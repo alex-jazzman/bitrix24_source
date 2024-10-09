@@ -6,7 +6,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 	const { CopilotRest } = require('im/messenger/provider/rest');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-rest-service');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -43,14 +44,14 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 					(result) => {
 						if (result.error() || result.status !== 200)
 						{
-							Logger.error('getParticipantList.error', result.error(), result.ex);
+							logger.error('getParticipantList.error', result.error(), result.ex);
 							reject(result.error());
 
 							return;
 						}
 
 						const data = result.data();
-						Logger.info('SidebarServices.getParticipantList:', result);
+						logger.info('SidebarServices.getParticipantList:', result);
 
 						if (Array.isArray(data) && data.length > 0)
 						{
@@ -97,13 +98,13 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				},
 			).then(
 				(result) => {
-					Logger.log(`${this.constructor.name}.deleteParticipant.result`, result);
+					logger.log(`${this.constructor.name}.deleteParticipant.result`, result);
 
 					return result.data();
 				},
 			).catch(
 				(err) => {
-					Logger.error(`${this.constructor.name}.deleteParticipant.catch`, err);
+					logger.error(`${this.constructor.name}.deleteParticipant.catch`, err);
 				},
 			);
 		}
@@ -124,7 +125,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				(result) => {
 					if (result.error())
 					{
-						Logger.error(result.error());
+						logger.error(result.error());
 					}
 
 					const data = result.data();
@@ -151,7 +152,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				(result) => {
 					if (result.error())
 					{
-						Logger.error(result.error());
+						logger.error(result.error());
 					}
 
 					const data = result.data();
@@ -178,7 +179,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				(result) => {
 					if (result.error())
 					{
-						Logger.error(result.error());
+						logger.error(result.error());
 					}
 
 					if (Type.isNull(result.answer.result))
@@ -209,7 +210,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				(result) => {
 					if (result.error())
 					{
-						Logger.error(result.error());
+						logger.error(result.error());
 					}
 
 					return result.data();
@@ -233,9 +234,9 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 					(result) => {
 						if (result.error())
 						{
-							Logger.error(`${this.constructor.name}.addManager.error:`, result.error());
+							logger.error(`${this.constructor.name}.addManager.error:`, result.error());
 						}
-						Logger.log(`${this.constructor.name}.addManager.result:`, result.data());
+						logger.log(`${this.constructor.name}.addManager.result:`, result.data());
 
 						return result.data();
 					},
@@ -258,9 +259,9 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 					(result) => {
 						if (result.error())
 						{
-							Logger.error(`${this.constructor.name}.removeManager.error:`, result.error());
+							logger.error(`${this.constructor.name}.removeManager.error:`, result.error());
 						}
-						Logger.log(`${this.constructor.name}.removeManager.result:`, result.data());
+						logger.log(`${this.constructor.name}.removeManager.result:`, result.data());
 
 						return result.data();
 					},
@@ -274,8 +275,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 		changeCopilotRole(roleCode)
 		{
 			CopilotRest.changeRole({ dialogId: this.dialogId, roleCode })
-				.then((result) => Logger.log(`${this.constructor.name}.changeCopilotRole.result:`, result))
-				.catch((error) => Logger.error(`${this.constructor.name}.changeCopilotRole.catch:`, error));
+				.then((result) => logger.log(`${this.constructor.name}.changeCopilotRole.result:`, result))
+				.catch((error) => logger.error(`${this.constructor.name}.changeCopilotRole.catch:`, error));
 		}
 	}
 

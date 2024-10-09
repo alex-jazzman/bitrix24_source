@@ -27,7 +27,7 @@ $arActivityDescription = [
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'client',
 		'GROUP' => ['clientCommunication'],
-		'SORT' => 1350,
+		'SORT' => 1349
 	],
 ];
 

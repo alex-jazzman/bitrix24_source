@@ -299,6 +299,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 
 			preparedTask.isExpired = selectIsExpired(preparedTask);
 			preparedTask.isConsideredForCounterChange = false;
+			preparedTask.isCreationErrorExist = false;
 
 			const uploadedFiles = Array.isArray(preparedTask.uploadedFiles) ? preparedTask.uploadedFiles : [];
 
@@ -690,6 +691,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				isRemoved: false,
 				isExpired: false,
 				isConsideredForCounterChange: false,
+				isCreationErrorExist: false,
 			};
 		}
 
@@ -793,6 +795,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				isRemoved: false,
 				isExpired: false,
 				isConsideredForCounterChange: false,
+				isCreationErrorExist: false,
 			};
 		}
 	}

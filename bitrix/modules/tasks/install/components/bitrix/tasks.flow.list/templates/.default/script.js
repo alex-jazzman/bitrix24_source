@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,tasks_flow_editForm,ui_dialogs_messagebox,ui_infoHelper,pull_queuemanager,tasks_flow_teamPopup,tasks_flow_taskQueue,tasks_clue,ui_manual,main_core_events,main_core) {
@@ -231,6 +230,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      message: main_core.Loc.getMessage('TASKS_FLOW_LIST_CONFIRM_REMOVE_MESSAGE'),
 	      buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
 	      okCaption: main_core.Loc.getMessage('TASKS_FLOW_LIST_CONFIRM_REMOVE_BUTTON'),
+	      popupOptions: {
+	        id: `tasks-flow-remove-confirm-${flowId}`
+	      },
 	      onOk: () => {
 	        message.close();
 	        babelHelpers.classPrivateFieldLooseBase(this, _updateRow)[_updateRow](flowId, 'remove');

@@ -39,6 +39,9 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 	const { Accomplices } = require('tasks/layout/task/fields/accomplices');
 	const { Auditors } = require('tasks/layout/task/fields/auditors');
 	const { DeadlinePeriod, ViewMode, TaskCounter } = require('tasks/enum');
+	const { Color, Indent } = require('tokens');
+	const { Text5 } = require('ui-system/typography/text');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	class TaskKanbanContent extends PureComponent
 	{
@@ -154,6 +157,11 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 		onContextMenuClick()
 		{
+			if (this.task.isCreationErrorExist)
+			{
+				return;
+			}
+
 			if (this.props.onContextMenuClick)
 			{
 				this.props.onContextMenuClick();
@@ -254,6 +262,31 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 		render()
 		{
+			if (this.task?.isCreationErrorExist)
+			{
+				return View(
+					{
+						style: {
+							flexDirection: 'column',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
+						},
+					},
+					this.renderHeader(),
+					View(
+						{
+							style: Styles.itemContent,
+						},
+						View(
+							{
+								style: Styles.body(this.task),
+							},
+							this.renderResponsible(),
+							this.renderCreationError(),
+						),
+					),
+				);
+			}
+
 			return View(
 				{
 					style: {
@@ -409,6 +442,30 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				backgroundColor: AppTheme.colors.bgContentPrimary,
 				onChange: this.onChangeDeadline,
 			});
+		}
+
+		renderCreationError()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+					},
+				},
+				Text5({
+					style: {
+						color: Color.accentMainAlert.toHex(),
+					},
+					text: Loc.getMessage('M_TASKS_TASK_ITEM_ERROR'),
+				}),
+				IconView({
+					style: {
+						marginLeft: Indent.XS.toNumber(),
+					},
+					icon: Icon.ALERT,
+					color: Color.accentMainAlert,
+				}),
+			);
 		}
 
 		renderCounter()
@@ -929,6 +986,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 			mark,
 			crm,
 			timeElapsed,
+			isCreationErrorExist,
 		} = task;
 
 		const { stageId, canMoveStage } = selectTaskStageByTaskIdOrGuid(
@@ -960,6 +1018,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				timeElapsed,
 				startDate,
 				endDate,
+				isCreationErrorExist,
 				activityDate: activityDate - (activityDate % 60),
 				counter: selectCounter(task),
 				isCompleted: selectIsCompleted(task),

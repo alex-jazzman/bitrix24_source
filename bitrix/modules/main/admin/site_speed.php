@@ -6,7 +6,6 @@
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 define("HELP_FILE", "settings/site_speed.php");
 
-use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Analytics;
 

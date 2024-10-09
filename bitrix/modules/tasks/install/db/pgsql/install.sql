@@ -861,3 +861,15 @@ CREATE TABLE IF NOT EXISTS b_tasks_flow_search_index (
 	UNIQUE (FLOW_ID)
 );
 CREATE INDEX IXF_TASKS_FLOW_SEARCH_INDEX_SEARCH_INDEX ON b_tasks_flow_search_index USING GIN (to_tsvector('english', COALESCE(SEARCH_INDEX, '')));
+
+create table if not exists b_tasks_flow_auto_created_robot
+(
+	ID                   int          not null generated always as identity,
+	FLOW_ID              int          not null,
+	STAGE_ID             int          not null,
+	BIZ_PROC_TEMPLATE_ID int          not null,
+	STAGE_TYPE           varchar(255) not null,
+	ROBOT                varchar(255) not null
+);
+
+create unique index ix_flow_robot on b_tasks_flow_auto_created_robot (FLOW_ID, ROBOT);

@@ -2,7 +2,6 @@ import { Loc, type JsonObject } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 
 import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { LayoutManager } from 'im.v2.lib.layout';
 import { Layout, ChatType } from 'im.v2.const';
 
 import '../css/create-chat.css';
@@ -80,29 +79,30 @@ export const CreateChat = {
 
 		this.chatType = CreateChatManager.getInstance().getChatType();
 
-		CreateChatManager.getInstance().subscribe(
-			CreateChatManager.events.titleChange,
-			(event: BaseEvent<string>) => {
-				this.chatTitle = event.getData();
-			},
-		);
-
-		CreateChatManager.getInstance().subscribe(
-			CreateChatManager.events.avatarChange,
-			(event: BaseEvent<string>) => {
-				this.chatAvatarFile = event.getData();
-			},
-		);
-
-		CreateChatManager.getInstance().subscribe(
-			CreateChatManager.events.chatTypeChange,
-			(event: BaseEvent<string>) => {
-				this.chatType = event.getData();
-			},
-		);
+		CreateChatManager.getInstance().subscribe(CreateChatManager.events.titleChange, this.onTitleChange);
+		CreateChatManager.getInstance().subscribe(CreateChatManager.events.avatarChange, this.onAvatarChange);
+		CreateChatManager.getInstance().subscribe(CreateChatManager.events.chatTypeChange, this.onChatTypeChange);
+	},
+	beforeUnmount()
+	{
+		CreateChatManager.getInstance().unsubscribe(CreateChatManager.events.titleChange, this.onTitleChange);
+		CreateChatManager.getInstance().unsubscribe(CreateChatManager.events.avatarChange, this.onAvatarChange);
+		CreateChatManager.getInstance().unsubscribe(CreateChatManager.events.chatTypeChange, this.onChatTypeChange);
 	},
 	methods:
 	{
+		onTitleChange(event: BaseEvent<string>)
+		{
+			this.chatTitle = event.getData();
+		},
+		onAvatarChange(event: BaseEvent<string>)
+		{
+			this.chatAvatarFile = event.getData();
+		},
+		onChatTypeChange(event: BaseEvent<string>)
+		{
+			this.chatType = event.getData();
+		},
 		onClick()
 		{
 			CreateChatManager.getInstance().startChatCreation(this.chatType, {

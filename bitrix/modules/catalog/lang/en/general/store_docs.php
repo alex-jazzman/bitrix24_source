@@ -8,6 +8,7 @@ $MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXISTS"] = "Product ##ID# (#NAME#) is c
 $MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXT"] = "Cleared inventory documents contain this item. Please change document status and delete the item.";
 $MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXT_2"] = "This product is registered in the warehouse database. You have to remove it there to delete the product.";
 $MESS["CAT_DOC_ERROR_MODULE_SALE_NOT_INSTALLED"] = "The Online Store module is not installed.";
+$MESS["CAT_DOC_ERROR_REQUIRED_FIELD"] = "The field \"#FIELD_NAME#\" is required.";
 $MESS["CAT_DOC_ERROR_SHIPMENT_NOT_FOUND"] = "Cannot find shipment for sales order";
 $MESS["CAT_DOC_ERROR_STORE_TO"] = "Destination warehouse is not specified for product #PRODUCT#";
 $MESS["CAT_DOC_PURCHASING_INFO_ERROR"] = "Error updating the purchase price and currency.";

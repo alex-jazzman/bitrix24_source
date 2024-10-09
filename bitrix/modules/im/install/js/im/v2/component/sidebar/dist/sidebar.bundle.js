@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,ui_vue3_directives_lazyload,ui_label,im_v2_lib_menu,main_date,ui_vue3_directives_hint,im_v2_lib_promo,im_v2_lib_rest,ui_promoVideoPopup,im_v2_lib_feature,ui_vue3_components_socialvideo,ui_viewer,ui_icons,im_v2_model,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service,im_v2_lib_logger,main_core,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_lib_utils,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements,main_core_events,im_v2_lib_dateFormatter) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_channel,ui_vue3_directives_lazyload,ui_label,im_v2_lib_menu,im_v2_lib_layout,main_date,ui_vue3_directives_hint,im_v2_lib_promo,im_v2_lib_rest,ui_promoVideoPopup,im_v2_lib_analytics,im_v2_lib_feature,ui_vue3_components_socialvideo,ui_viewer,ui_icons,im_v2_model,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service,im_v2_lib_logger,main_core,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_lib_utils,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements,main_core_events,im_v2_lib_dateFormatter) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -92,9 +92,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      list = [],
 	      users = [],
-	      files = []
+	      files = [],
+	      tariffRestrictions = {}
 	    } = resultData;
 	    const addUsersPromise = this.userManager.setUsersToModel(users);
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
 	    const rawMessages = list.map(favorite => favorite.message);
 	    const hasNextPage = list.length === REQUEST_ITEMS_LIMIT;
 	    const lastId = getLastElementId(list);
@@ -104,7 +106,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      chatId: this.chatId,
 	      favorites: list,
 	      hasNextPage,
-	      lastId
+	      lastId,
+	      isHistoryLimitExceeded
 	    });
 	    return Promise.all([setFilesPromise, storeMessagesPromise, setFavoritesPromise, addUsersPromise]);
 	  }
@@ -133,11 +136,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  task: 'task',
 	  meeting: 'meeting',
 	  market: 'market',
-	  multidialog: 'multidialog'
+	  multidialog: 'multidialog',
+	  tariffLimit: 'tariffLimit'
 	});
 	const MainPanels = {
 	  [MainPanelType.user]: {
 	    [MainPanelBlock.user]: 10,
+	    [MainPanelBlock.tariffLimit]: 15,
 	    [MainPanelBlock.info]: 20,
 	    [MainPanelBlock.file]: 30,
 	    [MainPanelBlock.fileUnsorted]: 30,
@@ -147,6 +152,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  [MainPanelType.chat]: {
 	    [MainPanelBlock.chat]: 10,
+	    [MainPanelBlock.tariffLimit]: 15,
 	    [MainPanelBlock.info]: 20,
 	    [MainPanelBlock.file]: 30,
 	    [MainPanelBlock.fileUnsorted]: 30,
@@ -156,6 +162,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  [MainPanelType.copilot]: {
 	    [MainPanelBlock.copilot]: 10,
+	    [MainPanelBlock.tariffLimit]: 15,
 	    [MainPanelBlock.copilotInfo]: 20,
 	    [MainPanelBlock.task]: 40,
 	    [MainPanelBlock.meeting]: 50
@@ -184,6 +191,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  [MainPanelType.support24Question]: {
 	    [MainPanelBlock.support]: 10,
+	    [MainPanelBlock.tariffLimit]: 15,
 	    [MainPanelBlock.multidialog]: 20,
 	    [MainPanelBlock.info]: 30,
 	    [MainPanelBlock.file]: 40
@@ -237,6 +245,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  if (!hasMarketApps(dialogId)) {
 	    blocksSet.delete(MainPanelBlock.market);
 	  }
+	  if (!hasHistoryLimit(dialogId)) {
+	    blocksSet.delete(MainPanelBlock.tariffLimit);
+	  }
 	  if (isBot(dialogId)) {
 	    blocksSet.delete(MainPanelBlock.task);
 	    blocksSet.delete(MainPanelBlock.meeting);
@@ -252,6 +263,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function hasMarketApps(dialogId) {
 	  return im_v2_lib_market.MarketManager.getInstance().getAvailablePlacementsByType(im_v2_const.PlacementType.sidebar, dialogId).length > 0;
+	}
+	function hasHistoryLimit(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  const isChannelCommentsChat = im_v2_const.ChatType.comment === chat.type;
+	  const isChannelChat = im_v2_lib_channel.ChannelManager.isChannel(dialogId);
+	  if (isChannelChat || isChannelCommentsChat || im_v2_lib_feature.FeatureManager.chatHistory.isAvailable()) {
+	    return false;
+	  }
+	  return im_v2_application_core.Core.getStore().getters['sidebar/hasHistoryLimit'](chat.chatId);
 	}
 
 	const REQUEST_ITEMS_LIMIT$1 = 50;
@@ -314,13 +334,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  handleUrlGetResponse(response) {
 	    const {
 	      list,
-	      users
+	      users,
+	      tariffRestrictions = {}
 	    } = response;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
 	    const addUsersPromise = this.userManager.setUsersToModel(users);
 	    const setLinksPromise = this.store.dispatch('sidebar/links/set', {
 	      chatId: this.chatId,
 	      links: list,
-	      hasNextPage: list.length === REQUEST_ITEMS_LIMIT$1
+	      hasNextPage: list.length === REQUEST_ITEMS_LIMIT$1,
+	      isHistoryLimitExceeded
 	    });
 	    return Promise.all([setLinksPromise, addUsersPromise]);
 	  }
@@ -363,12 +386,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.updateModels(response[im_v2_const.RestMethod.imChatFileCollectionGet]);
 	    };
 	  }
-	  updateModels(resultData) {
+	  updateModels(resultData, subType = '') {
 	    const {
 	      list,
 	      users,
-	      files
+	      files,
+	      tariffRestrictions = {}
 	    } = resultData;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	    const historyLimitPromise = this.store.dispatch('sidebar/files/setHistoryLimitExceeded', {
+	      chatId: this.chatId,
+	      isHistoryLimitExceeded
+	    });
+	    if (subType && !main_core.Type.isArrayFilled(list)) {
+	      return this.store.dispatch('sidebar/files/setHasNextPage', {
+	        chatId: this.chatId,
+	        subType,
+	        hasNextPage: false
+	      });
+	    }
 	    const addUsersPromise = this.userManager.setUsersToModel(users);
 	    const setFilesPromise = this.store.dispatch('files/set', files);
 	    const sortedList = {};
@@ -395,7 +431,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        lastId: getLastElementId(listByType)
 	      }));
 	    });
-	    return Promise.all([setFilesPromise, addUsersPromise, ...setSidebarFilesPromises]);
+	    return Promise.all([setFilesPromise, addUsersPromise, historyLimitPromise, ...setSidebarFilesPromises]);
 	  }
 	  loadFirstPage(subType) {
 	    return this.loadFirstPageBySubType(subType);
@@ -429,7 +465,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  requestPage(queryParams) {
 	    return this.restClient.callMethod(im_v2_const.RestMethod.imChatFileGet, queryParams).then(response => {
-	      return this.updateModels(response.data());
+	      return this.updateModels(response.data(), queryParams.SUBTYPE);
 	    }).catch(error => {
 	      console.error('SidebarInfo: imChatFileGet: page request error', error);
 	    });
@@ -499,8 +535,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  updateModels(resultData) {
 	    const {
 	      list,
-	      users
+	      users,
+	      tariffRestrictions = {}
 	    } = resultData;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
 	    const hasNextPage = list.length === REQUEST_ITEMS_LIMIT$3;
 	    const lastId = getLastElementId(list);
 	    const addUsersPromise = this.userManager.setUsersToModel(users);
@@ -508,7 +546,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      chatId: this.chatId,
 	      tasks: list,
 	      hasNextPage,
-	      lastId
+	      lastId,
+	      isHistoryLimitExceeded
 	    });
 	    return Promise.all([setTasksPromise, addUsersPromise]);
 	  }
@@ -577,8 +616,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  updateModels(resultData) {
 	    const {
 	      list,
-	      users
+	      users,
+	      tariffRestrictions = {}
 	    } = resultData;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
 	    const hasNextPage = list.length === REQUEST_ITEMS_LIMIT$4;
 	    const lastId = getLastElementId(list);
 	    const addUsersPromise = this.userManager.setUsersToModel(users);
@@ -586,7 +627,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      chatId: this.chatId,
 	      meetings: list,
 	      hasNextPage,
-	      lastId
+	      lastId,
+	      isHistoryLimitExceeded
 	    });
 	    return Promise.all([setMeetingsPromise, addUsersPromise]);
 	  }
@@ -863,8 +905,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  updateModels(resultData) {
 	    const {
 	      users,
-	      files
+	      files,
+	      tariffRestrictions = {}
 	    } = resultData;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	    const historyLimitPromise = this.store.dispatch('sidebar/files/setHistoryLimitExceeded', {
+	      chatId: this.chatId,
+	      isHistoryLimitExceeded
+	    });
 	    const preparedFiles = files.map(file => {
 	      return {
 	        ...file,
@@ -888,7 +936,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      subType: im_v2_const.SidebarDetailBlock.fileUnsorted,
 	      lastId: getLastElementId(preparedFiles)
 	    });
-	    return Promise.all([setFilesPromise, setSidebarFilesPromise, addUsersPromise, hasNextPagePromise, setLastIdPromise]);
+	    return Promise.all([setFilesPromise, setSidebarFilesPromise, addUsersPromise, hasNextPagePromise, setLastIdPromise, historyLimitPromise]);
 	  }
 	  getFilesCountFromModel(subType) {
 	    return this.store.getters['sidebar/files/getSize'](this.chatId, subType);
@@ -1555,6 +1603,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    contextDialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -1569,7 +1621,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.task;
 	    },
 	    taskTitle() {
-	      return this.taskItem.task.title;
+	      if (this.searchQuery.length === 0) {
+	        return main_core.Text.encode(this.taskItem.task.title);
+	      }
+	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.taskItem.task.title), this.searchQuery);
 	    },
 	    taskAuthorDialogId() {
 	      return this.taskItem.task.creatorId.toString();
@@ -1616,9 +1671,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			@mouseleave="showContextButton = false"
 		>
 			<div class="bx-im-sidebar-task-item__content" @click="onTaskClick">
-				<div class="bx-im-sidebar-task-item__header-text" :title="taskTitle">
-					{{ taskTitle }}
-				</div>
+				<div class="bx-im-sidebar-task-item__header-text" :title="taskTitle" v-html="taskTitle"></div>
 				<div class="bx-im-sidebar-task-item__detail-container">
 					<ChatAvatar 
 						:size="AvatarSize.XS"
@@ -1778,7 +1831,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getMenuItems() {
-	    return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getCallItem(), this.getOpenProfileItem(), this.getOpenUserCalendarItem(), this.getChatsWithUserItem(), this.getAddMembersToChatItem(), this.getHideItem(), this.getLeaveItem()];
+	    return [this.getPinMessageItem(), this.getEditItem(), this.getOpenProfileItem(), this.getOpenUserCalendarItem(), this.getChatsWithUserItem(), this.getAddMembersToChatItem(), this.getHideItem(), this.getLeaveItem()];
+	  }
+	  getEditItem() {
+	    if (!this.permissionManager.canPerformAction(im_v2_const.ChatActionType.update, this.context.dialogId)) {
+	      return null;
+	    }
+	    return {
+	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_UPDATE_CHAT'),
+	      onclick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().onOpenChatEditForm(this.context.dialogId);
+	        void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
+	          name: im_v2_const.Layout.updateChat.name,
+	          entityId: this.context.dialogId
+	        });
+	      }
+	    };
 	  }
 	  getOpenUserCalendarItem() {
 	    if (!this.isUser()) {
@@ -2046,6 +2114,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    meeting: {
 	      type: Object,
 	      required: true
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -2059,7 +2131,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.meeting;
 	    },
 	    title() {
-	      return this.meetingItem.meeting.title;
+	      if (this.searchQuery.length === 0) {
+	        return main_core.Text.encode(this.meetingItem.meeting.title);
+	      }
+	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.meetingItem.meeting.title), this.searchQuery);
 	    },
 	    date() {
 	      const meetingDate = this.meetingItem.meeting.dateFrom;
@@ -2103,7 +2178,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			</div>
 			<div class="bx-im-sidebar-meeting-item__content-container" @click="onMeetingClick">
 				<div class="bx-im-sidebar-meeting-item__content">
-					<div class="bx-im-sidebar-meeting-item__title" :title="title">{{ title }}</div>
+					<div class="bx-im-sidebar-meeting-item__title" :title="title" v-html="title"></div>
 					<div class="bx-im-sidebar-meeting-item__date">{{ date }}</div>
 				</div>
 			</div>
@@ -3061,6 +3136,106 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
+	const TariffLimit = {
+	  name: 'TariffLimit',
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    },
+	    panel: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    title() {
+	      return im_v2_lib_feature.FeatureManager.chatHistory.getLimitTitle();
+	    },
+	    preparedDescription() {
+	      return im_v2_lib_feature.FeatureManager.chatHistory.getLimitSubtitle(true).replace('[action_emphasis]', '<em class="bx-im-sidebar-elements-tariff-limit__description-accent">').replace('[/action_emphasis]', '</em>');
+	    },
+	    tooltipText() {
+	      return im_v2_lib_feature.FeatureManager.chatHistory.getTooltipText();
+	    }
+	  },
+	  watch: {
+	    dialogId() {
+	      this.sendAnalyticsOnCreate();
+	    },
+	    panel() {
+	      this.sendAnalyticsOnCreate();
+	    }
+	  },
+	  created() {
+	    this.sendAnalyticsOnCreate();
+	  },
+	  methods: {
+	    onDetailClick() {
+	      this.sendAnalyticsOnClick();
+	      im_v2_lib_feature.FeatureManager.chatHistory.openFeatureSlider();
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    },
+	    sendAnalyticsOnClick() {
+	      im_v2_lib_analytics.Analytics.getInstance().onSidebarHistoryLimitBannerClick({
+	        dialogId: this.dialogId,
+	        panel: this.panel
+	      });
+	    },
+	    sendAnalyticsOnCreate() {
+	      im_v2_lib_analytics.Analytics.getInstance().onSidebarHistoryLimitExceeded({
+	        dialogId: this.dialogId,
+	        panel: this.panel
+	      });
+	    }
+	  },
+	  template: `
+		<div
+			class="bx-im-sidebar-elements-tariff-limit__container"
+			:title="tooltipText"
+			@click="onDetailClick"
+		>
+			<div class="bx-im-sidebar-elements-tariff-limit__header">
+				<div class="bx-im-sidebar-elements-tariff-limit__title-container">
+					<div class="bx-im-sidebar-elements-tariff-limit__icon"></div>
+					<div class="bx-im-sidebar-elements-tariff-limit__title --line-clamp-2">{{ title }}</div>
+				</div>
+				<div class="bx-im-sidebar-elements-tariff-limit__arrow bx-im-sidebar__forward-green-icon"></div>
+			</div>
+			<div class="bx-im-sidebar-elements-tariff-limit__delimiter"></div>
+			<div class="bx-im-sidebar-elements-tariff-limit__content">
+				<div class="bx-im-sidebar-elements-tariff-limit__description" v-html="preparedDescription"></div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const TariffLimitPreview = {
+	  name: 'TariffLimitPreview',
+	  components: {
+	    TariffLimit
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock
+	  },
+	  template: `
+		<TariffLimit :dialogId="dialogId" :panel="SidebarDetailBlock.main" />
+	`
+	};
+
+	// @vue/component
 	const SidebarSkeleton = {
 	  name: 'SidebarSkeleton',
 	  template: `
@@ -3101,7 +3276,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    MultidialogPreview,
 	    SidebarSkeleton,
 	    CopilotPreview,
-	    CopilotInfoPreview
+	    CopilotInfoPreview,
+	    TariffLimitPreview
 	  },
 	  props: {
 	    dialogId: {
@@ -3182,6 +3358,92 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	function concatAndSortSearchResult(concatArrayFirst, concatArraySecond) {
+	  return [...concatArrayFirst, ...concatArraySecond].sort((a, z) => z - a);
+	}
+
+	const REQUEST_ITEMS_LIMIT$8 = 50;
+	var _query = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("query");
+	var _processSearchResponse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSearchResponse");
+	class TaskSearch {
+	  constructor({
+	    dialogId
+	  }) {
+	    Object.defineProperty(this, _processSearchResponse, {
+	      value: _processSearchResponse2
+	    });
+	    this.hasMoreItemsToLoad = true;
+	    Object.defineProperty(this, _query, {
+	      writable: true,
+	      value: ''
+	    });
+	    this.store = im_v2_application_core.Core.getStore();
+	    this.restClient = im_v2_application_core.Core.getRestClient();
+	    this.dialogId = dialogId;
+	    this.chatId = getChatId(dialogId);
+	    this.userManager = new im_v2_lib_user.UserManager();
+	  }
+	  searchOnServer(query) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _query)[_query] !== query) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _query)[_query] = query;
+	      this.hasMoreItemsToLoad = true;
+	    }
+	    return this.request();
+	  }
+	  resetSearchState() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _query)[_query] = '';
+	    this.hasMoreItemsToLoad = true;
+	    void this.store.dispatch('sidebar/tasks/clearSearch', {});
+	  }
+	  async request() {
+	    const queryParams = this.getQueryParams();
+	    let responseData = {};
+	    try {
+	      const response = await this.restClient.callMethod(im_v2_const.RestMethod.imChatTaskGet, queryParams);
+	      responseData = response.data();
+	    } catch (error) {
+	      console.error('SidebarSearch: Im.imChatTaskGet: page request error', error);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _processSearchResponse)[_processSearchResponse](responseData);
+	  }
+	  getQueryParams() {
+	    const queryParams = {
+	      CHAT_ID: this.chatId,
+	      LIMIT: REQUEST_ITEMS_LIMIT$8,
+	      SEARCH_TASK_NAME: babelHelpers.classPrivateFieldLooseBase(this, _query)[_query]
+	    };
+	    const lastId = this.store.getters['sidebar/tasks/getSearchResultCollectionLastId'](this.chatId);
+	    if (lastId > 0) {
+	      queryParams.LAST_ID = lastId;
+	    }
+	    return queryParams;
+	  }
+	  updateModels(resultData) {
+	    const {
+	      list,
+	      users,
+	      tariffRestrictions = {}
+	    } = resultData;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	    const hasNextPage = list.length === REQUEST_ITEMS_LIMIT$8;
+	    const lastId = getLastElementId(list);
+	    const addUsersPromise = this.userManager.setUsersToModel(users);
+	    const setTasksPromise = this.store.dispatch('sidebar/tasks/setSearch', {
+	      chatId: this.chatId,
+	      tasks: list,
+	      hasNextPage,
+	      lastId,
+	      isHistoryLimitExceeded
+	    });
+	    return Promise.all([setTasksPromise, addUsersPromise]);
+	  }
+	}
+	function _processSearchResponse2(response) {
+	  return this.updateModels(response).then(() => {
+	    return response.list.map(message => message.messageId);
+	  });
+	}
+
 	// @vue/component
 	const DateGroup = {
 	  name: 'DateGroup',
@@ -3204,7 +3466,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const DetailHeader = {
 	  name: 'DetailHeader',
 	  components: {
-	    ChatButton: im_v2_component_elements.Button
+	    ChatButton: im_v2_component_elements.Button,
+	    SearchInput: im_v2_component_elements.SearchInput
 	  },
 	  props: {
 	    title: {
@@ -3218,9 +3481,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    withAddButton: {
 	      type: Boolean,
 	      default: false
+	    },
+	    withSearch: {
+	      type: Boolean,
+	      default: false
+	    },
+	    isSearchHeaderOpened: {
+	      type: Boolean,
+	      default: false
+	    },
+	    delayForFocusOnStart: {
+	      type: Number || null,
+	      default: null
 	    }
 	  },
-	  emits: ['back', 'addClick'],
+	  emits: ['back', 'addClick', 'changeQuery', 'toggleSearchPanelOpened'],
 	  computed: {
 	    ButtonSize: () => im_v2_component_elements.ButtonSize,
 	    ButtonColor: () => im_v2_component_elements.ButtonColor,
@@ -3249,9 +3524,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:class="{'bx-im-messenger__cross-icon': !secondLevel, 'bx-im-sidebar__back-icon': secondLevel}"
 					@click="$emit('back')"
 				/>
-				<div class="bx-im-sidebar-detail-header__title-text">{{ title }}</div>
+				<div v-if="!isSearchHeaderOpened" class="bx-im-sidebar-detail-header__title-text">{{ title }}</div>
 				<slot name="action">
-					<div v-if="withAddButton" class="bx-im-sidebar-detail-header__add-button" ref="add-button">
+					<div v-if="withAddButton && !isSearchHeaderOpened" class="bx-im-sidebar-detail-header__add-button" ref="add-button">
 						<ChatButton
 							:text="loc('IM_SIDEBAR_ADD_BUTTON_TEXT')"
 							:size="ButtonSize.S"
@@ -3263,6 +3538,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						/>
 					</div>
 				</slot>
+				<div v-if="withSearch" class="bx-im-sidebar-detail-header__search">
+					<SearchInput
+						v-if="isSearchHeaderOpened"
+						:placeholder="loc('IM_SIDEBAR_SEARCH_MESSAGE_PLACEHOLDER')"
+						:withIcon="false"
+						:delayForFocusOnStart="delayForFocusOnStart"
+						@queryChange="$emit('changeQuery', $event)"
+						@close="$emit('toggleSearchPanelOpened', $event)"
+						class="bx-im-sidebar-search-header__input"
+					/>
+					<div v-else @click="$emit('toggleSearchPanelOpened', $event)" class="bx-im-sidebar-detail-header__search__icon --search"></div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DetailEmptySearchState = {
+	  name: 'DetailEmptySearchState',
+	  props: {
+	    title: {
+	      type: String,
+	      required: true
+	    },
+	    subTitle: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    }
+	  },
+	  template: `
+		<div class="bx-im-detail-empty-search-state__container">
+			<div class="bx-im-detail-empty-search-state__icon"></div>
+			<div class="bx-im-detail-empty-search-state__title">
+				{{ title }}
+			</div>
+			<div class="bx-im-detail-empty-search-state__subtitle">
+				{{ subTitle }}
 			</div>
 		</div>
 	`
@@ -3304,6 +3618,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const DEFAULT_MIN_TOKEN_SIZE = 3;
+
 	// @vue/component
 	const TaskPanel = {
 	  name: 'TaskPanel',
@@ -3312,7 +3628,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DateGroup,
 	    DetailHeader,
 	    DetailEmptyState,
-	    Loader: im_v2_component_elements.Loader
+	    StartState: DetailEmptyState,
+	    DetailEmptySearchState,
+	    Loader: im_v2_component_elements.Loader,
+	    TariffLimit
 	  },
 	  props: {
 	    dialogId: {
@@ -3326,12 +3645,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      isSearchHeaderOpened: false,
+	      searchQuery: '',
+	      searchResult: [],
+	      currentServerQueries: 0,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    tasks() {
+	      if (this.isSearchHeaderOpened) {
+	        return this.$store.getters['sidebar/tasks/getSearchResultCollection'](this.chatId);
+	      }
 	      return this.$store.getters['sidebar/tasks/get'](this.chatId);
 	    },
 	    formattedCollection() {
@@ -3348,20 +3675,89 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    preparedQuery() {
+	      return this.searchQuery.trim().toLowerCase();
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.preparedQuery.length < this.minTokenSize;
+	    },
+	    hasHistoryLimit() {
+	      return this.$store.getters['sidebar/tasks/isHistoryLimitExceeded'](this.chatId);
+	    }
+	  },
+	  watch: {
+	    preparedQuery(newQuery, previousQuery) {
+	      if (newQuery === previousQuery) {
+	        return;
+	      }
+	      this.cleanSearchResult();
+	      this.startSearch();
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
 	    this.contextMenu = new TaskMenu();
 	    this.service = new Task({
 	      dialogId: this.dialogId
 	    });
+	    this.serviceSearch = new TaskSearch({
+	      dialogId: this.dialogId
+	    });
+	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 500, this);
 	  },
 	  beforeUnmount() {
 	    this.collectionFormatter.destroy();
 	    this.contextMenu.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE);
+	    },
+	    searchOnServer(query) {
+	      this.currentServerQueries++;
+	      this.serviceSearch.searchOnServer(query).then(messageIds => {
+	        if (query !== this.preparedQuery) {
+	          this.isLoading = false;
+	          return;
+	        }
+	        this.searchResult = concatAndSortSearchResult(this.searchResult, messageIds);
+	      }).catch(error => {
+	        console.error(error);
+	      }).finally(() => {
+	        this.currentServerQueries--;
+	        this.stopLoader();
+	        if (this.isSearchQueryMinimumSize) {
+	          this.cleanSearchResult();
+	        }
+	      });
+	    },
+	    stopLoader() {
+	      if (this.currentServerQueries > 0) {
+	        return;
+	      }
+	      this.isLoading = false;
+	    },
+	    startSearch() {
+	      if (this.isSearchQueryMinimumSize) {
+	        this.cleanSearchResult();
+	      } else {
+	        this.isLoading = true;
+	        this.searchOnServerDelayed(this.preparedQuery);
+	      }
+	    },
+	    cleanSearchResult() {
+	      this.serviceSearch.resetSearchState();
+	      this.searchResult = [];
+	    },
+	    onChangeQuery(query) {
+	      this.searchQuery = query;
+	    },
+	    toggleSearchPanelOpened() {
+	      this.isSearchHeaderOpened = !this.isSearchHeaderOpened;
+	    },
 	    onContextMenuClick(event, target) {
 	      const item = {
 	        ...event,
@@ -3377,7 +3773,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/tasks/hasNextPage'](this.chatId);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/tasks/hasNextPageSearch' : 'sidebar/tasks/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -3386,19 +3783,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage();
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage();
+	      } else {
+	        await this.serviceSearch.request();
+	      }
 	      this.isLoading = false;
 	    },
 	    onAddClick() {
 	      new im_v2_lib_entityCreator.EntityCreator(this.chatId).createTaskForChat();
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
 		<div class="bx-im-sidebar-task-detail__scope">
 			<DetailHeader
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_TASK_DETAIL_TITLE')"
+				:title="loc('IM_SIDEBAR_TASK_DETAIL_TITLE')"
 				:secondLevel="secondLevel"
 				:withAddButton="showAddButton"
+				:isSearchHeaderOpened="isSearchHeaderOpened"
+				:delayForFocusOnStart="0"
+				withSearch
+				@changeQuery="onChangeQuery"
+				@toggleSearchPanelOpened="toggleSearchPanelOpened"
 				@addClick="onAddClick"
 				@back="onBackClick"
 			/>
@@ -3408,15 +3817,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<TaskItem
 						v-for="task in dateGroup.items"
 						:task="task"
+						:searchQuery="searchQuery"
 						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>
-				<DetailEmptyState
-					v-if="!isLoading && isEmptyState"
-					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_TASKS_EMPTY')"
-					:iconType="SidebarDetailBlock.task"
+				<TariffLimit
+					v-if="hasHistoryLimit"
+					:dialogId="dialogId"
+					:panel="SidebarDetailBlock.task"
+					class="bx-im-sidebar-task-detail__tariff-limit-container"
 				/>
+				<template v-if="!isLoading">
+					<template v-if="isSearchHeaderOpened">
+						<StartState
+							v-if="preparedQuery.length === 0"
+							:title="loc('IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE')"
+							:iconType="SidebarDetailBlock.messageSearch"
+						/>
+						<DetailEmptySearchState
+							v-else-if="isEmptyState"
+							:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+							:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+						/>
+					</template>
+					<DetailEmptyState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_TASKS_EMPTY')"
+						:iconType="SidebarDetailBlock.task"
+					/>
+				</template>
 				<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
 			</div>
 		</div>
@@ -3533,6 +3963,116 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		</div>
 	`
 	};
+
+	const REQUEST_ITEMS_LIMIT$9 = 50;
+	var _query$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("query");
+	var _processSearchResponse$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSearchResponse");
+	class FileSearch {
+	  constructor({
+	    dialogId
+	  }) {
+	    Object.defineProperty(this, _processSearchResponse$1, {
+	      value: _processSearchResponse2$1
+	    });
+	    this.hasMoreItemsToLoad = true;
+	    Object.defineProperty(this, _query$1, {
+	      writable: true,
+	      value: ''
+	    });
+	    this.store = im_v2_application_core.Core.getStore();
+	    this.restClient = im_v2_application_core.Core.getRestClient();
+	    this.dialogId = dialogId;
+	    this.chatId = getChatId(dialogId);
+	    this.userManager = new im_v2_lib_user.UserManager();
+	  }
+	  searchOnServer(query, subType) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _query$1)[_query$1] !== query) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _query$1)[_query$1] = query;
+	      this.hasMoreItemsToLoad = true;
+	    }
+	    return this.request(subType);
+	  }
+	  resetSearchState() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _query$1)[_query$1] = '';
+	    this.hasMoreItemsToLoad = true;
+	    void this.store.dispatch('sidebar/files/clearSearch', {});
+	  }
+	  async request(subType) {
+	    const queryParams = this.getQueryParams(subType);
+	    let responseData = {};
+	    try {
+	      const response = await this.restClient.callMethod(im_v2_const.RestMethod.imChatFileGet, queryParams);
+	      responseData = response.data();
+	    } catch (error) {
+	      console.error('SidebarSearch: Im.imChatFileGet: page request error', error);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _processSearchResponse$1)[_processSearchResponse$1](responseData);
+	  }
+	  updateModels(resultData) {
+	    const {
+	      list,
+	      users,
+	      files,
+	      tariffRestrictions = {}
+	    } = resultData;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	    const historyLimitPromise = this.store.dispatch('sidebar/files/setHistoryLimitExceeded', {
+	      chatId: this.chatId,
+	      isHistoryLimitExceeded
+	    });
+	    const addUsersPromise = this.userManager.setUsersToModel(users);
+	    const setFilesPromise = this.store.dispatch('files/set', files);
+	    const sortedList = {};
+	    list.forEach(file => {
+	      if (!sortedList[file.subType]) {
+	        sortedList[file.subType] = [];
+	      }
+	      sortedList[file.subType].push(file);
+	    });
+	    const setSidebarFilesPromises = [];
+	    Object.keys(sortedList).forEach(subType => {
+	      const listByType = sortedList[subType];
+	      setSidebarFilesPromises.push(this.store.dispatch('sidebar/files/setSearch', {
+	        chatId: this.chatId,
+	        files: listByType,
+	        subType
+	      }), this.store.dispatch('sidebar/files/setHasNextPageSearch', {
+	        chatId: this.chatId,
+	        subType,
+	        hasNextPage: listByType.length === REQUEST_ITEMS_LIMIT$9
+	      }), this.store.dispatch('sidebar/files/setLastIdSearch', {
+	        chatId: this.chatId,
+	        subType,
+	        lastId: getLastElementId(listByType)
+	      }));
+	    });
+	    return Promise.all([setFilesPromise, addUsersPromise, historyLimitPromise, ...setSidebarFilesPromises]);
+	  }
+	  loadNextPage(subType, searchQuery) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _query$1)[_query$1] !== searchQuery) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _query$1)[_query$1] = searchQuery;
+	    }
+	    return this.request(subType);
+	  }
+	  getQueryParams(subType) {
+	    const queryParams = {
+	      CHAT_ID: this.chatId,
+	      SEARCH_FILE_NAME: babelHelpers.classPrivateFieldLooseBase(this, _query$1)[_query$1],
+	      SUBTYPE: subType.toUpperCase(),
+	      LIMIT: REQUEST_ITEMS_LIMIT$9
+	    };
+	    const lastId = this.store.getters['sidebar/files/getSearchResultCollectionLastId'](this.chatId, subType);
+	    if (lastId > 0) {
+	      queryParams.LAST_ID = lastId;
+	    }
+	    return queryParams;
+	  }
+	}
+	function _processSearchResponse2$1(response) {
+	  return this.updateModels(response).then(() => {
+	    return response.files.map(file => file.id);
+	  });
+	}
 
 	// @vue/component
 	const MediaDetailItem = {
@@ -3779,6 +4319,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const DEFAULT_MIN_TOKEN_SIZE$1 = 3;
+
 	// @vue/component
 	const MediaTab = {
 	  name: 'MediaTab',
@@ -3786,17 +4328,37 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DateGroup,
 	    MediaDetailItem,
 	    DetailEmptyState,
+	    StartState: DetailEmptyState,
+	    DetailEmptySearchState,
 	    Loader: im_v2_component_elements.Loader
 	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchResult: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
+	    isSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    isLoadingSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$1
 	    };
 	  },
 	  computed: {
@@ -3808,6 +4370,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.dialog.chatId;
 	    },
 	    files() {
+	      if (this.isSearch) {
+	        return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileTypes.media);
+	      }
 	      return this.$store.getters['sidebar/files/get'](this.chatId, im_v2_const.SidebarFileTypes.media);
 	    },
 	    formattedCollection() {
@@ -3815,10 +4380,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isEmptyState() {
 	      return this.formattedCollection.length === 0;
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.searchQuery.length < this.minTokenSize;
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.service = new File({
+	      dialogId: this.dialogId
+	    });
+	    this.serviceSearch = new FileSearch({
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
@@ -3829,6 +4401,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.contextMenu.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$1);
+	    },
 	    onContextMenuClick(event, target) {
 	      const item = {
 	        ...event,
@@ -3839,7 +4415,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/files/hasNextPage'](this.chatId, im_v2_const.SidebarFileTypes.media);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/files/hasNextPageSearch' : 'sidebar/files/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId, im_v2_const.SidebarFileTypes.media);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -3848,8 +4425,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage(im_v2_const.SidebarFileTypes.media);
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage(im_v2_const.SidebarFileTypes.media);
+	      } else {
+	        await this.serviceSearch.loadNextPage(im_v2_const.SidebarFileTypes.media, this.searchQuery);
+	      }
 	      this.isLoading = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -3865,12 +4449,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					/>
 				</div>
 			</div>
-			<DetailEmptyState
-				v-if="!isLoading && isEmptyState"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_FILES_EMPTY')"
-				:iconType="SidebarDetailBlock.media"
-			/>
-			<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
+			<template v-if="!isLoading && !isLoadingSearch">
+				<template v-if="isSearch">
+					<StartState
+						v-if="searchQuery.length === 0"
+						:title="loc('IM_SIDEBAR_SEARCH_RESULT_START_TITLE')"
+						:iconType="SidebarDetailBlock.messageSearch"
+					/>
+					<DetailEmptySearchState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+						:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+					/>
+				</template>
+				<DetailEmptyState
+					v-else-if="isEmptyState"
+					:title="loc('IM_SIDEBAR_FILES_EMPTY')"
+					:iconType="SidebarDetailBlock.media"
+				/>
+			</template>
+			<Loader v-if="isLoading || isLoadingSearch" class="bx-im-sidebar-detail__loader-container" />
 		</div>
 	`
 	};
@@ -3935,6 +4533,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const DEFAULT_MIN_TOKEN_SIZE$2 = 3;
+
 	// @vue/component
 	const AudioTab = {
 	  name: 'AudioTab',
@@ -3942,22 +4542,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DetailEmptyState,
 	    AudioDetailItem,
 	    DateGroup,
+	    StartState: DetailEmptyState,
+	    DetailEmptySearchState,
 	    Loader: im_v2_component_elements.Loader
 	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchResult: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
+	    isSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    isLoadingSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$2
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    files() {
+	      if (this.isSearch) {
+	        return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileTypes.audio);
+	      }
 	      return this.$store.getters['sidebar/files/get'](this.chatId, im_v2_const.SidebarFileTypes.audio);
 	    },
 	    formattedCollection() {
@@ -3971,10 +4594,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.searchQuery.length < this.minTokenSize;
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.service = new File({
+	      dialogId: this.dialogId
+	    });
+	    this.serviceSearch = new FileSearch({
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
@@ -3985,6 +4615,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.contextMenu.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$2);
+	    },
 	    onContextMenuClick(event, target) {
 	      const item = {
 	        ...event,
@@ -3995,7 +4629,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/files/hasNextPage'](this.chatId, im_v2_const.SidebarFileTypes.audio);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/files/hasNextPageSearch' : 'sidebar/files/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId, im_v2_const.SidebarFileTypes.audio);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -4004,8 +4639,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage(im_v2_const.SidebarFileTypes.audio);
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage(im_v2_const.SidebarFileTypes.audio);
+	      } else {
+	        await this.serviceSearch.loadNextPage(im_v2_const.SidebarFileTypes.audio, this.searchQuery);
+	      }
 	      this.isLoading = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -4019,12 +4661,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>
-			<DetailEmptyState
-				v-if="!isLoading && isEmptyState"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_FILES_EMPTY')"
-				:iconType="SidebarDetailBlock.audio"
-			/>
-			<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
+			<template v-if="!isLoading && !isLoadingSearch">
+				<template v-if="isSearch">
+					<StartState
+						v-if="searchQuery.length === 0"
+						:title="loc('IM_SIDEBAR_SEARCH_RESULT_START_TITLE')"
+						:iconType="SidebarDetailBlock.messageSearch"
+					/>
+					<DetailEmptySearchState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+						:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+					/>
+				</template>
+				<DetailEmptyState
+					v-else-if="isEmptyState"
+					:title="loc('IM_SIDEBAR_FILES_EMPTY')"
+					:iconType="SidebarDetailBlock.audio"
+				/>
+			</template>
+			<Loader v-if="isLoading || isLoadingSearch" class="bx-im-sidebar-detail__loader-container" />
 		</div>
 	`
 	};
@@ -4044,6 +4700,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    contextDialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: '',
+	      required: false
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -4062,7 +4723,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    fileShortName() {
 	      const NAME_MAX_LENGTH = 15;
-	      return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
+	      const shortName = im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
+	      if (this.searchQuery.length === 0) {
+	        return main_core.Text.encode(shortName);
+	      }
+	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(shortName), this.searchQuery);
 	    },
 	    fileSize() {
 	      return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
@@ -4100,7 +4765,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div class="bx-im-sidebar-brief-item__content-container">
 				<div class="bx-im-sidebar-brief-item__content">
 					<div class="bx-im-sidebar-brief-item__title" @click="download" v-bind="viewerAttributes">
-						<span class="bx-im-sidebar-brief-item__title-text" :title="file.name">{{fileShortName}}</span>
+						<span class="bx-im-sidebar-brief-item__title-text" :title="file.name" v-html="fileShortName"></span>
 						<span class="bx-im-sidebar-brief-item__size-text">{{fileSize}}</span>
 					</div>
 					<div class="bx-im-sidebar-brief-item__author-container">
@@ -4123,6 +4788,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const DEFAULT_MIN_TOKEN_SIZE$3 = 3;
+
 	// @vue/component
 	const BriefTab = {
 	  name: 'BriefTab',
@@ -4130,22 +4797,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DateGroup,
 	    BriefItem,
 	    DetailEmptyState,
+	    StartState: DetailEmptyState,
+	    DetailEmptySearchState,
 	    Loader: im_v2_component_elements.Loader
 	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchResult: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
+	    isSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    isLoadingSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$3
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    files() {
+	      if (this.isSearch) {
+	        return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileTypes.brief);
+	      }
 	      return this.$store.getters['sidebar/files/get'](this.chatId, im_v2_const.SidebarFileTypes.brief);
 	    },
 	    formattedCollection() {
@@ -4159,10 +4849,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.searchQuery.length < this.minTokenSize;
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.service = new File({
+	      dialogId: this.dialogId
+	    });
+	    this.serviceSearch = new FileSearch({
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
@@ -4173,6 +4870,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.contextMenu.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$3);
+	    },
 	    onContextMenuClick(event, target) {
 	      const item = {
 	        ...event,
@@ -4183,7 +4884,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/files/hasNextPage'](this.chatId, im_v2_const.SidebarFileTypes.brief);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/files/hasNextPageSearch' : 'sidebar/files/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId, im_v2_const.SidebarFileTypes.brief);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -4192,8 +4894,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage(im_v2_const.SidebarFileTypes.brief);
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage(im_v2_const.SidebarFileTypes.brief);
+	      } else {
+	        await this.serviceSearch.loadNextPage(im_v2_const.SidebarFileTypes.brief, this.searchQuery);
+	      }
 	      this.isLoading = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -4204,15 +4913,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					v-for="file in dateGroup.items"
 					:brief="file"
 					:contextDialogId="dialogId"
+					:searchQuery="searchQuery"
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>
-			<DetailEmptyState
-				v-if="!isLoading && isEmptyState"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_BRIEFS_EMPTY')"
-				:iconType="SidebarDetailBlock.brief"
-			/>
-			<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
+			<template v-if="!isLoading && !isLoadingSearch">
+				<template v-if="isSearch">
+					<StartState
+						v-if="searchQuery.length === 0"
+						:title="loc('IM_SIDEBAR_SEARCH_RESULT_START_TITLE')"
+						:iconType="SidebarDetailBlock.messageSearch"
+					/>
+					<DetailEmptySearchState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+						:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+					/>
+				</template>
+				<DetailEmptyState
+					v-else-if="isEmptyState"
+					:title="loc('IM_SIDEBAR_BRIEFS_EMPTY')"
+					:iconType="SidebarDetailBlock.other"
+				/>
+			</template>
+			<Loader v-if="isLoading || isLoadingSearch" class="bx-im-sidebar-detail__loader-container" />
 		</div>
 	`
 	};
@@ -4232,6 +4956,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    contextDialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: '',
+	      required: false
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -4253,7 +4982,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    fileShortName() {
 	      const NAME_MAX_LENGTH = 15;
-	      return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
+	      const shortName = im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
+	      if (this.searchQuery.length === 0) {
+	        return main_core.Text.encode(shortName);
+	      }
+	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(shortName), this.searchQuery);
 	    },
 	    fileSize() {
 	      return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
@@ -4296,7 +5029,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div class="bx-im-sidebar-file-document-detail-item__content-container" v-bind="viewerAttributes">
 				<div class="bx-im-sidebar-file-document-detail-item__content">
 					<div class="bx-im-sidebar-file-document-detail-item__document-title" @click="download" :title="file.name">
-						<span class="bx-im-sidebar-file-document-detail-item__document-title-text">{{fileShortName}}</span>
+						<span class="bx-im-sidebar-file-document-detail-item__document-title-text" v-html="fileShortName"></span>
 						<span class="bx-im-sidebar-file-document-detail-item__document-size">{{fileSize}}</span>
 					</div>
 					<div class="bx-im-sidebar-file-document-detail-item__author-container">
@@ -4324,6 +5057,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const DEFAULT_MIN_TOKEN_SIZE$4 = 3;
+
 	// @vue/component
 	const OtherTab = {
 	  name: 'OtherTab',
@@ -4331,22 +5066,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DateGroup,
 	    DocumentDetailItem,
 	    DetailEmptyState,
+	    StartState: DetailEmptyState,
+	    DetailEmptySearchState,
 	    Loader: im_v2_component_elements.Loader
 	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchResult: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
+	    isSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    isLoadingSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$4
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    files() {
+	      if (this.isSearch) {
+	        return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileTypes.other);
+	      }
 	      return this.$store.getters['sidebar/files/get'](this.chatId, im_v2_const.SidebarFileTypes.other);
 	    },
 	    formattedCollection() {
@@ -4360,10 +5118,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.searchQuery.length < this.minTokenSize;
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.service = new File({
+	      dialogId: this.dialogId
+	    });
+	    this.serviceSearch = new FileSearch({
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
@@ -4374,6 +5139,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.contextMenu.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$4);
+	    },
 	    onContextMenuClick(event, target) {
 	      const item = {
 	        ...event,
@@ -4384,7 +5153,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/files/hasNextPage'](this.chatId, im_v2_const.SidebarFileTypes.other);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/files/hasNextPageSearch' : 'sidebar/files/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId, im_v2_const.SidebarFileTypes.other);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -4393,8 +5163,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage(im_v2_const.SidebarFileTypes.other);
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage(im_v2_const.SidebarFileTypes.other);
+	      } else {
+	        await this.serviceSearch.loadNextPage(im_v2_const.SidebarFileTypes.other, this.searchQuery);
+	      }
 	      this.isLoading = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -4405,18 +5182,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					v-for="file in dateGroup.items"
 					:fileItem="file"
 					:contextDialogId="dialogId"
+					:searchQuery="searchQuery"
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>
-			<DetailEmptyState
-				v-if="!isLoading && isEmptyState"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_FILES_EMPTY')"
-				:iconType="SidebarDetailBlock.other"
-			/>
-			<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
+			<template v-if="!isLoading && !isLoadingSearch">
+				<template v-if="isSearch">
+					<StartState
+						v-if="searchQuery.length === 0"
+						:title="loc('IM_SIDEBAR_SEARCH_RESULT_START_TITLE')"
+						:iconType="SidebarDetailBlock.messageSearch"
+					/>
+					<DetailEmptySearchState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+						:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+					/>
+				</template>
+				<DetailEmptyState
+					v-else-if="isEmptyState"
+					:title="loc('IM_SIDEBAR_FILES_EMPTY')"
+					:iconType="SidebarDetailBlock.other"
+				/>
+			</template>
+			<Loader v-if="isLoading || isLoadingSearch" class="bx-im-sidebar-detail__loader-container" />
 		</div>
 	`
 	};
+
+	const DEFAULT_MIN_TOKEN_SIZE$5 = 3;
 
 	// @vue/component
 	const DocumentTab = {
@@ -4425,22 +5219,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DateGroup,
 	    DocumentDetailItem,
 	    DetailEmptyState,
+	    StartState: DetailEmptyState,
+	    DetailEmptySearchState,
 	    Loader: im_v2_component_elements.Loader
 	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchResult: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
+	    isSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    isLoadingSearch: {
+	      type: Boolean,
+	      required: false
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$5
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    files() {
+	      if (this.isSearch) {
+	        return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileTypes.document);
+	      }
 	      return this.$store.getters['sidebar/files/get'](this.chatId, im_v2_const.SidebarFileTypes.document);
 	    },
 	    formattedCollection() {
@@ -4454,10 +5271,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.searchQuery.length < this.minTokenSize;
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.service = new File({
+	      dialogId: this.dialogId
+	    });
+	    this.serviceSearch = new FileSearch({
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
@@ -4468,6 +5292,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.contextMenu.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$5);
+	    },
 	    onContextMenuClick(event, target) {
 	      const item = {
 	        ...event,
@@ -4478,7 +5306,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/files/hasNextPage'](this.chatId, im_v2_const.SidebarFileTypes.document);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/files/hasNextPageSearch' : 'sidebar/files/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId, im_v2_const.SidebarFileTypes.document);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -4487,8 +5316,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage(im_v2_const.SidebarFileTypes.document);
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage(im_v2_const.SidebarFileTypes.document);
+	      } else {
+	        await this.serviceSearch.loadNextPage(im_v2_const.SidebarFileTypes.document, this.searchQuery);
+	      }
 	      this.isLoading = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -4498,19 +5334,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<DocumentDetailItem
 					v-for="file in dateGroup.items"
 					:fileItem="file"
+					:searchQuery="searchQuery"
 					:contextDialogId="dialogId"
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>
-			<DetailEmptyState
-				v-if="!isLoading && isEmptyState"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_FILES_EMPTY')"
-				:iconType="SidebarDetailBlock.document"
-			/>
-			<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
+			<template v-if="!isLoading && !isLoadingSearch">
+				<template v-if="isSearch">
+					<StartState
+						v-if="searchQuery.length === 0"
+						:title="loc('IM_SIDEBAR_SEARCH_RESULT_START_TITLE')"
+						:iconType="SidebarDetailBlock.messageSearch"
+					/>
+					<DetailEmptySearchState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+						:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+					/>
+				</template>
+				<DetailEmptyState
+					v-else-if="isEmptyState"
+					:title="loc('IM_SIDEBAR_FILES_EMPTY')"
+					:iconType="SidebarDetailBlock.document"
+				/>
+			</template>
+			<Loader v-if="isLoading || isLoadingSearch" class="bx-im-sidebar-detail__loader-container" />
 		</div>
 	`
 	};
+
+	const DEFAULT_MIN_TOKEN_SIZE$6 = 3;
 
 	// @vue/component
 	const FilePanel = {
@@ -4522,7 +5375,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    AudioTab,
 	    DocumentTab,
 	    BriefTab,
-	    OtherTab
+	    OtherTab,
+	    Loader: im_v2_component_elements.Loader,
+	    TariffLimit
 	  },
 	  props: {
 	    dialogId: {
@@ -4536,7 +5391,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  data() {
 	    return {
-	      tab: im_v2_const.SidebarFileTabTypes.media
+	      tab: im_v2_const.SidebarFileTabTypes.media,
+	      isSearchHeaderOpened: false,
+	      searchQuery: '',
+	      searchResult: [],
+	      currentServerQueries: 0,
+	      isLoading: false,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$6
 	    };
 	  },
 	  computed: {
@@ -4551,9 +5412,85 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return tabTypes.filter(tab => tab !== im_v2_const.SidebarDetailBlock.brief);
 	      }
 	      return tabTypes;
+	    },
+	    preparedQuery() {
+	      return this.searchQuery.trim().toLowerCase();
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.preparedQuery.length < this.minTokenSize;
+	    },
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    chatId() {
+	      return this.dialog.chatId;
+	    },
+	    hasHistoryLimit() {
+	      return this.$store.getters['sidebar/files/isHistoryLimitExceeded'](this.chatId);
 	    }
 	  },
+	  watch: {
+	    preparedQuery(newQuery, previousQuery) {
+	      if (newQuery === previousQuery) {
+	        return;
+	      }
+	      this.cleanSearchResult();
+	      this.startSearch();
+	    }
+	  },
+	  created() {
+	    this.initSettings();
+	    this.service = new File({
+	      dialogId: this.dialogId,
+	      tab: this.tab
+	    });
+	    this.serviceSearch = new FileSearch({
+	      dialogId: this.dialogId,
+	      tab: this.tab
+	    });
+	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 500, this);
+	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$6);
+	    },
+	    searchOnServer(query) {
+	      this.currentServerQueries++;
+	      this.serviceSearch.searchOnServer(query, this.tab).then(messageIds => {
+	        if (query !== this.preparedQuery) {
+	          this.isLoading = false;
+	          return;
+	        }
+	        this.searchResult = concatAndSortSearchResult(this.searchResult, messageIds);
+	      }).catch(error => {
+	        console.error(error);
+	      }).finally(() => {
+	        this.currentServerQueries--;
+	        this.stopLoader();
+	        if (this.isSearchQueryMinimumSize) {
+	          this.cleanSearchResult();
+	        }
+	      });
+	    },
+	    stopLoader() {
+	      if (this.currentServerQueries > 0) {
+	        return;
+	      }
+	      this.isLoading = false;
+	    },
+	    startSearch() {
+	      if (this.isSearchQueryMinimumSize) {
+	        this.cleanSearchResult();
+	      } else {
+	        this.isLoading = true;
+	        this.searchOnServerDelayed(this.preparedQuery);
+	      }
+	    },
+	    cleanSearchResult() {
+	      this.serviceSearch.resetSearchState();
+	      this.searchResult = [];
+	    },
 	    onBackClick() {
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.file
@@ -4561,19 +5498,50 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    onTabSelect(tabName) {
 	      this.tab = tabName;
+	      if (!this.isSearchQueryMinimumSize) {
+	        this.cleanSearchResult();
+	        this.startSearch();
+	      }
+	    },
+	    onChangeQuery(query) {
+	      this.searchQuery = query;
+	    },
+	    toggleSearchPanelOpened() {
+	      this.isSearchHeaderOpened = !this.isSearchHeaderOpened;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
 		<div>
 			<DetailHeader
 				:dialogId="dialogId"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_MEDIA_DETAIL_TITLE')"
+				:title="loc('IM_SIDEBAR_MEDIA_DETAIL_TITLE')"
 				:secondLevel="secondLevel"
+				:isSearchHeaderOpened="isSearchHeaderOpened"
+				:delayForFocusOnStart="0"
+				@changeQuery="onChangeQuery"
+				@toggleSearchPanelOpened="toggleSearchPanelOpened"
+				withSearch
 				@back="onBackClick"
+			/>
+			<TariffLimit
+				v-if="hasHistoryLimit"
+				:dialogId="dialogId"
+				:panel="SidebarDetailBlock.file"
+				class="bx-im-sidebar-file__tariff-limit-container" 
 			/>
 			<DetailTabs :tabs="tabs" @tabSelect="onTabSelect" />
 			<KeepAlive>
-				<component :is="tabComponentName" :dialogId="dialogId" />
+				<component 
+					:is="tabComponentName" 
+					:dialogId="dialogId" 
+					:searchResult="searchResult" 
+					:isSearch="isSearchHeaderOpened" 
+					:searchQuery="searchQuery" 
+					:isLoadingSearch="isLoading"
+				/>
 			</KeepAlive>
 		</div>
 	`
@@ -4587,7 +5555,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DocumentDetailItem,
 	    DetailEmptyState,
 	    DetailHeader,
-	    Loader: im_v2_component_elements.Loader
+	    Loader: im_v2_component_elements.Loader,
+	    TariffLimit
 	  },
 	  props: {
 	    dialogId: {
@@ -4620,6 +5589,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    hasHistoryLimit() {
+	      return this.$store.getters['sidebar/files/isHistoryLimitExceeded'](this.chatId);
 	    }
 	  },
 	  created() {
@@ -4680,6 +5652,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>
+				<TariffLimit
+					v-if="hasHistoryLimit"
+					:dialogId="dialogId"
+					:panel="SidebarDetailBlock.fileUnsorted"
+					class="bx-im-sidebar-file-unsorted-detail__tariff-limit-container"
+				/>
 				<DetailEmptyState
 					v-if="!isLoading && isEmptyState"
 					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_FILES_EMPTY')"
@@ -4706,6 +5684,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    contextDialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -4738,7 +5720,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        description
 	      } = this.linkItem.richData;
 	      const descriptionToShow = description || name || this.source;
-	      return im_v2_lib_utils.Utils.text.convertHtmlEntities(descriptionToShow);
+	      if (this.searchQuery.length === 0) {
+	        return im_v2_lib_utils.Utils.text.convertHtmlEntities(descriptionToShow);
+	      }
+	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(descriptionToShow), this.searchQuery);
 	    },
 	    authorDialogId() {
 	      return this.linkItem.authorId.toString();
@@ -4797,9 +5782,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			</template>
 			<div class="bx-im-link-item__content">
 				<div class="bx-im-link-item__short-description-text">{{ shortDescription }}</div>
-				<a :href="source" :title="description" target="_blank" class="bx-im-link-item__description-text">
-					{{ description }}
-				</a>
+				<a :href="source" :title="source" target="_blank" class="bx-im-link-item__description-text" v-html="description"></a>
 				<div class="bx-im-link-item__author-container">
 					<MessageAvatar 
 						:messageId="linkItem.messageId" 
@@ -4816,6 +5799,92 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		</div>
 	`
 	};
+
+	const REQUEST_ITEMS_LIMIT$a = 50;
+	var _query$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("query");
+	var _processSearchResponse$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSearchResponse");
+	var _updateModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
+	class LinkSearch {
+	  constructor({
+	    dialogId
+	  }) {
+	    Object.defineProperty(this, _updateModels, {
+	      value: _updateModels2
+	    });
+	    Object.defineProperty(this, _processSearchResponse$2, {
+	      value: _processSearchResponse2$2
+	    });
+	    this.hasMoreItemsToLoad = true;
+	    Object.defineProperty(this, _query$2, {
+	      writable: true,
+	      value: ''
+	    });
+	    this.store = im_v2_application_core.Core.getStore();
+	    this.restClient = im_v2_application_core.Core.getRestClient();
+	    this.dialogId = dialogId;
+	    this.chatId = getChatId(dialogId);
+	    this.userManager = new im_v2_lib_user.UserManager();
+	  }
+	  searchOnServer(query) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _query$2)[_query$2] !== query) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _query$2)[_query$2] = query;
+	      this.hasMoreItemsToLoad = true;
+	    }
+	    return this.request();
+	  }
+	  resetSearchState() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _query$2)[_query$2] = '';
+	    this.hasMoreItemsToLoad = true;
+	    void this.store.dispatch('sidebar/links/clearSearch', {});
+	  }
+	  async request() {
+	    const queryParams = this.getQueryParams();
+	    let responseData = {};
+	    try {
+	      const response = await this.restClient.callMethod(im_v2_const.RestMethod.imChatUrlGet, queryParams);
+	      responseData = response.data();
+	    } catch (error) {
+	      console.error('SidebarSearch: Im.imChatUrlGet: page request error', error);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _processSearchResponse$2)[_processSearchResponse$2](responseData);
+	  }
+	  getQueryParams() {
+	    const queryParams = {
+	      CHAT_ID: this.chatId,
+	      LIMIT: REQUEST_ITEMS_LIMIT$a,
+	      SEARCH_URL: babelHelpers.classPrivateFieldLooseBase(this, _query$2)[_query$2]
+	    };
+	    const linksCount = this.getLinksCountFromModel();
+	    if (main_core.Type.isNumber(linksCount) && linksCount > 0) {
+	      queryParams.OFFSET = linksCount;
+	    }
+	    return queryParams;
+	  }
+	  getLinksCountFromModel() {
+	    return this.store.getters['sidebar/links/getSearchResultCollectionSize'](this.chatId);
+	  }
+	}
+	function _processSearchResponse2$2(response) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels](response).then(() => {
+	    return response.list.map(message => message.messageId);
+	  });
+	}
+	function _updateModels2(resultData) {
+	  const {
+	    list,
+	    users,
+	    tariffRestrictions = {}
+	  } = resultData;
+	  const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	  const addUsersPromise = this.userManager.setUsersToModel(users);
+	  const setLinksPromise = this.store.dispatch('sidebar/links/setSearch', {
+	    chatId: this.chatId,
+	    links: list,
+	    hasNextPage: list.length === REQUEST_ITEMS_LIMIT$a,
+	    isHistoryLimitExceeded
+	  });
+	  return Promise.all([setLinksPromise, addUsersPromise]);
+	}
 
 	class LinkManager {
 	  constructor() {
@@ -4855,6 +5924,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const DEFAULT_MIN_TOKEN_SIZE$7 = 3;
+
 	// @vue/component
 	const LinkPanel = {
 	  name: 'LinkPanel',
@@ -4863,7 +5934,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    LinkItem,
 	    DateGroup,
 	    DetailEmptyState,
-	    Loader: im_v2_component_elements.Loader
+	    StartState: DetailEmptyState,
+	    DetailEmptySearchState,
+	    Loader: im_v2_component_elements.Loader,
+	    TariffLimit
 	  },
 	  props: {
 	    dialogId: {
@@ -4877,12 +5951,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      isSearchHeaderOpened: false,
+	      searchQuery: '',
+	      searchResult: [],
+	      currentServerQueries: 0,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$7
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    links() {
+	      if (this.isSearchHeaderOpened) {
+	        return this.$store.getters['sidebar/links/getSearchResultCollection'](this.chatId);
+	      }
 	      return this.$store.getters['sidebar/links/get'](this.chatId);
 	    },
 	    formattedCollection() {
@@ -4896,20 +5978,89 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    preparedQuery() {
+	      return this.searchQuery.trim().toLowerCase();
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.preparedQuery.length < this.minTokenSize;
+	    },
+	    hasHistoryLimit() {
+	      return this.$store.getters['sidebar/links/isHistoryLimitExceeded'](this.chatId);
+	    }
+	  },
+	  watch: {
+	    preparedQuery(newQuery, previousQuery) {
+	      if (newQuery === previousQuery) {
+	        return;
+	      }
+	      this.cleanSearchResult();
+	      this.startSearch();
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
 	    this.contextMenu = new LinkMenu();
 	    this.service = new Link({
 	      dialogId: this.dialogId
 	    });
+	    this.serviceSearch = new LinkSearch({
+	      dialogId: this.dialogId
+	    });
+	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 500, this);
 	  },
 	  beforeUnmount() {
 	    this.contextMenu.destroy();
 	    this.collectionFormatter.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$7);
+	    },
+	    searchOnServer(query) {
+	      this.currentServerQueries++;
+	      this.serviceSearch.searchOnServer(query).then(messageIds => {
+	        if (query !== this.preparedQuery) {
+	          this.isLoading = false;
+	          return;
+	        }
+	        this.searchResult = concatAndSortSearchResult(this.searchResult, messageIds);
+	      }).catch(error => {
+	        console.error(error);
+	      }).finally(() => {
+	        this.currentServerQueries--;
+	        this.stopLoader();
+	        if (this.isSearchQueryMinimumSize) {
+	          this.cleanSearchResult();
+	        }
+	      });
+	    },
+	    stopLoader() {
+	      if (this.currentServerQueries > 0) {
+	        return;
+	      }
+	      this.isLoading = false;
+	    },
+	    startSearch() {
+	      if (this.isSearchQueryMinimumSize) {
+	        this.cleanSearchResult();
+	      } else {
+	        this.isLoading = true;
+	        this.searchOnServerDelayed(this.preparedQuery);
+	      }
+	    },
+	    cleanSearchResult() {
+	      this.searchResult = [];
+	      this.serviceSearch.resetSearchState();
+	    },
+	    onChangeQuery(query) {
+	      this.searchQuery = query;
+	    },
+	    toggleSearchPanelOpened() {
+	      this.isSearchHeaderOpened = !this.isSearchHeaderOpened;
+	    },
 	    onContextMenuClick(event) {
 	      const item = {
 	        id: event.id,
@@ -4928,7 +6079,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/links/hasNextPage'](this.chatId);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/links/hasNextPageSearch' : 'sidebar/links/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -4937,16 +6089,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage();
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage();
+	      } else {
+	        await this.serviceSearch.request();
+	      }
 	      this.isLoading = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
 		<div class="bx-im-sidebar-link-detail__scope">
 			<DetailHeader
 				:dialogId="dialogId"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_LINK_DETAIL_TITLE')"
+				:title="loc('IM_SIDEBAR_LINK_DETAIL_TITLE')"
 				:secondLevel="secondLevel"
+				:isSearchHeaderOpened="isSearchHeaderOpened"
+				:delayForFocusOnStart="0"
+				@changeQuery="onChangeQuery"
+				@toggleSearchPanelOpened="toggleSearchPanelOpened"
+				withSearch
 				@back="onBackClick"
 			/>
 			<div class="bx-im-sidebar-detail__container" @scroll="onScroll">
@@ -4955,15 +6119,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<template v-for="link in dateGroup.items">
 						<LinkItem
 							:contextDialogId="dialogId"
+							:searchQuery="searchQuery"
 							:link="link" @contextMenuClick="onContextMenuClick"
 						/>
 					</template>
 				</div>
-				<DetailEmptyState
-					v-if="!isLoading && isEmptyState"
-					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_LINKS_EMPTY')"
-					:iconType="SidebarDetailBlock.link"
+				<TariffLimit
+					v-if="hasHistoryLimit"
+					:dialogId="dialogId"
+					:panel="SidebarDetailBlock.link"
+					class="bx-im-sidebar-link-detail__tariff-limit-container"
 				/>
+				<template v-if="!isLoading">
+					<template v-if="isSearchHeaderOpened">
+						<StartState
+							v-if="preparedQuery.length === 0"
+							:title="loc('IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE')"
+							:iconType="SidebarDetailBlock.messageSearch"
+						/>
+						<DetailEmptySearchState
+							v-else-if="isEmptyState"
+							:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+							:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+						/>
+					</template>
+					<DetailEmptyState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_LINKS_EMPTY')"
+						:iconType="SidebarDetailBlock.link"
+					/>
+				</template>
 				<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
 			</div>
 		</div>
@@ -5049,6 +6234,90 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const REQUEST_ITEMS_LIMIT$b = 50;
+	var _query$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("query");
+	var _processSearchResponse$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSearchResponse");
+	class MeetingSearch {
+	  constructor({
+	    dialogId
+	  }) {
+	    Object.defineProperty(this, _processSearchResponse$3, {
+	      value: _processSearchResponse2$3
+	    });
+	    this.hasMoreItemsToLoad = true;
+	    Object.defineProperty(this, _query$3, {
+	      writable: true,
+	      value: ''
+	    });
+	    this.store = im_v2_application_core.Core.getStore();
+	    this.restClient = im_v2_application_core.Core.getRestClient();
+	    this.dialogId = dialogId;
+	    this.chatId = getChatId(dialogId);
+	    this.userManager = new im_v2_lib_user.UserManager();
+	  }
+	  searchOnServer(query) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _query$3)[_query$3] !== query) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _query$3)[_query$3] = query;
+	      this.hasMoreItemsToLoad = true;
+	    }
+	    return this.request();
+	  }
+	  resetSearchState() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _query$3)[_query$3] = '';
+	    this.hasMoreItemsToLoad = true;
+	    void this.store.dispatch('sidebar/meetings/clearSearch', {});
+	  }
+	  async request() {
+	    const queryParams = this.getQueryParams();
+	    let responseData = {};
+	    try {
+	      const response = await this.restClient.callMethod(im_v2_const.RestMethod.imChatCalendarGet, queryParams);
+	      responseData = response.data();
+	    } catch (error) {
+	      console.error('SidebarSearch: Im.imChatCalendarGet: page request error', error);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _processSearchResponse$3)[_processSearchResponse$3](responseData);
+	  }
+	  getQueryParams() {
+	    const queryParams = {
+	      CHAT_ID: this.chatId,
+	      LIMIT: REQUEST_ITEMS_LIMIT$b,
+	      SEARCH_TITLE: babelHelpers.classPrivateFieldLooseBase(this, _query$3)[_query$3]
+	    };
+	    const lastId = this.store.getters['sidebar/meetings/getSearchResultCollectionLastId'](this.chatId);
+	    if (lastId > 0) {
+	      queryParams.LAST_ID = lastId;
+	    }
+	    return queryParams;
+	  }
+	  updateModels(resultData) {
+	    const {
+	      list,
+	      users,
+	      tariffRestrictions = {}
+	    } = resultData;
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	    const hasNextPage = list.length === REQUEST_ITEMS_LIMIT$b;
+	    const lastId = getLastElementId(list);
+	    const addUsersPromise = this.userManager.setUsersToModel(users);
+	    const setMeetingsPromise = this.store.dispatch('sidebar/meetings/setSearch', {
+	      chatId: this.chatId,
+	      meetings: list,
+	      hasNextPage,
+	      lastId,
+	      isHistoryLimitExceeded
+	    });
+	    return Promise.all([setMeetingsPromise, addUsersPromise]);
+	  }
+	}
+	function _processSearchResponse2$3(response) {
+	  return this.updateModels(response).then(() => {
+	    return response.list.map(message => message.messageId);
+	  });
+	}
+
+	const DEFAULT_MIN_TOKEN_SIZE$8 = 3;
+
 	// @vue/component
 	const MeetingPanel = {
 	  name: 'MeetingPanel',
@@ -5056,8 +6325,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    MeetingItem,
 	    DateGroup,
 	    DetailEmptyState,
+	    StartState: DetailEmptyState,
 	    DetailHeader,
-	    Loader: im_v2_component_elements.Loader
+	    DetailEmptySearchState,
+	    Loader: im_v2_component_elements.Loader,
+	    TariffLimit
 	  },
 	  props: {
 	    dialogId: {
@@ -5071,12 +6343,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      isSearchHeaderOpened: false,
+	      searchQuery: '',
+	      searchResult: [],
+	      currentServerQueries: 0,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$8
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    meetings() {
+	      if (this.isSearchHeaderOpened) {
+	        return this.$store.getters['sidebar/meetings/getSearchResultCollection'](this.chatId);
+	      }
 	      return this.$store.getters['sidebar/meetings/get'](this.chatId);
 	    },
 	    formattedCollection() {
@@ -5093,17 +6373,89 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    preparedQuery() {
+	      return this.searchQuery.trim().toLowerCase();
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.preparedQuery.length < this.minTokenSize;
+	    },
+	    hasHistoryLimit() {
+	      return this.$store.getters['sidebar/meetings/isHistoryLimitExceeded'](this.chatId);
+	    }
+	  },
+	  watch: {
+	    preparedQuery(newQuery, previousQuery) {
+	      if (newQuery === previousQuery) {
+	        return;
+	      }
+	      this.cleanSearchResult();
+	      this.startSearch();
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
 	    this.contextMenu = new MeetingMenu();
+	    this.service = new Meeting({
+	      dialogId: this.dialogId
+	    });
+	    this.serviceSearch = new MeetingSearch({
+	      dialogId: this.dialogId
+	    });
+	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 500, this);
 	  },
 	  beforeUnmount() {
 	    this.collectionFormatter.destroy();
 	    this.contextMenu.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$8);
+	    },
+	    searchOnServer(query) {
+	      this.currentServerQueries++;
+	      this.serviceSearch.searchOnServer(query).then(messageIds => {
+	        if (query !== this.preparedQuery) {
+	          this.isLoading = false;
+	          return;
+	        }
+	        this.searchResult = concatAndSortSearchResult(this.searchResult, messageIds);
+	      }).catch(error => {
+	        console.error(error);
+	      }).finally(() => {
+	        this.currentServerQueries--;
+	        this.stopLoader();
+	        if (this.isSearchQueryMinimumSize) {
+	          this.cleanSearchResult();
+	        }
+	      });
+	    },
+	    stopLoader() {
+	      if (this.currentServerQueries > 0) {
+	        return;
+	      }
+	      this.isLoading = false;
+	    },
+	    startSearch() {
+	      if (this.isSearchQueryMinimumSize) {
+	        this.cleanSearchResult();
+	      } else {
+	        this.isLoading = true;
+	        this.searchOnServerDelayed(this.preparedQuery);
+	      }
+	    },
+	    cleanSearchResult() {
+	      this.serviceSearch.resetSearchState();
+	      this.searchResult = [];
+	    },
+	    onChangeQuery(query) {
+	      this.searchQuery = query;
+	    },
+	    toggleSearchPanelOpened() {
+	      this.isSearchHeaderOpened = !this.isSearchHeaderOpened;
+	    },
 	    onContextMenuClick(event, target) {
 	      const item = {
 	        ...event,
@@ -5119,7 +6471,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/meetings/hasNextPage'](this.chatId);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/meetings/hasNextPageSearch' : 'sidebar/meetings/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -5128,19 +6481,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage();
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage();
+	      } else {
+	        await this.serviceSearch.request();
+	      }
 	      this.isLoading = false;
 	    },
 	    onAddClick() {
 	      new im_v2_lib_entityCreator.EntityCreator(this.chatId).createMeetingForChat();
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
 		<div class="bx-im-sidebar-meeting-detail__scope">
 			<DetailHeader
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_MEETING_DETAIL_TITLE')"
+				:title="loc('IM_SIDEBAR_MEETING_DETAIL_TITLE')"
 				:secondLevel="secondLevel"
 				:withAddButton="showAddButton"
+				:isSearchHeaderOpened="isSearchHeaderOpened"
+				:delayForFocusOnStart="0"
+				withSearch
+				@changeQuery="onChangeQuery"
+				@toggleSearchPanelOpened="toggleSearchPanelOpened"
 				@addClick="onAddClick"
 				@back="onBackClick"
 			/>
@@ -5150,14 +6515,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<MeetingItem
 						v-for="meeting in dateGroup.items"
 						:meeting="meeting"
+						:searchQuery="searchQuery"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>
-				<DetailEmptyState
-					v-if="!isLoading && isEmptyState"
-					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_MEETINGS_EMPTY')"
-					:iconType="SidebarDetailBlock.meeting"
+				<TariffLimit
+					v-if="hasHistoryLimit"
+					:dialogId="dialogId"
+					:panel="SidebarDetailBlock.meeting"
+					class="bx-im-sidebar-meeting-detail__tariff-limit-container"
 				/>
+				<template v-if="!isLoading">
+					<template v-if="isSearchHeaderOpened">
+						<StartState
+							v-if="preparedQuery.length === 0"
+							:title="loc('IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE')"
+							:iconType="SidebarDetailBlock.messageSearch"
+						/>
+						<DetailEmptySearchState
+							v-else-if="isEmptyState"
+							:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+							:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+						/>
+					</template>
+					<DetailEmptyState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_MEETINGS_EMPTY')"
+						:iconType="SidebarDetailBlock.meeting"
+					/>
+				</template>
 				<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
 			</div>
 		</div>
@@ -5290,7 +6676,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
 	          mentionText: user.name,
 	          mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(this.context.dialogId, user.name),
-	          dialogId: this.context.contextDialogId
+	          dialogId: this.context.contextDialogId,
+	          isMentionSymbol: false
 	        });
 	        this.menuInstance.close();
 	      }
@@ -5635,6 +7022,92 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const REQUEST_ITEMS_LIMIT$c = 50;
+	var _query$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("query");
+	var _processSearchResponse$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSearchResponse");
+	class FavoriteSearch {
+	  constructor({
+	    dialogId
+	  }) {
+	    Object.defineProperty(this, _processSearchResponse$4, {
+	      value: _processSearchResponse2$4
+	    });
+	    this.hasMoreItemsToLoad = true;
+	    Object.defineProperty(this, _query$4, {
+	      writable: true,
+	      value: ''
+	    });
+	    this.store = im_v2_application_core.Core.getStore();
+	    this.restClient = im_v2_application_core.Core.getRestClient();
+	    this.dialogId = dialogId;
+	    this.chatId = getChatId(dialogId);
+	    this.userManager = new im_v2_lib_user.UserManager();
+	  }
+	  searchOnServer(query) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _query$4)[_query$4] !== query) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _query$4)[_query$4] = query;
+	      this.hasMoreItemsToLoad = true;
+	    }
+	    return this.request();
+	  }
+	  resetSearchState() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _query$4)[_query$4] = '';
+	    this.hasMoreItemsToLoad = true;
+	    void this.store.dispatch('sidebar/favorites/clearSearch', {});
+	  }
+	  async request() {
+	    const queryParams = this.getQueryParams();
+	    let responseData = {};
+	    try {
+	      const response = await this.restClient.callMethod(im_v2_const.RestMethod.imChatFavoriteGet, queryParams);
+	      responseData = response.data();
+	    } catch (error) {
+	      console.error('SidebarSearch: Im.imChatFavoriteGet: page request error', error);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _processSearchResponse$4)[_processSearchResponse$4](responseData);
+	  }
+	  getQueryParams() {
+	    const queryParams = {
+	      CHAT_ID: this.chatId,
+	      LIMIT: REQUEST_ITEMS_LIMIT$c,
+	      SEARCH_MESSAGE: babelHelpers.classPrivateFieldLooseBase(this, _query$4)[_query$4]
+	    };
+	    const lastId = this.store.getters['sidebar/favorites/getSearchResultCollectionLastId'](this.chatId);
+	    if (lastId > 0) {
+	      queryParams.LAST_ID = lastId;
+	    }
+	    return queryParams;
+	  }
+	  updateModels(resultData) {
+	    const {
+	      list = [],
+	      users = [],
+	      files = [],
+	      tariffRestrictions = {}
+	    } = resultData;
+	    const addUsersPromise = this.userManager.setUsersToModel(users);
+	    const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	    const rawMessages = list.map(favorite => favorite.message);
+	    const hasNextPage = list.length === REQUEST_ITEMS_LIMIT$c;
+	    const lastId = getLastElementId(list);
+	    const setFilesPromise = this.store.dispatch('files/set', files);
+	    const storeMessagesPromise = this.store.dispatch('messages/store', rawMessages);
+	    const setFavoritesPromise = this.store.dispatch('sidebar/favorites/setSearch', {
+	      chatId: this.chatId,
+	      favorites: list,
+	      hasNextPage,
+	      lastId,
+	      isHistoryLimitExceeded
+	    });
+	    return Promise.all([setFilesPromise, storeMessagesPromise, setFavoritesPromise, addUsersPromise]);
+	  }
+	}
+	function _processSearchResponse2$4(response) {
+	  return this.updateModels(response).then(() => {
+	    return response.list.map(message => message.messageId);
+	  });
+	}
+
 	// @vue/component
 	const FavoriteItem = {
 	  name: 'FavoriteItem',
@@ -5654,6 +7127,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    searchQuery: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -5674,7 +7151,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.favoriteMessage.authorId.toString();
 	    },
 	    messageText() {
-	      return im_v2_lib_parser.Parser.purifyMessage(this.favoriteMessage);
+	      const purifiedMessage = im_v2_lib_parser.Parser.purifyMessage(this.favoriteMessage);
+	      const textToShow = main_core.Text.encode(purifiedMessage);
+	      if (this.searchQuery.length === 0) {
+	        return textToShow;
+	      }
+	      return im_v2_lib_textHighlighter.highlightText(textToShow, this.searchQuery);
 	    },
 	    isCopilot() {
 	      return this.$store.getters['users/bots/isCopilot'](this.favoriteMessage.authorId);
@@ -5724,10 +7206,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					@click.stop="onContextMenuClick"
 				></button>
 			</div>
-			<div class="bx-im-favorite-item__message-text"> {{ messageText }}</div>
+			<div class="bx-im-favorite-item__message-text" v-html="messageText"></div>
 		</div>
 	`
 	};
+
+	const DEFAULT_MIN_TOKEN_SIZE$9 = 3;
 
 	// @vue/component
 	const FavoritePanel = {
@@ -5735,9 +7219,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  components: {
 	    FavoriteItem,
 	    DateGroup,
+	    StartState: DetailEmptyState,
 	    DetailEmptyState,
 	    DetailHeader,
-	    Loader: im_v2_component_elements.Loader
+	    DetailEmptySearchState,
+	    Loader: im_v2_component_elements.Loader,
+	    TariffLimit
 	  },
 	  props: {
 	    dialogId: {
@@ -5751,12 +7238,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  data() {
 	    return {
-	      isLoading: false
+	      isLoading: false,
+	      isSearchHeaderOpened: false,
+	      searchQuery: '',
+	      searchResult: [],
+	      currentServerQueries: 0,
+	      minTokenSize: DEFAULT_MIN_TOKEN_SIZE$9
 	    };
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
 	    favorites() {
+	      if (this.isSearchHeaderOpened) {
+	        return this.$store.getters['sidebar/favorites/getSearchResultCollection'](this.chatId);
+	      }
 	      return this.$store.getters['sidebar/favorites/get'](this.chatId);
 	    },
 	    formattedCollection() {
@@ -5770,20 +7265,87 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    preparedQuery() {
+	      return this.searchQuery.trim().toLowerCase();
+	    },
+	    isSearchQueryMinimumSize() {
+	      return this.preparedQuery.length < this.minTokenSize;
+	    },
+	    hasHistoryLimit() {
+	      return this.$store.getters['sidebar/favorites/isHistoryLimitExceeded'](this.chatId);
+	    }
+	  },
+	  watch: {
+	    preparedQuery(newQuery, previousQuery) {
+	      if (newQuery === previousQuery) {
+	        return;
+	      }
+	      this.cleanSearchResult();
+	      this.startSearch();
 	    }
 	  },
 	  created() {
+	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
 	    this.contextMenu = new FavoriteMenu();
 	    this.service = new Favorite({
 	      dialogId: this.dialogId
 	    });
+	    this.serviceSearch = new FavoriteSearch({
+	      dialogId: this.dialogId
+	    });
+	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 500, this);
 	  },
 	  beforeUnmount() {
 	    this.contextMenu.destroy();
 	    this.collectionFormatter.destroy();
 	  },
 	  methods: {
+	    initSettings() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      this.minTokenSize = settings.get('minSearchTokenSize', DEFAULT_MIN_TOKEN_SIZE$9);
+	    },
+	    searchOnServer(query) {
+	      this.currentServerQueries++;
+	      this.serviceSearch.searchOnServer(query).then(() => {
+	        if (query !== this.preparedQuery) {
+	          this.isLoading = false;
+	        }
+	      }).catch(error => {
+	        console.error(error);
+	      }).finally(() => {
+	        this.currentServerQueries--;
+	        this.stopLoader();
+	        if (this.isSearchQueryMinimumSize) {
+	          this.cleanSearchResult();
+	        }
+	      });
+	    },
+	    stopLoader() {
+	      if (this.currentServerQueries > 0) {
+	        return;
+	      }
+	      this.isLoading = false;
+	    },
+	    startSearch() {
+	      if (this.isSearchQueryMinimumSize) {
+	        this.cleanSearchResult();
+	      } else {
+	        this.isLoading = true;
+	        this.searchOnServerDelayed(this.preparedQuery);
+	      }
+	    },
+	    cleanSearchResult() {
+	      this.searchResult = [];
+	      this.serviceSearch.resetSearchState();
+	    },
+	    onChangeQuery(query) {
+	      this.searchQuery = query;
+	    },
+	    toggleSearchPanelOpened() {
+	      this.isSearchHeaderOpened = !this.isSearchHeaderOpened;
+	    },
 	    onContextMenuClick(event) {
 	      const item = {
 	        id: event.id,
@@ -5801,7 +7363,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    needToLoadNextPage(event) {
 	      const target = event.target;
 	      const isAtThreshold = target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
-	      const hasNextPage = this.$store.getters['sidebar/favorites/hasNextPage'](this.chatId);
+	      const nameGetter = this.searchQuery.length > 0 ? 'sidebar/favorites/hasNextPageSearch' : 'sidebar/favorites/hasNextPage';
+	      const hasNextPage = this.$store.getters[nameGetter](this.chatId);
 	      return isAtThreshold && hasNextPage;
 	    },
 	    async onScroll(event) {
@@ -5810,60 +7373,93 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.isLoading = true;
-	      await this.service.loadNextPage();
+	      if (this.isSearchQueryMinimumSize) {
+	        await this.service.loadNextPage();
+	      } else {
+	        await this.serviceSearch.request();
+	      }
 	      this.isLoading = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
 		<div class="bx-im-sidebar-favorite-detail__scope">
 			<DetailHeader
 				:dialogId="dialogId"
-				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_FAVORITE_DETAIL_TITLE')"
+				:title="loc('IM_SIDEBAR_FAVORITE_DETAIL_TITLE')"
 				:secondLevel="secondLevel"
+				:isSearchHeaderOpened="isSearchHeaderOpened"
+				:delayForFocusOnStart="0"
+				@changeQuery="onChangeQuery"
+				@toggleSearchPanelOpened="toggleSearchPanelOpened"
+				withSearch
 				@back="onBackClick"
 			/>
 			<div class="bx-im-sidebar-favorite-detail__container bx-im-sidebar-detail__container" @scroll="onScroll">
-				<div 
-					v-for="dateGroup in formattedCollection" 
+				<div
+					v-for="dateGroup in formattedCollection"
 					class="bx-im-sidebar-favorite-detail__date-group_container"
 				>
 					<DateGroup :dateText="dateGroup.dateGroupTitle" />
-					<FavoriteItem 
-						v-for="favorite in dateGroup.items" 
+					<FavoriteItem
+						v-for="favorite in dateGroup.items"
 						:favorite="favorite"
 						:chatId="chatId"
 						:dialogId="dialogId"
-						@contextMenuClick="onContextMenuClick" 
+						:searchQuery="searchQuery"
+						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>
-				<DetailEmptyState
-					v-if="!isLoading && isEmptyState"
-					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_FAVORITES_EMPTY')"
-					:iconType="SidebarDetailBlock.favorite"
+				<TariffLimit
+					v-if="hasHistoryLimit"
+					:dialogId="dialogId"
+					:panel="SidebarDetailBlock.favorite"
+					class="bx-im-sidebar-favorite-detail__tariff-limit-container"
 				/>
+				<template v-if="!isLoading">
+					<template v-if="isSearchHeaderOpened">
+						<StartState
+							v-if="preparedQuery.length === 0"
+							:title="loc('IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE')"
+							:iconType="SidebarDetailBlock.messageSearch"
+						/>
+						<DetailEmptySearchState
+							v-else-if="isEmptyState"
+							:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED')"
+							:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED')"
+						/>
+					</template>
+					<DetailEmptyState
+						v-else-if="isEmptyState"
+						:title="loc('IM_SIDEBAR_FAVORITES_EMPTY')"
+						:iconType="SidebarDetailBlock.favorite"
+					/>
+				</template>
 				<Loader v-if="isLoading" class="bx-im-sidebar-detail__loader-container" />
 			</div>
 		</div>
 	`
 	};
 
-	const REQUEST_ITEMS_LIMIT$8 = 50;
+	const REQUEST_ITEMS_LIMIT$d = 50;
 	var _lastMessageId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastMessageId");
-	var _query = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("query");
+	var _query$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("query");
 	var _request = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("request");
-	var _processSearchResponse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSearchResponse");
-	var _updateModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
+	var _processSearchResponse$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSearchResponse");
+	var _updateModels$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
 	class MessageSearch {
 	  // eslint-disable-next-line no-unused-private-class-members
 
 	  constructor({
 	    dialogId
 	  }) {
-	    Object.defineProperty(this, _updateModels, {
-	      value: _updateModels2
+	    Object.defineProperty(this, _updateModels$1, {
+	      value: _updateModels2$1
 	    });
-	    Object.defineProperty(this, _processSearchResponse, {
-	      value: _processSearchResponse2
+	    Object.defineProperty(this, _processSearchResponse$5, {
+	      value: _processSearchResponse2$5
 	    });
 	    Object.defineProperty(this, _request, {
 	      value: _request2
@@ -5873,7 +7469,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: 0
 	    });
-	    Object.defineProperty(this, _query, {
+	    Object.defineProperty(this, _query$5, {
 	      writable: true,
 	      value: ''
 	    });
@@ -5884,8 +7480,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.userManager = new im_v2_lib_user.UserManager();
 	  }
 	  searchOnServer(query) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _query)[_query] !== query) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _query)[_query] = query;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _query$5)[_query$5] !== query) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _query$5)[_query$5] = query;
 	      this.hasMoreItemsToLoad = true;
 	      babelHelpers.classPrivateFieldLooseBase(this, _lastMessageId)[_lastMessageId] = 0;
 	    }
@@ -5899,13 +7495,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  resetSearchState() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _lastMessageId)[_lastMessageId] = 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _query)[_query] = '';
+	    babelHelpers.classPrivateFieldLooseBase(this, _query$5)[_query$5] = '';
 	    this.hasMoreItemsToLoad = true;
 	  }
 	}
 	function _request2() {
 	  const config = {
-	    SEARCH_MESSAGE: babelHelpers.classPrivateFieldLooseBase(this, _query)[_query],
+	    SEARCH_MESSAGE: babelHelpers.classPrivateFieldLooseBase(this, _query$5)[_query$5],
 	    CHAT_ID: this.chatId
 	  };
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _lastMessageId)[_lastMessageId] > 0) {
@@ -5914,59 +7510,41 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return new Promise((resolve, reject) => {
 	    this.restClient.callMethod(im_v2_const.RestMethod.imDialogMessagesSearch, config).then(response => {
 	      const responseData = response.data();
-	      resolve(babelHelpers.classPrivateFieldLooseBase(this, _processSearchResponse)[_processSearchResponse](responseData));
+	      resolve(babelHelpers.classPrivateFieldLooseBase(this, _processSearchResponse$5)[_processSearchResponse$5](responseData));
 	    }).catch(error => reject(error));
 	  });
 	}
-	function _processSearchResponse2(response) {
+	function _processSearchResponse2$5(response) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _lastMessageId)[_lastMessageId] = getLastElementId(response.messages);
-	  if (response.messages.length < REQUEST_ITEMS_LIMIT$8) {
+	  if (response.messages.length < REQUEST_ITEMS_LIMIT$d) {
 	    this.hasMoreItemsToLoad = false;
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels](response).then(() => {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _updateModels$1)[_updateModels$1](response).then(() => {
 	    return response.messages.map(message => message.id);
 	  });
 	}
-	function _updateModels2(rawData) {
+	function _updateModels2$1(rawData) {
 	  const {
 	    files,
 	    users,
 	    usersShort,
 	    reactions,
 	    additionalMessages,
-	    messages
+	    messages,
+	    tariffRestrictions = {}
 	  } = rawData;
+	  const isHistoryLimitExceeded = Boolean(tariffRestrictions.isHistoryLimitExceeded);
+	  const historyLimitPromise = this.store.dispatch('sidebar/messageSearch/setHistoryLimitExceeded', {
+	    chatId: this.chatId,
+	    isHistoryLimitExceeded
+	  });
 	  const usersPromise = Promise.all([this.userManager.setUsersToModel(users), this.userManager.addUsersToModel(usersShort)]);
 	  const filesPromise = this.store.dispatch('files/set', files);
 	  const reactionsPromise = this.store.dispatch('messages/reactions/set', reactions);
 	  const additionalMessagesPromise = this.store.dispatch('messages/store', additionalMessages);
 	  const messagesPromise = this.store.dispatch('messages/store', messages);
-	  return Promise.all([filesPromise, usersPromise, reactionsPromise, additionalMessagesPromise, messagesPromise]);
+	  return Promise.all([filesPromise, usersPromise, reactionsPromise, additionalMessagesPromise, messagesPromise, historyLimitPromise]);
 	}
-
-	// @vue/component
-	const EmptyState = {
-	  name: 'EmptyState',
-	  computed: {
-	    title() {
-	      return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND');
-	    },
-	    subTitle() {
-	      return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION');
-	    }
-	  },
-	  template: `
-		<div class="bx-im-message-search-empty-state__container bx-im-message-search-empty-state__scope">
-			<div class="bx-im-message-search-empty-state__icon"></div>
-			<div class="bx-im-message-search-empty-state__title">
-				{{ title }}
-			</div>
-			<div class="bx-im-message-search-empty-state__subtitle">
-				{{ subTitle }}
-			</div>
-		</div>
-	`
-	};
 
 	// @vue/component
 	const SearchItem = {
@@ -6087,11 +7665,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  name: 'MessageSearchPanel',
 	  components: {
 	    DateGroup,
-	    EmptyState,
 	    SearchItem,
 	    Loader: im_v2_component_elements.Loader,
 	    StartState: DetailEmptyState,
-	    SearchHeader
+	    SearchHeader,
+	    DetailEmptySearchState,
+	    TariffLimit
 	  },
 	  props: {
 	    dialogId: {
@@ -6124,6 +7703,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    preparedQuery() {
 	      return this.searchQuery.trim().toLowerCase();
+	    },
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    chatId() {
+	      return this.dialog.chatId;
+	    },
+	    hasHistoryLimit() {
+	      return this.$store.getters['sidebar/messageSearch/isHistoryLimitExceeded'](this.chatId);
 	    }
 	  },
 	  watch: {
@@ -6212,6 +7800,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.messageSearch
 	      });
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -6220,10 +7811,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div class="bx-im-message-search-detail__container bx-im-sidebar-detail__container" @scroll="onScroll">
 				<StartState 
 					v-if="!isLoading && preparedQuery.length === 0"
-					:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE')"
+					:title="loc('IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE')"
 					:iconType="SidebarDetailBlock.messageSearch"
 				/>
-				<EmptyState v-if="!isLoading && isEmptyState" />
+				<DetailEmptySearchState
+					v-if="!isLoading && isEmptyState"
+					:title="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND')"
+					:subTitle="loc('IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION')"
+				/>
 				<Loader v-if="isLoading && isEmptyState" class="bx-im-message-search-detail__loader" />
 				<div v-for="dateGroup in formattedCollection" class="bx-im-message-search-detail__date-group_container">
 					<DateGroup :dateText="dateGroup.dateGroupTitle" />
@@ -6234,6 +7829,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:query="preparedQuery"
 					/>
 				</div>
+				<TariffLimit
+					v-if="hasHistoryLimit"
+					:dialogId="dialogId"
+					:panel="SidebarDetailBlock.messageSearch"
+					class="bx-im-message-search-detail__tariff-limit-container"
+				/>
 			</div>
 		</div>
 	`
@@ -6308,12 +7909,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const REQUEST_ITEMS_LIMIT$9 = 50;
+	const REQUEST_ITEMS_LIMIT$e = 50;
 	var _chatsCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatsCount");
 	var _getRequestParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequestParams");
 	var _requestPage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestPage");
 	var _handleResponse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResponse");
-	var _updateModels$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
+	var _updateModels$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
 	var _setDialoguesPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDialoguesPromise");
 	class ChatsWithUser {
 	  constructor({
@@ -6322,8 +7923,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _setDialoguesPromise, {
 	      value: _setDialoguesPromise2
 	    });
-	    Object.defineProperty(this, _updateModels$1, {
-	      value: _updateModels2$1
+	    Object.defineProperty(this, _updateModels$2, {
+	      value: _updateModels2$2
 	    });
 	    Object.defineProperty(this, _handleResponse, {
 	      value: _handleResponse2
@@ -6357,7 +7958,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    filter: {
 	      userId
 	    },
-	    limit: REQUEST_ITEMS_LIMIT$9
+	    limit: REQUEST_ITEMS_LIMIT$e
 	  };
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _chatsCount)[_chatsCount] > 0) {
 	    requestParams.offset = babelHelpers.classPrivateFieldLooseBase(this, _chatsCount)[_chatsCount];
@@ -6374,10 +7975,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    chats
 	  } = response;
 	  babelHelpers.classPrivateFieldLooseBase(this, _chatsCount)[_chatsCount] += chats.length;
-	  if (chats.length < REQUEST_ITEMS_LIMIT$9) {
+	  if (chats.length < REQUEST_ITEMS_LIMIT$e) {
 	    this.hasMoreItemsToLoad = false;
 	  }
-	  await babelHelpers.classPrivateFieldLooseBase(this, _updateModels$1)[_updateModels$1](chats);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateModels$2)[_updateModels$2](chats);
 	  return chats.map(chat => {
 	    return {
 	      dialogId: chat.dialogId,
@@ -6385,7 +7986,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  });
 	}
-	function _updateModels2$1(chats) {
+	function _updateModels2$2(chats) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _setDialoguesPromise)[_setDialoguesPromise](chats);
 	}
 	function _setDialoguesPromise2(chats) {
@@ -6986,5 +8587,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Messenger.v2.Lib,BX.Main,BX.Vue3.Directives,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.Messenger.v2.Lib,BX.Vue3.Components,BX.UI.Viewer,BX,BX.Messenger.v2.Model,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Vue3.Directives,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Components,BX.UI.Viewer,BX,BX.Messenger.v2.Model,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib));
 //# sourceMappingURL=sidebar.bundle.js.map

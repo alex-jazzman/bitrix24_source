@@ -13,6 +13,7 @@ import { ErrorsView } from './views/errors-view';
 import { TimelineTask } from './timeline-task';
 
 import './css/style.css';
+import { TimelineTaskView } from './views/timeline-task-view';
 
 export type TimelineUserData = {
 	id: UserId,
@@ -48,8 +49,8 @@ export type TimelineData = {
 export class DurationFormatter
 {
 	static #limits = [
-		[3600 * 24 * 30 * 12, 'Ydiff'],
-		[3600 * 24 * 30, 'mdiff'],
+		[3600 * 24 * 365, 'Ydiff'],
+		[3600 * 24 * 31, 'mdiff'],
 		[3600 * 24, 'ddiff'],
 		[3600, 'Hdiff'],
 		[60, 'idiff'],
@@ -128,8 +129,13 @@ export class DurationFormatter
 		return result;
 	}
 
-	static formatDate(timestamp: number, format: string): string
+	static formatDate(timestamp: number, format: string, formatShort: ?string): string
 	{
+		if (formatShort && (DateTimeFormat.format('Y', timestamp) === DateTimeFormat.format('Y', Date.now() / 1000)))
+		{
+			return DateTimeFormat.format(formatShort, timestamp);
+		}
+
 		return DateTimeFormat.format(format, timestamp);
 	}
 }
@@ -144,8 +150,12 @@ export class Timeline
 	#container: HTMLDivElement;
 	#biPopup: HTMLDivElement;
 	#dateFormat: string;
+	#dateFormatShort: string;
 
-	constructor(options: { workflowId: string, taskId?: number, }, config: { dateFormat: ?string, timeFormat: ?string, })
+	constructor(
+		options: { workflowId: string, taskId?: number, },
+		config: { dateFormat: ?string, dateFormatShort: ?string, timeFormat: ?string, },
+	)
 	{
 		this.#container = this.#renderContainer();
 		setTimeout(() => {
@@ -163,6 +173,7 @@ export class Timeline
 		if (Type.isPlainObject(config))
 		{
 			this.#dateFormat = `${config.dateFormat || 'j F Y'} ${config.timeFormat || 'H:i'}`;
+			this.#dateFormatShort = `${config.dateFormatShort || 'j F'} ${config.timeFormat || 'H:i'}`;
 		}
 	}
 
@@ -186,12 +197,6 @@ export class Timeline
 			})
 			.catch((response) => console.error(response.errors))
 		;
-	}
-
-	static #tooLongProcessDuration(): number
-	{
-		// Three days, too much for business process
-		return 60 * 60 * 24 * 3;
 	}
 
 	#loadTimeline(): void
@@ -301,10 +306,7 @@ export class Timeline
 	#renderProceedTaskButton(task: TaskData): HTMLElement
 	{
 		const uri = (
-			task.url
-			|| new Uri('/bitrix/components/bitrix/bizproc.workflow.info/')
-				.setQueryParams({ workflow: this.#workflowId, task: task.id })
-				.toString()
+			task.url || new Uri(`/company/personal/bizproc/${task.id}/`).toString()
 		);
 
 		return Tag.render`
@@ -394,22 +396,6 @@ export class Timeline
 		`;
 	}
 
-	#renderHighlightedNotice(subject, text): HTMLElement
-	{
-		const timelineNotice = Tag.render`
-			<div class="bizproc-workflow-timeline-notice">
-				<div class="bizproc-workflow-timeline-subject">${Text.encode(subject)}</div>
-				<span class="bizproc-workflow-timeline-text">${Text.encode(text)}</span>
-				<span
-					data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_TIME_LIMIT_EXCEEDED')}"
-				></span>
-			</div>
-		`;
-		BX.UI.Hint.init(timelineNotice);
-
-		return timelineNotice;
-	}
-
 	#renderStatus(text, statusClass): HTMLElement
 	{
 		const statusClassValue = Type.isString(statusClass) ? (` ${statusClass}`) : '';
@@ -469,86 +455,6 @@ export class Timeline
 		`);
 	}
 
-	#renderUserList(children): HTMLElement
-	{
-		let hideMarksScript = '';
-		if (children.length === 1)
-		{
-			hideMarksScript = Tag.render`
-				<script type="text/javascript">
-					(function () {
-						for (let userItem of document
-							.currentScript
-							.closest('.bizproc-workflow-timeline-user-list')
-							.querySelectorAll('.bizproc-workflow-timeline-user')
-						)
-						{
-							BX.Dom.removeClass(userItem, ['--voted-up', '--voted-down']);
-						}
-					}
-					)();
-				</script>
-			`;
-		}
-
-		return (Tag.render`
-			<div class="bizproc-workflow-timeline-user-list">
-				${children}
-				${hideMarksScript}
-			</div>
-		`);
-	}
-
-	#renderVoteCaption(votedCnt, totalCnt): HTMLElement
-	{
-		return this.#renderCaption(
-			Loc.getMessage(
-				'BIZPROC_WORKFLOW_TIMELINE_SLIDER_VOTED',
-				{
-					'#VOTED#': votedCnt,
-					'#TOTAL#': totalCnt,
-				},
-			),
-		);
-	}
-
-	getStatusName(taskStatus: TaskStatus, taskApproveType: string = '', usersCount = 1): string
-	{
-		if (taskStatus.isYes() || taskStatus.isOk())
-		{
-			return Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMED');
-		}
-
-		if (taskStatus.isNo() || taskStatus.isCancel())
-		{
-			return Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_DECLINED');
-		}
-
-		if (taskStatus.isWaiting())
-		{
-			if (usersCount === 1)
-			{
-				return Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
-			}
-			let message = '';
-			switch (taskApproveType)
-			{
-				case 'all': message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ALL');
-					break;
-				case 'any': message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ANY');
-					break;
-				case 'vote': message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ALL');
-					break;
-				default: message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
-					break;
-			}
-
-			return message;
-		}
-
-		return taskStatus.name;
-	}
-
 	#renderItemsList(items): HTMLElement
 	{
 		return (Tag.render`
@@ -568,7 +474,7 @@ export class Timeline
 								);
 								if (showButtons)
 								{
-									BX.Dom.removeClass(button, '--hidden')									
+									BX.Dom.removeClass(button, '--hidden')
 								}
 							});
 						})();
@@ -611,12 +517,13 @@ export class Timeline
 				'--success',
 				'1',
 			),
-			this.#data.started && this.#renderSubject(DurationFormatter.formatDate(this.#data.started, this.#dateFormat)),
+			this.#data.started && this.#renderSubject(
+				DurationFormatter.formatDate(this.#data.started, this.#dateFormat, this.#dateFormatShort),
+			),
 			this.#renderContent(content),
 		], '--selected');
 	}
 
-	// eslint-disable-next-line max-lines-per-function
 	#renderContainer(): HTMLElement
 	{
 		const items = [];
@@ -625,112 +532,47 @@ export class Timeline
 
 		if (this.#data)
 		{
-			let taskNumber = 1;
 			let task = null;
-			let hasHidden = false;
-			let userId = Loc.getMessage('USER_ID');
-			userId = userId ? parseInt(userId, 10) : null;
 
 			items.push(this.#renderFirstBlock());
 
+			let taskNumber = 1;
+			let hasHidden = this.#data.tasks[0] ? !this.#data.tasks[0].status.isWaiting() : true;
 			for (const taskIndex of Object.keys(this.#data.tasks))
 			{
 				task = this.#data.tasks[taskIndex];
-				let iconClass = null;
-
-				let taskNumberNeeded = true;
 				isWaiting = task.status.isWaiting();
-				if (task.canView())
+				if (!isWaiting)
 				{
-					const content = [];
-					if (isWaiting)
-					{
-						if (hasHidden)
-						{
-							items.push(this.#renderMore());
-							hasHidden = false;
-						}
-						iconClass = '--processing';
-						taskNumberNeeded = false;
-						if (task.approveType === 'vote')
-						{
-							let votedCnt = 0;
-							// eslint-disable-next-line max-depth
-							for (const user of task.users)
-							{
-								// eslint-disable-next-line max-depth
-								if (!(new TaskStatus(user.status).isWaiting()))
-								{
-									votedCnt++;
-								}
-							}
-							content.push(this.#renderVoteCaption(votedCnt, task.users.length));
-						}
-						else
-						{
-							content.push(this.#renderCaption(this.getStatusName(task.status, task.approveType, task.users.length)));
-						}
-					}
-					else
-					{
-						hasHidden = true;
-						if (task.status.isOk() || task.status.isYes())
-						{
-							iconClass = '--success';
-						}
-						content.push(this.#renderCaption(this.getStatusName(task.status)));
-					}
-					const users = [];
-					for (const user of Object.values(task.users))
-					{
-						users.push(this.#renderUser(null, user, (user.id === userId) ? task : null));
-					}
-
-					if (users.length > 0)
-					{
-						content.push(this.#renderUserList(users));
-					}
-
-					if (!Type.isNil(task.executionTime))
-					{
-						content.push(
-							(task.executionTime < Timeline.#tooLongProcessDuration())
-								? this.#renderNotice(
-									Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'),
-									DurationFormatter.formatTimeInterval(task.executionTime, 2),
-								)
-								: this.#renderHighlightedNotice(
-									Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'),
-									DurationFormatter.formatTimeInterval(task.executionTime, 2),
-								),
-						);
-					}
-					items.push(this.#renderItem([
-						this.#renderItemTitle(
-							task.name,
-							iconClass,
-							taskNumberNeeded ? ((++taskNumber).toString()) : null,
-						),
-						this.#renderSubject(DurationFormatter.formatDate(task.modified, this.#dateFormat)),
-						this.#renderContent(content),
-					], isWaiting ? '--processing' : '--hidden'));
+					++taskNumber;
 				}
-				else
+
+				const taskView = new TimelineTaskView({
+					task,
+					userId: Text.toInteger(Loc.getMessage('USER_ID')),
+					dateFormat: this.#dateFormat,
+					dateFormatShort: this.#dateFormatShort,
+					taskNumber: isWaiting ? null : taskNumber,
+					users: this.#data.users,
+				});
+
+				const node = taskView.render();
+
+				if (!isWaiting && hasHidden)
 				{
-					let techItemClass = '--tech';
-					if (isWaiting && this.#data.tasks.length > 1)
-					{
-						techItemClass += ' --hidden';
-						hasHidden = true;
-					}
-					items.push(this.#renderItem([
-						this.#renderItemTitle(Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_NO_RIGHTS_TO_VIEW')),
-						this.#renderSubject(Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_NO_RIGHTS_TO_VIEW_TIP')),
-					], techItemClass));
+					Dom.addClass(node, '--hidden');
 				}
+
+				if (isWaiting && hasHidden)
+				{
+					items.push(this.#renderMore());
+					hasHidden = false;
+				}
+
+				items.push(node);
 			}
 
-			if (hasHidden)
+			if (hasHidden && this.#data.tasks[0])
 			{
 				items.push(this.#renderMore());
 			}
@@ -790,6 +632,7 @@ export class Timeline
 								DurationFormatter.formatDate(
 									this.#data.started + this.#data.executionTime,
 									this.#dateFormat,
+									this.#dateFormatShort,
 								),
 							),
 							this.#renderContent(content),
@@ -916,7 +759,7 @@ export class Timeline
 									${DurationFormatter.formatTimeInterval(this.#data.executionTime)}
 								</span>
 								<span
-									data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE')}"
+									data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE_MSGVER_1')}"
 								></span>
 							</div>
 							<div class="bizproc-workflow-timeline-notice">
@@ -961,7 +804,7 @@ export class Timeline
 								${DurationFormatter.formatTimeInterval(this.#data.executionTime)}
 							</span>
 							<span
-								data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE')}"
+								data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE_MSGVER_1')}"
 							></span>
 							<div class="bizproc-timeline-popup-prop">
 								${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_CURRENT_PROCESS_TIME')}

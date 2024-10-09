@@ -28,5 +28,6 @@ return [
 		'licenseNeverPayed' => $isCloud && \CBitrix24::isLicenseNeverPayed(),
 		'marketUrl' => $isCP ? \Bitrix\Intranet\Binding\Marketplace::getMainDirectory() : false,
 		'settingsUrl' => $isCP ? \Bitrix\Intranet\PortalSettings::getInstance()->getSettingsUrl() : '/settings/configs/',
+		'isUpgradeTariffAvailable' => $isCloud && \CBitrix24::getPromoLicense(),
 	],
 ];

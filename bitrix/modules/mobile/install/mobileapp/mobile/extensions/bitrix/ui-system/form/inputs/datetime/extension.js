@@ -7,16 +7,17 @@ jn.define('ui-system/form/inputs/datetime', (require, exports, module) => {
 	const { InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
 
 	/**
+	 * @typedef {InputProps} DateTimeInputProps
+	 * @property {boolean} [enableTime]
+	 * @property {boolean} [checkTimezoneOffset]
+	 * @property {'date' | 'datetime'} [datePickerType]
+	 * @property {string} [dateFormat]
+	 * @property {string} [defaultListTitle]
+	 * @property {Function} [dateFormatter]
+	 * @property {Array} [items]
+	 * @property {Function} [copyingOnLongClick]
+	 *
 	 * @class DateTimeInputTheme
-	 * @param {...InputProps} props
-	 * @param {boolean} [props.enableTime]
-	 * @param {boolean} [props.checkTimezoneOffset]
-	 * @param {'date' | 'datetime'} [props.datePickerType]
-	 * @param {string} [props.dateFormat]
-	 * @param {string} [props.defaultListTitle]
-	 * @param {Function} [props.dateFormatter]
-	 * @param {Array} [props.items]
-	 * @param {Function} [props.copyingOnLongClick]
 	 */
 	class DateTimeInputTheme extends InputClass
 	{
@@ -65,6 +66,10 @@ jn.define('ui-system/form/inputs/datetime', (require, exports, module) => {
 		}
 	}
 
+	/**
+	 * @param {DateTimeInputProps} props
+	 * @returns {DateTimeInputTheme}
+	 */
 	const DateTimeInput = (props) => {
 		const {
 			enableTime,

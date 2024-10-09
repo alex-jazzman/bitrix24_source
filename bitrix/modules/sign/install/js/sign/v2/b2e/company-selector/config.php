@@ -15,6 +15,7 @@ return [
 		'sign.v2.api',
 		'sign.v2.company-editor',
 		'sign.v2.helper',
+		'sign.v2.b2e.scheme-selector',
 		'ui.entity-selector',
 		'sign.tour',
 		'ui.label',

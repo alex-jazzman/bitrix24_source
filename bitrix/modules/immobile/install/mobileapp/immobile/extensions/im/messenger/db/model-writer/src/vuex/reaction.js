@@ -21,18 +21,18 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 		subscribeEvents()
 		{
 			this.storeManager
-				.on('messagesModel/reactionsModel/set', this.addRouter)
+				.on('messagesModel/reactionsModel/set', this.setRouter)
 				.on('messagesModel/reactionsModel/add', this.addRouter)
-				.on('messagesModel/reactionsModel/updateWithId', this.addRouter)
+				.on('messagesModel/reactionsModel/updateWithId', this.updateWithIdRouter)
 			;
 		}
 
 		unsubscribeEvents()
 		{
 			this.storeManager
-				.off('messagesModel/reactionsModel/set', this.addRouter)
+				.off('messagesModel/reactionsModel/set', this.setRouter)
 				.off('messagesModel/reactionsModel/add', this.addRouter)
-				.off('messagesModel/reactionsModel/updateWithId', this.addRouter)
+				.off('messagesModel/reactionsModel/updateWithId', this.updateWithIdRouter)
 			;
 		}
 

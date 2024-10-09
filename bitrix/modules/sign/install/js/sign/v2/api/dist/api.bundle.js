@@ -161,6 +161,13 @@ this.BX.Sign = this.BX.Sign || {};
 	      langId
 	    });
 	  }
+	  modifyReminderTypeForMemberRole(documentUid, memberRole, reminderType) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.member.reminder.set', {
+	      documentUid,
+	      memberRole,
+	      type: reminderType
+	    });
+	  }
 	  loadLanguages() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.loadLanguage');
 	  }
@@ -239,10 +246,19 @@ this.BX.Sign = this.BX.Sign || {};
 	      id
 	    });
 	  }
-	  registerB2eCompany(providerCode, taxId) {
+	  registerB2eCompany(providerCode, taxId, companyId, externalProviderId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.crm.b2ecompany.register', {
 	      providerCode,
-	      taxId
+	      taxId,
+	      companyId,
+	      externalProviderId
+	    });
+	  }
+	  createDocumentChat(chatType, documentId, isEntityId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.im.groupChat.createDocumentChat', {
+	      chatType,
+	      documentId,
+	      isEntityId
 	    });
 	  }
 	  setDecisionToSesB2eAgreement() {

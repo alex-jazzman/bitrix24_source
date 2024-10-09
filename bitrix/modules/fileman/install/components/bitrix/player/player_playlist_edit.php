@@ -22,7 +22,7 @@ if (($bCreate && (!$USER->CanDoFileOperation('fm_create_new_file', $arPath) || !
 
 $arTracks = Array();
 /* * * * * * * * * * * * * * POST * * * * * * * * * * * * * */
-if($REQUEST_METHOD=="POST" && $_REQUEST['save'] == 'Y')
+if($_SERVER['REQUEST_METHOD']=="POST" && $_REQUEST['save'] == 'Y')
 {
 	$objXML = new CDataXML();
 

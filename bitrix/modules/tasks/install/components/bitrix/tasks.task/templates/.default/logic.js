@@ -38,6 +38,12 @@ BX.namespace('Tasks.Component');
 				this.flowId = (parseInt(this.option('flowId'), 10));
 				this.flowLimitCode = this.option('flowLimitCode');
 				this.flowSelectedItem = null;
+				this.isProjectLimitExceeded = (this.option('isProjectLimitExceeded') === true);
+				this.projectLimitCode = this.option('projectLimitCode');
+
+				this.taskStatusSummaryEnabled = (this.option('taskStatusSummaryEnabled') === true);
+				this.relatedSubTaskDeadlinesEnabled = (this.option('relatedSubTaskDeadlinesEnabled') === true);
+				this.taskRecurringEnabled = (this.option('taskRecurringEnabled') === true);
 
 				this.fireTaskEvent();
 
@@ -493,9 +499,20 @@ BX.namespace('Tasks.Component');
 			{
 				return this.option('data').TASK;
 			},
+
 			getTaskActions: function()
 			{
 				return this.getTaskData().ACTION;
+			},
+
+			getTaskId: function()
+			{
+				return this.getTaskData().ID ?? 0;
+			},
+
+			getTaskDescription: function()
+			{
+				return (this.option('data').TASK.DESCRIPTION ?? '').trim();
 			},
 
 			initProjectDependence: function()
@@ -793,22 +810,26 @@ BX.namespace('Tasks.Component');
 
 									this.createFlow(searchQuery.getQuery())
 										.then((createdFlowData) => {
-											const item = dialog.addItem({
-												tabs: 'recents',
-												id: createdFlowData.id,
-												entityId: 'flow',
-												title: createdFlowData.name,
-												customData: {
-													groupId: createdFlowData.groupId,
-													templateId: createdFlowData.templateId,
-												},
-											});
-											if (item)
+											if (createdFlowData)
 											{
+												const item = dialog.addItem({
+													tabs: 'recents',
+													id: createdFlowData.id,
+													entityId: 'flow',
+													title: createdFlowData.name,
+													customData: {
+														groupId: createdFlowData.groupId,
+														templateId: createdFlowData.templateId,
+													},
+												});
 												item.select();
-											}
 
-											resolve();
+												resolve();
+											}
+											else
+											{
+												resolve();
+											}
 										})
 									;
 								});
@@ -837,8 +858,7 @@ BX.namespace('Tasks.Component');
 				const flowId = parseInt(selectedItem.id, 10);
 				const groupId = parseInt(selectedItem.customData.get('groupId'), 10);
 				const templateId = parseInt(selectedItem.customData.get('templateId'), 10);
-
-				const hasDescription = this.getEditorText().trim().length > 0;
+				const shouldShowConfirmChangeFlow = this.shouldShowConfirmChangeFlow(templateId);
 
 				window.onbeforeunload = () => {};
 
@@ -859,6 +879,7 @@ BX.namespace('Tasks.Component');
 					currentUri.removeQueryParam('EVENT_TYPE');
 					currentUri.removeQueryParam('EVENT_TASK_ID');
 					currentUri.removeQueryParam('EVENT_OPTIONS');
+					currentUri.removeQueryParam('NO_FLOW');
 
 					const immutable = this.option('immutable');
 					Object.entries(immutable).forEach(([key, value]) => {
@@ -882,7 +903,7 @@ BX.namespace('Tasks.Component');
 					dialog.getItem(this.flowSelectedItem).select(true);
 				};
 
-				if (hasDescription)
+				if (shouldShowConfirmChangeFlow)
 				{
 					this.showConfirmChangeFlow(reloadForm, rollback);
 				}
@@ -900,6 +921,7 @@ BX.namespace('Tasks.Component');
 				}
 
 				const dialog = baseEvent.getTarget();
+				const shouldShowConfirmChangeFlow = this.shouldShowConfirmChangeFlow();
 
 				window.onbeforeunload = () => {};
 
@@ -911,6 +933,8 @@ BX.namespace('Tasks.Component');
 					currentUri.removeQueryParam('EVENT_TYPE');
 					currentUri.removeQueryParam('EVENT_TASK_ID');
 					currentUri.removeQueryParam('EVENT_OPTIONS');
+
+					currentUri.setQueryParam('NO_FLOW', 1);
 
 					const immutable = this.option('immutable');
 					Object.entries(immutable).forEach(([key, value]) => {
@@ -924,8 +948,7 @@ BX.namespace('Tasks.Component');
 					dialog.getItem(this.flowSelectedItem).select(true);
 				};
 
-				const hasDescription = this.getEditorText().trim().length > 0;
-				if (hasDescription)
+				if (shouldShowConfirmChangeFlow)
 				{
 					this.showConfirmChangeFlow(reloadForm, rollback);
 				}
@@ -937,19 +960,45 @@ BX.namespace('Tasks.Component');
 
 			showConfirmChangeFlow(doneCallback, cancelCallback)
 			{
-				BX.UI.Dialogs.MessageBox.confirm(
-					BX.message('TASKS_TASK_FLOW_CHANGE_MESSAGE'),
-					BX.message('TASKS_TASK_FLOW_CHANGE_TITLE'),
-					() => {
+				BX.UI.Dialogs.MessageBox.show({
+					message: BX.message('TASKS_TASK_FLOW_CHANGE_MESSAGE'),
+					title: BX.message('TASKS_TASK_FLOW_CHANGE_TITLE'),
+					onOk: () => {
 						doneCallback();
 					},
-					BX.message('TASKS_TASK_FLOW_CHANGE_OK_CAPTION'),
-					(messageBox) => {
+					okCaption: BX.message('TASKS_TASK_FLOW_CHANGE_OK_CAPTION'),
+					cancelCallback: (messageBox) => {
 						cancelCallback();
 						messageBox.close();
 					},
-					BX.message('TASKS_TASK_FLOW_CHANGE_CANCEL_CAPTION'),
-				);
+					cancelCaption: BX.message('TASKS_TASK_FLOW_CHANGE_CANCEL_CAPTION'),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					popupOptions: {
+						events: {
+							onPopupClose: () => {
+								cancelCallback();
+							},
+						},
+					},
+				});
+			},
+
+			shouldShowConfirmChangeFlow(templateId = 0)
+			{
+				const description = this.getEditorText().trim();
+				const hasDescription = description.length > 0;
+
+				if (!hasDescription)
+				{
+					return false;
+				}
+
+				if (templateId > 0)
+				{
+					return true;
+				}
+
+				return description !== this.getTaskDescription();
 			},
 
 			createFlow(inputFlowName)
@@ -1143,31 +1192,96 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? 'Y' : 'N';
 					}
 
-					if (
-						(flagName === 'SAVE_AS_TEMPLATE' || flagName === 'REPLICATE')
-						&& flagNode.value === 'Y'
-						&& (
+					const limitExceeded = this.isLimitExceeded(flagName);
+					if (limitExceeded)
+					{
+						this.performExceededActions(flagName, flagNode, node);
+
+						this.showLimitDialog(
+							this.getFeatureId(flagName),
+							null,
+							{
+								module: 'tasks',
+								source: 'taskEdit',
+							}
+						);
+					}
+					else
+					{
+						this.processToggleFlag(flagName, flagNode.value === 'Y');
+					}
+				}
+			},
+
+			isLimitExceeded(flagName)
+			{
+				switch (flagName)
+				{
+					case 'REPLICATE':
+					case 'SAVE_AS_TEMPLATE':
+						return Boolean(
 							this.option('auxData').TASK_LIMIT_EXCEEDED
 							|| this.option('auxData').TASK_RECURRENT_RESTRICT
-						)
-					)
-					{
-						flagNode.value = 'N';
-						node.checked = false;
-
-						var code = (flagName === 'REPLICATE' ? 'limit_tasks_recurring_tasks' : 'limit_tasks_template');
-						BX.UI.InfoHelper.show(code, {
-							isLimit: true,
-							limitAnalyticsLabels: {
-								module: 'tasks',
-								source: 'taskEdit'
-							}
-						});
-						return;
-					}
-
-					this.processToggleFlag(flagName, flagNode.value === 'Y');
+						);
+					case 'TASK_PARAM_1':
+					case 'TASK_PARAM_2':
+						return !this.relatedSubTaskDeadlinesEnabled;
+					case 'TASK_PARAM_3':
+						return !this.taskStatusSummaryEnabled;
+					default:
+						return false;
 				}
+			},
+
+			performExceededActions(flagName, flagNode, parenNode)
+			{
+				switch (flagName)
+				{
+					case 'REPLICATE':
+					case 'SAVE_AS_TEMPLATE':
+					case 'TASK_PARAM_1':
+					case 'TASK_PARAM_2':
+					case 'TASK_PARAM_3':
+						if (flagNode.value === 'Y')
+						{
+							flagNode.value = 'N';
+							parenNode.checked = false;
+						}
+				}
+			},
+
+			getFeatureId(flagName)
+			{
+				switch (flagName)
+				{
+					case 'REPLICATE':
+						return 'tasks_recurring_tasks';
+					case 'SAVE_AS_TEMPLATE':
+						return 'tasks_template';
+					case 'TASK_PARAM_1':
+					case 'TASK_PARAM_2':
+						return 'tasks_related_subtask_deadlines';
+					case 'TASK_PARAM_3':
+						return 'tasks_status_summary';
+					default:
+						return '';
+				}
+			},
+
+			showLimitDialog(featureId, bindElement, limitAnalyticsLabels)
+			{
+				return new Promise((resolve, reject) => {
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+						Limit.showInstance({
+							featureId,
+							bindElement,
+							limitAnalyticsLabels,
+						});
+
+						resolve();
+					});
+				});
 			},
 
 			processToggleFlag: function(name, value)
@@ -1177,8 +1291,8 @@ BX.namespace('Tasks.Component');
 					var taskLimitExceeded = this.option('auxData').TASK_LIMIT_EXCEEDED;
 					var taskRecurrentRestrict = this.option('auxData').TASK_RECURRENT_RESTRICT;
 					if (
-						!taskLimitExceeded
-						|| (taskLimitExceeded && !value)
+						(!taskLimitExceeded || (taskLimitExceeded && !value))
+						|| (!taskRecurrentRestrict || (taskRecurrentRestrict && !value))
 					)
 					{
 						BX.Tasks.Util.fadeSlideToggleByClass(this.control('replication-panel'));

@@ -14,6 +14,6 @@ CREATE TABLE b_transformer_command (
 	CONTROLLER_URL varchar(255),
 	PRIMARY KEY (ID)
 );
-CREATE INDEX ix_b_transformer_command_guid ON b_transformer_command (guid);
+CREATE UNIQUE INDEX ux_b_transformer_command_guid ON b_transformer_command (guid);
 CREATE INDEX ix_b_transformer_command_file ON b_transformer_command (file);
 CREATE INDEX ix_b_transformer_command_update_time_error ON b_transformer_command (update_time, error);

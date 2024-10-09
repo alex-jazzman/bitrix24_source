@@ -41,11 +41,14 @@ $MESS['M_TASKS_FIELDS_CRM'] = 'Элементы CRM';
 $MESS['M_TASKS_FIELDS_CRM_MULTI'] = 'Элементы CRM: #COUNT#';
 $MESS['M_TASKS_FIELDS_FILES'] = 'Файлы';
 $MESS['M_TASKS_FIELDS_FILES_MULTI'] = 'Файлы: #COUNT#';
+$MESS['M_TASKS_FIELDS_TIME_TRACKING'] = 'Учёт времени';
 // endregion
 
 //region common
 $MESS['M_TASKS_BACK'] = 'Назад';
 $MESS['M_TASKS_EXTRA_SETTINGS'] = 'Дополнительные настройки';
+$MESS['M_TASKS_SAVE'] = 'Сохранить';
+$MESS['M_TASKS_EDIT'] = 'Редактировать';
 // endregion
 
 //region task statuses
@@ -54,4 +57,11 @@ $MESS['M_TASKS_STATUS_SUPPOSEDLY_COMPLETED'] = 'Ждёт контроля';
 $MESS['M_TASKS_STATUS_COMPLETED'] = 'Завершена';
 $MESS['M_TASKS_STATUS_EXPIRED'] = 'Просрочена';
 $MESS['M_TASKS_STATUS_NEED_RESULT'] = 'Требуется результат';
+// endregion
+
+//region dates conflict
+$MESS['M_TASKS_PLANNING_FINISH_DATE_OUT_OF_PROJECT_RANGE'] = 'Дата завершения выходит за сроки проекта';
+$MESS['M_TASKS_PLANNING_START_DATE_IS_OUT_OF_PROJECT_RANGE'] = 'Дата начала выходит за сроки проекта';
+$MESS['M_TASKS_PLANNING_START_AND_END_DATE_IS_OUT_OF_PROJECT_RANGE'] = 'Даты начала и завершения выходят за сроки проекта';
+$MESS['M_TASKS_DEADLINE_IS_OUT_OF_PROJECT_RANGE'] = "Крайний срок задачи выходит за сроки проекта";
 // endregion

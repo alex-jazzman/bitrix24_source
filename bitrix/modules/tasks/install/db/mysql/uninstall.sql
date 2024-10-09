@@ -137,3 +137,5 @@ DROP TABLE IF EXISTS b_tasks_custom_sort;
 DROP TABLE IF EXISTS b_tasks_flow_notification;
 
 DROP TABLE IF EXISTS b_tasks_flow_search_index;
+
+DROP TABLE IF EXISTS b_tasks_flow_auto_created_robot;

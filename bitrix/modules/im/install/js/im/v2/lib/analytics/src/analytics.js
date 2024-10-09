@@ -3,25 +3,30 @@ import { sendData } from 'ui.analytics';
 import { ChatType, Layout, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 
+import { HistoryLimit } from './classes/history-limit';
+import { getCategoryByChatType } from './helpers/get-category-by-chat-type';
+import { getChatType } from './helpers/get-chat-type';
+
 import {
 	AnalyticsEvent,
 	AnalyticsTool,
 	AnalyticsCategory,
 	AnalyticsType,
 	AnalyticsSection,
+	AnalyticsStatus,
 	CopilotChatType,
+	AnalyticsSubSection,
 } from './const';
 
 import type { ImModelChat } from 'im.v2.model';
 
 type DialogId = string;
 
-const CUSTOM_CHAT_TYPE = 'custom';
-
 export class Analytics
 {
-	#createdChats: Set<DialogId> = new Set();
-	#currentTab: string = '';
+	#excludedChats: Set<DialogId> = new Set();
+	#currentTab: string = Layout.chat.name;
+	#historyLimit: HistoryLimit = new HistoryLimit();
 
 	static #instance: Analytics;
 
@@ -46,7 +51,7 @@ export class Analytics
 
 	onCreateCopilotChat({ chatId, dialogId })
 	{
-		this.#createdChats.add(dialogId);
+		this.#excludedChats.add(dialogId);
 
 		sendData({
 			event: AnalyticsEvent.createNewChat,
@@ -75,14 +80,17 @@ export class Analytics
 		});
 	}
 
-	onOpenCopilotTab()
+	onOpenCopilotTab({ isAvailable = true } = {})
 	{
-		sendData({
+		const payload = {
 			event: AnalyticsEvent.openTab,
 			tool: AnalyticsTool.ai,
 			category: AnalyticsCategory.chatOperations,
 			c_section: AnalyticsSection.copilotTab,
-		});
+			status: isAvailable ? AnalyticsStatus.success : AnalyticsStatus.errorTurnedOff,
+		};
+
+		sendData(payload);
 	}
 
 	onOpenTab(tabName: string)
@@ -164,7 +172,7 @@ export class Analytics
 
 		sendData({
 			tool: AnalyticsTool.im,
-			category: this.#getCategoryByChatType(type),
+			category: getCategoryByChatType(type),
 			event: AnalyticsEvent.clickCreateNew,
 			type,
 			c_section: `${currentLayout}_tab`,
@@ -173,19 +181,19 @@ export class Analytics
 
 	onCreateChat(dialogId: string)
 	{
-		this.#createdChats.add(dialogId);
+		this.#excludedChats.add(dialogId);
 	}
 
 	onOpenChat(dialog: ImModelChat)
 	{
-		if (this.#createdChats.has(dialog.dialogId))
+		if (this.#excludedChats.has(dialog.dialogId))
 		{
-			this.#createdChats.delete(dialog.dialogId);
+			this.#excludedChats.delete(dialog.dialogId);
 
 			return;
 		}
 
-		const chatType = this.#getChatType(dialog);
+		const chatType = getChatType(dialog);
 
 		if (chatType === ChatType.copilot)
 		{
@@ -197,7 +205,7 @@ export class Analytics
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: this.#getCategoryByChatType(chatType),
+			category: getCategoryByChatType(chatType),
 			event: AnalyticsEvent.openExisting,
 			type: chatType,
 			c_section: `${currentLayout}_tab`,
@@ -215,26 +223,65 @@ export class Analytics
 		sendData(params);
 	}
 
-	#getCategoryByChatType(type: $Values<typeof ChatType>): string
+	onOpenChatEditForm(dialogId: string)
 	{
-		switch (type)
-		{
-			case ChatType.channel:
-			case ChatType.openChannel:
-			case ChatType.comment:
-			case ChatType.generalChannel:
-				return AnalyticsCategory.channel;
-			case ChatType.copilot:
-				return AnalyticsCategory.copilot;
-			case ChatType.videoconf:
-				return AnalyticsCategory.videoconf;
-			default:
-				return AnalyticsCategory.chat;
-		}
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: getCategoryByChatType(chat.type),
+			event: AnalyticsEvent.clickEdit,
+			c_section: AnalyticsSection.sidebar,
+			c_sub_section: AnalyticsSubSection.contextMenu,
+			p1: `chatType_${chat.type}`,
+			p5: `chatId_${chat.chatId}`,
+		});
 	}
 
-	#getChatType(chat: ImModelChat): $Values<typeof ChatType>
+	onSubmitChatEditForm(dialogId: string)
 	{
-		return ChatType[chat.type] ?? CUSTOM_CHAT_TYPE;
+		this.#excludedChats.add(dialogId);
+
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: getCategoryByChatType(chat.type),
+			event: AnalyticsEvent.submitEdit,
+			p1: `chatType_${chat.type}`,
+			p5: `chatId_${chat.chatId}`,
+		});
 	}
+
+	onCancelChatEditForm(dialogId: string)
+	{
+		this.#excludedChats.add(dialogId);
+	}
+
+	// region History Limit Analytics
+	onDialogHistoryLimitExceeded({ dialogId, noMessages }: { dialogId: DialogId, noMessages: boolean })
+	{
+		this.#historyLimit.onDialogHistoryLimitExceeded({ dialogId, noMessages });
+	}
+
+	onDialogHistoryLimitBannerClick({ dialogId }: { dialogId: DialogId })
+	{
+		this.#historyLimit.onDialogHistoryLimitBannerClick({ dialogId });
+	}
+
+	onSidebarHistoryLimitExceeded({ dialogId, panel })
+	{
+		this.#historyLimit.onSidebarHistoryLimitExceeded({ dialogId, panel });
+	}
+
+	onSidebarHistoryLimitBannerClick({ dialogId, panel })
+	{
+		this.#historyLimit.onSidebarHistoryLimitBannerClick({ dialogId, panel });
+	}
+
+	onGoToContextHistoryLimitClick({ dialogId }: { dialogId: DialogId })
+	{
+		this.#historyLimit.onGoToContextHistoryLimitClick({ dialogId });
+	}
+	// endregion
 }

@@ -18,6 +18,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\Helper;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\UserField;
 
@@ -34,6 +35,8 @@ UI\Extension::load([
 
 CJSCore::init([ 'avatar_editor' ]);
 
+$isProjectAccessEnabled = Loader::includeModule('socialnetwork') && \Bitrix\Socialnetwork\Helper\Workgroup::isProjectAccessFeatureEnabled();
+
 if ((string) ($arResult['FatalError'] ?? '') !== '')
 {
 	?><span class="errortext"><?= $arResult['FatalError'] ?></span><br /><br /><?php
@@ -47,7 +50,8 @@ else
 
 	?><script>
 		BX.ready(function() {
-			(new BX.Socialnetwork.WorkgroupCard()).init({
+			BX.Socialnetwork.WorkgroupCardInstance = new BX.Socialnetwork.WorkgroupCard();
+			(BX.Socialnetwork.WorkgroupCardInstance).init({
 				componentName: '<?= $component->getName() ?>',
 				signedParameters: '<?= $component->getSignedParameters() ?>',
 
@@ -88,7 +92,7 @@ else
 				urls: {
 					groupsList: '<?= CUtil::JSUrlEscape($arParams["PATH_TO_GROUPS_LIST"]) ?>'
 				},
-				editFeaturesAllowed: <?= (Helper\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false') ?>,
+				editFeaturesAllowed: <?= CUtil::phpToJSObject($isProjectAccessEnabled) ?>,
 				copyFeatureAllowed: <?=(Helper\Workgroup::isGroupCopyFeatureEnabled() ? 'true' : 'false')?>,
 
 				themePickerData: <?= CUtil::phpToJSObject($arResult['themePickerData']) ?>,
@@ -242,17 +246,20 @@ else
 		$menuTabs[] = [
 			'ID' => 'rights',
 			'TEXT' => Loc::getMessage('SONET_C6_CARD_MENU_ROLES'),
-			'ON_CLICK' => '',
-			'URL' => $arResult['Urls']['Features'],
+			'ON_CLICK' => (
+				$isProjectAccessEnabled
+					? ''
+					: 'BX.Socialnetwork.WorkgroupCardInstance.showLimit("'.Helper\Feature::PROJECTS_ACCESS_PERMISSIONS.'")'
+			),
+			'URL' => $isProjectAccessEnabled ? $arResult['Urls']['Features'] : '',
+			'IS_LOCKED' => !$isProjectAccessEnabled,
 		];
 	}
 
-	// todo: tasks 24.100.0
-	$doShowFlowsButton =
+	$doShowFlowsButton = (
 		Loader::includeModule('tasks')
-		&& class_exists('\Bitrix\Tasks\Flow\Path\FlowPathMaker')
 		&& \Bitrix\Socialnetwork\Integration\Tasks\Flow\FlowFeature::isOn()
-	;
+	);
 	if ($doShowFlowsButton)
 	{
 		$menuTabs[] = [
@@ -262,6 +269,7 @@ else
 			'URL' => '',
 		];
 	}
+
 
 
 	$APPLICATION->IncludeComponent(

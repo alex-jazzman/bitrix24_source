@@ -13,6 +13,7 @@ import {
 } from 'ui.lexical.core';
 
 import { $wrapNodeInElement } from 'ui.lexical.utils';
+import { calcImageSize } from '../../helpers/calc-image-size';
 
 import { registerDraggableNode } from '../../helpers/register-draggable-node';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
@@ -163,7 +164,10 @@ export class FilePlugin extends BasePlugin
 
 					if (fileType === FileType.VIDEO)
 					{
-						return { node: $createFileVideoNode(serverFileId, info) };
+						const width = Text.toInteger(node.getAttribute('width'));
+						const height = Text.toInteger(node.getAttribute('height'));
+
+						return { node: $createFileVideoNode(serverFileId, info, width, height) };
 					}
 
 					return { node: $createFileNode(serverFileId, info) };
@@ -190,14 +194,16 @@ export class FilePlugin extends BasePlugin
 					node: scheme.createElement({ name: this.getMode(), attributes, inline: true }),
 				};
 			},
-			'file-video': (lexicalNode: FileNode): BBCodeExportOutput => {
+			'file-video': (lexicalNode: FileVideoNode): BBCodeExportOutput => {
 				const scheme = this.getEditor().getBBCodeScheme();
 				const attributes = this.getMode() === 'disk' ? { file: '' } : {};
 				attributes.id = lexicalNode.getServerFileId();
 
-				return {
-					node: scheme.createElement({ name: this.getMode(), attributes, inline: false }),
-				};
+				const node = scheme.createElement({ name: this.getMode(), attributes, inline: false });
+				node.setAttribute('width', lexicalNode.getWidth());
+				node.setAttribute('height', lexicalNode.getHeight());
+
+				return { node };
 			},
 			'file-image': (lexicalNode: FileImageNode): BBCodeExportOutput => {
 				const scheme = this.getEditor().getBBCodeScheme();
@@ -332,26 +338,25 @@ export class FilePlugin extends BasePlugin
 					const fileType = this.getFileType(payload.info);
 					let node = null;
 
+					const previewWidth = payload.info.previewWidth;
+					const previewHeight = payload.info.previewHeight;
+					const renderWidth = payload.width;
+					const renderHeight = payload.height;
 					if (fileType === FileType.IMAGE)
 					{
-						const previewWidth = payload.info.previewWidth;
-						const previewHeight = payload.info.previewHeight;
-
-						const renderWidth = payload.width;
-						const renderHeight = payload.height;
-						const ratioWidth: number = renderWidth / previewWidth;
-						const ratioHeight: number = renderHeight / previewHeight;
-						const ratio: number = Math.min(ratioWidth, ratioHeight);
-
-						const useOriginalSize = ratio > 1; // image is too small
-						const width = useOriginalSize ? previewWidth : previewWidth * ratio;
-						const height = useOriginalSize ? previewHeight : previewHeight * ratio;
-
+						const [width, height] = calcImageSize(previewWidth, previewHeight, renderWidth, renderHeight);
 						node = $createFileImageNode(payload.serverFileId, payload.info, width, height);
 					}
 					else if (fileType === FileType.VIDEO)
 					{
-						node = $createFileVideoNode(payload.serverFileId, payload.info);
+						let width = 0;
+						let height = 0;
+						if (previewWidth > 0 && previewHeight > 0)
+						{
+							[width, height] = calcImageSize(previewWidth, previewHeight, renderWidth, renderHeight);
+						}
+
+						node = $createFileVideoNode(payload.serverFileId, payload.info, width, height);
 					}
 					else
 					{

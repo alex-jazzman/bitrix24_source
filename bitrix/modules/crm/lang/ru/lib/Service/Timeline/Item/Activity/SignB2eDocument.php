@@ -31,3 +31,4 @@ $MESS["CRM_SIGN_B2E_ACTIVITY_FIELD_SIGNER_READY"] = "Ещё не подписа�
 $MESS["CRM_SIGN_B2E_ACTIVITY_FIELD_SIGNER_DONE"] = "Подписано сотрудниками";
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_PREVIEW"] = "Открыть документ";
 $MESS["CRM_TIMELINE_ACTIVITY_DOWNLOAD"] = "Скачать архив";
+$MESS["CRM_SIGN_B2E_ACTIVITY_STATUS_SENDING"] = "Отправляется";

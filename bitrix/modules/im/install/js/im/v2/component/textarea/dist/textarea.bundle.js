@@ -166,6 +166,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    return mentions;
 	  }
+	  clearMentionSymbol() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol] = '';
+	  }
 	  clearMentionReplacements() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap] = {};
 	  }
@@ -6776,7 +6779,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const {
 	        mentionText,
 	        mentionReplacement,
-	        dialogId
+	        dialogId,
+	        isMentionSymbol = true
 	      } = event.getData();
 	      let {
 	        textToReplace = ''
@@ -6786,12 +6790,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
 	      this.draftManager.setDraftMentions(this.dialogId, mentions);
-	      const mentionSymbol = this.mentionManager.getMentionSymbol();
+	      const mentionSymbol = isMentionSymbol ? this.mentionManager.getMentionSymbol() : '';
 	      textToReplace = `${mentionSymbol}${textToReplace}`;
 	      this.text = im_v2_lib_textarea.Textarea.insertMention(this.$refs.textarea, {
 	        textToInsert: mentionText,
 	        textToReplace
 	      });
+	      this.mentionManager.clearMentionSymbol();
 	    },
 	    onInsertText(event) {
 	      const {

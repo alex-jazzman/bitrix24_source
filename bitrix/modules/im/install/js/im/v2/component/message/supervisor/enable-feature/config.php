@@ -12,6 +12,7 @@ return [
 		'im.v2.component.message.supervisor.base',
 		'main.core',
 		'im.v2.lib.analytics',
+		'stafftrack.user-statistics-link',
 	],
 	'skip_core' => false,
 ];

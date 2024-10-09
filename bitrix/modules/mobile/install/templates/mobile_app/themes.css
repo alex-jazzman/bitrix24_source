@@ -239,6 +239,10 @@
 	--chat-my-channel-cmnt-rgb: 255, 255, 255;
 	--chat-my-channel-success: #ffffff;
 	--chat-my-channel-success-rgb: 255, 255, 255;
+	--chat-overall-banner-bg: #ffffff;
+	--chat-overall-banner-bg-rgb: 255, 255, 255;
+	--chat-overall-invert-alert: #ffffff;
+	--chat-overall-invert-alert-rgb: 255, 255, 255;
 	--tech-dark-fixes: #ffffff;
 	--tech-dark-fixes-rgb: 255, 255, 255;
 }
@@ -484,6 +488,10 @@
 	--chat-my-channel-cmnt-rgb: 255, 255, 255;
 	--chat-my-channel-success: #ffffff;
 	--chat-my-channel-success-rgb: 255, 255, 255;
+	--chat-overall-banner-bg: #ffffff;
+	--chat-overall-banner-bg-rgb: 255, 255, 255;
+	--chat-overall-invert-alert: #ffffff;
+	--chat-overall-invert-alert-rgb: 255, 255, 255;
 	--tech-dark-fixes: #ffffff;
 	--tech-dark-fixes-rgb: 255, 255, 255;
 }
@@ -729,6 +737,10 @@
 	--chat-my-channel-cmnt-rgb: 224, 245, 195;
 	--chat-my-channel-success: #1BCE7B;
 	--chat-my-channel-success-rgb: 27, 206, 123;
+	--chat-overall-banner-bg: #FFFFFF8C;
+	--chat-overall-banner-bg-rgb: 255, 255, 255;
+	--chat-overall-invert-alert: #FFFFFF;
+	--chat-overall-invert-alert-rgb: 255, 255, 255;
 	--tech-dark-fixes: #FFFFFF00;
 	--tech-dark-fixes-rgb: 255, 255, 255;
 }
@@ -974,6 +986,10 @@
 	--chat-my-channel-cmnt-rgb: 27, 121, 230;
 	--chat-my-channel-success: #FFFFFF33;
 	--chat-my-channel-success-rgb: 255, 255, 255;
+	--chat-overall-banner-bg: #07070799;
+	--chat-overall-banner-bg-rgb: 7, 7, 7;
+	--chat-overall-invert-alert: #FF5752;
+	--chat-overall-invert-alert-rgb: 255, 87, 82;
 	--tech-dark-fixes: #383838;
 	--tech-dark-fixes-rgb: 56, 56, 56;
 }

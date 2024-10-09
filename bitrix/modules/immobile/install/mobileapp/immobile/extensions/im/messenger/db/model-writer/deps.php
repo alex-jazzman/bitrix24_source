@@ -22,5 +22,6 @@ return [
 		'./src/vuex/pin-message',
 		'./src/vuex/application',
 		'./src/vuex/copilot',
+		'./src/vuex/sidebar/file',
 	],
 ];

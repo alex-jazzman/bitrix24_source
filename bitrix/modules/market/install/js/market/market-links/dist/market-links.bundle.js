@@ -25,8 +25,13 @@ this.BX = this.BX || {};
 	  static collectionPageLink(collectionId) {
 	    return MAIN_DIR + 'collection/page/' + collectionId + '/';
 	  }
-	  static appDetail(appCode, isSiteTemplate = false, queryParams = {}) {
-	    if (isSiteTemplate) {
+	  static appDetail(appItem, queryParams = {}) {
+	    var _appItem$CODE;
+	    const appCode = (_appItem$CODE = appItem.CODE) != null ? _appItem$CODE : appItem.APP_CODE;
+	    if (appItem.IS_SITE_TEMPLATE === 'Y') {
+	      if (main_core.Type.isString(appItem.LANDING_TYPE) && appItem.LANDING_TYPE === 'VIBE') {
+	        return MarketLinks.vibeDetailLink(appCode, queryParams);
+	      }
 	      return MarketLinks.siteDetailLink(appCode, queryParams);
 	    }
 	    const params = new URLSearchParams(queryParams).toString();
@@ -50,6 +55,11 @@ this.BX = this.BX || {};
 	      path = uri.pathname + uri.search;
 	    }
 	    return path;
+	  }
+	  static vibeDetailLink(appCode, queryParams) {
+	    var _queryParams$from2;
+	    const from = (_queryParams$from2 = queryParams.from) != null ? _queryParams$from2 : '';
+	    return '/vibe/new/?tpl=market/' + appCode + '&from=' + from;
 	  }
 	  static openSiteTemplate(event, isSiteTemplate) {
 	    if (isSiteTemplate) {

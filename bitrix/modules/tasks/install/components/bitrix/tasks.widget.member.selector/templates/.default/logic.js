@@ -120,7 +120,12 @@ BX.namespace('Tasks.Component');
 
 						userType: this.option('userType'),
 						taskLimitExceeded: this.option('taskLimitExceeded'),
+						viewSelectorEnabled: this.option('viewSelectorEnabled'),
+						taskMailUserIntegrationEnabled: this.option('taskMailUserIntegrationEnabled'),
+						taskMailUserIntegrationFeatureId: this.option('taskMailUserIntegrationFeatureId'),
 						networkEnabled: this.option('networkEnabled'),
+						isProjectLimitExceeded: this.option('isProjectLimitExceeded'),
+						projectFeatureId: this.option('projectFeatureId'),
 					};
 
 					var types = this.option('types');
@@ -294,35 +299,47 @@ BX.namespace('Tasks.Component');
 					node.addEventListener('click', function(event) {
 						var userType = this.option('userType');
 						var taskLimitExceeded = this.option('taskLimitExceeded');
+						var viewSelectorEnabled = this.option('viewSelectorEnabled');
 
-						if ((userType === 'accomplice' || userType === 'auditor') && taskLimitExceeded)
+						if (
+							(userType === 'accomplice' || userType === 'auditor')
+							&& (taskLimitExceeded || !viewSelectorEnabled)
+						)
 						{
-							BX.Runtime.loadExtension('ui.info-helper').then(({ FeaturePromotersRegistry }) => {
-								if (FeaturePromotersRegistry)
-								{
-									FeaturePromotersRegistry.getPromoter({
-										code: 'limit_tasks_observers_participants',
-										bindElement: event.target,
-									}).show();
-								}
-								else
-								{
-									BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
-										isLimit: true,
-										limitAnalyticsLabels: {
-											module: 'tasks',
-										},
-									});
-								}
-							});
+							this.showLimit('tasks_observers_participants', event.target);
 
 							return;
 						}
 
-						this.getDialog().setTargetNode(event.target);
+						if (
+							userType === 'project'
+							&& this.option('isProjectLimitExceeded')
+						)
+						{
+							this.showLimit(this.option('projectFeatureId'));
+
+							return;
+						}
+
+						this.getDialog().setTargetNode(event.target.closest('.task-options-item-open-inner'));
 						this.getDialog().show();
 					}.bind(this));
 				}
+			},
+
+			showLimit(featureId, bindElement = null)
+			{
+				BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+					const { Limit } = exports;
+					Limit.showInstance({
+						featureId,
+						bindElement,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'edit',
+						},
+					});
+				});
 			},
 
 			getDialogSelectedItems: function()
@@ -387,6 +404,8 @@ BX.namespace('Tasks.Component');
 								inviteGuestLink: true,
 								myEmailUsers: true,
 								analyticsSource: 'task',
+								lockGuestLink: !this.option('taskMailUserIntegrationEnabled'),
+								lockGuestLinkFeatureId: this.option('taskMailUserIntegrationFeatureId'),
 							}
 						},
 						{
@@ -520,14 +539,17 @@ BX.namespace('Tasks.Component');
 
 				if ((userType === 'accomplice' || userType === 'auditor') && taskLimitExceeded)
 				{
-					BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
-						isLimit: true,
-						limitAnalyticsLabels: {
-							module: 'tasks',
-							source: 'taskEdit',
-							subject: userType
-						}
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+						Limit.showInstance({
+							featureId: 'tasks_observers_participants',
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'taskEdit',
+							},
+						});
 					});
+
 					return;
 				}
 

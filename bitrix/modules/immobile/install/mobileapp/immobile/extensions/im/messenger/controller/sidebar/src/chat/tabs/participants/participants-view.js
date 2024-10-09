@@ -2,7 +2,8 @@
  * @module im/messenger/controller/sidebar/chat/tabs/participants/participants-view
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-view', (require, exports, module) => {
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--participants-view');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Item } = require('im/messenger/lib/ui/base/item');
 	const { Loc } = require('loc');
@@ -17,7 +18,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { UserAdd } = require('im/messenger/controller/user-add');
 	const { ChatTitle } = require('im/messenger/lib/element');
-	const { BotCode } = require('im/messenger/const');
+	const { BotCode, SidebarActionType } = require('im/messenger/const');
+	const { Icon } = require('assets/icons');
 	const { Theme } = require('im/lib/theme');
 
 	/**
@@ -58,19 +60,19 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		componentDidMount()
 		{
-			Logger.log(`${this.constructor.name}.componentDidMount`);
+			logger.log(`${this.constructor.name}.componentDidMount`);
 			this.bindListener();
 			this.subscribeStoreEvents();
 		}
 
 		componentDidUpdate()
 		{
-			Logger.log(`${this.constructor.name}.componentDidUpdate`);
+			logger.log(`${this.constructor.name}.componentDidUpdate`);
 		}
 
 		componentWillUnmount()
 		{
-			Logger.log(`${this.constructor.name}.componentWillUnmount`);
+			logger.log(`${this.constructor.name}.componentWillUnmount`);
 			this.unsubscribeStoreEvents();
 		}
 
@@ -91,11 +93,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 */
 		onUpdateDialogStore(event)
 		{
-			Logger.info(`${this.constructor.name}.onUpdateDialogStore---------->`, event);
+			logger.info(`${this.constructor.name}.onUpdateDialogStore---------->`, event);
 			const { payload } = event;
 
 			if (payload.actionName === 'addParticipants' || payload.actionName === 'removeParticipants'
-			|| payload.actionName === 'updateManagerList' || payload.actionName === 'updateRole')
+				|| payload.actionName === 'updateManagerList' || payload.actionName === 'updateRole')
 			{
 				const newParticipants = this.participantsService.getParticipantsFromStore();
 				this.updateState({ participants: newParticipants });
@@ -125,7 +127,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		subscribeStoreEvents()
 		{
-			Logger.log(`${this.constructor.name}.subscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
 			this.storeManager.on('dialoguesModel/update', this.onUpdateDialogStore);
 			this.storeManager.on('dialoguesModel/copilotModel/update', this.onUpdateDialogStore);
 			BX.addCustomEvent('onCloseSidebarWidget', this.unsubscribeStoreEvents);
@@ -133,7 +135,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		unsubscribeStoreEvents()
 		{
-			Logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
 			this.storeManager.off('dialoguesModel/update', this.onUpdateDialogStore);
 			this.storeManager.off('dialoguesModel/copilotModel/update', this.onUpdateDialogStore);
 			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeStoreEvents);
@@ -182,11 +184,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						size: 'M',
 						isCustomStyle: true,
 						nextTo: false,
-						onLongClick: () => {
+						onLongClick: (data, ref) => {
 							this.onLongClickItem(
 								item.key,
 								item.userId,
 								this.setItemEntity(item),
+								ref,
 							);
 						},
 						onClick: () => {
@@ -368,7 +371,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 							},
 							svg: { content: buttonIcon },
 							onFailure: () => {
-								Logger.error('SidebarParticipantsView.getAddParticipantRow.Image.onFailure');
+								logger.error('SidebarParticipantsView.getAddParticipantRow.Image.onFailure');
 							},
 						}),
 					),
@@ -453,7 +456,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		onLoadScrollItems()
 		{
 			this.participantsService.sidebarRestService.getParticipantList()
-				.catch((err) => Logger.error('SidebarParticipantsView.onLoadScrollItems', err));
+				.catch((err) => logger.error('SidebarParticipantsView.onLoadScrollItems', err));
 		}
 
 		/**
@@ -540,7 +543,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		addParticipants(index, section, participants)
 		{
 			this.listViewRef.insertRows(participants, section, index, 'automatic')
-				.catch((err) => Logger.error(err));
+				.catch((err) => logger.error(err));
 		}
 
 		/**
@@ -549,13 +552,13 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 * @param {number} userId
 		 * @param {object} isEntity
 		 * @param {boolean} isEntity.isYou
-		 * @param {boolean} isEntity.isCopilot
+		 * @param {boolean?} isEntity.isCopilot
+		 * @param {LayoutComponent} ref
 		 * @private
 		 */
-		onLongClickItem(key, userId, isEntity)
+		onLongClickItem(key, userId, isEntity, ref)
 		{
-			const actions = [];
-			const callbacks = {};
+			const actionsItems = [];
 			const isGroupDialog = this.isGroupDialog();
 			const participantsCount = this.state.participants.length;
 
@@ -568,36 +571,53 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 			{
 				if (isEntity.isYou)
 				{
-					actions.push('notes');
-					callbacks.notes = this.participantsService.onClickGetNotes;
+					actionsItems.push({
+						actionName: SidebarActionType.notes,
+						callback: this.participantsService.onClickGetNotes,
+						icon: Icon.FLAG,
+					});
 					if (this.state.permissions.isCanLeave)
 					{
 						// TODO copilot dialog always is group chat, then need check count participants
 						if (this.props.isCopilot && participantsCount > 2)
 						{
-							actions.push('leave');
-							callbacks.leave = this.onClickLeaveChat.bind(this);
+							actionsItems.push({
+								actionName: SidebarActionType.leave,
+								callback: this.onClickLeaveChat.bind(this),
+								icon: Icon.DAY_OFF,
+							});
 						}
 
 						if (!this.props.isCopilot)
 						{
-							actions.push('leave');
-							callbacks.leave = this.onClickLeaveChat.bind(this);
+							actionsItems.push({
+								actionName: SidebarActionType.leave,
+								callback: this.onClickLeaveChat.bind(this),
+								icon: Icon.DAY_OFF,
+							});
 						}
 					}
 				}
 				else
 				{
-					actions.push('mention');
-					callbacks.mention = this.participantsService.onClickPingUser.bind(this, userId);
-					actions.push('send');
-					callbacks.send = this.participantsService.onClickSendMessage.bind(this, userId);
+					actionsItems.push({
+						actionName: SidebarActionType.mention,
+						callback: this.participantsService.onClickPingUser.bind(this, userId),
+						icon: Icon.MENTION,
+					}, {
+						actionName: SidebarActionType.send,
+						callback: this.participantsService.onClickSendMessage.bind(this, userId),
+						icon: Icon.MESSAGE,
+					});
 
 					const isCanDelete = this.state.permissions.isCanRemoveParticipants;
 					if (isCanDelete && ChatPermission.isCanRemoveUserById(userId, this.props.dialogId))
 					{
-						actions.push('remove');
-						callbacks.remove = this.onClickRemoveParticipant.bind(this, { key });
+						actionsItems.push({
+							actionName: SidebarActionType.remove,
+							callback: this.onClickRemoveParticipant.bind(this, { key }),
+							icon: Icon.BAN,
+						});
 					}
 				}
 			}
@@ -606,8 +626,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 			{
 				if (isEntity.isYou)
 				{
-					actions.push('notes');
-					callbacks.notes = this.participantsService.onClickGetNotes;
+					actionsItems.push({
+						actionName: SidebarActionType.notes,
+						callback: this.participantsService.onClickGetNotes,
+						icon: Icon.FLAG,
+					});
 				}
 				else
 				{
@@ -615,17 +638,16 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				}
 			}
 
-			return this.openParticipantManager(actions, callbacks);
+			return this.openParticipantManager(ref, actionsItems);
 		}
 
 		/**
-		 * @param {Array<string>} actions - ['remove', ...]
-		 * @param {Array<Function>} callbacks
-		 * @param {Array<string>} [actionsIcon=[]]
+		 * @param {Array<ActionItem>} actionsItems
+		 * @param {LayoutComponent} ref
 		 */
-		openParticipantManager(actions, callbacks, actionsIcon = [])
+		openParticipantManager(ref, actionsItems = [])
 		{
-			return ParticipantManager.open({ actions, callbacks, actionsIcon });
+			return ParticipantManager.open({ actionsItems, ref });
 		}
 
 		/**
@@ -651,24 +673,38 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		getEllipsisButton(item)
 		{
-			return View(
+			const setItemEntity = this.setItemEntity.bind(this);
+			const onLongClickItem = this.onLongClickItem.bind(this);
+
+			return {
+				create()
 				{
-					style: {
-						alignSelf: 'center',
-					},
+					return View(
+						{
+							ref: (ref) => {
+								if (ref)
+								{
+									this.viewRef = ref;
+								}
+							},
+							style: {
+								alignSelf: 'center',
+							},
+						},
+						ImageButton({
+							style: {
+								width: 24,
+								height: 24,
+							},
+							svg: { content: buttonIcons.ellipsis() },
+							onClick: () => {
+								onLongClickItem(item.key, item.userId, setItemEntity(item), this.viewRef);
+							},
+							testId: 'ITEM_ELLIPSIS_BUTTON',
+						}),
+					);
 				},
-				ImageButton({
-					style: {
-						width: 24,
-						height: 24,
-					},
-					svg: { content: buttonIcons.ellipsis() },
-					onClick: () => {
-						this.onLongClickItem(item.key, item.userId, this.setItemEntity(item));
-					},
-					testId: 'ITEM_ELLIPSIS_BUTTON',
-				}),
-			);
+			};
 		}
 
 		/**
@@ -704,7 +740,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 					title: this.getUserAddWidgetTitle(),
 					textRightBtn: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_NAME_BTN'),
 					callback: {
-						onAddUser: (event) => Logger.log('onAddParticipantInBackDrop', event),
+						onAddUser: (event) => logger.log('onAddParticipantInBackDrop', event),
 					},
 					widgetOptions: { mediumPositionPercent: 65 },
 					usersCustomFilter,

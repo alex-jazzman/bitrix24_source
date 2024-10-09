@@ -125,6 +125,8 @@ if ($arParams['SHOW_FILTER'] === 'Y')
 		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'] ?? null,
 		'VIEW_MODE_LIST' => (isset($arParams['PROJECT_VIEW']) && $arParams['PROJECT_VIEW'] === 'Y') ? ['VIEW_MODE_KANBAN', 'VIEW_MODE_LIST', 'VIEW_MODE_TIMELINE', 'VIEW_MODE_CALENDAR', 'VIEW_MODE_GANTT'] : [],
 		'SCOPE' => $arParams['SCOPE'] ?? null,
+
+		'SHOW_COUNTERS_TOOLBAR' => $arParams['SHOW_COUNTERS_TOOLBAR'] ?? null,
 	),
 	$component,
 	array('HIDE_ICONS' => true)

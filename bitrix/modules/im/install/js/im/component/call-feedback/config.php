@@ -4,17 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-if (\Bitrix\Im\Call\Call::isNewCallLayoutEnabled())
-{
-	$cssBundleFile = 'dist/call-feedback.bundle.css';
-}
-else
-{
-	$cssBundleFile = 'dist/call-feedback_old.bundle.css';
-}
-
 return [
-	'css' => $cssBundleFile,
+	'css' => 'dist/call-feedback.bundle.css',
 	'js' => 'dist/call-feedback.bundle.js',
 	'rel' => [
 		'main.polyfill.core',

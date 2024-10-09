@@ -276,13 +276,15 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	  removeChild(...children) {
-	    this.children = this.children.reduce((acc, node) => {
+	    const filteredChildren = [];
+	    this.children.forEach(node => {
 	      if (children.includes(node)) {
 	        node.setParent(null);
-	        return acc;
+	      } else {
+	        filteredChildren.push(node);
 	      }
-	      return [...acc, node];
-	    }, []);
+	    });
+	    this.children = filteredChildren;
 	  }
 	  replaceChild(targetNode, ...children) {
 	    this.children = this.children.flatMap(node => {
@@ -581,15 +583,22 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  appendChild(...children) {
 	    const flattenedChildren = BBCodeNode.flattenChildren(children);
-	    const filteredChildren = this.filterChildren(flattenedChildren);
-	    const convertedChildren = this.convertChildren(filteredChildren.resolved);
-	    convertedChildren.forEach(node => {
+	    const convertedChildren = this.convertChildren(flattenedChildren);
+	    const filteredChildren = this.filterChildren(convertedChildren);
+	    filteredChildren.resolved.forEach(node => {
 	      node.remove();
 	      node.setParent(this);
 	      this.children.push(node);
 	    });
 	    if (main_core.Type.isArrayFilled(filteredChildren.unresolved)) {
-	      if (this.getScheme().isAllowedUnresolvedNodesHoisting()) {
+	      const tagScheme = this.getTagScheme();
+	      if (tagScheme.hasNotAllowedChildrenCallback()) {
+	        tagScheme.runNotAllowedChildrenCallback({
+	          node: this,
+	          children: filteredChildren.unresolved,
+	          scheme: this.getScheme()
+	        });
+	      } else if (this.getScheme().isAllowedUnresolvedNodesHoisting()) {
 	        this.propagateChild(...filteredChildren.unresolved);
 	      } else {
 	        filteredChildren.unresolved.forEach(node => {
@@ -600,15 +609,22 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  prependChild(...children) {
 	    const flattenedChildren = BBCodeNode.flattenChildren(children);
-	    const filteredChildren = this.filterChildren(flattenedChildren);
-	    const convertedChildren = this.convertChildren(filteredChildren.resolved);
-	    convertedChildren.forEach(node => {
+	    const convertedChildren = this.convertChildren(flattenedChildren);
+	    const filteredChildren = this.filterChildren(convertedChildren);
+	    filteredChildren.resolved.forEach(node => {
 	      node.remove();
 	      node.setParent(this);
 	      this.children.unshift(node);
 	    });
 	    if (main_core.Type.isArrayFilled(filteredChildren.unresolved)) {
-	      if (this.getScheme().isAllowedUnresolvedNodesHoisting()) {
+	      const tagScheme = this.getTagScheme();
+	      if (tagScheme.hasNotAllowedChildrenCallback()) {
+	        tagScheme.runNotAllowedChildrenCallback({
+	          node: this,
+	          children: filteredChildren.unresolved,
+	          scheme: this.getScheme()
+	        });
+	      } else if (this.getScheme().isAllowedUnresolvedNodesHoisting()) {
 	        this.propagateChild(...filteredChildren.unresolved);
 	      } else {
 	        filteredChildren.unresolved.forEach(node => {
@@ -622,9 +638,9 @@ this.BX.UI = this.BX.UI || {};
 	      if (node === targetNode) {
 	        node.setParent(null);
 	        const flattenedChildren = BBCodeNode.flattenChildren(children);
-	        const filteredChildren = this.filterChildren(flattenedChildren);
-	        const convertedChildren = this.convertChildren(filteredChildren.resolved);
-	        return convertedChildren.map(child => {
+	        const convertedChildren = this.convertChildren(flattenedChildren);
+	        const filteredChildren = this.filterChildren(convertedChildren);
+	        return filteredChildren.resolved.map(child => {
 	          child.remove();
 	          child.setParent(this);
 	          return child;
@@ -720,6 +736,24 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getTagScheme() {
 	    return super.getTagScheme();
+	  }
+	  trimStartLinebreaks() {
+	    const firstChild = this.getFirstChild();
+	    if (firstChild && firstChild.getName() === '#linebreak') {
+	      firstChild.remove();
+	      this.trimStartLinebreaks();
+	    }
+	  }
+	  trimEndLinebreaks() {
+	    const lastChild = this.getLastChild();
+	    if (lastChild && lastChild.getName() === '#linebreak') {
+	      lastChild.remove();
+	      this.trimEndLinebreaks();
+	    }
+	  }
+	  trimLinebreaks() {
+	    this.trimStartLinebreaks();
+	    this.trimEndLinebreaks();
 	  }
 	  toString() {
 	    const tagScheme = this.getTagScheme();
@@ -908,7 +942,7 @@ this.BX.UI = this.BX.UI || {};
 	    return [leftNode, rightNode];
 	  }
 	  toString() {
-	    return this.getEncoder().encodeText(this.getContent());
+	    return this.getContent();
 	  }
 	  toPlainText() {
 	    return this.toString();
@@ -952,6 +986,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.stringifier = null;
 	    this.serializer = null;
 	    this.allowedIn = [];
+	    this.onChangeHandler = null;
 	    if (!main_core.Type.isPlainObject(options)) {
 	      throw new TypeError('options is not a object');
 	    }
@@ -963,38 +998,45 @@ this.BX.UI = this.BX.UI || {};
 	    this.setAllowedIn(options.allowedIn);
 	    this.setStringifier(options.stringify);
 	    this.setSerializer(options.serialize);
+	    this.setOnChangeHandler(options.onChange);
 	  }
 	  setName(name) {
 	    if (main_core.Type.isStringFilled(name)) {
 	      this.name = [name];
+	      this.runOnChangeHandler();
 	    }
 	    if (main_core.Type.isArrayFilled(name)) {
 	      this.name = name;
+	      this.runOnChangeHandler();
 	    }
 	  }
 	  getName() {
-	    return [...this.name];
+	    return this.name;
 	  }
 	  removeName(...names) {
 	    this.setName(this.getName().filter(name => {
 	      return !names.includes(name);
 	    }));
+	    this.runOnChangeHandler();
 	  }
 	  setGroup(name) {
 	    if (main_core.Type.isStringFilled(name)) {
 	      this.group = [name];
+	      this.runOnChangeHandler();
 	    }
 	    if (main_core.Type.isArrayFilled(name)) {
 	      this.group = name;
+	      this.runOnChangeHandler();
 	    }
 	  }
 	  removeGroup(...groups) {
 	    this.setGroup(this.getGroup().filter(group => {
 	      return !groups.includes(group);
 	    }));
+	    this.runOnChangeHandler();
 	  }
 	  getGroup() {
-	    return [...this.group];
+	    return this.group;
 	  }
 	  hasGroup(groupName) {
 	    return this.getGroup().includes(groupName);
@@ -1018,14 +1060,27 @@ this.BX.UI = this.BX.UI || {};
 	  setAllowedIn(allowedParents) {
 	    if (main_core.Type.isArray(allowedParents)) {
 	      this.allowedIn = [...allowedParents];
+	      this.runOnChangeHandler();
 	    }
 	  }
 	  getAllowedIn() {
-	    return [...this.allowedIn];
+	    return this.allowedIn;
 	  }
 	  isAllowedIn(tagName) {
 	    const allowedIn = this.getAllowedIn();
 	    return !main_core.Type.isArrayFilled(allowedIn) || main_core.Type.isArrayFilled(allowedIn) && allowedIn.includes(tagName);
+	  }
+	  setOnChangeHandler(handler) {
+	    this.onChangeHandler = handler;
+	  }
+	  getOnChangeHandler() {
+	    return this.onChangeHandler;
+	  }
+	  runOnChangeHandler() {
+	    const handler = this.getOnChangeHandler();
+	    if (main_core.Type.isFunction(handler)) {
+	      handler();
+	    }
 	  }
 	}
 
@@ -1038,39 +1093,34 @@ this.BX.UI = this.BX.UI || {};
 	    this[canBeEmptySymbol] = true;
 	    this.childConverter = null;
 	    this.allowedChildren = [];
+	    this.notAllowedChildrenCallback = null;
 	    this.setVoid(options.void);
 	    this.setCanBeEmpty(options.canBeEmpty);
 	    this.setChildConverter(options.convertChild);
 	    this.setAllowedChildren(options.allowedChildren);
+	    this.setOnChangeHandler(options.onChange);
+	    this.setNotAllowedChildrenCallback(options.onNotAllowedChildren);
 	  }
 	  static defaultBlockStringifier(node) {
 	    const isAllowNewlineBeforeOpeningTag = (() => {
 	      const previewsSibling = node.getPreviewsSibling();
 	      return previewsSibling && previewsSibling.getName() !== '#linebreak';
 	    })();
-	    const isAllowNewlineAfterOpeningTag = (() => {
-	      const firstChild = node.getFirstChild();
-	      return firstChild && firstChild.getName() !== '#linebreak';
-	    })();
-	    const isAllowNewlineBeforeClosingTag = (() => {
-	      const lastChild = node.getLastChild();
-	      return lastChild && lastChild.getName() !== '#linebreak';
-	    })();
 	    const isAllowNewlineAfterClosingTag = (() => {
 	      const nextSibling = node.getNextSibling();
 	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === BBCodeNode.ELEMENT_NODE && !nextSibling.getTagScheme().getGroup().includes('#inline'));
 	    })();
+	    node.trimLinebreaks();
 	    const openingTag = node.getOpeningTag();
 	    const content = node.getContent();
 	    const closingTag = node.getClosingTag();
-	    return [isAllowNewlineBeforeOpeningTag ? '\n' : '', openingTag, isAllowNewlineAfterOpeningTag ? '\n' : '', content, isAllowNewlineBeforeClosingTag ? '\n' : '', closingTag, isAllowNewlineAfterClosingTag ? '\n' : ''].join('');
-	  }
-	  setName(name) {
-	    super.setName(name);
+	    const isAllowContentLinebreaks = content.length > 0;
+	    return [isAllowNewlineBeforeOpeningTag ? '\n' : '', openingTag, isAllowContentLinebreaks ? '\n' : '', content, isAllowContentLinebreaks ? '\n' : '', closingTag, isAllowNewlineAfterClosingTag ? '\n' : ''].join('');
 	  }
 	  setVoid(value) {
 	    if (main_core.Type.isBoolean(value)) {
 	      this[voidSymbol$1] = value;
+	      this.runOnChangeHandler();
 	    }
 	  }
 	  isVoid() {
@@ -1079,6 +1129,7 @@ this.BX.UI = this.BX.UI || {};
 	  setCanBeEmpty(value) {
 	    if (main_core.Type.isBoolean(value)) {
 	      this[canBeEmptySymbol] = value;
+	      this.runOnChangeHandler();
 	    }
 	  }
 	  canBeEmpty() {
@@ -1095,6 +1146,7 @@ this.BX.UI = this.BX.UI || {};
 	  setAllowedChildren(allowedChildren) {
 	    if (main_core.Type.isArray(allowedChildren)) {
 	      this.allowedChildren = allowedChildren;
+	      this.runOnChangeHandler();
 	    }
 	  }
 	  getAllowedChildren() {
@@ -1103,6 +1155,17 @@ this.BX.UI = this.BX.UI || {};
 	  isChildAllowed(tagName) {
 	    const allowedChildren = this.getAllowedChildren();
 	    return !main_core.Type.isArrayFilled(allowedChildren) || main_core.Type.isArrayFilled(allowedChildren) && allowedChildren.includes(tagName);
+	  }
+	  setNotAllowedChildrenCallback(callback) {
+	    this.notAllowedChildrenCallback = callback;
+	  }
+	  hasNotAllowedChildrenCallback() {
+	    return main_core.Type.isFunction(this.notAllowedChildrenCallback);
+	  }
+	  runNotAllowedChildrenCallback(options) {
+	    if (main_core.Type.isFunction(this.notAllowedChildrenCallback)) {
+	      this.notAllowedChildrenCallback(options);
+	    }
 	  }
 	}
 
@@ -1124,13 +1187,18 @@ this.BX.UI = this.BX.UI || {};
 	    this.outputTagCase = BBCodeScheme.Case.LOWER;
 	    this.unresolvedNodesHoisting = true;
 	    this.encoder = new ui_bbcode_encoder.BBCodeEncoder();
+	    this.parentChildMap = null;
 	    if (!main_core.Type.isPlainObject(options)) {
 	      throw new TypeError('options is not a object');
 	    }
+	    this.onTagSchemeChange = this.onTagSchemeChange.bind(this);
 	    this.setTagSchemes(options.tagSchemes);
 	    this.setOutputTagCase(options.outputTagCase);
 	    this.setUnresolvedNodesHoisting(options.unresolvedNodesHoisting);
 	    this.setEncoder(options.encoder);
+	  }
+	  onTagSchemeChange() {
+	    this.parentChildMap = null;
 	  }
 	  setTagSchemes(tagSchemes) {
 	    if (main_core.Type.isArray(tagSchemes)) {
@@ -1140,6 +1208,9 @@ this.BX.UI = this.BX.UI || {};
 	      if (invalidSchemeIndex > -1) {
 	        throw new TypeError(`tagScheme #${invalidSchemeIndex} is not TagScheme instance`);
 	      }
+	      tagSchemes.forEach(tagScheme => {
+	        tagScheme.setOnChangeHandler(this.onTagSchemeChange);
+	      });
 	      this.tagSchemes = [...tagSchemes];
 	    }
 	  }
@@ -1246,31 +1317,34 @@ this.BX.UI = this.BX.UI || {};
 	    return node && node.getName() === '#tab';
 	  }
 	  getParentChildMap() {
-	    const tagSchemes = this.getTagSchemes();
-	    const map = new Map();
-	    tagSchemes.forEach(tagScheme => {
-	      const groups = tagScheme.getGroup();
-	      const schemeNames = [...tagScheme.getName(), ...groups, ...(tagScheme.isVoid() ? ['#void'] : [])];
-	      const allowedChildren = tagScheme.getAllowedChildren();
-	      const allowedIn = tagScheme.getAllowedIn();
-	      schemeNames.forEach(name => {
-	        if (!map.has(name)) {
-	          map.set(name, {
-	            allowedChildren: new Set(),
-	            allowedIn: new Set(),
-	            aliases: new Set()
-	          });
-	        }
-	        const entry = map.get(name);
-	        const newEntry = {
-	          allowedChildren: new Set([...entry.allowedChildren, ...allowedChildren]),
-	          allowedIn: new Set([...entry.allowedIn, ...allowedIn]),
-	          aliases: new Set([name, ...groups, ...(tagScheme.isVoid() ? ['#void'] : [])])
-	        };
-	        map.set(name, newEntry);
+	    if (main_core.Type.isNull(this.parentChildMap)) {
+	      const tagSchemes = this.getTagSchemes();
+	      const map = new Map();
+	      tagSchemes.forEach(tagScheme => {
+	        const groups = tagScheme.getGroup();
+	        const schemeNames = [...tagScheme.getName(), ...groups, ...(tagScheme.isVoid() ? ['#void'] : [])];
+	        const allowedChildren = tagScheme.getAllowedChildren();
+	        const allowedIn = tagScheme.getAllowedIn();
+	        schemeNames.forEach(name => {
+	          if (!map.has(name)) {
+	            map.set(name, {
+	              allowedChildren: new Set(),
+	              allowedIn: new Set(),
+	              aliases: new Set()
+	            });
+	          }
+	          const entry = map.get(name);
+	          const newEntry = {
+	            allowedChildren: new Set([...entry.allowedChildren, ...allowedChildren]),
+	            allowedIn: new Set([...entry.allowedIn, ...allowedIn]),
+	            aliases: new Set([name, ...groups, ...(tagScheme.isVoid() ? ['#void'] : [])])
+	          };
+	          map.set(name, newEntry);
+	        });
 	      });
-	    });
-	    return map;
+	      this.parentChildMap = map;
+	    }
+	    return this.parentChildMap;
 	  }
 	  isChildAllowed(parent, child) {
 	    const parentName = BBCodeScheme.getTagName(parent);
@@ -1402,7 +1476,7 @@ this.BX.UI = this.BX.UI || {};
 	      allowedChildren: ['#text', '#linebreak', '#inline'],
 	      canBeEmpty: false
 	    }), new BBCodeTagScheme({
-	      name: ['span'],
+	      name: ['span', 'font'],
 	      group: ['#inline'],
 	      allowedChildren: ['#text', '#linebreak', '#inline'],
 	      canBeEmpty: false
@@ -1415,7 +1489,14 @@ this.BX.UI = this.BX.UI || {};
 	      name: ['url'],
 	      group: ['#inline'],
 	      allowedChildren: ['#text', '#format', 'img'],
-	      canBeEmpty: false
+	      canBeEmpty: false,
+	      stringify(node) {
+	        const encoder = node.getEncoder();
+	        const openingTag = node.getOpeningTag();
+	        const closingTag = node.getClosingTag();
+	        const content = node.getContent();
+	        return `${openingTag}${encoder.decodeText(content)}${closingTag}`;
+	      }
 	    }), new BBCodeTagScheme({
 	      name: 'p',
 	      group: ['#block'],
@@ -1428,7 +1509,22 @@ this.BX.UI = this.BX.UI || {};
 	      allowedChildren: ['*'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
 	      allowedIn: ['#root', '#shadowRoot'],
-	      canBeEmpty: false
+	      canBeEmpty: false,
+	      onNotAllowedChildren: ({
+	        node,
+	        children
+	      }) => {
+	        const notAllowedChildren = new Set(['#tab', '#linebreak']);
+	        const bePropagated = [];
+	        children.forEach(child => {
+	          if (notAllowedChildren.has(child.getName()) || child.getName() === '#text' && /^\s+$/.test(child.getContent())) {
+	            child.remove();
+	          } else {
+	            bePropagated.push(child);
+	          }
+	        });
+	        node.propagateChild(...bePropagated);
+	      }
 	    }), new BBCodeTagScheme({
 	      name: ['*'],
 	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
@@ -1437,13 +1533,27 @@ this.BX.UI = this.BX.UI || {};
 	        const content = node.getContent().trim();
 	        return `${openingTag}${content}`;
 	      },
-	      allowedIn: ['list']
+	      allowedIn: ['list'],
+	      onNotAllowedChildren: ({
+	        node,
+	        children
+	      }) => {
+	        const bePropagated = [];
+	        children.forEach(child => {
+	          if (child.getName() === '#tab') {
+	            child.remove();
+	          } else {
+	            bePropagated.push(child);
+	          }
+	        });
+	        node.propagateChild(...bePropagated);
+	      }
 	    }), new BBCodeTagScheme({
 	      name: 'table',
 	      group: ['#block'],
 	      allowedChildren: ['tr'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
-	      allowedIn: ['#root', 'quote', 'spoiler'],
+	      allowedIn: ['#root', 'td', 'th', 'quote', 'spoiler'],
 	      canBeEmpty: false
 	    }), new BBCodeTagScheme({
 	      name: 'tr',
@@ -1465,7 +1575,13 @@ this.BX.UI = this.BX.UI || {};
 	      group: ['#block'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
 	      allowedChildren: ['#text', '#linebreak', '#tab'],
-	      allowedIn: ['#root', '#shadowRoot']
+	      allowedIn: ['#root', '#shadowRoot'],
+	      convertChild: (child, scheme) => {
+	        if (['#linebreak', '#tab', '#text'].includes(child.getName())) {
+	          return child;
+	        }
+	        return scheme.createText(child.toString());
+	      }
 	    }), new BBCodeTagScheme({
 	      name: 'video',
 	      group: ['#inlineBlock'],

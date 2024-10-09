@@ -1,8 +1,13 @@
 (() => {
-	const { EntityReady } = jn.require('entity-ready');
-	const { Entry } = jn.require('tasks/entry');
-	const { ErrorLogger } = jn.require('utils/logger/error-logger');
-	const { StorageCache } = jn.require('storage-cache');
+	const require = (extension) => jn.require(extension);
+	const { EntityReady } = require('entity-ready');
+	const { Entry } = require('tasks/entry');
+	const { ErrorLogger } = require('utils/logger/error-logger');
+	const { StorageCache } = require('storage-cache');
+	const { qrauth } = require('qrauth/utils');
+	const { FeatureId } = require('tasks/enum');
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
 
@@ -213,10 +218,15 @@
 				.catch(() => {})
 			;
 
-			BX.onViewLoaded(() => {
-				this.bindEvents();
-				this.updateCounters();
-			});
+			tariffPlanRestrictionsReady()
+				.then(() => {
+					BX.onViewLoaded(() => {
+						this.bindEvents();
+						this.updateCounters();
+					});
+				})
+				.catch(this.logger.error)
+			;
 		}
 
 		bindEvents()
@@ -290,18 +300,37 @@
 			if (changed)
 			{
 				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }]);
+
+				return;
 			}
-			else if (tabId === this.tabCodes.SCRUM)
+
+			switch (tabId)
 			{
-				qrauth.open({
-					redirectUrl: `/company/personal/user/${this.userId}/tasks/scrum/`,
-					showHint: true,
-					title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
-				});
-			}
-			else if (tabId === this.tabCodes.EFFICIENCY)
-			{
-				Entry.openEfficiency({ userId: this.userId });
+				case this.tabCodes.PROJECTS:
+				{
+					const { isRestricted, showRestriction } = getFeatureRestriction('socialnetwork_projects_groups');
+					if (isRestricted())
+					{
+						showRestriction();
+					}
+					break;
+				}
+
+				case this.tabCodes.SCRUM:
+					qrauth.open({
+						redirectUrl: `/company/personal/user/${this.userId}/tasks/scrum/`,
+						showHint: true,
+						title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
+					});
+					break;
+
+				case this.tabCodes.EFFICIENCY:
+					void Entry.openEfficiency({ userId: this.userId });
+					break;
+
+				default:
+					// no default
+					break;
 			}
 		}
 
@@ -346,30 +375,26 @@
 				this.updateFlowsCounter(cachedFlowCounters.counterValue);
 			}
 
-			(new RequestExecutor('tasksmobile.Task.Counter.getByType'))
-				.call()
-				.then(
-					(response) => {
-						const counters = response.result;
+			new RunActionExecutor('tasksmobile.Task.Counter.getByType')
+				.setHandler((response) => {
+					const counters = response.data;
 
-						const flowsCounter = counters.flowTotal;
-						this.updateFlowsCounter(flowsCounter);
-						flowListStorage.set({ counterValue: flowsCounter });
+					const flowsCounter = counters.flowTotal;
+					this.updateFlowsCounter(flowsCounter);
+					flowListStorage.set({ counterValue: flowsCounter });
 
-						const projectCounter = counters.sonetTotalExpired + counters.sonetTotalComments;
-						this.updateProjectsCounter(projectCounter);
-						projectListStorage.set({ counterValue: projectCounter });
+					const projectCounter = counters.sonetTotalExpired + counters.sonetTotalComments;
+					this.updateProjectsCounter(projectCounter);
+					projectListStorage.set({ counterValue: projectCounter });
 
-						if (this.showScrumList)
-						{
-							const scrumCounter = counters.scrumTotalComments;
-							this.updateScrumCounter(scrumCounter);
-							scrumListStorage.set({ counterValue: scrumCounter });
-						}
-					},
-					(response) => this.logger.error(response),
-				)
-				.catch((response) => this.logger.error(response))
+					if (this.showScrumList)
+					{
+						const scrumCounter = counters.scrumTotalComments;
+						this.updateScrumCounter(scrumCounter);
+						scrumListStorage.set({ counterValue: scrumCounter });
+					}
+				})
+				.call(false)
 			;
 		}
 
@@ -393,10 +418,12 @@
 
 		updateProjectsCounter(value)
 		{
+			const isProjectRestricted = getFeatureRestriction('socialnetwork_projects_groups').isRestricted();
+
 			this.tabs.updateItem(this.tabCodes.PROJECTS, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_PROJECTS'),
 				counter: Number(value),
-				label: (value > 0 ? String(value) : ''),
+				label: (!isProjectRestricted && value > 0 ? String(value) : ''),
 			});
 		}
 
@@ -416,9 +443,11 @@
 
 		updateEfficiencyCounter(value)
 		{
+			const isEfficiencyRestricted = getFeatureRestriction(FeatureId.EFFICIENCY).isRestricted();
+
 			this.tabs.updateItem(this.tabCodes.EFFICIENCY, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_EFFICIENCY'),
-				label: (value || value === 0 ? `${String(value)}%` : ''),
+				label: (!isEfficiencyRestricted && value >= 0 ? `${String(value)}%` : ''),
 				selectable: false,
 			});
 		}

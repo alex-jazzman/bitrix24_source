@@ -47,6 +47,10 @@ export class CountersModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
+			/** @function counters/getUnloadedChatCounters */
+			getUnloadedChatCounters: (state: CountersState): number => {
+				return state.unloadedChatCounters;
+			},
 			/** @function counters/getTotalChatCounter */
 			getTotalChatCounter: (state: CountersState): number => {
 				let loadedChatsCounter = 0;

@@ -1,4 +1,4 @@
-.ui-text-editor__image {
+.ui-text-editor__image-container {
 	cursor: default;
 	display: inline-block;
 	position: relative;
@@ -7,11 +7,6 @@
 
 .ui-text-editor-image-component {
 	display: inline-block;
-}
-
-.ui-text-editor-image-component img {
-	max-width: 100%;
-	min-width: 100%;
 }
 
 .ui-text-editor-image-component.--selected img {

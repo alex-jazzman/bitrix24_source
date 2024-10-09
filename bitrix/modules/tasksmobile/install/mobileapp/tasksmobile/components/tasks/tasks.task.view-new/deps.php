@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'reload/listeners',
-		'utils/guid',
+		'tariff-plan-restriction',
 		'tasks:layout/task/view-new',
+		'utils/guid',
 	],
 ];

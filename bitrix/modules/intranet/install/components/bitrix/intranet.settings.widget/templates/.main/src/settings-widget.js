@@ -1,7 +1,8 @@
-import {ajax, Cache, Dom, Event, Loc, Tag, Text, Type} from 'main.core';
+import {ajax, Dom, Event, Loc, Tag, Text, Type} from 'main.core';
 import {PopupComponentsMaker, PopupComponentsMakerItem} from 'ui.popupcomponentsmaker';
+import type {SettingsWidgetOptions, SettingsWidgetHoldingOptions, MainPageConfiguration} from './types/options';
+import {Label, LabelSize} from 'ui.label';
 import {BaseEvent, EventEmitter} from 'main.core.events';
-import type {SettingsWidgetOptions, SettingsWidgetHoldingOptions} from './types/options';
 import {MenuItem, Popup} from 'main.popup';
 import { sendData } from 'ui.analytics';
 import { RequisiteSection } from './requisite-section';
@@ -29,6 +30,7 @@ export class SettingsWidget extends EventEmitter
 	#requisiteSection: RequisiteSection;
 	#settingsUrl: string;
 	#isRenameable:? boolean;
+	#mainPage: MainPageConfiguration;
 
 	constructor(options: SettingsWidgetOptions)
 	{
@@ -41,6 +43,7 @@ export class SettingsWidget extends EventEmitter
 		this.#requisite = options.requisite;
 		this.#settingsUrl = options.settingsPath;
 		this.#isRenameable = options.isRenameable;
+		this.#mainPage = options.mainPage;
 		this.#requisiteSection = new RequisiteSection(options.requisite);
 
 		this.#setOptions(options);
@@ -205,6 +208,7 @@ export class SettingsWidget extends EventEmitter
 
 		const content = [
 			this.#requisite && this.#isAdmin ? this.#getRequisitesElement() : null,
+			this.#mainPage.isAvailable ? this.#getMainPageElement() : null,
 			this.#isAdmin ? this.#getSecurityAndSettingsElement() : null,
 			this.#isBitrix24 ? this.#getHoldingsElement() : null,
 			this.#getMigrateElement(),
@@ -340,6 +344,48 @@ export class SettingsWidget extends EventEmitter
 		return node;
 	}
 
+	#getMainPageElement(): HTMLDivElement
+	{
+		const onclick = () => {
+			this.getWidget().close();
+			BX.SidePanel.Instance.open(this.#mainPage.settingsPath);
+			BX.UI.Analytics.sendData({
+				tool: 'landing',
+				category: 'vibe',
+				event: 'open_settings_main',
+				c_sub_section: 'from_widget_vibe_point',
+			});
+		};
+		const label = new Label({
+			text: Loc.getMessage('INTRANET_SETTINGS_WIDGET_LABEL_NEW'),
+			customClass: 'ui-label-new',
+			size: LabelSize.SM,
+			fill: true,
+		})
+		const labelWrapper = Tag.render`
+			<div class="intranet-settings-widget__label-new">
+				${label.render()}
+			</div>
+		`;
+
+		const element = Tag.render`
+			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+				<div class="intranet-settings-widget_inner">
+					<div class="intranet-settings-widget_icon-box --green">
+						<div class="ui-icon-set --home-page"></div>
+					</div>
+					<div class="intranet-settings-widget__title">
+						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE')}
+					</div>
+				</div>
+				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
+				${this.#mainPage.isNew ? labelWrapper : null}
+			</div>
+		`;
+
+		return this.#prepareElement(element);
+	}
+
 	#getRequisitesElement(): HTMLDivElement
 	{
 		return this.#prepareElement(this.#requisiteSection.getElement());
@@ -363,16 +409,10 @@ export class SettingsWidget extends EventEmitter
 			this.#getHoldingWidget().show(this.#target);
 		};
 
-		const profilePhotoStyle = affiliate.profilePhoto
-			? `background: url('${encodeURI(Text.encode(affiliate.profilePhoto))}') no-repeat center; background-size: cover;`
-			: '';
-
 		const element = Tag.render`
 		<div class="intranet-settings-widget__branch" onclick="${onclickOpen}">
 			<div class="intranet-settings-widget__branch-icon_box">
-				<div class="ui-icon ui-icon-common-user intranet-settings-widget__branch-icon">
-					<i style="${profilePhotoStyle}"></i>
-				</div>
+				<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
 			</div>
 			<div class="intranet-settings-widget__branch_content">
 				<div class="intranet-settings-widget__branch-title">

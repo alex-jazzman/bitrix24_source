@@ -17,7 +17,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Name;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
 
 CUtil::InitJSCore(array("popup"));
@@ -264,7 +264,7 @@ if (
 			? SITE_DIR . "contacts/personal/user/{$userId}/tasks/effective/"
 			: SITE_DIR . "company/personal/user/{$userId}/tasks/effective/"
 	);
-	$efficiencyCounter = (KpiLimit::isLimitExceeded() ? 0 : Counter::getInstance($userId)->get(Name::EFFECTIVE));
+	$efficiencyCounter = (TaskLimit::isLimitExceeded() ? 0 : Counter::getInstance($userId)->get(Name::EFFECTIVE));
 
 	$items['effective_counter'] = [
 		'TEXT' => GetMessage('SONET_UM_EFFICIENCY'),

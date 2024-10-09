@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Activity\Provider\ProviderManager;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 
@@ -621,7 +622,8 @@ if($enableToolbar && $arResult['ENABLE_CREATE_TOOLBAR_BUTTON'])
 			'TEXT' => GetMessage('CRM_ACTIVITY_LIST_ADD_TASK_SHORT'),
 			'TITLE' => GetMessage('CRM_ACTIVITY_LIST_ADD_TASK'),
 			'ICON' => 'btn-new crm-activity-command-add-task',
-			'ONCLICK' => $isSingleButtonMode ? 'BX.CrmActivityEditor.items["'.CUtil::JSEscape($gridEditorID).'"].addTask();' : ''
+			'ONCLICK' => $isSingleButtonMode ? 'BX.CrmActivityEditor.items["'.CUtil::JSEscape($gridEditorID).'"].addTask();' : '',
+			'CLASS_NAME' => RestrictionManager::getTaskRestriction()->hasPermission() ? '' : 'crm-tariff-lock-behind',
 		);
 	}
 

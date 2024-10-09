@@ -8,9 +8,11 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Update\Stepper;
 use Bitrix\Tasks\Access;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\Update\SortConverter;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'pagetitle-toolbar-field-view tasks-pagetitle-view');
@@ -106,16 +108,9 @@ if ($isBitrix24Template)
 				$groupId = (int) ($arParams['GROUP_ID'] ?? 0);
 				$projectId = ($showViewMode ? $groupId : 'this.getAttribute(\'data-project-id\')');
 
-				$showLimitSlider = ($arResult['TASK_LIMIT_EXCEEDED'] || !Factory::canUseAutomation());
-				$robotsSliderId = 'limit_tasks_robots';
+				$showLimitSlider = !Factory::canUseAutomation();
+				$openLimitSliderAction = Limit::getLimitLockClick(FeatureDictionary::TASK_ROBOTS);
 
-				if (!Factory::isAutomationEnabled())
-				{
-					$showLimitSlider = true;
-					$robotsSliderId = 'limit_crm_rules_off';
-				}
-
-				$openLimitSliderAction = "top.BX.UI.InfoHelper.show('{$robotsSliderId}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks'}})";
 				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {cacheable: false, customLeftBoundary: 0, loader: 'bizproc:automation-loader'});";
 
 				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');

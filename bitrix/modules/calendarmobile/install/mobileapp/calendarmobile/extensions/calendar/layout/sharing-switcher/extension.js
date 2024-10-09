@@ -48,8 +48,6 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 
 		render()
 		{
-			const { isCalendarContext } = this.props;
-
 			return View(
 				{
 					style: styles.container,
@@ -67,17 +65,13 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 				View(
 					{
 						style: {
-							width: '65%',
+							flex: 1,
+							flexDirection: 'row',
 						},
 					},
-					View(
-						{},
-						isCalendarContext ? this.renderSwitcher() : this.renderTitle(),
-					),
-					this.renderDescription(),
-					this.model.isEnabled() && this.renderOpenLink(),
+					this.renderSwitcherBody(),
+					this.renderCalendarIcon(),
 				),
-				this.renderCalendarIcon(),
 			);
 		}
 
@@ -183,18 +177,40 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 			Application.openUrl(this.model.getPublicShortUrl());
 		}
 
-		renderCalendarIcon()
+		renderSwitcherBody()
 		{
-			return Image(
+			return View(
 				{
-					svg: {
-						content: icons.calendar,
-					},
 					style: {
-						width: '35%',
-						height: 96,
+						flexShrink: 1,
 					},
 				},
+				this.props.isCalendarContext ? this.renderSwitcher() : this.renderTitle(),
+				this.renderDescription(),
+				this.model.isEnabled() && this.renderOpenLink(),
+			);
+		}
+
+		renderCalendarIcon()
+		{
+			return View(
+				{
+					style: {
+						paddingHorizontal: 10,
+						justifyContent: 'center',
+					},
+				},
+				Image(
+					{
+						svg: {
+							content: icons.calendar,
+						},
+						style: {
+							width: 116,
+							height: 96,
+						},
+					},
+				),
 			);
 		}
 	}

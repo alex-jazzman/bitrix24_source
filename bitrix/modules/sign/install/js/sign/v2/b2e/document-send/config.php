@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core.events',
 		'sign.v2.b2e.user-party',
+		'sign.v2.b2e.reminder-selector',
 		'main.core',
 		'main.loader',
 		'ui.entity-selector',

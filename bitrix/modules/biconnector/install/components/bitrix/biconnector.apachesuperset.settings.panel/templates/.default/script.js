@@ -180,7 +180,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return ControllerFactory;
 	}();
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
+	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
 	var DateFilterField = /*#__PURE__*/function (_BX$UI$EntityEditorLi) {
 	  babelHelpers.inherits(DateFilterField, _BX$UI$EntityEditorLi);
 	  function DateFilterField(id, settings) {
@@ -190,6 +190,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    _this.dateSelectorBlock = null;
 	    _this.toInput = null;
 	    _this.startInput = null;
+	    _this.includeLastDateCheckbox = null;
 	    return _this;
 	  }
 	  babelHelpers.createClass(DateFilterField, [{
@@ -225,14 +226,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        this.dateSelectorBlock = null;
 	        this.startInput = null;
 	        this.endInput = null;
+	        this.includeLastDateCheckbox = null;
 	      }
 	      if (isRangeSelected) {
-	        main_core.Dom.removeClass(this._selectContainer, 'ui-ctl-w100');
-	        main_core.Dom.addClass(this._innerWrapper, 'ui-entity-editor-content-block__range');
-	        main_core.Dom.addClass(this._selectContainer, 'ui-ctl-date-range');
-	        this.dateSelectorBlock = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-dropdown-range-group\"></div>"])));
 	        var dateStartValue = main_core.Text.encode(this.getModel().getField(this.getDateStartFieldName()));
-	        this.startInput = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<input class=\"ui-ctl-element\" type=\"text\" value=\"", "\" name=\"", "\">"])), dateStartValue, this.getDateStartFieldName());
+	        this.startInput = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<input class=\"ui-ctl-element\" type=\"text\" value=\"", "\" name=\"", "\">"])), dateStartValue, this.getDateStartFieldName());
 	        main_core.Event.bind(this.startInput, 'click', function () {
 	          DateFilterField.showCalendar(_this2.startInput);
 	        });
@@ -242,10 +240,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        main_core.Event.bind(this.startInput, 'input', function () {
 	          _this2.onChange();
 	        });
-	        main_core.Dom.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-before-icon ui-ctl-datetime\">\n\t\t\t\t\t\t<div class=\"ui-ctl-before ui-ctl-icon-calendar\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.startInput), this.dateSelectorBlock);
-	        main_core.Dom.append(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl-dropdown-range-line\">\n\t\t\t\t\t\t<span class=\"ui-ctl-dropdown-range-line-item\"></span>\n\t\t\t\t\t</div>\n\t\t\t\t"]))), this.dateSelectorBlock);
 	        var dateEndValue = main_core.Text.encode(this.getModel().getField(this.getDateEndFieldName()));
-	        this.endInput = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<input class=\"ui-ctl-element\" type=\"text\" value=\"", "\" name=\"", "\">"])), dateEndValue, this.getDateEndFieldName());
+	        this.endInput = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<input class=\"ui-ctl-element\" type=\"text\" value=\"", "\" name=\"", "\">"])), dateEndValue, this.getDateEndFieldName());
 	        main_core.Event.bind(this.endInput, 'click', function () {
 	          DateFilterField.showCalendar(_this2.endInput);
 	        });
@@ -255,18 +251,25 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        main_core.Event.bind(this.endInput, 'input', function () {
 	          _this2.onChange();
 	        });
-	        main_core.Dom.append(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-before-icon ui-ctl-datetime\">\n\t\t\t\t\t\t<div class=\"ui-ctl-before ui-ctl-icon-calendar\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.endInput), this.dateSelectorBlock);
+	        this.includeLastDateCheckbox = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<input class=\"ui-ctl-element\" type=\"checkbox\" name=\"", "\">"])), this.getIncludeLastDateName());
+	        var includeLastDateValue = this.getModel().getField(this.getIncludeLastDateName());
+	        if (includeLastDateValue) {
+	          this.includeLastDateCheckbox.checked = true;
+	        }
+	        main_core.Event.bind(this.includeLastDateCheckbox, 'change', function () {
+	          _this2.onChange();
+	        });
+	        this.dateSelectorBlock = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl-dropdown-range-group\">\n\t\t\t\t\t\t<div class=\"ui-ctl-container\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-top\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-title\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-before-icon ui-ctl-datetime\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-before ui-ctl-icon-calendar\"></div>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-ctl-container\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-dropdown-range-line\">\n\t\t\t\t\t\t\t\t<span class=\"ui-ctl-dropdown-range-line-item\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-ctl-container\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-top\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-title\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-before-icon ui-ctl-datetime\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-before ui-ctl-icon-calendar\"></div>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-ctl-bottom\">\n\t\t\t\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FROM_TITLE'), this.startInput, main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_TO_TITLE'), this.endInput, this.includeLastDateCheckbox, main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_INCLUDE_LAST_DATE'));
 	        main_core.Dom.append(this.dateSelectorBlock, this._innerWrapper);
 	      } else {
 	        main_core.Dom.addClass(this._selectContainer, 'ui-ctl-w100');
-	        main_core.Dom.removeClass(this._innerWrapper, 'ui-entity-editor-content-block__range');
 	        main_core.Dom.removeClass(this._selectContainer, 'ui-ctl-date-range');
 	      }
 	    }
 	  }, {
 	    key: "layoutHint",
 	    value: function layoutHint() {
-	      var hintContainer = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getHintText());
+	      var hintContainer = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getHintText());
 	      main_core.Dom.insertBefore(hintContainer, this._container);
 	    }
 	  }, {
@@ -288,16 +291,27 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return (_this$_schemeElement$2 = this._schemeElement.getData().dateEndFieldName) !== null && _this$_schemeElement$2 !== void 0 ? _this$_schemeElement$2 : 'DATE_FILTER_END';
 	    }
 	  }, {
+	    key: "getIncludeLastDateName",
+	    value: function getIncludeLastDateName() {
+	      var _this$_schemeElement$3;
+	      return (_this$_schemeElement$3 = this._schemeElement.getData().includeLastDateName) !== null && _this$_schemeElement$3 !== void 0 ? _this$_schemeElement$3 : 'INCLUDE_LAST_FILTER_DATE';
+	    }
+	  }, {
 	    key: "save",
 	    value: function save() {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(DateFilterField.prototype), "save", this).call(this);
 	      this._model.setField(this.getDateStartFieldName(), null);
 	      this._model.setField(this.getDateEndFieldName(), null);
+	      this._model.setField(this.getIncludeLastDateName(), null);
 	      if (main_core.Type.isDomNode(this.endInput)) {
 	        this._model.setField(this.getDateEndFieldName(), this.endInput.value);
 	      }
 	      if (main_core.Type.isDomNode(this.startInput)) {
 	        this._model.setField(this.getDateStartFieldName(), this.startInput.value);
+	      }
+	      if (main_core.Type.isDomNode(this.includeLastDateCheckbox)) {
+	        this.includeLastDateCheckbox.value = this.includeLastDateCheckbox.checked ? 'Y' : 'N';
+	        this._model.setField(this.getIncludeLastDateName(), this.includeLastDateCheckbox.checked ? 'Y' : 'N');
 	      }
 	    }
 	  }], [{
@@ -343,7 +357,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return DashboardDateFilterField;
 	}(DateFilterField);
 
-	var _templateObject$2, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1;
+	var _templateObject$2, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8;
 	var KeyInfoField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
 	  babelHelpers.inherits(KeyInfoField, _BX$UI$EntityEditorCu);
 	  function KeyInfoField() {
@@ -378,9 +392,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      this.keyInput = main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"password\" class=\"ui-ctl-element\" readonly value=\"", "\">\n\t\t"])), value);
 	      this.eyeButton = main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn-link ui-btn\">\n\t\t\t\t<span class=\"ui-icon-set --crossed-eye\"></span>\n\t\t\t</button>\n\t\t"])));
 	      main_core.Event.bind(this.eyeButton, 'click', this.toggleKey.bind(this));
-	      var copyButton = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn-link ui-btn\">\n\t\t\t\t<span class=\"ui-icon-set --copy-plates\"></span>\n\t\t\t</button>\n\t\t"])));
+	      var copyButton = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn-link ui-btn\">\n\t\t\t\t<span class=\"ui-icon-set --copy-plates\"></span>\n\t\t\t</button>\n\t\t"])));
 	      main_core.Event.bind(copyButton, 'click', this.copyText.bind(this));
-	      var content = main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl ui-ctl__combined-input ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-icon__set ui-ctl-after\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.eyeButton, copyButton, this.keyInput);
+	      var content = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl ui-ctl__combined-input ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-icon__set ui-ctl-after\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.eyeButton, copyButton, this.keyInput);
 	      main_core.Dom.append(content, this._innerWrapper);
 	      this.refreshButton = new ui_buttons.Button({
 	        text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1'),
@@ -456,7 +470,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return KeyInfoField;
 	}(BX.UI.EntityEditorCustom);
 
-	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$2, _templateObject7$2;
+	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$2, _templateObject7$1;
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _values = /*#__PURE__*/new WeakMap();
@@ -585,7 +599,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        var saveBlock = main_core.Tag.render(_templateObject6$2 || (_templateObject6$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"save-block\"></div>"])));
 	        babelHelpers.classPrivateFieldGet(this, _values).forEach(function (id) {
 	          values.push(id);
-	          main_core.Dom.append(main_core.Tag.render(_templateObject7$2 || (_templateObject7$2 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[]\" value=\"", "\">"])), _this5.getName(), id), saveBlock);
+	          main_core.Dom.append(main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[]\" value=\"", "\">"])), _this5.getName(), id), saveBlock);
 	        });
 	        main_core.Dom.append(saveBlock, this._innerWrapper);
 	      }

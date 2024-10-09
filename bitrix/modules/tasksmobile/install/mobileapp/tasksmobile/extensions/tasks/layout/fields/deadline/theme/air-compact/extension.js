@@ -19,6 +19,7 @@ jn.define('tasks/layout/fields/deadline/theme/air-compact', (require, exports, m
 			readOnly: field.isReadOnly(),
 			hasError: isOverdue || field.hasErrorMessage(),
 			multiple: field.isMultiple(),
+			isRestricted: field.isRestricted(),
 			leftIcon: field.getLeftIcon(),
 			defaultLeftIcon: field.getDefaultLeftIcon(),
 			text: field.isEmpty() ? field.getTitleText() : field.getDisplayedValue(),

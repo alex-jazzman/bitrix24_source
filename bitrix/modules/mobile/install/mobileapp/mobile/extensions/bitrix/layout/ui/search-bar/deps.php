@@ -5,6 +5,7 @@ return [
 		'tokens',
 		'haptics',
 		'loc',
+		'type',
 		'qrauth/utils',
 		'utils/object',
 		'utils/string',

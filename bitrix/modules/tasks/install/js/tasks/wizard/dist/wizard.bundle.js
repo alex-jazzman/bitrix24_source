@@ -316,16 +316,20 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _openStep)[_openStep](babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][nextStep]);
 	}
 	function _renderFinishButton2() {
+	  var _babelHelpers$classPr3;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].finishButton = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].finishButton;
+	  (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].finishButton) == null ? void 0 : _babelHelpers$classPr3.setDataSet({
+	    id: 'tasks-wizard-flow-finish'
+	  });
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].finishButton.render();
 	}
 	function _renderSaveChangesButton2() {
-	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  var _babelHelpers$classPr4, _babelHelpers$classPr5;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].saveChangesButton = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].saveChangesButton;
-	  (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].saveChangesButton) == null ? void 0 : _babelHelpers$classPr3.setDataSet({
+	  (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].saveChangesButton) == null ? void 0 : _babelHelpers$classPr4.setDataSet({
 	    id: 'tasks-wizard-flow-save'
 	  });
-	  return (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].saveChangesButton) == null ? void 0 : _babelHelpers$classPr4.render();
+	  return (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].saveChangesButton) == null ? void 0 : _babelHelpers$classPr5.render();
 	}
 	function _openStep2(currentStep) {
 	  const index = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].findIndex(step => step.id === currentStep.id);

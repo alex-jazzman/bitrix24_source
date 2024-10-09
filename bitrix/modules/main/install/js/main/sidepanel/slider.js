@@ -636,6 +636,7 @@ BX.SidePanel.Slider.prototype =
 	{
 		return (
 			this.allowChangeHistory &&
+			!this.allowCrossOrigin &&
 			!this.isSelfContained() &&
 			!this.getUrl().match(/^\/bitrix\/(components|tools)\//i)
 		);

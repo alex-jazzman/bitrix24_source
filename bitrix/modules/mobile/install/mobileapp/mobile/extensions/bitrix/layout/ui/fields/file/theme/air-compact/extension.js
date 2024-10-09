@@ -21,6 +21,8 @@ jn.define('layout/ui/fields/file/theme/air-compact', (require, exports, module) 
 			readOnly: field.isReadOnly(),
 			hasError: field.hasFilesWithErrors(),
 			multiple: field.isMultiple(),
+			isRestricted: field.isRestricted(),
+			leftIcon: field.getLeftIcon(),
 			defaultLeftIcon: field.getDefaultLeftIcon(),
 			text: field.getTitleText(),
 			textMultiple,

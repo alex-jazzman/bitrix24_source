@@ -70,7 +70,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 			const { checked } = this.props;
 
 			return new Checkbox({
-				testId: this.getTestId(checked ? 'select' : 'unselect'),
+				testId: this.getTestId(),
 				checked,
 				useState: false,
 				size: 18,
@@ -128,9 +128,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 
 		getTestId(suffix)
 		{
-			const prefix = 'checkbox_block';
-
-			return suffix ? `${prefix}_${suffix}` : prefix;
+			return 'checkbox_block';
 		}
 
 		#setRef = (ref) => {

@@ -2,6 +2,7 @@ import ColumnItemOptions from "../columnitem";
 import {Event, Text, Tag, Dom, Loc} from 'main.core';
 
 import {PopupMenu} from "main.popup";
+import type { ChangerOpts } from './changer';
 import Changer from "./changer";
 import {BaseEvent, EventEmitter} from "main.core.events";
 
@@ -14,13 +15,15 @@ export default class VariableSelector extends Changer
 {
 	static TYPE = 'variables';
 
+	changerOptions: ChangerOpts;
+
 	constructor(options: ColumnItemOptions)
 	{
 		super(options);
 
-		this.selectedValues = [this.currentValue];
-
 		this.variables = options.variables || [];
+
+		this.selectedValues = [this.currentValue ?? '0'];
 	}
 
 	bindEvents()
@@ -114,5 +117,23 @@ export default class VariableSelector extends Changer
 
 		EventEmitter.emit('BX.UI.AccessRights.ColumnItem:selectAccessItems', this);
 		EventEmitter.emit('BX.UI.AccessRights.ColumnItem:update', this);
+	}
+
+	adjustChanger(): void
+	{
+		const defaultValue = this.changerOptions.replaceNullValueTo || null;
+
+		const selectedValue = this.selectedValues[0] || defaultValue;
+
+		if (selectedValue === this.currentValue)
+		{
+			this.isModify = false;
+			this.removeChangerHtmlClass();
+		}
+		else
+		{
+			this.isModify = true;
+			this.addChangerHtmlClass();
+		}
 	}
 }

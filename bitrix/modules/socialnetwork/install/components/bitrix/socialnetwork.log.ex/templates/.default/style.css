@@ -2144,6 +2144,12 @@ a.feed-post-more-link:hover {
 	padding: 5px 0 1px 10px;
 }
 
+.feed-com-tags-block .feed-com-files-cont {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
 .feed-com-file-wrap {
 	box-sizing: border-box;
 	display: block;

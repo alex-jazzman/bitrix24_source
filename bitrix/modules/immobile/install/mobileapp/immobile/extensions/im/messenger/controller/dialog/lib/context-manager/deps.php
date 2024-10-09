@@ -11,6 +11,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/plan-limit',
 	],
 	'bundle' => [
 		'./src/context-manager',

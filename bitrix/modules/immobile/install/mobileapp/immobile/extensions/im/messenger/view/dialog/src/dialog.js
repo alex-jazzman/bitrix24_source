@@ -8,7 +8,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { View } = require('im/messenger/view/base');
-	const { EventType, MessageType } = require('im/messenger/const');
+	const { EventType, MessageType, MessageIdType } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -530,6 +530,24 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {string} messageId
+		 * @return  {number}
+		 */
+		getPlayingTime(messageId)
+		{
+			try
+			{
+				return this.ui.getPlayingTime?.(messageId) || 0;
+			}
+			catch (error)
+			{
+				logger.error(error);
+
+				return 0;
+			}
+		}
+
+		/**
 		 * @desc update messages
 		 * @param {object} messages
 		 */
@@ -708,6 +726,21 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 
 			return this.messageList.filter((mess) => mess.type === MessageType.image).reverse();
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isHasPlanLimitMessage()
+		{
+			if (!Type.isArrayFilled(this.messageList))
+			{
+				return false;
+			}
+
+			return this.messageList.some((message) => {
+				return (message.id === MessageIdType.planLimitBanner) && message.type === MessageType.banner;
+			});
 		}
 
 		/* endregion ViewMessageList */

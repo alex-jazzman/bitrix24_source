@@ -12,6 +12,10 @@ export const CheckboxListCategory = {
 		'setOptionRef',
 	],
 
+	emits: [
+		'onToggleOption',
+	],
+
 	components: {
 		CheckboxListOption,
 	},
@@ -23,6 +27,10 @@ export const CheckboxListCategory = {
 			{
 				this.setOptionRef(ref.getId(), ref);
 			}
+		},
+		onToggleOption(event)
+		{
+			this.$emit('onToggleOption', event);
 		},
 	},
 
@@ -50,6 +58,7 @@ export const CheckboxListCategory = {
 						:isLocked="option?.locked"
 						:isEditable="isEditableOptionsTitle"
 						:ref="setRef"
+						@onToggleOption="onToggleOption"
 					/>
 				</div>
 			</div>

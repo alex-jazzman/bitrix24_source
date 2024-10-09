@@ -10,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 global $APPLICATION;
-$APPLICATION->SetTitle(Loc::getMessage("BIZPROC_WORKFLOW_TIMELINE_SLIDER_TITLE"));
+$APPLICATION->SetTitle(Loc::getMessage("BIZPROC_WORKFLOW_TIMELINE_SLIDER_TITLE_MSGVER_1"));
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-paddings no-background');
 
@@ -20,6 +20,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') 
  */
 
 Extension::load([
+	'bizproc.router',
 	'bizproc.workflow.timeline',
 	'ui.buttons',
 	'ui.forms',
@@ -31,6 +32,7 @@ $culture = Application::getInstance()->getContext()->getCulture();
 
 $config = [
 	'dateFormat' => $culture?->getLongDateFormat(),
+	'dateFormatShort' => $culture?->getDayMonthFormat(),
 	'timeFormat' => $culture?->getShortTimeFormat(),
 ];
 
@@ -49,6 +51,8 @@ $component = $this->getComponent();
 
 <script>
 	BX.ready(function () {
+
+		BX.Bizproc.Router.init();
 		const timeline = new BX.Bizproc.Workflow.Timeline(
 			<?= Json::encode($arResult['timelineProps']) ?>,
 			<?= Json::encode($config) ?>

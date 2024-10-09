@@ -534,11 +534,16 @@ elseif (isset($arParams['AJAX_CALL']) && $arParams['AJAX_CALL'] == 'INFO')
 
 			if (is_array($arResult['USER']['UF_DEPARTMENT']) && count($arResult['USER']['UF_DEPARTMENT']) > 0)
 			{
-				$dbRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('ID' => $arResult['USER']['UF_DEPARTMENT']));
-				$arResult['USER']['UF_DEPARTMENT'] = array();
-				while ($arSect = $dbRes->Fetch())
+				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+					->departmentRepository();
+				$departmentCollection = $departmentRepository->findAllByIds($arResult['USER']['UF_DEPARTMENT']);
+				$arResult['USER']['UF_DEPARTMENT'] = [];
+				foreach ($departmentCollection as $department)
 				{
-					$arResult['USER']['UF_DEPARTMENT'][] = array('ID' => $arSect['ID'], 'NAME' => $arSect['NAME']);
+					$arResult['USER']['UF_DEPARTMENT'][] = [
+						'ID' => $department->getId(),
+						'NAME' => $department->getName(),
+					];
 				}
 			}
 

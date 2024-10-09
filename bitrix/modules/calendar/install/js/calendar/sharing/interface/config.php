@@ -27,6 +27,7 @@ return [
 		'spotlight',
 		'ui.tour',
 		'ui.cnt',
+		'ui.info-helper',
 	],
 	'skip_core' => false,
 ];

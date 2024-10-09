@@ -42,11 +42,11 @@ export const ReviewItem = {
 		this.newReviewRating = this.review.RATING;
 	},
 	methods: {
-		getDetailLink: function(appCode) {
+		getDetailLink: function(reviewItem) {
 			const params = {
 				from: 'reviews',
 			};
-			return MarketLinks.appDetail(appCode, false, params);
+			return MarketLinks.appDetail(reviewItem, params);
 		},
 		showMenu: function () {
 			let menu = [];
@@ -201,7 +201,7 @@ export const ReviewItem = {
 			</div>
 			<div class="market-reviews__item-content">
 				<a class="market-reviews__item-logo"
-				   :href="getDetailLink(review.APP_CODE)"
+				   :href="getDetailLink(review)"
 				>
 					<img class="market-reviews__item-logo-img"
 						 :src="review.APP_LOGO"
@@ -211,7 +211,7 @@ export const ReviewItem = {
 				<div class="market-reviews__item-main-content">
 					<div class="market-reviews__item-title-wrapper">
 						<a class="market-reviews__item-title"
-						   :href="getDetailLink(review.APP_CODE)"
+						   :href="getDetailLink(review)"
 						>{{ review.APP_NAME }}</a>
 						<div class="market-reviews__item-rating">
 							<Stars :rating="review.RATING"

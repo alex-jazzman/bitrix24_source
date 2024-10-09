@@ -304,7 +304,6 @@ class Engine
 					debug: config.debug === true,
 					logToken: createCallResponse.logToken,
 					connectionData: createCallResponse.connectionData,
-					enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 					// jwt: callFields['JWT'],
 					// endpoint: callFields['ENDPOINT'],
 				});
@@ -383,7 +382,6 @@ class Engine
 					logToken: createCallResponse.logToken,
 					connectionData: createCallResponse.connectionData,
 					debug: config.debug,
-					enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 					// jwt: callFields['JWT'],
 					// endpoint: callFields['ENDPOINT']
 				});
@@ -423,7 +421,6 @@ class Engine
 			startDate: callFields['START_DATE'],
 			logToken: logToken,
 			connectionData: connectionData,
-			enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 			// jwt: callFields['JWT'],
 			// endpoint: callFields['ENDPOINT'],
 
@@ -590,7 +587,6 @@ class Engine
 				startDate: callFields.START_DATE,
 				logToken: params.logToken,
 				connectionData: params.connectionData,
-				enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 				events: {
 					onDestroy: this.#onCallDestroy.bind(this)
 				},

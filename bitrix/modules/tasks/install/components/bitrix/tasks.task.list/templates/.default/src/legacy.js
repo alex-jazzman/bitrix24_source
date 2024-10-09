@@ -7,6 +7,12 @@ BX.Tasks.GridActions = {
 	defaultPresetId: '',
 	getTotalCountProceed: false,
 	currentGroupAction: null,
+	restrictions: {
+		project: {
+			limitExceeded: false,
+			limitFeatureId: '',
+		}
+	},
 
 	checkCanMove: function()
 	{
@@ -292,6 +298,10 @@ BX.Tasks.GridActions = {
 			entities: [
 				{
 					id: 'project',
+					options: {
+						lockProjectLink: this.restrictions.project.limitExceeded,
+						lockProjectLinkFeatureId: this.restrictions.project.limitFeatureId,
+					},
 				},
 			],
 			events: {

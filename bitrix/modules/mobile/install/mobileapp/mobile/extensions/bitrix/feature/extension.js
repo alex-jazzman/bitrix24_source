@@ -101,6 +101,16 @@ jn.define('feature', (require, exports, module) => {
 
 			return minApiVersion(55, 'isOpenImageNonContextSupported');
 		}
+
+		static isFallbackUrlSupported()
+		{
+			return minApiVersion(55, 'isFallbackUrlSupported');
+		}
+
+		static isDidAdoptHeightByKeyboardEventSupported()
+		{
+			return minApiVersion(55, 'isDidAdoptHeightByKeyboardEventSupported');
+		}
 	}
 
 	/**

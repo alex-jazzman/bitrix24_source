@@ -6,7 +6,12 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
-	const { dateTimeOutline: dateTimeOutlineSvg, clipOutline, clockOutline: clockOutlineSvg } = require('assets/common');
+	const {
+		dateTimeOutline: dateTimeOutlineSvg,
+		clipOutline,
+		clockOutline: clockOutlineSvg,
+	} = require('assets/common');
+	const { Icon } = require('assets/icons');
 	const AppTheme = require('apptheme');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { ResponsibleSelector } = require('crm/timeline/services/responsible-selector');
@@ -22,6 +27,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 	const { ItemSelector } = require('layout/ui/item-selector');
 	const { DatePill } = require('layout/ui/date-pill');
 	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
+	const { debounce } = require('utils/function');
 
 	const INITIAL_HEIGHT = 1000;
 
@@ -69,6 +75,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 			this.updateResponsibleUser = this.updateResponsibleUser.bind(this);
 			this.updateDeadline = this.updateDeadline.bind(this);
 			this.onChangeSelectedReminders = this.onChangeSelectedReminders.bind(this);
+			this.refreshSaveButtonDebounced = debounce(this.refreshSaveButton, 500, this);
 		}
 
 		componentDidMount()
@@ -102,7 +109,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 		static getMenuIcon()
 		{
-			return `<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 5.5C9.47715 5.5 5 9.97715 5 15.5C5 21.0228 9.47715 25.5 15 25.5C20.5228 25.5 25 21.0228 25 15.5C25 9.97715 20.5228 5.5 15 5.5ZM11.6346 14.4874L13.8697 16.7226L19.228 11.3643L20.8081 12.9444L13.8713 19.8812L13.7853 19.7952L13.7838 19.7968L10.0545 16.0675L11.6346 14.4874Z" fill="${AppTheme.colors.base4}"/></svg>`;
+			return Icon.TASK;
 		}
 
 		static getDefaultPosition()
@@ -158,6 +165,16 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 			}
 
 			return this.fileFieldRef.hasUploadingFiles();
+		}
+
+		isFilesFieldValid()
+		{
+			if (!this.fileFieldRef)
+			{
+				return true;
+			}
+
+			return this.fileFieldRef.validate();
 		}
 
 		render()
@@ -271,7 +288,9 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					readOnly: false,
 					onChange: (files) => {
 						files = Array.isArray(files) ? files : [];
-						this.setState({ files }, () => this.refreshSaveButton());
+						this.setState({ files }, () => {
+							this.refreshSaveButtonDebounced();
+						});
 					},
 				}),
 			);
@@ -648,7 +667,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 		isSaveAllowed()
 		{
-			return this.state.text.length > 0 && !this.hasUploadingFiles();
+			return this.state.text.length > 0 && !this.hasUploadingFiles() && this.isFilesFieldValid();
 		}
 
 		refreshSaveButton()
@@ -682,7 +701,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					ownerId: this.entity.id,
 					description: text.trim(),
 					deadline: this.deadlineRef?.getMoment().format(datetime()),
-					fileTokens: files.map((file) => file.token),
+					fileTokens: files.map((file) => file.token).filter(Boolean),
 					parentActivityId: activityId || null,
 					pingOffsets: this.selectorRef.getSelectedValues(),
 				};

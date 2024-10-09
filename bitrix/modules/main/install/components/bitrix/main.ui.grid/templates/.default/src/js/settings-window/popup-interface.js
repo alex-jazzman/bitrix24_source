@@ -9,6 +9,6 @@ export interface PopupInterface {
 	isForAll(): boolean;
 	getPopupItems(): HTMLCollection;
 	getItems(): [];
-	select(id: string): void;
+	select(id: string, value: boolean): void;
 	saveColumns(columns: [], callback: Function): void;
 }

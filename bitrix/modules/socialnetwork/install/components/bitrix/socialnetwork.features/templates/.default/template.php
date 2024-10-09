@@ -36,6 +36,24 @@ elseif (!empty($arResult["FatalError"]))
 }
 else
 {
+	if ($arResult['featuresPageLimited'])
+	{
+		$componentParameters = [
+			'LIMIT_CODE' => 'limit_socialnetwork_projects_access_permissions',
+		];
+
+		$APPLICATION->IncludeComponent(
+			"bitrix:ui.sidepanel.wrapper",
+			"",
+			[
+				'POPUP_COMPONENT_NAME' => 'bitrix:intranet.settings.tool.stub',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+				'POPUP_COMPONENT_PARAMS' => $componentParameters,
+			],
+		);
+		return;
+	}
+
 	$isProject = ($arResult['Group']['PROJECT'] === 'Y');
 
 	if (

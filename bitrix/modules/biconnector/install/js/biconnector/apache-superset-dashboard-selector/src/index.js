@@ -7,6 +7,7 @@ type Props = {
 	textNodeId: string,
 	dashboardId: number,
 	marketCollectionUrl: string,
+	isMarketInstalled: boolean,
 };
 
 class SupersetDashboardSelector
@@ -16,6 +17,7 @@ class SupersetDashboardSelector
 	#textNode: HTMLElement;
 	#dashboardId: number;
 	#marketCollectionUrl: string;
+	#isMarketInstalled: boolean;
 
 	constructor(props: Props)
 	{
@@ -23,6 +25,7 @@ class SupersetDashboardSelector
 		this.#textNode = document.getElementById(props.textNodeId);
 		this.#dashboardId = props.dashboardId;
 		this.#marketCollectionUrl = props.marketCollectionUrl;
+		this.#isMarketInstalled = props.isMarketInstalled;
 		this.#initDialog(this.#selectorNode);
 
 		if (this.#selectorNode)
@@ -122,10 +125,19 @@ class SupersetDashboardSelector
 			</span>`;
 
 		Event.bind(footerLink, 'click', () => {
-			BX.SidePanel.Instance.open(this.#marketCollectionUrl, { customLeftBoundary: 0 });
-			BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('market', 'market_call', {
-				c_element: 'detail_button',
-			});
+			if (this.#isMarketInstalled)
+			{
+				BX.SidePanel.Instance.open(this.#marketCollectionUrl, { customLeftBoundary: 0 });
+				BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('market', 'market_call', {
+					c_element: 'detail_button',
+				});
+			}
+			else
+			{
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER_MARKET_INSTALL_ERROR'),
+				});
+			}
 		});
 
 		return footerLink;

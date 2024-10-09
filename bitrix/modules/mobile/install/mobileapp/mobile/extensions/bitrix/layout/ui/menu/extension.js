@@ -3,8 +3,8 @@
  */
 jn.define('layout/ui/menu', (require, exports, module) => {
 	const { Alert } = require('alert');
-	const { Feature } = require('feature');
 	const { Color } = require('tokens');
+	const { Feature } = require('feature');
 	const { mergeImmutable } = require('utils/object');
 
 	const DEFAULT_MENU_SECTION_NAME = 'main';
@@ -27,10 +27,27 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef {Object} UIMenuActionProps
+	 * @property {string} id
+	 * @property {string} testId
+	 * @property {string} title
+	 * @property {string} sectionCode
+	 * @property {Function} onItemSelected
+	 * @property {Icon} [icon]
+	 * @property {Object} [counterValue]
+	 * @property {boolean} [disable]
+	 * @property {boolean} [checked]
+	 * @property {string} [textColor]
+	 * @property {boolean} [showTopSeparator]
+	 *
 	 * @class UIMenu
 	 */
 	class Menu
 	{
+		/**
+		 * @param {Array<UIMenuActionProps>} actions
+		 * @param options
+		 */
 		constructor(actions, options = {})
 		{
 			this.popup = null;
@@ -266,46 +283,48 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 		}
 
 		/**
-		 * @param action
+		 * @param {UIMenuActionProps} action
 		 * @returns {string}
 		 */
 		getIconUrl(action)
 		{
-			const iconUrl = action?.iconUrl;
+			const icon = action?.icon;
 
-			if (Application.isBeta() && iconUrl)
+			if (Application.isBeta() && action?.iconUrl)
 			{
-				console.warn(`UIMenu: Please use the iconName parameter instead of <<${iconUrl}>>.`);
+				console.warn(`UIMenu: Please use the iconName parameter instead of <<${action?.iconUrl}>>.`);
 			}
 
-			return iconUrl;
+			return action?.iconUrl || icon?.getPath();
 		}
 
 		/**
-		 * @param action
+		 * @param {UIMenuActionProps} action
 		 * @returns {string}
 		 */
 		getIconName(action)
 		{
-			const icon = action?.iconName;
-			const isStringIcon = typeof icon === 'string';
+			const icon = action?.icon;
+			const iconName = action?.iconName;
 
-			if (!icon)
+			if (!iconName && !icon)
 			{
 				return null;
 			}
 
+			const isStringIcon = typeof iconName === 'string';
+
 			if (Application.isBeta() && isStringIcon)
 			{
-				console.warn(`UIMenu: You are using an deprecated icon "<<${icon}>>" type, you need to use enums "Icon.<name your icon>", example "cont { Icon } = require('assets/icons');`);
+				console.warn(`UIMenu: You are using an deprecated icon "<<${iconName}>>" type, you need to use enums "Icon.<name your icon>", example "cont { Icon } = require('assets/icons');`);
 			}
 
 			if (isStringIcon)
 			{
-				return icon;
+				return iconName;
 			}
 
-			return icon?.getIconName?.();
+			return icon?.getIconName?.() || iconName?.getIconName?.();
 		}
 	}
 

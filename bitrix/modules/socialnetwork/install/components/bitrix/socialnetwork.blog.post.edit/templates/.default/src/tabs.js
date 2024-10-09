@@ -1056,6 +1056,22 @@ export default class PostFormTabs extends EventEmitter
 			spanIcon[i].innerHTML = spanDataPicture[i].getAttribute('data-picture-small');
 		}
 
+		if (!this.listsMenu.popupWindow.isShown())
+		{
+			Runtime.loadExtension('ui.analytics')
+				.then(({ sendData }) => {
+					sendData({
+						tool: 'automation',
+						category: 'bizproc_operations',
+						event: 'drawer_open',
+						c_section: 'feed',
+						c_element: 'button',
+					});
+				})
+				.catch(() => {})
+			;
+		}
+
 		this.listsMenu.popupWindow.show();
 	};
 
@@ -1081,6 +1097,18 @@ export default class PostFormTabs extends EventEmitter
 						CreationGuide.open({
 							iBlockTypeId: iblock[5],
 							iBlockId: Text.toInteger(iblock[0]),
+							analyticsSection: 'feed',
+							analyticsP1: iblock[1],
+							onClose: () => {
+								if (BX.Livefeed && BX.Livefeed.PageInstance)
+								{
+									BX.Livefeed.PageInstance.refresh();
+								}
+								else
+								{
+									window.location.reload();
+								}
+							},
 						});
 
 						return;

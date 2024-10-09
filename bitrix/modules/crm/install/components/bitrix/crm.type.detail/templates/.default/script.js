@@ -28,6 +28,7 @@
 	    babelHelpers.defineProperty(this, "isExternal", false);
 	    babelHelpers.defineProperty(this, "isSaveFromTypeDetail", true);
 	    babelHelpers.defineProperty(this, "isCreateSectionsViaAutomatedSolutionDetails", false);
+	    babelHelpers.defineProperty(this, "isCrmAdmin", false);
 	    if (main_core.Type.isPlainObject(params)) {
 	      this.type = params.type;
 	      this.isNew = !this.type.isSaved();
@@ -41,6 +42,7 @@
 	      this.restrictionSliderCode = main_core.Type.isStringFilled(params.restrictionSliderCode) && this.isRestricted ? params.restrictionSliderCode : null;
 	      this.isExternal = Boolean(params.isExternal);
 	      this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
+	      this.isCrmAdmin = Boolean(params.isCrmAdmin);
 	    }
 	    this.buttonsPanel = document.getElementById('ui-button-panel');
 	    this.saveButton = document.getElementById('ui-button-panel-save');
@@ -528,7 +530,8 @@
 	        container: this.container.querySelector('[data-role="crm-type-custom-section-container"]'),
 	        selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
 	        customSections: this.type.getCustomSections() || [],
-	        isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails
+	        isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
+	        isCrmAdmin: this.isCrmAdmin
 	      });
 	    }
 	  }], [{
@@ -748,6 +751,9 @@
 	    if (main_core.Type.isBoolean(options.isCreateSectionsViaAutomatedSolutionDetails)) {
 	      this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
 	    }
+	    if (main_core.Type.isBoolean(options.isCrmAdmin)) {
+	      this.isCrmAdmin = options.isCrmAdmin;
+	    }
 	    this.initSelector();
 	    this.settingsContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-type-hidden crm-type-custom-sections-settings-container\">\n\t\t\t\t<div class=\"crm-type-relation-subtitle\">", "</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1'));
 	    this.container.append(this.settingsContainer);
@@ -798,6 +804,9 @@
 	        tagSelectorOptions.events = {
 	          onCreateButtonClick: this.onCreateButtonClick.bind(this)
 	        };
+	      }
+	      if (!this.isCrmAdmin) {
+	        tagSelectorOptions.locked = true;
 	      }
 	      this.selector = new ui_entitySelector.TagSelector(tagSelectorOptions);
 	      this.selector.renderTo(this.selectorContainer);

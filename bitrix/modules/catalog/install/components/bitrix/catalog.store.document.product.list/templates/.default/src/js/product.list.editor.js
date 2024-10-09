@@ -507,6 +507,9 @@ export class Editor
 	{
 		if (this.getGrid().getRows().getCountDisplayed() === 0)
 		{
+			this.setSettingValue('taxIncluded', null);
+			this.setSettingValue('taxIncludedFormatted', null);
+
 			requestAnimationFrame(() => this.addProductRow());
 		}
 	}
@@ -1537,6 +1540,30 @@ export class Editor
 		if (productRow && data.fields)
 		{
 			delete data.fields.ID;
+
+			// taxes
+			const taxIncluded = this.getSettingValue('taxIncluded', null);
+			const taxIncludedFormatted = this.getSettingValue('taxIncludedFormatted', null);
+			if (taxIncluded && taxIncludedFormatted)
+			{
+				if (
+					data.fields['TAX_INCLUDED'] === 'Y'
+					&& data.fields['TAX_INCLUDED'] !== taxIncluded
+				)
+				{
+					data.fields['BASE_PRICE'] = data.fields['BASE_PRICE'] / (1 + data.fields['TAX_RATE'] / 100);
+				}
+
+				data.fields['TAX_INCLUDED'] = taxIncluded;
+				data.fields['TAX_INCLUDED_FORMATTED'] = taxIncludedFormatted;
+			}
+			else
+			{
+				this.setSettingValue('taxIncluded', data.fields.TAX_INCLUDED);
+				this.setSettingValue('taxIncludedFormatted', data.fields.TAX_INCLUDED_FORMATTED);
+			}
+			// end taxes
+
 			productRow.setFields(data.fields);
 			Object.keys(data.fields).forEach((key) => {
 				productRow.updateFieldValue(key, data.fields[key]);
@@ -1585,6 +1612,12 @@ export class Editor
 				.layout()
 			;
 			product.executeExternalActions();
+		}
+
+		if (this.getProductCount() === 1)
+		{
+			this.setSettingValue('taxIncluded', null);
+			this.setSettingValue('taxIncludedFormatted', null);
 		}
 	}
 
@@ -1671,6 +1704,10 @@ export class Editor
 			'STORE_TO_TITLE',
 			'TOTAL_PRICE',
 			'TYPE',
+			'PRICE',
+			'TAX_RATE',
+			'TAX_INCLUDED',
+			'TAX_SUM',
 		];
 	}
 
@@ -1769,9 +1806,17 @@ export class Editor
 	updateTotalDataDelayed(options = {})
 	{
 		let totalCost = 0;
-		const field = this.getSettingValue('totalCalculationSumField', 'PURCHASING_PRICE');
-		this.products.forEach(item => totalCost += Text.toNumber(item.getField(field)) * Text.toNumber(item.getField('AMOUNT')));
-		this.setTotalData({totalCost});
+		let totalTax = 0;
+		const totalCostField = this.getSettingValue('totalCalculationSumField', 'PURCHASING_PRICE');
+		const totalTaxField = this.getSettingValue('totalCalculationSumTaxField', 'TAX_SUM');
+
+		this.products.forEach(item => {
+			totalCost += Text.toNumber(item.getField(totalCostField)) * Text.toNumber(item.getField('AMOUNT'));
+			totalTax += Text.toNumber(item.getField(totalTaxField));
+		});
+
+		const totalBeforeTax = totalCost - totalTax;
+		this.setTotalData({totalCost, totalBeforeTax, totalTax});
 	}
 
 	getProductsFields(fields: Array = [])
@@ -1792,7 +1837,7 @@ export class Editor
 		if (Type.isElementNode(item))
 		{
 			const currencyId = this.getCurrencyId();
-			const list = ['totalCost'];
+			const list = ['totalCost', 'totalBeforeTax', 'totalTax'];
 
 			for (const id of list)
 			{

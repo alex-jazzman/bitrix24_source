@@ -1086,6 +1086,13 @@ class BXEditorIframeCopilot
 
 		this.removeZwnbspSequence();
 
+		const range = selection.getRangeAt(0);
+		const contentEditableOffset = parseInt(getComputedStyle(this.contentEditable).paddingLeft);
+		if (range.getBoundingClientRect().x > contentEditableOffset)
+		{
+			return false;
+		}
+
 		if (selection.focusNode.outerHTML === '<span><br></span>' || selection.focusNode.outerHTML === '<div><br></div>')
 		{
 			selection.focusNode.replaceWith(BX.Tag.render`<br>`);

@@ -69,7 +69,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 				return this;
 			}
 
-			this.subtitle = message.text;
+			this.subtitle = this.getMessageText(item);
 
 			return this;
 		}

@@ -273,8 +273,13 @@ BX.CRM.Kanban.Grid.prototype = {
 					&& !BX.findParent(el.target, {className: 'bx-finder-popup'})
 				)
 				{
-					this.unSetKanbanDragMode();
-					this.resetMultiSelectMode();
+					const popup = BX.PopupWindowManager.getCurrentPopup();
+
+					if (!popup || !popup.isShown())
+					{
+						this.unSetKanbanDragMode();
+						this.resetMultiSelectMode();
+					}
 				}
 			}.bind(this));
 
@@ -1704,7 +1709,7 @@ BX.CRM.Kanban.Grid.prototype = {
 					const prevColumn = this.getColumn(prevColumnId);
 					const currentColumn = item.getColumn();
 
-					if (prevColumn.isHiddenTotalSum() !== currentColumn.isHiddenTotalSum())
+					if (prevColumn?.isHiddenTotalSum() !== currentColumn?.isHiddenTotalSum())
 					{
 						isShouldUpdateCard = true;
 					}
@@ -2817,6 +2822,11 @@ BX.CRM.Kanban.Grid.prototype = {
 			// );
 			if (!stilError)
 			{
+				if (this.itemMoving?.oldColumn?.id)
+				{
+					this.itemMoving.item.columnId = this.itemMoving.oldColumn.id;
+				}
+
 				this.moveItem(
 					this.itemMoving.item,
 					this.itemMoving.newColumn,

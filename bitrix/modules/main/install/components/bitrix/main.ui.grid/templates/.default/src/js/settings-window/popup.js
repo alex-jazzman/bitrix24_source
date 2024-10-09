@@ -800,11 +800,18 @@ class Popup implements PopupInterface
 		}
 	}
 
-	select(id: string): void
+	select(id: string, value: boolean = true): void
 	{
 		const column = this.getItems().find((item) => item.getId() === id);
 
-		column?.select();
+		if (value)
+		{
+			column?.select();
+		}
+		else
+		{
+			column?.unselect();
+		}
 	}
 
 	saveColumnsByNames(columns: string[], callback: Function): void

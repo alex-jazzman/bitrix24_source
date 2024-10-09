@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DialogType, EventType } = require('im/messenger/const');
+	const { DialogType, EventType, ComponentCode } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
@@ -28,6 +28,7 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			this.reactionRepository = this.core.getRepository().reaction;
 			this.messageRepository = this.core.getRepository().message;
 			this.pinMessageRepository = this.core.getRepository().pinMessage;
+			this.recentRepository = this.core.getRepository().recent;
 
 			this.messageContextCreator = new MessageContextCreator();
 
@@ -52,10 +53,16 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		 */
 		async onSyncRequestResultReceive(event)
 		{
+			if (!this.checkEventUuid(event.uuid))
+			{
+				return;
+			}
+
 			await this.fillData(event);
 		}
 
 		/**
+		 * @abstract
 		 * @param {object} data
 		 * @param {string} data.uuid
 		 * @param {SyncListResult} data.result
@@ -63,6 +70,28 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		async fillData(data)
 		{
 			throw new Error('SyncFillerBase.fillData must be override in subclass');
+		}
+
+		/**
+		 * @abstract
+		 * @return {string}
+		 *
+		 * @desc the method should return a prefix unique for each filler, which determines the need for event processing
+		 */
+		getUuidPrefix()
+		{
+			throw new Error('SyncFillerBase.getUuidPrefix must be override in subclass');
+		}
+
+		/**
+		 * @param {string} uuid
+		 * @return {boolean}
+		 *
+		 * @desc the method should check whether the uuid of the event is valid for this filler or not
+		 */
+		checkEventUuid(uuid)
+		{
+			return uuid.startsWith(this.getUuidPrefix());
 		}
 
 		/**
@@ -85,6 +114,7 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 				messages,
 				updatedMessages = {},
 				addedChats,
+				addedRecent,
 				completeDeletedMessages,
 				deletedChats,
 				addedPins,
@@ -113,6 +143,8 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 				await this.messageRepository.deleteByIdList(completeDeletedMessageIdList);
 				await this.pinMessageRepository.deleteByMessageIdList(completeDeletedMessageIdList);
 			}
+
+			await this.fillDatabaseFromRecent(addedRecent);
 		}
 
 		/**
@@ -213,6 +245,31 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		}
 
 		/**
+		 * @param {SyncListResult['addedRecent']} addedRecent
+		 * @return {Promise<void>}
+		 */
+		async fillDatabaseFromRecent(addedRecent)
+		{
+			const recentUsers = [];
+			addedRecent.forEach((recentItem) => {
+				if (recentItem.user)
+				{
+					recentUsers.push(recentItem.user);
+				}
+			});
+
+			if (Type.isArrayFilled(recentUsers))
+			{
+				await this.userRepository.saveFromRest(recentUsers);
+			}
+
+			if (Type.isArrayFilled(addedRecent))
+			{
+				await this.recentRepository.saveFromRest(addedRecent);
+			}
+		}
+
+		/**
 		 *
 		 * @param {SyncListResult['updatedMessages']} updatedMessages
 		 * @return {Promise<void>}
@@ -309,9 +366,11 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			const {
 				messages,
 				addedChats,
+				addedRecent,
 				completeDeletedMessages,
 				addedPins,
 				deletedPins,
+				deletedChats,
 				dialogIds,
 			} = syncListResult;
 
@@ -320,13 +379,15 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 				files,
 				reactions,
 			} = messages;
-
-			const pinnedUsers = addedPins.users ?? [];
-			const pinnedFiles = addedPins.files ?? [];
-
 			const messagesToSave = messages.messages;
 
-			const usersPromise = this.store.dispatch('usersModel/set', [...users, ...pinnedUsers]);
+			const pinnedUsers = addedPins.users ?? [];
+			const recentUsers = addedRecent.map((recentItem) => recentItem.user) ?? [];
+			const pinnedFiles = addedPins.files ?? [];
+
+			const filteredUsers = [...users, ...pinnedUsers, ...recentUsers].filter((user) => user.id !== 0);
+			const usersUniqueCollection = [...new Map(filteredUsers.map((user) => [user.id, user])).values()];
+			const usersPromise = this.store.dispatch('usersModel/set', usersUniqueCollection);
 
 			const addedChatsWithDialogIds = addedChats.map((chat) => {
 				const dialog = chat;
@@ -365,6 +426,26 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			]);
 
 			await Promise.all(pinPromises);
+
+			await this.store.dispatch('recentModel/update', addedRecent);
+
+			if (deletedChats)
+			{
+				for await (const keyId of Object.keys(deletedChats))
+				{
+					let dialogId = dialogIds[keyId];
+					if (!dialogId)
+					{
+						const dialog = this.store.getters['dialoguesModel/getByChatId'](keyId); // FIXME remove this check by dialogData when will backend always returned dialogIds with chatId
+						if (dialog && dialog.dialogId)
+						{
+							dialogId = dialog.dialogId;
+						}
+					}
+
+					this.store.dispatch('recentModel/delete', { id: dialogId ?? keyId });
+				}
+			}
 
 			const openChatIdList = this.getOpenChatsToAddMessages();
 			if (!Type.isArrayFilled(openChatIdList))

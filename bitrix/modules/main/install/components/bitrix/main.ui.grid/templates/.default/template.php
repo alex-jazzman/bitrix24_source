@@ -569,7 +569,11 @@ if ($emptyFooter)
 														?><span class="main-grid-cell-counter<?=$colLayout["counter"]["class"]?>"><?
 															if ($colLayout["counter"]["inner"]["enabled"]) :
 																?><span class="ui-counter<?=$colLayout["counter"]["counter"]["class"]?>"<?=$colLayout["counter"]["counter"]["attributes"]?>><?
-																	?><span class="ui-counter-inner"><?=$arRow["counters"][$id]["value"]?></span><?
+																	?><span class="ui-counter-inner"><?=$arRow["counters"][$id]["value"]?></span>
+																<?
+																if (!empty($colLayout["counter"]["counter"]["isDouble"])) :
+																	?><span class="ui-counter-secondary<?=$colLayout["counter"]["counter"]["secondaryClass"]?>"></span><?
+																endif;
 																?></span><?
 															endif;
 														?></span><?
@@ -669,7 +673,11 @@ if ($emptyFooter)
 														?><span class="main-grid-cell-counter<?=$colLayout["counter"]["class"]?>"><?
 															if ($colLayout["counter"]["inner"]["enabled"]) :
 																?><span class="ui-counter<?=$colLayout["counter"]["counter"]["class"]?>"<?=$colLayout["counter"]["counter"]["attributes"]?>><?
-																	?><span class="ui-counter-inner"><?=$arRow["counters"][$id]["value"]?></span><?
+																	?><span class="ui-counter-inner"><?=$arRow["counters"][$id]["value"]?></span>
+																<?
+																if (!empty($colLayout["counter"]["counter"]["isDouble"])) :
+																	?><span class="ui-counter-secondary<?=$colLayout["counter"]["counter"]["secondaryClass"]?>"></span><?
+																endif;
 																?></span><?
 															endif;
 														?></span><?

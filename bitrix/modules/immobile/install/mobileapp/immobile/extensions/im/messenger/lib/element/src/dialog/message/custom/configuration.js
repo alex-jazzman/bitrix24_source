@@ -42,18 +42,17 @@ jn.define('im/messenger/lib/element/dialog/message/custom/configuration', (requi
 		}
 
 		/**
+		 * @param {?string} [key]
 		 * @protected
 		 * @return {*}
 		 */
-		getMetaData()
+		getMetaData(key = this.getMetaDataKey())
 		{
-			const key = this.getMetaDataKey();
-
 			return this.metaData[key];
 		}
 
 		/**
-		 * @protected
+		 * @public
 		 * @return {MessagesModelState | {}}
 		 */
 		getMessage()
@@ -68,6 +67,14 @@ jn.define('im/messenger/lib/element/dialog/message/custom/configuration', (requi
 		getMessageComponentParams()
 		{
 			return this.getMessage()?.params?.COMPONENT_PARAMS;
+		}
+
+		/**
+		 * @return {object | undefined}
+		 */
+		getMessageComponentId()
+		{
+			return this.getMessage()?.params?.componentId;
 		}
 	}
 

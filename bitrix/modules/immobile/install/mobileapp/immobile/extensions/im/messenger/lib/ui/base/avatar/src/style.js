@@ -29,6 +29,28 @@ jn.define('im/messenger/lib/ui/base/avatar/style', (require, exports, module) =>
 	 */
 
 	const avatarStyle = {
+		S: {
+			justifyContent: 'center',
+			icon: {
+				width: 18,
+				height: 18,
+				borderRadius: 9,
+				squareBorderRadius: 4,
+			},
+			defaultIcon: {
+				width: 18,
+				height: 18,
+				borderRadius: 9,
+				squareBorderRadius: 4,
+				alignContent: 'center',
+				justifyContent: 'center',
+				text: {
+					fontSize: 8,
+					alignSelf: 'center',
+					color: '#FFF',
+				},
+			},
+		},
 		M: {
 			justifyContent: 'center',
 			icon: {

@@ -109,11 +109,12 @@ jn.define('layout/ui/fields/tag/theme/air', (require, exports, module) => {
 					)),
 				),
 			),
-			field.getAddButtonText()
+			field.shouldShowAddButton()
+			&& field.getAddButtonText()
 			&& !field.isReadOnly()
-			&& field.isMultiple()
+			&& !field.isRestricted()
 			&& !field.isEmpty()
-			&& field.shouldShowAddButton()
+			&& field.isMultiple()
 			&& AddButton({
 				testId: field.testId,
 				onClick: field.getContentClickHandler(),

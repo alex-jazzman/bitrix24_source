@@ -4,8 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use \Bitrix\Landing\Help;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Landing\Help;
+use Bitrix\Main\Localization\Loc;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -47,10 +47,11 @@ if ($isBitrix24Template)
 {
 	$this->SetViewTarget('inside_pagetitle');
 }
-?>
-<script src="/bitrix/components/bitrix/landing.filter/templates/.default/script.min.js?v1"></script>
 
-<?if (!$isBitrix24Template):?>
+/** @var CBitrixComponentTemplate $this */
+\Bitrix\Main\Page\Asset::getInstance()->addJs($this->GetFolder() . '/script.js');
+
+if (!$isBitrix24Template):?>
 <div class="tasks-interface-filter-container">
 <?endif;?>
 

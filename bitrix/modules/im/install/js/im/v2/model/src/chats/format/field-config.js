@@ -8,7 +8,7 @@ import {
 	prepareLastMessageViews,
 	prepareWritingList,
 	prepareManagerList,
-	prepareMuteList
+	prepareMuteList,
 } from './format-functions';
 
 export const chatFieldsConfig: FieldsConfig = [
@@ -176,6 +176,11 @@ export const chatFieldsConfig: FieldsConfig = [
 	{
 		fieldName: 'permissions',
 		targetFieldName: 'permissions',
+		checkFunction: Type.isPlainObject,
+	},
+	{
+		fieldName: 'tariffRestrictions',
+		targetFieldName: 'tariffRestrictions',
 		checkFunction: Type.isPlainObject,
 	},
 	{

@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,calendar_controls,calendar_planner,ui_vue3,calendar_util,calendar_entry,main_core,main_core_events,calendar_sectionmanager) {
+(function (exports,calendar_controls,calendar_planner,ui_vue3,calendar_util,calendar_entry,main_core,main_core_events,calendar_sectionmanager,viewer,calendar_entityrelation) {
 	'use strict';
 
 	const UserAvatar = {
@@ -74,6 +75,7 @@ this.BX = this.BX || {};
 	      isPrivate: this.params.isPrivate,
 	      location: this.params.location,
 	      canEditCalendar: this.params.canEditCalendar,
+	      canAttendeeEditCalendar: this.params.canAttendeeEditCalendar,
 	      canDeleteEvent: this.params.canDeleteEvent,
 	      showComments: this.params.showComments,
 	      filesView: this.getComponentHTML(this.params.filesView),
@@ -179,7 +181,7 @@ this.BX = this.BX || {};
 	          }
 	        }, this);
 	      }
-	      const accepted = (_this$attendees$y$fil = (_this$attendees$y = this.attendees.y) == null ? void 0 : _this$attendees$y.filter(a => parseInt(this.meetingHost.ID) !== parseInt(a.ID))) != null ? _this$attendees$y$fil : [];
+	      const accepted = (_this$attendees$y$fil = (_this$attendees$y = this.attendees.y) == null ? void 0 : _this$attendees$y.filter(attendee => attendee && parseInt(this.meetingHost.ID, 10) !== parseInt(attendee.ID, 10))) != null ? _this$attendees$y$fil : [];
 	      if (accepted.length <= 11) {
 	        this.avatarUsers = accepted.slice(0, 11);
 	        this.avatarMoreUsers = [];
@@ -216,6 +218,7 @@ this.BX = this.BX || {};
 	    },
 	    handleStatusUpdate(event) {
 	      this.entry.data.MEETING_STATUS = event.getData().status;
+	      this.curUserStatus = this.entry.data.MEETING_STATUS;
 	      this.isInvited = this.entry.isInvited();
 	    },
 	    handlePullEvent(event) {
@@ -274,6 +277,7 @@ this.BX = this.BX || {};
 	        this.isPrivate = newData.isPrivate;
 	        this.location = newData.location;
 	        this.canEditCalendar = newData.canEditCalendar;
+	        this.canAttendeeEditCalendar = newData.canAttendeeEditCalendar;
 	        this.canDeleteEvent = newData.canDeleteEvent;
 	        this.showComments = newData.showComments;
 	        this.filesView = this.getComponentHTML(newData.filesView);
@@ -543,6 +547,8 @@ this.BX = this.BX || {};
 									<div class="calendar-view-planner-wrap"></div>
 								</div>
 
+								<div class="calendar-slider-detail-relation" :id="id + '_view_relation_wrap'"/>
+
 								<div class="calendar-slider-detail-option">
 									<div class="calendar-slider-detail-option-block" v-if="isCrmEvent" ref="highlightCrmView">
 										<div class="calendar-slider-detail-option-name">{{$Bitrix.Loc.getMessage('EC_CRM_TITLE')}}:</div>
@@ -575,7 +581,7 @@ this.BX = this.BX || {};
 										<span :id="id + '_status_buttonset'"></span>
 
 										<div>
-											<button v-if="canEditCalendar" :id="id + '_but_edit'" class="ui-btn ui-btn-light-border">{{$Bitrix.Loc.getMessage('EC_VIEW_SLIDER_EDIT')}}</button>
+											<button v-show="canEditCalendar || (canAttendeeEditCalendar && ['H', 'Y'].includes(curUserStatus))" :id="id + '_but_edit'" class="ui-btn ui-btn-light-border">{{$Bitrix.Loc.getMessage('EC_VIEW_SLIDER_EDIT')}}</button>
 											<button v-if="canDeleteEvent" :id="id + '_but_del'" class="ui-btn ui-btn-light-border">{{$Bitrix.Loc.getMessage('EC_VIEW_SLIDER_DEL')}}</button>
 										</div>
 										
@@ -742,7 +748,6 @@ this.BX = this.BX || {};
 	          this.uid = params.id;
 	          this.entryUrl = params.entryUrl;
 	          this.userTimezone = params.userTimezone;
-	          this.dayOfWeekMonthFormat = params.dayOfWeekMonthFormat;
 	          this.plannerFeatureEnabled = !!params.plannerFeatureEnabled;
 	          if (this.planner && !this.plannerFeatureEnabled) {
 	            this.planner.lock();
@@ -776,7 +781,7 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  initControls(uid) {
-	    var _BX, _BX$Intranet;
+	    var _this$entry, _this$entry$data, _BX, _BX$Intranet;
 	    this.DOM.title = this.DOM.content.querySelector(`#${uid}_title`);
 	    this.DOM.buttonSet = this.DOM.content.querySelector(`#${uid}_buttonset`);
 	    this.DOM.editButton = this.DOM.content.querySelector(`#${uid}_but_edit`);
@@ -855,6 +860,14 @@ this.BX = this.BX || {};
 	        return main_core.Type.isElementNode(node) && (node.getAttribute('data-bx-viewer') || node.getAttribute('data-bx-image'));
 	      });
 	    }
+	    this.DOM.relationWrap = this.DOM.content.querySelector(`#${uid}_view_relation_wrap`);
+	    if (this.DOM.relationWrap && ((_this$entry = this.entry) == null ? void 0 : (_this$entry$data = _this$entry.data) == null ? void 0 : _this$entry$data.EVENT_TYPE) === '#shared_crm#') {
+	      this.relationControl = new calendar_entityrelation.RelationInterface({
+	        parentNode: this.DOM.relationWrap,
+	        eventId: this.entry.parentId
+	      });
+	      main_core.Dom.append(this.relationControl.render(), this.DOM.relationWrap);
+	    }
 	    if (this.entry && this.entry.isMeeting()) {
 	      this.initAcceptMeetingControl(uid);
 	    }
@@ -901,8 +914,8 @@ this.BX = this.BX || {};
 	        callbacks: {
 	          getUsersCount: () => this.attendees.length,
 	          hasChat: () => {
-	            var _this$entry$data, _this$entry$data$MEET;
-	            return ((_this$entry$data = this.entry.data) == null ? void 0 : (_this$entry$data$MEET = _this$entry$data.MEETING) == null ? void 0 : _this$entry$data$MEET.CHAT_ID) > 0;
+	            var _this$entry$data2, _this$entry$data2$MEE;
+	            return ((_this$entry$data2 = this.entry.data) == null ? void 0 : (_this$entry$data2$MEE = _this$entry$data2.MEETING) == null ? void 0 : _this$entry$data2$MEE.CHAT_ID) > 0;
 	          }
 	        }
 	      });
@@ -932,10 +945,11 @@ this.BX = this.BX || {};
 	      solidStatus: true,
 	      readonly: true,
 	      locked: !this.plannerFeatureEnabled,
-	      dayOfWeekMonthFormat: this.dayOfWeekMonthFormat
+	      alwaysBlue: true
 	    });
 	    this.planner.show();
 	    this.planner.showLoader();
+	    this.planner.setEntriesCount(this.attendees.length);
 	    setTimeout(() => {
 	      if (this.DOM.plannerWrapOuter) {
 	        main_core.Dom.removeClass(this.DOM.plannerWrapOuter, 'hidden');
@@ -1048,11 +1062,11 @@ this.BX = this.BX || {};
 	    }
 	  }
 	  copyEventUrl() {
-	    if (!this.entryUrl || !this.BX.clipboard.copy(this.entryUrl)) {
+	    if (!this.entryUrl || !this.BX.clipboard.copy(window.location.origin + this.entryUrl)) {
 	      return;
 	    }
 	    this.timeoutIds = this.timeoutIds || [];
-	    let popup = new this.BX.PopupWindow('calendar_clipboard_copy', this.DOM.copyButton, {
+	    const popup = new this.BX.PopupWindow('calendar_clipboard_copy', this.DOM.copyButton, {
 	      content: main_core.Loc.getMessage('CALENDAR_TIP_TEMPLATE_LINK_COPIED'),
 	      darkMode: true,
 	      autoHide: true,
@@ -1066,7 +1080,7 @@ this.BX = this.BX || {};
 	    while (timeoutId = this.timeoutIds.pop()) {
 	      clearTimeout(timeoutId);
 	    }
-	    this.timeoutIds.push(setTimeout(function () {
+	    this.timeoutIds.push(setTimeout(() => {
 	      popup.close();
 	    }, 1500));
 	  }
@@ -1157,5 +1171,5 @@ this.BX = this.BX || {};
 
 	exports.EventViewForm = EventViewForm;
 
-}((this.BX.Calendar = this.BX.Calendar || {}),BX.Calendar.Controls,BX.Calendar,BX.Vue3,BX.Calendar,BX.Calendar,BX,BX.Event,BX.Calendar));
+}((this.BX.Calendar = this.BX.Calendar || {}),BX.Calendar.Controls,BX.Calendar,BX.Vue3,BX.Calendar,BX.Calendar,BX,BX.Event,BX.Calendar,BX,BX.Calendar));
 //# sourceMappingURL=eventviewform.bundle.js.map

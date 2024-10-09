@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CBitrixComponent $component */
 /** @var string $templateFolder */
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
@@ -21,6 +22,7 @@ use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\Update\TagConverter;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -132,6 +134,8 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 
 			'SCOPE' => ScopeDictionary::SCOPE_TASKS_GRID,
+
+			'SHOW_COUNTERS_TOOLBAR' => $arParams['SHOW_COUNTERS_TOOLBAR'] ?? null,
 		],
 		$component,
 		['HIDE_ICONS' => true]
@@ -315,6 +319,12 @@ $arResult['EXPORT_EXCEL_PARAMS'] = [
 	],
 	'dialogMaxWidth' => 650,
 ];
+
+$isProjectLimitExceeded = !ProjectLimit::isFeatureEnabled();
+if (ProjectLimit::canTurnOnTrial())
+{
+	$isProjectLimitExceeded = false;
+}
 ?>
 
 <script>
@@ -323,10 +333,14 @@ $arResult['EXPORT_EXCEL_PARAMS'] = [
 			BX.Tasks.GridActions.gridId = '<?=$arParams['GRID_ID']?>';
 			BX.Tasks.GridActions.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
 			BX.Tasks.GridActions.tagsAreConverting = '<?=$tagsAreConverting?>';
+			BX.Tasks.GridActions.restrictions.project = {
+				limitExceeded: <?= Json::encode($isProjectLimitExceeded); ?>,
+				limitFeatureId: '<?= ProjectLimit::getFeatureId() ?>',
+			};
 
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
-				TASKS_DELETE_SUCCESS: '<?= Task::getDeleteMessage((int)$arResult['USER_ID']) ?>',
+				TASKS_DELETE_SUCCESS: '<?= Loader::includeModule('recyclebin') ? Task::getDeleteMessage((int)$arResult['USER_ID']) : Loc::getMessage('TASKS_DELETE_SUCCESS') ?>',
 				TASKS_LIST_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_ACTION_PING_NOTIFICATION') ?>',
 				TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION') ?>',
 				TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION') ?>',

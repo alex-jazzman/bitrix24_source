@@ -370,7 +370,19 @@ $this->SetViewTarget('below_pagetitle', 0);
 			<?= htmlspecialcharsbx(Loc::getMessage('SIGN_DOCUMENT_GRID_BANNER_TITLE'))?>
 		</div>
 		<div class="sign-document-list__banner-desc">
-			<?= nl2br(htmlspecialcharsbx($arResult['BANNER_TEXT'])) ?>
+			<?php
+			$placeholders = [
+				'[helpdesklink]' => '<a href="javascript:top.BX.Helper.show(\'redirect=detail&code=20617048\');">',
+				'[/helpdesklink]' => '</a>'
+			];
+			$replacedText = str_replace(
+				array_keys($placeholders),
+				array_values($placeholders),
+				$arResult['BANNER_TEXT']
+			);
+			?>
+
+			<?= nl2br($replacedText)?>
 		</div>
 	</div>
 	<div class="ui-icon-set --cross-20 sign-document-list__banner-btn_close"></div>

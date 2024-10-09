@@ -1112,7 +1112,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				'OFFER_ID' => $productId,
 				'BASE_PRICE' => ($product['TAX_INCLUDED'] === 'Y') ? $product['PRICE_BRUTTO'] : $product['PRICE_NETTO'],
 				'PRICE' => $product['BASE_PRICE'],
-				'VAT_RATE' => $product['TAX_RATE'] / 100,
+				'VAT_RATE' => is_numeric($product['TAX_RATE']) ? (float)$product['TAX_RATE'] / 100 : null,
 				'VAT_INCLUDED' => $product['TAX_INCLUDED'],
 				'CUSTOM_PRICE' => 'Y',
 				'TYPE' => $productType ? Sale\Internals\Catalog\ProductTypeMapper::getType($productType) : null,
@@ -1329,6 +1329,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 						->setMeasureCode((int)$product['MEASURE_CODE'])
 						->setMeasureName($product['MEASURE_NAME'])
 						->setTaxIncluded($product['VAT_INCLUDED'])
+						->setTaxRate(($product['VAT_RATE'] !== null) ? $product['VAT_RATE'] * 100 : null)
 					;
 
 					$basketItems[] = $item->getFields();

@@ -29,6 +29,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		QueueRepository,
 		PinMessageRepository,
 		CopilotRepository,
+		// SidebarFileRepository, TODO: The backend is not ready yet
 	} = require('im/messenger/db/repository');
 	const {
 		applicationModel,
@@ -74,6 +75,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				smile: null,
 				pinMessage: null,
 				copilot: null,
+				// sidebarFile: null, TODO: The backend is not ready yet
 			};
 
 			this.store = null;
@@ -165,6 +167,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				this.repository.pinMessage.pinTable.drop();
 				this.repository.pinMessage.pinMessageTable.drop();
 				this.repository.copilot.copilotTable.drop();
+				// this.repository.sidebarFile.sidebarFileTable.drop(); TODO: The backend is not ready yet
 
 				Application.storageById(CacheNamespace + CacheName.chatRecent).clear();
 				Application.storageById(CacheNamespace + CacheName.copilotRecent).clear();
@@ -189,6 +192,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				smile: new SmileRepository(),
 				pinMessage: new PinMessageRepository(),
 				copilot: new CopilotRepository(),
+				// sidebarFile: new SidebarFileRepository(),
 			};
 		}
 
@@ -283,6 +287,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		 *  smile: SmileRepository,
 		 *  pinMessage: PinMessageRepository,
 		 *  copilot?: CopilotRepository,
+		 *  sidebarFile: SidebarFileRepository,
 		 * }}
 		 */
 		getRepository()
@@ -320,7 +325,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			return this.store.getters['applicationModel/getStatus']();
 		}
 
-		setAppStatus(name, value)
+		async setAppStatus(name, value)
 		{
 			return this.store.dispatch('applicationModel/setStatus', { name, value });
 		}

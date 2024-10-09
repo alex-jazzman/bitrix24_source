@@ -40,7 +40,7 @@ import { $createVideoNode, VideoNode, type VideoPayload } from './video-node';
 import type TextEditor from '../../text-editor';
 
 import './video-plugin.css';
-import { VideoService } from './video-service';
+import { VideoService } from 'ui.video-service';
 
 export type InsertVideoPayload = Readonly<VideoPayload>;
 

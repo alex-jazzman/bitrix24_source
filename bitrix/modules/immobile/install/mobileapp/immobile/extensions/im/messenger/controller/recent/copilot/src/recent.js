@@ -5,11 +5,10 @@
  */
 jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
-	const { CopilotRecentCache } = require('im/messenger/cache');
+	const { Type } = require('type');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
-	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, EventType, ComponentCode, DialogType } = require('im/messenger/const');
+	const { EventType, ComponentCode, DialogType } = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
 	const logger = LoggerManager.getInstance().getLogger('recent--copilot-recent');
@@ -31,33 +30,9 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
 
-			this.firstPageHandler = this.firstPageHandler.bind(this);
 			this.stopRefreshing = this.stopRefreshing.bind(this);
 			this.renderInstant = this.renderInstant.bind(this);
 			this.loadPage = this.loadPage.bind(this);
-		}
-
-		fillStoreFromCache()
-		{
-			this.recentCache = new CopilotRecentCache({
-				storeManager: this.storeManager,
-			});
-			const cache = this.recentCache.get();
-
-			this.logger.info(`${this.getClassName()}.fillStoreFromCache cache:`, cache);
-
-			return this.fillStore(cache);
-		}
-
-		initRequests()
-		{
-			restManager.on(
-				RestMethod.imRecentList,
-				this.getRestRecentListOptions(),
-				this.firstPageHandler.bind(this),
-			);
-
-			this.countersInitRequest();
 		}
 
 		subscribeViewEvents()
@@ -89,9 +64,25 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 		}
 
 		/**
+		 * @return {ListByDialogTypeFilter}
+		 */
+		getDbFilter()
+		{
+			return { dialogTypes: [DialogType.copilot], limit: this.recentService.getRecentListRequestLimit() };
+		}
+
+		/**
+		 * @return {Promise<{any}>}
+		 */
+		async getSubDataFromDb()
+		{
+			return this.recentService.getCopilotDataFromDb();
+		}
+
+		/**
 		 * @return {object}
 		 */
-		getRestRecentListOptions()
+		getRestManagerRecentListOptions()
 		{
 			return { ONLY_COPILOT: 'Y', SKIP_OPENLINES: 'Y' };
 		}
@@ -112,16 +103,20 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			return new Promise((resolve) => {
 				/** @type {imV2RecentCopilotResult} */
 				const data = response.data();
-				this.logger.info(`${this.getClassName()}.pageHandler data:`, data);
+				this.logger.info(`${this.constructor.name}.pageHandler data:`, data);
+				this.recentService.pageNavigation.turnPage();
 
-				if (data.hasMore === false)
+				if (Type.isBoolean(data.hasMore))
 				{
-					this.pageNavigation.hasNextPage = false;
+					this.recentService.pageNavigation.hasNextPage = data.hasMore;
 				}
 
 				if (data.items.length > 0)
 				{
-					this.lastMessageDate = data.items[data.items.length - 1].message?.date;
+					const lastItem = data.items[data.items.length - 1];
+					const lastActivityDate = lastItem.date_last_activity ?? lastItem.message.date;
+					this.recentService.lastActivityDateFromServer = lastActivityDate;
+					this.recentService.lastActivityDate = new Date(lastActivityDate).toISOString();
 				}
 				else
 				{
@@ -130,7 +125,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 
 				this.saveRecentData(data)
 					.then(() => {
-						this.pageNavigation.isPageLoading = false;
+						this.recentService.pageNavigation.isPageLoading = false;
 
 						this.renderInstant();
 						this.checkEmpty();
@@ -138,7 +133,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 						resolve();
 					})
 					.catch((error) => {
-						this.logger.error(`${this.getClassName()}.saveRecentItems.catch:`, error);
+						this.logger.error(`${this.constructor.name}.saveRecentData.catch:`, error);
 					})
 				;
 			});
@@ -157,7 +152,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			void await this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot);
 			void await this.store.dispatch('recentModel/set', modelData.recent);
 
-			if (this.pageNavigation.currentPage === 1)
+			if (this.recentService.pageNavigation.currentPage === 1)
 			{
 				const recentIndex = [];
 				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
@@ -271,12 +266,6 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 
 		onLoadNextPage()
 		{
-			const canLoadNextPage = !this.pageNavigation.isPageLoading && this.pageNavigation.hasNextPage;
-			if (!canLoadNextPage)
-			{
-				return;
-			}
-
 			this.loadNextPage();
 		}
 
@@ -292,7 +281,6 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 		{
 			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imCopilotMessenger);
 		}
-
 
 		onRefresh()
 		{
@@ -326,7 +314,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			this.renderer.removeFromQueue(mutation.payload.data.id);
 
 			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
 				this.view.hideLoader();
 			}

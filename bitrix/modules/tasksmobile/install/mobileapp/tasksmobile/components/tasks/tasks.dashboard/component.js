@@ -1,7 +1,5 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-
-	const { Color } = require('tokens');
 	const { downloadImages, makeLibraryImagePath } = require('asset-manager');
 	const { KanbanAdapter, ListAdapter } = require('tasks/layout/dashboard');
 	const { Loc } = require('loc');
@@ -34,7 +32,7 @@
 	const { Feature } = require('feature');
 	const { showToast } = require('toast');
 	const { Type } = require('type');
-	const { DeadlinePeriod } = require('tasks/enum');
+	const { DeadlinePeriod, FeatureId } = require('tasks/enum');
 	const { fetchDisabledTools } = require('settings/disabled-tools');
 	const {
 		tasksUpserted,
@@ -43,12 +41,14 @@
 		selectEntities,
 		selectIsCreating,
 		selectMarkedAsRemoved,
+		selectWithCreationError,
 		remove,
 		mapStateToTaskModel,
 		readAllForRole,
 		readAllForProject,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { observeCounterChange } = require('tasks/statemanager/redux/slices/tasks/observers/counter-observer');
+	const { observeCreationError } = require('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer');
 	const { observeListChange } = require('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observer');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 
@@ -56,12 +56,10 @@
 	const { dispatch } = store;
 	const { selectTaskStageId } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const { increaseStageCounter, decreaseStageCounter } = require('tasks/statemanager/redux/slices/stage-counters');
-	const { flowsAdded, flowsUpserted } = require('tasks/statemanager/redux/slices/flows');
-	const {
-		selectIsFlowTaskCreationProhibited,
-		loadTariffRestrictions,
-	} = require('tasks/statemanager/redux/slices/tariff-restrictions');
-	const { openPlanRestriction } = require('tasks/layout/flow/tariff-plan-restrictions-opener');
+	const { upsertFlows, addFlows } = require('tasks/statemanager/redux/slices/flows');
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { Alert, makeButton, makeDestructiveButton } = require('alert');
+	const { AnalyticsEvent } = require('analytics');
 
 	const AIR_STYLE_SUPPORTED = Feature.isAirStyleSupported();
 
@@ -73,12 +71,10 @@
 		{
 			super(props);
 
-			void fetchDisabledTools();
-			void loadTariffRestrictions();
-
 			this.showSearch = this.showSearch.bind(this);
 			this.onItemsLoaded = this.onItemsLoaded.bind(this);
 			this.onSearch = this.onSearch.bind(this);
+			this.onCheckRestrictions = this.onCheckRestrictions.bind(this);
 			this.onCounterClick = this.onCounterClick.bind(this);
 			this.onSortingClick = this.onSortingClick.bind(this);
 			this.onReadAllClick = this.onReadAllClick.bind(this);
@@ -86,7 +82,7 @@
 			this.onItemLongClick = this.onItemLongClick.bind(this);
 			this.onFloatingButtonClick = this.onFloatingButtonClick.bind(this);
 			this.onPanList = this.onPanList.bind(this);
-			this.onPullToRefresh = this.onPullToRefresh.bind(this);
+			this.onPullToRefreshForEmptyScreen = this.onPullToRefreshForEmptyScreen.bind(this);
 			this.getEmptyListComponent = this.getEmptyListComponent.bind(this);
 			this.bindRef = this.bindRef.bind(this);
 			this.onItemAdded = this.onItemAdded.bind(this);
@@ -96,6 +92,7 @@
 			this.onBeforeItemsSetState = this.onBeforeItemsSetState.bind(this);
 			this.onVisibleTasksChange = this.onVisibleTasksChange.bind(this);
 			this.onCounterChange = this.onCounterChange.bind(this);
+			this.onCreationErrorChange = this.onCreationErrorChange.bind(this);
 			this.skipTasksOperations = this.skipTasksOperations.bind(this);
 			this.showTitleLoader = this.showTitleLoader.bind(this);
 			this.hideTitleLoader = this.hideTitleLoader.bind(this);
@@ -108,6 +105,8 @@
 				this.props.projectId,
 				this.props.isTabsMode,
 				this.props.tabsGuid,
+				this.getInitialPresetId(),
+				this.getInitialRole(),
 			);
 			this.tasksDashboardFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
 
@@ -138,6 +137,8 @@
 				view,
 			});
 
+			const { currentUserId, ownerId, projectId, analyticsLabel = {} } = this.props;
+
 			this.moreMenu = new TasksDashboardMoreMenu(
 				this.tasksDashboardFilter.getCountersByRole(),
 				this.tasksDashboardFilter.getCounterType(),
@@ -147,27 +148,30 @@
 					onSortingClick: this.onSortingClick,
 					onReadAllClick: this.onReadAllClick,
 					getSelectedView: () => this.state.view,
-					getProjectId: () => this.props.projectId,
+					getProjectId: () => projectId,
 					openViewSwitcher: this.openViewSwitcher,
 					onListClick: () => this.setView(Views.LIST),
 					onKanbanClick: () => this.setView(Views.KANBAN),
 					onPlannerClick: () => this.setView(Views.PLANNER),
 					onDeadlineClick: () => this.setView(Views.DEADLINE),
-					getOwnerId: () => this.props.ownerId || this.props.currentUserId,
+					getOwnerId: () => ownerId || currentUserId,
 				},
+				analyticsLabel,
 			);
 
 			this.search = new SearchLayout({
 				layout,
 				id: 'my_tasks',
 				cacheId: `my_tasks_${env.userId}`,
-				presetId: TasksDashboardFilter.presetType.default,
+				presetId: this.getInitialPresetId(),
 				searchDataAction: 'tasksmobile.Filter.getSearchBarPresets',
 				searchDataActionParams: {
-					groupId: this.props.projectId,
+					groupId: projectId,
 				},
 				onSearch: this.onSearch,
 				onCancel: this.onSearch,
+				onCheckRestrictions: this.onCheckRestrictions,
+				getDefaultPresetId: this.getDefaultPresetId,
 			});
 
 			this.navigationTitle = new NavigationTitle(this.getNavigationTitleParams());
@@ -197,6 +201,21 @@
 				counter: this.tasksDashboardFilter.getCounterValue(),
 			};
 		}
+
+		getInitialRole()
+		{
+			return this.props.flowId > 0 ? TasksDashboardFilter.roleType.originator : TasksDashboardFilter.roleType.all;
+		}
+
+		getInitialPresetId = () => {
+			return this.props.flowId > 0
+				? TasksDashboardFilter.presetType.originator
+				: TasksDashboardFilter.presetType.default;
+		};
+
+		getDefaultPresetId = () => {
+			return TasksDashboardFilter.presetType.default;
+		};
 
 		getNavigationTitleParams()
 		{
@@ -245,27 +264,13 @@
 			this.pull.subscribe();
 			this.unsubscribeCounterChangeObserver = observeCounterChange(store, this.onCounterChange);
 			this.unsubscribeTasksObserver = observeListChange(store, this.onVisibleTasksChange);
+			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange);
 
 			if (this.props.isTabsMode && this.isMyDashboard())
 			{
 				BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
 				BX.addCustomEvent('tasks.tabs:onAppActive', (eventData) => this.onAppActive(eventData));
 			}
-
-			BX.addCustomEvent('TasksDashboard.RemoveTask', (taskId) => {
-				setTimeout(() => {
-					const task = selectByTaskIdOrGuid(store.getState(), taskId);
-					if (task)
-					{
-						ActionMeta[ActionId.REMOVE]?.handleAction({
-							task,
-							taskId,
-							layout,
-							options: { skipConfirm: true },
-						});
-					}
-				}, 500);
-			});
 		}
 
 		prefetchAssets()
@@ -390,15 +395,9 @@
 		{
 			this.pull.unsubscribe();
 
-			if (this.unsubscribeTasksObserver)
-			{
-				this.unsubscribeTasksObserver();
-			}
-
-			if (this.unsubscribeCounterChangeObserver)
-			{
-				this.unsubscribeCounterChangeObserver();
-			}
+			this.unsubscribeTasksObserver?.();
+			this.unsubscribeCounterChangeObserver?.();
+			this.unsubscribeCreationErrorObserver?.();
 
 			this.removeTasksMarkedAsRemoved();
 		}
@@ -416,13 +415,13 @@
 
 		// endregion
 
-		// region handle UI events
+		// region handle UI events.
 
 		onVisibleTasksChange({ moved, removed, added, created })
 		{
 			if (!this.currentView || this.currentView.isLoading())
 			{
-				// delay until list is loaded to prevent race-condition with addItems loading
+				// delay until list is loaded to prevent race-condition with addItems loading.
 				setTimeout(() => {
 					this.onVisibleTasksChange({ moved, removed, added, created });
 				}, 30);
@@ -454,6 +453,15 @@
 		onCounterChange(counterChangeValue)
 		{
 			this.tasksDashboardFilter.updateCounterValue(this.tasksDashboardFilter.getCounterValue() + counterChangeValue);
+		}
+
+		onCreationErrorChange({ added, removed })
+		{
+			if (this.state.view !== Views.LIST)
+			{
+				added.forEach((task) => this.decreaseStageCounter(task));
+				removed.forEach((task) => this.increaseStageCounter(task));
+			}
 		}
 
 		replaceTasks(tasks)
@@ -643,7 +651,7 @@
 
 			if (flows.length > 0)
 			{
-				actions.push(isCache ? flowsAdded(flows) : flowsUpserted(flows));
+				actions.push(isCache ? addFlows(flows) : upsertFlows(flows));
 			}
 
 			if (tasksStages.length > 0)
@@ -667,20 +675,124 @@
 			this.setState({}, () => this.reload());
 		}
 
-		onItemClick(id)
+		onCheckRestrictions()
 		{
-			const row = selectByTaskIdOrGuid(store.getState(), id);
-			if (row)
+			const { isRestricted, showRestriction } = getFeatureRestriction(FeatureId.SEARCH);
+			if (isRestricted())
+			{
+				showRestriction({ parentWidget: layout });
+			}
+
+			return isRestricted();
+		}
+
+		onItemWithCreationErrorClick(task)
+		{
+			Alert.confirm(
+				Loc.getMessage('M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_TITLE'),
+				task.creationErrorText,
+				[
+					makeButton(
+						Loc.getMessage('M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_TRY_AGAIN'),
+						() => {
+							const mapUser = (user) => (
+								user
+									? {
+										id: user.id,
+										name: user.fullName,
+										image: user.avatarSize100,
+										link: user.link,
+										workPosition: user.workPosition,
+									}
+									: undefined
+							);
+							const state = store.getState();
+							const taskCreateParameters = {
+								initialTaskData: {
+									id: task.id,
+									guid: task.guid,
+									title: task.name,
+									description: task.description,
+									deadline: task.deadline ? new Date(task.deadline * 1000) : null,
+									groupId: task.groupId,
+									group: selectGroupById(state, task.groupId),
+									priority: String(task.priority),
+									parentId: task.parentId,
+									responsible: mapUser(usersSelector.selectById(state, task.responsible)),
+									accomplices: task.accomplices.map((userId) => {
+										return mapUser(usersSelector.selectById(state, userId));
+									}),
+									auditors: task.auditors.map((userId) => {
+										return mapUser(usersSelector.selectById(state, userId));
+									}),
+									uploadedFiles: task.uploadedFiles,
+									tags: task.tags,
+									crm: task.crm,
+									flowId: task.flowId,
+									relatedTaskId: task.relatedTaskId,
+									checklistFlatTree: task.checklistFlatTree,
+									startDatePlan: task.startDatePlan,
+									endDatePlan: task.endDatePlan,
+									imChatId: task.imChatId,
+									imMessageId: task.imMessageId,
+								},
+								layoutWidget: layout,
+							};
+
+							openTaskCreateForm(taskCreateParameters);
+						},
+					),
+					makeDestructiveButton(
+						Loc.getMessage('M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_REMOVE'),
+						() => {
+							ActionMeta[ActionId.REMOVE].handleAction({
+								layout,
+								taskId: task.id,
+								options: {
+									shouldBackOnRemove: false,
+								},
+							});
+						},
+					),
+				],
+			);
+		}
+
+		onItemClick(id, data, params)
+		{
+			const task = selectByTaskIdOrGuid(store.getState(), id);
+			if (!task)
+			{
+				return;
+			}
+
+			if (task.isCreationErrorExist)
+			{
+				this.onItemWithCreationErrorClick(task);
+			}
+			else
 			{
 				// eslint-disable-next-line no-undef
-				const task = new Task({ id: this.props.currentUserId });
-				task.setData(mapStateToTaskModel(row));
-				task.open(layout, 'tasks.dashboard');
+				const oldTaskModel = new Task({ id: this.props.currentUserId });
+				oldTaskModel.setData(mapStateToTaskModel(task));
+				oldTaskModel.open(layout, 'tasks.dashboard', {
+					analyticsLabel: {
+						...this.props.analyticsLabel,
+						c_element: this.props.analyticsLabel?.c_element ?? 'title_click',
+						c_sub_section: this.props.analyticsLabel?.c_sub_section ?? params.view?.toLowerCase(),
+					},
+				});
 			}
 		}
 
 		onItemLongClick(itemId, itemData, params)
 		{
+			const task = selectByTaskIdOrGuid(store.getState(), itemId);
+			if (task.isCreationErrorExist)
+			{
+				return;
+			}
+
 			Haptics.impactLight();
 
 			const actions = {
@@ -706,16 +818,18 @@
 			}
 
 			const actionMenu = new ActionMenu({
+				task,
 				actions: Object.keys(actions),
+				shouldBackOnRemove: false,
 				layoutWidget: layout,
-				task: selectByTaskIdOrGuid(store.getState(), itemId),
 				engine: AIR_STYLE_SUPPORTED ? new TopMenuEngine() : null,
 				analyticsLabel: {
+					...this.props.analyticsLabel,
 					module: 'tasks',
-					event: 'dashboard-item-menu-click',
 					currentView: this.state.view,
 					isCurrentUser: this.props.ownerId === this.props.currentUserId ? 'Y' : 'N',
 					isProject: Type.isNumber(this.props.projectId) ? 'Y' : 'N',
+					c_sub_section: this.props.analyticsLabel?.c_sub_section ?? this.state.view?.toLowerCase(),
 				},
 			});
 			const target = this.currentView.getItemMenuViewRef(itemId);
@@ -741,6 +855,11 @@
 			};
 
 			const stage = this.currentView.getActiveStage();
+			const analyticsEvent = new AnalyticsEvent({
+				c_section: this.props.analyticsLabel.c_section,
+				c_sub_section: this.props.analyticsLabel.c_sub_section ?? this.state.view?.toLowerCase(),
+				c_element: this.props.analyticsLabel.c_element ?? 'floating_button',
+			});
 			const taskCreateParameters = {
 				stage,
 				initialTaskData: {
@@ -750,6 +869,7 @@
 				loadStagesParams: this.getLoadStagesParams(),
 				layoutWidget: layout,
 				context: 'tasks.dashboard',
+				analyticsLabel: analyticsEvent.exportToObject(),
 			};
 
 			if (this.isSelectedView(Views.DEADLINE) && stage)
@@ -772,9 +892,13 @@
 
 			if (this.props.flowId > 0)
 			{
-				if (selectIsFlowTaskCreationProhibited(store.getState()))
+				const { isRestricted, showRestriction } = getFeatureRestriction(FeatureId.FLOW);
+				if (isRestricted())
 				{
-					void openPlanRestriction(layout);
+					showRestriction({
+						parentWidget: layout,
+						analyticsData: analyticsEvent,
+					});
 
 					return;
 				}
@@ -802,7 +926,7 @@
 				if (minutesPassed >= 30)
 				{
 					this.tasksDashboardFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
-					this.reload();
+					this.reload(false);
 				}
 			}
 		}
@@ -819,18 +943,18 @@
 			}
 		}
 
-		reload()
+		reload(skipUseCache = true)
 		{
 			if (this.currentView && this.currentView.reload)
 			{
 				this.currentView.reload({
 					menuButtons: this.getLayoutMenuButtons(),
-					skipUseCache: true,
+					skipUseCache,
 				});
 			}
 		}
 
-		onPullToRefresh()
+		onPullToRefreshForEmptyScreen()
 		{
 			this.reload();
 		}
@@ -1150,12 +1274,27 @@
 			return mergeImmutable(defaults, overrides);
 		}
 
-		onBeforeItemsSetState(items)
+		onBeforeItemsSetState(items, params)
 		{
+			let resultItems = [...items];
+
+			const { renderType, append, loadItemsParams = {} } = params;
+			if (
+				renderType === 'ajax'
+				&& !append
+				&& !Type.isStringFilled(loadItemsParams.searchParams?.searchString)
+			)
+			{
+				resultItems = [
+					...selectWithCreationError(store.getState()).sort(this.sorting.getSortItemsCallback()),
+					...resultItems,
+				];
+			}
+
 			const taskEntities = selectEntities(store.getState());
 
 			// filter marked as removed tasks
-			return items.filter(({ id }) => {
+			return resultItems.filter(({ id }) => {
 				const { isRemoved } = taskEntities[id] || {};
 
 				return Type.isNil(isRemoved) || !isRemoved;
@@ -1237,46 +1376,64 @@
 
 		onItemAdded(item)
 		{
-			if (this.state.view !== Views.LIST)
+			if (this.state.view === Views.LIST)
 			{
-				const newTaskStageId = selectTaskStageId(
-					store.getState(),
-					item.id,
-					this.state.view,
-					this.props.ownerId,
-				);
-				if (!Type.isNil(newTaskStageId))
-				{
-					dispatch(increaseStageCounter({
-						ownerId: this.props.ownerId,
-						projectId: this.props.projectId,
-						view: this.state.view,
-						stageId: newTaskStageId,
-					}));
-				}
+				return;
+			}
+
+			const task = selectByTaskIdOrGuid(store.getState(), item.id);
+			if (!task.isCreationErrorExist)
+			{
+				this.increaseStageCounter(item);
 			}
 		}
 
 		onItemDeleted(item)
 		{
-			if (this.state.view !== Views.LIST)
+			if (this.state.view === Views.LIST)
 			{
-				const task = selectByTaskIdOrGuid(store.getState(), item.id);
-				const newTaskStageId = selectTaskStageId(
-					store.getState(),
-					item.id,
-					this.state.view,
-					this.props.ownerId,
-				);
-				if (!Type.isNil(newTaskStageId) && (Type.isNil(task) || task.isRemoved === true))
-				{
-					dispatch(decreaseStageCounter({
+				return;
+			}
+
+			const task = selectByTaskIdOrGuid(store.getState(), item.id);
+			if (
+				Type.isNil(task)
+				|| (!task.isCreationErrorExist && task.isRemoved === true)
+			)
+			{
+				this.decreaseStageCounter(item);
+			}
+		}
+
+		increaseStageCounter(item)
+		{
+			this.changeStageCounter(item, increaseStageCounter);
+		}
+
+		decreaseStageCounter(item)
+		{
+			this.changeStageCounter(item, decreaseStageCounter);
+		}
+
+		changeStageCounter(item, actionToDispatch)
+		{
+			const newTaskStageId = selectTaskStageId(
+				store.getState(),
+				item.id,
+				this.state.view,
+				this.props.ownerId,
+			);
+
+			if (!Type.isNil(newTaskStageId))
+			{
+				dispatch(
+					actionToDispatch({
 						ownerId: this.props.ownerId,
 						projectId: this.props.projectId,
 						view: this.state.view,
 						stageId: newTaskStageId,
-					}));
-				}
+					}),
+				);
 			}
 		}
 
@@ -1316,7 +1473,12 @@
 		getEmptyListImage(viewType, search = false)
 		{
 			const air = AIR_STYLE_SUPPORTED ? 'air-' : '';
-			const fileName = `${air}${viewType}${search ? '-search' : ''}.svg`;
+			let fileName = `${air}${viewType}${search ? '-search' : ''}.svg`;
+
+			if (AIR_STYLE_SUPPORTED && !search)
+			{
+				fileName = 'air-dashboard.svg';
+			}
 
 			return makeLibraryImagePath(fileName, 'empty-states', 'tasks');
 		}
@@ -1340,7 +1502,8 @@
 					description,
 					emptyScreen: true,
 					image: Image(imageParams),
-					onRefresh: this.onPullToRefresh,
+					onRefresh: this.onPullToRefreshForEmptyScreen,
+					testId: 'TASKS_DASHBOARD_EMPTY_SCREEN',
 				})
 				: new EmptyScreen({
 					title,
@@ -1349,7 +1512,7 @@
 					styles: {
 						paddingHorizontal: 20,
 					},
-					onRefresh: this.onPullToRefresh,
+					onRefresh: this.onPullToRefreshForEmptyScreen,
 				});
 		}
 
@@ -1425,7 +1588,6 @@
 
 	const pathToIcons = `${currentDomain}/bitrix/mobileapp/tasksmobile/components/tasks/tasks.dashboard/icons`;
 	const viewIconsPrefix = `${pathToIcons}/view`;
-
 	const SvgIcons = {
 		[Views.LIST]: `${viewIconsPrefix}-list.svg`,
 		[Views.KANBAN]: `${viewIconsPrefix}-kanban.svg`,
@@ -1434,19 +1596,28 @@
 		readAll: `${pathToIcons}/read-all.svg`,
 	};
 
-	const projectId = Number(BX.componentParameters.get('GROUP_ID', 0));
+	Promise.allSettled([
+		fetchDisabledTools(),
+		tariffPlanRestrictionsReady(),
+	])
+		.then(() => {
+			const component = new TasksDashboard({
+				currentUserId: Number(env.userId),
+				ownerId: Number(BX.componentParameters.get('USER_ID', 0) || env.userId),
+				projectId: Number(BX.componentParameters.get('GROUP_ID', 0)) || null,
+				flowId: Number(BX.componentParameters.get('FLOW_ID', 0)),
+				flowName: BX.componentParameters.get('FLOW_NAME', null),
+				flowEfficiency: BX.componentParameters.get('FLOW_EFFICIENCY', null),
+				canCreateTask: BX.componentParameters.get('CAN_CREATE_TASK', true),
+				isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
+				tabsGuid: BX.componentParameters.get('TABS_GUID', ''),
+				analyticsLabel: BX.componentParameters.get('analyticsLabel', { c_section: 'tasks' }),
+			});
 
-	layout.showComponent(
-		new TasksDashboard({
-			currentUserId: Number(env.userId),
-			ownerId: Number(BX.componentParameters.get('USER_ID', 0) || env.userId),
-			projectId: projectId > 0 ? projectId : null,
-			flowId: Number(BX.componentParameters.get('FLOW_ID', 0)),
-			flowName: BX.componentParameters.get('FLOW_NAME', null),
-			flowEfficiency: BX.componentParameters.get('FLOW_EFFICIENCY', null),
-			canCreateTask: BX.componentParameters.get('CAN_CREATE_TASK', true),
-			isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
-			tabsGuid: BX.componentParameters.get('TABS_GUID', ''),
-		}),
-	);
+			BX.onViewLoaded(() => {
+				layout.showComponent(component);
+			});
+		})
+		.catch(console.error)
+	;
 })();

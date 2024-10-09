@@ -352,4 +352,18 @@ export default class UserFieldControl extends EventEmitter
 
 		return {};
 	}
+
+	canUseImportService(): boolean
+	{
+		const settings = Extension.getSettings('disk.uploader.user-field-widget');
+
+		return settings.get('canUseImport', true);
+	}
+
+	getImportFeatureId(): string
+	{
+		const settings = Extension.getSettings('disk.uploader.user-field-widget');
+
+		return settings.get('importFeatureId', '');
+	}
 }

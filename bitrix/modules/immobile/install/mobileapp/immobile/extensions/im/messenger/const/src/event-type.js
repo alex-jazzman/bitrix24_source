@@ -11,6 +11,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			failRestoreConnection: 'failRestoreConnection',
 			changeStatus: 'changeStatus',
 		},
+		jnComponent: {
+			openRequest: 'openRequest',
+		},
 		view: {
 			close: 'onViewRemoved',
 			show: 'onViewShown',
@@ -22,7 +25,6 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		/** Messenger component events */
 		messenger: {
 			openDialog: 'ImMobile.Messenger.Dialog:open',
-			openSidebar: 'ImMobile.Messenger.Sidebar:open',
 			getOpenDialogParams: 'ImMobile.Messenger.Dialog:getOpenParams',
 			openDialogParams: 'ImMobile.Messenger.Dialog:openParams',
 			openLine: 'ImMobile.Messenger.Openlines:open',
@@ -41,6 +43,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			uploadFileError: 'ImMobile.Messenger:uploadFileError',
 			cancelFileUpload: 'ImMobile.Messenger:cancelFileUpload',
 			dialogAccessError: 'ImMobile.Messenger:dialogAccessError',
+			updatePlanLimitsData: 'ImMobile.Messenger:updatePlanLimitsData',
 		},
 		/** Extension events */
 		recent: {
@@ -61,6 +64,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			loadNextPage: 'custom:loadNextPage',
 		},
 		dialog: {
+			titleClick: 'titleClick',
 			attachTap: 'attachTap',
 			topReached: 'topReached',
 			bottomReached: 'bottomReached',
@@ -78,6 +82,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
 			messageCheckInButtonTap: 'messageCheckInButtonTap',
+			messageBannerButtonTap: 'messageBannerButtonTap',
 			messageAvatarTap: 'avatarTap',
 			messageAvatarLongTap: 'avatarLongTap',
 			messageDoubleTap: 'messageDoubleTap',
@@ -88,6 +93,11 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageFileDownloadTap: 'messageFileDownloadTap',
 			messageFileUploadCancelTap: 'messageFileUploadCancelTap',
 			messageButtonTap: 'messageButtonTap',
+			messageAttachUserTap: 'attachUserTap',
+			messageAttachUrlTap: 'attachUrlTap',
+			messageAttachImageTap: 'attachImageTap',
+			messageAttachFileTap: 'attachFileTap',
+			messageKeyboardButtonTap: 'messageKeyboardButtonTap',
 			copilotFootnoteTap: 'copilotFootnoteTap',
 			urlTap: 'urlTap',
 			imageTap: 'imageTap',
@@ -96,6 +106,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			videoTap: 'videoTap',
 			fileTap: 'fileTap',
 			forwardTap: 'forwardTap',
+			sendTap: 'sendTap',
+			putTap: 'putTap',
 			phoneTap: 'phoneTap',
 			statusFieldTap: 'statusFieldTap',
 			chatJoinButtonTap: 'chatJoinButtonTap',
@@ -118,10 +130,12 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				scrollToFirstUnread: 'ImMobile.Messenger.Dialog:scrollToFirstUnread',
 				disableScrollToBottom: 'ImMobile.Messenger.Dialog:disableScrollToBottom',
 				mention: 'ImMobile.Messenger.Dialog:mention',
+				sendMessage: 'ImMobile.Messenger.Dialog:sendMessage',
+				textarea: {
+					insertText: 'ImMobile.Messenger.Dialog.Textarea:insertText',
+				},
 				close: 'ImMobile.Messenger.Dialog:close',
 			},
-			/** @deprecated */
-			like: 'like',
 
 			textField: {
 				submit: 'submit',

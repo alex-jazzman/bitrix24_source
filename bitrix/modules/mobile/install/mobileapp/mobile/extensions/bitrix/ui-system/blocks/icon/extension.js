@@ -3,10 +3,12 @@
  */
 jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	const { Color } = require('tokens');
+	const { Feature } = require('feature');
 	const { PropTypes } = require('utils/validation');
 	const { outline, Icon } = require('assets/icons');
 	const { OutlineIconTypes } = require('assets/icons/types');
 	const { mergeImmutable } = require('utils/object');
+	const { withCurrentDomain } = require('utils/url');
 
 	const DEFAULT_ICON_SIZE = {
 		width: 20,
@@ -14,21 +16,27 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef IconViewProps
+	 * @property {string} [testId]
+	 * @property {Function} [forwardRef]
+	 * @property {string | Icon} [icon]
+	 * @property {Color} [color]
+	 * @property {number} [opacity]
+	 * @property {Object | number} [size]
+	 * @property {number} [size.height]
+	 * @property {number} [size.width]
+	 * @property {boolean} [disabled]
+	 * @property {Object} [style]
+	 *
 	 * @class IconView
-	 * @params {object} props
-	 * @params {string} [props.testId]
-	 * @params {Function} [props.forwardRef]
-	 * @params {string | Icon} [props.icon]
-	 * @params {Color} [props.color]
-	 * @params {number} [props.opacity]
-	 * @params {Object | number} [props.size]
-	 * @params {number} [props.size.height]
-	 * @params {number} [props.size.width]
-	 * @params {boolean} [props.disabled]
-	 * @params {Object} [props.style]
 	 */
 	class IconView extends LayoutComponent
 	{
+		static isFallbackUrlSupported()
+		{
+			return Feature.isFallbackUrlSupported();
+		}
+
 		render()
 		{
 			const { testId, forwardRef } = this.props;
@@ -42,7 +50,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 
 		getProps()
 		{
-			const { icon, style = {}, onClick, onFailure, onSuccess, onSvgContentError, resizeMode } = this.props;
+			const { icon, style = {}, onClick, onSuccess, onSvgContentError, resizeMode } = this.props;
 
 			let props = {
 				style: this.getStyle(),
@@ -73,9 +81,9 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				style,
 				resizeMode,
 				onClick,
-				onFailure,
 				onSuccess,
 				onSvgContentError,
+				onFailure: this.handleOnFailure,
 			});
 		}
 
@@ -96,20 +104,19 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				};
 			}
 
-			if (path)
+			if (IconView.isFallbackUrlSupported())
 			{
 				return {
-					svg: {
-						uri: path,
+					named: {
+						named,
+						fallbackUrl: withCurrentDomain(path),
 					},
 				};
 			}
 
 			if (named)
 			{
-				return {
-					named: icon.getIconName(),
-				};
+				return { named };
 			}
 
 			return {};
@@ -145,7 +152,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 		{
 			const { opacity, iconColor, color, disabled } = this.props;
 
-			let colorToken = iconColor || color;
+			let colorToken = iconColor || color || Color.base1;
 
 			if (disabled)
 			{
@@ -176,6 +183,13 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				height: size,
 			};
 		}
+
+		handleOnFailure = () => {
+			if (Application.isBeta())
+			{
+				console.warn(`IconView: The image with the parameters ${JSON.stringify(this.getEnumIconParams())} was not uploaded. The icon enum must be updated`);
+			}
+		};
 	}
 
 	IconView.propTypes = {
@@ -199,6 +213,9 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	};
 
 	module.exports = {
+		/**
+		 * @param {IconViewProps} props
+		 */
 		IconView: (props) => new IconView(props),
 		Icon,
 		iconTypes: {

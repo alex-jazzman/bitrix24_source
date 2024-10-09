@@ -328,7 +328,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    hintContent() {
 	      if (this.isChatUserLimitExceeded) {
 	        return {
-	          text: `В звонке могут участвовать не больше ${this.userLimit} человек`,
+	          text: this.loc('IM_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', {
+	            '#USER_LIMIT#': this.userLimit
+	          }),
 	          popupOptions: {
 	            bindOptions: {
 	              position: 'bottom'
@@ -404,8 +406,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    shouldShowMenu() {
 	      return this.isActive;
 	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `

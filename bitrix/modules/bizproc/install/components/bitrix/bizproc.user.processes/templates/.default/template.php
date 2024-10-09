@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 \Bitrix\Main\UI\Extension::load([
 	'main.polyfill.intersectionobserver',
+	'bizproc.router',
 	'bizproc.task',
 	'bizproc.workflow.timeline',
 	'bizproc.workflow.faces',
@@ -58,19 +59,6 @@ $wrapJsRender = static function (array $workflow, string $columnId, string $plac
 	);
 };
 
-$openTaskInPopup = function (array $task) use ($targetUserId): string
-{
-	$taskId = $task['id'] ?? 0;
-
-	return sprintf("return BX.Bizproc.showTaskPopup(%d, null, %d, this)", $taskId, $targetUserId);
-};
-
-
-$renderUserName = function (\Bitrix\Main\EO_User $user): string
-{
-	return CUser::FormatName(CSite::GetNameFormat(false), $user);
-};
-
 $getRowActions = function (array $document, ?array $task, string $workflowId): array
 {
 	$actions = [
@@ -112,8 +100,8 @@ foreach ($workflows as $row)
 			'TASK_DESCRIPTION' => $row['description'] ?? '',
 			'MODIFIED' => $wrapJsRender($row, 'MODIFIED', $row['modified'] ?? ''),
 			'WORKFLOW_STARTED' => htmlspecialcharsbx($row['workflowStarted'] ?? ''),
-			'WORKFLOW_STARTED_BY' => isset($row['startedBy']) ? $renderUserName($row['startedBy']) : '',
-			'OVERDUE_DATE' => htmlspecialcharsbx($row['task']['overdueDate'] ?? ''),
+			'WORKFLOW_STARTED_BY' => htmlspecialcharsbx($row['startedBy']),
+			'OVERDUE_DATE' => htmlspecialcharsbx($row['overdueDate'] ?? ''),
 			'SUMMARY' => $wrapJsRender($row, 'SUMMARY'),
 		],
 		'actions' => $getRowActions($row['document'] ?? [], $taskToShow, $workflowId),
@@ -181,6 +169,7 @@ $messages = \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 <script>
 	BX.ready(function ()
 	{
+		BX.Bizproc.Router.init();
 		BX.message(<?= \Bitrix\Main\Web\Json::encode($messages) ?>);
 
 		const gridId = '<?= CUtil::JSEscape($arResult['gridId']) ?>';

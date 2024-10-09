@@ -6,7 +6,12 @@ export class TabNodeFormatter extends NodeFormatter
 		super({
 			name: '#tab',
 			convert({ node }: ConvertCallbackOptions): Text {
-				return document.createTextNode(node.toString());
+				if (node.getParent().getName() === 'code')
+				{
+					return document.createTextNode(node.toString());
+				}
+
+				return document.createTextNode(' ');
 			},
 			...options,
 		});

@@ -32,9 +32,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { EntityReady } = require('entity-ready');
 	const { Logger } = require('im/messenger/lib/logger');
 
-	// Channel uses the immobile-messenger-store and must be initialized after chat
-	await EntityReady.wait('chat');
-
 	const core = new ChannelApplication({
 		localStorage: {
 			enable: true,
@@ -59,6 +56,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		ChannelDialogPullHandler,
 		ChannelFilePullHandler,
 	} = require('im/messenger/provider/pull/channel');
+	const { SidebarPullHandler } = require('im/messenger/provider/pull/sidebar');
 
 	const {
 		AppStatus,
@@ -82,7 +80,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
-	const { ChannelSidebarController, CommentSidebarController } = require('im/messenger/controller/sidebar');
 	/* endregion import */
 
 	class ChannelMessenger extends MessengerBase
@@ -184,7 +181,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.onChatSettingChange = this.onChatSettingChange.bind(this);
 			this.onAppStatusChange = this.onAppStatusChange.bind(this);
 			this.onTabChanged = this.onTabChanged.bind(this);
-			this.openSidebar = this.openSidebar.bind(this);
 		}
 
 		/**
@@ -199,7 +195,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
 			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
 			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
-			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
 		}
 
 		unsubscribeMessengerEvents()
@@ -211,7 +206,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.removeCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
 			BX.removeCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
-			BX.removeCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
 		}
 
 		/**
@@ -299,6 +293,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.PULL.subscribe(new ChannelFilePullHandler());
 			BX.PULL.subscribe(new ChannelMessagePullHandler());
 			BX.PULL.subscribe(new ChannelDialogPullHandler());
+			BX.PULL.subscribe(new SidebarPullHandler());
 		}
 
 		/**
@@ -667,37 +662,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			this.refresh();
-		}
-
-		/**
-		 * desc Handler call open sidebar event
-		 * @param {{dialogId: string|number}} params
-		 * @override
-		 */
-		openSidebar(params)
-		{
-			Logger.info(`${this.constructor.name}.EventType.messenger.openSidebar`, params);
-			const dialogModel = this.store.getters['dialoguesModel/getById'](params.dialogId);
-			if (dialogModel?.role === UserRole.guest)
-			{
-				Haptics.notifyFailure();
-
-				return;
-			}
-
-			if (DialogType.comment === dialogModel?.type)
-			{
-				this.sidebar = new CommentSidebarController(params);
-				this.sidebar.open();
-
-				return;
-			}
-
-			if (dialogModel?.type === DialogType.openChannel)
-			{
-				this.sidebar = new ChannelSidebarController(params);
-				this.sidebar.open();
-			}
 		}
 		/* endregion legacy dialog integration */
 

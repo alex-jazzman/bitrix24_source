@@ -52,7 +52,6 @@ import { $insertDataTransferForPlainText } from 'ui.lexical.clipboard';
 import type TextEditor from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
-import './spoiler.css';
 import { $createSpoilerTitleTextNode, $isSpoilerTitleTextNode, SpoilerTitleTextNode } from './spoiler-title-text-node';
 
 export const INSERT_SPOILER_COMMAND = createCommand('INSERT_SPOILER_COMMAND');

@@ -1188,6 +1188,22 @@
 					})
 				},
 			},
+			{
+				condition: [
+					/^\/bitrix\/components\/bitrix\/sign.document.list\/slider.php\?type=document&entity_id=\d+&apply_filter=Y/,
+				],
+				options: {
+					cacheable: false,
+					width: 900,
+					allowChangeHistory: false,
+				},
+				handler(event, link)
+				{
+					BX.SidePanel.Instance.open(link.url);
+					event.stopPropagation();
+					event.preventDefault();
+				},
+			},
 		]
 	});
 

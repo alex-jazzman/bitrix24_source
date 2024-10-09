@@ -32,9 +32,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EntityReady } = require('entity-ready');
 
-	// Copilot uses the immobile-messenger-store and must be initialized after chat
-	await EntityReady.wait('chat');
-
 	const core = new CopilotApplication({
 		localStorage: {
 			enable: true,
@@ -60,6 +57,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		CopilotFilePullHandler,
 		CopilotUserPullHandler,
 	} = require('im/messenger/provider/pull/copilot');
+	const { PlanLimitsPullHandler } = require('im/messenger/provider/pull/plan-limits');
 
 	const {
 		AppStatus,
@@ -83,7 +81,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
 	const { SyncFillerCopilot } = require('im/messenger/provider/service');
-	const { ChatSidebarController } = require('im/messenger/controller/sidebar');
 	const AppTheme = require('apptheme');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	/* endregion import */
@@ -198,7 +195,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.onAppActiveBefore = this.onAppActiveBefore.bind(this);
 			this.onChatSettingChange = this.onChatSettingChange.bind(this);
 			this.onAppStatusChange = this.onAppStatusChange.bind(this);
-			this.openSidebar = this.openSidebar.bind(this);
+			this.updatePlanLimitsData = this.updatePlanLimitsData.bind(this);
 		}
 
 		/**
@@ -225,7 +222,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
+			BX.addCustomEvent(EventType.messenger.updatePlanLimitsData, this.updatePlanLimitsData);
 		}
 
 		unsubscribeMessengerEvents()
@@ -236,7 +233,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
-			BX.removeCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
+			BX.removeCustomEvent(EventType.messenger.updatePlanLimitsData, this.updatePlanLimitsData);
 		}
 
 		/**
@@ -334,6 +331,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.PULL.subscribe(new CopilotMessagePullHandler());
 			BX.PULL.subscribe(new CopilotFilePullHandler());
 			BX.PULL.subscribe(new CopilotUserPullHandler());
+			BX.PULL.subscribe(new PlanLimitsPullHandler());
 		}
 
 		/**
@@ -357,18 +355,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			if (queueRequests.length > 0)
 			{
 				await this.store.dispatch('queueModel/add', queueRequests);
-			}
-		}
-
-		/**
-		 * @override
-		 */
-		async initAnotherRepository()
-		{
-			const copilotData = await this.core.getRepository().copilot.getList();
-			if (copilotData.length > 0)
-			{
-				await this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilotData);
 			}
 		}
 
@@ -629,15 +615,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		}
 
 		/**
-		 * desc Handler call open sidebar event
-		 * @param {{dialogId: string|number}} params
-		 * @override
+		 * @param {PlanLimits} planLimits
+		 * @void
 		 */
-		openSidebar(params)
+		updatePlanLimitsData(planLimits)
 		{
-			Logger.info('CopilotMessenger.openSidebar', params);
-			this.sidebar = new ChatSidebarController(params);
-			this.sidebar.open();
+			Logger.log(`${this.constructor.name}.updatePlanLimitsData`, planLimits);
+			MessengerParams.setPlanLimits(planLimits);
 		}
 		/* endregion legacy dialog integration */
 

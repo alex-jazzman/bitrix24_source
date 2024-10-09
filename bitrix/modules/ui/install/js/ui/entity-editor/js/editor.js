@@ -3190,7 +3190,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				items.push(
 					{
 						id: "switchToPersonalConfig",
-						text: BX.message("UI_ENTITY_EDITOR_SWITCH_TO_PERSONAL_CONFIG_MSGVER_1"),
+						text: BX.message("UI_ENTITY_EDITOR_SWITCH_TO_PERSONAL_CONFIG_MSGVER_2"),
 						onclick: callback,
 						className: configScope === BX.UI.EntityConfigScope.personal
 							? "menu-popup-item-accept" : "menu-popup-item-none"
@@ -3200,7 +3200,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				items.push(
 					{
 						id: "switchToCommonConfig",
-						text: BX.message("UI_ENTITY_EDITOR_SWITCH_TO_COMMON_CONFIG_MSGVER_1"),
+						text: BX.message("UI_ENTITY_EDITOR_SWITCH_TO_COMMON_CONFIG_MSGVER_2"),
 						onclick: callback,
 						className: configScope === BX.UI.EntityConfigScope.common
 							? "menu-popup-item-accept" : "menu-popup-item-none"
@@ -3241,7 +3241,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				items.push(
 					{
 						id: "resetConfig",
-						text: BX.message("UI_ENTITY_EDITOR_RESET_CONFIG_MSGVER_1"),
+						text: BX.message("UI_ENTITY_EDITOR_RESET_CONFIG_MSGVER_2"),
 						onclick: callback,
 						className: "menu-popup-item-none"
 					}
@@ -3252,7 +3252,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 					items.push(
 						{
 							id: "forceCommonConfigForAllUsers",
-							text: BX.message("UI_ENTITY_EDITOR_FORCE_COMMON_CONFIG_FOR_ALL_MSGVER_1"),
+							text: BX.message("UI_ENTITY_EDITOR_FORCE_COMMON_CONFIG_FOR_ALL_MSGVER_2"),
 							onclick: callback,
 							className: "menu-popup-item-none"
 						}

@@ -4,6 +4,7 @@
 jn.define('calendar/layout/fields/layout/selector', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class Selector
@@ -134,7 +135,7 @@ jn.define('calendar/layout/fields/layout/selector', (require, exports, module) =
 					View(
 						{
 							style: {
-								backgroundColor: AppTheme.colors.base8,
+								backgroundColor: Color.bgContentPrimary.toHex(),
 							},
 						},
 						...this.state.items.map((item) => this.renderOption(item)),

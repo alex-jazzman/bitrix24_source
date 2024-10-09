@@ -186,6 +186,7 @@ export const TodoEditorBlocksCalendar = {
 				location,
 				entries: false,
 				prevUserList: oldUserIds,
+				skipFeatureCheck: 'Y',
 			};
 
 			newUserIds.forEach((userId) => {

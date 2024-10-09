@@ -1143,8 +1143,9 @@ this.BX.UI = this.BX.UI || {};
 	  const authorEditContainer = main_core.Tag.render(_t13 || (_t13 = _$1`
 			<div class="sender-item-author-container"></div>
 		`));
-	  if (sender.userUrl && sender.avatar) {
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderUserInfoNode)[_renderUserInfoNode](sender.userUrl, sender.avatar), authorEditContainer);
+	  if (sender.userUrl) {
+	    var _sender$avatar;
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderUserInfoNode)[_renderUserInfoNode](sender.userUrl, (_sender$avatar = sender.avatar) != null ? _sender$avatar : null), authorEditContainer);
 	  }
 	  return authorEditContainer;
 	}

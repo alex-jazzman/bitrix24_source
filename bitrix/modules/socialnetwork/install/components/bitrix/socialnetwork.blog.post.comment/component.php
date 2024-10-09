@@ -1689,7 +1689,8 @@ if (
 					$arConvertParams = Array(
 						"imageWidth" => $arParams["IMAGE_MAX_WIDTH"],
 						"imageHeight" => $arParams["IMAGE_MAX_HEIGHT"],
-						"pathToUser" => $arParams["PATH_TO_USER"]
+						"pathToUser" => $arParams["PATH_TO_USER"],
+						"ATTRIBUTES" => $arParams["ATTRIBUTES"] ?? null,
 					);
 
 					if (!empty($arParams["LOG_ID"]))
@@ -2087,6 +2088,7 @@ if (
 				"imageWidth" => $arParams["IMAGE_MAX_WIDTH"],
 				"imageHeight" => $arParams["IMAGE_MAX_HEIGHT"],
 				"pathToUser" => $arParams["PATH_TO_USER"],
+				"ATTRIBUTES" => $arParams["ATTRIBUTES"] ?? null,
 			);
 
 			$handlerManager = new CommentAux\HandlerManager();

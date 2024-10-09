@@ -4,7 +4,8 @@ import { BuilderModel } from 'ui.vue3.vuex';
 
 import { Layout, EventType } from 'im.v2.const';
 
-import { SettingsModel } from './nested-modules/settings';
+import { SettingsModel } from './nested-modules/settings/settings';
+import { TariffRestrictionsModel } from './nested-modules/tariff-restrictions/tariff-restrictions';
 
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 
@@ -27,6 +28,7 @@ export class ApplicationModel extends BuilderModel
 	{
 		return {
 			settings: SettingsModel,
+			tariffRestrictions: TariffRestrictionsModel,
 		};
 	}
 

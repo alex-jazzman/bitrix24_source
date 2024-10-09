@@ -6,7 +6,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-Class mobile extends CModule
+class mobile extends CModule
 {
 	var $MODULE_ID = "mobile";
 	var $MODULE_VERSION;
@@ -18,9 +18,9 @@ Class mobile extends CModule
 
 	function __construct()
 	{
-		$arModuleVersion = array();
+		$arModuleVersion = [];
 
-		include(__DIR__.'/version.php');
+		include(__DIR__ . '/version.php');
 
 		if (isset($arModuleVersion["VERSION"]))
 		{
@@ -32,7 +32,8 @@ Class mobile extends CModule
 		$this->MODULE_DESCRIPTION = Loc::getMessage('APP_MODULE_DESCRIPTION');
 	}
 
-	private function getSubmodules(): ?array {
+	private function getSubmodules(): ?array
+	{
 		return [
 			'im',
 			'crm',
@@ -48,7 +49,8 @@ Class mobile extends CModule
 		];
 	}
 
-	public function installSubmodules() {
+	public function installSubmodules()
+	{
 		$submodules = $this->getSubmodules();
 		foreach ($submodules as $submoduleId)
 		{
@@ -79,17 +81,17 @@ Class mobile extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'mobile', '\Bitrix\Mobile\Rest', 'onRestServiceBuildDescription');
 		$eventManager->registerEventHandler('mobile', 'onOneTimeHashRemoved', 'mobile', '\Bitrix\Mobile\Deeplink', 'onOneTimeHashRemoved');
 		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'mobile', 'CMobileEvent', 'PullOnGetDependentModule');
+		$eventManager->registerEventHandler('pull', 'onPushTokenUniqueHashGet', 'mobile', '\Bitrix\Mobile\Push\EventHandler', 'onPushTokenUniqueHashGet');
 		$eventManager->registerEventHandler('main', 'OnApplicationsBuildList', 'mobile', 'MobileApplication', 'OnApplicationsBuildList', 100, "modules/mobile/classes/general/mobile_event.php");
 		$eventManager->registerEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
 		$eventManager->registerEventHandler('mobile', 'onMobileMenuStructureBuilt', 'mobile', 'CMobileEvent', 'onMobileMenuBuilt');
 		$eventManager->registerEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
 		$eventManager->registerEventHandler('mobileapp', 'onBeforeComponentContentGet', 'mobile', 'CMobileEvent', 'onBeforeComponentContentGet');
 
-
 		return true;
 	}
 
-	function UnInstallDB($arParams = array())
+	function UnInstallDB($arParams = [])
 	{
 		UnRegisterModuleDependences("pull", "OnGetDependentModule", "mobile", "CMobileEvent", "PullOnGetDependentModule");
 		UnRegisterModuleDependences("main", "OnApplicationsBuildList", "main", 'MobileApplication', "OnApplicationsBuildList", 100, "modules/mobile/classes/general/mobile_event.php");
@@ -99,35 +101,36 @@ Class mobile extends CModule
 		$eventManager->unRegisterEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
 		$eventManager->unRegisterEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
 		$eventManager->unRegisterEventHandler('mobileapp', 'onBeforeComponentContentGet', 'mobile', 'CMobileEvent', 'onBeforeComponentContentGet');
+		$eventManager->unRegisterEventHandler('pull', 'onPushTokenUniqueHashGet', 'mobile', '\Bitrix\Mobile\Push\EventHandler', 'onPushTokenUniqueHashGet');
 
 		UnRegisterModule("mobile");
+
 		return true;
 	}
 
 	function InstallFiles()
 	{
-		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/public/mobile/", $_SERVER["DOCUMENT_ROOT"] . "/mobile/", True, True);
-		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/templates/", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/templates/", True, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/public/mobile/", $_SERVER["DOCUMENT_ROOT"] . "/mobile/", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/templates/", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/templates/", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/js/", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js/", true, true);
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/mobile/install/tools/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/', true, true);
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/mobile/install/services/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/services/', true, true);
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/mobile/install/mobileapp/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/mobileapp/', true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/images/", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/images/", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/components/", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/components", true, true);
+
 		COption::SetOptionString("socialnetwork", "urlToPost", "/mobile/log/index.php");
-		CopyDirFiles(
-			$_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/components/",
-			$_SERVER["DOCUMENT_ROOT"] . "/bitrix/components",
-			true, true
-		);
+
 		$default_site_id = CSite::GetDefSite();
 		if ($default_site_id)
 		{
-			$arAppTempalate = Array(
+			$arAppTempalate = [
 				"SORT" => 1,
 				"CONDITION" => "CSite::InDir('/mobile/')",
-				"TEMPLATE" => "mobile_app"
-			);
+				"TEMPLATE" => "mobile_app",
+			];
 
-			$arFields = Array("TEMPLATE" => Array());
+			$arFields = ["TEMPLATE" => []];
 			$dbTemplates = CSite::GetTemplateList($default_site_id);
 			$mobileAppFound = false;
 			while ($template = $dbTemplates->Fetch())
@@ -141,7 +144,7 @@ Class mobile extends CModule
 				$arFields["TEMPLATE"][] = [
 					"TEMPLATE" => $template['TEMPLATE'],
 					"SORT" => $template['SORT'],
-					"CONDITION" => $template['CONDITION']
+					"CONDITION" => $template['CONDITION'],
 				];
 			}
 
@@ -155,11 +158,11 @@ Class mobile extends CModule
 			$obSite->Update($default_site_id, $arFields);
 		}
 
-		if (File::isFileExists(Application::getDocumentRoot(). "/mobile/webdav/index.php"))
+		if (File::isFileExists(Application::getDocumentRoot() . "/mobile/webdav/index.php"))
 		{
 			CUrlRewriter::ReindexFile("/mobile/webdav/index.php");
 		}
-		if (File::isFileExists(Application::getDocumentRoot(). "/mobile/disk/index.php"))
+		if (File::isFileExists(Application::getDocumentRoot() . "/mobile/disk/index.php"))
 		{
 			CUrlRewriter::ReindexFile("/mobile/disk/index.php");
 		}
@@ -263,6 +266,12 @@ Class mobile extends CModule
 			}
 		}
 	}
-}
 
-?>
+	function InstallEvents()
+	{
+	}
+
+	function UnInstallEvents()
+	{
+	}
+}

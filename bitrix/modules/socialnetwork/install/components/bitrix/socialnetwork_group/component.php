@@ -660,8 +660,6 @@ if (
 		}
 		unset($variable);
 	}
-
-	CSocNetLogComponent::redirectExtranetSite($arRedirectSite, $componentPage, $arVariables, $arDefaultUrlTemplates404, "workgroup");
 }
 
 $arResult = array_merge(

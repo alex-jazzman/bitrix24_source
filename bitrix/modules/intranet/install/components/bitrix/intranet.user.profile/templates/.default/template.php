@@ -301,7 +301,21 @@ if (
 							<a
 								class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-round"
 								href="javascript:void(0)"
-								onclick="if (top.BXIM) { top.BXIM.callTo(<?= $arResult["User"]['ID'] ?>); }"
+								onclick="if (top.BXIM) {
+									top.BXIM.callTo(<?= $arResult['User']['ID'] ?>);
+									if (BX.type.isFunction(BX.UI?.Analytics?.sendData))
+									{
+										BX.UI.Analytics.sendData({
+											tool: 'im',
+											category: 'user_profile',
+											event: 'click_call_button',
+											type: 'private',
+											c_section: 'user_profile',
+											c_element: 'videocall',
+											p5: 'profileId_<?= $arResult['User']['ID'] ?>'
+										});
+									}
+								}"
 							>
 								<?= Loc::getMessage("INTRANET_USER_PROFILE_VIDEOCALL") ?>
 							</a>
@@ -964,7 +978,9 @@ if ($arResult["adminRightsRestricted"])
 		) ?>",
 		"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT")) ?>",
 		"INTRANET_USER_PROFILE_ACTION_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_ACTION_CONFIRM")) ?>",
-		"INTRANET_USERPROFILE_ACTION_REFUSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USERPROFILE_ACTION_REFUSE")) ?>"
+		"INTRANET_USERPROFILE_ACTION_REFUSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USERPROFILE_ACTION_REFUSE")) ?>",
+		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE")) ?>",
+		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER")) ?>",
 	});
 
 	new BX.Intranet.UserProfile.Manager({

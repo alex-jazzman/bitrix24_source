@@ -14,6 +14,7 @@ import './style.css';
 type Params = {
 	flowId: number,
 	bindElement: HTMLElement,
+	isFeatureEnabled: 'Y' | 'N',
 };
 
 export class ViewForm
@@ -42,6 +43,8 @@ export class ViewForm
 		this.#layout = {};
 
 		this.#viewAjax = new ViewAjax(this.#params.flowId);
+
+		this.isFeatureEnabled = params.isFeatureEnabled === 'Y';
 
 		void this.#load();
 	}
@@ -381,6 +384,7 @@ export class ViewForm
 	{
 		this.#layout.similarFlows ??= new SimilarFlows({
 			flowId: this.#params.flowId,
+			isFeatureEnabled: this.isFeatureEnabled,
 			createTaskButtonClickHandler: () => this.#layout.popup?.destroy(),
 		});
 

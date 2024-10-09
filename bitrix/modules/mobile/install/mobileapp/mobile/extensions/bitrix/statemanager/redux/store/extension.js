@@ -5,20 +5,21 @@ jn.define('statemanager/redux/store', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { enableBatching } = require('statemanager/redux/batched-actions');
 	const { batchedSubscribe } = require('statemanager/redux/batched-subscribe');
-	const { createStateSyncMiddleware, initBroadcastChannel } = require('statemanager/redux/state-sync');
+	const { createStateSyncMiddleware, initBroadcastChannel } = require('statemanager/redux/middleware/state-sync');
 	const { configureStore, combineReducers } = require('statemanager/redux/toolkit');
 	const { debounce } = require('utils/function');
+	const { analyticsSenderMiddleware } = require('statemanager/redux/middleware/analytics-sender');
 
 	// register user reducer in global ReducerRegistry
 	require('statemanager/redux/slices/users');
 
 	const isBeta = Application.isBeta();
 
-	const middlewares = [createStateSyncMiddleware()];
+	const middlewares = [createStateSyncMiddleware(), analyticsSenderMiddleware];
 
 	if (isBeta)
 	{
-		const { logger } = require('statemanager/redux/logger');
+		const { logger } = require('statemanager/redux/middleware/logger');
 
 		middlewares.push(logger);
 	}

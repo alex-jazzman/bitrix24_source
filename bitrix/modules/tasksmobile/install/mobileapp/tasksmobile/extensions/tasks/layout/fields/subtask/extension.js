@@ -51,6 +51,7 @@ jn.define('tasks/layout/fields/subtask', (require, exports, module) => {
 
 				return null;
 			};
+
 			const taskCreateParameters = {
 				initialTaskData: {
 					responsible: mapUser(usersSelector.selectById(store.getState(), userId)),
@@ -60,21 +61,15 @@ jn.define('tasks/layout/fields/subtask', (require, exports, module) => {
 				},
 				layoutWidget: this.getParentWidget(),
 				context: 'tasks.dashboard',
+				analyticsLabel: this.getAnalyticsLabel(),
 			};
 
 			openTaskCreateForm(taskCreateParameters);
 		}
 
-		getLeftIcon()
-		{
-			return {
-				icon: Icon.RELATED_TASKS,
-			};
-		}
-
 		getDefaultLeftIcon()
 		{
-			return null;
+			return Icon.RELATED_TASKS;
 		}
 	}
 

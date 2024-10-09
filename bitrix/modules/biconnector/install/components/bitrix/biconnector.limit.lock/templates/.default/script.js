@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,main_core_events,main_popup,ui_buttons) {
+(function (exports,main_core,main_core_events,main_popup,ui_buttons,ui_bannerDispatcher) {
 	'use strict';
 
 	var _templateObject;
@@ -61,45 +61,53 @@
 	}
 	function _show2() {
 	  var _this = this;
-	  var popupButtons = [new ui_buttons.Button({
-	    text: babelHelpers.classPrivateFieldGet(this, _licenseButtonText),
-	    color: ui_buttons.Button.Color.SUCCESS,
-	    onclick: function onclick() {
-	      top.location.href = babelHelpers.classPrivateFieldGet(_this, _licenseUrl);
+	  ui_bannerDispatcher.BannerDispatcher.high.toQueue(function (onDone) {
+	    var popupButtons = [];
+	    if (babelHelpers.classPrivateFieldGet(_this, _licenseButtonText)) {
+	      popupButtons.push(new ui_buttons.Button({
+	        text: babelHelpers.classPrivateFieldGet(_this, _licenseButtonText),
+	        color: ui_buttons.Button.Color.SUCCESS,
+	        onclick: function onclick() {
+	          top.location.href = babelHelpers.classPrivateFieldGet(_this, _licenseUrl);
+	        }
+	      }));
 	    }
-	  }), new ui_buttons.Button({
-	    text: babelHelpers.classPrivateFieldGet(this, _laterButtonText),
-	    color: ui_buttons.Button.Color.LINK,
-	    onclick: function onclick() {
-	      popup.close();
-	    }
-	  })];
-	  var popupContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-limit-popup-wrap\">\n\t\t\t\t<div class=\"biconnector-limit-popup\">\n\t\t\t\t\t<div class=\"biconnector-limit-pic\">\n\t\t\t\t\t\t<div class=\"biconnector-limit-pic-round\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"biconnector-limit-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _content));
-	  var popup = new main_popup.Popup({
-	    titleBar: babelHelpers.classPrivateFieldGet(this, _title),
-	    content: popupContent,
-	    overlay: true,
-	    className: babelHelpers.classPrivateFieldGet(this, _popupClassName),
-	    closeIcon: true,
-	    lightShadow: true,
-	    offsetLeft: 100,
-	    buttons: popupButtons
-	  });
-	  if (babelHelpers.classPrivateFieldGet(this, _fullLock)) {
-	    popup.subscribe('onClose', function () {
-	      if (BX.SidePanel.Instance.isOpen()) {
-	        BX.SidePanel.Instance.close();
+	    popupButtons.push(new ui_buttons.Button({
+	      text: babelHelpers.classPrivateFieldGet(_this, _laterButtonText),
+	      color: ui_buttons.Button.Color.LINK,
+	      onclick: function onclick() {
+	        popup.close();
 	      }
-	      main_core_events.EventEmitter.emit('BiConnector:LimitPopup.Lock.onClose');
+	    }));
+	    var popupContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-limit-popup-wrap\">\n\t\t\t\t<div class=\"biconnector-limit-popup\">\n\t\t\t\t\t<div class=\"biconnector-limit-pic\">\n\t\t\t\t\t\t<div class=\"biconnector-limit-pic-round\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"biconnector-limit-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(_this, _content));
+	    var popup = new main_popup.Popup({
+	      titleBar: babelHelpers.classPrivateFieldGet(_this, _title),
+	      content: popupContent,
+	      overlay: true,
+	      className: babelHelpers.classPrivateFieldGet(_this, _popupClassName),
+	      closeIcon: true,
+	      lightShadow: true,
+	      offsetLeft: 100,
+	      buttons: popupButtons
 	    });
-	  } else {
-	    popup.subscribe('onClose', function () {
-	      main_core_events.EventEmitter.emit('BiConnector:LimitPopup.Warning.onClose');
-	    });
-	  }
-	  popup.show();
+	    if (babelHelpers.classPrivateFieldGet(_this, _fullLock)) {
+	      popup.subscribe('onClose', function () {
+	        if (BX.SidePanel.Instance.isOpen()) {
+	          BX.SidePanel.Instance.close();
+	        }
+	        main_core_events.EventEmitter.emit('BiConnector:LimitPopup.Lock.onClose');
+	        onDone();
+	      });
+	    } else {
+	      popup.subscribe('onClose', function () {
+	        main_core_events.EventEmitter.emit('BiConnector:LimitPopup.Warning.onClose');
+	        onDone();
+	      });
+	    }
+	    popup.show();
+	  });
 	}
 	main_core.Reflection.namespace('BX.BIConnector').LimitLockPopup = LimitLockPopup;
 
-}((this.window = this.window || {}),BX,BX.Event,BX.Main,BX.UI));
+}((this.window = this.window || {}),BX,BX.Event,BX.Main,BX.UI,BX.UI));
 //# sourceMappingURL=script.js.map

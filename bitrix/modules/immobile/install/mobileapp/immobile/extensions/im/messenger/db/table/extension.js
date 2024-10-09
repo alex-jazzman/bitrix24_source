@@ -19,6 +19,7 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 	const { LinkPinTable } = require('im/messenger/db/table/link-pin');
 	const { LinkPinMessageTable } = require('im/messenger/db/table/link-pin-message');
 	const { CopilotTable } = require('im/messenger/db/table/copilot');
+	const { SidebarFileTable } = require('im/messenger/db/table/sidebar/file');
 
 	module.exports = {
 		OptionTable,
@@ -36,5 +37,6 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 		LinkPinTable,
 		LinkPinMessageTable,
 		CopilotTable,
+		SidebarFileTable,
 	};
 });

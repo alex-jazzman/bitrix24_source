@@ -713,8 +713,6 @@ if (
 		}
 		unset($variable);
 	}
-
-	CSocNetLogComponent::redirectExtranetSite($arRedirectSite, $componentPage, $arVariables, $arDefaultUrlTemplates404, "user");
 }
 
 ComponentHelper::setComponentOption(
@@ -1289,6 +1287,17 @@ elseif ($componentPage === "bizproc_task_list")
 {
 	$componentPage = "bizproc";
 }
+
+if ($componentPage === "bizproc_edit")
+{
+	//TODO: remove after bizproc 24.500.0 is released
+	$bpVersion = \Bitrix\Main\ModuleManager::getVersion('bizproc');
+	if ($bpVersion && version_compare($bpVersion, '24.500.0') >= 0)
+	{
+		$componentPage = 'bizproc_workflow';
+	}
+}
+
 /********************************************************************
 				/Business-process
 ********************************************************************/

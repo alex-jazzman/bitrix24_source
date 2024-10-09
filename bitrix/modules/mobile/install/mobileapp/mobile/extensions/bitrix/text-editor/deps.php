@@ -20,6 +20,7 @@ return [
         'haptics',
         'in-app-url',
         'utils/copy',
+        'utils/file',
 	],
 
 	'bundle' => [

@@ -8,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 
 Extension::load(['ui.icons', 'ui.fonts.opensans']);
 
@@ -254,12 +255,15 @@ $this->EndViewTarget();
 		var taskLimitExceeded = <?= Json::encode($taskLimitExceeded) ?>;
 		if (taskLimitExceeded)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_supervisor_view', {
-				isLimit: true,
-				limitAnalyticsLabels: {
-					module: 'tasks',
-					source: 'view'
-				}
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId: '<?=FeatureDictionary::TASK_SUPERVISOR_VIEW?>',
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'view',
+					},
+				});
 			});
 		}
 	});

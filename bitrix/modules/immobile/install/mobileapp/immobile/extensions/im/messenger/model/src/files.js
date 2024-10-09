@@ -30,6 +30,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		authorId: 0,
 		authorName: '',
 		urlPreview: '',
+		urlLocalPreview: '',
 		urlShow: '',
 		urlDownload: '',
 		localUrl: '',
@@ -149,7 +150,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 				if (existingFileList.length > 0)
 				{
-					store.commit('update', {
+					store.commit('update', { // TODO this update will be recovery default fields ( if fields not has)
 						actionName: 'set',
 						data: {
 							fileList: existingFileList,
@@ -375,6 +376,11 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			result.chatId = Number(fields.chatId);
 		}
 
+		if (Type.isString(fields.dialogId))
+		{
+			result.dialogId = fields.dialogId;
+		}
+
 		if (!Type.isUndefined(fields.date))
 		{
 			result.date = DateHelper.cast(fields.date);
@@ -544,7 +550,29 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			result.uploadData = fields.uploadData;
 		}
 
+		if (isLocalFileByUrl(fields.urlShow))
+		{
+			if (fields.type === FileType.image)
+			{
+				result.urlLocalPreview = fields.urlShow;
+			}
+
+			if (fields.type === FileType.video)
+			{
+				result.urlLocalPreview = fields.urlPreview;
+			}
+		}
+
 		return result;
+	}
+
+	/**
+	 * @param {string} url
+	 * @return {boolean}
+	 */
+	function isLocalFileByUrl(url)
+	{
+		return Type.isString(url) && url.startsWith('file');
 	}
 
 	module.exports = { filesModel };

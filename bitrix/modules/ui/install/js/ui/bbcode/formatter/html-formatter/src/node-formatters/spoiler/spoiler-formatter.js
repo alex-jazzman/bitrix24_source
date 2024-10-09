@@ -1,12 +1,14 @@
-import { Dom } from 'main.core';
+import { Dom, Type, Loc } from 'main.core';
 import {
 	NodeFormatter,
 	type AfterCallbackOptions,
 	type NodeFormatterOptions,
 	type ConvertCallbackOptions,
+	type BeforeConvertCallbackOptions,
 } from 'ui.bbcode.formatter';
 
-import './style.css';
+import { normalizeTextNodes } from '../../helpers/normalize-text-nodes';
+import type { BBCodeNode } from 'ui.bbcode.model';
 
 export class SpoilerNodeFormatter extends NodeFormatter
 {
@@ -15,21 +17,27 @@ export class SpoilerNodeFormatter extends NodeFormatter
 		super({
 			name: 'spoiler',
 			convert({ node }: ConvertCallbackOptions): HTMLDetailsElement {
+				const value = node.getValue().trim();
+				const title = Type.isStringFilled(value) ? value : Loc.getMessage('HTML_FORMATTER_SPOILER_TITLE');
+
 				return Dom.create({
 					tag: 'details',
 					attrs: {
-						className: 'ui-formatter__spoiler ui-icon-set__scope',
+						className: 'ui-typography-spoiler ui-icon-set__scope',
 					},
 					children: [
 						Dom.create({
 							tag: 'summary',
 							attrs: {
-								className: 'ui-formatter__spoiler-title',
+								className: 'ui-typography-spoiler-title',
 							},
-							text: node.getValue(),
+							text: title,
 						}),
 					],
 				});
+			},
+			before({ node }: BeforeConvertCallbackOptions): BBCodeNode {
+				return normalizeTextNodes(node);
 			},
 			after({ element }: AfterCallbackOptions): HTMLElement {
 				const [summary, ...content] = element.children;
@@ -39,7 +47,7 @@ export class SpoilerNodeFormatter extends NodeFormatter
 					Dom.create({
 						tag: 'div',
 						attrs: {
-							className: 'ui-formatter__spoiler-content',
+							className: 'ui-typography-spoiler-content',
 						},
 						children: [
 							...content,

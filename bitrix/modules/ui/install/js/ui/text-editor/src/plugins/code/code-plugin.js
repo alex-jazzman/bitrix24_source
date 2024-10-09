@@ -1,6 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 
 import { Loc, Type } from 'main.core';
+import { CodeParser, type CodeToken } from 'ui.code-parser';
 import { $insertDataTransferForPlainText } from 'ui.lexical.clipboard';
 
 import {
@@ -45,7 +46,6 @@ import Button from '../../toolbar/button';
 import { FORMAT_PARAGRAPH_COMMAND } from '../paragraph';
 import { CodeNode, $isCodeNode, $createCodeNode } from './code-node';
 import { CodeTokenNode, $isCodeTokenNode, $createCodeTokenNode } from './code-token-node';
-import { parse } from './parser';
 
 import type TextEditor from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
@@ -58,11 +58,6 @@ import type {
 	BBCodeImportConversion,
 } from '../../bbcode';
 
-export interface Token {
-	type: string;
-	content: string;
-}
-
 export type InsertCodePayload = {
 	content?: string,
 };
@@ -70,11 +65,10 @@ export type InsertCodePayload = {
 export const FORMAT_CODE_COMMAND: LexicalCommand = createCommand('FORMAT_CODE_COMMAND');
 export const INSERT_CODE_COMMAND: LexicalCommand<InsertCodePayload> = createCommand('INSERT_CODE_COMMAND');
 
-import './code.css';
-
 export class CodePlugin extends BasePlugin
 {
 	#nodesCurrentlyHighlighting = new Set();
+	#codeParser = new CodeParser();
 
 	constructor(editor: TextEditor)
 	{
@@ -284,7 +278,7 @@ export class CodePlugin extends BasePlugin
 					const codeNode = $createCodeNode();
 					if (Type.isPlainObject(payload) && Type.isStringFilled(payload.content))
 					{
-						const tokenNodes = getCodeTokenNodes(parse(payload.content));
+						const tokenNodes = getCodeTokenNodes(this.#codeParser.parse(payload.content));
 						codeNode.append(...tokenNodes);
 						$insertNodeToNearestRoot(codeNode);
 					}
@@ -352,7 +346,7 @@ export class CodePlugin extends BasePlugin
 						return false;
 					}
 					const code = currentNode.getTextContent();
-					const codeTokenNodes = getCodeTokenNodes(parse(code));
+					const codeTokenNodes = getCodeTokenNodes(this.#codeParser.parse(code));
 					const diffRange = getDiffRange(currentNode.getChildren(), codeTokenNodes);
 
 					const { from, to, nodesForReplacement } = diffRange;
@@ -672,10 +666,10 @@ function isEqual(nodeA: LexicalNode, nodeB: LexicalNode): boolean
 	);
 }
 
-function getCodeTokenNodes(tokens: Array<Token>): LexicalNode[]
+function getCodeTokenNodes(tokens: Array<CodeToken>): LexicalNode[]
 {
 	const nodes: LexicalNode[] = [];
-	tokens.forEach((token: Token): void => {
+	tokens.forEach((token: CodeToken): void => {
 		const partials: string[] = token.content.split(/([\t\n])/);
 		const partialsLength: number = partials.length;
 		for (let i = 0; i < partialsLength; i++)

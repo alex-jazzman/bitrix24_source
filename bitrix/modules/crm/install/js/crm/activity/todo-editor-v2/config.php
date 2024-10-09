@@ -16,6 +16,7 @@ $settings = [
 if (\Bitrix\Main\Loader::includeModule('crm'))
 {
 	$settings['crmMode'] = \Bitrix\Crm\Settings\Mode::getCurrentName();
+	$settings['locationFeatureEnabled'] = \Bitrix\Crm\Integration\Bitrix24Manager::isFeatureEnabled('calendar_location');
 }
 
 return [
@@ -28,9 +29,13 @@ return [
 		'ui.analytics',
 		'location.core',
 		'location.widget',
-		'calendar.planner',
 		'ui.design-tokens',
+		'calendar.planner',
 		'main.date',
+		'ui.info-helper',
+		'calendar.controls',
+		'calendar.sectionmanager',
+		'ui.sidepanel',
 		'crm.client-selector',
 		'ui.notification',
 		'ui.uploader.tile-widget',

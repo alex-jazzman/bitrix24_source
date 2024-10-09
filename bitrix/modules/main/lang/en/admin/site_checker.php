@@ -453,7 +453,6 @@ $MESS["SC_MEMORY_CHANGED"] = "The value of memory_limit was increased from #VAL0
 $MESS["SC_MOD_GD"] = "GD Library";
 $MESS["SC_MOD_GD_JPEG"] = "GD JPEG support";
 $MESS["SC_MOD_MBSTRING"] = "mbstring support";
-$MESS["SC_MOD_PERL_REG"] = "Regular Expression support (Perl-Compatible)";
 $MESS["SC_MOD_XML"] = "XML support";
 $MESS["SC_MYSQL_ERR_VER"] = "MySQL #CUR# is currently installed, but #REQ# is required.";
 $MESS["SC_NOT_FILLED"] = "The problem description is required.";

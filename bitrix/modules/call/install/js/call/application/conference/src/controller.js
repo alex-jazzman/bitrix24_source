@@ -125,6 +125,7 @@ class ConferenceApplication
 		this.onUpdateLastUsedCameraIdHandler = this.onUpdateLastUsedCameraId.bind(this);
 		this.onCallConnectionQualityChangedHandler = this.onCallConnectionQualityChanged.bind(this);
 		this.onCallToggleRemoteParticipantVideoHandler = this.onCallToggleRemoteParticipantVideo.bind(this);
+		this._onGetUserMediaEndedHandler = this.onGetUserMediaEnded.bind(this);
 
 		this.onPreCallDestroyHandler = this.onPreCallDestroy.bind(this);
 		this.onPreCallUserStateChangedHandler = this.onPreCallUserStateChanged.bind(this);
@@ -399,7 +400,6 @@ class ConferenceApplication
 					isIntranetOrExtranet: !!this.params.isIntranetOrExtranet,
 					language: this.params.language,
 					layout: Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
-					enableNewLayoutLogic: Call.Util.isNewCallLayoutEnabled(),
 					uiState: Call.View.UiState.Preparing,
 					blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record'],
 					localUserState: Call.UserState.Idle,
@@ -978,7 +978,7 @@ class ConferenceApplication
 			if(e.isNew)
 			{
 				Analytics.getInstance().onStartVideoconf({
-					callId: this.currentCall.id,
+					callId: this.currentCall?.id,
 					withVideo: videoEnabled,
 					mediaParams: {
 						video: Call.Hardware.isCameraOn,
@@ -995,7 +995,7 @@ class ConferenceApplication
 					joinAsViewer: viewerMode
 				});
 				Analytics.getInstance().onJoinVideoconf({
-					callId: this.currentCall.id,
+					callId: this.currentCall?.id,
 					withVideo: videoEnabled,
 					mediaParams: {
 						video: Call.Hardware.isCameraOn,
@@ -1133,10 +1133,9 @@ class ConferenceApplication
 			}
 
 			window.close();
-			// some users may open conference from the conference list page
-			// and 'window.close();' will not work in this case,
-			// so we can try to go to the previous page instead
-			history.back();
+			// if the conference was opened incorrectly, then "window.close();" may not work in some cases
+			// as a workaround, we can redirect the user back to the portal's front page.
+			location.href = '/';
 		}
 		else
 		{
@@ -1184,6 +1183,11 @@ class ConferenceApplication
 
 	getCallUsers(includeSelf)
 	{
+		if (!this.currentCall)
+		{
+			return [];
+		}
+
 		let result = Object.keys(this.currentCall.getUsers());
 		if (includeSelf)
 		{
@@ -1217,6 +1221,11 @@ class ConferenceApplication
 	setLocalVideoStream(stream)
 	{
 		this.localVideoStream = stream;
+	}
+
+	updateMediaDevices() {
+		Call.Hardware.getCurrentDeviceList()
+		console.log('updateMediaDevices')
 	}
 
 	stopLocalVideoStream()
@@ -1674,7 +1683,7 @@ class ConferenceApplication
 	onCallViewHangupButtonClick(e)
 	{
 		Analytics.getInstance().onDisconnectCall({
-			callId: this.currentCall.id,
+			callId: this.currentCall?.id,
 			callType: Analytics.AnalyticsType.videoconf,
 			subSection: Analytics.AnalyticsSubSection.finishButton,
 			mediaParams: {
@@ -1701,12 +1710,12 @@ class ConferenceApplication
 				text: BX.message("CALL_M_BTN_HANGUP_OPTION_FINISH"),
 				onclick: () => {
 					Analytics.getInstance().onFinishCall({
-						callId: this.currentCall.id,
+						callId: this.currentCall?.id,
 						callType: Analytics.AnalyticsType.videoconf,
 						status: Analytics.AnalyticsStatus.finishedForAll,
-						chatId: this.currentCall.associatedEntity.id,
+						chatId: this.currentCall?.associatedEntity.id,
 						callUsersCount: this.getCallUsers(true).length,
-						callLength: Call.Util.getTimeText(this.currentCall.startDate),
+						callLength: Call.Util.getTimeText(this.currentCall?.startDate),
 					});
 
 					this.stopLocalVideoStream();
@@ -1717,7 +1726,7 @@ class ConferenceApplication
 				text: BX.message("CALL_M_BTN_HANGUP_OPTION_LEAVE"),
 				onclick: () => {
 					Analytics.getInstance().onDisconnectCall({
-						callId: this.currentCall.id,
+						callId: this.currentCall?.id,
 						callType: Analytics.AnalyticsType.videoconf,
 						subSection: Analytics.AnalyticsSubSection.contextMenu,
 						mediaParams: {
@@ -2079,7 +2088,7 @@ class ConferenceApplication
 	onCallViewShowChatButtonClick()
 	{
 		Analytics.getInstance().onShowChat({
-			callId: this.currentCall.id,
+			callId: this.currentCall?.id,
 			callType: Analytics.AnalyticsType.videoconf,
 		});
 
@@ -2182,6 +2191,7 @@ class ConferenceApplication
 		this.currentCall.addEventListener(Call.Event.onUpdateLastUsedCameraId, this.onUpdateLastUsedCameraIdHandler);
 		this.currentCall.addEventListener(Call.Event.onConnectionQualityChanged, this.onCallConnectionQualityChangedHandler);
 		this.currentCall.addEventListener(Call.Event.onToggleRemoteParticipantVideo, this.onCallToggleRemoteParticipantVideoHandler);
+		this.currentCall.addEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
 	}
 
 	removeCallEvents()
@@ -2211,6 +2221,7 @@ class ConferenceApplication
 		this.currentCall.removeEventListener(Call.Event.onReconnecting, this.onReconnectingHandler);
 		this.currentCall.removeEventListener(Call.Event.onReconnected, this.onReconnectedHandler);
 		this.currentCall.addEventListener(Call.Event.onUpdateLastUsedCameraId, this.onUpdateLastUsedCameraIdHandler);
+		this.currentCall.removeEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
 	}
 
 	onCallUserInvited(e)
@@ -2315,7 +2326,7 @@ class ConferenceApplication
 				{
 					this.showWebScreenSharePopup();
 				}
-				this.callView.blockSwitchCamera();
+
 				this.callView.updateButtons();
 			}
 			else
@@ -2337,12 +2348,12 @@ class ConferenceApplication
 				{
 					this.webScreenSharePopup.close();
 				}
+			}
 
-				if(!this.currentCall.callFromMobile && !this.isViewerMode())
-				{
-					this.callView.unblockSwitchCamera();
-					this.callView.updateButtons();
-				}
+			if(!this.currentCall.callFromMobile && !this.isViewerMode())
+			{
+				this.callView.unblockSwitchCamera();
+				this.callView.updateButtons();
 			}
 		}
 
@@ -2354,17 +2365,36 @@ class ConferenceApplication
 
 	onCallRemoteMediaReceived(e)
 	{
+		const getStreamType = (stream) =>
+		{
+			if (stream?.getVideoTracks()?.length)
+			{
+				return 'video';
+			}
+
+			if (stream?.getAudioTracks()?.length)
+			{
+				return 'audio';
+			}
+
+			return null;
+		}
+
 		if (this.callView)
 		{
 			if ('track' in e)
 			{
 				this.callView.setUserMedia(e.userId, e.kind, e.track)
 			}
-			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'audio')
+			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'audio' && getStreamType(e.mediaRenderer.stream) === 'audio')
 			{
 				this.callView.setUserMedia(e.userId, 'audio', e.mediaRenderer.stream.getAudioTracks()[0]);
 			}
-			if ('mediaRenderer' in e && (e.mediaRenderer.kind === 'video' || e.mediaRenderer.kind === 'sharing'))
+			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'sharing' && getStreamType(e.mediaRenderer.stream) === 'audio')
+			{
+				this.callView.setUserMedia(e.userId, 'sharingAudio', e.mediaRenderer.stream.getAudioTracks()[0]);
+			}
+			if ('mediaRenderer' in e && (e.mediaRenderer.kind === 'video' || e.mediaRenderer.kind === 'sharing') && getStreamType(e.mediaRenderer.stream) === 'video')
 			{
 				this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
 			}
@@ -2416,6 +2446,11 @@ class ConferenceApplication
 		this.clearConnectionQualityTimer(e.userId);
 
 		this.callView.setUserConnectionQuality(e.userId, e.score);
+	}
+
+	onGetUserMediaEnded()
+	{
+		this.updateMediaDevices();
 	}
 
 	onCallToggleRemoteParticipantVideo(e)
@@ -2603,10 +2638,10 @@ class ConferenceApplication
 		if (!this.getActiveCallUsers().length)
 		{
 			Analytics.getInstance().onFinishCall({
-				callId: this.currentCall.id,
+				callId: this.currentCall?.id,
 				callType: Analytics.AnalyticsType.videoconf,
 				status: Analytics.AnalyticsStatus.lastUserLeft,
-				chatId: this.currentCall.associatedEntity.id,
+				chatId: this.currentCall?.associatedEntity.id,
 				callUsersCount: this.getCallUsers(true).length,
 				callLength: Call.Util.getTimeText(this.currentCall.startDate),
 			});

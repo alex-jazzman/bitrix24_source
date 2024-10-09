@@ -90,6 +90,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		USER_FIELDS: 'userFields',
 
 		DEADLINE: 'deadline',
+		DATE_PLAN: 'datePlan',
 		START_DATE_PLAN: 'startDatePlan',
 		END_DATE_PLAN: 'endDatePlan',
 
@@ -118,6 +119,9 @@ jn.define('tasks/enum', (require, exports, module) => {
 		[TaskField.RESPONSIBLE]: TaskActionAccess.UPDATE_RESPONSIBLE,
 		[TaskField.ACCOMPLICES]: TaskActionAccess.UPDATE_ACCOMPLICES,
 		[TaskField.DEADLINE]: TaskActionAccess.UPDATE_DEADLINE,
+		[TaskField.DATE_PLAN]: TaskActionAccess.UPDATE,
+
+		[TaskField.ALLOW_TIME_TRACKING]: TaskActionAccess.UPDATE,
 
 		// [TaskField.PRIORITY]: 'update',
 		// [TaskField.TIME_ESTIMATE]: 'update',
@@ -132,7 +136,6 @@ jn.define('tasks/enum', (require, exports, module) => {
 		// [TaskField.END_DATE_PLAN]: 'update',
 		//
 		// [TaskField.ALLOW_CHANGE_DEADLINE]: 'update',
-		// [TaskField.ALLOW_TIME_TRACKING]: 'update',
 		// [TaskField.ALLOW_TASK_CONTROL]: 'update',
 		// [TaskField.IS_MATCH_WORK_TIME]: 'update',
 		// [TaskField.IS_RESULT_REQUIRED]: 'update',
@@ -159,9 +162,29 @@ jn.define('tasks/enum', (require, exports, module) => {
 		USER_OPTION_CHANGED: 'user_option_changed',
 	};
 
+	const TimerState = {
+		OVERDUE: 'overdue',
+		PAUSED: 'paused',
+		RUNNING: 'running',
+	};
+
+	const FeatureId = {
+		FLOW: 'tasks_flow',
+		EFFICIENCY: 'tasks_efficiency',
+		DELEGATING: 'tasks_delegating',
+		ACCOMPLICE_AUDITOR: 'tasks_observers_participants',
+		CRM: 'tasks_crm_integration',
+		TIME_TRACKING: 'tasks_time_tracking',
+		RESULT_REQUIREMENT: 'tasks_status_summary',
+		TASK_CONTROL: 'tasks_control',
+		WORK_TIME_MATCH: 'tasks_skip_weekends',
+		SEARCH: 'tasks_search',
+	};
+
 	module.exports = {
 		ViewMode,
 		DeadlinePeriod,
+		FeatureId,
 		PullCommand,
 		TaskUserOption,
 		TaskMark,
@@ -172,5 +195,6 @@ jn.define('tasks/enum', (require, exports, module) => {
 		TaskActionAccess,
 		TaskField,
 		TaskFieldActionAccess,
+		TimerState,
 	};
 });

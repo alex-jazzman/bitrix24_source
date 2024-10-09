@@ -1,6 +1,7 @@
 this.BX = this.BX || {};
+this.BX.Location = this.BX.Location || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,crm_ai_copilotTextarea,crm_timeline_tools,ui_analytics,location_core,location_widget,calendar_planner,ui_designTokens,main_date,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint) {
+(function (exports,ui_vue3,crm_ai_copilotTextarea,crm_timeline_tools,ui_analytics,location_core,location_widget,calendar_planner,ui_designTokens,main_date,ui_infoHelper,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -205,16 +206,20 @@ this.BX.Crm = this.BX.Crm || {};
 	        p1: babelHelpers.classPrivateFieldGet(this, _crmMode)
 	      };
 	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _pingSettings))) {
-	        data.p2 = babelHelpers.classPrivateFieldGet(this, _pingSettings);
+	        data.p2 = 'ping_custom';
 	      }
 	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _colorId))) {
-	        data.p3 = babelHelpers.classPrivateFieldGet(this, _colorId);
+	        data.p3 = 'color_custom';
 	      }
 	      if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldGet(this, _blockTypes))) {
-	        data.p4 = babelHelpers.classPrivateFieldGet(this, _blockTypes).join(',');
+	        data.p4 = 'addBlock';
 	      }
 	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod))) {
-	        data.p5 = babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod);
+	        if (babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod) === 'forever') {
+	          data.p5 = 'skipPeriod_custom';
+	        } else {
+	          data.p5 = 'skipPeriod_forever';
+	        }
 	      }
 	      return data;
 	    }
@@ -644,10 +649,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    showLocationSelectorDialog() {
+	      if (!this.isLocationFeatureEnabled()) {
+	        ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	          featureId: 'calendar_location'
+	        }).show();
+	        return;
+	      }
 	      setTimeout(() => {
 	        var _this$getLocationSele;
 	        (_this$getLocationSele = this.getLocationSelectorDialog()) === null || _this$getLocationSele === void 0 ? void 0 : _this$getLocationSele.show();
 	      }, 5);
+	    },
+	    isLocationFeatureEnabled() {
+	      return main_core.Extension.getSettings('crm.activity.todo-editor-v2').get('locationFeatureEnabled');
 	    },
 	    getLocationSelectorDialog() {
 	      if (this.locations === null) {
@@ -931,7 +945,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        timezone: this.timezoneName,
 	        location,
 	        entries: false,
-	        prevUserList: oldUserIds
+	        prevUserList: oldUserIds,
+	        skipFeatureCheck: 'Y'
 	      };
 	      newUserIds.forEach(userId => {
 	        data.entityList.push({
@@ -3191,6 +3206,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      componentParams,
 	      onClick
 	    }) {
+	      if (componentParams !== null && componentParams !== void 0 && componentParams.isLocked) {
+	        ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	          featureId: 'calendar_location'
+	        }).show();
+	        return;
+	      }
 	      if (main_core.Type.isFunction(onClick)) {
 	        onClick();
 	      } else {
@@ -3245,7 +3266,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    };
 	  }
 	  return {
-	    html: _classPrivateMethodGet$3(this, _getActionItemHtml, _getActionItemHtml2).call(this, svgData, messageCode),
+	    html: _classPrivateMethodGet$3(this, _getActionItemHtml, _getActionItemHtml2).call(this, svgData, messageCode, componentParams === null || componentParams === void 0 ? void 0 : componentParams.isLocked),
 	    onclick: this.onItemClick.bind(this, {
 	      id,
 	      componentId,
@@ -3254,9 +3275,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    })
 	  };
 	}
-	function _getActionItemHtml2(svgData, messageCode) {
+	function _getActionItemHtml2(svgData, messageCode, isLocked = false) {
 	  return `
-			<span class="crm-activity__todo-editor-v2-actions-menu-item">
+			<span class="crm-activity__todo-editor-v2-actions-menu-item ${isLocked ? '--locked' : ''}">
 				<span 
 					class="crm-activity__todo-editor-v2-actions-menu-item-icon"
 					style="background-image: url('data:image/svg+xml,${encodeURIComponent(svgData)}')"
@@ -3350,6 +3371,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _onSaveHotkeyPressed = /*#__PURE__*/new WeakSet();
 	var _isValidBorderColor = /*#__PURE__*/new WeakSet();
 	var _getClassname = /*#__PURE__*/new WeakSet();
+	var _isLocationFeatureEnabled = /*#__PURE__*/new WeakSet();
 	/**
 	 * @memberOf BX.Crm.Activity
 	 */
@@ -3361,6 +3383,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  function TodoEditorV2(_params) {
 	    babelHelpers.classCallCheck(this, TodoEditorV2);
+	    _classPrivateMethodInitSpec$4(this, _isLocationFeatureEnabled);
 	    _classPrivateMethodInitSpec$4(this, _getClassname);
 	    _classPrivateMethodInitSpec$4(this, _isValidBorderColor);
 	    _classPrivateMethodInitSpec$4(this, _onSaveHotkeyPressed);
@@ -3795,7 +3818,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      svgData: '<svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.23231 5.98876C6.98167 4.03949 18.4413 4.15905 20.0081 5.98876C21.5749 7.81847 21.8554 15.3273 20.0081 17.0395C19.6571 17.3648 18.9666 17.6131 18.0668 17.793C18.0471 18.8982 17.9669 21.1391 17.6418 21.1391C17.3455 21.1391 15.2474 19.3102 13.962 18.1643C10.2879 18.232 6.19211 17.778 5.23231 17.0395C3.55525 15.7491 3.48296 7.93803 5.23231 5.98876ZM6.27368 14.5419C6.87367 14.6452 7.7036 14.7319 8.66214 14.7982C8.72234 14.54 8.79838 14.2423 8.8529 14.029C8.89254 13.8739 8.9208 13.7633 8.92333 13.7447C8.93599 13.3759 9.43469 13.0463 9.97766 12.8211C9.93653 12.7643 9.90135 12.7034 9.87269 12.6394C9.79701 12.5432 9.69766 12.4684 9.58444 12.4221L9.57579 12.1334L10.172 11.9424C10.172 11.9424 10.3259 11.8694 10.3407 11.8694C10.3231 11.825 10.301 11.7825 10.2747 11.7426C10.2656 11.718 10.218 11.5663 10.1989 11.5056L10.191 11.4805C10.2773 11.5942 10.3789 11.6955 10.4928 11.7814C10.3883 11.593 10.2999 11.3962 10.2283 11.1929C10.181 10.997 10.1494 10.7976 10.1336 10.5966C10.0927 10.2313 10.029 9.86897 9.94254 9.51169C9.88118 9.33425 9.77217 9.17712 9.62748 9.05751C9.41503 8.90666 9.16566 8.81625 8.90592 8.7959H8.87605C8.61632 8.81632 8.36698 8.90673 8.15451 9.05751C8.0096 9.17698 7.9005 9.33415 7.83924 9.51169C7.75307 9.86902 7.68931 10.2313 7.64834 10.5966C7.62998 10.7932 7.59675 10.988 7.54893 11.1796C7.47744 11.3864 7.39056 11.5877 7.28902 11.7816C7.40367 11.6961 7.50591 11.5951 7.59282 11.4815C7.59282 11.4815 7.53662 11.6922 7.52531 11.7229C7.49449 11.7699 7.46708 11.819 7.44328 11.8699C7.4583 11.8699 7.61206 11.9429 7.61206 11.9429L8.20819 12.1334L8.19958 12.4221C8.08625 12.4682 7.98689 12.543 7.9113 12.6392C7.87548 12.7316 7.81841 12.8143 7.74472 12.8805C7.60094 12.9315 7.46246 12.9964 7.33121 13.0741C7.13253 13.187 6.91378 13.2603 6.68715 13.2896C6.45896 13.328 6.31499 13.7045 6.31499 13.7045C6.31464 13.7106 6.29359 14.1341 6.27368 14.5419ZM9.28982 14.8373C11.3578 14.9552 13.8758 14.9842 15.9706 14.8924C15.848 14.3765 15.7382 13.954 15.7382 13.954C15.7382 13.954 15.3331 13.2757 14.5348 13.0651C14.2636 12.9878 14.0063 12.8682 13.7724 12.7109C13.7348 12.6134 13.72 12.5086 13.729 12.4045L13.4731 12.3645C13.4731 12.342 13.4512 12.0104 13.4512 12.0104C13.7587 11.9049 13.7271 11.2824 13.7271 11.2824C13.9224 11.3929 14.0496 10.901 14.0496 10.901C14.2806 10.217 13.9345 10.2581 13.9345 10.2581C13.9951 9.84024 13.9951 9.41586 13.9345 8.99799C13.7808 7.61217 11.4644 7.98794 11.7391 8.44097C11.0622 8.31303 11.2167 9.88648 11.2167 9.88648L11.3636 10.2933C11.1602 10.4278 11.2001 10.5825 11.2446 10.7553C11.2632 10.8274 11.2825 10.9027 11.2854 10.9811C11.2996 11.3739 11.5343 11.2923 11.5343 11.2923C11.5489 11.9401 11.8615 12.0252 11.8615 12.0252C11.9202 12.432 11.8838 12.3618 11.8838 12.3618L11.6054 12.3963C11.6092 12.4887 11.6019 12.5813 11.5835 12.672C11.4219 12.7457 11.3229 12.8042 11.2252 12.8619C11.1246 12.9214 11.0254 12.98 10.8604 13.0537C10.232 13.3343 9.54886 13.7007 9.42766 14.193C9.39512 14.3251 9.34534 14.5617 9.28982 14.8373ZM16.6009 14.86C17.5258 14.806 18.3408 14.7254 18.9595 14.6151C18.9386 14.1847 18.9145 13.6995 18.914 13.693C18.914 13.693 18.7709 13.3189 18.5442 13.2808C18.3191 13.2516 18.1018 13.1789 17.9044 13.0667C17.774 12.9895 17.6364 12.925 17.4936 12.8744C17.4204 12.8085 17.3637 12.7264 17.328 12.6346C17.253 12.5391 17.1543 12.4647 17.0416 12.419L17.0333 12.1321L17.6255 11.9429C17.6255 11.9429 17.7783 11.8703 17.7932 11.8703C17.7695 11.8198 17.7422 11.7709 17.7115 11.7242C17.7003 11.6937 17.6445 11.4845 17.6445 11.4845C17.7308 11.5974 17.8324 11.6977 17.9463 11.7826C17.8454 11.59 17.7591 11.39 17.6881 11.1845C17.6406 10.9942 17.6075 10.8007 17.5893 10.6053C17.5486 10.2425 17.4853 9.88251 17.3997 9.52753C17.3388 9.35114 17.2304 9.195 17.0864 9.07631C16.8754 8.92651 16.6276 8.8367 16.3696 8.81641H16.3399C16.0819 8.83662 15.8342 8.92644 15.6231 9.07631C15.4793 9.19514 15.371 9.35125 15.31 9.52753C15.2242 9.88246 15.1609 10.2425 15.1202 10.6053C15.1046 10.805 15.0731 11.0031 15.0262 11.1978C14.9551 11.3996 14.8672 11.5952 14.7634 11.7825C14.8767 11.6971 15.0035 11.4835 15.0035 11.4835C15.0035 11.4835 14.9918 11.7131 14.9804 11.7437C14.9543 11.7834 14.9323 11.8256 14.9149 11.8697C14.9296 11.8697 15.0825 11.9423 15.0825 11.9423L15.6746 12.1321L15.6661 12.419C15.5535 12.4649 15.3162 12.6391 15.2754 12.6955C15.8148 12.9192 16.3102 13.3665 16.323 13.7329C16.3255 13.7515 16.3539 13.8629 16.3938 14.0188C16.4536 14.2532 16.5393 14.5883 16.6009 14.86Z" fill="#A8ADB4"/></svg>',
 	      componentId: 'calendar',
 	      componentParams: {
-	        showLocation: true
+	        showLocation: true,
+	        isLocked: !_classPrivateMethodGet$4(this, _isLocationFeatureEnabled, _isLocationFeatureEnabled2).call(this)
 	      },
 	      hidden: !_classPrivateMethodGet$4(this, _canUseAddressBlock, _canUseAddressBlock2).call(this)
 	    }, {
@@ -4104,6 +4128,9 @@ this.BX.Crm = this.BX.Crm || {};
 	function _getClassname2() {
 	  return `crm-activity__todo-editor-v2 --border-${babelHelpers.classPrivateFieldGet(this, _borderColor)}`;
 	}
+	function _isLocationFeatureEnabled2() {
+	  return main_core.Extension.getSettings('crm.activity.todo-editor-v2').get('locationFeatureEnabled');
+	}
 	babelHelpers.defineProperty(TodoEditorV2, "BorderColor", TodoEditorBorderColor);
 	babelHelpers.defineProperty(TodoEditorV2, "AnalyticsSection", Section);
 	babelHelpers.defineProperty(TodoEditorV2, "AnalyticsSubSection", SubSection);
@@ -4113,5 +4140,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditorV2 = TodoEditorV2;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Vue3,BX.Crm.AI,BX.Crm.Timeline,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX.Calendar,BX,BX.Main,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Vue3,BX.Crm.AI,BX.Crm.Timeline,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX.Calendar,BX,BX.Main,BX.UI,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives));
 //# sourceMappingURL=todo-editor-v2.bundle.js.map

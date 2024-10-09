@@ -15,6 +15,8 @@ type Params = {
 
 export class RobotButton extends EventEmitter
 {
+	node: HTMLElement;
+
 	constructor(params: Params)
 	{
 		super(params);
@@ -30,21 +32,25 @@ export class RobotButton extends EventEmitter
 
 	render(): HTMLElement
 	{
-		let className = 'tasks-scrum-robot-btn ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
+		let className = 'ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
 		if (this.isShowLimitSidePanel())
 		{
-			className += ' ui-btn-icon-lock';
+			className += ' ui-btn-icon-lock ui-btn-xs';
+		}
+		else
+		{
+			className += ' tasks-scrum-robot-btn';
 		}
 
-		const node = Tag.render`
+		this.node = Tag.render`
 			<button class="${className}">
 				${Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON')}
 			</button>
 		`;
 
-		Event.bind(node, 'click', this.onClick.bind(this));
+		Event.bind(this.node, 'click', this.onClick.bind(this));
 
-		return node;
+		return this.node;
 	}
 
 	onClick()
@@ -53,12 +59,20 @@ export class RobotButton extends EventEmitter
 		{
 			const sliderCode = this.isAutomationEnabled ? 'limit_tasks_robots' : 'limit_crm_rules_off';
 
-			BX.UI.InfoHelper.show(sliderCode, {
-				isLimit: true,
-				limitAnalyticsLabels: {
-					module: 'tasks',
-					source: 'scrumActiveSprint',
-				},
+			BX.Runtime.loadExtension('ui.info-helper').then(({ FeaturePromotersRegistry }) => {
+				if (FeaturePromotersRegistry)
+				{
+					FeaturePromotersRegistry.getPromoter({ code: sliderCode, bindElement: this.node }).show();
+				}
+				else
+				{
+					BX.UI.InfoHelper.show(sliderCode, {
+						isLimit: true, limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'scrumActiveSprint',
+						},
+					});
+				}
 			});
 		}
 		else
@@ -76,6 +90,6 @@ export class RobotButton extends EventEmitter
 
 	isShowLimitSidePanel(): boolean
 	{
-		return !this.isAutomationEnabled || (this.isTaskLimitsExceeded && !this.canUseAutomation);
+		return !this.isAutomationEnabled || this.isTaskLimitsExceeded || !this.canUseAutomation;
 	}
 }

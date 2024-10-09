@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 	const { DialogType, UserRole } = require('im/messenger/const');
 	const { serviceLocator, } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const logger = LoggerManager.getInstance().getLogger('helpers--dialog');
 
@@ -124,6 +125,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return this.dialogModel.type === DialogType.comment;
 		}
 
+		get isChannelOrComment()
+		{
+			return this.isComment || this.isChannel;
+		}
+
 		get isCopilot()
 		{
 			return this.dialogModel.type === DialogType.copilot;
@@ -162,6 +168,16 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			}
 
 			return true;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isHistoryLimitExceeded()
+		{
+			return !this.isChannelOrComment
+				&& !MessengerParams.isFullChatHistoryAvailable()
+				&& this.dialogModel?.tariffRestrictions?.isHistoryLimitExceeded;
 		}
 	}
 

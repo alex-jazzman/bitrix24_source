@@ -2,6 +2,7 @@
 
 use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Provider\FlowProvider;
+use Bitrix\Tasks\Flow\Web\FlowRequestService;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -23,10 +24,15 @@ $arParams["PATH_TO_TASKS"] = str_replace("#user_id#", $arParams["USER_ID"], $arP
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
+$isEdit = ($arParams['ACTION'] ?? '') === 'edit';
+$taskId = (int)($arParams['FORM_PARAMETERS']['ID'] ?? null);
+$flowId = (new FlowRequestService($request))->getFlowIdFromRequest($taskId);
+
 $arResult['flow'] = null;
 $arResult['flowEfficiency'] = 0;
-$flowId = (int) $request->get('FLOW_ID');
-if ($flowId)
+
+
+if ($flowId > 0)
 {
 	$flowProvider = new FlowProvider();
 	try

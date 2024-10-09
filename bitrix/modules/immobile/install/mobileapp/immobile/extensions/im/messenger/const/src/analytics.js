@@ -18,6 +18,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		openTab: 'open_tab',
 		openMessenger: 'open_messenger',
 		sendMessage: 'send_message',
+		view: 'view',
+		click: 'click',
 	});
 
 	const Tool = Object.freeze({
@@ -32,6 +34,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chat: 'chat',
 		copilot: 'copilot',
 		videoconf: 'videoconf',
+		limitBanner: 'limit_banner',
 	});
 
 	const Type = Object.freeze({
@@ -65,6 +68,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		generalChannel: 'generalChannel',
 		comment: 'comment',
 		custom: 'custom', // case for custom dialog type
+		limitOfficeChatingHistory: 'limit_office_chating_history',
 	});
 
 	const Section = Object.freeze({
@@ -72,10 +76,16 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chatTab: 'chat_tab',
 		channelTab: 'channel_tab',
 		notificationTab: 'notification_tab',
+		sidebar: 'sidebar',
+		chatHistory: 'chat_history',
+		chatStart: 'chat_start',
+		messageLink: 'message_link',
+		chatWindow: 'chat_window',
 	});
 
 	const Element = Object.freeze({
 		push: 'push',
+		main: 'main',
 	});
 
 	const P3 = Object.freeze({

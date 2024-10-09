@@ -125,6 +125,8 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#ffffff',
 			chatMyChannelCmnt: '#ffffff',
 			chatMyChannelSuccess: '#ffffff',
+			chatOverallBannerBg: '#ffffff',
+			chatOverallInvertAlert: '#ffffff',
 			techDarkFixes: '#ffffff',
 		},
 		dark: {
@@ -248,6 +250,8 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#ffffff',
 			chatMyChannelCmnt: '#ffffff',
 			chatMyChannelSuccess: '#ffffff',
+			chatOverallBannerBg: '#ffffff',
+			chatOverallInvertAlert: '#ffffff',
 			techDarkFixes: '#ffffff',
 		},
 		newlight: {
@@ -371,6 +375,8 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#D8EEBA',
 			chatMyChannelCmnt: '#E0F5C3',
 			chatMyChannelSuccess: '#1BCE7B',
+			chatOverallBannerBg: '#8CFFFFFF',
+			chatOverallInvertAlert: '#FFFFFF',
 			techDarkFixes: '#00FFFFFF',
 		},
 		newdark: {
@@ -494,6 +500,8 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#33FFFFFF',
 			chatMyChannelCmnt: '#1B79E6',
 			chatMyChannelSuccess: '#33FFFFFF',
+			chatOverallBannerBg: '#99070707',
+			chatOverallInvertAlert: '#FF5752',
 			techDarkFixes: '#383838',
 		},
 
@@ -509,7 +517,7 @@ jn.define('apptheme/list', (require, exports, module) => {
 			areaPaddingLr: 18,
 			areaPaddingT: 18,
 			areaPaddingTAt: 6,
-			areaPaddingTFirst: 6,
+			areaPaddingTFirst: 10,
 			areaStroke: 1,
 			areaStrokeConfig: 'bottom',
 			cardCorner: 12,
@@ -549,6 +557,7 @@ jn.define('apptheme/list', (require, exports, module) => {
 			itbChipCorner: 8,
 			itbChipHeight: 34,
 			itbChipPaddingLr: 12,
+			itbChipPaddingLrLess: 8,
 			itbChipStroke: 1.2000000476837,
 			paddingLr: 18,
 			paddingLrMore: 24,

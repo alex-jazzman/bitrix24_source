@@ -189,6 +189,7 @@ Class socialnetwork extends CModule
 		$eventManager->registerEventHandler('main', 'onRatingListViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\RatingVoteList', 'onViewed');
 		$eventManager->registerEventHandler('mobile', 'onSetContentView', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onSetContentView');
 		$eventManager->registerEventHandler('mobile', 'onGetContentId', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onGetContentId');
+		$eventManager->registerEventHandler('mobile', 'onTariffRestrictionsCollect', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\TariffPlanRestriction', 'getTariffPlanRestrictions');
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounter');
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounterTypes');
 		$eventManager->registerEventHandler('intranet', 'onEmployeeDepartmentsChanged', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Intranet\Structure\Employee', 'onEmployeeDepartmentsChanged');
@@ -453,6 +454,7 @@ Class socialnetwork extends CModule
 		$eventManager->unregisterEventHandler('main', 'onRatingListViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\RatingVoteList', 'onViewed');
 		$eventManager->unregisterEventHandler('mobile', 'onSetContentView', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onSetContentView');
 		$eventManager->unregisterEventHandler('mobile', 'onGetContentId', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onGetContentId');
+		$eventManager->unregisterEventHandler('mobile', 'onTariffRestrictionsCollect', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\TariffPlanRestriction', 'getTariffPlanRestrictions');
 		$eventManager->unregisterEventHandler('pull', 'onGetMobileCounter', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounter');
 		$eventManager->unregisterEventHandler('pull', 'onGetMobileCounterTypes', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounterTypes');
 		$eventManager->unregisterEventHandler('intranet', 'onEmployeeDepartmentsChanged', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Intranet\Structure\Employee', 'onEmployeeDepartmentsChanged');
@@ -480,7 +482,6 @@ Class socialnetwork extends CModule
 		if (!!$id)
 		{
 			$USER_FIELD_MANAGER->CleanCache();
-			$USER_FIELD_MANAGER->arUserTypes = '';
 
 			$createIndex = false;
 			$arFields = array();
@@ -942,18 +943,15 @@ Class socialnetwork extends CModule
 
 	function InstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/socialnetwork", true, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/sounds",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/sounds", true, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/socialnetwork", true, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/sounds",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/sounds", true, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 		return true;
 	}
 

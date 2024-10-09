@@ -16,7 +16,12 @@ use Bitrix\Main\Localization\Loc;
 	'ui.icon-set.actions',
 	'ui.icon-set.main',
 	'ui.icon-set.crm',
+	'ui.icons.b24',
 	'ui.analytics',
+	'ui.icons.crm',
+	'ui.popupcomponentsmaker',
+	'ui.label',
+	'ui.buttons',
 ]);
 
 $additionalArguments = $this->getComponent()->getAdditionalArguments();
@@ -28,7 +33,8 @@ $widgetArguments = [
 	'isAdmin' => $arResult['IS_ADMIN'],
 	'theme' => $additionalArguments['THEME'],
 	'otp' => $additionalArguments['OTP'],
-	'settingsPath' => $additionalArguments['SETTINGS_PATH']
+	'settingsPath' => $additionalArguments['SETTINGS_PATH'],
+	'mainPage' => $additionalArguments['MAIN_PAGE'],
 ];
 if ($arResult['IS_BITRIX24'])
 {

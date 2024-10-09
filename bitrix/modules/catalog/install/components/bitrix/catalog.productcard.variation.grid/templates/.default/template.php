@@ -93,6 +93,7 @@ $isCatalogHidden = $arResult['IS_CATALOG_HIDDEN'];
 				'ACTION_PANEL' => $isProduct ? $arResult['GRID']['ACTION_PANEL'] : false,
 				'HANDLE_RESPONSE_ERRORS' => true,
 				'ENABLE_FIELDS_SEARCH' => $arResult['GRID']['ENABLE_FIELDS_SEARCH'],
+				'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => $arResult['GRID']['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'],
 			],
 			$component
 		);

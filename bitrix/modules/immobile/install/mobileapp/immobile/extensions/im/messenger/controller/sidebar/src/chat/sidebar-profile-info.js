@@ -2,7 +2,8 @@
  * @module im/messenger/controller/sidebar/chat/sidebar-profile-info
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require, exports, module) => {
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-info');
 	const { Type } = require('type');
 	const { Avatar, AvatarSafe } = require('im/messenger/lib/ui/base/avatar');
 	const { ChatTitle } = require('im/messenger/lib/element');
@@ -114,7 +115,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 						height: 24,
 					},
 					svg: { content: this.state.userData.statusSvg },
-					onFailure: (e) => Logger.error(e),
+					onFailure: (e) => logger.error(e),
 				}),
 			);
 		}
@@ -149,7 +150,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 		renderDescription()
 		{
-			if (this.props.isNotes || this.props.isBot)
+			if (this.props.isNotes)
 			{
 				return null;
 			}
@@ -202,7 +203,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 					alignSelf: 'center',
 				},
 				svg: { content: this.state.userData.chevron },
-				onFailure: (e) => Logger.error(e),
+				onFailure: (e) => logger.error(e),
 			});
 		}
 
@@ -271,7 +272,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 					const newState = { ...this.state.userData, departmentName: departmentNameRes };
 					this.setState({ userData: newState });
 				}).catch((err) => {
-					Logger.error(err);
+					logger.error(err);
 				});
 
 				return null;
@@ -282,7 +283,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 		componentDidMount()
 		{
-			Logger.log('SidebarProfileBtn.view.componentDidMount');
+			logger.log('SidebarProfileBtn.view.componentDidMount');
 			this.bindListener();
 			this.subscribeEvents();
 		}
@@ -299,7 +300,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 		subscribeEvents()
 		{
-			Logger.log(`${this.constructor.name}.view.subscribeEvents`);
+			logger.log(`${this.constructor.name}.view.subscribeEvents`);
 			if (this.props.isCopilot)
 			{
 				this.storeManager.on('dialoguesModel/copilotModel/update', this.onUpdateCopilotState);
@@ -310,7 +311,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 		unsubscribeEvents()
 		{
-			Logger.log(`${this.constructor.name}.view.unsubscribeEvents`);
+			logger.log(`${this.constructor.name}.view.unsubscribeEvents`);
 			this.storeManager.off('dialoguesModel/copilotModel/update', this.onUpdateCopilotState);
 
 			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeEvents);
@@ -337,7 +338,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				}
 				catch (error)
 				{
-					Logger.error(`${this.constructor.name}.onUpdateCopilotState.catch:`, error);
+					logger.error(`${this.constructor.name}.onUpdateCopilotState.catch:`, error);
 				}
 			}
 		}

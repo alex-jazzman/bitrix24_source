@@ -3261,7 +3261,8 @@ this.BX.UI = this.BX.UI || {};
 	        maxWidth: this.getTagMaxWidth(),
 	        textColor: this.getTagTextColor(),
 	        bgColor: this.getTagBgColor(),
-	        fontWeight: this.getTagFontWeight()
+	        fontWeight: this.getTagFontWeight(),
+	        onclick: this.getTagOption('onclick')
 	      };
 	    }
 	  }, {
@@ -4145,6 +4146,8 @@ this.BX.UI = this.BX.UI || {};
 	  _t4$2,
 	  _t5$1,
 	  _t6;
+	function _classStaticPrivateMethodGet$1(receiver, classConstructor, method) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); return method; }
+	function _classCheckPrivateStaticAccess$1(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 	let TagItem = /*#__PURE__*/function () {
 	  function TagItem(itemOptions) {
 	    babelHelpers.classCallCheck(this, TagItem);
@@ -4387,12 +4390,13 @@ this.BX.UI = this.BX.UI || {};
 	    value: function render() {
 	      const titleNode = this.getTitleNode();
 	      if (titleNode) {
+	        var _this$constructor;
 	        titleNode.renderTo(this.getTitleContainer());
-
-	        //Dom.attr(this.getContentContainer(), 'title', this.getTitle());
+	        const title = this.getTitleContainer().textContent;
+	        this.getContentContainer().setAttribute('title', _classStaticPrivateMethodGet$1(_this$constructor = this.constructor, TagItem, _sanitizeTitle$1).call(_this$constructor, title));
 	      } else {
 	        this.getTitleContainer().textContent = '';
-	        main_core.Dom.attr(this.getContentContainer(), 'title', '');
+	        main_core.Dom.attr(this.getContentContainer(), 'title', null);
 	      }
 	      const avatar = this.getAvatar();
 	      const bgImage = this.getAvatarOption('bgImage');
@@ -4561,6 +4565,9 @@ this.BX.UI = this.BX.UI || {};
 	  }]);
 	  return TagItem;
 	}();
+	function _sanitizeTitle$1(text) {
+	  return text.replaceAll(/[\t ]+/gm, ' ').replaceAll(/\n+/gm, '\n').trim();
+	}
 
 	let _$6 = t => t,
 	  _t$6,
@@ -6699,6 +6706,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "height", 420);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "maxLabelWidth", 160);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "minLabelWidth", 45);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "alwaysShowLabels", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "showAvatars", true);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "compactView", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "activeTab", null);
@@ -6730,6 +6738,7 @@ this.BX.UI = this.BX.UI || {};
 	    _this.clearUnavailableItems = options.clearUnavailableItems === true;
 	    _this.compactView = options.compactView === true;
 	    _this.dropdownMode = main_core.Type.isBoolean(options.dropdownMode) ? options.dropdownMode : false;
+	    _this.alwaysShowLabels = main_core.Type.isBoolean(options.alwaysShowLabels) ? options.alwaysShowLabels : false;
 	    if (main_core.Type.isArray(options.entities)) {
 	      options.entities.forEach(entity => {
 	        _this.addEntity(entity);
@@ -7782,6 +7791,43 @@ this.BX.UI = this.BX.UI || {};
 	      return this.minLabelWidth;
 	    }
 	  }, {
+	    key: "expandLabels",
+	    value: function expandLabels(animate = true) {
+	      const freeSpace = parseInt(this.getPopup().getPopupContainer().style.left, 10);
+	      if (freeSpace > this.getMinLabelWidth()) {
+	        main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-hide');
+	        if (animate) {
+	          main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-show');
+	          main_core.Dom.style(this.getLabelsContainer(), 'max-width', `${Math.min(freeSpace, this.getMaxLabelWidth())}px`);
+	          Animation.handleTransitionEnd(this.getLabelsContainer(), 'max-width').then(() => {
+	            main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-show');
+	            main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--active');
+	          }).catch(() => {
+	            // fail silently
+	          });
+	        } else {
+	          main_core.Dom.style(this.getLabelsContainer(), 'max-width', `${Math.min(freeSpace, this.getMaxLabelWidth())}px`);
+	        }
+	      } else {
+	        main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--active');
+	      }
+	    }
+	  }, {
+	    key: "collapseLabels",
+	    value: function collapseLabels(animate = true) {
+	      main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-show');
+	      main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--active');
+	      if (animate) {
+	        main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-hide');
+	        Animation.handleTransitionEnd(this.getLabelsContainer(), 'max-width').then(() => {
+	          main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-hide');
+	        }).catch(() => {
+	          // fail silently
+	        });
+	      }
+	      main_core.Dom.style(this.getLabelsContainer(), 'max-width', null);
+	    }
+	  }, {
 	    key: "getTagSelector",
 	    value: function getTagSelector() {
 	      return this.tagSelector;
@@ -7976,7 +8022,7 @@ this.BX.UI = this.BX.UI || {};
 					onmouseenter="${0}"
 					onmouseleave="${0}"
 				></div>
-			`), this.handleLabelsMouseEnter.bind(this), this.handleLabelsMouseLeave.bind(this));
+			`), this.alwaysShowLabels ? null : this.handleLabelsMouseEnter.bind(this), this.alwaysShowLabels ? null : this.handleLabelsMouseLeave.bind(this));
 	      });
 	    }
 	  }, {
@@ -8357,6 +8403,12 @@ this.BX.UI = this.BX.UI || {};
 	          });
 	        });
 	      }
+	      if (this.alwaysShowLabels) {
+	        setTimeout(() => {
+	          // We have to call the method after adjustPosition()
+	          this.expandLabels(false);
+	        }, 0);
+	      }
 	    }
 	    /**
 	     * @private
@@ -8392,6 +8444,9 @@ this.BX.UI = this.BX.UI || {};
 	          const left = parseInt(this.getPopup().getPopupContainer().style.left, 10);
 	          if (left < this.getMinLabelWidth()) {
 	            main_core.Dom.style(this.getPopup().getPopupContainer(), 'left', `${this.getMinLabelWidth()}px`);
+	            this.collapseLabels(false);
+	          } else if (this.alwaysShowLabels) {
+	            this.expandLabels(false);
 	          }
 	        }
 	      });
@@ -8443,19 +8498,7 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "handleLabelsMouseEnter",
 	    value: function handleLabelsMouseEnter() {
-	      const rect = main_core.Dom.getRelativePosition(this.getLabelsContainer(), this.getPopup().getTargetContainer());
-	      const freeSpace = rect.right;
-	      if (freeSpace > this.getMinLabelWidth()) {
-	        main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-hide');
-	        main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-show');
-	        main_core.Dom.style(this.getLabelsContainer(), 'max-width', `${Math.min(freeSpace, this.getMaxLabelWidth())}px`);
-	        Animation.handleTransitionEnd(this.getLabelsContainer(), 'max-width').then(() => {
-	          main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-show');
-	          main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--active');
-	        });
-	      } else {
-	        main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--active');
-	      }
+	      this.expandLabels();
 	    }
 	    /**
 	     * @private
@@ -8463,13 +8506,7 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "handleLabelsMouseLeave",
 	    value: function handleLabelsMouseLeave() {
-	      main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-hide');
-	      main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-show');
-	      main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--active');
-	      Animation.handleTransitionEnd(this.getLabelsContainer(), 'max-width').then(() => {
-	        main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-hide');
-	      });
-	      main_core.Dom.style(this.getLabelsContainer(), 'max-width', null);
+	      this.collapseLabels();
 	    }
 	    /**
 	     * @private

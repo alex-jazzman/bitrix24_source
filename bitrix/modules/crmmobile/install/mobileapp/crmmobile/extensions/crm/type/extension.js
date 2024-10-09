@@ -247,6 +247,17 @@ jn.define('crm/type', (require, exports, module) => {
 			return null;
 		}
 
+		static getTypeForAnalytics(entityType)
+		{
+			const analyticsType = Type.getCommonEntityTypeName(entityType);
+			if (analyticsType)
+			{
+				return analyticsType.toLowerCase();
+			}
+
+			return null;
+		}
+
 		static getCamelizedEntityTypeName(entityType)
 		{
 			entityType = Type.getCommonEntityTypeName(entityType);
@@ -258,12 +269,12 @@ jn.define('crm/type', (require, exports, module) => {
 			return null;
 		}
 
-		static getSupportedEntitiesList()
+		static getSupportedEntities()
 		{
 			const idsAndNames = {};
 			SUPPORTED_ENTITIES.forEach((entityId) => {
 				idsAndNames[entityId] = Type.resolveNameById(entityId);
-			})
+			});
 
 			return idsAndNames;
 		}

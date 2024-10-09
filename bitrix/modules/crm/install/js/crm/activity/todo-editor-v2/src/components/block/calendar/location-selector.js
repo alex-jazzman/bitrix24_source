@@ -1,5 +1,6 @@
-import { ajax as Ajax, Type } from 'main.core';
+import { ajax as Ajax, Extension, Type } from 'main.core';
 import { Dialog } from 'ui.entity-selector';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
 
 const DEFAULT_TAB_ID = 'location';
 
@@ -38,9 +39,20 @@ export const LocationSelector = {
 	methods: {
 		showLocationSelectorDialog(): void
 		{
+			if (!this.isLocationFeatureEnabled())
+			{
+				FeaturePromotersRegistry.getPromoter({ featureId: 'calendar_location' }).show();
+
+				return;
+			}
+
 			setTimeout(() => {
 				this.getLocationSelectorDialog()?.show();
 			}, 5);
+		},
+		isLocationFeatureEnabled(): boolean
+		{
+			return Extension.getSettings('crm.activity.todo-editor-v2').get('locationFeatureEnabled');
 		},
 		getLocationSelectorDialog(): ?Dialog
 		{

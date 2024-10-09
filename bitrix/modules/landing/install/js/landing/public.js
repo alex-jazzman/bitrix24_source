@@ -47,23 +47,29 @@
 								{
 									console.error(error);
 								}
-
 								if (url)
 								{
 									const isSameHost = url.hostname === window.location.hostname;
-									const isDifferentPath = url.pathname !== window.location.pathname;
-									const isNotIframe = url.searchParams.get('IFRAME') !== 'Y';
+									const isIframe = url.searchParams.get('IFRAME') === 'Y';
 
-									if (isSameHost && isDifferentPath && isNotIframe)
+									if (isSameHost && !isIframe)
 									{
-										BX.addClass(document.body, 'landing-page-transition');
-										linkOptions.href = url.href;
-										setTimeout(() => {
-											openPseudoLinks(linkOptions, event);
-										}, 400);
-										setTimeout(() => {
-											BX.removeClass(document.body, 'landing-page-transition');
-										}, 3000);
+										const isDifferentPath = url.pathname !== window.location.pathname;
+										if (isDifferentPath)
+										{
+											BX.addClass(document.body, 'landing-page-transition');
+											linkOptions.href = url.href;
+											setTimeout(() => {
+												openPseudoLinks(linkOptions, event);
+											}, 400);
+											setTimeout(() => {
+												BX.removeClass(document.body, 'landing-page-transition');
+											}, 3000);
+										}
+										else if (isBlockLink(linkOptions.href))
+										{
+											onBlockLinkClick(event);
+										}
 									}
 									else
 									{

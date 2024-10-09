@@ -22,7 +22,6 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 		CopilotPromptMessage,
 		CopilotErrorMessage,
 		CopilotMessage,
-		Banner,
 		CheckInMessageFactory,
 		CreateBannerFactory,
 		GalleryMessageFactory,
@@ -54,7 +53,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions}options
+		 * @param {CreateMessageOptions} options
 		 * @return {Message}
 		 */
 		static createMessage(modelMessage = {}, options = {})
@@ -62,11 +61,6 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			if (modelMessage.params?.componentId === MessageParams.ComponentId.ChatCopilotCreationMessage)
 			{
 				return new CopilotPromptMessage(modelMessage, options);
-			}
-
-			if (modelMessage.params?.componentId === MessageParams.ComponentId.ChatCopilotAddedUsersMessage)
-			{
-				return new Banner(modelMessage, options);
 			}
 
 			if (CreateBannerFactory.checkSuitableForDisplay(modelMessage))

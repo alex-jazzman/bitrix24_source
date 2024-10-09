@@ -35,7 +35,7 @@ $MESS['IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_ONE'] = '#USERNAME_1# пишет...';
 $MESS['IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_TWO'] = '#USERNAME_1# и #USERNAME_2# пишут...';
 $MESS['IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_MORE'] = '#USERNAME_1# и еще #USERS_COUNT# пишут...';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_NEW'] = 'Новые сообщения';
-$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED'] = 'Просмотрено:';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_MSGVER_1'] = 'Просмотрено: #DATE#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_ONE'] = 'Просмотрено: #USERNAME#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_MORE'] = 'Просмотрено: #USERNAME# и еще #USERS_COUNT#';
 
@@ -114,6 +114,125 @@ $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHANNEL_GENERAL_CREATE_BANNER_TITLE'] = '
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHANNEL_GENERAL_CREATE_BANNER_DESC_1'] = 'Делитесь важными анонсами и новостями компании';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHANNEL_GENERAL_CREATE_BANNER_DESC_2'] = 'Следите за актуальной информацией';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHANNEL_GENERAL_CREATE_BANNER_DESC_3'] = 'Оставляйте реакции и обсуждайте публикации в комментариях';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_TITTLE'] = 'Откройте доступ к полной истории переписки';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_DESC_1_PLURAL_0'] = 'Сейчас вам доступна переписка только за последний #COUNT# день.';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_DESC_1_PLURAL_1'] = 'Сейчас вам доступна переписка только за последние #COUNT# дня.';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_DESC_1_PLURAL_2'] = 'Сейчас вам доступна переписка только за последние #COUNT# дней.';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_DESC_2'] = 'Чтобы получить доступ ко всей истории и другим полезным возможностям, перейдите на платный тариф';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_BUTTON_UNLOCK'] = 'Получить доступ';
 
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHECK_IN_BUTTON'] = 'Чекин на работе';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_GALLERY_PHOTO'] = 'ещё #COUNT# фото';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_ATTACH_FILE_DOWNLOAD'] = 'Скачать';
+// Sign message
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_TITLE"] = "Подпишите документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_DESCRIPTION"] = "Подпишите документ #DOCUMENT_NAME#. После вашего подписания документ будет отправлен на подпись сотрудникам";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_BUTTON_TEXT"] = "Перейти к подписанию";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_TITLE_INITIATOR"] = "Подпишите документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_DESCRIPTION_INITIATOR"] = "#INITIATOR_LINK# просит вас подписать документ #DOCUMENT_NAME#. После вашего подписания документ будет отправлен на подпись сотрудникам";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_BUTTON_TEXT_INITIATOR"] = "Перейти к подписанию";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_SES_TITLE"] = "Подпишите документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_SES_DESCRIPTION"] = "Подпишите документ #DOCUMENT_NAME#. После подписания документ будет доступен в вашем профиле в разделе Подписанные документы. Никому не передавайте эту ссылку";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_SES_DESCRIPTION_INITIATOR"] = "#INITIATOR_LINK# просит вас подписать документ #DOCUMENT_NAME#. После подписания документ будет доступен в вашем профиле в разделе Подписанные документы. Никому не передавайте эту ссылку";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_SES_BUTTON_TEXT"] = "Перейти к подписанию";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_GOS_KEY_TITLE"] = "Подпишите документ в Госключе";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_GOS_KEY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# отправлен в приложение Госключ и будет доступен 24 часа. Если не подписать за это время, документ удалится. [helpdesklink]Как подписать в Госключе[/helpdesklink]";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_GOS_KEY_V2_DESCRIPTION"] = "Подпишите документ #DOCUMENT_NAME#. Перейдите в приложение Госключ и подпишите документ в течение 24 часов. Если не подписать за это время, документ удалится. [helpdesklink]Как подписать документ в Госключе[/helpdesklink]";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_GOS_KEY_V2_INITIATOR_DESCRIPTION"] = "#INITIATOR_LINK# просит вас подписать документ #DOCUMENT_NAME#. Перейдите в приложение Госключ и подпишите документ в течение 24 часов. Если не подписать за это время, документ удалится. [helpdesklink]Как подписать документ в Госключе[/helpdesklink]";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EMPLOYEE_GOS_KEY_V2_BUTTON_TEXT"] = "Открыть документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_REVIEWER_TITLE"] = "Согласуйте документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_REVIEWER_DESCRIPTION"] = "Согласуйте документ #DOCUMENT_NAME#. После вашего согласования документ будет отправлен остальным участникам";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_REVIEWER_BUTTON_TEXT"] = "Перейти к согласованию";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_REVIEWER_TITLE_INITIATOR"] = "Согласуйте документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_REVIEWER_DESCRIPTION_INITIATOR"] = "#INITIATOR_LINK# просит вас согласовать документ #DOCUMENT_NAME#. После вашего согласования документ будет отправлен остальным участникам";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_REVIEWER_BUTTON_TEXT_INITIATOR"] = "Перейти к согласованию";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EDITOR_TITLE"] = "Проверьте и заполните документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EDITOR_DESCRIPTION"] = "Проверьте документ #DOCUMENT_NAME#. После проверки документ будет отправлен на подпись представителю компании";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EDITOR_BUTTON_TEXT"] = "Проверить и заполнить";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EDITOR_TITLE_INITIATOR"] = "Проверьте и заполните документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EDITOR_DESCRIPTION_INITIATOR"] = "#INITIATOR_LINK# просит вас проверить документ #DOCUMENT_NAME#. После проверки документ будет отправлен на подпись представителю компании";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_EDITOR_BUTTON_TEXT_INITIATOR"] = "Проверить и заполнить";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_ASSIGNEE_TITLE"] = "Документ подписан";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_ASSIGNEE_DESCRIPTION"] = "Документ #DOCUMENT_NAME# подписан и отправлен на подпись остальным участникам";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_COMPANY_TITLE"] = "Документ подписан";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# подписан и доступен в разделе Сейф компании";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_COMPANY_BUTTON_TEXT"] = "В сейф компании";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_TITLE"] = "Документ подписан";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_DESCRIPTION"] = "Документ #DOCUMENT_NAME# подписан и доступен в вашем профиле в разделе Подписанные документы";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_BUTTON_TEXT"] = "Открыть документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_GOS_KEY_TITLE"] = "Документ подписан";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_GOS_KEY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# подписан и доступен в вашем профиле в разделе Подписанные документы и в Госключе";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_GOS_KEY_BUTTON_TEXT"] = "Открыть документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_EDITOR_TITLE"] = "Документ проверен и заполнен";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_EDITOR_DESCRIPTION"] = "Документ #DOCUMENT_NAME# проверен, заполнен и отправлен на подпись представителю компании";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_REVIEWER_TITLE"] = "Документ согласован";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION"] = "Документ #DOCUMENT_NAME# согласован и отправлен остальным участникам";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_REFUSED_COMPANY_TITLE"] = "Отказ от подписания";
+$MESS["IMMOBILE_MESSAGE_SIGN_REFUSED_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# не подписан";
+$MESS["IMMOBILE_MESSAGE_SIGN_REFUSED_COMPANY_DESCRIPTION_1"] = "#INITIATOR_LINK# отказывается подписывать документ #DOCUMENT_NAME#";
+$MESS["IMMOBILE_MESSAGE_SIGN_REFUSED_COMPANY_DESCRIPTIONM"] = "#INITIATOR_LINK# отказался подписывать документ #DOCUMENT_NAME#";
+$MESS["IMMOBILE_MESSAGE_SIGN_REFUSED_COMPANY_DESCRIPTIONF"] = "#INITIATOR_LINK# отказалась подписывать документ #DOCUMENT_NAME#";
+$MESS["IMMOBILE_MESSAGE_SIGN_REFUSED_COMPANY_BUTTON_TEXT"] = "К процессу подписания";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_TITLE"] = "Подписание с сотрудником отменено";
+$MESS["IMMOBILE_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_DESCRIPTION"] = "Отменено подписание документа #DOCUMENT_NAME# с сотрудником #USER_LINK#";
+$MESS["IMMOBILE_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_DESCRIPTION_1"] = "#INITIATOR_LINK# отменил(а) подписание документа #DOCUMENT_NAME# с сотрудником #USER_LINK#";
+$MESS["IMMOBILE_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME# с сотрудником #USER_LINK#";
+$MESS["IMMOBILE_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_DESCRIPTIONF"] = "#INITIATOR_LINK# отменила подписание документа #DOCUMENT_NAME# с сотрудником #USER_LINK#";
+$MESS["IMMOBILE_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_BUTTON_TEXT"] = "К процессу подписания";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE"] = "Подписание документа отменено";
+$MESS["IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTION"] = "#INITIATOR_LINK# отменил(а) подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTIONF"] = "#INITIATOR_LINK# отменила подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TITLE"] = "Подписание документа отменено";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписи";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_DESCRIPTION_1"] = "#INITIATOR_LINK# отменил(а) подписание документа #DOCUMENT_NAME#. Документ больше недоступен для подписания";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME#. Документ больше недоступен для подписания";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_DESCRIPTIONF"] = "#INITIATOR_LINK# отменила подписание документа #DOCUMENT_NAME#. Документ больше недоступен для подписания";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_BUTTON_TEXT"] = "К процессу подписания";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_CANCELLED_TITLE"] = "Подписание документа отменено";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_CANCELLED_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписания";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_CANCELLED_BUTTON_TEXT"] = "К процессу подписания";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_ASSIGNEE_TITLE"] = "Подписание документа отменено";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_ASSIGNEE_DESCRIPTION"] = "#INITIATOR_LINK# отменил(а) подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_ASSIGNEE_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_ASSIGNEE_DESCRIPTIONF"] = "#INITIATOR_LINK# отменила подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_REVIEWER_TITLE"] = "Подписание документа отменено";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_REVIEWER_DESCRIPTION"] = "#INITIATOR_LINK# отменил(а) подписание документа #DOCUMENT_NAME#. Вам больше не нужно согласовывать документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_REVIEWER_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME#. Вам больше не нужно согласовывать документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_REVIEWER_DESCRIPTIONF"] = "#INITIATOR_LINK# отменила подписание документа #DOCUMENT_NAME#. Вам больше не нужно согласовывать документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_EDITOR_TITLE"] = "Подписание документа отменено";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_EDITOR_DESCRIPTION"] = "#INITIATOR_LINK# отменил(а) подписание документа #DOCUMENT_NAME#. Вам больше не нужно проверять документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_EDITOR_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME#. Вам больше не нужно проверять документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TO_EDITOR_DESCRIPTIONF"] = "#INITIATOR_LINK# отменила подписание документа #DOCUMENT_NAME#. Вам больше не нужно проверять документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_TITLE"] = "Некоторые сотрудники не смогли подписать документ";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_DESCRIPTION"] = "Представитель компании #USER_LINK# должен ещё раз подписать документ #DOCUMENT_NAME#";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_SIGNING_ERROR_BUTTON_TEXT"] = "К процессу подписания";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_REPEAT_TITLE"] = "Подпишите документ повторно";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_REPEAT_DESCRIPTION"] = "Некоторые сотрудники не смогли подписать документ #DOCUMENT_NAME#. Подпишите документ ещё раз, после этого он снова будет отправлен сотрудникам";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_REPEAT_BUTTON_TEXT"] = "Подписать повторно";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_SIDEPANEL_BTN_SIGN"] = "Подпись";

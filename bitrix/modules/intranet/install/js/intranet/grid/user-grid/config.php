@@ -12,9 +12,10 @@ return [
 	'skip_core' => false,
 	'rel' => [
 		'ui.label',
-		'main.popup',
 		'ui.dialogs.messagebox',
+		'ui.form-elements.field',
 		'ui.cnt',
+		'intranet.reinvite',
 		'main.core',
 		'ui.icon-set.main',
 		'ui.entity-selector',

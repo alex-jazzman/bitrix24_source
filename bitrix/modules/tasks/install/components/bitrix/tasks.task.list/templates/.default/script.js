@@ -1,3 +1,4 @@
+/* eslint-disable */
 BX.namespace('BX.Tasks.Grid');
 
 BX.Tasks.GridActions = {
@@ -7,6 +8,12 @@ BX.Tasks.GridActions = {
 	defaultPresetId: '',
 	getTotalCountProceed: false,
 	currentGroupAction: null,
+	restrictions: {
+		project: {
+			limitExceeded: false,
+			limitFeatureId: '',
+		}
+	},
 
 	checkCanMove: function()
 	{
@@ -292,6 +299,10 @@ BX.Tasks.GridActions = {
 			entities: [
 				{
 					id: 'project',
+					options: {
+						lockProjectLink: this.restrictions.project.limitExceeded,
+						lockProjectLinkFeatureId: this.restrictions.project.limitFeatureId,
+					},
 				},
 			],
 			events: {
@@ -1856,7 +1867,6 @@ BX(function() {
 
 		updateGridRow: function(rowId, rowData, parameters, repository)
 		{
-
 			if (!this.isRowExist(rowId))
 			{
 				return;
@@ -2806,6 +2816,7 @@ BX(function() {
 		},
 	};
 });
+
 
 this.BX = this.BX || {};
 (function (exports,main_core_events,main_core,tasks_taskModel) {

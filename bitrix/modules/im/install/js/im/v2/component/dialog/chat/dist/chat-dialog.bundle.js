@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_popup,pull_vue3_status,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_provider_service,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_lib_channel,im_v2_const,im_v2_lib_permission,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_lib_slider) {
+(function (exports,main_popup,pull_vue3_status,im_v2_lib_analytics,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_lib_access,im_v2_lib_feature,im_v2_provider_service,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_lib_channel,im_v2_const,im_v2_lib_permission,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_lib_slider) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Dialog.ScrollManager';
@@ -728,6 +728,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.highlightMessage(messageId);
 	        return;
 	      }
+	      const {
+	        hasAccess,
+	        errorCode
+	      } = await im_v2_lib_access.AccessManager.checkMessageAccess(messageId);
+	      if (!hasAccess && errorCode === im_v2_lib_access.AccessErrorCode.messageAccessDeniedByTariff) {
+	        im_v2_lib_analytics.Analytics.getInstance().onGoToContextHistoryLimitClick({
+	          dialogId: this.dialogId
+	        });
+	        im_v2_lib_feature.FeatureManager.chatHistory.openFeatureSlider();
+	        return;
+	      }
 	      this.showLoadingBar();
 	      await this.getMessageService().loadContext(messageId).catch(error => {
 	        im_v2_lib_logger.Logger.error('goToMessageContext error', error);
@@ -794,7 +805,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const visibleMessages = this.getVisibleMessagesManager().getVisibleMessages();
 	      visibleMessages.forEach(messageId => {
 	        const message = this.$store.getters['messages/getById'](messageId);
-	        if (message.viewed) {
+	        if (!message || message.viewed) {
 	          return;
 	        }
 	        this.getChatService().readMessage(this.dialog.chatId, messageId);
@@ -1168,5 +1179,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.ScrollManager = ScrollManager;
 	exports.PinnedMessages = PinnedMessages;
 
-}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=chat-dialog.bundle.js.map

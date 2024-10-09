@@ -273,7 +273,7 @@
 
 			return params;
 		},
-		getOpenFunction(url)
+		getOpenFunction(url, params = {})
 		{
 			var resultOpenFunction = null;
 			var resolveList = [
@@ -302,7 +302,7 @@
 					resolveFunction: BX.MobileTools.taskIdFromUrl,
 					openFunction(data) {
 						// eslint-disable-next-line no-undef
-						BXMobileApp.Events.postToComponent('taskbackground::task::open', data, 'background');
+						BXMobileApp.Events.postToComponent('taskbackground::task::open', [data, params], 'background');
 					},
 				},
 				{
@@ -466,7 +466,10 @@
 				},
 			];
 
-			resolveList.push(BX.MobileTools.resolverCrmCondition);
+			resolveList.push(
+				BX.MobileTools.resolverCrmCondition,
+				...BX.MobileTools.resolverBizprocCondition,
+			);
 
 			var resolveData = null;
 			var inputData = null;
@@ -490,7 +493,7 @@
 		},
 		resolveOpenFunction(url, loadParams = {})
 		{
-			const openFunction = BX.MobileTools.getOpenFunction(url);
+			const openFunction = BX.MobileTools.getOpenFunction(url, loadParams);
 
 			if (!openFunction)
 			{
@@ -544,6 +547,39 @@
 				BXMobileApp.Events.postToComponent('crmbackground::router', props, 'background');
 			},
 		}),
+		resolverBizprocCondition: ([
+			{
+				resolveFunction: (url) => {
+					const isMyBpTask = /\/company\/personal\/bizproc\/(\d+)\//gi.test(url);
+					const isBpTask = /\/company\/personal\/bizproc\/(\d+)\/\?user_id=(\d+)/gi.test(url);
+
+					if (isMyBpTask || isBpTask)
+					{
+						return { url };
+					}
+
+					return null;
+				},
+				openFunction: (props) => {
+					// eslint-disable-next-line no-undef
+					BXMobileApp.Events.postToComponent('bizprocbackground::task::open', props, 'background');
+				},
+			},
+			{
+				resolveFunction: (url) => {
+					if (/\/bizproc\/userprocesses\//gi.test(url))
+					{
+						return true;
+					}
+
+					return null;
+				},
+				openFunction: () => {
+					// eslint-disable-next-line no-undef
+					BXMobileApp.Events.postToComponent('bizprocbackground::tab::open', {}, 'background');
+				},
+			},
+		]),
 
 		userIdFromUrl(url)
 		{

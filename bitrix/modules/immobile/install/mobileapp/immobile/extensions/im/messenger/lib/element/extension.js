@@ -44,12 +44,12 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { CopilotMessage } = require('im/messenger/lib/element/dialog/message/copilot');
 	const { CopilotPromptMessage } = require('im/messenger/lib/element/dialog/message/copilot-prompt');
 	const { CopilotErrorMessage } = require('im/messenger/lib/element/dialog/message/copilot-error');
-	const { Banner } = require('im/messenger/lib/element/dialog/message/banner');
 	const { CheckInMessageFactory } = require('im/messenger/lib/element/dialog/message/check-in/factory');
 	const { CheckInMessageHandler } = require('im/messenger/lib/element/dialog/message/check-in/handler');
 	const { GalleryMessageFactory } = require('im/messenger/lib/element/dialog/message/gallery/factory');
 	const { GalleryMessageHandler } = require('im/messenger/lib/element/dialog/message/gallery/handler');
-	const { CreateBannerFactory } = require('im/messenger/lib/element/dialog/message/create-banner/factory');
+	const { CreateBannerFactory } = require('im/messenger/lib/element/dialog/message/banner/factory');
+	const { BannerMessageHandler } = require('im/messenger/lib/element/dialog/message/banner/handler');
 
 	module.exports = {
 		ChatAvatar,
@@ -95,8 +95,8 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		GalleryMessageFactory,
 		GalleryMessageHandler,
 		CreateBannerFactory,
+		BannerMessageHandler,
 		MessageAlign,
 		MessageTextAlign,
-		Banner,
 	};
 });

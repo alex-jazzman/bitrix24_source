@@ -62,7 +62,6 @@ export class IncomingNotification extends EventEmitter
 		this.postponedEvents = [];
 		this.microphoneState = config.microphoneState;
 		this.cameraState = config.cameraState;
-		this.isNewCallLayoutEnabled = Util.isNewCallLayoutEnabled();
 
 		this.#subscribeEvents(config);
 		if (DesktopApi.isDesktop())
@@ -152,7 +151,7 @@ export class IncomingNotification extends EventEmitter
 			offsetTop: 0,
 			closeByEsc: false,
 			draggable: {restrict: false},
-			borderRadius: this.isNewCallLayoutEnabled ? '25px' : 'none',
+			borderRadius: '25px',
 			overlay: {backgroundColor: 'black', opacity: 30},
 			events: {
 				onPopupClose: () => this.emit(Events.onClose),
@@ -263,7 +262,6 @@ export class IncomingNotificationContent extends EventEmitter
 		this.callerColor = config.callerColor || '';
 		this.microphoneState = config.microphoneState;
 		this.cameraState = config.cameraState;
-		this.isNewCallLayoutEnabled = Util.isNewCallLayoutEnabled();
 
 		this.elements = {
 			root: null,
@@ -296,7 +294,6 @@ export class IncomingNotificationContent extends EventEmitter
 
 	render()
 	{
-		const backgroundImage = this.callerAvatar || '/bitrix/js/im/images/default-call-background.png';
 		let callerPrefix;
 
 		if (this.video)
@@ -323,7 +320,6 @@ export class IncomingNotificationContent extends EventEmitter
 		}
 
 		let avatarClass = '';
-		let avatarImageClass = '';
 		let avatarImageStyles;
 		let avatarImageText = '';
 
@@ -345,7 +341,6 @@ export class IncomingNotificationContent extends EventEmitter
 				backgroundSize: '40px',
 				backgroundPosition: 'center center',
 			}
-			avatarImageClass = this.isNewCallLayoutEnabled ? '' : 'bx-messenger-panel-avatar-img-default';
 			avatarImageText = Utils.text.getFirstLetters(this.callerName).toUpperCase();
 		}
 
@@ -368,10 +363,10 @@ export class IncomingNotificationContent extends EventEmitter
 											children: [
 												this.elements.avatar = Dom.create("div", {
 													props: {
-														className: "bx-messenger-call-window-photo-block " + avatarImageClass
+														className: "bx-messenger-call-window-photo-block"
 													},
 													style: avatarImageStyles,
-													text: this.isNewCallLayoutEnabled ? avatarImageText : '',
+													text: avatarImageText,
 												}),
 											]
 										}),
@@ -428,148 +423,80 @@ export class IncomingNotificationContent extends EventEmitter
 			]
 		});
 
-		if (this.isNewCallLayoutEnabled)
-		{
-			this.elements.windowBottom.prepend(...[
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-settings-block"},
-					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-settings-block-title"},
-							text: BX.message("CALL_M_INCOMING_NOTIFICATION_SETTINGS_TITLE")
-						}),
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-settings-buttons-block"},
-							children: [
-								Dom.create("div", {
-									props: {className: "bx-messenger-call-window-settings-button"},
-									children: [
-										this.elements.buttons.toggleMicrophoneIcon = Dom.create("div", {
-											props: {className: "bx-messenger-call-window-settings-icon microphone-" + (this.microphoneState ? "on" : "off")}
-										}),
-										Dom.create("div", {
-											props: {className: "bx-messenger-call-window-settings-text microphone"},
-											text: BX.message("IM_M_CALL_BTN_MIC")
-										}),
-									],
-									events: {click: this.#onMicrophoneSettingClick.bind(this)},
-								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-call-window-settings-separator"},
-								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-call-window-settings-button"},
-									children: [
-										this.elements.buttons.toggleCameraIcon = Dom.create("div", {
-											props: {
-												className: "bx-messenger-call-window-settings-icon camera-" + (this.cameraState && this.hasCamera ? "on" : "off") + (this.hasCamera ? "" : " bx-messenger-call-window-button-disabled")
-											},
-										}),
-										Dom.create("div", {
-											props: {className: "bx-messenger-call-window-settings-text camera"},
-											text: BX.message("IM_M_CALL_BTN_CAMERA"),
-										}),
-									],
-									events: {click: this.#onCameraSettingClick.bind(this)}
-								}),
-							],
-						}),
-					],
-				}),
-			]);
+		this.elements.windowBottom.prepend(...[
+			Dom.create("div", {
+				props: {className: "bx-messenger-call-window-settings-block"},
+				children: [
+					Dom.create("div", {
+						props: {className: "bx-messenger-call-window-settings-block-title"},
+						text: BX.message("CALL_M_INCOMING_NOTIFICATION_SETTINGS_TITLE")
+					}),
+					Dom.create("div", {
+						props: {className: "bx-messenger-call-window-settings-buttons-block"},
+						children: [
+							Dom.create("div", {
+								props: {className: "bx-messenger-call-window-settings-button"},
+								children: [
+									this.elements.buttons.toggleMicrophoneIcon = Dom.create("div", {
+										props: {className: "bx-messenger-call-window-settings-icon microphone-" + (this.microphoneState ? "on" : "off")}
+									}),
+									Dom.create("div", {
+										props: {className: "bx-messenger-call-window-settings-text microphone"},
+										text: BX.message("IM_M_CALL_BTN_MIC")
+									}),
+								],
+								events: {click: this.#onMicrophoneSettingClick.bind(this)},
+							}),
+							Dom.create("div", {
+								props: {className: "bx-messenger-call-window-settings-separator"},
+							}),
+							Dom.create("div", {
+								props: {className: "bx-messenger-call-window-settings-button"},
+								children: [
+									this.elements.buttons.toggleCameraIcon = Dom.create("div", {
+										props: {
+											className: "bx-messenger-call-window-settings-icon camera-" + (this.cameraState && this.hasCamera ? "on" : "off") + (this.hasCamera ? "" : " bx-messenger-call-window-button-disabled")
+										},
+									}),
+									Dom.create("div", {
+										props: {className: "bx-messenger-call-window-settings-text camera"},
+										text: BX.message("IM_M_CALL_BTN_CAMERA"),
+									}),
+								],
+								events: {click: this.#onCameraSettingClick.bind(this)}
+							}),
+						],
+					}),
+				],
+			}),
+		]);
 
-			this.elements.buttonsBlock.append(...[
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-button bx-messenger-call-window-button-danger"},
-					children: [
-						Dom.create("div", {
-							props: {
-								className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-down",
-								title: BX.message("IM_M_CALL_BTN_DECLINE"),
-							}
-						}),
-					],
-					events: {click: this.#onDeclineButtonClick.bind(this)}
-				}),
-				this.elements.buttons.answer = Dom.create("div", {
-					props: {
-						className: "bx-messenger-call-window-button",
-						title: BX.message("IM_M_CALL_BTN_ANSWER"),
-					},
-					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-up"}
-						}),
-					],
-					events: {click: this.#onAnswerButtonClick.bind(this)}
-				}),
-			]);
-		}
-		else
-		{
-			this.elements.root.prepend(...[
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-background"},
-					style: {
-						backgroundImage: "url('" + backgroundImage + "')"
-					},
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-background-blur"}
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-background-gradient"},
-					style: {
-						backgroundImage: "url('/bitrix/js/im/images/call-background-gradient.png')"
-					}
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-bottom-background"}
-				}),
-			]);
-
-			this.elements.buttonsBlock.append(...[
-				this.elements.buttons.answerVideo = Dom.create("div", {
-					props: {className: "bx-messenger-call-window-button" + (!this.hasCamera ? " bx-messenger-call-window-button-disabled" : "")},
-					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-camera"}
-						}),
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-button-text"},
-							text: BX.message("IM_M_CALL_BTN_ANSWER_VIDEO"),
-						}),
-					],
-					events: {click: this.#onAnswerWithVideoButtonClick.bind(this)}
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-button"},
-					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-up"}
-						}),
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-button-text"},
-							text: BX.message("IM_M_CALL_BTN_ANSWER"),
-						}),
-					],
-					events: {click: this.#onAnswerButtonClick.bind(this)}
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-button bx-messenger-call-window-button-danger"},
-					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-down"}
-						}),
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-button-text"},
-							text: BX.message("IM_M_CALL_BTN_DECLINE"),
-						}),
-					],
-					events: {click: this.#onDeclineButtonClick.bind(this)}
-				}),
-			]);
-		}
+		this.elements.buttonsBlock.append(...[
+			Dom.create("div", {
+				props: {className: "bx-messenger-call-window-button bx-messenger-call-window-button-danger"},
+				children: [
+					Dom.create("div", {
+						props: {
+							className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-down",
+							title: BX.message("IM_M_CALL_BTN_DECLINE"),
+						}
+					}),
+				],
+				events: {click: this.#onDeclineButtonClick.bind(this)}
+			}),
+			this.elements.buttons.answer = Dom.create("div", {
+				props: {
+					className: "bx-messenger-call-window-button" + (this.withBlur ? ' with-blur' : ''),
+					title: BX.message("IM_M_CALL_BTN_ANSWER"),
+				},
+				children: [
+					Dom.create("div", {
+						props: {className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-up"}
+					}),
+				],
+				events: {click: this.#onAnswerButtonClick.bind(this)}
+			}),
+		]);
 
 		return this.elements.root;
 	};
@@ -585,8 +512,8 @@ export class IncomingNotificationContent extends EventEmitter
 			return;
 		}
 
-		const width = this.isNewCallLayoutEnabled ? 450 : 351;
-		const height = this.isNewCallLayoutEnabled ? 575 : 510;
+		const width = 450;
+		const height = 575;
 
 		this.render();
 		document.body.appendChild(this.elements.root);
@@ -642,7 +569,7 @@ export class IncomingNotificationContent extends EventEmitter
 
 	#onAnswerButtonClick()
 	{
-		if (!this.hasCamera || !this.isNewCallLayoutEnabled)
+		if (!this.hasCamera)
 		{
 			this.cameraState = false;
 			this.microphoneState = true;

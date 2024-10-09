@@ -4,6 +4,7 @@ $MESS["MENU_SALESCENTER_SECTION"] = "Sales Center";
 $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Inventory management";
 $MESS["TOP_MENU_ABOUT"] = "Company";
 $MESS["TOP_MENU_AI"] = "AI Labs";
+$MESS["TOP_MENU_BICONNECTOR_CONSTRUCTOR"] = "BI Builder";
 $MESS["TOP_MENU_BIZPROC"] = "Workflows";
 $MESS["TOP_MENU_BLOG"] = "Conversations";
 $MESS["TOP_MENU_CALENDAR"] = "Calendar";

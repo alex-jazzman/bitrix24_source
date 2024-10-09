@@ -20,15 +20,18 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 	 */
 	class FileDownloadMenu
 	{
-		static createByFileId(fileId, options = {})
+		static createByFileId(props)
 		{
-			return new this(fileId, options);
+			return new this(props);
 		}
 
-		constructor(fileId, options)
+		/**
+		 * @constructor
+		 * @param {FileDownloadMenuProps} props
+		 */
+		constructor(props)
 		{
-			this.fileId = fileId;
-			this.options = options;
+			this.fileId = props.fileId;
 			this.store = serviceLocator.get('core').getStore();
 			this.diskService = new DiskService();
 
@@ -36,7 +39,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 				actions: this.createActions(),
 			});
 
-			Logger.log('FileDownloadMenu: created for file: ', this.fileId);
+			Logger.log(`${this.constructor.name} created for file: `, this.fileId);
 		}
 
 		createActions()
@@ -82,7 +85,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 				return;
 			}
 
-			Logger.log('FileDownloadMenu.downloadFileToDevice', file);
+			Logger.log(`${this.constructor.name}.downloadFileToDevice`, file);
 			const fileDownloadUrl = withCurrentDomain(file.urlDownload);
 
 			NotifyManager.showLoadingIndicator();
@@ -92,7 +95,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 					utils.saveFile(localPath);
 				})
 				.catch((error) => {
-					Logger.error('FileDownloadMenu.downloadFileToDevice error:', error);
+					Logger.error(`${this.constructor.name}.downloadFileToDevice:`, error);
 				})
 			;
 		}
@@ -105,7 +108,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 				return;
 			}
 
-			Logger.log('FileDownloadMenu.downloadFileToDisk', file);
+			Logger.log(`${this.constructor.name}.downloadFileToDisk`, file);
 
 			this.diskService.save(file.id)
 				.then(() => {
@@ -115,7 +118,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 					});
 				})
 				.catch((error) => {
-					Logger.error('FileDownloadMenu.downloadFileToDisk error:', error);
+					Logger.error(`${this.constructor.name}.downloadFileToDisk`, error);
 				})
 			;
 		}

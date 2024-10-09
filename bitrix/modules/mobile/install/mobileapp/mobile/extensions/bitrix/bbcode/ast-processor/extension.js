@@ -98,11 +98,27 @@ jn.define('bbcode/ast-processor', (require, exports, module) => {
 	   */
 	  static findParentNode(node, selector) {
 	    if (node) {
+	      const preparedSelector = (() => {
+	        if (Type.isStringFilled(selector)) {
+	          return AstProcessor.parseSelector(selector)[0];
+	        }
+	        return selector;
+	      })();
 	      const parent = node.getParent();
-	      if (AstProcessor.matchesNodeWithSelector(parent, selector)) {
+	      if (AstProcessor.matchesNodeWithSelector(parent, preparedSelector)) {
 	        return parent;
 	      }
-	      return AstProcessor.findParentNode(parent, selector);
+	      return AstProcessor.findParentNode(parent, preparedSelector);
+	    }
+	    return null;
+	  }
+	  static findParentNodeByName(node, name) {
+	    if (node) {
+	      const parent = node.getParent();
+	      if (parent && parent.getName() === name) {
+	        return parent;
+	      }
+	      return AstProcessor.findParentNodeByName(parent, name);
 	    }
 	    return null;
 	  }

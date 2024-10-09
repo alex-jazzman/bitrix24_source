@@ -1,6 +1,6 @@
 import { Type, Loc } from 'main.core';
-import { PopupManager } from 'main.popup';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { ErrorCollection } from 'ui.form-elements.field';
 
 export type SetSortType = {
 	menuId: ?string,
@@ -36,7 +36,6 @@ export class GridManager
 
 	static setSort(options: SetSortType): void
 	{
-		PopupManager.getPopupById(options.menuId)?.close();
 		const grid = BX.Main.gridManager.getById(options.gridId)?.instance;
 
 		if (Type.isObject(grid))
@@ -59,7 +58,31 @@ export class GridManager
 		}
 	}
 
-	static reinviteAction(userId: string, isExtranetUser: boolean): Promise
+	static reinviteCloudAction(data): Promise
+	{
+		return BX.ajax.runAction('intranet.invite.reinviteWithChangeContact', {
+			data: data,
+		}).then((response) => {
+			if (response.data.result)
+			{
+				const InviteAccessPopup = new BX.PopupWindow({
+					content: `<p>${Loc.getMessage('INTRANET_USER_LIST_ACTION_REINVITE_SUCCESS')}</p>`,
+					autoHide: true,
+				});
+
+				InviteAccessPopup.show();
+			}
+
+			return response;
+		}, (response) => {
+			const errors = response.errors.map(error => error.message);
+			ErrorCollection.showSystemError(errors.join('<br>'));
+
+			return response;
+		});
+	}
+
+	static reinviteAction(userId, isExtranetUser): Promise
 	{
 		return BX.ajax.runAction('intranet.controller.invite.reinvite', {
 			data: {
@@ -81,6 +104,11 @@ export class GridManager
 
 			return response;
 		});
+	}
+
+	getGrid():  BX.Main.grid
+	{
+		return this.#grid;
 	}
 
 	confirmAction(params: {

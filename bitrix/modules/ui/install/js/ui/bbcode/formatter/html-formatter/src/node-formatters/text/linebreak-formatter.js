@@ -1,5 +1,4 @@
 import { NodeFormatter, type NodeFormatterOptions, type ConvertCallbackOptions } from 'ui.bbcode.formatter';
-import { BBCodeElementNode } from 'ui.bbcode.model';
 
 export class LinebreakNodeFormatter extends NodeFormatter
 {
@@ -7,13 +6,7 @@ export class LinebreakNodeFormatter extends NodeFormatter
 		super({
 			name: '#linebreak',
 			convert({ node }: ConvertCallbackOptions): Text | HTMLBRElement {
-				const nextSibling: ?BBCodeElementNode = node.getNextSibling();
-				if (nextSibling && nextSibling.getName() === '#linebreak')
-				{
-					return document.createElement('br');
-				}
-
-				return document.createTextNode(node.getContent());
+				return document.createElement('br');
 			},
 			...options,
 		});

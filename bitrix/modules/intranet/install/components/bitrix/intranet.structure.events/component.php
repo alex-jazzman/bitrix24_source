@@ -146,10 +146,12 @@ else
 
 	if ($strUserIDs != '')
 	{
-		$dbRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure'), 'ID' => array_unique($arDepartmentIDs)));
-		while ($arSect = $dbRes->Fetch())
+		$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository();
+		$departmentCollection = $departmentRepository->findAllByIds(array_unique($arDepartmentIDs));
+		foreach ($departmentCollection as $department)
 		{
-			$arResult['DEPARTMENTS'][$arSect['ID']] = $arSect['NAME'];
+			$arResult['DEPARTMENTS'][$department->getId()] = $department->getName();
 		}
 		unset($dbRes);
 

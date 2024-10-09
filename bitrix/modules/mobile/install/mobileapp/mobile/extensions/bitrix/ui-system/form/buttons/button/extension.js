@@ -2,6 +2,7 @@
  * @module ui-system/form/buttons/button
  */
 jn.define('ui-system/form/buttons/button', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Component, Color } = require('tokens');
 	const { isLightColor } = require('utils/color');
 	const { capitalize } = require('utils/string');
@@ -20,28 +21,37 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef {Object} ButtonProps
+	 * @property {Function} [forwardRef]
+	 * @property {string} testId
+	 * @property {string} [text]
+	 * @property {Icon} [leftIcon]
+	 * @property {Color} [leftIconColor]
+	 * @property {Icon} [rightIcon]
+	 * @property {Color} [rightIconColor]
+	 * @property {ButtonSize} [size]
+	 * @property {Ellipsize} [ellipsize]
+	 * @property {ButtonDesign} [design=ButtonDesign.FILLED]
+	 * @property {SpinnerDesign} [loaderDesign]
+	 * @property {object} [badge]
+	 * @property {boolean} [stretched]
+	 * @property {boolean} [rounded]
+	 * @property {boolean} [border]
+	 * @property {boolean} [loading]
+	 * @property {boolean} [disabled]
+	 * @property {Color} [color]
+	 * @property {Color} [borderColor]
+	 * @property {number} [borderRadius]
+	 * @property {Color} [backgroundColor]
+	 * @property {ElementStyle} [style]
+	 * @property {function} [onClick]
+	 * @property {Function} [onLayout]
+	 * @property {Function} [onDisabledClick]
+	 * @property {Function} [onLongClick]
+	 *
 	 * @class Button
-	 * @param {object} props
-	 * @param {string} [props.text]
-	 * @param {ButtonDesign} [props.design=ButtonDesign.FILLED]
-	 * @param {ButtonSize} [props.size]
-	 * @param {string} [props.color]
-	 * @param {boolean} [props.stretched]
-	 * @param {boolean} [props.rounded]
-	 * @param {boolean} [props.disabled]
-	 * @param {string} [props.leftIcon]
-	 * @param {Color} [props.leftIconColor]
-	 * @param {string} [props.rightIcon]
-	 * @param {Color} [props.rightIconColor]
-	 * @param {boolean} [props.border]
-	 * @param {Ellipsize} [props.ellipsize]
-	 * @param {boolean} [props.loading]
-	 * @param {Color} [props.borderColor]
-	 * @param {Color} [props.backgroundColor]
-	 * @param {object} [props.style]
-	 * @param {function} [props.onClick]
-	 * @params {function} [props.forwardRef]
-	 * @return {Button}
+	 * @param {ButtonProps} props
+	 * @returns {Button}
 	 */
 	class Button extends LayoutComponent
 	{
@@ -263,23 +273,23 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		}
 
 		#handleOnClick = () => {
-			const { onClick, onDisabledClick, disabled } = this.props;
+			const { onClick, onDisabledClick } = this.props;
 
-			if (onClick && !disabled)
+			if (onClick && !this.#isDisabled())
 			{
 				onClick();
 			}
 
-			if (onDisabledClick && disabled)
+			if (onDisabledClick && this.#isDisabled())
 			{
 				onDisabledClick();
 			}
 		};
 
 		#handleOnLongClick = () => {
-			const { onLongClick, disabled } = this.props;
+			const { onLongClick } = this.props;
 
-			if (onLongClick && !disabled)
+			if (onLongClick && !this.#isDisabled())
 			{
 				onLongClick();
 			}
@@ -297,35 +307,36 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 
 		getButtonStyle()
 		{
-			const {
-				rounded = false,
-			} = this.props;
-
-			const { radius } = this.size.getBorder();
-
-			const style = {
+			return {
 				flexDirection: 'row',
 				flexShrink: 1,
 				backgroundColor: this.getBackgroundColor(),
 				justifyContent: 'center',
-				borderRadius: radius.toNumber(),
 				height: this.size.getHeight(),
 				...this.getBorderStyle(),
 				...this.getStretchedStyle(),
 			};
-
-			if (rounded)
-			{
-				style.borderRadius = Component.elementAccentCorner.toNumber();
-			}
-
-			return style;
 		}
 
 		getBorderStyle()
 		{
 			const { borderColor: designBorderColor } = this.designStyle;
-			const { border, borderColor, design, disabled } = this.props;
+			const { border, borderColor, borderRadius, design, rounded } = this.props;
+			const { radius } = this.size.getBorder();
+
+			const style = {
+				borderRadius: radius.toNumber(),
+			};
+
+			if (Type.isNumber(borderRadius))
+			{
+				style.borderRadius = borderRadius;
+			}
+
+			if (rounded)
+			{
+				style.borderRadius = Component.elementAccentCorner.toNumber();
+			}
 
 			if ((design && designBorderColor) || (border && borderColor))
 			{
@@ -337,7 +348,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 					buttonBorderColor = borderColor;
 				}
 
-				if (disabled)
+				if (this.#isDisabled())
 				{
 					buttonBorderColor = this.getDisabledStyle().borderColor;
 				}
@@ -346,13 +357,11 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 					? this.design.getOpacity('borderColor')
 					: null;
 
-				return {
-					borderWidth,
-					borderColor: buttonBorderColor.toHex(opacity),
-				};
+				style.borderWidth = borderWidth;
+				style.borderColor = buttonBorderColor.toHex(opacity);
 			}
 
-			return {};
+			return style;
 		}
 
 		/**
@@ -361,9 +370,9 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		getColor()
 		{
 			let { color: designColor } = this.designStyle;
-			const { color: propsColor, disabled } = this.props;
+			const { color: propsColor } = this.props;
 
-			if (disabled)
+			if (this.#isDisabled())
 			{
 				designColor = this.getDisabledStyle().color;
 			}
@@ -385,13 +394,18 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		getBackgroundColor()
 		{
 			const { backgroundColor: designBackgroundColor } = this.designStyle;
-			const { backgroundColor, disabled } = this.props;
+			const { backgroundColor } = this.props;
 			const background = backgroundColor || designBackgroundColor;
 
 			if (background)
 			{
-				return disabled
-					? this.getDisabledStyle().backgroundColor.toHex()
+				const disabledColor = this.getDisabledStyle().backgroundColor.toHex();
+
+				return this.#isDisabled()
+					? {
+						default: disabledColor,
+						pressed: disabledColor,
+					}
 					: background?.withPressed();
 			}
 
@@ -413,7 +427,6 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			return {
 				flexShrink: 1,
 				width: '100%',
-				alignItems: 'center',
 			};
 		}
 
@@ -437,6 +450,13 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 
 			return Boolean(loading);
 		}
+
+		#isDisabled()
+		{
+			const { disabled } = this.props;
+
+			return Boolean(disabled);
+		}
 	}
 
 	Button.defaultProps = {
@@ -447,28 +467,41 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	};
 
 	Button.propTypes = {
+		forwardRef: PropTypes.func,
 		testId: PropTypes.string.isRequired,
 		text: PropTypes.string,
-		leftIcon: PropTypes.object,
-		leftIconColor: PropTypes.object,
-		rightIcon: PropTypes.object,
-		rightIconColor: PropTypes.object,
-		size: PropTypes.object,
+		leftIcon: PropTypes.instanceOf(Icon),
+		leftIconColor: PropTypes.instanceOf(Color),
+		rightIcon: PropTypes.instanceOf(Icon),
+		rightIconColor: PropTypes.instanceOf(Color),
+		size: PropTypes.instanceOf(ButtonSize),
+		ellipsize: PropTypes.instanceOf(Ellipsize),
+		design: PropTypes.instanceOf(ButtonDesign),
+		loaderDesign: PropTypes.instanceOf(SpinnerDesign),
 		badge: PropTypes.object,
-		ellipsize: PropTypes.object,
-		design: PropTypes.object,
-		loaderDesign: PropTypes.object,
 		stretched: PropTypes.bool,
 		rounded: PropTypes.bool,
 		border: PropTypes.bool,
 		loading: PropTypes.bool,
-		color: PropTypes.object,
-		borderColor: PropTypes.object,
-		backgroundColor: PropTypes.object,
+		disabled: PropTypes.bool,
+		color: PropTypes.instanceOf(Color),
+		borderColor: PropTypes.instanceOf(Color),
+		backgroundColor: PropTypes.instanceOf(Color),
+		borderRadius: PropTypes.number,
+		style: PropTypes.object,
+		onClick: PropTypes.func,
+		onLayout: PropTypes.func,
+		onDisabledClick: PropTypes.func,
+		onLongClick: PropTypes.func,
 	};
 
 	module.exports = {
+		/**
+		 * @param {ButtonProps} props
+		 * @returns {Button}
+		 */
 		Button: (props) => new Button(props),
+		ButtonClass: Button,
 		ButtonDesign,
 		ButtonSize,
 		LoaderDesign: SpinnerDesign,

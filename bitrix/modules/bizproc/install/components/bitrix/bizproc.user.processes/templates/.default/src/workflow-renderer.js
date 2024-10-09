@@ -55,7 +55,7 @@ export class WorkflowRenderer
 	{
 		const itemName = Type.isString(this.#data?.name) ? this.#data.name : '';
 		const typeName = Type.isString(this.#data?.typeName) ? this.#data.typeName : '';
-		const documentUrl = this.#data.task?.url || this.#getWorkflowInfoUrl();
+		const documentUrl = this.#data.task?.url || this.#data.workflowUrl || this.#getWorkflowInfoUrl();
 
 		const description = Type.isString(this.#data?.description) ? this.#data.description : '';
 		const lengthLimit = 80;
@@ -83,13 +83,8 @@ export class WorkflowRenderer
 
 	#getWorkflowInfoUrl(): string
 	{
-		const uri = new Uri('/bitrix/components/bitrix/bizproc.workflow.info/');
-		uri.setQueryParam('workflow', this.#data.workflowId);
-
-		if (!Type.isNil(this.#data.task?.id))
-		{
-			uri.setQueryParam('task', this.#data.task?.id);
-		}
+		const idParam = Type.isNil(this.#data.task?.id) ? this.#data.workflowId : this.#data.task.id;
+		const uri = new Uri(`/company/personal/bizproc/${idParam}/`);
 
 		return uri.toString();
 	}
@@ -144,12 +139,8 @@ export class WorkflowRenderer
 			workflowId: this.#data.workflowId,
 			targetUserId: this.#targetUserId,
 			target,
-			data: {
-				...this.#data.taskProgress,
-				summaryProps: {
-					showContent: false,
-				},
-			},
+			data: this.#data.taskProgress,
+			showArrow: true,
 		}));
 		this.#faces.render();
 
@@ -180,7 +171,7 @@ export class WorkflowRenderer
 			;
 
 			counter = new Counter({
-				value: this.#data.taskCnt || this.#data.commentCnt,
+				value: (this.#data.taskCnt || 0) + (this.#data.commentCnt || 0),
 				color: primaryColor,
 				secondaryColor: CounterColor.SUCCESS,
 				isDouble: this.#data.taskCnt > 0 && this.#data.commentCnt > 0,

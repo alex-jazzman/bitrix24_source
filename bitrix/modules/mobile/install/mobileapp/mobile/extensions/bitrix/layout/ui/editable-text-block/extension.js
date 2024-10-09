@@ -70,13 +70,20 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 
 		renderText()
 		{
-			return new CollapsibleText({
+			const params = {
 				value: this.props.value || this.props.placeholder,
 				...this.props.textProps,
 				useBBCodeEditor: this.props.editorProps.useBBCodeEditor,
 				onClick: () => this.openEditor(),
 				onLongClick: () => this.openEditor(),
-			});
+			};
+
+			if (this.props.editorProps.useBBCodeEditor)
+			{
+				params.onLinkClick = () => this.openEditor();
+			}
+
+			return new CollapsibleText(params);
 		}
 
 		renderEditIcon()

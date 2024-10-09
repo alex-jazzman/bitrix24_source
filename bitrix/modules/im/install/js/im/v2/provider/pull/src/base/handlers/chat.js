@@ -8,6 +8,7 @@ import { CopilotManager } from 'im.v2.lib.copilot';
 import { CallManager } from 'im.v2.lib.call';
 import { WritingManager } from 'im.v2.lib.writing';
 import { Logger } from 'im.v2.lib.logger';
+import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 
 import type {
 	ChatOwnerParams,
@@ -21,7 +22,7 @@ import type {
 	ChatAvatarParams,
 	ChatConvertParams,
 } from '../../types/chat';
-import type { RawUser } from '../../types/common';
+import type { RawUser, RawChat } from '../../types/common';
 import type { ImModelChat } from 'im.v2.model';
 
 export class ChatPullHandler
@@ -233,6 +234,17 @@ export class ChatPullHandler
 
 		const copilotManager = new CopilotManager();
 		void copilotManager.handleRoleUpdate(params.copilotRole);
+	}
+
+	handleChatUpdate(params: {chat: RawChat})
+	{
+		void this.#store.dispatch('chats/update', {
+			dialogId: params.chat.dialogId,
+			fields: {
+				role: getChatRoleForUser(params.chat),
+				...params.chat,
+			},
+		});
 	}
 
 	#updateChatUsers(params: {

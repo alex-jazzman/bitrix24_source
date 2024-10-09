@@ -34,7 +34,34 @@ return [
 		'value' => [
 			'intranet.customSection.manager' => [
 				'className' => '\\Bitrix\\Intranet\\CustomSection\\Manager',
-			]
+			],
+			'intranet.option.mobile_app' => [
+				'constructor' => function () {
+					return new \Bitrix\Intranet\Service\MobileAppSettings(
+						new \Bitrix\Intranet\Service\IntranetOption()
+					);
+				},
+			],
+			'intranet.repository.iblock.department' => [
+				'className' => \Bitrix\Intranet\Repository\IblockDepartmentRepository::class,
+			],
+			'intranet.repository.hr.department' => [
+				'className' => \Bitrix\Intranet\Repository\HrDepartmentRepository::class,
+			],
+			'intranet.repository.department' => [
+				'constructor' => function () {
+					if (\Bitrix\Main\Loader::includeModule('humanresources')
+					&& (new \Bitrix\Intranet\Service\IntranetOption)->get('humanresources_enabled') === 'Y')
+					{
+						return new \Bitrix\Intranet\Repository\HrDepartmentRepository();
+					}
+
+					return new \Bitrix\Intranet\Repository\IblockDepartmentRepository();
+				}
+			],
+			'intranet.repository.invitation' => [
+				'className' => \Bitrix\Intranet\Repository\InvitationRepository::class,
+			],
 		],
 		'readonly' => true,
 	],

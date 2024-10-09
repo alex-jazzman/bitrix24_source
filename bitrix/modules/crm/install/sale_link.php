@@ -2312,34 +2312,6 @@ if (!empty($arCatalogId) && !$bError)
 	}
 }
 
-if(!$bError)
-{
-	//Copy perms from deals to invoices
-	$CCrmRole = new CCrmRole();
-	$dbRoles = $CCrmRole->GetList();
-
-	while($arRole = $dbRoles->Fetch())
-	{
-		$arPerms = $CCrmRole->GetRolePerms($arRole['ID']);
-
-		if(!isset($arPerms['INVOICE']) && is_array($arPerms['DEAL'] ?? null))
-		{
-			foreach ($arPerms['DEAL'] as $key => $value)
-			{
-				if(isset($value['-']) && $value['-'] != 'O')
-					$arPerms['INVOICE'][$key]['-'] = $value['-'];
-				else
-					$arPerms['INVOICE'][$key]['-'] = 'X';
-			}
-		}
-
-		$arFields = array('RELATION' => $arPerms);
-		$CCrmRole->Update($arRole['ID'], $arFields);
-	}
-
-	\Bitrix\Crm\Order\Permissions\Order::copyPermsFromInvoices();
-}
-
 if(Main\ModuleManager::isModuleInstalled('intranet'))
 {
 	if (!Main\Config\Option::get("sale", "sale_ps_success_path", false))

@@ -4,11 +4,27 @@ import {MessengerCoreStore } from "../../../../core/types/store";
 import {IServiceLocator} from "../../../lib/di/service-locator/types";
 
 declare type DialogOpenOptions = {
-	dialogId: DialogId,
-	dialogTitleParams: object,
-	forwardMessageId: number;
-	chatType: string;
-};
+	dialogId: string,
+	messageId?: string | number,
+	withMessageHighlight?: boolean,
+	dialogTitleParams?: DialogTitleParams,
+	forwardMessageId?: string,
+	chatType?: string,
+	isNew?: boolean,
+	isFromPush?: boolean,
+	userCode?: string, // for openlines dialog only
+	fallbackUrl?: string, // for openlines dialog only
+}
+
+declare type DialogTitleParams = {
+	name?: string,
+	description?: string,
+	avatar?: string,
+	color?: string,
+	chatType?: DialogTitleParamsChatType,
+}
+
+declare type DialogTitleParamsChatType = 'lines' | 'open'
 
 declare type DialogEvents = {
 	chatLoad: [DialoguesModelState],
@@ -33,6 +49,7 @@ declare type DialogLocatorServices = {
 	'store': MessengerCoreStore,
 	'view': DialogView,
 	'emitter': DialogEmitter,
+	'dialogId': DialogId,
 }
 
 declare type DialogLocator = IServiceLocator<DialogLocatorServices>;

@@ -60,8 +60,6 @@ export class UserProcesses
 			mustSubscribeToPushes = options.mustSubscribeToPushes === true;
 		}
 
-		this.bindAnchors();
-
 		this.loader = new WorkflowLoader();
 
 		if (mustSubscribeToPushes)
@@ -223,11 +221,11 @@ export class UserProcesses
 				WORKFLOW_STATE: Text.encode(workflow.statusText),
 				DOCUMENT_NAME: renderer.renderDocumentName(),
 				WORKFLOW_TEMPLATE_NAME: Text.encode(workflow.templateName),
-				TASK_DESCRIPTION: Dom.create('span', { html: workflow.task?.description || '' }),
+				TASK_DESCRIPTION: Dom.create('span', { html: workflow.description || '' }),
 				MODIFIED: renderer.renderModified(),
 				WORKFLOW_STARTED: Text.encode(workflow.workflowStarted),
 				WORKFLOW_STARTED_BY: Text.encode(workflow.startedBy),
-				OVERDUE_DATE: Text.encode(workflow.task?.overdueDate),
+				OVERDUE_DATE: Text.encode(workflow.overdueDate),
 				SUMMARY: renderer.renderSummary(),
 			},
 			actions,
@@ -334,46 +332,6 @@ export class UserProcesses
 				childNode,
 			);
 		}
-	}
-
-	bindAnchors()
-	{
-		BX.SidePanel.Instance.bindAnchors({
-			rules:
-				[
-					{
-						condition: [
-							'/rpa/task/',
-						],
-						options: {
-							width: 580,
-							cacheable: false,
-							allowChangeHistory: false,
-						},
-					},
-					{
-						condition: [
-							'/bitrix/components/bitrix/bizproc.workflow.info/',
-						],
-						options: {
-							cacheable: false,
-							allowChangeHistory: false,
-							loader: '/bitrix/components/bitrix/bizproc.workflow.info/templates/slider/images/skeleton.svg',
-							width: this.#detectSliderWidth(),
-						},
-					},
-				],
-		});
-	}
-
-	#detectSliderWidth(): number
-	{
-		if (window.innerWidth < 1500)
-		{
-			return null; // default slider width
-		}
-
-		return 1500 + Math.floor((window.innerWidth - 1500) / 3);
 	}
 
 	async initStartWorkflowButton(buttonId: ?string)

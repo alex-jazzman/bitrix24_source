@@ -75,12 +75,12 @@ export class ValueChecker
 			</div>
 		`;
 
-		this.#update();
+		this.update();
 
 		const observer = new IntersectionObserver(() => {
 			if (this.#layout.wrap.offsetWidth > 0)
 			{
-				this.#update();
+				this.update();
 
 				observer.disconnect();
 			}
@@ -102,7 +102,7 @@ export class ValueChecker
 		this.#layout.checker.subscribe('change', (baseEvent: BaseEvent) => {
 			const isChecked = baseEvent.getData();
 
-			this.#update();
+			this.update();
 
 			if (isChecked && this.#layout.checkerValue)
 			{
@@ -147,7 +147,7 @@ export class ValueChecker
 			<input class="ui-ctl-element" placeholder="${this.#params.placeholder}" value="${this.#params.value ?? this.#params.placeholder}">
 		`;
 
-		Event.bind(this.#layout.checkerValue, 'input', () => this.#update());
+		Event.bind(this.#layout.checkerValue, 'input', () => this.update());
 
 		return this.#layout.checkerValue;
 	}
@@ -166,8 +166,8 @@ export class ValueChecker
 		`;
 
 		this.#params.entitySelector.subscribe('Item:onSelect', this.#onEntitySelectorItemSelectedHandler.bind(this));
-		this.#params.entitySelector.subscribe('Item:onDeselect', () => this.#update());
-		this.#params.entitySelector.subscribe('onLoad', () => this.#update());
+		this.#params.entitySelector.subscribe('Item:onDeselect', () => this.update());
+		this.#params.entitySelector.subscribe('onLoad', () => this.update());
 		this.#params.entitySelector.setTargetNode(this.#layout.entitySelector);
 
 		Event.bind(this.#layout.entitySelector, 'click', () => {
@@ -182,11 +182,11 @@ export class ValueChecker
 
 	#onEntitySelectorItemSelectedHandler()
 	{
-		this.#update();
+		this.update();
 		this.#params.entitySelector.hide();
 	}
 
-	#update(): void
+	update(): void
 	{
 		this.#layout.wrap.closest('form')?.dispatchEvent(new window.Event('change'));
 

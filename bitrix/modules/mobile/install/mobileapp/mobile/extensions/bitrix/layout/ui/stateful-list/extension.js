@@ -754,6 +754,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			const params = {
 				append,
+				loadItemsParams: loadItems,
 				renderType: renderType.ajax,
 			};
 
@@ -786,7 +787,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			if (data?.items)
 			{
-				items = this.prepareItems(data.items);
+				items = data.items;
 			}
 
 			const newState = {
@@ -810,6 +811,9 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				{
 					newState.items = [];
 				}
+				newState.items = this.prepareItemsState(newState.items, params);
+				newState.items = this.prepareItems(newState.items);
+
 				this.setState(newState);
 
 				return;
@@ -835,7 +839,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				newState.items = items;
 			}
 
-			newState.items = this.prepareItemsState(newState.items);
+			newState.items = this.prepareItemsState(newState.items, params);
+			newState.items = this.prepareItems(newState.items);
 
 			const newStateKeys = Object.keys(newState);
 			const isEqualStateWithoutItems = (
@@ -916,6 +921,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		{
 			const initialStateParams = {
 				skipItems: true,
+				force: true,
 			};
 			const loadItemsParams = {
 				useCache: false,
@@ -960,7 +966,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 					this.props.onListReloaded(isPullToReload);
 				}
 
-				callback();
+				callback(initialStateParams);
 			});
 		}
 
@@ -1005,13 +1011,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return initialState;
 		}
 
-		prepareItemsState(items)
+		prepareItemsState(items, params = {})
 		{
 			let preparedItems = clone(items);
 
 			if (this.props.onBeforeItemsSetState)
 			{
-				preparedItems = this.props.onBeforeItemsSetState(preparedItems);
+				preparedItems = this.props.onBeforeItemsSetState(preparedItems, params);
 			}
 
 			return preparedItems;
@@ -1181,8 +1187,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		updateFloatingButton(params)
 		{
+			const { isRefreshing } = this.state;
+
 			const floatingButtonParams = params || {
-				accent: this.isEmptyList(),
+				accent: isRefreshing ? false : this.isEmptyList(),
 				hide: !this.isShowFloatingButton(),
 			};
 

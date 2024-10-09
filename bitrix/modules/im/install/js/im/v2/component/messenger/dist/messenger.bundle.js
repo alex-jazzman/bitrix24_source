@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_component_navigation,im_v2_component_list_container_recent,im_v2_component_list_container_openline,im_v2_component_list_container_channel,im_v2_component_content_chat,im_v2_component_content_createChat,im_v2_component_content_openlines,im_v2_component_content_notification,im_v2_component_content_market,im_v2_component_content_settings,im_v2_component_list_container_copilot,im_v2_component_content_copilot,im_v2_lib_analytics,im_v2_lib_logger,im_v2_lib_init,im_v2_const,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout) {
+(function (exports,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_css_classes,im_v2_component_navigation,im_v2_component_list_container_recent,im_v2_component_list_container_openline,im_v2_component_list_container_channel,im_v2_component_content_chat,im_v2_component_content_chatForms,im_v2_component_content_openlines,im_v2_component_content_notification,im_v2_component_content_market,im_v2_component_content_settings,im_v2_component_list_container_copilot,im_v2_component_content_copilot,im_v2_lib_analytics,im_v2_lib_logger,im_v2_lib_init,im_v2_const,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout) {
 	'use strict';
 
 	// @vue/component
@@ -14,7 +14,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    ChannelListContainer: im_v2_component_list_container_channel.ChannelListContainer,
 	    OpenlineListContainer: im_v2_component_list_container_openline.OpenlineListContainer,
 	    ChatContent: im_v2_component_content_chat.ChatContent,
-	    CreateChatContent: im_v2_component_content_createChat.CreateChatContent,
+	    CreateChatContent: im_v2_component_content_chatForms.CreateChatContent,
+	    UpdateChatContent: im_v2_component_content_chatForms.UpdateChatContent,
 	    OpenlinesContent: im_v2_component_content_openlines.OpenlinesContent,
 	    NotificationContent: im_v2_component_content_notification.NotificationContent,
 	    MarketContent: im_v2_component_content_market.MarketContent,
@@ -86,7 +87,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }) {
 	      let entityId = layoutEntityId;
 	      const lastOpenedElement = this.getLayoutManager().getLastOpenedElement(layoutName);
-	      if (lastOpenedElement) {
+	      if (!entityId && lastOpenedElement) {
 	        entityId = lastOpenedElement;
 	      }
 	      this.getLayoutManager().setLayout({
@@ -137,5 +138,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Messenger = Messenger;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Component,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Component,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=messenger.bundle.js.map

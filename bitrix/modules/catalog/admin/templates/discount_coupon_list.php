@@ -150,9 +150,8 @@ if (($arID = $lAdmin->GroupAction()) && !$boolCouponsReadOnly)
 	}
 }
 
-$CAdminCalendar_ShowScript = '';
 if (true == B_ADMIN_SUBCOUPONS_LIST)
-	$CAdminCalendar_ShowScript = CAdminCalendar::ShowScript();
+	CAdminCalendar::ShowScript();
 
 $lAdmin->AddHeaders(array(
 	array(
@@ -471,11 +470,6 @@ function ShowNewCoupons(id, multi)
 		$lAdmin->AddAdminContextMenu($aContext);
 	}
 	$lAdmin->CheckListMode();
-
-	if (true == B_ADMIN_SUBCOUPONS_LIST)
-	{
-		echo $CAdminCalendar_ShowScript;
-	}
 
 	$lAdmin->DisplayList(B_ADMIN_SUBCOUPONS_LIST);
 }

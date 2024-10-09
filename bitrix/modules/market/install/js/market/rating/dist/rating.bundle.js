@@ -287,6 +287,7 @@ this.BX = this.BX || {};
 	};
 
 	const Rating = {
+	  emits: ['can-review', 'review-info', 'update-rating'],
 	  components: {
 	    RatingItem,
 	    PopupWrapper

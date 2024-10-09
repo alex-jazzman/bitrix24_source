@@ -10,21 +10,25 @@ this.BX = this.BX || {};
 	  _t4,
 	  _t5,
 	  _t6,
-	  _t7;
+	  _t7,
+	  _t8;
 	class QrAuthorization {
 	  constructor(options = {}) {
-	    var _options$showFishingW, _options$showBottom;
+	    var _options$showFishingW, _options$showBottom, _Extension$getSetting, _Extension$getSetting2;
 	    this.title = options.title || null;
 	    this.content = options.content || null;
 	    this.bottomText = options.bottomText || main_core.Loc.getMessage('UI_QR_AUTHORIZE_TAKE_CODE');
 	    this.showFishingWarning = (_options$showFishingW = options.showFishingWarning) != null ? _options$showFishingW : false;
 	    this.showBottom = (_options$showBottom = options.showBottom) != null ? _options$showBottom : true;
 	    this.helpLink = options.helpLink || null;
+	    this.helpCode = options.helpCode || null;
 	    this.qr = options.qr || null;
 	    this.popupParam = options.popupParam || null;
 	    this.intent = options.intent || 'calendar';
 	    this.popup = null;
 	    this.loader = null;
+	    this.ttl = (_Extension$getSetting = (_Extension$getSetting2 = main_core.Extension.getSettings('ui.qrauthorization')) == null ? void 0 : _Extension$getSetting2.ttl) != null ? _Extension$getSetting : 60;
+	    this.ttlInterval = null;
 	    this.qrNode = null;
 	    this.successNode = null;
 	    this.loadingNode = null;
@@ -44,7 +48,8 @@ this.BX = this.BX || {};
 	    this.loading();
 	    main_core.ajax.runAction('mobile.deeplink.get', {
 	      data: {
-	        intent: this.intent
+	        intent: this.intent,
+	        ttl: this.ttl
 	      }
 	    }).then(response => {
 	      var _response$data;
@@ -116,10 +121,16 @@ this.BX = this.BX || {};
 	        events: {
 	          onPopupShow: () => {
 	            this.createQrCodeImage();
+	            this.ttlInterval = setInterval(() => {
+	              this.createQrCodeImage();
+	            }, this.ttl * 1000);
 	            const qrTarget = this.getPopup().getContentContainer().querySelector('[data-role="ui-qr-authorization__qr-node"]');
 	            if (qrTarget) {
 	              main_core.Dom.append(this.getQrNode(), qrTarget);
 	            }
+	          },
+	          onPopupClose: () => {
+	            clearInterval(this.ttlInterval);
 	          }
 	        },
 	        padding: 0,
@@ -157,14 +168,25 @@ this.BX = this.BX || {};
 		`), bottomTextSize ? '--' + bottomTextSize : '', bottomText, this.renderHelpLink());
 	  }
 	  renderHelpLink() {
-	    if (!this.helpLink) {
-	      return '';
+	    if (this.helpCode) {
+	      const onclick = e => {
+	        e.preventDefault();
+	        top.BX.Helper.show(`redirect=detail&code=${this.helpCode}`);
+	      };
+	      return main_core.Tag.render(_t5 || (_t5 = _`
+				<a onclick="${0}" class="ui-qr-authorization__popup-bottom--link">
+					${0}
+				</a onc>
+			`), onclick, main_core.Loc.getMessage('UI_QR_AUTHORIZE_HELP'));
 	    }
-	    return main_core.Tag.render(_t5 || (_t5 = _`
-			<a href="${0}" class="ui-qr-authorization__popup-bottom--link">
-				${0}
-			</a>
-		`), this.helpLink, main_core.Loc.getMessage('UI_QR_AUTHORIZE_HELP'));
+	    if (this.helpLink) {
+	      return main_core.Tag.render(_t6 || (_t6 = _`
+				<a href="${0}" class="ui-qr-authorization__popup-bottom--link">
+					${0}
+				</a>
+			`), this.helpLink, main_core.Loc.getMessage('UI_QR_AUTHORIZE_HELP'));
+	    }
+	    return '';
 	  }
 	  success() {
 	    this.clean();
@@ -173,7 +195,7 @@ this.BX = this.BX || {};
 	  }
 	  getSuccessNode() {
 	    if (!this.successNode) {
-	      this.successNode = main_core.Tag.render(_t6 || (_t6 = _`
+	      this.successNode = main_core.Tag.render(_t7 || (_t7 = _`
 				<div class="ui-qr-authorization__popup-qr-success"></div>
 			`));
 	    }
@@ -187,7 +209,7 @@ this.BX = this.BX || {};
 	  }
 	  getLoadingNode() {
 	    if (!this.loadingNode) {
-	      this.loadingNode = main_core.Tag.render(_t7 || (_t7 = _`
+	      this.loadingNode = main_core.Tag.render(_t8 || (_t8 = _`
 				<div class="ui-qr-authorization__popup-qr-loading"></div>
 			`));
 	    }
@@ -212,6 +234,7 @@ this.BX = this.BX || {};
 	    main_core.Dom.removeClass(this.getQrNode(), ['--loading', '--success']);
 	    main_core.Dom.remove(this.getLoadingNode());
 	    main_core.Dom.remove(this.getSuccessNode());
+	    main_core.Dom.clean(this.getQrNode());
 	    this.hideLoader();
 	  }
 	  show() {

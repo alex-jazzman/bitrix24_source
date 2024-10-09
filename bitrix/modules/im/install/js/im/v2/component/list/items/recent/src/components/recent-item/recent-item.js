@@ -12,7 +12,6 @@ import { ChannelManager } from 'im.v2.lib.channel';
 
 import './css/recent-item.css';
 
-import type { JsonObject } from 'main.core';
 import type { ImModelRecentItem, ImModelChat, ImModelMessage } from 'im.v2.model';
 
 // @vue/component
@@ -24,10 +23,6 @@ export const RecentItem = {
 			type: Object,
 			required: true,
 		},
-	},
-	data(): JsonObject
-	{
-		return {};
 	},
 	computed:
 	{
@@ -79,7 +74,8 @@ export const RecentItem = {
 		},
 		isChatSelected(): boolean
 		{
-			if (this.layout.name !== Layout.chat.name)
+			const canBeSelected = [Layout.chat.name, Layout.updateChat.name];
+			if (!canBeSelected.includes(this.layout.name))
 			{
 				return false;
 			}

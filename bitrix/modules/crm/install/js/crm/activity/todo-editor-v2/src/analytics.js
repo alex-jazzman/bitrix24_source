@@ -204,22 +204,29 @@ export class Analytics
 
 		if (Type.isStringFilled(this.#pingSettings))
 		{
-			data.p2 = this.#pingSettings;
+			data.p2 = 'ping_custom';
 		}
 
 		if (Type.isStringFilled(this.#colorId))
 		{
-			data.p3 = this.#colorId;
+			data.p3 = 'color_custom';
 		}
 
 		if (Type.isArrayFilled(this.#blockTypes))
 		{
-			data.p4 = this.#blockTypes.join(',');
+			data.p4 = 'addBlock';
 		}
 
 		if (Type.isStringFilled(this.#notificationSkipPeriod))
 		{
-			data.p5 = this.#notificationSkipPeriod;
+			if (this.#notificationSkipPeriod === 'forever')
+			{
+				data.p5 = 'skipPeriod_custom';
+			}
+			else
+			{
+				data.p5 = 'skipPeriod_forever';
+			}
 		}
 
 		return data;

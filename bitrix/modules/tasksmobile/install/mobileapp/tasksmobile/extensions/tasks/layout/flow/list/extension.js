@@ -10,7 +10,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 	const { batchActions } = require('statemanager/redux/batched-actions');
 	const store = require('statemanager/redux/store');
 	const { ListItemType, FlowListItemsFactory } = require('tasks/flow-list/simple-list/items');
-	const { flowsUpserted, flowsAdded } = require('tasks/statemanager/redux/slices/flows');
+	const { upsertFlows, addFlows } = require('tasks/statemanager/redux/slices/flows');
 	const { groupsUpserted, groupsAdded } = require('tasks/statemanager/redux/slices/groups');
 	const { usersUpserted, usersAdded } = require('statemanager/redux/slices/users');
 	const { NavigationTitle, Pull, TasksFlowListFilter, TasksFlowListMoreMenu } = require(
@@ -28,6 +28,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { dispatch } = store;
 	const { set } = require('utils/object');
+	const { AnalyticsEvent } = require('analytics');
 
 	const FLOWS_INFO_ITEM_ID = 'flows-info-item';
 
@@ -51,6 +52,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			this.getItemType = this.getItemType.bind(this);
 			this.getItemProps = this.getItemProps.bind(this);
 			this.onFlowsInfoItemCloseButtonClick = this.onFlowsInfoItemCloseButtonClick.bind(this);
+			this.onTabSelected = this.onTabSelected.bind(this);
 
 			this.flowListFilter = new TasksFlowListFilter(
 				this.props.currentUserId,
@@ -178,6 +180,8 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 				BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
 				BX.addCustomEvent('tasks.tabs:onAppActive', (eventData) => this.onAppActive(eventData));
 			}
+
+			BX.addCustomEvent('tasks.tabs:onTabSelected', this.onTabSelected);
 		}
 
 		prefetchAssets()
@@ -200,6 +204,23 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			{
 				this.unsubscribeCounterChangeObserver();
 			}
+
+			BX.removeCustomEvent('tasks.tabs:onTabSelected', this.onTabSelected);
+		}
+
+		onTabSelected(eventData)
+		{
+			if (eventData?.tabId === 'tasks.flow.list')
+			{
+				new AnalyticsEvent({
+					tool: 'tasks',
+					category: 'flows',
+					event: 'flows_view',
+					c_section: 'tasks',
+					c_sub_section: 'flows',
+					c_element: 'section_button',
+				}).send();
+			}
 		}
 
 		/**
@@ -216,7 +237,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 
 			if (items.length > 0)
 			{
-				actions.push(isCache ? flowsAdded(items) : flowsUpserted(items));
+				actions.push(isCache ? addFlows(items) : upsertFlows(items));
 			}
 
 			if (users.length > 0)
@@ -530,6 +551,11 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 					updateRows: 'none',
 					deleteRow: 'fade',
 					moveRow: true,
+				},
+				analyticsLabel: {
+					c_section: 'flows',
+					c_sub_section: 'flows_grid',
+					c_element: 'flows_grid_button',
 				},
 			});
 

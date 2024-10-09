@@ -30,6 +30,8 @@ return [
 		'im:messenger/model',
 		'im:messenger/view/dialog',
 		'im:messenger/provider/pull/chat',
+		'im:messenger/provider/pull/sidebar',
+		'im:messenger/provider/pull/plan-limits',
 		'im:messenger/provider/push',
 		'im:messenger/provider/service',
 		'im:messenger/lib/rest-manager',

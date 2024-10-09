@@ -76,8 +76,16 @@ if(SITE_TEMPLATE_ID === "bitrix24")
 	$this->EndViewTarget();
 }
 
+$isScrumLimitExceeded = ScrumLimit::isLimitExceeded() || !ScrumLimit::isFeatureEnabled();
+if (ScrumLimit::canTurnOnTrial())
+{
+	$isScrumLimitExceeded = false;
+}
+
 $arResult['HELPER']->initializeExtension([
-	'isScrumLimitExceeded' => ScrumLimit::isLimitExceeded(),
-	'isTaskAccessPermissionsLimit' => !(Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS)),
+	'isScrumLimitExceeded' => $isScrumLimitExceeded,
+	'isTaskAccessPermissionsLimit' => !(
+		Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_ACCESS_PERMISSIONS)
+	),
 	'isRoleControlDisabled' => Filter::isRolesEnabled(),
 ]);

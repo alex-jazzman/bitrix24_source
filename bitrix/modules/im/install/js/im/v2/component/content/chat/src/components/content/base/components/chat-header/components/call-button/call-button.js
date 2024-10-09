@@ -94,7 +94,7 @@ export const CallButton = {
 			if (this.isChatUserLimitExceeded)
 			{
 				return {
-					text: `В звонке могут участвовать не больше ${this.userLimit} человек`,
+					text: this.loc('IM_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', { '#USER_LIMIT#': this.userLimit }),
 					popupOptions: {
 						bindOptions: {
 							position: 'bottom',
@@ -190,9 +190,9 @@ export const CallButton = {
 		{
 			return this.isActive;
 		},
-		loc(phraseCode: string): string
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `

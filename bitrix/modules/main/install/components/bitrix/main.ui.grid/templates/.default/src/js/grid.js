@@ -812,6 +812,11 @@
 				{
 					BX.style(this.getTable(), 'min-height', `${gridRect.height - diff - panelsHeight - paddingOffset}px`);
 				}
+				else if (Math.abs(diff) === scrollBottom)
+				{
+					// If the grid is hidden
+					BX.style(this.getTable(), 'min-height', '');
+				}
 				else
 				{
 					BX.style(this.getTable(), 'min-height', `${gridRect.height + Math.abs(diff) - panelsHeight - paddingOffset}px`);

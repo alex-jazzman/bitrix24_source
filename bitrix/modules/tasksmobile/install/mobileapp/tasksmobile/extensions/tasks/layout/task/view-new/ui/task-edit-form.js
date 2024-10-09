@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const { Loc } = require('tasks/loc');
 	const { Form, CompactMode } = require('layout/ui/form');
 	const { Moment } = require('utils/date');
+	const { useCallback } = require('utils/function');
 	const { Formatter } = require('tasks/layout/task/view-new/services/deadline-format');
 	const {
 		makeProjectFieldConfig,
@@ -16,9 +17,16 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		makeSubTasksFieldConfig,
 		makeRelatedTasksFieldConfig,
 	} = require('tasks/layout/task/form-utils');
-	const { TaskField: Field, TaskFieldActionAccess } = require('tasks/enum');
+	const { TaskField: Field, TaskFieldActionAccess, FeatureId } = require('tasks/enum');
+	const {
+		getFieldRestrictionPolicy,
+		getFieldShowRestrictionCallback,
+	} = require('tasks/fields/restriction');
+	const { getFeatureRestriction } = require('tariff-plan-restriction');
 
 	const { connect } = require('statemanager/redux/connect');
+	const store = require('statemanager/redux/store');
+	const { dispatch } = store;
 	const {
 		selectByTaskIdOrGuid,
 		selectActions,
@@ -29,9 +37,11 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		selectIsExpired,
 		selectSubTasksById,
 		selectRelatedTasksById,
+		selectTimerState,
+		setTimeElapsed,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
-	const { flowsSelector } = require('tasks/statemanager/redux/slices/flows');
+	const { selectById } = require('tasks/statemanager/redux/slices/flows');
 	const { usersSelector } = require('statemanager/redux/slices/users');
 
 	const { TextAreaField: Title } = require('layout/ui/fields/textarea/theme/air-title');
@@ -51,16 +61,24 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	} = require('layout/ui/fields/file-with-background-attach/theme/air-compact');
 	const { ChecklistField } = require('tasks/layout/checklist/preview');
 	const { ChecklistField: ChecklistFieldCompact } = require('tasks/layout/fields/checklist/theme/air-compact');
-	const { TaskResultField } = require('tasks/layout/fields/result/theme/air');
-	const { TaskResultField: TaskResultFieldCompact } = require('tasks/layout/fields/result/theme/air-compact');
+
 	const { TaskFlowField } = require('tasks/layout/fields/flow/theme/air');
 	const { TaskFlowField: TaskFlowFieldCompact } = require('tasks/layout/fields/flow/theme/air-compact');
+	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking');
+	const { TimeTrackingField: TimeTrackingFieldCompact } = require('tasks/layout/fields/time-tracking/theme/air-compact');
 	const { ActionButtonsView } = require('tasks/layout/task/view-new/ui/action-buttons');
+	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
 
 	const { SubTasksField } = require('tasks/layout/fields/subtask/theme/air');
 	const { SubTasksField: SubTasksFieldCompact } = require('tasks/layout/fields/subtask/theme/air-compact');
 	const { RelatedTasksField } = require('tasks/layout/fields/related-task/theme/air');
 	const { RelatedTasksField: RelatedTasksFieldCompact } = require('tasks/layout/fields/related-task/theme/air-compact');
+
+	const { DatePlanField } = require('tasks/layout/fields/date-plan/theme/air');
+	const { DatePlanField: DatePlanFieldCompact } = require('tasks/layout/fields/date-plan/theme/air-compact');
+
+	const { TaskResultField } = require('tasks/layout/fields/result/theme/air');
+	const { TaskResultField: TaskResultFieldCompact } = require('tasks/layout/fields/result/theme/air-compact');
 
 	const deadlineFormatter = (ts) => Formatter.format(Moment.createFromTimestamp(ts));
 
@@ -88,12 +106,21 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			onChangeSubTaskField,
 			onChangeRelatedTaskField,
 			onChangeUserField,
+			onChangeDeadlineField,
 			userId,
 			deadlineColor,
 			checklistLoading,
 			checklistController,
 			onFieldContentClick,
+			timerState,
+			analyticsLabel,
 		} = props;
+
+		const taskCreateButtonAnalytics = {
+			...analyticsLabel,
+			c_sub_section: 'task_card',
+			c_element: 'create_button',
+		};
 
 		return new Form({
 			ref,
@@ -112,6 +139,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 				Field.RESULT,
 				Field.TAGS,
 				Field.CRM,
+				Field.ALLOW_TIME_TRACKING,
+				Field.DATE_PLAN,
 				Field.RELATED_TASKS,
 			],
 			primaryFields: [
@@ -142,6 +171,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 								value: task.files,
 							},
 							allowFiles: false,
+							autoFocus: false,
 						},
 					},
 				},
@@ -178,7 +208,10 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 					props: {
 						id: Field.RESPONSIBLE,
 						value: task.responsible,
-						readOnly: !actions[TaskFieldActionAccess[Field.RESPONSIBLE]] && !actions.delegate,
+						readOnly: (
+							!actions[TaskFieldActionAccess[Field.RESPONSIBLE]]
+							&& (!actions.delegate || getFeatureRestriction(FeatureId.DELEGATING).isRestricted())
+						),
 						required: true,
 						title: Loc.getMessage('M_TASK_DETAILS_FIELD_RESPONSIBLE_TITLE'),
 						showTitle: false,
@@ -227,11 +260,35 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						readOnly: !actions[TaskFieldActionAccess[Field.DEADLINE]],
 						required: false,
 						onContentClick: onFieldContentClick,
+						onChange: onChangeDeadlineField,
 						config: {
 							dateFormatter: deadlineFormatter,
 							color: deadlineColor,
 							renderAfter: renderStatus,
 						},
+					},
+				},
+				task.allowTimeTracking && {
+					factory: TimeTrackingField,
+					props: {
+						id: `${Field.ALLOW_TIME_TRACKING}Timer`,
+						value: {
+							timerState,
+							allowTimeTracking: task.allowTimeTracking,
+							timeElapsed: task.timeElapsed,
+							timeEstimate: task.timeEstimate,
+							isTimerRunningForCurrentUser: task.isTimerRunningForCurrentUser,
+							taskId: task.id,
+						},
+						onToggleTimer,
+						onTimeOver: useCallback((timeElapsed) => {
+							dispatch(setTimeElapsed({
+								timeElapsed,
+								taskId: task.id,
+							}));
+						}),
+						required: false,
+						readOnly: !actions[TaskFieldActionAccess[Field.ALLOW_TIME_TRACKING]],
 					},
 				},
 			].filter(Boolean),
@@ -327,6 +384,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						config: makeProjectFieldConfig({
 							items: [project].filter(Boolean),
 						}),
+						restrictionPolicy: getFieldRestrictionPolicy(Field.PROJECT),
+						showRestrictionCallback: getFieldShowRestrictionCallback(Field.PROJECT, parentWidget),
 						onChange: onChangeProjectField,
 					},
 					compact: ProjectFieldCompact,
@@ -344,6 +403,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						config: {
 							items: [flow].filter(Boolean),
 						},
+						restrictionPolicy: getFieldRestrictionPolicy(Field.FLOW),
+						showRestrictionCallback: getFieldShowRestrictionCallback(Field.FLOW, parentWidget),
 					},
 					compact: TaskFlowFieldCompact,
 				},
@@ -363,6 +424,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 							items: accomplices.filter(Boolean),
 							groupId: task.groupId,
 						}),
+						restrictionPolicy: getFieldRestrictionPolicy(Field.ACCOMPLICES),
+						showRestrictionCallback: getFieldShowRestrictionCallback(Field.ACCOMPLICES, parentWidget),
 						onChange: onChangeUserField,
 					},
 					compact: UserFieldCompact,
@@ -382,6 +445,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						config: makeAuditorsFieldConfig({
 							items: auditors.filter(Boolean),
 						}),
+						restrictionPolicy: getFieldRestrictionPolicy(Field.AUDITORS),
+						showRestrictionCallback: getFieldShowRestrictionCallback(Field.AUDITORS, parentWidget),
 						onChange: onChangeUserField,
 					},
 					compact: UserFieldCompact,
@@ -405,6 +470,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 							groupId: task.groupId,
 							group: [project].filter(Boolean).find((item) => item.id === task.groupId),
 						}),
+						analyticsLabel: taskCreateButtonAnalytics,
 					},
 					compact: SubTasksFieldCompact,
 				},
@@ -458,6 +524,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 								},
 							},
 						}),
+						restrictionPolicy: getFieldRestrictionPolicy(Field.CRM),
+						showRestrictionCallback: getFieldShowRestrictionCallback(Field.CRM, parentWidget),
 					},
 					compact: CrmElementFieldCompact,
 				},
@@ -480,8 +548,42 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 							groupId: task.groupId,
 							group: [project].filter(Boolean).find((item) => item.id === task.groupId),
 						}),
+						analyticsLabel: taskCreateButtonAnalytics,
 					},
 					compact: RelatedTasksFieldCompact,
+				},
+				{
+					factory: TimeTrackingFieldCompact,
+					props: {
+						id: Field.ALLOW_TIME_TRACKING,
+						value: {
+							timerState,
+							allowTimeTracking: task.allowTimeTracking,
+							timeElapsed: task.timeElapsed,
+							timeEstimate: task.timeEstimate,
+							isTimerRunningForCurrentUser: task.isTimerRunningForCurrentUser,
+						},
+						required: false,
+						readOnly: !actions[TaskFieldActionAccess[Field.ALLOW_TIME_TRACKING]],
+					},
+					compact: {
+						factory: TimeTrackingFieldCompact,
+						mode: CompactMode.ONLY,
+					},
+				},
+				{
+					factory: DatePlanField,
+					props: {
+						id: Field.DATE_PLAN,
+						taskId: task.id,
+						readOnly: !actions[TaskFieldActionAccess[Field.DATE_PLAN]],
+						onContentClick: onFieldContentClick,
+						startDatePlan: task.startDatePlan,
+						endDatePlan: task.endDatePlan,
+						groupId: task.groupId,
+						config: {},
+					},
+					compact: DatePlanFieldCompact,
 				},
 			],
 		});
@@ -532,7 +634,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	};
 
 	const selectMappedFlowById = (state, id) => {
-		const flow = flowsSelector.selectById(state, id);
+		const flow = selectById(state, id);
 
 		return flow ? {
 			id: flow.id,
@@ -567,6 +669,13 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		return null;
 	};
 
+	const onToggleTimer = ({ isTimerRunningForCurrentUser, taskId, layout }) => {
+		const actionId = isTimerRunningForCurrentUser ? ActionId.PAUSE_TIMER : ActionId.START_TIMER;
+		const { handleAction } = ActionMeta[actionId];
+
+		handleAction({ taskId, layout });
+	};
+
 	const mapStateToProps = (state, ownProps) => {
 		const taskId = ownProps.id;
 		const task = selectByTaskIdOrGuid(state, taskId);
@@ -598,6 +707,12 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 				subTasks: selectSubTasksById(state, task.id),
 				relatedTasks: selectRelatedTasksById(state, task.id),
 				parentId: task.parentId,
+				allowTimeTracking: task.allowTimeTracking,
+				timeElapsed: task.timeElapsed,
+				timeEstimate: task.timeEstimate,
+				isTimerRunningForCurrentUser: task.isTimerRunningForCurrentUser,
+				startDatePlan: task.startDatePlan,
+				endDatePlan: task.endDatePlan,
 			},
 			actions,
 			shouldShowCompactButtons,
@@ -608,6 +723,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			responsible: selectMappedUserById(state, task.responsible),
 			auditors: task.auditors.map((id) => selectMappedUserById(state, id)),
 			accomplices: task.accomplices.map((id) => selectMappedUserById(state, id)),
+			timerState: selectTimerState(task),
 		};
 	};
 

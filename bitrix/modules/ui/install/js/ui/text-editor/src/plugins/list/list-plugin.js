@@ -44,8 +44,6 @@ import type {
 	BBCodeExportConversion,
 } from '../../bbcode';
 
-import './list.css';
-
 export class ListPlugin extends BasePlugin
 {
 	constructor(editor: TextEditor)

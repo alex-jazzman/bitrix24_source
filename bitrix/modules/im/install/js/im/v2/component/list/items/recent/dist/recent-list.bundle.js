@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service,im_v2_lib_menu,im_v2_lib_draft,main_date,im_v2_lib_parser,im_v2_lib_dateFormatter,im_v2_lib_channel,im_public,im_v2_lib_call,im_v2_lib_createChat,im_v2_lib_layout,im_v2_component_elements,main_core,im_v2_lib_utils,main_core_events,im_v2_application_core,im_v2_const) {
+(function (exports,im_v2_provider_service,im_v2_lib_menu,im_v2_lib_draft,main_date,im_v2_lib_parser,im_v2_lib_dateFormatter,im_v2_lib_channel,im_public,im_v2_lib_call,im_v2_lib_createChat,im_v2_component_elements,main_core,im_v2_lib_utils,main_core_events,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	const HiddenTitleByChatType = {
@@ -339,9 +339,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      required: true
 	    }
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    AvatarSize: () => im_v2_component_elements.AvatarSize,
 	    recentItem() {
@@ -378,7 +375,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_channel.ChannelManager.isChannel(this.recentItem.dialogId);
 	    },
 	    isChatSelected() {
-	      if (this.layout.name !== im_v2_const.Layout.chat.name) {
+	      const canBeSelected = [im_v2_const.Layout.chat.name, im_v2_const.Layout.updateChat.name];
+	      if (!canBeSelected.includes(this.layout.name)) {
 	        return false;
 	      }
 	      return this.layout.entityId === this.recentItem.dialogId;
@@ -633,17 +631,25 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.chatAvatarFile = existingAvatar;
 	    }
 	    this.chatType = im_v2_lib_createChat.CreateChatManager.getInstance().getChatType();
-	    im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.titleChange, event => {
-	      this.chatTitle = event.getData();
-	    });
-	    im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.avatarChange, event => {
-	      this.chatAvatarFile = event.getData();
-	    });
-	    im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.chatTypeChange, event => {
-	      this.chatType = event.getData();
-	    });
+	    im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.titleChange, this.onTitleChange);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.avatarChange, this.onAvatarChange);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.chatTypeChange, this.onChatTypeChange);
+	  },
+	  beforeUnmount() {
+	    im_v2_lib_createChat.CreateChatManager.getInstance().unsubscribe(im_v2_lib_createChat.CreateChatManager.events.titleChange, this.onTitleChange);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().unsubscribe(im_v2_lib_createChat.CreateChatManager.events.avatarChange, this.onAvatarChange);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().unsubscribe(im_v2_lib_createChat.CreateChatManager.events.chatTypeChange, this.onChatTypeChange);
 	  },
 	  methods: {
+	    onTitleChange(event) {
+	      this.chatTitle = event.getData();
+	    },
+	    onAvatarChange(event) {
+	      this.chatAvatarFile = event.getData();
+	    },
+	    onChatTypeChange(event) {
+	      this.chatType = event.getData();
+	    },
 	    onClick() {
 	      im_v2_lib_createChat.CreateChatManager.getInstance().startChatCreation(this.chatType, {
 	        clearCurrentCreation: false
@@ -1002,5 +1008,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=recent-list.bundle.js.map

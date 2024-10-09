@@ -20,6 +20,21 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 		boolean: 'boolean',
 		json: 'json',
 		map: 'map',
+		set: 'set',
+	});
+
+	const FieldDefaultValue = Object.freeze({
+		zeroInteger: 0,
+		emptyText: '',
+		noneText: 'none',
+		emptyDate: '',
+		falseBoolean: '0',
+		trueBoolean: '1',
+		null: null,
+		emptyObject: {}, // these types are a literal format because it will be a JSON.stringify()
+		emptyArray: [],
+		emptyMap: {},
+		emptySet: {},
 	});
 
 	/**
@@ -33,74 +48,165 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			this.fieldsCollection = this.getFieldsCollection();
 
 			this.saveHandlerCollection = {
-				[FieldType.date]: (key, value) => {
-					return DateHelper.cast(value).toISOString();
-				},
-				[FieldType.boolean]: (key, value) => {
-					if (value === true)
-					{
-						return '1';
-					}
-
-					if (value === false)
-					{
-						return '0';
-					}
-
-					return '';
-				},
-				[FieldType.json]: (key, value) => {
-					return JSON.stringify(value);
-				},
-				[FieldType.map]: (key, value) => {
-					if (value instanceof Map)
-					{
-						return JSON.stringify(Object.fromEntries(value));
-					}
-
-					return JSON.stringify(value);
-				},
+				[FieldType.date]: this.saveDateFieldHandler.bind(this),
+				[FieldType.boolean]: this.saveBooleanFieldHandler.bind(this),
+				[FieldType.json]: this.saveJSONFieldHandler.bind(this),
+				[FieldType.map]: this.saveMapFieldHandler.bind(this),
+				[FieldType.set]: this.saveSetFieldHandler.bind(this),
+				[FieldType.text]: this.saveTextFieldHandler.bind(this),
 			};
 
 			this.restoreHandlerCollection = {
-				[FieldType.date]: (key, value) => {
-					return DateHelper.cast(value, null);
-				},
-				[FieldType.boolean]: (key, value) => {
-					return value === '1';
-				},
-				[FieldType.json]: (key, value) => {
-					try
-					{
-						return JSON.parse(value);
-					}
-					catch (error)
-					{
-						logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
-
-						return null;
-					}
-				},
-				[FieldType.map]: (key, value) => {
-					try
-					{
-						const obj = JSON.parse(value);
-
-						return new Map(Object.entries(obj));
-					}
-					catch (error)
-					{
-						logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
-
-						return null;
-					}
-				},
+				[FieldType.date]: this.restoreDateFieldHandler.bind(this),
+				[FieldType.boolean]: this.restoreBooleanFieldHandler.bind(this),
+				[FieldType.json]: this.restoreJSONFieldHandler.bind(this),
+				[FieldType.map]: this.restoreMapFieldHandler.bind(this),
+				[FieldType.set]: this.restoreSetFieldHandler.bind(this),
+				[FieldType.text]: this.restoreTextFieldHandler.bind(this),
 			};
 
 			if (this.isSupported)
 			{
 				this.table = new DatabaseTable(this.getName(), this.getFields());
 			}
+		}
+
+		saveDateFieldHandler(key, value)
+		{
+			try
+			{
+				return DateHelper.cast(value).toISOString();
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		restoreDateFieldHandler(key, value)
+		{
+			try
+			{
+				return DateHelper.cast(value, null);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		saveBooleanFieldHandler(key, value)
+		{
+			if (value === true)
+			{
+				return '1';
+			}
+
+			if (value === false)
+			{
+				return '0';
+			}
+
+			return '';
+		}
+
+		restoreBooleanFieldHandler(key, value)
+		{
+			return value === '1';
+		}
+
+		saveJSONFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.stringify(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		restoreJSONFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.parse(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		saveMapFieldHandler(key, value)
+		{
+			if (value instanceof Map)
+			{
+				return JSON.stringify(Object.fromEntries(value));
+			}
+
+			return JSON.stringify(value);
+		}
+
+		restoreMapFieldHandler(key, value)
+		{
+			try
+			{
+				const obj = JSON.parse(value);
+
+				return new Map(Object.entries(obj));
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		saveSetFieldHandler(key, value)
+		{
+			if (value instanceof Set)
+			{
+				return JSON.stringify([...value]);
+			}
+
+			return JSON.stringify(value);
+		}
+
+		restoreSetFieldHandler(key, value)
+		{
+			try
+			{
+				const obj = JSON.parse(value);
+
+				return new Set(Object.values(obj));
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		saveTextFieldHandler(key, value)
+		{
+			return value;
+		}
+
+		restoreTextFieldHandler(key, value)
+		{
+			return value;
 		}
 
 		get isSupported()
@@ -486,5 +592,6 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 	module.exports = {
 		Table,
 		FieldType,
+		FieldDefaultValue,
 	};
 });

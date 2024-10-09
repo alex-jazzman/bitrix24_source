@@ -3,10 +3,9 @@
  */
 jn.define('im/messenger/controller/sidebar/channel/tabs/tab-view', (require, exports, module) => {
 	const { SidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/tab-view');
-	const { ChannelParticipantsView } = require(
-		'im/messenger/controller/sidebar/channel/tabs/participants/participants-view',
-	);
+	const { ChannelParticipantsView } = require('im/messenger/controller/sidebar/channel/tabs/participants/participants-view');
 	const { Loc } = require('loc');
+	const { SidebarTab } = require('im/messenger/const');
 
 	/**
 	 * @class ChannelTabView
@@ -23,7 +22,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/tab-view', (require, exp
 			super(props);
 			this.state = {
 				tabItems: this.buildTabsData(),
-				selectedTab: { id: 0 },
+				selectedTab: { id: SidebarTab.participant },
 			};
 		}
 
@@ -31,15 +30,13 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/tab-view', (require, exp
 		 * @desc Build tabs data by object
 		 * @return {object[]}
 		 */
-		buildTabsData()
+
+		getTitleTabs()
 		{
-			return [
-				{
-					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_SUBSCRIBERS'),
-					counter: 0,
-					id: 'participants',
-				},
-			];
+			return {
+				...super.getTitleTabs(),
+				[SidebarTab.participant]: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_PARTICIPANTS'),
+			};
 		}
 
 		renderParticipantsList()

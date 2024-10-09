@@ -99,6 +99,7 @@ $this->setFrameMode(true);
 						'bindings' => $arResult['BINDINGS'],
 						'im' => ModuleManager::isModuleInstalled('im') ? 'Y' : 'N',
 					],
+					'desktopDownloadLinks' => $arResult['DESKTOP_DOWNLOAD_LINKS'],
 				])?>);
 		});
 	</script>

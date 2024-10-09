@@ -213,6 +213,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.onUpdateLastUsedCameraIdHandler = this.onUpdateLastUsedCameraId.bind(this);
 	    this.onCallConnectionQualityChangedHandler = this.onCallConnectionQualityChanged.bind(this);
 	    this.onCallToggleRemoteParticipantVideoHandler = this.onCallToggleRemoteParticipantVideo.bind(this);
+	    this._onGetUserMediaEndedHandler = this.onGetUserMediaEnded.bind(this);
 	    this.onPreCallDestroyHandler = this.onPreCallDestroy.bind(this);
 	    this.onPreCallUserStateChangedHandler = this.onPreCallUserStateChanged.bind(this);
 	    this.waitingForCallStatus = false;
@@ -483,7 +484,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          isIntranetOrExtranet: !!_this7.params.isIntranetOrExtranet,
 	          language: _this7.params.language,
 	          layout: im_lib_utils.Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
-	          enableNewLayoutLogic: Call.Util.isNewCallLayoutEnabled(),
 	          uiState: Call.View.UiState.Preparing,
 	          blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record'],
 	          localUserState: Call.UserState.Idle,
@@ -947,8 +947,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          microphoneState: !Call.Hardware.isMicrophoneMuted
 	        });
 	        if (e.isNew) {
+	          var _this15$currentCall;
 	          call_lib_analytics.Analytics.getInstance().onStartVideoconf({
-	            callId: _this15.currentCall.id,
+	            callId: (_this15$currentCall = _this15.currentCall) === null || _this15$currentCall === void 0 ? void 0 : _this15$currentCall.id,
 	            withVideo: videoEnabled,
 	            mediaParams: {
 	              video: Call.Hardware.isCameraOn,
@@ -958,11 +959,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	          _this15.currentCall.inviteUsers();
 	        } else {
+	          var _this15$currentCall2;
 	          _this15.currentCall.answer({
 	            joinAsViewer: viewerMode
 	          });
 	          call_lib_analytics.Analytics.getInstance().onJoinVideoconf({
-	            callId: _this15.currentCall.id,
+	            callId: (_this15$currentCall2 = _this15.currentCall) === null || _this15$currentCall2 === void 0 ? void 0 : _this15$currentCall2.id,
 	            withVideo: videoEnabled,
 	            mediaParams: {
 	              video: Call.Hardware.isCameraOn,
@@ -1074,10 +1076,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          this.floatingScreenShareWindow = null;
 	        }
 	        window.close();
-	        // some users may open conference from the conference list page
-	        // and 'window.close();' will not work in this case,
-	        // so we can try to go to the previous page instead
-	        history.back();
+	        // if the conference was opened incorrectly, then "window.close();" may not work in some cases
+	        // as a workaround, we can redirect the user back to the portal's front page.
+	        location.href = '/';
 	      } else {
 	        this.callView.releaseLocalMedia();
 	        this.callView.close();
@@ -1119,6 +1120,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "getCallUsers",
 	    value: function getCallUsers(includeSelf) {
+	      if (!this.currentCall) {
+	        return [];
+	      }
 	      var result = Object.keys(this.currentCall.getUsers());
 	      if (includeSelf) {
 	        result.push(this.currentCall.userId);
@@ -1143,6 +1147,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "setLocalVideoStream",
 	    value: function setLocalVideoStream(stream) {
 	      this.localVideoStream = stream;
+	    }
+	  }, {
+	    key: "updateMediaDevices",
+	    value: function updateMediaDevices() {
+	      Call.Hardware.getCurrentDeviceList();
+	      console.log('updateMediaDevices');
 	    }
 	  }, {
 	    key: "stopLocalVideoStream",
@@ -1540,8 +1550,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewHangupButtonClick",
 	    value: function onCallViewHangupButtonClick(e) {
+	      var _this$currentCall;
 	      call_lib_analytics.Analytics.getInstance().onDisconnectCall({
-	        callId: this.currentCall.id,
+	        callId: (_this$currentCall = this.currentCall) === null || _this$currentCall === void 0 ? void 0 : _this$currentCall.id,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	        subSection: call_lib_analytics.Analytics.AnalyticsSubSection.finishButton,
 	        mediaParams: {
@@ -1564,13 +1575,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var menuItems = [{
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_FINISH"),
 	        onclick: function onclick() {
+	          var _this22$currentCall, _this22$currentCall2, _this22$currentCall3;
 	          call_lib_analytics.Analytics.getInstance().onFinishCall({
-	            callId: _this22.currentCall.id,
+	            callId: (_this22$currentCall = _this22.currentCall) === null || _this22$currentCall === void 0 ? void 0 : _this22$currentCall.id,
 	            callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	            status: call_lib_analytics.Analytics.AnalyticsStatus.finishedForAll,
-	            chatId: _this22.currentCall.associatedEntity.id,
+	            chatId: (_this22$currentCall2 = _this22.currentCall) === null || _this22$currentCall2 === void 0 ? void 0 : _this22$currentCall2.associatedEntity.id,
 	            callUsersCount: _this22.getCallUsers(true).length,
-	            callLength: Call.Util.getTimeText(_this22.currentCall.startDate)
+	            callLength: Call.Util.getTimeText((_this22$currentCall3 = _this22.currentCall) === null || _this22$currentCall3 === void 0 ? void 0 : _this22$currentCall3.startDate)
 	          });
 	          _this22.stopLocalVideoStream();
 	          _this22.endCall(true);
@@ -1578,8 +1590,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }, {
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_LEAVE"),
 	        onclick: function onclick() {
+	          var _this22$currentCall4;
 	          call_lib_analytics.Analytics.getInstance().onDisconnectCall({
-	            callId: _this22.currentCall.id,
+	            callId: (_this22$currentCall4 = _this22.currentCall) === null || _this22$currentCall4 === void 0 ? void 0 : _this22$currentCall4.id,
 	            callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	            subSection: call_lib_analytics.Analytics.AnalyticsSubSection.contextMenu,
 	            mediaParams: {
@@ -1639,7 +1652,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewToggleMuteButtonClick",
 	    value: function onCallViewToggleMuteButtonClick(event) {
-	      var _this$currentCall;
+	      var _this$currentCall2;
 	      call_lib_analytics.Analytics.getInstance().onToggleMicrophone({
 	        muted: event.data.muted,
 	        callId: this.currentCall ? this.currentCall.id : 0,
@@ -1655,7 +1668,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.isRecording()) {
 	        BXDesktopSystem.CallRecordMute(event.data.muted);
 	      }
-	      if ((_this$currentCall = this.currentCall) !== null && _this$currentCall !== void 0 && _this$currentCall.userId) {
+	      if ((_this$currentCall2 = this.currentCall) !== null && _this$currentCall2 !== void 0 && _this$currentCall2.userId) {
 	        this.updateCallUser(this.currentCall.userId, {
 	          microphoneState: !event.data.muted
 	        });
@@ -1873,8 +1886,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewShowChatButtonClick",
 	    value: function onCallViewShowChatButtonClick() {
+	      var _this$currentCall3;
 	      call_lib_analytics.Analytics.getInstance().onShowChat({
-	        callId: this.currentCall.id,
+	        callId: (_this$currentCall3 = this.currentCall) === null || _this$currentCall3 === void 0 ? void 0 : _this$currentCall3.id,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
 	      });
 	      this.toggleChat();
@@ -1991,6 +2005,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.currentCall.addEventListener(Call.Event.onUpdateLastUsedCameraId, this.onUpdateLastUsedCameraIdHandler);
 	      this.currentCall.addEventListener(Call.Event.onConnectionQualityChanged, this.onCallConnectionQualityChangedHandler);
 	      this.currentCall.addEventListener(Call.Event.onToggleRemoteParticipantVideo, this.onCallToggleRemoteParticipantVideoHandler);
+	      this.currentCall.addEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
 	    }
 	  }, {
 	    key: "removeCallEvents",
@@ -2020,6 +2035,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.currentCall.removeEventListener(Call.Event.onReconnecting, this.onReconnectingHandler);
 	      this.currentCall.removeEventListener(Call.Event.onReconnected, this.onReconnectedHandler);
 	      this.currentCall.addEventListener(Call.Event.onUpdateLastUsedCameraId, this.onUpdateLastUsedCameraIdHandler);
+	      this.currentCall.removeEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
 	    }
 	  }, {
 	    key: "onCallUserInvited",
@@ -2108,7 +2124,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	            this.showWebScreenSharePopup();
 	          }
-	          this.callView.blockSwitchCamera();
 	          this.callView.updateButtons();
 	        } else {
 	          call_lib_analytics.Analytics.getInstance().onScreenShareStopped({
@@ -2124,10 +2139,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (this.webScreenSharePopup) {
 	            this.webScreenSharePopup.close();
 	          }
-	          if (!this.currentCall.callFromMobile && !this.isViewerMode()) {
-	            this.callView.unblockSwitchCamera();
-	            this.callView.updateButtons();
-	          }
+	        }
+	        if (!this.currentCall.callFromMobile && !this.isViewerMode()) {
+	          this.callView.unblockSwitchCamera();
+	          this.callView.updateButtons();
 	        }
 	      }
 	      if (this.currentCall && Call.Hardware.isCameraOn && e.tag === 'main' && e.stream.getVideoTracks().length === 0) {
@@ -2137,14 +2152,27 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallRemoteMediaReceived",
 	    value: function onCallRemoteMediaReceived(e) {
+	      var getStreamType = function getStreamType(stream) {
+	        var _stream$getVideoTrack, _stream$getAudioTrack;
+	        if (stream !== null && stream !== void 0 && (_stream$getVideoTrack = stream.getVideoTracks()) !== null && _stream$getVideoTrack !== void 0 && _stream$getVideoTrack.length) {
+	          return 'video';
+	        }
+	        if (stream !== null && stream !== void 0 && (_stream$getAudioTrack = stream.getAudioTracks()) !== null && _stream$getAudioTrack !== void 0 && _stream$getAudioTrack.length) {
+	          return 'audio';
+	        }
+	        return null;
+	      };
 	      if (this.callView) {
 	        if ('track' in e) {
 	          this.callView.setUserMedia(e.userId, e.kind, e.track);
 	        }
-	        if ('mediaRenderer' in e && e.mediaRenderer.kind === 'audio') {
+	        if ('mediaRenderer' in e && e.mediaRenderer.kind === 'audio' && getStreamType(e.mediaRenderer.stream) === 'audio') {
 	          this.callView.setUserMedia(e.userId, 'audio', e.mediaRenderer.stream.getAudioTracks()[0]);
 	        }
-	        if ('mediaRenderer' in e && (e.mediaRenderer.kind === 'video' || e.mediaRenderer.kind === 'sharing')) {
+	        if ('mediaRenderer' in e && e.mediaRenderer.kind === 'sharing' && getStreamType(e.mediaRenderer.stream) === 'audio') {
+	          this.callView.setUserMedia(e.userId, 'sharingAudio', e.mediaRenderer.stream.getAudioTracks()[0]);
+	        }
+	        if ('mediaRenderer' in e && (e.mediaRenderer.kind === 'video' || e.mediaRenderer.kind === 'sharing') && getStreamType(e.mediaRenderer.stream) === 'video') {
 	          this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
 	        }
 	      }
@@ -2189,6 +2217,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function onCallConnectionQualityChanged(e) {
 	      this.clearConnectionQualityTimer(e.userId);
 	      this.callView.setUserConnectionQuality(e.userId, e.score);
+	    }
+	  }, {
+	    key: "onGetUserMediaEnded",
+	    value: function onGetUserMediaEnded() {
+	      this.updateMediaDevices();
 	    }
 	  }, {
 	    key: "onCallToggleRemoteParticipantVideo",
@@ -2341,11 +2374,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.webScreenSharePopup.close();
 	      }
 	      if (!this.getActiveCallUsers().length) {
+	        var _this$currentCall4, _this$currentCall5;
 	        call_lib_analytics.Analytics.getInstance().onFinishCall({
-	          callId: this.currentCall.id,
+	          callId: (_this$currentCall4 = this.currentCall) === null || _this$currentCall4 === void 0 ? void 0 : _this$currentCall4.id,
 	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	          status: call_lib_analytics.Analytics.AnalyticsStatus.lastUserLeft,
-	          chatId: this.currentCall.associatedEntity.id,
+	          chatId: (_this$currentCall5 = this.currentCall) === null || _this$currentCall5 === void 0 ? void 0 : _this$currentCall5.associatedEntity.id,
 	          callUsersCount: this.getCallUsers(true).length,
 	          callLength: Call.Util.getTimeText(this.currentCall.startDate)
 	        });

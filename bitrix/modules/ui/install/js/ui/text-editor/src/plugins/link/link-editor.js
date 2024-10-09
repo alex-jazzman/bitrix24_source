@@ -206,6 +206,7 @@ export class LinkEditor extends EventEmitter
 						<button type="button" 
 							class="ui-text-editor-link-form-button" 
 							onclick="${this.#handleSaveBtnClick.bind(this)}"
+							data-testid="save-link-btn"
 						>
 							<span class="ui-icon-set --check"></span>
 						</button>
@@ -213,6 +214,7 @@ export class LinkEditor extends EventEmitter
 							type="button" 
 							class="ui-text-editor-link-form-button"
 							onclick="${this.#handleCancelBtnClick.bind(this)}"
+							data-testid="cancel-link-btn"
 						>
 							<span class="ui-icon-set --cross-60"></span>
 						</button>
@@ -223,6 +225,7 @@ export class LinkEditor extends EventEmitter
 							type="button" 
 							class="ui-text-editor-link-form-button"
 							onclick="${this.#handleEditBtnClick.bind(this)}"
+							data-testid="edit-link-btn"
 						>
 							<span class="ui-icon-set --pencil-60"></span>
 						</button>
@@ -230,6 +233,7 @@ export class LinkEditor extends EventEmitter
 							type="button" 
 							class="ui-text-editor-link-form-button ui-text-editor-link-form-delete-btn"
 							onclick="${this.#handleUnlinkBtnClick.bind(this)}"
+							data-testid="unlink-btn"
 						>
 							<span class="ui-icon-set --delete-hyperlink"></span>
 						</button>
@@ -249,6 +253,7 @@ export class LinkEditor extends EventEmitter
 					placeholder="https://"
 					value="${this.getLinkUrl()}"
 					onkeydown="${this.#handleLinkTextBoxKeyDown.bind(this)}"
+					data-testid="link-textbox-input"
 				>
 			`;
 		});

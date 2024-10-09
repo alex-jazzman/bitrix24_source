@@ -15,6 +15,8 @@ import {
 import {QueueModelActions, QueueModelMutation} from "../../model/types/queue";
 import {PinModelActions, PinModelMutation} from "../../model/types/messages/pin";
 import {CommentMessengerModel, CommentModelActions, CommentModelMutation} from "../../model/types/comment";
+import {SidebarFilesModelActions, SidebarFilesModelMutation} from "../../model/types/sidebar/files";
+import {SidebarLinksModelActions, SidebarLinksModelMutation} from "../../model/types/sidebar/links";
 
 
 export type MessengerStoreActions =
@@ -31,6 +33,8 @@ export type MessengerStoreActions =
 	| QueueModelActions
 	| PinModelActions
 	| CommentModelActions
+	| SidebarFilesModelActions
+	| SidebarLinksModelActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -46,6 +50,8 @@ export type MessengerStoreMutation =
 	| QueueModelMutation
 	| PinModelMutation
 	| CommentModelMutation
+	| SidebarFilesModelMutation
+	| SidebarLinksModelMutation
 
 type MessengerCoreStore = {
 	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,

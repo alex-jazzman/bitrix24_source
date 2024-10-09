@@ -68,6 +68,11 @@ class CallMobile extends \CModule
 		return true;
 	}
 
+	public function uninstallFiles(): void
+	{
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
+	}
+
 	private function installDependencies()
 	{
 		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('mobile'))

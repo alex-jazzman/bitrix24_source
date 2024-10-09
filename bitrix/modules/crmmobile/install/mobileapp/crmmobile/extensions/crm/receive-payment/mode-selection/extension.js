@@ -4,6 +4,7 @@
 jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { handleErrors } = require('crm/error');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { TypeId } = require('crm/type');
@@ -11,6 +12,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 	const { isEqual } = require('utils/object');
 	const { AnalyticsLabel } = require('analytics-label');
+	const { AnalyticsEvent } = require('analytics');
 	const { NotifyManager } = require('notify-manager');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
@@ -218,6 +220,17 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 				event: 'onReceivePaymentScenarioSelect',
 				scenario: action,
 			});
+
+			const analytics = new AnalyticsEvent();
+			analytics
+				.setTool('crm')
+				.setCategory('payments')
+				.setEvent('payment_create_click')
+				.setType(action)
+				.setSection('crm')
+				.setSubSection('mobile')
+			;
+			analytics.send();
 
 			if (action === 'terminal_payment' && !this.isTerminalToolEnabled)
 			{

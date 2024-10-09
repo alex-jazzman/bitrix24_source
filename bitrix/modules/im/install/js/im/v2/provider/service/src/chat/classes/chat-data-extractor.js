@@ -49,6 +49,7 @@ export class ChatDataExtractor
 			...this.#restResult.chat,
 			hasPrevPage: this.#restResult.hasPrevPage,
 			hasNextPage: this.#restResult.hasNextPage,
+			tariffRestrictions: this.#restResult.tariffRestrictions,
 		};
 		const chats = {
 			[this.#restResult.chat.dialogId]: mainChat,

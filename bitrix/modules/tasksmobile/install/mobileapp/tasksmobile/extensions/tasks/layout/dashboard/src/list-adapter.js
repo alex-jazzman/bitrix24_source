@@ -61,6 +61,8 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 							'priority',
 							'responsible',
 							'deadline',
+							'allowTimeTracking',
+							'isCreationErrorExist',
 						],
 						callbacks: {
 							counter: counterCallback,
@@ -86,7 +88,9 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					menuButtons: (this.props.layoutMenuButtons || []),
 					itemType: ListItemType.TASK,
 					itemFactory: ListItemsFactory,
-					// itemParams: (params.itemParams || {}),
+					itemParams: {
+						view: this.getView(),
+					},
 					// getRuntimeParams: this.getRuntimeParams,
 					// showEmptySpaceItem: this.isEnabledKanbanToolbar(),
 					pull: this.props.pull,
@@ -109,6 +113,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					// },
 					ref: this.bindRef,
 					animationTypes: this.props.animationTypes,
+					currentView: this.props.currentView,
 				}),
 			);
 		}
@@ -131,10 +136,21 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 		 */
 		reload(params = {})
 		{
+			const { skipUseCache = true } = params;
+
 			if (this.viewComponent)
 			{
-				this.viewComponent.reload(params, { useCache: false });
+				this.viewComponent.reload(params, { useCache: !skipUseCache });
 			}
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getView()
+		{
+			return this.props.loadStagesParams.view;
 		}
 	}
 

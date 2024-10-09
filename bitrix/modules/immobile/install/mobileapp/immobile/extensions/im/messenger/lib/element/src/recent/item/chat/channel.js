@@ -3,11 +3,10 @@
  */
 jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
-	const { Loc } = require('loc');
 	const { ComponentCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
-	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -45,6 +44,14 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 		setSuperEllipseIcon()
 		{
 			this.isSuperEllipseIcon = true;
+			// for native support styles (isSuperEllipseIcon key will be deleted)
+			if (Feature.isAvatarBorderStylesSupported)
+			{
+				const roundingRadiusByDesign = Theme.corner.M.toNumber();
+				const heightIcon = 56;
+				const borderPercent = Math.round((roundingRadiusByDesign / heightIcon) * 100);
+				this.styles.image = { image: { borderRadius: borderPercent } };
+			}
 		}
 
 		createMessageCount()

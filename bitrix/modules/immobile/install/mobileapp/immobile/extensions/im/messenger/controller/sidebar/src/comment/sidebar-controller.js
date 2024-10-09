@@ -10,9 +10,11 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 	const { buttonIcons } = require('im/messenger/assets/common');
 	const { ButtonFactory } = require('im/messenger/lib/ui/base/buttons');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--comment-sidebar-controller');
 	const { EventType } = require('im/messenger/const');
 	const { Loc } = require('loc');
+	const { isOnline } = require('device/connection');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');
 
@@ -50,7 +52,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 
 		open()
 		{
-			Logger.log(`${this.constructor.name}.open`);
+			logger.log(`${this.constructor.name}.open`);
 			this.createWidget();
 		}
 
@@ -69,13 +71,15 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 					},
 				)
 				.catch((error) => {
-					Logger.error(`${this.constructor.name}.PageManager.openWidget.catch:`, error);
+					logger.error(`${this.constructor.name}.PageManager.openWidget.catch:`, error);
 				});
 		}
 
 		async onWidgetReady()
 		{
-			Logger.log(`${this.constructor.name}.onWidgetReady`);
+			logger.log(`${this.constructor.name}.onWidgetReady`);
+			this.sidebarService.subscribeInitTabsData();
+			this.sidebarService.initTabsData();
 			this.sidebarService.setStore();
 			this.bindListener();
 			this.setUserService();
@@ -117,34 +121,34 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 
 		subscribeStoreEvents()
 		{
-			Logger.log(`${this.constructor.name}.subscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
 			this.storeManager.on('sidebarModel/update', this.onUpdateStore);
 			this.storeManager.on('dialoguesModel/update', this.onUpdateStore);
 		}
 
 		subscribeWidgetEvents()
 		{
-			Logger.log(`${this.constructor.name}.subscribeWidgetEvents`);
+			logger.log(`${this.constructor.name}.subscribeWidgetEvents`);
 			this.widget.on(EventType.view.close, this.onCloseWidget);
 			this.widget.on(EventType.view.hidden, this.onCloseWidget);
 		}
 
 		subscribeBXCustomEvents()
 		{
-			Logger.log(`${this.constructor.name}.subscribeBXCustomEvents`);
+			logger.log(`${this.constructor.name}.subscribeBXCustomEvents`);
 			BX.addCustomEvent('onDestroySidebar', this.onDestroySidebar);
 		}
 
 		unsubscribeStoreEvents()
 		{
-			Logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
 			this.storeManager.off('sidebarModel/update', this.onUpdateStore);
 			this.storeManager.off('dialoguesModel/update', this.onUpdateStore);
 		}
 
 		unsubscribeBXCustomEvents()
 		{
-			Logger.log(`${this.constructor.name}.unsubscribeBXCustomEvents`);
+			logger.log(`${this.constructor.name}.unsubscribeBXCustomEvents`);
 			BX.removeCustomEvent('onDestroySidebar', this.onDestroySidebar);
 		}
 
@@ -196,6 +200,13 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		 */
 		createSubscribeBtn(isSubscribed = !this.sidebarService.isMuteDialog())
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return null;
+			}
+
 			return isSubscribed ? ButtonFactory.createIconButton(
 				{
 					icon: buttonIcons.eyeOnInline(),
@@ -226,6 +237,13 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 
 		onClickSubscribeBtn()
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const oldStateMute = !this.sidebarService.isMuteDialog();
 			this.store.dispatch('sidebarModel/changeMute', { dialogId: this.dialogId, isMute: !oldStateMute });
 
@@ -244,7 +262,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		onUpdateStore(event)
 		{
 			const { payload } = event;
-			Logger.info(`${this.constructor.name}.onUpdateStore---------->`, event);
+			logger.info(`${this.constructor.name}.onUpdateStore---------->`, event);
 
 			if (payload.actionName === 'unmute' || payload.actionName === 'mute')
 			{

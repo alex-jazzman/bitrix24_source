@@ -125,6 +125,7 @@ $groups = $arParams["TEMPLATE_DATA"]["DATA"]["GROUP"];
 $users = $arParams["TEMPLATE_DATA"]["DATA"]["USER"];
 $relatedTasks = $arParams["TEMPLATE_DATA"]["DATA"]["RELATED_TASK"];
 $taskData = $arParams["TEMPLATE_DATA"]["DATA"]["TASK"];
+$flows = $arParams['TEMPLATE_DATA']['DATA']['FLOWS'];
 
 $trackedFields = CTaskLog::getTrackedFields();
 ?>
@@ -590,9 +591,17 @@ $trackedFields = CTaskLog::getTrackedFields();
 				break;
 
 			case "STATUS":
-				echo Loc::getMessage("TASKS_STATUS_".$record["FROM_VALUE"])?><span class="task-log-arrow">&rarr;</span><?=Loc::getMessage("TASKS_STATUS_".$record["TO_VALUE"]);
-				break;
+				echo
+					Loc::getMessage('TASKS_STATUS_' . $record['FROM_VALUE'] . '_MSGVER_1')
+					?? Loc::getMessage('TASKS_STATUS_' . $record['FROM_VALUE'])
+				;
+				?><span class="task-log-arrow">&rarr;</span><?php
+					echo
+						Loc::getMessage('TASKS_STATUS_' . $record['TO_VALUE'] . '_MSGVER_1')
+						?? Loc::getMessage('TASKS_STATUS_' . $record['TO_VALUE'])
+					;
 
+				break;
 			case "MARK":
 				echo !$record["FROM_VALUE"] ? Loc::getMessage("TASKS_MARK_NONE") : Loc::getMessage("TASKS_MARK_".$record["FROM_VALUE"])?><span class="task-log-arrow">&rarr;</span><? echo !$record["TO_VALUE"] ? Loc::getMessage("TASKS_MARK_NONE") : Loc::getMessage("TASKS_MARK_".$record["TO_VALUE"]);
 				break;
@@ -611,6 +620,10 @@ $trackedFields = CTaskLog::getTrackedFields();
 				$deleted = array_filter(explode(',', $record['FROM_VALUE']));
 				sort($deleted);
 				echo prepareUfCrmEntities($deleted);
+				break;
+			case 'FLOW_ID':
+				include_once __DIR__ . '/column/flow.php';
+				renderFlow($record, $flows);
 				break;
 
 			default:

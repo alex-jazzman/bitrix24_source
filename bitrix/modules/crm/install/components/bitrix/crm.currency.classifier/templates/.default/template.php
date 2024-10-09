@@ -277,7 +277,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 										</div>
 									</div>
 									<?php //if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()): ?>
-										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox">
+										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox --last-block">
 											<div class="crm-entity-widget-content-block-inner">
 												<label class="crm-entity-widget-content-block-checkbox-label">
 													<input class="crm-entity-widget-content-checkbox" id="edit_base_for_count" name="edit_base_for_count" type="checkbox"

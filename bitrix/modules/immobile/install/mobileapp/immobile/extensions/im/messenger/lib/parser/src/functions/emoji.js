@@ -1,6 +1,4 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module im/messenger/lib/parser/functions/emoji
@@ -11,7 +9,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 	const { Type } = require('type');
 	const {
 		FileType,
-		FileEmojiType
+		FileEmojiType,
 	} = require('im/messenger/const');
 
 	const parserEmoji = {
@@ -39,7 +37,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 				|| Type.isStringFilled(attach)
 			)
 			{
-				//text = this.getTextForAttach(text, attach);
+				text = this.getTextForAttach(text, attach);
 			}
 
 			return text.trim();
@@ -130,6 +128,17 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			}
 
 			return result.trim();
+		},
+
+		getTextForAttach(text, attach)
+		{
+			let attachDescription = '';
+			if (Type.isArray(attach) && attach.length > 0)
+			{
+				attachDescription = `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_ATTACH')}]`;
+			}
+
+			return `${text} ${attachDescription}`.trim();
 		},
 	};
 

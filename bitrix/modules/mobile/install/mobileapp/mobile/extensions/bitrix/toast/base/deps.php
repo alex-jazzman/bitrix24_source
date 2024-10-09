@@ -5,5 +5,6 @@ return [
 		'tokens',
 		'feature',
 		'notify',
+		'assets/icons',
 	],
 ];

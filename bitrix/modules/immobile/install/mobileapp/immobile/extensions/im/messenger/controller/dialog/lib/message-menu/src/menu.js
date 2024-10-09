@@ -5,6 +5,7 @@
 jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (require, exports, module) => {
 	include('InAppNotifier');
 	const { Filesystem, utils } = require('native/filesystem');
+	const { MessageParams } = require('im/messenger/const');
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
@@ -18,6 +19,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		FileType,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { isOnline } = require('device/connection');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -152,7 +154,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			if (this.isCreateBannerMessage(messageModel))
+			if (this.isMenuNotAvailableByComponentId(messageModel))
 			{
 				Haptics.notifyFailure();
 
@@ -360,7 +362,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		addCreateAction(menu, message)
 		{
-			if (message.isPossibleCreate())
+			if (message.isPossibleCreate() && MessageCreateMenu.hasActions())
 			{
 				menu.addAction(CreateAction);
 			}
@@ -476,6 +478,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onReply(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const replyManager = this.locator.get('reply-manager');
 
 			if (
@@ -497,6 +506,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			if (!Feature.isMessagePinSupported)
 			{
 				Notification.showComingSoon();
+
+				return;
+			}
+
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
 
 				return;
 			}
@@ -524,6 +540,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
@@ -537,6 +560,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 
 		onSubscribe(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			Notification.showToast(ToastType.subscribeToComments, this.locator.get('view').ui);
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			this.locator.get('chat-service').subscribeToCommentsByPostId(modelMessage.id);
@@ -544,6 +574,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 
 		onUnsubscribe(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			Notification.showToast(ToastType.unsubscribeFromComments, this.locator.get('view').ui);
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			this.locator.get('chat-service').unsubscribeFromCommentsByPostId(modelMessage.id);
@@ -561,6 +598,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const forwardController = new ForwardSelector();
 			forwardController.open({
 				messageId: message.id,
@@ -574,6 +618,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onCreate(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel)
 			{
@@ -628,6 +679,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onDownloadToDevice(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
@@ -695,6 +753,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onDownloadToDisk(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
@@ -739,15 +804,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 * @param {MessagesModelState} message
 		 * @return {Boolean}
 		 */
-		isCreateBannerMessage(message)
+		isMenuNotAvailableByComponentId(message)
 		{
 			const componentId = message.params?.componentId;
-			if (componentId && componentId.includes('CreationMessage'))
-			{
-				return true;
-			}
+			const componentIds = [MessageParams.ComponentId.SignMessage];
+			const isCreateBannerMessage = componentId?.includes('CreationMessage');
 
-			return false;
+			return componentId && (isCreateBannerMessage || componentIds.includes(componentId));
 		}
 	}
 

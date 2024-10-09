@@ -34,6 +34,8 @@ return [
 		'ui-system/typography/text',
 		'ui-system/typography/text-input',
 
+		'tariff-plan-restriction',
+		'tasks:enum',
 		'tasks:checklist',
 		'tasks:checklist/flat-tree',
 		'tasks:layout/checklist/list',

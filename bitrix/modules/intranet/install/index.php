@@ -260,6 +260,30 @@ Class intranet extends CModule
 				50
 			);
 
+		$eventManager->registerEventHandler(
+				'socialnetwork',
+				'OnSocNetUserToGroupAdd',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onSocNetUserToGroupAddHandler'
+			);
+
+		$eventManager->registerEventHandler(
+				'socialnetwork',
+				'OnSocNetUserToGroupUpdate',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onSocNetUserToGroupUpdateHandler'
+			);
+
+		$eventManager->registerEventHandler(
+				'socialnetwork',
+				'OnAfterSocNetUserToGroupDelete',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onSocNetUserToGroupDeleteHandler'
+			);
+
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);
 
@@ -333,71 +357,68 @@ Class intranet extends CModule
 	{
 		global $APPLICATION;
 
-		if($_ENV["COMPUTERNAME"]!='BX')
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/components",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/gadgets",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/admin",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/js",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/themes",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/themes",
+			true, true
+		);
+
+		// here: set access rights for all of the services
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/tools",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/images",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/images",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/services",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
+			true, true
+		);
+
+		foreach (["portal", "portal_clear"] as $wizard)
 		{
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/components",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/gadgets",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/admin",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/js",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/themes",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/themes",
-				true, true
-			);
-
-			// here: set access rights for all of the services
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/tools",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/images",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/images",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/services",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
-				true, true
-			);
-
-			foreach (["portal", "portal_clear"] as $wizard)
+			if (IO\Directory::isDirectoryExists(
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard)
+			)
 			{
-				if (IO\Directory::isDirectoryExists(
-					$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard)
-				)
-				{
-					CopyDirFiles(
-						$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard,
-						$_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards/bitrix/".$wizard,
-						true,
-						true,
-						true
-					);
-				}
+				CopyDirFiles(
+					$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard,
+					$_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards/bitrix/".$wizard,
+					true,
+					true,
+					true
+				);
 			}
 		}
 

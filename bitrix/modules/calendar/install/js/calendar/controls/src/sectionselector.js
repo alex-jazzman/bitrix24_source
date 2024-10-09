@@ -1,9 +1,20 @@
-import {Type, Dom, Event, Tag, Text, Loc} from "main.core";
-import "ui.icons.b24";
-import {MenuManager, MenuItem} from "main.popup";
+import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import 'ui.icons.b24';
+import { MenuItem, MenuManager } from 'main.popup';
 
 export class SectionSelector
 {
+	static getModes(): string[]
+	{
+		return [
+			'textselect',
+			'location',
+			'inline',
+			'compact',
+			'full',
+		];
+	}
+
 	constructor(params)
 	{
 		this.id = params.id || 'section-select-' + Math.round(Math.random() * 1000000);
@@ -18,7 +29,7 @@ export class SectionSelector
 		this.defaultOwnerId = parseInt(params.defaultOwnerId) || 0;
 
 		this.zIndex = params.zIndex || 3200;
-		this.mode = params.mode; // full|compact|textselect
+		this.mode = params.mode; // full|compact|textselect|inline
 		this.DOM = {
 			outerWrap: params.outerWrap
 		};
@@ -42,6 +53,10 @@ export class SectionSelector
 			this.DOM.selectImageWrap = this.DOM.select.appendChild(Tag.render`<span class="calendar-field-choice-calendar-img"></span>`);
 
 			this.DOM.selectInnerText = this.DOM.select.appendChild(Tag.render`<span class="calendar-field-choice-calendar-name calendar-field-choice-calendar-name-location">${Text.encode(Loc.getMessage('EC_CALENDAR_LOCATION_TITLE') + ' ' + this.getCurrentTitle())}</span>`);
+		}
+		else if (this.mode === 'inline')
+		{
+			this.DOM.select = this.DOM.outerWrap;
 		}
 		else
 		{

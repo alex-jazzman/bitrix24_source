@@ -877,7 +877,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  computed: {
 	    popupTitle() {
 	      if (this.options.hasConductedDocumentsOrQuantities) {
-	        return this.$Bitrix.Loc.getMessage('CATALOG_INVENTORY_MANAGEMENT_DATA_WILL_BE_DELETED');
+	        return this.$Bitrix.Loc.getMessage('CATALOG_INVENTORY_MANAGEMENT_DATA_WILL_BE_DELETED_MSGVER_1');
 	      }
 	      return null;
 	    },
@@ -885,7 +885,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      const result = [];
 	      if (this.options.hasConductedDocumentsOrQuantities) {
 	        result.push({
-	          text: this.$Bitrix.Loc.getMessage('CATALOG_INVENTORY_MANAGEMENT_DELETE_DOCUMENTS_AND_QUANTITY_TEXT_ON_ENABLE_B24'),
+	          text: this.$Bitrix.Loc.getMessage('CATALOG_INVENTORY_MANAGEMENT_DELETE_DOCUMENTS_AND_QUANTITY_TEXT_ON_ENABLE_B24_MSGVER_1'),
 	          hint: this.$Bitrix.Loc.getMessage('CATALOG_INVENTORY_MANAGEMENT_DISABLE_CONFIRMATION_TEXT_2')
 	        });
 	      }

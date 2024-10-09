@@ -45,6 +45,14 @@ class IntranetMobile extends CModule
 			'getPath'
 		);
 
+		$eventManager->registerEventHandler(
+			'main',
+			'OnUserInitialize',
+			$this->MODULE_ID,
+			'\Bitrix\IntranetMobile\Integration\Main\Event',
+			'onUserInitialize'
+		);
+
 		return true;
 	}
 
@@ -58,6 +66,14 @@ class IntranetMobile extends CModule
 			$this->MODULE_ID,
 			$this->workspaceClass,
 			'getPath'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnUserInitialize',
+			$this->MODULE_ID,
+			'\Bitrix\IntranetMobile\Integration\Main\Event',
+			'onUserInitialize'
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);

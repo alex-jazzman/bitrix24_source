@@ -8,6 +8,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 	const {
 		Table,
 		FieldType,
+		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('database-table--dialog');
@@ -35,20 +36,20 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'lastReadId', type: FieldType.integer },
 				{ name: 'markedId', type: FieldType.integer },
 				{ name: 'lastMessageId', type: FieldType.integer },
-				{ name: 'lastMessageViews', type: FieldType.json },
+				{ name: 'lastMessageViews', type: FieldType.json, defaultValue: FieldDefaultValue.emptyObject },
 				{ name: 'countOfViewers', type: FieldType.integer },
-				{ name: 'managerList', type: FieldType.json },
-				{ name: 'readList', type: FieldType.json },
-				{ name: 'muteList', type: FieldType.json },
+				{ name: 'managerList', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
+				{ name: 'readList', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
+				{ name: 'muteList', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
 				{ name: 'owner', type: FieldType.integer },
 				{ name: 'entityType', type: FieldType.text },
 				{ name: 'entityId', type: FieldType.integer },
 				{ name: 'dateCreate', type: FieldType.date },
-				{ name: 'public', type: FieldType.json },
+				{ name: 'public', type: FieldType.json, defaultValue: FieldDefaultValue.emptyObject },
 				{ name: 'code', type: FieldType.text },
 				{ name: 'diskFolderId', type: FieldType.integer },
 				{ name: 'aiProvider', type: FieldType.text },
-				{ name: 'role', type: FieldType.text, defaultValue: 'none' },
+				{ name: 'role', type: FieldType.text, defaultValue: FieldDefaultValue.noneText },
 				{ name: 'permissions', type: FieldType.json },
 			];
 		}

@@ -95,22 +95,34 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-?><script>
-	BX.message({
-		"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_DEAL_DETAIL_HISTORY_STUB')?>",
-	});
+$isMlAvailable = \Bitrix\Crm\Ml\Scoring::isMlAvailable();
+$isScoringEnabled = \Bitrix\Crm\Ml\Scoring::isEnabled();
+$isScoringAvailable = \Bitrix\Crm\Ml\Scoring::isScoringAvailable();
+$isTrainingUsed = \Bitrix\Crm\Ml\Scoring::isTrainingUsed();
+if ($isMlAvailable && $isScoringEnabled && $isScoringAvailable && $isTrainingUsed)
+{
+	echo \Bitrix\Crm\Tour\Ml\ScoringShutdownWarning::getInstance()->build();
+}
 
-	<? if($arResult['ENTITY_ID'] > 0): ?>
+if ($isScoringAvailable):
+?>
+	<script>
+		BX.message({
+			"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_DEAL_DETAIL_HISTORY_STUB')?>",
+		});
+
+		<? if($arResult['ENTITY_ID'] > 0): ?>
 			new BX.CrmScoringButton({
-				mlInstalled: <?= (\Bitrix\Crm\Ml\Scoring::isMlAvailable() ? 'true' : 'false')?>,
-				scoringEnabled: <?= (\Bitrix\Crm\Ml\Scoring::isEnabled() ? 'true' : 'false')?>,
+				mlInstalled: <?= ($isMlAvailable ? 'true' : 'false')?>,
+				scoringEnabled: <?= ($isScoringEnabled ? 'true' : 'false')?>,
 				scoringParameters: <?= \Bitrix\Main\Web\Json::encode($arResult['SCORING']) ?>,
 				entityType: '<?= CCrmOwnerType::DealName ?>',
 				entityId: <?= (int)$arResult['ENTITY_ID']?>,
 				isFinal: <?= $arResult['IS_STAGE_FINAL'] ? 'true' : 'false' ?>,
 			});
-	<? endif; ?>
-</script><?
+		<? endif; ?>
+	</script><?
+endif;
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
@@ -143,7 +155,6 @@ $APPLICATION->IncludeComponent(
 
 if ($arResult['IS_EDIT_MODE'] ?? false)
 {
-	echo \Bitrix\Crm\Tour\Sign\CreateDocumentFromDeal::getInstance()->build();
 	echo \Bitrix\Crm\Tour\Salescenter\CrmTerminalInDeal::getInstance()
 		->setCategoryId((int)$arResult['CATEGORY_ID'])
 		->build()

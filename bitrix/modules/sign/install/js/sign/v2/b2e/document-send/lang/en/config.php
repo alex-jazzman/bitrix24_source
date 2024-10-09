@@ -10,6 +10,7 @@ $MESS["SIGN_DOCUMENT_SEND_DEADLINE"] = "Deadline: none";
 $MESS["SIGN_DOCUMENT_SEND_FIRST_PARTY"] = "Sender";
 $MESS["SIGN_DOCUMENT_SEND_HEADER"] = "Check the information before submitting";
 $MESS["SIGN_DOCUMENT_SEND_LANG_SELECTOR_HINT"] = "Signature certificate will be created in the selected language.";
+$MESS["SIGN_DOCUMENT_SEND_REMINDER_TYPE_SELECTOR_HINT"] = "HR bot will be reminding the responsible person of the new document for three days.";
 $MESS["SIGN_DOCUMENT_SEND_SECOND_PARTY"] = "Recipient";
 $MESS["SIGN_DOCUMENT_SUMMARY_COMPANY_INN"] = "Taxpayer ID %innValue%";
 $MESS["SIGN_DOCUMENT_SUMMARY_TITLE"] = "Document for signing";

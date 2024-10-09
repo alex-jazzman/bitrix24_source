@@ -103,7 +103,7 @@ if ($USER->CanDoOperation('edit_subordinate_users') && !$USER->CanDoOperation('e
 	$subordinate = true;
 }
 
-if($REQUEST_METHOD=="POST" && is_array($files) && count($files)>0 && $saveperm <> '' && check_bitrix_sessid() && $USER->CanDoOperation('fileman_admin_folders'))
+if($_SERVER['REQUEST_METHOD']=="POST" && is_array($files) && count($files)>0 && $saveperm <> '' && check_bitrix_sessid() && $USER->CanDoOperation('fileman_admin_folders'))
 {
 	$CUR_PERM = GetAccessArrTmp($path);
 	$arPermissions=Array();

@@ -3,13 +3,10 @@
  */
 jn.define('tasks/layout/fields/flow', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const store = require('statemanager/redux/store');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { EntitySelectorFactoryType } = require('selector/widget/factory');
 	const { withCurrentDomain } = require('utils/url');
 	const { Icon } = require('assets/icons');
-	const { selectIsFlowTaskCreationProhibited } = require('tasks/statemanager/redux/slices/tariff-restrictions');
-	const { openPlanRestriction } = require('tasks/layout/flow/tariff-plan-restrictions-opener');
 
 	const DEFAULT_ICON = `/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/fields/flow/images/${AppTheme.id}/flow-icon.png`;
 
@@ -50,11 +47,6 @@ jn.define('tasks/layout/fields/flow', (require, exports, module) => {
 			return Icon.BOTTLENECK;
 		}
 
-		getLeftIcon()
-		{
-			return {};
-		}
-
 		getImageUrl(imageUrl)
 		{
 			return encodeURI(withCurrentDomain(imageUrl));
@@ -73,18 +65,6 @@ jn.define('tasks/layout/fields/flow', (require, exports, module) => {
 					parentLayout: this.getParentWidget(),
 				});
 			});
-		}
-
-		openSelector(forceSelectorType = false)
-		{
-			if (selectIsFlowTaskCreationProhibited(store.getState()))
-			{
-				this.removeFocus();
-				void openPlanRestriction(this.props?.config?.parentWidget);
-
-				return;
-			}
-			super.openSelector(forceSelectorType);
 		}
 
 		async handleAdditionalFocusActions()

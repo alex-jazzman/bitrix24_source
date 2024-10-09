@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Loc } = require('tasks/loc');
 	const { isEqual } = require('utils/object');
+	const { Icon } = require('assets/icons');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { getDiskFolderId } = require('tasks/disk');
 	const { PullCommand, TaskMark, TaskPriority, TaskField: Field, TaskActionAccess } = require('tasks/enum');
@@ -24,7 +25,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
 	const { executeIfOnline } = require('tasks/layout/online');
 	const { isOnline } = require('device/connection');
-	const { showOfflineToast } = require('toast');
+	const { showOfflineToast, showToast } = require('toast');
 	const { ChecklistController } = require('tasks/checklist');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Type } = require('type');
@@ -39,7 +40,6 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		updateUploadingFiles,
 		update,
 		delegate,
-		remove,
 		tasksUpserted,
 		taskRemoved,
 		selectActions,
@@ -52,11 +52,12 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		selectSubTasksIdsByTaskId,
 		updateSubTasks,
 		updateRelatedTasks,
+		selectDatePlan,
 	} = require('tasks/statemanager/redux/slices/tasks');
-	const { groupsUpserted, groupsAddedFromEntitySelector } = require('tasks/statemanager/redux/slices/groups');
+	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const { fetch, setFromServer } = require('tasks/statemanager/redux/slices/tasks-results');
-
-	const TASKS_DASHBOARD_COMPONENT = 'tasks.dashboard';
+	const { observeCreationError } = require('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class TaskView
@@ -83,7 +84,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 					newLayout.showComponent(taskViewComponent);
 				})
-				.catch(() => console.error)
+				.catch(console.error)
 			;
 		}
 
@@ -104,10 +105,18 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				this.init(props);
 			}
 
+			const analyticsLabel = Array.isArray(props.analyticsLabel) ? props.analyticsLabel : [props.analyticsLabel];
+			this.analyticsLabel = analyticsLabel.map((label) => ({
+				tool: 'tasks',
+				category: 'task_operations',
+				event: 'task_view',
+				type: 'task',
+				...label,
+			}));
+
 			this.bindScrollViewRef = this.bindScrollViewRef.bind(this);
 			this.bindFormRef = this.bindFormRef.bind(this);
 			this.scrollableProvider = this.scrollableProvider.bind(this);
-			this.removeTask = this.removeTask.bind(this);
 			this.onChangeField = this.onChangeField.bind(this);
 			this.onChangeUserField = this.onChangeUserField.bind(this);
 			this.onChangeProjectField = this.onChangeProjectField.bind(this);
@@ -119,6 +128,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.renderBeforeCompactFields = this.renderBeforeCompactFields.bind(this);
 			this.renderStatus = this.renderStatus.bind(this);
 			this.onFieldContentClick = this.onFieldContentClick.bind(this);
+			this.onCreationErrorChange = this.onCreationErrorChange.bind(this);
 		}
 
 		init(props)
@@ -186,6 +196,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 
 			this.#observeTaskState();
+			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange);
 		}
 
 		componentDidMount()
@@ -209,6 +220,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.layoutButtons.unsubscribe();
 			this.stickyTitle.unsubscribe();
 			this.unsubscribeTaskStateObserver?.();
+			this.unsubscribeCreationErrorObserver?.();
 		}
 
 		#initFromRedux()
@@ -224,8 +236,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					}),
 					this.#getDiskFolderId(),
 				])
-					.then((results) => this.#onAfterInitDataFetched(results))
-					.catch(console.error)
+					.then((results) => this.#onDataFetchSuccess(results))
+					.catch(this.#onDataFetchFailed)
 				;
 			}
 
@@ -256,21 +268,36 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				}),
 				this.#getDiskFolderId(),
 			])
-				.then((results) => this.#onAfterInitDataFetched(results, this.props.shouldOpenComments))
-				.catch(console.error)
+				.then((results) => this.#onDataFetchSuccess(results, this.props.shouldOpenComments))
+				.catch(this.#onDataFetchFailed)
 			;
 		}
 
-		#onAfterInitDataFetched(results, shouldOpenComments = false)
+		#onDataFetchFailed(error)
+		{
+			console.error(error);
+
+			this.analyticsLabel.forEach((label) => {
+				new AnalyticsEvent(label).setStatus('error').send();
+			});
+		}
+
+		#onDataFetchSuccess(results, shouldOpenComments = false)
 		{
 			const isForbidden = !results[0].value;
 
 			if (isForbidden)
 			{
+				this.analyticsLabel.forEach((label) => {
+					new AnalyticsEvent(label).setStatus('error').send();
+				});
 				this.#setForbiddenState();
 			}
 			else
 			{
+				this.analyticsLabel.forEach((label) => {
+					new AnalyticsEvent(label).setStatus('success').send();
+				});
 				this.layout.setTitle({ useProgress: false }, true);
 				this.setState({ loading: false }, () => shouldOpenComments && this.openComments());
 			}
@@ -392,6 +419,14 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			});
 		}
 
+		onCreationErrorChange({ added })
+		{
+			if (added.some((task) => task.id === this.#task.id))
+			{
+				this.close();
+			}
+		}
+
 		#onCommentAction(eventData)
 		{
 			const { taskId, userId, action } = eventData;
@@ -495,33 +530,13 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				actions,
 				layoutWidget: this.layout,
 				task: this.#task,
-				analyticsLabel: {},
+				analyticsLabel: {
+					c_section: this.props.analyticsLabel?.c_section,
+					c_sub_section: 'task_card',
+				},
 				engine: new TopMenuEngine(),
-				onRemove: this.removeTask,
 				allowSuccessToasts: true,
 			})).show();
-		}
-
-		removeTask()
-		{
-			if (this.openedFromTasksDashboard())
-			{
-				BX.postComponentEvent(
-					'TasksDashboard.RemoveTask',
-					[this.#taskId],
-					TASKS_DASHBOARD_COMPONENT,
-				);
-			}
-			else
-			{
-				this.unsubscribeTaskStateObserver?.();
-
-				dispatch(
-					remove({ taskId: this.#taskId }),
-				);
-			}
-
-			this.close();
 		}
 
 		close()
@@ -571,21 +586,16 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			return this.scrollViewRef;
 		}
 
-		/**
-		 * @private
-		 * @return {boolean}
-		 */
-		openedFromTasksDashboard()
-		{
-			return this.props.context === 'tasks.dashboard';
-		}
-
 		onChangeField(data)
 		{
 			switch (data.fieldId)
 			{
 				case Field.TITLE:
 				case Field.CHECKLIST:
+					break;
+				case Field.PROJECT:
+					break;
+				case Field.DEADLINE:
 					break;
 
 				case Field.FILES:
@@ -656,14 +666,106 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 		}
 
-		onChangeProjectField(_, groups = [])
-		{
-			if (groups.length > 0)
+		onChangeDeadlineField = (deadline) => {
+			const group = selectGroupById(store.getState(), this.#task.groupId);
+			if (group)
 			{
-				dispatch(groupsAddedFromEntitySelector(groups));
+				const { dateStart, dateFinish } = group;
+
+				if (!this.isDateInGroupPlanRange({ dateStart, dateFinish }, deadline))
+				{
+					showToast({
+						message: Loc.getMessage('M_TASKS_DEADLINE_IS_OUT_OF_PROJECT_RANGE'),
+						icon: Icon.CLOCK,
+					});
+
+					return;
+				}
 			}
 
-			this.checklistController.setGroupId(groups[0]?.id || 0);
+			this.updateTask(Field.DEADLINE, deadline, this.#task.deadline);
+		};
+
+		onChangeProjectField(_, groups = [])
+		{
+			const groupId = groups[0]?.id || 0;
+			const selectedGroup = groups[0] || null;
+			if (groups.length > 0)
+			{
+				const datePlan = selectedGroup?.customData?.datePlan;
+
+				const state = store.getState();
+				const deadline = this.#task.deadline;
+
+				if (!this.isDateInGroupPlanRange(datePlan, deadline))
+				{
+					showToast({
+						message: Loc.getMessage('M_TASKS_DEADLINE_IS_OUT_OF_PROJECT_RANGE'),
+						icon: Icon.CLOCK,
+					});
+
+					return;
+				}
+
+				const { startDatePlan, endDatePlan } = selectDatePlan(state, this.#taskId);
+
+				if (
+					!this.isDateInGroupPlanRange(datePlan, startDatePlan)
+					&& !this.isDateInGroupPlanRange(datePlan, endDatePlan)
+				)
+				{
+					showToast({
+						message: Loc.getMessage('M_TASKS_PLANNING_START_AND_END_DATE_IS_OUT_OF_PROJECT_RANGE'),
+						icon: Icon.CLOCK,
+					});
+
+					return;
+				}
+
+				if (!this.isDateInGroupPlanRange(datePlan, startDatePlan))
+				{
+					showToast({
+						message: Loc.getMessage('M_TASKS_PLANNING_START_DATE_IS_OUT_OF_PROJECT_RANGE'),
+						icon: Icon.CLOCK,
+					});
+
+					return;
+				}
+
+				if (!this.isDateInGroupPlanRange(datePlan, endDatePlan))
+				{
+					showToast({
+						message: Loc.getMessage('M_TASKS_PLANNING_FINISH_DATE_OUT_OF_PROJECT_RANGE'),
+						icon: Icon.CLOCK,
+					});
+
+					return;
+				}
+
+				dispatch(groupsAddedFromEntitySelector(groups));
+			}
+			this.updateTask(Field.PROJECT, groupId, selectedGroup);
+
+			this.checklistController.setGroupId(groupId);
+		}
+
+		isDateInGroupPlanRange(groupPlan, date)
+		{
+			if (!date || !Type.isNumber(date))
+			{
+				return true;
+			}
+
+			const { dateStart = null, dateFinish = null } = groupPlan;
+			let dateAfterFinish = (new Date(dateFinish * 1000));
+			dateAfterFinish.setDate(dateAfterFinish.getDate() + 1);
+			dateAfterFinish.setHours(0, 0, 0, 0);
+			dateAfterFinish = Math.floor(dateAfterFinish / 1000);
+
+			return (
+				(Type.isNil(dateStart) || date >= dateStart)
+				&& (Type.isNil(dateFinish) || date < dateAfterFinish)
+			);
 		}
 
 		onChangeSubTaskField(subTaskIds, tasks = [])
@@ -675,6 +777,15 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				parentId: this.#taskId,
 				newSubTasks,
 				deletedSubTasks,
+				analyticsLabel: newSubTasks.length > 0 && {
+					tool: 'tasks',
+					category: 'task_operations',
+					event: 'subtask_add',
+					type: 'task',
+					c_section: this.props.analyticsLabel?.c_section,
+					c_sub_section: 'task_card',
+					c_element: 'create_button',
+				},
 			}));
 		}
 
@@ -824,12 +935,14 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						onChangeSubTaskField: this.onChangeSubTaskField,
 						onChangeRelatedTaskField: this.onChangeRelatedTaskField,
 						onChangeUserField: this.onChangeUserField,
+						onChangeDeadlineField: this.onChangeDeadlineField,
 						renderBeforeCompactFields: this.renderBeforeCompactFields,
 						renderStatus: this.renderStatus,
 						onFieldContentClick: this.onFieldContentClick,
 						userId: this.props.userId,
 						checklistController: this.checklistController,
 						checklistLoading: this.state.checklistLoading,
+						analyticsLabel: this.props.analyticsLabel,
 					}),
 				),
 			);
@@ -859,6 +972,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				testId: this.getTestId('ActionButtons'),
 				layout: this.layout,
 				showDivider: form.hasCompactVisibleFields(),
+				analyticsLabel: this.props.analyticsLabel,
 			});
 		}
 
@@ -919,6 +1033,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			else
 			{
 				const reduxFields = this.prepareReduxFields(field, value, extendedValue);
+
 				if (!this.isAnyReduxFieldChanged(reduxFields))
 				{
 					return;
@@ -1020,7 +1135,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					return { allowChangeDeadline: value };
 
 				case Field.ALLOW_TIME_TRACKING:
-					return { allowTimeTracking: value };
+				case `${Field.ALLOW_TIME_TRACKING}Timer`:
+					return {
+						allowTimeTracking: value.allowTimeTracking,
+						timeEstimate: value.timeEstimate,
+					};
 
 				case Field.ALLOW_TASK_CONTROL:
 					return { allowTaskControl: value };
@@ -1095,7 +1214,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					return { ALLOW_CHANGE_DEADLINE: (value ? 'Y' : 'N') };
 
 				case Field.ALLOW_TIME_TRACKING:
-					return { ALLOW_TIME_TRACKING: (value ? 'Y' : 'N') };
+				case `${Field.ALLOW_TIME_TRACKING}Timer`:
+					return {
+						ALLOW_TIME_TRACKING: (value.allowTimeTracking ? 'Y' : 'N'),
+						TIME_ESTIMATE: value.timeEstimate,
+					};
 
 				case Field.ALLOW_TASK_CONTROL:
 					return { TASK_CONTROL: (value ? 'Y' : 'N') };

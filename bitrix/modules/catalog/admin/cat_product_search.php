@@ -140,7 +140,7 @@ if (!$bBadBlock)
 }
 else
 {
-	echo ShowError(GetMessage("SPS_NO_PERMS").".");
+	ShowError(GetMessage("SPS_NO_PERMS").".");
 }
 
 $lAdmin->CheckListMode();

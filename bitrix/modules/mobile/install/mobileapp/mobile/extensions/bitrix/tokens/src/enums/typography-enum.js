@@ -41,7 +41,7 @@ jn.define('tokens/src/enums/typography-enum', (require, exports, module) => {
 		 */
 		static getTokenBySize({ size, header = false, accent = false })
 		{
-			const token = header ? `h${size}` : `text${size}`;
+			const token = header && TypographyEnum.isValidHeadingSize(size) ? `h${size}` : `text${size}`;
 			const tokenName = accent && !token.includes('Accent') ? `${token}Accent` : token;
 
 			return this.getEnum(tokenName);
@@ -68,6 +68,24 @@ jn.define('tokens/src/enums/typography-enum', (require, exports, module) => {
 			}
 
 			return typographyToken;
+		}
+
+		/**
+		 * @param {number} size
+		 * @returns {boolean}
+		 */
+		static isValidTextSize(size)
+		{
+			return size >= 1 && size <= 7;
+		}
+
+		/**
+		 * @param {number} size
+		 * @returns {boolean}
+		 */
+		static isValidHeadingSize(size)
+		{
+			return size >= 1 && size <= 5;
 		}
 
 		/**

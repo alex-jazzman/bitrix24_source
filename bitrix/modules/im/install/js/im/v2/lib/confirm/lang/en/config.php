@@ -11,3 +11,6 @@ $MESS["IM_LIB_CONFIRM_SWITCH_NOTIFICATION_MODE"] = "Do you want to switch to sim
 $MESS["IM_LIB_CONFIRM_SWITCH_NOTIFICATION_MODE_YES"] = "Yes";
 $MESS["IM_LIB_CONFIRM_USER_KICK"] = "Are you sure you want to remove this user?";
 $MESS["IM_LIB_CONFIRM_USER_KICK_YES"] = "Remove";
+$MESS["IM_LIB_EXIT_UPDATE_CHANNEL_TITLE"] = "Do you want to save the changes and proceed to managing the subscribers?";
+$MESS["IM_LIB_EXIT_UPDATE_CHAT_TEXT_CONFIRM"] = "Yes";
+$MESS["IM_LIB_EXIT_UPDATE_CHAT_TITLE"] = "Do you want to save the changes and proceed to managing the chat members?";

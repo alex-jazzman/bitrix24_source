@@ -10,6 +10,7 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 	const {
 		Table,
 		FieldType,
+		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('database-table--message');
@@ -36,16 +37,17 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 				{ name: 'authorId', type: FieldType.integer },
 				{ name: 'date', type: FieldType.date },
 				{ name: 'text', type: FieldType.text },
-				{ name: 'params', type: FieldType.json, defaultValue: null },
-				{ name: 'files', type: FieldType.json, defaultValue: null },
+				{ name: 'params', type: FieldType.json, defaultValue: FieldDefaultValue.null },
+				{ name: 'files', type: FieldType.json, defaultValue: FieldDefaultValue.null },
 				{ name: 'unread', type: FieldType.boolean },
 				{ name: 'viewed', type: FieldType.boolean },
 				{ name: 'viewedByOthers', type: FieldType.boolean },
 				{ name: 'sending', type: FieldType.boolean },
 				{ name: 'error', type: FieldType.boolean },
 				{ name: 'retry', type: FieldType.boolean },
-				{ name: 'attach', type: FieldType.json, defaultValue: null },
-				{ name: 'forward', type: FieldType.json, defaultValue: null },
+				{ name: 'attach', type: FieldType.json, defaultValue: FieldDefaultValue.null },
+				{ name: 'keyboard', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
+				{ name: 'forward', type: FieldType.json, defaultValue: FieldDefaultValue.null },
 				{ name: 'richLinkId', type: FieldType.integer },
 				{ name: 'previousId', type: FieldType.integer },
 				{ name: 'nextId', type: FieldType.integer },

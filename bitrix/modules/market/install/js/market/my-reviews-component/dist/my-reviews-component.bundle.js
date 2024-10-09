@@ -98,11 +98,11 @@ this.BX = this.BX || {};
 	    this.newReviewRating = this.review.RATING;
 	  },
 	  methods: {
-	    getDetailLink: function (appCode) {
+	    getDetailLink: function (reviewItem) {
 	      const params = {
 	        from: 'reviews'
 	      };
-	      return market_marketLinks.MarketLinks.appDetail(appCode, false, params);
+	      return market_marketLinks.MarketLinks.appDetail(reviewItem, params);
 	    },
 	    showMenu: function () {
 	      let menu = [];
@@ -236,7 +236,7 @@ this.BX = this.BX || {};
 			</div>
 			<div class="market-reviews__item-content">
 				<a class="market-reviews__item-logo"
-				   :href="getDetailLink(review.APP_CODE)"
+				   :href="getDetailLink(review)"
 				>
 					<img class="market-reviews__item-logo-img"
 						 :src="review.APP_LOGO"
@@ -246,7 +246,7 @@ this.BX = this.BX || {};
 				<div class="market-reviews__item-main-content">
 					<div class="market-reviews__item-title-wrapper">
 						<a class="market-reviews__item-title"
-						   :href="getDetailLink(review.APP_CODE)"
+						   :href="getDetailLink(review)"
 						>{{ review.APP_NAME }}</a>
 						<div class="market-reviews__item-rating">
 							<Stars :rating="review.RATING"

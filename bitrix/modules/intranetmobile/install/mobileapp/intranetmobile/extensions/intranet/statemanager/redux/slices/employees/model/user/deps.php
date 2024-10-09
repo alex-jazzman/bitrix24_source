@@ -3,6 +3,6 @@
 return [
 	'extensions' => [
 		'utils/type',
-		'utils/object',
+		'intranet:enum',
 	],
 ];

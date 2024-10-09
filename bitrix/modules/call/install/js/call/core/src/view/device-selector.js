@@ -4,7 +4,6 @@ import {Popup} from 'main.popup'
 import {Hardware} from '../hardware';
 import {BackgroundDialog} from '../dialogs/background_dialog';
 import 'ui.switcher';
-import Util from '../util';
 
 const DeviceSelectorEvents = {
 	onMicrophoneSelect: "onMicrophoneSelect",
@@ -115,9 +114,9 @@ export class DeviceSelector
 				position: 'top'
 			},
 			angle: false,
-			background: Util.isNewCallLayoutEnabled() ? '#22272B' : 'white',
+			background: '#22272B',
 			overlay: {
-				backgroundColor: Util.isNewCallLayoutEnabled() ? '#22272B' : 'white',
+				backgroundColor: '#22272B',
 				opacity: 0
 			},
 			content: this.render(),

@@ -1,8 +1,9 @@
-import { ajax, Event, Loc, Tag, Type } from 'main.core';
+import { ajax, Event, Loc, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Button, ButtonState } from 'ui.buttons';
 import { Wizard } from 'tasks.wizard';
+import { Layout } from 'ui.sidepanel.layout';
 import { FormPage } from './pages/form-page';
 import { AboutPage } from './pages/about-page';
 import { SettingsPage } from './pages/settings-page';
@@ -11,6 +12,7 @@ import { Lottie } from 'ui.lottie';
 import flowfLottieIconInfo from '../lottie/tasks-flow-info-icon.json';
 import 'ui.sidepanel-content';
 import 'ui.forms';
+import 'ui.hint';
 import './style.css';
 
 type Params = {
@@ -66,6 +68,8 @@ export class EditForm extends EventEmitter
 
 	#pageChanging: boolean = false;
 
+	#hintManager = null;
+
 	constructor(params: Params = {})
 	{
 		super(params);
@@ -113,49 +117,67 @@ export class EditForm extends EventEmitter
 
 	openInSlider()
 	{
-		top.BX.SidePanel.Instance.open(`tasks-flow-create-slider-${this.#flow.id}`, {
+		const sidePanelId = `tasks-flow-create-slider-${Text.getRandom()}`;
+
+		BX.SidePanel.Instance.open(sidePanelId, {
 			cacheable: true,
-			contentCallback: async (slider) => {
-				this.slider = slider;
+			contentCallback: (slider) => {
+				return Layout.createContent({
+					extensions: ['tasks.flow.edit-form'],
+					design: { section: false },
+					content: async () => {
+						this.slider = slider;
 
-				const {data: noAccess} = await ajax.runAction('tasks.flow.View.Access.check', {
-					data: {
-						flowId: this.#flow.id > 0 ? this.#flow.id : 0,
-						context: 'edit-form',
-						demoFlow: this.#params.demoFlow,
-						guideFlow: this.#params.guideFlow,
-					}
+						const {data: noAccess} = await ajax.runAction('tasks.flow.View.Access.check', {
+							data: {
+								flowId: this.#flow.id > 0 ? this.#flow.id : 0,
+								context: 'edit-form',
+								demoFlow: this.#params.demoFlow,
+								guideFlow: this.#params.guideFlow,
+							}
+						});
+
+						if (noAccess !== null)
+						{
+							return Tag.render`${noAccess.html}`;
+						}
+
+						if (this.#flow.id > 0)
+						{
+							const { data: flowData, error } = await ajax.runAction('tasks.flow.Flow.get', {
+								data: {
+									flowId: this.#flow.id,
+								},
+							});
+
+							this.#flow = this.#getFlow(flowData);
+						}
+
+						this.#pages.forEach((page) => page.setFlow(this.#flow));
+
+						return this.#render();
+					},
+					buttons: [],
 				});
-
-				if (noAccess !== null)
-				{
-					return Tag.render`${noAccess.html}`;
-				}
-
-				if (this.#flow.id > 0)
-				{
-					const { data: flowData, error } = await ajax.runAction('tasks.flow.Flow.get', {
-						data: {
-							flowId: this.#flow.id,
-						},
-					});
-
-					this.#flow = this.#getFlow(flowData);
-				}
-
-				this.#pages.forEach((page) => page.setFlow(this.#flow));
-
-				return this.#render();
 			},
 			width: SLIDER_WIDTH,
 			events: {
-				onLoad: () => {
+				onLoad: (event) => {
 					const aboutPage = this.#pages
 						.find((page) => page.getId() === 'about-flow')
 					;
 					aboutPage.focusToEmptyName();
+
+					this.#hintManager = top.BX.UI.Hint.createInstance({
+						id: sidePanelId,
+						popupParameters: {
+							targetContainer: window.top.document.body,
+						},
+					});
+					this.#hintManager.init(event.slider.getContainer());
 				},
 				onClose: () => {
+					this.#hintManager.hide();
 					this.emit('afterClose');
 				},
 			},
@@ -468,7 +490,7 @@ export class EditForm extends EventEmitter
 			incorrectData.push('templateId');
 		}
 
-		if (flowData.ownerId <= 0)
+		if (flowData.id > 0 && flowData.ownerId <= 0 && flowData.demo === false)
 		{
 			incorrectData.push('ownerId');
 		}

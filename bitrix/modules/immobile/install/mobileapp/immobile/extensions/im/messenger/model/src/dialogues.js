@@ -9,7 +9,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { Color } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { clone, mergeImmutable } = require('utils/object');
+	const { clone, mergeImmutable, isEqual } = require('utils/object');
 	const { copilotModel } = require('im/messenger/model/dialogues/copilot');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -64,6 +64,9 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			manageUi: UserRole.none,
 			manageSettings: UserRole.none,
 			canPost: UserRole.none,
+		},
+		tariffRestrictions: {
+			isHistoryLimitExceeded: false,
 		},
 		aiProvider: '',
 		parentChatId: 0, // unsafe in local database
@@ -278,6 +281,53 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				});
 			},
 
+			/** @function dialoguesModel/setCollectionFromLocalDatabase */
+			setCollectionFromLocalDatabase: (store, payload) => {
+				if (!Array.isArray(payload) && Type.isPlainObject(payload))
+				{
+					payload = [payload];
+				}
+
+				const updateItems = [];
+				const addItems = [];
+				payload.map((element) => {
+					return validate(store, element);
+				}).forEach((element) => {
+					/** @type {DialoguesModelState} */
+					const existingItem = store.state.collection[element.dialogId];
+					if (existingItem)
+					{
+						updateItems.push({
+							dialogId: element.dialogId,
+							fields: element,
+						});
+					}
+					else
+					{
+						addItems.push({
+							dialogId: element.dialogId,
+							fields: { ...dialogState, ...element },
+						});
+					}
+				});
+
+				if (updateItems.length > 0)
+				{
+					store.commit('updateCollection', {
+						actionName: 'setCollectionFromLocalDatabase',
+						data: { updateItems },
+					});
+				}
+
+				if (addItems.length > 0)
+				{
+					store.commit('addCollection', {
+						actionName: 'setCollectionFromLocalDatabase',
+						data: { addItems },
+					});
+				}
+			},
+
 			/** @function dialoguesModel/add */
 			add: (store, payload) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
@@ -315,6 +365,37 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					data: {
 						dialogId: payload.dialogId,
 						fields: validate(store, payload.fields),
+					},
+				});
+
+				return true;
+			},
+
+			/**
+			 * @function dialoguesModel/updateTariffRestrictions
+			 * @param store
+			 * @param {DialogUpdateTariffRestrictionsPayload} payload
+			 */
+			updateTariffRestrictions: (store, payload) => {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				if (payload.isForceUpdate === false
+					&& isEqual(existingItem.tariffRestrictions, payload.tariffRestrictions, true))
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'updateTariffRestrictions',
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							tariffRestrictions: payload.tariffRestrictions,
+						},
 					},
 				});
 
@@ -749,6 +830,23 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			/**
 			 * @param state
+			 * @param {MutationPayload<DialoguesAddCollectionData, DialoguesAddActions>} payload
+			 */
+			addCollection: (state, payload) => {
+				logger.log('dialoguesModel: addCollection mutation', payload);
+
+				payload.data.addItems.forEach((item) => {
+					const {
+						dialogId,
+						fields,
+					} = item;
+
+					state.collection[dialogId] = fields;
+				});
+			},
+
+			/**
+			 * @param state
 			 * @param {MutationPayload<DialoguesUpdateData, DialoguesUpdateActions>} payload
 			 */
 			update: (state, payload) => {
@@ -760,6 +858,23 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				} = payload.data;
 
 				state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<DialoguesUpdateCollectionData, DialoguesUpdateActions>} payload
+			 */
+			updateCollection: (state, payload) => {
+				logger.log('dialoguesModel: updateCollection mutation', payload);
+
+				payload.data.updateItems.forEach((item) => {
+					const {
+						dialogId,
+						fields,
+					} = item;
+
+					state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
+				});
 			},
 
 			/**
@@ -1097,6 +1212,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			result.parentMessageId = fields.parentMessageId;
 		}
 
+		if (fields.tariffRestrictions)
+		{
+			result.tariffRestrictions = fields.tariffRestrictions;
+		}
+
 		return result;
 	}
 
@@ -1140,6 +1260,16 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			}
 			else
 			{
+				if (Type.isNil(rawFirstViewers))
+				{
+					// case for get data from local db (lastMessageViews is empty object)
+					return {
+						countOfViewers: 0,
+						firstViewer: null,
+						messageId: 0,
+					};
+				}
+
 				for (const rawFirstViewer of rawFirstViewers)
 				{
 					if (rawFirstViewer.userId === MessengerParams.getUserId())

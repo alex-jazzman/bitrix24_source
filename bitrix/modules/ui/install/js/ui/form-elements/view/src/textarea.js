@@ -95,7 +95,7 @@ export class TextArea extends BaseField
 			></textarea>
 		`;
 
-		node.value = Text.encode(this.#defaultValue);
+		node.value = this.#defaultValue;
 
 		return node;
 	}

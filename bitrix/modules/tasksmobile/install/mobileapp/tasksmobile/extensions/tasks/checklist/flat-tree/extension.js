@@ -19,17 +19,14 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			const {
 				taskId,
 				userId,
-				checklist,
 				hideCompleted,
-				checklistFlatTree,
 			} = props;
 
 			this.isSaved = false;
 			this.userId = userId;
 			this.taskId = taskId;
-			this.checklistFlatTree = checklistFlatTree || this.createFlatTree(checklist);
-			this.checklist = this.createChecklistFlatTree();
 			this.conditions = { hideCompleted };
+			this.checklist = this.createChecklist(props);
 			this.rootItem = this.findRootItem();
 
 			this.updateCompletedItems();
@@ -70,6 +67,18 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			});
 
 			return flatCheckList;
+		}
+
+		createChecklist(props)
+		{
+			const { checklistFlatTree, checklist } = props;
+
+			const flatTree = checklistFlatTree || this.createFlatTree(checklist);
+
+			return flatTree.map((item) => new CheckListFlatTreeItem({
+				item,
+				checklist: this,
+			}));
 		}
 
 		createFlatTree(checklistTree)
@@ -131,12 +140,9 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			});
 		}
 
-		createChecklistFlatTree()
+		getFlatTree()
 		{
-			return this.getChecklistFlatTree().map((item) => new CheckListFlatTreeItem({
-				item,
-				checklist: this,
-			}));
+			return this.getChecklist().map((checklistItem) => checklistItem.getItem());
 		}
 
 		getChecklist()
@@ -213,11 +219,6 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			}
 
 			return callback(item);
-		}
-
-		getChecklistFlatTree()
-		{
-			return this.checklistFlatTree;
 		}
 
 		/**

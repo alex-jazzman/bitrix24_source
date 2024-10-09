@@ -30,6 +30,7 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 	 * @param {boolean} [wideMode=false]
 	 * @param {string|null} [colorScheme=null]
 	 * @param {function} [bindContainerRef]
+	 * @param {number} [isRestricted=false]
 	 */
 	const AirCompactThemeView = ({
 		testId,
@@ -47,6 +48,7 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 		wideMode = false,
 		colorScheme = null,
 		bindContainerRef,
+		isRestricted = false,
 	}) => {
 		const leftContent = [];
 
@@ -90,11 +92,8 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 				IconView({
 					testId: `${testId}_COMPACT_FIELD_ICON`,
 					icon: leftIcon.icon,
-					color: colors.content,
+					color: (isRestricted ? Color.base1 : colors.content),
 					size: ICON_SIZE,
-					style: {
-						marginLeft: defaultLeftIcon ? Indent.XS.toNumber() : null,
-					},
 				}),
 			);
 		}
@@ -110,7 +109,6 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 						height: ICON_SIZE,
 						borderRadius: ICON_SIZE / 2,
 						opacity: readOnly ? 0.22 : 1,
-						marginLeft: defaultLeftIcon ? Indent.XS.toNumber() : null,
 					},
 				}),
 			);
@@ -121,7 +119,7 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 				IconView({
 					testId: `${testId}_COMPACT_DEFAULT_FIELD_ICON`,
 					icon: defaultLeftIcon,
-					color: colors.content,
+					color: (isRestricted ? Color.base1 : colors.content),
 					size: ICON_SIZE,
 				}),
 			);
@@ -211,7 +209,7 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 				},
 				DEFAULT: {
 					content: Color.accentMainPrimary,
-					border: Color.accentSoftBlue1,
+					border: Color.accentSoftBorderBlue,
 				},
 			};
 

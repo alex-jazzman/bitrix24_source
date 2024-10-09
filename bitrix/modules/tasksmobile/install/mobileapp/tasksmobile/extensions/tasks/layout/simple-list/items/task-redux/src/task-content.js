@@ -3,23 +3,30 @@
  */
 jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, exports, module) => {
 	const { transition, pause, chain } = require('animation');
-	const { Color } = require('tokens');
+	const { Color, Indent } = require('tokens');
 	const { PureComponent } = require('layout/pure-component');
 	const { CounterView } = require('layout/ui/counter-view');
 	const { ReduxAvatar } = require('layout/ui/user/avatar');
 	const { connect } = require('statemanager/redux/connect');
+	const store = require('statemanager/redux/store');
+	const { dispatch } = store;
 	const { DeadlinePill } = require('tasks/layout/deadline-pill');
 	const {
 		selectByTaskIdOrGuid,
 		selectCounter,
 		selectIsCompleted,
+		selectTimerState,
+		setTimeElapsed,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { Moment } = require('utils/date/moment');
 	const { DynamicDateFormatter } = require('utils/date/dynamic-date-formatter');
 	const { date, dayShortMonth, shortTime } = require('utils/date/formats');
 	const { withPressed } = require('utils/color');
-	const { TaskStatus, TaskCounter } = require('tasks/enum');
+	const { TaskStatus, TaskCounter, TimerState } = require('tasks/enum');
 	const { Text3, Text5 } = require('ui-system/typography/text');
+	const { TimeTrackingTimerIcon } = require('tasks/layout/fields/time-tracking/timer');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Loc } = require('loc');
 
 	class TaskContent extends PureComponent
 	{
@@ -208,6 +215,17 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 
 		renderBody()
 		{
+			if (this.task?.isCreationErrorExist)
+			{
+				return View(
+					{
+						style: this.styles.body(this.task),
+					},
+					this.renderResponsible(),
+					this.renderCreationError(),
+				);
+			}
+
 			return View(
 				{
 					style: this.styles.body(this.task),
@@ -250,6 +268,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 							justifyContent: 'flex-end',
 						},
 					},
+					this.renderTimeTrackingIcon(),
 					this.renderCounter(),
 					this.renderPinIcon(),
 				),
@@ -362,7 +381,11 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				}
 
 				return View(
-					{},
+					{
+						style: {
+							marginLeft: Indent.M.getValue(),
+						},
+					},
 					CounterView(
 						counter.value,
 						{
@@ -394,11 +417,73 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 					svg: {
 						content: Icons.pin,
 					},
-					style: this.styles.iconSmaller,
+					style: {
+						...this.styles.iconSmaller,
+						marginLeft: Indent.M.getValue(),
+					},
 				});
 			}
 
 			return null;
+		}
+
+		renderTimeTrackingIcon()
+		{
+			const allowTimeTracking = this.task?.allowTimeTracking;
+			const timerState = this.task?.timerState;
+			const seconds = this.task?.timeElapsed;
+			const timeEstimate = this.task?.timeEstimate;
+			const isActive = this.task?.isTimerRunningForCurrentUser;
+			const Colors = {
+				[TimerState.OVERDUE]: Color.accentMainAlert.toHex(),
+				[TimerState.RUNNING]: Color.accentMainPrimaryalt.toHex(),
+				[TimerState.PAUSED]: Color.base3.toHex(),
+			};
+
+			if (!allowTimeTracking)
+			{
+				return null;
+			}
+
+			return new TimeTrackingTimerIcon({
+				timeEstimate,
+				seconds,
+				isActive,
+				testId: `${this.props.testId}_TIME_TRACKING_${timerState}`,
+				color: Colors[timerState],
+				onTimeOver: this.#onTimeOver,
+			});
+		}
+
+		#onTimeOver = (timeElapsed) => {
+			dispatch(setTimeElapsed({
+				timeElapsed,
+				taskId: this.task?.id,
+			}));
+		};
+
+		renderCreationError()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+					},
+				},
+				Text5({
+					style: {
+						color: Color.accentMainAlert.toHex(),
+					},
+					text: Loc.getMessage('M_TASKS_TASK_ITEM_ERROR'),
+				}),
+				IconView({
+					style: {
+						marginLeft: Indent.XS.toNumber(),
+					},
+					icon: Icon.ALERT,
+					color: Color.accentMainAlert,
+				}),
+			);
 		}
 
 		get styles()
@@ -505,6 +590,11 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			checklist,
 			activityDate,
 			status,
+			allowTimeTracking,
+			timeElapsed,
+			timeEstimate,
+			isTimerRunningForCurrentUser,
+			isCreationErrorExist,
 		} = task;
 
 		return {
@@ -518,6 +608,12 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				isRepeatable,
 				checklist,
 				status,
+				allowTimeTracking,
+				timeElapsed,
+				timeEstimate,
+				isTimerRunningForCurrentUser,
+				isCreationErrorExist,
+				timerState: selectTimerState(task),
 				activityDate: activityDate - (activityDate % 60),
 				counter: selectCounter(task),
 				isCompleted: selectIsCompleted(task),

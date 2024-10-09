@@ -180,6 +180,12 @@ $fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleI
 	array_keys($arResult['LEAD']),
 );
 
+$stageToSemanticsMap = [];
+foreach (Container::getInstance()->getFactory(\CCrmOwnerType::Lead)?->getStages() as $stage)
+{
+	$stageToSemanticsMap[$stage->getStatusId()] = $stage->getSemantics();
+}
+
 if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 {
 	$arResult['LEAD'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Lead))->appendNearestActivityBlock($arResult['LEAD']);
@@ -550,11 +556,21 @@ js,
 		$webformId = $arResult['WEBFORM_LIST'][$arLead['WEBFORM_ID']] ?? $arLead['WEBFORM_ID'];
 	}
 
+	$isLeadConverted =
+		isset($arLead['STATUS_ID'])
+		&& isset($stageToSemanticsMap[$arLead['STATUS_ID']])
+		&& $stageToSemanticsMap[$arLead['STATUS_ID']] === \Bitrix\Crm\PhaseSemantics::SUCCESS
+	;
+
 	$resultItem = array(
 		'id' => $arLead['ID'],
 		'actions' => $arActions,
 		'data' => $arLead,
 		'editable' => !$arLead['EDIT'] ? $arColumns : true,
+		'editableColumns' => [
+			// don't allow moving leads that are already converted
+			'STATUS_ID' => !$isLeadConverted,
+		],
 		'columns' => array(
 			'LEAD_SUMMARY' => CCrmViewHelper::RenderInfo(
 				$arLead['PATH_TO_LEAD_SHOW'],

@@ -1,4 +1,4 @@
-import { Dom, Event, Loc, Runtime, Tag } from 'main.core';
+import { Dom, Event, Loc, Runtime, Tag, Uri } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 type Params = {
@@ -201,6 +201,10 @@ export class BlogCopilotReadonly
 
 	#copyIntoNewPost(text: string): void
 	{
-		location.href = `${this.#params.pathToPostCreate}#${encodeURIComponent(text)}`;
+		const pathToPostCreate = Uri.addParam(this.#params.pathToPostCreate, {
+			getTextFromHash: 'Y',
+		});
+
+		location.href = `${pathToPostCreate}#${encodeURIComponent(text)}`;
 	}
 }

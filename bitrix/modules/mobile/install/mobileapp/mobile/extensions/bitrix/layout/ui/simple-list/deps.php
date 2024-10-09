@@ -16,6 +16,7 @@ return [
 		'layout/ui/simple-list/items/extended',
 		'layout/ui/simple-list/skeleton',
 		'layout/ui/simple-list/view-mode',
+		'layout/ui/simple-list/menu-engine',
 		'ui-system/blocks/status-block',
 		'loc',
 		'type',

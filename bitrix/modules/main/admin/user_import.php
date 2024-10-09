@@ -606,11 +606,11 @@ if(CModule::IncludeModule("iblock")):
 					{
 						if(!fields[field])
 						{
-							res += '<tr><td><input type="checkbox" name="LDAPMAP['+field+']" id="'+field+'" value="'+AllMaps[field]['MAP']+'" onclick="ChCh(this.checked)" checked></td><td><label for="'+field+'">'+AllFields[field]['NAME']+'</label></td></tr>';
+							res += '<tr><td><input type="checkbox" name="LDAPMAP['+field+']" id="'+field+'" value="'+AllMaps[field]['MAP']+'" onclick="ChCh(this.checked)"></td><td><label for="'+field+'">'+AllFields[field]['NAME']+'</label></td></tr>';
 						}
 					}
 					if(res.length>0)
-						definedfields.innerHTML = '<table id="chb"><tr><td><input type="checkbox" id="eall" onclick="Ch(this.checked)" checked></td><td><label for="eall"><?echo GetMessage("USER_IMPORT_ALL")?></label></td></tr>'+res+'</table>';
+						definedfields.innerHTML = '<table id="chb"><tr><td><input type="checkbox" id="eall" onclick="Ch(this.checked)"></td><td><label for="eall"><?echo GetMessage("USER_IMPORT_ALL")?></label></td></tr>'+res+'</table>';
 				}
 				setTimeout('OnLdapSelect(<?=$indSelected?>);', 1);
 			</script>

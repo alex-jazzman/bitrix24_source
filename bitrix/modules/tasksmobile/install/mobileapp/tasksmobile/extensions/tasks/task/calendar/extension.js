@@ -2,7 +2,7 @@
  * @module tasks/task/calendar
  */
 jn.define('tasks/task/calendar', (require, exports, module) => {
-	const { RequestExecutor } = require('rest');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Type } = require('type');
 
 	class Calendar
@@ -59,12 +59,19 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 
 				this.isSettingsLoading = true;
 
-				(new RequestExecutor('tasksmobile.Calendar.getSettings'))
+				new RunActionExecutor('tasksmobile.Calendar.getSettings')
 					.setCacheHandler((response) => {
-						this.setSettings(response);
+						this.setSettings(response.data);
 					})
 					.setHandler((response) => {
-						this.setSettings(response);
+						if (response.status !== 'success')
+						{
+							reject();
+
+							return;
+						}
+
+						this.setSettings(response.data);
 
 						this.isSettingsLoading = false;
 						this.isSettingsLoaded = true;
@@ -72,10 +79,7 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 						resolve();
 					})
 					.call(true)
-					.catch((e) => {
-						console.error(e);
-						reject();
-					});
+				;
 			});
 		}
 

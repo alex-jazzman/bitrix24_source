@@ -7,6 +7,8 @@ import { PinService } from './classes/pin';
 import { ReadService } from './classes/read';
 import { UserService } from './classes/user';
 
+import type { UpdateChatConfig, GetMemberEntitiesConfig } from './types/chat';
+
 export class ChatService
 {
 	#loadService: LoadService;
@@ -76,6 +78,16 @@ export class ChatService
 	changeAvatar(chatId: number, avatarFile: File): Promise
 	{
 		return this.#updateService.changeAvatar(chatId, avatarFile);
+	}
+
+	updateChat(chatId: number, chatConfig: UpdateChatConfig): Promise<boolean>
+	{
+		return this.#updateService.updateChat(chatId, chatConfig);
+	}
+
+	getMemberEntities(chatId: number): Promise<GetMemberEntitiesConfig>
+	{
+		return this.#updateService.getMemberEntities(chatId);
 	}
 	// endregion 'update'
 

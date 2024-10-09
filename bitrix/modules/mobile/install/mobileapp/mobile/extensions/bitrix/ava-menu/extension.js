@@ -26,10 +26,8 @@ jn.define('ava-menu', (require, exports, module) => {
 		 */
 		static setCounter({ elemId, value })
 		{
-			if (!menu)
+			if (!this.isMenuExists())
 			{
-				console.error('Ava-menu is not supported in your app yet');
-
 				return;
 			}
 
@@ -59,6 +57,37 @@ jn.define('ava-menu', (require, exports, module) => {
 			Application.setBadges({ user_avatar: String(newTotalCounter) });
 		}
 
+		static setUserInfo({ title, imageUrl })
+		{
+			if (!this.isMenuExists())
+			{
+				return;
+			}
+
+			const userInfo = menu.getUserInfo();
+
+			if (!userInfo)
+			{
+				console.error('Ava-menu elements are not loaded');
+
+				return;
+			}
+
+			menu.setUserInfo({ ...userInfo, title, imageUrl });
+		}
+
+		static isMenuExists()
+		{
+			if (!menu)
+			{
+				console.error('Ava-menu is not supported in your app yet');
+
+				return false;
+			}
+
+			return true;
+		}
+
 		static init()
 		{
 			if (!menu)
@@ -79,7 +108,18 @@ jn.define('ava-menu', (require, exports, module) => {
 
 				if (info?.customData?.ahaMoment?.shouldShow === 'Y')
 				{
-					showAhaMoment();
+					try
+					{
+						// eslint-disable-next-line no-unused-vars
+						const { IntranetBackground } = require('intranet/background');
+						BX.addCustomEvent('userMiniProfileClosed', () => {
+							showAhaMoment();
+						});
+					}
+					catch
+					{
+						showAhaMoment();
+					}
 				}
 
 				CheckIn.handleItemColor();

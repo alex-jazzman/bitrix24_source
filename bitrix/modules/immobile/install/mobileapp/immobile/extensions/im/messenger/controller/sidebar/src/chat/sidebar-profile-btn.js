@@ -27,7 +27,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-btn', (require, 
 					style: {
 						marginTop: 16,
 						marginHorizontal: 14,
-						marginBottom: 12,
+						marginBottom: 14,
 						flexDirection: 'row',
 						alignSelf: 'stretch',
 						alignItems: 'center',
@@ -68,7 +68,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-btn', (require, 
 		{
 			Logger.log(`${this.constructor.name}.view.unsubscribeStoreEvents`);
 			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeStoreEvents);
-			BX.removeCustomEvent('oncChangeMuteBtn', this.onChangeMuteBtn);
+			BX.removeCustomEvent('onChangeMuteBtn', this.onChangeMuteBtn);
 			BX.removeCustomEvent('onUpdateBtn', this.onUpdateBtn);
 		}
 

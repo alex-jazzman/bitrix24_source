@@ -27,6 +27,9 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 			'entityTypeId' => $arResult['ENTITY_TYPE_ID'],
 			'categoryId' => '0',
+			'performance' => [
+				'layoutFooterEveryItemRender' => 'Y',
+			],
 		],
 		'USE_UI_TOOLBAR' => 'Y',
 	],
@@ -52,3 +55,4 @@ if ($arResult['SHOW_TARIFF_SLIDER'] ?? false):
 </script>
 <?php
 endif;
+?>

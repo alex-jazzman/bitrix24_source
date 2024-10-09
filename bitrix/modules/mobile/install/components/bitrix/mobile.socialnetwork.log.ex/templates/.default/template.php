@@ -77,7 +77,7 @@ if (!empty($arResult['TARGET']))
 	ob_start();
 }
 
-if ($arResult["FatalError"] <> '')
+if (!empty($arResult["FatalError"]))
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?php
 }
@@ -219,7 +219,7 @@ else
 			)?>,
 			groupID: <?=$arParams["GROUP_ID"]?>,
 			canAddPost: <?= ((int)$arResult["MICROBLOG_USER_ID"] > 0 ? 'true' : 'false') ?>,
-			groupImage: '<?=$arResult["GROUP_IMAGE"]?>',
+			groupImage: '<?= $arResult["GROUP_IMAGE"] ?? '' ?>',
 			curUrl: '<?=$APPLICATION->GetCurPageParam("", array("LAST_LOG_TS", "AJAX_CALL", "RELOAD", "RELOAD_JSON"))?>',
 			appCacheDebug: <?= Composite\AppCache::getInstance()->getDebug() ? "true" : "false" ?>,
 			tmstmp: <?=time()?>,
@@ -236,9 +236,9 @@ else
 			medalsList: <?=CUtil::PhpToJSObject($arResult["MEDALS_LIST"])?>,
 			importantData: <?=CUtil::PhpToJSObject($arResult["IMPORTANT_DATA"])?>,
 			postFormData: <?=CUtil::PhpToJSObject($arResult["POST_FORM_DATA"])?>,
-			unreadLogIdData: '<?= $arResult['unreadLogIdData'] ?>',
-			unreadLogCommentIdData: '<?= $arResult['unreadLogCommentIdData'] ?>',
-			unreadBlogCommentIdData: '<?= $arResult['unreadBlogCommentIdData'] ?>',
+			unreadLogIdData: '<?= $arResult['unreadLogIdData'] ?? '' ?>',
+			unreadLogCommentIdData: '<?= $arResult['unreadLogCommentIdData'] ?? '' ?>',
+			unreadBlogCommentIdData: '<?= $arResult['unreadBlogCommentIdData'] ?? '' ?>',
 		};
 
 		BX.ready(function() {
@@ -458,7 +458,7 @@ else
 			?><span id="blog-post-first-after"></span><?php
 	}
 
-	if($arResult["ErrorMessage"] <> '')
+	if (!empty($arResult["ErrorMessage"]))
 	{
 		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?php
 	}
@@ -979,7 +979,7 @@ else
 					$res = array(
 						"PROPS" => array(
 							"CONTENT" => $strText,
-							"JS" => $resources["SCRIPTS"],
+							"JS" => $resources["SCRIPTS"] ?? null,
 							"CSS" => $resources["CSS"],
 //							"STRINGS" => $resources["STRINGS"]
 							"STRINGS" => ""

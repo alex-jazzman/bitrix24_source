@@ -22,19 +22,20 @@ this.BX.UI = this.BX.UI || {};
 	    this.id = options.id || null;
 	    this.text = options.text;
 	    this.areaPadding = options.areaPadding;
-	    this.link = options.link || "";
+	    this.link = options.link || '';
 	    this.linkTitle = options.linkTitle || null;
 	    this.rounded = options.rounded || false;
 	    this.title = options.title || null;
 	    this.iconSrc = options.iconSrc || null;
 	    this.article = options.article || null;
+	    this.infoHelperCode = options.infoHelperCode || null;
 	    this.position = options.position || null;
 	    this.cursorMode = options.cursorMode || false;
 	    this.targetEvent = options.targetEvent || null;
 	    this.buttons = options.buttons || [];
 	    this.condition = options.condition || null;
 	    const events = main_core.Type.isPlainObject(options.events) ? options.events : {};
-	    for (let eventName in events) {
+	    for (const eventName in events) {
 	      const callback = main_core.Type.isFunction(events[eventName]) ? events[eventName] : main_core.Reflection.getClass(events[eventName]);
 	      if (callback) {
 	        this.subscribe(this.constructor.getFullEventName(eventName), () => {
@@ -93,6 +94,9 @@ this.BX.UI = this.BX.UI || {};
 	  getArticle() {
 	    return this.article;
 	  }
+	  getInfoHelperCode() {
+	    return this.infoHelperCode;
+	  }
 	  getCursorMode() {
 	    return this.cursorMode;
 	  }
@@ -100,7 +104,7 @@ this.BX.UI = this.BX.UI || {};
 	    return this.targetEvent;
 	  }
 	  static getFullEventName(shortName) {
-	    return "Step:" + shortName;
+	    return `Step:${shortName}`;
 	  }
 	  setTarget(target) {
 	    this.target = target;
@@ -670,7 +674,7 @@ this.BX.UI = this.BX.UI || {};
 				`), encodeURI(this.getCurrentStep().getIconSrc()));
 	      }
 	      let linkNode = '';
-	      if (this.getCurrentStep().getLink() || this.getCurrentStep().getArticle()) {
+	      if (this.getCurrentStep().getLink() || this.getCurrentStep().getArticle() || this.getCurrentStep().getInfoHelperCode()) {
 	        linkNode = this.getLink();
 	      }
 	      this.layout.content = main_core.Tag.render(_t5 || (_t5 = _`
@@ -707,10 +711,12 @@ this.BX.UI = this.BX.UI || {};
 	    main_core.Event.unbindAll(this.layout.link, 'click');
 	    this.getTitle().innerHTML = this.getCurrentStep().getTitle();
 	    this.getText().innerHTML = this.getCurrentStep().getText();
-	    if (this.getCurrentStep().getArticle() || this.getCurrentStep().getLink()) {
-	      main_core.Dom.removeClass(this.layout.link, "ui-tour-popup-link-hide");
+	    if (this.getCurrentStep().getArticle() || this.getCurrentStep().getLink() || this.getCurrentStep().getInfoHelperCode()) {
+	      main_core.Dom.removeClass(this.layout.link, 'ui-tour-popup-link-hide');
 	      if (this.getCurrentStep().getArticle()) {
-	        main_core.Event.bind(this.layout.link, "click", this.handleClickLink.bind(this));
+	        main_core.Event.bind(this.layout.link, 'click', this.handleClickLink.bind(this));
+	      } else if (this.getCurrentStep().getInfoHelperCode()) {
+	        main_core.Event.bind(this.layout.link, 'click', this.handleInfoHelperCodeClickLink.bind(this));
 	      }
 	      if (this.getCurrentStep().getLink()) {
 	        this.getLink().setAttribute('href', this.getCurrentStep().getLink());
@@ -747,6 +753,21 @@ this.BX.UI = this.BX.UI || {};
 	      main_core_events.EventEmitter.subscribe(this.helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
 	        this.getPopup().setAutoHide(true);
 	      });
+	    }
+	  }
+	  handleInfoHelperCodeClickLink() {
+	    event.preventDefault();
+	    if (main_core.Reflection.getClass('BX.UI.InfoHelper.show')) {
+	      const helper = top.BX.UI.InfoHelper;
+	      helper.show(this.getCurrentStep().getInfoHelperCode());
+	      if (this.onEvent) {
+	        if (helper.isOpen()) {
+	          this.getPopup().setAutoHide(false);
+	        }
+	        main_core_events.EventEmitter.subscribe(helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
+	          this.getPopup().setAutoHide(true);
+	        });
+	      }
 	    }
 	  }
 
@@ -1053,14 +1074,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  add(options) {
 	    const guide = this.create(options);
-	    guide.subscribe("UI.Tour.Guide:onFinish", () => {
+	    guide.subscribe('UI.Tour.Guide:onFinish', () => {
 	      this.handleTourFinish(guide);
 	    });
-	    if (!this.currentGuide) {
+	    if (this.currentGuide) {
+	      this.autoStartQueue.push(guide);
+	    } else {
 	      this.currentGuide = guide;
 	      guide.start();
-	    } else {
-	      this.autoStartQueue.push(guide);
 	    }
 	  }
 

@@ -164,7 +164,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 			colorLight : '#ffffff'
 		});
 
-		var pullConfig = <?= CUtil::PhpToJSObject($arResult['QRCODE_CONFIG']) ?>;
+		var pullConfig = <?= \Bitrix\Main\Web\Json::encode($arResult['QRCODE_CONFIG']) ?>;
 		if (pullConfig)
 		{
 			var Pull = new BX.PullClient();

@@ -5,7 +5,6 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Profile } = require('user/profile/src/profile');
 
-	const crmEntityDetailComponent = 'crm:crm.entity.details';
 	const COMMUNICATION_PATH = '/bitrix/mobileapp/mobile/extensions/bitrix/user/profile/images/communication';
 
 	const statusColor = (status) => {
@@ -127,7 +126,9 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 							if (this.formFields[fieldName].asterix)
 							{
 								this.formFields[fieldName].title = `${this.formFields[fieldName].title}*`;
-								const sectionIndex = this.formSections.findIndex((section) => section.id === this.formFields[fieldName].sectionCode);
+								const sectionIndex = this.formSections.findIndex((section) => (
+									section.id === this.formFields[fieldName].sectionCode
+								));
 								if (this.formSections[sectionIndex].footer)
 								{
 									this.formSections[sectionIndex].footer += `\n${this.formFields[fieldName].asterix}`;
@@ -360,13 +361,10 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 				BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [dialogParams], 'im.messenger');
 			};
 
-			if (this.isCrmEntityDetail())
+			const imOpener = DialogOpener();
+			if (typeof imOpener === 'function')
 			{
-				const imOpener = DialogOpener();
-				if (typeof imOpener === 'function')
-				{
-					openDialog = () => imOpener.open(dialogParams);
-				}
+				openDialog = () => imOpener.open(dialogParams);
 			}
 
 			if (!this.isBackdrop)
@@ -377,18 +375,6 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 			this.form.close(openDialog);
 
 			return true;
-		}
-
-		isCrmEntityDetail()
-		{
-			if (!PageManager.getNavigator())
-			{
-				return null;
-			}
-
-			const { type } = PageManager.getNavigator().getVisible();
-
-			return crmEntityDetailComponent === type;
 		}
 
 		/**

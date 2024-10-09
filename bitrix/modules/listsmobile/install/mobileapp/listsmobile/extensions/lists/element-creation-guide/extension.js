@@ -33,7 +33,7 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 					onlyMediumPosition: true,
 					shouldResizeContent: true,
 					swipeAllowed: true,
-					swipeContentAllowed: false,
+					swipeContentAllowed: true,
 				},
 				onReady: (readyLayout) => {
 					readyLayout.showComponent(new ElementCreationGuide({ ...props, layout: readyLayout }));

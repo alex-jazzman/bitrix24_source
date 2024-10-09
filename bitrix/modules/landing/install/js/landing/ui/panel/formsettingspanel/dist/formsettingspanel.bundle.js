@@ -170,7 +170,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }, {
 	    key: "isCrmFormPage",
 	    value: function isCrmFormPage() {
-	      return landing_env.Env.getInstance().getOptions().specialType === 'crm_forms';
+	      return landing_env.Env.getInstance().getSpecialType() === 'crm_forms';
 	    }
 	  }, {
 	    key: "getFormDesignButton",

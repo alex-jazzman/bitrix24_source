@@ -206,7 +206,7 @@
 
 		hasScrollRight()
 		{
-			return this.table.offsetWidth > (this.container.scrollLeft + this.container.clientWidth);
+			return this.table.offsetWidth > Math.round(this.container.scrollLeft + this.container.clientWidth);
 		},
 
 		showLeftEar()

@@ -32,7 +32,7 @@ export class ProductSearchInputPlacement extends ProductSearchInputBase
 			this.#onProductsFound.bind(this),
 		);
 
-		this.#initializePlacement().catch(console.error);
+		this.#initializePlacement().catch(() => {});
 	}
 
 	isSearchEnabled(): boolean
@@ -42,7 +42,7 @@ export class ProductSearchInputPlacement extends ProductSearchInputBase
 
 	onDialogShow(event: BaseEvent): void
 	{
-		this.#initializePlacement().catch(console.error);
+		this.#initializePlacement().catch(() => {});
 	}
 
 	getDialogParams(): Object
@@ -76,7 +76,7 @@ export class ProductSearchInputPlacement extends ProductSearchInputBase
 		this.getDialog().getPopup().show();
 		this.#initializePlacement()
 			.then(() => this.searchInDialogActual())
-			.catch(console.error);
+			.catch(() => {});
 	}
 
 	searchInDialogActual()
@@ -98,7 +98,7 @@ export class ProductSearchInputPlacement extends ProductSearchInputBase
 			dialog.getSearchTab().getStub().hide();
 			this.#initializePlacement()
 				.then(() => this.#searchInExternalCatalog())
-				.catch(console.error);
+				.catch(() => {});
 		}
 	}
 
@@ -114,7 +114,7 @@ export class ProductSearchInputPlacement extends ProductSearchInputBase
 		this.getDialog().getPopup().show();
 		this.#initializePlacement()
 			.then(() => this.showItems())
-			.catch(console.error);
+			.catch(() => {});
 	}
 
 	getPlaceholder(): string
@@ -421,7 +421,7 @@ export class ProductSearchInputPlacement extends ProductSearchInputBase
 
 	loadPreselectedItems(): void
 	{
-		this.selector.placement.initialize().then(() => super.loadPreselectedItems());
+		this.selector.placement.initialize().then(() => super.loadPreselectedItems()).catch(() => {});
 	}
 
 	#renderStub(tab: Tab, stubOptions: Object)

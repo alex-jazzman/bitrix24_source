@@ -194,13 +194,14 @@ jn.define('text-editor/components/text-input', (require, exports, module) => {
 		async getPlainTextValue()
 		{
 			const textInput = await this.getTextInput();
-			
+
 			return textInput.getTextValue();
 		}
 
 		async blur()
 		{
-			(await this.getTextInput()).blur();
+			const textInput = await this.getTextInput();
+			textInput.blur({ hideKeyboard: true });
 		}
 
 		setValue(value)

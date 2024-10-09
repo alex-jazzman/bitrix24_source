@@ -1542,7 +1542,7 @@ class CreateDBStep extends CWizardStep
 
 		$DB->DebugToFile = false;
 
-		if (!$DB->Connect($this->dbHost, $this->dbName, $this->dbUser, $this->dbPassword))
+		if (!$DB->DoConnect())
 		{
 			$this->SetError(InstallGetMessage("COULD_NOT_CONNECT") . " " . $DB->db_Error);
 			return;

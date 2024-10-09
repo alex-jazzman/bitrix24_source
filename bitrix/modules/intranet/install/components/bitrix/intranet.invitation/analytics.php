@@ -76,8 +76,10 @@ class Analytics
 		string $category = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $event = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $status = '',
+		array $userData = []
 	): void
 	{
+		global $USER;
 		$analyticData = $this->getData();
 		$analytic = [
 			'tool' => self::ANALYTIC_TOOL,
@@ -85,11 +87,14 @@ class Analytics
 			'event' => $event,
 			'section' => $analyticData['source'] ?? '',
 			'p1' => $this->getAdmin(),
+			'p2' => isset($userData['ADD_SEND_PASSWORD']) && $userData['ADD_SEND_PASSWORD'] === 'Y' ? 'Сonfirm_Y' : 'Сonfirm_N',
+			'p3' => isset($userData['UF_DEPARTMENT']) && count($userData['UF_DEPARTMENT']) > 0 ? 'department_Y' : 'department_N',
+			'p5' => 'userId_' . $USER->getId(),
 		];
 
 		if ($status !== '')
 		{
-			$analytic['status'] = $status === 'Y' ? 'on' : 'off';
+			$analytic['status'] = $status === 'Y' ? 'success' : 'fail';
 		}
 		$analytics[] = $analytic;
 		$this->send($analytics);
@@ -123,7 +128,7 @@ class Analytics
 			'section' => $analyticData['source'] ?? '',
 			'subSection' => $subSection,
 			'p1' => $this->getAdmin(),
-			'p5' => $USER->getId(),
+			'p5' => 'userId_' . $USER->getId(),
 		];
 
 		if ($analyticEmails > 0)

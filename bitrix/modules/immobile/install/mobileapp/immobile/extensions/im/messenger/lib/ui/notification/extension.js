@@ -2,6 +2,7 @@
  * @module im/messenger/lib/ui/notification
  */
 jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
+	/* global InAppNotifier, include  */
 	include('InAppNotifier');
 
 	const { Loc } = require('loc');
@@ -37,6 +38,15 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 		static showToastWithParams(params, layoutWidget = null)
 		{
 			MessengerToast.showWithParams(params, layoutWidget);
+		}
+
+		/**
+		 * @param {ShowToastParams} params
+		 * @param layoutWidget
+		 */
+		static showOfflineToast(params, layoutWidget = null)
+		{
+			MessengerToast.showOfflineToast(params, layoutWidget);
 		}
 	}
 

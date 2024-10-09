@@ -6,6 +6,12 @@ return [
 		'statemanager/redux/toolkit',
 		'utils/type',
 		'tasks:statemanager/redux/slices/flows/meta',
-		'tasks:statemanager/redux/slices/flows/selector',
+	],
+	'bundle' => [
+		'./src/selector',
+		'./src/action',
+		'./src/reducer',
+		'./src/slice',
+		'./src/tool',
 	],
 ];

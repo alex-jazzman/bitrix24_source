@@ -25,6 +25,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _skipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("skipMenu");
 	var _sliderIsMinimizing = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sliderIsMinimizing");
 	var _useTodoEditorV = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useTodoEditorV2");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _getSliderInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSliderInstance");
 	var _isSliderMinimizeAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSliderMinimizeAvailable");
@@ -57,6 +58,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _showCancelNotificationInParentWindow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCancelNotificationInParentWindow");
 	class TodoCreateNotification {
 	  constructor(_params) {
+	    var _params$analytics;
 	    Object.defineProperty(this, _showCancelNotificationInParentWindow, {
 	      value: _showCancelNotificationInParentWindow2
 	    });
@@ -203,6 +205,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: null
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = _params.entityTypeId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = _params.entityId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId] = _params.entityStageId;
@@ -210,6 +216,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _finalStages)[_finalStages] = _params.finalStages;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = Boolean(_params.skipPeriod);
 	    babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV] = _params.useTodoEditorV2 === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = (_params$analytics = _params.analytics) != null ? _params$analytics : {};
 	    if (BX.CrmTimelineManager) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline] = BX.CrmTimelineManager.getDefault();
 	    }
@@ -338,7 +345,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr11 = _babelHelpers$classPr10.getButton(SKIP_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr11.setState(ui_buttons.ButtonState.WAITING);
 	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
 	    analytics: {
-	      subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics],
 	      element: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsElement.skipPeriodButton,
 	      notificationSkipPeriod: period
 	    }
@@ -375,7 +382,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _cancel2() {
 	  void babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
 	    analytics: {
-	      subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics],
 	      element: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsElement.cancelButton
 	    }
 	  }).then(() => {
@@ -440,7 +447,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (event.key === 'Escape') {
 	        void babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
 	          analytics: {
-	            subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup,
+	            ...babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics],
 	            element: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsElement.cancelButton
 	          }
 	        });
@@ -549,10 +556,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    params.calendarSettings = babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getCalendarSettings();
 	    params.colorSettings = babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getColorSettings();
 	    params.defaultDescription = '';
-	    params.analytics = {
-	      section: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.details,
-	      subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup
-	    };
+	    params.analytics = babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics];
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditorV2.TodoEditorV2(params);
 	  } else {
 	    params.events.onChangeDescription = babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this);

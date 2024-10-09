@@ -92,6 +92,9 @@ export class Grid
 			message: Loc.getMessage('TASKS_FLOW_LIST_CONFIRM_REMOVE_MESSAGE'),
 			buttons: MessageBoxButtons.OK_CANCEL,
 			okCaption: Loc.getMessage('TASKS_FLOW_LIST_CONFIRM_REMOVE_BUTTON'),
+			popupOptions: {
+				id: `tasks-flow-remove-confirm-${flowId}`,
+			},
 			onOk: () => {
 				message.close();
 

@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
@@ -347,6 +348,23 @@ if (CModule::IncludeModule("intranet") && CIntranetUtils::IsExternalMailAvailabl
 	);
 }
 
+$projectSubLink = "/company/personal/user/".$userId."/groups/create/";
+if (
+	Loader::includeModule('tasks')
+	&& class_exists('\Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit')
+)
+{
+	$isProjectLimitExceeded = !ProjectLimit::isFeatureEnabled();
+	if (ProjectLimit::canTurnOnTrial())
+	{
+		$isProjectLimitExceeded = false;
+	}
+	if ($isProjectLimitExceeded)
+	{
+		$projectSubLink = 'javascript:' . ProjectLimit::getLimitLockClick(ProjectLimit::getFeatureId());
+	}
+}
+
 //groups
 $arMenu[] = [
 	GetMessage("MENU_GROUP_SECTION"),
@@ -357,7 +375,7 @@ $arMenu[] = [
 			"sonetgroups_panel_menu",
 			"/workgroups/"
 		),
-		"sub_link" => "/company/personal/user/".$userId."/groups/create/",
+		"sub_link" => $projectSubLink,
 		"menu_item_id" => "menu_all_groups",
 		"top_menu_id" => "sonetgroups_panel_menu",
 		// todo oh 'counter_id' => 'workgroups',

@@ -3,7 +3,7 @@ import { EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { Core } from 'im.v2.application.core';
-import { ChatActionType, EventType, SidebarDetailBlock, UserRole, ChatType } from 'im.v2.const';
+import { ChatActionType, EventType, SidebarDetailBlock, ChatType } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
 import { ChatService, RecentService } from 'im.v2.provider.service';
 import { Utils } from 'im.v2.lib.utils';

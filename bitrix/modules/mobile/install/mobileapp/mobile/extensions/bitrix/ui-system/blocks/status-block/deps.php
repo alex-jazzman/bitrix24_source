@@ -6,6 +6,8 @@ return [
 		'utils/object',
 		'asset-manager',
 		'utils/validation',
-		'ui-system/typography/bbcodetext'
+		'utils/enums/style',
+		'ui-system/layout/area',
+		'ui-system/typography/bbcodetext',
 	],
 ];

@@ -31,7 +31,7 @@ jn.define('lists/element-details', (require, exports, module) => {
 					mediumPositionPercent: 90,
 					onlyMediumPosition: true,
 					swipeAllowed: true,
-					swipeContentAllowed: false,
+					swipeContentAllowed: true,
 					horizontalSwipeAllowed: false,
 					hideNavigationBar: false,
 					navigationBarColor: AppTheme.colors.bgSecondary,

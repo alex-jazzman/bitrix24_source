@@ -9,8 +9,10 @@ return [
 		'./dist/feature.bundle.js',
 	],
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
+		'ui.info-helper',
+		'im.v2.const',
 		'im.v2.application.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

@@ -23,10 +23,8 @@ export class FileImageComponent extends DecoratorComponent
 		this.#figureResizer = new FigureResizer({
 			target: this.getImage(),
 			editor: this.getEditor(),
-			minWidth: this.getOption('width'),
-			minHeight: this.getOption('height'),
-			maxWidth: this.getOption('maxWidth'),
-			maxHeight: this.getOption('maxHeight'),
+			originalWidth: this.getOption('width'),
+			originalHeight: this.getOption('height'),
 			events: {
 				onResizeStart: this.#handleResizeStart.bind(this),
 				onResizeEnd: this.#handleResizeEnd.bind(this),
@@ -129,14 +127,9 @@ export class FileImageComponent extends DecoratorComponent
 
 	update(options: JsonObject)
 	{
-		const width = `${options.width}px`;
-		// const height = `${options.height}px`;
-		// const maxWidth = `${options.maxWidth}px`;
-		// const maxHeight = `${options.maxHeight}px`;
+		const width = options.width > 0 ? `${options.width}px` : 'inherit';
+		const aspectRatio = options.width > 0 && options.height > 0 ? `${options.width} / ${options.height}` : 'auto';
 
-		Dom.style(this.getImage(), {
-			width,
-			height: 'auto',
-		});
+		Dom.style(this.getImage(), { width, height: 'auto', aspectRatio });
 	}
 }

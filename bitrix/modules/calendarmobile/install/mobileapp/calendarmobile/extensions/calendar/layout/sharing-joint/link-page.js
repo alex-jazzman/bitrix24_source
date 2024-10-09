@@ -333,7 +333,7 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 			fontWeight: '500',
 			ellipsize: 'end',
 			numberOfLines: 1,
-			color: AppTheme.colors.base8,
+			color: AppTheme.colors.baseWhiteFixed,
 		},
 	};
 

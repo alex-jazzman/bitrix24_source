@@ -589,6 +589,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _profile = /*#__PURE__*/new WeakMap();
 	var _features = /*#__PURE__*/new WeakMap();
 	var _cache = /*#__PURE__*/new WeakMap();
+	var _desktopDownloadLinks = /*#__PURE__*/new WeakMap();
 	var _getProfileContainer = /*#__PURE__*/new WeakSet();
 	var _getPopupContainer = /*#__PURE__*/new WeakSet();
 	var _setEventHandlers = /*#__PURE__*/new WeakSet();
@@ -621,7 +622,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      _ref$component = _ref.component,
 	      componentName = _ref$component.componentName,
 	      signedParameters = _ref$component.signedParameters,
-	      features = _ref.features;
+	      features = _ref.features,
+	      desktopDownloadLinks = _ref.desktopDownloadLinks;
 	    babelHelpers.classCallCheck(this, Widget);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Widget).call(this));
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getLogoutContainer);
@@ -661,6 +663,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _desktopDownloadLinks, {
+	      writable: true,
+	      value: void 0
+	    });
 	    _this.setEventNamespace(Options.eventNameSpace);
 	    _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setEventHandlers, _setEventHandlers2).call(babelHelpers.assertThisInitialized(_this));
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _container$1, container);
@@ -677,6 +683,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _features).browser)) {
 	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _features).browser = main_core.Browser.isLinux() ? 'Linux' : main_core.Browser.isWin() ? 'Windows' : 'MacOs';
 	    }
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _desktopDownloadLinks, desktopDownloadLinks);
 	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _cache).set('componentParams', {
 	      componentName: componentName,
 	      signedParameters: signedParameters
@@ -953,7 +960,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getQrContainer', function () {
 	    return new Promise(function (resolve, reject) {
 	      BX.loadExt(['ui.qrauthorization', 'qrcode']).then(function () {
-	        var isInstalled = babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y' || babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
 	        var onclick = function onclick() {
 	          _this10.hide();
 	          new ui_qrauthorization.QrAuthorization({
@@ -971,13 +977,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        var node;
 	        if (flex !== 2 && flex !== 0) {
 	          // for a small size
-	          node = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", "  --clickable\" onclick=\"", "\" style=\"padding: 10px 14px\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center --column --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --center --margin-xl\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr\" style=\"margin-bottom: 12px\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__icon-help --absolute\" onclick=\"", "\" title=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'));
+	          node = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope\" style=\"padding: 10px 14px\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center --column --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --center --margin-xl\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr\" style=\"margin-bottom: 12px\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__icon-help --absolute\" onclick=\"", "\" title=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'));
 	        } else if (flex === 0) {
 	          //full size
-	          node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-qr-xl\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --l\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --large --border\" style=\"margin-top: auto\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --full-size\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
+	          node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-qr-xl\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --l\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --large --border\" style=\"margin-top: auto\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --full-size\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
 	        } else {
 	          // for flex 2. It is kind of middle
-	          node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-mid-qr  --clickable\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\" title=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --size-2\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
+	          node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-mid-qr\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\" title=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --size-2\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
 	        }
 	        return resolve(node);
 	      })["catch"](reject);
@@ -990,22 +996,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
 	    var cssPostfix = '--apple';
 	    var title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_APPLE');
-	    var linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg';
+	    var linkToDistributive = babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).macos;
 	    var typesInstallersForLinux = {
 	      'DEB': {
 	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB'),
-	        href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb'
+	        href: babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).linuxDeb
 	      },
 	      'RPM': {
 	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RPM'),
-	        href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm'
+	        href: babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).linuxRpm
 	      }
 	    };
 	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Windows') {
 	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
 	      cssPostfix = '--windows';
 	      title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_WINDOWS');
-	      linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.exe';
+	      linkToDistributive = babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).windows;
 	    }
 	    var onclick = isInstalled ? function (event) {
 	      event.preventDefault();

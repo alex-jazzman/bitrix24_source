@@ -320,6 +320,7 @@ export class TodoEditorV2
 					componentId: 'calendar',
 					componentParams: {
 						showLocation: true,
+						isLocked: !this.#isLocationFeatureEnabled(),
 					},
 					hidden: !this.#canUseAddressBlock(),
 				},
@@ -944,5 +945,10 @@ export class TodoEditorV2
 	#getClassname(): string
 	{
 		return `crm-activity__todo-editor-v2 --border-${this.#borderColor}`;
+	}
+
+	#isLocationFeatureEnabled(): boolean
+	{
+		return Extension.getSettings('crm.activity.todo-editor-v2').get('locationFeatureEnabled');
 	}
 }

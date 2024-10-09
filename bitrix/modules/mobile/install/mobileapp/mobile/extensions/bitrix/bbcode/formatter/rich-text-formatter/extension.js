@@ -1,32 +1,50 @@
 /** @module bbcode/formatter/rich-text-formatter */
 jn.define('bbcode/formatter/rich-text-formatter', (require, exports, module) => {
-	const { Formatter, NodeFormatter } = require('bbcode/formatter');
-	const { DiskNodeFormatter } = require('bbcode/formatter/rich-text-formatter/node-formatters/disk-formatter');
-	const { StripTagFormatter } = require('bbcode/formatter/rich-text-formatter/node-formatters/strip-tag-formatter');
-	const { MentionFormatter } = require('bbcode/formatter/rich-text-formatter/node-formatters/mention-formatter');
-	const { TextFormatter } = require('bbcode/formatter/rich-text-formatter/node-formatters/text-formatter');
 	const { inAppUrl } = require('in-app-url');
 	const { Type } = require('type');
+	const { Formatter, NodeFormatter } = require('bbcode/formatter');
+	const {
+		DiskNodeFormatter,
+		MentionFormatter,
+		TextFormatter,
+		TableFormatter,
+		CodeFormatter,
+	} = require('bbcode/formatter/shared');
 
 	class RichTextFormatter extends Formatter
 	{
+		static #defaultNotAllowedTags = ['p', 'span'];
+		#notAllowedTags = [...RichTextFormatter.#defaultNotAllowedTags];
+
+		/**
+		 * @param options {{
+		 *     notAllowedTags?: Array<string>,
+		 *     formatters?: Array<NodeFormatter>,
+		 *     mentionRenderType?: 'text' | 'link',
+		 *     diskRenderType?: 'link' | 'file' | 'text' | 'placeholder' | 'none',
+		 *     tableRenderType?: 'link' | 'placeholder' | 'none',
+		 *     codeRenderType?: 'code' | 'text' | 'placeholder' | 'none',
+		 * }}
+		 */
 		constructor(options = {})
 		{
 			const formatters = [
 				...(options?.formatters || []),
-				new DiskNodeFormatter(),
-				new StripTagFormatter({ name: 'p' }),
-				new StripTagFormatter({ name: 'span' }),
-				new MentionFormatter({ name: 'user' }),
-				new MentionFormatter({ name: 'project' }),
-				new MentionFormatter({ name: 'department' }),
 				new TextFormatter({ name: '#text' }),
+				new DiskNodeFormatter({ name: 'disk', renderType: options?.diskRenderType || 'file' }),
+				new MentionFormatter({ name: 'user', renderType: options?.mentionRenderType || 'link' }),
+				new MentionFormatter({ name: 'project', renderType: options?.mentionRenderType || 'link' }),
+				new MentionFormatter({ name: 'department', renderType: options?.mentionRenderType || 'link' }),
+				new TableFormatter({ name: 'table', renderType: options?.mentionRenderType || 'link' }),
+				new CodeFormatter({ name: 'code', renderType: options?.codeRenderType || 'text' }),
 			];
 
 			super({
 				...options,
 				formatters,
 			});
+
+			this.setNotAllowedTags(options.notAllowedTags);
 
 			formatters.forEach((formatter) => {
 				formatter.setFormatter(this);
@@ -35,12 +53,49 @@ jn.define('bbcode/formatter/rich-text-formatter', (require, exports, module) => 
 			this.formatters = formatters;
 		}
 
+		setNotAllowedTags(notAllowedTags)
+		{
+			if (Type.isArray(notAllowedTags))
+			{
+				this.#notAllowedTags = [
+					...RichTextFormatter.#defaultNotAllowedTags,
+					...notAllowedTags,
+				];
+			}
+		}
+
+		isNotAllowedTag(tagName)
+		{
+			return this.#notAllowedTags.includes(tagName);
+		}
+
 		getDefaultUnknownNodeCallback(options)
 		{
 			return () => {
 				return new NodeFormatter({
 					name: 'unknown',
-					convert({ node }) {
+					convert: ({ node }) => {
+						if (this.isNotAllowedTag(node.getName()))
+						{
+							const fragment = node.getScheme().createFragment({
+								children: [...node.getChildren()],
+							});
+
+							const firstChild = fragment.getFirstChild();
+							if (firstChild && firstChild.getName() === '#linebreak')
+							{
+								firstChild.remove();
+							}
+
+							const lastChild = fragment.getFirstChild();
+							if (lastChild && lastChild.getName() === '#linebreak')
+							{
+								lastChild.remove();
+							}
+
+							return fragment;
+						}
+
 						return node.clone();
 					},
 				});

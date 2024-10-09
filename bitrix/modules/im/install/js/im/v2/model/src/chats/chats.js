@@ -76,6 +76,9 @@ export class ChatsModel extends BuilderModel
 				manageUsersDelete: UserRole.none,
 				manageMessages: UserRole.none,
 			},
+			tariffRestrictions: {
+				isHistoryLimitExceeded: false,
+			},
 			parentChatId: 0,
 		};
 	}

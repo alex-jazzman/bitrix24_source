@@ -2,11 +2,15 @@
 
 return [
 	'extensions' => [
+		'type',
 		'tokens',
 		'utils/object',
 		'utils/validation',
 		'utils/enums/base',
-		'ui-system/typography/text-input'
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
+		'ui-system/typography/text-input',
+		'layout/pure-component',
 	],
 	'bundle' => [
 		'./src/design-enum',

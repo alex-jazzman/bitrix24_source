@@ -6,6 +6,7 @@ import type {
 	RawUser,
 	RawReaction,
 	RawShortUser,
+	RawTariffRestrictions,
 } from '../../types/rest';
 
 export type PaginationRestResult = {
@@ -20,4 +21,5 @@ export type PaginationRestResult = {
 	hasPrevPage?: boolean,
 	hasNextPage?: boolean,
 	copilot: RawCopilot,
+	tariffRestrictions: RawTariffRestrictions,
 };

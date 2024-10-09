@@ -4,6 +4,8 @@ return [
 	'extensions' => [
 		'animation/components/fade-view',
 		'assets/icons',
+		'alert',
+		'analytics',
 		'device/connection',
 		'asset-manager',
 		'feature',
@@ -22,8 +24,8 @@ return [
 		'utils/validation',
 		'utils/date',
 		'utils/date/formats',
-		'utils/date',
 		'utils/guid',
+		'utils/function',
 
 		'rest',
 		'rest/run-action-executor',
@@ -47,15 +49,19 @@ return [
 		'tasks:layout/fields/subtask/theme/air-compact',
 		'tasks:layout/fields/related-task/theme/air',
 		'tasks:layout/fields/related-task/theme/air-compact',
+		'tasks:layout/fields/time-tracking',
+		'tasks:layout/fields/time-tracking/theme/air-compact',
 
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
 		'statemanager/redux/batched-actions',
 		'statemanager/redux/slices/users',
+		'tariff-plan-restriction',
 
 		'tasks:loc',
 		'tasks:enum',
 		'tasks:disk',
+		'tasks:fields/restriction',
 
 		'tasks:layout/checklist/preview',
 		'tasks:layout/fields/checklist/theme/air-compact',
@@ -65,11 +71,14 @@ return [
 		'tasks:layout/fields/result/theme/air-compact',
 		'tasks:layout/fields/flow/theme/air',
 		'tasks:layout/fields/flow/theme/air-compact',
+		'tasks:layout/fields/date-plan/theme/air',
+		'tasks:layout/fields/date-plan/theme/air-compact',
 		'tasks:layout/action-menu',
 		'tasks:layout/action-menu/actions',
 		'tasks:layout/online',
 
 		'tasks:statemanager/redux/slices/tasks',
+		'tasks:statemanager/redux/slices/tasks/observers/creation-error-observer',
 		'tasks:statemanager/redux/slices/tasks-results',
 		'tasks:statemanager/redux/slices/groups',
 		'tasks:statemanager/redux/slices/flows',

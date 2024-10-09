@@ -49,6 +49,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 		{
 			const item = this.getModelItem();
 			const message = item.message;
+			const messageText = this.getMessageText(item);
 			if (!Type.isPlainObject(message) || message.id === 0)
 			{
 				this.subtitle = ChatTitle.createFromDialogId(item.id).getDescription() ?? this.subtitle;
@@ -60,7 +61,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 			const isYourMessage = item.message.senderId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
-				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + message.text;
+				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + messageText;
 
 				return this;
 			}
@@ -68,7 +69,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 			const hasAuthor = item.message.senderId;
 			if (!hasAuthor)
 			{
-				this.subtitle = message.text;
+				this.subtitle = messageText;
 
 				return this;
 			}
@@ -84,7 +85,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 				authorInfo = `${user.name}: `;
 			}
 
-			this.subtitle = authorInfo + message.text;
+			this.subtitle = authorInfo + messageText;
 
 			return this;
 		}

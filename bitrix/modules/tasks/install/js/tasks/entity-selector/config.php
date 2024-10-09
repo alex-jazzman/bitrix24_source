@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\UI\EntitySelector\TaskTemplateProvider;
 
 if (!Loader::includeModule('tasks'))
 {
@@ -62,6 +63,12 @@ return [
 				'options' => [
 					'dynamicLoad' => true,
 					'dynamicSearch' => true,
+					'itemOptions' => [
+						'default' => [
+							'link' => TaskTemplateProvider::getTemplateUrl(),
+							'linkTitle' => TaskTemplateProvider::getTemplateLinkTitle(),
+						],
+					],
 				],
 			],
 		],

@@ -16,6 +16,8 @@ export const EnableFeatures = Object.freeze({
 	invoices: 'invoices',
 	saleshub: 'saleshub',
 	websitesStores: 'sites',
+	checkIn: 'checkIn',
+	checkInGeo: 'checkInGeo',
 });
 
 export const UpdateFeatures = Object.freeze({

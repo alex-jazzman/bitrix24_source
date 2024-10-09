@@ -154,8 +154,8 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 
 		/**
 		 * @param {Object} params
-		 * @param {boolean} params.accent
-		 * @param {boolean} params.hide
+		 * @param {boolean} [params.accent]
+		 * @param {boolean} [params.hide]
 		 */
 		setFloatingButton(params = {})
 		{
@@ -170,6 +170,16 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 				};
 
 			this.getLayout().setFloatingButton(floatingActionButtonParams);
+		}
+
+		hide()
+		{
+			this.setFloatingButton({ hide: true });
+		}
+
+		show()
+		{
+			this.setFloatingButton({ hide: false });
 		}
 	}
 

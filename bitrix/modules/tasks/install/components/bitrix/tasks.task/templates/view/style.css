@@ -490,6 +490,12 @@ input.task-detail-field-add {
 	display: inline-flex;
 }
 
+.tasks-detail-tariff-lock-container {
+	display: flex;
+	flex-wrap: wrap;
+	cursor: pointer;
+}
+
 .task-detail-group.--flex-center {
 	display: inline-flex;
 	align-items: center;

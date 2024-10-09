@@ -38,7 +38,7 @@ describe('ui.bbcode.model/nodes', () => {
 			const node = scheme.createText('&#91;text&#93;');
 
 			assert.ok(node.getContent() === '&#91;text&#93;');
-			assert.ok(node.toString() === '&amp;#91;text&amp;#93;');
+			assert.ok(node.toString() === '&#91;text&#93;');
 		});
 
 		it('TextNode.setParent()', () => {
@@ -1735,6 +1735,26 @@ describe('ui.bbcode.model/nodes', () => {
 				assert.ok(children.at(2) === p3);
 				assert.ok(children.at(3) === p4);
 			});
+		});
+
+		describe('ElementNode.trimLinebreaks()', () => {
+		    it('should removes all start and end linebreaks', () => {
+		        const element = scheme.createElement({
+					name: 'p',
+					children: [
+						scheme.createNewLine(),
+						scheme.createNewLine(),
+						scheme.createText('test'),
+						scheme.createNewLine(),
+						scheme.createNewLine(),
+					],
+				});
+
+				element.trimLinebreaks();
+
+				assert.ok(element.getChildrenCount() === 1);
+				assert.ok(element.getFirstChild().getContent() === 'test');
+		    });
 		});
 	});
 

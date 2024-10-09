@@ -8,6 +8,7 @@ import { mapState, mapActions } from 'ui.vue3.pinia';
 import "./rating.css"
 
 export const Rating = {
+	emits: ['can-review', 'review-info', 'update-rating'],
 	components: {
 		RatingItem, PopupWrapper
 	},

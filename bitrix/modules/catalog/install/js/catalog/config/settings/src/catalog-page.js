@@ -95,7 +95,7 @@ class CatalogPage extends BaseSettingsPage
 	{
 		BX.UI.ButtonPanel.hide();
 		this.#resetSaveButton();
-		this.#updateDataAfterSave();
+		this.updateDataAfterSave();
 		BX.SidePanel.Instance.postMessage(window, 'BX.Crm.Config.Catalog:onAfterSaveSettings');
 	}
 	// end temporary methods
@@ -200,9 +200,28 @@ class CatalogPage extends BaseSettingsPage
 
 	#buildReservationSection(): SettingsSection
 	{
+		const storeControlMode = this.getValue('storeControlMode');
+		const reservationEntities = this.getValue('reservationEntities');
+
+		for (const reservationEntity of reservationEntities)
+		{
+			for (const schemeItem of reservationEntity.settings.scheme)
+			{
+				if (['mode', 'period'].includes(schemeItem.code))
+				{
+					schemeItem.disabled = storeControlMode === ModeList.MODE_1C;
+				}
+			}
+
+			if (storeControlMode === ModeList.MODE_1C)
+			{
+				reservationEntity.settings.values.mode = 'onAddToDocument';
+			}
+		}
+
 		const reservationSection = new ReservationSection({
 			parentPage: this,
-			reservationEntities: this.getValue('reservationEntities'),
+			reservationEntities,
 		});
 
 		return reservationSection.buildSection();
@@ -372,7 +391,7 @@ class CatalogPage extends BaseSettingsPage
 	}
 
 	// reads the data from the form element and updates the page object's #data
-	#updateDataAfterSave()
+	updateDataAfterSave()
 	{
 		this.setData(this.#convertFormDataToObjectData());
 	}

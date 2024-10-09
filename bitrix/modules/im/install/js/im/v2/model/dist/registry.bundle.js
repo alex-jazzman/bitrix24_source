@@ -288,13 +288,65 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const tariffRestrictionsFieldsConfig = [{
+	  fieldName: 'fullChatHistory',
+	  targetFieldName: 'fullChatHistory',
+	  checkFunction: main_core.Type.isPlainObject
+	}];
+
+	/* eslint-disable no-param-reassign */
+	class TariffRestrictionsModel extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      fullChatHistory: {
+	        isAvailable: true,
+	        limitDays: null
+	      }
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function application/tariffRestrictions/get */
+	      get: state => {
+	        return state;
+	      },
+	      /** @function application/tariffRestrictions/isHistoryAvailable */
+	      isHistoryAvailable: state => {
+	        var _state$fullChatHistor, _state$fullChatHistor2;
+	        return (_state$fullChatHistor = (_state$fullChatHistor2 = state.fullChatHistory) == null ? void 0 : _state$fullChatHistor2.isAvailable) != null ? _state$fullChatHistor : false;
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function application/tariffRestrictions/set */
+	      set: (store, payload) => {
+	        store.commit('set', this.formatFields(payload));
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      set: (state, payload) => {
+	        Object.entries(payload).forEach(([key, value]) => {
+	          state[key] = value;
+	        });
+	      }
+	    };
+	  }
+	  formatFields(fields) {
+	    return formatFieldsWithConfig(fields, tariffRestrictionsFieldsConfig);
+	  }
+	}
+
 	class ApplicationModel extends ui_vue3_vuex.BuilderModel {
 	  getName() {
 	    return 'application';
 	  }
 	  getNestedModules() {
 	    return {
-	      settings: SettingsModel
+	      settings: SettingsModel,
+	      tariffRestrictions: TariffRestrictionsModel
 	    };
 	  }
 	  getState() {
@@ -1837,6 +1889,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  targetFieldName: 'permissions',
 	  checkFunction: main_core.Type.isPlainObject
 	}, {
+	  fieldName: 'tariffRestrictions',
+	  targetFieldName: 'tariffRestrictions',
+	  checkFunction: main_core.Type.isPlainObject
+	}, {
 	  fieldName: 'parentChatId',
 	  targetFieldName: 'parentChatId',
 	  checkFunction: main_core.Type.isNumber
@@ -1905,6 +1961,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        manageUsersAdd: im_v2_const.UserRole.none,
 	        manageUsersDelete: im_v2_const.UserRole.none,
 	        manageMessages: im_v2_const.UserRole.none
+	      },
+	      tariffRestrictions: {
+	        isHistoryLimitExceeded: false
 	      },
 	      parentChatId: 0
 	    };
@@ -4152,7 +4211,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getState() {
 	    return {
 	      collection: {},
-	      counters: {}
+	      collectionSearch: {},
+	      counters: {},
+	      historyLimitExceededCollection: {}
 	    };
 	  }
 	  getElementState() {
@@ -4208,6 +4269,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return false;
 	        }
 	        return state.collection[chatId].hasNextPage;
+	      },
+	      /** @function sidebar/links/hasNextPageSearch */
+	      hasNextPageSearch: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return false;
+	        }
+	        return state.collectionSearch[chatId].hasNextPage;
+	      },
+	      /** @function sidebar/links/getSearchResultCollectionSize */
+	      getSearchResultCollectionSize: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return 0;
+	        }
+	        return state.collectionSearch[chatId].items.size;
+	      },
+	      /** @function sidebar/links/getSearchResultCollection */
+	      getSearchResultCollection: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return [];
+	        }
+	        return [...state.collectionSearch[chatId].items.values()].sort((a, b) => b.id - a.id);
+	      },
+	      /** @function sidebar/links/isHistoryLimitExceeded */
+	      isHistoryLimitExceeded: state => chatId => {
+	        var _state$historyLimitEx;
+	        const isAvailable = im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isHistoryAvailable'];
+	        if (isAvailable) {
+	          return false;
+	        }
+	        return (_state$historyLimitEx = state.historyLimitExceededCollection[chatId]) != null ? _state$historyLimitEx : false;
 	      }
 	    };
 	  }
@@ -4225,14 +4316,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        const {
 	          chatId,
 	          links,
-	          hasNextPage
+	          hasNextPage,
+	          isHistoryLimitExceeded = false
 	        } = payload;
-	        if (!main_core.Type.isArrayFilled(links) || !main_core.Type.isNumber(chatId)) {
+	        if (!main_core.Type.isNumber(chatId)) {
 	          return;
 	        }
 	        store.commit('setHasNextPage', {
 	          chatId,
 	          hasNextPage
+	        });
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
 	        });
 	        links.forEach(link => {
 	          const preparedLink = {
@@ -4244,6 +4340,40 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	            link: preparedLink
 	          });
 	        });
+	      },
+	      /** @function sidebar/links/setSearch */
+	      setSearch: (store, payload) => {
+	        const {
+	          chatId,
+	          links,
+	          hasNextPage,
+	          isHistoryLimitExceeded = false
+	        } = payload;
+	        if (!main_core.Type.isNumber(chatId)) {
+	          return;
+	        }
+	        store.commit('setHasNextPageSearch', {
+	          chatId,
+	          hasNextPage
+	        });
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
+	        links.forEach(link => {
+	          const preparedLink = {
+	            ...this.getElementState(),
+	            ...this.formatFields(link)
+	          };
+	          store.commit('addSearch', {
+	            chatId,
+	            link: preparedLink
+	          });
+	        });
+	      },
+	      /** @function sidebar/links/clearSearch */
+	      clearSearch: store => {
+	        store.commit('clearSearch', {});
 	      },
 	      /** @function sidebar/links/delete */
 	      delete: (store, payload) => {
@@ -4277,6 +4407,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId].hasNextPage = hasNextPage;
 	      },
+	      setHasNextPageSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          hasNextPage
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].hasNextPage = hasNextPage;
+	      },
+	      setHistoryLimitExceeded: (state, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded
+	        } = payload;
+	        if (state.historyLimitExceededCollection[chatId] && !isHistoryLimitExceeded) {
+	          return;
+	        }
+	        state.historyLimitExceededCollection[chatId] = isHistoryLimitExceeded;
+	      },
 	      setCounter: (state, payload) => {
 	        const {
 	          chatId,
@@ -4295,11 +4446,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId].items.set(link.id, link);
 	      },
+	      addSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          link
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].items.set(link.id, link);
+	      },
+	      clearSearch: state => {
+	        state.collectionSearch = {};
+	      },
 	      delete: (state, payload) => {
 	        const {
 	          chatId,
 	          id
 	        } = payload;
+	        const hasCollectionSearch = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (hasCollectionSearch) {
+	          state.collectionSearch[chatId].items.delete(id);
+	        }
 	        state.collection[chatId].items.delete(id);
 	        state.counters[chatId]--;
 	      }
@@ -4338,7 +4507,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getState() {
 	    return {
 	      collection: {},
-	      counters: {}
+	      counters: {},
+	      collectionSearch: {},
+	      historyLimitExceededCollection: {}
 	    };
 	  }
 	  getElementState() {
@@ -4402,6 +4573,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return false;
 	        }
 	        return state.collection[chatId].lastId;
+	      },
+	      /** @function sidebar/favorites/getSearchResultCollectionLastId */
+	      getSearchResultCollectionLastId: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return 0;
+	        }
+	        return state.collectionSearch[chatId].lastId;
+	      },
+	      /** @function sidebar/favorites/hasNextPageSearch */
+	      hasNextPageSearch: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return false;
+	        }
+	        return state.collectionSearch[chatId].hasNextPage;
+	      },
+	      /** @function sidebar/favorites/getSearchResultCollection */
+	      getSearchResultCollection: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return [];
+	        }
+	        return [...state.collectionSearch[chatId].items.values()].sort((a, b) => b.id - a.id);
+	      },
+	      /** @function sidebar/favorites/isHistoryLimitExceeded */
+	      isHistoryLimitExceeded: state => chatId => {
+	        var _state$historyLimitEx;
+	        const isAvailable = im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isHistoryAvailable'];
+	        if (isAvailable) {
+	          return false;
+	        }
+	        return (_state$historyLimitEx = state.historyLimitExceededCollection[chatId]) != null ? _state$historyLimitEx : false;
 	      }
 	    };
 	  }
@@ -4423,11 +4624,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          chatId,
 	          favorites,
 	          hasNextPage,
-	          lastId
+	          lastId,
+	          isHistoryLimitExceeded = false
 	        } = payload;
-	        if (!main_core.Type.isArrayFilled(favorites) || !main_core.Type.isNumber(chatId)) {
+	        if (!main_core.Type.isNumber(chatId)) {
 	          return;
 	        }
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
 	        store.commit('setHasNextPage', {
 	          chatId,
 	          hasNextPage
@@ -4488,6 +4694,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          chatId,
 	          id: targetLinkId
 	        });
+	      },
+	      /** @function sidebar/favorites/setSearch */
+	      setSearch: (store, payload) => {
+	        const {
+	          chatId,
+	          favorites,
+	          hasNextPage,
+	          lastId,
+	          isHistoryLimitExceeded = false
+	        } = payload;
+	        if (!main_core.Type.isNumber(chatId)) {
+	          return;
+	        }
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
+	        store.commit('setHasNextPageSearch', {
+	          chatId,
+	          hasNextPage
+	        });
+	        store.commit('setLastIdSearch', {
+	          chatId,
+	          lastId
+	        });
+	        favorites.forEach(favorite => {
+	          const preparedFavoriteMessage = {
+	            ...this.getElementState(),
+	            ...this.formatFields(favorite)
+	          };
+	          store.commit('addSearch', {
+	            chatId,
+	            favorite: preparedFavoriteMessage
+	          });
+	        });
+	      },
+	      /** @function sidebar/favorites/clearSearch */
+	      clearSearch: store => {
+	        store.commit('clearSearch', {});
 	      }
 	    };
 	  }
@@ -4503,6 +4748,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          state.collection[chatId] = this.getChatState();
 	        }
 	        state.collection[chatId].hasNextPage = hasNextPage;
+	      },
+	      setHasNextPageSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          hasNextPage
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].hasNextPage = hasNextPage;
 	      },
 	      setCounter: (state, payload) => {
 	        const {
@@ -4533,13 +4789,52 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId].items.set(favorite.id, favorite);
 	      },
+	      addSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          favorite
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].items.set(favorite.id, favorite);
+	      },
+	      clearSearch: state => {
+	        state.collectionSearch = {};
+	      },
+	      setLastIdSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          lastId
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].lastId = lastId;
+	      },
 	      delete: (state, payload) => {
 	        const {
 	          chatId,
 	          id
 	        } = payload;
+	        const hasCollectionSearch = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (hasCollectionSearch) {
+	          state.collectionSearch[chatId].items.delete(id);
+	        }
 	        state.collection[chatId].items.delete(id);
 	        state.counters[chatId]--;
+	      },
+	      setHistoryLimitExceeded: (state, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded
+	        } = payload;
+	        if (state.historyLimitExceededCollection[chatId] && !isHistoryLimitExceeded) {
+	          return;
+	        }
+	        state.historyLimitExceededCollection[chatId] = isHistoryLimitExceeded;
 	      }
 	    };
 	  }
@@ -4713,6 +5008,57 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	/* eslint-disable no-param-reassign */
+	class MessageSearchModel extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      historyLimitExceededCollection: {}
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function sidebar/messageSearch/isHistoryLimitExceeded */
+	      isHistoryLimitExceeded: state => chatId => {
+	        var _state$historyLimitEx;
+	        const isAvailable = im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isHistoryAvailable'];
+	        if (isAvailable) {
+	          return false;
+	        }
+	        return (_state$historyLimitEx = state.historyLimitExceededCollection[chatId]) != null ? _state$historyLimitEx : false;
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function sidebar/messageSearch/setHistoryLimitExceeded */
+	      setHistoryLimitExceeded: (store, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded = false
+	        } = payload;
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      setHistoryLimitExceeded: (state, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded
+	        } = payload;
+	        if (state.historyLimitExceededCollection[chatId] && !isHistoryLimitExceeded) {
+	          return;
+	        }
+	        state.historyLimitExceededCollection[chatId] = isHistoryLimitExceeded;
+	      }
+	    };
+	  }
+	}
+
 	const sidebarTaskFieldsConfig = [{
 	  fieldName: 'id',
 	  targetFieldName: 'id',
@@ -4785,7 +5131,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class TasksModel extends ui_vue3_vuex.BuilderModel {
 	  getState() {
 	    return {
-	      collection: {}
+	      collection: {},
+	      collectionSearch: {},
+	      historyLimitExceededCollection: {}
 	    };
 	  }
 	  getElementState() {
@@ -4825,7 +5173,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        return [...state.collection[chatId].items.values()].sort((a, b) => b.id - a.id);
 	      },
-	      /** @function sidebar/tasks/hasNextPage */
+	      /** @function sidebar/tasks/getSearchResultCollection */
+	      getSearchResultCollection: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return [];
+	        }
+	        return [...state.collectionSearch[chatId].items.values()].sort((a, b) => b.id - a.id);
+	      },
+	      /** @function sidebar/tasks/getSize */
 	      getSize: state => chatId => {
 	        if (!state.collection[chatId]) {
 	          return 0;
@@ -4845,6 +5200,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return false;
 	        }
 	        return state.collection[chatId].lastId;
+	      },
+	      /** @function sidebar/tasks/getSearchResultCollectionLastId */
+	      getSearchResultCollectionLastId: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return false;
+	        }
+	        return state.collectionSearch[chatId].lastId;
+	      },
+	      /** @function sidebar/tasks/isHistoryLimitExceeded */
+	      isHistoryLimitExceeded: state => chatId => {
+	        var _state$historyLimitEx;
+	        const isAvailable = im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isHistoryAvailable'];
+	        if (isAvailable) {
+	          return false;
+	        }
+	        return (_state$historyLimitEx = state.historyLimitExceededCollection[chatId]) != null ? _state$historyLimitEx : false;
 	      }
 	    };
 	  }
@@ -4856,11 +5227,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          chatId,
 	          tasks,
 	          hasNextPage,
-	          lastId
+	          lastId,
+	          isHistoryLimitExceeded = false
 	        } = payload;
-	        if (!main_core.Type.isArrayFilled(tasks) || !main_core.Type.isNumber(chatId)) {
+	        if (!main_core.Type.isNumber(chatId)) {
 	          return;
 	        }
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
 	        if (!main_core.Type.isNil(hasNextPage)) {
 	          store.commit('setHasNextPage', {
 	            chatId,
@@ -4879,6 +5255,49 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	            ...this.formatFields(task)
 	          };
 	          store.commit('add', {
+	            chatId,
+	            task: preparedTask
+	          });
+	        });
+	      },
+	      /** @function sidebar/tasks/clearSearch */
+	      clearSearch: store => {
+	        store.commit('clearSearch', {});
+	      },
+	      /** @function sidebar/tasks/setSearch */
+	      setSearch: (store, payload) => {
+	        const {
+	          chatId,
+	          tasks,
+	          hasNextPage,
+	          lastId,
+	          isHistoryLimitExceeded = false
+	        } = payload;
+	        if (!main_core.Type.isNumber(chatId)) {
+	          return;
+	        }
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
+	        if (!main_core.Type.isNil(hasNextPage)) {
+	          store.commit('setHasNextPageSearch', {
+	            chatId,
+	            hasNextPage
+	          });
+	        }
+	        if (!main_core.Type.isNil(lastId)) {
+	          store.commit('setLastIdSearch', {
+	            chatId,
+	            lastId
+	          });
+	        }
+	        tasks.forEach(task => {
+	          const preparedTask = {
+	            ...this.getElementState(),
+	            ...this.formatFields(task)
+	          };
+	          store.commit('addSearch', {
 	            chatId,
 	            task: preparedTask
 	          });
@@ -4916,11 +5335,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId].items.set(task.id, task);
 	      },
+	      addSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          task
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].items.set(task.id, task);
+	      },
 	      delete: (state, payload) => {
 	        const {
 	          id,
 	          chatId
 	        } = payload;
+	        const hasCollectionSearch = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (hasCollectionSearch) {
+	          state.collectionSearch[chatId].items.delete(id);
+	        }
 	        state.collection[chatId].items.delete(id);
 	      },
 	      setHasNextPage: (state, payload) => {
@@ -4934,6 +5368,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId].hasNextPage = hasNextPage;
 	      },
+	      setHasNextPageSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          hasNextPage
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].hasNextPage = hasNextPage;
+	      },
 	      setLastId: (state, payload) => {
 	        const {
 	          chatId,
@@ -4944,6 +5389,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          state.collection[chatId] = this.getChatState();
 	        }
 	        state.collection[chatId].lastId = lastId;
+	      },
+	      setLastIdSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          lastId
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].lastId = lastId;
+	      },
+	      clearSearch: state => {
+	        state.collectionSearch = {};
+	      },
+	      setHistoryLimitExceeded: (state, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded
+	        } = payload;
+	        if (state.historyLimitExceededCollection[chatId] && !isHistoryLimitExceeded) {
+	          return;
+	        }
+	        state.historyLimitExceededCollection[chatId] = isHistoryLimitExceeded;
 	      }
 	    };
 	  }
@@ -5009,7 +5478,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class MeetingsModel extends ui_vue3_vuex.BuilderModel {
 	  getState() {
 	    return {
-	      collection: {}
+	      collection: {},
+	      collectionSearch: {},
+	      historyLimitExceededCollection: {}
 	    };
 	  }
 	  getElementState() {
@@ -5044,6 +5515,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        return [...state.collection[chatId].items.values()].sort((a, b) => b.id - a.id);
 	      },
+	      /** @function sidebar/meetings/getSearchResultCollection */
+	      getSearchResultCollection: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return [];
+	        }
+	        return [...state.collectionSearch[chatId].items.values()].sort((a, b) => b.id - a.id);
+	      },
 	      /** @function sidebar/meetings/getSize */
 	      getSize: state => chatId => {
 	        if (!state.collection[chatId]) {
@@ -5064,6 +5542,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return false;
 	        }
 	        return state.collection[chatId].lastId;
+	      },
+	      /** @function sidebar/meetings/getSearchResultCollectionLastId */
+	      getSearchResultCollectionLastId: state => chatId => {
+	        if (!state.collectionSearch[chatId]) {
+	          return false;
+	        }
+	        return state.collectionSearch[chatId].lastId;
+	      },
+	      /** @function sidebar/meetings/isHistoryLimitExceeded */
+	      isHistoryLimitExceeded: state => chatId => {
+	        var _state$historyLimitEx;
+	        const isAvailable = im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isHistoryAvailable'];
+	        if (isAvailable) {
+	          return false;
+	        }
+	        return (_state$historyLimitEx = state.historyLimitExceededCollection[chatId]) != null ? _state$historyLimitEx : false;
 	      }
 	    };
 	  }
@@ -5075,11 +5569,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          chatId,
 	          meetings,
 	          hasNextPage,
-	          lastId
+	          lastId,
+	          isHistoryLimitExceeded = false
 	        } = payload;
-	        if (!main_core.Type.isArrayFilled(meetings) || !main_core.Type.isNumber(chatId)) {
+	        if (!main_core.Type.isNumber(chatId)) {
 	          return;
 	        }
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
 	        if (!main_core.Type.isNil(hasNextPage)) {
 	          store.commit('setHasNextPage', {
 	            chatId,
@@ -5103,6 +5602,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          });
 	        });
 	      },
+	      /** @function sidebar/meetings/setSearch */
+	      setSearch: (store, payload) => {
+	        const {
+	          chatId,
+	          meetings,
+	          hasNextPage,
+	          lastId,
+	          isHistoryLimitExceeded = false
+	        } = payload;
+	        if (!main_core.Type.isNumber(chatId)) {
+	          return;
+	        }
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
+	        if (!main_core.Type.isNil(hasNextPage)) {
+	          store.commit('setHasNextPageSearch', {
+	            chatId,
+	            hasNextPage
+	          });
+	        }
+	        if (!main_core.Type.isNil(lastId)) {
+	          store.commit('setLastIdSearch', {
+	            chatId,
+	            lastId
+	          });
+	        }
+	        meetings.forEach(meeting => {
+	          const preparedMeeting = {
+	            ...this.getElementState(),
+	            ...this.formatFields(meeting)
+	          };
+	          store.commit('addSearch', {
+	            chatId,
+	            meeting: preparedMeeting
+	          });
+	        });
+	      },
 	      /** @function sidebar/meetings/delete */
 	      delete: (store, payload) => {
 	        const {
@@ -5119,6 +5657,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          id,
 	          chatId
 	        });
+	      },
+	      /** @function sidebar/meetings/clearSearch */
+	      clearSearch: store => {
+	        store.commit('clearSearch', {});
 	      }
 	    };
 	  }
@@ -5135,11 +5677,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId].items.set(meeting.id, meeting);
 	      },
+	      addSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          meeting
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].items.set(meeting.id, meeting);
+	      },
 	      delete: (state, payload) => {
 	        const {
 	          id,
 	          chatId
 	        } = payload;
+	        const hasCollectionSearch = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (hasCollectionSearch) {
+	          state.collectionSearch[chatId].items.delete(id);
+	        }
 	        state.collection[chatId].items.delete(id);
 	      },
 	      setHasNextPage: (state, payload) => {
@@ -5153,6 +5710,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId].hasNextPage = hasNextPage;
 	      },
+	      setHasNextPageSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          hasNextPage
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].hasNextPage = hasNextPage;
+	      },
 	      setLastId: (state, payload) => {
 	        const {
 	          chatId,
@@ -5163,6 +5731,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          state.collection[chatId] = this.getChatState();
 	        }
 	        state.collection[chatId].lastId = lastId;
+	      },
+	      setLastIdSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          lastId
+	        } = payload;
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId].lastId = lastId;
+	      },
+	      clearSearch: state => {
+	        state.collectionSearch = {};
+	      },
+	      setHistoryLimitExceeded: (state, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded
+	        } = payload;
+	        if (state.historyLimitExceededCollection[chatId] && !isHistoryLimitExceeded) {
+	          return;
+	        }
+	        state.historyLimitExceededCollection[chatId] = isHistoryLimitExceeded;
 	      }
 	    };
 	  }
@@ -5202,7 +5794,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class FilesModel$1 extends ui_vue3_vuex.BuilderModel {
 	  getState() {
 	    return {
-	      collection: {}
+	      collection: {},
+	      collectionSearch: {},
+	      historyLimitExceededCollection: {}
 	    };
 	  }
 	  getElementState() {
@@ -5222,6 +5816,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      lastId: 0
 	    };
 	  }
+
+	  // eslint-disable-next-line max-lines-per-function
 	  getGetters() {
 	    return {
 	      /** @function sidebar/files/get */
@@ -5230,6 +5826,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return [];
 	        }
 	        return [...state.collection[chatId][subType].items.values()].sort((a, b) => b.id - a.id);
+	      },
+	      /** @function sidebar/files/getSearchResultCollection */
+	      getSearchResultCollection: state => (chatId, subType) => {
+	        if (!state.collectionSearch[chatId] || !state.collectionSearch[chatId][subType]) {
+	          return [];
+	        }
+	        return [...state.collectionSearch[chatId][subType].items.values()].sort((a, b) => b.id - a.id);
 	      },
 	      /** @function sidebar/files/getLatest */
 	      getLatest: (state, getters, rootState, rootGetters) => chatId => {
@@ -5285,12 +5888,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        return state.collection[chatId][subType].hasNextPage;
 	      },
+	      /** @function sidebar/files/hasNextPageSearch */
+	      hasNextPageSearch: state => (chatId, subType) => {
+	        if (!state.collectionSearch[chatId] || !state.collectionSearch[chatId][subType]) {
+	          return false;
+	        }
+	        return state.collectionSearch[chatId][subType].hasNextPage;
+	      },
 	      /** @function sidebar/files/getLastId */
 	      getLastId: state => (chatId, subType) => {
 	        if (!state.collection[chatId] || !state.collection[chatId][subType]) {
 	          return false;
 	        }
 	        return state.collection[chatId][subType].lastId;
+	      },
+	      /** @function sidebar/files/getSearchResultCollectionLastId */
+	      getSearchResultCollectionLastId: state => (chatId, subType) => {
+	        if (!state.collectionSearch[chatId] || !state.collectionSearch[chatId][subType]) {
+	          return false;
+	        }
+	        return state.collectionSearch[chatId][subType].lastId;
+	      },
+	      /** @function sidebar/files/isHistoryLimitExceeded */
+	      isHistoryLimitExceeded: state => chatId => {
+	        var _state$historyLimitEx;
+	        const isAvailable = im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isHistoryAvailable'];
+	        if (isAvailable) {
+	          return false;
+	        }
+	        return (_state$historyLimitEx = state.historyLimitExceededCollection[chatId]) != null ? _state$historyLimitEx : false;
 	      }
 	    };
 	  }
@@ -5312,6 +5938,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	            ...this.formatFields(file)
 	          };
 	          store.commit('add', {
+	            chatId,
+	            subType,
+	            file: preparedFile
+	          });
+	        });
+	      },
+	      /** @function sidebar/files/setSearch */
+	      setSearch: (store, payload) => {
+	        const {
+	          chatId,
+	          files,
+	          subType
+	        } = payload;
+	        if (!main_core.Type.isArrayFilled(files) || !main_core.Type.isNumber(chatId)) {
+	          return;
+	        }
+	        files.forEach(file => {
+	          const preparedFile = {
+	            ...this.getElementState(),
+	            ...this.formatFields(file)
+	          };
+	          store.commit('addSearch', {
 	            chatId,
 	            subType,
 	            file: preparedFile
@@ -5354,6 +6002,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          hasNextPage
 	        });
 	      },
+	      /** @function sidebar/files/setHasNextPageSearch */
+	      setHasNextPageSearch: (store, payload) => {
+	        const {
+	          chatId,
+	          subType,
+	          hasNextPage
+	        } = payload;
+	        if (!main_core.Type.isNumber(chatId)) {
+	          return;
+	        }
+	        if (!store.state.collectionSearch[chatId]) {
+	          return;
+	        }
+	        store.commit('setHasNextPageSearch', {
+	          chatId,
+	          subType,
+	          hasNextPage
+	        });
+	      },
 	      /** @function sidebar/files/setLastId */
 	      setLastId: (store, payload) => {
 	        const {
@@ -5372,9 +6039,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          subType,
 	          lastId
 	        });
+	      },
+	      /** @function sidebar/files/setLastIdSearch */
+	      setLastIdSearch: (store, payload) => {
+	        const {
+	          chatId,
+	          subType,
+	          lastId
+	        } = payload;
+	        if (!main_core.Type.isNumber(chatId)) {
+	          return;
+	        }
+	        if (!store.state.collectionSearch[chatId]) {
+	          return;
+	        }
+	        store.commit('setLastIdSearch', {
+	          chatId,
+	          subType,
+	          lastId
+	        });
+	      },
+	      /** @function sidebar/files/clearSearch */
+	      clearSearch: store => {
+	        store.commit('clearSearch', {});
+	      },
+	      /** @function sidebar/files/setHistoryLimitExceeded */
+	      setHistoryLimitExceeded: (store, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded = false
+	        } = payload;
+	        store.commit('setHistoryLimitExceeded', {
+	          chatId,
+	          isHistoryLimitExceeded
+	        });
 	      }
 	    };
 	  }
+
+	  // eslint-disable-next-line max-lines-per-function
 	  getMutations() {
 	    return {
 	      add: (state, payload) => {
@@ -5391,14 +6094,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId][subType].items.set(file.id, file);
 	      },
+	      addSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          file,
+	          subType
+	        } = payload;
+	        if (!state.collectionSearch[chatId]) {
+	          state.collectionSearch[chatId] = {};
+	        }
+	        if (!state.collectionSearch[chatId][subType]) {
+	          state.collectionSearch[chatId][subType] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId][subType].items.set(file.id, file);
+	      },
 	      delete: (state, payload) => {
 	        const {
 	          chatId,
 	          id
 	        } = payload;
+	        const hasCollectionSearch = !main_core.Type.isNil(state.collectionSearch[chatId]);
 	        Object.values(im_v2_const.SidebarFileTypes).forEach(subType => {
 	          if (state.collection[chatId][subType] && state.collection[chatId][subType].items.has(id)) {
 	            state.collection[chatId][subType].items.delete(id);
+	            if (hasCollectionSearch) {
+	              state.collectionSearch[chatId][subType].items.delete(id);
+	            }
 	          }
 	        });
 	      },
@@ -5417,6 +6138,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        state.collection[chatId][subType].hasNextPage = hasNextPage;
 	      },
+	      setHasNextPageSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          subType,
+	          hasNextPage
+	        } = payload;
+	        if (!state.collectionSearch[chatId]) {
+	          state.collectionSearch[chatId] = {};
+	        }
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId][subType]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId][subType] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId][subType].hasNextPage = hasNextPage;
+	      },
 	      setLastId: (state, payload) => {
 	        const {
 	          chatId,
@@ -5431,6 +6167,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          state.collection[chatId][subType] = this.getChatState();
 	        }
 	        state.collection[chatId][subType].lastId = lastId;
+	      },
+	      setLastIdSearch: (state, payload) => {
+	        const {
+	          chatId,
+	          subType,
+	          lastId
+	        } = payload;
+	        if (!state.collectionSearch[chatId]) {
+	          state.collectionSearch[chatId] = {};
+	        }
+	        const hasCollection = !main_core.Type.isNil(state.collectionSearch[chatId][subType]);
+	        if (!hasCollection) {
+	          state.collectionSearch[chatId][subType] = this.getChatState();
+	        }
+	        state.collectionSearch[chatId][subType].lastId = lastId;
+	      },
+	      clearSearch: state => {
+	        state.collectionSearch = {};
+	      },
+	      setHistoryLimitExceeded: (state, payload) => {
+	        const {
+	          chatId,
+	          isHistoryLimitExceeded
+	        } = payload;
+	        if (state.historyLimitExceededCollection[chatId] && !isHistoryLimitExceeded) {
+	          return;
+	        }
+	        state.historyLimitExceededCollection[chatId] = isHistoryLimitExceeded;
 	      }
 	    };
 	  }
@@ -5666,7 +6430,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tasks: TasksModel,
 	      meetings: MeetingsModel,
 	      files: FilesModel$1,
-	      multidialog: MultidialogModel
+	      multidialog: MultidialogModel,
+	      messageSearch: MessageSearchModel
 	    };
 	  }
 	  getState() {
@@ -5678,25 +6443,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getGetters() {
 	    return {
+	      /** @function sidebar/isInited */
 	      isInited: state => chatId => {
 	        return state.initedList.has(chatId);
+	      },
+	      /** @function sidebar/hasHistoryLimit */
+	      hasHistoryLimit: () => chatId => {
+	        const limitsByPanel = ['sidebar/links/isHistoryLimitExceeded', 'sidebar/files/isHistoryLimitExceeded', 'sidebar/favorites/isHistoryLimitExceeded', 'sidebar/meetings/isHistoryLimitExceeded', 'sidebar/tasks/isHistoryLimitExceeded', 'sidebar/messageSearch/isHistoryLimitExceeded'].map(getterName => im_v2_application_core.Core.getStore().getters[getterName](chatId));
+	        return limitsByPanel.some(hasLimit => hasLimit);
 	      }
 	    };
 	  }
 	  getActions() {
 	    return {
+	      /** @function sidebar/setInited */
 	      setInited: (store, chatId) => {
 	        if (!main_core.Type.isNumber(chatId)) {
 	          return;
 	        }
 	        store.commit('setInited', chatId);
 	      },
+	      /** @function sidebar/setFilesMigrated */
 	      setFilesMigrated: (store, value) => {
 	        if (!main_core.Type.isBoolean(value)) {
 	          return;
 	        }
 	        store.commit('setFilesMigrated', value);
 	      },
+	      /** @function sidebar/setLinksMigrated */
 	      setLinksMigrated: (store, value) => {
 	        if (!main_core.Type.isBoolean(value)) {
 	          return;
@@ -5918,6 +6692,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  // eslint-disable-next-line max-lines-per-function
 	  getGetters() {
 	    return {
+	      /** @function counters/getUnloadedChatCounters */
+	      getUnloadedChatCounters: state => {
+	        return state.unloadedChatCounters;
+	      },
 	      /** @function counters/getTotalChatCounter */
 	      getTotalChatCounter: state => {
 	        let loadedChatsCounter = 0;

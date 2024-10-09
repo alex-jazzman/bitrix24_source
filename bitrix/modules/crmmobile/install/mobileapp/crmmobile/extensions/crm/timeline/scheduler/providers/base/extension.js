@@ -78,7 +78,7 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 
 		/**
 		 * @abstract
-		 * @return {string}
+		 * @return {Icon}
 		 */
 		static getMenuIcon()
 		{}

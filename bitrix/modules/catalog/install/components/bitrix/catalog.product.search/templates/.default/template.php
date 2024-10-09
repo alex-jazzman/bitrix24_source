@@ -323,8 +323,8 @@ else
 						if (isset($arResult['SKU_PRICES'][$price['ID']]))
 						{
 							$priceValue = CCurrencyLang::CurrencyFormat(
-								$arResult['SKU_PRICES'][$price['ID']][$val["ID"]]['PRICE'],
-								$arResult['SKU_PRICES'][$price['ID']][$val["ID"]]['CURRENCY'],
+								$arResult['SKU_PRICES'][$price['ID']][$val["ID"]]['PRICE'] ?? '',
+								$arResult['SKU_PRICES'][$price['ID']][$val["ID"]]['CURRENCY'] ?? false,
 								true
 							);
 						}

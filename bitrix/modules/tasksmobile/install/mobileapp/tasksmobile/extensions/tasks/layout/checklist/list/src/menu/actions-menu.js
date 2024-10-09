@@ -10,7 +10,11 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Random } = require('utils/random');
 	const { ScrollView } = require('layout/ui/scroll-view');
-	const { MEMBER_TYPE, MEMBER_TYPE_ICONS } = require('tasks/layout/checklist/list/src/constants');
+	const {
+		MEMBER_TYPE,
+		MEMBER_TYPE_ICONS,
+		MEMBER_TYPE_RESTRICTION_FEATURE_META,
+	} = require('tasks/layout/checklist/list/src/constants');
 
 	const ICON_SIZE = 24;
 	const ICON_MARGIN = 16;
@@ -189,7 +193,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 				return null;
 			}
 
-			const { onMoveToCheckList, onAddFile, onBlur, openUserSelectionManager } = this.props;
+			const { onMoveToCheckList, onAddFile, onBlur } = this.props;
 			const { canUpdate, canAdd, canTabOut, canTabIn, hasAnotherCheckLists } = this.getPermissions();
 
 			return View(
@@ -226,26 +230,26 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						color: this.getIconColor(MEMBER_TYPE.auditor),
 						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.auditor],
 						size: ICON_SIZE,
-						disabled: !canUpdate,
+						disabled: (
+							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.auditor].isRestricted()
+						),
 						style: {
 							marginRight: ICON_MARGIN,
 						},
-						onClick: () => {
-							openUserSelectionManager(this.item.getId(), MEMBER_TYPE.auditor);
-						},
+						onClick: () => this.onMemberIconClick(MEMBER_TYPE.auditor),
 					}),
 					this.renderIconView({
 						testId: this.getTestId(MEMBER_TYPE.accomplice),
 						color: this.getIconColor(MEMBER_TYPE.accomplice),
 						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.accomplice],
 						size: ICON_SIZE,
-						disabled: !canUpdate,
+						disabled: (
+							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.accomplice].isRestricted()
+						),
 						style: {
 							marginRight: ICON_MARGIN,
 						},
-						onClick: () => {
-							openUserSelectionManager(this.item.getId(), MEMBER_TYPE.accomplice);
-						},
+						onClick: () => this.onMemberIconClick(MEMBER_TYPE.accomplice),
 					}),
 					this.renderIconView({
 						testId: this.getTestId('importance'),
@@ -327,6 +331,20 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 					onClick: onBlur,
 				}),
 			);
+		}
+
+		onMemberIconClick(memberType)
+		{
+			const { openTariffRestrictionWidget, openUserSelectionManager } = this.props;
+
+			if (MEMBER_TYPE_RESTRICTION_FEATURE_META[memberType].isRestricted())
+			{
+				openTariffRestrictionWidget(memberType);
+
+				return;
+			}
+
+			openUserSelectionManager(this.item.getId(), memberType);
 		}
 
 		onTabMove(direction)

@@ -106,6 +106,7 @@ class clouds extends CModule
 			RegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_RackSpaceCloudFiles', 'GetObjectInstance');
 			RegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_ClodoRU', 'GetObjectInstance');
 			RegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_Selectel', 'GetObjectInstance');
+			RegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_Selectel_S3', 'GetObjectInstance');
 			RegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_HotBox', 'GetObjectInstance');
 			RegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_Yandex', 'GetObjectInstance');
 			RegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_S3', 'GetObjectInstance');
@@ -156,6 +157,7 @@ class clouds extends CModule
 		UnRegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_RackSpaceCloudFiles', 'GetObjectInstance');
 		UnRegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_ClodoRU', 'GetObjectInstance');
 		UnRegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_Selectel', 'GetObjectInstance');
+		UnRegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_Selectel_S3', 'GetObjectInstance');
 		UnRegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_HotBox', 'GetObjectInstance');
 		UnRegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_Yandex', 'GetObjectInstance');
 		UnRegisterModuleDependences('clouds', 'OnGetStorageService', 'clouds', 'CCloudStorageService_S3', 'GetObjectInstance');

@@ -6,6 +6,7 @@ use Bitrix\HumanResources\Exception\UpdateFailedException;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\Main;
+use Bitrix\Main\Result;
 
 interface NodeMemberRepository
 {
@@ -28,7 +29,8 @@ interface NodeMemberRepository
 		MemberEntityType $entityType,
 		bool $withAllChildNodes = false,
 		int $limit = 100,
-		int $offset = 0
+		int $offset = 0,
+		bool $onlyActive = true,
 	): Item\Collection\NodeMemberCollection;
 
 	/**
@@ -66,6 +68,19 @@ interface NodeMemberRepository
 	): Main\Result;
 
 	/**
+	 * @param MemberEntityType $entityType
+	 * @param list<int> $entityIds
+	 * @param bool $active
+	 *
+	 * @return Result
+	 */
+	public function setActiveByEntityTypeAndEntityIds(
+		MemberEntityType $entityType,
+		array $entityIds,
+		bool $active,
+	): Main\Result;
+
+	/**
 	 * Finds all NodeMembers by their entity ID and entity type.
 	 *
 	 * @param int $entityId
@@ -75,6 +90,19 @@ interface NodeMemberRepository
 	 */
 	public function findAllByEntityIdAndEntityType(
 		int $entityId,
+		\Bitrix\HumanResources\Type\MemberEntityType $entityType
+	): Item\Collection\NodeMemberCollection;
+
+	/**
+	 * Finds all NodeMembers by their entity ID and entity type.
+	 *
+	 * @param list<int> $entityIds
+	 * @param \Bitrix\HumanResources\Type\MemberEntityType $entityType
+	 *
+	 * @return Item\Collection\NodeMemberCollection
+	 */
+	public function findAllByEntityIdsAndEntityType(
+		array $entityIds,
 		\Bitrix\HumanResources\Type\MemberEntityType $entityType
 	): Item\Collection\NodeMemberCollection;
 

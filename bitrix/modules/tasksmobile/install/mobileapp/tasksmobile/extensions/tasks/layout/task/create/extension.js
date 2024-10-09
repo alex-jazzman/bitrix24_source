@@ -258,9 +258,9 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 
 					return;
 				}
-				(new RunActionExecutor('tasksmobile.User.getUsersDataLegacy', { userIds: [env.userId] }))
+				(new RunActionExecutor('tasksmobile.User.getCurrentUserDataLegacy'))
 					.setHandler((response) => {
-						this.currentUser = response.data[env.userId];
+						this.currentUser = response.data;
 						resolve();
 					})
 					.call(false)

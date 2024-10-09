@@ -196,7 +196,7 @@
 					View(
 						{ style: { justifyContent: 'center', height: 40 } },
 						BBCodeText({
-							style: { fontSize: 15, color: AppTheme.colors.base1 },
+							style: { height: 40, fontSize: 15, color: AppTheme.colors.base1 },
 							value: text,
 						}),
 					),

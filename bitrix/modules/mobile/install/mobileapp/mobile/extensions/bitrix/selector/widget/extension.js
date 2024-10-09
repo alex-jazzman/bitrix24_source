@@ -352,6 +352,8 @@ jn.define('selector/widget', (require, exports, module) => {
 		 */
 		onSelectedChangedListener({ text, scope, items })
 		{
+			Keyboard.dismiss();
+
 			this.manualSelection = true;
 
 			if (!this.hasItemsInCurrentItems(items))

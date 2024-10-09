@@ -64,9 +64,11 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 			};
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
+			const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}))
+				.setSection('text_link');
 			EntityDetailOpener.open({
 				payload,
-				analytics: new AnalyticsEvent().setSection('text_link'),
+				analytics,
 			});
 		}
 

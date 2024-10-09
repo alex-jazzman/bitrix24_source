@@ -3,6 +3,7 @@
  */
 jn.define('catalog/store/product-list/menu/add-product-menu', (require, exports, module) => {
 	const { AnalyticsLabel } = require('analytics-label');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class StoreDocumentAddProductMenu

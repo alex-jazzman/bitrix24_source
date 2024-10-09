@@ -31,7 +31,8 @@ export class BxLinkHandler
 
 			if (command === DesktopBxLink.chat)
 			{
-				void Messenger.openChat(params.dialogId);
+				const messageId = params.messageId ?? 0;
+				void Messenger.openChat(params.dialogId, messageId);
 			}
 			else if (command === DesktopBxLink.lines)
 			{

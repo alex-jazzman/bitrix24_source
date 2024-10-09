@@ -1,8 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
-(function (exports,ui_label,main_popup,ui_dialogs_messagebox,ui_cnt,main_core,ui_iconSet_main,ui_entitySelector) {
+(function (exports,ui_label,ui_dialogs_messagebox,ui_formElements_field,ui_cnt,intranet_reinvite,main_core,ui_iconSet_main,ui_entitySelector) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -214,6 +213,11 @@ this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
 	    babelHelpers.classPrivateFieldSet(this, _grid, (_BX$Main$gridManager$ = BX.Main.gridManager.getById(gridId)) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance);
 	  }
 	  babelHelpers.createClass(GridManager, [{
+	    key: "getGrid",
+	    value: function getGrid() {
+	      return babelHelpers.classPrivateFieldGet(this, _grid);
+	    }
+	  }, {
 	    key: "confirmAction",
 	    value: function confirmAction(params) {
 	      var _this = this;
@@ -359,8 +363,7 @@ this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
 	  }, {
 	    key: "setSort",
 	    value: function setSort(options) {
-	      var _PopupManager$getPopu, _BX$Main$gridManager$2;
-	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(options.menuId)) === null || _PopupManager$getPopu === void 0 ? void 0 : _PopupManager$getPopu.close();
+	      var _BX$Main$gridManager$2;
 	      var grid = (_BX$Main$gridManager$2 = BX.Main.gridManager.getById(options.gridId)) === null || _BX$Main$gridManager$2 === void 0 ? void 0 : _BX$Main$gridManager$2.instance;
 	      if (main_core.Type.isObject(grid)) {
 	        grid.tableFade();
@@ -378,6 +381,28 @@ this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
 	      if (main_core.Type.isObject(grid) && main_core.Type.isObject(filter)) {
 	        filter.getApi().extendFilter(options.filter);
 	      }
+	    }
+	  }, {
+	    key: "reinviteCloudAction",
+	    value: function reinviteCloudAction(data) {
+	      return BX.ajax.runAction('intranet.invite.reinviteWithChangeContact', {
+	        data: data
+	      }).then(function (response) {
+	        if (response.data.result) {
+	          var InviteAccessPopup = new BX.PopupWindow({
+	            content: "<p>".concat(main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_REINVITE_SUCCESS'), "</p>"),
+	            autoHide: true
+	          });
+	          InviteAccessPopup.show();
+	        }
+	        return response;
+	      }, function (response) {
+	        var errors = response.errors.map(function (error) {
+	          return error.message;
+	        });
+	        ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+	        return response;
+	      });
 	    }
 	  }, {
 	    key: "reinviteAction",
@@ -406,16 +431,36 @@ this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
 	babelHelpers.defineProperty(GridManager, "instances", []);
 
 	var _templateObject$3;
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _updateData = /*#__PURE__*/new WeakSet();
+	var _onClick = /*#__PURE__*/new WeakSet();
+	var _actionFactory = /*#__PURE__*/new WeakSet();
+	var _inviteAction = /*#__PURE__*/new WeakSet();
+	var _acceptAction = /*#__PURE__*/new WeakSet();
 	var ActivityField = /*#__PURE__*/function (_BaseField) {
 	  babelHelpers.inherits(ActivityField, _BaseField);
 	  function ActivityField() {
+	    var _babelHelpers$getProt;
+	    var _this;
 	    babelHelpers.classCallCheck(this, ActivityField);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ActivityField).apply(this, arguments));
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(ActivityField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _acceptAction);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _inviteAction);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _actionFactory);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onClick);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _updateData);
+	    return _this;
 	  }
 	  babelHelpers.createClass(ActivityField, [{
 	    key: "render",
 	    value: function render(params) {
-	      var _params$action;
+	      var _params$action,
+	        _this2 = this;
 	      var title = '';
 	      var color = '';
 	      switch ((_params$action = params.action) !== null && _params$action !== void 0 ? _params$action : 'invite') {
@@ -429,19 +474,6 @@ this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
 	          color = BX.UI.Button.Color.LIGHT_BORDER;
 	          break;
 	      }
-	      var onclick = function onclick() {
-	        if (params.action === 'invite') {
-	          button.setWaiting(true);
-	          GridManager.reinviteAction(params.userId, params.isExtranet).then(function () {
-	            button.setWaiting(false);
-	          });
-	        } else if (params.action === 'accept') {
-	          GridManager.getInstance(params.gridId).confirmAction({
-	            isAccept: true,
-	            userId: params.userId
-	          });
-	        }
-	      };
 	      var counter = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-counter user-grid_invitation-counter\">\n\t\t\t\t<div class=\"ui-counter-inner\">1</div>\n\t\t\t</div>\n\t\t"])));
 	      main_core.Dom.append(counter, this.getFieldNode());
 	      var button = new BX.UI.Button({
@@ -451,13 +483,81 @@ this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
 	        size: BX.UI.Button.Size.EXTRA_SMALL,
 	        tag: BX.UI.Button.Tag.INPUT,
 	        round: true,
-	        onclick: onclick
+	        onclick: function onclick() {
+	          _classPrivateMethodGet$1(_this2, _onClick, _onClick2).call(_this2, params, button);
+	        }
 	      });
 	      button.renderTo(this.getFieldNode());
 	    }
 	  }]);
 	  return ActivityField;
 	}(BaseField);
+	function _updateData2(data) {
+	  var _GridManager$getInsta;
+	  var row = (_GridManager$getInsta = GridManager.getInstance(this.gridId).getGrid()) === null || _GridManager$getInsta === void 0 ? void 0 : _GridManager$getInsta.getRows().getById(this.userId);
+	  row === null || row === void 0 ? void 0 : row.stateLoad();
+	  GridManager.reinviteCloudAction(data).then(function (response) {
+	    row === null || row === void 0 ? void 0 : row.update();
+	    row === null || row === void 0 ? void 0 : row.stateUnload();
+	  });
+	}
+	function _onClick2(params, button) {
+	  if (!params.enabled) {
+	    var popup = BX.PopupWindowManager.create('intranet-user-grid-invitation-disabled', null, {
+	      darkMode: true,
+	      content: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_REINVITE_DISABLED'),
+	      closeByEsc: true,
+	      angle: true,
+	      offsetLeft: 40,
+	      maxWidth: 300,
+	      overlay: false,
+	      autoHide: true
+	    });
+	    popup.setBindElement(button.getContainer());
+	    popup.show();
+	  } else {
+	    _classPrivateMethodGet$1(this, _actionFactory, _actionFactory2).call(this, params.action).call(this, params, button);
+	  }
+	}
+	function _actionFactory2(action) {
+	  switch (action) {
+	    case 'accept':
+	      return _classPrivateMethodGet$1(this, _acceptAction, _acceptAction2);
+	      break;
+	    case 'invite':
+	      return _classPrivateMethodGet$1(this, _inviteAction, _inviteAction2);
+	    default:
+	      return _classPrivateMethodGet$1(this, _inviteAction, _inviteAction2);
+	      break;
+	  }
+	}
+	function _inviteAction2(params, button) {
+	  if (params.isCloud === true) {
+	    var _ref, _params$email;
+	    var reinvitePopup = new intranet_reinvite.ReinvitePopup({
+	      userId: params.userId,
+	      transport: _classPrivateMethodGet$1(this, _updateData, _updateData2).bind(params),
+	      //callback,
+	      formType: params.email ? intranet_reinvite.FormType.EMAIL : intranet_reinvite.FormType.PHONE,
+	      bindElement: button.getContainer(),
+	      inputValue: (_ref = (_params$email = params.email) !== null && _params$email !== void 0 ? _params$email : params.phoneNumber) !== null && _ref !== void 0 ? _ref : ''
+	    });
+	    //This is a hack. When the row is updated, a new button is created.
+	    reinvitePopup.getPopup().setBindElement(button.getContainer());
+	    reinvitePopup.show();
+	  } else {
+	    button.setWaiting(true);
+	    GridManager.reinviteAction(params.userId, params.isExtranet).then(function () {
+	      button.setWaiting(false);
+	    });
+	  }
+	}
+	function _acceptAction2(params, button) {
+	  GridManager.getInstance(params.gridId).confirmAction({
+	    isAccept: true,
+	    userId: params.userId
+	  });
+	}
 
 	var _templateObject$4, _templateObject2$2, _templateObject3$1;
 	var DepartmentField = /*#__PURE__*/function (_BaseField) {
@@ -525,5 +625,5 @@ this.BX.Intranet.Grid = this.BX.Intranet.Grid || {};
 	exports.DepartmentField = DepartmentField;
 	exports.GridManager = GridManager;
 
-}((this.BX.Intranet.Grid.UserGrid = this.BX.Intranet.Grid.UserGrid || {}),BX.UI,BX.Main,BX.UI.Dialogs,BX.UI,BX,BX,BX.UI.EntitySelector));
+}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI.Dialogs,BX.UI.FormElements,BX.UI,BX.Intranet.Reinvite,BX,BX,BX.UI.EntitySelector));
 //# sourceMappingURL=grid.bundle.js.map

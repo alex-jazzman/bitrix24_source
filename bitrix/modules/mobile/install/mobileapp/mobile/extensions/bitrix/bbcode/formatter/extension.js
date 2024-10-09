@@ -140,7 +140,7 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	      this.setOnUnknown(options.onUnknown);
 	    }
 	  }
-	  static isElement(source) {
+	  isElement(source) {
 	    return Type.isObject(source) && Type.isFunction(source.appendChild);
 	  }
 	  static prepareSourceNode(source) {
@@ -248,14 +248,14 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	        source: childNode,
 	        data
 	      });
-	      if (Formatter.isElement(childElement)) {
+	      if (childElement !== null) {
 	        const convertedChildElement = nodeFormatter.runForChild({
 	          node: childNode,
 	          element: childElement,
 	          formatter: this,
 	          data
 	        });
-	        if (Formatter.isElement(convertedChildElement)) {
+	        if (convertedChildElement !== null && this.isElement(convertedElement)) {
 	          convertedElement.appendChild(convertedChildElement);
 	        }
 	      }

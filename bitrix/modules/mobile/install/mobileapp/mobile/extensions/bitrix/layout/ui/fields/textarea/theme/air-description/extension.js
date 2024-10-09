@@ -83,7 +83,7 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 						useBBCodeEditor: true,
 						onClick: () => this.field.openBBCodeTextEditor(this.value),
 						onLongClick: () => this.field.openBBCodeTextEditor(this.value),
-						onLinkClick: this.field.getOnLinkClick(),
+						onLinkClick: () => this.field.openBBCodeTextEditor(this.value),
 						testId: `${this.field.testId}_CONTENT`,
 					})
 					: new EditableTextBlock({
@@ -95,7 +95,6 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 							style: descriptionStyle(this.field.isEmpty()),
 							bbCodeMode: true,
 							moreButtonColor: Color.accentMainPrimary,
-							onLinkClick: this.field.getOnLinkClick(),
 						},
 						editorProps: {
 							placeholder: this.field.getPlaceholder(),

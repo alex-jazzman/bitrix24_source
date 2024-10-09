@@ -7,5 +7,6 @@ return [
 	],
 	'bundle' => [
 		'./src/ellipsize',
+		'./src/align',
 	],
 ];

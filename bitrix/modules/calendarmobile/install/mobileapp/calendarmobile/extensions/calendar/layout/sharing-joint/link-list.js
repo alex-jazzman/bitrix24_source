@@ -8,6 +8,7 @@ jn.define('calendar/layout/sharing-joint/link-list', (require, exports, module) 
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Icons } = require('calendar/layout/icons');
 	const { LinkItem } = require('calendar/layout/sharing-joint/link-item');
+	const { Color } = require('tokens');
 
 	class LinkList extends LayoutComponent
 	{
@@ -206,11 +207,11 @@ jn.define('calendar/layout/sharing-joint/link-list', (require, exports, module) 
 				{
 					style: {
 						flex: 1,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						... (!hasLinks ? {
+						backgroundColor: Color.bgContentPrimary.toHex(),
+						...(hasLinks ? {} : {
 							alignItems: 'center',
 							justifyContent: 'center',
-						} : {}),
+						}),
 					},
 					ref: (ref) => {
 						this.listRef = ref;
@@ -327,7 +328,7 @@ jn.define('calendar/layout/sharing-joint/link-list', (require, exports, module) 
 			color: AppTheme.colors.base2,
 			textAlign: 'center',
 		},
-	}
+	};
 
 	module.exports = { LinkList };
 });

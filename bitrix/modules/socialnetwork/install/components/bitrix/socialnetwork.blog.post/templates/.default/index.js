@@ -213,7 +213,10 @@ this.BX.Socialnetwork.Blog = this.BX.Socialnetwork.Blog || {};
 	  form.show(list);
 	}
 	function _copyIntoNewPost2(text) {
-	  location.href = `${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].pathToPostCreate}#${encodeURIComponent(text)}`;
+	  const pathToPostCreate = main_core.Uri.addParam(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].pathToPostCreate, {
+	    getTextFromHash: 'Y'
+	  });
+	  location.href = `${pathToPostCreate}#${encodeURIComponent(text)}`;
 	}
 
 	exports.BlogCopilotReadonly = BlogCopilotReadonly;

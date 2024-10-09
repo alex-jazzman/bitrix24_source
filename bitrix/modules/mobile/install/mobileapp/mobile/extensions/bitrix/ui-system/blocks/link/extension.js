@@ -15,20 +15,24 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 	const ICON_SIZE = 20;
 
 	/**
-	 * @function Link
-	 * @params {object} props
-	 * @params {string} props.testId
-	 * @params {string} props.text
-	 * @params {number} props.size
-	 * @params {string}[ props.href]
-	 * @params {boolean} [props.useInAppLink=true]
-	 * @params {Color} [props.color=Color.accentMainLink]
-	 * @params {Ellipsize} [props.ellipsize=Ellipsize.END]
-	 * @params {string} [props.leftIcon]
-	 * @params {string} [props.rightIcon]
-	 * @params {function} [props.forwardRef]
-	 * @params {function} [props.onClick]
-	 * @return Link
+	 * @typedef LinkProps
+	 * @property {string} testId
+	 * @property {string} text
+	 * @property {number} [size]
+	 * @property {string} [href]
+	 * @property {boolean} [useInAppLink=true]
+	 * @property {Color} [color=Color.accentMainLink]
+	 * @property {Ellipsize} [ellipsize=Ellipsize.END]
+	 * @property {Icon} [leftIcon]
+	 * @property {Icon} [rightIcon]
+	 * @property {function} [forwardRef]
+	 * @property {function} [onClick]
+	 * @property {boolean} [accent=false]
+	 * @property {LinkMode} [mode=LinkMode.PLAIN]
+	 * @property {LinkDesign} [design=LinkDesign.PRIMARY]
+	 * @property {Object} [style]
+	 *
+	 * @class Link
 	 */
 	class Link extends LayoutComponent
 	{
@@ -164,8 +168,6 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 		}
 	}
 
-	const renderLinkBy = (typography = null) => (props) => new Link({ ...props, typography });
-
 	Link.defaultProps = {
 		useInAppLink: true,
 	};
@@ -173,28 +175,54 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 	Link.propTypes = {
 		testId: PropTypes.string.isRequired,
 		text: PropTypes.string.isRequired,
-		useInAppLink: PropTypes.bool,
 		size: PropTypes.number,
-		accent: PropTypes.bool,
 		href: PropTypes.string,
-		leftIcon: PropTypes.object,
-		rightIcon: PropTypes.object,
-		color: PropTypes.object,
-		ellipsize: PropTypes.object,
-		mode: PropTypes.object,
-		onClick: PropTypes.func,
+		useInAppLink: PropTypes.bool,
+		color: PropTypes.instanceOf(Color),
+		ellipsize: PropTypes.instanceOf(Ellipsize),
+		leftIcon: PropTypes.instanceOf(Icon),
+		rightIcon: PropTypes.instanceOf(Icon),
 		forwardRef: PropTypes.func,
+		onClick: PropTypes.func,
+		accent: PropTypes.bool,
+		mode: PropTypes.instanceOf(LinkMode),
+		design: PropTypes.instanceOf(LinkDesign),
+		style: PropTypes.object,
 	};
 
 	module.exports = {
-		Link: renderLinkBy(),
-		Link1: renderLinkBy(Text1),
-		Link2: renderLinkBy(Text2),
-		Link3: renderLinkBy(Text3),
-		Link4: renderLinkBy(Text4),
-		Link5: renderLinkBy(Text5),
-		Link6: renderLinkBy(Text6),
-		LinkCapital: renderLinkBy(Capital),
+		/**
+		 * @param {LinkProps} props
+		 */
+		Link: (props) => new Link(props),
+		/**
+		 * @param {LinkProps} props
+		 */
+		Link1: (props) => new Link({ ...props, typography: Text1 }),
+		/**
+		 * @param {LinkProps} props
+		 */
+		Link2: (props) => new Link({ ...props, typography: Text2 }),
+		/**
+		 * @param {LinkProps} props
+		 */
+		Link3: (props) => new Link({ ...props, typography: Text3 }),
+		/**
+		 * @param {LinkProps} props
+		 */
+		Link4: (props) => new Link({ ...props, typography: Text4 }),
+		/**
+		 * @param {LinkProps} props
+		 */
+		Link5: (props) => new Link({ ...props, typography: Text5 }),
+		/**
+		 * @param {LinkProps} props
+		 */
+		Link6: (props) => new Link({ ...props, typography: Text6 }),
+		/**
+		 * @param {LinkProps} props
+		 */
+		LinkCapital: (props) => new Link({ ...props, typography: Capital }),
 		LinkMode,
 		LinkDesign,
 		Icon,

@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.icons',
 	'ui.notification',
 	'ui.tour',
+	'ui.banner-dispatcher',
 	'main.core',
 	'catalog.document-grid',
 	'catalog.store-enable-wizard',
@@ -168,7 +169,9 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 				],
 				onEvents: true,
 			});
-			guide.showNextStep();
+			BX.UI.BannerDispatcher.high.toQueue(() => {
+				guide.showNextStep();
+			});
 		});
 	}
 
@@ -197,7 +200,9 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 				],
 				onEvents: true,
 			});
-			guide.showNextStep();
+			BX.UI.BannerDispatcher.normal.toQueue(() => {
+				guide.showNextStep();
+			});
 		});
 
 		BX.addCustomEvent('Step:onShow', (event) => {

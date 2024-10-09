@@ -10,3 +10,4 @@ drop table if exists b_sign_file;
 drop table if exists b_sign_blank_resource;
 drop table if exists b_sign_legal_log;
 drop table if exists b_sign_document_required_field;
+drop table if exists b_sign_document_chat

@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 	);
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { Loc } = require('loc');
+	const { Icon } = require('assets/icons');
 	const { ChannelParticipantsService } = require('im/messenger/controller/sidebar/channel/tabs/participants/participants-service');
 
 	/**
@@ -78,66 +79,78 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 		 * @param {number} userId
 		 * @param {object} isEntity
 		 * @param {boolean} isEntity.isYou
-		 * @param {boolean} isEntity.isManager
+		 * @param {boolean?} isEntity.isManager
+		 * @param {LayoutComponent} ref
 		 * @private
 		 */
-		onLongClickItem(key, userId, isEntity)
+		onLongClickItem(key, userId, isEntity, ref)
 		{
-			const actions = [];
-			const actionsIcon = [];
-			const callbacks = {};
+			const actionsItems = [];
 
 			if (isEntity.isYou)
 			{
-				actions.push('notes');
-				actionsIcon.push('notes');
-				callbacks.notes = this.participantsService.onClickGetNotes;
+				actionsItems.push({
+					actionName: 'notes',
+					callback: this.participantsService.onClickGetNotes,
+					icon: Icon.FLAG,
+				});
 				if (this.state.permissions.isCanLeave)
 				{
-					actions.push('channel_leave');
-					actionsIcon.push('leave');
-					callbacks.channel_leave = this.onClickLeaveChannel.bind(this);
+					actionsItems.push({
+						actionName: 'channel_leave',
+						callback: this.onClickLeaveChannel.bind(this),
+						icon: Icon.DAY_OFF,
+					});
 				}
 			}
 			else
 			{
 				if (ChatPermission.isCanMention(this.props.dialogId))
 				{
-					actions.push('mention');
-					actionsIcon.push('mention');
-					callbacks.mention = this.participantsService.onClickPingUser.bind(this, userId);
+					actionsItems.push({
+						actionName: 'mention',
+						callback: this.participantsService.onClickPingUser.bind(this, userId),
+						icon: Icon.MENTION,
+					});
 				}
-
-				actions.push('send');
-				actionsIcon.push('send');
-				callbacks.send = this.participantsService.onClickSendMessage.bind(this, userId);
+				actionsItems.push({
+					actionName: 'send',
+					callback: this.participantsService.onClickSendMessage.bind(this, userId),
+					icon: Icon.MESSAGE,
+				});
 
 				if (ChatPermission.isOwner())
 				{
 					if (isEntity.isManager)
 					{
-						actions.push('channel_remove_manager');
-						actionsIcon.push('cancel');
-						callbacks.channel_remove_manager = this.participantsService.onClickRemoveManager.bind(this, userId);
+						actionsItems.push({
+							actionName: 'channel_remove_manager',
+							callback: this.participantsService.onClickRemoveManager.bind(this, userId),
+							icon: Icon.CIRCLE_CROSS,
+						});
 					}
 					else
 					{
-						actions.push('channel_add_manager');
-						actionsIcon.push('crown');
-						callbacks.channel_add_manager = this.participantsService.onClickAddManager.bind(this, userId);
+						actionsItems.push({
+							actionName: 'channel_add_manager',
+							callback: this.participantsService.onClickAddManager.bind(this, userId),
+							icon: Icon.CROWN,
+						});
 					}
 				}
 
 				const isCanDelete = this.state.permissions.isCanRemoveParticipants;
 				if (isCanDelete && ChatPermission.isCanRemoveUserById(userId, this.props.dialogId))
 				{
-					actions.push('channel_remove');
-					actionsIcon.push('remove');
-					callbacks.channel_remove = this.onClickRemoveParticipant.bind(this, { key });
+					actionsItems.push({
+						actionName: 'channel_remove',
+						callback: this.onClickRemoveParticipant.bind(this, { key }),
+						icon: Icon.BAN,
+					});
 				}
 			}
 
-			return this.openParticipantManager(actions, callbacks, actionsIcon);
+			return this.openParticipantManager(ref, actionsItems);
 		}
 
 		getUserAddWidgetTitle()

@@ -182,7 +182,7 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if($REQUEST_METHOD=="POST" && (!empty($_POST['save']) || !empty($_POST['apply'])) && check_bitrix_sessid() && $isAdmin)
+if($_SERVER['REQUEST_METHOD']=="POST" && (!empty($_POST['save']) || !empty($_POST['apply'])) && check_bitrix_sessid() && $isAdmin)
 {
 	foreach($arSettings as $key => $value)
 	{

@@ -4,7 +4,7 @@
 jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, module) => {
 	const { createDraftSafeSelector } = require('statemanager/redux/toolkit');
 	const { sliceName, tasksAdapter } = require('tasks/statemanager/redux/slices/tasks/meta');
-	const { TaskStatus, TaskCounter } = require('tasks/enum');
+	const { TaskStatus, TaskCounter, TimerState } = require('tasks/enum');
 
 	const {
 		selectAll,
@@ -183,6 +183,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		(allTasks) => allTasks.filter((task) => task.isRemoved === true),
 	);
 
+	const selectWithCreationError = createDraftSafeSelector(
+		(state) => selectAll(state),
+		(allTasks) => allTasks.filter((task) => task.isCreationErrorExist),
+	);
+
 	const selectIsExpiredSoon = createDraftSafeSelector(
 		selectIsCompleted,
 		selectIsDeferred,
@@ -244,6 +249,38 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		},
 	);
 
+	const selectDatePlan = createDraftSafeSelector(
+		(state, taskId) => selectByTaskIdOrGuid(state, taskId),
+		(task) => {
+			if (!task)
+			{
+				return {};
+			}
+
+			return {
+				startDatePlan: task.startDatePlan,
+				endDatePlan: task.endDatePlan,
+			};
+		},
+	);
+
+	const selectExtraSettings = createDraftSafeSelector(
+		(state, taskId) => selectByTaskIdOrGuid(state, taskId),
+		(task) => {
+			if (!task)
+			{
+				return {};
+			}
+
+			return {
+				isMatchWorkTime: task.isMatchWorkTime,
+				allowChangeDeadline: task.allowChangeDeadline,
+				isResultRequired: task.isResultRequired,
+				allowTaskControl: task.allowTaskControl,
+			};
+		},
+	);
+
 	const selectActions = createDraftSafeSelector(
 		(task) => task,
 		selectIsAuditor,
@@ -287,6 +324,19 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		}),
 	);
 
+	const selectTimerState = createDraftSafeSelector(
+		(task) => task.timeEstimate > 0 && task.timeElapsed > task.timeEstimate,
+		(task) => task.isTimerRunningForCurrentUser,
+		(isOverdue, isTimerRunningForCurrentUser) => {
+			if (isOverdue)
+			{
+				return TimerState.OVERDUE;
+			}
+
+			return isTimerRunningForCurrentUser ? TimerState.RUNNING : TimerState.PAUSED;
+		},
+	);
+
 	module.exports = {
 		selectAll,
 		selectById,
@@ -318,7 +368,13 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		selectSubTasksById,
 		selectSubTasksIdsByTaskId,
 		selectRelatedTasksById,
+		selectWithCreationError,
+
+		selectDatePlan,
+		selectExtraSettings,
 
 		selectActions,
+
+		selectTimerState,
 	};
 });

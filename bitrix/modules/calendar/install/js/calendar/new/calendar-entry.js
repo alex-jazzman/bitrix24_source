@@ -503,6 +503,29 @@
 		{
 			const entries = [];
 			const activeSectionIndex = this.getActiveSectionsIndex();
+
+			const entriesColors = {};
+			this.entriesRaw.forEach((entryRaw) => {
+				if (!entryRaw.COLOR)
+				{
+					return;
+				}
+
+				entriesColors[entryRaw.ID] ??= {};
+				entriesColors[entryRaw.ID][entryRaw.COLOR] ??= 0;
+				entriesColors[entryRaw.ID][entryRaw.COLOR]++;
+			});
+			this.entriesRaw.forEach((entryRaw) => {
+				if (!entryRaw.COLOR)
+				{
+					return;
+				}
+
+				const colors = entriesColors[entryRaw.ID];
+
+				entryRaw.COLOR = Object.keys(colors).reduce((a, b) => colors[a] < colors[b] ? a : b);
+			});
+
 			for (const entryRaw of this.entriesRaw)
 			{
 				if ((entryRaw['~TYPE'] === 'tasks' && !activeSectionIndex['tasks'])
@@ -633,7 +656,7 @@
 				return a.entry.from.getTime() - b.entry.from.getTime();
 			}
 
-			return a.part.daysCount - b.part.daysCount;
+			return b.part.daysCount - a.part.daysCount;
 		},
 
 		clearLoadIndexCache: function()
@@ -1080,20 +1103,22 @@
 			{
 				this.data.REMIND.forEach(function (remind)
 				{
-					if (remind.type == 'min')
+					if (remind.type === 'min')
 					{
 						res.push(remind.count);
 					}
-					else if (remind.type == 'hour')
+					else if (remind.type === 'hour')
 					{
-						res.push(parseInt(remind.count) * 60);
+						res.push(Number(remind.count) * 60);
 					}
-					if (remind.type == 'day')
+
+					if (remind.type === 'day')
 					{
-						res.push(parseInt(remind.count) * 60 * 24);
+						res.push(Number(remind.count) * 60 * 24);
 					}
 				});
 			}
+
 			return res;
 		},
 

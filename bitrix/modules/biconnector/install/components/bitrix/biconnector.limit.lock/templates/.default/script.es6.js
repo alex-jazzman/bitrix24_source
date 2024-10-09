@@ -2,6 +2,7 @@ import { Tag, Reflection } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
+import { BannerDispatcher } from 'ui.banner-dispatcher';
 
 type LimitPopupParams = {
 	title: number,
@@ -40,24 +41,29 @@ class LimitLockPopup
 
 	#show()
 	{
-		const popupButtons = [
-			new Button({
-				text: this.#licenseButtonText,
-				color: Button.Color.SUCCESS,
-				onclick: () => {
-					top.location.href = this.#licenseUrl;
-				},
-			}),
-			new Button({
+		BannerDispatcher.high.toQueue((onDone) => {
+			const popupButtons = [];
+
+			if (this.#licenseButtonText)
+			{
+				popupButtons.push(new Button({
+					text: this.#licenseButtonText,
+					color: Button.Color.SUCCESS,
+					onclick: () => {
+						top.location.href = this.#licenseUrl;
+					},
+				}));
+			}
+
+			popupButtons.push(new Button({
 				text: this.#laterButtonText,
 				color: Button.Color.LINK,
 				onclick: () => {
 					popup.close();
 				},
-			}),
-		];
+			}));
 
-		const popupContent = Tag.render`
+			const popupContent = Tag.render`
 			<div class="biconnector-limit-popup-wrap">
 				<div class="biconnector-limit-popup">
 					<div class="biconnector-limit-pic">
@@ -68,35 +74,38 @@ class LimitLockPopup
 			</div>
 		`;
 
-		const popup = new Popup({
-			titleBar: this.#title,
-			content: popupContent,
-			overlay: true,
-			className: this.#popupClassName,
-			closeIcon: true,
-			lightShadow: true,
-			offsetLeft: 100,
-			buttons: popupButtons,
+			const popup = new Popup({
+				titleBar: this.#title,
+				content: popupContent,
+				overlay: true,
+				className: this.#popupClassName,
+				closeIcon: true,
+				lightShadow: true,
+				offsetLeft: 100,
+				buttons: popupButtons,
+			});
+
+			if (this.#fullLock)
+			{
+				popup.subscribe('onClose', () => {
+					if (BX.SidePanel.Instance.isOpen())
+					{
+						BX.SidePanel.Instance.close();
+					}
+					EventEmitter.emit('BiConnector:LimitPopup.Lock.onClose');
+					onDone();
+				});
+			}
+			else
+			{
+				popup.subscribe('onClose', () => {
+					EventEmitter.emit('BiConnector:LimitPopup.Warning.onClose');
+					onDone();
+				});
+			}
+
+			popup.show();
 		});
-
-		if (this.#fullLock)
-		{
-			popup.subscribe('onClose', () => {
-				if (BX.SidePanel.Instance.isOpen())
-				{
-					BX.SidePanel.Instance.close();
-				}
-				EventEmitter.emit('BiConnector:LimitPopup.Lock.onClose');
-			});
-		}
-		else
-		{
-			popup.subscribe('onClose', () => {
-				EventEmitter.emit('BiConnector:LimitPopup.Warning.onClose');
-			});
-		}
-
-		popup.show();
 	}
 }
 

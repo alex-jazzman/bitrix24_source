@@ -12,18 +12,12 @@ export type SummaryData = {
 	workflowId: string,
 	time: ?number,
 	workflowIsCompleted: boolean,
-	showArrow: boolean,
-	showContent: boolean,
-	showTitle: boolean,
 };
 
 export class Summary
 {
 	#isFinal: boolean = false;
 	#workflowId: string;
-	#showArrow: boolean;
-	#showContent: boolean;
-	#showTitle: boolean;
 
 	constructor(props: SummaryData = {})
 	{
@@ -38,17 +32,13 @@ export class Summary
 			this.#isFinal = props.workflowIsCompleted;
 		}
 
-		this.#showArrow = Type.isBoolean(props.showArrow) ? props.showArrow : true;
-		this.#showContent = Type.isBoolean(props.showContent) ? props.showContent : true;
-		this.#showTitle = Type.isBoolean(props.showTitle) ? props.showTitle : true;
-
 		this.#calculateDurationTexts(props.time);
 	}
 
 	#calculateDurationTexts(time)
 	{
 		const duration = (
-			Type.isNumber(time) && this.#showContent
+			Type.isNumber(time)
 				? DateTimeFormat.format(
 					[['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']],
 					0,
@@ -83,32 +73,24 @@ export class Summary
 
 	render(): HTMLElement
 	{
-		const title = Loc.getMessage(
+		const title = Text.encode(Loc.getMessage(
 			this.#isFinal
 				? 'BIZPROC_JS_WORKFLOW_FACES_SUMMARY_TITLE_FINAL'
 				: 'BIZPROC_JS_WORKFLOW_FACES_SUMMARY_TITLE'
 			,
-		);
-
-		if (this.#showContent)
-		{
-			return Tag.render`
-				<div class="bp-workflow-faces__steps-item --result --summary ${this.#showArrow ? '' : '--arrow-hidden'}">
-					<div class="bp-workflow-faces__steps-name">
-						<span class="bp-workflow-faces__text-area">${this.#showTitle ? Text.encode(title) : ''}</span>
-					</div>
-					${this.#renderContent()}
-					<div class="bp-workflow-faces__steps-duration" onclick="${this.#openTimeline.bind(this)}">
-						<a href="#" class="bp-workflow-faces__text-area">
-							${Loc.getMessage('BIZPROC_JS_WORKFLOW_FACES_SUMMARY_TIMELINE')}
-						</a>
-					</div>
-				</div>
-			`;
-		}
+		));
+		const footerTitle = Text.encode(Loc.getMessage('BIZPROC_JS_WORKFLOW_FACES_SUMMARY_TIMELINE_MSGVER_1'));
 
 		return Tag.render`
-			<div class="bp-workflow-faces__steps-item --result --summary --content-hidden"></div>
+			<div class="bp-workflow-faces-summary-item">
+				<div class="bp-workflow-faces-summary-name">
+					<div class="bp-workflow-faces-summary__text-area" title="${title}">${title}</div>
+				</div>
+				${this.#renderContent()}
+				<div class="bp-workflow-faces-summary__duration" onclick="${this.#openTimeline.bind(this)}">
+					<div class="bp-workflow-faces-summary__text-area" title="${footerTitle}">${footerTitle}</div>
+				</div>
+			</div>
 		`;
 	}
 
@@ -117,23 +99,24 @@ export class Summary
 		if (this.#isFinal)
 		{
 			return Tag.render`
-				<div class="bp-workflow-faces__steps-summary">
-					<div class="bp-workflow-faces__steps-summary-name">${Text.encode(this.durationTexts.nameBefore)}</div>
-					<div class="bp-workflow-faces__steps-summary-value">${Text.encode(this.durationTexts.value)}</div>
-					<div class="bp-workflow-faces__steps-summary-name">${Text.encode(this.durationTexts.nameAfter)}</div>
+				<div class="bp-workflow-faces-summary__summary">
+					<div class="bp-workflow-faces-summary__summary-name">${Text.encode(this.durationTexts.nameBefore)}</div>
+					<div class="bp-workflow-faces-summary__summary-value">${Text.encode(this.durationTexts.value)}</div>
+					<div class="bp-workflow-faces-summary__summary-name">${Text.encode(this.durationTexts.nameAfter)}</div>
 				</div>
 			`;
 		}
 
 		return Tag.render`
-			<div class="bp-workflow-faces__steps-users">
-				<div class="ui-icon-set --clock-2 bp-workflow-faces__steps-user"></div>
+			<div class="bp-workflow-faces-summary__icon-wrapper">
+				<div class="ui-icon-set --clock-2 bp-workflow-faces-summary__icon"></div>
 			</div>
 		`;
 	}
 
 	#openTimeline(event)
 	{
+		event.stopPropagation();
 		event.preventDefault();
 		Timeline.open({ workflowId: this.#workflowId });
 	}

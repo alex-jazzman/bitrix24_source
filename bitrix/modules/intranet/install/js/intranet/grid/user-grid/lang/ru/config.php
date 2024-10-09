@@ -8,6 +8,7 @@ $MESS["INTRANET_JS_CONTROL_BALLOON_ADD_DEPARTMENT"] = "Выбрать отдел
 $MESS["INTRANET_JS_CONTROL_BUTTON_ACCEPT_ENTER"] = "Подтвердить вход";
 $MESS["INTRANET_JS_CONTROL_BUTTON_INVITE_AGAIN"] = "Пригласить повторно";
 $MESS["INTRANET_USER_LIST_ACTION_REINVITE_SUCCESS"] = "Приглашение было отправлено";
+$MESS["INTRANET_USER_LIST_ACTION_REINVITE_DISABLED"] = "Приглашать сотрудников в Битрикс24 может только администратор. Обратитесь к нему, чтобы получить доступ";
 
 $MESS["INTRANET_USER_LIST_ACTION_RESTORE_TITLE"] = "Принять на работу?";
 $MESS["INTRANET_USER_LIST_ACTION_CONFIRM_TITLE"] = "Подтвердить вход?";

@@ -8,7 +8,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 	const { LottieAnimations } = require('crm/receive-payment/steps/finish/lottie-animations');
 	const { Statuses } = require('crm/receive-payment/steps/finish/statuses');
 	const { getEntityMessage } = require('crm/loc');
-	const { TypeId } = require('crm/type/id');
+	const { TypeId } = require('crm/type');
 	const { EventEmitter } = require('event-emitter');
 	const { WarningBlock } = require('layout/ui/warning-block');
 

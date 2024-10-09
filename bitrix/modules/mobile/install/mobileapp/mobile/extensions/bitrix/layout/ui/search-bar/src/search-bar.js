@@ -671,7 +671,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 
 	const styles = {
 		wrapper: (isVisible) => ({
-			top: 3,
+			top: 0,
 			position: isVisible ? 'absolute' : 'relative',
 			zIndex: 10,
 			height: isVisible ? 44 : 0,
@@ -679,7 +679,6 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			backgroundColor: Color.bgNavigation.toHex(),
 			opacity: 1,
 			borderBottomWidth: 1,
-			borderBottomColor: Color.bgSeparatorPrimary.toHex(),
 			paddingTop: Application.getPlatform() === 'ios' ? 3 : 0,
 		}),
 		presetsScrollView: {

@@ -1,4 +1,7 @@
 import { UsersModelState } from '../../../model/types/users';
+import { SidebarFile } from '../../../model/types/sidebar/files';
+import { SidebarLink } from '../../../model/types/sidebar/links';
+import { DialogId } from '../../../types/common';
 
 type SidebarViewProps = {
 	isGroupDialog: boolean,
@@ -73,6 +76,7 @@ type SidebarViewState = {
 		lastActivityDate: object | null,
 		userModelData: UsersModelState,
 	},
+	isHistoryLimitExceeded: boolean,
 }
 
 type SidebarProfileInfoProps = {
@@ -131,7 +135,7 @@ type SidebarProfileCounterState = {
 
 type SidebarTabViewProps = {
 	dialogId: string | number,
-	isNotes: boolean,
+	hideParticipants: boolean,
 	isCopilot: boolean,
 }
 
@@ -162,4 +166,24 @@ type SidebarParticipantsViewState = {
 		isCanAddParticipants: boolean,
 		isCanLeave: boolean,
 	},
+}
+
+type SidebarFilesViewProps = {
+	dialogId: string | number,
+}
+
+type SidebarFilesViewState = {
+	files: Array<SidebarFile>,
+	hasNextPage: boolean,
+	isHistoryLimitExceeded: boolean,
+}
+
+type SidebarLinksViewProps = {
+	dialogId: DialogId,
+}
+
+type SidebarLinksViewState = {
+	links: Array<SidebarLink>,
+	hasNextPage: boolean,
+	isHistoryLimitExceeded: boolean,
 }

@@ -1,7 +1,6 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_popup,tasks_flow_teamPopup,tasks_sidePanelIntegration,ui_label,main_core,main_loader,ui_buttons) {
+(function (exports,main_popup,tasks_flow_teamPopup,tasks_sidePanelIntegration,ui_label,main_core,main_loader,ui_buttons,ui_infoHelper) {
 	'use strict';
 
 	let _ = t => t,
@@ -189,6 +188,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _flowId$1)[_flowId$1] = params.flowId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
+	    this.isFeatureEnabled = params.isFeatureEnabled;
 	    babelHelpers.classPrivateFieldLooseBase(this, _viewAjax)[_viewAjax] = new ViewAjax(params.flowId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _createTaskButtonClickHandler)[_createTaskButtonClickHandler] = (_params$createTaskBut = params.createTaskButtonClickHandler) != null ? _params$createTaskBut : null;
 	  }
@@ -258,7 +258,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    onclick: () => {
 	      var _babelHelpers$classPr2, _babelHelpers$classPr3;
 	      (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _createTaskButtonClickHandler))[_createTaskButtonClickHandler]) == null ? void 0 : _babelHelpers$classPr2.call(_babelHelpers$classPr3);
-	      BX.SidePanel.Instance.open(flow.createTaskUri);
+	      if (this.isFeatureEnabled) {
+	        BX.SidePanel.Instance.open(flow.createTaskUri);
+	      } else {
+	        ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	          code: 'limit_tasks_flows'
+	        }).show();
+	      }
 	    }
 	  });
 	  return main_core.Tag.render(_t3 || (_t3 = _$1`
@@ -404,6 +410,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1] = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1] = {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _viewAjax$1)[_viewAjax$1] = new ViewAjax(babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].flowId);
+	    this.isFeatureEnabled = params.isFeatureEnabled === 'Y';
 	    void babelHelpers.classPrivateFieldLooseBase(this, _load$1)[_load$1]();
 	  }
 	  static showInstance(params) {
@@ -652,6 +659,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  var _babelHelpers$classPr6, _babelHelpers$classPr7;
 	  (_babelHelpers$classPr7 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1]).similarFlows) != null ? _babelHelpers$classPr7 : _babelHelpers$classPr6.similarFlows = new SimilarFlows({
 	    flowId: babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].flowId,
+	    isFeatureEnabled: this.isFeatureEnabled,
 	    createTaskButtonClickHandler: () => {
 	      var _babelHelpers$classPr8;
 	      return (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup) == null ? void 0 : _babelHelpers$classPr8.destroy();
@@ -663,5 +671,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.ViewForm = ViewForm;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Main,BX.Tasks.Flow,BX.Tasks,BX.UI,BX,BX,BX.UI));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Main,BX.Tasks.Flow,BX.Tasks,BX.UI,BX,BX,BX.UI,BX.UI));
 //# sourceMappingURL=view-form.bundle.js.map

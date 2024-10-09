@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Calendar = this.BX.Calendar || {};
-(function (exports,main_loader,main_qrcode,ui_designTokens,main_date,calendar_sharing_analytics,ui_entitySelector,main_core,calendar_util,ui_iconSet_api_core,main_popup,ui_dialogs_messagebox,ui_buttons,main_core_events,ui_iconSet_actions,ui_switcher,spotlight,ui_tour,ui_cnt) {
+(function (exports,main_loader,main_qrcode,ui_designTokens,main_date,calendar_sharing_analytics,ui_entitySelector,main_core,calendar_util,ui_iconSet_api_core,main_popup,ui_dialogs_messagebox,ui_buttons,main_core_events,ui_iconSet_actions,ui_switcher,spotlight,ui_tour,ui_cnt,ui_infoHelper) {
 	'use strict';
 
 	let _ = t => t,
@@ -557,7 +558,10 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      return calendar_util.Util.getWeekdaysLoc(true)[this.rule.weekdays[0]];
 	    }
 	    const weekdaysLoc = calendar_util.Util.getWeekdaysLoc();
-	    return this.rule.weekdays.map(w => weekdaysLoc[w]).reduce((a, b) => `${a}, ${b}`, '');
+	    if (this.rule.weekdays.length === 0) {
+	      return '';
+	    }
+	    return this.rule.weekdays.map(w => weekdaysLoc[w]).reduce((a, b) => `${a}, ${b}`);
 	  }
 	  getSortedWeekdays(weekdays) {
 	    return weekdays.map(w => w < this.weekStart ? w + 10 : w).sort((a, b) => a - b).map(w => w % 10);
@@ -1320,13 +1324,13 @@ this.BX.Calendar = this.BX.Calendar || {};
 			<div class="calendar-sharing__dialog-link-list-item-more">
 				<div class="calendar-sharing__dialog-link-list-item-more-text">${0}</div>
 			</div>
-		`), '+' + counter);
+		`), `+${counter}`);
 	  }
 	  openAvatarList() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _avatarPopup)[_avatarPopup]) {
 	      const uid = BX.util.getRandomString(6);
 	      babelHelpers.classPrivateFieldLooseBase(this, _avatarPopup)[_avatarPopup] = main_popup.MenuManager.create({
-	        id: 'calendar-sharing-dialog_' + uid,
+	        id: `calendar-sharing-dialog_${uid}`,
 	        bindElement: babelHelpers.classPrivateFieldLooseBase(this, _layout$3)[_layout$3].avatarContainer,
 	        bindOptions: {
 	          position: 'top'
@@ -1342,6 +1346,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        this.setPopupState(false);
 	      });
 	      const menuContainer = babelHelpers.classPrivateFieldLooseBase(this, _avatarPopup)[_avatarPopup].getMenuContainer();
+
+	      // eslint-disable-next-line init-declarations
 	      let timeout;
 	      main_core.Event.bind(menuContainer, 'mouseleave', () => {
 	        clearTimeout(timeout);
@@ -1422,7 +1428,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    });
 	  }
 	  renderDeleteButton() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _props)[_props].members.length) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _props)[_props].members.length === 0) {
 	      return main_core.Tag.render(_t9$1 || (_t9$1 = _$6`<div class="calendar-sharing__dialog-link-list-item-delete"></div>`));
 	    }
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _layout$3)[_layout$3].deleteButton) {
@@ -1463,7 +1469,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    return [new ui_buttons.Button({
 	      size: ui_buttons.ButtonSize.MEDIUM,
 	      color: ui_buttons.ButtonColor.DANGER,
-	      text: main_core.Loc.getMessage('SHARING_WARNING_POPUP_DELETE'),
+	      text: main_core.Loc.getMessage('SHARING_WARNING_POPUP_SUBMIT_BUTTON_NEW_MSGVER_1'),
 	      events: {
 	        click: () => {
 	          this.deleteLink();
@@ -2352,7 +2358,6 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.PAY_ATTENTION_TO_NEW_FEATURE_JOINT = 'joint-sharing';
 	    this.PAY_ATTENTION_TO_NEW_FEATURE_WITHOUT_TEXT_MODS = [this.PAY_ATTENTION_TO_NEW_FEATURE_FIRST];
 	    this.PAY_ATTENTION_TO_NEW_FEATURE_WITH_TEXT_MODS = [this.PAY_ATTENTION_TO_NEW_FEATURE_NEW, this.PAY_ATTENTION_TO_NEW_FEATURE_REMIND];
-	    this.AVAILABLE_PAY_ATTENTION_TO_NEW_FEATURE_MODS = [...this.PAY_ATTENTION_TO_NEW_FEATURE_WITHOUT_TEXT_MODS, ...this.PAY_ATTENTION_TO_NEW_FEATURE_WITH_TEXT_MODS];
 	    this.wrap = options.wrap;
 	    this.userInfo = options.userInfo || null;
 	    this.sharingConfig = calendar_util.Util.getSharingConfig();
@@ -2392,7 +2397,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	  }
 	  handleSharingButtonClick() {
 	    if (this.sharingFeatureLimit) {
-	      top.BX.UI.InfoHelper.show('limit_office_calendar_free_slots');
+	      ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	        featureId: 'calendar_sharing'
+	      }).show();
 	      return;
 	    }
 	    if (this.isSharingEnabled()) {
@@ -2437,7 +2444,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	  }
 	  handleSwitcherToggled() {
 	    if (this.sharingFeatureLimit && this.switcher.isChecked()) {
-	      top.BX.UI.InfoHelper.show('limit_office_calendar_free_slots');
+	      ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	        featureId: 'calendar_sharing'
+	      }).show();
 	      this.switcher.toggle();
 	      return;
 	    }
@@ -2663,5 +2672,5 @@ this.BX.Calendar = this.BX.Calendar || {};
 	exports.DialogNew = DialogNew;
 	exports.DialogQr = DialogQr;
 
-}((this.BX.Calendar.Sharing = this.BX.Calendar.Sharing || {}),BX,BX,BX,BX.Main,BX.Calendar.Sharing,BX.UI.EntitySelector,BX,BX.Calendar,BX.UI.IconSet,BX.Main,BX.UI.Dialogs,BX.UI,BX.Event,BX,BX.UI,BX,BX.UI.Tour,BX.UI));
+}((this.BX.Calendar.Sharing = this.BX.Calendar.Sharing || {}),BX,BX,BX,BX.Main,BX.Calendar.Sharing,BX.UI.EntitySelector,BX,BX.Calendar,BX.UI.IconSet,BX.Main,BX.UI.Dialogs,BX.UI,BX.Event,BX,BX.UI,BX,BX.UI.Tour,BX.UI,BX.UI));
 //# sourceMappingURL=interface.bundle.js.map

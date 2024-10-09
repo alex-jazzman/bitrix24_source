@@ -15,6 +15,7 @@ use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Security\Role\Utils\RoleManagerUtils;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Crm\Settings\CompanySettings;
@@ -866,11 +867,25 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
 	];
 
-	$stdItems['CRM_PERMISSIONS'] = [
-		'ID' => 'CRM_PERMISSIONS',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
-		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
-	];
+	if (RoleManagerUtils::getInstance()->isUsePermConfigV2())
+	{
+		$permsV2URL = '/crm/configs/perms/v2/';
+		$stdItems['CRM_PERMISSIONS'] = [
+			'ID' => 'CRM_PERMISSIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
+			'URL' => $permsV2URL, // CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
+			'ON_CLICK' => 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($permsV2URL) . '"); return false;'
+		];
+	}
+	else
+	{
+		$stdItems['CRM_PERMISSIONS'] = [
+			'ID' => 'CRM_PERMISSIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
+			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
+		];
+	}
+
 }
 
 if (Loader::includeModule('catalog'))

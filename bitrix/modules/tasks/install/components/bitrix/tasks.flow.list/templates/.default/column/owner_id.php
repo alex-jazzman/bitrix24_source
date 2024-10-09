@@ -19,12 +19,12 @@ if (!function_exists('renderOwnerIdColumn'))
 		/** @var User $user */
 		$user = $data['user'];
 
-		$userData = $user->toArray();
+		$userData = $user?->toArray() ?? [];
 
-		$name = HtmlFilter::encode($userData['name']);
-		$photoSrc= Uri::urnEncode($userData['photo']['src'] ?? '');
+		$name = HtmlFilter::encode($userData['name'] ?? '');
+		$photoSrc = Uri::urnEncode($userData['photo']['src'] ?? '');
 		$photoStyle = $photoSrc ? 'background-image: url(\''.$photoSrc.'\');' : '';
-		$pathToProfile = $userData['pathToProfile'];
+		$pathToProfile = $userData['pathToProfile'] ?? '';
 
 		$disableClass = $isActive ? '' : '--disable';
 

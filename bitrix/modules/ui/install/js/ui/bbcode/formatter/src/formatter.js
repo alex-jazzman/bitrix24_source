@@ -32,6 +32,7 @@ export interface FormatterElement
 
 const formattersSymbol: Symbol = Symbol('formatters');
 const onUnknownSymbol: Symbol = Symbol('onUnknown');
+const dataSymbol: Symbol = Symbol('data');
 
 /**
  * @memberOf BX.UI.BBCode
@@ -40,6 +41,7 @@ export class Formatter
 {
 	[formattersSymbol]: Map<any, any> = new Map();
 	[onUnknownSymbol]: (UnknownNodeCallbackOptions) => NodeFormatter | null = null;
+	[dataSymbol]: FormatterData | null = null;
 
 	constructor(options: FormatterOptions = {})
 	{
@@ -54,7 +56,7 @@ export class Formatter
 		}
 	}
 
-	static isElement(source): boolean
+	isElement(source): boolean
 	{
 		return Type.isObject(source) && Type.isFunction(source.appendChild);
 	}
@@ -72,6 +74,16 @@ export class Formatter
 		}
 
 		return null;
+	}
+
+	setData(data: FormatterData)
+	{
+		this[dataSymbol] = data;
+	}
+
+	getData(): FormatterData
+	{
+		return this[dataSymbol];
 	}
 
 	setNodeFormatters(formatters: Array<NodeFormatter>)
@@ -135,6 +147,11 @@ export class Formatter
 		return this.runOnUnknown({ node, formatter: this });
 	}
 
+	getNodeFormatters(): Array<NodeFormatter>
+	{
+		return this[formattersSymbol];
+	}
+
 	format(options: FormatterFormatOptions): DocumentFragment | HTMLElement | Text | null
 	{
 		if (!Type.isPlainObject(options))
@@ -147,6 +164,8 @@ export class Formatter
 		{
 			throw new TypeError('options.data is not a object');
 		}
+
+		this.setData(data);
 
 		const sourceNode: ?BBCodeNode = Formatter.prepareSourceNode(source);
 		if (Type.isNull(sourceNode))
@@ -187,7 +206,7 @@ export class Formatter
 
 		preparedNode.getChildren().forEach((childNode: BBCodeNode) => {
 			const childElement: ?HTMLElement = this.format({ source: childNode, data });
-			if (Formatter.isElement(childElement))
+			if (childElement !== null)
 			{
 				const convertedChildElement: ?HTMLElement = nodeFormatter.runForChild({
 					node: childNode,
@@ -195,7 +214,8 @@ export class Formatter
 					formatter: this,
 					data,
 				});
-				if (Formatter.isElement(convertedChildElement))
+
+				if (convertedChildElement !== null && this.isElement(convertedElement))
 				{
 					convertedElement.appendChild(convertedChildElement);
 				}

@@ -1,11 +1,10 @@
-import { Dom, Event, Extension, Loc, Tag } from 'main.core';
+import { Dom, Event, Extension, Loc, Tag, Type } from 'main.core';
 import { PULL as Pull } from 'pull.client';
 import { Dialog } from 'ui.entity-selector';
 import { UserSelector } from 'ui.form-elements.view';
 import { PullRequests } from '../pull-requests';
 import { FormPage } from './form-page';
 import { ValueChecker } from '../value-checker';
-import { Hint } from '../hint';
 
 import type { Flow } from '../edit-form';
 
@@ -64,6 +63,7 @@ export class SettingsPage extends FormPage
 	{
 		const pullRequests = new PullRequests(this.#currentUser);
 		pullRequests.subscribe('templateAdded', this.#onTemplateAddedHandler.bind(this));
+		pullRequests.subscribe('templateUpdated', this.#onTemplateUpdatedHandler.bind(this));
 
 		Pull.subscribe(pullRequests);
 	}
@@ -81,6 +81,23 @@ export class SettingsPage extends FormPage
 		this.#layout.taskTemplateDialog.addItem(templateItem);
 
 		this.#layout.taskTemplateDialog.getItems().find((item) => item.id === templateItem.id).select();
+	}
+
+	#onTemplateUpdatedHandler({ data })
+	{
+		const template = data.template;
+		const templateItem = this.#layout.taskTemplateDialog.getItem({ id: template.id, entityId: 'task-template' });
+
+		if (Type.isStringFilled(template.title))
+		{
+			templateItem?.setTitle(template.title);
+			this.#layout.taskTemplate?.update();
+		}
+
+		if (!Type.isArrayFilled(this.#layout.taskTemplateDialog.getSelectedItems()))
+		{
+			templateItem?.select();
+		}
 	}
 
 	setFlow(flow: Flow): void
@@ -205,8 +222,13 @@ export class SettingsPage extends FormPage
 
 		const notifyAtHalfTimeTitle = `
 			<div class="tasks-flow__create-title-with-hint">
-				${Loc.getMessage('TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME')}
-				<span data-id="notifyAtHalfTimeHint" class="ui-hint ui-hint-flow-value-checker">
+				<span>${Loc.getMessage('TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME')}</span>
+				<span
+					data-id="notifyAtHalfTimeHint"
+					class="ui-hint ui-hint-flow-value-checker"
+					data-hint="${Loc.getMessage('TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME_HINT')}" 
+					data-hint-no-icon
+				>
 					<span class="ui-hint-icon ui-hint-icon-flow-value-checker"></span>
 				</span>
 			</div>
@@ -225,7 +247,7 @@ export class SettingsPage extends FormPage
 		});
 
 		this.#layout.projectSelector = new UserSelector({
-			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_PROJECT_FOR_TASKS'),
+			label: this.#getProjectLabel(),
 			enableUsers: false,
 			enableDepartments: false,
 			multiple: false,
@@ -236,6 +258,7 @@ export class SettingsPage extends FormPage
 						features: {
 							tasks: [],
 						},
+						checkFeatureForCreate: true,
 					},
 				},
 			],
@@ -263,11 +286,6 @@ export class SettingsPage extends FormPage
 		`;
 
 		Event.bind(this.#layout.settingsPageForm, 'change', this.#params.onChangeHandler);
-
-		const notifyAtHalfTimeHint = this.#layout.settingsPageForm.querySelector('[data-id=notifyAtHalfTimeHint]');
-
-		const hint = new Hint({ text: Loc.getMessage('TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME_HINT') });
-		hint.bindTo(notifyAtHalfTimeHint);
 
 		return this.#layout.settingsPageForm;
 	}
@@ -374,5 +392,26 @@ export class SettingsPage extends FormPage
 		});
 
 		return this.#layout.taskTemplateDialog;
+	}
+
+	#getProjectLabel(): string
+	{
+		const notifyEmptyProject = `
+			<span
+				data-id="notifyEmptyProjectHint"
+				class="ui-hint ui-hint-flow-value-checker"
+				data-hint="${Loc.getMessage('TASKS_FLOW_EDIT_FORM_NOTIFY_EMPTY_PROJECT_HINT')}" 
+				data-hint-no-icon
+			>
+				<span class="ui-hint-icon ui-hint-icon-flow-value-checker"></span>
+			</span>
+		`;
+
+		return `
+			<div class="tasks-flow-field-label-container">
+				<span>${Loc.getMessage('TASKS_FLOW_EDIT_FORM_PROJECT_FOR_TASKS')}</span>
+				${this.#flow.id ? '' : notifyEmptyProject}
+			</div>
+		`;
 	}
 }

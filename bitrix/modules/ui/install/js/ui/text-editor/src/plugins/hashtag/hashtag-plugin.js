@@ -5,15 +5,12 @@ import {
 } from '../../bbcode';
 
 import { registerLexicalTextEntity } from 'ui.lexical.text';
-import { mergeRegister } from 'ui.lexical.utils';
 
 import { HashtagNode, $createHashtagNode } from './hashtag-node';
 import BasePlugin from '../base-plugin';
 
 import type TextEditor from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
-
-import './hashtag.css';
 
 export class HashtagPlugin extends BasePlugin
 {

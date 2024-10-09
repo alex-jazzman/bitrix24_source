@@ -262,7 +262,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				this.store.dispatch('usersModel/set', extractor.getUsers()),
 				this.store.dispatch('usersModel/addShort', extractor.getAdditionalUsers()),
 			];
-			const dialogData = extractor.getMainChat();
+			const dialogData = { ...extractor.getMainChat(), tariffRestrictions: extractor.getTariffRestrictions() };
 			this.setRecent(extractor).catch((err) => logger.log('LoadService.updateModels.setRecent error', err));
 			const copilotData = { dialogId: extractor.getDialogId(), ...extractor.getCopilot() };
 			const copilotPromise = this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilotData);
@@ -330,8 +330,13 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 		{
 			const messages = ChatUtils.objectClone(extractor.getMessages());
 			const message = messages[messages.length - 1];
+			if (Type.isNil(message))
+			{
+				return Promise.resolve(false);
+			}
+
 			message.text = ChatMessengerCommon.purifyText(
-				message.text,
+				message.text || '',
 				message.params,
 			);
 			message.senderId = message.author_id;

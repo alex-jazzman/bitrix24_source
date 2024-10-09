@@ -270,3 +270,6 @@ $MESS['main_options_device_geoip'] = 'Собирать IP-геоданные д�
 $MESS['main_options_geo'] = 'Геолокация';
 $MESS['main_options_geo_collect_names'] = 'Собирать названия местоположений Geonames в локальную БД:';
 $MESS['MAIN_UPDATE_USE_HTTPS'] = 'Использовать защищенное соединение https:';
+$MESS['MAIN_OPTION_CONTROLLER_PROXY_PASS_SET'] = '(установлен)';
+$MESS['MAIN_OPTION_CONTROLLER_PROXY_PASS_DEL_TITLE'] = 'Удалить сохраненный пароль';
+$MESS['MAIN_OPTION_CONTROLLER_PROXY_PASS_DEL'] = 'Удалить';

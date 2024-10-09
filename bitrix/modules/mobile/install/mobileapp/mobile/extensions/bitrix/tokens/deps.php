@@ -1,6 +1,7 @@
 <?php
 return [
 	'extensions' => [
+		'type',
 		'apptheme',
 		'apptheme/extended',
 		'utils/color',

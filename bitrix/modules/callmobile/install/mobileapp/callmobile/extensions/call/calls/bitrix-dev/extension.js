@@ -244,7 +244,6 @@
 				isIncomingVideoAllowed: incomingVideoAllowed,
 
 				onStreamReceived: (e) => this.eventEmitter.emit(BX.Call.Event.onStreamReceived, [e.userId, e.stream]),
-				onStreamRemoved: (e) => this.eventEmitter.emit(BX.Call.Event.onStreamRemoved, [e.userId]),
 				onStateChanged: this.__onPeerStateChanged.bind(this),
 				onInviteTimeout: this.__onPeerInviteTimeout.bind(this),
 				onInitialState: (e) => {
@@ -621,7 +620,7 @@
 				};
 
 				BXClientWrapper.getClient(clientOptions).then((client) => {
-					if (!this.ready) 
+					if (!this.ready)
 					{
 						return;
 					}
@@ -965,8 +964,8 @@
 			if (this.peers[failedUserId])
 			{
 				this.peers[failedUserId].onInviteTimeout(false);
-			} 
-			else if (failedUserId == this.userId) 
+			}
+			else if (failedUserId == this.userId)
 			{
 				this.eventEmitter.emit(BX.Call.Event.onPullEventUserInviteTimeout);
 			}
@@ -1711,15 +1710,7 @@
 			this.inviteTimeout = false;
 			this.endpoint = null;
 
-			this.stream = null;
-
 			this.isIncomingVideoAllowed = params.isIncomingVideoAllowed !== false;
-
-			this.tracks = {
-				audio: null,
-				video: null,
-				sharing: null,
-			};
 
 			this.callingTimeout = 0;
 			this.connectionRestoreTimeout = 0;
@@ -1728,7 +1719,6 @@
 				onStateChanged: BX.type.isFunction(params.onStateChanged) ? params.onStateChanged : BX.DoNothing,
 				onInviteTimeout: BX.type.isFunction(params.onInviteTimeout) ? params.onInviteTimeout : BX.DoNothing,
 				onStreamReceived: BX.type.isFunction(params.onStreamReceived) ? params.onStreamReceived : BX.DoNothing,
-				onStreamRemoved: BX.type.isFunction(params.onStreamRemoved) ? params.onStreamRemoved : BX.DoNothing,
 				onInitialState: BX.type.isFunction(params.onInitialState) ? params.onInitialState : BX.DoNothing,
 				onHandRaised: BX.type.isFunction(params.onHandRaised) ? params.onHandRaised : BX.DoNothing,
 			};
@@ -1828,7 +1818,7 @@
 			{
 				this.callbacks.onStreamReceived({
 					userId: this.userId,
-					stream: this.endpoint.remoteVideoStreams[0],
+					stream: this.getPriorityStream(),
 				});
 			}
 
@@ -1994,7 +1984,7 @@
 			this.log('RemoteMediaAdded', e);
 			this.callbacks.onStreamReceived({
 				userId: this.userId,
-				stream: this.endpoint.remoteVideoStreams[0],
+				stream: this.getPriorityStream(),
 			});
 
 			this.updateCalculatedState();
@@ -2002,9 +1992,11 @@
 
 		__onEndpointRemoteMediaRemoved(e)
 		{
+			console.log(e)
 			this.log('Remote media removed');
-			this.callbacks.onStreamRemoved({
+			this.callbacks.onStreamReceived({
 				userId: this.userId,
+				stream: this.getPriorityStream()
 			});
 
 			this.updateCalculatedState();
@@ -2038,6 +2030,24 @@
 			});
 		}
 
+		getPriorityStream()
+		{
+			let streams = this.endpoint.remoteVideoStreams;
+			if (streams.length == 0)
+			{
+				return null;
+			}
+			let sharingStream = streams.findLast((stream) => stream.kind === "sharing");
+			if (sharingStream === undefined)
+			{
+				return streams[streams.length - 1];
+			}
+			else
+			{
+				return sharingStream;
+			}
+		}
+
 		log()
 		{
 			this.call && this.call.log.apply(this.call, arguments);
@@ -2053,7 +2063,6 @@
 
 			this.callbacks.onStateChanged = BX.DoNothing;
 			this.callbacks.onStreamReceived = BX.DoNothing;
-			this.callbacks.onStreamRemoved = BX.DoNothing;
 			this.callbacks.onInitialState = BX.DoNothing;
 			this.callbacks.onHandRaised = BX.DoNothing;
 

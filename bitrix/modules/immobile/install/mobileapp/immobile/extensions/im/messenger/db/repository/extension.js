@@ -15,6 +15,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 	const { SmileRepository } = require('im/messenger/db/repository/smile');
 	const { PinMessageRepository } = require('im/messenger/db/repository/pin-message');
 	const { CopilotRepository } = require('im/messenger/db/repository/copilot');
+	const { SidebarFileRepository } = require('im/messenger/db/repository/sidebar/file');
 
 	module.exports = {
 		OptionRepository,
@@ -30,5 +31,6 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 		SmileRepository,
 		PinMessageRepository,
 		CopilotRepository,
+		SidebarFileRepository,
 	};
 });

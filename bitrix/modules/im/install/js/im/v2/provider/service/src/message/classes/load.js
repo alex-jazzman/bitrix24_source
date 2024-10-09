@@ -9,7 +9,7 @@ import { CopilotManager } from 'im.v2.lib.copilot';
 
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 import type { PaginationRestResult } from '../types/message';
-import type { RawMessage, RawCommentInfo } from '../../types/rest';
+import type { RawMessage, RawCommentInfo, RawTariffRestrictions } from '../../types/rest';
 
 export class LoadService
 {
@@ -31,7 +31,7 @@ export class LoadService
 		this.#chatId = chatId;
 	}
 
-	loadUnread(): Promise
+	async loadUnread(): Promise
 	{
 		if (this.#isLoading || !this.#getDialog().hasNextPage)
 		{
@@ -50,32 +50,33 @@ export class LoadService
 
 		const query = {
 			chatId: this.#chatId,
-			filter: {
-				lastId: lastUnreadMessageId,
-			},
-			order: {
-				id: 'ASC',
-			},
+			filter: { lastId: lastUnreadMessageId },
+			order: { id: 'ASC' },
 			limit: LoadService.MESSAGE_REQUEST_LIMIT,
 		};
 
-		return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
-			Logger.warn('MessageService: loadUnread result', result);
-			this.#preparedUnreadMessages = result.messages;
+		const result: PaginationRestResult = await runAction(RestMethod.imV2ChatMessageTail, { data: query })
+			.catch((error) => {
+				// eslint-disable-next-line no-console
+				console.error('MessageService: loadUnread error:', error);
+				this.#isLoading = false;
+			});
 
-			return this.#updateModels(result);
-		}).then(() => {
-			this.#isLoading = false;
+		Logger.warn('MessageService: loadUnread result', result);
+		this.#preparedUnreadMessages = result.messages;
 
-			return true;
-		}).catch((error) => {
-			// eslint-disable-next-line no-console
-			console.error('MessageService: loadUnread error:', error);
-			this.#isLoading = false;
-		});
+		const rawData: PaginationRestResult = {
+			...result,
+			tariffRestrictions: this.#prepareTariffRestrictions(result.tariffRestrictions),
+		};
+		await this.#updateModels(rawData);
+
+		this.#isLoading = false;
+
+		return Promise.resolve();
 	}
 
-	loadHistory(): Promise
+	async loadHistory(): Promise
 	{
 		if (this.#isLoading || !this.#getDialog().hasPrevPage)
 		{
@@ -94,31 +95,28 @@ export class LoadService
 
 		const query = {
 			chatId: this.#chatId,
-			filter: {
-				lastId: lastHistoryMessageId,
-			},
-			order: {
-				id: 'DESC',
-			},
+			filter: { lastId: lastHistoryMessageId },
+			order: { id: 'DESC' },
 			limit: LoadService.MESSAGE_REQUEST_LIMIT,
 		};
 
-		return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
-			Logger.warn('MessageService: loadHistory result', result);
-			this.#preparedHistoryMessages = result.messages;
-			const hasPrevPage = result.hasNextPage;
-			const rawData = { ...result, hasPrevPage, hasNextPage: null };
+		const result: PaginationRestResult = await runAction(RestMethod.imV2ChatMessageTail, { data: query })
+			.catch((error) => {
+				// eslint-disable-next-line no-console
+				console.error('MessageService: loadHistory error:', error);
+				this.#isLoading = false;
+			});
 
-			return this.#updateModels(rawData);
-		}).then(() => {
-			this.#isLoading = false;
+		Logger.warn('MessageService: loadHistory result', result);
+		this.#preparedHistoryMessages = result.messages;
 
-			return true;
-		}).catch((error) => {
-			// eslint-disable-next-line no-console
-			console.error('MessageService: loadHistory error:', error);
-			this.#isLoading = false;
-		});
+		const hasPrevPage = result.hasNextPage;
+		const rawData = { ...result, hasPrevPage, hasNextPage: null };
+		await this.#updateModels(rawData);
+
+		this.#isLoading = false;
+
+		return Promise.resolve();
 	}
 
 	hasPreparedHistoryMessages(): boolean
@@ -362,6 +360,7 @@ export class LoadService
 			additionalMessages,
 			commentInfo,
 			copilot,
+			tariffRestrictions,
 		} = rawData;
 
 		const dialogPromise = this.#store.dispatch('chats/update', {
@@ -369,6 +368,7 @@ export class LoadService
 			fields: {
 				hasPrevPage,
 				hasNextPage,
+				tariffRestrictions,
 			},
 		});
 		const usersPromise = Promise.all([
@@ -408,6 +408,27 @@ export class LoadService
 			dialogId: this.#getDialog().dialogId,
 			fields,
 		});
+	}
+
+	#prepareTariffRestrictions(restrictions: RawTariffRestrictions): RawTariffRestrictions
+	{
+		const dialogId = this.#getDialog().dialogId;
+		const chat: ?ImModelChat = this.#store.getters['chats/get'](dialogId);
+		if (!chat)
+		{
+			return restrictions;
+		}
+
+		const { tariffRestrictions: { isHistoryLimitExceeded } } = chat;
+		if (isHistoryLimitExceeded === true)
+		{
+			return {
+				...restrictions,
+				isHistoryLimitExceeded: true,
+			};
+		}
+
+		return restrictions;
 	}
 
 	#getDialog(): ImModelChat

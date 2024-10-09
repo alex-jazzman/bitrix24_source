@@ -4,7 +4,8 @@
 jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-service', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--participants-service');
 	const { MapCache } = require('im/messenger/cache');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -28,7 +29,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 			this.core = serviceLocator.get('core');
 			this.store = this.core.getStore();
 			this.dialogId = props.dialogId;
-			this.isNotes = props.isNotes;
 			this.isGroupDialog = DialogHelper.isDialogId(this.dialogId);
 			this.sidebarUserService = new SidebarUserService(this.dialogId);
 			this.sidebarRestService = new SidebarRestService(this.dialogId);
@@ -122,7 +122,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 		 */
 		getRestParticipantsData()
 		{
-			this.sidebarRestService.getParticipantList().catch((r) => Logger.error(r));
+			this.sidebarRestService.getParticipantList().catch((r) => logger.error(r));
 		}
 
 		/**
@@ -222,7 +222,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 		 */
 		deleteParticipant(userId)
 		{
-			this.sidebarRestService.deleteParticipant(userId).catch((err) => Logger.error(`${this.constructor.name}.deleteParticipant`, err));
+			this.sidebarRestService.deleteParticipant(userId).catch((err) => logger.error(`${this.constructor.name}.deleteParticipant`, err));
 		}
 
 		/**
@@ -275,21 +275,21 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 								PageManager.getNavigator().popTo('im.tabs')
 									// eslint-disable-next-line promise/no-nesting
 									.catch((err) => {
-										Logger.error(`${this.constructor.name}.onClickLeaveChat.popTo.catch error`, err);
+										logger.error(`${this.constructor.name}.onClickLeaveChat.popTo.catch error`, err);
 										BX.onCustomEvent('onDestroySidebar');
 										MessengerEmitter.emit(EventType.messenger.destroyDialog);
 									});
 							}
 							catch (e)
 							{
-								Logger.error(`${this.constructor.name}.onClickLeaveChat.getNavigator()`, e);
+								logger.error(`${this.constructor.name}.onClickLeaveChat.getNavigator()`, e);
 								BX.onCustomEvent('onDestroySidebar');
 								MessengerEmitter.emit(EventType.messenger.destroyDialog);
 							}
 						}
 					},
 				)
-				.catch((err) => Logger.error(`${this.constructor.name}.onClickLeaveChat.sidebarRestService.leaveChat`, err));
+				.catch((err) => logger.error(`${this.constructor.name}.onClickLeaveChat.sidebarRestService.leaveChat`, err));
 		}
 
 		/**
@@ -314,13 +314,13 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 				// PageManager.getNavigator().popTo('im.dialog')
 				// 	// eslint-disable-next-line promise/no-nesting
 				// 	.catch((err) => {
-				// 		Logger.error('ParticipantsService.onClickPingUser.popTo.catch error', err);
+				// 		logger.error('ParticipantsService.onClickPingUser.popTo.catch error', err);
 				// 		BX.onCustomEvent('onDestroySidebar');
 				// 	}); TODO uncomment when the popTo method will work over the entire stack code
 			// }
 			// catch (e)
 			// {
-			// 	Logger.error(`${this.constructor.name}.onClickPingUser.getNavigator()`, e);
+			// 	logger.error(`${this.constructor.name}.onClickPingUser.getNavigator()`, e);
 			// 	BX.onCustomEvent('onDestroySidebar');
 			// }
 
@@ -335,12 +335,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 
 		onClickAddManager()
 		{
-			Logger.log(`${this.constructor.name}.onClickAddManager`);
+			logger.log(`${this.constructor.name}.onClickAddManager`);
 		}
 
 		onClickRemoveManager()
 		{
-			Logger.log(`${this.constructor.name}.onClickRemoveManager`);
+			logger.log(`${this.constructor.name}.onClickRemoveManager`);
 		}
 	}
 

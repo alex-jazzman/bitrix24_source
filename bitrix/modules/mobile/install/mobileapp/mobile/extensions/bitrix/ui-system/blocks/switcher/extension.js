@@ -7,19 +7,22 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 	const { SwitcherSize } = require('ui-system/blocks/switcher/src/size-enum');
 
 	/**
+	 * @typedef {Object} SwitcherProps
+	 * @property {string} testId
+	 * @property {boolean} [checked=false]
+	 * @property {boolean} [disabled=false]
+	 * @property {boolean} [useState=true]
+	 * @property {boolean} [checked=false]
+	 * @property {SwitcherMode} [mode=SwitcherMode.SOLID]
+	 * @property {SwitcherSize} [size=SwitcherSize.M]
+	 * @property {Object} [trackColor]
+	 * @property {Object} [thumbColor]
+	 * @property {Function} [onClick]
+	 *
 	 * class Switcher
 	 */
 	class Switcher extends LayoutComponent
 	{
-		/**
-		 * @param props
-		 * @param {string} props.testId
-		 * @param {boolean} [props.useState=true]
-		 * @param {SwitcherMode} [props.mode=SwitcherMode.SOLID]
-		 * @param {object} [props.trackColor]
-		 * @param {object} [props.thumbColor]
-		 * @param {function} [props.onClick]
-		 */
 		constructor(props)
 		{
 			super(props);
@@ -95,10 +98,13 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 
 		render()
 		{
-			const { style } = this.props;
+			const { style, useState } = this.props;
+
+			const clickable = useState;
 
 			return View(
 				{
+					clickable,
 					testId: this.#getTestId(),
 					style: {
 						alignItems: 'flex-start',
@@ -108,6 +114,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 				},
 				View(
 					{
+						clickable,
 						ref: (ref) => {
 							this.trackRef = ref;
 						},
@@ -115,6 +122,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 					},
 					View(
 						{
+							clickable,
 							ref: (ref) => {
 								this.thumbRef = ref;
 							},
@@ -245,6 +253,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 
 	Switcher.defaultProps = {
 		compact: false,
+		checked: false,
 		useState: true,
 		trackColor: {},
 		thumbColor: {},
@@ -252,17 +261,37 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 	};
 
 	Switcher.propTypes = {
-		useState: PropTypes.bool,
 		testId: PropTypes.string.isRequired,
-		mode: PropTypes.object,
-		trackColor: PropTypes.object,
-		thumbColor: PropTypes.object,
+		checked: PropTypes.bool,
+		useState: PropTypes.bool,
+		mode: PropTypes.instanceOf(SwitcherMode),
+		size: PropTypes.instanceOf(SwitcherSize),
+		trackColor: PropTypes.shape({
+			true: PropTypes.shape({
+				backgroundColor: PropTypes.string,
+			}),
+			false: PropTypes.shape({
+				backgroundColor: PropTypes.string,
+			}),
+		}),
+		thumbColor: PropTypes.shape({
+			true: PropTypes.shape({
+				backgroundColor: PropTypes.string,
+			}),
+			false: PropTypes.shape({
+				backgroundColor: PropTypes.string,
+			}),
+		}),
 		onClick: PropTypes.func,
 	};
 
 	module.exports = {
+		/**
+		 * @param {SwitcherProps} props
+		 * @returns {Switcher}
+		 */
+		Switcher: (props) => new Switcher(props),
 		SwitcherMode,
 		SwitcherSize,
-		Switcher: (props) => new Switcher(props),
 	};
 });

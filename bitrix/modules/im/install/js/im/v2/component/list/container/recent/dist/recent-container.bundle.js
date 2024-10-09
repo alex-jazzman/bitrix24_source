@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core_events,main_core,im_public,im_v2_lib_utils,im_v2_component_list_items_recent,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch,im_v2_lib_logger,im_v2_provider_service,im_v2_component_elements,im_v2_const,im_v2_lib_analytics,im_v2_lib_promo,im_v2_lib_createChat) {
+(function (exports,main_core_events,main_core,im_v2_lib_utils,im_v2_component_list_items_recent,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch,im_v2_lib_logger,im_v2_provider_service,ui_infoHelper,im_public,im_v2_component_elements,im_v2_const,im_v2_lib_analytics,im_v2_lib_promo,im_v2_lib_createChat,im_v2_lib_feature) {
 	'use strict';
 
 	// @vue/component
@@ -126,8 +126,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        offsetTop: 4,
 	        padding: 0
 	      };
+	    },
+	    isCopilotAvailable() {
+	      // temporary hidden
+	      return false;
+	      // return FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
 	    }
 	  },
+
 	  methods: {
 	    onChatCreateClick(type) {
 	      im_v2_lib_analytics.Analytics.getInstance().onStartCreateNewChat(type);
@@ -140,6 +146,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      this.startChatCreation();
 	      this.showPopup = false;
+	    },
+	    onCopilotClick() {
+	      this.showPopup = false;
+	      if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive)) {
+	        const promoter = new ui_infoHelper.FeaturePromoter({
+	          code: im_v2_const.SliderCode.copilotDisabled
+	        });
+	        promoter.show();
+	        return;
+	      }
+	      void im_public.Messenger.openCopilot();
 	    },
 	    onPromoContinueClick() {
 	      im_v2_lib_promo.PromoManager.getInstance().markAsWatched(this.getPromoType());
@@ -191,6 +208,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:title="loc('IM_RECENT_CREATE_CONFERENCE_TITLE')"
 				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2')"
 				@click="onChatCreateClick(ChatType.videoconf)"
+			/>
+			<MenuItem
+				v-if="isCopilotAvailable"
+				:icon="MenuItemIcon.copilot"
+				:title="loc('IM_RECENT_CREATE_COPILOT_TITLE')"
+				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE')"
+				@click="onCopilotClick"
 			/>
 			<template #footer>
 				<CreateChatHelp @articleOpen="showPopup = false" />
@@ -314,5 +338,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=recent-container.bundle.js.map

@@ -8,7 +8,7 @@ export class ExternalCatalogPlacement
 	#appSid: ?string = null;
 	#initializePromise = null;
 	#isInitialized: boolean = false;
-	#initializationError: Error = null;
+	#initializationError: Object = null;
 
 	static LOAD_PLACEMENT_ERROR: string = 'LOAD_PLACEMENT_ERROR';
 	static REGISTER_PLACEMENT_ERROR: string = 'REGISTER_PLACEMENT_ERROR';
@@ -79,12 +79,11 @@ export class ExternalCatalogPlacement
 				},
 			)
 				.then((response) => resolve(response))
-				.catch(() => reject(
-					new Error(
-						ExternalCatalogPlacement.LOAD_PLACEMENT_ERROR,
-						{ cause: ExternalCatalogPlacement.LOAD_PLACEMENT_ERROR },
-					),
-				))
+				.catch(() => {
+					reject({
+						reason: ExternalCatalogPlacement.LOAD_PLACEMENT_ERROR,
+					});
+				})
 			;
 		});
 	}
@@ -112,12 +111,9 @@ export class ExternalCatalogPlacement
 							return;
 						}
 
-						reject(
-							new Error(
-								ExternalCatalogPlacement.REGISTER_PLACEMENT_ERROR,
-								{ cause: ExternalCatalogPlacement.REGISTER_PLACEMENT_ERROR },
-							),
-						);
+						reject({
+							reason: ExternalCatalogPlacement.REGISTER_PLACEMENT_ERROR,
+						});
 					}, 10),
 				},
 			);
@@ -167,13 +163,9 @@ export class ExternalCatalogPlacement
 					resolve(response);
 				})
 				.catch(() => {
-					console.error('#loadPlacementLayout err');
-					reject(
-						new Error(
-							ExternalCatalogPlacement.LOAD_PLACEMENT_LAYOUT_ERROR,
-							{ cause: ExternalCatalogPlacement.LOAD_PLACEMENT_LAYOUT_ERROR },
-						),
-					);
+					reject({
+						reason: ExternalCatalogPlacement.LOAD_PLACEMENT_LAYOUT_ERROR,
+					});
 				});
 		});
 	}
@@ -206,7 +198,7 @@ export class ExternalCatalogPlacement
 					resolve();
 				},
 			);
-			setTimeout(() => reject(), ExternalCatalogPlacement.RESPONSE_TIMEOUT);
+			setTimeout(() => reject({ reason: 'timeout' }), ExternalCatalogPlacement.RESPONSE_TIMEOUT);
 		});
 	}
 
@@ -225,7 +217,7 @@ export class ExternalCatalogPlacement
 		return this.#isInitialized && this.getInitializationError() === null;
 	}
 
-	getInitializationError(): ?Error
+	getInitializationError(): ?Object
 	{
 		return this.#initializationError;
 	}

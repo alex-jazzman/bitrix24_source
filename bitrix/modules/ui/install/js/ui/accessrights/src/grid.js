@@ -3,10 +3,11 @@ import {Dom, Reflection, Type, Tag, Loc, Text} from 'main.core';
 import {Loader} from "main.loader";
 import Section from "./section";
 import 'ui.notification';
+import { EntitySelectorOptions } from './selector/entity-selector-adapter';
 
 const BX = Reflection.namespace('BX');
 
-type GridOptions = {
+export type GridOptions = {
 	options: GridOptions;
 	renderTo: HTMLElement;
 	buttonPanel: BX.UI.ButtonPanel;
@@ -22,6 +23,9 @@ type GridOptions = {
 	accessRights: [];
 	loadParams: {};
 	needToLoadUserGroups?: boolean;
+	isSaveOnlyChangedRights?: boolean;
+	useEntitySelectorDialogAsPopup?: boolean;
+	entitySelectorDialogOptions?: EntitySelectorOptions
 };
 
 export default class Grid {
@@ -52,6 +56,14 @@ export default class Grid {
 		this.loader = null;
 		this.timer = null;
 		this.needToLoadUserGroups = options.needToLoadUserGroups ?? true;
+		this.isSaveOnlyChangedRights = options.isSaveOnlyChangedRights || false;
+
+		this.useEntitySelectorDialogAsPopup = options.useEntitySelectorDialogAsPopup || false;
+		this.entitySelectorDialogOptions = options.entitySelectorDialogOptions || null;
+
+		this.expandedGroups = [];
+		this.groupElements = [];
+		this.changedAccessIds = new Map();
 
 		this.initData();
 		if (options.userGroups)
@@ -82,6 +94,7 @@ export default class Grid {
 		EventEmitter.subscribe('BX.UI.AccessRights.ColumnItem:copyRole', this.addUserGroup.bind(this));
 		EventEmitter.subscribe('BX.UI.AccessRights.ColumnItem:removeRole', this.removeRoleColumn.bind(this));
 		EventEmitter.subscribe('BX.UI.AccessRights.ColumnItem:removeRole', this.adjustButtonPanel.bind(this));
+		EventEmitter.subscribe('BX.UI.AccessRights.ColumnItem:toggleGroup', this.toggleGroup.bind(this));
 		EventEmitter.subscribe('BX.Main.SelectorV2:onGetEntityTypes', this.onGetEntityTypes.bind(this));
 	}
 
@@ -93,6 +106,7 @@ export default class Grid {
 		this.headSection = null;
 		this.members = [];
 		this.columns = [];
+		this.changedAccessIds = new Map();
 	}
 
 	fireEventReset(): void
@@ -138,20 +152,30 @@ export default class Grid {
 
 		let needReload = false;
 		const dataToSave = [];
+
 		for (let i = 0; i < this.userGroups.length; i++)
 		{
-			if (Text.toNumber(this.userGroups[i].id) === 0)
+			const userGroup = this.userGroups[i];
+
+			if (Text.toNumber(userGroup.id) === 0)
 			{
 				needReload = true;
 			}
 
+			let accessRights = userGroup.accessRights;
+
+			if (this.isSaveOnlyChangedRights === true)
+			{
+				accessRights = this.#filterOnlyChangedAccessRight(accessRights, userGroup);
+			}
+
 			dataToSave.push({
-				accessCodes: this.userGroups[i].accessCodes,
-				id: this.userGroups[i].id,
-				title: this.userGroups[i].title,
-				type: this.userGroups[i].type,
-				accessRights: this.userGroups[i].accessRights
-			})
+				accessCodes: userGroup.accessCodes,
+				id: userGroup.id,
+				title: userGroup.title,
+				type: userGroup.type,
+				accessRights,
+			});
 		}
 
 		BX.ajax.runComponentAction(
@@ -185,6 +209,7 @@ export default class Grid {
 				clearTimeout(this.timer);
 				const waitContainer = this.buttonPanel.getContainer().querySelector('.ui-btn-wait');
 				Dom.removeClass(waitContainer, 'ui-btn-wait');
+				this.changedAccessIds = new Map();
 			},
 			(response) => {
 				let errorMessage = 'Error message';
@@ -290,7 +315,10 @@ export default class Grid {
 				}
 				this.unBlockGrid();
 			},
-			() => this.unBlockGrid
+			(err) => {
+				console.error(err);
+				this.unBlockGrid
+			}
 		);
 	}
 
@@ -378,6 +406,8 @@ export default class Grid {
 		param.headSection = true;
 		param.newColumn = true;
 		this.headSection.addColumn(param);
+
+		this.actualizeExpandedGroups();
 	}
 
 	addUserGroup(event: BaseEvent): void
@@ -420,6 +450,10 @@ export default class Grid {
 		const userGroup = this.userGroups[this.userGroups.indexOf(data.userGroup)];
 		const accessId = data.access.id;
 
+		setTimeout(() => {
+			this.#storeChangedAccessId(data);
+		}, 0)
+
 		for (let i = 0; i < userGroup.accessRights.length; i++)
 		{
 			const item = userGroup.accessRights[i];
@@ -443,6 +477,8 @@ export default class Grid {
 		const userGroup = this.userGroups[this.userGroups.indexOf(item.userGroup)];
 		const accessId = item.access.id;
 
+		this.#storeChangedAccessId(item);
+
 		const deleteIds = [];
 		for (let i = 0; i < userGroup.accessRights.length; i++)
 		{
@@ -456,6 +492,7 @@ export default class Grid {
 		deleteIds.forEach((i) => {
 			delete (userGroup.accessRights[i]);
 		});
+
 		const values = item.selectedValues || [];
 		values.forEach((value) => {
 			userGroup.accessRights.push({
@@ -624,6 +661,107 @@ export default class Grid {
 		};
 	}
 
+	toggleGroup(event: BaseEvent): void
+	{
+		const groupId = event.getData().id;
+
+		var idx = this.expandedGroups.indexOf(groupId);
+		if (idx > -1)
+		{
+			this.expandedGroups.splice(idx, 1);
+		}
+		else
+		{
+			this.expandedGroups.push(groupId);
+		}
+
+		this.actualizeExpandedGroups();
+	}
+
+	actualizeExpandedGroups()
+	{
+		for (const groupItem of this.groupElements)
+		{
+			if (this.igGroupsExpanded(groupItem.group))
+			{
+				groupItem.container.classList.add('--expanded');
+			}
+			else
+			{
+				groupItem.container.classList.remove('--expanded');
+			}
+		}
+	}
+
+	igGroupsExpanded(group: string): string[]
+	{
+		return this.expandedGroups.includes(group);
+	}
+
+	#makeChangedHash(roleId: number | string, accessId: string): string
+	{
+		return `r${roleId}_a${accessId}`;
+	}
+
+	#storeChangedAccessId(item): void
+	{
+		const accessId = item.access.id;
+		const isAccessChanged = item.isModify;
+		const userGroup = this.userGroups[this.userGroups.indexOf(item.userGroup)];
+
+		const changedCode = this.#makeChangedHash(userGroup.id, accessId);
+
+		if (isAccessChanged && !this.changedAccessIds.has(changedCode))
+		{
+			this.changedAccessIds.set(changedCode, { accessId, roleId: userGroup.id });
+		}
+		else if (!isAccessChanged && this.changedAccessIds.has(changedCode))
+		{
+			this.changedAccessIds.delete(changedCode);
+		}
+	}
+
+	#filterOnlyChangedAccessRight(accessRights, userGroup): Array
+	{
+		const processedChanged = new Map(this.changedAccessIds);
+
+		const filteredAccessRights = accessRights.filter((access) => {
+
+			if (Number(userGroup.id) === 0)
+			{
+				return true;
+			}
+
+			const changedCode = this.#makeChangedHash(userGroup.id, access.id);
+
+			const found = this.changedAccessIds.has(changedCode);
+
+			if (found)
+			{
+				processedChanged.delete(changedCode);
+			}
+
+			return found;
+		});
+
+		// some rights may be changed but not present in the accessRights array because they values were deleted.
+		// Than have to will add them with null value.
+		for (const [key, data] of processedChanged)
+		{
+			if (data.roleId != userGroup.id)
+			{
+				continue;
+			}
+
+			filteredAccessRights.push({
+				id: data.accessId,
+				value: null,
+			});
+		}
+
+		return filteredAccessRights;
+	}
+
 	static buildOption(params): {}
 	{
 		const controls = BX.Main
@@ -640,7 +778,7 @@ export default class Grid {
 			return false;
 		}
 
-		const columnId =  node.getAttribute(dataColumnAttribute);
+		const columnId = node.getAttribute(dataColumnAttribute);
 
 		const accessItem = params.item.id;
 		const entityType = params.entityType;
@@ -649,8 +787,8 @@ export default class Grid {
 
 		return {
 			accessCodes: accessCodesResult,
-			columnId: columnId,
-			item: params.item
+			columnId,
+			item: params.item,
 		};
 	}
 }

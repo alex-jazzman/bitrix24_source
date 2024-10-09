@@ -282,16 +282,10 @@ export class DeviceButton
 
 		if (!this.arrowHidden)
 		{
-			if (Util.isNewCallLayoutEnabled())
-			{
-				this.elements.icon.appendChild(this.elements.arrow);
-			}
-			else {
-				this.elements.root.appendChild(this.elements.arrow);
-			}
+			this.elements.icon.appendChild(this.elements.arrow);
 		}
 
-		if (this.showLevel && Util.isNewCallLayoutEnabled())
+		if (this.showLevel)
 		{
 			this.elements.icon.appendChild(createSVG("svg", {
 				attrNS: {
@@ -417,7 +411,7 @@ export class DeviceButton
 		this.elements.iconContainer.className = this.getIconContainerClass();
 		this.elements.icon.className = this.getIconClass();
 
-		if (this.elements.gradientStop1 && this.elements.gradientStop2 && Util.isNewCallLayoutEnabled())
+		if (this.elements.gradientStop1 && this.elements.gradientStop2)
 		{
 			this.elements.gradientStop1.setAttribute('offset', '0%');
 			this.elements.gradientStop2.setAttribute('offset', '0%');
@@ -438,7 +432,7 @@ export class DeviceButton
 		this.elements.iconContainer.className = this.getIconContainerClass();
 		this.elements.icon.className = this.getIconClass();
 
-		if (this.elements.gradientStop1 && this.elements.gradientStop2 && Util.isNewCallLayoutEnabled())
+		if (this.elements.gradientStop1 && this.elements.gradientStop2)
 		{
 			this.elements.gradientStop1.setAttribute('offset', '0%');
 			this.elements.gradientStop2.setAttribute('offset', '0%');
@@ -513,15 +507,11 @@ export class DeviceButton
 	setLevel(level)
 	{
 		this.level = Math.log(level * 100) / 4.6;
-		if (this.showLevel && this.enabled && Util.isNewCallLayoutEnabled())
+		if (this.showLevel && this.enabled)
 		{
 			const offset = `${100 - Math.round((1 - this.level) * 100)}%`;
 			this.elements.gradientStop1.setAttribute('offset', offset);
 			this.elements.gradientStop2.setAttribute('offset', offset);
-		}
-		else if (this.showLevel && this.enabled)
-		{
-			this.elements.levelMeter.setAttribute('y', Math.round((1 - this.level) * 20));
 		}
 	}
 }
@@ -550,29 +540,14 @@ export class WaterMarkButton
 
 	getWatermarkUrl(language)
 	{
-		if (Util.isNewCallLayoutEnabled())
-		{
-			switch (language)
-			{
-				case 'ru':
-				case 'kz':
-				case 'by':
-					return '/bitrix/js/call/images/new-logo-white-ru.svg';
-				default:
-					return '/bitrix/js/call/images/new-logo-white-en.svg';
-			}
-		}
-
 		switch (language)
 		{
-			case 'ua':
-				return '/bitrix/js/call/images/watermark-white-ua.svg';
 			case 'ru':
 			case 'kz':
 			case 'by':
-				return '/bitrix/js/call/images/watermark-white-ru.svg';
+				return '/bitrix/js/call/images/new-logo-white-ru.svg';
 			default:
-				return '/bitrix/js/call/images/watermark-white-en.svg';
+				return '/bitrix/js/call/images/new-logo-white-en.svg';
 		}
 	};
 }

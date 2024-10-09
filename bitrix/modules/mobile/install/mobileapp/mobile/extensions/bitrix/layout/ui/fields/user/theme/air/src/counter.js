@@ -8,8 +8,9 @@ jn.define('layout/ui/fields/user/theme/air/src/counter', (require, exports, modu
 	/**
 	 * @param {number} count
 	 * @param {number} size
+	 * @param {function} onClick
 	 */
-	const Counter = ({ count, size }) => View(
+	const Counter = ({ count, size, onClick }) => View(
 		{
 			style: {
 				width: size,
@@ -20,6 +21,7 @@ jn.define('layout/ui/fields/user/theme/air/src/counter', (require, exports, modu
 				alignItems: 'center',
 				justifyContent: 'center',
 			},
+			onClick,
 		},
 		View(
 			{

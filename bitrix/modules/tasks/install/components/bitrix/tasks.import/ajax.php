@@ -656,7 +656,7 @@ class TasksImportAjaxController extends Main\Engine\Controller
 
 		$dbGroups = WorkgroupTable::getList([
 			'select' => ['ID'],
-			'filter' => ['NAME' => $projectName],
+			'filter' => ['=NAME' => $projectName],
 		]);
 		$group = (is_object($dbGroups) ? $dbGroups->fetch() : null);
 		if (is_array($group))

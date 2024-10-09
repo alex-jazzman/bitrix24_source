@@ -14,6 +14,11 @@ export type ChatLoadRestResult = {
 	users: RawUser[],
 	usersShort: RawShortUser[],
 	copilot: RawCopilot,
+	tariffRestrictions: RawTariffRestrictions,
+};
+
+export type RawTariffRestrictions = {
+	isHistoryLimitExceeded: boolean,
 };
 
 export type RawMessage = {

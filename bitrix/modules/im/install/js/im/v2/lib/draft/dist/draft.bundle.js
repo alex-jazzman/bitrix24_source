@@ -104,9 +104,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  }
 	  setDraftText(dialogId, text) {
-	    if (!this.canSaveDraft(dialogId)) {
-	      return;
-	    }
 	    if (!this.drafts[dialogId]) {
 	      this.drafts[dialogId] = {};
 	    }
@@ -145,7 +142,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  }
 	  setRecentItemDraftText(dialogId, text) {
-	    im_v2_application_core.Core.getStore().dispatch(this.getDraftMethodName(), {
+	    if (!this.canSetRecentItemDraftText(dialogId)) {
+	      return;
+	    }
+	    void im_v2_application_core.Core.getStore().dispatch(this.getDraftMethodName(), {
 	      id: dialogId,
 	      text
 	    });
@@ -199,7 +199,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getDraftMethodName() {
 	    return 'recent/setRecentDraft';
 	  }
-	  canSaveDraft(dialogId) {
+	  canSetRecentItemDraftText(dialogId) {
 	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 	    if (!chat) {
 	      return false;

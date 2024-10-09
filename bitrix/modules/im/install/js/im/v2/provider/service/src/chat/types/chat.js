@@ -21,6 +21,13 @@ export type ChatConfig = {
 	copilotMainRole: string,
 };
 
+export type UpdateChatConfig = {
+	addedMemberEntities?: [string, number | string][],
+	deletedMemberEntities?: [string, number | string][],
+	addedManagers?: number[],
+	deletedManagers?: number[],
+} & ChatConfig;
+
 type ChatTypeItem = $Keys<typeof ChatType>
 export type RestChatConfig = {
 	users: number[],
@@ -38,4 +45,26 @@ export type RestChatConfig = {
 	manageSettings?: RoleItem,
 	manageMessages?: RoleItem,
 	conferencePassword?: string,
+};
+
+export type RestUpdateChatConfig = {
+	avatar?: string,
+	title?: string,
+	description?: string,
+	ownerId?: number,
+	searchable?: 'Y' | 'N',
+	manageUi?: RoleItem,
+	manageUsersAdd?: RoleItem,
+	manageUsersDelete?: RoleItem,
+	manageMessages?: RoleItem,
+	addedMemberEntities?: [string, number | string][],
+	deletedMemberEntities?: [string, number | string][],
+	addedManagers?: number[],
+	deletedManagers?: number[],
+};
+
+export type GetMemberEntitiesConfig = {
+	memberEntities: Array<[string, number]>,
+	userCount: number,
+	areUsersCollapsed: boolean,
 };

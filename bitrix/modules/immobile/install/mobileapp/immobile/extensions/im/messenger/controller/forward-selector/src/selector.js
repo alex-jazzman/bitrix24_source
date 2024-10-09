@@ -3,12 +3,13 @@
  */
 
 jn.define('im/messenger/controller/forward-selector/selector', (require, exports, module) => {
-	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('loc');
+
+	const { Theme } = require('im/lib/theme');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { EventType } = require('im/messenger/const');
 	const { RecentProvider, RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-
 	const { ForwardSelectorView } = require('im/messenger/controller/forward-selector/view');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Notification } = require('im/messenger/lib/ui/notification');
@@ -116,7 +117,7 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 		{
 			logger.log(`${this.constructor.name} forwardMessage`, messageId, dialogParams, fromDialogId);
 			const userModel = serviceLocator.get('core').getStore().getters['usersModel/getById'](dialogParams.dialogId);
-			if (userModel?.bot)
+			if (userModel?.bot && !Feature.isChatDialogWidgetSupportsBots)
 			{
 				Notification.showComingSoon(); // TODO delete when bots are available
 

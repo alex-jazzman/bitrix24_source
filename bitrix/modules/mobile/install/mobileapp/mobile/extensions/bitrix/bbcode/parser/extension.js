@@ -13,6 +13,8 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	const {Type} = jn.require('type');
 	const Model = jn.require('bbcode/model');
 	const {BBCodeEncoder} = jn.require('bbcode/encoder');
+	const {AstProcessor} = jn.require('bbcode/ast-processor');
+	const {Linkify} = jn.require('linkify');
 
 	function getByIndex(array, index) {
 	  if (!Type.isArray(array)) {
@@ -50,7 +52,8 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	}
 
-	const TAG_REGEX = /\[(\/)?(\w+|\*)(.*?)]/gs;
+	const TAG_REGEX = /\[\/?(?:\w+|\*).*?]/;
+	const TAG_REGEX_GS = /\[(\/)?(\w+|\*)(.*?)]/gs;
 	const isSpecialChar = symbol => {
 	  return ['\n', '\t'].includes(symbol);
 	};
@@ -63,6 +66,7 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	const parserScheme = new ParserScheme();
 	class BBCodeParser {
 	  constructor(options = {}) {
+	    this.allowedLinkify = true;
 	    if (options.scheme) {
 	      this.setScheme(options.scheme);
 	    } else {
@@ -77,6 +81,9 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	      this.setEncoder(options.encoder);
 	    } else {
 	      this.setEncoder(new BBCodeEncoder());
+	    }
+	    if (Type.isBoolean(options.linkify)) {
+	      this.setIsAllowedLinkify(options.linkify);
 	    }
 	  }
 	  setScheme(scheme) {
@@ -103,6 +110,22 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	  getEncoder() {
 	    return this.encoder;
+	  }
+	  setIsAllowedLinkify(value) {
+	    this.allowedLinkify = Boolean(value);
+	  }
+	  isAllowedLinkify() {
+	    return this.allowedLinkify;
+	  }
+	  canBeLinkified(node) {
+	    if (node.getName() === '#text') {
+	      const notAllowedNodeNames = ['url', 'img', 'video', 'code'];
+	      const inNotAllowedNode = notAllowedNodeNames.some(name => {
+	        return Boolean(AstProcessor.findParentNodeByName(node, name));
+	      });
+	      return !inNotAllowedNode;
+	    }
+	    return false;
 	  }
 	  static defaultOnUnknownHandler(node, scheme) {
 	    if (node.getType() === Model.BBCodeNode.ELEMENT_NODE) {
@@ -162,9 +185,9 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	  static findNextTagIndex(bbcode, startIndex = 0) {
 	    const nextContent = bbcode.slice(startIndex);
-	    const [nextTag] = nextContent.match(new RegExp(TAG_REGEX)) || [];
-	    if (nextTag) {
-	      return bbcode.indexOf(nextTag, startIndex);
+	    const matchResult = nextContent.match(new RegExp(TAG_REGEX));
+	    if (matchResult) {
+	      return matchResult.index + startIndex;
 	    }
 	    return -1;
 	  }
@@ -204,7 +227,7 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	    const wasOpened = [];
 	    let current = null;
 	    let level = 0;
-	    bbcode.replace(TAG_REGEX, (fullTag, slash, tagName, attrs, index) => {
+	    bbcode.replace(TAG_REGEX_GS, (fullTag, slash, tagName, attrs, index) => {
 	      const isOpeningTag = Boolean(slash) === false;
 	      const startIndex = fullTag.length + index;
 	      const nextContent = bbcode.slice(startIndex);
@@ -297,6 +320,28 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	        if (finalLinebreaksIndexes.length > 1 && (finalLinebreaksIndexes & 2) === 0) {
 	          node.setChildren(node.getChildren().slice(0, getByIndex(finalLinebreaksIndexes, 0)));
 	        }
+	      }
+	      if (this.isAllowedLinkify() && this.canBeLinkified(node)) {
+	        const content = node.toString();
+	        const tokens = Linkify.tokenize(content);
+	        const nodes = tokens.map(token => {
+	          if (token.t === 'url') {
+	            return parserScheme.createElement({
+	              name: 'url',
+	              value: token.toHref().replace(/^http:\/\//, 'https://'),
+	              children: [parserScheme.createText(token.toString())]
+	            });
+	          }
+	          if (token.t === 'email') {
+	            return parserScheme.createElement({
+	              name: 'url',
+	              value: token.toHref(),
+	              children: [parserScheme.createText(token.toString())]
+	            });
+	          }
+	          return parserScheme.createText(token.toString());
+	        });
+	        node.replace(...nodes);
 	      }
 	    });
 	    result.setScheme(this.getScheme(), this.getOnUnknownHandler());

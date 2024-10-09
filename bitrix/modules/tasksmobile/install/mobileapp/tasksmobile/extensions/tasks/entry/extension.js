@@ -2,11 +2,13 @@
  * @module tasks/entry
  */
 jn.define('tasks/entry', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Loc } = require('loc');
 	const { Feature } = require('feature');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
+	const { FeatureId } = require('tasks/enum');
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
 	/**
 	 * @typedef {{id?: string|number, taskId?: string|number, title?: string, taskInfo?: object }} OpenTaskData
@@ -44,11 +46,20 @@ jn.define('tasks/entry', (require, exports, module) => {
 			return true;
 		}
 
-		static async openEfficiency(data)
+		static async openEfficiency(data, params = {})
 		{
 			const efficiencyAvailable = await Entry.checkToolAvailable('effective', 'limit_tasks_off');
 			if (!efficiencyAvailable)
 			{
+				return;
+			}
+
+			await tariffPlanRestrictionsReady();
+			const { isRestricted, showRestriction } = getFeatureRestriction(FeatureId.EFFICIENCY);
+			if (isRestricted())
+			{
+				showRestriction({ showInComponent: params.isBackground });
+
 				return;
 			}
 
@@ -100,7 +111,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 		 */
 		static async #openTaskDetailNew(data, params = {})
 		{
-			const { userId = env.userId, parentWidget, context, shouldOpenComments = false } = params;
+			const { userId = env.userId, parentWidget, context, analyticsLabel, shouldOpenComments = false } = params;
 			const taskId = data.id || data.taskId;
 			const guid = Entry.getGuid();
 
@@ -114,6 +125,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 					taskId,
 					guid,
 					context,
+					analyticsLabel,
 					shouldOpenComments,
 				});
 			}
@@ -142,6 +154,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 						GUID: guid,
 						CONTEXT: context,
 						SHOULD_OPEN_COMMENTS: shouldOpenComments,
+						analyticsLabel,
 					},
 				});
 			}
@@ -330,6 +343,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				groupId: data.groupId || 0,
 				ownerId: data.ownerId || userId,
 				getProjectData: data.getProjectData || true,
+				analyticsLabel: data.analyticsLabel || {},
 			};
 
 			PageManager.openComponent('JSStackComponent', {
@@ -351,6 +365,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 					SITE_DIR: siteDir,
 					LANGUAGE_ID: languageId,
 					PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+					analyticsLabel: extendedData.analyticsLabel,
 				},
 			});
 		}

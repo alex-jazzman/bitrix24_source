@@ -11,6 +11,7 @@
  * @global CMain $APPLICATION
  * @global CUserTypeManager $USER_FIELD_MANAGER
  */
+
 use Bitrix\Main;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -510,20 +511,33 @@ $tabControl->BeginNextTab();
 		<td><?=GetMessage("USER_TYPE_LIST_DEF")?></td>
 		<td><?=GetMessage("USER_TYPE_LIST_DEL")?></td>
 	</tr>
-<?if($MULTIPLE=="N"):?>
+<?php
+
+$rsEnum = $obEnum::GetList([], ['USER_FIELD_ID' => $ID]);
+$enumItems = [];
+$hasDefaultItem = false;
+while($item = $rsEnum->GetNext())
+{
+	$enumItems[] = $item;
+	if (($item['DEF'] ?? 'N') === 'Y')
+	{
+		$hasDefaultItem = true;
+	}
+}
+
+if ($MULTIPLE === 'N'):
+	?>
 	<tr>
 		<td>&nbsp;</td>
 		<td>&nbsp;</td>
 		<td><?=GetMessage("USER_TYPE_LIST_NO_DEF")?></td>
 		<td>&nbsp;</td>
-		<td><input type="radio" name="LIST[DEF][]" value="0"></td>
+		<td><input type="radio" name="LIST[DEF][]" value="0" <?= ($hasDefaultItem ? '' : 'checked') ?>></td>
 		<td>&nbsp;</td>
 	</tr>
 <?endif?>
 <?
-	$rsEnum = $obEnum->GetList(array(), array("USER_FIELD_ID" => $ID));
-	while($arEnum = $rsEnum->GetNext()):
-
+	foreach ($enumItems as $arEnum):
 		if($bVarsFromForm && is_array($_REQUEST['LIST'][$arEnum["ID"]]))
 			foreach($_REQUEST['LIST'][$arEnum["ID"]] as $key=>$val)
 				$arEnum[$key] = htmlspecialcharsbx($val);
@@ -537,7 +551,7 @@ $tabControl->BeginNextTab();
 		<td><input type="checkbox" name="LIST[<?=$arEnum["ID"]?>][DEL]" value="Y"<?if($arEnum["DEL"] == "Y") echo " checked"?>></td>
 	</tr>
 <?
-	endwhile;
+	endforeach;
 ?>
 <?
 if($bVarsFromForm):

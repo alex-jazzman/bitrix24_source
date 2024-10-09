@@ -4,6 +4,7 @@
 jn.define('toast/base', (require, exports, module) => {
 	const { Feature } = require('feature');
 	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 
 	const Position = {
 		TOP: 'top',
@@ -28,6 +29,7 @@ jn.define('toast/base', (require, exports, module) => {
 	 * @property {string} message
 	 * @property {string} [imageUrl] - Path to png-image
 	 * @property {string} [iconName] - Icon name from assets/icons ext. Since API 54
+	 * @property {Icon} [icon]
 	 * @property {ToastSvgParams} [svg]
 	 * @property {ToastLottieParams} [lottie] - Lottie animation
 	 * @property {boolean} [blur=true] - Specifies whether to blur the background when the toast is shown.
@@ -65,6 +67,12 @@ jn.define('toast/base', (require, exports, module) => {
 		}
 
 		const preparedParams = { ...params };
+
+		const { icon } = params;
+		if (icon instanceof Icon)
+		{
+			preparedParams.iconName = icon.getIconName();
+		}
 
 		if (!Feature.isToastPositionSupported())
 		{

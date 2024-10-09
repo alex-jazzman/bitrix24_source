@@ -4,18 +4,23 @@
 jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 	const { Component, Indent } = require('tokens');
+	const { Type } = require('type');
 	const { mergeImmutable } = require('utils/object');
 	const { Text5 } = require('ui-system/typography/text');
 	const { BadgeCounterDesign } = require('ui-system/blocks/badges/counter/src/design-enum');
 
+	const MAX_COUNTS = 99;
+
 	/**
-	 * @param {object} props
-	 * @param {number} props.testId
-	 * @param {number | string} [props.value=0]
-	 * @param {boolean} [props.showRawValue]
-	 * @param {BadgeCounterDesign} props.design=BadgeCounterDesign.SUCCESS
-	 * @param {Color} [props.color=Color.baseWhiteFixed]
-	 * @param {Color} [props.backgroundColor=Color.accentMainPrimary]
+	 * @typedef {Object} BadgeCounterProps
+	 * @property {number} testId
+	 * @property {number | string} [value=0]
+	 * @property {boolean} [showRawValue]
+	 * @property {BadgeCounterDesign} design=BadgeCounterDesign.SUCCESS
+	 * @property {Color} [color=Color.baseWhiteFixed]
+	 * @property {Color} [backgroundColor=Color.accentMainPrimary]
+	 *
+	 * @param {BadgeCounterProps} props
 	 * @function BadgeCounter
 	 */
 	function BadgeCounter(props = {})
@@ -23,12 +28,12 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 		PropTypes.validate(BadgeCounter.propTypes, props, 'BadgeCounter');
 
 		const {
-			testId = '',
-			value = 0,
-			showRawValue = false,
+			testId,
+			value,
+			showRawValue,
 			design = BadgeCounterDesign.SUCCESS,
 			...restProps
-		} = props;
+		} = { ...BadgeCounter.defaultProps, ...props };
 
 		if (!BadgeCounterDesign.has(design))
 		{
@@ -37,7 +42,12 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 			return null;
 		}
 
-		const counterText = !showRawValue && value > 99 ? '99+' : String(value);
+		let badgeText = Type.isNil(value) || Number.isNaN(value) ? 0 : value;
+
+		if (Type.isNumber(Number(badgeText)) && !showRawValue)
+		{
+			badgeText = badgeText > MAX_COUNTS ? `${MAX_COUNTS}+` : badgeText;
+		}
 
 		const viewProps = mergeImmutable({
 			testId: `${testId}_${design.getName()}`,
@@ -62,7 +72,7 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 				},
 				Text5({
 					accent: true,
-					text: counterText,
+					text: String(badgeText),
 					color: design.getColor(),
 				}),
 			),
@@ -75,10 +85,10 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 	};
 
 	BadgeCounter.propTypes = {
+		value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 		testId: PropTypes.string.isRequired,
 		showRawValue: PropTypes.bool,
 		design: PropTypes.instanceOf(BadgeCounterDesign),
-		value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 	};
 
 	module.exports = { BadgeCounter, BadgeCounterDesign };

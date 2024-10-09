@@ -290,6 +290,11 @@ export class MentionManager extends EventEmitter
 		return mentions;
 	}
 
+	clearMentionSymbol()
+	{
+		this.#mentionSymbol = '';
+	}
+
 	clearMentionReplacements(): void
 	{
 		this.#mentionReplacementMap = {};

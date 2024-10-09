@@ -16,6 +16,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\Helper\Feature;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\UI;
@@ -37,6 +38,8 @@ if (Loader::includeModule('bitrix24'))
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+
+$isProjectAccessEnabled = \Bitrix\Socialnetwork\Helper\Workgroup::isProjectAccessFeatureEnabled();
 
 $groupMember = in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember());
 
@@ -118,7 +121,7 @@ if (
 			userIsAutoMember: <?=(isset($arResult["CurrentUserPerms"]["UserIsAutoMember"]) && $arResult["CurrentUserPerms"]["UserIsAutoMember"] ? 'true' : 'false')?>,
 			userIsScrumMaster: <?= (isset($arResult['CurrentUserPerms']['UserIsScrumMaster']) && $arResult['CurrentUserPerms']['UserIsScrumMaster'] ? 'true' : 'false') ?>,
 
-			editFeaturesAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false')?>,
+			editFeaturesAllowed: <?= CUtil::phpToJSObject($isProjectAccessEnabled) ?>,
 			copyFeatureAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::isGroupCopyFeatureEnabled() ? 'true' : 'false')?>,
 			canPickTheme: <?= (
 				$arResult['inIframe']

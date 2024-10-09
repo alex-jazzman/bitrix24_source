@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,main_date,main_loader,ui_vue3,ui_buttons,ui_hint,crm_field_colorSelector,main_core_events,ui_vue3_directives_hint,main_popup,ui_label,ui_cnt,ui_notification,crm_timeline_item,main_core,crm_timeline_tools) {
+(function (exports,rest_client,ui_analytics,main_date,ui_buttons,ui_hint,ui_vue3,main_loader,crm_field_colorSelector,main_core_events,ui_vue3_directives_hint,main_popup,ui_label,ui_cnt,ui_notification,crm_timeline_item,main_core,crm_timeline_tools) {
 	'use strict';
 
 	let _ = t => t,
@@ -2461,6 +2461,11 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	let ButtonScope = function ButtonScope() {
+	  babelHelpers.classCallCheck(this, ButtonScope);
+	};
+	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
+
 	let ButtonState = function ButtonState() {
 	  babelHelpers.classCallCheck(this, ButtonState);
 	};
@@ -2469,6 +2474,15 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
 	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
 	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
+
+	let ButtonType = function ButtonType() {
+	  babelHelpers.classCallCheck(this, ButtonType);
+	};
+	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
+	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
+	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
+	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
 
 	const BaseButton = {
 	  props: {
@@ -2547,147 +2561,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  template: `<button></button>`
 	};
-
-	const AdditionalButtonIcon = Object.freeze({
-	  NOTE: 'note',
-	  SCRIPT: 'script',
-	  PRINT: 'print',
-	  DOTS: 'dots'
-	});
-	const AdditionalButtonColor = Object.freeze({
-	  DEFAULT: 'default',
-	  PRIMARY: 'primary'
-	});
-	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
-	  props: {
-	    iconName: {
-	      type: String,
-	      required: false,
-	      default: '',
-	      validator(value) {
-	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
-	      }
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: AdditionalButtonColor.DEFAULT,
-	      validator(value) {
-	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
-	      }
-	    }
-	  },
-	  computed: {
-	    className() {
-	      return ['crm-timeline__card_add-button', {
-	        [`--icon-${this.iconName}`]: this.iconName,
-	        [`--color-${this.color}`]: this.color,
-	        [`--state-${this.currentState}`]: this.currentState
-	      }];
-	    },
-	    ButtonState() {
-	      return ButtonState;
-	    },
-	    loaderHtml() {
-	      const loader = new main_loader.Loader({
-	        mode: 'inline',
-	        size: 20
-	      });
-	      loader.show();
-	      return loader.layout.outerHTML;
-	    }
-	  },
-	  template: `
-		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
-			<div
-				v-if="currentState === ButtonState.LOADING"
-				v-html="loaderHtml"
-				class="crm-timeline__card_add-button"
-			></div>
-			<div
-				v-else
-				:title="title"
-				@click="executeAction"
-				:class="className">
-			</div>
-		</transition>
-	`
-	});
-
-	const MenuId = 'timeline-more-button-menu';
-	const Menu$1 = {
-	  components: {
-	    AdditionalButton
-	  },
-	  props: {
-	    buttons: Array,
-	    // buttons that didn't fit into footer
-	    items: Object // real menu items
-	  },
-
-	  inject: ['isReadOnly'],
-	  computed: {
-	    isMenuFilled() {
-	      const menuItems = this.menuItems;
-	      return menuItems.length > 0;
-	    },
-	    itemsArray() {
-	      if (!this.items) {
-	        return [];
-	      }
-	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
-	    },
-	    menuItems() {
-	      let result = this.buttons;
-	      if (this.buttons.length && this.itemsArray.length) {
-	        result.push({
-	          delimiter: true
-	        });
-	      }
-	      result = [...result, ...this.itemsArray];
-	      return result;
-	    },
-	    buttonProps() {
-	      return {
-	        color: AdditionalButtonColor.DEFAULT,
-	        icon: AdditionalButtonIcon.DOTS
-	      };
-	    }
-	  },
-	  beforeUnmount() {
-	    const menu = main_popup.MenuManager.getMenuById(MenuId);
-	    if (menu) {
-	      menu.destroy();
-	    }
-	  },
-	  methods: {
-	    showMenu() {
-	      Menu.showMenu(this, this.menuItems, {
-	        id: MenuId,
-	        className: 'crm-timeline__card_more-menu',
-	        width: 230,
-	        angle: false,
-	        cacheable: false,
-	        bindElement: this.$el
-	      });
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
-			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
-		</div>
-	`
-	};
-
-	let ButtonType = function ButtonType() {
-	  babelHelpers.classCallCheck(this, ButtonType);
-	};
-	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
-	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
-	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
-	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
 
 	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
 	  props: {
@@ -2840,6 +2713,72 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	});
 
+	const AdditionalButtonIcon = Object.freeze({
+	  NOTE: 'note',
+	  SCRIPT: 'script',
+	  PRINT: 'print',
+	  DOTS: 'dots'
+	});
+	const AdditionalButtonColor = Object.freeze({
+	  DEFAULT: 'default',
+	  PRIMARY: 'primary'
+	});
+	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	  props: {
+	    iconName: {
+	      type: String,
+	      required: false,
+	      default: '',
+	      validator(value) {
+	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
+	      }
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: AdditionalButtonColor.DEFAULT,
+	      validator(value) {
+	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
+	      }
+	    }
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card_add-button', {
+	        [`--icon-${this.iconName}`]: this.iconName,
+	        [`--color-${this.color}`]: this.color,
+	        [`--state-${this.currentState}`]: this.currentState
+	      }];
+	    },
+	    ButtonState() {
+	      return ButtonState;
+	    },
+	    loaderHtml() {
+	      const loader = new main_loader.Loader({
+	        mode: 'inline',
+	        size: 20
+	      });
+	      loader.show();
+	      return loader.layout.outerHTML;
+	    }
+	  },
+	  template: `
+		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
+			<div
+				v-if="currentState === ButtonState.LOADING"
+				v-html="loaderHtml"
+				class="crm-timeline__card_add-button"
+			></div>
+			<div
+				v-else
+				:title="title"
+				@click="executeAction"
+				:class="className">
+			</div>
+		</transition>
+	`
+	});
+
 	const Buttons = {
 	  components: {
 	    Button
@@ -2872,10 +2811,71 @@ this.BX.Crm = this.BX.Crm || {};
 		`
 	};
 
-	let ButtonScope = function ButtonScope() {
-	  babelHelpers.classCallCheck(this, ButtonScope);
+	const MenuId = 'timeline-more-button-menu';
+	const Menu$1 = {
+	  components: {
+	    AdditionalButton
+	  },
+	  props: {
+	    buttons: Array,
+	    // buttons that didn't fit into footer
+	    items: Object // real menu items
+	  },
+
+	  inject: ['isReadOnly'],
+	  computed: {
+	    isMenuFilled() {
+	      const menuItems = this.menuItems;
+	      return menuItems.length > 0;
+	    },
+	    itemsArray() {
+	      if (!this.items) {
+	        return [];
+	      }
+	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
+	    },
+	    menuItems() {
+	      let result = this.buttons;
+	      if (this.buttons.length && this.itemsArray.length) {
+	        result.push({
+	          delimiter: true
+	        });
+	      }
+	      result = [...result, ...this.itemsArray];
+	      return result;
+	    },
+	    buttonProps() {
+	      return {
+	        color: AdditionalButtonColor.DEFAULT,
+	        icon: AdditionalButtonIcon.DOTS
+	      };
+	    }
+	  },
+	  beforeUnmount() {
+	    const menu = main_popup.MenuManager.getMenuById(MenuId);
+	    if (menu) {
+	      menu.destroy();
+	    }
+	  },
+	  methods: {
+	    showMenu() {
+	      Menu.showMenu(this, this.menuItems, {
+	        id: MenuId,
+	        className: 'crm-timeline__card_more-menu',
+	        width: 230,
+	        angle: false,
+	        cacheable: false,
+	        bindElement: this.$el
+	      });
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
+			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
+		</div>
+	`
 	};
-	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
 
 	const Footer = {
 	  components: {
@@ -2978,7 +2978,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  template: `
 		<div :class="containerClassname">
-			<Buttons ref="buttons" :items="baseButtons" />
 			<div class="crm-timeline__card-action_menu">
 				<div
 					v-for="button in visibleAndSortedAdditionalButtons"
@@ -2992,6 +2991,7 @@ this.BX.Crm = this.BX.Crm || {};
 				</div>
 				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
 			</div>
+			<Buttons ref="buttons" :items="baseButtons" />
 		</div>
 	`
 	};
@@ -12115,25 +12115,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Scoring, [{
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      const outerWrapper = BX.create("DIV", {
+	      const isScoringAvailable = BX.prop.getBoolean(this._data, 'SCORING_IS_AVAILABLE', true);
+	      const outerWrapper = BX.create('DIV', {
 	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring"
+	          className: 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring'
 	        },
-	        events: {
+	        events: isScoringAvailable ? {
 	          click: function () {
-	            let url = "/crm/ml/#entity#/#id#/detail";
+	            let url = '/crm/ml/#entity#/#id#/detail';
 	            const ownerTypeId = this.getOwnerTypeId();
 	            const ownerId = this.getOwnerId();
-	            let ownerType;
+	            let ownerType = '';
 	            if (ownerTypeId === 1) {
-	              ownerType = "lead";
+	              ownerType = 'lead';
 	            } else if (ownerTypeId === 2) {
-	              ownerType = "deal";
+	              ownerType = 'deal';
 	            } else {
 	              return;
 	            }
-	            url = url.replace("#entity#", ownerType);
-	            url = url.replace("#id#", ownerId);
+	            url = url.replace('#entity#', ownerType);
+	            url = url.replace('#id#', ownerId);
 	            if (BX.SidePanel) {
 	              BX.SidePanel.Instance.open(url, {
 	                width: 840
@@ -12142,7 +12143,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              top.location.href = url;
 	            }
 	          }.bind(this)
-	        }
+	        } : null
 	      });
 	      const scoringInfo = BX.prop.getObject(this._data, "SCORING_INFO", null);
 	      if (!scoringInfo) {
@@ -16569,5 +16570,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Animations = Animations;
 	exports.CompatibleItem = CompatibleItem;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Main,BX,BX.Vue3,BX.UI,BX,BX.Crm.Field,BX.Event,BX.Vue3.Directives,BX.Main,BX.UI,BX.UI,BX,BX.Crm.Timeline,BX,BX.Crm.Timeline));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Main,BX.UI,BX,BX.Vue3,BX,BX.Crm.Field,BX.Event,BX.Vue3.Directives,BX.Main,BX.UI,BX.UI,BX,BX.Crm.Timeline,BX,BX.Crm.Timeline));
 //# sourceMappingURL=timeline.bundle.js.map

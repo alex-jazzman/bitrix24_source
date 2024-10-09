@@ -25,9 +25,9 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 				methodParams.ONLY_COPILOT = options.onlyCopilot ? 'Y' : 'N';
 			}
 
-			if (options.lastMessageDate)
+			if (options.lastActivityDate)
 			{
-				methodParams.LAST_MESSAGE_DATE = options.lastMessageDate;
+				methodParams.DATE_LAST_ACTIVITY = options.lastActivityDate;
 			}
 
 			return BX.rest.callMethod(RestMethod.imRecentList, methodParams);

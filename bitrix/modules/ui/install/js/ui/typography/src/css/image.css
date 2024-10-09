@@ -1,0 +1,8 @@
+.ui-typography-image-container {
+	display: inline-block;
+}
+
+.ui-typography-image {
+	max-width: 100%;
+	min-width: 100%;
+}

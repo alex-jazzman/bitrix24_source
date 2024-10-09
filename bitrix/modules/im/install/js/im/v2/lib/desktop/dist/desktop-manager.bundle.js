@@ -284,7 +284,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    im_v2_lib_desktopApi.DesktopApi.activateWindow();
 	    if (command === im_v2_const.DesktopBxLink.chat) {
-	      void im_public.Messenger.openChat(params.dialogId);
+	      var _params$messageId;
+	      const messageId = (_params$messageId = params.messageId) != null ? _params$messageId : 0;
+	      void im_public.Messenger.openChat(params.dialogId, messageId);
 	    } else if (command === im_v2_const.DesktopBxLink.lines) {
 	      void im_public.Messenger.openLines(params.dialogId);
 	    } else if (command === im_v2_const.DesktopBxLink.conference) {
@@ -771,9 +773,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  isLocationChangedToBx() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _locationChangedToBx)[_locationChangedToBx];
 	  }
-	  redirectToChat(dialogId = '') {
+	  redirectToChat(dialogId = '', messageId = 0) {
 	    im_v2_lib_logger.Logger.warn('Desktop: redirectToChat', dialogId);
-	    this.openBxLink(`bx://${im_v2_const.DesktopBxLink.chat}/dialogId/${dialogId}`);
+	    let link = `bx://${im_v2_const.DesktopBxLink.chat}/dialogId/${dialogId}`;
+	    if (messageId > 0) {
+	      link += `/messageId/${messageId}`;
+	    }
+	    this.openBxLink(link);
 	    return Promise.resolve();
 	  }
 	  redirectToLines(dialogId = '') {

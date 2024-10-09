@@ -2,7 +2,8 @@
  * @module im/messenger/controller/sidebar/chat/sidebar-profile-user-counter
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (require, exports, module) => {
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-user-counter');
 	const { Loc } = require('loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
@@ -65,7 +66,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 
 		componentDidMount()
 		{
-			Logger.log(`${this.constructor.name}.view.componentDidMount`);
+			logger.log(`${this.constructor.name}.view.componentDidMount`);
 			this.bindListener();
 			this.subscribeEvents();
 			this.buildUserCounterLocal();
@@ -83,7 +84,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 
 		subscribeEvents()
 		{
-			Logger.log(`${this.constructor.name}.view.subscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.view.subscribeStoreEvents`);
 			this.storeManager.on('dialoguesModel/update', this.onChangeProfileUserCounter);
 
 			BX.addCustomEvent('onCloseSidebarWidget', this.unsubscribeEvents);
@@ -91,7 +92,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 
 		unsubscribeEvents()
 		{
-			Logger.log(`${this.constructor.name}.view.unsubscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.view.unsubscribeStoreEvents`);
 			this.storeManager.off('dialoguesModel/update', this.onChangeProfileUserCounter);
 
 			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeEvents);

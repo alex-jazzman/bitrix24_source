@@ -85,10 +85,15 @@ export class DesktopManager
 		return this.#locationChangedToBx;
 	}
 
-	redirectToChat(dialogId: string = ''): Promise
+	redirectToChat(dialogId: string = '', messageId: number = 0): Promise
 	{
 		Logger.warn('Desktop: redirectToChat', dialogId);
-		this.openBxLink(`bx://${DesktopBxLink.chat}/dialogId/${dialogId}`);
+		let link = `bx://${DesktopBxLink.chat}/dialogId/${dialogId}`;
+		if (messageId > 0)
+		{
+			link += `/messageId/${messageId}`;
+		}
+		this.openBxLink(link);
 
 		return Promise.resolve();
 	}

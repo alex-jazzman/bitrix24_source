@@ -88,7 +88,15 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 </div>
 
 <div id="task-comments-block">
-	<?php $APPLICATION->IncludeComponent(
+	<?php
+	$analytics = [
+		'data-analytics' => [
+			'c_section' => 'comment',
+			'c_element' => 'title_click',
+		],
+	];
+
+	$APPLICATION->IncludeComponent(
 		'bitrix:forum.comments',
 		'',
 		[
@@ -108,6 +116,10 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 			'PERMISSION' => 'M',
 			'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'],
 			'SKIP_USER_READ' => 'Y',
+			'ATTRIBUTES' => [
+				'ANCHOR' => $analytics,
+				'TEXT_ANCHOR' => $analytics,
+			],
 		],
 		null,
 		['HIDE_ICONS' => 'Y']

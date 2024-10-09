@@ -290,6 +290,15 @@ export class Api
 		});
 	}
 
+	modifyReminderTypeForMemberRole(documentUid: string, memberRole: string, reminderType: string): Promise
+	{
+		return this.#post('sign.api_v1.b2e.member.reminder.set', {
+			documentUid,
+			memberRole,
+			type: reminderType,
+		});
+	}
+
 	loadLanguages(): Promise
 	{
 		return this.#post('sign.api_v1.document.loadLanguage');
@@ -400,10 +409,22 @@ export class Api
 		return this.#post('sign.api_v1.document.blank.getById', { id });
 	}
 
-	registerB2eCompany(providerCode: string, taxId: string): Promise<{ id: number }>
+	registerB2eCompany(
+		providerCode: string,
+		taxId: string,
+		companyId: string,
+		externalProviderId: ?string,
+	): Promise<{ id: number }>
 	{
 		return this.#post('sign.api_v1.integration.crm.b2ecompany.register', {
-			providerCode, taxId,
+			providerCode, taxId, companyId, externalProviderId
+		});
+	}
+
+	createDocumentChat(chatType: number, documentId: number, isEntityId: boolean): Promise<{ chatId: number }>
+	{
+		return this.#post('sign.api_v1.integration.im.groupChat.createDocumentChat', {
+			chatType, documentId, isEntityId,
 		});
 	}
 

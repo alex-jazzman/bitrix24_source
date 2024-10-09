@@ -145,10 +145,10 @@ if ($isAdmin && !$fb && check_bitrix_sessid())
 				}
 				else
 				{
-					$match[3] = (100-$count)+($match[3]);
+					$match[3] = (10000-$count)+($match[3]);
 					if ($match[2] == 0)
 					{
-						$match[2] = 9;
+						$match[2] = 9999;
 						$match[1] -= 1;
 					}
 					else
@@ -314,7 +314,7 @@ foreach($arModules as $info)
 				{
 					$disabled = (
 						!$isAdmin
-						|| in_array($info["MODULE_ID"], ["fileman", "intranet", "ui", "security"], true)
+						|| in_array($info["MODULE_ID"], ["fileman", "intranet", "ui", "security", "humanresources",], true)
 						|| (
 							in_array($info['MODULE_ID'], [ 'rest', 'socialnetwork' ], true)
 							&& ModuleManager::isModuleInstalled('intranet')

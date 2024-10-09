@@ -9,6 +9,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\UI\Editor;
@@ -26,6 +27,10 @@ Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
 
 Loc::loadMessages(__FILE__);
+
+$taskObserversParticipantsEnabled = \Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(
+	FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
+);
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
@@ -126,7 +131,7 @@ if (
 )
 {
 	$lockClass = 'tasks-btn-restricted';
-	$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
+	\Bitrix\Main\UI\Extension::load('ui.info-helper');
 }
 
 $taskUrlTemplate = str_replace(
@@ -255,7 +260,7 @@ $userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_
 					'INPUT_PREFIX' => $inputPrefix . '[SE_CHECKLIST]',
 					'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 					'CONVERTED' => $arResult['CHECKLIST_CONVERTED'],
-					'CAN_ADD_ACCOMPLICE' => true,
+					'CAN_ADD_ACCOMPLICE' => $taskObserversParticipantsEnabled,
 				],
 				$helper->getComponent(),
 				[
@@ -284,6 +289,7 @@ $userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_
 					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ACCOMPLICE'],
 					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 					'CONTEXT' => 'template',
+					'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 				],
 				$helper->getComponent(),
 				[
@@ -298,7 +304,8 @@ $userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_
 				'HTML' => ob_get_clean(),
 				'IS_PINABLE' => false,
 				'FILLED' => true,
-				'RESTRICTED' => $taskLimitExceeded,
+				'RESTRICTED' => !$taskObserversParticipantsEnabled,
+				'RESTRICTED_FEATURE_ID' => FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS,
 			];
 
 			ob_start();
@@ -314,6 +321,7 @@ $userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_
 					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_AUDITOR'],
 					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 					'CONTEXT' => 'template',
+					'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 				],
 				$helper->getComponent(),
 				[
@@ -328,7 +336,8 @@ $userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_
 				'HTML' => ob_get_clean(),
 				'IS_PINABLE' => false,
 				'FILLED' => true,
-				'RESTRICTED' => $taskLimitExceeded,
+				'RESTRICTED' => !$taskObserversParticipantsEnabled,
+				'RESTRICTED_FEATURE_ID' => FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS,
 			];
 
 

@@ -10,6 +10,8 @@
 		merge,
 		mergeImmutable,
 	} = require('utils/object');
+	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 	const { throttle } = require('utils/function');
 	const { KanbanTab } = require('crm/entity-tab/kanban');
 	const { ListTab } = require('crm/entity-tab/list');
@@ -23,6 +25,7 @@
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { Feature } = require('feature');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
@@ -145,36 +148,12 @@
 			}
 
 			const preparedCounters = {};
-			const entitiesToUpdate = new Set();
 
-			for (const counter in counters)
-			{
+			Object.keys(counters).forEach((counter) => {
 				if (counters[counter] >= 0)
 				{
 					preparedCounters[counter] = counters[counter];
 				}
-				else if (counters[counter] === -1)
-				{
-					for (const [id, entityName] of Object.entries(Type.getSupportedEntitiesList()))
-					{
-						if (counter.toLowerCase().includes(entityName.toLowerCase()))
-						{
-							entitiesToUpdate.add(id);
-
-							break;
-						}
-					}
-				}
-			}
-
-			entitiesToUpdate.forEach((entityTypeId) => {
-				const data = {
-					entityTypeId,
-					extras: {},
-					withExcludeUsers: 0,
-				}
-
-				BX.ajax.runAction('crm.counter.list', { data });
 			});
 
 			if (Object.keys(preparedCounters).length > 0)
@@ -600,6 +579,7 @@
 					permissions: data.permissions,
 					connectors: data.connectors,
 					restrictions: data.restrictions,
+					remindersList: data.remindersList,
 				});
 			}
 			else if (data.permissions && !isEqual(data.permissions, permissions))
@@ -686,13 +666,29 @@
 
 		getPreparedTabItem(tab)
 		{
-			return {
+			let tabItem = {
 				id: tab.typeName,
 				title: tab.titleInPlural,
-				active: tab.hasOwnProperty('active') ? tab.active : undefined,
-				selectable: tab.hasOwnProperty('selectable') ? tab.selectable : undefined,
+				active: Boolean(tab?.active),
+				selectable: Boolean(tab.selectable),
 				label: this.getPreparedLabel(tab.label, tab.id),
 			};
+			const { hasRestrictions } = this.getTabByTypeName(tabItem.id);
+
+			if (hasRestrictions)
+			{
+				tabItem = {
+					...tabItem,
+					icon: Icon.LOCK.getIconName(),
+					style: {
+						icon: {
+							color: Color.base0.toHex(),
+						},
+					},
+				};
+			}
+
+			return tabItem;
 		}
 
 		getPreparedLabel(label)
@@ -725,7 +721,7 @@
 		{
 			const rightButtonsIsSet = this.rightButtonsIsSet;
 			this.rightButtonsIsSet = true;
-			const { activeTabId, activeTabTypeName } = this.state;
+			const { activeTabId, activeTabTypeName, remindersList } = this.state;
 			const activeTab = this.getActiveTab() || {};
 
 			const categoryId = get(activeTab, 'data.currentCategoryId', null);
@@ -761,13 +757,14 @@
 				searchRef: this.searchRef,
 				searchBarId: `${activeTabTypeName}_${categoryId}`,
 				userInfo: this.userInfo,
+				remindersList,
 				ref,
 			};
 		}
 
 		onItemsLoaded(data)
 		{
-			if (data.event === 'refreshPresets')
+			if (data?.event === 'refreshPresets')
 			{
 				this.searchRef?.refreshPresets();
 			}

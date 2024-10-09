@@ -1,5 +1,7 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
 
 /**
  * Bitrix vars
@@ -60,14 +62,7 @@ $arParamsToDelete = array(
 	"confirm_user_id",
 );
 
-if(defined("AUTH_404"))
-{
-	$arResult["AUTH_URL"] = POST_FORM_ACTION_URI;
-}
-else
-{
-	$arResult["AUTH_URL"] = $APPLICATION->GetCurPageParam("change_password=yes", $arParamsToDelete);
-}
+$arResult["AUTH_URL"] = $APPLICATION->GetCurPageParam("change_password=yes", $arParamsToDelete);
 
 $arResult["BACKURL"] = $APPLICATION->GetCurPageParam("", $arParamsToDelete);
 

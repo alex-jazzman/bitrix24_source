@@ -175,10 +175,10 @@ export class BBCodeElementNode extends BBCodeNode
 	appendChild(...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
 		const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
-		const filteredChildren: FilteredChildren = this.filterChildren(flattenedChildren);
-		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(filteredChildren.resolved);
+		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(flattenedChildren);
+		const filteredChildren: FilteredChildren = this.filterChildren(convertedChildren);
 
-		convertedChildren.forEach((node: BBCodeContentNode) => {
+		filteredChildren.resolved.forEach((node: BBCodeContentNode) => {
 			node.remove();
 			node.setParent(this);
 			this.children.push(node);
@@ -186,7 +186,16 @@ export class BBCodeElementNode extends BBCodeNode
 
 		if (Type.isArrayFilled(filteredChildren.unresolved))
 		{
-			if (this.getScheme().isAllowedUnresolvedNodesHoisting())
+			const tagScheme: BBCodeTagScheme = this.getTagScheme();
+			if (tagScheme.hasNotAllowedChildrenCallback())
+			{
+				tagScheme.runNotAllowedChildrenCallback({
+					node: this,
+					children: filteredChildren.unresolved,
+					scheme: this.getScheme(),
+				});
+			}
+			else if (this.getScheme().isAllowedUnresolvedNodesHoisting())
 			{
 				this.propagateChild(...filteredChildren.unresolved);
 			}
@@ -202,10 +211,10 @@ export class BBCodeElementNode extends BBCodeNode
 	prependChild(...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
 		const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
-		const filteredChildren: FilteredChildren = this.filterChildren(flattenedChildren);
-		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(filteredChildren.resolved);
+		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(flattenedChildren);
+		const filteredChildren: FilteredChildren = this.filterChildren(convertedChildren);
 
-		convertedChildren.forEach((node: BBCodeContentNode) => {
+		filteredChildren.resolved.forEach((node: BBCodeContentNode) => {
 			node.remove();
 			node.setParent(this);
 			this.children.unshift(node);
@@ -213,7 +222,16 @@ export class BBCodeElementNode extends BBCodeNode
 
 		if (Type.isArrayFilled(filteredChildren.unresolved))
 		{
-			if (this.getScheme().isAllowedUnresolvedNodesHoisting())
+			const tagScheme: BBCodeTagScheme = this.getTagScheme();
+			if (tagScheme.hasNotAllowedChildrenCallback())
+			{
+				tagScheme.runNotAllowedChildrenCallback({
+					node: this,
+					children: filteredChildren.unresolved,
+					scheme: this.getScheme(),
+				});
+			}
+			else if (this.getScheme().isAllowedUnresolvedNodesHoisting())
 			{
 				this.propagateChild(...filteredChildren.unresolved);
 			}
@@ -234,10 +252,10 @@ export class BBCodeElementNode extends BBCodeNode
 				node.setParent(null);
 
 				const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
-				const filteredChildren: FilteredChildren = this.filterChildren(flattenedChildren);
-				const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(filteredChildren.resolved);
+				const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(flattenedChildren);
+				const filteredChildren: FilteredChildren = this.filterChildren(convertedChildren);
 
-				return convertedChildren.map((child: BBCodeContentNode) => {
+				return filteredChildren.resolved.map((child: BBCodeContentNode) => {
 					child.remove();
 					child.setParent(this);
 
@@ -379,6 +397,32 @@ export class BBCodeElementNode extends BBCodeNode
 	getTagScheme(): BBCodeTagScheme
 	{
 		return super.getTagScheme();
+	}
+
+	trimStartLinebreaks()
+	{
+		const firstChild: BBCodeContentNode = this.getFirstChild();
+		if (firstChild && firstChild.getName() === '#linebreak')
+		{
+			firstChild.remove();
+			this.trimStartLinebreaks();
+		}
+	}
+
+	trimEndLinebreaks()
+	{
+		const lastChild: BBCodeContentNode = this.getLastChild();
+		if (lastChild && lastChild.getName() === '#linebreak')
+		{
+			lastChild.remove();
+			this.trimEndLinebreaks();
+		}
+	}
+
+	trimLinebreaks()
+	{
+		this.trimStartLinebreaks();
+		this.trimEndLinebreaks();
 	}
 
 	toString(): string

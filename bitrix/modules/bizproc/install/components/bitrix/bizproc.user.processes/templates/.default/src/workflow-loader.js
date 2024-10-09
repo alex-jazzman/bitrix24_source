@@ -42,6 +42,7 @@ export type WorkflowData = {
 	taskCnt: number,
 	commentCnt: number,
 	isCompleted: boolean,
+	workflowUrl: ?string,
 };
 
 export class WorkflowLoader

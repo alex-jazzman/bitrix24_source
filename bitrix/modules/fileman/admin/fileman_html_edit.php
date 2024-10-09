@@ -204,7 +204,7 @@ if($strWarning == '')
 		}
 	}
 
-	if($REQUEST_METHOD == "POST" && $save <> '' && ($propeditmore ?? null) == '')
+	if($_SERVER['REQUEST_METHOD'] == "POST" && $save <> '' && ($propeditmore ?? null) == '')
 	{
 		if(!check_bitrix_sessid())
 		{

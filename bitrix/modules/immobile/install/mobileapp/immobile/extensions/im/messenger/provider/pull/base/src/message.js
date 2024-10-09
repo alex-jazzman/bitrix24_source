@@ -22,8 +22,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		DialogType,
 		EventType,
 	} = require('im/messenger/const');
-
 	const { BaseRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/base');
+	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
 
 	/**
 	 * @class BaseMessagePullHandler
@@ -637,7 +637,6 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				return;
 			}
 
-
 			const fieldsCount = {
 				counter: params.counter,
 			};
@@ -905,35 +904,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		 */
 		async setFiles(params)
 		{
-			if (!params.files)
-			{
-				return Promise.resolve();
-			}
-
-			const promises = [];
-			const files = Object.values(params.files);
-			files.forEach((file) => {
-				const templateFileIdExists = this.store.getters['filesModel/isInCollection']({
-					fileId: params.message?.templateFileId,
-				});
-
-				if (templateFileIdExists)
-				{
-					const updateFileWithIdPromise = this.store.dispatch('filesModel/updateWithId', {
-						id: params.message?.templateFileId,
-						fields: file,
-					});
-
-					promises.push(updateFileWithIdPromise);
-				}
-				else
-				{
-					const setFilePromise = this.store.dispatch('filesModel/set', file);
-					promises.push(setFilePromise);
-				}
-			});
-
-			return Promise.all(promises);
+			return FileUtils.setFiles(params);
 		}
 
 		/**

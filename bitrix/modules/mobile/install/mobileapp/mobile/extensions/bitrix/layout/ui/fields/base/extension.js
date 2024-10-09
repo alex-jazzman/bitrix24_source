@@ -21,6 +21,9 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { isOnline } = require('device/connection');
 	const { showOfflineToast } = require('toast');
 	const { Logger, LogType } = require('utils/logger');
+	const { RestrictionType, hasRestriction } = require('layout/ui/fields/base/restriction-type');
+	const { Icon } = require('assets/icons');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
 
 	const TitlePosition = {
 		top: 'top',
@@ -283,6 +286,39 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		getThemeComponent()
 		{
 			return BX.prop.getFunction(this.props, 'ThemeComponent', null);
+		}
+
+		getRestrictionPolicy()
+		{
+			return BX.prop.getNumber(this.props, 'restrictionPolicy', RestrictionType.NONE);
+		}
+
+		getShowRestrictionCallback()
+		{
+			return BX.prop.getFunction(
+				this.props,
+				'showRestrictionCallback',
+				() => PlanRestriction.open({ title: this.getTitleText() }, this.getParentWidget()),
+			);
+		}
+
+		onRestrictionHidden()
+		{
+			this.props.onFocusOut?.();
+		}
+
+		/**
+		 * @param {RestrictionType} restrictionType
+		 * @return {boolean}
+		 */
+		hasRestriction(restrictionType)
+		{
+			return hasRestriction(this.getRestrictionPolicy(), restrictionType);
+		}
+
+		isRestricted()
+		{
+			return this.hasRestriction(RestrictionType.FULL);
 		}
 
 		getExternalWrapperBorderColor()
@@ -742,6 +778,16 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		 */
 		getContentClickHandler()
 		{
+			if (this.isRestricted())
+			{
+				return () => {
+					this.getShowRestrictionCallback()?.()
+						.then((layout) => layout?.on('onViewHidden', () => this.onRestrictionHidden()))
+						.catch(console.error)
+					;
+				};
+			}
+
 			if (this.isReadOnly() && !this.props.onContentClick && !this.customContentClickHandler)
 			{
 				return null;
@@ -1716,7 +1762,12 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		 */
 		getLeftIcon()
 		{
-			console.error('Method "getLeftIcon" must be implemented.', this);
+			if (this.isRestricted())
+			{
+				return {
+					icon: Icon.LOCK,
+				};
+			}
 
 			return {};
 		}
@@ -1734,6 +1785,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		readOnly: PropTypes.bool,
 		editable: PropTypes.bool,
 		disabled: PropTypes.bool,
+		isRestricted: PropTypes.bool,
+		showRestrictionCallback: PropTypes.func,
 
 		// value props
 		value: PropTypes.any,
@@ -1808,6 +1861,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		readOnly: false,
 		editable: false,
 		disabled: false,
+		isRestricted: false,
 		title: '',
 		showTitle: true,
 		titlePosition: TitlePosition.top,

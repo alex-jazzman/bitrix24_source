@@ -11,6 +11,7 @@
 	const { DocumentType } = require('catalog/store/document-type');
 	const { confirmDestructiveAction } = require('alert');
 	const { Feature } = require('feature');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const COMPONENT_ID = 'CATALOG_STORE_LIST';
 	const PULL_MODULE_ID = 'catalog';

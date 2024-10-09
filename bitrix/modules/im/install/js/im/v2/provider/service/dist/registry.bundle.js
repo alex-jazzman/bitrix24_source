@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports,im_v2_provider_service,im_v2_lib_layout,im_v2_lib_uuid,im_public,im_v2_lib_copilot,ui_vue3_vuex,ui_notification,main_core,im_v2_lib_user,rest_client,im_v2_lib_utils,main_core_events,ui_uploader_core,im_v2_lib_logger,im_v2_lib_analytics,im_v2_application_core,im_v2_lib_rest,im_v2_const) {
+(function (exports,im_v2_provider_service,im_v2_lib_layout,im_v2_lib_roleManager,im_v2_lib_uuid,im_public,im_v2_lib_copilot,ui_vue3_vuex,ui_notification,main_core,im_v2_lib_user,rest_client,im_v2_lib_utils,main_core_events,ui_uploader_core,im_v2_lib_logger,im_v2_lib_analytics,im_v2_application_core,im_v2_lib_rest,im_v2_const) {
 	'use strict';
 
 	var _restResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restResult");
@@ -421,7 +421,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    const mainChat = {
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].chat,
 	      hasPrevPage: babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].hasPrevPage,
-	      hasNextPage: babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].hasNextPage
+	      hasNextPage: babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].hasNextPage,
+	      tariffRestrictions: babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].tariffRestrictions
 	    };
 	    const chats = {
 	      [babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].chat.dialogId]: mainChat
@@ -834,7 +835,23 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  im_v2_lib_analytics.Analytics.getInstance().onCreateChat(dialogId);
 	}
 
+	var _store$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _prepareFields$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFields");
+	var _updateChatInModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateChatInModel");
 	class UpdateService {
+	  constructor() {
+	    Object.defineProperty(this, _updateChatInModel, {
+	      value: _updateChatInModel2
+	    });
+	    Object.defineProperty(this, _prepareFields$1, {
+	      value: _prepareFields2$1
+	    });
+	    Object.defineProperty(this, _store$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2] = im_v2_application_core.Core.getStore();
+	  }
 	  async prepareAvatar(avatarFile) {
 	    if (!ui_uploader_core.isResizableImage(avatarFile)) {
 	      // eslint-disable-next-line no-console
@@ -852,12 +869,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  async changeAvatar(chatId, avatarFile) {
 	    im_v2_lib_logger.Logger.warn('ChatService: changeAvatar', chatId, avatarFile);
 	    const avatarInBase64 = await im_v2_lib_utils.Utils.file.getBase64(avatarFile);
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatUpdate, {
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatUpdateAvatar, {
 	      data: {
 	        id: chatId,
-	        fields: {
-	          avatar: avatarInBase64
-	        }
+	        avatar: avatarInBase64
 	      }
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
@@ -865,9 +880,83 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      throw new Error(error);
 	    });
 	  }
+	  async updateChat(chatId, chatConfig) {
+	    im_v2_lib_logger.Logger.warn(`ChatService: updateChat, chatId: ${chatId}`, chatConfig);
+	    const preparedFields = await babelHelpers.classPrivateFieldLooseBase(this, _prepareFields$1)[_prepareFields$1](chatConfig);
+	    const updateResult = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatUpdate, {
+	      data: {
+	        id: chatId,
+	        fields: preparedFields
+	      },
+	      id: chatId
+	    }).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('ChatService: updateChat error:', error);
+	      throw new Error(error);
+	    });
+	    im_v2_lib_logger.Logger.warn('ChatService: updateChat result', updateResult);
+	    const dialogId = `chat${chatId}`;
+	    await babelHelpers.classPrivateFieldLooseBase(this, _updateChatInModel)[_updateChatInModel](dialogId, chatConfig);
+	    return updateResult;
+	  }
+	  async getMemberEntities(chatId) {
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMemberEntitiesList, {
+	      data: {
+	        chatId
+	      }
+	    }).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('ChatService: getMemberEntities error:', error);
+	      throw new Error(error);
+	    });
+	  }
+	}
+	async function _prepareFields2$1(chatConfig) {
+	  const result = {
+	    title: chatConfig.title,
+	    description: chatConfig.description,
+	    ownerId: chatConfig.ownerId,
+	    searchable: chatConfig.isAvailableInSearch ? 'Y' : 'N',
+	    manageUi: chatConfig.manageUi,
+	    manageUsersAdd: chatConfig.manageUsersAdd,
+	    manageUsersDelete: chatConfig.manageUsersDelete,
+	    manageMessages: chatConfig.manageMessages,
+	    addedMemberEntities: chatConfig.addedMemberEntities,
+	    deletedMemberEntities: chatConfig.deletedMemberEntities,
+	    addedManagers: chatConfig.addedManagers,
+	    deletedManagers: chatConfig.deletedManagers
+	  };
+	  if (chatConfig.avatar) {
+	    result.avatar = await im_v2_lib_utils.Utils.file.getBase64(chatConfig.avatar);
+	  }
+	  Object.entries(result).forEach(([key, value]) => {
+	    if (main_core.Type.isUndefined(value)) {
+	      delete result[key];
+	    }
+	  });
+	  return result;
+	}
+	function _updateChatInModel2(dialogId, chatConfig) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('chats/update', {
+	    dialogId,
+	    fields: {
+	      name: chatConfig.title,
+	      description: chatConfig.description,
+	      ownerId: chatConfig.ownerId,
+	      managerList: chatConfig.managers,
+	      type: chatConfig.type,
+	      role: im_v2_lib_roleManager.getChatRoleForUser(chatConfig),
+	      permissions: {
+	        manageUi: chatConfig.manageUi,
+	        manageUsersAdd: chatConfig.manageUsersAdd,
+	        manageUsersDelete: chatConfig.manageUsersDelete,
+	        manageMessages: chatConfig.manageMessages
+	      }
+	    }
+	  });
 	}
 
-	var _store$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _updateChatTitleInModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateChatTitleInModel");
 	class RenameService {
@@ -875,7 +964,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _updateChatTitleInModel, {
 	      value: _updateChatTitleInModel2
 	    });
-	    Object.defineProperty(this, _store$2, {
+	    Object.defineProperty(this, _store$3, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -883,7 +972,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1] = im_v2_application_core.Core.getRestClient();
 	  }
 	  renameChat(dialogId, newName) {
@@ -891,7 +980,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    if (newName === '') {
 	      return Promise.resolve();
 	    }
-	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].getters['chats/get'](dialogId);
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].getters['chats/get'](dialogId);
 	    const oldName = dialog.name;
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateChatTitleInModel)[_updateChatTitleInModel](dialogId, newName);
 	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1].callMethod(im_v2_const.RestMethod.imChatUpdateTitle, {
@@ -904,7 +993,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	function _updateChatTitleInModel2(dialogId, title) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('chats/update', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch('chats/update', {
 	    dialogId,
 	    fields: {
 	      name: title
@@ -912,7 +1001,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 
-	var _store$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _sendMuteRequestDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendMuteRequestDebounced");
 	var _sendMuteRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendMuteRequest");
@@ -921,7 +1010,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _sendMuteRequest, {
 	      value: _sendMuteRequest2
 	    });
-	    Object.defineProperty(this, _store$3, {
+	    Object.defineProperty(this, _store$4, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -933,14 +1022,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$2)[_restClient$2] = im_v2_application_core.Core.getRestClient();
 	    const DEBOUNCE_TIME = 500;
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequestDebounced)[_sendMuteRequestDebounced] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequest)[_sendMuteRequest], DEBOUNCE_TIME);
 	  }
 	  muteChat(dialogId) {
 	    im_v2_lib_logger.Logger.warn('ChatService: muteChat', dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch('chats/mute', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('chats/mute', {
 	      dialogId
 	    });
 	    const queryParams = {
@@ -951,7 +1040,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  unmuteChat(dialogId) {
 	    im_v2_lib_logger.Logger.warn('ChatService: unmuteChat', dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch('chats/unmute', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('chats/unmute', {
 	      dialogId
 	    });
 	    const queryParams = {
@@ -971,17 +1060,17 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    // eslint-disable-next-line no-console
 	    console.error(`Im.RecentList: error ${actionText} chat`, error);
 	    const actionType = action === 'Y' ? 'chats/unmute' : 'chats/mute';
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch(actionType, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch(actionType, {
 	      dialogId
 	    });
 	  });
 	}
 
-	var _store$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class PinService {
 	  constructor() {
-	    Object.defineProperty(this, _store$4, {
+	    Object.defineProperty(this, _store$5, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -989,12 +1078,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$3)[_restClient$3] = im_v2_application_core.Core.getRestClient();
 	  }
 	  pinChat(dialogId) {
 	    im_v2_lib_logger.Logger.warn('PinService: pinChat', dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('recent/pin', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/pin', {
 	      id: dialogId,
 	      action: true
 	    });
@@ -1005,7 +1094,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$3)[_restClient$3].callMethod(im_v2_const.RestMethod.imRecentPin, queryParams).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('PinService: error pinning chat', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('recent/pin', {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/pin', {
 	        id: dialogId,
 	        action: false
 	      });
@@ -1013,7 +1102,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  unpinChat(dialogId) {
 	    im_v2_lib_logger.Logger.warn('PinService: unpinChat', dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('recent/pin', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/pin', {
 	      id: dialogId,
 	      action: false
 	    });
@@ -1024,7 +1113,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$3)[_restClient$3].callMethod(im_v2_const.RestMethod.imRecentPin, queryParams).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('PinService: error unpinning chat', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('recent/pin', {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/pin', {
 	        id: dialogId,
 	        action: true
 	      });
@@ -1033,7 +1122,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 
 	const READ_TIMEOUT = 300;
-	var _store$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _messagesToRead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messagesToRead");
 	var _readMessagesForChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readMessagesForChat");
@@ -1070,7 +1159,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _readMessagesForChat, {
 	      value: _readMessagesForChat2
 	    });
-	    Object.defineProperty(this, _store$5, {
+	    Object.defineProperty(this, _store$6, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1082,13 +1171,13 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: {}
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$4)[_restClient$4] = im_v2_application_core.Core.getRestClient();
 	  }
 	  readAll() {
 	    im_v2_lib_logger.Logger.warn('ReadService: readAll');
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('chats/clearCounters');
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/clearUnread');
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/clearCounters');
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/clearUnread');
 	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$4)[_restClient$4].callMethod(im_v2_const.RestMethod.imV2ChatReadAll).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('ReadService: readAll error', error);
@@ -1096,11 +1185,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  readDialog(dialogId) {
 	    im_v2_lib_logger.Logger.warn('ReadService: readDialog', dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/unread', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/unread', {
 	      id: dialogId,
 	      action: false
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
 	      dialogId,
 	      fields: {
 	        counter: 0
@@ -1115,7 +1204,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  unreadDialog(dialogId) {
 	    im_v2_lib_logger.Logger.warn('ReadService: unreadDialog', dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/unread', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/unread', {
 	      id: dialogId,
 	      action: true
 	    });
@@ -1124,7 +1213,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('ReadService: error setting chat as unread', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/unread', {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/unread', {
 	        id: dialogId,
 	        action: false
 	      });
@@ -1144,16 +1233,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  clearDialogMark(dialogId) {
 	    im_v2_lib_logger.Logger.warn('ReadService: clear dialog mark', dialogId);
-	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].getters['chats/get'](dialogId);
-	    const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].getters['recent/get'](dialogId);
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['chats/get'](dialogId);
+	    const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['recent/get'](dialogId);
 	    if (dialog.markedId === 0 && !(recentItem != null && recentItem.unread)) {
 	      return;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('recent/unread', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/unread', {
 	      id: dialogId,
 	      action: false
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
 	      dialogId,
 	      fields: {
 	        markedId: 0
@@ -1189,14 +1278,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  const maxMessageId = Math.max(...messageIds);
 	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId)[_getDialogByChatId](chatId);
 	  if (maxMessageId > dialog.lastReadId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
 	      dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialogIdByChatId)[_getDialogIdByChatId](chatId),
 	      fields: {
 	        lastId: maxMessageId
 	      }
 	    });
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('messages/readMessages', {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('messages/readMessages', {
 	    chatId,
 	    messageIds
 	  });
@@ -1223,7 +1312,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  if (newCounter < 0) {
 	    newCounter = 0;
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('chats/update', {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
 	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialogIdByChatId)[_getDialogIdByChatId](chatId),
 	    fields: {
 	      counter: newCounter
@@ -1248,7 +1337,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId)[_getDialogByChatId](chatId);
 	  if (dialog.counter > counter) {
 	    im_v2_lib_logger.Logger.warn('ReadService: counter from server is lower than local one', dialog.counter, counter);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
 	      dialogId: dialog.dialogId,
 	      fields: {
 	        counter
@@ -1257,21 +1346,21 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	function _getDialogIdByChatId2(chatId) {
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].getters['chats/getByChatId'](chatId);
+	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['chats/getByChatId'](chatId);
 	  if (!dialog) {
 	    return 0;
 	  }
 	  return dialog.dialogId;
 	}
 	function _getDialogByChatId2(chatId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].getters['chats/getByChatId'](chatId);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['chats/getByChatId'](chatId);
 	}
 
 	const DeleteUserErrorCode = {
 	  userInvitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
 	  userNotFound: 'USER_NOT_FOUND'
 	};
-	var _store$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _onChatLeave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChatLeave");
 	var _onChatKickError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChatKickError");
@@ -1295,7 +1384,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _onChatLeave, {
 	      value: _onChatLeave2
 	    });
-	    Object.defineProperty(this, _store$6, {
+	    Object.defineProperty(this, _store$7, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1303,7 +1392,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$5)[_restClient$5] = im_v2_application_core.Core.getRestClient();
 	  }
 	  addToChat(addConfig) {
@@ -1339,7 +1428,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  joinChat(dialogId) {
 	    im_v2_lib_logger.Logger.warn(`UserService: join chat ${dialogId}`);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
 	      dialogId,
 	      fields: {
 	        role: im_v2_const.UserRole.member
@@ -1356,12 +1445,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    im_v2_lib_logger.Logger.warn(`UserService: add manager ${userId} to ${dialogId}`);
 	    const {
 	      managerList
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['chats/get'](dialogId);
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['chats/get'](dialogId);
 	    if (managerList.includes(userId)) {
 	      return;
 	    }
 	    const newManagerList = [...managerList, userId];
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
 	      dialogId,
 	      fields: {
 	        managerList: newManagerList
@@ -1382,12 +1471,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    im_v2_lib_logger.Logger.warn(`UserService: remove manager ${userId} from ${dialogId}`);
 	    const {
 	      managerList
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['chats/get'](dialogId);
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['chats/get'](dialogId);
 	    if (!managerList.includes(userId)) {
 	      return;
 	    }
 	    const newManagerList = managerList.filter(managerId => managerId !== userId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
 	      dialogId,
 	      fields: {
 	        managerList: newManagerList
@@ -1406,16 +1495,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	function _onChatLeave2(dialogId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
 	    dialogId,
 	    fields: {
 	      inited: false
 	    }
 	  });
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/delete', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('recent/delete', {
 	    id: dialogId
 	  });
-	  const chatIsOpened = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['application/isChatOpen'](dialogId);
+	  const chatIsOpened = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['application/isChatOpen'](dialogId);
 	  if (chatIsOpened) {
 	    void im_public.Messenger.openChat();
 	  }
@@ -1545,6 +1634,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  changeAvatar(chatId, avatarFile) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _updateService)[_updateService].changeAvatar(chatId, avatarFile);
 	  }
+	  updateChat(chatId, chatConfig) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _updateService)[_updateService].updateChat(chatId, chatConfig);
+	  }
+	  getMemberEntities(chatId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _updateService)[_updateService].getMemberEntities(chatId);
+	  }
 	  // endregion 'update'
 
 	  // region 'rename'
@@ -1621,7 +1716,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _userService)[_userService] = new UserService();
 	}
 
-	var _store$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _chatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _userManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userManager");
 	var _preparedHistoryMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparedHistoryMessages");
@@ -1631,11 +1726,15 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _handleLoadedMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLoadedMessages");
 	var _updateModels$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
 	var _setDialogInited = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDialogInited");
+	var _prepareTariffRestrictions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareTariffRestrictions");
 	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
 	class LoadService$1 {
 	  constructor(chatId) {
 	    Object.defineProperty(this, _getDialog, {
 	      value: _getDialog2
+	    });
+	    Object.defineProperty(this, _prepareTariffRestrictions, {
+	      value: _prepareTariffRestrictions2
 	    });
 	    Object.defineProperty(this, _setDialogInited, {
 	      value: _setDialogInited2
@@ -1649,7 +1748,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _prepareInitialMessages, {
 	      value: _prepareInitialMessages2
 	    });
-	    Object.defineProperty(this, _store$7, {
+	    Object.defineProperty(this, _store$8, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1673,16 +1772,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: false
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _userManager)[_userManager] = new im_v2_lib_user.UserManager();
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId] = chatId;
 	  }
-	  loadUnread() {
+	  async loadUnread() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] || !babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().hasNextPage) {
 	      return Promise.resolve(false);
 	    }
 	    im_v2_lib_logger.Logger.warn('MessageService: loadUnread');
-	    const lastUnreadMessageId = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['messages/getLastId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	    const lastUnreadMessageId = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].getters['messages/getLastId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
 	    if (!lastUnreadMessageId) {
 	      im_v2_lib_logger.Logger.warn('MessageService: no lastUnreadMessageId, cant load unread');
 	      return Promise.resolve(false);
@@ -1698,27 +1797,29 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      },
 	      limit: LoadService$1.MESSAGE_REQUEST_LIMIT
 	    };
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageTail, {
+	    const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageTail, {
 	      data: query
-	    }).then(result => {
-	      im_v2_lib_logger.Logger.warn('MessageService: loadUnread result', result);
-	      babelHelpers.classPrivateFieldLooseBase(this, _preparedUnreadMessages)[_preparedUnreadMessages] = result.messages;
-	      return babelHelpers.classPrivateFieldLooseBase(this, _updateModels$1)[_updateModels$1](result);
-	    }).then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
-	      return true;
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('MessageService: loadUnread error:', error);
 	      babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
 	    });
+	    im_v2_lib_logger.Logger.warn('MessageService: loadUnread result', result);
+	    babelHelpers.classPrivateFieldLooseBase(this, _preparedUnreadMessages)[_preparedUnreadMessages] = result.messages;
+	    const rawData = {
+	      ...result,
+	      tariffRestrictions: babelHelpers.classPrivateFieldLooseBase(this, _prepareTariffRestrictions)[_prepareTariffRestrictions](result.tariffRestrictions)
+	    };
+	    await babelHelpers.classPrivateFieldLooseBase(this, _updateModels$1)[_updateModels$1](rawData);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
+	    return Promise.resolve();
 	  }
-	  loadHistory() {
+	  async loadHistory() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] || !babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().hasPrevPage) {
 	      return Promise.resolve(false);
 	    }
 	    im_v2_lib_logger.Logger.warn('MessageService: loadHistory');
-	    const lastHistoryMessageId = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['messages/getFirstId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	    const lastHistoryMessageId = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].getters['messages/getFirstId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
 	    if (!lastHistoryMessageId) {
 	      im_v2_lib_logger.Logger.warn('MessageService: no lastHistoryMessageId, cant load unread');
 	      return Promise.resolve();
@@ -1734,26 +1835,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      },
 	      limit: LoadService$1.MESSAGE_REQUEST_LIMIT
 	    };
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageTail, {
+	    const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageTail, {
 	      data: query
-	    }).then(result => {
-	      im_v2_lib_logger.Logger.warn('MessageService: loadHistory result', result);
-	      babelHelpers.classPrivateFieldLooseBase(this, _preparedHistoryMessages)[_preparedHistoryMessages] = result.messages;
-	      const hasPrevPage = result.hasNextPage;
-	      const rawData = {
-	        ...result,
-	        hasPrevPage,
-	        hasNextPage: null
-	      };
-	      return babelHelpers.classPrivateFieldLooseBase(this, _updateModels$1)[_updateModels$1](rawData);
-	    }).then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
-	      return true;
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('MessageService: loadHistory error:', error);
 	      babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
 	    });
+	    im_v2_lib_logger.Logger.warn('MessageService: loadHistory result', result);
+	    babelHelpers.classPrivateFieldLooseBase(this, _preparedHistoryMessages)[_preparedHistoryMessages] = result.messages;
+	    const hasPrevPage = result.hasNextPage;
+	    const rawData = {
+	      ...result,
+	      hasPrevPage,
+	      hasNextPage: null
+	    };
+	    await babelHelpers.classPrivateFieldLooseBase(this, _updateModels$1)[_updateModels$1](rawData);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
+	    return Promise.resolve();
 	  }
 	  hasPreparedHistoryMessages() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _preparedHistoryMessages)[_preparedHistoryMessages].length > 0;
@@ -1762,7 +1861,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    if (!this.hasPreparedHistoryMessages()) {
 	      return Promise.resolve();
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/setChatCollection', {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/setChatCollection', {
 	      messages: babelHelpers.classPrivateFieldLooseBase(this, _preparedHistoryMessages)[_preparedHistoryMessages]
 	    }).then(() => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _preparedHistoryMessages)[_preparedHistoryMessages] = [];
@@ -1776,7 +1875,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    if (!this.hasPreparedUnreadMessages()) {
 	      return Promise.resolve();
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/setChatCollection', {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/setChatCollection', {
 	      messages: babelHelpers.classPrivateFieldLooseBase(this, _preparedUnreadMessages)[_preparedUnreadMessages]
 	    }).then(() => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _preparedUnreadMessages)[_preparedUnreadMessages] = [];
@@ -1803,7 +1902,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    im_v2_lib_logger.Logger.warn('MessageService: loadFirstPage result', restResult);
 	    await babelHelpers.classPrivateFieldLooseBase(this, _handleLoadedMessages)[_handleLoadedMessages](restResult);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('chats/update', {
 	      dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().dialogId,
 	      fields: {
 	        hasPrevPage: false,
@@ -1910,7 +2009,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  if (newMaxId >= lastMessageId) {
 	    return rawMessages;
 	  }
-	  const messagesCollection = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['messages/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	  const messagesCollection = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].getters['messages/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
 	  const additionalMessages = messagesCollection.filter(message => {
 	    return message.id > newMaxId;
 	  });
@@ -1921,7 +2020,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  const {
 	    messages
 	  } = restResult;
-	  const messagesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/setChatCollection', {
+	  const messagesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/setChatCollection', {
 	    messages,
 	    clearCollection: true
 	  });
@@ -1938,20 +2037,22 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    hasNextPage,
 	    additionalMessages,
 	    commentInfo,
-	    copilot
+	    copilot,
+	    tariffRestrictions
 	  } = rawData;
-	  const dialogPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
+	  const dialogPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('chats/update', {
 	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().dialogId,
 	    fields: {
 	      hasPrevPage,
-	      hasNextPage
+	      hasNextPage,
+	      tariffRestrictions
 	    }
 	  });
 	  const usersPromise = Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _userManager)[_userManager].setUsersToModel(users), babelHelpers.classPrivateFieldLooseBase(this, _userManager)[_userManager].addUsersToModel(usersShort)]);
-	  const filesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('files/set', files);
-	  const reactionsPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/reactions/set', reactions);
-	  const additionalMessagesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/store', additionalMessages);
-	  const commentInfoPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/comments/set', commentInfo);
+	  const filesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('files/set', files);
+	  const reactionsPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/reactions/set', reactions);
+	  const additionalMessagesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/store', additionalMessages);
+	  const commentInfoPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/comments/set', commentInfo);
 	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  const copilotPromise = copilotManager.handleChatLoadResponse(copilot);
 	  return Promise.all([dialogPromise, filesPromise, usersPromise, reactionsPromise, additionalMessagesPromise, commentInfoPromise, copilotPromise]);
@@ -1964,21 +2065,40 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  if (flag === true && !wasInitedBefore) {
 	    delete fields.inited;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('chats/update', {
 	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().dialogId,
 	    fields
 	  });
 	}
+	function _prepareTariffRestrictions2(restrictions) {
+	  const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().dialogId;
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].getters['chats/get'](dialogId);
+	  if (!chat) {
+	    return restrictions;
+	  }
+	  const {
+	    tariffRestrictions: {
+	      isHistoryLimitExceeded
+	    }
+	  } = chat;
+	  if (isHistoryLimitExceeded === true) {
+	    return {
+	      ...restrictions,
+	      isHistoryLimitExceeded: true
+	    };
+	  }
+	  return restrictions;
+	}
 	function _getDialog2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
 	}
 	LoadService$1.MESSAGE_REQUEST_LIMIT = 25;
 
-	var _store$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class PinService$1 {
 	  constructor() {
-	    Object.defineProperty(this, _store$8, {
+	    Object.defineProperty(this, _store$9, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1986,12 +2106,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$6)[_restClient$6] = im_v2_application_core.Core.getRestClient();
 	  }
 	  pinMessage(chatId, messageId) {
 	    im_v2_lib_logger.Logger.warn(`Dialog: PinManager: pin message ${messageId}`);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/pin/add', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('messages/pin/add', {
 	      chatId,
 	      messageId
 	    });
@@ -2000,7 +2120,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('Dialog: PinManager: error pinning message', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/pin/delete', {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('messages/pin/delete', {
 	        chatId,
 	        messageId
 	      });
@@ -2008,7 +2128,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  unpinMessage(chatId, messageId) {
 	    im_v2_lib_logger.Logger.warn(`Dialog: PinManager: unpin message ${messageId}`);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/pin/delete', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('messages/pin/delete', {
 	      chatId,
 	      messageId
 	    });
@@ -2017,7 +2137,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('Dialog: PinManager: error unpinning message', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/pin/add', {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('messages/pin/add', {
 	        chatId,
 	        messageId
 	      });
@@ -2071,7 +2191,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  return im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
 	}
 
-	var _store$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _chatId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _shallowMessageDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shallowMessageDelete");
 	var _canDeleteCompletely = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canDeleteCompletely");
@@ -2115,7 +2235,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _shallowMessageDelete, {
 	      value: _shallowMessageDelete2
 	    });
-	    Object.defineProperty(this, _store$9, {
+	    Object.defineProperty(this, _store$a, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2124,7 +2244,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1] = chatId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a] = im_v2_application_core.Core.getStore();
 	  }
 	  async deleteMessage(messageId) {
 	    im_v2_lib_logger.Logger.warn('MessageService: deleteMessage', messageId);
@@ -2133,7 +2253,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendDeleteEvent)[_sendDeleteEvent](messageId);
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['messages/getById'](messageId);
+	    const message = babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].getters['messages/getById'](messageId);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _canDeleteCompletely)[_canDeleteCompletely](message)) {
 	      void babelHelpers.classPrivateFieldLooseBase(this, _completeMessageDelete)[_completeMessageDelete](message);
 	      return;
@@ -2142,7 +2262,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	function _shallowMessageDelete2(message) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('messages/update', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('messages/update', {
 	    id: message.id,
 	    fields: {
 	      text: '',
@@ -2173,7 +2293,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateRecentForCompleteDelete)[_updateRecentForCompleteDelete](newLastId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateChatForCompleteDelete)[_updateChatForCompleteDelete](newLastId);
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('messages/delete', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('messages/delete', {
 	    id: message.id
 	  });
 	  return babelHelpers.classPrivateFieldLooseBase(this, _deleteMessageOnServer)[_deleteMessageOnServer](message.id);
@@ -2181,12 +2301,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	function _updateRecentForCompleteDelete2(newLastId) {
 	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
 	  if (!newLastId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('recent/delete', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('recent/delete', {
 	      id: chat.dialogId
 	    });
 	    return;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('recent/update', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('recent/update', {
 	    id: chat.dialogId,
 	    fields: {
 	      messageId: newLastId
@@ -2195,14 +2315,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 	function _updateChatForCompleteDelete2(newLastId) {
 	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('chats/update', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('chats/update', {
 	    dialogId: chat.dialogId,
 	    fields: {
 	      lastMessageId: newLastId,
 	      lastId: newLastId
 	    }
 	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('chats/clearLastMessageViews', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('chats/clearLastMessageViews', {
 	    dialogId: chat.dialogId
 	  });
 	}
@@ -2218,23 +2338,23 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 	function _deleteTemporaryMessage2(messageId) {
 	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
-	  const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['recent/get'](chat.dialogId);
+	  const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].getters['recent/get'](chat.dialogId);
 	  if (recentItem.messageId === messageId) {
 	    const newLastId = babelHelpers.classPrivateFieldLooseBase(this, _getPreviousMessageId)[_getPreviousMessageId](messageId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('recent/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('recent/update', {
 	      id: chat.dialogId,
 	      fields: {
 	        messageId: newLastId
 	      }
 	    });
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('messages/delete', {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('messages/delete', {
 	    id: messageId
 	  });
 	}
 	function _getPreviousMessageId2(messageId) {
 	  var _previousMessage$id;
-	  const previousMessage = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['messages/getPreviousMessage']({
+	  const previousMessage = babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].getters['messages/getPreviousMessage']({
 	    messageId,
 	    chatId: babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]
 	  });
@@ -2246,11 +2366,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _getChat2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]);
 	}
 
 	var _chatId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
-	var _store$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class MarkService {
 	  constructor(chatId) {
@@ -2258,7 +2378,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _store$a, {
+	    Object.defineProperty(this, _store$b, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2267,19 +2387,19 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId$2)[_chatId$2] = chatId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$7)[_restClient$7] = im_v2_application_core.Core.getRestClient();
 	  }
 	  markMessage(messageId) {
 	    im_v2_lib_logger.Logger.warn('MessageService: markMessage', messageId);
 	    const {
 	      dialogId
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$2)[_chatId$2]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('recent/unread', {
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$2)[_chatId$2]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b].dispatch('recent/unread', {
 	      id: dialogId,
 	      action: true
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a].dispatch('chats/update', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b].dispatch('chats/update', {
 	      dialogId,
 	      fields: {
 	        markedId: messageId
@@ -2296,7 +2416,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 
 	var _chatId$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
-	var _store$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class FavoriteService {
 	  constructor(chatId) {
@@ -2304,7 +2424,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _store$b, {
+	    Object.defineProperty(this, _store$c, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2313,7 +2433,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId$3)[_chatId$3] = chatId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$8)[_restClient$8] = im_v2_application_core.Core.getRestClient();
 	  }
 	  addMessageToFavorite(messageId) {
@@ -2330,7 +2450,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  removeMessageFromFavorite(messageId) {
 	    im_v2_lib_logger.Logger.warn('MessageService: removeMessageFromFavorite', messageId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b].dispatch('sidebar/favorites/deleteByMessageId', {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('sidebar/favorites/deleteByMessageId', {
 	      chatId: babelHelpers.classPrivateFieldLooseBase(this, _chatId$3)[_chatId$3],
 	      messageId
 	    });
@@ -2477,7 +2597,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _favoriteService)[_favoriteService] = new FavoriteService(chatId);
 	}
 
-	var _store$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _processMessageSending = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processMessageSending");
 	var _handleAddingMessageToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleAddingMessageToModels");
 	var _sendAndProcessMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAndProcessMessage");
@@ -2590,11 +2710,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _processMessageSending, {
 	      value: _processMessageSending2
 	    });
-	    Object.defineProperty(this, _store$c, {
+	    Object.defineProperty(this, _store$d, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d] = im_v2_application_core.Core.getStore();
 	  }
 	  async sendMessage(params) {
 	    const {
@@ -2670,7 +2790,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      tempMessageId,
 	      dialogId
 	    } = params;
-	    const unsentMessage = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['messages/getById'](tempMessageId);
+	    const unsentMessage = babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['messages/getById'](tempMessageId);
 	    if (!unsentMessage) {
 	      return Promise.resolve();
 	    }
@@ -2795,17 +2915,17 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 	function _addMessageToModels2(message) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _addMessageToRecent)[_addMessageToRecent](message);
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('chats/clearLastMessageViews', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('chats/clearLastMessageViews', {
 	    dialogId: message.dialogId
 	  });
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('messages/add', message);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/add', message);
 	}
 	function _addMessageToRecent2(message) {
-	  const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['recent/get'](message.dialogId);
+	  const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['recent/get'](message.dialogId);
 	  if (!recentItem || message.text === '') {
 	    return;
 	  }
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('recent/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('recent/update', {
 	    id: message.dialogId,
 	    fields: {
 	      messageId: message.temporaryId
@@ -2841,20 +2961,20 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    newId,
 	    dialogId
 	  } = params;
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('messages/updateWithId', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/updateWithId', {
 	    id: oldId,
 	    fields: {
 	      id: newId
 	    }
 	  });
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('chats/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('chats/update', {
 	    dialogId,
 	    fields: {
 	      lastId: newId,
 	      lastMessageId: newId
 	    }
 	  });
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('recent/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('recent/update', {
 	    id: dialogId,
 	    fields: {
 	      messageId: newId
@@ -2862,7 +2982,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _updateMessageError2(messageId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('messages/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/update', {
 	    id: messageId,
 	    fields: {
 	      error: true
@@ -2870,7 +2990,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _removeMessageError2(messageId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('messages/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/update', {
 	    id: messageId,
 	    fields: {
 	      sending: true,
@@ -2889,13 +3009,13 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _getDialog2$1(dialogId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['chats/get'](dialogId, true);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['chats/get'](dialogId, true);
 	}
 	function _getDialogByChatId2$1(chatId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['chats/getByChatId'](chatId, true);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['chats/getByChatId'](chatId, true);
 	}
 	function _needToSetAsViewed2(dialogId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['users/bots/isNetwork'](dialogId);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['users/bots/isNetwork'](dialogId);
 	}
 	function _handleForwardMessageResponse2(params) {
 	  const {
@@ -2927,7 +3047,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  forwardUuidMap
 	}) {
 	  if (commentMessage) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('messages/update', {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/update', {
 	      id: commentMessage.temporaryId,
 	      fields: {
 	        error: true
@@ -2935,7 +3055,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	  }
 	  Object.keys(forwardUuidMap).forEach(uuid => {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].dispatch('messages/update', {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/update', {
 	      id: uuid,
 	      fields: {
 	        error: true
@@ -2953,7 +3073,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  const preparedMessages = [];
 	  Object.entries(forwardUuidMap).forEach(([uuid, messageId]) => {
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['messages/getById'](messageId);
+	    const message = babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['messages/getById'](messageId);
 	    if (!message) {
 	      return;
 	    }
@@ -2973,9 +3093,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  return preparedMessages;
 	}
 	function _prepareForwardParams2(messageId) {
-	  const message = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['messages/getById'](messageId);
+	  const message = babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['messages/getById'](messageId);
 	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId$1)[_getDialogByChatId$1](message.chatId);
-	  const isForward = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['messages/isForward'](messageId);
+	  const isForward = babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['messages/isForward'](messageId);
 	  const userId = isForward ? message.forward.userId : message.authorId;
 	  const chatType = isForward ? message.forward.chatType : chat.type;
 	  let chatTitle = isForward ? message.forward.chatTitle : chat.name;
@@ -3391,7 +3511,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  onUploadComplete: 'onUploadComplete'
 	};
 
-	var _store$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _isRequestingDiskFolderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRequestingDiskFolderId");
 	var _diskFolderIdRequestPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diskFolderIdRequestPromise");
@@ -3542,7 +3662,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _createUploader, {
 	      value: _createUploader2
 	    });
-	    Object.defineProperty(this, _store$d, {
+	    Object.defineProperty(this, _store$e, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -3570,7 +3690,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: {}
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a] = im_v2_application_core.Core.getRestClient();
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService] = SendingService$$1.getInstance();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initUploader)[_initUploader]();
@@ -3804,7 +3924,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _addFileFromDiskToModel2(messageWithFile) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/add', {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('files/add', {
 	    id: messageWithFile.tempFileId,
 	    chatId: messageWithFile.chatId,
 	    authorId: im_v2_application_core.Core.getUserId(),
@@ -3885,7 +4005,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	        ID: diskFolderId
 	      } = response.data();
 	      babelHelpers.classPrivateFieldLooseBase(this, _isRequestingDiskFolderId)[_isRequestingDiskFolderId] = false;
-	      babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].commit('chats/update', {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].commit('chats/update', {
 	        dialogId,
 	        fields: {
 	          diskFolderId
@@ -3939,7 +4059,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  };
 	}
 	function _updateFileProgress2(id, progress, status) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('files/update', {
 	    id,
 	    fields: {
 	      progress: progress === 100 ? 99 : progress,
@@ -3948,10 +4068,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _cancelUpload2(tempMessageId, tempFileId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/delete', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('messages/delete', {
 	    id: tempMessageId
 	  });
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/delete', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('files/delete', {
 	    id: tempFileId
 	  });
 	}
@@ -3960,7 +4080,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  const fileBinary = file.getBinary();
 	  const previewData = babelHelpers.classPrivateFieldLooseBase(this, _preparePreview)[_preparePreview](file);
 	  const asFile = file.getCustomData('sendAsFile');
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/add', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('files/add', {
 	    id: taskId,
 	    chatId: file.getCustomData('chatId'),
 	    authorId: im_v2_application_core.Core.getUserId(),
@@ -3976,7 +4096,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 	function _updateFilePreviewInStore2(file) {
 	  const previewData = babelHelpers.classPrivateFieldLooseBase(this, _preparePreview)[_preparePreview](file);
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('files/update', {
 	    id: file.getId(),
 	    fields: {
 	      ...previewData
@@ -3984,7 +4104,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _updateFileSizeInStore2(file) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('files/update', {
 	    id: file.getId(),
 	    fields: {
 	      size: file.getSize()
@@ -4029,11 +4149,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  return file.name.split('.').splice(-1)[0];
 	}
 	function _getDialog2$2(dialogId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['chats/get'](dialogId);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].getters['chats/get'](dialogId);
 	}
 	function _getCurrentUser2() {
 	  const userId = im_v2_application_core.Core.getUserId();
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].getters['users/get'](userId);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].getters['users/get'](userId);
 	}
 	function _getChatId2(dialogId) {
 	  var _babelHelpers$classPr;
@@ -4189,7 +4309,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	function _setMessageError2(tempMessageId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$e)[_store$e].dispatch('messages/update', {
 	    id: tempMessageId,
 	    fields: {
 	      error: true
@@ -4338,5 +4458,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.CopilotService = CopilotService$$1;
 	exports.CommentsService = CommentsService;
 
-}((this.BX.Messenger.v2.Provider.Service = this.BX.Messenger.v2.Provider.Service || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Event,BX.UI.Uploader,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Provider.Service = this.BX.Messenger.v2.Provider.Service || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Event,BX.UI.Uploader,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=registry.bundle.js.map

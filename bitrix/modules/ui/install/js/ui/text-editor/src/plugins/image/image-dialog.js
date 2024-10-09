@@ -132,6 +132,7 @@ export default class ImageDialog extends EventEmitter
 						<button type="button" 
 							class="ui-text-editor-image-dialog-button" 
 							onclick="${this.#handleSaveBtnClick.bind(this)}"
+							data-testid="image-dialog-save-btn"
 						>
 							<span class="ui-icon-set --check"></span>
 						</button>
@@ -139,6 +140,7 @@ export default class ImageDialog extends EventEmitter
 							type="button" 
 							class="ui-text-editor-image-dialog-button"
 							onclick="${this.#handleCancelBtnClick.bind(this)}"
+							data-testid="image-dialog-cancel-btn"
 						>
 							<span class="ui-icon-set --cross-60"></span>
 						</button>
@@ -158,6 +160,7 @@ export default class ImageDialog extends EventEmitter
 					placeholder="https://example.com/image.jpeg"
 					value="${this.getImageUrl()}"
 					onkeydown="${this.#handleTextBoxKeyDown.bind(this)}"
+					data-testid="image-dialog-textbox"
 				>
 			`;
 		});

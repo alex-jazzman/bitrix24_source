@@ -7,7 +7,7 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 	const { selectWholeUserById } = require('intranet/statemanager/redux/slices/employees/selector');
 	const { EmployeeActions } = require('intranet/enum');
 	const { selectActions } = require('intranet/statemanager/redux/slices/employees/selector');
-	const { Actions } = require('intranet/simple-list/items/user-redux/actions');
+	const { Actions } = require('intranet/simple-list/items/user-redux/src/actions');
 	const { Icon } = require('assets/icons');
 
 	/**

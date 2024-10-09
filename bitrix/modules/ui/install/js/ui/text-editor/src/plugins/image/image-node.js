@@ -177,7 +177,7 @@ export class ImageNode extends DecoratorNode
 	{
 		const span = document.createElement('span');
 		const theme = config.theme;
-		const className = theme.image;
+		const className = theme?.image?.container;
 		if (className !== undefined)
 		{
 			span.className = className;
@@ -226,6 +226,7 @@ export class ImageNode extends DecoratorNode
 				width: this.getWidth(),
 				height: this.getHeight(),
 				maxWidth: this.getMaxWidth(),
+				config,
 			},
 		};
 	}

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core,rest_client,ui_entitySelector) {
 	'use strict';
@@ -213,9 +214,6 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	    CommentActionController.isAjaxRunning = true;
-	    if (action !== 'taskComplete') {
-	      CommentActionController.showNotification(action);
-	    }
 	    const defaultData = {
 	      taskId
 	    };
@@ -230,9 +228,7 @@ this.BX = this.BX || {};
 	    main_core.ajax.runAction(CommentActionController.ajaxActions[action], {
 	      data: data
 	    }).then(() => {
-	      if (action === 'taskComplete') {
-	        CommentActionController.showNotification(action);
-	      }
+	      CommentActionController.showNotification(action);
 	      CommentActionController.isAjaxRunning = false;
 	    }, response => {
 	      if (response && response.errors) {

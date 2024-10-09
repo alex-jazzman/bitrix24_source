@@ -6,15 +6,16 @@ jn.define('ui-system/form/inputs/string', (require, exports, module) => {
 	const { InputClass, InputSize, InputMode, InputDesign } = require('ui-system/form/inputs/input');
 
 	/**
+	 * @typedef {InputProps} StringInputProps
+	 * @property {boolean} [isPassword]
+	 * @property {'number-pad' | 'decimal-pad' | 'numeric' | 'email-address' | 'phone-pad'} [keyboardType='default']
+	 * @property {'characters' | 'words' | 'sentences' | 'none'} [autoCapitalize='none']
+	 * @property {boolean} [enableKeyboardHide]
+	 * @property {Function} [onFocus]
+	 * @property {Function} [onBlur]
+	 * @property {Function} [onSelectionChange]
+	 *
 	 * @class StringInput
-	 * @param {...InputProps} props
-	 * @param {boolean} [props.isPassword]
-	 * @param {'number-pad' | 'decimal-pad' | 'numeric' | 'email-address' | 'phone-pad'} [props.keyboardType='default']
-	 * @param {'characters' | 'words' | 'sentences' | 'none'} [props.autoCapitalize='none']
-	 * @param {boolean} [props.enableKeyboardHide]
-	 * @param {Function} [props.onFocus]
-	 * @param {Function} [props.onBlur]
-	 * @param {Function} [props.onSelectionChange]
 	 */
 	class StringInput extends InputClass
 	{
@@ -41,9 +42,6 @@ jn.define('ui-system/form/inputs/string', (require, exports, module) => {
 
 			return {
 				...super.getFieldProps(),
-				ref: (ref) => {
-					this.contentFieldRef = ref;
-				},
 				isPassword,
 				keyboardType,
 				autoCapitalize,
@@ -77,6 +75,10 @@ jn.define('ui-system/form/inputs/string', (require, exports, module) => {
 	};
 
 	module.exports = {
+		/**
+		 * @param {StringInputProps} props
+		 * @returns {StringInput}
+		 */
 		StringInput: (props) => new StringInput(props),
 		InputSize,
 		InputMode,

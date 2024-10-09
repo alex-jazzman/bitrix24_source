@@ -14,6 +14,7 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 	const { EventEmitter } = require('event-emitter');
 	const { SharingAjax } = require('calendar/ajax');
 	const { Analytics } = require('calendar/sharing/analytics');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class SharingSettings
@@ -147,10 +148,11 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 		{
 			const parentLayoutWidget = this.props.layoutWidget;
 			const component = this.getRuleEditDialog();
+			console.log(parentLayoutWidget);
 
 			// eslint-disable-next-line promise/catch-or-return
 			new BottomSheet({ component })
-				.setBackgroundColor(AppTheme.colors.bgNavigation)
+				.setBackgroundColor(Color.bgNavigation.toHex())
 				.setMediumPositionPercent(60)
 				.disableContentSwipe()
 				.setParentWidget(parentLayoutWidget)

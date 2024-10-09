@@ -56,6 +56,7 @@ class TypeDetail
 	isExternal: boolean = false;
 	isSaveFromTypeDetail: boolean = true;
 	isCreateSectionsViaAutomatedSolutionDetails: boolean = false;
+	isCrmAdmin: boolean = false;
 
 	constructor(params: {
 		form: Element,
@@ -72,6 +73,7 @@ class TypeDetail
 		isRestricted: boolean,
 		restrictionErrorMessage: string,
 		restrictionSliderCode: ?string,
+		isCrmAdmin: boolean,
     })
 	{
 		if (Type.isPlainObject(params))
@@ -91,6 +93,7 @@ class TypeDetail
 			;
 			this.isExternal = Boolean(params.isExternal);
 			this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
+			this.isCrmAdmin = Boolean(params.isCrmAdmin);
 		}
 
 		this.buttonsPanel = document.getElementById('ui-button-panel');
@@ -666,6 +669,7 @@ class TypeDetail
 			selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
 			customSections: this.type.getCustomSections() || [],
 			isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
+			isCrmAdmin: this.isCrmAdmin,
 		});
 	}
 
@@ -923,6 +927,7 @@ class CustomSectionsController
 	cancelButton: Element;
 	addSectionItemButton: Element;
 	isCreateSectionsViaAutomatedSolutionDetails: false;
+	isCrmAdmin: false;
 
 	constructor(options: {
 		switcher: {},
@@ -930,6 +935,7 @@ class CustomSectionsController
 		selectorContainer: Element,
 		customSections?: CustomSection[],
 		isCreateSectionsViaAutomatedSolutionDetails: boolean,
+		isCrmAdmin: boolean,
 	})
 	{
 		this.switcher = options.switcher;
@@ -947,6 +953,11 @@ class CustomSectionsController
 		if (Type.isBoolean(options.isCreateSectionsViaAutomatedSolutionDetails))
 		{
 			this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
+		}
+
+		if (Type.isBoolean(options.isCrmAdmin))
+		{
+			this.isCrmAdmin = options.isCrmAdmin;
 		}
 
 		this.initSelector();
@@ -1020,6 +1031,11 @@ class CustomSectionsController
 			tagSelectorOptions.events = {
 				onCreateButtonClick: this.onCreateButtonClick.bind(this),
 			};
+		}
+
+		if (!this.isCrmAdmin)
+		{
+			tagSelectorOptions.locked = true;
 		}
 
 		this.selector = new TagSelector(tagSelectorOptions);

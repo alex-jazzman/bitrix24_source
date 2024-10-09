@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Intranet\Invitation;
+use Bitrix\Intranet\User;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bitrix24\Integrator;
@@ -390,31 +391,22 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		$error = "";
+		$error = new \Bitrix\Main\Error('');
 		if (!Integrator::checkPartnerEmail($userData["EMAIL"], $error))
 		{
-			$this->addError(new \Bitrix\Main\Error($error));
+			$this->addError($error);
 			return false;
 		}
 
 		$fields = array("ACTIVE" => "Y");
 
-		if (empty($userData["UF_DEPARTMENT"]) && Loader::includeModule('iblock'))
+		if (empty($userData["UF_DEPARTMENT"]))
 		{
-			$rsIBlock = CIBlock::GetList(array(), array("CODE" => "departments"));
-			$arIBlock = $rsIBlock->Fetch();
-			$iblockID = $arIBlock["ID"];
-
-			$db_up_department = CIBlockSection::GetList(
-				array(),
-				array(
-					"SECTION_ID" => 0,
-					"IBLOCK_ID" => $iblockID
-				)
-			);
-			if ($ar_up_department = $db_up_department->Fetch())
+			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->departmentRepository();
+			if ($department = $departmentRepository->getRootDepartment())
 			{
-				$fields["UF_DEPARTMENT"][] = $ar_up_department['ID'];
+				$fields["UF_DEPARTMENT"][] = $department->getId();
 			}
 		}
 

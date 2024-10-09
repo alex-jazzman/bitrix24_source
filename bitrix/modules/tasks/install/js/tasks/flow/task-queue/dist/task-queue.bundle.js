@@ -135,7 +135,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	let _$2 = t => t,
 	  _t$2,
-	  _t2$1;
+	  _t2$1,
+	  _t3,
+	  _t4;
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _flowId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowId");
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
@@ -143,14 +145,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _pageNum = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pageNum");
 	var _pending = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pending");
 	var _pages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pages");
+	var _totalTaskCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("totalTaskCount");
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _getList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getList");
 	var _renderContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
+	var _renderCounterContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCounterContainer");
+	var _renderTotalTaskCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTotalTaskCounter");
 	var _renderLines = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLines");
 	var _showLines = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showLines");
 	var _appendLines = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendLines");
+	var _setTotalTaskCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setTotalTaskCount");
 	var _showLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showLoader");
 	var _destroyLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroyLoader");
 	var _consoleError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("consoleError");
@@ -165,6 +171,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _showLoader, {
 	      value: _showLoader2
 	    });
+	    Object.defineProperty(this, _setTotalTaskCount, {
+	      value: _setTotalTaskCount2
+	    });
 	    Object.defineProperty(this, _appendLines, {
 	      value: _appendLines2
 	    });
@@ -173,6 +182,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    Object.defineProperty(this, _renderLines, {
 	      value: _renderLines2
+	    });
+	    Object.defineProperty(this, _renderTotalTaskCounter, {
+	      value: _renderTotalTaskCounter2
+	    });
+	    Object.defineProperty(this, _renderCounterContainer, {
+	      value: _renderCounterContainer2
 	    });
 	    Object.defineProperty(this, _renderContent, {
 	      value: _renderContent2
@@ -208,6 +223,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _totalTaskCount, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _popup, {
 	      writable: true,
 	      value: void 0
@@ -230,13 +249,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
 	  }
 	  static showInstance(params) {
-	    this.getInstance(params).show(params.bindElement);
-	  }
-	  static getInstance(params) {
-	    var _this$instances, _this$instances$queue;
-	    const queueId = params.flowId + params.type;
-	    (_this$instances$queue = (_this$instances = this.instances)[queueId]) != null ? _this$instances$queue : _this$instances[queueId] = new this(params);
-	    return this.instances[queueId];
+	    new this(params).show(params.bindElement);
 	  }
 	  show(bindElement) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = this.getPopup();
@@ -260,6 +273,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      events: {
 	        onFirstShow: () => {
 	          babelHelpers.classPrivateFieldLooseBase(this, _showLines)[_showLines]();
+	        },
+	        onClose: () => {
+	          popup.destroy();
 	        }
 	      }
 	    });
@@ -293,7 +309,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (response.data.tasks.length >= babelHelpers.classPrivateFieldLooseBase(this, _pageSize)[_pageSize]) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _pageNum)[_pageNum]++;
 	      }
-	      resolve(response.data.tasks);
+	      resolve({
+	        lines: response.data.tasks,
+	        totalTaskCount: response.data.totalCount
+	      });
 	    }).catch(error => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _consoleError)[_consoleError]('getList', error);
 	    });
@@ -308,21 +327,37 @@ this.BX.Tasks = this.BX.Tasks || {};
 				<div ref="listContainer" class="tasks-flow__task-queue-popup_content">
 					<div class="tasks-flow__task-queue-popup_content-box">
 						<span class="tasks-flow__task-queue-popup_label">
-							<span class="tasks-flow__task-queue-popup_label-text">
+							<span class="tasks-flow__task-queue-popup_label-text" title="${0}">
 								${0}
 							</span>
+							${0}
 						</span>
 						${0}
 					</div>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), babelHelpers.classPrivateFieldLooseBase(this, _renderLines)[_renderLines]());
+		`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), babelHelpers.classPrivateFieldLooseBase(this, _renderCounterContainer)[_renderCounterContainer](), babelHelpers.classPrivateFieldLooseBase(this, _renderLines)[_renderLines]());
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupContainer = popupContainer;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupContent = popupContent;
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupContainer;
 	}
+	function _renderCounterContainer2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].counterContainer = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+			<div class="tasks-flow__total-task-counter-container ui-counter">
+					${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderTotalTaskCounter)[_renderTotalTaskCounter]());
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].counterContainer, 'display', 'none');
+	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].counterContainer;
+	}
+	function _renderTotalTaskCounter2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].totalTaskCounter = main_core.Tag.render(_t3 || (_t3 = _$2`
+			<div class="tasks-flow__total-task-counter ui-counter-inner"></div>
+		`));
+	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].totalTaskCounter;
+	}
 	function _renderLines2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupInner = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupInner = main_core.Tag.render(_t4 || (_t4 = _$2`
 			<div class="tasks-flow__task-queue-popup_inner">
 				${0}
 			</div>
@@ -342,6 +377,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  // eslint-disable-next-line promise/catch-or-return
 	  babelHelpers.classPrivateFieldLooseBase(this, _appendLines)[_appendLines](babelHelpers.classPrivateFieldLooseBase(this, _pageNum)[_pageNum]).then(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _destroyLoader)[_destroyLoader]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _setTotalTaskCount)[_setTotalTaskCount]();
 	  });
 	}
 	function _appendLines2(pageNum) {
@@ -351,17 +387,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  const list = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupInner;
 
 	  // eslint-disable-next-line promise/catch-or-return
-	  return babelHelpers.classPrivateFieldLooseBase(this, _getList)[_getList](pageNum).then(lines => {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getList)[_getList](pageNum).then(({
+	    lines,
+	    totalTaskCount
+	  }) => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _totalTaskCount)[_totalTaskCount] = totalTaskCount;
+	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].counterContainer, 'display', 'inline-flex');
 	    babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages][pageNum] = lines.map(data => new Line(data));
 	    babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages][pageNum].forEach(line => main_core.Dom.append(line.render(), list));
 	  });
+	}
+	function _setTotalTaskCount2() {
+	  if (!main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _totalTaskCount)[_totalTaskCount])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].totalTaskCounter.innerText = babelHelpers.classPrivateFieldLooseBase(this, _totalTaskCount)[_totalTaskCount] > 99 ? '99+' : babelHelpers.classPrivateFieldLooseBase(this, _totalTaskCount)[_totalTaskCount];
+	  }
 	}
 	function _showLoader2() {
 	  const targetPosition = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupInner);
 	  const size = 40;
 	  babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader] = new main_loader.Loader({
 	    target: babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupInner,
-	    size: size,
+	    size,
 	    mode: 'inline',
 	    offset: {
 	      left: `${targetPosition.width / 2 - size / 2}px`
@@ -376,7 +422,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  // eslint-disable-next-line no-console
 	  console.error(`TaskQueue: ${action} error`, error);
 	}
-	TaskQueue.instances = {};
 	TaskQueue.TYPES = {
 	  PENDING: 'PENDING',
 	  AT_WORK: 'AT_WORK',

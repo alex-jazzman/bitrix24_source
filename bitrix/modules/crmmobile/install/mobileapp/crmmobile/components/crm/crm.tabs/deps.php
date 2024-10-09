@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'tokens',
 		'apptheme',
 		'layout/ui/menu',
 		'layout/pure-component',
@@ -12,6 +13,7 @@ return [
 		'require-lazy',
 		'qrauth/utils',
 		'rest',
+		'assets/icons',
 		'utils/object',
 		'utils/function',
 		'alert',

@@ -10,8 +10,6 @@ import { Utils } from 'im.v2.lib.utils';
 import { MessengerSlider } from 'im.v2.lib.slider';
 import { LinesService } from 'im.v2.provider.service';
 
-import type { ImModelLayout } from 'im.v2.model';
-
 export const Opener = {
 	async openChat(dialogId: string | number = '', messageId: number = 0): Promise
 	{
@@ -22,7 +20,7 @@ export const Opener = {
 		}
 
 		await MessengerSlider.getInstance().openSlider();
-		const layoutParams: ImModelLayout = {
+		const layoutParams = {
 			name: Layout.chat.name,
 			entityId: preparedDialogId,
 		};
@@ -30,7 +28,6 @@ export const Opener = {
 		{
 			layoutParams.contextId = messageId;
 		}
-
 		await LayoutManager.getInstance().setLayout(layoutParams);
 		EventEmitter.emit(EventType.layout.onOpenChat, { dialogId: preparedDialogId });
 

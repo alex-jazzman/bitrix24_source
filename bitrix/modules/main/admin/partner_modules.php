@@ -57,10 +57,10 @@ if($isAdmin && $_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST["module"]) 
 		elseif(isset($_POST["act"]) && $_POST["act"] == "add_opinion")
 		{
 			$arF = Array(
-					"comments" => $GLOBALS["APPLICATION"]->ConvertCharset($_POST["comments"], SITE_CHARSET, "windows-1251"),
+					"comments" => $_POST["comments"],
 					"lkey" => Application::getInstance()->getLicense()->getPublicHashKey(),
 					"act" => "add_delete_comment",
-					"name" => $GLOBALS["APPLICATION"]->ConvertCharset($USER->GetFullName(), SITE_CHARSET, "windows-1251"),
+					"name" => $USER->GetFullName(),
 					"email" => $USER->GetEmail(),
 					"reason" => $_POST["reason"],
 				);

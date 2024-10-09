@@ -41,6 +41,12 @@ $MESS["INTRANET_USER_PROFILE_HIRE"] = "Hire";
 $MESS["INTRANET_USER_PROFILE_HIRE_CONFIRM"] = "The employee will be able to log on to Bitrix24 and will be seen in the company structure.
 <br/><br/>
 Are you sure you want to grant the employee access?";
+$MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER"] = "User is not certified and thus cannot be Bitrix24 Partner. Partners have access to your Bitrix24 which is why only the employees of the trusted companies can get a Bitrix24 Partner status.
+<br/><br/>
+Partner level permissions are sufficient to set up and configure your Bitrix24. We strongly advise against granting third parties administrator access because they can accidentally or maliciously dismiss all employees and gain full control of your Bitrix24.
+<br/><br/>
+Select a Bitrix24 Partner you would like to work with <a target=\"_blank\" href=\"https://www.bitrix24.com/partners/\" >here</a>.";
+$MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE"] = "OK";
 $MESS["INTRANET_USER_PROFILE_INTERESTS_STUB_BUTTON"] = "Tell about your interests";
 $MESS["INTRANET_USER_PROFILE_INTERESTS_STUB_BUTTON_2"] = "Select interests";
 $MESS["INTRANET_USER_PROFILE_INTERESTS_STUB_TEXT"] = "Create or join interests. Find friends who share your interests.";

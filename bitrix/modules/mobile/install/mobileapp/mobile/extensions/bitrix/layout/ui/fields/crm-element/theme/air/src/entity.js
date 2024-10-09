@@ -50,7 +50,6 @@ jn.define('layout/ui/fields/crm-element/theme/air/src/entity', (require, exports
 					flexDirection: 'row',
 					justifyContent: 'flex-start',
 					marginTop: !isFirst && Indent.M.toNumber(),
-					marginBottom: isLast ? Indent.XL.toNumber() : 0,
 					paddingTop: Indent.S.toNumber(),
 				},
 				onClick: field.isEmpty() ? field.getContentClickHandler() : onEntityClick,
@@ -104,7 +103,10 @@ jn.define('layout/ui/fields/crm-element/theme/air/src/entity', (require, exports
 						ellipsize: 'end',
 					}),
 				),
-				!field.isReadOnly() && id && View(
+				id
+				&& !field.isReadOnly()
+				&& !field.isRestricted()
+				&& View(
 					{
 						onClick: () => field.removeEntity(id, type),
 						style: {

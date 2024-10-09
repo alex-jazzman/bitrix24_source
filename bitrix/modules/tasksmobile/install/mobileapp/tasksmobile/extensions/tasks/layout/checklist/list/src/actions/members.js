@@ -5,8 +5,11 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 	const { Color, Indent } = require('tokens');
 	const { Avatar } = require('layout/ui/user/avatar');
 	const { ElementsStack } = require('elements-stack');
-	const { IconView } = require('ui-system/blocks/icon');
-	const { MEMBER_TYPE_ICONS } = require('tasks/layout/checklist/list/src/constants');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const {
+		MEMBER_TYPE_ICONS,
+		MEMBER_TYPE_RESTRICTION_FEATURE_META,
+	} = require('tasks/layout/checklist/list/src/constants');
 
 	const IMAGE_SIZE = 22;
 
@@ -74,7 +77,11 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 					},
 				},
 				IconView({
-					icon: MEMBER_TYPE_ICONS[memberType],
+					icon: (
+						MEMBER_TYPE_RESTRICTION_FEATURE_META[memberType].isRestricted()
+							? Icon.LOCK
+							: MEMBER_TYPE_ICONS[memberType]
+					),
 					size: IMAGE_SIZE,
 					color: Color.base3,
 				}),

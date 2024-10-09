@@ -24,8 +24,8 @@ jn.define('text-editor/adapters/image-adapter', (require, exports, module) => {
 			if (imageWidth < maxWidth && imageHeight < maxHeight)
 			{
 				return {
-					width: imageWidth,
-					height: imageHeight,
+					width: Math.floor(imageWidth),
+					height: Math.floor(imageHeight),
 				};
 			}
 
@@ -35,14 +35,14 @@ jn.define('text-editor/adapters/image-adapter', (require, exports, module) => {
 			if (aspectRatio > maxAspectRatio)
 			{
 				return {
-					width: maxWidth,
-					height: (maxWidth / aspectRatio),
+					width: Math.floor(maxWidth),
+					height: Math.floor(maxWidth / aspectRatio),
 				};
 			}
 
 			return {
-				width: maxHeight * aspectRatio,
-				height: maxHeight,
+				width: Math.floor(maxHeight * aspectRatio),
+				height: Math.floor(maxHeight),
 			};
 		}
 

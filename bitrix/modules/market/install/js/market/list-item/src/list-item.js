@@ -86,11 +86,11 @@ export const ListItem = {
 		}
 	},
 	methods: {
-		getDetailLink: function(appCode, isSiteTemplate) {
+		getDetailLink: function() {
 			const params = {
 				from: this.fromParam,
 			};
-			return MarketLinks.appDetail(appCode, isSiteTemplate, params);
+			return MarketLinks.appDetail(this.item, params);
 		},
 		labelTitle: function (dateFormat) {
 			return dateFormat ? this.$Bitrix.Loc.getMessage('MARKET_LIST_ITEM_JS_PREMIUM_RATING') : '';
@@ -321,7 +321,7 @@ export const ListItem = {
 			<a class="market-catalog__elements-item_img-link"
 			   :style="{'background-image': 'url(\\'' + getBackgroundPath + '\\')'}"
 			   :title="item.NAME"
-			   :href="getDetailLink(this.getAppCode, this.isSiteTemplate)"
+			   :href="getDetailLink()"
 			   @click="MarketLinks.openSiteTemplate($event, this.isSiteTemplate)"
 			>
 				<img class="market-catalog__elements-item_img" 
@@ -352,7 +352,7 @@ export const ListItem = {
 				<div class="market-catalog__elements-item_info-head">
 					<a class="market-catalog__elements-item_info-title"
 					   :title="item.NAME"
-					   :href="getDetailLink(this.getAppCode, this.isSiteTemplate)"
+					   :href="getDetailLink()"
 					   @click="MarketLinks.openSiteTemplate($event, this.isSiteTemplate)"
 					>
 						{{ item.NAME }}

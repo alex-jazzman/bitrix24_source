@@ -4,10 +4,10 @@
 jn.define('im/messenger/controller/recent/channel/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
+	const { RestMethod } = require('im/messenger/const');
 	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { RestMethod, EventType, ComponentCode } = require('im/messenger/const');
-	const { RecentRest } = require('im/messenger/provider/rest');
+	const { EventType, ComponentCode } = require('im/messenger/const');
 
 	/**
 	 * @class ChannelRecent
@@ -22,7 +22,19 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 		}
 
 		async fillStoreFromCache()
-		{}
+		{
+			return Promise.resolve();
+		}
+
+		async drawCacheItems()
+		{
+			return Promise.resolve();
+		}
+
+		async loadPageFromDbHandler()
+		{
+			return Promise.resolve();
+		}
 
 		async init()
 		{
@@ -38,7 +50,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
 
-			this.firstPageHandler = this.firstPageHandler.bind(this);
 			this.stopRefreshing = this.stopRefreshing.bind(this);
 			this.renderInstant = this.renderInstant.bind(this);
 			this.loadPage = this.loadPage.bind(this);
@@ -74,19 +85,23 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 		stopRefreshing()
 		{
-			this.logger.info(`${this.getClassName()}.stopRefreshing`);
+			this.logger.info(`${this.constructor.name}.stopRefreshing`);
 			this.view.stopRefreshing();
 		}
 
 		initRequests()
 		{
+			this.recentChannelInitRequest();
+			this.countersInitRequest();
+		}
+
+		recentChannelInitRequest()
+		{
 			restManager.on(
 				RestMethod.imV2RecentChannelTail,
-				this.getRestRecentListOptions(),
-				this.firstPageHandler.bind(this),
+				this.getRestManagerRecentListOptions(),
+				this.restManagerRecentListHandler.bind(this),
 			);
-
-			this.countersInitRequest();
 		}
 
 		onItemSelected(recentItem)
@@ -101,12 +116,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 		onLoadNextPage()
 		{
-			const canLoadNextPage = !this.pageNavigation.isPageLoading && this.pageNavigation.hasNextPage;
-			if (!canLoadNextPage)
-			{
-				return;
-			}
-
 			this.loadNextPage();
 		}
 
@@ -115,11 +124,12 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			return new Promise((resolve) => {
 				/** @type {imV2RecentChannelTailResult} */
 				const data = response.data();
-				this.logger.info(`${this.getClassName()}.pageHandler data:`, data);
+				this.logger.info(`${this.constructor.name}.pageHandler data:`, data);
+				this.recentService.pageNavigation.turnPage();
 
 				if (data.hasNextPage === false)
 				{
-					this.pageNavigation.hasNextPage = false;
+					this.recentService.pageNavigation.hasNextPage = false;
 				}
 
 				if (data.recentItems.length === 0)
@@ -136,7 +146,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 				this.saveRecentData(data)
 					.then(() => {
-						this.pageNavigation.isPageLoading = false;
+						this.recentService.pageNavigation.isPageLoading = false;
 
 						this.renderInstant();
 						this.checkEmpty();
@@ -144,16 +154,16 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 						resolve();
 					})
 					.catch((error) => {
-						this.logger.error(`${this.getClassName()}.saveRecentItems error:`, error);
+						this.logger.error(`${this.constructor.name}.saveRecentData error:`, error);
 					})
 				;
 			});
 		}
 
 		/**
-		 *
 		 * @param {imV2RecentChannelTailResult} recentData
 		 * @return {Promise<void>}
+		 * @override
 		 */
 		async saveRecentData(recentData)
 		{
@@ -166,7 +176,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 			void await this.store.dispatch('recentModel/set', modelData.recent);
 
-			if (this.pageNavigation.currentPage === 1)
+			if (this.recentService.pageNavigation.currentPage === 1)
 			{
 				const recentIndex = [];
 				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
@@ -180,9 +190,9 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 						}
 					});
 
-				for await (const id of idListForDeleteFromCache)
+				for (const id of idListForDeleteFromCache)
 				{
-					this.store.dispatch('recentModel/delete', { id });
+					this.store.dispatch('recentModel/deleteFromModel', { id });
 				}
 			}
 		}
@@ -204,16 +214,22 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			recentData.recentItems.forEach((recentItem) => {
 				const message = recentData.messages.find((recentMessage) => recentItem.messageId === recentMessage.id);
 
+				let itemMessage = {};
+				if (message)
+				{
+					itemMessage = {
+						...message,
+						text: ChatMessengerCommon.purifyText(message.text, message.params),
+					};
+				}
+
 				/** @type {RecentModelState} */
 				const item = {
 					id: recentItem.dialogId,
 					pinned: recentItem.pinned,
 					liked: false,
 					unread: recentItem.unread,
-					message: {
-						...message,
-						text: ChatMessengerCommon.purifyText(message.text, message.params),
-					},
+					message: itemMessage,
 				};
 
 				result.recent.push(item);
@@ -274,7 +290,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			this.renderer.removeFromQueue(mutation.payload.data.id);
 
 			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
 				this.view.hideLoader();
 			}
@@ -295,10 +311,10 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 		/**
 		 * @return {object}
 		 */
-		getRestRecentListOptions()
+		getRestManagerRecentListOptions()
 		{
 			return {
-				limit: this.pageNavigation.itemsPerPage,
+				limit: this.recentService.pageNavigation.itemsPerPage,
 			};
 		}
 
@@ -310,18 +326,9 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 		/**
 		 * @return {Promise<any>}
 		 */
-		getPageFromService()
+		getPageFromServer()
 		{
-			const options = this.getRestListOptions();
-
-			if (this.pageNavigation.currentPage > 1)
-			{
-				options.filter = {
-					lastMessageId: this.lastMessageId,
-				};
-			}
-
-			return RecentRest.getChannelList(options);
+			return this.recentService.getChannelPageFromService(this.lastMessageId);
 		}
 	}
 

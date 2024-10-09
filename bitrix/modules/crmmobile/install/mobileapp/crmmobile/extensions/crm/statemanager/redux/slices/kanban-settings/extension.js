@@ -375,7 +375,7 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 					adapter.upsertOne(state, preparedData);
 				})
 				.addCase(fetchCrmKanban.rejected, (state, action) => {
-					state.status = action.payload.status;
+					state.status = STATUS.failed;
 				})
 				.addCase(fetchCrmKanbanList.pending, (state, action) => {
 					state.isFetchedList[action.meta.arg.entityTypeId] = true;
@@ -384,7 +384,7 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 				.addCase(fetchCrmKanbanList.fulfilled, (state, action) => {
 					const {
 						data: {
-							categories: kanbanSettingsList,
+							categories: kanbanSettingsList = [],
 							restrictions,
 							canUserEditCategory,
 						},
@@ -643,5 +643,6 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 		selectByEntityTypeId,
 		selectCanUserEditCategory,
 		selectIsFetchedList,
+		STATUS,
 	};
 });

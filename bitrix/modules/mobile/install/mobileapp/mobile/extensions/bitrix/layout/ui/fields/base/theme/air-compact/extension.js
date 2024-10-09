@@ -20,6 +20,7 @@ jn.define('layout/ui/fields/base/theme/air-compact', (require, exports, module) 
 			readOnly: field.isReadOnly(),
 			hasError: field.hasErrorMessage(),
 			multiple: field.isMultiple(),
+			isRestricted: field.isRestricted(),
 			leftIcon: field.getLeftIcon(),
 			defaultLeftIcon: field.getDefaultLeftIcon(),
 			text: field.isMultiple() ? field.getTitleText() : field.getDisplayedValue(),

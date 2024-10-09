@@ -4,6 +4,7 @@
 jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class ProviderSelector

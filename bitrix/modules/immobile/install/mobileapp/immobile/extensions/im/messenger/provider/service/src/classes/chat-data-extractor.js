@@ -47,6 +47,7 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 		{
 			const mainChat = {
 				...this.restResult.chat,
+				tariffRestrictions: this.getTariffRestrictions(),
 				hasPrevPage: this.restResult.hasPrevPage,
 				hasNextPage: this.restResult.hasNextPage,
 			};
@@ -65,6 +66,11 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 			});
 
 			return Object.values(chats);
+		}
+
+		getTariffRestrictions()
+		{
+			return this.restResult?.tariffRestrictions;
 		}
 
 		getFiles()

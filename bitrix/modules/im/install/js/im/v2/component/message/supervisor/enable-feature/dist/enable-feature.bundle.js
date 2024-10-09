@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_elements,im_v2_component_message_supervisor_base,main_core,im_v2_lib_analytics) {
+(function (exports,im_v2_component_elements,im_v2_component_message_supervisor_base,main_core,im_v2_lib_analytics,stafftrack_userStatisticsLink) {
 	'use strict';
 
 	const EnableFeatures = Object.freeze({
@@ -23,7 +23,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  scrum: 'scrum',
 	  invoices: 'invoices',
 	  saleshub: 'saleshub',
-	  websitesStores: 'sites'
+	  websitesStores: 'sites',
+	  checkIn: 'checkIn',
+	  checkInGeo: 'checkInGeo'
 	});
 	const UpdateFeatures = Object.freeze({
 	  collaborativeDocumentEditing: 'limit_office_no_document',
@@ -42,6 +44,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    im_v2_lib_analytics.Analytics.getInstance().onOpenToolsSettings(toolId);
 	    BX.SidePanel.Instance.open(`${window.location.origin}/settings/configs/?page=tools`);
 	  };
+	};
+	const openCheckInQrCode = () => {
+	  if (!stafftrack_userStatisticsLink.UserStatisticsLink) {
+	    return;
+	  }
+	  new stafftrack_userStatisticsLink.UserStatisticsLink({
+	    intent: stafftrack_userStatisticsLink.UserStatisticsLink.CHECK_IN_SETTINGS_INTENT
+	  }).show();
 	};
 	const onHelpClick = ARTICLE_CODE => BX.Helper.show(`redirect=detail&code=${ARTICLE_CODE}`);
 	const metaData = {
@@ -248,6 +258,30 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
 	      callback: () => onHelpClick('9289135')
 	    }
+	  },
+	  [EnableFeatures.checkIn]: {
+	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_TITLE'),
+	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_DESCRIPTION'),
+	    detailButton: {
+	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
+	      callback: () => openCheckInQrCode()
+	    },
+	    infoButton: {
+	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
+	      callback: () => onHelpClick('20922794')
+	    }
+	  },
+	  [EnableFeatures.checkInGeo]: {
+	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_GEO_TITLE'),
+	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_GEO_DESCRIPTION'),
+	    detailButton: {
+	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
+	      callback: () => openCheckInQrCode()
+	    },
+	    infoButton: {
+	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
+	      callback: () => onHelpClick('20922794')
+	    }
 	  }
 	};
 
@@ -326,5 +360,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SupervisorEnableFeatureMessage = SupervisorEnableFeatureMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX,BX.Messenger.v2.Lib,BX.Stafftrack));
 //# sourceMappingURL=enable-feature.bundle.js.map

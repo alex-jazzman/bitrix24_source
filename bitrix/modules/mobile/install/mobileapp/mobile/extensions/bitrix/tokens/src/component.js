@@ -54,6 +54,7 @@ jn.define('tokens/src/component', (require, exports, module) => {
 	Component.itbChipCorner = new Component('itbChipCorner', AppTheme.styles.itbChipCorner);
 	Component.itbChipHeight = new Component('itbChipHeight', AppTheme.styles.itbChipHeight);
 	Component.itbChipPaddingLr = new Component('itbChipPaddingLr', AppTheme.styles.itbChipPaddingLr);
+	Component.itbChipPaddingLrLess = new Component('itbChipPaddingLrLess', AppTheme.styles.itbChipPaddingLrLess);
 	Component.itbChipStroke = new Component('itbChipStroke', AppTheme.styles.itbChipStroke);
 	Component.paddingLr = new Component('paddingLr', AppTheme.styles.paddingLr);
 	Component.paddingLrMore = new Component('paddingLrMore', AppTheme.styles.paddingLrMore);

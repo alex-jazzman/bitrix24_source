@@ -10,10 +10,13 @@ return [
 	'rel' => [
 		'main.popup',
 		'pull.vue3.status',
+		'im.v2.lib.analytics',
 		'im.v2.component.message-list',
 		'im.v2.component.entity-selector',
 		'im.v2.lib.call',
 		'im.v2.lib.layout',
+		'im.v2.lib.access',
+		'im.v2.lib.feature',
 		'im.v2.provider.service',
 		'main.core.events',
 		'im.v2.lib.logger',

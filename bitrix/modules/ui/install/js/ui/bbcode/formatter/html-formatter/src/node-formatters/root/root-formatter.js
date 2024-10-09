@@ -1,4 +1,6 @@
-import { NodeFormatter, type NodeFormatterOptions } from 'ui.bbcode.formatter';
+import { NodeFormatter, type NodeFormatterOptions, type BeforeConvertCallbackOptions } from 'ui.bbcode.formatter';
+import { type BBCodeNode } from 'ui.bbcode.model';
+import { normalizeTextNodes } from '../../helpers/normalize-text-nodes';
 
 export class RootNodeFormatter extends NodeFormatter
 {
@@ -8,6 +10,9 @@ export class RootNodeFormatter extends NodeFormatter
 			name: '#root',
 			convert(): DocumentFragment {
 				return document.createDocumentFragment();
+			},
+			before({ node }: BeforeConvertCallbackOptions): BBCodeNode {
+				return normalizeTextNodes(node);
 			},
 			...options,
 		});

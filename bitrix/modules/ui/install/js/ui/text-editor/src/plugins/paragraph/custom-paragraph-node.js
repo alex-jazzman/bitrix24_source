@@ -3,6 +3,7 @@
 import {
 	$createParagraphNode,
 	$isTextNode,
+	$hasUpdateTag,
 	ParagraphNode,
 	type RangeSelection,
 	type NodeKey,
@@ -10,8 +11,6 @@ import {
 	type DOMConversionMap,
 	type DOMConversionOutput,
 	type DOMConversion,
-	type LexicalNode,
-	type TextNode, $createTextNode,
 } from 'ui.lexical.core';
 
 import { NewLineMode } from '../../constants';
@@ -66,6 +65,11 @@ export class CustomParagraphNode extends ParagraphNode
 				this.insertAfter(newElement, restoreSelection);
 
 				return newElement;
+			}
+
+			if ($hasUpdateTag('paste'))
+			{
+				return super.insertNewAfter(selection, restoreSelection);
 			}
 		}
 

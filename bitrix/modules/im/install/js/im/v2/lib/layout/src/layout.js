@@ -6,13 +6,15 @@ import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { ChatType, EventType, Layout, LocalStorageKey } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { AccessErrorCode, AccessManager } from 'im.v2.lib.access';
+import { FeatureManager } from 'im.v2.lib.feature';
 
 import type { ImModelLayout, ImModelChat } from 'im.v2.model';
 
 type EntityId = string;
 
 const TypesWithoutContext: Set<string> = new Set([ChatType.comment]);
-const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel.name]);
+const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel.name, Layout.market.name]);
 
 export class LayoutManager
 {
@@ -43,6 +45,15 @@ export class LayoutManager
 
 	async setLayout(config: ImModelLayout): Promise
 	{
+		if (config.contextId)
+		{
+			const hasAccess = await this.#handleContextAccess(config);
+			if (!hasAccess)
+			{
+				return Promise.resolve();
+			}
+		}
+
 		if (config.entityId)
 		{
 			this.setLastOpenedElement(config.name, config.entityId);
@@ -121,7 +132,7 @@ export class LayoutManager
 		EventEmitter.unsubscribe(EventType.desktop.onReload, this.#onDesktopReload.bind(this));
 	}
 
-	#onGoToMessageContext(event: BaseEvent<{dialogId: string, messageId: number}>): void
+	async #onGoToMessageContext(event: BaseEvent<{dialogId: string, messageId: number}>): void
 	{
 		const { dialogId, messageId } = event.getData();
 		if (this.getLayout().entityId === dialogId)
@@ -191,6 +202,26 @@ export class LayoutManager
 				dialogId,
 			});
 		}
+	}
+
+	async #handleContextAccess(config: ImModelLayout): Promise<boolean>
+	{
+		const { contextId: messageId, entityId: dialogId } = config;
+		if (!messageId)
+		{
+			return Promise.resolve(true);
+		}
+
+		const { hasAccess, errorCode } = await AccessManager.checkMessageAccess(messageId);
+		if (!hasAccess && errorCode === AccessErrorCode.messageAccessDeniedByTariff)
+		{
+			Analytics.getInstance().onGoToContextHistoryLimitClick({ dialogId });
+			FeatureManager.chatHistory.openFeatureSlider();
+
+			return Promise.resolve(false);
+		}
+
+		return Promise.resolve(true);
 	}
 
 	#getChat(dialogId: string): ImModelChat

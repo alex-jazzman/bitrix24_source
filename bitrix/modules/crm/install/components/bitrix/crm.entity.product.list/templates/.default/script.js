@@ -45,7 +45,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return HintPopup;
 	}();
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
+	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -57,9 +57,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	var _getDateNode = /*#__PURE__*/new WeakSet();
 	var _getReserveInputNode = /*#__PURE__*/new WeakSet();
 	var _layoutDateReservation = /*#__PURE__*/new WeakSet();
+	var _isInventoryManagementMode1C = /*#__PURE__*/new WeakSet();
 	var ReserveControl = /*#__PURE__*/function () {
 	  function ReserveControl(options) {
 	    babelHelpers.classCallCheck(this, ReserveControl);
+	    _classPrivateMethodInitSpec(this, _isInventoryManagementMode1C);
 	    _classPrivateMethodInitSpec(this, _layoutDateReservation);
 	    _classPrivateMethodInitSpec(this, _getReserveInputNode);
 	    _classPrivateMethodInitSpec(this, _getDateNode);
@@ -75,12 +77,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    babelHelpers.defineProperty(this, "wrapper", null);
 	    babelHelpers.classPrivateFieldSet(this, _row, options.row);
 	    this.inputFieldName = options.inputName || ReserveControl.INPUT_NAME;
+	    this.viewName = ReserveControl.VIEW_NAME;
 	    this.dateFieldName = options.dateFieldName || ReserveControl.DATE_NAME;
 	    this.quantityFieldName = options.quantityFieldName || ReserveControl.QUANTITY_NAME;
 	    this.deductedQuantityFieldName = options.deductedQuantityFieldName || ReserveControl.DEDUCTED_QUANTITY_NAME;
 	    this.defaultDateReservation = options.defaultDateReservation || null;
 	    this.isBlocked = options.isBlocked || false;
 	    this.isInventoryManagementToolEnabled = options.isInventoryManagementToolEnabled || false;
+	    this.inventoryManagementMode = options.inventoryManagementMode || '';
 	    this.measureName = options.measureName;
 	    this.isReserveEqualProductQuantity = options.isReserveEqualProductQuantity && (this.getReservedQuantity() === this.getQuantity() || babelHelpers.classPrivateFieldGet(this, _row).isNewRow());
 	  }
@@ -90,12 +94,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.wrapper = node;
 	      main_core.Dom.append(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), _classPrivateMethodGet(this, _getReserveInputNode, _getReserveInputNode2).call(this)), this.wrapper);
 	      main_core.Event.bind(_classPrivateMethodGet(this, _getReserveInputNode, _getReserveInputNode2).call(this).querySelector('input'), 'input', main_core.Runtime.debounce(this.onReserveInputChange, 800, this));
-	      if (this.getReservedQuantity() > 0 || this.isReserveEqualProductQuantity) {
-	        _classPrivateMethodGet(this, _layoutDateReservation, _layoutDateReservation2).call(this, this.getDateReservation());
+	      if (!_classPrivateMethodGet(this, _isInventoryManagementMode1C, _isInventoryManagementMode1C2).call(this)) {
+	        if (this.getReservedQuantity() > 0 || this.isReserveEqualProductQuantity) {
+	          _classPrivateMethodGet(this, _layoutDateReservation, _layoutDateReservation2).call(this, this.getDateReservation());
+	        }
+	        main_core.Dom.append(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this), this.wrapper);
+	        main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this), 'click', _classStaticPrivateMethodGet(ReserveControl, ReserveControl, _onDateInputClick).bind(this));
+	        main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this).querySelector('input'), 'change', this.onDateChange.bind(this));
 	      }
-	      main_core.Dom.append(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this), this.wrapper);
-	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this), 'click', _classStaticPrivateMethodGet(ReserveControl, ReserveControl, _onDateInputClick).bind(this));
-	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this).querySelector('input'), 'change', this.onDateChange.bind(this));
 	    }
 	  }, {
 	    key: "setReservedQuantity",
@@ -250,7 +256,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	function _getReserveInputNode2() {
 	  var _this2 = this;
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('reserveInput', function () {
-	    var tag = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div ", ">\n\t\t\t\t\t<input type=\"text\"\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox ", "\"\n\t\t\t\t\t\tautoComplete=\"off\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tplaceholder=\"0\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t"])), _this2.isInputDisabled() ? 'class="crm-entity-product-list-locked-field-wrapper"' : '', _this2.inputFieldName, _this2.inputFieldName, _this2.isInputDisabled() ? 'crm-entity-product-list-locked-field' : '', _this2.getReservedQuantity(), _this2.getReservedQuantity(), _this2.isInputDisabled() ? 'disabled' : '');
+	    var viewReserveNode = _classPrivateMethodGet(_this2, _isInventoryManagementMode1C, _isInventoryManagementMode1C2).call(_this2) ? main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<span>\n\t\t\t\t\t\t\t<span data-name=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t&nbsp;\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t"])), _this2.viewName, _this2.getReservedQuantity(), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this2, _row).getMeasureName())) : null;
+	    var tag = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div ", ">\n\t\t\t\t\t", "\n\t\t\t\t\t<input type=\"", "\"\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox ", "\"\n\t\t\t\t\t\tautoComplete=\"off\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tplaceholder=\"0\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t"])), _this2.isInputDisabled() ? 'class="crm-entity-product-list-locked-field-wrapper"' : '', viewReserveNode, _classPrivateMethodGet(_this2, _isInventoryManagementMode1C, _isInventoryManagementMode1C2).call(_this2) ? 'hidden' : 'text', _this2.inputFieldName, _this2.inputFieldName, _this2.isInputDisabled() ? 'crm-entity-product-list-locked-field' : '', _this2.getReservedQuantity(), _this2.getReservedQuantity(), _this2.isInputDisabled() ? 'disabled' : '');
 	    if (_this2.isBlocked || !_this2.isInventoryManagementToolEnabled) {
 	      tag.onclick = function () {
 	        return main_core_events.EventEmitter.emit(_this2, 'onNodeClick');
@@ -273,7 +280,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    hiddenInput.value = date;
 	  }
 	}
+	function _isInventoryManagementMode1C2() {
+	  return this.inventoryManagementMode === catalog_storeEnableWizard.ModeList.MODE_1C;
+	}
 	babelHelpers.defineProperty(ReserveControl, "INPUT_NAME", 'INPUT_RESERVE_QUANTITY');
+	babelHelpers.defineProperty(ReserveControl, "VIEW_NAME", 'VIEW_RESERVE_QUANTITY');
 	babelHelpers.defineProperty(ReserveControl, "DATE_NAME", 'DATE_RESERVE_END');
 	babelHelpers.defineProperty(ReserveControl, "QUANTITY_NAME", 'QUANTITY');
 	babelHelpers.defineProperty(ReserveControl, "DEDUCTED_QUANTITY_NAME", 'DEDUCTED_QUANTITY');
@@ -484,7 +495,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	var _togglePriceHintPopup = /*#__PURE__*/new WeakSet();
 	var _getAllowedStores = /*#__PURE__*/new WeakSet();
 	var _isReserveEqualProductQuantity = /*#__PURE__*/new WeakSet();
-	var _getMeasureName = /*#__PURE__*/new WeakSet();
 	var _getNodeChildByDataName = /*#__PURE__*/new WeakSet();
 	var _getNodesChild = /*#__PURE__*/new WeakSet();
 	var _needReserveControlInput = /*#__PURE__*/new WeakSet();
@@ -496,7 +506,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    _classPrivateMethodInitSpec$2(this, _needReserveControlInput);
 	    _classPrivateMethodInitSpec$2(this, _getNodesChild);
 	    _classPrivateMethodInitSpec$2(this, _getNodeChildByDataName);
-	    _classPrivateMethodInitSpec$2(this, _getMeasureName);
 	    _classPrivateMethodInitSpec$2(this, _isReserveEqualProductQuantity);
 	    _classPrivateMethodInitSpec$2(this, _getAllowedStores);
 	    _classPrivateMethodInitSpec$2(this, _togglePriceHintPopup);
@@ -722,7 +731,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        this.reserveControl.clearCache();
 	        if (_classPrivateMethodGet$2(this, _needReserveControlInput, _needReserveControlInput2).call(this)) {
 	          if (this.isRestrictedStoreInfo()) {
-	            storeWrapper.innerHTML = this.reserveControl.getReservedQuantity() + ' ' + main_core.Text.encode(_classPrivateMethodGet$2(this, _getMeasureName, _getMeasureName2).call(this));
+	            storeWrapper.innerHTML = this.reserveControl.getReservedQuantity() + ' ' + main_core.Text.encode(this.getMeasureName());
 	            return;
 	          }
 	          this.reserveControl.renderTo(storeWrapper);
@@ -1228,7 +1237,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService()) {
 	        return;
 	      }
-	      amountWithMeasure = amount + ' ' + _classPrivateMethodGet$2(this, _getMeasureName, _getMeasureName2).call(this);
+	      amountWithMeasure = amount + ' ' + this.getMeasureName();
 	      availableWrapper.innerHTML = amount > 0 ? amountWithMeasure : "<span class=\"store-available-popup-link--danger\">".concat(amountWithMeasure, "</span>");
 	    }
 	  }, {
@@ -1264,7 +1273,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        reserveWrapper.innerHTML = '';
 	        return;
 	      }
-	      reserveWrapper.innerHTML = main_core.Text.toNumber(this.getField('ROW_RESERVED')) + ' ' + _classPrivateMethodGet$2(this, _getMeasureName, _getMeasureName2).call(this);
+	      reserveWrapper.innerHTML = main_core.Text.toNumber(this.getField('ROW_RESERVED')) + ' ' + this.getMeasureName();
 	    }
 	  }, {
 	    key: "setDeductedQuantity",
@@ -1278,7 +1287,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        deductedWrapper.innerHTML = '';
 	        return;
 	      }
-	      deductedWrapper.innerHTML = main_core.Text.toNumber(this.getField('DEDUCTED_QUANTITY')) + ' ' + _classPrivateMethodGet$2(this, _getMeasureName, _getMeasureName2).call(this);
+	      deductedWrapper.innerHTML = main_core.Text.toNumber(this.getField('DEDUCTED_QUANTITY')) + ' ' + this.getMeasureName();
 	    }
 	  }, {
 	    key: "changeStoreName",
@@ -1458,6 +1467,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      if (main_core.Type.isElementNode(input)) {
 	        var _this$reserveControl;
 	        input.value = value;
+	        var view = node === null || node === void 0 ? void 0 : node.querySelector('span[data-name="VIEW_RESERVE_QUANTITY"]');
+	        if (view) {
+	          view.textContent = value;
+	        }
 	        (_this$reserveControl = this.reserveControl) === null || _this$reserveControl === void 0 ? void 0 : _this$reserveControl.changeInputValue(value);
 	      } else {
 	        this.changeReserveQuantity(value);
@@ -1939,7 +1952,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getInventoryManagementMode",
 	    value: function getInventoryManagementMode() {
-	      return this.getSettingValue('inventoryManagementMode', true);
+	      return this.getSettingValue('inventoryManagementMode', '');
 	    }
 	  }, {
 	    key: "isRestrictedStoreInfo",
@@ -1955,6 +1968,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        return false;
 	      }
 	      return !_classPrivateMethodGet$2(this, _getAllowedStores, _getAllowedStores2).call(this).includes(storeId);
+	    }
+	  }, {
+	    key: "getMeasureName",
+	    value: function getMeasureName() {
+	      var _this$editor$getDefau;
+	      var measureName = main_core.Type.isStringFilled(this.model.getField('MEASURE_NAME')) ? this.model.getField('MEASURE_NAME') : ((_this$editor$getDefau = this.editor.getDefaultMeasure()) === null || _this$editor$getDefau === void 0 ? void 0 : _this$editor$getDefau.SYMBOL) || '';
+	      return main_core.Text.encode(measureName);
 	    }
 	  }, {
 	    key: "setType",
@@ -2138,8 +2158,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      isReserveEqualProductQuantity: _classPrivateMethodGet$2(this, _isReserveEqualProductQuantity, _isReserveEqualProductQuantity2).call(this),
 	      defaultDateReservation: this.editor.getSettingValue('defaultDateReservation'),
 	      isInventoryManagementToolEnabled: this.isInventoryManagementToolEnabled(),
+	      inventoryManagementMode: this.getInventoryManagementMode(),
 	      isBlocked: this.isReserveBlocked(),
-	      measureName: _classPrivateMethodGet$2(this, _getMeasureName, _getMeasureName2).call(this)
+	      measureName: this.getMeasureName()
 	    });
 	    main_core_events.EventEmitter.subscribe(this.reserveControl, 'onNodeClick', function () {
 	      if (_this10.isReserveBlocked()) {
@@ -2232,11 +2253,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 	function _isReserveEqualProductQuantity2() {
 	  return this.editor.getSettingValue('isReserveEqualProductQuantity', false);
-	}
-	function _getMeasureName2() {
-	  var _this$editor$getDefau;
-	  var measureName = main_core.Type.isStringFilled(this.model.getField('MEASURE_NAME')) ? this.model.getField('MEASURE_NAME') : ((_this$editor$getDefau = this.editor.getDefaultMeasure()) === null || _this$editor$getDefau === void 0 ? void 0 : _this$editor$getDefau.SYMBOL) || '';
-	  return main_core.Text.encode(measureName);
 	}
 	function _getNodeChildByDataName2(name) {
 	  return this.getNode().querySelector("[data-name=\"".concat(name, "\"]"));

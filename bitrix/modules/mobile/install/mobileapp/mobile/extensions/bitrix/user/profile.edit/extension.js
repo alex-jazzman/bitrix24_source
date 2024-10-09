@@ -7,6 +7,7 @@ jn.define('user/profile.edit', (require, exports, module) => {
 	const { getFile } = require('files/entry');
 	const { FileConverter } = require('files/converter');
 	const { openDeleteDialog } = require('user/account-delete');
+	const { AvaMenu } = require('ava-menu');
 
 	class ProfileEdit extends Profile
 	{
@@ -106,6 +107,7 @@ jn.define('user/profile.edit', (require, exports, module) => {
 		{
 			const data = { PERSONAL_PHOTO: avatar, id: this.userId };
 			BX.rest.callMethod('user.update', data)
+				.then(this.#syncWithAvaMenu)
 				.then((e) => {
 					this.showNotification(BX.message('AVATAR_CHANGED_SUCCESS'));
 					BX.postComponentEvent('shouldReloadMenu', null, 'settings');
@@ -236,7 +238,9 @@ jn.define('user/profile.edit', (require, exports, module) => {
 
 									return oldValue !== item.value;
 								})
-								.forEach((item) => data[item.id] = item.value);
+								.forEach((item) => {
+									data[item.id] = item.value;
+								});
 
 							if (Object.values(data).length === 0)
 							{
@@ -249,7 +253,8 @@ jn.define('user/profile.edit', (require, exports, module) => {
 							data.ID = this.userId;
 							dialogs.showLoadingIndicator();
 							BX.rest.callMethod('mobile.user.update', data)
-								.then((e) => {
+								.then(this.#syncWithAvaMenu)
+								.then(() => {
 									this.isBeingUpdated = false;
 									this.changed = false;
 									this.showNotification(BX.message('PROFILE_CHANGED_SUCCESS'));
@@ -273,6 +278,15 @@ jn.define('user/profile.edit', (require, exports, module) => {
 					},
 				},
 			]);
+		}
+
+		async #syncWithAvaMenu()
+		{
+			return BX.ajax.runAction('mobile.AvaMenu.getUserInfo', { data: { reloadFromDb: true } })
+				.then(({ data }) => {
+					AvaMenu.setUserInfo(data);
+				})
+				.catch(console.error);
 		}
 	}
 

@@ -878,8 +878,9 @@ CREATE TABLE b_cache_tag
 	RELATIVE_PATH varchar(255),
 	TAG varchar(100),
 	PRIMARY KEY pk_b_cache_tag(ID),
-	INDEX ix_b_cache_tag_0 (SITE_ID, CACHE_SALT, RELATIVE_PATH(50)),
-	INDEX ix_b_cache_tag_1 (TAG)
+	INDEX `ix_init_tag` (`SITE_ID`,`CACHE_SALT`,`RELATIVE_PATH`,`TAG`),
+	INDEX `ix_relative_path` (`RELATIVE_PATH`),
+	INDEX `ix_tag_relative_path` (`TAG`,`RELATIVE_PATH`)
 );
 
 CREATE TABLE b_user_hit_auth

@@ -8,7 +8,19 @@ use Bitrix\Main\Localization\Loc;
 
 /** @var SignStartComponent $component */
 $component->setMenuIndex('sign_b2e_kanban');
+\Bitrix\Main\UI\Extension::load([
+	'sign.v2.b2e.kanban-entity-footer',
+	'sign.v2.b2e.kanban-entity-create-group-chat',
+]);
+?>
+<script>
+	const KanbanEntityFooter = new BX.Sign.V2.B2e.KanbanEntityFooter();
+	KanbanEntityFooter.init();
 
+	const KanbanEntityCreateGroupChat = new BX.Sign.V2.B2e.KanbanEntityCreateGroupChat();
+	KanbanEntityCreateGroupChat.init();
+</script>
+<?php
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
 
@@ -24,3 +36,4 @@ $APPLICATION->IncludeComponent(
 );
 
 $APPLICATION->setTitle(Loc::getMessage('SIGN_CMP_START_TPL_DOCS_TITLE_B2E'));
+?>

@@ -10,6 +10,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Views } = require('tasks/statemanager/redux/types');
 	const { Loc } = require('tasks/loc');
+	const { AnalyticsEvent } = require('analytics');
 
 	const airStyleSupported = Feature.isAirStyleSupported();
 
@@ -45,12 +46,14 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		 * @param {String} selectedCounter
 		 * @param {String} selectedSorting
 		 * @param {Object} callbacks
+		 * @param {Object} analyticsLabel
 		 */
 		constructor(
 			counters,
 			selectedCounter,
 			selectedSorting,
 			callbacks = {},
+			analyticsLabel = {},
 		)
 		{
 			super(counters, selectedCounter, selectedSorting, callbacks);
@@ -65,6 +68,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 			this.onKanbanClick = callbacks.onKanbanClick;
 			this.onPlannerClick = callbacks.onPlannerClick;
 			this.onDeadlineClick = callbacks.onDeadlineClick;
+			this.analyticsLabel = analyticsLabel;
 		}
 
 		/**
@@ -219,10 +223,32 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		 * @param item
 		 */
 		onMenuItemSelected = (event, item) => {
+			const analyticsEvent = new AnalyticsEvent({
+				...this.analyticsLabel,
+				tool: 'tasks',
+				category: 'task_operations',
+				type: 'task',
+				status: 'success',
+				c_sub_section: this.getSelectedView()?.toLowerCase(),
+			});
+
 			switch (item.id)
 			{
 				case TasksDashboardFilter.counterType.expired:
+					analyticsEvent
+						.setEvent('overdue_counters_on')
+						.setElement('overdue_counters_filter')
+						.send();
+
+					this.onCounterClick(item.id);
+					break;
+
 				case TasksDashboardFilter.counterType.newComments:
+					analyticsEvent
+						.setEvent('comments_counters_on')
+						.setElement('comments_counters_filter')
+						.send();
+
 					this.onCounterClick(item.id);
 					break;
 

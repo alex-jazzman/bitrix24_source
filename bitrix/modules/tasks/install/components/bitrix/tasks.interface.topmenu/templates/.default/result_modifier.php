@@ -12,14 +12,15 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Extranet\User;
 use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 $isMenu = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === true;
 $arResult['BX24_RU_ZONE'] = ModuleManager::isModuleInstalled('bitrix24')
 	&& preg_match("/^(ru)_/", COption::GetOptionString("main", "~controller_group_name", ""))
@@ -41,6 +42,25 @@ if ($helper->checkHasFatals())
 {
 	return;
 }
+
+$isProjectLimitExceeded = !ProjectLimit::isFeatureEnabled();
+if (ProjectLimit::canTurnOnTrial())
+{
+	$isProjectLimitExceeded = false;
+}
+
+$isScrumLimitExceeded = ScrumLimit::isLimitExceeded() || !ScrumLimit::isFeatureEnabled();
+if (ScrumLimit::canTurnOnTrial())
+{
+	$isScrumLimitExceeded = false;
+}
+
+$tasksEfficiencyEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_EFFICIENCY
+);
+$tasksReportEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_REPORTS
+);
 
 $arResult['TEMPLATE_DATA'] = array(// contains data generated in result_modifier.php
 );
@@ -146,12 +166,24 @@ $isSpacesAvailable = SpaceService::isAvailable(true);
 
 $projectsUrl = $isSpacesAvailable ? '/spaces/' : $tasksLink.'projects/'.$strIframe;
 
+if ($isProjectLimitExceeded)
+{
+	$projectHandler = ProjectLimit::getLimitLockClick(ProjectLimit::getFeatureId());
+}
+else
+{
+	$projectHandler = "BX.SidePanel.Instance.open('{$createGroupLink}')";
+}
+
 $arResult['ITEMS'][] = [
 	"TEXT" => $isSpacesAvailable ? GetMessage("TASKS_PANEL_TAB_SPACE") : GetMessage("TASKS_PANEL_TAB_PROJECTS"),
 	"URL" => $projectsUrl,
 	"ID" => "view_projects",
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS_LIST"] === "Y"),
-	'SUB_LINK' => ['CLASS' => '', 'URL' => $createGroupLink],
+	'SUB_LINK' => [
+		'CLASS' => '',
+		'ON_CLICK' => $projectHandler,
+	],
 	'COUNTER' => $arResult['PROJECTS_COUNTER'],
 	'COUNTER_ID' => 'tasks_projects_counter',
 ];
@@ -192,6 +224,14 @@ $scrumUri->addParams([
 		'scrum' => true,
 	]
 ]);
+if ($isScrumLimitExceeded)
+{
+	$scrumHandler = ScrumLimit::getLimitLockClick(ScrumLimit::getFeatureId());
+}
+else
+{
+	$scrumHandler = "BX.SidePanel.Instance.open('{$scrumUri->getUri()}')";
+}
 
 $arResult['ITEMS'][] = [
 	"TEXT" => GetMessage("TASKS_PANEL_TAB_SCRUM"),
@@ -200,9 +240,7 @@ $arResult['ITEMS'][] = [
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_SCRUM_LIST"] === "Y"),
 	'SUB_LINK' => [
 		'CLASS' => '',
-		'ON_CLICK' => 'BX.Tasks.Component.TopMenu.getInstance("topmenu").createScrum("'
-			. $scrumUri->getUri() . '", "'.ScrumLimit::getSidePanelId().'");'
-		,
+		'ON_CLICK' => $scrumHandler,
 	],
 	'COUNTER' => $arResult['SCRUM_COUNTER'],
 	'COUNTER_ID' => 'tasks_scrum_counter',
@@ -210,6 +248,8 @@ $arResult['ITEMS'][] = [
 
 if ($arParams["SHOW_SECTION_MANAGE"] !== "N")
 {
+	$taskSuperVisorExceeded = !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_SUPERVISOR_VIEW);
+
 	$counter = intval($arResult["SECTION_MANAGE_COUNTER"]);
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_MANAGE"),
@@ -218,6 +258,7 @@ if ($arParams["SHOW_SECTION_MANAGE"] !== "N")
 		'COUNTER' => $counter,
 		'COUNTER_ID' => 'departments_counter',
 		"IS_ACTIVE" => $arParams["MARK_SECTION_MANAGE"] === "Y",
+		'IS_LOCKED' => $taskSuperVisorExceeded,
 	);
 }
 
@@ -229,11 +270,9 @@ $efficiencyItem = [
 	"IS_ACTIVE" => (isset($arParams["MARK_SECTION_EFFECTIVE"]) && $arParams["MARK_SECTION_EFFECTIVE"] === "Y"),
 	"COUNTER" => (int)$arResult['EFFECTIVE_COUNTER'],
 ];
-if (
-	TaskLimit::isLimitExceeded()
-	|| KpiLimit::isLimitExceeded()
-)
+if (!$tasksEfficiencyEnabled)
 {
+	$efficiencyItem['IS_LOCKED'] = true;
 	unset($efficiencyItem['COUNTER']);
 }
 $arResult['ITEMS'][] = $efficiencyItem;
@@ -259,13 +298,16 @@ if (
 	)
 )
 {
-	$arResult['ITEMS'][] = array(
+	$reportItem = [
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_REPORTS"),
 		"URL" => $tasksLink.'report/'.$strIframe,
 		"ID" => "view_reports",
 		"IS_ACTIVE" => $arParams["MARK_SECTION_REPORTS"] === "Y",
-		'IS_DISABLED' => true
-	);
+		'IS_DISABLED' => true,
+		'IS_LOCKED' => !$tasksReportEnabled,
+	];
+
+	$arResult['ITEMS'][] = $reportItem;
 }
 
 if (
@@ -318,6 +360,19 @@ if ($hideRecycleBin !== 'N' && Loader::includeModule('recyclebin'))
 
 if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACTION_TASK_ADMIN))
 {
+	$isTaskAccessPermissionsEnabled = Bitrix24::checkFeatureEnabled(
+		Bitrix24\FeatureDictionary::TASK_ACCESS_PERMISSIONS
+	);
+
+	if ($isTaskAccessPermissionsEnabled)
+	{
+		$rightsHandler = "BX.SidePanel.Instance.open('/tasks/config/permissions/', { cacheable: false })";
+	}
+	else
+	{
+		$rightsHandler = TaskLimit::getLimitLockClick(Bitrix24\FeatureDictionary::TASK_ACCESS_PERMISSIONS, null);
+	}
+
 	$rightsButton = [
 		'TEXT' => GetMessage('TASKS_PANEL_TAB_CONFIG_PERMISSIONS'),
 		'ID' => 'config_permissions',
@@ -330,9 +385,9 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 	}
 	else
 	{
-		$rightsButton['ON_CLICK'] = 'BX.Tasks.Component.TopMenu.getInstance("topmenu").showConfigPermissions();';
+		$rightsButton['ON_CLICK'] = $rightsHandler;
 	}
-	if (!Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS))
+	if (!$isTaskAccessPermissionsEnabled)
 	{
 		$rightsButton['IS_LOCKED'] = true;
 	}

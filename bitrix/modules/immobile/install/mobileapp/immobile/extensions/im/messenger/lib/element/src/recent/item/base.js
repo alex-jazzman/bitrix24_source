@@ -448,11 +448,13 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return this.params.model.recent;
 		}
 
-		getMessageText()
+		/**
+		 * @param {RecentModelState} [item=this.getModelItem()]
+		 * @return {string}
+		 */
+		getMessageText(item = this.getModelItem())
 		{
-			const item = this.getModelItem();
 			const message = item.message;
-
 			let messageText = message.text;
 			const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id);
 			if (modelMessage.id)
@@ -463,6 +465,15 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					text: modelMessage.text,
 					attach: modelMessage?.params?.ATTACH ?? false,
 					files: messageFiles,
+					showFilePrefix: false,
+				});
+			}
+			else
+			{
+				messageText = parser.simplify({
+					text: item.message.text,
+					attach: item.message?.params?.withAttach ?? false,
+					files: item.message?.params?.withFile ?? false,
 					showFilePrefix: false,
 				});
 			}

@@ -5,6 +5,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { PropTypes } = require('utils/validation');
+	const { Type } = require('type');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const {
 		MINIMAL_SEARCH_LENGTH,
@@ -147,6 +148,11 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		getDefaultPresetId()
 		{
+			if (Type.isFunction(this.props.getDefaultPresetId))
+			{
+				return this.props.getDefaultPresetId();
+			}
+
 			if (!this.presetsLoaded)
 			{
 				return null;
@@ -303,16 +309,16 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		search()
 		{
-			if (this.text.length > 0 && this.text.length < MINIMAL_SEARCH_LENGTH)
-			{
-				return;
-			}
-
 			if (this.text.length > 0 && this.hasRestrictions())
 			{
 				this.text = '';
 				this.nativeSearchField.text = '';
 
+				return;
+			}
+
+			if (this.text.length > 0 && this.text.length < MINIMAL_SEARCH_LENGTH)
+			{
 				return;
 			}
 
@@ -354,6 +360,11 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			if (this.presetsLoaded)
 			{
 				return this.presetId !== this.getDefaultPresetId();
+			}
+
+			if (Type.isFunction(this.props.getDefaultPresetId))
+			{
+				return this.presetId !== this.props.getDefaultPresetId();
 			}
 
 			return false;

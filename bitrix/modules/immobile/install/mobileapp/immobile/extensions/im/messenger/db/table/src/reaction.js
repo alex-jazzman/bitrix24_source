@@ -21,7 +21,7 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 		{
 			return [
 				{ name: 'messageId', type: FieldType.integer, unique: true, index: true },
-				{ name: 'ownReactions', type: FieldType.json },
+				{ name: 'ownReactions', type: FieldType.set },
 				{ name: 'reactionCounters', type: FieldType.json },
 				{ name: 'reactionUsers', type: FieldType.map },
 			];

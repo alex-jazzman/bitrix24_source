@@ -29,7 +29,7 @@ this.BX = this.BX || {};
 	    BX.addCustomEvent("SidePanel.Slider:onMessage", this.onMessageSlider);
 	  },
 	  methods: {
-	    getDetailLink: function (appCode, isSiteTemplate) {
+	    getDetailLink: function (appItem) {
 	      const params = {
 	        from: 'main',
 	        collectionId: this.item.COLLECTION_ID
@@ -37,7 +37,7 @@ this.BX = this.BX || {};
 	      if (this.placement.length) {
 	        params.placement = this.placement;
 	      }
-	      return this.MarketLinks.appDetail(appCode, isSiteTemplate, params);
+	      return this.MarketLinks.appDetail(appItem, params);
 	    },
 	    onMessageSlider: function (event) {
 	      if (event.eventId === 'total-fav-number') {
@@ -136,7 +136,7 @@ this.BX = this.BX || {};
 						 :data-market-app-code="appItem.CODE"
 					>
 						<a class="market-topset-item-cover"
-						   :href="getDetailLink(appItem.CODE, isSiteTemplate(appItem))"
+						   :href="getDetailLink(appItem)"
 						   @click="MarketLinks.openSiteTemplate($event, isSiteTemplate(appItem))"
 						   @mousedown="adjustMouseClick($event.target)"
 						   :title="appItem.NAME"
@@ -172,7 +172,7 @@ this.BX = this.BX || {};
 						<div class="market-topset-item-info-container">
 							<h3 class="market-topset-item-info-title" :title="appItem.NAME">
 								<a class="market-topset-item-info-title-text"
-								   :href="getDetailLink(appItem.CODE, isSiteTemplate(appItem))"
+								   :href="getDetailLink(appItem,)"
 								   @click="MarketLinks.openSiteTemplate($event, isSiteTemplate(appItem))"
 								   @mousedown="adjustMouseClick($event.target)"
 								   :title="appItem.NAME"

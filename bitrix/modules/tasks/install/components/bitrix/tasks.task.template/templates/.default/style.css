@@ -1085,6 +1085,34 @@ select.task-options-inp {
   display: block;
   min-height: 0;
 }
+.task-options-item-open-inner.--tariff-lock {
+	position: relative;
+	max-width: 798px;
+	min-width: 217px;
+}
+
+.task-options-item-open-inner.--tariff-lock .ui-tile-selector-selector-wrap {
+	padding-right: 42px;
+}
+
+.task-options-item-open-inner.--tariff-lock .tariff-lock {
+	--task-tariff-lock-icon-size: 42px;
+
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: var(--task-tariff-lock-icon-size);
+	height: var(--task-tariff-lock-icon-size);
+	z-index: 1;
+	margin: 0;
+	margin-right: 0!important;
+	opacity: 1;
+	transition: .2s;
+}
+
+.task-options-item-open-inner.--tariff-lock .tariff-lock:hover {
+	opacity: 0.8;
+}
 .task-field-label-repeat {
   padding: 12px 0;
 }
@@ -1584,12 +1612,12 @@ select.task-options-inp {
 }
 
 .tasks-btn-restricted.task-field-label-repeat {
-	padding-left: 15px;
+	padding-right: 20px;
 	padding-bottom: 10px;
 }
 
 .tasks-parent-selector.tasks-btn-restricted {
-	padding-left: 15px;
+	padding: 0;
 }
 
 .tasks-parent-selector.tasks-btn-restricted:before,
@@ -1598,4 +1626,10 @@ select.task-options-inp {
 .task-edit-add-template-container.tasks-btn-restricted:before {
   top: 50%;
   transform: translate(0%, -50%);
+}
+
+.tasks-parent-selector.tasks-btn-restricted:before {
+	left: auto;
+	right: 10px;
+	z-index: 1;
 }

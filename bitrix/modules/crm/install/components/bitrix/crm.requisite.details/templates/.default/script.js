@@ -1,4 +1,7 @@
 BX.namespace("BX.Crm");
+
+BX.localStorage.set("BX.Crm.RequisiteSliderDetails:initStarted", {}, 10); // warmup local storage listeners
+
 if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 {
 	BX.Crm.RequisiteDetailsManager = function()

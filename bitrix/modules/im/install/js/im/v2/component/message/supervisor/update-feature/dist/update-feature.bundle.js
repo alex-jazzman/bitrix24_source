@@ -23,7 +23,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  scrum: 'scrum',
 	  invoices: 'invoices',
 	  saleshub: 'saleshub',
-	  websitesStores: 'sites'
+	  websitesStores: 'sites',
+	  checkIn: 'checkIn',
+	  checkInGeo: 'checkInGeo'
 	});
 	const UpdateFeatures = Object.freeze({
 	  collaborativeDocumentEditing: 'limit_office_no_document',

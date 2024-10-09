@@ -28,7 +28,7 @@ if (!function_exists('renderNameColumn'))
 		$groupBlock = <<<HTML
 			<div class="tasks-flow__list-name_info">
 				<span class="tasks-flow__list-name_info-title">$groupLabel</span>
-				<span>$groupName</span>
+				<span class="tasks-flow__list-name_info-text">$groupName</span>
 			</div>
 		HTML;
 
@@ -59,19 +59,25 @@ if (!function_exists('renderNameColumn'))
 			HTML;
 		}
 
+		$isFeatureEnabled = $arResult['isFeatureEnabled'] ? 'Y' : 'N';
+
 		if ($data['demo'] && $data['editable'])
 		{
 			$nameClick = 'BX.Tasks.Flow.EditForm.createInstance({ flowId: ' . $flowId . ' })';
 		}
 		else
 		{
-			$nameClick = 'BX.Tasks.Flow.ViewForm.showInstance({ flowId: ' . $flowId . ', bindElement: this })';
+			$nameClick = "BX.Tasks.Flow.ViewForm.showInstance({
+				flowId: $flowId,
+				bindElement: this,
+				isFeatureEnabled: '$isFeatureEnabled'
+			})";
 		}
 
 		if ($data['demo'])
 		{
 			$teamContentBlock = <<<HTML
-				<span>$team</span>
+				<span class="tasks-flow__list-name_info-text">$team</span>
 			HTML;
 		}
 		else
@@ -101,7 +107,7 @@ if (!function_exists('renderNameColumn'))
 				</div>
 				<div class="tasks-flow__list-name_info">
 					<span class="tasks-flow__list-name_info-title">$dateLabel</span>
-					<span>$date</span>
+					<span class="tasks-flow__list-name_info-text">$date</span>
 				</div>
 				<div class="tasks-flow__list-name_info --link">
 					<span class="tasks-flow__list-name_info-title">

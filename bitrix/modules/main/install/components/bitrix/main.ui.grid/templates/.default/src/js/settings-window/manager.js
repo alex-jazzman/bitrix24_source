@@ -196,9 +196,9 @@ import { Tag, Text, Type } from 'main.core';
 			this.getPopup().saveColumnsByNames(columns, callback);
 		},
 
-		select(name): void
+		select(name: string, value: boolean = true): void
 		{
-			this.getPopup().select(name);
+			this.getPopup().select(name, value);
 		},
 	};
 })();

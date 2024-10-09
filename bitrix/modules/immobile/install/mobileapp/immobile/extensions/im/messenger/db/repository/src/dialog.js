@@ -5,7 +5,6 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 	const { mergeImmutable } = require('utils/object');
 
-	const { DialogType } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		DialogTable,
@@ -109,7 +108,7 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			const dialogListToAdd = [];
 
 			dialogList.forEach((dialog) => {
-				const dialogToAdd = this.validateRestDialog(dialog);
+				const dialogToAdd = this.dialogTable.validate(this.validateRestDialog(dialog));
 
 				dialogListToAdd.push(dialogToAdd);
 			});
@@ -221,7 +220,22 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 
 			if (Type.isArray(dialog.muteList) || Type.isPlainObject(dialog.muteList))
 			{
-				result.muteList = JSON.stringify(dialog.muteList);
+				result.muteList = dialog.muteList;
+			}
+
+			if (Type.isArray(dialog.mute_list) || Type.isPlainObject(dialog.mute_list))
+			{
+				result.muteList = dialog.mute_list;
+			}
+
+			if (Type.isArray(dialog.managerList) || Type.isPlainObject(dialog.managerList))
+			{
+				result.managerList = dialog.managerList;
+			}
+
+			if (Type.isArray(dialog.manager_list) || Type.isPlainObject(dialog.manager_list))
+			{
+				result.managerList = dialog.manager_list;
 			}
 
 			if (Type.isNumber(dialog.ownerId) || Type.isStringFilled(dialog.ownerId))
@@ -239,14 +253,29 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				result.entityType = dialog.entityType;
 			}
 
+			if (Type.isStringFilled(dialog.entity_type))
+			{
+				result.entityType = dialog.entity_type;
+			}
+
 			if (Type.isNumber(dialog.entityId) || Type.isStringFilled(dialog.entityId))
 			{
 				result.entityId = dialog.entityId.toString();
 			}
 
+			if (Type.isNumber(dialog.entity_id) || Type.isStringFilled(dialog.entity_id))
+			{
+				result.entityId = dialog.entity_id.toString();
+			}
+
 			if (!Type.isUndefined(dialog.dateCreate))
 			{
-				result.dateCreate = DateHelper.cast(dialog.dateCreate).toISOString();
+				result.dateCreate = DateHelper.cast(dialog.dateCreate);
+			}
+
+			if (!Type.isUndefined(dialog.date_create))
+			{
+				result.dateCreate = DateHelper.cast(dialog.date_create);
 			}
 
 			if (Type.isPlainObject(dialog.public))
@@ -295,9 +324,7 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				result.permissions = this.validatePermissionsFromRest(dialog.permissions);
 			}
 
-			result.permissions = JSON.stringify(
-				mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions),
-			);
+			result.permissions = mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions);
 
 			return result;
 		}

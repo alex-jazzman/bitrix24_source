@@ -11,8 +11,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 	const { Uuid } = require('utils/uuid');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessageIdType, MessageType, DialogType } = require('im/messenger/const');
+	const { MessageIdType, MessageType, DialogType, MessageParams } = require('im/messenger/const');
 	const { DialogConverter } = require('im/messenger/lib/converter');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { Analytics } = require('im/messenger/const');
+	const { AnalyticsEvent } = require('analytics');
 
 	const {
 		Message,
@@ -207,6 +210,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				}
 
 				await this.updateViewMessages(formattedMessages);
+
+				if (this.view.isWelcomeScreenShown) // check when delete last message offline
+				{
+					this.view.hideMessageListLoader();
+				}
 			}
 
 			const bottomMessage = this.getBottomMessage();
@@ -242,10 +250,18 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			const viewMessageListToSet = this.processNearbyMessagesList(viewMessageListWithTemplate);
 			this.view.unreadSeparatorAdded = this.unreadSeparatorAdded;
+
 			await this.view.setMessages(viewMessageListToSet);
 			viewMessageListToSet.forEach((message) => {
 				this.viewMessageCollection[message.id] = message;
 			});
+
+			if (this.isHistoryLimitExceeded())
+			{
+				logger.log(`${this.constructor.name}.setMessageList.pushPlanLimitMessage`);
+				this.sendAnalyticsIsHistoryLimitExceeded(this.dialogId, Analytics.Section.chatStart);
+				await this.view.pushMessages([this.getPlanLimitMessage()]);
+			}
 		}
 
 		/**
@@ -399,6 +415,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			viewMessageListWithTemplate.forEach((message) => {
 				this.viewMessageCollection[message.id] = message;
 			});
+
+			if (this.isHistoryLimitExceeded())
+			{
+				await this.pushPlanLimitMessage();
+			}
 		}
 
 		/**
@@ -582,12 +603,54 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const updateMessagesObj = {};
 			for (const message of viewMessageList)
 			{
-				updateMessagesObj[message.id] = message;
-				this.viewMessageCollection[message.id] = message;
-				await this.view.updateMessageListById(message.id, message);
+				let messageObj = message;
+				if (message.type === MessageType.audio)
+				{
+					messageObj = this.updatePlayingTimeByMessage(message);
+				}
+
+				updateMessagesObj[messageObj.id] = messageObj;
+				this.viewMessageCollection[messageObj.id] = messageObj;
+				await this.view.updateMessageListById(messageObj.id, messageObj);
 			}
 
 			await this.view.updateMessagesByIds(updateMessagesObj);
+		}
+
+		/**
+		 * @desc update view message by id
+		 * @private
+		 * @param {number} id
+		 * @param {Message} message
+		 * @param {string | null} section
+		 * @return {Promise}
+		 */
+		async #updateMessageById(id, message, section)
+		{
+			let messageObj = message;
+			if (message.type === MessageType.audio)
+			{
+				messageObj = this.updatePlayingTimeByMessage(message);
+			}
+
+			await this.view.updateMessageById(id, messageObj, section);
+		}
+
+		/**
+		 * @param {AudioMessage} message
+		 * @return {AudioMessage}
+		 */
+		updatePlayingTimeByMessage(message)
+		{
+			if (!message.getIsPlaying())
+			{
+				return message;
+			}
+
+			const currentPlayingTime = this.view.getPlayingTime(message.id);
+			message.setPlayingTime(currentPlayingTime);
+
+			return message;
 		}
 
 		/**
@@ -825,7 +888,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 *
 		 * @param {Array<MessagesModelState>} messageList
 		 * @param {string} section
 		 */
@@ -871,7 +933,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				const isMessageChanged = !isEqual(formattedMessage, this.viewMessageCollection[formattedMessage.id]);
 				if (isMessageChanged)
 				{
-					await this.view.updateMessageById(formattedMessage.id, formattedMessage, section);
+					await this.#updateMessageById(formattedMessage.id, formattedMessage, section);
 					this.viewMessageCollection[formattedMessage.id] = formattedMessage;
 				}
 
@@ -885,7 +947,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 					if (isTemplateMessageChanged)
 					{
-						await this.view.updateMessageById(messageListItem.templateId, formattedMessage, section);
+						await this.#updateMessageById(messageListItem.templateId, formattedMessage, section);
 						this.viewMessageCollection[messageListItem.templateId] = formattedMessage;
 					}
 				}
@@ -893,6 +955,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				if (!isMessageChanged && !isTemplateMessageChanged)
 				{
 					logger.log('MessageRenderer.updateMessageList: Nothing changed');
+				}
+
+				if (this.isHistoryLimitExceeded() && !this.isHasPrevMorePage())
+				{
+					await this.pushPlanLimitMessage();
 				}
 			}
 		}
@@ -1039,6 +1106,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const messageListWithTemplate = [];
 			const dialogModelState = this.getDialog();
 			messageList.reverse().forEach((message, index, messageList) => {
+				if (Type.isNil(message))
+				{
+					return;
+				}
 				const isOldestMessage = index === 0;
 				if (isOldestMessage)
 				{
@@ -1220,8 +1291,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			{
 				return message;
 			}
-
-			const dialogType = this.getDialog().type;
+			const dialogModelState = this.getDialog();
+			const dialogType = dialogModelState?.type;
 			const isPrivateDialog = dialogType === DialogType.user || dialogType === DialogType.private;
 			if (!previousMessage)
 			{
@@ -1244,8 +1315,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				}
 
 				if (
-					nextModelMessage?.authorId !== modelMessage?.authorId
-					&& modelMessage.id !== this.getDialog().parentMessageId // scenario for comments chat when initial message is your
+					!Type.isNil(nextModelMessage?.authorId)
+					&& nextModelMessage?.authorId !== modelMessage?.authorId
+					&& (dialogModelState.parentMessageId !== 0 && modelMessage.id !== dialogModelState.parentMessageId)
+					// scenario for comments chat when initial message is your
 				)
 				{
 					message.setShowAvatar(modelMessage, true);
@@ -1254,6 +1327,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				if (!nextMessage)
 				{
 					message.setAuthorTopMessage(true);
+					message.setAuthorBottomMessage(true);
+				}
+
+				if (nextModelMessage?.authorId !== modelMessage?.authorId)
+				{
 					message.setAuthorBottomMessage(true);
 				}
 
@@ -1549,6 +1627,116 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		{
 			this.nextTickCallbackList.forEach((callback) => callback());
 			this.nextTickCallbackList = [];
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isHistoryLimitExceeded()
+		{
+			return DialogHelper.createByModel(this.getDialog())?.isHistoryLimitExceeded;
+		}
+
+		/**
+		 * @return {PlanLimitsBanner}
+		 */
+		getPlanLimitMessage()
+		{
+			const messageBanner = {
+				text: MessageParams.ComponentId.PlanLimitsMessage,
+				id: MessageIdType.planLimitBanner,
+				authorId: 0,
+				message: [],
+				files: [],
+				attach: [],
+				reactions: null,
+				params: {
+					componentId: MessageParams.ComponentId.PlanLimitsMessage,
+				},
+			};
+
+			return DialogConverter.createMessage(messageBanner);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isHasPlanLimitMessage()
+		{
+			return this.view.isHasPlanLimitMessage();
+		}
+
+		/**
+		 * @desc remove the limit banner.
+		 * This is necessary due to asynchronous data retrieval and
+		 * asynchronous rendering of the native (the native does not have time).
+		 * @deprecated
+		 * @return {Promise<boolean>}
+		 */
+		async removePlanLimitMessage()
+		{
+			logger.log(`${this.constructor.name}.removePlanLimitMessage`);
+
+			return this.view.removeMessagesByIds([MessageIdType.planLimitBanner]);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isPlanMessageOnTop()
+		{
+			const topMessage = this.view.getTopMessage();
+
+			return Boolean(topMessage && topMessage.id === MessageIdType.planLimitBanner);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isHasPrevMorePage()
+		{
+			const dialog = this.getDialog();
+
+			return dialog && dialog.hasPrevPage;
+		}
+
+		/**
+		 * @return {Promise<boolean>}
+		 */
+		async pushPlanLimitMessage()
+		{
+			if (this.isPlanMessageOnTop()) // banner on top stack, do nothing
+			{
+				return;
+			}
+
+			if (this.isHasPlanLimitMessage()) // banner into stack, but on top, remove
+			{
+				await this.removePlanLimitMessage();
+			}
+
+			logger.log(`${this.constructor.name}.pushPlanLimitMessage`);
+			await this.view.pushMessages([this.getPlanLimitMessage()]);
+			this.sendAnalyticsIsHistoryLimitExceeded(this.dialogId, Analytics.Section.chatHistory);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} section
+		 */
+		sendAnalyticsIsHistoryLimitExceeded(dialogId, section)
+		{
+			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const dialogType = dialog.type;
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.im)
+				.setCategory(Analytics.Category.limitBanner)
+				.setEvent(Analytics.Event.view)
+				.setType(Analytics.Type.limitOfficeChatingHistory)
+				.setSection(section)
+				.setP1(Analytics.P1[dialogType]);
+
+			analytics.send();
 		}
 	}
 

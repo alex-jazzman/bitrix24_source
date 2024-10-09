@@ -1,4 +1,5 @@
 import { Dom, Tag, Event, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 import { BaseField } from './base-field';
 
 export class Input extends BaseField
@@ -40,30 +41,40 @@ export class Input extends BaseField
 			});
 		}
 
+		Event.bind(inputElement, 'paste', (event) => {
+			setTimeout(() => {
+				this.#onInput(wrapper, event);
+			}, 0);
+		});
 		Event.bind(inputElement, 'input', (event) => {
-			Dom.hide(this.renderErrorsContainer());
-
-			if (Dom.hasClass(wrapper, 'ui-ctl-warning'))
-			{
-				Dom.removeClass(wrapper, 'ui-ctl-warning');
-			}
-
-			if (Type.isNil(event.target.value) || event.target.value === '')
-			{
-				this.emit('onUnreadySave');
-				this.readySave = false;
-			}
-			else
-			{
-				this.emit('onReadySave');
-				this.readySave = true;
-			}
-
-			this.value = event.target.value;
+			this.#onInput(wrapper, event);
 		});
 
 		Dom.append(input, wrapper);
 
 		return wrapper;
+	}
+
+	#onInput(wrapper: HTMLElement, event: BaseEvent): void
+	{
+		Dom.hide(this.renderErrorsContainer());
+
+		if (Dom.hasClass(wrapper, 'ui-ctl-warning'))
+		{
+			Dom.removeClass(wrapper, 'ui-ctl-warning');
+		}
+
+		if (Type.isNil(event.target.value) || event.target.value === '')
+		{
+			this.emit('onUnreadySave');
+			this.readySave = false;
+		}
+		else
+		{
+			this.emit('onReadySave');
+			this.readySave = true;
+		}
+
+		this.value = event.target.value;
 	}
 }

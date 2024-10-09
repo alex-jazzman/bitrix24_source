@@ -40,10 +40,12 @@ jn.define('tasks/layout/fields/result', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @param {PageManager} [parentWidget = this.parentWidget]
 		 */
-		createNewResult()
+		createNewResult(parentWidget = this.parentWidget)
 		{
 			void TextEditor.edit({
+				parentWidget,
 				textInput: {
 					placeholder: Loc.getMessage('TASKS_FIELDS_RESULT_ADD_WIDGET_PLACEHOLDER'),
 				},
@@ -178,7 +180,7 @@ jn.define('tasks/layout/fields/result', (require, exports, module) => {
 						taskId: this.taskId,
 						parentWidget: layout,
 						onResultClick: (resultId) => this.openResult(resultId),
-						onCreateClick: () => this.createNewResult(),
+						onCreateClick: () => this.createNewResult(layout),
 					});
 				},
 			})

@@ -520,7 +520,7 @@ export const ChatTextarea = {
 		},
 		onInsertMention(event: BaseEvent<InsertMentionEvent>)
 		{
-			const { mentionText, mentionReplacement, dialogId } = event.getData();
+			const { mentionText, mentionReplacement, dialogId, isMentionSymbol = true } = event.getData();
 			let { textToReplace = '' } = event.getData();
 			if (this.dialogId !== dialogId)
 			{
@@ -530,12 +530,13 @@ export const ChatTextarea = {
 			const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
 			this.draftManager.setDraftMentions(this.dialogId, mentions);
 
-			const mentionSymbol = this.mentionManager.getMentionSymbol();
+			const mentionSymbol = isMentionSymbol ? this.mentionManager.getMentionSymbol() : '';
 			textToReplace = `${mentionSymbol}${textToReplace}`;
 			this.text = Textarea.insertMention(this.$refs.textarea, {
 				textToInsert: mentionText,
 				textToReplace,
 			});
+			this.mentionManager.clearMentionSymbol();
 		},
 		onInsertText(event: BaseEvent<InsertTextEvent>)
 		{

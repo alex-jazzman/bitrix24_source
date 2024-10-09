@@ -295,8 +295,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		hideLoader()
 		{
-			this.removeItem({ id: this.loadNextPageItemId });
-			this.loaderShown = false;
+			if (this.loaderShown)
+			{
+				this.removeItem({ id: this.loadNextPageItemId });
+				this.loaderShown = false;
+			}
 		}
 
 		showWelcomeScreen()

@@ -16,6 +16,7 @@ return [
 		'calendar.entry',
 		'calendar.sectionmanager',
 		'ui.dialogs.messagebox',
+		'calendar.entityrelation',
 	],
 	'skip_core' => false,
 ];

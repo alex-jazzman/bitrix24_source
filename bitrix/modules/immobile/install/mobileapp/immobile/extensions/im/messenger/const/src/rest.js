@@ -126,6 +126,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imPromotionGet: 'im.promotion.get',
 		imPromotionRead: 'im.promotion.read',
 
+		imV2TariffRestrictionGet: 'im.v2.Tariff.Restriction.get',
+
 		imRevisionGet: 'im.revision.get',
 
 		imDepartmentColleaguesGet: 'im.department.colleagues.get',

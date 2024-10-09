@@ -103,11 +103,6 @@ export class DraftManager
 
 	setDraftText(dialogId: number, text: string): void
 	{
-		if (!this.canSaveDraft(dialogId))
-		{
-			return;
-		}
-
 		if (!this.drafts[dialogId])
 		{
 			this.drafts[dialogId] = {};
@@ -163,7 +158,12 @@ export class DraftManager
 
 	setRecentItemDraftText(dialogId: number, text: string)
 	{
-		Core.getStore().dispatch(this.getDraftMethodName(), {
+		if (!this.canSetRecentItemDraftText(dialogId))
+		{
+			return;
+		}
+
+		void Core.getStore().dispatch(this.getDraftMethodName(), {
 			id: dialogId,
 			text,
 		});
@@ -235,7 +235,7 @@ export class DraftManager
 		return 'recent/setRecentDraft';
 	}
 
-	canSaveDraft(dialogId: string): boolean
+	canSetRecentItemDraftText(dialogId: string): boolean
 	{
 		const chat = Core.getStore().getters['chats/get'](dialogId);
 		if (!chat)

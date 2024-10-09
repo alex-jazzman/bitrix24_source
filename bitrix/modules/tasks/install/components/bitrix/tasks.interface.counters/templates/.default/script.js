@@ -357,7 +357,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function processPullEvent(data) {
 	      var eventHandlers = {
 	        user_counter: this.onUserCounter.bind(this),
-	        project_counter: this.onProjectCounter.bind(this)
+	        project_counter: this.onProjectCounter.bind(this),
+	        comment_read_all: this.onCommentReadAll.bind(this)
 	      };
 	      var has = Object.prototype.hasOwnProperty;
 	      var command = data.command,
@@ -432,11 +433,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.role = this.filter.isFilteredByField('ROLEID') ? this.filter.fields.ROLEID : 'view_all';
 	    }
 	  }, {
+	    key: "onCommentReadAll",
+	    value: function onCommentReadAll(data) {
+	      this.updateCountersData();
+	    }
+	  }, {
 	    key: "onUserCounter",
 	    value: function onUserCounter(data) {
 	      var _this5 = this;
 	      var has = Object.prototype.hasOwnProperty;
 	      if (!this.isUserTaskList() || !this.isMyTaskList() || !has.call(data, this.groupId) || this.userId !== Number(data.userId)) {
+	        // most likely project counters were updated, but due to 'isSonetEnable' flag only user counters are comming
+	        this.updateCountersData();
 	        return;
 	      }
 	      var newCommentsCount = 0;
@@ -455,6 +463,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      if (newCommentsCount > 0) {
 	        this.$readAllInner.classList.remove('--fade');
+	      }
+	      if (data.isSonetEnabled !== undefined && data.isSonetEnabled === false) {
+	        this.updateCountersData();
 	      }
 	    }
 	  }, {

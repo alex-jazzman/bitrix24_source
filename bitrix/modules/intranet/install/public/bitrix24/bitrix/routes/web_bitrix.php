@@ -157,7 +157,7 @@ return function (RoutingConfigurator $routes) {
 		->where('any', '.*')
 		->group(function (RoutingConfigurator $routes) {
 
-			$routes->any('local/{any}', new PublicPageController('/marketplace/local/index.php'));
+
 			$routes->any('configuration/{any}', new PublicPageController('/marketplace/configuration/index.php'));
 			$routes->any('hook/{any}', new PublicPageController('/marketplace/hook/index.php'));
 			$routes->any('app/{any}', new PublicPageController('/marketplace/app/index.php'));

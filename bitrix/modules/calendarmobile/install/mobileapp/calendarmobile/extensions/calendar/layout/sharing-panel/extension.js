@@ -10,6 +10,7 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 	const { Icons } = require('calendar/layout/icons');
 	const { SharingContext } = require('calendar/model/sharing');
 	const { LinkList } = require('calendar/layout/sharing-joint');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class SharingPanel
@@ -136,7 +137,7 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 			// eslint-disable-next-line promise/catch-or-return
 			new BottomSheet({ component })
 				.setParentWidget(this.props.layoutWidget)
-				.setBackgroundColor(AppTheme.colors.bgNavigation)
+				.setBackgroundColor(Color.bgNavigation.toHex())
 				.disableContentSwipe()
 				.setMediumPositionPercent(80)
 				.open()
@@ -167,7 +168,7 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 			fontWeight: '500',
 			ellipsize: 'end',
 			numberOfLines: 1,
-			color: AppTheme.colors.base8,
+			color: AppTheme.colors.baseWhiteFixed,
 		},
 		historyButtonContainer: {
 			flexGrow: 1,

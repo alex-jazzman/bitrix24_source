@@ -23,6 +23,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 					networkWaiting: false,
 					connection: false,
 					sync: false,
+					backgroundSync: false,
 					running: false,
 				},
 			},
@@ -48,6 +49,11 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 				if (statusData.sync === true)
 				{
 					return AppStatus.sync;
+				}
+
+				if (statusData.backgroundSync === true)
+				{
+					return AppStatus.backgroundSync;
 				}
 
 				return AppStatus.running;

@@ -13,7 +13,7 @@ declare type DialogRow = {
 	markedId: number,
 	lastMessageId: number,
 	lastMessageViews: string,
-	countOfViewers: number,
+	countOfViewers: number, // FIXME remove this field ( is has lastMessageViews )
 	managerList: string,
 	readList: string,
 	muteList: string,

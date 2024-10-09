@@ -17,6 +17,7 @@ $MESS['IM_SIDEBAR_SYSTEM_USER'] = "Системный пользователь";
 $MESS['IM_SIDEBAR_SYSTEM_MESSAGE'] = "Системное сообщение";
 $MESS['IM_SIDEBAR_SEARCH_MESSAGE_PLACEHOLDER'] = "Поиск по чату";
 $MESS['IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE'] = "Здесь появятся сообщения, которые вы ищете";
+$MESS['IM_SIDEBAR_SEARCH_RESULT_START_TITLE'] = "Здесь появятся результаты, которые вы ищете";
 
 // detail titles
 $MESS['IM_SIDEBAR_MAIN_DETAIL_TITLE'] = "Участники: #NUMBER#";
@@ -42,6 +43,7 @@ $MESS['IM_SIDEBAR_MENU_SAVE_FILE_ON_DISK_MSGVER_1'] = "Сохранить на �
 $MESS['IM_SIDEBAR_MENU_DELETE_FILE'] = "Удалить файл";
 $MESS['IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'] = "Посмотреть в чате";
 $MESS['IM_SIDEBAR_MENU_INVITE_MEMBERS_V2'] = "Добавить участников";
+$MESS['IM_SIDEBAR_MENU_UPDATE_CHAT'] = "Редактировать";
 $MESS['IM_SIDEBAR_MENU_JOIN_CHAT'] = "Присоединиться к чату";
 $MESS['IM_SIDEBAR_MENU_KICK_FROM_CHAT'] = "Исключить из чата";
 $MESS['IM_SIDEBAR_MENU_REMOVE_FROM_SAVED_V2'] = "Убрать из Избранного";
@@ -66,6 +68,8 @@ $MESS['IM_SIDEBAR_MEETINGS_EMPTY'] = "Нет встреч";
 $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND'] = "Ничего не найдено";
 $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION'] = "Попробуйте сформулировать иначе";
 $MESS['IM_SIDEBAR_CHATS_WITH_USER_EMPTY'] = "Нет чатов с сотрудником";
+$MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED'] = "Попробуйте сформулировать иначе или измените ваш запрос";
+$MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED'] = "Ничего не нашлось";
 
 //tabs
 $MESS['IM_SIDEBAR_FILES_MEDIA_TAB'] = "Медиа";

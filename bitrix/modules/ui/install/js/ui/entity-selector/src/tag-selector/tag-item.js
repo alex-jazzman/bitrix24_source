@@ -309,12 +309,13 @@ export default class TagItem
 		{
 			titleNode.renderTo(this.getTitleContainer());
 
-			//Dom.attr(this.getContentContainer(), 'title', this.getTitle());
+			const title = this.getTitleContainer().textContent;
+			this.getContentContainer().setAttribute('title', this.constructor.#sanitizeTitle(title));
 		}
 		else
 		{
 			this.getTitleContainer().textContent = '';
-			Dom.attr(this.getContentContainer(), 'title', '');
+			Dom.attr(this.getContentContainer(), 'title', null);
 		}
 
 		const avatar = this.getAvatar();
@@ -372,6 +373,11 @@ export default class TagItem
 		Dom.style(this.getContainer(), 'background-color', this.getBgColor());
 
 		this.rendered = true;
+	}
+
+	static #sanitizeTitle(text: string): string
+	{
+		return text.replaceAll(/[\t ]+/gm, ' ').replaceAll(/\n+/gm, '\n').trim();
 	}
 
 	getContainer(): HTMLElement

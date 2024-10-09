@@ -10,7 +10,10 @@ export class StrikethroughNodeFormatter extends NodeFormatter
 			convert({ node }: ConvertCallbackOptions): HTMLElement {
 				return Dom.create({
 					tag: 's',
-					attributes: node.getAttributes(),
+					attrs: {
+						...node.getAttributes(),
+						className: 'ui-typography-text-strikethrough',
+					},
 				});
 			},
 			...options,

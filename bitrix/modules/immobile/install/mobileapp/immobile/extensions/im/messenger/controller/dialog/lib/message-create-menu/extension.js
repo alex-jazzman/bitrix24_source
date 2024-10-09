@@ -5,9 +5,18 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 	const { Loc } = require('loc');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { menuIcons } = require('im/messenger/assets/common');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { RestMethod } = require('im/messenger/const/rest');
+
+	let openTaskCreateForm = null;
+	try
+	{
+		openTaskCreateForm = require('tasks/layout/task/create/opener')?.openTaskCreateForm;
+	}
+	catch (error)
+	{
+		console.warn('Cannot get openTaskCreateForm', error);
+	}
 
 	/**
 	 * @class MessageAvatarMenu
@@ -19,7 +28,7 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 		 * @param {DialogLocator} serviceLocator
 		 */
 		constructor(messageData, serviceLocator) {
-			this.actionsName = ['task'];
+			this.actionsName = this.getActionNames();
 			this.actionsData = [];
 			this.messageData = messageData;
 			this.serviceLocator = serviceLocator;
@@ -33,6 +42,25 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 		{
 			const instanceClass = new MessageCreateMenu(messageData, serviceLocator);
 			instanceClass.show();
+		}
+
+		static hasActions()
+		{
+			const instanceClass = new MessageCreateMenu();
+
+			return instanceClass.getActionNames().length > 0;
+		}
+
+		getActionNames()
+		{
+			const actionsName = [];
+
+			if (openTaskCreateForm)
+			{
+				actionsName.push('task');
+			}
+
+			return actionsName;
 		}
 
 		show()
@@ -98,29 +126,35 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 		{
 			Logger.log(`${this.constructor.name}.onClickActionTask`);
 			const taskData = await this.getPrepareDataFromRest();
-			if (!taskData.params)
+			if (!taskData.params || !openTaskCreateForm)
 			{
 				return;
 			}
 
-			const auditorsIds = taskData.params.AUDITORS.split(',');
-			this.store = this.serviceLocator.get('store');
-			const auditors = auditorsIds.map((id) => {
-				const user = this.store.getters['usersModel/getById'](id);
-				if (user && user.name)
-				{
-					return Object.create({ id, name: user.name });
-				}
-
-				return Object.create({ id, name: '' });
-			});
-
-			const filesIds = taskData.params.UF_TASK_WEBDAV_FILES;
-			let files = [];
-			if (filesIds)
+			let auditors = [];
+			try
 			{
-				files = filesIds.map((id) => Object.create({ id }));
+				if (taskData.params?.AUDITORS)
+				{
+					const auditorsIds = taskData.params.AUDITORS.split(',');
+					this.store = this.serviceLocator.get('store');
+					auditors = auditorsIds.map((id) => {
+						const user = this.store.getters['usersModel/getById'](id);
+						if (user && user.name)
+						{
+							return Object.create({ id, name: user.name });
+						}
+
+						return Object.create({ id, name: '' });
+					});
+				}
 			}
+			catch (error)
+			{
+				Logger.error(`${this.constructor.name}.onClickActionTask get auditors error find ${error}`);
+			}
+
+			const files = taskData.params?.UF_TASK_WEBDAV_FILES_DATA || [];
 
 			this.closePromise.then(() => {
 				openTaskCreateForm({
@@ -128,11 +162,15 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 						title: this.messageData.text,
 						description: taskData.params.DESCRIPTION,
 						auditors,
-						// files, TODO when will be ready API TASK
+						files,
 						IM_CHAT_ID: taskData.params.IM_CHAT_ID,
 						IM_MESSAGE_ID: taskData.params.IM_MESSAGE_ID,
 					},
 					closeAfterSave: true,
+					analyticsLabel: {
+						c_section: 'chat',
+						c_element: 'create_button',
+					},
 				});
 			})
 				.catch((error) => Logger.log(`${this.constructor.name}.onClickActionTask.closePromise.catch:`, error));

@@ -10,6 +10,7 @@
 	font-size: var(--ui-font-size-5xs);
 	font-weight: var(--ui-font-weight-bold);
 	text-transform: uppercase;
+	align-items: center;
 	color: rgba(var(--ui-color-palette-black-solid-rgb), var(--ui-opacity-40));
 }
 
@@ -26,6 +27,7 @@
 
 .tasks-flow__task-queue-popup_label-text {
 	text-overflow: ellipsis;
+	letter-spacing: var(--ui-text-letter-spacing-neg-1);
 	white-space: nowrap;
 	overflow: hidden;
 }
@@ -55,4 +57,14 @@
 	margin-bottom: 12px;
 	border-radius: var(--ui-border-radius-2xs);
 	background: var(--ui-color-base-10);
+}
+
+.tasks-flow__total-task-counter.ui-counter-inner {
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-5xs);
+}
+
+.tasks-flow__total-task-counter-container {
+	--ui-counter-current-bg-color: rgba(var( --ui-color-palette-gray-90-rgb), var(--ui-opacity-10));
+	margin-left: 6px;
 }

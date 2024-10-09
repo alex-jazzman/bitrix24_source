@@ -10,7 +10,10 @@ export class BoldNodeFormatter extends NodeFormatter
 			convert({ node }: ConvertCallbackOptions): HTMLElement {
 				return Dom.create({
 					tag: 'b',
-					attributes: node.getAttributes(),
+					attrs: {
+						...node.getAttributes(),
+						className: 'ui-typography-text-bold',
+					},
 				});
 			},
 			...options,

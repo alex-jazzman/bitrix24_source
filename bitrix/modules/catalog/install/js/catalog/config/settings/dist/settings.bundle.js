@@ -297,27 +297,25 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      parent: babelHelpers.classPrivateFieldLooseBase(this, _parentPage)[_parentPage],
 	      section
 	    });
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _costPriceCalculationParams)[_costPriceCalculationParams].current) {
-	      section.append(new ui_section.Row({
-	        content: new ui_alerts.Alert({
-	          text: `
+	    section.append(new ui_section.Row({
+	      content: new ui_alerts.Alert({
+	        text: `
 							${main_core.Loc.getMessage('CAT_CONFIG_SETTINGS_COST_PRICE_CALCULATION_SECTION_HINT')}
 							<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17858278')">
 								${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
 							</a>
 						`,
-	          inline: true,
-	          size: ui_alerts.AlertSize.SMALL,
-	          color: ui_alerts.AlertColor.PRIMARY
-	        }).getContainer()
-	      }).render());
-	    }
+	        inline: true,
+	        size: ui_alerts.AlertSize.SMALL,
+	        color: ui_alerts.AlertColor.PRIMARY
+	      }).getContainer()
+	    }).render());
 	    const selector = new ui_formElements_view.Selector({
 	      label: main_core.Loc.getMessage('CAT_CONFIG_SETTINGS_COST_PRICE_CALCULATION_METHOD'),
 	      name: 'costPriceCalculationMethod',
 	      items: babelHelpers.classPrivateFieldLooseBase(this, _costPriceCalculationParams)[_costPriceCalculationParams].items,
 	      hints: babelHelpers.classPrivateFieldLooseBase(this, _costPriceCalculationParams)[_costPriceCalculationParams].hints,
-	      isFieldDisabled: Boolean(babelHelpers.classPrivateFieldLooseBase(this, _costPriceCalculationParams)[_costPriceCalculationParams].current)
+	      isFieldDisabled: true
 	    });
 	    selector.getInputNode().setAttribute('required', 'required');
 	    main_core.Event.bind(selector.getInputNode(), 'change', () => {
@@ -615,6 +613,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	          ui_notification.UI.Notification.Center.notify({
 	            content: main_core.Loc.getMessage('CAT_CONFIG_SETTINGS_MODE_CHANGED')
 	          });
+	          babelHelpers.classPrivateFieldLooseBase(this, _parentPage$1)[_parentPage$1].updateDataAfterSave();
 	        }
 	      }
 	    });
@@ -976,7 +975,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  _t3$2;
 	var _mode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mode");
 	var _period = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("period");
+	var _getModeSelectorClasses = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getModeSelectorClasses");
 	var _buildModeSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildModeSelector");
+	var _getPeriodClasses = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPeriodClasses");
 	var _buildPeriodInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildPeriodInput");
 	class ReservationMode extends ui_formElements_view.BaseField {
 	  constructor(params) {
@@ -984,8 +985,14 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    Object.defineProperty(this, _buildPeriodInput, {
 	      value: _buildPeriodInput2
 	    });
+	    Object.defineProperty(this, _getPeriodClasses, {
+	      value: _getPeriodClasses2
+	    });
 	    Object.defineProperty(this, _buildModeSelector, {
 	      value: _buildModeSelector2
+	    });
+	    Object.defineProperty(this, _getModeSelectorClasses, {
+	      value: _getModeSelectorClasses2
 	    });
 	    Object.defineProperty(this, _mode, {
 	      writable: true,
@@ -1012,20 +1019,27 @@ this.BX.Catalog = this.BX.Catalog || {};
 					</div>
 					<div class="ui-section__field-inline-box">
 						<div class="ui-section__field">
-							<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
+							<div class="${0}">
 								<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 								${0}
 							</div>
 						</div>
 						<div class="ui-section__field-inline-separator"></div>
-						<div class="ui-section__hint">
+						<div class="${0}">
 							${0}
 						</div>
 					</div>
 				</div>
 			</div>
-		`), this.getId(), babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode].fieldName, babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode].setting.name, babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].fieldName, babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].setting.name, babelHelpers.classPrivateFieldLooseBase(this, _buildModeSelector)[_buildModeSelector](), babelHelpers.classPrivateFieldLooseBase(this, _buildPeriodInput)[_buildPeriodInput]());
+		`), this.getId(), babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode].fieldName, babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode].setting.name, babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].fieldName, babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].setting.name, babelHelpers.classPrivateFieldLooseBase(this, _getModeSelectorClasses)[_getModeSelectorClasses](), babelHelpers.classPrivateFieldLooseBase(this, _buildModeSelector)[_buildModeSelector](), babelHelpers.classPrivateFieldLooseBase(this, _getPeriodClasses)[_getPeriodClasses](), babelHelpers.classPrivateFieldLooseBase(this, _buildPeriodInput)[_buildPeriodInput]());
 	  }
+	}
+	function _getModeSelectorClasses2() {
+	  let result = 'ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown';
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode].setting.disabled) {
+	    result += ' ui-ctl-disabled';
+	  }
+	  return result;
 	}
 	function _buildModeSelector2() {
 	  const options = [];
@@ -1041,15 +1055,23 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }
 	  const selector = main_core.Dom.create('select', {
 	    attrs: {
-	      class: 'ui-ctl-element'
+	      class: 'ui-ctl-element',
+	      disabled: babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode].setting.disabled
 	    },
 	    children: options
 	  });
 	  selector.name = babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode].fieldName;
 	  return selector;
 	}
+	function _getPeriodClasses2() {
+	  let result = 'ui-section__hint';
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].setting.disabled) {
+	    result += ' ui-ctl-disabled';
+	  }
+	  return result;
+	}
 	function _buildPeriodInput2() {
-	  return main_core.Tag.render(_t3$2 || (_t3$2 = _$4`
+	  const periodInput = main_core.Tag.render(_t3$2 || (_t3$2 = _$4`
 			<input
 				value="${0}"
 				name="${0}"
@@ -1057,6 +1079,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 				class="ui-ctl-element"
 			>
 		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].value), babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].fieldName);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _period)[_period].setting.disabled) {
+	    periodInput.disabled = true;
+	  }
+	  return periodInput;
 	}
 
 	var _reservationEntities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reservationEntities");
@@ -1180,16 +1206,12 @@ this.BX.Catalog = this.BX.Catalog || {};
 	var _showNegativeBalancePopupIfNeeded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNegativeBalancePopupIfNeeded");
 	var _isReservationUsed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReservationUsed");
 	var _isStoreBatchUsed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isStoreBatchUsed");
-	var _updateDataAfterSave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateDataAfterSave");
 	var _convertFormDataToObjectData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertFormDataToObjectData");
 	class CatalogPage extends ui_formElements_field.BaseSettingsPage {
 	  constructor() {
 	    super();
 	    Object.defineProperty(this, _convertFormDataToObjectData, {
 	      value: _convertFormDataToObjectData2
-	    });
-	    Object.defineProperty(this, _updateDataAfterSave, {
-	      value: _updateDataAfterSave2
 	    });
 	    Object.defineProperty(this, _isStoreBatchUsed, {
 	      value: _isStoreBatchUsed2
@@ -1308,6 +1330,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _initialData)[_initialData].defaultQuantityTrace = isEnabled ? 'Y' : 'N';
 	    this.setData(babelHelpers.classPrivateFieldLooseBase(this, _initialData)[_initialData]);
 	  }
+	  // reads the data from the form element and updates the page object's #data
+	  updateDataAfterSave() {
+	    this.setData(babelHelpers.classPrivateFieldLooseBase(this, _convertFormDataToObjectData)[_convertFormDataToObjectData]());
+	  }
 	}
 	function _getDataForSaving2() {
 	  return BX.ajax.prepareForm(this.getFormNode()).data;
@@ -1334,7 +1360,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	function _onSaveSuccess2() {
 	  BX.UI.ButtonPanel.hide();
 	  babelHelpers.classPrivateFieldLooseBase(this, _resetSaveButton)[_resetSaveButton]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _updateDataAfterSave)[_updateDataAfterSave]();
+	  this.updateDataAfterSave();
 	  BX.SidePanel.Instance.postMessage(window, 'BX.Crm.Config.Catalog:onAfterSaveSettings');
 	}
 	function _saveProductSettings2() {
@@ -1383,9 +1409,21 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  return this.getValue('productsCount') > 500;
 	}
 	function _buildReservationSection2() {
+	  const storeControlMode = this.getValue('storeControlMode');
+	  const reservationEntities = this.getValue('reservationEntities');
+	  for (const reservationEntity of reservationEntities) {
+	    for (const schemeItem of reservationEntity.settings.scheme) {
+	      if (['mode', 'period'].includes(schemeItem.code)) {
+	        schemeItem.disabled = storeControlMode === catalog_storeEnableWizard.ModeList.MODE_1C;
+	      }
+	    }
+	    if (storeControlMode === catalog_storeEnableWizard.ModeList.MODE_1C) {
+	      reservationEntity.settings.values.mode = 'onAddToDocument';
+	    }
+	  }
 	  const reservationSection = new ReservationSection({
 	    parentPage: this,
-	    reservationEntities: this.getValue('reservationEntities')
+	    reservationEntities
 	  });
 	  return reservationSection.buildSection();
 	}
@@ -1473,9 +1511,6 @@ this.BX.Catalog = this.BX.Catalog || {};
 	function _isStoreBatchUsed2() {
 	  return this.getValue('isStoreBatchUsed') || this.getValue('hasAccessToCatalogSettings');
 	}
-	function _updateDataAfterSave2() {
-	  this.setData(babelHelpers.classPrivateFieldLooseBase(this, _convertFormDataToObjectData)[_convertFormDataToObjectData]());
-	}
 	function _convertFormDataToObjectData2() {
 	  const formData = babelHelpers.classPrivateFieldLooseBase(this, _getDataForSaving)[_getDataForSaving]();
 	  const objectData = babelHelpers.classPrivateFieldLooseBase(this, _initialData)[_initialData];
@@ -1510,10 +1545,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 
 	class Slider {
 	  static open(source = null, options = {}) {
-	    var _BX$PopupWindowManage;
-	    (_BX$PopupWindowManage = BX.PopupWindowManager) == null ? void 0 : _BX$PopupWindowManage.getPopups().forEach(popup => {
-	      popup.close();
-	    });
+	    Slider.closePopup();
 	    let url = Slider.URL;
 	    if (main_core.Type.isStringFilled(source)) {
 	      url += `?configCatalogSource=${source}`;
@@ -1548,8 +1580,31 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      });
 	    });
 	  }
+	  static openRigthsSlider() {
+	    Slider.closePopup();
+	    return new Promise(resolve => {
+	      BX.SidePanel.Instance.open(Slider.URL_RIGHTS, {});
+	    });
+	  }
+	  static openSeoSlider(url) {
+	    Slider.closePopup();
+	    return new Promise(resolve => {
+	      BX.SidePanel.Instance.open(url, {
+	        width: 1000,
+	        allowChangeHistory: false,
+	        cacheable: false
+	      });
+	    });
+	  }
+	  static closePopup() {
+	    var _BX$PopupWindowManage;
+	    (_BX$PopupWindowManage = BX.PopupWindowManager) == null ? void 0 : _BX$PopupWindowManage.getPopups().forEach(popup => {
+	      popup.close();
+	    });
+	  }
 	}
 	Slider.URL = '/crm/configs/catalog/';
+	Slider.URL_RIGHTS = '/shop/settings/permissions/';
 
 	var _page = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("page");
 	var _onEventChangeData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEventChangeData");

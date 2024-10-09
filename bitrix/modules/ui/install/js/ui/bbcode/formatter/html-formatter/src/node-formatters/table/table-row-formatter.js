@@ -11,7 +11,7 @@ export class TableRowNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: 'tr',
 					attrs: {
-						classname: 'ui-formatter-table-row',
+						classname: 'ui-typography-table-row',
 					},
 				});
 			},

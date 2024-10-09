@@ -234,3 +234,13 @@
 .biconnector-grid-scope-hint-more:hover {
 	color: var(--ui-color-palette-blue-95);
 }
+
+.main-grid-row .ui-hint {
+	height: 13px;
+	width: 13px;
+	line-height: 13px;
+}
+
+.main-grid-row .ui-hint-icon {
+	margin: 0;
+}

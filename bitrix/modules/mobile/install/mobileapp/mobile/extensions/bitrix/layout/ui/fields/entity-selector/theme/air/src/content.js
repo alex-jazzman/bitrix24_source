@@ -25,15 +25,24 @@ jn.define('layout/ui/fields/entity-selector/theme/air/src/content', (require, ex
 			const isCollapsed = entityList.length > MAX_ELEMENTS;
 			const preparedEntityList = showAll ? entityList : entityList.slice(0, MAX_ELEMENTS);
 			const showAllButton = isCollapsed && !showAll;
+			const showAddButton = (
+				field.shouldShowAddButton()
+				&& field.getAddButtonText()
+				&& !field.isReadOnly()
+				&& !field.isRestricted()
+				&& !field.isEmpty()
+				&& field.isMultiple()
+			);
 
-			const addButtonText = field.getAddButtonText();
 			let content = null;
 			if (field.isEmpty())
 			{
-				content = [Entity({
-					field,
-					title: field.getEmptyText(),
-				})];
+				content = [
+					Entity({
+						field,
+						title: field.getEmptyText(),
+					}),
+				];
 			}
 			else
 			{
@@ -60,16 +69,9 @@ jn.define('layout/ui/fields/entity-selector/theme/air/src/content', (require, ex
 					},
 				},
 				...content,
-				addButtonText
-				&& field.shouldShowAddButton()
-				&& !field.isReadOnly()
-				&& field.isMultiple()
-				&& !field.isEmpty()
-				&& AddButton({
-					onClick: () => {
-						field.openSelector(false, field.addButtonRef);
-					},
-					text: addButtonText,
+				showAddButton && AddButton({
+					onClick: () => field.openSelector(false, field.addButtonRef),
+					text: field.getAddButtonText(),
 					testId: field.testId,
 					bindAddButtonRef: field.bindAddButtonRef,
 				}),

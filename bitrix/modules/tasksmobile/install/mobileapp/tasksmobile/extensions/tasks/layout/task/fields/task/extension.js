@@ -13,6 +13,7 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 		{
 			super(props);
 			this.state.showAll = false;
+			this.menu = new UI.Menu(this.getUIMenuItems());
 		}
 
 		getConfig()
@@ -44,6 +45,11 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 		getGroup()
 		{
 			return BX.prop.getObject(this.getConfig(), 'group', null);
+		}
+
+		getAnalyticsLabel()
+		{
+			return this.props.analyticsLabel ?? {};
 		}
 
 		getPreparedGroupData()
@@ -137,11 +143,9 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 			return this.state.entityList[0].title;
 		}
 
-		getLeftIcon()
+		getDefaultLeftIcon()
 		{
-			return {
-				icon: 'task',
-			};
+			return Icon.TASK;
 		}
 
 		getUIMenuItems()
@@ -170,17 +174,23 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 
 		openSelector(forceSelectorType = false, target = null)
 		{
-			const menuItems = this.getUIMenuItems();
-			if (menuItems.length > 0)
-			{
-				this.removeFocus()
-					.then(() => {
-						new UI.Menu(menuItems).show({ target: target || this.fieldContainerRef });
-					})
-					.catch((error) => {
-						this.logger.error('Error on remove focus', error);
-					});
-			}
+			this.removeFocus()
+				.then(() => {
+					this.menu.show({ target: this.getMenuTarget(target) });
+				})
+				.catch((error) => {
+					this.logger.error('Error on remove focus', error);
+				});
+		}
+
+		/**
+		 * @private
+		 * @param {object} target
+		 * @return {object}
+		 */
+		getMenuTarget(target)
+		{
+			return target || this.fieldContainerRef;
 		}
 
 		openTaskCreateForm()

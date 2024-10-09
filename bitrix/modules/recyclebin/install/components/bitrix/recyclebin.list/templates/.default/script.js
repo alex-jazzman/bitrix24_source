@@ -177,6 +177,21 @@ BX.namespace('Recyclebin');
 		};
 	};
 
+	BX.Recyclebin.List.showLimit = function(featureId)
+	{
+		BX.Runtime.loadExtension('ui.info-helper')
+			.then(({ FeaturePromotersRegistry }) => {
+				if (FeaturePromotersRegistry)
+				{
+					FeaturePromotersRegistry.getPromoter({
+						featureId,
+						bindElement: null,
+					}).show();
+				}
+			})
+		;
+	};
+
 	BX.Recyclebin.confirm = function(body, callback, params)
 	{
 		if(!BX.type.isFunction(callback))

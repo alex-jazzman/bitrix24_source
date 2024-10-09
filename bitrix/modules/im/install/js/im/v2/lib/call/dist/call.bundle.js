@@ -216,10 +216,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller].unfold();
 	  }
 	  getCurrentCallDialogId() {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
 	    if (!this.isAvailable() || !babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller].hasActiveCall()) {
 	      return '';
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller].currentCall.associatedEntity.id;
+	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller]) == null ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.currentCall) == null ? void 0 : _babelHelpers$classPr2.associatedEntity.id;
 	  }
 	  getCurrentCall() {
 	    if (!this.isAvailable() || !babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller].hasActiveCall()) {
@@ -276,6 +277,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  isChatUserLimitExceeded(dialogId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getChatUserCounter)[_getChatUserCounter](dialogId) > this.getCallUserLimit();
+	  }
+	  isConference(dialogId) {
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](dialogId);
+	    return dialog.type === im_v2_const.ChatType.videoconf;
 	  }
 
 	  // endregion call events
@@ -400,7 +405,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _checkChatCallSupport2(dialogId) {
 	  const userCounter = babelHelpers.classPrivateFieldLooseBase(this, _getChatUserCounter)[_getChatUserCounter](dialogId);
-	  return userCounter > 1 && userCounter <= this.getCallUserLimit();
+	  return (userCounter > 1 || this.isConference(dialogId)) && userCounter <= this.getCallUserLimit();
 	}
 	function _pushServerIsActive2() {
 	  return true;

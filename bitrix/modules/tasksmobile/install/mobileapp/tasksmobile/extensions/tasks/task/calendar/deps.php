@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'rest',
+		'rest/run-action-executor',
 		'type',
 	],
 ];

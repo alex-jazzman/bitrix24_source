@@ -15,7 +15,6 @@ Loc::loadMessages(__FILE__);
 
 $isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
-$kpiLimitExceeded = $arResult['KPI_LIMIT_EXCEEDED'];
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
@@ -37,7 +36,7 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 	<head>
 		<? $APPLICATION->ShowHead(); ?>
 	</head>
-	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if ($isIFrame):?>task-iframe-popup-side-slider<?php endif?> <?if($taskLimitExceeded || $kpiLimitExceeded):?>task-report-locked<?php endif?>"
+	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if ($isIFrame):?>task-iframe-popup-side-slider<?php endif?> <?if($taskLimitExceeded):?>task-report-locked<?php endif?>"
 		  onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');"
 		  onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
 	<div class="tasks-iframe-header">
@@ -75,7 +74,7 @@ if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 	return;
 }
 
-if ($taskLimitExceeded || $kpiLimitExceeded)
+if ($taskLimitExceeded)
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
@@ -102,7 +101,7 @@ if ($taskLimitExceeded || $kpiLimitExceeded)
 	$component,
 	array('HIDE_ICONS' => true)
 ); ?>
-<div class="task-iframe-workarea <?if($taskLimitExceeded || $kpiLimitExceeded):?>task-report-locked<?php endif?>" <?if($isIFrame):?>style="padding:0 20px;"<?php endif?>>
+<div class="task-iframe-workarea <?if($taskLimitExceeded):?>task-report-locked<?php endif?>" <?if($isIFrame):?>style="padding:0 20px;"<?php endif?>>
 	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.ui.grid',
@@ -145,7 +144,6 @@ if ($taskLimitExceeded || $kpiLimitExceeded)
 	BX.ready(function() {
 		new BX.Tasks.TasksReportEffectiveInProgress(<?=Json::encode([
 			'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
-			'kpiLimitExceeded' => $arResult['KPI_LIMIT_EXCEEDED'],
 			'pathToTasks' => str_replace('#user_id#', $arParams['USER_ID'], $arParams['PATH_TO_USER_TASKS']),
 		])?>);
 	});

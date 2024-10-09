@@ -1093,7 +1093,7 @@ this.BX.UI = this.BX.UI || {};
 	}(BaseField);
 	function _renderNode2() {
 	  var node = main_core.Tag.render(_templateObject2$6 || (_templateObject2$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<textarea\n\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\tname=\"", "\"\n\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t", "\n\t\t\t></textarea>\n\t\t"])), main_core.Text.encode(this.getName()), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _placeholder)), this.isEnable() ? '' : 'readonly');
-	  node.value = main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _defaultValue));
+	  node.value = babelHelpers.classPrivateFieldGet(this, _defaultValue);
 	  return node;
 	}
 

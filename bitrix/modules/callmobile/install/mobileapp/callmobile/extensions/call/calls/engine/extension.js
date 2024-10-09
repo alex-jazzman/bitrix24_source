@@ -1082,6 +1082,69 @@
 			return `${this.lpad(minutes, 2, '0')}:${this.lpad(seconds, 2, '0')}`;
 		}
 
+		getTimeText(startTime)
+		{
+			if (!startTime)
+			{
+				return '';
+			}
+
+			const nowDate = new Date();
+			let startDate = new Date(startTime);
+			if (startDate.getTime() < nowDate.getDate())
+			{
+				startDate = nowDate;
+			}
+
+			let totalTime = nowDate - startDate;
+			if (totalTime <= 0)
+			{
+				totalTime = 0;
+			}
+
+			let second = Math.floor(totalTime / 1000);
+
+			let hour = Math.floor(second / 60 / 60);
+			if (hour > 0)
+			{
+				second -= hour * 60 * 60;
+			}
+
+			const minute = Math.floor(second / 60);
+			if (minute > 0)
+			{
+				second -= minute * 60;
+			}
+
+			return (hour > 0 ? hour + ':' : '')
+				+ (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':')
+				+ second.toString().padStart(2, "0")
+			;
+		}
+
+		getTimeInSeconds(startTime)
+		{
+			if (!startTime)
+			{
+				return '';
+			}
+
+			const nowDate = new Date();
+			let startDate = new Date(startTime);
+			if (startDate.getTime() < nowDate.getDate())
+			{
+				startDate = nowDate;
+			}
+
+			let totalTime = nowDate - startDate;
+			if (totalTime <= 0)
+			{
+				totalTime = 0;
+			}
+
+			return Math.floor(totalTime / 1000);
+		}
+
 		lpad(str, length, chr)
 		{
 			str = str.toString();

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,calendar_entry,calendar_sectionmanager,calendar_util,main_core_events,calendar_compacteventform,ui_notification,calendar_roomsmanager,ui_dialogs_messagebox,main_core) {
 	'use strict';
@@ -140,7 +141,6 @@ this.BX = this.BX || {};
 	        isLocationCalendar: options.isLocationCalendar || false,
 	        roomsManager: options.roomsManager || null,
 	        locationAccess: options.locationAccess || false,
-	        dayOfWeekMonthFormat: options.dayOfWeekMonthFormat || false,
 	        locationCapacity: options.locationCapacity || 0,
 	        ownerId: options.ownerId,
 	        userId: options.userId,
@@ -156,7 +156,6 @@ this.BX = this.BX || {};
 	        new bx.Calendar.SliderLoader(eventId, {
 	          entryDateFrom: options.from,
 	          timezoneOffset: options.timezoneOffset,
-	          dayOfWeekMonthFormat: options.dayOfWeekMonthFormat || false,
 	          calendarContext: options.calendarContext || null,
 	          link: options.link
 	        }).show();
@@ -251,7 +250,7 @@ this.BX = this.BX || {};
 	    if (!this.confirmEditDialog) {
 	      this.confirmEditDialog = this.createConfirmEditDialog();
 	    }
-	    this.confirmEditDialog.show();
+	    this.confirmEditDialog.show(options);
 	    if (main_core.Type.isFunction(options.callback)) {
 	      this.confirmEditDialog.unsubscribeAll('onEdit');
 	      this.confirmEditDialog.subscribe('onEdit', event => {
@@ -321,7 +320,7 @@ this.BX = this.BX || {};
 	    if (!this.limitationEmailDialog) {
 	      this.limitationEmailDialog = this.createEmailLimitationDialog();
 	    }
-	    this.limitationEmailDialog.subscribe('onClose', () => {
+	    this.limitationEmailDialog.subscribe('onSaveWithoutAttendees', () => {
 	      if (main_core.Type.isFunction(options.callback)) {
 	        options.callback();
 	      }
@@ -521,7 +520,7 @@ this.BX = this.BX || {};
 	    calendar_util.Util.setUserSettings(userSettings);
 	  }
 
-	  //this is because extensions cant be loaded in iframe with import
+	  // this is because extensions cant be loaded in iframe with import
 	  static createConfirmEditDialog() {
 	    const bx = calendar_util.Util.getBX();
 	    return new bx.Calendar.Controls.ConfirmEditDialog();

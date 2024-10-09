@@ -177,6 +177,7 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 				parentWidget: this.getParentWidget(),
 				allowFiles: config.allowFiles,
 				fileField: config.fileField,
+				autoFocus: config.autoFocus,
 				closeOnSave: true,
 				textInput: {
 					placeholder: this.getPlaceholder(),

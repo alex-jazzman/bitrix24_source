@@ -117,20 +117,19 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 
 		getGridViewRecentItems()
 		{
-			const recentItems = this.getRecentItems();
-			if (recentItems.length < 3)
+			const items = this.getRecentItems();
+
+			if (items.length < 3)
 			{
 				return null;
 			}
 
-			const height = 108;
-
 			return {
-				layout: View(
-					{ style: { height } },
-					RecentGridView(this.detailCard, recentItems),
-				),
-				height,
+				layout: new RecentGridView({
+					items,
+					detailCard: this.detailCard,
+				}),
+				height: RecentGridView.getHeight(),
 			};
 		}
 
@@ -208,7 +207,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 					return;
 				}
 
-				if (item && item.isActive())
+				if (item && item.isActive() && item.isAvailableRecentMenu())
 				{
 					item.setIsRecent(true);
 					recentItems.push(item);

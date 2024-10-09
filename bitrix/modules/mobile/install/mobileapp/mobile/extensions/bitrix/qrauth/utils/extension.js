@@ -105,4 +105,11 @@
 	};
 
 	jnexport([qrauth, 'qrauth']);
+
+	/**
+	 * @module qrauth/utils
+	 */
+	jn.define('qrauth/utils', (require, exports, module) => {
+		module.exports = { qrauth };
+	});
 })();

@@ -90,6 +90,11 @@ create table if not exists b_sign_member
 	PRESET_ID bigint unsigned null,
 	ROLE tinyint null default null,
 	CONFIGURED tinyint null default null,
+	REMINDER_TYPE tinyint default 0,
+	REMINDER_LAST_SEND_DATE datetime null default null,
+	REMINDER_PLANNED_NEXT_SEND_DATE datetime null default null,
+	REMINDER_COMPLETED tinyint default 0,
+	REMINDER_START_DATE datetime null default null,
 	PRIMARY KEY(ID),
 	INDEX IX_B_DOCUMENT_ID (DOCUMENT_ID),
 	INDEX IX_B_HASH (HASH)
@@ -201,4 +206,14 @@ CREATE TABLE IF NOT EXISTS `b_sign_document_required_field`
 	`ROLE` TINYINT NOT NULL,
 	PRIMARY KEY (`ID`),
 	INDEX `IX_B_SIGN_REQUIRED_FIELDS_DOCUMENT_ID` (`DOCUMENT_ID`)
+);
+
+CREATE TABLE IF NOT EXISTS `b_sign_document_chat`
+(
+	`ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`CHAT_ID` BIGINT UNSIGNED NOT NULL,
+	`DOCUMENT_ID` BIGINT UNSIGNED NOT NULL,
+	`TYPE` TINYINT NOT NULL,
+	PRIMARY KEY (`ID`),
+	INDEX `IX_B_SIGN_CHAT_DOCUMENT_ID` (`DOCUMENT_ID`)
 );

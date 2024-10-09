@@ -14,15 +14,10 @@
 	background-color: #000;
 	min-width: 940px;
 	background: #0E1622;
-	background-image: url('../images/pattern-white-op.svg'), url('../images/highlights.png');
+	background-image: url('../images/pattern-white-op.png'), url('../images/highlights.png');
 	background-position: top right, center;
 	background-repeat: repeat, no-repeat;
 	background-size: auto, cover;
-}
-
-.bx-im-component-call.with-blur {
-	background-image: url('../images/pattern-white.svg'), url('../images/highlights.png');
-	backdrop-filter: inherit;
 }
 
 .bx-im-application-call-mobile-state .bx-im-component-call{
@@ -1010,10 +1005,9 @@
 }
 
 .bx-im-component-call-info-container-compact .bx-im-component-call-info-logo {
-	width: 38px;
-	min-width: 38px;
-	height: 38px;
-	background-size: contain;
+	width: 32px;
+	height: 32px;
+	background-size: 20px 20px;
 	margin-bottom: 0;
 	margin-right: 9px;
 }

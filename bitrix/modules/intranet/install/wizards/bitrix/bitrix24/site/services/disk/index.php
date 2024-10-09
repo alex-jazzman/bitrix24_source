@@ -17,23 +17,11 @@ $taskIdEdit = $rightsManager->getTaskIdByName($rightsManager::TASK_EDIT);
 $taskIdFull = $rightsManager->getTaskIdByName($rightsManager::TASK_FULL);
 
 $employeeCode = 'G'.WIZARD_EMPLOYEES_GROUP;
-if (CModule::IncludeModule("iblock"))
+$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+$rootDepartment = $departmentRepository->getRootDepartment();
+if ($rootDepartment)
 {
-	$rsIBlock = CIBlock::GetList(array(), array("CODE" => "departments"));
-	if ($arIBlock = $rsIBlock->Fetch())
-	{
-		$dbUpdepartment = CIBlockSection::GetList(
-			array(),
-			array(
-				"SECTION_ID" => 0,
-				"IBLOCK_ID" => $arIBlock["ID"]
-			)
-		);
-		if ($upDepartment = $dbUpdepartment->Fetch())
-		{
-			$employeeCode = "DR".$upDepartment['ID'];
-		}
-	}
+	$employeeCode = "DR".$rootDepartment->getId();
 }
 
 //Common storage

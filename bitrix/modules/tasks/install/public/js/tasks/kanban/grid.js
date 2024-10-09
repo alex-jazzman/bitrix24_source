@@ -1053,7 +1053,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 					this.updateItem(itemId, data);
 					if (gridData.kanbanType === "TL")
 					{
-						const deadlineText = item.getDeadline();
+						const deadlineText = data.data.deadline.rawValue ?? item.getDeadline();
 						BX.UI.Notification.Center.notify({
 							content: deadlineText
 								? BX.message("MAIN_KANBAN_NOTIFY_CHANGE_DEADLINE").replace("#date#", deadlineText)

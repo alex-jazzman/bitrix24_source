@@ -49,8 +49,6 @@ import { $insertNodeToNearestRoot } from 'ui.lexical.utils';
 import type TextEditor from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
-import './table.css';
-
 import TableDialog from './table-dialog';
 
 export const INSERT_TABLE_DIALOG_COMMAND: LexicalCommand = createCommand('INSERT_TABLE_DIALOG_COMMAND');

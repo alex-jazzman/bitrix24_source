@@ -7,7 +7,13 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 	const { isEqual } = require('utils/object');
 	const { EntityReady } = require('entity-ready');
 
-	const { RestMethod, ComponentCode, EventType } = require('im/messenger/const');
+	const {
+		RestMethod,
+		ComponentCode,
+		EventType,
+		AppStatus,
+		WaitingEntity,
+	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { runAction } = require('im/messenger/lib/rest');
@@ -30,6 +36,12 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			}
 
 			return this.instance;
+		}
+
+		constructor()
+		{
+			/** @type {AppStatus['sync'] | AppStatus['backgroundSync']} */
+			this.syncMode = AppStatus.sync;
 		}
 
 		async loadPage({ fromDate, fromId, fromServerDate })
@@ -77,21 +89,34 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 		{
 			logger.info('RestMethod.imV2SyncList result: ', result);
 
-			let resolveSyncListPromise;
-			let rejectSyncListPromise;
+			let resolveSyncListPromise = (data) => {};
+
+			let rejectSyncListPromise = (error) => {};
+
 			const syncListPromise = new Promise((resolve, reject) => {
 				resolveSyncListPromise = resolve;
 				rejectSyncListPromise = reject;
 			});
 
-			const messengerRequestResultSavedUuid = `${ComponentCode.imMessenger}-${Uuid.getV4()}`;
-			const expectedRequestResultSavedIdList = [
-				messengerRequestResultSavedUuid,
-			];
+			const expectedRequestResultSavedIdList = [];
 
-			const copilotRequestResultSavedUuid = `${ComponentCode.imCopilotMessenger}-${Uuid.getV4()}`;
-			const shouldAwaitCopilot = Feature.isCopilotAvailable && this.isEntityReady('copilot-messenger');
-			if (shouldAwaitCopilot)
+			const databaseRequestResultSavedUuid = `${WaitingEntity.sync.filler.database}-${Uuid.getV4()}`;
+			const messengerRequestResultSavedUuid = `${WaitingEntity.sync.filler.chat}-${Uuid.getV4()}`;
+			const copilotRequestResultSavedUuid = `${WaitingEntity.sync.filler.copilot}-${Uuid.getV4()}`;
+
+			const fillerOptions = this.getFillerOptions();
+
+			if (fillerOptions.shouldFillDatabase)
+			{
+				expectedRequestResultSavedIdList.push(databaseRequestResultSavedUuid);
+			}
+
+			if (fillerOptions.shouldFillChat)
+			{
+				expectedRequestResultSavedIdList.push(messengerRequestResultSavedUuid);
+			}
+
+			if (fillerOptions.shouldFillCopilot)
 			{
 				expectedRequestResultSavedIdList.push(copilotRequestResultSavedUuid);
 			}
@@ -126,12 +151,23 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 
 			BX.addCustomEvent(EventType.sync.requestResultSaved, fillCompleteHandler);
 
-			MessengerEmitter.emit(EventType.sync.requestResultReceived, {
-				uuid: messengerRequestResultSavedUuid,
-				result,
-			}, ComponentCode.imMessenger);
+			if (fillerOptions.shouldFillDatabase)
+			{
+				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+					uuid: databaseRequestResultSavedUuid,
+					result,
+				}, ComponentCode.imMessenger);
+			}
 
-			if (shouldAwaitCopilot)
+			if (fillerOptions.shouldFillChat)
+			{
+				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+					uuid: messengerRequestResultSavedUuid,
+					result,
+				}, ComponentCode.imMessenger);
+			}
+
+			if (fillerOptions.shouldFillCopilot)
 			{
 				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
 					uuid: copilotRequestResultSavedUuid,
@@ -152,6 +188,39 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			}
 
 			return EntityReady.readyEntitiesCollection.has(entityId);
+		}
+
+		getFillerOptions()
+		{
+			const options = {
+				shouldFillDatabase: false,
+				shouldFillChat: false,
+				shouldFillCopilot: false,
+			};
+
+			options.shouldFillDatabase = Feature.isLocalStorageEnabled;
+
+			options.shouldFillChat = this.syncMode === AppStatus.sync;
+
+			options.shouldFillCopilot = Feature.isCopilotAvailable
+				&& this.syncMode === AppStatus.sync
+				&& this.isEntityReady('copilot-messenger')
+			;
+
+			return options;
+		}
+
+		/**
+		 * @param {AppStatus['sync'] || AppStatus['backgroundSync']} mode
+		 */
+		setSyncMode(mode)
+		{
+			this.syncMode = mode;
+		}
+
+		resetSyncMode()
+		{
+			this.syncMode = AppStatus.sync;
 		}
 	}
 

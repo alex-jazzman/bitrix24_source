@@ -2,7 +2,9 @@
 
 return [
 	'extensions' => [
+		'type',
 		'tokens',
+		'utils/type',
 		'utils/color',
 		'utils/object',
 		'utils/string',

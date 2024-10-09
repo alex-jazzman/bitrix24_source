@@ -9,15 +9,6 @@ if (!\Bitrix\Main\Loader::includeModule('im'))
 	return [];
 }
 
-if (\Bitrix\Im\Call\Call::isNewCallLayoutEnabled())
-{
-	$cssBundleFile = './dist/call.bundle.css';
-}
-else
-{
-	$cssBundleFile = './dist/call_old.bundle.css';
-}
-
 use Bitrix\Main\Config\Option;
 
 return [
@@ -25,7 +16,7 @@ return [
 		'./dist/call.bundle.js',
 	],
 	'css' => [
-		$cssBundleFile,
+		'./dist/call.bundle.css',
 	],
 	'rel' => [
 		'im.lib.utils',
@@ -67,7 +58,6 @@ return [
 				'turn_server_max_users' => Option::get('im', 'turn_server_max_users'),
 				'call_server_enabled' => \Bitrix\Im\Call\Call::isCallServerEnabled() ? 'Y' : 'N',
 				'call_beta_ios_enabled' => \Bitrix\Im\Call\Call::isIosBetaEnabled() ? 'Y' : 'N',
-				'new_call_layout_enabled' => \Bitrix\Im\Call\Call::isNewCallLayoutEnabled() ? 'Y' : 'N',
 				'call_server_max_users' => \Bitrix\Im\Call\Call::getMaxCallServerParticipants(),
 				'call_log_service' => \Bitrix\Im\Call\Call::getLogService(),
 				'call_collect_stats' => Option::get('im', 'collect_call_stats', 'N'),

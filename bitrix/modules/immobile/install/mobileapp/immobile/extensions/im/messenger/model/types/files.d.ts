@@ -31,13 +31,14 @@ export type FilesModelState = {
 	authorId: number,
 	authorName: string,
 	urlPreview: string,
+	urlLocalPreview: string,
 	urlShow: string,
 	urlDownload: string,
 	init: boolean,
 	viewerAttrs: Object,
 	localUrl?: string,
 
-	uploadData: {
+	uploadData?: {
 		byteSent?: 0,
 		byteTotal?: 0,
 	},

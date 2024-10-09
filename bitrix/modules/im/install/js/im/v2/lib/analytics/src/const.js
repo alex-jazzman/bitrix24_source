@@ -14,6 +14,10 @@ export const AnalyticsEvent = Object.freeze({
 	openSettings: 'open_settings',
 	clickCreateNew: 'click_create_new',
 	openExisting: 'open_existing',
+	view: 'view',
+	click: 'click',
+	clickEdit: 'click_edit',
+	submitEdit: 'submit_edit',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -32,6 +36,7 @@ export const AnalyticsCategory = Object.freeze({
 	videoconf: 'videoconf',
 	copilot: 'copilot',
 	limit: 'limit',
+	limitBanner: 'limit_banner',
 	toolOff: 'tool_off',
 });
 
@@ -41,9 +46,24 @@ export const AnalyticsType = Object.freeze({
 	channel: 'channel',
 	videoconf: 'videoconf',
 	copilot: 'copilot',
+	limitOfficeChatingHistory: 'limit_office_chating_history',
 });
 
 export const AnalyticsSection = Object.freeze({
 	copilotTab: 'copilot_tab',
 	chat: 'chat',
+	chatStart: 'chat_start',
+	chatHistory: 'chat_history',
+	sidebar: 'sidebar',
+	chatWindow: 'chat_window',
+	messageLink: 'message_link',
+});
+
+export const AnalyticsStatus = Object.freeze({
+	success: 'success',
+	errorTurnedOff: 'error_turnedoff',
+});
+
+export const AnalyticsSubSection = Object.freeze({
+	contextMenu: 'context_menu',
 });

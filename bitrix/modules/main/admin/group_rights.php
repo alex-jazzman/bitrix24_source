@@ -203,7 +203,7 @@ echo "<script>\n".
 	"}\n".
 	"</script>\n";
 
-if($REQUEST_METHOD=="POST" && $Update <> '' && $MODULE_RIGHT=="W" && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $MODULE_RIGHT=="W" && check_bitrix_sessid())
 {
 	if (!empty($GROUPS))
 	{

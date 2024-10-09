@@ -47,38 +47,38 @@ if($iblockID == false)
 	$iblock->Update($iblockID, $arFields);
 
 	//Departments add
-	$bs = new CIBlockSection;
-	$arFields = array(
-		"NAME" => COption::GetOptionString("main", "site_name", GetMessage("iblock_dep_name1")),
-		"IBLOCK_ID" => $iblockID,
-		//"UF_HEAD" => "1"
-	);
-	$ID = $bs->Add($arFields);
-
-	if ($ID > 0)
+	try
 	{
-		$arDepartmentSections = array(
-			array(
-				"NAME" => GetMessage("iblock_dep_name2"),
-				"IBLOCK_ID" => $iblockID,
-				"IBLOCK_SECTION_ID" => $ID
-			),
-			array(
-				"NAME" => GetMessage("iblock_dep_name3"),
-				"IBLOCK_ID" => $iblockID,
-				"IBLOCK_SECTION_ID" => $ID
-			),
-			array(
-				"NAME" => GetMessage("iblock_dep_name5"),
-				"IBLOCK_ID" => $iblockID,
-				"IBLOCK_SECTION_ID" => $ID
-			),
+		$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository();
+		$department = $departmentRepository->save(new \Bitrix\Intranet\Entity\Department(
+			COption::GetOptionString("main", "site_name", GetMessage("iblock_dep_name1"))
+		));
 
-		);
+		$departments = [
+			new \Bitrix\Intranet\Entity\Department(
+				GetMessage("iblock_dep_name2"),
+				parentId: $department->getId()
+			),
+			new \Bitrix\Intranet\Entity\Department(
+				GetMessage("iblock_dep_name3"),
+				parentId: $department->getId()
+			),
+			new \Bitrix\Intranet\Entity\Department(
+				GetMessage("iblock_dep_name5"),
+				parentId: $department->getId()
+			),
+		];
 
-		foreach($arDepartmentSections as $department)
-			$ID = $bs->Add($department);
+		foreach($departments as $department)
+		{
+			$departmentRepository->save($department);
+		}
+
 	}
+	catch (\Exception)
+	{}
+
 
 	$dbRes = CUserTypeEntity::GetList(Array(), Array("ENTITY_ID" => 'USER', "FIELD_NAME" => 'UF_DEPARTMENT'));
 	if ($userField = $dbRes->Fetch())
@@ -90,9 +90,11 @@ if($iblockID == false)
 		);
 
 		//default department when user adding
-		$res_sect = CIBlockSection::GetList(array(), array("IBLOCK_ID"=>$iblockID, "DEPTH_LEVEL"=>1));
-		if($res_sect_arr = $res_sect->Fetch())
-			$userField['SETTINGS']['DEFAULT_VALUE'] = $res_sect_arr["ID"];
+		$rootDepartment = $departmentRepository->getRootDepartment();
+		if ($rootDepartment)
+		{
+			$userField['SETTINGS']['DEFAULT_VALUE'] = $rootDepartment->getId();
+		}
 
 		$userType = new CUserTypeEntity();
 		$userType->Update($userField["ID"], $userField);

@@ -29,7 +29,6 @@ export const Content = {
 		'options',
 		'params',
 		'context',
-		'onToggleOption',
 	],
 
 	data()
@@ -216,10 +215,10 @@ export const Content = {
 				this.selectAll();
 			}
 		},
-		select(id: string): void
+		select(id: string, value: boolean = true): void
 		{
 			const option = this.getOptionRefs().find((item) => item.id === id);
-			option?.setValue(true);
+			option?.setValue(value);
 		},
 		selectAll()
 		{
@@ -324,6 +323,15 @@ export const Content = {
 				Type.isArrayFilled(this.dataSections)
 				&& this.dataSections.every((section) => section.value === false)
 			);
+		},
+		onToggleOption(event)
+		{
+			if (this.dataOptions.has(event.id))
+			{
+				const option = this.dataOptions.get(event.id);
+				option.value = event.isChecked;
+				this.dataOptions.set(event.id, option);
+			}
 		},
 	},
 

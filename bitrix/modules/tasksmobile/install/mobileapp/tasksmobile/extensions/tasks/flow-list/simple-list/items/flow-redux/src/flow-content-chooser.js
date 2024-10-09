@@ -3,7 +3,7 @@
  */
 jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser', (require, exports, module) => {
 	const { connect } = require('statemanager/redux/connect');
-	const { selectById } = require('tasks/statemanager/redux/slices/flows/selector');
+	const { selectById } = require('tasks/statemanager/redux/slices/flows');
 	const { PureComponent } = require('layout/pure-component');
 	const { FlowContent } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-content');
 	const { FlowPromoContent } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-promo-content');

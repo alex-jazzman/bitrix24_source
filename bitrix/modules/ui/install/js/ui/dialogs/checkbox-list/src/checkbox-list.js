@@ -263,9 +263,17 @@ export class CheckboxList extends EventEmitter
 		this.apply();
 	}
 
-	selectOption(id: string): void
+	selectOption(id: string, value: boolean): void
 	{
-		this.#getLayoutComponent().select(id);
+		// to maintain backward compatibility without creating dependencies on main within the ticket #187991
+		// @todo remove later and set default value = true in the function signature
+		if (value !== false)
+		{
+			// eslint-disable-next-line no-param-reassign
+			value = true;
+		}
+
+		this.#getLayoutComponent().select(id, value);
 	}
 
 	apply(): void

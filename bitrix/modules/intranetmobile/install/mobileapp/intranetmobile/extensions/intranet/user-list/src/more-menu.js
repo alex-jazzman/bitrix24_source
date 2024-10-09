@@ -4,8 +4,6 @@
 jn.define('intranet/user-list/src/more-menu', (require, exports, module) => {
 
 	const { BaseListMoreMenu } = require('layout/ui/list/base-more-menu');
-	const { Color } = require('tokens');
-	const { more } = require('assets/icons/src/outline');
 	const { Loc } = require('loc');
 
 	const iconPrefix = `${currentDomain}/bitrix/mobileapp/intranetmobile/extensions/intranet/user-list/images/more-menu-`;

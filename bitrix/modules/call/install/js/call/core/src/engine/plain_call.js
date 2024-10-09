@@ -158,7 +158,6 @@ export class PlainCall extends AbstractCall
 
 			onMediaReceived: (e) =>
 			{
-				console.log("onMediaReceived:", e);
 				this.runCallback(CallEvent.onRemoteMediaReceived, e);
 			},
 			onMediaStopped: (e) =>
@@ -755,8 +754,7 @@ export class PlainCall extends AbstractCall
 	{
 		return new Promise(function (resolve, reject)
 		{
-			if (window["BXDesktopSystem"])
-			{
+			if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
 				navigator.mediaDevices.getUserMedia({
 					video: {
 						mandatory: {
@@ -769,22 +767,28 @@ export class PlainCall extends AbstractCall
 				}).then(
 					function (stream)
 					{
-						resolve(stream);
+						resolve(stream)
 					},
 					function (error)
 					{
-						reject(error);
+						reject(error)
 					}
-				)
+				);
 			}
 			else if (navigator.mediaDevices.getDisplayMedia)
 			{
 				navigator.mediaDevices.getDisplayMedia({
 					video: {
-						width: {max: 1920},
-						height: {max: 1080},
-						frameRate: {max: 5},
-					}
+						cursor: 'always',
+						width: {
+							ideal: 1920
+						},
+						height: {
+							ideal: 1080
+						}
+					},
+					systemAudio: "include",
+					audio: true,
 				}).then(
 					function (stream)
 					{
@@ -2117,6 +2121,7 @@ class Peer
 	videoSender: ?RTCRtpSender
 	audioSender: ?RTCRtpSender
 	screenSender: ?RTCRtpSender
+	screenAudioSender: ?RTCRtpSender
 	calculatedState: string
 
 	constructor(params)
@@ -2220,6 +2225,7 @@ class Peer
 		});
 
 		this._incomingAudioTrack = null;
+		this._incomingScreenAudioTrack = null;
 		this._incomingVideoTrack = null;
 		this._incomingScreenTrack = null;
 		Object.defineProperty(this, 'incomingAudioTrack', {
@@ -2233,6 +2239,10 @@ class Peer
 		Object.defineProperty(this, 'incomingScreenTrack', {
 			get: this._mediaGetter('_incomingScreenTrack'),
 			set: this._mediaSetter('_incomingScreenTrack', 'screen')
+		});
+		Object.defineProperty(this, 'incomingScreenAudioTrack', {
+			get: this._mediaGetter('_incomingScreenAudioTrack'),
+			set: this._mediaSetter('_incomingScreenAudioTrack', 'sharingAudio')
 		});
 
 		this.outgoingVideoHoldState = false;
@@ -2334,6 +2344,7 @@ class Peer
 		let audioTrack;
 		let videoTrack;
 		let screenTrack;
+		let screenAudioTrack;
 
 		if (this.call.localStreams["main"] && this.call.localStreams["main"].getAudioTracks().length > 0 && this.call.localStreams["main"].getAudioTracks()[0]?.readyState === 'live')
 		{
@@ -2342,6 +2353,10 @@ class Peer
 		if (this.call.localStreams["screen"] && this.call.localStreams["screen"].getVideoTracks().length > 0)
 		{
 			screenTrack = this.call.localStreams["screen"].getVideoTracks()[0];
+		}
+		if (this.call.localStreams["screen"] && this.call.localStreams["screen"].getAudioTracks().length > 0)
+		{
+			screenAudioTrack = this.call.localStreams["screen"].getAudioTracks()[0];
 		}
 		if (this.call.localStreams["main"] && this.call.localStreams["main"].getVideoTracks().length > 0 && this.call.localStreams["main"].getVideoTracks()[0]?.readyState === 'live')
 		{
@@ -2354,7 +2369,11 @@ class Peer
 		let tracksToSend = [];
 		if (audioTrack)
 		{
-			tracksToSend.push(audioTrack.id + ' (audio)')
+			tracksToSend.push(audioTrack.id + ' (audio)');
+		}
+		if (screenAudioTrack)
+		{
+			tracksToSend.push(screenAudioTrack.id + ' (sharingAudio)');
 		}
 		if (videoTrack)
 		{
@@ -2397,6 +2416,22 @@ class Peer
 		{
 			this.peerConnection.removeTrack(this.screenSender);
 			this.screenSender = null;
+		}
+
+		// if screen sender audio found - replace track
+		// if not found - add track
+		if (this.screenAudioSender && screenAudioTrack)
+		{
+			this.screenAudioSender.replaceTrack(screenAudioTrack);
+		}
+		if (!this.screenAudioSender && screenAudioTrack)
+		{
+			this.screenAudioSender = this.peerConnection.addTrack(screenAudioTrack);
+		}
+		if (this.screenAudioSender && !screenAudioTrack)
+		{
+			this.peerConnection.removeTrack(this.screenAudioSender);
+			this.screenAudioSender = null;
 		}
 
 		// if audio sender found - replace track
@@ -2992,6 +3027,7 @@ class Peer
 		this.screenSender = null;
 		this.audioSender = null;
 		this.incomingAudioTrack = null;
+		this.incomingScreenAudioTrack = null;
 		this.incomingVideoTrack = null;
 		this.incomingScreenTrack = null;
 	};
@@ -3163,7 +3199,15 @@ class Peer
 		}
 		else if (e.track.kind === 'audio')
 		{
-			this.incomingAudioTrack = e.track;
+			// this.incomingAudioTrack = e.track;
+			if (this.trackList[e.track.id] === 'screenAudio')
+			{
+				this.incomingScreenAudioTrack = e.track;
+			}
+			else
+			{
+				this.incomingAudioTrack = e.track;
+			}
 		}
 	};
 
@@ -3198,6 +3242,7 @@ class Peer
 		let audioTrack = null;
 		let videoTrack = null;
 		let screenTrack = null;
+		let screenAudioTrack = null;
 		this.peerConnection.getTransceivers().forEach((tr) =>
 		{
 			this.call.log("[debug] tr direction: " + tr.direction + " currentDirection: " + tr.currentDirection);
@@ -3208,7 +3253,14 @@ class Peer
 					const track = tr.receiver.track;
 					if (track.kind === 'audio')
 					{
-						audioTrack = track;
+						if (this.trackList[tr.mid] === 'sharingAudio')
+						{
+							screenAudioTrack = track;
+						}
+						else
+						{
+							audioTrack = track;
+						}
 					}
 					else if (track.kind === 'video')
 					{
@@ -3227,6 +3279,7 @@ class Peer
 		this.incomingAudioTrack = audioTrack;
 		this.incomingVideoTrack = videoTrack;
 		this.incomingScreenTrack = screenTrack;
+		this.incomingScreenAudioTrack = screenAudioTrack;
 	};
 
 	stopSignalingTimeout()
@@ -3336,6 +3389,7 @@ class Peer
 				audio: this.getSenderMid(this.audioSender),
 				video: this.getSenderMid(this.videoSender),
 				screen: this.getSenderMid(this.screenSender),
+				sharingAudio: this.getSenderMid(this.screenAudioSender),
 			},
 			userAgent: navigator.userAgent
 		})
@@ -3368,8 +3422,16 @@ class Peer
 			sdp: sdp
 		});
 
+		if (this.pendingRemoteSdpDelay)
+		{
+			this.pendingRemoteSdp = sdp;
+			return;
+		}
+
 		this.log("User: " + this.userId + "; Applying remote offer");
 		this.log("User: " + this.userId + "; Peer ice connection state ", this.peerConnection.iceConnectionState);
+
+		this.pendingRemoteSdpDelay = true;
 
 		this.peerConnection
 			.setRemoteDescription(sessionDescription)
@@ -3386,6 +3448,7 @@ class Peer
 			{
 				this.log("Created connection answer.");
 				this.log("Applying local description.");
+
 				return this.peerConnection.setLocalDescription(answer);
 			})
 			.then(() =>
@@ -3400,6 +3463,7 @@ class Peer
 						audio: this.getSenderMid(this.audioSender),
 						video: this.getSenderMid(this.videoSender),
 						screen: this.getSenderMid(this.screenSender),
+						sharingAudio: this.getSenderMid(this.screenAudioSender),
 					},
 					userAgent: navigator.userAgent
 				});
@@ -3410,6 +3474,14 @@ class Peer
 				this.updateCalculatedState();
 				this.log("Could not apply remote offer", e);
 				console.error("Could not apply remote offer", e);
+			})
+			.finally(() => {
+				this.pendingRemoteSdpDelay = false;
+				if (this.pendingRemoteSdp) {
+					this.applyOfferAndSendAnswer(this.pendingRemoteSdp);
+					this.pendingRemoteSdp = null;
+				}
+
 			})
 		;
 	};
@@ -3575,6 +3647,7 @@ class Peer
 		this.outgoingVideoHoldState = false;
 
 		this.incomingAudioTrack = null;
+		this.incomingScreenAudioTrack = null;
 		this.incomingVideoTrack = null;
 		this.incomingScreenTrack = null;
 	};

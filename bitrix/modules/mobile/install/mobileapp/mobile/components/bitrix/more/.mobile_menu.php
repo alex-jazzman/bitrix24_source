@@ -929,6 +929,7 @@ JS,
 	}
 }
 
+$useAssets = Mobile::getApiVersion() >= 54;
 return [
 	"menu" => $menuStructure,
 	"popupMenuItems" => [
@@ -936,7 +937,8 @@ return [
 			"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
 			"sectionCode" => "menu",
 			"id" => "switch_account",
-			"iconUrl" => $imageDir . "settings/change_account_popup.png?5",
+			"iconName" => "log_out",
+			"iconUrl" => !$useAssets ? $imageDir . "settings/change_account_popup.png?5" : null,
 			"onclick" => <<<JS
 				Application.exit();
 JS
@@ -947,7 +949,8 @@ JS
 			"title" => Loc::getMessage("MENU_PRESET_TAB"),
 			"sectionCode" => "menu",
 			"id" => "tab.settings",
-			"iconUrl" => $imageDir . "settings/tab_settings.png?9",
+			"iconName" => "bottom_menu",
+			"iconUrl" => !$useAssets ?$imageDir . "settings/tab_settings.png?9": null,
 			"onclick" => <<<JS
 				PageManager.openComponent("JSStackComponent",{
 						scriptPath: availableComponents["tab.presets"].publicUrl,

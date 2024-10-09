@@ -71,6 +71,7 @@ export class MembersMenu extends SidebarMenu
 					mentionText: user.name,
 					mentionReplacement: Utils.text.getMentionBbCode(this.context.dialogId, user.name),
 					dialogId: this.context.contextDialogId,
+					isMentionSymbol: false,
 				});
 				this.menuInstance.close();
 			},

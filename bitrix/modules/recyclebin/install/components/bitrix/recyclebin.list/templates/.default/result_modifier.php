@@ -84,13 +84,20 @@ function getColumnRestoreAction($entityId, $entityType, $restoreDisablingOptions
 		return "BX.Recyclebin.List.restore({$entityId}, '{$entityType}')";
 	}
 
-	if (!Feature::isFeatureEnabled("recyclebin"))
+	if (!Feature::isFeatureEnabled("recyclebin") || ($restoreDisablingOptions['IS_ON'] ?? false) === true)
 	{
 		if ($restoreDisablingOptions['EXISTS'])
 		{
 			if ($restoreDisablingOptions['IS_ON'])
 			{
-				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}', {isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$restoreDisablingOptions['MODULE']}'}});";
+				if ($restoreDisablingOptions['FEATURE_ID'])
+				{
+					return "BX.Recyclebin.List.showLimit('{$restoreDisablingOptions['FEATURE_ID']}');";
+				}
+				else
+				{
+					return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}', {isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$restoreDisablingOptions['MODULE']}'}});";
+				}
 			}
 			return "BX.Recyclebin.List.restore({$entityId}, '{$entityType}')";
 		}
@@ -153,6 +160,7 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 	$restoreDisablingType = '';
 	$sliderCode = '';
 	$module = 'recyclebin';
+	$featureId = null;
 
 	foreach ($entityTypes as $typeId => $type)
 	{
@@ -166,6 +174,8 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 				$restoreDisablingType = $typeId;
 				$sliderCode = $entityLimitData['RESTORE']['SLIDER_CODE'];
 				$module = $entityAdditionalData[$typeId]['MODULE_ID'];
+				$featureId = $entityLimitData['RESTORE']['FEATURE_ID'] ?? null;
+				
 				break;
 			}
 		}
@@ -177,6 +187,7 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 		'TYPE' => $restoreDisablingType,
 		'SLIDER_CODE' => $sliderCode,
 		'MODULE' => $module,
+		'FEATURE_ID' => $featureId,
 	];
 }
 
@@ -189,10 +200,9 @@ function getGroupRestoreAction(array $restoreDisablingOptions = [], bool $useDel
 {
 	$action = 'BX.Recyclebin.List.restoreBatch(' . $useDeletionManager . ');';
 
-	if (
-		!Loader::includeModule('bitrix24')
-		|| Feature::isFeatureEnabled('recyclebin')
-	)
+	$defaultFeatureCheck = !Loader::includeModule('bitrix24') || Feature::isFeatureEnabled('recyclebin');
+
+	if ($defaultFeatureCheck && !(($restoreDisablingOptions['IS_ON'] ?? false) === true))
 	{
 		return $action;
 	}
@@ -201,11 +211,19 @@ function getGroupRestoreAction(array $restoreDisablingOptions = [], bool $useDel
 	{
 		if ($restoreDisablingOptions['IS_ON'])
 		{
+			$featureId = (string)$restoreDisablingOptions['FEATURE_ID'];
 			$code = $restoreDisablingOptions['SLIDER_CODE'];
 			$source = $restoreDisablingOptions['MODULE'];
 			$params = "{isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$source}'}}";
-
-			return "BX.UI.InfoHelper.show('{$code}', {$params});";
+			
+			if ($featureId)
+			{
+				return "BX.Recyclebin.List.showLimit('{$featureId}');";
+			}
+			else
+			{
+				return "BX.UI.InfoHelper.show('{$code}', {$params});";
+			}
 		}
 
 		return $action;

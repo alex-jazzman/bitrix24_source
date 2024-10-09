@@ -251,7 +251,7 @@ export class FormSettingsPanel extends BasePresetPanel
 	// eslint-disable-next-line class-methods-use-this
 	isCrmFormPage(): boolean
 	{
-		return Env.getInstance().getOptions().specialType === 'crm_forms';
+		return Env.getInstance().getSpecialType() === 'crm_forms';
 	}
 
 	getFormDesignButton()

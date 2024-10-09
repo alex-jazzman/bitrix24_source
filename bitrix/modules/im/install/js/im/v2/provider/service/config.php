@@ -11,6 +11,7 @@ return [
 	'rel' => [
 		'im.v2.provider.service',
 		'im.v2.lib.layout',
+		'im.v2.lib.role-manager',
 		'im.v2.lib.uuid',
 		'im.public',
 		'im.v2.lib.copilot',

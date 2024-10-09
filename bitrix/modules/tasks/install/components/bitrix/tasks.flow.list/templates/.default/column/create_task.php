@@ -79,10 +79,10 @@ if (!function_exists('renderCreateTaskColumn'))
 			'noCaps' => true,
 			'text' => Loc::getMessage('TASKS_FLOW_LIST_CREATE_TASK'),
 			'size' => Bitrix\UI\Buttons\Size::EXTRA_SMALL,
-			'click' => $click ?? '',
+			'click' => $click,
 		]);
 		$buttonBuilder->setRound();
-		$buttonBuilder->addAttribute('id', 'tasks-flow-list-create-task');
+		$buttonBuilder->addAttribute('id', 'tasks-flow-list-create-task-' . $flow->getId());
 		$buttonBuilder->addAttribute('type', 'button');
 
 		$button = $buttonBuilder->render();

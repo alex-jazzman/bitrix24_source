@@ -100,7 +100,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
 	    const itemName = main_core.Type.isString((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data]) == null ? void 0 : _babelHelpers$classPr.name) ? babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].name : '';
 	    const typeName = main_core.Type.isString((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data]) == null ? void 0 : _babelHelpers$classPr2.typeName) ? babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].typeName : '';
-	    const documentUrl = ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].task) == null ? void 0 : _babelHelpers$classPr3.url) || babelHelpers.classPrivateFieldLooseBase(this, _getWorkflowInfoUrl)[_getWorkflowInfoUrl]();
+	    const documentUrl = ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].task) == null ? void 0 : _babelHelpers$classPr3.url) || babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].workflowUrl || babelHelpers.classPrivateFieldLooseBase(this, _getWorkflowInfoUrl)[_getWorkflowInfoUrl]();
 	    const description = main_core.Type.isString((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data]) == null ? void 0 : _babelHelpers$classPr4.description) ? babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].description : '';
 	    const lengthLimit = 80;
 	    const collapsedDescription = main_core.Dom.create('span', {
@@ -163,12 +163,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      workflowId: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].workflowId,
 	      targetUserId: babelHelpers.classPrivateFieldLooseBase(this, _targetUserId)[_targetUserId],
 	      target,
-	      data: {
-	        ...babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskProgress,
-	        summaryProps: {
-	          showContent: false
-	        }
-	      }
+	      data: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskProgress,
+	      showArrow: true
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _faces)[_faces].render();
 	    return target;
@@ -187,7 +183,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].userId === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId] && (babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskCnt > 0 || babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].commentCnt > 0)) {
 	      const primaryColor = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskCnt === 0 && babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].commentCnt > 0 ? ui_cnt.CounterColor.SUCCESS : ui_cnt.CounterColor.DANGER;
 	      counter = new ui_cnt.Counter({
-	        value: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskCnt || babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].commentCnt,
+	        value: (babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskCnt || 0) + (babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].commentCnt || 0),
 	        color: primaryColor,
 	        secondaryColor: ui_cnt.CounterColor.SUCCESS,
 	        isDouble: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskCnt > 0 && babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].commentCnt > 0
@@ -212,12 +208,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	}
 	function _getWorkflowInfoUrl2() {
 	  var _babelHelpers$classPr10;
-	  const uri = new main_core.Uri('/bitrix/components/bitrix/bizproc.workflow.info/');
-	  uri.setQueryParam('workflow', babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].workflowId);
-	  if (!main_core.Type.isNil((_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].task) == null ? void 0 : _babelHelpers$classPr10.id)) {
-	    var _babelHelpers$classPr11;
-	    uri.setQueryParam('task', (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].task) == null ? void 0 : _babelHelpers$classPr11.id);
-	  }
+	  const idParam = main_core.Type.isNil((_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].task) == null ? void 0 : _babelHelpers$classPr10.id) ? babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].workflowId : babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].task.id;
+	  const uri = new main_core.Uri(`/company/personal/bizproc/${idParam}/`);
 	  return uri.toString();
 	}
 
@@ -349,7 +341,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _subscribeToPushes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToPushes");
 	var _updateWorkflows = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateWorkflows");
 	var _appendWorkflow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendWorkflow");
-	var _detectSliderWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("detectSliderWidth");
 	var _createWorkflowRenderer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createWorkflowRenderer");
 	var _getWorkflowRendererById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWorkflowRendererById");
 	var _deleteWorkflowRendererById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteWorkflowRendererById");
@@ -371,9 +362,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    });
 	    Object.defineProperty(this, _createWorkflowRenderer, {
 	      value: _createWorkflowRenderer2
-	    });
-	    Object.defineProperty(this, _detectSliderWidth, {
-	      value: _detectSliderWidth2
 	    });
 	    Object.defineProperty(this, _appendWorkflow, {
 	      value: _appendWorkflow2
@@ -406,7 +394,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      this.currentUserId = options.currentUserId;
 	      mustSubscribeToPushes = options.mustSubscribeToPushes === true;
 	    }
-	    this.bindAnchors();
 	    this.loader = new WorkflowLoader();
 	    if (mustSubscribeToPushes) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _subscribeToPushes)[_subscribeToPushes]();
@@ -415,7 +402,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    this.initCounterPanel(options.counters, options.filterId);
 	  }
 	  getDefaultAddRowOptions(workflow, renderer) {
-	    var _workflow$task, _workflow$task2;
 	    const actions = [{
 	      text: main_core.Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_ROW_ACTION_DOCUMENT'),
 	      href: workflow.document.url || '#'
@@ -438,12 +424,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        DOCUMENT_NAME: renderer.renderDocumentName(),
 	        WORKFLOW_TEMPLATE_NAME: main_core.Text.encode(workflow.templateName),
 	        TASK_DESCRIPTION: main_core.Dom.create('span', {
-	          html: ((_workflow$task = workflow.task) == null ? void 0 : _workflow$task.description) || ''
+	          html: workflow.description || ''
 	        }),
 	        MODIFIED: renderer.renderModified(),
 	        WORKFLOW_STARTED: main_core.Text.encode(workflow.workflowStarted),
 	        WORKFLOW_STARTED_BY: main_core.Text.encode(workflow.startedBy),
-	        OVERDUE_DATE: main_core.Text.encode((_workflow$task2 = workflow.task) == null ? void 0 : _workflow$task2.overdueDate),
+	        OVERDUE_DATE: main_core.Text.encode(workflow.overdueDate),
 	        SUMMARY: renderer.renderSummary()
 	      },
 	      actions,
@@ -519,26 +505,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    if (childNode) {
 	      main_core.Dom.replace(target, childNode);
 	    }
-	  }
-	  bindAnchors() {
-	    BX.SidePanel.Instance.bindAnchors({
-	      rules: [{
-	        condition: ['/rpa/task/'],
-	        options: {
-	          width: 580,
-	          cacheable: false,
-	          allowChangeHistory: false
-	        }
-	      }, {
-	        condition: ['/bitrix/components/bitrix/bizproc.workflow.info/'],
-	        options: {
-	          cacheable: false,
-	          allowChangeHistory: false,
-	          loader: '/bitrix/components/bitrix/bizproc.workflow.info/templates/slider/images/skeleton.svg',
-	          width: babelHelpers.classPrivateFieldLooseBase(this, _detectSliderWidth)[_detectSliderWidth]()
-	        }
-	      }]
-	    });
 	  }
 	  async initStartWorkflowButton(buttonId) {
 	    const button = main_core.Type.isStringFilled(buttonId) && document.getElementById(buttonId);
@@ -886,13 +852,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      }
 	    });
 	  }
-	}
-	function _detectSliderWidth2() {
-	  if (window.innerWidth < 1500) {
-	    return null; // default slider width
-	  }
-
-	  return 1500 + Math.floor((window.innerWidth - 1500) / 3);
 	}
 	function _createWorkflowRenderer2(workflowId, workflow) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _workflowRenderer)[_workflowRenderer][workflowId] = new WorkflowRenderer({

@@ -174,11 +174,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      textToInsert,
 	      textToReplace = ''
 	    } = config;
+	    const isMentionWithSymbol = textToReplace.length > 0;
 	    let resultText = '';
 	    let newSelectionPosition = textarea.selectionStart + textToInsert.length + 1;
-	    if (textToReplace.length > 0) {
+	    if (isMentionWithSymbol) {
 	      newSelectionPosition -= textToReplace.length;
-	      resultText = textarea.value.replace(textToReplace, `${textToInsert} `);
+	      const textBefore = textarea.value.slice(0, textarea.selectionStart - textToReplace.length);
+	      const textAfter = textarea.value.slice(textarea.selectionStart);
+	      resultText = `${textBefore}${textToInsert} ${textAfter}`;
 	    } else {
 	      const textBefore = textarea.value.slice(0, textarea.selectionStart);
 	      const textAfter = textarea.value.slice(textarea.selectionEnd);

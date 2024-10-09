@@ -1766,13 +1766,13 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _settingsCollection)[_settingsCollection] = main_core.Extension.getSettings('catalog.product-selector');
 	    main_core_events.EventEmitter.subscribe('Catalog:ProductSelectorPlacement:onProductCreated', babelHelpers.classPrivateFieldLooseBase(this, _onProductCreated)[_onProductCreated].bind(this));
 	    main_core_events.EventEmitter.subscribe('Catalog:ProductSelectorPlacement:onProductsFound', babelHelpers.classPrivateFieldLooseBase(this, _onProductsFound)[_onProductsFound].bind(this));
-	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().catch(console.error);
+	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().catch(() => {});
 	  }
 	  isSearchEnabled() {
 	    return true;
 	  }
 	  onDialogShow(event) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().catch(console.error);
+	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().catch(() => {});
 	  }
 	  getDialogParams() {
 	    return {
@@ -1800,7 +1800,7 @@ this.BX = this.BX || {};
 	  }
 	  searchInDialog() {
 	    this.getDialog().getPopup().show();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().then(() => this.searchInDialogActual()).catch(console.error);
+	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().then(() => this.searchInDialogActual()).catch(() => {});
 	  }
 	  searchInDialogActual() {
 	    const dialog = this.getDialog();
@@ -1813,7 +1813,7 @@ this.BX = this.BX || {};
 	      this.dialogMode = DialogMode.SEARCHING;
 	      dialog.selectTab(dialog.getSearchTab().getId());
 	      dialog.getSearchTab().getStub().hide();
-	      babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().then(() => babelHelpers.classPrivateFieldLooseBase(this, _searchInExternalCatalog)[_searchInExternalCatalog]()).catch(console.error);
+	      babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().then(() => babelHelpers.classPrivateFieldLooseBase(this, _searchInExternalCatalog)[_searchInExternalCatalog]()).catch(() => {});
 	    }
 	  }
 	  handleClickNameInput() {
@@ -1822,7 +1822,7 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	    this.getDialog().getPopup().show();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().then(() => this.showItems()).catch(console.error);
+	    babelHelpers.classPrivateFieldLooseBase(this, _initializePlacement)[_initializePlacement]().then(() => this.showItems()).catch(() => {});
 	  }
 	  getPlaceholder() {
 	    return main_core.Loc.getMessage('CATALOG_SELECTOR_1C_INPUT_PLACEHOLDER');
@@ -1845,7 +1845,7 @@ this.BX = this.BX || {};
 	    return false;
 	  }
 	  loadPreselectedItems() {
-	    this.selector.placement.initialize().then(() => super.loadPreselectedItems());
+	    this.selector.placement.initialize().then(() => super.loadPreselectedItems()).catch(() => {});
 	  }
 	}
 	function _onExternalCatalogProductSelect2(item) {

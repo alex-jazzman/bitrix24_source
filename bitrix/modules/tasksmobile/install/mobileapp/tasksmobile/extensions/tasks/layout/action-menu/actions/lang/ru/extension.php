@@ -21,7 +21,6 @@ $MESS['M_TASKS_ACTIONS_MENU_UNFOLLOW_SUCCESS'] = 'Отслеживание вы�
 $MESS['M_TASKS_ACTIONS_MENU_UNFOLLOW'] = 'Не наблюдать';
 $MESS['M_TASKS_ACTIONS_MENU_REMOVE_MSGVER_1'] = 'Удалить задачу';
 $MESS['M_TASKS_ACTIONS_MENU_REMOVE_CONFIRM'] = 'Удалить задачу?';
-$MESS['M_TASKS_ACTIONS_MENU_REMOVE_MESSAGE'] = 'Задача удалена';
 $MESS['M_TASKS_ACTIONS_MENU_REMOVE_CANCEL'] = 'Отмена';
 $MESS['M_TASKS_ACTIONS_MENU_PIN'] = 'Закрепить';
 $MESS['M_TASKS_ACTIONS_MENU_PIN_SUCCESS'] = 'Задача закреплена';

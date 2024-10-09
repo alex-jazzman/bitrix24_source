@@ -9,11 +9,8 @@ return [
 	'css' => 'dist/faces.bundle.css',
 	'js' => 'dist/faces.bundle.js',
 	'rel' => [
-		'ui.vue3',
-		'main.core.events',
-		'main.date',
-		'ui.tooltip',
 		'bizproc.workflow.faces.summary',
+		'ui.image-stack-steps',
 		'main.core',
 		'ui.design-tokens',
 		'ui.icons',

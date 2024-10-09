@@ -126,6 +126,11 @@ if ($request->get('my_tasks_column') === 'Y')
 	$arParams['demoSuffix'] = FlowFeature::isFeatureEnabledByTrial() ? 'Y' : 'N';
 }
 
+if ($request->get('show_counters_toolbar') === 'N')
+{
+	$arParams['SHOW_COUNTERS_TOOLBAR'] = 'N';
+}
+
 $grid = (new Bitrix\Tasks\Grid\Task\Grid($arResult['LIST'], $arParams))
 	->setScope($arParams['CONTEXT'] ?? null);
 

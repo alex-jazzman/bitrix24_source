@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'device/connection',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/parser',
 		'im:messenger/lib/converter',
@@ -10,6 +11,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/notification',
+		'im:messenger/lib/helper',
 		'im:messenger/lib/permission-manager',
 	],
 	'bundle' => [

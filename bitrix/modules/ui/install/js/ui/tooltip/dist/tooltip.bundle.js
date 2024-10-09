@@ -402,6 +402,9 @@ this.BX = this.BX || {};
 	  }
 	  document.addEventListener('mouseover', e => {
 	    const node = e.target;
+	    if (!main_core.Type.isElementNode(node)) {
+	      return;
+	    }
 	    const userId = node.getAttribute('bx-tooltip-user-id');
 	    const loader = node.getAttribute('bx-tooltip-loader');
 	    let tooltipId = userId; // don't use integer value!

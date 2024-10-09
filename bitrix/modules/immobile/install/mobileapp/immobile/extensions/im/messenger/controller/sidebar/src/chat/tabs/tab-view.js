@@ -1,12 +1,15 @@
 /**
  * @module im/messenger/controller/sidebar/chat/tabs/tab-view
  */
+
 jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, exports, module) => {
-	const { SidebarParticipantsView } = require(
-		'im/messenger/controller/sidebar/chat/tabs/participants/participants-view',
-	);
+	const { SidebarParticipantsView } = require('im/messenger/controller/sidebar/chat/tabs/participants/participants-view');
+	const { SidebarFilesView } = require('im/messenger/controller/sidebar/chat/tabs/files/view');
+	const { SidebarLinksView } = require('im/messenger/controller/sidebar/chat/tabs/links/view');
 	const { Loc } = require('loc');
 	const { Theme } = require('im/lib/theme');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { SidebarTab } = require('im/messenger/const');
 
 	/**
 	 * @class SidebarTabView
@@ -23,41 +26,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 			super(props);
 			this.state = {
 				tabItems: this.buildTabsData(),
-				isNotes: props.isNotes,
-				selectedTab: { id: 0 },
+				selectedTab: { id: props.hideParticipants ? SidebarTab.document : SidebarTab.participant },
 			};
-		}
-
-		/**
-		 * @desc Build tabs data by object
-		 * @return {object[]}
-		 */
-		buildTabsData()
-		{
-			const defaultTabs = [
-				{
-					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_PARTICIPANTS'),
-					counter: 0,
-					id: 'participants',
-				},
-				// TODO uncommit this when layouts and scenery are ready
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_TASKS'), counter: 1, id: 'tasks' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_MEETINGS'), counter: 2, id: 'meetings' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_LINKS'), counter: 3, id: '3' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_MEDIA'), counter: 4, id: '4' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_FILES'), counter: 5, id: '5' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_AUDIO'), counter: 6, id: '6' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_SAVE'), counter: 7, id: '7' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_BRIEFS'), counter: 8, id: '8' },
-				// { title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_SIGN'), counter: 9, id: '9' },
-			];
-
-			if (this.props.isNotes)
-			{
-				return defaultTabs.filter((tab) => tab.id !== 'participants');
-			}
-
-			return defaultTabs;
 		}
 
 		render()
@@ -78,7 +48,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 					{},
 					TabView({
 						style: {
-							height: 44,
+							height: 51,
 							backgroundColor: Theme.colors.bgContentPrimary,
 						},
 						params: {
@@ -114,17 +84,70 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 			);
 		}
 
+		/**
+		 * @return {object}
+		 */
+		getTitleTabs()
+		{
+			return {
+				[SidebarTab.participant]: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_PARTICIPANTS'),
+				[SidebarTab.document]: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_DOCUMENTS'),
+				[SidebarTab.link]: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_TAB_LINKS'),
+			};
+		}
+
+		/**
+		 * @desc Build tabs data by object
+		 * @return {{title: string, id: string}[]}
+		 */
+		buildTabsData()
+		{
+			return this.getAvailableTabs().map((tab) => {
+				return {
+					title: this.getTitleTabs()[tab],
+					id: tab,
+				};
+			});
+		}
+
+		/**
+		 * @return {string[]}
+		 */
+		getAvailableTabs()
+		{
+			const tabsSet = new Set(Object.values(SidebarTab));
+
+			if (this.props.hideParticipants)
+			{
+				tabsSet.delete(SidebarTab.participant);
+			}
+
+			if (this.props.isCopilot || !MessengerParams.isFilesMigrated())
+			{
+				tabsSet.delete(SidebarTab.document);
+			}
+
+			if (this.props.isCopilot || !MessengerParams.isLinksMigrated())
+			{
+				tabsSet.delete(SidebarTab.link);
+			}
+
+			return [...tabsSet];
+		}
+
 		renderSelectedTab()
 		{
 			const { selectedTab } = this.state;
 			switch (selectedTab.id)
 			{
-				case 'participants':
+				case SidebarTab.participant:
 					return this.renderParticipantsList();
 				case 'tasks':
 					return null;
-				case 'meetings':
-					return null;
+				case SidebarTab.document:
+					return this.renderFilesList();
+				case SidebarTab.link:
+					return this.renderLinksList();
 				default:
 					return this.renderParticipantsList();
 			}
@@ -143,8 +166,21 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 			// const isRefreshing = participants.length === 0;
 
 			return new SidebarParticipantsView({
-				isNotes: this.props.isNotes,
 				isCopilot: this.props.isCopilot,
+				dialogId: this.props.dialogId,
+			});
+		}
+
+		renderFilesList()
+		{
+			return new SidebarFilesView({
+				dialogId: this.props.dialogId,
+			});
+		}
+
+		renderLinksList()
+		{
+			return new SidebarLinksView({
 				dialogId: this.props.dialogId,
 			});
 		}

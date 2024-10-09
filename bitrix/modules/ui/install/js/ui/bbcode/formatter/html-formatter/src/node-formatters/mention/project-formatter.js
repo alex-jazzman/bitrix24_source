@@ -22,9 +22,8 @@ export class ProjectNodeFormatter extends NodeFormatter
 					return Dom.create({
 						tag: 'a',
 						attrs: {
-							href: formatter.makeSafeHref(projectUrl),
-							className: 'ui-formatter-link ui-formatter-mention',
-							target: '_blank',
+							href: projectUrl,
+							className: 'ui-typography-mention',
 						},
 					});
 				}
@@ -32,7 +31,7 @@ export class ProjectNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: 'span',
 					attrs: {
-						className: 'ui-formatter-mention-stub',
+						className: 'ui-typography-mention',
 					},
 				});
 			},

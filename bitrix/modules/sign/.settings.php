@@ -168,6 +168,9 @@ return [
 					];
 				},
 			],
+			'sign.service.integration.crm.kanban.b2e.entity' => [
+				'className' => Service\Integration\Crm\Kanban\B2e\EntityService::class,
+			],
 			'sign.service.counter.b2e.userToSignDocument' => [
 				'className' => Service\Counter\B2e\UserToSignDocumentCounterService::class,
 			],
@@ -177,8 +180,14 @@ return [
 			'sign.service.integration.im' => [
 				'className' => Service\Integration\Im\ImService::class
 			],
-			'sign.service.chat' => [
-				'className' => Service\ChatService::class
+			'sign.service.hrbotmessage' => [
+				'className' => Service\HrBotMessageService::class
+			],
+			'sign.service.integration.im.groupChat' => [
+				'className' => Service\Integration\Im\GroupChatService::class
+			],
+			'sign.service.sign.documentChat.chatTypeConverter' => [
+				'className' => Service\Sign\DocumentChat\ChatTypeConverterService::class
 			],
 			'sign.service.integration.crm.events' => [
 				'className' => \Bitrix\Sign\Service\Integration\Crm\EventHandlerService::class,
@@ -281,6 +290,12 @@ return [
 					];
 				},
 			],
+			'sign.service.api.external-sign-provider' => [
+				'className' => Service\Api\B2e\ExternalSignProviderService::class,
+				'constructorParams' => static fn() => [
+						'api' => Service\Container::instance()->getApiService(),
+				],
+			],
 			'sign.service.sign.blank.file' => [
 				'className' => Service\Sign\BlankFileService::class,
 			],
@@ -299,8 +314,14 @@ return [
 			'sign.repository.member' => [
 				'className' => Repository\MemberRepository::class,
 			],
+			'sign.repository.documentChat' => [
+				'className' => Repository\DocumentChatRepository::class,
+			],
 			'sign.service.sign.document.agent' => [
 				'className' =>  Service\Sign\DocumentAgentService::class,
+			],
+			'sign.service.integration.im.notification' => [
+				'className' =>  Service\Integration\Im\NotificationService::class,
 			],
 			'sign.repository.file' => [
 				'className' => Repository\FileRepository::class,

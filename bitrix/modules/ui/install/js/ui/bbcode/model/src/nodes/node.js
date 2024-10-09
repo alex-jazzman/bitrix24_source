@@ -431,16 +431,19 @@ export class BBCodeNode
 
 	removeChild(...children: Array<BBCodeContentNode>)
 	{
-		this.children = this.children.reduce((acc: Array<BBCodeContentNode>, node: BBCodeContentNode) => {
+		const filteredChildren = [];
+		this.children.forEach((node: BBCodeContentNode) => {
 			if (children.includes(node))
 			{
 				node.setParent(null);
-
-				return acc;
 			}
+			else
+			{
+				filteredChildren.push(node);
+			}
+		});
 
-			return [...acc, node];
-		}, []);
+		this.children = filteredChildren;
 	}
 
 	replaceChild(targetNode: BBCodeContentNode, ...children: Array<BBCodeContentNode | BBCodeFragmentNode>)

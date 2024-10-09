@@ -5,6 +5,7 @@ jn.define('calendar/layout/fields/multiple-select-field', (require, exports, mod
 	const AppTheme = require('apptheme');
 	const { Selector } = require('calendar/layout/fields/layout/selector');
 	const { BottomSheet } = require('bottom-sheet');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class MultipleSelectField
@@ -48,7 +49,7 @@ jn.define('calendar/layout/fields/multiple-select-field', (require, exports, mod
 			});
 
 			(new BottomSheet({ component: selector })
-				.setBackgroundColor(AppTheme.colors.bgNavigation)
+				.setBackgroundColor(Color.bgNavigation.toHex())
 				.setMediumPositionPercent(60)
 				.setParentWidget(this.props.layoutWidget)
 				.open()

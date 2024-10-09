@@ -7,6 +7,7 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { Quote } from 'im.v2.lib.quote';
 import { FadeAnimation } from 'im.v2.component.animation';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { FeatureManager } from 'im.v2.lib.feature';
 
 import { DialogStatus } from 'im.v2.component.elements';
 import { DialogLoader } from './components/dialog-loader';
@@ -20,6 +21,7 @@ import { AuthorGroup } from './components/block/author-group';
 import { NewMessagesBlock } from './components/block/new-messages';
 import { MarkedMessagesBlock } from './components/block/marked-messages';
 import { EmptyState } from './components/empty-state';
+import { HistoryLimitBanner } from './components/history-limit-banner';
 import { CollectionManager, type DateGroupItem } from './classes/collection-manager/collection-manager';
 import { MessageComponents } from './utils/message-components';
 
@@ -62,6 +64,7 @@ export const MessageList = {
 		DialogLoader,
 		EmptyState,
 		FadeAnimation,
+		HistoryLimitBanner,
 		...MessageComponents,
 	},
 	props:
@@ -117,6 +120,10 @@ export const MessageList = {
 		{
 			return this.formattedCollection.length === 0;
 		},
+		isHistoryLimitExceeded(): boolean
+		{
+			return !FeatureManager.chatHistory.isAvailable() && this.dialog.tariffRestrictions.isHistoryLimitExceeded;
+		},
 		showDialogStatus(): boolean
 		{
 			return this.messageCollection.some((message) => {
@@ -125,7 +132,7 @@ export const MessageList = {
 		},
 		showEmptyState(): boolean
 		{
-			return this.dialogInited && this.noMessages && this.isUser;
+			return this.dialogInited && this.noMessages && this.isUser && !this.isHistoryLimitExceeded;
 		},
 	},
 	created()
@@ -299,6 +306,7 @@ export const MessageList = {
 			<div v-if="dialogInited" class="bx-im-message-list__container">
 				<EmptyState v-if="showEmptyState" :dialogId="dialogId" />
 				<slot name="before-messages" :getMessageComponentName="getMessageComponentName"></slot>
+				<HistoryLimitBanner v-if="isHistoryLimitExceeded" :dialogId="dialogId" :noMessages="noMessages" />
 				<DateGroup v-for="dateGroup in formattedCollection" :key="dateGroup.dateTitle" :item="dateGroup">
 					<!-- Slot for every date group item -->
 					<template #dateGroupItem="{ dateGroupItem, isMarkedBlock, isNewMessagesBlock, isAuthorBlock }">

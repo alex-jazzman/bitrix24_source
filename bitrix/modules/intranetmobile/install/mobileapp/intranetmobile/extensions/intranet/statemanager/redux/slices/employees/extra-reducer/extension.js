@@ -4,11 +4,10 @@
 jn.define('intranet/statemanager/redux/slices/employees/extra-reducer', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { userListAdapter } = require('intranet/statemanager/redux/slices/employees/meta');
-	const { EmployeeStatus, RequestStatus } = require('intranet/enum');
+	const { EmployeeStatus, RequestStatus, EmployeeActions } = require('intranet/enum');
 	const { showSafeToast, Position } = require('toast');
 	const { check, cross } = require('assets/icons/src/outline');
-	const { Actions } = require('intranet/simple-list/items/user-redux/actions');
-	const { EmployeeActions } = require('intranet/enum');
+	const { Actions } = require('intranet/simple-list/items/user-redux/src/actions');
 
 	const deleteInvitationPending = (state, action) => {
 		setActionRequestStatus(state, action, RequestStatus.PENDING);

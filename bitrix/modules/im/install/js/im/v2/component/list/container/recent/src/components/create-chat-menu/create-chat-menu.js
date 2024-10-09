@@ -1,8 +1,12 @@
+import { FeaturePromoter } from 'ui.info-helper';
+
+import { Messenger } from 'im.public';
 import { MessengerMenu, MenuItem, MenuItemIcon, CreateChatPromo } from 'im.v2.component.elements';
-import { Layout, PromoId, ChatType } from 'im.v2.const';
+import { Layout, PromoId, ChatType, SliderCode } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { PromoManager } from 'im.v2.lib.promo';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { CreateChatHelp } from './create-chat-help';
 
@@ -40,6 +44,12 @@ export const CreateChatMenu = {
 				padding: 0,
 			};
 		},
+		isCopilotAvailable(): boolean
+		{
+			// temporary hidden
+			return false;
+			// return FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
+		},
 	},
 	methods:
 	{
@@ -59,6 +69,20 @@ export const CreateChatMenu = {
 
 			this.startChatCreation();
 			this.showPopup = false;
+		},
+		onCopilotClick()
+		{
+			this.showPopup = false;
+
+			if (!FeatureManager.isFeatureAvailable(Feature.copilotActive))
+			{
+				const promoter = new FeaturePromoter({ code: SliderCode.copilotDisabled });
+				promoter.show();
+
+				return;
+			}
+
+			void Messenger.openCopilot();
 		},
 		onPromoContinueClick()
 		{
@@ -111,6 +135,13 @@ export const CreateChatMenu = {
 				:title="loc('IM_RECENT_CREATE_CONFERENCE_TITLE')"
 				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2')"
 				@click="onChatCreateClick(ChatType.videoconf)"
+			/>
+			<MenuItem
+				v-if="isCopilotAvailable"
+				:icon="MenuItemIcon.copilot"
+				:title="loc('IM_RECENT_CREATE_COPILOT_TITLE')"
+				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE')"
+				@click="onCopilotClick"
 			/>
 			<template #footer>
 				<CreateChatHelp @articleOpen="showPopup = false" />

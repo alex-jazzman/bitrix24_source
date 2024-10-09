@@ -88,9 +88,9 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 								<?endif?>
 
 								<span class="task-options-item-param"><?=htmlspecialcharsbx($block['TITLE'])?></span>
-								<div class="task-options-item-open-inner" style="<?= ($block['RESTRICTED'] ?? null) ? 'display: flex;' : ''?>">
-									<?php if ($block['RESTRICTED'] ?? null):?>
-										<?= Limit::getLimitLock(RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL)?>
+								<div class="task-options-item-open-inner <?= ($block['RESTRICTED'] ?? null) ? '--tariff-lock' : ''?>">
+									<?php if (($block['RESTRICTED'] ?? null) && isset($block['RESTRICTED_FEATURE_ID'])):?>
+										<?= Limit::getLimitLock($block['RESTRICTED_FEATURE_ID'])?>
 									<?php endif;?>
 
 									<?=$block['HTML']?>

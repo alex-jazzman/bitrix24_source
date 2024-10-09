@@ -19,6 +19,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/provider/service/sync',
 		'im:messenger/provider/pull/lib/recent/base',
+		'im:messenger/provider/pull/lib/file',
 		'im:chat/utils',
 		'im:chat/messengercommon',
 	],

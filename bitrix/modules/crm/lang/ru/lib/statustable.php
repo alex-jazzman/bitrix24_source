@@ -8,3 +8,4 @@ $MESS["CRM_STATUS_SUCCESS_SEMANTIC_UPDATE_ERROR"] = "Семантику успе
 $MESS["CRM_STATUS_STAGE_WITH_ITEMS_ERROR"] = "Нельзя удалить стадию, на которой есть элементы";
 $MESS["CRM_STATUS_UNSUPPORTED_SEMANTIC_ERROR"] = "Указанный тип семантики не поддерживается";
 $MESS["CRM_STATUS_INCORRECT_SEMANTIC_SORT_ERROR"] = "Нельзя добавить семантику с указанной сортировкой";
+$MESS["CRM_STATUS_INCORRECT_PROCESS_SEMANTIC_SORT_ERROR"] = "Нельзя создать промежуточную стадию после успешной";

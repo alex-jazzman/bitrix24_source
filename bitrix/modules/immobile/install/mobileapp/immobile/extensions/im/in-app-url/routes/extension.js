@@ -309,5 +309,10 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			'/immobile/in-app/file-open/:fileId',
 			({ fileId }) => openFile(fileId),
 		).name('im:message:gallery:open');
+
+		inAppUrl.register(
+			'/immobile/in-app/helpdesk=:articleCode',
+			({ articleCode }) => helpdesk.openHelpArticle(articleCode, 'helpdesk'),
+		).name('im:helpdesk');
 	};
 });

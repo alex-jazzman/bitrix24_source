@@ -43,6 +43,7 @@ CREATE TABLE b_sonet_group (
   SCRUM_MASTER_ID int NULL,
   SCRUM_SPRINT_DURATION int NULL,
   SCRUM_TASK_RESPONSIBLE char(1) NULL,
+  TYPE varchar(10) default NULL,
   PRIMARY KEY (ID)
 );
 CREATE INDEX ix_b_sonet_group_owner_id ON b_sonet_group (owner_id);

@@ -13,6 +13,23 @@ jn.define('ui-system/blocks/switcher/src/size-enum', (require, exports, module) 
 	 */
 	class SwitcherSize extends BaseEnum
 	{
+		static XL = new SwitcherSize('XL', {
+			thumb: {
+				style: {
+					top: 3,
+					width: 19,
+					height: 19,
+					borderRadius: CIRCLE,
+				},
+				position: 2,
+			},
+			track: {
+				width: 51,
+				height: 25,
+				borderRadius: CIRCLE,
+			},
+		});
+
 		static L = new SwitcherSize('L', {
 			thumb: {
 				style: {
@@ -84,6 +101,11 @@ jn.define('ui-system/blocks/switcher/src/size-enum', (require, exports, module) 
 				...this.getThumbPosition(checked),
 				...this.getValue().thumb.style,
 			};
+		}
+
+		getWidth()
+		{
+			return this.getValue().track.width;
 		}
 	}
 

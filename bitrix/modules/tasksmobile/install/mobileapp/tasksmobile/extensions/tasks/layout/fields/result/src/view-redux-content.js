@@ -224,7 +224,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 					marginRight: Indent.L.toNumber(),
 				},
 				indent: Indent.L,
-				borderColor: (isSelected ? Color.accentSoftBlue1 : Color.bgSeparatorPrimary),
+				borderColor: (isSelected ? Color.accentSoftBorderBlue : Color.bgSeparatorPrimary),
 				children: [
 					ReduxAvatar({
 						id: result.createdBy,
@@ -283,7 +283,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 					text: Loc.getMessage('TASKS_FIELDS_RESULT_VIEW_ACTION_COMPLETE'),
 					size: ButtonSize.L,
 					design: ButtonDesign.FILLED,
-					leftIcon: (completeActionMeta.data?.outlineIconContent ?? ''),
+					leftIcon: (completeActionMeta.getData().outlineIconContent ?? ''),
 					stretched: true,
 					testId: `${this.#testId}_ACTION_BUTTON_COMPLETE`,
 					onClick: () => {
@@ -298,7 +298,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 					text: approveActionMeta.title(),
 					size: ButtonSize.M,
 					design: ButtonDesign.OUTLINE_ACCENT_2,
-					leftIcon: (approveActionMeta.data?.outlineIconContent ?? ''),
+					leftIcon: (approveActionMeta.getData().outlineIconContent ?? ''),
 					leftIconColor: Color.accentMainSuccess,
 					color: Color.accentMainSuccess,
 					borderColor: Color.accentMainSuccess,
@@ -317,7 +317,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 					text: disapproveActionMeta.title(),
 					size: ButtonSize.M,
 					design: ButtonDesign.OUTLINE_NO_ACCENT,
-					leftIcon: (disapproveActionMeta.data?.outlineIconContent ?? ''),
+					leftIcon: (disapproveActionMeta.getData().outlineIconContent ?? ''),
 					stretched: true,
 					testId: `${this.#testId}_ACTION_BUTTON_DISAPPROVE`,
 					onClick: () => {

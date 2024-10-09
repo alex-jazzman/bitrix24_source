@@ -11,3 +11,6 @@ $MESS['IM_LIB_CONFIRM_DELETE_DESKTOP'] = "Вы уверены, что хотит
 $MESS['IM_LIB_CONFIRM_DELETE_DESKTOP_CONFIRM'] = "Да, удалить";
 $MESS['IM_LIB_CONFIRM_SWITCH_NOTIFICATION_MODE'] = "Перейти в простой режим? Все настройки расширенного режима будут отменены";
 $MESS['IM_LIB_CONFIRM_SWITCH_NOTIFICATION_MODE_YES'] = "Всё равно перейти";
+$MESS['IM_LIB_EXIT_UPDATE_CHAT_TITLE'] = "Сохранить изменения и перейти в список участников?";
+$MESS['IM_LIB_EXIT_UPDATE_CHANNEL_TITLE'] = "Сохранить изменения и перейти в список подписчиков?";
+$MESS['IM_LIB_EXIT_UPDATE_CHAT_TEXT_CONFIRM'] = "Сохранить и перейти";

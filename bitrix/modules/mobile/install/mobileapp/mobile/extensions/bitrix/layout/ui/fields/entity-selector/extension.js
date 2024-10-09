@@ -4,6 +4,7 @@
 jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { chevronDown, pen } = require('assets/common');
+	const { Icon } = require('assets/icons');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { isEqual } = require('utils/object');
@@ -486,6 +487,11 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			}
 		}
 
+		onRestrictionHidden()
+		{
+			this.onSelectorHidden();
+		}
+
 		isComplexSelector()
 		{
 			const { isComplex } = this.getConfig();
@@ -767,10 +773,17 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @return {{uri: string}|{icon: string}|{}}
+		 * @return {{uri: string}|{icon: string|Icon}|{}}
 		 */
 		getLeftIcon()
 		{
+			if (this.isRestricted())
+			{
+				return {
+					icon: Icon.LOCK,
+				};
+			}
+
 			if (this.isEmpty() || this.isMultiple())
 			{
 				return {};
@@ -882,7 +895,6 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 
 	EntitySelectorField.defaultProps = {
 		...BaseField.defaultProps,
-		showEditIcon: true,
 		showHiddenEntities: true,
 		showChevronDown: false,
 		config: {

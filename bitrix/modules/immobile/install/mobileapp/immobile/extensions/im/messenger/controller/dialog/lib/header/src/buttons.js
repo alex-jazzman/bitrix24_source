@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 	const { Loc } = require('loc');
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
+	const { isOnline } = require('device/connection');
 
 	const { DialogType, UserRole, HeaderButton, BotCode } = require('im/messenger/const');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
@@ -276,6 +277,13 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 		 */
 		onTap(buttonId)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			switch (buttonId)
 			{
 				case HeaderButton.callVideo: {

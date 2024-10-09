@@ -3,7 +3,6 @@ import { UserSelector } from 'ui.form-elements.view';
 import { FormPage } from './form-page';
 import { ValueChecker } from '../value-checker';
 import { bindFilterNumberInput } from '../bind-filter-number-input';
-import { Hint } from '../hint';
 
 import type { Flow } from '../edit-form';
 
@@ -120,7 +119,12 @@ export class ControlPage extends FormPage
 		const flowOwnerLabel = `
 			<div class="tasks-flow__create-title-with-hint">
 				${Loc.getMessage('TASKS_FLOW_EDIT_FORM_FLOW_OWNER')}
-				<span data-id="flowOwnerHint" class="ui-hint"><span class="ui-hint-icon"></span></span>
+				<span
+					data-id="flowOwnerHint"
+					class="ui-hint"
+					data-hint="${Loc.getMessage('TASKS_FLOW_EDIT_FORM_FLOW_OWNER_HINT')}" 
+					data-hint-no-icon
+				><span class="ui-hint-icon"></span></span>
 			</div>
 		`;
 
@@ -193,11 +197,6 @@ export class ControlPage extends FormPage
 		`;
 
 		Event.bind(this.#layout.controlPageForm, 'change', this.#params.onChangeHandler);
-
-		const flowOwnerHint = this.#layout.controlPageForm.querySelector('[data-id=flowOwnerHint]');
-
-		const hint = new Hint({ text: Loc.getMessage('TASKS_FLOW_EDIT_FORM_FLOW_OWNER_HINT') });
-		hint.bindTo(flowOwnerHint);
 
 		return this.#layout.controlPageForm;
 	}

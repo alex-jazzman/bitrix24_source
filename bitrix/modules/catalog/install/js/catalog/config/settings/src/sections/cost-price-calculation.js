@@ -28,31 +28,28 @@ export default class CostPriceCalculation
 			section,
 		});
 
-		if (this.#costPriceCalculationParams.current)
-		{
-			section.append(
-				(new Row({
-					content: (new Alert({
-						text: `
+		section.append(
+			(new Row({
+				content: (new Alert({
+					text: `
 							${Loc.getMessage('CAT_CONFIG_SETTINGS_COST_PRICE_CALCULATION_SECTION_HINT')}
 							<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17858278')">
 								${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
 							</a>
 						`,
-						inline: true,
-						size: AlertSize.SMALL,
-						color: AlertColor.PRIMARY,
-					})).getContainer(),
-				})).render(),
-			);
-		}
+					inline: true,
+					size: AlertSize.SMALL,
+					color: AlertColor.PRIMARY,
+				})).getContainer(),
+			})).render(),
+		);
 
 		const selector = new Selector({
 			label: Loc.getMessage('CAT_CONFIG_SETTINGS_COST_PRICE_CALCULATION_METHOD'),
 			name: 'costPriceCalculationMethod',
 			items: this.#costPriceCalculationParams.items,
 			hints: this.#costPriceCalculationParams.hints,
-			isFieldDisabled: Boolean(this.#costPriceCalculationParams.current),
+			isFieldDisabled: true,
 		});
 
 		selector.getInputNode().setAttribute('required', 'required');

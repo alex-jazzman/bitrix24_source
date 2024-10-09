@@ -387,7 +387,7 @@ class WizardServices
 
 		$obUserField = new CUserTypeEntity;
 		$fieldID = $obUserField->Add($arFields);
-		$GLOBALS["USER_FIELD_MANAGER"]->arFieldsCache = array();
+
 		return $fieldID;
 	}
 }

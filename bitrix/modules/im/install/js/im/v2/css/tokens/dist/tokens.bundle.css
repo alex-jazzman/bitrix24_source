@@ -166,4 +166,10 @@
 	--im-color-accent-purple: var(--ui-color-accent-purple);
 	--im-color-accent-purple-rgb: var(--ui-color-accent-purple-rgb);
 	--im-color-accent-turquoise: var(--ui-color-accent-turquoise);
+	--im-color-palette-green-15: var(--ui-color-palette-green-15);
+	--im-color-palette-green-15-rgb: var(--ui-color-palette-green-15-rgb);
+	--im-color-accent-red: var(--ui-color-palette-red-70);
+	--im-color-accent-red-rgb: var(--ui-color-palette-red-70-rgb);
+	--im-color-accent-blue: #00ace3;
+	--im-color-accent-blue-rgb: 0, 172, 227;
 }

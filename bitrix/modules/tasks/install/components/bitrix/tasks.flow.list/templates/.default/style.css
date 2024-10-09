@@ -22,6 +22,10 @@
 	opacity: var(--ui-opacity-60);
 }
 
+.tasks-flow__list-cell.--right {
+	text-align: right;
+}
+
 .tasks-flow__list-cell_line {
 	position: relative;
 	height: 27px;
@@ -107,7 +111,7 @@
 .tasks-flow__list-members_info.--link,
 .tasks-flow__list-name_info-link {
 	white-space: normal;
-	color: var(--ui-color-base-50);
+	color: var(--ui-color-base-70);
 	letter-spacing: var(--ui-text-letter-spacing-neg-3);
 	text-underline-position: under;
 	text-decoration: underline;
@@ -117,6 +121,10 @@
 	        text-decoration-style: var(--ui-text-decoration-style-dashed);
 	cursor: pointer;
 	transition: .2s;
+}
+
+.tasks-flow__list-name_info-text {
+	color: var(--ui-color-base-70);
 }
 
 .tasks-flow__list-members_wrapper.--link:hover .tasks-flow__list-members_info.--link,

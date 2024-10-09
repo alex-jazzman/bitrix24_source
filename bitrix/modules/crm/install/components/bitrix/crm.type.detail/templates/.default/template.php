@@ -638,12 +638,13 @@ BX.ready(function()
 		restrictionSliderCode: '<?= $arResult['restrictionSliderCode'] ?>',
 		isExternal: <?= $arResult['isExternal'] ? 'true' : 'false' ?>,
 		isCreateSectionsViaAutomatedSolutionDetails: <?= \Bitrix\Crm\Settings\Crm::isAutomatedSolutionListEnabled() ? 'true' : 'false' ?>,
+		isCrmAdmin: <?= $arResult['isCrmAdmin'] ? 'true' : 'false' ?>,
 	});
 	component.init();
 	BX.UI.Hint.init(form);
 	BX.UI.Switcher.initByClassName();
 
-	<?php if (isset($customSectionSwitcherID) && $isNew) :?>
+	<?php if (isset($customSectionSwitcherID) && $isNew || !$arResult['isCrmAdmin']) :?>
 		const customSectionSwitcher = BX.UI.Switcher.getById('<?= $customSectionSwitcherID ?>');
 		const customSectionSwitcherNode = document.getElementById('<?= $customSectionSwitcherID ?>');
 		if (customSectionSwitcherNode)
@@ -651,6 +652,7 @@ BX.ready(function()
 			customSectionSwitcher.init({
 				node: customSectionSwitcherNode,
 				disabled: true,
+				checked: customSectionSwitcher.isChecked(),
 			});
 		}
 	<?php endif; ?>

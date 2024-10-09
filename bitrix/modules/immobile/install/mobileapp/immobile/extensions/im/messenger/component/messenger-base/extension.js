@@ -83,7 +83,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.chatCreator = null;
 			/** @type {DialogCreator || null} */
 			this.dialogCreator = null;
-			this.sidebar = null;
 			this.visibilityManager = VisibilityManager.getInstance();
 
 			/**
@@ -111,7 +110,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 					this.initServices();
 					await this.initCurrentUser();
 					await this.initQueueRequests();
-					await this.initAnotherRepository();
 
 					this.connectionService.updateStatus();
 
@@ -196,6 +194,9 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.initCustomServices();
 		}
 
+		/**
+		 * @abstract
+		 */
 		initCustomServices()
 		{
 			Logger.info('MessengerBase.initCustomServices method is not override');
@@ -215,14 +216,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		async initQueueRequests()
 		{
 			Logger.info('MessengerBase.initQueueRequests method is not override');
-		}
-
-		/**
-		 * @abstract
-		 */
-		async initAnotherRepository()
-		{
-			Logger.info('MessengerBase.initAnotherRepository method is not override');
 		}
 
 		/**

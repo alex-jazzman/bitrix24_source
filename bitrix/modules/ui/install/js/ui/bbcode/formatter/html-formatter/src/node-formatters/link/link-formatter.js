@@ -6,6 +6,7 @@ import {
 	type ConvertCallbackOptions,
 	type ValidateCallbackOptions,
 } from 'ui.bbcode.formatter';
+import type { BBCodeContentNode } from 'ui.bbcode.model';
 import {
 	BBCodeElementNode,
 	BBCodeRootNode,
@@ -24,51 +25,55 @@ export class LinkNodeFormatter extends NodeFormatter
 				return !LinkNodeFormatter.startsWithJavascriptScheme(nodeValue);
 			},
 			before({ node, formatter }: AfterCallbackOptions): BBCodeElementNode {
-				if (
-					formatter.isShortLinkEnabled()
-					&& formatter.isHrefStartsWithAllowedScheme(node.toPlainText())
-				)
+				if (formatter.isShortLinkEnabled())
 				{
-					const scheme: BBCodeScheme = node.getScheme();
-					const nodeContentLength: number = node.getPlainTextLength();
-					const { shortLink } = formatter.getLinkSettings();
-					if (nodeContentLength > shortLink.maxLength)
+					const isIncludeImg: boolean = node.getChildren().some((node: BBCodeContentNode) => {
+						return node.getName() === 'img';
+					});
+
+					if (!isIncludeImg)
 					{
-						const sourceHref: string = LinkNodeFormatter.fetchNodeValue(node);
-
-						const nodeRoot: BBCodeRootNode = scheme.createRoot({
-							children: node.getChildren(),
-						});
-						const [left, right] = nodeRoot.split({
-							offset: shortLink.maxLength - shortLink.lastFragmentLength,
-						});
-						const sourceRightFragmentLength: number = right.getPlainTextLength();
-						const newLink: BBCodeElementNode = node.clone();
-						newLink.setValue(sourceHref);
-
-						if (sourceRightFragmentLength > shortLink.lastFragmentLength)
+						const scheme: BBCodeScheme = node.getScheme();
+						const nodeContentLength: number = node.getPlainTextLength();
+						const { shortLink } = formatter.getLinkSettings();
+						if (nodeContentLength > shortLink.maxLength)
 						{
-							newLink.appendChild(
+							const sourceHref: string = LinkNodeFormatter.fetchNodeValue(node);
+
+							const nodeRoot: BBCodeRootNode = scheme.createRoot({
+								children: node.getChildren(),
+							});
+							const [left, right] = nodeRoot.split({
+								offset: shortLink.maxLength - shortLink.lastFragmentLength,
+							});
+							const sourceRightFragmentLength: number = right.getPlainTextLength();
+							const newLink: BBCodeElementNode = node.clone();
+							newLink.setValue(sourceHref);
+
+							if (sourceRightFragmentLength > shortLink.lastFragmentLength)
+							{
+								newLink.appendChild(
+									...left.getChildren(),
+									scheme.createText('...'),
+								);
+
+								const [, lastFragment] = right.split({
+									offset: sourceRightFragmentLength - shortLink.lastFragmentLength,
+								});
+
+								newLink.appendChild(...lastFragment.getChildren());
+
+								return newLink;
+							}
+
+							newLink.setChildren([
 								...left.getChildren(),
 								scheme.createText('...'),
-							);
-
-							const [, lastFragment] = right.split({
-								offset: sourceRightFragmentLength - shortLink.lastFragmentLength,
-							});
-
-							newLink.appendChild(...lastFragment.getChildren());
+								...right.getChildren(),
+							]);
 
 							return newLink;
 						}
-
-						newLink.setChildren([
-							...left.getChildren(),
-							scheme.createText('...'),
-							...right.getChildren(),
-						]);
-
-						return newLink;
 					}
 				}
 
@@ -85,16 +90,16 @@ export class LinkNodeFormatter extends NodeFormatter
 					return node.getContent();
 				})();
 				const nodeAttributes: {[key: string]: string} = node.getAttributes();
-				const safeHref: string = formatter.makeSafeHref(sourceHref);
-				const { defaultTarget, attributes } = formatter.getLinkSettings();
+				const { defaultTarget = '_blank', attributes } = formatter.getLinkSettings();
 
 				return Dom.create({
 					tag: 'a',
 					attrs: {
 						...nodeAttributes,
 						...attributes,
+						href: sourceHref,
 						target: defaultTarget,
-						href: safeHref,
+						className: 'ui-typography-link',
 					},
 				});
 			},

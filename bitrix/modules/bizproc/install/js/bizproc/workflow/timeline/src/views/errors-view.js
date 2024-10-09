@@ -28,7 +28,7 @@ export class ErrorsView
 		`;
 	}
 
-	renderTo(target: HTMLElement)
+	renderTo(target: HTMLElement): void
 	{
 		Dom.append(this.render(), target);
 	}

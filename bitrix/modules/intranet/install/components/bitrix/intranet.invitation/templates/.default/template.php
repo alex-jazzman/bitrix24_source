@@ -38,6 +38,13 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 $menuContainerId = 'invitation-form-menu-'.$this->randString();
 $contentContainerId = 'invitation-form-content-'.$this->randString();
 
+$projectLimitFeatureId = \Bitrix\Socialnetwork\Helper\Feature::PROJECTS_GROUPS;
+$isProjectLimitExceeded = !\Bitrix\Socialnetwork\Helper\Feature::isFeatureEnabled($projectLimitFeatureId);
+if (\Bitrix\Socialnetwork\Helper\Feature::canTurnOnTrial($projectLimitFeatureId))
+{
+	$isProjectLimitExceeded = false;
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.feedback.form',
 	'',
@@ -496,6 +503,8 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 			firstInvitationBlock: '<?=$arResult['FIRST_INVITATION_BLOCK']?>',
 			isSelfRegisterEnabled: <?= CUtil::phpToJsObject(isset($arResult["REGISTER_SETTINGS"]["REGISTER"]) && $arResult["REGISTER_SETTINGS"]["REGISTER"] === "Y") ?>,
 			analyticsLabel: <?= CUtil::phpToJsObject(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('analyticsLabel')) ?>,
+			projectLimitExceeded: <?= \Bitrix\Main\Web\Json::encode($isProjectLimitExceeded); ?>,
+			projectLimitFeatureId: '<?= $projectLimitFeatureId ?>',
 		});
 
 		var imageMail = document.getElementById("invite-wrap-decal");

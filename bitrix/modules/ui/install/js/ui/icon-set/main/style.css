@@ -385,6 +385,28 @@
 	--ui-icon-set__path_shield-2-update: url('/bitrix/js/ui/icon-set/main/images/shield-2-update.svg');
 	--ui-icon-set__path_shield-2-core-problem: url('/bitrix/js/ui/icon-set/main/images/shield-2-core-problem.svg');
 	--ui-icon-set__path_torrent: url('/bitrix/js/ui/icon-set/main/images/torrent.svg');
+	--ui-icon-set__path_activity: url('/bitrix/js/ui/icon-set/main/images/activity.svg');
+	--ui-icon-set__path_add_to_checklist: url('/bitrix/js/ui/icon-set/main/images/add-to-checklist.svg');
+	--ui-icon-set__path_bp: url('/bitrix/js/ui/icon-set/main/images/bp.svg');
+	--ui-icon-set__path_close-chat: url('/bitrix/js/ui/icon-set/main/images/close-chat.svg');
+	--ui-icon-set__path_create_prompt: url('/bitrix/js/ui/icon-set/main/images/create-prompt.svg');
+	--ui-icon-set__path_devices: url('/bitrix/js/ui/icon-set/main/images/devices.svg');
+	--ui-icon-set__path_document_sign: url('/bitrix/js/ui/icon-set/main/images/document-sign.svg');
+	--ui-icon-set__path_favourite_prompt: url('/bitrix/js/ui/icon-set/main/images/favorite-prompt.svg');
+	--ui-icon-set__path_lines-vertical: url('/bitrix/js/ui/icon-set/main/images/lines.svg');
+	--ui-icon-set__path_main: url('/bitrix/js/ui/icon-set/main/images/main.svg');
+	--ui-icon-set__path_move_to_checklist: url('/bitrix/js/ui/icon-set/main/images/move-to-checklist.svg');
+	--ui-icon-set__path_open_chat: url('/bitrix/js/ui/icon-set/main/images/open-chat.svg');
+	--ui-icon-set__path_prompt: url('/bitrix/js/ui/icon-set/main/images/prompt.svg');
+	--ui-icon-set__path_prompt_var: url('/bitrix/js/ui/icon-set/main/images/prompt-var.svg');
+	--ui-icon-set__path_prompts_library: url('/bitrix/js/ui/icon-set/main/images/prompts-library.svg');
+	--ui-icon-set__path_record_video: url('/bitrix/js/ui/icon-set/main/images/record-video.svg');
+	--ui-icon-set__path_roles_library: url('/bitrix/js/ui/icon-set/main/images/roles-library.svg');
+	--ui-icon-set__path_save_prompt: url('/bitrix/js/ui/icon-set/main/images/save-prompt.svg');
+	--ui-icon-set__path_screen_share: url('/bitrix/js/ui/icon-set/main/images/screen-share.svg');
+	--ui-icon-set__path_sub_point: url('/bitrix/js/ui/icon-set/main/images/sub-point.svg');
+	--ui-icon-set__path_unsub_point: url('/bitrix/js/ui/icon-set/main/images/unsub-point.svg');
+	--ui-icon-set__path_subtask: url('/bitrix/js/ui/icon-set/main/images/subtask.svg');
 }
 
 .ui-icon-set.--shield-2-core-problem {
@@ -1913,4 +1935,92 @@
 
 .ui-icon-set.--speed-meter {
 	--ui-icon-set__icon-path: var(--ui-icon-set__path_speed-meter);
+}
+
+.ui-icon-set.--activity {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_activity);
+}
+
+.ui-icon-set.--add-to-checklist {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_add_to_checklist);
+}
+
+.ui-icon-set.--bp {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_bp);
+}
+
+.ui-icon-set.--close-chat {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_close-chat);
+}
+
+.ui-icon-set.--create-prompt {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_create_prompt);
+}
+
+.ui-icon-set.--devices {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_devices);
+}
+
+.ui-icon-set.--document-sign {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_document_sign);
+}
+
+.ui-icon-set.--favourite-prompt {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_favourite_prompt);
+}
+
+.ui-icon-set.--lines-vertical {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_lines-vertical);
+}
+
+.ui-icon-set.--main {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_main);
+}
+
+.ui-icon-set.--move-to-checklist {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_move_to_checklist);
+}
+
+.ui-icon-set.--open-chat {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_open_chat);
+}
+
+.ui-icon-set.--prompt {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_prompt);
+}
+
+.ui-icon-set.--prompt-var {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_prompt_var);
+}
+
+.ui-icon-set.--prompts-library {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_prompts_library);
+}
+
+.ui-icon-set.--record-video {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_record_video);
+}
+
+.ui-icon-set.--roles-library {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_roles_library);
+}
+
+.ui-icon-set.--save-prompt {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_save_prompt);
+}
+
+.ui-icon-set.--screen-share {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_screen_share);
+}
+
+.ui-icon-set.--sub-point {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_sub_point);
+}
+
+.ui-icon-set.--unsub-point {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_unsub_point);
+}
+
+.ui-icon-set.--subtask {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_subtask);
 }

@@ -53,7 +53,8 @@
 .tasks-flow__view-form-content {
 	display: flex;
 	flex-direction: column;
-	height: 197px;
+	/*height: 197px;*/
+	height: 202px;
 	box-sizing: border-box;
 	padding: 11px 0;
 	border-radius: 0 0 var(--ui-border-radius-lg) var(--ui-border-radius-lg);

@@ -11,7 +11,7 @@ jn.define('apptheme', (require, exports, module) => {
 		newlight: 'light',
 	};
 
-	const { colors, styles, typography } = require('apptheme/list');
+	const { styles, typography } = require('apptheme/list');
 	const nativeAppTheme = (Application.getApiVersion() >= 52) ? require('native/apptheme')?.AppTheme : undefined;
 
 	const componentTokens = {
@@ -22,10 +22,13 @@ jn.define('apptheme', (require, exports, module) => {
 	{
 		static cachedColors = {};
 		static cachedFonts = null;
+		static cachedStyles = null;
+
 		static get colors()
 		{
 			let colors = {};
-			if (AppTheme.cachedColors[AppTheme.id]) {
+			if (AppTheme.cachedColors[AppTheme.id])
+			{
 				colors = AppTheme.cachedColors[AppTheme.id];
 			}
 			else
@@ -36,7 +39,8 @@ jn.define('apptheme', (require, exports, module) => {
 				{
 					systemColors = nativeAppTheme.getColors(AppTheme.id);
 				}
-				colors =  { ...customTokens, ...systemColors }
+
+				colors = { ...customTokens, ...systemColors };
 				AppTheme.cachedColors[AppTheme.id] = colors;
 			}
 
@@ -45,35 +49,35 @@ jn.define('apptheme', (require, exports, module) => {
 
 		static get realColors()
 		{
-			if (AppTheme.cachedColors['currentRealColors'])
+			if (AppTheme.cachedColors.currentRealColors)
 			{
-				return AppTheme.cachedColors['currentRealColors'];
+				return AppTheme.cachedColors.currentRealColors;
 			}
 
-			let colors = nativeAppTheme.getColors();
-			AppTheme.cachedColors['currentRealColors'] = colors;
+			const colors = nativeAppTheme.getColors();
+			AppTheme.cachedColors.currentRealColors = colors;
+
 			return colors;
 		}
 
 		static get typography()
 		{
-			if (AppTheme.cachedFonts == null)
+			if (AppTheme.cachedFonts === null)
 			{
-				AppTheme.cachedFonts = nativeAppTheme?.typography ?? typography
+				AppTheme.cachedFonts = nativeAppTheme?.typography ?? typography;
 			}
 
-			return  AppTheme.cachedFonts
-
+			return AppTheme.cachedFonts;
 		}
 
 		static get styles()
 		{
-			if (AppTheme.cachedStyles == null)
+			if (AppTheme.cachedStyles === null)
 			{
-				AppTheme.cachedStyles = nativeAppTheme?.styles ?? styles
+				AppTheme.cachedStyles = nativeAppTheme?.styles ?? styles;
 			}
 
-			return  AppTheme.cachedStyles
+			return AppTheme.cachedStyles;
 		}
 
 		static get id()

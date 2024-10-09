@@ -117,7 +117,7 @@ export class Actions
 			const callback = (result) => {
 				const slider = BX.SidePanel.Instance.getTopSlider();
 
-				if (slider)
+				if (slider && result.error)
 				{
 					BX.UI.InfoHelper.sliderProviderForOldFormat?.getFrame().contentWindow.postMessage(
 						{

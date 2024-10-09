@@ -10,6 +10,7 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 	const { CheckBoxCounter } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter');
 	const { ButtonRemove } = require('tasks/layout/checklist/list/src/buttons/button-remove');
 	const { BaseChecklistItem } = require('tasks/layout/checklist/list/src/base-item');
+	const { MEMBER_TYPE_RESTRICTION_FEATURE_META } = require('tasks/layout/checklist/list/src/constants');
 
 	const LAYOUT_CHECKBOX_WIDTH = 34;
 
@@ -111,12 +112,21 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 		 */
 		renderMembers()
 		{
-			const { item, openUserSelectionManager } = this.props;
+			const { item, openUserSelectionManager, openTariffRestrictionWidget } = this.props;
 
 			return new ItemMembers({
 				item,
 				testId: this.getTestId('users'),
-				onClick: openUserSelectionManager,
+				onClick: (itemId, memberType) => {
+					if (MEMBER_TYPE_RESTRICTION_FEATURE_META[memberType].isRestricted())
+					{
+						openTariffRestrictionWidget(memberType);
+					}
+					else
+					{
+						openUserSelectionManager(itemId, memberType);
+					}
+				},
 			});
 		}
 
@@ -226,7 +236,7 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 
 		handleOnSubmit()
 		{
-			if (this.textRef.getTextValue())
+			if (this.getTextValue())
 			{
 				super.handleOnSubmit();
 			}
@@ -234,6 +244,14 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 			{
 				this.textInputBlur();
 			}
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getTextValue()
+		{
+			return this.textRef.getTextValue().trim();
 		}
 
 		toggleImportant()

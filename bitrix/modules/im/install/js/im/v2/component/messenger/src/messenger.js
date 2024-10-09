@@ -2,13 +2,14 @@ import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import 'im.v2.css.tokens';
 import 'im.v2.css.icons';
+import 'im.v2.css.classes';
 
 import { MessengerNavigation } from 'im.v2.component.navigation';
 import { RecentListContainer } from 'im.v2.component.list.container.recent';
 import { OpenlineListContainer } from 'im.v2.component.list.container.openline';
 import { ChannelListContainer } from 'im.v2.component.list.container.channel';
 import { ChatContent } from 'im.v2.component.content.chat';
-import { CreateChatContent } from 'im.v2.component.content.create-chat';
+import { CreateChatContent, UpdateChatContent } from 'im.v2.component.content.chat-forms';
 import { OpenlinesContent } from 'im.v2.component.content.openlines';
 import { NotificationContent } from 'im.v2.component.content.notification';
 import { MarketContent } from 'im.v2.component.content.market';
@@ -40,6 +41,7 @@ export const Messenger = {
 		OpenlineListContainer,
 		ChatContent,
 		CreateChatContent,
+		UpdateChatContent,
 		OpenlinesContent,
 		NotificationContent,
 		MarketContent,
@@ -128,7 +130,7 @@ export const Messenger = {
 			let entityId = layoutEntityId;
 
 			const lastOpenedElement = this.getLayoutManager().getLastOpenedElement(layoutName);
-			if (lastOpenedElement)
+			if (!entityId && lastOpenedElement)
 			{
 				entityId = lastOpenedElement;
 			}

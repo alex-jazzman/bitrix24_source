@@ -414,7 +414,6 @@ $MESS["MON_10"] = "Oct";
 $MESS["MON_11"] = "Nov";
 $MESS["MON_12"] = "Dec";
 $MESS["REQUIRED_FIELDS"] = "Required fields.";
-$MESS["TOOLS_CALENDAR"] = "Calendar";
 $MESS["TOOLS_DAYS"] = "days";
 $MESS["TOOLS_DN"] = "days";
 $MESS["TOOLS_HELP"] = "Help";

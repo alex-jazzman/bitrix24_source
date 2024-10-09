@@ -2,6 +2,7 @@
  * @module tasks/checklist/controller
  */
 jn.define('tasks/checklist/controller', (require, exports, module) => {
+	const { clone } = require('utils/object');
 	const { debounce } = require('utils/function');
 	const { ChecklistWidget } = require('tasks/checklist/widget');
 	const { CheckListFlatTree } = require('tasks/checklist/flat-tree');
@@ -14,21 +15,10 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		constructor(props)
 		{
 			this.props = props;
-			this.currentOpenChecklistId = null;
-			this.checklistsMap = new Map();
 			this.widgetMap = new Map();
-			this.handleOnSave = debounce(this.handleOnSave, 1000, this);
-			this.setChecklists(props.checklists);
-		}
-
-		/**
-		 * @public
-		 * @param {object[]} checklists
-		 */
-		setChecklists(checklists = [])
-		{
 			this.checklistsMap = new Map();
-			checklists.forEach((checklist) => this.addChecklist(checklist));
+			this.currentOpenChecklistId = null;
+			this.handleOnSave = debounce(this.handleOnSave, 1000, this);
 		}
 
 		/**
@@ -213,6 +203,46 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			checklistWidget.close();
 		}
 
+		getChecklistFlatTree()
+		{
+			const checklistsFlatTree = [];
+
+			this.getChecklists().forEach((checklist) => {
+				checklistsFlatTree.push(checklist.getFlatTree());
+			});
+
+			return checklistsFlatTree;
+		}
+
+		/**
+		 * @param {Array} checklistsFlatTree
+		 * @param {Object} checklistsTree
+		 * @param {boolean} clear
+		 */
+		setChecklists({ checklistsFlatTree, checklistsTree, clear = false })
+		{
+			if (clear)
+			{
+				this.clearChecklists();
+			}
+
+			if (checklistsFlatTree)
+			{
+				this.setChecklistFlatTree(checklistsFlatTree);
+			}
+			else if (checklistsTree)
+			{
+				this.setChecklistTree(clone(checklistsTree));
+			}
+		}
+
+		setChecklistFlatTree(checklistsFlatTree)
+		{
+			clone(checklistsFlatTree).forEach((checklistFlatTree) => {
+				this.addChecklist(new CheckListFlatTree({ checklistFlatTree, ...this.getTaskParams() }));
+			});
+		}
+
 		/**
 		 * @public
 		 * @param {object} tree
@@ -229,6 +259,11 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			checklists.forEach((checklist) => {
 				this.addChecklist(new CheckListFlatTree({ checklist, ...this.getTaskParams() }));
 			});
+		}
+
+		clearChecklists()
+		{
+			this.checklistsMap.clear();
 		}
 
 		addChecklist(checklist)
@@ -499,8 +534,6 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			}
 
 			this.removeFromWidgetMap(checklistId);
-			void this.handleOnSave();
-
 			this.props.onClose?.();
 		};
 

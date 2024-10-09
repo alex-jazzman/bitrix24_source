@@ -3,6 +3,8 @@ if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 CUtil::InitJSCore(array('popup'));
 $GLOBALS['APPLICATION']->SetAdditionalCSS("/bitrix/js/main/core/css/core_finder.css");
 
+$arParams["BIND_ELEMENT"] = $arParams["BIND_ELEMENT"] ?? null;
+
 CUtil::InitJSCore(array('popup'));
 ?>
 <script>

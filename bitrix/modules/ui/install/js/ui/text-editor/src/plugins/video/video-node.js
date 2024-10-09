@@ -16,7 +16,7 @@ import {
 } from 'ui.lexical.core';
 
 import type { DecoratorOptions } from '../../types/decorator-options';
-import { VideoService } from './video-service';
+import { VideoService } from 'ui.video-service';
 
 export interface VideoPayload {
 	src: string;
@@ -132,7 +132,7 @@ export class VideoNode extends DecoratorNode
 	{
 		const span = document.createElement('span');
 		const theme = config.theme;
-		const className = theme.video;
+		const className = theme?.video?.container;
 		if (className !== undefined)
 		{
 			span.className = className;
@@ -181,6 +181,7 @@ export class VideoNode extends DecoratorNode
 				width: this.getWidth(),
 				height: this.getHeight(),
 				provider: this.getProvider(),
+				config,
 			},
 		};
 	}

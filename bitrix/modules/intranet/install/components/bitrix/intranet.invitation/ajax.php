@@ -128,7 +128,10 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	protected function getHeadDepartmentId(): ?int
 	{
-		return Intranet\DepartmentStructure::getInstance(SITE_ID)->getBaseDepartmentId();
+		return \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository()
+			->getRootDepartment()
+			?->getId();
 	}
 
 	private function getCurrentUserDepartment(): array
@@ -246,19 +249,16 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	protected function registerNewUser($newUsers, $type, &$strError): array
 	{
-		$arError = [];
-		$invitedUserIds = Register::inviteNewUsers(SITE_ID, $newUsers, $type, $arError);
+		$result = Register::inviteNewUsers(SITE_ID, $newUsers, $type);
 
-		if (
-			is_array($arError)
-			&& count($arError) > 0
-		)
+		$invitedUserIds = $result->getData();
+		if (!$result->isSuccess())
 		{
-			foreach($arError as $strErrorText)
+			foreach($result->getErrors() as $error)
 			{
-				if ((string)$strErrorText !== '')
+				if ($error->getMessage() !== '')
 				{
-					$strError .= $strErrorText . " ";
+					$strError .= $error->getMessage() . " ";
 				}
 			}
 		}
@@ -534,8 +534,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function addAction()
 	{
-		$this->getAnalyticsInstance()->sendRegistration();
-
 		$userData = $_POST;
 		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"] ?? null) ?: [$this->getHeadDepartmentId()];
 
@@ -554,8 +552,12 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		{
 			$strError = str_replace("<br>", " ", $strError);
 			$this->addError(new \Bitrix\Main\Error($strError));
+			$this->getAnalyticsInstance()->sendRegistration(status: 'N', userData: $userData);
 			return false;
 		}
+
+		$this->getAnalyticsInstance()->sendRegistration(status: 'Y', userData: $userData);
+
 
 		$res = $this->prepareUsersForResponse([$idAdded]);
 
@@ -601,10 +603,10 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			return false;
 		}
 
-		$error = "";
+		$error = new \Bitrix\Main\Error('');
 		if (!Integrator::checkPartnerEmail($_POST["integrator_email"], $error))
 		{
-			$this->addError(new \Bitrix\Main\Error($error));
+			$this->addError($error);
 
 			return false;
 		}

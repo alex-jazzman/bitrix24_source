@@ -118,3 +118,9 @@ $MESS['INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU'] = '* принадл
 
 $MESS["INTRANET_USER_PROFILE_ACTION_CONFIRM"] = "Подтвердить вход";
 $MESS["INTRANET_USERPROFILE_ACTION_REFUSE"] = "Отказать";
+$MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER"] = 'Сотрудника нет в списке сертифицированных партнёров, его нельзя сделать интегратором. Интегратор получает доступ к вашему Битрикс24, поэтому мы разрешаем назначать интеграторами только сотрудников проверенных компаний.
+<br/><br/>
+Напоминаем, что для настройки достаточно прав интегратора. Не рекомендуем давать сторонним разработчикам права администратора, так как они могут уволить остальных сотрудников и получить полный контроль над вашим Битрикс24.
+<br/><br/>
+Выбрать надёжного партнёра можно на <a target="_blank" href="https://www.bitrix24.ru/partners/" >нашем сайте</a>';
+$MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE"] = "Понятно";

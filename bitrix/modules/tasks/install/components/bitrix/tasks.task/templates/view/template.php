@@ -1,17 +1,18 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI;
 use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -66,9 +67,23 @@ $isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 $taskRecurrentRestrict = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
+$taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
+);
+
+$taskTimeElapsedEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_TIME_ELAPSED
+);
+
+$isProjectLimitExceeded = !Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::isFeatureEnabled();
+if (Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::canTurnOnTrial())
+{
+	$isProjectLimitExceeded = false;
+}
+
 if ($taskLimitExceeded || $taskRecurrentRestrict)
 {
-	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+	UI\Extension::load('ui.info-helper');
 }
 
 if (isset($arResult['CAN_SHOW_MOBILE_QR_POPUP']) && $arResult['CAN_SHOW_MOBILE_QR_POPUP'] === true)
@@ -244,7 +259,10 @@ if (
 							'DATA' => $taskData['SE_CHECKLIST'],
 							'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 							'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
-							'CAN_ADD_ACCOMPLICE' => $can['EDIT'] && !$taskLimitExceeded,
+							'CAN_ADD_ACCOMPLICE' => (
+								$can['EDIT']
+								&& $taskObserversParticipantsEnabled
+							),
 						],
 						null,
 						['HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y']
@@ -278,6 +296,15 @@ if (
 						<div class="task-detail-group-wrap">
 							<div class="task-detail-group --flex-center">
 								<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
+								<?php if ($isProjectLimitExceeded): ?>
+									<div class="tasks-detail-tariff-lock-container"">
+										<span
+											class="tariff-lock"
+											onclick="<?=Util\Restriction\Bitrix24Restriction\Limit::getLimitLockClick(Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::getFeatureId(), null)?>"
+											style="margin-bottom: 3px"
+										></span>
+								<?php endif ?>
+
 								<?php $APPLICATION->IncludeComponent(
 									'bitrix:tasks.widget.member.selector',
 									'projectlink',
@@ -291,11 +318,16 @@ if (
 										'ENTITY_ROUTE' => 'task',
 										'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
 										'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-										'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
+										'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR,
+										'isProjectLimitExceeded' => $isProjectLimitExceeded,
+										'projectFeatureId' => Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::getFeatureId(),
 									),
 									null,
 									array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
 								);?>
+								<?php if ($isProjectLimitExceeded): ?>
+									</div>
+								<?php endif ?>
 							</div>
 						</div>
 					<?php endif;?>
@@ -671,7 +703,15 @@ if (
 					<span class="task-switcher-text">
 						<span class="task-switcher-text-inner">
 							<?=Loc::getMessage("TASKS_ELAPSED_TIME_SHORT")?>
-							<span class="task-switcher-text-counter" id="task-switcher-elapsed-time"><?=\Bitrix\Tasks\UI::formatTimeAmount($templateData["ELAPSED"]['TIME'])?></span>
+							<?php if($taskTimeElapsedEnabled): ?>
+								<span
+									class="task-switcher-text-counter"
+									id="task-switcher-elapsed-time"
+								><?=\Bitrix\Tasks\UI::formatTimeAmount($templateData["ELAPSED"]['TIME'])?>
+								</span>
+							<?php else: ?>
+								<span class="tariff-lock" style="align-self: center;"></span>
+							<?php endif; ?>
 						</span>
 					</span>
 				</span>
@@ -984,7 +1024,7 @@ if (!empty($request->get('ta_sec')))
 			TASKS_STATUS_1: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_1"))?>",
 			TASKS_STATUS_2: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_2"))?>",
 			TASKS_STATUS_3: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_3"))?>",
-			TASKS_STATUS_4: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_4"))?>",
+			TASKS_STATUS_4: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_4_MSGVER_1"))?>",
 			TASKS_STATUS_5: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_5"))?>",
 			TASKS_STATUS_6: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_6"))?>",
 			TASKS_STATUS_7: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_7"))?>",
@@ -1040,6 +1080,8 @@ if (!empty($request->get('ta_sec')))
 			contextId: 'tasks_task_<?= $taskData["ID"] ?>',
 			category: 'readonly_livefeed',
 		},
+		taskTimeElapsedEnabled: <?=CUtil::PhpToJSObject($taskTimeElapsedEnabled)?>,
+		taskTimeElapsedFeatureId: '<?= Bitrix24\FeatureDictionary::TASK_TIME_ELAPSED ?>',
 	});
 
 	if (window.B24)

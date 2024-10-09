@@ -547,12 +547,13 @@ foreach ($arFields as $GROUP_ID => $arGroupFields):
 			<td class="content-edit-form-field-input" colspan="2">
 				<select name="UF_DEPARTMENT[]" size="5" multiple="multiple" >
 					<?
-					$rsDepartments = CIBlockSection::GetTreeList(array(
-						"IBLOCK_ID"=>intval(COption::GetOptionInt('intranet', 'iblock_structure', false)),
-					));
-					while($arDepartment = $rsDepartments->GetNext()):
-						?><option value="<?echo $arDepartment["ID"]?>" <?if(is_array($value) && in_array($arDepartment["ID"], $value)) echo "selected"?>><?echo str_repeat("&nbsp;.&nbsp;", $arDepartment["DEPTH_LEVEL"])?><?echo $arDepartment["NAME"]?></option><?
-					endwhile;
+					$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+						->departmentRepository();
+					$departmentCollection = $departmentRepository->getAllTree();
+					foreach($departmentCollection as $department)
+					{
+						?><option value="<?echo $department->getId()?>" <?if(is_array($value) && in_array($department->getId(), $value)) echo "selected"?>><?echo str_repeat("&nbsp;.&nbsp;", $department->getDepth())?><?echo $department->getName()?></option><?
+					}
 					?>
 				</select>
 			</td>

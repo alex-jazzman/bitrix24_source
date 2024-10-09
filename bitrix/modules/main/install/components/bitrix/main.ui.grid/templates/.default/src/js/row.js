@@ -994,9 +994,14 @@ import { Type } from 'main.core';
 			return this.checkbox;
 		},
 
+		hasActionsButton()
+		{
+			return BX.Type.isDomNode(this.getActionsButton());
+		},
+
 		getActionsMenu()
 		{
-			if (!this.actionsMenu)
+			if (!this.actionsMenu && this.hasActionsButton())
 			{
 				const buttonRect = this.getActionsButton().getBoundingClientRect();
 
@@ -1703,6 +1708,34 @@ import { Type } from 'main.core';
 
 							return newInner;
 						})();
+
+						if (counter.isDouble)
+						{
+							const counterDoubleContainer = (() => {
+								const currentDoubleContainer = uiCounter.querySelector('.ui-counter-secondary');
+								if (BX.Type.isDomNode(currentDoubleContainer))
+								{
+									return currentDoubleContainer;
+								}
+
+								const newDoubleContainer = BX.Tag.render`
+									<span class="ui-counter-secondary"></span>
+								`;
+
+								BX.Dom.append(newDoubleContainer, uiCounter);
+
+								return newDoubleContainer;
+							})();
+
+							if (BX.Type.isStringFilled(counter.secondaryColor))
+							{
+
+								Object.values(BX.Grid.Counters.Color).forEach((secondaryColor) => {
+									BX.Dom.removeClass(counterDoubleContainer, secondaryColor);
+								});
+								BX.Dom.addClass(counterDoubleContainer, counter.secondaryColor);
+							}
+						}
 
 						if (BX.Type.isStringFilled(counter.type))
 						{

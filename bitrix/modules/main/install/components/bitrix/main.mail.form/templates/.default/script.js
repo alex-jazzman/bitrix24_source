@@ -1626,27 +1626,53 @@
 
 	BXMainMailForm.prototype.appendCalendarLinkButton = function(params)
 	{
-		if (BX.type.isNotEmptyObject(params)
+		if (
+			BX.type.isNotEmptyObject(params)
 			&& BX.type.isBoolean(params.showCalendarSharingButton)
-			&& !this.calendarSharingLinkButton)
+			&& !this.calendarSharingLinkButton
+		)
 		{
 			const id = 'calendar-sharing-link';
-			this.postForm.getToolbar().insertAfter({
-				BODY: `<i></i>${BX.Loc.getMessage('MAIN_MAIL_FORM_EDITOR_CALENDAR_SHARING_SELECT')}`,
-				ID: id,
-			});
+			const ownerType = this.options.ownerType ?? null;
+			const sharingFeatureLimitEnable = params.sharingFeatureLimitEnable
+				|| (params.crmSharingFeatureLimitEnable && ownerType === 'DEAL')
+			;
+			if (sharingFeatureLimitEnable)
+			{
+				this.postForm.getToolbar().insertAfter({
+					BODY: `<i></i>${BX.Loc.getMessage('MAIN_MAIL_FORM_EDITOR_CALENDAR_SHARING_SELECT')}`,
+					ID: id,
+				});
+			}
+			else
+			{
+				this.postForm.getToolbar().insertAfter({
+					BODY: `<div class="--locked"><i></i>${BX.Loc.getMessage('MAIN_MAIL_FORM_EDITOR_CALENDAR_SHARING_SELECT')}</div>`,
+					ID: id,
+				});
+			}
+
 			this.calendarSharingLinkButton = this.getSelectButton(id);
-			BX.Event.bind(this.calendarSharingLinkButton, 'click', this.insertCalendarSharingLink.bind(this));
-			this.calendarSharingLoader = new BX.Loader({
-				target: this.calendarSharingLinkButton,
-				size: 20,
-				mode: 'inline',
-				offset: {
-					left: '4%',
-					top: '-2%',
-				},
-			});
-			this.initPopupOpenCalendar();
+			if (sharingFeatureLimitEnable)
+			{
+				BX.Event.bind(this.calendarSharingLinkButton, 'click', this.insertCalendarSharingLink.bind(this));
+				this.calendarSharingLoader = new BX.Loader({
+					target: this.calendarSharingLinkButton,
+					size: 20,
+					mode: 'inline',
+					offset: {
+						left: '4%',
+						top: '-2%',
+					},
+				});
+				this.initPopupOpenCalendar();
+			}
+			else
+			{
+				BX.Event.bind(this.calendarSharingLinkButton, 'click', () => {
+					this.showCalendarSharingLimit(ownerType);
+				});
+			}
 		}
 	};
 
@@ -1688,6 +1714,26 @@
 			}
 			this.calendarSharingLoader.hide();
 		});
+	};
+
+	BXMainMailForm.prototype.showCalendarSharingLimit = function(ownerType)
+	{
+		if (ownerType === 'DEAL')
+		{
+			BX.UI.InfoHelper.show('limit_crm_calendar_free_slots');
+		}
+		else
+		{
+			BX.Runtime.loadExtension('ui.info-helper')
+				.then(({ FeaturePromotersRegistry }) => {
+					if (FeaturePromotersRegistry)
+					{
+						FeaturePromotersRegistry.getPromoter({ featureId: 'calendar_sharing' }).show();
+					}
+				})
+				.catch((error) => {})
+			;
+		}
 	};
 
 	BXMainMailForm.prototype.insertCalendarSharingMessage = function(sharingLinkNode)
@@ -1835,7 +1881,6 @@
 					autoSave: true,
 					simpleMode: true,
 					steps: [{
-						target: this.calendarSharingLinkButton,
 						position: 'top',
 						title: titleText,
 						text: tourText,
@@ -1845,8 +1890,13 @@
 				const guidePopup = guide.getPopup();
 				guidePopup.setWidth(400);
 				setTimeout(() => {
-					window.scrollTo(0, this.calendarSharingLinkButton.getBoundingClientRect().y + window.pageYOffset);
-					guide.start();
+					const step = guide.getCurrentStep();
+					if (step)
+					{
+						guide.scrollToTarget(this.calendarSharingLinkButton);
+						step.setTarget(this.calendarSharingLinkButton);
+						guide.start();
+					}
 				}, 1500);
 			}
 		});

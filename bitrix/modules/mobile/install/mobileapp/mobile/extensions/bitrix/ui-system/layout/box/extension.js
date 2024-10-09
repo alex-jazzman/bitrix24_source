@@ -2,19 +2,24 @@
  * @module ui-system/layout/box
  */
 jn.define('ui-system/layout/box', (require, exports, module) => {
+	const { animate } = require('animation');
 	const { Component, Color } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
+	const { ScrollView } = require('layout/ui/scroll-view');
 
 	/**
+	 * @typedef {Object} BoxProps
+	 * @property {Color | Color.bgPrimary | Color.bgSecondary} [backgroundColor]
+	 * @property {boolean} [withScroll = false]
+	 * @property {boolean} [scrollProps = {}]
+	 * @property {boolean} [withPaddingLeft = false]
+	 * @property {boolean} [paddingRight = false]
+	 * @property {boolean} [withPaddingHorizontal = false]
+	 * @property {DialogFooter} [footer]
+	 *
 	 * @function Box
-	 * @param {object} props
-	 * @param {Color | Color.bgPrimary | Color.bgSecondary} [props.backgroundColor]
-	 * @param {boolean} [props.withScroll = false]
-	 * @param {boolean} [props.scrollProps = {}]
-	 * @param {boolean} [props.withPaddingLeft = false]
-	 * @param {boolean} [props.paddingRight = false]
-	 * @param {boolean} [props.withPaddingHorizontal = false]
-	 * @param {View[]} children
+	 * @param {BoxProps} props
+	 * @param {View} children
 	 * @return Box
 	 */
 	function Box(props = {}, ...children)
@@ -28,6 +33,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 			withPaddingRight = false,
 			withPaddingHorizontal = false,
 			scrollProps = {},
+			footer = null,
 			...restProps
 		} = props;
 
@@ -45,20 +51,65 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 			style.backgroundColor = null;
 		}
 
+		let boxFooter = null;
+		let stubFooter = null;
+
+		if (footer)
+		{
+			let stubRef = null;
+			let stubHeight = 0;
+
+			boxFooter = footer({
+				style: {
+					backgroundColor,
+				},
+				onLayoutFooterHeight: ({ height }) => {
+					if (stubHeight !== height)
+					{
+						stubHeight = height;
+						animate(stubRef, {
+							duration: 50,
+							height,
+						});
+					}
+				},
+			});
+
+			stubFooter = View({
+				ref: (ref) => {
+					stubRef = ref;
+				},
+				style: {
+					width: '100%',
+					height: stubHeight,
+				},
+			});
+		}
+
 		const render = View(
 			mergeImmutable(restProps, { style }),
 			...children,
+			withScroll ? null : stubFooter,
+			withScroll ? null : boxFooter,
 		);
 
 		if (withScroll)
 		{
-			return ScrollView(
-				mergeImmutable(scrollProps, {
-					style: {
-						height: '100%',
-					},
-				}),
-				render,
+			return View(
+				{
+					resizableByKeyboard: restProps.resizableByKeyboard,
+					safeArea: restProps.safeArea,
+				},
+				ScrollView(
+					mergeImmutable(scrollProps, {
+						style: {
+							height: '100%',
+						},
+					}),
+					render,
+					stubFooter,
+				),
+				boxFooter,
 			);
 		}
 
@@ -79,6 +130,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		withPaddingLeft: PropTypes.bool,
 		withPaddingRight: PropTypes.bool,
 		withPaddingHorizontal: PropTypes.bool,
+		footer: PropTypes.func,
 	};
 
 	module.exports = { Box };

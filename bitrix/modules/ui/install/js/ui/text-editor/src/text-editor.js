@@ -8,7 +8,7 @@ import { HIDE_DIALOG_COMMAND } from './commands';
 import { NewLineMode } from './constants';
 import { $isRootEmpty } from './helpers/is-root-empty';
 
-import EditorTheme from './themes/default-theme';
+import { defaultTheme } from './themes/default-theme';
 import PluginCollection from './plugins/plugin-collection';
 import ComponentRegistry from './component-registry';
 import SchemeValidation from './scheme-validation';
@@ -91,6 +91,8 @@ const CollapsingState = {
 	EXPANDING: 'expanding',
 };
 
+import './css/layout.css';
+
 /**
  * @memberof BX.UI.TextEditor
  */
@@ -146,7 +148,7 @@ export default class TextEditor extends EventEmitter
 			this.#newLineMode = newLineMode;
 		}
 
-		this.#themeClasses = EditorTheme;
+		this.#themeClasses = defaultTheme;
 
 		this.#plugins = new PluginCollection(builtinPlugins, [...plugins, ...extraPlugins], pluginsToRemove);
 		const nodes = this.#plugins.getConstructors().map((pluginConstructor: PluginConstructor) => {

@@ -6,6 +6,7 @@ export const RestMethod = Object.freeze({
 	imV2ChatLoadContext: 'im.v2.Chat.loadInContext',
 	imV2ChatAdd: 'im.v2.Chat.add',
 	imV2ChatUpdate: 'im.v2.Chat.update',
+	imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 	imV2ChatRead: 'im.v2.Chat.read',
 	imV2ChatReadAll: 'im.v2.Chat.readAll',
 	imV2ChatUnread: 'im.v2.Chat.unread',
@@ -47,6 +48,8 @@ export const RestMethod = Object.freeze({
 	imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
 	imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
+	imV2AccessCheck: 'im.v2.Access.check',
+	imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 
 	imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
 	imCallBetaCreateRoom: 'im.call.beta.createRoom',

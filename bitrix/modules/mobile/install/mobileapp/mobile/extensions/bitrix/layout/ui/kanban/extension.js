@@ -503,6 +503,7 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 				onFloatingButtonClick: this.props.onFloatingButtonClick,
 				onFloatingButtonLongClick: this.props.onFloatingButtonLongClick,
 				needInitMenu: this.props.needInitMenu,
+				popupItemMenu: this.props.popupItemMenu || false,
 				itemActions: this.props.itemActions || [],
 				emptyListText: Loc.getMessage('M_UI_KANBAN_EMPTY_LIST_TEXT'),
 				emptySearchText: Loc.getMessage('M_UI_KANBAN_EMPTY_SEARCH_TEXT'),
@@ -841,7 +842,7 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 			this.reloadStatefulList(reloadParams, () => {
 				if (!skipInitCounters)
 				{
-					this.initCounters();
+					this.initCounters({ force });
 				}
 
 				if (initMenu)
@@ -870,6 +871,7 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 				actionParams: this.getPreparedActionParams(),
 				itemParams: this.getPreparedItemParams(),
 				forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', !useCache),
+				force: BX.prop.getBoolean(params, 'force', false),
 			};
 
 			if (params.menuButtons)
@@ -889,11 +891,11 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 		/**
 		 * @private
 		 */
-		initCounters()
+		initCounters({ force = false })
 		{
 			if (this.props.initCountersHandler)
 			{
-				this.props.initCountersHandler({ filter: this.filter });
+				this.props.initCountersHandler({ filter: this.filter }, force);
 			}
 		}
 

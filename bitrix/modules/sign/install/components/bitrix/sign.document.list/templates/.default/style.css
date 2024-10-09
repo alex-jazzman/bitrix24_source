@@ -117,6 +117,22 @@
 	letter-spacing: .2px;
 }
 
+.sign-document-list__banner-desc a {
+	text-align: left;
+	line-height: 19px;
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-palette-gray-60);
+	font-weight: var(--ui-font-weight-regular);
+	text-decoration: var(--ui-text-decoration-line-underline);
+	text-decoration: none;
+	border-bottom: 1px solid var(--ui-color-palette-gray-60);
+	padding-bottom: 2px;
+}
+
+.sign-document-list__banner-desc a:hover {
+	color: var(--ui-color-palette-gray-60);
+}
+
 .sign-document-list__banner-btn_close.ui-icon-set {
 	position: absolute;
 	top: 10px;

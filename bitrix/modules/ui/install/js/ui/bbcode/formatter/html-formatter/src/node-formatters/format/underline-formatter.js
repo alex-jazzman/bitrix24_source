@@ -10,7 +10,10 @@ export class UnderlineNodeFormatter extends NodeFormatter
 			convert({ node }: ConvertCallbackOptions): HTMLElement {
 				return Dom.create({
 					tag: 'u',
-					attributes: node.getAttributes(),
+					attrs: {
+						...node.getAttributes(),
+						className: 'ui-typography-text-underline',
+					},
 				});
 			},
 			...options,

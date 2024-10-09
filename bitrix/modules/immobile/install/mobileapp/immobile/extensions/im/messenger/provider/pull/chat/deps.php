@@ -23,6 +23,7 @@ return [
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',
 		'im:messenger/provider/pull/lib/recent/chat',
+		'im:messenger/provider/pull/lib/file',
 	],
 	'bundle' => [
 		'./src/dialog',

@@ -1,7 +1,6 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_buttons,ui_uploader_core,main_core,main_popup) {
+(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_buttons,ui_uploader_core,ui_infoHelper,main_core,main_popup) {
 	'use strict';
 
 	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
@@ -954,6 +953,14 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	    return {};
 	  }
+	  canUseImportService() {
+	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
+	    return settings.get('canUseImport', true);
+	  }
+	  getImportFeatureId() {
+	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
+	    return settings.get('importFeatureId', '');
+	  }
 	}
 
 	const loadDiskFileDialog = (dialogName, params = {}) => {
@@ -1539,6 +1546,8 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.fileDialogId = `file-dialog-${main_core.Text.getRandom(5)}`;
 	    this.cloudDialogId = `cloud-dialog-${main_core.Text.getRandom(5)}`;
 	    this.importServices = this.userFieldControl.getImportServices();
+	    this.canUseImportService = this.userFieldControl.canUseImportService();
+	    this.importFeatureId = this.userFieldControl.getImportFeatureId();
 	  },
 	  mounted() {
 	    this.uploader.assignBrowse(this.$refs.upload);
@@ -1561,6 +1570,12 @@ this.BX.Disk = this.BX.Disk || {};
 	      });
 	    },
 	    openCloudFileDialog(serviceId) {
+	      if (!this.canUseImportService) {
+	        ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	          featureId: this.importFeatureId
+	        }).show();
+	        return;
+	      }
 	      if (this.showCloudDialogLoader) {
 	        return;
 	      }
@@ -1978,5 +1993,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.openDiskFileDialog = openDiskFileDialog;
 	exports.openCloudFileDialog = openCloudFileDialog;
 
-}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI,BX.UI.Uploader,BX,BX.Main));
+}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI,BX.UI.Uploader,BX.UI,BX,BX.Main));
 //# sourceMappingURL=disk.uploader.uf-file.bundle.js.map

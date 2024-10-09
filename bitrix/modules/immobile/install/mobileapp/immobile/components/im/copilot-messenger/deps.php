@@ -31,6 +31,7 @@ return [
 		'im:messenger/view/dialog',
 		'im:messenger/provider/pull/chat',
 		'im:messenger/provider/pull/copilot',
+		'im:messenger/provider/pull/plan-limits',
 		'im:messenger/provider/service',
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/integration/mobile/communication',

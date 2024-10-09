@@ -17,6 +17,8 @@ return [
 		'im.v2.const',
 		'im.v2.lib.logger',
 		'im.v2.lib.channel',
+		'im.v2.lib.access',
+		'im.v2.lib.feature',
 	],
 	'skip_core' => true,
 ];

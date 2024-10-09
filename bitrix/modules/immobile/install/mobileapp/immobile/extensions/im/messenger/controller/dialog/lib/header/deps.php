@@ -5,6 +5,7 @@ return [
 		'apptheme',
 		'loc',
 		'utils/object',
+		'device/connection',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/lib/logger',

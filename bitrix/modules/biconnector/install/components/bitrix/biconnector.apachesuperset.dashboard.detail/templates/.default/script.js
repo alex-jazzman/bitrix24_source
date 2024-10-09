@@ -114,6 +114,13 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    top.window.history.pushState(null, '', event.data.credentials.dashboardUrl);
 	    _classPrivateMethodGet(_this, _initFrame, _initFrame2).call(_this, event.data.credentials);
 	    _classPrivateMethodGet(_this, _initHeaderButtons, _initHeaderButtons2).call(_this);
+	    biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+	      c_element: 'selector',
+	      status: 'success',
+	      type: babelHelpers.classPrivateFieldGet(_this, _embeddedParams).type.toLowerCase(),
+	      p1: biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(babelHelpers.classPrivateFieldGet(_this, _embeddedParams).appId),
+	      p2: babelHelpers.classPrivateFieldGet(_this, _embeddedParams).id
+	    });
 	  });
 	  main_core_events.EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', function (event) {
 	    _classPrivateMethodGet(_this, _initFrame, _initFrame2).call(_this, babelHelpers.classPrivateFieldGet(_this, _embeddedParams));

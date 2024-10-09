@@ -68,7 +68,7 @@ if ($componentErrorMessage == '')
 }
 else
 {
-	echo CAdminMessage::ShowMessage(
+	CAdminMessage::ShowMessage(
 		array(
 			"DETAILS" => $componentErrorMessage,
 			"TYPE" => "ERROR",

@@ -4,6 +4,7 @@ import { openDiskFileDialog } from '../helpers/open-disk-file-dialog';
 import { openCloudFileDialog } from '../helpers/open-cloud-file-dialog';
 
 import { Loader } from './loader';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
 
 import './css/control-panel.css';
 
@@ -23,6 +24,8 @@ export const ControlPanel = {
 		this.fileDialogId = `file-dialog-${Text.getRandom(5)}`;
 		this.cloudDialogId = `cloud-dialog-${Text.getRandom(5)}`;
 		this.importServices = this.userFieldControl.getImportServices();
+		this.canUseImportService = this.userFieldControl.canUseImportService();
+		this.importFeatureId = this.userFieldControl.getImportFeatureId();
 	},
 	mounted(): void
 	{
@@ -52,6 +55,13 @@ export const ControlPanel = {
 
 		openCloudFileDialog(serviceId)
 		{
+			if (!this.canUseImportService)
+			{
+				FeaturePromotersRegistry.getPromoter({ featureId: this.importFeatureId }).show();
+
+				return;
+			}
+
 			if (this.showCloudDialogLoader)
 			{
 				return;

@@ -2,6 +2,7 @@ import { ReactionsModelState } from './messages/reactions';
 import {MessengerModel, PayloadData} from "./base";
 import {channelChatId, commentChatId, CommentInfo, commentMessageId} from "./comment";
 import {DialogType} from "./dialogues";
+import {KeyboardButtonConfig} from "./messages/keyboard";
 
 declare type MessagesModelCollection = {
 	collection: Record<number | string, MessagesModelState>,
@@ -48,6 +49,7 @@ export type MessagesModelState = {
 	},
 	reactions?: ReactionsModelState // extended property
 	attach: Array<AttachConfig>,
+	keyboard: Array<KeyboardButtonConfig>,
 	richLinkId: number,
 }
 
@@ -172,6 +174,7 @@ export type MessagesModelActions =
 	| 'messagesModel/deleteByChatId'
 	| 'messagesModel/deleteAttach'
 	| 'messagesModel/clearChatCollection'
+	| 'messagesModel/disableKeyboardByMessageId'
 
 export type MessagesModelMutation =
 	'messagesModel/setChatCollection'

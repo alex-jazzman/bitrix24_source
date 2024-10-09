@@ -143,7 +143,7 @@ this.BX.Call = this.BX.Call || {};
 	      type: callType,
 	      c_section: AnalyticsSection.callWindow,
 	      status: status,
-	      p1: screenShareLength,
+	      p1: `shareLength_${screenShareLength}`,
 	      p5: `callId_${callId}`
 	    });
 	  }
@@ -271,8 +271,8 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      c_section: AnalyticsSection.callWindow,
 	      status: params.status,
-	      p1: params.callLength,
-	      p3: params.callUsersCount,
+	      p1: `callLength_${params.callLength}`,
+	      p3: `maxUserCount_${params.callUsersCount}`,
 	      p4: `chatId_${this.normalizeChatId(params.chatId)}`,
 	      p5: `callId_${params.callId}`
 	    });
@@ -319,7 +319,7 @@ this.BX.Call = this.BX.Call || {};
 	      c_section: AnalyticsSection.callWindow,
 	      c_sub_section: params.subSection,
 	      c_element: params.element,
-	      p1: params == null ? void 0 : params.recordTime,
+	      p1: `recordLength_${params == null ? void 0 : params.recordTime}`,
 	      p5: `callId_${params.callId}`
 	    });
 	  }

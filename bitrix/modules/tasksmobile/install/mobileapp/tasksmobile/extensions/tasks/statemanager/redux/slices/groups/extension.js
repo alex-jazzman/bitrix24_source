@@ -15,20 +15,28 @@ jn.define('tasks/statemanager/redux/slices/groups', (require, exports, module) =
 		selectAll: selectAllGroups,
 	} = groupsAdapter.getSelectors((state) => state[reducerName]);
 
-	const prepareGroup = ({ id, name, image, resizedImage100, additionalData }) => ({
+	const prepareGroup = ({ id, name, image, resizedImage100, additionalData, dateStart, dateFinish }) => ({
 		id: Number(id),
 		name,
 		image,
 		resizedImage100,
 		additionalData,
+		dateStart,
+		dateFinish,
 	});
 
-	const prepareGroupFromEntitySelector = (group) => ({
-		id: Number(group.id),
-		name: group.title,
-		image: group.imageUrl,
-		additionalData: {},
-	});
+	const prepareGroupFromEntitySelector = (group) => {
+		const datePlan = group?.customData?.datePlan;
+
+		return ({
+			id: Number(group.id),
+			name: group.title,
+			image: group.imageUrl,
+			dateStart: datePlan.dateStart,
+			dateFinish: datePlan.dateFinish,
+			additionalData: {},
+		});
+	};
 
 	const groupsSlice = createSlice({
 		name: reducerName,

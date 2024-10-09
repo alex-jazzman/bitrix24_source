@@ -342,6 +342,10 @@ export class Wizard
 	{
 		this.#layout.finishButton = this.#params.finishButton;
 
+		this.#layout.finishButton?.setDataSet({
+			id: 'tasks-wizard-flow-finish',
+		});
+
 		return this.#layout.finishButton.render();
 	}
 

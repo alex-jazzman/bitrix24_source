@@ -13,28 +13,17 @@ export class FeaturePromoter
 
 	constructor(options: FeaturePromoterConfiguration)
 	{
+		if (!options.code && !options.featureId)
+		{
+			throw new Error("Either the 'code' parameter or the 'featureId' parameter is required");
+		}
+
 		this.#options = options;
-		const settings = Extension.getSettings('ui.info-helper');
 		this.#options.bindElement = options.bindElement ?? null;
-		this.#code = options.code;
+		this.#code = options.code ?? '';
 
-		if (!options.code)
-		{
-			throw new Error("'code' parameter is required.");
-		}
-
-		if (Type.isObject(settings) && settings.popupProviderEnabled && Type.isDomNode(options.bindElement))
-		{
-			this.#provider = new PopupProvider({
-				bindElement: options.bindElement,
-				code: this.#code,
-			});
-		}
-		else
-		{
-			this.#provider = new SliderProvider();
-			InfoHelper.sliderProviderForOldFormat = this.#provider;
-		}
+		const settings = Extension.getSettings('ui.info-helper');
+		this.#provider = this.#createProvider(settings);
 	}
 
 	getOptions(): FeaturePromoterConfiguration
@@ -55,5 +44,34 @@ export class FeaturePromoter
 	close(): void
 	{
 		return this.#provider.close();
+	}
+
+	getBindElement(): ?HTMLElement
+	{
+		return this.getOptions().bindElement;
+	}
+
+	#createProvider(settings: Object): BaseProvider
+	{
+		if (
+			Type.isObject(settings)
+			&& settings.popupProviderEnabled
+			&& Type.isDomNode(this.getOptions().bindElement)
+			&& (!this.getOptions().featureId || !settings.isUpgradeTariffAvailable)
+		)
+		{
+			return new PopupProvider({
+				bindElement: this.getOptions().bindElement,
+				code: this.#code,
+				featureId: this.getOptions().featureId ?? null,
+			});
+		}
+		else
+		{
+			const provider = new SliderProvider({ featureId: this.getOptions().featureId ?? null });
+			InfoHelper.sliderProviderForOldFormat = provider;
+
+			return provider;
+		}
 	}
 }

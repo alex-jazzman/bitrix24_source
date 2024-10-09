@@ -1,43 +1,47 @@
 /**
  * @module ui-system/blocks/status-block
  */
+
 jn.define('ui-system/blocks/status-block', (require, exports, module) => {
+	const { Area } = require('ui-system/layout/area');
 	const { mergeImmutable } = require('utils/object');
 	const { Color, Indent, Component } = require('tokens');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { PropTypes } = require('utils/validation');
+	const { Align } = require('utils/enums/style');
 
 	/**
+	 * @typedef {Object} StatusBlockProps
+	 * @property {string} testId
+	 * @property {string} [title]
+	 * @property {Color} [titleColor]
+	 * @property {string} [description]
+	 * @property {Color} [descriptionColor]
+	 * @property {string} [footnote]
+	 * @property {Color} [footnoteColor]
+	 * @property {Array<Button>} [buttons]
+	 * @property {boolean} [emptyScreen]
+	 * @property {Align} [verticalAlign=Align.CENTER]
+	 * @property {Function} [forwardRef]
+	 * @property {Object} [style]
+	 *
 	 * @class StatusBlock
-	 * @param {Object} props
-	 * @param {string} props.testId
-	 * @param {string} [props.title]
-	 * @param {Color} [props.titleColor]
-	 * @param {string} [props.description]
-	 * @param {Color} [props.descriptionColor]
-	 * @param {string} [props.footnote]
-	 * @param {Color} [props.footnoteColor]
-	 * @param {Array<Button>} [props.buttons]
-	 * @param {boolean} [props.emptyScreen]
-	 * @params {Function} [props.forwardRef]
-	 * @params {Object} [props.style]
-	 * @returns {StatusBlock}
 	 */
 	class StatusBlock extends LayoutComponent
 	{
 		render()
 		{
-			const { forwardRef, emptyScreen } = this.props;
+			const { emptyScreen } = this.props;
 
 			return emptyScreen
-				? this.renderEmptyScreen(forwardRef)
-				: this.renderStatusContent(forwardRef);
+				? this.renderEmptyScreen()
+				: this.renderStatusContent();
 		}
 
-		renderEmptyScreen(forwardRef)
+		renderEmptyScreen()
 		{
-			const { style = {} } = this.props;
+			const { style = {}, forwardRef } = this.props;
 
 			return View(
 				{
@@ -68,20 +72,18 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 			);
 		}
 
-		renderStatusContent(forwardRef)
+		renderStatusContent()
 		{
-			const { testId } = this.props;
+			const { testId, forwardRef, verticalAlign } = this.props;
 
-			return View(
+			return Area(
 				{
 					ref: forwardRef,
 					testId,
 					style: {
 						flexGrow: 1,
-						justifyContent: 'center',
+						justifyContent: Align.resolve(verticalAlign, Align.CENTER).toString(),
 						alignItems: 'center',
-						flexDirection: 'column',
-						paddingVertical: Indent.XL4.toNumber(),
 					},
 				},
 				this.renderImage(),
@@ -252,17 +254,22 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 	StatusBlock.propTypes = {
 		testId: PropTypes.string.isRequired,
 		title: PropTypes.string,
-		titleColor: PropTypes.string,
+		titleColor: PropTypes.instanceOf(Color),
 		description: PropTypes.string,
-		descriptionColor: PropTypes.string,
+		descriptionColor: PropTypes.instanceOf(Color),
 		footnote: PropTypes.string,
-		footnoteColor: PropTypes.string,
+		footnoteColor: PropTypes.instanceOf(Color),
 		emptyScreen: PropTypes.bool,
 		forwardRef: PropTypes.func,
+		verticalAlign: PropTypes.instanceOf(Align),
 		style: PropTypes.object,
 	};
 
 	module.exports = {
+		/**
+		 * @param {StatusBlockProps} props
+		 * @returns {StatusBlock}
+		 */
 		StatusBlock: (props) => new StatusBlock(props),
 		makeLibraryImagePath,
 	};

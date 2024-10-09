@@ -1,6 +1,5 @@
 import {Dom} from 'main.core';
 import {EventEmitter} from 'main.core.events';
-import Util from '../util';
 import { Utils } from 'im.v2.lib.utils';
 
 export class FloorRequest extends EventEmitter
@@ -91,7 +90,7 @@ export class FloorRequest extends EventEmitter
 			this.elements.avatar.style.setProperty("--avatar", "url('" + this.userModel.avatar + "')");
 			this.elements.avatar.innerText = '';
 		}
-		else if (Util.isNewCallLayoutEnabled())
+		else
 		{
 			this.elements.avatar.innerText = Utils.text.getFirstLetters(this.userModel.name).toUpperCase();
 		}
@@ -114,12 +113,12 @@ export class FloorRequest extends EventEmitter
 			this.dismountWithAnimation();
 		}
 
-		if (this.userModel.avatar === '' && this.elements.avatar && Util.isNewCallLayoutEnabled())
+		if (this.userModel.avatar === '' && this.elements.avatar)
 		{
 			this.elements.avatar.innerText = Utils.text.getFirstLetters(this.userModel.name).toUpperCase();
 		}
 
-		if (this.elements.name && Util.isNewCallLayoutEnabled())
+		if (this.elements.name)
 		{
 			this.elements.name.innerHtml = BX.message("IM_CALL_WANTS_TO_SAY_" + (this.userModel.gender == "F" ? "F" : "M")).replace("#NAME#", '<span class ="bx-call-view-floor-request-notification-text-name">' + BX.util.htmlspecialchars(this.userModel.name) + '</span>');
 		}

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `b_transformer_command` (
 	`SEND_TIME` datetime,
 	`CONTROLLER_URL` varchar(255),
 	PRIMARY KEY (ID),
-	index ix_trans_commands_guid (GUID),
+	unique index ux_b_transformer_command_guid (GUID),
 	index ix_trans_commands_file (FILE),
 	INDEX ix_trans_time_error (UPDATE_TIME, ERROR (128))
 );

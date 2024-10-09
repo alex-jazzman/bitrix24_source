@@ -10,7 +10,7 @@ jn.define('tasks/layout/flow/detail', (require, exports, module) => {
 	const { FlowDetailCommon } = require('tasks/layout/flow/detail/src/common');
 
 	const store = require('statemanager/redux/store');
-	const { selectById } = require('tasks/statemanager/redux/slices/flows/selector');
+	const { selectById } = require('tasks/statemanager/redux/slices/flows');
 
 	const DetailTabType = {
 		COMMON: 'common',

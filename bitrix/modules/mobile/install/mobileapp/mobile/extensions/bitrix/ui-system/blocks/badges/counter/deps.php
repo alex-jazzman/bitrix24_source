@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'tokens',
 		'utils/object',
 		'utils/enums/base',

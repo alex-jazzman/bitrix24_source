@@ -53,4 +53,5 @@ export type DialogOptions = {
 	compactView?: boolean,
 	recentItemsLimit?: number,
 	offsetAnimation?: boolean,
+	alwaysShowLabels?: boolean,
 };

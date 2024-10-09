@@ -57,8 +57,8 @@ CREATE TABLE b_tasks (
 	INDEX ix_b_tasks_created_activity_date (CREATED_DATE, ACTIVITY_DATE),
 	INDEX b_tasks_deadline_ibuk (DEADLINE, DEADLINE_COUNTED),
 	INDEX ix_tasks_deadline_g (GROUP_ID),
-	INDEX ix_tasks_minimal_filter (DEADLINE, STATUS, ZOMBIE, GROUP_ID),
-	INDEX ix_b_tasks_status_is_regular(STATUS, IS_REGULAR)
+	INDEX ix_b_tasks_status_is_regular(STATUS, IS_REGULAR),
+	INDEX ix_tasks_standard_filter (DEADLINE, STATUS, GROUP_ID)
 );
 
 CREATE TABLE b_tasks_files_temporary (
@@ -879,4 +879,16 @@ create table if not exists b_tasks_flow_member
 	index ix_role (ROLE),
 	index ix_entity (ENTITY_ID, ENTITY_TYPE),
 	primary key (ID)
+);
+
+create table if not exists b_tasks_flow_auto_created_robot
+(
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	STAGE_ID int not null,
+	BIZ_PROC_TEMPLATE_ID int not null,
+	STAGE_TYPE varchar(255) not null,
+	ROBOT varchar(255) not null,
+	primary key (ID),
+	unique index ix_flow_robot(FLOW_ID, ROBOT)
 );

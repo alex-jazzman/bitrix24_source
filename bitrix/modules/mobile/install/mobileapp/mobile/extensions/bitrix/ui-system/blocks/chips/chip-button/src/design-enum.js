@@ -20,7 +20,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.accentSoftBlue1.toHex(),
+				borderColor: Color.accentSoftBorderBlue.toHex(),
 				color: Color.accentMainPrimary,
 			},
 		});
@@ -32,7 +32,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.accentSoftGreen1.toHex(),
+				borderColor: Color.accentSoftBorderGreen.toHex(),
 				color: Color.accentMainSuccess,
 			},
 		});
@@ -44,7 +44,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 			[ChipButtonMode.OUTLINE]: {
 				borderWidth: 1,
-				borderColor: Color.accentSoftRed1.toHex(),
+				borderColor: Color.accentSoftBorderRed.toHex(),
 				color: Color.accentMainAlert,
 			},
 		});
@@ -94,7 +94,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 		{
 			const chipMode = ChipButtonMode.resolve(mode, ChipButtonMode.SOLID);
 
-			return this.getValue()[chipMode];
+			return this.getValue()[chipMode.getValue()];
 		}
 	}
 

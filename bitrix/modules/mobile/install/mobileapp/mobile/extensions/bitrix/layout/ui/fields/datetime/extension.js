@@ -346,11 +346,6 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 			return this.getDisplayedValue();
 		}
 
-		getLeftIcon()
-		{
-			return {};
-		}
-
 		getDefaultLeftIcon()
 		{
 			return Icon.CALENDAR_WITH_SLOTS;

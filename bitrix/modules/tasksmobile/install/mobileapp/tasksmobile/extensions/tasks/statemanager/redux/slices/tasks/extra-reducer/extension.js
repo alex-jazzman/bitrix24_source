@@ -15,6 +15,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		selectIsCreator,
 	} = require('tasks/statemanager/redux/slices/tasks/selector');
 	const { isEqual } = require('utils/object');
+	const { Type } = require('type');
 
 	/**
 	 * @param {Object} state
@@ -719,7 +720,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		FieldChangeRegistry.unregisterFieldsChange(requestId);
 	};
 
-	const onCommonActionSuccess = (requestId, data, existingTask) => {
+	const onCommonActionSuccess = (requestId, existingTask, data) => {
 		unregisterRegistryChanges(requestId);
 
 		return TaskModel.prepareReduxTaskFromServerTask(data.task, existingTask);
@@ -746,7 +747,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		const existingTask = state.entities[taskId];
 		const preparedTask = (
 			status === 'success'
-				? onCommonActionSuccess(requestId, data, existingTask)
+				? onCommonActionSuccess(requestId, existingTask, data)
 				: onCommonActionError(requestId, existingTask)
 		);
 
@@ -756,7 +757,29 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		}
 	};
 
-	const createFulfilled = onCommonActionFulfilled;
+	const onCreateError = (requestId, existingTask, errors) => ({
+		...onCommonActionError(requestId, existingTask),
+		isCreationErrorExist: true,
+		creationErrorText: (Type.isArrayFilled(errors) ? errors[0].message : ''),
+	});
+
+	const createFulfilled = (state, action) => {
+		const { requestId, arg } = action.meta;
+		const { status, data, errors } = action.payload;
+		const { taskId } = arg;
+
+		const existingTask = state.entities[taskId];
+		const preparedTask = (
+			status === 'success'
+				? onCommonActionSuccess(requestId, existingTask, data)
+				: onCreateError(requestId, existingTask, errors)
+		);
+
+		if (!isEqual(existingTask, preparedTask))
+		{
+			tasksAdapter.updateOne(state, { id: taskId, changes: preparedTask });
+		}
+	};
 
 	const updateFulfilled = onCommonActionFulfilled;
 

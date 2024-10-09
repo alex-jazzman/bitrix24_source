@@ -128,12 +128,12 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 				if (itemList.length > 0)
 				{
-					isViewChanged = true;
-
 					const result = this[action](itemList);
+					// TODO if isViewChanged was true at least once, then we do not change it to false
+					isViewChanged = isViewChanged || result;
+
 					if (Type.isBoolean(result) && result === false)
 					{
-						isViewChanged = false;
 						logger.info(`RecentRenderer.${action} is canceled, the exact same element already exists`);
 					}
 					else

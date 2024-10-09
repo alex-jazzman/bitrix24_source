@@ -5,12 +5,14 @@ jn.define('layout/ui/fields/user/theme/air-compact', (require, exports, module) 
 	const { Indent, Color } = require('tokens');
 	const { UserFieldClass } = require('layout/ui/fields/user');
 	const { withTheme } = require('layout/ui/fields/theme');
-
 	const { Chip } = require('ui-system/blocks/chips/chip');
 	const { Text4 } = require('ui-system/typography/text');
 	const { IconView } = require('ui-system/blocks/icon');
+	const { SafeImage } = require('layout/ui/safe-image');
 	const { ElementsStack, Directions } = require('elements-stack');
 	const { Entity } = require('layout/ui/fields/user/theme/air-compact/src/entity');
+	const { ColorScheme } = require('layout/ui/fields/base/theme/air-compact');
+	const { withCurrentDomain } = require('utils/url');
 
 	const ICON_SIZE = 20;
 
@@ -22,110 +24,136 @@ jn.define('layout/ui/fields/user/theme/air-compact', (require, exports, module) 
 	const AirCompactThemeWrapper = ({ field }) => {
 		const testId = `${field.testId}_COMPACT_FIELD`;
 
-		let contentColor = null;
-		let borderColor = null;
+		/** @type {{ content: Color, border: Color }} */
+		let colors = ColorScheme.resolve(ColorScheme.DEFAULT);
 
 		if (field.isReadOnly())
 		{
-			contentColor = Color.base6;
-			borderColor = Color.bgSeparatorPrimary;
+			colors = ColorScheme.resolve(ColorScheme.READONLY);
 		}
 		else if (field.isEmpty())
 		{
-			contentColor = Color.base3;
-			borderColor = Color.bgSeparatorPrimary;
+			colors = ColorScheme.resolve(ColorScheme.EMPTY);
 		}
 		else if (field.hasErrorMessage())
 		{
-			contentColor = Color.accentMainAlert;
-			borderColor = Color.accentSoftRed1;
+			colors = ColorScheme.resolve(ColorScheme.ERROR);
+		}
+
+		const getLeftIcon = (additionalProps = {}) => {
+			const leftIcon = field.getLeftIcon();
+			const defaultLeftIcon = field.getDefaultLeftIcon();
+
+			if (leftIcon.icon)
+			{
+				return IconView({
+					icon: leftIcon.icon,
+					color: (field.isRestricted() ? Color.base1 : colors.content),
+					size: ICON_SIZE,
+					...additionalProps,
+				});
+			}
+
+			if (leftIcon.uri)
+			{
+				return SafeImage({
+					uri: withCurrentDomain(leftIcon.uri),
+					resizeMode: 'cover',
+					style: {
+						width: ICON_SIZE,
+						height: ICON_SIZE,
+						borderRadius: ICON_SIZE / 2,
+						opacity: (field.isReadOnly() ? 0.22 : 1),
+					},
+					...additionalProps,
+				});
+			}
+
+			if (defaultLeftIcon)
+			{
+				return IconView({
+					icon: defaultLeftIcon,
+					color: (field.isRestricted() ? Color.base1 : colors.content),
+					size: ICON_SIZE,
+					...additionalProps,
+				});
+			}
+
+			return null;
+		};
+
+		let children = [];
+
+		if (field.isEmpty())
+		{
+			children = [
+				View(
+					{
+						testId: `${testId}_CONTENT_EMPTY_VIEW`,
+						style: {
+							flexDirection: 'row',
+							alignItems: 'center',
+							flexShrink: 2,
+						},
+					},
+					getLeftIcon({ testId: `${field.testId}__CONTENT_EMPTY_VIEW_ICON` }),
+					Text4({
+						testId: `${testId}_COMPACT_FIELD_TEXT`,
+						text: field.getTitleText(),
+						color: colors.content,
+						style: {
+							marginLeft: Indent.XS.toNumber(),
+							flexShrink: 2,
+						},
+						numberOfLines: 1,
+						ellipsize: 'middle',
+					}),
+				),
+			];
 		}
 		else
 		{
-			contentColor = Color.accentMainPrimary;
-			borderColor = Color.accentSoftBlue1;
-		}
+			const entityList = field.getEntityList();
+			const showName = entityList.length === 1;
 
-		const entityList = field.getEntityList();
-		const showName = entityList.length === 1;
-		let userName = null;
-
-		if (showName)
-		{
-			const entityUser = entityList[0];
-			userName = Text4({
-				testId: `${field.testId}_COMPACT_USER_${entityUser.id}_TITLE`,
-				text: entityUser.title,
-				color: contentColor,
-				style: {
-					marginLeft: Indent.XS.toNumber(),
-					flexShrink: 2,
-				},
-				ellipsize: 'end',
-				numberOfLines: 1,
-			});
-		}
-
-		const children = field.isEmpty() ? [
-			View(
-				{
-					testId: `${testId}_CONTENT_EMPTY_VIEW`,
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						flexShrink: 2,
+			children = [
+				getLeftIcon({ testId: `${testId}_ICON` }),
+				ElementsStack(
+					{
+						direction: Directions.right,
+						indent: 1,
+						offset: Indent.S,
+						showRest: true,
+						maxElements: 3,
+						textColor: colors.content,
+						style: {
+							marginLeft: Indent.XS.toNumber(),
+							opacity: entityList.length > 1 && field.isReadOnly() ? 0.22 : 1,
+						},
 					},
-				},
-				IconView({
-					testId: `${field.testId}__CONTENT_EMPTY_VIEW_ICON`,
-					icon: field.getDefaultLeftIcon(),
-					color: contentColor,
-					size: ICON_SIZE,
-				}),
-				Text4({
-					testId: `${testId}_COMPACT_FIELD_TEXT`,
-					text: field.getTitleText(),
-					color: contentColor,
+					...entityList.map((entity) => Entity({
+						field,
+						entity,
+						avatarSize: ICON_SIZE,
+						canOpenEntity: false,
+						avatarStyle: {
+							opacity: entityList.length === 1 && field.isReadOnly() ? 0.22 : 1,
+						},
+					})),
+				),
+				showName && Text4({
+					testId: `${field.testId}_COMPACT_USER_${entityList[0].id}_TITLE`,
+					text: entityList[0].title,
+					color: colors.content,
 					style: {
 						marginLeft: Indent.XS.toNumber(),
 						flexShrink: 2,
 					},
+					ellipsize: 'end',
 					numberOfLines: 1,
-					ellipsize: 'middle',
 				}),
-			),
-		] : [
-			IconView({
-				testId: `${testId}_ICON`,
-				icon: field.getDefaultLeftIcon(),
-				color: contentColor,
-				size: ICON_SIZE,
-			}),
-			ElementsStack(
-				{
-					direction: Directions.right,
-					indent: 1,
-					offset: Indent.S,
-					showRest: true,
-					maxElements: 3,
-					textColor: contentColor,
-					style: {
-						marginLeft: Indent.XS.toNumber(),
-						opacity: entityList.length > 1 && field.isReadOnly() ? 0.22 : 1,
-					},
-				},
-				...entityList.map((entity) => Entity({
-					field,
-					entity,
-					avatarSize: ICON_SIZE,
-					canOpenEntity: false,
-					avatarStyle: {
-						opacity: entityList.length === 1 && field.isReadOnly() ? 0.22 : 1,
-					},
-				})),
-			),
-			userName,
-		];
+			];
+		}
 
 		return Chip({
 			testId: `${field.testId}_COMPACT_FIELD`,
@@ -138,7 +166,7 @@ jn.define('layout/ui/fields/user/theme/air-compact', (require, exports, module) 
 				right: Indent.L,
 			},
 			backgroundColor: Color.bgContentPrimary,
-			borderColor,
+			borderColor: colors.border,
 			children,
 		});
 	};

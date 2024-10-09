@@ -153,7 +153,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 							id: temporaryMessageId,
 							fields: {
 								error: true,
-								errorReason: ErrorCode.uploadManager.NETWORK_ERROR,
+								errorReason: ErrorCode.NETWORK_ERROR,
 							},
 						});
 					});
@@ -257,7 +257,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 			this.addFileToFileUploadStack(messageWithFile);
 			const uploadTask = await this.uploadManager.addUploadTaskByMessage(messageWithFile);
 
-			return this.addFileToModelByUploadTask(uploadTask);
+			return this.addFileToModelByUploadTask(uploadTask, messageWithFile.dialogId);
 		}
 
 		/**
@@ -286,7 +286,8 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				this.addFileToUploadRegistry(file.temporaryFileId, file);
 				this.addFileToFileUploadStack(file);
 				const { fileData, task } = await this.uploadManager.getFileDataAndTask(file);
-				await this.addFileToModelByUploadTask(fileData);
+
+				await this.addFileToModelByUploadTask(fileData, file.dialogId);
 				callBackSend(file);
 				tasks.push(task);
 			}
@@ -331,7 +332,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		/**
 		 * @private
 		 */
-		async addFileToModelByUploadTask(uploadTask)
+		async addFileToModelByUploadTask(uploadTask, dialogId)
 		{
 			const { taskId, file } = uploadTask;
 
@@ -353,10 +354,12 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				};
 			}
 
+			const dialog = this.getDialog(dialogId);
+
 			return this.store.dispatch('filesModel/set', {
 				id: taskId,
-				dialogId: this.getDialog().dialogId,
-				chatId: this.getDialog().chatId,
+				dialogId: dialog?.dialogId,
+				chatId: dialog?.chatId,
 				authorId: serviceLocator.get('core').getUserId(),
 				name: file.name,
 				type: this.getFileType(file),

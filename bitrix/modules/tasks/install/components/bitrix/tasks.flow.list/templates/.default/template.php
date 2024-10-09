@@ -27,6 +27,7 @@ Extension::load([
 	'tasks.clue',
 	'ui.hint',
 	'ui.manual',
+	'ui.counter',
 	'ui.notification',
 ]);
 

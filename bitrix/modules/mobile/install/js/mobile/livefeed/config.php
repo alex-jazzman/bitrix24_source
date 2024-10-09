@@ -89,6 +89,7 @@ return [
 //	'css' => '/bitrix/js/mobile/livefeed/mobile.livefeed.css',
 	'lang_additional' => $langAdditional,
 	'rel' => [
+		'ui.analytics',
 		'main.core',
 		'main.core.events',
 		'mobile.utils',

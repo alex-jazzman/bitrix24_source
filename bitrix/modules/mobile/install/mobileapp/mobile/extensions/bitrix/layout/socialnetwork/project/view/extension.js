@@ -8,6 +8,7 @@
 	const { Loc } = require('loc');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
 	class ProjectView extends LayoutComponent
 	{
@@ -350,6 +351,7 @@
 					alignSelf: 'flex-end',
 				},
 				uri: `${pathToImages}mobile-layout-project-more.png`,
+				testId: 'project_view_more',
 				onClick: () => this.showMoreContextMenu(),
 			});
 		}
@@ -810,8 +812,17 @@
 
 	class ProjectViewManager
 	{
-		static open(userId, projectId, parentWidget = PageManager)
+		static async open(userId, projectId, parentWidget = PageManager)
 		{
+			await tariffPlanRestrictionsReady();
+			const { isRestricted, showRestriction } = getFeatureRestriction('socialnetwork_projects_groups');
+			if (isRestricted())
+			{
+				showRestriction({ parentWidget });
+
+				return;
+			}
+
 			const projectView = new ProjectView({
 				showLoading: true,
 				userId,

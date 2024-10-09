@@ -35,6 +35,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Integration\UI\EntitySelector;
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Socialnetwork\Helper;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 
 if (!Loader::includeModule("socialnetwork"))
 {
@@ -172,6 +174,10 @@ else
 
 
 	$arResult["CALLBACK"] = '';
+	$arResult["trialEnabled"] = [
+		'project' => false,
+		'scrum' => false,
+	];
 
 	if (($arResult['TAB'] ?? '') !== 'invite')
 	{
@@ -717,7 +723,8 @@ else
 
 				$USER_FIELD_MANAGER->EditFormAddFields("SONET_GROUP", $arFields);
 
-				if (!empty($_POST["SCRUM_PROJECT"]))
+				$isScrumProject = !empty($_POST["SCRUM_PROJECT"]);
+				if ($isScrumProject)
 				{
 					if (preg_match('/^U(\d+)$/', $_POST["SCRUM_MASTER_CODE"], $match) && (int)$match[1] > 0)
 					{
@@ -774,6 +781,28 @@ else
 					else
 					{
 						$bFirstStepSuccess = true;
+
+						if (
+							$isScrumProject
+							&& Loader::includeModule('tasks')
+							&& !ScrumLimit::isFeatureEnabled()
+							&& ScrumLimit::canTurnOnTrial()
+						)
+						{
+							ScrumLimit::turnOnTrial();
+
+							$arResult["trialEnabled"]['scrum'] = true;
+						}
+						elseif (
+							Loader::includeModule('tasks')
+							&& !ProjectLimit::isFeatureEnabled()
+							&& ProjectLimit::canTurnOnTrial()
+						)
+						{
+							ProjectLimit::turnOnTrial();
+
+							$arResult["trialEnabled"]['project'] = true;
+						}
 					}
 				}
 				else
@@ -1626,7 +1655,8 @@ else
 							!array_key_exists("TAB", $arResult)
 								? 'create'
 								: $arResult["TAB"]
-						)
+						),
+						'trialEnabled' => $arResult["trialEnabled"],
 					]);
 					require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
 					die();

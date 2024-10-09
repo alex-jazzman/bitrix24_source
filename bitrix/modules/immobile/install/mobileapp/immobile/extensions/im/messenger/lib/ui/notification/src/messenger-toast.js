@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('loc');
-	const { showSafeToast } = require('toast');
+	const { showSafeToast, showOfflineToast } = require('toast');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
@@ -120,6 +120,15 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 				toastParams,
 				layoutWidget,
 			);
+		}
+
+		/**
+		 * @param {ShowToastParams} params
+		 * @param layoutWidget
+		 */
+		static showOfflineToast(params, layoutWidget = null)
+		{
+			showOfflineToast(params, layoutWidget);
 		}
 	}
 

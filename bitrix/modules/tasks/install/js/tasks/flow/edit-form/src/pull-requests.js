@@ -22,12 +22,23 @@ export class PullRequests extends EventEmitter
 	{
 		return {
 			template_add: this.#onTemplateAdded.bind(this),
+			template_update: this.#onTemplateUpdated.bind(this),
 		};
 	}
 
 	#onTemplateAdded(data): void
 	{
 		this.emit('templateAdded', {
+			template: {
+				id: data.TEMPLATE_ID,
+				title: data.TEMPLATE_TITLE,
+			},
+		});
+	}
+
+	#onTemplateUpdated(data): void
+	{
+		this.emit('templateUpdated', {
 			template: {
 				id: data.TEMPLATE_ID,
 				title: data.TEMPLATE_TITLE,

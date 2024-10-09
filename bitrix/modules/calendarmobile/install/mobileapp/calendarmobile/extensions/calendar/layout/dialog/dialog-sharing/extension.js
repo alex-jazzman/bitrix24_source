@@ -36,7 +36,7 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 			this.readOnly = this.props.readOnly || false;
 			this.onSwitcherChangeHandler = this.onSwitcherChangeHandler.bind(this);
 
-			this.layoutWidget = null;
+			this.layoutWidget = PageManager;
 		}
 
 		get sharing()

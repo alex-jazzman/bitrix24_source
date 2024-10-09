@@ -45,3 +45,4 @@ $MESS["TOP_MENU_COMPANY_SECTION"] = "Компания";
 $MESS["TOP_MENU_SIGN_B2E"] = "КЭДО";
 $MESS["TOP_MENU_SIGN_MSGVER_1"] = "Подпись";
 $MESS["TOP_MENU_SPACES"] = "Пространства";
+$MESS["TOP_MENU_BICONNECTOR_CONSTRUCTOR"] = "BI Конструктор";

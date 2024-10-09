@@ -126,10 +126,7 @@ export class CallUserMobile
 		{
 			this.elements.root.style.removeProperty("--avatar");
 			this.elements.root.style.setProperty("--avatar-background", this.avatarBackground);
-			this.elements.avatar.innerText = Util.isNewCallLayoutEnabled()
-				? Utils.text.getFirstLetters(this.userModel.name).toUpperCase()
-				: ''
-			;
+			this.elements.avatar.innerText = Utils.text.getFirstLetters(this.userModel.name).toUpperCase();
 		}
 		this.elements.avatar.classList.toggle("talking", this.userModel.talking);
 		this.elements.floorRequest.classList.toggle("active", this.userModel.floorRequestState);
@@ -601,7 +598,7 @@ class MobileMenuItem
 			this.text = this.userModel.name;
 			this.icon = this.userModel.avatar;
 			this.iconClass = "user-avatar";
-			this.iconText = Util.isNewCallLayoutEnabled() ? Utils.text.getFirstLetters(this.userModel.name) : '';
+			this.iconText = Utils.text.getFirstLetters(this.userModel.name);
 			this.iconBackground = Util.getAvatarBackground();
 		}
 
@@ -669,7 +666,7 @@ class MobileMenuItem
 				this.elements.icon.style.backgroundImage = "url(\"" + this.icon + "\")";
 				this.elements.icon.innerText = '';
 			}
-			else if (this.iconText && Util.isNewCallLayoutEnabled())
+			else if (this.iconText)
 			{
 				this.elements.icon.innerText = this.iconText;
 				this.elements.root.style.setProperty("--avatar-background", this.avatarBackground);

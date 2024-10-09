@@ -45,6 +45,12 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 
 			return View(
 				{
+					ref: (ref) => {
+						if (ref)
+						{
+							this.viewRef = ref;
+						}
+					},
 					style: {
 						flexDirection: 'column',
 						backgroundColor: this.props.isWithPressed
@@ -71,7 +77,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 					onLongClick: () => {
 						if (this.props.onLongClick)
 						{
-							this.props.onLongClick(this.props.data);
+							this.props.onLongClick(this.props.data, this.viewRef);
 						}
 					},
 				},
@@ -166,6 +172,11 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 			if (!this.props.additionalComponent)
 			{
 				return null;
+			}
+
+			if (Object.prototype.hasOwnProperty.call(this.props.additionalComponent, 'create'))
+			{
+				return this.props.additionalComponent.create();
 			}
 
 			return this.props.additionalComponent;

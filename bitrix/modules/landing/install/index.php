@@ -42,7 +42,7 @@ class Landing extends \CModule
 			'onAfterIBlockSectionDelete' => ['\Bitrix\Landing\Connector\Iblock', 'onAfterIBlockSectionDelete']
 		],
 		'intranet' => [
-			'onBuildBindingMenu' => ['\Bitrix\Landing\Connector\Intranet', 'onBuildBindingMenu']
+			'onBuildBindingMenu' => ['\Bitrix\Landing\Connector\Intranet', 'onBuildBindingMenu'],
 		],
 		'landing' => [
 			'onBuildSourceList' => ['\Bitrix\Landing\Connector\Landing', 'onSourceBuildHandler']

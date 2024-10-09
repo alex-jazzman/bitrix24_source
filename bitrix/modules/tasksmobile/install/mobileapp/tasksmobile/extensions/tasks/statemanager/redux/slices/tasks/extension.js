@@ -39,7 +39,10 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectSubTasksById,
 		selectSubTasksIdsByTaskId,
 		selectRelatedTasksById,
+		selectWithCreationError,
 		selectActions,
+		selectTimerState,
+		selectDatePlan,
 	} = require('tasks/statemanager/redux/slices/tasks/selector');
 	const {
 		create,
@@ -246,6 +249,15 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 
 				tasksAdapter.upsertMany(state, readTasks);
 			},
+			setTimeElapsed: (state, { payload }) => {
+				const { taskId, timeElapsed } = payload;
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					timeElapsed,
+				});
+			},
 		},
 		extraReducers: (builder) => {
 			builder
@@ -322,6 +334,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateChecklist,
 		updateUploadingFiles,
 		tasksRead,
+		setTimeElapsed,
 	} = actions;
 
 	ExpirationRegistry.setReducers({ taskExpired });
@@ -343,6 +356,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateChecklist,
 		updateUploadingFiles,
 		tasksRead,
+		setTimeElapsed,
 
 		selectAll,
 		selectById,
@@ -373,6 +387,9 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectSubTasksById,
 		selectSubTasksIdsByTaskId,
 		selectRelatedTasksById,
+		selectTimerState,
+		selectDatePlan,
+		selectWithCreationError,
 
 		create,
 		update,

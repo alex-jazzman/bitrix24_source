@@ -93,7 +93,6 @@ const EventName = {
 
 const beginingPosition = -1;
 const newUserPosition = 999;
-const localUserPosition = 1000;
 const addButtonPosition = 1001;
 
 const MIN_WIDTH = 250;
@@ -133,7 +132,6 @@ type ViewOptions = {
 	uiState: string,
 	layout: string,
 	userStates: {},
-	enableNewLayoutLogic: boolean,
 	showAddUserButtonInList?: boolean,
 }
 
@@ -166,15 +164,13 @@ export class View
 		this.showButtonPanel = (config.showButtonPanel !== false);
 		this.showAddUserButtonInList = config.showAddUserButtonInList || false;
 
-		this.enableNewLayoutLogic = config.enableNewLayoutLogic;
-
 		this.limitation = null;
 		this.inactiveUsers = [];
 		this.activeUsers = [];
 		this.rerenderTimeout = null;
 		this.waitingForUserMediaTimeouts = new Map();
 		this.rerenderQueue = new Map();
-		this.skipVideoTriggerForUsers = new Set();
+		this.shelvedRerenderQueue = new Map();
 
 		this.broadcastingMode = BX.prop.getBoolean(config, "broadcastingMode", false);
 		this.broadcastingPresenters = BX.prop.getArray(config, "broadcastingPresenters", []);
@@ -204,7 +200,7 @@ export class View
 			id: this.userId,
 			state: BX.prop.getString(config, "localUserState", UserState.Connected),
 			localUser: true,
-			order: this.enableNewLayoutLogic ? beginingPosition : localUserPosition,
+			order: beginingPosition,
 			name: this.userData[this.userId] ? this.userData[this.userId].name : '',
 			avatar: this.userData[this.userId] ? this.userData[this.userId].avatar_hr : '',
 		});
@@ -244,7 +240,11 @@ export class View
 			notificationPanel: null,
 			panel: null,
 			audioContainer: null,
+			screenAudioContainer: null,
 			audio: {
+				// userId: <audio> for this user's stream
+			},
+			screenAudio: {
 				// userId: <audio> for this user's stream
 			},
 			center: null,
@@ -328,6 +328,7 @@ export class View
 
 		this.uiState = config.uiState || UiState.Calling;
 		this.layout = config.layout || Layouts.Centered;
+		this.whiteSpaceInUserGrid = 0;
 		this.roomState = RoomState.None;
 
 		this.eventEmitter = new EventEmitter(this, 'BX.Call.View');
@@ -536,6 +537,10 @@ export class View
 			props: {className: "bx-messenger-videocall-audio-container"}
 		});
 
+		this.elements.screenAudioContainer = Dom.create("div", {
+			props: {className: "bx-messenger-videocall-audio-container"}
+		});
+
 		if (Hardware.initialized)
 		{
 			this.setSpeakerId(Hardware.defaultSpeaker);
@@ -567,6 +572,7 @@ export class View
 		}
 
 		this.container.appendChild(this.elements.audioContainer);
+		this.container.appendChild(this.elements.screenAudioContainer);
 	};
 
 	get isPreparing()
@@ -814,20 +820,6 @@ export class View
 		{
 			return el.id != this.userId && el.cameraState && this.isUserHasActiveState(el) && el.state !== UserState.Calling;
 		});
-	}
-
-	getLastUserWithVideo()
-	{
-		const usersWithVideo = this.getUsersWithCamera();
-		return usersWithVideo[usersWithVideo.length - 1];
-	};
-
-	getSkipUsersInVideoRules(users, limit)
-	{
-		const lastUserWithVideo = this.getLastUserWithVideo();
-		const lastUserWithVideoId = lastUserWithVideo?.id;
-		const index = lastUserWithVideoId ? this.userRegistry.users.findIndex(user => user.id == lastUserWithVideoId) : 0;
-		return users.slice(index + 1, limit);
 	};
 
 	hasUserWithScreenSharing()
@@ -837,6 +829,18 @@ export class View
 			return userModel.screenState;
 		})
 	};
+
+	hasCurrentUserScreenSharing()
+	{
+		const currentUser = this.userRegistry.get(this.userId);
+
+		if (currentUser)
+		{
+			return currentUser.screenState;
+		}
+
+		return false
+	}
 
 	getPresenterUserId()
 	{
@@ -970,6 +974,8 @@ export class View
 			return;
 		}
 
+		let useShelvedRerenderQueue = this.layout === Layouts.Centered && newLayout === Layouts.Grid;
+
 		this.layout = newLayout;
 
 		if (this.layout == Layouts.Centered || this.layout == Layouts.Mobile)
@@ -1012,7 +1018,7 @@ export class View
 
 		this.elements.root.classList.toggle("bx-messenger-videocall-fullscreen-mobile", (this.layout == Layouts.Mobile));
 
-		this.updateUserList();
+		this.updateUserList(useShelvedRerenderQueue);
 		this.toggleEars();
 		this.updateButtons();
 		this.eventEmitter.emit(EventName.onLayoutChange, {
@@ -1054,6 +1060,8 @@ export class View
 			return;
 		}
 		this.currentPage = pageNumber;
+
+		this.recalculateUsersPerPage()
 		if (this.elements.root)
 		{
 			this.elements.pageNavigatorLeftCounter.innerHTML = (this.currentPage - 1) + '&nbsp;/&nbsp;' + this.pagesCount;
@@ -1078,6 +1086,17 @@ export class View
 		const containerSize = this.elements.userList.container.getBoundingClientRect();
 		let columns = Math.floor(containerSize.width / MIN_GRID_USER_WIDTH) || 1;
 		let rows = Math.floor(containerSize.height / MIN_GRID_USER_HEIGHT) || 1;
+
+		if (this.layout === Layouts.Centered)
+		{
+			const rowsWithoutGap = Math.floor(containerSize.height / SIDE_USER_HEIGHT) || 1;
+			const rowGap = 6;
+
+			this.whiteSpaceInUserGrid = containerSize.height - rowsWithoutGap * SIDE_USER_HEIGHT + (rowsWithoutGap - 1) * rowGap;
+
+			columns = 1;
+			rows = this.whiteSpaceInUserGrid < 0 ? rowsWithoutGap - 1 : rowsWithoutGap;
+		}
 
 		let usersPerPage = columns * rows - 1;
 
@@ -1119,6 +1138,16 @@ export class View
 		return pages > 0 ? pages : 1;
 	};
 
+	recalculateUsersPerPage()
+	{
+		this.usersPerPage = this.calculateUsersPerPage();
+
+		if (this.currentPage < this.pagesCount && this.layout === Layouts.Centered && this.whiteSpaceInUserGrid > 0)
+		{
+			this.usersPerPage = this.usersPerPage + 1;
+		}
+	}
+
 	recalculatePages()
 	{
 		this.usersPerPage = this.calculateUsersPerPage();
@@ -1128,6 +1157,8 @@ export class View
 		{
 			this.currentPage = this.pagesCount;
 		}
+
+		this.recalculateUsersPerPage();
 
 		if (this.elements.root)
 		{
@@ -1318,10 +1349,17 @@ export class View
 			this.elements.audioContainer.appendChild(this.elements.audio[userId]);
 		}
 
+		if (!this.elements.screenAudio[userId])
+		{
+			this.elements.screenAudio[userId] = Dom.create("audio");
+			this.elements.screenAudioContainer.appendChild(this.elements.audio[userId]);
+		}
+
 		this.users[userId] = new CallUser({
 			parentContainer: this.container,
 			userModel: userModel,
 			audioElement: this.elements.audio[userId],
+			screenAudioElement: this.elements.screenAudio[userId],
 			allowPinButton: this.getConnectedUserCount() > 1,
 			onClick: this._onUserClick.bind(this),
 			onPin: this._onUserPin.bind(this),
@@ -1415,24 +1453,22 @@ export class View
 			}
 		}
 
-		if (this.enableNewLayoutLogic)
+
+		if (newState === UserState.Connected)
 		{
-			if (newState === UserState.Connected)
-			{
-				const timer = setTimeout(() => {
-					this.waitingForUserMediaTimeouts.delete(userId);
-				}, WAITING_VIDEO_DELAY);
-				this.waitingForUserMediaTimeouts.set(userId, timer);
-			}
-			else if (newState === UserState.Idle)
-			{
-				clearTimeout(this.waitingForUserMediaTimeouts.get(userId));
+			const timer = setTimeout(() => {
 				this.waitingForUserMediaTimeouts.delete(userId);
-				this.rerenderQueue.set(userId, {
-					userId,
-					reason: RerenderReason.UserDisconnected,
-				});
-			}
+			}, WAITING_VIDEO_DELAY);
+			this.waitingForUserMediaTimeouts.set(userId, timer);
+		}
+		else if (newState === UserState.Idle)
+		{
+			clearTimeout(this.waitingForUserMediaTimeouts.get(userId));
+			this.waitingForUserMediaTimeouts.delete(userId);
+			this.rerenderQueue.set(userId, {
+				userId,
+				reason: RerenderReason.UserDisconnected,
+			});
 		}
 
 		if (newState == UserState.Connected && user.order == newUserPosition)
@@ -1442,14 +1478,11 @@ export class View
 		else if (newState == UserState.Idle)
 		{
 			this.setUserFloorRequestState(userId, false);
-			if (this.enableNewLayoutLogic)
-			{
-				// reset user position to add them in the end after they reconnect
-				user.prevOrder = user.order;
-				user.order = newUserPosition;
-				user.prevCameraState = user.cameraState;
-				user.cameraState = false;
-			}
+			// reset user position to add them in the end after they reconnect
+			user.prevOrder = user.order;
+			user.order = newUserPosition;
+			user.prevCameraState = user.cameraState;
+			user.cameraState = false;
 		}
 
 		if (userId == this.localUser.id)
@@ -1544,14 +1577,16 @@ export class View
 		if (user)
 		{
 			user.videoPaused = videoPaused;
+			user.cameraState = !videoPaused;
 
-			if (this.enableNewLayoutLogic)
+			if (!user.videoPaused !== videoPaused)
 			{
-				user.cameraState = !videoPaused;
-				videoPaused
-					? this.updateRerenderQueue(userId, RerenderReason.VideoDisabled)
-					: this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+				return;
 			}
+
+			videoPaused
+				? this.updateRerenderQueue(userId, RerenderReason.VideoDisabled)
+				: this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
 		}
 	};
 
@@ -1868,17 +1903,18 @@ export class View
 
 	setVideoRenderer(userId, mediaRenderer)
 	{
-		if (!this.users[userId])
+		const user = this.users[userId];
+		if (!user)
 		{
 			throw Error("User " + userId + " is not a part of this call");
 		}
 		if (mediaRenderer === null)
 		{
-			this.users[userId].videoRenderer = null;
-			if (this.enableNewLayoutLogic)
+			if (user.hasCameraVideo())
 			{
 				this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
 			}
+			user.videoRenderer = null;
 			return;
 		}
 
@@ -1891,35 +1927,20 @@ export class View
 			throw Error("mediaRenderer should be of video kind");
 		}
 
-		const user = this.users[userId];
-		const userModel = this.userRegistry.get(userId);
 		const userHasCameraVideo = user.hasCameraVideo();
-		this.users[userId].videoRenderer = mediaRenderer;
+		user.videoRenderer = mediaRenderer;
 
-		if (this.enableNewLayoutLogic)
+		if (mediaRenderer.stream && mediaRenderer.kind === 'video')
 		{
-			if (this.skipVideoTriggerForUsers.has(userId))
+			this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+		}
+		else if (mediaRenderer.kind === 'video')
+		{
+			if (!userHasCameraVideo)
 			{
-				this.skipVideoTriggerForUsers.delete(userId);
 				return;
 			}
-
-			if (mediaRenderer.stream && mediaRenderer.kind === 'video')
-			{
-				this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
-			}
-			else if (mediaRenderer.kind === 'video')
-			{
-				if (!this.activeUsers.includes(userId) && !userHasCameraVideo && !userModel.prevCameraState)
-				{
-					return;
-				}
-				this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
-			}
-		}
-		else
-		{
-			this.toggleSubscribingVideoInRenderUserList([userId], this.activeUsers.includes(userId))
+			this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
 		}
 	};
 
@@ -1928,6 +1949,10 @@ export class View
 		if (kind === 'audio')
 		{
 			this.users[userId].audioTrack = track;
+		}
+		if (kind === 'sharingAudio')
+		{
+			this.users[userId].screenAudioTrack = track;
 		}
 		if (kind === 'video')
 		{
@@ -2837,11 +2862,7 @@ export class View
 			result.push('hangup');
 		}
 
-		if (
-			!this.hiddenButtons.hasOwnProperty('hangupOptions')
-			&& Util.isNewCallLayoutEnabled()
-			&& this.isIntranetOrExtranet
-		)
+		if (!this.hiddenButtons.hasOwnProperty('hangupOptions') && this.isIntranetOrExtranet)
 		{
 			result.push('hangupOptions');
 		}
@@ -2977,11 +2998,6 @@ export class View
 				click: this._onBodyClick.bind(this)
 			}
 		});
-
-		if (this.uiState === UiState.Preparing && !Util.isNewCallLayoutEnabled())
-		{
-			this.elements.wrap.classList.add("with-clouds");
-		}
 
 		if (this.showButtonPanel)
 		{
@@ -3229,7 +3245,6 @@ export class View
 
 		this.applyOrderChanges(params.orderChanges);
 		params.orderChanges.length = 0;
-		params.activeUsers = this.getActiveUsers();
 
 		if (diffBetweenChanges !== 0)
 		{
@@ -3238,8 +3253,7 @@ export class View
 
 			if (moreChangesField === 'videoEnabled')
 			{
-				params.skipUsersInVideoRules = this.getSkipUsersInVideoRules(params.activeUsers, rules[moreChangesField].length);
-				rules.videoEnabled.forEach((el, index) =>
+				rules.videoEnabled.forEach((el) =>
 				{
 					params.orderChanges.push({
 						type: SwapType.Replace,
@@ -3274,7 +3288,7 @@ export class View
 		}
 	};
 
-	completeVideoEnableSwap(userModel, skipUsers, rules, params)
+	completeVideoEnableSwap(userModel, rules, params)
 	{
 		const swapRemains = params.incompleteSwaps.length;
 
@@ -3386,56 +3400,43 @@ export class View
 
 	completeDisconnectSwap(rules, params)
 	{
-		const canCompleteVideoSwap = params.lastUserWithVideoOrder > rules.userDisconnected.order;
-		let orderForUserWithoutVideo = rules.userDisconnected.order;
-
-		if (canCompleteVideoSwap && params.disconnectedUserHadVideo)
+		const lowerOrderOnCurrentPage = this.userRegistry.get(params.possibleActiveUsers[0])?.order;
+		const higherOrderOnCurrentPage = this.userRegistry.get(params.possibleActiveUsers[params.possibleActiveUsers.length - 1])?.order;
+		let disconnectedUserFromCurrentPage = false;
+		if (this.currentPage === 1)
 		{
-			const userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1];
-			orderForUserWithoutVideo = userToSwap.order;
-
-			params.orderChanges.push({
-				type: SwapType.Direct,
-				to: {
-					userModel: userToSwap,
-					order: rules.userDisconnected.order,
-				},
-			});
+			disconnectedUserFromCurrentPage = rules.userDisconnected.order < lowerOrderOnCurrentPage || (rules.userDisconnected.order > lowerOrderOnCurrentPage && rules.userDisconnected.order < higherOrderOnCurrentPage);
+		}
+		else
+		{
+			const skipUsers = this.currentPage > 1 ? (this.currentPage - 2) * this.usersPerPage : 0;
+			const activeUsersFromPreviousPage = params.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
+			const lastActiveUserFromPreviousPage = this.userRegistry.get(activeUsersFromPreviousPage[activeUsersFromPreviousPage.length - 1]);
+			disconnectedUserFromCurrentPage = (rules.userDisconnected.order > lowerOrderOnCurrentPage && rules.userDisconnected.order < higherOrderOnCurrentPage)
+				|| (rules.userDisconnected.order < lowerOrderOnCurrentPage && rules.userDisconnected.order > lastActiveUserFromPreviousPage?.order);
 		}
 
-		const userToSelect = this.currentPage === this.pagesCount
-			? params.possibleActiveUsers
-			: params.activeUsers;
+		const userToSwap = params.disconnectedUserHadVideo
+			? params.usersWithVideo[params.usersWithVideo.length - 1]
+			: this.userRegistry.get(params.activeUsers[params.activeUsers.length - 1]);
 
-
-		for (let i = userToSelect.length; i > 0; i--)
+		if (!userToSwap || userToSwap.order <= rules.userDisconnected.order)
 		{
-			const user = this.userRegistry.get(userToSelect[i - 1]);
-			if (user.order < orderForUserWithoutVideo)
-			{
-				break;
-			}
+			return;
+		}
 
-			if (user.state === UserState.Calling)
-			{
-				continue;
-			}
+		params.orderChanges.push({
+			type: SwapType.Direct,
+			to: {
+				userModel: userToSwap,
+				order: rules.userDisconnected.order,
+			},
+		});
 
-			params.orderChanges.push({
-				type: SwapType.Direct,
-				to: {
-					userModel: user,
-					order: orderForUserWithoutVideo,
-				},
-			});
-
-			if (this.currentPage !== this.pagesCount && !params.possibleActiveUsers.includes(user.id))
-			{
-				params.usersToKeepActive.push(user.id);
-				params.usersToDeactivate++;
-			}
-
-			break;
+		if (this.currentPage !== this.pagesCount && disconnectedUserFromCurrentPage && !params.possibleActiveUsers.includes(userToSwap.id))
+		{
+			params.usersToKeepActive.push(userToSwap.id);
+			params.usersToDeactivate++;
 		}
 	};
 
@@ -3465,26 +3466,17 @@ export class View
 		let skippedUsers = 0;
 		let renderedUsers = 0;
 
-		const needToUseNewLogic = this.layout === Layouts.Grid && this.enableNewLayoutLogic;
 		const orderingRules = this.getOrderingRules();
 		const orderingParams = {
-			usersWithVideo: this.getUsersWithCamera(),
-			lastUserWithVideo: null,
-			lastUserWithVideoOrder: 1,
+			usersWithVideo: [],
 			usersWithEnabledVideo: [],
 			usersWithDisabledVideo: [],
 			possibleActiveUsers: null,
-			skipUsersInVideoRules: [],
 			usersToKeepActive: [],
 			usersToForceDeactivation: [],
 			currentPageUsers: [],
 			orderChanges: [],
 			incompleteSwaps: [],
-			disconnectedSwap: {
-				type: SwapType.Replace,
-				from: null,
-				to: null,
-			},
 			disconnectedUserHadVideo: false,
 			usersToDeactivate: 0,
 			videoDisabledProceed: false,
@@ -3495,21 +3487,16 @@ export class View
 			skipUsers = (this.currentPage - 1) * this.usersPerPage;
 		}
 
-		if (needToUseNewLogic)
+		if (this.layout === Layouts.Grid)
 		{
 			this.processVideoRules(orderingRules, orderingParams);
 			this.processDisconnectRules(orderingRules, orderingParams);
 			orderingParams.usersWithEnabledVideo = orderingRules.videoEnabled.map(el => el.id);
 			orderingParams.usersWithDisabledVideo = orderingRules.videoDisabled.map(el => el.id);
-			orderingParams.lastUserWithVideo = this.getLastUserWithVideo();
 
-			if (!orderingParams.activeUsers)
-			{
-				orderingParams.activeUsers = this.getActiveUsers();
-			}
+			orderingParams.activeUsers = this.getActiveUsers();
 			orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
-			orderingParams.lastUserWithVideoOrder = orderingParams.lastUserWithVideo?.order || 1;
-			orderingParams.usersWithVideo.sort((a, b) => a.order - b.order);
+			orderingParams.usersWithVideo = this.getUsersWithCamera();
 
 			this.completeVideoDisabledSwap(orderingRules, orderingParams);
 			if (orderingRules.userDisconnected)
@@ -3517,12 +3504,18 @@ export class View
 				this.completeDisconnectSwap(orderingRules, orderingParams);
 			}
 		}
-		else if (this.enableNewLayoutLogic && this.layout === Layouts.Centered)
+		else if (this.layout === Layouts.Centered)
 		{
 			// new grid logic is applied only in the Layouts.Grid layout
 			// so we need to save some rules for later
-			orderingRules.videoEnabled.forEach(user => this.updateRerenderQueue(user.id, RerenderReason.VideoEnabled));
-			orderingRules.videoDisabled.forEach(user => this.updateRerenderQueue(user.id, RerenderReason.VideoDisabled));
+			orderingRules.videoEnabled.forEach(user => this.shelvedRerenderQueue.set(user.id, {
+				userId: user.id,
+				reason: RerenderReason.VideoEnabled,
+			}));
+			orderingRules.videoDisabled.forEach(user => this.shelvedRerenderQueue.set(user.id, {
+				userId: user.id,
+				reason: RerenderReason.VideoDisabled,
+			}));
 		}
 
 		for (let i = 0; i < this.userRegistry.users.length; i++)
@@ -3567,11 +3560,6 @@ export class View
 				skippedUsers++;
 				userActive = false;
 				userSkipped = true;
-
-				if (needToUseNewLogic && userModel.cameraState)
-				{
-					this.skipVideoTriggerForUsers.add(userModel.id);
-				}
 			}
 
 			if (userActive && this.layout === Layouts.Grid && this.usersPerPage > 0 && renderedUsers < this.usersPerPage)
@@ -3579,7 +3567,7 @@ export class View
 				orderingParams.currentPageUsers.push(userModel);
 			}
 
-			if (needToUseNewLogic)
+			if (this.layout === Layouts.Grid)
 			{
 				if (orderingRules.videoEnabled.length)
 				{
@@ -3590,49 +3578,29 @@ export class View
 						const userEnabledVideo = orderingParams.orderChanges[index].from;
 						const currentUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userModel.id);
 						const changedUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userEnabledVideo.userModel.id);
+						const currentUserFromNextPage = userModel.order > orderingParams.possibleActiveUsers[orderingParams.possibleActiveUsers.length-1].order;
 
-						this.completeVideoEnableSwap(userModel, skipUsers, orderingRules, orderingParams);
+						this.completeVideoEnableSwap(userModel, orderingRules, orderingParams);
 						const swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
 
 						if (swapCompleted && userActive && !changedUserFromCurrentPage && !orderingParams.usersToKeepActive.includes(userModel.id))
 						{
 							userActive = false;
-							if (userModel.cameraState && !currentUserFromCurrentPage)
-							{
-								this.skipVideoTriggerForUsers.add(userModel.id);
-							}
-							if (!currentUserFromCurrentPage)
-							{
-								this.skipVideoTriggerForUsers.add(userEnabledVideo.userModel.id);
-							}
 						}
 						else if (swapCompleted && ((!userSkipped && !currentUserFromCurrentPage) || (userSkipped && changedUserFromCurrentPage)))
 						{
 							userActive = true;
-							if (!changedUserFromCurrentPage)
-							{
-								this.skipVideoTriggerForUsers.add(userEnabledVideo.userModel.id);
-							}
 						}
 					}
 
 					if (orderingParams.usersToDeactivate)
 					{
-						const newStatus = this.calculateUserActive(userModel, userActive, userSkipped, orderingParams);
-						userActive = newStatus;
-						if (userModel.cameraState && !newStatus)
-						{
-							this.skipVideoTriggerForUsers.add(userModel.id);
-						}
+						userActive = this.calculateUserActive(userModel, userActive, userSkipped, orderingParams);
 					}
 
 					if (orderingParams.usersToForceDeactivation.includes(userModel.id))
 					{
 						userActive = false;
-						if (userModel.cameraState)
-						{
-							this.skipVideoTriggerForUsers.add(userModel.id);
-						}
 					}
 				}
 				else if (orderingRules.videoDisabled.length)
@@ -3641,10 +3609,6 @@ export class View
 					{
 						userActive = true;
 						orderingParams.usersToDeactivate--;
-						if (userModel.cameraState)
-						{
-							this.skipVideoTriggerForUsers.add(userModel.id);
-						}
 					}
 					else if (orderingParams.usersToForceDeactivation.includes(userModel.id)
 						|| (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage)
@@ -3652,10 +3616,6 @@ export class View
 					{
 						userActive = false;
 						orderingParams.currentPageUsers.pop();
-						if (userModel.cameraState)
-						{
-							this.skipVideoTriggerForUsers.add(userModel.id);
-						}
 					}
 				}
 				else if (orderingRules.userDisconnected)
@@ -3664,25 +3624,12 @@ export class View
 					{
 						userActive = true;
 						orderingParams.usersToDeactivate--;
-						if (userModel.cameraState)
-						{
-							this.skipVideoTriggerForUsers.add(userModel.id);
-						}
 					}
 					else if (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage)
 					{
 						userActive = false;
 						orderingParams.currentPageUsers.pop();
-						if (userModel.cameraState)
-						{
-							this.skipVideoTriggerForUsers.add(userModel.id);
-						}
 					}
-				}
-				else if (pageChange && userModel.cameraState && (userActive || userSkipped))
-				{
-					// it's just a page change
-					this.skipVideoTriggerForUsers.add(userModel.id);
 				}
 			}
 
@@ -3727,11 +3674,6 @@ export class View
 			userCount++;
 		}
 
-		if (orderingParams.disconnectedSwap.from && orderingParams.disconnectedSwap.to)
-		{
-			orderingParams.disconnectedSwap.from.order = newUserPosition;
-			orderingParams.orderChanges.push(orderingParams.disconnectedSwap);
-		}
 		this.applyOrderChanges(orderingParams.orderChanges);
 
 		if (showLocalUser)
@@ -4356,7 +4298,7 @@ export class View
 		this.buttons[buttonName].setCounter(counter);
 	};
 
-	updateUserList()
+	updateUserList(useShelvedRerenderQueue)
 	{
 		if (this.layout == Layouts.Mobile)
 		{
@@ -4388,6 +4330,23 @@ export class View
 		if ((this.layout == Layouts.Grid || this.layout == Layouts.Centered) && this.size == Size.Full)
 		{
 			this.recalculatePages();
+		}
+
+		if (useShelvedRerenderQueue)
+		{
+			this.shelvedRerenderQueue.forEach((el) =>
+			{
+				if (el.reason === RerenderReason.VideoEnabled)
+				{
+					this.updateRerenderQueue(el.userId, el.reason);
+				}
+				else if (el.reason === RerenderReason.VideoDisabled)
+				{
+					this.updateRerenderQueue(el.userId, el.reason);
+				}
+			});
+
+			this.shelvedRerenderQueue.clear();
 		}
 
 		this.renderUserList();
@@ -5756,7 +5715,11 @@ export class View
 
 	releaseLocalMedia()
 	{
-		this.localUser.releaseStream();
+		if (!this.hasCurrentUserScreenSharing())
+		{
+			this.localUser.releaseStream();
+		}
+
 		if (this.centralUser.id == this.userId)
 		{
 			this.centralUser.releaseStream();
@@ -5769,7 +5732,6 @@ export class View
 		this.rerenderTimeout = null;
 		this.waitingForUserMediaTimeouts.forEach(timeout => clearTimeout(timeout));
 		this.waitingForUserMediaTimeouts.clear();
-		this.skipVideoTriggerForUsers.clear();
 		this.rerenderQueue.clear();
 	}
 

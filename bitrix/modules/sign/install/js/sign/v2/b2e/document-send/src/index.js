@@ -1,6 +1,7 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { UserParty } from 'sign.v2.b2e.user-party';
+import { ReminderSelector, type Options as ReminderOptions, ReminderType } from 'sign.v2.b2e.reminder-selector';
 import { Item, EntityTypes } from './item';
 import { Api, type Role, MemberRole } from 'sign.v2.api';
 import { DocumentSummary } from 'sign.v2.document-summary';
@@ -24,6 +25,11 @@ type Member = {
 	part: number,
 	uid: string,
 	role: Role,
+};
+
+const ReminderSelectorOptionsByRole: Record<Role, ReminderOptions> = {
+	[MemberRole.assignee]: { preSelectedType: ReminderType.oncePerDay },
+	[MemberRole.signer]: { preSelectedType: ReminderType.twicePerDay },
 };
 
 const idleCommunication: CommunicationType = 'idle';
@@ -68,6 +74,7 @@ export class DocumentSend extends EventEmitter
 	#progressOverlay: ?HTMLElement;
 	#progressContainer: ?HTMLElement;
 	#itemsToHide: Array<HTMLElement> = [];
+	#reminderSelectorByRole: Record<Role, ReminderSelector> = {};
 
 	constructor(documentSendConfig: DocumentSendConfig)
 	{
@@ -100,6 +107,10 @@ export class DocumentSend extends EventEmitter
 			maxValue: 100,
 			value: 0,
 			colorTrack: '#dfe3e6',
+		});
+
+		[MemberRole.assignee, MemberRole.signer].forEach((role: Role) => {
+			this.#getOrCreateReminderSelectorForRole(role);
 		});
 	}
 
@@ -189,7 +200,10 @@ export class DocumentSend extends EventEmitter
 				</p>
 				${this.#ui.employeesTitle}
 				${this.#items.employees.getLayout()}
-				${this.#getCommunicationsLayout('employee')}
+				<div class="sign-b2e-send__config-container">
+					${this.#getCommunicationsLayout('employee')}
+					${this.#getReminderSelectorLayout(MemberRole.signer)}
+				</div>
 			</div>
 		`;
 		this.#itemsToHide.push(usersLayout);
@@ -216,7 +230,10 @@ export class DocumentSend extends EventEmitter
 						${this.#items.representative.getLayout()}
 					</div>
 				</div>
-				${this.#getCommunicationsLayout('company')}
+				<div class="sign-b2e-send__config-container">
+					${this.#getCommunicationsLayout('company')}
+					${this.#getReminderSelectorLayout(MemberRole.assignee)}
+				</div>
 			</div>
 		`;
 		this.#itemsToHide.push(companyLayout);
@@ -364,6 +381,8 @@ export class DocumentSend extends EventEmitter
 			});
 			await Promise.all(validationMembersPromises);
 */
+
+			await this.#saveReminderTypesForRoles();
 			await api.configureDocument(uid);
 
 			this.#showProgressOverlay();
@@ -445,5 +464,33 @@ export class DocumentSend extends EventEmitter
 		this.emit('hideOverlay');
 		Dom.style(this.#progressOverlay, 'display', 'none');
 		this.emit('showPreview');
+	}
+
+	#getReminderSelectorLayout(role: Role): HTMLElement
+	{
+		return Tag.render`
+			<div class="sign-b2e-send__reminder-selector">
+				${this.#getOrCreateReminderSelectorForRole(role).getLayout()}
+				<span
+					data-hint="${Loc.getMessage('SIGN_DOCUMENT_SEND_REMINDER_TYPE_SELECTOR_HINT')}"
+				></span>
+			</div>
+		`;
+	}
+
+	#getOrCreateReminderSelectorForRole(role: Role): ReminderSelector
+	{
+		this.#reminderSelectorByRole[role] ??= new ReminderSelector(ReminderSelectorOptionsByRole[role] ?? {});
+
+		return this.#reminderSelectorByRole[role];
+	}
+
+	#saveReminderTypesForRoles(): Promise<void>
+	{
+		const promises: Array<Promise> = Object.entries(this.#reminderSelectorByRole)
+			.map(([role, selector]) => selector.save(this.#documentData.uid, role))
+		;
+
+		return Promise.all(promises);
 	}
 }

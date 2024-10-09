@@ -2,7 +2,6 @@
  * @module selector/providers/common
  */
 jn.define('selector/providers/common', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { withCurrentDomain } = require('utils/url');
 	const { mergeImmutable } = require('utils/object');
 	const { uniqBy, unique } = require('utils/array');

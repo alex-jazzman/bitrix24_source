@@ -11,7 +11,6 @@ define("HELP_FILE", "settings/mail_events/messagetype_admin.php");
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Mail\Internal\EventTypeTable;
 
-$err_mess = "File: ".__FILE__."<br>Line: ";
 $arFilter = array();
 $error = false;
 

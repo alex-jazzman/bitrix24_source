@@ -133,7 +133,7 @@ export class CallManager
 			return '';
 		}
 
-		return this.#controller.currentCall.associatedEntity.id;
+		return this.#controller?.currentCall?.associatedEntity.id;
 	}
 
 	getCurrentCall(): boolean
@@ -355,6 +355,13 @@ export class CallManager
 		this.foldCurrentCall();
 	}
 
+	isConference(dialogId: string): boolean
+	{
+		const dialog: ImModelChat = this.#store.getters['chats/get'](dialogId);
+
+		return dialog.type === ChatType.videoconf;
+	}
+
 	#checkCallSupport(dialogId: string): boolean
 	{
 		if (!this.#pushServerIsActive() || !BX.Call.Util.isWebRTCSupported())
@@ -385,7 +392,7 @@ export class CallManager
 	{
 		const userCounter = this.#getChatUserCounter(dialogId);
 
-		return userCounter > 1 && userCounter <= this.getCallUserLimit();
+		return (userCounter > 1 || this.isConference(dialogId)) && userCounter <= this.getCallUserLimit();
 	}
 
 	#pushServerIsActive(): boolean

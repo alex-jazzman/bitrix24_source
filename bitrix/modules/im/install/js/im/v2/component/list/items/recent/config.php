@@ -18,7 +18,6 @@ return [
 		'im.public',
 		'im.v2.lib.call',
 		'im.v2.lib.create-chat',
-		'im.v2.lib.layout',
 		'im.v2.component.elements',
 		'main.core',
 		'im.v2.lib.utils',

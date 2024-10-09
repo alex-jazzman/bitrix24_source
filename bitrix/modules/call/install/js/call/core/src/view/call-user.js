@@ -14,6 +14,7 @@ type CallUserElements = {
 	videoContainer?: HTMLElement,
 	video?: HTMLVideoElement,
 	audio?: HTMLAudioElement,
+	screenAudio?: HTMLAudioElement,
 	preview?: HTMLVideoElement,
 	videoBorder?: HTMLElement,
 	avatarContainer?: HTMLElement,
@@ -46,12 +47,14 @@ type CallUserElements = {
 type CallUserParams = {
 	parentContainer: HTMLElement,
 	userModel: UserModel,
+	screenAudioElement: ?HTMLAudioElement,
 	audioElement: ?HTMLAudioElement,
 	allowBackgroundItem: ?boolean,
 	allowMaskItem: ?boolean,
 	allowPinButton: ?boolean,
 	screenSharingUser: ?boolean,
 	audioTrack: ?MediaStreamTrack,
+	screenAudioTrack: ?MediaStreamTrack,
 	videoTrack: ?MediaStreamTrack,
 
 	onClick: () => void,
@@ -79,7 +82,9 @@ export class CallUser
 		this._allowPinButton = Type.isBoolean(config.allowPinButton) ? config.allowPinButton : true;
 		this._visible = true;
 		this._audioTrack = config.audioTrack;
+		this._screenAudioTrack = config.screenAudioTrack;
 		this._audioStream = this._audioTrack ? new MediaStream([this._audioTrack]) : null;
+		this._screenAudioStream = this._screenAudioTrack ? new MediaStream([this._screenAudioTrack]) : null;
 		this._videoTrack = config.videoTrack;
 		this._stream = this._videoTrack ? new MediaStream([this._videoTrack]) : null;
 		this._videoRenderer = null;
@@ -98,6 +103,11 @@ export class CallUser
 		if (config.audioElement)
 		{
 			this.elements.audio = config.audioElement;
+		}
+
+		if (config.screenAudioElement)
+		{
+			this.elements.screenAudio = config.screenAudioElement;
 		}
 
 		this.callBacks = {
@@ -174,6 +184,27 @@ export class CallUser
 	get audioStream()
 	{
 		return this._audioStream;
+	}
+
+	get screenAudioTrack()
+	{
+		return this._screenAudioTrack;
+	}
+
+	set screenAudioTrack(screenAudioTrack: ?MediaStreamTrack)
+	{
+		if (this._screenAudioTrack === screenAudioTrack)
+		{
+			return;
+		}
+		this._screenAudioTrack = screenAudioTrack;
+		this._screenAudioStream = this._screenAudioTrack ? new MediaStream([this._screenAudioTrack]) : null;
+		this.playScreenAudio()
+	}
+
+	get screenAudioStream()
+	{
+		return this._screenAudioStream;
 	}
 
 	get flipVideo()
@@ -563,13 +594,9 @@ export class CallUser
 			}
 		});
 
-		if (this.userModel.talking && Util.isNewCallLayoutEnabled())
+		if (this.userModel.talking)
 		{
 			this.updateAvatarPulseState()
-		}
-		else if (this.userModel.talking)
-		{
-			this.elements.root.classList.add("bx-messenger-videocall-user-talking");
 		}
 
 		this.elements.debugPanel = Dom.create("div", {
@@ -689,6 +716,7 @@ export class CallUser
 		{
 			this.elements.video.srcObject = this.stream;
 		}
+
 		if (this.flipVideo)
 		{
 			this.elements.video.classList.add("bx-messenger-videocall-video-flipped");
@@ -804,39 +832,19 @@ export class CallUser
 			}
 		});
 
-		if (Util.isNewCallLayoutEnabled())
-		{
-			this.elements.userBottomContainer.appendChild(
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-user-device-state-container"},
-					children: [
-						this.elements.cameraState = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")},
-						}),
-						this.elements.micState = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")},
-						}),
-					],
-				}),
-			);
-		}
-		else
-		{
-			this.elements.avatarBackground = Dom.create("div", {
-				props: {className: "bx-messenger-videocall-user-avatar-background"},
-			});
-
-			this.elements.container.prepend(this.elements.avatarBackground);
-
-			this.elements.nameContainer.prepend(...[
-				this.elements.micState = Dom.create("div", {
-					props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")},
-				}),
-				this.elements.cameraState = Dom.create("div", {
-					props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")},
-				}),
-			]);
-		}
+		this.elements.userBottomContainer.appendChild(
+			Dom.create("div", {
+				props: {className: "bx-messenger-videocall-user-device-state-container"},
+				children: [
+					this.elements.cameraState = Dom.create("div", {
+						props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")},
+					}),
+					this.elements.micState = Dom.create("div", {
+						props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")},
+					}),
+				],
+			}),
+		);
 
 		this.updatePanelDeferred();
 		return this.elements.root;
@@ -1180,10 +1188,7 @@ export class CallUser
 
 	getAvatarInnerText()
 	{
-		return Util.isNewCallLayoutEnabled()
-			? Utils.text.getFirstLetters(this.userModel.name).toUpperCase()
-			: ''
-			;
+		return Utils.text.getFirstLetters(this.userModel.name).toUpperCase();
 	}
 
 	updateRenameAllowed()
@@ -1280,12 +1285,36 @@ export class CallUser
 		}
 	};
 
+	playVideoElements(videoElement)
+	{
+		const isCanPlaying = videoElement && videoElement.srcObject;
+		const isPaused = videoElement && videoElement.paused;
+		const isReadyPlaying = videoElement && videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
+
+		if (isCanPlaying && isReadyPlaying && !isPaused)
+		{
+			videoElement.pause();
+		}
+
+		if (isCanPlaying && isReadyPlaying)
+		{
+			videoElement.play().catch(logPlaybackError)
+		}
+
+		if (isCanPlaying && !isReadyPlaying) {
+			videoElement.addEventListener('loadeddata', () => {
+				this.playVideoElements(videoElement);
+			})
+		}
+	}
+
 	update()
 	{
 		if (!this.elements.root)
 		{
 			return;
 		}
+
 		if (this.hasVideo()/* && this.visible*/)
 		{
 			if (this.visible)
@@ -1293,10 +1322,7 @@ export class CallUser
 				if (this.videoRenderer)
 				{
 					this.videoRenderer.render(this.elements.video);
-					if (this.elements.video.paused)
-					{
-						this.elements.video.play().catch(logPlaybackError);
-					}
+					this.playVideoElements(this.elements.video);
 					if (this._previewRenderer)
 					{
 						this._previewRenderer.render(this.elements.preview);
@@ -1308,8 +1334,8 @@ export class CallUser
 				}
 				else if (this.elements.video.srcObject != this.stream)
 				{
-
 					this.elements.video.srcObject = this.stream;
+					this.playVideoElements(this.elements.video);
 				}
 
 				if (this.elements.avatarContainer)
@@ -1378,16 +1404,22 @@ export class CallUser
 		}
 	};
 
+	playScreenAudio()
+	{
+		if (!this.screenAudioStream)
+		{
+			this.elements.screenAudio.srcObject = null;
+			return;
+		}
+
+		this.elements.screenAudio.srcObject = this.screenAudioStream;
+		this.elements.screenAudio.play().catch(logPlaybackError);
+	}
+
 	playVideo()
 	{
-		if (this.elements.video)
-		{
-			this.elements.video.play().catch(logPlaybackError);
-		}
-		if (this.elements.preview)
-		{
-			this.elements.preview.play().catch(logPlaybackError);
-		}
+		this.playVideoElements(this.elements.video);
+		this.playVideoElements(this.elements.preview);
 	};
 
 	blurVideo(blurState)
@@ -1474,17 +1506,11 @@ export class CallUser
 
 		if (this.userModel.state == UserState.Calling || this.userModel.state == UserState.Connecting)
 		{
-			Util.isNewCallLayoutEnabled()
-				? this.updateAvatarPulseState()
-				: this.elements.avatar.classList.add("bx-messenger-videocall-user-avatar-pulse")
-			;
+			this.updateAvatarPulseState();
 		}
 		else
 		{
-			Util.isNewCallLayoutEnabled()
-				? this.addAvatarPulseTimer()
-				: this.elements.avatar.classList.remove("bx-messenger-videocall-user-avatar-pulse")
-			;
+			this.addAvatarPulseTimer();
 		}
 
 		if (this.userModel.state == UserState.Idle)
@@ -1511,25 +1537,11 @@ export class CallUser
 		}
 		if (this.userModel.talking)
 		{
-			if (Util.isNewCallLayoutEnabled())
-			{
-				this.updateAvatarPulseState()
-			}
-			else
-			{
-				this.elements.root.classList.add("bx-messenger-videocall-user-talking");
-			}
+			this.updateAvatarPulseState();
 		}
 		else
 		{
-			if (Util.isNewCallLayoutEnabled())
-			{
-				this.addAvatarPulseTimer();
-			}
-			else
-			{
-				this.elements.root.classList.remove("bx-messenger-videocall-user-talking");
-			}
+			this.addAvatarPulseTimer();
 		}
 	};
 

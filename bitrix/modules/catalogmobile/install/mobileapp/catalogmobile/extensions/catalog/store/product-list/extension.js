@@ -147,6 +147,8 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				total: {
 					totalRows: props.items.length,
 					totalCost: props.document.total.amount,
+					totalTax: props.document.total.totalTax,
+					taxIncluded: props.document.total.taxIncluded,
 					currency: props.document.currency,
 					totalDiscount: 0,
 				},
@@ -316,12 +318,14 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 
 		calculateTotal()
 		{
+			let totalTax = 0;
 			let documentTotal = 0;
+			let taxIncluded;
 			this.getItems().map((productRow) => {
 				let price;
 				if (this.state.document.type === DocumentType.SalesOrders)
 				{
-					price = productRow.getSellPrice().amount || 0;
+					price = productRow.getPriceWithVat() || 0;
 				}
 				else
 				{
@@ -329,14 +333,22 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				}
 				const quantity = parseFloat(productRow.getAmount() || 0);
 
+				totalTax += (productRow.getVatValue() * quantity);
 				documentTotal += (price * quantity);
+
+				if (taxIncluded === undefined && productRow.getVatValue() > 0)
+				{
+					taxIncluded = productRow.isVatIncluded()
+				}
 			});
 
 			return {
 				totalRows: this.getItems().length,
 				totalCost: documentTotal,
+				totalTax: totalTax,
 				currency: this.getDocumentCurrency(),
 				totalDiscount: 0,
+				taxIncluded: taxIncluded,
 			};
 		}
 
@@ -345,7 +357,7 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 			return {
 				summary: true,
 				discount: false,
-				taxes: false,
+				taxes: true,
 			};
 		}
 

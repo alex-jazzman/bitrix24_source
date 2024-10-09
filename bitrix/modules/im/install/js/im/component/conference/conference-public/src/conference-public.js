@@ -256,14 +256,7 @@ BitrixVue.component('bx-im-component-conference-public',
 		},
 		callComponentClasses()
 		{
-			const classes = ['bx-im-component-call'];
-
-			if (navigator.platform.indexOf('Mac') !== -1)
-			{
-				classes.push('with-blur')
-			}
-
-			return classes;
+			return ['bx-im-component-call'];
 		},
 		chatId()
 		{

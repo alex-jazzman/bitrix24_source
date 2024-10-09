@@ -10,7 +10,10 @@ export class ItalicNodeFormatter extends NodeFormatter
 			convert({ node }: ConvertCallbackOptions): HTMLElement {
 				return Dom.create({
 					tag: 'i',
-					attributes: node.getAttributes(),
+					attrs: {
+						...node.getAttributes(),
+						className: 'ui-typography-text-italic',
+					},
 				});
 			},
 			...options,

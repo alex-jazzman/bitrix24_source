@@ -10,6 +10,9 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { isOnline } = require('device/connection');
+	const { Notification } = require('im/messenger/lib/ui/notification');
+
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--pin-manager')
@@ -501,6 +504,13 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			if (buttonType === ButtonType.edit)
 			{
 				return; // TODO unsupported type
+			}
+
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
 			}
 
 			this.locator.get('message-service')

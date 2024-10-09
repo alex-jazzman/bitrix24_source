@@ -3,98 +3,69 @@ import {
 	NodeFormatter,
 	type NodeFormatterOptions,
 	type BeforeConvertCallbackOptions,
-	type ForChildCallbackOptions,
+	type ConvertCallbackOptions,
 } from 'ui.bbcode.formatter';
-import {
-	BBCodeElementNode,
-	BBCodeNewLineNode,
-	BBCodeScheme,
-	BBCodeTextNode,
-} from 'ui.bbcode.model';
 
-import './style.css';
+import { type BBCodeNode } from 'ui.bbcode.model';
+import { CodeParser, type CodeToken } from 'ui.code-parser';
+import { normalizeLineBreaks } from '../../helpers/normalize-line-breaks';
 
 export class CodeNodeFormatter extends NodeFormatter
 {
+	#codeParser: CodeParser = new CodeParser();
+
 	constructor(options: NodeFormatterOptions = {})
 	{
 		super({
 			name: 'code',
-			before({ node }: BeforeConvertCallbackOptions): BBCodeElementNode {
-				const scheme: BBCodeScheme = node.getScheme();
-				const preparedNode: BBCodeElementNode = CodeNodeFormatter.trimLinebreaks(node);
-				const children: Array<BBCodeTextNode> = preparedNode.getChildren();
-				const newChildren: Array<BBCodeTextNode> = [];
-
-				let newNode: BBCodeTextNode = scheme.createText();
-				children.forEach((child: BBCodeTextNode | BBCodeNewLineNode) => {
-					if (scheme.isNewLine(child))
-					{
-						newChildren.push(newNode, child);
-						newNode = scheme.createText();
-					}
-					else
-					{
-						newNode.setContent(newNode.getContent() + child.getContent());
-					}
-				});
-
-				preparedNode.setChildren([...newChildren, newNode]);
-
-				return preparedNode;
+			before({ node }: BeforeConvertCallbackOptions): BBCodeNode {
+				return normalizeLineBreaks(node);
 			},
-			convert(): HTMLPreElement {
+			convert({ node }: ConvertCallbackOptions): HTMLElement {
+				const content = node.getTextContent();
+
 				return Dom.create({
-					tag: 'pre',
+					tag: 'code',
 					attrs: {
-						className: 'ui-formatter-code-block',
+						className: 'ui-typography-code',
 					},
+					dataset: {
+						decorator: true,
+					},
+					children: getCodeTokenNodes(this.#codeParser.parse(content)),
 				});
-			},
-			forChild({ node, element }: ForChildCallbackOptions): Text {
-				if (node.getPlainTextLength() === 0)
-				{
-					return null;
-				}
-
-				const scheme: BBCodeScheme = node.getScheme();
-				if (scheme.isText(node))
-				{
-					const preparedLine: string = node.toString().replaceAll(/\t/g, ' '.repeat(4));
-
-					return Dom.create({
-						tag: 'span',
-						attrs: {
-							className: 'ui-formatter-code-line',
-						},
-						text: preparedLine,
-					});
-				}
-
-				return element;
 			},
 			...options,
 		});
 	}
+}
 
-	static trimLinebreaks(node: BBCodeElementNode): BBCodeElementNode
-	{
-		const scheme: BBCodeScheme = node.getScheme();
-
-		let firstChild = node.getFirstChild();
-		while (scheme.isNewLine(firstChild))
+function getCodeTokenNodes(tokens: Array<CodeToken>): Array<Text | HTMLElement>
+{
+	const nodes: Array<Text | HTMLElement>[] = [];
+	tokens.forEach((token: CodeToken): void => {
+		const partials: string[] = token.content.split(/([\t\n])/);
+		const partialsLength: number = partials.length;
+		for (let i = 0; i < partialsLength; i++)
 		{
-			firstChild.remove();
-			firstChild = node.getFirstChild();
+			const part: string = partials[i];
+			if (part === '\n' || part === '\r\n')
+			{
+				nodes.push(document.createElement('br'));
+			}
+			else if (part === '\t')
+			{
+				nodes.push(document.createTextNode('\t'));
+			}
+			else if (part.length > 0)
+			{
+				const span = document.createElement('span');
+				span.className = `ui-typography-token-${token.type}`;
+				span.textContent = part;
+				nodes.push(span);
+			}
 		}
+	});
 
-		let lastChild = node.getLastChild();
-		while (scheme.isNewLine(lastChild))
-		{
-			lastChild.remove();
-			lastChild = node.getFirstChild();
-		}
-
-		return node;
-	}
+	return nodes;
 }

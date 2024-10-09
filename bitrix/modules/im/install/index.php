@@ -107,6 +107,7 @@ class im extends \CModule
 		$eventManager->registerEventHandler('humanresources', 'RELATION_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
 		$eventManager->registerEventHandler('humanresources', 'MEMBER_ADDED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
 		$eventManager->registerEventHandler('humanresources', 'MEMBER_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
+		$eventManager->registerEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
 
 		//marketplace
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'im','\Bitrix\Im\V2\Marketplace\Placement', 'onRestServiceBuildDescription');
@@ -490,6 +491,7 @@ class im extends \CModule
 		$eventManager->unRegisterEventHandler('humanresources', 'RELATION_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
 		$eventManager->unRegisterEventHandler('humanresources', 'MEMBER_ADDED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
 		$eventManager->unRegisterEventHandler('humanresources', 'MEMBER_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
+		$eventManager->unRegisterEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
 
 		$this->UnInstallUserFields($arParams);
 

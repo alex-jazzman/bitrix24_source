@@ -5,7 +5,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-Class tasks extends CModule
+class tasks extends CModule
 {
 	var $MODULE_ID = 'tasks';
 	var $MODULE_VERSION;
@@ -132,7 +132,7 @@ Class tasks extends CModule
 		$eventManager->registerEventHandler('main', 'OnUserDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onUserDelete');
 		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onSocNetGroupDelete');
 
-		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\ProjectsTable', 'onSocNetGroupDelete');
+		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\ProjectsTable', 'onSocNetGroupDelete');
 		$eventManager->registerEventHandler('socialnetwork', 'onContentViewed', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentViewed');
 		$eventManager->registerEventHandler('socialnetwork', 'onContentFinalizeView', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentFinalizeView');
 		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onIndexGetContent');
@@ -214,8 +214,6 @@ Class tasks extends CModule
 
 		CModule::includeModule('tasks');
 
-		\Bitrix\Tasks\Internals\Task\SearchIndexTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
-
 		(new \Bitrix\Tasks\Access\Install\AccessInstaller($DB))->install();
 		(new \Bitrix\Tasks\Access\Install\Migration($DB))->migrateTemplateRights();
 
@@ -268,7 +266,7 @@ Class tasks extends CModule
 		global $APPLICATION;
 		$userField = new CUserTypeEntity();
 
-		$fieldRes = \CUserTypeEntity::getList([], ['ENTITY_ID'  => 'TASKS_TASK_RESULT', 'FIELD_NAME' => 'UF_RESULT_FILES']);
+		$fieldRes = CUserTypeEntity::getList([], ['ENTITY_ID'  => 'TASKS_TASK_RESULT', 'FIELD_NAME' => 'UF_RESULT_FILES']);
 		if (!$fieldRes->Fetch())
 		{
 			$userFieldId = $userField->Add([
@@ -289,7 +287,7 @@ Class tasks extends CModule
 			}
 		}
 
-		$fieldRes = \CUserTypeEntity::getList([], ['ENTITY_ID'  => 'TASKS_TASK_RESULT', 'FIELD_NAME' => 'UF_RESULT_PREVIEW']);
+		$fieldRes = CUserTypeEntity::getList([], ['ENTITY_ID'  => 'TASKS_TASK_RESULT', 'FIELD_NAME' => 'UF_RESULT_PREVIEW']);
 		if (!$fieldRes->Fetch())
 		{
 			$userFieldId =  $userField->Add([
@@ -523,7 +521,7 @@ Class tasks extends CModule
 			],
 			[
 				'name' => '\Bitrix\Tasks\Integration\Recyclebin\AutoRemoveTaskAgent::execute();',
-				'nextExec' => \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+600, "FULL"),
+				'nextExec' => ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, "FULL"),
 			],
 		];
 		foreach ($agents as $agent)
@@ -651,7 +649,8 @@ Class tasks extends CModule
 
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $APPLICATION;
+		global $DB;
+
 		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
@@ -737,7 +736,7 @@ Class tasks extends CModule
 
 		// kanban
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onSocNetGroupDelete');
-		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\ProjectsTable', 'onSocNetGroupDelete');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Kanban\ProjectsTable', 'onSocNetGroupDelete');
 		$eventManager->unRegisterEventHandler('main', 'OnUserDelete', 'tasks', '\Bitrix\Tasks\Kanban\StagesTable', 'onUserDelete');
 
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onContentViewed', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\ContentViewHandler', 'onContentViewed');
@@ -825,7 +824,7 @@ Class tasks extends CModule
 			}
 		}
 
-		// Remove tasks from IM
+		// Remove tasks from 'im' module
 		if (IsModuleInstalled('im') && CModule::IncludeModule('im'))
 		{
 			if (method_exists('CIMNotify', 'DeleteByModule'))
@@ -993,65 +992,60 @@ Class tasks extends CModule
 
 	function InstallFiles($arParams = array())
 	{
-		global $DB;
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/admin",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
+			false
+		);
 
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/admin",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
-				false
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/components",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
+			true,
+			true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/components",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
-				true,
-				true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/activities",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/activities",
+			true,
+			true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/activities",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/activities",
-				true,
-				true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/public/js",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
+			true,
+			true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/public/js",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
-				true,
-				true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/js",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
+			true,
+			true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/js",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
-				true,
-				true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/public/tools",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
+			true,
+			true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/public/tools",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
-				true,
-				true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/public/services",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
+			true,
+			true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/public/services",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
-				true,
-				true
-			);
-
-			CUrlRewriter::Add(array(
-				"CONDITION" => "#^/stssync/tasks/#",
-				"RULE" => "",
-				"ID" => "bitrix:stssync.server",
-				"PATH" => "/bitrix/services/stssync/tasks/index.php",
-			));
-		}
+		CUrlRewriter::Add(array(
+			"CONDITION" => "#^/stssync/tasks/#",
+			"RULE" => "",
+			"ID" => "bitrix:stssync.server",
+			"PATH" => "/bitrix/services/stssync/tasks/index.php",
+		));
 
 		return true;
 	}
@@ -1087,7 +1081,7 @@ Class tasks extends CModule
 
 	function DoInstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION;
+		global $APPLICATION;
 
 		if (!CBXFeatures::IsFeatureEditable('Tasks'))
 		{
@@ -1111,7 +1105,8 @@ Class tasks extends CModule
 
 	function DoUninstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
+
 		$step = intval($step);
 		if($step < 2)
 		{

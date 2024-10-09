@@ -364,7 +364,25 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				config: {
 					currencyReadOnly: true,
 				},
-				onChange: (newVal) => this.updateFieldState('price.sell', newVal),
+				onChange: (newVal) => {
+					this.updateFieldState('price.sell', newVal);
+					const priceSellAmount = Number(newVal.amount);
+					let vatValue;
+					let priceWithVat;
+					const vatRate = this.state.product.price.vat.vatRate;
+					if (this.state.product.price.vat.vatIncluded === 'Y')
+					{
+						vatValue = (priceSellAmount * vatRate) / (vatRate + 1);
+						priceWithVat = priceSellAmount;
+					}
+					else
+					{
+						vatValue = priceSellAmount * vatRate;
+						priceWithVat = priceSellAmount + vatValue;
+					}
+					this.updateFieldState('price.vat.vatValue', vatValue);
+					this.updateFieldState('price.vat.priceWithVat', priceWithVat);
+				},
 				...this.getAccessProps(true, hasSellingPriceEditAccess),
 			});
 
@@ -406,6 +424,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					measure: get(this.state.product, 'measure.code', ''),
 				},
 				onChange: ({ amount, measure }) => {
+					amount = amount === '' ? null : Number(amount);
 					this.updateFieldState('amount', amount);
 					this.updateFieldState('measure', this.props.measures[measure]);
 				},

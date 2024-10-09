@@ -17,6 +17,7 @@ declare type TodoCreateNotificationParams = {
 	finalStages: Array<string>,
 	skipPeriod: ?string,
 	useTodoEditorV2?: boolean,
+	analytics?: Object,
 }
 
 const SAVE_BUTTON_ID = 'save';
@@ -40,6 +41,7 @@ export class TodoCreateNotification
 	#skipMenu: ?TodoNotificationSkipMenu = null;
 	#sliderIsMinimizing: boolean = false;
 	#useTodoEditorV2: boolean = false;
+	#analytics: Object = null;
 
 	constructor(params: TodoCreateNotificationParams)
 	{
@@ -50,6 +52,7 @@ export class TodoCreateNotification
 		this.#finalStages = params.finalStages;
 		this.#isSkipped = Boolean(params.skipPeriod);
 		this.#useTodoEditorV2 = (params.useTodoEditorV2 === true);
+		this.#analytics = params.analytics ?? {};
 
 		if (BX.CrmTimelineManager)
 		{
@@ -229,7 +232,7 @@ export class TodoCreateNotification
 
 		this.#toDoEditor.cancel({
 			analytics: {
-				subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
+				...this.#analytics,
 				element: TodoEditorV2.AnalyticsElement.skipPeriodButton,
 				notificationSkipPeriod: period,
 			},
@@ -271,7 +274,7 @@ export class TodoCreateNotification
 	{
 		void this.#toDoEditor.cancel({
 			analytics: {
-				subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
+				...this.#analytics,
 				element: TodoEditorV2.AnalyticsElement.cancelButton,
 			},
 		}).then(() => {
@@ -349,7 +352,7 @@ export class TodoCreateNotification
 				{
 					void this.#toDoEditor.cancel({
 						analytics: {
-							subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
+							...this.#analytics,
 							element: TodoEditorV2.AnalyticsElement.cancelButton,
 						},
 					});
@@ -485,10 +488,7 @@ export class TodoCreateNotification
 			params.calendarSettings = this.#timeline.getCalendarSettings();
 			params.colorSettings = this.#timeline.getColorSettings();
 			params.defaultDescription = '';
-			params.analytics = {
-				section: TodoEditorV2.AnalyticsSubSection.details,
-				subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
-			};
+			params.analytics = this.#analytics;
 
 			this.#toDoEditor = new TodoEditorV2(params);
 		}

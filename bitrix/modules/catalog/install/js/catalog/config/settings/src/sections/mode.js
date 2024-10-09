@@ -99,6 +99,8 @@ export default class Mode
 						UI.Notification.Center.notify({
 							content: Loc.getMessage('CAT_CONFIG_SETTINGS_MODE_CHANGED'),
 						});
+
+						this.#parentPage.updateDataAfterSave();
 					}
 				}
 			});

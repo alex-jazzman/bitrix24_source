@@ -521,62 +521,13 @@ class crm extends CModule
 				'adm' => [
 					'NAME' => Loc::getMessage('CRM_ROLE_ADMIN'),
 					'RELATION' => [
-						'LEAD' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'DEAL' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'CONTACT' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'COMPANY' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'QUOTE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'INVOICE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'ORDER' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
+						'LEAD' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Lead)),
+						'DEAL' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Deal)),
+						'CONTACT' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Contact)),
+						'COMPANY' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Company)),
+						'QUOTE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Quote)),
+						'INVOICE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Invoice)),
+
 						'WEBFORM' => [
 							'READ' => ['-' => 'X'],
 							'WRITE' => ['-' => 'X'],
@@ -593,62 +544,13 @@ class crm extends CModule
 				'man' => [
 					'NAME' => Loc::getMessage('CRM_ROLE_MAN'),
 					'RELATION' => [
-						'LEAD' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'DEAL' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'CONTACT' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'COMPANY' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'QUOTE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'INVOICE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'ORDER' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
+						'LEAD' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Lead)),
+						'DEAL' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Deal)),
+						'CONTACT' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Contact)),
+						'COMPANY' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Company)),
+						'QUOTE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Quote)),
+						'INVOICE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Invoice)),
+
 						'WEBFORM' => [
 							'READ' => ['-' => 'X'],
 							'WRITE' => ['-' => 'X'],
@@ -881,6 +783,7 @@ class crm extends CModule
 				$tableNamesToDelete[] = $type->getTableName();
 				$tableNamesToDelete[] = $typeFactory->getItemIndexDataClass($type)::getTableName();
 				$tableNamesToDelete[] = $typeFactory->getItemFieldsContextDataClass($type)::getTableName();
+				$tableNamesToDelete[] = \Bitrix\Crm\Security\AccessAttribute\Manager::getEntity(CCrmOwnerType::ResolveName($type->getEntityTypeId()))->getDBTableName();
 			}
 			foreach ($tableNamesToDelete as $tableName)
 			{

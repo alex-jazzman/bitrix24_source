@@ -58,6 +58,8 @@ if ($arResult['EXPORT_ALL'])
 	$arParams['COLUMNS'] = array_unique($arParams['COLUMNS']);
 	$columns = array_unique($arResult['EXPORT_COLUMNS']);
 }
+
+if ($arResult['CURRENT_PAGE'] === 1):
 ?>
 
 <meta http-equiv="Content-type" content="text/html;charset=<?=LANG_CHARSET ?>"/>
@@ -96,6 +98,8 @@ if ($arResult['EXPORT_ALL'])
 	</thead>
 
 	<tbody>
+	<?php endif; ?>
+
 	<?php foreach ($arResult['EXPORT_LIST'] as $task):?>
 		<tr>
 			<?php
@@ -215,9 +219,12 @@ if ($arResult['EXPORT_ALL'])
 
 					case 'STATUS':
 					case 'REAL_STATUS':
-						$columnValue = Loc::getMessage('TASKS_STATUS_'.$task['REAL_STATUS']);
-						break;
+						$columnValue =
+							Loc::getMessage('TASKS_STATUS_' . $task['REAL_STATUS'] . '_MSGVER_1')
+							?? Loc::getMessage('TASKS_STATUS_' . $task['REAL_STATUS'])
+						;
 
+					break;
 					case 'MARK':
 						$columnValue = Loc::getMessage('TASKS_MARK_'.($columnValue ?: 'NONE'));
 						break;
@@ -379,5 +386,7 @@ if ($arResult['EXPORT_ALL'])
 			?>
 		</tr>
 	<?php endforeach; ?>
+	<?php if ($arResult['CURRENT_PAGE'] === $arResult['TOTAL_PAGES']): ?>
 	</tbody>
 </table>
+<?php endif; ?>

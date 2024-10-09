@@ -17,6 +17,7 @@ import { CopilotPreview } from './blocks/copilot-preview';
 import { SupportPreview } from './blocks/support-preview';
 import { FileUnsortedPreview } from './blocks/file-unsorted';
 import { MultidialogPreview } from './blocks/multidialog';
+import { TariffLimitPreview } from './blocks/tariff-limit';
 import { SidebarSkeleton } from '../../elements/skeleton/skeleton';
 
 import './css/main-panel.css';
@@ -43,6 +44,7 @@ export const MainPanel = {
 		SidebarSkeleton,
 		CopilotPreview,
 		CopilotInfoPreview,
+		TariffLimitPreview,
 	},
 	props:
 	{

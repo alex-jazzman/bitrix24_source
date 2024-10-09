@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_copilot,im_v2_lib_smileManager,im_public,im_v2_lib_confirm,im_v2_lib_menu,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,ui_notification,main_polyfill_intersectionobserver,im_v2_component_elements,main_core,main_core_events,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_system,im_v2_component_message_chatCreation,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_conferenceCreation,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_ownChatCreation,im_v2_component_message_zoomInvite,im_v2_component_message_generalChatCreation,im_v2_component_message_generalChannelCreation,im_v2_component_message_channelCreation) {
+(function (exports,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_copilot,im_v2_lib_smileManager,im_public,im_v2_lib_confirm,im_v2_lib_menu,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,ui_notification,main_polyfill_intersectionobserver,im_v2_component_elements,main_core,main_core_events,im_v2_lib_analytics,im_v2_lib_feature,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_system,im_v2_component_message_chatCreation,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_conferenceCreation,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_ownChatCreation,im_v2_component_message_zoomInvite,im_v2_component_message_generalChatCreation,im_v2_component_message_generalChannelCreation,im_v2_component_message_channelCreation) {
 	'use strict';
 
 	// @vue/component
@@ -202,7 +202,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
 	          mentionText: this.context.user.name,
 	          mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(this.context.user.id, this.context.user.name),
-	          dialogId: this.context.dialog.dialogId
+	          dialogId: this.context.dialog.dialogId,
+	          isMentionSymbol: false
 	        });
 	        this.menuInstance.close();
 	      }
@@ -864,6 +865,70 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	// @vue/component
+	const HistoryLimitBanner = {
+	  name: 'HistoryLimitBanner',
+	  props: {
+	    noMessages: {
+	      type: Boolean,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    title() {
+	      return im_v2_lib_feature.FeatureManager.chatHistory.getLimitTitle();
+	    },
+	    subtitle() {
+	      return im_v2_lib_feature.FeatureManager.chatHistory.getLimitSubtitle();
+	    },
+	    buttonText() {
+	      return im_v2_lib_feature.FeatureManager.chatHistory.getLearnMoreText();
+	    }
+	  },
+	  mounted() {
+	    this.sendAnalytics();
+	  },
+	  methods: {
+	    onButtonClick() {
+	      im_v2_lib_analytics.Analytics.getInstance().onDialogHistoryLimitBannerClick({
+	        dialogId: this.dialogId
+	      });
+	      im_v2_lib_feature.FeatureManager.chatHistory.openFeatureSlider();
+	    },
+	    sendAnalytics() {
+	      im_v2_lib_analytics.Analytics.getInstance().onDialogHistoryLimitExceeded({
+	        dialogId: this.dialogId,
+	        noMessages: this.noMessages
+	      });
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<div class="bx-im-message-list-history-banner__container" :class="{'--no-messages': noMessages}">
+			<div class="bx-im-message-list-history-banner__left">
+				<div class="bx-im-message-list-history-banner__title">
+					<div class="bx-im-message-list-history-banner__icon bx-im-messenger__lock-icon"></div>
+					<div class="bx-im-message-list-history-banner__title_text --ellipsis" :title="title">
+						{{ title }}
+					</div>
+				</div>
+				<div class="bx-im-message-list-history-banner__subtitle --line-clamp-2" :title="subtitle">
+					{{ subtitle }}
+				</div>
+			</div>
+			<div class="bx-im-message-list-history-banner__right">
+				<div class="bx-im-message-list-history-banner__button" @click="onButtonClick">
+					{{ buttonText }}
+				</div>
+			</div>
+		</div>
+	`
+	};
+
 	var _getAvatarConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAvatarConfig");
 	var _getMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageType");
 	var _checkIfAvatarIsNeeded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkIfAvatarIsNeeded");
@@ -1016,20 +1081,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _lastAuthorId)[_lastAuthorId] = null;
 	}
 
+	var _getLocalShortDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLocalShortDate");
 	class DateManager {
 	  constructor() {
+	    Object.defineProperty(this, _getLocalShortDate, {
+	      value: _getLocalShortDate2
+	    });
 	    this.cachedDateGroups = {};
 	  }
 	  getDateTitle(date) {
-	    const INDEX_BETWEEN_DATE_AND_TIME = 10;
-	    // 2022-10-25T14:58:44.000Z => 2022-10-25
-	    const shortDate = date.toJSON().slice(0, INDEX_BETWEEN_DATE_AND_TIME);
+	    const shortDate = babelHelpers.classPrivateFieldLooseBase(this, _getLocalShortDate)[_getLocalShortDate](date);
 	    if (this.cachedDateGroups[shortDate]) {
 	      return this.cachedDateGroups[shortDate];
 	    }
 	    this.cachedDateGroups[shortDate] = im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(date, im_v2_lib_dateFormatter.DateTemplate.dateGroup);
 	    return this.cachedDateGroups[shortDate];
 	  }
+	}
+	function _getLocalShortDate2(date) {
+	  const timestampWithTimezoneOffset = date.getTime() - date.getTimezoneOffset() * 60000;
+	  const localDateInJSON = new Date(timestampWithTimezoneOffset).toJSON();
+
+	  // 2022-10-25T14:58:44.000Z => 2022-10-25
+	  const INDEX_BETWEEN_DATE_AND_TIME = 10;
+	  return localDateInJSON.slice(0, INDEX_BETWEEN_DATE_AND_TIME);
 	}
 
 	var _setInitialValues = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setInitialValues");
@@ -1185,6 +1260,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    DialogLoader,
 	    EmptyState,
 	    FadeAnimation: im_v2_component_animation.FadeAnimation,
+	    HistoryLimitBanner,
 	    ...MessageComponents
 	  },
 	  props: {
@@ -1228,13 +1304,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    noMessages() {
 	      return this.formattedCollection.length === 0;
 	    },
+	    isHistoryLimitExceeded() {
+	      return !im_v2_lib_feature.FeatureManager.chatHistory.isAvailable() && this.dialog.tariffRestrictions.isHistoryLimitExceeded;
+	    },
 	    showDialogStatus() {
 	      return this.messageCollection.some(message => {
 	        return message.id === this.dialog.lastMessageId;
 	      });
 	    },
 	    showEmptyState() {
-	      return this.dialogInited && this.noMessages && this.isUser;
+	      return this.dialogInited && this.noMessages && this.isUser && !this.isHistoryLimitExceeded;
 	    }
 	  },
 	  created() {
@@ -1378,6 +1457,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div v-if="dialogInited" class="bx-im-message-list__container">
 				<EmptyState v-if="showEmptyState" :dialogId="dialogId" />
 				<slot name="before-messages" :getMessageComponentName="getMessageComponentName"></slot>
+				<HistoryLimitBanner v-if="isHistoryLimitExceeded" :dialogId="dialogId" :noMessages="noMessages" />
 				<DateGroup v-for="dateGroup in formattedCollection" :key="dateGroup.dateTitle" :item="dateGroup">
 					<!-- Slot for every date group item -->
 					<template #dateGroupItem="{ dateGroupItem, isMarkedBlock, isNewMessagesBlock, isAuthorBlock }">
@@ -1421,5 +1501,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.CollectionManager = CollectionManager;
 	exports.MessageComponentManager = MessageComponentManager;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX,BX.Messenger.v2.Component.Elements,BX,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX,BX.Messenger.v2.Component.Elements,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message));
 //# sourceMappingURL=message-list.bundle.js.map

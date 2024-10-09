@@ -524,7 +524,12 @@ export default class Range
 
 		const weekdaysLoc = Util.getWeekdaysLoc();
 
-		return this.rule.weekdays.map((w) => weekdaysLoc[w]).reduce((a, b) => `${a}, ${b}`, '');
+		if (this.rule.weekdays.length === 0)
+		{
+			return '';
+		}
+
+		return this.rule.weekdays.map((w) => weekdaysLoc[w]).reduce((a, b) => `${a}, ${b}`);
 	}
 
 	getSortedWeekdays(weekdays): []

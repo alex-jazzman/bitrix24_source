@@ -1,8 +1,9 @@
 import { Loc, Tag, Text, Dom, Type } from 'main.core';
-import "./style.css";
+import './style.css';
 import { Api } from 'sign.v2.api';
 
-export const SchemeType = Object.freeze({
+export type Scheme = 'order' | 'default';
+export const SchemeType: Readonly<Record<string, Scheme | 'unset'>> = Object.freeze({
 	Order: 'order',
 	Default: 'default',
 	Unset: 'unset',

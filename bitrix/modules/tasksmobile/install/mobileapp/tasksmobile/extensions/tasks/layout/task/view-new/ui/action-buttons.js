@@ -252,8 +252,8 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 
 		renderActionChipButton(actionId, isFirst)
 		{
-			const { taskId, testId, layout } = this.props;
-			const { handleAction, title, data } = ActionMeta[actionId];
+			const { taskId, testId, layout, analyticsLabel: analyticsLabelParams = {} } = this.props;
+			const { handleAction, title, getData } = ActionMeta[actionId];
 
 			return ChipButton({
 				testId: `${testId}_Action_${actionId}`,
@@ -264,9 +264,15 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 				mode: ChipButtonMode.OUTLINE,
 				design: this.getChipDesign(actionId, isFirst),
 				text: this.getTitle(actionId, isFirst, title({ id: taskId })),
-				icon: data?.outlineIconContent ?? '',
+				icon: getData().outlineIconContent ?? '',
 				onClick: () => {
-					handleAction({ taskId, layout });
+					const analyticsLabel = {
+						...analyticsLabelParams,
+						c_element: `${actionId}_button`,
+						c_sub_section: 'task_card',
+					};
+
+					handleAction({ taskId, layout, analyticsLabel });
 				},
 			});
 		}
@@ -341,7 +347,7 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 
 		showMenuActions(actions)
 		{
-			const { taskId, layout } = this.props;
+			const { taskId, layout, analyticsLabel = {} } = this.props;
 
 			(new ActionMenu({
 				actions,
@@ -349,6 +355,7 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 				layoutWidget: layout,
 				engine: new TopMenuEngine(),
 				allowSuccessToasts: true,
+				analyticsLabel,
 			}))
 				.show({ target: this.chipRootViewRef });
 		}

@@ -37,19 +37,31 @@ export default class ReservationMode extends BaseField
 					</div>
 					<div class="ui-section__field-inline-box">
 						<div class="ui-section__field">
-							<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
+							<div class="${this.#getModeSelectorClasses()}">
 								<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 								${this.#buildModeSelector()}
 							</div>
 						</div>
 						<div class="ui-section__field-inline-separator"></div>
-						<div class="ui-section__hint">
+						<div class="${this.#getPeriodClasses()}">
 							${this.#buildPeriodInput()}
 						</div>
 					</div>
 				</div>
 			</div>
 		`;
+	}
+
+	#getModeSelectorClasses(): string
+	{
+		let result = 'ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown';
+
+		if (this.#mode.setting.disabled)
+		{
+			result += ' ui-ctl-disabled';
+		}
+
+		return result;
 	}
 
 	#buildModeSelector(): HTMLElement
@@ -68,6 +80,7 @@ export default class ReservationMode extends BaseField
 		const selector = Dom.create('select', {
 			attrs: {
 				class: 'ui-ctl-element',
+				disabled: this.#mode.setting.disabled,
 			},
 			children: options,
 		});
@@ -77,9 +90,21 @@ export default class ReservationMode extends BaseField
 		return selector;
 	}
 
+	#getPeriodClasses(): string
+	{
+		let result = 'ui-section__hint';
+
+		if (this.#period.setting.disabled)
+		{
+			result += ' ui-ctl-disabled';
+		}
+
+		return result;
+	}
+
 	#buildPeriodInput(): HTMLElement
 	{
-		return Tag.render`
+		const periodInput = Tag.render`
 			<input
 				value="${Text.encode(this.#period.value)}"
 				name="${this.#period.fieldName}"
@@ -87,5 +112,12 @@ export default class ReservationMode extends BaseField
 				class="ui-ctl-element"
 			>
 		`;
+
+		if (this.#period.setting.disabled)
+		{
+			periodInput.disabled = true;
+		}
+
+		return periodInput;
 	}
 }

@@ -145,7 +145,7 @@ export class BBCodeTextNode extends BBCodeNode
 
 	toString(): string
 	{
-		return this.getEncoder().encodeText(this.getContent());
+		return this.getContent();
 	}
 
 	toPlainText(): string

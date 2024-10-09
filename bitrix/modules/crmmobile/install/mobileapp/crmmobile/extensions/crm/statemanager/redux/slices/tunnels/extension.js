@@ -7,6 +7,7 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 	const {
 		createEntityAdapter,
 		createSlice,
+		createDraftSafeSelector,
 	} = require('statemanager/redux/toolkit');
 
 	const reducerName = 'crm:tunnels';
@@ -44,9 +45,6 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 				srcStage: tunnel.srcStageStatusId,
 				dstCategory: tunnel.dstCategoryId,
 				dstStage: tunnel.dstStageStatusId,
-				robot: {
-					Name: tunnel.robot.name,
-				},
 			};
 		});
 	};
@@ -111,7 +109,7 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 				.addCase('crm:kanban/fetchCrmKanbanList/fulfilled', (state, action) => {
 					const {
 						data: {
-							categories: kanbanSettingsList,
+							categories: kanbanSettingsList = [],
 						},
 					} = action.payload;
 
@@ -167,14 +165,20 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 
 	const {
 		selectById,
-		selectEntities,
 	} = adapter.getSelectors((state) => state[reducerName]);
+
+	const selectItemsByIds = createDraftSafeSelector(
+		(state, ids) => ({ state, ids }),
+		({ state, ids }) => ids
+			.map((id) => selectById(state, id))
+			.filter(Boolean),
+	);
 
 	ReducerRegistry.register(reducerName, reducer);
 
 	module.exports = {
 		selectById,
-		selectEntities,
+		selectItemsByIds,
 		getTunnelUniqueId,
 		prepareTunnelsBeforeSave,
 	};

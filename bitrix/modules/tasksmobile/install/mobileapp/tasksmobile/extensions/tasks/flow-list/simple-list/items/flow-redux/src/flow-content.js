@@ -3,7 +3,6 @@
  */
 jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const store = require('statemanager/redux/store');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
@@ -20,8 +19,8 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');
 	const { Entry } = require('tasks/entry');
-	const { selectIsFlowTaskCreationProhibited } = require('tasks/statemanager/redux/slices/tariff-restrictions');
-	const { openPlanRestriction } = require('tasks/layout/flow/tariff-plan-restrictions-opener');
+	const { FeatureId } = require('tasks/enum');
+	const { getFeatureRestriction } = require('tariff-plan-restriction');
 
 	class FlowContent extends PureComponent
 	{
@@ -651,9 +650,10 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 		};
 
 		createTaskButtonClickHandler = () => {
-			if (selectIsFlowTaskCreationProhibited(store.getState()))
+			const { isRestricted, showRestriction } = getFeatureRestriction(FeatureId.FLOW);
+			if (isRestricted())
 			{
-				void openPlanRestriction(this.props.layout);
+				showRestriction({ parentWidget: this.props.layout });
 
 				return;
 			}
@@ -663,6 +663,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 					flowId: this.id,
 				},
 				layoutWidget: this.props.layout,
+				analyticsLabel: {
+					c_section: 'flows',
+					c_sub_section: 'flows_grid',
+					c_element: 'flows_grid_button',
+				},
 			});
 		};
 
@@ -675,6 +680,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				flowName: this.flowName,
 				flowEfficiency: this.efficiency,
 				canCreateTask: this.active,
+				analyticsLabel: this.props.analyticsLabel,
 			});
 		}
 	}

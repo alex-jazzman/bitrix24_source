@@ -299,7 +299,11 @@ jn.define('text-editor', (require, exports, module) => {
 					}
 				}
 
-				const tableNodes = AstProcessor.findElements(ast, 'BBCodeElementNode[name="table"]');
+				const tableNodes = [
+					...AstProcessor.findElements(ast, 'BBCodeRootNode > BBCodeElementNode[name="table"]'),
+					...AstProcessor.findElements(ast, 'BBCodeElementNode[name="quote"] > BBCodeElementNode[name="table"]'),
+					...AstProcessor.findElements(ast, 'BBCodeElementNode[name="spoiler"] > BBCodeElementNode[name="table"]'),
+				];
 				if (Type.isArrayFilled(tableNodes))
 				{
 					for (const sourceNode of tableNodes)
@@ -386,6 +390,7 @@ jn.define('text-editor', (require, exports, module) => {
 		 *     parentWidget?: PageManager,
 		 *     view?: { style?: {} },
 		 *     textInput?: { style?: {} },
+		 *     autoFocus?: boolean,
 		 * }}
 		 * @return {
 		 * 		Promise<{
@@ -400,7 +405,7 @@ jn.define('text-editor', (require, exports, module) => {
 			return new Promise((resolve) => {
 				const editor = new TextEditor({
 					...options,
-					autoFocus: true,
+					autoFocus: options?.autoFocus !== false,
 					view: {
 						style: {
 							flex: 1,

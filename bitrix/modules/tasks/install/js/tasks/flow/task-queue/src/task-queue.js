@@ -1,4 +1,4 @@
-import { ajax, AjaxError, AjaxResponse, Dom, Event, Loc, Tag } from 'main.core';
+import { ajax, AjaxError, AjaxResponse, Dom, Event, Loc, Tag, Type } from 'main.core';
 import { Loader } from 'main.loader';
 import { Popup, PopupManager } from 'main.popup';
 
@@ -16,8 +16,6 @@ import './css/base.css';
 
 export class TaskQueue
 {
-	static instances = {};
-
 	static TYPES = {
 		PENDING: 'PENDING',
 		AT_WORK: 'AT_WORK',
@@ -32,6 +30,7 @@ export class TaskQueue
 	#pageNum: number = 1;
 	#pending: boolean = false;
 	#pages: { [key: number]: Line[] };
+	#totalTaskCount: number;
 
 	#popup: Popup;
 	#loader: Loader;
@@ -40,6 +39,8 @@ export class TaskQueue
 		popupContainer: HTMLElement,
 		popupContent: HTMLElement,
 		popupInner: HTMLElement,
+		counterContainer: HTMLElement,
+		totalTaskCounter: HTMLElement,
 	};
 
 	constructor(params: Params)
@@ -60,16 +61,7 @@ export class TaskQueue
 
 	static showInstance(params: Params): void
 	{
-		this.getInstance(params).show(params.bindElement);
-	}
-
-	static getInstance(params: Params): this
-	{
-		const queueId = params.flowId + params.type;
-
-		this.instances[queueId] ??= new this(params);
-
-		return this.instances[queueId];
+		(new this(params)).show(params.bindElement);
 	}
 
 	show(bindElement: HTMLElement): void
@@ -103,6 +95,9 @@ export class TaskQueue
 			events: {
 				onFirstShow: () => {
 					this.#showLines();
+				},
+				onClose: () => {
+					popup.destroy();
 				},
 			},
 		});
@@ -139,7 +134,10 @@ export class TaskQueue
 					{
 						this.#pageNum++;
 					}
-					resolve(response.data.tasks);
+					resolve({
+						lines: response.data.tasks,
+						totalTaskCount: response.data.totalCount,
+					});
 				})
 				.catch((error: AjaxError) => {
 					this.#consoleError('getList', error);
@@ -155,9 +153,10 @@ export class TaskQueue
 				<div ref="listContainer" class="tasks-flow__task-queue-popup_content">
 					<div class="tasks-flow__task-queue-popup_content-box">
 						<span class="tasks-flow__task-queue-popup_label">
-							<span class="tasks-flow__task-queue-popup_label-text">
+							<span class="tasks-flow__task-queue-popup_label-text" title="${Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${this.#type}`)}">
 								${Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${this.#type}`)}
 							</span>
+							${this.#renderCounterContainer()}
 						</span>
 						${this.#renderLines()}
 					</div>
@@ -169,6 +168,27 @@ export class TaskQueue
 		this.#layout.popupContent = popupContent;
 
 		return this.#layout.popupContainer;
+	}
+
+	#renderCounterContainer(): HTMLElement
+	{
+		this.#layout.counterContainer = Tag.render`
+			<div class="tasks-flow__total-task-counter-container ui-counter">
+					${this.#renderTotalTaskCounter()}
+			</div>
+		`;
+		Dom.style(this.#layout.counterContainer, 'display', 'none');
+
+		return this.#layout.counterContainer;
+	}
+
+	#renderTotalTaskCounter(): HTMLElement
+	{
+		this.#layout.totalTaskCounter = Tag.render`
+			<div class="tasks-flow__total-task-counter ui-counter-inner"></div>
+		`;
+
+		return this.#layout.totalTaskCounter;
 	}
 
 	#renderLines(): HTMLElement
@@ -199,6 +219,7 @@ export class TaskQueue
 		// eslint-disable-next-line promise/catch-or-return
 		this.#appendLines(this.#pageNum).then(() => {
 			this.#destroyLoader();
+			this.#setTotalTaskCount();
 		});
 	}
 
@@ -213,12 +234,22 @@ export class TaskQueue
 
 		// eslint-disable-next-line promise/catch-or-return
 		return this.#getList(pageNum)
-			.then((lines: Array<LineData>) => {
+			.then(({ lines, totalTaskCount }) => {
+				this.#totalTaskCount = totalTaskCount;
+				Dom.style(this.#layout.counterContainer, 'display', 'inline-flex');
 				this.#pages[pageNum] = lines.map((data: LineData) => new Line(data));
 
 				this.#pages[pageNum].forEach((line: Line) => Dom.append(line.render(), list));
 			})
 		;
+	}
+
+	#setTotalTaskCount(): void
+	{
+		if (!Type.isNil(this.#totalTaskCount))
+		{
+			this.#layout.totalTaskCounter.innerText = this.#totalTaskCount > 99 ? '99+' : this.#totalTaskCount;
+		}
 	}
 
 	#showLoader()
@@ -228,7 +259,7 @@ export class TaskQueue
 
 		this.#loader = new Loader({
 			target: this.#layout.popupInner,
-			size: size,
+			size,
 			mode: 'inline',
 			offset: {
 				left: `${((targetPosition.width / 2) - (size / 2))}px`,

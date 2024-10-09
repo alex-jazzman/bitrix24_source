@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
@@ -79,6 +80,10 @@ IncludeModuleLangFile('/modules/tasks/lib/task.php');
 	$component,
 	['HIDE_ICONS' => true]
 );
+
+?>
+<div class="<?= !$arResult['tasksReportEnabled'] ? 'task-report-locked' : '' ?>">
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:report.construct',
 	'',
@@ -96,6 +101,9 @@ $APPLICATION->IncludeComponent(
 	],
 	false
 );
+?>
+</div>
+<?php
 
 $entity = Bitrix\Main\Entity\Base::getInstance('Bitrix\Tasks\TaskTable');
 $status_lang = $entity->getField('STATUS')->getLangCode();
@@ -103,6 +111,7 @@ $status_lang_pseudo = $entity->getField('STATUS_PSEUDO')->getLangCode();
 $priority_lang = $entity->getField('PRIORITY')->getLangCode();
 $mark_lang = $entity->getField('MARK')->getLangCode();
 
+$pathToTasks = (preg_match('#^/\w#', $arResult['pathToTasks']) ? $arResult['pathToTasks']: '/');
 ?>
 
 <!-- filter value control examples -->
@@ -211,3 +220,30 @@ $mark_lang = $entity->getField('MARK')->getLangCode();
 		});
 	</script>
 </div>
+
+<script>
+	BX.ready(function() {
+		const tasksReportEnabled = <?= Json::encode($arResult['tasksReportEnabled']) ?>;
+
+		if (!tasksReportEnabled)
+		{
+			BX.addCustomEvent('SidePanel.Slider:onClose', (event) => {
+				if (event.getSlider().getUrl() === 'ui:info_helper')
+				{
+					window.location.href = '<?= CUtil::JSEscape($pathToTasks) ?>';
+				}
+			});
+
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId: '<?= $arResult['tasksReportFeatureId'] ?>',
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'view',
+					},
+				});
+			});
+		}
+	});
+</script>

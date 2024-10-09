@@ -14,6 +14,8 @@ use Bitrix\Tasks\Flow\Grid\Columns;
 
 $converter = new Converter(Converter::UC_FIRST | Converter::TO_CAMEL);
 
+$canDoAction = ($arResult['isFeatureEnabled'] || $arResult['canTurnOnTrial']);
+
 foreach ($arResult['rows'] as $key => $row)
 {
 	$data = $row['data'];
@@ -81,6 +83,7 @@ foreach ($arResult['rows'] as $key => $row)
 		$id = $action['id'];
 		$data = $action['data'];
 		$isDemoFlow = (($data['demo'] ?? null) === true);
+		$isActive = (($data['isActive'] ?? null) === true);
 		$demoFlow = $isDemoFlow ? 'Y' : 'N';
 
 		$editHandler = "BX.Tasks.Flow.EditForm.createInstance({ flowId: {$data['flowId']}, demoFlow: '{$demoFlow}' })";
@@ -88,7 +91,7 @@ foreach ($arResult['rows'] as $key => $row)
 		switch ($id)
 		{
 			case \Bitrix\Tasks\Flow\Grid\Action\Edit::ID:
-				if ($arResult['isFeatureEnabled'] || $isDemoFlow)
+				if ($canDoAction)
 				{
 					$actions[$actionKey]['onclick'] = $editHandler;
 				}
@@ -99,25 +102,22 @@ foreach ($arResult['rows'] as $key => $row)
 				$actions[$actionKey]['className'] = "menu-popup-no-icon tasks-flow-action-edit";
 				break;
 			case \Bitrix\Tasks\Flow\Grid\Action\Activate::ID:
-				if ($isDemoFlow)
+				if ($canDoAction || $isActive)
 				{
-					$actions[$actionKey]['onclick'] = $editHandler;
-				}
-				else
-				{
-					$actions[$actionKey]['onclick'] = "BX.Tasks.Flow.Grid.activateFlow({$data['flowId']})";
-				}
-				$actions[$actionKey]['className'] = "menu-popup-no-icon tasks-flow-action-activate";
-				break;
-			case \Bitrix\Tasks\Flow\Grid\Action\Remove::ID:
-				if ($arResult['isFeatureEnabled'])
-				{
-					$actions[$actionKey]['onclick'] = "BX.Tasks.Flow.Grid.removeFlow({$data['flowId']})";
+					$actions[$actionKey]['onclick'] = (
+						$isDemoFlow
+							? $editHandler
+							: "BX.Tasks.Flow.Grid.activateFlow({$data['flowId']})"
+					);
 				}
 				else
 				{
 					$actions[$actionKey]['onclick'] = "BX.Tasks.Flow.Grid.showFlowLimit()";
 				}
+				$actions[$actionKey]['className'] = "menu-popup-no-icon tasks-flow-action-activate";
+				break;
+			case \Bitrix\Tasks\Flow\Grid\Action\Remove::ID:
+				$actions[$actionKey]['onclick'] = "BX.Tasks.Flow.Grid.removeFlow({$data['flowId']})";
 				$actions[$actionKey]['className'] = "menu-popup-no-icon tasks-flow-action-remove";
 				break;
 		}

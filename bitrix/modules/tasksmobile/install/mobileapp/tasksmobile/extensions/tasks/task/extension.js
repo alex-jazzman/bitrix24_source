@@ -1146,7 +1146,7 @@
 			});
 		}
 
-		open(parentWidget, context)
+		open(parentWidget, context, params = {})
 		{
 			const taskId = this.task.id;
 			const taskData = {
@@ -1154,14 +1154,17 @@
 				id: taskId,
 				title: (this.task.title || 'TASK'),
 			};
-			const params = {
+			const { analyticsLabel = {} } = params;
+
+			const newParams = {
 				parentWidget,
 				context,
 				userId: this.task.currentUser.id,
 				taskObject: (this.task.canSendMyselfOnOpen ? this.task.exportProperties() : null),
+				analyticsLabel,
 			};
 
-			Entry.openTask(taskData, params);
+			Entry.openTask(taskData, newParams);
 		}
 	}
 
@@ -2561,9 +2564,9 @@
 			return this._actions.exportProperties();
 		}
 
-		open(parentWidget = null, context = null)
+		open(parentWidget = null, context = null, params = {})
 		{
-			this._actions.open(parentWidget, context);
+			this._actions.open(parentWidget, context, params);
 		}
 
 		save()

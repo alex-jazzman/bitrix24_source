@@ -40,6 +40,7 @@ $MESS["TASKS_FLOW_EDIT_FORM_HEADER_TITLE"] = "Create flow";
 $MESS["TASKS_FLOW_EDIT_FORM_HEADER_TITLE_EDIT"] = "Edit flow";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME"] = "Enable halfway point alert";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME_HINT"] = "For example, the alert will trigger on the fourth day of an eight day deadline.";
+$MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_EMPTY_PROJECT_HINT"] = "New project will be created if you don't select an existing project.";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_ON_QUEUE_OVERFLOW"] = "Notify if number of pending tasks exceeds";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_ON_TASKS_IN_PROGRESS_OVERFLOW"] = "Notify if number of tasks in progress exceeds";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_WHEN_EFFICIENCY_DECREASES"] = "Notify if efficiency drops below";

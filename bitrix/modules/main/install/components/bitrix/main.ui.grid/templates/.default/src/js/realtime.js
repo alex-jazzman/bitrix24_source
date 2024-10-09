@@ -19,7 +19,9 @@ type AddRowOptions = {
 		[colId: string]: {
 			type: $Values<BX.Grid.Counters.Type>,
 			color?: $Values<BX.Grid.Counters.Color>,
+			secondaryColor?: $Values<BX.Grid.Counters.Color>,
 			value: string | number,
+			isDouble?: boolean,
 		},
 	},
 };
@@ -78,6 +80,8 @@ export class Realtime extends EventEmitter
 				{
 					acc[columnId] = {
 						...counter,
+						isDouble: counter.isDouble ?? false,
+						secondaryColor: counter.secondaryColor,
 						animation: Text.toBoolean(counter.animation),
 					};
 				}

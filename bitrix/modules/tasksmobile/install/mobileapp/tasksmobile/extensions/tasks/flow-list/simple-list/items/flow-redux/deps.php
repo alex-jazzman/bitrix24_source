@@ -30,13 +30,12 @@ return [
 
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
-		'statemanager/redux/store',
 
+		'tariff-plan-restriction',
 		'tasks:entry',
+		'tasks:enum',
 		'tasks:layout/deadline-pill',
-		'tasks:layout/flow/tariff-plan-restrictions-opener',
-		'tasks:statemanager/redux/slices/flows/selector',
-		'tasks:statemanager/redux/slices/tariff-restrictions',
+		'tasks:statemanager/redux/slices/flows',
 		'tasks:flow-list/simple-list/items/type',
 
 		'require-lazy',

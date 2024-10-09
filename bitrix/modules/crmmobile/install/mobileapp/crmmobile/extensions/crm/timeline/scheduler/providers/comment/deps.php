@@ -6,6 +6,7 @@ return [
 		'feature',
 		'haptics',
 		'apptheme',
+		'assets/icons',
 		'layout/ui/fields/file',
 		'layout/ui/textarea',
 		'selector/widget/factory',

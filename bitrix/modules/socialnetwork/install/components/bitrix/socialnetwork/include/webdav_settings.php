@@ -28,7 +28,6 @@ if (!function_exists("__wd_check_uf_use_bp_property"))
 			$arFields["EDIT_FORM_LABEL"] = $arFieldName;
 			$obUserField  = new CUserTypeEntity;
 			$obUserField->Add($arFields);
-			$GLOBALS["USER_FIELD_MANAGER"]->arFieldsCache = array();
 		}
 	}
 }

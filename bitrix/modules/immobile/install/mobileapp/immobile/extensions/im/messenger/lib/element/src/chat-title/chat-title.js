@@ -243,7 +243,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (user.bot === true)
 			{
-				this.nameColor = AppTheme.colors.accentExtraPurple;
+				this.nameColor = Theme.colors.accentSoftElementViolet;
 			}
 		}
 
@@ -406,7 +406,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 
 			const currentUserId = serviceLocator.get('core').getUserId();
-			this.writingList = dialogModel.writingList.filter((user) => user.userId !== currentUserId);
+			this.writingList = dialogModel?.writingList.filter((user) => user.userId !== currentUserId);
 		}
 
 		/**

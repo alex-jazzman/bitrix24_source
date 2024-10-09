@@ -6962,6 +6962,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	    }
 	  }, {
+	    key: "clearLoadItemsRepeatCounter",
+	    value: function clearLoadItemsRepeatCounter() {
+	      this.loadItemsRepeatCounter.clear();
+	    }
+	  }, {
 	    key: "loadAllItems",
 	    value: function loadAllItems(entity) {
 	      var _this6 = this;
@@ -9475,6 +9480,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            item.setShortView(entity.getShortView());
 	            entity.appendItemToList(item);
 	            entity.setItem(item);
+	            _this.planBuilder.clearLoadItemsRepeatCounter();
 	            entity.setActiveLoadItems(false);
 	            entity.bindItemsLoader();
 	          }
@@ -11201,24 +11207,37 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(RobotButton, [{
 	    key: "render",
 	    value: function render() {
-	      var className = 'tasks-scrum-robot-btn ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
+	      var className = 'ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
 	      if (this.isShowLimitSidePanel()) {
-	        className += ' ui-btn-icon-lock';
+	        className += ' ui-btn-icon-lock ui-btn-xs';
+	      } else {
+	        className += ' tasks-scrum-robot-btn';
 	      }
-	      var node = main_core.Tag.render(_templateObject$E || (_templateObject$E = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"", "\">\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"])), className, main_core.Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON'));
-	      main_core.Event.bind(node, 'click', this.onClick.bind(this));
-	      return node;
+	      this.node = main_core.Tag.render(_templateObject$E || (_templateObject$E = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"", "\">\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"])), className, main_core.Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON'));
+	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
+	      return this.node;
 	    }
 	  }, {
 	    key: "onClick",
 	    value: function onClick() {
+	      var _this2 = this;
 	      if (this.isShowLimitSidePanel()) {
 	        var sliderCode = this.isAutomationEnabled ? 'limit_tasks_robots' : 'limit_crm_rules_off';
-	        BX.UI.InfoHelper.show(sliderCode, {
-	          isLimit: true,
-	          limitAnalyticsLabels: {
-	            module: 'tasks',
-	            source: 'scrumActiveSprint'
+	        BX.Runtime.loadExtension('ui.info-helper').then(function (_ref) {
+	          var FeaturePromotersRegistry = _ref.FeaturePromotersRegistry;
+	          if (FeaturePromotersRegistry) {
+	            FeaturePromotersRegistry.getPromoter({
+	              code: sliderCode,
+	              bindElement: _this2.node
+	            }).show();
+	          } else {
+	            BX.UI.InfoHelper.show(sliderCode, {
+	              isLimit: true,
+	              limitAnalyticsLabels: {
+	                module: 'tasks',
+	                source: 'scrumActiveSprint'
+	              }
+	            });
 	          }
 	        });
 	      } else {
@@ -11233,7 +11252,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "isShowLimitSidePanel",
 	    value: function isShowLimitSidePanel() {
-	      return !this.isAutomationEnabled || this.isTaskLimitsExceeded && !this.canUseAutomation;
+	      return !this.isAutomationEnabled || this.isTaskLimitsExceeded || !this.canUseAutomation;
 	    }
 	  }]);
 	  return RobotButton;

@@ -9,11 +9,11 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 	const { InputDomainIconPlace } = require('ui-system/form/inputs/email/src/domain-icon-place-enum');
 
 	/**
-	 * @class EmailInputTheme
-	 * @param {...InputProps} props
-	 * @param {boolean} [props.validation]
-	 * @param {InputDomainIconPlace} [props.domainIconPlace]
-	 * @param {function} [props.onChange]
+	 * @typedef {InputProps} EmailInputProps
+	 * @property {boolean} [validation]
+	 * @property {InputDomainIconPlace} [domainIconPlace]
+	 *
+	 * @class EmailInputClass
 	 */
 	class EmailInputClass extends InputClass
 	{
@@ -113,6 +113,10 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 	};
 
 	module.exports = {
+		/**
+		 * @param {EmailInputProps} props
+		 * @returns {EmailInputClass}
+		 */
 		EmailInput: (props) => new EmailInputClass(props),
 		InputSize,
 		InputMode,

@@ -36,7 +36,7 @@ if (!function_exists('renderMyTasksColumn'))
 			$data = Loc::getMessage('TASKS_FLOW_LIST_NO_TASKS');
 
 			return <<<HTML
-				<div class="tasks-flow__list-cell $disableClass">$data</div>
+				<div class="tasks-flow__list-cell $disableClass --right">$data</div>
 			HTML;
 		}
 
@@ -59,6 +59,8 @@ if (!function_exists('prepareMyTasksColumnData'))
 		$myTasksUri->addParams(['apply_filter' => 'Y']);
 		$myTasksUri->addParams(['FLOW' => $flowId]);
 		$myTasksUri->addParams(['FLOW_label' => $flowName]);
+		$myTasksUri->addParams(['ROLEID' => \Bitrix\Tasks\Internals\Counter\Role::ORIGINATOR]);
+		$myTasksUri->addParams(['show_counters_toolbar' => 'N']);
 		$myTasksUri->addParams(['my_tasks_column' => 'Y']);
 		$myTasksUri->addParams(
 			[

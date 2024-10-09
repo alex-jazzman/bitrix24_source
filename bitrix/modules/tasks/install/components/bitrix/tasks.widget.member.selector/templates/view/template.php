@@ -3,8 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
-use Bitrix\Tasks\Helper\RestrictionUrl;
 
 Loc::loadMessages(__FILE__);
 /** @var array $arResult */
@@ -46,8 +46,8 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 		<div class="task-detail-sidebar-info-title <?if($multiple):?>task-detail-sidebar-info-title-line<?endif?>">
 			<?=($arParams['TITLE'] !== '' ? htmlspecialcharsbx($arParams['TITLE']) : '&nbsp;')?>
-			<?php if ($arResult['TASK_LIMIT_EXCEEDED']):?>
-				<?= Limit::getLimitLock(RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL)?>
+			<?php if (!$arResult['viewSelectorEnabled']):?>
+				<?= Limit::getLimitLock(FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS, 'this')?>
 			<?php endif;?>
 		</div>
 

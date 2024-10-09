@@ -1,6 +1,5 @@
-import SmileyParser from '../src/plugins/smiley/smiley-parser';
+import { SmileyParser } from '../src/plugins/smiley/smiley-parser';
 import Smiley from '../src/plugins/smiley/smiley';
-import TokenTree from '../src/text-parser/token-tree';
 
 const smileys = [
 	{

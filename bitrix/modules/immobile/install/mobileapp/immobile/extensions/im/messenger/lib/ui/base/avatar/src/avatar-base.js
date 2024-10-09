@@ -15,7 +15,7 @@ jn.define('im/messenger/lib/ui/base/avatar/avatar-base', (require, exports, modu
 		 * @param { object } props.svg
 		 * @param { string } props.color
 		 * @param { string } props.text
-		 * @param { string } props.size 'L','M','XL'. Default 'M'
+		 * @param { string } props.size 'S', 'L','M','XL'. Default 'M'
 		 * @param { boolean | undefined } props.isSuperEllipse
 		 */
 		constructor(props)

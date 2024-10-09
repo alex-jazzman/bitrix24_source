@@ -49,7 +49,7 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 			this.actions = options.actions.filter((action) => Object.values(ActionMenu.action).includes(action));
 			this.task = options.task ?? selectByTaskIdOrGuid(store.getState(), options.taskId);
 			this.analyticsLabel = options.analyticsLabel;
-			this.onRemove = options.onRemove;
+			this.shouldBackOnRemove = options.shouldBackOnRemove;
 			this.allowSuccessToasts = Boolean(options.allowSuccessToasts);
 
 			/** @type {BaseEngine} */
@@ -75,11 +75,12 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 			]);
 
 			Object.keys(ActionMeta).forEach((actionId) => {
-				const { title, handleAction } = ActionMeta[actionId];
+				const { title, getData, handleAction } = ActionMeta[actionId];
 
 				actions[actionId] = {
 					...ActionMeta[actionId],
 					title: title(this.task),
+					data: getData(),
 					onClickCallback: async () => {
 						if (actionsToCloseMenu.has(actionId))
 						{
@@ -90,8 +91,12 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 
 						await handleAction({
 							task: this.task,
+							analyticsLabel: {
+								...this.analyticsLabel,
+								c_element: 'context_menu',
+							},
 							layout: this.layoutWidget,
-							options: { onRemove: this.onRemove },
+							options: { shouldBackOnRemove: this.shouldBackOnRemove },
 						});
 					},
 				};

@@ -17,6 +17,7 @@ return [
 		'im:messenger/lib/date-formatter',
 		'im:messenger/lib/element',
 		'im:messenger/lib/logger',
+		'im:messenger/lib/feature',
 		'im:messenger/lib/smile-manager',
 		'im:messenger/lib/utils',
 	],

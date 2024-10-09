@@ -37,6 +37,9 @@ if ($document === null)
 	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_after.php');
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog.php");
 }
+
+require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_after.php');
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -48,7 +51,9 @@ $APPLICATION->IncludeComponent(
 		],
 		'USE_PADDING' => false,
 		'USE_UI_TOOLBAR' => 'Y',
+		'PAGE_MODE' => false,
+		'PAGE_MODE_OFF_BACK_URL' => '/sign/b2e/',
 	],
 );
 
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_after.php');
+require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');

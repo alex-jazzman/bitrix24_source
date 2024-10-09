@@ -26,5 +26,9 @@ return [
 
 		'files/background-manager', // files background processes (upload, .etc)
 		'ava-menu',
+
+		'intranet:intranet-background',
+
+		'bizproc:background/opener',
 	],
 ];

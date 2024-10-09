@@ -67,6 +67,14 @@ export class DetailInstance
 
 			this.#initFrame(event.data.credentials);
 			this.#initHeaderButtons();
+
+			ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+				c_element: 'selector',
+				status: 'success',
+				type: this.#embeddedParams.type.toLowerCase(),
+				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+				p2: this.#embeddedParams.id,
+			});
 		});
 
 		EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', (event) => {

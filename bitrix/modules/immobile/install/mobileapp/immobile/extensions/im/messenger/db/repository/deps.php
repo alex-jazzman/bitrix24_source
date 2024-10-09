@@ -28,6 +28,8 @@ return [
 		'./src/copilot',
 		'./src/validators/message',
 		'./src/validators/pin',
+		'./src/validators/recent',
 		'./src/internal/dialog',
+		'./src/sidebar/file',
 	],
 ];

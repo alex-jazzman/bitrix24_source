@@ -2,7 +2,6 @@
 if (!defined("B_PROLOG_INCLUDED"))
 	require_once(__DIR__."/ajax.php");
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Error;
 use Bitrix\Main\UI\Uploader\Uploader;

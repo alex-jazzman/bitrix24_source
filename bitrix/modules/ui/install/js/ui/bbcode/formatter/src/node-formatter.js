@@ -28,6 +28,7 @@ export type NodeFormatterOptions = {
 	before?: (BeforeConvertCallbackOptions) => BBCodeNode | null,
 	after?: (AfterCallbackOptions) => FormatterCallbackResult,
 	forChild?: (ForChildCallbackOptions) => FormatterCallbackResult,
+	formatter?: Formatter,
 };
 
 type DefaultNodeConverterOptions = ConvertCallbackOptions | BeforeConvertCallbackOptions;
@@ -40,6 +41,7 @@ const beforeSymbol: Symbol = Symbol('before');
 const convertSymbol: Symbol = Symbol('convert');
 const forChildSymbol: Symbol = Symbol('forChild');
 const afterSymbol: Symbol = Symbol('after');
+const formatterSymbol: Symbol = Symbol('formatter');
 
 const defaultValidator = () => true;
 const defaultNodeConverter = ({ node }: DefaultNodeConverterOptions) => node;
@@ -64,6 +66,11 @@ export class NodeFormatter
 		else
 		{
 			this.setName(options.name);
+		}
+
+		if (!Type.isNil(options.formatter))
+		{
+			this.setFormatter(options.formatter);
 		}
 
 		this.setValidate(options.validate);
@@ -175,5 +182,15 @@ export class NodeFormatter
 	runAfter(options: AfterCallbackOptions): FormatterCallbackResult
 	{
 		return this[afterSymbol](options);
+	}
+
+	setFormatter(formatter: Formatter)
+	{
+		this[formatterSymbol] = formatter;
+	}
+
+	getFormatter(): Formatter
+	{
+		return this[formatterSymbol];
 	}
 }

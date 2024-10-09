@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
-import { PlacementType } from 'im.v2.const';
+import { ChatType, PlacementType } from 'im.v2.const';
+import { ChannelManager } from 'im.v2.lib.channel';
 import { MarketManager } from 'im.v2.lib.market';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
@@ -33,6 +34,11 @@ function filterUnavailableBlocks(dialogId: string, blocks: string[]): string[]
 		blocksSet.delete(MainPanelBlock.market);
 	}
 
+	if (!hasHistoryLimit(dialogId))
+	{
+		blocksSet.delete(MainPanelBlock.tariffLimit);
+	}
+
 	if (isBot(dialogId))
 	{
 		blocksSet.delete(MainPanelBlock.task);
@@ -57,4 +63,18 @@ function isFileMigrationFinished(): boolean
 function hasMarketApps(dialogId: string): boolean
 {
 	return MarketManager.getInstance().getAvailablePlacementsByType(PlacementType.sidebar, dialogId).length > 0;
+}
+
+function hasHistoryLimit(dialogId: string): boolean
+{
+	const chat = Core.getStore().getters['chats/get'](dialogId);
+	const isChannelCommentsChat = ChatType.comment === chat.type;
+	const isChannelChat = ChannelManager.isChannel(dialogId);
+
+	if (isChannelChat || isChannelCommentsChat || FeatureManager.chatHistory.isAvailable())
+	{
+		return false;
+	}
+
+	return Core.getStore().getters['sidebar/hasHistoryLimit'](chat.chatId);
 }

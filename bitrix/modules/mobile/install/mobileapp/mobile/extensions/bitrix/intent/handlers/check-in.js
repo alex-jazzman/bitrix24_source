@@ -4,8 +4,8 @@ BX.addCustomEvent('onIntentHandle', (intent) => {
 
 	/** @var {MobileIntent} intent */
 	intent.addHandler(() => {
-		const value = intent.check(['check-in']);
-		if (value === 'check-in' && Feature.isAirStyleSupported())
+		const value = intent.check(['check-in', 'check-in-settings']);
+		if (Feature.isAirStyleSupported() && (value === 'check-in' || value === 'check-in-settings'))
 		{
 			requireLazy('stafftrack:entry')
 				.then(({ Entry }) => {
@@ -14,6 +14,7 @@ BX.addCustomEvent('onIntentHandle', (intent) => {
 						Entry.openCheckIn({
 							dialogName: null,
 							dialogId: null,
+							openSettings: value === 'check-in-settings',
 						});
 					}
 				})

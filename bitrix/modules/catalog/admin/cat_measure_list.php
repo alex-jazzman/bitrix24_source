@@ -324,6 +324,10 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("CAT_MEASURE_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 
-$lAdmin->DisplayList();
+$listParams = [
+	'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => \Bitrix\Main\ModuleManager::isModuleInstalled('ui'),
+	'ENABLE_FIELDS_SEARCH' => 'Y',
+];
+$lAdmin->DisplayList($listParams);
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

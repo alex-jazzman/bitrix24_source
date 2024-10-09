@@ -42,7 +42,7 @@ class Messenger
 		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
 		if (isRedirectAllowed)
 		{
-			return DesktopManager?.getInstance().redirectToChat(dialogId);
+			return DesktopManager?.getInstance().redirectToChat(dialogId, messageId);
 		}
 
 		return getOpener()?.openChat(dialogId, messageId);

@@ -9350,6 +9350,10 @@ if (typeof BX.UI.EntityEditorBB === 'undefined')
 			}
 		}
 	};
+	BX.UI.EntityEditorBB.prototype.getRelatedDataKeys = function ()
+	{
+		return [this.getDataKey(), `${this.getDataKey()}_HTML`];
+	};
 	BX.UI.EntityEditorBB.create = function(id, settings)
 	{
 		var self = new BX.UI.EntityEditorBB();

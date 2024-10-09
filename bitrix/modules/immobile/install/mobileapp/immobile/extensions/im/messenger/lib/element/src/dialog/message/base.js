@@ -16,6 +16,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { ReactionType } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
+	const { Attach } = require('im/messenger/lib/element/dialog/message/element/attach/attach');
+	const { Keyboard } = require('im/messenger/lib/element/dialog/message/element/keyboard/keyboard');
 
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 
@@ -71,6 +73,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			/** @type {MessageRichLink || null} */
 			this.richLink = null;
 
+			this.attach = [];
+			this.keyboard = [];
+
 			this.showUsername = true;
 			// TODO change user color for message
 			this.userColor = '#428ae8';
@@ -103,6 +108,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
 				.setRichLink(modelMessage)
+				.setAttach(modelMessage)
+				.setKeyboard(modelMessage)
 				.setCommentInfo(modelMessage, Boolean(options.showCommentInfo))
 			;
 		}
@@ -237,7 +244,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				&& attach.BLOCKS[0].RICH_LINK,
 			);
 
-			if (attach && !attachWithOnlyRichLink)
+			if (attach && !attachWithOnlyRichLink && !Feature.isMessageAttachSupported)
 			{
 				if (Type.isStringFilled(text))
 				{
@@ -491,12 +498,17 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		}
 
 		/**
-		 *
+		 * @deprecated
 		 * @param {MessagesModelState} messageModel
 		 * @return {Message}
 		 */
 		setRichLink(messageModel)
 		{
+			if (Feature.isMessageAttachSupported)
+			{
+				return this;
+			}
+
 			const urlId = messageModel.richLinkId;
 
 			if (!urlId)
@@ -504,7 +516,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
-			/** @type {AttachConfig || undefined} */
 			const attach = messageModel.attach.find((attachConfig) => {
 				return Number(attachConfig.id) === urlId;
 			});
@@ -543,6 +554,42 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 						width: richLink?.previewSize?.width ?? 0,
 					},
 				};
+			}
+
+			return this;
+		}
+
+		setAttach(modelMessage)
+		{
+			if (!Feature.isMessageAttachSupported)
+			{
+				return this;
+			}
+
+			if (Type.isArrayFilled(modelMessage.attach))
+			{
+				this.attach = Attach
+					.createByMessagesModelAttach(modelMessage.attach)
+					.toMessageFormat()
+				;
+			}
+
+			return this;
+		}
+
+		setKeyboard(modelMessage)
+		{
+			if (!Feature.isMessageKeyboardSupported)
+			{
+				return this;
+			}
+
+			if (Type.isArrayFilled(modelMessage.keyboard))
+			{
+				this.keyboard = Keyboard
+					.createByMessagesModelKeyboard(modelMessage.keyboard)
+					.toMessageFormat()
+				;
 			}
 
 			return this;

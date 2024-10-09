@@ -50,7 +50,7 @@ jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, mo
 				onClick: () => Entry.openTask({ id }, { parentWidget: field.getParentWidget() }),
 			},
 			IconView({
-				icon: field.getLeftIcon()?.icon,
+				icon: field.getDefaultLeftIcon(),
 				size: 24,
 				color: Color.accentMainPrimaryalt,
 				style: {
@@ -133,12 +133,12 @@ jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, mo
 						}),
 					),
 				),
-				field.isReadOnly() && IconView({
+				(field.isReadOnly() || field.isRestricted()) && IconView({
 					icon: 'chevronRight',
 					size: 20,
 					color: Color.base5,
 				}),
-				(!isLoading && !field.isReadOnly()) && IconView({
+				(!isLoading && !field.isReadOnly() && !field.isRestricted()) && IconView({
 					icon: 'cross',
 					size: 20,
 					color: Color.base5,

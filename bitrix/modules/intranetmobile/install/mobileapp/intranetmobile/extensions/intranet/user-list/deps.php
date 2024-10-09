@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'tokens',
 		'loc',
-		'assets/icons/src/outline',
 
 		'layout/ui/list/base-more-menu',
 		'layout/ui/list/base-sorting',

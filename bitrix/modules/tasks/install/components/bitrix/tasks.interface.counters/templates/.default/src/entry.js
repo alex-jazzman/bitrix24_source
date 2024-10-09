@@ -193,6 +193,7 @@ export class Counters
 		const eventHandlers = {
 			user_counter: this.onUserCounter.bind(this),
 			project_counter: this.onProjectCounter.bind(this),
+			comment_read_all: this.onCommentReadAll.bind(this),
 		};
 		const has = Object.prototype.hasOwnProperty;
 		const {command, params} = data;
@@ -278,6 +279,11 @@ export class Counters
 		this.role = (this.filter.isFilteredByField('ROLEID') ? this.filter.fields.ROLEID : 'view_all');
 	}
 
+	onCommentReadAll(data)
+	{
+		this.updateCountersData();
+	}
+
 	onUserCounter(data)
 	{
 		const has = Object.prototype.hasOwnProperty;
@@ -288,6 +294,9 @@ export class Counters
 			|| this.userId !== Number(data.userId)
 		)
 		{
+			// most likely project counters were updated, but due to 'isSonetEnable' flag only user counters are comming
+			this.updateCountersData();
+
 			return;
 		}
 
@@ -312,6 +321,11 @@ export class Counters
 		if (newCommentsCount > 0)
 		{
 			this.$readAllInner.classList.remove('--fade');
+		}
+
+		if (data.isSonetEnabled !== undefined && data.isSonetEnabled === false)
+		{
+			this.updateCountersData();
 		}
 	}
 

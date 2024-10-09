@@ -231,12 +231,6 @@ $arUrlRewrite = array(
 		"PATH" => "/crm/configs/preset/index.php",
 	),
 	array(
-		"CONDITION" => "#^/marketplace/local/#",
-		"RULE" => "",
-		"ID" => "bitrix:rest.marketplace.localapp",
-		"PATH" => "/marketplace/local/index.php",
-	),
-	array(
 		"CONDITION" => "#^/marketplace/configuration/#",
 		"RULE" => "",
 		"ID" => "bitrix:rest.configuration",
@@ -903,5 +897,29 @@ $arUrlRewrite = array(
 		'RULE' => '',
 		'ID' => 'bitrix:socialnetwork.spaces',
 		'PATH' => '/spaces/index.php',
+	],
+	[
+		'CONDITION' => '#^/humanresources/#',
+		'RULE' => '',
+		'ID' => 'bitrix:humanresources.start',
+		'PATH' => '/humanresources/index.php',
+	],
+	array(
+		"CONDITION" => "#^/vibe/edit/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.start",
+		"PATH" => "/vibe/edit/index.php",
+	),
+	[
+		'CONDITION' => '#^/calendar/open/#',
+		'RULE' => '',
+		'ID' => 'bitrix:calendar.open-events',
+		'PATH' => '/calendar/open_events.php',
+	],
+	[
+		"CONDITION" => "#^/desktop/menu#",
+		"RULE" => "",
+		"ID" => "",
+		"PATH" => "/desktop_menu/index.php",
 	],
 );

@@ -1136,8 +1136,12 @@ this.BX = this.BX || {};
 	        display: 'flex',
 	        'justify-content': 'center'
 	      }
+	    },
+	    tagSelectorOptions: {
+	      textBoxWidth: 565 // same as default dialog width
 	    }
 	  });
+
 	  babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp].subscribe('Item:onSelect', babelHelpers.classPrivateFieldLooseBase(this, _handleItemSelect)[_handleItemSelect].bind(this));
 	  return babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp];
 	}

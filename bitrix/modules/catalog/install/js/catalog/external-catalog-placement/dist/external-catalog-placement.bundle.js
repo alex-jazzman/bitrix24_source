@@ -100,9 +100,11 @@ this.BX = this.BX || {};
 	      data: {
 	        placementId: babelHelpers.classPrivateFieldLooseBase(ExternalCatalogPlacement, _CODE)[_CODE]
 	      }
-	    }).then(response => resolve(response)).catch(() => reject(new Error(ExternalCatalogPlacement.LOAD_PLACEMENT_ERROR, {
-	      cause: ExternalCatalogPlacement.LOAD_PLACEMENT_ERROR
-	    })));
+	    }).then(response => resolve(response)).catch(() => {
+	      reject({
+	        reason: ExternalCatalogPlacement.LOAD_PLACEMENT_ERROR
+	      });
+	    });
 	  });
 	}
 	function _registerPlacement2(response) {
@@ -120,9 +122,9 @@ this.BX = this.BX || {};
 	          });
 	          return;
 	        }
-	        reject(new Error(ExternalCatalogPlacement.REGISTER_PLACEMENT_ERROR, {
-	          cause: ExternalCatalogPlacement.REGISTER_PLACEMENT_ERROR
-	        }));
+	        reject({
+	          reason: ExternalCatalogPlacement.REGISTER_PLACEMENT_ERROR
+	        });
 	      }, 10)
 	    });
 	  });
@@ -157,10 +159,9 @@ this.BX = this.BX || {};
 	    }).then(response => {
 	      resolve(response);
 	    }).catch(() => {
-	      console.error('#loadPlacementLayout err');
-	      reject(new Error(ExternalCatalogPlacement.LOAD_PLACEMENT_LAYOUT_ERROR, {
-	        cause: ExternalCatalogPlacement.LOAD_PLACEMENT_LAYOUT_ERROR
-	      }));
+	      reject({
+	        reason: ExternalCatalogPlacement.LOAD_PLACEMENT_LAYOUT_ERROR
+	      });
 	    });
 	  });
 	}
@@ -184,7 +185,9 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe('Catalog:ProductSelectorPlacement:onReady', () => {
 	      resolve();
 	    });
-	    setTimeout(() => reject(), ExternalCatalogPlacement.RESPONSE_TIMEOUT);
+	    setTimeout(() => reject({
+	      reason: 'timeout'
+	    }), ExternalCatalogPlacement.RESPONSE_TIMEOUT);
 	  });
 	}
 	Object.defineProperty(ExternalCatalogPlacement, _instance, {

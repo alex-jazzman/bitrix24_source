@@ -77,6 +77,17 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 		$component
 	);
 }
+
+$isMlAvailable = \Bitrix\Crm\Ml\Scoring::isMlAvailable();
+$isScoringEnabled = \Bitrix\Crm\Ml\Scoring::isEnabled();
+$isScoringAvailable = \Bitrix\Crm\Ml\Scoring::isScoringAvailable();
+$isTrainingUsed = \Bitrix\Crm\Ml\Scoring::isTrainingUsed();
+if ($isMlAvailable && $isScoringEnabled && $isScoringAvailable && $isTrainingUsed)
+{
+	echo \Bitrix\Crm\Tour\Ml\ScoringShutdownWarning::getInstance()->build();
+}
+
+if ($isScoringAvailable):
 ?>
 	<script>
 		BX.message({
@@ -84,8 +95,8 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 		});
 		<? if($arResult['ENTITY_ID'] > 0): ?>
 			new BX.CrmScoringButton({
-				mlInstalled: <?= (\Bitrix\Crm\Ml\Scoring::isMlAvailable() ? 'true' : 'false')?>,
-				scoringEnabled: <?= (\Bitrix\Crm\Ml\Scoring::isEnabled() ? 'true' : 'false')?>,
+				mlInstalled: <?= ($isMlAvailable ? 'true' : 'false')?>,
+				scoringEnabled: <?= ($isScoringEnabled ? 'true' : 'false')?>,
 				scoringParameters: <?= \Bitrix\Main\Web\Json::encode($arResult['SCORING'])?>,
 				entityType: '<?= CCrmOwnerType::LeadName?>',
 				entityId: <?= (int)$arResult['ENTITY_ID']?>,
@@ -93,6 +104,7 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 			});
 		<? endif; ?>
 </script><?
+endif;
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',

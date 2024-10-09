@@ -2946,13 +2946,14 @@ th[class*="main-grid-column-color-"]::before {
 	cursor: default;
 }
 
+.main-grid-labels .ui-label.ui-label-link .ui-label-inner,
 .main-grid-labels .ui-label.ui-label-link:hover .ui-label-inner {
 	border-bottom: 1px dashed transparent;
 }
 
 .main-grid-labels .ui-label.ui-label-link .ui-label-inner:hover {
 	cursor: pointer;
-	border-bottom: 1px dashed var(--ui-label-color);
+	border-color: var(--ui-label-color);
 }
 
 .main-grid-head-title-tooltip {

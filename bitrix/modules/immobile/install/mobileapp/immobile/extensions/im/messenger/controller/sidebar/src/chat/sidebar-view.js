@@ -7,8 +7,15 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-view', (require, exports
 	const { SidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/tab-view');
 	const { SidebarProfileUserCounter } = require('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter');
 	const { SidebarProfileInfo } = require('im/messenger/controller/sidebar/chat/sidebar-profile-info');
+	const { SidebarPlanLimitBanner } = require('im/messenger/controller/sidebar/chat/sidebar-plan-limit-banner');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-view');
+	const { Analytics } = require('im/messenger/const');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class SidebarView
@@ -23,9 +30,26 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-view', (require, exports
 		constructor(props)
 		{
 			super(props);
+			this.store = serviceLocator.get('core').getStore();
+			const isHistoryLimitExceeded = MessengerParams.isFullChatHistoryAvailable() ? false : this.store.getters['sidebarModel/isHistoryLimitExceeded'](this.props.dialogId);
+			this.dialog = this.store.getters['dialoguesModel/getById'](this.props.dialogId);
 			this.state = {
 				userData: props.userData,
+				isHistoryLimitExceeded,
 			};
+		}
+
+		componentDidMount()
+		{
+			logger.log(`${this.constructor.name}.componentDidMount`);
+			this.bindMethods();
+			this.subscribeStoreEvents();
+		}
+
+		componentWillUnmount()
+		{
+			logger.log(`${this.constructor.name}.componentWillUnmount`);
+			this.unsubscribeStoreEvents();
 		}
 
 		render()
@@ -40,6 +64,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-view', (require, exports
 					},
 				},
 				this.renderProfile(),
+				this.renderPlanLimitBanner(),
 				this.renderTabs(),
 			);
 		}
@@ -57,6 +82,33 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-view', (require, exports
 				this.renderInfoBlock(),
 				this.renderButtonsBlock(),
 			);
+		}
+
+		renderPlanLimitBanner()
+		{
+			if (!this.state.isHistoryLimitExceeded)
+			{
+				return null;
+			}
+
+			this.sendAnalyticsShowSidebarPlanLimitBanner();
+
+			return new SidebarPlanLimitBanner();
+		}
+
+		sendAnalyticsShowSidebarPlanLimitBanner()
+		{
+			const dialogType = this.dialog.type;
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.im)
+				.setCategory(Analytics.Category.limitBanner)
+				.setEvent(Analytics.Event.view)
+				.setType(Analytics.Type.limitOfficeChatingHistory)
+				.setSection(Analytics.Section.sidebar)
+				.setElement(Analytics.Element.main)
+				.setP1(Analytics.P1[dialogType]);
+
+			analytics.send();
 		}
 
 		renderInfoBlock()
@@ -123,19 +175,50 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-view', (require, exports
 		{
 			return new SidebarTabView({
 				dialogId: this.props.dialogId,
-				isNotes: this.props.isNotes,
+				hideParticipants: this.props.isNotes,
 				isCopilot: this.props.isCopilot,
 			});
 		}
 
 		/**
-		 * @desc Method update state component
-		 * @param {object} newState
+		 * @param {object} mutation
+		 * @param {MutationPayload<SidebarSetHistoryLimitExceededData, SidebarSetHistoryLimitExceededActions>} mutation.payload
+		 */
+		onSetPlanLimitsStore(mutation)
+		{
+			logger.info(`${this.constructor.name}.onSetPlanLimitsStore---------->`, mutation);
+
+			const { isHistoryLimitExceeded, dialogId } = mutation.payload.data;
+			const isCurrentDialog = this.props.dialogId === dialogId;
+			const needToUpdateBanner = this.state.isHistoryLimitExceeded !== isHistoryLimitExceeded;
+
+			if (isCurrentDialog && needToUpdateBanner)
+			{
+				this.setState({ isHistoryLimitExceeded });
+			}
+		}
+
+		/**
+		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		updateStateView(newState)
+		bindMethods()
 		{
-			this.setState(newState);
+			this.onSetPlanLimitsStore = this.onSetPlanLimitsStore.bind(this);
+		}
+
+		subscribeStoreEvents()
+		{
+			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
+
+			serviceLocator.get('core').getStoreManager().on('sidebarModel/setHistoryLimitExceeded', this.onSetPlanLimitsStore);
+		}
+
+		unsubscribeStoreEvents()
+		{
+			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
+
+			serviceLocator.get('core').getStoreManager().off('sidebarModel/setHistoryLimitExceeded', this.onSetPlanLimitsStore);
 		}
 	}
 

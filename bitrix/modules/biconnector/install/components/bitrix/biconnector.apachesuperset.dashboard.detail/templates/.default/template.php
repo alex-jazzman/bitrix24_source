@@ -149,7 +149,7 @@ if (!$limitManager->checkLimitWarning())
 		});
 
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
-			<?= CUtil::PhpToJSObject([
+			<?= Json::encode([
 				'appNodeId' => 'dashboard',
 				'openLoginPopup' => $arResult['OPEN_LOGIN_POPUP'],
 				'canExport' => $arResult['CAN_EXPORT'],
@@ -167,11 +167,12 @@ if (!$limitManager->checkLimitWarning())
 			]) ?>
 		);
 
-		new BX.BIConnector.SupersetDashboardSelector(<?= CUtil::PhpToJSObject([
+		new BX.BIConnector.SupersetDashboardSelector(<?= Json::encode([
 			'containerId' => 'dashboard-selector',
 			'textNodeId' => 'dashboard-selector-text',
 			'dashboardId' => $arResult['DASHBOARD_ID'],
 			'marketCollectionUrl' => $arResult['MARKET_COLLECTION_URL'],
+			'isMarketInstalled' => Loader::includeModule('market'),
 		]) ?>);
 	});
 </script>

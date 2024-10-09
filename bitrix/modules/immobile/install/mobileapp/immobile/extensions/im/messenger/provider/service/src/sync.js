@@ -16,6 +16,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 	const LAST_SYNC_ID_OPTION = 'SYNC_SERVICE_LAST_ID';
 	const LAST_SYNC_SERVER_DATE_OPTION = 'SYNC_SERVICE_LAST_SERVER_DATE';
 
+	const BACKGROUND_SYNC_INTERVAL = 120_000;
+
 	/**
 	 * @class SyncService
 	 */
@@ -44,6 +46,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			this.syncStartDate = null;
 			this.syncFinishDate = null;
 			this.lastSyncTime = null;
+			this.status = AppStatus.sync;
+			this.backgroundTimerId = null;
 		}
 
 		get isSyncInProgress()
@@ -51,14 +55,30 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			return this.syncInProgress;
 		}
 
+		get isBackgroundSyncInProgress()
+		{
+			return this.syncInProgress && this.isBackground;
+		}
+
+		get isBackground()
+		{
+			return this.status === AppStatus.backgroundSync;
+		}
+
 		/**
+		 * @param {AppStatus['sync'] || AppStatus['backgroundSync']} status
 		 * @return {Promise}
 		 */
-		async sync()
+		async sync(status = AppStatus.sync)
 		{
 			if (!Feature.isLocalStorageEnabled)
 			{
 				return Promise.reject(new Error('SyncService.sync error: local storage is disabled'));
+			}
+
+			if (![AppStatus.sync, AppStatus.backgroundSync].includes(status))
+			{
+				return Promise.reject(new Error(`SyncService.sync error: invalid sync status: ${status}`));
 			}
 
 			if (this.syncInProgress === true)
@@ -74,8 +94,10 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			});
 
 			logger.warn('SyncService: synchronization has started.');
-			this.setAppStatus(true);
+			this.status = status;
+			await this.setAppStatus(status, true);
 			this.postComponentAppStatus(true);
+			this.loadService.setSyncMode(this.status);
 
 			this.syncStartDate = Date.now();
 			this.syncInProgress = true;
@@ -96,12 +118,39 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			return this.syncPromise;
 		}
 
+		startBackgroundSyncInterval()
+		{
+			const backgroundSyncHandler = async () => {
+				logger.info('SyncService.backgroundSync: start background synchronization');
+
+				try
+				{
+					await this.sync(AppStatus.backgroundSync);
+				}
+				catch (error)
+				{
+					logger.error('SyncService.backgroundSync: error', error);
+				}
+
+				this.backgroundTimerId = setTimeout(backgroundSyncHandler, BACKGROUND_SYNC_INTERVAL);
+			};
+
+			this.backgroundTimerId = setTimeout(backgroundSyncHandler, BACKGROUND_SYNC_INTERVAL);
+		}
+
+		clearBackgroundSyncInterval()
+		{
+			clearTimeout(this.backgroundTimerId);
+			this.backgroundTimerId = null;
+		}
+
 		/**
+		 * @param {AppStatus['sync'] || AppStatus['backgroundSync']} syncStatus
 		 * @param {Boolean} value
 		 */
-		setAppStatus(value)
+		async setAppStatus(syncStatus, value)
 		{
-			serviceLocator.get('core').setAppStatus(AppStatus.sync, value);
+			return serviceLocator.get('core').setAppStatus(syncStatus, value);
 		}
 
 		/**
@@ -111,7 +160,7 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 		{
 			BX.postComponentEvent(
 				EventType.app.changeStatus,
-				[{ name: AppStatus.sync, value }],
+				[{ name: this.status, value }],
 				ComponentCode.imCopilotMessenger,
 			);
 		}
@@ -119,6 +168,11 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 		checkPullEventNeedsIntercept(params, extra, command)
 		{
 			if (!Feature.isLocalStorageEnabled)
+			{
+				return false;
+			}
+
+			if (this.isBackgroundSyncInProgress)
 			{
 				return false;
 			}
@@ -172,6 +226,7 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 				fromDate,
 				fromId,
 				fromServerDate,
+				isBackgroundSync: this.isBackground,
 			});
 
 			const lastSyncId = result.lastId;
@@ -216,8 +271,18 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 
 			this.syncFinishDate = Date.now();
 			this.lastSyncTime = this.syncFinishDate - this.syncStartDate;
-			this.setAppStatus(false);
+			this.setAppStatus(this.status, false);
+
+			if (this.status === AppStatus.backgroundSync)
+			{
+				// need to disable sync status enabled in Messenger.afterRefresh method
+				/** @see Messenger.afterRefresh */
+				this.setAppStatus(AppStatus.sync, false);
+			}
+
 			this.postComponentAppStatus(false);
+			this.loadService.resetSyncMode();
+			this.status = null;
 
 			logger.warn(`SyncService: synchronization completed in ${this.lastSyncTime / 1000} seconds.`);
 			this.syncStartDate = null;

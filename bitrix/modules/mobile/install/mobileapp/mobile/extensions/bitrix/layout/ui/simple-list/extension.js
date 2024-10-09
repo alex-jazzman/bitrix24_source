@@ -6,7 +6,6 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const AppTheme = require('apptheme');
-	const { ContextMenu } = require('layout/ui/context-menu');
 	const { clone, merge, get, isEqual } = require('utils/object');
 	const { useCallback } = require('utils/function');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
@@ -20,6 +19,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { isNil } = require('utils/type');
 	const { Feature } = require('feature');
 	const { FloatingButtonComponent } = require('layout/ui/floating-button');
+	const { MenuEngine } = require('layout/ui/simple-list/menu-engine');
 
 	const MIN_ROWS_COUNT_FOR_LOAD_MORE = 10;
 	const ACTION_DELETE = 'delete';
@@ -667,6 +667,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 								this.itemMenuViewRefs[item.id] = ref;
 							}
 						}, [item.id]),
+						analyticsLabel: this.props.analyticsLabel,
 					});
 				},
 				onRefresh: () => {
@@ -979,31 +980,37 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			);
 		}
 
+		getItemMenuEngine(itemId)
+		{
+			const commonProps = {
+				parent: this.getItem(itemId),
+				parentId: itemId,
+				testId: this.testId,
+				updateItemHandler: this.updateItemHandler,
+				params: {
+					showCancelButton: true,
+					mediumPositionPercent: 51,
+				},
+				analyticsLabel: this.getContextMenuAnalyticsLabel(),
+				layoutWidget: layout,
+			};
+			const popupItemMenu = this.props.popupItemMenu;
+
+			return MenuEngine.createMenu(commonProps, popupItemMenu);
+		}
+
 		showItemMenu(itemId)
 		{
 			const actions = clone(this.props.itemActions);
+			const engine = this.getItemMenuEngine(itemId);
 
 			if (this.itemViews[itemId])
 			{
 				this.itemViews[itemId].prepareActions(actions);
 			}
+			const target = this.getItemMenuViewRef(itemId);
 
-			this.menu = new ContextMenu({
-				parent: this.getItem(itemId),
-				parentId: itemId,
-				id: `SimpleList-${itemId}`,
-				testId: this.testId,
-				actions,
-				updateItemHandler: this.updateItemHandler,
-				params: {
-					showCancelButton: true,
-					showPartiallyHidden: actions.length > 7,
-					mediumPositionPercent: 51,
-				},
-				analyticsLabel: this.getContextMenuAnalyticsLabel(),
-			});
-
-			void this.menu.show();
+			void engine.show(actions, { target });
 		}
 
 		getContextMenuAnalyticsLabel()

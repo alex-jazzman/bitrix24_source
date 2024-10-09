@@ -12,8 +12,10 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 	const { chevronRight } = require('assets/common');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-controller');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { isOnline } = require('device/connection');
 	const { Moment } = require('utils/date');
 	const { EventType, DialogType } = require('im/messenger/const');
 	const { Loc } = require('loc');
@@ -22,6 +24,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');
 
 	class ChatSidebarController
@@ -60,15 +63,15 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 			};
 		}
 
-		open()
+		open(parentWidget = PageManager)
 		{
-			Logger.log('Sidebar.Controller.open');
-			this.createWidget();
+			logger.log('Sidebar.Controller.open');
+			this.createWidget(parentWidget);
 		}
 
-		createWidget()
+		createWidget(parentWidget = PageManager)
 		{
-			PageManager.openWidget(
+			parentWidget.openWidget(
 				'layout',
 				{
 					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_WIDGET_TITLE'),
@@ -79,13 +82,15 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 					this.onWidgetReady();
 				},
 			).catch((error) => {
-				Logger.error('error', error);
+				logger.error('error', error);
 			});
 		}
 
 		async onWidgetReady()
 		{
-			Logger.log('Sidebar.onWidgetReady');
+			logger.log('Sidebar.onWidgetReady');
+			this.sidebarService.subscribeInitTabsData();
+			this.sidebarService.initTabsData();
 			this.sidebarService.setStore();
 			this.bindListener();
 			this.setEntitySidebar();
@@ -107,8 +112,10 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		{
 			this.onUpdateStore = this.onUpdateStore.bind(this);
 			this.onCloseWidget = this.onCloseWidget.bind(this);
+			this.onHiddenWidget = this.onHiddenWidget.bind(this);
 			this.onDestroySidebar = this.onDestroySidebar.bind(this);
 			this.onCallActive = this.onCallActive.bind(this);
+			this.onUpdatePlanLimits = this.onUpdatePlanLimits.bind(this);
 			this.onCallInactive = this.onCallInactive.bind(this);
 		}
 
@@ -191,26 +198,27 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 
 		subscribeStoreEvents()
 		{
-			Logger.log('Sidebar.subscribeStoreEvents');
+			logger.log('Sidebar.subscribeStoreEvents');
 			this.storeManager.on('sidebarModel/update', this.onUpdateStore);
 			this.storeManager.on('dialoguesModel/update', this.onUpdateStore);
 		}
 
 		subscribeWidgetEvents()
 		{
-			Logger.log('Sidebar.subscribeWidgetEvents');
+			logger.log('Sidebar.subscribeWidgetEvents');
 			this.widget.on(EventType.view.close, this.onCloseWidget);
-			this.widget.on(EventType.view.hidden, this.onCloseWidget);
+			this.widget.on(EventType.view.hidden, this.onHiddenWidget);
 		}
 
 		subscribeViewEvents()
 		{
-			Logger.log('Sidebar.subscribeViewEvents');
+			logger.log('Sidebar.subscribeViewEvents');
 		}
 
 		subscribeBXCustomEvents()
 		{
-			Logger.log('Sidebar.subscribeBXCustomEvents');
+			logger.log('Sidebar.subscribeBXCustomEvents');
+			BX.addCustomEvent(EventType.messenger.updatePlanLimitsData, this.onUpdatePlanLimits);
 			BX.addCustomEvent(EventType.call.active, this.onCallActive);
 			BX.addCustomEvent(EventType.call.inactive, this.onCallInactive);
 			BX.addCustomEvent('onDestroySidebar', this.onDestroySidebar);
@@ -218,19 +226,19 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 
 		unsubscribeStoreEvents()
 		{
-			Logger.log('Sidebar.unsubscribeStoreEvents');
+			logger.log('Sidebar.unsubscribeStoreEvents');
 			this.storeManager.off('sidebarModel/update', this.onUpdateStore);
 			this.storeManager.off('dialoguesModel/update', this.onUpdateStore);
 		}
 
 		unsubscribeViewEvents()
 		{
-			Logger.log('Sidebar.unsubscribeViewEvents');
+			logger.log('Sidebar.unsubscribeViewEvents');
 		}
 
 		unsubscribeBXCustomEvents()
 		{
-			Logger.log('Sidebar.unsubscribeBXCustomEvents');
+			logger.log('Sidebar.unsubscribeBXCustomEvents');
 			BX.removeCustomEvent(EventType.call.active, this.onCallActive);
 			BX.removeCustomEvent(EventType.call.inactive, this.onCallInactive);
 			BX.removeCustomEvent('onDestroySidebar', this.onDestroySidebar);
@@ -327,7 +335,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 				// 	{
 				// 		icon: buttonIcons.more(),
 				// 		text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_MORE'),
-				// 		callback: () => Logger.log('IMMOBILE_DIALOG_SIDEBAR_BTN_MORE'),
+				// 		callback: () => logger.log('IMMOBILE_DIALOG_SIDEBAR_BTN_MORE'),
 				// 		disable: true,
 				// 		style: this.styleBtn,
 				// 	}
@@ -459,6 +467,13 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		/** Handler block  */
 		onClickVideoBtn()
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			if (this.permission.isCanCall)
 			{
 				Calls.createVideoCall(this.dialogId);
@@ -478,7 +493,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 
 		onClickRoleBtn()
 		{
-			Logger.info(`${this.constructor.name}.onClickRoleBtn`);
+			logger.info(`${this.constructor.name}.onClickRoleBtn`);
 			CopilotRoleSelector.open({
 				showOpenFeedbackItem: true,
 				openWidgetConfig: {
@@ -496,11 +511,18 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 						this.sidebarRestService.changeCopilotRole(result?.role?.code || null);
 					}
 				})
-				.catch((error) => Logger.error(error));
+				.catch((error) => logger.error(error));
 		}
 
 		onClickCallBtn()
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			if (this.permission.isCanCall)
 			{
 				Calls.createAudioCall(this.dialogId);
@@ -531,6 +553,13 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 
 		onClickMuteBtn()
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const oldStateMute = this.sidebarService.isMuteDialog();
 			this.store.dispatch('sidebarModel/changeMute', { dialogId: this.dialogId, isMute: !oldStateMute });
 
@@ -547,7 +576,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		onUpdateStore(event)
 		{
 			const { payload } = event;
-			Logger.info('Sidebar.onUpdateStore---------->', event);
+			logger.info('Sidebar.onUpdateStore---------->', event);
 
 			if (payload.actionName === 'changeMute' && Type.isBoolean(payload.data.fields.isMute))
 			{
@@ -558,6 +587,13 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		onDestroySidebar()
 		{
 			this.widget.back();
+		}
+
+		onUpdatePlanLimits()
+		{
+			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const isHistoryLimitExceeded = !MessengerParams.isFullChatHistoryAvailable();
+			this.store.dispatch('sidebarModel/setHistoryLimitExceeded', { chatId: dialogData?.chatId, isHistoryLimitExceeded });
 		}
 
 		onCallActive()
@@ -579,6 +615,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		}
 
 		onCloseWidget()
+		{
+			this.onHiddenWidget();
+			BX.removeCustomEvent(EventType.messenger.updatePlanLimitsData, this.onUpdatePlanLimits);
+		}
+
+		onHiddenWidget()
 		{
 			this.unsubscribeStoreEvents();
 			this.unsubscribeViewEvents();

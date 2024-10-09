@@ -1,7 +1,7 @@
 /**
- * @module intranet/simple-list/items/user-redux/actions
+ * @module intranet/simple-list/items/user-redux/src/actions
  */
-jn.define('intranet/simple-list/items/user-redux/actions', (require, exports, module) => {
+jn.define('intranet/simple-list/items/user-redux/src/actions', (require, exports, module) => {
 	const { confirmDestructiveAction, confirmDefaultAction } = require('alert');
 	const { Loc } = require('loc');
 	const { Color } = require('tokens');

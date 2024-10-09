@@ -1,6 +1,7 @@
 import { Dom, Tag, Type } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import type { BaseEvent } from 'main.core.events';
+import type { EditorConfig } from 'ui.lexical.core';
 
 import { $getNodeByKey } from 'ui.lexical.core';
 
@@ -24,6 +25,8 @@ export default class ImageComponent extends DecoratorComponent
 		this.#figureResizer = new FigureResizer({
 			target: this.getImage(),
 			editor: this.getEditor(),
+			originalWidth: this.getOption('width'),
+			originalHeight: this.getOption('height'),
 			maxWidth: this.getMaxWidth(),
 			events: {
 				onResizeStart: this.#handleResizeStart.bind(this),
@@ -121,6 +124,12 @@ export default class ImageComponent extends DecoratorComponent
 			img.draggable = false;
 			img.src = this.getOption('src');
 
+			const config: EditorConfig = this.getOption('config', {});
+			if (config?.theme?.image?.img)
+			{
+				img.className = config.theme.image.img;
+			}
+
 			return img;
 		});
 	}
@@ -132,12 +141,11 @@ export default class ImageComponent extends DecoratorComponent
 
 	update(options: JsonObject)
 	{
-		const width = Type.isNumber(options.width) ? `${options.width}px` : 'inherit';
-		const height = Type.isNumber(options.height) ? `${options.height}px` : 'inherit';
-		const maxWidth = Type.isNumber(options.maxWidth) ? `${options.maxWidth}px` : null;
+		const width = options.width > 0 ? `${options.width}px` : 'inherit';
+		const aspectRatio = options.width > 0 && options.height > 0 ? `${options.width} / ${options.height}` : 'auto';
 
 		this.#maxWidth = options.maxWidth;
 
-		Dom.style(this.getImage(), { width, height, maxWidth });
+		Dom.style(this.getImage(), { width, height: 'auto', aspectRatio });
 	}
 }

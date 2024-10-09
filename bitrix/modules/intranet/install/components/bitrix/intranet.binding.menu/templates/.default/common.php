@@ -22,7 +22,7 @@ $isSwitcher = in_array($this->getPageName(), ['crm_switcher', 'tasks_switcher'])
 ?>
 
 <div class="ui-btn-split ui-btn-light-border ui-btn-themes intranet-binding-menu-btn <?= $isSwitcher ? ' intranet-binding-menu-btn-round' : '';?>">
-	<a href="<?= $frequency ? \htmlspecialcharsbx($frequency['href']) : '#';?>" <?
+	<a href="<?= $frequency && isset($frequency['href']) ? \htmlspecialcharsbx($frequency['href']) : '#';?>" <?
 	?><?if (!$frequency){?>data-slider-ignore-autobinding="true"<?}?> <?
 	   ?>id="<?= $id;?>_top" class="ui-btn-main" <?if (isset($frequency['onclick'])){?>onclick="<?= htmlspecialcharsbx($frequency['onclick']);?>; return false;"<?}?>
 		title="<?= $arResult['FREQUENCY_MENU_ITEM']

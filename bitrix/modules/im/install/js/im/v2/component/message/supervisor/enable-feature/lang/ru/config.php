@@ -52,3 +52,9 @@ $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_INVOICES_DESCRIPTION"] = "В сче�
 
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SALESHUB_TITLE"] = "Включите Центр продаж";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SALESHUB_DESCRIPTION"] = "Подключайте платежные системы, онлайн-кассы и службы доставки. Принимайте оплату так, как вам удобно";
+
+$MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_TITLE'] = 'Включите Чекин на работе';
+$MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_DESCRIPTION'] = 'Игра, которая вовлекает, организует и радует! Сотрудники будут чекиниться в начале дня, отмечать место и добавлять фото';
+
+$MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_GEO_TITLE'] = 'Разрешите отправлять геопозицию в Чекине';
+$MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_GEO_DESCRIPTION'] = 'Разрешите сотрудникам отмечать не только время начала рабочего дня, но и место, откуда они работают';

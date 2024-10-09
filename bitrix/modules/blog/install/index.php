@@ -471,14 +471,12 @@ Class blog extends CModule
 	function InstallFiles()
 	{
 		global $install_public, $public_rewrite, $public_dir;
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/blog", true, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/public/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
-		}
+
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/blog", true, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/public/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
 
 		$install_public = (($install_public == "Y") ? "Y" : "N");
 		$errors = false;
@@ -556,13 +554,10 @@ Class blog extends CModule
 
 	function UnInstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");//css
-			DeleteDirFilesEx("/bitrix/themes/.default/icons/blog/");//icons
-			DeleteDirFilesEx("/bitrix/images/blog/");//images
-		}
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/install/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");//css
+		DeleteDirFilesEx("/bitrix/themes/.default/icons/blog/");//icons
+		DeleteDirFilesEx("/bitrix/images/blog/");//images
 
 		return true;
 	}

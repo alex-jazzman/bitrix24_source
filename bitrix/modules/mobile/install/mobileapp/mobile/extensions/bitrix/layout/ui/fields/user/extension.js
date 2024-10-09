@@ -35,18 +35,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 
 			if (this.isReadOnly() && this.isMultiple() && !this.isEmpty() && this.canOpenUserList())
 			{
-				this.customContentClickHandler = () => {
-					UserListManager.open({
-						title: (this.getTitleText() === this.props.title ? this.props.title : null),
-						users: this.state.entityList.map((user) => ({
-							id: user.id,
-							name: this.prepareUserTitle(user.title),
-							avatar: user.imageUrl,
-							workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
-						})),
-						testId: this.testId,
-					});
-				};
+				this.customContentClickHandler = this.openUserList.bind(this);
 			}
 
 			this.state.showAll = false;
@@ -301,6 +290,20 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 				})
 				.then((list) => ProfileView.open({ userId, isBackdrop: true }, list))
 				.catch(console.error);
+		}
+
+		openUserList()
+		{
+			UserListManager.open({
+				title: (this.getTitleText() === this.props.title ? this.props.title : null),
+				users: this.state.entityList.map((user) => ({
+					id: user.id,
+					name: this.prepareUserTitle(user.title),
+					avatar: user.imageUrl,
+					workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
+				})),
+				testId: this.testId,
+			});
 		}
 
 		shouldShowEditIcon()

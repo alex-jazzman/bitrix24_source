@@ -2,6 +2,10 @@
 $MESS["BPWFI_SLIDER_BANNER_BODY"] = "Leave your comments and discuss the workflow with the participants.";
 $MESS["BPWFI_SLIDER_BANNER_TITLE"] = "There are no comments to this workflow";
 $MESS["BPWFI_SLIDER_BUTTON_DELEGATE"] = "Delegate";
+$MESS["BPWFI_SLIDER_CONFIRM_ACCEPT"] = "Yes";
+$MESS["BPWFI_SLIDER_CONFIRM_CANCEL"] = "No";
+$MESS["BPWFI_SLIDER_CONFIRM_DESCRIPTION"] = "Are you sure you want to cancel the changes you made to the workflow? The values you entered in the fields will be lost.";
+$MESS["BPWFI_SLIDER_CONFIRM_TITLE"] = "Cancel workflow changes";
 $MESS["BPWFI_SLIDER_DESCRIPTION"] = "Description";
 $MESS["BPWFI_SLIDER_DISCUSSION_COMMENTS_COUNT"] = "Comments: #COMMENTS_COUNT#";
 $MESS["BPWFI_SLIDER_DISCUSSION_TITLE"] = "Workflow discussion";
@@ -11,5 +15,5 @@ $MESS["BPWFI_SLIDER_FIELDS_TITLE"] = "Assignment parameters (required)";
 $MESS["BPWFI_SLIDER_NAME"] = "Name";
 $MESS["BPWFI_SLIDER_NOT_MY_TASK"] = "You are viewing #USER#'s assignment";
 $MESS["BPWFI_SLIDER_TASK"] = "Assignment";
-$MESS["BPWFI_SLIDER_TIMELINE"] = "Workflow log";
+$MESS["BPWFI_SLIDER_TIMELINE_MSGVER_1"] = "Journal";
 $MESS["BPWFI_SLIDER_TYPE"] = "Workflow type";

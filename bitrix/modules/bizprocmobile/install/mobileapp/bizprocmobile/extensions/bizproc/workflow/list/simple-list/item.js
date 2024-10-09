@@ -147,6 +147,7 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 			const { data } = this.props.item;
 			const tasksCnt = data.tasks.length;
 			const commentsCnt = data.newCommentsCounter;
+			const useWorkflowCounter = data.useWorkflowCounter || false;
 
 			if (!tasksCnt && !commentsCnt)
 			{
@@ -158,7 +159,7 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 					style: this.styles.tasksCounter,
 				},
 				CounterView(
-					tasksCnt || commentsCnt,
+					useWorkflowCounter ? (tasksCnt || 0) + (commentsCnt || 0) : (tasksCnt || commentsCnt),
 					{
 						firstColor: tasksCnt > 0 ? AppTheme.colors.accentMainAlert : AppTheme.colors.accentMainSuccess,
 						isDouble: tasksCnt && commentsCnt,

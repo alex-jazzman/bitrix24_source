@@ -5,6 +5,7 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { get } = require('utils/object');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { ProviderSelector } = require('crm/timeline/ui/senders-selector/provider-selector');
 	const { NumberSelector } = require('crm/timeline/ui/senders-selector/number-selector');
 

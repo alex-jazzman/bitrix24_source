@@ -2,7 +2,8 @@
  * @module ui-system/form/inputs/input
  */
 jn.define('ui-system/form/inputs/input', (require, exports, module) => {
-	const { isEmpty } = require('utils/object');
+	const { Type } = require('type');
+	const { isEmpty, isEqual } = require('utils/object');
 	const { Color, Indent, Component } = require('tokens');
 	const { Text7 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
@@ -21,43 +22,46 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 	const ICON_SIZE = 20;
 
+	let mounted = false;
+
 	/**
 	 * @typedef {Object} InputProps
-	 * @property {string} props.testId
-	 * @property {Function} [props.forwardRef]
-	 * @property {string} [props.value]
-	 * @property {string} [props.placeholder]
-	 * @property {string} [props.label]
-	 * @property {InputSize} [props.size=InputSize.M]
-	 * @property {InputMode} [props.mode=InputMode.STROKE]
-	 * @property {InputDesign} [props.design=InputDesign.PRIMARY]
-	 * @property {boolean} [props.focus=false]
-	 * @property {boolean} [props.disabled=false]
-	 * @property {boolean} [props.locked=false]
-	 * @property {boolean} [props.edit=false]
-	 * @property {boolean} [props.dropdown=false]
-	 * @property {boolean} [props.erase=false]
-	 * @property {boolean} [props.required=false]
-	 * @property {boolean} [props.error=false]
-	 * @property {string} [props.errorText]
-	 * @property {'left' | 'center' | 'right'} [props.align]
-	 * @property {Color} [props.backgroundColor]
-	 * @property {Object | Icon} [props.leftContent]
-	 * @property {Function} [props.onClickLeftContent]
-	 * @property {Object | Icon} [props.rightContent]
-	 * @property {Function} [props.onClickRightContent]
-	 * @property {Object | Icon} [props.rightStickContent]
-	 * @property {Function} [props.onClickRightStickContent]
-	 * @property {Function} [props.onFocus]
-	 * @property {Function} [props.onChange]
-	 * @property {Function} [props.onSubmit]
-	 * @property {Function} [props.onBlur]
-	 * @property {Function} [props.onErase]
-	 * @property {Object} [props.style]
-	 *
+	 * @property {string} testId
+	 * @property {Function} [forwardRef]
+	 * @property {string} [value]
+	 * @property {string} [placeholder]
+	 * @property {string} [label]
+	 * @property {InputSize} [size=InputSize.M]
+	 * @property {InputMode} [mode=InputMode.STROKE]
+	 * @property {InputDesign} [design=InputDesign.PRIMARY]
+	 * @property {boolean} [focus=false]
+	 * @property {boolean} [disabled=false]
+	 * @property {boolean} [multiline=false]
+	 * @property {boolean} [locked=false]
+	 * @property {boolean} [edit=false]
+	 * @property {boolean} [dropdown=false]
+	 * @property {boolean} [erase=false]
+	 * @property {boolean} [required=false]
+	 * @property {boolean} [error=false]
+	 * @property {string} [errorText]
+	 * @property {'left' | 'center' | 'right'} [align]
+	 * @property {Color} [backgroundColor]
+	 * @property {Object | Icon} [leftContent]
+	 * @property {Function} [onClickLeftContent]
+	 * @property {Object | Icon} [rightContent]
+	 * @property {Function} [onClickRightContent]
+	 * @property {Object | Icon} [rightStickContent]
+	 * @property {Function} [onClickRightStickContent]
+	 * @property {Function} [onFocus]
+	 * @property {Function} [onChange]
+	 * @property {Function} [onSubmit]
+	 * @property {Function} [onBlur]
+	 * @property {Function} [onErase]
+	 * @property {Object} [style]
+
 	 * @class Input
 	 * @abstract
-	 * @param {...InputProps} props
+	 * @param {InputProps} props
 	 */
 	class Input extends PureComponent
 	{
@@ -65,16 +69,20 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		{
 			super(props);
 
-			this.initState(props);
+			this.currentValue = null;
 			this.contentFieldRef = null;
-			this.currentValue = props.value;
+
+			this.initProperties();
+			this.initState(props);
 
 			this.handleOnFocus = this.handleOnFocus.bind(this);
 			this.handleOnBlur = this.handleOnBlur.bind(this);
 			this.handleOnSubmit = this.handleOnSubmit.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
+			this.handleOnChangeText = this.handleOnChangeText.bind(this);
 			this.handleOnContentClick = this.handleOnContentClick.bind(this);
 			this.handleOnContentLongClick = this.handleOnContentLongClick.bind(this);
+			this.handleOnClickLeftContent = this.handleOnClickLeftContent.bind(this);
 		}
 
 		get field()
@@ -84,20 +92,90 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return field;
 		}
 
-		componentWillReceiveProps(props)
+		componentDidMount()
 		{
-			this.initState(props);
+			mounted = true;
+		}
+
+		componentWillUnmount()
+		{
+			mounted = false;
+		}
+
+		componentWillReceiveProps(nextProps)
+		{
+			this.initState(nextProps);
+		}
+
+		shouldComponentUpdate(nextProps, nextState)
+		{
+			const nextStateToCompare = Array.isArray(nextState) ? nextState[0] : nextState;
+
+			let prevPropsToCompare = this.props;
+			let nextPropsToCompare = nextProps;
+
+			if (this.currentValue !== null)
+			{
+				const currentValue = this.currentValue;
+
+				this.currentValue = null;
+
+				if (!isEqual(currentValue, nextProps.value))
+				{
+					this.logComponentDifference({ value: currentValue }, { value: nextProps.value }, null, null);
+
+					return true;
+				}
+
+				const { value: prevValue, ...prevPropsWithoutValue } = this.props;
+				const { value: nextValue, ...nextPropsWithoutValue } = nextProps;
+
+				prevPropsToCompare = prevPropsWithoutValue;
+				nextPropsToCompare = nextPropsWithoutValue;
+			}
+
+			const hasChanged = !isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(
+				this.state,
+				nextStateToCompare,
+			);
+
+			if (hasChanged)
+			{
+				this.logComponentDifference(prevPropsToCompare, nextPropsToCompare, this.state, nextStateToCompare);
+
+				return true;
+			}
+
+			return false;
 		}
 
 		initState(props)
 		{
-			this.state = {
+			this.state = this.getStateObject(props);
+		}
+
+		initProperties()
+		{}
+
+		getStateObject(props)
+		{
+			const state = {
+				...this.state,
 				error: props.error,
-				isFocused: props.focus,
 				readOnly: props.readOnly,
 			};
 
-			this.currentValue = props.value;
+			if (!this.isMounted())
+			{
+				state.isFocused = false;
+
+				if (Type.isBoolean(props.focus))
+				{
+					state.isFocused = props.focus;
+				}
+			}
+
+			return state;
 		}
 
 		render()
@@ -223,6 +301,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 						},
 					},
 					Text7({
+						numberOfLines: 1,
+						ellipsize: 'middle',
 						text: errorText,
 						color: this.getErrorColor(),
 					}),
@@ -262,14 +342,12 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 		renderLeftContent()
 		{
-			const { onClickLeftContent } = this.props;
-
 			return this.renderIconContent({
 				content: this.getLeftContent(),
 				style: {
 					marginRight: Indent.XS2.toNumber(),
 				},
-				onClick: onClickLeftContent,
+				onClick: this.handleOnClickLeftContent,
 			});
 		}
 
@@ -288,7 +366,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 		renderLockIcon()
 		{
-			if (!this.isLocked() || this.isFocused() || this.isDisabled())
+			if (!this.isLocked() || this.#isFocused() || this.isDisabled())
 			{
 				return null;
 			}
@@ -302,7 +380,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 		renderEditIcon()
 		{
-			if (!this.isEditable() || this.isFocused() || this.isDisabled())
+			if (!this.isEditable() || this.#isFocused() || this.isDisabled())
 			{
 				return null;
 			}
@@ -380,7 +458,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			const { height: inputHeight } = this.getSize().getInput();
 			const paddingTop = this.shouldRenderLabel() ? Indent.M.toNumber() : 0;
 			const paddingBottom = this.shouldRenderErrorText() ? Indent.S.toNumber() : 0;
-			const height = inputHeight + paddingTop + paddingBottom;
+			const height = inputHeight + paddingTop + paddingBottom + (this.isIOS() ? 0 : 1);
 
 			return {
 				height,
@@ -392,6 +470,11 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				...this.getBorderStyle(),
 				...style,
 			};
+		}
+
+		getRef()
+		{
+			return this.contentFieldRef;
 		}
 
 		getBackgroundColor()
@@ -467,16 +550,38 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			if (filled)
 			{
-				const { borderColor } = this.getDesignStyle();
-				style.borderColor = this.isError()
-					? this.getErrorColor().toHex()
-					: borderColor?.toHex();
+				const { borderColor, borderColorFocused } = this.getDesignStyle();
+
+				if (this.isError())
+				{
+					style.borderColor = this.getErrorColor().toHex();
+				}
+				else if (this.#isFocused() && borderColorFocused)
+				{
+					style.borderColor = borderColorFocused.toHex();
+				}
+				else
+				{
+					style.borderColor = borderColor?.toHex();
+				}
 			}
 
 			return style;
 		}
 
 		getValue()
+		{
+			if (this.currentValue !== null)
+			{
+				return this.currentValue;
+			}
+
+			const { value } = this.props;
+
+			return value;
+		}
+
+		getCurrentValue()
 		{
 			return this.currentValue;
 		}
@@ -533,11 +638,23 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return Boolean(edit);
 		}
 
-		isFocused()
+		#isFocused()
 		{
 			const { isFocused } = this.state;
 
-			return isFocused;
+			return Boolean(isFocused);
+		}
+
+		isEnable()
+		{
+			return !this.isReadOnly() && !this.isDisabled();
+		}
+
+		isMultiline()
+		{
+			const { multiline } = this.props;
+
+			return Boolean(multiline);
 		}
 
 		isReadOnly()
@@ -579,6 +696,16 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			// LongClick action
 		}
 
+		handleOnClickLeftContent()
+		{
+			const { onClickLeftContent } = this.props;
+
+			if (onClickLeftContent)
+			{
+				onClickLeftContent();
+			}
+		}
+
 		handleOnContentClick()
 		{
 			this.handleOnFocus();
@@ -587,30 +714,25 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		handleOnFocus()
 		{
 			const { onFocus } = this.props;
-			const focus = this.focusContentField();
-			if (!focus)
+
+			if (this.#isFocused())
 			{
 				return;
 			}
 
-			this.setFocused(true).then(() => {
-				if (onFocus)
-				{
-					onFocus();
-				}
-			}).catch(console.error);
+			void this.setFocused(true, onFocus);
 		}
 
 		handleOnBlur()
 		{
 			const { onBlur } = this.props;
 
-			this.setFocused(false).then(() => {
-				if (onBlur)
-				{
-					onBlur();
-				}
-			}).catch(console.error);
+			if (!this.#isFocused())
+			{
+				return;
+			}
+
+			void this.setFocused(false, onBlur);
 		}
 
 		handleOnSubmit(value)
@@ -623,10 +745,15 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			}
 		}
 
+		handleOnChangeText(value)
+		{
+			this.setCurrentValue(value);
+			this.handleOnChange(value);
+		}
+
 		handleOnChange(value)
 		{
 			const { onChange } = this.props;
-			this.currentValue = value;
 
 			if (onChange)
 			{
@@ -652,26 +779,29 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			}
 		};
 
-		focusContentField()
+		setFocused(value, callback)
 		{
-			if (typeof this.contentFieldRef?.focus !== 'function')
+			if (!this.isEnable())
 			{
-				return false;
+				return Promise.resolve();
 			}
 
-			this.contentFieldRef?.focus();
-
-			return true;
-		}
-
-		setFocused(value)
-		{
-			return new Promise((resolve) => {
+			return new Promise(() => {
 				this.setState({
 					error: !this.isValid(),
 					isFocused: value,
-				}, resolve);
+				}, () => {
+					if (Type.isFunction(callback))
+					{
+						callback();
+					}
+				});
 			});
+		}
+
+		setCurrentValue(value)
+		{
+			this.currentValue = value;
 		}
 
 		/**
@@ -697,15 +827,15 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					this.#handleOnForwardRef(ref);
 					this.contentFieldRef = ref;
 				},
-				multiline: false,
-				focus: this.isFocused(),
-				enable: !this.isReadOnly(),
+				multiline: this.isMultiline(),
+				focus: this.#isFocused(),
+				enable: this.isEnable(),
 				size: this.getTextSize(),
 				value: this.getValue(),
 				onBlur: this.handleOnBlur,
 				onFocus: this.handleOnFocus,
 				onSubmitEditing: this.handleOnSubmit,
-				onChangeText: this.handleOnChange,
+				onChangeText: this.handleOnChangeText,
 				placeholder: this.getPlaceholder(),
 				placeholderTextColor: this.getPlaceholderTextColor(),
 				style: this.getFieldStyle(),
@@ -787,6 +917,16 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			return Boolean(erase) && !this.isEmpty();
 		}
+
+		isIOS()
+		{
+			return Application.getPlatform() === 'ios';
+		}
+
+		isMounted()
+		{
+			return mounted;
+		}
 	}
 
 	Input.defaultProps = {
@@ -797,6 +937,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		dropdown: false,
 		required: false,
 		erase: false,
+		multiline: false,
 	};
 
 	Input.propTypes = {
@@ -810,11 +951,11 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		mode: PropTypes.instanceOf(InputMode),
 		focus: PropTypes.bool,
 		disabled: PropTypes.bool,
+		multiline: PropTypes.bool,
 		locked: PropTypes.bool,
 		edit: PropTypes.bool,
 		dropdown: PropTypes.bool,
 		required: PropTypes.bool,
-		erase: PropTypes.bool,
 		error: PropTypes.bool,
 		errorText: PropTypes.string,
 		align: PropTypes.oneOf(Object.keys(ALIGN)),
@@ -835,11 +976,15 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	};
 
 	module.exports = {
+		/**
+		 * @param {InputProps} props
+		 * @returns {Input}
+		 */
+		Input: (props) => new Input(props),
 		Icon,
 		InputMode,
 		InputSize,
 		InputDesign,
-		Input: (props) => new Input(props),
 		InputClass: Input,
 	};
 });

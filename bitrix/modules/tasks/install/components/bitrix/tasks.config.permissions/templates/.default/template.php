@@ -25,7 +25,9 @@ $openPopupEvent = 'tasks:onComponentOpen';
 
 $hasFatals = false;
 
-$areTasksPermissionsRestricted = !Integration\Bitrix24::checkFeatureEnabled(Integration\Bitrix24\FeatureDictionary::TASKS_PERMISSIONS);
+$areTasksPermissionsRestricted = !Integration\Bitrix24::checkFeatureEnabled(
+	Integration\Bitrix24\FeatureDictionary::TASK_ACCESS_PERMISSIONS
+);
 if ($areTasksPermissionsRestricted)
 {
 	?>
@@ -33,7 +35,7 @@ if ($areTasksPermissionsRestricted)
 		BX.ready(async () => {
 			await BX.Runtime.loadExtension('ui.info-helper');
 			BX.UI.InfoHelper.show(
-				'limit_task_access_permissions',
+				'limit_tasks_access_permissions',
 				{
 					isLimit: true,
 					limitAnalyticsLabels: {

@@ -6,7 +6,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-service', (require, expo
 	const { MuteService } = require('im/messenger/provider/service/classes/chat/mute');
 	const { CommentsService } = require('im/messenger/provider/service/classes/chat/comments');
 	const { restManager, RestManager } = require('im/messenger/lib/rest-manager');
+	const { SidebarFilesService } = require('im/messenger/controller/sidebar/chat/tabs/files/service');
+	const { SidebarLinksService } = require('im/messenger/controller/sidebar/chat/tabs/links/service');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { RestMethod } = require('im/messenger/const/rest');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-service');
 
 	/**
 	 * @class SidebarService
@@ -56,6 +61,49 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-service', (require, expo
 			}
 
 			return false;
+		}
+
+		subscribeInitTabsData()
+		{
+			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const isInitedSidebar = this.store.getters['sidebarModel/isInited'](dialogData?.chatId);
+
+			if (isInitedSidebar || !dialogData)
+			{
+				return;
+			}
+
+			const sidebarLinksService = new SidebarLinksService(dialogData.chatId);
+			const sidebarFilesService = new SidebarFilesService(dialogData.chatId);
+
+			this.sidebarRestManager.once(
+				RestMethod.imChatUrlGet,
+				sidebarLinksService.getInitialBatchParams(dialogData.chatId),
+				sidebarLinksService.getBatchResponseHandler.bind(sidebarLinksService),
+			);
+
+			this.sidebarRestManager.once(
+				RestMethod.imChatFileGet,
+				sidebarFilesService.getInitialBatchParams(dialogData.chatId),
+				sidebarFilesService.getBatchResponseHandler.bind(sidebarFilesService),
+			);
+		}
+
+		initTabsData()
+		{
+			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const isInitedSidebar = this.store.getters['sidebarModel/isInited'](dialogData?.chatId);
+
+			if (isInitedSidebar)
+			{
+				return;
+			}
+
+			this.sidebarRestManager
+				.callBatch()
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.initTabsData:`, error);
+				});
 		}
 
 		/**

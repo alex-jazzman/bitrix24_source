@@ -42,10 +42,21 @@ export default class FigureResizer extends EventEmitter
 
 	#maxWidth: 'none' | number = 'none';
 	#maxHeight: 'none' | number = 'none';
-	#minWidth: number = 100;
-	#minHeight: number = 100;
+	#minWidth: number = 16;
+	#minHeight: number = 16;
 
-	constructor({ target, editor, minWidth, minHeight, maxWidth, maxHeight, events, freeTransform })
+	constructor({
+		target,
+		editor,
+		originalWidth,
+		originalHeight,
+		minWidth,
+		minHeight,
+		maxWidth,
+		maxHeight,
+		events,
+		freeTransform,
+	})
 	{
 		super();
 		this.setEventNamespace('BX.UI.TextEditor.FigureResizer');
@@ -53,8 +64,15 @@ export default class FigureResizer extends EventEmitter
 		this.#target = target;
 		this.#editor = editor;
 
-		this.#minWidth = Math.min(this.#minWidth, Type.isNumber(minWidth) ? minWidth : Infinity);
-		this.#minHeight = Math.min(this.#minHeight, Type.isNumber(minHeight) ? minHeight : Infinity);
+		this.#minWidth = Math.min(
+			Math.max(this.#minWidth, Type.isNumber(minWidth) ? minWidth : this.#minWidth),
+			Type.isNumber(originalWidth) ? originalWidth : Infinity,
+		);
+		this.#minHeight = Math.min(
+			Math.max(this.#minHeight, Type.isNumber(minHeight) ? minHeight : this.#minHeight),
+			Type.isNumber(originalHeight) ? originalHeight : Infinity,
+		);
+
 		this.#maxWidth = Type.isNumber(maxWidth) ? maxWidth : 'none';
 		this.#maxHeight = Type.isNumber(maxHeight) ? maxHeight : 'none';
 		this.#freeTransform = freeTransform === true;
@@ -227,10 +245,10 @@ export default class FigureResizer extends EventEmitter
 				let diff = Math.floor(this.#positioning.startY - event.clientY);
 				diff = this.#positioning.direction & Direction.SOUTH ? -diff : diff;
 
-				const height = Math.round(clamp(
+				const height = Math.round(Math.max(
 					this.#positioning.startHeight + diff,
 					this.#minHeight,
-					this.#getMaxContainerHeight(),
+					// this.#getMaxContainerHeight(),
 				));
 
 				Dom.style(target, 'height', `${height}px`);

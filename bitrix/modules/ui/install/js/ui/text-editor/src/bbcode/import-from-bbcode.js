@@ -31,8 +31,8 @@ import {
 	$createParagraphNode,
 	$isDecoratorNode,
 	type LexicalNode,
-	type LineBreakNode,
 	type ElementNode,
+	type ParagraphNode,
 } from 'ui.lexical.core';
 
 export function $importFromBBCode(bbcode: string, editor: TextEditor, normalize: boolean = true): Array<LexicalNode>
@@ -230,7 +230,7 @@ export function $normalizeTextNodes(lexicalNodes: Array<LexicalNode>, editor: Te
 	return result;
 }
 
-function $createEmptyParagraphs(count: number = 1): Array<LineBreakNode>
+function $createEmptyParagraphs(count: number = 1): Array<ParagraphNode>
 {
 	const result = [];
 	for (let i = 0; i < count; i++)

@@ -42,7 +42,12 @@ export class PopupProvider extends BaseProvider
 		}
 		else
 		{
-			this.#dataSource = (new ProviderRequestFactory(ProvidersType.POPUP, this.#code)).getRequest();
+			const providerRequestFactoryConfiguration = {
+				type: ProvidersType.POPUP,
+				code: this.#code,
+				featureId: config.featureId,
+			};
+			this.#dataSource = (new ProviderRequestFactory(providerRequestFactoryConfiguration)).getRequest();
 		}
 
 		this.#analytics = new Analytics(this.#code, ProvidersType.POPUP);

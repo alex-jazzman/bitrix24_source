@@ -4,112 +4,45 @@
 jn.define('tasks/statemanager/redux/slices/flows', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { createSlice } = require('statemanager/redux/toolkit');
-	const { sliceName, entityAdapter } = require('tasks/statemanager/redux/slices/flows/meta');
-	const { flowsSelector } = require('tasks/statemanager/redux/slices/flows/selector');
+	const { sliceName, initialState } = require('tasks/statemanager/redux/slices/flows/meta');
+	const {
+		selectAll,
+		selectById,
+		selectEntities,
+		selectIds,
+		selectTotal,
+	} = require('tasks/statemanager/redux/slices/flows/src/selector');
 
-	const flowsInitialState = [];
-	const emptyInitialState = entityAdapter.getInitialState();
-	const filledState = entityAdapter.upsertMany(emptyInitialState, flowsInitialState);
+	const {
+		upsertFlows,
+		addFlows,
+	} = require('tasks/statemanager/redux/slices/flows/src/action');
 
-	const prepareFlow = ({
-		id,
-		ownerId,
-		creatorId,
-		groupId,
-		templateId,
-		efficiency,
-		active,
-		demo,
-		enableFlowUrl,
-		plannedCompletionTime,
-		plannedCompletionTimeText,
-		averagePendingTime,
-		averageAtWorkTime,
-		averageCompletedTime,
-		name,
-		distributionType,
-		taskCreators,
-		taskAssignees,
-		pending,
-		atWork,
-		completed,
-		myTasksTotal,
-		myTasksCounter,
-		activity,
-		description,
-		responsibleQueue,
-		manualDistributorId,
-		responsibleCanChangeDeadline,
-		matchWorkTime,
-		notifyAtHalfTime,
-		notifyOnQueueOverflow,
-		notifyOnTasksInProgressOverflow,
-		notifyWhenEfficiencyDecreases,
-	}) => ({
-		id: Number(id),
-		ownerId,
-		creatorId,
-		groupId,
-		templateId,
-		efficiency,
-		efficiencySuccess: Number(efficiency) >= 70,
-		active,
-		demo,
-		enableFlowUrl,
-		plannedCompletionTime,
-		plannedCompletionTimeText,
-		averagePendingTime,
-		averageAtWorkTime,
-		averageCompletedTime,
-		name,
-		distributionType,
-		taskCreators,
-		taskAssignees,
-		pending,
-		atWork,
-		completed,
-		myTasksTotal,
-		myTasksCounter,
-		activity,
-		description,
-		responsibleQueue,
-		manualDistributorId,
-		responsibleCanChangeDeadline,
-		matchWorkTime,
-		notifyAtHalfTime,
-		notifyOnQueueOverflow,
-		notifyOnTasksInProgressOverflow,
-		notifyWhenEfficiencyDecreases,
-	});
-
-	const flowsSlice = createSlice({
-		name: sliceName,
-		initialState: filledState,
-		reducers: {
-			flowsUpserted: {
-				reducer: entityAdapter.upsertMany,
-				prepare: (flows) => ({
-					payload: flows.map((flow) => prepareFlow(flow)),
-				}),
-			},
-			flowsAdded: {
-				reducer: entityAdapter.addMany,
-				prepare: (flows) => ({
-					payload: flows.map((flow) => prepareFlow(flow)),
-				}),
-			},
-		},
-	});
-
-	const { reducer, actions } = flowsSlice;
-	const { flowsUpserted, flowsAdded } = actions;
-
-	ReducerRegistry.register(sliceName, reducer);
-
-	module.exports = {
-		flowsReducer: reducer,
-		flowsSelector,
+	const {
 		flowsUpserted,
 		flowsAdded,
+	} = require('tasks/statemanager/redux/slices/flows/src/reducer');
+
+	const slice = createSlice({
+		name: sliceName,
+		initialState,
+		reducers: {
+			flowsAdded,
+			flowsUpserted,
+		},
+	});
+	ReducerRegistry.register(sliceName, slice.reducer);
+
+	module.exports = {
+		// actions
+		upsertFlows,
+		addFlows,
+
+		// selectors
+		selectAll,
+		selectById,
+		selectEntities,
+		selectIds,
+		selectTotal,
 	};
 });

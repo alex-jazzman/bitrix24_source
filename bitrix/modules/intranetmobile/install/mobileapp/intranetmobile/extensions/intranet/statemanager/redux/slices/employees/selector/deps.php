@@ -2,9 +2,11 @@
 
 return [
 	'extensions' => [
-		'statemanager/redux/slices/users/meta',
-		'statemanager/redux/slices/users/selector',
 		'utils/date',
+		'statemanager/redux/toolkit',
+		'statemanager/redux/slices/users/selector',
+		'intranet:statemanager/redux/slices/employees/meta',
+		'intranet:enum',
 	],
 ];
 

@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { Extension, Loc, Type } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
 
 import {
@@ -15,6 +15,8 @@ import {
 	type LexicalNode,
 } from 'ui.lexical.core';
 
+import { SmileyParser, SmileyManager } from 'ui.smiley';
+
 import { $findMatchingParent, $wrapNodeInElement } from 'ui.lexical.utils';
 import { DIALOG_VISIBILITY_COMMAND, HIDE_DIALOG_COMMAND } from '../../commands';
 import { UNFORMATTED } from '../../constants';
@@ -22,9 +24,7 @@ import { TextEditorLexicalNode } from '../../types/text-editor-lexical-node';
 
 import { $createSmileyNode, SmileyNode } from './smiley-node';
 import Button from '../../toolbar/button';
-import Smiley from './smiley';
 import { SmileyDialog } from './smiley-dialog';
-import { SmileyParser } from './smiley-parser';
 import BasePlugin from '../base-plugin';
 
 import type {
@@ -36,8 +36,6 @@ import type {
 import type TextEditor from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
-import './smiley.css';
-
 type InsertSmileyPayload = string;
 
 export const INSERT_SMILEY_COMMAND: LexicalCommand<InsertSmileyPayload> = createCommand('INSERT_SMILEY_COMMAND');
@@ -45,7 +43,6 @@ export const INSERT_SMILEY_DIALOG_COMMAND: LexicalCommand = createCommand('INSER
 
 export class SmileyPlugin extends BasePlugin
 {
-	#smileys: Map<string, Smiley> = new Map();
 	#smileyParser: SmileyParser = null;
 	#smileyDialog: SmileyDialog = null;
 
@@ -53,16 +50,9 @@ export class SmileyPlugin extends BasePlugin
 	{
 		super(editor);
 
-		const settings = Extension.getSettings('ui.text-editor');
-		const smileys = settings.get('smileys', []);
-		for (const smiley of smileys)
+		if (SmileyManager.getSize() > 0)
 		{
-			this.#smileys.set(smiley.typing, new Smiley(smiley));
-		}
-
-		if (this.#smileys.size > 0)
-		{
-			this.#smileyParser = new SmileyParser([...this.#smileys.values()]);
+			this.#smileyParser = new SmileyParser(SmileyManager.getAll());
 			this.#registerListeners();
 			this.#registerInsertSmileyCommand();
 			this.#registerComponents();
@@ -143,7 +133,7 @@ export class SmileyPlugin extends BasePlugin
 
 					for (const textNode of textNodes)
 					{
-						const smiley = this.#smileys.get(textNode.getTextContent()) || null;
+						const smiley = SmileyManager.get(textNode.getTextContent()) || null;
 						if (smiley)
 						{
 							// console.log('replace');
@@ -212,7 +202,7 @@ export class SmileyPlugin extends BasePlugin
 			this.getEditor().registerCommand(
 				INSERT_SMILEY_COMMAND,
 				(payload) => {
-					const smiley = this.#smileys.get(payload) || null;
+					const smiley = SmileyManager.get(payload) || null;
 					if (!smiley)
 					{
 						return false;
@@ -260,6 +250,7 @@ export class SmileyPlugin extends BasePlugin
 						events: {
 							onSelect: (event: BaseEvent) => {
 								this.getEditor().dispatchCommand(INSERT_SMILEY_COMMAND, event.getData().smiley);
+								this.#smileyDialog.hide();
 							},
 							onDestroy: () => {
 								this.#smileyDialog = null;

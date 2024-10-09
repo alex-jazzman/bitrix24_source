@@ -835,7 +835,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  summary: 'summary',
 	  vote: 'vote',
 	  aiText: 'ai-text',
-	  aiImage: 'ai-image'
+	  aiImage: 'ai-image',
+	  copilot: 'copilot'
 	};
 
 	// @vue/component
@@ -866,9 +867,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      required: false,
 	      default: 0
 	    }
-	  },
-	  data() {
-	    return {};
 	  },
 	  computed: {
 	    formattedCounter() {
@@ -945,10 +943,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -956,11 +950,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.config;
 	    },
 	    styles() {
-	      var _this$internalConfig$;
-	      const result = {
-	        backgroundColor: (_this$internalConfig$ = this.internalConfig.delimiter.color) != null ? _this$internalConfig$ : this.color
-	      };
-	      if (this.internalConfig.delimiter.size) {
+	      const result = {};
+	      if (this.internalConfig.delimiter.color) {
+	        result.backgroundColor = this.internalConfig.delimiter.color;
+	      }
+	      if (this.internalConfig.delimiter.size > 0) {
 	        result.width = `${this.internalConfig.delimiter.size}px`;
 	      }
 	      return result;
@@ -1047,10 +1041,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1105,8 +1095,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      return im_v2_lib_parser.Parser.decodeText(this.internalConfig.value);
 	    },
-	    color() {
-	      return this.internalConfig.color || '';
+	    colorToken() {
+	      return this.internalConfig.colorToken || 'base';
 	    },
 	    name() {
 	      return this.internalConfig.name;
@@ -1119,16 +1109,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div v-if="display === DisplayType.block" :style="{width}" class="bx-im-attach-grid__item --block">
 			<div class="bx-im-attach-grid__name">{{ name }}</div>
 			<div v-if="link" class="bx-im-attach-grid__value --link">
-				<a :href="link" target="_blank" :style="{color}" v-html="value"></a>
+				<a :href="link" target="_blank" :class="colorToken" v-html="value"></a>
 			</div>
-			<div v-else v-html="value" :style="{color}" class="bx-im-attach-grid__value"></div>
+			<div v-else v-html="value" :class="colorToken" class="bx-im-attach-grid__value"></div>
 		</div>
 		<div v-if="display === DisplayType.line" :style="{width}" class="bx-im-attach-grid__item --line">
 			<div class="bx-im-attach-grid__name">{{ name }}</div>
-			<div v-if="link" :style="{color}" class="bx-im-attach-grid__value --link">
+			<div v-if="link" :class="colorToken" class="bx-im-attach-grid__value --link">
 				<a :href="link" target="_blank" v-html="value"></a>
 			</div>
-			<div v-else class="bx-im-attach-grid__value" :style="{color}" v-html="value"></div>
+			<div v-else class="bx-im-attach-grid__value" :class="colorToken" v-html="value"></div>
 		</div>
 		<div v-if="display === DisplayType.row" class="bx-im-attach-grid__item --row">
 			<table>
@@ -1140,7 +1130,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						<td
 							v-if="value && link"
 							:colspan="name? 1: 2"
-							:style="{color}"
+							:class="colorToken"
 							class="bx-im-attach-grid__value --link"
 						>
 							<a :href="link" target="_blank" v-html="value"></a>
@@ -1148,7 +1138,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						<td
 							v-if="value && !link"
 							:colspan="name? 1: 2"
-							:style="{color}"
+							:class="colorToken"
 							v-html="value"
 							class="bx-im-attach-grid__value"
 						>
@@ -1170,10 +1160,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1306,10 +1292,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1334,10 +1316,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1382,7 +1360,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</span>
 			<div v-if="internalConfig.html || description" class="bx-im-attach-link__desc" v-html="html"></div>
 			<div v-if="preview" class="bx-im-attach-link__image">
-				<AttachImage :config="imageConfig" :color="color" />
+				<AttachImage :config="imageConfig" />
 			</div>
 		</div>
 	`
@@ -1398,10 +1376,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1423,10 +1397,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1487,10 +1457,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    },
 	    attachId: {
 	      type: String,
@@ -1579,7 +1545,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				></button>
 			</div>
 			<div v-if="preview" class="bx-im-attach-rich__image" @click="openLink" :style="imageStyles">
-				<AttachImage :config="imageConfig" :color="color" />
+				<AttachImage :config="imageConfig" />
 			</div>
 		</div>
 	`
@@ -1595,10 +1561,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: Object,
 	      default: () => {}
 	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
-	    },
 	    attachId: {
 	      type: String,
 	      required: true
@@ -1613,8 +1575,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-attach-rich__container">
 			<AttachRichItem 
 				v-for="(rich, index) in internalConfig.richLink" 
-				:config="rich" 
-				:color="color" 
+				:config="rich"
 				:key="index" 
 				:attachId="attachId" 
 			/>
@@ -1638,10 +1599,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1670,17 +1627,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      } else if (this.avatarType === AVATAR_TYPE.bot) {
 	        avatarType = AVATAR_TYPE.bot;
 	      }
-	      return `--${avatarType}`;
-	    },
-	    avatarTypeStyle() {
-	      return {
-	        backgroundColor: !this.avatar ? this.color : ''
-	      };
+	      return [`--${avatarType}`, 'base'];
 	    }
 	  },
 	  template: `
 		<div class="bx-im-attach-user__item">
-			<div class="bx-im-attach-user__avatar" :class="avatarTypeClass" :style="avatarTypeStyle">
+			<div class="bx-im-attach-user__avatar" :class="avatarTypeClass">
 				<img v-if="avatar" v-lazyload :data-lazyload-src="avatar" class="bx-im-attach-user__source" alt="name" />
 			</div>
 			<a v-if="link" :href="link" class="bx-im-attach-user__name" target="_blank">
@@ -1703,10 +1655,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    color: {
-	      type: String,
-	      default: im_v2_const.Color.transparent
 	    }
 	  },
 	  computed: {
@@ -1716,7 +1664,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  template: `
 		<div class="bx-im-attach-user__container">
-			<AttachUserItem v-for="(user, index) in internalConfig.user" :config="user" :color="color" :key="index" />
+			<AttachUserItem v-for="(user, index) in internalConfig.user" :config="user" :key="index" />
 		</div>
 	`
 	};
@@ -1751,10 +1699,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    config: {
 	      type: Object,
 	      default: () => {}
-	    },
-	    baseColor: {
-	      type: String,
-	      default: im_v2_const.Color.base
 	    }
 	  },
 	  computed: {
@@ -1764,22 +1708,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    blocks() {
 	      return this.internalConfig.blocks;
 	    },
-	    color() {
-	      if (!this.internalConfig.color) {
-	        return this.baseColor;
-	      }
-
-	      // todo: in future we should set color for rich link on the backend. Remove after we delete the old chat.
-	      if (this.internalConfig.color === im_v2_const.Color.transparent && this.hasRichLink) {
-	        return '#2FC6F6';
-	      }
-	      if (this.internalConfig.color === im_v2_const.Color.transparent) {
-	        return '';
-	      }
-	      return this.internalConfig.color;
-	    },
-	    hasRichLink() {
-	      return this.blocks.some(block => block[im_v2_const.AttachType.Rich]);
+	    colorToken() {
+	      const {
+	        colorToken = im_v2_const.ColorToken.base
+	      } = this.internalConfig;
+	      return colorToken;
 	    }
 	  },
 	  methods: {
@@ -1793,13 +1726,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  template: `
 		<div class="bx-im-attach__container bx-im-attach__scope">
-			<div v-if="color" class="bx-im-attach__border" :style="{borderColor: color}"></div>
+			<div class="bx-im-attach__border" :class="colorToken"></div>
 			<div class="bx-im-attach__content">
 				<component
 					v-for="(block, index) in blocks"
 					:is="getComponentForBlock(block)"
 					:config="block"
-					:color="color"
+					:colorToken="colorToken"
 					:key="index"
 					:attachId="internalConfig.id.toString()"
 				/>
@@ -2297,12 +2230,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.config;
 	    },
 	    buttonClasses() {
-	      const displayClass = this.button.display === im_v2_const.KeyboardButtonDisplay.block ? '--block' : '--line';
-	      const classes = [displayClass];
-	      if (this.keyboardBlocked || this.button.disabled) {
+	      const {
+	        bgColorToken = im_v2_const.ColorToken.base,
+	        display,
+	        disabled,
+	        wait
+	      } = this.button;
+	      const displayClass = display === im_v2_const.KeyboardButtonDisplay.block ? '--block' : '--line';
+	      const classes = [displayClass, bgColorToken];
+	      if (this.keyboardBlocked || disabled) {
 	        classes.push('--disabled');
 	      }
-	      if (this.button.wait) {
+	      if (wait) {
 	        classes.push('--loading');
 	      }
 	      return classes;
@@ -2310,18 +2249,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    buttonStyles() {
 	      const styles = {};
 	      const {
-	        width,
-	        bgColor,
-	        textColor
+	        width
 	      } = this.button;
 	      if (width) {
 	        styles.width = `${width}px`;
-	      }
-	      if (bgColor) {
-	        styles.backgroundColor = bgColor;
-	      }
-	      if (textColor) {
-	        styles.color = textColor;
 	      }
 	      return styles;
 	    }
@@ -3129,8 +3060,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: false
 	    },
 	    delayForFocusOnStart: {
-	      type: Number,
-	      default: 0
+	      type: Number || null,
+	      default: null
 	    }
 	  },
 	  emits: ['queryChange', 'inputFocus', 'inputBlur', 'keyPressed', 'close'],
@@ -3157,8 +3088,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	    }
 	  },
-	  created() {
-	    if (this.delayForFocusOnStart > 0) {
+	  mounted() {
+	    if (this.delayForFocusOnStart === 0) {
+	      this.focus();
+	    } else if (this.delayForFocusOnStart > 0) {
 	      setTimeout(() => {
 	        this.focus();
 	      }, this.delayForFocusOnStart);

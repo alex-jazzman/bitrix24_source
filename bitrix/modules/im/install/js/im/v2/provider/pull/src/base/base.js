@@ -1,5 +1,6 @@
 import { MessagePullHandler } from './handlers/message';
 import { ChatPullHandler } from './handlers/chat';
+import { TariffPullHandler } from './handlers/tariff';
 import { UserPullHandler } from './handlers/user';
 import { DesktopPullHandler } from './handlers/desktop';
 import { SettingsPullHandler } from './handlers/settings';
@@ -13,6 +14,7 @@ export class BasePullHandler
 	#desktopHandler: DesktopPullHandler;
 	#settingsHandler: SettingsPullHandler;
 	#commentsHandler: CommentsPullHandler;
+	#tariffPullHandler: TariffPullHandler;
 
 	constructor()
 	{
@@ -22,6 +24,7 @@ export class BasePullHandler
 		this.#desktopHandler = new DesktopPullHandler();
 		this.#settingsHandler = new SettingsPullHandler();
 		this.#commentsHandler = new CommentsPullHandler();
+		this.#tariffPullHandler = new TariffPullHandler();
 	}
 
 	getModuleId(): string
@@ -152,6 +155,11 @@ export class BasePullHandler
 		this.#chatHandler.handleChatAvatar(params);
 	}
 
+	handleChatUpdate(params)
+	{
+		this.#chatHandler.handleChatUpdate(params);
+	}
+
 	handleChatConvert(params)
 	{
 		this.#chatHandler.handleChatConvert(params);
@@ -200,4 +208,11 @@ export class BasePullHandler
 		this.#commentsHandler.handleReadAllChannelComments(params);
 	}
 	// endregion 'comments'
+
+	// region 'tariff'
+	handleChangeTariff(params)
+	{
+		this.#tariffPullHandler.handleChangeTariff(params);
+	}
+	// endregion 'tariff'
 }

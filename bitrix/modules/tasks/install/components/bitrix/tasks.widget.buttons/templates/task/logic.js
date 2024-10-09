@@ -184,15 +184,19 @@ BX.namespace('Tasks.Component');
 					}
 					else if (code === 'DELEGATE')
 					{
-						if (this.option('taskLimitExceeded'))
+						if (this.option('taskDelegatingExceeded'))
 						{
-							BX.UI.InfoHelper.show('limit_tasks_delegating', {
-								isLimit: true,
-								limitAnalyticsLabels: {
-									module: 'tasks',
-									source: 'taskView'
-								}
+							BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+								const { Limit } = exports;
+								Limit.showInstance({
+									featureId: this.option('taskDelegatingFeatureId'),
+									limitAnalyticsLabels: {
+										module: 'tasks',
+										source: 'taskView',
+									},
+								});
 							});
+
 							return;
 						}
 						this.showUserSelector();
@@ -592,8 +596,13 @@ BX.namespace('Tasks.Component');
 						code: 'DELEGATE',
 						text: BX.message('TASKS_DELEGATE_TASK'),
 						title: BX.message('TASKS_DELEGATE_TASK'),
-						className: 'menu-popup-item-delegate' + (this.option('taskLimitExceeded') ? ' tasks-tariff-lock' : ''),
-						onclick: this.passCtx(this.doMenuAction)
+						className: 'menu-popup-item-delegate' + (
+							this.option('taskLimitExceeded')
+							|| this.option('taskDelegatingExceeded')
+								? ' tasks-tariff-lock'
+								: ''
+						),
+						onclick: this.passCtx(this.doMenuAction),
 					});
 				}
 

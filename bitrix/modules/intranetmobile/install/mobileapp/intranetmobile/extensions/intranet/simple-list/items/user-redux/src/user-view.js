@@ -6,10 +6,9 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 	const { Indent, Color, Component } = require('tokens');
 	const { Loc } = require('loc');
 	const { showSafeToast } = require('toast');
-	const { BottomSheet } = require('bottom-sheet');
 	const { OutlineIconTypes } = require('assets/icons/types');
 	const { Icon } = require('ui-system/blocks/icon');
-	const { mobile, desktop, key } = require('assets/icons/src/outline');
+	const { outline: { mobile, desktop } } = require('assets/icons');
 	const { Text2, Text5, Text6 } = require('ui-system/typography/text');
 	const { ChipStatus, ChipStatusMode, ChipStatusDesign } = require('ui-system/blocks/chips/chip-status');
 	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
@@ -17,11 +16,8 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 	const { Button, ButtonSize } = require('ui-system/form/buttons');
 	const { ReduxAvatar } = require('layout/ui/user/avatar');
 	const { ActionMenu } = require('intranet/simple-list/items/user-redux/action-menu');
-	const { Actions } = require('intranet/simple-list/items/user-redux/actions');
+	const { Actions } = require('intranet/simple-list/items/user-redux/src/actions');
 	const { EmployeeActions, EmployeeStatus, RequestStatus } = require('intranet/enum');
-	const { RecommendationBox } = require('intranet/recommendation-box');
-	// const { MobileAppInstallRecommendationBox } = require('intranet/recommendation-box/mobile-app-install');
-	const { makeLibraryImagePath } = require('asset-manager');
 	const { openPhoneMenu } = require('communication/phone-menu');
 	const { selectById } = require('intranet/statemanager/redux/slices/employees/selector');
 	const store = require('statemanager/redux/store');
@@ -336,23 +332,15 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 					},
 					testId: 'user-view-is-desktop-installed',
 				}),
-				// ChipButton({
-				// 	text: '2FA',
-				// 	mode: ChipButtonMode.OUTLINE,
-				// 	design: ChipButtonDesign.GREY,
-				// 	icon: Icon.KEY,
-				// 	onClick: this.openInviteToEnable2FA,
-				// 	compact: true,
-				// 	style: {
-				// 		marginRight: Indent.S.toNumber(),
-				// 	},
-				// 	testId: 'user-view-is-2fa-installed',
-				// }),
 			];
 		}
 
 		openChat = () => {
-			BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ dialogId: this.props.id }], 'im.messenger');
+			void requireLazy('im:messenger/api/dialog-opener').then(({ DialogOpener }) => {
+				DialogOpener.open({
+					dialogId: this.props.id,
+				});
+			});
 		};
 
 		resendInvite = () => Actions.list[EmployeeActions.REINVITE.getValue()]({ userId: this.props.id });
@@ -374,14 +362,6 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 				},
 				layout,
 			);
-
-			// todo: wait until SMS sending is restored
-			// const component = new MobileAppInstallRecommendationBox({
-			// 	phoneNumber: this.props.personalMobile,
-			// 	buttonTestId: 'send-invite-to-install-mobile-app',
-			// });
-			// const bottomSheet = new BottomSheet({ component });
-			// bottomSheet.setMediumPositionPercent(60).open();
 		};
 
 		openInviteToInstallDesktopApp = () => {
@@ -397,62 +377,6 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 				},
 				layout,
 			);
-
-			// todo: waiting for the development of the product scenario for sending notifications
-			// this.openRecommendationBox(
-			// 	{
-			// 		imageName: 'install-desktop.svg',
-			// 		title: Loc.getMessage('M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_TITLE'),
-			// 		description: Loc.getMessage('M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_DESCRIPTION'),
-			// 		buttonText: Loc.getMessage('M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_BUTTON_TEXT'),
-			// 		buttonTestId: 'send-invite-to-install-desktopApp',
-			// 		onButtonClick: () => {
-			// 			console.log(`${this.props.id} send notify to install desktop`);
-			// 		},
-			// 	},
-			// );
-		};
-
-		openInviteToEnable2FA = () => {
-			if (this.props.is2FAEnabled)
-			{
-				showSafeToast(
-					{
-						...this.getToastParams(),
-						message: '2FA у пользователя уже подключен', // temp text
-						svg: { content: key() },
-					},
-					layout,
-				);
-			}
-
-			// todo: waiting for the development of the product scenario for 2FA
-			// this.openRecommendationBox(
-			// 	{
-			// 		imageName: 'enable-2fa.svg',
-			// 		title: Loc.getMessage('M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_TITLE'),
-			// 		description: Loc.getMessage('M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_DESCRIPTION'),
-			// 		buttonText: Loc.getMessage('M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_BUTTON_TEXT'),
-			// 		buttonTestId: 'send-invite-to-enable-2fa',
-			// 		onButtonClick: () => {
-			// 			console.log(`${this.props.id} send notify to enable 2fa`);
-			// 		},
-			// 	},
-			// );
-		};
-
-		openRecommendationBox = (params) => {
-			const { imageName, title, description, buttonText, buttonTestId, onButtonClick } = params;
-			const component = new RecommendationBox({
-				imageUri: makeLibraryImagePath(imageName, 'recommendation-box', 'intranet'),
-				title,
-				description,
-				buttonText,
-				buttonTestId,
-				onButtonClick,
-			});
-			const bottomSheet = new BottomSheet({ component });
-			bottomSheet.setMediumPositionPercent(50).open();
 		};
 
 		openPhoneMenu = () => {

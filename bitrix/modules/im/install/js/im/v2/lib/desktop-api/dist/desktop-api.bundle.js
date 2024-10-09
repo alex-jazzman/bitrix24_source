@@ -272,6 +272,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const DesktopSettingsKey = {
 	  smoothing: 'bxd_camera_smoothing',
+	  smoothing_v2: 'bxd_camera_smoothing_v2',
 	  telemetry: 'bxd_telemetry',
 	  sliderBindingsStatus: 'sliderBindingsStatus'
 	};
@@ -281,6 +282,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  setCameraSmoothingStatus(status) {
 	    const preparedStatus = status === true ? '1' : '0';
+	    if (this.getApiVersion() > 76) {
+	      this.setCustomSetting(DesktopSettingsKey.smoothing_v2, preparedStatus);
+	      return;
+	    }
 	    this.setCustomSetting(DesktopSettingsKey.smoothing, preparedStatus);
 	  },
 	  isTwoWindowMode() {

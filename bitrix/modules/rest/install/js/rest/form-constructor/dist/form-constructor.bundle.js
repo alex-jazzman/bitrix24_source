@@ -124,16 +124,27 @@ this.BX = this.BX || {};
 	}(BaseField);
 
 	var _templateObject$2, _templateObject2$2, _templateObject3$1;
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _onInput = /*#__PURE__*/new WeakSet();
 	var Input = /*#__PURE__*/function (_BaseField) {
 	  babelHelpers.inherits(Input, _BaseField);
 	  function Input() {
+	    var _babelHelpers$getProt;
+	    var _this;
 	    babelHelpers.classCallCheck(this, Input);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Input).apply(this, arguments));
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(Input)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _onInput);
+	    return _this;
 	  }
 	  babelHelpers.createClass(Input, [{
 	    key: "renderFieldContainer",
 	    value: function renderFieldContainer() {
-	      var _this = this;
+	      var _this2 = this;
 	      var wrapper = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl-container\"/>\n\t\t"])));
 	      if (this.options.label) {
 	        var inputTitle = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-ctl-top\">\n\t\t\t\t\t<div class=\"ui-ctl-title\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), this.options.label);
@@ -151,19 +162,13 @@ this.BX = this.BX || {};
 	          value: this.options.value
 	        });
 	      }
+	      main_core.Event.bind(inputElement, 'paste', function (event) {
+	        setTimeout(function () {
+	          _classPrivateMethodGet(_this2, _onInput, _onInput2).call(_this2, wrapper, event);
+	        }, 0);
+	      });
 	      main_core.Event.bind(inputElement, 'input', function (event) {
-	        main_core.Dom.hide(_this.renderErrorsContainer());
-	        if (main_core.Dom.hasClass(wrapper, 'ui-ctl-warning')) {
-	          main_core.Dom.removeClass(wrapper, 'ui-ctl-warning');
-	        }
-	        if (main_core.Type.isNil(event.target.value) || event.target.value === '') {
-	          _this.emit('onUnreadySave');
-	          _this.readySave = false;
-	        } else {
-	          _this.emit('onReadySave');
-	          _this.readySave = true;
-	        }
-	        _this.value = event.target.value;
+	        _classPrivateMethodGet(_this2, _onInput, _onInput2).call(_this2, wrapper, event);
 	      });
 	      main_core.Dom.append(input, wrapper);
 	      return wrapper;
@@ -171,12 +176,26 @@ this.BX = this.BX || {};
 	  }]);
 	  return Input;
 	}(BaseField);
+	function _onInput2(wrapper, event) {
+	  main_core.Dom.hide(this.renderErrorsContainer());
+	  if (main_core.Dom.hasClass(wrapper, 'ui-ctl-warning')) {
+	    main_core.Dom.removeClass(wrapper, 'ui-ctl-warning');
+	  }
+	  if (main_core.Type.isNil(event.target.value) || event.target.value === '') {
+	    this.emit('onUnreadySave');
+	    this.readySave = false;
+	  } else {
+	    this.emit('onReadySave');
+	    this.readySave = true;
+	  }
+	  this.value = event.target.value;
+	}
 
 	var _templateObject$3, _templateObject2$3, _templateObject3$2, _templateObject4;
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _options = /*#__PURE__*/new WeakMap();
 	var _fields = /*#__PURE__*/new WeakMap();
 	var _stepByStep = /*#__PURE__*/new WeakMap();
@@ -188,8 +207,8 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, FormConstructor);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FormConstructor).call(this));
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getStepContent);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getContentConfig);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getStepContent);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getContentConfig);
 	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _options, {
 	      writable: true,
 	      value: void 0
@@ -209,7 +228,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _options, options);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _fields, []);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _stepByStep, new ui_stepbystep.StepByStep({
-	      content: _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _getContentConfig, _getContentConfig2).call(babelHelpers.assertThisInitialized(_this))
+	      content: _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _getContentConfig, _getContentConfig2).call(babelHelpers.assertThisInitialized(_this))
 	    }));
 	    return _this;
 	  }
@@ -293,7 +312,7 @@ this.BX = this.BX || {};
 	        title: item.title
 	      };
 	    }
-	    stepConfig.html[0].node = _classPrivateMethodGet(_this3, _getStepContent, _getStepContent2).call(_this3, item);
+	    stepConfig.html[0].node = _classPrivateMethodGet$1(_this3, _getStepContent, _getStepContent2).call(_this3, item);
 	    contentConfig.push(stepConfig);
 	  });
 	  return contentConfig;

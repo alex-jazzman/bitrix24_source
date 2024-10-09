@@ -44,7 +44,7 @@ export type DialoguesModelState = {
 	lastMessageViews: LastMessageViews,
 	savedPositionMessageId: number,
 	managerList: Array<any>, //todo concrete type
-	readList: Array<any>, //todo concrete type
+	readList: Array<any>, // FIXME remove this field from model and table
 	writingList: Array<WritingUserData>,
 	muteList: Array<any>, //todo concrete type
 	textareaMessage: string,
@@ -61,6 +61,7 @@ export type DialoguesModelState = {
 	loading: boolean,
 	hasPrevPage: boolean,
 	hasNextPage: boolean,
+	tariffRestrictions: TariffRestrictions
 	role: string,
 	permissions: DialogPermissions,
 	aiProvider: string,
@@ -96,6 +97,10 @@ export type DialogPermissions = {
 	manageMessages: PermissionRoles,
 }
 
+export type TariffRestrictions = {
+	isHistoryLimitExceeded: boolean,
+}
+
 declare type PermissionRoles = 'guest' | 'member' | 'manager' | 'owner' | 'none';
 
 declare type DialoguesModelCollection = {
@@ -109,6 +114,7 @@ export type DialoguesModelActions =
 	'dialoguesModel/setState'
 	| 'dialoguesModel/set'
 	| 'dialoguesModel/setFromLocalDatabase'
+	| 'dialoguesModel/setCollectionFromLocalDatabase'
 	| 'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
@@ -116,6 +122,7 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/decreaseCounter'
 	| 'dialoguesModel/updateUserCounter'
 	| 'dialoguesModel/updateManagerList'
+	| 'dialoguesModel/updateTariffRestrictions'
 	| 'dialoguesModel/clearLastMessageViews'
 	| 'dialoguesModel/incrementLastMessageViews'
 	| 'dialoguesModel/setLastMessageViews'
@@ -140,6 +147,7 @@ export interface DialoguesSetStateData extends PayloadData
 export type DialoguesAddActions =
 	'set'
 	| 'add'
+	| 'addCollection'
 ;
 export interface DialoguesAddData extends PayloadData
 {
@@ -150,6 +158,7 @@ export interface DialoguesAddData extends PayloadData
 export type DialoguesUpdateActions =
 	'set'
 	| 'update'
+	| 'updateCollection'
 	| 'updateWritingList'
 	| 'decreaseCounter'
 	| 'updateUserCounter'
@@ -168,8 +177,31 @@ export interface DialoguesUpdateData extends PayloadData
 	fields: Partial<DialoguesModelState>,
 }
 
+export interface DialoguesUpdateCollectionData extends PayloadData
+{
+	updateItems: Array<DialogPayloadDataItem>
+}
+
+export interface DialoguesAddCollectionData extends PayloadData
+{
+	addItems: Array<DialogPayloadDataItem>
+}
+
 export type DialoguesDeleteActions = 'delete';
 export interface DialoguesDeleteData extends PayloadData
 {
 	dialogId: DialogId,
+}
+
+export interface DialogPayloadDataItem
+{
+	dialogId: DialogId,
+	fields: Partial<DialoguesModelState>,
+}
+
+export interface DialogUpdateTariffRestrictionsPayload
+{
+	dialogId: DialogId,
+	tariffRestrictions: TariffRestrictions,
+	isForceUpdate?: boolean,
 }

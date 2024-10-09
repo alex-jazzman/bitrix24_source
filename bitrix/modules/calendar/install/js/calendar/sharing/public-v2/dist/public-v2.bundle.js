@@ -957,8 +957,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      };
 	    });
 	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _selectedTimezoneId)[_selectedTimezoneId] === 'UTC' || !babelHelpers.classPrivateFieldLooseBase(this, _timezoneList)[_timezoneList][babelHelpers.classPrivateFieldLooseBase(this, _selectedTimezoneId)[_selectedTimezoneId]]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _selectedTimezoneId)[_selectedTimezoneId] = 'Africa/Dakar';
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _timezoneList)[_timezoneList][babelHelpers.classPrivateFieldLooseBase(this, _selectedTimezoneId)[_selectedTimezoneId]]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedTimezoneId)[_selectedTimezoneId] = 'UTC';
 	  }
 	}
 	function _separate2(take, array) {

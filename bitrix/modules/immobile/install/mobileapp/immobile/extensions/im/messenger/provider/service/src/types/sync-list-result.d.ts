@@ -25,9 +25,9 @@ declare type SyncListResult = {
 		pins: Array<RawPin>,
 		users: Array<RawUser>,
 	},
-	addedRecent: [],
+	addedRecent: Array<RawRecentItem>,
 	completeDeletedMessages: [],
-	deletedChats: [],
+	deletedChats: Record<number, number>,
 	deletedMessages: [],
 	deletedPins: [] | Record<number, number>,
 	dialogIds: Record<string, string>,
@@ -189,4 +189,35 @@ export type RawShortUser = {
 	id: number,
 	name: string,
 	avatar: string
+};
+
+export type RawRecentItem = {
+	id: string, // dialogId
+	chat_id: number,
+	type: string,
+	title: string,
+	avatar: {
+		url: string,
+		color: string
+	},
+	counter: number,
+	pinned: boolean,
+	unread: boolean,
+	last_id: number,
+	date_update: string,
+	date_last_activity: string,
+	message: {
+		attach: boolean,
+		author_id: number,
+		date: string,
+		file: boolean | {},
+		id: number,
+		status: string,
+		text: string,
+		uuid: string,
+	},
+	chat: {},
+	user: {},
+	has_reminder: boolean,
+	options: [],
 };

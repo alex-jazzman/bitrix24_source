@@ -17,6 +17,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		statusMessage: 'status-message',
 		templateSeparatorUnread: 'template-separator-unread',
 		templateSeparatorDate: 'template-separator',
+		planLimitBanner: 'plan-limit-banner',
 	};
 
 	const OwnMessageStatus = Object.freeze({
@@ -36,10 +37,13 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 
 			ChatCreationMessage: 'ChatCreationMessage',
 			GeneralChatCreationMessage: 'GeneralChatCreationMessage',
+			SignMessage: 'SignMessage',
 
 			ChannelCreationMessage: 'ChannelCreationMessage',
 			OpenChannelCreationMessage: 'OpenChannelCreationMessage',
 			GeneralChannelCreationMessage: 'GeneralChannelCreationMessage',
+
+			PlanLimitsMessage: 'PlanLimitsMessage',
 		},
 	});
 

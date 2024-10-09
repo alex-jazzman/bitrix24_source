@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_designTokens,ui_fonts_opensans,currency,ui_layoutForm,ui_forms,ui_buttons,ui_common,ui_alerts,catalog_productSelector,ui_entitySelector,catalog_productModel,ui_vue_vuex,main_popup,main_loader,ui_label,ui_messagecard,ui_vue_components_hint,ui_notification,ui_infoHelper,main_qrcode,clipboard,helper,ui_hint,ui_dialogs_messagebox,ui_vue,main_core,main_core_events,currency_currencyCore,catalog_productCalculator) {
 	'use strict';

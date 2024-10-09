@@ -38,7 +38,7 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			};
 
 			this.setImageId(file.id);
-			this.setImageUrl(file.urlShow);
+			this.setImageUrl(file.urlLocalPreview || file.urlShow);
 			this.setShowUsername(modelMessage, false);
 
 			if (modelMessage.text)

@@ -42,6 +42,7 @@ class sign extends CModule
 		'rest' => [
 			'OnRestServiceBuildDescription' => [
 				[\Bitrix\Sign\Rest\B2e\MySafe::class, 'onRestServiceBuildDescription'],
+				[\Bitrix\Sign\Rest\B2e\Provider::class, 'onRestServiceBuildDescription'],
 			]
 		],
 	];
@@ -154,16 +155,7 @@ class sign extends CModule
 		// module
 		registerModule($this->MODULE_ID);
 		$this->InstallEvents();
-
-		$startTime = ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL');
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Sign\\Service\\Providers\\LegalInfoProviderAgentService::installLegalConfig();',
-			module: 'sign',
-			period: 'N',
-			interval: 3600,
-			next_exec: $startTime,
-			existError: false
-		);
+		$this->installAgents();
 
 		return true;
 	}
@@ -298,5 +290,26 @@ class sign extends CModule
 				}
 			}
 		}
+	}
+
+	public function installAgents(): void
+	{
+		$startTime = ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL');
+		\CAgent::AddAgent(
+			name: '\\Bitrix\\Sign\\Service\\Providers\\LegalInfoProviderAgentService::installLegalConfig();',
+			module: 'sign',
+			period: 'N',
+			interval: 3600,
+			next_exec: $startTime,
+			existError: false
+		);
+		\CAgent::AddAgent(
+			'Bitrix\\Sign\\Agent\\Converter\\ConvertProviderSchemesAgent::run();',
+			'sign',
+			period: 'N',
+			interval: 900,
+			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3600, 'FULL'),
+			existError: false,
+		);
 	}
 }

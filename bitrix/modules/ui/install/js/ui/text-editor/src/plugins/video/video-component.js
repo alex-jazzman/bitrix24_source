@@ -1,13 +1,14 @@
-import { Dom, Tag, Type, Uri } from 'main.core';
-import { MemoryCache } from 'main.core.cache';
-import type { BaseCache } from 'main.core.cache';
+import { Dom, Tag, Type } from 'main.core';
+import { MemoryCache, type BaseCache } from 'main.core.cache';
 import type { BaseEvent } from 'main.core.events';
+import type { EditorConfig } from 'ui.lexical.core';
 
 import { $getNodeByKey } from 'ui.lexical.core';
 
 import DecoratorComponent from '../../decorator-component';
 
 import type { JsonObject } from 'main.core';
+import { calcImageSize } from '../../helpers/calc-image-size';
 import type { DecoratorComponentOptions } from '../../types/decorator-component-options';
 import { $isVideoNode, VideoNode } from './video-node';
 import FigureResizer from '../../helpers/figure-resizer';
@@ -22,17 +23,19 @@ export default class VideoComponent extends DecoratorComponent
 	{
 		super(options);
 
+		this.#trusted = Type.isStringFilled(this.getOption('provider'));
+
 		this.#figureResizer = new FigureResizer({
+			target: this.#getVideo(),
 			editor: this.getEditor(),
+			minWidth: 120,
+			minHeight: 120,
 			freeTransform: true,
 			events: {
 				onResize: this.#handleResize.bind(this),
 				onResizeEnd: this.#handleResizeEnd.bind(this),
 			},
 		});
-
-		this.#trusted = Type.isStringFilled(this.getOption('provider'));
-		this.#figureResizer.setTarget(this.#getContainer());
 
 		this.getNodeSelection().onSelect((selected: boolean) => {
 			if (selected || this.#figureResizer.isResizing())
@@ -59,57 +62,63 @@ export default class VideoComponent extends DecoratorComponent
 	#getContainer(): HTMLElement
 	{
 		return this.#refs.remember('container', () => {
-			const uri = new Uri(this.getOption('src'));
-			const isVideoFile = uri.getPath().match(/\.(mp4|webm|mov)$/);
-
 			return Tag.render`
 				<div class="ui-text-editor-video-component">
-					${this.#trusted || isVideoFile ? this.#getIframeContainer() : this.#getVideoStub()}
+					<div class="ui-text-editor-video-object-container">${this.#getVideo()}</div>
 					${this.#figureResizer.getContainer()}
 				</div>
 			`;
 		});
 	}
 
-	#getVideoStub(): HTMLElement
+	#getVideo(): HTMLIFrameElement | HTMLVideoElement
 	{
-		return this.#refs.remember('video-stub', () => {
-			return Tag.render`
-				<div class="ui-text-editor-video-stub"></div>
-			`;
-		});
-	}
-
-	#getIframeContainer(): HTMLElement
-	{
-		return this.#refs.remember('iframe-container', () => {
-			return Tag.render`
-				<div class="ui-text-editor-video-iframe-container">
-					${this.#getIframe()}
-				</div>
-			`;
-		});
-	}
-
-	#getIframe(): HTMLIFrameElement
-	{
-		return this.#refs.remember('iframe', () => {
-			const iframe = Tag.render`
-				<iframe
-					class="ui-text-editor-video-iframe"
-					frameborder="0"
-					src="about:blank"
-					draggable="false"
-				></iframe>
-			`;
-
-			iframe.src = this.getOption('src');
-			if (!this.#trusted)
+		return this.#refs.remember('video', () => {
+			let video: HTMLIFrameElement | HTMLVideoElement = null;
+			const src = this.getOption('src');
+			if (this.#trusted)
 			{
-				iframe.sandbox = '';
+				video = Tag.render`<iframe frameborder="0" src="about:blank" draggable="false"></iframe>`;
+				video.src = src;
+			}
+			else
+			{
+				video = Dom.create({
+					tag: 'video',
+					attrs: {
+						controls: true,
+						preload: 'metadata',
+						playsinline: true,
+						src,
+					},
+					events: {
+						loadedmetadata: (event: Event) => {
+							this.getEditor().update(() => {
+								const node: VideoNode = $getNodeByKey(this.getNodeKey());
+								if ($isVideoNode(node) && node.getWidth() === 0)
+								{
+									const [width, height] = calcImageSize(
+										event.target.videoWidth,
+										event.target.videoHeight,
+										600,
+										600,
+									);
+
+									node.setWidthAndHeight(width, height);
+								}
+							});
+						},
+					},
+				});
 			}
 
-			return iframe;
+			const config: EditorConfig = this.getOption('config', {});
+			if (config?.theme?.video?.object)
+			{
+				video.className = config.theme.video.object;
+			}
+
+			return video;
 		});
 	}
 
@@ -132,15 +141,22 @@ export default class VideoComponent extends DecoratorComponent
 		});
 	}
 
-	update(options: JsonObject)
+	update(options: JsonObject): void
 	{
-		// const width = Type.isNumber(options.width) ? `${options.width}px` : 'inherit';
-		// const height = Type.isNumber(options.height) ? `${options.height}px` : 'inherit';
+		const width = Type.isNumber(options.width) && options.width > 0 ? options.width : null;
+		const height = Type.isNumber(options.height) && options.height > 0 ? options.height : null;
+		const aspectRatio = width > 0 && height > 0 ? `${width} / ${height}` : 'auto';
 
-		const iframeWidth = Type.isNumber(options.width) ? options.width : '100%';
-		const iframeHeight = Type.isNumber(options.height) ? options.height : '100%';
-
-		Dom.style(this.#getContainer(), { width: null, height: null });
-		Dom.attr(this.#getIframe(), { width: iframeWidth, height: iframeHeight });
+		Dom.adjust(this.#getVideo(), {
+			attrs: {
+				width,
+				height: null,
+			},
+			style: {
+				width,
+				height: 'auto',
+				aspectRatio,
+			},
+		});
 	}
 }

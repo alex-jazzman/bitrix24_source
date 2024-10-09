@@ -271,6 +271,7 @@ this.BX = this.BX || {};
 	      navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
 	        _this2.gettingVideo = false;
 	        _this2.setLocalStream(stream);
+	        _this2.getApplication().updateMediaDevices();
 	        if (stream.getVideoTracks().length > 0) {
 	          if (!_this2.selectedCamera) {
 	            _this2.selectedCamera = stream.getVideoTracks()[0].getSettings().deviceId;
@@ -1896,11 +1897,7 @@ this.BX = this.BX || {};
 	      return classes;
 	    },
 	    callComponentClasses: function callComponentClasses() {
-	      var classes = ['bx-im-component-call'];
-	      if (navigator.platform.indexOf('Mac') !== -1) {
-	        classes.push('with-blur');
-	      }
-	      return classes;
+	      return ['bx-im-component-call'];
 	    },
 	    chatId: function chatId() {
 	      if (this.application) {

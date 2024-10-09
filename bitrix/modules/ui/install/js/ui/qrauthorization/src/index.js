@@ -1,4 +1,4 @@
-import { ajax as Ajax, Dom, Type, Tag, Loc } from 'main.core';
+import { ajax as Ajax, Dom, Type, Tag, Loc, Extension } from 'main.core';
 import { Popup } from 'main.popup';
 import { Loader } from 'main.loader';
 import { PULL } from 'pull.client';
@@ -25,11 +25,14 @@ export class QrAuthorization
 		this.showFishingWarning = options.showFishingWarning ?? false;
 		this.showBottom = options.showBottom ?? true;
 		this.helpLink = options.helpLink || null;
+		this.helpCode = options.helpCode || null;
 		this.qr = options.qr || null;
 		this.popupParam = options.popupParam || null;
 		this.intent = options.intent || 'calendar';
 		this.popup = null;
 		this.loader = null;
+		this.ttl = Extension.getSettings('ui.qrauthorization')?.ttl ?? 60;
+		this.ttlInterval = null;
 
 		this.qrNode = null;
 		this.successNode = null;
@@ -58,6 +61,7 @@ export class QrAuthorization
 		Ajax.runAction('mobile.deeplink.get', {
 			data: {
 				intent: this.intent,
+				ttl: this.ttl,
 			},
 		}).then((response) => {
 			const link = response.data?.link;
@@ -146,12 +150,19 @@ export class QrAuthorization
 				events: {
 					onPopupShow: () => {
 						this.createQrCodeImage();
+						this.ttlInterval = setInterval(() => {
+							this.createQrCodeImage();
+						}, this.ttl * 1000);
+
 						const qrTarget = this.getPopup().getContentContainer().querySelector('[data-role="ui-qr-authorization__qr-node"]');
 
 						if (qrTarget)
 						{
 							Dom.append(this.getQrNode(), qrTarget);
 						}
+					},
+					onPopupClose: () => {
+						clearInterval(this.ttlInterval);
 					},
 				},
 				padding: 0,
@@ -201,16 +212,30 @@ export class QrAuthorization
 
 	renderHelpLink(): HTMLElement | string
 	{
-		if (!this.helpLink)
+		if (this.helpCode)
 		{
-			return '';
+			const onclick = (e) => {
+				e.preventDefault();
+				top.BX.Helper.show(`redirect=detail&code=${this.helpCode}`);
+			};
+
+			return Tag.render`
+				<a onclick="${onclick}" class="ui-qr-authorization__popup-bottom--link">
+					${Loc.getMessage('UI_QR_AUTHORIZE_HELP')}
+				</a onc>
+			`;
 		}
 
-		return Tag.render`
-			<a href="${this.helpLink}" class="ui-qr-authorization__popup-bottom--link">
-				${Loc.getMessage('UI_QR_AUTHORIZE_HELP')}
-			</a>
-		`;
+		if (this.helpLink)
+		{
+			return Tag.render`
+				<a href="${this.helpLink}" class="ui-qr-authorization__popup-bottom--link">
+					${Loc.getMessage('UI_QR_AUTHORIZE_HELP')}
+				</a>
+			`;
+		}
+
+		return '';
 	}
 
 	success()
@@ -280,6 +305,7 @@ export class QrAuthorization
 		Dom.removeClass(this.getQrNode(), ['--loading', '--success']);
 		Dom.remove(this.getLoadingNode());
 		Dom.remove(this.getSuccessNode());
+		Dom.clean(this.getQrNode());
 		this.hideLoader();
 	}
 

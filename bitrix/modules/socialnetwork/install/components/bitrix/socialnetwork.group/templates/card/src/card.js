@@ -1,4 +1,4 @@
-import {Type, Loc} from 'main.core';
+import { Runtime, Type, Loc } from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
 import {Circle} from 'ui.graph.circle';
 
@@ -264,6 +264,20 @@ class WorkgroupCard
 
 			top.location.href = this.urls.groupsList;
 		}
+	}
+
+	showLimit(featureId: string, bindElement: ?HTMLElement = null): Promise
+	{
+		return new Promise((resolve, reject) => {
+			// eslint-disable-next-line promise/catch-or-return
+			Runtime.loadExtension('socialnetwork.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId,
+					bindElement,
+				});
+			});
+		});
 	}
 }
 

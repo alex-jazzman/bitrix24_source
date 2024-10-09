@@ -9,11 +9,11 @@ return [
 	'css' => 'dist/edit-form.bundle.css',
 	'js' => 'dist/edit-form.bundle.js',
 	'rel' => [
+		'main.popup',
 		'ui.buttons',
 		'tasks.wizard',
+		'ui.sidepanel.layout',
 		'tasks.interval-selector',
-		'main.popup',
-		'ui.hint',
 		'pull.client',
 		'ui.entity-selector',
 		'main.core.events',
@@ -22,6 +22,7 @@ return [
 		'ui.lottie',
 		'ui.sidepanel-content',
 		'ui.forms',
+		'ui.hint',
 	],
 	'settings' => [
 		'currentUser' => \Bitrix\Main\Engine\CurrentUser::get()->getId(),

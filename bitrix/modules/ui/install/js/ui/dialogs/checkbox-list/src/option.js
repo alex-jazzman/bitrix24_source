@@ -15,6 +15,10 @@ export const CheckboxListOption = {
 		'context',
 	],
 
+	emits: [
+		'onToggleOption',
+	],
+
 	data()
 	{
 		return {
@@ -100,6 +104,18 @@ export const CheckboxListOption = {
 			{
 				this.isCheckedValue = !this.isCheckedValue;
 			}
+
+			const { id, title, isLocked, isCheckedValue, isEditable, context } = this;
+
+			this.$emit('onToggleOption', {
+				id,
+				title,
+				isChecked: isCheckedValue,
+				isLocked,
+				isEditable,
+				context,
+				viewMode: this.viewMode,
+			});
 		},
 		onToggleViewMode(): void
 		{

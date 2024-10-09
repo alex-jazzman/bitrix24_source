@@ -525,9 +525,9 @@ export class AliasEditor
 			<div class="sender-item-author-container"></div>
 		`;
 
-		if (sender.userUrl && sender.avatar)
+		if (sender.userUrl)
 		{
-			Dom.append(this.#renderUserInfoNode(sender.userUrl, sender.avatar), authorEditContainer);
+			Dom.append(this.#renderUserInfoNode(sender.userUrl, sender.avatar ?? null), authorEditContainer);
 		}
 
 		return authorEditContainer;

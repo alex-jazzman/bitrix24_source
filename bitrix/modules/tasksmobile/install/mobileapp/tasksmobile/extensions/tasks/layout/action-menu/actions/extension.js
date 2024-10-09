@@ -2,16 +2,18 @@
  * @module tasks/layout/action-menu/actions
  */
 jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
+	const { AnalyticsEvent } = require('analytics');
 	const { confirmDestructiveAction } = require('alert');
 	const { Icon } = require('ui-system/blocks/icon');
 	const { downloadImages } = require('asset-manager');
 	const { Haptics } = require('haptics');
 	const { Feature } = require('feature');
 	const { Loc } = require('tasks/loc');
-	const { showSafeToast, showRemoveToast } = require('toast');
+	const { showSafeToast } = require('toast');
 	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 	const { ActionMenuError } = require('tasks/layout/action-menu/actions/src/error');
 	const { ExtraSettings } = require('tasks/layout/task/view-new/ui/extra-settings');
+	const { FeatureId } = require('tasks/enum');
 
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
@@ -20,6 +22,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { executeIfOnline } = require('tasks/layout/online');
 	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
+	const { getFeatureRestriction } = require('tariff-plan-restriction');
 	const {
 		startTimer,
 		pauseTimer,
@@ -34,14 +37,11 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		ping,
 		follow,
 		unfollow,
-		remove,
 		pin,
 		unpin,
 		mute,
 		unmute,
 		read,
-		markAsRemoved,
-		unmarkAsRemoved,
 		selectByTaskIdOrGuid,
 		selectIsCreator,
 	} = require('tasks/statemanager/redux/slices/tasks');
@@ -201,7 +201,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_COMPLETE'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_COMPLETE_SUCCESS'),
 			useSuccessHaptic: true,
-			handleAction: (task, layoutWidget) => executeIfOnline(
+			handleAction: (task, layoutWidget, options, analyticsLabel = {}) => executeIfOnline(
 				() => {
 					if (task.isResultRequired && !task.isOpenResultExists && !selectIsCreator(task))
 					{
@@ -220,6 +220,13 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 					dispatch(
 						complete({
 							taskId: task.id,
+							analyticsLabel: {
+								tool: 'tasks',
+								category: 'task_operations',
+								event: 'task_complete',
+								type: 'task',
+								...analyticsLabel,
+							},
 						}),
 					);
 
@@ -293,6 +300,10 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			id: ActionId.DELEGATE,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_DELEGATE'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_DELEGATE_SUCCESS'),
+			isRestricted: () => getFeatureRestriction(FeatureId.DELEGATING).isRestricted(),
+			showRestriction: (parentWidget, analyticsData) => {
+				return getFeatureRestriction(FeatureId.DELEGATING).showRestriction({ parentWidget, analyticsData });
+			},
 			useHaptic: false,
 			handleAction: (task, layoutWidget) => executeIfOnline(
 				() => new Promise((resolve) => {
@@ -402,50 +413,16 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_REMOVE_MSGVER_1'),
 			isDestructive: true,
 			useHaptic: false,
-			handleAction: (task, layoutWidget, { onRemove, skipConfirm }) => executeIfOnline(
+			handleAction: (task, layoutWidget, { shouldBackOnRemove = true }) => executeIfOnline(
 				() => {
 					const confirmRemove = () => {
-						const taskId = task.id;
-
 						Haptics.impactLight();
-
-						if (onRemove)
+						BX.postComponentEvent('taskbackground::removeTask', [task.id]);
+						if (shouldBackOnRemove)
 						{
-							onRemove();
-						}
-						else if (Feature.isToastSupported())
-						{
-							dispatch(
-								markAsRemoved({ taskId }),
-							);
-
-							showRemoveToast(
-								{
-									message: Loc.getMessage('M_TASKS_ACTIONS_MENU_REMOVE_MESSAGE'),
-									onButtonTap: () => {
-										dispatch(
-											unmarkAsRemoved({ taskId }),
-										);
-									},
-									onTimerOver: () => {
-										dispatch(remove({ taskId }));
-									},
-								},
-								layoutWidget,
-							);
-						}
-						else
-						{
-							dispatch(remove({ taskId }));
+							layoutWidget.back();
 						}
 					};
-
-					if (skipConfirm)
-					{
-						confirmRemove();
-
-						return;
-					}
 
 					confirmDestructiveAction({
 						title: '',
@@ -662,6 +639,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		[ActionId.READ]: `${pathToOutlineIcons}chatsWithCheck.svg`,
 		[ActionId.EXTRA_SETTINGS]: `${pathToOutlineIcons}settings.svg`,
 	};
+	const outlineLockIcon = `${pathToOutlineIcons}lock.svg`;
 
 	const outlineInlineIconMap = {
 		[ActionId.START_TIMER]: Icon.PLAY,
@@ -679,34 +657,42 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		[ActionId.EXTRA_SETTINGS]: Icon.SETTINGS,
 	};
 
-	const toastPrefix = `${currentDomain}${pathToIcons}/toast-`;
-	const toastIconMap = {
-		[ActionId.PING]: `${toastPrefix}ping.svg`,
-	};
-
 	Object.keys(ActionMeta).forEach((actionId) => {
 		const sectionCode = Object.keys(actionsBySectionsMap).find((section) => {
 			return actionsBySectionsMap[section].includes(actionId);
 		});
-
 		const currentAction = ActionMeta[actionId];
+		const { useSuccessHaptic, useHaptic = true, successToastPhrase, isRestricted, showRestriction } = currentAction;
 
 		ActionMeta[actionId] = {
 			...currentAction,
+			sectionCode,
+			getData: () => ({
+				svgUri: actionIconMap[actionId],
+				outlineIconUri: (isRestricted?.() ? outlineLockIcon : outlineIconMap[actionId]),
+				outlineIconContent: outlineInlineIconMap[actionId],
+			}),
 			/**
 			 * @param {object} [task]
 			 * @param {string|number} [taskId]
 			 * @param {object} [layout]
 			 * @param {object} [options]
+			 * @param {object} [analyticsLabel]
 			 * @return {Promise<void>}
 			 */
-			handleAction: async ({ task, taskId, layout, options }) => {
+			handleAction: async ({ task, taskId, layout, options, analyticsLabel }) => {
 				try
 				{
-					const { useSuccessHaptic, useHaptic = true, successToastPhrase } = currentAction;
+					if (isRestricted?.())
+					{
+						showRestriction?.(layout, analyticsLabel);
+
+						return;
+					}
+
 					const taskRedux = task ?? selectByTaskIdOrGuid(store.getState(), taskId);
 
-					await currentAction.handleAction(taskRedux, layout, options);
+					await currentAction.handleAction(taskRedux, layout, options, analyticsLabel);
 
 					if (useSuccessHaptic)
 					{
@@ -739,12 +725,6 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 					}
 				}
 			},
-			sectionCode,
-			data: {
-				svgUri: actionIconMap[actionId],
-				outlineIconUri: outlineIconMap[actionId],
-				outlineIconContent: outlineInlineIconMap[actionId],
-			},
 		};
 	});
 
@@ -772,12 +752,10 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	// prefetch assets with timeout to not affect core queries
 	setTimeout(() => {
 		const menuIcons = Object.values(actionIconMap).filter((icon) => icon !== null);
-		const toastIcons = Object.values(toastIconMap).filter((icon) => icon !== null);
-		const outlineIcons = Object.values(outlineIconMap).filter(Boolean);
+		const outlineIcons = Object.values({ ...outlineIconMap, outlineLockIcon }).filter(Boolean);
 
 		void downloadImages([
 			...menuIcons,
-			...toastIcons,
 			...outlineIcons,
 		]);
 	}, 1000);

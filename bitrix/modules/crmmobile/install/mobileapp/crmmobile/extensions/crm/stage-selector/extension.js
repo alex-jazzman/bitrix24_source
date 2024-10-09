@@ -3,13 +3,14 @@
  */
 jn.define('crm/stage-selector', (require, exports, module) => {
 	const { StageSelectorField } = require('layout/ui/fields/stage-selector');
-	const { TypeId } = require('crm/type/id');
+	const { TypeId } = require('crm/type');
 	const { actionCheckChangeStage } = require('crm/entity-actions/check-change-stage');
 	const { getEntityMessage } = require('crm/loc');
 	const { connect } = require('statemanager/redux/connect');
 	const { CrmStageSelectorItem } = require('crm/stage-selector/item');
 	const { isOnline } = require('device/connection');
 	const { showOfflineToast } = require('toast');
+	const { AnalyticsEvent } = require('analytics');
 
 	const {
 		selectStagesIdsBySemantics,
@@ -84,6 +85,12 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			return isNewEntity && TypeId.Lead === entityTypeId;
 		}
 
+		getAnalytics()
+		{
+			return new AnalyticsEvent(BX.componentParameters.get('analytics', {}))
+				.setElement('stage_selector');
+		}
+
 		onBeforeHandleChange(params)
 		{
 			if (!isOnline())
@@ -105,6 +112,7 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 				uid,
 				isSelectedStageFinalConverted: this.isFinalConvertedStage(selectedStageId, selectedStatusId),
 				isActiveStageFinalConverted: this.isFinalConvertedStage(activeStageId, this.activeStatusId),
+				analytics: this.getAnalytics(),
 			});
 		}
 

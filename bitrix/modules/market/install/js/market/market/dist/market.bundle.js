@@ -18,6 +18,7 @@ this.BX = this.BX || {};
 	          params: this.params,
 	          result: this.result,
 	          categories: [],
+	          searchFilters: [],
 	          favNumbers: 0,
 	          numUpdates: 0,
 	          totalApps: 0,
@@ -58,6 +59,7 @@ this.BX = this.BX || {};
 	      },
 	      created() {
 	        this.categories = this.result.CATEGORIES;
+	        this.searchFilters = this.result.SEARCH_FILTERS;
 	        this.favNumbers = this.result.FAV_NUMBERS;
 	        this.numUpdates = this.result.NUM_UPDATES;
 	        this.totalApps = this.result.TOTAL_APPS;
@@ -175,6 +177,7 @@ this.BX = this.BX || {};
 				<div class="market-wrapper">
 					<Toolbar
 						:categories="categories"
+						:searchFilters="searchFilters"
 						:menuInfo="result.MENU_INFO"
 						:marketAction="marketAction"
 						:searchAction="searchAction"

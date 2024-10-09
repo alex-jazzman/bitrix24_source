@@ -8,6 +8,7 @@ return [
 		'tasks:statemanager/redux/slices/tasks/meta',
 		'tasks:statemanager/redux/slices/tasks/model/task',
 		'tasks:statemanager/redux/slices/tasks/selector',
+		'type',
 		'utils/object',
 	],
 ];

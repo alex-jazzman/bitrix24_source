@@ -29,6 +29,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { ChatApplication } = require('im/messenger/core/chat');
+	const { EntityReady } = require('entity-ready');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const core = new ChatApplication({
@@ -60,15 +61,16 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		NotificationPullHandler,
 		OnlinePullHandler,
 	} = require('im/messenger/provider/pull/chat');
+	const { PlanLimitsPullHandler } = require('im/messenger/provider/pull/plan-limits');
+	const { SidebarPullHandler } = require('im/messenger/provider/pull/sidebar');
 
 	const {
 		AppStatus,
 		EventType,
 		RestMethod,
 		FeatureFlag,
-		UserRole,
 		ComponentCode,
-		DialogType,
+		OpenRequest,
 	} = require('im/messenger/const');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -80,16 +82,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Counters } = require('im/messenger/lib/counters');
-	const { EntityReady } = require('entity-ready');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { Promotion } = require('im/messenger/lib/promotion');
 	const { PushHandler } = require('im/messenger/provider/push');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
-	const { ChatSidebarController, ChannelSidebarController, CommentSidebarController } = require('im/messenger/controller/sidebar');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
-	const { SyncFillerChat, ComponentCodeService } = require('im/messenger/provider/service');
+	const { SyncFillerChat, SyncFillerDatabase, ComponentCodeService } = require('im/messenger/provider/service');
 	/* endregion import */
 
 	class Messenger extends MessengerBase
@@ -170,6 +170,25 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		initRequests()
 		{
 			restManager.on(RestMethod.imRevisionGet, {}, this.checkRevision.bind(this));
+
+			if (this.isNeedRequestPlanLimits())
+			{
+				restManager.once(RestMethod.imV2TariffRestrictionGet, {}, this.updatePlanLimitsData.bind(this));
+			}
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isNeedRequestPlanLimits()
+		{
+			const planLimits = MessengerParams.getPlanLimits();
+			if (planLimits?.fullChatHistory?.isAvailable)
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 		/**
@@ -204,7 +223,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
-			this.openSidebar = this.openSidebar.bind(this);
 			this.openLine = this.openLine.bind(this);
 			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
 			this.getOpenLineParams = this.getOpenLineParams.bind(this);
@@ -230,6 +248,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.onAppActiveBefore = this.onAppActiveBefore.bind(this);
 			this.onAppPaused = this.onAppPaused.bind(this);
 			this.onAppActive = this.onAppActive.bind(this);
+			this.openRequestRouter = this.openRequestRouter.bind(this);
 			this.onChatSettingChange = this.onChatSettingChange.bind(this);
 		}
 
@@ -252,7 +271,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		subscribeMessengerEvents()
 		{
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLine);
 			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams);
@@ -271,7 +289,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		unsubscribeMessengerEvents()
 		{
 			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.removeCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
 			BX.removeCustomEvent(EventType.messenger.openLine, this.openLine);
 			BX.removeCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.removeCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams);
@@ -304,6 +321,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.app.active, this.onAppActive);
 			BX.addCustomEvent(EventType.app.failRestoreConnection, this.refresh);
 			BX.addCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
+			jnComponent.on(EventType.jnComponent.openRequest, this.openRequestRouter);
 		}
 
 		/**
@@ -324,6 +342,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.app.active, this.onAppActive);
 			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.refresh);
 			BX.removeCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
+			jnComponent.off(EventType.jnComponent.openRequest, this.openRequestRouter);
 		}
 
 		/**
@@ -332,6 +351,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		initCustomServices()
 		{
 			this.syncFillerService = new SyncFillerChat();
+			this.syncDatabaseFillerService = new SyncFillerDatabase();
 		}
 
 		/**
@@ -395,6 +415,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.PULL.subscribe(new DesktopPullHandler());
 			BX.PULL.subscribe(new NotificationPullHandler());
 			BX.PULL.subscribe(new OnlinePullHandler());
+			BX.PULL.subscribe(new SidebarPullHandler());
+			BX.PULL.subscribe(new PlanLimitsPullHandler());
 		}
 
 		/**
@@ -465,6 +487,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		async refresh(redrawHeaderTruly)
 		{
+			this.syncService.clearBackgroundSyncInterval();
 			this.redrawHeaderTruly = redrawHeaderTruly ?? false;
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
@@ -517,6 +540,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				.then(() => this.ready())
 				.catch((error) => {
 					Logger.error('Messenger.afterRefresh error', error);
+				})
+				.finally(() => {
+					this.syncService.startBackgroundSyncInterval();
 				})
 			;
 		}
@@ -587,6 +613,56 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		/* region event handlers */
 
+		/**
+		 * @private
+		 * @param {PageManager} parentWidget
+		 * @param {*} openRequest
+		 * @return {Promise<void>}
+		 */
+		async openRequestRouter(parentWidget, openRequest = {})
+		{
+			Logger.info(`${this.constructor.name}.openRequestHandler`, parentWidget, openRequest);
+			if (!Type.isObject(openRequest))
+			{
+				return;
+			}
+
+			if (openRequest[OpenRequest.dialog] && Type.isObject(openRequest[OpenRequest.dialog].options))
+			{
+				/**
+				 * @type {DialogOpenOptions}
+				 */
+				const openDialogOptions = openRequest[OpenRequest.dialog].options;
+				this.openDialogByRequest(parentWidget, openDialogOptions).catch((error) => {
+					Logger.error(error);
+				});
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {PageManager} parentWidget
+		 * @param {DialogOpenOptions} openDialogOptions
+		 * @return {Promise<void>}
+		 */
+		async openDialogByRequest(parentWidget, openDialogOptions = {})
+		{
+			const openOptions = openDialogOptions;
+			if (openOptions.dialogId)
+			{
+				// eslint-disable-next-line no-param-reassign
+				openOptions.dialogId = openOptions.dialogId.toString();
+			}
+
+			this.dialog = new Dialog();
+
+			return this.dialog.open(openOptions, parentWidget);
+		}
+
+		/**
+		 * @param {DialogOpenOptions} options
+		 * @return {Promise<void>}
+		 */
 		async openDialog(options = {})
 		{
 			Logger.info(`${this.constructor.name}.openDialog`, options);
@@ -689,49 +765,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			);
 		}
 
-		/**
-		 * desc Handler call open sidebar event
-		 * @param {{dialogId: string|number}} params
-		 * @override
-		 */
-		openSidebar(params)
-		{
-			Logger.info('EventType.messenger.openSidebar', params);
-			const dialogModel = this.store.getters['dialoguesModel/getById'](params.dialogId);
-
-			// if curren role guest then open sidebar is none for it
-			if (dialogModel && dialogModel.role && dialogModel.role === UserRole.guest)
-			{
-				return;
-			}
-
-			if (DialogType.comment === dialogModel.type)
-			{
-				this.sidebar = new CommentSidebarController(params);
-				this.sidebar.open();
-
-				return;
-			}
-
-			if ([DialogType.channel, DialogType.openChannel, DialogType.generalChannel].includes(dialogModel.type)
-				&& dialogModel?.role !== UserRole.guest)
-			{
-				this.sidebar = new ChannelSidebarController(params);
-				this.sidebar.open();
-
-				return;
-			}
-
-			this.sidebar = new ChatSidebarController(params);
-			this.sidebar.open();
-		}
-
 		destroyDialog(dialogId)
 		{
 			Logger.info('EventType.messenger.destroyDialog', dialogId);
 			this.dialog.view.ui.back();
 		}
 
+		/**
+		 * @param {DialogOpenOptions} options
+		 */
 		openLine(options)
 		{
 			Logger.info('EventType.messenger.openLine', options);
@@ -985,6 +1027,44 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			reloadAllScripts();
 
 			return false;
+		}
+
+		/**
+		 * @param {*} response
+		 * @return boolean
+		 */
+		updatePlanLimitsData(response)
+		{
+			Logger.log(`${this.constructor.name}.updatePlanLimitsData`, response);
+			const error = response.error();
+			if (error)
+			{
+				Logger.error(`${this.constructor.name}.updatePlanLimitsData has error:`, error);
+
+				return false;
+			}
+
+			if (Type.isNil(response.data()?.fullChatHistory?.isAvailable))
+			{
+				Logger.error(`${this.constructor.name}.updatePlanLimitsData not valid response`, response.data());
+
+				return false;
+			}
+			const planLimits = response.data();
+			MessengerParams.setPlanLimits(planLimits);
+
+			this.sendToCopilotComponent(planLimits);
+
+			return true;
+		}
+
+		/**
+		 * @param {PlanLimits} planLimits
+		 * @return void
+		 */
+		sendToCopilotComponent(planLimits)
+		{
+			BX.postComponentEvent(EventType.messenger.updatePlanLimitsData, [planLimits], ComponentCode.imCopilotMessenger);
 		}
 
 		destructor()

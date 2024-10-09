@@ -3,7 +3,8 @@ import Util from './util';
 export const MediaStreamsKinds = {
 	Camera: 1,
 	Microphone: 2,
-	Screen: 3
+	Screen: 3,
+	ScreenAudio: 4,
 }
 
 class Track {
@@ -95,6 +96,7 @@ export class Call {
 		screenStream: null,
 		mediaMutedBySystem: false,
 		needToEnableAudioAfterSystemMuted: false,
+		needToDisableAudioAfterPublish: false,
 		localTracks: {},
 		localConnectionQuality: 0,
 		minimalConnectionQuality: 2,
@@ -439,7 +441,12 @@ export class Call {
 					this.setLog(`Publishing a local track with kind ${track.source} (sid: ${trackId}) succeeded`, LOG_LEVEL.INFO);
 					this.#privateProperties.localTracks[track.source] = track
 					this.triggerEvents('PublishSucceed', [track.source]);
-					if (track.source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
+					if (track.source === MediaStreamsKinds.Microphone && this.#privateProperties.needToDisableAudioAfterPublish)
+					{
+						this.#privateProperties.needToDisableAudioAfterPublish = false;
+						this.disableAudio();
+					}
+					else if (track.source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
 					{
 						this.#processVideoQueue();
 					}
@@ -965,8 +972,8 @@ export class Call {
 				this.#privateProperties[`${keys}`] = StreamQualityOptions[keys]
 			}
 
-			const source = MediaStreamKind
-			MediaStreamTrack.source = source
+			const source = MediaStreamKind;
+			MediaStreamTrack.source = source;
 			if (source === MediaStreamsKinds.Camera) {
 				if( this.#privateProperties.videoSimulcast) {
 					const width = MediaStreamTrack.getSettings().width;
@@ -1080,6 +1087,22 @@ export class Call {
 						"source":  source,
 					}
 				});
+			} else if (source === MediaStreamsKinds.ScreenAudio) {
+				this.sender.addTransceiver(MediaStreamTrack, {
+					direction: 'sendonly'
+				});
+				this.sender.addTransceiver(MediaStreamTrack, {
+					direction: 'sendonly'
+				});
+
+				this.#addPendingPublication(MediaStreamTrack.id, source);
+
+				this.#sendSignal({
+					"addTrack":  {
+						"cid" : MediaStreamTrack.id,
+						"source":  source
+					}
+				});
 			}
 
 			this.#privateProperties.offersStack++;
@@ -1087,6 +1110,10 @@ export class Call {
 		}
 		catch (e)
 		{
+			if (MediaStreamKind === MediaStreamsKinds.Microphone)
+			{
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+			}
 			this.setLog(`Publishing a track with kind ${MediaStreamKind} failed: ${e}`, LOG_LEVEL.ERROR);
 			this.#releaseStream(MediaStreamKind);
 			this.triggerEvents('PublishFailed', [MediaStreamKind])
@@ -1302,7 +1329,6 @@ export class Call {
 
 	#toggleRemoteParticipantVideo(participantIds, showVideo, isPaginateToggle = false)
 	{
-		const eventType = showVideo ? 'RemoteMediaAdded' : 'RemoteMediaRemoved';
 		participantIds.forEach(participantId => {
 			const remoteParticipant = this.#privateProperties.remoteParticipants[participantId];
 			if (remoteParticipant && remoteParticipant.tracks[MediaStreamsKinds.Camera] && remoteParticipant.isLocalVideoMute === showVideo)
@@ -1319,14 +1345,6 @@ export class Call {
 					remoteParticipant.tracks[MediaStreamsKinds.Camera].id,
 					remoteParticipant.tracks[MediaStreamsKinds.Camera].source,
 					remoteParticipant.isLocalVideoMute
-				);
-
-				this.triggerEvents(
-					eventType,
-					[
-						remoteParticipant,
-						remoteParticipant.tracks[MediaStreamsKinds.Camera]
-					]
 				);
 			}
 		});
@@ -1483,7 +1501,8 @@ export class Call {
 		}
 	}
 
-	async enableAudio() {
+	async enableAudio(disabled = false)
+	{
 		this.setLog('Start enabling audio', LOG_LEVEL.INFO);
 		this.#privateProperties.needToEnableAudioAfterSystemMuted = false;
 		if (this.#privateProperties.switchActiveAudioDeviceInProgress)
@@ -1511,7 +1530,11 @@ export class Call {
 			if (track)
 			{
 				this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
-				track.enabled = true;
+				track.enabled = !disabled;
+				if (disabled)
+				{
+					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				}
 				await this.publishTrack(MediaStreamsKinds.Microphone, track);
 			}
 			else
@@ -1648,21 +1671,34 @@ export class Call {
 
 	async startScreenShare() {
 		this.setLog('Start enabling screen sharing', LOG_LEVEL.INFO);
-		const track = await this.getLocalScreen()
-		if (track) {
-			await this.publishTrack(MediaStreamsKinds.Screen, track)
-		} else {
+		const tracks = await this.getLocalScreen()
+		const videoTrack = tracks?.video;
+		const audioTrack = tracks?.audio;
+
+		if (!videoTrack)
+		{
 			this.setLog('Enabling screen sharing failed: has no track', LOG_LEVEL.ERROR);
 			this.#releaseStream(MediaStreamsKinds.Screen);
-			this.triggerEvents('PublishFailed', [MediaStreamsKinds.Screen])
+			this.triggerEvents('PublishFailed', [MediaStreamsKinds.Screen]);
+			this.triggerEvents('PublishFailed', [MediaStreamsKinds.ScreenAudio]);
+			return;
+		}
+
+		await this.publishTrack(MediaStreamsKinds.Screen, videoTrack);
+
+		if (audioTrack)
+		{
+			await this.publishTrack(MediaStreamsKinds.ScreenAudio, audioTrack);
 		}
 	}
 
 	async stopScreenShare() {
 		this.setLog('Start disabling screen sharing', LOG_LEVEL.INFO);
-		this.#releaseStream(MediaStreamsKinds.Screen)
-		this.removeTrack(MediaStreamsKinds.Screen)
-		await this.unpublishTrack(MediaStreamsKinds.Screen)
+		this.#releaseStream(MediaStreamsKinds.Screen);
+		this.removeTrack(MediaStreamsKinds.Screen);
+		this.removeTrack(MediaStreamsKinds.ScreenAudio);
+		await this.unpublishTrack(MediaStreamsKinds.Screen);
+		await this.unpublishTrack(MediaStreamsKinds.ScreenAudio);
 	}
 
 	sendMessage(message) {
@@ -1695,10 +1731,15 @@ export class Call {
 			await this.getTrack(MediaStreamsKinds.Screen);
 		}
 
-		return this.#privateProperties.screenStream?.getVideoTracks()[0];
+		return {
+			video: this.#privateProperties.screenStream?.getVideoTracks()[0],
+			audio: this.#privateProperties.screenStream?.getAudioTracks()[0]
+		};
 	}
 
 	async #getUserMedia(options, fallbackMode = false) {
+		this.triggerEvents('GetUserMediaStarted', [options]);
+
 		this.setLog(`Start getting user media with options: ${JSON.stringify(options)}`, LOG_LEVEL.INFO);
 		const constraints = {
 			audio: false,
@@ -1730,7 +1771,18 @@ export class Call {
 				}
 			}
 
-			stream = await navigator.mediaDevices.getUserMedia(constraints)
+			stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+			if (options.video && stream.getVideoTracks()[0])
+			{
+				this.triggerEvents('GetUserMediaSuccess', [{video: true}]);
+			}
+
+			if (options.audio && stream.getAudioTracks()[0])
+			{
+				this.triggerEvents('GetUserMediaSuccess', [{audio: true}]);
+			}
+
 			if (options.video)
 			{
 				this.#addTrackMuteHandlers(stream.getVideoTracks()[0]);
@@ -1757,8 +1809,7 @@ export class Call {
 		let stream = null;
 
 		try {
-			if (window["BXDesktopSystem"])
-			{
+			if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
 				stream = await navigator.mediaDevices.getUserMedia({
 					video: {
 						mandatory: {
@@ -1774,9 +1825,16 @@ export class Call {
 			{
 				stream = await navigator.mediaDevices.getDisplayMedia({
 					video: {
-						cursor: 'always'
+						cursor: 'always',
+						width: {
+							ideal: 1920
+						},
+						height: {
+							ideal: 1080
+						}
 					},
-					audio: false
+					systemAudio: "include",
+					audio: true,
 				});
 			}
 			this.setLog('Getting display media succeeded', LOG_LEVEL.INFO);
@@ -2277,12 +2335,14 @@ export class Call {
 
 		if (track.kind === 'video')
 		{
+			const streamRemovingId = Util.getUuidv4();
+			participant.streamRemovingId = streamRemovingId;
 			ontrackData.streams[0].onremovetrack = () =>
 			{
 				// we need to check if a participant is still exists
 				// otherwise tracks were deleted when participant left room
 				const participant = this.#privateProperties.remoteParticipants[userId];
-				if (participant)
+				if (participant?.streamRemovingId === streamRemovingId)
 				{
 					this.setLog(`Track with kind ${track.source} (sid: ${track.id}) for a participant with id ${userId} (sid: ${participant.sid || 'unknown'}) was removed from peer connection`, LOG_LEVEL.WARNING);
 					this.triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
@@ -2588,6 +2648,7 @@ class Participant {
 	isHandRaised = false;
 	videoPaused = false;
 	isLocalVideoMute = false;
+	streamRemovingId = '';
 	cameraStreamQuality: STREAM_QUALITY.MEDIUM;
 
 	constructor(participant, socket) {

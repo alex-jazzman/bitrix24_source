@@ -52,9 +52,12 @@ export default class PostFormEditor extends EventEmitter
 			createdFromEmail: !!params.createdFromEmail,
 		};
 
-		if (!Type.isStringFilled(this.formParams.text))
+		const currentUri = new Uri(location.toString());
+		const getTextFromHash = currentUri.getQueryParam('getTextFromHash') === 'Y';
+
+		if (!Type.isStringFilled(this.formParams.text) && getTextFromHash)
 		{
-			this.formParams.textFromHash = decodeURIComponent(location.hash.slice(1));
+			this.formParams.textFromHash = decodeURIComponent(currentUri.getFragment());
 			history.replaceState(null, null, ' ');
 		}
 

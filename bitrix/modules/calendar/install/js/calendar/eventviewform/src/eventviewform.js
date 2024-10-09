@@ -10,6 +10,7 @@ import { BitrixVue } from 'ui.vue3';
 import { ViewEventSlider } from './view-event-slider';
 import { CalendarSection } from 'calendar.sectionmanager';
 import 'viewer';
+import {RelationInterface} from "calendar.entityrelation";
 
 export class EventViewForm {
 	permissions = {};
@@ -182,7 +183,6 @@ export class EventViewForm {
 					this.uid = params.id;
 					this.entryUrl = params.entryUrl;
 					this.userTimezone = params.userTimezone;
-					this.dayOfWeekMonthFormat = params.dayOfWeekMonthFormat;
 					this.plannerFeatureEnabled = !!params.plannerFeatureEnabled;
 					if (this.planner && !this.plannerFeatureEnabled)
 					{
@@ -345,6 +345,17 @@ export class EventViewForm {
 			);
 		}
 
+		this.DOM.relationWrap = this.DOM.content.querySelector(`#${uid}_view_relation_wrap`);
+
+		if (this.DOM.relationWrap && this.entry?.data?.EVENT_TYPE === '#shared_crm#')
+		{
+			this.relationControl = new RelationInterface({
+				parentNode: this.DOM.relationWrap,
+				eventId: this.entry.parentId,
+			});
+			Dom.append(this.relationControl.render(), this.DOM.relationWrap);
+		}
+
 		if (this.entry && this.entry.isMeeting())
 		{
 			this.initAcceptMeetingControl(uid);
@@ -447,11 +458,12 @@ export class EventViewForm {
 			solidStatus: true,
 			readonly: true,
 			locked: !this.plannerFeatureEnabled,
-			dayOfWeekMonthFormat: this.dayOfWeekMonthFormat
+			alwaysBlue: true,
 		});
 
 		this.planner.show();
 		this.planner.showLoader();
+		this.planner.setEntriesCount(this.attendees.length);
 
 		setTimeout(() => {
 			if (this.DOM.plannerWrapOuter)
@@ -586,13 +598,13 @@ export class EventViewForm {
 
 	copyEventUrl()
 	{
-		if(!this.entryUrl || !this.BX.clipboard.copy(this.entryUrl))
+		if (!this.entryUrl || !this.BX.clipboard.copy(window.location.origin + this.entryUrl))
 		{
 			return;
 		}
 
 		this.timeoutIds = this.timeoutIds || [];
-		let popup = new this.BX.PopupWindow(
+		const popup = new this.BX.PopupWindow(
 			'calendar_clipboard_copy',
 			this.DOM.copyButton,
 			{
@@ -602,17 +614,17 @@ export class EventViewForm {
 				zIndex: 1000,
 				angle: true,
 				offsetLeft: 20,
-				cachable: false
-			}
+				cachable: false,
+			},
 		);
 		popup.show();
 
 		let timeoutId;
-		while(timeoutId = this.timeoutIds.pop())
+		while (timeoutId = this.timeoutIds.pop())
 		{
 			clearTimeout(timeoutId);
 		}
-		this.timeoutIds.push(setTimeout(function(){popup.close();}, 1500));
+		this.timeoutIds.push(setTimeout(() =>{ popup.close(); }, 1500));
 	}
 
 	displayError(errors = [])

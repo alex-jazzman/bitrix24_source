@@ -50,8 +50,12 @@ export type Chat = {
 	loading: boolean,
 	hasPrevPage: boolean,
 	hasNextPage: boolean,
+	isHistoryLimitExceeded: boolean,
 	diskFolderId: number,
 	role: RoleItem,
 	permissions: Object<ActionGroupItem, RoleItem>,
+	tariffRestrictions: {
+		isHistoryLimitExceeded: boolean,
+	},
 	parentChatId: number,
 };

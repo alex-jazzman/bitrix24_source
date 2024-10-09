@@ -628,7 +628,7 @@ if($strError <> '')
 	$e = new CAdminException(array(array('text' => $strError)));
 	$message = new CAdminMessage(GetMessage("MAIN_ERROR_SAVING"), $e);
 	echo $message->Show();
-	//echo CAdminMessage::ShowMessage(Array("MESSAGE"=>$strError, "HTML"=>true, "TYPE"=>"ERROR"));
+	//CAdminMessage::ShowMessage(Array("MESSAGE"=>$strError, "HTML"=>true, "TYPE"=>"ERROR"));
 }
 
 //We have to explicitly call calendar and editor functions because

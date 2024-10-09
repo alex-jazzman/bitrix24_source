@@ -24,7 +24,7 @@ import type TextEditor from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
 const URL_REGEX = (
-	/((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@~-]*)/
+	/((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@~-]*)(?<![-.+():%])/
 );
 
 const EMAIL_REGEX = (
@@ -164,6 +164,11 @@ function startsWithSeparator(textContent: string): boolean
 	return isSeparator(textContent[0]);
 }
 
+function startsWithFullStop(textContent: string): boolean
+{
+	return /^\.[a-zA-Z0-9]{1,}/.test(textContent);
+}
+
 function isPreviousNodeValid(node: LexicalNode): boolean
 {
 	let previousNode = node.getPreviousSibling();
@@ -248,6 +253,7 @@ function handleLinkCreation(node: TextNode, matchers: Array<LinkMatcher>, onChan
 				attributes.target = '_blank';
 			}
 
+			console.log('match.url', match.text, match.url);
 			const linkNode = $createAutoLinkNode(match.url, attributes);
 			const textNode = $createTextNode(match.text);
 			textNode.setFormat(linkTextNode.getFormat());
@@ -337,7 +343,7 @@ function handleBadNeighbors(textNode: TextNode, matchers: Array<LinkMatcher>, on
 	const nextSibling = textNode.getNextSibling();
 	const text = textNode.getTextContent();
 
-	if ($isAutoLinkNode(previousSibling) && !startsWithSeparator(text))
+	if ($isAutoLinkNode(previousSibling) && (!startsWithSeparator(text) || startsWithFullStop(text)))
 	{
 		previousSibling.append(textNode);
 		handleLinkEdit(previousSibling, matchers, onChange);

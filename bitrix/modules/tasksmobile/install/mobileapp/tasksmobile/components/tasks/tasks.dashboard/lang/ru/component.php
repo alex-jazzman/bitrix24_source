@@ -29,3 +29,6 @@ $MESS['M_TASKS_VIEW_ROUTER_SELECTED_FILTER_TITLE'] = "Нет задач по ф�
 $MESS['M_TASKS_VIEW_FLOW_DEFAULT_NAVIGATION_TITLE'] = "Задачи потока";
 $MESS['M_TASKS_VIEW_FLOW_EFFICIENCY_NAVIGATION_SUBTITLE'] = "Эффективность: #EFFICIENCY#%";
 
+$MESS["M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_TITLE"] = "При создании задачи произошла ошибка";
+$MESS["M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_TRY_AGAIN"] = "Попробовать ещё раз";
+$MESS["M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_REMOVE"] = "Удалить задачу из списка";

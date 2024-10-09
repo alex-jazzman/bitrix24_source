@@ -16,6 +16,10 @@
 	margin-right: 0;
 }
 
+.landing-ui-field-image--compact .landing-ui-field-image-left .landing-ui-field .landing-ui-field-input {
+	margin-bottom: 7px;
+}
+
 .landing-ui-field-image-right {
 	display: flex;
 	flex-direction: column;

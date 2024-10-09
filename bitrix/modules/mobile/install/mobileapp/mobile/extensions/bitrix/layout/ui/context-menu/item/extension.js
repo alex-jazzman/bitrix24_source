@@ -271,11 +271,24 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 				return null;
 			}
 
+			const parentWidget = this.getParentWidget();
+			const ensureMenuClosed = (handler) => {
+				if (parentWidget)
+				{
+					parentWidget.close(handler);
+				}
+				else
+				{
+					handler();
+				}
+			};
+
 			return callback(
 				this.getId(),
 				this.getParentId(),
 				{
-					parentWidget: this.getParentWidget(),
+					parentWidget,
+					ensureMenuClosed,
 					parent: this.getParent(),
 				},
 			);

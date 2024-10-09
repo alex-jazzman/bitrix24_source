@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/service/classes/message/load', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { DialogType, ComponentCode } = require('im/messenger/const');
+	const { DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { UserManager } = require('im/messenger/lib/user-manager');
@@ -13,8 +13,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, DateHelper } = require('im/messenger/lib/helper');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	const logger = LoggerManager.getInstance().getLogger('message-service--load');
+
+	const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
 	/**
 	 * @class LoadService
@@ -175,21 +178,27 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(async (result) => {
 				logger.warn('LoadService: loadHistory result', result);
+				const hasPrevPage = result.hasNextPage; // FIXME convert key name when back and web switch to two keys
 				this.preparedHistoryMessages = result.messages.sort((a, b) => a.id - b.id);
 				this.preparedHistoryMessages = await this.contextCreator
-					.createMessageDoublyLinkedListForDialog(this.getDialog(), this.preparedHistoryMessages)
+					.createMessageDoublyLinkedListForDialog({ ...this.getDialog(), hasPrevPage }, this.preparedHistoryMessages)
 				;
 				this.reactions = {
 					reactions: result.reactions,
 					usersShort: result.usersShort,
 				};
 
-				const hasPrevPage = result.hasNextPage;
 				const rawData = { ...result, hasPrevPage, hasNextPage: null };
+				await this.updateModels(rawData);
 
-				return this.updateModels(rawData);
-			}).then(() => {
-				this.drawPreparedHistoryMessages();
+				return result;
+			}).then(async (result) => {
+				await this.drawPreparedHistoryMessages();
+
+				if (this.preparedHistoryMessages.length === 0 && result.tariffRestrictions.isHistoryLimitExceeded === true)
+				{
+					await this.updateForceTariffRestrictions(result.tariffRestrictions);
+				}
 				this.isHistoryLoading = false;
 
 				return true;
@@ -215,7 +224,8 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			};
 			logger.log('LoadService: loadHistoryMessagesFromDb', options);
 			const result = await this.messageRepository.getTopPage(options);
-			await this.updateModelsByDbResult(result);
+			const resultWithValidPlan = this.checkPlanLimits(result);
+			await this.updateModelsByDbResult(resultWithValidPlan);
 
 			const resultTemp = await this.tempMessageRepository.getList();
 			if (Type.isArrayFilled(resultTemp.messageList))
@@ -242,7 +252,8 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			};
 			logger.log('LoadService: loadUnreadMessagesFromDb', options);
 			const result = await this.messageRepository.getBottomPage(options);
-			await this.updateModelsByDbResult(result);
+			const resultWithValidPlan = this.checkPlanLimits(result);
+			await this.updateModelsByDbResult(resultWithValidPlan);
 		}
 
 		async loadFirstPage()
@@ -308,7 +319,9 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				this.isHistoryLoading = false;
 				this.isUnreadLoading = false;
 
-				return error;
+				const errorKey = Object.keys(error).filter((key) => key.startsWith(RestMethod.imV2ChatMessageGetContext));
+
+				return error[errorKey] || error;
 			}
 		}
 
@@ -374,6 +387,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				messageId,
 				LoadService.getMessageRequestLimit(),
 			);
+			this.checkPlanLimits(result, true);
+			if (result.dialogFields)
+			{
+				await this.updateDialogFields(result.dialogFields);
+			}
 
 			const response = {
 				isCompleteContext: true,
@@ -506,10 +524,13 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 		}
 
 		/**
+		 * @param {MessageRepositoryPage|*} result
 		 * @private
 		 */
 		async updateModelsByDbResult(result)
 		{
+			await this.updateDialogFields(result.dialogFields);
+
 			if (Type.isArrayFilled(result.userList))
 			{
 				await this.store.dispatch('usersModel/setFromLocalDatabase', result.userList);
@@ -541,12 +562,27 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 		}
 
 		/**
+		 * @param {object} dialogFields
+		 * @return void
+		 */
+		async updateDialogFields(dialogFields)
+		{
+			if (!Type.isUndefined(dialogFields))
+			{
+				await this.store.dispatch('dialoguesModel/update', {
+					dialogId: this.getDialog().dialogId,
+					fields: dialogFields,
+				});
+			}
+		}
+
+		/**
 		 * @param {boolean} hasPrevPage
 		 * @param {boolean} hasNextPage
-		 *
+		 * @param {TariffRestrictions} tariffRestrictions
 		 * @return {Promise<*>}
 		 */
-		async updatePageNavigationFields({ hasPrevPage, hasNextPage })
+		async updatePageNavigationFields({ hasPrevPage, hasNextPage, tariffRestrictions = {} })
 		{
 			const fields = {};
 			if (Type.isBoolean(hasPrevPage))
@@ -557,6 +593,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			if (Type.isBoolean(hasNextPage))
 			{
 				fields.hasNextPage = hasNextPage;
+			}
+
+			if (Type.isBoolean(tariffRestrictions?.isHistoryLimitExceeded))
+			{
+				fields.tariffRestrictions = tariffRestrictions;
 			}
 
 			return this.store.dispatch('dialoguesModel/update', {
@@ -576,6 +617,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				usersShort,
 				hasPrevPage,
 				hasNextPage,
+				tariffRestrictions = {},
 				additionalMessages,
 				commentInfo,
 				copilot,
@@ -584,6 +626,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			const dialogPromise = this.updatePageNavigationFields({
 				hasPrevPage,
 				hasNextPage,
+				tariffRestrictions,
 			});
 			const usersPromise = [
 				this.userManager.setUsersToModel(users),
@@ -659,6 +702,111 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			}
 
 			return true;
+		}
+
+		/**
+		 * @param {MessageRepositoryPage} requestPageResult
+		 * @param {boolean} [isContextLoad=false]
+		 * @return {MessageRepositoryPage|*}
+		 */
+		checkPlanLimits(requestPageResult, isContextLoad = false)
+		{
+			if (DialogHelper.createByChatId(this.chatId)?.isChannelOrComment)
+			{
+				return true;
+			}
+
+			const planLimits = MessengerParams.getPlanLimits();
+			if (planLimits?.fullChatHistory?.isAvailable === true)
+			{
+				return requestPageResult;
+			}
+
+			logger.log(`${this.constructor.name}.checkPlanLimits got messages: ${requestPageResult.messageList.length}`);
+			const filteredMessageList = this.filterMessagesByPlanLimitDay(
+				requestPageResult.messageList,
+				planLimits.fullChatHistory?.limitDays,
+			);
+
+			if (filteredMessageList.length < requestPageResult.messageList.length)
+			{
+				// eslint-disable-n ext-line no-param-reassign
+				requestPageResult.dialogFields = {
+					tariffRestrictions: {
+						isHistoryLimitExceeded: true,
+					},
+				};
+			}
+
+			if (filteredMessageList.length > 0 && filteredMessageList.length === requestPageResult.messageList.length)
+			{
+				const dialog = this.store.getters['dialoguesModel/getByChatId'](this.chatId);
+				if (!isContextLoad && dialog?.inited === false && dialog?.tariffRestrictions?.isHistoryLimitExceeded === true)
+				{
+					// eslint-disable-next-line no-param-reassign
+					requestPageResult.dialogFields = {
+						tariffRestrictions: {
+							isHistoryLimitExceeded: false,
+						},
+					};
+				}
+
+				if (filteredMessageList.length >= 10)
+				{
+					// eslint-disable-next-line no-param-reassign
+					requestPageResult.dialogFields = {
+						tariffRestrictions: {
+							isHistoryLimitExceeded: false,
+						},
+					};
+				}
+			}
+			logger.log(`${this.constructor.name}.checkPlanLimits filtered messages: ${requestPageResult.messageList.length - filteredMessageList.length}`);
+
+			// eslint-disable-next-line no-param-reassign
+			requestPageResult.messageList = filteredMessageList;
+
+			return requestPageResult;
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 * @param {number} [limitDay=30]
+		 * @return {Array<MessagesModelState>}
+		 */
+		filterMessagesByPlanLimitDay(messageList, limitDay = 30)
+		{
+			const currentEndData = Date.now() - this.getTimeFromDays(limitDay);
+
+			return messageList.filter((message) => {
+				const mesTime = DateHelper.cast(message.date)?.getTime();
+
+				return currentEndData <= mesTime;
+			});
+		}
+
+		/**
+		 * @param {number} limitDay
+		 * @return {number}
+		 */
+		getTimeFromDays(limitDay)
+		{
+			return limitDay * DAY_MILLISECONDS;
+		}
+
+		/**
+		 * @param {TariffRestrictions} tariffRestrictions
+		 */
+		updateForceTariffRestrictions(tariffRestrictions)
+		{
+			return this.store.dispatch(
+				'dialoguesModel/updateTariffRestrictions',
+				{
+					dialogId: `chat${this.chatId}`,
+					tariffRestrictions,
+					isForceUpdate: true,
+				},
+			);
 		}
 	}
 

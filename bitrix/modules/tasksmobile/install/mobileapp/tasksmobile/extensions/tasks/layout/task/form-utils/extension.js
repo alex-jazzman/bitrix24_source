@@ -13,6 +13,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 				recentItemsLimit: 15,
 				maxProjectsInRecentTab: 10,
 				searchLimit: 20,
+				shouldSelectProjectDates: true,
 			},
 			filters: [
 				{
@@ -25,7 +26,6 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 	}, extra);
 
 	const makeAccomplicesFieldConfig = (extra = {}) => mergeImmutable({
-		canOpenUserList: true,
 		provider: {
 			context: 'TASKS_MEMBER_SELECTOR_EDIT_accomplice',
 			options: {
@@ -50,7 +50,6 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 	}, extra);
 
 	const makeAuditorsFieldConfig = (extra = {}) => mergeImmutable({
-		canOpenUserList: true,
 		provider: {
 			context: 'TASKS_MEMBER_SELECTOR_EDIT_auditor',
 		},

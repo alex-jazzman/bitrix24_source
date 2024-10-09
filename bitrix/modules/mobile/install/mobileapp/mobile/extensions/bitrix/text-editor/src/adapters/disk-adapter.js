@@ -6,6 +6,7 @@ jn.define('text-editor/adapters/disk-adapter', (require, exports, module) => {
 	const { ImageAdapter } = require('text-editor/adapters/image-adapter');
 	const { scheme } = require('text-editor/internal/scheme');
 	const { Type } = require('type');
+	const { getMimeType } = require('utils/file');
 
 	/**
 	 * @param options {{
@@ -30,8 +31,9 @@ jn.define('text-editor/adapters/disk-adapter', (require, exports, module) => {
 			if (!this.previewSync)
 			{
 				const { fileOptions: file } = this.getOptions();
+				const mimeType = getMimeType(file.type, file.name);
 				if (
-					file?.type?.startsWith?.('image')
+					mimeType.startsWith?.('image')
 					&& Type.isNumber(file?.width)
 					&& Type.isNumber(file?.height)
 				)
@@ -51,7 +53,7 @@ jn.define('text-editor/adapters/disk-adapter', (require, exports, module) => {
 						},
 						children: [
 							scheme.createText({
-								content: `${currentDomain}${file.url}`,
+								content: DiskAdapter.normalizePath(file.url),
 							}),
 						],
 					});
@@ -60,7 +62,7 @@ jn.define('text-editor/adapters/disk-adapter', (require, exports, module) => {
 				{
 					this.previewSync = scheme.createElement({
 						name: 'url',
-						value: `${currentDomain}${file.url}`,
+						value: DiskAdapter.normalizePath(file.url),
 						children: [
 							scheme.createText({
 								content: file.name,
@@ -71,6 +73,24 @@ jn.define('text-editor/adapters/disk-adapter', (require, exports, module) => {
 			}
 
 			return this.previewSync;
+		}
+
+		static normalizePath(sourcePath)
+		{
+			if (Type.isStringFilled(sourcePath))
+			{
+				if (sourcePath.startsWith('file://'))
+				{
+					return sourcePath;
+				}
+
+				if (sourcePath.startsWith('/'))
+				{
+					return `${currentDomain}${sourcePath}`;
+				}
+			}
+
+			return sourcePath;
 		}
 	}
 

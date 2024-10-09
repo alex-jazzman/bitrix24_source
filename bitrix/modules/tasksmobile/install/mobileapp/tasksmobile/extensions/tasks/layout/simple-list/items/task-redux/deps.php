@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'assets/icons',
 		'animation',
 		'tokens',
 		'loc',
@@ -14,6 +15,7 @@ return [
 		'layout/ui/counter-view',
 		'layout/ui/simple-list/items/extended',
 		'layout/ui/user/avatar',
+		'ui-system/blocks/icon',
 		'ui-system/typography/text',
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
@@ -21,6 +23,7 @@ return [
 		'tasks:enum',
 		'tasks:layout/deadline-pill',
 		'tasks:statemanager/redux/slices/tasks',
+		'tasks:layout/fields/time-tracking/timer',
 	],
 	'bundle' => [
 		'./src/task-content',

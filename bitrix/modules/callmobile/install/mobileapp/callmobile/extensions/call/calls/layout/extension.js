@@ -901,24 +901,20 @@
 				userModel.cameraState = false;
 			}
 
-			let remoteStream = this.state.remoteStream;
 			if (userId == this.centralUserId && userId != env.userId)
 			{
-				remoteStream = stream;
+				this.setState({
+					remoteStream: stream
+				});
 			}
-			let localStream = this.state.localStream;
-			let cameraState = this.state.cameraState;
-			if (userId == this.userId /*&& userId != this.centralUserId*/)
+			else if (userId == this.userId)
 			{
-				localStream = stream;
-				cameraState = !!stream;
+				this.setState({
+					localStream: stream,
+					cameraState: !!stream,
+					mirrorLocalVideo: mirrorLocalVideo
+				});
 			}
-			this.setState({
-				remoteStream: remoteStream,
-				localStream: localStream,
-				cameraState: cameraState,
-				mirrorLocalVideo: (userId == this.userId) ? mirrorLocalVideo : this.state.mirrorLocalVideo
-			});
 		}
 
 		renderRemoteStream()
@@ -1274,7 +1270,7 @@
 					style: {
 						width: 66,
 						height: 66,
-						marginLeft: 40,
+						marginLeft: 28,
 					},
 					svg: {content: Icons.incomingDecline},
 					onClick: () => this.emit(EventName.DeclineButtonClick),
@@ -1287,8 +1283,8 @@
 						height: 46,
 						paddingLeft: 16,
 						paddingRight: 16,
-						marginLeft: 16,
-						marginRight: 16,
+						marginLeft: 12,
+						marginRight: 12,
 						borderWidth: 1,
 						borderRadius: 23,
 						borderColor: this.state.isVideoCall ? "#7FFFFFFF" : "#00FFFFFF",
@@ -1297,6 +1293,7 @@
 						textAlign: "center",
 
 					},
+					numberOfLines: 2,
 					text: BX.message("MOBILE_CALL_LAYOUT_ANSWER_WITHOUT_VIDEO"),
 					onClick: () => this.emit(EventName.AnswerButtonClick, [false]),
 				}),
@@ -1305,7 +1302,7 @@
 					style: {
 						width: 66,
 						height: 66,
-						marginRight: 40,
+						marginRight: 28,
 					},
 					svg: {content: this.state.isVideoCall ? Icons.incomingAnswerWithVideo : Icons.incomingAnswer},
 					onClick: () => this.emit(EventName.AnswerButtonClick, [this.state.isVideoCall]),

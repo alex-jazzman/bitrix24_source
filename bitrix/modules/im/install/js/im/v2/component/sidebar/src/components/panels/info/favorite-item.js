@@ -1,5 +1,5 @@
 import { EventEmitter } from 'main.core.events';
-
+import { Text } from 'main.core';
 import { EventType } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
 import { MessageAvatar, AvatarSize, MessageAuthorTitle } from 'im.v2.component.elements';
@@ -7,6 +7,7 @@ import { MessageAvatar, AvatarSize, MessageAuthorTitle } from 'im.v2.component.e
 import './css/favorite-item.css';
 
 import type { ImModelSidebarFavoriteItem, ImModelMessage } from 'im.v2.model';
+import { highlightText } from 'im.v2.lib.text-highlighter';
 
 // @vue/component
 export const FavoriteItem = {
@@ -26,9 +27,13 @@ export const FavoriteItem = {
 			type: String,
 			required: true,
 		},
+		searchQuery: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['contextMenuClick'],
-	data() {
+	data(): { showContextButton: boolean } {
 		return {
 			showContextButton: false,
 		};
@@ -50,7 +55,15 @@ export const FavoriteItem = {
 		},
 		messageText(): string
 		{
-			return Parser.purifyMessage(this.favoriteMessage);
+			const purifiedMessage = Parser.purifyMessage(this.favoriteMessage);
+			const textToShow = Text.encode(purifiedMessage);
+
+			if (this.searchQuery.length === 0)
+			{
+				return textToShow;
+			}
+
+			return highlightText(textToShow, this.searchQuery);
 		},
 		isCopilot(): boolean
 		{
@@ -104,7 +117,7 @@ export const FavoriteItem = {
 					@click.stop="onContextMenuClick"
 				></button>
 			</div>
-			<div class="bx-im-favorite-item__message-text"> {{ messageText }}</div>
+			<div class="bx-im-favorite-item__message-text" v-html="messageText"></div>
 		</div>
 	`,
 };

@@ -308,10 +308,6 @@ class CommentActionController
 		}
 
 		CommentActionController.isAjaxRunning = true;
-		if (action !== 'taskComplete')
-		{
-			CommentActionController.showNotification(action);
-		}
 
 		const defaultData = {
 			taskId,
@@ -328,10 +324,7 @@ class CommentActionController
 			data: data,
 		}).then(
 			() => {
-				if (action === 'taskComplete')
-				{
-					CommentActionController.showNotification(action);
-				}
+				CommentActionController.showNotification(action);
 				CommentActionController.isAjaxRunning = false;
 			},
 			(response) => {

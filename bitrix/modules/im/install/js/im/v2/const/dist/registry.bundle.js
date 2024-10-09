@@ -13,6 +13,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatLoadContext: 'im.v2.Chat.loadInContext',
 	  imV2ChatAdd: 'im.v2.Chat.add',
 	  imV2ChatUpdate: 'im.v2.Chat.update',
+	  imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 	  imV2ChatRead: 'im.v2.Chat.read',
 	  imV2ChatReadAll: 'im.v2.Chat.readAll',
 	  imV2ChatUnread: 'im.v2.Chat.unread',
@@ -54,6 +55,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
 	  imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	  imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
+	  imV2AccessCheck: 'im.v2.Access.check',
+	  imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 	  imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
 	  imCallBetaCreateRoom: 'im.call.beta.createRoom',
 	  imMessageAdd: 'im.message.add',
@@ -344,6 +347,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    list: 'RecentListContainer',
 	    content: 'CreateChatContent'
 	  },
+	  updateChat: {
+	    name: 'updateChat',
+	    list: 'RecentListContainer',
+	    content: 'UpdateChatContent'
+	  },
 	  channel: {
 	    name: 'channel',
 	    list: 'ChannelListContainer',
@@ -458,6 +466,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  base: '#17a3ea',
 	  transparent: 'transparent'
 	});
+	const ColorToken = Object.freeze({
+	  base: 'base',
+	  primary: 'primary',
+	  secondary: 'secondary',
+	  alert: 'alert'
+	});
 
 	const AttachType = Object.freeze({
 	  Delimiter: 'delimiter',
@@ -553,7 +567,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  createChatManageUiMenu: 'im-content-create-chat-manage-ui',
 	  createChatManageMessagesMenu: 'im-content-create-chat-can-post',
 	  messageBaseFileMenu: 'im-message-base-file-context-menu',
-	  desktopItemMenu: 'im-navigation-desktop-item-context-menu'
+	  desktopItemMenu: 'im-navigation-desktop-item-context-menu',
+	  messageHistoryLimit: 'im-message-history-limit-popup'
 	});
 
 	const Settings = Object.freeze({
@@ -637,6 +652,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  userList: 'userList',
 	  changeOwner: 'changeOwner',
 	  changeManagers: 'changeManagers',
+	  update: 'update',
 	  readMessage: 'readMessage',
 	  openComments: 'openComments',
 	  subscribeToComments: 'subscribeToComments',
@@ -697,12 +713,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  lines: `/online/?${GetParameter.openLines}=#DIALOG_ID#`
 	};
 
-	const CallViewState = {
-	  opened: 'Opened',
-	  closed: 'Closed',
-	  folded: 'Folded'
-	};
-
 	const TextareaPanelType = {
 	  edit: 'edit',
 	  reply: 'reply',
@@ -727,6 +737,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  open: 'open',
 	  close: 'close'
 	});
+
+	const SliderCode = {
+	  copilotDisabled: 'limit_copilot_off',
+	  historyLimited: 'limit_office_chating_history'
+	};
 
 	exports.RestMethod = RestMethod;
 	exports.EventType = EventType;
@@ -757,6 +772,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.SidebarFileTabTypes = SidebarFileTabTypes;
 	exports.SidebarFileTypes = SidebarFileTypes;
 	exports.Color = Color;
+	exports.ColorToken = ColorToken;
 	exports.AttachType = AttachType;
 	exports.AttachDescription = AttachDescription;
 	exports.KeyboardButtonType = KeyboardButtonType;
@@ -781,10 +797,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.BotCommand = BotCommand;
 	exports.PathPlaceholder = PathPlaceholder;
 	exports.GetParameter = GetParameter;
-	exports.CallViewState = CallViewState;
 	exports.TextareaPanelType = TextareaPanelType;
 	exports.ChatEntityLinkType = ChatEntityLinkType;
 	exports.MultidialogStatus = MultidialogStatus;
+	exports.SliderCode = SliderCode;
 
 }((this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}),BX.Messenger.v2.Const));
 //# sourceMappingURL=registry.bundle.js.map

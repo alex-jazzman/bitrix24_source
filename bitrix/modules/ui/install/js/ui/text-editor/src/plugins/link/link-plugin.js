@@ -61,7 +61,6 @@ import {
 } from 'ui.lexical.link';
 
 import type TextEditor from '../../text-editor';
-import './link.css';
 
 export const INSERT_LINK_DIALOG_COMMAND: LexicalCommand<string> = createCommand('INSERT_LINK_DIALOG_COMMAND');
 
@@ -330,7 +329,7 @@ export class LinkPlugin extends BasePlugin
 									this.getEditor().update(() => {
 										this.#restoreSelection();
 
-										this.getEditor().dispatchCommand(TOGGLE_LINK_COMMAND, { url, originalUrl });
+										this.getEditor().dispatchCommand(TOGGLE_LINK_COMMAND, { url, originalUrl, rel: null });
 										linkEditor.setEditMode(false);
 
 										const currentSelection: RangeSelection = $getSelection();

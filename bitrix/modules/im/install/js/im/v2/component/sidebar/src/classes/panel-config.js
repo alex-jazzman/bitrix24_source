@@ -25,11 +25,13 @@ export const MainPanelBlock = Object.freeze({
 	meeting: 'meeting',
 	market: 'market',
 	multidialog: 'multidialog',
+	tariffLimit: 'tariffLimit',
 });
 
 export const MainPanels = {
 	[MainPanelType.user]: {
 		[MainPanelBlock.user]: 10,
+		[MainPanelBlock.tariffLimit]: 15,
 		[MainPanelBlock.info]: 20,
 		[MainPanelBlock.file]: 30,
 		[MainPanelBlock.fileUnsorted]: 30,
@@ -39,6 +41,7 @@ export const MainPanels = {
 	},
 	[MainPanelType.chat]: {
 		[MainPanelBlock.chat]: 10,
+		[MainPanelBlock.tariffLimit]: 15,
 		[MainPanelBlock.info]: 20,
 		[MainPanelBlock.file]: 30,
 		[MainPanelBlock.fileUnsorted]: 30,
@@ -48,6 +51,7 @@ export const MainPanels = {
 	},
 	[MainPanelType.copilot]: {
 		[MainPanelBlock.copilot]: 10,
+		[MainPanelBlock.tariffLimit]: 15,
 		[MainPanelBlock.copilotInfo]: 20,
 		[MainPanelBlock.task]: 40,
 		[MainPanelBlock.meeting]: 50,
@@ -76,6 +80,7 @@ export const MainPanels = {
 	},
 	[MainPanelType.support24Question]: {
 		[MainPanelBlock.support]: 10,
+		[MainPanelBlock.tariffLimit]: 15,
 		[MainPanelBlock.multidialog]: 20,
 		[MainPanelBlock.info]: 30,
 		[MainPanelBlock.file]: 40,

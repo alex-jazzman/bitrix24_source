@@ -1,7 +1,7 @@
 <?php
 $MESS["SIGN_CURRENT_DOCUMENT_LIST_TITLE"] = "HR documents";
 $MESS["SIGN_DOCUMENT_DOCUMENT_LIST_TITLE"] = "Signing progress";
-$MESS["SIGN_DOCUMENT_GRID_BANNER_TEXT"] = "We recommend that you download the signed documents to your computer for faster access at any time.";
+$MESS["SIGN_DOCUMENT_GRID_BANNER_TEXT_MSGVER_1"] = "We recommend that you save the signed documents on your computer for immediate access at any time. [helpdesklink]Learn more[/helpdesklink]";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_ACTION"] = "Action";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_CREATED_BY"] = "Created by";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_CREATE_DATE"] = "Created on";

@@ -14,6 +14,7 @@ export type BBCodeNodeSchemeOptions = {
 	stringify?: BBCodeNodeStringifier,
 	serialize?: BBCodeNodeSerializer,
 	allowedIn?: Array<BBCodeNodeName>,
+	onChange?: () => void,
 };
 
 export class BBCodeNodeScheme
@@ -23,6 +24,7 @@ export class BBCodeNodeScheme
 	stringifier: BBCodeNodeStringifier | null = null;
 	serializer: BBCodeNodeSerializer | null = null;
 	allowedIn: Array<BBCodeNodeName> = [];
+	onChangeHandler: () => void = null;
 
 	constructor(options: BBCodeNodeSchemeOptions)
 	{
@@ -45,6 +47,7 @@ export class BBCodeNodeScheme
 		this.setAllowedIn(options.allowedIn);
 		this.setStringifier(options.stringify);
 		this.setSerializer(options.serialize);
+		this.setOnChangeHandler(options.onChange);
 	}
 
 	setName(name: BBCodeNodeSchemeOptions['name'])
@@ -52,17 +55,19 @@ export class BBCodeNodeScheme
 		if (Type.isStringFilled(name))
 		{
 			this.name = [name];
+			this.runOnChangeHandler();
 		}
 
 		if (Type.isArrayFilled(name))
 		{
 			this.name = name;
+			this.runOnChangeHandler();
 		}
 	}
 
 	getName(): Array<string>
 	{
-		return [...this.name];
+		return this.name;
 	}
 
 	removeName(...names: Array<BBCodeNodeName>)
@@ -72,6 +77,7 @@ export class BBCodeNodeScheme
 				return !names.includes(name);
 			}),
 		);
+		this.runOnChangeHandler();
 	}
 
 	setGroup(name: BBCodeNodeSchemeOptions['group'])
@@ -79,11 +85,13 @@ export class BBCodeNodeScheme
 		if (Type.isStringFilled(name))
 		{
 			this.group = [name];
+			this.runOnChangeHandler();
 		}
 
 		if (Type.isArrayFilled(name))
 		{
 			this.group = name;
+			this.runOnChangeHandler();
 		}
 	}
 
@@ -94,11 +102,12 @@ export class BBCodeNodeScheme
 				return !groups.includes(group);
 			}),
 		);
+		this.runOnChangeHandler();
 	}
 
 	getGroup(): Array<BBCodeGroupName>
 	{
-		return [...this.group];
+		return this.group;
 	}
 
 	hasGroup(groupName: string): boolean
@@ -137,12 +146,13 @@ export class BBCodeNodeScheme
 		if (Type.isArray(allowedParents))
 		{
 			this.allowedIn = [...allowedParents];
+			this.runOnChangeHandler();
 		}
 	}
 
 	getAllowedIn(): Array<BBCodeNodeName>
 	{
-		return [...this.allowedIn];
+		return this.allowedIn;
 	}
 
 	isAllowedIn(tagName: string): boolean
@@ -156,5 +166,24 @@ export class BBCodeNodeScheme
 				&& allowedIn.includes(tagName)
 			)
 		);
+	}
+
+	setOnChangeHandler(handler: () => void)
+	{
+		this.onChangeHandler = handler;
+	}
+
+	getOnChangeHandler(): (() => void) | null
+	{
+		return this.onChangeHandler;
+	}
+
+	runOnChangeHandler()
+	{
+		const handler = this.getOnChangeHandler();
+		if (Type.isFunction(handler))
+		{
+			handler();
+		}
 	}
 }

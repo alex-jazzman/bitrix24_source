@@ -1,15 +1,14 @@
-/* eslint-disable flowtype/require-return-type */
-
 /**
  * @module im/messenger/controller/recent/chat/recent
  */
 jn.define('im/messenger/controller/recent/chat/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
-	const { ChatRecentCache } = require('im/messenger/cache');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
+	const { RestMethod } = require('im/messenger/const');
+	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { DialogRest } = require('im/messenger/provider/rest');
@@ -34,23 +33,25 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
 			this.commentCountersDeleteHandler = this.commentCountersDeleteHandler.bind(this);
 
-			this.firstPageHandler = this.firstPageHandler.bind(this);
-			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
 			this.stopRefreshing = this.stopRefreshing.bind(this);
 			this.renderInstant = this.renderInstant.bind(this);
 			this.loadPage = this.loadPage.bind(this);
 		}
 
-		fillStoreFromCache()
+		initRequests()
 		{
-			this.recentCache = new ChatRecentCache({
-				storeManager: this.storeManager,
-			});
+			super.initRequests();
+			this.initDepartmentRequest();
+			this.countersInitRequest();
+		}
 
-			const cache = this.recentCache.get();
-			this.logger.info(`${this.getClassName()}.fillStoreFromCache cache:`, cache);
-
-			return this.fillStore(cache);
+		initDepartmentRequest()
+		{
+			restManager.once(
+				RestMethod.imDepartmentColleaguesGet,
+				this.getRestManagerDepartmentOptions(),
+				this.departmentColleaguesGetHandler.bind(this),
+			);
 		}
 
 		subscribeViewEvents()
@@ -123,12 +124,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		onLoadNextPage()
 		{
-			const canLoadNextPage = !this.pageNavigation.isPageLoading && this.pageNavigation.hasNextPage;
-			if (!canLoadNextPage)
-			{
-				return;
-			}
-
 			this.loadNextPage();
 		}
 
@@ -159,10 +154,10 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 					return DialogRest.readAllMessages();
 				})
 				.then((result) => {
-					this.logger.info(`${this.getClassName()}.readAllMessages result:`, result);
+					this.logger.info(`${this.constructor.name}.readAllMessages result:`, result);
 				})
 				.catch((error) => {
-					this.logger.error(`${this.getClassName()}.readAllMessages catch:`, error);
+					this.logger.error(`${this.constructor.name}.readAllMessages catch:`, error);
 				})
 			;
 		}
@@ -258,7 +253,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			this.renderer.removeFromQueue(mutation.payload.data.id);
 
 			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
 				this.view.hideLoader();
 			}
@@ -294,18 +289,18 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			const error = response.error();
 			if (error)
 			{
-				this.logger.error(`${this.getClassName()}.departmentColleaguesGetHandler`, error);
+				this.logger.error(`${this.constructor.name}.departmentColleaguesGetHandler`, error);
 
 				return;
 			}
 
 			const userList = response.data();
 
-			this.logger.log(`${this.getClassName()}.departmentColleaguesGetHandler`, userList);
+			this.logger.log(`${this.constructor.name}.departmentColleaguesGetHandler`, userList);
 
 			this.store.dispatch('usersModel/set', userList)
 				.catch((err) => {
-					this.logger.error(`${this.getClassName()}.departmentColleaguesGetHandler.usersModel/set.catch:`, err);
+					this.logger.error(`${this.constructor.name}.departmentColleaguesGetHandler.usersModel/set.catch:`, err);
 				});
 		}
 	}

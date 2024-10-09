@@ -22,12 +22,12 @@ if(!is_array($arUserOptions))
 
 /******* POST **********/
 
-if ($REQUEST_METHOD == "POST" && $_REQUEST['desktop_backurl'] && str_starts_with($_REQUEST['desktop_backurl'], "/"))
+if ($_SERVER['REQUEST_METHOD'] == "POST" && $_REQUEST['desktop_backurl'] && str_starts_with($_REQUEST['desktop_backurl'], "/"))
 	$desktop_backurl = $_REQUEST['desktop_backurl'];
 else
 	$desktop_backurl = "";
 
-if($REQUEST_METHOD=="POST" && $_REQUEST['save'] == 'Y')
+if ($_SERVER['REQUEST_METHOD']=="POST" && isset($_REQUEST['save']) && $_REQUEST['save'] == 'Y')
 {
 	if (!is_array($ids))
 		$ids = array();
@@ -64,7 +64,11 @@ if($REQUEST_METHOD=="POST" && $_REQUEST['save'] == 'Y')
 $obJSPopup = new CJSPopup('',
 	array(
 		'TITLE' => GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_DIALOG_TITLE'),
-		'ARGS' => "lang=".urlencode($_GET["lang"])."&site=".urlencode($_GET["site"])."&back_url=".urlencode($_GET["back_url"])."&path=".urlencode($_GET["path"])."&name=".urlencode($_GET["name"])
+		'ARGS' => "lang=" . urlencode($_GET["lang"] ?? '')
+			. "&site=" . urlencode($_GET["site"] ?? '')
+			. "&back_url=" . urlencode($_GET["back_url"] ?? '')
+			. "&path=" . urlencode($_GET["path"] ?? '')
+			. "&name=" . urlencode($_GET["name"] ?? '')
 	)
 );
 
@@ -111,8 +115,8 @@ for($i=1; $i<=count($arUserOptions); $i++):
 		</td>
 		</td>
 		<td>
-			<div onmouseout="rowMouseOut(this)" onmouseover="rowMouseOver(this)" class="edit-field view-area" id="view_area_text_<?=$i?>" onclick="editArea('text_<?=$i?>')" title="<?=GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_TOOLTIP_TEXT_EDIT')?>"><?=($arUserOption["NAME"] <> ''?htmlspecialcharsbx($arUserOption["NAME"]):GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_DIALOG_DESKTOP').$i)?></div>
-			<div class="edit-area" id="edit_area_text_<?=$i?>" style="display: none;"><input type="text" style="width: 220px;" name="text_<?echo $i?>" value="<?=($arUserOption["NAME"] <> ''?htmlspecialcharsbx($arUserOption["NAME"]):GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_DIALOG_DESKTOP').$i)?>" onblur="viewArea('text_<?=$i?>')" /></div>
+			<div onmouseout="rowMouseOut(this)" onmouseover="rowMouseOver(this)" class="edit-field view-area" id="view_area_text_<?=$i?>" onclick="editArea('text_<?=$i?>')" title="<?=GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_TOOLTIP_TEXT_EDIT')?>"><?=(($arUserOption["NAME"] ?? '') <> '' ? htmlspecialcharsbx($arUserOption["NAME"]):GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_DIALOG_DESKTOP').$i)?></div>
+			<div class="edit-area" id="edit_area_text_<?=$i?>" style="display: none;"><input type="text" style="width: 220px;" name="text_<?echo $i?>" value="<?=(($arUserOption["NAME"] ?? '') <> '' ? htmlspecialcharsbx($arUserOption["NAME"]) : GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_DIALOG_DESKTOP').$i)?>" onblur="viewArea('text_<?=$i?>')" /></div>
 		</td>
 		<td><span onclick="dsMoveUp(<?=$i?>)" class="rowcontrol up" style="visibility: <?=($i == 1 ? 'hidden' : 'visible')?>" title="<?=GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_TOOLTIP_UP')?>"></span></td>
 		<td><span onclick="dsMoveDown(<?=$i?>)" class="rowcontrol down" style="visibility: <?=($i == count($arUserOptions) ? 'hidden' : 'visible')?>" title="<?=GetMessage('CMDESKTOP_ADMIN_SETTINGS_ALL_TOOLTIP_DOWN')?>"></span></td>

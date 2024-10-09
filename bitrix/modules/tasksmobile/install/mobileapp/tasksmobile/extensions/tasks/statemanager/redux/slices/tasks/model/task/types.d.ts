@@ -23,9 +23,8 @@ declare type TaskReduxModel = {
 	accomplices?: number[],
 	auditors?: number[],
 
+	relatedTaskId?: number;
 	relatedTasks?: number[],
-	// ToDo
-	// subTasks?: object,
 
 	crm?: CrmDTO[],
 	tags?: TagsDTO[],
@@ -53,6 +52,7 @@ declare type TaskReduxModel = {
 
 	checklist?: ChecklistDTO,
 	checklistDetails?: ChecklistDetailsDTO[],
+	checklistFlatTree?: object[],
 	counter?: CounterDTO,
 
 	// todo: remove this after removing old task card
@@ -83,6 +83,12 @@ declare type TaskReduxModel = {
 	isRemoved?: boolean,
 	isExpired?: boolean,
 	isConsideredForCounterChange?: boolean,
+
+	isCreationErrorExist?: boolean,
+	creationErrorText?: string,
+
+	imChatId?: number,
+	imMessageId?: number,
 };
 
 export type ChecklistDTO = {

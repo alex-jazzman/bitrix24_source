@@ -9,13 +9,16 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 	const { Type } = require('type');
 
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
-	const { EventType, ComponentCode, DialogType } = require('im/messenger/const');
+	const { EventType, ComponentCode, DialogType, Analytics } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { SoftLoader } = require('im/messenger/lib/helper');
 	const { ComponentCodeService } = require('im/messenger/provider/service');
+	const { openPlanLimitsWidgetByError, openPlanLimitsWidget } = require('im/messenger/lib/plan-limit');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { AnalyticsEvent } = require('analytics');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--context-manager');
@@ -157,7 +160,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 
 		#bindEvents()
 		{
-			this.#goToMessageContextHandler = this.goToMessageContext.bind(this);
+			this.#goToMessageContextHandler = this.goToMessageContextInCurrentDialog.bind(this);
 		}
 
 		#subscribeEvents()
@@ -170,6 +173,16 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			BX.removeCustomEvent(EventType.dialog.external.goToMessageContext, this.#goToMessageContextHandler);
 		}
 
+		goToMessageContextInCurrentDialog(params)
+		{
+			if (params.dialogId !== this.#dialogId)
+			{
+				return;
+			}
+
+			void this.goToMessageContext(params);
+		}
+
 		/**
 		 * @param {GoToMessageContextEvent} event
 		 */
@@ -179,6 +192,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			parentMessageId = null,
 			withMessageHighlight = true,
 			showNotificationIfUnsupported = true,
+			showPlanLimitWidget = true,
 		})
 		{
 			if (!Feature.isGoToMessageContextSupported && showNotificationIfUnsupported)
@@ -216,13 +230,23 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				return;
 			}
 
-			const isContextLoaded = await this.#goToLocalStorageMessageContext(messageId, withMessageHighlight);
+			if (showPlanLimitWidget === true)
+			{
+				const isChannel = DialogHelper.createByDialogId(this.#dialogId)?.isChannelOrComment;
+				showPlanLimitWidget = isChannel !== true;
+			}
+
+			const isContextLoaded = await this.#goToLocalStorageMessageContext(
+				messageId,
+				withMessageHighlight,
+				showPlanLimitWidget,
+			);
 			if (isContextLoaded)
 			{
 				return;
 			}
 
-			await this.#goToServerMessageContext(messageId, withMessageHighlight);
+			await this.#goToServerMessageContext(messageId, withMessageHighlight, showPlanLimitWidget);
 		}
 
 		async goToLastReadMessageContext()
@@ -261,6 +285,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				messageId: this.#getDialogById(this.#dialogId).lastMessageId,
 				withMessageHighlight: false,
 				showNotificationIfUnsupported: false,
+				showPlanLimitWidget: false,
 			};
 
 			this.#log('goToBottomMessageContext()', goToMessageContextEvent);
@@ -418,9 +443,10 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		/**
 		 * @param {number} messageId
 		 * @param {boolean} withMessageHighlight
+		 * @param {boolean} showPlanLimitWidget
 		 * @return {Promise}
 		 */
-		async #goToLocalStorageMessageContext(messageId, withMessageHighlight)
+		async #goToLocalStorageMessageContext(messageId, withMessageHighlight, showPlanLimitWidget = true)
 		{
 			if (!Feature.isLocalStorageEnabled)
 			{
@@ -433,6 +459,26 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 
 			const result = await this.#messageService.loadLocalStorageContext(messageId);
 			if (!result.isCompleteContext)
+			{
+				return false;
+			}
+
+			const isPlanLimitHistoryExceeded = result?.result?.dialogFields?.tariffRestrictions?.isHistoryLimitExceeded;
+			if (isPlanLimitHistoryExceeded && showPlanLimitWidget)
+			{
+				const dialog = this.#getDialogById(this.#dialogId);
+
+				const analytics = new AnalyticsEvent()
+					.setSection(Analytics.Section.messageLink)
+					.setP1(Analytics.P1[dialog?.type]);
+
+				await openPlanLimitsWidget(analytics);
+
+				return true;
+			}
+
+			const isHasContextMessage = result?.result?.hasContextMessage;
+			if (!isHasContextMessage)
 			{
 				return false;
 			}
@@ -450,9 +496,10 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		/**
 		 * @param {number} messageId
 		 * @param {boolean} withMessageHighlight
+		 * @param {boolean} showPlanLimitWidget
 		 * @return {Promise}
 		 */
-		async #goToServerMessageContext(messageId, withMessageHighlight)
+		async #goToServerMessageContext(messageId, withMessageHighlight, showPlanLimitWidget = true)
 		{
 			this.#log(`#goToServerMessageContext: messageId: ${messageId}`);
 
@@ -461,6 +508,17 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			try
 			{
 				const result = await this.#messageService.loadContext(messageId);
+				if (result?.answer?.error)
+				{
+					this.#topLoader.hide();
+					if (showPlanLimitWidget)
+					{
+						await this.checkPlanLimitByError(result?.answer?.error);
+					}
+
+					return;
+				}
+
 				this.#resetRenderedState();
 				this.#view.setContextOptions(messageId);
 				await this.#messageService.updateModelByContextResult(result);
@@ -473,6 +531,15 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 
 				logger.error('ContextManager.#goToServerMessageContext: error', error);
 			}
+		}
+
+		/**
+		 * @param {object} error
+		 * @return void
+		 */
+		async checkPlanLimitByError(error)
+		{
+			await openPlanLimitsWidgetByError(error);
 		}
 
 		#isMessageRendered(messageId)

@@ -24,7 +24,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 
 	const store = require('statemanager/redux/store');
 	const { connect } = require('statemanager/redux/connect');
-	const { selectById } = require('tasks/statemanager/redux/slices/flows/selector');
+	const { selectById } = require('tasks/statemanager/redux/slices/flows');
 
 	class FlowDetailCommon extends PureComponent
 	{

@@ -63,7 +63,7 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 
 			if (Type.isStringFilled(file.urlPreview))
 			{
-				this.setPreviewImage(file.urlPreview);
+				this.setPreviewImage(file.urlLocalPreview || file.urlPreview);
 			}
 
 			if (Type.isNumber(file.size))

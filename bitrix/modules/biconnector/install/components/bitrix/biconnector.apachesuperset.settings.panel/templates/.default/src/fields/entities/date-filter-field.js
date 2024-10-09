@@ -11,6 +11,7 @@ export class DateFilterField extends BX.UI.EntityEditorList
 		this.dateSelectorBlock = null;
 		this.toInput = null;
 		this.startInput = null;
+		this.includeLastDateCheckbox = null;
 	}
 
 	static create(id, settings)
@@ -60,14 +61,11 @@ export class DateFilterField extends BX.UI.EntityEditorList
 			this.dateSelectorBlock = null;
 			this.startInput = null;
 			this.endInput = null;
+			this.includeLastDateCheckbox = null;
 		}
 
 		if (isRangeSelected)
 		{
-			Dom.removeClass(this._selectContainer, 'ui-ctl-w100');
-			Dom.addClass(this._innerWrapper, 'ui-entity-editor-content-block__range');
-			Dom.addClass(this._selectContainer, 'ui-ctl-date-range');
-			this.dateSelectorBlock = Tag.render`<div class="ui-ctl-dropdown-range-group"></div>`;
 			const dateStartValue = Text.encode(this.getModel().getField(this.getDateStartFieldName()));
 			this.startInput = Tag.render`<input class="ui-ctl-element" type="text" value="${dateStartValue}" name="${this.getDateStartFieldName()}">`;
 			Event.bind(this.startInput, 'click', () => {
@@ -79,24 +77,7 @@ export class DateFilterField extends BX.UI.EntityEditorList
 			Event.bind(this.startInput, 'input', () => {
 				this.onChange();
 			});
-			Dom.append(
-				Tag.render`
-					<div class="ui-ctl ui-ctl-before-icon ui-ctl-datetime">
-						<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
-						${this.startInput}
-					</div>
-				`,
-				this.dateSelectorBlock,
-			);
 
-			Dom.append(
-				Tag.render`
-					<div class="ui-ctl-dropdown-range-line">
-						<span class="ui-ctl-dropdown-range-line-item"></span>
-					</div>
-				`,
-				this.dateSelectorBlock,
-			);
 			const dateEndValue = Text.encode(this.getModel().getField(this.getDateEndFieldName()));
 			this.endInput = Tag.render`<input class="ui-ctl-element" type="text" value="${dateEndValue}" name="${this.getDateEndFieldName()}">`;
 			Event.bind(this.endInput, 'click', () => {
@@ -108,22 +89,57 @@ export class DateFilterField extends BX.UI.EntityEditorList
 			Event.bind(this.endInput, 'input', () => {
 				this.onChange();
 			});
-			Dom.append(
+
+			this.includeLastDateCheckbox = Tag.render`<input class="ui-ctl-element" type="checkbox" name="${this.getIncludeLastDateName()}">`;
+			const includeLastDateValue = this.getModel().getField(this.getIncludeLastDateName());
+			if (includeLastDateValue)
+			{
+				this.includeLastDateCheckbox.checked = true;
+			}
+			Event.bind(this.includeLastDateCheckbox, 'change', () => {
+				this.onChange();
+			});
+
+			this.dateSelectorBlock =
 				Tag.render`
-					<div class="ui-ctl ui-ctl-before-icon ui-ctl-datetime">
-						<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
-						${this.endInput}
+					<div class="ui-ctl-dropdown-range-group">
+						<div class="ui-ctl-container">
+							<div class="ui-ctl-top">
+								<div class="ui-ctl-title">${Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FROM_TITLE')}</div>
+							</div>
+							<div class="ui-ctl ui-ctl-before-icon ui-ctl-datetime">
+								<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
+								${this.startInput}
+							</div>
+						</div>
+						<div class="ui-ctl-container">
+							<div class="ui-ctl-dropdown-range-line">
+								<span class="ui-ctl-dropdown-range-line-item"></span>
+							</div>
+						</div>
+						<div class="ui-ctl-container">
+							<div class="ui-ctl-top">
+								<div class="ui-ctl-title">${Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_TO_TITLE')}</div>
+							</div>
+							<div class="ui-ctl ui-ctl-before-icon ui-ctl-datetime">
+								<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
+								${this.endInput}
+							</div>
+							<div class="ui-ctl-bottom">
+								<label class="ui-ctl ui-ctl-checkbox">
+									${this.includeLastDateCheckbox}
+									<div class="ui-ctl-label-text">${Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_INCLUDE_LAST_DATE')}</div>
+								</label>
+							</div>
+						</div>
 					</div>
-				`,
-				this.dateSelectorBlock,
-			);
+				`;
 
 			Dom.append(this.dateSelectorBlock, this._innerWrapper);
 		}
 		else
 		{
 			Dom.addClass(this._selectContainer, 'ui-ctl-w100');
-			Dom.removeClass(this._innerWrapper, 'ui-entity-editor-content-block__range');
 			Dom.removeClass(this._selectContainer, 'ui-ctl-date-range');
 		}
 	}
@@ -164,11 +180,18 @@ export class DateFilterField extends BX.UI.EntityEditorList
 		return this._schemeElement.getData().dateEndFieldName ?? 'DATE_FILTER_END';
 	}
 
+	getIncludeLastDateName(): string
+	{
+		return this._schemeElement.getData().includeLastDateName ?? 'INCLUDE_LAST_FILTER_DATE';
+	}
+
 	save()
 	{
 		super.save();
 		this._model.setField(this.getDateStartFieldName(), null);
 		this._model.setField(this.getDateEndFieldName(), null);
+		this._model.setField(this.getIncludeLastDateName(), null);
+
 		if (Type.isDomNode(this.endInput))
 		{
 			this._model.setField(this.getDateEndFieldName(), this.endInput.value);
@@ -177,6 +200,12 @@ export class DateFilterField extends BX.UI.EntityEditorList
 		if (Type.isDomNode(this.startInput))
 		{
 			this._model.setField(this.getDateStartFieldName(), this.startInput.value);
+		}
+
+		if (Type.isDomNode(this.includeLastDateCheckbox))
+		{
+			this.includeLastDateCheckbox.value = this.includeLastDateCheckbox.checked ? 'Y' : 'N';
+			this._model.setField(this.getIncludeLastDateName(), this.includeLastDateCheckbox.checked ? 'Y' : 'N');
 		}
 	}
 

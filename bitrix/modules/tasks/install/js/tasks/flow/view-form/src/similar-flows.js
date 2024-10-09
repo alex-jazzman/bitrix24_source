@@ -1,12 +1,14 @@
 import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { Loader } from 'main.loader';
 import { Button } from 'ui.buttons';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
 import { ViewAjax } from './view-ajax';
 import type { SimilarFlow } from './view-ajax';
 
 type Params = {
 	flowId: number,
 	createTaskButtonClickHandler: ?Function,
+	isFeatureEnabled: boolean,
 };
 
 export class SimilarFlows
@@ -24,6 +26,8 @@ export class SimilarFlows
 	{
 		this.#flowId = params.flowId;
 		this.#layout = {};
+
+		this.isFeatureEnabled = params.isFeatureEnabled;
 
 		this.#viewAjax = new ViewAjax(params.flowId);
 		this.#createTaskButtonClickHandler = params.createTaskButtonClickHandler ?? null;
@@ -116,7 +120,14 @@ export class SimilarFlows
 			noCaps: true,
 			onclick: () => {
 				this.#createTaskButtonClickHandler?.();
-				BX.SidePanel.Instance.open(flow.createTaskUri);
+				if (this.isFeatureEnabled)
+				{
+					BX.SidePanel.Instance.open(flow.createTaskUri);
+				}
+				else
+				{
+					FeaturePromotersRegistry.getPromoter({ code: 'limit_tasks_flows' }).show();
+				}
 			},
 		});
 

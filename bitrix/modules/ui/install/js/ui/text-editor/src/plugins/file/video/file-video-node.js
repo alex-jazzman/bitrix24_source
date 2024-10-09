@@ -22,6 +22,8 @@ import type { DecoratorOptions } from '../../../types/decorator-options';
 export type SerializedFileVideoNode = SerializedDecoratorNode & {
 	serverFileId: string | number,
 	info: UploaderFileInfo,
+	width: number,
+	height: number,
 };
 
 import './file-video.css';
@@ -31,10 +33,14 @@ export class FileVideoNode extends DecoratorNode
 {
 	__serverFileId: string | number;
 	__info: UploaderFileInfo;
+	__width: number = 0;
+	__height: number = 0;
 
 	constructor(
 		serverFileId: string | number,
 		info: UploaderFileInfo,
+		width?: number,
+		height?: number,
 		key?: NodeKey,
 	)
 	{
@@ -42,6 +48,17 @@ export class FileVideoNode extends DecoratorNode
 
 		this.__serverFileId = serverFileId;
 		this.__info = Type.isPlainObject(info) ? info : {};
+		this.__width = (
+			Type.isNumber(width) && width > 0
+				? Math.round(width)
+				: (this.__info.previewWidth > 0 ? this.__info.previewWidth : this.__width))
+		;
+
+		this.__height = (
+			Type.isNumber(height) && height > 0
+				? Math.round(height)
+				: (this.__info.previewHeight > 0 ? this.__info.previewHeight : this.__height)
+		);
 	}
 
 	static useDecoratorComponent = true;
@@ -53,7 +70,7 @@ export class FileVideoNode extends DecoratorNode
 
 	static clone(node: FileVideoNode): FileVideoNode
 	{
-		return new FileVideoNode(node.__serverFileId, node.__info, node.__key);
+		return new FileVideoNode(node.__serverFileId, node.__info, node.__width, node.__height, node.__key);
 	}
 
 	getId(): string | number
@@ -71,9 +88,42 @@ export class FileVideoNode extends DecoratorNode
 		return this.__info;
 	}
 
+	setWidthAndHeight(width: number, height: number): void
+	{
+		const writable = this.getWritable();
+		if (Type.isNumber(width))
+		{
+			writable.__width = Math.round(width);
+		}
+
+		if (Type.isNumber(height))
+		{
+			writable.__height = Math.round(height);
+		}
+	}
+
+	getWidth(): number
+	{
+		const self = this.getLatest();
+
+		return self.__width;
+	}
+
+	getHeight(): number
+	{
+		const self = this.getLatest();
+
+		return self.__height;
+	}
+
 	static importJSON(serializedNode: SerializedFileVideoNode): FileVideoNode
 	{
-		return $createFileVideoNode(serializedNode.serverFileId, serializedNode.info);
+		return $createFileVideoNode(
+			serializedNode.serverFileId,
+			serializedNode.info,
+			serializedNode.width,
+			serializedNode.height,
+		);
 	}
 
 	static importDOM(): DOMConversionMap | null
@@ -91,6 +141,8 @@ export class FileVideoNode extends DecoratorNode
 		return {
 			info: this.__info,
 			serverFileId: this.__serverFileId,
+			width: this.getWidth(),
+			height: this.getHeight(),
 			type: 'file-video',
 			version: 1,
 		};
@@ -116,7 +168,14 @@ export class FileVideoNode extends DecoratorNode
 	{
 		return {
 			componentClass: FileVideoComponent,
-			options: {},
+			options: {
+				src: this.__info.downloadUrl,
+				width: this.getWidth(),
+				height: this.getHeight(),
+				maxWidth: this.getWidth(),
+				maxHeight: this.getHeight(),
+				config,
+			},
 		};
 	}
 
@@ -126,9 +185,14 @@ export class FileVideoNode extends DecoratorNode
 	}
 }
 
-export function $createFileVideoNode(serverFileId: string | number, info: UploaderFileInfo = {}): FileVideoNode
+export function $createFileVideoNode(
+	serverFileId: string | number,
+	info: UploaderFileInfo = {},
+	width: number = null,
+	height: number = null,
+): FileVideoNode
 {
-	const node: FileVideoNode = new FileVideoNode(serverFileId, info);
+	const node: FileVideoNode = new FileVideoNode(serverFileId, info, width, height);
 
 	return $applyNodeReplacement(node);
 }

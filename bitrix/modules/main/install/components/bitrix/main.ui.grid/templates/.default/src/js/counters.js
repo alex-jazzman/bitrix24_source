@@ -19,6 +19,7 @@ export class Counters
 		GRAY: 'ui-counter-gray',
 		LIGHT: 'ui-counter-light',
 		DARK: 'ui-counter-dark',
+		WARNING: 'ui-counter-warning',
 	};
 
 	static Size = {

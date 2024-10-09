@@ -10,7 +10,10 @@ export class ListItemNodeFormatter extends NodeFormatter
 			convert({ node }: ConvertCallbackOptions): HTMLLIElement {
 				return Dom.create({
 					tag: 'li',
-					attributes: node.getAttributes(),
+					attrs: {
+						...node.getAttributes(),
+						className: 'ui-typography-li',
+					},
 				});
 			},
 			...options,

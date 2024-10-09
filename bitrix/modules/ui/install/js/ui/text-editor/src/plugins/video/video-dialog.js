@@ -132,6 +132,7 @@ export default class VideoDialog extends EventEmitter
 						<button type="button" 
 							class="ui-text-editor-video-dialog-button" 
 							onclick="${this.#handleSaveBtnClick.bind(this)}"
+							data-testid="video-dialog-save-btn"
 						>
 							<span class="ui-icon-set --check"></span>
 						</button>
@@ -139,6 +140,7 @@ export default class VideoDialog extends EventEmitter
 							type="button" 
 							class="ui-text-editor-video-dialog-button"
 							onclick="${this.#handleCancelBtnClick.bind(this)}"
+							data-testid="video-dialog-cancel-btn"
 						>
 							<span class="ui-icon-set --cross-60"></span>
 						</button>
@@ -160,6 +162,7 @@ export default class VideoDialog extends EventEmitter
 					value="${this.getVideoUrl()}"
 					onkeydown="${this.#handleTextBoxKeyDown.bind(this)}"
 					oninput="${this.#handleTextBoxInput.bind(this)}"
+					data-testid="video-dialog-textbox"
 				>
 			`;
 		});

@@ -63,7 +63,11 @@ $locMap = [
 								$arResult["TASKS"][$i][$field] = GetMessage("TASKS_PRIORITY_".$arResult["TASKS"][$i][$field]);
 								break;
 							case "REAL_STATUS":
-								$arResult["TASKS"][$i][$field] = GetMessage("TASKS_STATUS_".$arResult["TASKS"][$i][$field]);
+								$arResult['TASKS'][$i][$field] =
+									GetMessage('TASKS_STATUS_' . $arResult['TASKS'][$i][$field] . '_MSGVER_1')
+									?? GetMessage('TASKS_STATUS_' . $arResult['TASKS'][$i][$field])
+								;
+
 								break;
 							case "MARK":
 								$arResult["TASKS"][$i][$field] = $arResult["TASKS"][$i][$field] ? GetMessage("TASKS_MARK_".$arResult["TASKS"][$i][$field]) : GetMessage("TASKS_MARK_NONE");

@@ -11,7 +11,7 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-recent');
 
-	/* global ChatMessengerCommon, userId */
+	/* global userId */
 
 	/**
 	 * @class ChatRecentPullHandler

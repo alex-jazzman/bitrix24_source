@@ -31,6 +31,8 @@ export default class Form extends EventEmitter
 		this.firstInvitationBlock = params.firstInvitationBlock;
 		this.isSelfRegisterEnabled = params.isSelfRegisterEnabled;
 		this.analyticsLabel = params.analyticsLabel;
+		this.projectLimitExceeded = Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
+		this.projectLimitFeatureId = Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
 
 		if (Type.isDomNode(this.contentContainer))
 		{
@@ -165,6 +167,8 @@ export default class Form extends EventEmitter
 								project: true,
 								projectId: projectId,
 								isAdmin: this.isAdmin,
+								projectLimitExceeded: this.projectLimitExceeded,
+								projectLimitFeatureId: this.projectLimitFeatureId,
 							}
 						};
 						this.renderSelector(selectorParams);
@@ -181,6 +185,8 @@ export default class Form extends EventEmitter
 								project: "extranet",
 								projectId: projectId,
 								isAdmin: this.isAdmin,
+								projectLimitExceeded: this.projectLimitExceeded,
+								projectLimitFeatureId: this.projectLimitFeatureId,
 							}
 						};
 						this.renderSelector(selectorParams);
@@ -198,6 +204,8 @@ export default class Form extends EventEmitter
 								project: true,
 								projectId: projectId,
 								isAdmin: this.isAdmin,
+								projectLimitExceeded: this.projectLimitExceeded,
+								projectLimitFeatureId: this.projectLimitFeatureId,
 							}
 						};
 						this.renderSelector(selectorParams);

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'tokens',
 		'asset-manager',
 		'layout/ui/menu',

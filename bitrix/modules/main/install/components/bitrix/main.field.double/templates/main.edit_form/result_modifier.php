@@ -6,31 +6,34 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 $arResult['additionalParameters']['VALIGN'] = (
-$arResult['userField']['MULTIPLE'] === 'Y' ? 'top' : 'middle'
+	$arResult['userField']['MULTIPLE'] === 'Y' ? 'top' : 'middle'
 );
 
 $entityValueId = (int)($arResult['userField']['ENTITY_VALUE_ID'] ?? 0);
-$defaultValue = $arResult['userField']['SETTINGS']['DEFAULT_VALUE'] ?? null;
-if ($entityValueId < 1 && mb_strlen($defaultValue))
-{
-	$value = htmlspecialcharsbx(
-		$arResult['additionalParameters']['SETTINGS']['DEFAULT_VALUE'] ?? null
-	);
-}
 
 foreach($arResult['value'] as $key => $value)
 {
-	if (!empty($arUserField['SETTINGS']['VALUE']))
+	if(
+		$entityValueId < 1
+		&& (string)$arResult['userField']['SETTINGS']['DEFAULT_VALUE'] !== ''
+	)
+	{
+		$value = htmlspecialcharsbx(
+			$arResult['userField']['SETTINGS']['DEFAULT_VALUE'] ?? null
+		);
+	}
+
+	if (!empty($value))
 	{
 		$value = round(
-			(double)$arResult['additionalParameters']['VALUE'],
-			$arResult['userField']['SETTINGS']['PRECISION']
+			(double)$value,
+			(int)($arResult['userField']['SETTINGS']['PRECISION'] ?? 0)
 		);
 	}
 
 	$attrList = [
 		'type' => 'text',
-		'size' => $arResult['additionalParameters']['SETTINGS']['SIZE'] ?? '',
+		'size' => $arResult['userField']['SETTINGS']['SIZE'] ?? '',
 		'value' => $value,
 		'name' => str_replace('[]', '[' . $key . ']', $arResult['fieldName'])
 	];

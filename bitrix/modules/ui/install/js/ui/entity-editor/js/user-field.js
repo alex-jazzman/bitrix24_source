@@ -1948,7 +1948,7 @@ if(typeof BX.UI.EntityEditorUserFieldConfigurator === "undefined")
 		if (this.getEditor().isShowAlwaysFeautureEnabled())
 		{
 			this._showAlwaysCheckBox = this.createOption(
-				{ caption: BX.message("UI_ENTITY_EDITOR_SHOW_ALWAYS"), helpCode: "9627471" }
+				{ caption: BX.message("UI_ENTITY_EDITOR_SHOW_ALWAYS"), helpCode: "22048980" }
 			);
 		}
 		else

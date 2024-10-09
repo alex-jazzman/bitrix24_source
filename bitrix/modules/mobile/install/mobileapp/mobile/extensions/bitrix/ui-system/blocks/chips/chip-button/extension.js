@@ -16,23 +16,25 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef {Object} ChipButtonProps
+	 * @property {boolean} [text]
+	 * @property {Icon} [icon]
+	 * @property {boolean} [compact]
+	 * @property {ChipButtonMode} [mode=ChipButtonMode.SOLID]
+	 * @property {ChipButtonDesign} [design=ChipButtonDesign.PRIMARY]
+	 * @property {Ellipsize} [ellipsize]
+	 * @property {BadgeStatus | BadgeCounter} [badge]
+	 * @property {Function} [forwardRef]
+	 * @property {Color} [backgroundColor]
+	 *
 	 * @class ChipButton
 	 * @return ChipButton
 	 */
 	class ChipButton extends LayoutComponent
-		/**
-		 * @params {Object} props
-		 * @params {boolean} [props.text]
-		 * @params {Icon} [props.icon]
-		 * @params {boolean} [props.compact]
-		 * @params {ChipButtonMode} [props.mode]
-		 * @params {ChipButtonDesign} [props.design]
-		 * @params {Ellipsize} [props.ellipsize]
-		 * @params {BadgeStatus | BadgeCounter} [props.badge]
-		 * @params {Function} [props.forwardRef]
-		 * @params {Color} [props.backgroundColor]
-		 */
 	{
+		/**
+		 * @param {ChipButtonProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -165,24 +167,10 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		#renderBody()
 		{
-			const { onClick, backgroundColor = null } = this.props;
-			const { color, ...chipStyle } = this.style;
-
 			return View(
 				{
-					onClick,
-					style: {
-						flexShrink: 1,
-						flexDirection: 'row',
-						alignItems: 'center',
-						height: this.size.getHeight(),
-						borderRadius: Component.elementAccentCorner.toNumber(),
-						paddingLeft: this.#getInternalPadding(Direction.LEFT),
-						paddingRight: this.#getInternalPadding(Direction.RIGHT),
-						paddingHorizontal: Indent.L.toNumber(),
-						...chipStyle,
-						backgroundColor: backgroundColor?.toHex(),
-					},
+					onClick: this.#handleOnClick,
+					style: this.getBodyStyle(),
 				},
 				this.#renderIcon(),
 				this.#renderText(),
@@ -190,6 +178,40 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 				this.#renderDropdown(),
 			);
 		}
+
+		getBodyStyle()
+		{
+			const { backgroundColor = null } = this.props;
+			const { color, ...chipStyle } = this.style;
+
+			const style = {
+				flexShrink: 1,
+				flexDirection: 'row',
+				alignItems: 'center',
+				height: this.size.getHeight(),
+				borderRadius: Component.elementAccentCorner.toNumber(),
+				paddingLeft: this.#getInternalPadding(Direction.LEFT),
+				paddingRight: this.#getInternalPadding(Direction.RIGHT),
+				paddingHorizontal: Indent.L.toNumber(),
+				...chipStyle,
+			};
+
+			if (backgroundColor)
+			{
+				style.backgroundColor = backgroundColor?.toHex();
+			}
+
+			return style;
+		}
+
+		#handleOnClick = () => {
+			const { onClick } = this.props;
+
+			if (onClick)
+			{
+				onClick();
+			}
+		};
 
 		/**
 		 * @param {string} direction
@@ -234,18 +256,22 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	ChipButton.propTypes = {
 		testId: PropTypes.string.isRequired,
 		text: PropTypes.string,
-		icon: PropTypes.instanceOf(Icon),
 		compact: PropTypes.bool,
-		design: PropTypes.instanceOf(ChipButtonDesign),
-		mode: PropTypes.instanceOf(ChipButtonMode),
 		badge: PropTypes.object,
 		dropdown: PropTypes.bool,
-		ellipsize: PropTypes.object,
 		forwardRef: PropTypes.func,
+		icon: PropTypes.instanceOf(Icon),
+		design: PropTypes.instanceOf(ChipButtonDesign),
+		mode: PropTypes.instanceOf(ChipButtonMode),
+		ellipsize: PropTypes.instanceOf(Ellipsize),
 		backgroundColor: PropTypes.instanceOf(Color),
+
 	};
 
 	module.exports = {
+		/**
+		 * @param {ChipButtonProps} props
+		 */
 		ChipButton: (props) => new ChipButton(props),
 		ChipButtonDesign,
 		ChipButtonMode,

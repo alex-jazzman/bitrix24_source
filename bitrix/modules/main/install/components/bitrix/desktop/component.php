@@ -370,10 +370,7 @@ if ($gdAjax === $arParams['ID'])
 				break;
 
 			case 'update_position':
-				if (isset($_REQUEST['POS']) && is_array($_REQUEST['POS']))
-				{
-					BXGadget::SavePositions($arParams, $_REQUEST['POS']);
-				}
+				BXGadget::SavePositions($arParams, $_REQUEST['POS'] ?? []);
 				break;
 		}
 	}

@@ -128,6 +128,35 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 54;
 		}
 
+		static get isMessageAttachSupported()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isMessageKeyboardSupported()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isAvatarBorderStylesSupported()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isChatDialogWidgetSupportsSendPutCallBbCodes()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isChatDialogWidgetSupportsBots()
+		{
+			return (
+				this.isMessageAttachSupported
+				&& this.isMessageKeyboardSupported
+				&& this.isChatDialogWidgetSupportsSendPutCallBbCodes
+			);
+		}
+
 		static get isDevelopmentEnvironment()
 		{
 			return (

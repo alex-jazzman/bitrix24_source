@@ -671,7 +671,9 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		{
 			this.fieldRefs[fieldId] = ref;
 
-			this.getFieldSchema(fieldId).ref(ref);
+			// we can get empty ref of already removed field here,
+			// so we have to check if schema exists.
+			this.getFieldSchema(fieldId)?.ref(ref);
 		}
 
 		/**

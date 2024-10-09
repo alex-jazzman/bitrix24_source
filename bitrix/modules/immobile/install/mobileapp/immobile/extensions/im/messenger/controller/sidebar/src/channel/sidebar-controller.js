@@ -7,14 +7,19 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 	const { SidebarService } = require('im/messenger/controller/sidebar/chat/sidebar-service');
 	const { SidebarRestService } = require('im/messenger/controller/sidebar/chat/sidebar-rest-service');
 	const { SidebarUserService } = require('im/messenger/controller/sidebar/chat/sidebar-user-service');
+	const { SidebarFilesService } = require('im/messenger/controller/sidebar/chat/tabs/files/service');
+	const { SidebarLinksService } = require('im/messenger/controller/sidebar/chat/tabs/links/service');
 	const { buttonIcons } = require('im/messenger/assets/common');
 	const { ButtonFactory } = require('im/messenger/lib/ui/base/buttons');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('sidebar--channel-sidebar-controller');
 	const { EventType, DialogType } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { isOnline } = require('device/connection');
 	const { Loc } = require('loc');
 	const { Theme } = require('im/lib/theme');
 
@@ -52,7 +57,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 
 		open()
 		{
-			Logger.log(`${this.constructor.name}.open`);
+			logger.log(`${this.constructor.name}.open`);
 			this.createWidget();
 		}
 
@@ -71,18 +76,21 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 					},
 				)
 				.catch((error) => {
-					Logger.error(`${this.constructor.name}.PageManager.openWidget.catch:`, error);
+					logger.error(`${this.constructor.name}.PageManager.openWidget.catch:`, error);
 				});
 		}
 
 		async onWidgetReady()
 		{
-			Logger.log(`${this.constructor.name}.onWidgetReady`);
+			logger.log(`${this.constructor.name}.onWidgetReady`);
+			this.sidebarService.subscribeInitTabsData();
+			this.sidebarService.initTabsData();
 			this.sidebarService.setStore();
 			this.bindListener();
 			this.setUserService();
 			this.setPermissions();
 			this.createView();
+			this.initTabsData();
 			this.widget.showComponent(this.view);
 			this.subscribeStoreEvents();
 			this.subscribeWidgetEvents();
@@ -119,6 +127,23 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			this.isCanLeave = ChatPermission.isCanLeaveFromChat(this.dialogId);
 		}
 
+		initTabsData()
+		{
+			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const isInitedSidebar = this.store.getters['sidebarModel/isInited'](this.dialogId);
+
+			if (dialogData && !isInitedSidebar)
+			{
+				Promise.all([
+					new SidebarFilesService(dialogData.chatId).loadNextPage(),
+					new SidebarLinksService(dialogData.chatId).loadNextPage(),
+				])
+					.catch((error) => {
+						logger.error(`${this.constructor.name}.initTabsData:`, error);
+					});
+			}
+		}
+
 		createView()
 		{
 			this.view = new ChannelSidebarView(this.preparePropsSidebarView());
@@ -126,34 +151,34 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 
 		subscribeStoreEvents()
 		{
-			Logger.log(`${this.constructor.name}.subscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
 			this.storeManager.on('sidebarModel/update', this.onUpdateStore);
 			this.storeManager.on('dialoguesModel/update', this.onUpdateStore);
 		}
 
 		subscribeWidgetEvents()
 		{
-			Logger.log(`${this.constructor.name}.subscribeWidgetEvents`);
+			logger.log(`${this.constructor.name}.subscribeWidgetEvents`);
 			this.widget.on(EventType.view.close, this.onCloseWidget);
 			this.widget.on(EventType.view.hidden, this.onCloseWidget);
 		}
 
 		subscribeBXCustomEvents()
 		{
-			Logger.log(`${this.constructor.name}.subscribeBXCustomEvents`);
+			logger.log(`${this.constructor.name}.subscribeBXCustomEvents`);
 			BX.addCustomEvent('onDestroySidebar', this.onDestroySidebar);
 		}
 
 		unsubscribeStoreEvents()
 		{
-			Logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
+			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
 			this.storeManager.off('sidebarModel/update', this.onUpdateStore);
 			this.storeManager.off('dialoguesModel/update', this.onUpdateStore);
 		}
 
 		unsubscribeBXCustomEvents()
 		{
-			Logger.log(`${this.constructor.name}.unsubscribeBXCustomEvents`);
+			logger.log(`${this.constructor.name}.unsubscribeBXCustomEvents`);
 			BX.removeCustomEvent('onDestroySidebar', this.onDestroySidebar);
 		}
 
@@ -247,6 +272,13 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 
 		onClickLeaveBtn()
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			setTimeout(() => {
 				navigator.notification.confirm(
 					'',
@@ -277,25 +309,32 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 								PageManager.getNavigator().popTo('im.tabs')
 									// eslint-disable-next-line promise/no-nesting
 									.catch((err) => {
-										Logger.error(`${this.constructor.name}.onClickYesLeaveChannel.popTo.catch`, err);
+										logger.error(`${this.constructor.name}.onClickYesLeaveChannel.popTo.catch`, err);
 										BX.onCustomEvent('onDestroySidebar');
 										MessengerEmitter.emit(EventType.messenger.destroyDialog);
 									});
 							}
 							catch (e)
 							{
-								Logger.error(`${this.constructor.name}.onClickYesLeaveChannel.getNavigator()`, e);
+								logger.error(`${this.constructor.name}.onClickYesLeaveChannel.getNavigator()`, e);
 								BX.onCustomEvent('onDestroySidebar');
 								MessengerEmitter.emit(EventType.messenger.destroyDialog);
 							}
 						}
 					},
 				)
-				.catch((err) => Logger.error(`${this.constructor.name}.onClickYesLeaveChannel.sidebarRestService.leaveChat`, err));
+				.catch((err) => logger.error(`${this.constructor.name}.onClickYesLeaveChannel.sidebarRestService.leaveChat`, err));
 		}
 
 		onClickMuteBtn()
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const oldStateMute = this.sidebarService.isMuteDialog();
 			this.store.dispatch('sidebarModel/changeMute', { dialogId: this.dialogId, isMute: !oldStateMute });
 
@@ -312,7 +351,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 		onUpdateStore(event)
 		{
 			const { payload } = event;
-			Logger.info(`${this.constructor.name}.onUpdateStore---------->`, event);
+			logger.info(`${this.constructor.name}.onUpdateStore---------->`, event);
 
 			if (payload.actionName === 'changeMute' && Type.isBoolean(payload.data.fields.isMute))
 			{

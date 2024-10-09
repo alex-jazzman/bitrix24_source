@@ -2,6 +2,7 @@
  * @module tokens/src/enums/color-enum
  */
 jn.define('tokens/src/enums/color-enum', (require, exports, module) => {
+	const { Type } = require('type');
 	const { AppTheme } = require('apptheme/extended');
 	const { withPressed, transparent } = require('utils/color');
 	const { BaseEnum } = require('utils/enums/base');
@@ -23,12 +24,15 @@ jn.define('tokens/src/enums/color-enum', (require, exports, module) => {
 		 */
 		toHex(opacity)
 		{
-			if (typeof opacity !== 'undefined' && opacity < 1)
+			const opacityValue = !Type.isNil(opacity) && Number(opacity);
+			const hexColor = this.toString();
+
+			if (opacityValue && Type.isNumber(opacityValue) && opacityValue < 1)
 			{
-				return transparent(this.toString(), opacity);
+				return transparent(hexColor, opacityValue);
 			}
 
-			return this.toString();
+			return hexColor;
 		}
 
 		/**

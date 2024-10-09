@@ -23,4 +23,4 @@ $MESS['SIGN_DOCUMENT_SEND_LANG_SELECTOR_HINT'] = 'На выбранном язы
 $MESS["SIGN_SEND_PROGRESS_TITLE"] = "Отправка документов";
 $MESS["SIGN_SEND_CLOSE_DESCRIPTION"] = "Отправка может занять продолжительное время. Вы можете закрыть эту страницу, отправка произойдет в фоновом режиме";
 $MESS["SIGN_SEND_CLOSE_BTN"] = "Закрыть страницу";
-
+$MESS['SIGN_DOCUMENT_SEND_REMINDER_TYPE_SELECTOR_HINT'] = 'HR-бот в течение 3-х дней будет напоминать ответственному о новом документе';

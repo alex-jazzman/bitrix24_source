@@ -5,11 +5,12 @@
 	const AppTheme = require('apptheme');
 	const { Feature } = require('feature');
 	const { debounce } = require('utils/function');
-	const { EntityReady } = require('entity-ready');
 	const { Logger, LogType } = require('utils/logger');
 	const { PresetList } = require('tasks/layout/presetList');
 	const { Project } = require('tasks/project');
 	const { StorageCache } = require('storage-cache');
+	const { WorkgroupUtil } = require('project/utils');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const platform = Application.getPlatform();
 	const isAirStyleSupported = Feature.isAirStyleSupported();
@@ -211,21 +212,18 @@
 
 			this.cache = new StorageCache(this.list.mode, 'filterCounters');
 			this.total = this.cache.get().counterValue || 0;
-
-			EntityReady.wait('chat').then(() => this.updateCounters()).catch(console.error);
 		}
 
 		updateCounters()
 		{
 			logger.log('ProjectList.Filter.updateCounters');
 
-			(new RequestExecutor('tasksmobile.Task.Counter.getByType'))
-				.call()
-				.then((response) => {
+			(new RunActionExecutor('tasksmobile.Task.Counter.getByType'))
+				.setHandler((response) => {
 					this.counters = {};
 					this.total = 0;
 
-					Object.entries(response.result).forEach(([type, value]) => {
+					Object.entries(response.data).forEach(([type, value]) => {
 						this.counters[type] = value;
 
 						const typesToCollectInTotal = (
@@ -242,7 +240,8 @@
 					this.setVisualCounters();
 					this.saveCache();
 				})
-				.catch(console.error);
+				.call(false)
+			;
 		}
 
 		pseudoUpdateCounters(value)
@@ -911,19 +910,9 @@
 		startWatch()
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasksmobile.Project.startWatchList'))
-					.call()
-					.then(
-						(response) => resolve(response),
-						(response) => {
-							logger.error(response);
-							reject(response);
-						},
-					)
-					.catch((response) => {
-						logger.error(response);
-						reject(response);
-					})
+				new RunActionExecutor('tasksmobile.Project.startWatchList')
+					.setHandler((response) => (response.status === 'success' ? resolve(response.data) : reject(response)))
+					.call(false)
 				;
 			});
 		}
@@ -1367,10 +1356,9 @@
 		{
 			const methodName = (this.isScrum() ? 'getScrumListPresets' : 'getProjectListPresets');
 
-			(new RequestExecutor(`tasksmobile.Filter.${methodName}`))
-				.call()
-				.then((response) => {
-					this.presets = response.result;
+			new RunActionExecutor(`tasksmobile.Filter.${methodName}`)
+				.setHandler((response) => {
+					this.presets = response.data;
 					if (this.searchLayout)
 					{
 						this.searchLayout.updateState({
@@ -1379,7 +1367,8 @@
 						});
 					}
 				})
-				.catch(console.error);
+				.call(false)
+			;
 		}
 
 		setTopButtons()
@@ -1673,7 +1662,6 @@
 			else if (this.projectList.has(projectId))
 			{
 				const project = this.projectList.get(projectId);
-
 				const projectItem = {
 					id: project.id,
 					title: project.name,
@@ -1686,19 +1674,16 @@
 						opened: project.isOpened,
 					},
 				};
-
-				const projectData = {
+				const params = {
+					projectId: project.id,
 					siteId: BX.componentParameters.get('SITE_ID', env.siteId),
 					siteDir: BX.componentParameters.get('SITE_DIR', env.siteDir),
-					projectId: project.id,
-					action: 'view',
-					item: projectItem,
 					newsPathTemplate: this.newsPathTemplate,
 					calendarWebPathTemplate: this.calendarWebPathTemplate,
 					currentUserId: parseInt(this.userId || 0, 10),
 				};
 
-				BX.postComponentEvent('projectbackground::project::action', [projectData], 'background');
+				void WorkgroupUtil.openProject(projectItem, params);
 			}
 		}
 

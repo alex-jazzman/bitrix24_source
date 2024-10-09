@@ -1,5 +1,7 @@
 <?
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -30,7 +32,9 @@ $isIFrame = $arResult['IFRAME'] == 'Y';
 $iFrameType = $arResult['IFRAME_TYPE'];
 $isSideSlider = $iFrameType == 'SIDE_SLIDER';
 
-$isFlowEnabled = \Bitrix\Tasks\Flow\FlowFeature::isOn() && $edit && !$existingTask;
+$isFlowEnabled = FlowFeature::isOn() && $edit;
+$isFlowFeatureEnabled = FlowFeature::isFeatureEnabled() || FlowFeature::canTurnOnTrial();
+$flowFeatureEnabledClass = !$isFlowFeatureEnabled ? '--tariff-lock' : '';
 /** @var \Bitrix\Tasks\Flow\Flow $flow */
 $flow = $arResult['flow'];
 
@@ -207,7 +211,7 @@ endif?>
 									?>
 										<button
 											id="tasks-flow-selector"
-											class="tasks-flow__selector <?=$flowBtnClass ?> <?=$flowBtnUiClass ?>"
+											class="tasks-flow__selector <?=$flowBtnClass ?> <?=$flowBtnUiClass ?> <?=$flowFeatureEnabledClass?>"
 											title="<?= \Bitrix\Main\Text\HtmlFilter::encode($flowName) ?>"
 										>
 											<span class="tasks-flow__selector-text">

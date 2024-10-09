@@ -14,6 +14,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 		ToolbarIcon,
 		ToolbarButton,
 	} = require('crm/timeline/ui/toolbar');
+	const { Icon } = require('assets/icons');
 	const { Textarea } = require('layout/ui/textarea');
 	const { FileField } = require('layout/ui/fields/file');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
@@ -63,9 +64,12 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 			return Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_COMMENT_MENU_TITLE');
 		}
 
+		/**
+		 * @returns {Icon}
+		 */
 		static getMenuIcon()
 		{
-			return `<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.702 8h17.596C25.238 8 26 8.653 26 9.459v10.082c0 .806-.762 1.459-1.702 1.459H15.5l-5.833 5v-5H6.702C5.762 21 5 20.347 5 19.54V9.46C5 8.653 5.762 8 6.702 8Z" fill="${AppTheme.colors.base3}"/></svg>`;
+			return Icon.MESSAGE;
 		}
 
 		static getDefaultPosition()

@@ -1,7 +1,6 @@
 <?php
 $MESS["TOOLS_DN"] = "дн.";
 $MESS["TOOLS_DAYS"] = "дней";
-$MESS["TOOLS_CALENDAR"] = "Календарь";
 $MESS["TOOLS_HELP"] = "Помощь";
 $MESS["MAIN_QUOTE"] = "Цитата";
 $MESS["MAIN_QUOTE_S"] = "цитата";

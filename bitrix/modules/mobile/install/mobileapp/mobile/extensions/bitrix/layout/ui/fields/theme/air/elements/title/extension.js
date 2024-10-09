@@ -9,30 +9,21 @@ jn.define('layout/ui/fields/theme/air/elements/title', (require, exports, module
 	 * @param {string} text
 	 * @param {number} count
 	 * @param {string} testId
-	 * @param {Indent} titleIndent
 	 * @param {string} [textMultiple='']
 	 */
-	const Title = ({ text, count, testId, titleIndent, textMultiple }) => View(
-		{
-			style: {
-				flexDirection: 'row',
-				marginBottom: titleIndent.toNumber(),
-			},
+	const Title = ({ text, count, testId, textMultiple }) => Text5({
+		testId: `${testId}_TITLE`,
+		style: {
+			color: Color.base4.toHex(),
 		},
-		Text5({
-			testId: `${testId}_TITLE`,
-			style: {
-				color: Color.base4.toHex(),
-			},
-			numberOfLines: 1,
-			ellipsize: 'end',
-			text: (
-				textMultiple && count > 0
-					? textMultiple.replace('#COUNT#', String(count))
-					: String(text)
-			),
-		}),
-	);
+		numberOfLines: 1,
+		ellipsize: 'end',
+		text: (
+			textMultiple && count > 0
+				? textMultiple.replace('#COUNT#', String(count))
+				: String(text)
+		),
+	});
 
 	module.exports = {
 		Title,

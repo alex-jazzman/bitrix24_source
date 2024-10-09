@@ -24,7 +24,20 @@
 				}
 			}.bind(this));
 
+			const popup = BX.PopupWindowManager.getPopupById('userGridSettingsMenu');
+			this.sortButton = popup.getContentContainer().querySelector('[data-unqid="user-grid-sort-btn"]');
+
+			BX.addCustomEvent('BX.Main.grid:sort', () => {
+				BX.removeClass(this.sortButton, 'menu-popup-item-accept');
+			});
+
 			BX.addCustomEvent('onPullEvent-intranet', this.onPullEvent.bind(this));
+		},
+
+		setSort(sortParams)
+		{
+			BX.addClass(this.sortButton, 'menu-popup-item-accept');
+			BX.Intranet.UserList.GridManager.setSort(sortParams);
 		},
 
 		onPullEvent: function(command, params)

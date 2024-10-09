@@ -1193,6 +1193,7 @@ if(
 					"imageWidth" => $arParams["IMAGE_MAX_WIDTH"],
 					"imageHeight" => $arParams["IMAGE_MAX_HEIGHT"],
 					"pathToUser" => $arParams["PATH_TO_USER"],
+					"ATTRIBUTES" => $arParams["ATTRIBUTES"] ?? null,
 				);
 
 				if ($p->bMobile)

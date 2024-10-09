@@ -3,12 +3,15 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { PopupManager } from 'main.popup';
 import { PullStatus } from 'pull.vue3.status';
 
+import { Analytics } from 'im.v2.lib.analytics';
 import { MessageList } from 'im.v2.component.message-list';
 import { ForwardPopup } from 'im.v2.component.entity-selector';
 import { Logger } from 'im.v2.lib.logger';
 import { CallManager } from 'im.v2.lib.call';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { AccessManager, AccessErrorCode } from 'im.v2.lib.access';
+import { FeatureManager } from 'im.v2.lib.feature';
 import { MessageService, ChatService } from 'im.v2.provider.service';
 import {
 	DialogBlockType as BlockType,
@@ -287,6 +290,15 @@ export const ChatDialog = {
 				return;
 			}
 
+			const { hasAccess, errorCode } = await AccessManager.checkMessageAccess(messageId);
+			if (!hasAccess && errorCode === AccessErrorCode.messageAccessDeniedByTariff)
+			{
+				Analytics.getInstance().onGoToContextHistoryLimitClick({ dialogId: this.dialogId });
+				FeatureManager.chatHistory.openFeatureSlider();
+
+				return;
+			}
+
 			this.showLoadingBar();
 			await this.getMessageService().loadContext(messageId)
 				.catch((error) => {
@@ -368,7 +380,7 @@ export const ChatDialog = {
 			const visibleMessages = this.getVisibleMessagesManager().getVisibleMessages();
 			visibleMessages.forEach((messageId) => {
 				const message: ImModelMessage = this.$store.getters['messages/getById'](messageId);
-				if (message.viewed)
+				if (!message || message.viewed)
 				{
 					return;
 				}

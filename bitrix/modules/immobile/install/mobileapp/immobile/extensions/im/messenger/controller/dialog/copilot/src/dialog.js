@@ -31,8 +31,8 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		{
 			super();
 
-			this.messageButtonTapHandler = this.onMessageButtonTap.bind(this);
-			this.onCopilotFootnoteTap = this.onCopilotFootnoteTap.bind(this);
+			this.messageButtonTapHandler = this.messageButtonTapHandler.bind(this);
+			this.copilotFootnoteTapHandler = this.copilotFootnoteTapHandler.bind(this);
 		}
 
 		getDialogType()
@@ -71,7 +71,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				.on(EventType.dialog.messageButtonTap, this.messageButtonTapHandler)
 			;
 			this.view
-				.on(EventType.dialog.copilotFootnoteTap, this.onCopilotFootnoteTap)
+				.on(EventType.dialog.copilotFootnoteTap, this.copilotFootnoteTapHandler)
 			;
 		}
 
@@ -187,9 +187,9 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		 * @param messageId
 		 * @param {CopilotButton} button
 		 */
-		async onMessageButtonTap(messageId, button)
+		async messageButtonTapHandler(messageId, button)
 		{
-			logger.log('Dialog.onMessageButtonTap', messageId, button);
+			logger.log('Dialog.messageButtonTapHandler', messageId, button);
 
 			if (button.id === CopilotButtonType.copy)
 			{
@@ -220,10 +220,10 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			}
 		}
 
-		onCopilotFootnoteTap()
+		copilotFootnoteTapHandler()
 		{
 			const articleCode = '20418172';
-			logger.log('Dialog.onCopilotFootnoteTap, articleCode:', articleCode);
+			logger.log('Dialog.copilotFootnoteTapHandler, articleCode:', articleCode);
 			helpdesk.openHelpArticle(articleCode, 'helpdesk');
 		}
 

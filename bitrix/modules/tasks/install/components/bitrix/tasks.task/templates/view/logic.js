@@ -48,6 +48,8 @@ BX.namespace('Tasks.Component');
 		this.isTemplatesAvailable = parameters.isTemplatesAvailable;
 		this.isCopilotEnabled = parameters.isCopilotEnabled;
 		this.copilotParams = parameters.copilotParams;
+		this.taskTimeElapsedEnabled = parameters.taskTimeElapsedEnabled;
+		this.taskTimeElapsedFeatureId = parameters.taskTimeElapsedFeatureId;
 
 		BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskEvent.bind(this));
 		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this, false));
@@ -667,7 +669,12 @@ BX.namespace('Tasks.Component');
 		var statusContainer = BX("task-detail-status-below-name");
 		if(statusContainer)
 		{
-			var statusName = BX.message("TASKS_STATUS_" + status);
+			var statusName =
+				BX.Loc.hasMessage("TASKS_STATUS_" + status + "_MSGVER_1")
+					? BX.message("TASKS_STATUS_" + status + "_MSGVER_1")
+					: BX.message("TASKS_STATUS_" + status)
+			;
+
 			statusContainer.innerHTML = statusName.substr(0, 1).toLowerCase()+statusName.substr(1);
 		}
 	};
@@ -750,6 +757,13 @@ BX.namespace('Tasks.Component');
 			return false;
 		}
 
+		if (this.isTabLimitExceeded(currentTitle.dataset.id))
+		{
+			this.showTabLimit(currentTitle.dataset.id);
+
+			return false;
+		}
+
 		switch (currentTitle.dataset.id)
 		{
 			default:
@@ -761,6 +775,36 @@ BX.namespace('Tasks.Component');
 		}
 
 		return false;
+	};
+
+	BX.Tasks.Component.TaskView.prototype.isTabLimitExceeded = function(tabId)
+	{
+		switch (tabId)
+		{
+			case 'time':
+				return !this.taskTimeElapsedEnabled;
+			default:
+				return false;
+		}
+	};
+
+	BX.Tasks.Component.TaskView.prototype.showTabLimit = function(tabId)
+	{
+		switch (tabId)
+		{
+			case 'time':
+				BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+					const { Limit } = exports;
+					Limit.showInstance({
+						featureId: this.taskTimeElapsedFeatureId,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'taskViewTabs',
+						},
+					});
+				});
+				break;
+		}
 	};
 
 	BX.Tasks.Component.TaskView.prototype.getTabContent = function(tab)

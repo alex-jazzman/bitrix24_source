@@ -75,14 +75,6 @@ if ((($res = CCheckListResult::GetList(Array(),Array("REPORT"=>"N"))->Fetch()) |
 				else
 					unset($arPointFields["COMMENTS"]["CUSTOMER"]);
 
-				if (strtoupper(SITE_CHARSET) != "UTF-8" && !empty($arPointFields["COMMENTS"]))
-				{
-					if (!empty($arPointFields["COMMENTS"]["PERFOMER"]))
-						$arPointFields["COMMENTS"]["PERFOMER"] = \Bitrix\Main\Text\Encoding::convertEncoding($arPointFields["COMMENTS"]["PERFOMER"],"UTF-8",SITE_CHARSET);
-					if(!empty($arPointFields["COMMENTS"]["CUSTOMER"]))
-						$arPointFields["COMMENTS"]["CUSTOMER"] = \Bitrix\Main\Text\Encoding::convertEncoding($arPointFields["COMMENTS"]["CUSTOMER"],"UTF-8",SITE_CHARSET);
-				}
-
 				$arPointFields["STATUS"] = $arPoints[$arTestID]["STATE"]["STATUS"];
 			}
 			if (!empty($_POST["STATUS"]))//update only status

@@ -5,6 +5,7 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 	const { Feature } = require('feature');
 	const { getHttpPath } = require('utils/url');
 	const { ProfileView } = require('user/profile');
+	const { WorkgroupUtil } = require('project/utils');
 
 	/**
 	 * @param {InAppUrl} inAppUrl
@@ -96,14 +97,11 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 		}).name('log:entry');
 
 		inAppUrl.register('/workgroups/group/:groupId/$', ({ groupId }) => {
-			const data = {
+			void WorkgroupUtil.openProject(null, {
 				projectId: groupId,
-				action: 'view',
 				siteId: env.siteId,
 				siteDir: env.siteDir,
-			};
-
-			BX.postComponentEvent('projectbackground::project::action', [data], 'background');
+			});
 		}).name('group:open');
 	};
 });

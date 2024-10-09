@@ -30,6 +30,8 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 			/** @type {FloatingButtonComponent} */
 			this.floatingButtonRef = null;
 
+			this.floatinNativeButtonRef = null;
+
 			this.handleOnClick = this.handleOnClick.bind(this);
 			this.handleOnLongClick = this.handleOnLongClick.bind(this);
 			this.handleRecentItemAction = this.handleRecentItemAction.bind(this);
@@ -97,12 +99,14 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 				this.initRecentListeners();
 			}
 
-			return FloatingActionButton({
+			this.floatinNativeButtonRef = FloatingActionButton({
 				parentLayout: layout,
 				testId: this.getTestId(),
 				onClick: this.handleOnClick,
 				onLongClick: this.handleOnLongClick,
 			});
+
+			return this.floatinNativeButtonRef;
 		}
 
 		initRecentListeners()
@@ -151,7 +155,6 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 		 */
 		handleRecentAdd({ actionId, tabId = null })
 		{
-			console.log('handleRecentAdd');
 			this.getMenu().onAddToRecent(actionId, tabId);
 		}
 
@@ -170,18 +173,20 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 
 		actualize()
 		{
-			if (!this.floatingButtonRef)
+			if (!this.floatingButtonRef && !this.floatinNativeButtonRef)
 			{
 				return;
 			}
 
 			if (this.isVisible())
 			{
-				this.floatingButtonRef.show();
+				this.floatinNativeButtonRef?.show();
+				this.floatingButtonRef?.show();
 			}
 			else
 			{
-				this.floatingButtonRef.hide();
+				this.floatinNativeButtonRef?.hide();
+				this.floatingButtonRef?.hide();
 			}
 		}
 
@@ -356,5 +361,5 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 		}
 	}
 
-	module.exports = { FloatingButton };
+	module.exports = { FloatingButton, FloatingActionButtonSupportNative };
 });

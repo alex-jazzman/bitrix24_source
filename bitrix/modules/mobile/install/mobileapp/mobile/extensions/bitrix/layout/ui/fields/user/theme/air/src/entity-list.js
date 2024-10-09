@@ -10,6 +10,11 @@ jn.define('layout/ui/fields/user/theme/air/src/entity-list', (require, exports, 
 
 	const MAX_ELEMENTS = 5;
 
+	/**
+	 * @param {UserField} field
+	 * @return {any}
+	 * @constructor
+	 */
 	const EntityList = ({ field }) => {
 		const entityList = field.getEntityList();
 		const children = entityList.slice(0, MAX_ELEMENTS).map((entity) => UserAvatar({
@@ -19,13 +24,15 @@ jn.define('layout/ui/fields/user/theme/air/src/entity-list', (require, exports, 
 		}));
 
 		const showCounter = entityList.length > MAX_ELEMENTS;
-
 		if (showCounter)
 		{
-			children.push(Counter({
-				count: entityList.length - MAX_ELEMENTS,
-				size: AVATAR_SIZE + Indent.XS2.toNumber() * 2,
-			}));
+			children.push(
+				Counter({
+					count: entityList.length - MAX_ELEMENTS,
+					size: AVATAR_SIZE + Indent.XS2.toNumber() * 2,
+					onClick: () => field.openUserList(),
+				}),
+			);
 		}
 
 		return View(

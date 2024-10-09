@@ -147,7 +147,7 @@ export class CallController extends EventEmitter
 		this.folded = false;
 
 		this.localStream = null;
-		this.audioRingtone = Util.isNewCallLayoutEnabled() ? SoundType.ringtoneModern : SoundType.ringtone;
+		this.audioRingtone = SoundType.ringtoneModern;
 
 		// for setting the camera after reconnect
 		this.lastUsedCameraId = null;
@@ -430,6 +430,28 @@ export class CallController extends EventEmitter
 			if (userStates.hasOwnProperty(userId))
 			{
 				if (userStates[userId] === UserState.Connected || userStates[userId] === UserState.Connecting || userStates[userId] === UserState.Calling)
+				{
+					activeUsers.push(userId);
+				}
+			}
+		}
+		return activeUsers;
+	}
+
+	getMaxActiveCallUsers()
+	{
+		const userStates = this.currentCall.getUsers();
+		let activeUsers = [];
+
+		for (let userId in userStates)
+		{
+			if (userStates.hasOwnProperty(userId))
+			{
+				if (
+					userStates[userId] !== UserState.Declined
+					&& userStates[userId] !== UserState.Busy
+					&& userStates[userId] !== UserState.Unavailable
+				)
 				{
 					activeUsers.push(userId);
 				}
@@ -904,8 +926,8 @@ export class CallController extends EventEmitter
 			callType: this.getCallType(),
 			status: Analytics.AnalyticsStatus.privateToGroup,
 			chatId: this.currentCall.associatedEntity.id,
-			callUsersCount: this.getCallUsers(true).length,
-			callLength: Util.getTimeText(this.currentCall.startDate),
+			callUsersCount: this.getMaxActiveCallUsers().length,
+			callLength: Util.getTimeInSeconds(this.currentCall.startDate),
 		});
 
 		oldCall.hangup();
@@ -1208,9 +1230,6 @@ export class CallController extends EventEmitter
 				if (provider === Provider.Plain)
 				{
 					hiddenButtons.push('floorRequest');
-				}
-				if (provider !== Provider.Bitrix || !Util.isNewCallLayoutEnabled())
-				{
 					hiddenButtons.push('hangupOptions');
 				}
 				if (!Util.shouldShowDocumentButton())
@@ -1227,7 +1246,6 @@ export class CallController extends EventEmitter
 					userLimit: Util.getUserLimit(),
 					language: this.language,
 					layout: dialogId.toString().startsWith("chat") ? View.Layout.Grid : View.Layout.Centered,
-					enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 					microphoneId: Hardware.defaultMicrophone,
 					showShareButton: this.featureScreenSharing !== FeatureState.Disabled,
 					showRecordButton: this.featureRecord !== FeatureState.Disabled,
@@ -1340,9 +1358,7 @@ export class CallController extends EventEmitter
 						status: Analytics.AnalyticsStatus.success,
 					});
 
-					this.currentCall.inviteUsers({
-						show: !Util.isNewCallLayoutEnabled(),
-					});
+					this.currentCall.inviteUsers();
 
 					this.messengerFacade.repeatSound('dialtone', 5000, true);
 				}
@@ -1436,9 +1452,6 @@ export class CallController extends EventEmitter
 				if (this.currentCall instanceof PlainCall)
 				{
 					hiddenButtons.push('floorRequest');
-				}
-				if (!(this.currentCall instanceof BitrixCall) || !Util.isNewCallLayoutEnabled())
-				{
 					hiddenButtons.push('hangupOptions');
 				}
 				if (!Util.shouldShowDocumentButton())
@@ -1455,7 +1468,6 @@ export class CallController extends EventEmitter
 					userLimit: Util.getUserLimit(),
 					language: this.language,
 					layout: isGroupCall ? View.Layout.Grid : View.Layout.Centered,
-					enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 					showRecordButton: this.featureRecord !== FeatureState.Disabled,
 					microphoneId: Hardware.defaultMicrophone,
 					hiddenButtons: hiddenButtons,
@@ -1527,7 +1539,7 @@ export class CallController extends EventEmitter
 				callType: this.getCallType(),
 				subSection: finishCall ? Analytics.AnalyticsSubSection.contextMenu : Analytics.AnalyticsSubSection.window,
 				element: finishCall ? Analytics.AnalyticsElement.finishForAllButton : Analytics.AnalyticsElement.disconnectButton,
-				recordTime: Util.getRecordTimeText(this.callRecordInfo),
+				recordTime: Util.getRecordTimeText(this.callRecordInfo, true),
 			});
 
 			this.callRecordInfo = null;
@@ -1839,18 +1851,13 @@ export class CallController extends EventEmitter
 			});
 		}
 
-		let newStyleOptions = {};
-
-		if (Util.isNewCallLayoutEnabled())
-		{
-			newStyleOptions = {
-				className: 'bx-messenger-videocall-document-options-container',
-				background: '#22272B',
-				contentBackground: '#22272B',
-				darkMode: true,
-				contentBorderRadius: '6px',
-			};
-		}
+		let newStyleOptions = {
+			className: 'bx-messenger-videocall-document-options-container',
+			background: '#22272B',
+			contentBackground: '#22272B',
+			darkMode: true,
+			contentBorderRadius: '6px',
+		};
 
 		this.documentsMenu = new BX.PopupMenuWindow({
 			...newStyleOptions,
@@ -2523,9 +2530,6 @@ export class CallController extends EventEmitter
 				if (this.currentCall instanceof PlainCall)
 				{
 					hiddenButtons.push('floorRequest');
-				}
-				if (!(this.currentCall instanceof BitrixCall) || !Util.isNewCallLayoutEnabled())
-				{
 					hiddenButtons.push('hangupOptions');
 				}
 				if (!Util.shouldShowDocumentButton())
@@ -2542,7 +2546,6 @@ export class CallController extends EventEmitter
 					showRecordButton: this.featureRecord !== FeatureState.Disabled,
 					userLimit: Util.getUserLimit(),
 					layout: isGroupCall ? View.Layout.Grid : View.Layout.Centered,
-					enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 					microphoneId: Hardware.defaultMicrophone,
 					blockedButtons: this.getBlockedButtons(this.currentCall.provider === Provider.Plain),
 					hiddenButtons: hiddenButtons,
@@ -2572,14 +2575,6 @@ export class CallController extends EventEmitter
 				}
 
 				Hardware.isMicrophoneMuted = !mediaParams.audio;
-				if (
-					this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount()
-					&& !Util.isNewCallLayoutEnabled()
-				)
-				{
-					Hardware.isMicrophoneMuted = true;
-					this.showAutoMicMuteNotification();
-				}
 
 				this.currentCall.answer({
 					enableMicAutoParameters: Hardware.enableMicAutoParameters
@@ -2760,8 +2755,8 @@ export class CallController extends EventEmitter
 						callType: this.getCallType(),
 						status: Analytics.AnalyticsStatus.finishedForAll,
 						chatId: this.currentCall.associatedEntity.id,
-						callUsersCount: this.getCallUsers(true).length,
-						callLength: Util.getTimeText(this.currentCall.startDate),
+						callUsersCount: this.getMaxActiveCallUsers().length,
+						callLength: Util.getTimeInSeconds(this.currentCall.startDate),
 					});
 
 					this.leaveCurrentCall(false, true);
@@ -3446,9 +3441,22 @@ export class CallController extends EventEmitter
 			this.clearConnectionQualityTimer(e.userId);
 			this.callView.setUserConnectionQuality(e.userId, 5);
 
+			const unblockButtonsList = [];
+			const isNeedUnblockCameraButton = (this.currentCall instanceof BitrixCall && this.currentCall.isGetUserMediaFulfilled()) || this.currentCall instanceof PlainCall;
+
 			if (!e.isLegacyMobile)
 			{
-				this.callView.unblockButtons(['camera', 'floorRequest', 'screen']);
+				unblockButtonsList.push('floorRequest', 'screen');
+			}
+
+			if (!e.isLegacyMobile && isNeedUnblockCameraButton)
+			{
+				unblockButtonsList.push('camera');
+			}
+
+			if (!!unblockButtonsList.length)
+			{
+				this.callView.unblockButtons(unblockButtonsList);
 			}
 
 			if (this.callRecordState === View.RecordState.Stopped)
@@ -3632,7 +3640,7 @@ export class CallController extends EventEmitter
 				{
 					this.showWebScreenSharePopup();
 				}
-				this.callView.blockSwitchCamera();
+
 				this.callView.updateButtons();
 			}
 			else
@@ -3641,7 +3649,7 @@ export class CallController extends EventEmitter
 					callId: this.currentCall.id,
 					callType: this.getCallType(),
 					status: Analytics.AnalyticsStatus.success,
-					screenShareLength: Util.getTimeText(this.screenShareStartTime),
+					screenShareLength: Util.getTimeInSeconds(this.screenShareStartTime),
 				});
 				this.screenShareStartTime = null;
 
@@ -3657,12 +3665,12 @@ export class CallController extends EventEmitter
 				{
 					BXDesktopSystem.CallRecordStopSharing();
 				}
+			}
 
-				if (!this.currentCall.callFromMobile)
-				{
-					this.callView.unblockSwitchCamera();
-					this.callView.updateButtons();
-				}
+			if (!this.currentCall.callFromMobile)
+			{
+				this.callView.unblockSwitchCamera();
+				this.callView.updateButtons();
 			}
 
 			if (this.localStream)
@@ -3702,17 +3710,36 @@ export class CallController extends EventEmitter
 
 	_onCallRemoteMediaReceived(e)
 	{
+		const getStreamType = (stream) =>
+		{
+			if (stream?.getVideoTracks()?.length)
+			{
+				return 'video';
+			}
+
+			if (stream?.getAudioTracks()?.length)
+			{
+				return 'audio';
+			}
+
+			return null;
+		}
+
 		if (this.callView)
 		{
 			if ('track' in e)
 			{
 				this.callView.setUserMedia(e.userId, e.kind, e.track)
 			}
-			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'audio')
+			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'audio' && getStreamType(e.mediaRenderer.stream) === 'audio')
 			{
 				this.callView.setUserMedia(e.userId, 'audio', e.mediaRenderer.stream.getAudioTracks()[0]);
 			}
-			if ('mediaRenderer' in e && (e.mediaRenderer.kind === 'video' || e.mediaRenderer.kind === 'sharing'))
+			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'sharingAudio' && getStreamType(e.mediaRenderer.stream) === 'audio')
+			{
+				this.callView.setUserMedia(e.userId, 'sharingAudio', e.mediaRenderer.stream.getAudioTracks()[0]);
+			}
+			if ('mediaRenderer' in e && (e.mediaRenderer.kind === 'video' || e.mediaRenderer.kind === 'sharing') && getStreamType(e.mediaRenderer.stream) === 'video')
 			{
 				this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
 			}
@@ -3912,7 +3939,6 @@ export class CallController extends EventEmitter
 				{
 					this.showWebScreenSharePopup();
 				}
-				this.callView.blockSwitchCamera();
 			}
 			else
 			{
@@ -3928,13 +3954,8 @@ export class CallController extends EventEmitter
 				{
 					BXDesktopSystem.CallRecordStopSharing();
 				}
-
-				if (!this.currentCall.callFromMobile)
-				{
-					this.callView.unblockSwitchCamera();
-					this.callView.updateButtons();
-				}
 			}
+
 			this.callView.updateButtons();
 		}
 	}
@@ -4009,7 +4030,7 @@ export class CallController extends EventEmitter
 				callType: this.getCallType(),
 				subSection: Analytics.AnalyticsSubSection.window,
 				element: Analytics.AnalyticsElement.recordButton,
-				recordTime: Util.getRecordTimeText(this.callRecordInfo),
+				recordTime: Util.getRecordTimeText(this.callRecordInfo, true),
 			});
 			this.callRecordInfo = null;
 			BXDesktopSystem.CallRecordStop();
@@ -4310,8 +4331,8 @@ export class CallController extends EventEmitter
 				callType: this.getCallType(),
 				status: Analytics.AnalyticsStatus.lastUserLeft,
 				chatId: this.currentCall.associatedEntity.id,
-				callUsersCount: this.getCallUsers(true).length,
-				callLength: Util.getTimeText(this.currentCall.startDate),
+				callUsersCount: this.getMaxActiveCallUsers().length,
+				callLength: Util.getTimeInSeconds(this.currentCall.startDate),
 			});
 		}
 
@@ -4790,7 +4811,6 @@ export class CallController extends EventEmitter
 				userLimit: 48,
 				language: this.language,
 				layout: View.Layout.Grid,
-				enableNewLayoutLogic: Util.isNewCallLayoutEnabled(),
 				hiddenButtons: hiddenButtons,
 				blockedButtons: this.getBlockedButtons(),
 			});
@@ -5078,7 +5098,7 @@ export class CallController extends EventEmitter
 		const speakerModel = this.callView.userRegistry.get(roomSpeaker);
 		let avatarText = ''
 
-		if (!speakerModel && Util.isNewCallLayoutEnabled())
+		if (!speakerModel)
 		{
 			avatarText = Utils.text.getFirstLetters(speakerModel.name).toUpperCase();
 		}

@@ -4,8 +4,6 @@ import { IntervalSelector } from 'tasks.interval-selector';
 import { FormPage } from './form-page';
 import { ValueChecker } from '../value-checker';
 import { bindFilterNumberInput } from '../bind-filter-number-input';
-import { Hint } from '../hint';
-import 'ui.hint';
 
 import type { Flow } from '../edit-form';
 
@@ -159,8 +157,6 @@ export class AboutPage extends FormPage
 			</form>
 		`;
 
-		BX.UI.Hint.init(this.#layout.aboutPageForm);
-
 		Event.bind(this.#layout.aboutPageForm, 'change', this.#params.onChangeHandler);
 
 		return this.#layout.aboutPageForm;
@@ -185,7 +181,14 @@ export class AboutPage extends FormPage
 		const plannedCompletionTimeLabel = `
 			<div class="tasks-flow__create-title-with-hint">
 				${Loc.getMessage('TASKS_FLOW_EDIT_FORM_PLANNED_COMPLETION_TIME')}
-				<span data-id="plannedCompletionTimeHint" class="ui-hint"><span class="ui-hint-icon"></span></span>
+				<span
+					data-id="plannedCompletionTimeHint"
+					class="ui-hint"
+					data-hint="${Loc.getMessage('TASKS_FLOW_EDIT_FORM_PLANNED_COMPLETION_TIME_HINT')}" 
+					data-hint-no-icon
+				>
+					<span class="ui-hint-icon"></span>
+				</span>
 			</div>
 		`;
 
@@ -221,11 +224,6 @@ export class AboutPage extends FormPage
 				${this.#layout.skipWeekends.render()}
 			</div>
 		`;
-
-		const plannedCompletionTimeHint = root.querySelector('[data-id=plannedCompletionTimeHint]');
-
-		const hint = new Hint({ text: Loc.getMessage('TASKS_FLOW_EDIT_FORM_PLANNED_COMPLETION_TIME_HINT') });
-		hint.bindTo(plannedCompletionTimeHint);
 
 		return root;
 	}

@@ -16,7 +16,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 	const {
 		getTunnelUniqueId,
 		prepareTunnelsBeforeSave,
-		selectEntities: selectTunnelsEntities,
+		selectItemsByIds: selectTunnelsEntities,
 	} = require('crm/statemanager/redux/slices/tunnels');
 
 	const reducerName = 'crm:stage';
@@ -26,6 +26,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 	const {
 		selectById,
 		selectEntities,
+		selectAll,
 	} = adapter.getSelectors((state) => state[reducerName]);
 
 	const selectStatusIdById = createDraftSafeSelector(
@@ -44,7 +45,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 				const { sort } = selectById(getState(), stageId) || {};
 				const result = await StageAjax.create(entityTypeId, categoryId, {
 					...fields,
-					sort: sort + 10,
+					sort: sort + 1,
 				});
 
 				if (result.status !== 'success')
@@ -271,6 +272,16 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 		},
 	});
 
+	const selectIdAndStatusByIds = createDraftSafeSelector(
+		selectAll,
+		(store, ids) => ids,
+		(items, ids) => ids.map((id) => {
+			const item = items.find(({ id: itemId }) => itemId === id);
+
+			return item ? { id: item.id, statusId: item.statusId } : null;
+		}),
+	);
+
 	const { reducer } = slice;
 
 	ReducerRegistry.register(reducerName, reducer);
@@ -279,6 +290,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 		selectById,
 		selectEntities,
 		selectStatusIdById,
+		selectIdAndStatusByIds,
 
 		createCrmStage,
 		updateCrmStage,

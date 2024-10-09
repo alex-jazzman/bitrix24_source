@@ -8773,7 +8773,7 @@ window._main_polyfill_core = true;
 	          return element;
 	        }
 	        if ('text' in data && !Type.isNil(data.text)) {
-	          element.innerText = data.text;
+	          element.textContent = data.text;
 	          return element;
 	        }
 	        if ('html' in data && !Type.isNil(data.html)) {

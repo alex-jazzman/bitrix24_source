@@ -105,6 +105,7 @@ CREATE TABLE b_biconnector_superset_dashboard
 	FILTER_PERIOD VARCHAR(50) NULL,
 	CREATED_BY_ID INT NULL,
 	OWNER_ID INT NULL,
+	INCLUDE_LAST_FILTER_DATE CHAR(1) DEFAULT NULL,
 	PRIMARY KEY pk_b_biconnector_superset_dashboard(ID),
 	INDEX ix_b_biconnector_superset_dashboard_app_id(APP_ID),
 	INDEX ix_b_biconnector_superset_dashboard_external_id(EXTERNAL_ID),

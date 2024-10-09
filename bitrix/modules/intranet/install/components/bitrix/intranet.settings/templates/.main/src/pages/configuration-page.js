@@ -23,7 +23,7 @@ export class ConfigurationPage extends BaseSettingsPage
 	headerWidgetRender(): HTMLElement
 	{
 		let timeFormat = '';
-		if (this.getValue('isFormat24Hour') === 'Y')
+		if (this.getValue('isFormat24Hour')?.current === 'Y')
 		{
 			timeFormat = this.getValue('format24HourTime');
 		}

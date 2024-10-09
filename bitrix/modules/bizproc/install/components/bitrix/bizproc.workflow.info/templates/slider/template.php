@@ -19,6 +19,7 @@ $taskButtons = $isMyTask ? ($task['controls']['buttons'] ?? null) : null;
 $taskFields = $isMyTask ? ($task['controls']['fields'] ?? null) : null;
 
 $canDelegate = ($task
+	&& $task['isRunning']
 	&& ($arResult['isAdmin'] || (int)$task['delegationType'] !== CBPTaskDelegationType::None)
 );
 
@@ -50,7 +51,7 @@ use Bitrix\Main\Loader;
 						<span><?= Loc::getMessage('BPWFI_SLIDER_TASK') ?></span>
 					</span>
 					<span class="ui-tabs__tab-header-container">
-						<span onclick="BX.Bizproc.Workflow.Timeline.open({ workflowId: '<?= CUtil::JSEscape($workflowId) ?>' });"><?= Loc::getMessage('BPWFI_SLIDER_TIMELINE') ?></span>
+						<span onclick="BX.Bizproc.Workflow.Timeline.open({ workflowId: '<?= CUtil::JSEscape($workflowId) ?>' });"><?= Loc::getMessage('BPWFI_SLIDER_TIMELINE_MSGVER_1') ?></span>
 					</span>
 					<span class="ui-tabs__tab-header-container">
 						<a href="<?= htmlspecialcharsbx($arResult['documentUrl']) ?>" target="_blank" style="color: var(--ui-color-base-90);"><?= Loc::getMessage('BPWFI_SLIDER_DOCUMENT') ?></a>
@@ -89,9 +90,8 @@ use Bitrix\Main\Loader;
 							$description = $workflowView->getDescription();
 						}
 
-						if ($description):
 						?>
-						<div class="bp-workflow-info__tabs-block">
+						<div class="bp-workflow-info__tabs-block<?= !$description ? ' block-hidden' : ''?>">
 							<div class="bp-workflow-info__label"><?= Loc::getMessage('BPWFI_SLIDER_DESCRIPTION') ?></div>
 							<div class="bp-workflow-info__desc">
 								<div class="bp-workflow-info__desc-inner">
@@ -99,18 +99,19 @@ use Bitrix\Main\Loader;
 								</div>
 							</div>
 						</div>
-						<?php endif; ?>
 					</div>
 				</div>
 			</div>
-			<?php if ($taskFields):
+			<?php
 				$documentService = CBPRuntime::getRuntime()->getDocumentService();
 				$documentType = $arResult['documentType'];
 			?>
-			<div class="bp-workflow-info__editor">
+			<div class="bp-workflow-info__editor<?= !$taskFields ? ' block-hidden' : ''?>">
 				<div class="bp-workflow-info__editor-title"><?= Loc::getMessage('BPWFI_SLIDER_FIELDS_TITLE') ?></div>
 				<form class="ui-form" name="task-form" enctype="multipart/form-data">
-					<?php foreach ($taskFields as $field):
+					<?php
+					if ($taskFields):
+					foreach ($taskFields as $field):
 						$cid = str_replace('[]', '', $field['Id']);
 						?>
 						<div class="ui-form-row" data-cid="<?= htmlspecialcharsbx($cid) ?>">
@@ -130,9 +131,9 @@ use Bitrix\Main\Loader;
 							</div>
 						</div>
 					<?php endforeach; ?>
+					<?php endif; ?>
 				</form>
 			</div>
-			<?php endif; ?>
 		</div>
 	</div>
 	<?php
@@ -202,6 +203,10 @@ use Bitrix\Main\Loader;
 
 		BX.message({
 			BPWFI_SLIDER_BUTTON_DELEGATE: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_BUTTON_DELEGATE')) ?>',
+			BPWFI_SLIDER_CONFIRM_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_CONFIRM_TITLE')) ?>',
+			BPWFI_SLIDER_CONFIRM_DESCRIPTION: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_CONFIRM_DESCRIPTION')) ?>',
+			BPWFI_SLIDER_CONFIRM_ACCEPT: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_CONFIRM_ACCEPT')) ?>',
+			BPWFI_SLIDER_CONFIRM_CANCEL: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_CONFIRM_CANCEL')) ?>',
 		});
 		BX.Bizproc.Component.WorkflowInfo.Instance = new BX.Bizproc.Component.WorkflowInfo({
 			currentUserId: BX.message('USER_ID'),
@@ -211,6 +216,7 @@ use Bitrix\Main\Loader;
 			taskButtons: <?= \Bitrix\Main\Web\Json::encode($taskButtons) ?>,
 			taskForm: document.forms['task-form'],
 			buttonsPanel: document.querySelector('[data-role="buttons-panel"]'),
+			workflowContent: document.querySelector('.bp-workflow-info__content'),
 			canDelegateTask: <?= $canDelegate ? 'true' : 'false' ?>,
 		});
 		BX.Bizproc.Component.WorkflowInfo.Instance.init();

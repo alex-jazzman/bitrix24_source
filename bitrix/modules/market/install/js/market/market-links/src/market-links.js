@@ -37,9 +37,15 @@ export class MarketLinks
 		return MAIN_DIR + 'collection/page/' + collectionId + '/';
 	}
 
-	static appDetail(appCode, isSiteTemplate = false, queryParams = {})
+	static appDetail(appItem, queryParams = {})
 	{
-		if (isSiteTemplate) {
+		const appCode = appItem.CODE ?? appItem.APP_CODE;
+
+		if (appItem.IS_SITE_TEMPLATE === 'Y') {
+			if (Type.isString(appItem.LANDING_TYPE) && appItem.LANDING_TYPE === 'VIBE') {
+				return MarketLinks.vibeDetailLink(appCode, queryParams);
+			}
+
 			return MarketLinks.siteDetailLink(appCode, queryParams);
 		}
 
@@ -70,6 +76,13 @@ export class MarketLinks
 		}
 
 		return path;
+	}
+
+	static vibeDetailLink(appCode, queryParams)
+	{
+		const from = queryParams.from ?? '';
+
+		return '/vibe/new/?tpl=market/' + appCode + '&from=' + from;
 	}
 
 	static openSiteTemplate(event, isSiteTemplate)

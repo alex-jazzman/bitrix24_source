@@ -723,7 +723,11 @@ export class Guide extends Event.EventEmitter
 			}
 
 			let linkNode = '';
-			if(this.getCurrentStep().getLink() || this.getCurrentStep().getArticle())
+			if (
+				this.getCurrentStep().getLink()
+				|| this.getCurrentStep().getArticle()
+				|| this.getCurrentStep().getInfoHelperCode()
+			)
 			{
 				linkNode = this.getLink();
 			}
@@ -766,20 +770,27 @@ export class Guide extends Event.EventEmitter
 		this.getTitle().innerHTML = this.getCurrentStep().getTitle();
 		this.getText().innerHTML = this.getCurrentStep().getText();
 
-		if (this.getCurrentStep().getArticle() || this.getCurrentStep().getLink())
+		if (
+			this.getCurrentStep().getArticle()
+			|| this.getCurrentStep().getLink()
+			|| this.getCurrentStep().getInfoHelperCode()
+		)
 		{
-			Dom.removeClass(this.layout.link,  "ui-tour-popup-link-hide");
+			Dom.removeClass(this.layout.link, 'ui-tour-popup-link-hide');
 
 			if (this.getCurrentStep().getArticle())
 			{
-				Event.bind(this.layout.link, "click", this.handleClickLink.bind(this));
+				Event.bind(this.layout.link, 'click', this.handleClickLink.bind(this));
+			}
+			else if (this.getCurrentStep().getInfoHelperCode())
+			{
+				Event.bind(this.layout.link, 'click', this.handleInfoHelperCodeClickLink.bind(this));
 			}
 
 			if (this.getCurrentStep().getLink())
 			{
 				this.getLink().setAttribute('href', this.getCurrentStep().getLink());
 			}
-
 		}
 		else {
 			Dom.addClass(this.layout.link,  "ui-tour-popup-link-hide");
@@ -832,6 +843,29 @@ export class Guide extends Event.EventEmitter
 			EventEmitter.subscribe(this.helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
 				this.getPopup().setAutoHide(true);
 			});
+		}
+	}
+
+	handleInfoHelperCodeClickLink(): void
+	{
+		event.preventDefault();
+
+		if (Reflection.getClass('BX.UI.InfoHelper.show'))
+		{
+			const helper = top.BX.UI.InfoHelper;
+			helper.show(this.getCurrentStep().getInfoHelperCode());
+
+			if (this.onEvent)
+			{
+				if (helper.isOpen())
+				{
+					this.getPopup().setAutoHide(false);
+				}
+
+				EventEmitter.subscribe(helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
+					this.getPopup().setAutoHide(true);
+				});
+			}
 		}
 	}
 

@@ -2,7 +2,9 @@ import { Loc } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
 import { RecentMenu } from 'im.v2.lib.menu';
-import { ChatActionType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
+import { LayoutManager } from 'im.v2.lib.layout';
+import { ChatActionType, Layout } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 
 import type { MenuItem } from 'im.v2.lib.menu';
@@ -34,9 +36,8 @@ export class MainMenu extends RecentMenu
 	getMenuItems(): MenuItem[]
 	{
 		return [
-			this.getUnreadMessageItem(),
 			this.getPinMessageItem(),
-			this.getCallItem(),
+			this.getEditItem(),
 			this.getOpenProfileItem(),
 			this.getOpenUserCalendarItem(),
 			this.getChatsWithUserItem(),
@@ -44,6 +45,26 @@ export class MainMenu extends RecentMenu
 			this.getHideItem(),
 			this.getLeaveItem(),
 		];
+	}
+
+	getEditItem(): ?MenuItem
+	{
+		if (!this.permissionManager.canPerformAction(ChatActionType.update, this.context.dialogId))
+		{
+			return null;
+		}
+
+		return {
+			text: Loc.getMessage('IM_SIDEBAR_MENU_UPDATE_CHAT'),
+			onclick: () => {
+				Analytics.getInstance().onOpenChatEditForm(this.context.dialogId);
+
+				void LayoutManager.getInstance().setLayout({
+					name: Layout.updateChat.name,
+					entityId: this.context.dialogId,
+				});
+			},
+		};
 	}
 
 	getOpenUserCalendarItem(): ?MenuItem

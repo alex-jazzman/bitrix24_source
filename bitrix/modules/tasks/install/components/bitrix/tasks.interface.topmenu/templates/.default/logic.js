@@ -40,6 +40,7 @@ BX.namespace('Tasks.Component');
 				this.ownerId = Number(this.option('ownerId'));
 				this.groupId = Number(this.option('groupId'));
 
+				this.isProjectLimitExceeded = Boolean(this.option('isProjectLimitExceeded'));
 				this.isScrumLimitExceeded = Boolean(this.option('isScrumLimitExceeded'));
 				this.isTaskAccessPermissionsLimit = Boolean(this.option('isTaskAccessPermissionsLimit'));
 				this.isRoleControlDisabled = Boolean(this.option('isRoleControlDisabled'));
@@ -142,62 +143,6 @@ BX.namespace('Tasks.Component');
 				if (scrumButton)
 				{
 					scrumButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data.scrum_total_comments);
-				}
-			},
-
-			createScrum: function(createLink, sidePanelId)
-			{
-				if (this.isScrumLimitExceeded)
-				{
-					BX.UI.InfoHelper.show(
-						sidePanelId,
-						{
-							isLimit: true,
-							limitAnalyticsLabels: {
-								module: 'tasks',
-								source: 'scrumList'
-							}
-						}
-					);
-				}
-				else
-				{
-					BX.SidePanel.Instance.open(createLink);
-				}
-			},
-
-			showConfigPermissions: function()
-			{
-				if (this.isTaskAccessPermissionsLimit)
-				{
-					BX.UI.InfoHelper.show(
-						'limit_task_access_permissions',
-						{
-							isLimit: true,
-							limitAnalyticsLabels: {
-								module: 'tasks',
-								source: 'topMenu'
-							}
-						}
-					);
-				}
-				else
-				{
-					BX.SidePanel.Instance.open(
-						'/tasks/config/permissions/',
-						{
-							cacheable: false,
-							events: {
-								onOpen: function () {
-									var manager = BX.Main.interfaceButtonsManager;
-									for (var menuId in manager.data)
-									{
-										manager.data[menuId].closeSubmenu();
-									}
-								}
-							}
-						}
-					);
 				}
 			},
 

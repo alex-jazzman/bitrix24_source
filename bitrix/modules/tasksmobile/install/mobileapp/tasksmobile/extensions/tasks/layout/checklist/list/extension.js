@@ -13,7 +13,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 	const { toastMovedItem, toastEmptyPersonalList, toastNoRights } = require('tasks/layout/checklist/list/src/toasts');
 	const { ChecklistActionsMenu } = require('tasks/layout/checklist/list/src/menu/actions-menu');
 	const { ChecklistsMenu } = require('tasks/layout/checklist/list/src/menu/checklists-menu');
-	const { MEMBER_TYPE } = require('tasks/layout/checklist/list/src/constants');
+	const { MEMBER_TYPE, MEMBER_TYPE_RESTRICTION_FEATURE_META } = require('tasks/layout/checklist/list/src/constants');
 	const { ButtonAdd, buttonAddItemType } = require('tasks/layout/checklist/list/src/buttons/button-add-item');
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
 	const { OptimizedListView } = require('layout/ui/optimized-list-view');
@@ -443,6 +443,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				onChangeAttachments: this.#handleOnChangeAttachments,
 				onToggleComplete: this.handleOnToggleComplete,
 				openUserSelectionManager: this.openUserSelectionManager,
+				openTariffRestrictionWidget: this.openTariffRestrictionWidget,
 			};
 		}
 
@@ -464,6 +465,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				onToggleImportant: this.handleOnToggleImportant,
 				onMoveToCheckList: this.handleOnShowChecklistsMenu,
 				openUserSelectionManager: this.openUserSelectionManager,
+				openTariffRestrictionWidget: this.openTariffRestrictionWidget,
 				onAddFile: this.handleOnAddFile,
 				onBlur: this.handleOnBlurFocusedItem,
 			});
@@ -506,7 +508,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				return this.handleOnRemoveItem({ item });
 			}
 
-			const shouldBeDeletedOnBlur = !this.saveFocus && !item.hasItemTitle() && item.shouldRemove();
+			const blurItemRef = this.getItemRef(item.getId());
+			const shouldBeDeletedOnBlur = !this.saveFocus && !blurItemRef.getTextValue() && item.shouldRemove();
 
 			if ((shouldBeDeletedOnBlur && !item.isRoot()))
 			{
@@ -846,6 +849,15 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			userFieldInstance.openSelector();
 		};
 
+		openTariffRestrictionWidget = (memberType) => {
+			this.setSaveFocus(true);
+
+			MEMBER_TYPE_RESTRICTION_FEATURE_META[memberType].showRestriction({
+				parentWidget: this.getParentWidget(),
+				onHidden: () => this.handleOnFocusItem(),
+			});
+		};
+
 		#handleOnChangeUsers = ({ item, memberType }) => (_, members = []) => {
 			this.#handleOnChangeMembers({ item, members, memberType });
 			this.updateActionMenu();
@@ -863,6 +875,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return fieldConfigMap[entityMemberType];
 		}
 
+		/**
+		 * @returns {MainChecklistItem}
+		 */
 		getFocusedItemRef()
 		{
 			if (this.focusedItemId)
@@ -873,6 +888,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return null;
 		}
 
+		/**
+		 * @returns {MainChecklistItem}
+		 */
 		getItemRef(id)
 		{
 			return this.itemRefMap.get(id);

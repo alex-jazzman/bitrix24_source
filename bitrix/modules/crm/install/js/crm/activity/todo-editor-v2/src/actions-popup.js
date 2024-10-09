@@ -1,6 +1,7 @@
 import { Loc, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu, MenuManager } from 'main.popup';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
 import { Events } from './components/todo-editor';
 import type { ActionMenuItem } from './todo-editor';
 
@@ -75,13 +76,20 @@ export default class ActionsPopup
 		}
 
 		return {
-			html: this.#getActionItemHtml(svgData, messageCode),
+			html: this.#getActionItemHtml(svgData, messageCode, componentParams?.isLocked),
 			onclick: this.onItemClick.bind(this, { id, componentId, componentParams, onClick }),
 		};
 	}
 
 	onItemClick({ id, componentId, componentParams, onClick }): void
 	{
+		if (componentParams?.isLocked)
+		{
+			FeaturePromotersRegistry.getPromoter({ featureId: 'calendar_location' }).show();
+
+			return;
+		}
+
 		if (Type.isFunction(onClick))
 		{
 			onClick();
@@ -98,10 +106,10 @@ export default class ActionsPopup
 		this.#menu.close();
 	}
 
-	#getActionItemHtml(svgData: string, messageCode: string): string
+	#getActionItemHtml(svgData: string, messageCode: string, isLocked: boolean = false): string
 	{
 		return `
-			<span class="crm-activity__todo-editor-v2-actions-menu-item">
+			<span class="crm-activity__todo-editor-v2-actions-menu-item ${isLocked ? '--locked' : ''}">
 				<span 
 					class="crm-activity__todo-editor-v2-actions-menu-item-icon"
 					style="background-image: url('data:image/svg+xml,${encodeURIComponent(svgData)}')"

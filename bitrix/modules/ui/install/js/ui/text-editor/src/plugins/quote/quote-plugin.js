@@ -34,8 +34,6 @@ import { $createQuoteNode, QuoteNode } from './quote-node';
 
 import type TextEditor from '../../text-editor';
 
-import './quote.css';
-
 export type InsertQuotePayload = {
 	content?: string,
 };

@@ -92,7 +92,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 	    const isRedirectAllowed = await (DesktopManager == null ? void 0 : DesktopManager.getInstance().checkForRedirect());
 	    if (isRedirectAllowed) {
-	      return DesktopManager == null ? void 0 : DesktopManager.getInstance().redirectToChat(dialogId);
+	      return DesktopManager == null ? void 0 : DesktopManager.getInstance().redirectToChat(dialogId, messageId);
 	    }
 	    return (_getOpener = getOpener()) == null ? void 0 : _getOpener.openChat(dialogId, messageId);
 	  }

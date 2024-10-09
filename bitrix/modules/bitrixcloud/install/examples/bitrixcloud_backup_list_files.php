@@ -3,15 +3,16 @@
 $LICENSE_KEY = '';
 include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/license_key.php';
 
-$host = 'www.1c-bitrix.ru';
+$host = 'util.bitrixsoft.com';
 
-$path = '/buy_tmp/backup.php';
+$path = '/backup.php';
 $path .= '?license=' . md5($LICENSE_KEY);
 $path .= '&lang=ru';
+$path .= '&region=ru';
 $path .= '&action=get_info';
 
-$proto = '';
-$port = 80;
+$proto = 'ssl';
+$port = 443;
 $http_timeout = 10;
 
 $result = '';

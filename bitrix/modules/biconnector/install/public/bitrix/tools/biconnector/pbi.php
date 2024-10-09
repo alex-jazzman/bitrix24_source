@@ -59,6 +59,13 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	{
 		$limitManager->setSupersetKey($supersetKey);
 	}
+	else if (
+		!\Bitrix\Main\Loader::includeModule('bitrix24')
+		&& $accessKey === \Bitrix\BIConnector\Superset\KeyManager::getAccessKey()
+	)
+	{
+		$limitManager->setIsSuperset();
+	}
 
 	if (!$manager->checkAccessKey($accessKey))
 	{

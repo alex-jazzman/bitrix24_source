@@ -3200,15 +3200,20 @@ BitrixMSL.prototype.createTaskSetContentSuccess = function(taskId)
 			BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_SUCCESS_BUTTON_CANCEL'),
 			BX.message('MOBILE_EXT_LIVEFEED_CREATE_TASK_SUCCESS_BUTTON_OK')
 		],
-		callback: function (buttonId) {
+		callback(buttonId) {
 			if (buttonId == 2)
 			{
 				BXMobileApp.Events.postToComponent(
 					'taskbackground::task::open',
-					[{taskId: taskId}]
+					[{ taskId }, {
+						analyticsLabel: {
+							c_section: 'feed',
+							c_element: 'view_button',
+						},
+					}],
 				);
 			}
-		}
+		},
 	});
 };
 

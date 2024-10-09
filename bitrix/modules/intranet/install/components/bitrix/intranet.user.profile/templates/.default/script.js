@@ -513,6 +513,37 @@
 			}).show();
 		},
 
+		showIntegratorPartnerErrorPopup: function()
+		{
+			const popup = BX.PopupWindowManager.create('popup-message', null, {
+				id: 'intranet-user-profile-error-popup',
+				content:
+					BX.create('div', {
+						props: {
+							style: 'max-width: 450px',
+						},
+						html: BX.message('INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER'),
+					}),
+				closeIcon: false,
+				lightShadow: true,
+				offsetLeft: 100,
+				overlay: true,
+				contentPadding: 10,
+				buttons: [
+					new BX.UI.CreateButton({
+						text: BX.message('INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE'),
+						events: {
+							click()
+							{
+								this.context.close();
+							},
+						},
+					}),
+				],
+			});
+			popup.show();
+		},
+
 		showErrorPopup: function(error)
 		{
 			if (!error)
@@ -672,7 +703,14 @@
 				}
 			}, function (response) {
 				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
+				if (response["errors"][0].code === 'INTEGRATOR_ERROR_NOT_PARTNER')
+				{
+					this.showIntegratorPartnerErrorPopup();
+				}
+				else
+				{
+					this.showErrorPopup(response["errors"][0].message);
+				}
 			}.bind(this));
 		},
 

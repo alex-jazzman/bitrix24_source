@@ -6,6 +6,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 	const { getEntityMessage } = require('crm/loc');
 	const { get, clone } = require('utils/object');
 	const { ProductGrid } = require('layout/ui/product-grid');
+	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { confirmDestructiveAction } = require('alert');
 	const { ProductSelector } = require('layout/ui/product-grid/services/product-selector');
 	const { BarcodeScanner } = require('layout/ui/product-grid/services/barcode-scanner');
@@ -193,6 +194,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 				vatRates: taxes.vatRates,
 				iblockId: catalog.id,
 				isAllowedReservation: inventoryControl.isAllowedReservation,
+				inventoryControlMode: inventoryControl.mode,
 				isReservationRestrictedByPlan: inventoryControl.isReservationRestrictedByPlan,
 				defaultDateReserveEnd: inventoryControl.defaultDateReserveEnd,
 				isCatalogHidden: inventoryControl.isCatalogHidden,
@@ -557,6 +559,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 			// eslint-disable-next-line default-case
 			switch (actionId)
 			{
+				case TabType.CRM_PRODUCT:
 				case MenuItemId.SELECTOR:
 					void this.showProductSelector();
 					break;

@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	include('InAppNotifier');
 	const { Color, Indent, Component } = require('tokens');
 	const { Icon } = require('assets/icons');
+	const { Type } = require('type');
 
 	const { executeIfOnline } = require('tasks/layout/online');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
@@ -21,7 +22,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { ChecklistField, ClickStrategy } = require('tasks/layout/fields/checklist/theme/air-compact');
 	const { TaskFlowField } = require('tasks/layout/fields/flow/theme/air-compact');
 	const { TagField } = require('layout/ui/fields/tag/theme/air-compact');
+	const { DatePlanField } = require('tasks/layout/fields/date-plan/theme/air-compact');
 	const { CrmElementField } = require('layout/ui/fields/crm-element/theme/air-compact');
+	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking/theme/air-compact');
 
 	const store = require('statemanager/redux/store');
 	const { batchActions } = require('statemanager/redux/batched-actions');
@@ -32,8 +35,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { selectFirstStage } = require('tasks/statemanager/redux/slices/stage-settings');
 	const { create } = require('tasks/statemanager/redux/slices/tasks');
 	const { groupsAddedFromEntitySelector, groupsUpserted } = require('tasks/statemanager/redux/slices/groups');
-	const { flowsUpserted } = require('tasks/statemanager/redux/slices/flows');
-	const { loadTariffRestrictions } = require('tasks/statemanager/redux/slices/tariff-restrictions');
+	const { upsertFlows } = require('tasks/statemanager/redux/slices/flows');
 
 	const {
 		makeProjectFieldConfig,
@@ -45,7 +47,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { CalendarSettings } = require('tasks/task/calendar');
 	const { ChecklistController } = require('tasks/checklist');
 	const { Entry } = require('tasks/entry');
-	const { DeadlinePeriod, ViewMode, TaskField: Fields } = require('tasks/enum');
+	const {
+		DeadlinePeriod,
+		ViewMode,
+		TaskField: Fields,
+		TimerState,
+	} = require('tasks/enum');
 	const { getDiskFolderId } = require('tasks/disk');
 	const { confirmClosing, confirmDefaultAction } = require('alert');
 	const { Feature } = require('feature');
@@ -57,8 +64,14 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { Loc } = require('tasks/loc');
 	const { Notify } = require('notify');
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const { showToast, Position } = require('toast');
+	const { showToast, showErrorToast, Position } = require('toast');
 	const { ParentTask } = require('tasks/layout/task/parent-task');
+	const {
+		getFieldRestrictionPolicy,
+		getFieldShowRestrictionCallback,
+		isFieldRestricted,
+	} = require('tasks/fields/restriction');
+	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
 	const isAndroid = Application.getPlatform() !== 'ios';
 	const PARENT_TASK_HEIGHT = 30;
@@ -66,6 +79,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const DESCRIPTION_MIN_HEIGHT = 18 + (2 * Indent.XL.toNumber());
 	const FIELDS_HEIGHT = Component.itbChipHeight.getValue() + (2 * Indent.XL.toNumber());
 	const getTopMargin = (hasParentTask) => (hasParentTask ? Indent.XS.toNumber() : Indent.L.toNumber());
+	const TITLE_MAX_HEIGHT = Math.floor(device.screen.height * 5 / 667) * TITLE_MIN_HEIGHT;
 
 	class CreateNew extends LayoutComponent
 	{
@@ -81,19 +95,41 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			);
 		}
 
+		static removeRestrictedFieldsFromTaskData(taskData)
+		{
+			const preparedTaskData = { ...taskData };
+			const map = {
+				[Fields.FLOW]: 'flowId',
+				[Fields.PROJECT]: 'group',
+				[Fields.ACCOMPLICES]: 'accomplices',
+				[Fields.AUDITORS]: 'auditors',
+				[Fields.CRM]: 'crm',
+			};
+
+			Object.entries(map).forEach(([fieldId, property]) => {
+				if (isFieldRestricted(fieldId))
+				{
+					delete preparedTaskData[property];
+				}
+			});
+
+			return preparedTaskData;
+		}
+
 		static open(data = {})
 		{
 			const parentWidget = (data.layoutWidget || PageManager);
 
 			const createNew = new CreateNew({
-				initialTaskData: data.initialTaskData,
+				initialTaskData: CreateNew.removeRestrictedFieldsFromTaskData(data.initialTaskData),
 				view: (data.view || ViewMode.LIST),
 				stage: data.stage,
 				loadStagesParams: data.loadStagesParams,
 				closeAfterSave: data.closeAfterSave !== false,
 				context: data.context,
 				copyId: data.copyId,
-				parentWidget,
+				analyticsLabel: data.analyticsLabel || {},
+				parentWidget: data.layoutWidget,
 			});
 
 			parentWidget.openWidget('layout', {
@@ -108,12 +144,15 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					shouldResizeContent: true,
 					adoptHeightByKeyboard: true,
 				},
-			}).then((layoutWidget) => {
-				layoutWidget.showComponent(createNew);
+			})
+				.then((layoutWidget) => {
+					layoutWidget.showComponent(createNew);
 
-				createNew.layoutWidget = layoutWidget;
-				createNew.isLayoutWidgetClosed = false;
-			}).catch(() => {});
+					createNew.layoutWidget = layoutWidget;
+					createNew.isLayoutWidgetClosed = false;
+				})
+				.catch(() => {})
+			;
 		}
 
 		constructor(props)
@@ -160,6 +199,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.onChangeFiles = this.onChangeFiles.bind(this);
 			this.onChangeTags = this.onChangeTags.bind(this);
 			this.onChangeCrmElements = this.onChangeCrmElements.bind(this);
+			this.onChangeTimeTrackingSettings = this.onChangeTimeTrackingSettings.bind(this);
 			this.notifyDeadlineDisabledByFlow = this.notifyDeadlineDisabledByFlow.bind(this);
 			this.notifyProjectDisabledByFlow = this.notifyProjectDisabledByFlow.bind(this);
 
@@ -175,7 +215,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				getDiskFolderId().then(({ diskFolderId }) => {
 					this.diskFolderId = diskFolderId;
 				}),
-				loadTariffRestrictions(),
+				tariffPlanRestrictionsReady(),
 				CalendarSettings.loadSettings(),
 			];
 
@@ -212,7 +252,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 						const { flow, groups, users, template, checklist } = response.data;
 
-						dispatch(flowsUpserted([flow]));
+						dispatch(upsertFlows([flow]));
 						dispatch(groupsUpserted(groups));
 						dispatch(usersUpserted(users));
 
@@ -290,7 +330,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					return;
 				}
 
-				(new RunActionExecutor('tasksmobile.User.getUsersData', { userIds: [this.userId] }))
+				(new RunActionExecutor('tasksmobile.User.getCurrentUserData'))
 					.setHandler((response) => {
 						dispatch(usersUpserted(response.data));
 						fillCurrentUserData(response.data[0]);
@@ -311,22 +351,46 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.setState(
 				{ isLoading: false },
 				() => {
-					this.focusTitle();
+					if (Feature.isDidAdoptHeightByKeyboardEventSupported())
+					{
+						this.layoutWidget.once('didAdoptHeightByKeyboard', (isKeyboardOpened) => {
+							if (isKeyboardOpened)
+							{
+								this.layoutWidget.getBottomSheetHeight()
+									.then((height) => {
+										this.layoutWidget.setBottomSheetParams({
+											onlyMediumPosition: true,
+											mediumPositionHeight: height,
+											adoptHeightByKeyboard: false,
+										});
+										this.layoutHeight = height;
+										this.keyboardHeight = height - CreateNew.getStartingLayoutHeight(this.hasParentTask());
+									})
+									.catch(() => console.error)
+								;
+							}
+						});
+						this.focusTitle();
+					}
+					else
+					{
+						this.focusTitle();
 
-					setTimeout(() => {
-						this.layoutWidget.getBottomSheetHeight()
-							.then((height) => {
-								this.layoutWidget.setBottomSheetParams({
-									onlyMediumPosition: true,
-									mediumPositionHeight: height,
-									adoptHeightByKeyboard: false,
-								});
-								this.layoutHeight = height;
-								this.keyboardHeight = height - CreateNew.getStartingLayoutHeight(this.hasParentTask());
-							})
-							.catch(() => console.error)
-						;
-					}, 500);
+						setTimeout(() => {
+							this.layoutWidget.getBottomSheetHeight()
+								.then((height) => {
+									this.layoutWidget.setBottomSheetParams({
+										onlyMediumPosition: true,
+										mediumPositionHeight: height,
+										adoptHeightByKeyboard: false,
+									});
+									this.layoutHeight = height;
+									this.keyboardHeight = height - CreateNew.getStartingLayoutHeight(this.hasParentTask());
+								})
+								.catch(() => console.error)
+							;
+						}, 500);
+					}
 				},
 			);
 		}
@@ -335,7 +399,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 		{
 			const { initialTaskData } = this.props;
 
-			this.guid = getGuid();
+			this.guid = initialTaskData?.guid || getGuid();
 			this.task = {
 				title: (initialTaskData?.title || this.sourceTaskData?.name || ''),
 				description: (initialTaskData?.description || this.sourceTaskData?.description || ''),
@@ -354,14 +418,19 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				auditors: this.convertUsersCollectionToEntitySelectorFormat(
 					initialTaskData?.auditors || this.sourceTaskData?.auditors,
 				),
-				uploadedFiles: [],
+				uploadedFiles: initialTaskData?.uploadedFiles || [],
 				files: initialTaskData?.files || this.sourceTaskData?.files || [],
 				tags: initialTaskData?.tags || this.sourceTaskData?.tags || [],
 				crm: (initialTaskData?.crm || this.sourceTaskData?.crm || []),
 
-				IM_CHAT_ID: initialTaskData.IM_CHAT_ID,
-				IM_MESSAGE_ID: initialTaskData.IM_MESSAGE_ID,
-				relatedTaskId: initialTaskData.relatedTaskId || null,
+				relatedTaskId: initialTaskData?.relatedTaskId || null,
+				allowTimeTracking: initialTaskData?.allowTimeTracking || false,
+				timeEstimate: 0,
+				startDatePlan: initialTaskData?.startDatePlan || null,
+				endDatePlan: initialTaskData?.endDatePlan || null,
+
+				imChatId: initialTaskData?.IM_CHAT_ID,
+				imMessageId: initialTaskData?.IM_MESSAGE_ID,
 			};
 			this.initialTaskData = {
 				...this.task,
@@ -392,7 +461,11 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				},
 			});
 
-			this.checklistController.setChecklistTree(this.sourceTaskData?.checklist);
+			this.checklistController.setChecklists({
+				checklistsTree: this.sourceTaskData?.checklist,
+				checklistsFlatTree: initialTaskData?.checklistFlatTree,
+				clear: true,
+			});
 		}
 
 		convertUsersCollectionToEntitySelectorFormat(users)
@@ -415,6 +488,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				id: group.id,
 				title: group.name,
 				imageUrl: group.image,
+				customData: {
+					datePlan: {
+						dateStart: group.dateStart,
+						dateFinish: group.dateFinish,
+					},
+				},
 			} : undefined;
 		}
 
@@ -454,7 +533,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				return;
 			}
 
-			const layoutHeight = (
+			const layoutHeight = Math.round((
 				(this.hasParentTask() ? PARENT_TASK_HEIGHT : 0)
 				+ getTopMargin(this.hasParentTask())
 				+ this.titleHeight
@@ -462,7 +541,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				+ FIELDS_HEIGHT
 				+ BottomPanel.height
 				+ this.keyboardHeight
-			);
+			));
 
 			if (this.layoutHeight !== layoutHeight)
 			{
@@ -472,9 +551,20 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				this.layoutWidget.setBottomSheetHeight(this.layoutHeight)
 					.then(() => this.layoutWidget.getBottomSheetHeight())
 					.then((height) => {
-						this.setState({
-							titleMaxHeight: Math.min(this.titleHeight, height - this.layoutHeight + this.titleHeight),
-						});
+						if (this.titleHeight !== this.state.titleMaxHeight)
+						{
+							const titleMaxHeight = height - this.layoutHeight + this.titleHeight;
+							const preparedTitleMaxHeight = titleMaxHeight > 0
+								? Math.min(this.titleHeight, titleMaxHeight)
+								: this.titleHeight;
+
+							if (preparedTitleMaxHeight !== this.state.titleMaxHeight)
+							{
+								this.setState({
+									titleMaxHeight: preparedTitleMaxHeight,
+								});
+							}
+						}
 					})
 					.catch(console.error)
 				;
@@ -547,7 +637,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						this.titleInnerRef = ref;
 					},
 					onContentSizeChange: ({ height }) => {
-						this.titleHeight = height;
+						this.titleHeight = height > TITLE_MAX_HEIGHT ? TITLE_MAX_HEIGHT : height;
 						this.updateSheetHeight();
 					},
 					onChangeText: (text) => {
@@ -646,6 +736,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							config: makeProjectFieldConfig({
 								items: [this.task.group].filter(Boolean),
 							}),
+							restrictionPolicy: getFieldRestrictionPolicy(Fields.PROJECT),
+							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.PROJECT, this.layoutWidget),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeProject,
 							onContentClick: this.notifyProjectDisabledByFlow,
@@ -669,6 +761,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 									},
 								},
 							},
+							restrictionPolicy: getFieldRestrictionPolicy(Fields.FLOW),
+							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.FLOW, this.layoutWidget),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeFlow,
 						},
@@ -678,7 +772,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						factory: FileField,
 						props: {
 							id: Fields.FILES,
-							value: this.task.files,
+							value: [...this.task.files, ...this.task.uploadedFiles],
 							readOnly: false,
 							required: false,
 							multiple: true,
@@ -733,6 +827,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								items: this.task.accomplices,
 								groupId: this.task.group?.id || 0,
 							}),
+							restrictionPolicy: getFieldRestrictionPolicy(Fields.ACCOMPLICES),
+							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.ACCOMPLICES, this.layoutWidget),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeAccomplices,
 						},
@@ -750,6 +846,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							config: makeAuditorsFieldConfig({
 								items: this.task.auditors,
 							}),
+							restrictionPolicy: getFieldRestrictionPolicy(Fields.AUDITORS),
+							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.AUDITORS, this.layoutWidget),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeAuditors,
 						},
@@ -799,10 +897,45 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 									},
 								},
 							}),
+							restrictionPolicy: getFieldRestrictionPolicy(Fields.CRM),
+							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.CRM, this.layoutWidget),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeCrmElements,
 						},
 						compact: CrmElementField,
+					},
+					{
+						factory: TimeTrackingField,
+						props: {
+							id: Fields.ALLOW_TIME_TRACKING,
+							value: {
+								timerState: TimerState.PAUSED,
+								allowTimeTracking: this.task.allowTimeTracking,
+								timeElapsed: 0,
+								timeEstimate: this.task.timeEstimate,
+								isTimerRunningForCurrentUser: false,
+							},
+							required: false,
+							readOnly: false,
+							onChange: this.onChangeTimeTrackingSettings,
+							onSettingsWidgetClose: this.focusTitle,
+						},
+						compact: TimeTrackingField,
+					},
+					{
+						factory: DatePlanField,
+						props: {
+							id: Fields.DATE_PLAN,
+							taskId: this.task.id,
+							readOnly: false,
+							startDatePlan: this.task.startDatePlan,
+							endDatePlan: this.task.endDatePlan,
+							groupId: this.task.group?.id || 0,
+							onChange: this.onChangeDatePlan,
+							parentWidget: this.layoutWidget,
+							mode: 'create',
+						},
+						compact: DatePlanField,
 					},
 				],
 			});
@@ -848,15 +981,69 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.extraFieldsFormRef = ref;
 		}
 
-		onChangeDeadline(value)
+		onChangeDeadline(deadline)
 		{
-			this.task.deadline = (value ? new Date(value * 1000) : null);
+			const groupPlanRange = this.task.group?.customData?.datePlan || {};
+			if (deadline && !this.isDateInGroupPlanRange(deadline, groupPlanRange))
+			{
+				this.showDateConflictToast(Loc.getMessage('M_TASKS_DEADLINE_IS_OUT_OF_PROJECT_RANGE'));
+				this.setState({ forceUpdate: Math.random() });
+
+				return;
+			}
+
+			this.task.deadline = (deadline ? new Date(deadline * 1000) : null);
 			this.handlePreventBottomSheetDismiss();
 		}
 
+		onChangeDatePlan = (startDatePlan, endDatePlan) => {
+			this.task.startDatePlan = startDatePlan ?? null;
+			this.task.endDatePlan = endDatePlan ?? null;
+			this.setState({ forceUpdate: Math.random() });
+		};
+
 		onChangeProject(_, groups = [])
 		{
-			this.task.group = groups[0];
+			let selectedGroup = groups[0];
+
+			if (selectedGroup)
+			{
+				const groupPlanRange = selectedGroup?.customData?.datePlan;
+
+				if (this.task.deadline && !this.isDateInGroupPlanRange(this.task.deadline / 1000, groupPlanRange))
+				{
+					this.showDateConflictToast(Loc.getMessage('M_TASKS_DEADLINE_IS_OUT_OF_PROJECT_RANGE'));
+
+					selectedGroup = this.task.group;
+				}
+				else if (
+					!this.isDateInGroupPlanRange(this.task.startDatePlan, groupPlanRange)
+					&& !this.isDateInGroupPlanRange(this.task.endDatePlan, groupPlanRange)
+				)
+				{
+					this.showDateConflictToast(Loc.getMessage('M_TASKS_PLANNING_START_AND_END_DATE_IS_OUT_OF_PROJECT_RANGE'));
+
+					selectedGroup = this.task.group;
+				}
+				else if (!this.isDateInGroupPlanRange(this.task.startDatePlan, groupPlanRange))
+				{
+					this.showDateConflictToast(Loc.getMessage('M_TASKS_PLANNING_START_DATE_IS_OUT_OF_PROJECT_RANGE'));
+
+					selectedGroup = this.task.group;
+				}
+				else if (!this.isDateInGroupPlanRange(this.task.endDatePlan, groupPlanRange))
+				{
+					this.showDateConflictToast(Loc.getMessage('M_TASKS_PLANNING_FINISH_DATE_OUT_OF_PROJECT_RANGE'));
+
+					selectedGroup = this.task.group;
+				}
+
+				this.task.group = selectedGroup;
+			}
+			else
+			{
+				this.task.group = null;
+			}
 
 			if (groups.length > 0)
 			{
@@ -866,6 +1053,42 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.checklistController.setGroupId(this.task.group?.id || 0);
 			this.handlePreventBottomSheetDismiss();
 			this.setState({ forceUpdate: Math.random() });
+		}
+
+		/**
+		 * @param {number} date
+		 * @param {Object} groupPlanRange
+		 * @param {number|null} [groupPlanRange.dateStart=null]
+		 * @param {number|null} [groupPlanRange.dateFinish=null]
+		 * @returns {boolean}
+		 */
+		isDateInGroupPlanRange(date, groupPlanRange)
+		{
+			if (!date || !Type.isNumber(date))
+			{
+				return true;
+			}
+
+			const { dateStart = null, dateFinish = null } = groupPlanRange;
+
+			let dateAfterFinish = (new Date(dateFinish * 1000));
+			dateAfterFinish.setDate(dateAfterFinish.getDate() + 1);
+			dateAfterFinish.setHours(0, 0, 0, 0);
+			dateAfterFinish = Math.floor(dateAfterFinish / 1000);
+
+			return (
+				(Type.isNil(dateStart) || date >= dateStart)
+				&& (Type.isNil(dateFinish) || date < dateAfterFinish)
+			);
+		}
+
+		showDateConflictToast(message)
+		{
+			showToast({
+				message,
+				icon: Icon.CLOCK,
+				position: Position.TOP,
+			});
 		}
 
 		onChangeFlow(flowId, flows = [])
@@ -913,7 +1136,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							}
 
 							batchActions([
-								flowsUpserted([response.data.flow]),
+								upsertFlows([response.data.flow]),
 								groupsUpserted(response.data.groups),
 								usersUpserted(response.data.users),
 							]);
@@ -1047,6 +1270,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.handlePreventBottomSheetDismiss();
 		}
 
+		onChangeTimeTrackingSettings({ allowTimeTracking = false, timeEstimate = 0 })
+		{
+			this.task.allowTimeTracking = allowTimeTracking;
+			this.task.timeEstimate = timeEstimate;
+		}
+
 		handlePreventBottomSheetDismiss()
 		{
 			this.layoutWidget.preventBottomSheetDismiss(this.#formHasChanges());
@@ -1073,6 +1302,10 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				|| currentAuditors.length !== initialAuditors.length
 				|| !currentAuditors.every((userId) => initialAuditors.includes(userId))
 				|| this.task.uploadedFiles.length > 0
+				|| this.task.startDatePlan !== this.initialTaskData.startDatePlan
+				|| this.task.endDatePlan !== this.initialTaskData.endDatePlan
+				|| this.task.allowTimeTracking !== this.initialTaskData.allowTimeTracking
+				|| this.task.timeEstimate !== this.initialTaskData.timeEstimate
 			);
 		}
 
@@ -1104,20 +1337,55 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						}),
 					);
 				}
+				const { analyticsLabel = {}, closeAfterSave, parentWidget } = this.props;
+
+				const analyticsLabelParams = [{
+					tool: 'tasks',
+					category: 'task_operations',
+					type: 'task',
+					event: 'task_create',
+					...analyticsLabel,
+				}];
+
+				if (this.task.parentId > 0)
+				{
+					analyticsLabelParams.push({
+						tool: 'tasks',
+						category: 'task_operations',
+						type: 'task',
+						event: 'subtask_add',
+						...analyticsLabel,
+					});
+				}
+
 				dispatch(
 					create({
 						taskId: this.guid,
 						reduxFields: this.prepareReduxFields(),
 						serverFields: this.prepareFieldsToSave(),
 						relatedTaskId: this.task.relatedTaskId,
+						analyticsLabel: analyticsLabelParams,
 					}),
-				);
-				this.showCreationNotification(this.guid);
+				)
+					.then(({ payload }) => {
+						if (payload.status === 'error')
+						{
+							showErrorToast(
+								{
+									message: Loc.getMessage('TASKSMOBILE_TASK_CREATE_CREATION_ERROR'),
+								},
+								parentWidget,
+							);
+						}
+					})
+					.catch(console.error)
+				;
+				this.showCreationNotification(this.guid, analyticsLabelParams);
 				this.init();
 				this.setState({ isFakeReload: !this.state.isFakeReload });
 				this.handlePreventBottomSheetDismiss();
 
-				if (this.props.closeAfterSave)
+				if (closeAfterSave)
 				{
 					this.layoutWidget.close();
 				}
@@ -1180,6 +1448,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					: (this.task.deadline ? this.task.deadline.getTime() / 1000 : null),
 				groupId: this.task.group?.id || 0,
 				flowId: this.state.flowId || 0,
+				parentId: this.task.parentId,
 				priority: this.task.priority,
 
 				creator: this.task.creator.id,
@@ -1191,9 +1460,19 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 				files: this.task.files,
 				uploadedFiles: this.task.uploadedFiles,
+				relatedTaskId: this.task.relatedTaskId,
 
 				checklist: { completed, uncompleted },
 				checklistDetails,
+				checklistFlatTree: this.checklistController.getChecklistFlatTree(),
+
+				startDatePlan: this.task.startDatePlan,
+				endDatePlan: this.task.endDatePlan,
+				allowTimeTracking: this.task.allowTimeTracking,
+				timeEstimate: this.task.timeEstimate,
+
+				imChatId: this.task.imChatId,
+				imMessageId: this.task.imMessageId,
 			};
 		}
 
@@ -1216,9 +1495,13 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				STAGE_ID: 0,
 				TAGS: this.task.tags?.map((item) => item.name),
 				CRM: this.task.crm,
-				IM_CHAT_ID: this.task.IM_CHAT_ID,
-				IM_MESSAGE_ID: this.task.IM_MESSAGE_ID,
+				IM_CHAT_ID: this.task.imChatId,
+				IM_MESSAGE_ID: this.task.imMessageId,
 				CHECKLIST: this.checklistController.getChecklistRequestData(),
+				START_DATE_PLAN: this.task.startDatePlan ? this.convertDateFromUnixToISOString(this.task.startDatePlan) : '',
+				END_DATE_PLAN: this.task.endDatePlan ? this.convertDateFromUnixToISOString(this.task.endDatePlan) : '',
+				ALLOW_TIME_TRACKING: (this.task.allowTimeTracking ? 'Y' : 'N'),
+				TIME_ESTIMATE: this.task.timeEstimate,
 			};
 
 			if (this.isPlannerView() || this.isKanbanView())
@@ -1229,8 +1512,21 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			return fieldsToSave;
 		}
 
-		showCreationNotification(taskId)
+		convertDateFromUnixToISOString(date)
 		{
+			return (new Date(date * 1000)).toISOString();
+		}
+
+		showCreationNotification(taskId, analyticsLabel = {})
+		{
+			let analyticsLabelParams = Array.isArray(analyticsLabel) ? analyticsLabel : [analyticsLabel];
+
+			analyticsLabelParams = analyticsLabelParams.map((labelParam) => ({
+				...labelParam,
+				event: 'task_view',
+				c_element: 'view_button',
+			}));
+
 			if (Feature.isToastPositionSupported())
 			{
 				showToast(
@@ -1241,15 +1537,18 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							content: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.361 6.35445C20.5953 6.58876 20.5953 6.96866 20.361 7.20298L9.79422 17.7697C9.6817 17.8822 9.52908 17.9454 9.36995 17.9454C9.21082 17.9454 9.05821 17.8822 8.94569 17.7697L4.14839 12.9723C3.91408 12.738 3.91408 12.3581 4.1484 12.1238C4.38271 11.8895 4.76261 11.8895 4.99692 12.1238L9.36996 16.4969L19.5124 6.35445C19.7468 6.12013 20.1267 6.12013 20.361 6.35445Z" fill="#333333"/></svg>',
 						},
 						position: this.props.closeAfterSave ? Position.BOTTOM : Position.TOP,
-						onButtonTap: () => this.onNotificationClick(taskId),
+						onButtonTap: () => this.onNotificationClick(
+							taskId,
+							analyticsLabelParams,
+						),
 					},
-					this.props.parentWidget,
+					this.props.parentWidget || PageManager,
 				);
 			}
 			else
 			{
 				// eslint-disable-next-line no-undef
-				InAppNotifier.setHandler(() => this.onNotificationClick(taskId));
+				InAppNotifier.setHandler(() => this.onNotificationClick(taskId, analyticsLabelParams));
 				Notify.showMessage(
 					`"${this.task.title}"`,
 					Loc.getMessage('TASKSMOBILE_TASK_CREATE_NOTIFICATION_TITLE'),
@@ -1258,25 +1557,26 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			}
 		}
 
-		onNotificationClick(taskId)
+		onNotificationClick(taskId, analyticsLabel)
 		{
 			if (this.isLayoutWidgetClosed)
 			{
-				this.openCreatedTask(taskId);
+				this.openCreatedTask(taskId, analyticsLabel);
 			}
 			else
 			{
-				this.layoutWidget.close(() => this.openCreatedTask(taskId));
+				this.layoutWidget.close(() => this.openCreatedTask(taskId, analyticsLabel));
 			}
 		}
 
-		openCreatedTask(taskId)
+		openCreatedTask(taskId, analyticsLabel)
 		{
 			Entry.openTask(
 				{ id: taskId },
 				{
 					parentWidget: this.props.parentWidget,
 					context: this.props.context,
+					analyticsLabel,
 				},
 			);
 		}

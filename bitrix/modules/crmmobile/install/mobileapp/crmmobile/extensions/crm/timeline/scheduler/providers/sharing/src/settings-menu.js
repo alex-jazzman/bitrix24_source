@@ -5,6 +5,7 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Type: CrmType } = require('crm/type');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CommunicationSelector } = require('crm/communication/communication-selector');
 	const { SendersSelector } = require('crm/timeline/ui/senders-selector');
 

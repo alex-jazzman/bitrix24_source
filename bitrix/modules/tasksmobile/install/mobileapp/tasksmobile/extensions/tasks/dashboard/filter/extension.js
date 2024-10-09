@@ -31,6 +31,7 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 			return {
 				none: 'none',
 				default: 'filter_tasks_in_progress',
+				originator: 'filter_tasks_role_originator',
 			};
 		}
 
@@ -91,10 +92,12 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 		 * @param projectId
 		 * @param isTabsMode
 		 * @param tabsGuid
+		 * @param presetId
+		 * @param role
 		 */
-		constructor(currentUserId, ownerId, projectId, isTabsMode, tabsGuid)
+		constructor(currentUserId, ownerId, projectId, isTabsMode, tabsGuid, presetId, role)
 		{
-			super(TasksDashboardFilter.presetType.default, '', false);
+			super(presetId ?? TasksDashboardFilter.presetType.default, '', false);
 			this.currentUserId = Number(currentUserId);
 			this.ownerId = Number(ownerId);
 			this.projectId = Number(projectId);
@@ -102,7 +105,7 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 			this.tabsGuid = tabsGuid;
 
 			this.counterType = TasksDashboardFilter.counterType.none;
-			this.role = TasksDashboardFilter.roleType.all;
+			this.role = role ?? TasksDashboardFilter.roleType.all;
 			this.counterValue = 0;
 
 			setTimeout(() => this.fillPresets(this.getFillPresetParams()), 1000);

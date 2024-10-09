@@ -125,8 +125,8 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					else
 					{
 						const inactiveQuote = new QuoteInactive(title, text);
-						const inActiveQuoteId = parsedElements.add(inactiveQuote);
-						quoteMark = `${PLACEHOLDER}${inActiveQuoteId}`;
+						const inactiveQuoteId = parsedElements.add(inactiveQuote);
+						quoteMark = `${PLACEHOLDER}${inactiveQuoteId}`;
 					}
 
 					return quoteMark;
@@ -180,6 +180,32 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			}
 
 			return text;
+		},
+
+		decodeCode(text)
+		{
+			let result = text;
+			let prevPhraseFirstIndex = 0;
+
+			result = result.replaceAll(
+				/\[code](.*?)\[\/code]?/gis,
+				(textWithTag, context, index) => {
+					const textBeforeTag = text.slice(prevPhraseFirstIndex, index).trim();
+					const textAfterTag = text.slice(index + textWithTag.length).trim();
+
+					const startTag = /((.*\n)|^)$/gi.test(textBeforeTag) ? '' : '\n';
+					const endTag = /^((\n.*)|$)/gi.test(textAfterTag) ? '' : '\n';
+
+					const inactiveQuote = new QuoteInactive('', context);
+					const inactiveQuoteId = parsedElements.add(inactiveQuote);
+
+					prevPhraseFirstIndex = index + textWithTag.length;
+
+					return `${startTag}${PLACEHOLDER}${inactiveQuoteId}${endTag}`;
+				},
+			);
+
+			return result;
 		},
 
 		simplifyCode(text, spaceLetter = ' ')

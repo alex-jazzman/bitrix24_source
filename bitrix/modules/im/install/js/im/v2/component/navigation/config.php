@@ -15,10 +15,12 @@ return [
 	'rel' => [
 		'ui.vue3.directives.hint',
 		'ui.dialogs.messagebox',
+		'ui.info-helper',
 		'im.v2.lib.slider',
 		'im.v2.lib.call',
 		'im.v2.lib.phone',
 		'im.v2.lib.feature',
+		'im.v2.lib.analytics',
 		'im.v2.component.elements',
 		'im.v2.lib.utils',
 		'im.v2.lib.logger',

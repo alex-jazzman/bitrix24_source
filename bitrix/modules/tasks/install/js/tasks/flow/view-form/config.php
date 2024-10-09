@@ -15,6 +15,7 @@ return [
 		'main.core',
 		'main.loader',
 		'ui.buttons',
+		'ui.info-helper',
 	],
 	'skip_core' => false,
 ];

@@ -24,14 +24,26 @@ this.BX = this.BX || {};
 	    this.entityData = params.entityData || {};
 	    var analyticsLabelParam = params.analyticsLabel || {};
 	    if (this.items.length === 0) {
-	      if (this.entityType === 'task') {
-	        this.items = ['chat', 'videocall', 'blog_post', 'calendar_event'];
-	      } else if (this.entityType === 'calendar_event') {
-	        this.items = ['chat', 'videocall', 'blog_post', 'task'];
-	      } else if (this.entityType === 'workgroup') {
-	        this.items = ['chat', 'videocall'];
-	      } else {
-	        this.items = ['chat', 'videocall', 'blog_post', 'task', 'calendar_event'];
+	      switch (this.entityType) {
+	        case 'task':
+	          {
+	            this.items = ['chat', 'videocall', 'blog_post', 'calendar_event'];
+	            break;
+	          }
+	        case 'calendar_event':
+	          {
+	            this.items = ['chat', 'videocall', 'blog_post', 'task'];
+	            break;
+	          }
+	        case 'workgroup':
+	          {
+	            this.items = ['chat', 'videocall'];
+	            break;
+	          }
+	        default:
+	          {
+	            this.items = ['chat', 'videocall', 'blog_post', 'task', 'calendar_event'];
+	          }
 	      }
 	    }
 	    this.contextBx = window.top.BX || window.BX;
@@ -44,6 +56,10 @@ this.BX = this.BX || {};
 	    this.analyticsLabel = _objectSpread({
 	      entity: this.entityType
 	    }, analyticsLabelParam);
+	    this.analytics = params.analytics || {};
+	    if (!main_core.Type.isPlainObject(this.analytics)) {
+	      this.analytics = {};
+	    }
 	    this.buttonClassName = params.buttonClassName || '';
 	    this.renderButton();
 	    this.subscribeEvents();
@@ -145,10 +161,11 @@ this.BX = this.BX || {};
 	      var _this2 = this;
 	      this.getAvailableItems().then(function (availableItems) {
 	        _this2.items = _this2.items.filter(function (item) {
-	          return item && availableItems.indexOf(item) !== -1;
+	          return item && availableItems.includes(item);
 	        });
 	        var menuItems = [];
 	        _this2.items.forEach(function (item) {
+	          // eslint-disable-next-line default-case
 	          switch (item) {
 	            case 'videocall':
 	              if (_this2.isVideoCallEnabled) {
@@ -218,16 +235,10 @@ this.BX = this.BX || {};
 	    value: function openChat() {
 	      var _this3 = this;
 	      this.showLoader();
-	      main_core.ajax.runAction('intranet.controlbutton.getChat', {
-	        data: {
-	          entityType: this.entityType,
-	          entityId: this.entityId,
-	          entityData: this.entityData
-	        },
-	        analyticsLabel: this.analyticsLabel
-	      }).then(function (response) {
+	      var analytics = this.analytics.openChat || {};
+	      main_core.ajax.runAction('intranet.controlbutton.getChat', this.getAjaxConfig(analytics)).then(function (response) {
 	        if (response.data) {
-	          im_public_iframe.Messenger.openChat('chat' + parseInt(response.data));
+	          im_public_iframe.Messenger.openChat("chat".concat(parseInt(response.data, 10)));
 	        }
 	        _this3.chatLockCounter = 0;
 	        _this3.hideLoader();
@@ -245,17 +256,15 @@ this.BX = this.BX || {};
 	    key: "startVideoCall",
 	    value: function startVideoCall() {
 	      var _this4 = this;
+	      var videoCallContext = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      this.showLoader();
-	      main_core.ajax.runAction('intranet.controlbutton.getVideoCallChat', {
-	        data: {
-	          entityType: this.entityType,
-	          entityId: this.entityId,
-	          entityData: this.entityData
-	        },
-	        analyticsLabel: this.analyticsLabel
-	      }).then(function (response) {
+	      var analytics = this.analytics.startVideoCall || {};
+	      if (main_core.Type.isPlainObject(analytics) && main_core.Type.isStringFilled(analytics.c_sub_section) && videoCallContext) {
+	        analytics.c_sub_section = videoCallContext;
+	      }
+	      main_core.ajax.runAction('intranet.controlbutton.getVideoCallChat', this.getAjaxConfig(analytics)).then(function (response) {
 	        if (response.data) {
-	          im_public_iframe.Messenger.startVideoCall('chat' + response.data, true);
+	          im_public_iframe.Messenger.startVideoCall("chat".concat(response.data), true);
 	        }
 	        _this4.chatLockCounter = 0;
 	        _this4.hideLoader();
@@ -283,18 +292,13 @@ this.BX = this.BX || {};
 	    value: function openCalendarSlider() {
 	      var _this5 = this;
 	      this.showLoader();
-	      main_core.ajax.runAction('intranet.controlbutton.getCalendarLink', {
-	        data: {
-	          entityType: this.entityType,
-	          entityId: this.entityId
-	        },
-	        analyticsLabel: this.analyticsLabel
-	      }).then(function (response) {
+	      var analytics = this.analytics.openCalendarSlider || {};
+	      main_core.ajax.runAction('intranet.controlbutton.getCalendarLink', this.getAjaxConfig(analytics)).then(function (response) {
 	        var users = [];
 	        if (main_core.Type.isArrayLike(response.data.userIds)) {
 	          users = response.data.userIds.map(function (userId) {
 	            return {
-	              id: parseInt(userId),
+	              id: parseInt(userId, 10),
 	              entityId: 'user'
 	            };
 	          });
@@ -313,14 +317,8 @@ this.BX = this.BX || {};
 	    value: function openTaskSlider() {
 	      var _this6 = this;
 	      this.showLoader();
-	      main_core.ajax.runAction('intranet.controlbutton.getTaskLink', {
-	        data: {
-	          entityType: this.entityType,
-	          entityId: this.entityId,
-	          entityData: this.entityData
-	        },
-	        analyticsLabel: this.analyticsLabel
-	      }).then(function (response) {
+	      var analytics = this.analytics.openTaskSlider || {};
+	      main_core.ajax.runAction('intranet.controlbutton.getTaskLink', this.getAjaxConfig(analytics)).then(function (response) {
 	        BX.SidePanel.Instance.open(response.data.link, {
 	          requestMethod: 'post',
 	          requestParams: response.data
@@ -333,14 +331,8 @@ this.BX = this.BX || {};
 	    value: function openPostSlider() {
 	      var _this7 = this;
 	      this.showLoader();
-	      main_core.ajax.runAction('intranet.controlbutton.getPostLink', {
-	        data: {
-	          entityType: this.entityType,
-	          entityId: this.entityId,
-	          entityData: this.entityData
-	        },
-	        analyticsLabel: this.analyticsLabel
-	      }).then(function (response) {
+	      var analytics = this.analytics.openPostSlider || {};
+	      main_core.ajax.runAction('intranet.controlbutton.getPostLink', this.getAjaxConfig(analytics)).then(function (response) {
 	        BX.SidePanel.Instance.open(response.data.link, {
 	          requestMethod: 'post',
 	          requestParams: {
@@ -356,12 +348,29 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }, {
+	    key: "getAjaxConfig",
+	    value: function getAjaxConfig(analytics) {
+	      var config = {
+	        data: {
+	          entityType: this.entityType,
+	          entityId: this.entityId,
+	          entityData: this.entityData
+	        }
+	      };
+	      if (main_core.Type.isPlainObject(analytics) && main_core.Type.isStringFilled(analytics.event) && main_core.Type.isStringFilled(analytics.tool)) {
+	        config.analytics = analytics;
+	      } else {
+	        config.analyticsLabel = this.analyticsLabel;
+	      }
+	      return config;
+	    }
+	  }, {
 	    key: "showHintPopup",
 	    value: function showHintPopup(message) {
 	      if (!message) {
 	        return;
 	      }
-	      new main_popup.Popup('inviteHint' + main_core.Text.getRandom(8), this.button, {
+	      new main_popup.Popup("inviteHint".concat(main_core.Text.getRandom(8)), this.button, {
 	        content: message,
 	        zIndex: 15000,
 	        angle: true,
@@ -374,9 +383,10 @@ this.BX = this.BX || {};
 	        maxWidth: 400,
 	        events: {
 	          onAfterPopupShow: function onAfterPopupShow() {
+	            var _this8 = this;
 	            setTimeout(function () {
-	              this.close();
-	            }.bind(this), 5000);
+	              _this8.close();
+	            }, 5000);
 	          }
 	        }
 	      }).show();

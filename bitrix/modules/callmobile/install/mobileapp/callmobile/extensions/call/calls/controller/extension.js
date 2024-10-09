@@ -2,6 +2,11 @@
 
 (function()
 {
+	const require = jn.require;
+
+	const { AnalyticsEvent } = require('analytics');
+	const { Analytics } = require('call/const');
+
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
 
 	class CallController
@@ -15,6 +20,7 @@
 			this.localVideoPromise = null;
 			this.localVideoStream = null;
 
+			this.callProvider = null;
 			this._currentCall = null;
 			Object.defineProperty(this, 'currentCall', {
 				get: () => this._currentCall,
@@ -37,6 +43,9 @@
 			this.callDeclineTimeout = 35000;
 
 			this.callVideoEnabled = false; // for proximity sensor
+
+			this.ignoreJoinAnalyticsEvent = false;
+			this.ignoreLeaveAnalyticsEvent = false;
 
 			this.onCallUserInvitedHandler = this.onCallUserInvited.bind(this);
 			this.onCallUserStateChangedHandler = this.onCallUserStateChanged.bind(this);
@@ -111,7 +120,26 @@
 			});
 
 			device.on('proximityChanged', this.onProximitySensorDebounced);
-				}
+		}
+
+		getCallType()
+		{
+			if (!this.currentCall)
+			{
+				return;
+			}
+
+			const isVideoconf =
+				this.currentCall.associatedEntity.type === 'chat'
+				&& this.currentCall.associatedEntity.advanced['chatType'] === 'videoconf'
+			;
+			const callType = this.callProvider === BX.Call.Provider.Plain
+				? Analytics.AnalyticsType.private
+				: Analytics.AnalyticsType.group
+			;
+
+			return isVideoconf ? Analytics.AnalyticsType.videoconf : callType;
+		}
 
 		onCallInvite(e)
 		{
@@ -141,9 +169,9 @@
 
 				return;
 			}
-			let { name, avatar, color } = dialogData;
+			let { name, avatar, color, type } = dialogData;
 			avatar = decodeURI(avatar);
-			this.startCall(dialogId, e.video, { name, avatar, color });
+			this.startCall(dialogId, e.video, { name, avatar, color, type });
 		}
 
 		maybeShowLocalVideo(show)
@@ -240,7 +268,10 @@
 
 					return this.maybeShowLocalVideo(video);
 				}).then(() => {
+					this.callProvider = provider;
+
 					return callEngine.createCall({
+							type: associatedDialogData.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
 							entityType: 'chat',
 							entityId: dialogId,
 							provider,
@@ -275,6 +306,27 @@
 
 						if (createResult.isNew)
 						{
+							const analytics = new AnalyticsEvent()
+								.setTool(Analytics.AnalyticsTool.im)
+								.setCategory(Analytics.AnalyticsCategory.call)
+								.setEvent(Analytics.AnalyticsEvent.startCall)
+								.setType(this.getCallType())
+								.setStatus(Analytics.AnalyticsStatus.success)
+								.setP1(
+									this.currentCall.isVideoEnabled()
+										? Analytics.AnalyticsEvent.cameraOn
+										: Analytics.AnalyticsEvent.cameraOff
+								)
+								.setP2(
+									this.currentCall.isMuted()
+										? Analytics.AnalyticsEvent.micOff
+										: Analytics.AnalyticsEvent.micOn
+								)
+								.setP5(`callId_${this.currentCall.id}`);
+
+							this.ignoreJoinAnalyticsEvent = true;
+							analytics.send();
+
 							this.currentCall.inviteUsers();
 						}
 						else
@@ -284,6 +336,29 @@
 								this.currentCall.setMuted(true);
 								this.callView.setMuted(true);
 							}
+
+							const analytics = new AnalyticsEvent()
+								.setTool(Analytics.AnalyticsTool.im)
+								.setCategory(Analytics.AnalyticsCategory.call)
+								.setEvent(Analytics.AnalyticsEvent.connect)
+								.setType(this.getCallType())
+								.setSection(Analytics.AnalyticsSection.chatWindow)
+								.setElement(Analytics.AnalyticsElement.videocall)
+								.setStatus(Analytics.AnalyticsStatus.success)
+								.setP1(
+									this.currentCall.isVideoEnabled()
+										? Analytics.AnalyticsEvent.cameraOn
+										: Analytics.AnalyticsEvent.cameraOff
+								)
+								.setP2(
+									this.currentCall.isMuted()
+										? Analytics.AnalyticsEvent.micOff
+										: Analytics.AnalyticsEvent.micOn
+								)
+								.setP5(`callId_${this.currentCall.id}`);
+
+							this.ignoreJoinAnalyticsEvent = true;
+							analytics.send();
 
 							this.callView.setState({
 								status: 'call',
@@ -342,6 +417,8 @@
 
 				return this.maybeShowLocalVideo(video);
 			}).then(() => {
+				this.callProvider = provider;
+
 				return callEngine.createCall({
 					entityType: 'chat',
 					entityId: dialogId,
@@ -365,10 +442,50 @@
 					media.audioPlayer().playSound('call_outgoing', 10);
 					if (createResult.isNew)
 					{
+						const analytics = new AnalyticsEvent()
+							.setTool(Analytics.AnalyticsTool.im)
+							.setCategory(Analytics.AnalyticsCategory.call)
+							.setEvent(Analytics.AnalyticsEvent.startCall)
+							.setType(this.getCallType())
+							.setStatus(Analytics.AnalyticsStatus.success)
+							.setP1(
+								this.currentCall.isVideoEnabled()
+									? Analytics.AnalyticsEvent.cameraOn
+									: Analytics.AnalyticsEvent.cameraOff
+							)
+							.setP2(
+								this.currentCall.isMuted()
+									? Analytics.AnalyticsEvent.micOff
+									: Analytics.AnalyticsEvent.micOn
+							)
+							.setP5(`callId_${this.currentCall.id}`);
+
+						analytics.send();
+
 						this.currentCall.inviteUsers();
 					}
 					else
 					{
+						const analytics = new AnalyticsEvent()
+							.setTool(Analytics.AnalyticsTool.im)
+							.setCategory(Analytics.AnalyticsCategory.call)
+							.setEvent(Analytics.AnalyticsEvent.connect)
+							.setType(this.getCallType())
+							.setStatus(Analytics.AnalyticsStatus.success)
+							.setP1(
+								this.currentCall.isVideoEnabled()
+									? Analytics.AnalyticsEvent.cameraOn
+									: Analytics.AnalyticsEvent.cameraOff
+							)
+							.setP2(
+								this.currentCall.isMuted()
+									? Analytics.AnalyticsEvent.micOff
+									: Analytics.AnalyticsEvent.micOn
+							)
+							.setP5(`callId_${this.currentCall.id}`);
+
+						analytics.send();
+
 						this.callView.setState({
 							status: 'call',
 						});
@@ -527,6 +644,28 @@
 				else
 				{
 					CallUtil.warn("can't participate in two calls");
+
+					const isVideoconf =
+						newCall.associatedEntity.type === 'chat'
+						&& newCall.associatedEntity.advanced['chatType'] === 'videoconf'
+					;
+					const newCallType = provider === BX.Call.Provider.Plain
+						? Analytics.AnalyticsType.private
+						: Analytics.AnalyticsType.group
+					;
+
+					const callType = isVideoconf ? Analytics.AnalyticsType.videoconf : newCallType;
+
+					const analytics = new AnalyticsEvent()
+						.setTool(Analytics.AnalyticsTool.im)
+						.setCategory(Analytics.AnalyticsCategory.call)
+						.setEvent(Analytics.AnalyticsEvent.connect)
+						.setType(callType)
+						.setStatus(Analytics.AnalyticsStatus.busy)
+						.setP5(`callId_${newCall.id}`);
+
+					analytics.send();
+
 					newCall.decline(486);
 				}
 
@@ -536,13 +675,6 @@
 			if (this.callView)
 			{
 				CallUtil.error('call view already exists');
-
-				return;
-			}
-
-			if (newCall.associatedEntity.type === 'chat' && newCall.associatedEntity.advanced.chatType === 'videoconf')
-			{
-				CallUtil.error('conferences are not supported yet');
 
 				return;
 			}
@@ -596,6 +728,7 @@
 			this.bindCallEvents();
 			this.bindNativeCallEvents();
 			this.currentCall.setVideoEnabled(video);
+			this.callProvider = provider;
 			this.showIncomingCall({
 				video,
 				viewStatus: e.autoAnswer ? 'call' : 'incoming',
@@ -1083,6 +1216,50 @@
 			return result;
 		}
 
+		getMaxActiveCallUsers()
+		{
+			const userStates = this.currentCall.getUsers();
+			let activeUsers = [];
+
+			for (let userId in userStates)
+			{
+				if (userStates.hasOwnProperty(userId))
+				{
+					if (
+						userStates[userId] !== BX.Call.UserState.Declined
+						&& userStates[userId] !== BX.Call.UserState.Busy
+						&& userStates[userId] !== BX.Call.UserState.Unavailable
+					)
+					{
+						activeUsers.push(userId);
+					}
+				}
+			}
+			return activeUsers;
+		}
+
+		getActiveCallUsers()
+		{
+			const userStates = this.currentCall.getUsers();
+			let activeUsers = [];
+
+			for (let userId in userStates)
+			{
+				if (userStates.hasOwnProperty(userId))
+				{
+					if (
+						userStates[userId] === BX.Call.UserState.Connected
+						|| userStates[userId] === BX.Call.UserState.Connecting
+						|| userStates[userId] === BX.Call.UserState.Calling
+					)
+					{
+						activeUsers.push(userId);
+					}
+				}
+			}
+			return activeUsers;
+		}
+
 		onCallUserNameUpdate(params)
 		{
 			const { userId, name } = params;
@@ -1197,6 +1374,19 @@
 				return;
 			}
 			const muted = !this.currentCall.isMuted();
+
+			const analyticsEvent = muted ? Analytics.AnalyticsEvent.micOff : Analytics.AnalyticsEvent.micOn;
+
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(analyticsEvent)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callWindow)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			analytics.send();
+
 			this.currentCall.setMuted(muted);
 			this.callView.setMuted(muted);
 			if (this.nativeCall)
@@ -1213,6 +1403,21 @@
 			}
 
 			const cameraEnabled = !this.currentCall.isVideoEnabled();
+
+			const analyticsEvent = cameraEnabled
+				? Analytics.AnalyticsEvent.cameraOn
+				: Analytics.AnalyticsEvent.cameraOff
+			;
+
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(analyticsEvent)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callWindow)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			analytics.send();
 
 			if (this.callWithLegacyMobile)
 			{
@@ -1271,6 +1476,16 @@
 
 		onChatButtonClick()
 		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.clickChat)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callWindow)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			analytics.send();
+
 			this.fold();
 			if (this.currentCall)
 			{
@@ -1288,6 +1503,16 @@
 
 		onFloorRequestButtonClick()
 		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.handOn)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callWindow)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			analytics.send();
+
 			const floorState = this.callView.getUserFloorRequestState(env.userId);
 			const talkingState = this.callView.getUserTalking(env.userId);
 
@@ -1314,6 +1539,29 @@
 		{
 			CallUtil.log('onAnswerButtonClick');
 
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.connect)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callPopup)
+				.setElement(Analytics.AnalyticsElement.answerButton)
+				.setStatus(Analytics.AnalyticsStatus.success)
+				.setP1(
+					useVideo
+						? Analytics.AnalyticsEvent.cameraOn
+						: Analytics.AnalyticsEvent.cameraOff
+				)
+				.setP2(
+					this.currentCall.isMuted()
+						? Analytics.AnalyticsEvent.micOff
+						: Analytics.AnalyticsEvent.micOn
+				)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			this.ignoreJoinAnalyticsEvent = true;
+			analytics.send();
+
 			this.answerCurrentCall(useVideo);
 			if (this.nativeCall)
 			{
@@ -1325,6 +1573,29 @@
 
 		onHangupButtonClick()
 		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.disconnect)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callWindow)
+				.setSubSection(Analytics.AnalyticsSubSection.finishButton)
+				.setStatus(Analytics.AnalyticsStatus.quit)
+				.setP1(
+					this.currentCall.isVideoEnabled()
+						? Analytics.AnalyticsEvent.cameraOn
+						: Analytics.AnalyticsEvent.cameraOff
+				)
+				.setP2(
+					this.currentCall.isMuted()
+						? Analytics.AnalyticsEvent.micOff
+						: Analytics.AnalyticsEvent.micOn
+				)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			this.ignoreLeaveAnalyticsEvent = true;
+			analytics.send();
+
 			if (this.currentCall)
 			{
 				this.currentCall.hangup();
@@ -1334,6 +1605,16 @@
 
 		onDeclineButtonClick()
 		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.connect)
+				.setType(this.getCallType())
+				.setStatus(Analytics.AnalyticsStatus.decline)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			analytics.send();
+
 			this.declineCall();
 		}
 
@@ -1514,6 +1795,21 @@
 
 			this.removeCallEvents();
 			const oldCall = this.currentCall;
+
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.finishCall)
+				.setType(this.getCallType())
+				.setSection(Analytics.AnalyticsSection.callWindow)
+				.setStatus(Analytics.AnalyticsStatus.privateToGroup)
+				.setP1(`callLength_${CallUtil.getTimeInSeconds(this.callStartTime)}`)
+				.setP3(`maxUserCount_${this.getMaxActiveCallUsers().length}`)
+				.setP4(`chatId_${this.normalizeChatId(this.currentCall.associatedEntity.id)}`)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			analytics.send();
+
 			oldCall.hangup();
 
 			this.currentCall = this.childCall;
@@ -1530,6 +1826,16 @@
 
 		onCallTimeout()
 		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.connect)
+				.setType(this.getCallType())
+				.setStatus(Analytics.AnalyticsStatus.noAnswer)
+				.setP5(`callId_${this.currentCall.id}`);
+
+			analytics.send();
+
 			this.declineCall();
 		}
 
@@ -1544,6 +1850,32 @@
 
 		onCallJoin(e)
 		{
+			if (!this.ignoreJoinAnalyticsEvent)
+			{
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.AnalyticsTool.im)
+					.setCategory(Analytics.AnalyticsCategory.call)
+					.setEvent(Analytics.AnalyticsEvent.connect)
+					.setType(this.getCallType())
+					.setSection(Analytics.AnalyticsSection.chatList)
+					.setElement(Analytics.AnalyticsElement.joinButton)
+					.setStatus(Analytics.AnalyticsStatus.success)
+					.setP1(
+						this.currentCall.isVideoEnabled()
+							? Analytics.AnalyticsEvent.cameraOn
+							: Analytics.AnalyticsEvent.cameraOff
+					)
+					.setP2(
+						this.currentCall.isMuted()
+							? Analytics.AnalyticsEvent.micOff
+							: Analytics.AnalyticsEvent.micOn
+					)
+					.setP5(`callId_${this.currentCall.id}`);
+
+				analytics.send();
+			}
+			this.ignoreJoinAnalyticsEvent = false;
+
 			if (e.local)
 			{
 				CallUtil.warn('joined local call');
@@ -1567,6 +1899,24 @@
 
 		onCallLeave(e)
 		{
+			if (!this.getActiveCallUsers().length && !this.ignoreLeaveAnalyticsEvent)
+			{
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.AnalyticsTool.im)
+					.setCategory(Analytics.AnalyticsCategory.call)
+					.setEvent(Analytics.AnalyticsEvent.finishCall)
+					.setType(this.getCallType())
+					.setSection(Analytics.AnalyticsSection.callWindow)
+					.setStatus(Analytics.AnalyticsStatus.lastUserLeft)
+					.setP1(`callLength_${CallUtil.getTimeInSeconds(this.callStartTime)}`)
+					.setP3(`maxUserCount_${this.getMaxActiveCallUsers().length}`)
+					.setP4(`chatId_${this.normalizeChatId(this.currentCall.associatedEntity.id)}`)
+					.setP5(`callId_${this.currentCall.id}`);
+
+				analytics.send();
+			}
+			this.ignoreLeaveAnalyticsEvent = false;
+
 			if (!e.local && this.currentCall && this.currentCall.ready)
 			{
 				CallUtil.error(new Error('received remote leave with active call!'));
@@ -1750,6 +2100,21 @@
 		{
 			if (Application.getPlatform() === 'android') return;
 			CallUtil.getSdkAudioManager().selectAudioDevice('speaker');
+		}
+
+		normalizeChatId(chatId)
+		{
+			if (!chatId)
+			{
+				return 0;
+			}
+
+			if (chatId.includes('chat'))
+			{
+				chatId = chatId.replace('chat', '');
+			}
+
+			return chatId;
 		}
 
 		changeProximitySensorStatus(status, audioDevice, isVideoEnabled)

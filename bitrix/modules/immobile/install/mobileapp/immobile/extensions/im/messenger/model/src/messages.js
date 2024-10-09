@@ -36,11 +36,12 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		viewedByOthers: false,
 		sending: false,
 		error: false,
-		errorReason: 0, // code from rest/classes/general/rest.php:25
+		errorReason: 0, // code from rest/classes/general/rest.php:25 or main/install/js/main/core/core_ajax.js:1044
 		retry: false,
 		audioPlaying: false,
 		playingTime: 0,
 		attach: [],
+		keyboard: [],
 		richLinkId: null,
 		forward: {},
 	};
@@ -836,9 +837,34 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function messagesModel/disableKeyboardByMessageId */
+			disableKeyboardByMessageId: (store, messageId) => {
+				/** @type {MessagesModelState} */
+				const message = store.state.collection[messageId];
+				if (!message)
+				{
+					return;
+				}
+
+				const keyboard = message.keyboard.map((button) => {
+					button.disabled = true;
+
+					return button;
+				});
+
+				store.commit('update', {
+					actionName: 'disableKeyboardByMessageId',
+					data: {
+						id: messageId,
+						fields: {
+							keyboard,
+						},
+					},
+				});
+			},
+
 			/** @function messagesModel/clearChatCollection */
-			clearChatCollection: (store, payload) =>
-			{
+			clearChatCollection: (store, payload) => {
 				const { chatId } = payload;
 				if (!Type.isNumber(chatId))
 				{

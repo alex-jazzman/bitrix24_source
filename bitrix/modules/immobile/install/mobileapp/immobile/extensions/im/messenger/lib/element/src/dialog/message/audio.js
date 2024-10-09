@@ -21,10 +21,8 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 
 			/* region deprecated properties */
 			this.audioUrl = null;
-			this.isPlaying = null;
 			this.localAudioUrl = null;
 			this.size = null;
-			this.playingTime = null;
 			/* end region */
 
 			this.audio = {
@@ -98,7 +96,6 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 				return;
 			}
 
-			this.playingTime = playingTime;
 			this.audio.playingTime = playingTime;
 		}
 
@@ -115,8 +112,12 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 
 		setIsPlaying(audioPlaying)
 		{
-			this.isPlaying = Boolean(audioPlaying);
 			this.audio.isPlaying = Boolean(audioPlaying);
+		}
+
+		getIsPlaying()
+		{
+			return this.audio.isPlaying;
 		}
 
 		/**

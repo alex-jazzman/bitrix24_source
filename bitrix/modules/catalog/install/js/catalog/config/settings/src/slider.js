@@ -5,12 +5,11 @@ import { EventEmitter } from 'main.core.events';
 export default class Slider
 {
 	static URL = '/crm/configs/catalog/';
+	static URL_RIGHTS = '/shop/settings/permissions/';
 
 	static open(source = null, options = {}): Promise
 	{
-		BX.PopupWindowManager?.getPopups().forEach((popup) => {
-			popup.close();
-		});
+		Slider.closePopup();
 		let url = Slider.URL;
 		if (Type.isStringFilled(source))
 		{
@@ -58,6 +57,41 @@ export default class Slider
 					...options,
 				},
 			);
+		});
+	}
+
+	static openRigthsSlider(): Promise
+	{
+		Slider.closePopup();
+
+		return new Promise((resolve) => {
+			BX.SidePanel.Instance.open(
+				Slider.URL_RIGHTS,
+				{},
+			);
+		});
+	}
+
+	static openSeoSlider(url :string): Promise
+	{
+		Slider.closePopup();
+
+		return new Promise((resolve) => {
+			BX.SidePanel.Instance.open(
+				url,
+				{
+					width: 1000,
+					allowChangeHistory: false,
+					cacheable: false,
+				},
+			);
+		});
+	}
+
+	static closePopup(): void
+	{
+		BX.PopupWindowManager?.getPopups().forEach((popup): void => {
+			popup.close();
 		});
 	}
 }

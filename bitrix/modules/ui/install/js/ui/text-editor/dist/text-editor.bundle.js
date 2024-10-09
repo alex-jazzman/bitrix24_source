@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,ui_bbcode_parser,ui_textEditor,main_core_collections,ui_bbcode_model,ui_lexical_richText,ui_lexical_selection,ui_lexical_clipboard,ui_lexical_table,main_core_events,ui_lexical_history,main_popup,main_core_cache,ui_iconSet_editor,ui_lexical_list,ui_lexical_link,ui_lexical_text,ui_lexical_core,ui_lexical_utils,main_core) {
+(function (exports,ui_codeParser,ui_bbcode_parser,ui_textEditor,ui_smiley,ui_videoService,main_core_collections,ui_bbcode_model,ui_lexical_richText,ui_lexical_selection,ui_lexical_clipboard,ui_lexical_table,main_core_events,ui_lexical_history,main_popup,main_core_cache,ui_iconSet_editor,ui_lexical_list,ui_lexical_link,ui_lexical_text,ui_lexical_core,ui_lexical_utils,main_core) {
 	'use strict';
 
 	const HIDE_DIALOG_COMMAND = ui_lexical_core.createCommand('HIDE_DIALOG_COMMAND');
@@ -625,6 +625,9 @@ this.BX.UI = this.BX.UI || {};
 	        this.insertAfter(newElement, restoreSelection);
 	        return newElement;
 	      }
+	      if (ui_lexical_core.$hasUpdateTag('paste')) {
+	        return super.insertNewAfter(selection, restoreSelection);
+	      }
 	    }
 	    selection.insertLineBreak();
 	    return null;
@@ -1182,211 +1185,11 @@ this.BX.UI = this.BX.UI || {};
 	  return hasChild;
 	}
 
-	const TokenType = {
-	  WHITESPACE: 'whitespace',
-	  // LINE_BREAK: 'line-break',
-	  // TAB: 'tab',
-	  SEMICOLON: 'semicolon',
-	  OPERATOR: 'operator',
-	  BRACE: 'brace',
-	  BRACKET: 'bracket',
-	  PARENTHESES: 'parentheses',
-	  WORD: 'word',
-	  REGEX: 'regex',
-	  STRING_DOUBLE: 'string-double',
-	  STRING_SINGLE: 'string-single',
-	  STRING_TEMPLATE: 'string-template',
-	  XML_COMMENT: 'comment-xml',
-	  COMMENT_MULTILINE: 'comment-multiline',
-	  COMMENT_SLASH: 'comment-slash',
-	  COMMENT_HASH: 'comment-hash'
-	};
-	const CommentTokenTypes = new Set([TokenType.XML_COMMENT, TokenType.COMMENT_MULTILINE, TokenType.COMMENT_SLASH, TokenType.COMMENT_HASH]);
-	const StringTokenTypes = new Set([TokenType.STRING_SINGLE, TokenType.STRING_DOUBLE, TokenType.STRING_TEMPLATE]);
-	const keywords = new Set(['abstract', 'alias', 'and', 'arguments', 'array', 'asm', 'assert', 'auto', 'base', 'begin', 'bool', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'checked', 'class', 'clone', 'compl', 'const', 'continue', 'debugger', 'decimal', 'declare', 'def', 'default', 'defer', 'deinit', 'del', 'delegate', 'delete', 'do', 'double', 'echo', 'elif', 'else', 'elseif', 'elsif', 'end', 'ensure', 'enum', 'event', 'except', 'exec', 'explicit', 'export', 'extends', 'extension', 'extern', 'fallthrough', 'false', 'final', 'finally', 'fixed', 'float', 'for', 'foreach', 'friend', 'from', 'func', 'function', 'global', 'goto', 'guard', 'if', 'implements', 'implicit', 'import', 'include', 'include_once', 'init', 'inline', 'inout', 'instanceof', 'int', 'interface', 'internal', 'is', 'lambda', 'let', 'lock', 'long', 'module', 'mutable', 'namespace', 'NaN', 'native', 'new', 'next', 'nil', 'none', 'not', 'null', 'object', 'operator', 'or', 'out', 'override', 'package', 'params', 'pass', 'private', 'protected', 'protocol', 'public', 'raise', 'readonly', 'redo', 'ref', 'register', 'repeat', 'require', 'require_once', 'rescue', 'restrict', 'retry', 'return', 'sbyte', 'sealed', 'self', 'short', 'signed', 'sizeof', 'static', 'string', 'struct', 'subscript', 'super', 'switch', 'synchronized', 'template', 'then', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'typealias', 'typedef', 'typeid', 'typename', 'typeof', 'unchecked', 'undef', 'undefined', 'union', 'unless', 'unsigned', 'until', 'use', 'using', 'var', 'virtual', 'void', 'volatile', 'wchar_t', 'when', 'where', 'while', 'with', 'xor', 'yield']);
-	function normalizeTokenType(type, content) {
-	  if (CommentTokenTypes.has(type)) {
-	    return 'comment';
-	  }
-	  if (StringTokenTypes.has(type)) {
-	    return 'string';
-	  }
-	  if (type === TokenType.WORD) {
-	    if (keywords.has(content)) {
-	      return 'keyword';
-	    }
-	    if (/\d+/.test(content)) {
-	      return 'number';
-	    }
-	  }
-	  return type;
-	}
-	const WORD_REGEX = /[\p{L}\p{N}0-9_$]/u;
-	// const NON_WHITESPACE_REGEX = /[^\v\f \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/;
-
-	const parse = (text, merge = true) => {
-	  let currentPosition = 0;
-	  let nextChar = text[0];
-	  let currentChar = 1;
-	  let prevChar = null;
-	  let beforePrevChar = null;
-	  let tokenContent = '';
-	  let tokenType = null;
-	  let lastTokenType = null;
-	  let isMultiChar = null;
-	  const result = [];
-	  const shouldFinalizeToken = () => {
-	    if (!currentChar) {
-	      // end of content
-	      return true;
-	    }
-	    switch (tokenType) {
-	      // case TokenType.LINE_BREAK:
-	      // 	if (prevChar === '\r' && currentChar === '\n')
-	      // 	{
-	      // 		return false;
-	      // 	}
-	      //
-	      // 	return true;
-	      // case TokenType.TAB:
-	      // 	return true;
-	      case TokenType.WHITESPACE:
-	        return /\S/.test(currentChar);
-	      // return NON_WHITESPACE_REGEX.test(currentChar);
-	      case TokenType.OPERATOR:
-	      case TokenType.SEMICOLON:
-	      case TokenType.BRACKET:
-	      case TokenType.BRACE:
-	      case TokenType.PARENTHESES:
-	        return true;
-	      case TokenType.WORD:
-	        return !WORD_REGEX.test(currentChar);
-	      case TokenType.REGEX:
-	        return (prevChar === '/' || prevChar === '\n') && isMultiChar;
-	      case TokenType.STRING_DOUBLE:
-	        return prevChar === '"' && isMultiChar;
-	      case TokenType.STRING_SINGLE:
-	        return prevChar === '\'' && isMultiChar;
-	      case TokenType.STRING_TEMPLATE:
-	        return prevChar === '`' && isMultiChar;
-	      case TokenType.XML_COMMENT:
-	        return text[currentPosition - 4] + beforePrevChar + prevChar === '-->';
-	      case TokenType.COMMENT_MULTILINE:
-	        return beforePrevChar + prevChar === '*/';
-	      case TokenType.COMMENT_SLASH:
-	      case TokenType.COMMENT_HASH:
-	        return currentChar === '\n';
-	      default:
-	        return false;
-	    }
-	  };
-	  const getTokenType = () => {
-	    if (currentChar === '#') {
-	      return TokenType.COMMENT_HASH;
-	    }
-	    if (currentChar + nextChar === '//') {
-	      return TokenType.COMMENT_SLASH;
-	    }
-	    if (currentChar + nextChar === '/*') {
-	      return TokenType.COMMENT_MULTILINE;
-	    }
-	    if (currentChar + nextChar + text[currentPosition + 1] + text[currentPosition + 2] === '<!--') {
-	      return TokenType.XML_COMMENT;
-	    }
-	    if (currentChar === '`') {
-	      return TokenType.STRING_TEMPLATE;
-	    }
-	    if (currentChar === '\'') {
-	      return TokenType.STRING_SINGLE;
-	    }
-	    if (currentChar === '"') {
-	      return TokenType.STRING_DOUBLE;
-	    }
-	    if (currentChar === '/' && [TokenType.WHITESPACE, TokenType.OPERATOR].includes(lastTokenType) && prevChar !== '<') {
-	      return TokenType.REGEX;
-	    }
-	    if (currentChar === '(' || currentChar === ')') {
-	      return TokenType.PARENTHESES;
-	    }
-	    if (currentChar === '[' || currentChar === ']') {
-	      return TokenType.BRACKET;
-	    }
-	    if (currentChar === '{' || currentChar === '}') {
-	      return TokenType.BRACE;
-	    }
-	    if (WORD_REGEX.test(currentChar)) {
-	      return TokenType.WORD;
-	    }
-
-	    // if (currentChar === '\n' || (currentChar === '\r' && nextChar === '\n'))
-	    // {
-	    // 	return TokenType.LINE_BREAK;
-	    // }
-	    //
-	    // if (currentChar === '\t')
-	    // {
-	    // 	return TokenType.TAB;
-	    // }
-
-	    if (currentChar === ';') {
-	      return TokenType.SEMICOLON;
-	    }
-	    if (/[!&*+,./:;<=>?@\\|~-]/.test(currentChar)) {
-	      return TokenType.OPERATOR;
-	    }
-	    return TokenType.WHITESPACE;
-	  };
-	  while (prevChar = !CommentTokenTypes.has(tokenType) && prevChar === '\\' ? true : currentChar) {
-	    currentChar = nextChar;
-	    nextChar = text[++currentPosition];
-	    isMultiChar = tokenContent.length > 1;
-	    if (tokenType === null) {
-	      tokenType = getTokenType();
-	    }
-	    if (shouldFinalizeToken()) {
-	      if (tokenContent) {
-	        result.push({
-	          content: tokenContent,
-	          type: normalizeTokenType(tokenType, tokenContent)
-	        });
-	      }
-	      if (tokenType !== TokenType.WHITESPACE && !CommentTokenTypes.has(tokenType)) {
-	        lastTokenType = tokenType;
-	      }
-	      tokenContent = '';
-	      tokenType = getTokenType();
-	    }
-	    tokenContent += currentChar;
-	    beforePrevChar = prevChar;
-	  }
-	  return merge ? mergeTokens(result) : result;
-	};
-	const mergeTokens = tokens => {
-	  const result = [];
-	  let prevToken = null;
-	  tokens.forEach(token => {
-	    // Merge sibling words into one word token
-	    if ((token.type === 'whitespace' || token.type === 'word') && prevToken !== null && (prevToken.type === 'whitespace' || prevToken.type === 'word')) {
-	      prevToken.type = 'word';
-	      prevToken.content += token.content;
-	      return;
-	    }
-
-	    // Merge operator like '===' or '++' into one token
-	    if (token.type === 'operator' && prevToken !== null && prevToken.type === 'operator') {
-	      prevToken.content += token.content;
-	      return;
-	    }
-	    prevToken = token;
-	    result.push(token);
-	  });
-	  return result;
-	};
-
 	/* eslint-disable no-underscore-dangle */
 	const FORMAT_CODE_COMMAND = ui_lexical_core.createCommand('FORMAT_CODE_COMMAND');
 	const INSERT_CODE_COMMAND = ui_lexical_core.createCommand('INSERT_CODE_COMMAND');
 	var _nodesCurrentlyHighlighting = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nodesCurrentlyHighlighting");
+	var _codeParser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("codeParser");
 	var _registerComponents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	var _registerListeners$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
 	var _registerCommands$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
@@ -1421,6 +1224,10 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _nodesCurrentlyHighlighting, {
 	      writable: true,
 	      value: new Set()
+	    });
+	    Object.defineProperty(this, _codeParser, {
+	      writable: true,
+	      value: new ui_codeParser.CodeParser()
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$1)[_registerCommands$1]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents)[_registerComponents]();
@@ -1547,7 +1354,7 @@ this.BX.UI = this.BX.UI || {};
 	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_CODE_COMMAND, payload => {
 	    const codeNode = $createCodeNode();
 	    if (main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.content)) {
-	      const tokenNodes = getCodeTokenNodes(parse(payload.content));
+	      const tokenNodes = getCodeTokenNodes(babelHelpers.classPrivateFieldLooseBase(this, _codeParser)[_codeParser].parse(payload.content));
 	      codeNode.append(...tokenNodes);
 	      ui_lexical_utils.$insertNodeToNearestRoot(codeNode);
 	    } else {
@@ -1590,7 +1397,7 @@ this.BX.UI = this.BX.UI || {};
 	        return false;
 	      }
 	      const code = currentNode.getTextContent();
-	      const codeTokenNodes = getCodeTokenNodes(parse(code));
+	      const codeTokenNodes = getCodeTokenNodes(babelHelpers.classPrivateFieldLooseBase(this, _codeParser)[_codeParser].parse(code));
 	      const diffRange = getDiffRange(currentNode.getChildren(), codeTokenNodes);
 	      const {
 	        from,
@@ -2103,6 +1910,8 @@ this.BX.UI = this.BX.UI || {};
 	  constructor({
 	    target: _target2,
 	    editor,
+	    originalWidth,
+	    originalHeight,
 	    minWidth,
 	    minHeight,
 	    maxWidth: _maxWidth2,
@@ -2178,17 +1987,17 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	    Object.defineProperty(this, _minWidth, {
 	      writable: true,
-	      value: 100
+	      value: 16
 	    });
 	    Object.defineProperty(this, _minHeight, {
 	      writable: true,
-	      value: 100
+	      value: 16
 	    });
 	    this.setEventNamespace('BX.UI.TextEditor.FigureResizer');
 	    babelHelpers.classPrivateFieldLooseBase(this, _target$1)[_target$1] = _target2;
 	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = editor;
-	    babelHelpers.classPrivateFieldLooseBase(this, _minWidth)[_minWidth] = Math.min(babelHelpers.classPrivateFieldLooseBase(this, _minWidth)[_minWidth], main_core.Type.isNumber(minWidth) ? minWidth : Infinity);
-	    babelHelpers.classPrivateFieldLooseBase(this, _minHeight)[_minHeight] = Math.min(babelHelpers.classPrivateFieldLooseBase(this, _minHeight)[_minHeight], main_core.Type.isNumber(minHeight) ? minHeight : Infinity);
+	    babelHelpers.classPrivateFieldLooseBase(this, _minWidth)[_minWidth] = Math.min(Math.max(babelHelpers.classPrivateFieldLooseBase(this, _minWidth)[_minWidth], main_core.Type.isNumber(minWidth) ? minWidth : babelHelpers.classPrivateFieldLooseBase(this, _minWidth)[_minWidth]), main_core.Type.isNumber(originalWidth) ? originalWidth : Infinity);
+	    babelHelpers.classPrivateFieldLooseBase(this, _minHeight)[_minHeight] = Math.min(Math.max(babelHelpers.classPrivateFieldLooseBase(this, _minHeight)[_minHeight], main_core.Type.isNumber(minHeight) ? minHeight : babelHelpers.classPrivateFieldLooseBase(this, _minHeight)[_minHeight]), main_core.Type.isNumber(originalHeight) ? originalHeight : Infinity);
 	    babelHelpers.classPrivateFieldLooseBase(this, _maxWidth)[_maxWidth] = main_core.Type.isNumber(_maxWidth2) ? _maxWidth2 : 'none';
 	    babelHelpers.classPrivateFieldLooseBase(this, _maxHeight)[_maxHeight] = main_core.Type.isNumber(maxHeight) ? maxHeight : 'none';
 	    babelHelpers.classPrivateFieldLooseBase(this, _freeTransform)[_freeTransform] = freeTransform === true;
@@ -2323,7 +2132,8 @@ this.BX.UI = this.BX.UI || {};
 	    } else if (isVertical) {
 	      let diff = Math.floor(babelHelpers.classPrivateFieldLooseBase(this, _positioning)[_positioning].startY - event.clientY);
 	      diff = babelHelpers.classPrivateFieldLooseBase(this, _positioning)[_positioning].direction & Direction.SOUTH ? -diff : diff;
-	      const height = Math.round(clamp(babelHelpers.classPrivateFieldLooseBase(this, _positioning)[_positioning].startHeight + diff, babelHelpers.classPrivateFieldLooseBase(this, _minHeight)[_minHeight], babelHelpers.classPrivateFieldLooseBase(this, _getMaxContainerHeight)[_getMaxContainerHeight]()));
+	      const height = Math.round(Math.max(babelHelpers.classPrivateFieldLooseBase(this, _positioning)[_positioning].startHeight + diff, babelHelpers.classPrivateFieldLooseBase(this, _minHeight)[_minHeight] // this.#getMaxContainerHeight(),
+	      ));
 	      main_core.Dom.style(target, 'height', `${height}px`);
 	      this.emit('onResize', {
 	        width: babelHelpers.classPrivateFieldLooseBase(this, _positioning)[_positioning].currentWidth,
@@ -2430,10 +2240,8 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _figureResizer)[_figureResizer] = new FigureResizer({
 	      target: this.getImage(),
 	      editor: this.getEditor(),
-	      minWidth: this.getOption('width'),
-	      minHeight: this.getOption('height'),
-	      maxWidth: this.getOption('maxWidth'),
-	      maxHeight: this.getOption('maxHeight'),
+	      originalWidth: this.getOption('width'),
+	      originalHeight: this.getOption('height'),
 	      events: {
 	        onResizeStart: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeStart)[_handleResizeStart].bind(this),
 	        onResizeEnd: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeEnd)[_handleResizeEnd].bind(this)
@@ -2462,14 +2270,12 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	  }
 	  update(options) {
-	    const width = `${options.width}px`;
-	    // const height = `${options.height}px`;
-	    // const maxWidth = `${options.maxWidth}px`;
-	    // const maxHeight = `${options.maxHeight}px`;
-
+	    const width = options.width > 0 ? `${options.width}px` : 'inherit';
+	    const aspectRatio = options.width > 0 && options.height > 0 ? `${options.width} / ${options.height}` : 'auto';
 	    main_core.Dom.style(this.getImage(), {
 	      width,
-	      height: 'auto'
+	      height: 'auto',
+	      aspectRatio
 	    });
 	  }
 	}
@@ -2751,13 +2557,25 @@ this.BX.UI = this.BX.UI || {};
 	  return node instanceof FileNode;
 	}
 
+	function calcImageSize(previewWidth, previewHeight, renderWidth, renderHeight) {
+	  const ratioWidth = renderWidth / previewWidth;
+	  const ratioHeight = renderHeight / previewHeight;
+	  const ratio = Math.min(ratioWidth, ratioHeight);
+	  const useOriginalSize = ratio > 1; // image is too small
+	  const width = useOriginalSize ? previewWidth : previewWidth * ratio;
+	  const height = useOriginalSize ? previewHeight : previewHeight * ratio;
+	  return [width, height];
+	}
+
 	let _$3 = t => t,
-	  _t$3,
-	  _t2$2;
+	  _t$3;
 	var _refs$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
+	var _figureResizer$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("figureResizer");
 	var _render$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _getContainer$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContainer");
-	var _getVideoContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getVideoContainer");
+	var _getVideo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getVideo");
+	var _handleResize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResize");
+	var _handleResizeEnd$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeEnd");
 	var _setDraggable$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDraggable");
 	class FileVideoComponent extends DecoratorComponent {
 	  constructor(options) {
@@ -2765,8 +2583,14 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _setDraggable$1, {
 	      value: _setDraggable2$1
 	    });
-	    Object.defineProperty(this, _getVideoContainer, {
-	      value: _getVideoContainer2
+	    Object.defineProperty(this, _handleResizeEnd$1, {
+	      value: _handleResizeEnd2$1
+	    });
+	    Object.defineProperty(this, _handleResize, {
+	      value: _handleResize2
+	    });
+	    Object.defineProperty(this, _getVideo, {
+	      value: _getVideo2
 	    });
 	    Object.defineProperty(this, _getContainer$1, {
 	      value: _getContainer2$1
@@ -2778,11 +2602,27 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: new main_core_cache.MemoryCache()
 	    });
+	    Object.defineProperty(this, _figureResizer$1, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1] = new FigureResizer({
+	      target: babelHelpers.classPrivateFieldLooseBase(this, _getVideo)[_getVideo](),
+	      editor: this.getEditor(),
+	      minWidth: 120,
+	      minHeight: 120,
+	      events: {
+	        onResize: babelHelpers.classPrivateFieldLooseBase(this, _handleResize)[_handleResize].bind(this),
+	        onResizeEnd: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeEnd$1)[_handleResizeEnd$1].bind(this)
+	      }
+	    });
 	    this.getNodeSelection().onSelect(selected => {
-	      if (selected) {
+	      if (selected || babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].isResizing()) {
 	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$1)[_getContainer$1](), '--selected');
+	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].show();
 	      } else {
 	        main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$1)[_getContainer$1](), '--selected');
+	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].hide();
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _setDraggable$1)[_setDraggable$1](selected);
 	    });
@@ -2790,7 +2630,20 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _render$1)[_render$1]();
 	  }
 	  update(options) {
-	    // void
+	    const width = main_core.Type.isNumber(options.width) && options.width > 0 ? options.width : null;
+	    const height = main_core.Type.isNumber(options.height) && options.height > 0 ? options.height : null;
+	    const aspectRatio = width > 0 && height > 0 ? `${width} / ${height}` : 'auto';
+	    main_core.Dom.adjust(babelHelpers.classPrivateFieldLooseBase(this, _getVideo)[_getVideo](), {
+	      attrs: {
+	        width,
+	        height: null
+	      },
+	      style: {
+	        width,
+	        height: 'auto',
+	        aspectRatio
+	      }
+	    });
 	  }
 	}
 	function _render2$1() {
@@ -2799,21 +2652,61 @@ this.BX.UI = this.BX.UI || {};
 	function _getContainer2$1() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$1)[_refs$1].remember('container', () => {
 	    return main_core.Tag.render(_t$3 || (_t$3 = _$3`
-				<div class="ui-text-editor-file-video-component">
+				<div class="ui-text-editor-video-component">
+					<div class="ui-text-editor-video-object-container">${0}</div>
 					${0}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _getVideoContainer)[_getVideoContainer]());
+			`), babelHelpers.classPrivateFieldLooseBase(this, _getVideo)[_getVideo](), babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].getContainer());
 	  });
 	}
-	function _getVideoContainer2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$1)[_refs$1].remember('video-container', () => {
-	    return main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
-				<div class="ui-text-editor-file-video-container"></div>
-			`));
+	function _getVideo2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$1)[_refs$1].remember('video', () => {
+	    var _config$theme, _config$theme$video;
+	    const video = main_core.Dom.create({
+	      tag: 'video',
+	      attrs: {
+	        controls: true,
+	        preload: 'metadata',
+	        playsinline: true,
+	        src: this.getOption('src')
+	      },
+	      events: {
+	        loadedmetadata: event => {
+	          this.getEditor().update(() => {
+	            const node = ui_lexical_core.$getNodeByKey(this.getNodeKey());
+	            if ($isFileVideoNode(node) && node.getWidth() === 0) {
+	              const [width, height] = calcImageSize(event.target.videoWidth, event.target.videoHeight, 600, 600);
+	              node.setWidthAndHeight(width, height);
+	            }
+	          });
+	        }
+	      }
+	    });
+	    const config = this.getOption('config', {});
+	    if (config != null && (_config$theme = config.theme) != null && (_config$theme$video = _config$theme.video) != null && _config$theme$video.object) {
+	      video.className = config.theme.video.object;
+	    }
+	    return video;
+	  });
+	}
+	function _handleResize2(event) {
+	  this.update(event.getData());
+	}
+	function _handleResizeEnd2$1(event) {
+	  this.setSelected(true);
+	  this.getEditor().update(() => {
+	    const node = ui_lexical_core.$getNodeByKey(this.getNodeKey());
+	    if ($isFileVideoNode(node)) {
+	      const {
+	        width,
+	        height
+	      } = event.getData();
+	      node.setWidthAndHeight(width, height);
+	    }
 	  });
 	}
 	function _setDraggable2$1(draggable) {
-	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _getVideoContainer)[_getVideoContainer](), {
+	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$1)[_getContainer$1](), {
 	    draggable
 	  });
 	  if (draggable) {
@@ -2827,16 +2720,20 @@ this.BX.UI = this.BX.UI || {};
 
 	/** @memberof BX.UI.TextEditor.Plugins.File */
 	class FileVideoNode extends ui_lexical_core.DecoratorNode {
-	  constructor(serverFileId, info, key) {
+	  constructor(serverFileId, info, width, height, key) {
 	    super(key);
+	    this.__width = 0;
+	    this.__height = 0;
 	    this.__serverFileId = serverFileId;
 	    this.__info = main_core.Type.isPlainObject(info) ? info : {};
+	    this.__width = main_core.Type.isNumber(width) && width > 0 ? Math.round(width) : this.__info.previewWidth > 0 ? this.__info.previewWidth : this.__width;
+	    this.__height = main_core.Type.isNumber(height) && height > 0 ? Math.round(height) : this.__info.previewHeight > 0 ? this.__info.previewHeight : this.__height;
 	  }
 	  static getType() {
 	    return 'file-video';
 	  }
 	  static clone(node) {
-	    return new FileVideoNode(node.__serverFileId, node.__info, node.__key);
+	    return new FileVideoNode(node.__serverFileId, node.__info, node.__width, node.__height, node.__key);
 	  }
 	  getId() {
 	    return this.__serverFileId;
@@ -2847,8 +2744,25 @@ this.BX.UI = this.BX.UI || {};
 	  getInfo() {
 	    return this.__info;
 	  }
+	  setWidthAndHeight(width, height) {
+	    const writable = this.getWritable();
+	    if (main_core.Type.isNumber(width)) {
+	      writable.__width = Math.round(width);
+	    }
+	    if (main_core.Type.isNumber(height)) {
+	      writable.__height = Math.round(height);
+	    }
+	  }
+	  getWidth() {
+	    const self = this.getLatest();
+	    return self.__width;
+	  }
+	  getHeight() {
+	    const self = this.getLatest();
+	    return self.__height;
+	  }
 	  static importJSON(serializedNode) {
-	    return $createFileVideoNode(serializedNode.serverFileId, serializedNode.info);
+	    return $createFileVideoNode(serializedNode.serverFileId, serializedNode.info, serializedNode.width, serializedNode.height);
 	  }
 	  static importDOM() {
 	    return null;
@@ -2862,6 +2776,8 @@ this.BX.UI = this.BX.UI || {};
 	    return {
 	      info: this.__info,
 	      serverFileId: this.__serverFileId,
+	      width: this.getWidth(),
+	      height: this.getHeight(),
 	      type: 'file-video',
 	      version: 1
 	    };
@@ -2880,7 +2796,14 @@ this.BX.UI = this.BX.UI || {};
 	  decorate(editor, config) {
 	    return {
 	      componentClass: FileVideoComponent,
-	      options: {}
+	      options: {
+	        src: this.__info.downloadUrl,
+	        width: this.getWidth(),
+	        height: this.getHeight(),
+	        maxWidth: this.getWidth(),
+	        maxHeight: this.getHeight(),
+	        config
+	      }
 	    };
 	  }
 	  isInline() {
@@ -2888,8 +2811,8 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	}
 	FileVideoNode.useDecoratorComponent = true;
-	function $createFileVideoNode(serverFileId, info = {}) {
-	  const node = new FileVideoNode(serverFileId, info);
+	function $createFileVideoNode(serverFileId, info = {}, width = null, height = null) {
+	  const node = new FileVideoNode(serverFileId, info, width, height);
 	  return ui_lexical_core.$applyNodeReplacement(node);
 	}
 	function $isFileVideoNode(node) {
@@ -3115,8 +3038,10 @@ this.BX.UI = this.BX.UI || {};
 	            };
 	          }
 	          if (fileType === FileType.VIDEO) {
+	            const width = main_core.Text.toInteger(node.getAttribute('width'));
+	            const height = main_core.Text.toInteger(node.getAttribute('height'));
 	            return {
-	              node: $createFileVideoNode(serverFileId, info)
+	              node: $createFileVideoNode(serverFileId, info, width, height)
 	            };
 	          }
 	          return {
@@ -3152,12 +3077,15 @@ this.BX.UI = this.BX.UI || {};
 	          file: ''
 	        } : {};
 	        attributes.id = lexicalNode.getServerFileId();
+	        const node = scheme.createElement({
+	          name: this.getMode(),
+	          attributes,
+	          inline: false
+	        });
+	        node.setAttribute('width', lexicalNode.getWidth());
+	        node.setAttribute('height', lexicalNode.getHeight());
 	        return {
-	          node: scheme.createElement({
-	            name: this.getMode(),
-	            attributes,
-	            inline: false
-	          })
+	          node
 	        };
 	      },
 	      'file-image': lexicalNode => {
@@ -3253,20 +3181,20 @@ this.BX.UI = this.BX.UI || {};
 	    this.addFile(payload.info);
 	    const fileType = this.getFileType(payload.info);
 	    let node = null;
+	    const previewWidth = payload.info.previewWidth;
+	    const previewHeight = payload.info.previewHeight;
+	    const renderWidth = payload.width;
+	    const renderHeight = payload.height;
 	    if (fileType === FileType.IMAGE) {
-	      const previewWidth = payload.info.previewWidth;
-	      const previewHeight = payload.info.previewHeight;
-	      const renderWidth = payload.width;
-	      const renderHeight = payload.height;
-	      const ratioWidth = renderWidth / previewWidth;
-	      const ratioHeight = renderHeight / previewHeight;
-	      const ratio = Math.min(ratioWidth, ratioHeight);
-	      const useOriginalSize = ratio > 1; // image is too small
-	      const width = useOriginalSize ? previewWidth : previewWidth * ratio;
-	      const height = useOriginalSize ? previewHeight : previewHeight * ratio;
+	      const [width, height] = calcImageSize(previewWidth, previewHeight, renderWidth, renderHeight);
 	      node = $createFileImageNode(payload.serverFileId, payload.info, width, height);
 	    } else if (fileType === FileType.VIDEO) {
-	      node = $createFileVideoNode(payload.serverFileId, payload.info);
+	      let width = 0;
+	      let height = 0;
+	      if (previewWidth > 0 && previewHeight > 0) {
+	        [width, height] = calcImageSize(previewWidth, previewHeight, renderWidth, renderHeight);
+	      }
+	      node = $createFileVideoNode(payload.serverFileId, payload.info, width, height);
 	    } else {
 	      node = $createFileNode(payload.serverFileId, payload.info);
 	    }
@@ -3373,21 +3301,21 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$5 = t => t,
 	  _t$5,
-	  _t2$3;
+	  _t2$2;
 	var _refs$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
-	var _figureResizer$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("figureResizer");
+	var _figureResizer$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("figureResizer");
 	var _maxWidth$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("maxWidth");
 	var _render$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _getContainer$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContainer");
 	var _getImageContainer$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getImageContainer");
 	var _setDraggable$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDraggable");
 	var _handleResizeStart$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeStart");
-	var _handleResizeEnd$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeEnd");
+	var _handleResizeEnd$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeEnd");
 	class ImageComponent extends DecoratorComponent {
 	  constructor(options) {
 	    super(options);
-	    Object.defineProperty(this, _handleResizeEnd$1, {
-	      value: _handleResizeEnd2$1
+	    Object.defineProperty(this, _handleResizeEnd$2, {
+	      value: _handleResizeEnd2$2
 	    });
 	    Object.defineProperty(this, _handleResizeStart$1, {
 	      value: _handleResizeStart2$1
@@ -3408,7 +3336,7 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: new main_core_cache.MemoryCache()
 	    });
-	    Object.defineProperty(this, _figureResizer$1, {
+	    Object.defineProperty(this, _figureResizer$2, {
 	      writable: true,
 	      value: null
 	    });
@@ -3416,24 +3344,26 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: 'none'
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1] = new FigureResizer({
+	    babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2] = new FigureResizer({
 	      target: this.getImage(),
 	      editor: this.getEditor(),
+	      originalWidth: this.getOption('width'),
+	      originalHeight: this.getOption('height'),
 	      maxWidth: this.getMaxWidth(),
 	      events: {
 	        onResizeStart: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeStart$1)[_handleResizeStart$1].bind(this),
-	        onResizeEnd: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeEnd$1)[_handleResizeEnd$1].bind(this)
+	        onResizeEnd: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeEnd$2)[_handleResizeEnd$2].bind(this)
 	      }
 	    });
 	    this.getNodeSelection().onSelect(selected => {
-	      if (selected || babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].isResizing()) {
+	      if (selected || babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].isResizing()) {
 	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$2)[_getContainer$2](), '--selected');
-	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].show();
+	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].show();
 	      } else {
 	        main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$2)[_getContainer$2](), '--selected');
-	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].hide();
+	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].hide();
 	      }
-	      const draggable = selected && !babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].isResizing();
+	      const draggable = selected && !babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].isResizing();
 	      babelHelpers.classPrivateFieldLooseBase(this, _setDraggable$2)[_setDraggable$2](draggable);
 	    });
 	    this.update(this.getOptions());
@@ -3441,9 +3371,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getImage() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$2)[_refs$2].remember('image', () => {
+	      var _config$theme, _config$theme$image;
 	      const img = document.createElement('img');
 	      img.draggable = false;
 	      img.src = this.getOption('src');
+	      const config = this.getOption('config', {});
+	      if (config != null && (_config$theme = config.theme) != null && (_config$theme$image = _config$theme.image) != null && _config$theme$image.img) {
+	        img.className = config.theme.image.img;
+	      }
 	      return img;
 	    });
 	  }
@@ -3451,14 +3386,13 @@ this.BX.UI = this.BX.UI || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _maxWidth$1)[_maxWidth$1];
 	  }
 	  update(options) {
-	    const width = main_core.Type.isNumber(options.width) ? `${options.width}px` : 'inherit';
-	    const height = main_core.Type.isNumber(options.height) ? `${options.height}px` : 'inherit';
-	    const maxWidth = main_core.Type.isNumber(options.maxWidth) ? `${options.maxWidth}px` : null;
+	    const width = options.width > 0 ? `${options.width}px` : 'inherit';
+	    const aspectRatio = options.width > 0 && options.height > 0 ? `${options.width} / ${options.height}` : 'auto';
 	    babelHelpers.classPrivateFieldLooseBase(this, _maxWidth$1)[_maxWidth$1] = options.maxWidth;
 	    main_core.Dom.style(this.getImage(), {
 	      width,
-	      height,
-	      maxWidth
+	      height: 'auto',
+	      aspectRatio
 	    });
 	  }
 	}
@@ -3467,7 +3401,7 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _getContainer2$2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$2)[_refs$2].remember('container', () => {
-	    const figureResizer = babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$1)[_figureResizer$1].getContainer();
+	    const figureResizer = babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].getContainer();
 	    return main_core.Tag.render(_t$5 || (_t$5 = _$5`
 				<div class="ui-text-editor-image-component">
 					${0}
@@ -3478,7 +3412,7 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _getImageContainer2$1() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$2)[_refs$2].remember('image-container', () => {
-	    return main_core.Tag.render(_t2$3 || (_t2$3 = _$5`
+	    return main_core.Tag.render(_t2$2 || (_t2$2 = _$5`
 				<div class="ui-text-editor-image-container">
 					${0}
 				</div>
@@ -3499,7 +3433,7 @@ this.BX.UI = this.BX.UI || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _setDraggable$2)[_setDraggable$2](false);
 	  this.setSelected(true);
 	}
-	function _handleResizeEnd2$1(event) {
+	function _handleResizeEnd2$2(event) {
 	  this.setSelected(true);
 	  this.getEditor().update(() => {
 	    const node = ui_lexical_core.$getNodeByKey(this.getNodeKey());
@@ -3619,9 +3553,10 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	  createDOM(config) {
+	    var _theme$image;
 	    const span = document.createElement('span');
 	    const theme = config.theme;
-	    const className = theme.image;
+	    const className = theme == null ? void 0 : (_theme$image = theme.image) == null ? void 0 : _theme$image.container;
 	    if (className !== undefined) {
 	      span.className = className;
 	    }
@@ -3652,7 +3587,8 @@ this.BX.UI = this.BX.UI || {};
 	        src: this.getSrc(),
 	        width: this.getWidth(),
 	        height: this.getHeight(),
-	        maxWidth: this.getMaxWidth()
+	        maxWidth: this.getMaxWidth(),
+	        config
 	      }
 	    };
 	  }
@@ -3863,7 +3799,7 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$6 = t => t,
 	  _t$6,
-	  _t2$4;
+	  _t2$3;
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _imageUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imageUrl");
 	var _targetContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetContainer");
@@ -3981,6 +3917,7 @@ this.BX.UI = this.BX.UI || {};
 						<button type="button" 
 							class="ui-text-editor-image-dialog-button" 
 							onclick="${0}"
+							data-testid="image-dialog-save-btn"
 						>
 							<span class="ui-icon-set --check"></span>
 						</button>
@@ -3988,6 +3925,7 @@ this.BX.UI = this.BX.UI || {};
 							type="button" 
 							class="ui-text-editor-image-dialog-button"
 							onclick="${0}"
+							data-testid="image-dialog-cancel-btn"
 						>
 							<span class="ui-icon-set --cross-60"></span>
 						</button>
@@ -3998,13 +3936,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getUrlTextBox() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$3)[_refs$3].remember('url-textbox', () => {
-	      return main_core.Tag.render(_t2$4 || (_t2$4 = _$6`
+	      return main_core.Tag.render(_t2$3 || (_t2$3 = _$6`
 				<input 
 					type="text"
 					class="ui-ctl-element"
 					placeholder="https://example.com/image.jpeg"
 					value="${0}"
 					onkeydown="${0}"
+					data-testid="image-dialog-textbox"
 				>
 			`), this.getImageUrl(), babelHelpers.classPrivateFieldLooseBase(this, _handleTextBoxKeyDown)[_handleTextBoxKeyDown].bind(this));
 	    });
@@ -5127,72 +5066,6 @@ this.BX.UI = this.BX.UI || {};
 	  return ui_lexical_core.$applyNodeReplacement(node);
 	}
 
-	var _name = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("name");
-	var _image = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("image");
-	var _typing = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("typing");
-	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
-	var _height = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("height");
-	class Smiley {
-	  constructor(smileyOptions) {
-	    Object.defineProperty(this, _name, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _image, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _typing, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _width, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _height, {
-	      writable: true,
-	      value: void 0
-	    });
-	    const options = main_core.Type.isPlainObject(smileyOptions) ? smileyOptions : {};
-	    this.setName(options.name);
-	    this.setImage(options.image);
-	    this.setTyping(options.typing);
-	    this.setWidth(options.width);
-	    this.setHeight(options.height);
-	  }
-	  getName() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _name)[_name];
-	  }
-	  setName(value) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _name)[_name] = value;
-	  }
-	  getImage() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _image)[_image];
-	  }
-	  setImage(value) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _image)[_image] = value;
-	  }
-	  getTyping() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _typing)[_typing];
-	  }
-	  setTyping(value) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _typing)[_typing] = value;
-	  }
-	  getWidth() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _width)[_width];
-	  }
-	  setWidth(value) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _width)[_width] = value;
-	  }
-	  getHeight() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _height)[_height];
-	  }
-	  setHeight(value) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _height)[_height] = value;
-	  }
-	}
-
 	var _popup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _targetNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetNode");
 	class SmileyDialog extends main_core_events.EventEmitter {
@@ -5297,324 +5170,9 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	}
 
-	const CodePoint = {
-	  TAB: 9,
-	  SPACE: 32,
-	  NBSP: 160,
-	  NEW_LINE: 10,
-	  // \n
-	  RETURN: 13,
-	  // \r
-	  LINE_FEED: 12,
-	  // \f
-	  EXCLAMATION: 33,
-	  // !
-	  DOUBLE_QUOTE: 34,
-	  HASH: 35,
-	  // #
-	  SINGLE_QUOTE: 39,
-	  ASTERISK: 42,
-	  COMMA: 44,
-	  DOT: 46,
-	  COLON: 58,
-	  SEMI_COLON: 59,
-	  QUESTION: 63,
-	  ROUND_BRACKET_OPEN: 40,
-	  ROUND_BRACKET_CLOSE: 41,
-	  SQUARE_BRACKET_OPEN: 91,
-	  SQUARE_BRACKET_CLOSE: 93,
-	  CURLY_BRACKET_OPEN: 123,
-	  PIPE: 124,
-	  CURLY_BRACKET_CLOSE: 125,
-	  HYPHEN: 45
-	};
-
-	var _currentPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentPosition");
-	var _text = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("text");
-	var _textStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textStart");
-	var _textEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textEnd");
-	var _moveNext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("moveNext");
-	class TextParser {
-	  constructor(text, position = 0) {
-	    Object.defineProperty(this, _moveNext, {
-	      value: _moveNext2
-	    });
-	    Object.defineProperty(this, _currentPosition, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _text, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _textStart, {
-	      writable: true,
-	      value: -1
-	    });
-	    Object.defineProperty(this, _textEnd, {
-	      writable: true,
-	      value: -1
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _text)[_text] = text;
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] = position;
-	  }
-	  getCurrentPosition() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	  }
-	  tryChangePosition(fn) {
-	    const currentPosition = babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	    const success = fn();
-	    if (!success) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] = currentPosition;
-	    }
-	    return success;
-	  }
-	  peek() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _text)[_text].codePointAt(babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition]);
-	  }
-	  moveNext() {
-	    return this.hasNext() ? babelHelpers.classPrivateFieldLooseBase(this, _moveNext)[_moveNext](this.peek()) : NaN;
-	  }
-	  peekPrevious() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _text)[_text].codePointAt(babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] - 1);
-	  }
-	  hasNext() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] < babelHelpers.classPrivateFieldLooseBase(this, _text)[_text].length;
-	  }
-	  hasPendingText() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _textStart)[_textStart] !== babelHelpers.classPrivateFieldLooseBase(this, _textEnd)[_textEnd];
-	  }
-	  flushText() {
-	    if (this.hasPendingText()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _textStart)[_textStart] = -1;
-	      babelHelpers.classPrivateFieldLooseBase(this, _textEnd)[_textEnd] = -1;
-	    }
-	  }
-	  consume(match) {
-	    const codePoint = this.peek();
-	    const success = main_core.Type.isFunction(match) ? match(codePoint) : codePoint === match;
-	    if (success) {
-	      this.moveNext(codePoint);
-	    }
-	    return success;
-	  }
-	  consumeWhile(match) {
-	    const start = babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	    while (this.hasNext() && this.consume(match)) {
-	      /* */
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] !== start;
-	  }
-	  consumePoints(codePoints) {
-	    const currentPosition = babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	    for (const codePoint of codePoints) {
-	      const currentCodePoint = this.moveNext();
-	      if (codePoint !== currentCodePoint) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] = currentPosition;
-	        return false;
-	      }
-	    }
-	    return true;
-	  }
-	  consumeTree(treeIndex) {
-	    const currentPosition = babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	    let node = treeIndex;
-	    while (this.hasNext()) {
-	      const codePoint = this.moveNext();
-	      const index = node.get(codePoint);
-	      if (main_core.Type.isUndefined(index)) {
-	        break;
-	      }
-	      const [isLeaf, entry] = index;
-	      if (isLeaf === true) {
-	        this.consumeTree(entry);
-	        return true;
-	      }
-	      node = entry;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] = currentPosition;
-	    return false;
-	  }
-	  consumeText() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _textStart)[_textStart] === -1) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _textStart)[_textStart] = babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	      babelHelpers.classPrivateFieldLooseBase(this, _textEnd)[_textEnd] = babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	    }
-	    this.moveNext();
-	    babelHelpers.classPrivateFieldLooseBase(this, _textEnd)[_textEnd] = babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition];
-	    return true;
-	  }
-	  isWordBoundary() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] === 0) {
-	      return true;
-	    }
-	    if (this.hasPendingText()) {
-	      return isDelimiter(this.peekPrevious());
-	    }
-	    return false;
-	  }
-	}
-
-	// [.,;:!?#-*|[](){}]
-	function _moveNext2(code) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _currentPosition)[_currentPosition] += code > 0xFFFF ? 2 : 1;
-	  return code;
-	}
-	const wordBoundaries = new Set([CodePoint.DOT, CodePoint.COMMA, CodePoint.SEMI_COLON, CodePoint.COLON, CodePoint.EXCLAMATION, CodePoint.QUESTION, CodePoint.HASH, CodePoint.HYPHEN, CodePoint.ASTERISK, CodePoint.PIPE, CodePoint.ROUND_BRACKET_OPEN, CodePoint.ROUND_BRACKET_CLOSE, CodePoint.SQUARE_BRACKET_OPEN, CodePoint.SQUARE_BRACKET_CLOSE, CodePoint.CURLY_BRACKET_OPEN, CodePoint.CURLY_BRACKET_CLOSE]);
-	function isWordBoundary(ch) {
-	  return wordBoundaries.has(ch);
-	}
-	function isTextBound(codePoint) {
-	  return main_core.Type.isUndefined(codePoint) || Number.isNaN(codePoint) || isNewLine(codePoint) || isWhitespace(codePoint);
-	}
-	function isDelimiter(codePoint) {
-	  return isTextBound(codePoint) || isWordBoundary(codePoint);
-	}
-	function isWhitespace(codePoint) {
-	  return codePoint === CodePoint.SPACE || codePoint === CodePoint.TAB || codePoint === CodePoint.NBSP;
-	}
-	function isNewLine(codePoint) {
-	  return codePoint === CodePoint.NEW_LINE || codePoint === CodePoint.RETURN || codePoint === CodePoint.LINE_FEED;
-	}
-
-	var _index = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("index");
-	class TokenTree {
-	  constructor() {
-	    Object.defineProperty(this, _index, {
-	      writable: true,
-	      value: new Map()
-	    });
-	  }
-	  getTreeIndex() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _index)[_index];
-	  }
-	  addToken(token) {
-	    if (!main_core.Type.isStringFilled(token)) {
-	      return;
-	    }
-	    let index = babelHelpers.classPrivateFieldLooseBase(this, _index)[_index];
-	    for (let i = 0; i < token.length; i++) {
-	      const codePoint = token.codePointAt(i);
-	      if (i === token.length - 1) {
-	        if (index.has(codePoint)) {
-	          index.get(codePoint)[0] = true;
-	        } else {
-	          index.set(codePoint, [true, new Map()]);
-	        }
-	      } else {
-	        if (!index.has(codePoint)) {
-	          index.set(codePoint, [false, new Map()]);
-	        }
-	        [, index] = index.get(codePoint);
-	      }
-	    }
-	  }
-	}
-
-	var _splitOffsets = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("splitOffsets");
-	var _tokenTree = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tokenTree");
-	var _textParser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textParser");
-	var _parseSmileys = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("parseSmileys");
-	var _consumeSmiley = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("consumeSmiley");
-	var _isWordBoundary = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isWordBoundary");
-	var _isNextWordBoundary = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNextWordBoundary");
-	var _parseEmoji = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("parseEmoji");
-	class SmileyParser {
-	  constructor(smileys) {
-	    Object.defineProperty(this, _parseEmoji, {
-	      value: _parseEmoji2
-	    });
-	    Object.defineProperty(this, _isNextWordBoundary, {
-	      value: _isNextWordBoundary2
-	    });
-	    Object.defineProperty(this, _isWordBoundary, {
-	      value: _isWordBoundary2
-	    });
-	    Object.defineProperty(this, _consumeSmiley, {
-	      value: _consumeSmiley2
-	    });
-	    Object.defineProperty(this, _parseSmileys, {
-	      value: _parseSmileys2
-	    });
-	    Object.defineProperty(this, _splitOffsets, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _tokenTree, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _textParser, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _tokenTree)[_tokenTree] = new TokenTree();
-	    smileys.forEach(smiley => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _tokenTree)[_tokenTree].addToken(smiley.getTyping());
-	    });
-	  }
-	  parse(text) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _splitOffsets)[_splitOffsets] = [];
-	    babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser] = new TextParser(text);
-	    while (babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].hasNext()) {
-	      let success = false;
-	      success = success || babelHelpers.classPrivateFieldLooseBase(this, _parseEmoji)[_parseEmoji]();
-	      success = success || babelHelpers.classPrivateFieldLooseBase(this, _parseSmileys)[_parseSmileys]();
-	      success = success || babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].consumeText();
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _splitOffsets)[_splitOffsets];
-	  }
-	}
-	function _parseSmileys2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isWordBoundary)[_isWordBoundary]()) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].tryChangePosition(() => {
-	      const currentPosition = babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].getCurrentPosition();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _consumeSmiley)[_consumeSmiley]() && babelHelpers.classPrivateFieldLooseBase(this, _isNextWordBoundary)[_isNextWordBoundary]()) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _splitOffsets)[_splitOffsets].push({
-	          start: currentPosition,
-	          end: babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].getCurrentPosition()
-	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].flushText();
-	        return true;
-	      }
-	      return false;
-	    });
-	  }
-	  return false;
-	}
-	function _consumeSmiley2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].consumeTree(babelHelpers.classPrivateFieldLooseBase(this, _tokenTree)[_tokenTree].getTreeIndex());
-	}
-	function _isWordBoundary2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].hasPendingText()) {
-	    const last = babelHelpers.classPrivateFieldLooseBase(this, _splitOffsets)[_splitOffsets].at(-1);
-	    if (last && last.end === babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].getCurrentPosition()) {
-	      return true;
-	    }
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].isWordBoundary();
-	}
-	function _isNextWordBoundary2() {
-	  let isSmileyNext = false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].tryChangePosition(() => {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _consumeSmiley)[_consumeSmiley]()) {
-	      isSmileyNext = true;
-	    }
-	    return false;
-	  });
-	  if (isSmileyNext) {
-	    return true;
-	  }
-	  return isDelimiter(babelHelpers.classPrivateFieldLooseBase(this, _textParser)[_textParser].peek());
-	}
-	function _parseEmoji2() {
-	  return false;
-	}
-
 	/* eslint-disable no-underscore-dangle */
 	const INSERT_SMILEY_COMMAND = ui_lexical_core.createCommand('INSERT_SMILEY_COMMAND');
 	const INSERT_SMILEY_DIALOG_COMMAND = ui_lexical_core.createCommand('INSERT_SMILEY_DIALOG_COMMAND');
-	var _smileys = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smileys");
 	var _smileyParser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smileyParser");
 	var _smileyDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smileyDialog");
 	var _registerListeners$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
@@ -5632,10 +5190,6 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _registerListeners$3, {
 	      value: _registerListeners2$3
 	    });
-	    Object.defineProperty(this, _smileys, {
-	      writable: true,
-	      value: new Map()
-	    });
 	    Object.defineProperty(this, _smileyParser, {
 	      writable: true,
 	      value: null
@@ -5644,13 +5198,8 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
-	    const settings = main_core.Extension.getSettings('ui.text-editor');
-	    const smileys = settings.get('smileys', []);
-	    for (const smiley of smileys) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _smileys)[_smileys].set(smiley.typing, new Smiley(smiley));
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _smileys)[_smileys].size > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _smileyParser)[_smileyParser] = new SmileyParser([...babelHelpers.classPrivateFieldLooseBase(this, _smileys)[_smileys].values()]);
+	    if (ui_smiley.SmileyManager.getSize() > 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _smileyParser)[_smileyParser] = new ui_smiley.SmileyParser(ui_smiley.SmileyManager.getAll());
 	      babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$3)[_registerListeners$3]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _registerInsertSmileyCommand)[_registerInsertSmileyCommand]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$3)[_registerComponents$3]();
@@ -5711,7 +5260,7 @@ this.BX.UI = this.BX.UI || {};
 	      // console.log("textNodes", splitOffsets, textNodes);
 
 	      for (const textNode of textNodes) {
-	        const smiley = babelHelpers.classPrivateFieldLooseBase(this, _smileys)[_smileys].get(textNode.getTextContent()) || null;
+	        const smiley = ui_smiley.SmileyManager.get(textNode.getTextContent()) || null;
 	        if (smiley) {
 	          // console.log('replace');
 	          const smileyNode = $createSmileyNode(smiley.getImage(), smiley.getTyping(), smiley.getWidth(), smiley.getHeight());
@@ -5745,7 +5294,7 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _registerInsertSmileyCommand2() {
 	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_SMILEY_COMMAND, payload => {
-	    const smiley = babelHelpers.classPrivateFieldLooseBase(this, _smileys)[_smileys].get(payload) || null;
+	    const smiley = ui_smiley.SmileyManager.get(payload) || null;
 	    if (!smiley) {
 	      return false;
 	    }
@@ -5771,6 +5320,7 @@ this.BX.UI = this.BX.UI || {};
 	      events: {
 	        onSelect: event => {
 	          this.getEditor().dispatchCommand(INSERT_SMILEY_COMMAND, event.getData().smiley);
+	          babelHelpers.classPrivateFieldLooseBase(this, _smileyDialog)[_smileyDialog].hide();
 	        },
 	        onDestroy: () => {
 	          babelHelpers.classPrivateFieldLooseBase(this, _smileyDialog)[_smileyDialog] = null;
@@ -5800,49 +5350,38 @@ this.BX.UI = this.BX.UI || {};
 
 
 
-	var Smiley$1 = /*#__PURE__*/Object.freeze({
+	var Smiley = /*#__PURE__*/Object.freeze({
 		INSERT_SMILEY_COMMAND: INSERT_SMILEY_COMMAND,
 		INSERT_SMILEY_DIALOG_COMMAND: INSERT_SMILEY_DIALOG_COMMAND,
 		SmileyPlugin: SmileyPlugin,
 		SmileyNode: SmileyNode,
 		$isSmileyNode: $isSmileyNode,
 		$createSmileyNode: $createSmileyNode,
-		SmileyParser: SmileyParser,
 		SmileyDialog: SmileyDialog
 	});
 
 	let _$7 = t => t,
 	  _t$7,
-	  _t2$5,
-	  _t3,
-	  _t4;
+	  _t2$4;
 	var _refs$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
-	var _figureResizer$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("figureResizer");
+	var _figureResizer$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("figureResizer");
 	var _trusted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("trusted");
 	var _render$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _getContainer$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContainer");
-	var _getVideoStub = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getVideoStub");
-	var _getIframeContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIframeContainer");
-	var _getIframe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIframe");
-	var _handleResize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResize");
-	var _handleResizeEnd$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeEnd");
+	var _getVideo$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getVideo");
+	var _handleResize$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResize");
+	var _handleResizeEnd$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeEnd");
 	class VideoComponent extends DecoratorComponent {
 	  constructor(options) {
 	    super(options);
-	    Object.defineProperty(this, _handleResizeEnd$2, {
-	      value: _handleResizeEnd2$2
+	    Object.defineProperty(this, _handleResizeEnd$3, {
+	      value: _handleResizeEnd2$3
 	    });
-	    Object.defineProperty(this, _handleResize, {
-	      value: _handleResize2
+	    Object.defineProperty(this, _handleResize$1, {
+	      value: _handleResize2$1
 	    });
-	    Object.defineProperty(this, _getIframe, {
-	      value: _getIframe2
-	    });
-	    Object.defineProperty(this, _getIframeContainer, {
-	      value: _getIframeContainer2
-	    });
-	    Object.defineProperty(this, _getVideoStub, {
-	      value: _getVideoStub2
+	    Object.defineProperty(this, _getVideo$1, {
+	      value: _getVideo2$1
 	    });
 	    Object.defineProperty(this, _getContainer$3, {
 	      value: _getContainer2$3
@@ -5854,7 +5393,7 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: new main_core_cache.MemoryCache()
 	    });
-	    Object.defineProperty(this, _figureResizer$2, {
+	    Object.defineProperty(this, _figureResizer$3, {
 	      writable: true,
 	      value: null
 	    });
@@ -5862,41 +5401,44 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: false
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2] = new FigureResizer({
+	    babelHelpers.classPrivateFieldLooseBase(this, _trusted)[_trusted] = main_core.Type.isStringFilled(this.getOption('provider'));
+	    babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$3)[_figureResizer$3] = new FigureResizer({
+	      target: babelHelpers.classPrivateFieldLooseBase(this, _getVideo$1)[_getVideo$1](),
 	      editor: this.getEditor(),
+	      minWidth: 120,
+	      minHeight: 120,
 	      freeTransform: true,
 	      events: {
-	        onResize: babelHelpers.classPrivateFieldLooseBase(this, _handleResize)[_handleResize].bind(this),
-	        onResizeEnd: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeEnd$2)[_handleResizeEnd$2].bind(this)
+	        onResize: babelHelpers.classPrivateFieldLooseBase(this, _handleResize$1)[_handleResize$1].bind(this),
+	        onResizeEnd: babelHelpers.classPrivateFieldLooseBase(this, _handleResizeEnd$3)[_handleResizeEnd$3].bind(this)
 	      }
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _trusted)[_trusted] = main_core.Type.isStringFilled(this.getOption('provider'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].setTarget(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$3)[_getContainer$3]());
 	    this.getNodeSelection().onSelect(selected => {
-	      if (selected || babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].isResizing()) {
+	      if (selected || babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$3)[_figureResizer$3].isResizing()) {
 	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$3)[_getContainer$3](), '--selected');
-	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].show();
+	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$3)[_figureResizer$3].show();
 	      } else {
 	        main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$3)[_getContainer$3](), '--selected');
-	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].hide();
+	        babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$3)[_figureResizer$3].hide();
 	      }
 	    });
 	    this.update(this.getOptions());
 	    babelHelpers.classPrivateFieldLooseBase(this, _render$3)[_render$3]();
 	  }
 	  update(options) {
-	    // const width = Type.isNumber(options.width) ? `${options.width}px` : 'inherit';
-	    // const height = Type.isNumber(options.height) ? `${options.height}px` : 'inherit';
-
-	    const iframeWidth = main_core.Type.isNumber(options.width) ? options.width : '100%';
-	    const iframeHeight = main_core.Type.isNumber(options.height) ? options.height : '100%';
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getContainer$3)[_getContainer$3](), {
-	      width: null,
-	      height: null
-	    });
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _getIframe)[_getIframe](), {
-	      width: iframeWidth,
-	      height: iframeHeight
+	    const width = main_core.Type.isNumber(options.width) && options.width > 0 ? options.width : null;
+	    const height = main_core.Type.isNumber(options.height) && options.height > 0 ? options.height : null;
+	    const aspectRatio = width > 0 && height > 0 ? `${width} / ${height}` : 'auto';
+	    main_core.Dom.adjust(babelHelpers.classPrivateFieldLooseBase(this, _getVideo$1)[_getVideo$1](), {
+	      attrs: {
+	        width,
+	        height: null
+	      },
+	      style: {
+	        width,
+	        height: 'auto',
+	        aspectRatio
+	      }
 	    });
 	  }
 	}
@@ -5905,53 +5447,55 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _getContainer2$3() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$4)[_refs$4].remember('container', () => {
-	    const uri = new main_core.Uri(this.getOption('src'));
-	    const isVideoFile = uri.getPath().match(/\.(mp4|webm|mov)$/);
 	    return main_core.Tag.render(_t$7 || (_t$7 = _$7`
 				<div class="ui-text-editor-video-component">
-					${0}
-					${0}
-				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _trusted)[_trusted] || isVideoFile ? babelHelpers.classPrivateFieldLooseBase(this, _getIframeContainer)[_getIframeContainer]() : babelHelpers.classPrivateFieldLooseBase(this, _getVideoStub)[_getVideoStub](), babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$2)[_figureResizer$2].getContainer());
-	  });
-	}
-	function _getVideoStub2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$4)[_refs$4].remember('video-stub', () => {
-	    return main_core.Tag.render(_t2$5 || (_t2$5 = _$7`
-				<div class="ui-text-editor-video-stub"></div>
-			`));
-	  });
-	}
-	function _getIframeContainer2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$4)[_refs$4].remember('iframe-container', () => {
-	    return main_core.Tag.render(_t3 || (_t3 = _$7`
-				<div class="ui-text-editor-video-iframe-container">
+					<div class="ui-text-editor-video-object-container">${0}</div>
 					${0}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _getIframe)[_getIframe]());
+			`), babelHelpers.classPrivateFieldLooseBase(this, _getVideo$1)[_getVideo$1](), babelHelpers.classPrivateFieldLooseBase(this, _figureResizer$3)[_figureResizer$3].getContainer());
 	  });
 	}
-	function _getIframe2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$4)[_refs$4].remember('iframe', () => {
-	    const iframe = main_core.Tag.render(_t4 || (_t4 = _$7`
-				<iframe
-					class="ui-text-editor-video-iframe"
-					frameborder="0"
-					src="about:blank"
-					draggable="false"
-				></iframe>
-			`));
-	    iframe.src = this.getOption('src');
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _trusted)[_trusted]) {
-	      iframe.sandbox = '';
+	function _getVideo2$1() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _refs$4)[_refs$4].remember('video', () => {
+	    var _config$theme, _config$theme$video;
+	    let video = null;
+	    const src = this.getOption('src');
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _trusted)[_trusted]) {
+	      video = main_core.Tag.render(_t2$4 || (_t2$4 = _$7`<iframe frameborder="0" src="about:blank" draggable="false"></iframe>`));
+	      video.src = src;
+	    } else {
+	      video = main_core.Dom.create({
+	        tag: 'video',
+	        attrs: {
+	          controls: true,
+	          preload: 'metadata',
+	          playsinline: true,
+	          src
+	        },
+	        events: {
+	          loadedmetadata: event => {
+	            this.getEditor().update(() => {
+	              const node = ui_lexical_core.$getNodeByKey(this.getNodeKey());
+	              if ($isVideoNode(node) && node.getWidth() === 0) {
+	                const [width, height] = calcImageSize(event.target.videoWidth, event.target.videoHeight, 600, 600);
+	                node.setWidthAndHeight(width, height);
+	              }
+	            });
+	          }
+	        }
+	      });
 	    }
-	    return iframe;
+	    const config = this.getOption('config', {});
+	    if (config != null && (_config$theme = config.theme) != null && (_config$theme$video = _config$theme.video) != null && _config$theme$video.object) {
+	      video.className = config.theme.video.object;
+	    }
+	    return video;
 	  });
 	}
-	function _handleResize2(event) {
+	function _handleResize2$1(event) {
 	  this.update(event.getData());
 	}
-	function _handleResizeEnd2$2(event) {
+	function _handleResizeEnd2$3(event) {
 	  this.setSelected(true);
 	  this.getEditor().update(() => {
 	    const node = ui_lexical_core.$getNodeByKey(this.getNodeKey());
@@ -5964,196 +5508,6 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  });
 	}
-
-	var _url = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("url");
-	class BaseService {
-	  constructor(url) {
-	    Object.defineProperty(this, _url, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _url)[_url] = url;
-	  }
-	  static matchByUrl(url) {
-	    return false;
-	  }
-	  static getDomains() {
-	    return [];
-	  }
-	  getId() {
-	    return null;
-	  }
-	  getMatcher() {
-	    return /^$/;
-	  }
-	  getMatcherReplacement() {
-	    return null;
-	  }
-	  getEmbeddedUrl() {
-	    const replacement = this.getMatcherReplacement();
-	    if (main_core.Type.isStringFilled(replacement) || main_core.Type.isFunction(replacement)) {
-	      return this.getUrl().replace(this.getMatcher(), replacement);
-	    }
-	    return '';
-	  }
-	  getUrl() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _url)[_url];
-	  }
-	}
-
-	const YOUTUBE_MATCHER = /^((?:https?:)?\/\/)?((?:www|m)\.)?(youtube(-nocookie)?\.com|youtu\.be)(\/(?:[\w-]+\?v=|embed\/|shorts\/|live\/|v\/)?)(?<id>[\w-]+)(\S+)?$/;
-	const YOUTUBE_EMBEDDED = 'https://www.youtube-nocookie.com/embed/$<id>';
-	class Youtube extends BaseService {
-	  static matchByUrl(url) {
-	    return YOUTUBE_MATCHER.test(url);
-	  }
-	  static getDomains() {
-	    return ['youtube.com', 'youtu.be', 'youtube-nocookie.com', 'www.youtube-nocookie.com'];
-	  }
-	  getId() {
-	    return 'youtube';
-	  }
-	  getMatcher() {
-	    return YOUTUBE_MATCHER;
-	  }
-	  getMatcherReplacement() {
-	    return YOUTUBE_EMBEDDED;
-	  }
-	}
-
-	const FACEBOOK_MATCHER = /^(?:(?:https?:)?\/\/)?(?:www.)?facebook\.com.*\/(videos?|watch)(\.php|\/|\?).+$/;
-	class Facebook extends BaseService {
-	  static matchByUrl(url) {
-	    return FACEBOOK_MATCHER.test(url);
-	  }
-	  static getDomains() {
-	    return ['facebook.com', 'www.facebook.com'];
-	  }
-	  getId() {
-	    return 'facebook';
-	  }
-	  getMatcher() {
-	    return FACEBOOK_MATCHER;
-	  }
-	  getEmbeddedUrl() {
-	    const encodedUrl = encodeURIComponent(this.getUrl().replace(/\/$/, ''));
-	    return `https://www.facebook.com/plugins/video.php?href=${encodedUrl}`;
-	  }
-	}
-
-	const VIMEO_MATCHER = /^(?:(?:https?:)?\/\/)?(?:www.)?vimeo.com\/(.*\/)?(?<id>\d+)(.*)?/;
-	const VIMEO_EMBEDDED = 'https://player.vimeo.com/video/$<id>';
-	class Vimeo extends BaseService {
-	  static matchByUrl(url) {
-	    return VIMEO_MATCHER.test(url);
-	  }
-	  static getDomains() {
-	    return ['vimeo.com', 'player.vimeo.com'];
-	  }
-	  getId() {
-	    return 'vimeo';
-	  }
-	  getMatcher() {
-	    return VIMEO_MATCHER;
-	  }
-	  getMatcherReplacement() {
-	    return VIMEO_EMBEDDED;
-	  }
-	}
-
-	const INSTAGRAM_MATCHER = /(?:(?:https?:)?\/\/)?(?:www.)?(instagr\.am|instagram\.com)\/p\/(?<id>[\w-]+)\/?/;
-	const INSTAGRAM_EMBEDDED = 'https://instagram.com/p/$<id>/embed/captioned';
-	class Instagram extends BaseService {
-	  static matchByUrl(url) {
-	    return INSTAGRAM_MATCHER.test(url);
-	  }
-	  static getDomains() {
-	    return ['www.instagram.com', 'instagram.com', 'instagr.am'];
-	  }
-	  getId() {
-	    return 'instagram';
-	  }
-	  getMatcher() {
-	    return INSTAGRAM_MATCHER;
-	  }
-	  getMatcherReplacement() {
-	    return INSTAGRAM_EMBEDDED;
-	  }
-	}
-
-	const VK_MATCHER = /(?:(?:https?:)?\/\/)?(?:www.)?vk\.(com|ru)\/.*(video|clip)((?<oid>-?\d+)_(?<id>\d+))\/?/;
-	const VK_EMBEDDED = 'https://vk.com/video_ext.php?oid=$<oid>&id=$<id>&hd=2';
-	class VK extends BaseService {
-	  static matchByUrl(url) {
-	    return VK_MATCHER.test(url);
-	  }
-	  static getDomains() {
-	    return ['vk.com', 'vk.ru'];
-	  }
-	  getId() {
-	    return 'vk';
-	  }
-	  getDomains() {
-	    return ['vk.com'];
-	  }
-	  getMatcher() {
-	    return VK_MATCHER;
-	  }
-	  getMatcherReplacement() {
-	    return VK_EMBEDDED;
-	  }
-	}
-
-	const RUTUBE_MATCHER = /(?:(?:https?:)?\/\/)?(?:www.)?rutube\.ru\/video\/(private\/)?(?<id>[\dA-Za-z]+)\/?/;
-	const RUTUBE_EMBEDDED = 'https://rutube.ru/play/embed/$<id>';
-	class Rutube extends BaseService {
-	  static matchByUrl(url) {
-	    return RUTUBE_MATCHER.test(url);
-	  }
-	  static getDomains() {
-	    return ['rutube.ru', 'www.rutube.ru'];
-	  }
-	  getId() {
-	    return 'rutube';
-	  }
-	  getMatcher() {
-	    return RUTUBE_MATCHER;
-	  }
-	  getMatcherReplacement() {
-	    return RUTUBE_EMBEDDED;
-	  }
-	}
-
-	var _services = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("services");
-	class VideoService {
-	  static createByUrl(url) {
-	    for (const ServiceClass of babelHelpers.classPrivateFieldLooseBase(this, _services)[_services]) {
-	      if (ServiceClass.matchByUrl(url)) {
-	        return new ServiceClass(url);
-	      }
-	    }
-	    return null;
-	  }
-	  static createByHost(host) {
-	    for (const ServiceClass of babelHelpers.classPrivateFieldLooseBase(this, _services)[_services]) {
-	      if (ServiceClass.getDomains().includes(host)) {
-	        return new ServiceClass(host);
-	      }
-	    }
-	    return null;
-	  }
-	  static getEmbeddedUrl(url) {
-	    const videoService = this.createByUrl(url);
-	    if (videoService) {
-	      return videoService.getEmbeddedUrl();
-	    }
-	    return null;
-	  }
-	}
-	Object.defineProperty(VideoService, _services, {
-	  writable: true,
-	  value: [Youtube, Facebook, Vimeo, Instagram, VK, Rutube]
-	});
 
 	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 	class VideoNode extends ui_lexical_core.DecoratorNode {
@@ -6171,7 +5525,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    const url = /^https?:/.test(src) ? src : `https://${src.replace(/^\/\//, '')}`;
 	    const uri = new main_core.Uri(url);
-	    const videoService = VideoService.createByHost(uri.getHost());
+	    const videoService = ui_videoService.VideoService.createByHost(uri.getHost());
 	    if (videoService) {
 	      this.__provider = videoService.getId();
 	    }
@@ -6221,9 +5575,10 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	  createDOM(config) {
+	    var _theme$video;
 	    const span = document.createElement('span');
 	    const theme = config.theme;
-	    const className = theme.video;
+	    const className = theme == null ? void 0 : (_theme$video = theme.video) == null ? void 0 : _theme$video.container;
 	    if (className !== undefined) {
 	      span.className = className;
 	    }
@@ -6254,7 +5609,8 @@ this.BX.UI = this.BX.UI || {};
 	        src: this.getSrc(),
 	        width: this.getWidth(),
 	        height: this.getHeight(),
-	        provider: this.getProvider()
+	        provider: this.getProvider(),
+	        config
 	      }
 	    };
 	  }
@@ -6277,8 +5633,8 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$8 = t => t,
 	  _t$8,
-	  _t2$6,
-	  _t3$1;
+	  _t2$5,
+	  _t3;
 	var _popup$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _videoUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("videoUrl");
 	var _targetContainer$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetContainer");
@@ -6400,6 +5756,7 @@ this.BX.UI = this.BX.UI || {};
 						<button type="button" 
 							class="ui-text-editor-video-dialog-button" 
 							onclick="${0}"
+							data-testid="video-dialog-save-btn"
 						>
 							<span class="ui-icon-set --check"></span>
 						</button>
@@ -6407,6 +5764,7 @@ this.BX.UI = this.BX.UI || {};
 							type="button" 
 							class="ui-text-editor-video-dialog-button"
 							onclick="${0}"
+							data-testid="video-dialog-cancel-btn"
 						>
 							<span class="ui-icon-set --cross-60"></span>
 						</button>
@@ -6418,7 +5776,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getUrlTextBox() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$5)[_refs$5].remember('url-textbox', () => {
-	      return main_core.Tag.render(_t2$6 || (_t2$6 = _$8`
+	      return main_core.Tag.render(_t2$5 || (_t2$5 = _$8`
 				<input 
 					type="text"
 					class="ui-ctl-element"
@@ -6426,13 +5784,14 @@ this.BX.UI = this.BX.UI || {};
 					value="${0}"
 					onkeydown="${0}"
 					oninput="${0}"
+					data-testid="video-dialog-textbox"
 				>
 			`), this.getVideoUrl(), babelHelpers.classPrivateFieldLooseBase(this, _handleTextBoxKeyDown$1)[_handleTextBoxKeyDown$1].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleTextBoxInput)[_handleTextBoxInput].bind(this));
 	    });
 	  }
 	  getStatusContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$5)[_refs$5].remember('status', () => {
-	      return main_core.Tag.render(_t3$1 || (_t3$1 = _$8`
+	      return main_core.Tag.render(_t3 || (_t3 = _$8`
 				<div class="ui-text-editor-video-dialog-status">${0}</div>
 			`), main_core.Loc.getMessage('TEXT_EDITOR_VIDEO_INSERT_HINT'));
 	    });
@@ -6602,7 +5961,7 @@ this.BX.UI = this.BX.UI || {};
 	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_VIDEO_COMMAND, payload => {
 	    if (main_core.Type.isPlainObject(payload) && validateVideoUrl(payload.src)) {
 	      const videoNode = $createVideoNode({
-	        src: VideoService.getEmbeddedUrl(payload.src) || payload.src,
+	        src: ui_videoService.VideoService.getEmbeddedUrl(payload.src) || payload.src,
 	        width: payload.width,
 	        height: payload.height
 	      });
@@ -7019,71 +6378,75 @@ this.BX.UI = this.BX.UI || {};
 
 	const defaultTheme = {
 	  blockCursor: 'ui-text-editor__block-cursor',
-	  hashtag: 'ui-text-editor__hashtag',
-	  heading: {
-	    h1: 'ui-text-editor__h1',
-	    h2: 'ui-text-editor__h2',
-	    h3: 'ui-text-editor__h3',
-	    h4: 'ui-text-editor__h4',
-	    h5: 'ui-text-editor__h5',
-	    h6: 'ui-text-editor__h6'
-	  },
-	  image: 'ui-text-editor__image',
 	  indent: 'ui-text-editor__indent',
-	  link: 'ui-text-editor__link',
+	  ltr: 'ui-text-editor__ltr',
+	  rtl: 'ui-text-editor__rtl',
+	  heading: {
+	    h1: 'ui-typography-heading-h1',
+	    h2: 'ui-typography-heading-h2',
+	    h3: 'ui-typography-heading-h3',
+	    h4: 'ui-typography-heading-h4',
+	    h5: 'ui-typography-heading-h5',
+	    h6: 'ui-typography-heading-h6'
+	  },
+	  hashtag: 'ui-typography-hashtag',
+	  image: {
+	    container: 'ui-typography-image-container ui-text-editor__image-container',
+	    img: 'ui-typography-image'
+	  },
+	  link: 'ui-typography-link',
 	  list: {
-	    listitem: 'ui-text-editor__listItem',
-	    listitemChecked: 'ui-text-editor__listItemChecked',
-	    listitemUnchecked: 'ui-text-editor__listItemUnchecked',
+	    listitem: 'ui-typography-li',
 	    nested: {
 	      listitem: 'ui-text-editor__nestedListItem'
 	    },
-	    olDepth: ['ui-text-editor__ol1', 'ui-text-editor__ol2', 'ui-text-editor__ol3', 'ui-text-editor__ol4', 'ui-text-editor__ol5'],
-	    ul: 'ui-text-editor__ul'
+	    olDepth: ['ui-typography-ol ui-text-editor__ol1', 'ui-typography-ol ui-text-editor__ol2', 'ui-typography-ol ui-text-editor__ol3', 'ui-typography-ol ui-text-editor__ol4', 'ui-typography-ol ui-text-editor__ol5'],
+	    ul: 'ui-typography-ul'
 	  },
-	  ltr: 'ui-text-editor__ltr',
-	  paragraph: 'ui-text-editor__paragraph',
-	  quote: 'ui-text-editor__quote',
-	  rtl: 'ui-text-editor__rtl',
+	  paragraph: 'ui-typography-paragraph ui-text-editor__paragraph',
 	  text: {
-	    bold: 'ui-text-editor__text-bold',
-	    code: 'ui-text-editor__text-code',
-	    italic: 'ui-text-editor__text-italic',
-	    strikethrough: 'ui-text-editor__text-strikethrough',
-	    subscript: 'ui-text-editor__text-subscript',
-	    superscript: 'ui-text-editor__text-superscript',
-	    underline: 'ui-text-editor__text-underline',
-	    underlineStrikethrough: 'ui-text-editor__text-underline-strikethrough'
+	    bold: 'ui-typography-text-bold',
+	    code: 'ui-typography-text-code',
+	    italic: 'ui-typography-text-italic',
+	    strikethrough: 'ui-typography-text-strikethrough',
+	    subscript: 'ui-typography-text-subscript',
+	    superscript: 'ui-typography-text-superscript',
+	    underline: 'ui-typography-text-underline',
+	    underlineStrikethrough: 'ui-typography-text-underline-strikethrough'
 	  },
-	  mention: 'ui-text-editor__mention',
-	  code: 'ui-text-editor__code',
+	  mention: 'ui-typography-mention',
+	  quote: 'ui-typography-quote',
 	  spoiler: {
-	    container: 'ui-text-editor__spoiler',
-	    title: 'ui-text-editor__spoiler-title',
-	    content: 'ui-text-editor__spoiler-content'
+	    container: 'ui-typography-spoiler',
+	    title: 'ui-typography-spoiler-title ui-icon-set__scope',
+	    content: 'ui-typography-spoiler-content'
 	  },
-	  smiley: 'ui-text-editor__smiley',
+	  smiley: 'ui-typography-smiley',
+	  code: 'ui-typography-code',
 	  codeHighlight: {
-	    operator: 'ui-text-editor__token-operator',
-	    punctuation: 'ui-text-editor__token-punctuation',
-	    comment: 'ui-text-editor__token-comment',
-	    word: 'ui-text-editor__token-word',
-	    keyword: 'ui-text-editor__token-keyword',
-	    boolean: 'ui-text-editor__token-boolean',
-	    regex: 'ui-text-editor__token-regex',
-	    string: 'ui-text-editor__token-string',
-	    number: 'ui-text-editor__token-number',
-	    semicolon: 'ui-text-editor__token-semicolon',
-	    bracket: 'ui-text-editor__token-bracket',
-	    brace: 'ui-text-editor__token-brace',
-	    parentheses: 'ui-text-editor__token-parentheses'
+	    operator: 'ui-typography-token-operator',
+	    punctuation: 'ui-typography-token-punctuation',
+	    comment: 'ui-typography-token-comment',
+	    word: 'ui-typography-token-word',
+	    keyword: 'ui-typography-token-keyword',
+	    boolean: 'ui-typography-token-boolean',
+	    regex: 'ui-typography-token-regex',
+	    string: 'ui-typography-token-string',
+	    number: 'ui-typography-token-number',
+	    semicolon: 'ui-typography-token-semicolon',
+	    bracket: 'ui-typography-token-bracket',
+	    brace: 'ui-typography-token-brace',
+	    parentheses: 'ui-typography-token-parentheses'
 	  },
-	  video: 'ui-text-editor__video',
-	  table: 'ui-text-editor__table',
-	  tableRow: 'ui-text-editor__table-row',
-	  tableCell: 'ui-text-editor__table-cell',
-	  tableCellHeader: 'ui-text-editor__table-cell-header',
-	  tableSelection: 'ui-text-editor__table-selection',
+	  table: 'ui-typography-table',
+	  tableRow: 'ui-typography-table-row',
+	  tableCell: 'ui-typography-table-cell',
+	  tableCellHeader: 'ui-typography-table-cell-header',
+	  tableSelection: 'ui-typography-table-selection',
+	  video: {
+	    container: 'ui-typography-video-container ui-text-editor__video-container',
+	    object: 'ui-typography-video-object ui-text-editor__video-object'
+	  },
 	  file: {
 	    file: 'ui-text-editor__file',
 	    image: 'ui-text-editor__file-image',
@@ -7785,8 +7148,8 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$9 = t => t,
 	  _t$9,
-	  _t2$7,
-	  _t3$2;
+	  _t2$6,
+	  _t3$1;
 	var _popup$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _editMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editMode");
 	var _autoLinkMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("autoLinkMode");
@@ -7962,6 +7325,7 @@ this.BX.UI = this.BX.UI || {};
 						<button type="button" 
 							class="ui-text-editor-link-form-button" 
 							onclick="${0}"
+							data-testid="save-link-btn"
 						>
 							<span class="ui-icon-set --check"></span>
 						</button>
@@ -7969,6 +7333,7 @@ this.BX.UI = this.BX.UI || {};
 							type="button" 
 							class="ui-text-editor-link-form-button"
 							onclick="${0}"
+							data-testid="cancel-link-btn"
 						>
 							<span class="ui-icon-set --cross-60"></span>
 						</button>
@@ -7979,6 +7344,7 @@ this.BX.UI = this.BX.UI || {};
 							type="button" 
 							class="ui-text-editor-link-form-button"
 							onclick="${0}"
+							data-testid="edit-link-btn"
 						>
 							<span class="ui-icon-set --pencil-60"></span>
 						</button>
@@ -7986,6 +7352,7 @@ this.BX.UI = this.BX.UI || {};
 							type="button" 
 							class="ui-text-editor-link-form-button ui-text-editor-link-form-delete-btn"
 							onclick="${0}"
+							data-testid="unlink-btn"
 						>
 							<span class="ui-icon-set --delete-hyperlink"></span>
 						</button>
@@ -7996,20 +7363,21 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getLinkTextBox() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$6)[_refs$6].remember('link-textbox', () => {
-	      return main_core.Tag.render(_t2$7 || (_t2$7 = _$9`
+	      return main_core.Tag.render(_t2$6 || (_t2$6 = _$9`
 				<input 
 					type="text"
 					class="ui-ctl-element"
 					placeholder="https://"
 					value="${0}"
 					onkeydown="${0}"
+					data-testid="link-textbox-input"
 				>
 			`), this.getLinkUrl(), babelHelpers.classPrivateFieldLooseBase(this, _handleLinkTextBoxKeyDown)[_handleLinkTextBoxKeyDown].bind(this));
 	    });
 	  }
 	  getLinkLabel() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$6)[_refs$6].remember('link-label', () => {
-	      return main_core.Tag.render(_t3$2 || (_t3$2 = _$9`
+	      return main_core.Tag.render(_t3$1 || (_t3$1 = _$9`
 				<a href="" target="_blank" class="ui-text-editor-link-label"></a>
 			`));
 	    });
@@ -8309,7 +7677,8 @@ this.BX.UI = this.BX.UI || {};
 	              babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$2)[_restoreSelection$2]();
 	              this.getEditor().dispatchCommand(ui_lexical_link.TOGGLE_LINK_COMMAND, {
 	                url,
-	                originalUrl
+	                originalUrl,
+	                rel: null
 	              });
 	              linkEditor.setEditMode(false);
 	              const currentSelection = ui_lexical_core.$getSelection();
@@ -8509,7 +7878,7 @@ this.BX.UI = this.BX.UI || {};
 		LinkPlugin: LinkPlugin
 	});
 
-	const URL_REGEX = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@~-]*)/;
+	const URL_REGEX = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@~-]*)(?<![-.+():%])/;
 	const EMAIL_REGEX = /(([^\s"(),.:;<>@[\\\]]+(\.[^\s"(),.:;<>@[\\\]]+)*)|(".+"))@((\[(?:\d{1,3}\.){3}\d{1,3}])|(([\dA-Za-z-]+\.)+[A-Za-z]{2,}))/;
 	const MATCHERS = [createLinkMatcherWithRegExp(URL_REGEX, text => {
 	  return text.startsWith('http') ? text : `https://${text}`;
@@ -8590,6 +7959,9 @@ this.BX.UI = this.BX.UI || {};
 	function startsWithSeparator(textContent) {
 	  return isSeparator(textContent[0]);
 	}
+	function startsWithFullStop(textContent) {
+	  return /^\.[a-zA-Z0-9]{1,}/.test(textContent);
+	}
 	function isPreviousNodeValid(node) {
 	  let previousNode = node.getPreviousSibling();
 	  if (ui_lexical_core.$isElementNode(previousNode)) {
@@ -8637,6 +8009,7 @@ this.BX.UI = this.BX.UI || {};
 	      if (!main_core.Type.isStringFilled(attributes.target)) {
 	        attributes.target = '_blank';
 	      }
+	      console.log('match.url', match.text, match.url);
 	      const linkNode = ui_lexical_link.$createAutoLinkNode(match.url, attributes);
 	      const textNode = ui_lexical_core.$createTextNode(match.text);
 	      textNode.setFormat(linkTextNode.getFormat());
@@ -8705,7 +8078,7 @@ this.BX.UI = this.BX.UI || {};
 	  const previousSibling = textNode.getPreviousSibling();
 	  const nextSibling = textNode.getNextSibling();
 	  const text = textNode.getTextContent();
-	  if (ui_lexical_link.$isAutoLinkNode(previousSibling) && !startsWithSeparator(text)) {
+	  if (ui_lexical_link.$isAutoLinkNode(previousSibling) && (!startsWithSeparator(text) || startsWithFullStop(text))) {
 	    previousSibling.append(textNode);
 	    handleLinkEdit(previousSibling, matchers, onChange);
 	    onChange(null, previousSibling.getURL());
@@ -9785,9 +9158,9 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$a = t => t,
 	  _t$a,
-	  _t2$8,
-	  _t3$3,
-	  _t4$1;
+	  _t2$7,
+	  _t3$2,
+	  _t4;
 	var _popup$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _targetNode$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetNode");
 	var _refs$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
@@ -9899,7 +9272,7 @@ this.BX.UI = this.BX.UI || {};
 	      for (let index = 0; index < 100; index++) {
 	        const row = Math.floor(index / 10);
 	        const column = index % 10;
-	        buttons.push(main_core.Tag.render(_t2$8 || (_t2$8 = _$a`
+	        buttons.push(main_core.Tag.render(_t2$7 || (_t2$7 = _$a`
 					<button
 						class="ui-text-editor-table-dialog-box"
 						data-column="${0}"
@@ -9907,7 +9280,7 @@ this.BX.UI = this.BX.UI || {};
 					></button>
 				`), column + 1, row + 1));
 	      }
-	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$a`
+	      return main_core.Tag.render(_t3$2 || (_t3$2 = _$a`
 				<div 
 					class="ui-text-editor-table-dialog-grid" 
 					onmousemove="${0}"
@@ -9917,7 +9290,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getCaptionContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$7)[_refs$7].remember('caption', () => {
-	      return main_core.Tag.render(_t4$1 || (_t4$1 = _$a`<div class="ui-text-editor-table-dialog-caption"></div>`));
+	      return main_core.Tag.render(_t4 || (_t4 = _$a`<div class="ui-text-editor-table-dialog-caption"></div>`));
 	    });
 	  }
 	}
@@ -10797,7 +10170,7 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$c = t => t,
 	  _t$c,
-	  _t2$9;
+	  _t2$8;
 	const Direction$1 = {
 	  DOWNWARD: 1,
 	  UPWARD: -1,
@@ -10939,7 +10312,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getDropLine() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _dropLine)[_dropLine] === null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _dropLine)[_dropLine] = main_core.Tag.render(_t2$9 || (_t2$9 = _$c`
+	      babelHelpers.classPrivateFieldLooseBase(this, _dropLine)[_dropLine] = main_core.Tag.render(_t2$8 || (_t2$8 = _$c`
 				<div class="ui-text-editor-block-drop-line"></div>
 			`));
 	    }
@@ -11218,8 +10591,8 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$e = t => t,
 	  _t$e,
-	  _t2$a,
-	  _t3$4;
+	  _t2$9,
+	  _t3$3;
 	var _textEditor$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textEditor");
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
 	var _rendered = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rendered");
@@ -11230,7 +10603,7 @@ this.BX.UI = this.BX.UI || {};
 	var _removeListeners$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeListeners");
 	var _registerListeners$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
 	var _fillFromOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillFromOptions");
-	var _handleResize$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResize");
+	var _handleResize$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResize");
 	var _getSelectionBlockTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectionBlockTypes");
 	var _getBlockType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBlockType");
 	class Toolbar {
@@ -11241,8 +10614,8 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _getSelectionBlockTypes, {
 	      value: _getSelectionBlockTypes2
 	    });
-	    Object.defineProperty(this, _handleResize$1, {
-	      value: _handleResize2$1
+	    Object.defineProperty(this, _handleResize$2, {
+	      value: _handleResize2$2
 	    });
 	    Object.defineProperty(this, _fillFromOptions, {
 	      value: _fillFromOptions2
@@ -11287,7 +10660,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _fillFromOptions)[_fillFromOptions](toolbarOptions);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].length > 0) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _removeListeners$1)[_removeListeners$1] = babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$c)[_registerListeners$c]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver] = new ResizeObserver(babelHelpers.classPrivateFieldLooseBase(this, _handleResize$1)[_handleResize$1].bind(this));
+	      babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver] = new ResizeObserver(babelHelpers.classPrivateFieldLooseBase(this, _handleResize$2)[_handleResize$2].bind(this));
 	    }
 	  }
 	  renderTo(container) {
@@ -11320,14 +10693,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getItemsContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$8)[_refs$8].remember('items-container', () => {
-	      return main_core.Tag.render(_t2$a || (_t2$a = _$e`
+	      return main_core.Tag.render(_t2$9 || (_t2$9 = _$e`
 				<div class="ui-text-editor-toolbar-items"></div>
 			`));
 	    });
 	  }
 	  getMoreBtnContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$8)[_refs$8].remember('more-btn-container', () => {
-	      return main_core.Tag.render(_t3$4 || (_t3$4 = _$e`
+	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$e`
 				<div class="ui-text-editor-toolbar-more-btn">
 				${0}
 				</div>
@@ -11486,7 +10859,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  });
 	}
-	function _handleResize2$1(entries) {
+	function _handleResize2$2(entries) {
 	  if (this.getContainer().offsetWidth === 0 || main_core.Dom.hasClass(this.getItemsContainer(), '--animating')) {
 	    return;
 	  }
@@ -11925,9 +11298,9 @@ this.BX.UI = this.BX.UI || {};
 
 	let _$h = t => t,
 	  _t$h,
-	  _t2$b,
-	  _t3$5,
-	  _t4$2,
+	  _t2$a,
+	  _t3$4,
+	  _t4$1,
 	  _t5,
 	  _t6,
 	  _t7,
@@ -12333,7 +11706,7 @@ this.BX.UI = this.BX.UI || {};
 	      return babelHelpers.classPrivateFieldLooseBase(this, _paragraphHeight)[_paragraphHeight];
 	    }
 	    const className = this.getThemeClasses().paragraph || '';
-	    const paragraph = main_core.Tag.render(_t2$b || (_t2$b = _$h`<p class="${0}"><br /></p>`), className);
+	    const paragraph = main_core.Tag.render(_t2$a || (_t2$a = _$h`<p class="${0}"><br /></p>`), className);
 	    main_core.Dom.style(paragraph, {
 	      position: 'absolute',
 	      transform: 'translateY(-1000px)'
@@ -12460,7 +11833,7 @@ this.BX.UI = this.BX.UI || {};
 	  getRootContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$9)[_refs$9].remember('root', () => {
 	      const classes = [this.isEditable() ? '--editable' : '--read-only'];
-	      return main_core.Tag.render(_t3$5 || (_t3$5 = _$h`
+	      return main_core.Tag.render(_t3$4 || (_t3$4 = _$h`
 				<div class="ui-text-editor ${0}">
 					${0}
 				</div>
@@ -12469,7 +11842,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getInnerContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$9)[_refs$9].remember('inner', () => {
-	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$h`
+	      return main_core.Tag.render(_t4$1 || (_t4$1 = _$h`
 				<div class="ui-text-editor-inner">
 					${0}
 					${0}
@@ -12927,7 +12300,7 @@ this.BX.UI = this.BX.UI || {};
 	  Underline,
 	  Video,
 	  Spoiler,
-	  Smiley: Smiley$1,
+	  Smiley,
 	  Table,
 	  Hashtag,
 	  File
@@ -12963,5 +12336,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.Constants = Constants;
 	exports.Debug = Debug;
 
-}((this.BX.UI.TextEditor = this.BX.UI.TextEditor || {}),BX.UI.BBCode,BX.UI.TextEditor,BX.Collections,BX.UI.BBCode,BX.UI.Lexical.RichText,BX.UI.Lexical.Selection,BX.UI.Lexical.Clipboard,BX.UI.Lexical.Table,BX.Event,BX.UI.Lexical.History,BX.Main,BX.Cache,BX,BX.UI.Lexical.List,BX.UI.Lexical.Link,BX.UI.Lexical.Text,BX.UI.Lexical.Core,BX.UI.Lexical.Utils,BX));
+}((this.BX.UI.TextEditor = this.BX.UI.TextEditor || {}),BX.UI.CodeParser,BX.UI.BBCode,BX.UI.TextEditor,BX.UI.Smiley,BX.UI.VideoService,BX.Collections,BX.UI.BBCode,BX.UI.Lexical.RichText,BX.UI.Lexical.Selection,BX.UI.Lexical.Clipboard,BX.UI.Lexical.Table,BX.Event,BX.UI.Lexical.History,BX.Main,BX.Cache,BX,BX.UI.Lexical.List,BX.UI.Lexical.Link,BX.UI.Lexical.Text,BX.UI.Lexical.Core,BX.UI.Lexical.Utils,BX));
 //# sourceMappingURL=text-editor.bundle.js.map

@@ -94,7 +94,27 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 		 */
 		getSortingSection(item)
 		{
-			return this.view === Views.LIST ? (item.isPinned ? 0 : 1) : 0;
+			if (this.view === Views.LIST)
+			{
+				if (item.isCreationErrorExist)
+				{
+					return 0;
+				}
+
+				if (item.isPinned)
+				{
+					return 1;
+				}
+
+				return 2;
+			}
+
+			if (item.isCreationErrorExist)
+			{
+				return 0;
+			}
+
+			return 1;
 		}
 
 		/**
@@ -105,7 +125,17 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 		 */
 		static getSortingSection(item)
 		{
-			return item.isPinned ? 0 : 1;
+			if (item.isCreationErrorExist)
+			{
+				return 0;
+			}
+
+			if (item.isPinned)
+			{
+				return 1;
+			}
+
+			return 2;
 		}
 	}
 

@@ -1,4 +1,4 @@
-import { MenuManager } from 'main.popup';
+import { MenuManager, Menu } from 'main.popup';
 import { Dom, Tag, Event } from 'main.core';
 import { RatingStars } from "market.rating-stars";
 import { MarketLinks } from "market.market-links";
@@ -11,7 +11,7 @@ export const Toolbar = {
 		RatingStars,
 	},
 	props: [
-		'categories', 'menuInfo', 'marketAction', 'searchAction',
+		'categories', 'searchFilters', 'menuInfo', 'marketAction', 'searchAction',
 	],
 	data() {
 		return {
@@ -25,11 +25,14 @@ export const Toolbar = {
 				notFoundText: '',
 				loader: false,
 				loader2: false,
+				currentFilter: '',
 				currentPage: 1,
 				pages: 1,
+				resultCount: '',
 				foundApps: [],
 			},
-			menuPopup: null,
+			moreMenu: null,
+			searchFilterMenu: null,
 			MarketLinks: MarketLinks,
 		}
 	},
@@ -41,17 +44,27 @@ export const Toolbar = {
 
 			return this.categories.BANNER_INFO.SEARCH_LINK;
 		},
+		getSearchFilterName: function () {
+			for (let i = 0; i < this.searchFilters.LIST.length; i++) {
+				if (this.searchFilters.LIST[i].CODE && this.searchFilters.LIST[i].CODE === this.search.currentFilter) {
+					return this.searchFilters.LIST[i].NAME;
+				}
+			}
+
+			return '';
+		}
 	},
 	created: function () {
 		this.onSearch = BX.debounce(this.runSearch, 800, this);
 	},
 	mounted: function () {
 		this.bindEvents();
-		this.createPopupMenu();
+		this.createMoreMenu();
+		this.createSearchFilterMenu();
 	},
 	methods: {
 		bindEvents: function() {
-			this.$Bitrix.eventEmitter.subscribe('market:closeToolbarPopup', this.closeToolbarPopup);
+			this.$Bitrix.eventEmitter.subscribe('market:closeToolbarPopup', this.closeMoreMenu);
 
 			Event.bind(this.$refs.searchAutoScroll, 'scroll', (event) => {
 				if (this.needLoadNextPage(event.currentTarget)) {
@@ -83,16 +96,15 @@ export const Toolbar = {
 				}
 			});
 		},
-		createPopupMenu: function() {
+		createMoreMenu: function() {
 			if (!this.menuInfo || !BX.type.isArray(this.menuInfo)) {
 				return;
 			}
 
 			let menu = [];
-			let menuItem = {};
 
 			this.menuInfo.forEach((item) => {
-				menuItem = {
+				let menuItem = {
 					html: item.NAME,
 					href: item.PATH,
 					className: 'market-toolbar-menu-item',
@@ -123,7 +135,6 @@ export const Toolbar = {
 						if (item.PARAMS.DATASET.IGNORE_AUTOBINDING) {
 							menuItem.dataset.sliderIgnoreAutobinding = item.PARAMS.DATASET.IGNORE_AUTOBINDING;
 						}
-
 					}
 				}
 
@@ -131,7 +142,7 @@ export const Toolbar = {
 			});
 
 			if (menu.length > 0) {
-				this.menuPopup = MenuManager.create(
+				this.moreMenu = MenuManager.create(
 					'toolbar-popup-menu',
 					document.querySelector('.market-toolbar__popup-target'),
 					menu,
@@ -145,8 +156,75 @@ export const Toolbar = {
 			}
 		},
 		showMenu: function () {
-			if (this.menuPopup) {
-				this.menuPopup.toggle();
+			if (this.moreMenu) {
+				this.moreMenu.toggle();
+			}
+		},
+		createSearchFilterMenu: function () {
+			if (
+				!this.searchFilters ||
+				!this.searchFilters.LIST ||
+				!this.searchFilters.CURRENT ||
+				!BX.type.isArray(this.searchFilters.LIST)
+			) {
+				return;
+			}
+
+			let menu = [];
+			this.searchFilters.LIST.forEach((item) => {
+				let menuItem = {
+					id: item.CODE,
+					text: item.NAME,
+					className: item.CLASS,
+					onclick : (event, item) => {
+						if (!BX.hasClass(item.layout.item, "--accept")) {
+							this.closeSearchFilterMenu();
+							this.searchFilterMenu.getMenuItems().forEach((mItem) => {
+								if (BX.hasClass(mItem.layout.item, "--accept")) {
+									BX.removeClass(mItem.layout.item, "--accept");
+								}
+							});
+
+							BX.addClass(item.layout.item, "--accept");
+							this.search.currentFilter = item.id;
+
+							if (this.showSearchResult()) {
+								this.runSearch();
+							}
+						}
+					}
+				};
+
+				if (this.searchFilters.CURRENT === menuItem.id) {
+					this.search.currentFilter = menuItem.id;
+					menuItem.className += " --accept";
+				}
+
+				menu.push(menuItem);
+			});
+
+			if (this.search.currentFilter.length <= 0 && menu[0]) {
+				this.search.currentFilter = menu[0].id;
+				menu[0].className += " --accept";
+			}
+
+			if (menu.length > 0) {
+				this.searchFilterMenu = new Menu({
+					bindElement: this.$refs.marketSearchItem,
+					className: "market-toolbar__search-menu",
+					width: 257,
+					items: menu,
+				});
+			}
+		},
+		showSearchFilterMenu: function () {
+			if (this.searchFilterMenu) {
+				this.searchFilterMenu.show();
+			}
+		},
+		closeSearchFilterMenu: function () {
+			if (this.searchFilterMenu) {
+				this.searchFilterMenu.close();
 			}
 		},
 		needLoadNextPage: function(el) {
@@ -179,9 +257,9 @@ export const Toolbar = {
 			this.search.foundApps = [];
 			this.searchResult = false;
 		},
-		closeToolbarPopup: function () {
-			if (this.menuPopup) {
-				this.menuPopup.close();
+		closeMoreMenu: function () {
+			if (this.moreMenu) {
+				this.moreMenu.close();
 			}
 
 			if (this.dropdownShown) {
@@ -303,6 +381,9 @@ export const Toolbar = {
 		isEmptySearch: function () {
 			return this.searchResult && this.search.foundApps.length <= 0;
 		},
+		showSearchResult: function () {
+			return this.searchResult && !this.search.loader;
+		},
 		runSearch: function () {
 			if (this.search.text.length <= 0) {
 				this.searchResult = false;
@@ -323,6 +404,7 @@ export const Toolbar = {
 				data: {
 					text: searchText,
 					page: this.search.currentPage,
+					area: this.search.currentFilter,
 				}
 			}).then(
 				response => {
@@ -330,6 +412,10 @@ export const Toolbar = {
 					if (response.data && BX.type.isArray(response.data.apps)) {
 						this.search.currentPage = (response.data.apps.length > 0) ? parseInt(response.data.cur_page, 10) : 1;
 						this.search.pages = (response.data.apps.length > 0) ? parseInt(response.data.pages, 10) : 1;
+
+						if (!append) {
+							this.search.resultCount = (response.data.apps.length > 0) ? parseInt(response.data.result_count, 10) : '';
+						}
 
 						if (append) {
 							this.search.foundApps = this.search.foundApps.concat(response.data.apps);
@@ -413,14 +499,14 @@ export const Toolbar = {
 					<span class="market-toolbar__btn_icon-catalog-text">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_CATALOG_TITLE') }}</span>
 				</button>
 				<div class="ui-ctl ui-ctl-after-icon ui-ctl-round market-toolbar__search">
-					<button class="ui-ctl-after ui-ctl-icon-search"
-							:class="{'--show': !searchFocus, '--hide': searchFocus}"
-							@click="onSearchButtonClick"
-					></button>
-					<button class="ui-ctl-after ui-ctl-icon-clear"
-							:class="{'--hide': !searchFocus, '--show': searchFocus}"
-							@click="onSearchButtonClick"
-					></button>
+					<div ref="marketSearchItem">
+						<div class="market-toolbar__search-item"
+							 v-if="search.currentFilter"
+							 @click="showSearchFilterMenu"
+						>
+							<span class="market-toolbar__search-item-text">{{ getSearchFilterName }}</span>
+						</div>
+					</div>
 					<input type="text"
 						   id="market-search-input"
 						   ref="marketSearchInput"
@@ -433,6 +519,14 @@ export const Toolbar = {
 						   @blur="cleanSearchFocus()"
 						   @input="onSearch"
 					>
+					<button class="ui-ctl-after ui-ctl-icon-search"
+							:class="{'--show': !searchFocus, '--hide': searchFocus}"
+							@click="onSearchButtonClick"
+					></button>
+					<button class="ui-ctl-after ui-ctl-icon-clear"
+							:class="{'--hide': !searchFocus, '--show': searchFocus}"
+							@click="onSearchButtonClick"
+					></button>
 				</div>
 		
 				<div class="market-toolbar__nav">
@@ -587,7 +681,7 @@ export const Toolbar = {
 									 src="/bitrix/images/market/slider/search.svg"
 									 v-if="search.loader"
 								>
-								<template v-if="searchResult && !search.loader">
+								<template v-if="showSearchResult()">
 									<div class="market-menu-catalog__search-empty" v-if="isEmptySearch()">
 										<svg width="92" height="92" viewBox="0 0 92 92" fill="none" xmlns="http://www.w3.org/2000/svg">
 											<path fill-rule="evenodd" clip-rule="evenodd" d="M56.6536 62.8186C52.8102 65.3422 48.2117 66.8102 43.2703 66.8102C29.7864 66.8102 18.8555 55.8793 18.8555 42.3953C18.8555 28.9114 29.7864 17.9805 43.2703 17.9805C56.7543 17.9805 67.6852 28.9114 67.6852 42.3953C67.6852 47.3367 66.2172 51.9352 63.6936 55.7786L76.3834 68.4684C77.8804 69.9654 77.8804 72.3925 76.3834 73.8895L74.7645 75.5084C73.2675 77.0054 70.8404 77.0054 69.3434 75.5084L56.6536 62.8186ZM60.7095 42.3953C60.7095 52.0267 52.9017 59.8345 43.2703 59.8345C33.6389 59.8345 25.8311 52.0267 25.8311 42.3953C25.8311 32.7639 33.6389 24.9561 43.2703 24.9561C52.9017 24.9561 60.7095 32.7639 60.7095 42.3953Z" fill="#DFE0E3"/>
@@ -598,9 +692,15 @@ export const Toolbar = {
 										<div class="market-menu-catalog__search-text">'{{ search.notFoundText }}'</div>
 									</div>
 									<template v-else>
+										<div class="market-menu-catalog__search-head">
+											<div class="market-menu-catalog__search-result-value">
+												{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_SEARCH_RESULT_COUNT', {'#RESULT_COUNT#': search.resultCount}) }}
+											</div>
+											<div class="market-menu-catalog__search-result-dropdown"></div>
+										</div>
 										<a class="market-menu-catalog__search-item"
 										   v-for="appItem in search.foundApps"
-										   :href="MarketLinks.appDetail(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', {from: 'search', text: search.text})"
+										   :href="MarketLinks.appDetail(appItem, {from: 'search', text: search.text})"
 										   @click="MarketLinks.openSiteTemplate($event, appItem.IS_SITE_TEMPLATE === 'Y')"
 										>
 											<div class="market-menu-catalog__search-item_img-block">

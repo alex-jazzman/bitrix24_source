@@ -8,6 +8,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		EventType,
 		FeatureFlag,
 		ComponentCode,
+		OpenRequest,
 	} = require('im/messenger/const');
 
 	/**
@@ -20,7 +21,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 	{
 		static getVersion()
 		{
-			return 3;
+			return 4;
 		}
 
 		/**
@@ -43,16 +44,6 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		static open(options)
 		{
 			return new Promise((resolve, reject) => {
-				if (!FeatureFlag.native.openWebComponentParentWidgetSupported)
-				{
-					reject({
-						text: 'This method is not supported in applications with the API version less than 45.',
-						code: 'UNSUPPORTED_APP_VERSION',
-					});
-
-					return;
-				}
-
 				if (!Type.isObject(options))
 				{
 					reject({
@@ -73,7 +64,27 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					return;
 				}
 
+				if (BX.componentParameters.get('COMPONENT_CODE') === ComponentCode.imMessenger)
+				{
+					EntityReady.wait('chat').then(() => {
+						BX.postComponentEvent(EventType.messenger.openDialog, [options], ComponentCode.imMessenger);
+					});
+
+					return;
+				}
+
 				EntityReady.wait('chat').then(() => {
+					if (Type.isFunction(jnComponent.sendOpenRequest))
+					{
+						jnComponent.sendOpenRequest(ComponentCode.imMessenger, {
+							[OpenRequest.dialog]: {
+								options,
+							},
+						});
+
+						return;
+					}
+
 					BX.postComponentEvent(EventType.messenger.openDialog, [options], ComponentCode.imMessenger);
 				});
 			});

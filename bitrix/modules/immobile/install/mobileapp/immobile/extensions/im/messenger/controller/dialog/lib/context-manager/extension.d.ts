@@ -4,6 +4,7 @@ declare type GoToMessageContextEvent = {
 	parentMessageId?: string,
 	withMessageHighlight?: boolean,
 	showNotificationIfUnsupported?: boolean,
+	showPlanLimitWidget?: boolean,
 }
 
 declare type GoToLastReadMessageContextEvent = {

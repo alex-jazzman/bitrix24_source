@@ -61,6 +61,6 @@ $MESS['TASKS_FLOW_EDIT_FORM_DEMO_INFO_TITLE'] = 'Вы активировали <
 $MESS['TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT'] = 'Сделайте работу компании более прозрачной, управляйте загруженностью сотрудников и систематизируйте работу над задачами';
 $MESS['TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT_TRIAL'] = 'Все возможности потоков доступны на <span>15 дней</span>';
 $MESS['TASKS_FLOW_EDIT_FORM_DEMO_INFO_BTN'] = 'Начать работу';
-
+$MESS['TASKS_FLOW_EDIT_FORM_NOTIFY_EMPTY_PROJECT_HINT'] = 'Если вы не выберете проект, он будет создан автоматически';
 $MESS['TASKS_FLOW_EDIT_FORM_FLOW_UPDATE'] = 'Поток отредактирован';
 $MESS['TASKS_FLOW_EDIT_FORM_FLOW_CREATE'] = 'Поток создан';

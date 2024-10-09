@@ -127,6 +127,7 @@ $arResult['TOOLBAR_MENU'] = new \Bitrix\UI\Buttons\Button([
 		'id' => $toolbarMenuId,
 		'items' => [
 			[
+				'className' => 'menu-popup-item-none',
 				'TYPE' => 'EXPORT_EXCEL',
 				'text' => Loc::getMessage('INTRANET_USER_LIST_MENU_EXPORT_EXCEL_TITLE'),
 				'href' => (
@@ -136,6 +137,7 @@ $arResult['TOOLBAR_MENU'] = new \Bitrix\UI\Buttons\Button([
 				)
 			],
 			[
+				'className' => 'menu-popup-item-none',
 				'TYPE' => 'SYNC_OUTLOOK',
 				'text' => Loc::getMessage('INTRANET_USER_LIST_MENU_SYNC_OUTLOOK_TITLE'),
 				'href' => 'javascript:'.\CIntranetUtils::getStsSyncURL(
@@ -145,6 +147,7 @@ $arResult['TOOLBAR_MENU'] = new \Bitrix\UI\Buttons\Button([
 					)
 			],
 			[
+				'className' => 'menu-popup-item-none',
 				'TYPE' => 'SYNC_CARDDAV',
 				'text' => Loc::getMessage('INTRANET_USER_LIST_MENU_SYNC_CARDDAV_TITLE'),
 				'href' => 'javascript:'.$APPLICATION->getPopupLink(
@@ -155,10 +158,12 @@ $arResult['TOOLBAR_MENU'] = new \Bitrix\UI\Buttons\Button([
 			],
 			['delimiter' => true],
 			[
+				'className' => $arResult['IS_DEFAULT_SORT'] ? 'menu-popup-item-accept' : 'menu-popup-item-none',
 				'text' =>  Loc::getMessage('INTRANET_USER_LIST_MENU_SORT_DEFAULT'),
-				'onclick' => new \Bitrix\UI\Buttons\JsCode(
-					"BX.Intranet.Grid.UserGrid.GridManager.setSort($usageSortParams)"
-				)
+				'onclick' => new \Bitrix\UI\Buttons\JsCode("jsBXIUL.setSort($usageSortParams)"),
+				'dataset' => [
+					'unqid' => 'user-grid-sort-btn',
+				],
 			]
 		]
 	]

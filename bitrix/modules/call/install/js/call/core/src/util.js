@@ -351,11 +351,6 @@ const isCallServerAllowed = () =>
 	return BX.message('call_server_enabled') === 'Y'
 }
 
-const isNewCallLayoutEnabled = () =>
-{
-	return BX.message('new_call_layout_enabled') === 'Y'
-}
-
 const isFeedbackAllowed = () =>
 {
 	return BX.message('call_allow_feedback') === 'Y'
@@ -657,7 +652,7 @@ function getAvatarBackground()
 	return colorList[Math.floor(Math.random() * colorList.length)];
 }
 
-function getRecordTimeText(recordState)
+function getRecordTimeText(recordState, returnInSeconds = false)
 {
 	if (!recordState)
 	{
@@ -686,6 +681,11 @@ function getRecordTimeText(recordState)
 	}
 
 	let second = Math.floor(totalTime / 1000);
+
+	if (returnInSeconds)
+	{
+		return second;
+	}
 
 	let hour = Math.floor(second / 60 / 60);
 	if (hour > 0)
@@ -745,6 +745,29 @@ function getTimeText(startTime)
 		;
 }
 
+function getTimeInSeconds(startTime)
+{
+	if (!startTime)
+	{
+		return '';
+	}
+
+	const nowDate = new Date();
+	let startDate = new Date(startTime);
+	if (startDate.getTime() < nowDate.getDate())
+	{
+		startDate = nowDate;
+	}
+
+	let totalTime = nowDate - startDate;
+	if (totalTime <= 0)
+	{
+		totalTime = 0;
+	}
+
+	return Math.floor(totalTime / 1000);
+}
+
 export default {
 	updateUserData,
 	setUserData,
@@ -767,7 +790,6 @@ export default {
 	getFilledArea,
 	isWebRTCSupported,
 	isCallServerAllowed,
-	isNewCallLayoutEnabled,
 	isFeedbackAllowed,
 	shouldCollectStats,
 	shouldShowDocumentButton,
@@ -797,4 +819,5 @@ export default {
 	getAvatarBackground,
 	getRecordTimeText,
 	getTimeText,
+	getTimeInSeconds,
 }

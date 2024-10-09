@@ -2,10 +2,9 @@
  * @module crm/entity-tab/list
  */
 jn.define('crm/entity-tab/list', (require, exports, module) => {
-	const { EntityTab } = require('crm/entity-tab');
+	const { EntityTab, TypePull } = require('crm/entity-tab');
 	const { Filter } = require('layout/ui/kanban/filter');
 	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
-	const { TypePull } = require('crm/entity-tab/pull-manager');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { Type } = require('type');
 
@@ -38,6 +37,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				actionCallbacks: this.props.actionCallbacks,
 				itemLayoutOptions: this.getItemLayoutOptions(),
 				itemActions: this.getItemActions(),
+				popupItemMenu: true,
 				itemParams: {
 					isClientEnabled: this.isClientEnabled(),
 					...this.props.itemParams,

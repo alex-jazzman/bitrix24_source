@@ -32,6 +32,14 @@ module.exports = {
 						/ui_bbcode_encoder\./g,
 						'',
 					],
+					[
+						/ui_bbcode_astProcessor\./g,
+						'',
+					],
+					[
+						/ui_linkify\./g,
+						'',
+					],
 				],
 				banner: fs.readFileSync(path.resolve(__dirname, 'build/chunks/attention.message.txt'), 'ascii'),
 			}),

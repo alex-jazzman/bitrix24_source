@@ -19,7 +19,7 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 			super(props);
 
 			this.hasChanges = false;
-			this.layoutWidget = null;
+			this.layoutWidget = PageManager;
 			this.rangeHeight = 0;
 			this.customEventEmitter = this.props.customEventEmitter;
 

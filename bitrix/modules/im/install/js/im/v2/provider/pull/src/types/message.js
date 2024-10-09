@@ -1,4 +1,4 @@
-import { reactionType as Reaction } from 'ui.reactions-select';
+import type { reactionType as Reaction } from 'ui.reactions-select';
 
 import type { RawChat, RawFile, RawUser, RawMessage, RawMultidialog } from './common';
 

@@ -22,6 +22,7 @@ return [
 		'utils/function',
 		'utils/object',
 		'utils/skeleton',
+		'assets/icons',
 	],
 	'bundle' => [
 		'./src/clients-selector',

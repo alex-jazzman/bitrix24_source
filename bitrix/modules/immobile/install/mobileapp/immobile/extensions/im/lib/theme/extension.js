@@ -37,6 +37,44 @@ jn.define('im/lib/theme', (require, exports, module) => {
 			return AppTheme.colors;
 		}
 
+		/**
+		 * @return {typeof Corner}
+		 */
+		static get corner()
+		{
+			return tokens?.Corner;
+		}
+
+		/**
+		 * @return {typeof Color}
+		 */
+		static get color()
+		{
+			if (
+				Theme.isDesignSystemSupported
+				&& tokens?.Color
+			)
+			{
+				return tokens?.Color;
+			}
+
+			return Theme.#createAirColorFromOldTokens();
+		}
+
+		/**
+		 * @return {{name: string, toHex: string, value: string, withPressed: string}}
+		 */
+		static #createAirColorFromOldTokens()
+		{
+			const result = {};
+			Object.keys(AppTheme.colors).forEach((token) => {
+				const hex = AppTheme.colors[token];
+				result[token] = { name: token, toHex: hex, value: hex, withPressed: hex };
+			});
+
+			return result;
+		}
+
 		static createNewDesignTokenCollection()
 		{
 			const result = {};
