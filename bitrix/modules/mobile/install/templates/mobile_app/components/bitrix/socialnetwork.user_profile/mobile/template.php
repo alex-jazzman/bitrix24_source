@@ -294,7 +294,7 @@ if (CModule::IncludeModule('im'))
 		&& count($arResult['MANAGERS']) > 0
 	)
 	{
-		?><span class="emp-info-cell"><?= GetMessage("SONET_MANAGERS") . ":" ?></span><span class="emp-info-cell"><?$bFirst = true;
+		?><span class="emp-info-cell"><?= GetMessage("SONET_MANAGERS_MSGVER_1") . ":" ?></span><span class="emp-info-cell"><?$bFirst = true;
 		foreach ($arResult['MANAGERS'] as $id => $sub_user)
 		{
 			if (!$bFirst)

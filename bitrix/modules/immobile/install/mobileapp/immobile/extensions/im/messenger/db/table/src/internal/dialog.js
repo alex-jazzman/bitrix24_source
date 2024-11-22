@@ -19,6 +19,11 @@ jn.define('im/messenger/db/table/internal/dialog', (require, exports, module) =>
 			return 'b_im_dialog_internal';
 		}
 
+		getPrimaryKey()
+		{
+			return 'dialogId';
+		}
+
 		getFields()
 		{
 			return [
@@ -26,30 +31,6 @@ jn.define('im/messenger/db/table/internal/dialog', (require, exports, module) =>
 				{ name: 'wasCompletelySync', type: FieldType.boolean, defaultValue: false }, // indicates what the last message
 				// from the local database can be used as a previousId for first message that come from the SyncService
 			];
-		}
-
-		/**
-		 * @param {Array<string|number>} idList
-		 */
-		async deleteByIdList(idList)
-		{
-			if (!Feature.isLocalStorageEnabled || this.readOnly || !Type.isArrayFilled(idList))
-			{
-				return Promise.resolve({});
-			}
-
-			const dialogIdList = idList.map((id) => `'${id}'`).join(',');
-			const result = await this.executeSql({
-				query: `
-					DELETE
-					FROM ${this.getName()}
-					WHERE dialogId IN (${dialogIdList})
-				`,
-			});
-
-			logger.log('DialogInternalTable.deleteByIdList complete: ', idList);
-
-			return result;
 		}
 
 		/**
@@ -73,7 +54,7 @@ jn.define('im/messenger/db/table/internal/dialog', (require, exports, module) =>
 				query: `
 					UPDATE ${this.getName()} 
 					SET wasCompletelySync = ${wasCompletelySyncValue} 
-					WHERE dialogId IN (${dialogIdsToUpdate})
+					WHERE ${this.getPrimaryKey()} IN (${dialogIdsToUpdate})
 				`,
 			});
 

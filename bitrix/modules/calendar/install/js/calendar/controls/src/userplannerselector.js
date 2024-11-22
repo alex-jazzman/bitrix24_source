@@ -197,10 +197,10 @@ export class UserPlannerSelector extends EventEmitter
 		if (
 			this.entryId
 			&& this.entry
-			&& this.entry.data['PARENT_ID']
+			&& this.entry.data.PARENT_ID
 			&& (
-				this.entry.data['EVENT_TYPE'] === '#shared#'
-				|| this.entry.data['EVENT_TYPE'] === '#shared_crm#'
+				this.entry.data.EVENT_TYPE === '#shared#'
+				|| this.entry.data.EVENT_TYPE === '#shared_crm#'
 			)
 			&& this.entry.getCurrentStatus() !== false
 		)
@@ -233,11 +233,19 @@ export class UserPlannerSelector extends EventEmitter
 					mainItem: 'chat',
 					entityData: {
 						dateFrom: Util.formatDate(this.entry.from),
-						parentId: this.entry.parentId
+						parentId: this.entry.parentId,
 					},
-					analyticsLabel: {
-						formType: 'compact'
-					}
+					analytics: {
+						startVideoCall: {
+							tool: 'im',
+							category: 'events',
+							event: 'click_call',
+							type: 'group',
+							c_section: 'card_compact',
+							c_sub_section: 'context_menu',
+							p5: `eventId_${this.entry.parentId}`,
+						},
+					},
 				},
 				callbacks: {
 					getUsersCount: () => this.getUsersCount(),
@@ -245,7 +253,7 @@ export class UserPlannerSelector extends EventEmitter
 				},
 			});
 		}
-		else if(this.DOM.videocallWrap)
+		else if (this.DOM.videocallWrap)
 		{
 			Dom.addClass(this.DOM.videocallWrap, 'calendar-videocall-hidden');
 		}
@@ -468,8 +476,9 @@ export class UserPlannerSelector extends EventEmitter
 				timezone: params.timezone || '',
 				location: params.location || '',
 				entries: params.entrieIds || false,
-				prevUserList: params.prevUserList || []
-			}
+				prevUserList: params.prevUserList || [],
+				entry: this.entry,
+			},
 		});
 	}
 
@@ -747,13 +756,22 @@ export class UserPlannerSelector extends EventEmitter
 	{
 		return this.BX.ajax.runAction('calendar.api.calendarajax.getConferenceChatId', {
 			data: {
-				eventId: this.entry.data['PARENT_ID'],
+				eventId: this.entry.data.PARENT_ID,
+			},
+			analytics: {
+				tool: 'im',
+				category: 'events',
+				event: 'click_call',
+				type: 'videoconf',
+				c_section: 'card_compact',
+				c_sub_section: 'card',
+				p5: `eventId_${this.entry.data.PARENT_ID}`,
 			},
 		}).then(
 			(response) => {
 				if (top.window.BXIM && response.data && response.data.chatId)
 				{
-					top.BXIM.openMessenger('chat' + parseInt(response.data.chatId));
+					top.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
 
 					return null;
 				}
@@ -766,7 +784,7 @@ export class UserPlannerSelector extends EventEmitter
 				alert(Loc.getMessage('EC_CONFERENCE_ERROR'));
 
 				return null;
-			}
+			},
 		);
 	}
 

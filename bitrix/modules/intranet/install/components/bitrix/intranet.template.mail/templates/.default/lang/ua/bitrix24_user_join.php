@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["INTRANET_BITRIX24"] = "Бітрікс24";
 $MESS["INTRANET_CHANGE_NOTIFY_SETTINGS"] = "Змінити налаштування сповіщень";
 $MESS["INTRANET_MAIL_EVENTS_UNSUBSCRIBE"] = "Відписатися від усіх листів";
@@ -26,7 +26,7 @@ $MESS["INTRANET_USER_JOIN_MESSAGE_REQUEST_MESSAGE"] = "Залишився оди
 $MESS["INTRANET_USER_JOIN_MOBILE_TEXT1"] = "Залишайтеся завжди на зв'язку!";
 $MESS["INTRANET_USER_JOIN_MOBILE_TEXT2"] = "Установіть безкоштовний мобільний застосунок Бітрікс24.";
 $MESS["INTRANET_USER_JOIN_MORE"] = "Дізнатись більше";
-$MESS["INTRANET_USER_JOIN_PARTNERS_LINK"] = "https://www.bitrix24.ua/partners/";
+$MESS["INTRANET_USER_JOIN_PARTNERS_LINK"] = "https://www.bitrix24.com/partners/";
 $MESS["INTRANET_USER_JOIN_QUESTIONS"] = "Є питання?";
 $MESS["INTRANET_USER_JOIN_REQUEST_REJECT_MESSAGE"] = "На жаль, ваша реєстрація відхилена. Ви можете повторно надіслати запит і уточнити причини у адміністратора";
 $MESS["INTRANET_USER_JOIN_TEXT"] = "#NAME# запрошує вас в #BLOCK_START#Бітрікс#BLOCK_MIDDLE#24#BLOCK_END#";
@@ -35,4 +35,3 @@ $MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST"] = "Дякуємо �
 $MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_CONFIRM"] = "Ваша реєстрація на #URL# підтверджена";
 $MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_REJECT"] = "Ваша реєстрація на #URL# відхилена";
 $MESS["INTRANET_USER_JOIN_WEBINARS_LINK"] = "https://www.bitrix24.ua/support/webinars.php";
-?>

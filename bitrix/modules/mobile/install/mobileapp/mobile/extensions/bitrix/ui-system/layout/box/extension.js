@@ -4,8 +4,9 @@
 jn.define('ui-system/layout/box', (require, exports, module) => {
 	const { animate } = require('animation');
 	const { Component, Color } = require('tokens');
-	const { mergeImmutable } = require('utils/object');
+	const { mergeImmutable, isEmpty } = require('utils/object');
 	const { ScrollView } = require('layout/ui/scroll-view');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 
 	/**
 	 * @typedef {Object} BoxProps
@@ -19,11 +20,9 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 	 *
 	 * @function Box
 	 * @param {BoxProps} props
-	 * @param {View} children
-	 * @return Box
+	 * @param {Array<View>} children
 	 */
-	function Box(props = {}, ...children)
-	{
+	const Box = (props = {}, ...children) => {
 		PropTypes.validate(Box.propTypes, props, 'Box');
 
 		const {
@@ -86,6 +85,8 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 			});
 		}
 
+		const resizableByKeyboard = Boolean(restProps.resizableByKeyboard || !isEmpty(boxFooter?.props?.keyboardButton));
+
 		const render = View(
 			mergeImmutable(restProps, { style }),
 			...children,
@@ -97,7 +98,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		{
 			return View(
 				{
-					resizableByKeyboard: restProps.resizableByKeyboard,
+					resizableByKeyboard,
 					safeArea: restProps.safeArea,
 				},
 				ScrollView(
@@ -114,7 +115,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		}
 
 		return render;
-	}
+	};
 
 	Box.defaultProps = {
 		withScroll: false,
@@ -133,5 +134,5 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		footer: PropTypes.func,
 	};
 
-	module.exports = { Box };
+	module.exports = { Box, BoxFooter };
 });

@@ -20,7 +20,7 @@ export type ApplicationModelState = {
 	},
 }
 
-declare type AudioRate = 1.0 | 1.5 | 2.0;
+export type AudioRate = 1.0 | 1.5 | 2.0;
 
 export type ApplicationModelActions =
 	'applicationModel/openDialogId'

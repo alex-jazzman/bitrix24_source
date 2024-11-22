@@ -330,6 +330,21 @@ class calendar extends CModule
 		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'calendar', '\Bitrix\Calendar\Integration\AI\Settings', 'onTuningLoad');
 
 		$eventManager->registerEventHandler('forum', 'OnCommentDelete', 'calendar', '\Bitrix\Calendar\Core\Managers\Comment', 'onCommentDeleteHandler');
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnChatUserAddEntityTypeCalendarEventCategory',
+			toModuleId: 'calendar',
+			toClass: '\Bitrix\Calendar\Integration\Im\EventCategoryAttendees',
+			toMethod: 'onChannelUsersAdd',
+		);
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnChatUserDeleteEntityTypeCalendarEventCategory',
+			toModuleId: 'calendar',
+			toClass: '\Bitrix\Calendar\Integration\Im\EventCategoryAttendees',
+			toMethod: 'onChannelUserDelete',
+		);
 	}
 
 	function InstallAgents()
@@ -455,6 +470,21 @@ class calendar extends CModule
 		$eventManager->unregisterEventHandler('ai', 'onTuningLoad', 'calendar', '\Bitrix\Calendar\Integration\AI\Settings', 'onTuningLoad');
 
 		$eventManager->unregisterEventHandler('forum', 'OnCommentDelete', 'calendar', '\Bitrix\Calendar\Core\Managers\Comment', 'onCommentDeleteHandler');
+
+		$eventManager->unregisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnChatUserAddEntityTypeCalendarEventCategory',
+			toModuleId: 'calendar',
+			toClass: '\Bitrix\Calendar\Integration\Im\EventCategoryAttendees',
+			toMethod: 'onChannelUsersAdd',
+		);
+		$eventManager->unregisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnChatUserDeleteEntityTypeCalendarEventCategory',
+			toModuleId: 'calendar',
+			toClass: '\Bitrix\Calendar\Integration\Im\EventCategoryAttendees',
+			toMethod: 'onChannelUserDelete',
+		);
 	}
 
 	function UnInstallAgents()
@@ -634,7 +664,7 @@ class calendar extends CModule
 			elseif ($step === 2)
 			{
 				$this->UnInstallDB(array(
-					"savedata" => $_REQUEST["savedata"],
+					"savedata" => $_REQUEST["savedata"] ?? null,
 				));
 				$this->UnInstallEvents();
 				$this->UnInstallFiles();

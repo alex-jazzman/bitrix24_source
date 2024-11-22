@@ -14,6 +14,7 @@ $MESS["CATALOG_INVENTORY_MANAGEMENT_DATA_WILL_BE_DELETED_2"] = "Відновит
 $MESS["CATALOG_INVENTORY_MANAGEMENT_DELETE_DOCUMENTS_AND_QUANTITY_TEXT_ON_DISABLE_B24_TEXT_1"] = "Ми видалимо складські документи й занулимо залишки.";
 $MESS["CATALOG_INVENTORY_MANAGEMENT_DELETE_DOCUMENTS_AND_QUANTITY_TEXT_ON_DISABLE_B24_TEXT_2"] = "Під час повторного ввімкнення складського обліку ви не зможете відновити роботу з раніше проведеними документами.";
 $MESS["CATALOG_INVENTORY_MANAGEMENT_DELETE_DOCUMENTS_AND_QUANTITY_TEXT_ON_ENABLE_B24"] = "Під час увімкнення складського обліку Бітрікс24 ми видалимо раніше створені документи й занулимо залишки.";
+$MESS["CATALOG_INVENTORY_MANAGEMENT_DELETE_DOCUMENTS_AND_QUANTITY_TEXT_ON_ENABLE_B24_MSGVER_1"] = "Увімкнення складського обліку Бітрікс24 призведе до занулення залишків товарів. Усі створені вами чернетки документів збережуться.";
 $MESS["CATALOG_INVENTORY_MANAGEMENT_DETAILS"] = "Докладніше";
 $MESS["CATALOG_INVENTORY_MANAGEMENT_DISABLE_CONFIRMATION_TEXT"] = "Вимкнути складський облік?";
 $MESS["CATALOG_INVENTORY_MANAGEMENT_DISABLE_CONFIRMATION_TEXT_2"] = "Раніше ви вмикали складський облік Бітрікс24. Для коректної роботи звітів ми видалимо всі попередні дані.";

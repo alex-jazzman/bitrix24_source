@@ -9,11 +9,14 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { Feature } = require('feature');
 	const { Loc } = require('tasks/loc');
+	const { Dod } = require('tasks/layout/dod');
+
 	const { showSafeToast } = require('toast');
 	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 	const { ActionMenuError } = require('tasks/layout/action-menu/actions/src/error');
 	const { ExtraSettings } = require('tasks/layout/task/view-new/ui/extra-settings');
 	const { FeatureId } = require('tasks/enum');
+	const { Alert } = require('alert');
 
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
@@ -23,6 +26,10 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const { getFeatureRestriction } = require('tariff-plan-restriction');
+	const { truncate } = require('utils/string');
+	const { throttle } = require('utils/function');
+	const throttledShowSafeToast = throttle(showSafeToast, 4000);
+
 	const {
 		startTimer,
 		pauseTimer,
@@ -44,6 +51,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		read,
 		selectByTaskIdOrGuid,
 		selectIsCreator,
+		tasksUpserted,
 	} = require('tasks/statemanager/redux/slices/tasks');
 
 	const ActionId = {
@@ -203,34 +211,75 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			useSuccessHaptic: true,
 			handleAction: (task, layoutWidget, options, analyticsLabel = {}) => executeIfOnline(
 				() => {
-					if (task.isResultRequired && !task.isOpenResultExists && !selectIsCreator(task))
-					{
-						// todo show button to attach instant result
-						showSafeToast(
-							{
-								code: ActionId.COMPLETE,
-								message: Loc.getMessage('M_TASKS_ACTIONS_MENU_COMPLETE_RESULT_REQUIRED'),
-							},
-							layoutWidget,
-						);
+					const completeAction = () => {
+						if (task.isResultRequired && !task.isOpenResultExists && !selectIsCreator(task))
+						{
+							// todo show button to attach instant result
+							showSafeToast(
+								{
+									code: ActionId.COMPLETE,
+									message: Loc.getMessage('M_TASKS_ACTIONS_MENU_COMPLETE_RESULT_REQUIRED'),
+								},
+								layoutWidget,
+							);
 
-						throw new ActionMenuError('Result required');
+							throw new ActionMenuError('Result required');
+						}
+
+						dispatch(
+							complete({
+								taskId: task.id,
+								analyticsLabel: {
+									tool: 'tasks',
+									category: 'task_operations',
+									event: 'task_complete',
+									type: 'task',
+									...analyticsLabel,
+								},
+							}),
+						)
+							.then((response) => {
+								const {
+									data,
+									status,
+								} = response.payload;
+
+								if (
+									status === 'success'
+									&& data?.isSuccess
+									&& data.areAllSubtasksCompleted
+									&& data.parentTask
+								)
+								{
+									tasksUpserted([data.parentTask]);
+									showCompleteParentTaskAlert(data.task, data.parentTask);
+								}
+							})
+							.catch(console.error);
+
+						return Promise.resolve({});
+					};
+
+					if (task.isDodNecessary)
+					{
+						return new Promise((resolve) => {
+							Dod.show({
+								userId: Number(env.userId),
+								taskId: task.id,
+								groupId: task.groupId,
+								parentWidget: layoutWidget,
+								dodTypes: task.dodTypes,
+								activeTypeId: task.activeDodTypeId,
+								onComplete: async () => {
+									await completeAction();
+
+									resolve();
+								},
+							});
+						});
 					}
 
-					dispatch(
-						complete({
-							taskId: task.id,
-							analyticsLabel: {
-								tool: 'tasks',
-								category: 'task_operations',
-								event: 'task_complete',
-								type: 'task',
-								...analyticsLabel,
-							},
-						}),
-					);
-
-					return Promise.resolve({});
+					return completeAction();
 				},
 				layoutWidget,
 			),
@@ -245,7 +294,24 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 						renew({
 							taskId: task.id,
 						}),
-					);
+					)
+						.then((response) => {
+							const {
+								data,
+								status,
+							} = response.payload;
+							if (
+								status === 'success'
+								&& data?.isSuccess
+								&& data.allSubtasksWereCompleted
+								&& data.parentTask
+							)
+							{
+								tasksUpserted([data.parentTask]);
+								showRenewParentTaskAlert(data.task, data.parentTask);
+							}
+						})
+						.catch(console.error);
 				},
 				layoutWidget,
 			),
@@ -313,8 +379,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 						initSelectedIds: [task.responsible],
 						createOptions: {
 							enableCreation: true,
-							// ToDo
-							// analytics,
+							analytics: new AnalyticsEvent().setSection('task'),
 							getParentLayout: () => layout,
 						},
 						selectOptions: {
@@ -368,8 +433,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 								horizontalSwipeAllowed: false,
 							},
 						},
-					})
-						.show({}, layoutWidget)
+					}).show({}, layoutWidget)
 						.then((widget) => {
 							layout = widget;
 						})
@@ -746,7 +810,47 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			};
 		}
 
-		showSafeToast(params, layout);
+		throttledShowSafeToast(params, layout);
+	};
+
+	const showCompleteParentTaskAlert = (subTask, parentTask) => {
+		Alert.confirm(
+			Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_COMPLETE_TITLE'),
+			Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_COMPLETE_DESCRIPTION', {
+				'#TASK_NAME#': truncate(parentTask.name, 40),
+			}),
+			[
+				{
+					text: Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_NOT_COMPLETE_BUTTON'),
+				},
+				{
+					text: Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_COMPLETE_BUTTON'),
+					onPress: () => {
+						ActionMeta[ActionId.COMPLETE]?.handleAction({ taskId: parentTask.id });
+					},
+				},
+			],
+		);
+	};
+
+	const showRenewParentTaskAlert = (subTask, parentTask) => {
+		Alert.confirm(
+			Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_RENEW_TITLE'),
+			Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_RENEW_DESCRIPTION', {
+				'#TASK_NAME#': truncate(parentTask.name, 40),
+			}),
+			[
+				{
+					text: Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_NOT_RENEW_BUTTON'),
+				},
+				{
+					text: Loc.getMessage('M_TASKS_ACTIONS_MENU_PARENT_SCRUM_TASK_RENEW_BUTTON'),
+					onPress: () => {
+						ActionMeta[ActionId.RENEW]?.handleAction({ taskId: parentTask.id });
+					},
+				},
+			],
+		);
 	};
 
 	// prefetch assets with timeout to not affect core queries

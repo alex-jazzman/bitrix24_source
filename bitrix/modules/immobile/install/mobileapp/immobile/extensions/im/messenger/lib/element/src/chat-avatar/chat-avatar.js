@@ -103,7 +103,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (this.isUser(userId) && !user.lastActivityDate && !user.avatar)
 			{
-				this.avatar = `${ChatAvatar.getImagePath()}avatar_wait.png`;
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_wait_air.png`;
 				this.color = user.color;
 
 				return;

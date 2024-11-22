@@ -14,7 +14,7 @@ jn.define('ava-menu/aha-moment', (require, exports, module) => {
 			targetRef: 'user_avatar',
 			image: renderImage(),
 			title: Loc.getMessage('MOBILE_AVA_MENU_AHA_MOMENT_TITLE'),
-			description: Loc.getMessage('MOBILE_AVA_MENU_AHA_MOMENT_DESCRIPTION'),
+			description: Loc.getMessage('MOBILE_AVA_MENU_AHA_MOMENT_DESCRIPTION_MSGVER_1'),
 			buttonText: Loc.getMessage('MOBILE_AVA_MENU_AHA_MOMENT_OK_BUTTON_MSGVER_1'),
 			closeButton: false,
 			onClick: onOkClick,

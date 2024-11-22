@@ -16,6 +16,8 @@ use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
 use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
+use Bitrix\Main\Context;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Im;
 
@@ -117,7 +119,8 @@ else
 
 	if ($isSignMobileModuleInstalled && $isSignModuleInstalled)
 	{
-		\Bitrix\SignMobile\Service\EventService::checkDocumentsSentForSigning();
+		$service = \Bitrix\SignMobile\Service\Container::instance()->getEventService();
+		$service->checkDocumentsSentForSigning();
 	}
 
 	$event = new Bitrix\Main\Event("mobile", "onRequestSyncMail", [
@@ -206,13 +209,31 @@ else
 
 	$manager = new \Bitrix\Mobile\Tab\Manager($context);
 
-	if ($intent && str_starts_with($intent, 'preset_'))
+	if ($intent)
 	{
-		$components = explode('_', $intent);
-		if (count($components) >= 2)
+		if (isset($_REQUEST["first_open"]) && $_REQUEST["first_open"] === "Y")
 		{
-			$preset = $components[1];
-			$manager->setPresetName($preset);
+			$analyticEvent = new Main\Analytics\AnalyticsEvent('auth_complete', 'intranet', 'activation');
+			$request = Context::getCurrent()->getRequest();
+			$server = Context::getCurrent()->getServer();
+			$host = defined('BX24_HOST_NAME') ? BX24_HOST_NAME : $server->getHttpHost();
+			$analyticEvent
+				->setSection($intent)
+				->setSubSection('qrcode')
+				->setType('auth')
+				->setP1('platform_mobile')
+				->setUserId($USER->getId())
+				->send()
+			;
+		}
+
+		if (str_starts_with($intent, 'preset_')) {
+			$components = explode('_', $intent);
+			if (count($components) >= 2)
+			{
+				$preset = $components[1];
+				$manager->setPresetName($preset);
+			}
 		}
 	}
 	elseif (Main\Loader::includeModule('intranet') && Main\Loader::includeModule('crm'))
@@ -296,6 +317,23 @@ else
 		"LOGIN" => $USER->GetLogin(),
 	]);
 
+
+	$canCopyText = true;
+	$canTakeScreenshot = true;
+	if (ServiceLocator::getInstance()->has('intranet.option.mobile_app'))
+	{
+		/**
+		 * @var \Bitrix\Intranet\Service\MobileAppSettings $mobileSettings
+		 */
+
+		$mobileSettings = ServiceLocator::getInstance()->get('intranet.option.mobile_app');
+		if ($mobileSettings->isReady())
+		{
+			$canCopyText = $mobileSettings->canCopyText();
+			$canTakeScreenshot = $mobileSettings->canTakeScreenshot();
+		}
+	}
+
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
@@ -349,7 +387,8 @@ else
 				"componentCode" => "background",
 			],
 		],
-		"useModernStyle" => true,
+		"canTakeScreenshot" => $canTakeScreenshot,
+		"canCopyText" => $canCopyText,
 		"appmap" => [
 			"main" => ["url" => $siteDir . "mobile/index.php?version=" . $moduleVersion, "bx24ModernStyle" => true],
 			"menu" => ["url" => $siteDir . "mobile/left.php?version=" . $moduleVersion],

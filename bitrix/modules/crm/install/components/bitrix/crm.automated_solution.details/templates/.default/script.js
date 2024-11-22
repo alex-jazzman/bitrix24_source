@@ -2,8 +2,23 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
-(function (exports,ui_vue3,ui_vue3_vuex,main_core_events,crm_router,ui_dialogs_messagebox,ui_entitySelector,crm_toolbarComponent,ui_infoHelper,main_core) {
+(function (exports,ui_vue3,ui_vue3_vuex,main_core_events,ui_analytics,crm_integration_analytics,crm_router,ui_dialogs_messagebox,ui_entitySelector,crm_toolbarComponent,ui_infoHelper,main_core) {
 	'use strict';
+
+	function createSaveAnalyticsBuilder(store) {
+	  var builder = store.getters.isNew ? new crm_integration_analytics.Builder.Automation.AutomatedSolution.CreateEvent() : new crm_integration_analytics.Builder.Automation.AutomatedSolution.EditEvent();
+	  return builder.setId(store.state.automatedSolution.id).setTypeIds(store.state.automatedSolution.typeIds);
+	}
+	function wrapPromiseInAnalytics(promise, builder) {
+	  ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ATTEMPT).buildData());
+	  return promise.then(function (thenResult) {
+	    ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).buildData());
+	    return thenResult;
+	  })["catch"](function (error) {
+	    ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).buildData());
+	    throw error;
+	  });
+	}
 
 	var Card = {
 	  props: {
@@ -143,7 +158,8 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      });
 	    },
 	    save: function save() {
-	      return this.$store.dispatch('save');
+	      var builder = createSaveAnalyticsBuilder(this.$store).setElement(crm_integration_analytics.Dictionary.ELEMENT_SAVE_IS_REQUIRED_TO_PROCEED_POPUP);
+	      return wrapPromiseInAnalytics(this.$store.dispatch('save'), builder);
 	    }
 	  },
 	  template: "\n\t\t<div>\n\t\t\t<div class=\"ui-title-3\">{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_TYPES') }}</div>\n\t\t\t<Card\n\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_TITLE')\"\n\t\t\t\t:description=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_DESCRIPTION')\"\n\t\t\t/>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CREATE_TYPE') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"boundTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CRM_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"crmTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_EXTERNAL_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"externalTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
@@ -166,7 +182,8 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	        // tab show flags
 	        common: this.initialActiveTabId === 'common',
 	        types: this.initialActiveTabId === 'types'
-	      }
+	      },
+	      isCancelEventAlreadyRegistered: false
 	    };
 	  },
 	  computed: {
@@ -189,22 +206,35 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      }
 	      return buttons;
 	    },
+	    slider: function slider() {
+	      return BX.SidePanel.Instance.getSliderByWindow(window);
+	    },
 	    errors: function errors() {
 	      return this.$store.state.errors;
 	    },
 	    hasErrors: function hasErrors() {
 	      return main_core.Type.isArrayFilled(this.errors);
+	    },
+	    // eslint-disable-next-line max-len
+	    analyticsBuilder: function analyticsBuilder() {
+	      return createSaveAnalyticsBuilder(this.$store);
 	    }
 	  },
 	  mounted: function mounted() {
 	    main_core_events.EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:showTab', this.showTabFromEvent);
 	    main_core_events.EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:save', this.save);
 	    main_core_events.EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:delete', this["delete"]);
+	    main_core_events.EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:close', this.onCloseByCancelButton);
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseByEsc', this.onCloseByEsc);
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', this.onClose);
 	  },
 	  beforeUnmount: function beforeUnmount() {
 	    main_core_events.EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:showTab', this.showTabFromEvent);
 	    main_core_events.EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:save', this.save);
 	    main_core_events.EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:delete', this["delete"]);
+	    main_core_events.EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:close', this.onCloseByCancelButton);
+	    main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onCloseByEsc', this.onCloseByEsc);
+	    main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onClose', this.onClose);
 	  },
 	  methods: {
 	    showTabFromEvent: function showTabFromEvent(event) {
@@ -232,7 +262,10 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	    },
 	    save: function save() {
 	      var _this = this;
-	      this.$store.dispatch('save').then(function () {
+	      var builder = this.analyticsBuilder.setElement(crm_integration_analytics.Dictionary.ELEMENT_CREATE_BUTTON);
+	      wrapPromiseInAnalytics(this.$store.dispatch('save'), builder).then(function () {
+	        // don't register cancel event when this slider closes
+	        _this.isCancelEventAlreadyRegistered = true;
 	        _this.$Bitrix.Application.get().closeSliderOrRedirect();
 	      })["catch"](function () {}) // errors will be displayed reactively
 	      ["finally"](function () {
@@ -241,12 +274,54 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	    },
 	    "delete": function _delete() {
 	      var _this2 = this;
-	      this.$store.dispatch('delete').then(function () {
+	      var builder = new crm_integration_analytics.Builder.Automation.AutomatedSolution.DeleteEvent().setId(this.$store.state.automatedSolution.id).setElement(crm_integration_analytics.Dictionary.ELEMENT_DELETE_BUTTON);
+
+	      // don't register cancel event when this slider closes.
+	      // we set this flag here because for some reason slider starts to close before the promise is resolved
+	      this.isCancelEventAlreadyRegistered = true;
+	      wrapPromiseInAnalytics(this.$store.dispatch('delete'), builder).then(function () {
 	        _this2.$Bitrix.Application.get().closeSliderOrRedirect();
-	      })["catch"](function () {}) // errors will be displayed reactively
-	      ["finally"](function () {
+	      })["catch"](function () {
+	        // errors will be displayed reactively
+
+	        // okay, may be the slider won't be closed after all since we've failed
+	        _this2.isCancelEventAlreadyRegistered = false;
+	      })["finally"](function () {
 	        return _this2.unlockButtons();
 	      });
+	    },
+	    onCloseByCancelButton: function onCloseByCancelButton() {
+	      if (this.isCancelEventAlreadyRegistered) {
+	        return;
+	      }
+	      this.isCancelEventAlreadyRegistered = true;
+	      ui_analytics.sendData(this.analyticsBuilder.setElement(crm_integration_analytics.Dictionary.ELEMENT_CANCEL_BUTTON).setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
+	    },
+	    onCloseByEsc: function onCloseByEsc(event) {
+	      if (this.isCancelEventAlreadyRegistered) {
+	        return;
+	      }
+	      var _event$getData2 = event.getData(),
+	        _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
+	        sliderEvent = _event$getData3[0];
+	      if (sliderEvent.getSlider() !== this.slider) {
+	        return;
+	      }
+	      this.isCancelEventAlreadyRegistered = true;
+	      ui_analytics.sendData(this.analyticsBuilder.setElement(crm_integration_analytics.Dictionary.ELEMENT_ESC_BUTTON).setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
+	    },
+	    onClose: function onClose(event) {
+	      if (this.isCancelEventAlreadyRegistered) {
+	        return;
+	      }
+	      var _event$getData4 = event.getData(),
+	        _event$getData5 = babelHelpers.slicedToArray(_event$getData4, 1),
+	        sliderEvent = _event$getData5[0];
+	      if (sliderEvent.getSlider() !== this.slider) {
+	        return;
+	      }
+	      this.isCancelEventAlreadyRegistered = true;
+	      ui_analytics.sendData(this.analyticsBuilder.setElement(null).setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
 	    },
 	    unlockButtons: function unlockButtons() {
 	      this.allButtons.forEach(function (button) {
@@ -612,5 +687,5 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 
 	exports.App = App;
 
-}((this.BX.Crm.AutomatedSolution.Details = this.BX.Crm.AutomatedSolution.Details || {}),BX.Vue3,BX.Vue3.Vuex,BX.Event,BX.Crm,BX.UI.Dialogs,BX.UI.EntitySelector,BX.Crm,BX.UI,BX));
+}((this.BX.Crm.AutomatedSolution.Details = this.BX.Crm.AutomatedSolution.Details || {}),BX.Vue3,BX.Vue3.Vuex,BX.Event,BX.UI.Analytics,BX.Crm.Integration.Analytics,BX.Crm,BX.UI.Dialogs,BX.UI.EntitySelector,BX.Crm,BX.UI,BX));
 //# sourceMappingURL=script.js.map

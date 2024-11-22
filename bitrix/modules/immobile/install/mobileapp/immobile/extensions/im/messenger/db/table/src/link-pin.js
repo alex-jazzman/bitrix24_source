@@ -20,6 +20,11 @@ jn.define('im/messenger/db/table/link-pin', (require, exports, module) => {
 			return 'b_im_link_pin';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			return [

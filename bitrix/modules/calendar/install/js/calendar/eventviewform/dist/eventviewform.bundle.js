@@ -181,7 +181,16 @@ this.BX = this.BX || {};
 	          }
 	        }, this);
 	      }
-	      const accepted = (_this$attendees$y$fil = (_this$attendees$y = this.attendees.y) == null ? void 0 : _this$attendees$y.filter(attendee => attendee && parseInt(this.meetingHost.ID, 10) !== parseInt(attendee.ID, 10))) != null ? _this$attendees$y$fil : [];
+	      const accepted = (_this$attendees$y$fil = (_this$attendees$y = this.attendees.y) == null ? void 0 : _this$attendees$y.filter(attendee => {
+	        var _this$entry;
+	        if (!attendee) {
+	          return false;
+	        }
+	        if ((_this$entry = this.entry) != null && _this$entry.isOpenEvent()) {
+	          return true;
+	        }
+	        return parseInt(this.meetingHost.ID, 10) !== parseInt(attendee.ID, 10);
+	      })) != null ? _this$attendees$y$fil : [];
 	      if (accepted.length <= 11) {
 	        this.avatarUsers = accepted.slice(0, 11);
 	        this.avatarMoreUsers = [];
@@ -399,7 +408,7 @@ this.BX = this.BX || {};
 								<div class="calendar-slider-sidebar-user-block">
 								<div v-if="isMeeting">
 									<div class="calendar-slider-sidebar-user-container-holder">
-										<div class="calendar-slider-sidebar-user-container">
+										<div class="calendar-slider-sidebar-user-container" v-if="!entry.isOpenEvent()">
 											<div class="calendar-slider-sidebar-user-block-avatar">
 												<a :href="meetingHost.URL">
 													<UserAvatar :user="meetingHost" :avatarSize="avatarSize"/>
@@ -702,26 +711,29 @@ this.BX = this.BX || {};
 	  createContent(slider) {
 	    return new Promise(resolve => {
 	      this.BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
-	        analyticsLabel: {
-	          calendarAction: 'view_event',
-	          formType: 'full'
-	        },
 	        data: {
 	          entryId: this.entryId,
 	          dateFrom: calendar_util.Util.formatDate(this.entryDateFrom),
 	          timezoneOffset: this.timezoneOffset
+	        },
+	        analytics: {
+	          tool: 'im',
+	          category: 'events',
+	          event: 'view_card',
+	          c_section: 'card_full',
+	          p5: `eventId_${this.entryId}`
 	        }
 	      }).then(response => {
 	        const viewEventSliderRoot = document.createElement('div');
 	        if (main_core.Type.isFunction(slider.isOpen) && slider.isOpen() || slider.isOpen === true) {
 	          let params = response.data;
-	          params.eventExists = !!params.entry.ID;
+	          params.eventExists = Boolean(params.entry.ID);
 	          this.attendees = [];
 	          for (const status in params.attendees) {
 	            this.attendees.push(...params.attendees[status]);
 	          }
 
-	          //load components' css and js
+	          // load components' css and js
 	          if (params.filesView) {
 	            this.loadComponentAssets(params.filesView);
 	          }
@@ -734,21 +746,21 @@ this.BX = this.BX || {};
 	            });
 	          }
 
-	          //set vue component to slider
+	          // set vue component to slider
 	          this.app = ui_vue3.BitrixVue.createApp(ViewEventSlider, {
-	            params: params,
+	            params,
 	            reloadPlannerCallback: this.loadPlannerDataDebounce,
 	            showUserListPopupCallback: this.showUserListPopupBind
 	          });
 	          this.app.mount(viewEventSliderRoot);
 	          slider.sliderContent = viewEventSliderRoot;
 
-	          //set local params
+	          // set local params
 	          this.userId = params.userId;
 	          this.uid = params.id;
 	          this.entryUrl = params.entryUrl;
 	          this.userTimezone = params.userTimezone;
-	          this.plannerFeatureEnabled = !!params.plannerFeatureEnabled;
+	          this.plannerFeatureEnabled = Boolean(params.plannerFeatureEnabled);
 	          if (this.planner && !this.plannerFeatureEnabled) {
 	            this.planner.lock();
 	          }
@@ -756,7 +768,7 @@ this.BX = this.BX || {};
 	        }
 	        resolve(viewEventSliderRoot);
 	      }, response => {
-	        if (response.errors && response.errors.length) {
+	        if (response.errors && response.errors.length > 0) {
 	          slider.getData().set("sliderContent", '<div class="calendar-slider-alert">' + '<div class="calendar-slider-alert-inner">' + '<div class="calendar-slider-alert-img"></div>' + '<h1 class="calendar-slider-alert-text">' + main_core.Text.encode(response.errors[0].message) + '</h1>' + '</div>' + '</div>');
 	        }
 	        if (response.data && !main_core.Type.isNil(response.data.isAvailable) && !response.data.isAvailable) {
@@ -885,7 +897,7 @@ this.BX = this.BX || {};
 	    // Init "Videocall" control
 	    this.DOM.videoCall = this.DOM.sidebarInner.querySelector('.calendar-slider-sidebar-videocall');
 	    main_core.Dom.clean(this.DOM.videoCall);
-	    if (main_core.Type.isElementNode(this.DOM.videoCall) && this.entry && this.entry.data['PARENT_ID'] && (this.entry.data['EVENT_TYPE'] === '#shared#' || this.entry.data['EVENT_TYPE'] === '#shared_crm#')) {
+	    if (main_core.Type.isElementNode(this.DOM.videoCall) && this.entry && this.entry.data.PARENT_ID && (this.entry.data.EVENT_TYPE === '#shared#' || this.entry.data.EVENT_TYPE === '#shared_crm#')) {
 	      this.DOM.videoCall.style.display = '';
 	      this.conferenceButton = main_core.Tag.render(_t || (_t = _`
 				<div class="ui-btn-split ui-btn-icon-camera-blue intranet-control-btn ui-btn-light-border ui-btn-icon-inline" style="width: 100%">
@@ -907,8 +919,16 @@ this.BX = this.BX || {};
 	            dateFrom: calendar_util.Util.formatDate(this.entry.from),
 	            parentId: this.entry.parentId
 	          },
-	          analyticsLabel: {
-	            formType: 'full'
+	          analytics: {
+	            startVideoCall: {
+	              tool: 'im',
+	              category: 'events',
+	              event: 'click_call',
+	              type: 'group',
+	              c_section: 'card_full',
+	              c_sub_section: 'context_menu',
+	              p5: `eventId_${this.entry.parentId}`
+	            }
 	          }
 	        },
 	        callbacks: {
@@ -923,10 +943,10 @@ this.BX = this.BX || {};
 	      this.DOM.videoCall.style.display = 'none';
 	    }
 	  }
-	  handleEntryData(entryData, userIndex, sectionData) {
+	  handleEntryData(data, userIndex, sectionData) {
 	    this.entry = new calendar_entry.Entry({
-	      data: entryData,
-	      userIndex: userIndex
+	      data,
+	      userIndex
 	    });
 	    this.section = new calendar_sectionmanager.CalendarSection(sectionData);
 	    if (main_core.Type.isPlainObject(sectionData)) {
@@ -1153,11 +1173,20 @@ this.BX = this.BX || {};
 	  getConferenceChatId() {
 	    return this.BX.ajax.runAction('calendar.api.calendarajax.getConferenceChatId', {
 	      data: {
-	        eventId: this.entry.data['PARENT_ID']
+	        eventId: this.entry.data.PARENT_ID
+	      },
+	      analytics: {
+	        tool: 'im',
+	        category: 'events',
+	        event: 'click_call',
+	        type: 'videoconf',
+	        c_section: 'card_full',
+	        c_sub_section: 'card',
+	        p5: `eventId_${this.entry.parentId}`
 	      }
 	    }).then(response => {
 	      if (top.window.BXIM && response.data && response.data.chatId) {
-	        top.BXIM.openMessenger('chat' + parseInt(response.data.chatId));
+	        top.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
 	        return null;
 	      }
 	      alert(main_core.Loc.getMessage('EC_CONFERENCE_ERROR'));

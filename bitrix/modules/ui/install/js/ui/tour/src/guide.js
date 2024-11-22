@@ -231,7 +231,7 @@ export class Guide extends Event.EventEmitter
 		{
 			setTimeout(() => {
 				this.layout.backBtn.style.display = "block";
-			}, 10);
+			}, 200);
 		}
 
 		if (this.overlay)
@@ -291,8 +291,8 @@ export class Guide extends Event.EventEmitter
 	{
 		let currentStep = this.getCurrentStep();
 		currentStep.emit(currentStep.constructor.getFullEventName("onShow"), {
-			step : currentStep,
-			guide: this
+			step: currentStep,
+			guide: this,
 		});
 
 		if (currentStep.getTarget())
@@ -666,9 +666,9 @@ export class Guide extends Event.EventEmitter
 							EventEmitter.emit('UI.Tour.Guide:onPopupClose', this);
 
 						this.close();
-					}
+					},
 				},
-				buttons: buttons
+				buttons,
 			});
 
 			const conditionNodeTop = Tag.render`
@@ -1037,7 +1037,7 @@ export class Guide extends Event.EventEmitter
 		{
 			if (this.finalStep)
 			{
-				this.setFinalStep()
+				this.setFinalStep();
 			}
 			else
 			{
@@ -1143,7 +1143,7 @@ export class Guide extends Event.EventEmitter
 			for (let i = 0; i < this.buttons.length; i++)
 			{
 				let btn = Tag.render`
-					<button class="${this.buttons[i].class}" onclick="${this.buttons[i].events.click}">
+					<button class="${this.buttons[i].class}" onclick="${this.buttons[i].events?.click}">
 					${this.buttons[i].text}
 					</button>
 				`;

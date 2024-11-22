@@ -9,7 +9,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { EventType, FeatureFlag, ComponentCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const AppTheme = require('apptheme');
-	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 	const { AnalyticsEvent } = require('analytics');
 
 	class RecentView extends View
@@ -228,6 +228,9 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		setItems(items)
 		{
 			this.ui.setItems(items);
+			items.forEach((item) => {
+				this.itemCollection[item.id] = item;
+			});
 		}
 
 		addItems(items)

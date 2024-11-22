@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
-import TextEditor from './text-editor';
-import type { BitrixVueComponentProps } from 'ui.vue3';
+import { TextEditor } from './text-editor';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 export const TextEditorComponent: BitrixVueComponentProps = {
 	name: 'TextEditorComponent',
@@ -21,6 +21,12 @@ export const TextEditorComponent: BitrixVueComponentProps = {
 			default: null,
 		},
 	},
+	setup()
+	{
+		return {
+			editorClass: TextEditor,
+		};
+	},
 	provide(): Object<string, any> {
 		return {
 			editor: this.editor,
@@ -31,7 +37,9 @@ export const TextEditorComponent: BitrixVueComponentProps = {
 		if (this.editorInstance === null)
 		{
 			this.hasOwnEditor = true;
-			this.editor = new TextEditor(this.editorOptions);
+
+			const EditorClass = this.editorClass;
+			this.editor = new EditorClass(this.editorOptions);
 		}
 		else
 		{

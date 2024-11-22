@@ -1,7 +1,8 @@
-import { Dom, Event, Loc, Type } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { MenuItemOptions } from 'main.popup';
 import { Menu } from 'main.popup';
+import { Loader } from 'main.loader';
 import type { DetailConfig } from './type/detail-config';
 import type { DashboardEmbeddedParameters } from './type/dashboard-embedded-parameters';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
@@ -19,6 +20,8 @@ export class DetailInstance
 
 	#embeddedParams: DashboardEmbeddedParameters;
 	#embeddedLoader: ApacheSupersetEmbeddedLoader;
+	#embeddedDebugMode: boolean;
+	#pdfExportEnabled: boolean;
 	#canExport: boolean;
 	#canEdit: boolean;
 
@@ -36,15 +39,43 @@ export class DetailInstance
 		this.#canExport = config.canExport === 'Y';
 		this.#canEdit = config.canEdit === 'Y';
 		this.#embeddedParams = config.dashboardEmbeddedParams;
+		this.#embeddedDebugMode = config.embeddedDebugMode;
+		this.#pdfExportEnabled = config.pdfExportEnabled;
 
 		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
 		this.#subscribeEvents();
 		this.#initHeaderButtons();
+		if (!this.#embeddedParams.paramsCompatible)
+		{
+			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+				container: this.#frameNode,
+				isSupersetAvailable: true,
+				paramsCompatible: false,
+			});
+
+			ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+				c_element: config.analyticSource,
+				status: 'error',
+				type: this.#embeddedParams.type.toLowerCase(),
+				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+				p2: this.#embeddedParams.id,
+			});
+
+			return;
+		}
 
 		if (!BX.BIConnector.LimitLockPopup)
 		{
 			this.#initFrame(this.#embeddedParams);
 		}
+
+		ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+			c_element: config.analyticSource,
+			status: 'success',
+			type: this.#embeddedParams.type.toLowerCase(),
+			p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+			p2: this.#embeddedParams.id,
+		});
 	}
 
 	#subscribeEvents()
@@ -58,23 +89,44 @@ export class DetailInstance
 		});
 
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelectDataLoaded', (event) => {
-			this.#embeddedParams = event.data.credentials;
 			Dom.clean(this.#frameNode);
-			this.#canEdit = event.data.credentials.canEdit === 'Y';
-			this.#canExport = event.data.credentials.canExport === 'Y';
 			this.#embeddedParams = event.data.credentials;
-			top.window.history.pushState(null, '', event.data.credentials.dashboardUrl);
+			this.#canEdit = this.#embeddedParams.canEdit;
+			this.#canExport = this.#embeddedParams.canExport;
 
-			this.#initFrame(event.data.credentials);
+			let historyUrl = this.#embeddedParams.embeddedUrl;
+			if (this.#embeddedParams.paramsCompatible)
+			{
+				this.#initFrame(this.#embeddedParams);
+
+				ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+					c_element: 'selector',
+					status: 'success',
+					type: this.#embeddedParams.type.toLowerCase(),
+					p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+					p2: this.#embeddedParams.id,
+				});
+			}
+			else
+			{
+				historyUrl = this.#embeddedParams.dashboardUrl;
+				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+					container: this.#frameNode,
+					isSupersetAvailable: true,
+					paramsCompatible: false,
+				});
+
+				ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+					c_element: 'selector',
+					status: 'error',
+					type: this.#embeddedParams.type.toLowerCase(),
+					p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+					p2: this.#embeddedParams.id,
+				});
+			}
+
+			top.window.history.pushState(null, '', historyUrl);
 			this.#initHeaderButtons();
-
-			ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-				c_element: 'selector',
-				status: 'success',
-				type: this.#embeddedParams.type.toLowerCase(),
-				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-				p2: this.#embeddedParams.id,
-			});
 		});
 
 		EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', (event) => {
@@ -94,7 +146,7 @@ export class DetailInstance
 			supersetDomain: embeddedParams.supersetDomain,
 			mountPoint: this.#frameNode, // any html element that can contain an iframe
 			fetchGuestToken: embeddedParams.guestToken,
-			debug: true,
+			debug: this.#embeddedDebugMode,
 			dashboardUiConfig: { // dashboard UI config: hideTitle, hideTab, ...etc.
 				hideTitle: true,
 				hideTab: true,
@@ -104,6 +156,7 @@ export class DetailInstance
 					visible: true,
 					nativeFilters: embeddedParams.nativeFilters,
 				},
+				urlParams: embeddedParams.urlParams ?? {},
 			},
 		};
 
@@ -114,6 +167,10 @@ export class DetailInstance
 	#initHeaderButtons()
 	{
 		this.#initMoreMenu();
+		if (this.#pdfExportEnabled)
+		{
+			this.#initDownloadButton();
+		}
 
 		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
 		Event.unbindAll(this.#editBtn);
@@ -219,6 +276,96 @@ export class DetailInstance
 		this.#editBtn.removeAttribute('disabled');
 	}
 
+	#initDownloadButton(): void
+	{
+		const downloadButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-download');
+		Event.unbindAll(downloadButton);
+		const downloadMenu = new Menu({
+			closeByEsc: false,
+			closeIcon: false,
+			cacheable: true,
+			angle: {
+				position: 'top',
+			},
+			offsetLeft: 55,
+			bindElement: downloadButton,
+			autoHide: true,
+			items: [
+				{
+					id: 'download-screenshot',
+					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
+					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
+					onclick: (event, menuItem) => {
+						menuItem.disable();
+						const loader = new Loader({
+							target: menuItem.layout.item,
+							size: 30,
+						});
+						loader.show();
+						this.#embeddedLoader.getScreenshot()
+							.then((imageData: string) => {
+								const dashboardTitle = Text.decode(this.#embeddedParams.title);
+								this.#downloadFile(
+									imageData.replace('data:image/jpeg;base64,', ''),
+									`${dashboardTitle}.jpeg`,
+									'image/jpeg',
+								);
+								menuItem.enable();
+								loader.hide();
+							})
+							.catch(() => {
+								menuItem.enable();
+								loader.hide();
+								BX.UI.Notification.Center.notify({
+									content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
+								});
+							})
+						;
+					},
+				},
+				{
+					id: 'download-pdf',
+					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
+					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
+					onclick: (event, menuItem) => {
+						menuItem.disable();
+						const loader = new Loader({
+							target: menuItem.layout.item,
+							size: 30,
+						});
+						loader.show();
+						this.#embeddedLoader.getPdf()
+							.then((imageData: string) => {
+								const dashboardTitle = Text.decode(this.#embeddedParams.title);
+								this.#downloadFile(
+									imageData,
+									`${dashboardTitle}.pdf`,
+									'application/pdf',
+								);
+								menuItem.enable();
+								loader.hide();
+							})
+							.catch(() => {
+								menuItem.enable();
+								loader.hide();
+								BX.UI.Notification.Center.notify({
+									content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
+								});
+							})
+						;
+					},
+				},
+			],
+			events: {
+				onAfterShow: () => {
+					Dom.style(downloadMenu.popupWindow.angle.element, 'left', '17px');
+				},
+			},
+		});
+
+		Event.bind(downloadButton, 'click', () => downloadMenu.show());
+	}
+
 	#initMoreMenu()
 	{
 		const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
@@ -231,7 +378,10 @@ export class DetailInstance
 			closeByEsc: false,
 			closeIcon: false,
 			cacheable: true,
-			angle: 'top',
+			angle: {
+				position: 'top',
+				offset: 43,
+			},
 			items: this.#getMoreMenuItems(),
 			toFrontOnShow: true,
 			autoHide: true,
@@ -261,6 +411,7 @@ export class DetailInstance
 		Event.bind(moreButton, 'click', () => this.#moreMenu.show());
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	#getMoreMenuItems(): MenuItemOptions[]
 	{
 		const result = [
@@ -301,6 +452,25 @@ export class DetailInstance
 		}
 
 		return result;
+	}
+
+	#downloadFile(base64Data: string, fileName: string, fileType: string): void
+	{
+		const byteCharacters = atob(base64Data);
+		const byteNumbers = Array.from({ length: byteCharacters.length });
+		for (let i = 0; i < byteCharacters.length; i++)
+		{
+			byteNumbers[i] = byteCharacters.codePointAt(i);
+		}
+
+		const byteArray = new Uint8Array(byteNumbers);
+		const blob = new Blob([byteArray], { type: fileType });
+		const link = document.createElement('a');
+		link.href = window.URL.createObjectURL(blob);
+		link.download = fileName;
+		Dom.append(link, document.body);
+		link.click();
+		Dom.remove(link);
 	}
 
 	#getMoreMenu(): Menu

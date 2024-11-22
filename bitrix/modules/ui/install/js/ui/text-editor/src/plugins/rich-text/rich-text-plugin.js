@@ -1,6 +1,6 @@
 import { registerRichText } from 'ui.lexical.rich-text';
 import BasePlugin from '../base-plugin';
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 export class RichTextPlugin extends BasePlugin
 {

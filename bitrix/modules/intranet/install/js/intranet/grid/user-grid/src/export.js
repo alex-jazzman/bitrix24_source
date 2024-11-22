@@ -5,6 +5,7 @@ import { EmployeeField } from './field/employee-field';
 import { ActivityField } from './field/activity-field';
 import { DepartmentField } from './field/department-field';
 import { GridManager } from './grid-manager';
+import { Panel } from './panel';
 import './style.css';
 
 export {
@@ -15,4 +16,5 @@ export {
 	ActivityField,
 	DepartmentField,
 	GridManager,
+	Panel,
 };

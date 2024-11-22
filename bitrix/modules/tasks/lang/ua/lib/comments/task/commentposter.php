@@ -8,6 +8,8 @@ $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_CONTROL_DEADLINE"] = "Поста�
 Необхідно вказати крайній термін. ";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_DEADLINE"] = "Поставлено завдання для #RESPONSIBLE#.
 Необхідно вказати крайній термін. ";
+$MESS["COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_HIMSELF_DISTRIBUTION"] = "#RESPONSIBLE_LIST#, візьміть завдання в роботу.";
+$MESS["COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_WITH_MORE"] = "#RESPONSIBLE_LIST# і #SHOW_FLOW_ATTENDEES_START# ще #COUNT_USERS##SHOW_FLOW_ATTENDEES_END#, візьміть завдання в роботу.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION"] = "#RESPONSIBLE#, призначте #TASK_CHANGE_RESPONSIBLE_START#співробітника#TASK_CHANGE_RESPONSIBLE_END#, який виконуватиме це завдання.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED"] = "Завдання протерміноване.
 Ефективність знижена.

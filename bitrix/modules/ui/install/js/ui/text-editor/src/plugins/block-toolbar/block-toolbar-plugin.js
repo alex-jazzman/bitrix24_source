@@ -1,7 +1,7 @@
 import { Dom, Event, Tag, Type, Text } from 'main.core';
 import { HIDE_DIALOG_COMMAND } from '../../commands';
 import BasePlugin from '../base-plugin';
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 import {
 	COMMAND_PRIORITY_HIGH,

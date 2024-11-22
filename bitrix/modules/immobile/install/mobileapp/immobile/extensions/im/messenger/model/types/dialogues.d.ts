@@ -118,6 +118,7 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
+	| 'dialoguesModel/deleteFromModel'
 	| 'dialoguesModel/updateWritingList'
 	| 'dialoguesModel/decreaseCounter'
 	| 'dialoguesModel/updateUserCounter'
@@ -187,7 +188,7 @@ export interface DialoguesAddCollectionData extends PayloadData
 	addItems: Array<DialogPayloadDataItem>
 }
 
-export type DialoguesDeleteActions = 'delete';
+export type DialoguesDeleteActions = 'delete' | 'deleteFromModel';
 export interface DialoguesDeleteData extends PayloadData
 {
 	dialogId: DialogId,

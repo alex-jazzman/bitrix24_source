@@ -75,3 +75,11 @@
 .intranet-user-list-grid-container .main-grid-cell-left .main-grid-cell-content {
 	max-width: calc(100% - 19px);
 }
+
+.intranet-user-list-grid-container .main-grid-cell-checkbox .main-grid-cell-content {
+	top: 0;
+}
+
+.intranet-user-list-grid-container .main-grid-interface-settings-icon {
+	margin-top: 1.5px;
+}

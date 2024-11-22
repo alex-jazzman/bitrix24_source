@@ -60,7 +60,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  sidebarBriefs: 'sidebarBriefs',
 	  zoomActive: 'zoomActive',
 	  zoomAvailable: 'zoomAvailable',
-	  giphyAvailable: 'giphyAvailable'
+	  giphyAvailable: 'giphyAvailable',
+	  collabAvailable: 'collabAvailable'
 	};
 	const FeatureManager = {
 	  chatHistory: ChatHistoryManager,

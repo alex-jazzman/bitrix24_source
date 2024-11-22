@@ -118,6 +118,15 @@ jn.define('utils/file', (require, exports, module) => {
 	}
 
 	/**
+	 * @param {string} filename
+	 * @return {string}
+	 */
+	function getNameWithoutExtension(filename)
+	{
+		return (filename.includes('.')) ? filename.split('.').slice(0, -1).join('.') : filename;
+	}
+
+	/**
 	 * @param {'image'|'video'|'file'} fileType
 	 * @param {string} url
 	 * @param {string} name
@@ -227,6 +236,7 @@ jn.define('utils/file', (require, exports, module) => {
 		getNativeViewerMediaTypeByFileName,
 		getMimeType,
 		getExtension,
+		getNameWithoutExtension,
 		openNativeViewer,
 		prepareObjectId,
 		openNativeViewerByFileId,

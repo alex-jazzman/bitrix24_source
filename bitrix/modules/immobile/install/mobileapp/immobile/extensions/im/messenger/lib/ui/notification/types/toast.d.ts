@@ -6,6 +6,7 @@ export type ShowToastParams = {
 	backgroundOpacity?: number,
 	svg?: string,
 	svgType?: string,
+	icon?: object,
 }
 
 export enum ToastPosition {

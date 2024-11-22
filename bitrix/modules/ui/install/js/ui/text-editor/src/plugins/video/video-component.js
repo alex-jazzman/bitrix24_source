@@ -150,7 +150,6 @@ export default class VideoComponent extends DecoratorComponent
 		Dom.adjust(this.#getVideo(), {
 			attrs: {
 				width,
-				height: null,
 			},
 			style: {
 				width,

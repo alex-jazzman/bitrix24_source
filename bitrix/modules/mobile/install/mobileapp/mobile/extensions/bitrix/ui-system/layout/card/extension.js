@@ -10,6 +10,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	/**
 	 * @function Card
 	 * @param {object} props
+	 * @param {string} props.testId
 	 * @param {object=} [props.style={}]
 	 * @param {object=} [props.excludePaddingSide={}]
 	 * @param {boolean} [props.excludePaddingSide.left=false]

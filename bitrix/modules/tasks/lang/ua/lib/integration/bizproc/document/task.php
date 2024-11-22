@@ -56,3 +56,5 @@ $MESS["TASKS_BP_DOCUMENT_TAGS"] = "Теги";
 $MESS["TASKS_BP_DOCUMENT_TASK_CONTROL"] = "Прийняти після завершення";
 $MESS["TASKS_BP_DOCUMENT_TIME_ESTIMATE"] = "Планові трудозатрати";
 $MESS["TASKS_BP_DOCUMENT_TITLE"] = "Назва";
+$MESS["TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE"] = "Залишилася половина терміну на виконання завдання [url=#TASK_URL#][#{taskId}] #TASK_TITLE#[/url]. Переконайтеся, що встигаєте завершити роботу вчасно.";
+$MESS["TASKS_FLOW_NOTIFICATION_MESSAGE_HIMSELF_ADMIN_TASK_NOT_TAKEN_MESSAGE"] = "Ніхто не взяв у роботу завдання в потоці [url=#FLOW_URL#][#{flowId}] #FLOW_TITLE#[/url]. Призначте виконавця самостійно.";

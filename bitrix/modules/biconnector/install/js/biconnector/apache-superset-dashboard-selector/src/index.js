@@ -8,6 +8,7 @@ type Props = {
 	dashboardId: number,
 	marketCollectionUrl: string,
 	isMarketInstalled: boolean,
+	dashboardUrlParams: Object,
 };
 
 class SupersetDashboardSelector
@@ -18,6 +19,7 @@ class SupersetDashboardSelector
 	#dashboardId: number;
 	#marketCollectionUrl: string;
 	#isMarketInstalled: boolean;
+	#dashboardUrlParams: Object;
 
 	constructor(props: Props)
 	{
@@ -26,6 +28,7 @@ class SupersetDashboardSelector
 		this.#dashboardId = props.dashboardId;
 		this.#marketCollectionUrl = props.marketCollectionUrl;
 		this.#isMarketInstalled = props.isMarketInstalled;
+		this.#dashboardUrlParams = props.dashboardUrlParams;
 		this.#initDialog(this.#selectorNode);
 
 		if (this.#selectorNode)
@@ -108,6 +111,7 @@ class SupersetDashboardSelector
 		return BX.ajax.runAction('biconnector.dashboard.getDashboardEmbeddedData', {
 			data: {
 				id: dashboardId,
+				urlParams: this.#dashboardUrlParams,
 			},
 		});
 	}

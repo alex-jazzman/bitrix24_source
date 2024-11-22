@@ -215,6 +215,7 @@ jn.define('sign/dialog', (require, exports, module) => {
 				url = false,
 				role,
 				isGoskey,
+				isExternal,
 			} = props;
 
 			ComponentHelper.openLayout(
@@ -228,6 +229,7 @@ jn.define('sign/dialog', (require, exports, module) => {
 						role,
 						url,
 						isGoskey,
+						isExternal,
 					},
 				},
 			);

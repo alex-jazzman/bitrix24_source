@@ -129,7 +129,7 @@ if (isset($arResult['BOSS']['LINK']))
 			const widgetElement = document.querySelector('#<?= $id ?>');
 			if (widgetElement)
 			{
-				new BX.Landing.Widget.AboutWidget(widgetElement);
+				new BX.Landing.Widget.About(widgetElement);
 			}
 		}
 	});

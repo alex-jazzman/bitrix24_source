@@ -185,7 +185,7 @@ class Common
 				});
 			}
 
-			if (params.perms.canModify)
+			if (params.perms.canCreate)
 			{
 				itemTitle = Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_COPY');
 				if (!!params.isScrumProject)

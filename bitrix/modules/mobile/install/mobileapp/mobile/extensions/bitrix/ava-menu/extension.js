@@ -4,6 +4,7 @@
 jn.define('ava-menu', (require, exports, module) => {
 	const { menu } = require('native/avamenu') || {};
 	const { AnalyticsEvent } = require('analytics');
+	const { qrauth } = require('qrauth/utils');
 	const { showAhaMoment } = require('ava-menu/aha-moment');
 	const { CheckIn } = require('ava-menu/check-in');
 
@@ -193,7 +194,6 @@ jn.define('ava-menu', (require, exports, module) => {
 					return true;
 
 				case entryTypes.qrauth:
-					// eslint-disable-next-line no-undef
 					qrauth.open(customData);
 
 					return true;

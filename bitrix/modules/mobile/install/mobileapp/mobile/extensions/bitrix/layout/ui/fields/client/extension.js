@@ -14,6 +14,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const { get, isEqual, isEmpty, mergeImmutable } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
+	const { Random } = require('utils/random');
 
 	let SelectorProcessing = null;
 	let Type = null;
@@ -81,12 +82,22 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			this.customEventEmitter.on('UI.Fields.Client::select', this.handleClientSelection);
 
 			BX.addCustomEvent('MultiFieldDrawer::onSave', this.handleMultiFieldChange);
+
+			this.emitClientFieldUpdateEvent();
 		}
 
 		componentDidUpdate(prevProps, prevState)
 		{
 			super.componentDidUpdate(prevProps, prevState);
 
+			if (!isEqual(this.props.value, prevProps.value))
+			{
+				this.emitClientFieldUpdateEvent();
+			}
+		}
+
+		emitClientFieldUpdateEvent()
+		{
 			const { permissions } = this.getConfig();
 			const compound = this.getCompound();
 			const contactCompound = compound.find(({ entityTypeName }) => entityTypeName === TypeName.Contact);
@@ -152,9 +163,9 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'canFocusTitle', false);
 		}
 
-		isShowClientInfo()
+		isShowClientInfo(isHiddenContact)
 		{
-			return this.getConfig().showClientInfo;
+			return this.getConfig().showClientInfo && !isHiddenContact;
 		}
 
 		isShowClientType()
@@ -321,7 +332,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 							testId: `${testId}-${contact.type}-${contact.id}`,
 							onEdit: this.onEditClient,
 							readOnly: this.isReadOnly(),
-							showClientInfo: this.isShowClientInfo(),
+							showClientInfo: this.isShowClientInfo(contact.hidden),
 							showClientType: this.isShowClientType(),
 							onOpenBackdrop: () => {
 								this.handleOnOpenBackDrop(contact);
@@ -765,7 +776,24 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				options.categoryId = categoryId;
 			}
 
+			if (this.hasHiddenEntities(selectorType))
+			{
+				if (selectorType === CRM_CONTACT)
+				{
+					options.idsForFilterContact = this.getItems(this.getConfig())[selectorType].map((contact) => contact.id);
+				}
+				else if (selectorType === CRM_COMPANY)
+				{
+					options.idsForFilterCompany = this.getItems(this.getConfig())[selectorType].map((contact) => contact.id);
+				}
+			}
+
 			return { options };
+		}
+
+		hasHiddenEntities(type)
+		{
+			return this.getValue()[type].find((entity) => entity.hidden);
 		}
 
 		isShowSelectorInDeal(selectorType)
@@ -774,7 +802,16 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			const isContact = selectorType === CRM_CONTACT;
 			const { [CRM_COMPANY]: companies } = this.getValue();
 
-			return isContact || (isCompany && !companies.some((company) => this.shouldShowClient(company)));
+			return (
+				(
+					isContact
+					|| (isCompany && !companies.some((company) => this.shouldShowClient(company)))
+				)
+				&& (
+					this.checkPermissions(selectorType, 'add')
+					|| this.checkPermissions(selectorType, 'update')
+				)
+			);
 		}
 
 		setEntityContacts(contacts)

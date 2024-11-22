@@ -24,7 +24,6 @@ return [
 	'js' => 'dist/todo-editor-v2.bundle.js',
 	'rel' => [
 		'ui.vue3',
-		'crm.ai.copilot-textarea',
 		'crm.timeline.tools',
 		'ui.analytics',
 		'location.core',
@@ -46,6 +45,7 @@ return [
 		'main.core.events',
 		'ui.entity-selector',
 		'ui.vue3.directives.hint',
+		'ui.text-editor',
 	],
 	'skip_core' => false,
 	'settings' => $settings,

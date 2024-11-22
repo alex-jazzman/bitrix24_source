@@ -41,6 +41,20 @@ export class CopilotAgreement
 
 	static #checkAgreementResult: boolean | null = null;
 
+	static getFullAgreementLink(): string
+	{
+		const zone = Extension.getSettings('ai.copilot-agreement').zone;
+
+		const linksByZone = {
+			ru: 'https://www.bitrix24.ru/about/terms-of-use-ai.php',
+			kz: 'https://www.bitrix24.kz/about/terms-of-use-ai.php',
+			by: 'https://www.bitrix24.by/about/terms-of-use-ai.php',
+			en: 'https://www.bitrix24.com/terms/bitrix24copilot-rules.php',
+		};
+
+		return linksByZone[zone] || linksByZone.en;
+	}
+
 	async checkAgreement(): Promise<boolean>
 	{
 		if (CopilotAgreement.#checkAgreementResult !== null && CopilotAgreement.#checkAgreementResult !== undefined)
@@ -147,7 +161,7 @@ export class CopilotAgreement
 					</p>
 					<p class="ai__copilot-agreement-popup-content_text">
 						${Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_2', {
-							'#LINK#': `<a target="_blank" href="${this.#getFullAgreementLink()}">`,
+							'#LINK#': `<a target="_blank" href="${CopilotAgreement.getFullAgreementLink()}">`,
 							'#/LINK#': '</a>',
 						})}
 					</p>
@@ -222,20 +236,6 @@ export class CopilotAgreement
 		{
 			button.setState(null);
 		}
-	}
-
-	#getFullAgreementLink(): string
-	{
-		const zone = Extension.getSettings('ai.copilot-agreement').zone;
-
-		const linksByZone = {
-			ru: 'https://www.bitrix24.ru/about/terms-of-use-ai.php',
-			kz: 'https://www.bitrix24.kz/about/terms-of-use-ai.php',
-			by: 'https://www.bitrix24.by/about/terms-of-use-ai.php',
-			en: 'https://www.bitrix24.com/terms/bitrix24copilot-rules.php',
-		};
-
-		return linksByZone[zone] || linksByZone.en;
 	}
 
 	async #acceptAgreement(): Promise<boolean>

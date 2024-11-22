@@ -13,6 +13,7 @@ $MESS['SEC_WWALL_DASHBOARD_STATUS_DESC_UNSEC_EMPTY_CP'] = 'Ваш корпора
 $MESS['SEC_WWALL_DASHBOARD_STATUS_UPD_SEC'] = 'Обновление установлено';
 $MESS['SEC_WWALL_DASHBOARD_STATUS_UPD_UNSEC'] = 'Обновить';
 $MESS['SEC_WWALL_DASHBOARD_STATUS_UPD_NEW_SEC'] = 'Что нового?';
+$MESS['SEC_WWALL_DASHBOARD_STATUS_UPD_HISTORY'] = 'https://dev.1c-bitrix.ru/docs/versions.php';
 $MESS['SEC_WWALL_DASHBOARD_HISTORY_TITLE'] = 'История защиты';
 $MESS['SEC_WWALL_DASHBOARD_HISTORY_TITLE_EMPTY'] = 'Здесь будут все отражённые атаки';
 $MESS['SEC_WWALL_DASHBOARD_HISTORY_OBJECT'] = 'Объект';

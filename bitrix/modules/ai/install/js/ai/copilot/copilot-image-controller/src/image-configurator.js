@@ -6,8 +6,13 @@ import './css/image-configurator.css';
 import { ImageConfiguratorStyles } from './image-configurator-styles';
 import { ImageConfiguratorParams } from './image-configurator-params';
 import type { ImageConfiguratorParamsCurrentValues } from './image-configurator-params-config';
+import type { ImageCopilotFormat, ImageCopilotStyle, EngineInfo } from 'ai.engine';
 
-type ImageConfiguratorOptions = {}
+export type ImageConfiguratorOptions = {
+	formats: ImageCopilotFormat[];
+	styles: ImageCopilotStyle[];
+	engines: EngineInfo[];
+}
 
 export type getParamsResult = {
 	style: string;
@@ -24,6 +29,15 @@ export class ImageConfigurator extends EventEmitter
 		super(options);
 
 		this.setEventNamespace('AI.Copilot.ImageConfigurator');
+
+		this.#imageConfiguratorStyles = new ImageConfiguratorStyles({
+			styles: options?.styles ?? [],
+		});
+
+		this.#imageConfiguratorParams = new ImageConfiguratorParams({
+			formats: options?.formats ?? [],
+			engines: options?.engines ?? [],
+		});
 	}
 
 	getParams(): getParamsResult
@@ -57,15 +71,11 @@ export class ImageConfigurator extends EventEmitter
 
 	#renderImageStyles(): HTMLElement
 	{
-		this.#imageConfiguratorStyles = new ImageConfiguratorStyles({});
-
 		return this.#imageConfiguratorStyles.render();
 	}
 
 	#renderImageParams(): HTMLElement
 	{
-		this.#imageConfiguratorParams = new ImageConfiguratorParams({});
-
 		return this.#imageConfiguratorParams.render();
 	}
 }

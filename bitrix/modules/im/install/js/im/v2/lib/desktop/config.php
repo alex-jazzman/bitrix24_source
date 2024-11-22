@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -14,14 +14,15 @@ return [
 		'im.v2.lib.call',
 		'im.v2.application.core',
 		'main.core.events',
+		'main.core',
 		'im.v2.lib.utils',
 		'im.v2.const',
-		'main.core',
 		'im.v2.lib.desktop-api',
 		'im.v2.lib.logger',
 	],
 	'skip_core' => false,
 	'settings' => [
-		'desktopIsActive' => CIMMessenger::CheckDesktopStatusOnline()
+		'desktopIsActive' => CIMMessenger::CheckDesktopStatusOnline(),
+		'desktopActiveVersion' => CIMMessenger::CheckDesktopStatusOnline() ? CIMMessenger::GetDesktopVersion() : 0
 	]
 ];

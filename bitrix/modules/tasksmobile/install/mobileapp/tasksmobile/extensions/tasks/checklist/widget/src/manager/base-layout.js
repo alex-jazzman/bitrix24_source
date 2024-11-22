@@ -13,6 +13,9 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 	 */
 	class ChecklistBaseLayout
 	{
+		/**
+		 * @param {ChecklistBottomSheetProps} props
+		 */
 		constructor(props)
 		{
 			this.props = props;
@@ -117,6 +120,11 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 		showMoreButton({ highlightMoreButton } = {})
 		{
 			const { onShowMoreMenu } = this.props;
+
+			if (!onShowMoreMenu)
+			{
+				return;
+			}
 
 			this.layoutWidget.setRightButtons([
 				{

@@ -6,4 +6,7 @@ export type DetailConfig = {
 	openLoginPopup: boolean,
 	canExport: 'Y' | 'N',
 	canEdit: 'Y' | 'N',
+	analyticSource: string,
+	embeddedDebugMode: boolean,
+	pdfExportEnabled: boolean,
 }

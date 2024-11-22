@@ -17,7 +17,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 	const { ButtonAdd, buttonAddItemType } = require('tasks/layout/checklist/list/src/buttons/button-add-item');
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
 	const { OptimizedListView } = require('layout/ui/optimized-list-view');
-	const { KeyboardHeightCalculator } = require('utils/keyboard');
 	const { makeAccomplicesFieldConfig, makeAuditorsFieldConfig } = require('tasks/layout/task/form-utils');
 
 	const IS_IOS = Application.getPlatform() === 'ios';
@@ -53,8 +52,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			this.checklistQueue = new ListViewQueueWorker();
 			/** @type {ChecklistActionsMenu} */
 			this.menuRef = null;
-			/** @type {KeyboardHeightCalculator} */
-			this.keyboardHeightCalculatorRef = null;
 
 			this.#initState(props);
 
@@ -372,11 +369,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 					renderItem: (item) => this.renderChecklistItem(item),
 				}),
 				this.renderMenu(),
-				KeyboardHeightCalculator({
-					ref: (ref) => {
-						this.keyboardHeightCalculatorRef = ref;
-					},
-				}),
 			);
 		}
 
@@ -966,17 +958,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		showToastNoRights = () => {
-			const keyboardHeight = IS_IOS ? this.keyboardHeightCalculatorRef.getHeight({
-				safeArea: true,
-				bottomMenu: true,
-			}) : 0;
-			const offset = keyboardHeight + this.menuRef.getHeight();
-
 			toastNoRights({
 				layoutWidget: this.getParentWidget(),
-				params: {
-					offset,
-				},
 			});
 		};
 

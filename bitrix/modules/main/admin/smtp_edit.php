@@ -115,12 +115,16 @@ function fillSmtpConfigurationFromPost(Main\Mail\Internal\Sender $configuration,
 
 	$preparedFields['OPTIONS'] = $options;
 
+	// shouldn't be set from the request
+	unset($preparedFields['IS_CONFIRMED']);
+
 	if (!empty(trim($request->getPost('password'))) || empty($options['smtp']['password']))
 	{
 		// check connection only if the password is from the request OR is stored empty
 		$checkFields = $preparedFields;
 		$checkFields['OPTIONS']['smtp']['password'] = trim($request->getPost('password'));
 		checkSmtp($checkFields, $errors);
+		$preparedFields['IS_CONFIRMED'] = $checkFields['IS_CONFIRMED'] ?? false;
 	}
 
 	foreach ($preparedFields as $field => $value)

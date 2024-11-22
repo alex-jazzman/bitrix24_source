@@ -31,6 +31,7 @@ Extension::load([
 
 $assets = Asset::getInstance();
 $assets->addJs('/bitrix/js/crm/progress_control.js');
+$assets->addJs('/bitrix/js/crm/dialog.js');
 $assets->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
 if ($this->getComponent()->getErrors())

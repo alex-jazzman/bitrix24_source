@@ -107,6 +107,10 @@
 	background-color: var(--ui-color-background-secondary, #edeef0);
 }
 
+.crm-timeline__card-logo.--orange {
+	background-color: var(--ui-color-palette-orange-20, #fff1d6);
+}
+
 .crm-timeline__card-logo_icon.--custom-bg > i{
 	mask-image: none;
 	background-color: transparent;

@@ -12,6 +12,7 @@ return [
 		'main.core',
 		'market.rating-stars',
 		'market.market-links',
+		'ui.forms',
 		'ui.design-tokens',
 	],
 	'skip_core' => false,

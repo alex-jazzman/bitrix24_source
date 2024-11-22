@@ -120,6 +120,7 @@ $MESS["CRM_KANBAN_PLUS_TITLE_DYNAMIC"] = "Швидкий елемент";
 $MESS["CRM_KANBAN_PLUS_TITLE_LEAD"] = "Швидкий лід";
 $MESS["CRM_KANBAN_PLUS_TITLE_QUOTE"] = "Швидка пропозиція";
 $MESS["CRM_KANBAN_PLUS_TITLE_QUOTE_MSGVER_1"] = "Швидка пропозиція";
+$MESS["CRM_KANBAN_PLUS_TITLE_SMART_B2E_DOC"] = "Кадровий документ";
 $MESS["CRM_KANBAN_PLUS_TITLE_SMART_INVOICE"] = "Швидкий рахунок";
 $MESS["CRM_KANBAN_POPUP_AT_LEAST_ONE_FIELD"] = "У формі має бути хоча б одне поле";
 $MESS["CRM_KANBAN_POPUP_CANCEL"] = "Скасувати";

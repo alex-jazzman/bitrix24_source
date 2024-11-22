@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 	const { Type } = require('type');
+	const { unique } = require('utils/array');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AppStatus, ComponentCode, EventType } = require('im/messenger/const');
@@ -48,6 +49,9 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			this.lastSyncTime = null;
 			this.status = AppStatus.sync;
 			this.backgroundTimerId = null;
+			this.addedMessageIds = new Set();
+			this.deletedChatIds = new Set();
+			this.deletedMessageIds = new Set();
 		}
 
 		get isSyncInProgress()
@@ -121,6 +125,10 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 		startBackgroundSyncInterval()
 		{
 			const backgroundSyncHandler = async () => {
+				if (Application.isBackground())
+				{
+					return;
+				}
 				logger.info('SyncService.backgroundSync: start background synchronization');
 
 				try
@@ -190,15 +198,41 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 		/**
 		 * @private
 		 */
-		emitStoredPullEvents()
+		async emitStoredPullEvents()
 		{
+			logger.log('SyncService.emitStoredPullEvents: pullEventQueue', [...this.pullEventQueue.queue]);
+
 			while (this.pullEventQueue.isEmpty() === false)
 			{
 				const {
 					params,
+					/** @type {PullExtraParams} */
 					extra,
 					command,
 				} = this.pullEventQueue.dequeue();
+
+				if (
+					this.status === AppStatus.sync
+					&& (command === 'messageChat' || command === 'message')
+				)
+				{
+					const messageId = params.message.id;
+
+					if (this.addedMessageIds.has(messageId))
+					{
+						continue;
+					}
+
+					if (this.deletedChatIds.has(params.chatId))
+					{
+						continue;
+					}
+
+					if (this.deletedMessageIds.has(messageId))
+					{
+						continue;
+					}
+				}
 
 				extra.fromSyncService = true;
 
@@ -246,6 +280,21 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 				await serviceLocator.get('core').getRepository().option.set(LAST_SYNC_SERVER_DATE_OPTION, lastServerDate);
 			}
 
+			if (Type.isArrayFilled(result.addedMessageIdList))
+			{
+				this.addedMessageIds = new Set([...this.addedMessageIds, ...result.addedMessageIdList]);
+			}
+
+			if (Type.isArrayFilled(result.deletedChatIdList))
+			{
+				this.deletedChatIds = new Set([...this.deletedChatIds, ...result.deletedChatIdList]);
+			}
+
+			if (Type.isArrayFilled(result.deletedChatIdList))
+			{
+				this.deletedMessageIds = new Set([...this.deletedMessageIds, ...result.deletedChatIdList]);
+			}
+
 			if (hasMore === true)
 			{
 				await this.loadChangelog({
@@ -287,6 +336,9 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			logger.warn(`SyncService: synchronization completed in ${this.lastSyncTime / 1000} seconds.`);
 			this.syncStartDate = null;
 			this.syncFinishDate = null;
+			this.addedMessageIds = new Set();
+			this.deletedChatIds = new Set();
+			this.deletedMessageIds = new Set();
 		}
 
 		/**

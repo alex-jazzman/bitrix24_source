@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.AI = this.BX.AI || {};
 this.BX.AI.UI = this.BX.AI.UI || {};

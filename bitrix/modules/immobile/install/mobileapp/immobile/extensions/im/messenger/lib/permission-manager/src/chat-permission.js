@@ -123,8 +123,10 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		getPermissionByChatType(chatType)
 		{
 			const chatPermissions = this.getChatPermissions();
+			// we can have a "user" type for "private" chats
+			const currentChatType = chatType === DialogType.user ? DialogType.private : chatType;
 
-			return chatPermissions.byChatType[chatType] ?? chatPermissions.byChatType[DialogType.default];
+			return chatPermissions.byChatType[currentChatType] ?? chatPermissions.byChatType[DialogType.default];
 		}
 
 		getActionGroupsByChatType(chatType)
@@ -493,6 +495,19 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.deleteOthersMessage];
+
+			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		isCanDeleteChat(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType[DialogActionType.delete];
 
 			return this.getRightByLowRole(installedMinimalRole);
 		}

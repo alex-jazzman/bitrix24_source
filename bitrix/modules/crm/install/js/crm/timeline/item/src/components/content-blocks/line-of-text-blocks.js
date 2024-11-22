@@ -4,6 +4,7 @@ export default {
 	props: {
 		blocks: Object,
 		delimiter: String,
+		button: Object,
 	},
 	mounted(): void
 	{
@@ -37,10 +38,16 @@ export default {
 				return [];
 			}
 
-			return Object.keys(this.blocks)
+			const blocks = Object.keys(this.blocks)
 				.map((id) => ({ id, ...this.blocks[id] }))
-				.filter((item) => (item.scope !== 'mobile'))
-			;
+				.filter((item) => (item.scope !== 'mobile'));
+
+			if (Type.isObject(this.button))
+			{
+				blocks.push({ id: 'button', ...this.button });
+			}
+
+			return blocks;
 		},
 		formattedDelimiter(): string
 		{

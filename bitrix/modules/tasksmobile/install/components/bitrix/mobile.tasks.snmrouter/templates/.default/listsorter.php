@@ -129,14 +129,14 @@ $gridId = "mobile_tasks_list_{$columnsContextId}";
 
 if (is_array($sortInOptions))
 {
-	$curOption = CUserOptions::GetOption("mobile.interface.grid", $gridId);
+	$curOption = CUserOptions::GetOption('mobile.interface.grid', $gridId);
 	$curOption = (is_array($curOption) ? $curOption : array());
-	$curOption["sort_order"] = reset($sortInOptions);
+	$curOption['sort_order'] = reset($sortInOptions);
 
-	if ($curOption["sort_by"] != key($sortInOptions))
+	if ($curOption['sort_by'] != key($sortInOptions))
 	{
-		$curOption["sort_by"] = key($sortInOptions);
-		CUserOptions::SetOption("mobile.interface.grid", $gridId, $curOption);
+		$curOption['sort_by'] = key($sortInOptions);
+		CUserOptions::SetOption('mobile.interface.grid', $gridId, $curOption);
 	}
 }
 

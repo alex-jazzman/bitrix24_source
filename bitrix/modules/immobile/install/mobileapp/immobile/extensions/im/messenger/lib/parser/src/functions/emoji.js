@@ -26,7 +26,14 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 
 			if (Type.isArray(files) && files.length > 0)
 			{
-				text = this.getTextForFile(text, files, showFilePrefix);
+				if (files.length === 1)
+				{
+					text = this.getTextForFile(text, files, showFilePrefix);
+				}
+				else
+				{
+					text = this.getTextForGallery(text);
+				}
 			}
 			else if (
 				attach === true
@@ -58,7 +65,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 		{
 			if (Type.isArray(files) && files.length > 0)
 			{
-				const [ firstFile ] = files;
+				const [firstFile] = files;
 				text = this.getEmojiTextForFile(text, firstFile, showFilePrefix);
 			}
 			else if (files === true)
@@ -108,6 +115,17 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			}
 		},
 
+		getTextForGallery(text)
+		{
+			const messageWithText = Type.isStringFilled(text) && text.replaceAll(/(\s|\n)/gi, '').length > 0;
+			if (messageWithText)
+			{
+				return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_GALLERY')}] ${text}`.trim();
+			}
+
+			return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_GALLERY')}]`;
+		},
+
 		getEmojiTextForFileType(text, type = FileEmojiType.file, showFilePrefix = true)
 		{
 			let result = text;
@@ -123,7 +141,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			{
 				result = showFilePrefix
 					? `${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE')}: ${iconText} ${text}`
-					: `${iconText} ${text}`
+					: `[${iconText}] ${text}`
 				;
 			}
 

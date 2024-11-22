@@ -13,11 +13,19 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('database-table--dialog');
 
+	/**
+	 * @extends {Table<DialogStoredData>}
+	 */
 	class DialogTable extends Table
 	{
 		getName()
 		{
 			return 'b_im_dialog';
+		}
+
+		getPrimaryKey()
+		{
+			return 'dialogId';
 		}
 
 		getFields()
@@ -54,6 +62,11 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 			];
 		}
 
+		/**
+		 * @param {Array<DialogId>} dialogIdList
+		 * @param shouldRestoreRows
+		 * @return {Promise<{items: Array<DialogStoredData>}>}
+		 */
 		async getListByDialogIds(dialogIdList, shouldRestoreRows = true)
 		{
 			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isArrayFilled(dialogIdList))
@@ -72,27 +85,6 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 			});
 
 			return this.convertSelectResultToGetListResult(result, shouldRestoreRows);
-		}
-
-		async deleteByIdList(idList)
-		{
-			if (!Feature.isLocalStorageEnabled || this.readOnly || !Type.isArrayFilled(idList))
-			{
-				return Promise.resolve({});
-			}
-
-			const dialogIdList = idList.map((id) => `'${id}'`).join(',');
-			const result = await this.executeSql({
-				query: `
-					DELETE
-					FROM ${this.getName()}
-					WHERE dialogId IN (${dialogIdList})
-				`,
-			});
-
-			logger.log('DialogTable.deleteByIdList complete: ', idList);
-
-			return result;
 		}
 
 		async deleteByChatIdList(idList)

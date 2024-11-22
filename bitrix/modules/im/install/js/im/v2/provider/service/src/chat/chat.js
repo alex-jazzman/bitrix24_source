@@ -1,3 +1,4 @@
+import { DeleteService } from './classes/delete';
 import { LoadService } from './classes/load';
 import { CreateService } from './classes/create';
 import { UpdateService } from './classes/update';
@@ -19,6 +20,7 @@ export class ChatService
 	#pinService: PinService;
 	#readService: ReadService;
 	#userService: UserService;
+	#deleteService: DeleteService;
 
 	constructor()
 	{
@@ -67,6 +69,11 @@ export class ChatService
 	{
 		return this.#createService.createChat(chatConfig);
 	}
+
+	createCollab(collabConfig): Promise<{ newDialogId: string, newChatId: number }>
+	{
+		return this.#createService.createCollab(collabConfig);
+	}
 	// endregion 'create'
 
 	// region 'update'
@@ -90,6 +97,13 @@ export class ChatService
 		return this.#updateService.getMemberEntities(chatId);
 	}
 	// endregion 'update'
+
+	// region 'delete'
+	deleteChat(dialogId: string): Promise
+	{
+		return this.#deleteService.deleteChat(dialogId);
+	}
+	// endregion 'delete'
 
 	// region 'rename'
 	renameChat(dialogId: string, newName: string): Promise
@@ -191,5 +205,6 @@ export class ChatService
 		this.#pinService = new PinService();
 		this.#readService = new ReadService();
 		this.#userService = new UserService();
+		this.#deleteService = new DeleteService();
 	}
 }

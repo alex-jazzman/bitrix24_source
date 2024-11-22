@@ -286,8 +286,8 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 					leftIcon: (completeActionMeta.getData().outlineIconContent ?? ''),
 					stretched: true,
 					testId: `${this.#testId}_ACTION_BUTTON_COMPLETE`,
-					onClick: () => {
-						completeActionMeta.handleAction({ taskId, layout: taskViewWidget });
+					onClick: async () => {
+						await completeActionMeta.handleAction({ taskId, layout: taskViewWidget });
 						onClose?.();
 					},
 				}),

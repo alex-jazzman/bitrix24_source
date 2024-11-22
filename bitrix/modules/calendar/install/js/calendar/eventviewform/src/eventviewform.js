@@ -136,41 +136,49 @@ export class EventViewForm {
 	{
 		return new Promise((resolve) => {
 			this.BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
-				analyticsLabel: {calendarAction: 'view_event', formType: 'full'},
 				data: {
 					entryId: this.entryId,
 					dateFrom: Util.formatDate(this.entryDateFrom),
-					timezoneOffset: this.timezoneOffset
-				}
-			}).then(response => {
+					timezoneOffset: this.timezoneOffset,
+				},
+				analytics: {
+					tool: 'im',
+					category: 'events',
+					event: 'view_card',
+					c_section: 'card_full',
+					p5: `eventId_${this.entryId}`,
+				},
+			}).then((response) => {
 				const viewEventSliderRoot = document.createElement('div');
 
 				if ((Type.isFunction(slider.isOpen) && slider.isOpen()) || slider.isOpen === true)
 				{
 					let params = response.data;
-					params.eventExists = !!(params.entry.ID);
+					params.eventExists = Boolean(params.entry.ID);
 					this.attendees = [];
+
 					for (const status in params.attendees)
 					{
 						this.attendees.push(...params.attendees[status]);
 					}
 
-					//load components' css and js
+					// load components' css and js
 					if (params.filesView)
 					{
 						this.loadComponentAssets(params.filesView);
 					}
+
 					if (params.crmView)
 					{
 						this.loadComponentAssets(params.crmView);
 						this.BX.ajax.runAction('calendar.api.calendareventviewform.getCrmView', {
-							data: { signedEvent: params.signedEvent }
+							data: { signedEvent: params.signedEvent },
 						});
 					}
 
-					//set vue component to slider
+					// set vue component to slider
 					this.app = BitrixVue.createApp(ViewEventSlider, {
-						params: params,
+						params,
 						reloadPlannerCallback: this.loadPlannerDataDebounce,
 						showUserListPopupCallback: this.showUserListPopupBind,
 					});
@@ -178,12 +186,12 @@ export class EventViewForm {
 
 					slider.sliderContent = viewEventSliderRoot;
 
-					//set local params
+					// set local params
 					this.userId = params.userId;
 					this.uid = params.id;
 					this.entryUrl = params.entryUrl;
 					this.userTimezone = params.userTimezone;
-					this.plannerFeatureEnabled = !!params.plannerFeatureEnabled;
+					this.plannerFeatureEnabled = Boolean(params.plannerFeatureEnabled);
 					if (this.planner && !this.plannerFeatureEnabled)
 					{
 						this.planner.lock();
@@ -193,8 +201,8 @@ export class EventViewForm {
 
 				resolve(viewEventSliderRoot);
 			},
-			response => {
-				if (response.errors && response.errors.length)
+			(response) => {
+				if (response.errors && response.errors.length > 0)
 				{
 					slider.getData().set(
 						"sliderContent",
@@ -382,10 +390,10 @@ export class EventViewForm {
 		if (
 			Type.isElementNode(this.DOM.videoCall)
 			&& this.entry
-			&& this.entry.data['PARENT_ID']
+			&& this.entry.data.PARENT_ID
 			&& (
-				this.entry.data['EVENT_TYPE'] === '#shared#'
-				|| this.entry.data['EVENT_TYPE'] === '#shared_crm#'
+				this.entry.data.EVENT_TYPE === '#shared#'
+				|| this.entry.data.EVENT_TYPE === '#shared_crm#'
 			)
 		)
 		{
@@ -415,11 +423,19 @@ export class EventViewForm {
 					entityId: this.entry.parentId,
 					entityData: {
 						dateFrom: Util.formatDate(this.entry.from),
-						parentId: this.entry.parentId
+						parentId: this.entry.parentId,
 					},
-					analyticsLabel: {
-						formType: 'full'
-					}
+					analytics: {
+						startVideoCall: {
+							tool: 'im',
+							category: 'events',
+							event: 'click_call',
+							type: 'group',
+							c_section: 'card_full',
+							c_sub_section: 'context_menu',
+							p5: `eventId_${this.entry.parentId}`,
+						},
+					},
 				},
 				callbacks: {
 					getUsersCount: () => this.attendees.length,
@@ -433,9 +449,9 @@ export class EventViewForm {
 		}
 	}
 
-	handleEntryData(entryData, userIndex, sectionData)
+	handleEntryData(data, userIndex, sectionData)
 	{
-		this.entry = new Entry({data: entryData, userIndex: userIndex});
+		this.entry = new Entry({ data, userIndex });
 		this.section = new CalendarSection(sectionData);
 
 		if (Type.isPlainObject(sectionData))
@@ -744,13 +760,22 @@ export class EventViewForm {
 	{
 		return this.BX.ajax.runAction('calendar.api.calendarajax.getConferenceChatId', {
 			data: {
-				eventId: this.entry.data['PARENT_ID'],
+				eventId: this.entry.data.PARENT_ID,
+			},
+			analytics: {
+				tool: 'im',
+				category: 'events',
+				event: 'click_call',
+				type: 'videoconf',
+				c_section: 'card_full',
+				c_sub_section: 'card',
+				p5: `eventId_${this.entry.parentId}`,
 			},
 		}).then(
 			(response) => {
 				if (top.window.BXIM && response.data && response.data.chatId)
 				{
-					top.BXIM.openMessenger('chat' + parseInt(response.data.chatId));
+					top.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
 
 					return null;
 				}

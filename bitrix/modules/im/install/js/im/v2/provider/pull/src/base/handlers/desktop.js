@@ -1,8 +1,8 @@
-import {Logger} from 'im.v2.lib.logger';
-import {DesktopManager} from 'im.v2.lib.desktop';
-import {CounterManager} from 'im.v2.lib.counter';
+import { Logger } from 'im.v2.lib.logger';
+import { DesktopManager } from 'im.v2.lib.desktop';
+import { CounterManager } from 'im.v2.lib.counter';
 
-import type {DesktopOnlineParams} from '../../types/desktop';
+import type { DesktopOnlineParams } from '../../types/desktop';
 
 export class DesktopPullHandler
 {
@@ -11,6 +11,7 @@ export class DesktopPullHandler
 		Logger.warn('DesktopPullHandler: handleDesktopOnline', params);
 		const desktopManager = DesktopManager.getInstance();
 		desktopManager.setDesktopActive(true);
+		desktopManager.setDesktopVersion(params.version);
 
 		CounterManager.getInstance().removeBrowserTitleCounter();
 	}
@@ -19,5 +20,6 @@ export class DesktopPullHandler
 	{
 		Logger.warn('DesktopPullHandler: handleDesktopOffline');
 		DesktopManager.getInstance().setDesktopActive(false);
+		DesktopManager.getInstance().setDesktopVersion(0);
 	}
 }

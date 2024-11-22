@@ -24,6 +24,8 @@ Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.info-helper',
+	'ui.analytics',
+	'crm.integration.analytics',
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
@@ -96,6 +98,7 @@ $APPLICATION->IncludeComponent(
 		],
 		[
 			'TYPE' => 'cancel',
+			'onclick' => $emitJsEvent('close'),
 		],
 	];
 	if (!$arResult['isNew'])

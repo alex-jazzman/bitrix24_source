@@ -4,7 +4,7 @@ import {
 	type RangeSelection,
 } from 'ui.lexical.core';
 
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 
 export function $getSelectionPosition(
 	editor: TextEditor,

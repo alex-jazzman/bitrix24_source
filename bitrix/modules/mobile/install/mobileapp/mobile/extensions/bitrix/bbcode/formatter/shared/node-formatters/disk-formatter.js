@@ -14,20 +14,26 @@ jn.define('bbcode/formatter/shared/node-formatters/disk-formatter', (require, ex
 			super({
 				name: 'disk',
 				validate: ({ node, data }) => {
-					const diskId = node.getAttribute('id').replace(/^n/, '');
 					if (Type.isArrayFilled(data.files))
 					{
+						const sourceFileId = node.getAttribute('id');
+						const fileId = sourceFileId.replace(/^n/, '');
+						const idPropName = sourceFileId.startsWith('n') ? 'objectId' : 'id';
+
 						return data.files.some((file) => {
-							return String(file.objectId) === String(diskId);
+							return String(file[idPropName]) === String(fileId);
 						});
 					}
 
 					return false;
 				},
 				convert({ node, data }) {
-					const fileId = node.getAttribute('id').replace(/^n/, '');
+					const sourceFileId = node.getAttribute('id');
+					const fileId = sourceFileId.replace(/^n/, '');
+					const idPropName = sourceFileId.startsWith('n') ? 'objectId' : 'id';
+
 					const file = data.files.find((fileOptions) => {
-						return String(fileOptions.id) === String(fileId);
+						return String(fileOptions[idPropName]) === String(fileId);
 					});
 
 					if (options.renderType === 'text')

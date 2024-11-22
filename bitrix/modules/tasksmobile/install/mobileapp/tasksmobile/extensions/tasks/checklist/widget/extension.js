@@ -10,16 +10,20 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 	const { ChecklistMoreMenu } = require('tasks/checklist/widget/src/more-menu');
 
 	/**
+	 * @typedef {Object} ChecklistWidgetProps
+	 * @property {object} [checklist]
+	 * @property {CheckListFlatTree} [parentWidget]
+	 * @property {boolean} [inLayout]
+	 * @property {number | string} [focusedItemId]
+	 * @property {boolean} [hideCompleted]
+	 * @property {boolean} [hideMoreMenu=false]
+	 *
 	 * @class ChecklistWidget
 	 */
 	class ChecklistWidget
 	{
 		/**
-		 * @param {object} props
-		 * @param {object} [props.checklist]
-		 * @param {CheckListFlatTree} [props.parentWidget]
-		 * @param {boolean} [props.inLayout]
-		 * @param {number | string} [props.focusedItemId]
+		 * @param {ChecklistWidgetProps} props
 		 * @return {Promise}
 		 */
 		static async open(props)
@@ -37,9 +41,7 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 
 			/** @type {Checklist} */
 			this.checklistComponent = null;
-
 			this.parentWidget = props.parentWidget;
-
 			this.menuMore = this.createMoreMenu();
 		}
 
@@ -64,7 +66,7 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 
 		async initialOpenPageManager()
 		{
-			const { parentWidget, inLayout, hideCompleted } = this.props;
+			const { parentWidget, inLayout, hideCompleted, hideMoreMenu } = this.props;
 
 			const checklistComponent = this.getChecklistComponent();
 			const layoutType = inLayout ? PAGE_LAYOUT : BOTTOM_SHEET;
@@ -77,7 +79,7 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 				onSave: this.handleOnSave,
 				onClose: this.handleOnClose,
 				component: checklistComponent,
-				onShowMoreMenu: this.handleOnShowMoreMenu,
+				onShowMoreMenu: hideMoreMenu ? null : this.handleOnShowMoreMenu,
 				highlightMoreButton: hideCompleted,
 			});
 

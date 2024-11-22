@@ -8,6 +8,7 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 	const { Loc } = require('loc');
 
 	const { MessengerToast, ToastType } = require('im/messenger/lib/ui/notification/messenger-toast');
+
 	/**
 	 * @class Notify
 	 */
@@ -47,6 +48,15 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 		static showOfflineToast(params, layoutWidget = null)
 		{
 			MessengerToast.showOfflineToast(params, layoutWidget);
+		}
+
+		/**
+		 * @param {?ShowToastParams} params
+		 * @param layoutWidget
+		 */
+		static showErrorToast(params = {}, layoutWidget = null)
+		{
+			MessengerToast.showErrorToast(params, layoutWidget);
 		}
 	}
 

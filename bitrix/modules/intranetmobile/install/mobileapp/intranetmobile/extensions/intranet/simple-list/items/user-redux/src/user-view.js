@@ -6,9 +6,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 	const { Indent, Color, Component } = require('tokens');
 	const { Loc } = require('loc');
 	const { showSafeToast } = require('toast');
-	const { OutlineIconTypes } = require('assets/icons/types');
 	const { Icon } = require('ui-system/blocks/icon');
-	const { outline: { mobile, desktop } } = require('assets/icons');
 	const { Text2, Text5, Text6 } = require('ui-system/typography/text');
 	const { ChipStatus, ChipStatusMode, ChipStatusDesign } = require('ui-system/blocks/chips/chip-status');
 	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
@@ -35,11 +33,11 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 			return View(
 				{
 					style: {
-						paddingTop: Indent.S.toNumber(),
-						paddingBottom: Indent.XL3.toNumber(),
-						borderTopColor: this.props.showBorder && Color.bgSeparatorPrimary.toHex(),
+						paddingTop: Indent.XS.toNumber(),
+						paddingBottom: Indent.XL2.toNumber(),
+						borderBottomColor: this.props.showBorder && Color.bgSeparatorPrimary.toHex(),
 						marginHorizontal: Component.paddingLr.toNumber(),
-						borderTopWidth: 1,
+						borderBottomWidth: 0.5,
 					},
 				},
 				this.isAwaitingResponse(requestStatus) && this.renderTransparentForeground(),
@@ -76,7 +74,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 
 		renderInfo()
 		{
-			const { fullName, isAdmin, workPosition, department } = this.props;
+			const { fullName, isAdmin, workPosition, department = [] } = this.props;
 			const departmentNames = Object.values(department).join(', ');
 
 			return View(
@@ -166,10 +164,10 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 
 		renderButtons()
 		{
-			const { employeeStatus, id } = this.props;
+			const { employeeStatus, id, personalMobile, personalPhone, canInvite } = this.props;
 			const isInvited = employeeStatus === EmployeeStatus.INVITED.getValue();
 
-			const menu = new ActionMenu({ userId: id });
+			const menu = new ActionMenu({ userId: id, canInvite });
 
 			return View(
 				{
@@ -179,9 +177,9 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 						alignSelf: 'flex-start',
 					},
 				},
-				Button({
+				(!isInvited || personalMobile || personalPhone) && Button({
 					size: ButtonSize.M,
-					leftIcon: isInvited ? Icon.PHONE_UP : Icon.MESSAGE,
+					leftIcon: isInvited ? Icon.PHONE_UP : Icon.CHATS,
 					leftIconColor: Color.base4,
 					backgroundColor: Color.bgContentPrimary,
 					onClick: isInvited ? this.openPhoneMenu : this.openChat,
@@ -324,7 +322,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 					text: Loc.getMessage('M_INTRANET_USER_STATUS_DESKTOP_INSTALLED'),
 					mode: ChipButtonMode.OUTLINE,
 					design: isDesktopInstalled ? ChipButtonDesign.PRIMARY : ChipButtonDesign.GREY,
-					icon: OutlineIconTypes.desktop,
+					icon: Icon.SCREEN,
 					onClick: this.openInviteToInstallDesktopApp,
 					compact: true,
 					style: {
@@ -358,7 +356,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 				{
 					...this.getToastParams(),
 					message,
-					svg: { content: mobile() },
+					icon: Icon.MOBILE,
 				},
 				layout,
 			);
@@ -373,7 +371,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 				{
 					...this.getToastParams(),
 					message,
-					svg: { content: desktop() },
+					icon: Icon.SCREEN,
 				},
 				layout,
 			);

@@ -24,15 +24,8 @@
 	line-height: inherit;
 }
 
-.crm-activity__todo-editor-v2_container {
-	border: var(--ui-border-width-thin) solid var(--ui-color-base-10);
-	border-radius: var(--crm-activity__todo-editor-v2-border-radius);
-	outline: none;
-}
-
-.crm-activity__todo-editor-v2_container:focus-within {
-	outline: none;
-	border-color: var(--ui-color-palette-blue-50);
+.crm-activity__todo-editor-v2_editor {
+	position: relative;
 }
 
 .crm-activity__todo-editor-v2_container:focus-within .crm-activity__todo-editor-v2_deadline-pill {
@@ -40,21 +33,22 @@
 }
 
 .crm-activity__todo-editor-v2_header {
-	opacity: 0;
-	padding: 11px 14px 0 14px;
+	opacity: 1;
+	padding: 11px 14px 11px 14px;
 	position: relative;
 	min-height: 20px;
-	display: none;
+	display: flex;
+	align-items: center;
 	justify-content: end;
 }
 
-.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_header {
+/*.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_header {
 	display: flex;
 	animation-name: crm-activity__todo-editor-v2_block__fade-in;
 	animation-duration: 450ms;
 	animation-iteration-count: 1;
 	animation-fill-mode: both;
-}
+}*/
 
 .crm-activity__todo-editor-v2_responsible-user-selector {
 	transition: opacity .2s linear;
@@ -62,6 +56,12 @@
 
 .crm-activity__todo-editor-v2_responsible-user-selector:hover {
 	opacity: var(--ui-opacity-80);
+}
+
+.crm-activity__todo-editor-v2_header .crm-activity__todo-editor-v2_responsible-user-selector i {
+	height: 20px;
+	width: 20px;
+	padding-top: 0;
 }
 
 .crm-activity__todo-editor-v2_body {
@@ -93,7 +93,7 @@
 }
 
 .crm-activity__todo-editor-v2_input_control.--title {
-	color: var(--ui-color-palette-gray-80);
+	color: var(--ui-typography-color-text);
 	padding: 0;
 	min-height: auto !important;
 	height: var(--ui-size-lg);
@@ -115,18 +115,15 @@
 }
 
 .crm-activity__todo-editor-v2_tools {
-	display: none;
+	display: flex;
+	align-items: flex-end;
+	padding-top: 8px;
 	padding-bottom: 8px;
 }
 
 .crm-activity__todo-editor-v2_left_tools {
 	width: 75%;
 	display: flex;
-}
-
-.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_tools {
-	display: flex;
-	align-items: flex-end;
 }
 
 .crm-activity__todo-editor-v2_deadline {
@@ -257,6 +254,7 @@
 	background: none;
 	border-radius: var(--ui-border-radius-sm);
 	padding: 0 var(--ui-space-inset-xs2);
+	z-index: 10;
 }
 
 .crm-activity__todo-show-actions-popup-button:hover {
@@ -327,11 +325,20 @@
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='17' height='17' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M4.389 4.861a1 1 0 011-1h5.974a1 1 0 011 1v6.173a1 1 0 01-1 1H9.668v1.598a.5.5 0 01-.705.456l-3.983-1.789a1 1 0 01-.59-.912V4.86zm5.278 6.216V6.555A.5.5 0 009.37 6.1L6.52 4.819h4.657a.3.3 0 01.3.3v5.658a.3.3 0 01-.3.3h-1.51z' fill='%23525C69'/%3E%3C/svg%3E");
 }
 
-.crm-activity__todo-editor-v2_block-header-action {
+.crm-activity__todo-editor-v2_block-header-action,
+.crm-activity__todo-editor-v2_block-subheader-action {
 	font-size: var(--ui-font-size-sm);
-	margin-left: var(--ui-space-inset-2xs2);
 	cursor: pointer;
 	color: var(--ui-color-palette-gray-40);
+}
+
+.crm-activity__todo-editor-v2_block-header-action {
+	margin-left: var(--ui-space-inset-2xs2);
+}
+
+.crm-activity__todo-editor-v2_block-subheader-action {
+	margin-left: calc(20px + var(--ui-space-inset-2xs2));
+	border-bottom: var(--ui-border-width-thin) var(--ui-color-palette-gray-40) var(--ui-text-decoration-style-dashed);
 }
 
 .crm-activity__todo-editor-v2_block-header-close {
@@ -339,7 +346,7 @@
 	width: 24px;
 	height: 24px;
 	right: 0;
-	top: -4px;
+	top: -2px;
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.059 8l.941.941L8.941 16 8 15.059 15.059 8z' fill='%23959CA4'/%3E%3Cpath d='M8 8.941L8.941 8 16 15.059l-.941.94L8 8.942z' fill='%23959CA4'/%3E%3C/svg%3E");
 	cursor: pointer;
 }
@@ -434,16 +441,29 @@
 
 .crm-activity__todo-editor-v2_color-selector {
 	margin-right: 11px;
-	margin-top: 4px;
 	width: 12px;
 	height: 12px;
 }
 
-
 .crm-activity__todo-editor-v2_block-header.--skeleton {
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns:xlink='http://www.w3.org/1999/xlink' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100%25 20' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:20' fill='none'%3E%3Csvg height='20' id='d'%3E%3Cdefs%3E%3Cg id='a' fill='%23ecedee'%3E%3Crect x='28' y='6' width='181' height='8' rx='2'/%3E%3Ccircle cx='10' cy='10' r='10'/%3E%3C/g%3E%3C/defs%3E%3Cuse xlink:href='%23a'/%3E%3C/svg%3E%3Crect id='e' width='100%25' fill='url(%23b)' mask='url(%23c)' height='20'/%3E%3Cmask id='c' fill='%23fff'%3E%3Cuse xlink:href='%23d'/%3E%3C/mask%3E%3ClinearGradient x1='66.6%25' y1='50%25' x2='33.3%25' y2='50%25' id='b'%3E%3Cstop stop-opacity='0' offset='0%25'/%3E%3Cstop stop-opacity='.07' offset='50%25'/%3E%3Cstop stop-opacity='0' offset='100%25'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23e' attributeName='x' from='-100%25' to='100%25' dur='1s' begin='0s' repeatCount='indefinite'/%3E%3C/svg%3E") no-repeat;
 	display: block;
-	height:20px;
+	height: 20px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container.--skeleton {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns:xlink='http://www.w3.org/1999/xlink' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100%25 20' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:20' fill='none'%3E%3Csvg height='20' id='d'%3E%3Cdefs%3E%3Crect y='6' width='181' height='10' rx='2' fill='%23ecedee' id='a'/%3E%3C/defs%3E%3Cuse xlink:href='%23a'/%3E%3C/svg%3E%3Crect id='e' width='100%25' fill='url(%23b)' mask='url(%23c)' height='20'/%3E%3Cmask id='c' fill='%23fff'%3E%3Cuse xlink:href='%23d'/%3E%3C/mask%3E%3ClinearGradient x1='66.6%25' y1='50%25' x2='33.3%25' y2='50%25' id='b'%3E%3Cstop stop-opacity='0' offset='0%25'/%3E%3Cstop stop-opacity='.07' offset='50%25'/%3E%3Cstop stop-opacity='0' offset='100%25'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23e' attributeName='x' from='-100%25' to='100%25' dur='1s' begin='0s' repeatCount='indefinite'/%3E%3C/svg%3E") no-repeat;
+	height: 20px;
+	width: 100px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container span+span {
+	opacity: 0;
 }
 
 .crm-activity__todo-editor-v2-actions-menu-item.--locked {

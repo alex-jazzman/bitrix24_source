@@ -1,6 +1,5 @@
 import { ReactionsModelState } from './messages/reactions';
 import {MessengerModel, PayloadData} from "./base";
-import {channelChatId, commentChatId, CommentInfo, commentMessageId} from "./comment";
 import {DialogType} from "./dialogues";
 import {KeyboardButtonConfig} from "./messages/keyboard";
 

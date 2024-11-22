@@ -20,6 +20,7 @@ jn.define('text-editor/components/text-input', (require, exports, module) => {
 		 *         [key: string]: any,
 		 *     },
 		 *     autoFocus?: boolean,
+		 *     allowBBCode?: boolean,
 		 *     placeholder?: string,
 		 *     onLinkClick?: () => void,
 		 * }}
@@ -220,6 +221,7 @@ jn.define('text-editor/components/text-input', (require, exports, module) => {
 				keyboardType: 'default',
 				multiline: true,
 				focus: this.state.autoFocus,
+				showBBCode: !this.props.allowBBCode,
 				style: {
 					...this.state.style,
 					flex: 1,

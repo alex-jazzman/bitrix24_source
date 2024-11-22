@@ -1,5 +1,5 @@
 import { type Role, type Engine, type GetToolingResultData, Text as PayloadText, type Prompt } from 'ai.engine';
-import { Dom, Type, Loc, Runtime, Extension } from 'main.core';
+import { Dom, Type, Loc, Runtime, ajax } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
 import type { CopilotInput, CopilotInputEvents, CopilotMenu, CopilotMenuEvents, CopilotMenuItem, CopilotResult } from 'ai.copilot';
@@ -8,6 +8,7 @@ import { type CopilotMenuItemRoleInfo } from '../../src/copilot-menu/copilot-men
 import type { CopilotWarningResultField } from '../../src/copilot-warning-result-field';
 import { CopilotTextControllerEngine } from './copilot-text-controller-engine';
 import type { RolesDialog as RolesDialogType, RolesDialogOptions, SelectRoleEventDataType } from 'ai.roles-dialog';
+import type { PromptMasterPopup as PromptMasterPopupType } from 'ai.prompt-master';
 
 import { EditResultCommand, OpenFeedbackFormCommand } from './menu-item-commands/index';
 import { CopilotErrorMenuItems } from './menu-items/copilot-error-menu-items';
@@ -16,6 +17,7 @@ import { CopilotResultMenuItems } from './menu-items/copilot-result-menu-items';
 import type { EngineInfo } from './types/engine-info';
 import { CopilotGeneralMenuItems } from './menu-items/copilot-general-menu-items';
 import { AjaxErrorHandler } from 'ai.ajax-error-handler';
+import { UI } from 'ui.notification';
 
 export * from './menu-item/index';
 export {
@@ -37,6 +39,7 @@ type CopilotTextControllerOptions = {
 	copilotMenu: CopilotMenu;
 	copilotMenuEvents: CopilotMenuEvents;
 	analytics: CopilotAnalytics;
+	showResultInCopilot: ?boolean;
 }
 
 export class CopilotTextController extends EventEmitter
@@ -48,7 +51,7 @@ export class CopilotTextController extends EventEmitter
 	#category: string;
 	#readonly: boolean;
 	#selectedEngineCode: string;
-	#selectedPromptCodeWithSimpleTemplate: string;
+	#selectedPromptCodeWithSimpleTemplate: ?string = null;
 	#generalMenu: CopilotMenu;
 	#resultMenu: CopilotMenu;
 	#errorMenu: CopilotMenu;
@@ -66,6 +69,7 @@ export class CopilotTextController extends EventEmitter
 	#analytics: CopilotAnalytics;
 	#currentRole: Role;
 	#rolesDialog: RolesDialogType;
+	#showResultInCopilot: ?boolean;
 
 	#inputFieldContainerClickEventHandler: Function;
 	#inputFieldSubmitEventHandler: Function;
@@ -95,6 +99,7 @@ export class CopilotTextController extends EventEmitter
 		this.#CopilotMenu = options.copilotMenu;
 		this.#copilotMenuEvents = options.copilotMenuEvents;
 		this.#analytics = options.analytics;
+		this.#showResultInCopilot = options.showResultInCopilot;
 
 		this.#inputFieldContainerClickEventHandler = this.#handleInputContainerClickEvent.bind(this);
 		this.#inputFieldSubmitEventHandler = this.#handleInputFieldSubmitEvent.bind(this);
@@ -149,6 +154,18 @@ export class CopilotTextController extends EventEmitter
 	setSelectedEngine(engineCode: string): void
 	{
 		this.#setSelectedEngine(engineCode);
+	}
+
+	setExtraMarkers(extraMarkers: Object = {}): void
+	{
+		const payload = this.#engine?.getPayload() || new PayloadText();
+
+		payload.setMarkers({
+			...payload.getMarkers(),
+			...extraMarkers,
+		});
+
+		this.#engine.setPayload(payload);
 	}
 
 	async init(): void
@@ -244,24 +261,14 @@ export class CopilotTextController extends EventEmitter
 		return this.#generalMenu?.contains(elem) || this.#errorMenu?.contains(elem) || this.#resultMenu?.contains(elem);
 	}
 
-	generateWithRequiredUserMessage(commandCode: string): void
+	generateWithRequiredUserMessage(commandCode: string, promptText: string): void
 	{
-		this.#setEnginePayload({
-			command: commandCode,
-			markers: {
-				originalMessage: this.#selectedText || this.#context,
-				userMessage: this.#inputField.getValue(),
-			},
-		});
+		if (promptText)
+		{
+			this.#inputField.setHtmlContent(promptText);
+		}
 
 		this.setSelectedPromptCodeWithSimpleTemplate(commandCode);
-
-		const prompt = this.#getPromptByCode(this.#getTooling().prompts, commandCode);
-
-		if (prompt)
-		{
-			this.#inputField.setHtmlContent(prompt.text);
-		}
 
 		this.#inputField.focus(true);
 	}
@@ -312,6 +319,45 @@ export class CopilotTextController extends EventEmitter
 		this.#subscribeToInputFieldEvents();
 	}
 
+	async updateGeneralMenuPrompts(): void
+	{
+		try
+		{
+			this.#generalMenu?.setLoader();
+
+			const res = await this.#engine.getTooling('text');
+
+			CopilotTextController.#toolingDataByCategory[this.#category] = res;
+
+			const { promptsOther, promptsSystem, promptsFavorite, engines, permissions } = res.data;
+
+			const items = CopilotGeneralMenuItems.getMenuItems({
+				userPrompts: promptsOther,
+				systemPrompts: promptsSystem,
+				favouritePrompts: promptsFavorite,
+				engines,
+				selectedEngineCode: this.#selectedEngineCode,
+				canEditSettings: permissions.can_edit_settings === true,
+				copilotTextController: this,
+				addImageMenuItem: this.#addImageMenuItem,
+			});
+
+			this.#generalMenu?.updateMenuItemsExceptRoleItem(items);
+		}
+		catch (e)
+		{
+			console.error(e);
+			UI.Notification.Center.notify({
+				id: 'update-copilot-menu-error',
+				content: Loc.getMessage('AI_COPILOT_UPDATE_MENU_ERROR'),
+			});
+		}
+		finally
+		{
+			this.#generalMenu?.removeLoader();
+		}
+	}
+
 	isFirstLaunch(): boolean
 	{
 		return this.#getTooling().first_launch;
@@ -327,6 +373,7 @@ export class CopilotTextController extends EventEmitter
 	reset(): void
 	{
 		this.#selectedText = '';
+		this.#selectedPromptCodeWithSimpleTemplate = null;
 		this.#context = '';
 		this.#currentGenerateRequestId = -1;
 		this.#resultStack = [];
@@ -341,7 +388,7 @@ export class CopilotTextController extends EventEmitter
 
 	isPromptsLoaded(): boolean
 	{
-		return Boolean(this.#getTooling()?.prompts);
+		return Boolean(this.#getTooling()?.promptsOther);
 	}
 
 	clearResultField(): void
@@ -482,7 +529,7 @@ export class CopilotTextController extends EventEmitter
 		}
 
 		this.#setEnginePayload({
-			command: this.#selectedPromptCodeWithSimpleTemplate || 'zero_prompt',
+			command: 'zero_prompt',
 			markers: {
 				userMessage: userPrompt,
 				originalMessage: this.#selectedText || this.#context || '',
@@ -512,7 +559,13 @@ export class CopilotTextController extends EventEmitter
 
 	#initGeneralMenu()
 	{
-		const { prompts, engines, permissions } = this.#getTooling();
+		const {
+			promptsOther: userPrompts,
+			promptsSystem: systemPrompts,
+			promptsFavorite: favouritePrompts,
+			engines,
+			permissions,
+		} = this.#getTooling();
 
 		this.#generalMenu = new this.#CopilotMenu({
 			roleInfo: this.#getRoleInfoForMenu({
@@ -520,7 +573,9 @@ export class CopilotTextController extends EventEmitter
 				subtitle: Loc.getMessage('AI_COPILOT_GENERAL_MENU_ROLE_SUBTITLE'),
 			}),
 			items: CopilotGeneralMenuItems.getMenuItems({
-				prompts,
+				userPrompts,
+				systemPrompts,
+				favouritePrompts,
 				engines,
 				selectedEngineCode: this.#selectedEngineCode,
 				canEditSettings: permissions.can_edit_settings === true,
@@ -537,6 +592,13 @@ export class CopilotTextController extends EventEmitter
 
 		});
 
+		this.#generalMenu.subscribe('set-favourite', async (e: BaseEvent) => {
+			const isFavourite = e.getData().isFavourite;
+			const promptCode = e.getData().promptCode;
+
+			await this.setPromptIsFavourite(promptCode, isFavourite);
+		});
+
 		this.#generalMenu.subscribe(this.#copilotMenuEvents.clearHighlight, () => {
 			this.#generalMenu?.disableArrowsKey();
 			this.#inputField.enableEnterAndArrows();
@@ -546,6 +608,107 @@ export class CopilotTextController extends EventEmitter
 			this.#generalMenu?.enableArrowsKey();
 			this.#inputField.disableEnterAndArrows();
 		});
+	}
+
+	async setPromptIsFavourite(promptCode: string, isFavourite: string): void
+	{
+		try
+		{
+			this.#setMenuItemPromptIsFavourite(promptCode, isFavourite);
+
+			const data = new FormData();
+			data.append('promptCode', promptCode);
+
+			const action = isFavourite ? 'addInFavoriteList' : 'deleteFromFavoriteList';
+
+			await ajax.runAction(`ai.prompt.${action}`, {
+				data,
+			});
+		}
+		catch (error)
+		{
+			const prompts = [...this.#getTooling().promptsOther, ...this.#getTooling().promptsSystem];
+			const searchPrompt: Prompt | undefined = this.#getPromptByCode(prompts, promptCode);
+
+			const message = isFavourite
+				? Loc.getMessage('AI_COPILOT_ADD_PROMPT_TO_FAVOURITE_ERROR', { '#NAME#': searchPrompt.title })
+				: Loc.getMessage('AI_COPILOT_REMOVE_PROMPT_FROM_FAVOURITE_ERROR', { '#NAME#': searchPrompt.title })
+			;
+
+			UI.Notification.Center.notify({
+				id: `set-favourite-error-${searchPrompt.code}`,
+				content: message,
+				autoHide: true,
+			});
+
+			this.#setMenuItemPromptIsFavourite(promptCode, !isFavourite);
+			console.error(error);
+		}
+	}
+
+	#setMenuItemPromptIsFavourite(promptCode: string, isFavourite: string): void
+	{
+		if (isFavourite)
+		{
+			this.#setMenuItemPromptFavourite(promptCode);
+		}
+		else
+		{
+			this.#unsetMenuItemPromptFavourite(promptCode);
+		}
+	}
+
+	#setMenuItemPromptFavourite(promptCode: string): void
+	{
+		const prompts = [...this.#getTooling().promptsOther, ...this.#getTooling().promptsSystem];
+		const searchPrompt: Prompt | undefined = this.#getPromptByCode(prompts, promptCode);
+
+		if (this.#getTooling().promptsFavorite.length === 0)
+		{
+			this.#generalMenu.insertItemAfterRole(CopilotGeneralMenuItems.getFavouritePromptsSeparatorMenuItem());
+		}
+
+		this.#getTooling().promptsFavorite.push(searchPrompt);
+		searchPrompt.isFavorite = true;
+
+		const copilotMenuItem = CopilotGeneralMenuItems.getMenuItem(searchPrompt, prompts, this, true);
+
+		this.#generalMenu.insertItemAfter(
+			CopilotGeneralMenuItems.getFavouritePromptsSeparatorMenuItem().code,
+			copilotMenuItem,
+		);
+		this.#generalMenu.setItemIsFavourite(this.getMenuItemCodeFromPrompt(promptCode), true);
+	}
+
+	#unsetMenuItemPromptFavourite(promptCode: string): void
+	{
+		const prompts = [...this.#getTooling().promptsOther, ...this.#getTooling().promptsSystem];
+		const searchPrompt: Prompt | undefined = this.#getPromptByCode(prompts, promptCode);
+
+		searchPrompt.isFavorite = false;
+		const searchPromptIndexInFavouriteList = this.#getTooling().promptsFavorite.findIndex((prompt) => {
+			return prompt.code === searchPrompt.code;
+		});
+
+		this.#getTooling().promptsFavorite.splice(searchPromptIndexInFavouriteList, 1);
+
+		if (this.#getTooling().promptsFavorite.length === 0)
+		{
+			this.#generalMenu.removeItem(CopilotGeneralMenuItems.getFavouritePromptsSeparatorMenuItem().code);
+		}
+
+		this.#generalMenu.removeItem(this.getMenuItemCodeFromFavouritePrompt(promptCode));
+		this.#generalMenu.setItemIsFavourite(this.getMenuItemCodeFromPrompt(promptCode), false);
+	}
+
+	getMenuItemCodeFromPrompt(promptCode: string): string
+	{
+		return promptCode;
+	}
+
+	getMenuItemCodeFromFavouritePrompt(promptCode: string): string
+	{
+		return `${promptCode}:favourite`;
 	}
 
 	async #showRolesDialog(): Promise<void>
@@ -628,11 +791,13 @@ export class CopilotTextController extends EventEmitter
 			roleCode: this.#useRole() ? this.#currentRole?.code : undefined,
 		});
 
+		const oldPayloadMarkers = this.#engine.getPayload()?.getMarkers() ?? {};
+
 		payload.setMarkers({
+			...oldPayloadMarkers,
 			original_message: this.#isCommandRequiredContextMessage(command) ? originalMessage : undefined,
 			user_message: this.#isCommandRequiredUserMessage(command) ? userMessage : undefined,
 			current_result: this.#resultStack,
-			// role: this.#useRole() ? this.#currentRole?.code : undefined,
 		});
 
 		this.#engine.setPayload(payload);
@@ -649,7 +814,7 @@ export class CopilotTextController extends EventEmitter
 
 	#isCommandRequiredUserMessage(commandCode): boolean
 	{
-		const prompts = this.#getTooling().prompts;
+		const prompts = [...this.#getTooling().promptsOther, ...this.#getTooling().promptsSystem];
 		const searchPrompt: Prompt | undefined = this.#getPromptByCode(prompts, commandCode);
 
 		if (!searchPrompt)
@@ -657,12 +822,12 @@ export class CopilotTextController extends EventEmitter
 			return false;
 		}
 
-		return searchPrompt.required.user_message;
+		return searchPrompt.required.user_message || searchPrompt.type === 'simpleTemplate';
 	}
 
 	#isCommandRequiredContextMessage(commandCode): boolean
 	{
-		const prompts = this.#getTooling().prompts;
+		const prompts = [...this.#getTooling().promptsOther, ...this.#getTooling().promptsSystem];
 		const searchPrompt: Prompt | undefined = this.#getPromptByCode(prompts, commandCode);
 
 		if (!searchPrompt)
@@ -741,7 +906,11 @@ export class CopilotTextController extends EventEmitter
 
 			this.#generationResultText = res.data.result;
 
-			if (this.#selectedText || this.#readonly)
+			if (
+				this.#showResultInCopilot === true
+				|| (this.#showResultInCopilot === undefined && this.#selectedText)
+				|| this.#readonly
+			)
 			{
 				this.#resultField?.clearResult();
 				this.#resultField?.addResult(this.#generationResultText);
@@ -986,12 +1155,12 @@ export class CopilotTextController extends EventEmitter
 
 	#useRole(): boolean
 	{
-		return Extension.getSettings('ai.copilot.copilot-text-controller').hasRoleSelect === true;
+		return this.isReadonly() === false;
 	}
 
 	#getResultMenuItems(): CopilotMenuItem[]
 	{
-		const prompts = this.#getTooling().prompts;
+		const prompts = this.#getTooling().promptsOther;
 
 		if (this.#readonly)
 		{
@@ -1009,6 +1178,7 @@ export class CopilotTextController extends EventEmitter
 			copilotTextController: this,
 			inputField: this.#inputField,
 			copilotContainer: this.#copilotContainer,
+			showResultInCopilot: this.#showResultInCopilot,
 		}, this.#category);
 	}
 
@@ -1073,6 +1243,35 @@ export class CopilotTextController extends EventEmitter
 		}
 
 		return this.#analytics;
+	}
+
+	async showPromptMasterPopup(): void
+	{
+		const { PromptMasterPopup, PromptMasterPopupEvents } = await Runtime.loadExtension('ai.prompt-master');
+
+		const popup: PromptMasterPopupType = new PromptMasterPopup({
+			masterOptions: {
+				prompt: this.#inputField.getValue(),
+			},
+			popupEvents: {
+				onPopupShow: () => {
+					this.emit('prompt-master-show');
+					this?.#resultMenu?.disableArrowsKey();
+				},
+				onPopupDestroy: () => {
+					this.emit('prompt-master-destroy');
+				},
+			},
+			analyticFields: {
+				c_section: this.#category,
+			},
+		});
+
+		popup.subscribe(PromptMasterPopupEvents.SAVE_SUCCESS, () => {
+			this.updateGeneralMenuPrompts();
+		});
+
+		popup.show();
 	}
 }
 

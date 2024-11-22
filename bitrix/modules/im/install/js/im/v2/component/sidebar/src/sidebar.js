@@ -11,7 +11,7 @@ import './css/sidebar.css';
 
 import type { JsonObject } from 'main.core';
 
-type SidebarPanelType = $Keys<typeof SidebarDetailBlock>;
+type SidebarPanelType = $Values<typeof SidebarDetailBlock>;
 
 // @vue/component
 export const ChatSidebar = {

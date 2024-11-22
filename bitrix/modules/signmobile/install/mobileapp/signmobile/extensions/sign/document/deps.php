@@ -9,6 +9,7 @@ return [
 		'notify-manager',
 		'sign:dialog/banners/responsemobile',
 		'sign:dialog/banners/refusedjustnow',
+		'sign:dialog/banners/external',
 		'sign:connector',
 		'sign:dialog/banners/template',
 	],

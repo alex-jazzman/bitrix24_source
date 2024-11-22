@@ -8,10 +8,10 @@ import { Quote } from 'im.v2.lib.quote';
 import { FadeAnimation } from 'im.v2.component.animation';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { FeatureManager } from 'im.v2.lib.feature';
+import { MessageComponentManager } from 'im.v2.lib.message-component-manager';
 
 import { DialogStatus } from 'im.v2.component.elements';
 import { DialogLoader } from './components/dialog-loader';
-import { MessageComponentManager } from './classes/message-component-manager';
 import { AvatarMenu } from './classes/avatar-menu';
 import { MessageMenu } from './classes/message-menu';
 import { ObserverManager } from './classes/observer-manager';
@@ -36,7 +36,6 @@ import type { ImModelChat, ImModelMessage, ImModelUser } from 'im.v2.model';
 export { AuthorGroup } from './components/block/author-group';
 export { MessageComponents } from './utils/message-components';
 export { CollectionManager } from './classes/collection-manager/collection-manager';
-export { MessageComponentManager } from './classes/message-component-manager';
 
 // @vue/component
 export const MessageList = {

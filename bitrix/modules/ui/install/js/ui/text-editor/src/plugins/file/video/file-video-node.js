@@ -151,9 +151,10 @@ export class FileVideoNode extends DecoratorNode
 	createDOM(config: EditorConfig, editor: LexicalEditor): HTMLSpanElement
 	{
 		const div = document.createElement('span');
-		if (Type.isStringFilled(config?.theme?.file?.video))
+
+		if (Type.isStringFilled(config?.theme?.video?.container))
 		{
-			Dom.addClass(div, config.theme.file.video);
+			Dom.addClass(div, config.theme.video.container);
 		}
 
 		return div;

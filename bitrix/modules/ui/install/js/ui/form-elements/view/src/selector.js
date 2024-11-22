@@ -45,8 +45,11 @@ export class Selector extends BaseField
 
 	setHint(key: string): void
 	{
-		const moreElement = this.renderMoreElement(this.getHelpdeskCode()).outerHTML;
-		const more = !Type.isNil(this.getHelpdeskCode()) ? moreElement : '';
+		const more = (
+			Type.isNil(this.getHelpdeskCode())
+				? ''
+				: this.renderMoreElement(this.getHelpdeskCode()).outerHTML
+		);
 
 		const hint = this.getHint(key);
 		this.#hintTitleElement.innerText = !Type.isNil(hint) ? this.#hintTitle : '';

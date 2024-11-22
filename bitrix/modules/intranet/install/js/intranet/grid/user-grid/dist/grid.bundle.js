@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_label,ui_dialogs_messagebox,ui_formElements_field,ui_cnt,intranet_reinvite,main_core,ui_iconSet_main,ui_entitySelector) {
+(function (exports,ui_label,ui_formElements_field,main_popup,ui_cnt,intranet_reinvite,ui_iconSet_main,ui_dialogs_messagebox,im_public,ui_entitySelector,main_core) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -617,6 +617,683 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return DepartmentField;
 	}(BaseField);
 
+	/**
+	 * @abstract
+	 */
+	var BaseAction = /*#__PURE__*/function () {
+	  babelHelpers.createClass(BaseAction, [{
+	    key: "getAjaxMethod",
+	    /**
+	     * @abstract
+	     */
+	    value: function getAjaxMethod() {
+	      throw new Error('not implemented');
+	    }
+	  }], [{
+	    key: "getActionId",
+	    /**
+	     * @abstract
+	     */
+	    value: function getActionId() {
+	      throw new Error('not implemented');
+	    }
+	  }]);
+	  function BaseAction(params) {
+	    var _params$showPopups;
+	    babelHelpers.classCallCheck(this, BaseAction);
+	    this.grid = params.grid;
+	    this.userFilter = params.filter;
+	    this.selectedUsers = params.selectedUsers;
+	    this.showPopups = (_params$showPopups = params.showPopups) !== null && _params$showPopups !== void 0 ? _params$showPopups : true;
+	    this.isCloud = params.isCloud;
+	  }
+	  babelHelpers.createClass(BaseAction, [{
+	    key: "execute",
+	    value: function execute() {
+	      var _this = this;
+	      var confirmationPopup = this.showPopups ? this.getConfirmationPopup() : null;
+	      if (confirmationPopup) {
+	        confirmationPopup.setOkCallback(function () {
+	          _this.sendActionRequest();
+	          confirmationPopup.close();
+	        });
+	        confirmationPopup.show();
+	      } else {
+	        this.sendActionRequest();
+	      }
+	    }
+	  }, {
+	    key: "getConfirmationPopup",
+	    value: function getConfirmationPopup() {
+	      return null;
+	    }
+	  }, {
+	    key: "sendActionRequest",
+	    value: function sendActionRequest() {
+	      var _this$selectedUsers,
+	        _this2 = this;
+	      this.grid.tableFade();
+	      var selectedRows = (_this$selectedUsers = this.selectedUsers) !== null && _this$selectedUsers !== void 0 ? _this$selectedUsers : this.grid.getRows().getSelectedIds();
+	      var isSelectedAllRows = this.grid.getRows().isAllSelected() ? 'Y' : 'N';
+	      BX.ajax.runAction(this.getAjaxMethod(), {
+	        data: {
+	          fields: {
+	            userIds: selectedRows,
+	            isSelectedAllRows: isSelectedAllRows,
+	            filter: this.userFilter
+	          }
+	        }
+	      }).then(function (result) {
+	        return _this2.handleSuccess(result);
+	      })["catch"](function (result) {
+	        return _this2.handleError(result);
+	      });
+	    }
+	  }, {
+	    key: "handleSuccess",
+	    value: function handleSuccess(result) {
+	      this.grid.reload();
+	      if (this.showPopups) {
+	        var _result$data = result.data,
+	          skippedActiveUsers = _result$data.skippedActiveUsers,
+	          skippedFiredUsers = _result$data.skippedFiredUsers;
+	        if (skippedActiveUsers && Object.keys(skippedActiveUsers).length > 0) {
+	          this.showActiveUsersPopup(skippedActiveUsers);
+	        } else if (skippedFiredUsers && Object.keys(skippedFiredUsers).length > 0) {
+	          this.showFiredUsersPopup(skippedFiredUsers);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "handleError",
+	    value: function handleError(result) {
+	      this.grid.tableUnfade();
+	      this.unselectRows(this.grid);
+	      console.error(result);
+	      if (this.showPopups && result.errors && result.errors.length > 0) {
+	        var errorMessage = result.errors.map(function (item) {
+	          return item.message;
+	        }).join(', ');
+	        ui_dialogs_messagebox.MessageBox.show({
+	          message: errorMessage,
+	          buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+	          yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+	          onYes: function onYes(messageBox) {
+	            messageBox.close();
+	          }
+	        });
+	      }
+	    }
+	  }, {
+	    key: "showActiveUsersPopup",
+	    value: function showActiveUsersPopup(activeUsers) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage(this.getSkippedUsersTitleCode()),
+	        message: this.getMessageWithProfileNames(this.getSkippedUsersMessageCode(), activeUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "showFiredUsersPopup",
+	    value: function showFiredUsersPopup(firedUsers) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_FIRE_SKIPPED_TITLE'),
+	        message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_FIRE_SKIPPED_MESSAGE', firedUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getMessageWithProfileNames",
+	    value: function getMessageWithProfileNames(messageCode, users) {
+	      var maxDisplayCount = 5;
+	      var userValues = Object.values(users);
+	      var displayedNames = userValues.slice(0, maxDisplayCount).map(function (user) {
+	        return user.fullName;
+	      });
+	      var remainingCount = userValues.length - maxDisplayCount;
+	      var namesString = displayedNames.join(', ');
+	      if (displayedNames.length < 2 && remainingCount < 1) {
+	        return main_core.Loc.getMessage("".concat(messageCode, "_SINGLE"), {
+	          '#USER#': namesString
+	        });
+	      }
+	      if (remainingCount > 0) {
+	        return main_core.Loc.getMessage("".concat(messageCode, "_REMAINING"), {
+	          '#USER_LIST#': namesString,
+	          '#USER_REMAINING#': remainingCount
+	        });
+	      }
+	      return main_core.Loc.getMessage(messageCode, {
+	        '#USER_LIST#': namesString
+	      });
+	    }
+	  }, {
+	    key: "getSkippedUsersTitleCode",
+	    value: function getSkippedUsersTitleCode() {
+	      return '';
+	    }
+	  }, {
+	    key: "getSkippedUsersMessageCode",
+	    value: function getSkippedUsersMessageCode() {
+	      return '';
+	    }
+	  }, {
+	    key: "unselectRows",
+	    value: function unselectRows(grid) {
+	      grid.getRows().unselectAll();
+	      grid.updateCounterDisplayed();
+	      grid.updateCounterSelected();
+	      grid.disableActionsPanel();
+	      BX.onCustomEvent(window, 'Grid::allRowsUnselected', []);
+	    }
+	  }]);
+	  return BaseAction;
+	}();
+
+	var FireAction = /*#__PURE__*/function (_BaseAction) {
+	  babelHelpers.inherits(FireAction, _BaseAction);
+	  function FireAction() {
+	    babelHelpers.classCallCheck(this, FireAction);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FireAction).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(FireAction, [{
+	    key: "getConfirmationPopup",
+	    value: function getConfirmationPopup() {
+	      return new ui_dialogs_messagebox.MessageBox({
+	        message: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_FIRE_MESSAGE'),
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_FIRE_MESSAGE_TITLE'),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	        okCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_FIRE_MESSAGE_BUTTON')
+	      });
+	    }
+	  }, {
+	    key: "getAjaxMethod",
+	    value: function getAjaxMethod() {
+	      return 'intranet.controller.user.userlist.groupFire';
+	    }
+	  }, {
+	    key: "getSkippedUsersMessageCode",
+	    value: function getSkippedUsersMessageCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_FIRE_SKIPPED_MESSAGE';
+	    }
+	  }, {
+	    key: "getSkippedUsersTitleCode",
+	    value: function getSkippedUsersTitleCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_FIRE_SKIPPED_TITLE';
+	    }
+	  }], [{
+	    key: "getActionId",
+	    value: function getActionId() {
+	      return 'fire';
+	    }
+	  }]);
+	  return FireAction;
+	}(BaseAction);
+
+	var DeleteAction = /*#__PURE__*/function (_BaseAction) {
+	  babelHelpers.inherits(DeleteAction, _BaseAction);
+	  function DeleteAction() {
+	    babelHelpers.classCallCheck(this, DeleteAction);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DeleteAction).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(DeleteAction, [{
+	    key: "getAjaxMethod",
+	    value: function getAjaxMethod() {
+	      return 'intranet.controller.user.userlist.groupDelete';
+	    }
+	  }, {
+	    key: "getConfirmationPopup",
+	    value: function getConfirmationPopup() {
+	      return new ui_dialogs_messagebox.MessageBox({
+	        message: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DELETE_MESSAGE'),
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DELETE_MESSAGE_TITLE'),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	        okCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DELETE_MESSAGE_BUTTON')
+	      });
+	    }
+	  }, {
+	    key: "showActiveUsersPopup",
+	    value: function showActiveUsersPopup(activeUsers) {
+	      var _this = this;
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_TITLE'),
+	        message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_MESSAGE', activeUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	          new FireAction({
+	            selectedUsers: Object.keys(activeUsers),
+	            grid: _this.grid,
+	            filter: _this.userFilter,
+	            showPopups: false
+	          }).execute();
+	        },
+	        onNo: function onNo() {
+	          _this.grid.reload();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "showFiredUsersPopup",
+	    value: function showFiredUsersPopup(firedUsers) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DELETE_FIRED_TITLE'),
+	        message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_DELETE_FIRED_MESSAGE', firedUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getSkippedUsersTitleCode",
+	    value: function getSkippedUsersTitleCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_TITLE';
+	    }
+	  }, {
+	    key: "getSkippedUsersMessageCode",
+	    value: function getSkippedUsersMessageCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_MESSAGE';
+	    }
+	  }], [{
+	    key: "getActionId",
+	    value: function getActionId() {
+	      return 'delete';
+	    }
+	  }]);
+	  return DeleteAction;
+	}(BaseAction);
+
+	var ConfirmAction = /*#__PURE__*/function (_BaseAction) {
+	  babelHelpers.inherits(ConfirmAction, _BaseAction);
+	  function ConfirmAction() {
+	    babelHelpers.classCallCheck(this, ConfirmAction);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ConfirmAction).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(ConfirmAction, [{
+	    key: "getConfirmationPopup",
+	    value: function getConfirmationPopup() {
+	      return new ui_dialogs_messagebox.MessageBox({
+	        message: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_MESSAGE'),
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_MESSAGE_TITLE'),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	        okCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_MESSAGE_BUTTON')
+	      });
+	    }
+	  }, {
+	    key: "handleSuccess",
+	    value: function handleSuccess(result) {
+	      this.grid.reload();
+	      if (this.showPopups) {
+	        var skippedFiredUsers = result.data.skippedFiredUsers;
+	        if (skippedFiredUsers && Object.keys(skippedFiredUsers).length > 0) {
+	          this.showFiredUsersPopup(skippedFiredUsers);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "showFiredUsersPopup",
+	    value: function showFiredUsersPopup(firedUsers) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_TITLE'),
+	        message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_MESSAGE', firedUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getAjaxMethod",
+	    value: function getAjaxMethod() {
+	      return 'intranet.controller.user.userlist.groupConfirm';
+	    }
+	  }, {
+	    key: "getSkippedUsersMessageCode",
+	    value: function getSkippedUsersMessageCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_SKIPPED_MESSAGE';
+	    }
+	  }, {
+	    key: "getSkippedUsersTitleCode",
+	    value: function getSkippedUsersTitleCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_SKIPPED_TITLE';
+	    }
+	  }], [{
+	    key: "getActionId",
+	    value: function getActionId() {
+	      return 'confirm';
+	    }
+	  }]);
+	  return ConfirmAction;
+	}(BaseAction);
+
+	var DeclineAction = /*#__PURE__*/function (_BaseAction) {
+	  babelHelpers.inherits(DeclineAction, _BaseAction);
+	  function DeclineAction() {
+	    babelHelpers.classCallCheck(this, DeclineAction);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DeclineAction).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(DeclineAction, [{
+	    key: "getConfirmationPopup",
+	    value: function getConfirmationPopup() {
+	      return new ui_dialogs_messagebox.MessageBox({
+	        message: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DECLINE_MESSAGE'),
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DECLINE_MESSAGE_TITLE'),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	        okCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DECLINE_MESSAGE_BUTTON')
+	      });
+	    }
+	  }, {
+	    key: "showActiveUsersPopup",
+	    value: function showActiveUsersPopup(activeUsers) {
+	      var _this = this;
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_TITLE'),
+	        message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_MESSAGE', activeUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	          new FireAction({
+	            selectedUsers: Object.keys(activeUsers),
+	            grid: _this.grid,
+	            filter: _this.userFilter,
+	            showPopups: false
+	          }).execute();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getAjaxMethod",
+	    value: function getAjaxMethod() {
+	      return 'intranet.controller.user.userlist.groupDecline';
+	    }
+	  }, {
+	    key: "getSkippedUsersMessageCode",
+	    value: function getSkippedUsersMessageCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_SKIPPED_MESSAGE';
+	    }
+	  }, {
+	    key: "getSkippedUsersTitleCode",
+	    value: function getSkippedUsersTitleCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_SKIPPED_TITLE';
+	    }
+	  }], [{
+	    key: "getActionId",
+	    value: function getActionId() {
+	      return 'decline';
+	    }
+	  }]);
+	  return DeclineAction;
+	}(BaseAction);
+
+	var ReinviteAction = /*#__PURE__*/function (_BaseAction) {
+	  babelHelpers.inherits(ReinviteAction, _BaseAction);
+	  function ReinviteAction() {
+	    babelHelpers.classCallCheck(this, ReinviteAction);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ReinviteAction).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(ReinviteAction, [{
+	    key: "getAjaxMethod",
+	    value: function getAjaxMethod() {
+	      return 'intranet.controller.user.userlist.groupReInvite';
+	    }
+	  }, {
+	    key: "handleSuccess",
+	    value: function handleSuccess(result) {
+	      this.grid.tableUnfade();
+	      var _result$data = result.data,
+	        skippedActiveUsers = _result$data.skippedActiveUsers,
+	        skippedFiredUsers = _result$data.skippedFiredUsers,
+	        skippedWaitingUsers = _result$data.skippedWaitingUsers;
+	      if (skippedActiveUsers && Object.keys(skippedActiveUsers).length > 0) {
+	        this.showActiveUsersPopup(skippedActiveUsers);
+	      } else if (skippedWaitingUsers && Object.keys(skippedWaitingUsers).length > 0) {
+	        this.showWaitingUsersPopup(skippedWaitingUsers);
+	      } else if (skippedFiredUsers && Object.keys(skippedFiredUsers).length > 0) {
+	        this.showFiredUsersPopup(skippedFiredUsers);
+	      } else {
+	        BX.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_REINVITE_SUCCESS'),
+	          autoHide: true,
+	          position: 'bottom-right',
+	          category: 'menu-self-item-popup',
+	          autoHideDelay: 3000
+	        });
+	      }
+	      this.unselectRows(this.grid);
+	    }
+	  }, {
+	    key: "showWaitingUsersPopup",
+	    value: function showWaitingUsersPopup(waitingUsers) {
+	      var _this = this;
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_ALREADY_ACCEPT_INVITE_TITLE'),
+	        message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_ALREADY_ACCEPT_INVITE_MESSAGE', waitingUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_MESSAGE_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	          new ConfirmAction({
+	            grid: _this.grid,
+	            filter: _this.userFilter,
+	            selectedUsers: Object.keys(waitingUsers),
+	            showPopups: false
+	          }).execute();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "showFiredUsersPopup",
+	    value: function showFiredUsersPopup(firedUsers) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        title: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_TITLE'),
+	        message: this.getMessageWithProfileNames('INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_MESSAGE', firedUsers),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES,
+	        yesCaption: main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_UNDERSTOOD_BUTTON'),
+	        onYes: function onYes(messageBox) {
+	          messageBox.close();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getSkippedUsersMessageCode",
+	    value: function getSkippedUsersMessageCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_SKIPPED_MESSAGE';
+	    }
+	  }, {
+	    key: "getSkippedUsersTitleCode",
+	    value: function getSkippedUsersTitleCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_CONFIRM_SKIPPED_TITLE';
+	    }
+	  }], [{
+	    key: "getActionId",
+	    value: function getActionId() {
+	      return 'reInvite';
+	    }
+	  }]);
+	  return ReinviteAction;
+	}(BaseAction);
+
+	var CreateChatAction = /*#__PURE__*/function (_BaseAction) {
+	  babelHelpers.inherits(CreateChatAction, _BaseAction);
+	  function CreateChatAction() {
+	    babelHelpers.classCallCheck(this, CreateChatAction);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CreateChatAction).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(CreateChatAction, [{
+	    key: "getAjaxMethod",
+	    value: function getAjaxMethod() {
+	      return 'intranet.controller.user.userlist.createChat';
+	    }
+	  }, {
+	    key: "handleSuccess",
+	    value: function handleSuccess(result) {
+	      this.grid.tableUnfade();
+	      var chatId = result.data;
+	      im_public.Messenger.openChat("chat".concat(chatId));
+	      this.unselectRows(this.grid);
+	    }
+	  }], [{
+	    key: "getActionId",
+	    value: function getActionId() {
+	      return 'createChat';
+	    }
+	  }]);
+	  return CreateChatAction;
+	}(BaseAction);
+
+	var _templateObject$5;
+	var ChangeDepartmentAction = /*#__PURE__*/function (_BaseAction) {
+	  babelHelpers.inherits(ChangeDepartmentAction, _BaseAction);
+	  function ChangeDepartmentAction() {
+	    babelHelpers.classCallCheck(this, ChangeDepartmentAction);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ChangeDepartmentAction).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(ChangeDepartmentAction, [{
+	    key: "getAjaxMethod",
+	    value: function getAjaxMethod() {
+	      return 'intranet.controller.user.userlist.groupChangeDepartment';
+	    }
+	  }, {
+	    key: "execute",
+	    value: function execute() {
+	      var _this = this;
+	      var saveButton = new BX.UI.SaveButton({
+	        onclick: function onclick() {
+	          var selectedIds = dialog.getSelectedItems().map(function (item) {
+	            return item.id;
+	          });
+	          dialog.hide();
+	          if (selectedIds.length > 0) {
+	            _this.sendChangeDepartmentRequest(selectedIds);
+	          } else {
+	            _this.unselectRows(_this.grid);
+	          }
+	        },
+	        size: BX.UI.Button.Size.SMALL
+	      });
+	      var cancelButton = new BX.UI.CancelButton({
+	        onclick: function onclick() {
+	          dialog.hide();
+	        },
+	        size: BX.UI.Button.Size.SMALL
+	      });
+	      var footer = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
+	      saveButton.renderTo(footer);
+	      cancelButton.renderTo(footer);
+	      var dialog = new ui_entitySelector.Dialog({
+	        dropdownMode: true,
+	        enableSearch: true,
+	        compactView: true,
+	        multiple: true,
+	        footer: footer,
+	        entities: [{
+	          id: 'department',
+	          options: {
+	            selectMode: 'departmentsOnly',
+	            allowSelectRootDepartment: true
+	          }
+	        }]
+	      });
+	      dialog.show();
+	    }
+	  }, {
+	    key: "sendChangeDepartmentRequest",
+	    value: function sendChangeDepartmentRequest(departmentIds) {
+	      var _this$selectedUsers,
+	        _this2 = this;
+	      this.grid.tableFade();
+	      var selectedRows = (_this$selectedUsers = this.selectedUsers) !== null && _this$selectedUsers !== void 0 ? _this$selectedUsers : this.grid.getRows().getSelectedIds();
+	      var isSelectedAllRows = this.grid.getRows().isAllSelected() ? 'Y' : 'N';
+	      BX.ajax.runAction(this.getAjaxMethod(), {
+	        data: {
+	          fields: {
+	            userIds: selectedRows,
+	            isSelectedAllRows: isSelectedAllRows,
+	            filter: this.userFilter,
+	            departmentIds: departmentIds
+	          }
+	        }
+	      }).then(function (result) {
+	        return _this2.handleSuccess(result);
+	      })["catch"](function (result) {
+	        return _this2.handleError(result);
+	      });
+	    }
+	  }, {
+	    key: "getSkippedUsersTitleCode",
+	    value: function getSkippedUsersTitleCode() {
+	      return 'INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_TITLE';
+	    }
+	  }, {
+	    key: "getSkippedUsersMessageCode",
+	    value: function getSkippedUsersMessageCode() {
+	      return this.isCloud ? 'INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_CLOUD' : 'INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE';
+	    }
+	  }], [{
+	    key: "getActionId",
+	    value: function getActionId() {
+	      return 'changeDepartment';
+	    }
+	  }]);
+	  return ChangeDepartmentAction;
+	}(BaseAction);
+
+	var ACTIONS = [DeleteAction, FireAction, ConfirmAction, DeclineAction, ReinviteAction, CreateChatAction, ChangeDepartmentAction];
+	var ActionFactory = /*#__PURE__*/function () {
+	  function ActionFactory() {
+	    babelHelpers.classCallCheck(this, ActionFactory);
+	  }
+	  babelHelpers.createClass(ActionFactory, null, [{
+	    key: "createAction",
+	    value: function createAction(actionId, params) {
+	      var ActionClass = ACTIONS.find(function (action) {
+	        return action.getActionId() === actionId;
+	      });
+	      if (!ActionClass) {
+	        throw new Error("Unknown actionId: ".concat(actionId));
+	      }
+	      return new ActionClass(params);
+	    }
+	  }]);
+	  return ActionFactory;
+	}();
+
+	var Panel = /*#__PURE__*/function () {
+	  function Panel() {
+	    babelHelpers.classCallCheck(this, Panel);
+	  }
+	  babelHelpers.createClass(Panel, null, [{
+	    key: "executeAction",
+	    value: function executeAction(params) {
+	      try {
+	        var _BX$Main$gridManager$;
+	        var action = ActionFactory.createAction(params.actionId, {
+	          grid: (_BX$Main$gridManager$ = BX.Main.gridManager.getById(params.gridId)) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance,
+	          filter: params.filter,
+	          isCloud: params.isCloud
+	        });
+	        action.execute();
+	      } catch (error) {
+	        console.error('Error executing action:', error);
+	      }
+	    }
+	  }]);
+	  return Panel;
+	}();
+
 	exports.BaseField = BaseField;
 	exports.PhotoField = PhotoField;
 	exports.FullNameField = FullNameField;
@@ -624,6 +1301,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.ActivityField = ActivityField;
 	exports.DepartmentField = DepartmentField;
 	exports.GridManager = GridManager;
+	exports.Panel = Panel;
 
-}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI.Dialogs,BX.UI.FormElements,BX.UI,BX.Intranet.Reinvite,BX,BX,BX.UI.EntitySelector));
+}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI.FormElements,BX.Main,BX.UI,BX.Intranet.Reinvite,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=grid.bundle.js.map

@@ -4,6 +4,7 @@ import { typeof BBCodeFragmentNode } from './fragment-node';
 import { type BBCodeNodeStringifier } from '../scheme/node-schemes/node-scheme';
 import { typeof BBCodeTagScheme } from '../scheme/node-schemes/tag-scheme';
 import { typeof BBCodeScheme } from '../scheme/bbcode-scheme';
+import { type BBCodeToStringOptions } from './root-node';
 
 export type BBCodeElementNodeValue = string | number | boolean;
 
@@ -288,11 +289,11 @@ export class BBCodeElementNode extends BBCodeNode
 			.join(' ');
 	}
 
-	getContent(): string
+	getContent(options: BBCodeToStringOptions = {}): string
 	{
 		return this.getChildren()
 			.map((child: BBCodeContentNode) => {
-				return child.toString();
+				return child.toString(options);
 			})
 			.join('');
 	}
@@ -425,7 +426,7 @@ export class BBCodeElementNode extends BBCodeNode
 		this.trimEndLinebreaks();
 	}
 
-	toString(): string
+	toString(options: BBCodeToStringOptions = {}): string
 	{
 		const tagScheme: BBCodeTagScheme = this.getTagScheme();
 		const stringifier: BBCodeNodeStringifier = tagScheme.getStringifier();
@@ -433,11 +434,11 @@ export class BBCodeElementNode extends BBCodeNode
 		{
 			const scheme: BBCodeScheme = this.getScheme();
 
-			return stringifier(this, scheme);
+			return stringifier(this, scheme, options);
 		}
 
 		const openingTag: string = this.getOpeningTag();
-		const content: string = this.getContent();
+		const content: string = this.getContent(options);
 
 		if (this.isVoid())
 		{

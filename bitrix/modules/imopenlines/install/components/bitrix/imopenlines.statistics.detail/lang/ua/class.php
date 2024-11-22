@@ -50,6 +50,7 @@ $MESS["OL_STATS_HEADER_CONFIG_NAME"] = "Відкрита лінія";
 $MESS["OL_STATS_HEADER_CRM"] = "CRM";
 $MESS["OL_STATS_HEADER_CRM_LINK"] = "Посилання в CRM";
 $MESS["OL_STATS_HEADER_CRM_TEXT"] = "Запис в CRM";
+$MESS["OL_STATS_HEADER_CRM_URL_REFERER"] = "Сторінка сайту";
 $MESS["OL_STATS_HEADER_DATE_CLOSE"] = "Дата закриття";
 $MESS["OL_STATS_HEADER_DATE_CREATE"] = "Дата створення";
 $MESS["OL_STATS_HEADER_DATE_FIRST_ANSWER_NEW"] = "Дата відповіді оператора";

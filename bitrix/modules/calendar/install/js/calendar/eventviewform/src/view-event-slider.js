@@ -166,9 +166,19 @@ export const ViewEventSlider = {
 				}, this);
 			}
 
-			const accepted = this.attendees.y?.filter(
-				(attendee) => attendee && (parseInt(this.meetingHost.ID, 10) !== parseInt(attendee.ID, 10)),
-			) ?? [];
+			const accepted = this.attendees.y?.filter((attendee) => {
+				if (!attendee)
+				{
+					return false;
+				}
+
+				if (this.entry?.isOpenEvent())
+				{
+					return true;
+				}
+
+				return parseInt(this.meetingHost.ID, 10) !== parseInt(attendee.ID, 10);
+			}) ?? [];
 
 			if (accepted.length <= 11)
 			{
@@ -385,7 +395,7 @@ export const ViewEventSlider = {
 								<div class="calendar-slider-sidebar-user-block">
 								<div v-if="isMeeting">
 									<div class="calendar-slider-sidebar-user-container-holder">
-										<div class="calendar-slider-sidebar-user-container">
+										<div class="calendar-slider-sidebar-user-container" v-if="!entry.isOpenEvent()">
 											<div class="calendar-slider-sidebar-user-block-avatar">
 												<a :href="meetingHost.URL">
 													<UserAvatar :user="meetingHost" :avatarSize="avatarSize"/>

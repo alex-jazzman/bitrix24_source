@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["LD_BLOCK_SECTION_ABOUT"] = "Про проєкт";
 $MESS["LD_BLOCK_SECTION_BENEFITS"] = "Переваги";
 $MESS["LD_BLOCK_SECTION_COLUMNS"] = "Колонки";
@@ -38,4 +38,13 @@ $MESS["LD_BLOCK_SECTION_TILES_NEW2"] = "Кнопки та посилання";
 $MESS["LD_BLOCK_SECTION_TITLE"] = "Заголовок";
 $MESS["LD_BLOCK_SECTION_TRANSITIONS_SEPARATORS"] = "Переходи та роздільники";
 $MESS["LD_BLOCK_SECTION_VIDEO"] = "Відео";
-?>
+$MESS["LD_BLOCK_SECTION_WIDGETS_AUTOMATION"] = "Автоматизація";
+$MESS["LD_BLOCK_SECTION_WIDGETS_COMPANY_LIFE"] = "Життя компанії";
+$MESS["LD_BLOCK_SECTION_WIDGETS_EVENTS"] = "Зустрічі та події";
+$MESS["LD_BLOCK_SECTION_WIDGETS_HR"] = "HR";
+$MESS["LD_BLOCK_SECTION_WIDGETS_IMAGE"] = "Зображення";
+$MESS["LD_BLOCK_SECTION_WIDGETS_NEW_EMPLOYEES"] = "Новим співробітникам";
+$MESS["LD_BLOCK_SECTION_WIDGETS_PROFILE"] = "Профіль співробітника";
+$MESS["LD_BLOCK_SECTION_WIDGETS_SALES"] = "Продажі та клієнти";
+$MESS["LD_BLOCK_SECTION_WIDGETS_TASKS"] = "Завдання та проєкти";
+$MESS["LD_BLOCK_SECTION_WIDGETS_TEAM"] = "Команда";

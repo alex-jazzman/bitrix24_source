@@ -72,6 +72,7 @@ jn.define('call/calls-card', (require, exports, module) => {
 							startTime: this.startTime,
 							onPauseChanged: this.onPauseChangedHandler,
 							onRollUp: this.rollUpHandler,
+							isNumberHidden: props.isNumberHidden,
 						}));
 						this.viewPromise = null;
 					})

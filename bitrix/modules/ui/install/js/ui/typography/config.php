@@ -9,6 +9,7 @@ return [
 	'rel' => [
 		'ui.design-tokens',
 		'ui.icon-set.actions',
+		'ui.icon-set.main',
 	],
 	'skip_core' => true,
 ];

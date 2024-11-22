@@ -107,6 +107,7 @@
 	background: var(--widget-bp-v2-color-bg-button, var(--widget-bp-v2-color-bg-button-main-default));
 	font: var(--ui-font-weight-semi-bold) var(--ui-font-size-sm) var(--ui-font-family-system);
 	box-sizing: border-box;
+	cursor: pointer;
 }
 
 .landing-widget-bp-v2-content-item-button a,

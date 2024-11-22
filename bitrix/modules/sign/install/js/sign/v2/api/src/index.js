@@ -1,147 +1,26 @@
-import { ajax, Loc, Text } from 'main.core';
-import { UI } from 'ui.notification';
-import { StubNotAvailable, StubType, StubLinkType } from 'ui.sidepanel-content';
-import { SetupMember, Role, MemberRole } from './type';
-import type {
-	LoadedDocumentData,
-	Communication,
-	BlockData,
-	LoadedBlock,
-} from './type';
+import { post } from './request';
+import { TemplateApi } from './template/template-api';
+import type { BlockData, Communication, LoadedBlock, LoadedDocumentData, MemberStatusType } from './type';
+import { SetupMember } from './type';
 
-export type { SetupMember, Role };
-export { MemberRole };
+export * from './type';
+export * from './template/type';
 
 export class Api
 {
-	#post(endpoint: string, data: Object = null, notifyError: boolean): Promise<Object>
+	template: TemplateApi = new TemplateApi();
+
+	#post(endpoint: string, data: Object | null = null, notifyError: boolean = true): $Call<typeof post>
 	{
-		return this.#request('POST', endpoint, data, notifyError);
+		return post(endpoint, data, notifyError);
 	}
 
-	async #request(
-		method: string,
-		endpoint: string,
-		data: ?Object,
-		notifyError: ?boolean = true,
-	): Promise<Object>
+	register(blankId: string, scenarioType: string | null = null, asTemplate: boolean = false): Promise<{
+		uid: string,
+		templateUid: string | null
+	}>
 	{
-		const config = { method };
-		if (method === 'POST')
-		{
-			Object.assign(config, { data }, {
-				preparePost: false,
-				headers: [{
-					name: 'Content-Type',
-					value: 'application/json',
-				}],
-			});
-		}
-
-		try
-		{
-			const response = await ajax.runAction(endpoint, config);
-			if (response.errors?.length > 0)
-			{
-				throw new Error(response.errors[0].message);
-			}
-
-			return response.data;
-		}
-		catch (ex)
-		{
-			if (!notifyError)
-			{
-				return ex;
-			}
-
-			const { message = `Error in ${endpoint}`, errors = [] } = ex;
-			const errorCode = errors[0]?.code ?? '';
-
-			if (errorCode === 'SIGN_CLIENT_CONNECTION_ERROR')
-			{
-				const stub = new StubNotAvailable({
-					title: Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_TITLE'),
-					desc: Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_DESC'),
-					type: StubType.noConnection,
-					link: {
-						text: Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_LINK_TEXT'),
-						value: '18740976',
-						type: StubLinkType.helpdesk,
-					},
-				});
-				stub.openSlider();
-
-				throw ex;
-			}
-
-			if (errorCode === 'LICENSE_LIMITATIONS')
-			{
-				top.BX.UI.InfoHelper.show('limit_office_e_signature_box');
-
-				throw ex;
-			}
-
-			if (errorCode === 'SIGN_DOCUMENT_INCORRECT_STATUS')
-			{
-				const stub = new StubNotAvailable({
-					title: Loc.getMessage('SIGN_DOCUMENT_INCORRECT_STATUS_STUB_TITLE'),
-					desc: Loc.getMessage('SIGN_DOCUMENT_INCORRECT_STATUS_STUB_DESC'),
-					type: StubType.notAvailable,
-				});
-				stub.openSlider();
-
-				//close previous slider (with editor)
-				const slider = BX.SidePanel.Instance.getTopSlider();
-				const onSliderCloseHandler = (e: BX.SidePanel.Event): void => {
-					if (slider !== e.getSlider())
-					{
-						return;
-					}
-
-					window.top.BX.removeCustomEvent(
-						slider.getWindow(),
-						'SidePanel.Slider:onClose',
-						onSliderCloseHandler,
-					);
-
-					const sliders = window.top.BX.SidePanel.Instance.getOpenSliders();
-					for (let i = sliders.length - 2; i >= 0; i--)
-					{
-						if (sliders[i].getUrl().startsWith('/sign/doc/'))
-						{
-							sliders[i].close();
-							return;
-						}
-					}
-
-				};
-
-				window.top.BX.addCustomEvent(slider.getWindow(), 'SidePanel.Slider:onClose', onSliderCloseHandler);
-
-				throw ex;
-			}
-
-			if (errorCode === 'B2E_RESTRICTED_ON_TARIFF' || errorCode === 'B2E_SIGNERS_LIMIT_REACHED_ON_TARIFF')
-			{
-				top.BX.UI.InfoHelper.show('limit_office_e_signature');
-
-				throw ex;
-			}
-
-			const content = errors[0]?.message ?? message;
-			UI.Notification.Center.notify({
-				content: Text.encode(content),
-				autoHideDelay: 4000,
-			});
-
-			throw ex;
-		}
-	}
-
-	register(blankId: string, scenarioType: string | null = null): Promise<{ uid: string; }>
-	{
-		return this.#post('sign.api_v1.document.register', { blankId, scenarioType });
+		return this.#post('sign.api_v1.document.register', { blankId, scenarioType, asTemplate });
 	}
 
 	upload(uid: string): Promise<[]>
@@ -159,9 +38,9 @@ export class Api
 		return this.#post('sign.api_v1.document.blank.list', { page, scenario });
 	}
 
-	createBlank(files: Array<string>, scenario: string | null = null): Promise<{ id: number; }>
+	createBlank(files: Array<string>, scenario: string | null = null, forTemplate: boolean = false): Promise<{ id: number; }>
 	{
-		return this.#post('sign.api_v1.document.blank.create', { files, scenario });
+		return this.#post('sign.api_v1.document.blank.create', { files, scenario, forTemplate });
 	}
 
 	saveBlank(documentUid: string, blocks: []): Promise<[]>
@@ -266,7 +145,7 @@ export class Api
 		return this.#post('sign.api_v1.document.member.loadCommunications', { uid });
 	}
 
-	modifyTitle(uid: string, title: string): Promise<{blankTitle: string}>
+	modifyTitle(uid: string, title: string): Promise<{ blankTitle: string }>
 	{
 		return this.#post('sign.api_v1.document.modifyTitle', {
 			uid,
@@ -383,7 +262,12 @@ export class Api
 		});
 	}
 
-	getLinkForSigning(memberId: number, notifyError: boolean = true): Promise
+	getLinkForSigning(memberId: number, notifyError: boolean = true): Promise<{
+		uri: string,
+		requireBrowser: boolean,
+		mobileAllowed: boolean,
+		employeeData: Object
+	}>
 	{
 		return this.#post('sign.api_v1.b2e.member.link.getLinkForSigning', {
 			memberId,
@@ -404,7 +288,7 @@ export class Api
 		});
 	}
 
-	getBlankById(id: number): Promise<{id: number, title: string, scenario: string}>
+	getBlankById(id: number): Promise<{ id: number, title: string, scenario: string }>
 	{
 		return this.#post('sign.api_v1.document.blank.getById', { id });
 	}
@@ -421,6 +305,11 @@ export class Api
 		});
 	}
 
+	setDecisionToSesB2eAgreement(): Promise<{ decision: string }>
+	{
+		return this.#post('sign.api_v1.b2e.member.communication.setAgreementDecision', {});
+	}
+
 	createDocumentChat(chatType: number, documentId: number, isEntityId: boolean): Promise<{ chatId: number }>
 	{
 		return this.#post('sign.api_v1.integration.im.groupChat.createDocumentChat', {
@@ -428,13 +317,13 @@ export class Api
 		});
 	}
 
-	setDecisionToSesB2eAgreement(): Promise<{decision: string}>
-	{
-		return this.#post('sign.api_v1.b2e.member.communication.setAgreementDecision', {});
-	}
-
-	getDocumentFillAndStartProgress(uid: string): Promise<{completed: boolean, progress: Number}>
+	getDocumentFillAndStartProgress(uid: string): Promise<{ completed: boolean, progress: Number }>
 	{
 		return this.#post('sign.api_v1.document.getFillAndStartProgress', { uid });
+	}
+
+	getMember(uid: string): Promise<{ id: number, uid: string, status: MemberStatusType }>
+	{
+		return this.#post('sign.api_v1.document.member.get', { uid });
 	}
 }

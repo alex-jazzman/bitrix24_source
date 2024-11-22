@@ -1,4 +1,5 @@
-import { BaseChatContent } from '../base/base';
+import { BaseChatContent } from 'im.v2.component.content.elements';
+
 import { CommentsHeader } from './components/header';
 import { CommentsDialog } from './components/dialog';
 import { CommentsTextarea } from './components/textarea';
@@ -22,13 +23,8 @@ export const CommentsContent = {
 	},
 	template: `
 		<BaseChatContent :dialogId="dialogId">
-			<template #header="{ currentSidebarPanel }">
-				<CommentsHeader
-					:dialogId="dialogId"
-					:channelId="channelId"
-					:currentSidebarPanel="currentSidebarPanel"
-					:key="dialogId"
-				/>
+			<template #header>
+				<CommentsHeader :dialogId="dialogId" :channelId="channelId" :key="dialogId" />
 			</template>
 			<template #dialog>
 				<CommentsDialog :dialogId="dialogId" :key="dialogId" />

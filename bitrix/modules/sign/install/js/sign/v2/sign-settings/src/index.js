@@ -1,19 +1,29 @@
 import { Tag, Loc, Dom, Reflection, Text } from 'main.core';
-import type { Metadata } from 'ui.wizard';
-import { Wizard, type WizardOptions } from 'ui.wizard';
+import { Wizard, type WizardOptions, type Metadata } from 'ui.wizard';
 import { type DocumentData } from 'sign.v2.document-setup';
 import { Preview } from 'sign.v2.preview';
-import type { SignOptions } from './types';
+import type { SignOptions, SignOptionsConfig } from './types';
 import type { Editor } from 'sign.v2.editor';
 import './style.css';
 
-export type { SignOptions };
+export type { SignOptions, SignOptionsConfig };
+
+export type DocumentModeType = 'document' | 'template';
+export const DocumentMode: Readonly<Record<string, DocumentModeType>> = Object.freeze({
+	document: 'document',
+	template: 'template',
+});
+export function isTemplateMode(mode: string): boolean
+{
+	return mode === DocumentMode.template;
+}
 
 export class SignSettings
 {
 	#containerId: string;
 	#preview: Preview;
 	#type: string;
+	#wizardOptions: WizardOptions;
 	documentSetup: DocumentSetup;
 	documentSend: DocumentSend;
 	wizard: Wizard;
@@ -22,34 +32,27 @@ export class SignSettings
 	#container: HTMLElement | null = null;
 	#overlayContainer: HTMLElement | null = null;
 	#currentOverlay: HTMLElement | null = null;
+	documentMode: DocumentModeType;
 
-	constructor(containerId: string, signOptions: SignOptions, wizardOptions: WizardOptions)
+	constructor(containerId: string, signOptions: SignOptions = {}, wizardOptions: WizardOptions = {})
 	{
 		this.#containerId = containerId;
 		this.#preview = new Preview();
-		const { complete, ...rest } = wizardOptions ?? {};
-		this.wizard = new Wizard(this.getStepsMetadata(), {
-			back: { className: 'ui-btn-light-border' },
-			next: { className: 'ui-btn-primary' },
-			complete: {
-				className: 'ui-btn-primary',
-				title: Loc.getMessage('SIGN_SETTINGS_SEND_FOR_SIGN'),
-				onComplete: () => this.#onComplete(),
-				...complete,
-			},
-			...rest,
-		});
-		this.wizard.toggleBtnActiveState('next', true);
-		const { type = '', config = {} } = signOptions ?? {};
+		this.#wizardOptions = wizardOptions;
+		const { type = '', config = {}, documentMode } = signOptions;
+		this.documentMode = documentMode;
 		this.#type = type;
 		const { languages } = config.documentSendConfig ?? {};
-		const Editor = Reflection.getClass('top.BX.Sign.V2.Editor');
-		this.editor = new Editor(type, { languages });
+		const EditorConstructor = Reflection.getClass('top.BX.Sign.V2.Editor');
+		this.editor = new EditorConstructor(type, { languages });
 	}
 
 	#createHead(): HTMLElement
 	{
-		const headerTitle = Loc.getMessage('SIGN_SETTINGS_TITLE');
+		const headerTitle = this.isTemplateMode()
+			? Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE')
+			: Loc.getMessage('SIGN_SETTINGS_TITLE');
+
 		const headerTitleSub = this.#type === 'b2b'
 			? Loc.getMessage('SIGN_SETTINGS_B2B_TITLE_SUB')
 			: Loc.getMessage('SIGN_SETTINGS_B2E_TITLE_SUB')
@@ -65,6 +68,11 @@ export class SignSettings
 				</div>
 			</div>
 		`;
+	}
+
+	isTemplateMode(): boolean
+	{
+		return this.documentMode === DocumentMode.template;
 	}
 
 	#getLayout(): HTMLElement
@@ -106,7 +114,7 @@ export class SignSettings
 		});
 	}
 
-	#onComplete(showNotification: boolean = true): void
+	onComplete(showNotification: boolean = true): void
 	{
 		BX.SidePanel.Instance.close();
 		if (showNotification)
@@ -205,7 +213,7 @@ export class SignSettings
 			{
 				type: 'close',
 				stage: 'send',
-				method: () => this.#onComplete(false),
+				method: () => this.onComplete(false),
 			},
 			{
 				type: 'hidePreview',
@@ -282,12 +290,40 @@ export class SignSettings
 		return setupData;
 	}
 
-	render(): void
+	async init(uid: ?string): void
+	{
+		const metadata = this.getStepsMetadata(this);
+		const { complete, ...rest } = this.#wizardOptions;
+
+		const title = this.isTemplateMode()
+			? Loc.getMessage('SIGN_SETTINGS_CREATE_TEMPLATE')
+			: Loc.getMessage('SIGN_SETTINGS_SEND_FOR_SIGN');
+		this.wizard = new Wizard(metadata, {
+			back: { className: 'ui-btn-light-border' },
+			next: { className: 'ui-btn-primary' },
+			complete: {
+				className: 'ui-btn-primary',
+				title,
+				onComplete: () => this.onComplete(),
+				...complete,
+			},
+			...rest,
+		});
+		if (uid)
+		{
+			await this.applyDocumentData(uid);
+		}
+
+		this.#render();
+	}
+
+	#render(): void
 	{
 		const container = document.getElementById(this.#containerId);
 		Dom.append(this.#getOverlayContainer(), container);
 		Dom.append(this.#getLayout(), container);
 		const step = this.documentSetup.setupData ? 1 : 0;
+		this.wizard.toggleBtnActiveState('next', true);
 		this.wizard.moveOnStep(step);
 	}
 

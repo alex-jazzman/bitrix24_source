@@ -116,3 +116,7 @@
 #form-ai-page .ui-section__wrapper.--body-active .ui-section__section-section-body_container {
 	overflow: visible;
 }
+
+#form-ai-page .ui-section__wrapper.clickable.--body-active:last-child {
+	margin-bottom: 60px;
+}

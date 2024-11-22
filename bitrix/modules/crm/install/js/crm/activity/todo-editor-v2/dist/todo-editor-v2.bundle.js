@@ -1,7 +1,8 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Location = this.BX.Location || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,crm_ai_copilotTextarea,crm_timeline_tools,ui_analytics,location_core,location_widget,calendar_planner,ui_designTokens,main_date,ui_infoHelper,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint) {
+(function (exports,ui_vue3,crm_timeline_tools,ui_analytics,location_core,location_widget,ui_designTokens,calendar_planner,main_date,ui_infoHelper,calendar_controls,calendar_sectionmanager,ui_sidepanel,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint,ui_textEditor) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -53,7 +54,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  skipPeriodButton: 'skip_period_button',
 	  autoFromActivityViewMode: 'auto_from_activity_view_mode',
 	  complexButton: 'complete_button',
-	  checkbox: 'checkbox'
+	  checkbox: 'checkbox',
+	  calendarSection: 'calendar_section'
 	});
 	var _tool = /*#__PURE__*/new WeakMap();
 	var _category = /*#__PURE__*/new WeakMap();
@@ -212,7 +214,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        data.p3 = 'color_custom';
 	      }
 	      if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldGet(this, _blockTypes))) {
-	        data.p4 = 'addBlock';
+	        if (babelHelpers.classPrivateFieldGet(this, _blockTypes).includes('section_calendar')) {
+	          data.p4 = 'addBlock_calendar';
+	        } else {
+	          data.p4 = 'addBlock';
+	        }
 	      }
 	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod))) {
 	        if (babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod) === 'forever') {
@@ -642,7 +648,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    };
 	  },
 	  async mounted() {
-	    this.locations = await this.fetchRoomsManagerData();
+	    this.locations = await this.fetchRoomsListData();
 	    if (this.forceShowLocationSelectorDialog) {
 	      this.showLocationSelectorDialog();
 	    }
@@ -699,7 +705,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          multiple: false,
 	          dropdownMode: true,
 	          showAvatars: true,
-	          enableSearch: true,
+	          enableSearch: items.length > 8,
 	          width: 450,
 	          height: 300,
 	          zIndex: 2500,
@@ -721,9 +727,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        '#CAPACITY_VALUE#': value
 	      });
 	    },
-	    async fetchRoomsManagerData() {
+	    async fetchRoomsListData() {
 	      return new Promise(resolve => {
-	        main_core.ajax.runAction('calendar.api.locationajax.getRoomsManagerData').then(response => {
+	        main_core.ajax.runAction('calendar.api.locationajax.getRoomsList').then(response => {
 	          resolve(response.data);
 	        }).catch(errors => {
 	          console.log(errors);
@@ -802,9 +808,114 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const SectionSelector = {
+	  props: {
+	    userId: {
+	      type: Number,
+	      required: true
+	    },
+	    trackingUsersList: {
+	      type: Array,
+	      required: true
+	    },
+	    sections: {
+	      type: Array,
+	      required: true
+	    },
+	    selectedSectionId: {
+	      type: Number
+	    },
+	    readOnly: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    }
+	  },
+	  emits: ['change'],
+	  methods: {
+	    show() {
+	      setTimeout(() => {
+	        this.getSelectorDialog().openPopup();
+	      }, 5);
+	    },
+	    hide() {
+	      var _this$getSelectorDial, _this$getSelectorDial2;
+	      (_this$getSelectorDial = this.getSelectorDialog()) === null || _this$getSelectorDial === void 0 ? void 0 : (_this$getSelectorDial2 = _this$getSelectorDial.getPopup()) === null || _this$getSelectorDial2 === void 0 ? void 0 : _this$getSelectorDial2.close();
+	      this.selectorDialog = null;
+	    },
+	    isShown() {
+	      return this.isShownValue;
+	    },
+	    showCalendar() {
+	      ui_sidepanel.SidePanel.Instance.open(`/company/personal/user/${this.userId}/calendar/?IFRAME=Y`, {
+	        width: 1000,
+	        allowChangeHistory: false
+	      });
+	    },
+	    getSelectorDialog() {
+	      if (main_core.Type.isNil(this.selectorDialog)) {
+	        this.selectorDialog = new calendar_controls.SectionSelector({
+	          outerWrap: this.$refs.container,
+	          defaultCalendarType: 'user',
+	          defaultOwnerId: this.userId,
+	          sectionList: this.sections,
+	          sectionGroupList: calendar_sectionmanager.SectionManager.getSectionGroupList({
+	            type: 'user',
+	            ownerId: this.userId,
+	            userId: this.userId,
+	            trackingUsersList: this.trackingUsersList
+	          }),
+	          mode: 'inline',
+	          zIndex: 1200,
+	          getCurrentSection: () => {
+	            return this.sections.find(section => section.ID === this.selectedSectionId);
+	          },
+	          selectCallback: sectionValue => {
+	            this.onSelectSection(sectionValue.ID);
+	          },
+	          openPopupCallback: () => {
+	            this.isShownValue = true;
+	          },
+	          closePopupCallback: () => {
+	            this.isShownValue = false;
+	          }
+	        });
+	      }
+	      return this.selectorDialog;
+	    },
+	    onSelectSection(id) {
+	      this.$emit('change', Number(id));
+	    }
+	  },
+	  computed: {
+	    currentSectionTitle() {
+	      var _this$sections$find$N, _this$sections$find;
+	      return (_this$sections$find$N = (_this$sections$find = this.sections.find(section => section.ID === this.selectedSectionId)) === null || _this$sections$find === void 0 ? void 0 : _this$sections$find.NAME) !== null && _this$sections$find$N !== void 0 ? _this$sections$find$N : '';
+	    },
+	    hasSections() {
+	      return main_core.Type.isArrayFilled(this.sections);
+	    }
+	  },
+	  template: `
+		<span v-if="hasSections && !readOnly" class="crm-activity__todo-editor-v2_block-header-data__calendar-container">
+			<span @click="showCalendar">
+				{{ currentSectionTitle }}
+			</span>
+			<span ref="container"></span>
+		</span>
+		<span v-else-if="hasSections && readOnly">
+			<span @click="showCalendar">
+				{{ currentSectionTitle }}
+			</span>
+		</span>
+		<span v-else class="crm-activity__todo-editor-v2_block-header-data__calendar-container --skeleton"></span>
+	`
+	};
+
 	const TodoEditorBlocksCalendar = {
 	  components: {
-	    LocationSelector
+	    LocationSelector,
+	    SectionSelector
 	  },
 	  props: {
 	    id: {
@@ -836,7 +947,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  emits: ['close', 'updateFilledValues'],
 	  data() {
-	    var _this$settings$durati, _this$settings$showLo;
+	    var _this$settings$durati, _this$settings$showLo, _this$settings$sectio;
 	    const ownerId = this.settings.ownerId || this.context.ownerId;
 	    const selectedUserIds = new Set();
 	    selectedUserIds.add(ownerId);
@@ -856,7 +967,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      showLocation: (_this$settings$showLo = this.settings.showLocation) !== null && _this$settings$showLo !== void 0 ? _this$settings$showLo : false,
 	      locationId: null,
 	      timezoneName: this.settings.timezoneName,
-	      ownerId
+	      ownerId,
+	      sectionId: this.settings.sectionId || null,
+	      config: {},
+	      canUseCalendarSectionSelector: main_core.Type.isFunction(calendar_controls.SectionSelector.getModes) && calendar_controls.SectionSelector.getModes().includes('inline'),
+	      sectionSelectorReadOnly: (_this$settings$sectio = this.settings.sectionSelectorReadOnly) !== null && _this$settings$sectio !== void 0 ? _this$settings$sectio : false
 	    };
 	    return this.getPreparedData(data);
 	  },
@@ -876,6 +991,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_DEADLINE_CHANGE, this.onDeadlineChange);
 	  },
 	  methods: {
+	    /* eslint-disable no-param-reassign */
 	    getPreparedData(data) {
 	      const {
 	        filledValues
@@ -889,30 +1005,41 @@ this.BX.Crm = this.BX.Crm || {};
 	          }) => data.selectedUserIds.add(id));
 	        }
 	        if (main_core.Type.isStringFilled(filledValues.location)) {
-	          // eslint-disable-next-line no-param-reassign
 	          data.showLocation = true;
-	          // eslint-disable-next-line no-param-reassign
 	          data.locationId = Number(filledValues.location.split('_')[1]); //calendar_7_123, need 7 as id
 	        }
 
 	        if (main_core.Type.isObject(filledValues.selectedUserIds)) {
-	          // eslint-disable-next-line no-param-reassign
 	          data.selectedUserIds = filledValues.selectedUserIds;
 	        }
-
-	        // eslint-disable-next-line no-param-reassign
 	        data.from = Number(filledValues.from);
-	        // eslint-disable-next-line no-param-reassign
 	        data.to = Number(filledValues.to);
-	        // eslint-disable-next-line no-param-reassign
 	        data.duration = Number(filledValues.duration);
-	        // eslint-disable-next-line no-param-reassign
 	        data.timezoneName = filledValues.timezoneFrom;
-	        // eslint-disable-next-line no-param-reassign
 	        data.ownerId = filledValues.ownerId;
+	        data.sectionId = filledValues.sectionId;
+	        if (!main_core.Type.isNil(filledValues.sectionId)) {
+	          data.sectionId = Number(filledValues.sectionId);
+	        }
+	      }
+	      data.config = {};
+	      data.sectionSelectorReadOnly = false;
+	      if (main_core.Type.isObject(filledValues === null || filledValues === void 0 ? void 0 : filledValues.config)) {
+	        data.config = filledValues.config;
+	      } else if (data.canUseCalendarSectionSelector) {
+	        void this.fetchConfig().then(response => {
+	          var _response$data, _data$config$readOnly;
+	          this.config = (_response$data = response.data) !== null && _response$data !== void 0 ? _response$data : {};
+	          this.sectionSelectorReadOnly = (_data$config$readOnly = data.config.readOnly) !== null && _data$config$readOnly !== void 0 ? _data$config$readOnly : false;
+	          if (main_core.Type.isNil(data.sectionId)) {
+	            const defaultSection = data.config.sections.find(section => section.DEFAULT === true);
+	            this.sectionId = defaultSection ? defaultSection.ID : data.config.sections[0].ID;
+	          }
+	        });
 	      }
 	      return data;
 	    },
+	    /* eslint-enable no-param-reassign */
 	    getId() {
 	      return 'calendar';
 	    },
@@ -977,21 +1104,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.getPlanner().hideLoader();
 	        this.getPlanner().update(response.data.entries, accessibility);
 	        this.onDataUpdate();
-
-	        // @todo check this
-	        // this.plannerInstance.updateSelector(
-	        // 	Util.adjustDateForTimezoneOffset(
-	        // 		testData.entry.from,
-	        // 		testData.entry.userTimezoneOffsetFrom,
-	        // 		testData.entry.fullDay),
-	        // 	Util.adjustDateForTimezoneOffset(
-	        // 		testData.entry.to,
-	        // 		testData.entry.userTimezoneOffsetTo,
-	        // 		testData.entry.fullDay
-	        // 	),
-	        // 	testData.entry.fullDay
-	        //
-	        // );
 	      }, response => {
 	        console.error(response);
 	      }).catch(errors => {
@@ -1016,7 +1128,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        duration,
 	        location,
 	        selectedUserIds,
-	        ownerId
+	        ownerId,
+	        sectionId,
+	        config
 	      } = this;
 	      const newFilledValues = {
 	        to,
@@ -1024,7 +1138,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        duration,
 	        location,
 	        selectedUserIds,
-	        ownerId
+	        ownerId,
+	        sectionId,
+	        config
 	      };
 	      filledValues = {
 	        ...filledValues,
@@ -1078,6 +1194,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          timestamp = 0;
 	      }
 	      return main_date.DateTimeFormat.format(format, timestamp / 1000);
+	    },
+	    toggleCalendarSelectorDialog() {
+	      const sectionSelector = this.$refs.sectionSelector;
+	      if (sectionSelector.isShown()) {
+	        sectionSelector.hide();
+	      } else {
+	        sectionSelector.show();
+	      }
 	    },
 	    showUserSelectorDialog() {
 	      setTimeout(() => {
@@ -1155,32 +1279,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    }) {
 	      this.from = dateFrom.getTime();
 	      this.duration = dateTo.getTime() - this.from;
-	      this.$Bitrix.eventEmitter.emit(Events.EVENT_CALENDAR_CHANGE, {
-	        from: this.from,
-	        to: this.from + this.duration
-	      });
+	      this.emitCalendarChange();
 	    },
-	    // @todo
-	    /* getAccessibilityForUsers(): Promise
-	    {
-	    	const offset = 12 * 24 * 3600; //12 days
-	    		return new Promise((resolve) => {
-	    		const config = {
-	    			data: {
-	    				from: this.from - offset,
-	    				to: this.from + offset,
-	    				// @todo add currentEventId
-	    				//currentEventId:
-	    			},
-	    		};
-	    			Ajax.runAction('crm.activity.settings.calendar.getAccessibilityForUsers', config)
-	    			.then((response) => resolve(response))
-	    			.catch((errors) => {
-	    				console.log(errors);
-	    			})
-	    		;
-	    	});
-	    }, */
 	    updateSettings(data) {
 	      if (!data || !data.deadline) {
 	        return;
@@ -1199,14 +1299,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    getExecutedData() {
 	      const {
-	        duration
+	        duration,
+	        from,
+	        location,
+	        sectionId
 	      } = this;
 	      return {
-	        from: this.from,
-	        to: this.from + duration,
+	        from,
+	        to: from + duration,
 	        duration,
 	        selectedUserIds: [...this.getSelectedUserIds()],
-	        location: this.location
+	        sectionId,
+	        location
 	      };
 	    },
 	    prepareDataOnBlockConstruct(data, params) {
@@ -1215,6 +1319,43 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      // eslint-disable-next-line no-param-reassign
 	      data.settings.ownerId = params.responsibleUserId;
+	    },
+	    fetchConfig() {
+	      var _this$context$itemIde, _this$context$itemIde2;
+	      const data = {
+	        activityId: this.context.activityId,
+	        entityTypeId: (_this$context$itemIde = this.context.itemIdentifier) === null || _this$context$itemIde === void 0 ? void 0 : _this$context$itemIde.entityTypeId,
+	        entityId: (_this$context$itemIde2 = this.context.itemIdentifier) === null || _this$context$itemIde2 === void 0 ? void 0 : _this$context$itemIde2.entityId
+	      };
+	      return new Promise(resolve => {
+	        void main_core.ajax.runAction('crm.activity.todo.getCalendarConfig', {
+	          data
+	        }).then(response => {
+	          resolve(response);
+	        });
+	      });
+	    },
+	    onChangeSection(sectionId) {
+	      if (this.sectionId === sectionId) {
+	        return;
+	      }
+	      this.sectionId = sectionId;
+	      this.emitUpdateFilledValues();
+	      this.emitCalendarChange({
+	        sectionId
+	      });
+	    },
+	    emitCalendarChange(additional = {}) {
+	      const data = {
+	        ...additional,
+	        from: this.from,
+	        to: this.from + this.duration
+	      };
+	      this.$Bitrix.eventEmitter.emit(Events.EVENT_CALENDAR_CHANGE, data);
+	    },
+	    hasSections() {
+	      var _this$config;
+	      return main_core.Type.isArrayFilled((_this$config = this.config) === null || _this$config === void 0 ? void 0 : _this$config.sections);
 	    }
 	  },
 	  computed: {
@@ -1238,6 +1379,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    selectedUsersIdsArray() {
 	      return [...this.selectedUserIds];
+	    },
+	    changeTitle() {
+	      return this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_BLOCK_CHANGE_ACTION');
 	    }
 	  },
 	  created() {
@@ -1255,9 +1399,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      deep: true
 	    });
 	    this.$watch('settings', (newSettings, oldSettings) => {
-	      var _newSettings$showLoca;
+	      var _newSettings$showLoca, _this$filledValues;
 	      const showLocation = Boolean((_newSettings$showLoca = newSettings.showLocation) !== null && _newSettings$showLoca !== void 0 ? _newSettings$showLoca : false);
-	      this.showLocation = main_core.Type.isStringFilled(this.filledValues.location) || showLocation;
+	      this.showLocation = main_core.Type.isStringFilled((_this$filledValues = this.filledValues) === null || _this$filledValues === void 0 ? void 0 : _this$filledValues.location) || showLocation;
 	      if (oldSettings.showUserSelector !== newSettings.showUserSelector && newSettings.showUserSelector) {
 	        this.showUserSelectorDialog();
 	      }
@@ -1288,17 +1432,41 @@ this.BX.Crm = this.BX.Crm || {};
 				:style="iconStyles"
 			></span>
 			<span>{{ encodedTitle }}</span>
-			<span 
-				ref="userSelector"
-				@click="showUserSelectorDialog"
-				class="crm-activity__todo-editor-v2_block-header-action"
+			<span
+				v-if="canUseCalendarSectionSelector"
+				class="crm-activity__todo-editor-v2_block-header-data"
 			>
-				{{ usersList }}
+				<SectionSelector 
+					ref="sectionSelector"
+					:userId="context.userId"
+					:sections="config?.sections ?? []"
+					:trackingUsersList="config?.trackingUsersList ?? []"
+					:selectedSectionId="sectionId"
+					:readOnly="sectionSelectorReadOnly"
+					@change="onChangeSection"
+				/>
+			</span>
+			<span v-if="canUseCalendarSectionSelector && hasSections && !sectionSelectorReadOnly">
+				<span
+					@click="toggleCalendarSelectorDialog"
+					class="crm-activity__todo-editor-v2_block-header-action"
+				>
+					{{ changeTitle }}
+				</span>
 			</span>
 			<div
 				@click="$emit('close', id)"
 				class="crm-activity__todo-editor-v2_block-header-close"
 			></div>
+		</div>
+		<div class="crm-activity__todo-editor-v2_block-subheader">
+			<span
+				ref="userSelector"
+				@click="showUserSelectorDialog"
+				class="crm-activity__todo-editor-v2_block-subheader-action"
+			>
+				{{ usersList }} ({{ selectedUsersIdsArray.length }})
+			</span>
 		</div>
 		<div class="crm-activity__todo-editor-v2_block-body">
 			<div class="crm-activity__settings_popup__calendar-container">
@@ -2343,9 +2511,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  },
 	  template: `
-		<div class="crm-activity__todo-editor-v2_color-selector">
-			<div ref="itemSelectorRef" v-hint="hint"></div>
-		</div>
+		<div class="crm-activity__todo-editor-v2_color-selector" ref="itemSelectorRef" v-hint="hint"></div>
 	`
 	};
 
@@ -2549,7 +2715,6 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const TEXTAREA_MAX_HEIGHT = 126;
 	const ADD_MODE = 'add';
 	const Events = {
 	  EVENT_RESPONSIBLE_USER_CHANGE: 'crm:timeline:todo:responsible-user-changed',
@@ -2569,26 +2734,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    TodoEditorBlocksLink,
 	    TodoEditorBlocksFile,
 	    TodoEditorBlocksAddress,
-	    TodoEditorColorSelector
+	    TodoEditorColorSelector,
+	    TextEditorComponent: ui_textEditor.TextEditorComponent
 	  },
 	  props: {
-	    onFocus: Function,
-	    onSaveHotkeyPressed: Function,
 	    deadline: Date,
 	    defaultTitle: {
 	      type: String,
 	      required: false,
 	      default: ''
 	    },
-	    defaultDescription: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    popupMode: Boolean,
 	    currentUser: Object,
 	    pingSettings: Object,
-	    copilotSettings: Object,
 	    colorSettings: Object,
 	    mode: {
 	      type: String,
@@ -2605,15 +2762,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      default: null,
 	      required: false
 	    },
+	    itemIdentifier: {
+	      type: Object,
+	      default: {},
+	      required: true
+	    },
 	    analytics: {
 	      type: Object,
 	      default: null,
 	      required: false
-	    }
+	    },
+	    textEditor: ui_textEditor.TextEditor
 	  },
 	  data() {
 	    var _this$deadline;
-	    const isCopilotEnabled = main_core.Type.isPlainObject(this.copilotSettings);
 	    const currentDeadline = (_this$deadline = this.deadline) !== null && _this$deadline !== void 0 ? _this$deadline : new Date();
 	    const calendarDateTo = main_core.Runtime.clone(currentDeadline);
 	    calendarDateTo.setHours(currentDeadline.getHours() + 1);
@@ -2626,15 +2788,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    return {
 	      currentActivityId: this.activityId,
 	      title: this.defaultTitle,
-	      description: this.defaultDescription,
 	      currentDeadline,
 	      calendarDateTo,
 	      pingOffsets: this.pingSettings.selectedValues,
 	      colorId: this.colorSettings.selectedValueId,
 	      responsibleUserId: this.currentUser.userId,
-	      isTextareaToLong: false,
 	      wasUsed: false,
-	      isCopilotEnabled,
 	      blocksData,
 	      modeData: this.mode,
 	      currentUserData: this.currentUser
@@ -2660,17 +2819,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    context() {
 	      return {
 	        userId: this.responsibleUserId,
-	        activityId: this.currentActivityId
+	        activityId: this.currentActivityId,
+	        itemIdentifier: this.itemIdentifier
 	      };
-	    },
-	    placeholderDescription() {
-	      let code = '';
-	      if (this.wasUsed) {
-	        code = this.isCopilotEnabled ? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1' : 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_MSGVER_1';
-	      } else {
-	        code = 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_ROLLED';
-	      }
-	      return this.$Bitrix.Loc.getMessage(code);
 	    },
 	    placeholderTitle() {
 	      return this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_ADD_TITLE_PLACEHOLDER');
@@ -2680,18 +2831,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    orderedBlocksData() {
 	      return this.blocksData.sort((a, b) => b.sort - a.sort);
-	    }
-	  },
-	  watch: {
-	    description() {
-	      main_core.Dom.style(this.$refs.textarea, 'height', 'auto');
-	      void this.$nextTick(() => {
-	        const currentTextareaHeight = this.$refs.textarea.scrollHeight;
-	        main_core.Dom.style(this.$refs.textarea, 'height', `${currentTextareaHeight}px`);
-	        if (this.popupMode === true) {
-	          this.isTextareaToLong = currentTextareaHeight > TEXTAREA_MAX_HEIGHT;
-	        }
-	      });
 	    }
 	  },
 	  methods: {
@@ -2729,7 +2868,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }) {
 	      var _this$$refs$pingSelec;
 	      this.title = title;
-	      this.description = description;
+	      this.textEditor.setText(description);
 	      this.currentDeadline = new Date(deadline);
 	      this.currentActivityId = id;
 	      this.currentUserData = currentUser;
@@ -2762,35 +2901,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    resetTitleAndDescription() {
 	      this.setTitle(this.defaultTitle);
-	      this.setDescription(this.defaultDescription);
-	      main_core.Dom.style(this.$refs.textarea, 'height', 'auto');
+	      this.textEditor.setText(this.defaultDescription);
 	    },
 	    setTitle(title) {
 	      this.title = title;
-	    },
-	    setDescription(description) {
-	      this.description = description;
-	    },
-	    onTextareaFocus(event) {
-	      this.descriptionBeforeFocus = event.target.value;
-	      this.setWasUsed(true);
-	      this.onFocus();
-	    },
-	    onTextareaKeydown(event) {
-	      if (event.keyCode !== 13) {
-	        return;
-	      }
-	      const isMacCtrlKeydown = main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true);
-	      if (event.ctrlKey === true || isMacCtrlKeydown) {
-	        this.onSaveHotkeyPressed();
-	      }
-	    },
-	    setTextareaFocused() {
-	      this.setWasUsed(true);
-	      this.$refs.textarea.focus();
-	    },
-	    setWasUsed(value) {
-	      this.wasUsed = value;
 	    },
 	    onDeadlineClick() {
 	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
@@ -2826,9 +2940,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    onCalendarChange(event) {
 	      const data = event.getData();
 	      if (data) {
-	        this.currentDeadline = new Date(data.from);
+	        const currentDeadlineTimestamp = this.currentDeadline.getTime();
+	        this.setDeadline(new Date(data.from));
 	        this.calendarDateTo = new Date(data.to);
-	        this.sendAnalyticsDeadlineChange();
+	        if (currentDeadlineTimestamp !== data.from) {
+	          this.sendAnalyticsDeadlineChange();
+	        }
+	        if (main_core.Type.isNumber(data.sectionId)) {
+	          this.sendAnalyticsCalendarSectionChange();
+	        }
 	      }
 	    },
 	    setPingOffsets(offsets) {
@@ -2859,11 +2979,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this$$refs$pingSelec3, _this$$refs$colorSele;
 	      return {
 	        title: main_core.Type.isString(this.title) && main_core.Type.isStringFilled(this.title.trim()) ? this.title.trim() : null,
-	        description: this.description,
+	        description: this.textEditor.getText(),
 	        deadline: this.currentDeadline,
 	        responsibleUserId: this.responsibleUserId,
 	        pingOffsets: (_this$$refs$pingSelec3 = this.$refs.pingSelector) === null || _this$$refs$pingSelec3 === void 0 ? void 0 : _this$$refs$pingSelec3.getValue(),
-	        colorId: (_this$$refs$colorSele = this.$refs.colorSelector) === null || _this$$refs$colorSele === void 0 ? void 0 : _this$$refs$colorSele.getValue()
+	        colorId: (_this$$refs$colorSele = this.$refs.colorSelector) === null || _this$$refs$colorSele === void 0 ? void 0 : _this$$refs$colorSele.getValue(),
+	        isCalendarSectionChanged: this.isCalendarSectionChanged
 	      };
 	    },
 	    onColorSelectorValueChange() {
@@ -2882,6 +3003,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.isDeadlineChanged) {
 	        this.sendAnalytics(EventIds.activityTouch, ElementIds.deadline);
 	        this.isDeadlineChanged = true;
+	      }
+	    },
+	    sendAnalyticsCalendarSectionChange() {
+	      if (!this.isCalendarSectionChanged) {
+	        this.sendAnalytics(EventIds.activityTouch, ElementIds.calendarSection);
+	        this.isCalendarSectionChanged = true;
 	      }
 	    },
 	    sendAnalytics(event, element) {
@@ -2907,17 +3034,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.sendAnalytics(EventIds.activityTouch, ElementIds.title);
 	      }
 	    },
-	    onTextareaInput(event) {
-	      const {
-	        value
-	      } = event.target;
-	      this.setDescription(value);
+	    handleTextEditorFocus(event) {
+	      this.descriptionBeforeFocus = this.textEditor.getText();
 	    },
-	    onTextareaBlur(event) {
-	      const {
-	        value
-	      } = event.target;
-	      if (main_core.Type.isStringFilled(value) && value !== this.descriptionBeforeFocus) {
+	    handleTextEditorBlur(event) {
+	      const description = this.textEditor.getText();
+	      if (main_core.Type.isStringFilled(description) && description !== this.descriptionBeforeFocus) {
 	        this.sendAnalytics(EventIds.activityTouch, ElementIds.description);
 	      }
 	    },
@@ -2951,7 +3073,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      block.active = true;
 	      block.focused = true;
 	      block.sort = this.getNextBlockSortValue();
-	      this.setTextareaFocused();
+	      this.textEditor.focus();
 	      if (!this.addBlockSended) {
 	        this.addBlockSended = true;
 	        this.sendAnalytics(EventIds.activityTouch, ElementIds.addBlock);
@@ -2965,14 +3087,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      return ++maxSortValue;
-	    },
-	    onCopilotTextareaValueChange(event) {
-	      const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
-	      const id = event.getData().id;
-	      if (this.wasUsed && copilotId === id) {
-	        const value = event.getData().value;
-	        this.setDescription(value);
-	      }
 	    },
 	    showActionsPopup(event) {
 	      this.actionsPopup.bindElement(event.target).show();
@@ -3035,96 +3149,76 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.$Bitrix.eventEmitter.subscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
 	    this.$Bitrix.eventEmitter.subscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 	    main_core_events.EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
-	    if (this.isCopilotEnabled) {
-	      this.copilotTextarea = new crm_ai_copilotTextarea.CopilotTextarea({
-	        id: main_core.Text.getRandom(),
-	        target: this.$refs.textarea,
-	        copilotParams: this.copilotSettings
-	      });
-	      main_core_events.EventEmitter.subscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-	    }
 	  },
 	  beforeUnmount() {
 	    this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
 	    this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 	    main_core_events.EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
-	    if (this.isCopilotEnabled) {
-	      main_core_events.EventEmitter.unsubscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-	    }
 	  },
 	  template: `
-		<label>
-			<div class="crm-activity__todo-editor-v2_container">
-				<div class="crm-activity__todo-editor-v2_header">
-					<input
-						v-if="wasUsed"
-						type="text"
-						ref="title"
-						class="crm-activity__todo-editor-v2_input_control --title"
-						:value="title"
-						:placeholder="placeholderTitle"
-						maxlength="40"
-						@input="onTitleInput"
-						@focus="onTitleFocus"
-						@blur="onTitleBlur"
-					>
-					<TodoEditorColorSelector
-						ref="colorSelector"
-						:valuesList="colorSettings.valuesList"
-						:selectedValueId="colorSettings.selectedValueId"
-						@onChange="onColorSelectorValueChange"
-					/>
-					<TodoEditorResponsibleUserSelector
-						:userId="currentUserData.userId"
-						:userName="currentUserData.title"
-						:imageUrl="currentUserData.imageUrl"
-						ref="userSelector"
-						class="crm-activity__todo-editor-v2_action-btn"
-					/>
-				</div>
-				<div class="crm-activity__todo-editor-v2_body">
-					<textarea
-						rows="2"
-						ref="textarea"
-						@keydown="onTextareaKeydown"
-						class="crm-activity__todo-editor-v2_input_control"
-						:placeholder="placeholderDescription"
-						@input="onTextareaInput"
-						@focus="onTextareaFocus"
-						@blur="onTextareaBlur"
-						:value="description"
-						:class="{ '--has-scroll': isTextareaToLong }"
-					></textarea>
-					<button 
-						class="crm-activity__todo-show-actions-popup-button ui-btn ui-btn-sm ui-btn-base-light"
-						@click="showActionsPopup"
-					>
-						{{ popupMenuButtonTitle }}
-						<span class="crm-activity__todo-show-actions-popup-button-arrow"></span>
-					</button>
-					<div class="crm-activity__todo-editor-v2_tools" v-if="wasUsed">
-						<div class="crm-activity__todo-editor-v2_left_tools">
-							<div
-								ref="deadline"
-								@click="onDeadlineClick"
-								class="crm-activity__todo-editor-v2_deadline"
+		<div class="crm-activity__todo-editor-v2_container">
+			<div class="crm-activity__todo-editor-v2_editor">
+				<button
+					class="crm-activity__todo-show-actions-popup-button ui-btn ui-btn-sm ui-btn-base-light"
+					@click="showActionsPopup"
+				>
+					{{ popupMenuButtonTitle }}
+					<span class="crm-activity__todo-show-actions-popup-button-arrow"></span>
+				</button>
+				<TextEditorComponent :events="{ onFocus: this.handleTextEditorFocus, onBlur: this.handleTextEditorBlur }" :editor-instance="textEditor">
+					<template #header>
+						<div class="crm-activity__todo-editor-v2_header">
+							<input
+								type="text"
+								ref="title"
+								class="crm-activity__todo-editor-v2_input_control --title"
+								:value="title"
+								:placeholder="placeholderTitle"
+								maxlength="40"
+								@input="onTitleInput"
+								@focus="onTitleFocus"
+								@blur="onTitleBlur"
 							>
+							<TodoEditorColorSelector
+								ref="colorSelector"
+								:valuesList="colorSettings.valuesList"
+								:selectedValueId="colorSettings.selectedValueId"
+								@onChange="onColorSelectorValueChange"
+							/>
+							<TodoEditorResponsibleUserSelector
+								:userId="currentUserData.userId"
+								:userName="currentUserData.title"
+								:imageUrl="currentUserData.imageUrl"
+								ref="userSelector"
+								class="crm-activity__todo-editor-v2_action-btn"
+							/>
+						</div>
+					</template>
+					<template #footer>
+						<div class="crm-activity__todo-editor-v2_tools">
+							<div class="crm-activity__todo-editor-v2_left_tools">
+								<div
+									ref="deadline"
+									@click="onDeadlineClick"
+									class="crm-activity__todo-editor-v2_deadline"
+								>
 								<span class="crm-activity__todo-editor-v2_deadline-pill">
 									<span class="crm-activity__todo-editor-v2_deadline-icon"></span>
 									<span class="crm-activity__todo-editor-v2_deadline-text">{{ deadlineFormatted }}</span>
 								</span>
+								</div>
+								<TodoEditorPingSelector
+									ref="pingSelector"
+									:valuesList="pingSettings.valuesList"
+									:selectedValues="pingOffsets"
+									:deadline="currentDeadline"
+									@onChange="onPingSettingsSelectorValueChange"
+									class="crm-activity__todo-editor-v2_ping_selector"
+								/>
 							</div>
-							<TodoEditorPingSelector
-								ref="pingSelector"
-								:valuesList="pingSettings.valuesList"
-								:selectedValues="pingOffsets"
-								:deadline="currentDeadline"
-								@onChange="onPingSettingsSelectorValueChange"
-								class="crm-activity__todo-editor-v2_ping_selector"
-							/>
 						</div>
-					</div>
-				</div>
+					</template>
+				</TextEditorComponent>
 			</div>
 
 			<div
@@ -3148,7 +3242,7 @@ this.BX.Crm = this.BX.Crm || {};
 					@updateFilledValues="updateFilledValues"
 				/>
 			</div>
-		</label>
+		</div>
 	`
 	};
 
@@ -3337,6 +3431,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _hiddenActionItems = /*#__PURE__*/new WeakMap();
 	var _actionsPopup = /*#__PURE__*/new WeakMap();
 	var _analytics = /*#__PURE__*/new WeakMap();
+	var _textEditor = /*#__PURE__*/new WeakMap();
 	var _checkParams = /*#__PURE__*/new WeakSet();
 	var _initParams = /*#__PURE__*/new WeakSet();
 	var _prepareContainer = /*#__PURE__*/new WeakSet();
@@ -3364,6 +3459,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _canUseAddressBlock = /*#__PURE__*/new WeakSet();
 	var _getAnalyticsInstance = /*#__PURE__*/new WeakSet();
 	var _clearValue = /*#__PURE__*/new WeakSet();
+	var _shouldAnimateCollapse = /*#__PURE__*/new WeakSet();
 	var _clearData = /*#__PURE__*/new WeakSet();
 	var _getDefaultTitle = /*#__PURE__*/new WeakSet();
 	var _getDefaultDescription = /*#__PURE__*/new WeakSet();
@@ -3391,6 +3487,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$4(this, _getDefaultDescription);
 	    _classPrivateMethodInitSpec$4(this, _getDefaultTitle);
 	    _classPrivateMethodInitSpec$4(this, _clearData);
+	    _classPrivateMethodInitSpec$4(this, _shouldAnimateCollapse);
 	    _classPrivateMethodInitSpec$4(this, _clearValue);
 	    _classPrivateMethodInitSpec$4(this, _getAnalyticsInstance);
 	    _classPrivateMethodInitSpec$4(this, _canUseAddressBlock);
@@ -3510,6 +3607,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    _classPrivateFieldInitSpec$4(this, _textEditor, {
+	      writable: true,
+	      value: null
+	    });
 	    _classPrivateMethodGet$4(this, _checkParams, _checkParams2).call(this, _params);
 	    _classPrivateMethodGet$4(this, _initParams, _initParams2).call(this, _params);
 	    _classPrivateMethodGet$4(this, _prepareContainer, _prepareContainer2).call(this);
@@ -3535,20 +3636,61 @@ this.BX.Crm = this.BX.Crm || {};
 	      babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(TodoEditor, {
 	        deadline: babelHelpers.classPrivateFieldGet(this, _deadline),
 	        defaultTitle: babelHelpers.classPrivateFieldGet(this, _defaultTitle),
-	        defaultDescription: babelHelpers.classPrivateFieldGet(this, _defaultDescription),
-	        onFocus: _classPrivateMethodGet$4(this, _onInputFocus, _onInputFocus2).bind(this),
-	        onSaveHotkeyPressed: _classPrivateMethodGet$4(this, _onSaveHotkeyPressed, _onSaveHotkeyPressed2).bind(this),
-	        popupMode: babelHelpers.classPrivateFieldGet(this, _popupMode),
 	        currentUser: babelHelpers.classPrivateFieldGet(this, _currentUser),
 	        pingSettings: babelHelpers.classPrivateFieldGet(this, _pingSettings$1),
-	        copilotSettings: babelHelpers.classPrivateFieldGet(this, _copilotSettings),
 	        colorSettings: babelHelpers.classPrivateFieldGet(this, _colorSettings),
 	        actionsPopup: _classPrivateMethodGet$4(this, _getActionsPopup, _getActionsPopup2).call(this),
 	        blocks: _classPrivateMethodGet$4(this, _getBlocks, _getBlocks2).call(this),
 	        mode: babelHelpers.classPrivateFieldGet(this, _mode),
-	        analytics: _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this)
+	        analytics: _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this),
+	        textEditor: this.getTextEditor(),
+	        itemIdentifier: {
+	          entityTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
+	          entityId: babelHelpers.classPrivateFieldGet(this, _ownerId)
+	        }
 	      }));
 	      babelHelpers.classPrivateFieldSet(this, _layoutComponent, babelHelpers.classPrivateFieldGet(this, _layoutApp).mount(babelHelpers.classPrivateFieldGet(this, _container)));
+	    }
+	  }, {
+	    key: "getTextEditor",
+	    value: function getTextEditor() {
+	      if (babelHelpers.classPrivateFieldGet(this, _textEditor) !== null) {
+	        return babelHelpers.classPrivateFieldGet(this, _textEditor);
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _textEditor, new ui_textEditor.BasicEditor({
+	        removePlugins: ['BlockToolbar'],
+	        minHeight: 50,
+	        maxHeight: babelHelpers.classPrivateFieldGet(this, _popupMode) ? 126 : 600,
+	        content: babelHelpers.classPrivateFieldGet(this, _defaultDescription),
+	        placeholder: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_ROLLED'),
+	        paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _copilotSettings)) ? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1' : null),
+	        toolbar: [],
+	        floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'link', 'copilot'],
+	        collapsingMode: true,
+	        copilot: {
+	          copilotOptions: main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _copilotSettings)) ? babelHelpers.classPrivateFieldGet(this, _copilotSettings) : null,
+	          triggerBySpace: true
+	        },
+	        events: {
+	          onFocus: () => {
+	            _classPrivateMethodGet$4(this, _onInputFocus, _onInputFocus2).call(this);
+	          },
+	          onEmptyContentToggle: event => {
+	            babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onEmptyContentToggle', {
+	              isEmpty: event.getData().isEmpty
+	            });
+	          },
+	          onCollapsingToggle: event => {
+	            babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onCollapsingToggle', {
+	              isOpen: event.getData().isOpen
+	            });
+	          },
+	          onMetaEnter: () => {
+	            _classPrivateMethodGet$4(this, _onSaveHotkeyPressed, _onSaveHotkeyPressed2).call(this);
+	          }
+	        }
+	      }));
+	      return babelHelpers.classPrivateFieldGet(this, _textEditor);
 	    }
 	  }, {
 	    key: "onUpdateHandler",
@@ -3628,8 +3770,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getDescription",
 	    value: function getDescription() {
-	      var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	      return (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getData().description) !== null && _babelHelpers$classPr3 !== void 0 ? _babelHelpers$classPr3 : '';
+	      return this.getTextEditor().getText();
 	    }
 	  }, {
 	    key: "setParentActivityId",
@@ -3680,23 +3821,28 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "setFocused",
 	    value: function setFocused() {
-	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).setTextareaFocused();
+	      this.getTextEditor().focus(null, {
+	        defaultSelection: 'rootEnd'
+	      });
 	    }
 	  }, {
 	    key: "setDescription",
 	    value: function setDescription(description) {
-	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).setDescription(description);
+	      this.getTextEditor().setText(description);
 	      return this;
 	    }
 	  }, {
 	    key: "cancel",
 	    value: function cancel(params = {}) {
 	      var _params$analytics, _params$analytics2, _params$analytics3;
+	      const animateCollapse = _classPrivateMethodGet$4(this, _shouldAnimateCollapse, _shouldAnimateCollapse2).call(this);
 	      if ((params === null || params === void 0 ? void 0 : params.sendAnalytics) === false) {
+	        this.getTextEditor().collapse(animateCollapse);
 	        return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	      }
 	      const analytics = _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this);
 	      if (analytics === null) {
+	        this.getTextEditor().collapse(animateCollapse);
 	        return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	      }
 	      analytics.setEvent(EventIds.activityAdd).setElement(ElementIds.cancelButton);
@@ -3713,12 +3859,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        analytics.setNotificationSkipPeriod(notificationSkipPeriod);
 	      }
 	      analytics.send();
+	      this.getTextEditor().collapse(animateCollapse);
 	      return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	    }
 	  }, {
 	    key: "resetToDefaults",
 	    value: function resetToDefaults() {
-	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).setDescription(_classPrivateMethodGet$4(this, _getDefaultDescription, _getDefaultDescription2).call(this));
+	      this.setDescription(_classPrivateMethodGet$4(this, _getDefaultDescription, _getDefaultDescription2).call(this));
+	      this.getTextEditor().collapse(_classPrivateMethodGet$4(this, _shouldAnimateCollapse, _shouldAnimateCollapse2).call(this));
 	      return _classPrivateMethodGet$4(this, _clearData, _clearData2).call(this);
 	    }
 	  }]);
@@ -3910,6 +4058,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	async function _showPrefilledComponent2(entityData, blocksData, mode = TodoEditorMode.ADD) {
 	  await _classPrivateMethodGet$4(this, _initLayoutComponentForEdit, _initLayoutComponentForEdit2).call(this, entityData, blocksData);
+	  this.getTextEditor().expand();
 	  _classPrivateMethodGet$4(this, _scrollToTop, _scrollToTop2).call(this);
 	  this.setMode(mode);
 	  this.setFocused();
@@ -3973,7 +4122,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        parentActivityId: babelHelpers.classPrivateFieldGet(this, _parentActivityId),
 	        settings,
 	        pingOffsets: userData.pingOffsets,
-	        colorId: userData.colorId
+	        colorId: userData.colorId,
+	        isCalendarSectionChanged: userData.isCalendarSectionChanged
 	      };
 	      if (babelHelpers.classPrivateFieldGet(this, _mode) === TodoEditorMode.UPDATE) {
 	        data.id = babelHelpers.classPrivateFieldGet(this, _activityId);
@@ -3994,7 +4144,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _getAnalyticsLabel2(data) {
 	  const analyticsLabel = _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this);
 	  if (analyticsLabel === null) {
-	    return {};
+	    return null;
 	  }
 	  analyticsLabel.setEvent(EventIds.activityAdd).setElement(ElementIds.createButton);
 
@@ -4010,8 +4160,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    analyticsLabel.setColorId(data.colorId);
 	  }
 	  const blockTypes = [];
+	  const calendarBlockId = TodoEditorBlocksCalendar.methods.getId();
 	  data.settings.forEach(block => {
-	    blockTypes.push(block.id);
+	    if (data.isCalendarSectionChanged && block.id === calendarBlockId) {
+	      blockTypes.push('section_calendar');
+	    } else {
+	      blockTypes.push(block.id);
+	    }
 	  });
 	  if (main_core.Type.isArrayFilled(blockTypes)) {
 	    analyticsLabel.setBlockTypes(blockTypes);
@@ -4037,7 +4192,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return {
 	    id: TodoEditorBlocksClient.methods.getId(),
 	    title: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_CLIENT_BLOCK_TITLE'),
-	    icon: 'crm-activity__todo-editor-v2_client-icon.svg',
+	    icon: 'crm-activity__todo-editor-v2_client-icon-v2.svg',
 	    settings: {
 	      entityTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
 	      entityId: babelHelpers.classPrivateFieldGet(this, _ownerId)
@@ -4048,7 +4203,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return {
 	    id: TodoEditorBlocksLink.methods.getId(),
 	    title: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_LINK_BLOCK_TITLE'),
-	    icon: 'crm-activity__todo-editor-v2_link-icon.svg'
+	    icon: 'crm-activity__todo-editor-v2_link-icon-v2.svg'
 	  };
 	}
 	function _getFileBlockSettings2() {
@@ -4066,7 +4221,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return {
 	    id: TodoEditorBlocksAddress.methods.getId(),
 	    title: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_ADDRESS_BLOCK_TITLE'),
-	    icon: 'crm-activity__todo-editor-v2_address-icon.svg',
+	    icon: 'crm-activity__todo-editor-v2_address-icon-v2.svg',
 	    settings: {
 	      entityTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
 	      entityId: babelHelpers.classPrivateFieldGet(this, _ownerId)
@@ -4078,8 +4233,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  return (settings === null || settings === void 0 ? void 0 : settings.canUseAddressBlock) === true;
 	}
 	function _getAnalyticsInstance2() {
-	  var _babelHelpers$classPr5;
-	  const data = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr5 === void 0 ? void 0 : _babelHelpers$classPr5.getData();
+	  var _babelHelpers$classPr3;
+	  const data = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.getData();
 	  if (!data) {
 	    return null;
 	  }
@@ -4089,10 +4244,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classPrivateFieldSet(this, _parentActivityId, null);
 	  return _classPrivateMethodGet$4(this, _clearData, _clearData2).call(this);
 	}
+	function _shouldAnimateCollapse2() {
+	  var _BX$Crm3, _BX$Crm3$Timeline, _BX$Crm3$Timeline$Men;
+	  const menuBar = (_BX$Crm3 = BX.Crm) === null || _BX$Crm3 === void 0 ? void 0 : (_BX$Crm3$Timeline = _BX$Crm3.Timeline) === null || _BX$Crm3$Timeline === void 0 ? void 0 : (_BX$Crm3$Timeline$Men = _BX$Crm3$Timeline.MenuBar) === null || _BX$Crm3$Timeline$Men === void 0 ? void 0 : _BX$Crm3$Timeline$Men.getDefault();
+	  return menuBar && menuBar.getFirstItemIdWithLayout() === 'todo';
+	}
 	function _clearData2() {
 	  this.setDefaultDeadLine();
 	  this.setMode(TodoEditorMode.ADD);
-	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).setWasUsed(false);
 	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetTitleAndDescription();
 	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetPingOffsetsToDefault();
 	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetResponsibleUserToDefault();
@@ -4109,9 +4268,8 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _getDefaultDescription2() {
 	  let messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT';
-	  switch (babelHelpers.classPrivateFieldGet(this, _ownerTypeId)) {
-	    case BX.CrmEntityType.enumeration.deal:
-	      messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT_DEAL';
+	  if (babelHelpers.classPrivateFieldGet(this, _ownerTypeId) === BX.CrmEntityType.enumeration.deal) {
+	    messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT_DEAL';
 	  }
 	  return main_core.Loc.getMessage(messagePhrase);
 	}
@@ -4140,5 +4298,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditorV2 = TodoEditorV2;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Vue3,BX.Crm.AI,BX.Crm.Timeline,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX.Calendar,BX,BX.Main,BX.UI,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Vue3,BX.Crm.Timeline,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX,BX.Calendar,BX.Main,BX.UI,BX.Calendar.Controls,BX.Calendar,BX,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives,BX.UI.TextEditor));
 //# sourceMappingURL=todo-editor-v2.bundle.js.map

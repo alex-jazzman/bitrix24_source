@@ -196,6 +196,26 @@ jn.define('im/messenger/provider/service/recent', (require, exports, module) => 
 		}
 
 		/**
+		 * @param {number} lastMessageId
+		 * @param {object} restOptions
+		 * @return {Promise<any>}
+		 */
+		getCollabPageFromService(lastMessageId, restOptions)
+		{
+			const options = { limit: 50, ...restOptions };
+
+			if (this.pageNavigation.currentPage > 1)
+			{
+				options.filter = {
+					lastMessageId,
+				};
+			}
+
+			// TODO: implement collab rest
+			return RecentRest.getChannelList(options);
+		}
+
+		/**
 		 * @return {object}
 		 */
 		getPageNavigationOptions()

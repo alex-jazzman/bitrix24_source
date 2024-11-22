@@ -2437,6 +2437,7 @@ export class View
 			this.render();
 			this.container.appendChild(this.elements.root);
 		}
+
 		const statusNode = Dom.create("div", {
 			props: {className: "bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide"},
 		});
@@ -2462,6 +2463,45 @@ export class View
 		this.elements.overlay.textContent = '';
 	};
 
+	renderErrorCallLayout()
+	{
+		if (!this.elements.root)
+		{
+			this.render();
+			this.container.appendChild(this.elements.root);
+		}
+
+		const errorContainer = Dom.create("div", {
+			props: {className: "bx-messenger-videocall-error-container"},
+			children: [
+				Dom.create("div", {
+					props: {className: "bx-messenger-videocall-error-container-icon-alert"},
+				}),
+				Dom.create("div", {
+					props: {className: "bx-messenger-videocall-error-message"},
+					text: BX.message("CALL_CONNECTED_ERROR"),
+				}),
+				Dom.create("div", {
+					props: {className: "bx-messenger-videocall-error-button-self-test"},
+					text: BX.message("CALL_RUN_SELF_TEST"),
+					events: {
+						click: () =>
+						{
+							Util.startSelfTest();
+						}
+					}
+				}),
+
+			],
+		})
+
+		if (this.elements.overlay.childElementCount)
+		{
+			Dom.clean(this.elements.overlay);
+		}
+		this.elements.overlay.appendChild(errorContainer);
+	}
+
 	/**
 	 * @param {Object} params
 	 * @param {string} params.text
@@ -2469,7 +2509,7 @@ export class View
 	 */
 	showFatalError(params)
 	{
-		this.showMessage(params);
+		this.renderErrorCallLayout();
 		this.setUiState(UiState.Error);
 		// in some cases video elements may still be shown on the error screen, let's hide them
 		this.elements.userList.container.style.display = 'none';

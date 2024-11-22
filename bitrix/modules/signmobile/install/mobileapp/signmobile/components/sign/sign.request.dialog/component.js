@@ -7,6 +7,7 @@
 	const url = BX.componentParameters.get('url', false);
 	const role = BX.componentParameters.get('role');
 	const isGoskey = BX.componentParameters.get('isGoskey');
+	const isExternal = BX.componentParameters.get('isExternal');
 
 	if (role === 'reviewer')
 	{
@@ -30,6 +31,7 @@
 			role,
 			url,
 			isGoskey,
+			isExternal,
 		});
 	}
 })();

@@ -1519,6 +1519,7 @@ this.BX = this.BX || {};
 	        id: selectorOptions.selectorId || 'group_create_owner',
 	        dialogOptions: {
 	          id: selectorOptions.selectorId || 'group_create_owner',
+	          offsetLeft: 78,
 	          context: TeamManager$$1.contextList.owner,
 	          preselectedItems: selectorOptions.value,
 	          events: {
@@ -1559,6 +1560,7 @@ this.BX = this.BX || {};
 	        id: selectorOptions.selectorId || 'group_create_scrum_master',
 	        dialogOptions: {
 	          id: selectorOptions.selectorId || 'group_create_scrum_master',
+	          offsetLeft: 78,
 	          context: TeamManager$$1.contextList.scrumMaster,
 	          preselectedItems: selectorOptions.value,
 	          events: {
@@ -1597,6 +1599,7 @@ this.BX = this.BX || {};
 	        id: selectorOptions.selectorId || 'group_create_moderators',
 	        dialogOptions: {
 	          id: selectorOptions.selectorId || 'group_create_moderators',
+	          offsetLeft: 78,
 	          context: TeamManager$$1.contextList.moderators,
 	          preselectedItems: selectorOptions.value,
 	          events: {
@@ -1637,6 +1640,7 @@ this.BX = this.BX || {};
 	        id: selectorOptions.selectorId || 'group_create_users',
 	        dialogOptions: {
 	          id: selectorOptions.selectorId || 'group_create_users',
+	          offsetLeft: 78,
 	          context: TeamManager$$1.contextList.users,
 	          preselectedItems: selectorOptions.value,
 	          events: {

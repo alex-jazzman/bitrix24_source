@@ -1,42 +1,20 @@
 import 'ui.notification';
-import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { ChatService } from 'im.v2.provider.service';
 import { Logger } from 'im.v2.lib.logger';
-import { ThemeManager } from 'im.v2.lib.theme';
-import { ResizeManager } from 'im.v2.lib.textarea';
-import { EventType, Settings, SidebarDetailBlock } from 'im.v2.const';
-import { ChatSidebar } from 'im.v2.component.sidebar';
 import { Analytics } from 'im.v2.lib.analytics';
 
-import { ChatHeader } from './components/chat-header';
+import { CopilotInternalContent } from './components/content';
 import { EmptyState } from './components/empty-state';
-import { CopilotTextarea } from './components/textarea';
-import { CopilotDialog } from './components/dialog';
-
-import './css/copilot-content.css';
 
 import type { ImModelChat, ImModelLayout } from 'im.v2.model';
-import type { BackgroundStyle } from 'im.v2.lib.theme';
+import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const CopilotContent = {
 	name: 'CopilotContent',
-	components: { EmptyState, ChatHeader, CopilotDialog, CopilotTextarea, ChatSidebar },
-	directives:
-	{
-		'textarea-observer': {
-			mounted(element, binding)
-			{
-				binding.instance.textareaResizeManager.observeTextarea(element);
-			},
-			beforeUnmount(element, binding)
-			{
-				binding.instance.textareaResizeManager.unobserveTextarea(element);
-			},
-		},
-	},
+	components: { EmptyState, CopilotInternalContent },
 	props:
 	{
 		entityId: {
@@ -48,12 +26,9 @@ export const CopilotContent = {
 			default: 0,
 		},
 	},
-	data(): Object
+	data(): JsonObject
 	{
-		return {
-			textareaHeight: 0,
-			currentSidebarPanel: '',
-		};
+		return {};
 	},
 	computed:
 	{
@@ -65,26 +40,6 @@ export const CopilotContent = {
 		{
 			return this.$store.getters['chats/get'](this.entityId, true);
 		},
-		containerClasses(): string[]
-		{
-			const alignment = this.$store.getters['application/settings/get'](Settings.appearance.alignment);
-
-			return [`--${alignment}-align`];
-		},
-		backgroundStyle(): BackgroundStyle
-		{
-			const COPILOT_BACKGROUND_ID = 4;
-
-			return ThemeManager.getBackgroundStyleById(COPILOT_BACKGROUND_ID);
-		},
-		dialogContainerStyle(): Object
-		{
-			const CHAT_HEADER_HEIGHT = 64;
-
-			return {
-				height: `calc(100% - ${CHAT_HEADER_HEIGHT}px - ${this.textareaHeight}px)`,
-			};
-		},
 	},
 	watch:
 	{
@@ -93,27 +48,15 @@ export const CopilotContent = {
 			Logger.warn(`CopilotContent: switching from ${oldValue || 'empty'} to ${newValue}`);
 			this.onChatChange();
 		},
-		textareaHeight(newValue, oldValue)
-		{
-			if (!this.dialog.inited || oldValue === 0)
-			{
-				return;
-			}
-
-			EventEmitter.emit(EventType.dialog.scrollToBottom, {
-				chatId: this.dialog.chatId,
-				animation: false,
-			});
-		},
 	},
 	created()
 	{
-		if (this.entityId)
+		if (!this.entityId)
 		{
-			this.onChatChange();
+			return;
 		}
 
-		this.initTextareaResizeManager();
+		this.onChatChange();
 	},
 	methods:
 	{
@@ -151,51 +94,41 @@ export const CopilotContent = {
 			await this.loadChat();
 			Analytics.getInstance().onOpenChat(this.dialog);
 		},
-		onTextareaMount()
-		{
-			const textareaContainer: HTMLDivElement = this.$refs['textarea-container'];
-			this.textareaHeight = textareaContainer.clientHeight;
-		},
-		loadChatWithContext(): Promise
+		async loadChatWithContext(): Promise
 		{
 			Logger.warn(`CopilotContent: loading chat ${this.entityId} with context - ${this.layout.contextId}`);
 
-			return this.getChatService().loadChatWithContext(this.entityId, this.layout.contextId).then(() => {
-				Logger.warn(`CopilotContent: chat ${this.entityId} is loaded with context of ${this.layout.contextId}`);
-			}).catch((error) => {
-				if (error.code === 'ACCESS_ERROR')
-				{
-					this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR'));
-				}
-				Logger.error(error);
-				Messenger.openCopilot();
-			});
+			await this.getChatService().loadChatWithContext(this.entityId, this.layout.contextId)
+				.catch((error) => {
+					if (error.code === 'ACCESS_ERROR')
+					{
+						this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
+					}
+					Logger.error(error);
+					Messenger.openCopilot();
+				});
+
+			Logger.warn(`CopilotContent: chat ${this.entityId} is loaded with context of ${this.layout.contextId}`);
+
+			return Promise.resolve();
 		},
-		loadChat(): Promise
+		async loadChat(): Promise
 		{
 			Logger.warn(`CopilotContent: loading chat ${this.entityId}`);
 
-			return this.getChatService().loadChatWithMessages(this.entityId).then(() => {
-				Logger.warn(`CopilotContent: chat ${this.entityId} is loaded`);
-			}).catch((error) => {
-				const [firstError] = error;
-				if (firstError.code === 'ACCESS_DENIED')
-				{
-					this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR'));
-				}
-				Messenger.openCopilot();
-			});
-		},
-		initTextareaResizeManager()
-		{
-			this.textareaResizeManager = new ResizeManager();
-			this.textareaResizeManager.subscribe(
-				ResizeManager.events.onHeightChange,
-				(event: BaseEvent<{newHeight: number}>) => {
-					const { newHeight } = event.getData();
-					this.textareaHeight = newHeight;
-				},
-			);
+			await this.getChatService().loadChatWithMessages(this.entityId)
+				.catch((error) => {
+					const [firstError] = error;
+					if (firstError.code === 'ACCESS_DENIED')
+					{
+						this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
+					}
+					Messenger.openCopilot();
+				});
+
+			Logger.warn(`CopilotContent: chat ${this.entityId} is loaded`);
+
+			return Promise.resolve();
 		},
 		showNotification(text: string)
 		{
@@ -210,34 +143,13 @@ export const CopilotContent = {
 
 			return this.chatService;
 		},
-		onChangeSidebarPanel({ panel }: {panel: $Keys<typeof SidebarDetailBlock>})
-		{
-			this.currentSidebarPanel = panel;
-		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat__container bx-im-content-copilot__container" :class="containerClasses" :style="backgroundStyle">
-			<div v-if="entityId" class="bx-im-content-copilot__content">
-				<ChatHeader :dialogId="entityId" :key="entityId" :currentSidebarPanel="currentSidebarPanel" />
-				<div :style="dialogContainerStyle" class="bx-im-content-copilot__dialog_container">
-					<div class="bx-im-content-copilot__dialog_content">
-						<CopilotDialog :dialogId="entityId" :key="entityId" :textareaHeight="textareaHeight" />
-					</div>
-				</div>
-				<div v-textarea-observer class="bx-im-content-copilot__textarea_container" ref="textarea-container">
-					<CopilotTextarea :dialogId="entityId" :key="entityId" @mounted="onTextareaMount" />
-				</div>
-			</div>
-			<EmptyState v-else />
-			<ChatSidebar
-				v-if="entityId.length > 0"
-				:originDialogId="entityId"
-				@changePanel="onChangeSidebarPanel"
-			/>
-		</div>
+		<EmptyState v-if="!entityId" />
+		<CopilotInternalContent v-else :dialogId="entityId" />
 	`,
 };

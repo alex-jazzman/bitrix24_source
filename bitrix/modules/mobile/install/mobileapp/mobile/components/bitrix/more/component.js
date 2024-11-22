@@ -8,6 +8,9 @@
 	let sections = [];
 	let SITE_ID = BX.componentParameters.get("SITE_ID", "s1");
 
+	const { MoreTabNavigator } = jn.require('navigator/more-tab');
+	const moreTabNavigator = new MoreTabNavigator();
+
 	/**
 	 * @let  BaseList menu
 	 */
@@ -379,8 +382,27 @@
 		},
 		counterList: [],
 		currentCounters: {},
+		getItemById(id)
+		{
+			return items.find((item) => item?.params?.id === id);
+		},
+		triggerItemOnClick(item)
+		{
+			if (item.params.onclick)
+			{
+				(function()
+				{
+					eval(item
+						.params
+						.onclick);
+				}
+				).call(item);
+			}
+		},
 	};
 
+	moreTabNavigator.unsubscribeFromPushNotifications();
+	moreTabNavigator.subscribeToPushNotifications(More);
 	More.init();
 	// eslint-disable-next-line no-undef
 	qrauth.listenUniversalLink();

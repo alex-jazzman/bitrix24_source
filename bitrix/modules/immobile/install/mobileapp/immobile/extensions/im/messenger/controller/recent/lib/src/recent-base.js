@@ -7,8 +7,6 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { RestMethod } = require('im/messenger/const');
-	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { RecentRenderer } = require('im/messenger/controller/recent/lib/renderer');
 	const { ItemAction } = require('im/messenger/controller/recent/lib/item-action');
 	const { RecentConverter } = require('im/messenger/lib/converter');
@@ -51,6 +49,11 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			this.itemAction = {};
 
 			/**
+			 * @type {MessengerInitService}
+			 */
+			this.messagerInitService = serviceLocator.get('messenger-init-service');
+
+			/**
 			 * @type {RecentService|{}}
 			 */
 			this.recentService = {};
@@ -63,13 +66,14 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			this.initServices();
 			await this.fillStoreFromCache();
 			this.bindMethods();
-			this.initRequests();
 			this.subscribeStoreEvents();
 			this.subscribeMessengerEvents();
+			this.subscribeInitCounters();
 			this.subscribeViewEvents();
 			this.initItemAction();
 			await this.drawCacheItems();
 			this.initWorker();
+			this.subscribeInitMessengerEvent();
 		}
 
 		initView()
@@ -114,86 +118,13 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			}
 		}
 
-		initRequests()
-		{
-			this.initRecentListRequest();
-			this.countersInitRequest();
-		}
-
-		initRecentListRequest()
-		{
-			restManager.on(
-				RestMethod.imRecentList,
-				this.getRestManagerRecentListOptions(),
-				this.restManagerRecentListHandler.bind(this),
-			);
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getRestManagerRecentListOptions()
-		{
-			return { SKIP_OPENLINES: 'Y' };
-		}
-
-		/**
-		 * @return {object}
-		 */
-		async restManagerRecentListHandler(response)
-		{
-			const error = response.error();
-			if (error)
-			{
-				this.logger.error(`${this.constructor.name}.initRecentListRequest.addRecentListRequestToRestManager.error`, error);
-
-				return;
-			}
-
-			try
-			{
-				await this.pageHandler(response);
-				if (response && response.data()?.hasMore && !this.view.isLoaderShown)
-				{
-					this.view.showLoader();
-				}
-			}
-			catch (e)
-			{
-				this.logger.error(`${this.constructor.name}.initRecentListRequest.addRecentListRequestToRestManager.catch:`, e);
-			}
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getRestManagerDepartmentOptions()
-		{
-			return {
-				USER_DATA: 'Y',
-				LIMIT: this.recentService.getRecentListRequestLimit(),
-			};
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getRestListOptions()
-		{
-			return { skipOpenlines: true, onlyCopilot: false };
-		}
-
-		countersInitRequest()
-		{
-			Counters.initRequests();
-		}
-
 		bindMethods()
 		{
 			this.loadPage = this.loadPage.bind(this);
-			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
 			this.stopRefreshing = this.stopRefreshing.bind(this);
 			this.renderInstant = this.renderInstant.bind(this);
+			this.subscribeInitMessengerEvent = this.subscribeInitMessengerEvent.bind(this);
+			this.updatePageFromServer = this.updatePageFromServer.bind(this);
 		}
 
 		subscribeStoreEvents()
@@ -204,6 +135,16 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 		subscribeViewEvents()
 		{}
+
+		subscribeInitMessengerEvent()
+		{
+			this.messagerInitService.onInit(this.updatePageFromServer);
+		}
+
+		subscribeInitCounters()
+		{
+			Counters.subscribeInitMessengerEvent();
+		}
 
 		initItemAction()
 		{
@@ -240,6 +181,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			if (this.recentService.hasMoreFromDb && !this.view.isLoaderShown)
 			{
 				this.view.showLoader();
+				// This is a solution to add a loader before scrolling in advance. After scrolling, the loader will hide
 			}
 		}
 
@@ -351,7 +293,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		{
 			this.recentService.pageNavigation.isPageLoading = true;
 			this.getPageFromServer()
-				.then((response) => this.pageHandler(response))
+				.then((response) => this.pageHandler(response.data()))
 				.catch(() => {
 					this.logger.error(
 						`${this.constructor.name}.loadPage.getPageFromServer: page ${this.recentService.pageNavigation.currentPage} loading error, try again in ${this.loadPageAfterErrorWorker.frequency / 1000} seconds.`,
@@ -366,12 +308,39 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		}
 
 		/**
-		 * @param {object} response
+		 * @param {
+		 * immobileTabChatLoadResult.recentList
+		 * | immobileTabCopilotLoadResult.recentList
+		 * | immobileTabChannelLoadResult.recentList
+		 * } data.recentList
 		 */
-		pageHandler(response)
+		updatePageFromServer(data)
+		{
+			const recentList = data.recentList;
+
+			if (Type.isNil(recentList) || !Type.isPlainObject(recentList))
+			{
+				this.logger.error(`${this.constructor.name}.updatePageFromServer`, recentList);
+
+				return;
+			}
+
+			this.pageHandler(recentList)
+				.then(() => {
+					if (recentList.hasMore && !this.view.isLoaderShown)
+					{
+						this.view.showLoader();
+					}
+				})
+				.catch((err) => this.logger.error(`${this.constructor.name}.pageHandler.catch:`, err));
+		}
+
+		/**
+		 * @param {object} data
+		 */
+		pageHandler(data)
 		{
 			return new Promise((resolve) => {
-				const data = response.data();
 				this.logger.info(`${this.constructor.name}.pageHandler data:`, data);
 				this.recentService.pageNavigation.turnPage();
 
@@ -443,7 +412,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			this.renderer.do('update', items);
 			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
-				this.renderer.nextTick(() => this.view.hideLoader());
+				this.view.hideLoader();
 			}
 
 			this.checkEmpty();
@@ -564,6 +533,14 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		}
 
 		/**
+		 * @return {object}
+		 */
+		getRestListOptions()
+		{
+			return { skipOpenlines: true, onlyCopilot: false };
+		}
+
+		/**
 		 * @return {ListByDialogTypeFilter}
 		 */
 		getDbFilter()
@@ -646,6 +623,20 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			});
 
 			return result;
+		}
+
+		recentDeleteHandler(mutation)
+		{
+			this.renderer.removeFromQueue(mutation.payload.data.id);
+
+			this.view.removeItem({ id: mutation.payload.data.id });
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			{
+				this.view.hideLoader();
+			}
+			Counters.update();
+
+			this.checkEmpty();
 		}
 	}
 

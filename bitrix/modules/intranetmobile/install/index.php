@@ -47,10 +47,10 @@ class IntranetMobile extends CModule
 
 		$eventManager->registerEventHandler(
 			'main',
-			'OnUserInitialize',
+			'OnAfterUserAuthorize',
 			$this->MODULE_ID,
 			'\Bitrix\IntranetMobile\Integration\Main\Event',
-			'onUserInitialize'
+			'onAfterUserAuthorizeHandler'
 		);
 
 		return true;
@@ -70,10 +70,10 @@ class IntranetMobile extends CModule
 
 		$eventManager->unRegisterEventHandler(
 			'main',
-			'OnUserInitialize',
+			'OnAfterUserAuthorize',
 			$this->MODULE_ID,
 			'\Bitrix\IntranetMobile\Integration\Main\Event',
-			'onUserInitialize'
+			'onAfterUserAuthorizeHandler'
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
@@ -93,6 +93,7 @@ class IntranetMobile extends CModule
 
 	public function uninstallFiles(): void
 	{
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
 	}
 
 	public function installEvents(): void

@@ -18,8 +18,12 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		openTab: 'open_tab',
 		openMessenger: 'open_messenger',
 		sendMessage: 'send_message',
+		clickDelete: 'click_delete',
+		cancelDelete: 'cancel_delete',
+		delete: 'delete',
 		view: 'view',
 		click: 'click',
+		clickCallButton: 'click_call_button',
 	});
 
 	const Tool = Object.freeze({
@@ -34,6 +38,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chat: 'chat',
 		copilot: 'copilot',
 		videoconf: 'videoconf',
+		message: 'message',
+		chatPopup: 'chat_popup',
 		limitBanner: 'limit_banner',
 	});
 
@@ -69,6 +75,10 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		comment: 'comment',
 		custom: 'custom', // case for custom dialog type
 		limitOfficeChatingHistory: 'limit_office_chating_history',
+
+		/* region call type */
+		privateCall: 'private',
+		groupCall: 'group',
 	});
 
 	const Section = Object.freeze({
@@ -77,15 +87,28 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		channelTab: 'channel_tab',
 		notificationTab: 'notification_tab',
 		sidebar: 'sidebar',
+		activeChat: 'active_chat',
+		popup: 'popup',
+		mention: 'mention',
+		link: 'link',
 		chatHistory: 'chat_history',
 		chatStart: 'chat_start',
 		messageLink: 'message_link',
 		chatWindow: 'chat_window',
+		chatSidebar: 'chat_sidebar',
+		comments: 'comments',
+	});
+
+	const SubSection = Object.freeze({
+		window: 'window',
+		contextMenu: 'context_menu',
 	});
 
 	const Element = Object.freeze({
 		push: 'push',
 		main: 'main',
+		videocall: 'videocall',
+		audiocall: 'audiocall',
 	});
 
 	const P3 = Object.freeze({
@@ -109,6 +132,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		crm: 'chatType_crm',
 		mail: 'chatType_mail',
 		sonetGroup: 'chatType_sonetGroup',
+		copilot: 'chatType_copilot',
 	});
 
 	const Analytics = Object.freeze({
@@ -118,6 +142,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		Category,
 		Type,
 		Section,
+		SubSection,
 		Element,
 		P3,
 		P1,

@@ -74,6 +74,9 @@ else
 		&& Loader::includeModule('extranet')
 		&& CExtranet::IsExtranetSite()
 	);
+
+	$arResult['isExtranetForGroupsEnabled'] = Option::get('socialnetwork', 'enable_extranet_for_groups', true);
+
 	$arResult["isCurrentUserIntranet"] = (
 		!Loader::includeModule('extranet')
 		|| CExtranet::IsIntranetUser()
@@ -229,6 +232,7 @@ else
 					? $arResult['POST']['OWNER_ID']
 					: $arResult['currentUserId']
 			);
+			$leaveGroupTypeExtranet = ($_POST['IS_EXTRANET_GROUP'] ?? '') === 'Y' && $arResult['isExtranetForGroupsEnabled'];
 
 			if (
 				!array_key_exists("TAB", $arResult)
@@ -285,7 +289,15 @@ else
 				$arResult["POST"]["SUBJECT_ID"] = $_POST["GROUP_SUBJECT_ID"] ?? null;
 				$arResult['POST']['VISIBLE'] = (($_POST['GROUP_VISIBLE'] ?? null) === 'Y' ? 'Y' : 'N');
 				$arResult['POST']['OPENED'] = (($_POST['GROUP_OPENED'] ?? null) === 'Y' ? 'Y' : 'N');
-				$arResult['POST']['IS_EXTRANET_GROUP'] = (($_POST['IS_EXTRANET_GROUP'] ?? null) === 'Y' ? 'Y' : 'N');
+
+				$arResult['isExtranetGroup'] = Bitrix\Socialnetwork\Integration\Extranet\Group::isExtranetGroup($arResult['GROUP_ID'] ?? 0);
+
+				$makeGroupTypeExtranet = $arResult['isExtranetGroup'] && !$arResult['isExtranetForGroupsEnabled'];
+				if ($leaveGroupTypeExtranet || $makeGroupTypeExtranet)
+				{
+					$arResult['POST']['IS_EXTRANET_GROUP'] = 'Y';
+				}
+
 				$arResult['POST']['EXTRANET_INVITE_ACTION'] = (
 					isset($_POST['EXTRANET_INVITE_ACTION'])
 					&& $_POST['EXTRANET_INVITE_ACTION'] === 'add' ? 'add' : 'invite'
@@ -671,7 +683,15 @@ else
 						($_POST['IS_EXTRANET_GROUP'] ?? '') === 'Y'
 						&& Loader::includeModule('extranet')
 						&& !CExtranet::IsExtranetSite()
+						&& $arResult['isExtranetForGroupsEnabled']
 					)
+					{
+						$arFields["SITE_ID"][] = CExtranet::GetExtranetSiteID();
+						$arFields["VISIBLE"] = "N";
+						$arFields["OPENED"] = "N";
+					}
+
+					if ($leaveGroupTypeExtranet)
 					{
 						$arFields["SITE_ID"][] = CExtranet::GetExtranetSiteID();
 						$arFields["VISIBLE"] = "N";

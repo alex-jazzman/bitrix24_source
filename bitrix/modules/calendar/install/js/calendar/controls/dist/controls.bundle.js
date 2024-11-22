@@ -246,7 +246,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	          time: this.defaultReminderTime
 	        }
 	      }, {
-	        id: 'custom',
+	        id: 'custom-reminder',
 	        label: main_core.Loc.getMessage("EC_REMIND1_CUSTOM"),
 	        dataset: {
 	          mode: 'custom'
@@ -285,7 +285,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    const _this = this;
 	    const menuItems = [];
 	    this.values.forEach(item => {
-	      if (item.mode === 'time-menu' || item.mode === 'custom' || !BX.util.in_array(item.value, this.selectedValues)) {
+	      if (item.mode === 'time-menu' || item.mode === 'custom-reminder' || !BX.util.in_array(item.value, this.selectedValues)) {
 	        let menuItem = {};
 	        if (item.dataset && item.dataset.mode === 'time-menu') {
 	          menuItem.id = item.id;
@@ -311,11 +311,11 @@ this.BX.Calendar = this.BX.Calendar || {};
 	            };
 	          }();
 	        } else if (item.dataset && item.dataset.mode === 'custom') {
-	          menuItem.id = 'custom';
+	          menuItem.id = 'custom-reminder';
 	          menuItem.text = item.label;
 	          menuItem.items = [{
 	            id: 'tmp',
-	            text: 'tmp'
+	            text: ''
 	          }];
 	        } else {
 	          menuItem.text = item.label;
@@ -544,7 +544,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      if (submenuPopup instanceof main_popup.Popup) {
 	        if (/^menu-popup-popup-submenu-time-menu-day-\d$/.test(submenuPopup.getId())) {
 	          this.adjustTimeSubmenuPopup(submenuPopup);
-	        } else if (/^menu-popup-popup-submenu-custom$/.test(submenuPopup.getId())) {
+	        } else if (/^menu-popup-popup-submenu-custom-reminder$/.test(submenuPopup.getId())) {
 	          this.adjustCalendarSubmenuPopup(submenuPopup);
 	        }
 	      }
@@ -554,7 +554,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    if (event instanceof main_core_events.BaseEvent) {
 	      let submenuPopup = event.getTarget();
 	      if (submenuPopup instanceof main_popup.Popup) {
-	        if (/^menu-popup-popup-submenu-time-menu-day-\d$/.test(submenuPopup.getId())) ; else if (/^menu-popup-popup-submenu-custom$/.test(submenuPopup.getId())) {
+	        if (/^menu-popup-popup-submenu-time-menu-day-\d$/.test(submenuPopup.getId())) ; else if (/^menu-popup-popup-submenu-custom-reminder$/.test(submenuPopup.getId())) {
 	          let layout = submenuPopup.bindElement;
 	          let textNode = layout.querySelector('.menu-popup-item-text');
 	          if (main_core.Type.isDomNode(textNode)) {
@@ -2094,7 +2094,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      this.openPopupCallback(this);
 	    }
 	    BX.addCustomEvent(this.sectionMenu.popupWindow, 'onPopupClose', BX.delegate(function () {
-	      if (main_core.Type.isFunction(this.openPopupCallback)) {
+	      if (main_core.Type.isFunction(this.closePopupCallback)) {
 	        this.closePopupCallback();
 	      }
 	      main_core.Dom.removeClass(this.DOM.select, 'active');
@@ -4243,7 +4243,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    if (dateTime) {
 	      this.planner.updateSelector(dateTime.from, dateTime.to, dateTime.fullDay);
 	    }
-	    if (this.entryId && this.entry && this.entry.data['PARENT_ID'] && (this.entry.data['EVENT_TYPE'] === '#shared#' || this.entry.data['EVENT_TYPE'] === '#shared_crm#') && this.entry.getCurrentStatus() !== false) {
+	    if (this.entryId && this.entry && this.entry.data.PARENT_ID && (this.entry.data.EVENT_TYPE === '#shared#' || this.entry.data.EVENT_TYPE === '#shared_crm#') && this.entry.getCurrentStatus() !== false) {
 	      main_core.Dom.clean(this.DOM.videocallWrap);
 	      main_core.Dom.removeClass(this.DOM.videocallWrap, 'calendar-videocall-hidden');
 	      this.conferenceButton = main_core.Tag.render(_t$b || (_t$b = _$b`
@@ -4264,8 +4264,16 @@ this.BX.Calendar = this.BX.Calendar || {};
 	            dateFrom: calendar_util.Util.formatDate(this.entry.from),
 	            parentId: this.entry.parentId
 	          },
-	          analyticsLabel: {
-	            formType: 'compact'
+	          analytics: {
+	            startVideoCall: {
+	              tool: 'im',
+	              category: 'events',
+	              event: 'click_call',
+	              type: 'group',
+	              c_section: 'card_compact',
+	              c_sub_section: 'context_menu',
+	              p5: `eventId_${this.entry.parentId}`
+	            }
 	          }
 	        },
 	        callbacks: {
@@ -4437,7 +4445,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        timezone: params.timezone || '',
 	        location: params.location || '',
 	        entries: params.entrieIds || false,
-	        prevUserList: params.prevUserList || []
+	        prevUserList: params.prevUserList || [],
+	        entry: this.entry
 	      }
 	    });
 	  }
@@ -4626,11 +4635,20 @@ this.BX.Calendar = this.BX.Calendar || {};
 	  getConferenceChatId() {
 	    return this.BX.ajax.runAction('calendar.api.calendarajax.getConferenceChatId', {
 	      data: {
-	        eventId: this.entry.data['PARENT_ID']
+	        eventId: this.entry.data.PARENT_ID
+	      },
+	      analytics: {
+	        tool: 'im',
+	        category: 'events',
+	        event: 'click_call',
+	        type: 'videoconf',
+	        c_section: 'card_compact',
+	        c_sub_section: 'card',
+	        p5: `eventId_${this.entry.data.PARENT_ID}`
 	      }
 	    }).then(response => {
 	      if (top.window.BXIM && response.data && response.data.chatId) {
-	        top.BXIM.openMessenger('chat' + parseInt(response.data.chatId));
+	        top.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
 	        return null;
 	      }
 	      alert(main_core.Loc.getMessage('EC_CONFERENCE_ERROR'));
@@ -5167,7 +5185,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      if (params.intranetControlButtonParams.mainItem === 'chat') {
 	        this.setClickListener(chatButton, this.openChatWithConfirm.bind(this));
 	      } else {
-	        this.setClickListener(chatButton, this.startVideoCallWithConfirm.bind(this));
+	        this.setClickListener(chatButton, this.startVideoCallFromButton.bind(this));
 	      }
 
 	      // For testing purposes
@@ -5185,9 +5203,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      maxWidth: 350
 	    });
 	  }
-	  startVideoCallWithConfirm() {
+	  startVideoCallWithConfirm(videoCallContext = 'context_menu') {
 	    if (this.shouldNotConfirmOpenChat()) {
-	      this.startVideoCall();
+	      this.startVideoCall(videoCallContext);
 	      return;
 	    }
 	    calendar_util.Util.showConfirmPopup(this.startVideoCall, main_core.Loc.getMessage('EC_START_VIDEOCONFERENCE_CONFIRM_QUESTION'), {
@@ -5195,6 +5213,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      minWidth: 350,
 	      maxWidth: 350
 	    });
+	  }
+	  startVideoCallFromButton() {
+	    this.startVideoCallWithConfirm('card');
 	  }
 	  shouldNotConfirmOpenChat() {
 	    return this.hasChat() || this.getUsersCount() < 10;

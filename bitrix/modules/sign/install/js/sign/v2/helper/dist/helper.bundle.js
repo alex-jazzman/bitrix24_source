@@ -58,9 +58,39 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	}
 
+	let _$1 = t => t,
+	  _t$1,
+	  _t2$1;
+	class SignSettingsItemCounter {
+	  static numerate(layout) {
+	    const layoutItems = [...layout.children].filter(child => {
+	      return main_core.Dom.hasClass(child, 'sign-b2e-settings__item');
+	    });
+	    const hasCounter = layoutItems.some(node => {
+	      return main_core.Dom.hasClass(node.firstElementChild, 'sign-b2e-settings__counter');
+	    });
+	    if (hasCounter) {
+	      document.documentElement.scrollTop = 0;
+	      return;
+	    }
+	    layoutItems.forEach((node, index) => {
+	      const connectionNode = index === layoutItems.length - 1 ? main_core.Tag.render(_t$1 || (_t$1 = _$1`<span class="sign-b2e-settings__counter_connect">`)) : null;
+	      const counter = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+				<div class="sign-b2e-settings__counter">
+					<span class="sign-b2e-settings__counter_num" data-num="${0}"></span>
+					${0}
+				</div>
+			`), index + 1, connectionNode);
+	      main_core.Dom.prepend(counter, node);
+	      document.documentElement.scrollTop = 0;
+	    });
+	  }
+	}
+
 	exports.Helpdesk = Helpdesk;
 	exports.Link = Link;
 	exports.Hint = Hint;
+	exports.SignSettingsItemCounter = SignSettingsItemCounter;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX));
 //# sourceMappingURL=helper.bundle.js.map

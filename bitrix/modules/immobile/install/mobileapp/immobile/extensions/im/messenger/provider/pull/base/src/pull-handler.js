@@ -18,6 +18,7 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 		{
 			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
+			/** @type {Logger} */
 			this.logger = options.logger || Logger;
 		}
 

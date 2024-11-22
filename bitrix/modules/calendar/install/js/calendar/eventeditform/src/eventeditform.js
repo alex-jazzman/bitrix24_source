@@ -26,6 +26,7 @@ export class EventEditForm
 	userSettings = {};
 	prevUserList = [];
 	loadedAccessibilityData = {};
+	eventOptions = {};
 
 	constructor(options = {})
 	{
@@ -33,12 +34,14 @@ export class EventEditForm
 		this.type = options.type || 'user';
 		this.isLocationCalendar = options.isLocationCalendar || false;
 		this.locationAccess = options.locationAccess || false;
+		this.isProjectFeatureEnabled = Util.isProjectFeatureEnabled() || false;
 		this.locationCapacity = options.locationCapacity || 0;
 		this.roomsManager = options.roomsManager || null;
 		this.userId = options.userId || parseInt(Loc.getMessage('USER_ID'));
 		this.ownerId = options.ownerId;
 		this.entryId = parseInt(options.entryId) || null;
 		this.entry = options.entry || null;
+		this.eventOptions = this.entry?.data?.OPTIONS || {};
 		this.formDataValue = options.formDataValue || {};
 		this.emitter = new EventEmitter();
 		this.emitter.setEventNamespace('BX.Calendar.EventEditForm');
@@ -48,6 +51,12 @@ export class EventEditForm
 		{
 			Util.setCalendarContext(this.context);
 		}
+
+		this.isOpenEvent = (this.entry?.data['CAL_TYPE'] || this.type) === 'open_event';
+		// TODO: remove this check, planner enabled always
+		this.plannerEnabled = true;
+		this.sectionSelectorEnabled = !this.isOpenEvent;
+		this.attendeesControlEnabled = !this.isOpenEvent;
 
 		this.formSettings = {
 			pinnedFields: {},
@@ -86,7 +95,10 @@ export class EventEditForm
 			this.jumpToControl = options.jumpToControl;
 		}
 
-		this.refreshPlanner = Runtime.debounce(this.refreshPlannerState, 100, this);
+		if (this.plannerEnabled)
+		{
+			this.refreshPlanner = Runtime.debounce(this.refreshPlannerState, 100, this);
+		}
 		this.state = this.STATE.READY;
 		this.doShowConfirmPopup = true;
 		this.sliderOnClose = this.hideWithConfirm.bind(this);
@@ -398,17 +410,21 @@ export class EventEditForm
 
 		this.DOM.requestUid.value = Util.registerRequestId();
 
-		// Save attendees from userSelector
-		const attendeesEntityList = this.getUserSelectorEntityList();
-		Dom.clean(this.DOM.userSelectorValueWarp);
-		attendeesEntityList.forEach((entity, index) => {
-			this.DOM.userSelectorValueWarp.appendChild(Tag.render`
+		let attendeesEntityList;
+		if (this.attendeesControlEnabled)
+		{
+			// Save attendees from userSelector
+			attendeesEntityList = this.getUserSelectorEntityList();
+			Dom.clean(this.DOM.userSelectorValueWarp);
+			attendeesEntityList.forEach((entity, index) => {
+				this.DOM.userSelectorValueWarp.appendChild(Tag.render`
 				<input type="hidden" name="attendeesEntityList[${index}][entityId]" value="${entity.entityId}">
 			`);
-			this.DOM.userSelectorValueWarp.appendChild(Tag.render`
+				this.DOM.userSelectorValueWarp.appendChild(Tag.render`
 				<input type="hidden" name="attendeesEntityList[${index}][id]" value="${entity.id}">
 			`);
-		});
+			});
+		}
 
 		let checkCurrentUsersAccessibility = !this.entry.id || this.checkCurrentUsersAccessibility();
 		if (
@@ -437,9 +453,22 @@ export class EventEditForm
 			});
 		}
 
-		this.DOM.userSelectorValueWarp.appendChild(Tag.render`
-			<input type="hidden" name="checkCurrentUsersAccessibility" value="${checkCurrentUsersAccessibility ? 'Y' : 'N'}">
-		`);
+		if (this.attendeesControlEnabled)
+		{
+			this.DOM.userSelectorValueWarp.appendChild(Tag.render`
+				<input type="hidden" name="checkCurrentUsersAccessibility" value="${checkCurrentUsersAccessibility ? 'Y' : 'N'}">
+			`);
+		}
+
+		if (this.isOpenEvent)
+		{
+			const selectedCategories = this.categoryTagSelector.getDialog().getSelectedItems();
+			const selectedCategory = selectedCategories[0].id;
+			this.DOM.form.appendChild(
+				Tag.render`<input type="hidden" name="category" value="${selectedCategory}">`
+			)
+		}
+
 		this.DOM.form.doCheckOccupancy.value = options.doCheckOccupancy || 'Y';
 		const data = new FormData(this.DOM.form);
 
@@ -740,6 +769,7 @@ export class EventEditForm
 						this.handleLocationData(params.locationFeatureEnabled, params.locationList, params.iblockMeetingRoomList);
 						this.locationAccess = params.locationAccess;
 						this.plannerFeatureEnabled = Boolean(params.plannerFeatureEnabled);
+						this.isProjectFeatureEnabled = params.projectFeatureEnabled;
 						if (this.planner && !this.plannerFeatureEnabled)
 						{
 							this.planner.lock();
@@ -753,6 +783,15 @@ export class EventEditForm
 						if (this.userSettings.meetSection && this.type === 'user')
 						{
 							SectionManager.setNewEntrySectionId(this.userSettings.meetSection);
+						}
+
+						if (this.isOpenEvent)
+						{
+							const categoryId = this.formDataValue?.category || this.eventOptions?.CATEGORY_ID;
+							const preSelectedCategoryId = categoryId || params.defaultCategoryId;
+							this.preSelectedCategory = preSelectedCategoryId
+								? ['event-category', preSelectedCategoryId]
+								: null;
 						}
 
 						this.timezoneHint = params.timezoneHint;
@@ -811,9 +850,15 @@ export class EventEditForm
 		this.initNameControl(uid);
 		this.initEditorControl(uid);
 		this.initAttendeesControl();
-		this.initPlanner(uid);
+		if (this.plannerEnabled)
+		{
+			this.initPlanner(uid);
+		}
 		this.initReminderControl(uid);
-		this.initSectionSelector(uid);
+		if (this.sectionSelectorEnabled)
+		{
+			this.initSectionSelector(uid);
+		}
 		this.initLocationControl(uid);
 		this.initRepeatRuleControl(uid);
 		this.initColorControl(uid);
@@ -821,6 +866,10 @@ export class EventEditForm
 		this.initAdditionalControls(uid);
 
 		this.checkLastItemBorder();
+		if (this.isOpenEvent)
+		{
+			this.initCategoryControl();
+		}
 
 		if (this.DOM.buttonsWrap)
 		{
@@ -930,13 +979,16 @@ export class EventEditForm
 
 		// Section
 		const section = this.getCurrentSection();
-		if (this.formDataValue.section)
-		{
-			entry.sectionId = Number(this.formDataValue.section);
-		}
-		this.DOM.sectionInput.value = this.getCurrentSectionId();
 		this.initialSectionId = this.getCurrentSectionId();
-		this.sectionSelector.updateValue();
+		if (this.sectionSelectorEnabled)
+		{
+			if (this.formDataValue.section)
+			{
+				entry.sectionId = Number(this.formDataValue.section);
+			}
+			this.DOM.sectionInput.value = this.getCurrentSectionId();
+			this.initialSectionId = this.getCurrentSectionId();
+			this.sectionSelector.updateValue();
 
 			if (
 				!this.fieldIsPinned('section')
@@ -949,9 +1001,10 @@ export class EventEditForm
 				this.pinField('section');
 			}
 
-		if (((this.isSyncSection(section) || entry.isSharingEvent()) && entry.id) || !this.canEdit())
-		{
-			this.sectionSelector.setViewMode(true);
+			if (((this.isSyncSection(section) || entry.isSharingEvent()) && entry.id) || !this.canEdit())
+			{
+				this.sectionSelector.setViewMode(true);
+			}
 		}
 
 		// Color
@@ -1003,6 +1056,13 @@ export class EventEditForm
 					: entry.fullDay,
 				currentEventId: this.entry.id,
 			});
+		}
+
+		//max attendees
+		if (this.DOM.form.max_attendees)
+		{
+			const optionsJson = entry?.data?.OPTIONS?.OPTIONS ?? null;
+			this.DOM.form.max_attendees.value = JSON.parse(optionsJson)?.max_attendees || '';
 		}
 
 		// Private
@@ -1064,14 +1124,17 @@ export class EventEditForm
 
 		const dateTime = this.dateTimeControl.getValue();
 
-		this.planner.updateSelector(
-			dateTime.from,
-			dateTime.to,
-			dateTime.fullDay,
-			{
-				focus: true,
-			},
-		);
+		if (this.plannerEnabled)
+		{
+			this.planner.updateSelector(
+				dateTime.from,
+				dateTime.to,
+				dateTime.fullDay,
+				{
+					focus: true,
+				},
+			);
+		}
 
 		if (entry.isSharingEvent() || !this.canEdit())
 		{
@@ -1102,13 +1165,48 @@ export class EventEditForm
 			this.DOM.accessibilityInput.after(accessibilityText);
 		}
 
-		this.loadPlannerData({
-			entityList: this.getUserSelectorEntityList(),
-			from: Util.formatDate(entry.from.getTime() - Util.getDayLength() * 3),
-			to: Util.formatDate(entry.to.getTime() + Util.getDayLength() * 10),
-			timezone: entry.getTimezoneFrom(),
-			location: this.locationSelector.getTextValue(),
+		if (this.plannerEnabled)
+		{
+			this.loadPlannerData({
+				entityList: this.getUserSelectorEntityList(),
+				from: Util.formatDate(entry.from.getTime() - Util.getDayLength() * 3),
+				to: Util.formatDate(entry.to.getTime() + Util.getDayLength() * 10),
+				timezone: entry.getTimezoneFrom(),
+				location: this.locationSelector.getTextValue(),
+			});
+		}
+	}
+
+	initCategoryControl(): void
+	{
+		this.DOM.categorySelectorWrap = this.DOM.content.querySelector('.calendar-category-selector-wrap');
+		this.DOM.categorySelectorValueWarp = this.DOM.categorySelectorWrap.appendChild(Tag.render`<div></div>`);
+
+		this.categoryTagSelector = new EntityTagSelector({
+			multiple: false,
+			dialogOptions: {
+				context: 'calendar',
+				preselectedItems: this.preSelectedCategory ? [this.preSelectedCategory] : [],
+				preload: true,
+				zIndex: this.slider.zIndex,
+				multiple: false,
+				entities: [
+					{
+						id: 'event-category',
+						dynamicLoad: true,
+						dynamicSearch: true,
+					},
+				],
+				events: {
+					'onLoad': (): void => {
+						this.categoryTagSelector.getDialog().getItems().forEach(item => item.setDeselectable(false));
+						this.categoryTagSelector.getTags().forEach(tag => tag.render());
+					},
+				},
+			}
 		});
+
+		this.categoryTagSelector.renderTo(this.DOM.categorySelectorWrap);
 	}
 
 	updateEventNameInputTitle()
@@ -1504,19 +1602,23 @@ export class EventEditForm
 			}
 		});
 
-		this.planner.subscribe('onDateChange', () => {
-			if (this.repeatSelector.getType() === 'weekly')
-			{
-				this.repeatSelector.changeType(this.repeatSelector.getType());
-			}
-		});
-
+		if (this.plannerEnabled)
+		{
+			this.planner.subscribe('onDateChange', () => {
+				if (this.repeatSelector.getType() === 'weekly')
+				{
+					this.repeatSelector.changeType(this.repeatSelector.getType());
+				}
+			});
+		}
 	}
 
 	initAttendeesControl()
 	{
-		this.DOM.userSelectorWrap = this.DOM.content.querySelector('.calendar-attendees-selector-wrap');
-		this.DOM.userSelectorValueWarp = this.DOM.userSelectorWrap.appendChild(Tag.render`<div></div>`);
+		if (this.attendeesControlEnabled)
+		{
+			this.DOM.userSelectorWrap = this.DOM.content.querySelector('.calendar-attendees-selector-wrap');
+			this.DOM.userSelectorValueWarp = this.DOM.userSelectorWrap.appendChild(Tag.render`<div></div>`);
 
 			this.userTagSelector = new EntityTagSelector({
 				dialogOptions: {
@@ -1541,8 +1643,13 @@ export class EventEditForm
 				},
 			});
 
-		this.userTagSelector.renderTo(this.DOM.userSelectorWrap);
-		this.DOM.hideGuestsWrap = this.DOM.content.querySelector('.calendar-hide-members-wrap');
+			this.userTagSelector.renderTo(this.DOM.userSelectorWrap);
+		}
+
+		if (this.plannerEnabled)
+		{
+			this.DOM.hideGuestsWrap = this.DOM.content.querySelector('.calendar-hide-members-wrap');
+		}
 	}
 
 	handleUserSelectorChanges()
@@ -1649,7 +1756,8 @@ export class EventEditForm
 					ownerId: this.ownerId,
 					hostId: this.entry.data.MEETING_HOST || null,
 					type: this.type,
-					entityList: params.entityList || [],
+					// open_event need only location planner
+					entityList: !this.isOpenEvent && params.entityList || [],
 					dateFrom: Util.formatDate(this.planner.scaleDateFrom),
 					dateTo: Util.formatDate(this.planner.scaleDateTo),
 					timezone: params.timezone || '',
@@ -2286,7 +2394,7 @@ export class EventEditForm
 	{
 		const dateTime = this.dateTimeControl.getValue();
 		this.loadPlannerData({
-			entityList: this.getUserSelectorEntityList(),
+			entityList: this.isOpenEvent ? [] : this.getUserSelectorEntityList(),
 			from: Util.formatDate(dateTime.from.getTime() - Util.getDayLength() * 3),
 			to: Util.formatDate(dateTime.to.getTime() + Util.getDayLength() * 10),
 			timezone: dateTime.timezoneFrom,
@@ -2475,7 +2583,8 @@ export class EventEditForm
 
 		// Section
 		if (
-			!excludes.includes('section')
+			this.sectionSelectorEnabled
+			&& !excludes.includes('section')
 			&& Number(this.initialSectionId) !== Number(this.DOM.sectionInput.value)
 		)
 		{
@@ -2484,7 +2593,8 @@ export class EventEditForm
 
 		// Access codes
 		if (
-			!excludes.includes('codes')
+			this.attendeesControlEnabled
+			&& !excludes.includes('codes')
 			&& this.getUserSelectorEntityList().map((item)=>{return item.entityId + ':' + item.id}).join('|')
 			!== entry.getAttendeesEntityList().map((item)=>{return item.entityId + ':' + item.id}).join('|')
 		)
@@ -2553,8 +2663,16 @@ export class EventEditForm
 			fields.push('accessibility');
 		}
 
-		const currentUfWebDavCalEnv = this.entry.data.UF_WEBDAV_CAL_EVENT || [];
-		const newUfWebDavCalEnv = new FormData(this.DOM.form).getAll('UF_WEBDAV_CAL_EVENT[]')
+		const formMaxAttendees = parseInt(this.DOM.form?.max_attendees?.value, 10) || 0;
+		const optionsJson = entry?.data?.OPTIONS?.OPTIONS ?? null;
+		const eventMaxAttendees = JSON.parse(optionsJson)?.max_attendees ?? 0;
+		if (formMaxAttendees !== eventMaxAttendees)
+		{
+			fields.push('max_attendees');
+		}
+
+		const currentUfWebDavCalEnv = this.entry.data.UF_WEBDAV_CAL_EVENT || []
+		const newUfWebDavCalEnv = (new FormData(this.DOM.form)).getAll('UF_WEBDAV_CAL_EVENT[]')
 			.filter(Boolean);
 		if (JSON.stringify(currentUfWebDavCalEnv.sort()) !== JSON.stringify(newUfWebDavCalEnv.sort()))
 		{
@@ -2707,7 +2825,7 @@ export class EventEditForm
 			},
 		];
 
-		if (Util.isProjectFeatureEnabled())
+		if (this.isProjectFeatureEnabled)
 		{
 			entityList.push({
 				id: 'project',

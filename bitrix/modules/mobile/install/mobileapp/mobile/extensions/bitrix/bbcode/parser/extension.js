@@ -29,17 +29,6 @@ jn.define('bbcode/parser', (require, exports, module) => {
 
 	class ParserScheme extends Model.BBCodeScheme {
 	  getTagScheme(tagName) {
-	    if (tagName === 'code') {
-	      return new Model.BBCodeTagScheme({
-	        name: 'code',
-	        convertChild: (child, scheme) => {
-	          if (['#linebreak', '#tab', '#text'].includes(child.getName())) {
-	            return child;
-	          }
-	          return scheme.createText(child.toString());
-	        }
-	      });
-	    }
 	    return new Model.BBCodeTagScheme({
 	      name: 'any'
 	    });
@@ -142,6 +131,11 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	        });
 	        node.replace(newNode);
 	        newNode.setChildren(node.getChildren());
+	      } else if (['span', 'font'].includes(nodeName)) {
+	        const fragment = scheme.createFragment({
+	          children: node.getChildren()
+	        });
+	        node.replace(fragment);
 	      } else {
 	        const openingTag = node.getOpeningTag();
 	        const closingTag = node.getClosingTag();
@@ -322,7 +316,9 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	        }
 	      }
 	      if (this.isAllowedLinkify() && this.canBeLinkified(node)) {
-	        const content = node.toString();
+	        const content = node.toString({
+	          encode: false
+	        });
 	        const tokens = Linkify.tokenize(content);
 	        const nodes = tokens.map(token => {
 	          if (token.t === 'url') {

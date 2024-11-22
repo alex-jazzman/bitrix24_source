@@ -61,5 +61,7 @@ $MESS["TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR"] = "Призначте в�
 $MESS["TASKS_FLOW_EDIT_FORM_TASK_CONTROL"] = "Надсилати на перевірку постановнику";
 $MESS["TASKS_FLOW_EDIT_FORM_TEMPLATE_FOR_TASKS"] = "Шаблон для завдань у потоці";
 $MESS["TASKS_FLOW_EDIT_FORM_TEMPLATE_FOR_TASKS_ERROR"] = "Укажіть шаблон";
+$MESS["TASKS_FLOW_EDIT_FORM_THIS_IS_BIG_DEPARTMENT_HINT"] = "У цьому відділі багато співробітників, кожен із них отримуватиме повідомлення про завдання.";
+$MESS["TASKS_FLOW_EDIT_FORM_THIS_IS_EMPTY_DEPARTMENT_HINT"] = "У цьому відділі немає співробітників.";
 $MESS["TASKS_FLOW_EDIT_FORM_VALUE_ERROR"] = "Укажіть коректне значення.";
 $MESS["TASKS_FLOW_EDIT_FORM_WHO_CAN_ADD_TASKS"] = "Хто може додавати завдання в потік";

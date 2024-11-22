@@ -18,6 +18,9 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		...shortMemberTypes,
 	};
 
+	/**
+	 * @class CheckListFlatTreeItem
+	 */
 	class CheckListFlatTreeItem
 	{
 		constructor(props)
@@ -143,6 +146,14 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		getId()
 		{
 			return this.item.id;
+		}
+
+		/**
+		 * @return {string | number}
+		 */
+		getCopiedId()
+		{
+			return this.fields.copiedId;
 		}
 
 		setId(id)
@@ -593,6 +604,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			}
 
 			const isComplete = !this.getIsComplete();
+
 			this.setIsComplete(isComplete);
 			this.updateComplete(isComplete);
 			this.checklist.updateCounters(this.getParent());
@@ -692,6 +704,11 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		updateComplete(complete)
 		{
+			if (!this.checklist.isAutoCompleteItem())
+			{
+				return;
+			}
+
 			const action = complete ? 'complete' : 'renew';
 			const taskId = this.getTaskId();
 			const checkListItemId = this.getFieldId();

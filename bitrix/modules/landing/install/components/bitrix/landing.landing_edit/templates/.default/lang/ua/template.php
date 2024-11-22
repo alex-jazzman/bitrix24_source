@@ -2,6 +2,7 @@
 $MESS["LANDING_FIELD_TITLE_METAOG_NAME"] = "Вигляд сторінки в соцмережах";
 $MESS["LANDING_FIELD_TITLE_METAOG_NAME_GROUP"] = "Вигляд багатого посилання";
 $MESS["LANDING_FIELD_TITLE_METAOG_NAME_KNOWLEDGE"] = "Вигляд багатого посилання";
+$MESS["LANDING_FIELD_TITLE_METAOG_NAME_MAINPAGE"] = "Вигляд багатого посилання";
 $MESS["LANDING_TPL_ACTION_ADD_IN_SITEMAP"] = "Додати сторінку в карту сайту";
 $MESS["LANDING_TPL_ACTION_INSTALL_B24"] = "Встановити модуль інтеграції з Бітрікс24";
 $MESS["LANDING_TPL_ACTION_SETTINGS"] = "Налаштувати";

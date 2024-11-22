@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_analytics,im_v2_application_core,im_v2_const) {
+(function (exports,im_v2_lib_messageComponentManager,ui_analytics,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	const CopilotChatType = Object.freeze({
@@ -20,10 +20,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openSettings: 'open_settings',
 	  clickCreateNew: 'click_create_new',
 	  openExisting: 'open_existing',
+	  clickDelete: 'click_delete',
+	  cancelDelete: 'cancel_delete',
+	  delete: 'delete',
 	  view: 'view',
 	  click: 'click',
 	  clickEdit: 'click_edit',
-	  submitEdit: 'submit_edit'
+	  submitEdit: 'submit_edit',
+	  clickCallButton: 'click_call_button',
+	  clickStartConf: 'click_start_conf',
+	  clickJoin: 'click_join'
 	});
 	const AnalyticsTool = Object.freeze({
 	  ai: 'ai',
@@ -41,7 +47,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  copilot: 'copilot',
 	  limit: 'limit',
 	  limitBanner: 'limit_banner',
-	  toolOff: 'tool_off'
+	  toolOff: 'tool_off',
+	  message: 'message',
+	  chatPopup: 'chat_popup',
+	  call: 'call'
 	});
 	const AnalyticsType = Object.freeze({
 	  ai: 'ai',
@@ -49,7 +58,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  channel: 'channel',
 	  videoconf: 'videoconf',
 	  copilot: 'copilot',
-	  limitOfficeChatingHistory: 'limit_office_chating_history'
+	  deletedMessage: 'deleted_message',
+	  limitOfficeChatingHistory: 'limit_office_chating_history',
+	  privateCall: 'private',
+	  groupCall: 'group'
 	});
 	const AnalyticsSection = Object.freeze({
 	  copilotTab: 'copilot_tab',
@@ -57,16 +69,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  chatStart: 'chat_start',
 	  chatHistory: 'chat_history',
 	  sidebar: 'sidebar',
+	  popup: 'popup',
+	  activeChat: 'active_chat',
+	  comments: 'comments'
+	});
+	const AnalyticsSubSection = Object.freeze({
+	  contextMenu: 'context_menu',
+	  sidebar: 'sidebar',
 	  chatWindow: 'chat_window',
-	  messageLink: 'message_link'
+	  messageLink: 'message_link',
+	  chatSidebar: 'chat_sidebar',
+	  chatList: 'chat_list',
+	  window: 'window'
+	});
+	const AnalyticsElement = Object.freeze({
+	  initialBanner: 'initial_banner',
+	  videocall: 'videocall',
+	  audiocall: 'audiocall',
+	  startButton: 'start_button'
 	});
 	const AnalyticsStatus = Object.freeze({
 	  success: 'success',
 	  errorTurnedOff: 'error_turnedoff'
 	});
-	const AnalyticsSubSection = Object.freeze({
-	  contextMenu: 'context_menu'
-	});
+
+	function getCategoryByChatType(type) {
+	  switch (type) {
+	    case im_v2_const.ChatType.channel:
+	    case im_v2_const.ChatType.openChannel:
+	    case im_v2_const.ChatType.comment:
+	    case im_v2_const.ChatType.generalChannel:
+	      return AnalyticsCategory.channel;
+	    case im_v2_const.ChatType.copilot:
+	      return AnalyticsCategory.copilot;
+	    case im_v2_const.ChatType.videoconf:
+	      return AnalyticsCategory.videoconf;
+	    default:
+	      return AnalyticsCategory.chat;
+	  }
+	}
 
 	const CUSTOM_CHAT_TYPE = 'custom';
 	function getChatType(chat) {
@@ -74,18 +115,139 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return (_ChatType$chat$type = im_v2_const.ChatType[chat.type]) != null ? _ChatType$chat$type : CUSTOM_CHAT_TYPE;
 	}
 
-	var _onHistoryLimitBannerClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onHistoryLimitBannerClick");
+	class ChatDelete {
+	  onClick(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.clickDelete,
+	      type: getChatType(chat),
+	      c_section: AnalyticsSection.sidebar,
+	      c_sub_section: AnalyticsSubSection.contextMenu,
+	      p1: `chatType_${chat.type}`,
+	      p5: `chatId_${chat.chatId}`
+	    });
+	  }
+	  onCancel(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.cancelDelete,
+	      type: getChatType(chat),
+	      c_section: AnalyticsSection.popup,
+	      p1: `chatType_${chat.type}`,
+	      p5: `chatId_${chat.chatId}`
+	    });
+	  }
+	  onConfirm(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.delete,
+	      type: getChatType(chat),
+	      c_section: AnalyticsSection.popup,
+	      p1: `chatType_${chat.type}`,
+	      p5: `chatId_${chat.chatId}`
+	    });
+	  }
+	  onChatDeletedNotification(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const category = getCategoryByChatType(chat);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.chatPopup,
+	      event: AnalyticsEvent.view,
+	      type: `deleted_${category}`,
+	      c_section: AnalyticsSection.activeChat,
+	      p1: `chatType_${chat.type}`,
+	      p5: `chatId_${chat.chatId}`
+	    });
+	  }
+	}
+
+	class MessageDelete {
+	  onClickDelete({
+	    messageId,
+	    dialogId
+	  }) {
+	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	    const type = new im_v2_lib_messageComponentManager.MessageComponentManager(message).getName();
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.message,
+	      event: AnalyticsEvent.clickDelete,
+	      type,
+	      c_sub_section: AnalyticsSubSection.contextMenu,
+	      p1: `chatType_${chat.type}`,
+	      p5: `chatId_${chat.chatId}`
+	    });
+	  }
+	  onCancel({
+	    messageId,
+	    dialogId
+	  }) {
+	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	    const type = new im_v2_lib_messageComponentManager.MessageComponentManager(message).getName();
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.message,
+	      event: AnalyticsEvent.cancelDelete,
+	      type,
+	      c_section: AnalyticsSection.popup,
+	      c_sub_section: AnalyticsSubSection.contextMenu,
+	      p1: `chatType_${chat.type}`,
+	      p5: `chatId_${chat.chatId}`
+	    });
+	  }
+	  onNotFoundNotification({
+	    dialogId
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.chatPopup,
+	      event: AnalyticsEvent.view,
+	      type: AnalyticsType.deletedMessage,
+	      p1: `chatType_${chat.type}`,
+	      p5: `chatId_${chat.chatId}`
+	    });
+	  }
+	  onDeletedPostNotification({
+	    messageId,
+	    dialogId
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const commentInfo = im_v2_application_core.Core.getStore().getters['messages/comments/getByMessageId'](messageId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.chatPopup,
+	      event: AnalyticsEvent.view,
+	      type: AnalyticsType.deletedMessage,
+	      c_section: AnalyticsSection.comments,
+	      p1: `chatType_${chat.type}`,
+	      p4: `parentChatId_${chat.chatId}`,
+	      p5: `chatId_${commentInfo.chatId}`
+	    });
+	  }
+	}
+
+	var _onBannerClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onBannerClick");
 	var _getSidebarPanelNameForAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSidebarPanelNameForAnalytics");
 	class HistoryLimit {
 	  constructor() {
 	    Object.defineProperty(this, _getSidebarPanelNameForAnalytics, {
 	      value: _getSidebarPanelNameForAnalytics2
 	    });
-	    Object.defineProperty(this, _onHistoryLimitBannerClick, {
-	      value: _onHistoryLimitBannerClick2
+	    Object.defineProperty(this, _onBannerClick, {
+	      value: _onBannerClick2
 	    });
 	  }
-	  onDialogHistoryLimitExceeded({
+	  onDialogLimitExceeded({
 	    dialogId,
 	    noMessages
 	  }) {
@@ -102,7 +264,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	    ui_analytics.sendData(params);
 	  }
-	  onSidebarHistoryLimitExceeded({
+	  onSidebarLimitExceeded({
 	    dialogId,
 	    panel
 	  }) {
@@ -119,38 +281,38 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	    ui_analytics.sendData(params);
 	  }
-	  onDialogHistoryLimitBannerClick({
+	  onDialogBannerClick({
 	    dialogId
 	  }) {
 	    const section = AnalyticsSection.chatWindow;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onHistoryLimitBannerClick)[_onHistoryLimitBannerClick]({
+	    babelHelpers.classPrivateFieldLooseBase(this, _onBannerClick)[_onBannerClick]({
 	      dialogId,
 	      section
 	    });
 	  }
-	  onSidebarHistoryLimitBannerClick({
+	  onSidebarBannerClick({
 	    dialogId,
 	    panel
 	  }) {
 	    const section = AnalyticsSection.sidebar;
 	    const element = babelHelpers.classPrivateFieldLooseBase(this, _getSidebarPanelNameForAnalytics)[_getSidebarPanelNameForAnalytics](panel);
-	    babelHelpers.classPrivateFieldLooseBase(this, _onHistoryLimitBannerClick)[_onHistoryLimitBannerClick]({
+	    babelHelpers.classPrivateFieldLooseBase(this, _onBannerClick)[_onBannerClick]({
 	      dialogId,
 	      section,
 	      element
 	    });
 	  }
-	  onGoToContextHistoryLimitClick({
+	  onGoToContextLimitExceeded({
 	    dialogId
 	  }) {
 	    const section = AnalyticsSection.messageLink;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onHistoryLimitBannerClick)[_onHistoryLimitBannerClick]({
+	    babelHelpers.classPrivateFieldLooseBase(this, _onBannerClick)[_onBannerClick]({
 	      dialogId,
 	      section
 	    });
 	  }
 	}
-	function _onHistoryLimitBannerClick2({
+	function _onBannerClick2({
 	  dialogId,
 	  section,
 	  element
@@ -197,25 +359,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
-	function getCategoryByChatType(type) {
-	  switch (type) {
-	    case im_v2_const.ChatType.channel:
-	    case im_v2_const.ChatType.openChannel:
-	    case im_v2_const.ChatType.comment:
-	    case im_v2_const.ChatType.generalChannel:
-	      return AnalyticsCategory.channel;
-	    case im_v2_const.ChatType.copilot:
-	      return AnalyticsCategory.copilot;
-	    case im_v2_const.ChatType.videoconf:
-	      return AnalyticsCategory.videoconf;
-	    default:
-	      return AnalyticsCategory.chat;
-	  }
-	}
-
 	var _excludedChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludedChats");
 	var _currentTab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTab");
-	var _historyLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("historyLimit");
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	class Analytics {
 	  constructor() {
@@ -227,10 +372,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: im_v2_const.Layout.chat.name
 	    });
-	    Object.defineProperty(this, _historyLimit, {
-	      writable: true,
-	      value: new HistoryLimit()
-	    });
+	    this.chatDelete = new ChatDelete();
+	    this.messageDelete = new MessageDelete();
+	    this.historyLimit = new HistoryLimit();
 	  }
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
@@ -401,57 +545,50 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  onCancelChatEditForm(dialogId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _excludedChats)[_excludedChats].add(dialogId);
 	  }
-
-	  // region History Limit Analytics
-	  onDialogHistoryLimitExceeded({
-	    dialogId,
-	    noMessages
-	  }) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _historyLimit)[_historyLimit].onDialogHistoryLimitExceeded({
-	      dialogId,
-	      noMessages
+	  onStartCallClick(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.messenger,
+	      event: AnalyticsEvent.clickCallButton,
+	      type: params.type,
+	      c_section: params.section,
+	      c_sub_section: params.subSection,
+	      c_element: params.element,
+	      p5: `chatId_${params.chatId}`
 	    });
 	  }
-	  onDialogHistoryLimitBannerClick({
-	    dialogId
-	  }) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _historyLimit)[_historyLimit].onDialogHistoryLimitBannerClick({
-	      dialogId
+	  onStartConferenceClick(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.clickStartConf,
+	      type: AnalyticsType.videoconf,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: params.element,
+	      p5: `chatId_${params.chatId}`
 	    });
 	  }
-	  onSidebarHistoryLimitExceeded({
-	    dialogId,
-	    panel
-	  }) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _historyLimit)[_historyLimit].onSidebarHistoryLimitExceeded({
-	      dialogId,
-	      panel
+	  onJoinConferenceClick(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.clickJoin,
+	      type: AnalyticsType.videoconf,
+	      c_section: AnalyticsSection.chatList,
+	      p5: `callId_${params.callId}`
 	    });
 	  }
-	  onSidebarHistoryLimitBannerClick({
-	    dialogId,
-	    panel
-	  }) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _historyLimit)[_historyLimit].onSidebarHistoryLimitBannerClick({
-	      dialogId,
-	      panel
-	    });
-	  }
-	  onGoToContextHistoryLimitClick({
-	    dialogId
-	  }) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _historyLimit)[_historyLimit].onGoToContextHistoryLimitClick({
-	      dialogId
-	    });
-	  }
-	  // endregion
 	}
 	Object.defineProperty(Analytics, _instance, {
 	  writable: true,
 	  value: void 0
 	});
+	Analytics.AnalyticsType = AnalyticsType;
+	Analytics.AnalyticsSection = AnalyticsSection;
+	Analytics.AnalyticsSubSection = AnalyticsSubSection;
+	Analytics.AnalyticsElement = AnalyticsElement;
 
 	exports.Analytics = Analytics;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.UI.Analytics,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.UI.Analytics,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=analytics.bundle.js.map

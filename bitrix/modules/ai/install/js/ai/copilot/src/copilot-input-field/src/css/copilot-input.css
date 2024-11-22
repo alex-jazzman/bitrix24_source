@@ -22,6 +22,7 @@
 
 .ai__copilot_input {
 	overflow-y: auto;
+	white-space: pre-wrap;
 }
 
 .ai__copilot_input strong {
@@ -200,6 +201,10 @@
 	/*Firefox fix */
 	scrollbar-width: thin;
 	scrollbar-color: #ccc transparent;
+}
+
+.ai__copilot_input font {
+	color: inherit !important;
 }
 
 .ai__copilot_input::-webkit-scrollbar {

@@ -93,8 +93,8 @@ jn.define('im/messenger/controller/dialog/lib/keyboard-manager/handler/action', 
 		#copyText(actionValue)
 		{
 			DialogTextHelper.copyToClipboard(
+				actionValue,
 				{
-					clipboardText: actionValue,
 					notificationText: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_KEYBOARD_BUTTON_ACTION_COPY_SUCCESS'),
 				},
 			);

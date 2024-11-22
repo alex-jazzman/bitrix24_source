@@ -49,7 +49,7 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 
 		static WHITE = new BadgeCounterDesign('WHITE', {
 			color: Color.base3,
-			backgroundColor: Color.base8,
+			backgroundColor: Color.baseWhiteFixed,
 		});
 
 		getColor()

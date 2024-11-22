@@ -1,9 +1,27 @@
 import { Router } from 'crm.router';
-import { ajax, Dom, Loc, Text } from 'main.core';
+import { Messenger } from 'im.public';
+import { ajax, Dom, Loc, Text, Runtime } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
+import type { Api } from 'sign.v2.api';
+import type { FeatureResolver } from 'sign.feature-resolver';
+
+let featureResolver: FeatureResolver | null = null;
+let api: Api | null = null;
+Runtime.loadExtension(['sign.v2.api', 'sign.feature-resolver']).then(async (exports) => {
+	if (exports?.Api && exports?.FeatureResolver)
+	{
+		featureResolver = exports?.FeatureResolver.instance();
+		api = new exports.Api();
+	}
+}).catch((errors) => {
+	UI.Notification.Center.notify({
+		content: errors[0].message,
+		autoHideDelay: 5000,
+	});
+});
 
 export class SignB2eDocument extends Base
 {
@@ -38,7 +56,14 @@ export class SignB2eDocument extends Base
 		}
 		else if ((action === 'SignB2eDocument:Preview' || action === 'Activity:SignB2eDocument:Preview') && documentId > 0)
 		{
-			this.#previewDocument(actionData)
+			this.#previewDocument(actionData);
+		}
+		else if ((action === 'SignB2eDocument:CreateDocumentChat' || action === 'Activity:SignB2eDocument:CreateDocumentChat') && documentId > 0)
+		{
+			if (featureResolver && featureResolver.released('createDocumentChat'))
+			{
+				this.#createDocumentChat(actionData);
+			}
 		}
 		else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0)
 		{
@@ -148,7 +173,6 @@ export class SignB2eDocument extends Base
 		});
 	}
 
-
 	#deleteEntry(entryId): Promise
 	{
 		console.log(`delete entry${entryId}`);
@@ -167,6 +191,15 @@ export class SignB2eDocument extends Base
 	#previewDocument({ documentId }): Promise
 	{
 		return Router.openSlider(`/sign/b2e/preview/0/?docId=${documentId}&noRedirect=Y`);
+	}
+
+	async #createDocumentChat({ chatType, documentId }: { chatType: number, documentId: number }): void
+	{
+		if (api && featureResolver && featureResolver.released('createDocumentChat'))
+		{
+			const chatId = (await api.createDocumentChat(chatType, documentId, false)).chatId;
+			Messenger.openChat(`chat${chatId}`);
+		}
 	}
 
 	#resendDocument({ documentId, recipientHash }, animationCallbacks): Promise

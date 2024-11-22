@@ -112,10 +112,20 @@ if (
 		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID, CCrmActivityDirection::Outgoing)
 	)
 	{
-		echo (\Bitrix\Crm\Tour\CopilotInCallAutomatically::getInstance())
-			->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
-			->build()
-		;
+		if (AIManager::isBaasServiceHasPackage())
+		{
+			echo (\Bitrix\Crm\Tour\CopilotInCallAutomatically::getInstance())
+				->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+				->build()
+			;
+		}
+		else
+		{
+			echo (\Bitrix\Crm\Tour\CopilotInCallBuyingBoost::getInstance())
+				->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+				->build()
+			;
+		}
 	}
 }
 

@@ -4,7 +4,9 @@ return [
 	'extensions' => [
 		'type',
 		'tokens',
+		'utils/type',
 		'utils/object',
+		'utils/function',
 		'utils/validation',
 		'utils/enums/base',
 		'ui-system/blocks/icon',
@@ -13,8 +15,9 @@ return [
 		'layout/pure-component',
 	],
 	'bundle' => [
-		'./src/design-enum',
-		'./src/mode-enum',
-		'./src/size-enum',
+		'./src/visual-decorator',
+		'./src/enums/design-enum',
+		'./src/enums/mode-enum',
+		'./src/enums/size-enum',
 	],
 ];

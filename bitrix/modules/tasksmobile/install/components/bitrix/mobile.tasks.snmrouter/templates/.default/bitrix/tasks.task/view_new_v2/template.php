@@ -141,7 +141,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 	<div style="display: none;"><input type="text" name="AJAX_POST" value="Y" /></div><?//hack to not submit form?>
 
 	<?php
-	$favoriteButton = '';
+	$favoriteButton = "";
 	if ($can['FAVORITE.ADD'] || $can['FAVORITE.DELETE'])
 	{
 		$isActive = ($can['FAVORITE.DELETE'] ? 'active' : '');

@@ -1,5 +1,4 @@
 import 'ui.viewer';
-import { SocialVideo } from 'ui.vue3.components.socialvideo';
 
 import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
 import { MessageAvatar, AvatarSize } from 'im.v2.component.elements';
@@ -10,7 +9,7 @@ import '../css/media-detail-item.css';
 // @vue/component
 export const MediaDetailItem = {
 	name: 'MediaDetailItem',
-	components: { SocialVideo, MessageAvatar },
+	components: { MessageAvatar },
 	props: {
 		fileItem: {
 			type: Object,

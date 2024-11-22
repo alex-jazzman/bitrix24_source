@@ -10,29 +10,39 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, DialogType, EventType, ComponentCode, BotCode, Analytics } = require('im/messenger/const');
+	const {
+		RestMethod,
+		DialogType,
+		EventType,
+		ComponentCode,
+		BotCode,
+		Analytics,
+		OpenDialogContextType,
+	} = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { AnalyticsEvent } = require('analytics');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
 	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
-
 
 	class DialogCreator
 	{
 		constructor(options = {})
 		{
 			this.store = serviceLocator.get('core').getStore();
+			this.messagerInitService = serviceLocator.get('messenger-init-service');
 			this.selector = () => {};
-			this.initRequests();
+			this.bindMethods();
+			this.subscribeInitMessengerEvent();
 		}
 
-		initRequests()
+		subscribeInitMessengerEvent()
 		{
-			restManager.on(
-				RestMethod.imUserGet,
-				{ ID: MessengerParams.getUserId() },
-				this.handleUserGet.bind(this),
-			);
+			this.messagerInitService.onInit(this.handleUserGet);
+		}
+
+		bindMethods()
+		{
+			this.handleUserGet = this.handleUserGet.bind(this);
 		}
 
 		open()
@@ -116,7 +126,10 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 						() => {
 							MessengerEmitter.emit(
 								EventType.messenger.openDialog,
-								{ dialogId: `chat${chatId}`, isNew: true },
+								{
+									dialogId: `chat${chatId}`,
+									context: OpenDialogContextType.chatCreation,
+								},
 								ComponentCode.imCopilotMessenger,
 							);
 
@@ -229,21 +242,15 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			});
 		}
 
-		handleUserGet(response)
+		/**
+		 * @param {immobileTabChatLoadResult} data
+		 */
+		handleUserGet(data)
 		{
-			const error = response.error();
-			if (error)
+			if (data?.userData)
 			{
-				Logger.error('DialogCreator.handleUserGet', error);
-
-				return;
+				this.store.dispatch('usersModel/set', [data.userData]);
 			}
-
-			const currentUser = response.data();
-
-			Logger.info('DialogCreator.handleUserGet', currentUser);
-
-			this.store.dispatch('usersModel/set', [currentUser]);
 		}
 	}
 

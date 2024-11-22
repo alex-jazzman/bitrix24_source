@@ -422,15 +422,7 @@ elseif (isset($arParams['AJAX_CALL']) && $arParams['AJAX_CALL'] == 'INFO')
 
 		if ($arEvent['RRULE'])
 		{
-			$arRRule = array();
-			$arRRuleStr = explode(';', $arEvent['RRULE']);
-			foreach ($arRRuleStr as $str)
-			{
-				list($param, $value) = explode('=', $str);
-				$arRRule[$param] = $value;
-			}
-
-			$arResult['ENTRY']['PROPERTY_PERIOD_TYPE_VALUE'] = $arRRule['FREQ'];
+			$arResult['ENTRY']['PROPERTY_PERIOD_TYPE_VALUE'] = $arEvent['RRULE']['FREQ'];
 		}
 	}
 

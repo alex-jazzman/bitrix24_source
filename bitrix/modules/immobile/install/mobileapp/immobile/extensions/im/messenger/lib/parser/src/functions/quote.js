@@ -8,7 +8,7 @@
 jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) => {
 
 	const { Loc } = require('loc');
-	const { clone } = require('utils/object');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { parsedElements, PLACEHOLDER } = require('im/messenger/lib/parser/utils/parsed-elements');
 	const { MessageText } = require('im/messenger/lib/parser/elements/dialog/message/text');
@@ -47,7 +47,6 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				const quoteEndIndex = i - 1;
 
 				textLines.splice(quoteStartIndex, quoteEndIndex - quoteStartIndex);
-				quoteText = parserUrl.simplify(quoteText);
 				const inactiveQuoteId = parsedElements.add(new QuoteInactive('', quoteText));
 				textLines[quoteStartIndex] = `${PLACEHOLDER}${inactiveQuoteId}`;
 
@@ -62,7 +61,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			return textLines.join('\n');
 		},
 
-		decodeQuote(text)
+		decodeQuote(text, options)
 		{
 			text = text.replace(
 				/-{54}((.*?)\[(.*?)]( #(?:(?:chat)?\d+|\d+:\d+)\/\d+)?)?(.*?)-{54}?/gs,
@@ -83,6 +82,8 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 
 					let contextDialogId = '';
 					let contextMessageId = '';
+					let isActiveQuote = false;
+
 					if (contextTag)
 					{
 						contextTag = contextTag.trim().slice(1);
@@ -94,11 +95,19 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 
 						contextDialogId = dialogId;
 						contextMessageId = messageId;
+						const currentDialogId = options.dialogId || serviceLocator.get('core').getStore().getters['applicationModel/getCurrentOpenedDialogId']();
+						const isCurrenDialog = [dialogId, String(user1), String(user2)].includes(String(currentDialogId));
+
+						if (isCurrenDialog)
+						{
+							isActiveQuote = true;
+						}
+
 						if (!dialogId.toString().startsWith('chat'))
 						{
 							user1 = Number.parseInt(user1, 10);
 							user2 = Number.parseInt(user2, 10);
-							contextMessageId = messageId;
+
 							if (MessengerParams.getUserId() === user1)
 							{
 								contextDialogId = user2;
@@ -107,17 +116,13 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 							{
 								contextDialogId = user1;
 							}
-							else
-							{
-								contextTag = '';
-							}
 						}
 					}
 
-					text = parserUrl.simplify(text);
 					let quoteMark;
-					if (contextTag)
+					if (isActiveQuote)
 					{
+						text = parserUrl.simplify(text);
 						const activeQuote = new QuoteActive(title, text, contextDialogId, contextMessageId);
 						const activeQuoteId = parsedElements.add(activeQuote);
 						quoteMark = `${PLACEHOLDER}${activeQuoteId}`;
@@ -130,8 +135,13 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					}
 
 					return quoteMark;
-				}
+				},
 			);
+
+			const findQuotesWithoutLineBreaks = new RegExp(`(${PLACEHOLDER}\\d+)([^\\S\\r\\n]*)(?!\\n)`, 'g');
+			const addLineBreaksIfNotExists = (textWithQuote) => textWithQuote.replace(findQuotesWithoutLineBreaks, '$1$2\n');
+			text = addLineBreaksIfNotExists(text);
+			text = text.trim();
 
 			return text;
 		},

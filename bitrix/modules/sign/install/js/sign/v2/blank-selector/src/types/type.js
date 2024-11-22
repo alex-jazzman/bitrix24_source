@@ -20,6 +20,7 @@ export type BlankSelectorConfig = {
 	region: string,
 	regionDocumentTypes: [],
 	canUploadNewBlank?: boolean,
+	documentMode?: 'template' | 'document',
 };
 
 export type BlankData = {

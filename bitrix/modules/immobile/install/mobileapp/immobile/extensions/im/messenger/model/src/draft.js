@@ -8,7 +8,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 	const { DraftType, MessageType } = require('im/messenger/const');
 
 	/** @type {DraftModelState} */
-	const draftState = {
+	const draftDefaultElement = Object.freeze({
 		dialogId: 0,
 		messageId: 0,
 		messageType: MessageType.text,
@@ -18,7 +18,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 		userName: '',
 		image: null,
 		video: null,
-	};
+	});
 
 	const draftModel = {
 		namespaced: true,
@@ -78,7 +78,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 					actionName: 'set',
 					data: {
 						dialogId: validPayload.dialogId,
-						fields: { ...draftState, ...validPayload },
+						fields: { ...draftDefaultElement, ...validPayload },
 					},
 				});
 			},
@@ -227,5 +227,5 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 		return result;
 	}
 
-	module.exports = { draftModel };
+	module.exports = { draftModel, draftDefaultElement };
 });

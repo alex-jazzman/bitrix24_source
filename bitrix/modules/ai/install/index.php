@@ -1,8 +1,14 @@
 <?php
 
+use Bitrix\AI\Handler\Main;
+use Bitrix\AI\Rest;
+use Bitrix\AI\Handler\Intranet;
+use Bitrix\AI\Handler\Baas;
 use Bitrix\AI\Cloud;
+use Bitrix\AI\Cloud\Agent;
 use Bitrix\AI\Cloud\Scenario\Registration;
 use Bitrix\AI\Facade;
+use Bitrix\Main\Application;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\FileTable;
 use Bitrix\Main\IO\File;
@@ -29,18 +35,22 @@ class AI extends \CModule
 
 	public array $eventsData = [
 		'main' => [
-			'onAfterUserDelete' => ['\Bitrix\AI\Handler\Main', 'onAfterUserDelete'],
+			/** @see \Bitrix\AI\Handler\Main::onAfterUserDelete */
+			'onAfterUserDelete' => [Main::class, 'onAfterUserDelete'],
 		],
 		'rest' => [
-			'onRestServiceBuildDescription' => ['\Bitrix\AI\Rest', 'onRestServiceBuildDescription'],
-			'onRestAppDelete' => ['\Bitrix\AI\Rest', 'onRestAppDelete'],
+			/** @see \Bitrix\AI\Rest::onRestServiceBuildDescription */
+			'onRestServiceBuildDescription' => [Rest::class, 'onRestServiceBuildDescription'],
+			/** @see \Bitrix\AI\Rest::onRestAppDelete */
+			'onRestAppDelete' => [Rest::class, 'onRestAppDelete'],
 		],
 		'intranet' => [
-			'onSettingsProvidersCollect' => ['\Bitrix\AI\Handler\Intranet', 'onSettingsProvidersCollect'],
+			/** @see \Bitrix\AI\Handler\Intranet::onSettingsProvidersCollect */
+			'onSettingsProvidersCollect' => [Intranet::class, 'onSettingsProvidersCollect'],
 		],
 		'baas' => [
-            /** @see \Bitrix\AI\Handler\Baas::onPackagePurchased **/
-			'onPackagePurchased' => ['\Bitrix\AI\Handler\Baas', 'onPackagePurchased'],
+			/** @see \Bitrix\AI\Handler\Baas::onPackagePurchased **/
+			'onPackagePurchased' => [Baas::class, 'onPackagePurchased'],
 		],
 	];
 
@@ -92,7 +102,7 @@ class AI extends \CModule
 					$this->InstallDB();
 					$this->InstallEvents();
 					$this->InstallFiles();
-					$GLOBALS['errors'] = $this->errors;
+					$GLOBALS['errors'] = $this->errors ?? [];
 
 					$GLOBALS['APPLICATION']->includeAdminFile(
 						Loc::getMessage('AI_INSTALL_INSTALL_TITLE'),
@@ -167,7 +177,12 @@ class AI extends \CModule
 			if (Loader::includeModule('ai') && Facade\Bitrix24::shouldUseB24() === false)
 			{
 				$registration = new Registration('en');
-				$registration->tryAutoRegister();
+				$autoRegisterResult = $registration->tryAutoRegister();
+
+				if ($autoRegisterResult->isSuccess())
+				{
+					Application::getInstance()->addBackgroundJob(fn () => Agent\PropertiesSync::retrieveModels());
+				}
 			}
 		}
 		catch (\Exception)

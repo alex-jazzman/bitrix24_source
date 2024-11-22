@@ -12,7 +12,9 @@ return [
 		'main.core',
 		'main.date',
 		'ui.buttons',
+		'ui.dialogs.messagebox',
 		'ui.tooltip',
+		'ui.icons.b24',
 	],
 	'skip_core' => false,
 ];

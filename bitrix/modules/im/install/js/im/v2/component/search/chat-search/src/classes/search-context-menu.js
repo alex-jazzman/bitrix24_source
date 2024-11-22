@@ -6,7 +6,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { CallManager } from 'im.v2.lib.call';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { ChatActionType, EventType, SidebarDetailBlock } from 'im.v2.const';
+import { EventType, SidebarDetailBlock } from 'im.v2.const';
 
 import type { MenuItem } from 'im.v2.lib.menu';
 import type { ImModelUser } from 'im.v2.model';
@@ -28,7 +28,6 @@ export class SearchContextMenu extends BaseMenu
 	{
 		return [
 			this.getOpenItem(),
-			this.getCallItem(),
 			this.getOpenProfileItem(),
 			this.getChatsWithUserItem(),
 		];
@@ -40,24 +39,6 @@ export class SearchContextMenu extends BaseMenu
 			text: Loc.getMessage('IM_LIB_MENU_OPEN'),
 			onclick: () => {
 				Messenger.openChat(this.context.dialogId);
-				this.menuInstance.close();
-			},
-		};
-	}
-
-	getCallItem(): ?MenuItem
-	{
-		const chatCanBeCalled = this.callManager.chatCanBeCalled(this.context.dialogId);
-		const chatIsAllowedToCall = this.permissionManager.canPerformAction(ChatActionType.call, this.context.dialogId);
-		if (!chatCanBeCalled || !chatIsAllowedToCall)
-		{
-			return null;
-		}
-
-		return {
-			text: Loc.getMessage('IM_LIB_MENU_CALL_2'),
-			onclick: () => {
-				this.callManager.startCall(this.context.dialogId);
 				this.menuInstance.close();
 			},
 		};

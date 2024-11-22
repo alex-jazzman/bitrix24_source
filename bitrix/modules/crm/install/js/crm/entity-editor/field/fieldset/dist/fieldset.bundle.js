@@ -389,7 +389,7 @@ this.BX = this.BX || {};
 	        'ID': id
 	      });
 	      this.getModel().setField(this.getName(), value);
-	      this._entityEditorList[id] = this.createEntityEditor(id);
+	      this._entityEditorList[id] = this.createEntityEditor(id, {}, this.prepareEntityEditorContext());
 	      this.markAsChanged();
 	      return this._entityEditorList[id];
 	    }
@@ -532,7 +532,7 @@ this.BX = this.BX || {};
 	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	            var item = _step.value;
 	            if (!this._entityEditorList[item.ID]) {
-	              this._entityEditorList[item.ID] = this.createEntityEditor(item.ID, item);
+	              this._entityEditorList[item.ID] = this.createEntityEditor(item.ID, item, this.prepareEntityEditorContext());
 	            }
 	          }
 	        } catch (err) {
@@ -548,6 +548,11 @@ this.BX = this.BX || {};
 	    key: "getAttributeManagerSettings",
 	    value: function getAttributeManagerSettings() {
 	      return BX.prop.getObject(this._config, "ATTRIBUTE_CONFIG", null);
+	    }
+	  }, {
+	    key: "getResolverProperty",
+	    value: function getResolverProperty() {
+	      return BX.prop.getObject(this._settings, "resolverProperty", null);
 	    }
 	  }, {
 	    key: "getActiveControlById",
@@ -578,6 +583,11 @@ this.BX = this.BX || {};
 	        }
 	      }
 	      return validator.validate();
+	    }
+	  }, {
+	    key: "prepareEntityEditorContext",
+	    value: function prepareEntityEditorContext() {
+	      return {};
 	    }
 	  }], [{
 	    key: "create",

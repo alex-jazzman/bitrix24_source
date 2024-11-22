@@ -22,6 +22,7 @@ import { ZoomInviteMessage } from 'im.v2.component.message.zoom-invite';
 import { GeneralChatCreationMessage } from 'im.v2.component.message.general-chat-creation';
 import { GeneralChannelCreationMessage } from 'im.v2.component.message.general-channel-creation';
 import { ChannelCreationMessage } from 'im.v2.component.message.channel-creation';
+import { CallMessage } from 'im.v2.component.message.call';
 
 export const MessageComponents = {
 	DefaultMessage,
@@ -48,4 +49,5 @@ export const MessageComponents = {
 	GeneralChatCreationMessage,
 	GeneralChannelCreationMessage,
 	ChannelCreationMessage,
+	CallMessage,
 };

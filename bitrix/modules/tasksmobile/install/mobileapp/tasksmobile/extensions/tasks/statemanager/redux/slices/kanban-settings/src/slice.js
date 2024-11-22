@@ -20,7 +20,12 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require,
 		updateStagesOrderRejected,
 		addStageFulfilled,
 		deleteStageFulfilled,
+		updateTaskFulfilled,
 	} = require('tasks/statemanager/redux/slices/kanban-settings/src/extra-reducer');
+
+	const { setKanbanSettingsActionName } = require('tasks/statemanager/redux/slices/kanban-settings/action');
+	const { setKanbanSettings: setKanbanSettingsReducer } = require('tasks/statemanager/redux/slices/kanban-settings/reducer');
+	const { update } = require('tasks/statemanager/redux/slices/tasks/thunk');
 
 	const {
 		addStage,
@@ -37,14 +42,15 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require,
 				.addCase(updateStagesOrder.fulfilled, updateStagesOrderFulfilled)
 				.addCase(updateStagesOrder.rejected, updateStagesOrderRejected)
 				.addCase(addStage.fulfilled, addStageFulfilled)
-				.addCase(deleteStage.fulfilled, deleteStageFulfilled);
+				.addCase(deleteStage.fulfilled, deleteStageFulfilled)
+				.addCase(setKanbanSettingsActionName, setKanbanSettingsReducer)
+				.addCase(update.fulfilled, updateTaskFulfilled);
 		};
 	}
 
 	const slice = createSlice({
 		name: sliceName,
 		initialState,
-		reducers: {},
 		extraReducers: getExtraReducers(),
 	});
 

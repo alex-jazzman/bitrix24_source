@@ -179,7 +179,7 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 			const widgetElement = document.querySelector('#<?= $id ?>');
 			if (widgetElement)
 			{
-				new BX.Landing.Widget.AppsWidgetV2(widgetElement, options);
+				new BX.Landing.Widget.AppsV2(widgetElement, options);
 			}
 		}
 	});

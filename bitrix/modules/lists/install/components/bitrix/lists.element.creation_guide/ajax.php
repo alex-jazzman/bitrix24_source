@@ -144,7 +144,7 @@ class ListsElementCreationGuideAjaxController extends \Bitrix\Main\Engine\Contro
 	{
 		if (!Loader::includeModule('im'))
 		{
-			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_IM_NOT_INSTALLED')));
+			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_IM_NOT_INSTALLED_1')));
 
 			return null;
 		}
@@ -347,7 +347,7 @@ class ListsElementCreationGuideAjaxController extends \Bitrix\Main\Engine\Contro
 			return true;
 		}
 
-		$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_LISTS_NOT_INSTALLED')));
+		$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_LISTS_NOT_INSTALLED_1')));
 
 		return false;
 	}
@@ -369,7 +369,7 @@ class ListsElementCreationGuideAjaxController extends \Bitrix\Main\Engine\Contro
 		$exploded = explode('|', $unsigned);
 		if (!$exploded)
 		{
-			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_BAD_SIGNED_PARAMETERS')));
+			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_BAD_SIGNED_PARAMETERS_1')));
 
 			return null;
 		}
@@ -379,7 +379,7 @@ class ListsElementCreationGuideAjaxController extends \Bitrix\Main\Engine\Contro
 
 		if (!$params || !is_string($params))
 		{
-			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_BAD_SIGNED_PARAMETERS')));
+			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_BAD_SIGNED_PARAMETERS_1')));
 
 			return null;
 		}
@@ -429,7 +429,7 @@ class ListsElementCreationGuideAjaxController extends \Bitrix\Main\Engine\Contro
 			];
 		}
 
-		$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_BAD_SIGNED_PARAMETERS')));
+		$this->addError(new \Bitrix\Main\Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_AJAX_BAD_SIGNED_PARAMETERS_1')));
 
 		return null;
 	}

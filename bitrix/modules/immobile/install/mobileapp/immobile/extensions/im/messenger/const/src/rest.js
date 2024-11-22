@@ -42,6 +42,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatGet: 'im.v2.Chat.get',
 		imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
 
+		imV2ChatDelete: 'im.v2.Chat.delete',
 		imV2ChatAdd: 'im.v2.Chat.add',
 		imV2ChatRead: 'im.v2.Chat.read',
 		imV2ChatReadAll: 'im.v2.Chat.readAll',
@@ -65,7 +66,6 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 		imV2ChatPinCount: 'im.v2.Chat.Pin.count',
 
-		imV2ChatAdd: 'im.v2.Chat.add',
 		imV2ChatJoin: 'im.v2.Chat.join',
 		imV2ChatAddUsers: 'im.v2.Chat.addUsers',
 		imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
@@ -140,6 +140,10 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		serverTime: 'server.time',
 
 		openlinesDialogGet: 'imopenlines.dialog.get',
+
+		immobileTabChatLoad: 'immobile.Tab.Chat.load',
+		immobileTabCopilotLoad: 'immobile.Tab.Copilot.load',
+		immobileTabChannelLoad: 'immobile.Tab.Channel.load',
 	});
 
 	module.exports = {

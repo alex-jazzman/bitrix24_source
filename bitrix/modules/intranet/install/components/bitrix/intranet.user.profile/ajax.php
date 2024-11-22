@@ -74,11 +74,19 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 	{
 		$currentUser = CurrentUser::get();
 
-		return \Bitrix\Intranet\Util::deactivateUser([
+		$result = \Bitrix\Intranet\Util::deactivateUser([
 			'userId' => $this->userId,
 			'currentUserId' => $currentUser->getId(),
 			'isCurrentUserAdmin' => $currentUser->isAdmin()
 		]);
+
+		if ($result && $this->userId > 0)
+		{
+			$deactivateUser = new User($this->userId);
+			Invitation::fullSyncCounterByUser($deactivateUser->fetchOriginatorUser());
+		}
+
+		return $result;
 	}
 
 	public function hireUserAction()

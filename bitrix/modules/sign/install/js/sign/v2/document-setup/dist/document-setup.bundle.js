@@ -7,6 +7,10 @@ this.BX.Sign = this.BX.Sign || {};
 	let _ = t => t,
 	  _t,
 	  _t2;
+	const DocumentInitiated = Object.freeze({
+	  employee: 'employee',
+	  company: 'company'
+	});
 	var _notificationContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("notificationContainer");
 	var _changeDomainWarningContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeDomainWarningContainer");
 	var _scenarioType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scenarioType");
@@ -147,7 +151,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  loadBlocks(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(uid);
 	  }
-	  async setup(uid) {
+	  async setup(uid, isTemplateMode = false) {
 	    if (this.isSameBlankSelected()) {
 	      this.setupData = {
 	        ...this.setupData,
@@ -178,7 +182,10 @@ this.BX.Sign = this.BX.Sign || {};
 	        this.ready = false;
 	        blankId = selectedBlankId || (await this.blankSelector.createBlank());
 	        const isRegistered = babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].has(blankId);
-	        const uid = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _change)[_change](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId);
+	        const {
+	          uid,
+	          templateUid
+	        } = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _change)[_change](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId, isTemplateMode);
 	        babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].set(blankId, uid);
 	        await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].upload(uid);
 	        const [loadedData, blocks] = await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(uid), babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(uid)]);
@@ -186,7 +193,8 @@ this.BX.Sign = this.BX.Sign || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _setDocumentData)[_setDocumentData]({
 	          ...loadedData,
 	          blocks,
-	          isTemplate
+	          isTemplate,
+	          templateUid
 	        });
 	      }
 	    } catch {
@@ -277,15 +285,14 @@ this.BX.Sign = this.BX.Sign || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _appendEdoWarningContainer)[_appendEdoWarningContainer]();
 	  }
 	}
-	async function _register2(blankId) {
-	  var _data$uid;
-	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].register(blankId, babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType]);
-	  return (_data$uid = data == null ? void 0 : data.uid) != null ? _data$uid : '';
+	async function _register2(blankId, isTemplateMode = false) {
+	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].register(blankId, babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType], isTemplateMode);
+	  return data != null ? data : {};
 	}
 	async function _change2(uid, blankId) {
-	  var _data$uid2;
+	  var _data$uid;
 	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeDocument(uid, blankId);
-	  return (_data$uid2 = data == null ? void 0 : data.uid) != null ? _data$uid2 : '';
+	  return (_data$uid = data == null ? void 0 : data.uid) != null ? _data$uid : '';
 	}
 	async function _getPages2(uid) {
 	  var _data$pages;
@@ -313,7 +320,7 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	async function _processPages2(urls, cb) {
 	  let startIndex = 0;
-	  const pagesCount = 20;
+	  const pagesCount = 3;
 	  while (startIndex < urls.length) {
 	    const sliced = urls.slice(startIndex, startIndex + pagesCount);
 	    const convertedPages = await babelHelpers.classPrivateFieldLooseBase(this, _convertToBase)[_convertToBase](sliced);
@@ -368,6 +375,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  main_core.Dom.append(alert.getContainer(), babelHelpers.classPrivateFieldLooseBase(this, _notificationContainer)[_notificationContainer]);
 	}
 
+	exports.DocumentInitiated = DocumentInitiated;
 	exports.DocumentSetup = DocumentSetup;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Event,BX.Sign.V2,BX.Sign.V2,BX.UI,BX.UI));

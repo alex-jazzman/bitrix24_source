@@ -2,6 +2,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const { EntitySelectorWidget } = require('selector/widget');
+	const { Type } = require('type');
 
 	/**
 	 * @class BaseSelectorEntity
@@ -19,6 +20,7 @@
 				widgetParams,
 				allowMultipleSelection,
 				closeOnSelect,
+				leftButtons,
 			} = props;
 			const {
 				selectOptions,
@@ -26,11 +28,13 @@
 				events,
 				initSelectedIds,
 				undeselectableIds,
+				sectionTitles,
+				shouldRenderHiddenItemsInList,
 			} = props;
 
 			if (!Array.isArray(entityIds) || entityIds.length === 0)
 			{
-				entityIds = [this.getEntityId()];
+				entityIds = Array.isArray(this.getEntityId()) ? this.getEntityId() : [this.getEntityId()];
 			}
 
 			provider = this.prepareProvider(provider, entityIds);
@@ -48,6 +52,8 @@
 				closeOnSelect = true;
 			}
 
+			leftButtons = Type.isArrayFilled(leftButtons) ? leftButtons : [];
+
 			const entitySelectorWidget = new EntitySelectorWidget({
 				entityIds,
 				provider,
@@ -62,6 +68,11 @@
 				initSelectedIds: initSelectedIds || [],
 				undeselectableIds: undeselectableIds || [],
 				returnKey: BaseSelectorEntity.getReturnKey(),
+				scopes: this.getScopes(),
+				sectionTitles,
+				shouldRenderHiddenItemsInList,
+				animation: this.getPickerAnimation(),
+				leftButtons,
 			});
 
 			entitySelectorWidget.provider.setHandlerPrepareItem(this.prepareItemForDrawing);
@@ -84,6 +95,7 @@
 			}
 
 			provider.options = {
+				...provider.options,
 				entities: this.getEntitiesOptions(provider.options, entityIds, provider.filters),
 				useRawResult: this.useRawResult(),
 				useLettersForEmptyAvatar: Boolean(provider?.options?.useLettersForEmptyAvatar),
@@ -288,6 +300,16 @@
 		static useRawResult()
 		{
 			return false;
+		}
+
+		static getScopes()
+		{
+			return [];
+		}
+
+		static getPickerAnimation()
+		{
+			return 'none';
 		}
 	}
 

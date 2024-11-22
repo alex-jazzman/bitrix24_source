@@ -552,7 +552,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'type' => 'section'
 );
 
-if (!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() || COption::GetOptionString('crm', 'allow_old_detail_page', 'N') === 'Y')
+if (!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() || \Bitrix\Crm\Feature::enabled(\Bitrix\Crm\Feature\ReturnToOldDetailPage::class))
 {
 	$arResult['FIELDS']['tab_main'][] = [
 		'id' => 'ENABLE_SLIDER',

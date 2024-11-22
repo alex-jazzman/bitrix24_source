@@ -134,9 +134,9 @@ export class FileNode extends TextNode
 	createDOM(config: EditorConfig, editor: LexicalEditor): HTMLSpanElement
 	{
 		const span = document.createElement('span');
-		if (Type.isStringFilled(config?.theme?.file?.file))
+		if (Type.isStringFilled(config?.theme?.file))
 		{
-			Dom.addClass(span, config.theme.file.file);
+			Dom.addClass(span, config.theme.file);
 		}
 
 		span.textContent = this.getName();

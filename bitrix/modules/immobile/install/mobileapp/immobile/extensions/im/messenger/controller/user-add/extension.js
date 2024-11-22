@@ -52,8 +52,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			this.core = serviceLocator.get('core');
 			this.store = this.core.getMessengerStore();
 			this.setControls();
-
-			this.onClickRightBtn = this.onClickRightBtn.bind(this);
+			this.bindMethods();
 		}
 
 		setControls()
@@ -144,8 +143,9 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			};
 		}
 
-		show()
+		async show()
 		{
+			this.subscribeExternalEvents()
 			// eslint-disable-next-line es/no-optional-chaining
 			const mediumPositionPercent = this.options.widgetOptions?.mediumPositionPercent || 50;
 			const backgroundColor = Theme.isDesignSystemSupported ? Theme.colors.bgSecondary : Theme.colors.bgContentTertiary;
@@ -158,23 +158,20 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				},
 			};
 
-			PageManager.openWidget(
+			this.widget = await PageManager.openWidget(
 				'layout',
 				widgetConfig,
-			).then(
-				(widget) => {
-					this.widget = widget;
-					this.onWidgetReady();
-				},
-			).catch((error) => {
-				Logger.error('UserAdd.openWidget.error', error);
-			});
+			);
+			this.onWidgetReady();
 		}
 
 		onWidgetReady()
 		{
 			this.createView();
 			this.widget.showComponent(this.view);
+			this.widget.on(EventType.view.close, () => {
+				this.unsubscribeExternalEvents();
+			});
 		}
 
 		createView()
@@ -186,14 +183,40 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				loadingTextRightBtn: this.loadingTextRightBtn,
 				recentText: this.recentText,
 				callback: {
-					onClickRightBtn: this.onClickRightBtn,
+					onClickRightBtn: this.clickRightBtnHandler,
 				},
 				isCopilotDialog: this.options.isCopilotDialog,
 				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			});
 		}
 
-		onClickRightBtn()
+		bindMethods()
+		{
+			this.clickRightBtnHandler = this.clickRightBtnHandler.bind(this);
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.widget.close();
+		}
+
+		clickRightBtnHandler()
 		{
 			if (this.isChatCreate)
 			{

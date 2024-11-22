@@ -139,25 +139,30 @@ $buyButtonClassName = in_array('BUY', $arParams['ADD_TO_BASKET_ACTION_PRIMARY'])
 $showAddBtn = in_array('ADD', $arParams['ADD_TO_BASKET_ACTION']);
 $showButtonClassName = in_array('ADD', $arParams['ADD_TO_BASKET_ACTION_PRIMARY']) ? 'btn-default' : 'btn-link';
 $showSubscribe = $arParams['PRODUCT_SUBSCRIPTION'] === 'Y' && ($arResult['PRODUCT']['SUBSCRIBE'] === 'Y' || $haveOffers);
-$productType = $arResult['PRODUCT']['TYPE'];
 
 $arParams['MESS_BTN_BUY'] = $arParams['MESS_BTN_BUY'] ?: Loc::getMessage('CT_BCE_CATALOG_BUY');
 $arParams['MESS_BTN_ADD_TO_BASKET'] = $arParams['MESS_BTN_ADD_TO_BASKET'] ?: Loc::getMessage('CT_BCE_CATALOG_ADD');
 
 if ($arResult['MODULES']['catalog'] && $arResult['PRODUCT']['TYPE'] === ProductTable::TYPE_SERVICE)
 {
+	$arParams['~MESS_NOT_AVAILABLE_SERVICE'] ??= '';
 	$arParams['~MESS_NOT_AVAILABLE'] = $arParams['~MESS_NOT_AVAILABLE_SERVICE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE_SERVICE')
 	;
+
+	$arParams['MESS_NOT_AVAILABLE_SERVICE'] ??= '';
 	$arParams['MESS_NOT_AVAILABLE'] = $arParams['MESS_NOT_AVAILABLE_SERVICE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE_SERVICE')
 	;
 }
 else
 {
+	$arParams['~MESS_NOT_AVAILABLE'] ??= '';
 	$arParams['~MESS_NOT_AVAILABLE'] = $arParams['~MESS_NOT_AVAILABLE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE')
 	;
+
+	$arParams['MESS_NOT_AVAILABLE'] ??= '';
 	$arParams['MESS_NOT_AVAILABLE'] = $arParams['MESS_NOT_AVAILABLE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE')
 	;

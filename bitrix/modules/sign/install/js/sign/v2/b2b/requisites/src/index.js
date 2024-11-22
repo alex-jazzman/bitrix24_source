@@ -9,6 +9,7 @@ const crmEditorSettings = {
 	entityTypeId: 36,
 	guid: 'sign_entity_editor',
 	params: {
+		ENABLE_CONFIGURATION_UPDATE: 'N',
 		ENABLE_PAGE_TITLE_CONTROLS: false,
 		ENABLE_MODE_TOGGLE: true,
 		IS_EMBEDDED: 'N',

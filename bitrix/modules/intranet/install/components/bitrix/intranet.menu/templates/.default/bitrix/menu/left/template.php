@@ -38,7 +38,7 @@ $getLink = function ($item): string
 
 	if (preg_match("~".SITE_DIR."online\/~i", $curLink))
 	{
-		$curLink = 'bx://v2/' . $_SERVER['HTTP_HOST'] . '/chat/';
+		$curLink = 'bx://v2/' . $_SERVER['SERVER_NAME'] . '/chat/';
 	}
 
 	return $curLink;
@@ -149,7 +149,7 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 					<?}?>
 				</a>
 				<div class="intranet__desktop-menu_user">
-					<span class="intranet__desktop-menu_user-add" onclick="BX.Intranet.Account.openLoginTab()"></span>
+					<span class="intranet__desktop-menu_user-add" onclick="BXDesktopSystem.AccountAddForm()"></span>
 				</div>
 			</div>
 			<div class="intranet__desktop-menu_main">
@@ -284,7 +284,7 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 
 	<div class="intranet__desktop-menu_popup">
 		<ul class="intranet__desktop-menu_popup-list">
-			<li class="intranet__desktop-menu_popup-item --add" onclick="BX.Intranet.Account.openLoginTab()">
+			<li class="intranet__desktop-menu_popup-item --add" onclick="BXDesktopSystem.AccountAddForm()">
 				<span class="intranet__desktop-menu_user-add"></span>
 				<span class="intranet__desktop-menu_popup-text"><?=Loc::getMessage("MENU_ADD")?></span>
 			</li>

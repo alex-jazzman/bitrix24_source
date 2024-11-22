@@ -538,7 +538,7 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 
 		this.getModel().setField(this.getName(), value);
 
-		this._entityEditorList[id] = this.createEntityEditor(id);
+		this._entityEditorList[id] = this.createEntityEditor(id, {}, this.prepareEntityEditorContext());
 		this.markAsChanged();
 
 		return this._entityEditorList[id];
@@ -735,7 +735,11 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 			{
 				if (!this._entityEditorList[item.ID])
 				{
-					this._entityEditorList[item.ID] = this.createEntityEditor(item.ID, item);
+					this._entityEditorList[item.ID] = this.createEntityEditor(
+						item.ID,
+						item,
+						this.prepareEntityEditorContext()
+					);
 				}
 			}
 		}
@@ -748,6 +752,11 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 	getAttributeManagerSettings()
 	{
 		return BX.prop.getObject(this._config, "ATTRIBUTE_CONFIG", null);
+	}
+
+	getResolverProperty()
+	{
+		return BX.prop.getObject(this._settings, "resolverProperty", null);
 	}
 
 	getActiveControlById(id)
@@ -788,6 +797,11 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		}
 
 		return validator.validate();
+	}
+
+	prepareEntityEditorContext()
+	{
+		return {};
 	}
 }
 

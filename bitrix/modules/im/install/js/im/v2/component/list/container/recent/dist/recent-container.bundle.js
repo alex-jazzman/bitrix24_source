@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core_events,main_core,im_v2_lib_utils,im_v2_component_list_items_recent,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch,im_v2_lib_logger,im_v2_provider_service,ui_infoHelper,im_public,im_v2_component_elements,im_v2_const,im_v2_lib_analytics,im_v2_lib_promo,im_v2_lib_createChat,im_v2_lib_feature) {
+(function (exports,main_core_events,im_v2_lib_utils,im_v2_component_list_items_recent,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch,im_v2_lib_logger,im_v2_provider_service,main_core,ui_infoHelper,im_public,im_v2_component_elements,im_v2_const,im_v2_lib_analytics,im_v2_lib_promo,im_v2_lib_createChat,im_v2_lib_feature) {
 	'use strict';
 
 	// @vue/component
@@ -117,7 +117,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  computed: {
 	    ChatType: () => im_v2_const.ChatType,
-	    MenuItemIcon: () => im_v2_component_elements.MenuItemIcon,
 	    menuConfig() {
 	      return {
 	        id: 'im-create-chat-menu',
@@ -127,13 +126,31 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        padding: 0
 	      };
 	    },
-	    isCopilotAvailable() {
-	      // temporary hidden
-	      return false;
-	      // return FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
+	    menuItems() {
+	      return [{
+	        icon: im_v2_component_elements.MenuItemIcon.chat,
+	        title: this.loc('IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2'),
+	        subtitle: this.loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_V2'),
+	        clickHandler: this.onChatCreateClick.bind(this, im_v2_const.ChatType.chat)
+	      }, {
+	        icon: im_v2_component_elements.MenuItemIcon.channel,
+	        title: this.loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2'),
+	        subtitle: this.loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3'),
+	        clickHandler: this.onChatCreateClick.bind(this, im_v2_const.ChatType.channel)
+	      }, {
+	        icon: im_v2_component_elements.MenuItemIcon.conference,
+	        title: this.loc('IM_RECENT_CREATE_CONFERENCE_TITLE'),
+	        subtitle: this.loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2'),
+	        clickHandler: this.onChatCreateClick.bind(this, im_v2_const.ChatType.videoconf)
+	      }, {
+	        icon: im_v2_component_elements.MenuItemIcon.conference,
+	        title: this.loc('IM_RECENT_CREATE_COLLAB_TITLE'),
+	        subtitle: this.loc('IM_RECENT_CREATE_COLLAB_SUBTITLE'),
+	        clickHandler: this.onChatCreateClick.bind(this, im_v2_const.ChatType.collab),
+	        showCondition: () => im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable)
+	      }];
 	    }
 	  },
-
 	  methods: {
 	    onChatCreateClick(type) {
 	      im_v2_lib_analytics.Analytics.getInstance().onStartCreateNewChat(type);
@@ -179,6 +196,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _PromoByChatType$this;
 	      return (_PromoByChatType$this = PromoByChatType[this.chatTypeToCreate]) != null ? _PromoByChatType$this : '';
 	    },
+	    needToShowMenuItem(showCondition) {
+	      if (!main_core.Type.isFunction(showCondition)) {
+	        return true;
+	      }
+	      return showCondition();
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
@@ -191,31 +214,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ref="icon"
 		></div>
 		<MessengerMenu v-if="showPopup" :config="menuConfig" @close="showPopup = false">
-			<MenuItem
-				:icon="MenuItemIcon.chat"
-				:title="loc('IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2')"
-				:subtitle="loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_V2')"
-				@click="onChatCreateClick(ChatType.chat)"
-			/>
-			<MenuItem
-				:icon="MenuItemIcon.channel"
-				:title="loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2')"
-				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3')"
-				@click="onChatCreateClick(ChatType.channel)"
-			/>
-			<MenuItem
-				:icon="MenuItemIcon.conference"
-				:title="loc('IM_RECENT_CREATE_CONFERENCE_TITLE')"
-				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2')"
-				@click="onChatCreateClick(ChatType.videoconf)"
-			/>
-			<MenuItem
-				v-if="isCopilotAvailable"
-				:icon="MenuItemIcon.copilot"
-				:title="loc('IM_RECENT_CREATE_COPILOT_TITLE')"
-				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE')"
-				@click="onCopilotClick"
-			/>
+			<template v-for="{ icon, title, subtitle, clickHandler, showCondition } in menuItems">
+				<MenuItem
+					v-if="needToShowMenuItem(showCondition)"
+					:key="title"
+					:icon="icon"
+					:title="title"
+					:subtitle="subtitle"
+					@click="clickHandler"
+				/>
+			</template>
 			<template #footer>
 				<CreateChatHelp @articleOpen="showPopup = false" />
 			</template>
@@ -338,5 +346,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=recent-container.bundle.js.map

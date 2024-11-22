@@ -16,7 +16,6 @@ return [
 		'utils/object',
 		'utils/random',
 		'utils/function',
-		'utils/keyboard',
 		'utils/validation',
 		'layout/ui/menu',
 		'layout/ui/checkbox',
@@ -40,6 +39,8 @@ return [
 		'tasks:checklist/flat-tree',
 		'tasks:layout/checklist/list',
 		'tasks:checklist/flat-tree/item',
+		'tasks:tariff-plan-restriction',
+		'tasks:layout/task/form-utils'
 	],
 	'bundle' => [
 		'./src/item/base-item',

@@ -11,26 +11,11 @@ jn.define('ui-system/form/inputs/email/src/domain-icon-place-enum', (require, ex
 	 */
 	class InputDomainIconPlace extends BaseEnum
 	{
-		static RIGHT = new InputDomainIconPlace('RIGHT', 'right');
+		static RIGHT = new InputDomainIconPlace('RIGHT', 'rightContent');
 
-		static LEFT = new InputDomainIconPlace('LEFT', 'left');
+		static LEFT = new InputDomainIconPlace('LEFT', 'leftContent');
 
-		static RIGHT_STICK = new InputDomainIconPlace('RIGHT_STICK', 'right_stick');
-
-		isRight()
-		{
-			return this.equal(InputDomainIconPlace.RIGHT);
-		}
-
-		isLeft()
-		{
-			return this.equal(InputDomainIconPlace.LEFT);
-		}
-
-		isRightStick()
-		{
-			return this.equal(InputDomainIconPlace.RIGHT_STICK);
-		}
+		static RIGHT_STICK = new InputDomainIconPlace('RIGHT_STICK', 'rightStickContent');
 	}
 
 	module.exports = { InputDomainIconPlace };

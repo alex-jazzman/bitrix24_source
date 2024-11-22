@@ -3585,12 +3585,6 @@ select:not(:-internal-list-box) {
 
 /*endregion*/
 
-.calendar-options-uf-crm-cont {
-	padding: 10px 0;
-}
-
-/*endregion*/
-
 /*region Slider detail new event*/
 
 .calendar-slider-workarea {
@@ -5085,8 +5079,8 @@ select:not(:-internal-list-box) {
 
 .calendar-info-panel-description .calendar-option-fixedbtn {
 	top: auto;
-	right: 7px;
-	bottom: 4px;
+	right: 37px;
+	bottom: 6px;
 }
 
 .pinned .calendar-option-fixedbtn,
@@ -5112,12 +5106,6 @@ select:not(:-internal-list-box) {
 
 .pinned .calendar-option-fixedbtn:after {
 	background-position: 2px -68px;
-}
-
-.feed-add-post-form-editor-btn,
-.feed-add-post-form-title-btn {
-	margin-right: 25px;
-	margin-top: 7px;
 }
 
 /*region Destination*/
@@ -7477,12 +7465,8 @@ input.calendar-error {
 	overflow: auto;
 }
 
-#popup-window-content-menu-popup-popup-submenu-custom {
+#popup-window-content-menu-popup-popup-submenu-custom-reminder {
 	padding: 14px!important;
-}
-
-#popup-window-content-menu-popup-popup-submenu-custom .menu-popup {
-	display: none!important;
 }
 
 .menu-popup-item-text .calendar-field-datetime{

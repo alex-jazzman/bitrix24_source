@@ -1,7 +1,3 @@
 <?php
-$MESS['LANDING_WIDGETVUE_LOADER_DEFAULT_MESSAGE'] = 'Загружаем данные';
-$MESS['LANDING_WIDGETVUE_LOADER_TOO_LONG'] = 'Пока нет данных';
-
-$MESS['LANDING_WIDGETVUE_ERROR_DEFAULT_MESSAGE'] = 'Ошибка при получении данных';
-$MESS['LANDING_WIDGETVUE_ERROR_DEFAULT_LINK_TEXT'] = 'Подробнее ...';
 $MESS['LANDING_WIDGETVUE_ERROR_PAYMENT'] = 'Подписка истекла, продлите подписку на Маркет';
+$MESS['LANDING_WIDGETVUE_ERROR_FETCH'] = 'Ошибка при загрузке данных';

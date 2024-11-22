@@ -12,7 +12,6 @@ $MESS["CRM_OPEN_LINE_FACEBOOK"] = "Facebook";
 $MESS["CRM_OPEN_LINE_FACEBOOKCOMMENTS"] = "Коментарі Facebook";
 $MESS["CRM_OPEN_LINE_INSTAGRAM"] = "Instagram";
 $MESS["CRM_OPEN_LINE_LIVECHAT"] = "Онлайн-чат";
-$MESS["CRM_OPEN_LINE_NETWORK"] = "Бітрікс24.Network";
 $MESS["CRM_OPEN_LINE_SEND_MESSAGE"] = "Надіслати повідомлення";
 $MESS["CRM_OPEN_LINE_TELEGRAMBOT"] = "Telegram";
 $MESS["CRM_OPEN_LINE_VKGROUP"] = "ВКонтакті";

@@ -6779,7 +6779,7 @@ BX.MessengerChat.prototype.openMessenger = function(userId, params)
 	this.popupMessengerTopLine = BX.create("div", { props : { className : "bx-messenger-box-topline"}});
 	this.popupMessengerContent.insertBefore(this.popupMessengerTopLine, this.popupMessengerContent.firstChild);
 
-	if (!BX.MessengerCommon.isDesktop() && this.BXIM.bitrixIntranet && this.BXIM.platformName != '' && this.BXIM.settings.bxdNotify)
+	if (false && !BX.MessengerCommon.isDesktop() && this.BXIM.bitrixIntranet && this.BXIM.platformName != '' && this.BXIM.settings.bxdNotify)
 	{
 		clearTimeout(this.popupMessengerDesktopTimeout);
 		this.popupMessengerDesktopTimeout = setTimeout(BX.delegate(function(){

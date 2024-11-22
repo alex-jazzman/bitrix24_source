@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,main_date,ui_buttons,ui_hint,ui_vue3,main_loader,crm_field_colorSelector,main_core_events,ui_vue3_directives_hint,main_popup,ui_label,ui_cnt,ui_notification,crm_timeline_item,main_core,crm_timeline_tools) {
+(function (exports,rest_client,ui_analytics,main_date,ui_buttons,ui_vue3,main_loader,crm_field_colorSelector,main_core_events,ui_vue3_directives_hint,main_popup,ui_label,ui_hint,ui_cnt,ui_notification,crm_timeline_item,main_core,crm_timeline_tools) {
 	'use strict';
 
 	let _ = t => t,
@@ -3028,7 +3029,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      this.isComplete = true;
 	      const action = new Action(this.action);
-	      action.execute(this);
+	      action.execute(this).then(() => {}).catch(() => {
+	        this.isComplete = false;
+	      });
 	    },
 	    onClick() {
 	      if (this.action) {
@@ -3440,8 +3443,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    className() {
 	      return {
 	        'crm-timeline__card-status': true,
-	        '--clickable': !!this.action,
-	        '--hint': !!this.hint
+	        '--clickable': Boolean(this.action),
+	        '--hint': Boolean(this.hint)
 	      };
 	    },
 	    tagTypeToLabelColorDict() {
@@ -3488,6 +3491,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      const action = new Action(this.action);
 	      action.execute(this);
+	    },
+	    showTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      main_core.Runtime.debounce(() => {
+	        BX.UI.Hint.show(this.$el, this.hint, true);
+	      }, 50, this)();
+	    },
+	    hideTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      BX.UI.Hint.hide(this.$el);
 	    }
 	  },
 	  mounted() {
@@ -3503,7 +3520,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  },
 	  template: `
-		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
+		<div
+			ref="tag"
+			:class="className"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+			@click="executeAction"
+		></div>
 	`
 	};
 
@@ -16570,5 +16593,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Animations = Animations;
 	exports.CompatibleItem = CompatibleItem;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Main,BX.UI,BX,BX.Vue3,BX,BX.Crm.Field,BX.Event,BX.Vue3.Directives,BX.Main,BX.UI,BX.UI,BX,BX.Crm.Timeline,BX,BX.Crm.Timeline));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Main,BX.UI,BX.Vue3,BX,BX.Crm.Field,BX.Event,BX.Vue3.Directives,BX.Main,BX.UI,BX,BX.UI,BX,BX.Crm.Timeline,BX,BX.Crm.Timeline));
 //# sourceMappingURL=timeline.bundle.js.map

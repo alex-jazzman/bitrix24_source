@@ -17,7 +17,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		makeSubTasksFieldConfig,
 		makeRelatedTasksFieldConfig,
 	} = require('tasks/layout/task/form-utils');
-	const { TaskField: Field, TaskFieldActionAccess, FeatureId } = require('tasks/enum');
+	const { TaskField: Field, TaskFieldActionAccess, FeatureId, ViewMode } = require('tasks/enum');
 	const {
 		getFieldRestrictionPolicy,
 		getFieldShowRestrictionCallback,
@@ -43,6 +43,13 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const { selectById } = require('tasks/statemanager/redux/slices/flows');
 	const { usersSelector } = require('statemanager/redux/slices/users');
+	const {
+		selectTaskStageByTaskIdOrGuid,
+	} = require('tasks/statemanager/redux/slices/tasks-stages');
+	const {
+		getUniqId,
+		selectCanMoveStage,
+	} = require('tasks/statemanager/redux/slices/kanban-settings');
 
 	const { TextAreaField: Title } = require('layout/ui/fields/textarea/theme/air-title');
 	const { TextAreaField: Description } = require('layout/ui/fields/textarea/theme/air-description');
@@ -73,6 +80,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const { SubTasksField: SubTasksFieldCompact } = require('tasks/layout/fields/subtask/theme/air-compact');
 	const { RelatedTasksField } = require('tasks/layout/fields/related-task/theme/air');
 	const { RelatedTasksField: RelatedTasksFieldCompact } = require('tasks/layout/fields/related-task/theme/air-compact');
+	const { TasksStageSelector } = require('tasks/layout/fields/stage-selector');
 
 	const { DatePlanField } = require('tasks/layout/fields/date-plan/theme/air');
 	const { DatePlanField: DatePlanFieldCompact } = require('tasks/layout/fields/date-plan/theme/air-compact');
@@ -114,6 +122,10 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			onFieldContentClick,
 			timerState,
 			analyticsLabel,
+			view,
+			canMoveStage,
+			kanbanOwnerId,
+			isStageSelectorInitiallyHidden,
 		} = props;
 
 		const taskCreateButtonAnalytics = {
@@ -266,6 +278,37 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 							color: deadlineColor,
 							renderAfter: renderStatus,
 						},
+					},
+				},
+				{
+					factory: TasksStageSelector,
+					props: {
+						id: Field.STAGE,
+						config: {
+							parentWidget,
+							isReversed: view === ViewMode.DEADLINE,
+							deepMergeStyles: {
+								wrapper: {
+									paddingTop: 0,
+									paddingBottom: 0,
+								},
+								readOnlyWrapper: {
+									paddingTop: 0,
+									paddingBottom: 0,
+								},
+							},
+							initiallyHidden: isStageSelectorInitiallyHidden,
+						},
+						notifyAboutReadOnlyStatus: onFieldContentClick,
+						readOnly: view === ViewMode.DEADLINE
+							? !canMoveStage && !actions[TaskFieldActionAccess[Field.UPDATE_DEADLINE]]
+							: !canMoveStage,
+						value: task.stageId,
+						view,
+						projectId: task.groupId,
+						userId: kanbanOwnerId,
+						taskId: task.id,
+						showTitle: false,
 					},
 				},
 				task.allowTimeTracking && {
@@ -592,9 +635,11 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const FormStyle = {
 		primaryContainer: {
 			backgroundColor: Color.bgContentPrimary.toHex(),
-			paddingHorizontal: Component.areaPaddingLr.toNumber(),
 			paddingTop: 10,
 		},
+		primaryField: (field) => ({
+			paddingHorizontal: field.getId() === Field.STAGE ? 0 : Component.areaPaddingLr.toNumber(),
+		}),
 		secondaryContainer: {
 			marginTop: Indent.XL2.toNumber(),
 			paddingHorizontal: Component.areaPaddingLr.toNumber(),
@@ -684,6 +729,20 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		const shouldShowCompactButtons = ActionButtonsView.hasAllowedActions(task);
 		const deadlineColor = getDeadlineColor(task);
 
+		const stageData = selectTaskStageByTaskIdOrGuid(
+			state,
+			taskId,
+			task.guid,
+			ownProps.view,
+			ownProps.kanbanOwnerId,
+		);
+
+		const canMoveStage = selectCanMoveStage(state, getUniqId(
+			ownProps.view,
+			task.groupId,
+			ownProps.kanbanOwnerId,
+		));
+
 		return {
 			// !!! add here only props which trigger render
 			task: {
@@ -713,6 +772,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 				isTimerRunningForCurrentUser: task.isTimerRunningForCurrentUser,
 				startDatePlan: task.startDatePlan,
 				endDatePlan: task.endDatePlan,
+				stageId: stageData?.stageId,
 			},
 			actions,
 			shouldShowCompactButtons,
@@ -724,6 +784,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			auditors: task.auditors.map((id) => selectMappedUserById(state, id)),
 			accomplices: task.accomplices.map((id) => selectMappedUserById(state, id)),
 			timerState: selectTimerState(task),
+			view: ownProps.view,
+			canMoveStage,
 		};
 	};
 

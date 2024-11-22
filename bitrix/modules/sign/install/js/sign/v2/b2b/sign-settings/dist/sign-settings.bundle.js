@@ -37,8 +37,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    this.editor.documentData = setupData;
 	    return true;
 	  }
-	  getStepsMetadata() {
-	    const signSettings = this;
+	  getStepsMetadata(signSettings) {
 	    return {
 	      setup: {
 	        get content() {

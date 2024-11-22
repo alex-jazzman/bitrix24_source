@@ -127,7 +127,13 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/context-menu', (requi
 
 		#copyLink()
 		{
-			DialogTextHelper.copyToClipboard({ clipboardText: this.url, notificationText: this.url });
+			DialogTextHelper.copyToClipboard(
+				this.url,
+				{
+					notificationText: this.url,
+					notificationIcon: Icon.LINK,
+				},
+			);
 			logger.log(`${this.constructor.name}.copyLink`);
 		}
 

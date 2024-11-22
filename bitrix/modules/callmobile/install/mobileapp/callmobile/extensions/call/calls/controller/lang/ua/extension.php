@@ -1,4 +1,5 @@
 <?php
+$MESS["CALLMOBILE_MESSAGE_HAS_ACTIVE_CALL_HINT"] = "Зараз у вас проходить інший дзвінок. Відключіться від нього, щоб почати новий.";
 $MESS["MOBILE_CALL_ALREADY_FINISHED"] = "Дзвінок уже завершено";
 $MESS["MOBILE_CALL_ALREADY_JOINED"] = "До дзвінка неможливо підключитися одночасно з 2-х пристроїв";
 $MESS["MOBILE_CALL_APP_REQUIRED"] = "Потрібно встановити застосунок";
@@ -19,5 +20,6 @@ $MESS["MOBILE_CALL_OPEN_APP_STORE"] = "Перейти до App Store";
 $MESS["MOBILE_CALL_OPEN_CHAT"] = "Перейти в чат";
 $MESS["MOBILE_CALL_OPEN_PLAY_MARKET"] = "Перейти до Play Market";
 $MESS["MOBILE_CALL_UNSUPPORTED_VERSION"] = "Ваша версія застосунку застаріла. Для здійснення дзвінків оновіть, будь ласка, застосунок";
+$MESS["MOBILE_CALL_USERS_LIMIT_EXCEEDED"] = "Не вдалося під'єднатися. Кількість учасників дзвінка вже перевищила допустиму за тарифом.";
 $MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Без відео";
 $MESS["MOBILE_CALL_WITH_VIDEO"] = "З відео";

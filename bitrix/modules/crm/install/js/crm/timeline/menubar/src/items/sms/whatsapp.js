@@ -502,7 +502,7 @@ export default class Whatsapp extends Item
 
 	#setCommunicationsParams(): void
 	{
-		if (this.#communications.length === 0)
+		if (this.#isClientPhoneNotSet())
 		{
 			this.#toPhone = null;
 			this.#toEntityTypeId = null;
@@ -642,7 +642,7 @@ export default class Whatsapp extends Item
 
 	#handleSendButtonClick(): void
 	{
-		if (this.#communications.length === 0)
+		if (this.#isClientPhoneNotSet())
 		{
 			MessageBox.alert(Loc.getMessage('CRM_TIMELINE_SMS_ERROR_NO_COMMUNICATIONS'));
 
@@ -883,6 +883,16 @@ export default class Whatsapp extends Item
 	#isTourAvailable(): boolean
 	{
 		return Type.isArrayFilled(this.#unViewedTourList) && !BX.Crm.EntityEditor.getDefault().isNew();
+	}
+
+	#isClientPhoneNotSet(): boolean
+	{
+		if (this.#communications.length === 0)
+		{
+			return true;
+		}
+
+		return !Type.isArrayFilled(this.#communications[0].phones);
 	}
 	// endregion
 }

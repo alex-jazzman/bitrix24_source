@@ -33,6 +33,7 @@ export type HtmlFormatterOptions = FormatterOptions & {
 		},
 	},
 	fileMode: 'disk' | 'file',
+	containerMode: 'none' | 'void' | 'collapsed',
 };
 
 const globalSettings = Extension.getSettings('ui.bbcode.formatter.html-formatter');
@@ -45,6 +46,7 @@ export class HtmlFormatter extends Formatter
 	#linkSettings: HtmlFormatterOptions['linkSettings'];
 	#mentionSettings: HtmlFormatterOptions['mention'];
 	#fileMode: HtmlFormatterOptions['fileMode'];
+	#containerMode: HtmlFormatterOptions['container'];
 
 	constructor(options: HtmlFormatterOptions = {})
 	{
@@ -66,6 +68,7 @@ export class HtmlFormatter extends Formatter
 			return new FormatterClass({ formatter: this });
 		});
 
+		this.setContainerMode(options.containerMode);
 		this.setNodeFormatters(defaultFormatters);
 		this.setNodeFormatters(options.formatters);
 	}
@@ -104,6 +107,16 @@ export class HtmlFormatter extends Formatter
 	getMentionSettings(): HtmlFormatterOptions['mention']
 	{
 		return this.#mentionSettings;
+	}
+
+	setContainerMode(mode: HtmlFormatterOptions['containerMode']): void
+	{
+		this.#containerMode = mode;
+	}
+
+	getContainerMode(): HtmlFormatterOptions['container']
+	{
+		return this.#containerMode;
 	}
 
 	isElement(source): boolean

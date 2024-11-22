@@ -67,7 +67,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			}
 
 			text = parserQuote.decodeArrowQuote(text);
-			text = parserQuote.decodeQuote(text);
+			text = parserQuote.decodeQuote(text, options);
 			text = parserQuote.decodeCode(text);
 			text = parserQuote.decodeTextAroundQuotes(text);
 
@@ -127,7 +127,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				replaces = [],
 				showIconIfEmptyText = true,
 				showPhraseMessageWasDeleted = true,
-				showFilePrefix = true,
+				showFilePrefix = false,
 			} = config;
 
 			if (!Type.isString(text))
@@ -214,6 +214,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				text,
 				attach,
 				files,
+				showFilePrefix: false,
 			});
 
 			return text.trim();

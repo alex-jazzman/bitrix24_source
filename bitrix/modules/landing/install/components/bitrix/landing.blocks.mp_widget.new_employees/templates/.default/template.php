@@ -155,7 +155,7 @@ $sidebarUsers = array_slice($arResult['USERS'], 0, 5);
 			const widgetElement = document.querySelector('#<?= $id ?>');
 			if (widgetElement)
 			{
-				new BX.Landing.Widget.NewEmployeesWidget(widgetElement);
+				new BX.Landing.Widget.NewEmployees(widgetElement);
 			}
 		}
 	});

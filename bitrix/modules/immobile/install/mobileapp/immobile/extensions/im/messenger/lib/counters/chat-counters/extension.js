@@ -29,17 +29,19 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			this.notificationCounter = new Counter();
 		}
 
-		handleCountersGet(response)
+		/**
+		 * @param {immobileTabChatLoadResult} data
+		 */
+		handleCountersGet(data)
 		{
-			const error = response.error();
-			if (error)
+			const counters = data?.imCounters;
+
+			if (!data || !Type.isPlainObject(counters))
 			{
-				logger.error(`${this.getClassName()}.handleCountersGet`, error);
+				logger.error(`${this.getClassName()}.handleCountersGet`, counters);
 
 				return;
 			}
-
-			const counters = response.data();
 
 			logger.log(`${this.getClassName()}.handleCountersGet`, counters);
 
@@ -58,7 +60,7 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			this.chatCounter.value = counters.type.chat;
 			this.openlinesCounter.value = counters.type.lines;
 			this.notificationCounter.value = counters.type.notify;
-			this.store.dispatch('commentModel/setCounters', counters.channelComment);
+			this.setCommentCounters(counters.channelComment);
 
 			MessengerEmitter.emit(EventType.notification.reload);
 			this.update();
@@ -131,6 +133,31 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			BX.postComponentEvent('ImRecent::counter::messages', [this.chatCounter.value], 'calls');
 			BX.postComponentEvent('ImRecent::counter::list', [counters], 'communication');
 			BX.postComponentEvent('ImRecent::counter::list', [counters], 'im.navigation');
+		}
+
+		/**
+		 * @param {Record<number, Record<number, number>>} countersCollection
+		 */
+		setCommentCounters(countersCollection)
+		{
+			if (!countersCollection)
+			{
+				return;
+			}
+
+			// erase invalid local counters
+			Object.entries(countersCollection).forEach(([channelChatId, countersMap]) => {
+				const channelCountersCollection = this.store.getters['commentModel/getChannelCounterCollection'](channelChatId);
+
+				Object.keys(channelCountersCollection).forEach((commentChatId) => {
+					if (!countersCollection[channelChatId][commentChatId])
+					{
+						countersCollection[channelChatId][commentChatId] = 0;
+					}
+				});
+			});
+
+			this.store.dispatch('commentModel/setCounters', countersCollection);
 		}
 
 		clearAll()

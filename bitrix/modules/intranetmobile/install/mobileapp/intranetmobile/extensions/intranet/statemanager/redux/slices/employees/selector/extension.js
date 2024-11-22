@@ -28,51 +28,46 @@ jn.define('intranet/statemanager/redux/slices/employees/selector', (require, exp
 
 	const selectCanUserBeReinvited = createDraftSafeSelector(
 		selectById,
-		({ lastInvitationTimestamp }) => (
-			!Moment.createFromTimestamp((lastInvitationTimestamp ?? 0) / 1000).withinHour
-		),
+		(user) => {
+			if (user)
+			{
+				const { lastInvitationTimestamp } = user;
+
+				return !Moment.createFromTimestamp((lastInvitationTimestamp ?? 0) / 1000).withinHour;
+			}
+
+			return false;
+		},
 	);
 
 	const selectActions = createDraftSafeSelector(
 		(state, { currentUserId }) => selectWholeUserById(state, currentUserId),
 		(state, { userId }) => selectWholeUserById(state, userId),
 		(state, { userId }) => selectCanUserBeReinvited(state, userId),
-		(currentUser, user, canUserBeReinvited) => ({
-			[EmployeeActions.DELETE_INVITATION.getValue()]: user.employeeStatus === EmployeeStatus.INVITED.getValue(),
-			[EmployeeActions.FIRE.getValue()]: (
-				currentUser.id !== user.id
-				&& currentUser.isAdmin
-				&& user.employeeStatus === EmployeeStatus.ACTIVE.getValue()
-			),
-			[EmployeeActions.HIRE.getValue()]: (
-				currentUser.id !== user.id
-				&& currentUser.isAdmin
-				&& user.employeeStatus === EmployeeStatus.FIRED.getValue()
-			),
-			[EmployeeActions.REINVITE.getValue()]: (
-				currentUser.id !== user.id
-				&& canUserBeReinvited
-				&& currentUser.isAdmin
-				&& user.employeeStatus === EmployeeStatus.INVITED.getValue()
-			),
-			[EmployeeActions.CHANGE_DEPARTMENT.getValue()]: (
-				currentUser.isAdmin
-				&& (
-					user.employeeStatus === EmployeeStatus.INVITED.getValue()
-					|| user.employeeStatus === EmployeeStatus.ACTIVE.getValue()
-				)
-			),
-			[EmployeeActions.CONFIRM_USER_REQUEST.getValue()]: (
-				currentUser.id !== user.id
-				&& currentUser.isAdmin
-				&& user.employeeStatus === EmployeeStatus.INVITE_AWAITING_APPROVE.getValue()
-			),
-			[EmployeeActions.DECLINE_USER_REQUEST.getValue()]: (
-				currentUser.id !== user.id
-				&& currentUser.isAdmin
-				&& user.employeeStatus === EmployeeStatus.INVITE_AWAITING_APPROVE.getValue()
-			),
-		}),
+		(state, { canInvite }) => canInvite,
+		(currentUser, user, canUserBeReinvited, canInvite) => {
+			const isNotCurrentUser = currentUser.id !== user.id;
+			const isAdmin = currentUser.isAdmin;
+			const isInvited = user.employeeStatus === EmployeeStatus.INVITED.getValue();
+			const isActive = user.employeeStatus === EmployeeStatus.ACTIVE.getValue();
+			const isFired = user.employeeStatus === EmployeeStatus.FIRED.getValue();
+			const isAwaitingApproval = user.employeeStatus === EmployeeStatus.INVITE_AWAITING_APPROVE.getValue();
+
+			const canReinvite = isNotCurrentUser && canUserBeReinvited && canInvite && isInvited;
+
+			return {
+				[EmployeeActions.DELETE_INVITATION.getValue()]: isInvited,
+				[EmployeeActions.FIRE.getValue()]: isNotCurrentUser && isAdmin && isActive,
+				[EmployeeActions.HIRE.getValue()]: isNotCurrentUser && isAdmin && isFired,
+				[EmployeeActions.REINVITE.getValue()]: canReinvite,
+				[EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue()]: canReinvite,
+				[EmployeeActions.CHANGE_PHONE.getValue()]: canReinvite && user.personalMobile,
+				[EmployeeActions.CHANGE_EMAIL.getValue()]: canReinvite && user.email,
+				[EmployeeActions.CHANGE_DEPARTMENT.getValue()]: isAdmin && (isInvited || isActive),
+				[EmployeeActions.CONFIRM_USER_REQUEST.getValue()]: isNotCurrentUser && isAdmin && isAwaitingApproval,
+				[EmployeeActions.DECLINE_USER_REQUEST.getValue()]: isNotCurrentUser && isAdmin && isAwaitingApproval,
+			};
+		},
 	);
 
 	module.exports = {

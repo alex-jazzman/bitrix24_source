@@ -228,22 +228,18 @@ else
 		if ($NS['STEP'] >= 4)
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/classes/general/cml2.php");
 
-		if($NS["STEP"] < 1)
+		if($NS["STEP"] == 1)
 		{
-			$obXMLFile->DropTemporaryTables();
-			$strMessage = GetMessage("CC_BSC1_TABLES_DROPPED");
-			$NS["STEP"] = 1;
-		}
-		elseif($NS["STEP"] == 1)
-		{
-			if($obXMLFile->CreateTemporaryTables())
+			$result = $obXMLFile->initializeTemporaryTables();
+
+			if ($result)
 			{
-				$strMessage = GetMessage("CC_BSC1_TABLES_CREATED");
+				$strMessage = GetMessage("CC_BSC1_TABLES_PREPARED");
 				$NS["STEP"] = 2;
 			}
 			else
 			{
-				$strError = GetMessage("CC_BSC1_TABLE_CREATE_ERROR");
+				$strError = GetMessage("CC_BSC1_TABLE_PREPARE_ERROR");
 			}
 		}
 		elseif($NS["STEP"] == 2)
@@ -438,7 +434,7 @@ else
 			$_SESSION["BX_CML2_IMPORT"] = array(
 				"zip" => $_SESSION["BX_CML2_IMPORT"]["zip"], //save from prev load
 				"NS" => array(
-					"STEP" => 0,
+					"STEP" => 1,
 				),
 				"SECTION_MAP" => false,
 				"PRICES_MAP" => false,
@@ -469,7 +465,7 @@ else
 			$_SESSION["BX_CML2_IMPORT"] = array(
 				"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
 				"NS" => array(
-					"STEP" => 0,
+					"STEP" => 1,
 				),
 				"SECTION_MAP" => false,
 				"PRICES_MAP" => false,

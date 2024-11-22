@@ -29,7 +29,7 @@ window.__blogLinkEntity = function(entities, xmlId) {
 				var placeHolder = document.getElementById('blog-post-addc-add-' + entities[ii][1]);
 				if (placeHolder)
 				{
-					placeHolder.addEventListener('click', window['UC'][ii].reply.bind(window['UC'][ii]));
+					placeHolder.addEventListener('click', window['UC'][ii].reply.bind(window['UC'][ii], placeHolder, 'comment_button'));
 				}
 			}
 		}

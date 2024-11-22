@@ -53,7 +53,7 @@ $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT_COUNT_PLURAL_1'] = '#COUNT# ко�
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT_COUNT_PLURAL_2'] = '#COUNT# комментариев';
 
 $MESS['IMMOBILE_ELEMENT_RECENT_YOU_WROTE'] = 'Вы: ';
-$MESS['IMMOBILE_ELEMENT_RECENT_USER_INVITED_2'] = 'Приглашение не принято';
+$MESS['IMMOBILE_ELEMENT_RECENT_USER_INVITED_3'] = 'Приглашение ещё не принято';
 $MESS['IMMOBILE_ELEMENT_RECENT_USER_BIRTHDAY'] = 'Празднует сегодня день рождения';
 
 $MESS['IMMOBILE_ELEMENT_RECENT_CALL_STATUS_JOIN'] = 'Присоединиться';

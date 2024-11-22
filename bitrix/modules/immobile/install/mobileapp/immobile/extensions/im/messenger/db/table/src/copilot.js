@@ -24,6 +24,11 @@ jn.define('im/messenger/db/table/copilot', (require, exports, module) => {
 				{ name: 'messages', type: FieldType.json },
 			];
 		}
+
+		getPrimaryKey()
+		{
+			return 'dialogId';
+		}
 	}
 
 	module.exports = {

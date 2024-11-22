@@ -24,6 +24,10 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 	 */
 	function openPhoneMenu(params)
 	{
+		const {
+			isNumberHidden = false,
+		} = params;
+
 		params = {
 			...params,
 			number: stringify(params.number).trim(),
@@ -39,7 +43,9 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 			params: {
 				showActionLoader: false,
 				showCancelButton: true,
-				title: Loc.getMessage('PHONE_CALL_TO_MSGVER_1', { '#PHONE#': getFormattedNumber(params.number) }),
+				title: isNumberHidden
+					? Loc.getMessage('PHONE_HIDDEN')
+					: Loc.getMessage('PHONE_CALL_TO_MSGVER_1', { '#PHONE#': getFormattedNumber(params.number) }),
 			},
 		});
 
@@ -48,7 +54,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 
 	function getMenuActions(params)
 	{
-		const { number, canUseTelephony } = params;
+		const { number, canUseTelephony, isNumberHidden } = params;
 
 		return [
 			{
@@ -60,6 +66,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 
 					return Promise.resolve({ closeCallback });
 				},
+				disabled: isNumberHidden,
 			},
 			{
 				title: Loc.getMessage('PHONE_CALL_B24_MSGVER_1'),
@@ -89,6 +96,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 
 					return Promise.resolve({ closeCallback });
 				},
+				disabled: isNumberHidden,
 			},
 		];
 	}

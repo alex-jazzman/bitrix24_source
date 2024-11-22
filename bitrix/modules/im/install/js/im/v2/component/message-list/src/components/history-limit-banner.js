@@ -40,12 +40,12 @@ export const HistoryLimitBanner = {
 	{
 		onButtonClick(): void
 		{
-			Analytics.getInstance().onDialogHistoryLimitBannerClick({ dialogId: this.dialogId });
+			Analytics.getInstance().historyLimit.onDialogBannerClick({ dialogId: this.dialogId });
 			FeatureManager.chatHistory.openFeatureSlider();
 		},
 		sendAnalytics()
 		{
-			Analytics.getInstance().onDialogHistoryLimitExceeded({
+			Analytics.getInstance().historyLimit.onDialogLimitExceeded({
 				dialogId: this.dialogId,
 				noMessages: this.noMessages,
 			});

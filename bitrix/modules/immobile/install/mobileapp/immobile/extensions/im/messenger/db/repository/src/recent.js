@@ -7,6 +7,9 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 	} = require('im/messenger/db/table');
 	const { validateRestItem } = require('im/messenger/db/repository/validators/recent');
 
+	/**
+	 * @class RecentRepository
+	 */
 	class RecentRepository
 	{
 		constructor()
@@ -68,6 +71,9 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			return this.recentTable.add(recentListToAdd, true);
 		}
 
+		/**
+		 * @param {DialogId} dialogId
+		 */
 		async deleteById(dialogId)
 		{
 			return this.recentTable.deleteByIdList([dialogId]);

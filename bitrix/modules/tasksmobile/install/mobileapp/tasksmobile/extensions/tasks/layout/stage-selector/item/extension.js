@@ -18,7 +18,7 @@ jn.define('tasks/stage-selector/item', (require, exports, module) => {
 		{
 			return (
 				!this.props.isCurrent
-				&& (this.props.stage.statusId === 'PERIOD1' || this.props.stage.statusId === 'FINISH')
+				&& (this.props.stage.statusId === 'PERIOD1')
 			);
 		}
 	}

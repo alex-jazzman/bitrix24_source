@@ -22,6 +22,11 @@ this.BX = this.BX || {};
 	        loader: false,
 	        loader2: false,
 	        currentFilter: '',
+	        order: {
+	          currentValue: {},
+	          currentName: '',
+	          menuItems: []
+	        },
 	        currentPage: 1,
 	        pages: 1,
 	        resultCount: '',
@@ -29,6 +34,7 @@ this.BX = this.BX || {};
 	      },
 	      moreMenu: null,
 	      searchFilterMenu: null,
+	      searchOrderMenu: null,
 	      MarketLinks: market_marketLinks.MarketLinks
 	    };
 	  },
@@ -46,6 +52,9 @@ this.BX = this.BX || {};
 	        }
 	      }
 	      return '';
+	    },
+	    existOrder: function () {
+	      return Object.keys(this.search.order.currentValue).length > 0;
 	    }
 	  },
 	  created: function () {
@@ -142,6 +151,9 @@ this.BX = this.BX || {};
 	          text: item.NAME,
 	          className: item.CLASS,
 	          onclick: (event, item) => {
+	            if (this.search.loader) {
+	              return;
+	            }
 	            if (!BX.hasClass(item.layout.item, "--accept")) {
 	              this.closeSearchFilterMenu();
 	              this.searchFilterMenu.getMenuItems().forEach(mItem => {
@@ -334,7 +346,8 @@ this.BX = this.BX || {};
 	        data: {
 	          text: searchText,
 	          page: this.search.currentPage,
-	          area: this.search.currentFilter
+	          area: this.search.currentFilter,
+	          order: this.search.order.currentValue
 	        }
 	      }).then(response => {
 	        this.defaultSearchProcess();
@@ -349,6 +362,12 @@ this.BX = this.BX || {};
 	            return;
 	          }
 	          this.search.foundApps = response.data.apps;
+	          if (response.data.sort_info) {
+	            if (this.searchOrderMenu) {
+	              this.searchOrderMenu.destroy();
+	            }
+	            this.createSearchOrderMenu(response.data.sort_info);
+	          }
 	          if (this.searchAction.length > 0) {
 	            try {
 	              eval(this.searchAction.replace('#SEARCH_TEXT#', searchText));
@@ -380,6 +399,65 @@ this.BX = this.BX || {};
 	        } catch (e) {}
 	      }
 	      top.BX.UI.InfoHelper.show(this.$root.marketSlider);
+	    },
+	    createSearchOrderMenu: function (sortInfo) {
+	      if (!sortInfo || !sortInfo.LIST || !sortInfo.CURRENT || !BX.type.isArray(sortInfo.LIST)) {
+	        return;
+	      }
+	      this.search.order.menuItems = [];
+	      sortInfo.LIST.forEach(item => {
+	        let menuItem = {
+	          id: item.VALUE,
+	          text: item.NAME,
+	          className: 'market-toolbar-popup',
+	          onclick: (event, item) => {
+	            if (!BX.hasClass(item.layout.item, "--check")) {
+	              this.closeSearchOrderMenu();
+	              this.searchOrderMenu.getMenuItems().forEach(mItem => {
+	                if (BX.hasClass(mItem.layout.item, "--check")) {
+	                  BX.removeClass(mItem.layout.item, "--check");
+	                }
+	              });
+	              BX.addClass(item.layout.item, "--check");
+	              this.search.order.currentValue = item.id;
+	              this.search.order.currentName = item.text;
+	              this.runSearch();
+	            }
+	          }
+	        };
+	        if (Object.keys(sortInfo.CURRENT.VALUE)[0] === Object.keys(menuItem.id)[0]) {
+	          this.search.order.currentValue = menuItem.id;
+	          this.search.order.currentName = menuItem.text;
+	          menuItem.className += " --check";
+	        }
+	        this.search.order.menuItems.push(menuItem);
+	      });
+	      if (!this.existOrder && this.search.order.menuItems[0]) {
+	        this.search.order.currentValue = this.search.order.menuItems[0].id;
+	        this.search.order.currentName = this.search.order.menuItems[0].text;
+	        this.search.order.menuItems[0].className += " --check";
+	      }
+	      this.createOrderMenuObject();
+	    },
+	    createOrderMenuObject: function () {
+	      if (this.search.order.menuItems.length > 0) {
+	        this.searchOrderMenu = new main_popup.Menu({
+	          bindElement: this.$refs.resultDropdown,
+	          className: "market-search__order-menu",
+	          items: this.search.order.menuItems
+	        });
+	      }
+	    },
+	    showSearchOrderMenu: function () {
+	      this.createOrderMenuObject();
+	      if (this.searchOrderMenu) {
+	        this.searchOrderMenu.show();
+	      }
+	    },
+	    closeSearchOrderMenu: function () {
+	      if (this.searchOrderMenu) {
+	        this.searchOrderMenu.close();
+	      }
 	    }
 	  },
 	  template: `
@@ -566,7 +644,7 @@ this.BX = this.BX || {};
 							<div class="market-menu-catalog__subnav" v-if="!searchFocus">
 								<template v-for="(category, index) in categories.ITEMS">
 									<div class="market-menu-catalog__subnav-items"
-										 v-if="showSubCategories(index)"
+										 v-if="showSubCategories(index) && category.SUB_ITEMS"
 									>
 										<a class="market-menu-catalog__subnav-item_link"
 										   :href="MarketLinks.categoryLink(subCategory.CODE)"
@@ -613,7 +691,16 @@ this.BX = this.BX || {};
 											<div class="market-menu-catalog__search-result-value">
 												{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_SEARCH_RESULT_COUNT', {'#RESULT_COUNT#': search.resultCount}) }}
 											</div>
-											<div class="market-menu-catalog__search-result-dropdown"></div>
+											<div
+												ref="resultDropdown"
+												@click="showSearchOrderMenu()"
+												class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown market-menu-catalog__search-result-dropdown"
+												:title="search.order.currentName"
+												v-if="existOrder"
+											>
+												<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+												<div class="ui-ctl-element">{{ search.order.currentName }}</div>
+											</div>
 										</div>
 										<a class="market-menu-catalog__search-item"
 										   v-for="appItem in search.foundApps"

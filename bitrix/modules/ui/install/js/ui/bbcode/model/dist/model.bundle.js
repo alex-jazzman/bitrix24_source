@@ -661,9 +661,9 @@ this.BX.UI = this.BX.UI || {};
 	      return attrValue ? `${preparedKey}=${encodedValue}` : preparedKey;
 	    }).join(' ');
 	  }
-	  getContent() {
+	  getContent(options = {}) {
 	    return this.getChildren().map(child => {
-	      return child.toString();
+	      return child.toString(options);
 	    }).join('');
 	  }
 	  getOpeningTag() {
@@ -755,15 +755,15 @@ this.BX.UI = this.BX.UI || {};
 	    this.trimStartLinebreaks();
 	    this.trimEndLinebreaks();
 	  }
-	  toString() {
+	  toString(options = {}) {
 	    const tagScheme = this.getTagScheme();
 	    const stringifier = tagScheme.getStringifier();
 	    if (main_core.Type.isFunction(stringifier)) {
 	      const scheme = this.getScheme();
-	      return stringifier(this, scheme);
+	      return stringifier(this, scheme, options);
 	    }
 	    const openingTag = this.getOpeningTag();
-	    const content = this.getContent();
+	    const content = this.getContent(options);
 	    if (this.isVoid()) {
 	      return `${openingTag}${content}`;
 	    }
@@ -816,9 +816,9 @@ this.BX.UI = this.BX.UI || {};
 	      children
 	    });
 	  }
-	  toString() {
+	  toString(options = {}) {
 	    return this.getChildren().map(child => {
-	      return child.toString();
+	      return child.toString(options);
 	    }).join('');
 	  }
 	  toJSON() {
@@ -941,11 +941,16 @@ this.BX.UI = this.BX.UI || {};
 	    })();
 	    return [leftNode, rightNode];
 	  }
-	  toString() {
+	  toString(options = {}) {
+	    if (options.encode !== false) {
+	      return this.getEncoder().encodeText(this.getContent());
+	    }
 	    return this.getContent();
 	  }
 	  toPlainText() {
-	    return this.toString();
+	    return this.toString({
+	      encode: false
+	    });
 	  }
 	  toJSON() {
 	    return {
@@ -1101,7 +1106,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.setOnChangeHandler(options.onChange);
 	    this.setNotAllowedChildrenCallback(options.onNotAllowedChildren);
 	  }
-	  static defaultBlockStringifier(node) {
+	  static defaultBlockStringifier(node, scheme, options = {}) {
 	    const isAllowNewlineBeforeOpeningTag = (() => {
 	      const previewsSibling = node.getPreviewsSibling();
 	      return previewsSibling && previewsSibling.getName() !== '#linebreak';
@@ -1112,7 +1117,7 @@ this.BX.UI = this.BX.UI || {};
 	    })();
 	    node.trimLinebreaks();
 	    const openingTag = node.getOpeningTag();
-	    const content = node.getContent();
+	    const content = node.getContent(options);
 	    const closingTag = node.getClosingTag();
 	    const isAllowContentLinebreaks = content.length > 0;
 	    return [isAllowNewlineBeforeOpeningTag ? '\n' : '', openingTag, isAllowContentLinebreaks ? '\n' : '', content, isAllowContentLinebreaks ? '\n' : '', closingTag, isAllowNewlineAfterClosingTag ? '\n' : ''].join('');
@@ -1476,11 +1481,6 @@ this.BX.UI = this.BX.UI || {};
 	      allowedChildren: ['#text', '#linebreak', '#inline'],
 	      canBeEmpty: false
 	    }), new BBCodeTagScheme({
-	      name: ['span', 'font'],
-	      group: ['#inline'],
-	      allowedChildren: ['#text', '#linebreak', '#inline'],
-	      canBeEmpty: false
-	    }), new BBCodeTagScheme({
 	      name: ['img'],
 	      group: ['#inlineBlock'],
 	      allowedChildren: ['#text'],
@@ -1501,7 +1501,19 @@ this.BX.UI = this.BX.UI || {};
 	      name: 'p',
 	      group: ['#block'],
 	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
-	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      stringify(node) {
+	        // Temporary implementation for mobile compatibility
+
+	        node.trimLinebreaks();
+	        const openingTag = node.getOpeningTag();
+	        const content = node.getContent(options);
+	        const closingTag = node.getClosingTag();
+	        const isAllowNewlineBeforeOpeningTag = (() => {
+	          const previewsSibling = node.getPreviewsSibling();
+	          return previewsSibling && previewsSibling.getName() !== '#linebreak';
+	        })();
+	        return [isAllowNewlineBeforeOpeningTag ? '\n' : '', openingTag, content, '\n', closingTag].join('');
+	      },
 	      allowedIn: ['#root', '#shadowRoot']
 	    }), new BBCodeTagScheme({
 	      name: 'list',
@@ -1528,9 +1540,9 @@ this.BX.UI = this.BX.UI || {};
 	    }), new BBCodeTagScheme({
 	      name: ['*'],
 	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
-	      stringify: node => {
+	      stringify: (node, scheme, toStringOptions) => {
 	        const openingTag = node.getOpeningTag();
-	        const content = node.getContent().trim();
+	        const content = node.getContent(toStringOptions).trim();
 	        return `${openingTag}${content}`;
 	      },
 	      allowedIn: ['list'],
@@ -1576,11 +1588,11 @@ this.BX.UI = this.BX.UI || {};
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
 	      allowedChildren: ['#text', '#linebreak', '#tab'],
 	      allowedIn: ['#root', '#shadowRoot'],
-	      convertChild: (child, scheme) => {
+	      convertChild: (child, scheme, toStringOptions) => {
 	        if (['#linebreak', '#tab', '#text'].includes(child.getName())) {
 	          return child;
 	        }
-	        return scheme.createText(child.toString());
+	        return scheme.createText(child.toString(toStringOptions));
 	      }
 	    }), new BBCodeTagScheme({
 	      name: 'video',

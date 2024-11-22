@@ -8,5 +8,8 @@ return [
 		'statemanager/redux/toolkit',
 		'toast',
 		'tasks:statemanager/redux/slices/tasks/selector',
+		'tasks:statemanager/redux/slices/kanban-settings/selector',
+		'tasks:statemanager/redux/slices/stage-settings/selector',
+		'tasks/statemanager/redux/types',
 	],
 ];

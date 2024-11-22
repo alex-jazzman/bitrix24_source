@@ -1,6 +1,6 @@
 /* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 import { BBCodeElementNode, BBCodeNode } from 'ui.bbcode.model';
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 
 export function wrapNodeWith(node: BBCodeNode, tag: string, editor: TextEditor): BBCodeElementNode
 {

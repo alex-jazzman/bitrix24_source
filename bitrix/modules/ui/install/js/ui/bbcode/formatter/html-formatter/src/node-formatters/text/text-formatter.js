@@ -11,7 +11,7 @@ export class TextNodeFormatter extends NodeFormatter
 		super({
 			name: '#text',
 			convert({ node }: ConvertCallbackOptions): Text {
-				const text = node.toString();
+				const text = node.toString({ encode: false });
 				if (findParent(node, (parent: BBCodeNode) => parent.getName() === 'code'))
 				{
 					return document.createTextNode(text);

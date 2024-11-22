@@ -17,7 +17,6 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		{
 			super.initRouters();
 			this.storeRouter = this.storeRouter.bind(this);
-			this.deleteByChatIdRouter = this.deleteByChatIdRouter.bind(this);
 		}
 
 		subscribeEvents()
@@ -27,7 +26,6 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				.on('messagesModel/store', this.storeRouter)
 				.on('messagesModel/update', this.updateRouter)
 				.on('messagesModel/updateWithId', this.updateWithIdRouter)
-				.on('messagesModel/deleteByChatId', this.deleteByChatIdRouter)
 				.on('messagesModel/delete', this.deleteRouter)
 			;
 		}
@@ -39,7 +37,6 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				.off('messagesModel/store', this.storeRouter)
 				.off('messagesModel/update', this.updateRouter)
 				.off('messagesModel/updateWithId', this.updateWithIdRouter)
-				.off('messagesModel/deleteByChatId', this.deleteByChatIdRouter)
 				.off('messagesModel/delete', this.deleteRouter)
 			;
 		}
@@ -212,33 +209,6 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			if (messageId)
 			{
 				await this.repository.message.deleteByIdList([data.id]);
-			}
-		}
-
-		/**
-		 * @param {MutationPayload<MessagesDeleteByChatIdData, MessagesDeleteByChatIdActions>} mutation.payload
-		 */
-		async deleteByChatIdRouter(mutation)
-		{
-			if (this.checkIsValidMutation(mutation) === false)
-			{
-				return;
-			}
-
-			const actionName = mutation?.payload?.actionName;
-			const data = mutation?.payload?.data || {};
-			const deleteActions = [
-				'deleteByChatId',
-			];
-			if (!deleteActions.includes(actionName))
-			{
-				return;
-			}
-
-			const chatId = data.chatId;
-			if (chatId)
-			{
-				await this.repository.message.deleteByChatId(chatId);
 			}
 		}
 

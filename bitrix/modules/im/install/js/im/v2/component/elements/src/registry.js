@@ -27,6 +27,7 @@ export { CreateChatPromo } from './create-chat-promo/create-chat-promo';
 export { ListLoadingState } from './list-loading-state/list-loading-state';
 export { CopilotRolesDialog } from './copilot-roles-dialog/copilot-roles-dialog';
 export { ChatHint } from './hint/hint';
+export { VideoPlayer } from './videoplayer/videoplayer';
 
 export type { CustomColorScheme } from './button/button';
 export type { DropdownItem } from './dropdown/dropdown';

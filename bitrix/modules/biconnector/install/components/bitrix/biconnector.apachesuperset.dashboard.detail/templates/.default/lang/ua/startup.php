@@ -7,3 +7,4 @@ $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_DESC_UNAVAILABLE"] = "Це тимчасо�
 $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_LINK"] = "Докладніше";
 $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_MSGVER_1"] = "Створення звіту...";
 $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_UNAVAILABLE"] = "Звіт недоступний";
+$MESS["SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE"] = "Подивитися цей звіт можна лише з вибраних зон видимості.";

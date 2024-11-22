@@ -27,5 +27,7 @@ return [
 		'crm:entity-tab/kanban',
 		'crm:ui/loading-progress',
 		'crm:simple-list/items',
+
+		'crm:navigator',
 	],
 ];

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Lists = this.BX.Lists || {};
-(function (exports,main_core,main_date,ui_buttons) {
+(function (exports,main_core,main_date,ui_buttons,ui_dialogs_messagebox) {
 	'use strict';
 
 	let _ = t => t,
@@ -40,6 +40,9 @@ this.BX.Lists = this.BX.Lists || {};
 	var _isAdminLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdminLoaded");
 	var _isLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLoading");
 	var _stepsEnterTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stepsEnterTime");
+	var _formData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formData");
+	var _messageBox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messageBox");
+	var _canClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canClose");
 	var _setCurrentStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCurrentStep");
 	var _fillSteps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillSteps");
 	var _toggleButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleButtons");
@@ -78,8 +81,16 @@ this.BX.Lists = this.BX.Lists || {};
 	var _removeNotTunedConstantsHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeNotTunedConstantsHint");
 	var _sendCreationAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendCreationAnalytics");
 	var _getAnalyticsSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticsSection");
+	var _isChangedFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChangedFormData");
+	var _showConfirmDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showConfirmDialog");
 	class ElementCreationGuide {
 	  constructor(_props) {
+	    Object.defineProperty(this, _showConfirmDialog, {
+	      value: _showConfirmDialog2
+	    });
+	    Object.defineProperty(this, _isChangedFormData, {
+	      value: _isChangedFormData2
+	    });
 	    Object.defineProperty(this, _getAnalyticsSection, {
 	      value: _getAnalyticsSection2
 	    });
@@ -254,6 +265,18 @@ this.BX.Lists = this.BX.Lists || {};
 	      writable: true,
 	      value: new Map()
 	    });
+	    Object.defineProperty(this, _formData, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _messageBox, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _canClose, {
+	      writable: true,
+	      value: false
+	    });
 	    if (!main_core.Type.isStringFilled(_props.signedParameters)) {
 	      throw new TypeError('signedParameters must be filled string');
 	    }
@@ -273,10 +296,25 @@ this.BX.Lists = this.BX.Lists || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderProgressBar)[_renderProgressBar]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderFirstStep)[_renderFirstStep]();
+	    main_core.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', event => {
+	      if (event.target.getWindow() === window && babelHelpers.classPrivateFieldLooseBase(this, _isChangedFormData)[_isChangedFormData]() && !babelHelpers.classPrivateFieldLooseBase(this, _canClose)[_canClose]) {
+	        var _babelHelpers$classPr;
+	        event.getCompatData()[0].denyAction();
+	        if (!((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox]) != null && _babelHelpers$classPr.getPopupWindow().isShown())) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _showConfirmDialog)[_showConfirmDialog](event.target);
+	        }
+	      }
+	    });
 	  }
 	  next() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] || babelHelpers.classPrivateFieldLooseBase(this, _isLastStep)[_isLastStep]()) {
 	      return;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]) {
+	      const form = document.forms.form_lists_element_creation_guide_element;
+	      babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData] = form ? new FormData(form) : new FormData();
+	      babelHelpers.classPrivateFieldLooseBase(this, _appendSectionFormData)[_appendSectionFormData](babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _appendBPFormData)[_appendBPFormData](babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]);
 	    }
 	    const currentStepIndex = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].findIndex(step => step.step === babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep]);
 	    const currentStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][currentStepIndex];
@@ -317,6 +355,7 @@ this.BX.Lists = this.BX.Lists || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isFirstStep)[_isFirstStep]()) {
 	      if (main_core.Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window)) {
 	        BX.SidePanel.Instance.getSliderByWindow(window).close(false);
+	        return;
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep]();
 	      return;
@@ -356,6 +395,7 @@ this.BX.Lists = this.BX.Lists || {};
 	      data
 	    }) => {
 	      if (main_core.Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window)) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _canClose)[_canClose] = true;
 	        BX.SidePanel.Instance.getSliderByWindow(window).close(false);
 	        babelHelpers.classPrivateFieldLooseBase(this, _showSuccessNotification)[_showSuccessNotification](data.elementUrl);
 	      }
@@ -389,6 +429,12 @@ this.BX.Lists = this.BX.Lists || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _removeWaitFromButton)[_removeWaitFromButton](button);
 	    });
+	  }
+	  checkEqualFileField(fileFieldA, fileFieldB) {
+	    if (!fileFieldB) {
+	      return false;
+	    }
+	    return fileFieldA.name === fileFieldB.name;
 	  }
 	}
 	function _setCurrentStep2(step) {
@@ -619,7 +665,10 @@ this.BX.Lists = this.BX.Lists || {};
 				</div>
 			`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE')), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DURATION')), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_UNDEFINED_DESCRIPTION'));
 	  }
-	  const formattedDuration = main_date.DateTimeFormat.format([['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']], 0, babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration]);
+	  let formattedDuration = main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_ZERO_DURATION');
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration] > 0) {
+	    formattedDuration = main_date.DateTimeFormat.format([['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']], 0, babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration]);
+	  }
 	  return main_core.Tag.render(_t6 || (_t6 = _`
 			<div class="list-el-cg__informer">
 				<div class="list-el-cg__informer-header">
@@ -670,12 +719,12 @@ this.BX.Lists = this.BX.Lists || {};
 	function _renderAdminList2(admins, canNotify = false) {
 	  return main_core.Tag.render(_t7 || (_t7 = _`
 			<div>
-				<p>
+				<div class="list-el-cg__const-desc">
 					${0}
-				</p>
-				<p>
+				</div>
+				<div class="list-el-cg__const-title">
 					${0}
-				</p>
+				</div>
 				${0}
 			</div>
 		`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_ADMIN')), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY')), admins.map(admin => {
@@ -690,27 +739,21 @@ this.BX.Lists = this.BX.Lists || {};
 	      });
 	    }
 	    return main_core.Tag.render(_t8 || (_t8 = _`
-						<div style="padding: 12px 0; border-top: 1px solid var(--ui-color-palette-gray-10); line-height: 45px;">
-							<div
-								bx-tooltip-user-id="${0}"
-								style="
-									margin-right: 10px;
-									display: inline-block;
-									line-height: 34px;
-									vertical-align: middle;
-									height: 36px;
-									width: 36px;
-									background-image: url('${0}');
-									border-radius: var(--ui-border-radius-circle);
-									background-size: cover;
-								"
-							></div>
-							<span>${0}</span>
-							<div style="float: right;">
+						<div class="list-el-cg__const-box">
+							<div class="list-el-cg__const-user">
+								<div
+									class="ui-icon ui-icon-common-user list-el-cg__const-icon"
+									bx-tooltip-user-id="${0}"								
+								>
+									<i style="background-image: url('${0}');"></i>
+								</div>
+								<span class="list-el-cg__const-name">${0}</span>
+							</div>						
+							<div>
 								${0}
 							</div>
 						</div>
-					`), admin.id, admin.img ? encodeURI(main_core.Text.encode(admin.img)) : '', main_core.Text.encode(admin.name), (_button = button) == null ? void 0 : _button.render());
+					`), admin.id, admin.img ? encodeURI(main_core.Text.encode(admin.img)) : '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2', main_core.Text.encode(admin.name), (_button = button) == null ? void 0 : _button.render());
 	  }));
 	}
 	function _notifyAdmin2(admin, button) {
@@ -725,7 +768,7 @@ this.BX.Lists = this.BX.Lists || {};
 	  }) => {
 	    if (data.success === true) {
 	      main_core.Dom.replace(button.getContainer(), main_core.Tag.render(_t9 || (_t9 = _`
-							<span>
+							<span class="list-el-cg__const-success-text">
 								${0}
 							</span>
 						`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_SUCCESS'))));
@@ -838,6 +881,7 @@ this.BX.Lists = this.BX.Lists || {};
 						<span class="ui-alert-message">${0}</span>
 					</div>
 				`), message), errorsNode);
+	    BX.scrollToNode(errorsNode);
 	  }
 	}
 	function _cleanErrors2(fromNode = null) {
@@ -902,7 +946,36 @@ this.BX.Lists = this.BX.Lists || {};
 	function _getAnalyticsSection2() {
 	  return new main_core.Uri(window.location.href).getQueryParam('analyticsSection') || 'bizproc';
 	}
+	function _isChangedFormData2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]) {
+	    return false;
+	  }
+	  const form = document.forms.form_lists_element_creation_guide_element;
+	  const formData = form ? new FormData(form) : new FormData();
+	  babelHelpers.classPrivateFieldLooseBase(this, _appendSectionFormData)[_appendSectionFormData](formData);
+	  babelHelpers.classPrivateFieldLooseBase(this, _appendBPFormData)[_appendBPFormData](formData);
+	  const originFormData = Object.fromEntries(babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData].entries());
+	  for (const [key, value] of formData.entries()) {
+	    if (main_core.Type.isFile(value)) {
+	      if (!this.checkEqualFileField(value, originFormData[key])) {
+	        return true;
+	      }
+	    } else if (value !== originFormData[key]) {
+	      return true;
+	    }
+	  }
+	  return false;
+	}
+	function _showConfirmDialog2(slider) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox] = ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_DESCRIPTION'), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_TITLE'), () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _canClose)[_canClose] = true;
+	    slider.close();
+	  }, main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CONFIRM'), () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox].close();
+	    babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox] = null;
+	  }, main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CANCEL'));
+	}
 	namespace.ElementCreationGuide = ElementCreationGuide;
 
-}((this.BX.Lists.Component = this.BX.Lists.Component || {}),BX,BX.Main,BX.UI));
+}((this.BX.Lists.Component = this.BX.Lists.Component || {}),BX,BX.Main,BX.UI,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map

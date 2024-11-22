@@ -4,8 +4,7 @@
 jn.define('intranet/user-list/src/department-button', (require, exports, module) => {
 	const { DepartmentSelector } = require('selector/widget/entity/intranet/department');
 	const { Text3 } = require('ui-system/typography/text');
-	const { IconView } = require('ui-system/blocks/icon');
-	const { OutlineIconTypes } = require('assets/icons/types');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Color, Corner, Component } = require('tokens');
 	const { Loc } = require('loc');
 
@@ -71,7 +70,7 @@ jn.define('intranet/user-list/src/department-button', (require, exports, module)
 					},
 					IconView(
 						{
-							icon: OutlineIconTypes.persons3,
+							icon: Icon.THREE_PERSONS,
 							size: 28,
 							color: Color.base2,
 							style: {
@@ -88,7 +87,7 @@ jn.define('intranet/user-list/src/department-button', (require, exports, module)
 				),
 				IconView(
 					{
-						icon: OutlineIconTypes.chevronDown,
+						icon: Icon.CHEVRON_DOWN,
 						color: Color.base4,
 						size: 24,
 					},

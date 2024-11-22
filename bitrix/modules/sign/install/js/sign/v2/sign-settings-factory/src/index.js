@@ -7,18 +7,13 @@ const settings = {
 	b2e: B2ESignSettings,
 };
 
-export async function getSignSettings(
+export function createSignSettings(
 	containerId: string,
 	options: SignOptions,
-): B2BSignSettings | B2ESignSettings
+): void
 {
 	const { type, uid } = options;
 	const SignSettingsConstructor = settings[type] ?? B2BSignSettings;
 	const signSettings = new SignSettingsConstructor(containerId, options);
-	if (uid)
-	{
-		await signSettings.applyDocumentData(uid);
-	}
-
-	return signSettings;
+	signSettings.init(uid);
 }

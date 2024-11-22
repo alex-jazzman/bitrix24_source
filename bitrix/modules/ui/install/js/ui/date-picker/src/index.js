@@ -5,9 +5,9 @@ import type { DatePickerOptions } from './date-picker-options';
 
 export {
 	DatePicker,
+	DatePickerEvent,
 };
 
 export type {
 	DatePickerOptions,
-	DatePickerEvent,
 };

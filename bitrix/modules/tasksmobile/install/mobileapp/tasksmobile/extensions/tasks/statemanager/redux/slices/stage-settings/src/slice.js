@@ -18,7 +18,10 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/src/slice', (require, 
 		deleteStagePending,
 		deleteStageFulfilled,
 		deleteStageRejected,
+		setKanbanSettings: setKanbanSettingsReducer,
+		updateTaskFulfilled,
 	} = require('tasks/statemanager/redux/slices/stage-settings/src/extra-reducer');
+	const { update } = require('tasks/statemanager/redux/slices/tasks/thunk');
 
 	const {
 		addStage,
@@ -27,6 +30,7 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/src/slice', (require, 
 	} = require('tasks/statemanager/redux/slices/stage-settings/thunk');
 
 	const { fetchStages } = require('tasks/statemanager/redux/slices/kanban-settings/thunk');
+	const { setKanbanSettingsActionName } = require('tasks/statemanager/redux/slices/kanban-settings/action');
 
 	function getExtraReducers()
 	{
@@ -41,7 +45,9 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/src/slice', (require, 
 				.addCase(updateStage.rejected, updateStageRejected)
 				.addCase(deleteStage.pending, deleteStagePending)
 				.addCase(deleteStage.fulfilled, deleteStageFulfilled)
-				.addCase(deleteStage.rejected, deleteStageRejected);
+				.addCase(deleteStage.rejected, deleteStageRejected)
+				.addCase(setKanbanSettingsActionName, setKanbanSettingsReducer)
+				.addCase(update.fulfilled, updateTaskFulfilled);
 		};
 	}
 

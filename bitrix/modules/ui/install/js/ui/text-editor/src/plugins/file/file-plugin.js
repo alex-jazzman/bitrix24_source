@@ -32,7 +32,7 @@ import type {
 } from '../../bbcode';
 
 import type { UploaderFileInfo } from 'ui.uploader.core';
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
 
 type InsertFilePayload = {

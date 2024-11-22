@@ -1,13 +1,11 @@
 <?php
+$MESS["M_CRM_COMMUNICATION_HIDDEN"] = "Приховано";
 $MESS["M_CRM_COMMUNICATION_MENU_ADD_COMPANY"] = "Додати компанію";
 $MESS["M_CRM_COMMUNICATION_MENU_ADD_CONTACT"] = "Додати контакт";
-$MESS["M_CRM_COMMUNICATION_MENU_CHANNELS"] = "Канали звернень";
 $MESS["M_CRM_COMMUNICATION_MENU_COMPANY"] = "Компанія";
 $MESS["M_CRM_COMMUNICATION_MENU_CONTACT"] = "Контакт";
-$MESS["M_CRM_COMMUNICATION_MENU_EMAIL"] = "Написати лист";
 $MESS["M_CRM_COMMUNICATION_MENU_EMAIL_DESCRIPTION"] = "Ви зможете надсилати й отримувати листи прямо в CRM";
 $MESS["M_CRM_COMMUNICATION_MENU_EMAIL_STUB"] = "Додати адресу ел. пошти";
-$MESS["M_CRM_COMMUNICATION_MENU_IM"] = "Написати в месенджері";
 $MESS["M_CRM_COMMUNICATION_MENU_INFO_DESCRIPTION"] = "Додайте клієнта, щоб зателефонувати, написати листа або надіслати повідомлення в чат";
 $MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE"] = "В елементі ще нема клієнта";
 $MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_DEAL"] = "В угоді ще нема клієнта";
@@ -16,7 +14,6 @@ $MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_QUOTE"] = "У пропозиції щ
 $MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_SMART_INVOICE"] = "У рахунку ще нема клієнта";
 $MESS["M_CRM_COMMUNICATION_MENU_LEAD"] = "Лід";
 $MESS["M_CRM_COMMUNICATION_MENU_OPENLINE"] = "Відкрита лінія";
-$MESS["M_CRM_COMMUNICATION_MENU_PHONE"] = "Зателефонувати";
 $MESS["M_CRM_COMMUNICATION_MENU_PHONE_DESCRIPTION"] = "Ви зможете телефонувати прямо з CRM, надсилати повідомлення або ділитися документами через SMS і месенджери";
 $MESS["M_CRM_COMMUNICATION_MENU_PHONE_STUB"] = "Додати телефон";
 $MESS["M_CRM_COMMUNICATION_MENU_PHONE_TITLE"] = "Ви зможете телефонувати прямо з CRM, надсилати повідомлення або ділитися документами через SMS і месенджери";

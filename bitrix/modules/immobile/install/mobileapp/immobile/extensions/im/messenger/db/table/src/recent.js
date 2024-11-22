@@ -21,11 +21,16 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			return 'b_im_recent';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			return [
-				{ name: 'id', type: FieldType.text, unique: true },
-				{ name: 'lastActivityDate', type: FieldType.date },
+				{ name: 'id', type: FieldType.text, unique: true, index: true },
+				{ name: 'lastActivityDate', type: FieldType.date, index: true },
 				{ name: 'message', type: FieldType.json },
 				{ name: 'dateMessage', type: FieldType.date },
 				{ name: 'unread', type: FieldType.boolean },

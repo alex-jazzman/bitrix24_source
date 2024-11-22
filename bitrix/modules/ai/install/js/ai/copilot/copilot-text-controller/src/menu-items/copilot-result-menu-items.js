@@ -12,7 +12,7 @@ import {
 } from '../menu-item-commands/index';
 
 import { CopilotMenuItems } from './copilot-menu-items';
-import { Loc } from 'main.core';
+import { Extension, Loc } from 'main.core';
 import { Actions, Main } from 'ui.icon-set.api.core';
 
 type CopilotResultMenuItemsOptions = {
@@ -39,6 +39,11 @@ export class CopilotResultMenuItems extends CopilotMenuItems
 		const inputField = options.inputField ?? null;
 		const copilotTextController = options.copilotTextController ?? null;
 
+		const usePromptLibrary = Extension
+			.getSettings('ai.copilot.copilot-text-controller')
+			.get('isPromptLibraryEnable')
+		;
+
 		const saveMenuItemText = selectedText ? 'AI_COPILOT_COMMAND_REPLACE' : 'AI_COPILOT_COMMAND_SAVE';
 		const saveMenuItem: CopilotMenuItem = {
 			text: Loc.getMessage(saveMenuItemText),
@@ -49,6 +54,21 @@ export class CopilotResultMenuItems extends CopilotMenuItems
 			}),
 			notHighlight: true,
 		};
+
+		const promptMasterMenuItem = (usePromptLibrary
+			&& copilotTextController.getLastCommandCode() === 'zero_prompt'
+			&& copilotTextController.isReadonly() === false
+			&& copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null)
+			? {
+				code: 'prompt-master',
+				text: Loc.getMessage('AI_COPILOT_MENU_ITEM_CREATE_PROMPT'),
+				icon: Main.BOOKMARK_1,
+				notHighlight: true,
+				command: async () => {
+					await copilotTextController.showPromptMasterPopup();
+				},
+			}
+			: null;
 
 		const editMenuItem: CopilotMenuItem = {
 			text: Loc.getMessage('AI_COPILOT_COMMAND_EDIT'),
@@ -75,11 +95,12 @@ export class CopilotResultMenuItems extends CopilotMenuItems
 			: null;
 
 		return [
-			saveMenuItem,
-			addBelowMenuItem,
+			promptMasterMenuItem,
 			{
 				separator: true,
 			},
+			saveMenuItem,
+			addBelowMenuItem,
 			editMenuItem,
 			...getResultMenuPromptItems(prompts),
 			{

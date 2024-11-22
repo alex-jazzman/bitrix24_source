@@ -47,7 +47,7 @@ import { FORMAT_PARAGRAPH_COMMAND } from '../paragraph';
 import { CodeNode, $isCodeNode, $createCodeNode } from './code-node';
 import { CodeTokenNode, $isCodeTokenNode, $createCodeTokenNode } from './code-token-node';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
 import type {

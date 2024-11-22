@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
-(function (exports,crm_activity_planner,main_core_collections,crm_merger_batchmergemanager,crm_autorun,main_core_events,ui_entitySelector,ui_notification,ui_dialogs_messagebox,main_core) {
+(function (exports,crm_activity_planner,main_core_collections,main_core_events,crm_merger_batchmergemanager,crm_autorun,ui_entitySelector,ui_notification,ui_dialogs_messagebox,main_core) {
 	'use strict';
 
 	/**
@@ -547,16 +547,23 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	}
 
 	var _entityTypeId$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _mergerUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mergerUrl");
 	class ExecuteMerge extends BaseHandler {
 	  constructor({
-	    entityTypeId
+	    entityTypeId,
+	    mergerUrl
 	  }) {
 	    super();
 	    Object.defineProperty(this, _entityTypeId$4, {
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _mergerUrl, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$4)[_entityTypeId$4] = main_core.Text.toInteger(entityTypeId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _mergerUrl)[_mergerUrl] = main_core.Type.isStringFilled(mergerUrl) ? mergerUrl : null;
 	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$4)[_entityTypeId$4])) {
 	      throw new Error('entityTypeId is required');
 	    }
@@ -569,7 +576,8 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    if (!mergeManager) {
 	      mergeManager = crm_merger_batchmergemanager.BatchMergeManager.create(grid.getId(), {
 	        gridId: grid.getId(),
-	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$4)[_entityTypeId$4]
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$4)[_entityTypeId$4],
+	        mergerUrl: babelHelpers.classPrivateFieldLooseBase(this, _mergerUrl)[_mergerUrl]
 	      });
 	    }
 	    if (!mergeManager.isRunning() && selectedIds.length > 1) {
@@ -889,7 +897,30 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    } else {
 	      stageManager.setEntityIds(selectedIds);
 	    }
+	    this.registerAnalyticsCloseEvent(forAll, selectedIds, stageId);
 	    stageManager.execute();
+	  }
+	  registerAnalyticsCloseEvent(forAll, selectedIds, stageId) {
+	    const stage = JSON.parse(babelHelpers.classPrivateFieldLooseBase(this, _valueElement$5)[_valueElement$5].dataset.items).find(obj => {
+	      return obj.VALUE === stageId;
+	    });
+	    if (!stage.SEMANTICS) {
+	      return;
+	    }
+	    let element = null;
+	    if (stage.SEMANTICS === 'F') {
+	      element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_GRID_GROUP_ACTIONS_LOSE_STAGE;
+	    }
+	    if (stage.SEMANTICS === 'S') {
+	      element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_GRID_GROUP_ACTIONS_WON_STAGE;
+	    }
+	    const entityIds = forAll ? '' : selectedIds.toString();
+	    const analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9], entityIds).setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_LIST).setElement(element).buildData();
+	    if (forAll) {
+	      analyticsData.p3 = 'for_all';
+	    }
+	    analyticsData.status = BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT;
+	    BX.UI.Analytics.sendData(analyticsData);
 	  }
 	}
 
@@ -1125,44 +1156,6 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  }
 	}
 
-	var _isReloadOnlyIfForAll = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReloadOnlyIfForAll");
-	var _reloadPageAfterEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reloadPageAfterEvent");
-	class ReloadPageAfterGridUpdate extends BaseHandler {
-	  constructor({
-	    isReloadOnlyIfForAll
-	  }) {
-	    super();
-	    Object.defineProperty(this, _reloadPageAfterEvent, {
-	      value: _reloadPageAfterEvent2
-	    });
-	    Object.defineProperty(this, _isReloadOnlyIfForAll, {
-	      writable: true,
-	      value: false
-	    });
-	    if (!main_core.Type.isNil(isReloadOnlyIfForAll)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _isReloadOnlyIfForAll)[_isReloadOnlyIfForAll] = main_core.Text.toBoolean(isReloadOnlyIfForAll);
-	    }
-	  }
-	  static getEventName() {
-	    return 'reloadPageAfterGridUpdate';
-	  }
-	  execute(grid, selectedIds, forAll) {
-	    if (!forAll && babelHelpers.classPrivateFieldLooseBase(this, _isReloadOnlyIfForAll)[_isReloadOnlyIfForAll]) {
-	      return;
-	    }
-	    main_core_events.EventEmitter.subscribe('Grid::updated', event => {
-	      const [eventSender] = event.getData();
-	      babelHelpers.classPrivateFieldLooseBase(this, _reloadPageAfterEvent)[_reloadPageAfterEvent](grid, eventSender);
-	    });
-	  }
-	}
-	function _reloadPageAfterEvent2(target, eventSender) {
-	  if (target !== eventSender) {
-	    return;
-	  }
-	  setTimeout(() => window.location.reload(), 0);
-	}
-
 	var _targetElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetElement");
 	class RenderUserTagSelector extends BaseHandler {
 	  constructor({
@@ -1371,7 +1364,6 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	Router.registerHandler(RenderUserTagSelector);
 	Router.registerHandler(OpenTaskCreationForm);
 	Router.registerHandler(LoadEnumsAndEditSelected);
-	Router.registerHandler(ReloadPageAfterGridUpdate);
 
 	/**
 	 * @memberOf BX.Crm.EntityList.Panel
@@ -1412,5 +1404,5 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	exports.createCallList = createCallList;
 	exports.createCallListAndShowAlertOnErrors = createCallListAndShowAlertOnErrors;
 
-}((this.BX.Crm.EntityList.Panel = this.BX.Crm.EntityList.Panel || {}),BX,BX.Collections,BX.Crm,BX.Crm.Autorun,BX.Event,BX.UI.EntitySelector,BX,BX.UI.Dialogs,BX));
+}((this.BX.Crm.EntityList.Panel = this.BX.Crm.EntityList.Panel || {}),BX,BX.Collections,BX.Event,BX.Crm,BX.Crm.Autorun,BX.UI.EntitySelector,BX,BX.UI.Dialogs,BX));
 //# sourceMappingURL=panel.bundle.js.map

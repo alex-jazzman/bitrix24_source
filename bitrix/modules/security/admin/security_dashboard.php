@@ -16,7 +16,7 @@ Extension::load([
 	'ui.design-tokens',
 	'amcharts',
 	'amcharts_serial',
-	'main.wwallPopup'
+	'main.wwallpopup'
 ]);
 
 
@@ -123,17 +123,6 @@ $modulesToUpdate = \Bitrix\Main\Security\W\Rules\RuleRecordTable::query()
 	->addSelect('MODULE_VERSION')
 	->fetchAll();
 
-$primeModuleToUpdate = null;
-
-if ($modulesToUpdate)
-{
-	foreach ($modulesToUpdate as $item)
-	{
-		$primeModuleToUpdate = $item['MODULE'];
-		break;
-	}
-}
-
 $APPLICATION->SetTitle(GetMessage("SEC_WWALL_DASHBOARD_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -154,7 +143,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 			<div class="adm-security-banner__btn-box">
 				<div class="adm-security-banner__desc">
 					<div class="adm-security-banner__desc_text"><?= Loc::getMessage('SEC_WWALL_DASHBOARD_STATUS_UPD_SEC') ?></div>
-					<a href="https://dev.1c-bitrix.ru/docs/versions.php" class="adm-security-banner__desc_link tooltip" target="_blank" data-tooltip-content=""><?= Loc::getMessage('SEC_WWALL_DASHBOARD_STATUS_UPD_NEW_SEC') ?></a>
+					<a href="<?= Loc::getMessage('SEC_WWALL_DASHBOARD_STATUS_UPD_HISTORY')?>" class="adm-security-banner__desc_link tooltip" target="_blank" data-tooltip-content=""><?= Loc::getMessage('SEC_WWALL_DASHBOARD_STATUS_UPD_NEW_SEC') ?></a>
 				</div>
 			</div>
 		</div>
@@ -238,7 +227,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 					<?php if($modulesToUpdate): ?>
 						<a href="/bitrix/admin/update_system.php"><button class="adm-btn adm-btn-refresh --size-23"><?= Loc::getMessage('SEC_WWALL_DASHBOARD_SITE_UPDATE_ACTION') ?></button></a>
 					<?php endif; ?>
-					<a target="_blank" href="https://dev.1c-bitrix.ru/docs/versions.php?module=<?php echo htmlspecialcharsbx($primeModuleToUpdate) ?>" class="adm-security-info_link tooltip" data-tooltip-content=""><?= Loc::getMessage('SEC_WWALL_DASHBOARD_SITE_UPDATE_WHATS_NEW') ?></a>
+					<a target="_blank" href="<?= Loc::getMessage('SEC_WWALL_DASHBOARD_STATUS_UPD_HISTORY')?>" class="adm-security-info_link tooltip" data-tooltip-content=""><?= Loc::getMessage('SEC_WWALL_DASHBOARD_SITE_UPDATE_WHATS_NEW') ?></a>
 				</div>
 			</div>
 		</div>

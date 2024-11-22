@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'type',
 		'entity-ready',
 		'uploader/client',
@@ -25,12 +26,15 @@ return [
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',
 		'im:messenger/lib/page-navigation',
+		'im:messenger/provider/data',
 	],
 	'bundle' => [
+		'./src/analytics',
 		'./src/sync',
 		'./src/chat',
 		'./src/recent',
 		'./src/message',
+		'./src/messenger-init',
 		'./src/sending',
 		'./src/queue',
 		'./src/disk',
@@ -38,6 +42,8 @@ return [
 		'./src/connection',
 		'./src/counters',
 		'./src/component-code',
+		'./src/classes/analytics/message-delete',
+		'./src/classes/analytics/chat-delete',
 		'./src/classes/chat/load',
 		'./src/classes/chat/read',
 		'./src/classes/chat/mute',
@@ -59,6 +65,7 @@ return [
 		'./src/classes/sync/fillers/sync-filler-chat',
 		'./src/classes/sync/fillers/sync-filler-copilot',
 		'./src/classes/sync/fillers/sync-filler-database',
+		'./src/classes/sync/fillers/sync-filler-channel',
 		'./src/classes/chat-data-extractor',
 		'./src/classes/message-context-creator',
 	],

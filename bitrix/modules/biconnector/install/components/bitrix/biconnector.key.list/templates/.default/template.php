@@ -20,6 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 \Bitrix\Main\UI\Extension::load([
 	'sidepanel',
@@ -46,7 +47,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 <script>
-	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
+	BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 
 	<?php if ($arResult['IS_AVAILABLE_ONBOARDING'] ?? null): ?>
 		BX.ready(() => {

@@ -24,15 +24,8 @@
 	line-height: inherit;
 }
 
-.crm-activity__todo-editor-v2_container {
-	border: var(--ui-border-width-thin) solid var(--ui-color-base-10);
-	border-radius: var(--crm-activity__todo-editor-v2-border-radius);
-	outline: none;
-}
-
-.crm-activity__todo-editor-v2_container:focus-within {
-	outline: none;
-	border-color: var(--ui-color-palette-blue-50);
+.crm-activity__todo-editor-v2_editor {
+	position: relative;
 }
 
 .crm-activity__todo-editor-v2_container:focus-within .crm-activity__todo-editor-v2_deadline-pill {
@@ -40,21 +33,22 @@
 }
 
 .crm-activity__todo-editor-v2_header {
-	opacity: 0;
-	padding: 11px 14px 0 14px;
+	opacity: 1;
+	padding: 11px 14px 11px 14px;
 	position: relative;
 	min-height: 20px;
-	display: none;
+	display: flex;
+	align-items: center;
 	justify-content: end;
 }
 
-.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_header {
+/*.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_header {
 	display: flex;
 	animation-name: crm-activity__todo-editor-v2_block__fade-in;
 	animation-duration: 450ms;
 	animation-iteration-count: 1;
 	animation-fill-mode: both;
-}
+}*/
 
 .crm-activity__todo-editor-v2_responsible-user-selector {
 	transition: opacity .2s linear;
@@ -62,6 +56,12 @@
 
 .crm-activity__todo-editor-v2_responsible-user-selector:hover {
 	opacity: var(--ui-opacity-80);
+}
+
+.crm-activity__todo-editor-v2_header .crm-activity__todo-editor-v2_responsible-user-selector i {
+	height: 20px;
+	width: 20px;
+	padding-top: 0;
 }
 
 .crm-activity__todo-editor-v2_body {
@@ -93,7 +93,7 @@
 }
 
 .crm-activity__todo-editor-v2_input_control.--title {
-	color: var(--ui-color-palette-gray-80);
+	color: var(--ui-typography-color-text);
 	padding: 0;
 	min-height: auto !important;
 	height: var(--ui-size-lg);
@@ -115,18 +115,15 @@
 }
 
 .crm-activity__todo-editor-v2_tools {
-	display: none;
+	display: flex;
+	align-items: flex-end;
+	padding-top: 8px;
 	padding-bottom: 8px;
 }
 
 .crm-activity__todo-editor-v2_left_tools {
 	width: 75%;
 	display: flex;
-}
-
-.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_tools {
-	display: flex;
-	align-items: flex-end;
 }
 
 .crm-activity__todo-editor-v2_deadline {
@@ -250,6 +247,7 @@
 	background: none;
 	border-radius: var(--ui-border-radius-sm);
 	padding: 0 var(--ui-space-inset-xs2);
+	z-index: 10;
 }
 
 .crm-activity__todo-show-actions-popup-button:hover {
@@ -320,11 +318,20 @@
 	background-image: url('./images/crm-activity__todo-editor-v2_calendar-room-icon.svg');
 }
 
-.crm-activity__todo-editor-v2_block-header-action {
+.crm-activity__todo-editor-v2_block-header-action,
+.crm-activity__todo-editor-v2_block-subheader-action {
 	font-size: var(--ui-font-size-sm);
-	margin-left: var(--ui-space-inset-2xs2);
 	cursor: pointer;
 	color: var(--ui-color-palette-gray-40);
+}
+
+.crm-activity__todo-editor-v2_block-header-action {
+	margin-left: var(--ui-space-inset-2xs2);
+}
+
+.crm-activity__todo-editor-v2_block-subheader-action {
+	margin-left: calc(20px + var(--ui-space-inset-2xs2));
+	border-bottom: var(--ui-border-width-thin) var(--ui-color-palette-gray-40) var(--ui-text-decoration-style-dashed);
 }
 
 .crm-activity__todo-editor-v2_block-header-close {
@@ -332,7 +339,7 @@
 	width: 24px;
 	height: 24px;
 	right: 0;
-	top: -4px;
+	top: -2px;
 	background-image: url('./images/crm-activity__todo-editor-v2_cross.svg');
 	cursor: pointer;
 }
@@ -427,16 +434,29 @@
 
 .crm-activity__todo-editor-v2_color-selector {
 	margin-right: 11px;
-	margin-top: 4px;
 	width: 12px;
 	height: 12px;
 }
 
-
 .crm-activity__todo-editor-v2_block-header.--skeleton {
 	background: url('./images/skeletons/header.svg') no-repeat;
 	display: block;
-	height:20px;
+	height: 20px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container.--skeleton {
+	background: url('./images/skeletons/container.svg') no-repeat;
+	height: 20px;
+	width: 100px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container span+span {
+	opacity: 0;
 }
 
 .crm-activity__todo-editor-v2-actions-menu-item.--locked {

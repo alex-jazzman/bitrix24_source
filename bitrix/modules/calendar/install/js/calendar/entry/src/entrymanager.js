@@ -1,4 +1,4 @@
-import { Entry } from 'calendar.entry';
+import { Entry } from './entry';
 import { SectionManager } from 'calendar.sectionmanager';
 import { Util } from 'calendar.util';
 import {Dom, Event, Loc, Tag, Type} from 'main.core';
@@ -180,14 +180,14 @@ export class EntryManager {
 			new bx.Calendar.SliderLoader(
 				options.entry ? 'EDIT' + options.entry.id : 'NEW',
 				{
-					calendarContext: options.calendarContext,
+					calendarContext: options.calendarContext || bx.Calendar.Util.getCalendarContext(),
 					entry: options.entry || null,
 					type: options.type,
 					isLocationCalendar: options.isLocationCalendar || false,
 					roomsManager: options.roomsManager || null,
 					locationAccess: options.locationAccess || false,
 					locationCapacity: options.locationCapacity || 0,
-					ownerId: options.ownerId,
+					ownerId: options.ownerId || 0,
 					userId: options.userId,
 					formDataValue: options.formDataValue || null,
 					jumpToControl: options.jumpToControl,
@@ -258,7 +258,7 @@ export class EntryManager {
 
 			if (status === 'N' && !params.confirmed)
 			{
-				if (entry.isRecursive())
+				if (entry.isRecursive() && !entry.isOpenEvent())
 				{
 					this.showConfirmStatusDialog(entry, resolve);
 					return false;

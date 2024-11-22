@@ -14,3 +14,15 @@ $MESS['AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION'] = 'Заполните форму
 $MESS['AI_COPILOT_ROLES_ERROR_TEXT'] = 'CoPilot не может выполнить действие. <br>Обновите страницу или попробуйте немного позже';
 $MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT'] = 'Выберите отрасль из списка слева, или продолжите без роли';
 $MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT_2'] = 'Попробуйте изменить запрос или выберите подходящую роль в списке категорий';
+
+$MESS['AI_COPILOT_ROLES_FAVOURITE_GROUP'] = 'Избранное';
+$MESS['AI_COPILOT_ROLES_ADD_TO_FAVOURITE'] = 'Добавить в "Избранное';
+$MESS['AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE'] = 'Удалить из Избранного';
+$MESS['AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS'] = 'Роль <b>#ROLE#</b> добавлена в Избранное';
+$MESS['AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_NOTIFICATION_SUCCESS'] = 'Роль <b>#ROLE#</b> удалена из Избранного';
+$MESS['AI_COPILOT_ROLES_ADD_TO_FAVOURITE_ACTION_FAILED'] = 'Не удалось добавить роль в Избранное, попробуйте ещё раз';
+$MESS['AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_ACTION_FAILED'] = 'Не удалось удалить роль из Избранного, попробуйте ещё раз';
+$MESS['AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE'] = 'Здесь будут избранные роли';
+$MESS['AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP'] = 'Добавляйте в Избранное роли, которые используете чаще всего';
+$MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT_3'] = 'Попробуйте изменить запрос или выберите #LINK#Универсальный CoPilot#/LINK#';
+$MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT_TITLE'] = 'Роль не найдена';

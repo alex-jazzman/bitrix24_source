@@ -1,11 +1,10 @@
-import { TodoEditor } from 'crm.activity.todo-editor';
 import { TodoEditorV2 } from 'crm.activity.todo-editor-v2';
 import { TodoNotificationSkip } from 'crm.activity.todo-notification-skip';
 import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-menu';
-import { Event, Loc, Tag } from 'main.core';
+import { Event, Loc, Tag, Cache } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
-import { Button, ButtonColor, ButtonState, CancelButton, SaveButton } from 'ui.buttons';
+import { Button, ButtonColor, ButtonState } from 'ui.buttons';
 
 import './todo-create-notification.css';
 
@@ -16,7 +15,6 @@ declare type TodoCreateNotificationParams = {
 	stageIdField: string,
 	finalStages: Array<string>,
 	skipPeriod: ?string,
-	useTodoEditorV2?: boolean,
 	analytics?: Object,
 }
 
@@ -40,8 +38,8 @@ export class TodoCreateNotification
 	#skipProvider: TodoNotificationSkip = null;
 	#skipMenu: ?TodoNotificationSkipMenu = null;
 	#sliderIsMinimizing: boolean = false;
-	#useTodoEditorV2: boolean = false;
 	#analytics: Object = null;
+	#refs: typeof(Cache.MemoryCache) = new Cache.MemoryCache();
 
 	constructor(params: TodoCreateNotificationParams)
 	{
@@ -51,7 +49,6 @@ export class TodoCreateNotification
 		this.#stageIdField = params.stageIdField;
 		this.#finalStages = params.finalStages;
 		this.#isSkipped = Boolean(params.skipPeriod);
-		this.#useTodoEditorV2 = (params.useTodoEditorV2 === true);
 		this.#analytics = params.analytics ?? {};
 
 		if (BX.CrmTimelineManager)
@@ -137,7 +134,7 @@ export class TodoCreateNotification
 		this.#sliderIsMinimizing = this.#isSliderMinimizeAvailable() && sliderEvent.getSlider()?.isMinimizing();
 		sliderEvent.denyAction();
 
-		setTimeout(() => {
+		setTimeout(async () => {
 			this.#showTodoCreationNotification();
 		}, 100);
 	}
@@ -191,20 +188,6 @@ export class TodoCreateNotification
 		}
 	}
 
-	#onChangeDescription(event: BaseEvent): void
-	{
-		const { description } = event.getData();
-		const saveButton = this.#popup?.getButton(SAVE_BUTTON_ID);
-		if (description.length === 0 && !saveButton.getState())
-		{
-			saveButton.setState(ButtonState.DISABLED);
-		}
-		else if (description.length > 0 && saveButton.getState() === ButtonState.DISABLED)
-		{
-			saveButton.setState(null);
-		}
-	}
-
 	#onSaveHotkeyPressed(): void
 	{
 		const saveButton = this.#popup?.getButton(SAVE_BUTTON_ID);
@@ -230,7 +213,7 @@ export class TodoCreateNotification
 		this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(ButtonState.DISABLED);
 		this.#popup?.getButton(SKIP_BUTTON_ID)?.setState(ButtonState.WAITING);
 
-		this.#toDoEditor.cancel({
+		this.getTodoEditor().cancel({
 			analytics: {
 				...this.#analytics,
 				element: TodoEditorV2.AnalyticsElement.skipPeriodButton,
@@ -256,7 +239,7 @@ export class TodoCreateNotification
 		this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(ButtonState.DISABLED);
 		this.#popup?.getButton(SKIP_BUTTON_ID)?.setState(ButtonState.DISABLED);
 
-		this.#toDoEditor.save().then((result) => {
+		this.getTodoEditor().save().then((result) => {
 			this.#revertButtonsState();
 
 			if (!(Object.hasOwn(result, 'errors') && result.errors.length > 0))
@@ -272,7 +255,7 @@ export class TodoCreateNotification
 
 	#cancel(): void
 	{
-		void this.#toDoEditor.cancel({
+		void this.getTodoEditor().cancel({
 			analytics: {
 				...this.#analytics,
 				element: TodoEditorV2.AnalyticsElement.cancelButton,
@@ -320,19 +303,22 @@ export class TodoCreateNotification
 
 			this.#popup = PopupManager.create({
 				id: `todo-create-confirm-${this.#entityTypeId}-${this.#entityId}`,
-				closeIcon: !this.#useTodoEditorV2,
+				closeIcon: false,
 				padding: popupPaddingNumberValue,
 				overlay: {
 					opacity: 40,
 					backgroundColor: popupOverlayColor,
 				},
 				content: this.#getPopupContent(),
-				buttons: this.#getPopupButtons(),
 				minWidth: 537,
 				width: Math.round(innerWidth * 0.45),
 				maxWidth: 737,
 				events: {
 					onClose: this.#closeSlider.bind(this),
+					onFirstShow: () => {
+						this.getTodoEditor().show();
+						this.getTodoEditor().setFocused();
+					},
 				},
 				className: 'crm-activity__todo-create-notification-popup',
 			});
@@ -341,7 +327,7 @@ export class TodoCreateNotification
 		this.#popup.show();
 
 		setTimeout(() => {
-			this.#toDoEditor.setFocused();
+			this.getTodoEditor().setFocused();
 		}, 10);
 
 		setTimeout(() => {
@@ -350,7 +336,7 @@ export class TodoCreateNotification
 			Event.bind(document, 'keyup', (event) => {
 				if (event.key === 'Escape')
 				{
-					void this.#toDoEditor.cancel({
+					void this.getTodoEditor().cancel({
 						analytics: {
 							...this.#analytics,
 							element: TodoEditorV2.AnalyticsElement.cancelButton,
@@ -361,32 +347,9 @@ export class TodoCreateNotification
 		}, 300);
 	}
 
-	#getPopupDescription(): string
-	{
-		// eslint-disable-next-line init-declarations
-		let messagePhrase;
-		switch (this.#entityTypeId)
-		{
-			case BX.CrmEntityType.enumeration.lead:
-				messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION_LEAD';
-				break;
-			case BX.CrmEntityType.enumeration.deal:
-				messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION_DEAL';
-				break;
-			default:
-				messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION';
-		}
-
-		return Loc.getMessage(messagePhrase);
-	}
-
 	#getPopupContent(): HTMLElement
 	{
-		const editorContainer = Tag.render`<div></div>`;
-		let content = null;
-
-		if (this.#useTodoEditorV2)
-		{
+		return this.#refs.remember('content', () => {
 			const buttonsContainer = Tag.render`
 				<div class="crm-activity__todo-create-notification_footer">
 					<div class="crm-activity__todo-create-notification_buttons-container">
@@ -407,38 +370,25 @@ export class TodoCreateNotification
 				</div>
 			`;
 
-			content = Tag.render`
+			return Tag.render`
 				<div>
 					<div class="crm-activity__todo-create-notification_title --v2">
 						${this.#getNotificationTitle()}
 					</div>
 					<div>
-						${editorContainer}
+						${this.#getTodoEditorContainer()}
 					</div>
 					${buttonsContainer}
 				</div>
 			`;
-		}
-		else
-		{
-			content = Tag.render`
-				<div class="crm-activity__todo-create-notification">
-					<div class="crm-activity__todo-create-notification_title">
-						${Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_TITLE')}
-					</div>
-					<div class="crm-activity__todo-create-notification_content">
-						<div class="crm-activity__todo-create-notification_description">
-							${this.#getPopupDescription()}
-						</div>
-						${editorContainer}
-					</div>
-				</div>
-			`;
-		}
+		});
+	}
 
-		this.#createToDoEditor(editorContainer).show();
-
-		return content;
+	#getTodoEditorContainer(): HTMLElement
+	{
+		return this.#refs.remember('editor', () => {
+			return Tag.render`<div></div>`;
+		});
 	}
 
 	#getNotificationTitle(): string
@@ -468,10 +418,15 @@ export class TodoCreateNotification
 		;
 	}
 
-	#createToDoEditor(container: HTMLDivElement): TodoEditor | TodoEditorV2
+	getTodoEditor(): TodoEditorV2
 	{
+		if (this.#toDoEditor !== null)
+		{
+			return this.#toDoEditor;
+		}
+
 		const params = {
-			container,
+			container: this.#getTodoEditorContainer(),
 			ownerTypeId: this.#entityTypeId,
 			ownerId: this.#entityId,
 			currentUser: this.#timeline.getCurrentUser(),
@@ -480,74 +435,23 @@ export class TodoCreateNotification
 				onSaveHotkeyPressed: this.#onSaveHotkeyPressed.bind(this),
 				onChangeUploaderContainerSize: this.#onChangeUploaderContainerSize.bind(this),
 			},
-			borderColor: TodoEditor.BorderColor.PRIMARY,
+			borderColor: TodoEditorV2.BorderColor.PRIMARY,
 		};
 
-		if (this.#useTodoEditorV2)
-		{
-			params.calendarSettings = this.#timeline.getCalendarSettings();
-			params.colorSettings = this.#timeline.getColorSettings();
-			params.defaultDescription = '';
-			params.analytics = this.#analytics;
+		params.calendarSettings = this.#timeline.getCalendarSettings();
+		params.colorSettings = this.#timeline.getColorSettings();
+		params.defaultDescription = '';
+		params.analytics = this.#analytics;
 
-			this.#toDoEditor = new TodoEditorV2(params);
-		}
-		else
-		{
-			params.events.onChangeDescription = this.#onChangeDescription.bind(this);
-			this.#toDoEditor = new TodoEditor(params);
-		}
+		this.#toDoEditor = new TodoEditorV2(params);
 
 		return this.#toDoEditor;
-	}
-
-	#getPopupButtons(): Array<Button>
-	{
-		if (this.#useTodoEditorV2)
-		{
-			return [];
-		}
-
-		return [
-			this.#createSaveButton(),
-			this.#createCancelButton(),
-			this.#createNotificationSkipButton(),
-		];
-	}
-
-	#createSaveButton(): Button
-	{
-		return new SaveButton({
-			id: SAVE_BUTTON_ID,
-			round: true,
-			state: this.#toDoEditor.getDescription() ? null : ButtonState.DISABLED,
-			events: {
-				click: this.#saveTodo.bind(this),
-			},
-		});
-	}
-
-	#createCancelButton(): Button
-	{
-		return new CancelButton({
-			text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL'),
-			color: ButtonColor.LIGHT_BORDER,
-			id: CANCEL_BUTTON_ID,
-			round: true,
-			events: {
-				click: this.#cancel.bind(this),
-			},
-		});
 	}
 
 	#createNotificationSkipButton(): Button
 	{
 		return new Button({
-			text: Loc.getMessage(
-				this.#useTodoEditorV2
-					? 'CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_V2'
-					: 'CRM_ACTIVITY_TODO_NOTIFICATION_SKIP',
-			),
+			text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_V2'),
 			color: ButtonColor.LINK,
 			id: SKIP_BUTTON_ID,
 			dropdown: true,

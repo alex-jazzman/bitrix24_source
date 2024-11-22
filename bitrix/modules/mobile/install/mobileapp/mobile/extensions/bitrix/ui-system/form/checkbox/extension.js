@@ -11,14 +11,22 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 	const DEFAULT_SIZE = 20;
 
 	/**
+	 * @typedef CheckboxProps
+	 * @property {string} testId
+	 * @property {number} size
+	 * @property {boolean} [checked]
+	 * @property {boolean} [disabled]
+	 * @property {boolean} [useState]
+	 * @property {boolean} [indeterminate]
+	 * @property {Color} [background]
+	 * @property {Function} [onClick]
+	 *
 	 * @class Checkbox
 	 */
 	class Checkbox extends LayoutComponent
 	{
 		/**
-		 * @param props
-		 * @param {Boolean} props.checked
-		 * @param {Color} props.background
+		 * @param {CheckboxProps} props
 		 */
 		constructor(props)
 		{
@@ -188,6 +196,7 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 		background: PropTypes.object,
 		useState: PropTypes.bool,
 		indeterminate: PropTypes.bool,
+		onClick: PropTypes.func,
 	};
 
 	module.exports = { Checkbox };

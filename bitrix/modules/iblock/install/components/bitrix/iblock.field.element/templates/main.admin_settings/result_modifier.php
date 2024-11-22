@@ -1,6 +1,9 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Iblock\UserField\Types\ElementType;
 
@@ -38,11 +41,6 @@ else
 	$value = '';
 	$display = ElementType::DISPLAY_LIST;
 	$listHeight = 5;
-}
-
-if (!in_array($display, [ElementType::DISPLAY_LIST, ElementType::DISPLAY_CHECKBOX], true))
-{
-	$display = ElementType::DISPLAY_LIST;
 }
 
 /**

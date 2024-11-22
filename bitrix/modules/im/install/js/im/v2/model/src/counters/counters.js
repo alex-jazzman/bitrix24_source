@@ -225,6 +225,15 @@ export class CountersModel extends BuilderModel
 
 				store.commit('readAllChannelComments', channelChatId);
 			},
+			/** @function counters/delete */
+			delete: (store, payload: {channelChatId: number, commentChatId: number}) => {
+				if (!Type.isPlainObject(payload))
+				{
+					return;
+				}
+
+				store.commit('delete', payload);
+			},
 		};
 	}
 
@@ -286,6 +295,15 @@ export class CountersModel extends BuilderModel
 			},
 			readAllChannelComments: (state: CountersState, channelChatId: number) => {
 				delete state.commentCounters[channelChatId];
+			},
+			delete: (state: CountersState, payload: {channelChatId: number, commentChatId: number}) => {
+				const { channelChatId, commentChatId } = payload;
+				if (!state.commentCounters[channelChatId])
+				{
+					return;
+				}
+
+				delete state.commentCounters[channelChatId][commentChatId];
 			},
 		};
 	}

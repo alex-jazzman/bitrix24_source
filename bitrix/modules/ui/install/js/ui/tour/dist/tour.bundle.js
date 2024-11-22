@@ -308,7 +308,7 @@ this.BX.UI = this.BX.UI || {};
 	    if (this.layout.backBtn) {
 	      setTimeout(() => {
 	        this.layout.backBtn.style.display = "block";
-	      }, 10);
+	      }, 200);
 	    }
 	    if (this.overlay) {
 	      this.setOverlayElementForm();
@@ -633,7 +633,7 @@ this.BX.UI = this.BX.UI || {};
 	            this.close();
 	          }
 	        },
-	        buttons: buttons
+	        buttons
 	      });
 	      const conditionNodeTop = main_core.Tag.render(_t2 || (_t2 = _`
 				<div class="ui-tour-popup-condition-top">
@@ -972,11 +972,12 @@ this.BX.UI = this.BX.UI || {};
 	    const buttons = [];
 	    if (this.buttons !== "") {
 	      for (let i = 0; i < this.buttons.length; i++) {
+	        var _this$buttons$i$event;
 	        let btn = main_core.Tag.render(_t16 || (_t16 = _`
 					<button class="${0}" onclick="${0}">
 					${0}
 					</button>
-				`), this.buttons[i].class, this.buttons[i].events.click, this.buttons[i].text);
+				`), this.buttons[i].class, (_this$buttons$i$event = this.buttons[i].events) == null ? void 0 : _this$buttons$i$event.click, this.buttons[i].text);
 	        buttons.push(btn);
 	      }
 	    } else {

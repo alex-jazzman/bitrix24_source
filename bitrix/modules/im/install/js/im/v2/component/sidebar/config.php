@@ -10,9 +10,9 @@ return [
 	'js' => 'dist/sidebar.bundle.js',
 	'rel' => [
 		'im.v2.lib.local-storage',
-		'im.v2.lib.channel',
 		'ui.vue3.directives.lazyload',
 		'ui.label',
+		'im.v2.lib.channel',
 		'im.v2.lib.menu',
 		'im.v2.lib.layout',
 		'main.date',
@@ -22,7 +22,6 @@ return [
 		'ui.promo-video-popup',
 		'im.v2.lib.analytics',
 		'im.v2.lib.feature',
-		'ui.vue3.components.socialvideo',
 		'ui.viewer',
 		'ui.icons',
 		'im.v2.model',

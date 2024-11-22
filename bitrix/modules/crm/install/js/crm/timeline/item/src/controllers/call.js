@@ -14,7 +14,8 @@ import type { ActionParams } from './base';
 import { Base } from './base';
 
 const COPILOT_BUTTON_DISABLE_DELAY = 5000;
-const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_LIMIT = 5;
+const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT = 2;
+const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT = 5;
 const COPILOT_HELPDESK_CODE = 18_799_442;
 
 declare type CoPilotAdditionalInfoData = {
@@ -199,17 +200,27 @@ export class Call extends Base
 					ownerId: actionData.ownerId,
 				},
 			}).then((response) => {
-				if (
-					response?.status === 'success'
-					&& response?.data?.numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_LIMIT
-				)
+				if (response?.status === 'success')
 				{
-					this.#emitTimelineCopilotTourEvent(
-						aiCopilotBtnUI.getContainer(),
-						'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch',
-						'copilot-in-call-automatically',
-						500,
-					);
+					const numberOfManualStarts = response?.data?.numberOfManualStarts;
+					if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT)
+					{
+						this.#emitTimelineCopilotTourEvent(
+							aiCopilotBtnUI.getContainer(),
+							'BX.Crm.Timeline.Call:onShowTourWhenNeedBuyBoost',
+							'copilot-in-call-buying-boost',
+							500,
+						);
+					}
+					else if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT)
+					{
+						this.#emitTimelineCopilotTourEvent(
+							aiCopilotBtnUI.getContainer(),
+							'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch',
+							'copilot-in-call-automatically',
+							500,
+						);
+					}
 				}
 			})
 			.catch((response) => {

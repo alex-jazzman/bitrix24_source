@@ -5,5 +5,6 @@ return [
 		'animation',
 		'utils/object',
 		'layout/ui/scroll-view',
+		'ui-system/layout/dialog-footer'
 	],
 ];

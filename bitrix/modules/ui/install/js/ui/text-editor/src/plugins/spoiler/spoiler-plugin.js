@@ -1,7 +1,6 @@
 /* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 import { Loc, Type } from 'main.core';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
-import { TableCellNode } from 'ui.lexical.table';
 import {
 	$normalizeTextNodes,
 	shouldWrapInParagraph,
@@ -13,6 +12,8 @@ import {
 } from '../../bbcode';
 
 import { $findMatchingParent } from 'ui.lexical.utils';
+import { $getAncestor } from '../../helpers/get-ancestor';
+import { $isBlockNode } from '../../helpers/is-block-node';
 
 import { $createSpoilerContentNode, $isSpoilerContentNode, SpoilerContentNode } from './spoiler-content-node';
 import { $createSpoiler, $createSpoilerNode, $isSpoilerNode, SpoilerNode } from './spoiler-node';
@@ -31,26 +32,22 @@ import {
 	$setSelection,
 	createCommand,
 	$isRootOrShadowRoot,
+	$createTextNode,
 	COMMAND_PRIORITY_LOW,
 	COMMAND_PRIORITY_NORMAL,
 	INSERT_PARAGRAPH_COMMAND,
 	DELETE_CHARACTER_COMMAND,
 	PASTE_COMMAND,
 	KEY_ENTER_COMMAND,
-	KEY_ARROW_DOWN_COMMAND,
-	KEY_ARROW_LEFT_COMMAND,
-	KEY_ARROW_RIGHT_COMMAND,
-	KEY_ARROW_UP_COMMAND,
 	type ElementNode,
 	type LexicalNode,
 	type RangeSelection,
-	type DecoratorNode, $createTextNode,
 } from 'ui.lexical.core';
 
 import { $insertDataTransferForPlainText } from 'ui.lexical.clipboard';
 
-import type TextEditor from '../../text-editor';
-import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
+import { type TextEditor } from '../../text-editor';
+import { type SchemeValidationOptions } from '../../types/scheme-validation-options';
 
 import { $createSpoilerTitleTextNode, $isSpoilerTitleTextNode, SpoilerTitleTextNode } from './spoiler-title-text-node';
 
@@ -99,7 +96,7 @@ export class SpoilerPlugin extends BasePlugin
 						after: (childLexicalNodes: Array<LexicalNode>): Array<LexicalNode> => {
 							return [
 								$createSpoilerTitleNode().append($createSpoilerTitleTextNode(title)),
-								$createSpoilerContentNode().append(...$normalizeTextNodes(childLexicalNodes, this.getEditor())),
+								$createSpoilerContentNode().append(...$normalizeTextNodes(childLexicalNodes)),
 							];
 						},
 					};
@@ -146,8 +143,8 @@ export class SpoilerPlugin extends BasePlugin
 				},
 				{
 					nodeClass: SpoilerContentNode,
-					validate: ((tableCellNode: TableCellNode) => {
-						tableCellNode.getChildren().forEach((child: LexicalNode | ElementNode) => {
+					validate: ((contentNode: SpoilerContentNode) => {
+						contentNode.getChildren().forEach((child: LexicalNode | ElementNode) => {
 							if (shouldWrapInParagraph(child))
 							{
 								const paragraph = $createParagraphNode();
@@ -202,38 +199,6 @@ export class SpoilerPlugin extends BasePlugin
 			this.getEditor().registerCommand(
 				DELETE_CHARACTER_COMMAND,
 				this.#handleDeleteCharacter.bind(this),
-				COMMAND_PRIORITY_LOW,
-			),
-
-			// When spoiler is the last child pressing down/right arrow will insert paragraph
-			// below it to allow adding more content. It's similar what $insertBlockNode
-			// (mainly for decorators), except it'll always be possible to continue adding
-			// new content even if trailing paragraph is accidentally deleted
-			this.getEditor().registerCommand(
-				KEY_ARROW_DOWN_COMMAND,
-				this.#handleEscapeDown.bind(this),
-				COMMAND_PRIORITY_LOW,
-			),
-
-			this.getEditor().registerCommand(
-				KEY_ARROW_RIGHT_COMMAND,
-				this.#handleEscapeDown.bind(this),
-				COMMAND_PRIORITY_LOW,
-			),
-
-			// When spoiler is the first child pressing up/left arrow will insert paragraph
-			// above it to allow adding more content. It's similar what $insertBlockNode
-			// (mainly for decorators), except it'll always be possible to continue adding
-			// new content even if leading paragraph is accidentally deleted
-			this.getEditor().registerCommand(
-				KEY_ARROW_UP_COMMAND,
-				this.#handleEscapeUp.bind(this),
-				COMMAND_PRIORITY_LOW,
-			),
-
-			this.getEditor().registerCommand(
-				KEY_ARROW_LEFT_COMMAND,
-				this.#handleEscapeUp.bind(this),
 				COMMAND_PRIORITY_LOW,
 			),
 
@@ -451,64 +416,6 @@ export class SpoilerPlugin extends BasePlugin
 		return false;
 	}
 
-	#handleEscapeUp(): boolean
-	{
-		const selection: RangeSelection = $getSelection();
-		if ($isRangeSelection(selection) && selection.isCollapsed() && selection.anchor.offset === 0)
-		{
-			const container: SpoilerNode = $findMatchingParent(selection.anchor.getNode(), $isSpoilerNode);
-			if ($isSpoilerNode(container))
-			{
-				const parent: ElementNode = container.getParent();
-				if (
-					parent !== null
-					&& parent.getFirstChild() === container
-					&& selection.anchor.key === container.getFirstDescendant()?.getKey()
-				)
-				{
-					container.insertBefore($createParagraphNode());
-				}
-			}
-		}
-
-		return false;
-	}
-
-	#handleEscapeDown(): boolean
-	{
-		const selection: RangeSelection = $getSelection();
-		if ($isRangeSelection(selection) && selection.isCollapsed())
-		{
-			const container: SpoilerNode = $findMatchingParent(selection.anchor.getNode(), $isSpoilerNode);
-			if ($isSpoilerNode(container))
-			{
-				const parent: ElementNode = container.getParent();
-				if (parent !== null && parent.getLastChild() === container)
-				{
-					const titleParagraph = container.getFirstDescendant();
-					const contentParagraph = container.getLastDescendant();
-
-					if (
-						(
-							contentParagraph !== null
-							&& selection.anchor.key === contentParagraph.getKey()
-							&& selection.anchor.offset === contentParagraph.getTextContentSize()
-						) || (
-							titleParagraph !== null
-							&& selection.anchor.key === titleParagraph.getKey()
-							&& selection.anchor.offset === titleParagraph.getTextContentSize()
-						)
-					)
-					{
-						container.insertAfter($createParagraphNode());
-					}
-				}
-			}
-		}
-
-		return false;
-	}
-
 	#handlePaste(event: ClipboardEvent): boolean
 	{
 		const selection: RangeSelection = $getSelection();
@@ -564,7 +471,7 @@ export function insertSpoiler(selection: RangeSelection, title?: string)
 
 	const handled = new Set();
 	const nodes: LexicalNode[] = selection.getNodes();
-	const firstSelectedBlock = $getAncestor(selection.anchor.getNode(), $isBlock);
+	const firstSelectedBlock = $getAncestor(selection.anchor.getNode(), $isBlockNode);
 	if (firstSelectedBlock && !nodes.includes(firstSelectedBlock))
 	{
 		nodes.unshift(firstSelectedBlock);
@@ -577,7 +484,7 @@ export function insertSpoiler(selection: RangeSelection, title?: string)
 	let firstNode = true;
 	for (const node of nodes)
 	{
-		if (!$isBlock(node) || handled.has(node.getKey()))
+		if (!$isBlockNode(node) || handled.has(node.getKey()))
 		{
 			continue;
 		}
@@ -623,22 +530,6 @@ export function insertSpoiler(selection: RangeSelection, title?: string)
 	}
 
 	return spoiler;
-}
-
-function $isBlock(node: ElementNode | DecoratorNode | LexicalNode): boolean
-{
-	return ($isElementNode(node) || $isDecoratorNode(node)) && !node.isInline() && !node.isParentRequired();
-}
-
-export function $getAncestor(node: LexicalNode, predicate: (ancestor: LexicalNode) => boolean): LexicalNode | null
-{
-	let parent: LexicalNode = node;
-	while (parent !== null && parent.getParent() !== null && !predicate(parent))
-	{
-		parent = parent.getParentOrThrow();
-	}
-
-	return predicate(parent) ? parent : null;
 }
 
 export function trimSpoilerTitle(title: string): string

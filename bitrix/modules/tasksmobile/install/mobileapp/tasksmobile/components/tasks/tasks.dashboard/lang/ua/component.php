@@ -1,4 +1,7 @@
 <?php
+$MESS["M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_REMOVE"] = "Прибрати завдання зі списку";
+$MESS["M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_TITLE"] = "Помилка створення завдання";
+$MESS["M_TASKS_DASHBOARD_CREATION_ERROR_ALERT_TRY_AGAIN"] = "Спробувати ще раз";
 $MESS["M_TASKS_VIEW_FLOW_DEFAULT_NAVIGATION_TITLE"] = "Завдання потоку";
 $MESS["M_TASKS_VIEW_FLOW_EFFICIENCY_NAVIGATION_SUBTITLE"] = "Ефективність: #EFFICIENCY#%";
 $MESS["M_TASKS_VIEW_ROUTER_ALL_STAGES_DESCRIPTION"] = "Створюйте завдання й відстежуйте їхнє виконання, щоб нічого не забути";

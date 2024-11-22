@@ -68,6 +68,7 @@ jn.define('sign/opener', (require, exports, module) => {
 				url = false,
 				role,
 				isGoskey = false,
+				isExternal = false,
 			} = props;
 
 			if (goWithoutConfirmation)
@@ -92,6 +93,7 @@ jn.define('sign/opener', (require, exports, module) => {
 							role,
 							url,
 							isGoskey,
+							isExternal,
 						},
 					},
 				);
@@ -110,6 +112,7 @@ jn.define('sign/opener', (require, exports, module) => {
 					memberId,
 					role,
 					isGoskey,
+					isExternal,
 				});
 			}
 		}

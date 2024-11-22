@@ -19,7 +19,7 @@ if (
 {
 	$arSwitchStateTo = (array) $_GET['F_STATE'];
 }
-elseif ( ! (isset($_GET["F_CANCEL"]) || isset($_GET['F_FILTER_SWITCH_PRESET'])) )
+elseif ( !(isset($_GET["F_CANCEL"]) || isset($_GET['F_FILTER_SWITCH_PRESET'])) )
 {
 	$currentRole = $oListState->getUserRole();
 	$arSwitchStateTo = array(intval($currentRole) ? 'sR'.base_convert($currentRole, 10, 32) : 'sR400');

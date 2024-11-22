@@ -74,6 +74,7 @@ else
 				canProcessRequestsIn: <?=(($arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"] ?? null) && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
 				canModify: <?=($arResult["CurrentUserPerms"]["UserCanModifyGroup"] ? 'true' : 'false')?>,
 				canModerate: <?=($arResult["CurrentUserPerms"]["UserCanModerateGroup"] ? 'true' : 'false')?>,
+				canCreate: <?=($arResult["canCreateGroup"] ? 'true' : 'false')?>,
 				hideArchiveLinks: <?=($arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
 				containerNodeId: 'socialnetwork-group-card-box',
 				subscribeButtonNodeId: 'group_card_subscribe_button',

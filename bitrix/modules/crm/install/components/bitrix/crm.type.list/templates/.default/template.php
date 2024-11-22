@@ -42,6 +42,8 @@ Extension::load([
 	'ajax',
 	'ui.dialogs.messagebox',
 	'ui.fonts.opensans',
+	'crm.integration.analytics',
+	'ui.analytics',
 ]);
 Main\Loader::includeModule('ui');
 
@@ -102,6 +104,7 @@ UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 			gridId: '<?= CUtil::JSEscape($arResult['grid']['GRID_ID']); ?>',
 			errorTextContainer: document.getElementById('crm-type-list-error-container'),
 			welcomeMessageContainer: document.querySelector('[data-role="crm-type-list-welcome"]'),
+			isExternal: <?= $arResult['isExternal'] ? 'true' : 'false' ?>,
 		};
 		(new BX.Crm.TypeListComponent(params)).init();
     });

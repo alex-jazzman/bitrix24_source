@@ -3,6 +3,7 @@
  */
 jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Random } = require('utils/random');
 	const { ItemTextField } = require('tasks/layout/checklist/list/src/text-field');
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
 	const { confirmDestructiveAction } = require('alert');
@@ -225,7 +226,9 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 
 		reload()
 		{
-			this.setState({});
+			this.setState({
+				random: Random.getString(),
+			});
 		}
 
 		canUpdateItem()

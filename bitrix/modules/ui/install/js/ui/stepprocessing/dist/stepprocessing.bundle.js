@@ -761,7 +761,8 @@ this.BX.UI = this.BX.UI || {};
 	      overlay: true,
 	      resizable: true,
 	      minWidth: Number.parseInt(this.getSetting('minWidth', 500)),
-	      maxWidth: Number.parseInt(this.getSetting('maxWidth', 1000))
+	      maxWidth: Number.parseInt(this.getSetting('maxWidth', 1000)),
+	      ...this._settings.popupOptions
 	    });
 	    if (!this.popupWindow.isShown()) {
 	      this.popupWindow.show();
@@ -1417,7 +1418,7 @@ this.BX.UI = this.BX.UI || {};
 	    if (this.endpointType === EndpointType.Controller) {
 	      this.ajaxPromise = BX.ajax.runAction(this.controller + '.' + this.getAction(), params).then(this._onRequestSuccess.bind(this), this._onRequestFailure.bind(this));
 	    } else if (this.endpointType === EndpointType.Component) {
-	      params.data.mode = this.componentMode;
+	      params.mode = this.componentMode;
 	      if ('signedParameters' in params.data) {
 	        params.signedParameters = params.data.signedParameters;
 	        delete params.data.signedParameters;
@@ -1460,7 +1461,7 @@ this.BX.UI = this.BX.UI || {};
 	        this.setController(this.controllerDefault);
 	        this.ajaxPromise = BX.ajax.runAction(this.controller + '.cancel', params).then(this._onRequestSuccess.bind(this), this._onRequestFailure.bind(this));
 	      } else if (this.endpointType === EndpointType.Component) {
-	        params.data.mode = this.componentMode;
+	        params.mode = this.componentMode;
 	        if ('signedParameters' in params.data) {
 	          params.signedParameters = params.data.signedParameters;
 	          delete params.data.signedParameters;
@@ -1500,7 +1501,7 @@ this.BX.UI = this.BX.UI || {};
 	        this.setController(this.controllerDefault);
 	        this.ajaxPromise = BX.ajax.runAction(this.controller + '.finalize', params);
 	      } else if (this.endpointType === EndpointType.Component) {
-	        params.data.mode = this.componentMode;
+	        params.mode = this.componentMode;
 	        if ('signedParameters' in params.data) {
 	          params.signedParameters = params.data.signedParameters;
 	          delete params.data.signedParameters;
@@ -1993,7 +1994,8 @@ this.BX.UI = this.BX.UI || {};
 	          stop: BX.delegate(this.stop, this),
 	          dialogShown: typeof this.handlers.dialogShown == 'function' ? this.handlers.dialogShown : null,
 	          dialogClosed: typeof this.handlers.dialogClosed == 'function' ? this.handlers.dialogClosed : null
-	        }
+	        },
+	        popupOptions: this.options.popupOptions
 	      });
 	    }
 	    return this.dialog;

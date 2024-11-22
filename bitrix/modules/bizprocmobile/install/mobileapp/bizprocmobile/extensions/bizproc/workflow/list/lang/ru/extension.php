@@ -8,7 +8,6 @@ $MESS['BPMOBILE_WORKFLOW_LIST_ITEM_MENU_DELEGATE'] = 'Делегировать';
 $MESS['BPMOBILE_WORKFLOW_LIST_NEW_TASKS_NOTIFICATION'] = 'Новых процессов: %COUNT%';
 $MESS['BPMOBILE_WORKFLOW_LIST_STATUS'] = 'Статус';
 $MESS['BPMOBILE_WORKFLOW_LIST_TASK_TOUCHED'] = 'Задание «#TASK_NAME#» выполнено';
-$MESS['BPMOBILE_WORKFLOW_LIST_TASK_DETAIL_DEVELOPING'] = 'У вас сейчас нет заданий по процессу. Откройте Протокол, чтобы увидеть подробности';
 $MESS['BPMOBILE_WORKFLOW_LIST_SELECTED_TASKS'] = 'Выбрано процессов: #TASKS_AMOUNT#';
 $MESS['BPMOBILE_WORKFLOW_LIST_TASK_UNSELECTABLE'] = 'Этот процесс нельзя выбрать, в нём нет заданий для вас';
 $MESS['BPMOBILE_WORKFLOW_LIST_CANCEL'] = 'Отменить выбор';

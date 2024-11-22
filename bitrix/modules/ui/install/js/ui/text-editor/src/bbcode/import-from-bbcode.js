@@ -54,7 +54,7 @@ export function $importFromBBCode(bbcode: string, editor: TextEditor, normalize:
 		}
 	}
 
-	return normalize ? $normalizeTextNodes(lexicalNodes, editor) : lexicalNodes;
+	return normalize ? $normalizeTextNodes(lexicalNodes) : lexicalNodes;
 }
 
 function $createNodesFromBBCode(
@@ -178,7 +178,7 @@ export function shouldWrapInParagraph(lexicalNode: LexicalNode | ElementNode): b
 	return !($isDecoratorNode(lexicalNode) && lexicalNode.isInline() === false);
 }
 
-export function $normalizeTextNodes(lexicalNodes: Array<LexicalNode>, editor: TextEditor): Array<LexicalNode>
+export function $normalizeTextNodes(lexicalNodes: Array<LexicalNode>): Array<LexicalNode>
 {
 	const result = [];
 	let currentParagraph = null;

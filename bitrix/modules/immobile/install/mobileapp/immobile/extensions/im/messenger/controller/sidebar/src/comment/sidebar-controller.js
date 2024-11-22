@@ -100,6 +100,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 			this.onUpdateStore = this.onUpdateStore.bind(this);
 			this.onCloseWidget = this.onCloseWidget.bind(this);
 			this.onDestroySidebar = this.onDestroySidebar.bind(this);
+			this.onDeleteChat = this.onDeleteChat.bind(this);
 		}
 
 		setUserService()
@@ -137,6 +138,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		{
 			logger.log(`${this.constructor.name}.subscribeBXCustomEvents`);
 			BX.addCustomEvent('onDestroySidebar', this.onDestroySidebar);
+			BX.addCustomEvent(EventType.dialog.external.delete, this.onDeleteChat);
 		}
 
 		unsubscribeStoreEvents()
@@ -150,6 +152,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		{
 			logger.log(`${this.constructor.name}.unsubscribeBXCustomEvents`);
 			BX.removeCustomEvent('onDestroySidebar', this.onDestroySidebar);
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.onDeleteChat);
 		}
 
 		/**
@@ -280,6 +283,16 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 			this.unsubscribeStoreEvents();
 			this.unsubscribeBXCustomEvents();
 			BX.onCustomEvent('onCloseSidebarWidget');
+		}
+
+		onDeleteChat({ dialogId })
+		{
+			if (String(this.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.widget.back();
 		}
 
 		/**

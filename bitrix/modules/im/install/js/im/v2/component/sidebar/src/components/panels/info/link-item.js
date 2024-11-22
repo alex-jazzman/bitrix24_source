@@ -109,6 +109,7 @@ export const LinkItem = {
 		{
 			this.$emit('contextMenuClick', {
 				id: this.linkItem.id,
+				authorId: this.linkItem.authorId,
 				messageId: this.linkItem.messageId,
 				source: this.source,
 				target: event.currentTarget,

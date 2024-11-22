@@ -60,7 +60,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			this.onDeletePin = this.onDeletePin.bind(this);
 			this.onUpdatePin = this.onUpdatePin.bind(this);
 			this.onUpdateMessage = this.onUpdateMessage.bind(this);
-			this.onDeleteByChatId = this.onDeleteByChatId.bind(this);
 			this.onDeleteMessagesByIdList = this.onDeleteMessagesByIdList.bind(this);
 			this.onUpdateDiscussionMessage = this.onUpdateDiscussionMessage.bind(this);
 			this.onUpdateDialog = this.onUpdateDialog.bind(this);
@@ -86,7 +85,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				.on('messagesModel/pinModel/delete', this.onDeletePin)
 				.on('messagesModel/pinModel/updateMessage', this.onUpdateMessage)
 				.on('messagesModel/pinModel/updatePin', this.onUpdatePin)
-				.on('messagesModel/pinModel/deleteByChatId', this.onDeleteByChatId)
 				.on('messagesModel/pinModel/deleteMessagesByIdList', this.onDeleteMessagesByIdList)
 				.on('dialoguesModel/update', this.onUpdateDialog)
 			;
@@ -106,7 +104,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				.off('messagesModel/pinModel/deleteByIdList', this.onDeletePin)
 				.off('messagesModel/pinModel/updateMessage', this.onUpdateMessage)
 				.off('messagesModel/pinModel/updatePin', this.onUpdatePin)
-				.off('messagesModel/pinModel/deleteByChatId', this.onDeleteByChatId)
 				.off('messagesModel/pinModel/deleteMessagesByIdList', this.onDeleteMessagesByIdList)
 				.off('dialoguesModel/update', this.onUpdateDialog)
 			;
@@ -569,19 +566,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		 */
 		onDeleteMessagesByIdList({ payload })
 		{
-			this.redrawPanel();
-		}
-
-		/**
-		 * @param {MutationPayload<PinDeleteByChatIdData, PinDeleteByChatIdActions>} payload
-		 */
-		onDeleteByChatId({ payload })
-		{
-			if (!this.isPinInCurrentDialog(payload.data.chatId))
-			{
-				return;
-			}
-
 			this.redrawPanel();
 		}
 

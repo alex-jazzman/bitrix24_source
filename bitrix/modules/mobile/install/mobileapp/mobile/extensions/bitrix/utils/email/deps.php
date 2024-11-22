@@ -1,7 +1,9 @@
 <?php
 
 return [
-	'extensions' => [],
+	'extensions' => [
+		'type'
+	],
 	'bundle' => [
 		'./src/domains',
 	],

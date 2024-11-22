@@ -73,6 +73,7 @@
 
 .ai__copilot_input {
 	overflow-y: auto;
+	white-space: pre-wrap;
 }
 
 .ai__copilot_input strong {
@@ -252,6 +253,10 @@
 	/*Firefox fix */
 	scrollbar-width: thin;
 	scrollbar-color: #ccc transparent;
+}
+
+.ai__copilot_input font {
+	color: inherit !important;
 }
 
 .ai__copilot_input::-webkit-scrollbar {
@@ -459,6 +464,7 @@
 	opacity: 0;
 	z-index: -1;
 }
+
 
 .ai__copilot_waning-field {
 	box-sizing: border-box;
@@ -684,6 +690,11 @@
 	opacity: 0;
 }
 
+.ai__copilot-menu_delimiter-label .ui-label {
+	margin-right: 0;
+	margin-left: 6px;
+}
+
 .ai__copilot-menu_item {
 	display: flex;
 	flex-direction: row;
@@ -700,10 +711,14 @@
 	margin-right: 0;
 }
 
-.ai__copilot-menu_item-left {
+.ai__copilot-menu_item-left,
+.ai__copilot-menu_item-right {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+}
+
+.ai__copilot-menu_item-left {
 	margin-right: 10px;
 }
 
@@ -714,6 +729,40 @@
 .ai__copilot-menu_item-check {
 	display: flex;
 	opacity: 0;
+}
+
+.ai__copilot-menu_item.--favourite-icon-on-hover .ai__copilot-menu_item-favourite {
+	opacity: 0;
+}
+
+.ai__copilot-menu_item.--highlight.ai__copilot-menu_item.--favourite-icon-on-hover .ai__copilot-menu_item-favourite {
+	opacity: 1;
+}
+
+.ai__copilot-menu_item-favourite {
+	--ui-icon-set__icon-color: var(--ui-color-base-50);
+	width: 24px;
+	height: 24px;
+	opacity: 0;
+}
+
+.ai__copilot-menu-popup .menu-popup-item.--highlight .ai__copilot-menu_item-favourite {
+	opacity: 1;
+}
+
+.ai__copilot-menu-popup .menu-popup-item.--highlight .ai__copilot-menu_item-favourite:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-70);
+}
+
+.ai__copilot-menu_item-favourite.--is-favourite,
+.ai__copilot-menu-popup .menu-popup-item.--highlight .ai__copilot-menu_item-favourite.--is-favourite,
+.ai__copilot-menu-popup .menu-popup-item.--highlight .ai__copilot-menu_item-favourite:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-90);
+	opacity: 1;
+}
+
+.ai__copilot-menu_item.--selected .ai__copilot-menu_item-favourite:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-90);
 }
 
 .ai__copilot-menu_item-icon {
@@ -727,6 +776,11 @@
 
 .ai__copilot-menu_item.--system .ai__copilot-menu_item-icon .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-60);
+}
+
+.ai__copilot-menu_item.--highlight-text .ai__copilot-menu_item-text {
+	color: var(--ai__copilot_color-main);
+	font-weight: var(--ui-font-weight-medium);
 }
 
 .ai__copilot-menu_item-text {
@@ -824,6 +878,25 @@
 .ai__copilot-menu-popup.--keyboard-control .menu-popup-item-submenu.menu-popup-item.--role-item.--highlight:hover .ai__copilot-menu_role-subtitle {
 	color: var(--ui-color-copilot-secondary, red);
 }
+
+.ai__copilot-menu-popup_fade {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(var(--ui-color-background-primary-rgb), 0.5);
+	pointer-events: none;
+}
+
+.ai__copilot-menu_item-loader {
+	width: 18px;
+	height: 18px;
+	position: absolute;
+	top: 5px;
+	right: 0;
+}
+
 .ai__copilot-context-menu__result-popup {
 	border: var(--ui-border-width-thin) solid var(--ui-color-base-30);
 }

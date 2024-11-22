@@ -104,6 +104,26 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 			return this.getDurationValueByType(this.durationType);
 		}
 
+		setIsMatchWorkTime(isMatchWorkTime)
+		{
+			this.isMatchWorkTime = isMatchWorkTime;
+			if (this.isMatchWorkTime)
+			{
+				const oldDurationValue = this.durationValue;
+				const oldDurationType = this.durationType;
+				this.updateStartDatePlan(this.startDatePlan);
+				if (this.endDatePlan)
+				{
+					this.updateDurationType(oldDurationType);
+					this.updateDurationValue(oldDurationValue);
+				}
+			}
+			else
+			{
+				this.endDatePlan = this.startDatePlan + this.durationValue * this.getMultiplier(this.durationType);
+			}
+		}
+
 		updateStartDatePlan(newStartDatePlan)
 		{
 			if (newStartDatePlan && (!Type.isNumber(newStartDatePlan)))
@@ -199,11 +219,23 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 				return;
 			}
 
+			if (!this.endDatePlan || !this.startDatePlan)
+			{
+				return;
+			}
+
 			const newDuration = Number(this.durationValue) * this.getMultiplier(newDurationType);
 			if (newDuration < MAX_DURATION)
 			{
 				this.duration = newDuration;
-				this.endDatePlan = this.startDatePlan === null ? null : this.startDatePlan + this.duration;
+
+				this.endDatePlan = this.startDatePlan + this.duration;
+
+				if (this.isMatchWorkTime && !this.calendar.isWorkTime(new Date(this.endDatePlan * 1000)))
+				{
+					this.endDatePlan = Math.floor(this.calendar.calculateEndDate(new Date(this.startDatePlan * 1000), this.duration * 1000) / 1000);
+					this.onFixDate?.();
+				}
 			}
 		}
 
@@ -211,6 +243,9 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 		{
 			if (!newDurationValue)
 			{
+				this.duration = null;
+				this.endDatePlan = null;
+
 				return;
 			}
 
@@ -226,12 +261,14 @@ jn.define('tasks/layout/fields/date-plan/dates-resolver', (require, exports, mod
 					this.startDatePlan = Math.floor(now / 1000);
 				}
 
-				this.endDatePlan = this.startDatePlan + this.duration;
+				let newEndDatePlan = this.startDatePlan + this.duration;
+
 				if (this.isMatchWorkTime)
 				{
-					this.endDatePlan = Math.floor(this.calendar.calculateEndDate(new Date(this.startDatePlan * 1000), this.duration * 1000) / 1000);
+					newEndDatePlan = Math.floor(this.calendar.calculateEndDate(new Date(this.startDatePlan * 1000), this.duration * 1000) / 1000);
 					this.onFixDate?.();
 				}
+				this.endDatePlan = newEndDatePlan;
 			}
 		}
 

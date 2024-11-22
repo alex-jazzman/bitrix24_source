@@ -4,6 +4,7 @@
 (() => {
 	const require = (extension) => jn.require(extension);
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { qrauth } = require('qrauth/utils');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
 	const projectCache = new Map();
@@ -34,7 +35,9 @@
 
 			const result = [];
 
-			if (availableFeatures.includes('tasks'))
+			const isTasksMobileInstalled = BX.prop.getBoolean(jnExtensionData.get('project/utils'), 'isTasksMobileInstalled', false);
+
+			if (availableFeatures.includes('tasks') && isTasksMobileInstalled)
 			{
 				result.push(
 					WorkgroupUtil.getTasksTab({

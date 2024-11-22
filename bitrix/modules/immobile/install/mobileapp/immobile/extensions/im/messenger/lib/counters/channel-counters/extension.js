@@ -9,12 +9,17 @@ jn.define('im/messenger/lib/counters/channel-counters', (require, exports, modul
 	 */
 	class ChannelCounters extends BaseCounters
 	{
-
-		handleCountersGet(response)
+		/**
+		 * @param {immobileTabChannelLoadResult} data
+		 */
+		handleCountersGet(data)
 		{
-			const data = response.data();
+			const channelComment = data?.imCounters?.channelComment;
 
-			this.store.dispatch('commentModel/setCounters', data.channelComment);
+			if (channelComment)
+			{
+				this.store.dispatch('commentModel/setCounters', channelComment);
+			}
 		}
 	}
 

@@ -8,7 +8,7 @@ import { getChatType } from '../helpers/get-chat-type';
 
 export class HistoryLimit
 {
-	onDialogHistoryLimitExceeded({ dialogId, noMessages }: { dialogId: string, noMessages: boolean })
+	onDialogLimitExceeded({ dialogId, noMessages }: { dialogId: string, noMessages: boolean })
 	{
 		const sectionValue = noMessages ? AnalyticsSection.chatStart : AnalyticsSection.chatHistory;
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
@@ -26,7 +26,7 @@ export class HistoryLimit
 		sendData(params);
 	}
 
-	onSidebarHistoryLimitExceeded({ dialogId, panel }: { dialogId: string, panel: $Values<typeof SidebarDetailBlock> })
+	onSidebarLimitExceeded({ dialogId, panel }: { dialogId: string, panel: $Values<typeof SidebarDetailBlock> })
 	{
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
 		const chatType = getChatType(dialog);
@@ -44,26 +44,26 @@ export class HistoryLimit
 		sendData(params);
 	}
 
-	onDialogHistoryLimitBannerClick({ dialogId }: {dialogId: string})
+	onDialogBannerClick({ dialogId }: {dialogId: string})
 	{
 		const section = AnalyticsSection.chatWindow;
-		this.#onHistoryLimitBannerClick({ dialogId, section });
+		this.#onBannerClick({ dialogId, section });
 	}
 
-	onSidebarHistoryLimitBannerClick({ dialogId, panel }: { dialogId: string, panel: $Values<typeof SidebarDetailBlock> })
+	onSidebarBannerClick({ dialogId, panel }: { dialogId: string, panel: $Values<typeof SidebarDetailBlock> })
 	{
 		const section = AnalyticsSection.sidebar;
 		const element = this.#getSidebarPanelNameForAnalytics(panel);
-		this.#onHistoryLimitBannerClick({ dialogId, section, element });
+		this.#onBannerClick({ dialogId, section, element });
 	}
 
-	onGoToContextHistoryLimitClick({ dialogId }: { dialogId: string })
+	onGoToContextLimitExceeded({ dialogId }: { dialogId: string })
 	{
 		const section = AnalyticsSection.messageLink;
-		this.#onHistoryLimitBannerClick({ dialogId, section });
+		this.#onBannerClick({ dialogId, section });
 	}
 
-	#onHistoryLimitBannerClick({ dialogId, section, element }: { dialogId: string, section: string, element?: string })
+	#onBannerClick({ dialogId, section, element }: { dialogId: string, section: string, element?: string })
 	{
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
 		const chatType = getChatType(dialog);

@@ -61,22 +61,25 @@ create table if not exists b_ai_prompt
 	ID int(18) not null auto_increment,
 	APP_CODE varchar(128) default null,
 	PARENT_ID int(18) default null,
-	CATEGORY text default null,
 	CACHE_CATEGORY text default null,
 	SECTION varchar(20) default null,
+    AUTHOR_ID int not null default 0,
+    EDITOR_ID int not null default 0,
 	SORT int(18) default null,
 	CODE varchar(100) not null,
 	TYPE varchar(32) default null,
 	ICON varchar(50) default null,
 	HASH char(32) not null,
 	PROMPT text default null,
-	TRANSLATE text not null,
+	DEFAULT_TITLE varchar(255) default '',
 	TEXT_TRANSLATES text default null,
 	SETTINGS text default null,
 	WORK_WITH_RESULT char(1) not null default 'N',
 	IS_NEW TINYINT(1) UNSIGNED default 0,
+    IS_ACTIVE TINYINT(1) UNSIGNED default 1,
 	IS_SYSTEM char(1) not null default 'N',
-	DATE_MODIFY timestamp not null default current_timestamp,
+	DATE_CREATE timestamp NOT NULL DEFAULT current_timestamp,
+	DATE_MODIFY timestamp NOT NULL DEFAULT current_timestamp,
 	PRIMARY KEY (ID),
 	INDEX IX_B_APP_CODE (APP_CODE),
 	INDEX IX_B_CODE (CODE),
@@ -183,6 +186,50 @@ create table if not exists b_ai_section
 	INDEX IX_B_CODE (CODE)
 );
 
+create table if not exists b_ai_prompt_share
+(
+	ID bigint unsigned not null auto_increment,
+	PROMPT_ID int not null,
+	ACCESS_CODE varchar(100) not null,
+	DATE_CREATE timestamp not null default current_timestamp,
+	CREATED_BY int not null,
+	PRIMARY KEY (ID),
+	INDEX IX_B_ACCESS_CODE (ACCESS_CODE),
+	INDEX IX_B_PROMPT_ID (PROMPT_ID),
+	UNIQUE IX_B_PROMPT_OWNER (PROMPT_ID, ACCESS_CODE)
+);
+
+create table if not exists b_ai_prompt_owner
+(
+	ID bigint unsigned not null auto_increment,
+	USER_ID int not null,
+	PROMPT_ID int not null,
+	IS_FAVORITE tinyint default 0,
+	IS_DELETED tinyint default 0,
+	PRIMARY KEY (ID),
+	INDEX IX_B_USER_ID (USER_ID),
+	INDEX IX_B_PROMPT_ID (PROMPT_ID),
+	UNIQUE IX_B_PROMPT_OWNER (USER_ID, PROMPT_ID)
+);
+
+create table if not exists b_ai_prompt_owner_option
+(
+	ID bigint unsigned not null auto_increment,
+	USER_ID int not null,
+	SORTING_IN_FAVORITE_LIST TEXT,
+	PRIMARY KEY (ID),
+	UNIQUE IX_B_USER_ID (USER_ID)
+);
+
+create table if not exists b_ai_prompt_category
+(
+	PROMPT_ID int not null,
+	CODE varchar(100) not null,
+	UNIQUE IX_B_PROMPT_OWNER (PROMPT_ID, CODE),
+	INDEX IX_B_PROMPT_ID (PROMPT_ID),
+	INDEX IX_B_CODE (CODE)
+);
+
 create table if not exists b_ai_baas_package
 (
 	ID int(18) not null auto_increment,
@@ -199,4 +246,55 @@ create table if not exists b_ai_counter
 	VALUE varchar(200),
 	PRIMARY KEY (ID),
 	UNIQUE ix_option_name (NAME)
+);
+
+create table if not exists b_ai_prompt_translate_name
+(
+	ID bigint unsigned not null auto_increment,
+	PROMPT_ID int not null,
+	LANG varchar(5) not null,
+	TEXT varchar(255) not null,
+
+	PRIMARY KEY (ID),
+
+	INDEX IX_B_PROMPT_ID (PROMPT_ID),
+	UNIQUE IX_B_PROMPT_LANG (PROMPT_ID, LANG)
+);
+
+create table if not exists b_ai_prompt_display_rule
+(
+	`ID` int not null auto_increment,
+	`PROMPT_ID` int not null,
+	`NAME` varchar(25) not null,
+	`IS_CHECK_INVERT` TINYINT(1) default 1,
+	`VALUE` varchar(100) not null,
+	PRIMARY KEY (ID),
+	INDEX `IX_B_PROMPT_ID` (PROMPT_ID),
+	INDEX `IX_B_RULE_NAME` (NAME)
+);
+
+create table if not exists b_ai_role_display_rule
+(
+	`ID` int not null auto_increment,
+	`ROLE_ID` int not null,
+	`NAME` varchar(25) not null,
+	`IS_CHECK_INVERT` TINYINT(1) default 1,
+	`VALUE` varchar(100) not null,
+	PRIMARY KEY (ID),
+	INDEX `IX_B_PROMPT_ID` (ROLE_ID),
+	INDEX `IX_B_RULE_NAME` (NAME)
+);
+
+create table if not exists b_ai_image_style_prompt
+(
+	ID int not null auto_increment,
+	CODE varchar(100) not null,
+	HASH char(32) not null,
+	PROMPT text default null,
+	NAME_TRANSLATES text not null,
+	PREVIEW varchar(255) not null,
+	SORT int default null,
+	DATE_MODIFY timestamp not null default current_timestamp,
+	PRIMARY KEY (ID),
+	INDEX IX_B_CODE (CODE)
 );

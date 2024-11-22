@@ -2,7 +2,7 @@
  * @module intranet/user-mini-profile
  */
 jn.define('intranet/user-mini-profile', (require, exports, module) => {
-	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
+	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
 	const { Color, Indent } = require('tokens');
 	const { Box } = require('ui-system/layout/box');
 	const { Area } = require('ui-system/layout/area');
@@ -13,7 +13,6 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { PureComponent } = require('layout/pure-component');
 	const { isEmpty } = require('utils/object');
-	const { ButtonDesign } = require('ui-system/form/buttons/button/src/design-enum');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 
 	class UserMiniProfile extends PureComponent

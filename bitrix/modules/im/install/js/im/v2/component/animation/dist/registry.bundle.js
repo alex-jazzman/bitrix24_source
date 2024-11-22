@@ -65,9 +65,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: 100
 	    }
 	  },
-	  data() {
-	    return {};
-	  },
+	  emits: ['afterEnter'],
 	  computed: {
 	    formattedDuration() {
 	      return `${this.duration}ms`;
@@ -79,13 +77,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    clearDuration(element) {
 	      main_core.Dom.style(element, 'transition-duration', '');
+	    },
+	    onAfterEnter(element) {
+	      this.$emit('afterEnter');
+	      this.clearDuration(element);
 	    }
 	  },
 	  template: `
 		<Transition
 			name="im-animation-fade"
 			@beforeEnter="setDuration"
-			@afterEnter="clearDuration"
+			@afterEnter="onAfterEnter"
 			@beforeLeave="setDuration"
 			@afterLeave="clearDuration"
 		>

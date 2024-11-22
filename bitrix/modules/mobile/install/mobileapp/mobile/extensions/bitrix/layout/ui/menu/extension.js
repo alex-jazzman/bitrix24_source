@@ -5,7 +5,9 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Color } = require('tokens');
 	const { Feature } = require('feature');
+	const { qrauth } = require('qrauth/utils');
 	const { mergeImmutable } = require('utils/object');
+	const { MenuPosition } = require('layout/ui/menu/src/menu-position');
 
 	const DEFAULT_MENU_SECTION_NAME = 'main';
 
@@ -76,19 +78,33 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 			}
 
 			// @todo optional items recalculation?
-			this.popup.setData(...this.getMenuConfig());
+			const popupConfig = this.getMenuConfig();
+			this.popup.setData(...popupConfig);
 
 			return this.popup;
 		}
 
+		/**
+		 * @public
+		 * @function show
+		 * @params {object} options
+		 * @params {MenuPosition} [options.position]
+		 * @params {View|String} [options.target]
+		 * @return void
+		 */
 		show(options = {})
 		{
-			const { target } = options;
+			const { target, position } = options;
 			const popup = this.getPopup();
 
 			if (target && typeof popup.setTarget === 'function')
 			{
 				popup.setTarget(target);
+			}
+
+			if (MenuPosition.has(position))
+			{
+				popup.setPosition(position.getValue());
 			}
 
 			popup.show();
@@ -112,14 +128,16 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 				this.prepareActions(action, items, sectionMap, actionsFlatMap);
 			}
 
+			const sections = [...sectionMap.values()];
+
 			return [
 				items,
-				[...sectionMap.values()],
+				sections,
 				(event, item) => {
 					if (event === 'onItemSelected')
 					{
 						const action = actionsFlatMap.get(item.id);
-						if (action && action.callbacks.onItemSelected)
+						if (action?.callbacks?.onItemSelected)
 						{
 							action.callbacks.onItemSelected(event, item);
 						}
@@ -331,6 +349,7 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 	module.exports = {
 		UIMenu: Menu,
 		UIMenuType: Types,
+		UIMenuPosition: MenuPosition,
 	};
 });
 

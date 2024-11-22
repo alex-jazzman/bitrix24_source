@@ -90,6 +90,7 @@ $MESS["CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED"] = "Ця дія не підтри
 $MESS["CRM_LOCALIZATION_FIELD_VALUE_WITH_TITLE"] = "#TITLE# #VALUE#";
 $MESS["CRM_OLD_VERSION_SUFFIX"] = "#TITLE# (стара версія)";
 $MESS["CRM_ORDER_TITLE"] = "Замовлення № #ORDER_ID# від #ORDER_DATE#";
+$MESS["CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED"] = "Недостатньо прав для зміни стадії.";
 $MESS["CRM_QUOTE_ADD_HINT"] = "У вас недостатньо прав на створення пропозицій. Зверніться до адміністратора Бітрікс24 або співробітника, відповідального за CRM.";
 $MESS["CRM_QUOTE_ADD_HINT_MSGVER_1"] = "У вас недостатньо прав на створення пропозицій. Зверніться до адміністратора Бітрікс24 або співробітника, відповідального за CRM.";
 $MESS["CRM_QUOTE_TITLE"] = "Пропозиція № #QUOTE_NUMBER# від #BEGINDATE#";

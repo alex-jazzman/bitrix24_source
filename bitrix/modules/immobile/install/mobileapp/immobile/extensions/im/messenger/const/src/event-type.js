@@ -25,6 +25,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		/** Messenger component events */
 		messenger: {
 			openDialog: 'ImMobile.Messenger.Dialog:open',
+			openDialogComplete: 'ImMobile.Messenger.Dialog:openComplete',
 			getOpenDialogParams: 'ImMobile.Messenger.Dialog:getOpenParams',
 			openDialogParams: 'ImMobile.Messenger.Dialog:openParams',
 			openLine: 'ImMobile.Messenger.Openlines:open',
@@ -36,6 +37,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			createChat: 'ImMobile.Messenger.Chat:create',
 			createChannel: 'ImMobile.Messenger.Channel:create',
 			refresh: 'ImMobile.Messenger:refresh',
+			init: 'ImMobile.Messenger.Init',
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
 			renderRecent: 'ImMobile.Messenger:renderRecent',
 			destroyDialog: 'ImMobile.Messenger:destroyDialog',
@@ -105,6 +107,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			audioRateTap: 'audioRateTap',
 			videoTap: 'videoTap',
 			fileTap: 'fileTap',
+			fileDownloadTap: 'fileDownloadTap',
 			forwardTap: 'forwardTap',
 			sendTap: 'sendTap',
 			putTap: 'putTap',
@@ -135,6 +138,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 					insertText: 'ImMobile.Messenger.Dialog.Textarea:insertText',
 				},
 				close: 'ImMobile.Messenger.Dialog:close',
+				delete: 'ImMobile.Messenger.Dialog:delete',
+				deleteComment: 'ImMobile.Messenger.Dialog:deleteComment',
 			},
 
 			textField: {
@@ -169,6 +174,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			active: 'CallEvents::active',
 			inactive: 'CallEvents::inactive',
 			join: 'CallEvents::joinCall',
+			leave: 'CallEvents::leaveCall',
 		},
 		notification: {
 			open: 'onNotificationsOpen',
@@ -187,6 +193,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			tabChanged: 'ImMobile.Navigation:tabChanged',
 			broadCastEventWithTabChange: 'ImMobile.Navigation:broadCastEventWithChangeTab',
 			changeTab: 'ImMobile.Navigation:changeTab',
+			changeTabResult: 'ImMobile.Navigation:changeTabResult',
 		},
 	});
 

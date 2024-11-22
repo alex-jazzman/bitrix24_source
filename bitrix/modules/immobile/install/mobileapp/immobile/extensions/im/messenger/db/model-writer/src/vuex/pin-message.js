@@ -24,7 +24,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				.on('messagesModel/pinModel/updatePin', this.addRouter)
 				.on('messagesModel/pinModel/updateMessage', this.updateRouter)
 				.on('messagesModel/pinModel/deleteByIdList', this.deleteRouter)
-				.on('messagesModel/pinModel/deleteByChatId', this.deleteRouter)
 				.on('messagesModel/pinModel/delete', this.deleteRouter)
 				.on('messagesModel/pinModel/deleteMessagesByIdList', this.deleteRouter)
 			;
@@ -38,7 +37,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				.off('messagesModel/pinModel/updatePin', this.addRouter)
 				.off('messagesModel/pinModel/updateMessage', this.updateRouter)
 				.off('messagesModel/pinModel/deleteByIdList', this.deleteRouter)
-				.off('messagesModel/pinModel/deleteByChatId', this.deleteRouter)
 				.off('messagesModel/pinModel/delete', this.deleteRouter)
 				.off('messagesModel/pinModel/deleteMessagesByIdList', this.deleteRouter)
 			;
@@ -115,10 +113,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 			{
 				case 'delete': {
 					return this.deletePin(payload.data);
-				}
-
-				case 'deleteByChatId': {
-					return this.deleteByChatId(payload.data);
 				}
 
 				case 'deleteMessage': {
@@ -213,15 +207,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		deletePinList(deletePinListData)
 		{
 			this.repository.pinMessage.deletePinsByIdList(deletePinListData.idList);
-		}
-
-		/**
-		 *
-		 * @param {PinDeleteByChatIdData} deleteByChatIdData
-		 */
-		deleteByChatId(deleteByChatIdData)
-		{
-			this.repository.pinMessage.deleteByChatId(deleteByChatIdData.chatId);
 		}
 
 		/**

@@ -27,6 +27,7 @@ $arComponentParameters = [
 				'popularHighToLow' => Loc::getMessage('LANDING_WIDGET_BP_PARAM_SORT_POPULAR_TO_LOW'),
 				'popularLowToHigh' => Loc::getMessage('LANDING_WIDGET_BP_PARAM_SORT_POPULAR_TO_HIGH'),
 			],
+			'DEFAULT' => 'popularHighToLow',
 		],
 		'COLOR_BG' => [
 			'NAME' => Loc::getMessage('LANDING_WIDGET_BP_PARAM_BG_NAME'),

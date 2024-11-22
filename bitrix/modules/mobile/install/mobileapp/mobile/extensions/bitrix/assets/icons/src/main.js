@@ -40,6 +40,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static ADD_EVENT = new Icon('ADD_EVENT', {
+			name: 'add_event',
+			path: '/bitrix/images/mobile/icons/add_event.svg',
+			content: '',
+		});
+
 		static ADD_FUNNEL = new Icon('ADD_FUNNEL', {
 			name: 'add_funnel',
 			path: '/bitrix/images/mobile/icons/add_funnel.svg',
@@ -220,6 +226,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static BOX_WITH_LID = new Icon('BOX_WITH_LID', {
+			name: 'box_with_lid',
+			path: '/bitrix/images/mobile/icons/box_with_lid.svg',
+			content: '',
+		});
+
 		static BULLETED_LIST = new Icon('BULLETED_LIST', {
 			name: 'bulleted_list',
 			path: '/bitrix/images/mobile/icons/bulleted_list.svg',
@@ -265,6 +277,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static CAMERA = new Icon('CAMERA', {
 			name: 'camera',
 			path: '/bitrix/images/mobile/icons/camera.svg',
+			content: '',
+		});
+
+		static CAMERA_OFF = new Icon('CAMERA_OFF', {
+			name: 'camera_off',
+			path: '/bitrix/images/mobile/icons/camera_off.svg',
 			content: '',
 		});
 
@@ -475,6 +493,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static CLOUD_SYNC = new Icon('CLOUD_SYNC', {
 			name: 'cloud_sync',
 			path: '/bitrix/images/mobile/icons/cloud_sync.svg',
+			content: '',
+		});
+
+		static CLOUD_TIME = new Icon('CLOUD_TIME', {
+			name: 'cloud_time',
+			path: '/bitrix/images/mobile/icons/cloud_time.svg',
 			content: '',
 		});
 
@@ -766,6 +790,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static FILE_WITH_CHECK_2 = new Icon('FILE_WITH_CHECK_2', {
+			name: 'file_with_check_2',
+			path: '/bitrix/images/mobile/icons/file_with_check_2.svg',
+			content: '',
+		});
+
 		static FILTER = new Icon('FILTER', {
 			name: 'filter',
 			path: '/bitrix/images/mobile/icons/filter.svg',
@@ -850,6 +880,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static GLOBE_EXTRANET = new Icon('GLOBE_EXTRANET', {
+			name: 'globe_extranet',
+			path: '/bitrix/images/mobile/icons/globe_extranet.svg',
+			content: '',
+		});
+
 		static GO_TO = new Icon('GO_TO', {
 			name: 'go_to',
 			path: '/bitrix/images/mobile/icons/go_to.svg',
@@ -913,6 +949,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static HEADSET = new Icon('HEADSET', {
 			name: 'headset',
 			path: '/bitrix/images/mobile/icons/headset.svg',
+			content: '',
+		});
+
+		static HEART = new Icon('HEART', {
+			name: 'heart',
+			path: '/bitrix/images/mobile/icons/heart.svg',
 			content: '',
 		});
 
@@ -1180,6 +1222,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static MICROPHONE_OFF = new Icon('MICROPHONE_OFF', {
+			name: 'microphone_off',
+			path: '/bitrix/images/mobile/icons/microphone_off.svg',
+			content: '',
+		});
+
 		static MICROPHONE_ON = new Icon('MICROPHONE_ON', {
 			name: 'microphone_on',
 			path: '/bitrix/images/mobile/icons/microphone_on.svg',
@@ -1345,6 +1393,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static OPEN_CHANNELS = new Icon('OPEN_CHANNELS', {
 			name: 'open_channels',
 			path: '/bitrix/images/mobile/icons/open_channels.svg',
+			content: '',
+		});
+
+		static PACKAGE = new Icon('PACKAGE', {
+			name: 'package',
+			path: '/bitrix/images/mobile/icons/package.svg',
 			content: '',
 		});
 
@@ -1822,6 +1876,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static STOP_HAND = new Icon('STOP_HAND', {
+			name: 'stop_hand',
+			path: '/bitrix/images/mobile/icons/stop_hand.svg',
+			content: '',
+		});
+
 		static STOP_SIZE_M = new Icon('STOP_SIZE_M', {
 			name: 'stop_size_m',
 			path: '/bitrix/images/mobile/icons/stop_size_m.svg',
@@ -1858,9 +1918,15 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
-		static STRUCTURE = new Icon('STRUCTURE', {
-			name: 'structure',
-			path: '/bitrix/images/mobile/icons/structure.svg',
+		static STRUCTURE_HORIZONTAL = new Icon('STRUCTURE_HORIZONTAL', {
+			name: 'structure_horizontal',
+			path: '/bitrix/images/mobile/icons/structure_horizontal.svg',
+			content: '',
+		});
+
+		static STRUCTURE_VERTICAL = new Icon('STRUCTURE_VERTICAL', {
+			name: 'structure_vertical',
+			path: '/bitrix/images/mobile/icons/structure_vertical.svg',
 			content: '',
 		});
 
@@ -1873,6 +1939,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SUN = new Icon('SUN', {
 			name: 'sun',
 			path: '/bitrix/images/mobile/icons/sun.svg',
+			content: '',
+		});
+
+		static SWITCH_CAMERA = new Icon('SWITCH_CAMERA', {
+			name: 'switch_camera',
+			path: '/bitrix/images/mobile/icons/switch_camera.svg',
 			content: '',
 		});
 

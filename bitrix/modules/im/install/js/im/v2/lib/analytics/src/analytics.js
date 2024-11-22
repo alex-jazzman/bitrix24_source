@@ -3,10 +3,6 @@ import { sendData } from 'ui.analytics';
 import { ChatType, Layout, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 
-import { HistoryLimit } from './classes/history-limit';
-import { getCategoryByChatType } from './helpers/get-category-by-chat-type';
-import { getChatType } from './helpers/get-chat-type';
-
 import {
 	AnalyticsEvent,
 	AnalyticsTool,
@@ -16,7 +12,14 @@ import {
 	AnalyticsStatus,
 	CopilotChatType,
 	AnalyticsSubSection,
+	AnalyticsElement,
 } from './const';
+
+import { getCategoryByChatType } from './helpers/get-category-by-chat-type';
+import { getChatType } from './helpers/get-chat-type';
+import { ChatDelete } from './classes/chat-delete';
+import { MessageDelete } from './classes/message-delete';
+import { HistoryLimit } from './classes/history-limit';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -26,9 +29,16 @@ export class Analytics
 {
 	#excludedChats: Set<DialogId> = new Set();
 	#currentTab: string = Layout.chat.name;
-	#historyLimit: HistoryLimit = new HistoryLimit();
+	chatDelete: ChatDelete = new ChatDelete();
+	messageDelete: MessageDelete = new MessageDelete();
+	historyLimit: HistoryLimit = new HistoryLimit();
 
 	static #instance: Analytics;
+
+	static AnalyticsType = AnalyticsType;
+	static AnalyticsSection = AnalyticsSection;
+	static AnalyticsSubSection = AnalyticsSubSection;
+	static AnalyticsElement = AnalyticsElement;
 
 	static getInstance(): Analytics
 	{
@@ -258,30 +268,42 @@ export class Analytics
 		this.#excludedChats.add(dialogId);
 	}
 
-	// region History Limit Analytics
-	onDialogHistoryLimitExceeded({ dialogId, noMessages }: { dialogId: DialogId, noMessages: boolean })
+	onStartCallClick(params)
 	{
-		this.#historyLimit.onDialogHistoryLimitExceeded({ dialogId, noMessages });
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			type: params.type,
+			c_section: params.section,
+			c_sub_section: params.subSection,
+			c_element: params.element,
+			p5: `chatId_${params.chatId}`,
+		});
 	}
 
-	onDialogHistoryLimitBannerClick({ dialogId }: { dialogId: DialogId })
+	onStartConferenceClick(params)
 	{
-		this.#historyLimit.onDialogHistoryLimitBannerClick({ dialogId });
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.clickStartConf,
+			type: AnalyticsType.videoconf,
+			c_section: AnalyticsSection.chatWindow,
+			c_element: params.element,
+			p5: `chatId_${params.chatId}`,
+		});
 	}
 
-	onSidebarHistoryLimitExceeded({ dialogId, panel })
+	onJoinConferenceClick(params)
 	{
-		this.#historyLimit.onSidebarHistoryLimitExceeded({ dialogId, panel });
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.clickJoin,
+			type: AnalyticsType.videoconf,
+			c_section: AnalyticsSection.chatList,
+			p5: `callId_${params.callId}`,
+		});
 	}
-
-	onSidebarHistoryLimitBannerClick({ dialogId, panel })
-	{
-		this.#historyLimit.onSidebarHistoryLimitBannerClick({ dialogId, panel });
-	}
-
-	onGoToContextHistoryLimitClick({ dialogId }: { dialogId: DialogId })
-	{
-		this.#historyLimit.onGoToContextHistoryLimitClick({ dialogId });
-	}
-	// endregion
 }

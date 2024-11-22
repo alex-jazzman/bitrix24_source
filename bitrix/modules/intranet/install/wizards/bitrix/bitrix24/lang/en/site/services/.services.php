@@ -1,5 +1,6 @@
 <?php
 $MESS["SERVICE_ADVERTISING"] = "Advertising and Banners";
+$MESS["SERVICE_BICONNECTOR"] = "BI connector";
 $MESS["SERVICE_BLOG"] = "Blogs";
 $MESS["SERVICE_BPV"] = "Business Processes";
 $MESS["SERVICE_CALENDAR"] = "Event Calendar";

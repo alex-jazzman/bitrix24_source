@@ -1,5 +1,6 @@
 <?php
 $MESS['SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL'] = 'Название документа';
+$MESS['SIGN_DOCUMENT_SETUP_TITLE_TEMPLATE_HEAD_LABEL'] = 'Название шаблона';
 $MESS['SIGN_DOCUMENT_SETUP_TITLE_LABEL'] = 'Название';
 $MESS['SIGN_DOCUMENT_SETUP_NUM_LABEL'] = 'Регистрационный номер';
 $MESS['SIGN_DOCUMENT_SETUP_TITLE_HINT'] = 'Название документа видят все стороны';

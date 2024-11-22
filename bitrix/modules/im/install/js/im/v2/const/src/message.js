@@ -30,6 +30,7 @@ export const MessageComponent = Object.freeze({
 	generalChatCreationMessage: 'GeneralChatCreationMessage',
 	generalChannelCreationMessage: 'GeneralChannelCreationMessage',
 	channelCreationMessage: 'ChannelCreationMessage',
+	callMessage: 'CallMessage',
 });
 
 export const MessageMentionType = Object.freeze({

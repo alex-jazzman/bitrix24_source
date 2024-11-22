@@ -542,8 +542,8 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 				communications,
 				ownerInfo,
 				typeId,
-				selectedPhoneId: toPhoneId,
-				onPhoneSelectCallback: this.onPhoneSelectCallback,
+				selectedId: toPhoneId,
+				onSelectCallback: this.onPhoneSelectCallback,
 			});
 		}
 
@@ -679,25 +679,25 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 				const { smsConfig, onChangeSenderCallback, onChangePhoneCallback } = this;
 
 				this.sendersSelector = new SendersSelector({
-					currentPhoneId,
+					currentFromId: currentPhoneId,
 					currentSender,
 					senders: smsConfig.config.senders,
 					contactCenterUrl: smsConfig.contactCenterUrl,
 					onChangeSenderCallback,
-					onChangePhoneCallback,
+					onChangeFromCallback: onChangePhoneCallback,
 				});
 			}
 
 			this.sendersSelector.show(this.layout);
 		}
 
-		onChangeSenderCallback({ sender, phoneId })
+		onChangeSenderCallback({ sender, fromId })
 		{
 			const isSenderTemplatesBased = this.isSenderTemplatesBased(sender);
 
 			this.setState({
 				sender,
-				fromPhoneId: phoneId,
+				fromPhoneId: fromId,
 				templateId: isSenderTemplatesBased ? 0 : null,
 				maxHeight: MAX_HEIGHT,
 			}, () => {
@@ -712,10 +712,10 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			});
 		}
 
-		onChangePhoneCallback({ phoneId })
+		onChangePhoneCallback({ fromId })
 		{
 			this.setState({
-				fromPhoneId: phoneId,
+				fromPhoneId: fromId,
 			});
 		}
 

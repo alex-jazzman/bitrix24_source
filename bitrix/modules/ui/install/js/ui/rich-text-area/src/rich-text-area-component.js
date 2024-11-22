@@ -149,11 +149,7 @@ export const RichTextAreaComponent: BitrixVueComponentProps = {
 
 			void getFilesFromDataTransfer(event.dataTransfer).then((files: File[]): void => {
 				this.getUploader().addFiles(files);
-
-				if (this.getEditor().isCollapsed())
-				{
-					this.getEditor().toggleCollapsing();
-				}
+				this.getEditor().expand();
 			});
 
 			this.showDropArea = false;

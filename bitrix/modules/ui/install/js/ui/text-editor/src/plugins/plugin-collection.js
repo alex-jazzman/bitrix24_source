@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
 
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 import type { PluginConstructor } from './base-plugin';
 import BasePlugin from './base-plugin';
 

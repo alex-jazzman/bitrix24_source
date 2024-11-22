@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,im_lib_utils,ui_switcher,ui_dialogs_messagebox,ui_buttons,im_v2_lib_desktopApi,im_v2_const,main_core_events,main_popup,main_core,im_v2_lib_utils,call_lib_analytics,loader,resize_observer,webrtc_adapter,im_lib_localstorage) {
+(function (exports,im_lib_utils,ui_switcher,ui_dialogs_messagebox,ui_buttons,im_v2_lib_desktopApi,im_v2_const,intranet_desktopDownload,main_core_events,main_popup,main_core,im_v2_lib_utils,call_lib_analytics,loader,resize_observer,webrtc_adapter,im_lib_localstorage) {
 	'use strict';
 
 	// screensharing workaround
@@ -6674,19 +6674,24 @@ this.BX = this.BX || {};
 	    key: "playVideoElements",
 	    value: function playVideoElements(videoElement) {
 	      var _this3 = this;
-	      var isCanPlaying = videoElement && videoElement.srcObject;
-	      var isPaused = videoElement && videoElement.paused;
-	      var isReadyPlaying = videoElement && videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
-	      if (isCanPlaying && isReadyPlaying && !isPaused) {
+	      var hasVideoEl = !!videoElement;
+	      var isCanPlaying = hasVideoEl && !!videoElement.srcObject;
+	      var isPaused = hasVideoEl && videoElement.paused;
+	      var isReadyPlaying = hasVideoEl && videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
+	      var isEnded = hasVideoEl && videoElement.ended;
+	      if (hasVideoEl && !isPaused) {
 	        videoElement.pause();
 	      }
-	      if (isCanPlaying && isReadyPlaying) {
+	      if (isCanPlaying && isReadyPlaying && !isEnded) {
 	        videoElement.play()["catch"](logPlaybackError);
 	      }
-	      if (isCanPlaying && !isReadyPlaying) {
-	        videoElement.addEventListener('loadeddata', function () {
+	      if (isCanPlaying && isEnded) {
+	        videoElement.load();
+	      }
+	      if (isCanPlaying && !isReadyPlaying && !isEnded && !videoElement.onloadeddata) {
+	        videoElement.onloadeddata = function () {
 	          _this3.playVideoElements(videoElement);
-	        });
+	        };
 	      }
 	    }
 	  }, {
@@ -6698,6 +6703,7 @@ this.BX = this.BX || {};
 	      if (this.hasVideo() /* && this.visible*/) {
 	        var _this$videoRenderer, _this$videoRenderer2;
 	        if (this.visible) {
+	          var _this$elements$video$, _this$stream;
 	          if (this.videoRenderer) {
 	            this.videoRenderer.render(this.elements.video);
 	            this.playVideoElements(this.elements.video);
@@ -6706,7 +6712,7 @@ this.BX = this.BX || {};
 	            } else {
 	              this.elements.preview.srcObject = null;
 	            }
-	          } else if (this.elements.video.srcObject != this.stream) {
+	          } else if (this.stream && ((_this$elements$video$ = this.elements.video.srcObject) === null || _this$elements$video$ === void 0 ? void 0 : _this$elements$video$.id) !== ((_this$stream = this.stream) === null || _this$stream === void 0 ? void 0 : _this$stream.id)) {
 	            this.elements.video.srcObject = this.stream;
 	            this.playVideoElements(this.elements.video);
 	          }
@@ -7738,7 +7744,23 @@ this.BX = this.BX || {};
 	                }
 	              }
 	            })]
-	          }) : null, this.allowAdvancedSettings && !!BX.MessengerCommon ? main_core.Dom.create("div", {
+	          }) : null, main_core.Dom.create("div", {
+	            props: {
+	              className: "bx-call-view-device-selector-bottom-item"
+	            },
+	            children: [main_core.Dom.create("span", {
+	              props: {
+	                className: "bx-call-view-device-selector-bottom-item-action"
+	              },
+	              text: BX.message("CALL_RUN_SELF_TEST"),
+	              events: {
+	                click: function click() {
+	                  Util.startSelfTest();
+	                  _this3.popup.close();
+	                }
+	              }
+	            })]
+	          }), this.allowAdvancedSettings && !!BX.MessengerCommon ? main_core.Dom.create("div", {
 	            props: {
 	              className: "bx-call-view-device-selector-bottom-item"
 	            },
@@ -10041,14 +10063,51 @@ this.BX = this.BX || {};
 	      this.elements.overlay.textContent = '';
 	    }
 	  }, {
-	    key: "showFatalError",
+	    key: "renderErrorCallLayout",
+	    value: function renderErrorCallLayout() {
+	      if (!this.elements.root) {
+	        this.render();
+	        this.container.appendChild(this.elements.root);
+	      }
+	      var errorContainer = main_core.Dom.create("div", {
+	        props: {
+	          className: "bx-messenger-videocall-error-container"
+	        },
+	        children: [main_core.Dom.create("div", {
+	          props: {
+	            className: "bx-messenger-videocall-error-container-icon-alert"
+	          }
+	        }), main_core.Dom.create("div", {
+	          props: {
+	            className: "bx-messenger-videocall-error-message"
+	          },
+	          text: BX.message("CALL_CONNECTED_ERROR")
+	        }), main_core.Dom.create("div", {
+	          props: {
+	            className: "bx-messenger-videocall-error-button-self-test"
+	          },
+	          text: BX.message("CALL_RUN_SELF_TEST"),
+	          events: {
+	            click: function click() {
+	              Util.startSelfTest();
+	            }
+	          }
+	        })]
+	      });
+	      if (this.elements.overlay.childElementCount) {
+	        main_core.Dom.clean(this.elements.overlay);
+	      }
+	      this.elements.overlay.appendChild(errorContainer);
+	    }
 	    /**
 	     * @param {Object} params
 	     * @param {string} params.text
 	     * @param {string} [params.subText]
 	     */
+	  }, {
+	    key: "showFatalError",
 	    value: function showFatalError(params) {
-	      this.showMessage(params);
+	      this.renderErrorCallLayout();
 	      this.setUiState(UiState.Error);
 	      // in some cases video elements may still be shown on the error screen, let's hide them
 	      this.elements.userList.container.style.display = 'none';
@@ -21438,6 +21497,10 @@ this.BX = this.BX || {};
 	  }
 	  return parseInt(BX.message('turn_server_max_users'));
 	};
+	var getClientSelfTestUrl = function getClientSelfTestUrl() {
+	  var _BX$message;
+	  return (_BX$message = BX.message('call_client_selftest_url')) !== null && _BX$message !== void 0 ? _BX$message : '';
+	};
 	var getCallFeatures = function getCallFeatures() {
 	  return BX.message('call_features');
 	};
@@ -21690,6 +21753,17 @@ this.BX = this.BX || {};
 	  }
 	  return Math.floor(totalTime / 1000);
 	}
+	var isConferenceChatEnabled = function isConferenceChatEnabled() {
+	  return BX.message('conference_chat_enabled');
+	};
+	function startSelfTest() {
+	  var link = BX.Call.Util.getClientSelfTestUrl();
+	  if (isDesktop()) {
+	    window.open(link, '_blank', 'popup');
+	    return;
+	  }
+	  window.open(link, '_blank');
+	}
 	var Util = {
 	  updateUserData: updateUserData,
 	  setUserData: setUserData,
@@ -21718,6 +21792,7 @@ this.BX = this.BX || {};
 	  getDocumentsArticleCode: getDocumentsArticleCode,
 	  getResumesArticleCode: getResumesArticleCode,
 	  getUserLimit: getUserLimit,
+	  getClientSelfTestUrl: getClientSelfTestUrl,
 	  getLogMessage: getLogMessage,
 	  getUuidv4: getUuidv4,
 	  reportConnectionResult: reportConnectionResult,
@@ -21741,7 +21816,9 @@ this.BX = this.BX || {};
 	  getAvatarBackground: getAvatarBackground,
 	  getRecordTimeText: getRecordTimeText,
 	  getTimeText: getTimeText,
-	  getTimeInSeconds: getTimeInSeconds
+	  getTimeInSeconds: getTimeInSeconds,
+	  isConferenceChatEnabled: isConferenceChatEnabled,
+	  startSelfTest: startSelfTest
 	};
 
 	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
@@ -24747,7 +24824,7 @@ this.BX = this.BX || {};
 	          okCaption: BX.message('IM_M_CALL_BTN_UPDATE'),
 	          cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
 	          onOk: function onOk() {
-	            var url = main_core.Browser.isMac() ? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "http://dl.bitrix24.com/b24/bitrix24_desktop.exe";
+	            var url = intranet_desktopDownload.DesktopDownload.getLinkForCurrentUser();
 	            window.open(url, "desktopApp");
 	            return true;
 	          }
@@ -24934,6 +25011,10 @@ this.BX = this.BX || {};
 	            element: call_lib_analytics.Analytics.AnalyticsElement.videocall,
 	            status: call_lib_analytics.Analytics.AnalyticsStatus.success
 	          });
+	          if (_this7.getCallUsers(true).length > _this7.getMaxActiveMicrophonesCount()) {
+	            Hardware.isMicrophoneMuted = true;
+	            _this7.showAutoMicMuteNotification();
+	          }
 	          _this7.currentCall.answer();
 	        }
 	        _this7._onUpdateLastUsedCameraId();
@@ -25245,6 +25326,10 @@ this.BX = this.BX || {};
 	        this.documentsMenu.destroy();
 	        return;
 	      }
+	      call_lib_analytics.Analytics.getInstance().onDocumentBtnClick({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType()
+	      });
 	      var targetNodeWidth = this.callView.buttons.document.elements.root.offsetWidth;
 	      var resumesArticleCode = Util.getResumesArticleCode();
 	      var documentsArticleCode = Util.getDocumentsArticleCode();
@@ -25252,6 +25337,7 @@ this.BX = this.BX || {};
 	        text: BX.message('IM_M_CALL_MENU_CREATE_RESUME'),
 	        onclick: function onclick() {
 	          _this10.documentsMenu.close();
+	          _this10.onDocumentCreateAnalyticsEvent(call_lib_analytics.Analytics.AnalyticsType.resume);
 	          _this10.maybeShowDocumentEditor({
 	            type: DocumentType.Resume
 	          }, resumesArticleCode);
@@ -25262,6 +25348,7 @@ this.BX = this.BX || {};
 	          text: BX.message('IM_M_CALL_MENU_CREATE_FILE_DOC'),
 	          onclick: function onclick() {
 	            _this10.documentsMenu.close();
+	            _this10.onDocumentCreateAnalyticsEvent(call_lib_analytics.Analytics.AnalyticsType.doc);
 	            _this10.maybeShowDocumentEditor({
 	              type: DocumentType.Blank,
 	              typeFile: FILE_TYPE_DOCX
@@ -25271,6 +25358,7 @@ this.BX = this.BX || {};
 	          text: BX.message('IM_M_CALL_MENU_CREATE_FILE_XLS'),
 	          onclick: function onclick() {
 	            _this10.documentsMenu.close();
+	            _this10.onDocumentCreateAnalyticsEvent(call_lib_analytics.Analytics.AnalyticsType.sheet);
 	            _this10.maybeShowDocumentEditor({
 	              type: DocumentType.Blank,
 	              typeFile: FILE_TYPE_XLSX
@@ -25280,6 +25368,7 @@ this.BX = this.BX || {};
 	          text: BX.message('IM_M_CALL_MENU_CREATE_FILE_PPT'),
 	          onclick: function onclick() {
 	            _this10.documentsMenu.close();
+	            _this10.onDocumentCreateAnalyticsEvent(call_lib_analytics.Analytics.AnalyticsType.presentation);
 	            _this10.maybeShowDocumentEditor({
 	              type: DocumentType.Blank,
 	              typeFile: FILE_TYPE_PPTX
@@ -25344,6 +25433,15 @@ this.BX = this.BX || {};
 	      this.documentsMenu.show();
 	    }
 	  }, {
+	    key: "onDocumentCreateAnalyticsEvent",
+	    value: function onDocumentCreateAnalyticsEvent(documentType) {
+	      call_lib_analytics.Analytics.getInstance().onDocumentCreate({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        type: documentType
+	      });
+	    }
+	  }, {
 	    key: "buildPreviousResumesSubmenu",
 	    value: function buildPreviousResumesSubmenu(menuItem) {
 	      var _this11 = this;
@@ -25360,6 +25458,10 @@ this.BX = this.BX || {};
 	              text: resume.object.createDate + ': ' + resume.object.name,
 	              onclick: function onclick() {
 	                _this11.documentsMenu.close();
+	                call_lib_analytics.Analytics.getInstance().onLastResumeOpen({
+	                  callId: _this11.currentCall.id,
+	                  callType: _this11.getCallType()
+	                });
 	                _this11.viewDocumentByLink(resume.links.view);
 	              }
 	            });
@@ -25408,6 +25510,7 @@ this.BX = this.BX || {};
 	      clearTimeout(this.showPromoPopupTimeout);
 	      this._createAndOpenSidebarWithIframe("about:blank", openAnimation);
 	      BX.loadExt('disk.onlyoffice-im-integration').then(function () {
+	        var _options;
 	        var docEditor = new BX.Disk.OnlyOfficeImIntegration.CreateDocument({
 	          dialog: {
 	            id: _this12.currentCall.associatedEntity.id
@@ -25418,7 +25521,9 @@ this.BX = this.BX || {};
 	          delegate: {
 	            setMaxWidth: _this12.setCallEditorMaxWidth.bind(_this12),
 	            onDocumentCreated: _this12._onDocumentCreated.bind(_this12)
-	          }
+	          },
+	          type: options.type,
+	          typeFile: (_options = options) === null || _options === void 0 ? void 0 : _options.typeFile
 	        });
 	        var promiseGetUrl;
 	        if (options.type === DocumentType.Resume) {
@@ -25453,6 +25558,11 @@ this.BX = this.BX || {};
 	    key: "closeDocumentEditor",
 	    value: function closeDocumentEditor() {
 	      var _this13 = this;
+	      call_lib_analytics.Analytics.getInstance().onDocumentClose({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        type: this.getDocumentType()
+	      });
 	      return new Promise(function (resolve) {
 	        if (_this13.docEditor && _this13.docEditorIframe) {
 	          _this13.docEditor.onCloseIframe(_this13.docEditorIframe);
@@ -25548,6 +25658,11 @@ this.BX = this.BX || {};
 	      if (this.currentCall) {
 	        this.currentCall.sendCustomMessage(DOC_CREATED_EVENT, true);
 	      }
+	      call_lib_analytics.Analytics.getInstance().onDocumentUpload({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        type: this.getDocumentType()
+	      });
 	    }
 	  }, {
 	    key: "onSideBarCloseClicked",
@@ -25604,6 +25719,21 @@ this.BX = this.BX || {};
 	        });
 	      }
 	      this.documentPromoPopup = null;
+	    }
+	  }, {
+	    key: "getDocumentType",
+	    value: function getDocumentType() {
+	      if (this.docEditor.options.type === DocumentType.Resume) {
+	        return call_lib_analytics.Analytics.AnalyticsType.resume;
+	      }
+	      switch (this.docEditor.options.typeFile) {
+	        case FILE_TYPE_DOCX:
+	          return call_lib_analytics.Analytics.AnalyticsType.doc;
+	        case FILE_TYPE_XLSX:
+	          return call_lib_analytics.Analytics.AnalyticsType.sheet;
+	        case FILE_TYPE_PPTX:
+	          return call_lib_analytics.Analytics.AnalyticsType.presentation;
+	      }
 	    }
 	  }, {
 	    key: "unfold",
@@ -26119,6 +26249,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallViewShowChatButtonClick",
 	    value: function _onCallViewShowChatButtonClick() {
+	      if (!this.currentCall) {
+	        return;
+	      }
 	      call_lib_analytics.Analytics.getInstance().onShowChat({
 	        callId: this.currentCall.id,
 	        callType: this.getCallType()
@@ -26291,7 +26424,7 @@ this.BX = this.BX || {};
 	          this.callView.setButtonActive('record', true);
 	        } else {
 	          if (window.BX.Helper) {
-	            window.BX.Helper.show("redirect=detail&code=12398134");
+	            window.BX.Helper.show("redirect=detail&code=22079566");
 	          }
 	          return;
 	        }
@@ -28375,5 +28508,5 @@ this.BX = this.BX || {};
 	exports.View = View;
 	exports.WebScreenSharePopup = WebScreenSharePopup;
 
-}((this.BX.Call = this.BX.Call || {}),BX.Messenger.Lib,BX.UI,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Event,BX.Main,BX,BX.Messenger.v2.Lib,BX.Call.Lib,BX,BX,BX,BX.Messenger.Lib));
+}((this.BX.Call = this.BX.Call || {}),BX.Messenger.Lib,BX.UI,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Intranet,BX.Event,BX.Main,BX,BX.Messenger.v2.Lib,BX.Call.Lib,BX,BX,BX,BX.Messenger.Lib));
 //# sourceMappingURL=call.bundle.js.map

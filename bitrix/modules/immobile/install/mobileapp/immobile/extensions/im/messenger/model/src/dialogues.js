@@ -15,7 +15,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues');
 
-	const dialogState = {
+	const dialogDefaultElement = Object.freeze({
 		dialogId: '0',
 		chatId: 0,
 		type: DialogType.chat,
@@ -72,7 +72,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		parentChatId: 0, // unsafe in local database
 		parentMessageId: 0, // unsafe in local database
 		messageCount: 0, // unsafe in local database
-	};
+	});
 
 	/** @type {DialoguesMessengerModel} */
 	const dialoguesModel = {
@@ -200,7 +200,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			/** @function dialoguesModel/setState */
 			setState: (store, payload) => {
 				Object.entries(payload.collection).forEach(([key, value]) => {
-					payload.collection[key] = { ...dialogState, ...payload.collection[key] };
+					payload.collection[key] = { ...dialogDefaultElement, ...payload.collection[key] };
 				});
 
 				store.commit('setState', {
@@ -239,7 +239,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 							actionName: 'set',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogState, ...element },
+								fields: { ...dialogDefaultElement, ...element },
 							},
 						});
 					}
@@ -274,7 +274,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 							actionName: 'setFromLocalDatabase',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogState, ...element },
+								fields: { ...dialogDefaultElement, ...element },
 							},
 						});
 					}
@@ -306,7 +306,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					{
 						addItems.push({
 							dialogId: element.dialogId,
-							fields: { ...dialogState, ...element },
+							fields: { ...dialogDefaultElement, ...element },
 						});
 					}
 				});
@@ -345,7 +345,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 							actionName: 'add',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogState, ...element },
+								fields: { ...dialogDefaultElement, ...element },
 							},
 						});
 					}
@@ -451,6 +451,18 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			delete: (store, payload) => {
 				store.commit('delete', {
 					actionName: 'delete',
+					data: {
+						dialogId: payload.dialogId,
+					},
+				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/deleteFromModel */
+			deleteFromModel: (store, payload) => {
+				store.commit('delete', {
+					actionName: 'deleteFromModel',
 					data: {
 						dialogId: payload.dialogId,
 					},
@@ -707,7 +719,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 				const {
 					lastMessageViews: defaultLastMessageViews,
-				} = dialogState;
+				} = dialogDefaultElement;
 				store.commit('update', {
 					actionName: 'clearLastMessageViews',
 					data: {
@@ -1423,5 +1435,5 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		return result;
 	}
 
-	module.exports = { dialoguesModel };
+	module.exports = { dialoguesModel, dialogDefaultElement };
 });

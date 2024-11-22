@@ -116,7 +116,12 @@ export class Market
 						return;
 					}
 
-					if (link.dataset.loadContent.length <= 0 || link.href.length <= 0) {
+					let href = link.href;
+					if (!href) {
+						href = link.dataset.href;
+					}
+
+					if (link.dataset.loadContent.length <= 0 || !href) {
 						return;
 					}
 
@@ -124,7 +129,7 @@ export class Market
 						this.mainUri = this.result.MAIN_URI;
 					}
 
-					this.updatePage(link.href, link.dataset.loadContent);
+					this.updatePage(href, link.dataset.loadContent);
 				},
 				refreshUri: function(event) {
 					if (!event.data.refreshUri || !event.data.skeleton) {

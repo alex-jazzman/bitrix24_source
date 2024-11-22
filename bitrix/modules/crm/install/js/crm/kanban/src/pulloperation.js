@@ -1,5 +1,6 @@
 import { Sorter } from 'crm.kanban.sort';
 import { Type } from 'main.core';
+import { ViewMode } from './viewmode';
 
 export default class PullOperation
 {
@@ -83,6 +84,16 @@ export default class PullOperation
 
 		if (!item)
 		{
+			return;
+		}
+
+		const { viewMode } = this.grid.getData();
+		if ([ViewMode.MODE_ACTIVITIES, ViewMode.MODE_DEADLINES].includes(viewMode))
+		{
+			item.useAnimation = false;
+
+			this.grid.insertItem(item);
+
 			return;
 		}
 

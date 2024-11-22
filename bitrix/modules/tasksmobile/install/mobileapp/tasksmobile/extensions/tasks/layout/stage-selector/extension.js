@@ -139,6 +139,16 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 			}
 		}
 
+		isActiveStageExist()
+		{
+			if (this.state.activeStageId === 0)
+			{
+				return true;
+			}
+
+			return super.isActiveStageExist();
+		}
+
 		onChangeStage(stage)
 		{
 			if (this.isReadOnly())

@@ -1,12 +1,12 @@
-import { BaseChatContent } from '../base/base';
+import { BaseChatContent } from 'im.v2.component.content.elements';
+
 import { ChannelDialog } from './components/dialog';
-import { ChannelHeader } from './components/header';
 import { JoinPanel } from './components/join-panel';
 import { ChannelTextarea } from './components/textarea';
 
 export const ChannelContent = {
 	name: 'ChannelContent',
-	components: { BaseChatContent, ChannelHeader, ChannelDialog, ChannelTextarea, JoinPanel },
+	components: { BaseChatContent, ChannelDialog, ChannelTextarea, JoinPanel },
 	props:
 	{
 		dialogId: {
@@ -16,9 +16,6 @@ export const ChannelContent = {
 	},
 	template: `
 		<BaseChatContent :dialogId="dialogId">
-			<template #header="{ currentSidebarPanel }">
-				<ChannelHeader :dialogId="dialogId" :currentSidebarPanel="currentSidebarPanel" :key="dialogId" />
-			</template>
 			<template #dialog>
 				<ChannelDialog :dialogId="dialogId" :key="dialogId" />
 			</template>

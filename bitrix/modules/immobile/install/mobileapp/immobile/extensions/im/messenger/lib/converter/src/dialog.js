@@ -14,9 +14,11 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 		EmojiOnlyMessage,
 		DeletedMessage,
 		ImageMessage,
+		MediaGalleryMessage,
 		AudioMessage,
 		VideoMessage,
 		FileMessage,
+		FileGalleryMessage,
 		SystemTextMessage,
 		UnsupportedMessage,
 		CopilotPromptMessage,
@@ -25,7 +27,9 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 		CheckInMessageFactory,
 		CreateBannerFactory,
 		GalleryMessageFactory,
+		CallMessageFactory,
 	} = require('im/messenger/lib/element');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageHelper } = require('im/messenger/lib/helper');
 
 	/**
@@ -68,17 +72,13 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return CreateBannerFactory.create(modelMessage, options);
 			}
 
-			const isMessageWithFile = modelMessage.files[0];
-			/** @type {FilesModelState || null} */
-			let file = null;
-			if (isMessageWithFile)
-			{
-				file = serviceLocator.get('core').getStore().getters['filesModel/getById'](modelMessage.files[0]);
-			}
-
+			const files = serviceLocator.get('core')
+				.getStore()
+				.getters['filesModel/getListByMessageId'](modelMessage.id)
+			;
 			const messageHelper = MessageHelper.createByModel(
 				modelMessage,
-				file ?? [],
+				files,
 			);
 
 			if (messageHelper.isSystem)
@@ -109,11 +109,27 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return CheckInMessageFactory.create(modelMessage, options);
 			}
 
+			if (messageHelper.isMediaGallery && Feature.isGalleryMessageSupported)
+			{
+				return new MediaGalleryMessage(modelMessage, options, files);
+			}
+
+			if (messageHelper.isFileGallery && Feature.isGalleryMessageSupported)
+			{
+				return new FileGalleryMessage(modelMessage, options, files);
+			}
+
 			if (GalleryMessageFactory.checkSuitableForDisplay(modelMessage))
 			{
 				return GalleryMessageFactory.create(modelMessage, options);
 			}
 
+			if (CallMessageFactory.checkSuitableForDisplay(modelMessage))
+			{
+				return CallMessageFactory.create(modelMessage, options);
+			}
+
+			const file = files[0];
 			if (messageHelper.isImage)
 			{
 				if (Type.isStringFilled(file?.urlPreview))
@@ -273,6 +289,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 			const applicationSettingState = serviceLocator.get('core').getStore().getters['applicationModel/getSettings']();
 			options.audioRate = applicationSettingState ? applicationSettingState.audioRate : 1;
+			options.dialogId = dialog.dialogId;
 
 			return options;
 		}

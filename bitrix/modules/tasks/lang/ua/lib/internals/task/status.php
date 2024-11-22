@@ -6,3 +6,4 @@ $MESS["TASKS_STATUS_4"] = "Чекає контролю";
 $MESS["TASKS_STATUS_5"] = "Завершене";
 $MESS["TASKS_STATUS_6"] = "Відкладене";
 $MESS["TASKS_STATUS_7"] = "Відхилене";
+$MESS["TASKS_STATUS_TITLE"] = "Статус";

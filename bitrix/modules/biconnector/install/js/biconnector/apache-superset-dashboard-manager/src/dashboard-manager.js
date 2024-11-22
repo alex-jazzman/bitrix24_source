@@ -21,6 +21,7 @@ export class DashboardManager
 	static DASHBOARD_STATUS_LOAD = 'L';
 	static DASHBOARD_STATUS_READY = 'R';
 	static DASHBOARD_STATUS_FAILED = 'F';
+	static DASHBOARD_STATUS_DRAFT = 'D';
 
 	static DASHBOARD_STATUS_COMPUTED_NOT_LOAD = 'NL';
 
@@ -203,6 +204,15 @@ export class DashboardManager
 		});
 	}
 
+	getDashboardUrlParameters(dashboardId: number | string): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.getDashboardUrlParameters', {
+			data: {
+				id: dashboardId,
+			},
+		});
+	}
+
 	exportDashboard(
 		dashboardId: number,
 		openedFrom: string,
@@ -308,11 +318,19 @@ export class DashboardManager
 		);
 	}
 
-	createEmptyDashboard(): Promise
+	openCreationSlider(): void
 	{
-		return Ajax.runAction('biconnector.dashboard.createEmptyDashboard', {
-			data: {},
-		});
+		const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.create/slider.php';
+		const sliderLink = new Uri(componentLink);
+
+		BX.SidePanel.Instance.open(
+			sliderLink.toString(),
+			{
+				width: 790,
+				allowChangeHistory: false,
+				cacheable: false,
+			},
+		);
 	}
 
 	getEditUrl(dashboardInfo: DashboardInfo): Promise
@@ -322,7 +340,7 @@ export class DashboardManager
 				'biconnector.dashboard.getEditUrl',
 				{
 					data: {
-						dashboardId: dashboardInfo.id,
+						id: dashboardInfo.id,
 						editUrl: dashboardInfo.editLink,
 					},
 				},
@@ -381,6 +399,16 @@ export class DashboardManager
 		return BX.ajax.runAction('biconnector.dashboard.getDashboardEmbeddedData', {
 			data: {
 				id: dashboardId,
+			},
+		});
+	}
+
+	toggleDraft(dashboardId: number, publish: boolean): Promise
+	{
+		return BX.ajax.runAction('biconnector.dashboard.toggleDraft', {
+			data: {
+				id: dashboardId,
+				publish: publish ? 1 : 0,
 			},
 		});
 	}

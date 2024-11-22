@@ -64,7 +64,7 @@ export class SpoilerContentNode extends ElementNode
 	{
 		return {
 			div: (domNode: HTMLElement) => {
-				if (!domNode.hasAttribute('data-lexical-spoiler-content'))
+				if (!domNode.hasAttribute('data-spoiler-content'))
 				{
 					return null;
 				}
@@ -85,7 +85,7 @@ export class SpoilerContentNode extends ElementNode
 	exportDOM(): DOMExportOutput
 	{
 		const element = document.createElement('div');
-		element.setAttribute('data-lexical-spoiler-content', 'true');
+		element.setAttribute('data-spoiler-content', 'true');
 
 		return { element };
 	}

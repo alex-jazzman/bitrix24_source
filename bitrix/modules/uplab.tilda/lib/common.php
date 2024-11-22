@@ -103,7 +103,7 @@ class Common
 
     static function getPageContent($page, $params = [])
     {
-        $data = Request::getData('getpageexport', ['pageid' => $page]);
+        $data = Request::getData('getpagefullexport', ['pageid' => $page]);
 
         $content = '';
 
@@ -130,7 +130,9 @@ class Common
         }
 
         // HTML
-        $html = Helper::convert2Win1251($data['html']);
+        $matches = [];
+        preg_match_all('/<!--allrecords-->(.*)<!--\/allrecords-->/s', $data['html'], $matches, PREG_SET_ORDER);
+        $html = Helper::convert2Win1251($matches[0][1]);
 
         // Images + CSS + JS
         $assetsTypes = ['images', 'css', 'js'];

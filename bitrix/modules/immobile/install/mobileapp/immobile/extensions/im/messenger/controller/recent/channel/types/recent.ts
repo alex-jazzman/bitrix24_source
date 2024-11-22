@@ -11,7 +11,7 @@ declare type imV2RecentChannelTailResult = {
 	users: Array<RawUser>,
 }
 
-declare type ChannelRecentItemData = {
+export type ChannelRecentItemData = {
 	chatId: number,
 	dialogId: DialogId,
 	invited: [],

@@ -39,9 +39,14 @@ export class AiPage extends BaseSettingsPage
 		const groups: ?{[string]: AiSettingsGroup} = this.getValue('fields');
 		if (groups)
 		{
+			this.isOpen = true;
 			for (let groupCode in groups)
 			{
 				const section = this.#buildGroup(groups[groupCode]);
+				if (this.isOpen === true)
+				{
+					this.isOpen = false;
+				}
 				if (section)
 				{
 					section.renderTo(contentNode);
@@ -79,7 +84,7 @@ export class AiPage extends BaseSettingsPage
 			section: {
 				title: title,
 				titleIconClasses: 'ui-icon-set ' + (icon.code ?? AiPage.#groupIconDefaultIcon),
-				isOpen: true,
+				isOpen: this.isOpen,
 			},
 		});
 

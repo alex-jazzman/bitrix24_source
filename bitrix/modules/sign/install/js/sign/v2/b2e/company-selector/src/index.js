@@ -1,15 +1,17 @@
-import { Dom, Loc, Tag, Text as TextFormat, Type, Uri, Event } from 'main.core';
+import { Dom, Event, Loc, Tag, Text as TextFormat, Type, Uri } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 import { Menu } from 'main.popup';
-import { Api } from 'sign.v2.api';
-import { CompanyEditor, CompanyEditorMode, DocumentEntityTypeId, EditorTypeGuid } from 'sign.v2.company-editor';
-import { Helpdesk, Link } from 'sign.v2.helper';
-import { SchemeType, type Scheme } from 'sign.v2.b2e.scheme-selector';
-import { Dialog, Item as DialogItem } from 'ui.entity-selector';
 import { Guide } from 'sign.tour';
-import { Label, LabelColor } from 'ui.label';
+import { Api } from 'sign.v2.api';
+import { type Scheme, SchemeType } from 'sign.v2.b2e.scheme-selector';
+import { CompanyEditor, CompanyEditorMode, DocumentEntityTypeId, EditorTypeGuid } from 'sign.v2.company-editor';
+import { DocumentInitiated } from 'sign.v2.document-setup';
+import type { DocumentInitiatedType } from 'sign.v2.document-setup';
+import { Helpdesk, Link } from 'sign.v2.helper';
 import { Alert, AlertColor } from 'ui.alerts';
+import { Dialog } from 'ui.entity-selector';
+import { Label, LabelColor } from 'ui.label';
 
 import './style.css';
 
@@ -51,6 +53,7 @@ export type CompanySelectorOptions = {
 	companyId: ?number,
 	entityId: number;
 	region: string;
+	documentInitiatedType?: DocumentInitiatedType;
 };
 
 const allowedSignatureProviders: Array<ProviderCodeType> = ['goskey', 'external', 'ses-ru', 'ses-com'];
@@ -140,7 +143,7 @@ export class CompanySelector
 	#loadPromise: Promise<void>;
 	#providerExpiresDaysToShowInfo: Number = 45;
 
-	constructor(options: CompanySelectorOptions)
+	constructor(options: CompanySelectorOptions = {})
 	{
 		this.#api = new Api();
 		this.#options = options;
@@ -177,7 +180,7 @@ export class CompanySelector
 		this.#selectProvider(companyUid);
 	}
 
-	setOptions(options: CompanySelectorOptions): void
+	setOptions(options: Partial<CompanySelectorOptions>): void
 	{
 		this.#options = { ...this.#options, ...options };
 	}
@@ -793,7 +796,11 @@ export class CompanySelector
 		}
 
 		this.#ui.info.title.header.name.innerText = selectedItem.title;
-		BX.show(this.#ui.info.editButton);
+		if (this.#ui.info.editButton)
+		{
+			BX.show(this.#ui.info.editButton);
+		}
+
 		BX.show(this.#ui.info.setRqInnButton);
 		if (Type.isStringFilled(selectedItem.rqInn))
 		{
@@ -805,7 +812,10 @@ export class CompanySelector
 		else
 		{
 			this.#ui.info.title.rqInn.textContent = Loc.getMessage('SIGN_B2E_COMPANIES_NO_RQ_INN');
-			BX.hide(this.#ui.info.editButton);
+			if (this.#ui.info.editButton)
+			{
+				BX.hide(this.#ui.info.editButton);
+			}
 		}
 
 		this.#resetProviderState();
@@ -986,7 +996,11 @@ export class CompanySelector
 			this.#getDialog().setTargetNode(this.#ui.container);
 			this.#getDialog().show();
 		});
-		Event.bind(this.#ui.info.editButton, 'click', () => this.#showEditMenu());
+		if (this.#ui.info.editButton)
+		{
+			Event.bind(this.#ui.info.editButton, 'click', () => this.#showEditMenu());
+		}
+
 		Event.bind(this.#ui.info.setRqInnButton, 'click', () => this.#editCompany());
 	}
 
@@ -1240,7 +1254,6 @@ export class CompanySelector
 	{
 		return new Alert({
 			text: this.#getProviderAlertMessage(provider),
-			color: AlertColor.WARNING,
 			customClass: 'sign-document-b2e-company__provider_alert',
 		});
 	}
@@ -1250,13 +1263,13 @@ export class CompanySelector
 		if (this.#isProviderExpired(provider))
 		{
 			return Helpdesk.replaceLink(
-				Loc.getMessage('SIGN_B2E_GOSKEY_APIKEY_EXPIRED_MORE'),
+				Loc.getMessage('SIGN_B2E_GOSKEY_APIKEY_EXPIRED_MORE_MSGVER_1'),
 				HelpdeskCodes.GoskeyApiKey,
 			);
 		}
 
 		const daysLeft = this.#getProviderDaysLeft(provider.expires);
-		const alertText = Loc.getMessagePlural('SIGN_B2E_GOSKEY_APIKEY_EXPIRES', daysLeft, {
+		const alertText = Loc.getMessagePlural('SIGN_B2E_GOSKEY_APIKEY_EXPIRES_MSGVER_1', daysLeft, {
 			'#DAYS#': daysLeft,
 		});
 
@@ -1272,7 +1285,15 @@ export class CompanySelector
 	 */
 	#getDefaultSchemeByProviderCode(provider: ProviderCodeType): Scheme
 	{
-		return provider === ProviderCode.sesRu ? SchemeType.Order : SchemeType.Default;
+		return provider === ProviderCode.sesRu && this.#options.documentInitiatedType === DocumentInitiated.company
+			? SchemeType.Order
+			: SchemeType.Default
+		;
+	}
+
+	setInitiatedByType(initiatedByType: DocumentInitiatedType): void
+	{
+		this.setOptions({ documentInitiatedType: initiatedByType });
 	}
 
 	#setProviderImage(provider: Provider): void

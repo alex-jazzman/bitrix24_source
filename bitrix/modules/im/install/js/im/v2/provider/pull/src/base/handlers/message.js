@@ -1,6 +1,8 @@
+import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Store } from 'ui.vue3.vuex';
 
+import { Analytics } from 'im.v2.lib.analytics';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
@@ -132,6 +134,17 @@ export class MessagePullHandler
 			dialogId: params.dialogId,
 			userId: params.senderId,
 		});
+
+		const areChannelCommentsOpened = this.#store.getters['messages/comments/areOpenedForChannelPost'](params.id);
+		if (areChannelCommentsOpened)
+		{
+			EventEmitter.emit(EventType.dialog.closeComments);
+			Analytics.getInstance().messageDelete.onDeletedPostNotification({
+				dialogId: params.dialogId,
+				messageId: params.id,
+			});
+			this.#showNotification(Loc.getMessage('IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND'));
+		}
 
 		this.#store.dispatch('messages/delete', {
 			id: params.id,
@@ -487,5 +500,10 @@ export class MessagePullHandler
 
 		const copilotManager = new CopilotManager();
 		void copilotManager.handleMessageAdd(params.copilot);
+	}
+
+	#showNotification(text: string): void
+	{
+		BX.UI.Notification.Center.notify({ content: text });
 	}
 }

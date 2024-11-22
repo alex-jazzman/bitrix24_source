@@ -40,12 +40,13 @@ class mobile extends CModule
 			'tasks',
 			'calendar',
 			'imconnector',
-			"catalog",
+			'catalog',
 			'bizproc',
 			'lists',
 			'sign',
 			'intranet',
 			'stafftrack',
+			'disk',
 		];
 	}
 
@@ -202,9 +203,9 @@ class mobile extends CModule
 		return true;
 	}
 
-	function UnInstallFiles()
+	public function uninstallFiles(): void
 	{
-		return true;
+
 	}
 
 	function InstallPull()
@@ -260,7 +261,7 @@ class mobile extends CModule
 			elseif ($step == 2)
 			{
 				$this->UnInstallDB();
-				$this->UnInstallFiles();
+				$this->uninstallFiles();
 				$GLOBALS["errors"] = $this->errors;
 				$APPLICATION->IncludeAdminFile(Loc::getMessage("APP_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/unstep.php");
 			}

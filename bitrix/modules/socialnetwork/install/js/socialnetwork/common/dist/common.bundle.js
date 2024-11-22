@@ -420,7 +420,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	            href: params.urls.requestsOut
 	          });
 	        }
-	        if (params.perms.canModify) {
+	        if (params.perms.canCreate) {
 	          itemTitle = main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_COPY');
 	          if (!!params.isScrumProject) {
 	            itemTitle = main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_COPY_SCRUM');

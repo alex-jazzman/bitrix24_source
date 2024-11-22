@@ -313,9 +313,8 @@ class voximplant extends \CModule
 
 			if (isset($roleIds['manager']) && \Bitrix\Main\Loader::includeModule('intranet'))
 			{
-				$departmentTree = \CIntranetUtils::GetDeparmentsTree();
-				$rootDepartment = (int)$departmentTree[0][0];
-
+				$structureService = \Bitrix\Voximplant\Integration\HumanResources\StructureService::getInstance();
+				$rootDepartment = $structureService->getRootDepartmentId();
 				if ($rootDepartment > 0)
 				{
 					\Bitrix\Voximplant\Model\RoleAccessTable::add([

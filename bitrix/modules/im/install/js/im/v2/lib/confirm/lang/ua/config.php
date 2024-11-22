@@ -11,3 +11,6 @@ $MESS["IM_LIB_CONFIRM_SWITCH_NOTIFICATION_MODE"] = "Перейти в прост
 $MESS["IM_LIB_CONFIRM_SWITCH_NOTIFICATION_MODE_YES"] = "Так";
 $MESS["IM_LIB_CONFIRM_USER_KICK"] = "Справді вилучити цього користувача?";
 $MESS["IM_LIB_CONFIRM_USER_KICK_YES"] = "Вилучити";
+$MESS["IM_LIB_EXIT_UPDATE_CHANNEL_TITLE"] = "Бажаєте зберегти зміни й перейти до керування підписниками?";
+$MESS["IM_LIB_EXIT_UPDATE_CHAT_TEXT_CONFIRM"] = "Так";
+$MESS["IM_LIB_EXIT_UPDATE_CHAT_TITLE"] = "Бажаєте зберегти зміни й перейти до керування учасниками чату?";

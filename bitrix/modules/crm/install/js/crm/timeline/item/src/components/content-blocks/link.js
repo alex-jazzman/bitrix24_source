@@ -58,6 +58,7 @@ export default {
 			}
 
 			const action = new Action(this.action);
+
 			if (!action.isRedirect())
 			{
 				return {};
@@ -67,6 +68,7 @@ export default {
 				href: action.getValue(),
 			};
 			const target = action.getActionParam('target');
+
 			if (target)
 			{
 				attrs.target = target;

@@ -18,7 +18,7 @@ import { $createMentionNode, MentionNode } from './mention-node';
 
 import type { Dialog, DialogOptions } from 'ui.entity-selector';
 import type { BaseEvent } from 'main.core.events';
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 import {
 	$getSelection,

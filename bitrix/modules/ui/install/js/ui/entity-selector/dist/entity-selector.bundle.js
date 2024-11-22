@@ -4163,6 +4163,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(this, "fontWeight", null);
 	    babelHelpers.defineProperty(this, "link", null);
 	    babelHelpers.defineProperty(this, "onclick", null);
+	    babelHelpers.defineProperty(this, "clickable", null);
 	    babelHelpers.defineProperty(this, "deselectable", null);
 	    babelHelpers.defineProperty(this, "customData", null);
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
@@ -4189,6 +4190,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.setTextColor(options.textColor);
 	    this.setBgColor(options.bgColor);
 	    this.setFontWeight(options.fontWeight);
+	    this.setClickable(options.clickable);
 	  }
 	  babelHelpers.createClass(TagItem, [{
 	    key: "getId",
@@ -4237,9 +4239,11 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getAvatar() {
 	      if (this.avatar !== null) {
 	        return this.avatar;
-	      } else if (this.getSelector().getTagAvatar() !== null) {
+	      }
+	      if (this.getSelector().getTagAvatar() !== null) {
 	        return this.getSelector().getTagAvatar();
-	      } else if (this.getEntityTagOption('avatar') !== null) {
+	      }
+	      if (this.getEntityTagOption('avatar') !== null) {
 	        return this.getEntityTagOption('avatar');
 	      }
 	      return this.getEntityItemOption('avatar');
@@ -4295,7 +4299,8 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getTextColor() {
 	      if (this.textColor !== null) {
 	        return this.textColor;
-	      } else if (this.getSelector().getTagTextColor() !== null) {
+	      }
+	      if (this.getSelector().getTagTextColor() !== null) {
 	        return this.getSelector().getTagTextColor();
 	      }
 	      return this.getEntityTagOption('textColor');
@@ -4312,7 +4317,8 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getBgColor() {
 	      if (this.bgColor !== null) {
 	        return this.bgColor;
-	      } else if (this.getSelector().getTagBgColor() !== null) {
+	      }
+	      if (this.getSelector().getTagBgColor() !== null) {
 	        return this.getSelector().getTagBgColor();
 	      }
 	      return this.getEntityTagOption('bgColor');
@@ -4329,7 +4335,8 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getFontWeight() {
 	      if (this.fontWeight !== null) {
 	        return this.fontWeight;
-	      } else if (this.getSelector().getTagFontWeight() !== null) {
+	      }
+	      if (this.getSelector().getTagFontWeight() !== null) {
 	        return this.getSelector().getTagFontWeight();
 	      }
 	      return this.getEntityTagOption('fontWeight');
@@ -4346,7 +4353,8 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getMaxWidth() {
 	      if (this.maxWidth !== null) {
 	        return this.maxWidth;
-	      } else if (this.getSelector().getTagMaxWidth() !== null) {
+	      }
+	      if (this.getSelector().getTagMaxWidth() !== null) {
 	        return this.getSelector().getTagMaxWidth();
 	      }
 	      return this.getEntityTagOption('maxWidth');
@@ -4368,7 +4376,7 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "isDeselectable",
 	    value: function isDeselectable() {
-	      return this.deselectable !== null ? this.deselectable : this.getSelector().isDeselectable();
+	      return this.deselectable === null ? this.getSelector().isDeselectable() : this.deselectable;
 	    }
 	  }, {
 	    key: "getCustomData",
@@ -4384,6 +4392,30 @@ this.BX.UI = this.BX.UI || {};
 	    key: "getOnclick",
 	    value: function getOnclick() {
 	      return this.onclick;
+	    }
+	  }, {
+	    key: "setClickable",
+	    value: function setClickable(flag) {
+	      if (main_core.Type.isBoolean(flag)) {
+	        this.clickable = flag;
+	      }
+	    }
+	  }, {
+	    key: "isClickable",
+	    value: function isClickable() {
+	      if (this.clickable !== null) {
+	        return this.clickable;
+	      }
+	      if (this.getSelector().getTagClickable() !== null) {
+	        return this.getSelector().getTagClickable();
+	      }
+	      if (this.getEntityTagOption('clickable') !== null) {
+	        return this.getEntityTagOption('clickable');
+	      }
+	      if (this.getEntityItemOption('clickable') !== null) {
+	        return this.getEntityItemOption('clickable');
+	      }
+	      return false;
 	    }
 	  }, {
 	    key: "render",
@@ -4443,7 +4475,8 @@ this.BX.UI = this.BX.UI || {};
 				<div class="ui-tag-selector-item ui-tag-selector-tag">
 					${0}
 					${0}
-				</div>`), this.getContentContainer(), this.getRemoveIcon());
+				</div>
+			`), this.getContentContainer(), this.getRemoveIcon());
 	      });
 	    }
 	  }, {
@@ -4462,19 +4495,17 @@ this.BX.UI = this.BX.UI || {};
 						${0}
 					</a>
 				`), this.handleContainerClick.bind(this), this.getLink(), this.getAvatarContainer(), this.getTitleContainer());
-	        } else {
-	          const className = main_core.Type.isFunction(this.getOnclick()) ? ' ui-tag-selector-tag-content--clickable' : '';
-	          return main_core.Tag.render(_t3$2 || (_t3$2 = _$5`
-					<div 
-						class="ui-tag-selector-tag-content${0}" 
-						onclick="${0}"
-					>
-						${0}
-						${0}
-					</div>
-					
-				`), className, this.handleContainerClick.bind(this), this.getAvatarContainer(), this.getTitleContainer());
 	        }
+	        const className = this.isClickable() || this.getOnclick() !== null ? ' ui-tag-selector-tag-content--clickable' : '';
+	        return main_core.Tag.render(_t3$2 || (_t3$2 = _$5`
+				<div
+					class="ui-tag-selector-tag-content${0}"
+					onclick="${0}"
+				>
+					${0}
+					${0}
+				</div>
+			`), className, this.handleContainerClick.bind(this), this.getAvatarContainer(), this.getTitleContainer());
 	      });
 	    }
 	  }, {
@@ -4532,6 +4563,8 @@ this.BX.UI = this.BX.UI || {};
 	        Animation.handleAnimationEnd(this.getContainer(), 'ui-tag-selector-tag-remove').then(() => {
 	          main_core.Dom.remove(this.getContainer());
 	          resolve();
+	        }).catch(() => {
+	          // Fail silently
 	        });
 	      });
 	    }
@@ -4543,6 +4576,8 @@ this.BX.UI = this.BX.UI || {};
 	        Animation.handleAnimationEnd(this.getContainer(), 'ui-tag-selector-tag-show').then(() => {
 	          main_core.Dom.removeClass(this.getContainer(), 'ui-tag-selector-tag--show');
 	          resolve();
+	        }).catch(() => {
+	          // Fail silently
 	        });
 	      });
 	    }
@@ -4553,6 +4588,10 @@ this.BX.UI = this.BX.UI || {};
 	      if (main_core.Type.isFunction(fn)) {
 	        fn(this);
 	      }
+	      const selector = this.getSelector();
+	      selector.emit('TagItem:onClick', {
+	        item: this
+	      });
 	    }
 	  }, {
 	    key: "handleRemoveIconClick",
@@ -4609,6 +4648,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "tagBgColor", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "tagFontWeight", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "tagMaxWidth", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "tagClickable", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "dialog", null);
 	    _this.setEventNamespace('BX.UI.EntitySelector.TagSelector');
 	    const options = main_core.Type.isPlainObject(selectorOptions) ? selectorOptions : {};
@@ -4633,6 +4673,7 @@ this.BX.UI = this.BX.UI || {};
 	    _this.setTagTextColor(options.tagTextColor);
 	    _this.setTagBgColor(options.tagBgColor);
 	    _this.setTagFontWeight(options.tagFontWeight);
+	    _this.setTagClickable(options.tagClickable);
 	    if (main_core.Type.isPlainObject(options.dialogOptions)) {
 	      let selectedItems = main_core.Type.isArray(options.items) ? options.items : [];
 	      if (main_core.Type.isArray(options.dialogOptions.selectedItems)) {
@@ -5037,6 +5078,19 @@ this.BX.UI = this.BX.UI || {};
 	    value: function setTagAvatar(tagAvatar) {
 	      if (main_core.Type.isString(tagAvatar) || tagAvatar === null) {
 	        this.tagAvatar = tagAvatar;
+	        this.updateTags();
+	      }
+	    }
+	  }, {
+	    key: "getTagClickable",
+	    value: function getTagClickable() {
+	      return this.tagClickable;
+	    }
+	  }, {
+	    key: "setTagClickable",
+	    value: function setTagClickable(flag) {
+	      if (main_core.Type.isBoolean(flag) || flag === null) {
+	        this.tagClickable = flag;
 	        this.updateTags();
 	      }
 	    }

@@ -1,6 +1,6 @@
-/* eslint-disable  */
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ai_engine,main_popup,main_core_events,ui_vue3_components_hint,main_core,ui_vue3_pinia,ui_label,ui_iconSet_api_vue,ui_iconSet_api_core) {
+(function (exports,ai_engine,ui_notification,main_popup,ui_vue3_components_hint,ui_label,ui_iconSet_animated,ui_iconSet_api_vue,ui_iconSet_api_core,main_core,main_core_events,ui_vue3_pinia) {
 	'use strict';
 
 	let _ = t => t,
@@ -254,8 +254,8 @@ this.BX = this.BX || {};
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _getFormattedExtraParams)[_getFormattedExtraParams](extraParams)
 	    };
 	    sendData(sendDataOptions);
-	  } catch (er) {
-	    console.error('AI: RolesDialog: Can\'t send analytics', er);
+	  } catch (e) {
+	    console.error('AI: RolesDialog: Can\'t send analytics', e);
 	  }
 	}
 	function _getCommonParameters2() {
@@ -513,6 +513,12 @@ this.BX = this.BX || {};
 	      RolesDialogRoleItemAvatar,
 	      RolesDialogLabelNew
 	    },
+	    data() {
+	      return {
+	        isFavourite: this.itemData.itemData.customData.isFavourite,
+	        isProcessingRoleFavourite: false
+	      };
+	    },
 	    props: ['itemData'],
 	    computed: {
 	      ...ui_vue3_pinia.mapWritableState(States.useGlobalState, {
@@ -554,11 +560,24 @@ this.BX = this.BX || {};
 	          '--selected': this.isSelected
 	        };
 	      },
-	      selectedIconData() {
+	      isRoleCanBeFavourite() {
+	        return this.item.customData.canBeFavourite === true;
+	      },
+	      favouriteLabelIconData() {
+	        const iconName = this.isProcessingRoleFavourite ? ui_iconSet_api_core.Animated.LOADER_WAIT : ui_iconSet_api_core.Main.BOOKMARK_1;
 	        return {
-	          name: ui_iconSet_api_core.Main.CHECK,
-	          color: this.getUiTokenValue('--ui-color-copilot-soft') || '#B095DC',
-	          size: 16
+	          name: iconName,
+	          size: 24
+	        };
+	      },
+	      favouriteLabelTitle() {
+	        return this.isFavourite ? this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE') : this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE');
+	      },
+	      favouriteLabelClassname() {
+	        return {
+	          'ai__roles-dialog_role-item-favourite-label': true,
+	          '--active': this.isFavourite,
+	          '--loading': this.isProcessingRoleFavourite
 	        };
 	      },
 	      infoIcon() {
@@ -571,36 +590,54 @@ this.BX = this.BX || {};
 	          this.item.button.action();
 	        }
 	      },
-	      getUiTokenValue(token) {
-	        getComputedStyle(document.body).getPropertyValue(token);
+	      toggleFavourite() {
+	        if (this.isProcessingRoleFavourite) {
+	          return;
+	        }
+	        let isRequestFinished = false;
+	        setTimeout(() => {
+	          if (isRequestFinished === false) {
+	            this.isProcessingRoleFavourite = true;
+	          }
+	        }, 300);
+
+	        // eslint-disable-next-line promise/catch-or-return
+	        this.item.customData.actions.toggleFavourite(!this.isFavourite).then(() => {
+	          this.isFavourite = !this.isFavourite;
+	        }).finally(() => {
+	          this.isProcessingRoleFavourite = false;
+	          isRequestFinished = true;
+	        });
 	      }
 	    },
 	    template: `
 			<article @click="selectRole" :class="className">
-			  <RolesDialogRoleItemAvatar
-			      :avatar="item.customData.avatar"
-			      :avatar-alt="item.title"
-			      :icon="isInfoItem ? infoIcon : null"
-			  />
-			  <div class="ai__roles-dialog_role-item-info">
-			    <div class="ai__roles-dialog_role-item-title-wrapper">
-					<div class="ai__roles-dialog_role-item-title" v-html="title"></div>
-					<div class="ai__roles-dialog_role-item-label">
-						<RolesDialogLabelNew v-if="isNew" />
+				<RolesDialogRoleItemAvatar
+					:avatar="item.customData.avatar"
+					:avatar-alt="item.title"
+					:icon="isInfoItem ? infoIcon : null"
+				/>
+				<div class="ai__roles-dialog_role-item-info">
+					<div class="ai__roles-dialog_role-item-title-wrapper">
+						<div class="ai__roles-dialog_role-item-title" v-html="title"></div>
+						<div class="ai__roles-dialog_role-item-label">
+							<RolesDialogLabelNew v-if="isNew" />
+						</div>
 					</div>
-			    </div>
-			    <p class="ai__roles-dialog_role-item-description" v-html="subtitle"></p>
-			  </div>
-			  <div
-			      v-if="isSelected"
-			      class="ai__roles-dialog_role-item-select-icon"
-			  >
-			    <BIcon
-			        :name="selectedIconData.name"
-			        :size="selectedIconData.size"
-			        :color="selectedIconData.color"
-			    />
-			  </div>
+					<p class="ai__roles-dialog_role-item-description" v-html="subtitle"></p>
+				</div>
+				<button
+					v-if="isRoleCanBeFavourite"
+					:class="favouriteLabelClassname"
+					:title="favouriteLabelTitle"
+					@click.stop.prevent="toggleFavourite"
+					@mousedown.stop
+				>
+					<BIcon
+						:name="favouriteLabelIconData.name"
+						:size="favouriteLabelIconData.size"
+					/>
+				</button>
 			</article>
 		`
 	  };
@@ -660,31 +697,85 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const RolesDialogSearchStubEvents = {
+	  CHOOSE_STANDARD_ROLE: 'AI.RolesDialog.RolesDialogSearchStub:ChooseStandardRole'
+	};
+	const textWithLink = main_core.Loc.getMessage('AI_COPILOT_ROLES_SEARCH_NO_RESULT_3', {
+	  '#LINK#': '<span @click.prevent="selectUniversalRole">',
+	  '#/LINK#': '</span>'
+	});
 	const RolesDialogSearchStub = {
+	  methods: {
+	    selectUniversalRole() {
+	      main_core_events.EventEmitter.emit(document, RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE);
+	    }
+	  },
 	  template: `
 		<div class="ai__roles-dialog_search-stub">
 			<div class="ai__roles-dialog_search-stub-content">
 				<div class="ai__roles-dialog_search-stub-image"></div>
+				<h3 class="ai__roles-dialog_search-stub-title">
+					{{ $Bitrix.Loc.getMessage('AI_COPILOT_ROLES_SEARCH_NO_RESULT_TITLE') }}
+				</h3>
 				<div class="ai__roles-dialog_search-stub-text">
-					{{ $Bitrix.Loc.getMessage('AI_COPILOT_ROLES_SEARCH_NO_RESULT_2') }}
+					${textWithLink}
 				</div>
 			</div>
 		</div>
 	`
 	};
 
+	const getRolesDialogEmptyGroupStubWithStates = States => {
+	  return {
+	    computed: {
+	      ...ui_vue3_pinia.mapWritableState(States.useGlobalState, {
+	        currentGroup: 'currentGroup'
+	      }),
+	      emptyStubData() {
+	        return this.currentGroup.customData.emptyStubData;
+	      },
+	      groupCode() {
+	        return this.currentGroup.id;
+	      },
+	      title() {
+	        return this.emptyStubData.title;
+	      },
+	      description() {
+	        return this.emptyStubData.description;
+	      }
+	    },
+	    template: `
+			<div class="ai__roles-dialog_empty-group-stub">
+				<div class="ai__roles-dialog_empty-group-stub-content">
+					<div
+						class="ai__roles-dialog_empty-group-stub-image"
+						:class="'--' + groupCode"
+					></div>
+					<h3 class="ai__roles-dialog_empty-group-stub-title">
+						{{ title }}
+					</h3>
+					<div class="ai__roles-dialog_empty-group-stub-text">
+						{{ description }}
+					</div>
+				</div>
+			</div>
+		`
+	  };
+	};
+
 	const RolesDialogEvents = {
 	  HIDE: 'hide',
-	  SELECT_ROLE: 'select-role',
-	  SELECT_DEFAULT_ROLE: 'select-default-role'
+	  SELECT_ROLE: 'select-role'
 	};
 	const RECOMMENDED_GROUP_CODE = 'recommended';
 	const RECENT_GROUP_CODE = 'recents';
+	const FAVOURITE_GROUP_CODE = 'favorites';
 	var _entityCatalog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCatalog");
 	var _engine = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("engine");
 	var _analytic = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytic");
 	var _roles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roles");
 	var _recentRoles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recentRoles");
+	var _favouriteRoles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("favouriteRoles");
 	var _defaultRoleCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("defaultRoleCode");
 	var _industries = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("industries");
 	var _selectedDefaultRoleHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedDefaultRoleHandler");
@@ -703,22 +794,41 @@ this.BX = this.BX || {};
 	var _initEntityCatalog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initEntityCatalog");
 	var _getSlots = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSlots");
 	var _getInfoItemData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInfoItemData");
-	var _getAllIndustryCodes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAllIndustryCodes");
+	var _getAllIndustryCodesWithExcludes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAllIndustryCodesWithExcludes");
 	var _loadData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadData");
 	var _getRecommendedRoleIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecommendedRoleIndustry");
 	var _getRecentRoleIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentRoleIndustry");
+	var _getFavouriteRoleIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFavouriteRoleIndustry");
 	var _getItemsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemsData");
 	var _getUniversalRoleItemData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUniversalRoleItemData");
 	var _getItemGroupsFromIndustries = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemGroupsFromIndustries");
 	var _getItemGroupDataFromIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemGroupDataFromIndustry");
 	var _getRecentItemGroupData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentItemGroupData");
 	var _compareRecentItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("compareRecentItems");
+	var _getFavouriteItemGroupData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFavouriteItemGroupData");
+	var _compareFavouriteItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("compareFavouriteItems");
 	var _getItemDataFromRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemDataFromRole");
 	var _getSelectedGroupIndex = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectedGroupIndex");
 	var _isSelectedIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSelectedIndustry");
+	var _isRoleInFavouriteList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRoleInFavouriteList");
+	var _toggleRoleFavourite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleRoleFavourite");
+	var _addRoleToFavouriteList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addRoleToFavouriteList");
+	var _removeRoleFromFavouriteList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeRoleFromFavouriteList");
 	class RolesDialog extends main_core_events.EventEmitter {
 	  constructor(_options) {
 	    super(_options);
+	    Object.defineProperty(this, _removeRoleFromFavouriteList, {
+	      value: _removeRoleFromFavouriteList2
+	    });
+	    Object.defineProperty(this, _addRoleToFavouriteList, {
+	      value: _addRoleToFavouriteList2
+	    });
+	    Object.defineProperty(this, _toggleRoleFavourite, {
+	      value: _toggleRoleFavourite2
+	    });
+	    Object.defineProperty(this, _isRoleInFavouriteList, {
+	      value: _isRoleInFavouriteList2
+	    });
 	    Object.defineProperty(this, _isSelectedIndustry, {
 	      value: _isSelectedIndustry2
 	    });
@@ -727,6 +837,12 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _getItemDataFromRole, {
 	      value: _getItemDataFromRole2
+	    });
+	    Object.defineProperty(this, _compareFavouriteItems, {
+	      value: _compareFavouriteItems2
+	    });
+	    Object.defineProperty(this, _getFavouriteItemGroupData, {
+	      value: _getFavouriteItemGroupData2
 	    });
 	    Object.defineProperty(this, _compareRecentItems, {
 	      value: _compareRecentItems2
@@ -746,6 +862,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _getItemsData, {
 	      value: _getItemsData2
 	    });
+	    Object.defineProperty(this, _getFavouriteRoleIndustry, {
+	      value: _getFavouriteRoleIndustry2
+	    });
 	    Object.defineProperty(this, _getRecentRoleIndustry, {
 	      value: _getRecentRoleIndustry2
 	    });
@@ -755,8 +874,8 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _loadData, {
 	      value: _loadData2
 	    });
-	    Object.defineProperty(this, _getAllIndustryCodes, {
-	      value: _getAllIndustryCodes2
+	    Object.defineProperty(this, _getAllIndustryCodesWithExcludes, {
+	      value: _getAllIndustryCodesWithExcludes2
 	    });
 	    Object.defineProperty(this, _getInfoItemData, {
 	      value: _getInfoItemData2
@@ -805,6 +924,10 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _recentRoles, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _favouriteRoles, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -918,9 +1041,11 @@ this.BX = this.BX || {};
 	function _subscribeEvents2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler] = babelHelpers.classPrivateFieldLooseBase(this, _selectDefaultRole)[_selectDefaultRole].bind(this);
 	  main_core_events.EventEmitter.subscribe(document, RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
+	  main_core_events.EventEmitter.subscribe(document, RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
 	}
 	function _unsubscribeEvents2() {
 	  main_core_events.EventEmitter.unsubscribe(document, RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
+	  main_core_events.EventEmitter.unsubscribe(document, RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
 	}
 	function _selectRole2(role) {
 	  const event = new main_core_events.BaseEvent({
@@ -936,10 +1061,10 @@ this.BX = this.BX || {};
 	  this.setSelectedRoleCode(babelHelpers.classPrivateFieldLooseBase(this, _defaultRoleCode)[_defaultRoleCode]);
 	  const event = new main_core_events.BaseEvent({
 	    data: {
-	      code: babelHelpers.classPrivateFieldLooseBase(this, _defaultRoleCode)[_defaultRoleCode]
+	      role: babelHelpers.classPrivateFieldLooseBase(this, _universalRole)[_universalRole]
 	    }
 	  });
-	  this.emit(RolesDialogEvents.SELECT_DEFAULT_ROLE, event);
+	  this.emit(RolesDialogEvents.SELECT_ROLE, event);
 	  babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].close();
 	}
 	async function _init2() {
@@ -954,13 +1079,15 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog] = new EntityCatalog({
 	    title: babelHelpers.classPrivateFieldLooseBase(this, _title)[_title],
 	    showSearch: true,
+	    showEmptyGroups: true,
 	    customComponents: {
 	      RolesDialogContentHeader: getRolesDialogContentHeader(States, babelHelpers.classPrivateFieldLooseBase(this, _analytic)[_analytic]),
 	      RolesDialogRoleItem: getRolesDialogRoleItemWithStates(States),
 	      RolesDialogGroupListHeader,
 	      RolesDialogGroupItem,
 	      RolesDialogGroupListFooter,
-	      RolesDialogSearchStub
+	      RolesDialogSearchStub,
+	      RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States)
 	    },
 	    popupOptions: {
 	      className: 'ai_roles-dialog_popup ui-entity-catalog__scope',
@@ -989,7 +1116,8 @@ this.BX = this.BX || {};
 	    [EntityCatalog.SLOT_MAIN_CONTENT_HEADER]: '<RolesDialogContentHeader />',
 	    [EntityCatalog.SLOT_MAIN_CONTENT_ITEM]: '<RolesDialogRoleItem :itemData="itemSlotProps" />',
 	    [EntityCatalog.SLOT_GROUP]: '<RolesDialogGroupItem :groupData="groupSlotProps" />',
-	    [EntityCatalog.SLOT_GROUP_LIST_HEADER]: '<RolesDialogGroupListHeader />'
+	    [EntityCatalog.SLOT_GROUP_LIST_HEADER]: '<RolesDialogGroupListHeader />',
+	    [EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />'
 	  };
 	  if (EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB) {
 	    slots[EntityCatalog.SLOT_MAIN_CONTENT_NO_SELECTED_GROUP_STUB] = '<RolesDialogSearchStub />';
@@ -1002,7 +1130,7 @@ this.BX = this.BX || {};
 	    id: 'info-item-data',
 	    title: main_core.Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_TITLE'),
 	    subtitle: main_core.Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION'),
-	    groupIds: babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodes)[_getAllIndustryCodes](),
+	    groupIds: babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodesWithExcludes)[_getAllIndustryCodesWithExcludes]([FAVOURITE_GROUP_CODE]),
 	    customData: {
 	      isInfoItem: true
 	    },
@@ -1047,9 +1175,12 @@ this.BX = this.BX || {};
 	    }
 	  };
 	}
-	function _getAllIndustryCodes2() {
+	function _getAllIndustryCodesWithExcludes2(excludesCodes) {
+	  const excludes = new Set(excludesCodes);
 	  return babelHelpers.classPrivateFieldLooseBase(this, _industries)[_industries].map(industry => {
 	    return industry.code;
+	  }).filter(industryCode => {
+	    return excludes.has(industryCode) === false;
 	  });
 	}
 	async function _loadData2() {
@@ -1068,12 +1199,13 @@ this.BX = this.BX || {};
 	      isNew
 	    };
 	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _industries)[_industries].unshift(babelHelpers.classPrivateFieldLooseBase(this, _getRecentRoleIndustry)[_getRecentRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getRecommendedRoleIndustry)[_getRecommendedRoleIndustry]());
+	  babelHelpers.classPrivateFieldLooseBase(this, _industries)[_industries].unshift(babelHelpers.classPrivateFieldLooseBase(this, _getRecentRoleIndustry)[_getRecentRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getFavouriteRoleIndustry)[_getFavouriteRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getRecommendedRoleIndustry)[_getRecommendedRoleIndustry]());
 	  babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = result.data.items.reduce((roles, roleIndustry) => {
 	    const industryRoles = roleIndustry.roles;
 	    return [...roles, ...industryRoles];
 	  }, []);
 	  babelHelpers.classPrivateFieldLooseBase(this, _recentRoles)[_recentRoles] = result.data.recents;
+	  babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles] = result.data.favorites;
 	  babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = [...babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]];
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode] = babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode] || null;
 	}
@@ -1089,6 +1221,12 @@ this.BX = this.BX || {};
 	    name: main_core.Loc.getMessage('AI_COPILOT_ROLES_RECENT_GROUP')
 	  };
 	}
+	function _getFavouriteRoleIndustry2() {
+	  return {
+	    code: FAVOURITE_GROUP_CODE,
+	    name: main_core.Loc.getMessage('AI_COPILOT_ROLES_FAVOURITE_GROUP')
+	  };
+	}
 	function _getItemsData2() {
 	  let selectedRole = null;
 	  const items = babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles].map(role => {
@@ -1098,6 +1236,9 @@ this.BX = this.BX || {};
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _recentRoles)[_recentRoles].findIndex(recentRole => recentRole.code === role.code) > -1) {
 	      groupIds.push(RECENT_GROUP_CODE);
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles].findIndex(favouriteRole => favouriteRole.code === role.code) > -1) {
+	      groupIds.push(FAVOURITE_GROUP_CODE);
 	    }
 	    if (role.code === babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode]) {
 	      selectedRole = babelHelpers.classPrivateFieldLooseBase(this, _getItemDataFromRole)[_getItemDataFromRole](role, groupIds);
@@ -1113,16 +1254,20 @@ this.BX = this.BX || {};
 	}
 	function _getUniversalRoleItemData2() {
 	  const role = babelHelpers.classPrivateFieldLooseBase(this, _universalRole)[_universalRole];
-	  const groupIds = [...babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodes)[_getAllIndustryCodes]()];
+	  const groupIds = [...babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodesWithExcludes)[_getAllIndustryCodesWithExcludes]([FAVOURITE_GROUP_CODE])];
 	  return babelHelpers.classPrivateFieldLooseBase(this, _getItemDataFromRole)[_getItemDataFromRole](role, groupIds);
 	}
 	function _getItemGroupsFromIndustries2() {
 	  const selectedGroupIndex = babelHelpers.classPrivateFieldLooseBase(this, _getSelectedGroupIndex)[_getSelectedGroupIndex]();
 	  const groups = babelHelpers.classPrivateFieldLooseBase(this, _industries)[_industries].map((industry, index) => {
+	    const isSelectedRole = index === selectedGroupIndex;
 	    if (industry.code === RECENT_GROUP_CODE) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _getRecentItemGroupData)[_getRecentItemGroupData](index === selectedGroupIndex);
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getRecentItemGroupData)[_getRecentItemGroupData](isSelectedRole);
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupDataFromIndustry)[_getItemGroupDataFromIndustry](industry, index === selectedGroupIndex);
+	    if (industry.code === FAVOURITE_GROUP_CODE) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getFavouriteItemGroupData)[_getFavouriteItemGroupData](isSelectedRole);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupDataFromIndustry)[_getItemGroupDataFromIndustry](industry, isSelectedRole);
 	  });
 	  return [[...groups]];
 	}
@@ -1152,7 +1297,27 @@ this.BX = this.BX || {};
 	  }
 	  return item1Index - item2Index;
 	}
+	function _getFavouriteItemGroupData2(isSelected = false) {
+	  return {
+	    ...babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupDataFromIndustry)[_getItemGroupDataFromIndustry](babelHelpers.classPrivateFieldLooseBase(this, _getFavouriteRoleIndustry)[_getFavouriteRoleIndustry](), isSelected),
+	    compare: (item1, item2) => {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _compareFavouriteItems)[_compareFavouriteItems](item1, item2);
+	    },
+	    customData: {
+	      emptyStubData: {
+	        title: main_core.Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE'),
+	        description: main_core.Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP')
+	      }
+	    }
+	  };
+	}
+	function _compareFavouriteItems2(item1, item2) {
+	  const item1Index = babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles].findIndex(rr => item1.id === rr.code) + 1;
+	  const item2Index = babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles].findIndex(rr => item2.id === rr.code) + 1;
+	  return item1Index - item2Index;
+	}
 	function _getItemDataFromRole2(role, groupIds = []) {
+	  const isRoleInFavouriteList = babelHelpers.classPrivateFieldLooseBase(this, _isRoleInFavouriteList)[_isRoleInFavouriteList](role.code);
 	  return {
 	    groupIds,
 	    id: role.code,
@@ -1170,7 +1335,15 @@ this.BX = this.BX || {};
 	    customData: {
 	      selected: role.code === babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode],
 	      avatar: role.avatar.medium,
-	      isNew: role.isNew
+	      isNew: role.isNew,
+	      isFavourite: isRoleInFavouriteList,
+	      canBeFavourite: role.code !== babelHelpers.classPrivateFieldLooseBase(this, _universalRole)[_universalRole].code,
+	      actions: {
+	        toggleFavourite: makeItFavourite => {
+	          const roleCode = role.code;
+	          return babelHelpers.classPrivateFieldLooseBase(this, _toggleRoleFavourite)[_toggleRoleFavourite](roleCode, makeItFavourite);
+	        }
+	      }
 	    }
 	  };
 	}
@@ -1187,9 +1360,62 @@ this.BX = this.BX || {};
 	  });
 	  return (selectedItem == null ? void 0 : selectedItem.groupIds.includes(industry.code)) || false;
 	}
+	function _isRoleInFavouriteList2(roleCode) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles].some(role => {
+	    return role.code === roleCode;
+	  });
+	}
+	async function _toggleRoleFavourite2(roleCode, makeFavourite) {
+	  const role = roleCode === babelHelpers.classPrivateFieldLooseBase(this, _universalRole)[_universalRole].code ? babelHelpers.classPrivateFieldLooseBase(this, _universalRole)[_universalRole] : babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles].find(currentRole => currentRole.code === roleCode);
+	  if (!role && roleCode !== babelHelpers.classPrivateFieldLooseBase(this, _universalRole)[_universalRole].code) {
+	    const failedMessage = makeFavourite ? main_core.Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_ACTION_FAILED') : main_core.Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_ACTION_FAILED');
+	    ui_notification.UI.Notification.Center.notify({
+	      content: failedMessage
+	    });
+	    return Promise.reject();
+	  }
+	  if (makeFavourite) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _addRoleToFavouriteList)[_addRoleToFavouriteList](role.code, role.name);
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _removeRoleFromFavouriteList)[_removeRoleFromFavouriteList](role.code, role.name);
+	}
+	async function _addRoleToFavouriteList2(roleCode, roleName) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _engine)[_engine].addRoleToFavouriteList(roleCode).then(res => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles] = res.data.items;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setItems(babelHelpers.classPrivateFieldLooseBase(this, _getItemsData)[_getItemsData]());
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setGroups(babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupsFromIndustries)[_getItemGroupsFromIndustries]());
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS', {
+	        '#ROLE#': roleName
+	      })
+	    });
+	  }).catch(err => {
+	    console.error(err);
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_ACTION_FAILED')
+	    });
+	  });
+	}
+	async function _removeRoleFromFavouriteList2(roleCode, roleName) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _engine)[_engine].removeRoleFromFavouriteList(roleCode).then(res => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles] = res.data.items;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setItems(babelHelpers.classPrivateFieldLooseBase(this, _getItemsData)[_getItemsData]());
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setGroups(babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupsFromIndustries)[_getItemGroupsFromIndustries]());
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_NOTIFICATION_SUCCESS', {
+	        '#ROLE#': roleName
+	      })
+	    });
+	  }).catch(err => {
+	    console.error(err);
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_ACTION_FAILED')
+	    });
+	  });
+	}
 
 	exports.RolesDialogEvents = RolesDialogEvents;
 	exports.RolesDialog = RolesDialog;
 
-}((this.BX.AI = this.BX.AI || {}),BX.AI,BX.Main,BX.Event,BX.Vue3.Components,BX,BX.Vue3.Pinia,BX.UI,BX.UI.IconSet,BX.UI.IconSet));
+}((this.BX.AI = this.BX.AI || {}),BX.AI,BX,BX.Main,BX.Vue3.Components,BX.UI,BX,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Event,BX.Vue3.Pinia));
 //# sourceMappingURL=roles-dialog.bundle.js.map

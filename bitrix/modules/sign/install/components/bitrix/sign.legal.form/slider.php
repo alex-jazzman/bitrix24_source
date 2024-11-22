@@ -1,14 +1,5 @@
 <?php
 
-//define("NOT_CHECK_PERMISSIONS", true);
-//define("STOP_STATISTICS", true);
-//define("NO_KEEP_STATISTIC", "Y");
-//define("NO_AGENT_STATISTIC","Y");
-//define("DisableEventsCheck", true);
-
-use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Type\Document\EntityType;
-
 $siteId = '';
 if (isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 {
@@ -32,6 +23,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_NAME' => 'bitrix:sign.legal.form',
 		'POPUP_COMPONENT_PARAMS' => [
 			'PROFILE_ID' => (int)$request->get('profileId'),
+			'~ENABLE_COMMON_CONFIGURATION_UPDATE' => true,
 		],
 		'USE_PADDING' => false,
 		'USE_UI_TOOLBAR' => 'N',

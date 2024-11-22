@@ -288,6 +288,15 @@ export default {
 				.setActivityDirection(activityDirection)
 				.buildData(),
 		);
+
+		sendData(
+			Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+				.setTool(Dictionary.TOOL_CRM)
+				.setCategory(Dictionary.CATEGORY_AI_OPERATIONS)
+				.setElement(element)
+				.setActivityDirection(activityDirection)
+				.buildData(),
+		);
 	},
 };
 

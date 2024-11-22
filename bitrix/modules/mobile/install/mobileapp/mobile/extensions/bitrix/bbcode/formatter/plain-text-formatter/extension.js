@@ -9,6 +9,8 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 		TextFormatter,
 		TableFormatter,
 		CodeFormatter,
+		ListFormatter,
+		ListItemFormatter,
 	} = require('bbcode/formatter/shared');
 
 	class PlainTextFormatter extends Formatter
@@ -23,6 +25,7 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 		 *     diskRenderType?: 'link' | 'file' | 'text' | 'placeholder' | 'none',
 		 *     tableRenderType?: 'link' | 'placeholder' | 'none',
 		 *     codeRenderType?: 'code' | 'text' | 'placeholder' | 'none',
+		 *     listRenderType?: 'list' | 'text' | 'placeholder' | 'none',
 		 * }}
 		 */
 		constructor(options = {})
@@ -48,6 +51,14 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 				new CodeFormatter({
 					name: 'code',
 					renderType: options.codeRenderType || 'text',
+				}),
+				new ListItemFormatter({
+					name: '*',
+					renderType: options.listRenderType || 'text',
+				}),
+				new ListFormatter({
+					name: 'list',
+					renderType: options.listRenderType || 'text',
 				}),
 				new MentionFormatter({
 					name: 'user',

@@ -7,16 +7,28 @@
 	--crm-timeline__editable-text_font-size: var(--ui-font-size-xl, 14px);
 	--crm-timeline__editable-text_line-height: var(--ui-font-line-height-md, 1.4);
 	--crm-timeline__editable-text_max-height: 124px;
-	--crm-timeline__editable-text_padding-top: 11px;
-	--crm-timeline__editable-text_padding-bottom: 11px;
+	--crm-timeline__editable-text_padding-top: 1px;
+	--crm-timeline__editable-text_padding-bottom: 1px;
+	--crm-timeline__editable-text_padding-left: 17px;
+	--crm-timeline__editable-text_padding-right: 40px;
 	--crm-timeline__editable-text_bg-color: var(--crm-timeline__card-color-background);
-	padding: var(--crm-timeline__editable-text_padding-top) 40px var(--crm-timeline__editable-text_padding-bottom) 17px;
+	padding: var(--crm-timeline__editable-text_padding-top) var(--crm-timeline__editable-text_padding-right) var(--crm-timeline__editable-text_padding-bottom) var(--crm-timeline__editable-text_padding-left);
 	position: relative;
 	z-index: 1;
 	border-radius: var(--ui-border-radius-lg, 12px);
 	border: var( --ui-border-width-thin) solid rgba(0, 0, 0, 0.1);
 	background-color:  var(--crm-timeline__editable-text_bg-color);
 	margin-right: 20px;
+}
+
+.crm-timeline__editable-text.--is-edit,
+.crm-timeline__editable-text_wrapper.--comment .crm-timeline__editable-text {
+	--crm-timeline__editable-text_padding-top: 11px;
+	--crm-timeline__editable-text_padding-bottom: 11px;
+}
+
+.crm-timeline__editable-text_wrapper:not(.--comment) .crm-timeline__editable-text.--is-edit {
+	--crm-timeline__editable-text_padding-top: 1px;
 }
 
 .crm-timeline__editable-text.--bg-color-yellow {
@@ -28,30 +40,12 @@
 }
 
 .crm-timeline__editable-text.--height-short {
-	--crm-timeline__editable-text_max-height: 44px;
-}
-
-.crm-timeline__editable-text.--height-short .crm-timeline__editable-text_text {
-	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-width: calc(100% - 1px);
-	white-space: nowrap;
-}
-
-
-.crm-timeline__editable-text.--height-short::after {
-	display: none;
+	--crm-timeline__editable-text_max-height: 66px;
 }
 
 .crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_inner {
 	max-height: none;
 	overflow: unset;
-}
-
-.crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_text {
-	display: inline;
-	white-space: break-spaces;
 }
 
 .crm-timeline__editable-text.--is-expanded::after {
@@ -89,6 +83,7 @@
 	transition: box-shadow 0.2s linear;
 	cursor: pointer;
 	white-space: nowrap;
+	z-index: 1;
 }
 
 .crm-timeline__editable-text_collapse-btn:hover,
@@ -99,7 +94,7 @@
 
 .crm-timeline__editable-text_inner {
 	box-sizing: border-box;
-	max-height: calc(var(--crm-timeline__editable-text_max-height) - var(--crm-timeline__editable-text_padding-bottom) * 2);
+	max-height: calc(var(--crm-timeline__editable-text_max-height) - var(--crm-timeline__editable-text_padding-top) - var(--crm-timeline__editable-text_padding-bottom));
 	overflow-y: hidden;
 }
 
@@ -119,7 +114,7 @@
 	content: '';
 	display: block;
 	position: absolute;
-	bottom: 11px;
+	bottom: var(--crm-timeline__editable-text_padding-bottom);
 	left: 2px;
 	border-bottom-left-radius: var(--ui-border-radius-lg, 12px);
 	border-bottom-right-radius: var(--ui-border-radius-lg, 12px);
@@ -132,6 +127,9 @@
 	position: relative;
 	min-height: 19.68px;
 	min-width: 100%;
+
+	--ui-typography-font-size: var(--ui-font-size-md);
+	--ui-typography-block-space-stack: 15px;
 }
 
 .crm-timeline__editable-text_text {
@@ -139,7 +137,6 @@
 	padding: 0;
 	box-sizing: border-box;
 	white-space: pre-wrap;
-	height: 24px;
 	width: 100%;
 	font-family: inherit;
 	font-size: var(--ui-font-size-md, 14px);

@@ -158,155 +158,6 @@ this.BX = this.BX || {};
 	  _t4,
 	  _t5,
 	  _t6;
-	const styleItems = [{
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_NONE'),
-	  value: 'None',
-	  classNameModifier: 'none'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_CINEMATIC_DEFAULT'),
-	  value: 'cinematic-default',
-	  classNameModifier: 'cinematic-default'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_SAI_CINEMATIC'),
-	  value: 'sai-cinematic',
-	  classNameModifier: 'sai-cinematic'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_SAI_ENHANCE'),
-	  value: 'sai-enhance',
-	  classNameModifier: 'sai-enhance'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_SAI_LINE_ART'),
-	  value: 'sai-line art',
-	  classNameModifier: 'sai-line-art'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_SAI_PHOTOGRAPHIC'),
-	  value: 'sai-photographic',
-	  classNameModifier: 'sai-photographic'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_SAI_TEXTURE'),
-	  value: 'sai-texture',
-	  classNameModifier: 'sai-texture'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_ADVERTISING'),
-	  value: 'ads-advertising',
-	  classNameModifier: 'ads-advertising'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_AUTOMOTIVE'),
-	  value: 'ads-automotive',
-	  classNameModifier: 'ads-automotive'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_CORPORATE'),
-	  value: 'ads-corporate',
-	  classNameModifier: 'ads-corporate'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_FASHION_EDITORIAL'),
-	  value: 'ads-fashion editorial',
-	  classNameModifier: 'ads-fashion-editorial'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_FOOD_PHOTOGRAPHY'),
-	  value: 'ads-food photography',
-	  classNameModifier: 'ads-food-photography'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_LUXURY'),
-	  value: 'ads-luxury',
-	  classNameModifier: 'ads-luxury'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_REAL_ESTATE'),
-	  value: 'ads-real-estate',
-	  classNameModifier: 'ads-real-estate'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ADS_RETAIL'),
-	  value: 'ads-retail',
-	  classNameModifier: 'ads-retail'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ABSTRACT'),
-	  value: 'artstyle-abstract',
-	  classNameModifier: 'artstyle-abstract'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ABSTRACT_EXPRESSIONISM'),
-	  value: 'artstyle-abstract expressionism',
-	  classNameModifier: 'artstyle-abstract-expressionism'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ART_DECO'),
-	  value: 'artstyle-art deco',
-	  classNameModifier: 'artstyle-art-deco'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_ART_NOUVEAU'),
-	  value: 'artstyle-art nouveau',
-	  classNameModifier: 'artstyle-art-nouveau'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_CONSTRUCTIVIST'),
-	  value: 'artstyle-constructivist',
-	  classNameModifier: 'artstyle-constructivist'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_CUBIST'),
-	  value: 'artstyle-cubist',
-	  classNameModifier: 'artstyle-cubist'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_EXPRESSIONIST'),
-	  value: 'artstyle-expressionist',
-	  classNameModifier: 'artstyle-expressionist'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_GRAFFITI'),
-	  value: 'artstyle-graffiti',
-	  classNameModifier: 'artstyle-graffiti'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_HYPERREALISM'),
-	  value: 'artstyle-hyperrealism',
-	  classNameModifier: 'artstyle-hyperrealism'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_IMPRESSIONIST'),
-	  value: 'artstyle-impressionist',
-	  classNameModifier: 'artstyle-impressionist'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_POINTILLISM'),
-	  value: 'artstyle-pointillism',
-	  classNameModifier: 'artstyle-pointillism'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_POP_ART'),
-	  value: 'artstyle-pop art',
-	  classNameModifier: 'artstyle-pop-art'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_PSYCHEDELIC'),
-	  value: 'artstyle-psychedelic',
-	  classNameModifier: 'artstyle-psychedelic'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_RENAISSANCE'),
-	  value: 'artstyle-renaissance',
-	  classNameModifier: 'artstyle-renaissance'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_STEAMPUNK'),
-	  value: 'artstyle-steampunk',
-	  classNameModifier: 'artstyle-steampunk'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_SURREALIST'),
-	  value: 'artstyle-surrealist',
-	  classNameModifier: 'artstyle-surrealist'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_TYPOGRAPHY'),
-	  value: 'artstyle-typography',
-	  classNameModifier: 'artstyle-typography'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_WATERCOLOR'),
-	  value: 'artstyle-watercolor',
-	  classNameModifier: 'artstyle-watercolor'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_MISK_MINIMALIST'),
-	  value: 'misc-minimalist',
-	  classNameModifier: 'misc-minimalist'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_PAPERCRAFT_COLLAGE'),
-	  value: 'papercraft-collage',
-	  classNameModifier: 'papercraft-collage'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_PAPERCRAFT_PAPERCUT_COLLAGE'),
-	  value: 'papercraft-papercut collage',
-	  classNameModifier: 'papercraft-papercut-collage'
-	}, {
-	  title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_STYLE_PHOTO_HDR'),
-	  value: 'photo-hdr',
-	  classNameModifier: 'photo-hdr'
-	}];
 	const ImageConfiguratorStylesEvents = Object.freeze({
 	  select: 'select'
 	});
@@ -316,6 +167,7 @@ this.BX = this.BX || {};
 	var _isExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExpanded");
 	var _styleList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("styleList");
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _styles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("styles");
 	var _renderHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHeader");
 	var _isShowExpandBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShowExpandBtn");
 	var _renderExpandListBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderExpandListBtn");
@@ -323,8 +175,8 @@ this.BX = this.BX || {};
 	var _renderStyleItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStyleItems");
 	var _renderStyleItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStyleItem");
 	class ImageConfiguratorStyles extends main_core_events.EventEmitter {
-	  constructor(_options) {
-	    super(_options);
+	  constructor(options) {
+	    super(options);
 	    Object.defineProperty(this, _renderStyleItem, {
 	      value: _renderStyleItem2
 	    });
@@ -345,7 +197,7 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _mainStylesCount, {
 	      writable: true,
-	      value: styleItems.length
+	      value: 0
 	    });
 	    Object.defineProperty(this, _currentMainStylesCount, {
 	      writable: true,
@@ -367,7 +219,13 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _selectedStyle)[_selectedStyle] = styleItems[0].value;
+	    Object.defineProperty(this, _styles, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _styles)[_styles] = options.styles;
+	    babelHelpers.classPrivateFieldLooseBase(this, _mainStylesCount)[_mainStylesCount] = babelHelpers.classPrivateFieldLooseBase(this, _styles)[_styles].length;
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedStyle)[_selectedStyle] = babelHelpers.classPrivateFieldLooseBase(this, _styles)[_styles][0].code;
 	    this.setEventNamespace('AI.Copilot.ImageConfiguratorStyles');
 	  }
 	  getSelectedStyle() {
@@ -420,7 +278,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = !babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded];
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
 	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _styleList)[_styleList], '--expanded');
-	      babelHelpers.classPrivateFieldLooseBase(this, _currentMainStylesCount)[_currentMainStylesCount] = Object.values(styleItems).length;
+	      babelHelpers.classPrivateFieldLooseBase(this, _currentMainStylesCount)[_currentMainStylesCount] = Object.values(babelHelpers.classPrivateFieldLooseBase(this, _styles)[_styles]).length;
 	      babelHelpers.classPrivateFieldLooseBase(this, _styleList)[_styleList].innerHTML = '';
 	      babelHelpers.classPrivateFieldLooseBase(this, _styleList)[_styleList].append(...babelHelpers.classPrivateFieldLooseBase(this, _renderStyleItems)[_renderStyleItems]());
 	    } else {
@@ -438,11 +296,11 @@ this.BX = this.BX || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _styleList)[_styleList];
 	}
 	function _renderStyleItems2() {
-	  return styleItems.slice(0, babelHelpers.classPrivateFieldLooseBase(this, _currentMainStylesCount)[_currentMainStylesCount]).map(styleItem => {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _styles)[_styles].slice(0, babelHelpers.classPrivateFieldLooseBase(this, _currentMainStylesCount)[_currentMainStylesCount]).map(styleItem => {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _renderStyleItem)[_renderStyleItem](styleItem);
 	  });
 	}
-	function _renderStyleItem2(options) {
+	function _renderStyleItem2(style) {
 	  const radioButton = main_core.Tag.render(_t5 || (_t5 = _`
 			<input
 				${0}
@@ -451,62 +309,60 @@ this.BX = this.BX || {};
 				type="radio"
 				class="ai__image-configurator-style_item-radio-btn"
 			/>
-		`), options.value === babelHelpers.classPrivateFieldLooseBase(this, _selectedStyle)[_selectedStyle] ? 'checked' : '', options.value);
+		`), style.code === babelHelpers.classPrivateFieldLooseBase(this, _selectedStyle)[_selectedStyle] ? 'checked' : '', style.code);
 	  const item = main_core.Tag.render(_t6 || (_t6 = _`
-			<div title="${0}" class="ai__image-configurator-styles_item --style-${0}">
+			<div
+				title="${0}"
+				class="ai__image-configurator-styles_item"
+			>
 				${0}
-				<label for="${0}" class="ai__image-configurator-styles_item-inner">
+				<label
+					for="${0}"
+					class="ai__image-configurator-styles_item-inner"
+					style="background-image: url(${0})"
+				>
 					<div class="ai__image-configurator-styles_item-title">${0}</div>
 				</label>
 			</div>
-		`), options.title, options.classNameModifier, radioButton, options.value, options.title);
+		`), style.name, radioButton, style.code, style.preview, style.name);
 	  main_core.Event.bind(radioButton, 'input', () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _selectedStyle)[_selectedStyle] = options.value;
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedStyle)[_selectedStyle] = style.code;
 	    this.emit(ImageConfiguratorStylesEvents.select, new main_core_events.BaseEvent({
-	      data: options.value
+	      data: style.code
 	    }));
 	  });
 	  return item;
 	}
 
-	const params = {
-	  format: {
-	    title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_TITLE'),
-	    icon: ui_iconSet_api_core.Editor.INCERT_IMAGE,
-	    options: [{
-	      title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_SQUARE'),
-	      value: 'square'
-	    }, {
-	      title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_PORTRAIT'),
-	      value: 'portrait'
-	    }, {
-	      title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_LANDSCAPE'),
-	      value: 'landscape'
-	    }, {
-	      title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_WIDE'),
-	      value: 'wide'
-	    }]
-	  }
-	  // light: {
-	  // 	icon: Editor.INCERT_IMAGE,
-	  // 	title: Loc.getMessage('AI_COPILOT_IMAGE_LIGHT_OPTION_TITLE'),
-	  // 	options: [
-	  // 		{
-	  // 			title: Loc.getMessage('AI_COPILOT_IMAGE_LIGHT_OPTION_COMMON'),
-	  // 			value: 'common',
-	  // 		},
-	  // 	],
-	  // },
-	  // composition: {
-	  // 	icon: Editor.INCERT_IMAGE,
-	  // 	title: Loc.getMessage('AI_COPILOT_IMAGE_COMPOSITION_OPTION_TITLE'),
-	  // 	options: [
-	  // 		{
-	  // 			title: Loc.getMessage('AI_COPILOT_IMAGE_COMPOSITION_OPTION_COMMON'),
-	  // 			value: 'common',
-	  // 		},
-	  // 	],
-	  // },
+	const getParams = options => {
+	  return {
+	    format: {
+	      title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_TITLE'),
+	      icon: ui_iconSet_api_core.Editor.INCERT_IMAGE,
+	      options: getOptionsFromFormats(options.formats)
+	    },
+	    engine: {
+	      title: main_core.Loc.getMessage('AI_COPILOT_IMAGE_ENGINE_OPTION_TITLE'),
+	      icon: ui_iconSet_api_core.Main.ROBOT,
+	      options: getOptionsFromEngines(options.engines)
+	    }
+	  };
+	};
+	const getOptionsFromFormats = formats => {
+	  return formats.map(format => {
+	    return {
+	      title: format.name,
+	      value: format.code
+	    };
+	  });
+	};
+	const getOptionsFromEngines = engines => {
+	  return engines.map(engine => {
+	    return {
+	      title: engine.title,
+	      value: engine.code
+	    };
+	  });
 	};
 
 	let _$1 = t => t,
@@ -516,6 +372,8 @@ this.BX = this.BX || {};
 	var _container$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _currentValues = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentValues");
 	var _openOptionsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openOptionsMenu");
+	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _getSelectedEngineCodeFromEngines = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectedEngineCodeFromEngines");
 	var _renderParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderParams");
 	var _renderParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderParam");
 	var _showOptionsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showOptionsMenu");
@@ -525,7 +383,6 @@ this.BX = this.BX || {};
 	var _handleMenuItemClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleMenuItemClick");
 	class ImageConfiguratorParams extends main_core_events.EventEmitter {
 	  constructor(_options) {
-	    var _params$light, _params$composition;
 	    super(_options);
 	    Object.defineProperty(this, _handleMenuItemClick, {
 	      value: _handleMenuItemClick2
@@ -548,6 +405,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _renderParams, {
 	      value: _renderParams2
 	    });
+	    Object.defineProperty(this, _getSelectedEngineCodeFromEngines, {
+	      value: _getSelectedEngineCodeFromEngines2
+	    });
 	    Object.defineProperty(this, _container$1, {
 	      writable: true,
 	      value: void 0
@@ -560,16 +420,23 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _params, {
+	      writable: true,
+	      value: {}
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = getParams({
+	      formats: Object.values(_options.formats),
+	      engines: _options.engines
+	    });
 	    const data = {
-	      format: params.format.options[0].value,
-	      light: (_params$light = params.light) == null ? void 0 : _params$light.options[0].value,
-	      composition: (_params$composition = params.composition) == null ? void 0 : _params$composition.options[0].value
+	      format: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].format.options[0].value,
+	      engine: babelHelpers.classPrivateFieldLooseBase(this, _getSelectedEngineCodeFromEngines)[_getSelectedEngineCodeFromEngines](_options.engines)
 	    };
 	    const handler = {
 	      set: (target, property, value) => {
 	        Reflect.set(target, property, value);
 	        if (babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1]) {
-	          const option = params[property].options.find(currentOption => currentOption.value === value);
+	          const option = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params][property].options.find(currentOption => currentOption.value === value);
 	          const optionElem = babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1].querySelector(`#ai__copilot-image-params-item-${property}`);
 	          if (optionElem) {
 	            optionElem.innerText = option.title;
@@ -596,9 +463,14 @@ this.BX = this.BX || {};
 			<div class="ai__copilot-image-params">
 				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderParams)[_renderParams](params));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderParams)[_renderParams](babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]));
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1];
 	  }
+	}
+	function _getSelectedEngineCodeFromEngines2(engines) {
+	  var _engines$;
+	  const selectedEngine = engines.find(engine => engine.selected);
+	  return selectedEngine.code || (engines == null ? void 0 : (_engines$ = engines[0]) == null ? void 0 : _engines$.code);
 	}
 	function _renderParams2(parameters) {
 	  return Object.entries(parameters).map(([parameterName, parameter]) => {
@@ -717,6 +589,7 @@ this.BX = this.BX || {};
 	var _renderImageParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderImageParams");
 	class ImageConfigurator extends main_core_events.EventEmitter {
 	  constructor(options) {
+	    var _options$styles, _options$formats, _options$engines;
 	    super(options);
 	    Object.defineProperty(this, _renderImageParams, {
 	      value: _renderImageParams2
@@ -737,6 +610,13 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 	    this.setEventNamespace('AI.Copilot.ImageConfigurator');
+	    babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorStyles)[_imageConfiguratorStyles] = new ImageConfiguratorStyles({
+	      styles: (_options$styles = options == null ? void 0 : options.styles) != null ? _options$styles : []
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorParams)[_imageConfiguratorParams] = new ImageConfiguratorParams({
+	      formats: (_options$formats = options == null ? void 0 : options.formats) != null ? _options$formats : [],
+	      engines: (_options$engines = options == null ? void 0 : options.engines) != null ? _options$engines : []
+	    });
 	  }
 	  getParams() {
 	    return {
@@ -763,11 +643,9 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _renderImageStyles2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorStyles)[_imageConfiguratorStyles] = new ImageConfiguratorStyles({});
 	  return babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorStyles)[_imageConfiguratorStyles].render();
 	}
 	function _renderImageParams2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorParams)[_imageConfiguratorParams] = new ImageConfiguratorParams({});
 	  return babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorParams)[_imageConfiguratorParams].render();
 	}
 
@@ -784,12 +662,17 @@ this.BX = this.BX || {};
 	var _popupId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popupId");
 	var _imageConfigurator = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imageConfigurator");
 	var _withoutBackBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("withoutBackBtn");
+	var _submitButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitButton");
 	var _createPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createPopup");
 	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
 	var _renderBackBtnIfNeeded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderBackBtnIfNeeded");
+	var _initSubmitButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initSubmitButton");
 	class ImageConfiguratorPopup extends main_core_events.EventEmitter {
 	  constructor(options) {
 	    super(options);
+	    Object.defineProperty(this, _initSubmitButton, {
+	      value: _initSubmitButton2
+	    });
 	    Object.defineProperty(this, _renderBackBtnIfNeeded, {
 	      value: _renderBackBtnIfNeeded2
 	    });
@@ -823,10 +706,20 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _submitButton, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _popupId)[_popupId] = options.popupId || String(Math.random());
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement] = options.bindElement;
 	    babelHelpers.classPrivateFieldLooseBase(this, _popupOffset)[_popupOffset] = options.popupOffset;
 	    babelHelpers.classPrivateFieldLooseBase(this, _withoutBackBtn)[_withoutBackBtn] = options.withoutBackBtn === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _imageConfigurator)[_imageConfigurator] = new ImageConfigurator({
+	      formats: options.imageConfiguratorOptions.formats,
+	      styles: options.imageConfiguratorOptions.styles,
+	      engines: options.imageConfiguratorOptions.engines
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _initSubmitButton)[_initSubmitButton]();
 	    this.setEventNamespace('AI.Copilot:ImagePopup');
 	  }
 	  getPopupId() {
@@ -866,6 +759,12 @@ this.BX = this.BX || {};
 	  getImageConfiguration() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _imageConfigurator)[_imageConfigurator].getParams();
 	  }
+	  disableSubmitButton() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _submitButton)[_submitButton].setDisabled(true);
+	  }
+	  enableSubmitButton() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _submitButton)[_submitButton].setDisabled(false);
+	  }
 	}
 	function _createPopup2() {
 	  var _babelHelpers$classPr7, _babelHelpers$classPr8;
@@ -873,7 +772,7 @@ this.BX = this.BX || {};
 	    id: babelHelpers.classPrivateFieldLooseBase(this, _popupId)[_popupId],
 	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement],
 	    cacheable: true,
-	    width: 258,
+	    width: 278,
 	    padding: 0,
 	    content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent]()
 	  });
@@ -883,18 +782,6 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _renderPopupContent2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _imageConfigurator)[_imageConfigurator] = new ImageConfigurator({});
-	  const button = new ui_buttons.Button({
-	    color: ui_buttons.Button.Color.AI,
-	    text: main_core.Loc.getMessage('AI_COPILOT_IMAGE_POPUP_GENERATE_BTN'),
-	    round: true,
-	    noCaps: true,
-	    onclick: () => {
-	      this.emit(ImageConfiguratorPopupEvents.completions, new main_core_events.BaseEvent({
-	        data: babelHelpers.classPrivateFieldLooseBase(this, _imageConfigurator)[_imageConfigurator].getParams()
-	      }));
-	    }
-	  });
 	  return main_core.Tag.render(_t$3 || (_t$3 = _$3`
 			<div class="ai__copilot-image-configurator-popup-content">
 				<header class="ai__copilot-image-configurator-popup-content_header">
@@ -910,7 +797,7 @@ this.BX = this.BX || {};
 					${0}
 				</div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderBackBtnIfNeeded)[_renderBackBtnIfNeeded](), main_core.Loc.getMessage('AI_COPILOT_IMAGE_POPUP_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _imageConfigurator)[_imageConfigurator].render(), button.render());
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderBackBtnIfNeeded)[_renderBackBtnIfNeeded](), main_core.Loc.getMessage('AI_COPILOT_IMAGE_POPUP_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _imageConfigurator)[_imageConfigurator].render(), babelHelpers.classPrivateFieldLooseBase(this, _submitButton)[_submitButton].render());
 	}
 	function _renderBackBtnIfNeeded2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _withoutBackBtn)[_withoutBackBtn]) {
@@ -931,6 +818,19 @@ this.BX = this.BX || {};
 			</div>
 		`), backBtnIconElem);
 	}
+	function _initSubmitButton2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitButton)[_submitButton] = new ui_buttons.Button({
+	    color: ui_buttons.Button.Color.AI,
+	    text: main_core.Loc.getMessage('AI_COPILOT_IMAGE_POPUP_GENERATE_BTN'),
+	    round: true,
+	    noCaps: true,
+	    onclick: () => {
+	      this.emit(ImageConfiguratorPopupEvents.completions, new main_core_events.BaseEvent({
+	        data: babelHelpers.classPrivateFieldLooseBase(this, _imageConfigurator)[_imageConfigurator].getParams()
+	      }));
+	    }
+	  });
+	}
 
 	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _copilotContainer$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotContainer");
@@ -945,6 +845,9 @@ this.BX = this.BX || {};
 	var _popupWithoutBackBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popupWithoutBackBtn");
 	var _currentGenerateRequestId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentGenerateRequestId");
 	var _useInsertAboveAndUnderTextMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useInsertAboveAndUnderTextMenuItems");
+	var _formats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formats");
+	var _styles$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("styles");
+	var _engines = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("engines");
 	var _inputFieldCancelLoadingEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldCancelLoadingEventHandler");
 	var _inputFieldSubmitEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldSubmitEventHandler");
 	var _inputFieldAdjustHeightEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldAdjustHeightEventHandler");
@@ -1051,6 +954,18 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _formats, {
+	      writable: true,
+	      value: []
+	    });
+	    Object.defineProperty(this, _styles$1, {
+	      writable: true,
+	      value: []
+	    });
+	    Object.defineProperty(this, _engines, {
+	      writable: true,
+	      value: []
+	    });
 	    Object.defineProperty(this, _inputFieldCancelLoadingEventHandler, {
 	      writable: true,
 	      value: void 0
@@ -1089,6 +1004,12 @@ this.BX = this.BX || {};
 	    const isErrorMenu = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) == null ? void 0 : _babelHelpers$classPr2.contains(target);
 	    const isResultMenu = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) == null ? void 0 : _babelHelpers$classPr3.contains(target);
 	    return isImageConfiguratorPopup || isErrorMenu || isResultMenu;
+	  }
+	  async init() {
+	    const res = await babelHelpers.classPrivateFieldLooseBase(this, _engine)[_engine].getImageCopilotTooling();
+	    babelHelpers.classPrivateFieldLooseBase(this, _formats)[_formats] = res.data.params.formats;
+	    babelHelpers.classPrivateFieldLooseBase(this, _engines)[_engines] = res.data.engines;
+	    babelHelpers.classPrivateFieldLooseBase(this, _styles$1)[_styles$1] = res.data.params.styles;
 	  }
 	  showImageConfigurator() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup]) {
@@ -1185,16 +1106,26 @@ this.BX = this.BX || {};
 	    popupOffset: {
 	      top: 8
 	    },
-	    withoutBackBtn: babelHelpers.classPrivateFieldLooseBase(this, _popupWithoutBackBtn)[_popupWithoutBackBtn]
+	    withoutBackBtn: babelHelpers.classPrivateFieldLooseBase(this, _popupWithoutBackBtn)[_popupWithoutBackBtn],
+	    imageConfiguratorOptions: {
+	      styles: babelHelpers.classPrivateFieldLooseBase(this, _styles$1)[_styles$1],
+	      formats: babelHelpers.classPrivateFieldLooseBase(this, _formats)[_formats],
+	      engines: babelHelpers.classPrivateFieldLooseBase(this, _engines)[_engines]
+	    }
 	  });
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].getValue()) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup].disableSubmitButton();
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup].subscribe(ImageConfiguratorPopupEvents.completions, e => {
 	    const {
 	      style,
-	      format
+	      format,
+	      engine
 	    } = e.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _setPayload)[_setPayload]({
 	      style,
-	      format
+	      format,
+	      engine
 	    });
 	    this.completions();
 	  });
@@ -1204,6 +1135,16 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _subscribeToInputFieldEvents2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotInputEvents)[_copilotInputEvents].input, event => {
+	    const inputFieldValue = event.getData();
+	    if (inputFieldValue) {
+	      var _babelHelpers$classPr19;
+	      (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup]) == null ? void 0 : _babelHelpers$classPr19.enableSubmitButton();
+	    } else {
+	      var _babelHelpers$classPr20;
+	      (_babelHelpers$classPr20 = babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup]) == null ? void 0 : _babelHelpers$classPr20.disableSubmitButton();
+	    }
+	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotInputEvents)[_copilotInputEvents].cancelLoading, babelHelpers.classPrivateFieldLooseBase(this, _inputFieldCancelLoadingEventHandler)[_inputFieldCancelLoadingEventHandler]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotInputEvents)[_copilotInputEvents].submit, babelHelpers.classPrivateFieldLooseBase(this, _inputFieldSubmitEventHandler)[_inputFieldSubmitEventHandler]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotInputEvents)[_copilotInputEvents].adjustHeight, babelHelpers.classPrivateFieldLooseBase(this, _inputFieldAdjustHeightEventHandler)[_inputFieldAdjustHeightEventHandler]);
@@ -1244,7 +1185,8 @@ this.BX = this.BX || {};
 	}
 	function _setPayload2(options) {
 	  const payload = new ai_engine.Text({
-	    prompt: babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].getValue()
+	    prompt: babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].getValue(),
+	    engineCode: options.engine
 	  });
 	  payload.setMarkers({
 	    style: options.style,
@@ -1260,17 +1202,19 @@ this.BX = this.BX || {};
 	  this.getAnalytics().setP1('prompt', options.style).setP2('format', options.format);
 	}
 	function _handleInputFieldSubmitEvent2() {
-	  var _babelHelpers$classPr19, _babelHelpers$classPr20;
-	  if (!((_babelHelpers$classPr19 = babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup]) != null && _babelHelpers$classPr19.isShown()) || !((_babelHelpers$classPr20 = babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].getValue()) != null && _babelHelpers$classPr20.trim())) {
+	  var _babelHelpers$classPr21, _babelHelpers$classPr22;
+	  if (!((_babelHelpers$classPr21 = babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup]) != null && _babelHelpers$classPr21.isShown()) || !((_babelHelpers$classPr22 = babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].getValue()) != null && _babelHelpers$classPr22.trim())) {
 	    return;
 	  }
 	  const {
 	    style,
-	    format
+	    format,
+	    engine
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup].getImageConfiguration();
 	  babelHelpers.classPrivateFieldLooseBase(this, _setPayload)[_setPayload]({
 	    style,
-	    format
+	    format,
+	    engine
 	  });
 	  this.completions();
 	}
@@ -1281,10 +1225,10 @@ this.BX = this.BX || {};
 	  this.showImageConfigurator();
 	}
 	function _handleInputFieldAdjustHeightEvent2() {
-	  var _babelHelpers$classPr21, _babelHelpers$classPr22, _babelHelpers$classPr23;
-	  (_babelHelpers$classPr21 = babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) == null ? void 0 : _babelHelpers$classPr21.adjustPosition();
-	  (_babelHelpers$classPr22 = babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) == null ? void 0 : _babelHelpers$classPr22.adjustPosition();
-	  (_babelHelpers$classPr23 = babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup]) == null ? void 0 : _babelHelpers$classPr23.adjustPosition();
+	  var _babelHelpers$classPr23, _babelHelpers$classPr24, _babelHelpers$classPr25;
+	  (_babelHelpers$classPr23 = babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) == null ? void 0 : _babelHelpers$classPr23.adjustPosition();
+	  (_babelHelpers$classPr24 = babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) == null ? void 0 : _babelHelpers$classPr24.adjustPosition();
+	  (_babelHelpers$classPr25 = babelHelpers.classPrivateFieldLooseBase(this, _imageConfiguratorPopup)[_imageConfiguratorPopup]) == null ? void 0 : _babelHelpers$classPr25.adjustPosition();
 	}
 	function _showResultMenu2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) {
@@ -1315,7 +1259,7 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _showErrorMenu2() {
-	  var _babelHelpers$classPr24;
+	  var _babelHelpers$classPr26;
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _initErrorMenu)[_initErrorMenu]();
 	  }
@@ -1323,7 +1267,7 @@ this.BX = this.BX || {};
 	    top: 8,
 	    left: 0
 	  });
-	  (_babelHelpers$classPr24 = babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) == null ? void 0 : _babelHelpers$classPr24.open();
+	  (_babelHelpers$classPr26 = babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) == null ? void 0 : _babelHelpers$classPr26.open();
 	}
 	function _initErrorMenu2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu] = new (babelHelpers.classPrivateFieldLooseBase(this, _CopilotMenu)[_CopilotMenu])({

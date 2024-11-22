@@ -31,9 +31,11 @@ export default class PullManager
 		this.grid = grid;
 
 		const data = grid.getData();
+
 		const options = {
 			moduleId: data.moduleId,
 			pullTag: data.pullTag,
+			additionalPullTags: data.additionalPullTags ?? [],
 			userId: data.userId,
 			additionalData: {
 				viewMode: data.viewMode,

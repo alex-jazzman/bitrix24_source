@@ -12,3 +12,4 @@ $MESS["PHONE_CALL_TO"] = "На номер #PHONE#";
 $MESS["PHONE_CALL_TO_MSGVER_1"] = "#PHONE#";
 $MESS["PHONE_COPY"] = "Копіювати";
 $MESS["PHONE_COPY_DONE"] = "Номер скопійований";
+$MESS["PHONE_HIDDEN"] = "Номер прихований";

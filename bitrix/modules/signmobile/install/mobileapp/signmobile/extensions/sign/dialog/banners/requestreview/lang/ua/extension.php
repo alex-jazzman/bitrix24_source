@@ -1,0 +1,5 @@
+<?php
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_BUTTON_CLOSE"] = "Погодити пізніше";
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_BUTTON_START_SIGNING"] = "Перейти до погодження";
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_DESCRIPTION"] = "Після вашого погодження документ [COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]#DOCUMENT_TITLE#[/COLOR] надсилатиметься іншим учасникам.";
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_TITLE"] = "Погодьте документ";

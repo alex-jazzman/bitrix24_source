@@ -38,6 +38,9 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._helpWrapper = null;
 		this.eventsNamespace = 'BX.Crm.EntityEditor';
 		this.pageTitleInputClassName = "pagetitle-item crm-pagetitle-item";
+
+		this._selectedStage = null;
+		this.onItemSelectEvent = this.onItemSelectEvent.bind(this);
 	};
 
 	BX.extend(BX.Crm.EntityEditor, BX.UI.EntityEditor);
@@ -114,6 +117,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		BX.addCustomEvent("onCrmEntityCreate", this._entityCreateHandler);
 		BX.addCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
+		BX.addCustomEvent("BX.UI.EntityEditorList:onItemSelect", this.onItemSelectEvent);
 	};
 	BX.Crm.EntityEditor.prototype.deattachFromEvents = function()
 	{
@@ -127,6 +131,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		BX.removeCustomEvent("onCrmEntityCreate", this._entityCreateHandler);
 		BX.removeCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
 		BX.removeCustomEvent("BX.UI.EntityConfigurationManager:onInitialize", this._configurationManagerInitializeHandler);
+		BX.removeCustomEvent("BX.UI.EntityEditorList:onItemSelect", this.onItemSelectEvent);
 	};
 	BX.Crm.EntityEditor.prototype.onConfigurationManagerInitialize = function(editor, eventArgs) {
 		if(eventArgs.type === 'editor')
@@ -897,6 +902,18 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		return items;
 	};
+	BX.Crm.EntityEditor.prototype.onItemSelectEvent = function(editor, eventArgs) {
+		const fieldId = eventArgs.field.getId();
+		if (fieldId === 'STAGE_ID' || fieldId === 'STATUS_ID')
+		{
+			this._selectedStage = eventArgs.item.value;
+		}
+	};
+	BX.Crm.EntityEditor.prototype.registerSaveAnalyticsEvent = function(status) {
+		BX.Crm.EntityEditor.superclass.registerSaveAnalyticsEvent.apply(this, [status]);
+
+		trySendAnalyticsIfEntityClose.call(this, status);
+	};
 	BX.Crm.EntityEditor.defaultInstance = null;
 	BX.Crm.EntityEditor.items = {};
 	BX.Crm.EntityEditor.get = function(id)
@@ -922,6 +939,34 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this.items[self.getId()] = self;
 		return self;
 	};
+}
+
+function trySendAnalyticsIfEntityClose(status)
+{
+	if (!this._selectedStage)
+	{
+		return;
+	}
+
+	const analyticsConfig = BX.prop.getObject(this._settings, 'analyticsConfig', {});
+	let analyticsData = BX.prop.getObject(analyticsConfig, 'entityClose', null);
+	const finalStagesSemantics = BX.prop.getObject(analyticsConfig, 'finalStagesSemantics', null);
+
+	if (!BX.Type.isPlainObject(analyticsData) || !BX.Type.isPlainObject(finalStagesSemantics))
+	{
+		return;
+	}
+
+	if (!finalStagesSemantics[this._selectedStage])
+	{
+		return;
+	}
+
+	analyticsData.status = status;
+	analyticsData.c_element = finalStagesSemantics[this._selectedStage] === 'F' ? 'lose' : 'won';
+	analyticsData.p2 = this._entityId;
+
+	BX.UI.Analytics.sendData(analyticsData);
 }
 //endregion
 

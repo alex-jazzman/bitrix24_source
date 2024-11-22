@@ -396,6 +396,11 @@ const getUserLimit = () =>
 	return parseInt(BX.message('turn_server_max_users'));
 }
 
+const getClientSelfTestUrl = () =>
+{
+	return BX.message('call_client_selftest_url') ?? '';
+}
+
 const getCallFeatures = () => {
 	return BX.message('call_features')
 }
@@ -768,6 +773,24 @@ function getTimeInSeconds(startTime)
 	return Math.floor(totalTime / 1000);
 }
 
+const isConferenceChatEnabled = () =>
+{
+	return BX.message('conference_chat_enabled');
+}
+
+
+function startSelfTest()
+{
+	const link = BX.Call.Util.getClientSelfTestUrl();
+
+	if (isDesktop()) {
+		window.open(link, '_blank', 'popup');
+		return;
+	}
+
+	window.open(link, '_blank');
+}
+
 export default {
 	updateUserData,
 	setUserData,
@@ -796,6 +819,7 @@ export default {
 	getDocumentsArticleCode,
 	getResumesArticleCode,
 	getUserLimit,
+	getClientSelfTestUrl,
 	getLogMessage,
 	getUuidv4,
 	reportConnectionResult,
@@ -820,4 +844,6 @@ export default {
 	getRecordTimeText,
 	getTimeText,
 	getTimeInSeconds,
+	isConferenceChatEnabled,
+	startSelfTest,
 }

@@ -264,7 +264,7 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 							fontSize: 14,
 							color: AppTheme.colors.base2,
 						},
-						text: Loc.getMessage('BPMOBILE_TASK_DETAILS_TIMELINE'),
+						text: Loc.getMessage('BPMOBILE_TASK_DETAILS_TIMELINE_MSGVER_1'),
 					}),
 				),
 				this.renderTimelineCounter(),

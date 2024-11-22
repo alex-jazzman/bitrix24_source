@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/product-grid/services/product-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { qrauth } = require('qrauth/utils');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { Type } = require('type');
 
@@ -27,7 +28,8 @@ jn.define('layout/ui/product-grid/services/product-selector', (require, exports,
 
 			this.actionsOnClose = [];
 
-			const emptyCallback = () => {};
+			const emptyCallback = () => {
+			};
 
 			if (props.isCatalogHidden)
 			{

@@ -1,5 +1,4 @@
 <?php
-$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Створити товар у повній версії";
 $MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1"] = "Створити товар у вебверсії";
 $MESS["CSPL_DETAIL_PRODUCT_MENU_TITLE"] = "Додати товар";
 $MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "У документі зараз немає товарів";
@@ -13,10 +12,7 @@ $MESS["CSPL_MENU_CREATE_SKU"] = "Товар із варіаціями";
 $MESS["CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE"] = "Знайти за штрихкодом";
 $MESS["CSPL_PRODUCT_CONTEXT_MENU_EDIT"] = "Редагувати";
 $MESS["CSPL_PRODUCT_CONTEXT_MENU_OPEN"] = "Відкрити";
-$MESS["CSPL_PRODUCT_CONTEXT_MENU_REMOVE"] = "Видалити";
 $MESS["CSPL_PRODUCT_DELETE_CONFIRMATION"] = "Ви впевнені, що хочете видалити запис із документа?";
-$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL"] = "Скасувати";
-$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_OK"] = "Видалити";
 $MESS["CSPL_PRODUCT_DETAIL_BACKDROP_TITLE"] = "Дані товару";
 $MESS["CSPL_PRODUCT_NOT_FOUND_BY_BARCODE"] = "Товар з цим штрихкодом не знайдено в каталозі";
 $MESS["CSPL_REMOVE_PRODUCT_ERROR"] = "Неможливо видалити товар із документа";

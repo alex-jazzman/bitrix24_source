@@ -110,6 +110,8 @@ $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1'] = 'Клиент сам выб
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_2'] = 'Встреча появится у вас в делах';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS'] = 'Как это работает';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON'] = 'Отправить';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON_MSGVER_2'] = 'Отправить ссылку';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_COPY_BUTTON'] = 'Копировать ссылку';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON'] = 'Отменить';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_MORE_INFO_BUTTON'] = 'Подробнее о слотах в CRM';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_RECEIVER'] = 'Получатель';
@@ -126,6 +128,7 @@ $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TI
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1'] = '<a href="/marketplace/category/crm_robot_sms/" target="_blank">Подключите СМС-сервис</a>, чтобы мгновенно отправлять клиентам ссылку на ваши свободные слоты.';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TITLE'] = 'Укажите контакты клиента в сделке';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT'] = 'Укажите номер телефона клиента, чтобы мы могли отправить ссылку на свободные слоты.';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT_V2'] = 'Укажите номер телефона или почту клиента, чтобы мы могли отправить ссылку на свободные слоты';
 
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE_SETUP"] = "Подключите WhatsApp";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE"] = "WhatsApp подключён";

@@ -31,6 +31,7 @@ jn.define('bizproc/task/tasks-performer/rules/task-opener', (require, exports, m
 				modal: true,
 				titleParams: {
 					text: props.widgetTitle,
+					type: 'dialog',
 				},
 				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {

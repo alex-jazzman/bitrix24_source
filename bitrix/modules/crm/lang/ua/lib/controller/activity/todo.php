@@ -10,6 +10,7 @@ $MESS["CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_ORDER"] = "Вас призначен
 $MESS["CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_QUOTE"] = "Вас призначено відповідальним за справу \"#subject#\" у пропозиції \"#entityName#\".";
 $MESS["CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_QUOTE_MSGVER_1"] = "Вас призначено відповідальним за справу \"#subject#\" у пропозиції \"#entityName#\".";
 $MESS["CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_SMART_INVOICE"] = "Вас призначено відповідальним за справу \"#subject#\" у рахунку \"#entityName#\".";
+$MESS["CRM_ACTIVITY_TODO_CALENDAR_MODULE_NOT_INSTALLED"] = "Щоб продовжити, установіть модуль «Календар подій».";
 $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE"] = "Ви вже не відповідаєте за справу ##todoId#";
 $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_COMPANY"] = "Ви вже не відповідаєте за справу \"#subject#\" у компанії \"#entityName#\".";
 $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_CONTACT"] = "Ви вже не відповідаєте за справу \"#subject#\" у контакті \"#entityName#\".";

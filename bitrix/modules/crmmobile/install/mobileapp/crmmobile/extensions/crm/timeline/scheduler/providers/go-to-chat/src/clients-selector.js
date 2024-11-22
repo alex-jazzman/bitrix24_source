@@ -161,8 +161,8 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 				communications,
 				ownerInfo,
 				typeId,
-				selectedPhoneId,
-				onPhoneSelectCallback,
+				selectedId: selectedPhoneId,
+				onSelectCallback: onPhoneSelectCallback,
 			});
 		}
 

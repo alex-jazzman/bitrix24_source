@@ -13,6 +13,7 @@ export const ChatActionType = Object.freeze({
 	changeOwner: 'changeOwner',
 	changeManagers: 'changeManagers',
 	update: 'update',
+	delete: 'delete',
 	readMessage: 'readMessage',
 	openComments: 'openComments',
 	subscribeToComments: 'subscribeToComments',

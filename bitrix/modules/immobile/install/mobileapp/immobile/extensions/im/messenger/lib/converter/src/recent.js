@@ -184,16 +184,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 		toCallItem(callStatus, call)
 		{
-			const listItem = new CallItem(callStatus, call);
-
-			const dialogId = call.associatedEntity.id;
-			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
-			if (recentItem && recentItem.color)
-			{
-				listItem.color = recentItem.color;
-			}
-
-			return listItem;
+			return new CallItem(callStatus, call);
 		}
 
 		// TODO: moved from old im.recent, need to refactor

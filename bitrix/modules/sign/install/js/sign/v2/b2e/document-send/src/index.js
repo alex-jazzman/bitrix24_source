@@ -1,5 +1,7 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
+import type { DocumentModeType } from 'sign.v2.sign-settings';
+import { isTemplateMode } from 'sign.v2.sign-settings';
 import { UserParty } from 'sign.v2.b2e.user-party';
 import { ReminderSelector, type Options as ReminderOptions, ReminderType } from 'sign.v2.b2e.reminder-selector';
 import { Item, EntityTypes } from './item';
@@ -75,6 +77,7 @@ export class DocumentSend extends EventEmitter
 	#progressContainer: ?HTMLElement;
 	#itemsToHide: Array<HTMLElement> = [];
 	#reminderSelectorByRole: Record<Role, ReminderSelector> = {};
+	#documentMode: DocumentModeType;
 
 	constructor(documentSendConfig: DocumentSendConfig)
 	{
@@ -95,9 +98,10 @@ export class DocumentSend extends EventEmitter
 				showEditor: (event: BaseEvent) => this.emit('showEditor'),
 			},
 		});
-		const { region, languages } = documentSendConfig;
+		const { region, languages, documentMode } = documentSendConfig;
 		this.#langSelector = new LangSelector(region, languages);
 		this.#documentData = {};
+		this.#documentMode = documentMode;
 		this.#ui.employeesTitle = Tag.render`
 			<p class="sign-b2e-send__party_signing-employees">
 				${Loc.getMessage('SIGN_SEND_SIGNING_EMPLOYEES', { '#CNT#': 0 })}
@@ -174,11 +178,16 @@ export class DocumentSend extends EventEmitter
 				<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_DOCUMENT_SEND_HEADER')}</h1>
 			</div>
 		`;
+
+		const summaryTitle = this.#isTemplateMode()
+			? Loc.getMessage('SIGN_DOCUMENT_SUMMARY_TEMPLATE_TITLE')
+			: Loc.getMessage('SIGN_DOCUMENT_SUMMARY_TITLE');
+
 		this.#itemsToHide = [];
 		const summaryLayout = Tag.render`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
-					${Loc.getMessage('SIGN_DOCUMENT_SUMMARY_TITLE')}
+					${summaryTitle}
 				</p>
 				${this.#documentSummary.getLayout()}
 				<div class="sign-b2e-send__lang-selector">
@@ -193,20 +202,25 @@ export class DocumentSend extends EventEmitter
 			</div>
 		`;
 		this.#itemsToHide.push(summaryLayout);
-		const usersLayout = Tag.render`
-			<div class="sign-b2e-settings__item">
-				<p class="sign-b2e-settings__item_title">
-					${Loc.getMessage('SIGN_DOCUMENT_SEND_SECOND_PARTY')}
-				</p>
-				${this.#ui.employeesTitle}
-				${this.#items.employees.getLayout()}
-				<div class="sign-b2e-send__config-container">
-					${this.#getCommunicationsLayout('employee')}
-					${this.#getReminderSelectorLayout(MemberRole.signer)}
+
+		let usersLayout = null;
+		if (!this.#isTemplateMode())
+		{
+			usersLayout = Tag.render`
+				<div class="sign-b2e-settings__item">
+					<p class="sign-b2e-settings__item_title">
+						${Loc.getMessage('SIGN_DOCUMENT_SEND_SECOND_PARTY')}
+					</p>
+					${this.#ui.employeesTitle}
+					${this.#items.employees.getLayout()}
+					<div class="sign-b2e-send__config-container">
+						${this.#getCommunicationsLayout('employee')}
+						${this.#getReminderSelectorLayout(MemberRole.signer)}
+					</div>
 				</div>
-			</div>
-		`;
-		this.#itemsToHide.push(usersLayout);
+			`;
+			this.#itemsToHide.push(usersLayout);
+		}
 		const companyLayout = Tag.render`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
@@ -268,7 +282,10 @@ export class DocumentSend extends EventEmitter
 			Dom.append(validationLayout, layout);
 		});
 		Dom.append(companyLayout, layout);
-		Dom.append(usersLayout, layout);
+		if (!Type.isNull(usersLayout))
+		{
+			Dom.append(usersLayout, layout);
+		}
 
 		this.#progressContainer = Tag.render`<div class="send-b2e-progress-container"></div>`;
 		this.#progress.renderTo(this.#progressContainer);
@@ -295,7 +312,7 @@ export class DocumentSend extends EventEmitter
 			</div>
 		`;
 		this.#progressOverlay.style.display = 'none';
-		this.emit('appendOverlay', { overlay : this.#progressOverlay });
+		this.emit('appendOverlay', { overlay: this.#progressOverlay });
 		Hint.create(layout);
 
 		return layout;
@@ -323,7 +340,7 @@ export class DocumentSend extends EventEmitter
 
 		if (Type.isArrayFilled(parties?.employees))
 		{
-			this.#items.employees.setUsersIds(parties?.employees.map(employee => employee.entityId));
+			this.#items.employees.setUsersIds(parties?.employees.map((employee) => employee.entityId));
 		}
 
 		if (Type.isArrayFilled(parties?.validation))
@@ -342,7 +359,7 @@ export class DocumentSend extends EventEmitter
 	async sendForSign(): Promise<boolean>
 	{
 		const api = new Api();
-		const { uid } = this.#documentData;
+		const { uid, templateUid } = this.#documentData;
 
 		/*
 		//disabled due absence of communication channels for b2e
@@ -383,10 +400,17 @@ export class DocumentSend extends EventEmitter
 */
 
 			await this.#saveReminderTypesForRoles();
-			await api.configureDocument(uid);
 
-			this.#showProgressOverlay();
-			await this.#checkFillAndStartProgress(uid);
+			if (this.#isTemplateMode())
+			{
+				await api.template.completeTemplate(templateUid);
+			}
+			else
+			{
+				await api.configureDocument(uid);
+				this.#showProgressOverlay();
+				await this.#checkFillAndStartProgress(uid);
+			}
 
 			return true;
 		}
@@ -492,5 +516,10 @@ export class DocumentSend extends EventEmitter
 		;
 
 		return Promise.all(promises);
+	}
+
+	#isTemplateMode(): boolean
+	{
+		return isTemplateMode(this.#documentMode);
 	}
 }

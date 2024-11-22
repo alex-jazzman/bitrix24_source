@@ -54,8 +54,15 @@ jn.define('im/messenger/lib/plan-limit', (require, exports, module) => {
 
 		if (Type.isNil(analyticsData.getP1()))
 		{
-			const dialogId = window.messenger?.dialog?.dialogId;
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			const store = serviceLocator.get('core').getStore();
+
+			const dialogId = store.getters['applicationModel/getCurrentOpenedDialogId']();
+			if (dialogId === 0)
+			{
+				return;
+			}
+
+			const dialog = store.getters['dialoguesModel/getById'](dialogId);
 			analytics.setP1(Analytics.P1[dialog?.type]);
 		}
 

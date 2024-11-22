@@ -22,7 +22,7 @@ interface ITable<T>
 	getMap(): string
 	getFields(): Array<TableField>
 	getList(options: TableGetListOptions<T>): Promise<{items: Array<T>}>
-	getListByIds(idList: Array<any>, shouldRestoreRows: boolean = true): Promise<{items: Array<T>}>
+	getListByIds(idList: Array<any>, shouldRestoreRows: boolean): Promise<{items: Array<T>}>
 	getById(id: any): Promise<T | null>
 }
 

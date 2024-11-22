@@ -39,6 +39,7 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 				new EditableTextBlock(
 					{
 						value: this.state.text,
+						showEditIcon: this.state.editable,
 						onSave: (text) => this.onSave(text),
 						textProps,
 						editorProps,
@@ -53,6 +54,11 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 			return {
 				title: this.getEditorTitle(),
 				placeholder: this.getEditorPlaceholder(),
+				useBBCodeEditor: this.props.useBBCodeEditor,
+				bbCodeEditorParams: {
+					readOnly: !this.props.editable,
+					closeOnSave: true,
+				},
 			};
 		}
 

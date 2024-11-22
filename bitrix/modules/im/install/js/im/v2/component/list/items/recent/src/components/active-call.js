@@ -4,6 +4,7 @@ import { Text } from 'main.core';
 import { ChatType, RecentCallStatus } from 'im.v2.const';
 import { ChatAvatar, AvatarSize, ChatTitle, Button as MessengerButton, ButtonSize, ButtonColor, ButtonIcon } from 'im.v2.component.elements';
 import { CallManager } from 'im.v2.lib.call';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import '../css/active-call.css';
 
@@ -71,6 +72,9 @@ export const ActiveCall = {
 		{
 			if (this.isConference)
 			{
+				Analytics.getInstance().onJoinConferenceClick({
+					callId: this.activeCall.call.id,
+				});
 				Messenger.openConference({ code: this.dialog.public.code });
 				return
 			}

@@ -12,6 +12,7 @@ import { InfoGroup } from '../components/content-blocks/info-group';
 import ItemSelector from '../components/content-blocks/item-selector';
 import LineOfTextBlocks from '../components/content-blocks/line-of-text-blocks';
 import LinkBlock from '../components/content-blocks/link';
+import LineOfTextBlocksButton from '../components/content-blocks/line-of-text-blocks-button';
 import Money from '../components/content-blocks/money';
 import { MoneyPill } from '../components/content-blocks/money-pill';
 import { Note } from '../components/content-blocks/note';
@@ -35,6 +36,7 @@ export class CommonContentBlocks extends Base
 			AddressBlock,
 			TextBlock,
 			LinkBlock,
+			LineOfTextBlocksButton,
 			DateBlock,
 			WithTitle,
 			LineOfTextBlocks,

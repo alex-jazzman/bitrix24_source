@@ -31,9 +31,9 @@ return [
 		'ui.code-parser',
 		'ui.bbcode.model',
 		'ui.video-service',
-		'main.core',
 		'ui.bbcode.formatter',
 		'ui.typography',
+		'main.core',
 	],
 	'settings' => [
 		'linkSettings' => [

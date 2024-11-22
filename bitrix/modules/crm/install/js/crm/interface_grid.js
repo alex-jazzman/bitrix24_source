@@ -1651,7 +1651,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		entityId,
 		currentUser,
 		settings,
-		useTodoEditorV2,
 		analytics
 	)
 	{
@@ -1677,7 +1676,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 				entityId,
 				currentUser,
 				settings,
-				useTodoEditorV2,
 				analytics,
 			);
 			menu.close();
@@ -1691,7 +1689,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		entityId,
 		currentUser,
 		settings,
-		useTodoEditorV2,
 		analytics
 	)
 	{
@@ -1722,12 +1719,11 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 							analytics,
 							source: BX.Crm.Activity.TodoEditorV2.AnalyticsSubSection.list,
 						},
-						useTodoEditorV2,
 					}
 				);
 
 			}
-			BX.CrmUIGridExtension.activityAddingPopup[key].show(bindElement);
+			BX.CrmUIGridExtension.activityAddingPopup[key].show();
 		});
 	};
 	//endregion
@@ -1793,6 +1789,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 
 		return null;
 	}
+
 	//endregion
 }
 //endregion

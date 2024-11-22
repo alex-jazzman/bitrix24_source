@@ -16,12 +16,6 @@ jn.define('selector/providers/common', (require, exports, module) => {
 	const specialChars = '!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}';
 	const specialCharsRegExp = new RegExp(`[${specialChars}]`, 'g');
 
-	const getImage = (name) => {
-		const path = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/';
-
-		return `${currentDomain}${path}${name}.png`;
-	};
-
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
 	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/user.png';
@@ -63,6 +57,13 @@ jn.define('selector/providers/common', (require, exports, module) => {
 		static title()
 		{
 			return '';
+		}
+
+		getAvatarImage(name)
+		{
+			const path = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/';
+
+			return `${currentDomain}${path}${name}.png`;
 		}
 
 		getColor(entityId, entityType)
@@ -579,7 +580,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 							if (!item.imageUrl && !this.options.useLettersForEmptyAvatar)
 							{
-								item.imageUrl = getImage(entityId);
+								item.imageUrl = this.getAvatarImage(entityId);
 							}
 
 							return item;
@@ -625,7 +626,8 @@ jn.define('selector/providers/common', (require, exports, module) => {
 						shortTitle: item.shortTitle,
 						params: item.params,
 						imageUrl: isDefaultImage(item.imageUrl) && this.options.useLettersForEmptyAvatar ? null : item.imageUrl,
-						defaultImage: !this.options.useLettersForEmptyAvatar && item.imageUrl.includes(getImage(entityId)),
+						defaultImage: !this.options.useLettersForEmptyAvatar
+							&& item.imageUrl.includes(this.getAvatarImage(entityId)),
 					});
 				}
 
@@ -716,6 +718,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					customData: entity.customData || {},
 				},
 				disabled: entity.customData?.isSelectable === false,
+				type: entity.type,
+				typeIconFrame: entity.typeIconFrame,
+				imageColor: entity.imageColor,
+				selectedImageColor: entity.selectedImageColor,
+				selectedTypeIconFrame: entity.selectedTypeIconFrame,
 			};
 
 			switch (entity.entityId)
@@ -801,7 +808,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			// Note: Android doesn't support svg images in selector widget
 			if (!item.imageUrl || item.imageUrl.endsWith('.svg'))
 			{
-				item.imageUrl = this.options.useLettersForEmptyAvatar ? null : getImage(entity.entityId);
+				item.imageUrl = this.options.useLettersForEmptyAvatar ? null : this.getAvatarImage(entity.entityId);
 			}
 
 			if (this.isSingleChoose())

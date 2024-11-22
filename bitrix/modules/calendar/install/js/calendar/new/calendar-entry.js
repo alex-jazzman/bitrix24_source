@@ -532,7 +532,10 @@
 					|| (entryRaw['~TYPE'] !== 'tasks' && entryRaw['SECT_ID'] && !activeSectionIndex[parseInt(entryRaw['SECT_ID'])])
 				)
 				{
-					continue;
+					if (entryRaw['CAL_TYPE'] !== 'open_event')
+					{
+						continue;
+					}
 				}
 
 				const movedEntry = this.findMovedEntry(entryRaw);
@@ -1134,7 +1137,12 @@
 		getColor: function()
 		{
 			return this.color;
-		}
+		},
+
+		isOpenEvent: function()
+		{
+			return this.data.CAL_TYPE === 'open_event';
+		},
 	};
 
 	if (window.BXEventCalendar)

@@ -1,6 +1,7 @@
 import { ChatType, UserRole } from 'im.v2.const';
 
 export type RoleItem = $Keys<typeof UserRole>;
+export type MemberEntity = [string, number | string];
 export type ChatConfig = {
 	title: string,
 	avatar: File,
@@ -22,15 +23,22 @@ export type ChatConfig = {
 };
 
 export type UpdateChatConfig = {
-	addedMemberEntities?: [string, number | string][],
-	deletedMemberEntities?: [string, number | string][],
+	addedMemberEntities?: MemberEntity[],
+	deletedMemberEntities?: MemberEntity[],
 	addedManagers?: number[],
 	deletedManagers?: number[],
 } & ChatConfig;
 
+export type CollabConfig = {
+	title: string,
+	avatar: File,
+	memberEntities: MemberEntity[],
+};
+
 type ChatTypeItem = $Keys<typeof ChatType>
 export type RestChatConfig = {
 	users: number[],
+	memberEntities?: MemberEntity[],
 	type?: ChatTypeItem,
 	entityType?: ChatTypeItem,
 	title?: string,
@@ -57,10 +65,15 @@ export type RestUpdateChatConfig = {
 	manageUsersAdd?: RoleItem,
 	manageUsersDelete?: RoleItem,
 	manageMessages?: RoleItem,
-	addedMemberEntities?: [string, number | string][],
-	deletedMemberEntities?: [string, number | string][],
+	addedMemberEntities?: MemberEntity[],
+	deletedMemberEntities?: MemberEntity[],
 	addedManagers?: number[],
 	deletedManagers?: number[],
+};
+
+export type RestCreateCollabConfig = {
+	title?: string,
+	avatar?: string,
 };
 
 export type GetMemberEntitiesConfig = {

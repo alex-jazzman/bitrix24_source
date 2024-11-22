@@ -74,6 +74,30 @@ export const showExitUpdateChannelConfirm = (): Promise<boolean> => {
 	});
 };
 
+export const showDeleteChatConfirm = (): Promise<boolean> => {
+	return showTwoButtonConfirm({
+		title: Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TITLE'),
+		text: Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT'),
+		firstButtonCaption: Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT_CONFIRM'),
+	});
+};
+
+export const showDeleteChannelConfirm = (): Promise<boolean> => {
+	return showTwoButtonConfirm({
+		title: Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_TITLE'),
+		text: Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_TEXT'),
+		firstButtonCaption: Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT_CONFIRM'),
+	});
+};
+
+export const showDeleteChannelPostConfirm = (): Promise<boolean> => {
+	return showTwoButtonConfirm({
+		title: Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TITLE'),
+		text: Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT'),
+		firstButtonCaption: Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT_CONFIRM'),
+	});
+};
+
 const showTwoButtonConfirm = (params: ConfirmParams): Promise<boolean> => {
 	const { text = '', firstButtonCaption = '', secondButtonCaption = '', title = '' } = params;
 

@@ -4,21 +4,47 @@
 jn.define('tasks/checklist/controller', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { debounce } = require('utils/function');
+	const { PropTypes } = require('utils/validation');
 	const { ChecklistWidget } = require('tasks/checklist/widget');
 	const { CheckListFlatTree } = require('tasks/checklist/flat-tree');
 
 	/**
+	 * @typedef {Object} ChecklistControllerProps
+	 * @property {number} [taskId]
+	 * @property {number} [groupId]
+	 * @property {number} [userId]
+	 * @property {Array} [checklistTree]
+	 * @property {Object} [diskConfig]
+	 * @property {boolean} [hideCompleted]
+	 * @property {boolean} [hideMoreMenu=false]
+	 * @property {boolean} [autoCompleteItem=true]
+	 * @property {boolean} [inLayout]
+	 * @property {Function} [onChange]
+	 * @property {Function} [onClose]
+	 * @property {Object} [parentWidget]
+	 *
 	 * @class ChecklistController
 	 */
 	class ChecklistController
 	{
+		/**
+		 * @param {ChecklistControllerProps} props
+		 */
 		constructor(props)
 		{
-			this.props = props;
+			PropTypes.validate(ChecklistController.propTypes, props, 'ChecklistController');
+
+			this.props = {
+				...ChecklistController.defaultProps,
+				...props,
+			};
+
 			this.widgetMap = new Map();
 			this.checklistsMap = new Map();
 			this.currentOpenChecklistId = null;
 			this.handleOnSave = debounce(this.handleOnSave, 1000, this);
+
+			this.setChecklistTree(props.checklistTree);
 		}
 
 		/**
@@ -310,7 +336,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 */
 		openChecklist(params)
 		{
-			const { userId, groupId, diskConfig, inLayout, hideCompleted, parentWidget } = this.props;
+			const { userId, groupId, diskConfig, inLayout, hideCompleted, hideMoreMenu, parentWidget } = this.props;
 			const { checklist } = params;
 			const checklistId = checklist.getId();
 			this.currentOpenChecklistId = checklistId;
@@ -322,6 +348,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 					diskConfig,
 					parentWidget,
 					hideCompleted,
+					hideMoreMenu,
 					inLayout: Boolean(inLayout),
 					checklists: this.checklistsMap,
 					onSave: this.handleOnSave,
@@ -545,9 +572,9 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 
 		getTaskParams()
 		{
-			const { userId, taskId, groupId, diskConfig, hideCompleted } = this.props;
+			const { userId, taskId, groupId, diskConfig, hideCompleted, autoCompleteItem } = this.props;
 
-			return { userId, taskId, groupId, diskConfig, hideCompleted };
+			return { userId, taskId, groupId, diskConfig, hideCompleted, autoCompleteItem };
 		}
 
 		#updateAfterSave(items)
@@ -595,6 +622,25 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			return false;
 		}
 	}
+
+	ChecklistController.defaultProps = {
+		autoCompleteItem: true,
+		hideMoreMenu: false,
+	};
+
+	ChecklistController.propTypes = {
+		taskId: PropTypes.number,
+		groupId: PropTypes.number,
+		userId: PropTypes.number,
+		checklistTree: PropTypes.object,
+		diskConfig: PropTypes.object,
+		hideCompleted: PropTypes.bool,
+		hideMoreMenu: PropTypes.bool,
+		inLayout: PropTypes.bool,
+		onChange: PropTypes.func,
+		onClose: PropTypes.func,
+		parentWidget: PropTypes.object,
+	};
 
 	module.exports = { ChecklistController };
 });

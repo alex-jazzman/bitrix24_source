@@ -150,16 +150,27 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 
 		getColor()
 		{
-			const { opacity, iconColor, color, disabled } = this.props;
+			const { opacity, disabled } = this.props;
 
-			let colorToken = iconColor || color || Color.base1;
+			const toHex = (token) => token.toHex(opacity);
 
 			if (disabled)
 			{
-				colorToken = Color.base6;
+				return toHex(Color.base6);
 			}
 
-			return colorToken.toHex(opacity);
+			const { iconColor, color } = this.props;
+
+			let colorToken = iconColor || color;
+
+			if (colorToken === null)
+			{
+				return null;
+			}
+
+			colorToken = colorToken || Color.base1;
+
+			return toHex(colorToken);
 		}
 
 		getIconSize()

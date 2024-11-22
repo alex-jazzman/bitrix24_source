@@ -126,14 +126,18 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        _this.imageCopilot.init();
 	      });
 	      _this.aiButton = Image.createAiButton(_this.compactMode);
-	      _this.aiButton.on("click", function () {
+	      _this.aiButton = Image.createAiButton(_this.compactMode);
+	      _this.aiButtonContainer = main_core.Dom.create('div', {});
+	      BX.Dom.addClass(_this.aiButtonContainer, 'landing-ui-button-ai-image-container');
+	      _this.aiButtonContainer.appendChild(_this.aiButton.layout);
+	      BX.bind(_this.aiButtonContainer, 'click', function () {
 	        if (_this.isAiImageActive) {
 	          _this.onAiClick();
 	        } else if (_this.aiUnactiveInfoCode && _this.aiUnactiveInfoCode.length > 0) {
 	          BX.UI.InfoHelper.show(_this.aiUnactiveInfoCode);
 	        }
 	      });
-	      _this.right.appendChild(_this.aiButton.layout);
+	      _this.right.appendChild(_this.aiButtonContainer);
 	    }
 	    _this.right.appendChild(_this.uploadButton.layout);
 	    _this.right.appendChild(_this.editButton.layout);
@@ -304,7 +308,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      this.copilotBindElement = this.dropzone.hidden ? this.preview : this.dropzone;
 	      this.imageCopilot.show({
 	        width: 500,
-	        bindElement: this.copilotBindElement
+	        bindElement: this.aiButtonContainer
 	      });
 	      this.imageCopilot.adjustPosition({});
 	    }

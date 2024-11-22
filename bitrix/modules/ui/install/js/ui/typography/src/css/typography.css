@@ -6,8 +6,11 @@
 	--ui-typography-space-inline: var(--ui-space-inline-sm) var(--ui-space-inline-md);
 	--ui-typography-block-space-stack: var(--ui-space-stack-md);
 	--ui-typography-block-space-inline: var(--ui-space-stack-md);
-	--ui-typography-block-space: var(--ui-typography-block-space-stack) 0;
 
 	--ui-typography-color-text: var(--ui-color-text-primary);
 	--ui-typography-color-link: var(--ui-color-link-primary-base);
+}
+
+.ui-typography-container.--collapsed {
+	margin: calc(var(--ui-typography-block-space-stack) * -1) 0;
 }

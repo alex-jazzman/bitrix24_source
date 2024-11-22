@@ -478,9 +478,7 @@ this.BX.UI = this.BX.UI || {};
 	      event.preventDefault();
 	      void ui_uploader_core.getFilesFromDataTransfer(event.dataTransfer).then(files => {
 	        this.getUploader().addFiles(files);
-	        if (this.getEditor().isCollapsed()) {
-	          this.getEditor().toggleCollapsing();
-	        }
+	        this.getEditor().expand();
 	      });
 	      this.showDropArea = false;
 	    }

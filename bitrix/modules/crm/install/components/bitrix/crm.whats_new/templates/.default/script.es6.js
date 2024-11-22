@@ -39,6 +39,7 @@ type StepConfig = {
 	useDynamicTarget: ?boolean,
 	eventName: ?string,
 	article: ?number,
+	infoHelperCode: ?string,
 }
 
 type Step = {
@@ -206,6 +207,7 @@ class ActionViewMode
 				text: stepConfig.text,
 				position: stepConfig.position,
 				article: stepConfig.article,
+				infoHelperCode: stepConfig.infoHelperCode,
 			};
 
 			if (stepConfig.useDynamicTarget)

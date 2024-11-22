@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 	const { Type } = require('type');
 
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
-	const { EventType, ComponentCode, DialogType, Analytics } = require('im/messenger/const');
+	const { EventType, ComponentCode, DialogType, OpenDialogContextType, Analytics } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -191,8 +191,10 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			messageId,
 			parentMessageId = null,
 			withMessageHighlight = true,
+			targetMessagePosition = AfterScrollMessagePosition.top,
 			showNotificationIfUnsupported = true,
 			showPlanLimitWidget = true,
+			context = OpenDialogContextType.default,
 		})
 		{
 			if (!Feature.isGoToMessageContextSupported && showNotificationIfUnsupported)
@@ -211,14 +213,20 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			const isCurrentDialogContext = dialogId === this.#dialogId;
 			if (!isCurrentDialogContext)
 			{
-				await this.#goToAnotherDialogMessageContext(dialogId, messageId, withMessageHighlight, parentMessageId);
+				await this.#goToAnotherDialogMessageContext(
+					dialogId,
+					messageId,
+					withMessageHighlight,
+					parentMessageId,
+					context,
+				);
 
 				return;
 			}
 
 			if (this.#isMessageRendered(messageId))
 			{
-				await this.#goToRenderedMessageContext(messageId, withMessageHighlight);
+				await this.#goToRenderedMessageContext(messageId, withMessageHighlight, targetMessagePosition);
 
 				return;
 			}
@@ -239,6 +247,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			const isContextLoaded = await this.#goToLocalStorageMessageContext(
 				messageId,
 				withMessageHighlight,
+				targetMessagePosition,
 				showPlanLimitWidget,
 			);
 			if (isContextLoaded)
@@ -246,7 +255,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				return;
 			}
 
-			await this.#goToServerMessageContext(messageId, withMessageHighlight, showPlanLimitWidget);
+			await this.#goToServerMessageContext(messageId, withMessageHighlight, targetMessagePosition, showPlanLimitWidget);
 		}
 
 		async goToLastReadMessageContext()
@@ -284,6 +293,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				dialogId: this.#dialogId,
 				messageId: this.#getDialogById(this.#dialogId).lastMessageId,
 				withMessageHighlight: false,
+				targetMessagePosition: AfterScrollMessagePosition.bottom,
 				showNotificationIfUnsupported: false,
 				showPlanLimitWidget: false,
 			};
@@ -372,8 +382,15 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		 * @param {number|string} messageId
 		 * @param {boolean} withMessageHighlight
 		 * @param {number|string|null} [parentMessageId]
+		 * @param {string} context
 		 */
-		async #goToAnotherDialogMessageContext(dialogId, messageId, withMessageHighlight, parentMessageId = null)
+		async #goToAnotherDialogMessageContext(
+			dialogId,
+			messageId,
+			withMessageHighlight,
+			parentMessageId = null,
+			context = OpenDialogContextType.default,
+		)
 		{
 			const componentCode = await this.#getComponentCode(dialogId, messageId, parentMessageId);
 			this.#log(`#goToAnotherDialogMessageContext: dialogId: ${dialogId}, messageId: ${messageId}, withMessageHighlight: ${withMessageHighlight} componentCode: ${componentCode}`);
@@ -389,6 +406,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				messageId,
 				withMessageHighlight,
 				checkComponentCode: false,
+				context,
 			}, componentCode);
 		}
 
@@ -443,10 +461,16 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		/**
 		 * @param {number} messageId
 		 * @param {boolean} withMessageHighlight
+		 * @param {string} targetMessagePosition
 		 * @param {boolean} showPlanLimitWidget
 		 * @return {Promise}
 		 */
-		async #goToLocalStorageMessageContext(messageId, withMessageHighlight, showPlanLimitWidget = true)
+		async #goToLocalStorageMessageContext(
+			messageId,
+			withMessageHighlight,
+			targetMessagePosition = AfterScrollMessagePosition.top,
+			showPlanLimitWidget = true,
+		)
 		{
 			if (!Feature.isLocalStorageEnabled)
 			{
@@ -484,11 +508,11 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			}
 
 			this.#resetRenderedState();
-			this.#view.setContextOptions(messageId);
+			this.#view.setContextOptions(messageId, false, targetMessagePosition);
 			await this.#messageService.enablePageNavigation();
 			await this.#messageService.updateModelByLocalStorageContextResult(result.result);
 
-			await this.#goToRenderedMessageContext(messageId, withMessageHighlight);
+			await this.#goToRenderedMessageContext(messageId, withMessageHighlight, targetMessagePosition);
 
 			return true;
 		}
@@ -496,10 +520,16 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		/**
 		 * @param {number} messageId
 		 * @param {boolean} withMessageHighlight
+		 * @param {string} targetMessagePosition
 		 * @param {boolean} showPlanLimitWidget
 		 * @return {Promise}
 		 */
-		async #goToServerMessageContext(messageId, withMessageHighlight, showPlanLimitWidget = true)
+		async #goToServerMessageContext(
+			messageId,
+			withMessageHighlight,
+			targetMessagePosition = AfterScrollMessagePosition.top,
+			showPlanLimitWidget = true,
+		)
 		{
 			this.#log(`#goToServerMessageContext: messageId: ${messageId}`);
 
@@ -520,10 +550,10 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				}
 
 				this.#resetRenderedState();
-				this.#view.setContextOptions(messageId);
+				this.#view.setContextOptions(messageId, false, targetMessagePosition);
 				await this.#messageService.updateModelByContextResult(result);
 				this.#topLoader.hide();
-				await this.#goToRenderedMessageContext(messageId, withMessageHighlight);
+				await this.#goToRenderedMessageContext(messageId, withMessageHighlight, targetMessagePosition);
 			}
 			catch (error)
 			{

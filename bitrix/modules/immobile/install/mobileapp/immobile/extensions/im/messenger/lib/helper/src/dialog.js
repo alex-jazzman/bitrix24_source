@@ -4,9 +4,10 @@
 jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogType, UserRole } = require('im/messenger/const');
-	const { serviceLocator, } = require('im/messenger/lib/di/service-locator');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
 	const logger = LoggerManager.getInstance().getLogger('helpers--dialog');
 
@@ -55,7 +56,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {string | number} dialogId
+		 * @param {DialogId} dialogId
 		 * @return {DialogHelper|null}
 		 */
 		static createByDialogId(dialogId)
@@ -110,6 +111,13 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			this.dialogModel = dialogModel;
 		}
 
+		get isDirect()
+		{
+			return this.constructor.isChatId(this.dialogModel.dialogId)
+				&& [DialogType.user, DialogType.private].includes(this.dialogModel.type)
+			;
+		}
+
 		get isChannel()
 		{
 			return [DialogType.generalChannel, DialogType.openChannel, DialogType.channel].includes(this.dialogModel.type);
@@ -140,6 +148,16 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return this.dialogModel.type === DialogType.open;
 		}
 
+		get isGeneral()
+		{
+			return this.dialogModel.type === DialogType.general;
+		}
+
+		get isGeneralChannel()
+		{
+			return this.dialogModel.type === DialogType.generalChannel;
+		}
+
 		get isCurrentUserOwner()
 		{
 			return Number(this.dialogModel.owner) === serviceLocator.get('core').getUserId();
@@ -148,6 +166,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		get isCurrentUserGuest()
 		{
 			return this.dialogModel.role === UserRole.guest;
+		}
+
+		get isCurrentUserParticipant()
+		{
+			return !([UserRole.none, UserRole.guest].includes(this.dialogModel.role));
 		}
 
 		get isLocalStorageSupported()
@@ -168,6 +191,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			}
 
 			return true;
+		}
+
+		get canBeDeleted()
+		{
+			return ChatPermission.isCanDeleteChat(this.dialogModel);
 		}
 
 		/**

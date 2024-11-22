@@ -3,6 +3,7 @@ import { Popup } from 'main.popup';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Icon, Actions } from 'ui.icon-set.api.core';
 import { Button } from 'ui.buttons';
+import type { ImageConfiguratorOptions } from './image-configurator';
 
 import { ImageConfigurator } from './image-configurator';
 import './css/image-configurator-popup.css';
@@ -17,11 +18,13 @@ type ImageConfiguratorPopupOptions = {
 	popupId: string;
 	popupOffset?: ImageConfiguratorPopupOffset;
 	withoutBackBtn: boolean;
+	imageConfiguratorOptions: ImageConfiguratorOptions;
 }
 
 type ImageConfiguration = {
 	style: string;
 	format: string;
+	engine: string;
 }
 
 export const ImageConfiguratorPopupEvents = Object.freeze({
@@ -37,6 +40,7 @@ export class ImageConfiguratorPopup extends EventEmitter
 	#popupId: string;
 	#imageConfigurator: ImageConfigurator;
 	#withoutBackBtn: boolean;
+	#submitButton: Button;
 
 	constructor(options: ImageConfiguratorPopupOptions)
 	{
@@ -46,6 +50,13 @@ export class ImageConfiguratorPopup extends EventEmitter
 		this.#bindElement = options.bindElement;
 		this.#popupOffset = options.popupOffset;
 		this.#withoutBackBtn = options.withoutBackBtn === true;
+		this.#imageConfigurator = new ImageConfigurator({
+			formats: options.imageConfiguratorOptions.formats,
+			styles: options.imageConfiguratorOptions.styles,
+			engines: options.imageConfiguratorOptions.engines,
+		});
+
+		this.#initSubmitButton();
 
 		this.setEventNamespace('AI.Copilot:ImagePopup');
 	}
@@ -104,13 +115,23 @@ export class ImageConfiguratorPopup extends EventEmitter
 		return this.#imageConfigurator.getParams();
 	}
 
+	disableSubmitButton(): void
+	{
+		this.#submitButton.setDisabled(true);
+	}
+
+	enableSubmitButton(): void
+	{
+		this.#submitButton.setDisabled(false);
+	}
+
 	#createPopup(): Popup
 	{
 		this.#popup = new Popup({
 			id: this.#popupId,
 			bindElement: this.#bindElement,
 			cacheable: true,
-			width: 258,
+			width: 278,
 			padding: 0,
 			content: this.#renderPopupContent(),
 		});
@@ -123,20 +144,6 @@ export class ImageConfiguratorPopup extends EventEmitter
 
 	#renderPopupContent(): HTMLElement
 	{
-		this.#imageConfigurator = new ImageConfigurator({});
-
-		const button = new Button({
-			color: Button.Color.AI,
-			text: Loc.getMessage('AI_COPILOT_IMAGE_POPUP_GENERATE_BTN'),
-			round: true,
-			noCaps: true,
-			onclick: () => {
-				this.emit(ImageConfiguratorPopupEvents.completions, new BaseEvent({
-					data: this.#imageConfigurator.getParams(),
-				}));
-			},
-		});
-
 		return Tag.render`
 			<div class="ai__copilot-image-configurator-popup-content">
 				<header class="ai__copilot-image-configurator-popup-content_header">
@@ -149,7 +156,7 @@ export class ImageConfiguratorPopup extends EventEmitter
 					${this.#imageConfigurator.render()}
 				</div>
 				<div class="ai__copilot-image-configurator-popup-content_footer">
-					${button.render()}
+					${this.#submitButton.render()}
 				</div>
 			</div>
 		`;
@@ -179,5 +186,20 @@ export class ImageConfiguratorPopup extends EventEmitter
 				${backBtnIconElem}
 			</div>
 		`;
+	}
+
+	#initSubmitButton(): void
+	{
+		this.#submitButton = new Button({
+			color: Button.Color.AI,
+			text: Loc.getMessage('AI_COPILOT_IMAGE_POPUP_GENERATE_BTN'),
+			round: true,
+			noCaps: true,
+			onclick: () => {
+				this.emit(ImageConfiguratorPopupEvents.completions, new BaseEvent({
+					data: this.#imageConfigurator.getParams(),
+				}));
+			},
+		});
 	}
 }

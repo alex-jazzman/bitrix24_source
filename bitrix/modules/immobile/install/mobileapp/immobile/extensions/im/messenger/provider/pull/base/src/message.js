@@ -18,6 +18,10 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+
+	const { ChatDataProvider } = require('im/messenger/provider/data');
+
 	const {
 		DialogType,
 		EventType,
@@ -637,10 +641,39 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				return;
 			}
 
+			const commentInfo = this.store.getters['commentModel/getByMessageId'](messageId);
+			if (commentInfo)
+			{
+				this.store.dispatch('commentModel/deleteCommentByMessageId', {
+					messageId,
+					channelChatId: dialogItem.chatId,
+				})
+					.then(() => {
+						Counters.update();
+					})
+					.catch((error) => {
+						this.logger.error(`${this.constructor.name}.fullDeleteMessage comment delete error`, error);
+					})
+				;
+
+				const chatProvider = new ChatDataProvider();
+				chatProvider.delete({ dialogId: commentInfo.dialogId })
+					.catch((error) => {
+						this.logger.error(`${this.constructor.name}.fullDeleteMessage delete comment chat error`, error);
+					})
+				;
+
+				MessengerEmitter.emit(EventType.dialog.external.delete, {
+					dialogId: commentInfo.dialogId,
+					shouldShowAlert: true,
+					chatType: DialogType.comment,
+					shouldSendDeleteAnalytics: true,
+				});
+			}
+
 			const fieldsCount = {
 				counter: params.counter,
 			};
-			let isNeedUpdateRecentItem = false;
 			if (params.lastMessageViews?.countOfViewers
 				&& (params.lastMessageViews.countOfViewers !== dialogItem.lastMessageViews.countOfViewers))
 			{
@@ -666,7 +699,9 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			});
 
 			const newLastMessage = params.newLastMessage;
-			if (newLastMessage)
+			let isNeedUpdateRecentItem = false;
+
+			if (recentItem && newLastMessage)
 			{
 				recentItem.message = {
 					text: ChatMessengerCommon.purifyText(newLastMessage.text, newLastMessage.params),

@@ -16,6 +16,7 @@ export type TextEditorOptions = {
 	removePlugins?: Array<string | PluginConstructor>,
 
 	toolbar?: string[],
+	hideToolbar?: boolean,
 	floatingToolbar?: string[],
 
 	newLineMode?: NewLineMode,
@@ -27,6 +28,24 @@ export type TextEditorOptions = {
 
 	placeholder?: string,
 	paragraphPlaceholder?: string | 'auto',
+
+	visualOptions: {
+		borderRadius?: string,
+		borderWidth?: string,
+		borderStyle?: string,
+		borderColorBase?: string,
+		borderColorFocus?: string,
+
+		colorBackground?: string,
+		colorSelection?: string,
+		colorToolbarBackground?: string,
+		colorToolbarBorder?: string,
+
+		blockSpaceInline?: string,
+		blockSpaceStack?: string,
+	},
+
+	namespace?: string,
 	events?: Object<string, (event: BaseEvent) => {}>,
 
 	mention?: {

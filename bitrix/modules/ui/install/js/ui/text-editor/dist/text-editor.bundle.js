@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,ui_codeParser,ui_bbcode_parser,ui_textEditor,ui_smiley,ui_videoService,main_core_collections,ui_bbcode_model,ui_lexical_richText,ui_lexical_selection,ui_lexical_clipboard,ui_lexical_table,main_core_events,ui_lexical_history,main_popup,main_core_cache,ui_iconSet_editor,ui_lexical_list,ui_lexical_link,ui_lexical_text,ui_lexical_core,ui_lexical_utils,main_core) {
+(function (exports,ui_codeParser,ui_bbcode_parser,ui_textEditor,ui_lexical_clipboard,ui_smiley,ui_videoService,main_core_collections,ui_bbcode_model,ui_lexical_selection,ui_lexical_richText,ui_lexical_table,main_core_events,ui_lexical_history,main_popup,main_core_cache,ui_iconSet_editor,ui_lexical_list,ui_lexical_link,ui_lexical_text,ui_lexical_core,ui_lexical_utils,main_core) {
 	'use strict';
 
 	const HIDE_DIALOG_COMMAND = ui_lexical_core.createCommand('HIDE_DIALOG_COMMAND');
@@ -92,7 +92,7 @@ this.BX.UI = this.BX.UI || {};
 	      lexicalNodes = [...lexicalNodes, ...nodes];
 	    }
 	  }
-	  return normalize ? $normalizeTextNodes(lexicalNodes, editor) : lexicalNodes;
+	  return normalize ? $normalizeTextNodes(lexicalNodes) : lexicalNodes;
 	}
 	function $createNodesFromBBCode(node, editor, forChildMap = new Map(), parentLexicalNode = null) {
 	  if (node instanceof ui_bbcode_model.BBCodeNewLineNode) {
@@ -164,7 +164,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  return !(ui_lexical_core.$isDecoratorNode(lexicalNode) && lexicalNode.isInline() === false);
 	}
-	function $normalizeTextNodes(lexicalNodes, editor) {
+	function $normalizeTextNodes(lexicalNodes) {
 	  const result = [];
 	  let currentParagraph = null;
 	  let lineBreaks = 0;
@@ -240,14 +240,28 @@ this.BX.UI = this.BX.UI || {};
 	  };
 	}
 
-	function trimLineBreaks(nodes) {
+	function $isParagraphEmpty(node) {
+	  if (!ui_lexical_core.$isParagraphNode(node)) {
+	    return false;
+	  }
+	  if (node.isEmpty()) {
+	    return true;
+	  }
+	  return node.getChildren().every(child => {
+	    return ui_lexical_core.$isLineBreakNode(child) || ui_lexical_core.$isTextNode(child) && /^\s*$/.test(child.getTextContent());
+	  });
+	}
+
+	function trimEmptyParagraphs(nodes) {
 	  const trimmedNodes = [...nodes];
-	  const firstNode = trimmedNodes[0];
-	  const lastNode = trimmedNodes[trimmedNodes.length - 1];
-	  if (ui_lexical_core.$isLineBreakNode(firstNode) || ui_lexical_core.$isParagraphNode(firstNode) && firstNode.isEmpty()) {
+
+	  // trim from the start
+	  while (trimmedNodes.length > 0 && $isParagraphEmpty(trimmedNodes[0])) {
 	    trimmedNodes.splice(0, 1);
 	  }
-	  if (ui_lexical_core.$isLineBreakNode(lastNode) || ui_lexical_core.$isParagraphNode(lastNode) && lastNode.isEmpty()) {
+
+	  // trim from the end
+	  while (trimmedNodes.length > 0 && $isParagraphEmpty(trimmedNodes[trimmedNodes.length - 1])) {
 	    trimmedNodes.splice(-1, 1);
 	  }
 	  return trimmedNodes;
@@ -257,7 +271,7 @@ this.BX.UI = this.BX.UI || {};
 	function $exportToBBCode(lexicalNode, editor) {
 	  const scheme = editor.getBBCodeScheme();
 	  const root = scheme.createRoot();
-	  const topLevelChildren = trimLineBreaks(lexicalNode.getChildren());
+	  const topLevelChildren = trimEmptyParagraphs(lexicalNode.getChildren());
 	  for (const topLevelNode of topLevelChildren) {
 	    $appendNodesToBBCode(topLevelNode, root, editor);
 	    // root.appendChild(scheme.createNewLine());
@@ -350,6 +364,19 @@ this.BX.UI = this.BX.UI || {};
 	  });
 	  elementNode.appendChild(node);
 	  return elementNode;
+	}
+
+	function trimLineBreaks(nodes) {
+	  const trimmedNodes = [...nodes];
+	  const firstNode = trimmedNodes[0];
+	  const lastNode = trimmedNodes[trimmedNodes.length - 1];
+	  if (ui_lexical_core.$isLineBreakNode(firstNode) || ui_lexical_core.$isParagraphNode(firstNode) && firstNode.isEmpty()) {
+	    trimmedNodes.splice(0, 1);
+	  }
+	  if (ui_lexical_core.$isLineBreakNode(lastNode) || ui_lexical_core.$isParagraphNode(lastNode) && lastNode.isEmpty()) {
+	    trimmedNodes.splice(-1, 1);
+	  }
+	  return trimmedNodes;
 	}
 
 	function getSelectedNode(selection) {
@@ -599,6 +626,1074 @@ this.BX.UI = this.BX.UI || {};
 	  this.emit('onClick');
 	}
 
+	/* eslint-disable no-underscore-dangle */
+	class QuoteNode extends ui_lexical_core.ElementNode {
+	  static getType() {
+	    return 'quote';
+	  }
+	  static clone(node) {
+	    return new QuoteNode(node.__key);
+	  }
+	  createDOM(config, editor) {
+	    var _config$theme;
+	    const element = document.createElement('blockquote');
+	    element.setAttribute('spellcheck', 'false');
+	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : _config$theme.quote)) {
+	      main_core.Dom.addClass(element, config.theme.quote);
+	    }
+	    return element;
+	  }
+	  updateDOM(prevNode, anchor, config) {
+	    return false;
+	  }
+	  static importDOM() {
+	    return {
+	      blockquote: node => ({
+	        conversion: element => {
+	          return {
+	            node: $createQuoteNode()
+	          };
+	        },
+	        priority: 0
+	      })
+	    };
+	  }
+	  static importJSON(serializedNode) {
+	    const node = $createQuoteNode();
+	    node.setFormat(serializedNode.format);
+	    node.setIndent(serializedNode.indent);
+	    node.setDirection(serializedNode.direction);
+	    return node;
+	  }
+	  exportJSON() {
+	    return {
+	      ...super.exportJSON(),
+	      type: 'quote'
+	    };
+	  }
+	  canIndent() {
+	    return false;
+	  }
+	  isInline() {
+	    return false;
+	  }
+	  canReplaceWith(replacement) {
+	    return false;
+	  }
+	  collapseAtStart(selection) {
+	    // const paragraph = $createParagraphNode();
+	    // const children = this.getChildren();
+	    // children.forEach((child) => paragraph.append(child));
+	    // this.replace(paragraph);
+	    $removeQuote(this);
+	    return true;
+	  }
+	  canBeEmpty() {
+	    return false;
+	  }
+	  isShadowRoot() {
+	    return true;
+	  }
+
+	  // insertNewAfter(selection: RangeSelection, restoreSelection = true): null | ParagraphNode
+	  // {
+	  // 	const children = this.getChildren();
+	  // 	const childrenLength = children.length;
+	  //
+	  // 	if (
+	  // 		childrenLength >= 2
+	  // 		&& children[childrenLength - 1].getTextContent() === '\n'
+	  // 		&& children[childrenLength - 2].getTextContent() === '\n'
+	  // 		&& selection.isCollapsed()
+	  // 		&& selection.anchor.key === this.__key
+	  // 		&& selection.anchor.offset === childrenLength
+	  // 	)
+	  // 	{
+	  // 		children[childrenLength - 1].remove();
+	  // 		children[childrenLength - 2].remove();
+	  // 		const newElement = $createParagraphNode();
+	  // 		this.insertAfter(newElement, restoreSelection);
+	  //
+	  // 		return newElement;
+	  // 	}
+	  //
+	  // 	selection.insertLineBreak();
+	  //
+	  // 	return null;
+	  // }
+	}
+
+	function $createQuoteNode() {
+	  return ui_lexical_core.$applyNodeReplacement(new QuoteNode());
+	}
+	function $isQuoteNode(node) {
+	  return node instanceof QuoteNode;
+	}
+	function $removeQuote(quoteNode) {
+	  if (!$isQuoteNode(quoteNode)) {
+	    return false;
+	  }
+	  let lastElement = quoteNode;
+	  for (const child of quoteNode.getChildren()) {
+	    if (ui_lexical_core.$isElementNode(child) || ui_lexical_core.$isDecoratorNode(child)) {
+	      lastElement = lastElement.insertAfter(child);
+	    } else {
+	      lastElement = lastElement.insertAfter(ui_lexical_core.$createParagraphNode().append(child));
+	    }
+	  }
+	  quoteNode.remove();
+	  return true;
+	}
+
+	function $getAncestor(node, predicate) {
+	  let parent = node;
+	  while (parent !== null && parent.getParent() !== null && !predicate(parent)) {
+	    parent = parent.getParentOrThrow();
+	  }
+	  return predicate(parent) ? parent : null;
+	}
+
+	function $isBlockNode(node) {
+	  return (ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node)) && !node.isInline() && !node.isParentRequired();
+	}
+
+	function $wrapNodes(selection, createElement) {
+	  if (selection === null) {
+	    return null;
+	  }
+	  const anchor = selection.anchor;
+	  const anchorNode = anchor.getNode();
+	  const element = createElement();
+	  if (ui_lexical_core.$isRootOrShadowRoot(anchorNode)) {
+	    const firstChild = anchorNode.getFirstChild();
+	    if (firstChild) {
+	      firstChild.replace(element, true);
+	    } else {
+	      anchorNode.append(element);
+	    }
+	    return element;
+	  }
+	  const handled = new Set();
+	  const nodes = selection.getNodes();
+	  const firstSelectedBlock = $getAncestor(selection.anchor.getNode(), $isBlockNode);
+	  if (firstSelectedBlock && !nodes.includes(firstSelectedBlock)) {
+	    nodes.unshift(firstSelectedBlock);
+	  }
+	  handled.add(element.getKey());
+	  let firstNode = true;
+	  for (const node of nodes) {
+	    if (!$isBlockNode(node) || handled.has(node.getKey())) {
+	      continue;
+	    }
+	    const isParentHandled = $getAncestor(node.getParent(), parentNode => handled.has(parentNode.getKey()));
+	    if (isParentHandled) {
+	      continue;
+	    }
+	    if (firstNode) {
+	      firstNode = false;
+	      node.replace(element);
+	      element.append(node);
+	    } else {
+	      element.append(node);
+	    }
+	    handled.add(node.getKey());
+	  }
+	  return element;
+	}
+
+	/** @memberof BX.UI.TextEditor.Plugins.Quote */
+	const INSERT_QUOTE_COMMAND = ui_lexical_core.createCommand('INSERT_QUOTE_COMMAND');
+
+	/** @memberof BX.UI.TextEditor.Plugins.Quote */
+	const FORMAT_QUOTE_COMMAND = ui_lexical_core.createCommand('FORMAT_QUOTE_COMMAND');
+
+	/** @memberof BX.UI.TextEditor.Plugins.Quote */
+	const REMOVE_QUOTE_COMMAND = ui_lexical_core.createCommand('REMOVE_QUOTE_COMMAND');
+	var _registerCommands = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerComponents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	class QuotePlugin extends BasePlugin {
+	  constructor(editor) {
+	    super(editor);
+	    Object.defineProperty(this, _registerComponents, {
+	      value: _registerComponents2
+	    });
+	    Object.defineProperty(this, _registerCommands, {
+	      value: _registerCommands2
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands)[_registerCommands]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents)[_registerComponents]();
+	  }
+	  static getName() {
+	    return 'Quote';
+	  }
+	  static getNodes(editor) {
+	    return [QuoteNode];
+	  }
+	  importBBCode() {
+	    return {
+	      quote: () => ({
+	        conversion: node => {
+	          return {
+	            node: $createQuoteNode(),
+	            after: childLexicalNodes => {
+	              return $normalizeTextNodes(childLexicalNodes);
+	            }
+	          };
+	        },
+	        priority: 0
+	      })
+	    };
+	  }
+	  exportBBCode() {
+	    return {
+	      quote: lexicalNode => {
+	        const scheme = this.getEditor().getBBCodeScheme();
+	        return {
+	          node: scheme.createElement({
+	            name: 'quote'
+	          })
+	        };
+	      }
+	    };
+	  }
+	  validateScheme() {
+	    return {
+	      nodes: [{
+	        nodeClass: QuoteNode,
+	        validate: quoteNode => {
+	          let prevParagraph = null;
+	          quoteNode.getChildren().forEach(child => {
+	            if (shouldWrapInParagraph(child)) {
+	              if (prevParagraph === null) {
+	                const paragraph = ui_lexical_core.$createParagraphNode();
+	                child.replace(paragraph);
+	                paragraph.append(child);
+	                prevParagraph = paragraph;
+	              } else {
+	                prevParagraph.append(child);
+	              }
+	            } else {
+	              prevParagraph = null;
+	            }
+	          });
+	          return false;
+	        }
+	      }],
+	      bbcodeMap: {
+	        quote: 'quote'
+	      }
+	    };
+	  }
+	}
+	function _registerCommands2() {
+	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_QUOTE_COMMAND, payload => {
+	    const quoteNode = $createQuoteNode();
+	    if (main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.content)) {
+	      const nodes = $importFromBBCode(payload.content, this.getEditor(), false);
+	      quoteNode.append(...$normalizeTextNodes(nodes));
+	      ui_lexical_utils.$insertNodeToNearestRoot(quoteNode);
+	    } else {
+	      quoteNode.append(ui_lexical_core.$createParagraphNode());
+	      ui_lexical_utils.$insertNodeToNearestRoot(quoteNode);
+	    }
+	    quoteNode.selectStart();
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(FORMAT_QUOTE_COMMAND, () => {
+	    const selection = ui_lexical_core.$getSelection();
+	    if (ui_lexical_core.$isRangeSelection(selection)) {
+	      const quoteNode = $createQuoteNode();
+	      $wrapNodes(selection, () => quoteNode);
+	      if (quoteNode.isEmpty()) {
+	        quoteNode.append(ui_lexical_core.$createParagraphNode());
+	      }
+	      quoteNode.selectStart();
+	    }
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(REMOVE_QUOTE_COMMAND, () => {
+	    const selection = ui_lexical_core.$getSelection();
+	    if (!ui_lexical_core.$isRangeSelection(selection)) {
+	      return false;
+	    }
+	    let quoteNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), $isQuoteNode);
+	    if (!quoteNode) {
+	      quoteNode = ui_lexical_utils.$findMatchingParent(selection.focus.getNode(), $isQuoteNode);
+	    }
+	    $removeQuote(quoteNode);
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
+	}
+	function _registerComponents2() {
+	  this.getEditor().getComponentRegistry().register('quote', () => {
+	    const button = new Button();
+	    button.setContent('<span class="ui-icon-set --quote"></span>');
+	    button.setBlockType('quote');
+	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_QUOTE'));
+	    button.subscribe('onClick', () => {
+	      this.getEditor().focus();
+	      this.getEditor().update(() => {
+	        if (button.isActive()) {
+	          this.getEditor().dispatchCommand(REMOVE_QUOTE_COMMAND);
+	        } else if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK) {
+	          this.getEditor().dispatchCommand(INSERT_QUOTE_COMMAND);
+	        } else {
+	          this.getEditor().dispatchCommand(FORMAT_QUOTE_COMMAND);
+	        }
+	      });
+	    });
+	    return button;
+	  });
+	}
+
+
+
+	var Quote = /*#__PURE__*/Object.freeze({
+		QuoteNode: QuoteNode,
+		$createQuoteNode: $createQuoteNode,
+		$isQuoteNode: $isQuoteNode,
+		$removeQuote: $removeQuote,
+		INSERT_QUOTE_COMMAND: INSERT_QUOTE_COMMAND,
+		FORMAT_QUOTE_COMMAND: FORMAT_QUOTE_COMMAND,
+		REMOVE_QUOTE_COMMAND: REMOVE_QUOTE_COMMAND,
+		QuotePlugin: QuotePlugin
+	});
+
+	/*
+	eslint-disable no-underscore-dangle,
+	@bitrix24/bitrix24-rules/no-pseudo-private,
+	@bitrix24/bitrix24-rules/no-native-dom-methods
+	*/
+	function convertSpoilerContentElement(domNode) {
+	  const node = $createSpoilerContentNode();
+	  return {
+	    node
+	  };
+	}
+	class SpoilerContentNode extends ui_lexical_core.ElementNode {
+	  static getType() {
+	    return 'spoiler-content';
+	  }
+	  static clone(node) {
+	    return new SpoilerContentNode(node.__key);
+	  }
+	  createDOM(config, editor) {
+	    var _config$theme, _config$theme$spoiler;
+	    const dom = document.createElement('div');
+	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$spoiler = _config$theme.spoiler) == null ? void 0 : _config$theme$spoiler.content)) {
+	      main_core.Dom.addClass(dom, config.theme.spoiler.content);
+	    }
+	    return dom;
+	  }
+	  updateDOM(prevNode, dom, config) {
+	    return false;
+	  }
+	  static importDOM() {
+	    return {
+	      div: domNode => {
+	        if (!domNode.hasAttribute('data-spoiler-content')) {
+	          return null;
+	        }
+	        return {
+	          conversion: convertSpoilerContentElement,
+	          priority: 2
+	        };
+	      }
+	    };
+	  }
+	  static importJSON(serializedNode) {
+	    return $createSpoilerContentNode();
+	  }
+	  exportDOM() {
+	    const element = document.createElement('div');
+	    element.setAttribute('data-spoiler-content', 'true');
+	    return {
+	      element
+	    };
+	  }
+	  exportJSON() {
+	    return {
+	      ...super.exportJSON(),
+	      type: 'spoiler-content',
+	      version: 1
+	    };
+	  }
+	  isShadowRoot() {
+	    return true;
+	  }
+	  isParentRequired() {
+	    return true;
+	  }
+	  createParentElementNode() {
+	    return $createSpoilerNode();
+	  }
+	  canIndent() {
+	    return false;
+	  }
+	  canInsertAfter(node) {
+	    return false;
+	  }
+	  canReplaceWith(replacement) {
+	    return false;
+	  }
+	  insertBefore(node) {
+	    const firstChild = this.getFirstChild();
+	    const nodeToInsert = ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node) ? node : ui_lexical_core.$createParagraphNode().append(node);
+	    if (firstChild === null) {
+	      this.append(nodeToInsert);
+	    } else {
+	      firstChild.insertBefore(nodeToInsert);
+	    }
+	    return nodeToInsert;
+	  }
+	  insertAfter(node) {
+	    const nodeToInsert = ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node) ? node : ui_lexical_core.$createParagraphNode().append(node);
+	    this.append(nodeToInsert);
+	    return nodeToInsert;
+	  }
+	}
+	function $createSpoilerContentNode() {
+	  return new SpoilerContentNode();
+	}
+	function $isSpoilerContentNode(node) {
+	  return node instanceof SpoilerContentNode;
+	}
+
+	/* eslint-disable no-underscore-dangle */
+	class SpoilerTitleTextNode extends ui_lexical_core.TextNode {
+	  static getType() {
+	    return 'spoiler-title-text';
+	  }
+	  static clone(node) {
+	    return new SpoilerTitleTextNode(node.__text, node.__key);
+	  }
+	  createDOM(config) {
+	    return super.createDOM(config);
+	  }
+	  static importJSON(serializedNode) {
+	    return $createSpoilerTitleTextNode(serializedNode.text);
+	  }
+	  exportJSON() {
+	    return {
+	      ...super.exportJSON(),
+	      type: 'spoiler-title-text'
+	    };
+	  }
+	}
+	function $createSpoilerTitleTextNode(text = '') {
+	  return ui_lexical_core.$applyNodeReplacement(new SpoilerTitleTextNode(text));
+	}
+	function $isSpoilerTitleTextNode(node) {
+	  return node instanceof SpoilerTitleTextNode;
+	}
+
+	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
+	const INSERT_SPOILER_COMMAND = ui_lexical_core.createCommand('INSERT_SPOILER_COMMAND');
+	const REMOVE_SPOILER_COMMAND = ui_lexical_core.createCommand('REMOVE_SPOILER_COMMAND');
+	var _registerComponents$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerCommands$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerNodeTransforms = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerNodeTransforms");
+	var _handleDeleteCharacter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDeleteCharacter");
+	var _handleEnter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEnter");
+	var _handlePaste = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePaste");
+	class SpoilerPlugin extends BasePlugin {
+	  constructor(editor) {
+	    super(editor);
+	    Object.defineProperty(this, _handlePaste, {
+	      value: _handlePaste2
+	    });
+	    Object.defineProperty(this, _handleEnter, {
+	      value: _handleEnter2
+	    });
+	    Object.defineProperty(this, _handleDeleteCharacter, {
+	      value: _handleDeleteCharacter2
+	    });
+	    Object.defineProperty(this, _registerNodeTransforms, {
+	      value: _registerNodeTransforms2
+	    });
+	    Object.defineProperty(this, _registerCommands$1, {
+	      value: _registerCommands2$1
+	    });
+	    Object.defineProperty(this, _registerComponents$1, {
+	      value: _registerComponents2$1
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerNodeTransforms)[_registerNodeTransforms]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$1)[_registerCommands$1]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$1)[_registerComponents$1]();
+	  }
+	  static getName() {
+	    return 'Spoiler';
+	  }
+	  static getNodes(editor) {
+	    return [SpoilerNode, SpoilerTitleNode, SpoilerContentNode, SpoilerTitleTextNode];
+	  }
+	  importBBCode() {
+	    return {
+	      spoiler: () => ({
+	        conversion: node => {
+	          const title = main_core.Type.isStringFilled(node.getValue()) ? trimSpoilerTitle(node.getValue()) : main_core.Loc.getMessage('TEXT_EDITOR_SPOILER_TITLE');
+	          return {
+	            node: $createSpoilerNode(false),
+	            after: childLexicalNodes => {
+	              return [$createSpoilerTitleNode().append($createSpoilerTitleTextNode(title)), $createSpoilerContentNode().append(...$normalizeTextNodes(childLexicalNodes))];
+	            }
+	          };
+	        },
+	        priority: 0
+	      })
+	    };
+	  }
+	  exportBBCode() {
+	    return {
+	      spoiler: spoilerNode => {
+	        const scheme = this.getEditor().getBBCodeScheme();
+	        const titleNode = spoilerNode.getChildren()[0];
+	        const title = trimSpoilerTitle(titleNode.getTextContent());
+	        const value = title === main_core.Loc.getMessage('TEXT_EDITOR_SPOILER_TITLE') ? '' : title;
+	        return {
+	          node: scheme.createElement({
+	            name: 'spoiler',
+	            value
+	          })
+	        };
+	      },
+	      'spoiler-title': node => {
+	        return {
+	          node: null
+	        };
+	      },
+	      'spoiler-content': node => {
+	        const scheme = this.getEditor().getBBCodeScheme();
+	        return {
+	          node: scheme.createFragment()
+	        };
+	      }
+	    };
+	  }
+	  validateScheme() {
+	    return {
+	      nodes: [{
+	        nodeClass: SpoilerNode
+	      }, {
+	        nodeClass: SpoilerContentNode,
+	        validate: contentNode => {
+	          contentNode.getChildren().forEach(child => {
+	            if (shouldWrapInParagraph(child)) {
+	              const paragraph = ui_lexical_core.$createParagraphNode();
+	              child.replace(paragraph);
+	              paragraph.append(child);
+	            }
+	          });
+	          return false;
+	        }
+	      }],
+	      bbcodeMap: {
+	        spoiler: 'spoiler',
+	        'spoiler-content': 'spoiler'
+	      }
+	    };
+	  }
+	}
+	function _registerComponents2$1() {
+	  this.getEditor().getComponentRegistry().register('spoiler', () => {
+	    const button = new Button();
+	    button.setContent('<span class="ui-icon-set --insert-spoiler"></span>');
+	    button.setBlockType('spoiler');
+	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_SPOILER'));
+	    button.subscribe('onClick', () => {
+	      this.getEditor().focus();
+	      this.getEditor().update(() => {
+	        if (button.isActive()) {
+	          this.getEditor().dispatchCommand(REMOVE_SPOILER_COMMAND);
+	        } else {
+	          this.getEditor().dispatchCommand(INSERT_SPOILER_COMMAND);
+	        }
+	      });
+	    });
+	    return button;
+	  });
+	}
+	function _registerCommands2$1() {
+	  this.cleanUpRegister(
+	  // This handles the case when container is collapsed and we delete its previous sibling
+	  // into it, it would cause collapsed content deleted (since it's display: none, and selection
+	  // swallows it when deletes single char). Instead we expand container, which is although
+	  // not perfect, but avoids bigger problem
+	  this.getEditor().registerCommand(ui_lexical_core.DELETE_CHARACTER_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleDeleteCharacter)[_handleDeleteCharacter].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.KEY_ENTER_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEnter)[_handleEnter].bind(this), ui_lexical_core.COMMAND_PRIORITY_NORMAL), this.getEditor().registerCommand(ui_lexical_core.INSERT_PARAGRAPH_COMMAND, event => {
+	    const selection = ui_lexical_core.$getSelection();
+	    if (ui_lexical_core.$isRangeSelection(selection)) {
+	      const spoilerTitleNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => $isSpoilerTitleNode(node));
+	      if (spoilerTitleNode) {
+	        const newBlock = spoilerTitleNode.insertNewAfter(selection);
+	        if (newBlock) {
+	          newBlock.selectStart();
+	        }
+	        return true;
+	      }
+	    }
+	    return false;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.PASTE_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handlePaste)[_handlePaste].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(INSERT_SPOILER_COMMAND, payload => {
+	    this.getEditor().update(() => {
+	      const title = main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.title) ? payload.title : undefined;
+	      const selection = ui_lexical_core.$getSelection();
+	      const spoiler = insertSpoiler(selection, title);
+	      spoiler.getTitleNode().select();
+	    });
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(REMOVE_SPOILER_COMMAND, () => {
+	    this.getEditor().update(() => {
+	      const selection = ui_lexical_core.$getSelection();
+	      if (!ui_lexical_core.$isRangeSelection(selection)) {
+	        return;
+	      }
+	      let spoilerNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), $isSpoilerNode);
+	      if (!spoilerNode) {
+	        spoilerNode = ui_lexical_utils.$findMatchingParent(selection.focus.getNode(), $isSpoilerNode);
+	      }
+	      $removeSpoiler(spoilerNode);
+	    });
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
+	}
+	function _registerNodeTransforms2() {
+	  this.cleanUpRegister(
+	  // Structure enforcing transformers for each node type. In case nesting structure is not
+	  // "Container > Title + Content" it'll unwrap nodes and convert it back
+	  // to regular content.
+	  this.getEditor().registerNodeTransform(SpoilerNode, node => {
+	    const children = node.getChildren();
+	    if (children.length !== 2 || !$isSpoilerTitleNode(children[0]) || !$isSpoilerContentNode(children[1])) {
+	      for (const child of children) {
+	        if (ui_lexical_core.$isElementNode(child) || ui_lexical_core.$isDecoratorNode(child)) {
+	          node.insertBefore(child);
+	        } else {
+	          node.insertBefore(ui_lexical_core.$createParagraphNode().append(child));
+	        }
+	      }
+	      node.remove();
+	    }
+	  }), this.getEditor().registerNodeTransform(SpoilerTitleNode, node => {
+	    const parent = node.getParent();
+	    if (!$isSpoilerNode(parent)) {
+	      node.replace(ui_lexical_core.$createParagraphNode().append(...node.getChildren()));
+	    } else if (node.getChildrenSize() === 1 && !$isSpoilerTitleTextNode(node.getFirstChild()) || node.getChildrenSize() > 1) {
+	      ui_lexical_core.$setSelection(null);
+	      const textContent = trimSpoilerTitle(node.getTextContent());
+	      node.clear();
+	      node.append($createSpoilerTitleTextNode(textContent));
+	      node.select();
+	    }
+	  }), this.getEditor().registerNodeTransform(SpoilerTitleTextNode, node => {
+	    const parent = node.getParent();
+	    if (!$isSpoilerTitleNode(parent)) {
+	      node.replace(ui_lexical_core.$createParagraphNode().append(ui_lexical_core.$createTextNode(node.getTextContent())));
+	    }
+	  }), this.getEditor().registerNodeTransform(SpoilerContentNode, node => {
+	    const parent = node.getParent();
+	    if (!$isSpoilerNode(parent)) {
+	      const children = node.getChildren();
+	      for (const child of children) {
+	        if (ui_lexical_core.$isElementNode(child) || ui_lexical_core.$isDecoratorNode(child)) {
+	          node.insertBefore(child);
+	        } else {
+	          node.insertBefore(ui_lexical_core.$createParagraphNode().append(child));
+	        }
+	      }
+	      node.remove();
+	    }
+	  }));
+	}
+	function _handleDeleteCharacter2() {
+	  const selection = ui_lexical_core.$getSelection();
+	  if (!ui_lexical_core.$isRangeSelection(selection) || !selection.isCollapsed() || selection.anchor.offset !== 0) {
+	    return false;
+	  }
+	  const anchorNode = selection.anchor.getNode();
+	  const topLevelElement = anchorNode.getTopLevelElement();
+	  if (topLevelElement === null) {
+	    return false;
+	  }
+	  const container = topLevelElement.getPreviousSibling();
+	  if (!$isSpoilerNode(container) || container.getOpen()) {
+	    return false;
+	  }
+	  container.setOpen(true);
+	  return true;
+	}
+	function _handleEnter2(event) {
+	  if (event && (event.ctrlKey || event.metaKey)) {
+	    // Handling CMD+Enter to toggle spoiler element collapsed state
+	    const selection = ui_lexical_core.$getPreviousSelection();
+	    if (ui_lexical_core.$isRangeSelection(selection) && selection.isCollapsed()) {
+	      const parent = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => ui_lexical_core.$isElementNode(node) && !node.isInline());
+	      if ($isSpoilerTitleNode(parent)) {
+	        const container = parent.getParent();
+	        if ($isSpoilerNode(container)) {
+	          container.toggleOpen();
+	          ui_lexical_core.$setSelection(selection.clone());
+	          return true;
+	        }
+	      }
+	    }
+	  }
+	  return false;
+	}
+	function _handlePaste2(event) {
+	  const selection = ui_lexical_core.$getSelection();
+	  if (!ui_lexical_core.$isRangeSelection(selection) || !(event instanceof ClipboardEvent) || event.clipboardData === null) {
+	    return false;
+	  }
+	  const spoilerTitleNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => $isSpoilerTitleNode(node));
+	  if (spoilerTitleNode) {
+	    ui_lexical_clipboard.$insertDataTransferForPlainText(event.clipboardData, selection);
+	    return true;
+	  }
+	  return false;
+	}
+	function insertSpoiler(selection, title) {
+	  if (!ui_lexical_core.$isRangeSelection(selection)) {
+	    return null;
+	  }
+	  const anchor = selection.anchor;
+	  const anchorNode = anchor.getNode();
+	  const spoiler = $createSpoiler(true, title);
+	  if (ui_lexical_core.$isRootOrShadowRoot(anchorNode)) {
+	    const firstChild = anchorNode.getFirstChild();
+	    if (firstChild) {
+	      firstChild.replace(spoiler, true);
+	    } else {
+	      anchorNode.append(spoiler);
+	    }
+	    return spoiler;
+	  }
+	  const handled = new Set();
+	  const nodes = selection.getNodes();
+	  const firstSelectedBlock = $getAncestor(selection.anchor.getNode(), $isBlockNode);
+	  if (firstSelectedBlock && !nodes.includes(firstSelectedBlock)) {
+	    nodes.unshift(firstSelectedBlock);
+	  }
+	  handled.add(spoiler.getKey());
+	  handled.add(spoiler.getTitleNode().getKey());
+	  handled.add(spoiler.getContentNode().getKey());
+	  let firstNode = true;
+	  for (const node of nodes) {
+	    if (!$isBlockNode(node) || handled.has(node.getKey())) {
+	      continue;
+	    }
+	    const isParentHandled = $getAncestor(node.getParent(), parentNode => handled.has(parentNode.getKey()));
+	    if (isParentHandled) {
+	      continue;
+	    }
+	    if (firstNode) {
+	      firstNode = false;
+	      node.replace(spoiler);
+	      spoiler.getContentNode().append(node);
+	    } else {
+	      spoiler.getContentNode().append(node);
+	    }
+
+	    // let parent: ElementNode = node.getParent();
+	    // while (parent !== null)
+	    // {
+	    // 	const parentKey = parent.getKey();
+	    // 	const nextParent: ElementNode = parent.getParent();
+	    // 	if ($isRootOrShadowRoot(nextParent) && !handled.has(parentKey))
+	    // 	{
+	    // 		handled.add(parentKey);
+	    // 		createSpoilerOrMerge(parent);
+	    //
+	    // 		break;
+	    // 	}
+	    //
+	    // 	parent = nextParent;
+	    // }
+
+	    handled.add(node.getKey());
+	  }
+	  return spoiler;
+	}
+	function trimSpoilerTitle(title) {
+	  return title.trim().replaceAll(/\r?\n|\t/gm, '').replace('\r', '').replaceAll(/\s+/g, ' ');
+	}
+
+	/*
+	eslint-disable no-underscore-dangle,
+	@bitrix24/bitrix24-rules/no-pseudo-private,
+	@bitrix24/bitrix24-rules/no-native-dom-methods
+	*/
+	function convertSummaryElement(domNode) {
+	  const node = $createSpoilerTitleNode();
+	  return {
+	    node
+	  };
+	}
+	class SpoilerTitleNode extends ui_lexical_core.ElementNode {
+	  constructor(...args) {
+	    super(...args);
+	    this.__language = 'hack';
+	    this.__flags = UNFORMATTED;
+	  }
+	  static getType() {
+	    return 'spoiler-title';
+	  }
+	  static clone(node) {
+	    return new SpoilerTitleNode(node.__key);
+	  }
+	  createDOM(config, editor) {
+	    var _config$theme, _config$theme$spoiler;
+	    const dom = document.createElement('summary');
+	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$spoiler = _config$theme.spoiler) == null ? void 0 : _config$theme$spoiler.title)) {
+	      main_core.Dom.addClass(dom, config.theme.spoiler.title);
+	    }
+	    main_core.Dom.addClass(dom, 'ui-icon-set__scope');
+	    return dom;
+	  }
+	  updateDOM(prevNode, dom, config) {
+	    return false;
+	  }
+	  static importDOM() {
+	    return {
+	      summary: domNode => {
+	        return {
+	          conversion: convertSummaryElement,
+	          priority: 1
+	        };
+	      }
+	    };
+	  }
+	  static importJSON(serializedNode) {
+	    return $createSpoilerTitleNode();
+	  }
+	  exportDOM() {
+	    const element = document.createElement('summary');
+	    return {
+	      element
+	    };
+	  }
+	  exportJSON() {
+	    return {
+	      ...super.exportJSON(),
+	      type: 'spoiler-title',
+	      version: 1
+	    };
+	  }
+	  collapseAtStart(selection) {
+	    const spoilerNode = this.getParent();
+	    if (!$isSpoilerNode(spoilerNode)) {
+	      return false;
+	    }
+	    return $removeSpoiler(spoilerNode);
+	  }
+	  insertNewAfter(selection, restoreSelection = true) {
+	    const containerNode = this.getParentOrThrow();
+	    if (!$isSpoilerNode(containerNode)) {
+	      throw new Error('SpoilerTitleNode expects to be child of SpoilerNode');
+	    }
+	    if (containerNode.getOpen()) {
+	      const contentNode = this.getNextSibling();
+	      if (!$isSpoilerContentNode(contentNode)) {
+	        throw new Error('SpoilerTitleNode expects to have SpoilerContentNode sibling');
+	      }
+	      const firstChild = contentNode.getFirstChild();
+	      if (ui_lexical_core.$isElementNode(firstChild) || ui_lexical_core.$isDecoratorNode(firstChild)) {
+	        return firstChild;
+	      }
+	      const paragraph = ui_lexical_core.$createParagraphNode();
+	      contentNode.append(paragraph);
+	      return paragraph;
+	    }
+	    const paragraph = ui_lexical_core.$createParagraphNode();
+	    containerNode.insertAfter(paragraph, restoreSelection);
+	    return paragraph;
+	  }
+	  isParentRequired() {
+	    return true;
+	  }
+	  createParentElementNode() {
+	    return $createSpoilerNode();
+	  }
+	  canIndent() {
+	    return false;
+	  }
+	  insertAfter(nodeToInsert) {
+	    const textContent = nodeToInsert.getTextContent();
+	    this.clear();
+	    this.append($createSpoilerTitleTextNode(trimSpoilerTitle(textContent)));
+	    return this;
+	  }
+	}
+	function $createSpoilerTitleNode() {
+	  return new SpoilerTitleNode();
+	}
+	function $isSpoilerTitleNode(node) {
+	  return node instanceof SpoilerTitleNode;
+	}
+	function $removeSpoiler(spoilerNode) {
+	  if (!$isSpoilerNode(spoilerNode)) {
+	    return false;
+	  }
+	  const contentNode = spoilerNode.getContentNode();
+	  let lastElement = spoilerNode;
+	  if (contentNode !== null) {
+	    for (const child of contentNode.getChildren()) {
+	      if (ui_lexical_core.$isElementNode(child) || ui_lexical_core.$isDecoratorNode(child)) {
+	        lastElement = lastElement.insertAfter(child);
+	      } else {
+	        lastElement = lastElement.insertAfter(ui_lexical_core.$createParagraphNode().append(child));
+	      }
+	    }
+	  }
+	  spoilerNode.remove();
+	  return true;
+	}
+
+	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+	class SpoilerNode extends ui_lexical_core.ElementNode {
+	  constructor(open, key) {
+	    super(key);
+	    this.__open = open;
+	  }
+	  static getType() {
+	    return 'spoiler';
+	  }
+	  static clone(node) {
+	    return new SpoilerNode(node.__open, node.__key);
+	  }
+	  createDOM(config, editor) {
+	    var _config$theme, _config$theme$spoiler;
+	    const details = document.createElement('details');
+	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$spoiler = _config$theme.spoiler) == null ? void 0 : _config$theme$spoiler.container)) {
+	      main_core.Dom.addClass(details, config.theme.spoiler.container);
+	    }
+	    details.open = this.__open;
+	    main_core.Event.bind(details, 'toggle', () => {
+	      const open = editor.getEditorState().read(() => this.getOpen());
+	      if (open !== details.open) {
+	        editor.update(() => this.toggleOpen());
+	      }
+	    });
+	    return details;
+	  }
+	  updateDOM(prevNode, dom, config) {
+	    if (prevNode.__open !== this.__open) {
+	      dom.open = this.__open;
+	    }
+	    return false;
+	  }
+	  static importDOM() {
+	    return {
+	      details: domNode => {
+	        return {
+	          conversion: details => {
+	            const isOpen = main_core.Type.isBoolean(details.open) ? details.open : true;
+	            return {
+	              node: $createSpoiler(isOpen)
+	            };
+	          },
+	          priority: 1
+	        };
+	      }
+	    };
+	  }
+	  static importJSON(serializedNode) {
+	    return $createSpoilerNode(serializedNode.open);
+	  }
+	  exportDOM(editor) {
+	    const details = document.createElement('details');
+	    if (this.__open) {
+	      details.setAttribute('open', true);
+	    }
+	    return {
+	      element: details
+	    };
+	  }
+	  exportJSON() {
+	    return {
+	      ...super.exportJSON(),
+	      open: this.__open,
+	      type: 'spoiler',
+	      version: 1
+	    };
+	  }
+	  isShadowRoot() {
+	    return true;
+	  }
+	  canBeEmpty() {
+	    return false;
+	  }
+	  append(...nodesToAppend) {
+	    for (const node of nodesToAppend) {
+	      if ($isSpoilerTitleNode(node)) {
+	        const titleNode = node;
+	        if (this.getTitleNode() === null) {
+	          super.append(titleNode);
+	        } else {
+	          this.getTitleNode().clear();
+	          this.getTitleNode().append($createSpoilerTitleTextNode(node.getTextContent()));
+	        }
+	      } else if ($isSpoilerContentNode(node)) {
+	        const contentNode = node;
+	        if (this.getContentNode() === null) {
+	          super.append(contentNode);
+	        } else {
+	          this.getContentNode().append(...contentNode.getChildren());
+	        }
+	      } else if (ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node)) {
+	        this.getContentNode().append(node);
+	      } else {
+	        this.getContentNode().append(ui_lexical_core.$createParagraphNode().append(node));
+	      }
+	    }
+	    return this;
+	  }
+	  getTitleNode() {
+	    return this.getChildren()[0] || null;
+	  }
+	  getContentNode() {
+	    return this.getChildren()[1] || null;
+	  }
+	  setOpen(open) {
+	    const writable = this.getWritable();
+	    writable.__open = open;
+	  }
+	  getOpen() {
+	    return this.getLatest().__open;
+	  }
+	  toggleOpen() {
+	    this.setOpen(!this.getOpen());
+	  }
+	}
+	function $createSpoiler(isOpen, title = main_core.Loc.getMessage('TEXT_EDITOR_SPOILER_TITLE')) {
+	  return $createSpoilerNode(isOpen).append($createSpoilerTitleNode().append($createSpoilerTitleTextNode(title)), $createSpoilerContentNode());
+	}
+	function $createSpoilerNode(isOpen) {
+	  return new SpoilerNode(isOpen);
+	}
+	function $isSpoilerNode(node) {
+	  return node instanceof SpoilerNode;
+	}
+
+
+
+	var Spoiler = /*#__PURE__*/Object.freeze({
+		SpoilerNode: SpoilerNode,
+		$createSpoiler: $createSpoiler,
+		$createSpoilerNode: $createSpoilerNode,
+		$isSpoilerNode: $isSpoilerNode,
+		convertSummaryElement: convertSummaryElement,
+		SpoilerTitleNode: SpoilerTitleNode,
+		$createSpoilerTitleNode: $createSpoilerTitleNode,
+		$isSpoilerTitleNode: $isSpoilerTitleNode,
+		$removeSpoiler: $removeSpoiler,
+		convertSpoilerContentElement: convertSpoilerContentElement,
+		SpoilerContentNode: SpoilerContentNode,
+		$createSpoilerContentNode: $createSpoilerContentNode,
+		$isSpoilerContentNode: $isSpoilerContentNode,
+		INSERT_SPOILER_COMMAND: INSERT_SPOILER_COMMAND,
+		REMOVE_SPOILER_COMMAND: REMOVE_SPOILER_COMMAND,
+		SpoilerPlugin: SpoilerPlugin,
+		insertSpoiler: insertSpoiler,
+		trimSpoilerTitle: trimSpoilerTitle
+	});
+
 	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 	class CustomParagraphNode extends ui_lexical_core.ParagraphNode {
 	  constructor(__mode, key) {
@@ -684,6 +1779,30 @@ this.BX.UI = this.BX.UI || {};
 	      })
 	    };
 	  }
+	  collapseAtStart() {
+	    const children = this.getChildren();
+	    // If we have an empty (trimmed) first paragraph and try and remove it,
+	    // delete the paragraph as long as we have another sibling to go to
+	    if (children.length === 0 || ui_lexical_core.$isTextNode(children[0]) && children[0].getTextContent().trim() === '') {
+	      const nextSibling = this.getNextSibling();
+	      if (nextSibling !== null) {
+	        this.selectNext();
+	        this.remove();
+	        return true;
+	      }
+	      const prevSibling = this.getPreviousSibling();
+	      if (prevSibling !== null) {
+	        this.selectPrevious();
+	        this.remove();
+	        return true;
+	      }
+	      const parentNode = this.getParent();
+	      if (parentNode !== null && !ui_lexical_core.$isRootNode(parentNode) && Object.getPrototypeOf(parentNode).hasOwnProperty('collapseAtStart')) {
+	        return parentNode.collapseAtStart();
+	      }
+	    }
+	    return false;
+	  }
 	  static importJSON(serializedParagraphNode) {
 	    return super.importJSON(serializedParagraphNode);
 	  }
@@ -702,18 +1821,30 @@ this.BX.UI = this.BX.UI || {};
 
 	/** @memberof BX.UI.TextEditor.Plugins.Paragraph */
 	const FORMAT_PARAGRAPH_COMMAND = ui_lexical_core.createCommand('FORMAT_PARAGRAPH_COMMAND');
-	var _registerCommands = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerCommands$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _registerListeners = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
+	var _isBlockNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBlockNode");
+	var _handleEscapeUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEscapeUp");
+	var _handleEscapeDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEscapeDown");
 	class ParagraphPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
+	    Object.defineProperty(this, _handleEscapeDown, {
+	      value: _handleEscapeDown2
+	    });
+	    Object.defineProperty(this, _handleEscapeUp, {
+	      value: _handleEscapeUp2
+	    });
+	    Object.defineProperty(this, _isBlockNode, {
+	      value: _isBlockNode2
+	    });
 	    Object.defineProperty(this, _registerListeners, {
 	      value: _registerListeners2
 	    });
-	    Object.defineProperty(this, _registerCommands, {
-	      value: _registerCommands2
+	    Object.defineProperty(this, _registerCommands$2, {
+	      value: _registerCommands2$2
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands)[_registerCommands]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$2)[_registerCommands$2]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerListeners)[_registerListeners]();
 	  }
 	  static getName() {
@@ -788,7 +1919,7 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	}
-	function _registerCommands2() {
+	function _registerCommands2$2() {
 	  this.cleanUpRegister(this.getEditor().registerCommand(FORMAT_PARAGRAPH_COMMAND, () => {
 	    const selection = ui_lexical_core.$getSelection();
 	    if (ui_lexical_core.$isRangeSelection(selection)) {
@@ -803,7 +1934,51 @@ this.BX.UI = this.BX.UI || {};
 	    if (!ui_lexical_core.$isParagraphNode(lastChild)) {
 	      root.append(ui_lexical_core.$createParagraphNode());
 	    }
-	  }));
+	  }),
+	  // When a block node is the first child pressing up/left arrow will insert paragraph
+	  // above it to allow adding more content. It's similar what $insertBlockNode
+	  // (mainly for decorators), except it'll always be possible to continue adding
+	  // new content even if leading paragraph is accidentally deleted
+	  this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_UP_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeUp)[_handleEscapeUp].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_LEFT_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeUp)[_handleEscapeUp].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW),
+	  // When a block node is the last child pressing down/right arrow will insert paragraph
+	  // below it to allow adding more content. It's similar what $insertBlockNode
+	  // (mainly for decorators), except it'll always be possible to continue adding
+	  // new content even if trailing paragraph is accidentally deleted
+	  this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_DOWN_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeDown)[_handleEscapeDown].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_RIGHT_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeDown)[_handleEscapeDown].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW));
+	}
+	function _isBlockNode2(node) {
+	  return $isQuoteNode(node) || $isCodeNode(node) || $isSpoilerNode(node);
+	}
+	function _handleEscapeUp2() {
+	  const selection = ui_lexical_core.$getSelection();
+	  if (ui_lexical_core.$isRangeSelection(selection) && selection.isCollapsed() && selection.anchor.offset === 0) {
+	    const container = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), babelHelpers.classPrivateFieldLooseBase(this, _isBlockNode)[_isBlockNode]);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isBlockNode)[_isBlockNode](container)) {
+	      var _container$getFirstDe;
+	      const parent = container.getParent();
+	      if (parent !== null && parent.getFirstChild() === container && (selection.anchor.key === ((_container$getFirstDe = container.getFirstDescendant()) == null ? void 0 : _container$getFirstDe.getKey()) || selection.anchor.key === container.getKey())) {
+	        container.insertBefore(ui_lexical_core.$createParagraphNode());
+	      }
+	    }
+	  }
+	  return false;
+	}
+	function _handleEscapeDown2() {
+	  const selection = ui_lexical_core.$getSelection();
+	  if (ui_lexical_core.$isRangeSelection(selection) && selection.isCollapsed()) {
+	    const container = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), babelHelpers.classPrivateFieldLooseBase(this, _isBlockNode)[_isBlockNode]);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isBlockNode)[_isBlockNode](container)) {
+	      const parent = container.getParent();
+	      if (parent !== null && parent.getLastChild() === container) {
+	        const firstDescendant = container.getFirstDescendant();
+	        const lastDescendant = container.getLastDescendant();
+	        if (lastDescendant !== null && selection.anchor.key === lastDescendant.getKey() && selection.anchor.offset === lastDescendant.getTextContentSize() || firstDescendant !== null && selection.anchor.key === firstDescendant.getKey() && selection.anchor.offset === firstDescendant.getTextContentSize() || selection.anchor.key === container.getKey() && selection.anchor.offset === container.getTextContentSize()) {
+	          container.insertAfter(ui_lexical_core.$createParagraphNode());
+	        }
+	      }
+	    }
+	  }
+	  return false;
 	}
 	function convertParagraphNode(bbcodeNode) {
 	  return {
@@ -1190,9 +2365,9 @@ this.BX.UI = this.BX.UI || {};
 	const INSERT_CODE_COMMAND = ui_lexical_core.createCommand('INSERT_CODE_COMMAND');
 	var _nodesCurrentlyHighlighting = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nodesCurrentlyHighlighting");
 	var _codeParser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("codeParser");
-	var _registerComponents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	var _registerListeners$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
-	var _registerCommands$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerCommands$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _handleCodeNodeTransform = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCodeNodeTransform");
 	var _handleTextNodeTransform = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTextNodeTransform");
 	var _handleTab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTab");
@@ -1212,14 +2387,14 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _handleCodeNodeTransform, {
 	      value: _handleCodeNodeTransform2
 	    });
-	    Object.defineProperty(this, _registerCommands$1, {
-	      value: _registerCommands2$1
+	    Object.defineProperty(this, _registerCommands$3, {
+	      value: _registerCommands2$3
 	    });
 	    Object.defineProperty(this, _registerListeners$1, {
 	      value: _registerListeners2$1
 	    });
-	    Object.defineProperty(this, _registerComponents, {
-	      value: _registerComponents2
+	    Object.defineProperty(this, _registerComponents$2, {
+	      value: _registerComponents2$2
 	    });
 	    Object.defineProperty(this, _nodesCurrentlyHighlighting, {
 	      writable: true,
@@ -1229,8 +2404,8 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: new ui_codeParser.CodeParser()
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$1)[_registerCommands$1]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents)[_registerComponents]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$3)[_registerCommands$3]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$2)[_registerComponents$2]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$1)[_registerListeners$1]();
 	  }
 	  static getName() {
@@ -1290,7 +2465,7 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	}
-	function _registerComponents2() {
+	function _registerComponents2$2() {
 	  this.getEditor().getComponentRegistry().register('code', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --enclose-text-in-code-tag"></span>');
@@ -1350,7 +2525,7 @@ this.BX.UI = this.BX.UI || {};
 	    return false;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
-	function _registerCommands2$1() {
+	function _registerCommands2$3() {
 	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_CODE_COMMAND, payload => {
 	    const codeNode = $createCodeNode();
 	    if (main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.content)) {
@@ -1758,15 +2933,15 @@ this.BX.UI = this.BX.UI || {};
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _nodeSelection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nodeSelection");
 	var _unregisterCommands = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unregisterCommands");
-	var _registerCommands$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerCommands$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _handleDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDelete");
 	class DecoratorComponent {
 	  constructor(componentOptions) {
 	    Object.defineProperty(this, _handleDelete, {
 	      value: _handleDelete2
 	    });
-	    Object.defineProperty(this, _registerCommands$2, {
-	      value: _registerCommands2$2
+	    Object.defineProperty(this, _registerCommands$4, {
+	      value: _registerCommands2$4
 	    });
 	    Object.defineProperty(this, _textEditor$1, {
 	      writable: true,
@@ -1810,7 +2985,7 @@ this.BX.UI = this.BX.UI || {};
 	        main_core.Dom.removeClass(this.getTarget(), '--selected');
 	      }
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _unregisterCommands)[_unregisterCommands] = babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$2)[_registerCommands$2]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _unregisterCommands)[_unregisterCommands] = babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$4)[_registerCommands$4]();
 	  }
 	  update(options) {
 	    // update
@@ -1850,7 +3025,7 @@ this.BX.UI = this.BX.UI || {};
 	    return null;
 	  }
 	}
-	function _registerCommands2$2() {
+	function _registerCommands2$4() {
 	  return ui_lexical_utils.mergeRegister(this.getEditor().registerCommand(ui_lexical_core.CLICK_COMMAND, event => {
 	    if (this.getTarget().contains(event.target)) {
 	      if (event.shiftKey) {
@@ -2263,9 +3438,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getImage() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('image', () => {
+	      var _config$theme, _config$theme$image;
 	      const img = document.createElement('img');
 	      img.draggable = false;
 	      img.src = this.getOption('src');
+	      const config = this.getOption('config', {});
+	      if (config != null && (_config$theme = config.theme) != null && (_config$theme$image = _config$theme.image) != null && _config$theme$image.img) {
+	        img.className = config.theme.image.img;
+	      }
 	      return img;
 	    });
 	  }
@@ -2423,10 +3603,10 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	  createDOM(config, editor) {
-	    var _config$theme, _config$theme$file;
+	    var _config$theme, _config$theme$image;
 	    const span = document.createElement('span');
-	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$file = _config$theme.file) == null ? void 0 : _config$theme$file.image)) {
-	      main_core.Dom.addClass(span, config.theme.file.image);
+	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$image = _config$theme.image) == null ? void 0 : _config$theme$image.container)) {
+	      main_core.Dom.addClass(span, config.theme.image.container);
 	    }
 	    return span;
 	  }
@@ -2441,7 +3621,8 @@ this.BX.UI = this.BX.UI || {};
 	        width: this.getWidth(),
 	        height: this.getHeight(),
 	        maxWidth: this.getWidth(),
-	        maxHeight: this.getHeight()
+	        maxHeight: this.getHeight(),
+	        config
 	        // maxWidth: this.__info.previewWidth,
 	        // maxHeight: this.__info.previewHeight,
 	      }
@@ -2538,10 +3719,10 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	  createDOM(config, editor) {
-	    var _config$theme, _config$theme$file;
+	    var _config$theme;
 	    const span = document.createElement('span');
-	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$file = _config$theme.file) == null ? void 0 : _config$theme$file.file)) {
-	      main_core.Dom.addClass(span, config.theme.file.file);
+	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : _config$theme.file)) {
+	      main_core.Dom.addClass(span, config.theme.file);
 	    }
 	    span.textContent = this.getName();
 	    return span;
@@ -2783,10 +3964,10 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	  createDOM(config, editor) {
-	    var _config$theme, _config$theme$file;
+	    var _config$theme, _config$theme$video;
 	    const div = document.createElement('span');
-	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$file = _config$theme.file) == null ? void 0 : _config$theme$file.video)) {
-	      main_core.Dom.addClass(div, config.theme.file.video);
+	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$video = _config$theme.video) == null ? void 0 : _config$theme$video.container)) {
+	      main_core.Dom.addClass(div, config.theme.video.container);
 	    }
 	    return div;
 	  }
@@ -3379,6 +4560,10 @@ this.BX.UI = this.BX.UI || {};
 	      if (config != null && (_config$theme = config.theme) != null && (_config$theme$image = _config$theme.image) != null && _config$theme$image.img) {
 	        img.className = config.theme.image.img;
 	      }
+	      img.onerror = event => {
+	        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+	        main_core.Dom.addClass(this.getTarget(), '--error ui-icon-set__scope');
+	      };
 	      return img;
 	    });
 	  }
@@ -3973,16 +5158,16 @@ this.BX.UI = this.BX.UI || {};
 	var _imageDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imageDialog");
 	var _onEditorScroll = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEditorScroll");
 	var _lastSelection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastSelection");
-	var _registerCommands$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerCommands$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _restoreSelection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreSelection");
 	var _handleDialogDestroy = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDialogDestroy");
 	var _handleEditorScroll = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEditorScroll");
-	var _registerComponents$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class ImagePlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$1, {
-	      value: _registerComponents2$1
+	    Object.defineProperty(this, _registerComponents$3, {
+	      value: _registerComponents2$3
 	    });
 	    Object.defineProperty(this, _handleEditorScroll, {
 	      value: _handleEditorScroll2
@@ -3993,8 +5178,8 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _restoreSelection, {
 	      value: _restoreSelection2
 	    });
-	    Object.defineProperty(this, _registerCommands$3, {
-	      value: _registerCommands2$3
+	    Object.defineProperty(this, _registerCommands$5, {
+	      value: _registerCommands2$5
 	    });
 	    Object.defineProperty(this, _imageDialog, {
 	      writable: true,
@@ -4008,10 +5193,10 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
-	    this.cleanUpRegister(babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$3)[_registerCommands$3](), registerDraggableNode(this.getEditor(), ImageNode, data => {
+	    this.cleanUpRegister(babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$5)[_registerCommands$5](), registerDraggableNode(this.getEditor(), ImageNode, data => {
 	      this.getEditor().dispatchCommand(INSERT_IMAGE_COMMAND, data);
 	    }));
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$1)[_registerComponents$1]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$3)[_registerComponents$3]();
 	  }
 	  static getName() {
 	    return 'Image';
@@ -4086,7 +5271,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	}
-	function _registerCommands2$3() {
+	function _registerCommands2$5() {
 	  return ui_lexical_utils.mergeRegister(this.getEditor().registerCommand(INSERT_IMAGE_COMMAND, payload => {
 	    if (!validateImageUrl(payload == null ? void 0 : payload.src)) {
 	      return false;
@@ -4177,7 +5362,7 @@ this.BX.UI = this.BX.UI || {};
 	    $adjustDialogPosition(babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog].getPopup(), this.getEditor());
 	  });
 	}
-	function _registerComponents2$1() {
+	function _registerComponents2$3() {
 	  this.getEditor().getComponentRegistry().register('image', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --incert-image"></span>');
@@ -4236,6 +5421,15 @@ this.BX.UI = this.BX.UI || {};
 	  static importDOM() {
 	    return {
 	      span: domNode => {
+	        if (!domNode.hasAttribute('data-mention-id')) {
+	          return null;
+	        }
+	        return {
+	          conversion: convertMentionElement,
+	          priority: 1
+	        };
+	      },
+	      a: domNode => {
 	        if (!domNode.hasAttribute('data-mention-id')) {
 	          return null;
 	        }
@@ -4355,8 +5549,8 @@ this.BX.UI = this.BX.UI || {};
 	var _triggerByAtSign = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerByAtSign");
 	var _dialogOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogOptions");
 	var _entities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entities");
-	var _registerCommands$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
-	var _registerComponents$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerCommands$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerComponents$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	var _convertMentionElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertMentionElement");
 	var _registerKeyDownListener = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerKeyDownListener");
 	var _registerTextContentListener = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerTextContentListener");
@@ -4440,11 +5634,11 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _convertMentionElement, {
 	      value: _convertMentionElement2
 	    });
-	    Object.defineProperty(this, _registerComponents$2, {
-	      value: _registerComponents2$2
+	    Object.defineProperty(this, _registerComponents$4, {
+	      value: _registerComponents2$4
 	    });
-	    Object.defineProperty(this, _registerCommands$4, {
-	      value: _registerCommands2$4
+	    Object.defineProperty(this, _registerCommands$6, {
+	      value: _registerCommands2$6
 	    });
 	    Object.defineProperty(this, _dialog, {
 	      writable: true,
@@ -4505,8 +5699,8 @@ this.BX.UI = this.BX.UI || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _registerKeyDownListener)[_registerKeyDownListener]();
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _entities)[_entities].size > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$4)[_registerCommands$4]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$2)[_registerComponents$2]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$6)[_registerCommands$6]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$4)[_registerComponents$4]();
 	    }
 	  }
 	  static getName() {
@@ -4571,7 +5765,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _unlockKeyboardCommands)[_unlockKeyboardCommands]();
 	  }
 	}
-	function _registerCommands2$4() {
+	function _registerCommands2$6() {
 	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_MENTION_COMMAND, payload => {
 	    if (!main_core.Type.isPlainObject(payload) || !main_core.Type.isStringFilled(payload.entityId) || !main_core.Type.isStringFilled(payload.text) || !main_core.Type.isStringFilled(payload.id) && !main_core.Type.isNumber(payload.id)) {
 	      return false;
@@ -4631,7 +5825,7 @@ this.BX.UI = this.BX.UI || {};
 	    return this.isDialogVisible();
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
-	function _registerComponents2$2() {
+	function _registerComponents2$4() {
 	  this.getEditor().getComponentRegistry().register('mention', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --mention"></span>');
@@ -5177,12 +6371,12 @@ this.BX.UI = this.BX.UI || {};
 	var _smileyDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smileyDialog");
 	var _registerListeners$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
 	var _registerInsertSmileyCommand = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerInsertSmileyCommand");
-	var _registerComponents$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class SmileyPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$3, {
-	      value: _registerComponents2$3
+	    Object.defineProperty(this, _registerComponents$5, {
+	      value: _registerComponents2$5
 	    });
 	    Object.defineProperty(this, _registerInsertSmileyCommand, {
 	      value: _registerInsertSmileyCommand2
@@ -5202,7 +6396,7 @@ this.BX.UI = this.BX.UI || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _smileyParser)[_smileyParser] = new ui_smiley.SmileyParser(ui_smiley.SmileyManager.getAll());
 	      babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$3)[_registerListeners$3]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _registerInsertSmileyCommand)[_registerInsertSmileyCommand]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$3)[_registerComponents$3]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$5)[_registerComponents$5]();
 	    }
 	  }
 	  static getName() {
@@ -5331,7 +6525,7 @@ this.BX.UI = this.BX.UI || {};
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
-	function _registerComponents2$3() {
+	function _registerComponents2$5() {
 	  this.getEditor().getComponentRegistry().register('smileys', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --insert-emoji"></span>');
@@ -5431,8 +6625,7 @@ this.BX.UI = this.BX.UI || {};
 	    const aspectRatio = width > 0 && height > 0 ? `${width} / ${height}` : 'auto';
 	    main_core.Dom.adjust(babelHelpers.classPrivateFieldLooseBase(this, _getVideo$1)[_getVideo$1](), {
 	      attrs: {
-	        width,
-	        height: null
+	        width
 	      },
 	      style: {
 	        width,
@@ -5843,16 +7036,16 @@ this.BX.UI = this.BX.UI || {};
 	var _videoDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("videoDialog");
 	var _onEditorScroll$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEditorScroll");
 	var _lastSelection$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastSelection");
-	var _registerCommands$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerCommands$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _restoreSelection$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreSelection");
 	var _handleDialogDestroy$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDialogDestroy");
 	var _handleEditorScroll$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEditorScroll");
-	var _registerComponents$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class VideoPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$4, {
-	      value: _registerComponents2$4
+	    Object.defineProperty(this, _registerComponents$6, {
+	      value: _registerComponents2$6
 	    });
 	    Object.defineProperty(this, _handleEditorScroll$2, {
 	      value: _handleEditorScroll2$2
@@ -5863,8 +7056,8 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _restoreSelection$1, {
 	      value: _restoreSelection2$1
 	    });
-	    Object.defineProperty(this, _registerCommands$5, {
-	      value: _registerCommands2$5
+	    Object.defineProperty(this, _registerCommands$7, {
+	      value: _registerCommands2$7
 	    });
 	    Object.defineProperty(this, _videoDialog, {
 	      writable: true,
@@ -5878,8 +7071,8 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$5)[_registerCommands$5]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$4)[_registerComponents$4]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$7)[_registerCommands$7]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$6)[_registerComponents$6]();
 	  }
 	  static getName() {
 	    return 'Video';
@@ -5957,7 +7150,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	}
-	function _registerCommands2$5() {
+	function _registerCommands2$7() {
 	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_VIDEO_COMMAND, payload => {
 	    if (main_core.Type.isPlainObject(payload) && validateVideoUrl(payload.src)) {
 	      const videoNode = $createVideoNode({
@@ -6053,7 +7246,7 @@ this.BX.UI = this.BX.UI || {};
 	    $adjustDialogPosition(babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog].getPopup(), this.getEditor());
 	  });
 	}
-	function _registerComponents2$4() {
+	function _registerComponents2$6() {
 	  this.getEditor().getComponentRegistry().register('video', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --insert-video"></span>');
@@ -6337,6 +7530,10 @@ this.BX.UI = this.BX.UI || {};
 	  return [start + numNonSingleWidthCharBeforeSelection, end + numNonSingleWidthCharBeforeSelection + numNonSingleWidthCharInSelection];
 	}
 
+	function createHashCode(s) {
+	  return [...s].reduce((hash, c) => Math.trunc(Math.imul(31, hash) + c.codePointAt(0)), 0);
+	}
+
 	function $isRootEmpty(trim = true) {
 	  const root = ui_lexical_core.$getRoot();
 	  let text = root.getTextContent();
@@ -6390,10 +7587,6 @@ this.BX.UI = this.BX.UI || {};
 	    h6: 'ui-typography-heading-h6'
 	  },
 	  hashtag: 'ui-typography-hashtag',
-	  image: {
-	    container: 'ui-typography-image-container ui-text-editor__image-container',
-	    img: 'ui-typography-image'
-	  },
 	  link: 'ui-typography-link',
 	  list: {
 	    listitem: 'ui-typography-li',
@@ -6443,15 +7636,15 @@ this.BX.UI = this.BX.UI || {};
 	  tableCell: 'ui-typography-table-cell',
 	  tableCellHeader: 'ui-typography-table-cell-header',
 	  tableSelection: 'ui-typography-table-selection',
+	  image: {
+	    container: 'ui-typography-image-container ui-text-editor__image-container',
+	    img: 'ui-typography-image'
+	  },
 	  video: {
 	    container: 'ui-typography-video-container ui-text-editor__video-container',
 	    object: 'ui-typography-video-object ui-text-editor__video-object'
 	  },
-	  file: {
-	    file: 'ui-text-editor__file',
-	    image: 'ui-text-editor__file-image',
-	    video: 'ui-text-editor__file-video'
-	  }
+	  file: 'ui-text-editor__file'
 	};
 
 	let _Symbol$iterator;
@@ -6686,14 +7879,100 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	}
 
-	var _registerComponents$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	class ClipboardPlainTableNode extends ui_lexical_core.ElementNode {
+	  static getType() {
+	    return 'plain-table-node';
+	  }
+	  static clone(node) {
+	    throw new Error('Not implemented');
+	  }
+	  static importJSON(serializedNode) {
+	    throw new Error('Not implemented');
+	  }
+	  exportJSON() {
+	    throw new Error('Not implemented');
+	  }
+	  static importDOM() {
+	    return {
+	      table: () => {
+	        return {
+	          conversion: convertTableToPlainText,
+	          priority: 0
+	        };
+	      },
+	      tr: () => {
+	        return {
+	          conversion: () => ({
+	            node: null
+	          }),
+	          priority: 0
+	        };
+	      },
+	      td: () => {
+	        return {
+	          conversion: () => ({
+	            node: null
+	          }),
+	          priority: 0
+	        };
+	      },
+	      th: () => {
+	        return {
+	          conversion: () => ({
+	            node: null
+	          }),
+	          priority: 0
+	        };
+	      }
+	    };
+	  }
+	}
+	function convertTableToPlainText(table) {
+	  const nodes = [];
+	  const rows = [...table.rows];
+	  for (const row of rows) {
+	    if (nodes.length > 0) {
+	      nodes.push(ui_lexical_core.$createLineBreakNode());
+	    }
+	    const cells = [];
+	    for (const cell of row.cells) {
+	      if (cells.length > 0) {
+	        // cells.push($createTabNode());
+	        cells.push(ui_lexical_core.$createTextNode(' '));
+	      }
+	      cells.push(ui_lexical_core.$createTextNode(cell.textContent.trim()));
+	    }
+	    nodes.push(...cells);
+	  }
+	  return {
+	    node: nodes
+	  };
+	}
+
+	class ClipboardPlugin extends BasePlugin {
+	  static getName() {
+	    return 'Clipboard';
+	  }
+	  static getNodes(editor) {
+	    const nodes = [];
+	    const tablePluginExists = editor.getPlugins().getConstructors().some(plugin => {
+	      return plugin.getName() === 'Table';
+	    });
+	    if (!tablePluginExists) {
+	      nodes.push(ClipboardPlainTableNode);
+	    }
+	    return nodes;
+	  }
+	}
+
+	var _registerComponents$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class BoldPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$5, {
-	      value: _registerComponents2$5
+	    Object.defineProperty(this, _registerComponents$7, {
+	      value: _registerComponents2$7
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$5)[_registerComponents$5]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$7)[_registerComponents$7]();
 	  }
 	  static getName() {
 	    return 'Bold';
@@ -6729,7 +8008,7 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	}
-	function _registerComponents2$5() {
+	function _registerComponents2$7() {
 	  this.getEditor().getComponentRegistry().register('bold', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --bold"></span>');
@@ -6754,14 +8033,14 @@ this.BX.UI = this.BX.UI || {};
 		BoldPlugin: BoldPlugin
 	});
 
-	var _registerComponents$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class ItalicPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$6, {
-	      value: _registerComponents2$6
+	    Object.defineProperty(this, _registerComponents$8, {
+	      value: _registerComponents2$8
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$6)[_registerComponents$6]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$8)[_registerComponents$8]();
 	  }
 	  static getName() {
 	    return 'Italic';
@@ -6785,7 +8064,7 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	}
-	function _registerComponents2$6() {
+	function _registerComponents2$8() {
 	  this.getEditor().getComponentRegistry().register('italic', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --italic"></span>');
@@ -6811,17 +8090,17 @@ this.BX.UI = this.BX.UI || {};
 	});
 
 	var _registerKeyModifierCommand = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerKeyModifierCommand");
-	var _registerComponents$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class StrikethroughPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$7, {
-	      value: _registerComponents2$7
+	    Object.defineProperty(this, _registerComponents$9, {
+	      value: _registerComponents2$9
 	    });
 	    Object.defineProperty(this, _registerKeyModifierCommand, {
 	      value: _registerKeyModifierCommand2
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$7)[_registerComponents$7]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$9)[_registerComponents$9]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerKeyModifierCommand)[_registerKeyModifierCommand]();
 	  }
 	  static getName() {
@@ -6867,7 +8146,7 @@ this.BX.UI = this.BX.UI || {};
 	    return false;
 	  }, ui_lexical_core.COMMAND_PRIORITY_NORMAL));
 	}
-	function _registerComponents2$7() {
+	function _registerComponents2$9() {
 	  this.getEditor().getComponentRegistry().register('strikethrough', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --strikethrough"></span>');
@@ -6892,14 +8171,14 @@ this.BX.UI = this.BX.UI || {};
 		StrikethroughPlugin: StrikethroughPlugin
 	});
 
-	var _registerComponents$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class UnderlinePlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$8, {
-	      value: _registerComponents2$8
+	    Object.defineProperty(this, _registerComponents$a, {
+	      value: _registerComponents2$a
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$8)[_registerComponents$8]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$a)[_registerComponents$a]();
 	  }
 	  static getName() {
 	    return 'Underline';
@@ -6923,7 +8202,7 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	  }
 	}
-	function _registerComponents2$8() {
+	function _registerComponents2$a() {
 	  this.getEditor().getComponentRegistry().register('underline', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --underline"></span>');
@@ -6948,203 +8227,94 @@ this.BX.UI = this.BX.UI || {};
 		UnderlinePlugin: UnderlinePlugin
 	});
 
-	/* eslint-disable no-underscore-dangle */
-	class QuoteNode extends ui_lexical_core.ElementNode {
-	  static getType() {
-	    return 'quote';
-	  }
-	  static clone(node) {
-	    return new QuoteNode(node.__key);
-	  }
-	  createDOM(config, editor) {
-	    var _config$theme;
-	    const element = document.createElement('blockquote');
-	    element.setAttribute('spellcheck', 'false');
-	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : _config$theme.quote)) {
-	      main_core.Dom.addClass(element, config.theme.quote);
-	    }
-	    return element;
-	  }
-	  updateDOM(prevNode, anchor, config) {
-	    return false;
-	  }
-	  static importDOM() {
-	    return {
-	      blockquote: node => ({
-	        conversion: element => {
-	          return {
-	            node: $createQuoteNode()
-	          };
-	        },
-	        priority: 0
-	      })
-	    };
-	  }
-	  static importJSON(serializedNode) {
-	    const node = $createQuoteNode();
-	    node.setFormat(serializedNode.format);
-	    node.setIndent(serializedNode.indent);
-	    node.setDirection(serializedNode.direction);
-	    return node;
-	  }
-	  exportJSON() {
-	    return {
-	      ...super.exportJSON(),
-	      type: 'quote'
-	    };
-	  }
-	  canIndent() {
-	    return false;
-	  }
-	  isInline() {
-	    return false;
-	  }
-	  canReplaceWith(replacement) {
-	    return false;
-	  }
-	  collapseAtStart(selection) {
-	    const paragraph = ui_lexical_core.$createParagraphNode();
-	    const children = this.getChildren();
-	    children.forEach(child => paragraph.append(child));
-	    this.replace(paragraph);
-	    return true;
-	  }
-	  insertNewAfter(selection, restoreSelection = true) {
-	    const children = this.getChildren();
-	    const childrenLength = children.length;
-	    if (childrenLength >= 2 && children[childrenLength - 1].getTextContent() === '\n' && children[childrenLength - 2].getTextContent() === '\n' && selection.isCollapsed() && selection.anchor.key === this.__key && selection.anchor.offset === childrenLength) {
-	      children[childrenLength - 1].remove();
-	      children[childrenLength - 2].remove();
-	      const newElement = ui_lexical_core.$createParagraphNode();
-	      this.insertAfter(newElement, restoreSelection);
-	      return newElement;
-	    }
-	    selection.insertLineBreak();
-	    return null;
-	  }
-	}
-	function $createQuoteNode() {
-	  return ui_lexical_core.$applyNodeReplacement(new QuoteNode());
-	}
-	function $isQuoteNode(node) {
-	  return node instanceof QuoteNode;
-	}
-
-	/** @memberof BX.UI.TextEditor.Plugins.Quote */
-	const INSERT_QUOTE_COMMAND = ui_lexical_core.createCommand('INSERT_QUOTE_COMMAND');
-
-	/** @memberof BX.UI.TextEditor.Plugins.Quote */
-	const FORMAT_QUOTE_COMMAND = ui_lexical_core.createCommand('FORMAT_QUOTE_COMMAND');
-	var _registerCommands$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
-	var _registerComponents$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
-	class QuotePlugin extends BasePlugin {
+	const CLEAR_FORMATTING_COMMAND = ui_lexical_core.createCommand('CLEAR_FORMATTING_COMMAND');
+	var _registerCommands$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerComponents$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	class ClearFormatPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$9, {
-	      value: _registerComponents2$9
+	    Object.defineProperty(this, _registerComponents$b, {
+	      value: _registerComponents2$b
 	    });
-	    Object.defineProperty(this, _registerCommands$6, {
-	      value: _registerCommands2$6
+	    Object.defineProperty(this, _registerCommands$8, {
+	      value: _registerCommands2$8
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$6)[_registerCommands$6]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$9)[_registerComponents$9]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$8)[_registerCommands$8]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$b)[_registerComponents$b]();
 	  }
 	  static getName() {
-	    return 'Quote';
-	  }
-	  static getNodes(editor) {
-	    return [QuoteNode];
-	  }
-	  importBBCode() {
-	    return {
-	      quote: () => ({
-	        conversion: node => {
-	          return {
-	            node: $createQuoteNode(),
-	            after: childLexicalNodes => {
-	              return trimLineBreaks(childLexicalNodes);
-	            }
-	          };
-	        },
-	        priority: 0
-	      })
-	    };
-	  }
-	  exportBBCode() {
-	    return {
-	      quote: lexicalNode => {
-	        const scheme = this.getEditor().getBBCodeScheme();
-	        return {
-	          node: scheme.createElement({
-	            name: 'quote'
-	          })
-	        };
-	      }
-	    };
-	  }
-	  validateScheme() {
-	    return {
-	      nodes: [{
-	        nodeClass: QuoteNode
-	      }],
-	      bbcodeMap: {
-	        quote: 'quote'
-	      }
-	    };
+	    return 'ClearFormat';
 	  }
 	}
-	function _registerCommands2$6() {
-	  this.cleanUpRegister(this.getEditor().registerCommand(INSERT_QUOTE_COMMAND, payload => {
-	    const quoteNode = $createQuoteNode();
-	    if (main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.content)) {
-	      const nodes = $importFromBBCode(payload.content, this.getEditor(), false);
-	      quoteNode.append(...nodes);
-	      ui_lexical_utils.$insertNodeToNearestRoot(quoteNode);
-	    } else {
-	      ui_lexical_utils.$insertNodeToNearestRoot(quoteNode);
-	      quoteNode.selectEnd();
-	    }
-	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR), this.getEditor().registerCommand(FORMAT_QUOTE_COMMAND, () => {
+	function _registerCommands2$8() {
+	  this.cleanUpRegister(this.getEditor().registerCommand(CLEAR_FORMATTING_COMMAND, () => {
 	    const selection = ui_lexical_core.$getSelection();
-	    if (ui_lexical_core.$isRangeSelection(selection)) {
-	      ui_lexical_selection.$setBlocksType(selection, () => $createQuoteNode());
+	    if (!ui_lexical_core.$isRangeSelection(selection) && !ui_lexical_table.$isTableSelection(selection)) {
+	      return false;
 	    }
+	    const anchor = selection.anchor;
+	    const focus = selection.focus;
+	    const nodes = selection.getNodes();
+	    const extractedNodes = selection.extract();
+	    if (anchor.key === focus.key && anchor.offset === focus.offset) {
+	      return false;
+	    }
+	    nodes.forEach((node, idx) => {
+	      // We split the first and last node by the selection
+	      // So that we don't format unselected text inside those nodes
+	      if (ui_lexical_core.$isTextNode(node)) {
+	        // Use a separate variable to ensure TS does not lose the refinement
+	        let textNode = node;
+	        if (idx === 0 && anchor.offset !== 0) {
+	          textNode = textNode.splitText(anchor.offset)[1] || textNode;
+	        }
+	        if (idx === nodes.length - 1) {
+	          textNode = textNode.splitText(focus.offset)[0] || textNode;
+	        }
+	        /**
+	         * If the selected text has one format applied
+	         * selecting a portion of the text, could
+	         * clear the format to the wrong portion of the text.
+	         *
+	         * The cleared text is based on the length of the selected text.
+	         */
+	        // We need this in case the selected text only has one format
+	        const extractedTextNode = extractedNodes[0];
+	        if (nodes.length === 1 && ui_lexical_core.$isTextNode(extractedTextNode)) {
+	          textNode = extractedTextNode;
+	        }
+	        if (textNode.__style !== '') {
+	          textNode.setStyle('');
+	        }
+	        if (textNode.__format !== 0) {
+	          textNode.setFormat(0);
+	          ui_lexical_utils.$getNearestBlockElementAncestorOrThrow(textNode).setFormat('');
+	        }
+	      }
+	      /* else if ($isHeadingNode(node) || $isQuoteNode(node))
+	      {
+	      	node.replace($createParagraphNode(), true);
+	      } */
+	    });
+
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR));
 	}
-	function _registerComponents2$9() {
-	  this.getEditor().getComponentRegistry().register('quote', () => {
+	function _registerComponents2$b() {
+	  this.getEditor().getComponentRegistry().register('clear-format', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --quote"></span>');
-	    button.setBlockType('quote');
-	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_QUOTE'));
+	    button.setContent('<span class="ui-icon-set --remove-formatting"></span>');
+	    button.disableInsideUnformatted();
+	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_CLEAR_FORMATTING'));
 	    button.subscribe('onClick', () => {
 	      this.getEditor().focus();
 	      this.getEditor().update(() => {
-	        if (button.isActive()) {
-	          this.getEditor().dispatchCommand(FORMAT_PARAGRAPH_COMMAND);
-	        } else if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK) {
-	          this.getEditor().dispatchCommand(INSERT_QUOTE_COMMAND);
-	        } else {
-	          this.getEditor().dispatchCommand(FORMAT_QUOTE_COMMAND);
-	        }
+	        this.getEditor().dispatchCommand(CLEAR_FORMATTING_COMMAND);
 	      });
 	    });
 	    return button;
 	  });
 	}
-
-
-
-	var Quote = /*#__PURE__*/Object.freeze({
-		QuoteNode: QuoteNode,
-		$createQuoteNode: $createQuoteNode,
-		$isQuoteNode: $isQuoteNode,
-		INSERT_QUOTE_COMMAND: INSERT_QUOTE_COMMAND,
-		FORMAT_QUOTE_COMMAND: FORMAT_QUOTE_COMMAND,
-		QuotePlugin: QuotePlugin
-	});
 
 	let _$9 = t => t,
 	  _t$9,
@@ -7420,7 +8590,7 @@ this.BX.UI = this.BX.UI || {};
 	var _onEditorScroll$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEditorScroll");
 	var _lastSelection$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastSelection");
 	var _registerListeners$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
-	var _registerCommands$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerCommands$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _registerToggleLinkCommand = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerToggleLinkCommand");
 	var _registerInsertLinkCommand = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerInsertLinkCommand");
 	var _restoreSelection$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreSelection");
@@ -7431,12 +8601,12 @@ this.BX.UI = this.BX.UI || {};
 	var _insertLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertLink");
 	var _isLinkSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLinkSelected");
 	var _convertAutoLinkToLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertAutoLinkToLink");
-	var _registerComponents$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class LinkPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$a, {
-	      value: _registerComponents2$a
+	    Object.defineProperty(this, _registerComponents$c, {
+	      value: _registerComponents2$c
 	    });
 	    Object.defineProperty(this, _convertAutoLinkToLink, {
 	      value: _convertAutoLinkToLink2
@@ -7468,8 +8638,8 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _registerToggleLinkCommand, {
 	      value: _registerToggleLinkCommand2
 	    });
-	    Object.defineProperty(this, _registerCommands$7, {
-	      value: _registerCommands2$7
+	    Object.defineProperty(this, _registerCommands$9, {
+	      value: _registerCommands2$9
 	    });
 	    Object.defineProperty(this, _registerListeners$4, {
 	      value: _registerListeners2$4
@@ -7486,9 +8656,9 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$7)[_registerCommands$7]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$9)[_registerCommands$9]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$4)[_registerListeners$4]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$a)[_registerComponents$a]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$c)[_registerComponents$c]();
 	  }
 	  static getName() {
 	    return 'Link';
@@ -7569,7 +8739,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }));
 	}
-	function _registerCommands2$7() {
+	function _registerCommands2$9() {
 	  this.cleanUpRegister(babelHelpers.classPrivateFieldLooseBase(this, _registerToggleLinkCommand)[_registerToggleLinkCommand](), babelHelpers.classPrivateFieldLooseBase(this, _registerInsertLinkCommand)[_registerInsertLinkCommand](), babelHelpers.classPrivateFieldLooseBase(this, _registerKeyModifierCommand$1)[_registerKeyModifierCommand$1](), babelHelpers.classPrivateFieldLooseBase(this, _registerPasteCommand)[_registerPasteCommand]());
 	}
 	function _registerToggleLinkCommand2() {
@@ -7849,7 +9019,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  return false;
 	}
-	function _registerComponents2$a() {
+	function _registerComponents2$c() {
 	  this.getEditor().getComponentRegistry().register('link', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --link-3"></span>');
@@ -8157,7 +9327,7 @@ this.BX.UI = this.BX.UI || {};
 	});
 
 	var _registerListeners$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
-	var _registerComponents$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	var _isIndentPermitted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isIndentPermitted");
 	var _getElementNodesInSelection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getElementNodesInSelection");
 	class ListPlugin extends BasePlugin {
@@ -8169,14 +9339,14 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _isIndentPermitted, {
 	      value: _isIndentPermitted2
 	    });
-	    Object.defineProperty(this, _registerComponents$b, {
-	      value: _registerComponents2$b
+	    Object.defineProperty(this, _registerComponents$d, {
+	      value: _registerComponents2$d
 	    });
 	    Object.defineProperty(this, _registerListeners$7, {
 	      value: _registerListeners2$7
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$7)[_registerListeners$7]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$b)[_registerComponents$b]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$d)[_registerComponents$d]();
 	  }
 	  static getName() {
 	    return 'List';
@@ -8288,7 +9458,7 @@ this.BX.UI = this.BX.UI || {};
 	    return ui_lexical_list.$handleListInsertParagraph();
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.INDENT_CONTENT_COMMAND, () => !babelHelpers.classPrivateFieldLooseBase(this, _isIndentPermitted)[_isIndentPermitted](1), ui_lexical_core.COMMAND_PRIORITY_CRITICAL));
 	}
-	function _registerComponents2$b() {
+	function _registerComponents2$d() {
 	  this.getEditor().getComponentRegistry().register('bulleted-list', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --bulleted-list"></span>');
@@ -8357,803 +9527,6 @@ this.BX.UI = this.BX.UI || {};
 
 	var List = /*#__PURE__*/Object.freeze({
 		ListPlugin: ListPlugin
-	});
-
-	/*
-	eslint-disable no-underscore-dangle,
-	@bitrix24/bitrix24-rules/no-pseudo-private,
-	@bitrix24/bitrix24-rules/no-native-dom-methods
-	*/
-	function convertSpoilerContentElement(domNode) {
-	  const node = $createSpoilerContentNode();
-	  return {
-	    node
-	  };
-	}
-	class SpoilerContentNode extends ui_lexical_core.ElementNode {
-	  static getType() {
-	    return 'spoiler-content';
-	  }
-	  static clone(node) {
-	    return new SpoilerContentNode(node.__key);
-	  }
-	  createDOM(config, editor) {
-	    var _config$theme, _config$theme$spoiler;
-	    const dom = document.createElement('div');
-	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$spoiler = _config$theme.spoiler) == null ? void 0 : _config$theme$spoiler.content)) {
-	      main_core.Dom.addClass(dom, config.theme.spoiler.content);
-	    }
-	    return dom;
-	  }
-	  updateDOM(prevNode, dom, config) {
-	    return false;
-	  }
-	  static importDOM() {
-	    return {
-	      div: domNode => {
-	        if (!domNode.hasAttribute('data-lexical-spoiler-content')) {
-	          return null;
-	        }
-	        return {
-	          conversion: convertSpoilerContentElement,
-	          priority: 2
-	        };
-	      }
-	    };
-	  }
-	  static importJSON(serializedNode) {
-	    return $createSpoilerContentNode();
-	  }
-	  exportDOM() {
-	    const element = document.createElement('div');
-	    element.setAttribute('data-lexical-spoiler-content', 'true');
-	    return {
-	      element
-	    };
-	  }
-	  exportJSON() {
-	    return {
-	      ...super.exportJSON(),
-	      type: 'spoiler-content',
-	      version: 1
-	    };
-	  }
-	  isShadowRoot() {
-	    return true;
-	  }
-	  isParentRequired() {
-	    return true;
-	  }
-	  createParentElementNode() {
-	    return $createSpoilerNode();
-	  }
-	  canIndent() {
-	    return false;
-	  }
-	  canInsertAfter(node) {
-	    return false;
-	  }
-	  canReplaceWith(replacement) {
-	    return false;
-	  }
-	  insertBefore(node) {
-	    const firstChild = this.getFirstChild();
-	    const nodeToInsert = ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node) ? node : ui_lexical_core.$createParagraphNode().append(node);
-	    if (firstChild === null) {
-	      this.append(nodeToInsert);
-	    } else {
-	      firstChild.insertBefore(nodeToInsert);
-	    }
-	    return nodeToInsert;
-	  }
-	  insertAfter(node) {
-	    const nodeToInsert = ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node) ? node : ui_lexical_core.$createParagraphNode().append(node);
-	    this.append(nodeToInsert);
-	    return nodeToInsert;
-	  }
-	}
-	function $createSpoilerContentNode() {
-	  return new SpoilerContentNode();
-	}
-	function $isSpoilerContentNode(node) {
-	  return node instanceof SpoilerContentNode;
-	}
-
-	/* eslint-disable no-underscore-dangle */
-	class SpoilerTitleTextNode extends ui_lexical_core.TextNode {
-	  static getType() {
-	    return 'spoiler-title-text';
-	  }
-	  static clone(node) {
-	    return new SpoilerTitleTextNode(node.__text, node.__key);
-	  }
-	  createDOM(config) {
-	    return super.createDOM(config);
-	  }
-	  static importJSON(serializedNode) {
-	    return $createSpoilerTitleTextNode(serializedNode.text);
-	  }
-	  exportJSON() {
-	    return {
-	      ...super.exportJSON(),
-	      type: 'spoiler-title-text'
-	    };
-	  }
-	}
-	function $createSpoilerTitleTextNode(text = '') {
-	  return ui_lexical_core.$applyNodeReplacement(new SpoilerTitleTextNode(text));
-	}
-	function $isSpoilerTitleTextNode(node) {
-	  return node instanceof SpoilerTitleTextNode;
-	}
-
-	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
-	const INSERT_SPOILER_COMMAND = ui_lexical_core.createCommand('INSERT_SPOILER_COMMAND');
-	const REMOVE_SPOILER_COMMAND = ui_lexical_core.createCommand('REMOVE_SPOILER_COMMAND');
-	var _registerComponents$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
-	var _registerCommands$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
-	var _registerNodeTransforms = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerNodeTransforms");
-	var _handleDeleteCharacter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDeleteCharacter");
-	var _handleEnter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEnter");
-	var _handleEscapeUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEscapeUp");
-	var _handleEscapeDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEscapeDown");
-	var _handlePaste = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePaste");
-	class SpoilerPlugin extends BasePlugin {
-	  constructor(editor) {
-	    super(editor);
-	    Object.defineProperty(this, _handlePaste, {
-	      value: _handlePaste2
-	    });
-	    Object.defineProperty(this, _handleEscapeDown, {
-	      value: _handleEscapeDown2
-	    });
-	    Object.defineProperty(this, _handleEscapeUp, {
-	      value: _handleEscapeUp2
-	    });
-	    Object.defineProperty(this, _handleEnter, {
-	      value: _handleEnter2
-	    });
-	    Object.defineProperty(this, _handleDeleteCharacter, {
-	      value: _handleDeleteCharacter2
-	    });
-	    Object.defineProperty(this, _registerNodeTransforms, {
-	      value: _registerNodeTransforms2
-	    });
-	    Object.defineProperty(this, _registerCommands$8, {
-	      value: _registerCommands2$8
-	    });
-	    Object.defineProperty(this, _registerComponents$c, {
-	      value: _registerComponents2$c
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerNodeTransforms)[_registerNodeTransforms]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$8)[_registerCommands$8]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$c)[_registerComponents$c]();
-	  }
-	  static getName() {
-	    return 'Spoiler';
-	  }
-	  static getNodes(editor) {
-	    return [SpoilerNode, SpoilerTitleNode, SpoilerContentNode, SpoilerTitleTextNode];
-	  }
-	  importBBCode() {
-	    return {
-	      spoiler: () => ({
-	        conversion: node => {
-	          const title = main_core.Type.isStringFilled(node.getValue()) ? trimSpoilerTitle(node.getValue()) : main_core.Loc.getMessage('TEXT_EDITOR_SPOILER_TITLE');
-	          return {
-	            node: $createSpoilerNode(false),
-	            after: childLexicalNodes => {
-	              return [$createSpoilerTitleNode().append($createSpoilerTitleTextNode(title)), $createSpoilerContentNode().append(...$normalizeTextNodes(childLexicalNodes, this.getEditor()))];
-	            }
-	          };
-	        },
-	        priority: 0
-	      })
-	    };
-	  }
-	  exportBBCode() {
-	    return {
-	      spoiler: spoilerNode => {
-	        const scheme = this.getEditor().getBBCodeScheme();
-	        const titleNode = spoilerNode.getChildren()[0];
-	        const title = trimSpoilerTitle(titleNode.getTextContent());
-	        const value = title === main_core.Loc.getMessage('TEXT_EDITOR_SPOILER_TITLE') ? '' : title;
-	        return {
-	          node: scheme.createElement({
-	            name: 'spoiler',
-	            value
-	          })
-	        };
-	      },
-	      'spoiler-title': node => {
-	        return {
-	          node: null
-	        };
-	      },
-	      'spoiler-content': node => {
-	        const scheme = this.getEditor().getBBCodeScheme();
-	        return {
-	          node: scheme.createFragment()
-	        };
-	      }
-	    };
-	  }
-	  validateScheme() {
-	    return {
-	      nodes: [{
-	        nodeClass: SpoilerNode
-	      }, {
-	        nodeClass: SpoilerContentNode,
-	        validate: tableCellNode => {
-	          tableCellNode.getChildren().forEach(child => {
-	            if (shouldWrapInParagraph(child)) {
-	              const paragraph = ui_lexical_core.$createParagraphNode();
-	              child.replace(paragraph);
-	              paragraph.append(child);
-	            }
-	          });
-	          return false;
-	        }
-	      }],
-	      bbcodeMap: {
-	        spoiler: 'spoiler',
-	        'spoiler-content': 'spoiler'
-	      }
-	    };
-	  }
-	}
-	function _registerComponents2$c() {
-	  this.getEditor().getComponentRegistry().register('spoiler', () => {
-	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --insert-spoiler"></span>');
-	    button.setBlockType('spoiler');
-	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_SPOILER'));
-	    button.subscribe('onClick', () => {
-	      this.getEditor().focus();
-	      this.getEditor().update(() => {
-	        if (button.isActive()) {
-	          this.getEditor().dispatchCommand(REMOVE_SPOILER_COMMAND);
-	        } else {
-	          this.getEditor().dispatchCommand(INSERT_SPOILER_COMMAND);
-	        }
-	      });
-	    });
-	    return button;
-	  });
-	}
-	function _registerCommands2$8() {
-	  this.cleanUpRegister(
-	  // This handles the case when container is collapsed and we delete its previous sibling
-	  // into it, it would cause collapsed content deleted (since it's display: none, and selection
-	  // swallows it when deletes single char). Instead we expand container, which is although
-	  // not perfect, but avoids bigger problem
-	  this.getEditor().registerCommand(ui_lexical_core.DELETE_CHARACTER_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleDeleteCharacter)[_handleDeleteCharacter].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW),
-	  // When spoiler is the last child pressing down/right arrow will insert paragraph
-	  // below it to allow adding more content. It's similar what $insertBlockNode
-	  // (mainly for decorators), except it'll always be possible to continue adding
-	  // new content even if trailing paragraph is accidentally deleted
-	  this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_DOWN_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeDown)[_handleEscapeDown].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_RIGHT_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeDown)[_handleEscapeDown].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW),
-	  // When spoiler is the first child pressing up/left arrow will insert paragraph
-	  // above it to allow adding more content. It's similar what $insertBlockNode
-	  // (mainly for decorators), except it'll always be possible to continue adding
-	  // new content even if leading paragraph is accidentally deleted
-	  this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_UP_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeUp)[_handleEscapeUp].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.KEY_ARROW_LEFT_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEscapeUp)[_handleEscapeUp].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.KEY_ENTER_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handleEnter)[_handleEnter].bind(this), ui_lexical_core.COMMAND_PRIORITY_NORMAL), this.getEditor().registerCommand(ui_lexical_core.INSERT_PARAGRAPH_COMMAND, event => {
-	    const selection = ui_lexical_core.$getSelection();
-	    if (ui_lexical_core.$isRangeSelection(selection)) {
-	      const spoilerTitleNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => $isSpoilerTitleNode(node));
-	      if (spoilerTitleNode) {
-	        const newBlock = spoilerTitleNode.insertNewAfter(selection);
-	        if (newBlock) {
-	          newBlock.selectStart();
-	        }
-	        return true;
-	      }
-	    }
-	    return false;
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.PASTE_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handlePaste)[_handlePaste].bind(this), ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(INSERT_SPOILER_COMMAND, payload => {
-	    this.getEditor().update(() => {
-	      const title = main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.title) ? payload.title : undefined;
-	      const selection = ui_lexical_core.$getSelection();
-	      const spoiler = insertSpoiler(selection, title);
-	      spoiler.getTitleNode().select();
-	    });
-	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(REMOVE_SPOILER_COMMAND, () => {
-	    this.getEditor().update(() => {
-	      const selection = ui_lexical_core.$getSelection();
-	      if (!ui_lexical_core.$isRangeSelection(selection)) {
-	        return;
-	      }
-	      let spoilerNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), $isSpoilerNode);
-	      if (!spoilerNode) {
-	        spoilerNode = ui_lexical_utils.$findMatchingParent(selection.focus.getNode(), $isSpoilerNode);
-	      }
-	      $removeSpoiler(spoilerNode);
-	    });
-	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
-	}
-	function _registerNodeTransforms2() {
-	  this.cleanUpRegister(
-	  // Structure enforcing transformers for each node type. In case nesting structure is not
-	  // "Container > Title + Content" it'll unwrap nodes and convert it back
-	  // to regular content.
-	  this.getEditor().registerNodeTransform(SpoilerNode, node => {
-	    const children = node.getChildren();
-	    if (children.length !== 2 || !$isSpoilerTitleNode(children[0]) || !$isSpoilerContentNode(children[1])) {
-	      for (const child of children) {
-	        if (ui_lexical_core.$isElementNode(child) || ui_lexical_core.$isDecoratorNode(child)) {
-	          node.insertBefore(child);
-	        } else {
-	          node.insertBefore(ui_lexical_core.$createParagraphNode().append(child));
-	        }
-	      }
-	      node.remove();
-	    }
-	  }), this.getEditor().registerNodeTransform(SpoilerTitleNode, node => {
-	    const parent = node.getParent();
-	    if (!$isSpoilerNode(parent)) {
-	      node.replace(ui_lexical_core.$createParagraphNode().append(...node.getChildren()));
-	    } else if (node.getChildrenSize() === 1 && !$isSpoilerTitleTextNode(node.getFirstChild()) || node.getChildrenSize() > 1) {
-	      ui_lexical_core.$setSelection(null);
-	      const textContent = trimSpoilerTitle(node.getTextContent());
-	      node.clear();
-	      node.append($createSpoilerTitleTextNode(textContent));
-	      node.select();
-	    }
-	  }), this.getEditor().registerNodeTransform(SpoilerTitleTextNode, node => {
-	    const parent = node.getParent();
-	    if (!$isSpoilerTitleNode(parent)) {
-	      node.replace(ui_lexical_core.$createParagraphNode().append(ui_lexical_core.$createTextNode(node.getTextContent())));
-	    }
-	  }), this.getEditor().registerNodeTransform(SpoilerContentNode, node => {
-	    const parent = node.getParent();
-	    if (!$isSpoilerNode(parent)) {
-	      const children = node.getChildren();
-	      for (const child of children) {
-	        if (ui_lexical_core.$isElementNode(child) || ui_lexical_core.$isDecoratorNode(child)) {
-	          node.insertBefore(child);
-	        } else {
-	          node.insertBefore(ui_lexical_core.$createParagraphNode().append(child));
-	        }
-	      }
-	      node.remove();
-	    }
-	  }));
-	}
-	function _handleDeleteCharacter2() {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (!ui_lexical_core.$isRangeSelection(selection) || !selection.isCollapsed() || selection.anchor.offset !== 0) {
-	    return false;
-	  }
-	  const anchorNode = selection.anchor.getNode();
-	  const topLevelElement = anchorNode.getTopLevelElement();
-	  if (topLevelElement === null) {
-	    return false;
-	  }
-	  const container = topLevelElement.getPreviousSibling();
-	  if (!$isSpoilerNode(container) || container.getOpen()) {
-	    return false;
-	  }
-	  container.setOpen(true);
-	  return true;
-	}
-	function _handleEnter2(event) {
-	  if (event && (event.ctrlKey || event.metaKey)) {
-	    // Handling CMD+Enter to toggle spoiler element collapsed state
-	    const selection = ui_lexical_core.$getPreviousSelection();
-	    if (ui_lexical_core.$isRangeSelection(selection) && selection.isCollapsed()) {
-	      const parent = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => ui_lexical_core.$isElementNode(node) && !node.isInline());
-	      if ($isSpoilerTitleNode(parent)) {
-	        const container = parent.getParent();
-	        if ($isSpoilerNode(container)) {
-	          container.toggleOpen();
-	          ui_lexical_core.$setSelection(selection.clone());
-	          return true;
-	        }
-	      }
-	    }
-	  }
-	  return false;
-	}
-	function _handleEscapeUp2() {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (ui_lexical_core.$isRangeSelection(selection) && selection.isCollapsed() && selection.anchor.offset === 0) {
-	    const container = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), $isSpoilerNode);
-	    if ($isSpoilerNode(container)) {
-	      var _container$getFirstDe;
-	      const parent = container.getParent();
-	      if (parent !== null && parent.getFirstChild() === container && selection.anchor.key === ((_container$getFirstDe = container.getFirstDescendant()) == null ? void 0 : _container$getFirstDe.getKey())) {
-	        container.insertBefore(ui_lexical_core.$createParagraphNode());
-	      }
-	    }
-	  }
-	  return false;
-	}
-	function _handleEscapeDown2() {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (ui_lexical_core.$isRangeSelection(selection) && selection.isCollapsed()) {
-	    const container = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), $isSpoilerNode);
-	    if ($isSpoilerNode(container)) {
-	      const parent = container.getParent();
-	      if (parent !== null && parent.getLastChild() === container) {
-	        const titleParagraph = container.getFirstDescendant();
-	        const contentParagraph = container.getLastDescendant();
-	        if (contentParagraph !== null && selection.anchor.key === contentParagraph.getKey() && selection.anchor.offset === contentParagraph.getTextContentSize() || titleParagraph !== null && selection.anchor.key === titleParagraph.getKey() && selection.anchor.offset === titleParagraph.getTextContentSize()) {
-	          container.insertAfter(ui_lexical_core.$createParagraphNode());
-	        }
-	      }
-	    }
-	  }
-	  return false;
-	}
-	function _handlePaste2(event) {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (!ui_lexical_core.$isRangeSelection(selection) || !(event instanceof ClipboardEvent) || event.clipboardData === null) {
-	    return false;
-	  }
-	  const spoilerTitleNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => $isSpoilerTitleNode(node));
-	  if (spoilerTitleNode) {
-	    ui_lexical_clipboard.$insertDataTransferForPlainText(event.clipboardData, selection);
-	    return true;
-	  }
-	  return false;
-	}
-	function insertSpoiler(selection, title) {
-	  if (!ui_lexical_core.$isRangeSelection(selection)) {
-	    return null;
-	  }
-	  const anchor = selection.anchor;
-	  const anchorNode = anchor.getNode();
-	  const spoiler = $createSpoiler(true, title);
-	  if (ui_lexical_core.$isRootOrShadowRoot(anchorNode)) {
-	    const firstChild = anchorNode.getFirstChild();
-	    if (firstChild) {
-	      firstChild.replace(spoiler, true);
-	    } else {
-	      anchorNode.append(spoiler);
-	    }
-	    return spoiler;
-	  }
-	  const handled = new Set();
-	  const nodes = selection.getNodes();
-	  const firstSelectedBlock = $getAncestor(selection.anchor.getNode(), $isBlock);
-	  if (firstSelectedBlock && !nodes.includes(firstSelectedBlock)) {
-	    nodes.unshift(firstSelectedBlock);
-	  }
-	  handled.add(spoiler.getKey());
-	  handled.add(spoiler.getTitleNode().getKey());
-	  handled.add(spoiler.getContentNode().getKey());
-	  let firstNode = true;
-	  for (const node of nodes) {
-	    if (!$isBlock(node) || handled.has(node.getKey())) {
-	      continue;
-	    }
-	    const isParentHandled = $getAncestor(node.getParent(), parentNode => handled.has(parentNode.getKey()));
-	    if (isParentHandled) {
-	      continue;
-	    }
-	    if (firstNode) {
-	      firstNode = false;
-	      node.replace(spoiler);
-	      spoiler.getContentNode().append(node);
-	    } else {
-	      spoiler.getContentNode().append(node);
-	    }
-
-	    // let parent: ElementNode = node.getParent();
-	    // while (parent !== null)
-	    // {
-	    // 	const parentKey = parent.getKey();
-	    // 	const nextParent: ElementNode = parent.getParent();
-	    // 	if ($isRootOrShadowRoot(nextParent) && !handled.has(parentKey))
-	    // 	{
-	    // 		handled.add(parentKey);
-	    // 		createSpoilerOrMerge(parent);
-	    //
-	    // 		break;
-	    // 	}
-	    //
-	    // 	parent = nextParent;
-	    // }
-
-	    handled.add(node.getKey());
-	  }
-	  return spoiler;
-	}
-	function $isBlock(node) {
-	  return (ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node)) && !node.isInline() && !node.isParentRequired();
-	}
-	function $getAncestor(node, predicate) {
-	  let parent = node;
-	  while (parent !== null && parent.getParent() !== null && !predicate(parent)) {
-	    parent = parent.getParentOrThrow();
-	  }
-	  return predicate(parent) ? parent : null;
-	}
-	function trimSpoilerTitle(title) {
-	  return title.trim().replaceAll(/\r?\n|\t/gm, '').replace('\r', '').replaceAll(/\s+/g, ' ');
-	}
-
-	/*
-	eslint-disable no-underscore-dangle,
-	@bitrix24/bitrix24-rules/no-pseudo-private,
-	@bitrix24/bitrix24-rules/no-native-dom-methods
-	*/
-	function convertSummaryElement(domNode) {
-	  const node = $createSpoilerTitleNode();
-	  return {
-	    node
-	  };
-	}
-	class SpoilerTitleNode extends ui_lexical_core.ElementNode {
-	  constructor(...args) {
-	    super(...args);
-	    this.__language = 'hack';
-	    this.__flags = UNFORMATTED;
-	  }
-	  static getType() {
-	    return 'spoiler-title';
-	  }
-	  static clone(node) {
-	    return new SpoilerTitleNode(node.__key);
-	  }
-	  createDOM(config, editor) {
-	    var _config$theme, _config$theme$spoiler;
-	    const dom = document.createElement('summary');
-	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$spoiler = _config$theme.spoiler) == null ? void 0 : _config$theme$spoiler.title)) {
-	      main_core.Dom.addClass(dom, config.theme.spoiler.title);
-	    }
-	    main_core.Dom.addClass(dom, 'ui-icon-set__scope');
-	    return dom;
-	  }
-	  updateDOM(prevNode, dom, config) {
-	    return false;
-	  }
-	  static importDOM() {
-	    return {
-	      summary: domNode => {
-	        return {
-	          conversion: convertSummaryElement,
-	          priority: 1
-	        };
-	      }
-	    };
-	  }
-	  static importJSON(serializedNode) {
-	    return $createSpoilerTitleNode();
-	  }
-	  exportDOM() {
-	    const element = document.createElement('summary');
-	    return {
-	      element
-	    };
-	  }
-	  exportJSON() {
-	    return {
-	      ...super.exportJSON(),
-	      type: 'spoiler-title',
-	      version: 1
-	    };
-	  }
-	  collapseAtStart(selection) {
-	    const spoilerNode = this.getParent();
-	    if (!$isSpoilerNode(spoilerNode)) {
-	      return false;
-	    }
-	    return $removeSpoiler(spoilerNode);
-	  }
-	  insertNewAfter(selection, restoreSelection = true) {
-	    const containerNode = this.getParentOrThrow();
-	    if (!$isSpoilerNode(containerNode)) {
-	      throw new Error('SpoilerTitleNode expects to be child of SpoilerNode');
-	    }
-	    if (containerNode.getOpen()) {
-	      const contentNode = this.getNextSibling();
-	      if (!$isSpoilerContentNode(contentNode)) {
-	        throw new Error('SpoilerTitleNode expects to have SpoilerContentNode sibling');
-	      }
-	      const firstChild = contentNode.getFirstChild();
-	      if (ui_lexical_core.$isElementNode(firstChild) || ui_lexical_core.$isDecoratorNode(firstChild)) {
-	        return firstChild;
-	      }
-	      const paragraph = ui_lexical_core.$createParagraphNode();
-	      contentNode.append(paragraph);
-	      return paragraph;
-	    }
-	    const paragraph = ui_lexical_core.$createParagraphNode();
-	    containerNode.insertAfter(paragraph, restoreSelection);
-	    return paragraph;
-	  }
-	  isParentRequired() {
-	    return true;
-	  }
-	  createParentElementNode() {
-	    return $createSpoilerNode();
-	  }
-	  canIndent() {
-	    return false;
-	  }
-	  insertAfter(nodeToInsert) {
-	    const textContent = nodeToInsert.getTextContent();
-	    this.clear();
-	    this.append($createSpoilerTitleTextNode(trimSpoilerTitle(textContent)));
-	    return this;
-	  }
-	}
-	function $createSpoilerTitleNode() {
-	  return new SpoilerTitleNode();
-	}
-	function $isSpoilerTitleNode(node) {
-	  return node instanceof SpoilerTitleNode;
-	}
-	function $removeSpoiler(spoilerNode) {
-	  if (!$isSpoilerNode(spoilerNode)) {
-	    return false;
-	  }
-	  const contentNode = spoilerNode.getContentNode();
-	  let lastElement = spoilerNode;
-	  if (contentNode !== null) {
-	    for (const child of contentNode.getChildren()) {
-	      if (ui_lexical_core.$isElementNode(child) || ui_lexical_core.$isDecoratorNode(child)) {
-	        lastElement = lastElement.insertAfter(child);
-	      } else {
-	        lastElement = lastElement.insertAfter(ui_lexical_core.$createParagraphNode().append(child));
-	      }
-	    }
-	  }
-	  spoilerNode.remove();
-	  return true;
-	}
-
-	/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
-	class SpoilerNode extends ui_lexical_core.ElementNode {
-	  constructor(open, key) {
-	    super(key);
-	    this.__open = open;
-	  }
-	  static getType() {
-	    return 'spoiler';
-	  }
-	  static clone(node) {
-	    return new SpoilerNode(node.__open, node.__key);
-	  }
-	  createDOM(config, editor) {
-	    var _config$theme, _config$theme$spoiler;
-	    const details = document.createElement('details');
-	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$spoiler = _config$theme.spoiler) == null ? void 0 : _config$theme$spoiler.container)) {
-	      main_core.Dom.addClass(details, config.theme.spoiler.container);
-	    }
-	    details.open = this.__open;
-	    main_core.Event.bind(details, 'toggle', () => {
-	      const open = editor.getEditorState().read(() => this.getOpen());
-	      if (open !== details.open) {
-	        editor.update(() => this.toggleOpen());
-	      }
-	    });
-	    return details;
-	  }
-	  updateDOM(prevNode, dom, config) {
-	    if (prevNode.__open !== this.__open) {
-	      dom.open = this.__open;
-	    }
-	    return false;
-	  }
-	  static importDOM() {
-	    return {
-	      details: domNode => {
-	        return {
-	          conversion: details => {
-	            const isOpen = main_core.Type.isBoolean(details.open) ? details.open : true;
-	            return {
-	              node: $createSpoiler(isOpen)
-	            };
-	          },
-	          priority: 1
-	        };
-	      }
-	    };
-	  }
-	  static importJSON(serializedNode) {
-	    return $createSpoilerNode(serializedNode.open);
-	  }
-	  exportDOM(editor) {
-	    const details = document.createElement('details');
-	    if (this.__open) {
-	      details.setAttribute('open', true);
-	    }
-	    return {
-	      element: details
-	    };
-	  }
-	  exportJSON() {
-	    return {
-	      ...super.exportJSON(),
-	      open: this.__open,
-	      type: 'spoiler',
-	      version: 1
-	    };
-	  }
-	  isShadowRoot() {
-	    return true;
-	  }
-	  canBeEmpty() {
-	    return false;
-	  }
-	  append(...nodesToAppend) {
-	    for (const node of nodesToAppend) {
-	      if ($isSpoilerTitleNode(node)) {
-	        const titleNode = node;
-	        if (this.getTitleNode() === null) {
-	          super.append(titleNode);
-	        } else {
-	          this.getTitleNode().clear();
-	          this.getTitleNode().append($createSpoilerTitleTextNode(node.getTextContent()));
-	        }
-	      } else if ($isSpoilerContentNode(node)) {
-	        const contentNode = node;
-	        if (this.getContentNode() === null) {
-	          super.append(contentNode);
-	        } else {
-	          this.getContentNode().append(...contentNode.getChildren());
-	        }
-	      } else if (ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node)) {
-	        this.getContentNode().append(node);
-	      } else {
-	        this.getContentNode().append(ui_lexical_core.$createParagraphNode().append(node));
-	      }
-	    }
-	    return this;
-	  }
-	  getTitleNode() {
-	    return this.getChildren()[0] || null;
-	  }
-	  getContentNode() {
-	    return this.getChildren()[1] || null;
-	  }
-	  setOpen(open) {
-	    const writable = this.getWritable();
-	    writable.__open = open;
-	  }
-	  getOpen() {
-	    return this.getLatest().__open;
-	  }
-	  toggleOpen() {
-	    this.setOpen(!this.getOpen());
-	  }
-	}
-	function $createSpoiler(isOpen, title = main_core.Loc.getMessage('TEXT_EDITOR_SPOILER_TITLE')) {
-	  return $createSpoilerNode(isOpen).append($createSpoilerTitleNode().append($createSpoilerTitleTextNode(title)), $createSpoilerContentNode());
-	}
-	function $createSpoilerNode(isOpen) {
-	  return new SpoilerNode(isOpen);
-	}
-	function $isSpoilerNode(node) {
-	  return node instanceof SpoilerNode;
-	}
-
-
-
-	var Spoiler = /*#__PURE__*/Object.freeze({
-		SpoilerNode: SpoilerNode,
-		$createSpoiler: $createSpoiler,
-		$createSpoilerNode: $createSpoilerNode,
-		$isSpoilerNode: $isSpoilerNode,
-		convertSummaryElement: convertSummaryElement,
-		SpoilerTitleNode: SpoilerTitleNode,
-		$createSpoilerTitleNode: $createSpoilerTitleNode,
-		$isSpoilerTitleNode: $isSpoilerTitleNode,
-		$removeSpoiler: $removeSpoiler,
-		convertSpoilerContentElement: convertSpoilerContentElement,
-		SpoilerContentNode: SpoilerContentNode,
-		$createSpoilerContentNode: $createSpoilerContentNode,
-		$isSpoilerContentNode: $isSpoilerContentNode,
-		INSERT_SPOILER_COMMAND: INSERT_SPOILER_COMMAND,
-		REMOVE_SPOILER_COMMAND: REMOVE_SPOILER_COMMAND,
-		SpoilerPlugin: SpoilerPlugin,
-		insertSpoiler: insertSpoiler,
-		$getAncestor: $getAncestor,
-		trimSpoilerTitle: trimSpoilerTitle
 	});
 
 	let _$a = t => t,
@@ -9335,8 +9708,8 @@ this.BX.UI = this.BX.UI || {};
 	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 	const INSERT_TABLE_DIALOG_COMMAND = ui_lexical_core.createCommand('INSERT_TABLE_DIALOG_COMMAND');
 	var _tableDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tableDialog");
-	var _registerComponents$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
-	var _registerCommands$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerComponents$e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerCommands$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _registerListeners$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
 	class TablePlugin extends BasePlugin {
 	  constructor(editor) {
@@ -9344,19 +9717,19 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _registerListeners$8, {
 	      value: _registerListeners2$8
 	    });
-	    Object.defineProperty(this, _registerCommands$9, {
-	      value: _registerCommands2$9
+	    Object.defineProperty(this, _registerCommands$a, {
+	      value: _registerCommands2$a
 	    });
-	    Object.defineProperty(this, _registerComponents$d, {
-	      value: _registerComponents2$d
+	    Object.defineProperty(this, _registerComponents$e, {
+	      value: _registerComponents2$e
 	    });
 	    Object.defineProperty(this, _tableDialog, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$9)[_registerCommands$9]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$a)[_registerCommands$a]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$8)[_registerListeners$8]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$d)[_registerComponents$d]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$e)[_registerComponents$e]();
 	  }
 	  static getName() {
 	    return 'Table';
@@ -9387,7 +9760,7 @@ this.BX.UI = this.BX.UI || {};
 	          return {
 	            node: ui_lexical_table.$createTableCellNode(),
 	            after: childLexicalNodes => {
-	              return $normalizeTextNodes(childLexicalNodes, this.getEditor());
+	              return $normalizeTextNodes(childLexicalNodes);
 	            }
 	          };
 	        },
@@ -9398,7 +9771,7 @@ this.BX.UI = this.BX.UI || {};
 	          return {
 	            node: ui_lexical_table.$createTableCellNode(ui_lexical_table.TableCellHeaderStates.ROW),
 	            after: childLexicalNodes => {
-	              return $normalizeTextNodes(childLexicalNodes, this.getEditor());
+	              return $normalizeTextNodes(childLexicalNodes);
 	            }
 	          };
 	        },
@@ -9472,7 +9845,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	}
-	function _registerComponents2$d() {
+	function _registerComponents2$e() {
 	  this.getEditor().getComponentRegistry().register('table', () => {
 	    const button = new Button();
 	    button.setContent('<span class="ui-icon-set --table-editor"></span>');
@@ -9485,7 +9858,7 @@ this.BX.UI = this.BX.UI || {};
 	    return button;
 	  });
 	}
-	function _registerCommands2$9() {
+	function _registerCommands2$a() {
 	  this.cleanUpRegister(this.getEditor().registerCommand(ui_lexical_table.INSERT_TABLE_COMMAND, ({
 	    columns,
 	    rows
@@ -9719,7 +10092,7 @@ this.BX.UI = this.BX.UI || {};
 	var _triggerBySpace = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerBySpace");
 	var _registerListeners$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
 	var _registerParagraphNodeTransform = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerParagraphNodeTransform");
-	var _registerComponents$e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$f = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	var _show = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("show");
 	var _hide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hide");
 	var _createCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createCopilot");
@@ -9763,8 +10136,8 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _show, {
 	      value: _show2
 	    });
-	    Object.defineProperty(this, _registerComponents$e, {
-	      value: _registerComponents2$e
+	    Object.defineProperty(this, _registerComponents$f, {
+	      value: _registerComponents2$f
 	    });
 	    Object.defineProperty(this, _registerParagraphNodeTransform, {
 	      value: _registerParagraphNodeTransform2
@@ -9803,7 +10176,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotOptions)[_copilotOptions] = editor.getOption('copilot.copilotOptions');
 	    if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _copilotOptions)[_copilotOptions])) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$a)[_registerListeners$a]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$e)[_registerComponents$e]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$f)[_registerComponents$f]();
 	    }
 	  }
 	  static getName() {
@@ -9894,7 +10267,7 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	  });
 	}
-	function _registerComponents2$e() {
+	function _registerComponents2$f() {
 	  this.getEditor().getComponentRegistry().register('copilot', () => {
 	    const button = new Button();
 	    const copilotIconClass = '--copilot-ai';
@@ -9941,11 +10314,18 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
 	    const selectionText = selection.getTextContent();
-	    const selectedText = selectionText.trim().length > 0 ? selectionText : ui_lexical_core.$getRoot().getTextContent();
 	    const editorPosition = main_core.Dom.getPosition(this.getEditor().getScrollerContainer());
 	    const width = Math.min(editorPosition.width, 600);
 	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3] = selection.clone();
-	    babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].setSelectedText(selectedText);
+	    const selectedText = selectionText.trim();
+	    if (selectedText.length > 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].setSelectedText(selectedText);
+	    } else {
+	      const wholeText = ui_lexical_core.$getRoot().getTextContent().trim();
+	      if (wholeText.length > 0) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].setContext(wholeText);
+	      }
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].show({
 	      width
 	    });
@@ -9971,17 +10351,19 @@ this.BX.UI = this.BX.UI || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _copilotStatus)[_copilotStatus] = CopilotStatus.LOADING;
 	  return new Promise((resolve, reject) => {
 	    main_core.Runtime.loadExtension('ai.copilot').then(({
-	      Copilot
+	      Copilot,
+	      CopilotEvents
 	    }) => {
 	      if (this.isDestroyed()) {
 	        reject(new Error('Copilot plugin was destroyed.'));
 	        return;
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot] = new Copilot({
+	        showResultInCopilot: true,
 	        ...babelHelpers.classPrivateFieldLooseBase(this, _copilotOptions)[_copilotOptions],
 	        autoHide: true
 	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe('finish-init', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe(CopilotEvents.FINISH_INIT, () => {
 	        if (this.isDestroyed()) {
 	          reject(new Error('Copilot plugin was destroyed.'));
 	          return;
@@ -9989,9 +10371,9 @@ this.BX.UI = this.BX.UI || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _copilotStatus)[_copilotStatus] = CopilotStatus.LOADED;
 	        resolve();
 	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe('save', babelHelpers.classPrivateFieldLooseBase(this, _handleCopilotSave)[_handleCopilotSave].bind(this));
-	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe('add_below', babelHelpers.classPrivateFieldLooseBase(this, _handleCopilotAddBelow)[_handleCopilotAddBelow].bind(this));
-	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe('hide', babelHelpers.classPrivateFieldLooseBase(this, _handleCopilotHide)[_handleCopilotHide].bind(this));
+	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe(CopilotEvents.TEXT_SAVE, babelHelpers.classPrivateFieldLooseBase(this, _handleCopilotSave)[_handleCopilotSave].bind(this));
+	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe(CopilotEvents.TEXT_PLACE_BELOW, babelHelpers.classPrivateFieldLooseBase(this, _handleCopilotAddBelow)[_handleCopilotAddBelow].bind(this));
+	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].subscribe(CopilotEvents.HIDE, babelHelpers.classPrivateFieldLooseBase(this, _handleCopilotHide)[_handleCopilotHide].bind(this));
 	      babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].init();
 	    }).catch(() => {
 	      reject();
@@ -10102,22 +10484,22 @@ this.BX.UI = this.BX.UI || {};
 	  });
 	}
 
-	var _registerComponents$f = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
+	var _registerComponents$g = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class HistoryPlugin extends BasePlugin {
 	  constructor(editor) {
 	    super(editor);
-	    Object.defineProperty(this, _registerComponents$f, {
-	      value: _registerComponents2$f
+	    Object.defineProperty(this, _registerComponents$g, {
+	      value: _registerComponents2$g
 	    });
 	    const historyState = ui_lexical_history.createEmptyHistoryState();
 	    this.cleanUpRegister(ui_lexical_history.registerHistory(editor.getLexicalEditor(), historyState, 1000));
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$f)[_registerComponents$f]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$g)[_registerComponents$g]();
 	  }
 	  static getName() {
 	    return 'History';
 	  }
 	}
-	function _registerComponents2$f() {
+	function _registerComponents2$g() {
 	  let canUndo = false;
 	  this.getEditor().getComponentRegistry().register('undo', () => {
 	    const button = new Button();
@@ -11106,10 +11488,17 @@ this.BX.UI = this.BX.UI || {};
 		FloatingToolbarPlugin: FloatingToolbarPlugin
 	});
 
+	const TOGGLE_TOOLBAR_COMMAND = ui_lexical_core.createCommand('TOGGLE_TOOLBAR_COMMAND');
+	const SHOW_TOOLBAR_COMMAND = ui_lexical_core.createCommand('SHOW_TOOLBAR_COMMAND');
+	const HIDE_TOOLBAR_COMMAND = ui_lexical_core.createCommand('HIDE_TOOLBAR_COMMAND');
 	var _toolbar$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toolbar");
+	var _registerCommands$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	class ToolbarPlugin extends BasePlugin {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _registerCommands$b, {
+	      value: _registerCommands2$b
+	    });
 	    Object.defineProperty(this, _toolbar$1, {
 	      writable: true,
 	      value: null
@@ -11121,10 +11510,38 @@ this.BX.UI = this.BX.UI || {};
 	  getToolbar() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _toolbar$1)[_toolbar$1];
 	  }
+	  isRendered() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _toolbar$1)[_toolbar$1] !== null && babelHelpers.classPrivateFieldLooseBase(this, _toolbar$1)[_toolbar$1].isRendered();
+	  }
+	  show() {
+	    if (this.isRendered()) {
+	      main_core.Dom.removeClass(this.getEditor().getToolbarContainer(), '--hidden');
+	    }
+	  }
+	  hide() {
+	    if (this.isRendered()) {
+	      main_core.Dom.addClass(this.getEditor().getToolbarContainer(), '--hidden');
+	    }
+	  }
+	  isShown() {
+	    return this.isRendered() && !main_core.Dom.hasClass(this.getEditor().getToolbarContainer(), '--hidden');
+	  }
+	  toggle() {
+	    if (this.isShown()) {
+	      this.hide();
+	    } else {
+	      this.show();
+	    }
+	  }
 	  afterInit() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toolbar$1)[_toolbar$1] = new Toolbar(this.getEditor(), this.getEditor().getOption('toolbar'));
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _toolbar$1)[_toolbar$1].isEmpty()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$b)[_registerCommands$b]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _toolbar$1)[_toolbar$1].renderTo(this.getEditor().getToolbarContainer());
+	      const hideToolbar = this.getEditor().getOption('hideToolbar', false);
+	      if (hideToolbar) {
+	        this.hide();
+	      }
 	    }
 	  }
 	  destroy() {
@@ -11132,10 +11549,25 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _toolbar$1)[_toolbar$1].destroy();
 	  }
 	}
+	function _registerCommands2$b() {
+	  this.cleanUpRegister(this.getEditor().registerCommand(TOGGLE_TOOLBAR_COMMAND, () => {
+	    this.toggle();
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(SHOW_TOOLBAR_COMMAND, () => {
+	    this.show();
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_TOOLBAR_COMMAND, () => {
+	    this.hide();
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
+	}
 
 
 
 	var Toolbar$1 = /*#__PURE__*/Object.freeze({
+		TOGGLE_TOOLBAR_COMMAND: TOGGLE_TOOLBAR_COMMAND,
+		SHOW_TOOLBAR_COMMAND: SHOW_TOOLBAR_COMMAND,
+		HIDE_TOOLBAR_COMMAND: HIDE_TOOLBAR_COMMAND,
 		ToolbarPlugin: ToolbarPlugin
 	});
 
@@ -11205,8 +11637,10 @@ this.BX.UI = this.BX.UI || {};
 	          paragraphPlaceholder = main_core.Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_MENTION');
 	        }
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _paragraphPlaceholder)[_paragraphPlaceholder] = paragraphPlaceholder;
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerParagraphListeners)[_registerParagraphListeners]();
+	      if (paragraphPlaceholder !== 'auto') {
+	        babelHelpers.classPrivateFieldLooseBase(this, _paragraphPlaceholder)[_paragraphPlaceholder] = paragraphPlaceholder;
+	        babelHelpers.classPrivateFieldLooseBase(this, _registerParagraphListeners)[_registerParagraphListeners]();
+	      }
 	    }
 	  }
 	  static getName() {
@@ -11345,17 +11779,22 @@ this.BX.UI = this.BX.UI || {};
 	var _prevEmptyStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prevEmptyStatus");
 	var _initEditorState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initEditorState");
 	var _initDecorateNodes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initDecorateNodes");
-	var _registerCommands$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _registerCommands$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
+	var _createNamespace = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createNamespace");
 	var _initBBCodeImportMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initBBCodeImportMap");
 	var _initBBCodeExportMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initBBCodeExportMap");
 	var _initBBCodeScheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initBBCodeScheme");
 	var _initCollapsingMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCollapsingMode");
+	var _collapse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collapse");
 	var _handleCollapsingTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCollapsingTransition");
 	class TextEditor extends main_core_events.EventEmitter {
 	  constructor(editorOptions) {
 	    super();
 	    Object.defineProperty(this, _handleCollapsingTransition, {
 	      value: _handleCollapsingTransition2
+	    });
+	    Object.defineProperty(this, _collapse, {
+	      value: _collapse2
 	    });
 	    Object.defineProperty(this, _initCollapsingMode, {
 	      value: _initCollapsingMode2
@@ -11369,8 +11808,11 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _initBBCodeImportMap, {
 	      value: _initBBCodeImportMap2
 	    });
-	    Object.defineProperty(this, _registerCommands$a, {
-	      value: _registerCommands2$a
+	    Object.defineProperty(this, _createNamespace, {
+	      value: _createNamespace2
+	    });
+	    Object.defineProperty(this, _registerCommands$c, {
+	      value: _registerCommands2$c
 	    });
 	    Object.defineProperty(this, _initDecorateNodes, {
 	      value: _initDecorateNodes2
@@ -11483,10 +11925,14 @@ this.BX.UI = this.BX.UI || {};
 	      value: true
 	    });
 	    this.setEventNamespace('BX.UI.TextEditor.Editor');
+	    const defaultOptions = this.constructor.getDefaultOptions();
 	    const _options2 = main_core.Type.isPlainObject(editorOptions) ? editorOptions : {};
-	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = new main_core_collections.SettingsCollection(_options2);
-	    const builtinPlugins = this.constructor.getBuiltinPlugins();
-	    const plugins = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].get('plugins', builtinPlugins);
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = new main_core_collections.SettingsCollection({
+	      ...defaultOptions,
+	      ..._options2
+	    });
+	    const builtinPlugins = [...this.constructor.getBuiltinPlugins()];
+	    const _plugins2 = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].get('plugins', builtinPlugins);
 	    const extraPlugins = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].get('extraPlugins', []);
 	    const pluginsToRemove = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].get('removePlugins', []);
 	    const newLineMode = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].get('newLineMode');
@@ -11494,13 +11940,14 @@ this.BX.UI = this.BX.UI || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _newLineMode)[_newLineMode] = newLineMode;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _themeClasses)[_themeClasses] = defaultTheme;
-	    babelHelpers.classPrivateFieldLooseBase(this, _plugins$1)[_plugins$1] = new PluginCollection(builtinPlugins, [...plugins, ...extraPlugins], pluginsToRemove);
-	    const _nodes = babelHelpers.classPrivateFieldLooseBase(this, _plugins$1)[_plugins$1].getConstructors().map(pluginConstructor => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _plugins$1)[_plugins$1] = new PluginCollection(builtinPlugins, [..._plugins2, ...extraPlugins], pluginsToRemove);
+	    const constructors = babelHelpers.classPrivateFieldLooseBase(this, _plugins$1)[_plugins$1].getConstructors();
+	    const _nodes = constructors.map(pluginConstructor => {
 	      return pluginConstructor.getNodes(this);
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _lexicalEditor)[_lexicalEditor] = ui_lexical_core.createEditor({
-	      namespace: 'TextEditor',
 	      // uses when you copy-paste from one to another editor
+	      namespace: main_core.Type.isStringFilled(_options2.namespace) ? _options2.namespace : babelHelpers.classPrivateFieldLooseBase(this, _createNamespace)[_createNamespace](constructors),
 	      nodes: _nodes.flat(),
 	      onError: error => {
 	        console.error(error);
@@ -11511,7 +11958,8 @@ this.BX.UI = this.BX.UI || {};
 	    this.setMinHeight(_options2.minHeight);
 	    this.setMaxHeight(_options2.maxHeight);
 	    this.setAutoFocus(_options2.autoFocus);
-	    babelHelpers.classPrivateFieldLooseBase(this, _removeListeners$2)[_removeListeners$2] = ui_lexical_utils.mergeRegister(babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$a)[_registerCommands$a](), babelHelpers.classPrivateFieldLooseBase(this, _initDecorateNodes)[_initDecorateNodes](_nodes.flat()));
+	    this.setVisualOptions(_options2.visualOptions);
+	    babelHelpers.classPrivateFieldLooseBase(this, _removeListeners$2)[_removeListeners$2] = ui_lexical_utils.mergeRegister(babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$c)[_registerCommands$c](), babelHelpers.classPrivateFieldLooseBase(this, _initDecorateNodes)[_initDecorateNodes](_nodes.flat()));
 	    babelHelpers.classPrivateFieldLooseBase(this, _plugins$1)[_plugins$1].init(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _bbcodeImportMap)[_bbcodeImportMap] = babelHelpers.classPrivateFieldLooseBase(this, _initBBCodeImportMap)[_initBBCodeImportMap]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _bbcodeExportMap)[_bbcodeExportMap] = babelHelpers.classPrivateFieldLooseBase(this, _initBBCodeExportMap)[_initBBCodeExportMap]();
@@ -11520,12 +11968,10 @@ this.BX.UI = this.BX.UI || {};
 	    this.subscribeFromOptions(_options2.events);
 	  }
 	  static getBuiltinPlugins() {
-	    return [RichTextPlugin, ParagraphPlugin, BoldPlugin, UnderlinePlugin, ItalicPlugin, StrikethroughPlugin, TabIndentPlugin, CodePlugin, QuotePlugin, ListPlugin, MentionPlugin, LinkPlugin, AutoLinkPlugin, ImagePlugin, VideoPlugin, SmileyPlugin, SpoilerPlugin, TablePlugin, HashtagPlugin, CopilotPlugin, HistoryPlugin, BlockToolbarPlugin, FloatingToolbarPlugin, ToolbarPlugin, PlaceholderPlugin, FilePlugin];
+	    return [RichTextPlugin, ParagraphPlugin, ClipboardPlugin, BoldPlugin, UnderlinePlugin, ItalicPlugin, StrikethroughPlugin, ClearFormatPlugin, TabIndentPlugin, CodePlugin, QuotePlugin, ListPlugin, MentionPlugin, LinkPlugin, AutoLinkPlugin, ImagePlugin, VideoPlugin, SmileyPlugin, SpoilerPlugin, TablePlugin, HashtagPlugin, CopilotPlugin, HistoryPlugin, BlockToolbarPlugin, FloatingToolbarPlugin, ToolbarPlugin, PlaceholderPlugin, FilePlugin];
 	  }
 	  static getDefaultOptions() {
-	    return {
-	      plugins: []
-	    };
+	    return {};
 	  }
 	  getComponentRegistry() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _componentRegistry)[_componentRegistry];
@@ -11637,69 +12083,29 @@ this.BX.UI = this.BX.UI || {};
 	  getMaxHeight() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _maxHeight$1)[_maxHeight$1];
 	  }
+	  setVisualOptions(options) {
+	    if (!main_core.Type.isPlainObject(options)) {
+	      return;
+	    }
+	    for (const [option, value] of Object.entries(options)) {
+	      const name = main_core.Text.toKebabCase(option);
+	      main_core.Dom.style(this.getRootContainer(), `--ui-text-editor-${name}`, value);
+	    }
+	  }
 	  isCollapsingModeEnabled() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _collapsingMode)[_collapsingMode];
 	  }
 	  isCollapsed() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.COLLAPSED;
 	  }
-	  toggleCollapsing() {
-	    if (!this.isCollapsingModeEnabled()) {
-	      return;
-	    }
-	    main_core.Event.unbind(this.getRootContainer(), 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _collapsingTransitionEnd)[_collapsingTransitionEnd]);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.COLLAPSED || babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.COLLAPSING) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.EXPANDING;
-	      this.blur(); // to avoid a root container scrolling because of a browser focus
-
-	      const currentHeight = this.getRootContainer().offsetHeight;
-	      main_core.Dom.removeClass(this.getRootContainer(), ['--collapsed', '--collapsing']);
-	      main_core.Dom.style(this.getRootContainer(), {
-	        height: `${currentHeight}px`,
-	        overflow: 'hidden'
-	      });
-	      main_core.Dom.style(this.getInnerContainer(), {
-	        opacity: 0
-	      });
-	      requestAnimationFrame(() => {
-	        main_core.Dom.addClass(this.getRootContainer(), '--expanding');
-	        main_core.Dom.style(this.getRootContainer(), {
-	          height: `${this.getRootContainer().scrollHeight}px`
-	        });
-	        main_core.Dom.style(this.getInnerContainer(), {
-	          opacity: 1
-	        });
-	        this.emit('onCollapsingToggle', {
-	          isOpen: true
-	        });
-	      });
-	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.COLLAPSING;
-	      const currentHeight = this.getRootContainer().offsetHeight;
-	      main_core.Dom.removeClass(this.getRootContainer(), ['--expanding']);
-	      main_core.Dom.style(this.getRootContainer(), {
-	        height: `${currentHeight}px`,
-	        overflow: 'hidden'
-	      });
-	      main_core.Dom.style(this.getInnerContainer(), {
-	        opacity: 1
-	      });
-	      this.blur();
-	      const paragraphHeight = this.getParagraphHeight();
-	      requestAnimationFrame(() => {
-	        main_core.Dom.addClass(this.getRootContainer(), '--collapsing');
-	        main_core.Dom.style(this.getRootContainer(), {
-	          height: `${paragraphHeight}px`
-	        });
-	        main_core.Dom.style(this.getInnerContainer(), {
-	          opacity: 0
-	        });
-	        this.emit('onCollapsingToggle', {
-	          isOpen: false
-	        });
-	      });
-	    }
-	    main_core.Event.bind(this.getRootContainer(), 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _collapsingTransitionEnd)[_collapsingTransitionEnd]);
+	  collapse(animate = true) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapse)[_collapse]('hide', animate);
+	  }
+	  expand(animate = true) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapse)[_collapse]('show', animate);
+	  }
+	  toggle(animate = true) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapse)[_collapse]('toggle', animate);
 	  }
 	  getParagraphHeight() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _paragraphHeight)[_paragraphHeight] !== null) {
@@ -11813,7 +12219,9 @@ this.BX.UI = this.BX.UI || {};
 	    if (!document.hasFocus()) {
 	      window.focus();
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _lexicalEditor)[_lexicalEditor].focus(main_core.Type.isFunction(callbackFn) ? callbackFn : null, main_core.Type.isPlainObject(options) ? options : undefined);
+	    babelHelpers.classPrivateFieldLooseBase(this, _lexicalEditor)[_lexicalEditor].focus(main_core.Type.isFunction(callbackFn) ? callbackFn : null, main_core.Type.isPlainObject(options) ? options : {
+	      defaultSelection: 'rootStart'
+	    });
 	  }
 	  hasFocus() {
 	    return this.getRootElement().contains(document.activeElement);
@@ -12057,10 +12465,10 @@ this.BX.UI = this.BX.UI || {};
 	  removeListeners.push(removeListener);
 	  return ui_lexical_utils.mergeRegister(...removeListeners);
 	}
-	function _registerCommands2$a() {
+	function _registerCommands2$c() {
 	  return ui_lexical_utils.mergeRegister(this.registerCommand(ui_lexical_core.FOCUS_COMMAND, () => {
 	    if (this.isCollapsingModeEnabled() && babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.COLLAPSED && this.isEmpty(false)) {
-	      this.toggleCollapsing();
+	      this.expand();
 	      return true;
 	    }
 	    this.emit('onFocus');
@@ -12083,8 +12491,12 @@ this.BX.UI = this.BX.UI || {};
 	      return;
 	    }
 	    const isInitialChange = prevEditorState.isEmpty();
-	    if (isInitialChange && babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].get('collapsingMode') === true) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _initCollapsingMode)[_initCollapsingMode]();
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].get('collapsingMode') === true) {
+	      if (isInitialChange) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _initCollapsingMode)[_initCollapsingMode]();
+	      } else if (this.isCollapsed() && !this.isEmpty()) {
+	        this.expand(false);
+	      }
 	    }
 	    if (!isInitialChange && tags.has('history-merge')) {
 	      return;
@@ -12130,6 +12542,10 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	  }));
 	}
+	function _createNamespace2(plugins) {
+	  const hashCode = createHashCode(plugins.map(node => node.getName()).sort().join('-'));
+	  return String(hashCode);
+	}
 	function _initBBCodeImportMap2() {
 	  const importMap = new Map();
 	  for (const [, plugin] of babelHelpers.classPrivateFieldLooseBase(this, _plugins$1)[_plugins$1]) {
@@ -12171,18 +12587,95 @@ this.BX.UI = this.BX.UI || {};
 	function _initCollapsingMode2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _collapsingMode)[_collapsingMode] = true;
 	  if (this.isEmpty()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.COLLAPSED;
-	    main_core.Dom.addClass(this.getRootContainer(), '--collapsed');
-	    this.emit('onCollapsingToggle', {
-	      isOpen: false
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapse)[_collapse]('hide', false, true);
+	  } else {
+	    this.expand(false);
+	  }
+	}
+	function _collapse2(mode = 'hide', animate = true, initialState = false) {
+	  if (!this.isCollapsingModeEnabled()) {
+	    return;
+	  }
+	  const collapsed = babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.COLLAPSED || babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.COLLAPSING;
+	  const expanded = babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.EXPANDED || babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.EXPANDING;
+	  if (mode === 'hide' && collapsed || mode === 'show' && expanded) {
+	    return;
+	  }
+	  if (animate === false) {
+	    if (collapsed) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.EXPANDED;
+	      main_core.Dom.removeClass(this.getRootContainer(), '--collapsed');
+	      this.emit('onCollapsingToggle', {
+	        isOpen: true
+	      });
+	      this.focus();
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.COLLAPSED;
+	      main_core.Dom.addClass(this.getRootContainer(), '--collapsed');
+	      this.emit('onCollapsingToggle', {
+	        isOpen: false
+	      });
+	      this.clear();
+	      this.clearHistory();
+	      if (!initialState) {
+	        this.blur();
+	      }
+	    }
+	    return;
+	  }
+	  main_core.Event.unbind(this.getRootContainer(), 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _collapsingTransitionEnd)[_collapsingTransitionEnd]);
+	  if (collapsed) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.EXPANDING;
+	    this.blur(); // to avoid a root container scrolling because of a browser focus
+
+	    const currentHeight = this.getRootContainer().offsetHeight;
+	    main_core.Dom.removeClass(this.getRootContainer(), ['--collapsed', '--collapsing']);
+	    main_core.Dom.style(this.getRootContainer(), {
+	      height: `${currentHeight}px`,
+	      overflow: 'hidden'
+	    });
+	    main_core.Dom.style(this.getInnerContainer(), {
+	      opacity: 0
+	    });
+	    requestAnimationFrame(() => {
+	      main_core.Dom.addClass(this.getRootContainer(), '--expanding');
+	      main_core.Dom.style(this.getRootContainer(), {
+	        height: `${this.getRootContainer().scrollHeight}px`
+	      });
+	      main_core.Dom.style(this.getInnerContainer(), {
+	        opacity: 1
+	      });
+	      this.emit('onCollapsingToggle', {
+	        isOpen: true
+	      });
 	    });
 	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.EXPANDED;
-	    main_core.Dom.removeClass(this.getRootContainer(), '--collapsed');
-	    this.emit('onCollapsingToggle', {
-	      isOpen: true
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.COLLAPSING;
+	    const currentHeight = this.getRootContainer().offsetHeight;
+	    main_core.Dom.removeClass(this.getRootContainer(), ['--expanding']);
+	    main_core.Dom.style(this.getRootContainer(), {
+	      height: `${currentHeight}px`,
+	      overflow: 'hidden'
+	    });
+	    main_core.Dom.style(this.getInnerContainer(), {
+	      opacity: 1
+	    });
+	    this.blur();
+	    const paragraphHeight = this.getParagraphHeight();
+	    requestAnimationFrame(() => {
+	      main_core.Dom.addClass(this.getRootContainer(), '--collapsing');
+	      main_core.Dom.style(this.getRootContainer(), {
+	        height: `${paragraphHeight}px`
+	      });
+	      main_core.Dom.style(this.getInnerContainer(), {
+	        opacity: 0
+	      });
+	      this.emit('onCollapsingToggle', {
+	        isOpen: false
+	      });
 	    });
 	  }
+	  main_core.Event.bind(this.getRootContainer(), 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _collapsingTransitionEnd)[_collapsingTransitionEnd]);
 	}
 	function _handleCollapsingTransition2() {
 	  main_core.Event.unbind(this.getRootContainer(), 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _collapsingTransitionEnd)[_collapsingTransitionEnd]);
@@ -12225,6 +12718,11 @@ this.BX.UI = this.BX.UI || {};
 	      default: null
 	    }
 	  },
+	  setup() {
+	    return {
+	      editorClass: TextEditor
+	    };
+	  },
 	  provide() {
 	    return {
 	      editor: this.editor
@@ -12233,7 +12731,8 @@ this.BX.UI = this.BX.UI || {};
 	  beforeCreate() {
 	    if (this.editorInstance === null) {
 	      this.hasOwnEditor = true;
-	      this.editor = new TextEditor(this.editorOptions);
+	      const EditorClass = this.editorClass;
+	      this.editor = new EditorClass(this.editorOptions);
 	    } else {
 	      this.hasOwnEditor = false;
 	      this.editor = this.editorInstance;
@@ -12275,6 +12774,29 @@ this.BX.UI = this.BX.UI || {};
 			<slot name="footer"></slot>
 		</Teleport>
 	`
+	};
+
+	/**
+	 * @memberof BX.UI.TextEditor
+	 */
+	class BasicEditor extends TextEditor {
+	  static getDefaultOptions() {
+	    return {
+	      plugins: ['RichText', 'Paragraph', 'Clipboard', 'Bold', 'Underline', 'Italic', 'Strikethrough', 'TabIndent', 'List', 'Mention', 'Link', 'AutoLink', 'Image', 'Copilot', 'History', 'BlockToolbar', 'FloatingToolbar', 'Toolbar', 'Placeholder', 'File'],
+	      toolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', 'link', 'copilot'],
+	      newLineMode: NewLineMode.MIXED
+	    };
+	  }
+	}
+
+	const BasicEditorComponent = {
+	  name: 'BasicEditorComponent',
+	  extends: TextEditorComponent,
+	  setup() {
+	    return {
+	      editorClass: BasicEditor
+	    };
+	  }
 	};
 
 	/**
@@ -12328,7 +12850,9 @@ this.BX.UI = this.BX.UI || {};
 	};
 
 	exports.TextEditor = TextEditor;
+	exports.BasicEditor = BasicEditor;
 	exports.TextEditorComponent = TextEditorComponent;
+	exports.BasicEditorComponent = BasicEditorComponent;
 	exports.BasePlugin = BasePlugin;
 	exports.Button = Button;
 	exports.Plugins = Plugins;
@@ -12336,5 +12860,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.Constants = Constants;
 	exports.Debug = Debug;
 
-}((this.BX.UI.TextEditor = this.BX.UI.TextEditor || {}),BX.UI.CodeParser,BX.UI.BBCode,BX.UI.TextEditor,BX.UI.Smiley,BX.UI.VideoService,BX.Collections,BX.UI.BBCode,BX.UI.Lexical.RichText,BX.UI.Lexical.Selection,BX.UI.Lexical.Clipboard,BX.UI.Lexical.Table,BX.Event,BX.UI.Lexical.History,BX.Main,BX.Cache,BX,BX.UI.Lexical.List,BX.UI.Lexical.Link,BX.UI.Lexical.Text,BX.UI.Lexical.Core,BX.UI.Lexical.Utils,BX));
+}((this.BX.UI.TextEditor = this.BX.UI.TextEditor || {}),BX.UI.CodeParser,BX.UI.BBCode,BX.UI.TextEditor,BX.UI.Lexical.Clipboard,BX.UI.Smiley,BX.UI.VideoService,BX.Collections,BX.UI.BBCode,BX.UI.Lexical.Selection,BX.UI.Lexical.RichText,BX.UI.Lexical.Table,BX.Event,BX.UI.Lexical.History,BX.Main,BX.Cache,BX,BX.UI.Lexical.List,BX.UI.Lexical.Link,BX.UI.Lexical.Text,BX.UI.Lexical.Core,BX.UI.Lexical.Utils,BX));
 //# sourceMappingURL=text-editor.bundle.js.map

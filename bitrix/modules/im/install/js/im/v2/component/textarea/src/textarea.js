@@ -443,7 +443,7 @@ export const ChatTextarea = {
 				return;
 			}
 
-			const decorationCombination = Utils.key.isCombination(event, ['Ctrl+b', 'Ctrl+i', 'Ctrl+u', 'Ctrl+s']);
+			const decorationCombination = Utils.key.isExactCombination(event, ['Ctrl+b', 'Ctrl+i', 'Ctrl+u', 'Ctrl+s']);
 			if (decorationCombination)
 			{
 				event.preventDefault();

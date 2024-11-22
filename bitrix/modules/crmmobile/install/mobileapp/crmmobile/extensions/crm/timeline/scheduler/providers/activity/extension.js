@@ -545,6 +545,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						width: 26,
 						height: 26,
 						borderRadius: 500,
+						backgroundColor: AppTheme.colors.base5,
 					},
 					resizeMode: 'contain',
 					uri: withCurrentDomain(user.imageUrl),

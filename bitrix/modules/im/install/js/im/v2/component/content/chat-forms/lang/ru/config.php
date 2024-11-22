@@ -2,6 +2,7 @@
 $MESS["IM_CREATE_CHAT_TITLE_PLACEHOLDER"] = "Введите название чата";
 $MESS["IM_CREATE_CONFERENCE_TITLE_PLACEHOLDER"] = "Введите название видеоконференции";
 $MESS["IM_CREATE_CHANNEL_TITLE_PLACEHOLDER_V2"] = "Название канала";
+$MESS["IM_CREATE_COLLAB_TITLE_PLACEHOLDER"] = "Название коллаба";
 $MESS["IM_CREATE_CHAT_USER_SELECTOR_ADD_MEMBERS_V2"] = "Добавить";
 $MESS["IM_CREATE_CHANNEL_USER_SELECTOR_ADD_MEMBERS"] = "Добавить подписчиков";
 $MESS["IM_CREATE_CHAT_USER_SELECTOR_CHANGE_OWNER"] = "Изменить";
@@ -9,6 +10,7 @@ $MESS["IM_CREATE_CHAT_CONFIRM"] = "Создать чат";
 $MESS["IM_CREATE_CHAT_CANCEL"] = "Отмена";
 $MESS["IM_CREATE_CONFERENCE_CONFIRM"] = "Создать конференцию";
 $MESS["IM_CREATE_CHANNEL_CONFIRM"] = "Создать канал";
+$MESS["IM_CREATE_COLLAB_CONFIRM"] = "Создать коллаб";
 $MESS["IM_CREATE_CHAT_SETTINGS_SECTION"] = "Настройки чата";
 $MESS["IM_CREATE_CHAT_SETTINGS_SECTION_OWNER"] = "Владелец";
 $MESS["IM_CREATE_CHAT_SETTINGS_SECTION_PRIVACY"] = "Приватность";
@@ -43,27 +45,25 @@ $MESS["IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3"] = "Расскажите, �
 $MESS["IM_CREATE_CHANNEL_DESCRIPTION_TITLE"] = "Описание канала";
 $MESS["IM_CREATE_CHAT_MEMBERS_TITLE"] = "Участники #SUBTITLE_START#(добавьте человека или целый отдел)#SUBTITLE_END#";
 $MESS["IM_CREATE_CHANNEL_MEMBERS_TITLE"] = "Подписчики #SUBTITLE_START#(добавьте человека или целый отдел)#SUBTITLE_END#";
+$MESS["IM_CREATE_COLLAB_MEMBERS_TITLE"] = "Сотрудники #SUBTITLE_START#(добавьте сотрудника или целый отдел)#SUBTITLE_END#";
 $MESS["IM_CREATE_CHANNEL_MEMBERS_HINT"] = "Добавьте людей или отделы в канал, чтобы они видели публикации. Новые сотрудники отделов будут подключаться к каналу автоматически";
 $MESS["IM_CREATE_CHAT_PRIVACY_SECTION_V2"] = "Тип канала";
 $MESS["IM_CREATE_CHAT_PRIVACY_SECTION_PRIVATE_TITLE"] = "Закрытый";
 $MESS["IM_CREATE_CHAT_PRIVACY_SECTION_PRIVATE_SUBTITLE_V2"] = "Канал увидят только подписчики. Права на добавление новых подписчиков настраивает владелец";
 $MESS["IM_CREATE_CHAT_PRIVACY_SECTION_OPEN_TITLE"] = "Открытый";
 $MESS["IM_CREATE_CHAT_PRIVACY_SECTION_OPEN_SUBTITLE_V2"] = "Канал появится в общем списке каналов компании. Подписаться и просматривать публикации могут все";
-
 $MESS["IM_CREATE_CHAT_OWNER_HINT"] = "Владельцу доступны все настройки чата";
 $MESS["IM_CREATE_CHAT_MANAGER_HINT"] = "Права администраторов настраивает владелец";
 $MESS["IM_CREATE_CHAT_MANAGE_USERS_ADD_HINT"] = "Выберите, кто сможет добавлять участников в чат";
 $MESS["IM_CREATE_CHAT_MANAGE_USERS_DELETE_HINT"] = "Выберите, кто сможет исключать участников из чата";
 $MESS["IM_CREATE_CHAT_MANAGE_UI_HINT"] = "Выберите, кто сможет менять название и иконку чата";
 $MESS["IM_CREATE_CHAT_MANAGE_SENDING_HINT"] = "Выберите, кто сможет отправлять сообщения в чат";
-
 $MESS["IM_CREATE_CHANNEL_OWNER_HINT"] = "Владельцу доступны все настройки канала и все действия с публикациями";
 $MESS["IM_CREATE_CHANNEL_MANAGER_HINT"] = "Администраторы могут работать с публикациями и комментариями. Остальные права настраивает владелец";
 $MESS["IM_CREATE_CHANNEL_MANAGE_USERS_ADD_HINT"] = "Выберите, кто сможет добавлять подписчиков";
 $MESS["IM_CREATE_CHANNEL_MANAGE_USERS_DELETE_HINT"] = "Выберите, кто сможет исключать подписчиков";
 $MESS["IM_CREATE_CHANNEL_MANAGE_UI_HINT"] = "Выберите, кто сможет менять название и иконку канала";
 $MESS["IM_CREATE_CHANNEL_MANAGE_SENDING_HINT"] = "Выберите, кто сможет добавлять публикации в канал";
-
 $MESS["IM_UPDATE_CONFIRM"] = "Сохранить изменения";
 $MESS["IM_UPDATE_CHANNEL_COLLAPSED_ELEMENT"] = "Подписчики #COUNT#";
 $MESS["IM_UPDATE_GROUP_CHAT_COLLAPSED_ELEMENT"] = "Участники #COUNT#";

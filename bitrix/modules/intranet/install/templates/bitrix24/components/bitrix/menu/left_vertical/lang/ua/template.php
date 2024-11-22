@@ -64,6 +64,7 @@ $MESS["MENU_MY_WORKGROUPS"] = "Мої групи";
 $MESS["MENU_MY_WORKGROUPS_EXTRANET"] = "Екстранет";
 $MESS["MENU_MY_WORKGROUPS_FAVORITES"] = "Обране";
 $MESS["MENU_OPEN_IN_NEW_PAGE"] = "Відкрити у новій вкладці";
+$MESS["MENU_OPEN_SETTINGS_MAIN_PAGE"] = "Відкрити налаштування головної сторінки";
 $MESS["MENU_PRESET_CRM_DESC1"] = "Автоматизувати продажі";
 $MESS["MENU_PRESET_CRM_DESC2"] = "підвищити конверсію, спілкуватися з клієнтами";
 $MESS["MENU_PRESET_CRM_DESC11"] = "Продавати більше";

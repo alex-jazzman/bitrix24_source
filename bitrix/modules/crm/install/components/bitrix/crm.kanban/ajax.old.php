@@ -143,7 +143,8 @@ if ($version == 2)
 	{
 		$result['ITEMS']['dropzones'] = array();
 
-		$isCrmAdmin = Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$entityTypeId = CCrmOwnerType::ResolveID($type);
+		$isAdminForEntity = Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId);
 
 		foreach ($result['ITEMS']['columns'] as $k => &$column)
 		{
@@ -178,7 +179,7 @@ if ($version == 2)
 			if (!$column['dropzone'])
 			{
 				$canSort = (
-					$isCrmAdmin
+					$isAdminForEntity
 					&& $column['type'] === 'PROGRESS'
 					&& !\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($viewMode)
 				);

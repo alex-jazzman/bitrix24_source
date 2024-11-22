@@ -1,7 +1,9 @@
-import { Dom, Loc, Reflection, Tag, Text, Type, ajax, Runtime, Uri } from 'main.core';
+import { Dom, Loc, Reflection, Tag, Text, Type, ajax, Runtime, Uri, Event } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Button, ButtonSize, ButtonColor } from 'ui.buttons';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.tooltip';
+import 'ui.icons.b24';
 
 import './css/style.css';
 
@@ -54,6 +56,9 @@ class ElementCreationGuide
 	#isAdminLoaded: boolean = false;
 	#isLoading: boolean = false;
 	#stepsEnterTime: Map<string, number> = new Map();
+	#formData: FormData;
+	#messageBox: MessageBox;
+	#canClose: boolean = false;
 
 	constructor(props: ComponentData)
 	{
@@ -85,6 +90,17 @@ class ElementCreationGuide
 		this.#toggleButtons();
 		this.#renderProgressBar();
 		this.#renderFirstStep();
+
+		Event.EventEmitter.subscribe('SidePanel.Slider:onClose', (event) => {
+			if (event.target.getWindow() === window && this.#isChangedFormData() && !this.#canClose)
+			{
+				event.getCompatData()[0].denyAction();
+				if (!this.#messageBox?.getPopupWindow().isShown())
+				{
+					this.#showConfirmDialog(event.target);
+				}
+			}
+		});
 	}
 
 	#setCurrentStep(step: ?string): void
@@ -403,11 +419,16 @@ class ElementCreationGuide
 			`;
 		}
 
-		const formattedDuration = DateTimeFormat.format(
-			[['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']],
-			0,
-			this.#duration,
-		);
+		let formattedDuration = Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_ZERO_DURATION');
+
+		if (this.#duration > 0)
+		{
+			formattedDuration = DateTimeFormat.format(
+				[['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']],
+				0,
+				this.#duration,
+			);
+		}
 
 		return Tag.render`
 			<div class="list-el-cg__informer">
@@ -451,6 +472,14 @@ class ElementCreationGuide
 		if (this.#isLoading || this.#isLastStep())
 		{
 			return;
+		}
+
+		if (!this.#formData)
+		{
+			const form = document.forms.form_lists_element_creation_guide_element;
+			this.#formData = form ? new FormData(form) : new FormData();
+			this.#appendSectionFormData(this.#formData);
+			this.#appendBPFormData(this.#formData);
 		}
 
 		const currentStepIndex = this.#steps.findIndex((step) => step.step === this.#currentStep);
@@ -537,12 +566,12 @@ class ElementCreationGuide
 	{
 		return Tag.render`
 			<div>
-				<p>
+				<div class="list-el-cg__const-desc">
 					${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_ADMIN'))}
-				</p>
-				<p>
+				</div>
+				<div class="list-el-cg__const-title">
 					${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY'))}
-				</p>
+				</div>
 				${admins.map((admin) => {
 					let button = null;
 					if (canNotify)
@@ -556,23 +585,17 @@ class ElementCreationGuide
 					}
 
 					return Tag.render`
-						<div style="padding: 12px 0; border-top: 1px solid var(--ui-color-palette-gray-10); line-height: 45px;">
-							<div
-								bx-tooltip-user-id="${admin.id}"
-								style="
-									margin-right: 10px;
-									display: inline-block;
-									line-height: 34px;
-									vertical-align: middle;
-									height: 36px;
-									width: 36px;
-									background-image: url('${admin.img ? encodeURI(Text.encode(admin.img)) : ''}');
-									border-radius: var(--ui-border-radius-circle);
-									background-size: cover;
-								"
-							></div>
-							<span>${Text.encode(admin.name)}</span>
-							<div style="float: right;">
+						<div class="list-el-cg__const-box">
+							<div class="list-el-cg__const-user">
+								<div
+									class="ui-icon ui-icon-common-user list-el-cg__const-icon"
+									bx-tooltip-user-id="${admin.id}"								
+								>
+									<i style="background-image: url('${admin.img ? encodeURI(Text.encode(admin.img)) : '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2'}');"></i>
+								</div>
+								<span class="list-el-cg__const-name">${Text.encode(admin.name)}</span>
+							</div>						
+							<div>
 								${button?.render()}
 							</div>
 						</div>
@@ -603,7 +626,7 @@ class ElementCreationGuide
 					Dom.replace(
 						button.getContainer(),
 						Tag.render`
-							<span>
+							<span class="list-el-cg__const-success-text">
 								${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_SUCCESS'))}
 							</span>
 						`,
@@ -657,6 +680,8 @@ class ElementCreationGuide
 			if (Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window))
 			{
 				BX.SidePanel.Instance.getSliderByWindow(window).close(false);
+
+				return;
 			}
 
 			this.#setCurrentStep();
@@ -720,6 +745,7 @@ class ElementCreationGuide
 			.then(({ data }) => {
 				if (Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window))
 				{
+					this.#canClose = true;
 					BX.SidePanel.Instance.getSliderByWindow(window).close(false);
 					this.#showSuccessNotification(data.elementUrl);
 				}
@@ -888,6 +914,7 @@ class ElementCreationGuide
 				`,
 				errorsNode,
 			);
+			BX.scrollToNode(errorsNode);
 		}
 	}
 
@@ -980,6 +1007,65 @@ class ElementCreationGuide
 	#getAnalyticsSection(): string
 	{
 		return ((new Uri(window.location.href)).getQueryParam('analyticsSection')) || 'bizproc';
+	}
+
+	#isChangedFormData(): boolean
+	{
+		if (!this.#formData)
+		{
+			return false;
+		}
+
+		const form: HTMLFormElement = document.forms.form_lists_element_creation_guide_element;
+		const formData = form ? new FormData(form) : new FormData();
+		this.#appendSectionFormData(formData);
+		this.#appendBPFormData(formData);
+
+		const originFormData = Object.fromEntries(this.#formData.entries());
+		for (const [key, value] of formData.entries())
+		{
+			if (Type.isFile(value))
+			{
+				if (!this.checkEqualFileField(value, originFormData[key]))
+				{
+					return true;
+				}
+			}
+			else if (value !== originFormData[key])
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	checkEqualFileField(fileFieldA: File, fileFieldB: File): boolean
+	{
+		if (!fileFieldB)
+		{
+			return false;
+		}
+
+		return fileFieldA.name === fileFieldB.name;
+	}
+
+	#showConfirmDialog(slider)
+	{
+		this.#messageBox = MessageBox.confirm(
+			Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_DESCRIPTION'),
+			Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_TITLE'),
+			() => {
+				this.#canClose = true;
+				slider.close();
+			},
+			Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CONFIRM'),
+			() => {
+				this.#messageBox.close();
+				this.#messageBox = null;
+			},
+			Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CANCEL'),
+		);
 	}
 }
 

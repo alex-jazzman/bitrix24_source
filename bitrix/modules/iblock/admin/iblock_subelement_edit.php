@@ -562,10 +562,19 @@ do{ //one iteration loop
 		{
 			foreach ($PROP[$k1] as $prop_value_id => $prop_value)
 			{
+				$filePropDescr = null;
+				if (isset($_POST["DESCRIPTION_PROP"][$k1][$prop_value_id]))
+				{
+					$filePropDescr = $_POST["DESCRIPTION_PROP"][$k1][$prop_value_id];
+				}
+				elseif (isset($_POST["PROP_descr"][$k1][$prop_value_id]))
+				{
+					$filePropDescr = $_POST["PROP_descr"][$k1][$prop_value_id];
+				}
 				$PROP[$k1][$prop_value_id] = CIBlock::makeFilePropArray(
 					$PROP[$k1][$prop_value_id],
 					($PROP_del[$k1][$prop_value_id] ?? 'N') === "Y",
-					$_POST["DESCRIPTION_PROP"][$k1][$prop_value_id] ?? $_POST["PROP_descr"][$k1][$prop_value_id]
+					$filePropDescr
 				);
 			}
 		}

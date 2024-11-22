@@ -1,5 +1,7 @@
 <?php
 $MESS["BIC_ACCESS"] = "Доступ до розділу";
+$MESS["BIC_ACCESS_HINT"] = "Співробітникам без доступу до BI-конструктора буде недоступний список звітів і звіти в зонах видимості.";
+$MESS["BIC_ACCESS_MSGVER_1"] = "Доступ до BI-конструктора";
 $MESS["BIC_DASHBOARD_COPY"] = "Копіювання";
 $MESS["BIC_DASHBOARD_CREATE"] = "Створення звітів";
 $MESS["BIC_DASHBOARD_DELETE"] = "Видалення";

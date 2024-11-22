@@ -7,7 +7,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  b2b: sign_v2_b2b_signSettings.B2BSignSettings,
 	  b2e: sign_v2_b2e_signSettings.B2ESignSettings
 	};
-	async function getSignSettings(containerId, options) {
+	function createSignSettings(containerId, options) {
 	  var _settings$type;
 	  const {
 	    type,
@@ -15,13 +15,10 @@ this.BX.Sign = this.BX.Sign || {};
 	  } = options;
 	  const SignSettingsConstructor = (_settings$type = settings[type]) != null ? _settings$type : sign_v2_b2b_signSettings.B2BSignSettings;
 	  const signSettings = new SignSettingsConstructor(containerId, options);
-	  if (uid) {
-	    await signSettings.applyDocumentData(uid);
-	  }
-	  return signSettings;
+	  signSettings.init(uid);
 	}
 
-	exports.getSignSettings = getSignSettings;
+	exports.createSignSettings = createSignSettings;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign.V2.B2b,BX.Sign.V2.B2e));
 //# sourceMappingURL=sign-settings-factory.bundle.js.map

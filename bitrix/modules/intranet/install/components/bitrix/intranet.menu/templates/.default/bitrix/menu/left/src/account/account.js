@@ -156,8 +156,23 @@ export class Account
 		Dom.append(userData, block);
 
 		const avatar = document.getElementsByClassName('ui-icon-common-user-desktop')[0];
-		const previewImage = `url('${Text.encode(this.currentUser.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : this.currentUser.protocol + '://' + this.currentUser.portal + this.currentUser.avatar)}')`;
+		const previewImage = this.getAvatarUrl(this.currentUser);
 		Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
+	}
+
+	getAvatarUrl(account): string
+	{
+		let avatarUrl = '';
+		if (account.avatar.includes('http://') || account.avatar.includes('https://'))
+		{
+			avatarUrl = account.avatar;
+		}
+		else
+		{
+			avatarUrl = account.protocol + '://' + account.portal + account.avatar;
+		}
+
+		return `url('${Text.encode(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : avatarUrl)}')`;
 	}
 
 	viewPopupAccounts(): void
@@ -185,7 +200,7 @@ export class Account
 		Dom.insertBefore(item, menuPopup.firstElementChild);
 
 		const avatar = document.getElementsByClassName('ui-icon-common-user-popup')[0];
-		const previewImage = `url('${Text.encode(this.currentUser.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : this.currentUser.protocol + '://' + this.currentUser.portal + this.currentUser.avatar)}')`;
+		const previewImage = this.getAvatarUrl(this.currentUser);
 		Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
 
 		const block = document.getElementsByClassName('intranet__desktop-menu_popup-list')[0];
@@ -222,7 +237,7 @@ export class Account
 			this.addContextMenu(account, index);
 
 			let userAvatar = document.getElementsByClassName('ui-icon-common-user-' + index)[0];
-			let previewUserImage = `url('${Text.encode(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : account.protocol + '://' + account.portal + account.avatar)}')`;
+			let previewUserImage = this.getAvatarUrl(account);
 			Dom.style(userAvatar, '--ui-icon-service-bg-image', previewUserImage);
 
 			index++;

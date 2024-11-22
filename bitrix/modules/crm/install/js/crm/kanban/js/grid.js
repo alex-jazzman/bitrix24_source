@@ -1022,6 +1022,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				currentColumn.layout.total.textContent = +currentColumn.layout.total.innerHTML - 1;
 			}
 
+			items[i].useAnimation = false;
 			removePromises.push(currentColumn.removeItem(items[i]));
 			currentColumns.set(items[i].getId(), currentColumn);
 		}
@@ -1387,6 +1388,14 @@ BX.CRM.Kanban.Grid.prototype = {
 		const price = parseFloat(item.getData().price);
 
 		column.incPrice(price);
+
+		const ids = this.itemMoving.groupIds ? this.itemMoving.groupIds.toString() : item.getId();
+
+		const analyticsData = this.getDefaultAnalyticsCloseEvent(item, column.getData().type, ids);
+		analyticsData.c_sub_section = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN_DROPZONE;
+		analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_CANCEL_BUTTON;
+		this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL);
+
 		this.onItemMoved(item, column);
 	},
 
@@ -1614,7 +1623,6 @@ BX.CRM.Kanban.Grid.prototype = {
 		// some vars
 		var afterItemId = 0;
 		var itemId = item.getId();
-		var targetColumnId = targetColumn ? targetColumn.getId() : 0;
 
 		// set sort
 		if (targetColumn instanceof BX.Kanban.DropZone)
@@ -1648,31 +1656,39 @@ BX.CRM.Kanban.Grid.prototype = {
 				groupIds.push(itemId);
 			}
 
-			this.checkItemStatusAfterMoved(item, afterItemId, targetColumnId);
+			this.checkItemStatusAfterMoved(item, afterItemId, targetColumn);
 		}
 	},
 
 	/**
 	 * @param {BX.CRM.Kanban.Item} item
 	 * @param {number} afterItemId
-	 * @param {string} targetColumnId
+	 * @param {BX.Kanban.Column|BX.Kanban.DropZone} targetColumn
 	 */
-	checkItemStatusAfterMoved: function(item, afterItemId, targetColumnId)
+	checkItemStatusAfterMoved: function(item, afterItemId, targetColumn)
 	{
 		const itemId = item.getId();
+		const targetColumnId = targetColumn ? targetColumn.getId() : 0;
 		const params = {
 			action: 'status',
-			entity_id: this.itemMoving.groupIds ?? itemId,
+			entity_id: this.itemMoving?.groupIds ?? itemId,
 			prev_entity_id: afterItemId,
 			status: targetColumnId,
 			eventId: BX.Pull.QueueManager.registerRandomEventId(),
 		};
+		const ids = this.itemMoving?.groupIds ? this.itemMoving?.groupIds.toString() : itemId;
+
+		const analyticsData = this.getDefaultAnalyticsCloseEvent(item, targetColumn.getData().type, ids);
+
+		this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
 
 		this.ajax(
 			params,
 			(data) => {
 				if (!data)
 				{
+					this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
 					return;
 				}
 
@@ -1682,12 +1698,16 @@ BX.CRM.Kanban.Grid.prototype = {
 
 					this.showResponseError(data);
 
+					this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
 					return;
 				}
 
+				this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+
 				if (
 					this.getData().useItemPlanner
-					&& !this.itemMoving.groupIds
+					&& !this.itemMoving?.groupIds
 					&& BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable()
 				)
 				{
@@ -1726,8 +1746,57 @@ BX.CRM.Kanban.Grid.prototype = {
 					void this.loadNew(itemId, false, true, true, true);
 				}
 			},
-			(error) => BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true),
+			(error) => {
+				this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
+				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
+			},
 		);
+	},
+
+	/**
+	 * @param {BX.CRM.Kanban.Item} item
+	 * @param {string} type
+	 * @param {string} ids
+	 */
+	getDefaultAnalyticsCloseEvent(item, type, ids)
+	{
+		let element = type;
+
+		if (element === 'WIN')
+		{
+			element = 'won';
+		}
+		else if (element === 'LOOSE')
+		{
+			element = 'lose';
+		} else
+		{
+			element = 'progress';
+		}
+
+		let subSection = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN;
+
+		if (this.dropZonesShow) {
+			subSection = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN_DROPZONE;
+		}
+
+		return BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(item.getGridData().entityType, ids)
+			.setSubSection(subSection)
+			.setElement(element)
+			.buildData();
+	},
+
+	registerAnalyticsCloseEvent(analyticsData, status)
+	{
+		if (!analyticsData || (analyticsData.c_element === 'progress' && status !== BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL))
+		{
+			return;
+		}
+
+		analyticsData.status = status;
+
+		BX.UI.Analytics.sendData(analyticsData);
 	},
 
 	/**
@@ -3033,6 +3102,11 @@ BX.CRM.Kanban.Grid.prototype = {
 	{
 		const kanbanColumnClassname = 'main-kanban-column';
 		let kanbanColumnElem = popupWindow.bindElement;
+		const isTourPopup = BX.hasClass(popupWindow.popupContainer, 'popup-window-ui-tour');
+		if (isTourPopup)
+		{
+			return false;
+		}
 
 		while (kanbanColumnElem && !BX.Dom.hasClass(kanbanColumnElem, kanbanColumnClassname)) {
 			kanbanColumnElem = kanbanColumnElem.parentNode;
@@ -3119,6 +3193,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				id: columns[i].id,
 				name: columns[i].name,
 				blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
+				type: columns[i].data.type,
 			});
 		}
 		for (var i = 0, c = drops.length; i < c; i++)
@@ -3140,6 +3215,7 @@ BX.CRM.Kanban.Grid.prototype = {
 					id: drops[i].id,
 					name: drops[i].name,
 					blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
+					type: drops[i].data.type,
 				});
 			}
 		}

@@ -28,7 +28,7 @@ export const LocationSelector = {
 
 	async mounted()
 	{
-		this.locations = await this.fetchRoomsManagerData();
+		this.locations = await this.fetchRoomsListData();
 
 		if (this.forceShowLocationSelectorDialog)
 		{
@@ -97,7 +97,7 @@ export const LocationSelector = {
 					multiple: false,
 					dropdownMode: true,
 					showAvatars: true,
-					enableSearch: true,
+					enableSearch: items.length > 8,
 					width: 450,
 					height: 300,
 					zIndex: 2500,
@@ -124,11 +124,11 @@ export const LocationSelector = {
 				{ '#CAPACITY_VALUE#': value },
 			);
 		},
-		async fetchRoomsManagerData(): Object
+		async fetchRoomsListData(): Object
 		{
 			return new Promise((resolve) => {
 				Ajax
-					.runAction('calendar.api.locationajax.getRoomsManagerData')
+					.runAction('calendar.api.locationajax.getRoomsList')
 					.then((response) => {
 						resolve(response.data);
 					})

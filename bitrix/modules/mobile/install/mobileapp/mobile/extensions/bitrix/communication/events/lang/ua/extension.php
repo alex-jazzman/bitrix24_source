@@ -1,5 +1,3 @@
 <?php
-$MESS["COMMUNICATION_EVENTS_CONFIRM_CALL_OK"] = "Зателефонувати";
-$MESS["COMMUNICATION_EVENTS_CONFIRM_CALL_TITLE"] = "Зателефонувати за номером #PHONE_NUMBER#?";
 $MESS["COMMUNICATION_EVENTS_MESSAGE_WINDOW_TITLE"] = "Нове повідомлення";
 $MESS["COMMUNICATION_EVENTS_UNKNOWN_LINK"] = "Невірна адреса сайту";

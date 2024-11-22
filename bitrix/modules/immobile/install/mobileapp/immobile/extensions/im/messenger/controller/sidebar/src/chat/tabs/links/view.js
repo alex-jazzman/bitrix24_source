@@ -14,12 +14,13 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { icon } = require('im/messenger/controller/sidebar/lib/assets/icons');
 	const { SidebarTab } = require('im/messenger/const');
+	const { BaseSidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/base/view');
 
 	/**
 	 * @class SidebarLinksView
 	 * @typedef {LayoutComponent<SidebarLinksViewProps, SidebarLinksViewState>} SidebarLinksView
 	 */
-	class SidebarLinksView extends LayoutComponent
+	class SidebarLinksView extends BaseSidebarTabView
 	{
 		#core;
 		#store;
@@ -38,7 +39,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 			const dialog = this.#store.getters['dialoguesModel/getById'](props.dialogId);
 			this.#chatId = dialog?.chatId;
 			this.#linksService = new SidebarLinksService(this.#chatId);
-			this.#listViewRef = null;
 			this.isHistoryLimitExceeded = this.#store.getters['sidebarModel/sidebarLinksModel/isHistoryLimitExceeded'](this.#chatId);
 
 			this.state = {
@@ -51,24 +51,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 				text: '',
 			});
 			this.#getLinksFromStore();
-		}
-
-		componentDidMount()
-		{
-			logger.log(`${this.constructor.name}.componentDidMount`);
-			this.#bindListener();
-			this.#subscribeStoreEvents();
-		}
-
-		componentDidUpdate()
-		{
-			logger.log(`${this.constructor.name}.componentDidUpdate`);
-		}
-
-		componentWillUnmount()
-		{
-			logger.log(`${this.constructor.name}.componentWillUnmount`);
-			this.#unsubscribeStoreEvents();
 		}
 
 		render()
@@ -246,12 +228,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		#bindListener()
+		bindListener()
 		{
+			super.bindListener();
 			this.onSetHistoryLimitExceeded = this.#onSetHistoryLimitExceeded.bind(this);
 			this.onSetSidebarLinksStore = this.#onSetSidebarLinksStore.bind(this);
 			this.onDeleteSidebarLinksStore = this.#onDeleteSidebarLinksStore.bind(this);
-			this.unsubscribeStoreEvents = this.#unsubscribeStoreEvents.bind(this);
 		}
 
 		/**
@@ -371,7 +353,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 			}
 		}
 
-		#subscribeStoreEvents()
+		subscribeStoreEvents()
 		{
 			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
 			this.#storeManager.on('sidebarModel/sidebarLinksModel/setHistoryLimitExceeded', this.onSetHistoryLimitExceeded);
@@ -379,7 +361,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 			this.#storeManager.on('sidebarModel/sidebarLinksModel/delete', this.onDeleteSidebarLinksStore);
 		}
 
-		#unsubscribeStoreEvents()
+		unsubscribeStoreEvents()
 		{
 			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
 			this.#storeManager.off('sidebarModel/sidebarLinksModel/setHistoryLimitExceeded', this.onSetHistoryLimitExceeded);
@@ -422,6 +404,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 			return [...map]
 				.map(([_, value]) => (value))
 				.sort((a, b) => new Date(b.dateCreate).getTime() - new Date(a.dateCreate).getTime());
+		}
+
+		scrollToBegin()
+		{
+			this.#listViewRef?.scrollToBegin(true);
 		}
 	}
 

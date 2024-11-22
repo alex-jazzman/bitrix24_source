@@ -4,8 +4,8 @@ import { EventEmitter } from 'main.core.events';
 
 import { PromoManager } from 'im.v2.lib.promo';
 import { ChatService } from 'im.v2.provider.service';
-import { AddToChat } from 'im.v2.component.entity-selector';
 import { EditableChatTitle, AvatarSize, ChatAvatar } from 'im.v2.component.elements';
+import { ChatHeader } from 'im.v2.component.content.elements';
 import { EventType, PromoId, SidebarDetailBlock } from 'im.v2.const';
 
 import { AddToChatHint } from './add-to-chat-hint';
@@ -16,16 +16,13 @@ import type { JsonObject } from 'main.core';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
-export const ChatHeader = {
-	name: 'ChatHeader',
-	components: { EditableChatTitle, AddToChat, ChatAvatar, AddToChatHint },
+export const CopilotChatHeader = {
+	name: 'CopilotChatHeader',
+	components: { ChatHeader, EditableChatTitle, ChatAvatar, AddToChatHint },
+	inject: ['currentSidebarPanel'],
 	props:
 	{
 		dialogId: {
-			type: String,
-			default: '',
-		},
-		currentSidebarPanel: {
 			type: String,
 			default: '',
 		},
@@ -44,16 +41,6 @@ export const ChatHeader = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		chatId(): number
-		{
-			return this.dialog.chatId;
-		},
-		userCounter(): string
-		{
-			return Loc.getMessagePlural('IM_CONTENT_COPILOT_HEADER_USER_COUNT', this.dialog.userCounter, {
-				'#COUNT#': this.dialog.userCounter,
-			});
-		},
 		isInited(): boolean
 		{
 			return this.dialog.inited;
@@ -62,24 +49,18 @@ export const ChatHeader = {
 		{
 			return this.dialog.userCounter > 2;
 		},
-		isSidebarOpened(): boolean
-		{
-			return this.currentSidebarPanel.length > 0;
-		},
 		copilotRole(): string
 		{
 			const role = this.$store.getters['copilot/chats/getRole'](this.dialogId);
-			if (!role)
-			{
-				return '';
-			}
 
-			return role.name;
+			return role?.name ?? '';
 		},
-	},
-	mounted()
-	{
-		this.showAddToChatHint = PromoManager.getInstance().needToShow(PromoId.addUsersToCopilotChat);
+		formattedUserCounter(): string
+		{
+			return Loc.getMessagePlural('IM_CONTENT_COPILOT_HEADER_USER_COUNT', this.dialog.userCounter, {
+				'#COUNT#': this.dialog.userCounter,
+			});
+		},
 	},
 	methods:
 	{
@@ -87,26 +68,14 @@ export const ChatHeader = {
 		{
 			this.getChatService().renameChat(this.dialogId, newTitle).catch(() => {
 				BX.UI.Notification.Center.notify({
-					content: this.loc('IM_CONTENT_COPILOT_HEADER_RENAME_ERROR'),
+					content: this.loc('IM_CONTENT_CHAT_HEADER_RENAME_ERROR'),
 				});
 			});
 		},
-		getChatService(): ChatService
+		onHintHide()
 		{
-			if (!this.chatService)
-			{
-				this.chatService = new ChatService();
-			}
-
-			return this.chatService;
-		},
-		loc(phraseCode: string, replacements: {[string]: string} = {}): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-		},
-		openAddToChatPopup()
-		{
-			this.showAddToChatPopup = true;
+			void PromoManager.getInstance().markAsWatched(PromoId.addUsersToCopilotChat);
+			this.showAddToChatHint = false;
 		},
 		onMembersClick()
 		{
@@ -127,29 +96,32 @@ export const ChatHeader = {
 				dialogId: this.dialogId,
 			});
 		},
-		toggleRightPanel()
+		handleAddToChatHint(): void
 		{
-			if (this.currentSidebarPanel)
+			this.showAddToChatHint = PromoManager.getInstance().needToShow(PromoId.addUsersToCopilotChat);
+		},
+		getChatService(): ChatService
+		{
+			if (!this.chatService)
 			{
-				EventEmitter.emit(EventType.sidebar.close, { panel: '' });
-
-				return;
+				this.chatService = new ChatService();
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
-				panel: SidebarDetailBlock.main,
-				dialogId: this.dialogId,
-			});
+			return this.chatService;
 		},
-		onHintHide()
+		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{
-			void PromoManager.getInstance().markAsWatched(PromoId.addUsersToCopilotChat);
-			this.showAddToChatHint = false;
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `
-		<div class="bx-im-copilot-header__container">
-			<div class="bx-im-copilot-header__left">
+		<ChatHeader
+			:dialogId="dialogId"
+			:withSearchButton="false"
+			class="bx-im-copilot-header__container"
+			@buttonPanelReady="handleAddToChatHint"
+		>
+			<template #left>
 				<div class="bx-im-copilot-header__avatar">
 					<ChatAvatar
 						:avatarDialogId="dialogId"
@@ -160,48 +132,27 @@ export const ChatHeader = {
 				</div>
 				<div class="bx-im-copilot-header__info">
 					<EditableChatTitle :dialogId="dialogId" @newTitleSubmit="onNewTitleSubmit" />
-					<div 
+					<div
 						v-if="isGroupCopilotChat"
 						:title="loc('IM_CONTENT_COPILOT_HEADER_OPEN_MEMBERS_TITLE')"
 						@click="onMembersClick"
 						class="bx-im-copilot-header__subtitle --click"
 					>
-						{{ userCounter }}
+						{{ formattedUserCounter }}
 					</div>
 					<div v-else class="bx-im-copilot-header__subtitle">
 						{{ copilotRole }}
 					</div>
 				</div>
-			</div>
-			<div class="bx-im-copilot-header__right">
-				<div
-					:title="loc('IM_CONTENT_COPILOT_HEADER_OPEN_INVITE_POPUP_TITLE')"
-					:class="{'--active': showAddToChatPopup}"
-					class="bx-im-copilot-header__icon --add-users"
-					@click="openAddToChatPopup"
-					ref="add-users"
-				>
-					<AddToChatHint
-						v-if="showAddToChatHint"
-						:bindElement="$refs['add-users']"
-						@close="showAddToChatHint = false"
-						@hide="onHintHide"
-					/>
-				</div>
-				<div
-					class="bx-im-copilot-header__icon --panel"
-					:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR')"
-					:class="{'--active': isSidebarOpened}"
-					@click="toggleRightPanel"
-				></div>
-			</div>
-			<AddToChat
-				:bindElement="$refs['add-users'] || {}"
-				:dialogId="dialogId"
-				:showPopup="showAddToChatPopup"
-				:popupConfig="{offsetTop: 15, offsetLeft: -300}"
-				@close="showAddToChatPopup = false"
-			/>
-		</div>
+			</template>
+			<template #invite-hint="{ inviteButtonRef }">
+				<AddToChatHint
+					v-if="showAddToChatHint"
+					:bindElement="inviteButtonRef"
+					@close="showAddToChatHint = false"
+					@hide="onHintHide"
+				/>
+			</template>
+		</ChatHeader>
 	`,
 };

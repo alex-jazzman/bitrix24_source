@@ -100,17 +100,7 @@ if($bBadBlock)
 $request = Main\Context::getCurrent()->getRequest();
 // TODO: hack for psevdo-excel export in crm (\CAdminUiList::GetSystemContextMenu)
 $urlBuilderManager = Iblock\Url\AdminPage\BuilderManager::getInstance();
-$urlBuilder = null;
-$urlBuilderId = (string)$request->get('urlBuilderId') ;
-if ($urlBuilderId !== '')
-{
-	$urlBuilder = $urlBuilderManager->getBuilder($urlBuilderId);
-}
-// TODO end
-if ($urlBuilder === null)
-{
-	$urlBuilder = $urlBuilderManager->getBuilder();
-}
+$urlBuilder = $urlBuilderManager->getBuilder();
 unset($urlBuilderManager);
 if ($urlBuilder === null)
 {
@@ -131,32 +121,14 @@ if ($urlBuilder === null)
 	die();
 }
 $urlBuilderId = $urlBuilder->getId();
-//TODO: hack fo compensation BX.adminSidePanel.prototype.checkActionByUrl where remove IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER from url
-if ($urlBuilderId === 'INVENTORY')
-{
-	$urlBuilder->setSliderMode(true);
-}
-// end hack
 $urlBuilder->setIblockId($IBLOCK_ID);
 $urlBuilder->setUrlParams([]);
-
-// TODO: remove after realization of the new grid of products.
-if ($publicMode)
-{
-	/**
-	 * @var CMain $APPLICATION
-	 */
-
-	$bodyClass = $APPLICATION->GetPageProperty('BodyClass', '');
-	$APPLICATION->SetPageProperty('BodyClass', str_replace('no-background', '', $bodyClass));
-}
 
 $pageConfig = array(
 	'IBLOCK_EDIT' => false,
 	'CHECK_NEW_CARD' => false,
 	'USE_NEW_CARD' => false,
 	'CATALOG' => false,
-	'PUBLIC_CRM_CATALOG' => false,
 	'PUBLIC_MODE' => false,
 
 	'LIST_ID_PREFIX' => '',
@@ -184,10 +156,6 @@ switch ($urlBuilderId)
 		$pageConfig['ALLOW_USER_EDIT'] = false;
 		$pageConfig['SLIDER_CRM'] = $urlBuilder->isSliderMode();
 		$pageConfig['DEFAULT_ACTION_TYPE'] = CAdminUiListRow::LINK_TYPE_SLIDER;
-		if (Loader::includeModule('crm'))
-		{
-			$pageConfig['PUBLIC_CRM_CATALOG'] = \Bitrix\Crm\Product\Catalog::getDefaultId() === $IBLOCK_ID;
-		}
 		$pageConfig['PUBLIC_MODE'] = true;
 		break;
 	case 'INVENTORY':
@@ -199,10 +167,6 @@ switch ($urlBuilderId)
 		$pageConfig['ALLOW_EXTERNAL_LINK'] = false;
 		$pageConfig['ALLOW_USER_EDIT'] = false;
 		$pageConfig['DEFAULT_ACTION_TYPE'] = CAdminUiListRow::LINK_TYPE_SLIDER;
-		if (Loader::includeModule('crm'))
-		{
-			$pageConfig['PUBLIC_CRM_CATALOG'] = \Bitrix\Crm\Product\Catalog::getDefaultId() === $IBLOCK_ID;
-		}
 		$pageConfig['PUBLIC_MODE'] = true;
 		break;
 	case 'CATALOG':
@@ -486,9 +450,20 @@ $sectionItems = array(
 	"" => GetMessage("IBLOCK_ALL"),
 	"0" => GetMessage("IBLOCK_UPPER_LEVEL"),
 );
-$sectionQueryObject = CIBlockSection::GetTreeList(Array("IBLOCK_ID"=>$IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));
-while($arSection = $sectionQueryObject->Fetch())
-	$sectionItems[$arSection["ID"]] = str_repeat(" . ", $arSection["DEPTH_LEVEL"]).$arSection["NAME"];
+$sectionQueryObject = CIBlockSection::GetTreeList(
+	['IBLOCK_ID' => $IBLOCK_ID],
+	[
+		'ID',
+		'NAME',
+		'DEPTH_LEVEL',
+	]
+);
+while ($arSection = $sectionQueryObject->Fetch())
+{
+	$margin = max((int)$arSection['DEPTH_LEVEL'], 1);
+	$sectionItems[$arSection['ID']] = str_repeat(' . ', $margin) . $arSection['NAME'];
+}
+unset($arSection, $sectionQueryObject);
 
 // region Filter definitions
 /*
@@ -5180,16 +5155,18 @@ if ($additional === null)
 $lAdmin->SetContextMenu($aContext, $additional, $contextConfig);
 $lAdmin->CheckListMode();
 
-if ($pageConfig['PUBLIC_CRM_CATALOG'])
+if ($pageConfig['CATALOG'])
 {
-	$APPLICATION->SetTitle(GetMessage("IBEL_LIST_TITLE_2"));
+	$APPLICATION->SetTitle(GetMessage(
+		'IBEL_LIST_TITLE',
+		[
+			'#IBLOCK_NAME#' => $arIBlock['NAME'],
+		]
+	));
 }
 else
 {
-	if ($pageConfig['CATALOG'])
-		$APPLICATION->SetTitle(GetMessage("IBEL_LIST_TITLE", array("#IBLOCK_NAME#" => $arIBlock["NAME"])));
-	else
-		$APPLICATION->SetTitle($arIBlock["NAME"]);
+	$APPLICATION->SetTitle($arIBlock["NAME"]);
 }
 
 Main\Page\Asset::getInstance()->addJs('/bitrix/js/iblock/iblock_edit.js');

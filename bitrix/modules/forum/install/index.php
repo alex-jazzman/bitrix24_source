@@ -1,4 +1,5 @@
-<?global $DOCUMENT_ROOT, $MESS;
+<?php
+
 if (!function_exists("CreatePattern"))
 {
 	function CreatePattern($pattern="", $DICTIONARY_ID=0)
@@ -384,7 +385,7 @@ class forum extends CModule
 
 	function InstallFiles()
 	{
-		if($_SERVER["DevServer"] != "Y" && $_ENV["COMPUTERNAME"]!="BX")
+		if($_SERVER["DevServer"] != "Y")
 		{
 			CheckDirPath($_SERVER["DOCUMENT_ROOT"]."/bitrix/images/forum/", true, true);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/forum/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/forum", true, true);
@@ -399,7 +400,7 @@ class forum extends CModule
 
 	function UnInstallFiles()
 	{
-		if($_SERVER["DevServer"] != "Y" && $_ENV["COMPUTERNAME"]!="BX")
+		if($_SERVER["DevServer"] != "Y")
 		{
 			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/forum/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
 			DeleteDirFiles(
@@ -603,4 +604,3 @@ class forum extends CModule
 		}
 	}
 }
-?>

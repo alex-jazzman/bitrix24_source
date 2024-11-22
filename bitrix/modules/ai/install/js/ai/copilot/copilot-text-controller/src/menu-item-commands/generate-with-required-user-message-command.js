@@ -1,3 +1,4 @@
+import { ajax } from 'main.core';
 import { BaseCommand, type BaseCommandOptions } from './base-command';
 
 type GenerateWithRequiredUserMessageCommandOptions = {
@@ -15,8 +16,22 @@ export class GenerateWithRequiredUserMessageCommand extends BaseCommand
 		this.#commandCode = options.commandCode;
 	}
 
-	execute(): void
+	async execute(): void
 	{
-		this.copilotTextController.generateWithRequiredUserMessage(this.#commandCode);
+		const data = new FormData();
+		data.append('promptCode', this.#commandCode);
+
+		try
+		{
+			const res = await ajax.runAction('ai.prompt.getTextByCode', {
+				data,
+			});
+
+			this.copilotTextController.generateWithRequiredUserMessage(this.#commandCode, res.data.text);
+		}
+		catch (e)
+		{
+			console.error(e);
+		}
 	}
 }

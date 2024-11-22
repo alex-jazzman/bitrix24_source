@@ -67,6 +67,7 @@ export const ElementIds = Object.freeze({
 	autoFromActivityViewMode: 'auto_from_activity_view_mode',
 	complexButton: 'complete_button',
 	checkbox: 'checkbox',
+	calendarSection: 'calendar_section',
 });
 
 export type ElementIdsType = ElementIds.colorSettings | ElementIds.description | ElementIds.title | ElementIds.responsibleUserId
@@ -214,7 +215,14 @@ export class Analytics
 
 		if (Type.isArrayFilled(this.#blockTypes))
 		{
-			data.p4 = 'addBlock';
+			if (this.#blockTypes.includes('section_calendar'))
+			{
+				data.p4 = 'addBlock_calendar';
+			}
+			else
+			{
+				data.p4 = 'addBlock';
+			}
 		}
 
 		if (Type.isStringFilled(this.#notificationSkipPeriod))

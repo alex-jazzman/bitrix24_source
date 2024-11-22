@@ -284,4 +284,6 @@
 .sign-document-b2e-company__provider_alert {
 	margin-top: 10px;
 	margin-bottom: 0;
+	background-color: var(--ui-color-palette-orange-15);
+	color: var(--ui-color-palette-gray-60);
 }

@@ -219,7 +219,7 @@ export class MembersMenu extends SidebarMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_LEAVE_V2'),
+			text: Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1'),
 			onclick: async () => {
 				this.menuInstance.close();
 				const userChoice = await showLeaveFromChatConfirm();

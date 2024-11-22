@@ -43,6 +43,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/tab-view', (require, exp
 		{
 			return new ChannelParticipantsView({
 				dialogId: this.props.dialogId,
+				id: SidebarTab.participant,
 			});
 		}
 	}

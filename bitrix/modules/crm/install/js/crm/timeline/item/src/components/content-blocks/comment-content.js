@@ -10,6 +10,9 @@ import { ButtonState } from '../enums/button-state';
 const TYPE_LOAD_FILES_BLOCK = 1;
 const TYPE_LOAD_TEXT_CONTENT = 2;
 
+/**
+ * @extends EditableDescription
+ */
 export default BitrixVue.cloneComponent(EditableDescription, {
 	props: {
 		filesCount: {
@@ -32,6 +35,8 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 	data(): Object {
 		return {
 			...this.parentData(),
+			value: this.text,
+			oldValue: this.text,
 			isTextLoaded: false,
 			isTextChanged: false,
 			isMoving: false,
@@ -374,7 +379,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 	},
 
 	template: `
-		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper">
+		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper --comment">
 			<div ref="rootElement" :class="className">
 				<button
 					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"

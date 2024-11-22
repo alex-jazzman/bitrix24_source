@@ -573,10 +573,6 @@ if(
 					"LOG_ID" => (isset($arParams["LOG_ID"]) ? $arParams["LOG_ID"] : false),
 				]);
 				$arResult["PostPerm"] = $permsResult['PERM'];
-				$arResult["ReadOnly"] = (
-					$permsResult['PERM'] <= Permissions::READ
-					&& $permsResult['READ_BY_OSG']
-				);
 			}
 		}
 

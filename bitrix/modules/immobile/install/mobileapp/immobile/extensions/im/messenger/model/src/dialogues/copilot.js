@@ -8,13 +8,13 @@ jn.define('im/messenger/model/dialogues/copilot', (require, exports, module) => 
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues-copilot');
 
 	/** @type {CopilotModelState} */
-	const copilotModelState = {
+	const copilotDefaultElement = Object.freeze({
 		dialogId: 'chat0',
 		roles: {},
 		aiProvider: '',
 		chats: [],
 		messages: [],
-	};
+	});
 
 	/**
 	 * @type {CopilotModel}
@@ -163,7 +163,7 @@ jn.define('im/messenger/model/dialogues/copilot', (require, exports, module) => 
 						addItems.push(
 							{
 								dialogId: validElement.dialogId,
-								fields: { ...copilotModelState, ...validElement },
+								fields: { ...copilotDefaultElement, ...validElement },
 							},
 						);
 					}
@@ -349,5 +349,5 @@ jn.define('im/messenger/model/dialogues/copilot', (require, exports, module) => 
 		return result;
 	}
 
-	module.exports = { copilotModel };
+	module.exports = { copilotModel, copilotDefaultElement };
 });

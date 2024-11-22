@@ -35,7 +35,6 @@ if (\Bitrix\Main\Loader::includeModule('pull'))
 	\CPullWatch::Add($USER->getId(), "superset_dashboard", true);
 }
 
-
 Extension::load([
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-analytics',
@@ -47,6 +46,7 @@ Extension::load([
 	'pull.client',
 	'ui.icons',
 	'ui.icon-set.actions',
+	'ui.feedback.form',
 	'ui.alerts',
 	'ui.tour',
 	'ui.switcher',
@@ -94,6 +94,7 @@ if (!$limitManager->checkLimitWarning())
 		BX.BIConnector.SupersetDashboardGridManager.Instance = new BX.BIConnector.SupersetDashboardGridManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
 			'isNeedShowTopMenuGuide' => $arResult['NEED_SHOW_TOP_MENU_GUIDE'] ?? false,
+			'isNeedShowDraftGuide' => $arResult['NEED_SHOW_DRAFT_GUIDE'] ?? false,
 		])?>);
 
 		BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();

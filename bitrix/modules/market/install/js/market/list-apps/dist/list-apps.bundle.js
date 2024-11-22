@@ -64,12 +64,14 @@ this.BX = this.BX || {};
 	    prevCategory: function () {
 	      if (this.isCategory) {
 	        for (let category of this.$root.result.CATEGORIES.ITEMS) {
-	          for (let subCategory of category.SUB_ITEMS) {
-	            if (subCategory.CODE === this.params.CATEGORY) {
-	              return {
-	                'code': category.CODE,
-	                'name': category.NAME
-	              };
+	          if (category.SUB_ITEMS) {
+	            for (let subCategory of category.SUB_ITEMS) {
+	              if (subCategory.CODE === this.params.CATEGORY) {
+	                return {
+	                  'code': category.CODE,
+	                  'name': category.NAME
+	                };
+	              }
 	            }
 	          }
 	        }
@@ -391,6 +393,17 @@ this.BX = this.BX || {};
 							  v-for="tag in result.FILTER_TAGS"
 							  :class="[{'--checked': isSelectedTag(tag.value)}]"
 							  @click="filterTag(tag.value, $event)"
+						>
+							{{ tag.name }}
+						</span>
+					</template>
+					<template v-else-if="result.FILTER_CATEGORIES">
+						<span class="market-catalog__categories-item"
+							  v-for="tag in result.FILTER_CATEGORIES"
+							  :class="[{'--checked': isSelectedTag(tag.value)}]"
+							  :data-href="MarketLinks.categoryLink(tag.value)"
+							  data-load-content="list"
+							  @click.prevent="$root.emitLoadContent"
 						>
 							{{ tag.name }}
 						</span>

@@ -6,6 +6,7 @@ export const RestMethod = Object.freeze({
 	imV2ChatLoadContext: 'im.v2.Chat.loadInContext',
 	imV2ChatAdd: 'im.v2.Chat.add',
 	imV2ChatUpdate: 'im.v2.Chat.update',
+	imV2ChatDelete: 'im.v2.Chat.delete',
 	imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 	imV2ChatRead: 'im.v2.Chat.read',
 	imV2ChatReadAll: 'im.v2.Chat.readAll',

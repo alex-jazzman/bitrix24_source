@@ -3,13 +3,24 @@ import { ChatType } from 'im.v2.const';
 import { GroupChatCreation } from './components/create/group-chat';
 import { ConferenceCreation } from './components/create/conference';
 import { ChannelCreation } from './components/create/channel';
+import { CollabCreation } from './components/create/collab';
 
 import './css/chat-forms-content.css';
+
+import type { BitrixVueComponentProps } from 'ui.vue3';
+
+const CreationComponentByChatType = {
+	[ChatType.chat]: GroupChatCreation,
+	[ChatType.videoconf]: ConferenceCreation,
+	[ChatType.channel]: ChannelCreation,
+	[ChatType.collab]: CollabCreation,
+	default: GroupChatCreation,
+};
 
 // @vue/component
 export const CreateChatContent = {
 	name: 'CreateChatContent',
-	components: { GroupChatCreation, ConferenceCreation, ChannelCreation },
+	components: { GroupChatCreation, ConferenceCreation, ChannelCreation, CollabCreation },
 	props:
 	{
 		entityId: {
@@ -24,12 +35,14 @@ export const CreateChatContent = {
 		{
 			return this.entityId;
 		},
+		creationComponent(): BitrixVueComponentProps
+		{
+			return CreationComponentByChatType[this.chatType] ?? CreationComponentByChatType.default;
+		},
 	},
 	template: `
 		<div class="bx-im-content-chat-forms__container">
-			<GroupChatCreation v-if="chatType === ChatType.chat" />
-			<ConferenceCreation v-else-if="chatType === ChatType.videoconf" />
-			<ChannelCreation v-else-if="chatType === ChatType.channel" />
+			<component :is="creationComponent" />
 		</div>
 	`,
 };

@@ -68,6 +68,7 @@ Extension::load([
 	'ui.feedback.form',
 	'ui.icons',
 	'ui.notification',
+	'ui.icon-set.actions',
 	'ui.hint',
 	'loc',
 	'sidepanel',
@@ -128,6 +129,9 @@ if (!$limitManager->checkLimitWarning())
 		</div>
 		<div class="dashboard-header-buttons">
 			<button id="edit-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-edit"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
+			<?php if ($arResult['PDF_EXPORT_ENABLED']): ?>
+			<button id="download-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-download"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></button>
+			<?php endif; ?>
 			<div id="more-btn" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more"><i></i></div>
 		</div>
 	</div>
@@ -138,32 +142,28 @@ if (!$limitManager->checkLimitWarning())
 <script>
 	BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 	BX.ready(() => {
-		const dashboardAppId = '<?= CUtil::JSEscape($arResult['DASHBOARD_APP_ID'] ?? 'unknown') ?>';
-
-		BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-			c_element: '<?= CUtil::JSEscape($analyticSource) ?>',
-			status: 'success',
-			type: '<?= CUtil::JSEscape($arResult['DASHBOARD_TYPE']) ?>'.toLowerCase(),
-			p1: BX.BIConnector.ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(dashboardAppId),
-			p2: '<?= (int)$arResult['DASHBOARD_ID'] ?>'
-		});
-
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
 			<?= Json::encode([
 				'appNodeId' => 'dashboard',
 				'openLoginPopup' => $arResult['OPEN_LOGIN_POPUP'],
 				'canExport' => $arResult['CAN_EXPORT'],
 				'canEdit' => $arResult['CAN_EDIT'],
+				'analyticSource' => $analyticSource,
 				'dashboardEmbeddedParams' => [
 					'guestToken' => $arResult['GUEST_TOKEN'],
 					'uuid' => $arResult['DASHBOARD_UUID'],
 					'id' => $arResult['DASHBOARD_ID'],
+					'title' => $dashboardTitle,
 					'nativeFilters' => $arResult['NATIVE_FILTERS'],
+					'urlParams' => $arResult['URL_PARAMS'],
 					'editUrl' => $arResult['DASHBOARD_EDIT_URL'],
 					'supersetDomain' => \CUtil::JSEscape($arResult['SUPERSET_DOMAIN']),
 					'type' => $arResult['DASHBOARD_TYPE'],
 					'appId' => $arResult['DASHBOARD_APP_ID'],
+					'paramsCompatible' => $arResult['PARAMS_COMPATIBLE'],
 				],
+				'embeddedDebugMode' => $arResult['EMBEDDED_DEBUG_MODE'],
+				'pdfExportEnabled' => $arResult['PDF_EXPORT_ENABLED'],
 			]) ?>
 		);
 
@@ -173,6 +173,7 @@ if (!$limitManager->checkLimitWarning())
 			'dashboardId' => $arResult['DASHBOARD_ID'],
 			'marketCollectionUrl' => $arResult['MARKET_COLLECTION_URL'],
 			'isMarketInstalled' => Loader::includeModule('market'),
+			'dashboardUrlParams' => $arResult['URL_PARAMS'],
 		]) ?>);
 	});
 </script>

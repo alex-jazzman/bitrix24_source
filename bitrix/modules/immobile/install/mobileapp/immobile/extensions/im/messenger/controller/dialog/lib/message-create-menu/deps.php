@@ -3,8 +3,8 @@
 return [
 	'extensions' => [
 		'loc',
+		'assets/icons',
 		'layout/ui/context-menu',
-		'im:messenger/assets/common',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/rest',
 		'im:messenger/const',

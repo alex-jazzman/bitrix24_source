@@ -511,6 +511,7 @@
 	top: 10px;
 	right: 14px;
 	display: flex;
+	align-items: center;
 }
 
 .crm-timeline__user-icon {
@@ -522,6 +523,7 @@
 .crm-timeline__user-icon.--muted {
 	opacity: 0.5;
 }
+
 .crm-timeline__card-title {
 	display: inline-block;
 	vertical-align: middle;
@@ -697,6 +699,10 @@ a.crm-timeline__card-title:hover {
 }
 .crm-timeline__card-logo.--secondary {
 	background-color: var(--ui-color-background-secondary, #edeef0);
+}
+
+.crm-timeline__card-logo.--orange {
+	background-color: var(--ui-color-palette-orange-20, #fff1d6);
 }
 
 .crm-timeline__card-logo_icon.--custom-bg > i{
@@ -1687,6 +1693,7 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__card-action {
 	padding: calc(var(--ui-space-inset-sm, 12px) * -1) var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
 	display: flex;
+	flex-direction: row-reverse;
 	margin-top: 16px;
 	margin-bottom: 16px;
 }
@@ -1704,6 +1711,8 @@ a.crm-timeline__card-title:hover {
 	flex-wrap: wrap;
 	flex: 1;
 	margin-bottom: -4px;
+	width: 100%;
+	overflow: hidden;
 }
 
 .crm-timeline__card-action_menu {
@@ -1725,7 +1734,7 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__card-action-btn {
 	display: inline-block;
 	min-width: 126px;
-	max-width: 50%;
+	max-width: calc(50% - 8px);
 	margin: 0 8px 8px 0;
 }
 
@@ -1835,6 +1844,14 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__card_add-button-fade-enter-from,
 .crm-timeline__card_add-button-fade-leave-to {
 	opacity: 0;
+}
+
+.crm-timeline__card-action-btn:has(.ui-btn:empty) {
+	min-width: 32px;
+}
+
+.crm-timeline__card-action-btn .ui-btn:empty {
+	min-width: 32px;
 }
 
 .crm-timeline__text-block {
@@ -1951,6 +1968,23 @@ a.crm-timeline__card-title:hover {
 
 .crm-timeline__card_link_icon.--code-copy {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.828 4.348h5.987a1.5 1.5 0 011.5 1.5v6.178h.16a1.5 1.5 0 001.5-1.5V4.531a1.5 1.5 0 00-1.5-1.5H7.317a1.5 1.5 0 00-1.489 1.317z' fill='%23A8ADB4'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.017 7.463a1.5 1.5 0 011.5-1.5h6.004a1.5 1.5 0 011.5 1.5v6.004a1.5 1.5 0 01-1.5 1.5H4.517a1.5 1.5 0 01-1.5-1.5V7.463zm7.446.06H4.576v5.886h5.887V7.522z' fill='%23A8ADB4'/%3E%3C/svg%3E");
+}
+
+.crm-timeline__card_link_icon.--code-bottom-caret {
+	width: 12px;
+	height: 12px;
+	margin-top: 2px;
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.668 8.15l-4.527 4.527L12 13.8l-1.119-1.123L6.354 8.15 4.757 9.748l7.254 7.254 7.254-7.254-1.597-1.598z' fill='%23525C69'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.668 8.15l-4.527 4.527L12 13.8l-1.119-1.123L6.354 8.15 4.757 9.748l7.254 7.254 7.254-7.254-1.597-1.598z' fill='%23525C69'/%3E%3C/svg%3E");
+	-webkit-mask-size: contain;
+	        mask-size: contain;
+	-webkit-mask-position: center center;
+	        mask-position: center center;
+	background-color: var(--ui-color-palette-gray-70, #828B95);
+}
+
+.crm-timeline__card_link_icon.--code-chat {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 .959a.5.5 0 01.5-.5h1a.5.5 0 01.5.5V3h2a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-2v2.041a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5V5h-2a.5.5 0 01-.5-.5v-1A.5.5 0 0111 3h2V.959z' fill='%23C9CCD0'/%3E%3Cpath d='M14.16 10c.653 0 1.28-.103 1.869-.294v3.027a1.22 1.22 0 01-1.22 1.22H8.505L5.01 17.447a.4.4 0 01-.683-.282v-3.214H2.202a1.22 1.22 0 01-1.22-1.22V4.307c0-.673.546-1.22 1.22-1.22h5.966A6.053 6.053 0 0014.161 10z' fill='%23C9CCD0'/%3E%3C/svg%3E");
 }
 
 .crm-timeline__card_link.--color-base-50 {
@@ -2133,6 +2167,10 @@ a.crm-timeline__card-title:hover {
 	top: 8px;
 }
 
+.crm-timeline__card-logo.--orange .crm-timeline__calendar-icon {
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-palette-orange-50, #FFA900);
+}
+
 .crm-timeline__date-pill {
 	position: relative;
 	display: inline-flex;
@@ -2209,16 +2247,28 @@ a.crm-timeline__card-title:hover {
 	--crm-timeline__editable-text_font-size: var(--ui-font-size-xl, 14px);
 	--crm-timeline__editable-text_line-height: var(--ui-font-line-height-md, 1.4);
 	--crm-timeline__editable-text_max-height: 124px;
-	--crm-timeline__editable-text_padding-top: 11px;
-	--crm-timeline__editable-text_padding-bottom: 11px;
+	--crm-timeline__editable-text_padding-top: 1px;
+	--crm-timeline__editable-text_padding-bottom: 1px;
+	--crm-timeline__editable-text_padding-left: 17px;
+	--crm-timeline__editable-text_padding-right: 40px;
 	--crm-timeline__editable-text_bg-color: var(--crm-timeline__card-color-background);
-	padding: var(--crm-timeline__editable-text_padding-top) 40px var(--crm-timeline__editable-text_padding-bottom) 17px;
+	padding: var(--crm-timeline__editable-text_padding-top) var(--crm-timeline__editable-text_padding-right) var(--crm-timeline__editable-text_padding-bottom) var(--crm-timeline__editable-text_padding-left);
 	position: relative;
 	z-index: 1;
 	border-radius: var(--ui-border-radius-lg, 12px);
 	border: var( --ui-border-width-thin) solid rgba(0, 0, 0, 0.1);
 	background-color:  var(--crm-timeline__editable-text_bg-color);
 	margin-right: 20px;
+}
+
+.crm-timeline__editable-text.--is-edit,
+.crm-timeline__editable-text_wrapper.--comment .crm-timeline__editable-text {
+	--crm-timeline__editable-text_padding-top: 11px;
+	--crm-timeline__editable-text_padding-bottom: 11px;
+}
+
+.crm-timeline__editable-text_wrapper:not(.--comment) .crm-timeline__editable-text.--is-edit {
+	--crm-timeline__editable-text_padding-top: 1px;
 }
 
 .crm-timeline__editable-text.--bg-color-yellow {
@@ -2230,30 +2280,12 @@ a.crm-timeline__card-title:hover {
 }
 
 .crm-timeline__editable-text.--height-short {
-	--crm-timeline__editable-text_max-height: 44px;
-}
-
-.crm-timeline__editable-text.--height-short .crm-timeline__editable-text_text {
-	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-width: calc(100% - 1px);
-	white-space: nowrap;
-}
-
-
-.crm-timeline__editable-text.--height-short::after {
-	display: none;
+	--crm-timeline__editable-text_max-height: 66px;
 }
 
 .crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_inner {
 	max-height: none;
 	overflow: unset;
-}
-
-.crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_text {
-	display: inline;
-	white-space: break-spaces;
 }
 
 .crm-timeline__editable-text.--is-expanded::after {
@@ -2291,6 +2323,7 @@ a.crm-timeline__card-title:hover {
 	transition: box-shadow 0.2s linear;
 	cursor: pointer;
 	white-space: nowrap;
+	z-index: 1;
 }
 
 .crm-timeline__editable-text_collapse-btn:hover,
@@ -2301,7 +2334,7 @@ a.crm-timeline__card-title:hover {
 
 .crm-timeline__editable-text_inner {
 	box-sizing: border-box;
-	max-height: calc(var(--crm-timeline__editable-text_max-height) - var(--crm-timeline__editable-text_padding-bottom) * 2);
+	max-height: calc(var(--crm-timeline__editable-text_max-height) - var(--crm-timeline__editable-text_padding-top) - var(--crm-timeline__editable-text_padding-bottom));
 	overflow-y: hidden;
 }
 
@@ -2321,7 +2354,7 @@ a.crm-timeline__card-title:hover {
 	content: '';
 	display: block;
 	position: absolute;
-	bottom: 11px;
+	bottom: var(--crm-timeline__editable-text_padding-bottom);
 	left: 2px;
 	border-bottom-left-radius: var(--ui-border-radius-lg, 12px);
 	border-bottom-right-radius: var(--ui-border-radius-lg, 12px);
@@ -2334,6 +2367,9 @@ a.crm-timeline__card-title:hover {
 	position: relative;
 	min-height: 19.68px;
 	min-width: 100%;
+
+	--ui-typography-font-size: var(--ui-font-size-md);
+	--ui-typography-block-space-stack: 15px;
 }
 
 .crm-timeline__editable-text_text {
@@ -2341,7 +2377,6 @@ a.crm-timeline__card-title:hover {
 	padding: 0;
 	box-sizing: border-box;
 	white-space: pre-wrap;
-	height: 24px;
 	width: 100%;
 	font-family: inherit;
 	font-size: var(--ui-font-size-md, 14px);
@@ -2992,43 +3027,122 @@ a.crm-timeline__card-title:hover {
 	opacity: 0;
 }
 
-.crm-timeline-calendar-sharing-item-editable,
-.crm-timeline-calendar-sharing-item-non-editable {
-	position: relative;
-	flex-direction: row;
+.crm-timeline-calendar-sharing-slots {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.crm-timeline-calendar-sharing-slots-block {
+	display: flex;
 	align-items: center;
-	min-height: 21px;
-	margin-bottom: 5px;
-	width: -webkit-max-content;
-	width: max-content;
-	padding: 0 9px;
-	font-family: var(--ui-font-family-secondary, --ui-font-family-open-sans, 'Open Sans', sans-serif);
-	font-size: var(--ui-font-size-xs, 12px);
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-	line-height: var(--ui-font-line-height-xl, 1.62);
-	border-radius: 64px;
-	color: var(--ui-color-text-subtle, #828b95);
+	gap: 4px;
 }
 
-.crm-timeline-calendar-sharing-item-editable:last-child,
-.crm-timeline-calendar-sharing-item-non-editable:last-child {
-	margin-bottom: 0;
-}
-
-.crm-timeline-calendar-sharing-item-editable {
-	background-color: #FFE9BE;
-	padding-right: 21px;
+.crm-timeline-calendar-sharing-slots-more {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
 	cursor: pointer;
+	color: var(--ui-color-palette-gray-70, #828B95);
 }
 
-.crm-timeline-calendar-sharing-item-non-editable {
-	background-color: var(--ui-color-base-04, #F1F4F6);
-	cursor: default;
+.crm-timeline-calendar-sharing-slots-more-text {
 }
 
+.crm-timeline-calendar-sharing-slots-more > i {
+	width: 14px;
+	height: 14px;
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.668 8.15l-4.527 4.527L12 13.8l-1.119-1.123L6.354 8.15 4.757 9.748l7.254 7.254 7.254-7.254-1.597-1.598z' fill='%23525C69'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.668 8.15l-4.527 4.527L12 13.8l-1.119-1.123L6.354 8.15 4.757 9.748l7.254 7.254 7.254-7.254-1.597-1.598z' fill='%23525C69'/%3E%3C/svg%3E");
+	-webkit-mask-size: contain;
+	        mask-size: contain;
+	-webkit-mask-position: center center;
+	        mask-position: center center;
+	--crm-timeline__date-pill_caret-color: 130, 139, 149;
+	background-color: var(--ui-color-palette-gray-70, #828B95);
+}
+
+.crm-timeline-calendar-sharing-slots-more-popup-item {
+	padding: 5px 8px;
+	color: var(--ui-color-text-secondary, #525C69);
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 19px;
+}
+
+.crm-timeline-sharing-members-popup {
+	border-radius: 15px;
+	overflow: hidden;
+}
+
+.crm-timeline-sharing-members-popup-item {
+	min-width: 100px;
+	min-height: 30px;
+	display: flex;
+	padding: 5px 15px;
+	gap: 5px;
+	align-items: center;
+}
+
+.crm-timeline-sharing-members-popup-item-image {
+	min-width: 23px;
+	min-height: 23px;
+	width: 23px;
+	height: 23px;
+	border-radius: 100%;
+}
+
+.crm-timeline-sharing-members-popup-item-title {
+	color: var(--ui-color-text-secondary);
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.crm-timeline-sharing-members-popup-item:hover > .crm-timeline-sharing-members-popup-item-title {
+	color: var(--ui-color-text-primary);
+}
+
+.crm-timeline-sharing-members-popup .menu-popup-item-text {
+	padding: 0;
+}
 .crm-timeline-block-line-of-texts {
 	display: flex;
 	flex-wrap: wrap;
+}
+.right-fixed-button {
+	margin-left: auto;
+}
+
+.crm-timeline__line_of_text_blocks_button {
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-link-primary-base);
+	text-decoration: underline !important;
+	-webkit-text-decoration-color: transparent !important;
+	        text-decoration-color: transparent !important;
+	cursor: pointer;
+	transition: var(--crm-timeline__transition-hover);
+	word-break: break-all;
+}
+
+.crm-timeline__line_of_text_blocks_button_icon {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	vertical-align: top;
+	background-position: center;
+	background-repeat: no-repeat;
+	transition: filter 0.3s ease;
+}
+
+.crm-timeline__line_of_text_blocks_button_icon:hover {
+	filter: brightness(0.7);
+}
+
+.crm-timeline__line_of_text_blocks_button_icon.--code-chat {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 .959a.5.5 0 01.5-.5h1a.5.5 0 01.5.5V3h2a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-2v2.041a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5V5h-2a.5.5 0 01-.5-.5v-1A.5.5 0 0111 3h2V.959z' fill='%23C9CCD0'/%3E%3Cpath d='M14.16 10c.653 0 1.28-.103 1.869-.294v3.027a1.22 1.22 0 01-1.22 1.22H8.505L5.01 17.447a.4.4 0 01-.683-.282v-3.214H2.202a1.22 1.22 0 01-1.22-1.22V4.307c0-.673.546-1.22 1.22-1.22h5.966A6.053 6.053 0 0014.161 10z' fill='%23C9CCD0'/%3E%3C/svg%3E");
 }
 .crm-timeline-block-deadline-and-ping-selector {
 	display: flex;

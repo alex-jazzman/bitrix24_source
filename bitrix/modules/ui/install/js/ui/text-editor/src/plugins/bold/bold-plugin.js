@@ -16,7 +16,7 @@ import {
 	type BBCodeImportConversion,
 } from '../../bbcode';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 export class BoldPlugin extends BasePlugin
 {

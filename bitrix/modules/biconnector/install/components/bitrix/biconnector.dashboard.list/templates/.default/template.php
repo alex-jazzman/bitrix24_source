@@ -21,6 +21,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 CModule::includeModule('biconnector');
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 \Bitrix\Main\UI\Extension::load([
 	'sidepanel',
@@ -50,7 +51,7 @@ if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 
 ?>
 	<script>
-		BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
+		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		<?php if ($arResult['IS_AVAILABLE_ONBOARDING'] ?? null): ?>
 			BX.ready(() => {
 				const grid = new BX.BIConnector.DashboardGrid({

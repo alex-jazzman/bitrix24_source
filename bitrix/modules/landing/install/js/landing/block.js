@@ -4982,6 +4982,9 @@
 				{
 					return BX.Landing.Backend.getInstance()
 						.batch("Landing\\Block::updateNodes", batch, updateNodeParams)
+						.then(() => {
+							BX.Landing.History.getInstance().push();
+						})
 						.then(function() {
 							return Promise.resolve(data);
 						});

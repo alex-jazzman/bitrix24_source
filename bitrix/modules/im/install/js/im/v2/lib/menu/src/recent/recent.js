@@ -11,6 +11,7 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { showLeaveFromChatConfirm } from 'im.v2.lib.confirm';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { Messenger } from 'im.public';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import { BaseMenu } from '../base/base';
 import { InviteManager } from './invite-manager';
@@ -58,11 +59,9 @@ export class RecentMenu extends BaseMenu
 		}
 
 		return [
-			this.getOpenItem(),
 			this.getUnreadMessageItem(),
 			this.getPinMessageItem(),
 			this.getMuteItem(),
-			this.getCallItem(),
 			this.getOpenProfileItem(),
 			this.getChatsWithUserItem(),
 			this.getHideItem(),
@@ -94,11 +93,6 @@ export class RecentMenu extends BaseMenu
 
 	getUnreadMessageItem(): ?MenuItem
 	{
-		if (this.isChannel())
-		{
-			return null;
-		}
-
 		const dialog = this.store.getters['chats/get'](this.context.dialogId, true);
 		const showReadOption = this.context.unread || dialog.counter > 0;
 
@@ -123,7 +117,7 @@ export class RecentMenu extends BaseMenu
 		const isPinned = this.context.pinned;
 
 		return {
-			text: isPinned ? Loc.getMessage('IM_LIB_MENU_UNPIN') : Loc.getMessage('IM_LIB_MENU_PIN'),
+			text: isPinned ? Loc.getMessage('IM_LIB_MENU_UNPIN_MSGVER_1') : Loc.getMessage('IM_LIB_MENU_PIN_MSGVER_1'),
 			onclick: () => {
 				if (isPinned)
 				{
@@ -177,6 +171,16 @@ export class RecentMenu extends BaseMenu
 		return {
 			text: Loc.getMessage('IM_LIB_MENU_CALL_2'),
 			onclick: () => {
+				Analytics.getInstance().onStartCallClick({
+					type: this.context.dialogId.includes('chat')
+						? Analytics.AnalyticsType.groupCall
+						: Analytics.AnalyticsType.privateCall,
+					section: Analytics.AnalyticsSection.chatList,
+					subSection: Analytics.AnalyticsSubSection.contextMenu,
+					element: Analytics.AnalyticsElement.videocall,
+					chatId: this.context.chatId,
+				});
+
 				this.callManager.startCall(this.context.dialogId);
 				this.menuInstance.close();
 			},
@@ -209,7 +213,7 @@ export class RecentMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_HIDE'),
+			text: Loc.getMessage('IM_LIB_MENU_HIDE_MSGVER_1'),
 			onclick: () => {
 				RecentService.getInstance().hideChat(this.context.dialogId);
 
@@ -226,8 +230,13 @@ export class RecentMenu extends BaseMenu
 			return null;
 		}
 
+		const text = this.isChannel()
+			? Loc.getMessage('IM_LIB_MENU_LEAVE_CHANNEL')
+			: Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1')
+		;
+
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_LEAVE_V2'),
+			text,
 			onclick: async () => {
 				this.menuInstance.close();
 				const userChoice = await showLeaveFromChatConfirm();

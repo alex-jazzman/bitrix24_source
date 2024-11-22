@@ -1,8 +1,12 @@
-import { Widget } from 'landing.widget';
-
-export class NewEmployeesWidget
+export class NewEmployeesV2 extends BX.Landing.Widget.Base
 {
 	constructor(element)
+	{
+		super(element);
+		this.initialize(element);
+	}
+
+	initialize(element)
 	{
 		if (!element)
 		{
@@ -14,7 +18,6 @@ export class NewEmployeesWidget
 			mainContainer,
 			sidebarContainer,
 		};
-		const widget = new Widget(element, widgetOptions);
-		widget.deleteContextDependentContainer();
+		this.deleteContextDependentContainer(widgetOptions);
 	}
 }

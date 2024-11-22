@@ -40,12 +40,8 @@
 	display: flex;
 }
 
-.dashboard-header-buttons button, .dashboard-header-buttons div {
-	margin-right: 10px;
-}
-
-.dashboard-header-buttons:last-child {
-	margin-right: 0;
+.dashboard-header-buttons-more {
+	margin-left: 10px;
 }
 
 .dashboard-header-logo {
@@ -65,11 +61,6 @@
 .dashboard-header-title-section {
 	display: flex;
 	align-items: center;
-}
-
-.more-popup .popup-window-angly {
-	left: auto !important;
-	right: 15px !important;
 }
 
 .dashboard-iframe {
@@ -102,7 +93,7 @@
 	justify-content: center;
 	width: 678px;
 	height: 534px;
-	background: radial-gradient(51.98% 51.83% at 50% 50%, rgba(255, 255, 255, 0.78) 37.5%, rgba(255, 255, 255, 0.00) 68.75%);
+	background: radial-gradient(58% 54% at 50% 50%, rgba(255, 255, 255, 0.95) 55%, rgba(255, 255, 255, 0.00) 78%);
 	transform: translate(-50%,-50%);
 	text-align: center;
 	z-index: 2;

@@ -1855,6 +1855,21 @@ foreach($arResult['COMPANY'] as &$arCompany)
 			),
 			$addParams
 		);
+		$arCompany['PATH_TO_DEAL_EDIT'] = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Deal)
+			->setSection(
+			!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+				? $arParams['ANALYTICS']['c_section']
+				: null
+			)
+			->setSubSection(
+			!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+				? $arParams['ANALYTICS']['c_sub_section']
+				: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			->buildUri($arCompany['PATH_TO_DEAL_EDIT'])
+			->getUri()
+		;
 	}
 
 	if ($bContact)
@@ -1866,6 +1881,21 @@ foreach($arResult['COMPANY'] as &$arCompany)
 			),
 			['company_id' => $entityID]
 		);
+		$arCompany['PATH_TO_CONTACT_EDIT'] = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Contact)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+				? $arParams['ANALYTICS']['c_section']
+				: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+				? $arParams['ANALYTICS']['c_sub_section']
+				: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			->buildUri($arCompany['PATH_TO_CONTACT_EDIT'])
+			->getUri()
+		;
 	}
 
 	$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Company)

@@ -12,6 +12,7 @@
 	const preinstalledRole = BX.componentParameters.get('role', ROLE_SIGNER);
 	const preinstalledTitle = BX.componentParameters.get('title', '');
 	const preinstalledIsGoskey = BX.componentParameters.get('isGoskey', false);
+	const preinstalledIsExternal = BX.componentParameters.get('isExternal', false);
 
 	function addHeader(role = preinstalledRole)
 	{
@@ -49,6 +50,7 @@
 			memberId,
 			title: preinstalledTitle,
 			isGoskey: preinstalledIsGoskey,
+			isExternal: preinstalledIsExternal,
 		}));
 		addHeader();
 	}
@@ -59,6 +61,7 @@
 				url,
 				isReadyForSigning,
 				isGoskey,
+				isExternal,
 				state,
 				role,
 				documentTitle = '',
@@ -74,6 +77,7 @@
 					memberId,
 					title: documentTitle,
 					isGoskey,
+					isExternal,
 				}));
 				addHeader(role);
 			}

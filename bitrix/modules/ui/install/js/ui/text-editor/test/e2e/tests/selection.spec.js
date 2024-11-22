@@ -220,7 +220,7 @@ test.describe.parallel('Selection', () => {
 		await page.keyboard.press('ArrowUp');
 		await page.keyboard.up('Shift');
 		await page.keyboard.press('Backspace');
-		await assertHTML(page, paragraph() + paragraph());
+		await assertHTML(page, paragraph());
 	});
 
 	// test('Can persist the text format from the paragraph', async ({ page }) => {

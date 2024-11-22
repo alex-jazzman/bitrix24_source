@@ -45,14 +45,6 @@ if (!$arResult['isIframe'])
 			},
 			{
 				condition: [
-					"type/(\\d+)/details/(\\d+)/",
-				],
-				options: {
-					cacheable: false
-				}
-			},
-			{
-				condition: [
 					"type/(\\d+)/categories/",
 				],
 				options: {
@@ -63,7 +55,7 @@ if (!$arResult['isIframe'])
 			},
 			{
 				condition: [
-					"type/detail/(\\d+)/?(\\?isExternal=Y)?$"
+					"type/detail/(\\d+)"
 				],
 				options: {
 					width: 876,
@@ -74,6 +66,16 @@ if (!$arResult['isIframe'])
 			{
 				condition: [
 					"type/automated_solution/details/(\\d+)/?$"
+				],
+				options: {
+					width: 876,
+					cacheable: false,
+					allowChangeHistory: false
+				}
+			},
+			{
+				condition: [
+					"type/(\\d+)/merge/?$"
 				],
 				options: {
 					width: 876,

@@ -130,6 +130,11 @@ export default class ImageComponent extends DecoratorComponent
 				img.className = config.theme.image.img;
 			}
 
+			img.onerror = (event) => {
+				img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+				Dom.addClass(this.getTarget(), '--error ui-icon-set__scope');
+			};
+
 			return img;
 		});
 	}

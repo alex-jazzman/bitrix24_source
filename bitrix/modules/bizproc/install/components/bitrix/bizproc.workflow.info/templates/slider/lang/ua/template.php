@@ -2,6 +2,10 @@
 $MESS["BPWFI_SLIDER_BANNER_BODY"] = "Залишайте коментарі та ставте запитання учасникам процесу.";
 $MESS["BPWFI_SLIDER_BANNER_TITLE"] = "Коментарів до процесу поки що немає";
 $MESS["BPWFI_SLIDER_BUTTON_DELEGATE"] = "Делегувати";
+$MESS["BPWFI_SLIDER_CONFIRM_ACCEPT"] = "Так, скасувати";
+$MESS["BPWFI_SLIDER_CONFIRM_CANCEL"] = "Не скасовувати";
+$MESS["BPWFI_SLIDER_CONFIRM_DESCRIPTION"] = "Якщо ви скасуєте зміни в картці процесу, інформація в полях не збережеться.";
+$MESS["BPWFI_SLIDER_CONFIRM_TITLE"] = "Скасувати зміни в картці процесу?";
 $MESS["BPWFI_SLIDER_DESCRIPTION"] = "Опис";
 $MESS["BPWFI_SLIDER_DISCUSSION_COMMENTS_COUNT"] = "Коментарі: #COMMENTS_COUNT#";
 $MESS["BPWFI_SLIDER_DISCUSSION_TITLE"] = "Обговорення процесу";
@@ -12,4 +16,5 @@ $MESS["BPWFI_SLIDER_NAME"] = "Назва";
 $MESS["BPWFI_SLIDER_NOT_MY_TASK"] = "Ви відкрили завдання співробітника #USER#";
 $MESS["BPWFI_SLIDER_TASK"] = "Завдання";
 $MESS["BPWFI_SLIDER_TIMELINE"] = "Протокол";
+$MESS["BPWFI_SLIDER_TIMELINE_MSGVER_1"] = "Протокол";
 $MESS["BPWFI_SLIDER_TYPE"] = "Тип процесу";

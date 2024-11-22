@@ -10,7 +10,9 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 	const { clone } = require('utils/object');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { EventType, DialogType, ComponentCode, UserRole } = require('im/messenger/const');
+	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 
 	/**
 	 * @class BaseDialogPullHandler
@@ -241,28 +243,71 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			this.logger.info(`${this.getClassName()}.handleChatUserLeave`, params);
 
 			const dialogId = params.dialogId;
-			const chatId = params.chatId;
 
 			this.deleteCounters(params.dialogId);
 
 			if (Number(params.userId) === MessengerParams.getUserId())
 			{
-				await this.store.dispatch('recentModel/delete', { id: dialogId });
-				Counters.update();
+				const chatProvider = new ChatDataProvider();
+				const chatDataResult = await chatProvider.get({ dialogId });
 
-				MessengerEmitter.emit(EventType.dialog.external.close, {
+				if (!chatDataResult.hasData())
+				{
+					return;
+				}
+				const chatData = chatDataResult.getData();
+				const chatHelper = DialogHelper.createByModel(chatData);
+
+				// close and delete the comment chat linked to this channel
+				if (chatHelper.isChannel)
+				{
+					const commentChatData = this.store.getters['dialoguesModel/getByParentChatId'](chatData.chatId);
+
+					if (
+						Type.isPlainObject(commentChatData)
+						&& this.store.getters['applicationModel/isDialogOpen'](commentChatData.dialogId)
+					)
+					{
+						chatProvider.delete({ dialogId: commentChatData.dialogId });
+						MessengerEmitter.emit(EventType.dialog.external.delete, {
+							dialogId: commentChatData.dialogId,
+							shouldShowAlert: false,
+							shouldSendDeleteAnalytics: false,
+							chatType: chatDataResult.getData().type,
+						});
+					}
+				}
+
+				const recentProvider = new RecentDataProvider();
+				recentProvider.delete({ dialogId })
+					.then(() => chatProvider.delete({ dialogId }))
+					.catch((error) => {
+						this.logger.error(`${this.constructor.name}.handleChatUserLeave delete chat error`, error);
+					})
+				;
+
+				MessengerEmitter.emit(EventType.dialog.external.delete, {
 					dialogId,
+					shouldShowAlert: true,
+					chatType: chatDataResult.getData().type,
+					shouldSendDeleteAnalytics: false,
 				});
 
-				await this.store.dispatch('dialoguesModel/delete', { dialogId });
-				await this.store.dispatch('messagesModel/deleteByChatId', { chatId });
+				Counters.update();
 			}
 
 			this.store.dispatch('dialoguesModel/removeParticipants', {
 				dialogId,
 				participants: [params.userId],
 				userCounter: params.userCount,
-			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`, err));
+			})
+				.catch((error) => {
+					this.logger.error(
+						`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`,
+						error,
+					);
+				})
+			;
 		}
 
 		/**
@@ -359,6 +404,90 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				dialogId: params.dialogId,
 				managerList: params.list,
 			});
+		}
+
+		/**
+		 * @param {{chatId: number, userId: number, dialogId: DialogId, type: string, parentChatId?: number}} params
+		 * @param extra
+		 * @param command
+		 */
+		async handleChatDelete(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+			this.logger.warn(`${this.getClassName()}.handleChatDelete`, params, extra, command);
+
+			if (params.type === DialogType.comment)
+			{
+				void this.store.dispatch('commentModel/setCounters', {
+					[params.parentChatId]: {
+						[params.chatId]: 0,
+					},
+				});
+			}
+
+			const chatProvider = new ChatDataProvider();
+			const chatDataResult = await chatProvider.get({ chatId: params.chatId });
+
+			if (!chatDataResult.hasData())
+			{
+				this.logger.log(`${this.getClassName()}.handleChatDelete dialog with chat id=${params.chatId} not found`);
+
+				return;
+			}
+
+			const chatData = chatDataResult.getData();
+
+			if (!this.shouldDeleteChat(chatData))
+			{
+				this.logger.log(`${this.getClassName()}.handleChatDelete does not need to be deleted from this component`);
+
+				return;
+			}
+
+			const openedDialogStack = this.store.getters['applicationModel/getOpenDialogs']();
+			for (const dialogId of openedDialogStack)
+			{
+				const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+
+				if (dialog?.parentChatId === params.chatId)
+				{
+					MessengerEmitter.emit(EventType.dialog.external.delete, {
+						dialogId,
+						shouldShowAlert: false,
+						chatType: dialog.type,
+						shouldSendDeleteAnalytics: false,
+					});
+				}
+			}
+
+			const recentProvider = new RecentDataProvider();
+			recentProvider.delete({ dialogId: chatData.dialogId })
+				.then(() => chatProvider.delete({ dialogId: chatData.dialogId }))
+				.catch((error) => {
+					this.logger.error(`${this.constructor.name}.handleChatDelete delete chat error`, error);
+				})
+			;
+
+			MessengerEmitter.emit(EventType.dialog.external.delete, {
+				dialogId: chatData.dialogId,
+				shouldShowAlert: true,
+				chatType: chatData.type,
+				shouldSendDeleteAnalytics: true,
+			});
+		}
+
+		/**
+		 * @abstract
+		 * @desc Method should return true if this chat needs to be deleted in this component
+		 * @param {DialoguesModelState} chatData
+		 * @return {boolean}
+		 */
+		shouldDeleteChat(chatData)
+		{
+			return true;
 		}
 
 		/**

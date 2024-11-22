@@ -199,15 +199,24 @@
 }
 
 .list-el-cg__content-body {
+	position: relative;
 	margin-bottom: 18px;
 	padding: 12px 16px;
+	width: 100%;
+	background: var(--ui-color-background-primary);
 	color: var(--ui-color-text-secondary);
 	font-size: var(--ui-typography-text-lg-font-size);
 	line-height: var(--ui-typography-text-md-line-height);
+	transition: opacity .33s linear;
+	opacity: 1;
+	transform: translate(0, 0);
+	box-sizing: border-box;
 }
 
 .list-el-cg__content-body.--hidden {
-	display: none;
+	position: absolute;
+	transform: translate(-110%, 0);
+	opacity: 0;
 }
 
 .list-el-cg__content-open {
@@ -314,6 +323,88 @@
 	width: calc(100% - 20px) !important;
 }
 
-.list-el-cg__slider .bx-field-value select {
-	width: 100% !important;
+.list-el-cg__slider .bx-field-value {
+	/*display: grid;*/
+	/*align-items: center;*/
+	/*grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));*/
+	/*gap: 5px;*/
+	/*margin: 0;*/
+}
+
+.list-el-cg__slider .bx-field-value select,
+.list-el-cg__slider .bx-field-value input {
+	margin: 0 !important;
+}
+
+.list-el-cg__slider .bx-field-value table {
+	margin-bottom: 10px;
+	border-spacing: 0;
+}
+
+.list-el-cg__slider .bx-field-value input + input + select {
+	margin-left: 10px!important;
+}
+
+.list-el-cg__const-desc,
+.list-el-cg__const-title {
+	display: block;
+	margin-bottom: 12px;
+	color: var(--ui-color-base-90);
+}
+
+.list-el-cg__const-desc {
+	font-size: var(--ui-font-size-lg);
+	line-height: 21px;
+}
+
+.list-el-cg__const-title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.list-el-cg__const-box {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 64px;
+	padding: 12px 20px;
+	border-bottom: 1px solid #d9d9d9;
+	box-sizing: border-box;
+}
+
+.list-el-cg__const-box:last-child {
+	border-bottom: none;
+}
+
+.list-el-cg__const-user {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 10px;
+	overflow: hidden;
+}
+
+.list-el-cg__const-icon {
+	display: inline-block;
+	width: 32px;
+	margin-right: 6px;
+	min-width: 32px;
+	height: 32px;
+	border-radius: var(--ui-border-radius-circle);
+	background-size: cover;
+}
+
+.list-el-cg__const-name {
+	max-width: 100%;
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-base-90);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.list-el-cg__const-success-text {
+	padding: 0 12px;
+	font-weight: var(--ui-font-weight-bold);
+	font-size: var(--ui-font-size-xs);
+	text-transform: uppercase;
 }

@@ -12,7 +12,6 @@ return [
 		'utils/uuid',
 		'utils/url',
 		'utils/color',
-		'analytics',
 		'communication/phone-menu',
 		'device/connection',
 		'im:lib/theme',

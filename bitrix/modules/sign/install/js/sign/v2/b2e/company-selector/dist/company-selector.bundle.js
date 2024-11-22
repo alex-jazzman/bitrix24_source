@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,main_date,main_loader,main_popup,sign_v2_api,sign_v2_companyEditor,sign_v2_helper,sign_v2_b2e_schemeSelector,ui_entitySelector,sign_tour,ui_label,ui_alerts) {
+(function (exports,main_core,main_date,main_loader,main_popup,sign_tour,sign_v2_api,sign_v2_b2e_schemeSelector,sign_v2_companyEditor,sign_v2_documentSetup,sign_v2_helper,ui_alerts,ui_entitySelector,ui_label) {
 	'use strict';
 
 	let _ = t => t,
@@ -125,7 +125,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _getDefaultSchemeByProviderCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDefaultSchemeByProviderCode");
 	var _setProviderImage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setProviderImage");
 	class CompanySelector {
-	  constructor(options) {
+	  constructor(options = {}) {
 	    Object.defineProperty(this, _setProviderImage, {
 	      value: _setProviderImage2
 	    });
@@ -612,6 +612,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    const provider = babelHelpers.classPrivateFieldLooseBase(this, _company)[_company].provider;
 	    return Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyB2eCompany(documentId, provider.uid), babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyB2eDocumentScheme(documentId, babelHelpers.classPrivateFieldLooseBase(this, _getDefaultSchemeByProviderCode)[_getDefaultSchemeByProviderCode](provider.code))]);
 	  }
+	  setInitiatedByType(initiatedByType) {
+	    this.setOptions({
+	      documentInitiatedType: initiatedByType
+	    });
+	  }
 	}
 	function _showLoader2() {
 	  BX.hide(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.container);
@@ -966,7 +971,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.title.header.name.innerText = selectedItem.title;
-	  BX.show(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton) {
+	    BX.show(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton);
+	  }
 	  BX.show(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.setRqInnButton);
 	  if (main_core.Type.isStringFilled(selectedItem.rqInn)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.title.rqInn.innerText = main_core.Loc.getMessage('SIGN_B2E_COMPANIES_INN', {
@@ -976,7 +983,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    BX.hide(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.setRqInnButton);
 	  } else {
 	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.title.rqInn.textContent = main_core.Loc.getMessage('SIGN_B2E_COMPANIES_NO_RQ_INN');
-	    BX.hide(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton) {
+	      BX.hide(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton);
+	    }
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _resetProviderState)[_resetProviderState]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _toggleProviderState)[_toggleProviderState](selectedItem.rqInn);
@@ -1110,7 +1119,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().setTargetNode(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].container);
 	    babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().show();
 	  });
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _showEditMenu)[_showEditMenu]());
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton) {
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.editButton, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _showEditMenu)[_showEditMenu]());
+	  }
 	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.setRqInnButton, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _editCompany)[_editCompany]());
 	}
 	function _onCompanyDeselectedHandler2(event) {
@@ -1260,22 +1271,21 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	function _getProviderAlert2(provider) {
 	  return new ui_alerts.Alert({
 	    text: babelHelpers.classPrivateFieldLooseBase(this, _getProviderAlertMessage)[_getProviderAlertMessage](provider),
-	    color: ui_alerts.AlertColor.WARNING,
 	    customClass: 'sign-document-b2e-company__provider_alert'
 	  });
 	}
 	function _getProviderAlertMessage2(provider) {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isProviderExpired)[_isProviderExpired](provider)) {
-	    return sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_B2E_GOSKEY_APIKEY_EXPIRED_MORE'), HelpdeskCodes.GoskeyApiKey);
+	    return sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_B2E_GOSKEY_APIKEY_EXPIRED_MORE_MSGVER_1'), HelpdeskCodes.GoskeyApiKey);
 	  }
 	  const daysLeft = babelHelpers.classPrivateFieldLooseBase(this, _getProviderDaysLeft)[_getProviderDaysLeft](provider.expires);
-	  const alertText = main_core.Loc.getMessagePlural('SIGN_B2E_GOSKEY_APIKEY_EXPIRES', daysLeft, {
+	  const alertText = main_core.Loc.getMessagePlural('SIGN_B2E_GOSKEY_APIKEY_EXPIRES_MSGVER_1', daysLeft, {
 	    '#DAYS#': daysLeft
 	  });
 	  return sign_v2_helper.Helpdesk.replaceLink(alertText, HelpdeskCodes.GoskeyApiKey);
 	}
 	function _getDefaultSchemeByProviderCode2(provider) {
-	  return provider === ProviderCode.sesRu ? sign_v2_b2e_schemeSelector.SchemeType.Order : sign_v2_b2e_schemeSelector.SchemeType.Default;
+	  return provider === ProviderCode.sesRu && babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].documentInitiatedType === sign_v2_documentSetup.DocumentInitiated.company ? sign_v2_b2e_schemeSelector.SchemeType.Order : sign_v2_b2e_schemeSelector.SchemeType.Default;
 	}
 	function _setProviderImage2(provider) {
 	  var _babelHelpers$classPr10, _babelHelpers$classPr11;
@@ -1294,5 +1304,5 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	exports.HelpdeskCodes = HelpdeskCodes;
 	exports.CompanySelector = CompanySelector;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Main,BX,BX.Main,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2.B2e,BX.UI.EntitySelector,BX.Sign.Tour,BX.UI,BX.UI));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Main,BX,BX.Main,BX.Sign.Tour,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.UI,BX.UI.EntitySelector,BX.UI));
 //# sourceMappingURL=company-selector.bundle.js.map

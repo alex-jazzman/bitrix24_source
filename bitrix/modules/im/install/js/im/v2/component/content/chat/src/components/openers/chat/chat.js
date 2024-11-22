@@ -8,9 +8,12 @@ import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatService } from 'im.v2.provider.service';
+import { AccessErrorCode } from '../../../../../../../lib/access/src/classes/access-service';
+import { BaseChatContent } from 'im.v2.component.content.elements';
 
-import { BaseChatContent } from '../../content/base/base';
 import { ChannelContent } from '../../content/channel/channel';
+import { CollabContent } from '../../content/collab/collab';
+import { MultidialogContent } from '../../content/multidialog/multidialog';
 import { EmptyState } from './components/empty-state';
 import { UserService } from './classes/user-service';
 
@@ -22,7 +25,7 @@ import type { ImModelChat, ImModelLayout } from 'im.v2.model';
 // @vue/component
 export const ChatOpener = {
 	name: 'ChatOpener',
-	components: { BaseChatContent, ChannelContent, EmptyState },
+	components: { BaseChatContent, ChannelContent, CollabContent, MultidialogContent, EmptyState },
 	props:
 	{
 		dialogId: {
@@ -52,6 +55,14 @@ export const ChatOpener = {
 		isChannel(): boolean
 		{
 			return ChannelManager.isChannel(this.dialogId);
+		},
+		isCollab(): boolean
+		{
+			return this.dialog.type === ChatType.collab;
+		},
+		isMultidialog(): boolean
+		{
+			return this.$store.getters['sidebar/multidialog/isSupport'](this.dialogId);
 		},
 		isGuest(): boolean
 		{
@@ -138,9 +149,10 @@ export const ChatOpener = {
 			Logger.warn(`ChatContent: loading chat ${this.dialogId} with context - ${this.layout.contextId}`);
 
 			await this.getChatService().loadChatWithContext(this.dialogId, this.layout.contextId)
-				.catch((error) => {
-					this.handleChatLoadError(error);
-					Logger.error(error);
+				.catch((errors) => {
+					this.sendAnalytics(errors);
+					this.handleChatLoadError(errors);
+					Logger.error(errors);
 					Messenger.openChat();
 				});
 
@@ -151,25 +163,35 @@ export const ChatOpener = {
 			Logger.warn(`ChatContent: loading chat ${this.dialogId}`);
 
 			await this.getChatService().loadChatWithMessages(this.dialogId)
-				.catch((error) => {
-					this.handleChatLoadError(error);
-					Logger.error(error);
+				.catch((errors) => {
+					this.handleChatLoadError(errors);
+					Logger.error(errors);
 					Messenger.openChat();
 				});
 
 			Logger.warn(`ChatContent: chat ${this.dialogId} is loaded`);
 		},
-		handleChatLoadError(error: Error[]): void
+		handleChatLoadError(errors: Error[]): void
 		{
-			const [firstError] = error;
-			if (firstError.code === 'ACCESS_DENIED')
+			const [firstError] = errors;
+			if (firstError.code === AccessErrorCode.accessDenied)
 			{
-				this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR'));
+				this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
 			}
-			else if (firstError.code === 'MESSAGE_NOT_FOUND')
+			else if (firstError.code === AccessErrorCode.messageNotFound)
 			{
 				this.showNotification(this.loc('IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND'));
 			}
+		},
+		sendAnalytics(errors: Error[])
+		{
+			const [firstError] = errors;
+			if (firstError.code !== AccessErrorCode.messageNotFound)
+			{
+				return;
+			}
+
+			Analytics.getInstance().messageDelete.onNotFoundNotification({ dialogId: this.dialogId });
 		},
 		showNotification(text: string)
 		{
@@ -202,11 +224,9 @@ export const ChatOpener = {
 		<div class="bx-im-content-default-chat__container">
 			<EmptyState v-if="!dialogId" />
 			<ChannelContent v-else-if="isChannel" :dialogId="dialogId" />
-			<BaseChatContent
-				v-else
-				:dialogId="dialogId"
-				class="bx-im-content-comments__container"
-			/>
+			<CollabContent v-else-if="isCollab" :dialogId="dialogId" />
+			<MultidialogContent v-else-if="isMultidialog" :dialogId="dialogId" />
+			<BaseChatContent v-else :dialogId="dialogId" />
 		</div>
 	`,
 };

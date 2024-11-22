@@ -169,6 +169,11 @@ class BBCodeParser
 				node.replace(newNode);
 				newNode.setChildren(node.getChildren());
 			}
+			else if (['span', 'font'].includes(nodeName))
+			{
+				const fragment = scheme.createFragment({ children: node.getChildren() });
+				node.replace(fragment);
+			}
 			else
 			{
 				const openingTag: string = node.getOpeningTag();
@@ -476,7 +481,7 @@ class BBCodeParser
 				&& this.canBeLinkified(node)
 			)
 			{
-				const content = node.toString();
+				const content = node.toString({ encode: false });
 				const tokens: Array<Linkify.MultiToken> = Linkify.tokenize(content);
 
 				const nodes = tokens.map((token: Linkify.MultiToken) => {

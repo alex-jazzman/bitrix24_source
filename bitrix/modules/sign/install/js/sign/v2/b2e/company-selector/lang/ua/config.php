@@ -1,0 +1,24 @@
+<?php
+$MESS["SIGN_B2E_ADD_COMPANY"] = "Додати компанію";
+$MESS["SIGN_B2E_COMPANIES_EDIT"] = "Редагувати";
+$MESS["SIGN_B2E_COMPANIES_NOT_CHANGED"] = "Компанія не вибрана.";
+$MESS["SIGN_B2E_COMPANIES_SELECT_BUTTON"] = "Вибрати";
+$MESS["SIGN_B2E_COMPANIES_TAB"] = "Компанії";
+$MESS["SIGN_B2E_COMPANIES_UNSET_PROVIDER_MORE"] = "[helpdesklink]Докладніше[/helpdesklink]";
+$MESS["SIGN_B2E_COMPANIES_UNSET_PROVIDER_PARAGRAPH_1"] = "Виберіть правильного провайдера для використання з електронним підписом для HR.";
+$MESS["SIGN_B2E_COMPANIES_UNSET_PROVIDER_PARAGRAPH_2"] = "Залежно від чинного законодавства для певного типу документів може вимагатися використання розширених або кваліфікованих електронних підписів. Ви несете відповідальність за те, щоб визначити, чи відповідає електронний підпис для HR вашому чинному законодавству.";
+$MESS["SIGN_B2E_COMPANY_CREATE"] = "Створення компанії";
+$MESS["SIGN_B2E_COMPANY_EDIT"] = "Налаштування компанії";
+$MESS["SIGN_B2E_COMPANY_NOT_CONNECTED_PROVIDER_STATUS"] = "Провайдер не підключений.";
+$MESS["SIGN_B2E_COMPANY_NOT_SET_PROVIDER_STATUS"] = "Провайдер не вибраний.";
+$MESS["SIGN_B2E_COMPANY_SES_COM_INFO"] = "Електронний підпис для HR дає змогу підписувати різні кадрові документи простим електронним підписом (ПЕП). [helpdesklink]Докладніше[/helpdesklink]<br><br>Ознайомтеся з [link]Умовами[/link], щоб зрозуміти наслідки використання електронного підпису для HR у вашому конкретному випадку.";
+$MESS["SIGN_B2E_NO_REGISTER_URL"] = "Під'єднання недоступне.";
+$MESS["SIGN_B2E_PROVIDERS_TAB"] = "Провайдери";
+$MESS["SIGN_B2E_PROVIDER_CONNECT"] = "Під'єднати";
+$MESS["SIGN_B2E_PROVIDER_CONNECT_SELECTOR"] = "Під'єднати провайдера";
+$MESS["SIGN_B2E_PROVIDER_DISCONNECT"] = "Вимкнути";
+$MESS["SIGN_B2E_PROVIDER_SES_COM_NAME"] = "Електронний підпис для HR";
+$MESS["SIGN_B2E_PROVIDER_SES_NAME"] = "Електронний підпис для HR";
+$MESS["SIGN_B2E_SELECT_COMPANY"] = "Компанія";
+$MESS["SIGN_B2E_SELECT_PROVIDER_WITHOUT_INN"] = "Під'єднано #DATE#";
+$MESS["SIGN_B2E_SELECT_PROVIDER_WITHOUT_INN_DATE"] = "Під'єднано";

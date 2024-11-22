@@ -1,5 +1,6 @@
-import { Planner } from 'calendar.planner';
+import { SectionSelector as CalendarSectionSelector } from 'calendar.controls';
 import 'ui.design-tokens';
+import { Planner } from 'calendar.planner';
 import { ajax as Ajax, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { DateTimeFormat, Timezone } from 'main.date';
@@ -7,10 +8,12 @@ import { Dialog } from 'ui.entity-selector';
 import type { BlockSettings } from '../../../todo-editor';
 import { Events } from '../../todo-editor';
 import { LocationSelector } from './location-selector';
+import { SectionSelector } from './section-selector';
 
 export const TodoEditorBlocksCalendar = {
 	components: {
 		LocationSelector,
+		SectionSelector,
 	},
 
 	props: {
@@ -73,6 +76,13 @@ export const TodoEditorBlocksCalendar = {
 			locationId: null,
 			timezoneName: this.settings.timezoneName,
 			ownerId,
+			sectionId: this.settings.sectionId || null,
+			config: {},
+			canUseCalendarSectionSelector: (
+				Type.isFunction(CalendarSectionSelector.getModes)
+				&& CalendarSectionSelector.getModes().includes('inline')
+			),
+			sectionSelectorReadOnly: this.settings.sectionSelectorReadOnly ?? false,
 		};
 
 		return this.getPreparedData(data);
@@ -103,6 +113,7 @@ export const TodoEditorBlocksCalendar = {
 	},
 
 	methods: {
+		/* eslint-disable no-param-reassign */
 		getPreparedData(data: Object): Object
 		{
 			const { filledValues } = this;
@@ -120,32 +131,52 @@ export const TodoEditorBlocksCalendar = {
 
 				if (Type.isStringFilled(filledValues.location))
 				{
-					// eslint-disable-next-line no-param-reassign
 					data.showLocation = true;
-					// eslint-disable-next-line no-param-reassign
 					data.locationId = Number(filledValues.location.split('_')[1]); //calendar_7_123, need 7 as id
 				}
 
 				if (Type.isObject(filledValues.selectedUserIds))
 				{
-					// eslint-disable-next-line no-param-reassign
 					data.selectedUserIds = filledValues.selectedUserIds;
 				}
 
-				// eslint-disable-next-line no-param-reassign
 				data.from = Number(filledValues.from);
-				// eslint-disable-next-line no-param-reassign
 				data.to = Number(filledValues.to);
-				// eslint-disable-next-line no-param-reassign
 				data.duration = Number(filledValues.duration);
-				// eslint-disable-next-line no-param-reassign
 				data.timezoneName = filledValues.timezoneFrom;
-				// eslint-disable-next-line no-param-reassign
 				data.ownerId = filledValues.ownerId;
+				data.sectionId = filledValues.sectionId;
+
+				if (!Type.isNil(filledValues.sectionId))
+				{
+					data.sectionId = Number(filledValues.sectionId);
+				}
+			}
+
+			data.config = {};
+			data.sectionSelectorReadOnly = false;
+
+			if (Type.isObject(filledValues?.config))
+			{
+				data.config = filledValues.config;
+			}
+			else if (data.canUseCalendarSectionSelector)
+			{
+				void this.fetchConfig().then((response) => {
+					this.config = response.data ?? {};
+					this.sectionSelectorReadOnly = data.config.readOnly ?? false;
+
+					if (Type.isNil(data.sectionId))
+					{
+						const defaultSection = data.config.sections.find((section) => section.DEFAULT === true);
+						this.sectionId = defaultSection ? defaultSection.ID : data.config.sections[0].ID;
+					}
+				});
 			}
 
 			return data;
 		},
+		/* eslint-enable no-param-reassign */
 		getId(): string
 		{
 			return 'calendar';
@@ -229,21 +260,6 @@ export const TodoEditorBlocksCalendar = {
 						this.getPlanner().update(response.data.entries, accessibility);
 
 						this.onDataUpdate();
-
-						// @todo check this
-						// this.plannerInstance.updateSelector(
-						// 	Util.adjustDateForTimezoneOffset(
-						// 		testData.entry.from,
-						// 		testData.entry.userTimezoneOffsetFrom,
-						// 		testData.entry.fullDay),
-						// 	Util.adjustDateForTimezoneOffset(
-						// 		testData.entry.to,
-						// 		testData.entry.userTimezoneOffsetTo,
-						// 		testData.entry.fullDay
-						// 	),
-						// 	testData.entry.fullDay
-						//
-						// );
 					},
 					(response) => {
 						console.error(response);
@@ -268,7 +284,7 @@ export const TodoEditorBlocksCalendar = {
 		emitUpdateFilledValues(): void
 		{
 			let { filledValues } = this;
-			const { to, from, duration, location, selectedUserIds, ownerId } = this;
+			const { to, from, duration, location, selectedUserIds, ownerId, sectionId, config } = this;
 
 			const newFilledValues = {
 				to,
@@ -277,6 +293,8 @@ export const TodoEditorBlocksCalendar = {
 				location,
 				selectedUserIds,
 				ownerId,
+				sectionId,
+				config,
 			};
 			filledValues = { ...filledValues, ...newFilledValues };
 			this.$emit('updateFilledValues', this.getId(), filledValues);
@@ -343,6 +361,18 @@ export const TodoEditorBlocksCalendar = {
 			}
 
 			return DateTimeFormat.format(format, timestamp / 1000);
+		},
+		toggleCalendarSelectorDialog(): void
+		{
+			const sectionSelector = this.$refs.sectionSelector;
+			if (sectionSelector.isShown())
+			{
+				sectionSelector.hide();
+			}
+			else
+			{
+				sectionSelector.show();
+			}
 		},
 		showUserSelectorDialog(): void
 		{
@@ -419,34 +449,8 @@ export const TodoEditorBlocksCalendar = {
 			this.from = dateFrom.getTime();
 			this.duration = dateTo.getTime() - this.from;
 
-			this.$Bitrix.eventEmitter.emit(Events.EVENT_CALENDAR_CHANGE, {
-				from: this.from,
-				to: this.from + this.duration,
-			});
+			this.emitCalendarChange();
 		},
-		// @todo
-		/* getAccessibilityForUsers(): Promise
-		{
-			const offset = 12 * 24 * 3600; //12 days
-
-			return new Promise((resolve) => {
-				const config = {
-					data: {
-						from: this.from - offset,
-						to: this.from + offset,
-						// @todo add currentEventId
-						//currentEventId:
-					},
-				};
-
-				Ajax.runAction('crm.activity.settings.calendar.getAccessibilityForUsers', config)
-					.then((response) => resolve(response))
-					.catch((errors) => {
-						console.log(errors);
-					})
-				;
-			});
-		}, */
 		updateSettings(data: Object | null): void
 		{
 			if (!data || !data.deadline)
@@ -467,14 +471,15 @@ export const TodoEditorBlocksCalendar = {
 		},
 		getExecutedData(): Object
 		{
-			const { duration } = this;
+			const { duration, from, location, sectionId } = this;
 
 			return {
-				from: this.from,
-				to: this.from + duration,
+				from,
+				to: from + duration,
 				duration,
 				selectedUserIds: [...this.getSelectedUserIds()],
-				location: this.location,
+				sectionId,
+				location,
 			};
 		},
 		prepareDataOnBlockConstruct(data: BlockSettings, params: Object): Object
@@ -484,6 +489,47 @@ export const TodoEditorBlocksCalendar = {
 
 			// eslint-disable-next-line no-param-reassign
 			data.settings.ownerId = params.responsibleUserId;
+		},
+		fetchConfig(): Promise
+		{
+			const data = {
+				activityId: this.context.activityId,
+				entityTypeId: this.context.itemIdentifier?.entityTypeId,
+				entityId: this.context.itemIdentifier?.entityId,
+			};
+
+			return new Promise((resolve) => {
+				void Ajax.runAction('crm.activity.todo.getCalendarConfig', { data })
+					.then((response) => {
+						resolve(response);
+					})
+				;
+			});
+		},
+		onChangeSection(sectionId: number): void
+		{
+			if (this.sectionId === sectionId)
+			{
+				return;
+			}
+
+			this.sectionId = sectionId;
+			this.emitUpdateFilledValues();
+			this.emitCalendarChange({ sectionId });
+		},
+		emitCalendarChange(additional: Object = {}): void
+		{
+			const data = {
+				...additional,
+				from: this.from,
+				to: this.from + this.duration,
+			};
+
+			this.$Bitrix.eventEmitter.emit(Events.EVENT_CALENDAR_CHANGE, data);
+		},
+		hasSections(): boolean
+		{
+			return Type.isArrayFilled(this.config?.sections);
 		},
 	},
 
@@ -517,6 +563,10 @@ export const TodoEditorBlocksCalendar = {
 		{
 			return [...this.selectedUserIds];
 		},
+		changeTitle(): string
+		{
+			return this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_BLOCK_CHANGE_ACTION');
+		},
 	},
 
 	created()
@@ -548,7 +598,7 @@ export const TodoEditorBlocksCalendar = {
 			'settings',
 			(newSettings, oldSettings) => {
 				const showLocation = Boolean(newSettings.showLocation ?? false);
-				this.showLocation = Type.isStringFilled(this.filledValues.location) || showLocation;
+				this.showLocation = Type.isStringFilled(this.filledValues?.location) || showLocation;
 
 				if (oldSettings.showUserSelector !== newSettings.showUserSelector && newSettings.showUserSelector)
 				{
@@ -591,17 +641,41 @@ export const TodoEditorBlocksCalendar = {
 				:style="iconStyles"
 			></span>
 			<span>{{ encodedTitle }}</span>
-			<span 
-				ref="userSelector"
-				@click="showUserSelectorDialog"
-				class="crm-activity__todo-editor-v2_block-header-action"
+			<span
+				v-if="canUseCalendarSectionSelector"
+				class="crm-activity__todo-editor-v2_block-header-data"
 			>
-				{{ usersList }}
+				<SectionSelector 
+					ref="sectionSelector"
+					:userId="context.userId"
+					:sections="config?.sections ?? []"
+					:trackingUsersList="config?.trackingUsersList ?? []"
+					:selectedSectionId="sectionId"
+					:readOnly="sectionSelectorReadOnly"
+					@change="onChangeSection"
+				/>
+			</span>
+			<span v-if="canUseCalendarSectionSelector && hasSections && !sectionSelectorReadOnly">
+				<span
+					@click="toggleCalendarSelectorDialog"
+					class="crm-activity__todo-editor-v2_block-header-action"
+				>
+					{{ changeTitle }}
+				</span>
 			</span>
 			<div
 				@click="$emit('close', id)"
 				class="crm-activity__todo-editor-v2_block-header-close"
 			></div>
+		</div>
+		<div class="crm-activity__todo-editor-v2_block-subheader">
+			<span
+				ref="userSelector"
+				@click="showUserSelectorDialog"
+				class="crm-activity__todo-editor-v2_block-subheader-action"
+			>
+				{{ usersList }} ({{ selectedUsersIdsArray.length }})
+			</span>
 		</div>
 		<div class="crm-activity__todo-editor-v2_block-body">
 			<div class="crm-activity__settings_popup__calendar-container">

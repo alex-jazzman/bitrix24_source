@@ -36,6 +36,7 @@ jn.define('bizproc/task/tasks-performer/informers/task-list-informer', (require,
 						modal: true,
 						titleParams: {
 							text: props.title || '',
+							type: 'dialog',
 						},
 						backgroundColor: AppTheme.colors.bgContentPrimary,
 						backdrop: {

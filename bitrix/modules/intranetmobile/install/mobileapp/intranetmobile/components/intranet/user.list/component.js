@@ -26,7 +26,7 @@
 
 	const { UserListSorting, UserListMoreMenu, UserListFilter, DepartmentButton } = require('intranet/user-list');
 	const { ListItemType, ListItemsFactory } = require('intranet/simple-list/items');
-	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 
 	const isAndroid = (Application.getPlatform() === 'android');
 
@@ -353,7 +353,8 @@
 
 		onBeforeItemsRender = (items) => items.map((item, index) => ({
 			...item,
-			showBorder: index !== 0,
+			showBorder: index !== items.length - 1,
+			canInvite: this.canInvite,
 		}));
 
 		onVisibleEmployeesChange = ({ moved, removed, added, created }) => {
@@ -370,7 +371,11 @@
 			if (removed.length > 0)
 			{
 				void this.removeEmployees(removed);
-				this.search.fetchPresets(true); // need to update counters
+				// need to update counters
+				if (this.search?.searchLayoutView)
+				{
+					this.search.fetchPresets(true);
+				}
 			}
 
 			if (added.length > 0)
@@ -403,7 +408,7 @@
 
 		addOrRestoreEmployees(added)
 		{
-			//this.search.fetchPresets(true);
+			// this.search.fetchPresets(true);
 		}
 
 		updateEmployees(moved)
@@ -420,7 +425,7 @@
 
 		onFloatingButtonClick = () => {
 			openIntranetInviteWidget({
-				analytics: new AnalyticsEvent().setSection('user.list'),
+				analytics: new AnalyticsEvent().setSection('userList'),
 				parentLayout: layout,
 				onInviteSentHandler: this.onInviteSuccess,
 			});

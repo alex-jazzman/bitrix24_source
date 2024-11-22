@@ -25,18 +25,29 @@ this.BX.Call = this.BX.Call || {};
 	  micOff: 'mic_off',
 	  clickUserFrame: 'click_user_frame',
 	  handOn: 'hand_on',
-	  clickChat: 'click_chat'
+	  clickChat: 'click_chat',
+	  click: 'click',
+	  create: 'create',
+	  edit: 'edit',
+	  save: 'save',
+	  upload: 'upload',
+	  openResume: 'open_resume'
 	});
 	const AnalyticsTool = Object.freeze({
 	  im: 'im'
 	});
 	const AnalyticsCategory = Object.freeze({
-	  call: 'call'
+	  call: 'call',
+	  callDocs: 'call_docs'
 	});
 	const AnalyticsType = Object.freeze({
 	  private: 'private',
 	  group: 'group',
-	  videoconf: 'videoconf'
+	  videoconf: 'videoconf',
+	  resume: 'resume',
+	  doc: 'doc',
+	  presentation: 'presentation',
+	  sheet: 'sheet'
 	});
 	const AnalyticsSection = Object.freeze({
 	  callWindow: 'call_window',
@@ -371,6 +382,54 @@ this.BX.Call = this.BX.Call || {};
 	      event: AnalyticsEvent.clickChat,
 	      type: params.callType,
 	      c_section: AnalyticsSection.callWindow,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDocumentBtnClick(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callDocs,
+	      event: AnalyticsEvent.click,
+	      p4: `callType_${params.callType}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDocumentCreate(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callDocs,
+	      event: AnalyticsEvent.create,
+	      type: params.type,
+	      p4: `callType_${params.callType}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDocumentClose(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callDocs,
+	      event: AnalyticsEvent.save,
+	      type: params.type,
+	      p4: `callType_${params.callType}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDocumentUpload(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callDocs,
+	      event: AnalyticsEvent.upload,
+	      type: params.type,
+	      p4: `callType_${params.callType}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onLastResumeOpen(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callDocs,
+	      event: AnalyticsEvent.openResume,
+	      p4: `callType_${params.callType}`,
 	      p5: `callId_${params.callId}`
 	    });
 	  }

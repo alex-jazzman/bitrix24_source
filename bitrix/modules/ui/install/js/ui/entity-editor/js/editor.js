@@ -3266,7 +3266,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 					items.push(
 						{
 							id: "createConfigForCheckedUsers",
-							text: BX.message('UI_ENTITY_EDITOR_CREATE_SCOPE'),
+							text: BX.message('UI_ENTITY_EDITOR_CREATE_SCOPE_MSGVER_1'),
 							onclick: callback,
 							className: "menu-popup-item-none"
 						}
@@ -3275,7 +3275,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 					items.push(
 						{
 							id: "editCommonConfig",
-							text: BX.message('UI_ENTITY_EDITOR_UPDATE_SCOPE'),
+							text: BX.message('UI_ENTITY_EDITOR_UPDATE_SCOPE_MSGVER_1'),
 							onclick: callback,
 							className: "menu-popup-item-none"
 						}
@@ -4033,7 +4033,7 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 			{
 				return (this._popup || new BX.PopupWindow(this._id, null, {
 					className: 'ui-entity-editor-content-user-scope-popup',
-					titleBar: BX.message('UI_ENTITY_EDITOR_CREATE_SCOPE'),
+					titleBar: BX.message('UI_ENTITY_EDITOR_CREATE_SCOPE_MSGVER_1'),
 					closeIcon : true,
 					autoHide: false,
 					closeByEsc: true,
@@ -4079,7 +4079,7 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 					props: {
 						className: 'ui-ctl-label-text'
 					},
-					text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_NAME')
+					text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_NAME_MSGVER_1')
 				}));
 
 				var control = BX.create('div', {
@@ -4093,7 +4093,6 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 						className: 'ui-ctl-element',
 						value: this.getName(),
 						type: 'text',
-						placeholder: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_NAME_PLACEHOLDER')
 					}
 				});
 
@@ -4114,7 +4113,7 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 					props: {
 						className: 'ui-ctl-label-text'
 					},
-					text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_MEMBERS')
+					text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_MEMBERS_MSGVER_1')
 				}));
 
 				var control = BX.create('div', {
@@ -4187,8 +4186,11 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 					props:{
 						className: 'ui-ctl-label-text',
 					},
-					text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_FORCE_INSTALL_TO_USERS')
+					text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_FORCE_INSTALL_TO_USERS_MSGVER_1')
 				}));
+				control.appendChild(
+					BX.UI.Hint.createNode(BX.message('UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_FORCE_INSTALL_TO_USERS'))
+				);
 
 				container.appendChild(control);
 
@@ -4342,7 +4344,7 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 			notifyShow: function(response)
 			{
 				window.top.BX.UI.Notification.Center.notify({
-					content: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_SAVED'),
+					content: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_SAVED_MSGVER_1'),
 					width: 'auto',
 				});
 			},

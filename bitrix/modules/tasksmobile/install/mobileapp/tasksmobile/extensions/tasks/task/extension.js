@@ -1154,11 +1154,13 @@
 				id: taskId,
 				title: (this.task.title || 'TASK'),
 			};
-			const { analyticsLabel = {} } = params;
+			const { analyticsLabel = {}, view, kanbanOwnerId } = params;
 
 			const newParams = {
 				parentWidget,
 				context,
+				view,
+				kanbanOwnerId,
 				userId: this.task.currentUser.id,
 				taskObject: (this.task.canSendMyselfOnOpen ? this.task.exportProperties() : null),
 				analyticsLabel,

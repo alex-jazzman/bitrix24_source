@@ -1,4 +1,5 @@
 import { BBCodeNode, type BBCodeElementNode } from 'ui.bbcode.model';
+import type { ElementNode } from 'ui.lexical.core';
 import {
 	RootNode,
 	ParagraphNode,
@@ -8,6 +9,11 @@ import {
 	$getSelection,
 	$isRangeSelection,
 	COMMAND_PRIORITY_EDITOR,
+	COMMAND_PRIORITY_LOW,
+	KEY_ARROW_UP_COMMAND,
+	KEY_ARROW_LEFT_COMMAND,
+	KEY_ARROW_DOWN_COMMAND,
+	KEY_ARROW_RIGHT_COMMAND,
 	type LexicalNode,
 	type RangeSelection,
 	type LexicalCommand,
@@ -15,6 +21,7 @@ import {
 } from 'ui.lexical.core';
 
 import { $setBlocksType } from 'ui.lexical.selection';
+import { $findMatchingParent } from 'ui.lexical.utils';
 import { trimLineBreaks } from '../../bbcode';
 
 import type {
@@ -30,8 +37,12 @@ import type { SchemeValidationOptions } from '../../types/scheme-validation-opti
 
 import BasePlugin from '../base-plugin';
 
-import type TextEditor from '../../text-editor';
+import { $isCodeNode } from '../code';
+import { $isQuoteNode } from '../quote';
+import { $isSpoilerNode } from '../spoiler';
 import { CustomParagraphNode } from './custom-paragraph-node';
+
+import { type TextEditor } from '../../text-editor';
 
 import './paragraph.css';
 
@@ -159,7 +170,106 @@ export class ParagraphPlugin extends BasePlugin
 					root.append($createParagraphNode());
 				}
 			}),
+
+			// When a block node is the first child pressing up/left arrow will insert paragraph
+			// above it to allow adding more content. It's similar what $insertBlockNode
+			// (mainly for decorators), except it'll always be possible to continue adding
+			// new content even if leading paragraph is accidentally deleted
+			this.getEditor().registerCommand(
+				KEY_ARROW_UP_COMMAND,
+				this.#handleEscapeUp.bind(this),
+				COMMAND_PRIORITY_LOW,
+			),
+
+			this.getEditor().registerCommand(
+				KEY_ARROW_LEFT_COMMAND,
+				this.#handleEscapeUp.bind(this),
+				COMMAND_PRIORITY_LOW,
+			),
+
+			// When a block node is the last child pressing down/right arrow will insert paragraph
+			// below it to allow adding more content. It's similar what $insertBlockNode
+			// (mainly for decorators), except it'll always be possible to continue adding
+			// new content even if trailing paragraph is accidentally deleted
+			this.getEditor().registerCommand(
+				KEY_ARROW_DOWN_COMMAND,
+				this.#handleEscapeDown.bind(this),
+				COMMAND_PRIORITY_LOW,
+			),
+			this.getEditor().registerCommand(
+				KEY_ARROW_RIGHT_COMMAND,
+				this.#handleEscapeDown.bind(this),
+				COMMAND_PRIORITY_LOW,
+			),
 		);
+	}
+
+	#isBlockNode(node: LexicalNode | null | undefined): boolean
+	{
+		return $isQuoteNode(node) || $isCodeNode(node) || $isSpoilerNode(node);
+	}
+
+	#handleEscapeUp(): boolean
+	{
+		const selection: RangeSelection = $getSelection();
+		if ($isRangeSelection(selection) && selection.isCollapsed() && selection.anchor.offset === 0)
+		{
+			const container: ElementNode = $findMatchingParent(selection.anchor.getNode(), this.#isBlockNode);
+			if (this.#isBlockNode(container))
+			{
+				const parent: ElementNode = container.getParent();
+				if (
+					parent !== null
+					&& parent.getFirstChild() === container
+					&& (
+						selection.anchor.key === container.getFirstDescendant()?.getKey()
+						|| selection.anchor.key === container.getKey()
+					)
+				)
+				{
+					container.insertBefore($createParagraphNode());
+				}
+			}
+		}
+
+		return false;
+	}
+
+	#handleEscapeDown(): boolean
+	{
+		const selection: RangeSelection = $getSelection();
+		if ($isRangeSelection(selection) && selection.isCollapsed())
+		{
+			const container: ElementNode = $findMatchingParent(selection.anchor.getNode(), this.#isBlockNode);
+			if (this.#isBlockNode(container))
+			{
+				const parent: ElementNode = container.getParent();
+				if (parent !== null && parent.getLastChild() === container)
+				{
+					const firstDescendant = container.getFirstDescendant();
+					const lastDescendant = container.getLastDescendant();
+					if (
+						(
+							lastDescendant !== null
+							&& selection.anchor.key === lastDescendant.getKey()
+							&& selection.anchor.offset === lastDescendant.getTextContentSize()
+						) || (
+							firstDescendant !== null
+							&& selection.anchor.key === firstDescendant.getKey()
+							&& selection.anchor.offset === firstDescendant.getTextContentSize()
+						) || (
+							selection.anchor.key === container.getKey()
+							&& selection.anchor.offset === container.getTextContentSize()
+						)
+					)
+					{
+						container.insertAfter($createParagraphNode());
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 }
 

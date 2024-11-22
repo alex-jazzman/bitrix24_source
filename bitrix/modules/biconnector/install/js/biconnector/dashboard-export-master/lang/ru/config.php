@@ -14,3 +14,4 @@ $MESS['BIC_EXPORT_OPEN_SETTINGS'] = 'Настроить отчёт';
 $MESS['BIC_EXPORT_BUTTON'] = 'Экспортировать';
 $MESS['BIC_EXPORT_ERROR'] = 'Не удалось экспортировать отчёт. Попробуйте ещё раз';
 $MESS['BIC_EXPORT_SCOPE_HINT'] = 'Зоны видимости цифровых рабочих мест не будут экспортированы';
+$MESS['BIC_EXPORT_URL_PARAM'] = 'Параметры';

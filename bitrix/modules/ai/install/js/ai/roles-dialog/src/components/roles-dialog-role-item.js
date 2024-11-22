@@ -1,11 +1,12 @@
 import { Type } from 'main.core';
-import { Main } from 'ui.icon-set.api.core';
+import { Main, Animated } from 'ui.icon-set.api.core';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { mapWritableState } from 'ui.vue3.pinia';
 import { type States as StatesType } from 'ui.entity-catalog';
 import { RolesDialogRoleItemAvatar } from './roles-dialog-role-item-avatar';
 import { RolesDialogLabelNew } from './roles-dialog-label-new';
 
+import 'ui.icon-set.animated';
 import '../css/roles-dialog-role-item.css';
 
 import type { RolesDialogItemData } from '../roles-dialog';
@@ -19,6 +20,12 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 			BIcon,
 			RolesDialogRoleItemAvatar,
 			RolesDialogLabelNew,
+		},
+		data(): { isFavourite: boolean, isProcessingRoleFavourite: boolean } {
+			return {
+				isFavourite: this.itemData.itemData.customData.isFavourite,
+				isProcessingRoleFavourite: false,
+			};
 		},
 		props: ['itemData'],
 		computed: {
@@ -64,11 +71,31 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 					'--selected': this.isSelected,
 				};
 			},
-			selectedIconData(): { name: string, color: string, size: number } {
+			isRoleCanBeFavourite(): boolean {
+				return this.item.customData.canBeFavourite === true;
+			},
+			favouriteLabelIconData(): { name: string, color: string, size: number } {
+				const iconName = this.isProcessingRoleFavourite
+					? Animated.LOADER_WAIT
+					: Main.BOOKMARK_1
+				;
+
 				return {
-					name: Main.CHECK,
-					color: this.getUiTokenValue('--ui-color-copilot-soft') || '#B095DC',
-					size: 16,
+					name: iconName,
+					size: 24,
+				};
+			},
+			favouriteLabelTitle(): string {
+				return this.isFavourite
+					? this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE')
+					: this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE')
+				;
+			},
+			favouriteLabelClassname(): Object {
+				return {
+					'ai__roles-dialog_role-item-favourite-label': true,
+					'--active': this.isFavourite,
+					'--loading': this.isProcessingRoleFavourite,
 				};
 			},
 			infoIcon(): string {
@@ -82,36 +109,60 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 					this.item.button.action();
 				}
 			},
-			getUiTokenValue(token: string): ?string {
-				getComputedStyle(document.body).getPropertyValue(token);
+			toggleFavourite(): void {
+				if (this.isProcessingRoleFavourite)
+				{
+					return;
+				}
+
+				let isRequestFinished = false;
+
+				setTimeout(() => {
+					if (isRequestFinished === false)
+					{
+						this.isProcessingRoleFavourite = true;
+					}
+				}, 300);
+
+				// eslint-disable-next-line promise/catch-or-return
+				this.item.customData.actions.toggleFavourite(!this.isFavourite)
+					.then(() => {
+						this.isFavourite = !this.isFavourite;
+					})
+					.finally(() => {
+						this.isProcessingRoleFavourite = false;
+						isRequestFinished = true;
+					});
 			},
 		},
 		template: `
 			<article @click="selectRole" :class="className">
-			  <RolesDialogRoleItemAvatar
-			      :avatar="item.customData.avatar"
-			      :avatar-alt="item.title"
-			      :icon="isInfoItem ? infoIcon : null"
-			  />
-			  <div class="ai__roles-dialog_role-item-info">
-			    <div class="ai__roles-dialog_role-item-title-wrapper">
-					<div class="ai__roles-dialog_role-item-title" v-html="title"></div>
-					<div class="ai__roles-dialog_role-item-label">
-						<RolesDialogLabelNew v-if="isNew" />
+				<RolesDialogRoleItemAvatar
+					:avatar="item.customData.avatar"
+					:avatar-alt="item.title"
+					:icon="isInfoItem ? infoIcon : null"
+				/>
+				<div class="ai__roles-dialog_role-item-info">
+					<div class="ai__roles-dialog_role-item-title-wrapper">
+						<div class="ai__roles-dialog_role-item-title" v-html="title"></div>
+						<div class="ai__roles-dialog_role-item-label">
+							<RolesDialogLabelNew v-if="isNew" />
+						</div>
 					</div>
-			    </div>
-			    <p class="ai__roles-dialog_role-item-description" v-html="subtitle"></p>
-			  </div>
-			  <div
-			      v-if="isSelected"
-			      class="ai__roles-dialog_role-item-select-icon"
-			  >
-			    <BIcon
-			        :name="selectedIconData.name"
-			        :size="selectedIconData.size"
-			        :color="selectedIconData.color"
-			    />
-			  </div>
+					<p class="ai__roles-dialog_role-item-description" v-html="subtitle"></p>
+				</div>
+				<button
+					v-if="isRoleCanBeFavourite"
+					:class="favouriteLabelClassname"
+					:title="favouriteLabelTitle"
+					@click.stop.prevent="toggleFavourite"
+					@mousedown.stop
+				>
+					<BIcon
+						:name="favouriteLabelIconData.name"
+						:size="favouriteLabelIconData.size"
+					/>
+				</button>
 			</article>
 		`,
 	};

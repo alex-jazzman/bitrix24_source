@@ -155,6 +155,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		{
 			return this.get('IS_FILES_MIGRATED', false);
 		}
+
+		isCollabAvailable()
+		{
+			// TODO implement collab flag support
+			return false;
+
+			return this.get('IS_COLLAB_AVAILABLE', false);
+		}
 	}
 
 	module.exports = {

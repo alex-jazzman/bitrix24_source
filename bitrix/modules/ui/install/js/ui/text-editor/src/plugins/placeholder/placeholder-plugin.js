@@ -65,8 +65,11 @@ export class PlaceholderPlugin extends BasePlugin
 				}
 			}
 
-			this.#paragraphPlaceholder = paragraphPlaceholder;
-			this.#registerParagraphListeners();
+			if (paragraphPlaceholder !== 'auto')
+			{
+				this.#paragraphPlaceholder = paragraphPlaceholder;
+				this.#registerParagraphListeners();
+			}
 		}
 	}
 

@@ -4,7 +4,8 @@
 	border-spacing: 0;
 	overflow-y: scroll;
 	overflow-x: scroll;
-	margin: var(--ui-typography-block-space);
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
 }
 
 .ui-typography-table-row {

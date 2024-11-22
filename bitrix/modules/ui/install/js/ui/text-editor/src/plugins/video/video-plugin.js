@@ -37,7 +37,7 @@ import { validateVideoUrl } from '../../helpers/validate-video-url';
 
 import { $createVideoNode, VideoNode, type VideoPayload } from './video-node';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 import './video-plugin.css';
 import { VideoService } from 'ui.video-service';

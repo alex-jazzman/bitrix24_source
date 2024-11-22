@@ -79,6 +79,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_EXIT_UPDATE_CHAT_TEXT_CONFIRM')
 	  });
 	};
+	const showDeleteChatConfirm = () => {
+	  return showTwoButtonConfirm({
+	    title: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TITLE'),
+	    text: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT'),
+	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT_CONFIRM')
+	  });
+	};
+	const showDeleteChannelConfirm = () => {
+	  return showTwoButtonConfirm({
+	    title: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_TITLE'),
+	    text: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_TEXT'),
+	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT_CONFIRM')
+	  });
+	};
+	const showDeleteChannelPostConfirm = () => {
+	  return showTwoButtonConfirm({
+	    title: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TITLE'),
+	    text: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT'),
+	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT_CONFIRM')
+	  });
+	};
 	const showTwoButtonConfirm = params => {
 	  const {
 	    text = '',
@@ -146,6 +167,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.showNotificationsModeSwitchConfirm = showNotificationsModeSwitchConfirm;
 	exports.showExitUpdateGroupChatConfirm = showExitUpdateGroupChatConfirm;
 	exports.showExitUpdateChannelConfirm = showExitUpdateChannelConfirm;
+	exports.showDeleteChatConfirm = showDeleteChatConfirm;
+	exports.showDeleteChannelConfirm = showDeleteChannelConfirm;
+	exports.showDeleteChannelPostConfirm = showDeleteChannelPostConfirm;
 
 }((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Main,BX.UI.Dialogs));
 //# sourceMappingURL=confirm.bundle.js.map

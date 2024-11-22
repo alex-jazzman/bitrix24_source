@@ -9,6 +9,10 @@ import 'ui.icon-set.main';
 
 import './style.css';
 
+export type UserPartyConfig = {
+	region: string,
+	b2eSignersLimitCount: number,
+}
 const Mode = Object.freeze({
 	view: 'view',
 	edit: 'edit',

@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core) {
+(function (exports,crm_integration_analytics,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -13,6 +14,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _isShowNotify = /*#__PURE__*/new WeakMap();
 	var _isApplyFilterAfterAction = /*#__PURE__*/new WeakMap();
 	var _useIgnorePostfixForCode = /*#__PURE__*/new WeakMap();
+	var _analyticsData = /*#__PURE__*/new WeakMap();
 	var _prepareExecute = /*#__PURE__*/new WeakSet();
 	var _onSuccess = /*#__PURE__*/new WeakSet();
 	var _handleErrorOnSimpleAction = /*#__PURE__*/new WeakSet();
@@ -21,9 +23,11 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getPreparedNotifyCode = /*#__PURE__*/new WeakSet();
 	var _getPreparedNotifyContent = /*#__PURE__*/new WeakSet();
 	var _onFailure = /*#__PURE__*/new WeakSet();
+	var _prepareAnalyticsData = /*#__PURE__*/new WeakSet();
 	var SimpleAction = /*#__PURE__*/function () {
 	  function SimpleAction(_grid2, _params2) {
 	    babelHelpers.classCallCheck(this, SimpleAction);
+	    _classPrivateMethodInitSpec(this, _prepareAnalyticsData);
 	    _classPrivateMethodInitSpec(this, _onFailure);
 	    _classPrivateMethodInitSpec(this, _getPreparedNotifyContent);
 	    _classPrivateMethodInitSpec(this, _getPreparedNotifyCode);
@@ -51,6 +55,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateFieldInitSpec(this, _useIgnorePostfixForCode, {
 	      writable: true,
 	      value: false
+	    });
+	    _classPrivateFieldInitSpec(this, _analyticsData, {
+	      writable: true,
+	      value: null
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _grid, _grid2);
 	    babelHelpers.classPrivateFieldSet(this, _params, _params2);
@@ -81,6 +89,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function execute() {
 	      var _this = this;
 	      _classPrivateMethodGet(this, _prepareExecute, _prepareExecute2).call(this);
+	      if (babelHelpers.classPrivateFieldGet(this, _params).action === 'status') {
+	        _classPrivateMethodGet(this, _prepareAnalyticsData, _prepareAnalyticsData2).call(this);
+	        babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+	      }
 	      return new Promise(function (resolve, reject) {
 	        babelHelpers.classPrivateFieldGet(_this, _grid).ajax(babelHelpers.classPrivateFieldGet(_this, _params), function (data) {
 	          return _classPrivateMethodGet(_this, _onSuccess, _onSuccess2).call(_this, data, resolve);
@@ -103,10 +115,13 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _onSuccess2(data, resolve) {
 	  if (!data || data.error) {
+	    babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 	    _classPrivateMethodGet(this, _handleErrorOnSimpleAction, _handleErrorOnSimpleAction2).call(this, data, resolve);
 	  } else {
+	    babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 	    _classPrivateMethodGet(this, _handleSuccessOnSimpleAction, _handleSuccessOnSimpleAction2).call(this, data, resolve);
 	  }
+	  babelHelpers.classPrivateFieldSet(this, _analyticsData, null);
 	}
 	function _handleErrorOnSimpleAction2(data, callback) {
 	  var grid = babelHelpers.classPrivateFieldGet(this, _grid);
@@ -204,8 +219,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  return content;
 	}
 	function _onFailure2(error, callback) {
+	  babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+	  babelHelpers.classPrivateFieldSet(this, _analyticsData, null);
 	  BX.Kanban.Utils.showErrorDialog("Error: ".concat(error), true);
 	  callback(new Error(error));
+	}
+	function _prepareAnalyticsData2() {
+	  var _babelHelpers$classPr = babelHelpers.slicedToArray(babelHelpers.classPrivateFieldGet(this, _params).entity_id, 1),
+	    entityId = _babelHelpers$classPr[0];
+	  var item = babelHelpers.classPrivateFieldGet(this, _grid).getItem(entityId);
+	  var targetColumn = babelHelpers.classPrivateFieldGet(this, _grid).getColumn(babelHelpers.classPrivateFieldGet(this, _params).status);
+	  var type = targetColumn ? targetColumn.getData().type : babelHelpers.classPrivateFieldGet(this, _params).type;
+	  babelHelpers.classPrivateFieldSet(this, _analyticsData, babelHelpers.classPrivateFieldGet(this, _grid).getDefaultAnalyticsCloseEvent(item, type, babelHelpers.classPrivateFieldGet(this, _params).entity_id.toString()));
+	  babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_TOP_ACTIONS;
+	  if (type === 'LOOSE') {
+	    babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_TOP_ACTIONS;
+	  }
 	}
 	NAMESPACE.SimpleAction = SimpleAction;
 
@@ -841,6 +870,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  return FieldsSelector;
 	}();
 
+	var ViewMode = {
+	  MODE_STAGES: 'STAGES',
+	  MODE_ACTIVITIES: 'ACTIVITIES',
+	  MODE_DEADLINES: 'DEADLINES',
+	  getDefault: function getDefault() {
+	    return this.MODE_STAGES;
+	  },
+	  getAll: function getAll() {
+	    return [this.MODE_STAGES, this.MODE_ACTIVITIES, this.MODE_DEADLINES];
+	  },
+	  normalize: function normalize(mode) {
+	    return this.getAll().includes(mode) ? mode : this.getDefault();
+	  }
+	};
+	Object.freeze(ViewMode);
+
 	var PullOperation = /*#__PURE__*/function () {
 	  babelHelpers.createClass(PullOperation, null, [{
 	    key: "createInstance",
@@ -905,6 +950,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      var item = this.grid.getItem(params.item.id);
 	      var paramsItem = params.item;
 	      if (!item) {
+	        return;
+	      }
+	      var _this$grid$getData = this.grid.getData(),
+	        viewMode = _this$grid$getData.viewMode;
+	      if ([ViewMode.MODE_ACTIVITIES, ViewMode.MODE_DEADLINES].includes(viewMode)) {
+	        item.useAnimation = false;
+	        this.grid.insertItem(item);
 	        return;
 	      }
 	      var insertItemParams = {};
@@ -979,22 +1031,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  return PullOperation;
 	}();
 
-	var ViewMode = {
-	  MODE_STAGES: 'STAGES',
-	  MODE_ACTIVITIES: 'ACTIVITIES',
-	  MODE_DEADLINES: 'DEADLINES',
-	  getDefault: function getDefault() {
-	    return this.MODE_STAGES;
-	  },
-	  getAll: function getAll() {
-	    return [this.MODE_STAGES, this.MODE_ACTIVITIES, this.MODE_DEADLINES];
-	  },
-	  normalize: function normalize(mode) {
-	    return this.getAll().includes(mode) ? mode : this.getDefault();
-	  }
-	};
-	Object.freeze(ViewMode);
-
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -1018,7 +1054,8 @@ this.BX.Crm = this.BX.Crm || {};
 	var _onPullStageChanged = /*#__PURE__*/new WeakSet();
 	var _onPullStageDeleted = /*#__PURE__*/new WeakSet();
 	var PullManager = function PullManager(_grid) {
-	  var _this = this;
+	  var _data$additionalPullT,
+	    _this = this;
 	  babelHelpers.classCallCheck(this, PullManager);
 	  _classPrivateMethodInitSpec$2(this, _onPullStageDeleted);
 	  _classPrivateMethodInitSpec$2(this, _onPullStageChanged);
@@ -1040,6 +1077,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  var _options = {
 	    moduleId: _data.moduleId,
 	    pullTag: _data.pullTag,
+	    additionalPullTags: (_data$additionalPullT = _data.additionalPullTags) !== null && _data$additionalPullT !== void 0 ? _data$additionalPullT : [],
 	    userId: _data.userId,
 	    additionalData: {
 	      viewMode: _data.viewMode
@@ -1217,5 +1255,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.PullManager = PullManager;
 	exports.ViewMode = ViewMode;
 
-}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX,BX.Main,BX.Event,BX.Pull,BX.CRM.Kanban,BX));
+}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX.Crm.Integration.Analytics,BX,BX.Main,BX.Event,BX.Pull,BX.CRM.Kanban,BX));
 //# sourceMappingURL=kanban.js.map

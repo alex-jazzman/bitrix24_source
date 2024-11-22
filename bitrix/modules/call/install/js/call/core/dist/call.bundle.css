@@ -2214,6 +2214,67 @@
 	        justify-content: flex-start;
 }
 
+.bx-messenger-videocall-error-container {
+	width: 100%;
+	height: 100%;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+	gap: 32px;
+}
+
+.bx-messenger-videocall-error-container-icon-alert {
+	height: 69px;
+	width: 69px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='69' height='69' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='34.5' cy='34.5' r='34.5' fill='%23fff' fill-opacity='.25'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M49.027 41.846L36.99 21.796c-.928-1.54-3.138-1.54-4.046 0l-12.038 20.05c-.948 1.579.197 3.572 2.032 3.572h24.077c1.816 0 2.96-1.993 2.013-3.572zM33.24 28.781c0-.888.71-1.598 1.599-1.598h.217c.888 0 1.599.71 1.599 1.598v5.98c0 .888-.711 1.598-1.599 1.598h-.217c-.888 0-1.599-.71-1.599-1.598v-5.98zm3.73 11.605a2.022 2.022 0 01-2.013 2.013 2.021 2.021 0 01-2.013-2.013c0-1.105.908-2.013 2.013-2.013s2.013.908 2.013 2.013z' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+.bx-messenger-videocall-error-message {
+	font: 16px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: #FFFFFF;
+}
+
+.bx-messenger-videocall-error-button-self-test {
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: #FFFFFF;
+	padding: 6px 22px;
+	background-color: #2FC6F6;
+	border-radius: 64px;
+	cursor: pointer;
+	min-height: 30px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	-webkit-transition: 100ms linear background-color;
+	-o-transition: 100ms linear background-color;
+	transition: 100ms linear background-color;
+	text-transform: uppercase;
+}
+
+.bx-messenger-videocall-error-button-self-test:hover {
+	background-color: #3EDDFF;
+}
+
 .bx-messenger-videocall-user {
 	--border-radius: 6px;
 	width: 100%;
@@ -4695,14 +4756,14 @@ bx-messenger-videocall-page-navigator.left.active.force-visible{
 }
 .bx-call-view-device-selector-bottom-item-action {
 	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #2067B0;
-	border-bottom: 1px dashed #2067B0;
+	color: #A8ADB4;
+	border-bottom: 1px dashed #A8ADB4;
 	margin: 0 8px;
 	cursor: pointer;
 }
 .bx-call-view-device-selector-bottom-item-action:hover {
-	color: #525C69;
-	border-bottom: 1px dashed #525C69;
+	color: #959CA4;
+	border-bottom: 1px dashed #959CA4;
 }
 /* endregion */
 

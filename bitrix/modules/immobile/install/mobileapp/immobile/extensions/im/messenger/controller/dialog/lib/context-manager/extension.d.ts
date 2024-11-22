@@ -1,8 +1,10 @@
 declare type GoToMessageContextEvent = {
 	dialogId: string | number,
 	messageId: string | number,
+	context: string,
 	parentMessageId?: string,
 	withMessageHighlight?: boolean,
+	targetMessagePosition?: string,
 	showNotificationIfUnsupported?: boolean,
 	showPlanLimitWidget?: boolean,
 }

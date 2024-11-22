@@ -20,7 +20,7 @@ import { printRangeSelection } from './print-range-selection';
 import { printTableSelection } from './print-table-selection';
 import { visitTree } from './visit-tree';
 
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 
 export function generateContent(editor: TextEditor | LexicalEditor): string
 {

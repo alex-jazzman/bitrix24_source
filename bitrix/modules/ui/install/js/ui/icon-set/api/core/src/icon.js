@@ -13,7 +13,9 @@ export const Actions = Object.freeze({
 	CHEVRON_DOWN: 'chevron-down',
 	LEFT_SEMICIRCULAR_ANTICLOCKWISE_ARROW_2: 'left-semicircular-anticlockwise-arrow-2',
 	EXPAND_1: 'expand-1',
+	EXPAND_DIAGONAL: 'expand-diagonal',
 	COLLAPSE: 'collapse',
+	COLLAPSE_DIAGONAL: 'collapse-diagonal',
 	AGENDA_GAP: 'agenda-gap',
 	EXPAND_TO_FULL_SCREEN: 'expand-to-full-screen',
 	CURVED_ARROW_LEFT: 'curved-arrow-left',
@@ -551,6 +553,15 @@ export const Main = Object.freeze({
 	SUB_POINT: 'sub-point',
 	UNSUB_POINT: 'unsub-point',
 	SUB_TASK: 'subtask',
+	COLLAB: 'collab',
+	NO_PICTURE: 'no-picture',
+	THREAD: 'thread',
+	THREAD_SINGLE: 'thread-single',
+	BUSINESS_PROCESS_1: 'business-process-1',
+	WAITING_POINTS: 'waiting-points',
+	WAITING_LIST: 'waiting-list',
+	LINK_BOLD: 'link-bold',
+	NOTE: 'note',
 });
 
 export const ContactCenter = Object.freeze({

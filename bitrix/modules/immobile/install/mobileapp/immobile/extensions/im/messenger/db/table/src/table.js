@@ -40,6 +40,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 	/**
 	 * @abstract
 	 * @implements ITable
+	 * @template TStoredItem
+	 * @implements {ITable<TStoredItem>}
 	 */
 	class Table
 	{
@@ -69,6 +71,18 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			{
 				this.table = new DatabaseTable(this.getName(), this.getFields());
 			}
+
+			this.getPrimaryKey();
+		}
+
+		/**
+		 * @abstract
+		 * @desc Method must be return primary key. Composite primary key not supported!
+		 * @return {string}
+		 */
+		getPrimaryKey()
+		{
+			throw new Error(`${this.constructor.name}: method getPrimaryKey must be override`);
 		}
 
 		saveDateFieldHandler(key, value)
@@ -273,6 +287,12 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return this.table.getMap();
 		}
 
+		/**
+		 * @param {Array<TStoredItem>} items
+		 * @param {boolean} replace
+		 * @param {boolean} ignoreErrors
+		 * @return {Promise<{lastInsertId: number, columns: *[], changes: number, rows: *[], errors: Error[]} | void>}
+		 */
 		add(items, replace = true, ignoreErrors = false)
 		{
 			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
@@ -324,8 +344,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		/**
 		 *
-		 * @param {TableGetListOptions} options
-		 * @return {Promise<{items: Array}>}
+		 * @param {TableGetListOptions<TStoredItem>} options
+		 * @return {Promise<{items: Array<TStoredItem>}>}
 		 */
 		async getList(options)
 		{
@@ -343,6 +363,10 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return result;
 		}
 
+		/**
+		 * @param {string | number} id
+		 * @return {Promise<TStoredItem | null>}
+		 */
 		async getById(id)
 		{
 			if (!this.isSupported || !Feature.isLocalStorageEnabled)
@@ -352,7 +376,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 			const result = await this.getList({
 				filter: {
-					id,
+					[this.getPrimaryKey()]: id,
 				},
 				limit: 1,
 			});
@@ -365,6 +389,11 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return null;
 		}
 
+		/**
+		 * @param {Array<string | number>} idList
+		 * @param shouldRestoreRows
+		 * @return {Promise<{items: Array<TStoredItem>}>}
+		 */
 		async getListByIds(idList, shouldRestoreRows = true)
 		{
 			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
@@ -378,7 +407,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				query: `
 					SELECT * 
 					FROM ${this.getName()} 
-					WHERE id IN (${idsFormatted})
+					WHERE ${this.getPrimaryKey()} IN (${idsFormatted})
 				`,
 			});
 
@@ -428,11 +457,11 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				query: `
 					DELETE
 					FROM ${this.getName()}
-					WHERE id IN (${idsFormatted})
+					WHERE ${this.getPrimaryKey()} IN (${idsFormatted})
 				`,
 			});
 
-			logger.log(`Table.deleteByIdList complete: ${this.getName()}`, idList);
+			logger.log(`${this.constructor.name}.deleteByIdList complete: ${this.getName()}`, idList);
 
 			return result;
 		}
@@ -472,6 +501,20 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			}
 
 			return this.table.create();
+		}
+
+		async truncate()
+		{
+			if (this.isSupported)
+			{
+				return this.executeSql({
+					query: `DELETE FROM ${this.getName()}`,
+				});
+			}
+
+			logger.log(`Table.truncate complete: ${this.getName()}`);
+
+			return Promise.resolve();
 		}
 
 		drop()

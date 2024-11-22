@@ -82,3 +82,11 @@ export type ChatConvertParams = {
 	newType: string,
 	newPermissions: JsonObject,
 };
+
+export type ChatDeleteParams = {
+	dialogId: string,
+	chatId: number,
+	userId: string,
+	type: string,
+	parentChatId: number,
+};

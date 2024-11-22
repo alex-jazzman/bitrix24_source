@@ -2,9 +2,9 @@
  * @module ui-system/layout/dialog-footer
  */
 jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
-	const { isEmpty } = require('utils/object');
+	const { isEmpty, isFunction, isObjectLike } = require('utils/object');
 	const { Color, Component, Indent } = require('tokens');
-	const { Button, ButtonSize, ButtonClass } = require('ui-system/form/buttons/button');
+	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
 
 	const IS_IOS = Application.getPlatform() === 'ios';
 	const SAFE_AREA_HEIGHT = 34;
@@ -16,6 +16,7 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 	 * @property {ButtonProps} keyboardButton
 	 * @property {Color} backgroundColor
 	 * @property {Object} children
+	 * @property {boolean} [isShowKeyboard=false]
 	 *
 	 * @class DialogFooter
 	 */
@@ -31,8 +32,8 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 
 			this.state = {
 				footerHeight: 0,
-				focusButtonHeight: 0,
-				isShowKeyboard: false,
+				keyboardButtonHeight: 0,
+				isShowKeyboard: props.isShowKeyboard ?? false,
 			};
 		}
 
@@ -75,22 +76,39 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 		renderKeyboardButton()
 		{
 			const { keyboardButton } = this.props;
+			const keyboardButtonParams = this.getKeyboardButtonParams();
 
-			if (isEmpty(keyboardButton))
+			if (isFunction(keyboardButton))
 			{
-				return null;
+				return keyboardButton(keyboardButtonParams);
 			}
 
-			return Button({
+			return Button(keyboardButtonParams);
+		}
+
+		/**
+		 * @returns {ButtonProps}
+		 */
+		getKeyboardButtonParams()
+		{
+			const { keyboardButton } = this.props;
+
+			const baseParams = {
 				forwardRef: (ref) => {
 					this.buttonRef = ref;
 				},
-				testId: 'OPEN_BUTTON_SHEET',
-				size: ButtonSize.XL,
+				testId: 'KEYBOARD_FOOTER_BUTTON',
+				size: this.getKeyboardButtonSize(),
 				stretched: true,
 				borderRadius: 0,
-				...keyboardButton,
-			});
+			};
+
+			if (isObjectLike(keyboardButton))
+			{
+				return { ...keyboardButton, ...baseParams };
+			}
+
+			return baseParams;
 		}
 
 		renderFooterButton()
@@ -107,7 +125,7 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 					style: {
 						marginVertical: this.#getPaddingVertical(),
 					},
-					onLayout: this.#handleOnLayoutFooterHeight,
+					onLayout: this.#handleOnLayoutFooter,
 				},
 				...children,
 			);
@@ -117,12 +135,54 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 		{
 			if (isShowKeyboard)
 			{
-				this.#handleOnLayoutFocusButtonHeight({ isShowKeyboard });
+				this.#handleOnLayoutKeyboardButtonHeight({ isShowKeyboard });
 			}
 			else
 			{
-				this.#handleOnLayoutFooterHeight({ isShowKeyboard });
+				this.#handleOnLayoutFooter({ isShowKeyboard });
 			}
+		}
+
+		#handleOnLayoutKeyboardButtonHeight = ({ isShowKeyboard }) => {
+			const keyboardButtonHeight = this.getKeyboardButtonSize().getHeight();
+
+			this.setState({ keyboardButtonHeight, isShowKeyboard });
+			this.onLayoutFooterHeight({ height: keyboardButtonHeight });
+		};
+
+		#handleOnLayoutFooter = ({ height, width, isShowKeyboard }) => {
+			const { footerHeight: stateFooterHeight } = this.state;
+			const footerHeight = height > 0 ? this.#getFooterHeight(height) : stateFooterHeight;
+
+			this.setState({ footerHeight, isShowKeyboard });
+			this.onLayoutFooterHeight({ height: footerHeight, width });
+		};
+
+		onLayoutFooterHeight(params)
+		{
+			const { onLayoutFooterHeight } = this.props;
+
+			if (onLayoutFooterHeight)
+			{
+				onLayoutFooterHeight(params);
+			}
+		}
+
+		#getFooterHeight(height)
+		{
+			return height + (this.#getPaddingVertical() * 2) + this.#getPaddingBottom();
+		}
+
+		#getPaddingVertical()
+		{
+			return Indent.XL.toNumber();
+		}
+
+		#getBackgroundColor()
+		{
+			const { backgroundColor } = this.props;
+
+			return Color.resolve(backgroundColor, Color.bgPrimary).toHex();
 		}
 
 		/**
@@ -141,61 +201,29 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 			return SAFE_AREA_HEIGHT;
 		}
 
-		#handleOnLayoutFocusButtonHeight = ({ isShowKeyboard }) => {
-			const { onLayoutFooterHeight } = this.props;
-			const focusButtonHeight = 48;
-
-			this.setState({ focusButtonHeight, isShowKeyboard });
-
-			onLayoutFooterHeight({
-				height: focusButtonHeight,
-			});
-		};
-
-		#handleOnLayoutFooterHeight = ({ height, width, isShowKeyboard }) => {
-			const { footerHeight: stateFooterHeight } = this.state;
-			const { onLayoutFooterHeight } = this.props;
-			const footerHeight = height > 0 ? this.#getFooterHeight(height) : stateFooterHeight;
-
-			this.setState({
-				footerHeight,
-				isShowKeyboard,
-			});
-
-			onLayoutFooterHeight({
-				height: footerHeight,
-				width,
-			});
-		};
-
-		#getFooterHeight(height)
+		getKeyboardButtonSize()
 		{
-			return height + (this.#getPaddingVertical() * 2) + this.#getPaddingBottom();
-		}
-
-		#getPaddingVertical()
-		{
-			return Indent.XL.toNumber();
-		}
-
-		#getBackgroundColor()
-		{
-			const { backgroundColor } = this.props;
-
-			return Color.resolve(backgroundColor, Color.bgPrimary).toHex();
+			return ButtonSize.XL;
 		}
 	}
 
 	DialogFooter.defaultProps = {
 		safeArea: true,
+		isShowKeyboard: false,
 	};
 
 	DialogFooter.propTypes = {
 		safeArea: PropTypes.bool,
-		keyboardButton: PropTypes.shape(ButtonClass.propTypes),
+		keyboardButton: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
 		onLayoutFooterHeight: PropTypes.func,
 		backgroundColor: PropTypes.instanceOf(Color),
-		children: PropTypes.arrayOf(PropTypes.object),
+		isShowKeyboard: PropTypes.bool,
+		children: PropTypes.arrayOf(
+			PropTypes.oneOfType([
+				PropTypes.bool,
+				PropTypes.object,
+			]),
+		),
 	};
 
 	module.exports = {

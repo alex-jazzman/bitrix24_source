@@ -4,28 +4,143 @@ this.BX.Sign = this.BX.Sign || {};
 (function (exports,main_core,ui_notification,ui_sidepanelContent) {
 	'use strict';
 
+	async function request(method, endpoint, data, notifyError = true) {
+	  const config = {
+	    method
+	  };
+	  if (method === 'POST') {
+	    Object.assign(config, {
+	      data
+	    }, {
+	      preparePost: false,
+	      headers: [{
+	        name: 'Content-Type',
+	        value: 'application/json'
+	      }]
+	    });
+	  }
+	  try {
+	    var _response$errors;
+	    const response = await main_core.ajax.runAction(endpoint, config);
+	    if (((_response$errors = response.errors) == null ? void 0 : _response$errors.length) > 0) {
+	      throw new Error(response.errors[0].message);
+	    }
+	    return response.data;
+	  } catch (ex) {
+	    var _errors$0$code, _errors$, _errors$0$message, _errors$2;
+	    if (!notifyError) {
+	      return ex;
+	    }
+	    const {
+	      message = `Error in ${endpoint}`,
+	      errors = []
+	    } = ex;
+	    const errorCode = (_errors$0$code = (_errors$ = errors[0]) == null ? void 0 : _errors$.code) != null ? _errors$0$code : '';
+	    if (errorCode === 'SIGN_CLIENT_CONNECTION_ERROR') {
+	      const stub = new ui_sidepanelContent.StubNotAvailable({
+	        title: main_core.Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_TITLE'),
+	        desc: main_core.Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_DESC'),
+	        type: ui_sidepanelContent.StubType.noConnection,
+	        link: {
+	          text: main_core.Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_LINK_TEXT'),
+	          value: '18740976',
+	          type: ui_sidepanelContent.StubLinkType.helpdesk
+	        }
+	      });
+	      stub.openSlider();
+	      throw ex;
+	    }
+	    if (errorCode === 'LICENSE_LIMITATIONS') {
+	      top.BX.UI.InfoHelper.show('limit_office_e_signature_box');
+	      throw ex;
+	    }
+	    if (errorCode === 'SIGN_DOCUMENT_INCORRECT_STATUS') {
+	      const stub = new ui_sidepanelContent.StubNotAvailable({
+	        title: main_core.Loc.getMessage('SIGN_DOCUMENT_INCORRECT_STATUS_STUB_TITLE'),
+	        desc: main_core.Loc.getMessage('SIGN_DOCUMENT_INCORRECT_STATUS_STUB_DESC'),
+	        type: ui_sidepanelContent.StubType.notAvailable
+	      });
+	      stub.openSlider();
+
+	      //close previous slider (with editor)
+	      const slider = BX.SidePanel.Instance.getTopSlider();
+	      const onSliderCloseHandler = e => {
+	        if (slider !== e.getSlider()) {
+	          return;
+	        }
+	        window.top.BX.removeCustomEvent(slider.getWindow(), 'SidePanel.Slider:onClose', onSliderCloseHandler);
+	        const sliders = window.top.BX.SidePanel.Instance.getOpenSliders();
+	        for (let i = sliders.length - 2; i >= 0; i--) {
+	          if (sliders[i].getUrl().startsWith('/sign/doc/')) {
+	            sliders[i].close();
+	            return;
+	          }
+	        }
+	      };
+	      window.top.BX.addCustomEvent(slider.getWindow(), 'SidePanel.Slider:onClose', onSliderCloseHandler);
+	      throw ex;
+	    }
+	    if (errorCode === 'B2E_RESTRICTED_ON_TARIFF' || errorCode === 'B2E_SIGNERS_LIMIT_REACHED_ON_TARIFF') {
+	      top.BX.UI.InfoHelper.show('limit_office_e_signature');
+	      throw ex;
+	    }
+	    const content = (_errors$0$message = (_errors$2 = errors[0]) == null ? void 0 : _errors$2.message) != null ? _errors$0$message : message;
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Text.encode(content),
+	      autoHideDelay: 4000
+	    });
+	    throw ex;
+	  }
+	}
+	function post(endpoint, data = null, notifyError = true) {
+	  return request('POST', endpoint, data, notifyError);
+	}
+
+	class TemplateApi {
+	  getList() {
+	    return post('sign.api_v1.b2e.document.template.list');
+	  }
+	  completeTemplate(templateUid) {
+	    return post('sign.api_v1.b2e.document.template.complete', {
+	      uid: templateUid
+	    });
+	  }
+	  send(templateUid) {
+	    return post('sign.api_v1.b2e.document.template.send', {
+	      uid: templateUid
+	    });
+	  }
+	}
+
 	const MemberRole = Object.freeze({
 	  assignee: 'assignee',
 	  signer: 'signer',
 	  editor: 'editor',
 	  reviewer: 'reviewer'
 	});
+	const MemberStatus = Object.freeze({
+	  done: 'done',
+	  wait: 'wait',
+	  ready: 'ready',
+	  refused: 'refused',
+	  stopped: 'stopped',
+	  stoppableReady: 'stoppable_ready',
+	  processing: 'processing'
+	});
 
 	var _post = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("post");
-	var _request = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("request");
 	class Api {
 	  constructor() {
-	    Object.defineProperty(this, _request, {
-	      value: _request2
-	    });
 	    Object.defineProperty(this, _post, {
 	      value: _post2
 	    });
+	    this.template = new TemplateApi();
 	  }
-	  register(blankId, scenarioType = null) {
+	  register(blankId, scenarioType = null, asTemplate = false) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.register', {
 	      blankId,
-	      scenarioType
+	      scenarioType,
+	      asTemplate
 	    });
 	  }
 	  upload(uid) {
@@ -44,10 +159,11 @@ this.BX.Sign = this.BX.Sign || {};
 	      scenario
 	    });
 	  }
-	  createBlank(files, scenario = null) {
+	  createBlank(files, scenario = null, forTemplate = false) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.blank.create', {
 	      files,
-	      scenario
+	      scenario,
+	      forTemplate
 	    });
 	  }
 	  saveBlank(documentUid, blocks) {
@@ -254,6 +370,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      externalProviderId
 	    });
 	  }
+	  setDecisionToSesB2eAgreement() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.member.communication.setAgreementDecision', {});
+	  }
 	  createDocumentChat(chatType, documentId, isEntityId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.im.groupChat.createDocumentChat', {
 	      chatType,
@@ -261,109 +380,24 @@ this.BX.Sign = this.BX.Sign || {};
 	      isEntityId
 	    });
 	  }
-	  setDecisionToSesB2eAgreement() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.member.communication.setAgreementDecision', {});
-	  }
 	  getDocumentFillAndStartProgress(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.getFillAndStartProgress', {
 	      uid
 	    });
 	  }
-	}
-	function _post2(endpoint, data = null, notifyError) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _request)[_request]('POST', endpoint, data, notifyError);
-	}
-	async function _request2(method, endpoint, data, notifyError = true) {
-	  const config = {
-	    method
-	  };
-	  if (method === 'POST') {
-	    Object.assign(config, {
-	      data
-	    }, {
-	      preparePost: false,
-	      headers: [{
-	        name: 'Content-Type',
-	        value: 'application/json'
-	      }]
+	  getMember(uid) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.get', {
+	      uid
 	    });
 	  }
-	  try {
-	    var _response$errors;
-	    const response = await main_core.ajax.runAction(endpoint, config);
-	    if (((_response$errors = response.errors) == null ? void 0 : _response$errors.length) > 0) {
-	      throw new Error(response.errors[0].message);
-	    }
-	    return response.data;
-	  } catch (ex) {
-	    var _errors$0$code, _errors$, _errors$0$message, _errors$2;
-	    if (!notifyError) {
-	      return ex;
-	    }
-	    const {
-	      message = `Error in ${endpoint}`,
-	      errors = []
-	    } = ex;
-	    const errorCode = (_errors$0$code = (_errors$ = errors[0]) == null ? void 0 : _errors$.code) != null ? _errors$0$code : '';
-	    if (errorCode === 'SIGN_CLIENT_CONNECTION_ERROR') {
-	      const stub = new ui_sidepanelContent.StubNotAvailable({
-	        title: main_core.Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_TITLE'),
-	        desc: main_core.Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_DESC'),
-	        type: ui_sidepanelContent.StubType.noConnection,
-	        link: {
-	          text: main_core.Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_LINK_TEXT'),
-	          value: '18740976',
-	          type: ui_sidepanelContent.StubLinkType.helpdesk
-	        }
-	      });
-	      stub.openSlider();
-	      throw ex;
-	    }
-	    if (errorCode === 'LICENSE_LIMITATIONS') {
-	      top.BX.UI.InfoHelper.show('limit_office_e_signature_box');
-	      throw ex;
-	    }
-	    if (errorCode === 'SIGN_DOCUMENT_INCORRECT_STATUS') {
-	      const stub = new ui_sidepanelContent.StubNotAvailable({
-	        title: main_core.Loc.getMessage('SIGN_DOCUMENT_INCORRECT_STATUS_STUB_TITLE'),
-	        desc: main_core.Loc.getMessage('SIGN_DOCUMENT_INCORRECT_STATUS_STUB_DESC'),
-	        type: ui_sidepanelContent.StubType.notAvailable
-	      });
-	      stub.openSlider();
-
-	      //close previous slider (with editor)
-	      const slider = BX.SidePanel.Instance.getTopSlider();
-	      const onSliderCloseHandler = e => {
-	        if (slider !== e.getSlider()) {
-	          return;
-	        }
-	        window.top.BX.removeCustomEvent(slider.getWindow(), 'SidePanel.Slider:onClose', onSliderCloseHandler);
-	        const sliders = window.top.BX.SidePanel.Instance.getOpenSliders();
-	        for (let i = sliders.length - 2; i >= 0; i--) {
-	          if (sliders[i].getUrl().startsWith('/sign/doc/')) {
-	            sliders[i].close();
-	            return;
-	          }
-	        }
-	      };
-	      window.top.BX.addCustomEvent(slider.getWindow(), 'SidePanel.Slider:onClose', onSliderCloseHandler);
-	      throw ex;
-	    }
-	    if (errorCode === 'B2E_RESTRICTED_ON_TARIFF' || errorCode === 'B2E_SIGNERS_LIMIT_REACHED_ON_TARIFF') {
-	      top.BX.UI.InfoHelper.show('limit_office_e_signature');
-	      throw ex;
-	    }
-	    const content = (_errors$0$message = (_errors$2 = errors[0]) == null ? void 0 : _errors$2.message) != null ? _errors$0$message : message;
-	    ui_notification.UI.Notification.Center.notify({
-	      content: main_core.Text.encode(content),
-	      autoHideDelay: 4000
-	    });
-	    throw ex;
-	  }
+	}
+	function _post2(endpoint, data = null, notifyError = true) {
+	  return post(endpoint, data, notifyError);
 	}
 
-	exports.MemberRole = MemberRole;
 	exports.Api = Api;
+	exports.MemberRole = MemberRole;
+	exports.MemberStatus = MemberStatus;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX,BX.UI.Sidepanel.Content));
 //# sourceMappingURL=api.bundle.js.map

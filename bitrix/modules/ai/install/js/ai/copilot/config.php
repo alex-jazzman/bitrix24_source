@@ -33,6 +33,7 @@ return [
 		'ai.engine',
 		'ui.design-tokens',
 		'ui.icon-set.editor',
+		'ui.icon-set.crm',
 		'ui.label',
 		'main.loader',
 		'ai.speech-converter',

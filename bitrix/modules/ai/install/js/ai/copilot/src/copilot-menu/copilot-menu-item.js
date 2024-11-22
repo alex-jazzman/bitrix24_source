@@ -1,6 +1,7 @@
 import { EventEmitter } from 'main.core.events';
 
 export type BaseMenuItemOptions = {
+	id?: string;
 	code: string;
 	text?: string;
 	href?: string;
@@ -11,6 +12,7 @@ export type BaseMenuItemOptions = {
 }
 
 export type BaseMenuItemGetOptions = {
+	id: string;
 	code: string;
 	text: string;
 	icon: string;
@@ -20,6 +22,7 @@ export type BaseMenuItemGetOptions = {
 
 export class BaseMenuItem extends EventEmitter
 {
+	id: string = '';
 	code: string;
 	text: string;
 	icon: string;
@@ -34,6 +37,10 @@ export class BaseMenuItem extends EventEmitter
 		super();
 		this.setEventNamespace('AI.CopilotMenuItem');
 
+		if (options.id) {
+			this.id = options.id;
+		}
+
 		this.code = options.code;
 		this.text = options.text;
 		this.icon = options.icon;
@@ -46,6 +53,7 @@ export class BaseMenuItem extends EventEmitter
 	getOptions(): BaseMenuItemGetOptions
 	{
 		return {
+			id: this.id,
 			code: this.code,
 			text: this.text,
 			icon: this.icon,

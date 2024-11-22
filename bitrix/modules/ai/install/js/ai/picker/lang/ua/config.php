@@ -1,0 +1,25 @@
+<?php
+$MESS["AI_JS_PICKER_GENERAL_AGREE_WITH_TERMS"] = "Погоджуюся";
+$MESS["AI_JS_PICKER_GENERAL_HELP_LINK"] = "Як написати ефективні підказки";
+$MESS["AI_JS_PICKER_HISTORY_LOADING"] = "Завантаження історії...";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_COPY"] = "Копіювати";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_COPY_NOTIFY"] = "Зображення скопійовано";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_USE"] = "Уставити";
+$MESS["AI_JS_PICKER_IMAGE_EMPTY_STATE"] = "Ваші зображення відображатимуться тут";
+$MESS["AI_JS_PICKER_IMAGE_HEADER"] = "Опишіть потрібне зображення";
+$MESS["AI_JS_PICKER_IMAGE_HINT_TEXT"] = "ШІ ImageAssistant скоро розумітиме вашу мову. Поки використовуйте англійську.";
+$MESS["AI_JS_PICKER_IMAGE_HINT_TITLE"] = "Опис зображення потрібно написати англійською мовою";
+$MESS["AI_JS_PICKER_IMAGE_MAX_CAPACITY"] = "Зберігання останніх запитів (#capacity#)";
+$MESS["AI_JS_PICKER_IMAGE_PLACEHOLDER"] = "Приклад: великий букет червоних троянд у формі серця на білому фоні";
+$MESS["AI_JS_PICKER_IMAGE_SUBMIT"] = "Згенерувати зображення";
+$MESS["AI_JS_PICKER_INIT_ERROR"] = "У роботі ШІ сталася помилка, спробуйте оновити сторінку.";
+$MESS["AI_JS_PICKER_TEXT_ACTION_COPY"] = "Копіювати";
+$MESS["AI_JS_PICKER_TEXT_ACTION_COPY_NOTIFY"] = "Текст скопійовано";
+$MESS["AI_JS_PICKER_TEXT_ACTION_USE"] = "Уставити";
+$MESS["AI_JS_PICKER_TEXT_GENERATE_FAILED"] = "Щось пішло не так, спробуйте ще раз.";
+$MESS["AI_JS_PICKER_TEXT_HEADER"] = "Про що ви хочете написати?";
+$MESS["AI_JS_PICKER_TEXT_LOADER"] = "Триває написання";
+$MESS["AI_JS_PICKER_TEXT_MAX_CAPACITY"] = "Зберігання останніх запитів (#capacity#)";
+$MESS["AI_JS_PICKER_TEXT_PLACEHOLDER"] = "Приклад: написати новину про знижки на букети троянд";
+$MESS["AI_JS_PICKER_TEXT_PREVIOUS_ITEMS_LABEL"] = "Попередні версії";
+$MESS["AI_JS_PICKER_TEXT_SUBMIT"] = "Згенерувати текст";

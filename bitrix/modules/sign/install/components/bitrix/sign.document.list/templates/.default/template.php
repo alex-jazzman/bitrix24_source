@@ -18,6 +18,8 @@ global $APPLICATION;
 
 $APPLICATION->SetTitle($arResult['TITLE']);
 
+const COMPONENT_TYPE_SAFE = 'safe';
+
 Extension::load([
 	'ui.icons.disk',
 	'ui.label',
@@ -189,17 +191,102 @@ $getActionButton = static function (string $role, int $memberId): string {
 	return $button->render();
 };
 
-$getDownloadResultFileTemplate = static function (?string $extensionName, ?string $downloadUrl, ?string $name = null): string {
+$getDownloadResultFileTemplate = static function (
+	?string $extensionName,
+	?string $downloadUrl,
+	?string $name = null,
+	?string $entityId = null,
+	?string $downloadUrlForPrinted = null
+) use (
+	$arParams
+): string {
+
 	ob_start();
 	?>
-	<a href="<?= htmlspecialcharsbx($downloadUrl) ?>" class="ui-label ui-label-light sign-personal-download-result-file-wrapper">
-		<div class="ui-label-inner sign-personal-download-result-file-inner">
-			<div class="ui-icon ui-icon-file-<?= htmlspecialcharsbx($extensionName) ?> sign-personal-download-result-icon"><i></i></div>
-			<div class="sign-personal-download-result-file-text">
-				<?= htmlspecialcharsbx($name ?? $extensionName) ?>
-			</div>
-		</div>
-	</a>
+
+	<?php
+	$downloadUrlObject = new \Bitrix\Main\Web\Uri($downloadUrl);
+	$downloadUrlForPrintedObject = new \Bitrix\Main\Web\Uri($downloadUrlForPrinted);
+
+	$isValidDownloadUrl = str_starts_with($downloadUrlObject->getPath(), '/bitrix/services/main/ajax.php');
+	$isValidDownloadUrlForPrinted = str_starts_with($downloadUrlForPrintedObject->getPath(), '/bitrix/services/main/ajax.php') ?? null;
+
+	if (mb_strtolower($arParams['COMPONENT_TYPE']) === COMPONENT_TYPE_SAFE): ?>
+			<?php if ($isValidDownloadUrl || $isValidDownloadUrlForPrinted): ?>
+				<?php if ($downloadUrlForPrinted !== null): ?>
+					<div class="ui-btn-split ui-btn-light-border" id="menu_<?= htmlspecialcharsbx($entityId) ?>">
+						<a href="<?= htmlspecialcharsbx($downloadUrlObject) ?>" class="ui-btn-main sign-personal-download-btn">
+							<?= Loc::getMessage('SIGN_DOCUMENT_GRID_COLUMN_DOWNLOAD_BUTTON') ?>
+						</a>
+						<button class="ui-btn-menu" id="menu_btn_<?= htmlspecialcharsbx($entityId) ?>"></button>
+					</div>
+				<?php else: ?>
+					<button class="ui-btn ui-btn-light-border" id="menu_<?= htmlspecialcharsbx($entityId) ?>">
+						<a href="<?= htmlspecialcharsbx($downloadUrlObject) ?>" class="sign-personal-download-btn">
+							<?= Loc::getMessage('SIGN_DOCUMENT_GRID_COLUMN_DOWNLOAD_BUTTON') ?>
+						</a>
+					</button>
+				<?php endif; ?>
+			<?php endif; ?>
+		<script>
+			BX.ready(function() {
+				const menuButton = BX("menu_btn_<?= CUtil::JSEscape($entityId) ?>");
+
+				const menu = new BX.PopupMenuWindow({
+					bindElement: menuButton,
+					offsetLeft: -160,
+					closeByEsc: true,
+					className: 'sign-personal-download-dropdown-menu-btn',
+					items: [
+						<?php if ($downloadUrlForPrinted !== null && $isValidDownloadUrlForPrinted): ?>
+							{
+								text: "<?= CUtil::JSEscape(Loc::getMessage('SIGN_DOCUMENT_DOWNLOAD_PRINTED'))?>",
+								href: "<?= CUtil::JSEscape($downloadUrlForPrintedObject)?>"
+							},
+						<? endif; ?>
+						<?php if ($downloadUrl !== null && $isValidDownloadUrl): ?>
+							{
+								text: "<?= CUtil::JSEscape(Loc::getMessage('SIGN_DOCUMENT_DOWNLOAD_ARCHIVE'))?>",
+								href: "<?= CUtil::JSEscape($downloadUrlObject)?>"
+							},
+						<? endif; ?>
+					]
+				});
+
+				BX.bind(menuButton, 'click', (event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					menu.popupWindow.show();
+				});
+
+				BX.bind(document, 'click', () => {
+					if (menu.popupWindow.isShown())
+					{
+						menu.popupWindow.close();
+					}
+				});
+
+				BX.bind(document.querySelector('.main-grid-container'), 'scroll', () => {
+					if (menu.popupWindow.isShown())
+					{
+						menu.popupWindow.close();
+					}
+				})
+			});
+		</script>
+	<?php else: ?>
+		<?php if ($isValidDownloadUrl): ?>
+			<a href="<?= htmlspecialcharsbx($downloadUrlObject) ?>" class="ui-label ui-label-light sign-personal-download-result-file-wrapper">
+				<div class="ui-label-inner sign-personal-download-result-file-inner">
+					<div class="ui-icon ui-icon-file-<?= htmlspecialcharsbx($extensionName) ?> sign-personal-download-result-icon"><i></i></div>
+					<div class="sign-personal-download-result-file-text">
+						<?= htmlspecialcharsbx($name ?? $extensionName) ?>
+					</div>
+				</div>
+			</a>
+		<?php endif; ?>
+	<?php endif; ?>
+
 	<?php
 	return (string)ob_get_clean();
 };
@@ -287,8 +374,10 @@ $prepareGridData = static function ($documentData) use (
 		$data['DOWNLOAD_DOCUMENT'] = !$downloadResultFileInfo['DOWNLOAD_URL']
 			? ''
 			: $getDownloadResultFileTemplate(
-				$downloadResultFileInfo['EXTENSION'],
-				$downloadResultFileInfo['DOWNLOAD_URL']
+				extensionName: $downloadResultFileInfo['EXTENSION'],
+				downloadUrl: $downloadResultFileInfo['DOWNLOAD_URL'],
+				entityId: $data['ID'],
+				downloadUrlForPrinted: $downloadResultFileInfo['DOWNLOAD_URL_PRINTED']
 			);
 	}
 

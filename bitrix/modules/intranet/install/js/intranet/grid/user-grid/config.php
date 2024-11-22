@@ -12,12 +12,14 @@ return [
 	'skip_core' => false,
 	'rel' => [
 		'ui.label',
-		'ui.dialogs.messagebox',
 		'ui.form-elements.field',
+		'main.popup',
 		'ui.cnt',
 		'intranet.reinvite',
-		'main.core',
 		'ui.icon-set.main',
+		'ui.dialogs.messagebox',
+		'im.public',
 		'ui.entity-selector',
+		'main.core',
 	],
 ];

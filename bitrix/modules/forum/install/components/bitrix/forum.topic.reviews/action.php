@@ -231,7 +231,7 @@ if ((empty($request["preview_comment"]) || $request["preview_comment"] == "N"))
 		endif;
 
 		$strURL = (!empty($post["back_page"]) ? $post["back_page"] : $APPLICATION->GetCurPageParam("",
-			array("MID", "SEF_APPLICATION_CUR_PAGE_URL", BX_AJAX_PARAM_ID, "result", "AJAX_CALL", "bxajaxid")));
+			array("MID", BX_AJAX_PARAM_ID, "result", "AJAX_CALL", "bxajaxid")));
 		$bNotModerated = ($arResult["FORUM"]["MODERATION"] != "Y" || CForumNew::CanUserModerateForum($arParams["FORUM_ID"], $USER->GetUserGroupArray()));
 		$strURL = ForumAddPageParams($strURL, array("MID" => $MID, "result" => ($bNotModerated ? "reply" : "not_approved")), true, false);
 		$strURL .= ($bNotModerated ? "#message".$MID : "#reviewnote");

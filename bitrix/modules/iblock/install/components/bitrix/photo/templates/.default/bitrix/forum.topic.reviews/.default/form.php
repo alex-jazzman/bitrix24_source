@@ -24,7 +24,7 @@ if (!empty($arResult["ERROR_MESSAGE"])):
 	$arResult["ERROR_MESSAGE"] = preg_replace(array("/<br(.*?)><br(.*?)>/is", "/<br(.*?)>$/is"), array("<br />", ""), $arResult["ERROR_MESSAGE"]);
 	?>
 	<div class="reviews-note-box reviews-note-error">
-		<div class="reviews-note-box-text"><?=ShowError($arResult["ERROR_MESSAGE"], "reviews-note-error");?></div>
+		<div class="reviews-note-box-text"><? ShowError($arResult["ERROR_MESSAGE"], "reviews-note-error");?></div>
 	</div>
 <?
 endif;

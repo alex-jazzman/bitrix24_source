@@ -1196,6 +1196,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		this._defaultProcessColor = "#ACE9FB";
 		this._defaultSuccessSuccessColor = "#DBF199";
 		this._defaultFailureColor = "#FFBEBD";
+		this._analyticsData = null;
 	};
 
 	BX.CrmProgressControl.prototype =
@@ -1354,17 +1355,19 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		{
 			return this.getPermissionChecker().isHasPermissionToMove(this.getCurrentStepId(), id);
 		},
-		isHasPermissionToMoveFailureStages()
-		{
-			return this.getPermissionChecker().isHasPermissionToMoveAtLeastOneFailureStage(this.getCurrentStepId());
-		},
 		isHasPermissionToMoveTerminationStages()
 		{
-			return this.getPermissionChecker().isHasPermissionToMoveAtLeastOneTerminationStage(this.getCurrentStepId());
+			return this.isHasPermissionToMoveSuccessStage() || this.isHasPermissionToMoveFailureStages();
 		},
 		isHasPermissionToMoveSuccessStage()
 		{
-			return this.getPermissionChecker().isHasPermissionToMoveSuccessStage(this.getCurrentStepId());
+			const canConvert = !this._terminationControl || this._terminationControl.isEnabled();
+
+			return canConvert && this.getPermissionChecker().isHasPermissionToMoveSuccessStage(this.getCurrentStepId());
+		},
+		isHasPermissionToMoveFailureStages()
+		{
+			return this.getPermissionChecker().isHasPermissionToMoveAtLeastOneFailureStage(this.getCurrentStepId());
 		},
 		showMissPermissionError()
 		{
@@ -1462,18 +1465,15 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				&& this._findStepInfoBySemantics('failure')
 			)
 			{
-				if (!this._terminationControl || this._terminationControl.isEnabled())
+				if (!this.isHasPermissionToMoveTerminationStages())
 				{
-					if (!this.isHasPermissionToMoveTerminationStages())
-					{
-						this.showMissPermissionError();
+					this.showMissPermissionError();
 
-						return;
-					}
-
-					// User have to make choice
-					this._openTerminationDialog();
+					return;
 				}
+
+				// User have to make choice
+				this._openTerminationDialog();
 
 				return;
 			}
@@ -1698,6 +1698,17 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				return;
 			}
 
+			if (BX?.Crm?.Integration?.Analytics) {
+				this._analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(
+						this.getEntityType(),
+						this.getEntityId(),
+					)
+					.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_LIST)
+					.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_GRID_PROGRESS_BAR)
+					.buildData();
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+			}
+
 			this._closeTerminationDialog();
 
 			let stepId = BX.type.isNotEmptyString(params.result) ? params.result : '';
@@ -1719,6 +1730,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				if (!this.isHasPermissionToMoveFailureStages())
 				{
 					this.showMissPermissionError();
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 
 					return;
 				}
@@ -1737,6 +1749,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				if (!this.isHasPermissionToMove(stepId))
 				{
 					this.showMissPermissionError();
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 
 					return;
 				}
@@ -1750,6 +1763,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					const finalScript = this.getSetting('finalScript', '');
 					if (finalScript !== '')
 					{
+						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 						eval(finalScript);
 
 						return;
@@ -1758,6 +1772,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					const finalUrl = this.getSetting('finalUrl', '');
 					if (finalUrl !== '')
 					{
+						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 						window.location = finalUrl;
 
 						return;
@@ -1963,7 +1978,28 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				return;
 			}
-			if (BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(type))
+
+			if (BX?.Crm?.Integration?.Analytics)
+			{
+				const stepSemantics = this._stepInfos[this._findStepInfoIndex(value)].semantics;
+
+				if (stepSemantics === 'apology' || stepSemantics === 'failure')
+				{
+					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_BUTTON;
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+				}
+				else if (stepSemantics === 'success')
+				{
+					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_BUTTON;
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+				}
+				else
+				{
+					this._analyticsData = null;
+				}
+			}
+
+				if (BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(type))
 			{
 				BX.ajax.runAction(serviceUrl, {
 						data: {
@@ -2058,14 +2094,28 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						stageId: BX.prop.getString(data, 'VALUE', null)
 					}
 				);
+				if (this._analyticsData)
+				{
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+				}
+
 				return;
 			}
 
 			BX.onCustomEvent(this, 'CrmProgressControlAfterSaveSucces', [ this, data ]);
 			BX.CrmProgressControl._synchronize(this);
+
+			if (this._analyticsData)
+			{
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+			}
 		},
 		_onSaveRequestFailure: function(data)
 		{
+			if (this._analyticsData)
+			{
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+			}
 			BX.onCustomEvent(self, 'CrmProgressControlAfterSaveFailed', [ this, data ]);
 		},
 		_openEntityEditorDialog: function(params)
@@ -2169,6 +2219,12 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				this._steps[i].enableHint(enable);
 			}
+		},
+		_registerAnalyticsCloseEvent(status)
+		{
+			this._analyticsData.status = status;
+
+			BX.UI.Analytics.sendData(this._analyticsData);
 		}
 	};
 

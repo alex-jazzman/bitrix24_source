@@ -27,7 +27,7 @@ import {
 import Button from '../../toolbar/button';
 import BasePlugin from '../base-plugin';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 import './copilot.css';
 import { CustomParagraphNode } from '../paragraph/custom-paragraph-node';
@@ -252,12 +252,25 @@ export class CopilotPlugin extends BasePlugin
 			this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
 
 			const selectionText = selection.getTextContent();
-			const selectedText = selectionText.trim().length > 0 ? selectionText : $getRoot().getTextContent();
 			const editorPosition = Dom.getPosition(this.getEditor().getScrollerContainer());
 			const width = Math.min(editorPosition.width, 600);
 
 			this.#lastSelection = selection.clone();
-			this.#copilot.setSelectedText(selectedText);
+
+			const selectedText = selectionText.trim();
+			if (selectedText.length > 0)
+			{
+				this.#copilot.setSelectedText(selectedText);
+			}
+			else
+			{
+				const wholeText = $getRoot().getTextContent().trim();
+				if (wholeText.length > 0)
+				{
+					this.#copilot.setContext(wholeText);
+				}
+			}
+
 			this.#copilot.show({ width });
 
 			this.#adjustDialogPosition();
@@ -295,7 +308,7 @@ export class CopilotPlugin extends BasePlugin
 
 		return new Promise((resolve, reject) => {
 			Runtime.loadExtension('ai.copilot')
-				.then(({ Copilot }) => {
+				.then(({ Copilot, CopilotEvents }) => {
 					if (this.isDestroyed())
 					{
 						reject(new Error('Copilot plugin was destroyed.'));
@@ -304,11 +317,12 @@ export class CopilotPlugin extends BasePlugin
 					}
 
 					this.#copilot = new Copilot({
+						showResultInCopilot: true,
 						...this.#copilotOptions,
 						autoHide: true,
 					});
 
-					this.#copilot.subscribe('finish-init', () => {
+					this.#copilot.subscribe(CopilotEvents.FINISH_INIT, () => {
 						if (this.isDestroyed())
 						{
 							reject(new Error('Copilot plugin was destroyed.'));
@@ -320,9 +334,9 @@ export class CopilotPlugin extends BasePlugin
 						resolve();
 					});
 
-					this.#copilot.subscribe('save', this.#handleCopilotSave.bind(this));
-					this.#copilot.subscribe('add_below', this.#handleCopilotAddBelow.bind(this));
-					this.#copilot.subscribe('hide', this.#handleCopilotHide.bind(this));
+					this.#copilot.subscribe(CopilotEvents.TEXT_SAVE, this.#handleCopilotSave.bind(this));
+					this.#copilot.subscribe(CopilotEvents.TEXT_PLACE_BELOW, this.#handleCopilotAddBelow.bind(this));
+					this.#copilot.subscribe(CopilotEvents.HIDE, this.#handleCopilotHide.bind(this));
 
 					this.#copilot.init();
 				})

@@ -3,6 +3,7 @@ import { ajax as Ajax, Dom, Extension, Loc, Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { UI } from 'ui.notification';
+import { BasicEditor } from 'ui.text-editor';
 import { BitrixVue } from 'ui.vue3';
 import ActionsPopup from './actions-popup';
 import type { ElementIdsType, SectionIdType, SubSectionIdType } from './analytics';
@@ -134,6 +135,7 @@ export class TodoEditorV2
 	#hiddenActionItems: string[] = [];
 	#actionsPopup: ?ActionsPopup = null;
 	#analytics: ?Analytics = null;
+	#textEditor: BasicEditor = null;
 
 	constructor(params: TodoEditorParams)
 	{
@@ -254,21 +256,69 @@ export class TodoEditorV2
 		this.#layoutApp = BitrixVue.createApp(TodoEditorComponent, {
 			deadline: this.#deadline,
 			defaultTitle: this.#defaultTitle,
-			defaultDescription: this.#defaultDescription,
-			onFocus: this.#onInputFocus.bind(this),
-			onSaveHotkeyPressed: this.#onSaveHotkeyPressed.bind(this),
-			popupMode: this.#popupMode,
 			currentUser: this.#currentUser,
 			pingSettings: this.#pingSettings,
-			copilotSettings: this.#copilotSettings,
 			colorSettings: this.#colorSettings,
 			actionsPopup: this.#getActionsPopup(),
 			blocks: this.#getBlocks(),
 			mode: this.#mode,
 			analytics: this.#getAnalyticsInstance(),
+			textEditor: this.getTextEditor(),
+			itemIdentifier: {
+				entityTypeId: this.#ownerTypeId,
+				entityId: this.#ownerId,
+			},
 		});
 
 		this.#layoutComponent = this.#layoutApp.mount(this.#container);
+	}
+
+	getTextEditor(): BasicEditor
+	{
+		if (this.#textEditor !== null)
+		{
+			return this.#textEditor;
+		}
+
+		this.#textEditor = new BasicEditor({
+			removePlugins: ['BlockToolbar'],
+			minHeight: 50,
+			maxHeight: this.#popupMode ? 126 : 600,
+			content: this.#defaultDescription,
+			placeholder: Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_ROLLED'),
+			paragraphPlaceholder: Loc.getMessage(
+				Type.isPlainObject(this.#copilotSettings)
+					? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1'
+					: null,
+			),
+			toolbar: [],
+			floatingToolbar: [
+				'bold', 'italic', 'underline', 'strikethrough',
+				'|',
+				'link', 'copilot',
+			],
+			collapsingMode: true,
+			copilot: {
+				copilotOptions: Type.isPlainObject(this.#copilotSettings) ? this.#copilotSettings : null,
+				triggerBySpace: true,
+			},
+			events: {
+				onFocus: () => {
+					this.#onInputFocus();
+				},
+				onEmptyContentToggle: (event: BaseEvent) => {
+					this.#eventEmitter.emit('onEmptyContentToggle', { isEmpty: event.getData().isEmpty });
+				},
+				onCollapsingToggle: (event: BaseEvent) => {
+					this.#eventEmitter.emit('onCollapsingToggle', { isOpen: event.getData().isOpen });
+				},
+				onMetaEnter: () => {
+					this.#onSaveHotkeyPressed();
+				},
+			},
+		});
+
+		return this.#textEditor;
 	}
 
 	#getActionsPopup(): ActionsPopup
@@ -481,8 +531,9 @@ export class TodoEditorV2
 	async #showPrefilledComponent(entityData: Object, blocksData: Object, mode: string = TodoEditorMode.ADD): void
 	{
 		await this.#initLayoutComponentForEdit(entityData, blocksData);
-		this.#scrollToTop();
 
+		this.getTextEditor().expand();
+		this.#scrollToTop();
 		this.setMode(mode);
 		this.setFocused();
 	}
@@ -592,6 +643,7 @@ export class TodoEditorV2
 					settings,
 					pingOffsets: userData.pingOffsets,
 					colorId: userData.colorId,
+					isCalendarSectionChanged: userData.isCalendarSectionChanged,
 				};
 
 				if (this.#mode === TodoEditorMode.UPDATE)
@@ -620,12 +672,12 @@ export class TodoEditorV2
 		return Promise.resolve(result);
 	}
 
-	#getAnalyticsLabel(data: Object): Object
+	#getAnalyticsLabel(data: Object): ?Object
 	{
 		const analyticsLabel = this.#getAnalyticsInstance();
 		if (analyticsLabel === null)
 		{
-			return {};
+			return null;
 		}
 
 		analyticsLabel
@@ -650,8 +702,16 @@ export class TodoEditorV2
 		}
 
 		const blockTypes = [];
+		const calendarBlockId = TodoEditorBlocksCalendar.methods.getId();
 		data.settings.forEach((block) => {
-			blockTypes.push(block.id);
+			if (data.isCalendarSectionChanged && block.id === calendarBlockId)
+			{
+				blockTypes.push('section_calendar');
+			}
+			else
+			{
+				blockTypes.push(block.id);
+			}
 		});
 		if (Type.isArrayFilled(blockTypes))
 		{
@@ -693,7 +753,7 @@ export class TodoEditorV2
 		return {
 			id: TodoEditorBlocksClient.methods.getId(),
 			title: Loc.getMessage('CRM_ACTIVITY_TODO_CLIENT_BLOCK_TITLE'),
-			icon: 'crm-activity__todo-editor-v2_client-icon.svg',
+			icon: 'crm-activity__todo-editor-v2_client-icon-v2.svg',
 			settings: {
 				entityTypeId: this.#ownerTypeId,
 				entityId: this.#ownerId,
@@ -706,7 +766,7 @@ export class TodoEditorV2
 		return {
 			id: TodoEditorBlocksLink.methods.getId(),
 			title: Loc.getMessage('CRM_ACTIVITY_TODO_LINK_BLOCK_TITLE'),
-			icon: 'crm-activity__todo-editor-v2_link-icon.svg',
+			icon: 'crm-activity__todo-editor-v2_link-icon-v2.svg',
 		};
 	}
 
@@ -728,7 +788,7 @@ export class TodoEditorV2
 		return {
 			id: TodoEditorBlocksAddress.methods.getId(),
 			title: Loc.getMessage('CRM_ACTIVITY_TODO_ADDRESS_BLOCK_TITLE'),
-			icon: 'crm-activity__todo-editor-v2_address-icon.svg',
+			icon: 'crm-activity__todo-editor-v2_address-icon-v2.svg',
 			settings: {
 				entityTypeId: this.#ownerTypeId,
 				entityId: this.#ownerId,
@@ -750,7 +810,7 @@ export class TodoEditorV2
 
 	getDescription(): String
 	{
-		return this.#layoutComponent?.getData().description ?? '';
+		return this.getTextEditor().getText();
 	}
 
 	setParentActivityId(activityId: Number): TodoEditorV2
@@ -811,26 +871,32 @@ export class TodoEditorV2
 
 	setFocused(): void
 	{
-		this.#layoutComponent.setTextareaFocused();
+		this.getTextEditor().focus(null, { defaultSelection: 'rootEnd' });
 	}
 
 	setDescription(description: String): TodoEditorV2
 	{
-		this.#layoutComponent.setDescription(description);
+		this.getTextEditor().setText(description);
 
 		return this;
 	}
 
 	cancel(params: CancelParams = {}): Promise
 	{
+		const animateCollapse = this.#shouldAnimateCollapse();
+
 		if (params?.sendAnalytics === false)
 		{
+			this.getTextEditor().collapse(animateCollapse);
+
 			return this.#clearValue();
 		}
 
 		const analytics = this.#getAnalyticsInstance();
 		if (analytics === null)
 		{
+			this.getTextEditor().collapse(animateCollapse);
+
 			return this.#clearValue();
 		}
 
@@ -859,6 +925,8 @@ export class TodoEditorV2
 
 		analytics.send();
 
+		this.getTextEditor().collapse(animateCollapse);
+
 		return this.#clearValue();
 	}
 
@@ -883,9 +951,17 @@ export class TodoEditorV2
 
 	resetToDefaults(): Promise
 	{
-		this.#layoutComponent.setDescription(this.#getDefaultDescription());
+		this.setDescription(this.#getDefaultDescription());
+		this.getTextEditor().collapse(this.#shouldAnimateCollapse());
 
 		return this.#clearData();
+	}
+
+	#shouldAnimateCollapse(): boolean
+	{
+		const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
+
+		return menuBar && menuBar.getFirstItemIdWithLayout() === 'todo';
 	}
 
 	#clearData(): Promise
@@ -893,7 +969,6 @@ export class TodoEditorV2
 		this.setDefaultDeadLine();
 		this.setMode(TodoEditorMode.ADD);
 
-		this.#layoutComponent.setWasUsed(false);
 		this.#layoutComponent.resetTitleAndDescription();
 		this.#layoutComponent.resetPingOffsetsToDefault();
 		this.#layoutComponent.resetResponsibleUserToDefault();
@@ -901,7 +976,6 @@ export class TodoEditorV2
 		this.#layoutComponent.resetCurrentActivityId();
 
 		Dom.removeClass(this.#container, '--is-edit');
-
 		this.#layoutComponent.closeBlocks();
 
 		return new Promise((resolve) => {
@@ -917,10 +991,9 @@ export class TodoEditorV2
 	#getDefaultDescription(): String
 	{
 		let messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT';
-		switch (this.#ownerTypeId)
+		if (this.#ownerTypeId === BX.CrmEntityType.enumeration.deal)
 		{
-			case BX.CrmEntityType.enumeration.deal:
-				messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT_DEAL';
+			messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT_DEAL';
 		}
 
 		return Loc.getMessage(messagePhrase);

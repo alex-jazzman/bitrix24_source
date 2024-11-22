@@ -553,6 +553,7 @@
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.636 2.273C1.628 2.273 0 3.952 0 6.023v7.5c0 2.07 1.628 3.75 3.636 3.75h12.728c2.008 0 3.636-1.68 3.636-3.75v-7.5c0-2.071-1.628-3.75-3.636-3.75H3.636zM8.48 6.109a.505.505 0 00-.797.412v6.504c0 .41.462.649.797.412l4.584-3.252a.505.505 0 000-.824L8.479 6.109z' fill='%23C9CCD0'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: center;
+	flex-shrink: 0;
 }
 
 .bx-im-message-panel__image_img {
@@ -579,6 +580,7 @@
 .bx-im-message-panel__close:hover {
 	opacity: 0.7;
 }
+
 .bx-im-market-apps-panel__scope {
 	--im-market-apps-panel__border-color_container: #edeef0;
 	--im-market-apps-panel__color_empty-state-text: #525c69;

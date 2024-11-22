@@ -853,7 +853,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      collection: {},
 	      layout: {
 	        opened: false,
-	        channelDialogId: ''
+	        channelDialogId: '',
+	        postId: 0
 	      }
 	    };
 	  }
@@ -892,18 +893,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      /** @function messages/comments/areOpened */
 	      areOpened: state => {
-	        var _state$layout$opened, _state$layout;
-	        return (_state$layout$opened = (_state$layout = state.layout) == null ? void 0 : _state$layout.opened) != null ? _state$layout$opened : false;
+	        return state.layout.opened;
 	      },
 	      /** @function messages/comments/areOpenedForChannel */
 	      areOpenedForChannel: state => channelDialogId => {
-	        var _state$layout2;
-	        return ((_state$layout2 = state.layout) == null ? void 0 : _state$layout2.channelDialogId) === channelDialogId;
+	        return state.layout.channelDialogId === channelDialogId;
+	      },
+	      /** @function messages/comments/areOpenedForChannelPost */
+	      areOpenedForChannelPost: state => postId => {
+	        return state.layout.postId === postId;
 	      },
 	      /** @function messages/comments/getOpenedChannelId */
 	      getOpenedChannelId: state => {
-	        var _state$layout$channel, _state$layout3;
-	        return (_state$layout$channel = (_state$layout3 = state.layout) == null ? void 0 : _state$layout3.channelDialogId) != null ? _state$layout$channel : '';
+	        var _state$layout$channel;
+	        return (_state$layout$channel = state.layout.channelDialogId) != null ? _state$layout$channel : '';
 	      }
 	    };
 	  }
@@ -999,17 +1002,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      setOpened: (state, payload) => {
 	        const {
-	          channelDialogId
+	          channelDialogId,
+	          commentsPostId
 	        } = payload;
 	        state.layout = {
 	          opened: true,
-	          channelDialogId
+	          channelDialogId,
+	          postId: commentsPostId
 	        };
 	      },
 	      setClosed: state => {
 	        state.layout = {
 	          opened: false,
-	          channelDialogId: ''
+	          channelDialogId: '',
+	          commentsPostId: 0
 	        };
 	      }
 	    };
@@ -3645,6 +3651,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        store.commit('deleteFromRecentCollection', existingItem.dialogId);
 	        store.commit('deleteFromCopilotCollection', existingItem.dialogId);
+	        store.commit('deleteFromChannelCollection', existingItem.dialogId);
 	        const canDelete = babelHelpers.classPrivateFieldLooseBase(this, _canDelete)[_canDelete](existingItem.dialogId);
 	        if (!canDelete) {
 	          return;
@@ -3681,6 +3688,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      deleteFromCopilotCollection: (state, payload) => {
 	        state.copilotCollection.delete(payload);
+	      },
+	      deleteFromChannelCollection: (state, payload) => {
+	        state.channelCollection.delete(payload);
 	      },
 	      setChannelCollection: (state, payload) => {
 	        payload.forEach(dialogId => {
@@ -6841,6 +6851,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return;
 	        }
 	        store.commit('readAllChannelComments', channelChatId);
+	      },
+	      /** @function counters/delete */
+	      delete: (store, payload) => {
+	        if (!main_core.Type.isPlainObject(payload)) {
+	          return;
+	        }
+	        store.commit('delete', payload);
 	      }
 	    };
 	  }
@@ -6890,6 +6907,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      readAllChannelComments: (state, channelChatId) => {
 	        delete state.commentCounters[channelChatId];
+	      },
+	      delete: (state, payload) => {
+	        const {
+	          channelChatId,
+	          commentChatId
+	        } = payload;
+	        if (!state.commentCounters[channelChatId]) {
+	          return;
+	        }
+	        delete state.commentCounters[channelChatId][commentChatId];
 	      }
 	    };
 	  }

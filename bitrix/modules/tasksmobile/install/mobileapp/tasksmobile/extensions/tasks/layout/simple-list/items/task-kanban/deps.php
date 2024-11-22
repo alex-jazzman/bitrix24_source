@@ -34,6 +34,8 @@ return [
 		'tasks:statemanager/redux/slices/stage-settings',
 		'tasks:statemanager/redux/slices/tasks-stages',
 		'tasks:statemanager/redux/slices/kanban-settings',
+
+		'tasks:utils/stages',
 	],
 	'bundle' => [
 		'./src/field',

@@ -14,6 +14,7 @@ jn.define('intranet/simple-list/items/user-redux', (require, exports, module) =>
 				testId: this.props.testId,
 				customStyles: this.props.customStyles,
 				showBorder: this.props.item.showBorder,
+				canInvite: this.props.item.canInvite,
 			});
 		}
 	}

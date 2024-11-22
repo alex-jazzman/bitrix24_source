@@ -80,6 +80,7 @@ CREATE INDEX ix_b_imopenlines_session_date_create ON b_imopenlines_session (date
 CREATE INDEX ix_b_imopenlines_session_config_id ON b_imopenlines_session (config_id);
 CREATE INDEX ix_b_imopenlines_session_status_date_close ON b_imopenlines_session (status, date_close);
 CREATE INDEX ix_b_imopenlines_session_operator_id_date_create ON b_imopenlines_session (operator_id, date_create);
+CREATE INDEX ix_b_imopenlines_session_operator_config_status ON b_imopenlines_session (operator_id, config_id, status);
 
 CREATE TABLE b_imopenlines_session_index (
 	SESSION_ID int NOT NULL,

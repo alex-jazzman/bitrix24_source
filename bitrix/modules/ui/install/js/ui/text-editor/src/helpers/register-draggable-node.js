@@ -15,7 +15,7 @@ import { DRAG_START_COMMAND, DRAG_END_COMMAND } from '../commands';
 import { getDragSelection } from './get-drag-selection';
 import { getNodeInSelection } from './get-node-in-selection';
 
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 
 const DRAG_DATA_FORMAT = 'application/x-lexical-drag-image';
 const TRANSPARENT_IMAGE = Tag.render`<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">`;

@@ -17,6 +17,7 @@ return [
 		'im.v2.lib.confirm',
 		'im.v2.lib.channel',
 		'im.public',
+		'im.v2.lib.analytics',
 		'main.popup',
 		'main.core.events',
 		'ui.vue3.vuex',

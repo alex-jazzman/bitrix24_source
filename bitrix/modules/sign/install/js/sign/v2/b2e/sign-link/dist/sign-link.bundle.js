@@ -123,6 +123,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldSet(this, _slider, (options === null || options === void 0 ? void 0 : options.slider) || null);
 	  }
 	  babelHelpers.createClass(SignLink, [{
+	    key: "preloadData",
+	    value: function preloadData() {
+	      return _classPrivateMethodGet(this, _loadData, _loadData2).call(this);
+	    }
+	  }, {
 	    key: "openSlider",
 	    value: function () {
 	      var _openSlider = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(options) {
@@ -130,9 +135,13 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        return _regeneratorRuntime().wrap(function _callee$(_context) {
 	          while (1) switch (_context.prev = _context.next) {
 	            case 0:
-	              _context.next = 2;
+	              if (babelHelpers.classPrivateFieldGet(this, _loaded)) {
+	                _context.next = 3;
+	                break;
+	              }
+	              _context.next = 3;
 	              return _classPrivateMethodGet(this, _loadData, _loadData2).call(this);
-	            case 2:
+	            case 3:
 	              signLink = this;
 	              BX.SidePanel.Instance.open('sign:stub:sign-link', {
 	                width: 900,
@@ -156,7 +165,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	                events: options === null || options === void 0 ? void 0 : options.events
 	              });
 	              babelHelpers.classPrivateFieldSet(this, _slider, BX.SidePanel.Instance.getSlider('sign:stub:sign-link'));
-	            case 5:
+	            case 6:
 	            case "end":
 	              return _context.stop();
 	          }

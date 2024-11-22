@@ -173,7 +173,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const NotificationItemConfirmButtons = {
 	  name: 'NotificationItemConfirmButtons',
 	  components: {
-	    Button: im_v2_component_elements.Button
+	    MessengerButton: im_v2_component_elements.Button
 	  },
 	  props: {
 	    buttons: {
@@ -188,10 +188,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    preparedButtons() {
 	      return this.buttons.map(button => {
 	        const [id, value] = button.COMMAND_PARAMS.split('|');
+
+	        // we need to decode it, because legacy chat does htmlspecialcharsbx on the server side
+	        // @see \CIMMessenger::Add
+	        const text = main_core.Text.decode(button.TEXT);
 	        return {
-	          id: id,
-	          value: value,
-	          text: button.TEXT
+	          id,
+	          value,
+	          text
 	        };
 	      });
 	    }
@@ -206,7 +210,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  template: `
 		<div class="bx-im-content-notification-item-confirm-buttons__container">
-			<Button
+			<MessengerButton
 				v-for="(button, index) in preparedButtons" :key="index"
 				:text="button.text"
 				:color="getButtonColor(button)"
@@ -214,7 +218,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:isRounded="true"
 				:isUppercase="false"
 				@click="click(button)"
-			></Button>
+			></MessengerButton>
 		</div>
 	`
 	};
@@ -1298,5 +1302,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.NotificationContent = NotificationContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.UI.Dialogs,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.UI.Dialogs,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=notification-content.bundle.js.map

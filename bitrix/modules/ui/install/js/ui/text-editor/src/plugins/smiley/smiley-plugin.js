@@ -33,7 +33,7 @@ import type {
 	BBCodeExportConversion,
 } from '../../bbcode';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
 type InsertSmileyPayload = string;

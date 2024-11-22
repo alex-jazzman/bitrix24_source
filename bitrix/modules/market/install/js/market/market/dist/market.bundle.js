@@ -106,13 +106,17 @@ this.BX = this.BX || {};
 	          if (!link) {
 	            return;
 	          }
-	          if (link.dataset.loadContent.length <= 0 || link.href.length <= 0) {
+	          let href = link.href;
+	          if (!href) {
+	            href = link.dataset.href;
+	          }
+	          if (link.dataset.loadContent.length <= 0 || !href) {
 	            return;
 	          }
 	          if (this.result.MAIN_URI && this.result.MAIN_URI.length > 0) {
 	            this.mainUri = this.result.MAIN_URI;
 	          }
-	          this.updatePage(link.href, link.dataset.loadContent);
+	          this.updatePage(href, link.dataset.loadContent);
 	        },
 	        refreshUri: function (event) {
 	          if (!event.data.refreshUri || !event.data.skeleton) {

@@ -248,7 +248,7 @@ $phraseNavigatorButtonExtend = $arResult['PHRASES']['NAVIGATOR_BUTTON']['EXTEND'
 				const options = {
 					isShowExtendButton: '<?= $arResult['IS_SHOW_EXTEND_BUTTON'] ?>',
 				};
-				new BX.Landing.Widget.LivefeedWidget(widgetElement, options);
+				new BX.Landing.Widget.Livefeed(widgetElement, options);
 			}
 		}
 	});

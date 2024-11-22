@@ -12,6 +12,8 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 	const { StringInput, InputSize, InputMode, InputDesign } = require('ui-system/form/inputs/string');
 	const { EmailInput, InputDomainIconPlace } = require('ui-system/form/inputs/email');
 	const { PhoneInput } = require('ui-system/form/inputs/phone');
+	const { isPhoneNumber } = require('utils/phone');
+	const { isValidEmail } = require('utils/email');
 
 	class UserMiniProfileForm extends PureComponent
 	{
@@ -146,60 +148,85 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 
 			if (image)
 			{
-				const converter = new FileConverter();
-
-				this.setState({
-					newPhoto: image.previewUrl,
-				});
-
-				(
-					async () => {
-						try
-						{
-							const path = await converter.resize('avatarResize', {
-								url: image.previewUrl,
-								width: 1000,
-								height: 1000,
-							});
-							const file = await getFile(path);
-							file.readMode = BX.FileConst.READ_MODE.DATA_URL;
-							const fileData = await file.readNext();
-
-							if (fileData.content)
-							{
-								const content = fileData.content;
-								const personalPhoto = [
-									'avatar.png', content.slice(
-										content.indexOf('base64,') + 7,
-										content.length,
-									),
-								];
-								this.onChange('PERSONAL_PHOTO', personalPhoto);
-							}
-						}
-						catch (error)
-						{
-							console.log(error);
-						}
-					})();
+				this.setState(
+					{
+						newPhoto: image.previewUrl,
+					},
+					() => {
+						void this.convertImage(image);
+					},
+				);
 			}
 		};
 
-		onContinue = () => {
-			const fieldToFocus = [
-				this.nameField,
-				this.lastNameField,
-				this.phoneField,
-				this.emailField,
-			].find((field) => {
-				return field && (!field.getValue() || !field.isValid());
-			});
-
-			if (fieldToFocus)
+		async convertImage(image)
+		{
+			try
 			{
-				fieldToFocus.setFocused(true);
+				const converter = new FileConverter();
+				const path = await converter.resize('avatarResize', {
+					url: image.previewUrl,
+					width: 1000,
+					height: 1000,
+				});
+				const file = await getFile(path);
+				file.readMode = BX.FileConst.READ_MODE.DATA_URL;
+				const fileData = await file.readNext();
+
+				if (fileData.content)
+				{
+					const content = fileData.content;
+					const personalPhoto = [
+						'avatar.png', content.slice(
+							content.indexOf('base64,') + 7,
+							content.length,
+						),
+					];
+					this.onChange('PERSONAL_PHOTO', personalPhoto);
+				}
 			}
-			else
+			catch (error)
+			{
+				console.error(error);
+			}
+		}
+
+		validate = (profileData) => {
+			const { NAME, LAST_NAME, PERSONAL_MOBILE, EMAIL } = profileData;
+
+			if (isEmpty(NAME))
+			{
+				this.nameField?.focus();
+
+				return false;
+			}
+
+			if (isEmpty(LAST_NAME))
+			{
+				this.lastNameField?.focus();
+
+				return false;
+			}
+
+			if (isEmpty(PERSONAL_MOBILE) || !isPhoneNumber(PERSONAL_MOBILE))
+			{
+				this.phoneField?.focus();
+
+				return false;
+			}
+
+			if (isEmpty(EMAIL) || !isValidEmail(EMAIL))
+			{
+				this.emailField?.focus();
+
+				return false;
+			}
+
+			return true;
+		};
+
+		onContinue = () => {
+			if (this.validate(this.getProfileData()))
 			{
 				Keyboard.dismiss();
 			}
@@ -214,20 +241,7 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				return;
 			}
 
-			const invalidField = [
-				this.nameField,
-				this.lastNameField,
-				this.phoneField,
-				this.emailField,
-			].find((field) => {
-				return field && !field.isValid();
-			});
-
-			if (invalidField)
-			{
-				invalidField.setFocused(true);
-			}
-			else
+			if (this.validate(fields))
 			{
 				this.updateUser(fields);
 			}
@@ -248,15 +262,14 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				});
 		}
 
-		onChange(id, value)
-		{
+		onChange = (id, value) => {
 			this.setState({
 				profileData: {
 					...this.getProfileData(),
 					[id]: value,
 				},
 			});
-		}
+		};
 
 		onChangeName = (value) => {
 			this.onChange('NAME', value);
@@ -383,8 +396,11 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				domainIconPlace: InputDomainIconPlace.LEFT,
 				leftContent: Icon.MAIL,
 				onChange: this.onChangeEmail,
+				onError: this.handleOnError,
 			});
 		}
+
+		handleOnError = (error, id) => {};
 
 		handleOnSetEmailRef = (ref) => {
 			this.emailField = ref;
@@ -397,7 +413,6 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 					style: {
 						height: 1,
 						backgroundColor: Color.bgSeparatorPrimary.toHex(),
-						marginLeft: InputSize.L.getInput()?.paddingHorizontal?.toNumber() ?? Indent.XL.toNumber(),
 					},
 				},
 			);
@@ -429,6 +444,7 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 									: Color.bgSeparatorPrimary.toHex(),
 								borderRadius: Corner.L.toNumber(),
 								marginBottom: Indent.XL4.toNumber(),
+								paddingLeft: InputSize.L.getInput()?.paddingHorizontal?.toNumber() ?? Indent.XL.toNumber(),
 							},
 						},
 						this.getNameField(),

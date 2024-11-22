@@ -51,7 +51,8 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 			layout.openWidget('layout', {
 				modal: true,
 				titleParams: {
-					text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TITLE'),
+					text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TITLE_MSGVER_1'),
+					type: 'dialog',
 				},
 				backgroundColor: AppTheme.colors.bgContentPrimary,
 				backdrop: {

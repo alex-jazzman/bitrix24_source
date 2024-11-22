@@ -218,11 +218,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 
 		/**
 		 * @desc Delete participants with rest call
-		 * @return {number} userId
+		 * @param {number} userId
+		 * @return Promise
 		 */
 		deleteParticipant(userId)
 		{
-			this.sidebarRestService.deleteParticipant(userId).catch((err) => logger.error(`${this.constructor.name}.deleteParticipant`, err));
+			return this.sidebarRestService.deleteParticipant(userId);
 		}
 
 		/**

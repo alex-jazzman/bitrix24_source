@@ -656,7 +656,7 @@ export class List extends EventEmitter
 				entityId: this.entityId,
 				text: this.#getSmsText(channel, link),
 				providerId: channel.id,
-				isProviderFixed: 'Y',
+				isProviderFixed: 'N',
 				canUseBitrix24Provider: 'Y',
 			};
 

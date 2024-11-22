@@ -2196,11 +2196,7 @@ var focusWithoutScrolling = function(element)
 				// Chrome 43.0.2357 in Mac puts visible space instead of invisible
 				if (BX.browser.IsMac())
 				{
-					var tmpId = "bx-editor-temp-" + Math.round(Math.random() * 1000000);
-					this.editor.action.Exec('insertHTML', '<span id="' + tmpId + '">' + this.editor.INVISIBLE_SPACE + '</span>');
-					var tmpElement = this.editor.GetIframeElement(tmpId);
-					if (tmpElement)
-						BX.remove(tmpElement);
+					return BX.PreventDefault(e);
 				}
 				else
 				{

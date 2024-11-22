@@ -7,7 +7,7 @@ jn.define('utils/phone', (require, exports, module) => {
 	const { phoneUtils } = require('native/phonenumber');
 	const { stringify } = require('utils/string');
 	const storageKey = 'PhoneDefaultCountryCode';
-	const storage = Application.storageById(storageKey);
+	const storage = Application.storageById?.(storageKey);
 
 	const GLOBAL_COUNTRY_CODE = 'XX';
 
@@ -154,6 +154,7 @@ jn.define('utils/phone', (require, exports, module) => {
 	const getGlobalCountryCode = () => GLOBAL_COUNTRY_CODE;
 
 	module.exports = {
+		preparePhoneNumberByPhoneCode,
 		getMainDefaultCountryCode,
 		getFlagImageByCountryCode,
 		getGlobalCountryCode,

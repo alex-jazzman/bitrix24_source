@@ -3,7 +3,7 @@ import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
 import { ajax, Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
-import { MenuItem, MenuItemOptions, MenuManager } from 'main.popup';
+import { MenuItem, MenuItemOptions, MenuManager, Menu } from 'main.popup';
 import { Dialog } from 'ui.entity-selector';
 import 'ui.icon-set.actions';
 import { Icon } from 'ui.icon-set.api.core';
@@ -1039,23 +1039,27 @@ export default class GoToChat extends Item
 		const channel = this.#getChannelById(id);
 		this.fromPhoneId = channel.fromList[0].id;
 
-		this.settingsMenu.close();
+		this.settingsMenu.destroy();
+		this.initSettingsMenu();
 	}
 
 	getPhoneSubMenuItems(): Array
 	{
 		const currentChannel = this.#getChannelById(this.currentChannelId);
-
 		const items = [];
-		currentChannel.fromList.forEach(({ id, name: text }) => {
-			const className = (id === this.fromPhoneId ? ACTIVE_MENU_ITEM_CLASS : DEFAULT_MENU_ITEM_CLASS);
-			items.push({
-				id,
-				text,
-				className,
-				onclick: this.onSelectSenderPhone,
+
+		if (currentChannel)
+		{
+			currentChannel.fromList.forEach(({ id, name: text }) => {
+				const className = (id === this.fromPhoneId ? ACTIVE_MENU_ITEM_CLASS : DEFAULT_MENU_ITEM_CLASS);
+				items.push({
+					id,
+					text,
+					className,
+					onclick: this.onSelectSenderPhone,
+				});
 			});
-		});
+		}
 
 		return items;
 	}
@@ -1071,7 +1075,8 @@ export default class GoToChat extends Item
 
 		this.fromPhoneId = id;
 
-		this.settingsMenu.close();
+		this.settingsMenu.destroy();
+		this.initSettingsMenu();
 	}
 
 	#getLoader(): Loader

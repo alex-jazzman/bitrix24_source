@@ -154,6 +154,8 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('pull', 'onGetDependentModule', $this->MODULE_ID, '\Bitrix\BIConnector\Integration\Pull\PullManager', 'onGetDependentModule');
 			$eventManager->registerEventHandler('crm', 'onAfterAutomatedSolutionDelete', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\ScopeService', 'deleteAutomatedSolutionBinding');
 
+			$eventManager->registerEventHandler('main', 'OnBuildGlobalMenu', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorShop', 'buildCrmMenu');
+
 			$this->InstallTasks();
 
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\LogTable::cleanUpAgent();', 'biconnector', 'N', 86400);
@@ -232,6 +234,7 @@ class BIConnector extends \CModule
 		$eventManager->unregisterEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');
 		$eventManager->unregisterEventHandler('pull', 'onGetDependentModule', $this->MODULE_ID, '\Bitrix\BIConnector\Integration\Pull\PullManager', 'onGetDependentModule');
 		$eventManager->unregisterEventHandler('crm', 'onAfterAutomatedSolutionDelete', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\ScopeService', 'deleteAutomatedSolutionBinding');
+		$eventManager->unregisterEventHandler('main', 'OnBuildGlobalMenu', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorShop', 'buildCrmMenu');
 
 		\CAgent::RemoveModuleAgents('biconnector');
 

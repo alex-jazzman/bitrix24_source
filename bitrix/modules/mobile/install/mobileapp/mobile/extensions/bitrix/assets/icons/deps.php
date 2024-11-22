@@ -10,5 +10,6 @@ return [
 		'./src/main',
 		'./src/base',
 		'./src/outline',
+		'./src/disk',
 	],
 ];

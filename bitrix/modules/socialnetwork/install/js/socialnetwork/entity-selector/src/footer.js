@@ -31,6 +31,7 @@ export default class Footer extends DefaultFooter
 			const createProjectLink = this.getOption('createProjectLink');
 			const lockProjectLink = this.getOption('lockProjectLink', false);
 			const lockProjectLinkFeatureId = this.getOption('lockProjectLinkFeatureId', '');
+			const isProject = this.getOption('isProject', false);
 
 			const complexPhrases = {
 				'111': 'SOCNET_ENTITY_SELECTOR_EMPLOYEE_OR_PROJECT_OR_GUEST',
@@ -168,7 +169,7 @@ export default class Footer extends DefaultFooter
 				if (lockProjectLink)
 				{
 					const projectLink = this.createLockedProjectLink(
-						Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'),
+						isProject ? Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT_1') : Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'),
 						true,
 						lockProjectLinkFeatureId,
 					);
@@ -179,7 +180,7 @@ export default class Footer extends DefaultFooter
 				}
 
 				return this.createProjectLink(
-					Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'),
+					isProject ? Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT_1') : Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'),
 					true,
 				);
 			}

@@ -154,8 +154,21 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 			}
 		}
 
-		showRecipientSettingsMenu(recipientName, emailList, selectedEmailId, entityId, entityType, customData)
+		showRecipientSettingsMenu(
+			recipientName,
+			emailList,
+			selectedEmailId,
+			entityId,
+			entityType,
+			customData,
+			isEmailHidden,
+		)
 		{
+			if (isEmailHidden)
+			{
+				return;
+			}
+
 			if (!selectedEmailId)
 			{
 				selectedEmailId = 0;
@@ -306,6 +319,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 				email,
 				id,
 				customData,
+				isEmailHidden,
 			} = recipient;
 
 			let {
@@ -321,8 +335,9 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 
 			return View(
 				{
+					testId: `MAIL_CONTACT_FIELD_RECIPIENT_${id}`,
 					onClick: () => {
-						this.showRecipientSettingsMenu(title, email, selectedEmailId, id, type, customData);
+						this.showRecipientSettingsMenu(title, email, selectedEmailId, id, type, customData, isEmailHidden);
 					},
 					style: {
 						...this.styles.capsule,
@@ -340,10 +355,10 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 						style: this.styles.tagTitle,
 						numberOfLines: 1,
 						ellipsize: 'end',
-						text: recipientText,
+						text: isEmailHidden ? Loc.getMessage('FIELDS_MAIL_CONTACT_RECIPIENT_HIDDEN') : recipientText,
 					}),
 				),
-				Image({
+				!isEmailHidden && Image({
 					style: {
 						width: 14,
 						height: 16,

@@ -71,6 +71,7 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 				'EXCLUDE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processExclusion();'
 			],
 			'ANALYTICS' => [
+				'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
 				'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 			],
 		],
@@ -90,9 +91,6 @@ if ($isMlAvailable && $isScoringEnabled && $isScoringAvailable && $isTrainingUse
 if ($isScoringAvailable):
 ?>
 	<script>
-		BX.message({
-			"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>",
-		});
 		<? if($arResult['ENTITY_ID'] > 0): ?>
 			new BX.CrmScoringButton({
 				mlInstalled: <?= ($isMlAvailable ? 'true' : 'false')?>,
@@ -105,7 +103,13 @@ if ($isScoringAvailable):
 		<? endif; ?>
 </script><?
 endif;
-
+?>
+<script>
+	BX.message({
+		"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>",
+	});
+</script>
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
@@ -175,6 +179,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 								last : "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_LAST")?>",
 							},
 							analytics: {
+								c_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD ?>',
 								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS ?>',
 							},
 						}

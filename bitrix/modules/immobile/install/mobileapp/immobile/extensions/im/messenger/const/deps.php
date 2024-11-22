@@ -39,5 +39,8 @@ return [
 		'./src/keyboard',
 		'./src/waiting-entity',
 		'./src/open-request',
+		'./src/context-type',
+		'./src/url-params',
+		'./src/messenger-init-rest',
 	],
 ];

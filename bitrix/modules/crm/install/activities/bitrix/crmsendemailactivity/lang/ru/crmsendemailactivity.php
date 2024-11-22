@@ -2,9 +2,9 @@
 $MESS['CRM_SEMA_EMPTY_PROP'] = 'Не указан текст письма';
 $MESS['CRM_SEMA_MESSAGE_TEXT'] = 'Текст письма';
 $MESS['CRM_SEMA_MESSAGE_TEXT_TYPE'] = 'Тип текста';
-$MESS['CRM_SEMA_ATTACHMENT_TYPE'] = 'Тип вложений';
-$MESS['CRM_SEMA_ATTACHMENT'] = 'Вложения';
-$MESS['CRM_SEMA_ATTACHMENT_FILE_1'] = 'Файлы документа';
+$MESS['CRM_SEMA_ATTACHMENT_TYPE_1'] = 'Расположение';
+$MESS['CRM_SEMA_ATTACHMENT_1'] = 'Файлы';
+$MESS['CRM_SEMA_ATTACHMENT_FILE_2'] = 'Поля элемента';
 $MESS['CRM_SEMA_ATTACHMENT_DISK'] = 'Диск';
 $MESS['CRM_SEMA_DEFAULT_SUBJECT'] = 'Новое письмо (#DATE#)';
 $MESS['CRM_SEMA_EMAIL_SUBJECT'] = 'Тема';

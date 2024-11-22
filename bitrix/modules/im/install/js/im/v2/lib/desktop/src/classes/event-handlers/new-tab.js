@@ -1,6 +1,5 @@
 import { EventType } from 'im.v2.const';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
-import { Loc } from 'main.core';
 
 export class NewTabHandler
 {
@@ -21,14 +20,6 @@ export class NewTabHandler
 
 	#onNewTabClick()
 	{
-		const siteDir = Loc.getMessage('SITE_DIR') || '/';
-
-		BX.SidePanel.Instance.open(
-			`${siteDir}sitemap/?IM_DESKTOP_NEW_TAB=Y`,
-			{
-				allowChangeHistory: false,
-				customLeftBoundary: 0,
-			},
-		);
+		DesktopApi.createTab('/desktop/menu/');
 	}
 }

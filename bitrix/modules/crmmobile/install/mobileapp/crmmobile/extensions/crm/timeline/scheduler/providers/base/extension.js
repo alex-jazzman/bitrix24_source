@@ -252,9 +252,9 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 			});
 		}
 
-		close()
+		close(callback = () => {})
 		{
-			this.layout.close();
+			this.layout.close(callback);
 		}
 
 		onActivityCreate(data)

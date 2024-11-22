@@ -112,5 +112,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChatCopilotCreationMessage = ChatCopilotCreationMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Service,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=copilot-creation.bundle.js.map

@@ -1,0 +1,8 @@
+<?php
+$MESS["SIGN_KANBAN_ENTITY_FOOTER_CANCEL_TITLE"] = "Скасувати підписання";
+$MESS["SIGN_KANBAN_ENTITY_FOOTER_EDIT_TITLE"] = "Заповнити дані";
+$MESS["SIGN_KANBAN_ENTITY_FOOTER_MODIFY_TITLE"] = "Продовжити заповнення";
+$MESS["SIGN_KANBAN_ENTITY_FOOTER_PREVIEW_TITLE"] = "Відкрити документ";
+$MESS["SIGN_KANBAN_ENTITY_FOOTER_PROCESS_TITLE"] = "До процесу підписання";
+$MESS["SIGN_KANBAN_ENTITY_FOOTER_REVIEW_TITLE"] = "Погодити документ";
+$MESS["SIGN_KANBAN_ENTITY_FOOTER_SIGN_TITLE"] = "Підписати документ";

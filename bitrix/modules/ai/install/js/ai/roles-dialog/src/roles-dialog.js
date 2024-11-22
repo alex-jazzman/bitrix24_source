@@ -1,6 +1,7 @@
 import { Engine, type Role, RoleIndustry } from 'ai.engine';
 import { Type, Loc, BaseError, Runtime } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
+import { UI } from 'ui.notification';
 import { type EntityCatalog as EntityCatalogClass, type ItemData, type GroupData } from 'ui.entity-catalog';
 import { RolesDialogLoaderPopup } from './roles-dialog-loader-popup';
 import { showRolesDialogErrorPopup } from './roles-dialog-error-popup';
@@ -11,7 +12,8 @@ import { RolesDialogGroupListHeader } from './components/roles-dialog-group-list
 import { getRolesDialogContentHeader } from './components/roles-dialog-content-header';
 import { getRolesDialogRoleItemWithStates } from './components/roles-dialog-role-item';
 import { RolesDialogGroupItem } from './components/roles-dialog-group-item';
-import { RolesDialogSearchStub } from './components/roles-dialog-search-stub';
+import { RolesDialogSearchStub, RolesDialogSearchStubEvents } from './components/roles-dialog-search-stub';
+import { getRolesDialogEmptyGroupStubWithStates } from './components/roles-dialog-empty-group-stub';
 
 import './css/roles-dialog.css';
 
@@ -25,15 +27,10 @@ export type RolesDialogOptions = {
 export const RolesDialogEvents = {
 	HIDE: 'hide',
 	SELECT_ROLE: 'select-role',
-	SELECT_DEFAULT_ROLE: 'select-default-role',
 };
 
 export type SelectRoleEventDataType = {
 	role: Role;
-}
-
-export type SelectDefaultRoleEventDataType = {
-	code: string;
 }
 
 export type RolesDialogItemData = ItemData | {
@@ -42,17 +39,31 @@ export type RolesDialogItemData = ItemData | {
 		isInfoItem: boolean;
 		avatar?: string;
 		isNew: boolean;
+		canBeFavourite?: boolean;
+		isFavourite?: boolean;
+		actions?: RolesDialogItemDataCustomActions;
 	}
+}
+
+type RolesDialogItemDataCustomActions = {
+	toggleFavourite?: (makeItFavourite: boolean) => void;
 }
 
 export type RolesDialogGroupData = GroupData | {
 	customData: {
 		isNew: boolean;
+		emptyStubData: RolesDialogGroupDataEmptyStub,
 	},
+}
+
+export type RolesDialogGroupDataEmptyStub = {
+	title: string;
+	description: string;
 }
 
 const RECOMMENDED_GROUP_CODE = 'recommended';
 const RECENT_GROUP_CODE = 'recents';
+const FAVOURITE_GROUP_CODE = 'favorites';
 
 export class RolesDialog extends EventEmitter
 {
@@ -61,6 +72,7 @@ export class RolesDialog extends EventEmitter
 	#analytic: RolesDialogAnalytics;
 	#roles: Role[];
 	#recentRoles: Role[];
+	#favouriteRoles: Role[];
 	#defaultRoleCode: string;
 	#industries: RoleIndustry[];
 	#selectedDefaultRoleHandler: Function | null;
@@ -200,6 +212,12 @@ export class RolesDialog extends EventEmitter
 			RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE,
 			this.#selectedDefaultRoleHandler,
 		);
+
+		EventEmitter.subscribe(
+			document,
+			RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE,
+			this.#selectedDefaultRoleHandler,
+		);
 	}
 
 	#unsubscribeEvents(): void
@@ -207,6 +225,12 @@ export class RolesDialog extends EventEmitter
 		EventEmitter.unsubscribe(
 			document,
 			RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE,
+			this.#selectedDefaultRoleHandler,
+		);
+
+		EventEmitter.unsubscribe(
+			document,
+			RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE,
 			this.#selectedDefaultRoleHandler,
 		);
 	}
@@ -229,13 +253,13 @@ export class RolesDialog extends EventEmitter
 	{
 		this.setSelectedRoleCode(this.#defaultRoleCode);
 
-		const event: BaseEvent<SelectDefaultRoleEventDataType> = new BaseEvent({
+		const event: BaseEvent<SelectRoleEventDataType> = new BaseEvent({
 			data: {
-				code: this.#defaultRoleCode,
+				role: this.#universalRole,
 			},
 		});
 
-		this.emit(RolesDialogEvents.SELECT_DEFAULT_ROLE, event);
+		this.emit(RolesDialogEvents.SELECT_ROLE, event);
 
 		this.#entityCatalog.close();
 	}
@@ -254,6 +278,7 @@ export class RolesDialog extends EventEmitter
 		this.#entityCatalog = new EntityCatalog({
 			title: this.#title,
 			showSearch: true,
+			showEmptyGroups: true,
 			customComponents: {
 				RolesDialogContentHeader: getRolesDialogContentHeader(States, this.#analytic),
 				RolesDialogRoleItem: getRolesDialogRoleItemWithStates(States),
@@ -261,6 +286,7 @@ export class RolesDialog extends EventEmitter
 				RolesDialogGroupItem,
 				RolesDialogGroupListFooter,
 				RolesDialogSearchStub,
+				RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States),
 			},
 			popupOptions: {
 				className: 'ai_roles-dialog_popup ui-entity-catalog__scope',
@@ -291,6 +317,7 @@ export class RolesDialog extends EventEmitter
 			[EntityCatalog.SLOT_MAIN_CONTENT_ITEM]: '<RolesDialogRoleItem :itemData="itemSlotProps" />',
 			[EntityCatalog.SLOT_GROUP]: '<RolesDialogGroupItem :groupData="groupSlotProps" />',
 			[EntityCatalog.SLOT_GROUP_LIST_HEADER]: '<RolesDialogGroupListHeader />',
+			[EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />',
 		};
 
 		if (EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB)
@@ -308,7 +335,7 @@ export class RolesDialog extends EventEmitter
 			id: 'info-item-data',
 			title: Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_TITLE'),
 			subtitle: Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION'),
-			groupIds: this.#getAllIndustryCodes(),
+			groupIds: this.#getAllIndustryCodesWithExcludes([FAVOURITE_GROUP_CODE]),
 			customData: {
 				isInfoItem: true,
 			},
@@ -316,8 +343,8 @@ export class RolesDialog extends EventEmitter
 				action: async () => {
 					await Runtime.loadExtension('ui.feedback.form');
 					const id = Math.round(Math.random() * 1000);
-
 					BX.UI.Feedback.Form.open({
+
 						id: `ai.roles-dialog.feedback-form_${id}`,
 						presets: {
 							sender_page: `${this.#moduleId}_${this.#contextId}`,
@@ -356,11 +383,17 @@ export class RolesDialog extends EventEmitter
 		};
 	}
 
-	#getAllIndustryCodes(): string[]
+	#getAllIndustryCodesWithExcludes(excludesCodes: string[]): string[]
 	{
-		return this.#industries.map((industry) => {
-			return industry.code;
-		});
+		const excludes = new Set(excludesCodes);
+
+		return this.#industries
+			.map((industry) => {
+				return industry.code;
+			})
+			.filter((industryCode: string) => {
+				return excludes.has(industryCode) === false;
+			});
 	}
 
 	async #loadData(): void
@@ -380,7 +413,11 @@ export class RolesDialog extends EventEmitter
 			};
 		});
 
-		this.#industries.unshift(this.#getRecentRoleIndustry(), this.#getRecommendedRoleIndustry());
+		this.#industries.unshift(
+			this.#getRecentRoleIndustry(),
+			this.#getFavouriteRoleIndustry(),
+			this.#getRecommendedRoleIndustry(),
+		);
 
 		this.#roles = result.data.items.reduce((roles: Role[], roleIndustry) => {
 			const industryRoles = roleIndustry.roles;
@@ -389,6 +426,7 @@ export class RolesDialog extends EventEmitter
 		}, []);
 
 		this.#recentRoles = result.data.recents;
+		this.#favouriteRoles = result.data.favorites;
 
 		this.#roles = [...this.#roles];
 
@@ -411,6 +449,14 @@ export class RolesDialog extends EventEmitter
 		};
 	}
 
+	#getFavouriteRoleIndustry(): RoleIndustry
+	{
+		return {
+			code: FAVOURITE_GROUP_CODE,
+			name: Loc.getMessage('AI_COPILOT_ROLES_FAVOURITE_GROUP'),
+		};
+	}
+
 	#getItemsData(): RolesDialogItemData[]
 	{
 		let selectedRole = null;
@@ -426,6 +472,11 @@ export class RolesDialog extends EventEmitter
 			if (this.#recentRoles.findIndex((recentRole) => recentRole.code === role.code) > -1)
 			{
 				groupIds.push(RECENT_GROUP_CODE);
+			}
+
+			if (this.#favouriteRoles.findIndex((favouriteRole) => favouriteRole.code === role.code) > -1)
+			{
+				groupIds.push(FAVOURITE_GROUP_CODE);
 			}
 
 			if (role.code === this.#selectedRoleCode)
@@ -455,7 +506,7 @@ export class RolesDialog extends EventEmitter
 	#getUniversalRoleItemData(): ItemData
 	{
 		const role = this.#universalRole;
-		const groupIds = [...this.#getAllIndustryCodes()];
+		const groupIds = [...this.#getAllIndustryCodesWithExcludes([FAVOURITE_GROUP_CODE])];
 
 		return this.#getItemDataFromRole(role, groupIds);
 	}
@@ -465,12 +516,19 @@ export class RolesDialog extends EventEmitter
 		const selectedGroupIndex = this.#getSelectedGroupIndex();
 
 		const groups = this.#industries.map((industry, index): RolesDialogGroupData => {
+			const isSelectedRole = index === selectedGroupIndex;
+
 			if (industry.code === RECENT_GROUP_CODE)
 			{
-				return this.#getRecentItemGroupData(index === selectedGroupIndex);
+				return this.#getRecentItemGroupData(isSelectedRole);
 			}
 
-			return this.#getItemGroupDataFromIndustry(industry, index === selectedGroupIndex);
+			if (industry.code === FAVOURITE_GROUP_CODE)
+			{
+				return this.#getFavouriteItemGroupData(isSelectedRole);
+			}
+
+			return this.#getItemGroupDataFromIndustry(industry, isSelectedRole);
 		});
 
 		return [
@@ -515,8 +573,34 @@ export class RolesDialog extends EventEmitter
 		return item1Index - item2Index;
 	}
 
+	#getFavouriteItemGroupData(isSelected: boolean = false): RolesDialogGroupData
+	{
+		return {
+			...this.#getItemGroupDataFromIndustry(this.#getFavouriteRoleIndustry(), isSelected),
+			compare: (item1, item2) => {
+				return this.#compareFavouriteItems(item1, item2);
+			},
+			customData: {
+				emptyStubData: {
+					title: Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE'),
+					description: Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP'),
+				},
+			},
+		};
+	}
+
+	#compareFavouriteItems(item1: RolesDialogItemData, item2: RolesDialogItemData): number
+	{
+		const item1Index = this.#favouriteRoles.findIndex((rr) => item1.id === rr.code) + 1;
+		const item2Index = this.#favouriteRoles.findIndex((rr) => item2.id === rr.code) + 1;
+
+		return item1Index - item2Index;
+	}
+
 	#getItemDataFromRole(role: Role, groupIds: string[] = []): RolesDialogItemData
 	{
+		const isRoleInFavouriteList = this.#isRoleInFavouriteList(role.code);
+
 		return {
 			groupIds,
 			id: role.code,
@@ -535,6 +619,15 @@ export class RolesDialog extends EventEmitter
 				selected: role.code === this.#selectedRoleCode,
 				avatar: role.avatar.medium,
 				isNew: role.isNew,
+				isFavourite: isRoleInFavouriteList,
+				canBeFavourite: role.code !== this.#universalRole.code,
+				actions: {
+					toggleFavourite: (makeItFavourite: boolean) => {
+						const roleCode = role.code;
+
+						return this.#toggleRoleFavourite(roleCode, makeItFavourite);
+					},
+				},
 			},
 		};
 	}
@@ -557,5 +650,88 @@ export class RolesDialog extends EventEmitter
 		});
 
 		return selectedItem?.groupIds.includes(industry.code) || false;
+	}
+
+	#isRoleInFavouriteList(roleCode: string): boolean
+	{
+		return this.#favouriteRoles.some((role) => {
+			return role.code === roleCode;
+		});
+	}
+
+	async #toggleRoleFavourite(roleCode: string, makeFavourite: boolean): Promise<any>
+	{
+		const role = roleCode === this.#universalRole.code
+			? this.#universalRole
+			: this.#roles.find((currentRole: Role) => currentRole.code === roleCode)
+		;
+
+		if (!role && roleCode !== this.#universalRole.code)
+		{
+			const failedMessage = makeFavourite
+				? Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_ACTION_FAILED')
+				: Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_ACTION_FAILED')
+			;
+
+			UI.Notification.Center.notify({
+				content: failedMessage,
+			});
+
+			return Promise.reject();
+		}
+
+		if (makeFavourite)
+		{
+			return this.#addRoleToFavouriteList(role.code, role.name);
+		}
+
+		return this.#removeRoleFromFavouriteList(role.code, role.name);
+	}
+
+	async #addRoleToFavouriteList(roleCode: string, roleName: string): Promise
+	{
+		return this.#engine.addRoleToFavouriteList(roleCode)
+			.then((res) => {
+				this.#favouriteRoles = res.data.items;
+
+				this.#entityCatalog.setItems(this.#getItemsData());
+				this.#entityCatalog.setGroups(this.#getItemGroupsFromIndustries());
+
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS', {
+						'#ROLE#': roleName,
+					}),
+				});
+			})
+			.catch((err) => {
+				console.error(err);
+
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_ACTION_FAILED'),
+				});
+			});
+	}
+
+	async #removeRoleFromFavouriteList(roleCode: string, roleName: string): Promise
+	{
+		return this.#engine.removeRoleFromFavouriteList(roleCode)
+			.then((res) => {
+				this.#favouriteRoles = res.data.items;
+				this.#entityCatalog.setItems(this.#getItemsData());
+				this.#entityCatalog.setGroups(this.#getItemGroupsFromIndustries());
+
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_NOTIFICATION_SUCCESS', {
+						'#ROLE#': roleName,
+					}),
+				});
+			})
+			.catch((err) => {
+				console.error(err);
+
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_ACTION_FAILED'),
+				});
+			});
 	}
 }

@@ -1,6 +1,8 @@
 import { Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
+import { Analytics } from 'im.v2.lib.analytics';
+import { ChannelManager } from 'im.v2.lib.channel';
 import { Core } from 'im.v2.application.core';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { Parser } from 'im.v2.lib.parser';
@@ -10,6 +12,7 @@ import { EventType, PlacementType, ChatActionType } from 'im.v2.const';
 import { MarketManager } from 'im.v2.lib.market';
 import { Utils } from 'im.v2.lib.utils';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { showDeleteChannelPostConfirm } from 'im.v2.lib.confirm';
 
 import '../css/message-menu.css';
 
@@ -321,11 +324,7 @@ export class MessageMenu extends BaseMenu
 		return {
 			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_DELETE'),
 			className: 'menu-popup-no-icon bx-im-dialog-chat__message-menu_delete',
-			onclick: () => {
-				const messageService = new MessageService({ chatId: this.context.chatId });
-				void messageService.deleteMessage(this.context.id);
-				this.menuInstance.close();
-			},
+			onclick: this.#onDelete.bind(this),
 		};
 	}
 
@@ -429,5 +428,39 @@ export class MessageMenu extends BaseMenu
 	#isForwardedMessage(): boolean
 	{
 		return Type.isStringFilled(this.context.forward.id);
+	}
+
+	async #onDelete()
+	{
+		const { id: messageId, dialogId, chatId } = this.context;
+		Analytics.getInstance().messageDelete.onClickDelete({ messageId, dialogId });
+		this.menuInstance.close();
+
+		if (await this.#isDeletionCancelled())
+		{
+			return;
+		}
+
+		const messageService = new MessageService({ chatId });
+		void messageService.deleteMessage(messageId);
+	}
+
+	async #isDeletionCancelled(): Promise<boolean>
+	{
+		const { id: messageId, dialogId } = this.context;
+		if (!ChannelManager.isChannel(dialogId))
+		{
+			return false;
+		}
+
+		const confirmResult = await showDeleteChannelPostConfirm();
+		if (!confirmResult)
+		{
+			Analytics.getInstance().messageDelete.onCancel({ messageId, dialogId });
+
+			return true;
+		}
+
+		return false;
 	}
 }

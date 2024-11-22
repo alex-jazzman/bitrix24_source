@@ -147,7 +147,7 @@ jn.define('bizproc/workflow/faces/timeline', (require, exports, module) => {
 					color: AppTheme.colors.accentMainLinks,
 					marginTop: 1,
 				},
-				text: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_TIMELINE'),
+				text: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_TIMELINE_MSGVER_1'),
 				numberOfLines: 1,
 				ellipsize: 'end',
 			});

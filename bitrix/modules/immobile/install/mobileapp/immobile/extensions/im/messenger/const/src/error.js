@@ -6,6 +6,10 @@ jn.define('im/messenger/const/error', (require, exports, module) => {
 		dialog: {
 			accessError: 'ACCESS_ERROR',
 			accessDenied: 'ACCESS_DENIED',
+			chatNotFound: 'CHAT_NOT_FOUND',
+			delete: {
+				userInvitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
+			},
 		},
 		planLimit: {
 			MESSAGE_ACCESS_DENIED_BY_TARIFF: 'MESSAGE_ACCESS_DENIED_BY_TARIFF',

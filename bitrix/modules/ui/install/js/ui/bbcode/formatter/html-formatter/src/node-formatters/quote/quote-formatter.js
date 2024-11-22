@@ -2,7 +2,7 @@ import { Dom } from 'main.core';
 import type { BeforeConvertCallbackOptions } from 'ui.bbcode.formatter';
 import { NodeFormatter, type NodeFormatterOptions } from 'ui.bbcode.formatter';
 import type { BBCodeNode } from 'ui.bbcode.model';
-import { normalizeLineBreaks } from '../../helpers/normalize-line-breaks';
+import { normalizeTextNodes } from '../../helpers/normalize-text-nodes';
 
 export class QuoteNodeFormatter extends NodeFormatter
 {
@@ -19,8 +19,9 @@ export class QuoteNodeFormatter extends NodeFormatter
 				});
 			},
 			before({ node }: BeforeConvertCallbackOptions): BBCodeNode {
-				return normalizeLineBreaks(node);
+				return normalizeTextNodes(node);
 			},
+
 			...options,
 		});
 	}

@@ -32,6 +32,7 @@ this.BX.SocialNetwork = this.BX.SocialNetwork || {};
 	        var createProjectLink = _this2.getOption('createProjectLink');
 	        var lockProjectLink = _this2.getOption('lockProjectLink', false);
 	        var lockProjectLinkFeatureId = _this2.getOption('lockProjectLinkFeatureId', '');
+	        var isProject = _this2.getOption('isProject', false);
 	        var complexPhrases = {
 	          '111': 'SOCNET_ENTITY_SELECTOR_EMPLOYEE_OR_PROJECT_OR_GUEST',
 	          '110': 'SOCNET_ENTITY_SELECTOR_INVITE_EMPLOYEE_OR_GUEST',
@@ -107,11 +108,11 @@ this.BX.SocialNetwork = this.BX.SocialNetwork || {};
 	          return _guestLink;
 	        } else if (createProjectLink) {
 	          if (lockProjectLink) {
-	            var projectLink = _this2.createLockedProjectLink(main_core.Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'), true, lockProjectLinkFeatureId);
+	            var projectLink = _this2.createLockedProjectLink(isProject ? main_core.Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT_1') : main_core.Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'), true, lockProjectLinkFeatureId);
 	            _this2.createLock(projectLink, lockProjectLinkFeatureId);
 	            return projectLink;
 	          }
-	          return _this2.createProjectLink(main_core.Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'), true);
+	          return _this2.createProjectLink(isProject ? main_core.Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT_1') : main_core.Loc.getMessage('SOCNET_ENTITY_SELECTOR_CREATE_PROJECT'), true);
 	        }
 	        return null;
 	      });

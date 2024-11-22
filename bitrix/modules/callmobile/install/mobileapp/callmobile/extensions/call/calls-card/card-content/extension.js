@@ -39,6 +39,7 @@ jn.define('call/calls-card/card-content', (require, exports, module) => {
 				paused: false,
 				crmStatus: this.props.crmStatus,
 				showName: this.props.showName,
+				isNumberHidden: this.props.isNumberHidden,
 			};
 
 			this.onCloseHandler = this.onClose.bind(this);
@@ -169,7 +170,7 @@ jn.define('call/calls-card/card-content', (require, exports, module) => {
 					onUiEvent: this.onUiEventHandler,
 				}),
 				this.renderName(),
-				PhoneField({
+				!this.state.isNumberHidden && PhoneField({
 					readOnly: true,
 					value: {
 						phoneNumber: this.phoneNumber,

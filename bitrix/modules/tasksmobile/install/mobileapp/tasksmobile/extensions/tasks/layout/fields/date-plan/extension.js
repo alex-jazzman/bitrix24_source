@@ -129,6 +129,7 @@ jn.define('tasks/layout/fields/date-plan', (require, exports, module) => {
 				groupPlan: this.#groupPlan,
 				parentWidget: this.props.parentWidget,
 				onSave: this.onSave,
+				onHidden: this.props.onHidden,
 				startDatePlan: this.props.startDatePlan,
 				endDatePlan: this.props.endDatePlan,
 			});

@@ -18,16 +18,24 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { UserAdd } = require('im/messenger/controller/user-add');
 	const { ChatTitle } = require('im/messenger/lib/element');
-	const { BotCode, SidebarActionType } = require('im/messenger/const');
+	const {
+		BotCode,
+		SidebarActionType,
+		ErrorType,
+	} = require('im/messenger/const');
 	const { Icon } = require('assets/icons');
 	const { Theme } = require('im/lib/theme');
+	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { BaseSidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/base/view');
 
 	/**
 	 * @class SidebarParticipantsView
 	 * @typedef {LayoutComponent<SidebarParticipantsViewProps, SidebarParticipantsViewState>} SidebarParticipantsView
 	 */
-	class SidebarParticipantsView extends LayoutComponent
+	class SidebarParticipantsView extends BaseSidebarTabView
 	{
+		#listViewRef;
+
 		constructor(props)
 		{
 			super(props);
@@ -58,32 +66,14 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 			return new ParticipantsService(this.props);
 		}
 
-		componentDidMount()
-		{
-			logger.log(`${this.constructor.name}.componentDidMount`);
-			this.bindListener();
-			this.subscribeStoreEvents();
-		}
-
-		componentDidUpdate()
-		{
-			logger.log(`${this.constructor.name}.componentDidUpdate`);
-		}
-
-		componentWillUnmount()
-		{
-			logger.log(`${this.constructor.name}.componentWillUnmount`);
-			this.unsubscribeStoreEvents();
-		}
-
 		/**
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
 		bindListener()
 		{
+			super.bindListener();
 			this.onUpdateDialogStore = this.onUpdateDialogStore.bind(this);
-			this.unsubscribeStoreEvents = this.unsubscribeStoreEvents.bind(this);
 		}
 
 		/**
@@ -130,7 +120,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
 			this.storeManager.on('dialoguesModel/update', this.onUpdateDialogStore);
 			this.storeManager.on('dialoguesModel/copilotModel/update', this.onUpdateDialogStore);
-			BX.addCustomEvent('onCloseSidebarWidget', this.unsubscribeStoreEvents);
 		}
 
 		unsubscribeStoreEvents()
@@ -138,7 +127,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
 			this.storeManager.off('dialoguesModel/update', this.onUpdateDialogStore);
 			this.storeManager.off('dialoguesModel/copilotModel/update', this.onUpdateDialogStore);
-			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeStoreEvents);
 		}
 
 		render()
@@ -164,7 +152,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				ref: (ref) => {
 					if (ref)
 					{
-						this.listViewRef = ref;
+						this.#listViewRef = ref;
 					}
 				},
 				style: {
@@ -323,7 +311,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		/**
 		 * @desc Returns view a row element with added btn
 		 * @return {LayoutComponent}
-		 * @private
+		 * @protected
 		 */
 		getAddParticipantRow()
 		{
@@ -430,7 +418,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 * @desc check is add ellipsis button
 		 * @param {object} item
 		 * @return {boolean}
-		 * @private
+		 * @protected
 		 */
 		isEllipsis(item)
 		{
@@ -451,7 +439,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		/**
 		 * @desc Handler load more event by scroll down ( staring rest call participants with pagination )
 		 * @void
-		 * @private
+		 * @protected
 		 */
 		onLoadScrollItems()
 		{
@@ -464,7 +452,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 * @param {object} event
 		 * @param {string} event.key  - string key item
 		 * @void
-		 * @private
+		 * @protected
 		 */
 		onClickRemoveParticipant(event)
 		{
@@ -474,9 +462,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 					(buttonId) => {
 						if (buttonId === 2)
 						{
-							const { key } = event;
-							const itemPos = this.listViewRef.getElementPosition(key);
-							this.removeParticipant(itemPos.index, itemPos.section);
+							const {
+								key,
+								userId,
+							} = event;
+							const itemPos = this.#listViewRef.getElementPosition(key);
+							this.removeParticipant(itemPos.index, itemPos.section, userId);
 						}
 					},
 					Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_TITLE'),
@@ -491,7 +482,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		/**
 		 * @desc Handler leave chat
 		 * @void
-		 * @private
+		 * @protected
 		 */
 		onClickLeaveChat()
 		{
@@ -517,19 +508,23 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 * @desc Remove participant
 		 * @param {number} index
 		 * @param {number} section
+		 * @param {number} userId
 		 * @void
-		 * @private
+		 * @protected
 		 */
-		removeParticipant(index, section)
+		removeParticipant(index, section, userId)
 		{
-			const indexWithoutAddedRow = this.state.permissions.isCanAddParticipants ? index - 1 : index;
-			const deletedUser = this.state.participants.find((el, i) => i === indexWithoutAddedRow);
-			const onComplete = () => {
-				this.state.participants = this.state.participants.filter((el, i) => i !== indexWithoutAddedRow);
-
-				this.participantsService.deleteParticipant(deletedUser.id);
-			};
-			this.listViewRef.deleteRow(section, index, 'automatic', onComplete);
+			this.participantsService.deleteParticipant(userId)
+				.catch((errors) => {
+					if (errors[0]?.code === ErrorType.dialog.delete.userInvitedFromStructure)
+					{
+						Notification.showToastWithParams({
+							message: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_USER_INVITED_FROM_STRUCTURE_DELETE_ERROR'),
+							backgroundColor: Theme.colors.accentMainAlert,
+						});
+					}
+				})
+			;
 		}
 
 		/**
@@ -538,11 +533,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 * @param {number} section
 		 * @param {Array<object>} participants
 		 * @void
-		 * @private
+		 * @protected
 		 */
 		addParticipants(index, section, participants)
 		{
-			this.listViewRef.insertRows(participants, section, index, 'automatic')
+			this.#listViewRef.insertRows(participants, section, index, 'automatic')
 				.catch((err) => logger.error(err));
 		}
 
@@ -554,7 +549,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 * @param {boolean} isEntity.isYou
 		 * @param {boolean?} isEntity.isCopilot
 		 * @param {LayoutComponent} ref
-		 * @private
+		 * @protected
 		 */
 		onLongClickItem(key, userId, isEntity, ref)
 		{
@@ -615,7 +610,10 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 					{
 						actionsItems.push({
 							actionName: SidebarActionType.remove,
-							callback: this.onClickRemoveParticipant.bind(this, { key }),
+							callback: this.onClickRemoveParticipant.bind(this, {
+								key,
+								userId,
+							}),
 							icon: Icon.BAN,
 						});
 					}
@@ -653,7 +651,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		/**
 		 * @desc Handler click item
 		 * @param {number} userId
-		 * @private
+		 * @protected
 		 */
 		onClickItem(userId)
 		{
@@ -668,7 +666,10 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				return false;
 			}
 
-			return UserProfile.show(userId, { backdrop: true });
+			return UserProfile.show(userId, {
+				backdrop: true,
+				openingDialogId: this.props.dialogId,
+			});
 		}
 
 		getEllipsisButton(item)
@@ -710,7 +711,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		/**
 		 * @desc Call user add widget
 		 * @void
-		 * @private
+		 * @protected
 		 */
 		callParticipantsAddWidget()
 		{
@@ -802,6 +803,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		isCopilotGroupDialog()
 		{
 			return this.state.participants.length > 2;
+		}
+
+		scrollToBegin()
+		{
+			this.#listViewRef?.scrollToBegin(true);
 		}
 	}
 

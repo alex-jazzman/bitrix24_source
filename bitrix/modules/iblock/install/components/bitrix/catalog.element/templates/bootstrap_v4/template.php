@@ -143,18 +143,24 @@ $arParams['MESS_BTN_ADD_TO_BASKET'] = $arParams['MESS_BTN_ADD_TO_BASKET'] ?: Loc
 
 if ($arResult['MODULES']['catalog'] && $arResult['PRODUCT']['TYPE'] === ProductTable::TYPE_SERVICE)
 {
+	$arParams['~MESS_NOT_AVAILABLE_SERVICE'] ??= '';
 	$arParams['~MESS_NOT_AVAILABLE'] = $arParams['~MESS_NOT_AVAILABLE_SERVICE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE_SERVICE')
 	;
+
+	$arParams['MESS_NOT_AVAILABLE_SERVICE'] ??= '';
 	$arParams['MESS_NOT_AVAILABLE'] = $arParams['MESS_NOT_AVAILABLE_SERVICE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE_SERVICE')
 	;
 }
 else
 {
+	$arParams['~MESS_NOT_AVAILABLE'] ??= '';
 	$arParams['~MESS_NOT_AVAILABLE'] = $arParams['~MESS_NOT_AVAILABLE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE')
 	;
+
+	$arParams['MESS_NOT_AVAILABLE'] ??= '';
 	$arParams['MESS_NOT_AVAILABLE'] = $arParams['MESS_NOT_AVAILABLE']
 		?: Loc::getMessage('CT_BCE_CATALOG_NOT_AVAILABLE')
 	;

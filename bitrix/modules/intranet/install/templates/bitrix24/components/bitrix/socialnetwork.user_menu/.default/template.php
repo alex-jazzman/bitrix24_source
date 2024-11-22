@@ -247,6 +247,21 @@ if(
 }
 
 if (
+	Loader::includeModule('biconnector')
+	&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
+)
+{
+	/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorProfile::getMenuItemData */
+	$menuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
+		\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_PROFILE
+	);
+	if ($menuItem)
+	{
+		$items[] = $menuItem;
+	}
+}
+
+if (
 	is_array($arResult['CanView'])
 	&& $arResult['CanView']['tasks']
 	&& checkEffectiveRights($userId)

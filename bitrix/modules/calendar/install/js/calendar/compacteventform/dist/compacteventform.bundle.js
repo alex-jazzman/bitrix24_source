@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events,calendar_util,main_popup,calendar_controls,calendar_entry,calendar_sectionmanager,ui_dialogs_messagebox,calendar_entityrelation) {
+(function (exports,main_core,main_core_events,calendar_util,main_popup,calendar_controls,calendar_entry,calendar_sectionmanager,ui_analytics,ui_dialogs_messagebox,calendar_entityrelation) {
 	'use strict';
 
 	let _ = t => t,
@@ -95,8 +95,11 @@ this.BX = this.BX || {};
 	    });
 
 	    // Fulfill previous deletions to avoid data inconsistency
-	    if (this.getMode() === CompactEventForm.EDIT_MODE) {
+	    if (this.isEditMode()) {
 	      calendar_entry.EntryManager.doDelayedActions();
+	    }
+	    if (this.isViewMode() && !this.isLocationMode()) {
+	      this.sendOpenViewCardAnalytics();
 	    }
 	    this.prepareData().then(() => {
 	      if (this.isLocationMode()) {
@@ -105,7 +108,7 @@ this.BX = this.BX || {};
 	        this.setFormValues();
 	      }
 	      this.popup.show();
-	      if (this.userPlannerSelector && (this.isLocationCalendar || this.userPlannerSelector.attendeesEntityList.length > 1 && this.getMode() !== CompactEventForm.VIEW_MODE)) {
+	      if (this.hasToOpenPlannerInDefault()) {
 	        this.userPlannerSelector.showPlanner();
 	      }
 	      if (this.isTitleOverflowing()) {
@@ -611,6 +614,9 @@ this.BX = this.BX || {};
 	    const el = this.DOM.titleInput;
 	    return el.clientWidth < el.scrollWidth || el.clientHeight < el.scrollHeight;
 	  }
+	  hasToOpenPlannerInDefault() {
+	    return this.userPlannerSelector && (this.isLocationCalendar || this.userPlannerSelector.attendeesEntityList.length > 1 && this.getMode() !== CompactEventForm.VIEW_MODE);
+	  }
 	  checkLocationForm(event) {
 	    if (event && event instanceof main_core_events.BaseEvent) {
 	      const data = event.getData();
@@ -671,12 +677,13 @@ this.BX = this.BX || {};
 	    return this.getFormDataChanges().length > 0;
 	  }
 	  setParams(params = {}) {
+	    var _params$ownerId;
 	    this.userId = params.userId || calendar_util.Util.getCurrentUserId();
 	    this.type = params.type || 'user';
 	    this.isLocationCalendar = params.isLocationCalendar || false;
 	    this.locationAccess = params.locationAccess || false;
 	    this.calendarContext = params.calendarContext || null;
-	    this.ownerId = params.ownerId ? params.ownerId : 0;
+	    this.ownerId = (_params$ownerId = params.ownerId) != null ? _params$ownerId : 0;
 	    if (this.type === 'user' && !this.ownerId) {
 	      this.ownerId = this.userId;
 	    }
@@ -1843,6 +1850,15 @@ this.BX = this.BX || {};
 	    }
 	    return [['user', this.entry.data.MEETING_HOST || 0], ['user', this.entry.getOwnerId()]];
 	  }
+	  sendOpenViewCardAnalytics() {
+	    ui_analytics.sendData({
+	      tool: 'im',
+	      category: 'events',
+	      event: 'view_card',
+	      c_section: 'card_compact',
+	      p5: `eventId_${this.entry.data.PARENT_ID}`
+	    });
+	  }
 	}
 	CompactEventForm.VIEW_MODE = 'view';
 	CompactEventForm.EDIT_MODE = 'edit';
@@ -1850,5 +1866,5 @@ this.BX = this.BX || {};
 
 	exports.CompactEventForm = CompactEventForm;
 
-}((this.BX.Calendar = this.BX.Calendar || {}),BX,BX.Event,BX.Calendar,BX.Main,BX.Calendar.Controls,BX.Calendar,BX.Calendar,BX.UI.Dialogs,BX.Calendar));
+}((this.BX.Calendar = this.BX.Calendar || {}),BX,BX.Event,BX.Calendar,BX.Main,BX.Calendar.Controls,BX.Calendar,BX.Calendar,BX.UI.Analytics,BX.UI.Dialogs,BX.Calendar));
 //# sourceMappingURL=compacteventform.bundle.js.map

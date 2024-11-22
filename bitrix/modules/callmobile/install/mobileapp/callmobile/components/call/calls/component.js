@@ -377,6 +377,7 @@
 			this.log("onPhoneTo", e);
 			let number = e.number;
 			let params = e.params;
+			const isNumberHidden = e.isNumberHidden;
 
 			params = params || {};
 			if (typeof (params) != 'object')
@@ -388,7 +389,7 @@
 
 			if (this.canUseTelephony())
 			{
-				this.phoneCall(number, params);
+				this.phoneCall(number, params, isNumberHidden);
 			}
 		}
 
@@ -617,7 +618,7 @@
 			);
 		}
 
-		phoneCall(number, params)
+		phoneCall(number, params, isNumberHidden = false)
 		{
 			if (!this.canUseTelephony())
 			{
@@ -668,6 +669,7 @@
 			this.isOutgoingCallCanceled = false;
 			this.phoneNumber = correctNumber;
 			this.phoneFullNumber = correctNumber;
+			this.isNumberHidden = isNumberHidden;
 
 			if (params['NAME'])
 			{
@@ -1107,6 +1109,7 @@
 				recordText,
 				crmStatus,
 				showName: this.showName,
+				isNumberHidden: this.isNumberHidden,
 			};
 		}
 

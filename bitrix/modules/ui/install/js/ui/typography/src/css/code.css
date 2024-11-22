@@ -1,8 +1,8 @@
 .ui-typography-code {
 	display: block;
 	background-color: #fdf6e3;
-	padding: var(--ui-space-inset-xs);
-	margin: var(--ui-typography-block-space);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-sm2);
+	margin: var(--ui-typography-block-space-stack) 0;
 	overflow-x: auto;
 	position: relative;
 	tab-size: 2;

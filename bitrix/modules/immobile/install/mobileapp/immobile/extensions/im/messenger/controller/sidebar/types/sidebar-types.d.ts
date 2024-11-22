@@ -158,6 +158,7 @@ type SidebarParticipantsViewProps = {
 	dialogId: string | number,
 	isNotes: boolean,
 	isCopilot: boolean,
+	id: string,
 }
 type SidebarParticipantsViewState = {
 	participants: Array<object>,
@@ -170,6 +171,7 @@ type SidebarParticipantsViewState = {
 
 type SidebarFilesViewProps = {
 	dialogId: string | number,
+	id: string,
 }
 
 type SidebarFilesViewState = {
@@ -180,6 +182,7 @@ type SidebarFilesViewState = {
 
 type SidebarLinksViewProps = {
 	dialogId: DialogId,
+	id: string,
 }
 
 type SidebarLinksViewState = {

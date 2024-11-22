@@ -111,7 +111,15 @@ jn.define('tasks/entry', (require, exports, module) => {
 		 */
 		static async #openTaskDetailNew(data, params = {})
 		{
-			const { userId = env.userId, parentWidget, context, analyticsLabel, shouldOpenComments = false } = params;
+			const {
+				userId = env.userId,
+				parentWidget,
+				context,
+				analyticsLabel,
+				shouldOpenComments = false,
+				view,
+				kanbanOwnerId,
+			} = params;
 			const taskId = data.id || data.taskId;
 			const guid = Entry.getGuid();
 
@@ -127,6 +135,8 @@ jn.define('tasks/entry', (require, exports, module) => {
 					context,
 					analyticsLabel,
 					shouldOpenComments,
+					view,
+					kanbanOwnerId,
 				});
 			}
 			else
@@ -153,8 +163,10 @@ jn.define('tasks/entry', (require, exports, module) => {
 						USER_ID: (userId || env.userId),
 						GUID: guid,
 						CONTEXT: context,
+						VIEW: view,
 						SHOULD_OPEN_COMMENTS: shouldOpenComments,
 						analyticsLabel,
+						kanbanOwnerId,
 					},
 				});
 			}

@@ -1,0 +1,27 @@
+<?php
+$MESS["AI_COPILOT_ROLES_ADD_TO_FAVOURITE"] = "Додати в Обране";
+$MESS["AI_COPILOT_ROLES_ADD_TO_FAVOURITE_ACTION_FAILED"] = "Не вдалося додати роль до Обраного, спробуйте ще раз.";
+$MESS["AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS"] = "Роль <b>#ROLE#</b> додано до Обраного.";
+$MESS["AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP"] = "Додавайте до Обраного ролі, які найчастіше використовуєте.";
+$MESS["AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE"] = "Тут будуть ваші ролі";
+$MESS["AI_COPILOT_ROLES_ERROR_TEXT"] = "CoPilot не може виконати дію. <br>Оновіть сторінку або спробуйте трохи згодом.";
+$MESS["AI_COPILOT_ROLES_FAVOURITE_GROUP"] = "Обране";
+$MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER"] = "Галузі";
+$MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_2"] = "Категорії";
+$MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT"] = "У кожній галузі зібрані ролі CoPilot, пов'язані із цією сферою діяльності. Це допоможе вам витрачати менше часу на формулювання запитів і спростить роботу з CoPilot.";
+$MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT_2"] = "У кожній категорії зібрані ролі CoPilot, пов'язані з цією сферою діяльності. Це допоможе вам витрачати менше часу на складання запитів і спростить роботу з CoPilot.";
+$MESS["AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION"] = "Заповніть форму зворотного зв'язку, якщо не знайшли відповідної ролі.";
+$MESS["AI_COPILOT_ROLES_HELP_ITEM_TITLE"] = "Розкажіть нам про свої побажання";
+$MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER"] = "Ролі";
+$MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER_HINT"] = "Роль допомагає CoPilot відповісти на запит з урахуванням особливостей професії. Так ви отримаєте точнішу відповідь і не витратите багато часу на формулювання запиту.";
+$MESS["AI_COPILOT_ROLES_RECENT_GROUP"] = "Нещодавні";
+$MESS["AI_COPILOT_ROLES_RECOMMENDED_GROUP"] = "Рекомендовані";
+$MESS["AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE"] = "Видалити з Обраного";
+$MESS["AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_ACTION_FAILED"] = "Не вдалося видалити роль з Обраного, спробуйте ще раз.";
+$MESS["AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_NOTIFICATION_SUCCESS"] = "Роль <b>#ROLE#</b> видалено з Обраного.";
+$MESS["AI_COPILOT_ROLES_SEARCH_NO_RESULT"] = "Виберіть галузь зі списку зліва, або продовжуйте без ролі.";
+$MESS["AI_COPILOT_ROLES_SEARCH_NO_RESULT_2"] = "Спробуйте змінити запит або виберіть відповідну роль у списку категорій.";
+$MESS["AI_COPILOT_ROLES_SEARCH_NO_RESULT_3"] = "Спробуйте змінити запит або виберіть #LINK#Універсальний CoPilot#/LINK#.";
+$MESS["AI_COPILOT_ROLES_SEARCH_NO_RESULT_TITLE"] = "Роль не знайдено";
+$MESS["AI_COPILOT_ROLES_USE_ROLE_BTN"] = "Вибрати";
+$MESS["AI_COPILOT_ROLES_USE_STANDARD_ROLE"] = "Продовжити з універсальною роллю";

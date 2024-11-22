@@ -63,6 +63,11 @@ jn.define('tasks/layout/fields/date-plan/view-redux-content', (require, exports,
 
 		componentDidMount()
 		{
+			if (this.props.onHidden)
+			{
+				this.parentWidget.on('onViewHidden', () => this.props?.onHidden());
+			}
+
 			Keyboard.on(Keyboard.Event.Hidden, () => {
 				if (this.height)
 				{
@@ -225,9 +230,10 @@ jn.define('tasks/layout/fields/date-plan/view-redux-content', (require, exports,
 		{
 			return NumberField(
 				{
-					testId: '',
+					testId: 'duration-value-field',
 					required: false,
-					value: this.state.durationValue,
+					value: this.state.durationValue || 0,
+					forcedValue: this.state.durationValue || 0,
 					shouldShowToolbar: false,
 					onChange: this.onChangeDurationValue,
 					title: '',
@@ -253,6 +259,7 @@ jn.define('tasks/layout/fields/date-plan/view-redux-content', (require, exports,
 					ref: (ref) => {
 						this.durationMenuTargetRef = ref;
 					},
+					testId: 'duration-type-field',
 					style: {
 						width: '100%',
 						flexDirection: 'row',
@@ -419,10 +426,20 @@ jn.define('tasks/layout/fields/date-plan/view-redux-content', (require, exports,
 		}
 
 		onFixDate = () => {
-			showToast({
-				message: Loc.getMessage('M_TASKS_DATE_PLAN_EDIT_FORM_DATE_CHANGED_FROM_WORK_TIME'),
-				icon: Icon.CLOCK,
-			}, this.parentWidget);
+			const clearToast = () => {
+				this.workTimeChangeToast = null;
+			};
+
+			if (!this.workTimeChangeToast)
+			{
+				this.workTimeChangeToast = showToast({
+					message: Loc.getMessage('M_TASKS_DATE_PLAN_EDIT_FORM_DATE_CHANGED_FROM_WORK_TIME'),
+					icon: Icon.CLOCK,
+					onTimerOver: clearToast,
+					onTap: clearToast,
+					position: 'top',
+				});
+			}
 		};
 	}
 

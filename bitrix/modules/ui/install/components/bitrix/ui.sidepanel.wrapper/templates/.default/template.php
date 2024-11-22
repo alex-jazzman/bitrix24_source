@@ -134,13 +134,25 @@ if ($arResult["SHOW_BITRIX24_THEME"] === "Y")
 {
 	$bodyClass .= " bitrix24-".$themePicker->getCurrentBaseThemeId()."-theme";
 }
+else if ($arResult["CUSTOM_BACKGROUND_STYLE"])
+{
+	$bodyClass .= " ui-page-slider-wrapper-custom-background";
+}
 else
 {
 	$bodyClass .= " ui-page-slider-wrapper-default-theme";
 }
+
+$bodyStyle = "";
+
+if ($arResult['CUSTOM_BACKGROUND_STYLE'])
+{
+	$backgroundStyle = $arResult["CUSTOM_BACKGROUND_STYLE"];
+	$bodyStyle .= " background: $backgroundStyle;";
+}
 ?>
 <body class="<?= $bodyClass ?> <?php
-$APPLICATION->ShowProperty('BodyClass');?>">
+$APPLICATION->ShowProperty('BodyClass');?>" style="<?= $bodyStyle ?>">
 <?php
 if ($arResult["SHOW_BITRIX24_THEME"] === "Y")
 {
@@ -173,6 +185,14 @@ if ($arResult["SHOW_BITRIX24_THEME"] === "Y")
 				);
 			}
 		?></div>
+
+		<?php
+		if ($arParams['HIDE_TOOLBAR']):
+			?>
+			<div></div>
+			<?php
+		else:
+		?>
 		<div class="ui-side-panel-toolbar<?if (!$arParams['USE_UI_TOOLBAR_MARGIN']):?> --no-margin<?endif?>">
 		<?php
 		if (!isset($arParams['USE_UI_TOOLBAR']) || $arParams['USE_UI_TOOLBAR'] !== 'Y')
@@ -211,6 +231,8 @@ if ($arResult["SHOW_BITRIX24_THEME"] === "Y")
 		}
 		?>
 		</div>
+		<?php endif;?>
+
 		<div class="ui-side-panel-wrap-below"><?php $APPLICATION->ShowViewContent("below_pagetitle")?></div>
 
 		<div class="ui-page-slider-workarea">

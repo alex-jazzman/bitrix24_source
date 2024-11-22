@@ -1786,7 +1786,7 @@ this.BX = this.BX || {};
 	              }
 	              _context.prev = 2;
 	              _context.next = 5;
-	              return this.engine.getTooling(category);
+	              return this.engine.getImagePickerTooling();
 	            case 5:
 	              res = _context.sent;
 	              this.engines = res.data.engines;

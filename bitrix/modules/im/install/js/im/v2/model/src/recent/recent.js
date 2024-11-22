@@ -429,6 +429,7 @@ export class RecentModel extends BuilderModel
 
 				store.commit('deleteFromRecentCollection', existingItem.dialogId);
 				store.commit('deleteFromCopilotCollection', existingItem.dialogId);
+				store.commit('deleteFromChannelCollection', existingItem.dialogId);
 				const canDelete = this.#canDelete(existingItem.dialogId);
 
 				if (!canDelete)
@@ -470,6 +471,9 @@ export class RecentModel extends BuilderModel
 			},
 			deleteFromCopilotCollection: (state: RecentState, payload: string) => {
 				state.copilotCollection.delete(payload);
+			},
+			deleteFromChannelCollection: (state: RecentState, payload: string) => {
+				state.channelCollection.delete(payload);
 			},
 			setChannelCollection: (state: RecentState, payload: string[]) => {
 				payload.forEach((dialogId) => {

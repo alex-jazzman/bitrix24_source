@@ -56,5 +56,4 @@ $MESS["TASKS_ROLE_AUDITOR"] = "Спостерігаю";
 $MESS["TASKS_ROLE_ORIGINATOR"] = "Доручив";
 $MESS["TASKS_ROLE_RESPONSIBLE"] = "Мої";
 $MESS["TASKS_ROLE_VIEW_ALL"] = "Всі завдання";
-$MESS["TO_LOGIN_ON_DESKTOP"] = "Увійти на комп'ютері";
 $MESS["TO_LOGIN_ON_DESKTOP_MSGVER_1"] = "Перейти до вебверсії";

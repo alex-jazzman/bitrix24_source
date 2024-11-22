@@ -6,6 +6,7 @@ import {Button} from 'ui.buttons';
 import {LocalStorage} from 'im.lib.localstorage';
 import {DesktopApi} from 'im.v2.lib.desktop-api';
 import {SoundType} from 'im.v2.const';
+import {DesktopDownload} from 'intranet.desktop-download';
 
 import {BackgroundDialog} from './dialogs/background_dialog'
 import {PromoPopup, PromoPopup3D} from './dialogs/promo_popup';
@@ -1129,7 +1130,7 @@ export class CallController extends EventEmitter
 				cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
 				onOk: () =>
 				{
-					const url = Browser.isMac() ? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "http://dl.bitrix24.com/b24/bitrix24_desktop.exe";
+					const url = DesktopDownload.getLinkForCurrentUser();
 					window.open(url, "desktopApp");
 					return true;
 				},
@@ -1376,6 +1377,12 @@ export class CallController extends EventEmitter
 						element: Analytics.AnalyticsElement.videocall,
 						status: Analytics.AnalyticsStatus.success,
 					});
+
+					if (this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount())
+					{
+						Hardware.isMicrophoneMuted = true;
+						this.showAutoMicMuteNotification();
+					}
 					this.currentCall.answer();
 				}
 
@@ -1777,6 +1784,11 @@ export class CallController extends EventEmitter
 			return;
 		}
 
+		Analytics.getInstance().onDocumentBtnClick({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
 		const targetNodeWidth = this.callView.buttons.document.elements.root.offsetWidth;
 		const resumesArticleCode = Util.getResumesArticleCode();
 		const documentsArticleCode = Util.getDocumentsArticleCode();
@@ -1787,6 +1799,7 @@ export class CallController extends EventEmitter
 					onclick: () =>
 					{
 						this.documentsMenu.close();
+						this.onDocumentCreateAnalyticsEvent(Analytics.AnalyticsType.resume);
 						this.maybeShowDocumentEditor({
 							type: DocumentType.Resume,
 						}, resumesArticleCode);
@@ -1800,6 +1813,7 @@ export class CallController extends EventEmitter
 							onclick: () =>
 							{
 								this.documentsMenu.close();
+								this.onDocumentCreateAnalyticsEvent(Analytics.AnalyticsType.doc);
 								this.maybeShowDocumentEditor({
 									type: DocumentType.Blank,
 									typeFile: FILE_TYPE_DOCX,
@@ -1811,6 +1825,7 @@ export class CallController extends EventEmitter
 							onclick: () =>
 							{
 								this.documentsMenu.close();
+								this.onDocumentCreateAnalyticsEvent(Analytics.AnalyticsType.sheet);
 								this.maybeShowDocumentEditor({
 									type: DocumentType.Blank,
 									typeFile: FILE_TYPE_XLSX,
@@ -1822,6 +1837,7 @@ export class CallController extends EventEmitter
 							onclick: () =>
 							{
 								this.documentsMenu.close();
+								this.onDocumentCreateAnalyticsEvent(Analytics.AnalyticsType.presentation);
 								this.maybeShowDocumentEditor({
 									type: DocumentType.Blank,
 									typeFile: FILE_TYPE_PPTX,
@@ -1888,6 +1904,15 @@ export class CallController extends EventEmitter
 		this.documentsMenu.show();
 	}
 
+	onDocumentCreateAnalyticsEvent(documentType)
+	{
+		Analytics.getInstance().onDocumentCreate({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			type: documentType,
+		});
+	}
+
 	buildPreviousResumesSubmenu(menuItem)
 	{
 		BX.ajax.runAction('disk.api.integration.messengerCall.listResumesInChatByCall', {
@@ -1908,6 +1933,10 @@ export class CallController extends EventEmitter
 						onclick: () =>
 						{
 							this.documentsMenu.close();
+							Analytics.getInstance().onLastResumeOpen({
+								callId: this.currentCall.id,
+								callType: this.getCallType(),
+							});
 							this.viewDocumentByLink(resume.links.view);
 						}
 					});
@@ -1980,7 +2009,9 @@ export class CallController extends EventEmitter
 					delegate: {
 						setMaxWidth: this.setCallEditorMaxWidth.bind(this),
 						onDocumentCreated: this._onDocumentCreated.bind(this),
-					}
+					},
+					type: options.type,
+					typeFile: options?.typeFile,
 				});
 
 				let promiseGetUrl;
@@ -2030,6 +2061,12 @@ export class CallController extends EventEmitter
 
 	closeDocumentEditor()
 	{
+		Analytics.getInstance().onDocumentClose({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			type: this.getDocumentType(),
+		});
+
 		return new Promise((resolve) =>
 		{
 			if (this.docEditor && this.docEditorIframe)
@@ -2142,6 +2179,12 @@ export class CallController extends EventEmitter
 		{
 			this.currentCall.sendCustomMessage(DOC_CREATED_EVENT, true)
 		}
+
+		Analytics.getInstance().onDocumentUpload({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			type: this.getDocumentType(),
+		});
 	}
 
 	onSideBarCloseClicked()
@@ -2205,6 +2248,24 @@ export class CallController extends EventEmitter
 		}
 
 		this.documentPromoPopup = null;
+	}
+
+	getDocumentType()
+	{
+		if (this.docEditor.options.type === DocumentType.Resume)
+		{
+			return Analytics.AnalyticsType.resume;
+		}
+
+		switch (this.docEditor.options.typeFile)
+		{
+			case FILE_TYPE_DOCX:
+				return Analytics.AnalyticsType.doc;
+			case FILE_TYPE_XLSX:
+				return Analytics.AnalyticsType.sheet;
+			case FILE_TYPE_PPTX:
+				return Analytics.AnalyticsType.presentation;
+		}
 	}
 
 	unfold()
@@ -2823,6 +2884,11 @@ export class CallController extends EventEmitter
 
 	_onCallViewShowChatButtonClick()
 	{
+		if (!this.currentCall)
+		{
+			return;
+		}
+
 		Analytics.getInstance().onShowChat({
 			callId: this.currentCall.id,
 			callType: this.getCallType(),
@@ -3036,7 +3102,7 @@ export class CallController extends EventEmitter
 			{
 				if (window.BX.Helper)
 				{
-					window.BX.Helper.show("redirect=detail&code=12398134");
+					window.BX.Helper.show("redirect=detail&code=22079566");
 				}
 
 				return;

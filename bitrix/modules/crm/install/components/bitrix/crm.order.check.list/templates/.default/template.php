@@ -101,6 +101,15 @@ foreach($arResult['ROWS'] as $key => $check)
 
 	}
 
+	if (isset($check['CASHBOX_IS_CHECKABLE']) && $check['STATUS'] === 'E')
+	{
+		$actions[] = array(
+			'TITLE' => GetMessage('CRM_ORDER_CHECK_REPRINT_TITLE'),
+			'TEXT' => GetMessage('CRM_ORDER_CHECK_REPRINT'),
+			'ONCLICK' => 'BX.Crm.OrderPaymentCheckList.reprintCheck(' . $check['ID'] . ', ' . CUtil::PhpToJSObject($jsData) . ');'
+		);
+	}
+
 	if (isset($check['STATUS']) && in_array($check['STATUS'], ['E', 'N', 'P'], true))
 	{
 		$actions[] = array(
@@ -199,7 +208,7 @@ foreach($arResult['ROWS'] as $key => $check)
 			array('TARGET' => '_blank')
 		);
 	}
-	
+
 	$isEditable = 'Y';
 	if (empty($check['EDIT']))
 	{

@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 	const { isEqual } = require('utils/object');
 	const { isOnline } = require('device/connection');
 
-	const { DialogType, UserRole, HeaderButton, BotCode } = require('im/messenger/const');
+	const { DialogType, UserRole, HeaderButton, BotCode, Analytics  } = require('im/messenger/const');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
@@ -287,11 +287,13 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 			switch (buttonId)
 			{
 				case HeaderButton.callVideo: {
+					Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatWindow);
 					Calls.createVideoCall(this.dialogId);
 					break;
 				}
 
 				case HeaderButton.callAudio: {
+					Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatWindow);
 					Calls.createAudioCall(this.dialogId);
 					break;
 				}

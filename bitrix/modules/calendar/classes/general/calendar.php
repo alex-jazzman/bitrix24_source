@@ -19,6 +19,7 @@ use Bitrix\Calendar\Sync;
 use Bitrix\Calendar\Sync\Factories\FactoriesCollection;
 use Bitrix\Calendar\Sync\Google;
 use Bitrix\Calendar\Core\Event\Tools\UidGenerator;
+use Bitrix\Calendar\OpenEvents;
 use Bitrix\Calendar\Sync\Managers\Synchronization;
 use Bitrix\Calendar\Sync\Util\Context;
 use Bitrix\Calendar\Ui\CountersManager;
@@ -33,7 +34,6 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type;
 use Bitrix\Calendar\Integration\Bitrix24Manager;
 use Bitrix\Calendar\Rooms;
-use Bitrix\Calendar\Internals\SectionConnectionTable;
 use Bitrix\Calendar\Sharing;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Provider\TaskList;
@@ -575,9 +575,17 @@ class CCalendar
 		}
 		else
 		{
+			$owners = [self::$ownerId];
+			$types = [self::$type];
+			if (self::$type === 'user' && OpenEvents\Feature::getInstance()->isAvailable())
+			{
+				$types[] = Core\Event\Tools\Dictionary::CALENDAR_TYPE['open_event'];
+				$owners[] = 0;
+			}
+
 			$sectionList = self::getSectionList([
-				'CAL_TYPE' => self::$type,
-				'OWNER_ID' => self::$ownerId,
+				'CAL_TYPE' => $types,
+				'OWNER_ID' => $owners,
 				'ACTIVE' => 'Y',
 				'ADDITIONAL_IDS' => $followedSectionList,
 				'checkPermissions' => true,
@@ -1552,6 +1560,11 @@ class CCalendar
 			: 75
 		;
 
+		if ($type === 'user' && OpenEvents\Feature::getInstance()->isAvailable())
+		{
+			$type = ['user', Core\Event\Tools\Dictionary::CALENDAR_TYPE['open_event']];
+		}
+
 		$arFilter = array(
 			'CAL_TYPE' => $type,
 			'FROM_LIMIT' => $params['fromLimit'],
@@ -2089,11 +2102,6 @@ class CCalendar
 				}
 			}
 
-			if (!$bChangeMeeting)
-			{
-				$arFields['IS_MEETING'] = $curEvent['IS_MEETING'];
-			}
-
 			if ($arFields['IS_MEETING'] && !$bPersonal && $arFields['CAL_TYPE'] === 'user')
 			{
 				$arFields['SECTION_ID'] = $curEvent['SECT_ID'];
@@ -2450,7 +2458,6 @@ class CCalendar
 
 				// 2. Copy event with new changes, but without recursion
 				$newParams = $params;
-				$newParams['sendEditNotification'] = false;
 
 				if (!($newParams['arFields']['MEETING']['REINVITE'] ?? null))
 				{
@@ -2458,7 +2465,7 @@ class CCalendar
 				}
 
 				$newParams['arFields']['RECURRENCE_ID'] = $curEvent['RECURRENCE_ID'] ?: $newParams['arFields']['ID'];
-				$newParams['arFields']['ORIGINAL_RECURSION_ID'] = (int)($curEvent['ORIGINAL_RECURSION_ID'] ?: $newParams['arFields']['ID']);
+				$newParams['arFields']['ORIGINAL_RECURSION_ID'] = (int)($curEvent['ORIGINAL_RECURSION_ID'] ?? $newParams['arFields']['ID']);
 
 				unset(
 					$newParams['arFields']['ID'],
@@ -2484,7 +2491,7 @@ class CCalendar
 				}
 
 				$instanceDate = !isset($newParams['arFields']['DATE_FROM'])
-					||self::Date(self::Timestamp($curEvent['DATE_FROM']), false) === self::Date($currentFromTs, false);
+					|| self::Date(self::Timestamp($curEvent['DATE_FROM']), false) === self::Date($currentFromTs, false);
 
 				if ($newParams['arFields']['SKIP_TIME'])
 				{
@@ -2516,10 +2523,12 @@ class CCalendar
 				$commentXmlId = CCalendarEvent::GetEventCommentXmlId($eventMod);
 				$newParams['arFields']['RELATIONS'] = array('COMMENT_XML_ID' => $commentXmlId);
 				$newParams['editInstance'] = true;
+				$newParams['sendEditNotification'] = true;
+
 				//original instance date start
 				$newParams['arFields']['ORIGINAL_DATE_FROM'] = self::GetOriginalDate(
 					$params['currentEvent']['DATE_FROM'],
-					$eventMod['DATE_FROM'] ?? $newParams['currentEventDateFrom'],
+					$eventMod['DATE_FROM'],
 					$newParams['arFields']['TZ_FROM']
 				);
 				$newParams['originalDavXmlId'] = $params['currentEvent']['G_EVENT_ID'];
@@ -2528,6 +2537,19 @@ class CCalendar
 				$newParams['parentDateTo'] = $params['currentEvent']['DATE_TO'];
 				$newParams['requestUid'] = $params['requestUid'] ?? null;
 				$newParams['sendInvitesToDeclined'] = $params['sendInvitesToDeclined'] ?? null;
+
+				// check instance changes from original recurrent event
+				$eventMod['DATE_FROM'] = $newParams['arFields']['ORIGINAL_DATE_FROM'];
+				$eventMod['DATE_TO'] = self::Date(
+					self::Timestamp($eventMod['DATE_FROM'], false) + $curEvent['DT_LENGTH']
+				);
+				unset($eventMod['RRULE']);
+
+				$instanceChanges = CCalendarEvent::CheckEntryChanges($newParams['arFields'], $eventMod);
+				if (!empty($instanceChanges))
+				{
+					$newParams['instanceChanges'] = $instanceChanges;
+				}
 
 				$result['recEventId'] = self::SaveEvent($newParams);
 				(new Core\Managers\EventOriginalRecursion())->add(
@@ -2555,26 +2577,27 @@ class CCalendar
 					$newParams['saveAttendeesStatus'] = true;
 				}
 
-				if (!empty($newParams['arFields']['LOCATION']) && is_string($newParams['arFields']['LOCATION']))
-				{
-					$parsedLocation = Rooms\Util::parseLocation($newParams['arFields']['LOCATION']);
-					if (!empty($parsedLocation['room_event_id']))
-					{
-						$newParams['arFields']['LOCATION'] = 'calendar_' . $parsedLocation['room_id'];
-					}
-				}
-
 				$currentFromTs = self::Timestamp($newParams['arFields']['DATE_FROM'] ?? null);
 				$length = self::Timestamp($newParams['arFields']['DATE_TO']) - self::Timestamp($newParams['arFields']['DATE_FROM']);
 
-				if (!isset($newParams['arFields']['DATE_FROM']) || !isset($newParams['arFields']['DATE_TO']))
+				if (!isset($newParams['arFields']['DATE_FROM'], $newParams['arFields']['DATE_TO']))
 				{
 					$length = $curEvent['DT_LENGTH'];
 					$currentFromTs = self::Timestamp($curEvent['DATE_FROM']);
 				}
 
+				// Check location changes
+				[$isRecurrentLocationChanged, $newParams] = self::checkRecurrenceLocationChanges($newParams, $curEvent);
+				// Check name changes
+				$isRecurrentNameChanged = !empty($newParams['arFields']['NAME']) && ($curEvent['NAME'] !== $newParams['arFields']['NAME']);
+				// Check time changes
+				$isRecurrentTimeChanged = (self::Timestamp($curEvent['DATE_FROM'], false) % self::DAY_LENGTH) !== ($currentFromTs % self::DAY_LENGTH);
+				// Check attendees changes
+				$isRecurrentAttendeesChanged = self::checkRecurrenceAttendeesChanges($newParams, $curEvent);
+
 				$instanceDate = !isset($newParams['arFields']['DATE_FROM'])
-					||self::Date(self::Timestamp($curEvent['DATE_FROM']), false) === self::Date($currentFromTs, false);
+					|| self::Date(self::Timestamp($curEvent['DATE_FROM']), false) === self::Date($currentFromTs, false)
+				;
 
 				if ($newParams['arFields']['SKIP_TIME'])
 				{
@@ -2674,7 +2697,8 @@ class CCalendar
 						'checkLocationOccupancy' => $params['checkLocationOccupancy'] ?? false,
 					]);
 
-					unset($newParams['arFields']['ID'],
+					unset(
+						$newParams['arFields']['ID'],
 						$newParams['arFields']['DAV_XML_ID'],
 						$newParams['arFields']['G_EVENT_ID'],
 						$newParams['recursionEditMode']
@@ -2699,7 +2723,10 @@ class CCalendar
 
 				$newParams['sendInvitesToDeclined'] = $params['sendInvitesToDeclined'];
 				$newParams['editNextEvents'] = true;
+				$newParams['previousRecurrentId'] = $recId;
+
 				$result = self::SaveEvent($newParams);
+
 				if (!is_array($result))
 				{
 					$result = [
@@ -2728,33 +2755,91 @@ class CCalendar
 							continue;
 						}
 
-						$evFromTs = self::Timestamp($recRelatedEvent['DATE_FROM']);
+						$evFromTs = self::Timestamp($recRelatedEvent['DATE_FROM'], false);
+						$instanceLength = $recRelatedEvent['DT_LENGTH'] ?? $length;
 
 						if ($evFromTs > $currentDateTimestamp)
 						{
 							$newParams['arFields']['ID'] = $recRelatedEvent['ID'];
 							$newParams['arFields']['RRULE'] = CCalendarEvent::ParseRRULE($recRelatedEvent['RRULE']);
 
+							/*
+							 * Set correct date for related
+							 * if full day event - set related date
+							 * else if recurrent event time change - set related date and recurrent event time
+							 * else - keep related date and related time
+							 */
 							if ($newParams['arFields']['SKIP_TIME'])
 							{
 								$newParams['arFields']['DATE_FROM'] = self::Date($evFromTs, false);
 								$newParams['arFields']['DATE_TO'] = self::Date(self::Timestamp($recRelatedEvent['DATE_TO']), false);
 							}
-							else
+							else if ($isRecurrentTimeChanged)
 							{
 								$newFromTs = self::DateWithNewTime($currentFromTs, $evFromTs);
 								$newParams['arFields']['DATE_FROM'] = self::Date($newFromTs);
 								$newParams['arFields']['DATE_TO'] = self::Date($newFromTs + $length);
 							}
+							else
+							{
+								$newParams['arFields']['DATE_FROM'] = self::Date($evFromTs);
+								$newParams['arFields']['DATE_TO'] = self::Date($evFromTs + $instanceLength);
+							}
 
+							/*
+							 * Set correct location for related
+							 * Entry condition - location on recurrent was not changed
+							 * if related has no location or different - keep it
+							 */
+							$newRecurrentLocation = null;
+							if (!$isRecurrentLocationChanged)
+							{
+								$newRecurrentLocation = $newParams['arFields']['LOCATION'] ?? '';
 
+								if (!empty($recRelatedEvent['LOCATION']))
+								{
+									$parsedRelatedLocation = Rooms\Util::parseLocation($recRelatedEvent['LOCATION']);
+									if (!empty($parsedRelatedLocation['room_event_id']))
+									{
+										$recRelatedEvent['LOCATION'] = 'calendar_' . $parsedRelatedLocation['room_id'];
+									}
+								}
+
+								$newParams['arFields']['LOCATION'] = $recRelatedEvent['LOCATION'] ?? '';
+							}
+
+							/*
+							 * Set correct name for related
+							 */
+							if (!$isRecurrentNameChanged)
+							{
+								$newParams['arFields']['NAME'] = $recRelatedEvent['NAME'] ?? $newParams['arFields']['NAME'];
+							}
+
+							/*
+							 * Set correct attendees for related
+							 * If recurrent attendees has not changed - keep related attendees
+							 */
+							if (!$isRecurrentAttendeesChanged)
+							{
+								$newParams['arFields']['ATTENDEES_CODES'] = $recRelatedEvent['ATTENDEES_CODES']
+									?? $newParams['arFields']['ATTENDEES_CODES']
+								;
+							}
+
+							/*
+							 * Set additional params
+							 */
 							$newParams['arFields']['RECURRENCE_ID'] = $result['id'];
 							$newParams['originalDavXmlId'] = $result['originalDavXmlId'];
+
+							$parentDateTime = self::Date($currentFromTs);
 							$newParams['arFields']['ORIGINAL_DATE_FROM'] = self::GetOriginalDate(
-								$result['originalDateFrom'] ?? null,
+								$parentDateTime,
 								$recRelatedEvent['ORIGINAL_DATE_FROM'] ?? $newParams['currentEventDateFrom'],
 								$result['instanceTz']
 							);
+
 							$newParams['instanceTz'] = $result['instanceTz'];
 							$newParams['editInstance'] = true;
 
@@ -2766,6 +2851,11 @@ class CCalendar
 							}
 
 							self::SaveEvent($newParams);
+
+							if ($newRecurrentLocation !== null)
+							{
+								$newParams['arFields']['LOCATION'] = $newRecurrentLocation;
+							}
 						}
 					}
 				}
@@ -2789,7 +2879,7 @@ class CCalendar
 				$UFs = $params['UF'] ?? null;
 				if(!empty($UFs) && is_array($UFs))
 				{
-					CCalendarEvent::UpdateUserFields($id, $UFs);
+					CCalendarEvent::UpdateUserFields($id, $UFs, false);
 
 					if (!empty($arFields['IS_MEETING']) && !empty($UFs['UF_WEBDAV_CAL_EVENT']))
 					{
@@ -2800,6 +2890,10 @@ class CCalendar
 							$UF['UF_WEBDAV_CAL_EVENT'] ?? null
 						);
 					}
+
+					CCalendarEvent::updateSearchIndex((int)$id, [
+						'updateAllByParent' => true,
+					]);
 				}
 			}
 
@@ -2822,14 +2916,37 @@ class CCalendar
 			{
 				$events = [];
 				$recId = $curEvent['RECURRENCE_ID'] ?: $curEvent['ID'];
-				if ($curEvent['RECURRENCE_ID'] && $curEvent['RECURRENCE_ID'] !== $curEvent['ID'])
+
+				/**
+				 * @deprecated potentially
+				 */
+//				if ($curEvent['RECURRENCE_ID'] && $curEvent['RECURRENCE_ID'] !== $curEvent['ID'])
+//				{
+//					$masterEvent = CCalendarEvent::GetById($curEvent['RECURRENCE_ID']);
+//					if ($masterEvent)
+//					{
+//						$events[] = $masterEvent;
+//					}
+//				}
+
+				$currentFromTs = self::Timestamp($params['arFields']['DATE_FROM'], false);
+				$length = self::Timestamp($params['arFields']['DATE_TO'], false) - self::Timestamp($params['arFields']['DATE_FROM'], false);
+
+				if (!isset($params['arFields']['DATE_FROM'], $params['arFields']['DATE_TO']))
 				{
-					$masterEvent = CCalendarEvent::GetById($curEvent['RECURRENCE_ID']);
-					if ($masterEvent)
-					{
-						$events[] = $masterEvent;
-					}
+					$length = $curEvent['DT_LENGTH'];
+					$currentFromTs = self::Timestamp($curEvent['DATE_FROM']);
 				}
+
+				// Check location changes
+				[$isRecurrentLocationChanged, $params] = self::checkRecurrenceLocationChanges($params, $curEvent);
+				// Check name changes
+				$isRecurrentNameChanged = !empty($params['arFields']['NAME']) && ($curEvent['NAME'] !== $params['arFields']['NAME']);
+				// Check time changes
+				$isRecurrentTimeChanged = (self::Timestamp($curEvent['DATE_FROM'], false) % self::DAY_LENGTH) !== ($currentFromTs % self::DAY_LENGTH);
+				// Check attendees changes
+				$isRecurrentAttendeesChanged = self::checkRecurrenceAttendeesChanges($params, $curEvent);
+
 
 				if ($recId)
 				{
@@ -2866,33 +2983,72 @@ class CCalendar
 					$newParams['currentEvent'] = $ev;
 
 					$eventFromTs = self::Timestamp($ev['DATE_FROM']);
-					$currentFromTs = self::Timestamp($newParams['arFields']['DATE_FROM']);
-					$length = self::Timestamp($newParams['arFields']['DATE_TO']) - self::Timestamp($newParams['arFields']['DATE_FROM']);
+					$instanceLength = $ev['DT_LENGTH'] ?? $length;
 
+					/*
+					 * Set correct date for related
+					 * if full day event - set related date
+					 * else if recurrent event time change - set related date and recurrent event time
+					 * else - keep related date and related time
+					 */
 					if ($newParams['arFields']['SKIP_TIME'])
 					{
 						$newParams['arFields']['DATE_FROM'] = $ev['DATE_FROM'];
 						$newParams['arFields']['DATE_TO'] = self::Date($eventFromTs + $length, false);
 					}
-					else
+					else if ($isRecurrentTimeChanged)
 					{
 						$newFromTs = self::DateWithNewTime($currentFromTs, $eventFromTs);
 						$newParams['arFields']['DATE_FROM'] = self::Date($newFromTs);
 						$newParams['arFields']['DATE_TO'] = self::Date($newFromTs + $length);
 					}
+					else
+					{
+						$newParams['arFields']['DATE_FROM'] = self::Date($eventFromTs);
+						$newParams['arFields']['DATE_TO'] = self::Date($eventFromTs + $instanceLength);
+					}
+
+					/*
+					 * Set correct location for related
+					 * Entry condition - location on recurrent was not changed
+					 * if related has no location or different - keep it
+					 */
+					if (!$isRecurrentLocationChanged)
+					{
+						if (!empty($ev['LOCATION']))
+						{
+							$parsedRelatedLocation = Rooms\Util::parseLocation($ev['LOCATION']);
+							if (!empty($parsedRelatedLocation['room_event_id']))
+							{
+								$ev['LOCATION'] = 'calendar_' . $parsedRelatedLocation['room_id'];
+							}
+						}
+
+						$newParams['arFields']['LOCATION'] = $ev['LOCATION'] ?? '';
+					}
+
+					/*
+					 * Set correct name for related
+					 */
+					if (!$isRecurrentNameChanged)
+					{
+						$newParams['arFields']['NAME'] = $ev['NAME'] ?? $newParams['arFields']['NAME'];
+					}
+
+					/*
+					 * Set correct attendees for related
+					 * If recurrent attendees has not changed - keep related attendees
+					 */
+					if (!$isRecurrentAttendeesChanged)
+					{
+						$newParams['arFields']['ATTENDEES_CODES'] = $ev['ATTENDEES_CODES']
+							?? $newParams['arFields']['ATTENDEES_CODES']
+						;
+					}
 
 					if (isset($ev['EXDATE']) && $ev['EXDATE'])
 					{
 						$newParams['arFields']['EXDATE'] = $ev['EXDATE'];
-					}
-
-					if (!empty($newParams['arFields']['LOCATION']) && is_string($newParams['arFields']['LOCATION']))
-					{
-						$parsedLocation = Rooms\Util::parseLocation($newParams['arFields']['LOCATION']);
-						if (!empty($parsedLocation['room_event_id']))
-						{
-							$newParams['arFields']['LOCATION'] = 'calendar_' . $parsedLocation['room_id'];
-						}
 					}
 
 					if (isset($newParams['arFields']['RELATIONS']['ORIGINAL_RECURSION_ID']))
@@ -3270,6 +3426,7 @@ class CCalendar
 		$eventsList = CCalendarEvent::GetList([
 			'arSelect' => [
 				'ID',
+				'CAL_TYPE',
 				'PARENT_ID',
 				'RECURRENCE_ID',
 				'DATE_TO',
@@ -4449,7 +4606,9 @@ class CCalendar
 			'work_time_end' => COption::GetOptionString('calendar', 'work_time_end', 19),
 			'year_holidays' => COption::GetOptionString('calendar', 'year_holidays', Loc::getMessage('EC_YEAR_HOLIDAYS_DEFAULT')),
 			'year_workdays' => COption::GetOptionString('calendar', 'year_workdays', Loc::getMessage('EC_YEAR_WORKDAYS_DEFAULT')),
-			'week_holidays' => explode('|', COption::GetOptionString('calendar', 'week_holidays', 'SA|SU')),
+			'week_holidays' => array_filter(
+				explode('|', COption::GetOptionString('calendar', 'week_holidays', 'SA|SU'))
+			),
 			'week_start' => COption::GetOptionString('calendar', 'week_start', 'MO'),
 			'user_name_template' => self::GetUserNameTemplate($params['getDefaultForEmpty']),
 			'sync_by_push' => COption::GetOptionString('calendar', 'sync_by_push', false),
@@ -5569,7 +5728,10 @@ class CCalendar
 			'getPermissions' => ($params['getPermissions'] ?? null),
 		]);
 
-		if ($type === 'user')
+		if (
+			$type === 'user'
+			|| (is_array($type) && in_array(Core\Event\Tools\Dictionary::CALENDAR_TYPE['user'], $type, true))
+		)
 		{
 			$sectionIdList = [];
 			foreach ($sectionList as $section)
@@ -5577,17 +5739,7 @@ class CCalendar
 				$sectionIdList[] = (int)$section['ID'];
 			}
 
-			$sectionLinkList = SectionConnectionTable::getList([
-				'select' => [
-					'SECTION_ID',
-					'CONNECTION_ID',
-					'ACTIVE',
-					'IS_PRIMARY',
-				],
-				'filter' => [
-					'=SECTION_ID' => $sectionIdList,
-				],
-			])->fetchAll();
+			$sectionLinkList = !empty($sectionIdList) ? CCalendarSect::getSectionConnectionList($sectionIdList) : [];
 
 			if (!empty($sectionLinkList))
 			{
@@ -5596,12 +5748,12 @@ class CCalendar
 					$sectionList[$i]['connectionLinks'] = [];
 					foreach ($sectionLinkList as $sectionLink)
 					{
-						if ((int)$sectionLink['SECTION_ID'] === (int)$section['ID'])
+						if ($sectionLink->getSectionId() === (int)$section['ID'])
 						{
 							$sectionList[$i]['connectionLinks'][] = [
-								'id' => $sectionLink['CONNECTION_ID'],
-								'active' => $sectionLink['ACTIVE'],
-								'isPrimary' => $sectionLink['IS_PRIMARY'],
+								'id' => $sectionLink->getConnectionId(),
+								'active' => $sectionLink->getActive() ? 'Y' : 'N',
+								'isPrimary' => $sectionLink->getIsPrimary() ? 'Y' : 'N',
 							];
 						}
 					}
@@ -6198,18 +6350,7 @@ class CCalendar
 					switch ($recurrenceSyncMode)
 					{
 						case Sync\Dictionary::RECURRENCE_SYNC_MODE['exception']:
-							if (
-								(
-									$event->getMeetingStatus() === 'H'
-									&& !empty($params['editMeetingStatus'])
-									&& $params['editMeetingStatus']['status'] === 'N'
-								)
-								||
-								(
-									$event->getMeetingStatus() !== 'N'
-									&& (empty($params['editMeetingStatus']) || $params['editMeetingStatus']['status'] !== 'N')
-								)
-							)
+							if ($event->getMeetingStatus() !== 'N')
 							{
 								$result = empty($curEvent)
 									? $syncManager->createInstance($event, $context)
@@ -6220,6 +6361,13 @@ class CCalendar
 						case Sync\Dictionary::RECURRENCE_SYNC_MODE['deleteInstance']:
 							$context->add('diff', 'EXDATE', $curEvent['EXDATE']);
 							$result = $syncManager->deleteInstance($event, $context);
+							break;
+						case Sync\Dictionary::RECURRENCE_SYNC_MODE['exceptionNewSeries']:
+							$syncManager->deleteInstanceEventConnection($event);
+							if ($event->getMeetingStatus() !== 'N')
+							{
+								$result = $syncManager->createInstance($event, $context);
+							}
 							break;
 						default:
 							if ($event->getMeetingStatus() !== 'N')
@@ -6248,12 +6396,22 @@ class CCalendar
 					}
 					else
 					{
-						$result =  (new Sync\Util\Result())
-							->addError(new Main\Error("Master event not found", 404));
+						$result =  (new Sync\Util\Result())->addError(
+							new Main\Error("Master event not found", 404)
+						);
 					}
 				}
-				else
+				else if ($event->getMeetingStatus() !== 'N')
 				{
+					if (
+						!empty($params['editNextEvents'])
+						&& !empty($params['previousRecurrentId'])
+						&& $event->getExcludedDateCollection()?->count()
+					)
+					{
+						self::removeIncorrectRecurrentExDates($event->getExcludedDateCollection(), $params['previousRecurrentId']);
+					}
+
 					$result = $syncManager->createEvent($event, $context);
 				}
 			}
@@ -6266,17 +6424,46 @@ class CCalendar
 		{
 			throw $e;
 		}
-		finally
-		{
-			/** @var Sync\Factories\FactoryBase $factory */
-			foreach ($factories as $factory)
-			{
-				// TODO: try to use it
-				// $pushManager->unLockConnection($factory->getConnection());
-			}
-		}
 
 		return $result ?? null;
+	}
+
+	/**
+	 * @param Core\Event\Properties\ExcludedDatesCollection $exDatesCollection
+	 * @param int $recId
+	 * @return void
+	 * @throws Main\ObjectException
+	 */
+	private static function removeIncorrectRecurrentExDates(
+		Core\Event\Properties\ExcludedDatesCollection $exDatesCollection,
+		int $recId,
+	): void
+	{
+		$exDatesToRemove = [];
+
+		$recEvents = CCalendarEvent::GetEventsByRecId($recId, false);
+
+		foreach ($recEvents as $recEvent)
+		{
+			if ((int)$recEvent['ID'] !== (int)$recEvent['PARENT_ID'])
+			{
+				continue;
+			}
+
+			$exDatesToRemove[] = new Date(
+				Util::getDateObject(
+					$recEvent['ORIGINAL_DATE_FROM'] ?? $recEvent['DATE_FROM'],
+					($recEvent['DT_SKIP_TIME'] ?? null) === 'Y',
+					$recEvent['TZ_FROM'],
+				)
+			);
+		}
+
+		/** @var Date $exDate */
+		foreach ($exDatesToRemove as $exDate)
+		{
+			$exDatesCollection->removeDateFromCollection($exDate);
+		}
 	}
 
 	public static function changeCalendarSync(Core\Event\Event $event, array $currentEvent, array $params)
@@ -6403,5 +6590,64 @@ class CCalendar
 		}
 
 		return implode(';', array_unique(array_merge($currentExDates, $newExDates)));
+	}
+
+	/**
+	 * @param array $params
+	 * @param array $curEvent
+	 * @return array
+	 */
+	private static function checkRecurrenceLocationChanges(array $params, array $curEvent): array
+	{
+		$isRecurrentLocationChanged = false;
+		if (!empty($params['arFields']['LOCATION']) && is_string($params['arFields']['LOCATION']))
+		{
+			$parsedLocation = Rooms\Util::parseLocation($params['arFields']['LOCATION']);
+			if (!empty($parsedLocation['room_event_id']))
+			{
+				$params['arFields']['LOCATION'] = 'calendar_' . $parsedLocation['room_id'];
+			}
+
+			$isRecurrentLocationChanged = true;
+
+			if (!empty($curEvent['LOCATION']) && is_string($curEvent['LOCATION']))
+			{
+				$currentLocation = $curEvent['LOCATION'];
+				$parsedCurrentLocation = Rooms\Util::parseLocation($curEvent['LOCATION']);
+				if (!empty($parsedCurrentLocation['room_event_id']))
+				{
+					$currentLocation = 'calendar_' . $parsedCurrentLocation['room_id'];
+				}
+
+				$isRecurrentLocationChanged = $params['arFields']['LOCATION'] !== $currentLocation;
+			}
+		}
+
+		return [$isRecurrentLocationChanged, $params];
+	}
+
+	/**
+	 * @param array $params
+	 * @param array $curEvent
+	 * @return bool
+	 */
+	private static function checkRecurrenceAttendeesChanges(array $params, array $curEvent): bool
+	{
+		$isRecurrentAttendeesChanged = false;
+
+		if (
+			!empty($params['arFields']['ATTENDEES_CODES'])
+			&& is_array($params['arFields']['ATTENDEES_CODES'])
+			&& !empty($curEvent['ATTENDEES_CODES'])
+			&& is_array($curEvent['ATTENDEES_CODES'])
+		)
+		{
+			$firstDiff = array_diff($params['arFields']['ATTENDEES_CODES'], $curEvent['ATTENDEES_CODES']);
+			$secondDiff = array_diff($curEvent['ATTENDEES_CODES'], $params['arFields']['ATTENDEES_CODES']);
+
+			$isRecurrentAttendeesChanged = !empty($firstDiff) || !empty($secondDiff);
+		}
+
+		return $isRecurrentAttendeesChanged;
 	}
 }

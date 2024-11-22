@@ -255,7 +255,12 @@ jn.define('tab.presets', (require, exports, module) => {
 
 				const title = tabsDesc?.[code]?.shortTitle ?? '';
 				const color = index === 0 ? Color.base1 : Color.base4;
-				const iconNode = this.getIconView({ code, color, animated: index === 0 && active });
+				const iconId = tabsDesc?.[code]?.iconId ?? code;
+				const iconNode = this.getIconView({
+					color,
+					code: iconId,
+					animated: index === 0 && active,
+				});
 
 				return View(
 					{
@@ -291,7 +296,7 @@ jn.define('tab.presets', (require, exports, module) => {
 			layout.showComponent(new Editor(this.state.tabs, layout));
 		}
 
-		getIconView({ code, color = Color.base4, animated = false})
+		getIconView({ code, color = Color.base4, animated = false })
 		{
 			return IconView({
 				forwardRef: (ref) => {

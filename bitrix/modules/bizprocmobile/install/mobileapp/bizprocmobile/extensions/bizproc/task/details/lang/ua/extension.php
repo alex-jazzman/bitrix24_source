@@ -9,4 +9,5 @@ $MESS["BPMOBILE_TASK_DETAILS_COMMENTS_LIKE"] = "Уподобайка";
 $MESS["BPMOBILE_TASK_DETAILS_COMMENTS_TITLE"] = "Коментарі";
 $MESS["BPMOBILE_TASK_DETAILS_RPA"] = "Завдання можна виконати лише у вебверсії Бітрікс24. Увійдіть до свого облікового запису з браузера на комп'ютері.";
 $MESS["BPMOBILE_TASK_DETAILS_TIMELINE"] = "Протокол";
+$MESS["BPMOBILE_TASK_DETAILS_TIMELINE_MSGVER_1"] = "Протокол";
 $MESS["BPMOBILE_TASK_DETAILS_TITLE"] = "Завдання";

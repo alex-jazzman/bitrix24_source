@@ -14,6 +14,11 @@ jn.define('im/messenger/db/table/sidebar/file', (require, exports, module) => {
 			return 'b_im_sidebar_file';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			return [

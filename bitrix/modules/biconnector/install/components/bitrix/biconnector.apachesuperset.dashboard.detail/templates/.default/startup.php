@@ -96,7 +96,8 @@ else
 			container: document.querySelector('.biconnector-dashboard__loader'),
 			dashboardId: <?= (int)$arResult['DASHBOARD_ID'] ?>,
 			status: '<?= \CUtil::JSEscape($arResult['DASHBOARD_STATUS']) ?>',
-			isSupersetAvailable: <?= \CUtil::PhpToJSObject($arResult['IS_SUPERSET_AVAILABLE'] ?? true) ?>,
+			isSupersetAvailable: <?= Json::encode($arResult['IS_SUPERSET_AVAILABLE'] ?? true) ?>,
+			paramsCompatible: <?= Json::encode($arResult['PARAMS_COMPATIBLE'] ?? true) ?>,
 		})
 	});
 </script>

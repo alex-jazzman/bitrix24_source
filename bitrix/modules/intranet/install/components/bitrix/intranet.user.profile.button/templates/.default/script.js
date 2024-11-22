@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_popupcomponentsmaker,main_qrcode,main_loader,ui_qrauthorization,main_core,main_popup,main_core_events,im_v2_lib_desktopApi) {
+(function (exports,ui_popupcomponentsmaker,main_qrcode,main_loader,main_core_cache,ui_hint,ui_qrauthorization,main_core,main_popup,main_core_events,im_v2_lib_desktopApi) {
 	'use strict';
 
 	var Options = function Options() {
@@ -508,7 +508,82 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return ' - ' + BX.date.format(format, new Date(dateTime), new Date());
 	}
 
-	var _templateObject$4, _templateObject2$3, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$2;
+	var _templateObject$4, _templateObject2$3;
+	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	function _classStaticPrivateMethodGet$1(receiver, classConstructor, method) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); return method; }
+	function _classCheckPrivateStaticAccess$1(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	var SignDocument = /*#__PURE__*/function () {
+	  function SignDocument() {
+	    babelHelpers.classCallCheck(this, SignDocument);
+	  }
+	  babelHelpers.createClass(SignDocument, null, [{
+	    key: "getPromise",
+	    value: function () {
+	      var _getPromise = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+	        var _yield$Runtime$loadEx, B2EEmployeeSignSettings;
+	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              _context.next = 2;
+	              return main_core.Runtime.loadExtension('sign.v2.b2e.sign-settings-employee');
+	            case 2:
+	              _yield$Runtime$loadEx = _context.sent;
+	              B2EEmployeeSignSettings = _yield$Runtime$loadEx.B2EEmployeeSignSettings;
+	              SignDocument.B2EEmployeeSignSettingsClass = B2EEmployeeSignSettings;
+	              return _context.abrupt("return", _classStaticPrivateMethodGet$1(SignDocument, SignDocument, _getLayout).call(SignDocument));
+	            case 6:
+	            case "end":
+	              return _context.stop();
+	          }
+	        }, _callee);
+	      }));
+	      function getPromise() {
+	        return _getPromise.apply(this, arguments);
+	      }
+	      return getPromise;
+	    }()
+	  }]);
+	  return SignDocument;
+	}();
+	function _getLayout() {
+	  return _classStaticPrivateFieldSpecGet(this, SignDocument, _cache).remember('layout', function () {
+	    var layout = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__scope system-auth-form__sign\">\n\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --border\" style=\"flex-direction:row;\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --sign\">\n\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span data-hint-center data-hint=\"", "\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__btn--sign ui-popupcomponentmaker__btn --medium --border\" onclick=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-block --flex --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\">", "</div>\n\t\t\t\t\t\t<span data-hint-center data-hint=\"", "\"></span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE_HINT'), function () {
+	      return _classStaticPrivateMethodGet$1(SignDocument, SignDocument, _onCreateDocumentBtnClick).call(SignDocument);
+	    }, main_core.Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_CREATE_DOCUMENT'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TRACK_SIGNING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TRACK_SIGNING_HINT'));
+	    BX.UI.Hint.init(layout);
+	    return layout;
+	  });
+	}
+	function _onCreateDocumentBtnClick() {
+	  main_core_events.EventEmitter.emit(SignDocument, SignDocument.events.onDocumentCreateSidePanelOpen);
+	  var container = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<div id=\"sign-b2e-employee-settings-container\"></div>"])));
+	  BX.SidePanel.Instance.open('sign-b2e-settings-init-by-employee', {
+	    width: 750,
+	    cacheable: false,
+	    contentCallback: function contentCallback() {
+	      container.innerHTML = '';
+	      return container;
+	    },
+	    events: {
+	      onLoad: function onLoad() {
+	        var employeeSignSettings = new SignDocument.B2EEmployeeSignSettingsClass(container.id);
+	        employeeSignSettings.render();
+	      }
+	    }
+	  });
+	}
+	babelHelpers.defineProperty(SignDocument, "events", {
+	  onDocumentCreateSidePanelOpen: 'onDocumentCreateSidePanelOpen'
+	});
+	var _cache = {
+	  writable: true,
+	  value: new main_core_cache.MemoryCache()
+	};
+
+	var _templateObject$5, _templateObject2$4, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$2;
 	var Otp = /*#__PURE__*/function () {
 	  function Otp() {
 	    var isSingle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
@@ -537,7 +612,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          console.error('Otp page is not defined. Check the component params');
 	        }
 	      };
-	      var button = isInstalled ? main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
+	      var button = isInstalled ? main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
 	      var onclickHelp = function onclickHelp() {
 	        top.BX.Helper.show('redirect=detail&code=17728602');
 	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, Options.eventNameSpace + ':onOpen');
@@ -578,7 +653,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Otp;
 	}();
 
-	var _templateObject$5, _templateObject2$4, _templateObject3$3, _templateObject4$3, _templateObject5$3, _templateObject6$3, _templateObject7$1, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16;
+	var _templateObject$6, _templateObject2$5, _templateObject3$3, _templateObject4$3, _templateObject5$3, _templateObject6$3, _templateObject7$1, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16;
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -588,8 +663,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _popup = /*#__PURE__*/new WeakMap();
 	var _profile = /*#__PURE__*/new WeakMap();
 	var _features = /*#__PURE__*/new WeakMap();
-	var _cache = /*#__PURE__*/new WeakMap();
+	var _cache$1 = /*#__PURE__*/new WeakMap();
 	var _desktopDownloadLinks = /*#__PURE__*/new WeakMap();
+	var _networkProfileUrl = /*#__PURE__*/new WeakMap();
 	var _getProfileContainer = /*#__PURE__*/new WeakSet();
 	var _getPopupContainer = /*#__PURE__*/new WeakSet();
 	var _setEventHandlers = /*#__PURE__*/new WeakSet();
@@ -599,6 +675,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _getMaskContainer = /*#__PURE__*/new WeakSet();
 	var _getCompanyPulse = /*#__PURE__*/new WeakSet();
 	var _savePhoto = /*#__PURE__*/new WeakSet();
+	var _getSignDocument = /*#__PURE__*/new WeakSet();
 	var _getStressLevel = /*#__PURE__*/new WeakSet();
 	var _getQrContainer = /*#__PURE__*/new WeakSet();
 	var _getDeskTopContainer = /*#__PURE__*/new WeakSet();
@@ -623,7 +700,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      componentName = _ref$component.componentName,
 	      signedParameters = _ref$component.signedParameters,
 	      features = _ref.features,
-	      desktopDownloadLinks = _ref.desktopDownloadLinks;
+	      desktopDownloadLinks = _ref.desktopDownloadLinks,
+	      networkProfileUrl = _ref.networkProfileUrl;
 	    babelHelpers.classCallCheck(this, Widget);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Widget).call(this));
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getLogoutContainer);
@@ -634,6 +712,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getDeskTopContainer);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getQrContainer);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getStressLevel);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getSignDocument);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _savePhoto);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getCompanyPulse);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getMaskContainer);
@@ -659,11 +738,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: {}
 	    });
-	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _cache, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _cache$1, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _desktopDownloadLinks, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _networkProfileUrl, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -684,7 +767,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _features).browser = main_core.Browser.isLinux() ? 'Linux' : main_core.Browser.isWin() ? 'Windows' : 'MacOs';
 	    }
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _desktopDownloadLinks, desktopDownloadLinks);
-	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _cache).set('componentParams', {
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _networkProfileUrl, networkProfileUrl);
+	    babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _cache$1).set('componentParams', {
 	      componentName: componentName,
 	      signedParameters: signedParameters
 	    });
@@ -718,10 +802,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return babelHelpers.classPrivateFieldGet(this, _popup);
 	      }
 	      this.emit('init');
+	      var signDocument = main_core.Type.isNull(_classPrivateMethodGet$2(this, _getSignDocument, _getSignDocument2).call(this)) ? null : {
+	        html: _classPrivateMethodGet$2(this, _getSignDocument, _getSignDocument2).call(this),
+	        marginBottom: 24,
+	        minHeight: '99px'
+	      };
 	      var content = [_classPrivateMethodGet$2(this, _getProfileContainer, _getProfileContainer2).call(this), _classPrivateMethodGet$2(this, _getAdminPanelContainer, _getAdminPanelContainer2).call(this) ? {
 	        html: _classPrivateMethodGet$2(this, _getAdminPanelContainer, _getAdminPanelContainer2).call(this),
 	        backgroundColor: '#fafafa'
-	      } : null, [{
+	      } : null, signDocument, [{
 	        html: _classPrivateMethodGet$2(this, _getThemeContainer, _getThemeContainer2).call(this),
 	        marginBottom: 24,
 	        overflow: true,
@@ -835,13 +924,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}(main_core_events.EventEmitter);
 	function _getProfileContainer2() {
 	  var _this3 = this;
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('profile', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('profile', function () {
 	    var onclick = function onclick(event) {
 	      _this3.hide();
 	      return BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldGet(_this3, _profile).URL);
 	    };
-	    var avatarNode = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(encodeURI(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO), "')\"") : '');
-	    var nameNode = main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME);
+	    var avatarNode = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(encodeURI(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO), "')\"") : '');
+	    var nameNode = main_core.Tag.render(_templateObject2$5 || (_templateObject2$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME);
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UserProfile:Avatar:changed', function (_ref2) {
 	      var _ref2$data = babelHelpers.slicedToArray(_ref2.data, 1),
 	        _ref2$data$ = _ref2$data[0],
@@ -868,7 +957,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getPopupContainer2() {
 	  var _this4 = this;
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('popup-container', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('popup-container', function () {
 	    return _this4.getPopup().getPopup().getPopupContainer();
 	  });
 	}
@@ -892,16 +981,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getb24NetPanelContainer2() {
 	  var _this6 = this;
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('b24netPanel', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('b24netPanel', function () {
 	    if (babelHelpers.classPrivateFieldGet(_this6, _features)['b24netPanel'] !== 'Y') {
 	      return null;
 	    }
-	    return main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"system-auth-form__item system-auth-form__scope --center --padding-sm --clickable\" href=\"https://www.bitrix24.net/\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --network\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</a>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_PROFILE_B24NET_MSGVER_1'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_GOTO'));
+	    return main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"system-auth-form__item system-auth-form__scope --center --padding-sm --clickable\" href=\"", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --network\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</a>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(_this6, _networkProfileUrl), main_core.Loc.getMessage('AUTH_PROFILE_B24NET_MSGVER_1'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_GOTO'));
 	  });
 	}
 	function _getAdminPanelContainer2() {
 	  var _this7 = this;
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('adminPanel', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('adminPanel', function () {
 	    if (babelHelpers.classPrivateFieldGet(_this7, _features)['adminPanel'] !== 'Y') {
 	      return null;
 	    }
@@ -909,18 +998,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _getThemeContainer2() {
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('themePicker', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('themePicker', function () {
 	    return ThemePicker.getPromise();
 	  });
 	}
 	function _getMaskContainer2() {
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('Mask', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('Mask', function () {
 	    return main_core.Tag.render(_templateObject6$3 || (_templateObject6$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --mask\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span style=\"cursor: default\" class=\"system-auth-form__icon-help\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --disabled\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-new --soon\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MASKS'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SOON'));
 	  });
 	}
 	function _getCompanyPulse2(isNarrow) {
 	  var _this8 = this;
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getCompanyPulse', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getCompanyPulse', function () {
 	    if (babelHelpers.classPrivateFieldGet(_this8, _features).pulse === 'Y' && babelHelpers.classPrivateFieldGet(_this8, _profile).ID > 0 && babelHelpers.classPrivateFieldGet(_this8, _profile).ID === main_core.Loc.getMessage('USER_ID')) {
 	      return new Promise(function (resolve) {
 	        main_core.ajax.runComponentAction('bitrix:intranet.user.profile.button', 'getUserStatComponent', {
@@ -940,28 +1029,40 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return null;
 	  });
 	}
-	function _getStressLevel2() {
+	function _getSignDocument2() {
 	  var _this9 = this;
+	  if (babelHelpers.classPrivateFieldGet(this, _features)['signDocument'] !== 'Y') {
+	    return null;
+	  }
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getSignDocument', function () {
+	    main_core_events.EventEmitter.subscribe(SignDocument, SignDocument.events.onDocumentCreateSidePanelOpen, function () {
+	      return _this9.hide();
+	    });
+	    return SignDocument.getPromise();
+	  });
+	}
+	function _getStressLevel2() {
+	  var _this10 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features)['stressLevel'] !== 'Y') {
 	    return null;
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getStressLevel', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getStressLevel', function () {
 	    var _babelHelpers$classPr2;
 	    return StressLevel.getPromise({
-	      signedParameters: babelHelpers.classPrivateFieldGet(_this9, _cache).get('componentParams').signedParameters,
-	      componentName: babelHelpers.classPrivateFieldGet(_this9, _cache).get('componentParams').componentName,
-	      userId: babelHelpers.classPrivateFieldGet(_this9, _profile).ID,
-	      data: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this9, _features)['stressLevelData']) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : null
+	      signedParameters: babelHelpers.classPrivateFieldGet(_this10, _cache$1).get('componentParams').signedParameters,
+	      componentName: babelHelpers.classPrivateFieldGet(_this10, _cache$1).get('componentParams').componentName,
+	      userId: babelHelpers.classPrivateFieldGet(_this10, _profile).ID,
+	      data: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this10, _features)['stressLevelData']) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : null
 	    });
 	  });
 	}
 	function _getQrContainer2(flex) {
-	  var _this10 = this;
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getQrContainer', function () {
+	  var _this11 = this;
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getQrContainer', function () {
 	    return new Promise(function (resolve, reject) {
 	      BX.loadExt(['ui.qrauthorization', 'qrcode']).then(function () {
 	        var onclick = function onclick() {
-	          _this10.hide();
+	          _this11.hide();
 	          new ui_qrauthorization.QrAuthorization({
 	            title: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
 	            content: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2')
@@ -969,7 +1070,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        };
 	        var onclickHelp = function onclickHelp(event) {
 	          top.BX.Helper.show('redirect=detail&code=14999860');
-	          _this10.hide();
+	          _this11.hide();
 	          event.preventDefault();
 	          event.stopPropagation();
 	          return false;
@@ -991,34 +1092,34 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _getDeskTopContainer2() {
-	  var _this11 = this;
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getDeskTopContainer', function () {
-	    var isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
+	  var _this12 = this;
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getDeskTopContainer', function () {
+	    var isInstalled = babelHelpers.classPrivateFieldGet(_this12, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
 	    var cssPostfix = '--apple';
 	    var title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_APPLE');
-	    var linkToDistributive = babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).macos;
+	    var linkToDistributive = babelHelpers.classPrivateFieldGet(_this12, _desktopDownloadLinks).macos;
 	    var typesInstallersForLinux = {
 	      'DEB': {
 	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB'),
-	        href: babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).linuxDeb
+	        href: babelHelpers.classPrivateFieldGet(_this12, _desktopDownloadLinks).linuxDeb
 	      },
 	      'RPM': {
 	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RPM'),
-	        href: babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).linuxRpm
+	        href: babelHelpers.classPrivateFieldGet(_this12, _desktopDownloadLinks).linuxRpm
 	      }
 	    };
-	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Windows') {
-	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
+	    if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Windows') {
+	      isInstalled = babelHelpers.classPrivateFieldGet(_this12, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
 	      cssPostfix = '--windows';
 	      title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_WINDOWS');
-	      linkToDistributive = babelHelpers.classPrivateFieldGet(_this11, _desktopDownloadLinks).windows;
+	      linkToDistributive = babelHelpers.classPrivateFieldGet(_this12, _desktopDownloadLinks).windows;
 	    }
 	    var onclick = isInstalled ? function (event) {
 	      event.preventDefault();
 	      event.stopPropagation();
 	      return false;
 	    } : function () {
-	      _this11.hide();
+	      _this12.hide();
 	      return true;
 	    };
 	    var menuLinux = null;
@@ -1044,17 +1145,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        offsetLeft: 10,
 	        events: {
 	          onShow: function onShow() {
-	            _this11.getPopup().getPopup().setAutoHide(false);
+	            _this12.getPopup().getPopup().setAutoHide(false);
 	          },
 	          onClose: function onClose() {
-	            _this11.getPopup().getPopup().setAutoHide(true);
+	            _this12.getPopup().getPopup().setAutoHide(true);
 	          }
 	        }
 	      });
 	      menuLinux.toggle();
 	    };
-	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
-	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_LINUX_INSTALLED'] === 'Y';
+	    if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Linux') {
+	      isInstalled = babelHelpers.classPrivateFieldGet(_this12, _features)['appInstalled']['APP_LINUX_INSTALLED'] === 'Y';
 	      cssPostfix = '--linux';
 	      title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_LINUX');
 	      linkToDistributive = '';
@@ -1064,17 +1165,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return false;
 	      } : showMenuLinux;
 	    }
-	    if (babelHelpers.classPrivateFieldGet(_this11, _features)['otp'].IS_ENABLED !== 'Y') {
+	    if (babelHelpers.classPrivateFieldGet(_this12, _features)['otp'].IS_ENABLED !== 'Y') {
 	      var menuPopup = null;
 	      var menuItems = [{
 	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'),
 	        href: linkToDistributive,
 	        onclick: function onclick() {
 	          menuPopup.close();
-	          _this11.hide();
+	          _this12.hide();
 	        }
 	      }];
-	      if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
+	      if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Linux') {
 	        menuItems = [{
 	          text: typesInstallersForLinux.DEB.text,
 	          href: typesInstallersForLinux.DEB.href,
@@ -1098,10 +1199,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          offsetLeft: 10,
 	          events: {
 	            onShow: function onShow() {
-	              _this11.getPopup().getPopup().setAutoHide(false);
+	              _this12.getPopup().getPopup().setAutoHide(false);
 	            },
 	            onClose: function onClose() {
-	              _this11.getPopup().getPopup().setAutoHide(true);
+	              _this12.getPopup().getPopup().setAutoHide(true);
 	            }
 	          }
 	        });
@@ -1111,7 +1212,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    var getLinkForHiddenState = function getLinkForHiddenState() {
 	      var link = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-title --link-dotted\">", "</a>\n\t\t\t\t"])), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'));
-	      if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
+	      if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Linux') {
 	        link.addEventListener('click', showMenuLinux);
 	      }
 	      return link;
@@ -1120,21 +1221,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _getOTPContainer2(single) {
-	  var _this12 = this;
+	  var _this13 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features).otp.IS_ENABLED !== 'Y') {
 	    return null;
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getOTPContainer', function () {
-	    return new Otp(single, babelHelpers.classPrivateFieldGet(_this12, _features).otp).getContainer();
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getOTPContainer', function () {
+	    return new Otp(single, babelHelpers.classPrivateFieldGet(_this13, _features).otp).getContainer();
 	  });
 	}
 	function _getLoginHistoryContainer2() {
-	  var _this13 = this;
+	  var _this14 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features).loginHistory.isHide) {
 	    return null;
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getLoginHistoryContainer', function () {
-	    var history = new UserLoginHistory(babelHelpers.classPrivateFieldGet(_this13, _features).loginHistory, _this13);
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getLoginHistoryContainer', function () {
+	    var history = new UserLoginHistory(babelHelpers.classPrivateFieldGet(_this14, _features).loginHistory, _this14);
 	    return {
 	      html: history.getContainer(),
 	      backgroundColor: '#fafafa'
@@ -1142,40 +1243,40 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _getBindings2() {
-	  var _this14 = this;
+	  var _this15 = this;
 	  if (!(main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _features)['bindings']) && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _features)['bindings']['text']) && main_core.Type.isArray(babelHelpers.classPrivateFieldGet(this, _features)['bindings']['items']) && babelHelpers.classPrivateFieldGet(this, _features)['bindings']['items'].length > 0)) {
 	    return null;
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getBindingsContainer', function () {
-	    var div = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --binding\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"arrow\" class=\"system-auth-form__item-icon --arrow-right\"></div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this14, _features)['bindings']['text']));
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getBindingsContainer', function () {
+	    var div = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --binding\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"arrow\" class=\"system-auth-form__item-icon --arrow-right\"></div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this15, _features)['bindings']['text']));
 	    div.addEventListener('click', function () {
-	      _this14.__bindingsMenu = _this14.__bindingsMenu || new main_popup.Menu({
+	      _this15.__bindingsMenu = _this15.__bindingsMenu || new main_popup.Menu({
 	        className: 'system-auth-form__popup',
 	        bindElement: div.querySelector('[data-role="arrow"]'),
-	        items: babelHelpers.classPrivateFieldGet(_this14, _features)['bindings']['items'],
+	        items: babelHelpers.classPrivateFieldGet(_this15, _features)['bindings']['items'],
 	        angle: true,
 	        cachable: false,
 	        offsetLeft: 10,
 	        events: {
 	          onShow: function onShow() {
-	            _this14.emit('bindings:open');
+	            _this15.emit('bindings:open');
 	          }
 	        }
 	      });
-	      _this14.__bindingsMenu.toggle();
+	      _this15.__bindingsMenu.toggle();
 	    });
 	    return div;
 	  });
 	}
 	function _getNotificationContainer2() {
-	  var _this15 = this;
+	  var _this16 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features)['im'] !== 'Y') {
 	    return null;
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getNotificationContainer', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getNotificationContainer', function () {
 	    var div = main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --notification\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_NOTIFICATION'));
 	    div.addEventListener('click', function () {
-	      _this15.hide();
+	      _this16.hide();
 	      BXIM.openSettings({
 	        'onlyPanel': 'notify'
 	      });
@@ -1184,7 +1285,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _getLogoutContainer2() {
-	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getLogoutContainer', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('getLogoutContainer', function () {
 	    var onclickLogout = function onclickLogout() {
 	      if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	        im_v2_lib_desktopApi.DesktopApi.logout();
@@ -1206,5 +1307,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.Widget = Widget;
 
-}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX,BX,BX.UI,BX,BX.Main,BX.Event,BX.Messenger.v2.Lib));
+}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX,BX,BX.Cache,BX,BX.UI,BX,BX.Main,BX.Event,BX.Messenger.v2.Lib));
 //# sourceMappingURL=script.js.map

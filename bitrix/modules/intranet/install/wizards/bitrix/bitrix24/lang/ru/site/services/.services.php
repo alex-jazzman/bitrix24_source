@@ -38,4 +38,5 @@ $MESS["SERVICE_TASKS"] = "Задачи";
 $MESS["SERVICE_VOXIMPLANT"] = "Телефония";
 $MESS["SERVICE_SOCIALSERVICES"] = "Социальные сервисы";
 $MESS["SERVICE_SALESCENTER"] = "Продажи в чате";
+$MESS["SERVICE_BICONNECTOR"] = "BI-коннектор";
 ?>

@@ -11,7 +11,6 @@ jn.define('tasks/layout/fields/time-tracking', (require, exports, module) => {
 	const { toTimer } = require('tasks/layout/fields/time-tracking/time-utils');
 	const { TimeTrackingTimer } = require('tasks/layout/fields/time-tracking/timer');
 	const { FeatureId, TimerState } = require('tasks/enum');
-	const { UIMenu } = require('layout/ui/menu');
 	const { Loc } = require('tasks/loc');
 	const { getFeatureRestriction } = require('tariff-plan-restriction');
 
@@ -38,6 +37,7 @@ jn.define('tasks/layout/fields/time-tracking', (require, exports, module) => {
 
 			this.fieldContainerRef = null;
 			this.moreMenuButtonRef = null;
+			this.menu = null;
 		}
 
 		bindContainerRef(ref)
@@ -149,37 +149,60 @@ jn.define('tasks/layout/fields/time-tracking', (require, exports, module) => {
 				return;
 			}
 
-			const { testId, value, onToggleTimer } = this.props;
-			const { isTimerRunningForCurrentUser, taskId } = value;
+			const { testId, value } = this.props;
+			const { isTimerRunningForCurrentUser } = value;
 
-			const menu = new UIMenu([
+			const items = [
 				{
-					id: 'menu_item_play_pause',
+					id: isTimerRunningForCurrentUser ? 'menu_item_pause' : 'menu_item_play',
 					testId: isTimerRunningForCurrentUser ? `${testId}_menu_item_pause` : `${testId}_menu_item_play`,
+					type: 'base',
 					title: isTimerRunningForCurrentUser
 						? Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_PAUSE_TIMER')
 						: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_START_TIMER'),
-					iconName: isTimerRunningForCurrentUser ? Icon.PAUSE : Icon.PLAY,
-					sectionCode: 'default',
-					onItemSelected: () => {
-						if (onToggleTimer)
-						{
-							onToggleTimer({ isTimerRunningForCurrentUser, taskId, layout: this.getParentWidget() });
-						}
-					},
+					sectionCode: '0',
+					iconName: isTimerRunningForCurrentUser ? Icon.PAUSE.getIconName() : Icon.PLAY.getIconName(),
 				},
 				{
 					id: 'menu_item_settings',
 					testId: `${testId}_menu_item_settings`,
 					title: Loc.getMessage('M_TASKS_EDIT'),
-					iconName: Icon.EDIT,
-					sectionCode: 'default',
-					onItemSelected: () => this.#openTimeTrackingSettings(),
+					iconName: Icon.EDIT.getIconName(),
+					type: 'base',
+					sectionCode: '0',
 				},
-			]);
+			];
 
-			menu.show({ target: this.moreMenuButtonRef });
+			const sections = [{ id: '0' }];
+
+			if (!this.menu)
+			{
+				this.menu = dialogs.createPopupMenu();
+				this.menu.on('itemSelected', this.#onContextMenuItemClick);
+			}
+
+			this.menu.setTarget(this.moreMenuButtonRef);
+			this.menu.setData(items, sections);
+
+			this.menu.show();
 		}
+
+		#onContextMenuItemClick = (item) => {
+			if (item?.id === 'menu_item_settings')
+			{
+				this.#openTimeTrackingSettings();
+			}
+			else if (item?.id === 'menu_item_play' || item?.id === 'menu_item_pause')
+			{
+				const isTimerRunningForCurrentUser = (item.id === 'menu_item_pause');
+				const { value, onToggleTimer } = this.props;
+				const { taskId } = value;
+				if (onToggleTimer)
+				{
+					onToggleTimer({ isTimerRunningForCurrentUser, taskId, layout: this.getParentWidget() });
+				}
+			}
+		};
 
 		#openTimeTrackingSettings()
 		{

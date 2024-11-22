@@ -3,7 +3,10 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, module) => {
 	const { Type } = require('type');
+
+	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
+	const { Audio } = require('im/messenger/lib/element/dialog/message/element/audio/audio');
 
 	/**
 	 * @class AudioMessage
@@ -19,74 +22,31 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 		{
 			super(modelMessage, options);
 
-			/* region deprecated properties */
-			this.audioUrl = null;
-			this.localAudioUrl = null;
-			this.size = null;
-			/* end region */
-
-			this.audio = {
-				id: 0,
-				localUrl: null,
-				url: null,
-				size: null,
-				isPlaying: null,
-				playingTime: null,
-				/** @type {AudioRate} */
-				rate: 1,
-			};
-
-			this.setAudioId(file.id);
-			this.setAudioUrl(file.urlShow);
-			this.setLocalAudioUrl(file.localUrl);
-			this.setPlayingTime(modelMessage.playingTime);
-			this.setSize(file.size);
-			this.setIsPlaying(modelMessage.audioPlaying);
-			this.setRate(options.audioRate);
-
 			if (modelMessage.text !== '')
 			{
-				this.setMessage(modelMessage.text);
+				this.setMessage(modelMessage.text, { dialogId: options.dialogId });
 			}
 
 			this.setShowTail(true);
+
+			const audio = new Audio(modelMessage, file, options);
+			this.audio = audio.toMessageFormat();
+
+			/* region deprecated properties */
+			this.audioUrl = this.audio.url;
+			this.localAudioUrl = this.audio.localUrl;
+			this.size = this.audio.size;
+			/* end region */
 		}
 
 		getType()
 		{
-			return 'audio';
+			return MessageType.audio;
 		}
 
-		setAudioId(audioId)
+		getIsPlaying()
 		{
-			if (!Type.isNumber(audioId))
-			{
-				return;
-			}
-
-			this.audio.id = audioId.toString();
-		}
-
-		setAudioUrl(audioUrl)
-		{
-			if (!Type.isStringFilled(audioUrl))
-			{
-				return;
-			}
-
-			this.audioUrl = audioUrl;
-			this.audio.url = audioUrl;
-		}
-
-		setLocalAudioUrl(localUrl)
-		{
-			if (!Type.isStringFilled(localUrl))
-			{
-				return;
-			}
-
-			this.localAudioUrl = localUrl;
-			this.audio.localUrl = localUrl;
+			return this.audio.isPlaying;
 		}
 
 		setPlayingTime(playingTime)
@@ -97,35 +57,6 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 			}
 
 			this.audio.playingTime = playingTime;
-		}
-
-		setSize(size)
-		{
-			if (!Type.isNumber(size))
-			{
-				return;
-			}
-
-			this.size = size;
-			this.audio.size = size;
-		}
-
-		setIsPlaying(audioPlaying)
-		{
-			this.audio.isPlaying = Boolean(audioPlaying);
-		}
-
-		getIsPlaying()
-		{
-			return this.audio.isPlaying;
-		}
-
-		/**
-		 * @param {AudioRate} rate
-		 */
-		setRate(rate)
-		{
-			this.audio.rate = rate;
 		}
 	}
 

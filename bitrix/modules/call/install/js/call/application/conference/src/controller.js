@@ -77,7 +77,6 @@ class ConferenceApplication
 		this.rootNode = this.params.node || document.createElement('div');
 
 		this.event = new VueVendorV2;
-
 		this.callContainer = null;
 		// this.callView = null;
 		this.preCall = null;
@@ -116,6 +115,7 @@ class ConferenceApplication
 		this.onCallUserFloorRequestHandler = this.onCallUserFloorRequest.bind(this);
 		this.onMicrophoneLevelHandler = this.onMicrophoneLevel.bind(this);
 		this._onCallJoinHandler = this.onCallJoin.bind(this);
+		this.onCallFailureHandler = this.onCallFailure.bind(this);
 		this.onCallLeaveHandler = this.onCallLeave.bind(this);
 		this.onCallDestroyHandler = this.onCallDestroy.bind(this);
 		this.onInputFocusHandler = this.onInputFocus.bind(this);
@@ -378,58 +378,89 @@ class ConferenceApplication
 		{
 			return new Promise((resolve, reject) =>
 			{
-				this.callContainer = document.getElementById('bx-im-component-call-container');
+				try {
+					this.callContainer = document.getElementById('bx-im-component-call-container');
 
-				let hiddenButtons = ['document'];
-				if (this.isViewerMode())
+					let hiddenButtons = ['document'];
+					if (this.isViewerMode())
+					{
+						hiddenButtons = ['camera', 'microphone', 'screen', 'record', 'floorRequest', 'document'];
+					}
+					if (!this.params.isIntranetOrExtranet)
+					{
+						hiddenButtons.push('record');
+					}
+
+					if (!Call.Util.isConferenceChatEnabled())
+					{
+						hiddenButtons.push('chat');
+					}
+
+					this.callView = new Call.View({
+						container: this.callContainer,
+						showChatButtons: true,
+						showUsersButton: true,
+						showShareButton: this.getFeatureState('screenSharing') !== ConferenceApplication.FeatureState.Disabled,
+						showRecordButton: this.getFeatureState('record') !== ConferenceApplication.FeatureState.Disabled,
+						userLimit: Call.Util.getUserLimit(),
+						isIntranetOrExtranet: !!this.params.isIntranetOrExtranet,
+						language: this.params.language,
+						layout: Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
+						uiState: Call.View.UiState.Preparing,
+						blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record'],
+						localUserState: Call.UserState.Idle,
+						hiddenTopButtons: !this.isBroadcast() || this.getBroadcastPresenters().length > 1? []: ['grid'],
+						hiddenButtons: hiddenButtons,
+						broadcastingMode: this.isBroadcast(),
+						broadcastingPresenters: this.getBroadcastPresenters(),
+					});
+
+					this.callView.subscribe(Call.View.Event.onButtonClick, this.onCallButtonClick.bind(this));
+					this.callView.subscribe(Call.View.Event.onReplaceCamera, this.onCallReplaceCamera.bind(this));
+					this.callView.subscribe(Call.View.Event.onReplaceMicrophone, this.onCallReplaceMicrophone.bind(this));
+					this.callView.subscribe(Call.View.Event.onReplaceSpeaker, this.onCallReplaceSpeaker.bind(this));
+					this.callView.subscribe(Call.View.Event.onHasMainStream, this.onCallViewHasMainStream.bind(this));
+					this.callView.subscribe(Call.View.Event.onChangeHdVideo, this.onCallViewChangeHdVideo.bind(this));
+					this.callView.subscribe(Call.View.Event.onChangeMicAutoParams, this.onCallViewChangeMicAutoParams.bind(this));
+					this.callView.subscribe(Call.View.Event.onChangeFaceImprove, this.onCallViewChangeFaceImprove.bind(this));
+					this.callView.subscribe(Call.View.Event.onUserRename, this.onCallViewUserRename.bind(this));
+					this.callView.subscribe(Call.View.Event.onUserPinned, this.onCallViewUserPinned.bind(this));
+					this.callView.subscribe(Call.View.Event.onToggleSubscribe, this.onCallToggleSubscribe.bind(this));
+
+					this.callView.blockAddUser();
+					this.callView.blockHistoryButton();
+
+					if (!Utils.device.isMobile())
+					{
+						this.callView.show();
+					}
+
+					resolve()
+				} catch (error)
 				{
-					hiddenButtons = ['camera', 'microphone', 'screen', 'record', 'floorRequest', 'document'];
+					Logger.error('creating call interface conference', error);
+
+					let errorCode;
+					if (typeof (error) == "string")
+					{
+						errorCode = error;
+					}
+					else if (typeof (error) == "object" && error.code)
+					{
+						errorCode = error.code == 'access_denied' ? 'ACCESS_DENIED' : error.code
+					}
+					else
+					{
+						errorCode = 'UNKNOWN_ERROR';
+					}
+
+					this.onCallFailure({
+						code: errorCode,
+						message: error.message || "",
+					})
+
+					reject('call interface error');
 				}
-				if (!this.params.isIntranetOrExtranet)
-				{
-					hiddenButtons.push('record');
-				}
-
-				this.callView = new Call.View({
-					container: this.callContainer,
-					showChatButtons: true,
-					showUsersButton: true,
-					showShareButton: this.getFeatureState('screenSharing') !== ConferenceApplication.FeatureState.Disabled,
-					showRecordButton: this.getFeatureState('record') !== ConferenceApplication.FeatureState.Disabled,
-					userLimit: Call.Util.getUserLimit(),
-					isIntranetOrExtranet: !!this.params.isIntranetOrExtranet,
-					language: this.params.language,
-					layout: Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
-					uiState: Call.View.UiState.Preparing,
-					blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record'],
-					localUserState: Call.UserState.Idle,
-					hiddenTopButtons: !this.isBroadcast() || this.getBroadcastPresenters().length > 1? []: ['grid'],
-					hiddenButtons: hiddenButtons,
-					broadcastingMode: this.isBroadcast(),
-					broadcastingPresenters: this.getBroadcastPresenters(),
-				});
-
-				this.callView.subscribe(Call.View.Event.onButtonClick, this.onCallButtonClick.bind(this));
-				this.callView.subscribe(Call.View.Event.onReplaceCamera, this.onCallReplaceCamera.bind(this));
-				this.callView.subscribe(Call.View.Event.onReplaceMicrophone, this.onCallReplaceMicrophone.bind(this));
-				this.callView.subscribe(Call.View.Event.onReplaceSpeaker, this.onCallReplaceSpeaker.bind(this));
-				this.callView.subscribe(Call.View.Event.onHasMainStream, this.onCallViewHasMainStream.bind(this));
-				this.callView.subscribe(Call.View.Event.onChangeHdVideo, this.onCallViewChangeHdVideo.bind(this));
-				this.callView.subscribe(Call.View.Event.onChangeMicAutoParams, this.onCallViewChangeMicAutoParams.bind(this));
-				this.callView.subscribe(Call.View.Event.onChangeFaceImprove, this.onCallViewChangeFaceImprove.bind(this));
-				this.callView.subscribe(Call.View.Event.onUserRename, this.onCallViewUserRename.bind(this));
-				this.callView.subscribe(Call.View.Event.onUserPinned, this.onCallViewUserPinned.bind(this));
-				this.callView.subscribe(Call.View.Event.onToggleSubscribe, this.onCallToggleSubscribe.bind(this));
-
-				this.callView.blockAddUser();
-				this.callView.blockHistoryButton();
-
-				if (!Utils.device.isMobile())
-				{
-					this.callView.show();
-				}
-
-				resolve()
 			})
 		}
 
@@ -1007,8 +1038,25 @@ class ConferenceApplication
 
 			this.onUpdateLastUsedCameraId();
 
-		}).catch(e => {
-			Logger.error('creating call error', e);
+		}).catch(error => {
+			Logger.error('creating call error', error);
+			let errorCode;
+			if (typeof (error) == "string")
+			{
+				errorCode = error;
+			}
+			else if (typeof (error) == "object" && error.code)
+			{
+				errorCode = error.code == 'access_denied' ? 'ACCESS_DENIED' : error.code
+			}
+			else
+			{
+				errorCode = 'UNKNOWN_ERROR';
+			}
+			this.onCallFailure({
+				code: errorCode,
+				message: error.message || "",
+			})
 			this.initCallPromise = null;
 		});
 	}
@@ -1884,7 +1932,7 @@ class ConferenceApplication
 			{
 				if (window.BX.Helper)
 				{
-					window.BX.Helper.show("redirect=detail&code=12398134");
+					window.BX.Helper.show("redirect=detail&code=22079566");
 				}
 
 				return;
@@ -2183,7 +2231,7 @@ class ConferenceApplication
 		this.currentCall.addEventListener(Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler);
 		this.currentCall.addEventListener(Call.Event.onMicrophoneLevel, this.onMicrophoneLevelHandler);
 		//this.currentCall.addEventListener(Call.Event.onDeviceListUpdated, this._onCallDeviceListUpdatedHandler);
-		//this.currentCall.addEventListener(Call.Event.onCallFailure, this._onCallFailureHandler);
+		this.currentCall.addEventListener(Call.Event.onCallFailure, this.onCallFailureHandler);
 		this.currentCall.addEventListener(Call.Event.onJoin, this._onCallJoinHandler);
 		this.currentCall.addEventListener(Call.Event.onLeave, this.onCallLeaveHandler);
 		this.currentCall.addEventListener(Call.Event.onReconnecting, this.onReconnectingHandler);
@@ -2216,7 +2264,7 @@ class ConferenceApplication
 		this.currentCall.removeEventListener(Call.Event.onConnectionQualityChanged, this.onCallConnectionQualityChangedHandler);
 		this.currentCall.removeEventListener(Call.Event.onToggleRemoteParticipantVideo, this.onCallToggleRemoteParticipantVideoHandler);
 		//this.currentCall.removeEventListener(Call.Event.onDeviceListUpdated, this._onCallDeviceListUpdatedHandler);
-		//this.currentCall.removeEventListener(Call.Event.onCallFailure, this._onCallFailureHandler);
+		this.currentCall.removeEventListener(Call.Event.onCallFailure, this.onCallFailureHandler);
 		this.currentCall.removeEventListener(Call.Event.onLeave, this.onCallLeaveHandler);
 		this.currentCall.removeEventListener(Call.Event.onReconnecting, this.onReconnectingHandler);
 		this.currentCall.removeEventListener(Call.Event.onReconnected, this.onReconnectedHandler);
@@ -2623,6 +2671,92 @@ class ConferenceApplication
 		this.callView.setUiState(Call.View.UiState.Connected);
 	}
 
+	onCallFailure(e)
+	{
+		this.setConferenceHasErrorInCall(true);
+		const errorCode = e.code || e.name || e.error;
+
+		let errorMessage;
+
+		if (e.name == "VoxConnectionError" || e.name == "AuthResult")
+		{
+			Call.Util.reportConnectionResult(e.call.id, false);
+		}
+
+		if (e.name == "AuthResult" || errorCode == "AUTHORIZE_ERROR")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_AUTHORIZATION");
+		}
+		else if (e.name == "Failed" && errorCode == 403)
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
+		}
+		else if (errorCode == "ERROR_UNEXPECTED_ANSWER")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_UNEXPECTED_ANSWER");
+		}
+		else if (errorCode == "BLANK_ANSWER_WITH_ERROR_CODE")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
+		}
+		else if (errorCode == "BLANK_ANSWER")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
+		}
+		else if (errorCode == "ACCESS_DENIED")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_ACCESS_DENIED");
+		}
+		else if (errorCode == "NO_WEBRTC")
+		{
+			errorMessage = this.isHttps ? BX.message("IM_CALL_NO_WEBRT") : BX.message("IM_CALL_ERROR_HTTPS_REQUIRED");
+		}
+		else if (errorCode == "UNKNOWN_ERROR")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN");
+		}
+		else if (errorCode == "NETWORK_ERROR")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_NETWORK");
+		}
+		else if (errorCode == "NotAllowedError")
+		{
+			errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
+		}
+		else
+		{
+			//errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
+			errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN_WITH_CODE").replace("#ERROR_CODE#", errorCode);
+		}
+
+		if (this.callView)
+		{
+			this.callView.showFatalError({text: errorMessage});
+		}
+		else
+		{
+			this.showNotification(errorMessage);
+		}
+
+		this.autoCloseCallView = false;
+		if (this.currentCall)
+		{
+			this.removeVideoStrategy();
+			this.removeCallEvents();
+
+			if (this.currentCallIsNew)
+			{
+				BX.CallEngine.getRestClient().callMethod('im.call.interrupt', {callId: this.currentCall.id});
+			}
+
+			this.currentCall.destroy();
+			this.currentCall = null;
+			this.currentCallIsNew = false;
+		}
+
+		Call.Hardware.isMicrophoneMuted = false;
+	}
+
 	onCallLeave(e)
 	{
 		if (!e.local)
@@ -2841,6 +2975,11 @@ class ConferenceApplication
 
 		checkIfMessageNotifyIsNeeded(params)
 		{
+			if (!Call.Util.isConferenceChatEnabled())
+			{
+				return false;
+			}
+
 			const rightPanelMode = this.getConference().common.rightPanelMode;
 			return !Utils.device.isMobile()
 				&& params.chatId === this.getChatId()
@@ -2984,6 +3123,11 @@ class ConferenceApplication
 		setConferenceStatus(conferenceStarted)
 		{
 			this.controller.getStore().commit('conference/setConferenceStatus', {conferenceStarted});
+		}
+
+		setConferenceHasErrorInCall(hasErrorInCall)
+		{
+			this.controller.getStore().commit('conference/setConferenceHasErrorInCall', {hasErrorInCall});
 		}
 
 		setConferenceStartDate(conferenceStartDate)

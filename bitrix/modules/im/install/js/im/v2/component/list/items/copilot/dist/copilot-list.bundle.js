@@ -277,7 +277,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	class CopilotRecentMenu extends im_v2_lib_menu.RecentMenu {
 	  getMenuItems() {
-	    return [this.getOpenItem(), this.getPinMessageItem(), this.getHideItem()];
+	    return [this.getPinMessageItem(), this.getHideItem(), this.getLeaveItem()];
 	  }
 	  getOpenItem() {
 	    return {
@@ -290,7 +290,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  }
 	  getHideItem() {
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIST_COPILOT_MENU_HIDE'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_HIDE_MSGVER_1'),
 	      onclick: () => {
 	        this.getRecentService().hideChat(this.context.dialogId);
 	        this.menuInstance.close();
@@ -415,5 +415,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotList = CopilotList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=copilot-list.bundle.js.map

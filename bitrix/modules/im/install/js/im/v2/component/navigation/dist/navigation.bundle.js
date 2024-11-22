@@ -198,7 +198,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 	function _getConnectItem2() {
-	  const title = this.context.connected ? main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DISCONNECT') : main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_CONNECT');
+	  const title = this.context.connected ? main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DISCONNECT_V2') : main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_CONNECT_V2');
 	  return {
 	    text: title,
 	    onclick: function () {
@@ -215,7 +215,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _getDeleteItem2() {
 	  return {
-	    text: main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE'),
+	    text: main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2'),
 	    onclick: async function () {
 	      const userChoice = await im_v2_lib_confirm.showDesktopDeleteConfirm();
 	      if (userChoice === true) {

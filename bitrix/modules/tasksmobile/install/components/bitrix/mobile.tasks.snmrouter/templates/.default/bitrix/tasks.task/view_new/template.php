@@ -661,7 +661,10 @@ BX.ready(function(){
 var commentsCount = <?=(int)$task['COMMENTS_COUNT']?>;
 
 if(typeof BX.MSL != 'undefined')
+{
 	BX.MSL.viewImageBind('tasks-detail-card-container-over', { tag: 'IMG', attr: 'data-bx-image' });
+}
+
 BX.addCustomEvent("onCheckFileBlockVisibility", function(node){
 	if (BX("block_file_empty").parentNode != node.parentNode)
 	{

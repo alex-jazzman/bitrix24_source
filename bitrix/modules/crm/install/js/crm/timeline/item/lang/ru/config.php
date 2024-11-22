@@ -23,6 +23,9 @@ $MESS["CRM_TIMELINE_ITEM_NOTE_SHOW"] = "Показать полностью";
 $MESS["CRM_TIMELINE_ITEM_NOTE_HIDE"] = "Скрыть текст";
 $MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE"] = "#WEEKDAYS#, #FROM_TIME# - #TO_TIME#, на #DURATION#";
 $MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V2"] = "#WEEKDAYS#, #FROM_TIME# - #TO_TIME#, #DURATION#";
+$MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V3"] = "#WEEKDAYS#, #FROM_TIME# - #TO_TIME#";
+$MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_DURATION"] = "Длительность: #DURATION#";
+$MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_WITH_MORE"] = "#RANGE# , <div class='#MORE_LINK_CLASS#' data-anchor='more-link'>ещё #AMOUNT#</div>";
 $MESS['CRM_TIMELINE_ITEM_TASK_PING_SENT'] = 'Пинг-уведомление отправлено';
 $MESS['CRM_TIMELINE_ITEM_TASK_DELETE'] = 'Задача успешно удалена';
 $MESS['CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE'] = 'Вы действительно хотите удалить эту задачу?';
@@ -51,3 +54,5 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_MESSAGE'] = 'Изм�
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'] = 'Перейти к редактированию';
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_TITLE'] = 'Перейти к редактированию другого сообщения WhatsApp?';
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'] = 'Изменения в новом сообщении WhatsApp не сохранятся, если вы начнёте редактировать другое сообщение';
+
+$MESS['CRM_TIMELINE_ITEM_LINK_IS_COPIED_SHORT'] = 'Ссылка скопирована';

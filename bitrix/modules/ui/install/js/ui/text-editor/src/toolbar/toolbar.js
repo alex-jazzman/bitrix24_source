@@ -23,7 +23,7 @@ import { $isListNode, ListNode } from 'ui.lexical.list';
 import { $isAutoLinkNode, $isLinkNode } from 'ui.lexical.link';
 import { $isCodeTokenNode } from '../plugins/code';
 
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 import { TextEditorLexicalNode } from '../types/text-editor-lexical-node';
 import type { ToolbarOptions, ToolbarItem } from '../types/toolbar-options';
 import Separator from './separator';

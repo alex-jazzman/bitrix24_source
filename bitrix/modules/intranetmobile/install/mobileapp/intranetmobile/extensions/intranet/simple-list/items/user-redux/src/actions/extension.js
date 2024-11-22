@@ -12,6 +12,7 @@ jn.define('intranet/simple-list/items/user-redux/src/actions', (require, exports
 		fireEmployee,
 		hireEmployee,
 		reinvite,
+		reinviteWithChangeContact,
 		confirmUserRequest,
 		changeDepartment,
 	} = require('intranet/statemanager/redux/slices/employees/thunk');
@@ -75,6 +76,15 @@ jn.define('intranet/simple-list/items/user-redux/src/actions', (require, exports
 					dispatch(
 						reinvite({
 							userId,
+						}),
+					);
+				},
+				[EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue()]: ({ userId, email, phone }) => {
+					dispatch(
+						reinviteWithChangeContact({
+							userId,
+							email,
+							phone,
 						}),
 					);
 				},

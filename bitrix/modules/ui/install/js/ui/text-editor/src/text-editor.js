@@ -6,6 +6,7 @@ import { DefaultBBCodeScheme, type BBCodeScheme } from 'ui.bbcode.model';
 import { createDOMRange, createRectsFromDOMRange } from 'ui.lexical.selection';
 import { HIDE_DIALOG_COMMAND } from './commands';
 import { NewLineMode } from './constants';
+import { createHashCode } from './helpers/create-hash-code';
 import { $isRootEmpty } from './helpers/is-root-empty';
 
 import { defaultTheme } from './themes/default-theme';
@@ -16,10 +17,12 @@ import BasePlugin from './plugins/base-plugin';
 
 import { RichTextPlugin } from './plugins/rich-text';
 import { ParagraphPlugin } from './plugins/paragraph';
+import { ClipboardPlugin } from './plugins/clipboard';
 import { BoldPlugin } from './plugins/bold';
 import { ItalicPlugin } from './plugins/italic';
 import { StrikethroughPlugin } from './plugins/strikethrough';
 import { UnderlinePlugin } from './plugins/underline';
+import { ClearFormatPlugin } from './plugins/clear-format';
 import { MentionPlugin } from './plugins/mention';
 import { CodePlugin } from './plugins/code';
 import { QuotePlugin } from './plugins/quote';
@@ -96,7 +99,7 @@ import './css/layout.css';
 /**
  * @memberof BX.UI.TextEditor
  */
-export default class TextEditor extends EventEmitter
+export class TextEditor extends EventEmitter
 {
 	#lexicalEditor: LexicalEditor = null;
 	#componentRegistry: ComponentRegistry = new ComponentRegistry();
@@ -134,10 +137,11 @@ export default class TextEditor extends EventEmitter
 		super();
 		this.setEventNamespace('BX.UI.TextEditor.Editor');
 
+		const defaultOptions: TextEditorOptions = this.constructor.getDefaultOptions();
 		const options: TextEditorOptions = Type.isPlainObject(editorOptions) ? editorOptions : {};
-		this.#options = new SettingsCollection(options);
+		this.#options = new SettingsCollection({ ...defaultOptions, ...options });
 
-		const builtinPlugins = this.constructor.getBuiltinPlugins();
+		const builtinPlugins = [...this.constructor.getBuiltinPlugins()];
 		const plugins: Array<string | PluginConstructor> = this.#options.get('plugins', builtinPlugins);
 		const extraPlugins: Array<PluginConstructor> = this.#options.get('extraPlugins', []);
 		const pluginsToRemove: Array<PluginConstructor> = this.#options.get('removePlugins', []);
@@ -151,12 +155,14 @@ export default class TextEditor extends EventEmitter
 		this.#themeClasses = defaultTheme;
 
 		this.#plugins = new PluginCollection(builtinPlugins, [...plugins, ...extraPlugins], pluginsToRemove);
-		const nodes = this.#plugins.getConstructors().map((pluginConstructor: PluginConstructor) => {
+		const constructors = this.#plugins.getConstructors();
+		const nodes = constructors.map((pluginConstructor: PluginConstructor) => {
 			return pluginConstructor.getNodes(this);
 		});
 
 		this.#lexicalEditor = createEditor({
-			namespace: 'TextEditor', // uses when you copy-paste from one to another editor
+			// uses when you copy-paste from one to another editor
+			namespace: Type.isStringFilled(options.namespace) ? options.namespace : this.#createNamespace(constructors),
 			nodes: nodes.flat(),
 			onError: (error: Error) => {
 				console.error(error);
@@ -168,6 +174,7 @@ export default class TextEditor extends EventEmitter
 		this.setMinHeight(options.minHeight);
 		this.setMaxHeight(options.maxHeight);
 		this.setAutoFocus(options.autoFocus);
+		this.setVisualOptions(options.visualOptions);
 
 		this.#removeListeners = mergeRegister(
 			this.#registerCommands(),
@@ -189,10 +196,12 @@ export default class TextEditor extends EventEmitter
 		return [
 			RichTextPlugin,
 			ParagraphPlugin,
+			ClipboardPlugin,
 			BoldPlugin,
 			UnderlinePlugin,
 			ItalicPlugin,
 			StrikethroughPlugin,
+			ClearFormatPlugin,
 			TabIndentPlugin,
 			CodePlugin,
 			QuotePlugin,
@@ -218,9 +227,7 @@ export default class TextEditor extends EventEmitter
 
 	static getDefaultOptions(): TextEditorOptions
 	{
-		return {
-			plugins: [],
-		};
+		return {};
 	}
 
 	getComponentRegistry(): ComponentRegistry
@@ -328,7 +335,7 @@ export default class TextEditor extends EventEmitter
 					const decorator = decorators[nodeKey];
 					const {
 						componentClass: DecoratorClass,
-						options: decoratorOptions
+						options: decoratorOptions,
 					} = decorator;
 
 					const component = this.#decoratorComponents.get(nodeKey);
@@ -372,7 +379,7 @@ export default class TextEditor extends EventEmitter
 						&& this.isEmpty(false)
 					)
 					{
-						this.toggleCollapsing();
+						this.expand();
 
 						return true;
 					}
@@ -415,9 +422,16 @@ export default class TextEditor extends EventEmitter
 					}
 
 					const isInitialChange: boolean = prevEditorState.isEmpty();
-					if (isInitialChange && this.#options.get('collapsingMode') === true)
+					if (this.#options.get('collapsingMode') === true)
 					{
-						this.#initCollapsingMode();
+						if (isInitialChange)
+						{
+							this.#initCollapsingMode();
+						}
+						else if (this.isCollapsed() && !this.isEmpty())
+						{
+							this.expand(false);
+						}
 					}
 
 					if (!isInitialChange && tags.has('history-merge'))
@@ -475,6 +489,18 @@ export default class TextEditor extends EventEmitter
 				this.emit('onEditable', { isEditable });
 			}),
 		);
+	}
+
+	#createNamespace(plugins: PluginConstructor[]): string
+	{
+		const hashCode = createHashCode(
+			plugins
+				.map((node) => node.getName())
+				.sort()
+				.join('-'),
+		);
+
+		return String(hashCode);
 	}
 
 	getBBCodeScheme(): BBCodeScheme
@@ -661,20 +687,35 @@ export default class TextEditor extends EventEmitter
 		return this.#maxHeight;
 	}
 
+	setVisualOptions(options: TextEditorOptions['visualOption']): void
+	{
+		if (!Type.isPlainObject(options))
+		{
+			return;
+		}
+
+		for (const [option, value] of Object.entries(options))
+		{
+			const name = Text.toKebabCase(option);
+
+			Dom.style(
+				this.getRootContainer(),
+				`--ui-text-editor-${name}`,
+				value,
+			);
+		}
+	}
+
 	#initCollapsingMode()
 	{
 		this.#collapsingMode = true;
 		if (this.isEmpty())
 		{
-			this.#collapsingState = CollapsingState.COLLAPSED;
-			Dom.addClass(this.getRootContainer(), '--collapsed');
-			this.emit('onCollapsingToggle', { isOpen: false });
+			this.#collapse('hide', false, true);
 		}
 		else
 		{
-			this.#collapsingState = CollapsingState.EXPANDED;
-			Dom.removeClass(this.getRootContainer(), '--collapsed');
-			this.emit('onCollapsingToggle', { isOpen: true });
+			this.expand(false);
 		}
 	}
 
@@ -688,19 +729,54 @@ export default class TextEditor extends EventEmitter
 		return this.#collapsingState === CollapsingState.COLLAPSED;
 	}
 
-	toggleCollapsing(): void
+	#collapse(mode: 'show' | 'hide' | 'toggle' = 'hide', animate: boolean = true, initialState: boolean = false): void
 	{
 		if (!this.isCollapsingModeEnabled())
 		{
 			return;
 		}
 
+		const collapsed = (
+			this.#collapsingState === CollapsingState.COLLAPSED || this.#collapsingState === CollapsingState.COLLAPSING
+		);
+
+		const expanded = (
+			this.#collapsingState === CollapsingState.EXPANDED || this.#collapsingState === CollapsingState.EXPANDING
+		);
+
+		if ((mode === 'hide' && collapsed) || (mode === 'show' && expanded))
+		{
+			return;
+		}
+
+		if (animate === false)
+		{
+			if (collapsed)
+			{
+				this.#collapsingState = CollapsingState.EXPANDED;
+				Dom.removeClass(this.getRootContainer(), '--collapsed');
+				this.emit('onCollapsingToggle', { isOpen: true });
+				this.focus();
+			}
+			else
+			{
+				this.#collapsingState = CollapsingState.COLLAPSED;
+				Dom.addClass(this.getRootContainer(), '--collapsed');
+				this.emit('onCollapsingToggle', { isOpen: false });
+				this.clear();
+				this.clearHistory();
+				if (!initialState)
+				{
+					this.blur();
+				}
+			}
+
+			return;
+		}
+
 		Event.unbind(this.getRootContainer(), 'transitionend', this.#collapsingTransitionEnd);
 
-		if (
-			this.#collapsingState === CollapsingState.COLLAPSED
-			|| this.#collapsingState === CollapsingState.COLLAPSING
-		)
+		if (collapsed)
 		{
 			this.#collapsingState = CollapsingState.EXPANDING;
 			this.blur(); // to avoid a root container scrolling because of a browser focus
@@ -742,6 +818,21 @@ export default class TextEditor extends EventEmitter
 		}
 
 		Event.bind(this.getRootContainer(), 'transitionend', this.#collapsingTransitionEnd);
+	}
+
+	collapse(animate: boolean = true): void
+	{
+		this.#collapse('hide', animate);
+	}
+
+	expand(animate: boolean = true): void
+	{
+		this.#collapse('show', animate);
+	}
+
+	toggle(animate: boolean = true): void
+	{
+		this.#collapse('toggle', animate);
 	}
 
 	getParagraphHeight(): number
@@ -963,7 +1054,7 @@ export default class TextEditor extends EventEmitter
 
 		this.#lexicalEditor.focus(
 			Type.isFunction(callbackFn) ? callbackFn : null,
-			Type.isPlainObject(options) ? options : undefined,
+			Type.isPlainObject(options) ? options : { defaultSelection: 'rootStart' },
 		);
 	}
 

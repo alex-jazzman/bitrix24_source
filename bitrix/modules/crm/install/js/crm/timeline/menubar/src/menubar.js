@@ -68,7 +68,7 @@ export class MenuBar
 			}
 		});
 
-		this.setActiveItemById(this.#getFirstItemIdWithLayout());
+		this.setActiveItemById(this.getFirstItemIdWithLayout());
 	}
 
 	getItemById(id: String): ?Item
@@ -134,10 +134,10 @@ export class MenuBar
 
 	#onItemFinishEdit(): void
 	{
-		this.setActiveItemById(this.#getFirstItemIdWithLayout());
+		this.setActiveItemById(this.getFirstItemIdWithLayout());
 	}
 
-	#getFirstItemIdWithLayout(): ?Item
+	getFirstItemIdWithLayout(): ?Item
 	{
 		if (this.#isReadonly)
 		{

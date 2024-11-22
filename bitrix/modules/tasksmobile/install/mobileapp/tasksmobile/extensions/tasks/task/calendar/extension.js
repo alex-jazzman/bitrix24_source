@@ -4,13 +4,19 @@
 jn.define('tasks/task/calendar', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Type } = require('type');
+	const { MemoryStorage } = require('native/memorystore');
+	const { SubstituteStorage } = require('tasks/task/calendar/src/substitute-storage');
+	const { Feature } = require('feature');
+
+	const STORAGE_NAME = 'calendarSettingsStore';
+	const store = Feature.isMemoryStorageSupported()
+		? new MemoryStorage(STORAGE_NAME)
+		: new SubstituteStorage(STORAGE_NAME);
 
 	class Calendar
 	{
 		constructor()
 		{
-			this.isSettingsLoading = false;
-			this.isSettingsLoaded = false;
 			this.settings = {};
 
 			this.workTime = [
@@ -36,51 +42,91 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 			void this.loadSettings();
 		}
 
-		loadSettings()
+		async loadSettings()
 		{
+			const executor = new RunActionExecutor('tasksmobile.Calendar.getSettings');
+
+			const cachedData = await this.#getCachedData(executor);
+			if (cachedData)
+			{
+				this.setSettings(cachedData);
+
+				return cachedData;
+			}
+
+			const isSettingsLoading = await store.get('isSettingsLoading');
+			if (isSettingsLoading)
+			{
+				return this.#waitForDataFromCache(executor);
+			}
+
+			return this.#loadDataFromBackend(executor);
+		}
+
+		async #getCachedData(executor)
+		{
+			if (!executor.getCache().isExpired())
+			{
+				return store.get('data');
+			}
+
+			return null;
+		}
+
+		async #waitForDataFromCache(executor)
+		{
+			return new Promise((resolve) => {
+				const interval = setInterval(async () => {
+					const data = await store.get('data');
+
+					if (data)
+					{
+						clearInterval(interval);
+						resolve(data);
+					}
+
+					const isSettingsLoading = await store.get('isSettingsLoading');
+					if (!isSettingsLoading)
+					{
+						clearInterval(interval);
+						const repeatedRequest = await this.#loadDataFromBackend(executor);
+						resolve(repeatedRequest);
+					}
+				}, 50);
+			});
+		}
+
+		async #loadDataFromBackend(executor)
+		{
+			await store.set('isSettingsLoading', true);
+
 			return new Promise((resolve, reject) => {
-				if (this.isSettingsLoaded)
-				{
-					resolve();
-
-					return;
-				}
-
-				if (this.isSettingsLoading)
-				{
-					setTimeout(() => {
-						this.loadSettings()
-							.then(resolve)
-							.catch(reject);
-					}, 50);
-
-					return;
-				}
-
-				this.isSettingsLoading = true;
-
-				new RunActionExecutor('tasksmobile.Calendar.getSettings')
-					.setCacheHandler((response) => {
-						this.setSettings(response.data);
+				executor
+					.setCacheHandler(async (response) => {
+						await this.handleResponse(response, resolve);
 					})
-					.setHandler((response) => {
+					.setHandler(async (response) => {
 						if (response.status !== 'success')
 						{
+							await store.set('isSettingsLoading', false);
 							reject();
 
 							return;
 						}
-
-						this.setSettings(response.data);
-
-						this.isSettingsLoading = false;
-						this.isSettingsLoaded = true;
-
-						resolve();
+						await this.handleResponse(response, resolve);
 					})
-					.call(true)
-				;
+					.setSkipRequestIfCacheExists()
+					.setCacheTtl(3600)
+					.call(true);
 			});
+		}
+
+		async handleResponse(response, resolve)
+		{
+			await store.set('data', response.data);
+			this.setSettings(response.data);
+			await store.set('isSettingsLoading', false);
+			resolve(response.data);
 		}
 
 		setSettings(settings, adaptSettings = true)

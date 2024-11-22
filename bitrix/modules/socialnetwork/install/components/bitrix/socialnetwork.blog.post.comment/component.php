@@ -729,14 +729,12 @@ if (
 			{
 				if ($arResult["use_captcha"])
 				{
-					include_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/captcha.php');
 					$captchaCode = (string)$_POST["captcha_code"];
 					$captchaWord = (string)$_POST["captcha_word"];
 					$cpt = new CCaptcha();
-					$captchaPass = Option::get('main', 'captcha_password');
 					if ($captchaCode !== '')
 					{
-						if (!$cpt->CheckCodeCrypt($captchaWord, $captchaCode, $captchaPass))
+						if (!$cpt->CheckCodeCrypt($captchaWord, $captchaCode))
 						{
 							$strErrorMessage .= Loc::getMessage('B_B_PC_CAPTCHA_ERROR') . "<br />";
 						}
@@ -936,6 +934,30 @@ if (
 								"imageWidth" => $arParams["IMAGE_MAX_WIDTH"],
 								"imageHeight" => $arParams["IMAGE_MAX_HEIGHT"],
 							);
+
+							if (isset($this->request->getValues()['ANALYTICS_LABEL']))
+							{
+								$analyticsInfo = $this->request->getValues()['ANALYTICS_LABEL'];
+								$eventId = CSocNetLog::GetList(
+									arFilter: ['MODULE_ID' => 'blog', 'SOURCE_ID' => $arPost['ID']],
+									arSelectFields: ['EVENT_ID'],
+								)->Fetch()['EVENT_ID'] ?? '';
+								$analytics = \Bitrix\Socialnetwork\Helper\Analytics::getInstance();
+
+								$typeMap = [
+									'blog_post_vote' => $analytics::TYPE_POLL,
+									'blog_post_grat' => $analytics::TYPE_APPRECIATION,
+									'blog_post_important' => $analytics::TYPE_ANNOUNCEMENT,
+									'blog_post' => $analytics::TYPE_POST,
+								];
+
+								$analytics->onCommentAdd(
+									$analyticsInfo['section'] ?? '',
+									$analyticsInfo['context'] ?? '',
+									'',
+									$typeMap[$eventId] ?? '',
+								);
+							}
 
 							$commentUrl .= (mb_strpos($commentUrl, "?") !== false ? "&" : "?");
 							if (
@@ -2064,15 +2086,8 @@ if (
 
 		if ($arResult["use_captcha"])
 		{
-			include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/captcha.php");
 			$cpt = new CCaptcha();
-			$captchaPass = Option::get('main', 'captcha_password');
-			if ($captchaPass === '')
-			{
-				$captchaPass = \Bitrix\Main\Security\Random::getString(10);
-				Option::set('main', 'captcha_password', $captchaPass);
-			}
-			$cpt->SetCodeCrypt($captchaPass);
+			$cpt->SetCodeCrypt();
 			$arResult["CaptchaCode"] = htmlspecialcharsbx($cpt->GetCodeCrypt());
 		}
 

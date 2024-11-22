@@ -17,7 +17,6 @@ return [
 		'tasks:loc',
 		'tasks:layout/fields/time-tracking/timer',
 		'tasks:layout/fields/time-tracking/time-utils',
-		'layout/ui/menu',
 	],
 	'bundle' => [
 		'./ui/settings-widget',

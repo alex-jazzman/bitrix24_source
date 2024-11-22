@@ -6,6 +6,10 @@
 
 	const { AnalyticsEvent } = require('analytics');
 	const { Analytics } = require('call/const');
+	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { Theme } = require('im/lib/theme');
+	const { Icon } = require('assets/icons');
+	const { Loc } = require('loc');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
 
@@ -232,7 +236,20 @@
 
 			if (this.callView || this.currentCall)
 			{
-				return;
+				if (this.currentCall?.associatedEntity.id === dialogId) 
+				{
+					this.onJoinCall(this.currentCall.id)
+					return;
+				}
+				else
+				{
+					Notification.showToastWithParams({
+						message: Loc.getMessage('CALLMOBILE_MESSAGE_HAS_ACTIVE_CALL_HINT'),
+						icon: Icon.ALERT,
+						backgroundColor: Theme.colors.accentMainAlert
+					});
+					return;
+				}
 			}
 			dialogId = dialogId.toString();
 			let provider = BX.Call.Provider.Plain;
@@ -1850,7 +1867,7 @@
 
 		onCallJoin(e)
 		{
-			if (!this.ignoreJoinAnalyticsEvent)
+			if (!this.ignoreJoinAnalyticsEvent && !e.local)
 			{
 				const analytics = new AnalyticsEvent()
 					.setTool(Analytics.AnalyticsTool.im)

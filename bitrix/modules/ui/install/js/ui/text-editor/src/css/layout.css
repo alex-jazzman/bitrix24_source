@@ -12,8 +12,12 @@
 
 	--ui-text-editor-color-background: #fff;
 	--ui-text-editor-color-selection: rgba(0, 0, 0, 0.13);
-	--ui-text-editor-color-border-base: #ccc;
-	--ui-text-editor-color-border-focus: #2fc6f6;
+
+	--ui-text-editor-border-width: 1px;
+	--ui-text-editor-border-style: solid;
+	--ui-text-editor-border-color-base: #ccc;
+	--ui-text-editor-border-color-focus: #2fc6f6;
+
 	--ui-text-editor-color-text: var(--ui-color-text-primary);
 	--ui-text-editor-color-link: var(--ui-color-link-primary-base);
 	--ui-text-editor-color-toolbar-background: var(--ui-text-editor-color-background);
@@ -23,7 +27,10 @@
 	--ui-text-editor-min-height: auto;
 	--ui-text-editor-max-height: auto;
 
-	border: 1px solid var(--ui-text-editor-color-border-base);
+	border-width: var(--ui-text-editor-border-width);
+	border-style: var(--ui-text-editor-border-style);
+	border-color: var(--ui-text-editor-border-color-base);
+
 	border-radius: var(--ui-text-editor-border-radius);
 	background-color: var(--ui-text-editor-color-background);
 
@@ -31,7 +38,7 @@
 }
 
 .ui-text-editor:focus-within {
-	border-color: var(--ui-text-editor-color-border-focus);
+	border-color: var(--ui-text-editor-border-color-focus);
 }
 
 .ui-text-editor.--expanding,

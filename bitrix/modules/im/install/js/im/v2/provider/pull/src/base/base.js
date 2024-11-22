@@ -160,6 +160,11 @@ export class BasePullHandler
 		this.#chatHandler.handleChatUpdate(params);
 	}
 
+	handleChatDelete(params)
+	{
+		this.#chatHandler.handleChatDelete(params);
+	}
+
 	handleChatConvert(params)
 	{
 		this.#chatHandler.handleChatConvert(params);

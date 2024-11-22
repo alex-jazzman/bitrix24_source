@@ -1634,7 +1634,6 @@ BX.CRM.Kanban.Item.prototype = {
 		const pingSettings = data.pingSettings || gridData.pingSettings;
 		const colorSettings = data.colorSettings || gridData.colorSettings;
 		const calendarSettings = data.calendarSettings || gridData.calendarSettings;
-		const useTodoEditorV2 = data.useTodoEditorV2 || gridData.useTodoEditorV2;
 		const settings = {
 			pingSettings,
 			colorSettings,
@@ -1642,7 +1641,6 @@ BX.CRM.Kanban.Item.prototype = {
 		};
 
 		const params = {
-			useTodoEditorV2,
 			context: this.getToDoEditorContext(),
 			events: {
 				onSave: () => {
@@ -1662,13 +1660,6 @@ BX.CRM.Kanban.Item.prototype = {
 						});
 					});
 				},
-				onActualizePopupLayout: (event) => {
-					const item = this.grid.getItem(event.data.entityId);
-					if (item)
-					{
-						this.activityAddingPopup.bindPopup(item.planner.children[0]);
-					}
-				},
 			},
 		};
 
@@ -1683,9 +1674,7 @@ BX.CRM.Kanban.Item.prototype = {
 			);
 		}
 
-		const bindElement = node.isNode ? node : this.activityPlan;
-
-		this.activityAddingPopup.show(bindElement, mode);
+		this.activityAddingPopup.show(mode);
 		if (disableItem)
 		{
 			this.unDisabledItem();
@@ -2312,7 +2301,6 @@ BX.CRM.Kanban.Item.prototype = {
 	 * @property {boolean} return
 	 * @property {boolean} returnApproach
 	 * @property {Object} sort
-	 * @property {boolean} useTodoEditorV2
 	 * @property {string | null} special_type
 	 * @property {string | null} contactTooltip
 	 * @property {string | null} companyTooltip

@@ -12,4 +12,10 @@
 	{
 		console.warn(e);
 	}
+
+	const { OpenDesktopNotification } = require('background/notifications/open-desktop');
+	OpenDesktopNotification.bindOpenDesktopEvent();
+
+	const { OpenHelpdeskNotification } = require('background/notifications/open-helpdesk');
+	OpenHelpdeskNotification.bindOpenHelpdeskEvent();
 })();

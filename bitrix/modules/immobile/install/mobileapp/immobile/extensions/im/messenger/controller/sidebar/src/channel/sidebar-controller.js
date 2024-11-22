@@ -3,25 +3,41 @@
  */
 jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require, exports, module) => {
 	/* global InAppNotifier */
+	const { isOnline } = require('device/connection');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { Icon } = require('assets/icons');
+	const { UIMenu } = require('layout/ui/menu');
+
+	const { Theme } = require('im/lib/theme');
+
+	const { buttonIcons } = require('im/messenger/assets/common');
+	const {
+		EventType,
+		DialogType,
+		SidebarContextMenuActionType,
+	} = require('im/messenger/const');
+
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { ButtonFactory } = require('im/messenger/lib/ui/base/buttons');
+	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
+	const { showDeleteChannelAlert } = require('im/messenger/lib/ui/alert');
+
+	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
+
 	const { ChannelSidebarView } = require('im/messenger/controller/sidebar/channel/sidebar-view');
 	const { SidebarService } = require('im/messenger/controller/sidebar/chat/sidebar-service');
 	const { SidebarRestService } = require('im/messenger/controller/sidebar/chat/sidebar-rest-service');
 	const { SidebarUserService } = require('im/messenger/controller/sidebar/chat/sidebar-user-service');
 	const { SidebarFilesService } = require('im/messenger/controller/sidebar/chat/tabs/files/service');
 	const { SidebarLinksService } = require('im/messenger/controller/sidebar/chat/tabs/links/service');
-	const { buttonIcons } = require('im/messenger/assets/common');
-	const { ButtonFactory } = require('im/messenger/lib/ui/base/buttons');
-	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Type } = require('type');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--channel-sidebar-controller');
-	const { EventType, DialogType } = require('im/messenger/const');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { ChatPermission } = require('im/messenger/lib/permission-manager');
-	const { Notification } = require('im/messenger/lib/ui/notification');
-	const { isOnline } = require('device/connection');
-	const { Loc } = require('loc');
-	const { Theme } = require('im/lib/theme');
 
 	class ChannelSidebarController
 	{
@@ -41,6 +57,10 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			this.sidebarRestService = new SidebarRestService(options.dialogId);
 			this.sidebarUserService = null;
 			this.dialogId = options.dialogId;
+			this.headerContextMenuButtons = [];
+
+			/** @type {LayoutWidget | null} */
+			this.dialogWidget = null;
 		}
 
 		/**
@@ -55,15 +75,21 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			};
 		}
 
-		open()
+		open(parentWidget = PageManager)
 		{
 			logger.log(`${this.constructor.name}.open`);
-			this.createWidget();
+
+			this.createWidget(parentWidget);
 		}
 
-		createWidget()
+		createWidget(parentWidget = PageManager)
 		{
-			PageManager.openWidget(
+			if (parentWidget !== PageManager)
+			{
+				this.dialogWidget = parentWidget;
+			}
+
+			parentWidget.openWidget(
 				'layout',
 				{
 					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_WIDGET_TITLE_CHANNEL'),
@@ -95,6 +121,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			this.subscribeStoreEvents();
 			this.subscribeWidgetEvents();
 			this.subscribeBXCustomEvents();
+			this.setHeaderButtons();
 		}
 
 		/**
@@ -106,6 +133,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			this.onUpdateStore = this.onUpdateStore.bind(this);
 			this.onCloseWidget = this.onCloseWidget.bind(this);
 			this.onDestroySidebar = this.onDestroySidebar.bind(this);
+			this.onDeleteChat = this.onDeleteChat.bind(this);
 		}
 
 		setUserService()
@@ -167,6 +195,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 		{
 			logger.log(`${this.constructor.name}.subscribeBXCustomEvents`);
 			BX.addCustomEvent('onDestroySidebar', this.onDestroySidebar);
+			BX.addCustomEvent(EventType.dialog.external.delete, this.onDeleteChat);
 		}
 
 		unsubscribeStoreEvents()
@@ -180,6 +209,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 		{
 			logger.log(`${this.constructor.name}.unsubscribeBXCustomEvents`);
 			BX.removeCustomEvent('onDestroySidebar', this.onDestroySidebar);
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.onDeleteChat);
 		}
 
 		/**
@@ -201,6 +231,64 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 				restService: this.sidebarRestService,
 				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			};
+		}
+
+		setHeaderButtons()
+		{
+			this.prepareHeaderContextMenuButtons();
+
+			if (!Type.isArrayFilled(this.headerContextMenuButtons))
+			{
+				return;
+			}
+
+			this.widget.setRightButtons([
+				{
+					type: this.constants.headerButton.more,
+					id: this.constants.headerButton.more,
+					testId: `SIDEBAR_HEADER_BUTTON_${this.constants.headerButton.more.toUpperCase()}`,
+					callback: () => {
+						this.createHeaderPopupMenu();
+					},
+				},
+			]);
+		}
+
+		prepareHeaderContextMenuButtons()
+		{
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+			if (!helper)
+			{
+				Logger.error(`${this.constructor.name}.createHeaderPopupMenu: unknown dialogId`, this.dialogId);
+
+				return;
+			}
+
+			if (helper.canBeDeleted)
+			{
+				this.headerContextMenuButtons.push(
+					{
+						id: SidebarContextMenuActionType.delete,
+						title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_CONTEXT_HEADER_MENU_DELETE'),
+						showIcon: true,
+						iconName: Icon.TRASHCAN,
+						testId: this.getContextMenuTestId(SidebarContextMenuActionType.delete),
+						isDestructive: true,
+						onItemSelected: this.onDeleteChatButtonClick.bind(this),
+					},
+				);
+			}
+		}
+
+		createHeaderPopupMenu()
+		{
+			if (!Type.isArrayFilled(this.headerContextMenuButtons))
+			{
+				return;
+			}
+
+			const menu = new UIMenu(this.headerContextMenuButtons);
+			menu.show();
 		}
 
 		/**
@@ -364,11 +452,83 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			this.widget.back();
 		}
 
+		onDeleteChat({ dialogId })
+		{
+			if (String(this.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.widget.back();
+		}
+
 		onCloseWidget()
 		{
 			this.unsubscribeStoreEvents();
 			this.unsubscribeBXCustomEvents();
 			BX.onCustomEvent('onCloseSidebarWidget');
+		}
+
+		onDeleteChatButtonClick()
+		{
+			showDeleteChannelAlert({
+				deleteCallback: () => {
+					this.deleteChat();
+				},
+				cancelCallback: () => {
+					AnalyticsService.getInstance().sendChatDeleteCanceled({
+						dialogId: this.dialogId,
+					});
+				},
+			});
+
+			AnalyticsService.getInstance().sendChatDeletePopupShown({
+				dialogId: this.dialogId,
+			});
+		}
+
+		async deleteChat()
+		{
+			const { type } = this.store.getters['dialoguesModel/getById'](this.dialogId);
+
+			this.sidebarRestService.deleteChat(this.dialogId)
+				.then(async () => {
+					MessengerEmitter.broadcast(EventType.dialog.external.delete, {
+						dialogId: this.dialogId,
+						chatType: type,
+						shouldShowAlert: false,
+						deleteByCurrentUserFromMobile: true,
+					});
+					const recentProvider = new RecentDataProvider();
+					recentProvider.delete({ dialogId: this.dialogId })
+						.catch((error) => {
+							logger.error(`${this.constructor.name}.deleteChat delete recent error`, error);
+						})
+					;
+					const chatProvider = new ChatDataProvider();
+					chatProvider.delete({ dialogId: this.dialogId })
+						.catch((error) => {
+							logger.error(`${this.constructor.name}.deleteChat error`, error);
+						})
+					;
+
+					this.widget.back();
+					if (this.dialogWidget)
+					{
+						this.dialogWidget.back();
+					}
+
+					Notification.showToast(ToastType.deleteChannel);
+				})
+				.catch((error) => {
+					Logger.error(error);
+					Notification.showErrorToast();
+				})
+			;
+
+			AnalyticsService.getInstance().sendChatDeleteConfirmed({
+				dialogId: this.dialogId,
+			});
 		}
 
 		/**
@@ -392,6 +552,24 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 		{
 			return true;
 		}
+
+		/**
+		 * @param {string} id
+		 * @returns {string}
+		 */
+		getContextMenuTestId(id)
+		{
+			return `SIDEBAR_CONTEXT_MENU_${id.toUpperCase()}`;
+		}
+
+		/**
+		 * @property {object}
+		 */
+		constants = {
+			headerButton: {
+				more: 'more',
+			},
+		};
 	}
 
 	module.exports = { ChannelSidebarController };

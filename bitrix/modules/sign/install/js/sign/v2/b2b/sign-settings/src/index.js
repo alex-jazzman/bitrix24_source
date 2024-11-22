@@ -36,10 +36,8 @@ export class B2BSignSettings extends SignSettings
 		return true;
 	}
 
-	getStepsMetadata(): Metadata
+	getStepsMetadata(signSettings: B2BSignSettings): Metadata
 	{
-		const signSettings = this;
-
 		return {
 			setup: {
 				get content(): HTMLElement {

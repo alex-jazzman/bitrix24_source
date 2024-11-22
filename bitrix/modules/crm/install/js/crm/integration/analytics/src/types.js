@@ -47,6 +47,28 @@ export type EntityAddEvent = {
 	p3?: 'myCompany_1' | 'myCompany_0',
 };
 
+export type EntityCloseEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
+	event: Dictionary.EVENT_ENTITY_CLOSE,
+	type: 'lead' | 'deal',
+	c_section: Dictionary.SECTION_LEAD
+		| Dictionary.SECTION_DEAL
+	,
+	c_sub_section: Dictionary.SUB_SECTION_LIST
+		| Dictionary.SUB_SECTION_KANBAN
+		| Dictionary.SUB_SECTION_KANBAN_DROPZONE
+		| Dictionary.SUB_SECTION_DETAILS
+	,
+	c_element?: Dictionary.ELEMENT_WON_BUTTON
+		| Dictionary.ELEMENT_LOSE_BUTTON
+		| Dictionary.ELEMENT_CANCEL_BUTTON
+	,
+	status?: EventStatus,
+	p1: CrmMode,
+	p2: string
+};
+
 export type EntityConvertEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
@@ -73,8 +95,8 @@ export type EntityConvertBatchEvent = EntityConvertEvent & {
 };
 
 export type AICallParsingEvent = {
-	tool: Dictionary.TOOL_AI,
-	category: Dictionary.CATEGORY_CRM_OPERATIONS,
+	tool: Dictionary.TOOL_CRM | Dictionary.TOOL_AI,
+	category: Dictionary.CATEGORY_CRM_OPERATIONS | Dictionary.CATEGORY_AI_OPERATIONS,
 	event: Dictionary.EVENT_CALL_PARSING,
 	type: Dictionary.TYPE_MANUAL | Dictionary.TYPE_AUTO,
 	c_section: Dictionary.SECTION_CRM,

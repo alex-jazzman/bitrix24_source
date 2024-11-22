@@ -6,8 +6,6 @@ return [
 		'loc',
 		'toast',
 		'utils/date',
-		'assets/icons/types',
-		'assets/icons',
 		'layout/ui/user/avatar',
 		'layout/ui/context-menu',
 		'ui-system/typography/heading',

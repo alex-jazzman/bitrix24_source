@@ -17,7 +17,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--recent');
 
-	const elementState = {
+	const recentDefaultElement = Object.freeze({
 		id: 0,
 		message: {
 			id: 0,
@@ -43,7 +43,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			canResend: false,
 		},
 		options: {},
-	};
+	});
 
 	const recentModel = {
 		namespaced: true,
@@ -228,7 +228,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 							item.liked = false;
 
 							return {
-								...elementState,
+								...recentDefaultElement,
 								...validate(item),
 							};
 						})
@@ -445,6 +445,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				return true;
 			},
 
+
 			/** @function recentModel/clearAllCounters */
 			clearAllCounters: (store, payload) => {
 				const updatedItems = [];
@@ -480,6 +481,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			 * @param {MutationPayload<RecentSetStateData, RecentSetStateActions>} payload
 			 */
 			setState: (state, payload) => {
+				logger.warn('RecentModel.setState', payload);
 				const {
 					collection,
 				} = payload.data;
@@ -510,7 +512,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 				recentItemList.forEach((item) => {
 					state.collection.push({
-						...elementState,
+						...recentDefaultElement,
 						...item.fields,
 					});
 
@@ -638,5 +640,5 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		return 0;
 	}
 
-	module.exports = { recentModel };
+	module.exports = { recentModel, recentDefaultElement };
 });

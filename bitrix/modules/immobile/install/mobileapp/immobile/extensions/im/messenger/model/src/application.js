@@ -66,24 +66,12 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 				return !statusData.networkWaiting;
 			},
 
-			/** @function applicationModel/getDialogId */
-			getDialogId: (state) => {
-				const chatSettings = Application.storage.getObject('settings.chat', {
-					chatBetaEnable: false,
-				});
-
-				if (chatSettings.chatBetaEnable)
-				{
-					return state.dialog.currentId;
-				}
-
-				const page = PageManager.getNavigator().getVisible();
-				if (page.type === 'Web' && page.pageId === `im-${state.dialog.currentId}`)
-				{
-					return state.dialog.currentId;
-				}
-
-				return 0;
+			/**
+			 * @function applicationModel/getCurrentOpenedDialogId
+			 * @return {DialogId | 0}
+			 */
+			getCurrentOpenedDialogId: (state) => () => {
+				return state.dialog.currentId;
 			},
 
 			/** @function applicationModel/isSomeDialogOpen */

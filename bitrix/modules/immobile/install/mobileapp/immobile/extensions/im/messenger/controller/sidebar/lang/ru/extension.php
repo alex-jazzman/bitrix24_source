@@ -67,8 +67,11 @@ $MESS['IMMOBILE_DIALOG_SIDEBAR_LINKS_EMPTY_STATE_SUBTITLE'] = 'Никто из �
 $MESS['IMMOBILE_DIALOG_SIDEBAR_FILES_EMPTY_STATE_TITLE'] = 'Файлов пока нет';
 $MESS['IMMOBILE_DIALOG_SIDEBAR_FILES_EMPTY_STATE_SUBTITLE'] = 'Никто из участников пока#BR#не отправлял файлы';
 
+$MESS['IMMOBILE_DIALOG_SIDEBAR_CONTEXT_HEADER_MENU_DELETE'] = 'Удалить';
+
 $MESS['IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_TITLE'] = 'Откройте доступ к полной истории переписки';
 $MESS['IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_DESCRIPTION_1_PLURAL_1'] = 'Сейчас вам доступна переписка только за последний #COUNT# день.';
 $MESS['IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_DESCRIPTION_1_PLURAL_0'] = 'Сейчас вам доступна переписка только за последние #COUNT# дня.';
 $MESS['IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_DESCRIPTION_1_PLURAL_2'] = 'Сейчас вам доступна переписка только за последние #COUNT# дней.';
 $MESS['IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_DESCRIPTION_2'] = 'Чтобы получить доступ ко всей истории и другим полезным возможностям, перейдите на платный тариф';
+$MESS['IMMOBILE_DIALOG_SIDEBAR_USER_INVITED_FROM_STRUCTURE_DELETE_ERROR'] = 'Этого сотрудника нельзя исключить, он был добавлен в составе отдела';

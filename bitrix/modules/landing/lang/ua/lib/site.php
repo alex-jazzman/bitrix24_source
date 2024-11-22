@@ -7,6 +7,7 @@ $MESS["LANDING_DELETE_FOLDER_ERROR_CONTAINS_AREAS"] = "Папка містить
 $MESS["LANDING_EXPORT_ERROR"] = "Параметр code може складатися тільки з латинських букв та цифр.";
 $MESS["LANDING_TYPE_GROUP"] = "Групи";
 $MESS["LANDING_TYPE_KNOWLEDGE"] = "База знань";
+$MESS["LANDING_TYPE_MAINPAGE"] = "Головна сторінка";
 $MESS["LANDING_TYPE_PAGE"] = "Лендінг";
 $MESS["LANDING_TYPE_SMN"] = "Проєкт";
 $MESS["LANDING_TYPE_STORE"] = "Магазин";

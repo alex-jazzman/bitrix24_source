@@ -1,3 +1,4 @@
+import { EntityCloseEvent } from 'crm.integration.analytics';
 import { Loc, Reflection, Type } from 'main.core';
 import { QueueManager } from 'pull.queuemanager';
 import { UI } from 'ui.notification';
@@ -11,6 +12,7 @@ export default class SimpleAction
 	#isShowNotify: boolean = true;
 	#isApplyFilterAfterAction: boolean = false;
 	#useIgnorePostfixForCode: boolean = false;
+	#analyticsData: ?EntityCloseEvent = null;
 
 	constructor(grid: BX.CRM.Kanban.Grid, params: Object)
 	{
@@ -43,6 +45,15 @@ export default class SimpleAction
 	{
 		this.#prepareExecute();
 
+		if (this.#params.action === 'status')
+		{
+			this.#prepareAnalyticsData();
+			this.#grid.registerAnalyticsCloseEvent(
+				this.#analyticsData,
+				BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT,
+			);
+		}
+
 		return new Promise((resolve, reject) => {
 			this.#grid.ajax(
 				this.#params,
@@ -70,12 +81,15 @@ export default class SimpleAction
 	{
 		if (!data || data.error)
 		{
+			this.#grid.registerAnalyticsCloseEvent(this.#analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 			this.#handleErrorOnSimpleAction(data, resolve);
 		}
 		else
 		{
+			this.#grid.registerAnalyticsCloseEvent(this.#analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 			this.#handleSuccessOnSimpleAction(data, resolve);
 		}
+		this.#analyticsData = null;
 	}
 
 	#handleErrorOnSimpleAction(data, callback): void
@@ -239,9 +253,33 @@ export default class SimpleAction
 
 	#onFailure(error: string, callback: Function): void
 	{
+		this.#grid.registerAnalyticsCloseEvent(this.#analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+		this.#analyticsData = null;
+
 		BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 
 		callback(new Error(error));
+	}
+
+	#prepareAnalyticsData(): void
+	{
+		const [entityId] = this.#params.entity_id;
+		const item = this.#grid.getItem(entityId);
+		const targetColumn = this.#grid.getColumn(this.#params.status);
+
+		const type = targetColumn ? targetColumn.getData().type : this.#params.type;
+		this.#analyticsData = this.#grid.getDefaultAnalyticsCloseEvent(
+			item,
+			type,
+			this.#params.entity_id.toString(),
+		);
+
+		this.#analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_TOP_ACTIONS;
+
+		if (type === 'LOOSE')
+		{
+			this.#analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_TOP_ACTIONS;
+		}
 	}
 }
 

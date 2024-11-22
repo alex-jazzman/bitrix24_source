@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,crm_router,crm_toolbarComponent,crm_typeModel,main_core,main_core_events,main_loader,ui_dialogs_messagebox,ui_entitySelector) {
+(function (exports,crm_integration_analytics,crm_router,crm_toolbarComponent,crm_typeModel,main_core,main_core_events,main_loader,ui_analytics,ui_dialogs_messagebox,ui_entitySelector) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
@@ -7,6 +7,7 @@
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm.Component');
@@ -15,13 +16,18 @@
 	/**
 	 * @memberOf BX.Crm.Component
 	 */
+	var _isCancelEventRegistered = /*#__PURE__*/new WeakMap();
+	var _registerCancelEvent = /*#__PURE__*/new WeakSet();
 	var _findActiveTabButton = /*#__PURE__*/new WeakSet();
 	var _findFirstTabButton = /*#__PURE__*/new WeakSet();
+	var _getAnalyticsBuilder = /*#__PURE__*/new WeakSet();
 	var TypeDetail = /*#__PURE__*/function () {
 	  function TypeDetail(params) {
 	    babelHelpers.classCallCheck(this, TypeDetail);
+	    _classPrivateMethodInitSpec(this, _getAnalyticsBuilder);
 	    _classPrivateMethodInitSpec(this, _findFirstTabButton);
 	    _classPrivateMethodInitSpec(this, _findActiveTabButton);
+	    _classPrivateMethodInitSpec(this, _registerCancelEvent);
 	    babelHelpers.defineProperty(this, "isProgress", false);
 	    babelHelpers.defineProperty(this, "tabs", new Map());
 	    babelHelpers.defineProperty(this, "isRestricted", false);
@@ -29,6 +35,10 @@
 	    babelHelpers.defineProperty(this, "isSaveFromTypeDetail", true);
 	    babelHelpers.defineProperty(this, "isCreateSectionsViaAutomatedSolutionDetails", false);
 	    babelHelpers.defineProperty(this, "isCrmAdmin", false);
+	    _classPrivateFieldInitSpec(this, _isCancelEventRegistered, {
+	      writable: true,
+	      value: false
+	    });
 	    if (main_core.Type.isPlainObject(params)) {
 	      this.type = params.type;
 	      this.isNew = !this.type.isSaved();
@@ -97,15 +107,33 @@
 	      this.form.querySelectorAll('[data-name*="linkedUserFields"]').forEach(function (linkedUserFieldNode) {
 	        main_core.Event.bind(linkedUserFieldNode, 'click', _this.enableUserFieldIfAnyLinkedChecked.bind(_this));
 	      });
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseByEsc', function (event) {
+	        var _event$getData = event.getData(),
+	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
+	          sliderEvent = _event$getData2[0];
+	        var slider = sliderEvent.getSlider();
+	        if (slider === _this.getSlider()) {
+	          _classPrivateMethodGet(_this, _registerCancelEvent, _registerCancelEvent2).call(_this, crm_integration_analytics.Dictionary.ELEMENT_ESC_BUTTON);
+	        }
+	      });
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function (event) {
+	        var _event$getData3 = event.getData(),
+	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 1),
+	          sliderEvent = _event$getData4[0];
+	        var slider = sliderEvent.getSlider();
+	        if (slider === _this.getSlider()) {
+	          _classPrivateMethodGet(_this, _registerCancelEvent, _registerCancelEvent2).call(_this, null);
+	        }
+	      });
 	      this.handleSliderDestroy = this.handleSliderDestroy.bind(this);
 	      top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
 	    }
 	  }, {
 	    key: "handleSliderDestroy",
 	    value: function handleSliderDestroy(event) {
-	      var _event$getData = event.getData(),
-	        _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
-	        sliderEvent = _event$getData2[0];
+	      var _event$getData5 = event.getData(),
+	        _event$getData6 = babelHelpers.slicedToArray(_event$getData5, 1),
+	        sliderEvent = _event$getData6[0];
 	      var slider = sliderEvent.getSlider();
 	      if (slider.getFrameWindow() === window) {
 	        // if we add event handler from iframe to the main page, they will live forever, even after slider destroys
@@ -262,11 +290,16 @@
 	        this.type.setIsExternalDynamicalType(this.isExternal);
 	        this.type.setIsSaveFromTypeDetail(this.isSaveFromTypeDetail);
 	      }
+	      var analyticsBuilder = _classPrivateMethodGet(this, _getAnalyticsBuilder, _getAnalyticsBuilder2).call(this).setElement(crm_integration_analytics.Dictionary.ELEMENT_CREATE_BUTTON);
+	      ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ATTEMPT).buildData());
 	      this.type.save().then(function (response) {
+	        ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).setId(_this5.type.getId()).buildData());
+	        babelHelpers.classPrivateFieldSet(_this5, _isCancelEventRegistered, true);
 	        _this5.stopProgress();
 	        _this5.afterSave(response);
 	        _this5.isNew = false;
 	      })["catch"](function (errors) {
+	        ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).setId(_this5.type.getId()).buildData());
 	        _this5.showErrors(errors);
 	        _this5.stopProgress();
 	      });
@@ -353,10 +386,15 @@
 	      if (!this.type) {
 	        return;
 	      }
+	      var currentUrl = new main_core.Uri(decodeURI(window.location.href));
+	      var analyticsBuilder = new crm_integration_analytics.Builder.Automation.Type.DeleteEvent().setElement(crm_integration_analytics.Dictionary.ELEMENT_DELETE_BUTTON).setIsExternal(this.isExternal).setSubSection(currentUrl.getQueryParam('c_sub_section')).setId(this.type.getId());
 	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('CRM_TYPE_DETAIL_DELETE_CONFIRM'), function () {
 	        return new Promise(function (resolve) {
+	          ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ATTEMPT).buildData());
 	          _this6.startProgress();
 	          _this6.type["delete"]().then(function (response) {
+	            ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).buildData());
+	            babelHelpers.classPrivateFieldSet(_this6, _isCancelEventRegistered, true);
 	            _this6.stopProgress();
 	            var isUrlChanged = main_core.Type.isObject(response.data) && response.data.isUrlChanged === true;
 	            _this6.emitTypeUpdatedEvent({
@@ -364,12 +402,14 @@
 	            });
 	            crm_router.Router.Instance.closeSliderOrRedirect(crm_router.Router.Instance.getTypeListUrl());
 	          })["catch"](function (errors) {
+	            ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).buildData());
 	            _this6.showErrors(errors);
 	            _this6.stopProgress();
 	            resolve();
 	          });
 	        });
 	      }, null, function (box) {
+	        ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
 	        _this6.stopProgress();
 	        box.close();
 	      });
@@ -425,6 +465,7 @@
 	          }
 	        }
 	      });
+	      this.selectedPresetId = presetId;
 	    }
 	  }, {
 	    key: "getPresetById",
@@ -556,25 +597,53 @@
 	  }, {
 	    key: "handleBooleanFieldClick",
 	    value: function handleBooleanFieldClick(fieldName) {
-	      if (instance) {
-	        instance.toggleBooleanField(fieldName);
-	      }
+	      var _instance2;
+	      (_instance2 = instance) === null || _instance2 === void 0 ? void 0 : _instance2.toggleBooleanField(fieldName);
 	    }
 	  }, {
 	    key: "handlePresetSelectorClick",
 	    value: function handlePresetSelectorClick() {
-	      if (instance) {
-	        instance.enablePresetsView();
-	      }
+	      var _instance3;
+	      (_instance3 = instance) === null || _instance3 === void 0 ? void 0 : _instance3.enablePresetsView();
+	    }
+	  }, {
+	    key: "handleCancelButtonClick",
+	    value: function handleCancelButtonClick() {
+	      var _instance;
+	      // if we just add click event handler to cancel button node, that handler will be called after slider close
+	      // to capture click before that, we need to add handler directly to markup
+	      (_instance = instance) === null || _instance === void 0 ? void 0 : _classPrivateMethodGet(_instance, _registerCancelEvent, _registerCancelEvent2).call(_instance, crm_integration_analytics.Dictionary.ELEMENT_CANCEL_BUTTON);
 	    }
 	  }]);
 	  return TypeDetail;
 	}();
+	function _registerCancelEvent2(element) {
+	  if (babelHelpers.classPrivateFieldGet(this, _isCancelEventRegistered)) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldSet(this, _isCancelEventRegistered, true);
+	  ui_analytics.sendData(_classPrivateMethodGet(this, _getAnalyticsBuilder, _getAnalyticsBuilder2).call(this).setElement(element).setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
+	}
 	function _findActiveTabButton2() {
 	  return document.querySelector('.ui-sidepanel-menu-item.ui-sidepanel-menu-active > [data-role^=tab-]');
 	}
 	function _findFirstTabButton2() {
 	  return document.querySelector('.ui-sidepanel-menu-item > [data-role^=tab-]');
+	}
+	function _getAnalyticsBuilder2() {
+	  var builder = this.isNew ? new crm_integration_analytics.Builder.Automation.Type.CreateEvent() : new crm_integration_analytics.Builder.Automation.Type.EditEvent();
+	  builder.setIsExternal(this.isExternal);
+	  if (main_core.Type.isStringFilled(this.selectedPresetId)) {
+	    builder.setPreset(this.selectedPresetId);
+	  }
+	  if (this.type.getId() > 0) {
+	    builder.setId(this.type.getId());
+	  }
+	  var currentUrl = new main_core.Uri(decodeURI(window.location.href));
+	  if (currentUrl.getQueryParam('c_sub_section') && builder instanceof crm_integration_analytics.Builder.Automation.Type.EditEvent) {
+	    builder.setSubSection(currentUrl.getQueryParam('c_sub_section'));
+	  }
+	  return builder;
 	}
 	namespace.TypeDetail = TypeDetail;
 	var RelationsController = /*#__PURE__*/function () {
@@ -1085,5 +1154,5 @@
 	  return CustomSectionItem;
 	}();
 
-}((this.window = this.window || {}),BX.Crm,BX.Crm,BX.Crm.Models,BX,BX.Event,BX,BX.UI.Dialogs,BX.UI.EntitySelector));
+}((this.window = this.window || {}),BX.Crm.Integration.Analytics,BX.Crm,BX.Crm,BX.Crm.Models,BX,BX.Event,BX,BX.UI.Analytics,BX.UI.Dialogs,BX.UI.EntitySelector));
 //# sourceMappingURL=script.js.map

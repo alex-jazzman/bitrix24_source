@@ -3,12 +3,13 @@
  */
 jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
-	const { PropTypes } = require('utils/validation');
 	const { Loc } = require('loc');
 	const { Indent } = require('tokens');
 	const { isOnline } = require('device/connection');
+	const { PropTypes } = require('utils/validation');
 	const { showOfflineToast } = require('toast');
 	const { UIMenu } = require('layout/ui/menu');
+	const { PureComponent } = require('layout/pure-component');
 	const { AddButton } = require('layout/ui/fields/theme/air/elements/add-button');
 	const { MoreButton } = require('layout/ui/fields/theme/air/elements/more-button');
 	const { Title } = require('tasks/layout/checklist/preview/src/title');
@@ -21,10 +22,41 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef {Object} ChecklistPreviewPropsInitialState
+	 * @property {string} title
+	 * @property {number} completed
+	 * @property {number} uncompleted
+	 */
+
+	/**
+	 * @typedef {Object} ChecklistPreviewPropsConfig
+	 * @property {Object} parentWidget
+	 * @property {Object} checklistController
+	 * @property {ChecklistPreviewPropsInitialState[]} initialState
+	 * @property {number|string} taskId
+	 */
+
+	/**
+	 * @typedef {Object} ChecklistPreviewProps
+	 * @property {string} id
+	 * @property {string} testId
+	 * @property {Object} value
+	 * @property {boolean} readOnly
+	 * @property {ChecklistPreviewPropsConfig} config
+	 * @property {boolean} loading
+	 * @property {boolean} [hideTitle=false]
+	 * @property {number} maxElements
+	 * @property {boolean} showAddButton
+	 */
+
+	/**
 	 * @class ChecklistPreview
 	 */
-	class ChecklistPreview extends LayoutComponent
+	class ChecklistPreview extends PureComponent
 	{
+		/**
+		 * @param {ChecklistPreviewProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -101,6 +133,13 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 		getId()
 		{
 			return this.props.id;
+		}
+
+		#getMaxElements()
+		{
+			const { maxElements } = this.props;
+
+			return maxElements > 0 ? maxElements : MAX_ELEMENTS;
 		}
 
 		hasUploadingFiles()
@@ -207,7 +246,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 					id: 'create-checklist',
 					testId: 'create-checklist',
 					title: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_ADD_CHECKLIST'),
-					onItemSelected: () => this.createChecklist(),
+					onItemSelected: this.createChecklist,
 					iconName: Icon.PLUS,
 				});
 			}
@@ -221,10 +260,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 
 			const elementsLoaded = this.props.loading === true && props.loading === false;
 
-			if (elementsLoaded)
+			if (elementsLoaded && this.controller)
 			{
 				const checklistsCount = this.controller.getChecklists().size;
-				this.state.collapsed = checklistsCount > MAX_ELEMENTS;
+				this.state.collapsed = checklistsCount > this.#getMaxElements();
 			}
 		}
 
@@ -292,6 +331,13 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			return (this.getConfig().initialState || [{ title: '' }]);
 		}
 
+		getChecklists()
+		{
+			return this.isLoading()
+				? this.getChecklistStubs()
+				: this.getSortedChecklists();
+		}
+
 		render()
 		{
 			const { ThemeComponent } = this.props;
@@ -301,13 +347,12 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 				return this.props.ThemeComponent({ field: this });
 			}
 
-			const checklists = this.isLoading()
-				? this.getChecklistStubs()
-				: this.getSortedChecklists();
-
+			const checklists = this.getChecklists();
 			const collapsed = this.#isCollapsed();
-			const visibleChecklists = collapsed ? checklists.slice(0, MAX_ELEMENTS) : checklists;
-			const restCount = checklists.length - MAX_ELEMENTS;
+			const visibleChecklists = collapsed
+				? checklists.slice(0, this.#getMaxElements())
+				: checklists;
+			const restCount = checklists.length - this.#getMaxElements();
 
 			return View(
 				{
@@ -317,57 +362,128 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 						paddingTop: Indent.XL.toNumber(),
 						paddingBottom: collapsed ? 32 : Indent.XL.toNumber(),
 					},
-				},
-				Title({
-					testId: this.testId,
-					count: checklists.length,
-				}),
-				this.isLoading() && View(
-					{
-						testId: `${this.testId}_CONTENT`,
-					},
-					...visibleChecklists.map((checklist, index) => ItemStub({
-						testId: this.testId,
-						title: checklist.title,
-						showBorder: index < (visibleChecklists.length - 1),
-					})),
-				),
-				!this.isEmpty() && !this.isLoading() && View(
-					{
-						testId: `${this.testId}_CONTENT`,
-					},
-					...visibleChecklists.map((checklist, index) => {
-						const rootItem = checklist.getRootItem();
+					onLayout: () => {
+						const { onLayout } = this.props;
 
-						return Item({
-							testId: this.testId,
-							totalCount: rootItem.getTotalCount(),
-							completedCount: rootItem.getCompletedCount(),
-							title: rootItem.getTitle(),
-							isComplete: rootItem.getIsComplete(),
-							showBorder: index < (visibleChecklists.length - 1),
-							onClick: () => this.openPageManager(checklist),
-						});
-					}),
-				),
-				!collapsed && !this.isReadOnly() && AddButton({
-					testId: this.testId,
-					text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_ADD_CHECKLIST'),
-					onClick: this.createChecklist,
-					style: {
-						paddingHorizontal: Indent.XL2.toNumber(),
+						if (onLayout)
+						{
+							onLayout(this);
+						}
 					},
-				}),
-				collapsed && MoreButton({
-					testId: `${this.testId}_SHOW_ALL`,
-					text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_SHOW_MORE', {
-						'#COUNT#': restCount,
-					}),
-					onClick: () => this.#expand(),
+				},
+				this.renderTitle(visibleChecklists),
+				this.renderStubItems(visibleChecklists),
+				this.renderItems(visibleChecklists),
+				this.renderAddButtons(),
+				this.renderMoreButton(restCount),
+			);
+		}
+
+		renderTitle(checklists)
+		{
+			const { hideTitle } = this.props;
+
+			if (hideTitle)
+			{
+				return null;
+			}
+
+			return Title({
+				loading: this.isLoading(),
+				testId: this.testId,
+				count: checklists.length,
+			});
+		}
+
+		renderItems(checklists)
+		{
+			if (this.isEmpty() || this.isLoading())
+			{
+				return null;
+			}
+
+			return View(
+				{
+					testId: `${this.testId}_CONTENT`,
+				},
+				...checklists.map((checklist, index) => {
+					const rootItem = checklist.getRootItem();
+
+					return Item({
+						testId: this.testId,
+						totalCount: rootItem.getTotalCount(),
+						completedCount: rootItem.getCompletedCount(),
+						title: rootItem.getTitle(),
+						isComplete: rootItem.getIsComplete(),
+						showBorder: index < (checklists.length - 1),
+						onClick: () => this.openPageManager(checklist),
+					});
 				}),
 			);
 		}
+
+		renderStubItems(checklists)
+		{
+			if (!this.isLoading())
+			{
+				return null;
+			}
+
+			return View(
+				{
+					testId: `${this.testId}_CONTENT`,
+				},
+				...checklists.map((checklist, index) => ItemStub({
+					testId: this.testId,
+					title: checklist.title,
+					showBorder: index < (checklists.length - 1),
+				})),
+			);
+		}
+
+		renderMoreButton(restCount)
+		{
+			if (!this.#isCollapsed())
+			{
+				return null;
+			}
+
+			return MoreButton({
+				testId: `${this.testId}_SHOW_ALL`,
+				text: Loc.getMessage(
+					'TASKS_FIELDS_CHECKLIST_AIR_SHOW_MORE',
+					{
+						'#COUNT#': restCount,
+					},
+				),
+				onClick: () => this.#expand(),
+			});
+		}
+
+		renderAddButtons()
+		{
+			const { showAddButton } = this.props;
+
+			if (this.#isCollapsed() || this.isReadOnly() || !showAddButton)
+			{
+				return null;
+			}
+
+			return AddButton({
+				testId: this.testId,
+				text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_ADD_CHECKLIST'),
+				onClick: this.createChecklist,
+				style: {
+					paddingHorizontal: Indent.XL2.toNumber(),
+				},
+			});
+		}
 	}
+
+	ChecklistPreview.defaultProps = {
+		showAddButton: true,
+		hideTitle: false,
+	};
 
 	ChecklistPreview.propTypes = {
 		id: PropTypes.string,
@@ -384,12 +500,18 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			})),
 			taskId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 		}),
+		showAddButton: PropTypes.bool,
+		maxElements: PropTypes.number,
 		loading: PropTypes.bool,
+		onLayout: PropTypes.func,
 	};
 
 	module.exports = {
 		ChecklistPreview,
 		ClickStrategy,
+		/**
+		 * @param {ChecklistPreviewProps} props
+		 */
 		ChecklistField: (props) => new ChecklistPreview(props),
 	};
 });

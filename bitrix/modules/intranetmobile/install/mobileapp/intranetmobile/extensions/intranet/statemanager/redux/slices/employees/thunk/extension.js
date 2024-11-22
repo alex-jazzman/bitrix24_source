@@ -36,17 +36,49 @@ jn.define('intranet/statemanager/redux/slices/employees/thunk', (require, export
 						isExtranetUser,
 					},
 				});
-				const timestamp = Date.now();
-				const preparedData = { ...response, userId, timestamp };
 
-				if (preparedData.status === 'success')
+				if (response.status === 'success')
 				{
-					return preparedData;
+					return { ...response.data };
 				}
 
-				console.error(preparedData.errors[0].message);
+				console.error(response.errors[0].message);
 
-				return rejectWithValue(preparedData);
+				return rejectWithValue(response);
+			}
+			catch (error)
+			{
+				console.error(error);
+			}
+		},
+		{
+			condition,
+			getPendingMeta: ({ arg }) => ({ arg }),
+		},
+	);
+
+	const reinviteWithChangeContact = createAsyncThunk(
+		`${sliceName}/reinviteWithChangeContact`,
+		async ({ userId, email, phone }, { rejectWithValue }) => {
+			try
+			{
+				const response = await runActionPromise({
+					action: 'intranet.invite.reinviteWithChangeContact',
+					options: {
+						userId,
+						newEmail: email || null,
+						newPhone: phone || null,
+					},
+				});
+
+				if (response.status === 'success')
+				{
+					return response.data;
+				}
+
+				console.error(response.errors[0].message);
+
+				return rejectWithValue(response);
 			}
 			catch (error)
 			{
@@ -130,6 +162,7 @@ jn.define('intranet/statemanager/redux/slices/employees/thunk', (require, export
 
 	module.exports = {
 		reinvite,
+		reinviteWithChangeContact,
 		deleteInvitation,
 		fireEmployee,
 		hireEmployee,

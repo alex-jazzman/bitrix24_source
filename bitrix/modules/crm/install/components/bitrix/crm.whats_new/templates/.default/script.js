@@ -264,7 +264,8 @@
 	      title: stepConfig.title,
 	      text: stepConfig.text,
 	      position: stepConfig.position,
-	      article: stepConfig.article
+	      article: stepConfig.article,
+	      infoHelperCode: stepConfig.infoHelperCode
 	    };
 	    if (stepConfig.useDynamicTarget) {
 	      var _stepConfig$eventName;

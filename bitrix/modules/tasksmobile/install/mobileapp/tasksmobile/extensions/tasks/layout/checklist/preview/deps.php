@@ -11,7 +11,9 @@ return [
 		'utils/validation',
 		'utils/skeleton',
 		'device/connection',
+
 		'layout/ui/menu',
+		'layout/pure-component',
 		'layout/ui/fields/theme/air/elements/add-button',
 		'layout/ui/fields/theme/air/elements/more-button',
 	],

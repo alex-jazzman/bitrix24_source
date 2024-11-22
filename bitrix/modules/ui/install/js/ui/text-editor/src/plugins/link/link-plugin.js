@@ -60,7 +60,7 @@ import {
 	type AutoLinkNode,
 } from 'ui.lexical.link';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 export const INSERT_LINK_DIALOG_COMMAND: LexicalCommand<string> = createCommand('INSERT_LINK_DIALOG_COMMAND');
 

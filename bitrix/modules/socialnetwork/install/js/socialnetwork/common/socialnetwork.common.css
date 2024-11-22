@@ -44,6 +44,7 @@
 .sonet-common-widget-avatar.sonet-common-workgroup-avatar {
 	width: 36px;
 	height: 36px;
+	min-width: 36px;
 	margin-right: 8px;
 	-ms-flex-negative: 0;
 	flex-shrink: 0;

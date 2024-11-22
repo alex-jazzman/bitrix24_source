@@ -1,87 +1,57 @@
 /**
  * @module ui-system/form/inputs/string
  */
+
 jn.define('ui-system/form/inputs/string', (require, exports, module) => {
+	const { useCallback } = require('utils/function');
 	const { TextField } = require('ui-system/typography/text-field');
-	const { InputClass, InputSize, InputMode, InputDesign } = require('ui-system/form/inputs/input');
+	const { Input, InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
 
 	/**
 	 * @typedef {InputProps} StringInputProps
 	 * @property {boolean} [isPassword]
-	 * @property {'number-pad' | 'decimal-pad' | 'numeric' | 'email-address' | 'phone-pad'} [keyboardType='default']
-	 * @property {'characters' | 'words' | 'sentences' | 'none'} [autoCapitalize='none']
-	 * @property {boolean} [enableKeyboardHide]
-	 * @property {Function} [onFocus]
-	 * @property {Function} [onBlur]
-	 * @property {Function} [onSelectionChange]
 	 *
-	 * @class StringInput
+	 * @function StringInput
+	 * @param {StringInputProps} props
 	 */
-	class StringInput extends InputClass
+	class StringInput extends LayoutComponent
 	{
-		constructor(props)
+		render()
 		{
-			super(props);
+			const { isPassword, ...restProps } = this.props;
 
-			this.handleOnSelectionChange = this.handleOnSelectionChange.bind(this);
+			return Input({
+				...restProps,
+				element: this.renderElement,
+			});
 		}
 
-		renderContent()
-		{
-			return TextField(this.getFieldProps());
-		}
+		renderElement = (fieldProps) => {
+			const { isPassword } = this.props;
 
-		getFieldProps()
-		{
-			const {
-				isPassword = false,
-				keyboardType = 'default',
-				autoCapitalize = 'none',
-				enableKeyboardHide = false,
-			} = this.props;
-
-			return {
-				...super.getFieldProps(),
+			return TextField({
+				...fieldProps,
 				isPassword,
-				keyboardType,
-				autoCapitalize,
-				enableKeyboardHide,
-				forcedValue: this.getValue(),
-				onSelectionChange: this.handleOnSelectionChange,
-			};
-		}
-
-		handleOnSelectionChange(value)
-		{
-			const { onSelectionChange } = this.props;
-
-			if (onSelectionChange)
-			{
-				onSelectionChange(value);
-			}
-		}
+				forcedValue: fieldProps.value,
+			});
+		};
 	}
 
-	StringInput.defaultProps = InputClass.defaultProps;
+	StringInput.defaultProps = {
+		...InputClass.defaultProps,
+		isPassword: false,
+	};
 
 	StringInput.propTypes = {
 		...InputClass.propTypes,
-		keyboardType: PropTypes.string,
-		autoCapitalize: PropTypes.string,
-		enableKeyboardHide: PropTypes.bool,
 		isPassword: PropTypes.bool,
-		onSelectionChange: PropTypes.func,
-		onCursorPositionChange: PropTypes.func,
 	};
 
 	module.exports = {
-		/**
-		 * @param {StringInputProps} props
-		 * @returns {StringInput}
-		 */
 		StringInput: (props) => new StringInput(props),
 		InputSize,
 		InputMode,
 		InputDesign,
+		Icon,
 	};
 });

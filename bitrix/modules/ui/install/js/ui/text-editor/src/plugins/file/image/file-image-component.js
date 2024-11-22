@@ -1,6 +1,7 @@
 import { Dom, Tag } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import type { BaseEvent } from 'main.core.events';
+import type { EditorConfig } from 'ui.lexical.core';
 
 import { $getNodeByKey } from 'ui.lexical.core';
 
@@ -120,6 +121,12 @@ export class FileImageComponent extends DecoratorComponent
 			const img: HTMLImageElement = document.createElement('img');
 			img.draggable = false;
 			img.src = this.getOption('src');
+
+			const config: EditorConfig = this.getOption('config', {});
+			if (config?.theme?.image?.img)
+			{
+				img.className = config.theme.image.img;
+			}
 
 			return img;
 		});

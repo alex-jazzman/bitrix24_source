@@ -389,6 +389,7 @@ this.BX = this.BX || {};
 	    this.canInitiate = null;
 	    this.canModify = null;
 	    this.canLeave = null;
+	    this.canCreate = null;
 	    this.groupId = null;
 	    this.isProject = null;
 	    this.isScrumProject = null;
@@ -426,6 +427,7 @@ this.BX = this.BX || {};
 	      this.canInitiate = !!params.canInitiate;
 	      this.canProcessRequestsIn = !!params.canProcessRequestsIn;
 	      this.canModify = !!params.canModify;
+	      this.canCreate = !!params.canCreate;
 	      this.canLeave = main_core.Type.isBoolean(params.canLeave) ? params.canLeave : this.userIsMember && this.userRole !== 'A' && !this.userIsAutoMember && !this.userIsScrumMaster;
 	      this.containerNode = main_core.Type.isStringFilled(params.containerNodeId) ? document.getElementById(params.containerNodeId) : null;
 	      this.menuButtonNode = main_core.Type.isStringFilled(params.menuButtonNodeId) ? document.getElementById(params.menuButtonNodeId) : null;
@@ -502,7 +504,8 @@ this.BX = this.BX || {};
 	              canInitiate: _this.canInitiate,
 	              canProcessRequestsIn: _this.canProcessRequestsIn,
 	              canModify: _this.canModify,
-	              canLeave: _this.canLeave
+	              canLeave: _this.canLeave,
+	              canCreate: _this.canCreate
 	            },
 	            urls: {
 	              requestUser: main_core.Loc.getMessage('SGCSPathToRequestUser'),

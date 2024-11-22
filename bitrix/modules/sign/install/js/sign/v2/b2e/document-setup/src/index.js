@@ -1,11 +1,12 @@
-import { Tag, Dom, Loc, Type } from 'main.core';
+import { Dom, Loc, Tag, Type } from 'main.core';
 import { Api } from 'sign.v2.api';
-import { Dialog } from 'ui.entity-selector';
-import { DocumentSetup as BaseDocumentSetup } from 'sign.v2.document-setup';
+import { SignDropdown } from 'sign.v2.b2e.sign-dropdown';
 import { type BlankSelectorConfig } from 'sign.v2.blank-selector';
-import { DateSelector } from './date-selector';
+import { DocumentSetup as BaseDocumentSetup } from 'sign.v2.document-setup';
 import { Hint } from 'sign.v2.helper';
-
+import type { DocumentModeType } from 'sign.v2.sign-settings';
+import { isTemplateMode } from 'sign.v2.sign-settings';
+import { DateSelector } from './date-selector';
 import './style.css';
 
 type RegionDocumentType = {
@@ -18,18 +19,19 @@ export class DocumentSetup extends BaseDocumentSetup
 	#api: Api;
 	#region: string;
 	#regionDocumentTypes: Array<RegionDocumentType>;
-	#documentTypeSelector: Dialog;
 	#documentTypeDropdown: HTMLElement;
 	#documentNumberInput: HTMLInputElement | null = null;
 	#documentTitleInput: HTMLInputElement;
 	#dateSelector: DateSelector | null = null;
+	#documentMode: DocumentModeType;
 
 	constructor(blankSelectorConfig: BlankSelectorConfig)
 	{
 		super(blankSelectorConfig);
-		const { region, regionDocumentTypes } = blankSelectorConfig;
+		const { region, regionDocumentTypes, documentMode } = blankSelectorConfig;
 		this.#api = new Api();
 		this.#region = region;
+		this.#documentMode = documentMode;
 		this.#regionDocumentTypes = regionDocumentTypes;
 		this.#documentTitleInput = Tag.render`
 			<input
@@ -39,7 +41,7 @@ export class DocumentSetup extends BaseDocumentSetup
 				oninput="${({ target }) => this.setDocumentTitle(target.value)}"
 			/>
 		`;
-		if (this.#isRuRegion())
+		if (this.#isRuRegion() && !isTemplateMode(documentMode))
 		{
 			this.#documentNumberInput = Tag.render`<input type="text" class="ui-ctl-element" maxlength="255" />`;
 			this.#dateSelector = new DateSelector();
@@ -58,10 +60,14 @@ export class DocumentSetup extends BaseDocumentSetup
 	{
 		this.#initDocumentType();
 		const documentTypeLayout = this.#getDocumentTypeLayout();
+		const title = this.#isTemplateMode()
+			? Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_TEMPLATE_HEAD_LABEL')
+			: Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL');
+
 		const titleLayout = Tag.render`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
-					${Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL')}
+					${title}
 				</p>
 				${this.#getDocumentTitleLayout()}
 			</div>
@@ -88,46 +94,21 @@ export class DocumentSetup extends BaseDocumentSetup
 			return;
 		}
 
-		this.#documentTypeDropdown = Tag.render`
-			<div
-				class="sign-b2e-document-setup__type"
-				onclick="${() => {
-					this.#documentTypeSelector.show();
-				}}"
-			>
-				<div class="sign-b2e-document-setup__type_text">
-					<span class="sign-b2e-document-setup__type_title"></span>
-					<span class="sign-b2e-document-setup__type_caption"></span>
-				</div>
-				<span class="sign-b2e-document-setup__type_btn"></span>
-			</div>
-		`;
-		this.#documentTypeSelector = new Dialog({
-			targetNode: this.#documentTypeDropdown,
-			width: 500,
-			height: 350,
+		this.#documentTypeDropdown = new SignDropdown({
 			tabs: [{ id: 'b2e-document-codes', title: ' ' }],
-			showAvatars: false,
-			dropdownMode: true,
-			multiple: false,
-			enableSearch: true,
 			entities: [
 				{ id: 'b2e-document-code', searchFields: [{ name: 'caption', system: true }] },
 			],
-			hideOnSelect: true,
-			events: {
-				'Item:OnSelect': ({ data }) => this.#onTypeSelect(data.item),
-			},
+			className: 'sign-b2e-document-setup__type-selector',
+			withCaption: true,
 		});
-		const container = this.#documentTypeSelector.getContainer();
-		Dom.addClass(container, 'sign-b2e-document-setup__type-selector');
 		this.#regionDocumentTypes.forEach((item) => {
 			if (Type.isPlainObject(item)
 				&& Type.isStringFilled(item.code)
 				&& Type.isStringFilled(item.description))
 			{
 				const { code, description } = item;
-				this.#documentTypeSelector.addItem({
+				this.#documentTypeDropdown.addItem({
 					id: code,
 					title: code,
 					caption: `(${description})`,
@@ -137,8 +118,7 @@ export class DocumentSetup extends BaseDocumentSetup
 				});
 			}
 		});
-		const [firstItem] = this.#documentTypeSelector.getItems();
-		firstItem?.select();
+		this.#documentTypeDropdown.selectItem(this.#regionDocumentTypes[0].code);
 	}
 
 	#getDocumentTypeLayout(): HTMLElement | null
@@ -156,14 +136,14 @@ export class DocumentSetup extends BaseDocumentSetup
 						data-hint="${Loc.getMessage('SIGN_DOCUMENT_SETUP_TYPE_HINT')}"
 					></span>
 				</p>
-				${this.#documentTypeDropdown}
+				${this.#documentTypeDropdown.getLayout()}
 			</div>
 		`;
 	}
 
 	#getDocumentNumberLayout(): HTMLElement | null
 	{
-		if (!this.#isRuRegion())
+		if (!this.#isRuRegion() || this.#isTemplateMode())
 		{
 			return null;
 		}
@@ -196,30 +176,34 @@ export class DocumentSetup extends BaseDocumentSetup
 					</div>
 				</div>
 				${this.#getDocumentNumberLayout()}
-				<p class="sign-b2e-document-setup__title-text">
-					${Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HINT')}
-				</p>
+				${this.#getDocumentHintLayout()}
 				${this.#dateSelector?.getLayout()}
 			</div>
 		`;
 	}
 
-	#getDocumentTitleFullClass(): string
+	#getDocumentHintLayout(): HTMLElement | null
 	{
-		return this.#isRuRegion() ? '' : '--full';
+		if (this.#isTemplateMode())
+		{
+			return null;
+		}
+
+		return Tag.render`
+			<p class="sign-b2e-document-setup__title-text">
+				${Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HINT')}
+			</p>
+		`;
 	}
 
-	#onTypeSelect(item): void
+	#getDocumentTitleFullClass(): string
 	{
-		const { title, caption } = item;
-		const { firstElementChild: textNode } = this.#documentTypeDropdown;
-		textNode.title = `${title} ${caption}`;
-		const {
-			firstElementChild: titleNode,
-			lastElementChild: captionNode,
-		} = textNode;
-		titleNode.textContent = title;
-		captionNode.textContent = caption;
+		if (this.#isTemplateMode())
+		{
+			return '--full';
+		}
+
+		return this.#isRuRegion() ? '' : '--full';
 	}
 
 	#sendDocumentType(uid: string): Promise<void>
@@ -229,14 +213,14 @@ export class DocumentSetup extends BaseDocumentSetup
 			return Promise.resolve();
 		}
 
-		const type = [...this.#documentTypeSelector.selectedItems][0].id;
+		const type = this.#documentTypeDropdown.getSelectedId();
 
 		return this.#api.changeRegionDocumentType(uid, type);
 	}
 
 	#sendDocumentNumber(uid: string): Promise<void>
 	{
-		if (!this.#isRuRegion())
+		if (!this.#isRuRegion() || this.#isTemplateMode())
 		{
 			return Promise.resolve();
 		}
@@ -246,7 +230,7 @@ export class DocumentSetup extends BaseDocumentSetup
 
 	#sendDocumentDate(uid: string): Promise<void>
 	{
-		if (!this.#isRuRegion())
+		if (!this.#isRuRegion() || this.#isTemplateMode())
 		{
 			return Promise.resolve();
 		}
@@ -284,7 +268,7 @@ export class DocumentSetup extends BaseDocumentSetup
 	{
 		try
 		{
-			await super.setup(uid);
+			await super.setup(uid, this.#isTemplateMode());
 			if (!this.setupData)
 			{
 				return;
@@ -295,7 +279,7 @@ export class DocumentSetup extends BaseDocumentSetup
 				const { title, externalId, externalDateCreate } = this.setupData;
 				this.setDocumentTitle(title);
 
-				if (this.#isRuRegion())
+				if (this.#isRuRegion() && !this.#isTemplateMode())
 				{
 					this.#setDocumentNumber(externalId);
 					this.#dateSelector.setDateInCalendar(new Date(externalDateCreate));
@@ -304,7 +288,7 @@ export class DocumentSetup extends BaseDocumentSetup
 				return;
 			}
 
-			const { uid: documentUid } = this.setupData;
+			const { uid: documentUid, templateUid } = this.setupData;
 			const { value: title } = this.#documentTitleInput;
 			const externalId = this.#documentNumberInput?.value;
 			this.ready = false;
@@ -322,7 +306,7 @@ export class DocumentSetup extends BaseDocumentSetup
 				this.blankSelector.modifyBlankTitle(blankId, blankTitle);
 			}
 
-			this.setupData = { ...this.setupData, title, externalId };
+			this.setupData = { ...this.setupData, title, externalId, templateUid };
 		}
 		catch
 		{
@@ -352,6 +336,11 @@ export class DocumentSetup extends BaseDocumentSetup
 		input.focus();
 
 		return false;
+	}
+
+	#isTemplateMode(): boolean
+	{
+		return isTemplateMode(this.#documentMode);
 	}
 
 	validate(): boolean

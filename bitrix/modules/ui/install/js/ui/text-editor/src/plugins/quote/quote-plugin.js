@@ -5,34 +5,37 @@ import type { BBCodeElementNode } from 'ui.bbcode.model';
 import {
 	$getSelection,
 	$isRangeSelection,
+	$createParagraphNode,
 	createCommand,
-	COMMAND_PRIORITY_EDITOR,
+	COMMAND_PRIORITY_LOW,
 	type LexicalNode,
 	type RangeSelection,
+	type ElementNode,
 	type LexicalCommand,
 } from 'ui.lexical.core';
 
-import { $setBlocksType } from 'ui.lexical.selection';
-import { $insertNodeToNearestRoot } from 'ui.lexical.utils';
+import { $findMatchingParent, $insertNodeToNearestRoot } from 'ui.lexical.utils';
 
 import {
-	trimLineBreaks,
+	$importFromBBCode,
+	$normalizeTextNodes,
+	shouldWrapInParagraph,
 	type BBCodeConversion,
 	type BBCodeConversionFn,
 	type BBCodeExportOutput,
 	type BBCodeImportConversion,
-	type BBCodeExportConversion, $importFromBBCode,
+	type BBCodeExportConversion,
 } from '../../bbcode';
 
 import { NewLineMode } from '../../constants';
+import { $wrapNodes } from '../../helpers/wrap-nodes';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
 import BasePlugin from '../base-plugin';
 import Button from '../../toolbar/button';
-import { FORMAT_PARAGRAPH_COMMAND } from '../paragraph';
-import { $createQuoteNode, QuoteNode } from './quote-node';
+import { $createQuoteNode, $isQuoteNode, $removeQuote, QuoteNode } from './quote-node';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 export type InsertQuotePayload = {
 	content?: string,
@@ -43,6 +46,9 @@ export const INSERT_QUOTE_COMMAND: LexicalCommand<InsertQuotePayload> = createCo
 
 /** @memberof BX.UI.TextEditor.Plugins.Quote */
 export const FORMAT_QUOTE_COMMAND: LexicalCommand = createCommand('FORMAT_QUOTE_COMMAND');
+
+/** @memberof BX.UI.TextEditor.Plugins.Quote */
+export const REMOVE_QUOTE_COMMAND: LexicalCommand = createCommand('REMOVE_QUOTE_COMMAND');
 
 export class QuotePlugin extends BasePlugin
 {
@@ -72,7 +78,7 @@ export class QuotePlugin extends BasePlugin
 					return {
 						node: $createQuoteNode(),
 						after: (childLexicalNodes: Array<LexicalNode>): Array<LexicalNode> => {
-							return trimLineBreaks(childLexicalNodes);
+							return $normalizeTextNodes(childLexicalNodes);
 						},
 					};
 				},
@@ -99,6 +105,31 @@ export class QuotePlugin extends BasePlugin
 		return {
 			nodes: [{
 				nodeClass: QuoteNode,
+				validate: ((quoteNode: QuoteNode) => {
+					let prevParagraph = null;
+					quoteNode.getChildren().forEach((child: LexicalNode | ElementNode) => {
+						if (shouldWrapInParagraph(child))
+						{
+							if (prevParagraph === null)
+							{
+								const paragraph = $createParagraphNode();
+								child.replace(paragraph);
+								paragraph.append(child);
+								prevParagraph = paragraph;
+							}
+							else
+							{
+								prevParagraph.append(child);
+							}
+						}
+						else
+						{
+							prevParagraph = null;
+						}
+					});
+
+					return false;
+				}),
 			}],
 			bbcodeMap: {
 				quote: 'quote',
@@ -116,18 +147,20 @@ export class QuotePlugin extends BasePlugin
 					if (Type.isPlainObject(payload) && Type.isStringFilled(payload.content))
 					{
 						const nodes = $importFromBBCode(payload.content, this.getEditor(), false);
-						quoteNode.append(...nodes);
+						quoteNode.append(...$normalizeTextNodes(nodes));
 						$insertNodeToNearestRoot(quoteNode);
 					}
 					else
 					{
+						quoteNode.append($createParagraphNode());
 						$insertNodeToNearestRoot(quoteNode);
-						quoteNode.selectEnd();
 					}
+
+					quoteNode.selectStart();
 
 					return true;
 				},
-				COMMAND_PRIORITY_EDITOR,
+				COMMAND_PRIORITY_LOW,
 			),
 			this.getEditor().registerCommand(
 				FORMAT_QUOTE_COMMAND,
@@ -135,12 +168,41 @@ export class QuotePlugin extends BasePlugin
 					const selection: RangeSelection = $getSelection();
 					if ($isRangeSelection(selection))
 					{
-						$setBlocksType(selection, () => $createQuoteNode());
+						const quoteNode = $createQuoteNode();
+						$wrapNodes(selection, () => quoteNode);
+
+						if (quoteNode.isEmpty())
+						{
+							quoteNode.append($createParagraphNode());
+						}
+
+						quoteNode.selectStart();
 					}
 
 					return true;
 				},
-				COMMAND_PRIORITY_EDITOR,
+				COMMAND_PRIORITY_LOW,
+			),
+			this.getEditor().registerCommand(
+				REMOVE_QUOTE_COMMAND,
+				() => {
+					const selection: RangeSelection = $getSelection();
+					if (!$isRangeSelection(selection))
+					{
+						return false;
+					}
+
+					let quoteNode = $findMatchingParent(selection.anchor.getNode(), $isQuoteNode);
+					if (!quoteNode)
+					{
+						quoteNode = $findMatchingParent(selection.focus.getNode(), $isQuoteNode);
+					}
+
+					$removeQuote(quoteNode);
+
+					return true;
+				},
+				COMMAND_PRIORITY_LOW,
 			),
 		);
 	}
@@ -157,7 +219,7 @@ export class QuotePlugin extends BasePlugin
 				this.getEditor().update((): void => {
 					if (button.isActive())
 					{
-						this.getEditor().dispatchCommand(FORMAT_PARAGRAPH_COMMAND);
+						this.getEditor().dispatchCommand(REMOVE_QUOTE_COMMAND);
 					}
 					else if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK)
 					{

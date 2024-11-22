@@ -25,6 +25,7 @@ jn.define('tasks/layout/fields/date-plan/view', (require, exports, module) => {
 		 * @param {number} data.endDatePlan
 		 * @param {Function} [data.onSave]
 		 * @param {GroupPlan} data.groupPlan
+		 * @param {Function} data.onHidden
 		 */
 		static open(data = {})
 		{
@@ -36,6 +37,7 @@ jn.define('tasks/layout/fields/date-plan/view', (require, exports, module) => {
 				onSave: data.onSave,
 				startDatePlan: data.startDatePlan,
 				endDatePlan: data.endDatePlan,
+				onHidden: data.onHidden,
 			});
 
 			void new BottomSheet({
@@ -75,6 +77,7 @@ jn.define('tasks/layout/fields/date-plan/view', (require, exports, module) => {
 					startDatePlan: this.props.startDatePlan,
 					endDatePlan: this.props.endDatePlan,
 					isMatchWorkTime: this.props.isMatchWorkTime,
+					onHidden: this.props.onHidden,
 				}),
 			);
 		}

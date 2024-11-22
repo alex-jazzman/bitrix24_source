@@ -63,16 +63,6 @@ if (
 	\Bitrix\Crm\Settings\Crm::setWhatsAppGoToChatEnabled($enableWhatsAppGoToChat === 'y');
 }
 
-$enableTodoEditorV2 = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('enableTodoEditorV2');
-if (
-	isset($enableTodoEditorV2)
-	&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin()
-)
-{
-	$enableTodoEditorV2 = strtolower($enableTodoEditorV2);
-	\Bitrix\Crm\Settings\Crm::setTimelineToDoUseV2Enabled($enableTodoEditorV2 === 'y');
-}
-
 $enableAutomatedSolutionList = $request->get('enableAutomatedSolutionList');
 if (isset($enableAutomatedSolutionList))
 {
@@ -153,4 +143,12 @@ $title = GetMessage('CRM_TITLE1');
 if (!is_string($title) || empty($title))
 	$title = GetMessage('CRM_TITLE');
 $APPLICATION->SetTitle($title);
-$this->includeComponentTemplate();
+
+if (isset($_GET['expert']) || isset($_GET['enableFeature']) || isset($_GET['disableFeature']))
+{
+	$this->includeComponentTemplate('expert');
+}
+else
+{
+	$this->includeComponentTemplate();
+}

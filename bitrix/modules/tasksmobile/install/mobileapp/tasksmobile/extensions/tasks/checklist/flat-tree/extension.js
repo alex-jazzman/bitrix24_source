@@ -10,6 +10,14 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 	const { CheckListFlatTreeItem } = require('tasks/checklist/flat-tree/item');
 
 	/**
+	 * {typedef} CheckListFlatTreeProps
+	 * @property {boolean} [autoCompleteItem=true]
+	 * @property {number} [userId]
+	 * @property {number} [taskId]
+	 * @property {boolean} [hideCompleted]
+	 * @property {Array} [checklistFlatTree]
+	 * @property {Object} [checklist]
+	 *
 	 * @class CheckListFlatTree
 	 */
 	class CheckListFlatTree
@@ -21,6 +29,8 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				userId,
 				hideCompleted,
 			} = props;
+
+			this.props = props;
 
 			this.isSaved = false;
 			this.userId = userId;
@@ -72,7 +82,6 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		createChecklist(props)
 		{
 			const { checklistFlatTree, checklist } = props;
-
 			const flatTree = checklistFlatTree || this.createFlatTree(checklist);
 
 			return flatTree.map((item) => new CheckListFlatTreeItem({
@@ -91,7 +100,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 
 				if (!item.key)
 				{
-					const nodeId = Random.getString();
+					const nodeId = Number(item.nodeId) > 0 ? Random.getString() : item.nodeId;
 					const fields = item.fields || {};
 					const attachments = this.prepareAttachments(fields.attachments);
 
@@ -99,7 +108,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 					item.isNew = false;
 					item.index = flatList.length;
 					item.focused = false;
-					item.key = nodeId;
+					item.key = String(nodeId);
 					item.type = CheckListFlatTreeItem.getItemType();
 					item.nodeId = nodeId;
 					item.id = fields?.id || nodeId;
@@ -132,6 +141,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 						fields: {
 							parentId: copiedIdMap[parentId],
 							parentNodeId: copiedIdMap[parentId],
+							parentCopiedId: parentId,
 						},
 					});
 				}
@@ -554,6 +564,10 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			this.updateDisplaySortIndexes(id);
 		}
 
+		/**
+		 *
+		 * @param {CheckListFlatTreeItem} item
+		 */
 		updateCounters(item)
 		{
 			if (!item)
@@ -718,9 +732,10 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		{
 			const parent = item.getParent();
 			const itemId = item.getFieldId();
-			const parentId = item.getParentId();
+			const copiedId = item.getCopiedId();
 			const title = this.#getTitleForSaving(item);
 			const members = Object.values(item.getMembers());
+			const parentId = item.getParentId();
 
 			if (!title || isNil(parentId))
 			{
@@ -730,18 +745,26 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			const itemRequestData = {
 				NODE_ID: item.getNodeId(),
 				PARENT_NODE_ID: parent ? parent.getNodeId() : 0,
-				ID: Type.isInteger(itemId) ? itemId : null,
 				PARENT_ID: Type.isInteger(parentId) ? parentId : null,
 				TITLE: title,
 				SORT_INDEX: item.getSortIndex(),
-				IS_COMPLETE: item.getIsComplete() ? 1 : 0,
-				IS_IMPORTANT: item.getIsImportant() ? 1 : 0,
-				ATTACHMENTS: {},
-				MEMBERS: {},
+				IS_COMPLETE: Number(item.getIsComplete()),
+				IS_IMPORTANT: Number(item.getIsImportant()),
 			};
+
+			if (Type.isInteger(itemId))
+			{
+				itemRequestData.ID = itemId;
+			}
+
+			if (copiedId)
+			{
+				itemRequestData.COPIED_ID = copiedId;
+			}
 
 			if (item.hasAttachments())
 			{
+				itemRequestData.ATTACHMENTS = {};
 				const attachments = item.getAttachments();
 
 				Object.keys(attachments).forEach((id) => {
@@ -753,6 +776,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 
 			if (members.length > 0)
 			{
+				itemRequestData.MEMBERS = {};
 				members.forEach(({ id, type, name }) => {
 					itemRequestData.MEMBERS[id] = { TYPE: type, NAME: name };
 				});
@@ -842,6 +866,13 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				remove: this.canRemove(),
 				addAccomplice: this.canAddAccomplice(),
 			};
+		}
+
+		isAutoCompleteItem()
+		{
+			const { autoCompleteItem } = this.props;
+
+			return Boolean(autoCompleteItem);
 		}
 
 		updateCompletedItems()

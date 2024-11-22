@@ -2,10 +2,12 @@
  * @module ui-system/form/inputs/email
  */
 jn.define('ui-system/form/inputs/email', (require, exports, module) => {
+	const { refSubstitution } = require('utils/function');
+	const { PureComponent } = require('layout/pure-component');
 	const { EmailFieldClass } = require('layout/ui/fields/email');
 	const { PropTypes } = require('utils/validation');
 	const { getDomainImageUri, getEmailServiceName, defaultImageName, isValidEmail } = require('utils/email');
-	const { InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
+	const { Input, InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
 	const { InputDomainIconPlace } = require('ui-system/form/inputs/email/src/domain-icon-place-enum');
 
 	/**
@@ -15,67 +17,74 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 	 *
 	 * @class EmailInputClass
 	 */
-	class EmailInputClass extends InputClass
+	class EmailInputClass extends PureComponent
 	{
+		constructor(props)
+		{
+			super(props);
+
+			this.state = this.initState(props);
+		}
+
+		componentWillReceiveProps(nextProps)
+		{
+			this.state = this.initState(nextProps);
+		}
+
+		initState(props)
+		{
+			const state = {};
+
+			const shouldRenderDomain = Boolean(this.getDomainIconPlace());
+			if (shouldRenderDomain)
+			{
+				state.emailService = this.getEmailServiceName(props.value);
+			}
+
+			return state;
+		}
+
+		render()
+		{
+			return Input({
+				...this.props,
+				...this.getDomainIcon(),
+				autoCapitalize: 'none',
+				keyboardType: 'email-address',
+				onChange: this.handleOnChangeText,
+				onValid: this.handleOnValidation,
+				errorText: this.getValidationErrorMessage(),
+			});
+		}
+
 		getValidationErrorMessage()
 		{
 			return EmailFieldClass.getValidationErrorMessage();
 		}
 
-		getLeftContent()
+		getDomainIcon()
 		{
-			const { domainIconPlace } = this.props;
+			const iconPlacement = this.getDomainIconPlace();
+			const defaultContentIcon = this.props?.[iconPlacement] || Icon.MAIL;
 
-			return domainIconPlace?.isLeft()
-				? this.getContent(super.getLeftContent())
-				: super.getLeftContent();
-		}
-
-		getRightContent()
-		{
-			const { domainIconPlace } = this.props;
-
-			return domainIconPlace?.isRight()
-				? this.getContent(super.getRightContent())
-				: super.getRightContent();
-		}
-
-		rightStickContent()
-		{
-			const { domainIconPlace } = this.props;
-
-			return domainIconPlace?.isRightStick()
-				? this.getContent(super.getRightStickContent())
-				: super.getRightStickContent();
-		}
-
-		getContent(content)
-		{
-			if (!content)
+			if (!iconPlacement)
 			{
-				return null;
+				return {};
 			}
 
-			const { domainIconPlace } = this.props;
+			const { emailService } = this.state;
+			const isDefinedEmailService = emailService && emailService !== defaultImageName;
 
-			if (!domainIconPlace)
-			{
-				return content;
-			}
-
-			const service = getEmailServiceName(this.getValue());
-
-			if (service === defaultImageName)
-			{
-				return content;
-			}
-
-			return this.renderDomainIcon(service);
+			return {
+				[iconPlacement]: isDefinedEmailService
+					? this.renderDomainIcon(emailService)
+					: defaultContentIcon,
+			};
 		}
 
 		renderDomainIcon(service)
 		{
-			const size = this.getIconSize();
+			const size = InputClass.getIconSize();
 
 			return Image({
 				style: {
@@ -87,16 +96,62 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 			});
 		}
 
-		isValid()
+		handleOnChangeText = (value) => {
+			const emailService = this.getEmailServiceName(value);
+			const { emailService: prevEmailService } = this.state;
+
+			if (emailService !== prevEmailService)
+			{
+				const { onChange } = this.props;
+
+				this.setState(
+					{
+						emailService,
+					},
+					() => {
+						onChange?.(value);
+					},
+				);
+			}
+		};
+
+		/**
+		 * @returns {InputDomainIconPlace}
+		 */
+		getDomainIconPlace()
 		{
+			const { domainIconPlace } = this.props;
+
+			if (!domainIconPlace)
+			{
+				return null;
+			}
+
+			return InputDomainIconPlace.resolve(domainIconPlace, InputDomainIconPlace.LEFT).getValue();
+		}
+
+		handleOnValidation = (value) => {
 			const { validation } = this.props;
 
 			if (validation)
 			{
-				return isValidEmail(this.getValue()) && super.isValid();
+				return isValidEmail(value);
 			}
 
-			return super.isValid();
+			return true;
+		};
+
+		getEmailServiceName(email)
+		{
+			return getEmailServiceName(email);
+		}
+
+		isError()
+		{
+			const { error: propsError } = this.props;
+			const { error: stateError } = this.state;
+
+			return Boolean(propsError || stateError);
 		}
 	}
 
@@ -117,7 +172,7 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 		 * @param {EmailInputProps} props
 		 * @returns {EmailInputClass}
 		 */
-		EmailInput: (props) => new EmailInputClass(props),
+		EmailInput: (props) => refSubstitution(EmailInputClass)(props),
 		InputSize,
 		InputMode,
 		InputDesign,

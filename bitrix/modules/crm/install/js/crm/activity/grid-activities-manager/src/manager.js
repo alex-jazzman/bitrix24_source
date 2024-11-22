@@ -1,4 +1,4 @@
-import { Reflection, Runtime, Dom, ajax } from 'main.core';
+import { ajax, Dom, Reflection, Runtime } from 'main.core';
 
 const Util = Reflection.namespace('BX.util');
 
@@ -27,7 +27,6 @@ export class Manager
 		entityId: number,
 		currentUser: Object,
 		settings: ?any,
-		useTodoEditorV2,
 	)
 	{
 		Dom.addClass(bindElement, '--active');
@@ -60,12 +59,11 @@ export class Manager
 							}
 						},
 					},
-					useTodoEditorV2,
 				},
 			);
 		}
 
-		this.activityAddingPopup[key].show(bindElement);
+		this.activityAddingPopup[key].show();
 	}
 
 	async viewActivity(gridId: string, activityId: number, allowEdit: boolean)

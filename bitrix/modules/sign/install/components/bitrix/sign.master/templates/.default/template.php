@@ -85,12 +85,12 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 		<script>
 			BX.ready(async () => {
 				await top.BX.Runtime.loadExtension('sign.v2.editor');
-				const signSettings = await BX.Sign.V2.getSignSettings('sign-settings-container', {
+				BX.Sign.V2.createSignSettings('sign-settings-container', {
 					uid: '<?=CUtil::JSEscape($document?->getUid() ?? '')?>',
 					config: <?= \Bitrix\Main\Web\Json::encode($arResult["WIZARD_CONFIG"], false, false, true) ?>,
-					type: '<?= CUtil::JSEscape($arResult['SCENARIO']) ?>'
+					type: '<?= CUtil::JSEscape($arResult['SCENARIO']) ?>',
+					documentMode: '<?= CUtil::JSEscape($arResult['DOCUMENT_MODE']) ?>'
 				});
-				signSettings.render();
 			});
 		</script>
 <?php

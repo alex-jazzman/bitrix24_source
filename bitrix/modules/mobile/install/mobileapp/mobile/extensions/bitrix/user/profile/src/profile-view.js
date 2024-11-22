@@ -157,7 +157,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 						if (data.HEAD_DATA && data.HEAD_DATA.id)
 						{
 							this.formFields.HEAD = {
-								title: BX.message('STRUCTURE_HEAD'),
+								title: BX.message('STRUCTURE_HEAD_MSGVER_1'),
 								subtitle: data.HEAD,
 								params: {
 									openScheme: 'user',
@@ -529,10 +529,10 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 		{
 			this.popupMenu.setData(
 				[
-					{ title: BX.message('PROFILE_USER_TASKS_MSGVER_1'), sectionCode: 'usermenu', id: 'tasks' },
+					this.isTasksMobileInstalled() && { title: BX.message('PROFILE_USER_TASKS_MSGVER_1'), sectionCode: 'usermenu', id: 'tasks' },
 					{ title: BX.message('PROFILE_USER_FILES_MSGVER_1'), sectionCode: 'usermenu', id: 'files' },
 					{ title: BX.message('PROFILE_USER_MESSAGES_MSGVER_1'), sectionCode: 'usermenu', id: 'messages' },
-				],
+				].filter(Boolean),
 				[{ id: 'usermenu', title: '' }],
 				(event, item) => {
 					if (event === 'onItemSelected')
@@ -589,6 +589,11 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 					callback: () => this.popupMenu.show(),
 				},
 			]);
+		}
+
+		isTasksMobileInstalled()
+		{
+			return BX.prop.getBoolean(jnExtensionData.get('user/profile'), 'isTasksMobileInstalled', false);
 		}
 
 		error(e)

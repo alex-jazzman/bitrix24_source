@@ -1,10 +1,15 @@
 import { QrAuthorization } from 'ui.qrauthorization';
-import { Widget } from 'landing.widget';
 import { Event } from 'main.core';
 
-export class AppsWidgetV2
+export class AppsV2 extends BX.Landing.Widget.Base
 {
-	constructor(element, options = {})
+	constructor(element, options)
+	{
+		super(element);
+		this.initialize(element, options);
+	}
+
+	initialize(element, options = {})
 	{
 		const mainContainer = element.querySelector('.landing-widget-view-main');
 		const sidebarContainer = element.querySelector('.landing-widget-view-sidebar');
@@ -12,8 +17,7 @@ export class AppsWidgetV2
 			mainContainer,
 			sidebarContainer,
 		};
-		const widget = new Widget(element, widgetOptions);
-		widget.deleteContextDependentContainer();
+		this.deleteContextDependentContainer(widgetOptions);
 
 		const qrButton = element.querySelector('.landing-widget-qr-button');
 		const qrAuth = new QrAuthorization(options);

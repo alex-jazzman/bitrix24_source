@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,ui_buttons,ui_vue3,calendar_sharing_interface,crm_messagesender,main_loader,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditor,crm_activity_todoEditorV2,crm_tourManager,main_core_events,ui_designTokens,main_core,crm_zoom) {
+(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,ui_vue3,calendar_sharing_interface,calendar_sharing_analytics,crm_messagesender,ui_buttons,main_loader,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditorV2,crm_tourManager,main_core_events,ui_designTokens,main_core,crm_zoom) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
@@ -1148,23 +1149,26 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.currentChannelId = id;
 	    const channel = babelHelpers.classPrivateFieldLooseBase(this, _getChannelById)[_getChannelById](id);
 	    this.fromPhoneId = channel.fromList[0].id;
-	    this.settingsMenu.close();
+	    this.settingsMenu.destroy();
+	    this.initSettingsMenu();
 	  }
 	  getPhoneSubMenuItems() {
 	    const currentChannel = babelHelpers.classPrivateFieldLooseBase(this, _getChannelById)[_getChannelById](this.currentChannelId);
 	    const items = [];
-	    currentChannel.fromList.forEach(({
-	      id,
-	      name: text
-	    }) => {
-	      const className = id === this.fromPhoneId ? ACTIVE_MENU_ITEM_CLASS : DEFAULT_MENU_ITEM_CLASS;
-	      items.push({
+	    if (currentChannel) {
+	      currentChannel.fromList.forEach(({
 	        id,
-	        text,
-	        className,
-	        onclick: this.onSelectSenderPhone
+	        name: text
+	      }) => {
+	        const className = id === this.fromPhoneId ? ACTIVE_MENU_ITEM_CLASS : DEFAULT_MENU_ITEM_CLASS;
+	        items.push({
+	          id,
+	          text,
+	          className,
+	          onclick: this.onSelectSenderPhone
+	        });
 	      });
-	    });
+	    }
 	    return items;
 	  }
 	  onSelectSenderPhone(event, item) {
@@ -1172,7 +1176,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      id
 	    } = item;
 	    this.fromPhoneId = id;
-	    this.settingsMenu.close();
+	    this.settingsMenu.destroy();
+	    this.initSettingsMenu();
 	  }
 	  onHide() {
 	    if (this.loader) {
@@ -3522,10 +3527,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t6$1,
 	  _t7$1,
 	  _t8,
-	  _t9,
-	  _t10,
-	  _t11,
-	  _t12;
+	  _t9;
 	const DataLoadStatus = Object.freeze({
 	  loaded: 'loaded',
 	  notLoaded: 'notLoaded',
@@ -3533,36 +3535,86 @@ this.BX.Crm = this.BX.Crm || {};
 	});
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
+	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
+	var _settingsModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settingsModel");
+	var _bindEvents$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
+	var _sendOpenFormAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendOpenFormAnalytics");
+	var _renderLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLoader");
+	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
+	var _sendLinkAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendLinkAction");
+	var _sendCopyAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendCopyAnalytics");
+	var _getSharingLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSharingLink");
 	class Sharing extends WithEditor {
 	  constructor(...args) {
 	    super(...args);
-	    this.HELPDESK_CODE = 17502612;
+	    Object.defineProperty(this, _getSharingLink, {
+	      value: _getSharingLink2
+	    });
+	    Object.defineProperty(this, _sendCopyAnalytics, {
+	      value: _sendCopyAnalytics2
+	    });
+	    Object.defineProperty(this, _sendLinkAction, {
+	      value: _sendLinkAction2
+	    });
+	    Object.defineProperty(this, _render, {
+	      value: _render2
+	    });
+	    Object.defineProperty(this, _renderLoader, {
+	      value: _renderLoader2
+	    });
+	    Object.defineProperty(this, _sendOpenFormAnalytics, {
+	      value: _sendOpenFormAnalytics2
+	    });
+	    Object.defineProperty(this, _bindEvents$1, {
+	      value: _bindEvents2$1
+	    });
+	    Object.defineProperty(this, _layout, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _settingsModel, {
+	      writable: true,
+	      value: void 0
+	    });
 	  }
 	  /**
 	   * @override
 	   */
 	  initialize(context, settings) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
 	    this.dataLoadStatus = DataLoadStatus.notLoaded;
 	    super.initialize(context, settings);
-	    if (this.getSetting('isAvailable')) {
-	      this.bindEvents();
+	    if (this.supportsLayout()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _bindEvents$1)[_bindEvents$1]();
 	    }
 	  }
+	  /**
+	   * @override
+	   */
 	  activate() {
-	    if (this.getSetting('isAvailable')) {
-	      this.setVisible(true);
+	    if (this.supportsLayout()) {
+	      super.activate();
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendOpenFormAnalytics)[_sendOpenFormAnalytics]();
 	    } else {
 	      var _BX$UI, _BX$UI$InfoHelper;
 	      (_BX$UI = BX.UI) == null ? void 0 : (_BX$UI$InfoHelper = _BX$UI.InfoHelper) == null ? void 0 : _BX$UI$InfoHelper.show('limit_crm_calendar_free_slots');
 	    }
 	  }
-	  supportsLayout() {
-	    return this.getSetting('isAvailable');
+	  /**
+	   * @override
+	   */
+	  deactivate() {
+	    var _babelHelpers$classPr;
+	    super.deactivate();
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wrap) == null ? void 0 : _babelHelpers$classPr.reset();
+	    this.setLocked(false);
 	  }
-	  bindEvents() {
-	    main_core_events.EventEmitter.subscribe('CalendarSharing:LinkCopied', () => this.onLinkCopied());
-	    main_core_events.EventEmitter.subscribe('CalendarSharing:RuleUpdated', () => this.onRuleUpdated());
-	    main_core_events.EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', this.onContactsChangedHandler.bind(this));
+
+	  /**
+	   * @override
+	   */
+	  supportsLayout() {
+	    return this.getSetting('isAvailable') && this.getEntityId() > 0;
 	  }
 
 	  /**
@@ -3570,17 +3622,14 @@ this.BX.Crm = this.BX.Crm || {};
 	   */
 	  onShow() {
 	    super.onShow();
-	    if (this.dataLoadStatus === DataLoadStatus.notLoaded && this.getEntityId() > 0) {
-	      void this.loadData().then(isSuccess => {
-	        if (isSuccess) {
-	          this.unlockControl();
-	          this.updateSettingsButton();
-	        }
-	        this.removeLoader();
-	      }, result => {});
-	    } else if (this.getEntityId() <= 0) {
-	      this.removeLoader();
+	    if (this.dataLoadStatus !== DataLoadStatus.notLoaded) {
+	      return;
 	    }
+	    this.loadData().then(isSuccess => {
+	      if (isSuccess) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
+	      }
+	    });
 	  }
 	  async loadData() {
 	    this.dataLoadStatus = DataLoadStatus.loading;
@@ -3606,155 +3655,104 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  setConfig(config) {
 	    this.link = config.link;
-	    this.calendarSettings = config.calendarSettings;
 	    this.isResponsible = config.isResponsible;
-	    this.setContacts(config.contacts);
 	    this.isNotificationsAvailable = config.isNotificationsAvailable;
-	    this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
+	    this.dealContacts = config.contacts;
 	    this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel] = new calendar_sharing_interface.SettingsModel({
+	      context: 'crm',
+	      linkHash: this.link.hash,
+	      sharingUrl: this.link.url,
+	      userInfo: config.userInfo,
+	      rule: this.link.rule,
+	      calendarSettings: config.calendarSettings,
+	      collapsed: false
+	    });
 	  }
-	  unlockControl() {
-	    main_core.Dom.removeClass(this.DOM.root, '--locked');
+
+	  /**
+	   * @override
+	   */
+	  save() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _sendLinkAction)[_sendLinkAction]();
 	  }
 
 	  /**
 	   * @override
 	   */
 	  createLayout() {
-	    this.DOM = {
-	      menuBarItem: document.querySelector('.crm-entity-stream-section-menu [data-id=sharing]')
-	    };
-	    const root = main_core.Tag.render(_t$3 || (_t$3 = _$3`
-			<div class="crm-entity-stream-content-sharing crm-entity-stream-content-wait-detail --hidden --locked">
-				<div id="_sharing_content_container">
-					<div class="crm-entity-stream-calendar-sharing-container">
-						<div class="crm-entity-stream-calendar-sharing-main">
-							<div class="crm-entity-stream-calendar-sharing-icon"></div>
-							<div class="crm-entity-stream-calendar-sharing-info">
-								<div class="crm-entity-stream-calendar-sharing-header">
-									${0}
-								</div>
-								<div class="crm-entity-stream-calendar-sharing-info-item">
-									<div class="crm-entity-stream-calendar-sharing-info-item-icon"></div>
-									<div class="crm-entity-stream-calendar-sharing-info-item-text">
-										${0}
-									</div>
-								</div>
-								<div class="crm-entity-stream-calendar-sharing-info-item">
-									<div class="crm-entity-stream-calendar-sharing-info-item-icon"></div>
-									<div class="crm-entity-stream-calendar-sharing-info-item-text">
-										${0}
-									</div>
-								</div>
-								<div class="crm-entity-stream-calendar-sharing-info-btn-settings">
-									<div class="crm-entity-stream-calendar-sharing-info-icon-qr"></div>
-									${0}
-								</div>
-							</div>
-							${0}
-						</div>
-					</div>
-				</div>
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].menuBarItem = document.querySelector('.crm-entity-stream-section-menu [data-id=sharing]');
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].root = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+			<div class="crm-entity-stream-content-sharing crm-entity-stream-content-wait-detail --hidden">
+				${0}
 				<div class="crm-entity-stream-calendar-sharing-btn-container">
 					${0}
 					${0}
 					${0}
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_INFO_TITLE'), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1'), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_2'), this.createConfigureSlotsButton(), this.createSettingsButton(), this.createSendButton(), this.createCancelButton(), this.createMoreInfoButton());
-	    this.DOM.root = root;
-	    this.createLoader(root);
-	    return root;
-	  }
-	  createLoader(root) {
-	    this.loader = new main_loader.Loader({
-	      target: root
-	    });
-	    this.loader.show();
-	  }
-	  removeLoader() {
-	    this.loader.destroy();
-	  }
-	  createConfigureSlotsButton() {
-	    this.DOM.configureSlotsButton = main_core.Tag.render(_t2$3 || (_t2$3 = _$3`
-			<div class="crm-entity-stream-calendar-sharing-info-btn-settings-text">
-				${0}
-			</div>
-		`), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS'));
-	    main_core.Event.bind(this.DOM.configureSlotsButton, 'click', () => this.onConfigureSlotsButtonClick());
-	    return this.DOM.configureSlotsButton;
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderLoader)[_renderLoader](), this.renderSendButton(), this.renderCopyButton(), this.renderCancelButton());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].root;
 	  }
 	  createSettingsButton() {
-	    this.DOM.settingsButton = main_core.Tag.render(_t3$2 || (_t3$2 = _$3`
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].settingsButton = main_core.Tag.render(_t2$3 || (_t2$3 = _$3`
 			<div class="crm-entity-stream-calendar-sharing-settings-icon"></div>
 		`));
 	    this.updateSettingsButton();
-	    main_core.Event.bind(this.DOM.settingsButton, 'click', () => this.onSettingsButtonClick());
-	    return this.DOM.settingsButton;
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].settingsButton, 'click', () => this.onSettingsButtonClick());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].settingsButton;
 	  }
 	  updateSettingsButton() {
-	    if (this.isContactAvailable()) {
-	      this.DOM.settingsButton.style.display = '';
+	    if (this.hasContacts()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].settingsButton.style.display = '';
 	    } else {
-	      this.DOM.settingsButton.style.display = 'none';
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].settingsButton.style.display = 'none';
 	    }
 	  }
-	  createSendButton() {
-	    this.DOM.sendButton = main_core.Tag.render(_t4$2 || (_t4$2 = _$3`
-			<button class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round">
-				${0}
-			</button>
-		`), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON'));
-	    main_core.Event.bind(this.DOM.sendButton, 'click', () => this.onSendButtonClick());
-	    this._saveButton = this.DOM.sendButton;
-	    return this.DOM.sendButton;
+	  renderSendButton() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].sendButton = new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON_MSGVER_2'),
+	      size: ui_buttons.ButtonSize.EXTRA_SMALL,
+	      color: ui_buttons.ButtonColor.PRIMARY,
+	      round: true,
+	      onclick: () => this.onSendButtonClick()
+	    }).render();
+	    this._saveButton = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].sendButton;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].sendButton;
 	  }
-	  createCancelButton() {
-	    this.DOM.cancelButton = main_core.Tag.render(_t5$1 || (_t5$1 = _$3`
-			<span class="ui-btn ui-btn-xs ui-btn-link">
-				${0}
-			</span>
-		`), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON'));
-	    main_core.Event.bind(this.DOM.cancelButton, 'click', () => this.onCancelButtonClick());
-	    this._cancelButton = this.DOM.cancelButton;
-	    return this.DOM.cancelButton;
+	  renderCopyButton() {
+	    return new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_COPY_BUTTON'),
+	      size: ui_buttons.ButtonSize.EXTRA_SMALL,
+	      color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	      round: true,
+	      onclick: () => this.copyLink()
+	    }).render();
 	  }
-	  createMoreInfoButton() {
-	    this.DOM.moreInfoButton = main_core.Tag.render(_t6$1 || (_t6$1 = _$3`
-			<span class="crm-entity-stream-calendar-sharing-more-btn">
-				${0}
-			</span>
-		`), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_MORE_INFO_BUTTON'));
-	    main_core.Event.bind(this.DOM.moreInfoButton, 'click', () => this.onMoreInfoButtonClick());
-	    return this.DOM.moreInfoButton;
-	  }
-	  onConfigureSlotsButtonClick() {
-	    this.showConfigureSlotsPopup();
+	  renderCancelButton() {
+	    const cancelButton = new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'),
+	      size: ui_buttons.ButtonSize.EXTRA_SMALL,
+	      color: ui_buttons.ButtonColor.LINK,
+	      onclick: () => this.onCancelButtonClick()
+	    }).render();
+	    this._cancelButton = cancelButton;
+	    return cancelButton;
 	  }
 	  onSettingsButtonClick() {
 	    this.showSettingsPopup();
 	  }
 	  async onSendButtonClick() {
-	    if (!this.isContactAvailable()) {
+	    if (!this.hasDealContacts()) {
 	      this.showWarningNoContact();
 	      return;
 	    }
-	    if (!this.areCommunicationChannelsAvailable && this.isNotificationsAvailable && this.isChannelsAvailable()) {
-	      const bitrix24Channel = this.channels.find(channel => {
-	        return this.isChannelBitrix24(channel);
-	      });
-	      if (bitrix24Channel) {
-	        const isApproved = await this.isBitrix24Approved();
-	        if (isApproved) {
-	          this.channel = bitrix24Channel;
-	          this.updateSenderList();
-	          this.onSaveButtonClick();
-	          return;
-	        }
-	      }
-	    }
-	    if (!this.areCommunicationChannelsAvailable) {
+	    if (!this.isChannelAvailable(this.channel) && this.hasPhoneWithoutChannels()) {
 	      this.showWarningNoCommunicationChannels();
+	      return;
+	    }
+	    if (!this.isChannelAvailable(this.channel) && this.hasEmailWithoutChannels()) {
+	      this.connectMailbox();
 	      return;
 	    }
 	    if (this.isNotificationsAvailable && this.isChannelBitrix24(this.channel)) {
@@ -3769,30 +3767,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    this.onSaveButtonClick();
 	  }
-	  onLinkCopied() {
-	    this.saveLinkAction({
-	      isActionCopy: true
+	  onLinkCopied(linkHash) {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _sendLinkAction)[_sendLinkAction]({
+	      isActionCopy: true,
+	      linkHash
 	    });
 	  }
 	  onRuleUpdated() {
 	    this.onRuleUpdatedAction();
-	  }
-	  onMoreInfoButtonClick() {
-	    this.openHelpDesk();
-	  }
-	  showConfigureSlotsPopup() {
-	    if (!this.newDialog) {
-	      this.newDialog = new calendar_sharing_interface.DialogNew({
-	        bindElement: this.DOM.configureSlotsButton,
-	        sharingUrl: this.link.url,
-	        sharingRule: this.link.rule,
-	        linkHash: this.link.hash,
-	        context: "crm",
-	        readOnly: !this.isResponsible,
-	        calendarSettings: this.calendarSettings
-	      });
-	    }
-	    this.newDialog.show();
 	  }
 	  showSettingsPopup() {
 	    if (this.settingsMenu) {
@@ -3806,18 +3788,21 @@ this.BX.Crm = this.BX.Crm || {};
 	    return (_this$settingsMenu = this.settingsMenu) == null ? void 0 : _this$settingsMenu.popupWindow.isShown();
 	  }
 	  getSettingsMenu() {
-	    const items = [this.getSharingReceiverItem()];
-	    if (this.areCommunicationChannelsAvailable && this.isChannelsAvailable()) {
-	      items.push(this.getSharingChannelsItem());
-	    }
-	    if (this.currentFromList) {
-	      items.push(this.getSharingSenderItem());
-	    }
 	    return main_popup.MenuManager.create({
 	      id: 'crm-calendar-sharing-settings',
-	      bindElement: this.DOM.settingsButton,
-	      items: items
+	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].settingsButton,
+	      items: this.getSettingsMenuItems()
 	    });
+	  }
+	  getSettingsMenuItems() {
+	    const items = [this.getSharingReceiverItem()];
+	    if (this.hasChannels()) {
+	      items.push(this.getSharingChannelsItem());
+	    }
+	    if (this.isChannelAvailable(this.channel)) {
+	      items.push(this.getSharingSenderItem());
+	    }
+	    return items;
 	  }
 	  getSharingReceiverItem() {
 	    return {
@@ -3832,7 +3817,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return {
 	      id: 'sharing_channels',
 	      text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS'),
-	      items: this.channels.map(channel => {
+	      items: this.channels.filter(channel => channel.contacts.length > 0).map(channel => {
 	        return this.getChannelMenuItem(channel);
 	      })
 	    };
@@ -3847,13 +3832,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    };
 	  }
 	  getContactMenuItem(contact) {
-	    const isSelected = contact.entityId === this.contact.entityId && contact.entityTypeId === this.contact.entityTypeId;
-	    const itemHtml = main_core.Tag.render(_t7$1 || (_t7$1 = _$3`
+	    const isSelected = contact.entityId === this.contact.entityId && contact.entityTypeId === this.contact.entityTypeId && contact.value === this.contact.value;
+	    const itemHtml = main_core.Tag.render(_t3$2 || (_t3$2 = _$3`
 			<div class="crm-entity-stream-calendar-sharing-settings-check">
 				<div>${0}</div>
 			</div>
-		`), main_core.Text.encode(`${contact.name} (${contact.phone})`));
-	    contact.check = main_core.Tag.render(_t8 || (_t8 = _$3`
+		`), main_core.Text.encode(`${contact.name} (${contact.value})`));
+	    contact.check = main_core.Tag.render(_t4$2 || (_t4$2 = _$3`
 			<div class="crm-entity-stream-calendar-sharing-settings-check-icon ${0}"></div>
 		`), isSelected ? '--show' : '');
 	    itemHtml.append(contact.check);
@@ -3867,34 +3852,62 @@ this.BX.Crm = this.BX.Crm || {};
 	    };
 	  }
 	  getChannelMenuItem(channel) {
-	    const isSelected = channel.id === this.channel.id;
-	    const itemHtml = main_core.Tag.render(_t9 || (_t9 = _$3`
+	    const isSelected = channel.id === this.channel.id && this.isChannelAvailable(channel);
+	    const itemHtml = main_core.Tag.render(_t5$1 || (_t5$1 = _$3`
 			<div class="crm-entity-stream-calendar-sharing-settings-check">
 				<div>${0}</div>
 			</div>
 		`), main_core.Text.encode(channel.name));
-	    channel.check = main_core.Tag.render(_t10 || (_t10 = _$3`
+	    channel.check = main_core.Tag.render(_t6$1 || (_t6$1 = _$3`
 			<div class="crm-entity-stream-calendar-sharing-settings-check-icon ${0}"></div>
 		`), isSelected ? '--show' : '');
 	    itemHtml.append(channel.check);
 	    return {
 	      html: itemHtml,
+	      className: channel.fromList.length <= 0 ? 'crm-timeline-popup-menu-item-disabled menu-popup-no-icon' : '',
 	      onclick: () => {
+	        if (channel.fromList.length <= 0) {
+	          this.connectMailbox();
+	          return;
+	        }
 	        main_core.Dom.removeClass(this.channel.check, '--show');
 	        main_core.Dom.addClass(channel.check, '--show');
-	        this.channel = channel;
-	        this.updateSenderList();
+	        this.setChannel(channel);
 	      }
 	    };
 	  }
+	  connectMailbox() {
+	    BX.SidePanel.Instance.open('/mail/');
+
+	    //TODO: replace this workaround with subscribing for onPullEvent-mail "mailbox_created"
+	    const onMailSliderClose = () => {
+	      const previous = BX.SidePanel.Instance.openSliders[BX.SidePanel.Instance.getOpenSlidersCount() - 2];
+	      if (previous.url.includes('/crm/')) {
+	        this.updateChannels();
+	        top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onClose', onMailSliderClose);
+	      }
+	    };
+	    top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', onMailSliderClose);
+	  }
+	  updateChannels() {
+	    const data = {
+	      entityTypeId: this.getEntityTypeId(),
+	      entityId: this.getEntityId()
+	    };
+	    BX.ajax.runAction('crm.timeline.calendar.sharing.getConfig', {
+	      data
+	    }).then(response => {
+	      this.setCommunicationChannels(response.data.config.communicationChannels, this.channel.id);
+	    });
+	  }
 	  getFromMenuItem(from) {
 	    const isSelected = from.id === this.currentFrom.id;
-	    const itemHtml = main_core.Tag.render(_t11 || (_t11 = _$3`
+	    const itemHtml = main_core.Tag.render(_t7$1 || (_t7$1 = _$3`
 			<div class="crm-entity-stream-calendar-sharing-settings-check">
 				<div>${0}</div>
 			</div>
 		`), main_core.Text.encode(from.name));
-	    from.check = main_core.Tag.render(_t12 || (_t12 = _$3`
+	    from.check = main_core.Tag.render(_t8 || (_t8 = _$3`
 			<div class="crm-entity-stream-calendar-sharing-settings-check-icon ${0}"></div>
 		`), isSelected ? '--show' : '');
 	    itemHtml.append(from.check);
@@ -3932,69 +3945,29 @@ this.BX.Crm = this.BX.Crm || {};
 	    const openConfigurationButton = guideContentContainer.querySelector('span[data-role=crm-timeline-calendar-sharing_open-configure-slots]');
 	    openConfigurationButton.addEventListener('click', () => {
 	      guidePopup.close();
-	      this.showConfigureSlotsPopup();
 	    });
 	  }
 	  showWarningNoContact() {
 	    const title = main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TITLE');
-	    const text = main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT');
+	    const text = main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT_V2');
 	    const noContactWarningGuide = this.getWarningGuide(title, text);
 	    noContactWarningGuide.showNextStep();
 	  }
-	  updateSenderList() {
-	    this.currentFromList = this.channel.fromList;
-	    this.currentFrom = this.channel.fromList[0];
-	    if (this.settingsMenu) {
-	      this.settingsMenu.removeMenuItem('sharing_sender');
-	      const item = this.getSharingSenderItem();
-	      this.settingsMenu.addMenuItem(item);
-	    }
+	  async copyLink() {
+	    this.setLocked(true);
+	    const link = await babelHelpers.classPrivateFieldLooseBase(this, _getSharingLink)[_getSharingLink]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wrap.copyLink(link.url, link.hash);
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendCopyAnalytics)[_sendCopyAnalytics]();
 	  }
-	  copyLink(link) {
-	    BX.clipboard.copy(link);
-	    BX.UI.Notification.Center.notify({
-	      content: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_COPY_LINK_NOTIFICATION')
-	    });
-	    main_core_events.EventEmitter.emit('CalendarSharing:LinkCopied');
-	  }
-
-	  /**
-	   * @override
-	   */
-	  save() {
-	    return this.saveLinkAction();
-	  }
-	  saveLinkAction(options = {
-	    isActionCopy: false
-	  }) {
-	    let action;
-	    let data = {
-	      ownerId: this.getEntityId(),
-	      ownerTypeId: this.getEntityTypeId(),
-	      ruleArray: this.getSharingRule()
-	    };
-	    if (this.isContactAvailable() && this.isChannelsAvailable() && !options.isActionCopy) {
-	      action = 'crm.api.timeline.calendar.sharing.sendLink';
-	      data.contactId = this.contact.entityId || null;
-	      data.contactTypeId = this.contact.entityTypeId || null;
-	      data.channelId = this.channel.id || null;
-	      data.senderId = this.currentFrom.id || null;
-	    } else {
-	      action = 'crm.api.timeline.calendar.sharing.onLinkCopied';
-	      data.linkHash = this.link.hash;
-	    }
-	    return BX.ajax.runAction(action, {
-	      data
-	    }).then(response => {
-	      if (response.data) {
-	        this.emitFinishEditEvent();
-	        return true;
+	  async saveJointLink() {
+	    const response = await BX.ajax.runAction('crm.api.timeline.calendar.sharing.generateJointSharingLink', {
+	      data: {
+	        memberIds: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getMemberIds(),
+	        entityId: this.getEntityId(),
+	        entityTypeId: this.getEntityTypeId()
 	      }
-	      return false;
-	    }, error => {
-	      console.error(error);
-	      return false;
 	    });
+	    return response.data;
 	  }
 	  onRuleUpdatedAction() {
 	    return BX.ajax.runAction('crm.api.timeline.calendar.sharing.onRuleUpdated', {
@@ -4008,36 +3981,40 @@ this.BX.Crm = this.BX.Crm || {};
 	      return false;
 	    });
 	  }
-	  getSharingRule() {
-	    var _this$newDialog$getSe, _this$newDialog;
-	    return (_this$newDialog$getSe = (_this$newDialog = this.newDialog) == null ? void 0 : _this$newDialog.getSettingsControlRule()) != null ? _this$newDialog$getSe : this.link.rule;
-	  }
 	  onContactsChangedHandler(event) {
+	    var _this$channel;
 	    const {
 	      item,
 	      current
 	    } = event.getData();
 	    const isCurrentDeal = this.getEntityTypeId() === (item == null ? void 0 : item.entityTypeId) && this.getEntityId() === (item == null ? void 0 : item.entityId);
-	    if (!isCurrentDeal || !main_core.Type.isArray(current)) {
+	    if (!isCurrentDeal || !main_core.Type.isArray(current) || !main_core.Type.isArray(this.channels)) {
 	      return;
 	    }
-	    const phoneReceivers = current.filter(receiver => receiver.address.typeId === 'PHONE');
-	    const contacts = [];
-	    const contactsHashes = [];
-	    for (const receiver of phoneReceivers) {
+	    const contacts = current.map(receiver => {
 	      var _receiver$addressSour;
-	      if (contactsHashes.includes(receiver.addressSource.hash)) {
-	        continue;
-	      }
-	      contactsHashes.push(receiver.addressSource.hash);
-	      contacts.push({
+	      return {
+	        id: receiver.address.id,
 	        entityId: receiver.addressSource.entityId,
 	        entityTypeId: receiver.addressSource.entityTypeId,
 	        name: (_receiver$addressSour = receiver.addressSourceData) == null ? void 0 : _receiver$addressSour.title,
-	        phone: receiver.address.value
-	      });
-	    }
-	    this.setContacts(contacts);
+	        value: receiver.address.value,
+	        valueType: receiver.address.valueType,
+	        typeId: receiver.address.typeId
+	      };
+	    });
+	    this.dealContacts = contacts;
+	    const phoneContacts = contacts.filter(receiver => receiver.typeId === 'PHONE');
+	    const mailContacts = contacts.filter(receiver => receiver.typeId === 'EMAIL');
+	    this.channels.forEach(channel => {
+	      if (channel.typeId === 'PHONE') {
+	        channel.contacts = phoneContacts;
+	      }
+	      if (channel.typeId === 'EMAIL') {
+	        channel.contacts = mailContacts;
+	      }
+	    });
+	    this.setChannel(this.chooseChannel((_this$channel = this.channel) == null ? void 0 : _this$channel.id));
 	    this.updateSettingsButton();
 	    if (this.isSettingsPopupShown()) {
 	      this.showSettingsPopup();
@@ -4045,7 +4022,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  setContacts(contacts) {
 	    var _contacts$find;
-	    this.contacts = contacts.filter(contact => contact.entityId && contact.entityTypeId && contact.phone && contact.name).sort((a, b) => a.entityId - b.entityId) // sort by id
+	    this.contacts = contacts.filter(contact => contact.entityId && contact.entityTypeId && contact.value && contact.name).sort((a, b) => a.entityId - b.entityId) // sort by id
 	    .sort((a, b) => a.entityTypeId - b.entityTypeId); // sort company last
 
 	    this.contact = (_contacts$find = contacts.find(contact => {
@@ -4055,24 +4032,63 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  setCommunicationChannels(channels, selectedId) {
 	    this.channels = channels || [];
-	    if (selectedId) {
-	      var _channels$find;
-	      this.channel = (_channels$find = channels.find(channel => {
-	        return channel.id === selectedId;
-	      })) != null ? _channels$find : this.channels[0];
-	    } else {
-	      this.channel = this.channels ? this.channels[0] : null;
+	    this.setChannel(this.chooseChannel(selectedId));
+	  }
+	  chooseChannel(selectedId) {
+	    const activeChannels = this.channels.filter(channel => this.isChannelAvailable(channel));
+	    if (selectedId && main_core.Type.isArrayFilled(activeChannels)) {
+	      var _activeChannels$find;
+	      return (_activeChannels$find = activeChannels.find(channel => channel.id === selectedId)) != null ? _activeChannels$find : activeChannels[0];
 	    }
+	    const availableChannels = this.channels.filter(channel => channel.contacts.length > 0);
+	    return availableChannels == null ? void 0 : availableChannels[0];
+	  }
+	  setChannel(channel) {
+	    if (!channel) {
+	      return;
+	    }
+	    this.channel = channel;
+	    this.setContacts(this.channel.contacts);
 	    if (this.channel && this.channel.fromList) {
 	      this.currentFromList = this.channel.fromList;
 	      this.currentFrom = this.channel.fromList[0];
 	    }
+	    if (this.settingsMenu) {
+	      for (const item of this.getSettingsMenuItems()) {
+	        this.settingsMenu.removeMenuItem(item.id);
+	        this.settingsMenu.addMenuItem(item);
+	      }
+	    }
 	  }
-	  isContactAvailable() {
+	  hasContacts() {
 	    return main_core.Type.isArrayFilled(this.contacts);
 	  }
-	  isChannelsAvailable() {
+	  hasDealContacts() {
+	    return main_core.Type.isArrayFilled(this.dealContacts);
+	  }
+	  hasChannels() {
 	    return main_core.Type.isArrayFilled(this.channels);
+	  }
+	  hasPhoneWithoutChannels() {
+	    if (!this.channel) {
+	      return true;
+	    }
+	    const phoneContacts = this.dealContacts.filter(contact => contact.typeId === 'PHONE');
+	    const phoneChannels = this.channels.filter(channel => channel.typeId === 'PHONE');
+	    const channelUnavailable = this.channel.typeId === 'PHONE' && !this.isChannelAvailable(this.channel);
+	    return main_core.Type.isArrayFilled(phoneContacts) && !main_core.Type.isArrayFilled(phoneChannels) || channelUnavailable;
+	  }
+	  hasEmailWithoutChannels() {
+	    if (!this.channel) {
+	      return true;
+	    }
+	    const mailContacts = this.dealContacts.filter(contact => contact.typeId === 'EMAIL');
+	    const mailChannels = this.channels.filter(channel => channel.typeId === 'EMAIL');
+	    const channelUnavailable = this.channel.typeId === 'EMAIL' && !this.isChannelAvailable(this.channel);
+	    return main_core.Type.isArrayFilled(mailContacts) && !main_core.Type.isArrayFilled(mailChannels) || channelUnavailable;
+	  }
+	  isChannelAvailable(channel) {
+	    return main_core.Type.isArrayFilled(channel == null ? void 0 : channel.fromList) && main_core.Type.isArrayFilled(channel == null ? void 0 : channel.contacts);
 	  }
 	  isChannelBitrix24(channel) {
 	    return channel.id === crm_messagesender.Types.bitrix24;
@@ -4082,17 +4098,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      senderType: crm_messagesender.Types.bitrix24
 	    });
 	  }
-	  openHelpDesk() {
-	    if (top.BX.Helper) {
-	      top.BX.Helper.show(`redirect=detail&code=${this.HELPDESK_CODE}`);
-	    }
-	  }
 	  getWarningGuide(title, text) {
 	    const warningGuide = new ui_tour.Guide({
 	      simpleMode: true,
 	      onEvents: true,
 	      steps: [{
-	        target: this.DOM.sendButton,
+	        target: babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].sendButton,
 	        title,
 	        text,
 	        condition: {
@@ -4104,7 +4115,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    const guidePopup = warningGuide.getPopup();
 	    main_core.Dom.addClass(guidePopup.popupContainer, 'crm-calendar-sharing-configure-slots-popup-ui-tour-animate');
-	    guidePopup.setWidth(390);
+	    guidePopup.setWidth(430);
 	    const guideContent = guidePopup.getContentContainer().firstElementChild;
 	    const offsetFromCloseIcon = parseInt(getComputedStyle(guidePopup.closeIcon)['width']);
 	    const existingPadding = parseInt(getComputedStyle(guideContent)['paddingRight']);
@@ -4115,7 +4126,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        const arrowContainer = guidePopup.angle.element;
 	        const arrow = arrowContainer.firstElementChild;
 	        arrow.style.border = '2px solid var(--ui-color-text-warning, #ffa900)';
-	        if (guidePopup.getContentContainer().getBoundingClientRect().top > this.DOM.sendButton.getBoundingClientRect().top) {
+	        if (guidePopup.getContentContainer().getBoundingClientRect().top > babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].sendButton.getBoundingClientRect().top) {
 	          const condition = guidePopup.getContentContainer().querySelector('.ui-tour-popup-condition-bottom');
 	          condition.className = 'ui-tour-popup-condition-top';
 	          arrowContainer.style.top = '-20px';
@@ -4126,6 +4137,90 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    return warningGuide;
 	  }
+	}
+	function _bindEvents2$1() {
+	  main_core_events.EventEmitter.subscribe('CalendarSharing:LinkCopied', ({
+	    data: {
+	      hash
+	    }
+	  }) => this.onLinkCopied(hash));
+	  main_core_events.EventEmitter.subscribe('CalendarSharing:RuleUpdated', () => this.onRuleUpdated());
+	  main_core_events.EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', this.onContactsChangedHandler.bind(this));
+	  main_core.Event.bind(window, 'beforeunload', () => {
+	    var _babelHelpers$classPr2;
+	    return (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel]) == null ? void 0 : _babelHelpers$classPr2.save();
+	  });
+	}
+	function _sendOpenFormAnalytics2() {
+	  calendar_sharing_analytics.Analytics.sendPopupOpened(calendar_sharing_analytics.Analytics.contexts.crm);
+	}
+	function _renderLoader2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].loader = main_core.Tag.render(_t9 || (_t9 = _$3`
+			<div class="crm-entity-stream-content-sharing-loader"></div>
+		`));
+	  new main_loader.Loader().show(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].loader);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].loader;
+	}
+	function _render2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wrap = new calendar_sharing_interface.Layout({
+	    readOnly: !this.isResponsible,
+	    settingsModel: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel],
+	    externalIcon: this.createSettingsButton()
+	  });
+	  const wrapNode = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wrap.render();
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].loader.replaceWith(wrapNode);
+	  return wrapNode;
+	}
+	async function _sendLinkAction2({
+	  isActionCopy,
+	  linkHash
+	} = {}) {
+	  const data = {
+	    ownerId: this.getEntityId(),
+	    ownerTypeId: this.getEntityTypeId(),
+	    ruleArray: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getRule().toArray(),
+	    memberIds: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getMemberIds()
+	  };
+	  let action;
+	  if (!isActionCopy && this.isChannelAvailable(this.channel)) {
+	    action = 'crm.api.timeline.calendar.sharing.sendLink';
+	    data.contactId = this.contact.entityId || null;
+	    data.contactTypeId = this.contact.entityTypeId || null;
+	    data.channelId = this.channel.id || null;
+	    data.senderId = this.currentFrom.id || null;
+	  } else {
+	    action = 'crm.api.timeline.calendar.sharing.onLinkCopied';
+	    data.linkHash = linkHash != null ? linkHash : this.link.hash;
+	  }
+	  return BX.ajax.runAction(action, {
+	    data
+	  }).then(response => {
+	    if (response.data) {
+	      this.emitFinishEditEvent();
+	      return true;
+	    }
+	    return false;
+	  }, error => {
+	    console.error(error);
+	    return false;
+	  });
+	}
+	function _sendCopyAnalytics2() {
+	  const params = {
+	    peopleCount: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getMemberIds().length,
+	    ruleChanges: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getChanges()
+	  };
+	  const type = babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getMemberIds().length === 1 ? calendar_sharing_analytics.Analytics.linkTypes.solo : calendar_sharing_analytics.Analytics.linkTypes.multiple;
+	  calendar_sharing_analytics.Analytics.sendLinkCopied(babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getContext(), type, params);
+	}
+	async function _getSharingLink2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getMemberIds().length === 1) {
+	    return {
+	      url: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getSharingUrl(),
+	      hash: babelHelpers.classPrivateFieldLooseBase(this, _settingsModel)[_settingsModel].getLinkHash()
+	    };
+	  }
+	  return await this.saveJointLink();
 	}
 
 	let _$4 = t => t,
@@ -4138,9 +4233,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t7$2,
 	  _t8$1,
 	  _t9$1,
-	  _t10$1,
-	  _t11$1,
-	  _t12$1,
+	  _t10,
+	  _t11,
+	  _t12,
 	  _t13,
 	  _t14;
 
@@ -5267,7 +5362,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _renderSetupText2() {
 	  const enableSalesCenter = BX.prop.getBoolean(this.getSetting('smsConfig', {}), 'isSalescenterEnabled', false);
-	  return main_core.Tag.render(_t10$1 || (_t10$1 = _$4`<div class="crm-entity-stream-content-sms-conditions-container">
+	  return main_core.Tag.render(_t10 || (_t10 = _$4`<div class="crm-entity-stream-content-sms-conditions-container">
 			<div class="crm-entity-stream-content-sms-conditions">
 				<div class="crm-entity-stream-content-sms-conditions-text">
 					<strong>${0}</strong><br>
@@ -5279,13 +5374,13 @@ this.BX.Crm = this.BX.Crm || {};
 		<div class="crm-entity-stream-content-new-sms-btn-container">
 			<a href="#" data-role="sender-selector" target="_top" class="crm-entity-stream-content-new-sms-connect-link">${0}</a>
 			${0}
-		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t11$1 || (_t11$1 = _$4`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
+		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t11 || (_t11 = _$4`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
 	<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
 	<div class="crm-entity-stream-content-sms-button-text">${0}</div>
 </div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null);
 	}
 	function _renderTemplatesContainer2() {
-	  this._templatesContainer = main_core.Tag.render(_t12$1 || (_t12$1 = _$4`<div class="crm-entity-stream-content-new-sms-templates">
+	  this._templatesContainer = main_core.Tag.render(_t12 || (_t12 = _$4`<div class="crm-entity-stream-content-new-sms-templates">
 				<div class="ui-ctl-label-text">
 					${0}<span class="ui-hint" data-role="hint"><span class="ui-hint-icon"></span></span>
 				</div>
@@ -5789,9 +5884,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t7$3,
 	  _t8$2,
 	  _t9$2,
-	  _t10$2,
-	  _t11$2,
-	  _t12$2,
+	  _t10$1,
+	  _t11$1,
+	  _t12$1,
 	  _t13$1,
 	  _t14$1;
 	const ARTICLE_CODE_SEND_WITH_WHATSAPP = '20526810';
@@ -5852,9 +5947,13 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getTemplateEditorText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTemplateEditorText");
 	var _getFooterData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFooterData");
 	var _isTourAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourAvailable");
+	var _isClientPhoneNotSet = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isClientPhoneNotSet");
 	class Whatsapp extends Item {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _isClientPhoneNotSet, {
+	      value: _isClientPhoneNotSet2
+	    });
 	    Object.defineProperty(this, _isTourAvailable, {
 	      value: _isTourAvailable2
 	    });
@@ -6316,13 +6415,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  return setupButton;
 	}
 	function _createTemplatesContainer2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerTitle)[_templatesContainerTitle] = main_core.Tag.render(_t10$2 || (_t10$2 = _$5`
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerTitle)[_templatesContainerTitle] = main_core.Tag.render(_t10$1 || (_t10$1 = _$5`
 			<div class="crm-entity-stream-content-new-detail-whatsapp-template-title"></div>
 		`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerContent)[_templatesContainerContent] = main_core.Tag.render(_t11$2 || (_t11$2 = _$5`
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerContent)[_templatesContainerContent] = main_core.Tag.render(_t11$1 || (_t11$1 = _$5`
 			<div class="crm-entity-stream-content-new-detail-whatsapp-template-content"></div>
 		`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer] = main_core.Tag.render(_t12$2 || (_t12$2 = _$5`
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer] = main_core.Tag.render(_t12$1 || (_t12$1 = _$5`
 			<div class="crm-entity-stream-content-new-detail-whatsapp-template --demo">
 				${0}
 				${0}
@@ -6381,7 +6480,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _applySendButtonState)[_applySendButtonState]();
 	}
 	function _setCommunicationsParams2$1() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].length === 0) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isClientPhoneNotSet)[_isClientPhoneNotSet]()) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _toEntityTypeId)[_toEntityTypeId] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _toEntityId)[_toEntityId] = null;
@@ -6471,7 +6570,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  createOrUpdatePlaceholder((_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]) == null ? void 0 : _babelHelpers$classPr2.ORIGINAL_ID) != null ? _babelHelpers$classPr : null, this.getEntityTypeId(), this.getEntityCategoryId(), params).catch(error => console.error(error));
 	}
 	function _handleSendButtonClick2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].length === 0) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isClientPhoneNotSet)[_isClientPhoneNotSet]()) {
 	    ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_SMS_ERROR_NO_COMMUNICATIONS'));
 	    return;
 	  }
@@ -6645,6 +6744,12 @@ this.BX.Crm = this.BX.Crm || {};
 	function _isTourAvailable2() {
 	  return main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList]) && !BX.Crm.EntityEditor.getDefault().isNew();
 	}
+	function _isClientPhoneNotSet2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].length === 0) {
+	    return true;
+	  }
+	  return !main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications][0].phones);
+	}
 
 	class Task extends Item {
 	  showSlider() {
@@ -6678,16 +6783,11 @@ this.BX.Crm = this.BX.Crm || {};
 	var _toDoEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toDoEditor");
 	var _todoEditorContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("todoEditorContainer");
 	var _saveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveButton");
-	var _useTodoEditorV = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useTodoEditorV2");
 	var _isTourViewed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourViewed");
 	var _createEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createEditor");
-	var _onChangeDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChangeDescription");
 	class ToDo extends Item {
 	  constructor(...args) {
 	    super(...args);
-	    Object.defineProperty(this, _onChangeDescription, {
-	      value: _onChangeDescription2
-	    });
 	    Object.defineProperty(this, _createEditor, {
 	      value: _createEditor2
 	    });
@@ -6703,10 +6803,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _useTodoEditorV, {
-	      writable: true,
-	      value: false
-	    });
 	    Object.defineProperty(this, _isTourViewed, {
 	      writable: true,
 	      value: false
@@ -6718,19 +6814,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  createLayout() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer] = main_core.Tag.render(_t$6 || (_t$6 = _$6`<div></div>`));
 	    babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton] = main_core.Tag.render(_t2$6 || (_t2$6 = _$6`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON'));
-	    return main_core.Tag.render(_t3$5 || (_t3$5 = _$6`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
-			${0}
-			<div class="crm-entity-stream-content-new-comment-btn-container">
+	    return main_core.Tag.render(_t3$5 || (_t3$5 = _$6`
+			<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
 				${0}
-				<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>
+				<div class="crm-entity-stream-content-new-comment-btn-container">
+					${0}
+					<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>
+				</div>
 			</div>
-		</div>`), babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer], babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer], babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
 	  }
 	  initializeLayout() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV] = Boolean(this.getSetting('useTodoEditorV2', false));
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
-	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
-	    }
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
 	    babelHelpers.classPrivateFieldLooseBase(this, _createEditor)[_createEditor]();
 	  }
 	  initializeSettings() {
@@ -6764,9 +6859,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
 	      sendAnalytics
 	    });
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
-	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
-	    }
 	    this.setFocused(false);
 	  }
 	  bindInputHandlers() {
@@ -6820,35 +6912,24 @@ this.BX.Crm = this.BX.Crm || {};
 	    colorSettings: this.getSetting('colorSettings'),
 	    actionMenuSettings: this.getSetting('actionMenuSettings'),
 	    events: {
-	      onFocus: this.setFocused.bind(this, true)
+	      onCollapsingToggle: event => {
+	        const {
+	          isOpen
+	        } = event.getData();
+	        this.setFocused(isOpen);
+	      }
 	    }
 	  };
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
-	    params.calendarSettings = this.getSetting('calendarSettings');
-	    const extras = this.getExtras();
-	    if (main_core.Type.isPlainObject(extras.analytics)) {
-	      params.analytics = {
-	        section: extras.analytics.c_section,
-	        subSection: extras.analytics.c_sub_section
-	      };
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditorV2.TodoEditorV2(params);
-	  } else {
-	    params.events.onChangeDescription = babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this);
-	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditor.TodoEditor(params);
+	  params.calendarSettings = this.getSetting('calendarSettings');
+	  const extras = this.getExtras();
+	  if (main_core.Type.isPlainObject(extras.analytics)) {
+	    params.analytics = {
+	      section: extras.analytics.c_section,
+	      subSection: extras.analytics.c_sub_section
+	    };
 	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditorV2.TodoEditorV2(params);
 	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].show();
-	}
-	function _onChangeDescription2(event) {
-	  let {
-	    description
-	  } = event.getData();
-	  description = description.trim();
-	  if (description.length === 0 && !main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
-	  } else if (description.length > 0 && main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
-	  }
 	}
 
 	class Visit extends Item {
@@ -7642,7 +7723,6 @@ this.BX.Crm = this.BX.Crm || {};
 	var _selectedItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedItemId");
 	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
 	var _onItemFinishEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onItemFinishEdit");
-	var _getFirstItemIdWithLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFirstItemIdWithLayout");
 	var _defaultInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("defaultInstance");
 	var _selectMenuItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectMenuItem");
 	class MenuBar {
@@ -7650,9 +7730,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _params$extras, _params$menuId;
 	    Object.defineProperty(this, _selectMenuItem, {
 	      value: _selectMenuItem2
-	    });
-	    Object.defineProperty(this, _getFirstItemIdWithLayout, {
-	      value: _getFirstItemIdWithLayout2
 	    });
 	    Object.defineProperty(this, _onItemFinishEdit, {
 	      value: _onItemFinishEdit2
@@ -7718,7 +7795,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _items)[_items][id] = item;
 	      }
 	    });
-	    this.setActiveItemById(babelHelpers.classPrivateFieldLooseBase(this, _getFirstItemIdWithLayout)[_getFirstItemIdWithLayout]());
+	    this.setActiveItemById(this.getFirstItemIdWithLayout());
 	  }
 	  getItemById(id) {
 	    var _babelHelpers$classPr;
@@ -7761,6 +7838,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      inline: 'nearest'
 	    });
 	  }
+	  getFirstItemIdWithLayout() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isReadonly$1)[_isReadonly$1]) {
+	      return null;
+	    }
+	    let firstId = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].getAllItems().forEach(function (itemElement) {
+	      if (firstId === null) {
+	        const id = itemElement.dataset.id;
+	        const item = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items][id];
+	        if (item && item.supportsLayout()) {
+	          firstId = id;
+	        }
+	      }
+	    }.bind(this));
+	    return firstId;
+	  }
 	  static create(id, params) {
 	    const self = new MenuBar(id, params);
 	    MenuBar.instances[id] = self;
@@ -7777,23 +7870,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _onItemFinishEdit2() {
-	  this.setActiveItemById(babelHelpers.classPrivateFieldLooseBase(this, _getFirstItemIdWithLayout)[_getFirstItemIdWithLayout]());
-	}
-	function _getFirstItemIdWithLayout2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isReadonly$1)[_isReadonly$1]) {
-	    return null;
-	  }
-	  let firstId = null;
-	  babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].getAllItems().forEach(function (itemElement) {
-	    if (firstId === null) {
-	      const id = itemElement.dataset.id;
-	      const item = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items][id];
-	      if (item && item.supportsLayout()) {
-	        firstId = id;
-	      }
-	    }
-	  }.bind(this));
-	  return firstId;
+	  this.setActiveItemById(this.getFirstItemIdWithLayout());
 	}
 	function _selectMenuItem2(id) {
 	  const activeItem = babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].getItemById(babelHelpers.classPrivateFieldLooseBase(this, _selectedItemId)[_selectedItemId]);
@@ -7842,5 +7919,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.UI,BX.Vue3,BX.Calendar.Sharing,BX.Crm.MessageSender,BX,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Crm.Activity,BX.Crm,BX.Event,BX,BX,BX.Crm));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.Vue3,BX.Calendar.Sharing,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.UI,BX,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Crm,BX.Event,BX,BX,BX.Crm));
 //# sourceMappingURL=toolbar.bundle.js.map

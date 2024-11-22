@@ -24,7 +24,7 @@ $MESS["MAIL_CLIENT_CONFIG_IMAP_PORT"] = "Порт";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_SSL"] = "использовать защищенное соединение";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_LOGIN"] = "Логин";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_PASS"] = "Пароль";
-$MESS["MAIL_CLIENT_CONFIG_IMAP_AGE"] = "Забрать из ящика письма за #AGE#";
+$MESS["MAIL_CLIENT_CONFIG_IMAP_AGE_MSGVER_1"] = "Забрать из ящика письма за #AGE#";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_AGE_2_1"] = "1 день";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_AGE_2_7"] = "7 дней";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_AGE_2_30"] = "1 месяц";
@@ -153,3 +153,8 @@ $MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE"] = "Авторизуйтесь пов
 $MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT"] = "При последней синхронизации мы не смогли получить доступ к вашему ящику. Авторизуйтесь повторно, чтобы продолжить работу с почтой";
 $MESS["MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE"] = "Обновите пароль приложения";
 $MESS["MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT"] = "При последней синхронизации мы не смогли получить доступ к вашему ящику. Создайте новый пароль в вашем почтовом сервисе, чтобы продолжить работу с почтой";
+
+$MESS["MAIL_CLIENT_CONFIG_CRM_AGE_INFO_CRM"] = "Синхронизировать письма с CRM за #AGE#";
+$MESS["MAIL_CLIENT_CONFIG_CRM_AGE_INFO_CRM_ATTENTION"] = "Письма, полученные за выбранный период, появятся в CRM и будут доступны по умолчанию всем сотрудникам, если права доступа не ограничивают просмотр";
+$MESS["MAIL_CLIENT_CONFIG_CRM_NEW_ENTITY_IN_INFO_CRM_ATTENTION"] = "Созданные из писем элементы CRM будут доступны по умолчанию всем сотрудникам, если права доступа не ограничивают просмотр";
+$MESS["MAIL_CLIENT_CONFIG_CRM_NEW_ENTITY_OUT_INFO_CRM_ATTENTION"] = "Созданные из писем элементы CRM будут доступны по умолчанию всем сотрудникам, если права доступа не ограничивают просмотр";

@@ -9,7 +9,7 @@ import { registerLexicalTextEntity } from 'ui.lexical.text';
 import { HashtagNode, $createHashtagNode } from './hashtag-node';
 import BasePlugin from '../base-plugin';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
 export class HashtagPlugin extends BasePlugin

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BX24_CLOSE_BUTTON"] = "Закрити";
 $MESS["BX24_INVITE_BUTTON"] = "Запросити";
 $MESS["BX24_INVITE_DIALOG_EMAIL_ERROR"] = "Невірно введені email: <br/>";
@@ -7,6 +7,7 @@ $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL"] = "Не вказаний e-mail";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL_LIST"] = "Не вказані e-mail";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_LAST_NAME"] = "Чи не вказано прізвище";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PASSWORD"] = "Не вказаний пароль";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PHONE_LIST"] = "Не вказані номери телефонів.";
 $MESS["BX24_INVITE_DIALOG_ERROR_EXTRANET_USER_TRANSFER"] = "Не вдалося перетворити зовнішнього користувача";
 $MESS["BX24_INVITE_DIALOG_ERROR_USER_TRANSFER"] = "Не вдалося перетворити поштового користувача";
 $MESS["BX24_INVITE_DIALOG_ERROR_WRONG_PASSWORD_CONFIRM"] = "Невірне підтвердження пароля";
@@ -24,4 +25,3 @@ $MESS["BX24_INVITE_DIALOG_USER_PHONE_EXIST_ERROR2"] = "Користувачі з
 $MESS["BX24_INVITE_TITLE_ADD"] = "Додати співробітника";
 $MESS["BX24_INVITE_TITLE_INVITE"] = "Запросити співробітників";
 $MESS["BX24_LOADING"] = "Завантаження...";
-?>

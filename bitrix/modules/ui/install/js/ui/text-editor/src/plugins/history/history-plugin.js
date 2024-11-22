@@ -2,7 +2,7 @@ import { Browser, Loc } from 'main.core';
 import Button from '../../toolbar/button';
 import BasePlugin from '../base-plugin';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 import { registerHistory, createEmptyHistoryState } from 'ui.lexical.history';
 

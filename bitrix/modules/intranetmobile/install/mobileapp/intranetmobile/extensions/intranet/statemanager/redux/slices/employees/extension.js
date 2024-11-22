@@ -11,6 +11,7 @@ jn.define('intranet/statemanager/redux/slices/employees', (require, exports, mod
 		fireEmployee,
 		hireEmployee,
 		reinvite,
+		reinviteWithChangeContact,
 		changeDepartment,
 	} = require('intranet/statemanager/redux/slices/employees/thunk');
 	const {
@@ -53,6 +54,8 @@ jn.define('intranet/statemanager/redux/slices/employees', (require, exports, mod
 			builder
 				.addCase(reinvite.pending, reinvitePending)
 				.addCase(reinvite.rejected, reinviteRejected)
+				.addCase(reinviteWithChangeContact.pending, reinvitePending)
+				.addCase(reinviteWithChangeContact.rejected, reinviteRejected)
 				.addCase(deleteInvitation.pending, deleteInvitationPending)
 				.addCase(deleteInvitation.fulfilled, deleteInvitationFulfilled)
 				.addCase(deleteInvitation.rejected, deleteInvitationRejected)

@@ -19,6 +19,7 @@ jn.define('ui-system/blocks/stage-selector', (require, exports, module) => {
 	 * @param {Color} [props.leftIconColor=Color.base2]
 	 * @param {string} [props.extraIcon=null]
 	 * @param {Icon} [props.rightIcon=Icon.CHEVRON_DOWN]
+	 * @param {Color} [props.rightIconColor=Color.base2]
 	 * @param {CardDesign} [props.cardDesign=CardDesign.PRIMARY]
 	 * @param {boolean} [props.cardBorder=false]
 	 * @return StageSelector
@@ -39,6 +40,7 @@ jn.define('ui-system/blocks/stage-selector', (require, exports, module) => {
 			leftIconColor,
 			extraIcon,
 			rightIcon,
+			rightIconColor,
 			cardDesign,
 			cardBorder,
 			...restProps
@@ -98,7 +100,7 @@ jn.define('ui-system/blocks/stage-selector', (require, exports, module) => {
 			rightIcon && IconView({
 				icon: rightIcon,
 				size: 24,
-				color: Color.base4,
+				color: rightIconColor,
 			}),
 		);
 	}
@@ -112,6 +114,7 @@ jn.define('ui-system/blocks/stage-selector', (require, exports, module) => {
 		leftIconColor: Color.base2,
 		extraIcon: null,
 		rightIcon: Icon.CHEVRON_DOWN,
+		rightIconColor: Color.base4,
 		cardDesign: CardDesign.PRIMARY,
 		cardBorder: false,
 	};
@@ -126,6 +129,7 @@ jn.define('ui-system/blocks/stage-selector', (require, exports, module) => {
 		leftIconColor: PropTypes.object,
 		extraIcon: PropTypes.object,
 		rightIcon: PropTypes.object,
+		rightIconColor: PropTypes.object,
 		cardDesign: PropTypes.object,
 		cardBorder: PropTypes.bool,
 	};

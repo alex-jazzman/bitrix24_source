@@ -16,7 +16,7 @@ import {
 } from 'ui.lexical.core';
 
 import BasePlugin from '../base-plugin';
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 export class ItalicPlugin extends BasePlugin
 {

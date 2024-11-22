@@ -26,6 +26,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 				role,
 				url,
 				isGoskey,
+				isExternal,
 			} = props;
 
 			this.documentTitle = documentTitle;
@@ -34,6 +35,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 			this.role = role;
 			this.layoutWidget = layoutWidget;
 			this.isGoskey = isGoskey;
+			this.isExternal = isExternal;
 		}
 
 		componentDidMount()
@@ -81,6 +83,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 									role: this.role,
 									url: this.url,
 									isGoskey: this.isGoskey,
+									isExternal: this.isExternal,
 								});
 							});
 						},

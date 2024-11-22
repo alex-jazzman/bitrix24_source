@@ -13,10 +13,6 @@ export const defaultTheme = {
 		h6: 'ui-typography-heading-h6',
 	},
 	hashtag: 'ui-typography-hashtag',
-	image: {
-		container: 'ui-typography-image-container ui-text-editor__image-container',
-		img: 'ui-typography-image',
-	},
 	link: 'ui-typography-link',
 	list: {
 		listitem: 'ui-typography-li',
@@ -74,14 +70,15 @@ export const defaultTheme = {
 	tableCellHeader: 'ui-typography-table-cell-header',
 	tableSelection: 'ui-typography-table-selection',
 
+	image: {
+		container: 'ui-typography-image-container ui-text-editor__image-container',
+		img: 'ui-typography-image',
+	},
+
 	video: {
 		container: 'ui-typography-video-container ui-text-editor__video-container',
 		object: 'ui-typography-video-object ui-text-editor__video-object',
 	},
 
-	file: {
-		file: 'ui-text-editor__file',
-		image: 'ui-text-editor__file-image',
-		video: 'ui-text-editor__file-video',
-	},
+	file: 'ui-text-editor__file',
 };

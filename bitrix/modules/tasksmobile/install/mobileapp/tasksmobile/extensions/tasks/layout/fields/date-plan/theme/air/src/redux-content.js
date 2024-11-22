@@ -94,6 +94,7 @@ jn.define('tasks/layout/fields/date-plan/theme/air/redux-content', (require, exp
 		{
 			return Text5(
 				{
+					testId: `${this.#testId}-start-date-plan`,
 					text: getFormattedDateTime(this.props.startDatePlan) || Loc.getMessage('M_TASKS_DATE_PLAN_AIR_FIELD_NO_DATE_SPECIFIED'),
 				},
 			);
@@ -103,6 +104,7 @@ jn.define('tasks/layout/fields/date-plan/theme/air/redux-content', (require, exp
 		{
 			return Text5(
 				{
+					testId: `${this.#testId}-end-date-plan`,
 					text: getFormattedDateTime(this.props.endDatePlan) || Loc.getMessage('M_TASKS_DATE_PLAN_AIR_FIELD_NO_DATE_SPECIFIED'),
 				},
 			);

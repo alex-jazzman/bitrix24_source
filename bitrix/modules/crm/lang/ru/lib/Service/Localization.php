@@ -37,6 +37,7 @@ $MESS["CRM_COMMON_CONTACTS"] = "Контакты";
 $MESS["CRM_COMMON_COMPANIES"] = "Компании";
 $MESS["CRM_COMMON_INVOICES"] = "Счета";
 $MESS["CRM_COMMON_LEAD"] = "Лид";
+$MESS["CRM_COMMON_RETURN_CUSTOMER_LEAD"] = "Повторный лид";
 $MESS["CRM_COMMON_DEAL"] = "Сделка";
 $MESS["CRM_COMMON_CONTACT"] = "Контакт";
 $MESS["CRM_COMMON_COMPANY"] = "Компания";

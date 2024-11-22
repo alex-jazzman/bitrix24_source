@@ -4,7 +4,12 @@
 jn.define('im/messenger/controller/channel-creator/creator', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { EventType, RestMethod, Analytics } = require('im/messenger/const');
+	const {
+		EventType,
+		RestMethod,
+		Analytics,
+		OpenDialogContextType,
+	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -172,6 +177,7 @@ jn.define('im/messenger/controller/channel-creator/creator', (require, exports, 
 
 			MessengerEmitter.emit(EventType.messenger.openDialog, {
 				dialogId: `chat${chatId}`,
+				context: OpenDialogContextType.chatCreation,
 			});
 		}
 	}

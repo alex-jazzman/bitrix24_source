@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,crm_router,main_core,main_core_events,ui_dialogs_messagebox) {
+(function (exports,crm_integration_analytics,crm_router,main_core,main_core_events,ui_analytics,ui_dialogs_messagebox) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -27,6 +27,9 @@
 	      }
 	      if (main_core.Type.isElementNode(params.welcomeMessageContainer)) {
 	        this.welcomeMessageContainer = params.welcomeMessageContainer;
+	      }
+	      if (main_core.Type.isBoolean(params.isExternal)) {
+	        this.isExternal = params.isExternal;
 	      }
 	    }
 	  }
@@ -119,26 +122,53 @@
 	        this.showErrors([main_core.Loc.getMessage('CRM_TYPE_TYPE_NOT_FOUND')]);
 	        return;
 	      }
+	      var analyticsBuilder = new crm_integration_analytics.Builder.Automation.Type.DeleteEvent().setSubSection(crm_integration_analytics.Dictionary.ELEMENT_GRID_ROW_CONTEXT_MENU).setIsExternal(this.isExternal).setId(id);
+	      var isCancelRegistered = false;
 	      ui_dialogs_messagebox.MessageBox.show({
 	        title: main_core.Loc.getMessage('CRM_TYPE_TYPE_DELETE_CONFIRMATION_TITLE'),
 	        message: main_core.Loc.getMessage('CRM_TYPE_TYPE_DELETE_CONFIRMATION_MESSAGE'),
 	        modal: true,
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
 	        onYes: function onYes(messageBox) {
+	          ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ATTEMPT).buildData());
 	          main_core.ajax.runAction('crm.controller.type.delete', {
 	            analyticsLabel: 'crmTypeListDeleteType',
 	            data: {
 	              id: id
 	            }
 	          }).then(function (response) {
+	            ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).buildData());
 	            var isUrlChanged = main_core.Type.isObject(response.data) && response.data.isUrlChanged === true;
 	            if (isUrlChanged) {
 	              window.location.reload();
 	              return;
 	            }
 	            _this2.grid.reloadTable();
-	          })["catch"](_this2.showErrorsFromResponse.bind(_this2));
+	          })["catch"](function (response) {
+	            ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).buildData());
+	            _this2.showErrorsFromResponse(response);
+	          });
 	          messageBox.close();
+	        },
+	        onCancel: function onCancel(messageBox) {
+	          if (isCancelRegistered) {
+	            messageBox.close();
+	            return;
+	          }
+	          isCancelRegistered = true;
+	          ui_analytics.sendData(analyticsBuilder.setElement(crm_integration_analytics.Dictionary.ELEMENT_CANCEL_BUTTON).setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
+	          messageBox.close();
+	        },
+	        popupOptions: {
+	          events: {
+	            onPopupClose: function onPopupClose() {
+	              if (isCancelRegistered) {
+	                return;
+	              }
+	              isCancelRegistered = true;
+	              ui_analytics.sendData(analyticsBuilder.setElement(null).setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
+	            }
+	          }
 	        }
 	      });
 	    } // endregion
@@ -181,5 +211,5 @@
 	}
 	namespace.TypeListComponent = TypeListComponent;
 
-}((this.window = this.window || {}),BX.Crm,BX,BX.Event,BX.UI.Dialogs));
+}((this.window = this.window || {}),BX.Crm.Integration.Analytics,BX.Crm,BX,BX.Event,BX.UI.Analytics,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map

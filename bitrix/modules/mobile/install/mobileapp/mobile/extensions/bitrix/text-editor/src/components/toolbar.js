@@ -14,6 +14,8 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 	{
 		/**
 		 * @param props {{
+		 * 		allowFiles: boolean,
+		 * 		allowBBCode: boolean,
 		 * 		events: {
 		 * 			[eventName: string]: ({type: string}) => void,
 		 * 		},
@@ -36,7 +38,7 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 				isShown: false,
 				isSaveButtonLoading: false,
 				saveButton: props.saveButton,
-				allowFiles: this.props.allowFiles,
+				allowFiles: props.allowFiles,
 			};
 		}
 
@@ -86,6 +88,7 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 
 		render()
 		{
+			const { allowBBCode, testId } = this.props;
 			const {
 				highlight,
 				isShown,
@@ -99,60 +102,60 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 					style: {
 						display: isShown ? 'flex' : 'none',
 						flexDirection: 'row',
-						justifyContent: 'space-between',
+						justifyContent: (allowBBCode ? 'space-between' : 'flex-end'),
 						alignItems: 'center',
 						height: 52,
 					},
 				},
-				ToolbarButton({
+				allowBBCode && ToolbarButton({
 					icon: Icon.BOLD,
 					active: highlight.includes('bold'),
 					onClick: () => {
 						this.emit('onFormat', [{ type: 'bold' }]);
 					},
-					testId: `${this.props.testId}_BOLD`,
+					testId: `${testId}_BOLD`,
 				}),
-				ToolbarButton({
+				allowBBCode && ToolbarButton({
 					icon: Icon.ITALIC,
 					active: highlight.includes('italic'),
 					onClick: () => {
 						this.emit('onFormat', [{ type: 'italic' }]);
 					},
-					testId: `${this.props.testId}_ITALIC`,
+					testId: `${testId}_ITALIC`,
 				}),
-				ToolbarButton({
+				allowBBCode && ToolbarButton({
 					icon: Icon.UNDERLINE,
 					active: highlight.includes('underline'),
 					onClick: () => {
 						this.emit('onFormat', [{ type: 'underline' }]);
 					},
-					testId: `${this.props.testId}_UNDERLINE`,
+					testId: `${testId}_UNDERLINE`,
 				}),
-				ToolbarButton({
+				allowBBCode && ToolbarButton({
 					icon: Icon.STRIKETHROUGH,
 					active: highlight.includes('strikethrough'),
 					onClick: () => {
 						this.emit('onFormat', [{ type: 'strikethrough' }]);
 					},
-					testId: `${this.props.testId}_STRIKE`,
+					testId: `${testId}_STRIKE`,
 				}),
-				ToolbarButton({
+				allowBBCode && ToolbarButton({
 					icon: Icon.BULLETED_LIST,
 					active: highlight.includes('bulletList'),
 					onClick: () => {
 						this.emit('onFormat', [{ type: 'markedList' }]);
 					},
-					testId: `${this.props.testId}_MARKED_LIST`,
+					testId: `${testId}_MARKED_LIST`,
 				}),
-				ToolbarButton({
+				allowBBCode && ToolbarButton({
 					icon: Icon.NUMBERED_LIST,
 					active: highlight.includes('numberList'),
 					onClick: () => {
 						this.emit('onFormat', [{ type: 'numericList' }]);
 					},
-					testId: `${this.props.testId}_NUMBER_LIST`,
+					testId: `${testId}_NUMBER_LIST`,
 				}),
-				Image({
+				allowBBCode && Image({
 					style: {
 						width: 1,
 						height: 10,
@@ -163,22 +166,22 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 					svg: {
 						content: separatorSvg,
 					},
-					testId: `${this.props.testId}_SEPARATOR`,
+					testId: `${testId}_SEPARATOR`,
 				}),
-				ToolbarButton({
+				allowBBCode && ToolbarButton({
 					icon: Icon.MENTION,
 					onClick: () => {
 						this.emit('onMention', [{ type: 'onMention' }]);
 					},
-					testId: `${this.props.testId}_MENTION`,
+					testId: `${testId}_MENTION`,
 				}),
-				allowFiles ? ToolbarButton({
+				allowBBCode && allowFiles && ToolbarButton({
 					icon: Icon.ATTACH,
 					onClick: () => {
 						this.emit('onAttach', [{ type: 'onAttach' }]);
 					},
-					testId: `${this.props.testId}_ATTACH`,
-				}) : undefined,
+					testId: `${testId}_ATTACH`,
+				}),
 				Button({
 					leftIcon: Icon.ARROW_TOP,
 					size: ButtonSize.S,
@@ -192,7 +195,7 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 						this.setSaveButtonLoading(true);
 						this.emit('onSave', [{}]);
 					},
-					testId: `${this.props.testId}_SAVE`,
+					testId: `${testId}_SAVE`,
 				}),
 			);
 		}

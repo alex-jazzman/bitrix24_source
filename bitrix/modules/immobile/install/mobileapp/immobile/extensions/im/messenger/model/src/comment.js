@@ -11,14 +11,15 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 
 	const LAST_USERS_TO_SHOW = 3;
 
-	const commentState = {
+	const commentDefaultElement = Object.freeze({
 		chatId: 0,
 		dialogId: 0,
 		lastUserIds: [],
 		messageCount: 0,
 		messageId: 0,
 		isUserSubscribed: false,
-	};
+		showLoader: false,
+	});
 
 	/**
 	 *
@@ -34,7 +35,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 		getters: {
 			/**
 			 * @function commentModel/getByMessageId
-			 * @return {CommentInfo || undefined}
+			 * @return {CommentInfoModelState || undefined}
 			 */
 			getByMessageId: (state) => (messageId) => {
 				return clone(state.commentCollection[messageId]);
@@ -53,7 +54,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 
 			/**
 			 * @function commentModel/getCommentInfoByCommentChatId
-			 * @return {CommentInfo | undefined}
+			 * @return {CommentInfoModelState | undefined}
 			 */
 			getCommentInfoByCommentChatId: (state) => (commentChatId) => {
 				return Object.values(state.commentCollection).find((comment) => {
@@ -121,7 +122,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 
 			/**
 			 * @function commentModel/getChannelCounterCollection
-			 * @return {Array<number>}
+			 * @return {Record<number, number>}
 			 */
 			getChannelCounterCollection: (state) => (channelId) => {
 				if (!state.countersCollection[channelId])
@@ -221,7 +222,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 
 			/** @function commentModel/setComment */
 			setComment: (store, payload) => {
-				/** @type {CommentInfo} */
+				/** @type {CommentInfoModelState} */
 				const comment = validate(payload);
 
 				const { newUserId } = payload;
@@ -291,11 +292,43 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				});
 			},
 
+			/** @function commentModel/deleteCommentByMessageId */
+			deleteCommentByMessageId: (store, payload) => {
+				const { messageId, channelChatId } = payload;
+
+				const commentInfo = store.state.commentCollection[messageId]
+				if (!commentInfo)
+				{
+					return;
+				}
+
+				store.commit('setCounters', {
+					actionName: 'deleteCommentByMessageId',
+					data: {
+						chatCounterMap: {
+							[channelChatId]: {
+								[commentInfo.chatId]: 0,
+							},
+						},
+					},
+				});
+
+				store.commit('deleteComment', {
+					actionName: 'deleteCommentByMessageId',
+					data: {
+						messageId,
+						channelChatId,
+						commentDialogId: commentInfo.dialogId,
+						commentChatId: commentInfo.chatId,
+					},
+				});
+			},
+
 			/** @function commentModel/subscribe */
 			subscribe: (store, payload) => {
 				const messageId = payload.messageId;
 				const commentInfo = {
-					...commentState,
+					...commentDefaultElement,
 					...store.state.commentCollection[messageId],
 					isUserSubscribed: true,
 					messageId,
@@ -313,7 +346,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 			unsubscribe: (store, payload) => {
 				const messageId = payload.messageId;
 				const commentInfo = {
-					...commentState,
+					...commentDefaultElement,
 					...store.state.commentCollection[messageId],
 					isUserSubscribed: false,
 					messageId,
@@ -321,6 +354,40 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 
 				store.commit('setComments', {
 					actionName: 'subscribe',
+					data: {
+						commentList: [commentInfo],
+					},
+				});
+			},
+			/** @function commentModel/showLoader */
+			showLoader: (store, payload) => {
+				const messageId = payload.messageId;
+				const commentInfo = {
+					...commentDefaultElement,
+					...store.state.commentCollection[messageId],
+					showLoader: true,
+					messageId,
+				};
+
+				store.commit('setComments', {
+					actionName: 'showLoader',
+					data: {
+						commentList: [commentInfo],
+					},
+				});
+			},
+			/** @function commentModel/hideLoader */
+			hideLoader: (store, payload) => {
+				const messageId = payload.messageId;
+				const commentInfo = {
+					...commentDefaultElement,
+					...store.state.commentCollection[messageId],
+					showLoader: false,
+					messageId,
+				};
+
+				store.commit('setComments', {
+					actionName: 'hideLoader',
 					data: {
 						commentList: [commentInfo],
 					},
@@ -338,7 +405,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 
 				payload.data.commentList.forEach((comment) => {
 					state.commentCollection[comment.messageId] = {
-						...commentState,
+						...commentDefaultElement,
 						...state.commentCollection[comment.messageId],
 						...comment,
 					};
@@ -377,7 +444,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				logger.log('commentModel setCommentsWithCounters mutation', payload);
 				payload.data.commentList.forEach((comment) => {
 					state.commentCollection[comment.messageId] = {
-						...commentState,
+						...commentDefaultElement,
 						...state.commentCollection[comment.messageId],
 						...comment,
 					};
@@ -419,6 +486,13 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 
 				state.countersCollection[channelId] = {};
 			},
+
+			deleteComment: (state, payload) => {
+				logger.log('commentModel deleteComment mutation', payload);
+				const { messageId } = payload.data;
+
+				delete state.commentCollection[messageId];
+			},
 		},
 	};
 
@@ -442,5 +516,5 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 		return currentUsers;
 	}
 
-	module.exports = { commentModel };
+	module.exports = { commentModel, commentDefaultElement };
 });

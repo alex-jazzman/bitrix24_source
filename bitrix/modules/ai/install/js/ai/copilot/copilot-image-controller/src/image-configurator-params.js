@@ -1,3 +1,4 @@
+import type { ImageCopilotFormat, EngineInfo } from 'ai.engine';
 import { Tag, Event, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { MenuItemOptions, MenuOptions } from 'main.popup';
@@ -6,29 +7,37 @@ import { Icon, Actions, Main } from 'ui.icon-set.api.core';
 
 import './css/image-configurator-params.css';
 
-import { params } from './image-configurator-params-config';
+import { getParams } from './image-configurator-params-config';
 import type {
 	ImageConfiguratorParam,
 	ImageConfiguratorParamOption,
 	ImageConfiguratorParamsCurrentValues,
 } from './image-configurator-params-config';
 
-type ImageConfiguratorParamsOptions = {};
+type ImageConfiguratorParamsOptions = {
+	formats: ImageCopilotFormat[];
+	engines: EngineInfo[];
+};
 
 export class ImageConfiguratorParams extends EventEmitter
 {
 	#container: HTMLElement | null;
 	#currentValues: ImageConfiguratorParamsCurrentValues;
 	#openOptionsMenu: Menu | null;
+	#params: any = {};
 
 	constructor(options: ImageConfiguratorParamsOptions)
 	{
 		super(options);
 
+		this.#params = getParams({
+			formats: Object.values(options.formats),
+			engines: options.engines,
+		});
+
 		const data = {
-			format: params.format.options[0].value,
-			light: params.light?.options[0].value,
-			composition: params.composition?.options[0].value,
+			format: this.#params.format.options[0].value,
+			engine: this.#getSelectedEngineCodeFromEngines(options.engines),
 		};
 
 		const handler = {
@@ -37,7 +46,7 @@ export class ImageConfiguratorParams extends EventEmitter
 
 				if (this.#container)
 				{
-					const option = params[property].options.find((currentOption) => currentOption.value === value);
+					const option = this.#params[property].options.find((currentOption) => currentOption.value === value);
 
 					const optionElem = this.#container.querySelector(`#ai__copilot-image-params-item-${property}`);
 
@@ -63,6 +72,13 @@ export class ImageConfiguratorParams extends EventEmitter
 		return { ...this.#currentValues };
 	}
 
+	#getSelectedEngineCodeFromEngines(engines: EngineInfo[]): ?string
+	{
+		const selectedEngine: ?EngineInfo = engines.find((engine) => engine.selected);
+
+		return selectedEngine.code || engines?.[0]?.code;
+	}
+
 	isContainsTarget(target: HTMLElement): boolean
 	{
 		return this.#container?.contains(target)
@@ -73,7 +89,7 @@ export class ImageConfiguratorParams extends EventEmitter
 	{
 		this.#container = Tag.render`
 			<div class="ai__copilot-image-params">
-				${this.#renderParams(params)}
+				${this.#renderParams(this.#params)}
 			</div>
 		`;
 

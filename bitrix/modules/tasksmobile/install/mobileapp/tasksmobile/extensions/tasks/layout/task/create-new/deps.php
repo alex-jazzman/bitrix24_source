@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'alert',
+		'analytics',
 		'bottom-sheet',
 		'feature',
 		'haptics',

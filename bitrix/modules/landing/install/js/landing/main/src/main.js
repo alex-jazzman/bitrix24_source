@@ -1152,6 +1152,11 @@ export class Main extends EventEmitter
 			});
 		}
 
+		if (BX.type.isObject(data.lang))
+		{
+			Loc.setMessage(data.lang);
+		}
+
 		let loadedScripts = 0;
 		const scriptsCount = (data.js.length + ext.SCRIPT.length + ext.STYLE.length + data.css.length);
 		let resPromise = null;
@@ -1205,9 +1210,19 @@ export class Main extends EventEmitter
 			resPromise = Promise.resolve(data);
 		}
 
-		return resPromise;
-	}
+		return resPromise.then(data => {
+			if (BX.type.isArray(data.assetStrings))
+			{
+				const head = document.head;
+				data.assetStrings.forEach(string => {
+					const element = Tag.render`${string}`;
+					Dom.insertAfter(element, head.lastChild);
+				});
+			}
 
+			return data;
+		});
+	}
 
 	/**
 	 * Executes block scripts

@@ -2,7 +2,8 @@
 	background: #fcfcfc;
 	border: 1px solid #eee;
 	border-radius: 10px;
-	margin: var(--ui-typography-block-space);
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
 
 	font-family: var(--ui-typography-font-family), sans-serif;
 	font-size: var(--ui-typography-font-size);

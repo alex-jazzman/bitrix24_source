@@ -32,3 +32,4 @@ $MESS["CRM_SIGN_B2E_ACTIVITY_FIELD_SIGNER_DONE"] = "Подписано сотр�
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_PREVIEW"] = "Открыть документ";
 $MESS["CRM_TIMELINE_ACTIVITY_DOWNLOAD"] = "Скачать архив";
 $MESS["CRM_SIGN_B2E_ACTIVITY_STATUS_SENDING"] = "Отправляется";
+$MESS["CRM_TIMELINE_ACTIVITY_CREATE_CHAT"] = "Открыть чат";

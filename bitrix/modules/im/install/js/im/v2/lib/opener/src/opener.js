@@ -172,7 +172,7 @@ export const Opener = {
 
 	openNewTab(path)
 	{
-		if (DesktopApi.isChatTab() && DesktopApi.isFeatureSupported(DesktopFeature.openNewTab))
+		if (DesktopApi.isChatTab() && DesktopApi.isFeatureSupported(DesktopFeature.openNewTab.id))
 		{
 			DesktopApi.createImTab(`${path}&${GetParameter.desktopChatTabMode}=Y`);
 		}

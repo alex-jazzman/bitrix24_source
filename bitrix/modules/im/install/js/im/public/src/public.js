@@ -1,6 +1,7 @@
 import { Type, Extension, Reflection, type JsonObject } from 'main.core';
 
 import { legacyMessenger, legacyDesktop } from './legacy';
+import { desktop } from './desktop';
 import { prepareSettingsSection } from './functions/settings';
 
 type Opener = {
@@ -27,6 +28,7 @@ class Messenger
 	{
 		const settings = Extension.getSettings('im.public');
 		this.v2enabled = settings.get('v2enabled', false);
+		this.desktop = desktop;
 	}
 
 	async openChat(dialogId: string = '', messageId: number = 0): Promise

@@ -11,7 +11,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { DialogDTO } = require('im/messenger/controller/dialog-creator/dialog-dto');
 	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
 	const { Theme } = require('im/lib/theme');
-	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 	const { AnalyticsEvent } = require('analytics');
 
 	class NavigationSelector
@@ -47,6 +47,9 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 						userList: ChatUtils.objectClone(this.userList),
 						analytics: new AnalyticsEvent().setSection(Analytics.Section.chatTab),
 					}, this.layout);
+				},
+				onCreateCollab: () => {
+					console.warn('onCreateCollab tap');
 				},
 				onCreatePrivateChat: () => {
 					RecipientSelector.open(

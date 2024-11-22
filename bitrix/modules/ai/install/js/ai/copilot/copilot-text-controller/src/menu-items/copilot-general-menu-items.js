@@ -9,7 +9,7 @@ import { CopilotMenuItems } from './copilot-menu-items';
 import type { CopilotMenuItem } from 'ai.copilot';
 import type { EngineInfo } from '../types/engine-info';
 import type { Prompt } from 'ai.engine';
-import { Loc } from 'main.core';
+import { Extension, Loc } from 'main.core';
 import { CopilotProvidersMenuItems } from './copilot-providers-menu-items';
 import { Main as MainIconSet, Main } from 'ui.icon-set.api.core';
 
@@ -20,18 +20,33 @@ type CopilotGeneralMenuItemsOptions = {
 	canEditSettings: boolean,
 	copilotTextController: CopilotTextController,
 	addImageMenuItem: boolean;
+	systemPrompts: Prompt[];
+	userPrompts: Prompt[];
 }
+
 export class CopilotGeneralMenuItems extends CopilotMenuItems
 {
 	static getMenuItems(options: CopilotGeneralMenuItemsOptions): CopilotMenuItem[] {
 		const {
-			prompts,
 			engines,
 			selectedEngineCode,
 			canEditSettings = false,
 			copilotTextController,
 			addImageMenuItem = false,
+			userPrompts,
+			systemPrompts,
+			favouritePrompts,
 		} = options;
+
+		const usePromptLibrary = Extension
+			.getSettings('ai.copilot.copilot-text-controller')
+			.get('isPromptLibraryEnable')
+		;
+
+		const favouriteSectionSeparator = favouritePrompts.length > 0
+			? CopilotGeneralMenuItems.getFavouritePromptsSeparatorMenuItem()
+			: null
+		;
 
 		const imageMenuItem = addImageMenuItem
 			? [{
@@ -46,7 +61,46 @@ export class CopilotGeneralMenuItems extends CopilotMenuItems
 
 		return [
 			...imageMenuItem,
-			...getGeneralMenuItemsFromPrompts(prompts, copilotTextController),
+			favouriteSectionSeparator,
+			...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true),
+			...(usePromptLibrary && copilotTextController.isReadonly() === false ? [
+				{
+					code: 'user-prompt-separator',
+					separator: true,
+					title: Loc.getMessage('AI_COPILOT_USER_PROMPTS_MENU_SECTION'),
+					text: Loc.getMessage('AI_COPILOT_USER_PROMPTS_MENU_SECTION'),
+					isNew: true,
+				},
+				...getGeneralMenuItemsFromPrompts(userPrompts, copilotTextController, false),
+				{
+					code: 'promptLib',
+					text: Loc.getMessage('AI_COPILOT_MENU_ITEM_AI_PROMPT_LIB'),
+					icon: Main.PROMPTS_LIBRARY,
+					highlightText: true,
+					command: async () => {
+						if (BX.SidePanel)
+						{
+							copilotTextController.getAnalytics().setCategoryPromptSaving();
+							copilotTextController.getAnalytics().sendEventOpenPromptLibrary();
+
+							BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library/templates/.default/template.php', {
+								cacheable: false,
+								events: {
+									onCloseStart: () => {
+										copilotTextController.getAnalytics().setCategoryText();
+										copilotTextController.updateGeneralMenuPrompts();
+									},
+								},
+							});
+						}
+						else
+						{
+							window.location.href = '/bitrix/components/bitrix/ai.prompt.library/templates/.default/template.php';
+						}
+					},
+				},
+			] : []),
+			...getGeneralMenuItemsFromPrompts(systemPrompts, copilotTextController),
 			...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings),
 			{
 				code: 'about_open_copilot',
@@ -64,16 +118,16 @@ export class CopilotGeneralMenuItems extends CopilotMenuItems
 					isBeforeGeneration: false,
 				})),
 			},
-		];
+		].filter((item) => item);
 	}
-}
 
-function getGeneralMenuItemsFromPrompts(
-	prompts: Prompt[],
-	copilotTextController: CopilotTextController,
-): CopilotMenuItem[]
-{
-	return prompts.map((prompt) => {
+	static getMenuItem(
+		prompt: Prompt,
+		prompts: Prompt[],
+		copilotTextController: CopilotTextController,
+		isFavouriteSection: boolean = false,
+	): CopilotMenuItem
+	{
 		let command = null;
 		if (prompt.required)
 		{
@@ -85,11 +139,17 @@ function getGeneralMenuItemsFromPrompts(
 				: new GenerateWithoutRequiredUserMessage({
 					copilotTextController,
 					prompts,
-					commandCode: prompt.code,
+					commandCode: copilotTextController.getMenuItemCodeFromPrompt(prompt.code),
 				});
 		}
 
+		const code = isFavouriteSection
+			? copilotTextController.getMenuItemCodeFromFavouritePrompt(prompt.code)
+			: prompt.code
+		;
+
 		return {
+			id: code,
 			command,
 			code: prompt.code,
 			text: prompt.title,
@@ -98,7 +158,35 @@ function getGeneralMenuItemsFromPrompts(
 			title: prompt.title,
 			icon: prompt.icon,
 			section: prompt.section,
+			isFavourite: copilotTextController.isReadonly() === true ? null : prompt.isFavorite,
+			isShowFavouriteIconOnHover: isFavouriteSection && copilotTextController.isReadonly() === false,
 		};
+	}
+
+	static getFavouritePromptsSeparatorMenuItem(): CopilotMenuItem
+	{
+		return {
+			code: 'favourite-prompts-items-separator',
+			separator: true,
+			title: Loc.getMessage('AI_COPILOT_FAVOURITE_PROMPTS_MENU_SECTION'),
+			text: Loc.getMessage('AI_COPILOT_FAVOURITE_PROMPTS_MENU_SECTION'),
+		};
+	}
+}
+
+function getGeneralMenuItemsFromPrompts(
+	prompts: Prompt[],
+	copilotTextController: CopilotTextController,
+	isFavouriteSection: boolean = false,
+): CopilotMenuItem[]
+{
+	return prompts.map((prompt: Prompt): CopilotMenuItem => {
+		return CopilotGeneralMenuItems.getMenuItem(
+			prompt,
+			prompts,
+			copilotTextController,
+			isFavouriteSection,
+		);
 	}).filter((item) => item.code !== 'zero_prompt');
 }
 
@@ -116,6 +204,7 @@ function getSelectedEngineMenuItem(
 			text: Loc.getMessage('AI_COPILOT_PROVIDER_MENU_SECTION'),
 		},
 		{
+			id: 'provider',
 			code: 'provider',
 			text: Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT'),
 			children: CopilotProvidersMenuItems.getMenuItems({

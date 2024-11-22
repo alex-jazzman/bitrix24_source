@@ -5,7 +5,7 @@ jn.define('intranet/statemanager/redux/slices/employees/extra-reducer', (require
 	const { Loc } = require('loc');
 	const { userListAdapter } = require('intranet/statemanager/redux/slices/employees/meta');
 	const { EmployeeStatus, RequestStatus, EmployeeActions } = require('intranet/enum');
-	const { showSafeToast, Position } = require('toast');
+	const { showErrorToast, showSafeToast, Position } = require('toast');
 	const { check, cross } = require('assets/icons/src/outline');
 	const { Actions } = require('intranet/simple-list/items/user-redux/src/actions');
 
@@ -144,8 +144,12 @@ jn.define('intranet/statemanager/redux/slices/employees/extra-reducer', (require
 	};
 
 	const reinviteRejected = (state, action) => {
-		showCustomizedToast(Loc.getMessage('MOBILE_USERS_USER_ACTIONS_REINVITE_REJECTED'));
 		const { userId } = action.meta.arg;
+		const { errors } = action.payload;
+		if (errors && errors.length > 0)
+		{
+			showErrorToast(errors[0]);
+		}
 		const user = state.entities[userId];
 		if (user)
 		{
@@ -184,6 +188,7 @@ jn.define('intranet/statemanager/redux/slices/employees/extra-reducer', (require
 			svg: { content: svgContent },
 			position: Position.BOTTOM,
 			time: 1.5,
+			offset: 60,
 		}, layout);
 	};
 

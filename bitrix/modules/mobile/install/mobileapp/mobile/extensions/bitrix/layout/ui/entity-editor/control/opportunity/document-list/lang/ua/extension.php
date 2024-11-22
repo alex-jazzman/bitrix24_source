@@ -1,5 +1,4 @@
 <?php
-$MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD"] = "додати документ";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD_MSGVER_1"] = "Додати";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CANCEL_DEDUCT_WARNING_REALIZATION"] = "Недостатньо прав для скасвання реалізації.";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CANCEL_DEDUCT_WARNING_TITLE_REALIZATION"] = "Реалізація не може бути скасована.";
@@ -9,7 +8,6 @@ $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CREATION_MENU_REALIZATION"]
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CREATION_MENU_TERMINAL_PAYMENT"] = "Оплата через термінал";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_EMPTYSTATE_DESCRIPTION"] = "Тут буде інформація про оплати й доставлення.";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_EMPTYSTATE_DESCRIPTION_WITH_REALIZATION"] = "Тут буде інформація про оплати, доставлення та реалізації.";
-$MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_TITLE"] = "Документи угоди";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_TITLE_MSGVER_1"] = "Оплата й доставлення";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEDUCT_WARNING_REALIZATION"] = "Недостатньо прав для проведення реалізації.";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEDUCT_WARNING_TITLE_REALIZATION"] = "Реалізація не може бути проведена.";
@@ -36,7 +34,6 @@ $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_PAYMENT_PAID"] = "Опла�
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_PAYMENT_PHONE_DRAWER_WARNING_TEXT"] = "Без номера телефону неможливо надіслати повідомлення з посиланням на оплату";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_DATE"] = "Реалізація ##ACCOUNT_NUMBER# від #DATE#";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_DEDUCTED"] = "Проведено";
-$MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_DETAIL_HINT_MSGVER_1"] = "Перегляд документа реалізації доступний тільки у вебверсії";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_CANCEL_DEDUCT"] = "Скасувати проведення";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_DEDUCT"] = "Провести";
 $MESS["MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_DELETE"] = "Видалити";

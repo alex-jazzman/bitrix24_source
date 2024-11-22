@@ -4,6 +4,7 @@ $MESS["MENU_SALESCENTER_SECTION"] = "Центр продажів";
 $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складський облік";
 $MESS["TOP_MENU_ABOUT"] = "Компанія";
 $MESS["TOP_MENU_AI"] = "Лабораторія AI";
+$MESS["TOP_MENU_BICONNECTOR_CONSTRUCTOR"] = "BI-конструктор";
 $MESS["TOP_MENU_BIZPROC"] = "Бізнес-процеси";
 $MESS["TOP_MENU_BLOG"] = "Повідомлення";
 $MESS["TOP_MENU_CALENDAR"] = "Календар";

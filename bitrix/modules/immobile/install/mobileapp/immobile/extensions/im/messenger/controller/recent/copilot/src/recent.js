@@ -25,14 +25,11 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 
 		bindMethods()
 		{
+			super.bindMethods();
 			this.recentAddHandler = this.recentAddHandler.bind(this);
 			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
 			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
-
-			this.stopRefreshing = this.stopRefreshing.bind(this);
-			this.renderInstant = this.renderInstant.bind(this);
-			this.loadPage = this.loadPage.bind(this);
 		}
 
 		subscribeViewEvents()
@@ -82,27 +79,17 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 		/**
 		 * @return {object}
 		 */
-		getRestManagerRecentListOptions()
-		{
-			return { ONLY_COPILOT: 'Y', SKIP_OPENLINES: 'Y' };
-		}
-
-		/**
-		 * @return {object}
-		 */
 		getRestListOptions()
 		{
 			return { skipOpenlines: true, onlyCopilot: true };
 		}
 
 		/**
-		 * @param {object} response
+		 * @param {imV2RecentCopilotResult} data
 		 */
-		pageHandler(response)
+		pageHandler(data)
 		{
 			return new Promise((resolve) => {
-				/** @type {imV2RecentCopilotResult} */
-				const data = response.data();
 				this.logger.info(`${this.constructor.name}.pageHandler data:`, data);
 				this.recentService.pageNavigation.turnPage();
 
@@ -307,19 +294,6 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			});
 
 			this.updateItems(recentList);
-		}
-
-		recentDeleteHandler(mutation)
-		{
-			this.renderer.removeFromQueue(mutation.payload.data.id);
-
-			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
-			{
-				this.view.hideLoader();
-			}
-
-			this.checkEmpty();
 		}
 
 		dialogUpdateHandler(mutation)

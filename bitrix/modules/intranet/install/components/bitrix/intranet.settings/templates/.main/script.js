@@ -4916,12 +4916,14 @@ this.BX = this.BX || {};
 	var _getButtonPartners = /*#__PURE__*/new WeakSet();
 	var _getButtonCreate = /*#__PURE__*/new WeakSet();
 	var _bindButtonEvents = /*#__PURE__*/new WeakSet();
+	var _bindSliderCloseEvent = /*#__PURE__*/new WeakSet();
 	var MainpagePage = /*#__PURE__*/function (_BaseSettingsPage) {
 	  babelHelpers.inherits(MainpagePage, _BaseSettingsPage);
 	  function MainpagePage() {
 	    var _this;
 	    babelHelpers.classCallCheck(this, MainpagePage);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MainpagePage).call(this));
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _bindSliderCloseEvent);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _bindButtonEvents);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _getButtonCreate);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _getButtonPartners);
@@ -5096,6 +5098,7 @@ this.BX = this.BX || {};
 	        }).render());
 	      }
 	      _classPrivateMethodGet$f(this, _bindButtonEvents, _bindButtonEvents2).call(this);
+	      _classPrivateMethodGet$f(this, _bindSliderCloseEvent, _bindSliderCloseEvent2).call(this);
 	      secondarySection.renderTo(contentNode);
 	      section.renderTo(contentNode);
 	    }
@@ -5332,7 +5335,7 @@ this.BX = this.BX || {};
 	          main_core.ajax.runAction('intranet.mainpage.publish').then(function () {
 	            _this5.emit('publish');
 	            if (babelHelpers.classPrivateFieldGet(_this5, _urlPublic)) {
-	              window.top.location = babelHelpers.classPrivateFieldGet(_this5, _urlPublic);
+	              babelHelpers.classPrivateFieldSet(_this5, _isPublished, true);
 	            }
 	          });
 	          babelHelpers.classPrivateFieldGet(_this5, _popupShare).close();
@@ -5382,6 +5385,7 @@ this.BX = this.BX || {};
 	          main_core.Dom.replace(innerWrapper, newTemplate);
 	          main_core.ajax.runAction('intranet.mainpage.withdraw').then(function () {
 	            _this6.emit('withdraw');
+	            babelHelpers.classPrivateFieldSet(_this6, _isPublished, false);
 	          });
 	          babelHelpers.classPrivateFieldGet(_this6, _popupWithdraw).close();
 	          BX.UI.Analytics.sendData({
@@ -5526,6 +5530,16 @@ this.BX = this.BX || {};
 	    _classPrivateMethodGet$f(_this7, _showSharePopup, _showSharePopup2).call(_this7);
 	  });
 	  main_core.Event.bind(_classPrivateMethodGet$f(this, _getButtonWithdraw, _getButtonWithdraw2).call(this), 'click', _classPrivateMethodGet$f(this, _showWithdrawPopup, _showWithdrawPopup2).bind(this));
+	}
+	function _bindSliderCloseEvent2() {
+	  var _this8 = this;
+	  var isPublishedBefore = babelHelpers.classPrivateFieldGet(this, _isPublished);
+	  main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onClose', function () {
+	    if (babelHelpers.classPrivateFieldGet(_this8, _isPublished) !== isPublishedBefore) {
+	      var location = babelHelpers.classPrivateFieldGet(_this8, _isPublished) ? babelHelpers.classPrivateFieldGet(_this8, _urlPublic) : '/';
+	      window.top.location = location;
+	    }
+	  });
 	}
 
 	function _classPrivateFieldInitSpec$m(obj, privateMap, value) { _checkPrivateRedeclaration$r(obj, privateMap); privateMap.set(obj, value); }

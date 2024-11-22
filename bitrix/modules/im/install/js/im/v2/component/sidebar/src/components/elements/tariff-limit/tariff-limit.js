@@ -68,14 +68,14 @@ export const TariffLimit = {
 		},
 		sendAnalyticsOnClick()
 		{
-			Analytics.getInstance().onSidebarHistoryLimitBannerClick({
+			Analytics.getInstance().historyLimit.onSidebarBannerClick({
 				dialogId: this.dialogId,
 				panel: this.panel,
 			});
 		},
 		sendAnalyticsOnCreate()
 		{
-			Analytics.getInstance().onSidebarHistoryLimitExceeded({
+			Analytics.getInstance().historyLimit.onSidebarLimitExceeded({
 				dialogId: this.dialogId,
 				panel: this.panel,
 			});

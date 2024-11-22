@@ -65,6 +65,7 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 			ShowError($message);
 		}
 	}
+
 	return;
 }
 ?>

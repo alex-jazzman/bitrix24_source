@@ -18,6 +18,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
 	const { Loc } = require('loc');
 	const { Feature } = require('feature');
+	const { qrauth } = require('qrauth/utils');
 
 	const CACHE_ID = 'DETAIL_CARD';
 	const TAB_HEADER_HEIGHT = Feature.isAirStyleSupported() ? 50 : 44;

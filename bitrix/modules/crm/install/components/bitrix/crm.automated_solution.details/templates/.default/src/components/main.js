@@ -1,8 +1,12 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Dom, Type } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { sendData as sendAnalyticsData } from 'ui.analytics';
+import { createSaveAnalyticsBuilder, wrapPromiseInAnalytics } from '../helpers/analytics';
 import type { Error } from '../store';
 import { CommonTab } from './tabs/common-tab';
 import { TypesTab } from './tabs/types-tab';
+
 import '../css/main.css';
 
 export const Main = {
@@ -21,6 +25,8 @@ export const Main = {
 				common: this.initialActiveTabId === 'common',
 				types: this.initialActiveTabId === 'types',
 			},
+
+			isCancelEventAlreadyRegistered: false,
 		};
 	},
 
@@ -52,6 +58,10 @@ export const Main = {
 
 			return buttons;
 		},
+		slider(): BX.SidePanel.Slider
+		{
+			return BX.SidePanel.Instance.getSliderByWindow(window);
+		},
 
 		errors(): Error[]
 		{
@@ -62,6 +72,12 @@ export const Main = {
 		{
 			return Type.isArrayFilled(this.errors);
 		},
+
+		// eslint-disable-next-line max-len
+		analyticsBuilder(): Builder.Automation.AutomatedSolution.CreateEvent | Builder.Automation.AutomatedSolution.EditEvent
+		{
+			return createSaveAnalyticsBuilder(this.$store);
+		},
 	},
 
 	mounted()
@@ -69,6 +85,9 @@ export const Main = {
 		EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:showTab', this.showTabFromEvent);
 		EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:save', this.save);
 		EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:delete', this.delete);
+		EventEmitter.subscribe('BX.Crm.AutomatedSolution.Details:close', this.onCloseByCancelButton);
+		EventEmitter.subscribe('SidePanel.Slider:onCloseByEsc', this.onCloseByEsc);
+		EventEmitter.subscribe('SidePanel.Slider:onClose', this.onClose);
 	},
 
 	beforeUnmount()
@@ -76,6 +95,9 @@ export const Main = {
 		EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:showTab', this.showTabFromEvent);
 		EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:save', this.save);
 		EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:delete', this.delete);
+		EventEmitter.unsubscribe('BX.Crm.AutomatedSolution.Details:close', this.onCloseByCancelButton);
+		EventEmitter.unsubscribe('SidePanel.Slider:onCloseByEsc', this.onCloseByEsc);
+		EventEmitter.unsubscribe('SidePanel.Slider:onClose', this.onClose);
 	},
 
 	methods: {
@@ -102,8 +124,15 @@ export const Main = {
 
 		save(): void
 		{
-			this.$store.dispatch('save')
+			const builder = this.analyticsBuilder
+				.setElement(Dictionary.ELEMENT_CREATE_BUTTON)
+			;
+
+			wrapPromiseInAnalytics(this.$store.dispatch('save'), builder)
 				.then(() => {
+					// don't register cancel event when this slider closes
+					this.isCancelEventAlreadyRegistered = true;
+
 					this.$Bitrix.Application.get().closeSliderOrRedirect();
 				})
 				.catch(() => {}) // errors will be displayed reactively
@@ -113,13 +142,95 @@ export const Main = {
 
 		delete(): void
 		{
-			this.$store.dispatch('delete')
+			const builder = (new Builder.Automation.AutomatedSolution.DeleteEvent())
+				.setId(this.$store.state.automatedSolution.id)
+				.setElement(Dictionary.ELEMENT_DELETE_BUTTON)
+			;
+
+			// don't register cancel event when this slider closes.
+			// we set this flag here because for some reason slider starts to close before the promise is resolved
+			this.isCancelEventAlreadyRegistered = true;
+
+			wrapPromiseInAnalytics(this.$store.dispatch('delete'), builder)
 				.then(() => {
 					this.$Bitrix.Application.get().closeSliderOrRedirect();
 				})
-				.catch(() => {}) // errors will be displayed reactively
+				.catch(() => {
+					// errors will be displayed reactively
+
+					// okay, may be the slider won't be closed after all since we've failed
+					this.isCancelEventAlreadyRegistered = false;
+				})
 				.finally(() => this.unlockButtons())
 			;
+		},
+
+		onCloseByCancelButton(): void
+		{
+			if (this.isCancelEventAlreadyRegistered)
+			{
+				return;
+			}
+
+			this.isCancelEventAlreadyRegistered = true;
+
+			sendAnalyticsData(
+				this.analyticsBuilder
+					.setElement(Dictionary.ELEMENT_CANCEL_BUTTON)
+					.setStatus(Dictionary.STATUS_CANCEL)
+					.buildData()
+				,
+			);
+		},
+
+		onCloseByEsc(event: BaseEvent<BX.SidePanel.Event[]>): void
+		{
+			if (this.isCancelEventAlreadyRegistered)
+			{
+				return;
+			}
+
+			const [sliderEvent] = event.getData();
+
+			if (sliderEvent.getSlider() !== this.slider)
+			{
+				return;
+			}
+
+			this.isCancelEventAlreadyRegistered = true;
+
+			sendAnalyticsData(
+				this.analyticsBuilder
+					.setElement(Dictionary.ELEMENT_ESC_BUTTON)
+					.setStatus(Dictionary.STATUS_CANCEL)
+					.buildData()
+				,
+			);
+		},
+
+		onClose(event: BaseEvent<BX.SidePanel.Event[]>): void
+		{
+			if (this.isCancelEventAlreadyRegistered)
+			{
+				return;
+			}
+
+			const [sliderEvent] = event.getData();
+
+			if (sliderEvent.getSlider() !== this.slider)
+			{
+				return;
+			}
+
+			this.isCancelEventAlreadyRegistered = true;
+
+			sendAnalyticsData(
+				this.analyticsBuilder
+					.setElement(null)
+					.setStatus(Dictionary.STATUS_CANCEL)
+					.buildData()
+				,
+			);
 		},
 
 		unlockButtons(): void

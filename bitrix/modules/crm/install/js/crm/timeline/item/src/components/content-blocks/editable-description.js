@@ -1,6 +1,5 @@
-import { CopilotTextarea, Events as CopilotTextareaEvents } from 'crm.ai.copilot-textarea';
-import { Browser, Loc, Runtime, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Loc, Runtime, Text, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 
 import { Action } from '../../action';
@@ -9,10 +8,14 @@ import { ButtonState } from '../enums/button-state';
 import { ButtonType } from '../enums/button-type';
 import { EditableDescriptionHeight } from '../enums/editable-description-height';
 import { EditableDescriptionBackgroundColor } from '../enums/editable-description-background-color';
+import { TextEditorComponent, BasicEditor } from 'ui.text-editor';
+import { HtmlFormatterComponent } from 'ui.bbcode.formatter.html-formatter';
 
 export const EditableDescription = {
 	components: {
 		Button,
+		TextEditorComponent,
+		HtmlFormatterComponent,
 	},
 	props: {
 		text: {
@@ -48,25 +51,24 @@ export const EditableDescription = {
 		copilotSettings: {
 			type: Object,
 			required: false,
-			default: null,
+			default: [],
 		},
+	},
+
+	beforeCreate()
+	{
+		this.textEditor = null;
 	},
 
 	data(): Object
 	{
 		return {
-			value: this.text,
-			oldValue: this.text,
 			isEdit: false,
 			isSaving: false,
 			isLongText: false,
 			isCollapsed: false,
-			isCopilotEnabled: Type.isPlainObject(this.copilotSettings),
-			placeholderText: Loc.getMessage(
-				Type.isPlainObject(this.copilotSettings)
-					? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT'
-					: 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER',
-			),
+			bbcode: this.text,
+			isContentEmpty: Type.isString(this.text) && this.text.trim() === '',
 		};
 	},
 
@@ -140,9 +142,7 @@ export const EditableDescription = {
 
 		saveTextButtonState(): string
 		{
-			const trimValue = this.value.trim();
-
-			if (trimValue.length === 0)
+			if (this.isContentEmpty)
 			{
 				return ButtonState.DISABLED;
 			}
@@ -171,17 +171,10 @@ export const EditableDescription = {
 	methods: {
 		startEditing(): void
 		{
-			this.destroyCopilot();
-
 			this.isEdit = true;
 			this.isCollapsed = true;
 			this.$nextTick(() => {
-				const textarea = this.$refs.textarea;
-
-				this.createCopilot(textarea);
-				this.adjustHeight(textarea);
-
-				textarea.focus();
+				this.getTextEditor().focus(null, { defaultSelection: 'rootEnd' });
 			});
 
 			this.emitEvent('EditableDescription:StartEdit');
@@ -203,17 +196,6 @@ export const EditableDescription = {
 			elem.style.height = `${elem.scrollHeight}px`;
 		},
 
-		onPressEnter(event): void
-		{
-			if (
-				event.ctrlKey === true
-				|| (Browser.isMac() && (event.metaKey === true || event.altKey === true))
-			)
-			{
-				this.saveText();
-			}
-		},
-
 		saveText(): void
 		{
 			if (
@@ -225,20 +207,21 @@ export const EditableDescription = {
 				return;
 			}
 
-			if (this.value.trim() === this.oldValue)
+			const encodedTrimText = this.getTextEditor().getText().trim();
+			if (encodedTrimText === this.bbcode)
 			{
 				this.isEdit = false;
 				this.emitEvent('EditableDescription:FinishEdit');
+
+				return;
 			}
 
 			this.isSaving = true;
-			const encodedTrimText = this.value.trim();
 
 			// eslint-disable-next-line promise/catch-or-return
 			this.executeSaveAction(encodedTrimText).then(() => {
 				this.isEdit = false;
-				this.oldValue = encodedTrimText;
-				this.value = encodedTrimText;
+				this.bbcode = encodedTrimText;
 				this.$nextTick(() => {
 					this.isLongText = this.checkIsLongText();
 				});
@@ -251,11 +234,6 @@ export const EditableDescription = {
 		executeSaveAction(text: string): ?Promise
 		{
 			if (!this.saveAction)
-			{
-				return;
-			}
-
-			if (!this.value)
 			{
 				return;
 			}
@@ -279,7 +257,6 @@ export const EditableDescription = {
 				return;
 			}
 
-			this.value = this.oldValue;
 			this.isEdit = false;
 			this.emitEvent('EditableDescription:FinishEdit');
 		},
@@ -290,13 +267,33 @@ export const EditableDescription = {
 			{
 				return;
 			}
-			this.value = '';
-			this.$refs.textarea.focus();
+
+			this.getTextEditor().clear();
+			this.getTextEditor().focus(null, { defaultSelection: 'rootEnd' });
 		},
 
 		copyText(): void
 		{
-			const isSuccess = BX.clipboard.copy(this.value);
+			const selection = window.getSelection();
+			selection.removeAllRanges();
+
+			const range = document.createRange();
+			const referenceNode = this.$refs.text;
+			range.selectNodeContents(referenceNode);
+			selection.addRange(range);
+
+			let isSuccess = false;
+			try
+			{
+				isSuccess = document.execCommand('copy');
+			}
+			catch (err)
+			{
+				// just in case
+			}
+
+			selection.removeAllRanges();
+
 			if (isSuccess)
 			{
 				new Popup({
@@ -354,61 +351,62 @@ export const EditableDescription = {
 			);
 		},
 
-		onCopilotTextareaValueChange(event: BaseEvent): void
+		getTextEditor(): BasicEditor
 		{
-			const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
-			const id = event.getData().id;
-
-			if (this.isEdit && copilotId === id)
+			if (this.textEditor !== null)
 			{
-				this.value = event.getData().value;
+				return this.textEditor;
 			}
-		},
 
-		createCopilot(textarea: HTMLElement): void
-		{
-			if (this.isCopilotEnabled)
-			{
-				this.copilotTextarea = new CopilotTextarea({
-					id: Text.getRandom(),
-					target: textarea,
-					copilotParams: this.copilotSettings,
-				});
+			this.textEditor = new BasicEditor({
+				removePlugins: ['BlockToolbar'],
+				maxHeight: 600,
+				content: this.bbcode,
+				paragraphPlaceholder: Loc.getMessage(
+					Type.isPlainObject(this.copilotSettings)
+						? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT'
+						: null,
+				),
+				toolbar: [],
+				floatingToolbar: [
+					'bold', 'italic', 'underline', 'strikethrough',
+					'|',
+					'link', 'copilot',
+				],
+				visualOptions: {
+					colorBackground: 'transparent',
+					borderWidth: '0px',
+					blockSpaceInline: '0px',
+					blockSpaceStack: '0px',
+				},
+				copilot: {
+					copilotOptions: Type.isPlainObject(this.copilotSettings) ? this.copilotSettings : null,
+					triggerBySpace: true,
+				},
+				events: {
+					onMetaEnter: () => {
+						this.saveText();
+					},
+					onEscape: () => {
+						this.cancelEditing();
+					},
+					onEmptyContentToggle: (event: BaseEvent) => {
+						this.isContentEmpty = event.getData().isEmpty;
+					},
+				},
+			});
 
-				EventEmitter.subscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-			}
-		},
-
-		destroyCopilot(): void
-		{
-			if (this.isCopilotEnabled)
-			{
-				EventEmitter.unsubscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-				delete this.copilotTextarea;
-			}
+			return this.textEditor;
 		},
 	},
 
 	watch: {
 		text(newTextValue): void
 		{
-			// update text from push
-			this.value = newTextValue;
-			this.oldValue = newTextValue;
+			this.bbcode = newTextValue;
+
 			this.$nextTick(() => {
 				this.isLongText = this.checkIsLongText();
-			});
-		},
-
-		value(): void
-		{
-			if (!this.isEdit)
-			{
-				return;
-			}
-
-			this.$nextTick(() => {
-				this.adjustHeight(this.$refs.textarea);
 			});
 		},
 
@@ -424,6 +422,23 @@ export const EditableDescription = {
 				});
 			}
 		},
+
+		isSaving(value: boolean): void
+		{
+			if (this.textEditor !== null) // CommentContent uses this method as well
+			{
+				this.getTextEditor().setEditable(!value);
+			}
+		},
+
+		isEdit(value: boolean): void
+		{
+			if (value === false && this.textEditor !== null)
+			{
+				this.textEditor.destroy();
+				this.textEditor = null;
+			}
+		},
 	},
 
 	mounted(): void
@@ -431,11 +446,6 @@ export const EditableDescription = {
 		this.$nextTick(() => {
 			this.isLongText = this.checkIsLongText();
 		});
-	},
-
-	beforeUnmount(): void
-	{
-		this.destroyCopilot();
 	},
 
 	template: `
@@ -458,7 +468,7 @@ export const EditableDescription = {
 					<i class="crm-timeline__editable-text_fixed-icon --clear"></i>
 				</button>
 				<button
-					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
+					v-if="!isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
 					class="crm-timeline__editable-text_edit-btn"
@@ -467,29 +477,16 @@ export const EditableDescription = {
 				</button>
 				<div class="crm-timeline__editable-text_inner">
 					<div class="crm-timeline__editable-text_content">
-						<textarea
+						<TextEditorComponent
 							v-if="isEdit"
-							ref="textarea"
-							v-model="value"
-							:disabled="!isEdit || isSaving"
-							:placeholder="placeholderText"
-							@keydown.esc="cancelEditing"
-							@keydown.enter="onPressEnter"
-							class="crm-timeline__editable-text_text"
-						></textarea>
+							:editor-instance="this.getTextEditor()"
+						/>
 						<span
 							v-else
 							ref="text"
 							class="crm-timeline__editable-text_text"
 						>
-							{{value}}
-						</span>
-						<span
-							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
-							@click="startEditing"
-							class="crm-timeline__editable-text_text-edit-icon"
-						>
-							<span class="crm-timeline__editable-text_edit-icon"></span>
+							<HtmlFormatterComponent :bbcode="bbcode" />
 						</span>
 					</div>
 					<div

@@ -24,6 +24,7 @@ CUtil::InitJSCore(['popup']);
 	'ui.counterpanel',
 	'intranet.invitation-counter',
 	'pull.client',
+	'main.pagination.lazyloadtotalcount',
 ]);
 
 
@@ -157,7 +158,7 @@ $APPLICATION->IncludeComponent(
 				'analyticsLabel[category]' => 'invitation',
 				'analyticsLabel[event]' => 'drawer_open',
 				'analyticsLabel[c_section]' => 'userList',
-			]);?>'
+			]);?>',
 		});
 
 		const filterId = '<?=\CUtil::JSEscape($arResult['FILTER_ID'])?>';
@@ -266,6 +267,7 @@ $APPLICATION->IncludeComponent(
 		});
 		counter.show();
 		<?php endif;?>
+		(new BX.Main.Pagination.Lazyloadtotalcount()).register();
 	});
 </script><?php
 if (

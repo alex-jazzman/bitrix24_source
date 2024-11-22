@@ -1,5 +1,5 @@
 import {RawChat, RawFile, RawMessage, RawPin, RawReaction, RawShortUser, RawUser} from "./sync-list-result";
-import {CommentInfo} from "../../../../model/types/comment";
+import {CommentInfoModelState} from "../../../../model/types/comment";
 
 declare type ImV2ChatPinTailResult = {
 	additionalMessages: Array<RawMessage>,
@@ -23,5 +23,5 @@ declare type ImV2ChatLoadResult = {
 	reminders: [],
 	users: Array<RawUser>,
 	usersShort: Array<RawShortUser>,
-	commentInfo?: Array<CommentInfo>,
+	commentInfo?: Array<CommentInfoModelState>,
 }

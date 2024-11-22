@@ -1,12 +1,6 @@
-import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
-import { Text, Type, Runtime, Loc } from 'main.core';
-import { BaseEvent }  from 'main.core.events';
-import { Loader } from 'main.loader';
-
-import { Content } from './components/content';
-import { Message } from './components/message';
-import { Error } from './components/error';
-import { WidgetOptions } from './internal/types';
+import {WidgetOptions} from './internal/types';
+import {Backend} from 'landing.backend';
+import {Loc, Text, Type, Dom, Event} from 'main.core';
 
 import './css/style.css';
 
@@ -14,198 +8,316 @@ export class WidgetVue
 {
 	static runningAppNodes: Set<HTMLElement> = new Set();
 
-	#rootNode: ?HTMLElement;
-	#data: ?{};
-	#blockId: number;
-	#appId: number;
+	#rootNode: ?HTMLElement = null;
+	#template: string;
+	#lang: {[key: string]: string} = {};
+	#appId: number = 0;
+	#appAllowedByTariff: boolean = true;
+	#fetchable: boolean = false;
+	#clickable: boolean = false;
 
-	#fetchable: boolean;
-	#clickable: boolean;
-	#allowedByTariff: boolean;
+	/**
+	 * Unique string for every widget
+	 * @type {string}
+	 */
+	#uniqueId: string;
+	// #rootContent: ?string = null;
+	#frame: ?Window = null;
 
-	#application: VueCreateAppResult;
-	#contentComponent: Object;
+	#defaultData: ?{} = null;
+	#blockId: number = 0;
+
+	// #application: VueCreateAppResult;
+	// #contentComponent: Object;
+
+	// #widgetOptions: {};
 
 	constructor(options: WidgetOptions): void
 	{
-		this.#rootNode = Type.isString(options.rootNode) ? document.querySelector(options.rootNode) : null;
-		this.#data = Type.isObject(options.data) ? options.data : null;
+		this.#uniqueId = 'widget' + Text.getRandom(8);
 
+		this.#rootNode = Type.isString(options.rootNode)
+			? document.querySelector(options.rootNode)
+			: null
+		;
+
+		this.#template = Type.isString(options.template) ? options.template : '';
+
+		// this.#rootContent = this.#rootNode ? this.#rootNode.innerHTML : null;
+
+		this.#defaultData = Type.isObject(options.data) ? options.data : null;
+		this.#lang = options.lang || {};
 		this.#blockId = options.blockId ? Text.toNumber(options.blockId) : 0;
-		this.#appId = options.appId ? Text.toNumber(options.appId) : 0;
-		this.#contentComponent = Runtime.clone(Content);
 
-		this.#fetchable = options.fetchable || false;
+		// const isEditMode = Type.isFunction(BX.Landing.getMode) && BX.Landing.getMode() === 'edit';
+		// this.#widgetOptions.clickable = !isEditMode;
+
+		this.#appId = options.appId ? Text.toNumber(options.appId) : 0;
+		this.#appAllowedByTariff = (this.#appId && Type.isBoolean(options.appAllowedByTariff))
+			? options.appAllowedByTariff
+			: true
+		;
+
+		this.#fetchable = Type.isBoolean(options.fetchable) ? options.fetchable : false;
 		const isEditMode = Type.isFunction(BX.Landing.getMode) && BX.Landing.getMode() === 'edit';
 		this.#clickable = !isEditMode;
-		this.#allowedByTariff =
-			(this.#appId && Type.isBoolean(options.allowedByTariff))
-				? options.allowedByTariff
-				: true
+	}
+
+	/**
+	 * Create frame with widget content
+	 * @returns {Promise|*}
+	 */
+	mount()
+	{
+		return this.#getFrameContent()
+			.then(srcDoc => {
+				this.#frame = document.createElement('iframe');
+				this.#frame.className = 'landing-widgetvue-iframe';
+				this.#frame.sandbox = 'allow-scripts';
+				this.#frame.srcdoc = srcDoc;
+
+				if (
+					this.#blockId > 0
+					&& this.#rootNode
+					&& !WidgetVue.runningAppNodes.has(this.#rootNode)
+				)
+				{
+					const blockWrapper = this.#rootNode.parentElement;
+					Dom.clean(blockWrapper);
+					Dom.append(this.#frame, blockWrapper);
+
+					this.#bindEvents();
+				}
+			})
 		;
 	}
 
-	mount()
+	#getFrameContent(): Promise<string>
 	{
-		if (
-			this.#blockId > 0
-			&& this.#rootNode
-			&& !WidgetVue.runningAppNodes.has(this.#rootNode)
-		)
+		let content = '';
+
+		const engineParams = {
+			id: this.#uniqueId,
+			origin: window.location.origin,
+			fetchable: this.#fetchable,
+			clickable: this.#clickable,
+		};
+
+		return this.#getCoreConfigs()
+			.then(core => {
+				content += this.#parseExtensionConfig(core);
+				content += this.#parseExtensionConfig({
+					lang_additional: this.#lang,
+				});
+
+				return this.#getAssetsConfigs();
+			})
+
+			.then(assets => {
+				content += this.#parseExtensionConfig(assets);
+
+				if (!this.#appAllowedByTariff)
+				{
+					throw new Error(Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT'));
+				}
+
+				if (this.#defaultData)
+				{
+					return this.#defaultData;
+				}
+
+				return this.#fetchData();
+			})
+
+			.then(data => {
+				engineParams.data = data;
+			})
+
+			.catch(error => {
+				engineParams.error = error.message || 'error';
+			})
+
+			.then(() => {
+				const appInit = `
+					<script>
+						BX.ready(function() {
+							(new BX.Landing.WidgetVue.Engine(
+								${JSON.stringify(engineParams)}
+							)).render();
+						});
+					</script>
+					
+					<div id="${this.#uniqueId}">${this.#template}</div>
+				`;
+
+				content += appInit;
+
+				return content;
+			})
+		;
+	}
+
+	#getCoreConfigs(): Promise<Object>
+	{
+		const extCodes = [
+			'main.core',
+			'ui.design-tokens',
+		];
+		const tplCodes = [
+			'bitrix24',
+		];
+
+		return Backend.getInstance()
+			.action(
+				'Block::getAssetsConfig',
+				{
+					extCodes,
+					tplCodes,
+				},
+			)
+		;
+	}
+
+	#getAssetsConfigs(): Promise<Object>
+	{
+		const extCodes = [
+			'landing.widgetvue.engine',
+		];
+
+		return Backend.getInstance()
+			.action(
+				'Block::getAssetsConfig',
+				{ extCodes },
+			)
+		;
+	}
+
+	#parseExtensionConfig(ext: Object): string
+	{
+		const domain = `${document.location.protocol}//${document.location.host}`;
+		let html = '';
+
+		if (ext.lang_additional !== undefined)
 		{
-			this.loader = new Loader({
-				target: this.#rootNode,
-			});
-			this.#contentComponent.template = this.#rootNode.innerHTML || '';
-			this.#contentComponent.template = `<div>${this.#contentComponent.template}</div>`
-			this.#createApp();
-			WidgetVue.runningAppNodes.add(this.#rootNode);
+			html += `<script>BX.message(${JSON.stringify(ext.lang_additional)})</script>`;
 		}
-	}
 
-	showLoader()
-	{
-		this.loader.show();
-	}
-
-	hideLoader()
-	{
-		this.loader.hide();
-	}
-
-	#createApp(): void
-	{
-		const context = this;
-
-		this.#application = BitrixVue.createApp({
-			name: 'BX widget ' + this.#blockId,
-
-			components: {
-				Message,
-				Error,
-				Content: this.#contentComponent,
-			},
-
-			props: {
-				defaultData: {
-					type: Object,
-					default: null,
-				},
-
-				allowedByTariff: {
-					type: Boolean,
-					default: true,
-				},
-			},
-
-			data() {
-				return {
-					message: null,
-					error: null,
-				};
-			},
-
-			created()
-			{
-				this.$bitrix.eventEmitter.subscribe('landing:widgetvue:startContentLoad', this.onShowLoader);
-				this.$bitrix.eventEmitter.subscribe('landing:widgetvue:endContentLoad', this.onHideLoader);
-				this.$bitrix.eventEmitter.subscribe('landing:widgetvue:onMessage', this.onShowMessage);
-				this.$bitrix.eventEmitter.subscribe('landing:widgetvue:onHideMessage', this.onHideMessage);
-				this.$bitrix.eventEmitter.subscribe('landing:widgetvue:onError', this.onShowError);
-			},
-
-			beforeUnmount()
-			{
-				this.$bitrix.eventEmitter.unsubscribe('landing:widgetvue:startContentLoad', this.onShowLoader);
-				this.$bitrix.eventEmitter.unsubscribe('landing:widgetvue:endContentLoad', this.onHideLoader);
-				this.$bitrix.eventEmitter.unsubscribe('landing:widgetvue:onMessage', this.onShowMessage);
-				this.$bitrix.eventEmitter.unsubscribe('landing:widgetvue:onHideMessage', this.onHideMessage);
-				this.$bitrix.eventEmitter.unsubscribe('landing:widgetvue:onError', this.onShowError);
-			},
-
-			methods: {
-				onShowLoader()
-				{
-					// todo: move loader to comp
-					this.$bitrix.Application.get().showLoader();
-				},
-
-				onHideLoader()
-				{
-					// todo: move loader to comp
-					this.$bitrix.Application.get().hideLoader();
-				},
-
-				onShowMessage(event: BaseEvent)
-				{
-					const message = event.getData()?.message || null;
-					this.message = message
-						? {message: message}
-						: null
-					;
-				},
-
-				onHideMessage()
-				{
-					this.message = null;
-				},
-
-				onShowError(event: BaseEvent)
-				{
-					const message = event.getData()?.message || null;
-					this.error = message
-						? {message: message}
-						: null
-					;
-				},
-			},
-
-			beforeCreate(): void
-			{
-				this.$bitrix.Application.set(context);
-			},
-
-			template: `
-				<Error
-					v-if="!allowedByTariff"
-					message="${Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT')}"
-				>
-				</Error>
-
-				<Suspense v-else>
-					<template #default>
-						<div>
-							<Error
-								v-show="error !== null"
-								v-bind="error && error.message !== null ? error : {}"
-							/>
-							<Message
-								v-show="message !== null"
-								v-bind="message && message.message !== null ? message : {}"
-							/>
-							<Content
-								v-show="message === null && error === null"
-
-								:defaultData="defaultData"
-								:blockId=${this.#blockId}
-								:appId="${this.#appId}"
-								:fetchable=${this.#fetchable}
-								:clickable=${this.#clickable}
-							/>
-						</div>
-					</template>
-
-					<template #fallback>
-						<Message />
-					</template>
-				</Suspense>
-			`,
-		},
-		{
-			defaultData: this.#data,
-			allowedByTariff: this.#allowedByTariff,
+		(ext.js || []).forEach(js => {
+			html += `<script src="${domain}${js}"></script>`;
 		});
 
-		this.#application.mount(this.#rootNode);
+		(ext.css || []).forEach(css => {
+			html += `<link href="${domain}${css}" type="text/css" rel="stylesheet" />`;
+		});
+
+		return html;
+	}
+
+	#fetchData(params = {}): Promise<Object>
+	{
+		if (!this.#fetchable)
+		{
+			console.info('Fetch data is impossible now (haven`t handler)');
+
+			return Promise.resolve({});
+		}
+
+		return Backend.getInstance()
+			.action('RepoWidget::fetchData', {
+				blockId: this.#blockId,
+				params,
+			})
+
+			.then(jsonData => {
+				let data = {};
+				try
+				{
+					data = JSON.parse(jsonData);
+					if (data.error)
+					{
+						throw new Error(Loc.getMessage('LANDING_WIDGETVUE_ERROR_FETCH'), data.error);
+					}
+				}
+				catch (error)
+				{
+					throw new Error(Loc.getMessage('LANDING_WIDGETVUE_ERROR_FETCH'), error);
+				}
+
+				return data;
+			})
+		;
+	}
+
+	#bindEvents()
+	{
+		Event.bind(window, 'message', this.#onMessage.bind(this));
+	}
+
+	#onMessage(event)
+	{
+		if (event.data && event.data.name && event.data.params)
+		{
+			if (event.data.name === 'fetchData')
+			{
+				this.#fetchData(event.data.params)
+					.then(data => {
+						event.source.postMessage(
+							{
+								name: 'setData',
+								params: {
+									data,
+								},
+							},
+							'*',
+						);
+					})
+
+					.catch(error => {
+						event.source.postMessage(
+							{
+								name: 'setError',
+								params: {
+									error,
+								},
+							},
+							'*',
+						);
+					})
+				;
+			}
+
+			if (
+				event.data.name === 'setSize'
+				&& event.data.params.size !== undefined
+			)
+			{
+				this.#frame.height = parseInt(event.data.params.size);
+			}
+
+			if (
+				event.data.name === 'openApplication'
+				&& this.#appId > 0
+			)
+			{
+				const params = Type.isObject(event.data.params) ? event.data.params : {};
+				BX.rest.AppLayout.openApplication(
+					this.#appId,
+					params,
+				);
+			}
+
+			if (
+				event.data.name === 'openPath'
+				&& Type.isString(event.data.path)
+			)
+			{
+				// todo: change open function
+				const url = new URL(event.data.path, window.location.origin);
+				if (url.origin === window.location.origin)
+				{
+					window.open(url.href, '_blank');
+				}
+			}
+		}
 	}
 }

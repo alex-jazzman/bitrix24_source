@@ -55,6 +55,9 @@ jn.define('im/messenger/db/repository/copilot', (require, exports, module) => {
 			return this.copilotTable.add(copilotItemsToAdd, true);
 		}
 
+		/**
+		 * @param {Array<DialogId>} idList
+		 */
 		async deleteByIdList(idList)
 		{
 			return this.copilotTable.deleteByIdList(idList);

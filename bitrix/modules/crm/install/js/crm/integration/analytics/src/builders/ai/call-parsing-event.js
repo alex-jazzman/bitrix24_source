@@ -9,6 +9,8 @@ import type { AICallParsingEvent as CallParsingEventStructure } from '../../type
 export class CallParsingEvent
 {
 	#entityType: string | number | null;
+	#tool: CallParsingEventStructure['tool'] = Dictionary.TOOL_AI;
+	#category: CallParsingEventStructure['category'] = Dictionary.CATEGORY_CRM_OPERATIONS;
 	#type: CallParsingEventStructure['type'] = Dictionary.TYPE_MANUAL;
 	#element: ?CallParsingEventStructure['c_element'];
 	#activityId: number;
@@ -28,6 +30,20 @@ export class CallParsingEvent
 		self.#status = status;
 
 		return self;
+	}
+
+	setTool(tool: CallParsingEventStructure['tool']): CallParsingEvent
+	{
+		this.#tool = tool;
+
+		return this;
+	}
+
+	setCategory(category: CallParsingEventStructure['category']): CallParsingEvent
+	{
+		this.#category = category;
+
+		return this;
 	}
 
 	setType(type: CallParsingEventStructure['type']): CallParsingEvent
@@ -76,8 +92,8 @@ export class CallParsingEvent
 		}
 
 		return filterOutNilValues({
-			tool: Dictionary.TOOL_AI,
-			category: Dictionary.CATEGORY_CRM_OPERATIONS,
+			tool: this.#tool,
+			category: this.#category,
 			event: Dictionary.EVENT_CALL_PARSING,
 			type: this.#type,
 			c_section: Dictionary.SECTION_CRM,

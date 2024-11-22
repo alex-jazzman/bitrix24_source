@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 
 	const { Loc } = require('loc');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType, ComponentCode } = require('im/messenger/const');
+	const { EventType, ComponentCode, OpenDialogContextType } = require('im/messenger/const');
 	const { getFile } = require('files/entry');
 	const { FileConverter } = require('files/converter');
 	const { DialogInfoView } = require('im/messenger/controller/dialog-creator/dialog-info/view');
@@ -232,7 +232,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 								avatar: chat.avatar,
 								color: chat.color,
 							},
-							isNew: true,
+							context: OpenDialogContextType.chatCreation,
 						},
 						ComponentCode.imMessenger,
 					);

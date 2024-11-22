@@ -1,4 +1,5 @@
 import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Menu, Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
 import 'ui.buttons';
@@ -126,6 +127,7 @@ export class MainpagePage extends BaseSettingsPage
 		}
 
 		this.#bindButtonEvents();
+		this.#bindSliderCloseEvent();
 
 		secondarySection.renderTo(contentNode);
 		section.renderTo(contentNode);
@@ -518,7 +520,7 @@ export class MainpagePage extends BaseSettingsPage
 								this.emit('publish');
 								if (this.#urlPublic)
 								{
-									window.top.location = this.#urlPublic;
+									this.#isPublished = true;
 								}
 							});
 
@@ -578,6 +580,7 @@ export class MainpagePage extends BaseSettingsPage
 							Dom.replace(innerWrapper, newTemplate);
 							Ajax.runAction('intranet.mainpage.withdraw').then(() => {
 								this.emit('withdraw');
+								this.#isPublished = false;
 							});
 
 							this.#popupWithdraw.close();
@@ -818,6 +821,26 @@ export class MainpagePage extends BaseSettingsPage
 			this.#showSharePopup()
 		});
 		Event.bind(this.#getButtonWithdraw(), 'click', this.#showWithdrawPopup.bind(this));
+	}
+
+	#bindSliderCloseEvent()
+	{
+		const isPublishedBefore = this.#isPublished;
+
+		EventEmitter.subscribe(
+			EventEmitter.GLOBAL_TARGET,
+			'SidePanel.Slider:onClose',
+			() => {
+				if (this.#isPublished !== isPublishedBefore)
+				{
+					const location = this.#isPublished
+						? this.#urlPublic
+						: '/'
+					;
+					window.top.location = location;
+				}
+			}
+		);
 	}
 
 	renderLockElement(): HTMLElement

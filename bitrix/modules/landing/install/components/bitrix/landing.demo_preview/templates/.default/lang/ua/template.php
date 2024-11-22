@@ -1,15 +1,21 @@
 <?php
 $MESS["LANDING_404_ERROR"] = "Шаблон не знайдений";
 $MESS["LANDING_LOADER_WAIT_MSGVER_1"] = "Зачекайте трохи, триває створення інтернет-магазину...";
+$MESS["LANDING_PREVIEW_MAINPAGE_BUTTON_CANCEL_TEXT"] = "Скасувати";
+$MESS["LANDING_PREVIEW_MAINPAGE_BUTTON_OK_TEXT"] = "Так, установити";
+$MESS["LANDING_PREVIEW_MAINPAGE_MESSAGE"] = "У вас уже є шаблон головної сторінки. Установлення нового шаблону видалить поточний разом з усіма змінами. Відновити його не вийде.";
+$MESS["LANDING_PREVIEW_MAINPAGE_TITLE"] = "Видалити поточний шаблон та імпортувати новий?";
 $MESS["LANDING_TPL_BUTTON_CANCEL"] = "Скасувати";
 $MESS["LANDING_TPL_BUTTON_CREATE"] = "Створити";
 $MESS["LANDING_TPL_BUTTON_CREATE_KB"] = "Створити базу знань";
 $MESS["LANDING_TPL_BUTTON_CREATE_PAGE"] = "Створити сторінку";
 $MESS["LANDING_TPL_BUTTON_CREATE_SITE"] = "Створити сайт";
 $MESS["LANDING_TPL_BUTTON_CREATE_STORE"] = "Створити магазин";
+$MESS["LANDING_TPL_BUTTON_REPLACE_PAGE"] = "Застосувати шаблон";
 $MESS["LANDING_TPL_BUTTON_SHOW_IN_MOBILE"] = "Відкрити на мобільному пристрої";
 $MESS["LANDING_TPL_HEADER_LOGO_BITRIX"] = "Бітрікс";
 $MESS["LANDING_TPL_HEADER_LOGO_KB"] = "Бази знань";
+$MESS["LANDING_TPL_HEADER_LOGO_MAINPAGE"] = "Вайб";
 $MESS["LANDING_TPL_HEADER_LOGO_SITE"] = "Сайти";
 $MESS["LANDING_TPL_HEADER_RIGHT_CREATE_HINT_MSGVER_1"] = "У вас немає прав на створення сайтів. Зв'яжіться з адміністратором порталу.";
 $MESS["LANDING_TPL_MY_COLOR"] = "Свій колір";

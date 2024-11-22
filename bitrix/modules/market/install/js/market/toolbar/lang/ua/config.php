@@ -11,3 +11,4 @@ $MESS["MARKET_TOOLBAR_JS_MARKET_TOTAL_APPS"] = "Кількість застос�
 $MESS["MARKET_TOOLBAR_JS_MORE"] = "Ще";
 $MESS["MARKET_TOOLBAR_JS_NO_SEARCH_RESULT"] = "За вашим запитом нічого не знайдено.";
 $MESS["MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER"] = "Шукати в Бітрікс24.Маркет?";
+$MESS["MARKET_TOOLBAR_JS_SEARCH_RESULT_COUNT"] = "Знайдено результатів: #RESULT_COUNT#";

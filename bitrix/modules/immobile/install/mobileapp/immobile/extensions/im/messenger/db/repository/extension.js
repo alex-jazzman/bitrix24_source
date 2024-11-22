@@ -4,6 +4,7 @@
 jn.define('im/messenger/db/repository', (require, exports, module) => {
 	const { OptionRepository } = require('im/messenger/db/repository/option');
 	const { RecentRepository } = require('im/messenger/db/repository/recent');
+	const { CounterRepository } = require('im/messenger/db/repository/counter');
 	const { DialogRepository } = require('im/messenger/db/repository/dialog');
 	const { DialogInternalRepository } = require('im/messenger/db/repository/internal/dialog');
 	const { UserRepository } = require('im/messenger/db/repository/user');
@@ -20,6 +21,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 	module.exports = {
 		OptionRepository,
 		RecentRepository,
+		CounterRepository,
 		DialogRepository,
 		DialogInternalRepository,
 		UserRepository,

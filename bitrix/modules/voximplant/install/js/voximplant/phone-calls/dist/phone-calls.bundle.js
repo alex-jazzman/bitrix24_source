@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_events,main_core,im_v2_lib_desktopApi,main_popup,ui_dialogs_messagebox) {
+(function (exports,intranet_desktopDownload,main_core_events,main_core,im_v2_lib_desktopApi,main_popup,ui_dialogs_messagebox) {
 	'use strict';
 
 	var baseZIndex = 15000;
@@ -6800,7 +6800,7 @@ this.BX = this.BX || {};
 	        okCaption: main_core.Loc.getMessage('IM_M_CALL_BTN_DOWNLOAD'),
 	        cancelCaption: main_core.Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
 	        onOk: function onOk() {
-	          var url = main_core.Browser.isMac() ? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "http://dl.bitrix24.com/b24/bitrix24_desktop.exe";
+	          var url = intranet_desktopDownload.DesktopDownload.getLinkForCurrentUser();
 	          window.open(url, "desktopApp");
 	          return true;
 	        }
@@ -8499,5 +8499,5 @@ this.BX = this.BX || {};
 	exports.PhoneCallView = PhoneCallView;
 	exports.BackgroundWorker = BackgroundWorker;
 
-}((this.BX.Voximplant = this.BX.Voximplant || {}),BX.Event,BX,BX.Messenger.v2.Lib,BX.Main,BX.UI.Dialogs));
+}((this.BX.Voximplant = this.BX.Voximplant || {}),BX.Intranet,BX.Event,BX,BX.Messenger.v2.Lib,BX.Main,BX.UI.Dialogs));
 //# sourceMappingURL=phone-calls.bundle.js.map

@@ -15,12 +15,13 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/view', (require, expo
 	const { SidebarFileType } = require('im/messenger/const');
 	const { icon } = require('im/messenger/controller/sidebar/lib/assets/icons');
 	const { SidebarTab } = require('im/messenger/const');
+	const { BaseSidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/base/view');
 
 	/**
 	 * @class SidebarFilesView
 	 * @typedef {LayoutComponent<SidebarFilesViewProps, SidebarFilesViewState>} SidebarFilesView
 	 */
-	class SidebarFilesView extends LayoutComponent
+	class SidebarFilesView extends BaseSidebarTabView
 	{
 		#core;
 		#store;
@@ -32,13 +33,13 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/view', (require, expo
 		constructor(props)
 		{
 			super(props);
+
 			this.#core = serviceLocator.get('core');
 			this.#store = this.#core.getStore();
 			this.#storeManager = this.#core.getStoreManager();
 			const dialog = this.#store.getters['dialoguesModel/getById'](props.dialogId);
-			this.#chatId = dialog.chatId;
+			this.#chatId = dialog?.chatId;
 			this.#filesService = new SidebarFilesService(this.#chatId);
-			this.#listViewRef = null;
 			this.isHistoryLimitExceeded = this.#store.getters['sidebarModel/sidebarFilesModel/isHistoryLimitExceeded'](this.#chatId, SidebarFileType.document);
 
 			this.state = {
@@ -50,26 +51,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/view', (require, expo
 				enable: false,
 				text: '',
 			});
-
-			this.#bindListener();
-			this.#updateFilesFromStore();
 		}
 
 		componentDidMount()
 		{
-			logger.log(`${this.constructor.name}.componentDidMount`);
-			this.#subscribeStoreEvents();
-		}
-
-		componentDidUpdate()
-		{
-			logger.log(`${this.constructor.name}.componentDidUpdate`);
-		}
-
-		componentWillUnmount()
-		{
-			logger.log(`${this.constructor.name}.componentWillUnmount`);
-			this.#unsubscribeStoreEvents();
+			super.componentDidMount();
+			this.#updateFilesFromStore();
 		}
 
 		render()
@@ -247,12 +234,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/view', (require, expo
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		#bindListener()
+		bindListener()
 		{
+			super.bindListener();
 			this.onSetHistoryLimitExceeded = this.#onSetHistoryLimitExceeded.bind(this);
 			this.onSetSidebarFilesStore = this.#onSetSidebarFilesStore.bind(this);
 			this.onDeleteSidebarFilesStore = this.#onDeleteSidebarFilesStore.bind(this);
-			this.unsubscribeStoreEvents = this.#unsubscribeStoreEvents.bind(this);
 		}
 
 		/**
@@ -376,7 +363,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/view', (require, expo
 			}
 		}
 
-		#subscribeStoreEvents()
+		subscribeStoreEvents()
 		{
 			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
 			this.#storeManager.on('sidebarModel/sidebarFilesModel/setHistoryLimitExceeded', this.onSetHistoryLimitExceeded);
@@ -384,7 +371,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/view', (require, expo
 			this.#storeManager.on('sidebarModel/sidebarFilesModel/delete', this.onDeleteSidebarFilesStore);
 		}
 
-		#unsubscribeStoreEvents()
+		unsubscribeStoreEvents()
 		{
 			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
 			this.#storeManager.off('sidebarModel/sidebarFilesModel/setHistoryLimitExceeded', this.onSetHistoryLimitExceeded);
@@ -427,6 +414,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/view', (require, expo
 			return [...map]
 				.map(([_, value]) => (value))
 				.sort((a, b) => new Date(b.dateCreate).getTime() - new Date(a.dateCreate).getTime());
+		}
+
+		scrollToBegin()
+		{
+			this.#listViewRef?.scrollToBegin(true);
 		}
 	}
 

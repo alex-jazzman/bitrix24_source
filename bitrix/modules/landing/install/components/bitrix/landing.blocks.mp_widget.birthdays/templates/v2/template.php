@@ -142,7 +142,7 @@ $sidebarUsers = array_slice($arResult['USERS'], 0, 4);
 			const widgetElement = document.querySelector('#<?= $id ?>');
 			if (widgetElement)
 			{
-				new BX.Landing.Widget.BirthdaysWidgetV2(widgetElement);
+				new BX.Landing.Widget.BirthdaysV2(widgetElement);
 			}
 		}
 	});

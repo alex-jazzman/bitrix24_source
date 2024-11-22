@@ -150,7 +150,7 @@ jn.define('communication/menu', (require, exports, module) => {
 		getInfoSection(actions)
 		{
 			const hasClientActions = actions.some((action) => action.sectionCode === CLIENT_ACTIONS_CODE);
-			if (hasClientActions)
+			if (hasClientActions && !this.hasHiddenValues())
 			{
 				const { ownerTypeName } = this.ownerInfo;
 				const messagePrefix = 'M_CRM_COMMUNICATION_MENU_INFO_TITLE';
@@ -332,12 +332,7 @@ jn.define('communication/menu', (require, exports, module) => {
 		 */
 		createItem(params)
 		{
-			const { type, id: entityId, title: entityTitle = '', connectionType } = params;
-
-			if (!get(this.permissions, [type, 'read'], true))
-			{
-				return null;
-			}
+			const { type, id: entityId, title: entityTitle = '', connectionType, hidden = false } = params;
 
 			const itemValue = params[connectionType];
 			if (!itemValue)
@@ -356,7 +351,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				return null;
 			}
 
-			const title = this.getTitle(itemValue, connectionType);
+			const title = hidden ? Loc.getMessage('M_CRM_COMMUNICATION_HIDDEN') : this.getTitle(itemValue, connectionType);
 			if (!Type.isStringFilled(title))
 			{
 				return null;
@@ -371,7 +366,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				id: `${sectionCode}_${connectionType}`,
 				sectionCode,
 				title,
-				subtitle: this.getSubtitle(complexName, value, connectionType),
+				subtitle: hidden ? null : this.getSubtitle(complexName, value, connectionType),
 				isSelected,
 				showSelectedImage,
 				data: {
@@ -486,6 +481,7 @@ jn.define('communication/menu', (require, exports, module) => {
 					return {
 						number: typeof connectionValue === 'string' ? connectionValue : connectionValue.value,
 						params,
+						isNumberHidden: menuValue.hidden,
 					};
 				}
 
@@ -501,6 +497,7 @@ jn.define('communication/menu', (require, exports, module) => {
 						params: {
 							owner: { ownerType, ownerId },
 						},
+						isEmailHidden: menuValue.hidden,
 					};
 				}
 
@@ -587,6 +584,17 @@ jn.define('communication/menu', (require, exports, module) => {
 			}
 
 			return this.additionalItems;
+		}
+
+		hasHiddenValues()
+		{
+			const entityTypeOrder = this.clientOptions.map(({ entityTypeName }) => entityTypeName);
+
+			return entityTypeOrder.some((entityType) => {
+				const clientValues = this.value[entityType];
+
+				return Array.isArray(clientValues) && clientValues.find((value) => value.hidden);
+			});
 		}
 	}
 

@@ -127,14 +127,21 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 				required,
 				textAreaStyle,
 				useBBCodeEditor,
-				bbCodeEditorParams,
+				bbCodeEditorParams = {},
 				parentWidget,
 			} = this.props.editorProps;
+			const { value } = this.props;
 
 			if (useBBCodeEditor)
 			{
 				const editorParams = {
 					...bbCodeEditorParams,
+					title,
+					textInput: {
+						...bbCodeEditorParams.textInput,
+						placeholder,
+					},
+					value,
 					readOnly: (!bbCodeEditorParams.readOnly && isOffline() ? true : bbCodeEditorParams.readOnly),
 					onSave: ({ bbcode, files }) => {
 						if (this.props.onSave)
@@ -158,7 +165,7 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 			TextEditor.open({
 				title,
 				parentWidget,
-				text: this.props.value,
+				text: value,
 				required,
 				placeholder,
 				textAreaStyle,

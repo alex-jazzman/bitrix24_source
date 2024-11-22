@@ -25,6 +25,8 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")." 
 	'ui.icon-set.actions',
 	'ui.forms',
 	'ui.tooltip',
+	"ui.dialogs.messagebox",
+	'ui.icons.b24',
 ]);
 
 $htmlId = 'lists-element-creation-guide';
@@ -196,7 +198,7 @@ $includeFormComponent = static function(array $tab) {
 <div class="list-el-cg">
 	<div class="list-el-cg__header">
 		<div class="list-el-cg__header-icon">
-			<div class="ui-icon-set --smart-process" style="--ui-icon-set__icon-size: 48px; --ui-icon-set__icon-color: #fff;"></div>
+			<div class="ui-icon-set --bp" style="--ui-icon-set__icon-size: 48px; --ui-icon-set__icon-color: #fff;"></div>
 		</div>
 		<div class="list-el-cg__header-content">
 			<div class="list-el-cg__header__title"><?= htmlspecialcharsbx(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_TITLE')) ?></div>

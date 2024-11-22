@@ -10,11 +10,11 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 	const { sidebarLinksModel } = require('im/messenger/model/sidebar/links/links');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
-	const elementState = {
+	const sidebarDefaultElement = Object.freeze({
 		dialogId: '0',
 		isMute: false,
 		isHistoryLimitExceeded: false,
-	};
+	});
 
 	/**
 	 *
@@ -105,7 +105,7 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 							actionName: 'set',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...elementState, ...element },
+								fields: { ...sidebarDefaultElement, ...element },
 							},
 						});
 					}
@@ -127,7 +127,7 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 							actionName: 'add',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...elementState, ...element },
+								fields: { ...sidebarDefaultElement, ...element },
 							},
 						});
 					}
@@ -329,5 +329,5 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 		},
 	};
 
-	module.exports = { sidebarModel };
+	module.exports = { sidebarModel, sidebarDefaultElement };
 });

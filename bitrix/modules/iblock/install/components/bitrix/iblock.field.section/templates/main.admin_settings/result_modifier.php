@@ -1,6 +1,9 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Iblock\UserField\Types\SectionType;
 use Bitrix\Main\Text\HtmlFilter;
@@ -40,11 +43,6 @@ else
 	$listHeight = 5;
 }
 
-if (!in_array($display, [SectionType::DISPLAY_LIST, SectionType::DISPLAY_CHECKBOX], true))
-{
-	$display = SectionType::DISPLAY_LIST;
-}
-
 /**
  * @var $component SectionUfComponent
  */
@@ -79,9 +77,10 @@ if($component->isIblockIncluded())
 		);
 
 		$options = [];
-		while($section = $sections->GetNext())
+		while ($section = $sections->GetNext())
 		{
-			$options[$section['ID']] = str_repeat('&nbsp;.&nbsp;', $section['DEPTH_LEVEL']) . $section['NAME'];
+			$margin = max((int)$section['DEPTH_LEVEL'], 1);
+			$options[$section['ID']] = str_repeat('&nbsp;.&nbsp;', $margin) . $section['NAME'];
 		}
 
 		$arResult['options'] = $options;

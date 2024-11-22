@@ -1,6 +1,7 @@
 import { Type, Loc } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { ErrorCollection } from 'ui.form-elements.field';
+import { Popup } from 'main.popup';
 
 export type SetSortType = {
 	menuId: ?string,

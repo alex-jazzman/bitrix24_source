@@ -1,0 +1,4 @@
+<?php
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_BUTTON_CLOSE_TITLE"] = "Закрити";
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_DESCRIPTION"] = "Документ [COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]#DOCUMENT_TITLE#[/COLOR] більше не доступний для підписання.";
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_TITLE"] = "Підписання скасовано";

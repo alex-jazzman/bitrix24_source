@@ -5,6 +5,7 @@ import { BaseMessage } from 'im.v2.component.message.base';
 
 import './css/chat-creation-message.css';
 
+import { Analytics } from 'im.v2.lib.analytics';
 import type { CustomColorScheme } from 'im.v2.component.elements';
 import { CallManager } from 'im.v2.lib.call';
 import type { ImModelMessage } from 'im.v2.model';
@@ -130,6 +131,13 @@ export const ChatCreationMessage = {
 		},
 		onCallButtonClick()
 		{
+			Analytics.getInstance().onStartCallClick({
+				type: Analytics.AnalyticsType.groupCall,
+				section: Analytics.AnalyticsSection.chatWindow,
+				subSection: Analytics.AnalyticsSubSection.window,
+				element: Analytics.AnalyticsElement.initialBanner,
+				chatId: this.chatId,
+			});
 			Messenger.startVideoCall(this.dialogId);
 		},
 		onInviteButtonClick()

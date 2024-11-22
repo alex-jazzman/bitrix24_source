@@ -130,5 +130,8 @@ $arServices = Array(
 	"salescenter" => Array(
 		"NAME" => GetMessage("SERVICE_SALESCENTER"),
 	),
+	"biconnector" => Array(
+		"NAME" => GetMessage("SERVICE_BICONNECTOR"),
+	)
 );
 ?>

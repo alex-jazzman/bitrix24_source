@@ -31,6 +31,7 @@ jn.define('intranet/simple-list/items/user-redux/user-content', (require, export
 				...this.user,
 				customStyles: this.props.customStyles,
 				showBorder: this.props.showBorder,
+				canInvite: this.props.canInvite,
 			});
 		}
 	}

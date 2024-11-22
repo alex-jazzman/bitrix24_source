@@ -12,6 +12,7 @@ create table if not exists b_sign_blank
 	MODIFIED_BY_ID int(18) not null,
 	DATE_CREATE timestamp null,
 	DATE_MODIFY timestamp not null,
+	FOR_TEMPLATE tinyint not null default 0,
 	PRIMARY KEY(ID),
 	INDEX IX_B_EXTERNAL_HOST (EXTERNAL_ID, HOST)
 );
@@ -49,6 +50,9 @@ create table if not exists b_sign_document
 	STOPPED_BY_ID int null default null,
 	EXTERNAL_DATE_CREATE datetime null default null,
 	PROVIDER_CODE varchar(255) null default null,
+	TEMPLATE_ID bigint unsigned null default null,
+	CREATED_FROM_DOCUMENT_ID int null default null,
+	INITIATED_BY_TYPE tinyint default 0,
 	PRIMARY KEY(ID),
 	INDEX IX_B_ENTITY (ENTITY_TYPE, ENTITY_ID),
 	INDEX IX_B_HOST (HOST),
@@ -216,4 +220,18 @@ CREATE TABLE IF NOT EXISTS `b_sign_document_chat`
 	`TYPE` TINYINT NOT NULL,
 	PRIMARY KEY (`ID`),
 	INDEX `IX_B_SIGN_CHAT_DOCUMENT_ID` (`DOCUMENT_ID`)
+);
+
+CREATE TABLE IF NOT EXISTS `b_sign_document_template`
+(
+	`ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`UID` CHAR(32) NOT NULL,
+	`TITLE` VARCHAR(255) NOT NULL,
+	`STATUS` TINYINT NOT NULL,
+	`CREATED_BY_ID` INT NOT NULL,
+	`MODIFIED_BY_ID` INT NULL,
+	`DATE_CREATE` TIMESTAMP NOT NULL,
+	`DATE_MODIFY` TIMESTAMP NULL,
+	PRIMARY KEY (`ID`),
+	UNIQUE INDEX `UK_B_SIGN_DOCUMENT_TEMPLATE_UID` (`UID`)
 );

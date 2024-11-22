@@ -256,9 +256,24 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		}
 		if($arResult['PERM_QUOTE'] && !$arResult['CATEGORY_ID'])
 		{
+			$analyticsEventBuilderForQuote = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Quote)
+				->setSection(
+					!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+				)
+				->setSubSection(
+					!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+				)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			;
 			if ($isQuoteAvailable)
 			{
-				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arCompany['PATH_TO_QUOTE_ADD']) . "');";
+				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape(
+					$analyticsEventBuilderForQuote->buildUri($arCompany['PATH_TO_QUOTE_ADD'])->getUri()
+				) . "');";
 			}
 			else
 			{
@@ -281,7 +296,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'company_id' => $arCompany['ID'],
 				]);
 				unset($quoteAction['ONCLICK']);
-				$quoteAction['HREF'] = $link;
+				$quoteAction['HREF'] = $analyticsEventBuilderForQuote->buildUri($link)->getUri();
 			}
 			$arEntitySubMenuItems[] = $quoteAction;
 		}
@@ -292,9 +307,24 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
+			$analyticsEventBuilderForInvoice = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Invoice)
+				->setSection(
+					!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+				)
+				->setSubSection(
+					!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+				)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			;
 			if ($isInvoiceAvailable)
 			{
-				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arCompany['PATH_TO_INVOICE_ADD']) . "');";
+				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape(
+					$analyticsEventBuilderForInvoice->buildUri($arCompany['PATH_TO_INVOICE_ADD'])->getUri()
+				) . "');";
 			}
 			else
 			{
@@ -314,6 +344,19 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
+			$analyticsEventBuilderForSmartInvoice = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::SmartInvoice)
+				->setSection(
+					!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+						? $arParams['ANALYTICS']['c_section']
+						: null
+				)
+				->setSubSection(
+					!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+						? $arParams['ANALYTICS']['c_sub_section']
+						: null
+				)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			;
 			$subMenuItem = [
 				'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
 				'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
@@ -321,7 +364,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 
 			if ($isInvoiceAvailable)
 			{
-				$subMenuItem['HREF'] = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+				$href = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
 					\CCrmOwnerType::SmartInvoice,
 					0,
 					null,
@@ -330,6 +373,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 						$arCompany['ID']
 					)
 				);
+				$subMenuItem['HREF'] = $analyticsEventBuilderForSmartInvoice->buildUri($href)->getUri();
 			}
 			else
 			{
@@ -358,14 +402,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 				\CCrmOwnerType::Company,
 				(int)($arResult['CATEGORY_ID'] ?? 0)
 			))->fetchForJsComponent();
-
 			$calendarSettings = (new CalendarSettingsProvider())->fetchForJsComponent();
-			$useTodoEditorV2 = \Bitrix\Crm\Settings\Crm::isTimelineToDoUseV2Enabled();
-			$colorSettings = (
-				$useTodoEditorV2
-					? (new ColorSettingsProvider())->fetchForJsComponent()
-					: null
-			);
+			$colorSettings = (new ColorSettingsProvider())->fetchForJsComponent();
 
 			$settings = CUtil::PhpToJSObject([
 				'pingSettings' => $pingSettings,
@@ -377,7 +415,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 
 			$arActivitySubMenuItems[] = [
 				'TEXT' => Loc::getMessage('CRM_COMPANY_ADD_TODO'),
-				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Company . ", " . (int)$arCompany['ID'] . ", " . $currentUser . ", " . $settings . ", " . $useTodoEditorV2 . ", " . $analytics .");"
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Company . ", " . (int)$arCompany['ID'] . ", " . $currentUser . ", " . $settings . ", " . $analytics .");"
 			];
 
 			if (IsModuleInstalled('subscribe'))

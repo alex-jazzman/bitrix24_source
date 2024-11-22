@@ -1,5 +1,8 @@
 <?php
+$MESS["SOCNET_ENTITY_SELECTOR_CANCEL"] = "Скасування";
+$MESS["SOCNET_ENTITY_SELECTOR_CREATE"] = "Створити";
 $MESS["SOCNET_ENTITY_SELECTOR_CREATE_PROJECT"] = "Створити групу";
+$MESS["SOCNET_ENTITY_SELECTOR_CREATE_PROJECT_1"] = "Створити проєкт";
 $MESS["SOCNET_ENTITY_SELECTOR_EMPLOYEE_OR_PROJECT"] = "<employee>Запросити співробітника</employee><span>або</span><project>створити групу</project>";
 $MESS["SOCNET_ENTITY_SELECTOR_EMPLOYEE_OR_PROJECT_OR_GUEST"] = "<employee>Запросити співробітника</employee><span>або</span><project>створити групу</project><span>або</span><guest>запросити гостя</guest>";
 $MESS["SOCNET_ENTITY_SELECTOR_INVITED_GUEST_HINT"] = "Ви можете додати не тільки співробітника, але й партнера або клієнта по електронній пошті.";

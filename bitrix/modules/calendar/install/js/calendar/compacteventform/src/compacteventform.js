@@ -14,6 +14,7 @@ import {
 } from 'calendar.controls';
 import { Entry, EntryManager } from 'calendar.entry';
 import { SectionManager } from 'calendar.sectionmanager';
+import { sendData } from 'ui.analytics';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { RelationInterface } from 'calendar.entityrelation';
 
@@ -84,9 +85,14 @@ export class CompactEventForm extends EventEmitter
 		});
 
 		// Fulfill previous deletions to avoid data inconsistency
-		if (this.getMode() === CompactEventForm.EDIT_MODE)
+		if (this.isEditMode())
 		{
 			EntryManager.doDelayedActions();
+		}
+
+		if (this.isViewMode() && !this.isLocationMode())
+		{
+			this.sendOpenViewCardAnalytics();
 		}
 
 		this.prepareData()
@@ -101,16 +107,7 @@ export class CompactEventForm extends EventEmitter
 				}
 
 				this.popup.show();
-				if (
-					this.userPlannerSelector
-					&& (
-						this.isLocationCalendar
-						|| (
-							this.userPlannerSelector.attendeesEntityList.length > 1
-							&& this.getMode() !== CompactEventForm.VIEW_MODE
-						)
-					)
-				)
+				if (this.hasToOpenPlannerInDefault())
 				{
 					this.userPlannerSelector.showPlanner();
 				}
@@ -818,6 +815,19 @@ export class CompactEventForm extends EventEmitter
 		return el.clientWidth < el.scrollWidth || el.clientHeight < el.scrollHeight;
 	}
 
+	hasToOpenPlannerInDefault()
+	{
+		return this.userPlannerSelector
+			&& (
+				this.isLocationCalendar
+				|| (
+					this.userPlannerSelector.attendeesEntityList.length > 1
+					&& this.getMode() !== CompactEventForm.VIEW_MODE
+				)
+			)
+		;
+	}
+
 	checkLocationForm(event)
 	{
 		if (event && event instanceof BaseEvent)
@@ -918,7 +928,7 @@ export class CompactEventForm extends EventEmitter
 		this.isLocationCalendar = params.isLocationCalendar || false;
 		this.locationAccess = params.locationAccess || false;
 		this.calendarContext = params.calendarContext || null;
-		this.ownerId = params.ownerId ? params.ownerId : 0;
+		this.ownerId = params.ownerId ?? 0;
 		if (this.type === 'user' && !this.ownerId)
 		{
 			this.ownerId = this.userId;
@@ -2585,8 +2595,7 @@ export class CompactEventForm extends EventEmitter
 	{
 		return Tag.render`
 			<div class="calendar-list-slider-messagebox-text">${`${Loc.getMessage('EC_LEAVE_EVENT_CONFIRM_QUESTION')
-				 }<br>${
-				 Loc.getMessage('EC_LEAVE_EVENT_CONFIRM_DESC')}`}</div>
+			}<br>${Loc.getMessage('EC_LEAVE_EVENT_CONFIRM_DESC')}`}</div>
 		`;
 	}
 
@@ -2598,5 +2607,16 @@ export class CompactEventForm extends EventEmitter
 		}
 
 		return [['user', this.entry.data.MEETING_HOST || 0], ['user', this.entry.getOwnerId()]];
+	}
+
+	sendOpenViewCardAnalytics()
+	{
+		sendData({
+			tool: 'im',
+			category: 'events',
+			event: 'view_card',
+			c_section: 'card_compact',
+			p5: `eventId_${this.entry.data.PARENT_ID}`,
+		});
 	}
 }

@@ -9367,10 +9367,63 @@ if (typeof BX.UI.EntityEditorBBCode === 'undefined')
 	BX.UI.EntityEditorBBCode = function()
 	{
 		BX.UI.EntityEditorBBCode.superclass.constructor.apply(this);
+
+		this._htmlFormatter = null;
 	};
 
 	BX.extend(BX.UI.EntityEditorBBCode, BX.UI.EntityEditorBB);
 
+	BX.UI.EntityEditorBBCode.prototype.layout = function(options)
+	{
+		if (this._hasLayout)
+		{
+			return;
+		}
+
+		BX.UI.EntityEditorBB.superclass.layout.apply(this, [options]);
+
+		if (this._mode !== BX.UI.EntityEditorMode.edit) // view mode
+		{
+			let contentNode = null;
+			if (this._innerWrapper)
+			{
+				contentNode = this._innerWrapper.querySelector('.ui-entity-editor-content-block-inner-html');
+			}
+
+			if (contentNode)
+			{
+				const formatter = this.getHtmlFormatter();
+				const result = formatter.format({ source: this.getValue() });
+
+				const fieldIcon = new BX.UI.EntityFieldIcon({
+					editor: this._editor,
+					mode: this.getMode(),
+					fieldId: this.getId(),
+					fieldType: 'string',
+					fieldInnerWrapper: this._innerWrapper,
+				});
+
+				const iconNode = fieldIcon.getIconNode();
+				if (iconNode)
+				{
+					result.appendChild(iconNode);
+				}
+
+				contentNode.innerHTML = '';
+				contentNode.appendChild(result);
+			}
+		}
+	};
+
+	BX.UI.EntityEditorBBCode.prototype.getHtmlFormatter = function()
+	{
+		if (this._htmlFormatter === null)
+		{
+			this._htmlFormatter = new BX.UI.BBCode.Formatter.HtmlFormatter({ containerMode: 'collapsed' });
+		}
+
+		return this._htmlFormatter;
+	}
 	BX.UI.EntityEditorBBCode.prototype.focus = function()
 	{
 		this._htmlEditor.focus();
@@ -9418,31 +9471,19 @@ if (typeof BX.UI.EntityEditorBBCode === 'undefined')
 	{
 		const editorOptions = this._schemeElement.getDataObjectParam('editorOptions', {});
 		this._htmlEditorContainer = BX.Tag.render`<div></div>`;
-		this._htmlEditor = new BX.UI.TextEditor.TextEditor({
-			toolbar: [
-				'bold', 'italic', 'underline', 'strikethrough',
-				'|',
-				'numbered-list', 'bulleted-list',
-				'|',
-				'link', 'image', 'copilot',
-			],
-			removePlugins: [
-				'Hashtag',
-				'Code',
-				'Quote',
-				'Video',
-				'Spoiler',
-				'Table',
-				'Mention',
-				'File',
-			],
+		this._htmlEditor = new BX.UI.TextEditor.BasicEditor({
+			removePlugins: ['BlockToolbar'],
 			minHeight: 100,
 			maxHeight: 300,
 			...editorOptions,
 			content: this.getStringValue(""),
 			events: {
 				onChange: (event) => {
-					this.onChange();
+					const { isInitialChange } = event.getData();
+					if (!isInitialChange)
+					{
+						this.onChange();
+					}
 				},
 			},
 		});

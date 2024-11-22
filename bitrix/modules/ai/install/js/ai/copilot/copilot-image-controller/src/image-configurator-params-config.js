@@ -1,5 +1,6 @@
+import type { EngineInfo, ImageCopilotFormat } from 'ai.engine';
 import { Loc } from 'main.core';
-import { Editor } from 'ui.icon-set.api.core';
+import { Editor, Main } from 'ui.icon-set.api.core';
 
 export type ImageConfiguratorParam = {
 	title: string;
@@ -14,51 +15,43 @@ export type ImageConfiguratorParamOption = {
 
 export type ImageConfiguratorParamsCurrentValues = {
 	format: string;
-	light: string;
-	composition: string;
+	engine: string;
 }
 
-export const params: {[code: string]: ImageConfiguratorParam} = {
-	format: {
-		title: Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_TITLE'),
-		icon: Editor.INCERT_IMAGE,
-		options: [
-			{
-				title: Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_SQUARE'),
-				value: 'square',
-			},
-			{
-				title: Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_PORTRAIT'),
-				value: 'portrait',
-			},
-			{
-				title: Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_LANDSCAPE'),
-				value: 'landscape',
-			},
-			{
-				title: Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_WIDE'),
-				value: 'wide',
-			},
-		],
-	},
-	// light: {
-	// 	icon: Editor.INCERT_IMAGE,
-	// 	title: Loc.getMessage('AI_COPILOT_IMAGE_LIGHT_OPTION_TITLE'),
-	// 	options: [
-	// 		{
-	// 			title: Loc.getMessage('AI_COPILOT_IMAGE_LIGHT_OPTION_COMMON'),
-	// 			value: 'common',
-	// 		},
-	// 	],
-	// },
-	// composition: {
-	// 	icon: Editor.INCERT_IMAGE,
-	// 	title: Loc.getMessage('AI_COPILOT_IMAGE_COMPOSITION_OPTION_TITLE'),
-	// 	options: [
-	// 		{
-	// 			title: Loc.getMessage('AI_COPILOT_IMAGE_COMPOSITION_OPTION_COMMON'),
-	// 			value: 'common',
-	// 		},
-	// 	],
-	// },
+type getParamsOptions = {
+	formats: ImageCopilotFormat[];
+	engines: EngineInfo[];
+}
+
+export const getParams = (options: getParamsOptions): {[code: string]: ImageConfiguratorParam} => {
+	return {
+		format: {
+			title: Loc.getMessage('AI_COPILOT_IMAGE_FORMAT_OPTION_TITLE'),
+			icon: Editor.INCERT_IMAGE,
+			options: getOptionsFromFormats(options.formats),
+		},
+		engine: {
+			title: Loc.getMessage('AI_COPILOT_IMAGE_ENGINE_OPTION_TITLE'),
+			icon: Main.ROBOT,
+			options: getOptionsFromEngines(options.engines),
+		},
+	};
+};
+
+const getOptionsFromFormats = (formats: ImageCopilotFormat[]): ImageConfiguratorParamOption[] => {
+	return formats.map((format) => {
+		return {
+			title: format.name,
+			value: format.code,
+		};
+	});
+};
+
+const getOptionsFromEngines = (engines: EngineInfo[]): ImageConfiguratorParamOption[] => {
+	return engines.map((engine) => {
+		return {
+			title: engine.title,
+			value: engine.code,
+		};
+	});
 };

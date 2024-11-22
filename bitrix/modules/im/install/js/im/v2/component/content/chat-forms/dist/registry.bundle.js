@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_feature,im_v2_component_animation,ui_entitySelector,main_core,im_v2_component_elements,im_v2_application_core,im_v2_lib_createChat,im_v2_lib_permission,ui_forms,ui_notification,main_core_events,main_popup,im_public,im_v2_lib_analytics,im_v2_provider_service,im_v2_const,im_v2_lib_confirm) {
+(function (exports,im_v2_lib_feature,im_v2_component_animation,ui_entitySelector,main_core,im_v2_component_elements,im_v2_application_core,im_v2_lib_permission,ui_forms,im_v2_lib_createChat,ui_notification,main_core_events,main_popup,im_public,im_v2_lib_analytics,im_v2_provider_service,im_v2_const,im_v2_lib_confirm) {
 	'use strict';
 
 	// @vue/component
@@ -1777,13 +1777,156 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const CollabCreation = {
+	  name: 'CollabCreation',
+	  components: {
+	    TitleInput,
+	    ChatAvatar,
+	    CreateChatHeading,
+	    ChatMembersSelector,
+	    ButtonPanel
+	  },
+	  data() {
+	    return {
+	      isCreating: false,
+	      avatarFile: null,
+	      chatTitle: '',
+	      chatMembers: []
+	    };
+	  },
+	  watch: {
+	    chatTitle(newValue) {
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setChatTitle(newValue);
+	    }
+	  },
+	  created() {
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange);
+	    this.restoreFields();
+	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatType(im_v2_const.ChatType.collab);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(true);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange);
+	    if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation) {
+	      return;
+	    }
+	    this.saveFields();
+	  },
+	  methods: {
+	    restoreFields() {
+	      const savedFields = im_v2_lib_createChat.CreateChatManager.getInstance().getFields();
+	      if (!savedFields) {
+	        return;
+	      }
+	      const {
+	        chatTitle,
+	        avatarFile,
+	        chatMembers
+	      } = savedFields;
+	      this.chatTitle = chatTitle;
+	      this.avatarFile = avatarFile;
+	      this.chatMembers = chatMembers;
+	    },
+	    saveFields() {
+	      im_v2_lib_createChat.CreateChatManager.getInstance().saveFields({
+	        chatTitle: this.chatTitle,
+	        avatarFile: this.avatarFile,
+	        chatMembers: this.chatMembers
+	      });
+	    },
+	    onLayoutChange(event) {
+	      const {
+	        to
+	      } = event.getData();
+	      if (to.name === im_v2_const.Layout.createChat.name && to.entityId !== im_v2_const.ChatType.collab) {
+	        this.exitByChatTypeSwitch = true;
+	      }
+	    },
+	    onMembersChange(currentTags) {
+	      this.chatMembers = currentTags;
+	    },
+	    async onCreateClick() {
+	      this.isCreating = true;
+	      const {
+	        newDialogId
+	      } = await this.getChatService().createCollab({
+	        title: this.chatTitle,
+	        avatar: this.avatarFile,
+	        memberEntities: this.chatMembers
+	      }).catch(() => {
+	        this.isCreating = false;
+	        BX.UI.Notification.Center.notify({
+	          content: this.loc('IM_CREATE_CHAT_ERROR')
+	        });
+	      });
+	      this.isCreating = false;
+	      this.exitByCreation = true;
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
+	      void im_public.Messenger.openChat(newDialogId);
+	    },
+	    onCancelClick() {
+	      this.exitByCancel = true;
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
+	      im_public.Messenger.openChat();
+	    },
+	    onAvatarChange(newAvatarFile) {
+	      this.avatarFile = newAvatarFile;
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
+	    },
+	    onScroll() {
+	      var _MenuManager$getMenuB, _MenuManager$getMenuB2, _MenuManager$getMenuB3, _MenuManager$getMenuB4;
+	      (_MenuManager$getMenuB = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersAddMenu)) == null ? void 0 : _MenuManager$getMenuB.close();
+	      (_MenuManager$getMenuB2 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersDeleteMenu)) == null ? void 0 : _MenuManager$getMenuB2.close();
+	      (_MenuManager$getMenuB3 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUiMenu)) == null ? void 0 : _MenuManager$getMenuB3.close();
+	      (_MenuManager$getMenuB4 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageMessagesMenu)) == null ? void 0 : _MenuManager$getMenuB4.close();
+	    },
+	    getChatService() {
+	      if (!this.chatService) {
+	        this.chatService = new im_v2_provider_service.ChatService();
+	      }
+	      return this.chatService;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-content-chat-forms__content --collab" @scroll="onScroll">
+			<div class="bx-im-content-chat-forms__header">
+				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" :squared="true" />
+				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_COLLAB_TITLE_PLACEHOLDER')" />
+			</div>
+			<CreateChatHeading :text="loc('IM_CREATE_COLLAB_MEMBERS_TITLE')" />
+			<div class="bx-im-content-chat-forms__members_container">
+				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			</div>
+		</div>
+		<ButtonPanel
+			:isCreating="isCreating"
+			:createButtonTitle="loc('IM_CREATE_COLLAB_CONFIRM')"
+			@create="onCreateClick"
+			@cancel="onCancelClick"
+		/>
+	`
+	};
+
+	const CreationComponentByChatType = {
+	  [im_v2_const.ChatType.chat]: GroupChatCreation,
+	  [im_v2_const.ChatType.videoconf]: ConferenceCreation,
+	  [im_v2_const.ChatType.channel]: ChannelCreation,
+	  [im_v2_const.ChatType.collab]: CollabCreation,
+	  default: GroupChatCreation
+	};
+
 	// @vue/component
 	const CreateChatContent = {
 	  name: 'CreateChatContent',
 	  components: {
 	    GroupChatCreation,
 	    ConferenceCreation,
-	    ChannelCreation
+	    ChannelCreation,
+	    CollabCreation
 	  },
 	  props: {
 	    entityId: {
@@ -1795,13 +1938,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    ChatType: () => im_v2_const.ChatType,
 	    chatType() {
 	      return this.entityId;
+	    },
+	    creationComponent() {
+	      var _CreationComponentByC;
+	      return (_CreationComponentByC = CreationComponentByChatType[this.chatType]) != null ? _CreationComponentByC : CreationComponentByChatType.default;
 	    }
 	  },
 	  template: `
 		<div class="bx-im-content-chat-forms__container">
-			<GroupChatCreation v-if="chatType === ChatType.chat" />
-			<ConferenceCreation v-else-if="chatType === ChatType.videoconf" />
-			<ChannelCreation v-else-if="chatType === ChatType.channel" />
+			<component :is="creationComponent" />
 		</div>
 	`
 	};
@@ -2414,5 +2559,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.CreateChatContent = CreateChatContent;
 	exports.UpdateChatContent = UpdateChatContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.UI.EntitySelector,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX,BX.Event,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.UI.EntitySelector,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX,BX.Event,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

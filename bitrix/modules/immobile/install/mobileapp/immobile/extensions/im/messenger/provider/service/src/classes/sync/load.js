@@ -44,6 +44,19 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			this.syncMode = AppStatus.sync;
 		}
 
+		/**
+		 * @param fromDate
+		 * @param fromId
+		 * @param fromServerDate
+		 * @return {Promise<{
+		 * hasMore: boolean,
+		 * lastId: ?number,
+		 * lastServerDate: ?string,
+		 * addedMessageIdList: ?Array<number>,
+		 * deletedChatIdList: ?Array<number>,
+		 * deletedMessageIdList: ?Array<number>,
+		 * }>}
+		 */
 		async loadPage({ fromDate, fromId, fromServerDate })
 		{
 			const syncListOptions = {
@@ -83,7 +96,14 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 
 		/**
 		 * @param {SyncListResult} result
-		 * @return Promise{{hasMore: boolean, lastId: number, lastServerDate: string}}
+		 * @return {Promise<{
+		 * hasMore: boolean,
+		 * lastId: number,
+		 * lastServerDate: string,
+		 * addedMessageIdList: Array<number>,
+		 * deletedChatIdList: Array<number>,
+		 * deletedMessageIdList: Array<number>,
+		 * }>}
 		 */
 		async handleSyncList(result)
 		{
@@ -103,6 +123,7 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			const databaseRequestResultSavedUuid = `${WaitingEntity.sync.filler.database}-${Uuid.getV4()}`;
 			const messengerRequestResultSavedUuid = `${WaitingEntity.sync.filler.chat}-${Uuid.getV4()}`;
 			const copilotRequestResultSavedUuid = `${WaitingEntity.sync.filler.copilot}-${Uuid.getV4()}`;
+			const channelRequestResultSavedUuid = `${WaitingEntity.sync.filler.channel}-${Uuid.getV4()}`;
 
 			const fillerOptions = this.getFillerOptions();
 
@@ -119,6 +140,11 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			if (fillerOptions.shouldFillCopilot)
 			{
 				expectedRequestResultSavedIdList.push(copilotRequestResultSavedUuid);
+			}
+
+			if (fillerOptions.shouldFillChannel)
+			{
+				expectedRequestResultSavedIdList.push(channelRequestResultSavedUuid);
 			}
 
 			const requestResultSavedIdList = [];
@@ -145,6 +171,9 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 						hasMore: result.hasMore,
 						lastId: result.lastId,
 						lastServerDate: result.lastServerDate,
+						addedMessageIdList: this.getAddedMessageIdList(result),
+						deletedChatIdList: this.getDeletedChatIdList(result),
+						deletedMessageIdList: this.getDeletedMessageIdList(result),
 					});
 				}
 			};
@@ -175,6 +204,14 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 				}, ComponentCode.imCopilotMessenger);
 			}
 
+			if (fillerOptions.shouldFillChannel)
+			{
+				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+					uuid: channelRequestResultSavedUuid,
+					result,
+				}, ComponentCode.imChannelMessenger);
+			}
+
 			logger.log('SyncService waits for a response from SyncFillers', expectedRequestResultSavedIdList);
 
 			return syncListPromise;
@@ -196,11 +233,13 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 				shouldFillDatabase: false,
 				shouldFillChat: false,
 				shouldFillCopilot: false,
+				shouldFillChannel: false,
 			};
 
 			options.shouldFillDatabase = Feature.isLocalStorageEnabled;
 
 			options.shouldFillChat = this.syncMode === AppStatus.sync;
+			options.shouldFillChannel = this.syncMode === AppStatus.sync;
 
 			options.shouldFillCopilot = Feature.isCopilotAvailable
 				&& this.syncMode === AppStatus.sync
@@ -221,6 +260,48 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 		resetSyncMode()
 		{
 			this.syncMode = AppStatus.sync;
+		}
+
+		/**
+		 * @param {SyncListResult} result
+		 * @return {Array<number>}
+		 */
+		getAddedMessageIdList(result)
+		{
+			if (!Type.isArrayFilled(result.messages.messages))
+			{
+				return [];
+			}
+
+			return result.messages.messages.map((message) => message.id);
+		}
+
+		/**
+		 * @param {SyncListResult} result
+		 * @return {Array<number>}
+		 */
+		getDeletedChatIdList(result)
+		{
+			if (!Type.isPlainObject(result.completeDeletedChats))
+			{
+				return [];
+			}
+
+			return Object.values(result.completeDeletedChats);
+		}
+
+		/**
+		 * @param {SyncListResult} result
+		 * @return {Array<number>}
+		 */
+		getDeletedMessageIdList(result)
+		{
+			if (!Type.isPlainObject(result.completeDeletedMessages))
+			{
+				return [];
+			}
+
+			return Object.values(result.completeDeletedMessages);
 		}
 	}
 

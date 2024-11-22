@@ -15,12 +15,18 @@ export class Skeleton
 		this.status = options.status;
 		this.isSupersetAvailable = options.isSupersetAvailable;
 		this.#dashboardManager = new DashboardManager();
+		this.paramsCompatible = options.paramsCompatible ?? true;
 
 		this.subscribeOnEvents();
 
 		if (Type.isDomNode(this.container))
 		{
 			Dom.append(this.getAnimationContainer(), this.container);
+		}
+
+		if (this.paramsCompatible === false)
+		{
+			this.#changeContent(this.#getParamsCompatibilityErrorContent());
 		}
 	}
 
@@ -81,6 +87,7 @@ export class Skeleton
 	onDashboardStatusUpdated(status: string): void
 	{
 		switch (status) {
+			case DashboardManager.DASHBOARD_STATUS_DRAFT:
 			case DashboardManager.DASHBOARD_STATUS_READY: {
 				window.location.reload();
 				break;
@@ -193,7 +200,7 @@ export class Skeleton
 		});
 
 		return Tag.render`
-			<div class="biconnector-dashboard__hint_title">			
+			<div class="biconnector-dashboard__hint_title">
 				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_MSGVER_1')}
 			</div>
 			<div class="biconnector-dashboard__hint_desc">
@@ -283,6 +290,18 @@ export class Skeleton
 	getErrorLogo(): HTMLElement {
 		return Tag.render`
 			<div class="biconnector-dashboard__error__logo"></div>
+		`;
+	}
+
+	#getParamsCompatibilityErrorContent(): HTMLElement
+	{
+		return Tag.render`
+			<div class="biconnector-dashboard__error__logo-wrapper">
+				${this.getErrorLogo()}
+			</div>
+			<div class="biconnector-dashboard__hint_desc">
+				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE')}
+			</div>
 		`;
 	}
 }

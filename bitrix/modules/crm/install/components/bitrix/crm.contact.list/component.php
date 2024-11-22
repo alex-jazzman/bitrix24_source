@@ -1813,7 +1813,24 @@ foreach($arResult['CONTACT'] as &$arContact)
 		])
 		->getUri()
 	;
-
+	if (isset($arContact['PATH_TO_DEAL_EDIT']))
+	{
+		$arContact['PATH_TO_DEAL_EDIT'] = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Deal)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			->buildUri($arContact['PATH_TO_DEAL_EDIT'])
+			->getUri()
+		;
+	}
 	$arContact['PATH_TO_CONTACT_DELETE'] =  CHTTP::urlAddParams(
 		$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_CONTACT_LIST'],
 		array(

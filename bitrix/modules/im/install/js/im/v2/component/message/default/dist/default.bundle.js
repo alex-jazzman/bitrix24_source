@@ -3,8 +3,10 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_message_elements,im_v2_component_message_base,im_v2_lib_parser) {
+(function (exports,im_v2_component_message_elements,im_v2_component_message_base,main_core,im_v2_lib_parser) {
 	'use strict';
+
+	const NO_CONTEXT_TAG = 'none';
 
 	// @vue/component
 	const Reply = {
@@ -24,8 +26,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
 	    replyMessage() {
 	      return this.$store.getters['messages/getById'](this.replyId);
+	    },
+	    replyMessageChat() {
+	      var _this$replyMessage;
+	      return this.$store.getters['chats/getByChatId']((_this$replyMessage = this.replyMessage) == null ? void 0 : _this$replyMessage.chatId);
 	    },
 	    replyAuthor() {
 	      return this.$store.getters['users/get'](this.replyMessage.authorId);
@@ -38,35 +47,33 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      text = im_v2_lib_parser.Parser.decodeText(text);
 	      return text;
 	    },
+	    isQuoteFromTheSameChat() {
+	      var _this$replyMessage2;
+	      return ((_this$replyMessage2 = this.replyMessage) == null ? void 0 : _this$replyMessage2.chatId) === this.dialog.chatId;
+	    },
 	    replyContext() {
+	      if (!this.isQuoteFromTheSameChat) {
+	        return NO_CONTEXT_TAG;
+	      }
 	      if (!this.isForward) {
 	        return `${this.dialogId}/${this.replyId}`;
 	      }
-	      const replyMessageChat = this.getChatByChatId(this.replyMessage.chatId);
-	      if (!replyMessageChat) {
-	        return '';
-	      }
-	      return `${replyMessageChat.dialogId}/${this.replyId}`;
+	      return `${this.replyMessageChat.dialogId}/${this.replyId}`;
 	    },
-	    hasReplyContext() {
-	      return this.replyContext.length > 0;
+	    canShowReply() {
+	      return !main_core.Type.isNil(this.replyMessage) && !main_core.Type.isNil(this.replyMessageChat);
 	    }
 	  },
 	  methods: {
-	    getChatByChatId(chatId) {
-	      return this.$store.getters['chats/getByChatId'](chatId, true);
-	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
-		<div class="bx-im-message-quote" :class="{'--with-context': hasReplyContext}" :data-context="replyContext">
+		<div v-if="canShowReply" class="bx-im-message-quote" :data-context="replyContext">
 			<div class="bx-im-message-quote__wrap">
 				<div class="bx-im-message-quote__name">
-					<div class="bx-im-message-quote__name-text">
-						{{ replyTitle }}
-					</div>
+					<div class="bx-im-message-quote__name-text">{{ replyTitle }}</div>
 				</div>
 				<div class="bx-im-message-quote__text" v-html="replyText"></div>
 			</div>
@@ -134,5 +141,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.DefaultMessage = DefaultMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX,BX.Messenger.v2.Lib));
 //# sourceMappingURL=default.bundle.js.map

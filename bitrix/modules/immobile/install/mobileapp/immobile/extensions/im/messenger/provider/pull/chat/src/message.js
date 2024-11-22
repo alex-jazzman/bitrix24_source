@@ -41,12 +41,12 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				return;
 			}
 
-			if (recentMessageManager.isOpenChannelChat() && recentMessageManager.isChannelListEvent())
+			if (recentMessageManager.isChannelListEvent())
 			{
 				return;
 			}
 
-			logger.info(`${this.getClassName()}.handleMessageChat `, params, extra);
+			logger.info(`${this.getClassName()}.handleMessageChat `, params, extra, command);
 
 			if (recentMessageManager.isCommentChat())
 			{

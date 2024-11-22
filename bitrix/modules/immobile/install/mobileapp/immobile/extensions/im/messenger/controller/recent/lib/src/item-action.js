@@ -22,6 +22,11 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 	const { ProfileView } = require('user/profile');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const {
+		RecentDataProvider,
+		ChatDataProvider,
+	} = require('im/messenger/provider/data');
+
 	const logger = LoggerManager.getInstance().getLogger('recent--item-action');
 
 	/**
@@ -128,15 +133,23 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		leave(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			const recentProvider = new RecentDataProvider();
 
-			this.store.dispatch('recentModel/delete', { id: recentItem.id })
+			recentProvider.deleteFromSource(RecentDataProvider.source.model, { dialogId: recentItem.id })
 				.then(() => Counters.update())
 				.catch((err) => logger.error('Recent item leave error: ', err))
 			;
 
 			ChatRest.leave({ dialogId: recentItem.id })
 				.then(() => {
-					this.store.dispatch('dialoguesModel/delete', { id: itemId });
+					const chatProvider = new ChatDataProvider();
+
+					return recentProvider.delete({ dialogId: recentItem.id })
+						.then(() => chatProvider.delete({ dialogId: recentItem.id }))
+						.catch((error) => {
+							logger.error('ChatRest.leave delete error', error);
+						})
+					;
 				})
 				.catch((result) => {
 					logger.error('Recent item leave error: ', result.error());

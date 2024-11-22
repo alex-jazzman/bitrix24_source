@@ -20,6 +20,7 @@ jn.define('bizproc/task/tasks-performer/informers/similar-tasks-informer', (requ
 						modal: true,
 						titleParams: {
 							text: Loc.getMessage('BPMOBILE_TASK_TASKS_PERFORMER_INFORMERS_SIMILAR_TASKS_TITLE'),
+							type: 'dialog',
 						},
 						backgroundColor: AppTheme.colors.bgContentPrimary,
 						backdrop: {

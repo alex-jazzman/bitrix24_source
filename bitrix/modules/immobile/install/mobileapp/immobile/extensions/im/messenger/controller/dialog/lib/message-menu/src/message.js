@@ -74,6 +74,16 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			return this.isText();
 		}
 
+		isPossibleCopyLink()
+		{
+			if (this.isDialogCopilot() || this.isComment())
+			{
+				return false;
+			}
+
+			return true;
+		}
+
 		isPossiblePin()
 		{
 			if (this.dialog.type === DialogType.comment)
@@ -242,6 +252,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		isChannel()
 		{
 			return this.dialogHelper.isChannel;
+		}
+
+		isComment()
+		{
+			return this.dialogHelper.isComment;
 		}
 
 		isEmojiOrSmileOnly()

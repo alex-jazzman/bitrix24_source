@@ -316,9 +316,27 @@ this.BX = this.BX || {};
 	    key: "getTooling",
 	    value: function getTooling(category) {
 	      _classPrivateMethodGet(this, _addSystemParameters, _addSystemParameters2).call(this);
+	      babelHelpers.classPrivateFieldGet(this, _parameters).category = babelHelpers.classPrivateFieldGet(this, _parameters).promptCategory;
 	      var data = {
-	        category: category,
-	        parameters: babelHelpers.classPrivateFieldGet(this, _parameters)
+	        parameters: babelHelpers.classPrivateFieldGet(this, _parameters),
+	        category: babelHelpers.classPrivateFieldGet(this, _parameters).promptCategory,
+	        moduleId: babelHelpers.classPrivateFieldGet(this, _moduleId),
+	        context: babelHelpers.classPrivateFieldGet(this, _contextId)
+	      };
+	      return main_core.ajax.runAction('ai.prompt.getPromptsForUser', {
+	        data: main_core.Http.Data.convertObjectToFormData(data),
+	        method: 'POST',
+	        start: false,
+	        preparePost: false
+	      });
+	    }
+	  }, {
+	    key: "getImagePickerTooling",
+	    value: function getImagePickerTooling() {
+	      _classPrivateMethodGet(this, _addSystemParameters, _addSystemParameters2).call(this);
+	      var data = {
+	        parameters: babelHelpers.classPrivateFieldGet(this, _parameters),
+	        category: 'image'
 	      };
 	      return new Promise(function (resolve, reject) {
 	        var fd = main_core.Http.Data.convertObjectToFormData(data);
@@ -326,6 +344,34 @@ this.BX = this.BX || {};
 	          method: 'POST',
 	          dataType: 'json',
 	          url: Engine.getToolingUrl,
+	          data: fd,
+	          start: false,
+	          preparePost: false,
+	          onsuccess: function onsuccess(response) {
+	            if (response.status === 'error') {
+	              reject(response);
+	            } else {
+	              resolve(response);
+	            }
+	          },
+	          onfailure: reject
+	        });
+	        xhr.send(fd);
+	      });
+	    }
+	  }, {
+	    key: "getImageCopilotTooling",
+	    value: function getImageCopilotTooling() {
+	      _classPrivateMethodGet(this, _addSystemParameters, _addSystemParameters2).call(this);
+	      var data = {
+	        parameters: babelHelpers.classPrivateFieldGet(this, _parameters)
+	      };
+	      return new Promise(function (resolve, reject) {
+	        var fd = main_core.Http.Data.convertObjectToFormData(data);
+	        var xhr = main_core.ajax({
+	          method: 'POST',
+	          dataType: 'json',
+	          url: Engine.getImageToolingUrl,
 	          data: fd,
 	          start: false,
 	          preparePost: false,
@@ -628,6 +674,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(Engine, "imageAcceptationUrl", '/bitrix/services/main/ajax.php?action=ai.api.image.acceptation');
 	babelHelpers.defineProperty(Engine, "saveImageUrl", '/bitrix/services/main/ajax.php?action=ai.api.image.save');
 	babelHelpers.defineProperty(Engine, "getToolingUrl", '/bitrix/services/main/ajax.php?action=ai.api.tooling.get');
+	babelHelpers.defineProperty(Engine, "getImageToolingUrl", '/bitrix/services/main/ajax.php?action=ai.api.image.getTooling');
 	babelHelpers.defineProperty(Engine, "installKitUrl", '/bitrix/services/main/ajax.php?action=ai.api.tooling.installKit');
 	babelHelpers.defineProperty(Engine, "getRolesListUrl", '/bitrix/services/main/ajax.php?action=ai.api.role.list');
 	babelHelpers.defineProperty(Engine, "getRolesDialogDataUrl", '/bitrix/services/main/ajax.php?action=ai.api.role.picker');

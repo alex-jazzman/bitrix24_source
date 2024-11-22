@@ -8,9 +8,21 @@
 
 	const AppTheme = require('apptheme');
 	const { ProfileView } = require('user/profile');
-	const { openIntranetInviteWidget } = require('intranet/invite-opener');
 	const { AnalyticsEvent } = require('analytics');
 	const storageId = 'user.component.result';
+
+	// eslint-disable-next-line init-declarations
+	let openIntranetInviteWidget;
+	try
+	{
+		openIntranetInviteWidget = require('intranet/invite-opener-new').openIntranetInviteWidget;
+	}
+	catch (e)
+	{
+		console.warn(e);
+		openIntranetInviteWidget = require('intranet/invite-opener').openIntranetInviteWidget;
+	}
+
 	const componentResult = {
 		/**
 		 * @returns {{nameFormat:String}}

@@ -59,9 +59,11 @@ export class LayoutManager
 			this.setLastOpenedElement(config.name, config.entityId);
 		}
 
+		this.#handleLayoutLeave();
+
 		if (this.#isSameChat(config))
 		{
-			this.#onSameChatReopen(config);
+			this.#handleSameChatReopen(config);
 		}
 
 		this.#sendAnalytics(config);
@@ -114,6 +116,13 @@ export class LayoutManager
 		this.#lastOpenedElement[layoutName] = entityId;
 	}
 
+	clearLayoutEntityId(): void
+	{
+		const currentLayoutName = this.getLayout().name;
+		void this.setLayout({ name: currentLayoutName });
+		void this.#deleteLastOpenedElement(currentLayoutName);
+	}
+
 	isChatContextAvailable(dialogId: string): boolean
 	{
 		if (!this.getLayout().contextId)
@@ -130,6 +139,16 @@ export class LayoutManager
 	{
 		EventEmitter.unsubscribe(EventType.dialog.goToMessageContext, this.#onGoToMessageContext);
 		EventEmitter.unsubscribe(EventType.desktop.onReload, this.#onDesktopReload.bind(this));
+	}
+
+	#deleteLastOpenedElement(layoutName: string): void
+	{
+		if (LayoutsWithoutLastOpenedElement.has(layoutName))
+		{
+			return;
+		}
+
+		delete this.#lastOpenedElement[layoutName];
 	}
 
 	async #onGoToMessageContext(event: BaseEvent<{dialogId: string, messageId: number}>): void
@@ -185,15 +204,9 @@ export class LayoutManager
 		return sameLayout && sameEntityId;
 	}
 
-	#onSameChatReopen(config: ImModelLayout): void
+	#handleSameChatReopen(config: ImModelLayout): void
 	{
 		const { entityId: dialogId, contextId } = config;
-
-		const isChannel = ChannelManager.isChannel(dialogId);
-		if (isChannel)
-		{
-			EventEmitter.emit(EventType.dialog.closeComments);
-		}
 
 		if (contextId)
 		{
@@ -215,13 +228,23 @@ export class LayoutManager
 		const { hasAccess, errorCode } = await AccessManager.checkMessageAccess(messageId);
 		if (!hasAccess && errorCode === AccessErrorCode.messageAccessDeniedByTariff)
 		{
-			Analytics.getInstance().onGoToContextHistoryLimitClick({ dialogId });
+			Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({ dialogId });
 			FeatureManager.chatHistory.openFeatureSlider();
 
 			return Promise.resolve(false);
 		}
 
 		return Promise.resolve(true);
+	}
+
+	#handleLayoutLeave()
+	{
+		const { entityId: dialogId = '' } = this.getLayout();
+		const isChannelOpened = ChannelManager.isChannel(dialogId);
+		if (isChannelOpened)
+		{
+			EventEmitter.emit(EventType.dialog.closeComments);
+		}
 	}
 
 	#getChat(dialogId: string): ImModelChat

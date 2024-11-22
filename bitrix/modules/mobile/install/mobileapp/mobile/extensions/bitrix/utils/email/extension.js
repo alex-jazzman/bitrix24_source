@@ -2,6 +2,7 @@
  * @module utils/email
  */
 jn.define('utils/email', (require, exports, module) => {
+	const { Type } = require('type');
 	const { domains } = require('utils/email/src/domains');
 	const DEFAULT = 'default';
 
@@ -11,7 +12,7 @@ jn.define('utils/email', (require, exports, module) => {
 	 */
 	function getEmailDomain(email)
 	{
-		if (email.trim() === '')
+		if (!Type.isStringFilled(email) || email.trim() === '')
 		{
 			return null;
 		}

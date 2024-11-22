@@ -24,6 +24,7 @@ $MESS["SEC_WWALL_DASHBOARD_STATUS_TITLE_SEC_CP"] = "Bitrix24 protected";
 $MESS["SEC_WWALL_DASHBOARD_STATUS_TITLE_UNSEC"] = "Your site is vulnerable. Install the update immediately.";
 $MESS["SEC_WWALL_DASHBOARD_STATUS_TITLE_UNSEC_CP"] = "Your Bitrix24 is vulnerable. Install the update immediately.";
 $MESS["SEC_WWALL_DASHBOARD_STATUS_UPD_NEW_SEC"] = "What's new?";
+$MESS['SEC_WWALL_DASHBOARD_STATUS_UPD_HISTORY'] = 'https://www.bitrix24.com/self-hosted/box-versions.php';
 $MESS["SEC_WWALL_DASHBOARD_STATUS_UPD_SEC"] = "Update installed";
 $MESS["SEC_WWALL_DASHBOARD_STATUS_UPD_UNSEC"] = "Update";
 $MESS["SEC_WWALL_DASHBOARD_TITLE"] = "Proactive Protection Monitor";

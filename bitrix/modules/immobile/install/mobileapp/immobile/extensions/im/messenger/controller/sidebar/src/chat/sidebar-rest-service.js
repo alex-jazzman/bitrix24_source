@@ -88,25 +88,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 		 */
 		deleteParticipant(userId)
 		{
-			const chatId = Type.isString(this.dialogId) ? Number(this.dialogId.slice(4)) : this.dialogId;
-
-			return BX.rest.callMethod(
-				RestMethod.imV2ChatDeleteUser,
-				{
-					id: chatId,
+			return runAction(RestMethod.imV2ChatDeleteUser, {
+				data: {
+					dialogId: this.dialogId,
 					userId,
 				},
-			).then(
-				(result) => {
-					logger.log(`${this.constructor.name}.deleteParticipant.result`, result);
-
-					return result.data();
-				},
-			).catch(
-				(err) => {
-					logger.error(`${this.constructor.name}.deleteParticipant.catch`, err);
-				},
-			);
+			});
 		}
 
 		/**
@@ -277,6 +264,15 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 			CopilotRest.changeRole({ dialogId: this.dialogId, roleCode })
 				.then((result) => logger.log(`${this.constructor.name}.changeCopilotRole.result:`, result))
 				.catch((error) => logger.error(`${this.constructor.name}.changeCopilotRole.catch:`, error));
+		}
+
+		async deleteChat(dialogId)
+		{
+			return runAction(RestMethod.imV2ChatDelete, {
+				data: {
+					dialogId,
+				},
+			});
 		}
 	}
 

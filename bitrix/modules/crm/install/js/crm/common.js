@@ -13099,6 +13099,7 @@ BX.Crm.Page =
 		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") },
 		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' } },
 		activity: { condition: new RegExp("/bitrix/components/bitrix/crm.activity.planner/slider.php", "i"), options: { allowChangeHistory: false, width: 1080 }},
+		factoryBasedMerge: { condition: new RegExp('/crm/type/[0-9]+/merge/', 'i'), options: { allowHistoryChange: false, customLeftBoundary: 0 } },
 	},
 	items: [],
 	initialized: false,

@@ -8,6 +8,7 @@ import 'main.qrcode';
 import Options from "./options";
 import Ustat from "./ustat";
 import UserLoginHistory from './user-login-history';
+import { SignDocument } from './sign-document';
 import {QrAuthorization} from "ui.qrauthorization";
 import {Otp} from "./otp";
 import {DesktopApi} from 'im.v2.lib.desktop-api';
@@ -26,12 +27,14 @@ export default class Widget extends EventEmitter
 		linuxDeb: string,
 		linuxRpm: string,
 	};
+	#networkProfileUrl;
 
 	constructor(container, {
 		profile: {ID, FULL_NAME, PHOTO, MASK, STATUS, URL, WORK_POSITION},
 		component: {componentName, signedParameters},
 		features,
 		desktopDownloadLinks,
+		networkProfileUrl,
 	})
 	{
 		super();
@@ -49,6 +52,7 @@ export default class Widget extends EventEmitter
 			;
 		}
 		this.#desktopDownloadLinks = desktopDownloadLinks;
+		this.#networkProfileUrl = networkProfileUrl;
 
 		this.#cache.set('componentParams', {componentName, signedParameters});
 		this.hide = this.hide.bind(this);
@@ -83,12 +87,21 @@ export default class Widget extends EventEmitter
 			return this.#popup;
 		}
 		this.emit('init');
+		let signDocument = Type.isNull(this.#getSignDocument())
+			? null
+			: {
+				html: this.#getSignDocument(),
+				marginBottom: 24,
+				minHeight: '99px',
+			}
+		;
 		let content = [
 			this.#getProfileContainer(),
 			(this.#getAdminPanelContainer() ? {
 				html: this.#getAdminPanelContainer(),
 				backgroundColor: '#fafafa'
 			} : null),
+			signDocument,
 			[
 				{
 					html: this.#getThemeContainer(),
@@ -208,6 +221,7 @@ export default class Widget extends EventEmitter
 				secondary: item['secondary'] || false,
 			};
 		}
+
 		this.#popup = new PopupComponentsMaker({
 			target: this.#container,
 			content: content.map(prepareFunc),
@@ -324,7 +338,7 @@ export default class Widget extends EventEmitter
 			}
 
 			return Tag.render`
-				<a class="system-auth-form__item system-auth-form__scope --center --padding-sm --clickable" href="https://www.bitrix24.net/">
+				<a class="system-auth-form__item system-auth-form__scope --center --padding-sm --clickable" href="${this.#networkProfileUrl}">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --network"></div>
 					</div>
@@ -442,6 +456,24 @@ export default class Widget extends EventEmitter
 		}.bind(this), function (response) {
 			console.log('response: ', response);
 		}.bind(this));
+	}
+
+	#getSignDocument(): Promise<HTMLElement> | null
+	{
+		if (this.#features['signDocument'] !== 'Y')
+		{
+			return null;
+		}
+
+		return this.#cache.remember('getSignDocument', (): Promise<HTMLElement> => {
+			EventEmitter.subscribe(
+				SignDocument,
+				SignDocument.events.onDocumentCreateSidePanelOpen,
+				() => this.hide(),
+			);
+
+			return SignDocument.getPromise();
+		});
 	}
 
 	#getStressLevel(): Promise

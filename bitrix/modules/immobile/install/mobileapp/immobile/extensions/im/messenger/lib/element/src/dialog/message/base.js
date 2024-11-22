@@ -18,6 +18,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
 	const { Attach } = require('im/messenger/lib/element/dialog/message/element/attach/attach');
 	const { Keyboard } = require('im/messenger/lib/element/dialog/message/element/keyboard/keyboard');
+	const { CommentInfo } = require('im/messenger/lib/element/dialog/message/element/comment-info/comment-info');
 
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 
@@ -433,66 +434,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
-			const commentInfo = serviceLocator.get('core').getStore().getters['commentModel/getByMessageId']?.(modelMessage.id);
-			if (!commentInfo)
-			{
-				this.commentInfo = {
-					title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT'),
-					totalCounter: 0,
-				};
-
-				return this;
-			}
-			let messageCount = commentInfo.messageCount;
-			// remove first system message from count
-			if (commentInfo.messageCount > 0)
-			{
-				messageCount = commentInfo.messageCount - 1;
-			}
-			const colorUtils = new ColorUtils();
-
-			const users = serviceLocator.get('core').getStore().getters['usersModel/getByIdList'](commentInfo.lastUserIds);
-
-			const commentUsers = users.map((user) => {
-				const result = {};
-
-				if (user.avatar !== '')
-				{
-					result.imageUrl = user.avatar;
-
-					return result;
-				}
-
-				result.defaultIconSvg = defaultUserIcon(
-					user
-						? user.color
-						: colorUtils.getColorByNumber(user.id),
-				);
-
-				return result;
-			});
-
-			const unreadCounter = serviceLocator.get('core').getStore().getters['commentModel/getCommentCounter']?.({
+			this.commentInfo = CommentInfo.createByMessagesModel({
+				messageId: modelMessage.id,
 				channelId: modelMessage.chatId,
-				commentChatId: commentInfo.chatId,
-			}) ?? null;
-
-			const title = messageCount === 0
-				? Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT')
-				: Loc.getMessagePlural('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT_COUNT', messageCount, {
-					'#COUNT#': messageCount,
-				})
+			}).toMessageFormat()
 			;
-
-			this.commentInfo = {
-				title,
-				totalCounter: messageCount,
-				unreadCounter: unreadCounter ? {
-					color: Theme.colors.accentMainSuccess,
-					value: `+${unreadCounter}`,
-				} : null,
-				users: commentUsers.length > 0 ? commentUsers : null,
-			};
 
 			return this;
 		}

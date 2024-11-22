@@ -2,8 +2,8 @@ import { Dom, Type } from 'main.core';
 import { $getSelection, $isRangeSelection } from 'ui.lexical.core';
 import { $getSelectionPosition } from './get-selection-position';
 
-import type { Popup } from 'main.popup';
-import type TextEditor from '../text-editor';
+import { type Popup } from 'main.popup';
+import { type TextEditor } from '../text-editor';
 
 const lastPositionMap: WeakMap<Popup, 'top' | 'bottom'> = new WeakMap();
 const editorPadding = 16;

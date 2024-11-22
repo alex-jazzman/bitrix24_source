@@ -8,9 +8,17 @@ this.BX.Sign = this.BX.Sign || {};
 	  _t,
 	  _t2,
 	  _t3;
+	const DocumentMode = Object.freeze({
+	  document: 'document',
+	  template: 'template'
+	});
+	function isTemplateMode(mode) {
+	  return mode === DocumentMode.template;
+	}
 	var _containerId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("containerId");
 	var _preview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preview");
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
+	var _wizardOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wizardOptions");
 	var _previewLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previewLayout");
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _overlayContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("overlayContainer");
@@ -19,20 +27,23 @@ this.BX.Sign = this.BX.Sign || {};
 	var _getLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLayout");
 	var _getOverlayContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOverlayContainer");
 	var _showCompleteNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCompleteNotification");
-	var _onComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onComplete");
 	var _renderPages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPages");
 	var _subscribeOnEditorEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnEditorEvents");
 	var _appendOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendOverlay");
+	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _showOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showOverlay");
 	var _hideOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideOverlay");
 	class SignSettings {
-	  constructor(containerId, signOptions, wizardOptions) {
+	  constructor(containerId, signOptions = {}, wizardOptions = {}) {
 	    var _config$documentSendC;
 	    Object.defineProperty(this, _hideOverlay, {
 	      value: _hideOverlay2
 	    });
 	    Object.defineProperty(this, _showOverlay, {
 	      value: _showOverlay2
+	    });
+	    Object.defineProperty(this, _render, {
+	      value: _render2
 	    });
 	    Object.defineProperty(this, _appendOverlay, {
 	      value: _appendOverlay2
@@ -42,9 +53,6 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    Object.defineProperty(this, _renderPages, {
 	      value: _renderPages2
-	    });
-	    Object.defineProperty(this, _onComplete, {
-	      value: _onComplete2
 	    });
 	    Object.defineProperty(this, _showCompleteNotification, {
 	      value: _showCompleteNotification2
@@ -70,6 +78,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _wizardOptions, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _previewLayout, {
 	      writable: true,
 	      value: null
@@ -88,38 +100,40 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _containerId)[_containerId] = containerId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview] = new sign_v2_preview.Preview();
-	    const {
-	      complete,
-	      ...rest
-	    } = wizardOptions != null ? wizardOptions : {};
-	    this.wizard = new ui_wizard.Wizard(this.getStepsMetadata(), {
-	      back: {
-	        className: 'ui-btn-light-border'
-	      },
-	      next: {
-	        className: 'ui-btn-primary'
-	      },
-	      complete: {
-	        className: 'ui-btn-primary',
-	        title: main_core.Loc.getMessage('SIGN_SETTINGS_SEND_FOR_SIGN'),
-	        onComplete: () => babelHelpers.classPrivateFieldLooseBase(this, _onComplete)[_onComplete](),
-	        ...complete
-	      },
-	      ...rest
-	    });
-	    this.wizard.toggleBtnActiveState('next', true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _wizardOptions)[_wizardOptions] = wizardOptions;
 	    const {
 	      type = '',
-	      config = {}
-	    } = signOptions != null ? signOptions : {};
+	      config = {},
+	      documentMode
+	    } = signOptions;
+	    this.documentMode = documentMode;
 	    babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] = type;
 	    const {
 	      languages
 	    } = (_config$documentSendC = config.documentSendConfig) != null ? _config$documentSendC : {};
-	    const Editor = main_core.Reflection.getClass('top.BX.Sign.V2.Editor');
-	    this.editor = new Editor(type, {
+	    const EditorConstructor = main_core.Reflection.getClass('top.BX.Sign.V2.Editor');
+	    this.editor = new EditorConstructor(type, {
 	      languages
 	    });
+	  }
+	  isTemplateMode() {
+	    return this.documentMode === DocumentMode.template;
+	  }
+	  onComplete(showNotification = true) {
+	    BX.SidePanel.Instance.close();
+	    if (showNotification) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _showCompleteNotification)[_showCompleteNotification]();
+	    }
+	    const queryString = window.location.search;
+	    const urlParams = new URLSearchParams(queryString);
+	    if (!urlParams.has('noRedirect')) {
+	      const {
+	        entityTypeId,
+	        entityId
+	      } = this.documentSetup.setupData;
+	      const detailsUrl = `/crm/type/${entityTypeId}/details/${entityId}/`;
+	      BX.SidePanel.Instance.open(detailsUrl);
+	    }
 	  }
 	  subscribeOnEvents() {
 	    const settingsEvents = [{
@@ -181,7 +195,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    }, {
 	      type: 'close',
 	      stage: 'send',
-	      method: () => babelHelpers.classPrivateFieldLooseBase(this, _onComplete)[_onComplete](false)
+	      method: () => this.onComplete(false)
 	    }, {
 	      type: 'hidePreview',
 	      stage: 'send',
@@ -237,19 +251,39 @@ this.BX.Sign = this.BX.Sign || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderPages)[_renderPages](blocks, preparedPages);
 	    return setupData;
 	  }
-	  render() {
-	    const container = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _containerId)[_containerId]);
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getOverlayContainer)[_getOverlayContainer](), container);
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout](), container);
-	    const step = this.documentSetup.setupData ? 1 : 0;
-	    this.wizard.moveOnStep(step);
+	  async init(uid) {
+	    const metadata = this.getStepsMetadata(this);
+	    const {
+	      complete,
+	      ...rest
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _wizardOptions)[_wizardOptions];
+	    const title = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_SETTINGS_CREATE_TEMPLATE') : main_core.Loc.getMessage('SIGN_SETTINGS_SEND_FOR_SIGN');
+	    this.wizard = new ui_wizard.Wizard(metadata, {
+	      back: {
+	        className: 'ui-btn-light-border'
+	      },
+	      next: {
+	        className: 'ui-btn-primary'
+	      },
+	      complete: {
+	        className: 'ui-btn-primary',
+	        title,
+	        onComplete: () => this.onComplete(),
+	        ...complete
+	      },
+	      ...rest
+	    });
+	    if (uid) {
+	      await this.applyDocumentData(uid);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
 	  }
 	  getStepsMetadata() {
 	    return {};
 	  }
 	}
 	function _createHead2() {
-	  const headerTitle = main_core.Loc.getMessage('SIGN_SETTINGS_TITLE');
+	  const headerTitle = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE') : main_core.Loc.getMessage('SIGN_SETTINGS_TITLE');
 	  const headerTitleSub = babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] === 'b2b' ? main_core.Loc.getMessage('SIGN_SETTINGS_B2B_TITLE_SUB') : main_core.Loc.getMessage('SIGN_SETTINGS_B2E_TITLE_SUB');
 	  return main_core.Tag.render(_t || (_t = _`
 			<div class="sign-settings__head">
@@ -290,22 +324,6 @@ this.BX.Sign = this.BX.Sign || {};
 	    autoHideDelay: 4000
 	  });
 	}
-	function _onComplete2(showNotification = true) {
-	  BX.SidePanel.Instance.close();
-	  if (showNotification) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _showCompleteNotification)[_showCompleteNotification]();
-	  }
-	  const queryString = window.location.search;
-	  const urlParams = new URLSearchParams(queryString);
-	  if (!urlParams.has('noRedirect')) {
-	    const {
-	      entityTypeId,
-	      entityId
-	    } = this.documentSetup.setupData;
-	    const detailsUrl = `/crm/type/${entityTypeId}/details/${entityId}/`;
-	    BX.SidePanel.Instance.open(detailsUrl);
-	  }
-	}
 	function _renderPages2(blocks, preparedPages = false) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].ready = false;
 	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(blocks);
@@ -343,6 +361,14 @@ this.BX.Sign = this.BX.Sign || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _currentOverlay)[_currentOverlay] = overlay;
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _currentOverlay)[_currentOverlay], babelHelpers.classPrivateFieldLooseBase(this, _overlayContainer)[_overlayContainer]);
 	}
+	function _render2() {
+	  const container = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _containerId)[_containerId]);
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getOverlayContainer)[_getOverlayContainer](), container);
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout](), container);
+	  const step = this.documentSetup.setupData ? 1 : 0;
+	  this.wizard.toggleBtnActiveState('next', true);
+	  this.wizard.moveOnStep(step);
+	}
 	function _showOverlay2() {
 	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'display', 'none');
 	  main_core.Dom.show(babelHelpers.classPrivateFieldLooseBase(this, _overlayContainer)[_overlayContainer]);
@@ -352,6 +378,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  main_core.Dom.hide(babelHelpers.classPrivateFieldLooseBase(this, _overlayContainer)[_overlayContainer]);
 	}
 
+	exports.DocumentMode = DocumentMode;
+	exports.isTemplateMode = isTemplateMode;
 	exports.SignSettings = SignSettings;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Ui,BX.Sign.V2));

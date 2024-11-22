@@ -3,8 +3,8 @@ import {
 	AuthorGroup,
 	MessageComponents,
 	CollectionManager,
-	MessageComponentManager,
 } from 'im.v2.component.message-list';
+import { MessageComponentManager } from 'im.v2.lib.message-component-manager';
 import { MessageComponent } from 'im.v2.const';
 
 import { CommentsDialogLoader } from './dialog-loader';

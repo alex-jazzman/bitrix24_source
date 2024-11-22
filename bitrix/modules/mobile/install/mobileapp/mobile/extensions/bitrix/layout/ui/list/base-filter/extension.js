@@ -16,7 +16,7 @@ jn.define('layout/ui/list/base-filter', (require, exports, module) => {
 		 * @param {String} searchString
 		 * @param {Boolean} needFillPresets
 		 */
-		constructor(presetId, searchString, needFillPresets = true) {
+		constructor(presetId, searchString = '', needFillPresets = true) {
 			this.presets = [];
 			this.presetId = presetId;
 			this.setSearchString(searchString);

@@ -75,6 +75,15 @@ export function sendFeedback(
 					.setActivityDirection(activityDirection)
 					.buildData(),
 			);
+
+			sendData(
+				Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+					.setTool(Dictionary.TOOL_CRM)
+					.setCategory(Dictionary.CATEGORY_AI_OPERATIONS)
+					.setElement(Dictionary.ELEMENT_FEEDBACK_SEND)
+					.setActivityDirection(activityDirection)
+					.buildData(),
+			);
 		})
 		.catch(({ errors }) => console.error('Error sending feedback', errors));
 }
@@ -101,6 +110,15 @@ export function showSendFeedbackPopup(
 
 				sendData(
 					Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+						.setElement(Dictionary.ELEMENT_FEEDBACK_REFUSED)
+						.setActivityDirection(activityDirection)
+						.buildData(),
+				);
+
+				sendData(
+					Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+						.setTool(Dictionary.TOOL_CRM)
+						.setCategory(Dictionary.CATEGORY_AI_OPERATIONS)
 						.setElement(Dictionary.ELEMENT_FEEDBACK_REFUSED)
 						.setActivityDirection(activityDirection)
 						.buildData(),

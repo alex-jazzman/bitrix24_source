@@ -218,7 +218,7 @@ if (empty($arResult["ERROR_MESSAGE"]) && !empty($arResult["OK_MESSAGE"])):
 ?>
 <div class="reviews-note-box reviews-note-note">
 	<a name="reviewnote"></a>
-	<div class="reviews-note-box-text"><?=ShowNote($arResult["OK_MESSAGE"]);?></div>
+	<div class="reviews-note-box-text"><? ShowNote($arResult["OK_MESSAGE"]);?></div>
 </div>
 <?
 endif;

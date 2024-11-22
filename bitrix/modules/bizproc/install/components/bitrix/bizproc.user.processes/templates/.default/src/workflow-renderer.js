@@ -135,14 +135,21 @@ export class WorkflowRenderer
 	{
 		const target = Tag.render`<div></div>`;
 
-		this.#faces = (new WorkflowFaces({
-			workflowId: this.#data.workflowId,
-			targetUserId: this.#targetUserId,
-			target,
-			data: this.#data.taskProgress,
-			showArrow: true,
-		}));
-		this.#faces.render();
+		try
+		{
+			this.#faces = (new WorkflowFaces({
+				workflowId: this.#data.workflowId,
+				targetUserId: this.#targetUserId,
+				target,
+				data: this.#data.taskProgress,
+				showArrow: true,
+			}));
+			this.#faces.render();
+		}
+		catch (e)
+		{
+			console.error(e);
+		}
 
 		return target;
 	}

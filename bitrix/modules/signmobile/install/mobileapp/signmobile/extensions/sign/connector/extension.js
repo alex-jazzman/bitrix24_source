@@ -32,6 +32,21 @@ jn.define('sign/connector', (require, exports, module) => {
 	}
 
 	/**
+	 * @function getExternalUrl
+	 *
+	 * @param memberId
+	 * @returns {Promise<{ data: {url: string } }>}
+	 */
+	function getExternalUrl(memberId)
+	{
+		return BX.ajax.runAction('signmobile.api.document.getExternalUrl', {
+			data: {
+				memberId: Number(memberId),
+			},
+		});
+	}
+
+	/**
 	 * @function confirmationAccept
 	 *
 	 * @param memberId
@@ -76,5 +91,6 @@ jn.define('sign/connector', (require, exports, module) => {
 		confirmationAccept,
 		rejectConfirmation,
 		confirmationPostpone,
+		getExternalUrl,
 	};
 });

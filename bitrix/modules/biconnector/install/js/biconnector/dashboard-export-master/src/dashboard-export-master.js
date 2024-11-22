@@ -22,6 +22,7 @@ type DashboardData = {
 	appId: string,
 	scopesToExport: string,
 	scopesNotToExport: string,
+	urlParams: string,
 }
 
 /**
@@ -155,6 +156,8 @@ export class DashboardExportMaster
 			`;
 		}
 
+		const params = dashboardData.urlParams || Loc.getMessage('BIC_EXPORT_SCOPE_NONE');
+
 		return `
 			<div class="bic-export-container">
 				<div class="bic-export-header">
@@ -183,10 +186,18 @@ export class DashboardExportMaster
 						</div>
 						<div class="bic-setting-value">${scope}</div>
 					</div>
+					
+					<div class="bic-setting-item bic-setting-item-url-params">
+						<div class="bic-setting-title">
+							<span>${Loc.getMessage('BIC_EXPORT_URL_PARAM')}</span>
+						</div>
+						<div class="bic-setting-value">${params}</div>
+					</div>
 
 					<div class="bic-setting-item">
 						<span class="bic-settings-link">${Loc.getMessage('BIC_EXPORT_OPEN_SETTINGS')}</span>
 					</div>
+					
 				</div>
 				<div class="bic-export-separator"></div>
 				<div class="bic-export-footer"></div>

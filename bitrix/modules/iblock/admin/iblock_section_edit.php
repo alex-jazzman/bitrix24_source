@@ -980,13 +980,24 @@ $tabControl->BeginCustomField("IBLOCK_SECTION_ID", GetMessage("IBSEC_E_PARENT_SE
 		<td><?= $tabControl->GetCustomLabelHTML(); ?></td>
 		<td>
 		<?php
-		$l = CIBlockSection::GetTreeList(Array("IBLOCK_ID"=>$IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));?>
+		$l = CIBlockSection::GetTreeList(Array("IBLOCK_ID"=>$IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));
+		$l = CIBlockSection::GetTreeList(
+			['IBLOCK_ID' => $IBLOCK_ID],
+			[
+				'ID',
+				'NAME',
+				'DEPTH_LEVEL',
+			]
+		);
+		?>
 		<select name="IBLOCK_SECTION_ID" >
 			<option value="0"><?= GetMessage("IBLOCK_UPPER_LEVEL"); ?></option>
 		<?php
 			while($a = $l->Fetch()):
-				?><option value="<?= (int)$a["ID"]; ?>"<?= ($str_IBLOCK_SECTION_ID==$a["ID"] ? ' selected' : ''); ?>><?= str_repeat(".", $a["DEPTH_LEVEL"]) . htmlspecialcharsbx($a["NAME"]); ?></option><?php
+				$margin = max((int)$a['DEPTH_LEVEL'], 1);
+				?><option value="<?= (int)$a["ID"]; ?>"<?= ($str_IBLOCK_SECTION_ID==$a["ID"] ? ' selected' : ''); ?>><?= str_repeat(".", $margin) . htmlspecialcharsbx($a["NAME"]); ?></option><?php
 			endwhile;
+			unset($a, $l);
 		?>
 		</select>
 		</td>

@@ -7,8 +7,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
-	const { RestMethod } = require('im/messenger/const');
-	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { DialogRest } = require('im/messenger/provider/rest');
@@ -27,31 +25,15 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		bindMethods()
 		{
+			super.bindMethods();
 			this.recentAddHandler = this.recentAddHandler.bind(this);
 			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
 			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
 			this.commentCountersDeleteHandler = this.commentCountersDeleteHandler.bind(this);
 
-			this.stopRefreshing = this.stopRefreshing.bind(this);
-			this.renderInstant = this.renderInstant.bind(this);
-			this.loadPage = this.loadPage.bind(this);
-		}
-
-		initRequests()
-		{
-			super.initRequests();
-			this.initDepartmentRequest();
-			this.countersInitRequest();
-		}
-
-		initDepartmentRequest()
-		{
-			restManager.once(
-				RestMethod.imDepartmentColleaguesGet,
-				this.getRestManagerDepartmentOptions(),
-				this.departmentColleaguesGetHandler.bind(this),
-			);
+			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
+			this.initMessengerHandler = this.initMessengerHandler.bind(this);
 		}
 
 		subscribeViewEvents()
@@ -84,6 +66,11 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		{
 			BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing);
 			BX.addCustomEvent(EventType.messenger.renderRecent, this.renderInstant);
+		}
+
+		subscribeInitMessengerEvent()
+		{
+			this.messagerInitService.onInit(this.initMessengerHandler);
 		}
 
 		/* region Events */
@@ -164,7 +151,11 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		onRefresh()
 		{
-			MessengerEmitter.emit(EventType.messenger.refresh, true, ComponentCode.imMessenger);
+			MessengerEmitter.emit(
+				EventType.messenger.refresh,
+				{ redrawHeaderTruly: true, shortMode: true },
+				ComponentCode.imMessenger,
+			);
 		}
 
 		joinCall(callId)
@@ -248,19 +239,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			this.updateItems(recentList);
 		}
 
-		recentDeleteHandler(mutation)
-		{
-			this.renderer.removeFromQueue(mutation.payload.data.id);
-
-			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
-			{
-				this.view.hideLoader();
-			}
-
-			this.checkEmpty();
-		}
-
 		dialogUpdateHandler(mutation)
 		{
 			const dialogId = mutation.payload.data.dialogId;
@@ -284,18 +262,18 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			}
 		}
 
-		departmentColleaguesGetHandler(response)
+		initMessengerHandler(data)
 		{
-			const error = response.error();
-			if (error)
+			void this.updatePageFromServer(data);
+
+			if (data?.departmentColleagues)
 			{
-				this.logger.error(`${this.constructor.name}.departmentColleaguesGetHandler`, error);
-
-				return;
+				this.departmentColleaguesGetHandler(data.departmentColleagues);
 			}
+		}
 
-			const userList = response.data();
-
+		departmentColleaguesGetHandler(userList)
+		{
 			this.logger.log(`${this.constructor.name}.departmentColleaguesGetHandler`, userList);
 
 			this.store.dispatch('usersModel/set', userList)

@@ -288,7 +288,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				$arResult['value'][$entityTypeName]['items'][$itemId] = [
 					'ENTITY_TYPE_ID' => $entityTypeId,
 					'ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId.'-'.$itemId,
-					'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId . '-' . $itemId,
+					'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId) . '_' . $itemId,
 					'ENTITY_TITLE' => $item->getHeading(),
 					'ENTITY_LINK' => Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $itemId),
 				];

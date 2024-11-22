@@ -1,0 +1,2 @@
+<?php
+$MESS["SIGN_DOCUMENT_LIST_STATUS_STOPPED"] = "Зупинено";

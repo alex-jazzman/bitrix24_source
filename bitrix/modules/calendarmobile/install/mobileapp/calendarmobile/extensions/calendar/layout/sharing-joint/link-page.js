@@ -23,6 +23,8 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 			this.showMenu = this.showMenu.bind(this);
 			this.onDeleteMenuItemClickHandler = this.onDeleteMenuItemClickHandler.bind(this);
 			this.onCopyMenuItemClickHandler = this.onCopyMenuItemClickHandler.bind(this);
+
+			this.layoutWidget = props.layoutWidget;
 		}
 
 		get link()
@@ -38,11 +40,6 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 		get sendLink()
 		{
 			return this.props.sendLink;
-		}
-
-		setLayoutWidget(widget)
-		{
-			this.layoutWidget = widget;
 		}
 
 		render()

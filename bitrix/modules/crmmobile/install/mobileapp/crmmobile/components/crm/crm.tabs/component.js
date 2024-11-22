@@ -26,12 +26,17 @@
 	const { Loc } = require('loc');
 	const { Feature } = require('feature');
 	const { ContextMenu } = require('layout/ui/context-menu');
+	const { CrmNavigator } = require('crm/navigator');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
 	const TAB_BIG_LABEL = '99+';
 
 	let featureCounter = 0;
+	const customSectionId = BX.componentParameters.get('customSectionId', null);
+	const crmNavigator = new CrmNavigator({ customSectionId });
+	crmNavigator.unsubscribeFromPushNotifications();
+	crmNavigator.subscribeToPushNotifications();
 
 	/**
 	 * @class CrmTabs

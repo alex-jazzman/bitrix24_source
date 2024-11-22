@@ -1,5 +1,5 @@
 <?php
-
+$MESS["CRM_ACTIVITY_TODO_CALENDAR_MODULE_NOT_INSTALLED"] = "Please install the Event Calendar module to continue.";
 $MESS["CRM_ACTIVITY_TODO_UPDATE_COLOR_ERROR"] = "Cannot change color for closed activity.";
 $MESS["CRM_ACTIVITY_TODO_UPDATE_FILES_ERROR"] = "Cannot update files in a completed activity.";
 $MESS["CRM_ACTIVITY_TODO_UPDATE_PING_OFFSETS_ERROR"] = "Cannot change reminders in a completed activity.";

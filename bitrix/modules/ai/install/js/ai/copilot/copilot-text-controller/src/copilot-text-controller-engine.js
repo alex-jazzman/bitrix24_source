@@ -49,6 +49,8 @@ export class CopilotTextControllerEngine
 		const res = await CopilotTextControllerEngine.#toolingDataByCategory[this.#category];
 		CopilotTextControllerEngine.#toolingDataByCategory[this.#category] = res;
 
+		this.#excludeZeroPromptFromPrompts();
+
 		this.#selectedEngineCode = this.#getSelectedEngineCode(res.data.engines);
 	}
 
@@ -91,7 +93,7 @@ export class CopilotTextControllerEngine
 
 	getPrompts(): Prompt[]
 	{
-		return this.#getTooling().prompts;
+		return this.#getTooling().promptsSystem;
 	}
 
 	getPermissions()
@@ -249,7 +251,7 @@ export class CopilotTextControllerEngine
 
 	#isCommandRequiredUserMessage(commandCode): boolean
 	{
-		const prompts = this.#getTooling().prompts;
+		const prompts = this.#getTooling().promptsSystem;
 		const searchPrompt: Prompt | undefined = this.#getPromptByCode(prompts, commandCode);
 
 		if (!searchPrompt)
@@ -262,7 +264,7 @@ export class CopilotTextControllerEngine
 
 	#isCommandRequiredContextMessage(commandCode): boolean
 	{
-		const prompts = this.#getTooling().prompts;
+		const prompts = this.#getTooling().promptsSystem;
 		const searchPrompt: Prompt | undefined = this.#getPromptByCode(prompts, commandCode);
 
 		if (!searchPrompt)
@@ -310,6 +312,19 @@ export class CopilotTextControllerEngine
 			.setParameters({
 				promptCategory: initEngineOptions.category,
 			});
+	}
+
+	#excludeZeroPromptFromPrompts(): void
+	{
+		const zeroPromptIndex = CopilotTextControllerEngine.#toolingDataByCategory[this.#category].data.promptsSystem
+			.findIndex((prompt) => {
+				return prompt.code === 'zero_prompt';
+			});
+
+		if (zeroPromptIndex > -1)
+		{
+			CopilotTextControllerEngine.#toolingDataByCategory[this.#category].data.promptsSystem.splice(zeroPromptIndex, 1);
+		}
 	}
 }
 

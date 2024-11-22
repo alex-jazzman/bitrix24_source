@@ -22,4 +22,4 @@ $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Error refreshing key
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Key has been refreshed.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Select employees who will receive notifications when a new dashboard or update is available. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK"] = "Dashboard owner has full access to the dashboard. You can lose your access if you change dashboard owner. #HINT_LINK#";
-$MESS["BICONNECTOR_SUPERSET_SETTINGS_SCOPE_HINT_LINK"] = "This dashboard will be present in the selected Bitrix24 areas. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_PARAMS_HINT_LINK"] = "Parameter availability depends on the selected scope. Only the \"User ID\" parameter is available if no scope is selected. #HINT_LINK#";

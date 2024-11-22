@@ -7,14 +7,14 @@ jn.define('intent', (require, exports, module) => {
 		handlers: [],
 		execute: () => {
 			BX.onCustomEvent('onIntentHandle', [Intent]);
-			Intent.handlers.forEach(handler => handler.call());
+			Intent.handlers.forEach((handler) => handler.call());
 			Intent.handlers = [];
 		},
 		notify: (data, eventName) => {
-			const intent = Intent.check(data)
+			const intent = Intent.check(data);
 			if (intent)
 			{
-				analytics.send(eventName, {type: intent}, ["fbonly"]);
+				analytics.send(eventName, { type: intent }, ['fbonly']);
 			}
 		},
 		check: (data) => {
@@ -28,10 +28,10 @@ jn.define('intent', (require, exports, module) => {
 				targetIntents = [data];
 			}
 
-			return targetIntents.find((name, index, intents) => {
-				({ intent } = Application.getLastNotification(name));
+			return targetIntents.find((name) => {
+				const { intent } = Application.getLastNotification(name);
 
-				return intents.includes(intent);
+				return name === intent;
 			});
 		},
 	};

@@ -55,6 +55,7 @@ export type RecentModelActions =
 	| 'recentModel/set'
 	| 'recentModel/like'
 	| 'recentModel/delete'
+	| 'recentModel/deleteFromModel'
 	| 'recentModel/clearAllCounters'
 	| 'recentModel/update'
 
@@ -96,7 +97,7 @@ export interface RecentUpdateData extends PayloadData
 }
 
 
-export type RecentDeleteActions = 'delete';
+export type RecentDeleteActions = 'delete' | 'deleteFromModel';
 export interface RecentDeleteData extends PayloadData
 {
 	id: DialogId;

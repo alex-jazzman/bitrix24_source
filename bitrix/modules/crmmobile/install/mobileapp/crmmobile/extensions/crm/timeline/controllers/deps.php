@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'alert',
 		'crm:type',
 		'type',

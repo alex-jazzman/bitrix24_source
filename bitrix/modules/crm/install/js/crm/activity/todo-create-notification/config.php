@@ -12,7 +12,6 @@ return [
 		'main.core',
 		'main.core.events',
 		'main.popup',
-		'crm.activity.todo-editor',
 		'crm.activity.todo-editor-v2',
 		'crm.activity.todo-notification-skip',
 		'crm.activity.todo-notification-skip-menu',

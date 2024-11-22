@@ -22,6 +22,7 @@ return [
 		'im:messenger/provider/pull/lib/file',
 		'im:chat/utils',
 		'im:chat/messengercommon',
+		'im:messenger/provider/data',
 	],
 	'bundle' => [
 		'./src/pull-handler',

@@ -2,12 +2,14 @@
  * @module selector/widget
  */
 jn.define('selector/widget', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const { Color } = require('tokens');
 	const { uniqBy } = require('utils/array');
 	const { isEqual, get, mergeImmutable } = require('utils/object');
 	const { CommonSelectorProvider } = require('selector/providers/common');
 	const { Feature } = require('feature');
 	const { showToast } = require('toast');
+	const { Type } = require('type');
 
 	const SERVICE_SECTION_CODE = 'service';
 	const COMMON_SECTION_CODE = 'common';
@@ -36,6 +38,11 @@ jn.define('selector/widget', (require, exports, module) => {
 			initSelectedIds,
 			undeselectableIds,
 			returnKey,
+			scopes,
+			shouldRenderHiddenItemsInList,
+			sectionTitles,
+			animation,
+			leftButtons,
 		})
 		{
 			this.returnKey = returnKey || DEFAULT_RETURN_KEY;
@@ -62,8 +69,43 @@ jn.define('selector/widget', (require, exports, module) => {
 			this.entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
 			this.initSelectedIds = this.prepareInitSelectedIds(initSelectedIds);
 			this.undeselectableIds = this.prepareInitSelectedIds(undeselectableIds);
+			this.scopes = scopes;
+
+			this.sectionTitles = sectionTitles || {};
+			this.shouldRenderHiddenItemsInList = shouldRenderHiddenItemsInList ?? true;
+			this.animation = animation;
+
+			this.leftButtons = Type.isArrayFilled(leftButtons) ? leftButtons : [];
 
 			this.setupProvider(provider);
+		}
+
+		getWidget()
+		{
+			return this.widget;
+		}
+
+		getProvider()
+		{
+			return this.provider;
+		}
+
+		getCurrentItems()
+		{
+			return this.currentItems;
+		}
+
+		getCurrentSelectedItems()
+		{
+			return this.currentSelectedItems;
+		}
+
+		addEvents(events)
+		{
+			this.events = {
+				...this.events,
+				...events,
+			};
 		}
 
 		prepareInitSelectedIds(initSelectedIds)
@@ -91,7 +133,9 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		setupProvider(provider)
 		{
-			this.provider = new CommonSelectorProvider(
+			const providerClass = provider.class ?? CommonSelectorProvider;
+			// eslint-disable-next-line new-cap
+			this.provider = new providerClass(
 				provider.context || null,
 				provider.options || {},
 			);
@@ -137,11 +181,12 @@ jn.define('selector/widget', (require, exports, module) => {
 		show({ widgetParams = this.widgetParams } = {}, parentWidget = PageManager)
 		{
 			let airWidgetParams = {};
+			const sendButtonName = widgetParams.sendButtonName ?? Loc.getMessage('PROVIDER_WIDGET_SELECT');
 
 			if (isAirStyleSupported)
 			{
 				airWidgetParams = {
-					sendButtonName: this.allowMultipleSelection ? BX.message('PROVIDER_WIDGET_SELECT') : null,
+					sendButtonName: this.allowMultipleSelection ? sendButtonName : null,
 					titleParams: {
 						type: 'dialog',
 					},
@@ -169,10 +214,20 @@ jn.define('selector/widget', (require, exports, module) => {
 
 						this.widget.setReturnKey(this.returnKey);
 
+						if (Array.isArray(this.scopes))
+						{
+							this.widget.setScopes(this.scopes);
+						}
+
 						const placeholder = this.getSearchPlaceholder();
 						if (placeholder)
 						{
 							this.widget.setPlaceholder(placeholder);
+						}
+
+						if (this.leftButtons)
+						{
+							this.widget.setLeftButtons(this.leftButtons);
 						}
 
 						if (!isAirStyleSupported)
@@ -189,6 +244,11 @@ jn.define('selector/widget', (require, exports, module) => {
 									callback: () => this.close(),
 								},
 							]);
+						}
+
+						if (Application.getApiVersion() > 55)
+						{
+							this.widget.setPickerAnimation?.(this.animation);
 						}
 
 						this.widget.allowMultipleSelection(this.allowMultipleSelection);
@@ -226,14 +286,22 @@ jn.define('selector/widget', (require, exports, module) => {
 		 * Specific method call from widget.setListener().
 		 *
 		 * @param text
+		 * @param scope
 		 */
-		onListFillListener({ text })
+		onListFillListener({ text, scope })
 		{
 			this.queryText = text.trim();
 
 			if (text === '')
 			{
-				this.provider.loadRecent();
+				if (typeof this.searchOptions.onSearchCancelled === 'function')
+				{
+					this.searchOptions.onSearchCancelled({ scope });
+				}
+				else
+				{
+					this.provider.loadRecent();
+				}
 			}
 			else
 			{
@@ -246,9 +314,12 @@ jn.define('selector/widget', (require, exports, module) => {
 		 *
 		 * @param text
 		 * @param item
+		 * @param scope
 		 */
-		onItemSelectedListener({ text, item })
+		onItemSelectedListener({ text, item, scope })
 		{
+			this.handleOnEventsCallback('onItemSelected', { text, item, scope });
+
 			if (
 				item.disabled
 				&& this.selectOptions.nonSelectableErrorText.length > 0
@@ -264,6 +335,11 @@ jn.define('selector/widget', (require, exports, module) => {
 			{
 				this.createItems(text);
 			}
+		}
+
+		onScopeChangedListener({ text, scope })
+		{
+			this.handleOnEventsCallback('onScopeChanged', { text, scope });
 		}
 
 		createItems(text)
@@ -356,7 +432,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			this.manualSelection = true;
 
-			if (!this.hasItemsInCurrentItems(items))
+			if (this.shouldRenderHiddenItemsInList && !this.hasItemsInCurrentItems(items))
 			{
 				this.setItems([...items, ...this.currentItems]);
 			}
@@ -487,7 +563,7 @@ jn.define('selector/widget', (require, exports, module) => {
 			}, []);
 		}
 
-		onProviderFetchResult(items, cache = false)
+		onProviderFetchResult(items, cache = false, title = null)
 		{
 			if (this.provider.queryString !== this.queryText)
 			{
@@ -559,11 +635,11 @@ jn.define('selector/widget', (require, exports, module) => {
 					return item;
 				});
 
-			const title = (
-				isRecent
-					? BX.message('PROVIDER_SEARCH_RECENT_SECTION_TITLE')
-					: BX.message('PROVIDER_SEARCH_SECTION_TITLE')
-			);
+			const recentTitle = this.sectionTitles.recent ?? Loc.getMessage('PROVIDER_SEARCH_RECENT_SECTION_TITLE');
+			const searchTitle = this.sectionTitles.search ?? Loc.getMessage('PROVIDER_SEARCH_SECTION_TITLE');
+
+			const title = isRecent ? recentTitle : searchTitle;
+
 			const buttonText = this.getCommonSectionButtonText();
 			const styles = this.getCommonSectionStyles();
 
@@ -590,6 +666,11 @@ jn.define('selector/widget', (require, exports, module) => {
 				this.currentItems = items;
 
 				this.widget.setItems(this.currentItems);
+
+				if (Application.getApiVersion() > 55)
+				{
+					this.widget.animatePicker?.();
+				}
 			}
 
 			if (isAirStyleSupported)

@@ -11,6 +11,8 @@ if (!CModule::IncludeModule('im'))
 
 session_write_close();
 
+\Bitrix\Main\UI\Extension::load("rest.client");
+
 $CIMNotify = new CIMNotify(false);
 $result = $CIMNotify->GetNotifyList(['PAGE' => 0]);
 

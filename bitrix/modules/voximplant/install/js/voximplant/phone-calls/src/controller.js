@@ -1,6 +1,7 @@
 import { Browser, Type, Text, Runtime, Loc, Reflection } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
+import { DesktopDownload } from 'intranet.desktop-download';
 
 import { Keypad } from './view/keypad'
 import { PhoneCallView, Direction, UiState, CallState, CallProgress } from './view/view'
@@ -1623,7 +1624,7 @@ export class PhoneCallsController extends EventEmitter
 			cancelCaption: Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
 			onOk: () =>
 			{
-				const url = Browser.isMac() ? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "http://dl.bitrix24.com/b24/bitrix24_desktop.exe";
+				const url = DesktopDownload.getLinkForCurrentUser();
 				window.open(url, "desktopApp");
 				return true;
 			},

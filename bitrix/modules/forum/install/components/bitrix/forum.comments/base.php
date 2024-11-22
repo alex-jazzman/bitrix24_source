@@ -17,7 +17,9 @@ class CCommentBase
 		{
 			if (mb_stripos($method, "On") === 0)
 			{
-				$this->addHandler($method, [$this, $method]);
+				$this->addHandler($method, function() use ($method) {
+					return call_user_func([$this, $method], ...func_get_args());
+				});
 			}
 		}
 	}

@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const { withCurrentDomain } = require('utils/url');
+	const { Icon } = require('assets/icons');
 	const { Theme } = require('im/lib/theme');
 
 	const {
@@ -22,11 +23,14 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { isOnline } = require('device/connection');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
+	const { showDeleteChannelPostAlert } = require('im/messenger/lib/ui/alert');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { AnalyticsService } = require('im/messenger/provider/service');
 
 	const {
 		LikeReaction,
@@ -39,6 +43,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	} = require('im/messenger/controller/dialog/lib/message-menu/reaction');
 	const {
 		CopyAction,
+		CopyLinkAction,
 		PinAction,
 		UnpinAction,
 		ForwardAction,
@@ -57,6 +62,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { MessageMenuMessage } = require('im/messenger/controller/dialog/lib/message-menu/message');
 	const { MessageMenuView } = require('im/messenger/controller/dialog/lib/message-menu/view');
 	const { MessageCreateMenu } = require('im/messenger/controller/dialog/lib/message-create-menu');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--message-menu');
 
@@ -107,6 +113,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				ActionType.reaction,
 				ActionType.reply,
 				ActionType.copy,
+				ActionType.copyLink,
 				ActionType.subscribe,
 				ActionType.unsubscribe,
 				ActionType.pin,
@@ -228,6 +235,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			this.actions = {
 				[ActionType.reaction]: this.addReactionAction.bind(this),
 				[ActionType.copy]: this.addCopyAction.bind(this),
+				[ActionType.copyLink]: this.addCopyLinkAction.bind(this),
 				[ActionType.pin]: this.addPinAction.bind(this),
 				[ActionType.unpin]: this.addUnpinAction.bind(this),
 				[ActionType.subscribe]: this.addSubscribeAction.bind(this),
@@ -248,6 +256,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		{
 			this.handlers = {
 				[ActionType.copy]: this.onCopy.bind(this),
+				[ActionType.copyLink]: this.onCopyLink.bind(this),
 				[ActionType.reply]: this.onReply.bind(this),
 				[ActionType.pin]: this.onPin.bind(this),
 				[ActionType.unpin]: this.onUnpin.bind(this),
@@ -293,6 +302,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			if (message.isPossibleCopy())
 			{
 				menu.addAction(CopyAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addCopyLinkAction(menu, message)
+		{
+			if (Feature.isMessageMenuAirIconSupported && message.isPossibleCopyLink())
+			{
+				menu.addAction(CopyLinkAction);
 			}
 		}
 
@@ -468,8 +489,31 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 
 			DialogTextHelper.copyToClipboard(
-				{ clipboardText: modelMessage.text },
-				this.locator.get('view').ui,
+				modelMessage.text,
+				{
+					parentWidget: this.locator.get('view').ui,
+				},
+			);
+		}
+
+		/**
+		 * @param {Message} message
+		 */
+		onCopyLink(message)
+		{
+			const link = MessageHelper.createById(message.id)?.getLinkToMessage();
+			if (!Type.isStringFilled(link))
+			{
+				return;
+			}
+
+			DialogTextHelper.copyToClipboard(
+				link,
+				{
+					notificationText: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_COPY_LINK_SUCCESS'),
+					notificationIcon: Icon.LINK,
+					parentWidget: this.locator.get('view').ui,
+				},
 			);
 		}
 
@@ -645,7 +689,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			UserProfile.show(messageModel.authorId, { backdrop: true });
+			UserProfile.show(messageModel.authorId, {
+				backdrop: true,
+				openingDialogId: this.dialogId,
+			});
 		}
 
 		/**
@@ -666,6 +713,32 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
+				return;
+			}
+
+			AnalyticsService.getInstance().sendMessageDeleteActionClicked({
+				messageId: messageModel.id,
+				dialogId: this.dialogId,
+			});
+
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+
+			if (helper?.isChannel)
+			{
+				showDeleteChannelPostAlert({
+					deleteCallback: () => {
+						this.locator.get('message-service')
+							.delete(messageModel, this.dialogId)
+						;
+					},
+					cancelCallback: () => {
+						AnalyticsService.getInstance().sendMessageDeletingCanceled({
+							messageId: messageModel.id,
+							dialogId: this.dialogId,
+						});
+					},
+				});
+
 				return;
 			}
 
@@ -807,7 +880,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		isMenuNotAvailableByComponentId(message)
 		{
 			const componentId = message.params?.componentId;
-			const componentIds = [MessageParams.ComponentId.SignMessage];
+			const componentIds = [
+				MessageParams.ComponentId.SignMessage,
+				MessageParams.ComponentId.CallMessage,
+			];
 			const isCreateBannerMessage = componentId?.includes('CreationMessage');
 
 			return componentId && (isCreateBannerMessage || componentIds.includes(componentId));

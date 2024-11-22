@@ -1,4 +1,5 @@
 <?php
+$MESS["CALLMOBILE_MESSAGE_HAS_ACTIVE_CALL_HINT"] = "You are now on a different call. Disconnect from that call to start a new one.";
 $MESS["MOBILE_CALL_ALREADY_FINISHED"] = "Call has already been ended";
 $MESS["MOBILE_CALL_ALREADY_JOINED"] = "You cannot connect to the call from multiple devices";
 $MESS["MOBILE_CALL_APP_REQUIRED"] = "Application is required";

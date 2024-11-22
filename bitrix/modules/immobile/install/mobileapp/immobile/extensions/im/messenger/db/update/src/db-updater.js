@@ -17,6 +17,15 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 			this.#connection = new OptionTable();
 		}
 
+		get transactionMode()
+		{
+			return {
+				deferred: 'DEFERRED',
+				immediate: 'IMMEDIATE',
+				exclusive: 'EXCLUSIVE',
+			}
+		}
+
 		/**
 		 * @param options
 		 * @param {String} options.query
@@ -217,6 +226,32 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 		{
 			return this.executeSql({
 				query: `DROP TABLE ${tableName}`,
+			});
+		}
+
+		async startTransaction(transactionMode = this.transactionMode.deferred)
+		{
+			if (!(Object.values(this.transactionMode).includes(transactionMode)))
+			{
+				throw new Error(`${this.constructor.name}.startTransaction: unknown transactionMode: ${transactionMode}`);
+			}
+
+			return this.executeSql({
+				query: `BEGIN ${transactionMode} TRANSACTION`,
+			});
+		}
+
+		async rollbackTransaction()
+		{
+			return this.executeSql({
+				query: 'ROLLBACK TRANSACTION',
+			});
+		}
+
+		async commitTransaction()
+		{
+			return this.executeSql({
+				query: 'COMMIT TRANSACTION',
 			});
 		}
 	}

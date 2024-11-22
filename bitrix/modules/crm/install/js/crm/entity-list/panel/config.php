@@ -50,9 +50,9 @@ return [
 	'rel' => [
 		'crm_activity_planner',
 		'main.core.collections',
+		'main.core.events',
 		'crm.merger.batchmergemanager',
 		'crm.autorun',
-		'main.core.events',
 		'ui.entity-selector',
 		'ui.notification',
 		'ui.dialogs.messagebox',

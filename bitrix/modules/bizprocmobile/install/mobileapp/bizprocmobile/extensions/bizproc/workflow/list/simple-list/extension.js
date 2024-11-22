@@ -25,7 +25,7 @@ jn.define('bizproc/workflow/list/simple-list', (require, exports, module) => {
 			layout.openWidget('layout', {
 				modal: true,
 				titleParams: {
-					text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TITLE'),
+					text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TITLE_MSGVER_1'),
 				},
 				backgroundColor: AppTheme.colors.bgContentPrimary,
 				backdrop: {

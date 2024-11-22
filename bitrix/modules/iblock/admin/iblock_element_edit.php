@@ -2088,7 +2088,7 @@ else
 			{
 				$arSubMenu[] = array(
 					"TEXT" => GetMessage("IBEL_HIST"),
-					"LINK" => $selfFolderUrl.'/iblock_history_list.php?ELEMENT_ID='.$ID.'&type='.urlencode($arIBlock["IBLOCK_TYPE_ID"]).'&lang='.LANGUAGE_ID.'&IBLOCK_ID='.$IBLOCK_ID.'&find_section_section='.$find_section_section,
+					"LINK" => $selfFolderUrl.'iblock_history_list.php?ELEMENT_ID='.$ID.'&type='.urlencode($arIBlock["IBLOCK_TYPE_ID"]).'&lang='.LANGUAGE_ID.'&IBLOCK_ID='.$IBLOCK_ID.'&find_section_section='.$find_section_section,
 				);
 			}
 
@@ -3004,17 +3004,28 @@ $tabControl->EndCustomField("DETAIL_TEXT",
 	$tabControl->BeginCustomField("SECTIONS", GetMessage("IBLOCK_SECTION"), $arIBlock["FIELDS"]["IBLOCK_SECTION"]["IS_REQUIRED"] === "Y");
 	?>
 	<tr id="tr_SECTIONS">
-	<?if($arIBlock["SECTION_CHOOSER"] != "D" && $arIBlock["SECTION_CHOOSER"] != "P"):?>
+	<?php
+	if ($arIBlock["SECTION_CHOOSER"] != "D" && $arIBlock["SECTION_CHOOSER"] != "P"):
 
-		<?$l = CIBlockSection::GetTreeList(Array("IBLOCK_ID"=>$IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));?>
+		$l = CIBlockSection::GetTreeList(
+			['IBLOCK_ID' => $IBLOCK_ID],
+			[
+				'ID',
+				'NAME',
+				'DEPTH_LEVEL',
+			]
+		);
+	?>
 		<td width="40%" class="adm-detail-valign-top"><?echo $tabControl->GetCustomLabelHTML()?></td>
 		<td width="60%">
 		<select name="IBLOCK_SECTION[]" size="14" multiple onchange="onSectionChanged()">
 			<option value="0"<?if(is_array($str_IBLOCK_ELEMENT_SECTION) && in_array(0, $str_IBLOCK_ELEMENT_SECTION))echo " selected"?>><?echo GetMessage("IBLOCK_UPPER_LEVEL")?></option>
-		<?
+		<?php
 			while($ar_l = $l->GetNext()):
-				?><option value="<?echo $ar_l["ID"]?>"<?if(is_array($str_IBLOCK_ELEMENT_SECTION) && in_array($ar_l["ID"], $str_IBLOCK_ELEMENT_SECTION))echo " selected"?>><?echo str_repeat(" . ", $ar_l["DEPTH_LEVEL"])?><?echo $ar_l["NAME"]?></option><?
+				$margin = max((int)$ar_l['DEPTH_LEVEL'], 1);
+				?><option value="<?= $ar_l["ID"] ?>"<?if(is_array($str_IBLOCK_ELEMENT_SECTION) && in_array($ar_l["ID"], $str_IBLOCK_ELEMENT_SECTION))echo " selected"?>><?= str_repeat(" . ", $margin) . $ar_l["NAME"] ?></option><?php
 			endwhile;
+			unset($ar_l, $l);
 		?>
 		</select>
 		</td>

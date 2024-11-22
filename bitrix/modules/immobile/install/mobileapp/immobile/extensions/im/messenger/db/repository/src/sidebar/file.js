@@ -31,6 +31,16 @@ jn.define('im/messenger/db/repository/sidebar/file', (require, exports, module) 
 			return this.sidebarFileTable.add(filesToAdd, true);
 		}
 
+		/**
+		 * @param {number} chatId
+		 */
+		async deleteByChatId(chatId)
+		{
+			return this.sidebarFileTable.delete({
+				chatId,
+			});
+		}
+
 		async deleteById(id)
 		{
 			return this.sidebarFileTable.deleteByIdList([id]);

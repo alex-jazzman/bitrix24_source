@@ -267,7 +267,7 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 					<div class="mail-connect-section-block">
 						<div class="mail-connect-form-inner">
 							<input type="checkbox" class="mail-connect-form-input mail-connect-form-input-check" name="fields[mail_connect_import_messages]" value="Y" id="mail_connect_mb_import_messages" checked>
-							<? [$label1, $label2] = explode('#AGE#', Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE'), 2); ?>
+							<? [$label1, $label2] = explode('#AGE#', Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_MSGVER_1'), 2); ?>
 							<label class="mail_connect_mb_import_messages_label" for="mail_connect_mb_import_messages"><?=$label1 ?></label>
 							<? $maxAgeDefault = $maxAgeLimit > 0 && $maxAgeLimit < 7 ? 1 : 7; ?>
 							<label class="mail-set-singleselect mail-set-singleselect-line" data-checked="mail_connect_mb_max_age_field_<?=$maxAgeDefault ?>">
@@ -499,7 +499,7 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 							<? if (!empty($mailbox) && empty($mailbox['__crm'])): ?> style="display: none; " <? endif ?>>
 							<? if (empty($mailbox)): ?>
 								<div class="mail-connect-option-email mail-connect-form-check-hidden">
-									<? [$label1, $label2] = explode('#AGE#', Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_AGE'), 2); ?>
+									<? [$label1, $label2] = explode('#AGE#', Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_AGE_INFO_CRM'), 2); ?>
 									<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 										   name="fields[crm_sync_old]" value="Y" id="mail_connect_mb_crm_sync_old"
 										<? if (empty($mailbox)): ?> checked <? endif ?>>
@@ -523,6 +523,11 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 									<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_sync_old">
 										<?=$label2 ?>
 									</label>
+								</div>
+								<div class="ui-alert ui-alert-warning">
+									<span class="ui-alert-message">
+										<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_AGE_INFO_CRM_ATTENTION') ?>
+									</span>
 								</div>
 							<? endif ?>
 							<div class="mail-connect-option-email mail-connect-form-check-hidden">
@@ -556,6 +561,11 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 								<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_allow_entity_in">
 									<?=$label2 ?>
 								</label>
+								<div class="ui-alert ui-alert-warning">
+									<span class="ui-alert-message">
+										<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NEW_ENTITY_IN_INFO_CRM_ATTENTION') ?>
+									</span>
+								</div>
 							</div>
 							<div class="mail-connect-option-email mail-connect-form-check-hidden">
 								<? [$label1, $label2] = explode('#ENTITY#', Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NEW_ENTITY_OUT'), 2); ?>
@@ -580,6 +590,11 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 								<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_allow_entity_out">
 									<?=$label2 ?>
 								</label>
+								<div class="ui-alert ui-alert-warning">
+									<span class="ui-alert-message">
+										<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NEW_ENTITY_OUT_INFO_CRM_ATTENTION') ?>
+									</span>
+								</div>
 							</div>
 							<div class="mail-connect-option-email mail-connect-form-check-hidden">
 								<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"

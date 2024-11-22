@@ -18,6 +18,7 @@ $MESS["CRM_ACTIVITY_TODO_ADD_TITLE_DEFAULT"] = "Зв'язатися з кліє�
 $MESS["CRM_ACTIVITY_TODO_ADD_TITLE_PLACEHOLDER"] = "Що потрібно зробити";
 $MESS["CRM_ACTIVITY_TODO_ADD_TITLE_WITH_PREFIX"] = "Заплановано: #TITLE#";
 $MESS["CRM_ACTIVITY_TODO_BIND_CLIENT_ERROR"] = "Не вдалося прив'язати клієнта. Оновіть сторінку й спробуйте знову.";
+$MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_CHANGE_ACTION"] = "змінити";
 $MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_ROOMS_CAPACITY"] = "Кількість місць: #CAPACITY_VALUE#";
 $MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_ROOMS_ENTITY_TITLE"] = "Переговорна";
 $MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_ROOMS_LIST"] = "вибрати";

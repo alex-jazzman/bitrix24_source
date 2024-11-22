@@ -1,7 +1,9 @@
 import { Store } from 'ui.vue3.vuex';
+import { Loc } from 'main.core';
 
+import { LayoutManager } from 'im.v2.lib.layout';
 import { Messenger } from 'im.public';
-import { UserRole } from 'im.v2.const';
+import { ChatType, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { UserManager } from 'im.v2.lib.user';
 import { CopilotManager } from 'im.v2.lib.copilot';
@@ -9,6 +11,7 @@ import { CallManager } from 'im.v2.lib.call';
 import { WritingManager } from 'im.v2.lib.writing';
 import { Logger } from 'im.v2.lib.logger';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import type {
 	ChatOwnerParams,
@@ -21,6 +24,7 @@ import type {
 	ChatRenameParams,
 	ChatAvatarParams,
 	ChatConvertParams,
+	ChatDeleteParams,
 } from '../../types/chat';
 import type { RawUser, RawChat } from '../../types/common';
 import type { ImModelChat } from 'im.v2.model';
@@ -247,6 +251,48 @@ export class ChatPullHandler
 		});
 	}
 
+	handleChatDelete(params: ChatDeleteParams)
+	{
+		Logger.warn('ChatPullHandler: handleChatDelete', params);
+
+		const currentUserId = Core.getUserId();
+		if (params.userId === currentUserId)
+		{
+			return;
+		}
+
+		void this.#store.dispatch('chats/update', {
+			dialogId: params.dialogId,
+			fields: { inited: false },
+		});
+		void this.#store.dispatch('recent/delete', { id: params.dialogId });
+
+		const isCommentChat = params.type === ChatType.comment;
+		if (isCommentChat)
+		{
+			void this.#store.dispatch('counters/delete', {
+				channelChatId: params.parentChatId,
+				commentChatId: params.chatId,
+			});
+		}
+
+		void this.#store.dispatch('messages/clearChatCollection', { chatId: params.chatId });
+
+		const chatIsOpened = this.#store.getters['application/isChatOpen'](params.dialogId);
+		if (chatIsOpened)
+		{
+			Analytics.getInstance().chatDelete.onChatDeletedNotification(params.dialogId);
+			this.#showNotification(Loc.getMessage('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
+			void LayoutManager.getInstance().clearLayoutEntityId();
+		}
+
+		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === params.dialogId;
+		if (chatHasCall)
+		{
+			CallManager.getInstance().leaveCurrentCall();
+		}
+	}
+
 	#updateChatUsers(params: {
 		users?: {[userId: string]: RawUser},
 		dialogId: string,
@@ -263,5 +309,10 @@ export class ChatPullHandler
 			dialogId: params.dialogId,
 			fields: { userCounter: params.userCount },
 		});
+	}
+
+	#showNotification(text: string): void
+	{
+		BX.UI.Notification.Center.notify({ content: text });
 	}
 }

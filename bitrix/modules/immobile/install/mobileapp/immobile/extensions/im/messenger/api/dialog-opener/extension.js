@@ -39,7 +39,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		 *
 		 * @param {object} [options.parentWidget]
 		 *
-		 * @return {Promise}
+		 * @return {Promise<DialoguesModelState>}
 		 */
 		static open(options)
 		{
@@ -63,6 +63,25 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 
 					return;
 				}
+
+				const openDialogCompleteHandler = ({ chatData, error }) => {
+					if (String(chatData?.dialogId) !== String(options.dialogId))
+					{
+						return;
+					}
+
+					BX.removeCustomEvent(EventType.messenger.openDialogComplete, openDialogCompleteHandler);
+
+					if (error)
+					{
+						reject(new Error(error));
+					}
+					else
+					{
+						resolve(chatData);
+					}
+				};
+				BX.addCustomEvent(EventType.messenger.openDialogComplete, openDialogCompleteHandler);
 
 				if (BX.componentParameters.get('COMPONENT_CODE') === ComponentCode.imMessenger)
 				{

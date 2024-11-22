@@ -4,7 +4,8 @@
 jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { ContextMenu } = require('layout/ui/context-menu');
-	const { menuIcons } = require('im/messenger/assets/common');
+	const { Icon } = require('assets/icons');
+
 	const { Logger } = require('im/messenger/lib/logger');
 	const { RestMethod } = require('im/messenger/const/rest');
 
@@ -89,9 +90,7 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 				this.actionsData.push({
 					id: actionName,
 					title: Loc.getMessage(`IMMOBILE_DIALOG_MESSAGE_CREATE_MENU_${actionName.toUpperCase()}`),
-					data: {
-						svgIcon: menuIcons[actionName](),
-					},
+					icon: Icon.TASK,
 					onClickCallback: this.getCallbackByAction(actionName),
 					testId: `IMMOBILE_DIALOG_MESSAGE_CREATE_MENU_${actionName.toUpperCase()}`,
 				});

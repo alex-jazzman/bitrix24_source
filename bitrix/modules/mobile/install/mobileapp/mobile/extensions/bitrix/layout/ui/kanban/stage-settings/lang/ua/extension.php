@@ -2,7 +2,6 @@
 $MESS["STAGE_DETAIL_DEFAULT_STAGE_DEFAULT_NAME"] = "Нова стадія";
 $MESS["STAGE_DETAIL_DEFAULT_STAGE_NAME"] = "Назва";
 $MESS["STAGE_DETAIL_DELETE"] = "Видалення стадії";
-$MESS["STAGE_DETAIL_DELETE_OK"] = "Видалити";
 $MESS["STAGE_DETAIL_DELETE_TEXT"] = "Видалити стадію?";
 $MESS["STAGE_DETAIL_FUNNEL"] = "Стадія \"#STAGE_NAME#\"";
 $MESS["STAGE_DETAIL_FUNNEL_EMPTY"] = "Стадія без назви";

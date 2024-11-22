@@ -76,7 +76,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 									const newState = { selectedTab: tab };
 									this.setState(newState);
 								}
+
+								return;
 							}
+
+							BX.onCustomEvent('onCurrentTabSelected', tab.id);
 						},
 					}),
 				),
@@ -168,6 +172,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 			return new SidebarParticipantsView({
 				isCopilot: this.props.isCopilot,
 				dialogId: this.props.dialogId,
+				id: SidebarTab.participant,
 			});
 		}
 
@@ -175,6 +180,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 		{
 			return new SidebarFilesView({
 				dialogId: this.props.dialogId,
+				id: SidebarTab.document,
 			});
 		}
 
@@ -182,6 +188,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 		{
 			return new SidebarLinksView({
 				dialogId: this.props.dialogId,
+				id: SidebarTab.link,
 			});
 		}
 	}

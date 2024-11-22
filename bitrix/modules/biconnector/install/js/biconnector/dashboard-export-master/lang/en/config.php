@@ -13,3 +13,4 @@ $MESS["BIC_EXPORT_SCOPE"] = "Scope";
 $MESS["BIC_EXPORT_SCOPE_HINT"] = "Automated solution scope will not be exported.";
 $MESS["BIC_EXPORT_SCOPE_NONE"] = "none";
 $MESS["BIC_EXPORT_SUBTITLE"] = "Export dashboard";
+$MESS["BIC_EXPORT_URL_PARAM"] = "Parameters";

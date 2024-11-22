@@ -10,10 +10,14 @@ import * as AllConstants from './constants';
 
 import { generateContent } from './debug/generate-content';
 
-import TextEditor from './text-editor';
+import { TextEditor } from './text-editor';
+import { TextEditorComponent } from './text-editor-component';
+
+import { BasicEditor } from './presets/basic-editor';
+import { BasicEditorComponent } from './presets/basic-editor-component';
+
 import BasePlugin from './plugins/base-plugin';
 import Button from './toolbar/button';
-import { TextEditorComponent } from './text-editor-component';
 
 import * as Paragraph from './plugins/paragraph';
 import * as AutoLink from './plugins/auto-link';
@@ -90,7 +94,9 @@ const Debug = {
  */
 export {
 	TextEditor,
+	BasicEditor,
 	TextEditorComponent,
+	BasicEditorComponent,
 	BasePlugin,
 	Button,
 	Plugins,

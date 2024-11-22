@@ -977,7 +977,7 @@ this.BX = this.BX || {};
 	      if (this._showDetails) {
 	        main_core.Dom.addClass(this._domNodes.detailsContainer, 'visible');
 	        if (main_core.Type.isDomNode(this._domNodes.detailsToggler)) {
-	          this._domNodes.detailsToggler.textContent = main_core.Loc.getMessage('CRM_ADDRESS_MODE_SHORT');
+	          this._domNodes.detailsToggler.textContent = main_core.Loc.getMessage('CRM_ADDRESS_MODE_SHORT_MSGVER_1');
 	        }
 	        if (this._canChangeType) {
 	          main_core.Dom.addClass(this._domNodes.addressTypeContainer, 'visible');
@@ -985,7 +985,7 @@ this.BX = this.BX || {};
 	      } else {
 	        main_core.Dom.removeClass(this._domNodes.detailsContainer, 'visible');
 	        if (main_core.Type.isDomNode(this._domNodes.detailsToggler)) {
-	          this._domNodes.detailsToggler.textContent = main_core.Loc.getMessage('CRM_ADDRESS_MODE_DETAILED');
+	          this._domNodes.detailsToggler.textContent = main_core.Loc.getMessage('CRM_ADDRESS_MODE_DETAILED_MSGVER_1');
 	        }
 	        if (this._canChangeType) {
 	          main_core.Dom.removeClass(this._domNodes.addressTypeContainer, 'visible');

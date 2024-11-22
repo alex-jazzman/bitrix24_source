@@ -364,6 +364,64 @@ export class Analytics
 		});
 	}
 
+	onDocumentBtnClick(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callDocs,
+			event: AnalyticsEvent.click,
+			p4: `callType_${params.callType}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onDocumentCreate(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callDocs,
+			event: AnalyticsEvent.create,
+			type: params.type,
+			p4: `callType_${params.callType}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onDocumentClose(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callDocs,
+			event: AnalyticsEvent.save,
+			type: params.type,
+			p4: `callType_${params.callType}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onDocumentUpload(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callDocs,
+			event: AnalyticsEvent.upload,
+			type: params.type,
+			p4: `callType_${params.callType}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onLastResumeOpen(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callDocs,
+			event: AnalyticsEvent.openResume,
+			p4: `callType_${params.callType}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
 	normalizeChatId(chatId)
 	{
 		if (!chatId)

@@ -1624,7 +1624,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			return new Promise((resolve) => {
 				const entityType = this.getCurrentEntityType();
-				const categoryId = category ? category.categoryId : 0;
+				const categoryId = category ? category.categoryId : -1;
 
 				if (entityType.needSaveCurrentCategoryId)
 				{
@@ -1683,7 +1683,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			if (!categoryFromStorage)
 			{
-				this.state.categoryId = categoryId;
+				this.state.categoryId = this.getCurrentCategoryId();
 				this.clearCurrentCategory();
 
 				console.error(`Category ${categoryId} not found in storage`);

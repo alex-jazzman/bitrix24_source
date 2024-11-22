@@ -24,6 +24,8 @@ jn.define('calendar/layout/sharing-joint/link-list', (require, exports, module) 
 			this.onSortByDateClickHandler = this.onSortByDateClickHandler.bind(this);
 
 			this.state = this.getState();
+
+			this.layoutWidget = props.layoutWidget;
 		}
 
 		get model()
@@ -34,11 +36,6 @@ jn.define('calendar/layout/sharing-joint/link-list', (require, exports, module) 
 		loadUserLinks()
 		{
 			this.model.loadUserLinks().then(() => this.redraw());
-		}
-
-		setLayoutWidget(widget)
-		{
-			this.layoutWidget = widget;
 		}
 
 		componentDidMount()

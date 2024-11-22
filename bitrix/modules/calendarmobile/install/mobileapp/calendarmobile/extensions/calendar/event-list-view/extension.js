@@ -433,7 +433,8 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			}
 			else
 			{
-				const component = new DialogSharing({
+				const component = (layoutWidget) => new DialogSharing({
+					layoutWidget,
 					sharing: this.sharing,
 					onSharing: (fields) => {
 						this.sharing.getModel().setFields(fields);
@@ -441,13 +442,11 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 					},
 				});
 
-				// eslint-disable-next-line promise/catch-or-return
-				new BottomSheet({ component })
+				void new BottomSheet({ component })
 					.setBackgroundColor(Color.bgNavigation.toHex())
 					.setMediumPositionPercent(70)
 					.disableContentSwipe()
 					.open()
-					.then((widget) => component.setLayoutWidget(widget))
 				;
 			}
 		}

@@ -7,6 +7,8 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 	const { BaseDialogPullHandler } = require('im/messenger/provider/pull/base');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { Counters } = require('im/messenger/lib/counters');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--copilot-dialog');
 
 	/**
@@ -78,6 +80,22 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 		deleteCounters(dialogId)
 		{
 			delete Counters.copilotCounter.detail[dialogId];
+		}
+
+		/**
+		 * @param {DialoguesModelState} chatData
+		 * @return {boolean}
+		 */
+		shouldDeleteChat(chatData)
+		{
+			const helper = DialogHelper.createByModel(chatData);
+
+			if (!helper?.isCopilot)
+			{
+				return false;
+			}
+
+			return true;
 		}
 	}
 

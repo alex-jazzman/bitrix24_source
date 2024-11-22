@@ -1645,6 +1645,49 @@
 	justify-content: flex-start;
 }
 
+.bx-messenger-videocall-error-container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 32px;
+}
+
+.bx-messenger-videocall-error-container-icon-alert {
+	height: 69px;
+	width: 69px;
+	background-image: url("data:image/svg+xml,%3Csvg width='69' height='69' viewBox='0 0 69 69' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='34.5' cy='34.5' r='34.5' fill='white' fill-opacity='0.25'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M49.0274 41.8461L36.989 21.7951C36.0614 20.2558 33.8511 20.2558 32.9433 21.7951L20.9048 41.8461C19.9575 43.4249 21.1022 45.4181 22.9375 45.4181H47.0144C48.8301 45.4181 49.9747 43.4249 49.0274 41.8461ZM33.2393 28.7812C33.2393 27.8931 33.9498 27.1826 34.8379 27.1826H35.055C35.943 27.1826 36.6535 27.8931 36.6535 28.7812V34.7609C36.6535 35.649 35.943 36.3595 35.055 36.3595H34.8379C33.9498 36.3595 33.2393 35.649 33.2393 34.7609V28.7812ZM36.9693 40.386C36.9693 41.4912 36.0614 42.399 34.9563 42.399C33.8511 42.399 32.9433 41.4912 32.9433 40.386C32.9433 39.2809 33.8511 38.373 34.9563 38.373C36.0614 38.373 36.9693 39.2809 36.9693 40.386Z' fill='white'/%3E%3C/svg%3E%0A");
+}
+
+.bx-messenger-videocall-error-message {
+	font: 16px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: #FFFFFF;
+}
+
+.bx-messenger-videocall-error-button-self-test {
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: #FFFFFF;
+	padding: 6px 22px;
+	background-color: #2FC6F6;
+	border-radius: 64px;
+	cursor: pointer;
+	min-height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	transition: 100ms linear background-color;
+	text-transform: uppercase;
+}
+
+.bx-messenger-videocall-error-button-self-test:hover {
+	background-color: #3EDDFF;
+}
+
 .bx-messenger-videocall-user {
 	--border-radius: 6px;
 	width: 100%;
@@ -3658,14 +3701,14 @@ bx-messenger-videocall-page-navigator.left.active.force-visible{
 }
 .bx-call-view-device-selector-bottom-item-action {
 	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #2067B0;
-	border-bottom: 1px dashed #2067B0;
+	color: #A8ADB4;
+	border-bottom: 1px dashed #A8ADB4;
 	margin: 0 8px;
 	cursor: pointer;
 }
 .bx-call-view-device-selector-bottom-item-action:hover {
-	color: #525C69;
-	border-bottom: 1px dashed #525C69;
+	color: #959CA4;
+	border-bottom: 1px dashed #959CA4;
 }
 /* endregion */
 

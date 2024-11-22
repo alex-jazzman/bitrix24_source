@@ -45,12 +45,12 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 
 		get maxLettersCount()
 		{
-			return this.props.maxLettersCount || 180;
+			return this.props.maxLettersCount ?? 180;
 		}
 
 		get maxNewLineCount()
 		{
-			return this.props.maxNewLineCount || 4;
+			return this.props.maxNewLineCount ?? 4;
 		}
 
 		get bbCodeMode()

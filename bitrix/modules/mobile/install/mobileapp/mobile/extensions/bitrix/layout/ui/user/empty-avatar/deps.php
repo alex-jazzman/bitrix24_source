@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
-		'tokens',
 		'type',
+		'tokens',
 		'utils/color',
 		'selector/utils/word-separator',
 		'asset-manager',

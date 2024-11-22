@@ -116,7 +116,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return Promise.resolve();
 	  },
 	  openNewTab(path) {
-	    if (im_v2_lib_desktopApi.DesktopApi.isChatTab() && im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.openNewTab)) {
+	    if (im_v2_lib_desktopApi.DesktopApi.isChatTab() && im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.openNewTab.id)) {
 	      im_v2_lib_desktopApi.DesktopApi.createImTab(`${path}&${im_v2_const.GetParameter.desktopChatTabMode}=Y`);
 	    } else {
 	      im_v2_lib_utils.Utils.browser.openLink(path);
@@ -136,5 +136,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Opener = Opener;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
 //# sourceMappingURL=opener.bundle.js.map

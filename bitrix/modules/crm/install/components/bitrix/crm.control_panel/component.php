@@ -867,7 +867,7 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
 	];
 
-	if (RoleManagerUtils::getInstance()->isUsePermConfigV2())
+	if (Crm\Feature::enabled(Crm\Feature\PermissionsLayoutV2::class))
 	{
 		$permsV2URL = '/crm/configs/perms/v2/';
 		$stdItems['CRM_PERMISSIONS'] = [

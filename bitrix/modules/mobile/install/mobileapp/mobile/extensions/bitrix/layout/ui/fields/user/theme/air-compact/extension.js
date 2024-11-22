@@ -9,7 +9,7 @@ jn.define('layout/ui/fields/user/theme/air-compact', (require, exports, module) 
 	const { Text4 } = require('ui-system/typography/text');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { SafeImage } = require('layout/ui/safe-image');
-	const { ElementsStack, Directions } = require('elements-stack');
+	const { ElementsStack, ElementsStackDirection } = require('elements-stack');
 	const { Entity } = require('layout/ui/fields/user/theme/air-compact/src/entity');
 	const { ColorScheme } = require('layout/ui/fields/base/theme/air-compact');
 	const { withCurrentDomain } = require('utils/url');
@@ -120,7 +120,7 @@ jn.define('layout/ui/fields/user/theme/air-compact', (require, exports, module) 
 				getLeftIcon({ testId: `${testId}_ICON` }),
 				ElementsStack(
 					{
-						direction: Directions.right,
+						direction: ElementsStackDirection.RIGHT,
 						indent: 1,
 						offset: Indent.S,
 						showRest: true,

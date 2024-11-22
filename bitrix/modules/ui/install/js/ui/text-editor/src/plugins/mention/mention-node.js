@@ -96,6 +96,17 @@ export class MentionNode extends ElementNode
 					priority: 1,
 				};
 			},
+			a: (domNode: HTMLElement) => {
+				if (!domNode.hasAttribute('data-mention-id'))
+				{
+					return null;
+				}
+
+				return {
+					conversion: convertMentionElement,
+					priority: 1,
+				};
+			},
 		};
 	}
 

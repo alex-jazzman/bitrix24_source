@@ -54,6 +54,7 @@ jn.define('text-editor', (require, exports, module) => {
 		 *     fileField?: {},
 		 *     saveButton?: {},
 		 *     allowFiles?: boolean,
+		 *     allowBBCode?: boolean,
 		 *     mention?: {
 		 *     		paths?: {
 		 *     			user?: (id) => string,
@@ -70,6 +71,10 @@ jn.define('text-editor', (require, exports, module) => {
 			this.onLinkClick = this.onLinkClick.bind(this);
 			this.onLongClickInReadOnlyMode = this.onLongClickInReadOnlyMode.bind(this);
 			this.onFileFieldFocusOut = this.onFileFieldFocusOut.bind(this);
+
+			const defaultPlaceholder = (
+				this.isBBCodeAllowed() ? '' : Loc.getMessage('MOBILEAPP_TEXT_EDITOR_PLACEHOLDER')
+			);
 
 			this.state = {
 				value: props.value,
@@ -91,7 +96,7 @@ jn.define('text-editor', (require, exports, module) => {
 						fontSize: 18,
 						...(Type.isPlainObject(props?.textInput?.style) ? props.textInput.style : {}),
 					},
-					placeholder: props?.textInput?.placeholder ?? Loc.getMessage('MOBILEAPP_TEXT_EDITOR_PLACEHOLDER'),
+					placeholder: props?.textInput?.placeholder ?? defaultPlaceholder,
 					placeholderTextColor: props?.textInput?.placeholderTextColor ?? Color.base5.toHex(),
 					onLinkClick: props?.textInput?.onLinkClick || this.onLinkClick,
 				},
@@ -128,6 +133,7 @@ jn.define('text-editor', (require, exports, module) => {
 			 */
 			this.textInput = new TextInputComponent({
 				autoFocus: this.state.autoFocus,
+				allowBBCode: this.isBBCodeAllowed(),
 				events: {
 					onStyleChange: this.onStyleChange.bind(this),
 					onFocus: this.onFocus.bind(this),
@@ -154,6 +160,7 @@ jn.define('text-editor', (require, exports, module) => {
 					onSave: this.onSaveClick.bind(this),
 				},
 				allowFiles: this.state.allowFiles,
+				allowBBCode: this.isBBCodeAllowed(),
 				testId: `${this.state.testId}_TOOLBAR`,
 			});
 
@@ -225,6 +232,21 @@ jn.define('text-editor', (require, exports, module) => {
 		async setValue(value)
 		{
 			const sourceBbcode = Type.isString(value) ? value : '';
+
+			if (!this.isBBCodeAllowed())
+			{
+				if (this.state.readOnly === true)
+				{
+					this.setState({ preparedValue: sourceBbcode });
+				}
+				else
+				{
+					this.getTextInput().setValue(sourceBbcode);
+				}
+
+				return;
+			}
+
 			const ast = parser.parse(sourceBbcode);
 
 			BBCodeNode.flattenAst(ast).forEach((node) => {
@@ -250,18 +272,19 @@ jn.define('text-editor', (require, exports, module) => {
 
 			try
 			{
-				const attachmentsIds = this.fetchDiskFileIds(ast);
+				const diskNodes = AstProcessor.findElements(ast, 'BBCodeElementNode[name="disk"]');
 				if (
-					Type.isArrayFilled(attachmentsIds)
+					Type.isArrayFilled(diskNodes)
 					&& Type.isArrayFilled(this.state.fileField.value)
 				)
 				{
-					const diskNodes = AstProcessor.findElements(ast, 'BBCodeElementNode[name="disk"]');
-
 					diskNodes.forEach((sourceNode) => {
-						const diskFileId = sourceNode.getAttribute('id').replace(/^n/, '');
+						const sourceFileId = sourceNode.getAttribute('id');
+						const fileId = sourceFileId.replace(/^n/, '');
+						const idPropName = sourceFileId.startsWith('n') ? 'objectId' : 'id';
+
 						const fileOptions = this.state.fileField.value.find((file) => {
-							return String(file.objectId) === String(diskFileId);
+							return String(file[idPropName]) === String(fileId);
 						});
 
 						if (fileOptions)
@@ -391,6 +414,8 @@ jn.define('text-editor', (require, exports, module) => {
 		 *     view?: { style?: {} },
 		 *     textInput?: { style?: {} },
 		 *     autoFocus?: boolean,
+		 *     allowFiles?: boolean,
+		 *     allowBBCode?: boolean,
 		 * }}
 		 * @return {
 		 * 		Promise<{
@@ -405,6 +430,7 @@ jn.define('text-editor', (require, exports, module) => {
 			return new Promise((resolve) => {
 				const editor = new TextEditor({
 					...options,
+					allowFiles: options.allowBBCode === false ? false : options.allowFiles,
 					autoFocus: options?.autoFocus !== false,
 					view: {
 						style: {
@@ -1046,6 +1072,11 @@ jn.define('text-editor', (require, exports, module) => {
 					];
 				})(),
 			);
+		}
+
+		isBBCodeAllowed()
+		{
+			return this.props.allowBBCode !== false;
 		}
 	}
 

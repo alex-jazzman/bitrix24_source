@@ -70,6 +70,11 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 
 		static isAvailableInMenu(context = {})
 		{
+			if ((!openTaskCreateForm && !TaskCreate) || !FeatureId)
+			{
+				return false;
+			}
+
 			if (!context.detailCard)
 			{
 				return false;

@@ -1694,6 +1694,39 @@ if (
 								$bAdd = true;
 								$bNeedMail = false;
 							}
+
+							$analytics = \Bitrix\Socialnetwork\Helper\Analytics::getInstance();
+
+							$postType = '';
+							switch($this->request->get('changePostFormTab'))
+							{
+								case 'message':
+									$postType = $analytics::TYPE_POST;
+
+									break;
+								case 'vote':
+									$postType = $analytics::TYPE_POLL;
+
+									break;
+								case 'grat':
+									$postType = $analytics::TYPE_APPRECIATION;
+
+									break;
+								case 'important':
+									$postType = $analytics::TYPE_ANNOUNCEMENT;
+
+									break;
+							}
+
+							$analytics->onPostCreate(
+								$arParams['SOCNET_GROUP_ID'] > 0
+									? $analytics::SECTION_PROJECT
+									: $analytics::SECTION_FEED
+								,
+								'',
+								$newID > 0,
+								$postType,
+							);
 						}
 
 						if ((int)$newID > 0)
@@ -2668,7 +2701,7 @@ if (
 
 				if (empty($arResult['PostToShow']['FEED_DESTINATION']['SELECTED']))
 				{
-					$arResult['FATAL_MESSAGE'] .= Loc::getMessage('BLOG_SONET_MODULE_NOT_AVAIBLE');
+					$arResult['FATAL_MESSAGE'] = Loc::getMessage('BLOG_SONET_MODULE_NOT_AVAIBLE');
 				}
 			}
 			elseif ($bDefaultToAll)

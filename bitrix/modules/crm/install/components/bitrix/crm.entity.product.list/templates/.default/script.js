@@ -2771,6 +2771,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    babelHelpers.defineProperty(this, "productRowAddHandler", this.handleProductRowAdd.bind(this));
 	    babelHelpers.defineProperty(this, "showSettingsPopupHandler", this.handleShowSettingsPopup.bind(this));
 	    babelHelpers.defineProperty(this, "onDialogSelectProductHandler", this.handleOnDialogSelectProduct.bind(this));
+	    babelHelpers.defineProperty(this, "onAddViewedProductToDealHandler", this.handleOnAddViewedProductToDeal.bind(this));
 	    babelHelpers.defineProperty(this, "onSaveHandler", this.handleOnSave.bind(this));
 	    babelHelpers.defineProperty(this, "onFocusToProductList", this.handleProductListFocus.bind(this));
 	    babelHelpers.defineProperty(this, "onEntityUpdateHandler", this.handleOnEntityUpdate.bind(this));
@@ -2877,6 +2878,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var _this4 = this;
 	      this.unsubscribeCustomEvents();
 	      main_core_events.EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
+	      main_core_events.EventEmitter.subscribe('onAddViewedProductToDeal', this.onAddViewedProductToDealHandler);
 	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
 	      main_core_events.EventEmitter.subscribe('onFocusToProductList', this.onFocusToProductList);
 	      main_core_events.EventEmitter.subscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
@@ -2905,6 +2907,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "unsubscribeCustomEvents",
 	    value: function unsubscribeCustomEvents() {
 	      main_core_events.EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
+	      main_core_events.EventEmitter.unsubscribe('onAddViewedProductToDeal', this.onAddViewedProductToDealHandler);
 	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
 	      main_core_events.EventEmitter.unsubscribe('onFocusToProductList', this.onFocusToProductList);
 	      main_core_events.EventEmitter.unsubscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
@@ -2939,14 +2942,43 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.selectProductInRow(id, productId);
 	    }
 	  }, {
-	    key: "selectProductInRow",
-	    value: function selectProductInRow(id, productId) {
+	    key: "handleOnAddViewedProductToDeal",
+	    value: function handleOnAddViewedProductToDeal(event) {
+	      var _event$getCompatData3 = event.getCompatData(),
+	        _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 1),
+	        productId = _event$getCompatData4[0];
+	      var id;
+	      if (this.getProductCount() > 0) {
+	        id = this.addProductRow();
+	      } else {
+	        var _this$products$3;
+	        id = (_this$products$3 = this.products[0]) === null || _this$products$3 === void 0 ? void 0 : _this$products$3.getField('ID');
+	      }
+	      this.selectViewedProductInRow(id, productId);
+	    }
+	  }, {
+	    key: "selectViewedProductInRow",
+	    value: function selectViewedProductInRow(id, productId) {
 	      var _this5 = this;
 	      if (!main_core.Type.isStringFilled(id) || main_core.Text.toNumber(productId) <= 0) {
 	        return;
 	      }
 	      requestAnimationFrame(function () {
 	        var productSelector = _this5.getProductSelector(id);
+	        if (productSelector) {
+	          productSelector.onProductSelect(productId);
+	        }
+	      });
+	    }
+	  }, {
+	    key: "selectProductInRow",
+	    value: function selectProductInRow(id, productId) {
+	      var _this6 = this;
+	      if (!main_core.Type.isStringFilled(id) || main_core.Text.toNumber(productId) <= 0) {
+	        return;
+	      }
+	      requestAnimationFrame(function () {
+	        var productSelector = _this6.getProductSelector(id);
 	        if (productSelector) {
 	          productSelector.searchInput.clearErrors();
 	          productSelector.onProductSelect(productId);
@@ -3022,13 +3054,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnInnerCancel",
 	    value: function handleOnInnerCancel(event) {
-	      var _this6 = this;
+	      var _this7 = this;
 	      if (this.controller) {
 	        this.controller.rollback();
 	      }
 	      this.setGridChanged(false);
 	      main_core_events.EventEmitter.subscribeOnce(this, 'onGridReloaded', function () {
-	        return _this6.actionUpdateTotalData({
+	        return _this7.actionUpdateTotalData({
 	          isInternalChanging: true
 	        });
 	      });
@@ -3054,12 +3086,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "reloadGrid",
 	    value: function reloadGrid() {
-	      var _this7 = this;
+	      var _this8 = this;
 	      var useProductsFromRequest = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 	      this.getGrid().reloadTable('POST', {
 	        useProductsFromRequest: useProductsFromRequest
 	      }, function () {
-	        return main_core_events.EventEmitter.emit(_this7, 'onGridReloaded');
+	        return main_core_events.EventEmitter.emit(_this8, 'onGridReloaded');
 	      });
 	    }
 	    /*
@@ -3073,11 +3105,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnBeforeGridRequest",
 	    value: function handleOnBeforeGridRequest(event) {
-	      var _this8 = this;
-	      var _event$getCompatData3 = event.getCompatData(),
-	        _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 2),
-	        grid = _event$getCompatData4[0],
-	        eventArgs = _event$getCompatData4[1];
+	      var _this9 = this;
+	      var _event$getCompatData5 = event.getCompatData(),
+	        _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 2),
+	        grid = _event$getCompatData6[0],
+	        eventArgs = _event$getCompatData6[1];
 	      if (!grid || !grid.parent || grid.parent.getId() !== this.getGridId()) {
 	        return;
 	      }
@@ -3097,7 +3129,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.clearEditor();
 	      if (isNativeAction && this.isChanged()) {
 	        main_core_events.EventEmitter.subscribeOnce('Grid::updated', function () {
-	          return _this8.actionUpdateTotalData({
+	          return _this9.actionUpdateTotalData({
 	            isInternalChanging: false
 	          });
 	        });
@@ -3106,9 +3138,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnGridUpdated",
 	    value: function handleOnGridUpdated(event) {
-	      var _event$getCompatData5 = event.getCompatData(),
-	        _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 1),
-	        grid = _event$getCompatData6[0];
+	      var _event$getCompatData7 = event.getCompatData(),
+	        _event$getCompatData8 = babelHelpers.slicedToArray(_event$getCompatData7, 1),
+	        grid = _event$getCompatData8[0];
 	      if (!grid || grid.getId() !== this.getGridId()) {
 	        return;
 	      }
@@ -3117,10 +3149,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnGridRowMoved",
 	    value: function handleOnGridRowMoved(event) {
-	      var _event$getCompatData7 = event.getCompatData(),
-	        _event$getCompatData8 = babelHelpers.slicedToArray(_event$getCompatData7, 3),
-	        ids = _event$getCompatData8[0],
-	        grid = _event$getCompatData8[2];
+	      var _event$getCompatData9 = event.getCompatData(),
+	        _event$getCompatData10 = babelHelpers.slicedToArray(_event$getCompatData9, 3),
+	        ids = _event$getCompatData10[0],
+	        grid = _event$getCompatData10[2];
 	      if (!grid || grid.getId() !== this.getGridId()) {
 	        return;
 	      }
@@ -3178,10 +3210,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "addFirstRowIfEmpty",
 	    value: function addFirstRowIfEmpty() {
-	      var _this9 = this;
+	      var _this10 = this;
 	      if (this.getGrid().getRows().getCountDisplayed() === 0) {
 	        requestAnimationFrame(function () {
-	          return _this9.addProductRow();
+	          return _this10.addProductRow();
 	        });
 	      }
 	    }
@@ -3343,12 +3375,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "changeCurrencyId",
 	    value: function changeCurrencyId(currencyId) {
-	      var _this10 = this;
+	      var _this11 = this;
 	      this.setCurrencyId(currencyId);
 	      var products = [];
 	      this.products.forEach(function (product) {
 	        var priceFields = {};
-	        _classPrivateMethodGet$5(_this10, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this10).forEach(function (name) {
+	        _classPrivateMethodGet$5(_this11, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this11).forEach(function (name) {
 	          priceFields[name] = product.getField(name);
 	        });
 	        products.push({
@@ -3367,7 +3399,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      templateRow['CURRENCY'] = this.getCurrencyId();
 	      var templateFieldNames = ['DISCOUNT_ROW', 'SUM', 'PRICE'];
 	      templateFieldNames.forEach(function (field) {
-	        templateRow[field]['CURRENCY']['VALUE'] = _this10.getCurrencyId();
+	        templateRow[field]['CURRENCY']['VALUE'] = _this11.getCurrencyId();
 	      });
 	      this.setGridEditData(editData);
 	    }
@@ -3388,13 +3420,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "updateTotalUiCurrency",
 	    value: function updateTotalUiCurrency() {
-	      var _this11 = this;
+	      var _this12 = this;
 	      var totalBlock = BX(this.getSettingValue('totalBlockContainerId', null));
 	      if (main_core.Type.isElementNode(totalBlock)) {
 	        totalBlock.querySelectorAll('.crm-product-list-payment-side-table-column').forEach(function (column) {
 	          var valueElement = column.querySelector('.crm-product-list-result-grid-total');
 	          if (valueElement) {
-	            column.innerHTML = currency_currencyCore.CurrencyCore.getPriceControl(valueElement, _this11.getCurrencyId());
+	            column.innerHTML = currency_currencyCore.CurrencyCore.getPriceControl(valueElement, _this12.getCurrencyId());
 	          }
 	        });
 	      }
@@ -3624,9 +3656,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getContainer",
 	    value: function getContainer() {
-	      var _this12 = this;
+	      var _this13 = this;
 	      return this.cache.remember('container', function () {
-	        return document.getElementById(_this12.getContainerId());
+	        return document.getElementById(_this13.getContainerId());
 	      });
 	    }
 	  }, {
@@ -3768,9 +3800,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getGrid",
 	    value: function getGrid() {
-	      var _this13 = this;
+	      var _this14 = this;
 	      return this.cache.remember('grid', function () {
-	        var gridId = _this13.getGridId();
+	        var gridId = _this14.getGridId();
 	        if (!main_core.Reflection.getClass('BX.Main.gridManager.getInstanceById')) {
 	          throw Error("Cannot find grid with '".concat(gridId, "' id."));
 	        }
@@ -3942,17 +3974,17 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getSettingsPopup",
 	    value: function getSettingsPopup() {
-	      var _this14 = this;
+	      var _this15 = this;
 	      return this.cache.remember('settings-popup', function () {
-	        return new SettingsPopup(_this14.getContainer().querySelector('.crm-entity-product-list-add-block-active [data-role="product-list-settings-button"]'), _this14.getSettingValue('popupSettings', []), _this14);
+	        return new SettingsPopup(_this15.getContainer().querySelector('.crm-entity-product-list-add-block-active [data-role="product-list-settings-button"]'), _this15.getSettingValue('popupSettings', []), _this15);
 	      });
 	    }
 	  }, {
 	    key: "getHintPopup",
 	    value: function getHintPopup() {
-	      var _this15 = this;
+	      var _this16 = this;
 	      return this.cache.remember('hint-popup', function () {
-	        return new HintPopup(_this15);
+	        return new HintPopup(_this16);
 	      });
 	    }
 	  }, {
@@ -4079,10 +4111,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "focusProductSelector",
 	    value: function focusProductSelector(newId) {
-	      var _this16 = this;
+	      var _this17 = this;
 	      requestAnimationFrame(function () {
-	        var _this16$getProductSel;
-	        (_this16$getProductSel = _this16.getProductSelector(newId)) === null || _this16$getProductSel === void 0 ? void 0 : _this16$getProductSel.searchInDialog().focusName();
+	        var _this17$getProductSel;
+	        (_this17$getProductSel = _this17.getProductSelector(newId)) === null || _this17$getProductSel === void 0 ? void 0 : _this17$getProductSel.searchInDialog().focusName();
 	      });
 	    }
 	  }, {
@@ -4098,7 +4130,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnProductChange",
 	    value: function handleOnProductChange(event) {
-	      var _this17 = this;
+	      var _this18 = this;
 	      var data = event.getData();
 	      var productRow = this.getProductByRowId(data.rowId);
 	      if (productRow && data.fields) {
@@ -4107,22 +4139,22 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          if (!main_core.Type.isNil(fields['IMAGE_INFO'])) {
 	            fields['IMAGE_INFO'] = JSON.stringify(fields['IMAGE_INFO']);
 	          }
-	          if (_this17.getCurrencyId() !== fields['CURRENCY_ID']) {
+	          if (_this18.getCurrencyId() !== fields['CURRENCY_ID']) {
 	            fields['CURRENCY'] = fields['CURRENCY_ID'];
 	            var priceFields = {};
-	            _classPrivateMethodGet$5(_this17, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this17).forEach(function (name) {
+	            _classPrivateMethodGet$5(_this18, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this18).forEach(function (name) {
 	              priceFields[name] = data.fields[name];
 	            });
 	            var products = [{
 	              fields: priceFields,
 	              id: productRow.getId()
 	            }];
-	            main_core.ajax.runComponentAction(_this17.getComponentName(), 'calculateProductPrices', {
+	            main_core.ajax.runComponentAction(_this18.getComponentName(), 'calculateProductPrices', {
 	              mode: 'class',
-	              signedParameters: _this17.getSignedParameters(),
+	              signedParameters: _this18.getSignedParameters(),
 	              data: {
 	                products: products,
-	                currencyId: _this17.getCurrencyId(),
+	                currencyId: _this18.getCurrencyId(),
 	                options: {
 	                  ACTION: 'calculateProductPrices'
 	                }
@@ -4141,12 +4173,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          }
 	        });
 	        promise.then(function (fields) {
-	          if (_this17.products.length > 1) {
+	          if (_this18.products.length > 1) {
 	            var taxId = fields['VAT_ID'] || fields['TAX_ID'];
 	            var taxIncluded = fields['VAT_INCLUDED'] || fields['TAX_INCLUDED'];
 	            if (taxId > 0 && taxIncluded !== productRow.getTaxIncluded()) {
-	              var _this17$getTaxList;
-	              var taxRate = (_this17$getTaxList = _this17.getTaxList()) === null || _this17$getTaxList === void 0 ? void 0 : _this17$getTaxList.find(function (item) {
+	              var _this18$getTaxList;
+	              var taxRate = (_this18$getTaxList = _this18.getTaxList()) === null || _this18$getTaxList === void 0 ? void 0 : _this18$getTaxList.find(function (item) {
 	                return parseInt(item.ID) === taxId;
 	              });
 	              if ((taxRate === null || taxRate === void 0 ? void 0 : taxRate.VALUE) > 0 && taxIncluded === 'Y') {
@@ -4160,13 +4192,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          if (productRow.getField('OFFER_ID') !== fields.ID) {
 	            fields['ROW_RESERVED'] = 0;
 	            fields['DEDUCTED_QUANTITY'] = 0;
-	            if (!_this17.getSettingValue('allowDiscountChange', true)) {
+	            if (!_this18.getSettingValue('allowDiscountChange', true)) {
 	              fields['DISCOUNT_ROW'] = 0;
 	              fields['DISCOUNT_SUM'] = 0;
 	              fields['DISCOUNT_RATE'] = 0;
 	              fields['DISCOUNT'] = 0;
-	              productRow.updateUiHtmlField('DISCOUNT_PRICE', currency_currencyCore.CurrencyCore.currencyFormat(0, _this17.getCurrencyId(), true));
-	              productRow.updateUiHtmlField('DISCOUNT_ROW', currency_currencyCore.CurrencyCore.currencyFormat(0, _this17.getCurrencyId(), true));
+	              productRow.updateUiHtmlField('DISCOUNT_PRICE', currency_currencyCore.CurrencyCore.currencyFormat(0, _this18.getCurrencyId(), true));
+	              productRow.updateUiHtmlField('DISCOUNT_ROW', currency_currencyCore.CurrencyCore.currencyFormat(0, _this18.getCurrencyId(), true));
 	            }
 	          }
 	          Object.keys(fields).forEach(function (key) {
@@ -4183,7 +4215,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          productRow.updatePropertyFields();
 	          productRow.modifyBasePriceInput();
 	          productRow.executeExternalActions();
-	          _this17.getGrid().tableUnfade();
+	          _this18.getGrid().tableUnfade();
 	        });
 	      } else {
 	        this.getGrid().tableUnfade();
@@ -4256,12 +4288,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "executeActions",
 	    /* actions */value: function executeActions(actions) {
-	      var _this18 = this;
+	      var _this19 = this;
 	      if (!main_core.Type.isArrayFilled(actions)) {
 	        return;
 	      }
 	      var disableSaveButton = actions.filter(function (action) {
-	        return action.type === _this18.actions.updateTotal || action.type === _this18.actions.disableSaveButton;
+	        return action.type === _this19.actions.updateTotal || action.type === _this19.actions.disableSaveButton;
 	      }).length > 0;
 	      var _iterator3 = _createForOfIteratorHelper$1(actions),
 	        _step3;
@@ -4462,14 +4494,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "sendTotalData",
 	    value: function sendTotalData(data, options) {
-	      var _this19 = this;
+	      var _this20 = this;
 	      if (this.controller) {
 	        var needMarkAsChanged = true;
 	        if (main_core.Type.isObject(options) && (options.isInternalChanging === true || options.isInternalChanging === 'true')) {
 	          needMarkAsChanged = false;
 	        }
 	        setTimeout(function () {
-	          _this19.controller.changeSumTotal(data, needMarkAsChanged, !_classPrivateMethodGet$5(_this19, _childrenHasErrors, _childrenHasErrors2).call(_this19));
+	          _this20.controller.changeSumTotal(data, needMarkAsChanged, !_classPrivateMethodGet$5(_this20, _childrenHasErrors, _childrenHasErrors2).call(_this20));
 	        }, 500);
 	      }
 	    }
@@ -4478,7 +4510,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "ajaxRequest",
 	    value: function ajaxRequest(action, data) {
-	      var _this20 = this;
+	      var _this21 = this;
 	      var requestKey = main_core.Text.getRandom();
 	      this.ajaxPool.set(action, requestKey);
 	      if (!main_core.Type.isPlainObject(data.options)) {
@@ -4491,9 +4523,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        signedParameters: this.getSignedParameters(),
 	        data: data
 	      }).then(function (response) {
-	        return _this20.ajaxResultSuccess(response, data.options);
+	        return _this21.ajaxResultSuccess(response, data.options);
 	      }, function (response) {
-	        return _this20.ajaxResultFailure(response, data.options);
+	        return _this21.ajaxResultFailure(response, data.options);
 	      });
 	    }
 	  }, {
@@ -4609,11 +4641,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "cleanProductRows",
 	    value: function cleanProductRows() {
-	      var _this21 = this;
+	      var _this22 = this;
 	      this.products.filter(function (item) {
 	        return item.isEmpty();
 	      }).forEach(function (row) {
-	        return _this21.deleteRow(row.getField('ID'), true);
+	        return _this22.deleteRow(row.getField('ID'), true);
 	      });
 	    }
 	  }, {

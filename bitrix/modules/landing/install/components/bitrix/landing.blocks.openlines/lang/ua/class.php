@@ -10,3 +10,4 @@ $MESS["LANDING_CMP_OL_NO_BUTTON"] = "На вашому сайті немає CRM
 $MESS["LANDING_CMP_OL_NO_BUTTON_CP"] = "Перевірте їх наявність і активність на сторінці &laquo;#LINK1#CRM - CRM-форми#LINK2#&raquo;.";
 $MESS["LANDING_CMP_OL_NO_BUTTON_ID"] = "Не обрано CRM-віджет";
 $MESS["LANDING_CMP_OL_NO_BUTTON_SM"] = "Перевірте установку модуля &laquo;Інтеграція з Бітрікс24 (b24connector)&raquo; в разділі &laquo;#LINK1#Налаштування &mdash; Налаштування продукту &mdash; Модулі#LINK2#&raquo; і прив'язку порталу Бітрікс24 в налаштуваннях &laquo;#LINK3#Комунікацій з клієнтом#LINK4#&raquo;.";
+$MESS["LANDING_CMP_OL_NO_WIDGETS"] = "У цьому віджеті наразі немає відкритих ліній.";

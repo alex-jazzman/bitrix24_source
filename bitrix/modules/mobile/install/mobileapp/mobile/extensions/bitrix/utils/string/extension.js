@@ -158,6 +158,24 @@
 	}
 
 	/**
+	 * @param {string} str
+	 * @param {number} num
+	 * @return {string}
+	 */
+	function truncate(str, num)
+	{
+		const trimmedStr = trim(str);
+		if (trimmedStr.length <= num)
+		{
+			return trimmedStr;
+		}
+
+		const truncatedStr = trimmedStr.slice(0, num);
+
+		return `${trim(truncatedStr)}...`;
+	}
+
+	/**
 	 * @class StringUtils
 	 * @deprecated Please import specific utilities directly, using jn.require()
 	 */
@@ -205,6 +223,7 @@
 			splitByWords,
 			compareWords,
 			IntlCollator,
+			truncate,
 			replaceAll,
 		};
 	});

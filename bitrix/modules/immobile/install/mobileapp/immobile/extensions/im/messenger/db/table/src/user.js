@@ -17,6 +17,11 @@ jn.define('im/messenger/db/table/user', (require, exports, module) => {
 			return 'b_im_user';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			return [

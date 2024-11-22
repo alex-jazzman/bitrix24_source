@@ -16,6 +16,11 @@ jn.define('im/messenger/db/table/temp-message', (require, exports, module) => {
 			return 'b_im_temp_message';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			return [

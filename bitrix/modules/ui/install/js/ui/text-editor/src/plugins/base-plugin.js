@@ -1,7 +1,7 @@
 import type { LexicalEditor, LexicalNode, LexicalNodeReplacement } from 'ui.lexical.core';
 import { mergeRegister } from 'ui.lexical.utils';
 import { BBCodeExportConversion, BBCodeImportConversion } from '../bbcode';
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 import type { SchemeValidationOptions } from '../types/scheme-validation-options';
 
 export interface PluginStaticMembers {

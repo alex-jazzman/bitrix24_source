@@ -342,14 +342,8 @@ js,
 			$pingSettings = (new TodoPingSettingsProvider(\CCrmOwnerType::Lead))
 				->fetchForJsComponent()
 			;
-
 			$calendarSettings = (new CalendarSettingsProvider())->fetchForJsComponent();
-			$useTodoEditorV2 = \Bitrix\Crm\Settings\Crm::isTimelineToDoUseV2Enabled();
-			$colorSettings = (
-				$useTodoEditorV2
-					? (new ColorSettingsProvider())->fetchForJsComponent()
-					: null
-			);
+			$colorSettings = (new ColorSettingsProvider())->fetchForJsComponent();
 
 			$settings = CUtil::PhpToJSObject([
 				'pingSettings' => $pingSettings,
@@ -361,7 +355,7 @@ js,
 
 			$arActivitySubMenuItems[] = [
 				'TEXT' => Loc::getMessage('CRM_LEAD_ADD_TODO'),
-				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ", " . $currentUser . ", " . $settings . ", " . $useTodoEditorV2 . ", " . $analytics .");"
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ", " . $currentUser . ", " . $settings . ", " . $analytics .");"
 			];
 
 			if (IsModuleInstalled('subscribe'))
@@ -467,9 +461,24 @@ js,
 
 			if (IsModuleInstalled('sale'))
 			{
+				$analyticsEventBuilderForQuote = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Quote)
+					->setSection(
+						!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+							? $arParams['ANALYTICS']['c_section']
+							: null
+					)
+					->setSubSection(
+						!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+							? $arParams['ANALYTICS']['c_sub_section']
+							: null
+					)
+					->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+				;
 				if ($isQuoteAvailable)
 				{
-					$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arLead['PATH_TO_QUOTE_ADD']) . "');";
+					$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape(
+							$analyticsEventBuilderForQuote->buildUri($arLead['PATH_TO_QUOTE_ADD'])->getUri()
+					) . "');";
 				}
 				else
 				{
@@ -495,7 +504,7 @@ js,
 					$link->addParams([
 						'lead_id' => $arLead['ID'],
 					]);
-					$quoteAction['HREF'] = $link;
+					$quoteAction['HREF'] = $analyticsEventBuilderForQuote->buildUri($link)->getUri();
 				}
 				$arActions[] = $quoteAction;
 			}
@@ -971,6 +980,7 @@ if ($arResult['CAN_CONVERT']):
 							last : "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_LAST")?>",
 						},
 						analytics: {
+							c_section: '<?= Integration\Analytics\Dictionary::SECTION_LEAD ?>',
 							c_sub_section: '<?= Integration\Analytics\Dictionary::SUB_SECTION_LIST ?>',
 						},
 					}

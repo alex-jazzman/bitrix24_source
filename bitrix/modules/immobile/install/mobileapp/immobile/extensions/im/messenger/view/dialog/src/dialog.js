@@ -716,19 +716,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @return {Array<Message|any>}
-		 */
-		getImageMessages()
-		{
-			if (!Type.isArrayFilled(this.messageList))
-			{
-				return [];
-			}
-
-			return this.messageList.filter((mess) => mess.type === MessageType.image).reverse();
-		}
-
-		/**
 		 * @return {boolean}
 		 */
 		isHasPlanLimitMessage()

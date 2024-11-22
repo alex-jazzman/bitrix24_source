@@ -60,6 +60,7 @@ export class Editor
 	showSettingsPopupHandler = this.handleShowSettingsPopup.bind(this);
 
 	onDialogSelectProductHandler = this.handleOnDialogSelectProduct.bind(this);
+	onAddViewedProductToDealHandler = this.handleOnAddViewedProductToDeal.bind(this);
 	onSaveHandler = this.handleOnSave.bind(this);
 	onFocusToProductList = this.handleProductListFocus.bind(this);
 	onEntityUpdateHandler = this.handleOnEntityUpdate.bind(this);
@@ -217,6 +218,7 @@ export class Editor
 	{
 		this.unsubscribeCustomEvents();
 		EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
+		EventEmitter.subscribe('onAddViewedProductToDeal', this.onAddViewedProductToDealHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
 		EventEmitter.subscribe('onFocusToProductList', this.onFocusToProductList);
 		EventEmitter.subscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
@@ -250,6 +252,7 @@ export class Editor
 	unsubscribeCustomEvents()
 	{
 		EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
+		EventEmitter.unsubscribe('onAddViewedProductToDeal', this.onAddViewedProductToDealHandler);
 		EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
 		EventEmitter.unsubscribe('onFocusToProductList', this.onFocusToProductList);
 		EventEmitter.unsubscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
@@ -287,6 +290,37 @@ export class Editor
 			id = this.products[0]?.getField('ID');
 		}
 		this.selectProductInRow(id, productId)
+	}
+
+	handleOnAddViewedProductToDeal(event: BaseEvent)
+	{
+		const [productId] = event.getCompatData();
+		let id;
+		if (this.getProductCount() > 0)
+		{
+			id = this.addProductRow();
+		}
+		else
+		{
+			id = this.products[0]?.getField('ID');
+		}
+		this.selectViewedProductInRow(id, productId);
+	}
+
+	selectViewedProductInRow(id: string, productId: number): void
+	{
+		if (!Type.isStringFilled(id) || Text.toNumber(productId) <= 0)
+		{
+			return;
+		}
+
+		requestAnimationFrame(() => {
+			const productSelector = this.getProductSelector(id);
+			if (productSelector)
+			{
+				productSelector.onProductSelect(productId);
+			}
+		});
 	}
 
 	selectProductInRow(id: string, productId: number): void

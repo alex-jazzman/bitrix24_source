@@ -2742,7 +2742,7 @@ table.blogquote td {
 /*endregion*/
 
 /* Popup menu window */
-.crm-timeline-popup-menu-item-disabled { opacity: .7 }
+.crm-timeline-popup-menu-item-disabled { opacity: .5 }
 
 .crm-timeline-wait {
 	display: block;

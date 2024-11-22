@@ -1,9 +1,10 @@
 import { Type } from 'main.core';
 import type { BBCodeContentNode } from '../../nodes/node';
+import type { BBCodeToStringOptions } from '../../nodes/root-node';
 import { typeof BBCodeScheme } from '../bbcode-scheme';
 
 export type BBCodeNodeConverter = (node: BBCodeContentNode, scheme: BBCodeScheme) => BBCodeContentNode | Array<BBCodeContentNode> | null;
-export type BBCodeNodeStringifier = (node: BBCodeContentNode, scheme: BBCodeScheme) => string;
+export type BBCodeNodeStringifier = (node: BBCodeContentNode, scheme: BBCodeScheme, toStringOptions: BBCodeToStringOptions) => string;
 export type BBCodeNodeSerializer = (node: BBCodeContentNode, scheme: BBCodeScheme) => any;
 export type BBCodeNodeName = string;
 export type BBCodeGroupName = string;

@@ -26,7 +26,7 @@ export function createImageNode({ src, width, height }): HTMLSpanElement
 					error: (event) => {
 						const img: HTMLImageElement = event.target;
 						img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-						img.style.cssText = 'border: 1px dashed red';
+						Dom.addClass(img.parentNode, '--error ui-icon-set__scope');
 					},
 				},
 			}),

@@ -3,4 +3,6 @@ $MESS["SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT"] = "Змінити";
 $MESS["SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT"] = "Експортувати";
 $MESS["SUPERSET_DASHBOARD_DETAIL_MORE_MENU_FEEDBACK"] = "Зворотний зв'язок";
 $MESS["SUPERSET_DASHBOARD_DETAIL_MORE_MENU_ORDER_DASHBOARD"] = "Замовити звіт";
+$MESS["SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE"] = "Подивитися цей звіт можна лише з вибраних зон видимості.";
 $MESS["SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER"] = "Завантажити з Маркету";
+$MESS["SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER_MARKET_INSTALL_ERROR"] = "Щоб завантажити звіти з Маркету, установіть модуль «market».";

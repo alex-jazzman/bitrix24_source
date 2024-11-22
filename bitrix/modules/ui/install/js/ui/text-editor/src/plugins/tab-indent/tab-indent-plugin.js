@@ -15,7 +15,7 @@ import { $findMatchingParent } from 'ui.lexical.utils';
 import { $isListItemNode } from 'ui.lexical.list';
 
 import BasePlugin from '../base-plugin';
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 export class TabIndentPlugin extends BasePlugin
 {

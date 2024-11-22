@@ -1,6 +1,6 @@
 import { Type, Tag, Dom, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 
 function clamp(value: number, min: number, max: number): number
 {

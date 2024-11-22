@@ -10,5 +10,7 @@ $MESS["BIC_EXPORT_HINT_WITH_NO_SETTINGS"] = "Клієнт зможе самос�
 $MESS["BIC_EXPORT_OPEN_SETTINGS"] = "Налаштувати звіт";
 $MESS["BIC_EXPORT_PERIOD"] = "Період звіту";
 $MESS["BIC_EXPORT_SCOPE"] = "Зони видимості";
+$MESS["BIC_EXPORT_SCOPE_HINT"] = "Зони видимості цифрових робочих місць не будуть експортовані.";
 $MESS["BIC_EXPORT_SCOPE_NONE"] = "немає";
 $MESS["BIC_EXPORT_SUBTITLE"] = "Експорт звіту";
+$MESS["BIC_EXPORT_URL_PARAM"] = "Параметри";

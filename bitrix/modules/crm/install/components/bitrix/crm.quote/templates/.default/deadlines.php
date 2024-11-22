@@ -167,6 +167,7 @@ else
 					'c_sub_section' => Dictionary::SUB_SECTION_DEADLINES,
 				],
 			],
+			'PATH_TO_MERGE' => $arResult['PATH_TO_MERGE'] ?? null,
 		],
 		$component
 	);

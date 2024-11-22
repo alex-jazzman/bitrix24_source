@@ -655,18 +655,18 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			});
 		}
 
-		onChangeProviderCallback({ sender, phoneId })
+		onChangeProviderCallback({ sender, fromId })
 		{
 			this.setState({
 				currentChannelId: sender.id,
-				fromPhoneId: phoneId,
+				fromPhoneId: fromId,
 			});
 		}
 
-		onChangeProviderPhoneCallback({ phoneId })
+		onChangeProviderPhoneCallback({ fromId })
 		{
 			this.setState({
-				fromPhoneId: phoneId,
+				fromPhoneId: fromId,
 			});
 		}
 	}

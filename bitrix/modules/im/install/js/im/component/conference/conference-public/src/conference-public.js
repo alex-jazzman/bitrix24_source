@@ -140,6 +140,10 @@ BitrixVue.component('bx-im-component-conference-public',
 		{
 			return this.conference.common.conferenceStarted;
 		},
+		hasErrorInCall()
+		{
+			return this.conference.common.hasErrorInCall;
+		},
 		userInited()
 		{
 			return this.conference.common.inited;
@@ -485,7 +489,7 @@ BitrixVue.component('bx-im-component-conference-public',
 		<div :class="callComponentClasses">
 			<div class="bx-im-component-call-left">
 				<div id="bx-im-component-call-container" :class="callContainerClasses"></div>
-				<div v-if="isPreparationStep" class="bx-im-component-call-left-preparation">
+				<div v-if="isPreparationStep" class="bx-im-component-call-left-preparation" v-show="!hasErrorInCall">
 					<!-- Step 1: Errors page -->
 					<Error v-if="errorCode"/>
 					<!-- Step 2: Password page -->

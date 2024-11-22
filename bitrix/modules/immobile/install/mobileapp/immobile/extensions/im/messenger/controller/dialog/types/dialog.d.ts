@@ -10,10 +10,14 @@ declare type DialogOpenOptions = {
 	dialogTitleParams?: DialogTitleParams,
 	forwardMessageId?: string,
 	chatType?: string,
-	isNew?: boolean,
-	isFromPush?: boolean,
 	userCode?: string, // for openlines dialog only
 	fallbackUrl?: string, // for openlines dialog only
+
+	/**
+	 * the context of opening a chat
+	 * @see OpenDialogContextType
+	 */
+	context: string,
 }
 
 declare type DialogTitleParams = {

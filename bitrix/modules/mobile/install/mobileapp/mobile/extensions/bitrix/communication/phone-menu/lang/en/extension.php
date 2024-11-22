@@ -12,3 +12,4 @@ $MESS["PHONE_CALL_TO"] = "#PHONE#";
 $MESS["PHONE_CALL_TO_MSGVER_1"] = "#PHONE#";
 $MESS["PHONE_COPY"] = "Copy";
 $MESS["PHONE_COPY_DONE"] = "Number copied";
+$MESS["PHONE_HIDDEN"] = "Phone number hidden";

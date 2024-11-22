@@ -57,6 +57,7 @@ $APPLICATION->IncludeComponent(
 				'selected' => true,
 			],
 		],
+		'PATH_TO_MERGE' => $arResult['pathToMerge'],
 	],
 	$component
 );

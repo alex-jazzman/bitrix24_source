@@ -346,7 +346,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        entityId: this.entityId,
 	        text: babelHelpers.classPrivateFieldLooseBase(this, _getSmsText)[_getSmsText](channel, link),
 	        providerId: channel.id,
-	        isProviderFixed: 'Y',
+	        isProviderFixed: 'N',
 	        canUseBitrix24Provider: 'Y'
 	      };
 	      if (channel.templateCode) {

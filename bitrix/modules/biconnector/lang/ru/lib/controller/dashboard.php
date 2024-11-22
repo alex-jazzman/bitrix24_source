@@ -3,7 +3,6 @@
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR_SYSTEM'] = 'Нельзя удалять системные отчёты';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR_COPIED'] = 'Удалить отчёт можно только после удаления всех его копий';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_EXPORT_ERROR'] = 'Не удалось экспортировать отчёт. Попробуйте ещё раз';
-$MESS['BICONNECTOR_CONTROLLER_DASHBOARD_CREATE_EMPTY_ERROR'] = 'Не удалось создать отчёт. Попробуйте ещё раз';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_COPY_ERROR'] = 'Не удалось скопировать отчёт. Попробуйте ещё раз';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR'] = 'Не удалось удалить отчёт. Попробуйте ещё раз';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_ERROR_NOT_FOUND'] = 'Такого отчёта нет';
@@ -15,7 +14,6 @@ $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_READY
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_EMPTY'] = "Добавьте название отчёта";
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM'] = 'Нельзя менять названия системных отчётов и отчётов из Маркета. Вы можете скопировать отчёт и изменить название копии';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_UNHANDLED'] = 'Не удалось изменить название отчёта, попробуйте ещё раз';
-$MESS['BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_CREATE'] = 'Недостаточно прав для создания отчёта. Обратитесь к вашему руководителю или администратору Битрикс24';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EDIT'] = 'Недостаточно прав для редактирования отчёта. Обратитесь к вашему руководителю или администратору Битрикс24';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_COPY'] = 'Недостаточно прав для копирования отчёта. Обратитесь к вашему руководителю или администратору Битрикс24';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EXPORT'] = 'Недостаточно прав для экспортирования отчёта. Обратитесь к вашему руководителю или администратору Битрикс24';

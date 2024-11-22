@@ -8,7 +8,7 @@ import {
 	type NodeSelection,
 } from 'ui.lexical.core';
 
-import type TextEditor from '../text-editor';
+import { type TextEditor } from '../text-editor';
 
 function isNodeSelected(editor: TextEditor, key: NodeKey): boolean
 {

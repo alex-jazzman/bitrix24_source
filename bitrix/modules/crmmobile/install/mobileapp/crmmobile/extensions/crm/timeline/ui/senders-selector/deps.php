@@ -9,6 +9,6 @@ return [
 	],
 	'bundle' => [
 		'./src/provider-selector',
-		'./src/number-selector',
+		'./src/from-selector',
 	],
 ];

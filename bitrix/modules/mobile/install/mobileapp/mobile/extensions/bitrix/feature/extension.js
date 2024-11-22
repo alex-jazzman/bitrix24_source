@@ -21,6 +21,11 @@ jn.define('feature', (require, exports, module) => {
 			return minApiVersion(50, 'isBackgroundGradientSupported');
 		}
 
+		static isGradientWithTextSupported()
+		{
+			return Application.getPlatform() === 'android' || minApiVersion(52, 'isGradientWithTextSupported');
+		}
+
 		static isGeoPositionSupported()
 		{
 			return minApiVersion(51, 'isGeoPositionSupported');
@@ -110,6 +115,16 @@ jn.define('feature', (require, exports, module) => {
 		static isDidAdoptHeightByKeyboardEventSupported()
 		{
 			return minApiVersion(55, 'isDidAdoptHeightByKeyboardEventSupported');
+		}
+
+		static isSmartphoneContactsAPISupported()
+		{
+			return minApiVersion(55, 'isSmartphoneContactsAPISupported');
+		}
+
+		static isNativeAvatarSupported()
+		{
+			return typeof Avatar === 'function' && minApiVersion(56, 'isNativeAvatarSupported');
 		}
 	}
 

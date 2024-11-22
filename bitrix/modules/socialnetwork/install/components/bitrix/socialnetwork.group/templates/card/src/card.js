@@ -27,6 +27,7 @@ class WorkgroupCard
 		this.canInitiate = null;
 		this.canModify = null;
 		this.canLeave = null;
+		this.canCreate = null;
 
 		this.groupId = null;
 		this.isProject = null;
@@ -72,6 +73,7 @@ class WorkgroupCard
 		this.canInitiate = !!params.canInitiate;
 		this.canProcessRequestsIn = !!params.canProcessRequestsIn;
 		this.canModify = !!params.canModify;
+		this.canCreate = !!params.canCreate;
 		this.canLeave = (
 			Type.isBoolean(params.canLeave)
 				? params.canLeave
@@ -188,6 +190,7 @@ class WorkgroupCard
 						canProcessRequestsIn: this.canProcessRequestsIn,
 						canModify: this.canModify,
 						canLeave: this.canLeave,
+						canCreate: this.canCreate,
 					},
 					urls: {
 						requestUser: Loc.getMessage('SGCSPathToRequestUser'),

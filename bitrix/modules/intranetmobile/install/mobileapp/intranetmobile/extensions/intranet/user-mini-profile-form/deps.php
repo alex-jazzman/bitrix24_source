@@ -14,6 +14,8 @@ return [
 		'ui-system/form/inputs/string',
 		'ui-system/form/inputs/email',
 		'ui-system/form/inputs/phone',
+		'utils/phone',
+		'utils/email',
 	],
 ];
 

@@ -67,7 +67,10 @@ export const ChatContent = {
 			const { messageId } = event.getData();
 			this.commentsPostId = messageId;
 			this.commentsAnimationFlag = true;
-			this.$store.dispatch('messages/comments/setOpened', { channelDialogId: this.entityId });
+			this.$store.dispatch('messages/comments/setOpened', {
+				channelDialogId: this.entityId,
+				commentsPostId: this.commentsPostId,
+			});
 		},
 		onCloseComments()
 		{

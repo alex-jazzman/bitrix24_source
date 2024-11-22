@@ -7,6 +7,9 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 	const { PropTypes } = require('utils/validation');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { FloatingActionButtonMode } = require('ui-system/form/buttons/floating-action-button/src/mode-enum');
+	const { FloatingActionButtonType } = require('ui-system/form/buttons/floating-action-button/src/type-enum');
+	const { BaseEnum } = require('utils/enums/base');
+	const { BaseIcon } = require('assets/icons/src/base');
 
 	const BUTTON_SIZE = 58;
 
@@ -14,6 +17,10 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 	 * @class FloatingActionButton
 	 * @param {string} testId
 	 * @param {boolean} accent
+	 * @param {boolean} showLoader
+	 * @param {boolean} safeArea
+	 * @param {string} icon
+	 * @param {string} type
 	 * @param {object} parentLayout
 	 * @param {Function} onClick
 	 * @param {Function} onLongClick
@@ -64,9 +71,19 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 
 		isAccentButton()
 		{
-			const { accent } = this.props;
+			const { accentByDefault, accent } = this.props;
 
-			return Boolean(accent);
+			if (typeof accent !== 'undefined')
+			{
+				if (Application.isBeta())
+				{
+					console.warn('The "accent" parameter is deprecated. Please use "accentByDefault" instead.');
+				}
+
+				return Boolean(accent);
+			}
+
+			return Boolean(accentByDefault);
 		}
 
 		shouldSafeArea()
@@ -74,6 +91,13 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 			const { safeArea } = this.props;
 
 			return Boolean(safeArea);
+		}
+
+		#getIcon()
+		{
+			const { icon } = this.props;
+
+			return Icon.resolve(icon, Icon.PLUS);
 		}
 
 		render()
@@ -104,7 +128,7 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 				},
 				IconView({
 					size: 32,
-					icon: Icon.PLUS,
+					icon: this.#getIcon(),
 					color: this.getIconColor(),
 				}),
 			);
@@ -135,12 +159,30 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 				return;
 			}
 
-			this.setFloatingButton({
-				safeArea: this.shouldSafeArea(),
-				accent: this.isAccentButton(),
-			});
+			const transformedProps = this.transformProps(this.props);
+
+			this.setFloatingButton(transformedProps);
 
 			this.#initListeners();
+		}
+
+		transformProps(props)
+		{
+			return Object.keys(props).reduce((accumulator, key) => {
+				const value = props[key];
+
+				if (value instanceof BaseIcon)
+				{
+					return { ...accumulator, [key]: value.getIconName() };
+				}
+
+				if (value instanceof BaseEnum)
+				{
+					return { ...accumulator, [key]: value.getValue() };
+				}
+
+				return { ...accumulator, [key]: value };
+			}, {});
 		}
 
 		#initListeners()
@@ -154,18 +196,25 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 
 		/**
 		 * @param {Object} params
-		 * @param {boolean} [params.accent]
+		 * @param {boolean} [params.accentByDefault]
 		 * @param {boolean} [params.hide]
+		 * @param {boolean}  [params.showLoader]
+		 * @param {string} [params.type]
+		 * @param {Object} [params.icon]
 		 */
 		setFloatingButton(params = {})
 		{
-			const { testId } = this.props;
-			const { accent = false, hide = false } = params;
+			const transformedProps = this.transformProps(this.props);
+			const {
+				hide = false,
+				safeArea = this.shouldSafeArea(),
+			} = params;
 			const floatingActionButtonParams = hide
 				? {}
 				: {
-					testId,
-					accentByDefault: accent,
+					...transformedProps,
+					accentByDefault: this.isAccentButton(),
+					safeArea,
 					callback: () => {},
 				};
 
@@ -184,21 +233,26 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 	}
 
 	FloatingActionButton.defaultProps = {
-		accent: false,
+		accentByDefault: false,
+		showLoader: false,
 		safeArea: false,
 	};
 
 	FloatingActionButton.propTypes = {
 		safeArea: PropTypes.bool,
 		testId: PropTypes.string.isRequired,
-		accent: PropTypes.bool,
+		accentByDefault: PropTypes.bool,
 		onLongClick: PropTypes.func,
 		onClick: PropTypes.func,
 		parentLayout: PropTypes.object,
+		showLoader: PropTypes.bool,
+		type: PropTypes.instanceOf(FloatingActionButtonType),
+		icon: PropTypes.instanceOf(Icon),
 	};
 
 	module.exports = {
 		FloatingActionButton: (props) => new FloatingActionButton(props),
 		FloatingActionButtonSupportNative: FloatingActionButton.supportNative,
+		FloatingActionButtonType,
 	};
 });

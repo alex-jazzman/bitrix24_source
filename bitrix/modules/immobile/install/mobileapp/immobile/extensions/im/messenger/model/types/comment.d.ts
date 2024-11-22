@@ -1,15 +1,14 @@
-import {DialogId} from "../../types/common";
-import {MessagesModelState} from "./messages";
-import {Pin, PinModelCollection} from "./messages/pin";
-import {MessengerModel} from "./base";
+import { DialogId } from '../../types/common';
+import { MessengerModel } from './base';
 
-declare type CommentInfo = {
+declare type CommentInfoModelState = {
 	chatId: number,
 	dialogId: DialogId,
 	messageId: number,
 	lastUserIds: Array<number>,
 	messageCount: number,
 	isUserSubscribed: boolean,
+	showLoader: boolean,
 }
 
 declare type CommentModelActions = 'commentModel/setComments'
@@ -21,6 +20,8 @@ declare type CommentModelActions = 'commentModel/setComments'
 	| 'commentModel/deleteChannelCounters'
 	| 'commentModel/subscribe'
 	| 'commentModel/unsubscribe'
+	| 'commentModel/showLoader'
+	| 'commentModel/hideLoader'
 ;
 
 declare type CommentModelMutation = 'commentModel/setComments'
@@ -30,9 +31,9 @@ declare type CommentModelMutation = 'commentModel/setComments'
 	| 'commentModel/deleteChannelCounters'
 ;
 
-declare type CommentsSetCommentsActions = 'setComments' | 'updateComment'| 'setComment';
+declare type CommentsSetCommentsActions = 'setComments' | 'updateComment' | 'setComment';
 declare type CommentsSetCommentsData = {
-	commentList: Array<CommentInfo>
+	commentList: Array<CommentInfoModelState>
 }
 
 declare type CommentsSetCountersActions = 'setCounters';
@@ -51,7 +52,7 @@ declare type channelChatId = number;
 declare type commentChatId = number;
 
 declare type CommentModelCollection = {
-	commentCollection: Record<commentMessageId, CommentInfo>,
+	commentCollection: Record<commentMessageId, CommentInfoModelState>,
 	countersCollection: Record<channelChatId, Record<commentChatId, number>>,
 }
 

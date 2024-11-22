@@ -1,16 +1,19 @@
 import { BatchMergeManager } from 'crm.merger.batchmergemanager';
-import { Text } from 'main.core';
+import { Text, Type } from 'main.core';
 import { BaseHandler } from '../base-handler';
 
 export class ExecuteMerge extends BaseHandler
 {
 	#entityTypeId: number;
+	#mergerUrl: ?string;
 
-	constructor({ entityTypeId })
+	constructor({ entityTypeId, mergerUrl })
 	{
 		super();
 
 		this.#entityTypeId = Text.toInteger(entityTypeId);
+		this.#mergerUrl = Type.isStringFilled(mergerUrl) ? mergerUrl : null;
+
 		if (!BX.CrmEntityType.isDefined(this.#entityTypeId))
 		{
 			throw new Error('entityTypeId is required');
@@ -32,6 +35,7 @@ export class ExecuteMerge extends BaseHandler
 				{
 					gridId: grid.getId(),
 					entityTypeId: this.#entityTypeId,
+					mergerUrl: this.#mergerUrl,
 				},
 			);
 		}

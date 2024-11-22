@@ -14,19 +14,19 @@ jn.define('intranet/background', (require, exports, module) => {
 
 		initMiniProfile()
 		{
-			const isNeedToShowMiniProfile = Application.storage.get('intranet.miniProfile.needToShow', null);
+			const isNeedToShowMiniProfile = Application.storage.get(`intranet.miniProfile.needToShow_${env.userId}`, null);
 
 			if (isNeedToShowMiniProfile)
 			{
 				this.showMiniProfile();
-				Application.storage.set('intranet.miniProfile.needToShow', false);
+				Application.storage.set(`intranet.miniProfile.needToShow_${env.userId}`, false);
 			}
 			else if (isNeedToShowMiniProfile === null || isNeedToShowMiniProfile === undefined)
 			{
-				const request = new RunActionExecutor('intranetmobile.userProfile.isNeedToShowMiniProfile', {});
+				const request = new RunActionExecutor('intranetmobile.userprofile.isNeedToShowMiniProfile', {});
 				request.call(false)
 					.then((response) => {
-						Application.storage.set('intranet.miniProfile.needToShow', false);
+						Application.storage.set(`intranet.miniProfile.needToShow_${env.userId}`, false);
 
 						if (response.data)
 						{

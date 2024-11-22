@@ -102,7 +102,6 @@ export class KeyboardMenu extends EventEmitter
 			mutationsList.some((mutation): boolean => {
 				if (mutation.type === 'childList')
 				{
-					this.highlightFirstItem();
 					this.#menu.getMenuItems().forEach((menuItem) => {
 						this.#unsubscribeMenuItemEvents(menuItem);
 						this.#handleMenuItemEvents(menuItem);
@@ -115,7 +114,7 @@ export class KeyboardMenu extends EventEmitter
 			});
 		});
 
-		const config = { childList: true, subtree: false };
+		const config = { childList: true, subtree: true };
 		observer.observe(this.#menu.getMenuContainer(), config);
 	}
 

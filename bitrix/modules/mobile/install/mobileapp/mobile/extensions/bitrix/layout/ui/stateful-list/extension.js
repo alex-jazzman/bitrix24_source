@@ -782,7 +782,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				}
 			}
 
-			const { data } = response;
+			let { data } = response;
+
 			let items = [];
 
 			if (data?.items)
@@ -1689,7 +1690,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			if (!isEqual(buttons, this.layoutRightButtons))
 			{
 				this.layoutRightButtons = buttons;
-				layout.setRightButtons(buttons);
+				this.layout.setRightButtons(buttons);
 			}
 		}
 

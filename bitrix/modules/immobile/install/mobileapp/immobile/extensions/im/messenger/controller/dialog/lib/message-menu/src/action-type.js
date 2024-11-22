@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action-type', (requir
 		reaction: 'reaction',
 		reply: 'reply',
 		copy: 'copy',
+		copyLink: 'copy-link',
 		pin: 'pin',
 		unpin: 'unpin',
 		forward: 'forward',

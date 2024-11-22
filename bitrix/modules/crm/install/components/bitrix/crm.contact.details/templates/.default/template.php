@@ -51,6 +51,7 @@ $APPLICATION->IncludeComponent(
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processRemoval();',
 		],
 		'ANALYTICS' => [
+			'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
 			'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 		],
 	],

@@ -34,13 +34,18 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 			/** @type {ForwardSelectorView} */
 			this.view = null;
 			this.isFirstRender = true;
+			this.fromDialogId = null;
 
 			this.initProvider();
 		}
 
-		open({ messageId, fromDialogId, locator })
+		async open({ messageId, fromDialogId, locator })
 		{
-			PageManager.openWidget('layout', {
+			this.fromDialogId = fromDialogId;
+			this.bindMethods();
+			this.subscribeExternalEvents();
+
+			const layoutWidget = await PageManager.openWidget('layout', {
 				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
 				useLargeTitleMode: true,
 				modal: true,
@@ -50,32 +55,37 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 					horizontalSwipeAllowed: false,
 					onlyMediumPosition: true,
 				},
-			}).then((layoutWidget) => {
-				this.layout = layoutWidget;
-				this.view = new ForwardSelectorView({
-					onChangeText: (text) => {
-						this.onUserTypeText({ text });
-					},
-					onItemSelected: (dialogParams) => {
-						this.forwardMessage({
-							messageId,
-							dialogParams,
-							fromDialogId,
-							locator,
-						});
-					},
-					onMount: () => {
-						if (this.isFirstRender)
-						{
-							this.provider.loadLatestSearch();
-							this.isFirstRender = false;
-						}
-					},
-					openingLoaderTitle: this.getLoadingItem().title,
-				});
-				layoutWidget.showComponent(this.view);
-				logger.log(`${this.constructor.name} show component`);
 			});
+
+			this.layout = layoutWidget;
+			this.view = new ForwardSelectorView({
+				onChangeText: (text) => {
+					this.onUserTypeText({ text });
+				},
+				onItemSelected: (dialogParams) => {
+					this.forwardMessage({
+						messageId,
+						dialogParams,
+						fromDialogId,
+						locator,
+					});
+				},
+				onMount: () => {
+					if (this.isFirstRender)
+					{
+						this.provider.loadLatestSearch();
+						this.isFirstRender = false;
+					}
+				},
+				openingLoaderTitle: this.getLoadingItem().title,
+			});
+			layoutWidget.showComponent(this.view);
+
+			layoutWidget.on(EventType.view.close, () => {
+				this.unsubscribeExternalEvents();
+			});
+
+			logger.log(`${this.constructor.name} show component`);
 		}
 
 		initProvider()
@@ -145,6 +155,31 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 		{
 			super.close();
 			this.layout.close();
+		}
+
+		bindMethods()
+		{
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.fromDialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.close();
 		}
 
 		subscribeEvents() {}

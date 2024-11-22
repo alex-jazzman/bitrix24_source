@@ -48,7 +48,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return null;
 	  },
 	  openLink(link, target = '_blank') {
-	    window.open(link, target, '', true);
+	    window.open(link, target);
 	  },
 	  waitForSelectionToUpdate() {
 	    return new Promise(resolve => {
@@ -488,7 +488,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!main_core.Type.isStringFilled(fileName)) {
 	      return '';
 	    }
-	    return fileName.split('.').splice(-1)[0];
+	    return fileName.split('.').splice(-1)[0].toLowerCase();
 	  },
 	  getIconTypeByFilename(fileName) {
 	    const extension = this.getFileExtension(fileName);

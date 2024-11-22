@@ -92,7 +92,7 @@ $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 					"empty_get_comments")),
 			"FIELDS" => array(
 			)
-		)
+		),
 	),
 	$this->__component
 );

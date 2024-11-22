@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_date,main_popup,ui_sidepanel_layout,ui_uploader_tileWidget,ui_uploader_core,main_loader,ui_icons,main_core,main_core_events,sign_v2_api,ui_entitySelector) {
+(function (exports,main_date,main_popup,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_tileWidget,ui_uploader_core,main_loader,ui_icons,main_core,main_core_events,sign_v2_api,ui_entitySelector) {
 	'use strict';
 
 	let _ = t => t,
@@ -576,7 +577,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    try {
 	      var _babelHelpers$classPr;
 	      const filesIds = files.map(file => file.getServerFileId());
-	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr : null);
+	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode));
 	      babelHelpers.classPrivateFieldLooseBase(this, _setupBlank)[_setupBlank]({
 	        ...blankData,
 	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF')
@@ -923,5 +924,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.BlankField = BlankField$$1;
 	exports.BlankSelector = BlankSelector;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector));
 //# sourceMappingURL=blank-selector.bundle.js.map

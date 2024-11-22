@@ -63,3 +63,13 @@ export type SetupMember = {
 	party: number;
 	role?: Role;
 };
+export type MemberStatusType = 'done' | 'wait' | 'ready' | 'refused' | 'stopped' | 'stoppable_ready' | 'processing';
+export const MemberStatus: Readonly<Record<string, MemberStatusType>> = Object.freeze({
+	done: 'done',
+	wait: 'wait',
+	ready: 'ready',
+	refused: 'refused',
+	stopped: 'stopped',
+	stoppableReady: 'stoppable_ready',
+	processing: 'processing',
+});

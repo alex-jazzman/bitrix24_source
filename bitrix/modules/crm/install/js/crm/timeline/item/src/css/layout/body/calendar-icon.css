@@ -116,3 +116,7 @@
 	right: 10px;
 	top: 8px;
 }
+
+.crm-timeline__card-logo.--orange .crm-timeline__calendar-icon {
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-palette-orange-50, #FFA900);
+}

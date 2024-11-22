@@ -58,7 +58,7 @@ $APPLICATION->IncludeComponent(
 <script>
 	BX.ready(() => {
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
-		BX.BIConnector.SupersetDashboardTagGridManager.Instance = new BX.BIConnector.SupersetDashboardTagGridManager(<?=CUtil::PhpToJSObject([
+		BX.BIConnector.SupersetDashboardTagGridManager.Instance = new BX.BIConnector.SupersetDashboardTagGridManager(<?=Json::encode([
 			'gridId' => $grid?->getId(),
 		])?>);
 	});

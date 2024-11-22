@@ -1,0 +1,21 @@
+<?php
+$MESS["SIGN_SERVICE_DEFAULT_ERROR"] = "Не вдалося виконати дію, спробуйте трохи пізніше.";
+$MESS["SIGN_SERVICE_DEFAULT_ERROR_WITH_CODE"] = "Не вдалося виконати дію, спробуйте трохи пізніше (код помилки: #CODE#).";
+$MESS["SIGN_SERVICE_ERROR_BLANK_DELETE_FAILED"] = "Не вдалося видалити шаблон, спробуйте згодом.";
+$MESS["SIGN_SERVICE_ERROR_DELETE_DOCUMENTS_EXISTS"] = "Не можемо видалити шаблон, за яким створено документи.";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_SIGNING_EXPIRED"] = "Термін підписання документа закінчився.";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_TO_MANY_MEMBERS"] = "Має бути 2 учасники підписання.";
+$MESS["SIGN_SERVICE_ERROR_EMPTY_MEMBER_CHANNEL"] = "Укажіть номер телефону або адресу електронної пошти учасника підписання.";
+$MESS["SIGN_SERVICE_ERROR_FIELD_FILE_NOT_IMAGE"] = "У це поле можна додати лише зображення.";
+$MESS["SIGN_SERVICE_ERROR_FILE_TOO_BIG"] = "Перевищено максимальний розмір файлу.";
+$MESS["SIGN_SERVICE_ERROR_FILE_TOO_BIG_SIZE_MSG_1"] = "Файл занадто великий. Максимальний розмір не може перевищувати #SIZE# МБ.";
+$MESS["SIGN_SERVICE_ERROR_FILE_TO_MANY_PAGES_COUNT"] = "Кількість сторінок у файлі не може перевищувати #COUNT#.";
+$MESS["SIGN_SERVICE_ERROR_MEMBERS_NOT_READY_FOR_RESEND"] = "Документ не готовий до надсилання.";
+$MESS["SIGN_SERVICE_ERROR_MEMBER_INVALID_PHONE"] = "Уведіть коректний номер для надсилання SMS або виберіть адресу електронної пошти.";
+$MESS["SIGN_SERVICE_ERROR_MEMBER_PHONE_UNSUPPORTED_COUNTRY_CODE"] = "Надсилання SMS на цей номер тимчасово не підтримується. Ви можете надіслати документ на підпис електронною поштою.";
+$MESS["SIGN_SERVICE_ERROR_NO_FILE_TYPE"] = "Такий формат не підтримується. Можна додавати файли у форматах pdf, doc, docx, rtf, odt, jpg, png.";
+$MESS["SIGN_SERVICE_ERROR_PREVIOUS_MEMBER_NOT_DONE"] = "Виконати дію можна тільки після того, як перша сторона підпише документ.";
+$MESS["SIGN_SERVICE_ERROR_PROTECTED_PDF"] = "Файл захищений паролем і недоступний для завантаження.";
+$MESS["SIGN_SERVICE_ERROR_REQUIRED_FIELDS_VALIDATION"] = "Заповніть обов'язкові поля.";
+$MESS["SIGN_SERVICE_ERROR_SMS_LIMIT_EXCEEDED"] = "Перевищено ліміт на повторне надсилання SMS.";
+$MESS["SIGN_SERVICE_ERROR_TOO_MANY_FILES_COUNT"] = "На підпис можна надіслати зображення (максимум %imageCountLimit%) або 1 файл у форматах PDF, DOC, DOCX, RTF чи ODT.";

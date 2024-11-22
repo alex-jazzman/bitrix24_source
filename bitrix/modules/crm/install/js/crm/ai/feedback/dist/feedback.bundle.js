@@ -53,6 +53,7 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	    }
 	  }).then(() => {
 	    ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_SEND).setActivityDirection(activityDirection).buildData());
+	    ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setTool(crm_integration_analytics.Dictionary.TOOL_CRM).setCategory(crm_integration_analytics.Dictionary.CATEGORY_AI_OPERATIONS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_SEND).setActivityDirection(activityDirection).buildData());
 	  }).catch(({
 	    errors
 	  }) => console.error('Error sending feedback', errors));
@@ -72,6 +73,7 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	      onCancel: () => {
 	        messageBox.close();
 	        ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_REFUSED).setActivityDirection(activityDirection).buildData());
+	        ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setTool(crm_integration_analytics.Dictionary.TOOL_CRM).setCategory(crm_integration_analytics.Dictionary.CATEGORY_AI_OPERATIONS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_REFUSED).setActivityDirection(activityDirection).buildData());
 	        resolve();
 	      }
 	    });

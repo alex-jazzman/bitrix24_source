@@ -6,6 +6,8 @@ import {
 	ElementNode,
 	$applyNodeReplacement,
 	$createParagraphNode,
+	$isElementNode,
+	$isDecoratorNode,
 	type EditorConfig,
 	type LexicalNode,
 	type SerializedElementNode,
@@ -15,6 +17,8 @@ import {
 	type DOMConversionMap,
 	type DOMConversionOutput,
 } from 'ui.lexical.core';
+
+import { $isParagraphEmpty } from '../../helpers/is-paragraph-empty';
 
 export class QuoteNode extends ElementNode
 {
@@ -93,40 +97,51 @@ export class QuoteNode extends ElementNode
 
 	collapseAtStart(selection: RangeSelection): true
 	{
-		const paragraph = $createParagraphNode();
-		const children = this.getChildren();
-		children.forEach((child) => paragraph.append(child));
-		this.replace(paragraph);
+		// const paragraph = $createParagraphNode();
+		// const children = this.getChildren();
+		// children.forEach((child) => paragraph.append(child));
+		// this.replace(paragraph);
+		$removeQuote(this);
 
 		return true;
 	}
 
-	insertNewAfter(selection: RangeSelection, restoreSelection = true): null | ParagraphNode
+	canBeEmpty(): false
 	{
-		const children = this.getChildren();
-		const childrenLength = children.length;
-
-		if (
-			childrenLength >= 2
-			&& children[childrenLength - 1].getTextContent() === '\n'
-			&& children[childrenLength - 2].getTextContent() === '\n'
-			&& selection.isCollapsed()
-			&& selection.anchor.key === this.__key
-			&& selection.anchor.offset === childrenLength
-		)
-		{
-			children[childrenLength - 1].remove();
-			children[childrenLength - 2].remove();
-			const newElement = $createParagraphNode();
-			this.insertAfter(newElement, restoreSelection);
-
-			return newElement;
-		}
-
-		selection.insertLineBreak();
-
-		return null;
+		return false;
 	}
+
+	isShadowRoot(): boolean
+	{
+		return true;
+	}
+
+	// insertNewAfter(selection: RangeSelection, restoreSelection = true): null | ParagraphNode
+	// {
+	// 	const children = this.getChildren();
+	// 	const childrenLength = children.length;
+	//
+	// 	if (
+	// 		childrenLength >= 2
+	// 		&& children[childrenLength - 1].getTextContent() === '\n'
+	// 		&& children[childrenLength - 2].getTextContent() === '\n'
+	// 		&& selection.isCollapsed()
+	// 		&& selection.anchor.key === this.__key
+	// 		&& selection.anchor.offset === childrenLength
+	// 	)
+	// 	{
+	// 		children[childrenLength - 1].remove();
+	// 		children[childrenLength - 2].remove();
+	// 		const newElement = $createParagraphNode();
+	// 		this.insertAfter(newElement, restoreSelection);
+	//
+	// 		return newElement;
+	// 	}
+	//
+	// 	selection.insertLineBreak();
+	//
+	// 	return null;
+	// }
 }
 
 export function $createQuoteNode(): QuoteNode
@@ -137,4 +152,29 @@ export function $createQuoteNode(): QuoteNode
 export function $isQuoteNode(node: LexicalNode | null | undefined): boolean
 {
 	return node instanceof QuoteNode;
+}
+
+export function $removeQuote(quoteNode: QuoteNode): boolean
+{
+	if (!$isQuoteNode(quoteNode))
+	{
+		return false;
+	}
+
+	let lastElement = quoteNode;
+	for (const child of quoteNode.getChildren())
+	{
+		if ($isElementNode(child) || $isDecoratorNode(child))
+		{
+			lastElement = lastElement.insertAfter(child);
+		}
+		else
+		{
+			lastElement = lastElement.insertAfter($createParagraphNode().append(child));
+		}
+	}
+
+	quoteNode.remove();
+
+	return true;
 }

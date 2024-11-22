@@ -2,29 +2,31 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_public,im_v2_lib_rest,im_v2_lib_call,im_v2_application_core,main_core_events,im_v2_lib_utils,im_v2_const,main_core,im_v2_lib_desktopApi,im_v2_lib_logger) {
+(function (exports,im_public,im_v2_lib_rest,im_v2_lib_call,im_v2_application_core,main_core_events,main_core,im_v2_lib_utils,im_v2_const,im_v2_lib_desktopApi,im_v2_lib_logger) {
 	'use strict';
 
+	const IMAGE_DESKTOP_RUN = 'icon.png';
+	const IMAGE_DESKTOP_TWO_WINDOW_MODE = 'internal.png';
 	const IMAGE_CHECK_URL = 'http://127.0.0.1:20141';
 	const IMAGE_CHECK_TIMEOUT = 500;
 	const IMAGE_CLASS = 'bx-im-messenger__out-of-view';
 	const INTERNET_CHECK_URL = '//www.bitrixsoft.com/200.ok';
 	const checkTimeoutList = {};
 	const CheckUtils = {
-	  testImageLoad(successCallback, failureCallback) {
+	  testImageLoad(successCallback, failureCallback, image = IMAGE_DESKTOP_RUN) {
 	    const dateCheck = Date.now();
 	    let failureCallbackCalled = false;
 	    const imageForCheck = main_core.Dom.create({
 	      tag: 'img',
 	      attrs: {
-	        src: `${IMAGE_CHECK_URL}/icon.png?${dateCheck}`,
+	        src: `${IMAGE_CHECK_URL}/${image}?${dateCheck}`,
 	        'data-id': dateCheck
 	      },
 	      props: {
 	        className: IMAGE_CLASS
 	      },
 	      events: {
-	        error: function () {
+	        error() {
 	          if (failureCallbackCalled) {
 	            return;
 	          }
@@ -33,7 +35,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          clearTimeout(checkTimeoutList[checkId]);
 	          main_core.Dom.remove(this);
 	        },
-	        load: function () {
+	        load() {
 	          const checkId = this.dataset.id;
 	          successCallback(true, checkId);
 	          clearTimeout(checkTimeoutList[checkId]);
@@ -53,14 +55,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return new Promise(resolve => {
 	      fetch(`${INTERNET_CHECK_URL}.${currentTimestamp}`).then(response => {
 	        if (response.status === 200) {
-	          return resolve(true);
+	          resolve(true);
+	          return;
 	        }
 	        resolve(false);
 	      }).catch(() => {
 	        resolve(false);
 	      });
 	    });
-	  }
+	  },
+	  IMAGE_DESKTOP_RUN,
+	  IMAGE_DESKTOP_TWO_WINDOW_MODE
 	};
 
 	let conferenceList = [];
@@ -315,6 +320,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      (_BX$Timeman = BX.Timeman) == null ? void 0 : (_BX$Timeman$Monitor = _BX$Timeman.Monitor) == null ? void 0 : _BX$Timeman$Monitor.openReport();
 	    } else if (command === im_v2_const.DesktopBxLink.openTab) {
 	      im_v2_lib_desktopApi.DesktopApi.setActiveTab();
+	    } else if (command === im_v2_const.DesktopBxLink.openPage) {
+	      const options = Encoder.decodeParamsJson(params.options);
+	      im_v2_lib_desktopApi.DesktopApi.openPage(options.url, options.options);
 	    }
 	  });
 	}
@@ -471,6 +479,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      im_v2_lib_logger.Logger.desktop('StatusHandler: onWakeUp event, slider is open, delay 60 sec');
 	      return;
 	    }
+	    if (im_v2_lib_call.CallManager.getInstance().hasCurrentCall()) {
+	      clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _wakeUpTimer)[_wakeUpTimer]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _wakeUpTimer)[_wakeUpTimer] = setTimeout(babelHelpers.classPrivateFieldLooseBase(this, _onWakeUp)[_onWakeUp].bind(this), 60 * 1000);
+	      im_v2_lib_logger.Logger.desktop('StatusHandler: onWakeUp event, call is active, delay 60 sec');
+	      return;
+	    }
 	    im_v2_lib_logger.Logger.desktop('StatusHandler: onWakeUp event, reload window');
 	    im_v2_lib_desktopApi.DesktopApi.reloadWindow();
 	  }
@@ -604,11 +618,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  im_v2_lib_desktopApi.DesktopApi.subscribe(im_v2_const.EventType.desktop.onNewTabClick, babelHelpers.classPrivateFieldLooseBase(this, _onNewTabClick)[_onNewTabClick].bind(this));
 	}
 	function _onNewTabClick2() {
-	  const siteDir = main_core.Loc.getMessage('SITE_DIR') || '/';
-	  BX.SidePanel.Instance.open(`${siteDir}sitemap/?IM_DESKTOP_NEW_TAB=Y`, {
-	    allowChangeHistory: false,
-	    customLeftBoundary: 0
-	  });
+	  im_v2_lib_desktopApi.DesktopApi.createTab('/desktop/menu/');
 	}
 
 	/* eslint-disable no-undef */
@@ -713,6 +723,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const DESKTOP_PROTOCOL_VERSION = 2;
 	const LOCATION_RESET_TIMEOUT = 1000;
 	var _desktopIsActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("desktopIsActive");
+	var _desktopActiveVersion = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("desktopActiveVersion");
 	var _locationChangedToBx = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("locationChangedToBx");
 	var _enableRedirectCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableRedirectCounter");
 	var _prepareBxUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareBxUrl");
@@ -744,6 +755,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _desktopActiveVersion, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _locationChangedToBx, {
 	      writable: true,
 	      value: false
@@ -769,6 +784,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  setDesktopActive(flag) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _desktopIsActive)[_desktopIsActive] = flag;
+	  }
+	  setDesktopVersion(version) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _desktopActiveVersion)[_desktopActiveVersion] = version;
+	  }
+	  getDesktopVersion() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _desktopActiveVersion)[_desktopActiveVersion];
 	  }
 	  isLocationChangedToBx() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _locationChangedToBx)[_locationChangedToBx];
@@ -843,7 +864,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return Promise.resolve();
 	  }
 	  openAccountTab(domainName) {
-	    this.openBxLink(`bx://v2/${domainName}/openTab`);
+	    this.openBxLink(`bx://v2/${domainName}/${im_v2_const.DesktopBxLink.openTab}`);
+	  }
+	  openPage(url, options = {}) {
+	    const encodedParams = Encoder.encodeParamsJson({
+	      url,
+	      options
+	    });
+	    this.openBxLink(`bx://${im_v2_const.DesktopBxLink.openPage}/options/${encodedParams}`);
 	  }
 	  checkStatusInDifferentContext() {
 	    if (!this.isDesktopActive()) {
@@ -865,6 +893,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return Promise.resolve(false);
 	    }
 	    return this.checkStatusInDifferentContext();
+	  }
+	  checkForOpenBrowserPage() {
+	    if (!this.isDesktopActive() || !this.isRedirectOptionEnabled()) {
+	      return Promise.resolve(false);
+	    }
+	    const desktopVersion = this.getDesktopVersion();
+	    if (!im_v2_lib_desktopApi.DesktopApi.isFeatureSupportedInVersion(desktopVersion, im_v2_lib_desktopApi.DesktopFeature.openPage.id)) {
+	      return Promise.resolve(false);
+	    }
+	    return new Promise(resolve => {
+	      CheckUtils.testImageLoad(() => {
+	        CheckUtils.testImageLoad(() => {
+	          resolve(true);
+	        }, () => {
+	          resolve(false);
+	        }, CheckUtils.IMAGE_DESKTOP_TWO_WINDOW_MODE);
+	      }, () => {
+	        resolve(false);
+	      }, CheckUtils.IMAGE_DESKTOP_RUN);
+	    });
 	  }
 	  isRedirectEnabled() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _enableRedirectCounter)[_enableRedirectCounter] > 0;
@@ -903,9 +951,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _initDesktopStatus2() {
 	  const settings = main_core.Extension.getSettings('im.v2.lib.desktop');
 	  this.setDesktopActive(settings.get('desktopIsActive'));
+	  this.setDesktopVersion(settings.get('desktopActiveVersion'));
 	}
 
 	exports.DesktopManager = DesktopManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=desktop-manager.bundle.js.map

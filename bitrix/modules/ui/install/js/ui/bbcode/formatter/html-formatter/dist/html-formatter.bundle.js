@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.BBCode = this.BX.UI.BBCode || {};
-(function (exports,ui_smiley,ui_codeParser,ui_bbcode_model,ui_videoService,main_core,ui_bbcode_formatter) {
+(function (exports,ui_smiley,ui_codeParser,ui_bbcode_model,ui_videoService,ui_bbcode_formatter,ui_typography,main_core) {
 	'use strict';
 
 	function createEmptyParagraphs(scheme, count = 1) {
@@ -65,6 +65,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  return node;
 	}
 
+	let _ = t => t,
+	  _t;
 	class RootNodeFormatter extends ui_bbcode_formatter.NodeFormatter {
 	  constructor(options = {}) {
 	    super({
@@ -76,6 +78,18 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        node
 	      }) {
 	        return normalizeTextNodes(node);
+	      },
+	      after({
+	        element,
+	        formatter
+	      }) {
+	        const mode = formatter.getContainerMode();
+	        if (mode === 'void' || mode === 'collapsed') {
+	          const container = main_core.Tag.render(_t || (_t = _`<div class="ui-typography-container --${0}"></div>`), mode);
+	          container.appendChild(element);
+	          return container;
+	        }
+	        return element;
 	      },
 	      ...options
 	    });
@@ -101,7 +115,9 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	      convert({
 	        node
 	      }) {
-	        const text = node.toString();
+	        const text = node.toString({
+	          encode: false
+	        });
 	        if (findParent(node, parent => parent.getName() === 'code')) {
 	          return document.createTextNode(text);
 	        }
@@ -321,23 +337,6 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  }
 	}
 
-	class SpanNodeFormatter extends ui_bbcode_formatter.NodeFormatter {
-	  constructor(options = {}) {
-	    super({
-	      name: 'span',
-	      convert({
-	        node
-	      }) {
-	        return main_core.Dom.create({
-	          tag: 'span',
-	          attrs: node.getAttributes()
-	        });
-	      },
-	      ...options
-	    });
-	  }
-	}
-
 	class TableNodeFormatter extends ui_bbcode_formatter.NodeFormatter {
 	  constructor(options = {}) {
 	    super({
@@ -472,7 +471,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	      before({
 	        node
 	      }) {
-	        return normalizeLineBreaks(node);
+	        return normalizeTextNodes(node);
 	      },
 	      ...options
 	    });
@@ -669,6 +668,9 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          attrs: {
 	            className: 'ui-typography-spoiler-content'
 	          },
+	          dataset: {
+	            spoilerContent: 'true'
+	          },
 	          children: [...content]
 	        }));
 	        return element;
@@ -696,6 +698,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	            attrs: {
 	              href: userUrl,
 	              className: 'ui-typography-mention'
+	            },
+	            dataset: {
+	              mentionEntityId: 'user',
+	              mentionId: node.getValue()
 	            }
 	          });
 	        }
@@ -703,6 +709,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          tag: 'span',
 	          attrs: {
 	            className: 'ui-typography-mention'
+	          },
+	          dataset: {
+	            mentionEntityId: 'user',
+	            mentionId: node.getValue()
 	          }
 	        });
 	      },
@@ -729,6 +739,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	            attrs: {
 	              href: departmentUrl,
 	              className: 'ui-typography-mention'
+	            },
+	            dataset: {
+	              mentionEntityId: 'department',
+	              mentionId: node.getValue()
 	            }
 	          });
 	        }
@@ -736,6 +750,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          tag: 'span',
 	          attrs: {
 	            className: 'ui-typography-mention'
+	          },
+	          dataset: {
+	            mentionEntityId: 'department',
+	            mentionId: node.getValue()
 	          }
 	        });
 	      },
@@ -762,6 +780,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	            attrs: {
 	              href: projectUrl,
 	              className: 'ui-typography-mention'
+	            },
+	            dataset: {
+	              mentionEntityId: 'project',
+	              mentionId: node.getValue()
 	            }
 	          });
 	        }
@@ -769,6 +791,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          tag: 'span',
 	          attrs: {
 	            className: 'ui-typography-mention'
+	          },
+	          dataset: {
+	            mentionEntityId: 'project',
+	            mentionId: node.getValue()
 	          }
 	        });
 	      },
@@ -805,7 +831,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        error: event => {
 	          const img = event.target;
 	          img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-	          img.style.cssText = 'border: 1px dashed red';
+	          main_core.Dom.addClass(img.parentNode, '--error ui-icon-set__scope');
 	        }
 	      }
 	    })]
@@ -1049,7 +1075,6 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 		UnderlineNodeFormatter: UnderlineNodeFormatter,
 		ItalicNodeFormatter: ItalicNodeFormatter,
 		StrikethroughNodeFormatter: StrikethroughNodeFormatter,
-		SpanNodeFormatter: SpanNodeFormatter,
 		TableNodeFormatter: TableNodeFormatter,
 		TableHeadCellNodeFormatter: TableHeadCellNodeFormatter,
 		TableDataCellNodeFormatter: TableDataCellNodeFormatter,
@@ -1076,6 +1101,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	var _linkSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkSettings");
 	var _mentionSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mentionSettings");
 	var _fileMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fileMode");
+	var _containerMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("containerMode");
 	var _isVoidElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isVoidElement");
 	class HtmlFormatter extends ui_bbcode_formatter.Formatter {
 	  constructor(options = {}) {
@@ -1095,6 +1121,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _containerMode, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.setLinkSettings({
 	      ...globalSettings.linkSettings,
 	      ...options.linkSettings
@@ -1109,6 +1139,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        formatter: this
 	      });
 	    });
+	    this.setContainerMode(options.containerMode);
 	    this.setNodeFormatters(defaultFormatters);
 	    this.setNodeFormatters(options.formatters);
 	  }
@@ -1136,6 +1167,12 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  }
 	  getMentionSettings() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _mentionSettings)[_mentionSettings];
+	  }
+	  setContainerMode(mode) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _containerMode)[_containerMode] = mode;
+	  }
+	  getContainerMode() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _containerMode)[_containerMode];
 	  }
 	  isElement(source) {
 	    if (source.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
@@ -1174,7 +1211,53 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  return ['img', 'br', 'hr', 'input'].includes(source.tagName.toLowerCase());
 	}
 
-	exports.HtmlFormatter = HtmlFormatter;
+	const HtmlFormatterComponent = {
+	  props: {
+	    bbcode: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    }
+	  },
+	  beforeCreate() {
+	    this.htmlFormatter = null;
+	  },
+	  mounted() {
+	    this.format(this.bbcode);
+	  },
+	  unmounted() {
+	    this.htmlFormatter = null;
+	  },
+	  watch: {
+	    bbcode(newValue) {
+	      this.format(newValue);
+	    }
+	  },
+	  methods: {
+	    format(bbcode) {
+	      const result = this.getHtmlFormatter().format({
+	        source: bbcode
+	      });
+	      const container = this.$refs.content;
+	      main_core.Dom.clean(container);
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dom-methods
+	      container.appendChild(result);
+	      // container.parentNode.replaceChild(result, container);
+	    },
 
-}((this.BX.UI.BBCode.Formatter = this.BX.UI.BBCode.Formatter || {}),BX.UI.Smiley,BX.UI.CodeParser,BX.UI.BBCode,BX.UI.VideoService,BX,BX.UI.BBCode));
+	    getHtmlFormatter() {
+	      if (this.htmlFormatter !== null) {
+	        return this.htmlFormatter;
+	      }
+	      this.htmlFormatter = new HtmlFormatter();
+	      return this.htmlFormatter;
+	    }
+	  },
+	  template: '<div class="ui-typography-container" ref="content"></div>'
+	};
+
+	exports.HtmlFormatter = HtmlFormatter;
+	exports.HtmlFormatterComponent = HtmlFormatterComponent;
+
+}((this.BX.UI.BBCode.Formatter = this.BX.UI.BBCode.Formatter || {}),BX.UI.Smiley,BX.UI.CodeParser,BX.UI.BBCode,BX.UI.VideoService,BX.UI.BBCode,window,BX));
 //# sourceMappingURL=html-formatter.bundle.js.map

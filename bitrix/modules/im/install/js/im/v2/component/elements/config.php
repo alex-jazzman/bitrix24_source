@@ -9,12 +9,10 @@ return [
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
 		'im.v2.lib.channel',
-		'ui.fonts.opensans',
 		'im.v2.lib.copilot',
 		'ui.icons.disk',
 		'im.v2.lib.parser',
 		'rest.client',
-		'ui.vue3.directives.lazyload',
 		'ui.loader',
 		'im.v2.model',
 		'main.core.events',
@@ -38,6 +36,10 @@ return [
 		'ui.lottie',
 		'ai.roles-dialog',
 		'ui.vue3.components.hint',
+		'ui.fonts.opensans',
+		'main.polyfill.intersectionobserver',
+		'ui.vue3.directives.lazyload',
+		'im.v2.component.animation',
 	],
 	'skip_core' => false,
 ];

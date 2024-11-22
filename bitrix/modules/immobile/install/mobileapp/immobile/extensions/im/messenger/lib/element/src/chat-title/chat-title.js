@@ -189,21 +189,21 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		{
 			if (dialog.extranet === true)
 			{
-				this.nameColor = AppTheme.colors.accentSoftElementOrange1;
+				this.nameColor = Theme.colors.accentExtraBrown;
 
 				return;
 			}
 
 			if (dialog.type === DialogType.support24Notifier)
 			{
-				this.nameColor = AppTheme.colors.accentMainLinks;
+				this.nameColor = Theme.colors.accentMainLink;
 
 				return;
 			}
 
 			if (dialog.type === DialogType.support24Question)
 			{
-				this.nameColor = AppTheme.colors.accentMainLinks;
+				this.nameColor = Theme.colors.accentMainLink;
 			}
 		}
 
@@ -215,28 +215,28 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		{
 			if (user.extranet === true)
 			{
-				this.nameColor = AppTheme.colors.accentSoftElementOrange1;
+				this.nameColor = Theme.colors.accentExtraBrown;
 
 				return;
 			}
 
 			if (user.botData.type === BotType.support24)
 			{
-				this.nameColor = AppTheme.colors.accentMainLinks;
+				this.nameColor = Theme.colors.accentMainLink;
 
 				return;
 			}
 
 			if (user.network === true)
 			{
-				this.nameColor = AppTheme.colors.accentSoftElementGreen1;
+				this.nameColor = Theme.colors.accentSoftElementGreen;
 
 				return;
 			}
 
 			if (user.connector === true)
 			{
-				this.nameColor = AppTheme.colors.accentSoftElementGreen1;
+				this.nameColor = Theme.colors.accentSoftElementGreen;
 
 				return;
 			}

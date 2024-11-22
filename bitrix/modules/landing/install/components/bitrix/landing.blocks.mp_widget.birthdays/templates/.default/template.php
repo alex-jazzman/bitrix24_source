@@ -138,7 +138,7 @@ $sidebarUsers = array_slice($arResult['USERS'], 0, 4);
 			const widgetElement = document.querySelector('#<?= $id ?>');
 			if (widgetElement)
 			{
-				new BX.Landing.Widget.BirthdaysWidget(widgetElement);
+				new BX.Landing.Widget.Birthdays(widgetElement);
 			}
 		}
 	});

@@ -43,11 +43,13 @@ test.describe('Nodes', () => {
 		await assertHTML(
 			page,
 			quote(
-				mention('Matthew Mcconaughey')
-				+ text(' wrote:')
-				+ br()
-				+ text('Hi! ')
-				+ bold('What\'s up?'),
+				paragraph(
+					mention('Matthew Mcconaughey')
+					+ text(' wrote:')
+					+ br()
+					+ text('Hi! ')
+					+ bold('What\'s up?'),
+				),
 			) + paragraph(),
 		);
 
@@ -64,18 +66,21 @@ test.describe('Nodes', () => {
 		await assertHTML(
 			page,
 			quote(
-				mention('Matthew Mcconaughey')
-				+ text(' wrote:')
-				+ br()
-				+ text('Hi! ')
-				+ bold('What\'s up?')
-				+ br()
-				+ quote(
-					mention('Woody Harrelson')
+				paragraph(
+					mention('Matthew Mcconaughey')
 					+ text(' wrote:')
 					+ br()
 					+ text('Hi! ')
-					+ italic('What\'s up?'),
+					+ bold('What\'s up?'),
+				)
+				+ quote(
+					paragraph(
+						mention('Woody Harrelson')
+						+ text(' wrote:')
+						+ br()
+						+ text('Hi! ')
+						+ italic('What\'s up?'),
+					),
 				),
 			) + paragraph(),
 		);
@@ -228,13 +233,14 @@ test.describe('Nodes', () => {
 		await focusEditor(page);
 		await page.evaluate(() => {
 			window.textEditor.setText(
-				'[video]https://d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-rain/rain3.mp4[/video]',
+				'[video]https://video.1c-bitrix.ru/bitrix24/themes/video-rain/rain3.mp4[/video]',
 			);
 		});
 
 		await assertHTML(
 			page,
 			paragraph(video() + br()),
+			{ ignoreInlineStyles: true },
 		);
 	});
 });

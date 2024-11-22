@@ -3,13 +3,43 @@
  */
 jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 	const { Type } = require('type');
-	const { FileType } = require('im/messenger/const');
+	const {
+		FileType,
+		UrlGetParameter,
+		MessageComponent,
+	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { emojiRegex } = require('im/messenger/lib/utils');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 
 	const logger = LoggerManager.getInstance().getLogger('helpers--message');
+
+	/**
+	 * @desc It's Set should be sync with serverComponentList in the im module
+	 * @see im/install/js/im/v2/component/message-list/src/classes/message-component-manager.js
+	 */
+	const serverComponentList = new Set([
+		MessageComponent.unsupported,
+		MessageComponent.chatCreation,
+		MessageComponent.ownChatCreation,
+		MessageComponent.conferenceCreation,
+		MessageComponent.callInvite,
+		MessageComponent.copilotCreation,
+		MessageComponent.copilotMessage,
+		MessageComponent.supportVote,
+		MessageComponent.supportSessionNumber,
+		MessageComponent.supportChatCreation,
+		MessageComponent.zoomInvite,
+		MessageComponent.copilotAddedUsers,
+		MessageComponent.supervisorUpdateFeature,
+		MessageComponent.supervisorEnableFeature,
+		MessageComponent.sign,
+		MessageComponent.checkIn,
+		MessageComponent.generalChatCreationMessage,
+		MessageComponent.generalChannelCreationMessage,
+		MessageComponent.channelCreationMessage,
+	]);
 
 	/**
 	 * @class MessageHelper
@@ -109,7 +139,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isDeleted()
 		{
-			return this.messageModel.params?.IS_DELETED === 'Y';
+			return this.messageModel.params?.IS_DELETED === 'Y'
+				|| this.isEmpty
+			;
 		}
 
 		get isForward()
@@ -135,6 +167,39 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			}
 
 			return this.messageModel.files?.length > 1;
+		}
+
+		get isEmpty()
+		{
+			return !this.isText && !this.isWithFile && !this.isWithAttach;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isMediaGallery()
+		{
+			if (!this.isGallery)
+			{
+				return false;
+			}
+
+			return this.filesModel.every((file) => {
+				return file.type === FileType.image || file.type === FileType.video;
+			});
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isFileGallery()
+		{
+			if (!this.isGallery)
+			{
+				return false;
+			}
+
+			return this.filesModel.findIndex((file) => file.type === FileType.file) !== -1;
 		}
 
 		get isVideo()
@@ -238,6 +303,55 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return String(this.dialogModel?.parentMessageId) === String(this.messageModel.id);
 		}
 
+		getComponentId()
+		{
+			if (this.isDeleted)
+			{
+				return MessageComponent.deleted;
+			}
+
+			if (this.#isServerComponent())
+			{
+				return this.messageModel.params.componentId;
+			}
+
+			if (this.isSystem)
+			{
+				return MessageComponent.system;
+			}
+
+			if (this.isWithFile)
+			{
+				return MessageComponent.file;
+			}
+
+			if (this.isEmojiOnly || this.isSmileOnly)
+			{
+				return MessageComponent.smile;
+			}
+
+			return MessageComponent.default;
+		}
+
+		/**
+		 * @return {?string}
+		 */
+		getLinkToMessage()
+		{
+			const core = serviceLocator.get('core');
+			const host = core.getHost();
+			const messageId = this.messageModel.id;
+			const dialog = this.#getDialoguesModel();
+			if (Type.isUndefined(dialog))
+			{
+				return null;
+			}
+
+			const dialogId = dialog.dialogId;
+
+			return `${host}/online/?${UrlGetParameter.openChat}=${dialogId}&${UrlGetParameter.openMessage}=${messageId}`;
+		}
+
 		/**
 		 * @return {?DialoguesModelState}
 		 */
@@ -246,6 +360,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return serviceLocator.get('core').getStore()
 				.getters['dialoguesModel/getByChatId'](this.messageModel.chatId)
 			;
+		}
+
+		#isServerComponent()
+		{
+			return serverComponentList.has(this.messageModel?.params?.componentId);
 		}
 	}
 

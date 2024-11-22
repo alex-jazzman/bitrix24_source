@@ -1,4 +1,3 @@
-import { TodoEditor } from 'crm.activity.todo-editor';
 import type { ColorSettings } from 'crm.activity.todo-editor-v2';
 import { TodoEditorV2 } from 'crm.activity.todo-editor-v2';
 import { TourManager } from 'crm.tour-manager';
@@ -14,7 +13,6 @@ type Settings = {
 	colorSettings: ColorSettings,
 	currentUser: Object,
 	pingSettings: Object,
-	useTodoEditorV2: boolean,
 };
 
 type CalendarSettings = {
@@ -27,10 +25,9 @@ const ARTICLE_CODE = '21064046';
 /** @memberof BX.Crm.Timeline.MenuBar */
 export default class ToDo extends Item
 {
-	#toDoEditor = null;
+	#toDoEditor: TodoEditorV2 = null;
 	#todoEditorContainer: HTMLElement = null;
 	#saveButton: HTMLElement = null;
-	#useTodoEditorV2: boolean = false;
 	#isTourViewed: boolean = false;
 
 	initialize(context: Context, settings: Settings): void
@@ -44,23 +41,20 @@ export default class ToDo extends Item
 
 		this.#saveButton = Tag.render`<button onclick="${this.onSaveButtonClick.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled" >${Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON')}</button>`;
 
-		return Tag.render`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
-			${this.#todoEditorContainer}
-			<div class="crm-entity-stream-content-new-comment-btn-container">
-				${this.#saveButton}
-				<span onclick="${this.onCancelButtonClick.bind(this)}"  class="ui-btn ui-btn-xs ui-btn-link">${Loc.getMessage('CRM_TIMELINE_CANCEL_BTN')}</span>
+		return Tag.render`
+			<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
+				${this.#todoEditorContainer}
+				<div class="crm-entity-stream-content-new-comment-btn-container">
+					${this.#saveButton}
+					<span onclick="${this.onCancelButtonClick.bind(this)}"  class="ui-btn ui-btn-xs ui-btn-link">${Loc.getMessage('CRM_TIMELINE_CANCEL_BTN')}</span>
+				</div>
 			</div>
-		</div>`;
+		`;
 	}
 
 	initializeLayout(): void
 	{
-		this.#useTodoEditorV2 = Boolean(this.getSetting('useTodoEditorV2', false));
-
-		if (this.#useTodoEditorV2)
-		{
-			Dom.removeClass(this.#saveButton, 'ui-btn-disabled');
-		}
+		Dom.removeClass(this.#saveButton, 'ui-btn-disabled');
 
 		this.#createEditor();
 	}
@@ -106,30 +100,25 @@ export default class ToDo extends Item
 			colorSettings: this.getSetting('colorSettings'),
 			actionMenuSettings: this.getSetting('actionMenuSettings'),
 			events: {
-				onFocus: this.setFocused.bind(this, true),
+				onCollapsingToggle: (event: BaseEvent) => {
+					const { isOpen } = event.getData();
+					this.setFocused(isOpen);
+				},
 			},
 		};
 
-		if (this.#useTodoEditorV2)
-		{
-			params.calendarSettings = this.getSetting('calendarSettings');
+		params.calendarSettings = this.getSetting('calendarSettings');
 
-			const extras = this.getExtras();
-			if (Type.isPlainObject(extras.analytics))
-			{
-				params.analytics = {
-					section: extras.analytics.c_section,
-					subSection: extras.analytics.c_sub_section,
-				};
-			}
-
-			this.#toDoEditor = new TodoEditorV2(params);
-		}
-		else
+		const extras = this.getExtras();
+		if (Type.isPlainObject(extras.analytics))
 		{
-			params.events.onChangeDescription = this.#onChangeDescription.bind(this);
-			this.#toDoEditor = new TodoEditor(params);
+			params.analytics = {
+				section: extras.analytics.c_section,
+				subSection: extras.analytics.c_sub_section,
+			};
 		}
+
+		this.#toDoEditor = new TodoEditorV2(params);
 
 		this.#toDoEditor.show();
 	}
@@ -156,10 +145,7 @@ export default class ToDo extends Item
 	cancel(sendAnalytics: boolean = true): void
 	{
 		this.#toDoEditor.cancel({ sendAnalytics });
-		if (!this.#useTodoEditorV2)
-		{
-			Dom.addClass(this.#saveButton, 'ui-btn-disabled');
-		}
+
 		this.setFocused(false);
 	}
 
@@ -181,21 +167,6 @@ export default class ToDo extends Item
 	focus(): void
 	{
 		this.#toDoEditor.setFocused();
-	}
-
-	#onChangeDescription(event: BaseEvent): void
-	{
-		let { description } = event.getData();
-		description = description.trim();
-
-		if (description.length === 0 && !Dom.hasClass(this.#saveButton, 'ui-btn-disabled'))
-		{
-			Dom.addClass(this.#saveButton, 'ui-btn-disabled');
-		}
-		else if (description.length > 0 && Dom.hasClass(this.#saveButton, 'ui-btn-disabled'))
-		{
-			Dom.removeClass(this.#saveButton, 'ui-btn-disabled');
-		}
 	}
 
 	setVisible(visible: Boolean): void

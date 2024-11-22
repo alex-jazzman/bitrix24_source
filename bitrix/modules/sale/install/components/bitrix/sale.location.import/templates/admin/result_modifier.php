@@ -10,7 +10,6 @@ if(is_array($arResult['LAYOUT']) && is_array($arResult['LAYOUT']['']))
 {
 	$leftTopLevel = array(
 		'RUSSIA' => 		'0000028023',
-		'URKAIN' => 		'0000000364',
 		'KAZAKHSTAN' => 	'0000000276',
 		'BELARUS' => 		'0000000001'
 	);

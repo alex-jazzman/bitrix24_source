@@ -12,6 +12,7 @@ jn.define('sign/document', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { ResponseMobile } = require('sign/dialog/banners/responsemobile');
 	const { RefusedJustNow } = require('sign/dialog/banners/refusedjustnow');
+	const { External } = require('sign/dialog/banners/external');
 	const { NotifyManager } = require('notify-manager');
 	const { showConfirm } = require('sign/dialog/banners/template');
 	const { rejectConfirmation } = require('sign/connector');
@@ -33,6 +34,7 @@ jn.define('sign/document', (require, exports, module) => {
 				hideButtons,
 				title,
 				isGoskey,
+				isExternal,
 			} = props;
 
 			this.layout = widget;
@@ -40,6 +42,7 @@ jn.define('sign/document', (require, exports, module) => {
 			this.memberId = memberId;
 			this.hideButtons = hideButtons;
 			this.isGoskey = isGoskey;
+			this.isExternal = isExternal;
 			this.title = title;
 		}
 
@@ -101,6 +104,17 @@ jn.define('sign/document', (require, exports, module) => {
 								}
 
 								this.clearHeader();
+
+								if (this.isExternal)
+								{
+									this.layout.showComponent(new External({
+										documentTitle: this.title,
+										memberId: this.memberId,
+										layoutWidget: this.layout,
+									}));
+
+									return;
+								}
 
 								this.layout.showComponent(new ResponseMobile({
 									documentTitle: this.title,

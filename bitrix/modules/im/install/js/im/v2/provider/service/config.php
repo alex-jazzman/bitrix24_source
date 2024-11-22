@@ -9,6 +9,7 @@ return [
 		'./dist/registry.bundle.js',
 	],
 	'rel' => [
+		'im.v2.lib.access',
 		'im.v2.provider.service',
 		'im.v2.lib.layout',
 		'im.v2.lib.role-manager',

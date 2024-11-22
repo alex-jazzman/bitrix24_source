@@ -12,6 +12,7 @@ return [
 		'./src/table',
 		'./src/option',
 		'./src/recent',
+		'./src/counter',
 		'./src/dialog',
 		'./src/user',
 		'./src/file',

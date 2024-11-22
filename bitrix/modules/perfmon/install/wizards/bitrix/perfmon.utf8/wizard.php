@@ -198,7 +198,11 @@ class CUtf8BackupWarningStep extends CBaseUtf8WizardStep
 
 	public function OnPostForm()
 	{
-		$this->CloseSite();
+		$wizard = $this->GetWizard();
+		if ($wizard->IsNextButtonClick())
+		{
+			$this->CloseSite();
+		}
 	}
 }
 
@@ -269,7 +273,9 @@ class CUtf8CheckStep extends CBaseUtf8WizardStep
 		$internalEncoding = $hasMbString ? strtolower(mb_internal_encoding()) : '';
 		$arList[] = [
 			'IS_OK' => $internalEncoding === 'utf-8',
-			'MESSAGE' => GetMessage('UTFWIZ_STEP2_MB_INTERNAL_ENCODING'),
+			'MESSAGE' => GetMessage('UTFWIZ_STEP2_MB_INTERNAL_ENCODING', [
+				'#EDIT_HREF#' => $dbconnEditUrl,
+			]),
 		];
 
 		$arList[] = [

@@ -12,10 +12,7 @@ export const FadeAnimation = {
 			default: 100,
 		},
 	},
-	data(): JsonObject
-	{
-		return {};
-	},
+	emits: ['afterEnter'],
 	computed:
 	{
 		formattedDuration(): string
@@ -33,12 +30,17 @@ export const FadeAnimation = {
 		{
 			Dom.style(element, 'transition-duration', '');
 		},
+		onAfterEnter(element: HTMLElement)
+		{
+			this.$emit('afterEnter');
+			this.clearDuration(element);
+		},
 	},
 	template: `
 		<Transition
 			name="im-animation-fade"
 			@beforeEnter="setDuration"
-			@afterEnter="clearDuration"
+			@afterEnter="onAfterEnter"
 			@beforeLeave="setDuration"
 			@afterLeave="clearDuration"
 		>

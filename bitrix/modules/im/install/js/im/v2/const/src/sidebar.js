@@ -16,6 +16,7 @@ export const SidebarDetailBlock = Object.freeze({
 	messageSearch: 'messageSearch',
 	chatsWithUser: 'chatsWithUser',
 	multidialog: 'multidialog',
+	none: '',
 });
 
 export const SidebarFileTypes = Object.freeze({

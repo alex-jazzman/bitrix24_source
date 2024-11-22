@@ -1,15 +1,17 @@
 (() => {
-	const { UnattachedFilesStorage } = jn.require('files/background-manager/unattached-files-storage');
-	const { debounce } = jn.require('utils/function');
-	const { prepareObjectId } = jn.require('utils/file');
-	const { Logger, LogType } = jn.require('utils/logger');
-	const { UploaderClient } = jn.require('uploader/client');
-	const { isOnline } = jn.require('device/connection');
-	const { showToast } = jn.require('toast');
-	const { inAppUrl } = jn.require('in-app-url');
-	const { Loc } = jn.require('loc');
-	const { Color } = jn.require('tokens');
-	const { Haptics } = jn.require('haptics');
+	const require = (ext) => jn.require(ext);
+
+	const { UnattachedFilesStorage } = require('files/background-manager/unattached-files-storage');
+	const { debounce } = require('utils/function');
+	const { prepareObjectId } = require('utils/file');
+	const { Logger, LogType } = require('utils/logger');
+	const { UploaderClient } = require('uploader/client');
+	const { isOnline } = require('device/connection');
+	const { showToast } = require('toast');
+	const { inAppUrl } = require('in-app-url');
+	const { Loc } = require('loc');
+	const { Color } = require('tokens');
+	const { Haptics } = require('haptics');
 
 	const logger = new Logger([LogType.INFO]);
 
@@ -89,36 +91,43 @@
 			}
 
 			this.setErrorToFile(file);
-			this.showErrorPopup(file);
+			this.showErrorPopup(file, event);
 
 			const fileId = file?.params?.id;
 			this.scanUploadQueue(fileId);
 		}
 
-		showErrorPopup(file)
+		showErrorPopup(file, event)
 		{
 			const entityUrl = file?.attachToEntityController?.entityUrl;
 			if (entityUrl)
 			{
 				// ToDo why debounce? maybe queue + setTimeout?
-				this.checkErrorToastShownDebounced(file);
+				this.checkErrorToastShownDebounced(file, event);
 			}
 		}
 
-		checkErrorToastShown(file)
+		checkErrorToastShown(file, event)
 		{
 			const entityId = file?.attachToEntityController?.entityId;
 			const fileId = file?.params.id;
 			const fileDataFromCache = UnattachedFilesStorage.getFileByEntityIdAndFileId(entityId, fileId);
 
-			if (fileDataFromCache && !fileDataFromCache?.params.errorShown)
+			if (
+				(fileDataFromCache && !fileDataFromCache?.params.errorShown)
+				|| event === BX.FileUploadEvents.FILE_READ_ERROR
+			)
 			{
-				this.showErrorToast(file);
+				this.showErrorToast(file, event !== BX.FileUploadEvents.FILE_READ_ERROR);
 				this.setErrorShownToFiles(entityId, [fileId]);
 			}
 		}
 
-		showErrorToast(file)
+		/**
+		 * @param {object} file
+		 * @param {boolean} showButton
+		 */
+		showErrorToast(file, showButton = true)
 		{
 			const entityUrl = file?.attachToEntityController?.entityUrl;
 			if (entityUrl)
@@ -126,7 +135,7 @@
 				Haptics.notifyWarning();
 				showToast({
 					message: Loc.getMessage('BACKGROUND_ATTACHMENT_MANAGER_TOAST_UPLOAD_ERROR_TITLE'),
-					buttonText: Loc.getMessage('BACKGROUND_ATTACHMENT_MANAGER_TOAST_UPLOAD_ERROR_BUTTON'),
+					buttonText: showButton && Loc.getMessage('BACKGROUND_ATTACHMENT_MANAGER_TOAST_UPLOAD_ERROR_BUTTON'),
 					backgroundColor: Color.accentMainAlert.toHex(),
 					backgroundOpacity: 1,
 					blur: false,

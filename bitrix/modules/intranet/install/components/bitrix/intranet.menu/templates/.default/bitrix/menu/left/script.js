@@ -128,8 +128,19 @@ this.BX = this.BX || {};
 	      var userData = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet__desktop-menu_user-block ", "\">\n\t\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop\">\n\t\t\t\t\t<i></i>\n\t\t\t\t\t<div class=\"intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger\">\n\t\t\t\t\t\t<div class=\"ui-counter-inner\" data-role=\"counter\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"intranet__desktop-menu_user-inner\">\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-name\">", "</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-post\">", "</span>\n\t\t\t\t</span>\n\t\t\t</div>"])), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', counters, this.currentUser.portal, this.currentUser.work_position);
 	      main_core.Dom.append(userData, block);
 	      var avatar = document.getElementsByClassName('ui-icon-common-user-desktop')[0];
-	      var previewImage = "url('".concat(main_core.Text.encode(this.currentUser.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : this.currentUser.protocol + '://' + this.currentUser.portal + this.currentUser.avatar), "')");
+	      var previewImage = this.getAvatarUrl(this.currentUser);
 	      main_core.Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
+	    }
+	  }, {
+	    key: "getAvatarUrl",
+	    value: function getAvatarUrl(account) {
+	      var avatarUrl = '';
+	      if (account.avatar.includes('http://') || account.avatar.includes('https://')) {
+	        avatarUrl = account.avatar;
+	      } else {
+	        avatarUrl = account.protocol + '://' + account.portal + account.avatar;
+	      }
+	      return "url('".concat(main_core.Text.encode(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : avatarUrl), "')");
 	    }
 	  }, {
 	    key: "viewPopupAccounts",
@@ -143,7 +154,7 @@ this.BX = this.BX || {};
 	      var item = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet__desktop-menu_popup-header\">\n\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-popup\">\n\t\t\t\t<i></i>\n\t\t\t</span>\n\t\t\t<span class=\"intranet__desktop-menu_popup-label\">", "</span>\n\t\t\t<div class=\"intranet__desktop-menu_popup-header-user\">\n\t\t\t\t<span class=\"intranet__desktop-menu_popup-name\">", "</span>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>"])), this.currentUser.portal, this.currentUser.first_name + ' ' + this.currentUser.last_name, position);
 	      main_core.Dom.insertBefore(item, menuPopup.firstElementChild);
 	      var avatar = document.getElementsByClassName('ui-icon-common-user-popup')[0];
-	      var previewImage = "url('".concat(main_core.Text.encode(this.currentUser.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : this.currentUser.protocol + '://' + this.currentUser.portal + this.currentUser.avatar), "')");
+	      var previewImage = this.getAvatarUrl(this.currentUser);
 	      main_core.Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
 	      var block = document.getElementsByClassName('intranet__desktop-menu_popup-list')[0];
 	      this.removeElements('intranet__desktop-menu_popup-item-account');
@@ -163,7 +174,7 @@ this.BX = this.BX || {};
 	          main_core.Dom.insertBefore(_item, block.children[index]);
 	          this.addContextMenu(account, index);
 	          var userAvatar = document.getElementsByClassName('ui-icon-common-user-' + index)[0];
-	          var previewUserImage = "url('".concat(main_core.Text.encode(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : account.protocol + '://' + account.portal + account.avatar), "')");
+	          var previewUserImage = this.getAvatarUrl(account);
 	          main_core.Dom.style(userAvatar, '--ui-icon-service-bg-image', previewUserImage);
 	          index++;
 	        }

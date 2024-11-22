@@ -1,3 +1,5 @@
+// jn.require('im/messenger/lib/dev/action-timer');
+
 // eslint-disable-next-line no-var
 var REVISION = 19; // API revision - sync with im/lib/revision.php
 
@@ -26,11 +28,18 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { isEqual } = require('utils/object');
-	const { Haptics } = require('haptics');
 	const { ChannelApplication } = require('im/messenger/core/channel');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EntityReady } = require('entity-ready');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
+	const {
+		AppStatus,
+		EventType,
+		RestMethod,
+		ComponentCode,
+		NavigationTab,
+	} = require('im/messenger/const');
 
 	const core = new ChannelApplication({
 		localStorage: {
@@ -48,7 +57,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	}
 	serviceLocator.add('core', core);
 
-	const { restManager } = require('im/messenger/lib/rest-manager');
+	const channelInitService = new MessengerInitService({
+		actionName: RestMethod.immobileTabChannelLoad,
+	});
+	serviceLocator.add('messenger-init-service', channelInitService);
+
 	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
@@ -57,16 +70,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		ChannelFilePullHandler,
 	} = require('im/messenger/provider/pull/channel');
 	const { SidebarPullHandler } = require('im/messenger/provider/pull/sidebar');
-
-	const {
-		AppStatus,
-		EventType,
-		RestMethod,
-		ComponentCode,
-		DialogType,
-		UserRole,
-		NavigationTab,
-	} = require('im/messenger/const');
+	const { SyncFillerChannel } = require('im/messenger/provider/service');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
@@ -115,16 +119,22 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		initCore()
 		{
+			this.serviceLocator = serviceLocator;
 			/**
 			 * @type {CoreApplication}
 			 */
-			this.core = core;
+			this.core = this.serviceLocator.get('core');
 			this.repository = this.core.getRepository();
 
 			/**
 			 * @type {MessengerCoreStore}
 			 */
 			this.store = this.core.getStore();
+
+			/**
+			 * @type {MessengerInitService}
+			 */
+			this.channelInitService = this.serviceLocator.get('messenger-init-service');
 
 			/**
 			 * @type {MessengerCoreStoreManager}
@@ -142,7 +152,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		initRequests()
 		{
-			restManager.on(RestMethod.imRevisionGet, {}, this.checkRevision.bind(this));
+			this.channelInitService.onInit(this.checkRevision.bind(this));
 		}
 
 		/**
@@ -175,7 +185,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.cancelFileUpload = this.cancelFileUpload.bind(this);
 
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
-			this.onChatDialogAccessError = this.onChatDialogAccessError.bind(this);
 			this.onTaskStatusSuccess = this.onTaskStatusSuccess.bind(this);
 			this.onAppActiveBefore = this.onAppActiveBefore.bind(this);
 			this.onChatSettingChange = this.onChatSettingChange.bind(this);
@@ -213,8 +222,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		subscribeExternalEvents()
 		{
+			super.subscribeExternalEvents();
 			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
-			BX.addCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
 			BX.addCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
 			BX.addCustomEvent(EventType.app.failRestoreConnection, this.refresh);
@@ -228,13 +237,21 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		unsubscribeExternalEvents()
 		{
+			super.unsubscribeExternalEvents();
 			BX.removeCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
-			BX.removeCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.removeCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
 			BX.removeCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
 			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.refresh);
 			BX.removeCustomEvent(EventType.app.changeStatus, this.onAppStatusChange);
 			BX.removeCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
+		}
+
+		/**
+		 * @override
+		 */
+		initCustomServices()
+		{
+			this.syncFillerService = new SyncFillerChannel();
 		}
 
 		/**
@@ -355,10 +372,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			await this.queueCallBatch();
 
-			return restManager.callBatch()
-				.then(() => this.afterRefresh())
-				.catch((response) => this.afterRefreshError(response))
-			;
+			return this.channelInitService.runAction(this.getBaseInitRestMethods())
+				.then(() => {
+					this.afterRefresh();
+				})
+				.catch((response) => {
+					this.afterRefreshError(response);
+				});
 		}
 
 		setExtendWatchInterval()
@@ -433,14 +453,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		async afterRefreshError(response)
 		{
-			const firstErrorKey = Object.keys(response)[0];
-			if (firstErrorKey)
-			{
-				const firstError = response[firstErrorKey].error();
-				if (firstError.ex.error === 'REQUEST_CANCELED')
-				{
-					Logger.error('ChannelMessenger.afterRefreshError', firstError.ex);
+			Logger.error('CopilotMessenger.afterRefreshError', response);
+			const errorList = Type.isArray(response) ? response : [response];
 
+			for (const error of errorList)
+			{
+				if (error?.code === 'REQUEST_CANCELED')
+				{
 					return;
 				}
 			}
@@ -632,20 +651,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
-		onChatDialogAccessError()
-		{
-			Logger.warn('ChannelMessenger.chatDialog.accessError');
-
-			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
-				message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
-				backgroundColor: '#E6000000',
-				time: 3,
-			});
-
-			this.dialog.deleteCurrentDialog();
-		}
-
 		onTabChanged({ newTab, previousTab })
 		{
 			Logger.log('ChannelMessenger.onTabChanged', newTab, this.extendWatchTimerId);
@@ -667,20 +672,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		/* endregion event handlers */
 
-		checkRevision(response)
+		/**
+		 * @param {immobileTabChannelLoadResult} data
+		 */
+		checkRevision(data)
 		{
-			const error = response.error();
-			if (error)
+			const revision = data?.mobileRevision;
+			if (!Type.isNumber(revision) || REVISION >= revision)
 			{
-				Logger.error('ChannelMessenger.checkRevision', error);
-
-				return true;
-			}
-
-			const actualRevision = response.data().mobile;
-			if (!Type.isNumber(actualRevision) || REVISION >= actualRevision)
-			{
-				Logger.log('ChannelMessenger.checkRevision: current', REVISION, 'actual', actualRevision);
+				Logger.log('ChannelMessenger.checkRevision: current', REVISION, 'actual', revision);
 
 				return true;
 			}
@@ -689,7 +689,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				'ChannelMessenger.checkRevision: reload scripts because revision up',
 				REVISION,
 				' -> ',
-				actualRevision,
+				revision,
 			);
 
 			reloadAllScripts();

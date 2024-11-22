@@ -89,6 +89,7 @@ $APPLICATION->IncludeComponent(
 			'EXCLUDE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processExclusion();'
 		),
 		'ANALYTICS' => [
+			'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
 			'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 		],
 	),
@@ -107,10 +108,6 @@ if ($isMlAvailable && $isScoringEnabled && $isScoringAvailable && $isTrainingUse
 if ($isScoringAvailable):
 ?>
 	<script>
-		BX.message({
-			"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_DEAL_DETAIL_HISTORY_STUB')?>",
-		});
-
 		<? if($arResult['ENTITY_ID'] > 0): ?>
 			new BX.CrmScoringButton({
 				mlInstalled: <?= ($isMlAvailable ? 'true' : 'false')?>,
@@ -123,7 +120,15 @@ if ($isScoringAvailable):
 		<? endif; ?>
 	</script><?
 endif;
-
+?>
+<script>
+	BX.ready(() => {
+		BX.message({
+			'CRM_TIMELINE_HISTORY_STUB': '<?=GetMessageJS('CRM_DEAL_DETAIL_HISTORY_STUB')?>'
+		});
+	});
+</script>
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
@@ -153,14 +158,6 @@ $APPLICATION->IncludeComponent(
 	]
 );
 
-if ($arResult['IS_EDIT_MODE'] ?? false)
-{
-	echo \Bitrix\Crm\Tour\Salescenter\CrmTerminalInDeal::getInstance()
-		->setCategoryId((int)$arResult['CATEGORY_ID'])
-		->build()
-	;
-}
-
 /** @var \Bitrix\Crm\Conversion\EntityConversionConfig|null $conversionConfig */
 $conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
 
@@ -187,6 +184,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 								cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
 							},
 							analytics: {
+								c_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL ?>',
 								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS ?>',
 							},
 						}
@@ -365,3 +363,5 @@ endif;
 <?php endif;
 
 echo \CCrmComponentHelper::prepareInitReceiverRepositoryJS(\CCrmOwnerType::Deal, (int)($arResult['ENTITY_ID'] ?? 0));
+
+include 'mango_popup.php'; // temporary notification. Will be removed soon

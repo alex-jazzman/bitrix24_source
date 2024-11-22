@@ -1,12 +1,16 @@
 import { Messenger } from 'im.public';
 import { Button as ChatButton, ButtonSize, CopilotRolesDialog } from 'im.v2.component.elements';
 import { Color } from 'im.v2.const';
+import { ThemeManager } from 'im.v2.lib.theme';
 import { CopilotService } from 'im.v2.provider.service';
+
+import { COPILOT_BACKGROUND_ID } from '../const/const';
 
 import '../css/empty-state.css';
 
 import type { JsonObject } from 'main.core';
 import type { CustomColorScheme } from 'im.v2.component.elements';
+import type { BackgroundStyle } from 'im.v2.lib.theme';
 
 const BUTTON_BACKGROUND_COLOR = '#fff';
 const BUTTON_HOVER_COLOR = '#eee';
@@ -26,6 +30,10 @@ export const EmptyState = {
 	computed:
 	{
 		ButtonSize: () => ButtonSize,
+		backgroundStyle(): BackgroundStyle
+		{
+			return ThemeManager.getBackgroundStyleById(COPILOT_BACKGROUND_ID);
+		},
 		preparedText(): string
 		{
 			return this.loc('IM_CONTENT_COPILOT_EMPTY_STATE_MESSAGE_MSGVER_1', {
@@ -85,7 +93,7 @@ export const EmptyState = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-copilot-empty-state__container">
+		<div class="bx-im-content-copilot-empty-state__container" :style="backgroundStyle">
 			<div class="bx-im-content-copilot-empty-state__content">
 				<div class="bx-im-content-copilot-empty-state__icon"></div>
 				<div class="bx-im-content-copilot-empty-state__text">{{ preparedText }}</div>

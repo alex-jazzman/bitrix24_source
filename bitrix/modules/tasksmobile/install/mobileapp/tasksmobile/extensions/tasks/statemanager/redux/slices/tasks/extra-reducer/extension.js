@@ -16,6 +16,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 	} = require('tasks/statemanager/redux/slices/tasks/selector');
 	const { isEqual } = require('utils/object');
 	const { Type } = require('type');
+	const { Views } = require('tasks/statemanager/redux/types');
 
 	/**
 	 * @param {Object} state
@@ -867,6 +868,53 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		});
 	};
 
+	const updateTaskStagePending = (state, action) => {
+		const { taskId, view } = action.meta.arg;
+		const {
+			stage,
+		} = action.meta;
+
+		const task = state.entities[taskId];
+		if (task && stage && view === Views.DEADLINE)
+		{
+			const oldTaskState = state.entities[taskId];
+			const newTaskState = prepareUpdateDeadlineNewState(oldTaskState, stage.deadline);
+
+			upsertOne(state, action, oldTaskState, newTaskState);
+		}
+	};
+
+	const updateTaskStageFulfilled = (state, action) => {
+		const { status, data } = action.payload;
+		const { taskId, view } = action.meta.arg;
+		const {
+			requestId,
+		} = action.meta;
+
+		if (view === Views.DEADLINE)
+		{
+			if (data === true && status === 'success')
+			{
+				unregisterRegistryChanges(requestId);
+			}
+			else
+			{
+				const preparedTask = onCommonActionError(requestId, state.entities[taskId]);
+				tasksAdapter.upsertOne(state, preparedTask);
+			}
+		}
+	};
+
+	const updateTaskStageRejected = (state, action) => {
+		const { taskId } = action.meta.arg;
+		const {
+			requestId,
+		} = action.meta;
+
+		const preparedTask = onCommonActionError(requestId, state.entities[taskId]);
+		tasksAdapter.upsertOne(state, preparedTask);
+	};
+
 	module.exports = {
 		prepareUpdateDeadlineNewState,
 		prepareDelegateNewState,
@@ -952,5 +1000,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		updateSubTasksFulfilled,
 		updateRelatedTasksPending,
 		updateRelatedTasksFulfilled,
+		updateTaskStagePending,
+		updateTaskStageFulfilled,
+		updateTaskStageRejected,
 	};
 });

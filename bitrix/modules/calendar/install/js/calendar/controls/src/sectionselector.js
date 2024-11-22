@@ -31,7 +31,7 @@ export class SectionSelector
 		this.zIndex = params.zIndex || 3200;
 		this.mode = params.mode; // full|compact|textselect|inline
 		this.DOM = {
-			outerWrap: params.outerWrap
+			outerWrap: params.outerWrap,
 		};
 
 		this.create();
@@ -140,9 +140,10 @@ export class SectionSelector
 				{
 					menuItems.push(
 						new MenuItem({
-						text: sectionGroup.title,
-						delimiter: true
-					}));
+							text: sectionGroup.title,
+							delimiter: true,
+						}),
+					);
 
 					for (let i = 0; i < filteredList.length; i++)
 					{
@@ -174,12 +175,12 @@ export class SectionSelector
 			this.DOM.select,
 			menuItems,
 			{
-				closeByEsc : true,
-				autoHide : true,
+				closeByEsc: true,
+				autoHide: true,
 				zIndex: this.zIndex,
 				offsetTop: 0,
 				offsetLeft: offsetLeft,
-				angle: this.mode === 'compact'
+				angle: this.mode === 'compact',
 			}
 		);
 
@@ -216,7 +217,7 @@ export class SectionSelector
 
 		BX.addCustomEvent(this.sectionMenu.popupWindow, 'onPopupClose', BX.delegate(function()
 		{
-			if (Type.isFunction(this.openPopupCallback))
+			if (Type.isFunction(this.closePopupCallback))
 			{
 				this.closePopupCallback();
 			}

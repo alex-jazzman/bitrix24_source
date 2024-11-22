@@ -3,6 +3,8 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/deleted', (require, exports, module) => {
 	const { Loc } = require('loc');
+
+	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
@@ -29,7 +31,7 @@ jn.define('im/messenger/lib/element/dialog/message/deleted', (require, exports, 
 
 		getType()
 		{
-			return 'deleted';
+			return MessageType.deleted;
 		}
 	}
 

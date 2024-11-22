@@ -28,6 +28,7 @@ import './css/content-blocks/value-change-item.css';
 import './css/content-blocks/product-list/styles.css';
 import './css/content-blocks/calendar/sharing.css';
 import './css/content-blocks/line-of-text-blocks.css';
+import './css/content-blocks/line-of-text-blocks-button.css';
 import './css/content-blocks/todo/deadline-and-ping-selector.css';
 import './css/content-blocks/address.css';
 import Item from './item';

@@ -50,6 +50,7 @@ $APPLICATION->SetTitle($arResult['TITLE']);
 					canUpdateCommonConfiguration: <?=$arResult['CAN_UPDATE_COMMON_CONFIGURATION'] ? 'true' : 'false'?>,
 					options: <?=\Bitrix\Main\Web\Json::encode($arResult['ENTITY_CONFIG_OPTIONS'])?>,
 					categoryName: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_CATEGORY_NAME'])?>",
+					signedParams: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_SIGNED_PARAMS'])?>",
 				}
 			);
 

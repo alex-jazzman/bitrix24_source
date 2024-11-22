@@ -136,7 +136,11 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateSubTasksFulfilled,
 		updateRelatedTasksPending,
 		updateRelatedTasksFulfilled,
+		updateTaskStagePending,
+		updateTaskStageFulfilled,
+		updateTaskStageRejected,
 	} = require('tasks/statemanager/redux/slices/tasks/extra-reducer');
+	const { updateTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages/thunk');
 
 	const tasksSlice = createSlice({
 		name: sliceName,
@@ -258,6 +262,16 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 					timeElapsed,
 				});
 			},
+			setAttachedFiles: (state, { payload }) => {
+				const { taskId, files } = payload;
+
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					files,
+				});
+			},
 		},
 		extraReducers: (builder) => {
 			builder
@@ -317,6 +331,9 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(updateSubTasks.fulfilled, updateSubTasksFulfilled)
 				.addCase(updateRelatedTasks.pending, updateRelatedTasksPending)
 				.addCase(updateRelatedTasks.fulfilled, updateRelatedTasksFulfilled)
+				.addCase(updateTaskStage.pending, updateTaskStagePending)
+				.addCase(updateTaskStage.fulfilled, updateTaskStageFulfilled)
+				.addCase(updateTaskStage.rejected, updateTaskStageRejected)
 			;
 		},
 	});
@@ -335,6 +352,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateUploadingFiles,
 		tasksRead,
 		setTimeElapsed,
+		setAttachedFiles,
 	} = actions;
 
 	ExpirationRegistry.setReducers({ taskExpired });
@@ -357,6 +375,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateUploadingFiles,
 		tasksRead,
 		setTimeElapsed,
+		setAttachedFiles,
 
 		selectAll,
 		selectById,

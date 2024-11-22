@@ -14,6 +14,12 @@ import { MultidialogModel } from './nested-modules/multidialog/multidialog';
 
 import type { GetterTree, ActionTree, MutationTree, NestedModuleTree } from 'ui.vue3.vuex';
 
+type SidebarState = {
+	initedList: Set<number>,
+	isFilesMigrated: boolean,
+	isLinksMigrated: boolean,
+};
+
 /* eslint-disable no-param-reassign */
 export class SidebarModel extends BuilderModel
 {
@@ -36,7 +42,7 @@ export class SidebarModel extends BuilderModel
 		};
 	}
 
-	getState()
+	getState(): SidebarState
 	{
 		return {
 			initedList: new Set(),
@@ -49,7 +55,7 @@ export class SidebarModel extends BuilderModel
 	{
 		return {
 			/** @function sidebar/isInited */
-			isInited: (state) => (chatId: number): boolean => {
+			isInited: (state: SidebarState) => (chatId: number): boolean => {
 				return state.initedList.has(chatId);
 			},
 			/** @function sidebar/hasHistoryLimit */
@@ -104,13 +110,13 @@ export class SidebarModel extends BuilderModel
 	getMutations(): MutationTree
 	{
 		return {
-			setInited: (state, chatId: number) => {
+			setInited: (state: SidebarState, chatId: number) => {
 				state.initedList.add(chatId);
 			},
-			setFilesMigrated: (state, payload: boolean) => {
+			setFilesMigrated: (state: SidebarState, payload: boolean) => {
 				state.isFilesMigrated = payload;
 			},
-			setLinksMigrated: (state, payload: boolean) => {
+			setLinksMigrated: (state: SidebarState, payload: boolean) => {
 				state.isLinksMigrated = payload;
 			},
 		};

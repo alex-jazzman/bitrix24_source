@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core) {
@@ -34,7 +33,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    this.activityAddingPopup = {};
 	  }
-	  async showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings, useTodoEditorV2) {
+	  async showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings) {
 	    main_core.Dom.addClass(bindElement, '--active');
 	    const key = `${entityTypeId}_${entityId}`;
 	    const exports = await main_core.Runtime.loadExtension('crm.activity.adding-popup');
@@ -53,11 +52,10 @@ this.BX.Crm = this.BX.Crm || {};
 	              grid.instance.reload();
 	            }
 	          }
-	        },
-	        useTodoEditorV2
+	        }
 	      });
 	    }
-	    this.activityAddingPopup[key].show(bindElement);
+	    this.activityAddingPopup[key].show();
 	  }
 	  async viewActivity(gridId, activityId, allowEdit) {
 	    try {
@@ -173,8 +171,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	class GridActivitiesManager {
-	  static showActivityAddingPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings, useTodoEditorV2) {
-	    void GridActivitiesManager.getManagerInstance().showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings, useTodoEditorV2);
+	  static showActivityAddingPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings) {
+	    void GridActivitiesManager.getManagerInstance().showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings);
 	  }
 	  static viewActivity(gridId, activityId, allowEdit) {
 	    void GridActivitiesManager.getManagerInstance().viewActivity(gridId, activityId, allowEdit);

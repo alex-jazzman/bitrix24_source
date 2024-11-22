@@ -64,9 +64,17 @@ export class SignLink
 		this.#slider = options?.slider || null;
 	}
 
-	async openSlider(options: SignLinkSliderOptions): void
+	preloadData(): Promise<void>
 	{
-		await this.#loadData();
+		return this.#loadData();
+	}
+
+	async openSlider(options: SignLinkSliderOptions): Promise<void>
+	{
+		if (!this.#loaded)
+		{
+			await this.#loadData();
+		}
 
 		const signLink = this;
 

@@ -15,7 +15,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		FileImageType,
 	} = require('im/messenger/const');
 
-	const elementState = {
+	const fileDefaultElement = Object.freeze({
 		id: 0,
 		chatId: 0,
 		dialogId: '0',
@@ -39,8 +39,9 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			byteSent: 0,
 			byteTotal: 0,
 		},
-	};
+	});
 
+	/** @type {FilesMessengerModel} */
 	const filesModel = {
 		namespaced: true,
 		state: () => ({
@@ -120,7 +121,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 						result.templateId = result.id;
 
 						return {
-							...elementState,
+							...fileDefaultElement,
 							...result,
 						};
 					});
@@ -130,7 +131,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					const result = validate(store, { ...payload });
 					result.templateId = result.id;
 					fileList.push({
-						...elementState,
+						...fileDefaultElement,
 						...result,
 					});
 				}
@@ -179,7 +180,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 						result.templateId = result.id;
 
 						return {
-							...elementState,
+							...fileDefaultElement,
 							...result,
 						};
 					});
@@ -189,7 +190,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					const result = validate(store, { ...payload });
 					result.templateId = result.id;
 					fileList.push({
-						...elementState,
+						...fileDefaultElement,
 						...result,
 					});
 				}
@@ -258,6 +259,18 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					actionName: 'delete',
 					data: {
 						id,
+					},
+				});
+			},
+
+			/** @function filesModel/deleteByChatId */
+			deleteByChatId: (store, payload) => {
+				const { chatId } = payload;
+
+				store.commit('deleteByChatId', {
+					actionName: 'deleteByChatId',
+					data: {
+						chatId,
 					},
 				});
 			},
@@ -342,6 +355,24 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				} = payload.data;
 
 				delete state.collection[id];
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<FilesDeleteByChatIdData, FilesDeleteByChatIdActions>} payload
+			 */
+			deleteByChatId: (state, payload) => {
+				logger.log('filesModel: deleteByChatId mutation', payload);
+
+				const { chatId } = payload.data;
+
+				for (const file of Object.values(state.collection))
+				{
+					if (file.chatId === chatId)
+					{
+						delete state.collection[file.id];
+					}
+				}
 			},
 		},
 	};
@@ -575,5 +606,5 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		return Type.isString(url) && url.startsWith('file');
 	}
 
-	module.exports = { filesModel };
+	module.exports = { filesModel, fileDefaultElement };
 });

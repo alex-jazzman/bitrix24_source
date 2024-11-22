@@ -11,12 +11,11 @@ export class GridActivitiesManager
 		entityId: number,
 		currentUser: Object,
 		settings: ?any,
-		useTodoEditorV2: ?number,
 	)
 	{
 		void GridActivitiesManager
 			.getManagerInstance()
-			.showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings, useTodoEditorV2)
+			.showAddPopup(bindElement, gridManagerId, entityTypeId, entityId, currentUser, settings)
 		;
 	}
 

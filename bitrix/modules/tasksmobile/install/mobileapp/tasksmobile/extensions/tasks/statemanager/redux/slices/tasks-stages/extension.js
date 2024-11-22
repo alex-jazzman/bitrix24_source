@@ -2,16 +2,27 @@
  * @module tasks/statemanager/redux/slices/tasks-stages
  */
 jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, module) => {
-	const { StateCache } = require('statemanager/redux/state-cache');
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
-	const { createSlice, createEntityAdapter, createAction } = require('statemanager/redux/toolkit');
+	const { createSlice, createAction } = require('statemanager/redux/toolkit');
 
-	const sliceName = 'tasks:tasksStages';
-
-	const selectId = ({ taskId, viewMode, userId }) => `${taskId}_${viewMode}_${userId}`;
-
-	const entityAdapter = createEntityAdapter({ selectId });
-	const initialState = StateCache.getReducerState(sliceName, entityAdapter.getInitialState());
+	const {
+		sliceName,
+		selectId,
+		entityAdapter,
+		initialState,
+	} = require('tasks/statemanager/redux/slices/tasks-stages/meta');
+	const { updateTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages/thunk');
+	const {
+		setTaskStage: setTaskStageReducer,
+		updateTaskStagePending,
+		onUpdateTaskStageRejected,
+		updateTaskStageFulfilled,
+		updateDeadlinePending,
+		updateTaskDeadlineFulfilled,
+		updateTaskPending,
+		updateTaskFulfilled,
+	} = require('tasks/statemanager/redux/slices/tasks-stages/extra-reducers');
+	const { updateDeadline, update } = require('tasks/statemanager/redux/slices/tasks/thunk');
 
 	const { selectById } = entityAdapter.getSelectors((state) => state[sliceName]);
 
@@ -64,16 +75,15 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 			},
 		},
 		extraReducers: (builder) => {
-			builder.addCase(setTaskStage, (state, action) => {
-				const { taskId, viewMode, userId, nextStageId: stageId } = action.payload;
-
-				entityAdapter.upsertOne(state, {
-					taskId,
-					viewMode,
-					userId,
-					stageId,
-				});
-			});
+			builder
+				.addCase(setTaskStage, setTaskStageReducer)
+				.addCase(updateTaskStage.pending, updateTaskStagePending)
+				.addCase(updateTaskStage.rejected, onUpdateTaskStageRejected)
+				.addCase(updateTaskStage.fulfilled, updateTaskStageFulfilled)
+				.addCase(updateDeadline.pending, updateDeadlinePending)
+				.addCase(updateDeadline.fulfilled, updateTaskDeadlineFulfilled)
+				.addCase(update.pending, updateTaskPending)
+				.addCase(update.fulfilled, updateTaskFulfilled);
 		},
 	});
 
@@ -88,5 +98,6 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 		selectTaskStageByTaskIdOrGuid,
 		selectTaskStageId,
 		setTaskStage,
+		updateTaskStage,
 	};
 });

@@ -3,6 +3,7 @@ import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 import { Popup } from 'main.popup';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
 import { UploaderEvent, type UploaderFile } from 'ui.uploader.core';
@@ -319,7 +320,7 @@ export class BlankSelector extends EventEmitter
 		try
 		{
 			const filesIds = files.map((file) => file.getServerFileId());
-			const blankData = await this.#api.createBlank(filesIds, this.#config.type ?? null);
+			const blankData = await this.#api.createBlank(filesIds, this.#config.type ?? null, isTemplateMode(this.#config.documentMode));
 			this.#setupBlank({
 				...blankData,
 				userName: Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),

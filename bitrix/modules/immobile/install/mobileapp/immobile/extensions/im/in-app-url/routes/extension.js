@@ -11,6 +11,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		EventType,
 		ComponentCode,
 		FileType,
+		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
@@ -36,6 +37,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	const openDialog = (componentCode, dialogId, messageId = null) => {
 		const openDialogEvent = {
 			dialogId,
+			context: OpenDialogContextType.link,
 		};
 
 		if (Type.isStringFilled(messageId) && Type.isNumber(parseInt(messageId, 10)))
@@ -224,6 +226,23 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		}
 	};
 
+	const openGoToWebWidget = async ({ title = null, hintText = null, redirectUrl = null }) => {
+		try
+		{
+			const { qrauth } = await requireLazy('qrauth/utils');
+
+			qrauth.open({
+				title,
+				hintText,
+				redirectUrl,
+			});
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
+	};
+
 	/**
 	 * @param {InAppUrl} inAppUrl
 	 */
@@ -254,6 +273,15 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			'/online/\\?AI_UX_TRIGGER=box_agreement$',
 			() => openCopilotAgreement(),
 		).name('im:copilot:agreement');
+
+		inAppUrl.register(
+			'/online/\\?FEATURE_PROMOTER=limit_boost_copilot',
+			() => openGoToWebWidget({
+				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_TITLE'),
+				hintText: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_HINT'),
+				redirectUrl: '/?feature_promoter=limit_boost_copilot',
+			}),
+		).name('im:copilot:openGoToWeb');
 
 		// lines
 		inAppUrl.register(

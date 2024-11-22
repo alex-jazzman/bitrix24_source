@@ -8,7 +8,6 @@ $MESS["BPMOBILE_WORKFLOW_LIST_ITEM_MENU_VIEW"] = "Details";
 $MESS["BPMOBILE_WORKFLOW_LIST_NEW_TASKS_NOTIFICATION"] = "New workflows: %COUNT%";
 $MESS["BPMOBILE_WORKFLOW_LIST_SELECTED_TASKS"] = "Workflows selected: #TASKS_AMOUNT#";
 $MESS["BPMOBILE_WORKFLOW_LIST_STATUS"] = "Status";
-$MESS["BPMOBILE_WORKFLOW_LIST_TASK_DETAIL_DEVELOPING"] = "You currently don't have assignments for this workflow. Open the log for details";
 $MESS["BPMOBILE_WORKFLOW_LIST_TASK_TOUCHED"] = "Assignment #TASK_NAME# has been completed";
 $MESS["BPMOBILE_WORKFLOW_LIST_TASK_UNSELECTABLE"] = "You cannot select this workflow because it has no assignments for you";
 $MESS["BPMOBILE_WORKFLOW_TASK_LAYOUT_ACTION_SELECT_ALL"] = "Select all";

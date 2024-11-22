@@ -1,8 +1,12 @@
-import { Widget } from 'landing.widget';
-
-export class BirthdaysWidget
+export class Birthdays extends BX.Landing.Widget.Base
 {
 	constructor(element)
+	{
+		super(element);
+		this.initialize(element);
+	}
+
+	initialize(element)
 	{
 		const mainContainer = element.querySelector('.landing-widget-view-main');
 		const sidebarContainer = element.querySelector('.landing-widget-view-sidebar');
@@ -10,7 +14,6 @@ export class BirthdaysWidget
 			mainContainer,
 			sidebarContainer,
 		};
-		const widget = new Widget(element, widgetOptions);
-		widget.deleteContextDependentContainer();
+		this.deleteContextDependentContainer(widgetOptions);
 	}
 }

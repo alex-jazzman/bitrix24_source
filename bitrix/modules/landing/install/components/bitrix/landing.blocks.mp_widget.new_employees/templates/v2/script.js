@@ -1,25 +1,37 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
-(function (exports,landing_widget) {
+(function (exports) {
 	'use strict';
 
-	var NewEmployeesWidget = function NewEmployeesWidget(element) {
-	  babelHelpers.classCallCheck(this, NewEmployeesWidget);
-	  if (!element) {
-	    return;
+	var NewEmployeesV2 = /*#__PURE__*/function (_BX$Landing$Widget$Ba) {
+	  babelHelpers.inherits(NewEmployeesV2, _BX$Landing$Widget$Ba);
+	  function NewEmployeesV2(element) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, NewEmployeesV2);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(NewEmployeesV2).call(this, element));
+	    _this.initialize(element);
+	    return _this;
 	  }
-	  var mainContainer = element.querySelector('.landing-widget-view-main');
-	  var sidebarContainer = element.querySelector('.landing-widget-view-sidebar');
-	  var widgetOptions = {
-	    mainContainer: mainContainer,
-	    sidebarContainer: sidebarContainer
-	  };
-	  var widget = new landing_widget.Widget(element, widgetOptions);
-	  widget.deleteContextDependentContainer();
-	};
+	  babelHelpers.createClass(NewEmployeesV2, [{
+	    key: "initialize",
+	    value: function initialize(element) {
+	      if (!element) {
+	        return;
+	      }
+	      var mainContainer = element.querySelector('.landing-widget-view-main');
+	      var sidebarContainer = element.querySelector('.landing-widget-view-sidebar');
+	      var widgetOptions = {
+	        mainContainer: mainContainer,
+	        sidebarContainer: sidebarContainer
+	      };
+	      this.deleteContextDependentContainer(widgetOptions);
+	    }
+	  }]);
+	  return NewEmployeesV2;
+	}(BX.Landing.Widget.Base);
 
-	exports.NewEmployeesWidget = NewEmployeesWidget;
+	exports.NewEmployeesV2 = NewEmployeesV2;
 
-}((this.BX.Landing.Widget = this.BX.Landing.Widget || {}),BX.Landing));
+}((this.BX.Landing.Widget = this.BX.Landing.Widget || {})));
 //# sourceMappingURL=script.js.map

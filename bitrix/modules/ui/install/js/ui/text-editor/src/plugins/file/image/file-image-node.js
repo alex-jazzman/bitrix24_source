@@ -176,9 +176,9 @@ export class FileImageNode extends DecoratorNode
 	createDOM(config: EditorConfig, editor: LexicalEditor): HTMLSpanElement
 	{
 		const span = document.createElement('span');
-		if (Type.isStringFilled(config?.theme?.file?.image))
+		if (Type.isStringFilled(config?.theme?.image?.container))
 		{
-			Dom.addClass(span, config.theme.file.image);
+			Dom.addClass(span, config.theme.image.container);
 		}
 
 		return span;
@@ -199,6 +199,7 @@ export class FileImageNode extends DecoratorNode
 				height: this.getHeight(),
 				maxWidth: this.getWidth(),
 				maxHeight: this.getHeight(),
+				config,
 				// maxWidth: this.__info.previewWidth,
 				// maxHeight: this.__info.previewHeight,
 			},

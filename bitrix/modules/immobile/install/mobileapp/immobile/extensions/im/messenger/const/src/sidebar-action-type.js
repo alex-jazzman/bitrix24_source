@@ -13,7 +13,15 @@ jn.define('im/messenger/const/sidebar-action-type', (require, exports, module) =
 		mention: 'mention',
 		send: 'send',
 		remove: 'remove',
+		deleteChat: 'deleteChat'
 	});
 
-	module.exports = { SidebarActionType };
+	const SidebarContextMenuActionType = {
+		delete: 'delete',
+	}
+
+	module.exports = {
+		SidebarActionType,
+		SidebarContextMenuActionType,
+	};
 });

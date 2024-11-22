@@ -1,6 +1,7 @@
-import { Type } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { Store } from 'ui.vue3.vuex';
 
+import { AccessErrorCode } from 'im.v2.lib.access';
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { RestMethod, Layout } from 'im.v2.const';
@@ -19,6 +20,12 @@ import type { ChatLoadRestResult, CommentInfoRestResult } from '../../types/rest
 type UpdateModelsResult = {
 	dialogId: string,
 	chatId: number,
+};
+
+type RequestChatError = {
+	code: $Values<typeof AccessErrorCode> | number,
+	customData: Array | null,
+	message: string,
 };
 
 export class LoadService
@@ -130,11 +137,12 @@ export class LoadService
 		this.#markDialogAsLoading(dialogId);
 
 		const actionResult = await runAction(actionName, { data: params })
-			.catch((error) => {
+			.catch((errors: RequestChatError[]) => {
 				// eslint-disable-next-line no-console
-				console.error('ChatService: Load: error loading chat', error);
+				console.error('ChatService: Load: error loading chat', errors);
+				this.#handleChatLoadError(errors);
 				this.#markDialogAsNotLoaded(dialogId);
-				throw error;
+				throw errors;
 			});
 
 		if (this.#needLayoutRedirect(actionResult))
@@ -267,5 +275,19 @@ export class LoadService
 		const extractor = new ChatDataExtractor(actionResult);
 
 		return extractor.isOpenlinesChat() && Type.isStringFilled(extractor.getDialogId());
+	}
+
+	#handleChatLoadError(errors: RequestChatError[]): void
+	{
+		const [firstError] = errors;
+		if (firstError.code === AccessErrorCode.chatNotFound)
+		{
+			this.#showNotification(Loc.getMessage('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
+		}
+	}
+
+	#showNotification(text: string)
+	{
+		BX.UI.Notification.Center.notify({ content: text });
 	}
 }

@@ -17,7 +17,8 @@ import {
 	$isTabNode,
 	type LexicalNode, ElementNode,
 } from 'ui.lexical.core';
-import { trimLineBreaks } from './trim-line-breaks';
+
+import { trimEmptyParagraphs } from './trim-empty-paragraphs';
 
 import type { BBCodeExportOutput, BBCodeExportMap, BBCodeExportFn } from './types';
 
@@ -25,7 +26,7 @@ export function $exportToBBCode(lexicalNode: LexicalNode | ElementNode, editor: 
 {
 	const scheme: BBCodeScheme = editor.getBBCodeScheme();
 	const root: BBCodeRootNode = scheme.createRoot();
-	const topLevelChildren = trimLineBreaks(lexicalNode.getChildren());
+	const topLevelChildren = trimEmptyParagraphs(lexicalNode.getChildren());
 
 	for (const topLevelNode of topLevelChildren)
 	{

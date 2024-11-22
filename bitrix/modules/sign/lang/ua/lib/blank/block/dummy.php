@@ -1,0 +1,23 @@
+<?php
+$MESS["SIGN_CORE_BLOCK_DATE_HINT"] = "Поле для введення інформації у форматі дати, наприклад термінів дії або дати створення договору.";
+$MESS["SIGN_CORE_BLOCK_DATE_TITLE"] = "Дата";
+$MESS["SIGN_CORE_BLOCK_MYREQUISITES_HINT"] = "Поле для введення реквізитів компанії.";
+$MESS["SIGN_CORE_BLOCK_MYREQUISITES_TITLE"] = "Реквізити";
+$MESS["SIGN_CORE_BLOCK_MYSIGN_BLOCK_HINT"] = "Поле, в якому буде підпис вашої сторони";
+$MESS["SIGN_CORE_BLOCK_MYSIGN_TITLE"] = "Підпис";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_ERROR_EMPTY"] = "Додано блок печатки компанії, але в реквізитах компанії зображення печатки не завантажено.";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_HINT"] = "Поле для печатки вашої компанії.";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_TITLE"] = "Печатка";
+$MESS["SIGN_CORE_BLOCK_NUMBER_HINT"] = "Поле для введення номера документа. У полі можна ввести номер вручну або використовувати нумератор. Наприклад, можна вказати, з якого номера розпочати нумерацію, а також задати крок збільшення.";
+$MESS["SIGN_CORE_BLOCK_NUMBER_TITLE"] = "Номер";
+$MESS["SIGN_CORE_BLOCK_REFERENCE_BLOCK_HINT"] = "Поле, яке автоматично заповниться даними вашої CRM. Якщо у CRM немає потрібних даних і поле залишиться порожнім, то після заповнення поля будь-яким із підписантів ця інформація збережеться у вашій CRM.";
+$MESS["SIGN_CORE_BLOCK_REFERENCE_TITLE"] = "Поле CRM";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_ERROR_EMPTY"] = "Блок \"Поле CRM\" не налаштовано.";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_HINT"] = "Поле для введення реквізитів контрагента.";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_TITLE"] = "Реквізити";
+$MESS["SIGN_CORE_BLOCK_SIGN_BLOCK_HINT"] = "Поле, в якому буде підпис контрагента";
+$MESS["SIGN_CORE_BLOCK_SIGN_TITLE"] = "Підпис";
+$MESS["SIGN_CORE_BLOCK_STAMP_HINT"] = "Поле для печатки контрагента.";
+$MESS["SIGN_CORE_BLOCK_STAMP_TITLE"] = "Печатка";
+$MESS["SIGN_CORE_BLOCK_TEXT_HINT"] = "Поле для введення будь-якої текстової інформації, як-от умов договору.";
+$MESS["SIGN_CORE_BLOCK_TEXT_TITLE"] = "Текст";

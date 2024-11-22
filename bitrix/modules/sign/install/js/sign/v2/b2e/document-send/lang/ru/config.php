@@ -14,6 +14,7 @@ $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_EMAIL"] = 'и по E-mail';
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_IDLE"] = 'Чат Битрикс24';
 $MESS["SIGN_DOCUMENT_INFO_SEND"] = 'Проверьте данные перед отправкой';
 $MESS['SIGN_DOCUMENT_SUMMARY_TITLE'] = 'Документ на подпись';
+$MESS['SIGN_DOCUMENT_SUMMARY_TEMPLATE_TITLE'] = 'Шаблон';
 $MESS['SIGN_DOCUMENT_SEND_FIRST_PARTY'] = 'Первая сторона';
 $MESS['SIGN_DOCUMENT_SEND_SECOND_PARTY'] = 'Вторая сторона';
 $MESS['SIGN_DOCUMENT_SEND_HEADER'] = 'Проверьте данные перед отправкой';

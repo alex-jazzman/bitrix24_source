@@ -164,6 +164,7 @@ else
 					'c_sub_section' => Dictionary::SUB_SECTION_KANBAN,
 				],
 			],
+			'PATH_TO_MERGE' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getEntityMergeUrl(CCrmOwnerType::Quote),
 		],
 		$component
 	);

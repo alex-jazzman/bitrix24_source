@@ -1,7 +1,7 @@
 import { Tag, Type, Dom, Event, Runtime, Cache, Extension } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
-import { Engine } from 'ai.engine';
+import { Engine, Text as PayloadText } from 'ai.engine';
 import { type CopilotImageController, type saveEventData } from 'ai.copilot.copilot-image-controller';
 import type { CopilotBanner as CopilotBannerType } from 'ai.copilot-banner';
 import { checkCopilotAgreement } from './helpers/check-copilot-agreement';
@@ -40,6 +40,8 @@ export type CopilotOptions = {
 	mode: CopilotMode.TEXT | CopilotMode.IMAGE | CopilotMode.TEXT_AND_IMAGE;
 	useText: boolean;
 	useImage: boolean;
+	extraMarkers: {[string]: string};
+	showResultInCopilot?: boolean;
 };
 
 export type CopilotMenuOption = {
@@ -67,6 +69,7 @@ type InitEngineOptions = {
 	contextId: string;
 	contextParameters: any;
 	category: string;
+	extraMarkers: {[string]: string};
 }
 
 type InitCopilotTextControllerOptions = {
@@ -123,6 +126,7 @@ export class Copilot extends EventEmitter
 	#analytics: CopilotAnalytics;
 	#useText: boolean;
 	#useImage: boolean;
+	#showResultInCopilot: ?boolean;
 
 	static #staticEulaRestrictCallback: Function | false = null;
 
@@ -188,12 +192,14 @@ export class Copilot extends EventEmitter
 		this.#context = options.context;
 		this.#useText = Type.isBoolean(options.useText) ? options.useText : true;
 		this.#useImage = options.useImage === true;
+		this.#showResultInCopilot = options.showResultInCopilot;
 
 		this.#initEngine({
 			category: options.category,
 			contextId: options.contextId,
 			moduleId: options.moduleId,
 			contextParameters: options.contextParameters,
+			extraMarkers: options.extraMarkers,
 		});
 
 		this.#inputField = new CopilotInput({
@@ -430,6 +436,26 @@ export class Copilot extends EventEmitter
 		this.#engine.setContextParameters(contextParameters);
 	}
 
+	setExtraMarkers(extraMarkers: {[string]: string}): void
+	{
+		const extraMarkersWithoutSystemMarkers = {
+			...extraMarkers,
+			original_message: undefined,
+			user_message: undefined,
+		};
+
+		const payload = this.#engine?.getPayload() || new PayloadText();
+
+		payload.setMarkers({
+			...payload.getMarkers(),
+			...extraMarkersWithoutSystemMarkers,
+		});
+
+		this.#engine.setPayload(payload);
+
+		this.#copilotTextController?.setExtraMarkers(extraMarkers);
+	}
+
 	getPosition(): { inputField: DOMRect, menu: DOMRect} {
 		return {
 			inputField: Dom.getPosition(this.#copilotPopup.getPopupContainer()),
@@ -488,6 +514,8 @@ export class Copilot extends EventEmitter
 			.setParameters({
 				promptCategory: initEngineOptions.category,
 			});
+
+		this.setExtraMarkers(initEngineOptions.extraMarkers);
 	}
 
 	async #initCopilotImageController(): void
@@ -504,6 +532,8 @@ export class Copilot extends EventEmitter
 			useInsertAboveAndUnderMenuItems: this.#useText,
 			analytics: this.#getAnalytics(true),
 		});
+
+		await this.#copilotImageController.init();
 
 		this.#copilotImageController.subscribe('back', () => {
 			this.#copilotImageController.finish();
@@ -563,6 +593,7 @@ export class Copilot extends EventEmitter
 			copilotMenu: CopilotMenu,
 			copilotMenuEvents: CopilotMenuEvents,
 			analytics: this.#getAnalytics(),
+			showResultInCopilot: this.#showResultInCopilot,
 		});
 
 		this.#copilotTextController.subscribe('aiResult', (event: BaseEvent) => {
@@ -573,6 +604,14 @@ export class Copilot extends EventEmitter
 			this.emit(CopilotEvents.TEXT_COMPLETION_RESULT, {
 				result: event.getData().result,
 			});
+		});
+
+		this.#copilotTextController.subscribe('prompt-master-show', () => {
+			this.#copilotPopup.setClosingByEsc(false);
+		});
+
+		this.#copilotTextController.subscribe('prompt-master-destroy', () => {
+			this.#copilotPopup.setClosingByEsc(true);
 		});
 
 		this.#copilotTextController.subscribe('close', () => {
@@ -629,7 +668,11 @@ export class Copilot extends EventEmitter
 		const preventAutoHide = this.#preventAutoHide(event);
 		const isClickOnSlider = Boolean(event.target.closest('.side-panel'));
 		const isClickOnRolesDialog = Boolean(event.target.closest('.ai_roles-dialog_popup'));
+		const isClickOnPromptMasterPopup = Boolean(event.target.closest('.ai__prompt-master-popup'));
+		const isClickOnOverlay = Boolean(event.target.closest('.popup-window-overlay'));
+		const isClickOnAnotherPopup = Boolean(event.target.closest('.popup-window'));
 		const isClickOnBaasPopup = Boolean(this.#getBaasPopup()?.getPopupContainer().contains(target));
+		const isClickOnNotificationBalloon = Boolean(event.target.closest('.ui-notification-balloon'));
 
 		const shouldBeHidden = !isSelf
 			&& !this.#copilotTextController?.isContainsElem(target)
@@ -639,7 +682,11 @@ export class Copilot extends EventEmitter
 			&& !isWarningFieldInfoSlider
 			&& !isClickOnSlider
 			&& !isClickOnRolesDialog
+			&& !isClickOnPromptMasterPopup
+			&& !isClickOnAnotherPopup
 			&& !isClickOnBaasPopup
+			&& !isClickOnOverlay
+			&& !isClickOnNotificationBalloon
 		;
 
 		if (shouldBeHidden)

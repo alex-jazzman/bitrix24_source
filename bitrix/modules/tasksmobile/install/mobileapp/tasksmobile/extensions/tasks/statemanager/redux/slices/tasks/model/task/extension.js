@@ -165,6 +165,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.isMuted = serverTask.isMuted;
 			}
 
+			if (!Type.isUndefined(serverTask.isDodNecessary))
+			{
+				preparedTask.isDodNecessary = serverTask.isDodNecessary;
+			}
+
 			if (!Type.isUndefined(serverTask.isPinned))
 			{
 				preparedTask.isPinned = serverTask.isPinned;
@@ -258,6 +263,16 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 			if (!Type.isUndefined(serverTask.checklistDetails))
 			{
 				preparedTask.checklistDetails = serverTask.checklistDetails;
+			}
+
+			if (!Type.isUndefined(serverTask.dodTypes))
+			{
+				preparedTask.dodTypes = serverTask.dodTypes;
+			}
+
+			if (!Type.isUndefined(serverTask.activeDodTypeId))
+			{
+				preparedTask.activeDodTypeId = serverTask.activeDodTypeId;
 			}
 
 			if (!Type.isUndefined(serverTask.counter))

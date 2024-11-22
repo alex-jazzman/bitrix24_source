@@ -17,8 +17,8 @@ return [
 		'main.popup',
 		'ai.engine',
 		'ui.feedback.form',
-		'ui.notification',
 		'ai.ajax-error-handler',
+		'ui.notification',
 		'main.core.events',
 		'ui.icon-set.main',
 		'main.core',
@@ -26,7 +26,7 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'hasRoleSelect' => Option::get('ai', 'ai_copilot_roles_enable', 'Y') === 'Y',
+		'isPromptLibraryEnable' => Option::get('ai', 'ai_prompt_library_enable') === 'Y',
 		'settingsPageLink' => $isCP ? \Bitrix\Intranet\PortalSettings::getInstance()->getSettingsUrl() . '?page=ai' : '/settings/configs/?page=ai',
 	]
 ];

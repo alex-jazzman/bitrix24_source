@@ -188,7 +188,6 @@
 	margin-left: 3px;
 	font: var(--im-font-size-xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	color: var(--im-list-copilot__font-color_message);
-	text-transform: lowercase;
 }
 
 .bx-im-list-copilot-item__content_bottom {

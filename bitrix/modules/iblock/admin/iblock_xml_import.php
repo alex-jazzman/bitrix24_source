@@ -82,7 +82,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Import"]=="Y")
 				"PRICES_MAP" => false,
 			);
 
-			$obXMLFile->DropTemporaryTables();
 			if(CIBlockCMLImport::CheckIfFileIsCML($ABS_FILE_NAME))
 				$NS["STEP"]++;
 			else
@@ -90,10 +89,16 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Import"]=="Y")
 		}
 		elseif($NS["STEP"] < 2)
 		{
-			if($obXMLFile->CreateTemporaryTables())
+			$result = $obXMLFile->initializeTemporaryTables();
+
+			if ($result)
+			{
 				$NS["STEP"]++;
+			}
 			else
-				$arErrors[] = GetMessage("IBLOCK_CML2_TABLE_CREATE_ERROR");
+			{
+				$arErrors[] = GetMessage("IBLOCK_CML2_TABLE_PREPARE_ERROR");
+			}
 		}
 		elseif($NS["STEP"] < 3)
 		{

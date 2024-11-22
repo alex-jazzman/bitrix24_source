@@ -159,14 +159,18 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	  renderWorkflowFaces() {
 	    const target = main_core.Tag.render(_t4 || (_t4 = _`<div></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _faces)[_faces] = new bizproc_workflow_faces.WorkflowFaces({
-	      workflowId: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].workflowId,
-	      targetUserId: babelHelpers.classPrivateFieldLooseBase(this, _targetUserId)[_targetUserId],
-	      target,
-	      data: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskProgress,
-	      showArrow: true
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _faces)[_faces].render();
+	    try {
+	      babelHelpers.classPrivateFieldLooseBase(this, _faces)[_faces] = new bizproc_workflow_faces.WorkflowFaces({
+	        workflowId: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].workflowId,
+	        targetUserId: babelHelpers.classPrivateFieldLooseBase(this, _targetUserId)[_targetUserId],
+	        target,
+	        data: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].taskProgress,
+	        showArrow: true
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _faces)[_faces].render();
+	    } catch (e) {
+	      console.error(e);
+	    }
 	    return target;
 	  }
 	  renderSummary() {

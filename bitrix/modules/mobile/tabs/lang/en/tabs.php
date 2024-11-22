@@ -1,9 +1,13 @@
 <?php
+$MESS["TAB_DISK_NAVIGATION_TAB_MY_FILES"] = "My files";
+$MESS["TAB_DISK_NAVIGATION_TAB_RECENT"] = "Recent items";
+$MESS["TAB_DISK_NAVIGATION_TAB_SHARED_FILES"] = "Shared files";
 $MESS["TAB_NAME_CALENDAR"] = "Calendar";
 $MESS["TAB_NAME_CALENDAR_SHORT"] = "Calendar";
 $MESS["TAB_NAME_CATALOG_STORE"] = "Inventory management";
 $MESS["TAB_NAME_CATALOG_STORE_SHORT"] = "Warehouses";
 $MESS["TAB_NAME_CRM"] = "CRM";
+$MESS["TAB_NAME_DISK"] = "Files";
 $MESS["TAB_NAME_IM_OPENLINES"] = "Open Channels";
 $MESS["TAB_NAME_IM_OPENLINES_SHORT"] = "Open Channels";
 $MESS["TAB_NAME_IM_RECENT"] = "Chats";

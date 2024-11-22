@@ -1,0 +1,46 @@
+<?php
+$MESS["SIGN_CURRENT_DOCUMENT_LIST_TITLE"] = "Кадрові документи";
+$MESS["SIGN_DOCUMENT_DOCUMENT_LIST_TITLE"] = "Підписання";
+$MESS["SIGN_DOCUMENT_GRID_BANNER_PERSONAL_TEXT"] = "Зберігайте підписані документи на комп'ютері, щоб мати до них доступ будь-коли.
+Бітрікс24 не бере на себе відповідальність за зберігання і відсутність доступу до документів.";
+$MESS["SIGN_DOCUMENT_GRID_BANNER_SAFE_TEXT"] = "Зберігайте підписані документи на комп'ютері, щоб мати до них доступ будь-коли.
+Бітрікс24 не бере на себе відповідальність за зберігання і відсутність доступу до документів.";
+$MESS["SIGN_DOCUMENT_GRID_BANNER_TEXT"] = "Рекомендуємо зберігати копії підписаних документів на комп'ютері, щоб мати доступ до них будь-коли.";
+$MESS["SIGN_DOCUMENT_GRID_BANNER_TEXT_MSGVER_1"] = "Рекомендуємо зберігати копії підписаних документів на комп'ютері, щоб мати до них доступ будь-коли. [helpdesklink]Докладніше[/helpdesklink]";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_ACTION"] = "Дія";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_CREATED_BY"] = "Ініціатор";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_CREATE_DATE"] = "Дата створення";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_DOWNLOAD"] = "Завантажити";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_DOWNLOAD_ACTION_MSGVER_1"] = "Дія";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_ID"] = "ID";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_INITIATOR"] = "Представник";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_MEMBER"] = "Учасник";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_ROLE"] = "Роль";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_SIGN_DATE"] = "Дата підписання";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_STATUS"] = "Статус";
+$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_TITLE"] = "Документ";
+$MESS["SIGN_DOCUMENT_LIST_GRID_COUNTER_READY"] = "Іде підписання";
+$MESS["SIGN_DOCUMENT_LIST_GRID_COUNTER_REFUSED"] = "Відмова від підписання";
+$MESS["SIGN_DOCUMENT_LIST_GRID_COUNTER_SIGNED"] = "Підписано";
+$MESS["SIGN_DOCUMENT_LIST_GRID_COUNTER_STOPPED"] = "Зупинено";
+$MESS["SIGN_DOCUMENT_LIST_GRID_COUNTER_WAIT"] = "Очікування документа";
+$MESS["SIGN_DOCUMENT_LIST_ROLE_CAPTION_ASSIGNEE"] = "Представник";
+$MESS["SIGN_DOCUMENT_LIST_ROLE_CAPTION_EDITOR_MSG_1"] = "Заповнює";
+$MESS["SIGN_DOCUMENT_LIST_ROLE_CAPTION_REVIEWER"] = "Погоджує";
+$MESS["SIGN_DOCUMENT_LIST_ROLE_CAPTION_SIGNER"] = "Співробітник";
+$MESS["SIGN_DOCUMENT_LIST_ROLE_CAPTION_UNDEFINED"] = "Не визначено";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_DATE_CREATE_NAME"] = "Дата створення";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_DATE_SIGN_NAME"] = "Дата підписання";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_ACTION"] = "Дія";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_COMPANY"] = "Компанія";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_DOCUMENT_NAME"] = "Назва документа";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_EMPLOYEE"] = "Учасник";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_INITIATOR"] = "Ініціатор";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_MEMBER_STATUS"] = "Статус";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_REPRESENTATIVE"] = "Представник";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_ROLE"] = "Роль";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_FILTER_LABEL_STATUS"] = "Статус";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_STUB_NO_DOCUMENT"] = "Немає документів.";
+$MESS["SIGN_DOCUMENT_LIST_TITLE_STUB_NO_DOCUMENT_FOR_SIGN"] = "Немає документів на підпис.";
+$MESS["SIGN_PERSONAL_DOCUMENT_LIST_TITLE"] = "Підписані документи";
+$MESS["SIGN_SAFE_DOCUMENT_LIST_TITLE"] = "Сейф компанії";

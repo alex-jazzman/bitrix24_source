@@ -1,3 +1,4 @@
+import { Loc } from 'main.core';
 import { Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
@@ -6,8 +7,10 @@ import { UserManager } from 'im.v2.lib.user';
 import { Logger } from 'im.v2.lib.logger';
 import { RestMethod } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
+import { AccessErrorCode } from '../../../../../lib/access/src/classes/access-service';
 import type { PaginationRestResult } from '../types/message';
 import type { RawMessage, RawCommentInfo, RawTariffRestrictions } from '../../types/rest';
 
@@ -215,6 +218,8 @@ export class LoadService
 				return this.#handleLoadedMessages(data[RestMethod.imV2ChatMessageGetContext]);
 			})
 			.catch((error) => {
+				this.#sendAnalytics(error);
+				this.#handleLoadContextError(error);
 				// eslint-disable-next-line no-console
 				console.error('MessageService: loadContext error:', error);
 				throw new Error(error);
@@ -434,5 +439,32 @@ export class LoadService
 	#getDialog(): ImModelChat
 	{
 		return this.#store.getters['chats/getByChatId'](this.#chatId);
+	}
+
+	#handleLoadContextError(error): void
+	{
+		if (error.code !== AccessErrorCode.messageNotFound)
+		{
+			return;
+		}
+
+		this.#showNotification(Loc.getMessage('IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND'));
+	}
+
+	#showNotification(text: string)
+	{
+		BX.UI.Notification.Center.notify({ content: text });
+	}
+
+	#sendAnalytics(error)
+	{
+		if (error.code !== AccessErrorCode.messageNotFound)
+		{
+			return;
+		}
+
+		const chat = this.#getDialog();
+		const dialogId = chat.dialogId;
+		Analytics.getInstance().messageDelete.onNotFoundNotification({ dialogId });
 	}
 }

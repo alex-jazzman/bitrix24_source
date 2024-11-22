@@ -7,7 +7,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Uuid } = require('utils/uuid');
-	const { merge, clone } = require('utils/object');
+	const { mergeImmutable, clone } = require('utils/object');
 	const { reactionsModel } = require('im/messenger/model/messages/reactions');
 	const { pinModel } = require('im/messenger/model/messages/pin');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -18,7 +18,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 	const TEMPORARY_MESSAGE_PREFIX = 'temporary';
 
-	const messageState = {
+	const messageDefaultElement = Object.freeze({
 		id: 0,
 		templateId: '',
 		previousId: 0,
@@ -44,7 +44,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		keyboard: [],
 		richLinkId: null,
 		forward: {},
-	};
+	});
 
 	/** @type {MessagesMessengerModel} */
 	const messagesModel = {
@@ -333,7 +333,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				const chatId = messages[0]?.chatId;
@@ -385,7 +385,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				const chatId = messages[0]?.chatId;
@@ -421,7 +421,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				if (messages.length === 0)
@@ -445,7 +445,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				if (messages.length === 0)
@@ -472,7 +472,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				const handlersComplete = waiter.waitComplete();
 
 				const message = {
-					...messageState,
+					...messageDefaultElement,
 					...validate(payload),
 				};
 
@@ -503,7 +503,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				const message = {
-					...messageState,
+					...messageDefaultElement,
 					...validate(payload),
 				};
 
@@ -523,7 +523,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				store.commit('setTemporaryMessages', {
@@ -912,7 +912,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				} = payload.data;
 
 				messageList.forEach((message) => {
-					message.params = { ...messageState.params, ...message.params };
+					message.params = { ...messageDefaultElement.params, ...message.params };
 
 					state.collection[message.id] = message;
 				});
@@ -930,7 +930,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				} = payload.data;
 
 				messageList.forEach((message) => {
-					message.params = { ...messageState.params, ...message.params };
+					message.params = { ...messageDefaultElement.params, ...message.params };
 
 					state.temporaryMessages[message.id] = message;
 				});
@@ -950,7 +950,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				const currentMessage = { ...state.collection[id] };
 
 				delete state.collection[id];
-				state.collection[fields.id] = merge(currentMessage, fields, { sending: false });
+				state.collection[fields.id] = mergeImmutable(currentMessage, fields, { sending: false });
 
 				if (state.chatCollection[currentMessage.chatId].has(id))
 				{
@@ -972,7 +972,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					fields,
 				} = payload.data;
 
-				state.collection[id] = merge(state.collection[id], fields);
+				state.collection[id] = mergeImmutable(state.collection[id], fields);
 			},
 
 			/**
@@ -1079,5 +1079,6 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 	module.exports = {
 		messagesModel,
+		messageDefaultElement
 	};
 });

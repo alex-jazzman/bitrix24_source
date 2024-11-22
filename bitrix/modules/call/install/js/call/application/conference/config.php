@@ -42,6 +42,6 @@ return [
 		'rest.client',
 		'im.lib.utils',
 	],
-	'lang' => '/bitrix/modules/im/lang/'.LANGUAGE_ID.'/js_common.php',
+	'lang' => ['/bitrix/modules/im/lang/'.LANGUAGE_ID.'/js_common.php', '/bitrix/modules/im/lang/'.LANGUAGE_ID.'/js_im.php'],
 	'skip_core' => false,
 ];

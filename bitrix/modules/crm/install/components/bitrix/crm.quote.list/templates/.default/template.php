@@ -377,7 +377,27 @@ if ($arResult['ENABLE_TOOLBAR'])
 
 	if ($arResult['ADD_EVENT_NAME'] !== '')
 	{
-		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
+		$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(CCrmOwnerType::Quote)
+			->setSection(
+				!empty($arParams['~ANALYTICS']['c_section']) && is_string($arParams['~ANALYTICS']['c_section'])
+					? $arParams['~ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['~ANALYTICS']['c_sub_section']) && is_string($arParams['~ANALYTICS']['c_sub_section'])
+					? $arParams['~ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+		$data = [
+			'urlParams' => $analyticsBuilder->buildData(),
+		];
+		foreach ($data['urlParams'] as $key => $value)
+		{
+			$data['urlParams']['st[' . $key . ']'] = $value;
+			unset($data['urlParams'][$key]);
+		}
+		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}', " . json_encode($data) . ")";
 	}
 
 	$APPLICATION->IncludeComponent(
@@ -569,6 +589,7 @@ if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversion
 								cancelButton: "<?=GetMessageJS("CRM_QUOTE_CONV_DIALOG_CANCEL_BTN")?>"
 							},
 							analytics: {
+								c_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE ?>',
 								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST ?>',
 								c_element: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU ?>',
 							},

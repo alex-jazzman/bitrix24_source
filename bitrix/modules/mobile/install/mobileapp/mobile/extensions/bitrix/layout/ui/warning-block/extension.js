@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/warning-block', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { qrauth } = require('qrauth/utils');
 
 	const BlockType = {
 		warning: 'warning',

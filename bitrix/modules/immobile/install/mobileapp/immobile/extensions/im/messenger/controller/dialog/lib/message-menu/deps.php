@@ -3,12 +3,14 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'assets/icons',
 		'loc',
 		'type',
 		'haptics',
 		'notify-manager',
 		'utils/url',
 		'device/connection',
+		'layout/ui/feedback-form-opener',
 		'im:lib/theme',
 		'im:messenger/assets/common',
 		'im:messenger/const',
@@ -21,9 +23,10 @@ return [
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/ui/notification',
+		'im:messenger/lib/ui/alert',
 		'im:messenger/controller/dialog/lib/message-create-menu',
 		'im:messenger/controller/dialog/lib/helper/text',
-		'layout/ui/feedback-form-opener',
+		'im:messenger/provider/service',
 	],
 	'bundle' => [
 		'./src/action',

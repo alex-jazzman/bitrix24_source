@@ -1,9 +1,11 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Router } from 'crm.router';
 import { ToolbarComponent } from 'crm.toolbar-component';
 import { CustomSection, TypeModel, TypeModelData } from 'crm.type-model';
-import { Dom, Event, Loc, Reflection, Tag, Text, Type } from 'main.core';
+import { Dom, Event, Loc, Reflection, Tag, Text, Type, Uri } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
+import { sendData as sendAnalyticsData } from 'ui.analytics';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { TagSelector } from 'ui.entity-selector';
 
@@ -42,6 +44,7 @@ class TypeDetail
 	isNew: boolean;
 	tabs: Map<string, Element> = new Map();
 	presets: Array;
+	selectedPresetId: ?string;
 	relations: {
 		parent: Relation[],
 		child: Relation[],
@@ -57,6 +60,8 @@ class TypeDetail
 	isSaveFromTypeDetail: boolean = true;
 	isCreateSectionsViaAutomatedSolutionDetails: boolean = false;
 	isCrmAdmin: boolean = false;
+
+	#isCancelEventRegistered: boolean = false;
 
 	constructor(params: {
 		form: Element,
@@ -163,6 +168,25 @@ class TypeDetail
 			Event.bind(linkedUserFieldNode, 'click', this.enableUserFieldIfAnyLinkedChecked.bind(this));
 		});
 
+		EventEmitter.subscribe('SidePanel.Slider:onCloseByEsc', (event: BaseEvent) => {
+			const [sliderEvent] = event.getData();
+			const slider: BX.SidePanel.Slider = sliderEvent.getSlider();
+
+			if (slider === this.getSlider())
+			{
+				this.#registerCancelEvent(Dictionary.ELEMENT_ESC_BUTTON);
+			}
+		});
+		EventEmitter.subscribe('SidePanel.Slider:onClose', (event: BaseEvent) => {
+			const [sliderEvent] = event.getData();
+			const slider: BX.SidePanel.Slider = sliderEvent.getSlider();
+
+			if (slider === this.getSlider())
+			{
+				this.#registerCancelEvent(null);
+			}
+		});
+
 		this.handleSliderDestroy = this.handleSliderDestroy.bind(this);
 		top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
 	}
@@ -179,6 +203,24 @@ class TypeDetail
 			this.destroy();
 			top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
 		}
+	}
+
+	#registerCancelEvent(element: ?string): void
+	{
+		if (this.#isCancelEventRegistered)
+		{
+			return;
+		}
+
+		this.#isCancelEventRegistered = true;
+
+		sendAnalyticsData(
+			this.#getAnalyticsBuilder()
+				.setElement(element)
+				.setStatus(Dictionary.STATUS_CANCEL)
+				.buildData()
+			,
+		);
 	}
 
 	destroy(): void
@@ -361,14 +403,71 @@ class TypeDetail
 			this.type.setIsSaveFromTypeDetail(this.isSaveFromTypeDetail);
 		}
 
+		const analyticsBuilder = this.#getAnalyticsBuilder()
+			.setElement(Dictionary.ELEMENT_CREATE_BUTTON)
+		;
+
+		sendAnalyticsData(
+			analyticsBuilder
+				.setStatus(Dictionary.STATUS_ATTEMPT)
+				.buildData()
+			,
+		);
+
 		this.type.save().then((response) => {
+			sendAnalyticsData(
+				analyticsBuilder
+					.setStatus(Dictionary.STATUS_SUCCESS)
+					.setId(this.type.getId())
+					.buildData()
+				,
+			);
+
+			this.#isCancelEventRegistered = true;
+
 			this.stopProgress();
 			this.afterSave(response);
 			this.isNew = false;
 		}).catch((errors) => {
+			sendAnalyticsData(
+				analyticsBuilder
+					.setStatus(Dictionary.STATUS_ERROR)
+					.setId(this.type.getId())
+					.buildData()
+				,
+			);
+
 			this.showErrors(errors);
 			this.stopProgress();
 		});
+	}
+
+	#getAnalyticsBuilder(): Builder.Automation.Type.CreateEvent | Builder.Automation.Type.EditEvent
+	{
+		const builder = this.isNew
+			? new Builder.Automation.Type.CreateEvent()
+			: new Builder.Automation.Type.EditEvent()
+		;
+
+		builder.setIsExternal(this.isExternal);
+
+		if (Type.isStringFilled(this.selectedPresetId))
+		{
+			builder.setPreset(this.selectedPresetId);
+		}
+
+		if (this.type.getId() > 0)
+		{
+			builder.setId(this.type.getId());
+		}
+
+		const currentUrl = new Uri(decodeURI(window.location.href));
+		if (currentUrl.getQueryParam('c_sub_section') && builder instanceof Builder.Automation.Type.EditEvent)
+		{
+			builder.setSubSection(currentUrl.getQueryParam('c_sub_section'));
+		}
+
+		return builder;
 	}
 
 	collectEntityTypeIds(role: string): []
@@ -467,12 +566,38 @@ class TypeDetail
 		{
 			return;
 		}
+
+		const currentUrl = new Uri(decodeURI(window.location.href));
+
+		const analyticsBuilder = (new Builder.Automation.Type.DeleteEvent())
+			.setElement(Dictionary.ELEMENT_DELETE_BUTTON)
+			.setIsExternal(this.isExternal)
+			.setSubSection(currentUrl.getQueryParam('c_sub_section'))
+			.setId(this.type.getId())
+		;
+
 		MessageBox.confirm(
 			Loc.getMessage('CRM_TYPE_DETAIL_DELETE_CONFIRM'),
 			() => {
 				return new Promise((resolve) => {
+					sendAnalyticsData(
+						analyticsBuilder
+							.setStatus(Dictionary.STATUS_ATTEMPT)
+							.buildData()
+						,
+					);
+
 					this.startProgress();
 					this.type.delete().then((response) => {
+						sendAnalyticsData(
+							analyticsBuilder
+								.setStatus(Dictionary.STATUS_SUCCESS)
+								.buildData()
+							,
+						);
+
+						this.#isCancelEventRegistered = true;
+
 						this.stopProgress();
 
 						const isUrlChanged = (Type.isObject(response.data) && (response.data.isUrlChanged === true));
@@ -480,6 +605,13 @@ class TypeDetail
 
 						Router.Instance.closeSliderOrRedirect(Router.Instance.getTypeListUrl());
 					}).catch((errors: string[]) => {
+						sendAnalyticsData(
+							analyticsBuilder
+								.setStatus(Dictionary.STATUS_ERROR)
+								.buildData()
+							,
+						);
+
 						this.showErrors(errors);
 						this.stopProgress();
 						resolve();
@@ -488,6 +620,13 @@ class TypeDetail
 			},
 			null,
 			(box) => {
+				sendAnalyticsData(
+					analyticsBuilder
+						.setStatus(Dictionary.STATUS_CANCEL)
+						.buildData()
+					,
+				);
+
 				this.stopProgress();
 				box.close();
 			},
@@ -554,6 +693,8 @@ class TypeDetail
 				}
 			}
 		});
+
+		this.selectedPresetId = presetId;
 	}
 
 	getPresetById(presetId: string)
@@ -696,18 +837,19 @@ class TypeDetail
 
 	static handleBooleanFieldClick(fieldName: string)
 	{
-		if (instance)
-		{
-			instance.toggleBooleanField(fieldName);
-		}
+		instance?.toggleBooleanField(fieldName);
 	}
 
 	static handlePresetSelectorClick()
 	{
-		if (instance)
-		{
-			instance.enablePresetsView();
-		}
+		instance?.enablePresetsView();
+	}
+
+	static handleCancelButtonClick()
+	{
+		// if we just add click event handler to cancel button node, that handler will be called after slider close
+		// to capture click before that, we need to add handler directly to markup
+		instance?.#registerCancelEvent(Dictionary.ELEMENT_CANCEL_BUTTON);
 	}
 }
 

@@ -1,3 +1,5 @@
+import type { DocumentInitiatedType } from './index';
+
 type Block = {
 	code: string;
 	data: { text: string; };
@@ -35,4 +37,5 @@ export type DocumentData = {
 	status: string;
 	title: string;
 	uid: string;
+	initiatedByType: DocumentInitiatedType;
 };

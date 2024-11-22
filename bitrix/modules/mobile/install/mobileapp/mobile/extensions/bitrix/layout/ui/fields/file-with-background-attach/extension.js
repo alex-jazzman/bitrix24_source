@@ -73,7 +73,20 @@ jn.define('layout/ui/fields/file-with-background-attach', (require, exports, mod
 		{
 			const filesFromCache = this.getFilesFromCache();
 			const filteredFilesFromProps = newProps.value.filter((file) => Number.isInteger(file.id));
-			this.filesFromCache = this.filteredCachedFiles(filteredFilesFromProps, filesFromCache);
+			const uploadingFilesFromProps = newProps.value.filter((file) => !Number.isInteger(file.id));
+
+			if (isEqual(filesFromCache, uploadingFilesFromProps))
+			{
+				this.filesFromCache = this.filteredCachedFiles(filteredFilesFromProps, filesFromCache);
+			}
+			// if the field received an added file from props but the storage has not yet processed it
+			else
+			{
+				const uploadingFilesFromCache = filesFromCache.filter((file) => !Number.isInteger(file.id));
+				const uniqueUploadingFiles = this.getUniqueFiles([...uploadingFilesFromCache, ...uploadingFilesFromProps]);
+
+				this.filesFromCache = this.filteredCachedFiles(filteredFilesFromProps, uniqueUploadingFiles);
+			}
 
 			super.componentWillReceiveProps(newProps);
 		}

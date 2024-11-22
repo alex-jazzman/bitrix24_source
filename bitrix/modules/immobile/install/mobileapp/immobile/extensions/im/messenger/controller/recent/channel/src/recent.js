@@ -45,14 +45,11 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 		bindMethods()
 		{
+			super.bindMethods();
 			this.recentAddHandler = this.recentAddHandler.bind(this);
 			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
 			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
-
-			this.stopRefreshing = this.stopRefreshing.bind(this);
-			this.renderInstant = this.renderInstant.bind(this);
-			this.loadPage = this.loadPage.bind(this);
 		}
 
 		subscribeViewEvents()
@@ -89,21 +86,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			this.view.stopRefreshing();
 		}
 
-		initRequests()
-		{
-			this.recentChannelInitRequest();
-			this.countersInitRequest();
-		}
-
-		recentChannelInitRequest()
-		{
-			restManager.on(
-				RestMethod.imV2RecentChannelTail,
-				this.getRestManagerRecentListOptions(),
-				this.restManagerRecentListHandler.bind(this),
-			);
-		}
-
 		onItemSelected(recentItem)
 		{
 			if (recentItem.params.disableTap)
@@ -119,11 +101,12 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			this.loadNextPage();
 		}
 
-		pageHandler(response)
+		/**
+		 * @param {imV2RecentChannelTailResult} data
+		 */
+		pageHandler(data)
 		{
 			return new Promise((resolve) => {
-				/** @type {imV2RecentChannelTailResult} */
-				const data = response.data();
 				this.logger.info(`${this.constructor.name}.pageHandler data:`, data);
 				this.recentService.pageNavigation.turnPage();
 
@@ -285,19 +268,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			this.updateItems(recentList);
 		}
 
-		recentDeleteHandler(mutation)
-		{
-			this.renderer.removeFromQueue(mutation.payload.data.id);
-
-			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
-			{
-				this.view.hideLoader();
-			}
-
-			this.checkEmpty();
-		}
-
 		dialogUpdateHandler(mutation)
 		{
 			const dialogId = mutation.payload.data.dialogId;
@@ -306,16 +276,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			{
 				this.updateItems([recentItem]);
 			}
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getRestManagerRecentListOptions()
-		{
-			return {
-				limit: this.recentService.pageNavigation.itemsPerPage,
-			};
 		}
 
 		saveShareDialogCache(recentItems)

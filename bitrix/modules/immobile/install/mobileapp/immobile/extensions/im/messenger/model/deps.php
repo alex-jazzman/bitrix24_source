@@ -23,6 +23,7 @@ return [
 		'./src/application',
 		'./src/recent',
 		'./src/recent/search',
+		'./src/counter',
 		'./src/messages',
 		'./src/users',
 		'./src/dialogues',

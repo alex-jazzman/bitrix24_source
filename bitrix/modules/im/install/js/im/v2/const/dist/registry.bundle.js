@@ -13,6 +13,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatLoadContext: 'im.v2.Chat.loadInContext',
 	  imV2ChatAdd: 'im.v2.Chat.add',
 	  imV2ChatUpdate: 'im.v2.Chat.update',
+	  imV2ChatDelete: 'im.v2.Chat.delete',
 	  imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 	  imV2ChatRead: 'im.v2.Chat.read',
 	  imV2ChatReadAll: 'im.v2.Chat.readAll',
@@ -227,7 +228,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  channel: 'channel',
 	  openChannel: 'openChannel',
 	  generalChannel: 'generalChannel',
-	  comment: 'comment'
+	  comment: 'comment',
+	  collab: 'collab'
 	});
 	const DialogScrollThreshold = Object.freeze({
 	  none: 'none',
@@ -299,7 +301,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  channelPost: 'ChannelPost',
 	  generalChatCreationMessage: 'GeneralChatCreationMessage',
 	  generalChannelCreationMessage: 'GeneralChannelCreationMessage',
-	  channelCreationMessage: 'ChannelCreationMessage'
+	  channelCreationMessage: 'ChannelCreationMessage',
+	  callMessage: 'CallMessage'
 	});
 	const MessageMentionType = Object.freeze({
 	  user: 'USER',
@@ -444,7 +447,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  market: 'market',
 	  messageSearch: 'messageSearch',
 	  chatsWithUser: 'chatsWithUser',
-	  multidialog: 'multidialog'
+	  multidialog: 'multidialog',
+	  none: ''
 	});
 	const SidebarFileTypes = Object.freeze({
 	  media: 'media',
@@ -520,9 +524,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  notifications: 'notifications',
 	  recentSearch: 'recentSearch',
 	  timeManager: 'timemanpwt',
-	  openTab: 'openTab',
 	  copilot: 'copilot',
-	  settings: 'settings'
+	  settings: 'settings',
+	  openTab: 'openTab',
+	  openPage: 'openPage'
 	};
 	const LegacyDesktopBxLink = {
 	  messenger: 'messenger',
@@ -653,6 +658,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  changeOwner: 'changeOwner',
 	  changeManagers: 'changeManagers',
 	  update: 'update',
+	  delete: 'delete',
 	  readMessage: 'readMessage',
 	  openComments: 'openComments',
 	  subscribeToComments: 'subscribeToComments',

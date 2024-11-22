@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		EventType,
 		BotCode,
 		Analytics,
+		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { MessageService } = require('im/messenger/provider/service');
 	const { LoggerManager, Logger } = require('im/messenger/lib/logger');
@@ -123,15 +124,11 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				messageId,
 				withMessageHighlight,
 				dialogTitleParams,
-				isNew,
-				isFromPush = false,
 			} = options;
 
 			this.dialogId = dialogId;
 			this.contextMessageId = messageId ?? null;
 			this.withMessageHighlight = withMessageHighlight ?? false;
-			this.isNew = isNew;
-			this.isFromPush = isFromPush;
 			void this.store.dispatch('applicationModel/openDialogId', dialogId);
 
 			const hasDialog = await this.loadDialogFromDb();
@@ -195,8 +192,10 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			{
 				const modelMessage = this.store.getters['messagesModel/getById'](messageId);
 				DialogTextHelper.copyToClipboard(
-					{ clipboardText: modelMessage.text },
-					this.view.ui,
+					modelMessage.text,
+					{
+						parentWidget: this.view.ui,
+					},
 				);
 
 				return true;
@@ -258,29 +257,35 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		{
 			super.sendAnalyticsOpenDialog();
 
-			if (!this.isNew)
+			if (this.openingContext === OpenDialogContextType.chatCreation)
 			{
-				const userCounter = this.getDialog().userCounter;
-				const element = this.isFromPush ? Analytics.Element.push : null;
-				const p3type = userCounter > 2 ? Analytics.CopilotChatType.multiuser : Analytics.CopilotChatType.private;
-				const analytics = new AnalyticsEvent()
-					.setTool(Analytics.Tool.ai)
-					.setCategory(Analytics.Category.chatOperations)
-					.setEvent(Analytics.Event.openChat)
-					.setType(Analytics.Type.ai)
-					.setSection(Analytics.Section.copilotTab)
-					.setElement(element)
-					.setP3(p3type)
-					.setP5(`chatId_${this.getDialog()?.chatId}`);
+				return;
+			}
 
-				try
-				{
-					analytics.send();
-				}
-				catch (err)
-				{
-					Logger.error(`${this.constructor.name}.sendAnalyticsOpenDialog.send.catch:`, err);
-				}
+			const userCounter = this.getDialog().userCounter;
+
+			const element = this.openingContext === OpenDialogContextType.push
+				? Analytics.Element.push
+				: null
+			;
+			const p3type = userCounter > 2 ? Analytics.CopilotChatType.multiuser : Analytics.CopilotChatType.private;
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.ai)
+				.setCategory(Analytics.Category.chatOperations)
+				.setEvent(Analytics.Event.openChat)
+				.setType(Analytics.Type.ai)
+				.setSection(Analytics.Section.copilotTab)
+				.setElement(element)
+				.setP3(p3type)
+				.setP5(`chatId_${this.getDialog()?.chatId}`);
+
+			try
+			{
+				analytics.send();
+			}
+			catch (err)
+			{
+				Logger.error(`${this.constructor.name}.sendAnalyticsOpenDialog.send.catch:`, err);
 			}
 		}
 

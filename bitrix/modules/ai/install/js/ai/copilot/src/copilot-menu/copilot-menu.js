@@ -1,5 +1,5 @@
 import type { Role } from 'ai.engine';
-import { Tag, Type, Text, Dom } from 'main.core';
+import { Tag, Type, Text, Dom, bind, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu, MenuItem, Popup } from 'main.popup';
 import type { MenuItemOptions } from 'main.popup';
@@ -9,6 +9,7 @@ import { CopilotMenuCommand } from './index';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import 'ui.icon-set.editor';
+import 'ui.icon-set.crm';
 import { Label, LabelColor, LabelSize } from 'ui.label';
 import { Loader } from 'main.loader';
 
@@ -51,6 +52,7 @@ export const CopilotMenuEvents = Object.freeze({
 export type CopilotMenuItem = CopilotMenuItemAbility | CopilotMenuItemDelimiter;
 
 type CopilotMenuItemAbility = {
+	id: string;
 	code: string;
 	text: string;
 	icon?: string;
@@ -60,31 +62,35 @@ type CopilotMenuItemAbility = {
 	arrow?: boolean;
 	href?: string;
 	notHighlight?: boolean;
+	highlightText?: boolean;
 	disabled?: boolean;
 	command?: Function | CopilotMenuCommand;
 	labelText?: string;
+	isFavourite?: boolean;
+	isShowFavouriteIconOnHover?: boolean;
 }
 
 type CopilotMenuItemDelimiter = {
 	separator: boolean;
 	title?: string;
 	section?: string;
+	isNew?: boolean;
 }
 
 export class CopilotMenu extends EventEmitter
 {
 	#keyboardMenu: KeyboardMenu;
 	#menuItems: CopilotMenuItem[];
-	#filter: string;
 	#cacheable: boolean;
 	#keyboardControlOptions: CopilotMenuKeyboardControlOptions;
 	#forceTop: boolean = true;
 	#autoHide: boolean = false;
-	#angle: boolean | {offset: number, position?: ("top" | "bottom" | "left" | "right")};
+	#angle: boolean | { offset: number, position?: ("top" | "bottom" | "left" | "right") };
 	#bordered: boolean = true;
 	#roleInfo: CopilotMenuItemRoleInfo;
 	#currentRole: Role;
 	#roleInfoContainer: HTMLElement;
+	#loader: Loader;
 
 	constructor(options: CopilotMenuOptions)
 	{
@@ -167,21 +173,7 @@ export class CopilotMenu extends EventEmitter
 		return this.#keyboardMenu?.getMenu()?.getPopupWindow()?.isShown();
 	}
 
-	setFilter(filter: string)
-	{
-		return;
-
-		// eslint-disable-next-line no-unreachable
-		this.#filter = Type.isString(filter) ? filter : '';
-
-		if (this.#getMenu())
-		{
-			this.#closeAllSubmenus();
-			this.#filterMenuItems();
-		}
-	}
-
-	setBindElement(bindElement: HTMLElement, offset: { left: number, top: number})
+	setBindElement(bindElement: HTMLElement, offset: { left: number, top: number })
 	{
 		this.#getMenu().getPopupWindow().setBindElement(bindElement);
 		this.#getMenu().getPopupWindow().setOffset({
@@ -248,38 +240,131 @@ export class CopilotMenu extends EventEmitter
 		this.#currentRole.name = role.name;
 	}
 
+	setItemIsFavourite(itemCode: string, isFavourite: boolean): void
+	{
+		const itemContainer = this.#getMenu().getMenuItem(itemCode)?.getContainer();
+
+		if (!itemContainer)
+		{
+			return;
+		}
+
+		const favouriteLabelWrapper = itemContainer.querySelector('.ai__copilot-menu_item-favourite');
+
+		if (!favouriteLabelWrapper)
+		{
+			return;
+		}
+
+		Dom.replace(favouriteLabelWrapper, this.#renderFavouriteLabel(itemCode, isFavourite));
+	}
+
+	insertItemBefore(itemCode: string, insertedItem: CopilotMenuItem): void
+	{
+		const menuItem = this.#getMenuItem(insertedItem, false);
+
+		this.#getMenu().addMenuItem(menuItem, itemCode);
+	}
+
+	insertItemAfterRole(insertedItem: CopilotMenuItem): void
+	{
+		const roleItemPosition = this.#getMenu().getMenuItemPosition('role-item');
+		const menuItemAfterRoleItem = this.#getMenu().getMenuItems()[roleItemPosition + 1];
+
+		this.insertItemBefore(menuItemAfterRoleItem.getId(), insertedItem);
+	}
+
+	insertItemAfter(itemCode: string, insertedItem: CopilotMenuItem): void
+	{
+		const menuItemAfterTarget = this.#getMenu()
+			.getMenuItems()[this.#getMenu().getMenuItemPosition(itemCode) + 1];
+
+		this.insertItemBefore(menuItemAfterTarget.getId(), insertedItem);
+	}
+
+	removeItem(itemCode: string): void
+	{
+		this.#getMenu().removeMenuItem(itemCode);
+	}
+
+	setLoader(): void
+	{
+		const popupContainer = this.#getMenu().getPopupWindow()?.getPopupContainer();
+
+		if (!popupContainer)
+		{
+			return;
+		}
+
+		const fade = Tag.render`<div class="ai__copilot-menu-popup_fade"></div>`;
+
+		Dom.append(fade, popupContainer);
+
+		this.#loader = new Loader({
+			size: 55,
+			target: popupContainer,
+			color: getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary') || '#8e52ec',
+		});
+
+		this.#loader.show();
+	}
+
+	removeLoader(): void
+	{
+		const popupContainer = this.#getMenu().getPopupWindow()?.getPopupContainer();
+
+		if (!popupContainer)
+		{
+			return;
+		}
+
+		const fade = popupContainer.querySelector('.ai__copilot-menu-popup_fade');
+
+		Dom.remove(fade);
+
+		this.#loader.destroy();
+		this.#loader = null;
+	}
+
+	updateMenuItemsExceptRoleItem(copilotMenuItems: CopilotMenuItem[]): void
+	{
+		this.#removeMenuItemsExceptRoleItem();
+		this.#addMenuItems(copilotMenuItems);
+	}
+
+	#removeMenuItemsExceptRoleItem(): void
+	{
+		const menuItems = this.#getMenu().getMenuItems();
+
+		menuItems.forEach((currentMenuItem) => {
+			const id = currentMenuItem.getId();
+
+			if (id === 'role-item')
+			{
+				return;
+			}
+
+			requestAnimationFrame(() => {
+				this.#getMenu().removeMenuItem(id);
+			});
+		});
+	}
+
+	#addMenuItems(copilotMenuItems: CopilotMenuItem[]): void
+	{
+		const newMenuItems = this.#getMenuItems(copilotMenuItems);
+
+		newMenuItems.forEach((newMenuItem) => {
+			requestAnimationFrame(() => {
+				this.#getMenu().addMenuItem(newMenuItem);
+			});
+		});
+	}
+
 	#closeAllSubmenus(): void
 	{
 		this.#getMenu().getMenuItems().forEach((menuItem) => {
 			menuItem.closeSubMenu();
-		});
-	}
-
-	#filterMenuItems(): void
-	{
-		this.#getMenu().menuItems = [];
-		const sortedMenuItemsWithAllDelimiters: CopilotMenuItem[] = this.#menuItems.filter((menuItem) => {
-			return menuItem.text.toLowerCase().indexOf(this.#filter ? this.#filter.toLowerCase() : '') === 0 || menuItem.separator;
-		});
-
-		const sortedMenuItems = sortedMenuItemsWithAllDelimiters.filter((menuItem, index, arr) => {
-			return !menuItem.separator || (arr[index + 1] && !arr[index + 1].separator);
-		});
-
-		this.#getMenu().layout.itemsContainer.innerHTML = '';
-		if (sortedMenuItems.length === 0)
-		{
-			Dom.style(this.#getMenu().layout.menuContainer, 'padding', 0);
-			Dom.style(this.#getMenu().getPopupWindow().getPopupContainer(), 'border', 0);
-		}
-		else
-		{
-			Dom.style(this.#getMenu().getPopupWindow().getPopupContainer(), 'border', null);
-			Dom.style(this.#getMenu().layout.menuContainer, 'padding', null);
-		}
-
-		this.#getMenuItems(sortedMenuItems).forEach((menuItem) => {
-			this.#getMenu().addMenuItem(menuItem);
 		});
 	}
 
@@ -410,6 +495,10 @@ export class CopilotMenu extends EventEmitter
 			: null;
 
 		const labelWrapper = label ? Tag.render(`<div>${label}</div>`) : null;
+		const favouriteLabel = Type.isBoolean(item.isFavourite)
+			? this.#renderFavouriteLabel(item.code, item.isFavourite)
+			: null
+		;
 
 		const html = Tag.render`
 			<div class="${this.#getMenuItemClassname(item, isSubmenuItem, item.selected)}">
@@ -417,16 +506,19 @@ export class CopilotMenu extends EventEmitter
 					${menuIcon}
 					<div class="ai__copilot-menu_item-text">${Text.encode(item.text)}</div>
 				</div>
-				<div class="ai__copilot-menu_item-check">
-					${checkIcon.render()}
+				<div class="ai__copilot-menu_item-right">
+					${favouriteLabel}
+					<div class="ai__copilot-menu_item-check">
+						${checkIcon.render()}
+					</div>
+					${labelWrapper}
 				</div>
-				${labelWrapper}
 			</div>
 		`;
 
 		return {
 			html,
-			id: item.code || '',
+			id: item.id || '',
 			text: item.text,
 			href: item.href,
 			className: `menu-popup-no-icon ${item.arrow ? 'menu-popup-item-submenu' : ''}`,
@@ -437,9 +529,44 @@ export class CopilotMenu extends EventEmitter
 		};
 	}
 
+	#renderFavouriteLabel(promptCode: string, isFavourite: boolean = false): HTMLElement
+	{
+		const favouriteIcon = new Icon({
+			icon: Main.BOOKMARK_1,
+			size: 24,
+		});
+
+		const iconWrapperClassname = `ai__copilot-menu_item-favourite ${isFavourite ? '--is-favourite' : ''}`;
+		const title = isFavourite
+			? Loc.getMessage('AI_COPILOT_REMOVE_PROMPT_FROM_FAVOURITE')
+			: Loc.getMessage('AI_COPILOT_ADD_PROMPT_TO_FAVOURITE')
+		;
+
+		const wrapper = Tag.render`
+			<div title="${title}" class="${iconWrapperClassname}">
+				${favouriteIcon.render()}
+			</div>
+		`;
+
+		bind(wrapper, 'click', (event: PointerEvent) => {
+			event.preventDefault();
+			event.stopImmediatePropagation();
+
+			const newIsFavourite = !isFavourite;
+
+			this.emit('set-favourite', {
+				promptCode,
+				isFavourite: newIsFavourite,
+			});
+		});
+
+		return wrapper;
+	}
+
 	#getRoleMenuItem(): MenuItemOptions
 	{
 		return {
+			id: 'role-item',
 			html: this.#getRoleMenuItemHtml(),
 			className: `menu-popup-no-icon ${this.#roleInfo.onclick ? 'menu-popup-item-submenu' : ''} --role-item`,
 			onclick: this.#handleMenuItemClick(this.#roleInfo.onclick).bind(this),
@@ -521,9 +648,19 @@ export class CopilotMenu extends EventEmitter
 			classNames = [...classNames, '--system'];
 		}
 
+		if (item.highlightText)
+		{
+			classNames = [...classNames, '--highlight-text'];
+		}
+
 		if (item.selected)
 		{
 			classNames = [...classNames, '--selected'];
+		}
+
+		if (item.isShowFavouriteIconOnHover)
+		{
+			classNames = [...classNames, '--favourite-icon-on-hover'];
 		}
 
 		return classNames.join(' ');
@@ -563,8 +700,8 @@ export class CopilotMenu extends EventEmitter
 	{
 		const loaderSize = 18;
 		const loaderColor = getComputedStyle(document.body.querySelector('.ai__copilot-scope')).getPropertyValue('--ai__copilot_color-main');
-		const loaderWrapper = Tag.render`<div class="ai__copilot-menu_item-loader" style="position: relative; width: ${loaderSize}px; height: ${loaderSize}px;"></div>`;
-		const menuItemContent = menuItem.getContainer().querySelector('.ai__copilot-menu_item');
+		const loaderWrapper = Tag.render`<div class="ai__copilot-menu_item-loader"></div>`;
+		const menuItemContent = menuItem.getContainer().querySelector('.ai__copilot-menu_item-right');
 
 		Dom.addClass(menuItem.getContainer(), 'menu-popup-item-loading');
 		Dom.append(loaderWrapper, menuItemContent);
@@ -589,11 +726,34 @@ export class CopilotMenu extends EventEmitter
 	#getSectionSeparatorMenuItem(item: CopilotMenuItemDelimiter): MenuItemOptions
 	{
 		return {
-			id: item.title || '',
+			id: item.code || item.title || '',
 			text: item.title,
 			title: item.title,
 			delimiter: true,
+			html: item.title
+				? `
+					<span>${item.title}</span>
+					${item.isNew ? this.#renderSeparatorMenuItemNewLabel().outerHTML : ''}
+				`
+				: undefined,
 		};
+	}
+
+	#renderSeparatorMenuItemNewLabel(): HTMLElement
+	{
+		return this.#renderSeparatorMenuItemLabel(Loc.getMessage('AI_COPILOT_MENU_ITEM_LABEL_NEW'));
+	}
+
+	#renderSeparatorMenuItemLabel(text: string): HTMLElement
+	{
+		const newLabel = new Label({
+			text,
+			color: Label.Color.PRIMARY,
+			size: Label.Size.SM,
+			fill: true,
+		});
+
+		return Tag.render`<span class="ai__copilot-menu_delimiter-label">${newLabel.render().outerHTML}</span>`;
 	}
 
 	#initRoleInfoFromOptions(roleInfoOption: CopilotMenuItemRoleInfo): void

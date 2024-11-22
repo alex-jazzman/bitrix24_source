@@ -9,7 +9,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { getDiskFolderId } = require('tasks/disk');
-	const { PullCommand, TaskMark, TaskPriority, TaskField: Field, TaskActionAccess } = require('tasks/enum');
+	const { PullCommand, TaskMark, TaskPriority, TaskField: Field, TaskActionAccess, ViewMode, WorkModeByViewMode } = require('tasks/enum');
 	const { ParentTask } = require('tasks/layout/task/parent-task');
 	const { LikesPanel } = require('tasks/layout/task/view-new/ui/likes-panel');
 	const { ActionButtons } = require('tasks/layout/task/view-new/ui/action-buttons');
@@ -53,11 +53,19 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		updateSubTasks,
 		updateRelatedTasks,
 		selectDatePlan,
+		setAttachedFiles,
+		updateDeadline,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const { fetch, setFromServer } = require('tasks/statemanager/redux/slices/tasks-results');
 	const { observeCreationError } = require('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer');
 	const { AnalyticsEvent } = require('analytics');
+
+	const { setKanbanSettings } = require('tasks/statemanager/redux/slices/kanban-settings/action');
+	const { taskStageUpserted } = require('tasks/statemanager/redux/slices/tasks-stages');
+	const { updateTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages/thunk');
+	const { selectTaskStageByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks-stages');
+	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
 
 	/**
 	 * @class TaskView
@@ -183,6 +191,24 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					[PullCommand.TASK_RESULT_DELETE]: () => this.#getTaskResultData(),
 				},
 			});
+
+			this.view = (!this.props.view || this.props.view === ViewMode.LIST) ? ViewMode.KANBAN : this.props.view;
+			this.kanbanOwnerId = this.view === ViewMode.PLANNER ? this.props.kanbanOwnerId : this.props.userId;
+			this.initialStageId = selectTaskStageByTaskIdOrGuid(
+				store.getState(),
+				this.#taskId,
+				this.#task?.guid,
+				this.view,
+				this.kanbanOwnerId,
+			)?.stageId;
+			this.initialStages = selectStages(
+				store.getState(),
+				getUniqId(
+					this.view,
+					this.#task?.groupId,
+					this.kanbanOwnerId,
+				),
+			);
 
 			this.commentsOpener = new CommentsOpener();
 
@@ -334,6 +360,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					params: {
 						WITH_RESULT_DATA: (withResultData ? 'Y' : 'N'),
 						WITH_CHECKLIST_DATA: (withChecklistData ? 'Y' : 'N'),
+						WORK_MODE: WorkModeByViewMode[this.view],
+						KANBAN_OWNER_ID: this.kanbanOwnerId,
 					},
 				})
 					.setHandler((response) => {
@@ -356,11 +384,21 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						}
 						this.checklistController.setGroupId(response.data.groupId);
 
+						this.#onAfterGetTaskData(response);
+
 						return resolve(true);
 					})
 					.call(false)
 				;
 			});
+		}
+
+		#onAfterGetTaskData(response)
+		{
+			const stages = response.data?.kanban?.stages;
+			const stageId = response.data?.taskstage?.[0]?.stageId;
+
+			this.#animateStageField(stageId, stages);
 		}
 
 		#getDiskFolderId()
@@ -372,19 +410,56 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		#updateReduxStore(responseData)
 		{
-			const { tasks = [], users = [], groups = [], relatedtaskids = [], results } = responseData || {};
+			const {
+				tasks = [],
+				users = [],
+				groups = [],
+				relatedtaskids = [],
+				taskstage = [],
+				kanban = null,
+				results,
+			} = responseData || {};
+
 			const actions = [
 				tasks.length > 0 && tasksUpserted(tasks),
 				users.length > 0 && usersUpserted(users),
 				groups.length > 0 && groupsUpserted(groups),
 				relatedtaskids.length > 0 && setRelatedTasks({ taskId: this.#taskId, relatedTasks: relatedtaskids }),
 				Type.isArray(results) && setFromServer({ taskId: this.#taskId, results }),
+				taskstage.length > 0 && taskStageUpserted(taskstage),
+				kanban && setKanbanSettings(this.#prepareKanbanData(kanban, this.getCurrentTaskProjectId(tasks))),
 			].filter(Boolean);
 
 			if (actions.length > 0)
 			{
 				dispatch(batchActions(actions));
 			}
+		}
+
+		/**
+		 * @param {array} tasks
+		 * @return {number}
+		 */
+		getCurrentTaskProjectId(tasks)
+		{
+			return tasks.find((task) => task.id === Number(this.#taskId))?.groupId || null;
+		}
+
+		/**
+		 * @param {object} data
+		 * @param {number} projectId
+		 * @return {object}
+		 */
+		#prepareKanbanData(data, projectId)
+		{
+			return {
+				view: this.view,
+				projectId,
+				userId: this.kanbanOwnerId,
+				stages: data?.stages,
+				canEdit: data?.canedit,
+				canMoveStage: data?.canmovestage,
+			};
 		}
 
 		#getTaskResultData()
@@ -611,6 +686,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					const removedFiles = this.#task.files.filter(({ objectId }) => !newObjectIds.has(objectId));
 					const hasRemovedFiles = removedFiles.length > 0;
 					const hasAddedFilesFromDisk = data.value.some((file) => file.isDiskFile);
+					const newAttachedFiles = data.value.filter((file) => newObjectIds.has(file.objectId) && !file.hasError);
 
 					if (hasRemovedFiles || hasAddedFilesFromDisk)
 					{
@@ -622,6 +698,15 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 								taskId: this.#taskId,
 								reduxFields,
 								serverFields,
+							}),
+						);
+					}
+					else if (!isEqual(this.#task.files, newAttachedFiles))
+					{
+						dispatch(
+							setAttachedFiles({
+								taskId: this.#taskId,
+								files: newAttachedFiles,
 							}),
 						);
 					}
@@ -640,7 +725,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						return !newObjectIds.has(file.objectId);
 					});
 
-					if (!isEqual(this.#task.uploadedFiles, notAttachedFiles) && notAttachedFiles.length > 0)
+					if (!isEqual(this.#task.uploadedFiles, notAttachedFiles))
 					{
 						dispatch(
 							updateUploadingFiles({
@@ -943,8 +1028,26 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						checklistController: this.checklistController,
 						checklistLoading: this.state.checklistLoading,
 						analyticsLabel: this.props.analyticsLabel,
+						view: this.view,
+						isStageSelectorInitiallyHidden: this.#isStageSelectorInitiallyHidden(),
+						kanbanOwnerId: this.kanbanOwnerId,
 					}),
 				),
+			);
+		}
+
+		#isStageSelectorInitiallyHidden()
+		{
+			return this.view === ViewMode.KANBAN && (
+				(
+					// backlog task
+					(
+						this.#task?.groupId !== 0
+						&& Number.isInteger(this.initialStageId)
+						&& (Array.isArray(this.initialStages) && this.initialStages.length === 0)
+					)
+					|| this.#task?.groupId === 0
+				)
 			);
 		}
 
@@ -1015,20 +1118,25 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		{
 			if (field === Field.STAGE)
 			{
-				void BX.ajax.runAction('tasksmobile.Task.updateProjectKanbanTaskStage', {
-					data: {
-						id: this.#taskId,
+				dispatch(
+					updateTaskStage({
+						taskId: this.#taskId,
 						stageId: value,
 						projectId: this.#task.groupId,
-						order: 'ACTIVITY',
-						extra: {
-							filterParams: {},
-						},
-						searchParams: {
-							ownerId: env.userId,
-						},
-					},
-				});
+						view: this.view,
+						userId: this.props.userId,
+					}),
+				);
+			}
+			else if (field === Field.DEADLINE)
+			{
+				dispatch(
+					updateDeadline({
+						taskId: this.#taskId,
+						deadline: value * 1000,
+						userId: this.props.userId,
+					}),
+				);
 			}
 			else
 			{
@@ -1062,8 +1170,71 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						taskId: this.#taskId,
 						reduxFields,
 						serverFields,
+						withStageData: field === Field.PROJECT ? 'Y' : 'N',
+						userId: this.kanbanOwnerId,
 					}),
-				);
+				)
+					.then((response) => {
+						this.#onAfterFieldUpdate(field, value, response);
+					})
+					.catch(console.error);
+			}
+		}
+
+		#onAfterFieldUpdate(field, value, response)
+		{
+			if (
+				field === Field.PROJECT
+				&& response?.payload?.data?.isSuccess
+			)
+			{
+				this.#onAfterSaveProjectField(value, response);
+			}
+		}
+
+		#onAfterSaveProjectField(value, response)
+		{
+			if (this.view === ViewMode.KANBAN)
+			{
+				if (value === 0)
+				{
+					this.formRef?.getField(Field.STAGE)?.hide();
+				}
+				else
+				{
+					const data = response?.payload?.data;
+					const stages = data?.kanban?.stages;
+
+					this.#animateStageField(data?.stageId, stages);
+				}
+			}
+		}
+
+		#animateStageField(stageId, stages)
+		{
+			if (!this.formRef || !this.formRef?.getField(Field.STAGE))
+			{
+				this.initialStageId = stageId;
+				this.initialStages = stages;
+
+				return;
+			}
+
+			if (Array.isArray(stages) && stages.length > 0)
+			{
+				const stage = stages.find(({ id, aliasId }) => id === stageId || aliasId === stageId);
+				if (stage)
+				{
+					this.formRef?.getField(Field.STAGE)?.show();
+				}
+				else
+				{
+					this.formRef?.getField(Field.STAGE)?.hide();
+				}
+			}
+			else
+			{
+				this.formRef?.getField(Field.STAGE)?.hide();
 			}
 		}
 

@@ -9,7 +9,6 @@ return [
 	'js' => 'script.js',
 	'rel' => [
 		'ui.qrauthorization',
-		'landing.widget',
 		'main.core',
 	],
 	'skip_core' => false,

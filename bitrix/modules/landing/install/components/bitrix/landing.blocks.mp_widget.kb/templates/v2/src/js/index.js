@@ -1,8 +1,12 @@
-import { Widget } from 'landing.widget';
-
-export class KbWidgetV2
+export class KbV2 extends BX.Landing.Widget.Base
 {
 	constructor(element, options)
+	{
+		super(element);
+		this.initialize(element, options);
+	}
+
+	initialize(element, options)
 	{
 		if (!element)
 		{
@@ -23,8 +27,7 @@ export class KbWidgetV2
 			gridExtendedClass: 'extended',
 			buttonHideClass: 'hide',
 		};
-		const widget = new Widget(element, widgetOptions);
-		widget.deleteContextDependentContainer();
-		widget.toggleExtendViewButtonBehavior();
+		this.deleteContextDependentContainer(widgetOptions);
+		this.toggleExtendViewButtonBehavior(widgetOptions);
 	}
 }

@@ -16,7 +16,7 @@ module.exports = {
 
 					return {
 						code: transformedCode,
-						map: null,
+						//map: null,
 					};
 				},
 			},

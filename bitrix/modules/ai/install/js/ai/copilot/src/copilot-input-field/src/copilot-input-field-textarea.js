@@ -28,26 +28,7 @@ export class CopilotInputFieldTextarea extends EventEmitter
 				contenteditable="true"></div>
 		`;
 
-		const observer = new MutationObserver((mutations) => {
-			for (const mutation of mutations)
-			{
-				if (mutation.target.parentElement?.tagName !== 'STRONG')
-				{
-					continue;
-				}
-
-				const nodeText = mutation.target.nodeValue || '';
-				const openBracketPosition = [...nodeText].indexOf('[');
-				const closeBracketPosition = [...nodeText].indexOf(']');
-
-				if (closeBracketPosition === -1 || openBracketPosition === -1)
-				{
-					const pos = this.getCursorPosition();
-					mutation.target.parentElement.replaceWith(...mutation.target.parentElement.childNodes);
-					this.setCursorPosition(pos);
-				}
-			}
-		});
+		const observer = new MutationObserver(this.#observeRemovingStrongTagAfterDeletingBracket.bind(this));
 
 		observer.observe(this.#container, {
 			childList: true,
@@ -62,6 +43,28 @@ export class CopilotInputFieldTextarea extends EventEmitter
 		});
 
 		return this.#container;
+	}
+
+	#observeRemovingStrongTagAfterDeletingBracket(mutations: MutationRecord[]): void
+	{
+		for (const mutation of mutations)
+		{
+			if (mutation.target.parentElement?.tagName !== 'STRONG')
+			{
+				continue;
+			}
+
+			const nodeText = mutation.target.nodeValue || '';
+			const openBracketPosition = [...nodeText].indexOf('[');
+			const closeBracketPosition = [...nodeText].indexOf(']');
+
+			if (closeBracketPosition === -1 || openBracketPosition === -1)
+			{
+				const pos = this.getCursorPosition();
+				mutation.target.parentElement.replaceWith(...mutation.target.parentElement.childNodes);
+				this.setCursorPosition(pos);
+			}
+		}
 	}
 
 	set value(text: string): void
@@ -172,23 +175,31 @@ export class CopilotInputFieldTextarea extends EventEmitter
 
 		const selection = window.getSelection();
 		const cursorPosition = this.getCursorPosition();
-		if (selection.anchorNode.parentElement?.tagName === 'STRONG' && selection.baseOffset === selection.anchorNode.length)
+
+		if (
+			selection.anchorNode.parentElement?.tagName === 'STRONG'
+			&& selection.focusOffset === selection.anchorNode.length
+			&& selection.anchorNode.textContent.at(0) === '['
+		)
 		{
 			let nextNode = selection.anchorNode.parentElement.nextSibling;
-			if (!nextNode)
+
+			if (!nextNode || nextNode.nodeName === 'BR')
 			{
 				nextNode = document.createTextNode(' ');
-				Dom.append(nextNode, selection.anchorNode.parentNode.parentNode);
-				// selection.anchorNode.parentNode.parentNode.appendChild(nextNode);
+				Dom.insertAfter(nextNode, selection.anchorNode.parentElement);
 			}
-			selection.anchorNode.textContent = selection.anchorNode.textContent.slice(0, -1);
+
+			selection.anchorNode.textContent = selection.anchorNode.textContent.slice(0, -e.data.length);
 			nextNode.textContent = e.data + nextNode.textContent;
 			this.setCursorPosition(cursorPosition);
+
 			e.preventDefault();
 			e.stopPropagation();
 
 			return;
 		}
+
 		this.emit('input', this.value);
 	}
 }

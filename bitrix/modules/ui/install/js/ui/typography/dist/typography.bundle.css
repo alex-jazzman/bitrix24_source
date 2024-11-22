@@ -6,14 +6,18 @@
 	--ui-typography-space-inline: var(--ui-space-inline-sm) var(--ui-space-inline-md);
 	--ui-typography-block-space-stack: var(--ui-space-stack-md);
 	--ui-typography-block-space-inline: var(--ui-space-stack-md);
-	--ui-typography-block-space: var(--ui-typography-block-space-stack) 0;
 
 	--ui-typography-color-text: var(--ui-color-text-primary);
 	--ui-typography-color-link: var(--ui-color-link-primary-base);
 }
 
+.ui-typography-container.--collapsed {
+	margin: calc(var(--ui-typography-block-space-stack) * -1) 0;
+}
+
 .ui-typography-paragraph {
-	margin: var(--ui-typography-block-space);
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
 	padding: 0;
 
 	font-family: var(--ui-typography-font-family), sans-serif;
@@ -72,12 +76,41 @@
 	min-width: 100%;
 }
 
+.ui-typography-image-container.--error {
+	position: relative;
+	background-color: var(--ui-color-base-03);
+}
+
+.ui-typography-image-container.--error .ui-typography-image {
+	min-width: 100px;
+	min-height: 100px;
+}
+
+.ui-typography-image-container.--error:before {
+	display: block;
+	position: absolute;
+	content: '';
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 50%;
+	height: 50%;
+	-webkit-mask-image: var(--ui-icon-set__path_picture);
+	        mask-image: var(--ui-icon-set__path_picture);
+	-webkit-mask-size: 100%;
+	        mask-size: 100%;
+	-webkit-mask-position: center;
+	        mask-position: center;
+	-webkit-mask-repeat: no-repeat;
+	        mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-15);
+}
+
 .ui-typography-quote {
 	border: 1px solid #e0e2e3;
 	background-color: #f3f6f7;
-	margin: var(--ui-typography-block-space);
-	padding: var(--ui-space-inset-xs);
-	padding-left: var(--ui-space-inset-2xl);
+	margin: var(--ui-typography-block-space-stack) 0;
+	padding: 0 var(--ui-typography-block-space-stack) 0 var(--ui-space-inset-2xl);
 	border-radius: var(--ui-border-radius-sm);
 	position: relative;
 
@@ -85,6 +118,10 @@
 	font-size: var(--ui-typography-font-size);
 	line-height: var(--ui-typography-line-height);
 	color: var(--ui-typography-color-text);
+}
+
+.ui-typography-quote:empty:after {
+	content: '\00A0';
 }
 
 .ui-typography-quote:before {
@@ -102,8 +139,8 @@
 .ui-typography-code {
 	display: block;
 	background-color: #fdf6e3;
-	padding: var(--ui-space-inset-xs);
-	margin: var(--ui-typography-block-space);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-sm2);
+	margin: var(--ui-typography-block-space-stack) 0;
 	overflow-x: auto;
 	position: relative;
 	-moz-tab-size: 2;
@@ -172,7 +209,8 @@
 	border-spacing: 0;
 	overflow-y: scroll;
 	overflow-x: scroll;
-	margin: var(--ui-typography-block-space);
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
 }
 
 .ui-typography-table-row {
@@ -208,7 +246,8 @@
 	background: #fcfcfc;
 	border: 1px solid #eee;
 	border-radius: 10px;
-	margin: var(--ui-typography-block-space);
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
 
 	font-family: var(--ui-typography-font-family), sans-serif;
 	font-size: var(--ui-typography-font-size);
@@ -266,7 +305,8 @@
 .ui-typography-ol,
 .ui-typography-ul {
 	padding: 0 0 0 24px;
-	margin: var(--ui-typography-block-space);
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
 
 	font-family: var(--ui-typography-font-family), sans-serif;
 	font-size: var(--ui-typography-font-size);

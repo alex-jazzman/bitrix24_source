@@ -2,9 +2,9 @@
 
 import { Type } from 'main.core';
 import { $createParagraphNode, $isElementNode, $isRootNode, $isTextNode } from 'ui.lexical.core';
-import type { ElementNode, LexicalNode } from 'ui.lexical.core';
-import type TextEditor from './text-editor';
-import type { SchemeNodeValidation, SchemeValidationOptions } from './types/scheme-validation-options';
+import { type ElementNode, type LexicalNode } from 'ui.lexical.core';
+import { type TextEditor } from './text-editor';
+import { type SchemeNodeValidation, type SchemeValidationOptions } from './types/scheme-validation-options';
 
 export default class SchemeValidation
 {

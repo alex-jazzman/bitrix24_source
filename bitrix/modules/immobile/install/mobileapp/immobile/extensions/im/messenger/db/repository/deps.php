@@ -16,6 +16,7 @@ return [
 	'bundle' => [
 		'./src/option',
 		'./src/recent',
+		'./src/counter',
 		'./src/dialog',
 		'./src/file',
 		'./src/user',

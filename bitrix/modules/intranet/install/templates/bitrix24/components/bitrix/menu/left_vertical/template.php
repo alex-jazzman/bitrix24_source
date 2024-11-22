@@ -27,7 +27,7 @@ $sumHiddenCounters = 0;
 $arHiddenItemsCounters = array();
 $arAllItemsCounters = array();
 $groupPopupExists = false;
-$mainPage = new MainPage\Page;
+$mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 
 ?>
 <div class="menu-items-block menu-items-view-mode" id="menu-items-block">
@@ -419,7 +419,7 @@ $arJSParams = array(
 	'workgroupsCounterData' => $arResult["WORKGROUP_COUNTER_DATA"],
 	'availablePresetTools' => $arResult['PRESET_TOOLS_AVAILABILITY'],
 	'settingsPath' => $arResult['SETTINGS_PATH'],
-	'isMainPageEnabled' => $mainPage->enabled() ? 'Y' : 'N',
+	'isMainPageEnabled' => $mainPage->isEnabled() ? 'Y' : 'N',
 );
 ?>
 

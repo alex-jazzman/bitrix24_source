@@ -36,7 +36,7 @@ import BasePlugin from '../base-plugin';
 import ImageDialog from './image-dialog';
 import { $createImageNode, ImageNode, type ImagePayload } from './image-node';
 
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
 import './image-plugin.css';

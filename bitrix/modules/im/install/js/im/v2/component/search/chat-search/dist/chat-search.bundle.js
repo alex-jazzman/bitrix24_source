@@ -217,27 +217,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 	  }
 	  getMenuItems() {
-	    return [this.getOpenItem(), this.getCallItem(), this.getOpenProfileItem(), this.getChatsWithUserItem()];
+	    return [this.getOpenItem(), this.getOpenProfileItem(), this.getChatsWithUserItem()];
 	  }
 	  getOpenItem() {
 	    return {
 	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN'),
 	      onclick: () => {
 	        im_public.Messenger.openChat(this.context.dialogId);
-	        this.menuInstance.close();
-	      }
-	    };
-	  }
-	  getCallItem() {
-	    const chatCanBeCalled = this.callManager.chatCanBeCalled(this.context.dialogId);
-	    const chatIsAllowedToCall = this.permissionManager.canPerformAction(im_v2_const.ChatActionType.call, this.context.dialogId);
-	    if (!chatCanBeCalled || !chatIsAllowedToCall) {
-	      return null;
-	    }
-	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_CALL_2'),
-	      onclick: () => {
-	        this.callManager.startCall(this.context.dialogId);
 	        this.menuInstance.close();
 	      }
 	    };

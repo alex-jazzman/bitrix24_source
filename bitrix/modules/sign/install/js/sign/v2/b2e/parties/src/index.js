@@ -1,11 +1,14 @@
-import { Loc, Tag, Dom, Type } from 'main.core';
-import { CompanySelector, type Provider } from 'sign.v2.b2e.company-selector';
-import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
-import { DocumentValidation } from 'sign.v2.b2e.document-validation';
+import { Dom, Loc, Tag, Type } from 'main.core';
 import { type Role } from 'sign.v2.api';
+import { CompanySelector, type Provider } from 'sign.v2.b2e.company-selector';
+import { DocumentValidation } from 'sign.v2.b2e.document-validation';
+import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
+import type { BlankSelectorConfig } from 'sign.v2.blank-selector';
 import { Hint } from 'sign.v2.helper';
 
 const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
+
+type PartiesData = { entityType: string, entityId: ?number, role?: Role };
 
 export class Parties
 {
@@ -17,11 +20,16 @@ export class Parties
 		blocks: {
 			companyContent: HTMLDivElement = null,
 			representativeContent: HTMLDivElement = null,
+			validationEditorLayout: HTMLDivElement = null,
 		},
 	};
 
-	constructor(region: string)
+	#hideEditor: boolean;
+
+	constructor(blankSelectorConfig: BlankSelectorConfig & { hideValidationParty?: boolean })
 	{
+		const { region, hideValidationParty = true } = blankSelectorConfig;
+		this.#hideEditor = hideValidationParty ?? false;
 		this.#representativeSelector = new RepresentativeSelector({});
 		this.#companySelector = new CompanySelector({ region });
 		this.#documentValidation = new DocumentValidation();
@@ -30,6 +38,11 @@ export class Parties
 	setEntityId(entityId: number): void
 	{
 		this.#companySelector.setOptions({ entityId });
+	}
+
+	setInitiatedByType(initiatedByType: string): void
+	{
+		this.#companySelector.setInitiatedByType(initiatedByType);
 	}
 
 	loadCompany(companyUid: string): void
@@ -85,14 +98,18 @@ export class Parties
 				${this.#documentValidation.getReviewerLayout()}
 			</div>
 		`;
-		const validationEditorLayout = Tag.render`
-			<div class="sign-b2e-settings__item --editor">
-				<p class="sign-b2e-settings__item_title">
-					${Loc.getMessage('SIGN_PARTIES_ITEM_VALIDATION_EDITOR')}
-				</p>
-				${this.#documentValidation.getEditorLayout()}
-			</div>
-		`;
+
+		if (!this.#hideEditor)
+		{
+			this.#ui.blocks.validationEditorLayout = Tag.render`
+				<div class="sign-b2e-settings__item --editor">
+					<p class="sign-b2e-settings__item_title">
+						${Loc.getMessage('SIGN_PARTIES_ITEM_VALIDATION_EDITOR')}
+					</p>
+					${this.#documentValidation.getEditorLayout()}
+				</div>
+			`;
+		}
 
 		return Tag.render`
 			<div>
@@ -101,7 +118,7 @@ export class Parties
 				${providerLayout}
 				${this.#ui.blocks.representativeContent}
 				${validationReviewerLayout}
-				${validationEditorLayout}
+				${this.#ui.blocks.validationEditorLayout}
 			</div>
 		`;
 	}
@@ -140,7 +157,7 @@ export class Parties
 		return this.#companySelector.getSelectedCompanyProvider();
 	}
 
-	getParties(): { [key: string]: { entityType: string, entityId: ?number, role?: Role } }
+	getParties(): Record<string, PartiesData> & { validation: Array<PartiesData> }
 	{
 		const validationData = this.#documentValidation.getValidationData();
 
@@ -153,8 +170,8 @@ export class Parties
 				entityType: 'company',
 				entityId: this.#companySelector.getCompanyId(),
 			},
-			validation: Object.keys(validationData).map((role) => {
-				return { entityType: 'user', entityId: validationData[role], role };
+			validation: Object.entries(validationData).map(([role, entityId]) => {
+				return { entityType: 'user', entityId, role };
 			}),
 		};
 	}

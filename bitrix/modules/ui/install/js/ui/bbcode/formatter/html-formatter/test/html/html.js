@@ -45,9 +45,24 @@ export function quote(content = '')
 	return `<blockquote class="ui-typography-quote">${content}</blockquote>`;
 }
 
-export function mention(url, content = '')
+export function mention(url, id, entityId, content = '')
 {
-	return `<a href="${url}" class="ui-typography-mention">${content}</a>`;
+	return `<a href="${url}" class="ui-typography-mention" data-mention-entity-id="${entityId}" data-mention-id="${id}">${content}</a>`;
+}
+
+export function user(url, id, content = '')
+{
+	return mention(url, id, 'user', content);
+}
+
+export function department(url, id, content = '')
+{
+	return mention(url, id, 'department', content);
+}
+
+export function project(url, id, content = '')
+{
+	return mention(url, id, 'project', content);
 }
 
 export function br(count = 1)

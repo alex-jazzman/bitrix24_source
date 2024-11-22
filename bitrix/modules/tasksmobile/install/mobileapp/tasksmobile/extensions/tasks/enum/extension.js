@@ -9,8 +9,25 @@ jn.define('tasks/enum', (require, exports, module) => {
 		DEADLINE: 'DEADLINE',
 	};
 
+	const WorkMode = {
+		GROUP: 'G',
+		USER: 'U',
+		TIMELINE: 'P',
+		ACTIVE_SPRINT: 'A',
+	};
+
+	const WorkModeByViewMode = {
+		[ViewMode.LIST]: ViewMode.LIST,
+		[ViewMode.KANBAN]: WorkMode.GROUP,
+		[ViewMode.PLANNER]: WorkMode.USER,
+		[ViewMode.DEADLINE]: WorkMode.TIMELINE,
+	};
+
 	const DeadlinePeriod = {
 		PERIOD_OVERDUE: 'PERIOD1',
+		PERIOD_TODAY: 'PERIOD2',
+		PERIOD_THIS_WEEK: 'PERIOD3',
+		PERIOD_NEXT_WEEK: 'PERIOD4',
 		PERIOD_NO_DEADLINE: 'PERIOD5',
 		PERIOD_OVER_TWO_WEEKS: 'PERIOD6',
 	};
@@ -183,6 +200,8 @@ jn.define('tasks/enum', (require, exports, module) => {
 
 	module.exports = {
 		ViewMode,
+		WorkMode,
+		WorkModeByViewMode,
 		DeadlinePeriod,
 		FeatureId,
 		PullCommand,

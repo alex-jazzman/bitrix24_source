@@ -63,6 +63,7 @@ $APPLICATION->IncludeComponent(
 		],
 		'HEADERS_SECTIONS' => $headerSections,
 		'PERFORMANCE' => $arResult['performance'],
+		'PATH_TO_MERGE' => $arResult['pathToMerge'],
 	],
 	$component
 );

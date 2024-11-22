@@ -1,3 +1,5 @@
+import { DialogId } from "../../../types/common";
+
 type CreateMessageOptions = {
 	showUsername?: boolean,
 	showAvatar?: boolean,
@@ -12,4 +14,5 @@ type CreateMessageOptions = {
 	audioRate?: number,
 	showAvatarsInReaction?: boolean,
 	initialPostMessageId?: string,
+	dialogId: DialogId,
 };

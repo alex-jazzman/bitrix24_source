@@ -9,12 +9,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const LayoutsWithoutLastOpenedElement = new Set([im_v2_const.Layout.channel.name, im_v2_const.Layout.market.name]);
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _lastOpenedElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastOpenedElement");
+	var _deleteLastOpenedElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteLastOpenedElement");
 	var _onGoToMessageContext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onGoToMessageContext");
 	var _onDesktopReload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDesktopReload");
 	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	var _isSameChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSameChat");
-	var _onSameChatReopen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSameChatReopen");
+	var _handleSameChatReopen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSameChatReopen");
 	var _handleContextAccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleContextAccess");
+	var _handleLayoutLeave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLayoutLeave");
 	var _getChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChat");
 	class LayoutManager {
 	  static getInstance() {
@@ -30,11 +32,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _getChat, {
 	      value: _getChat2
 	    });
+	    Object.defineProperty(this, _handleLayoutLeave, {
+	      value: _handleLayoutLeave2
+	    });
 	    Object.defineProperty(this, _handleContextAccess, {
 	      value: _handleContextAccess2
 	    });
-	    Object.defineProperty(this, _onSameChatReopen, {
-	      value: _onSameChatReopen2
+	    Object.defineProperty(this, _handleSameChatReopen, {
+	      value: _handleSameChatReopen2
 	    });
 	    Object.defineProperty(this, _isSameChat, {
 	      value: _isSameChat2
@@ -47,6 +52,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _onGoToMessageContext, {
 	      value: _onGoToMessageContext2
+	    });
+	    Object.defineProperty(this, _deleteLastOpenedElement, {
+	      value: _deleteLastOpenedElement2
 	    });
 	    Object.defineProperty(this, _lastOpenedElement, {
 	      writable: true,
@@ -65,8 +73,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (config.entityId) {
 	      this.setLastOpenedElement(config.name, config.entityId);
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _handleLayoutLeave)[_handleLayoutLeave]();
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isSameChat)[_isSameChat](config)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _onSameChatReopen)[_onSameChatReopen](config);
+	      babelHelpers.classPrivateFieldLooseBase(this, _handleSameChatReopen)[_handleSameChatReopen](config);
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics](config);
 	    return im_v2_application_core.Core.getStore().dispatch('application/setLayout', config);
@@ -100,6 +109,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _lastOpenedElement)[_lastOpenedElement][layoutName] = entityId;
 	  }
+	  clearLayoutEntityId() {
+	    const currentLayoutName = this.getLayout().name;
+	    void this.setLayout({
+	      name: currentLayoutName
+	    });
+	    void babelHelpers.classPrivateFieldLooseBase(this, _deleteLastOpenedElement)[_deleteLastOpenedElement](currentLayoutName);
+	  }
 	  isChatContextAvailable(dialogId) {
 	    if (!this.getLayout().contextId) {
 	      return false;
@@ -113,6 +129,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.goToMessageContext, babelHelpers.classPrivateFieldLooseBase(this, _onGoToMessageContext)[_onGoToMessageContext]);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.desktop.onReload, babelHelpers.classPrivateFieldLooseBase(this, _onDesktopReload)[_onDesktopReload].bind(this));
 	  }
+	}
+	function _deleteLastOpenedElement2(layoutName) {
+	  if (LayoutsWithoutLastOpenedElement.has(layoutName)) {
+	    return;
+	  }
+	  delete babelHelpers.classPrivateFieldLooseBase(this, _lastOpenedElement)[_lastOpenedElement][layoutName];
 	}
 	async function _onGoToMessageContext2(event) {
 	  const {
@@ -157,15 +179,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const sameEntityId = entityId && entityId === config.entityId;
 	  return sameLayout && sameEntityId;
 	}
-	function _onSameChatReopen2(config) {
+	function _handleSameChatReopen2(config) {
 	  const {
 	    entityId: dialogId,
 	    contextId
 	  } = config;
-	  const isChannel = im_v2_lib_channel.ChannelManager.isChannel(dialogId);
-	  if (isChannel) {
-	    main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
-	  }
 	  if (contextId) {
 	    main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
 	      messageId: contextId,
@@ -186,13 +204,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    errorCode
 	  } = await im_v2_lib_access.AccessManager.checkMessageAccess(messageId);
 	  if (!hasAccess && errorCode === im_v2_lib_access.AccessErrorCode.messageAccessDeniedByTariff) {
-	    im_v2_lib_analytics.Analytics.getInstance().onGoToContextHistoryLimitClick({
+	    im_v2_lib_analytics.Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({
 	      dialogId
 	    });
 	    im_v2_lib_feature.FeatureManager.chatHistory.openFeatureSlider();
 	    return Promise.resolve(false);
 	  }
 	  return Promise.resolve(true);
+	}
+	function _handleLayoutLeave2() {
+	  const {
+	    entityId: dialogId = ''
+	  } = this.getLayout();
+	  const isChannelOpened = im_v2_lib_channel.ChannelManager.isChannel(dialogId);
+	  if (isChannelOpened) {
+	    main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
+	  }
 	}
 	function _getChat2(dialogId) {
 	  return im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);

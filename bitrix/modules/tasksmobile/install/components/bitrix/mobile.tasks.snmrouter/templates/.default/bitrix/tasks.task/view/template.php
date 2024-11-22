@@ -487,21 +487,21 @@ BX.ready(function(){
 		}
 	);
 
-    setTimeout(function(){
-        if (BX('post-comments-wrap'))
-        {
-            var firstNewComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block-new' }, true);
-            if (firstNewComment)
-            {
-                document.body.scrollTop = firstNewComment.offsetTop;
-            }
-            // else
-            // {
-            //     var firstComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block' }, true);
-            //     document.body.scrollTop = (firstComment ? firstComment.offsetTop : 0);
-            // }
-        }
-    }, 100);
+	setTimeout(function(){
+		if (BX('post-comments-wrap'))
+		{
+			var firstNewComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block-new' }, true);
+			if (firstNewComment)
+			{
+				document.body.scrollTop = firstNewComment.offsetTop;
+			}
+			// else
+			// {
+			// 	var firstComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block' }, true);
+			// 	document.body.scrollTop = (firstComment ? firstComment.offsetTop : 0);
+			// }
+		}
+	}, 100);
 });
 
 if(typeof BX.MSL != 'undefined')

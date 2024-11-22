@@ -61,6 +61,7 @@ if (
 		$uri = new \Bitrix\Main\Web\Uri($redirectLink);
 		$uri->addParams(Context::getCurrent()->getRequest()->getQueryList()->toArray());
 		$arResult['VARIABLES']['dashboardId'] = $dashboardId;
+
 		?>
 			<script>
 				window.history.pushState({}, null, '<?=$uri->getPathQuery()?>');
@@ -80,6 +81,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
 			'DASHBOARD_ID' => $dashboardId,
+			'URL_PARAMS' => $arResult['URL_PARAMS'],
 		],
 		'USE_UI_TOOLBAR' => 'N',
 		'PAGE_MODE' => false,

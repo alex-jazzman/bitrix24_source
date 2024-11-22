@@ -25,7 +25,7 @@ return [
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/logger',
 		'im:messenger/controller/channel-creator',
-		'intranet/invite-opener',
+		'intranet:invite-opener-new',
 		'analytics',
 		'layout/ui/copilot-role-selector',
 	],

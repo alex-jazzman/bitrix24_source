@@ -27,6 +27,11 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 			return 'b_im_message';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			// null is temporary here for json fields, in the future we need an empty object by default {}

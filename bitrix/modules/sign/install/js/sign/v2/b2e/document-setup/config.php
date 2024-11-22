@@ -9,11 +9,12 @@ return [
 	'js' => 'dist/document-setup.bundle.js',
 	'rel' => [
 		'sign.v2.api',
-		'ui.entity-selector',
+		'sign.v2.b2e.sign-dropdown',
 		'sign.v2.document-setup',
+		'sign.v2.helper',
+		'sign.v2.sign-settings',
 		'main.core',
 		'main.date',
-		'sign.v2.helper',
 	],
 	'skip_core' => false,
 ];

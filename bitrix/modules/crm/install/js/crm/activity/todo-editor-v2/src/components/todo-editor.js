@@ -1,6 +1,5 @@
-import { CopilotTextarea, Events as CopilotTextareaEvents } from 'crm.ai.copilot-textarea';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { Browser, Dom, Runtime, Text, Type } from 'main.core';
+import { Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { ElementIds, EventIds } from '../analytics';
@@ -16,8 +15,8 @@ import {
 import { TodoEditorColorSelector } from './color-selector/todo-editor-color-selector';
 import { TodoEditorPingSelector } from './todo-editor-ping-selector';
 import { TodoEditorResponsibleUserSelector } from './todo-editor-responsible-user-selector';
+import { TextEditorComponent, TextEditor } from 'ui.text-editor';
 
-const TEXTAREA_MAX_HEIGHT = 126;
 const ADD_MODE = 'add';
 
 export const Events = {
@@ -41,26 +40,17 @@ export const TodoEditor = {
 		TodoEditorBlocksFile,
 		TodoEditorBlocksAddress,
 		TodoEditorColorSelector,
+		TextEditorComponent,
 	},
-
 	props: {
-		onFocus: Function,
-		onSaveHotkeyPressed: Function,
 		deadline: Date,
 		defaultTitle: {
 			type: String,
 			required: false,
 			default: '',
 		},
-		defaultDescription: {
-			type: String,
-			required: false,
-			default: '',
-		},
-		popupMode: Boolean,
 		currentUser: Object,
 		pingSettings: Object,
-		copilotSettings: Object,
 		colorSettings: Object,
 		mode: {
 			type: String,
@@ -77,17 +67,21 @@ export const TodoEditor = {
 			default: null,
 			required: false,
 		},
+		itemIdentifier: {
+			type: Object,
+			default: {},
+			required: true,
+		},
 		analytics: {
 			type: Object,
 			default: null,
 			required: false,
 		},
+		textEditor: TextEditor,
 	},
 
 	data(): Object
 	{
-		const isCopilotEnabled = Type.isPlainObject(this.copilotSettings);
-
 		const currentDeadline = this.deadline ?? new Date();
 		const calendarDateTo = Runtime.clone(currentDeadline);
 		calendarDateTo.setHours(currentDeadline.getHours() + 1);
@@ -101,15 +95,12 @@ export const TodoEditor = {
 		return {
 			currentActivityId: this.activityId,
 			title: this.defaultTitle,
-			description: this.defaultDescription,
 			currentDeadline,
 			calendarDateTo,
 			pingOffsets: this.pingSettings.selectedValues,
 			colorId: this.colorSettings.selectedValueId,
 			responsibleUserId: this.currentUser.userId,
-			isTextareaToLong: false,
 			wasUsed: false,
-			isCopilotEnabled,
 			blocksData,
 			modeData: this.mode,
 			currentUserData: this.currentUser,
@@ -142,26 +133,8 @@ export const TodoEditor = {
 			return {
 				userId: this.responsibleUserId,
 				activityId: this.currentActivityId,
+				itemIdentifier: this.itemIdentifier,
 			};
-		},
-		placeholderDescription(): string
-		{
-			let code = '';
-
-			if (this.wasUsed)
-			{
-				code = (
-					this.isCopilotEnabled
-						? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1'
-						: 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_MSGVER_1'
-				);
-			}
-			else
-			{
-				code = 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_ROLLED';
-			}
-
-			return this.$Bitrix.Loc.getMessage(code);
 		},
 		placeholderTitle(): string
 		{
@@ -174,21 +147,6 @@ export const TodoEditor = {
 		orderedBlocksData(): BlockSettings[]
 		{
 			return this.blocksData.sort((a, b) => b.sort - a.sort);
-		},
-	},
-
-	watch: {
-		description(): void
-		{
-			Dom.style(this.$refs.textarea, 'height', 'auto');
-			void this.$nextTick(() => {
-				const currentTextareaHeight = this.$refs.textarea.scrollHeight;
-				Dom.style(this.$refs.textarea, 'height', `${currentTextareaHeight}px`);
-				if (this.popupMode === true)
-				{
-					this.isTextareaToLong = currentTextareaHeight > TEXTAREA_MAX_HEIGHT;
-				}
-			});
 		},
 	},
 
@@ -223,7 +181,7 @@ export const TodoEditor = {
 		setData({ title, description, deadline, id, colorId, currentUser, pingOffsets }): void
 		{
 			this.title = title;
-			this.description = description;
+			this.textEditor.setText(description);
 			this.currentDeadline = new Date(deadline);
 			this.currentActivityId = id;
 
@@ -273,53 +231,12 @@ export const TodoEditor = {
 		resetTitleAndDescription(): void
 		{
 			this.setTitle(this.defaultTitle);
-			this.setDescription(this.defaultDescription);
-
-			Dom.style(this.$refs.textarea, 'height', 'auto');
+			this.textEditor.setText(this.defaultDescription);
 		},
 
 		setTitle(title: string): void
 		{
 			this.title = title;
-		},
-
-		setDescription(description: string): void
-		{
-			this.description = description;
-		},
-
-		onTextareaFocus(event: FocusEvent): void
-		{
-			this.descriptionBeforeFocus = event.target.value;
-
-			this.setWasUsed(true);
-			this.onFocus();
-		},
-
-		onTextareaKeydown(event): void
-		{
-			if (event.keyCode !== 13)
-			{
-				return;
-			}
-
-			const isMacCtrlKeydown = Browser.isMac() && (event.metaKey === true || event.altKey === true);
-
-			if (event.ctrlKey === true || isMacCtrlKeydown)
-			{
-				this.onSaveHotkeyPressed();
-			}
-		},
-
-		setTextareaFocused(): void
-		{
-			this.setWasUsed(true);
-			this.$refs.textarea.focus();
-		},
-
-		setWasUsed(value: boolean): void
-		{
-			this.wasUsed = value;
 		},
 
 		onDeadlineClick(): void
@@ -369,10 +286,20 @@ export const TodoEditor = {
 			const data = event.getData();
 			if (data)
 			{
-				this.currentDeadline = new Date(data.from);
+				const currentDeadlineTimestamp = this.currentDeadline.getTime();
+
+				this.setDeadline(new Date(data.from));
 				this.calendarDateTo = new Date(data.to);
 
-				this.sendAnalyticsDeadlineChange();
+				if (currentDeadlineTimestamp !== data.from)
+				{
+					this.sendAnalyticsDeadlineChange();
+				}
+
+				if (Type.isNumber(data.sectionId))
+				{
+					this.sendAnalyticsCalendarSectionChange();
+				}
 			}
 		},
 
@@ -420,11 +347,12 @@ export const TodoEditor = {
 						? this.title.trim()
 						: null
 				),
-				description: this.description,
+				description: this.textEditor.getText(),
 				deadline: this.currentDeadline,
 				responsibleUserId: this.responsibleUserId,
 				pingOffsets: this.$refs.pingSelector?.getValue(),
 				colorId: this.$refs.colorSelector?.getValue(),
+				isCalendarSectionChanged: this.isCalendarSectionChanged,
 			};
 		},
 
@@ -452,6 +380,15 @@ export const TodoEditor = {
 			{
 				this.sendAnalytics(EventIds.activityTouch, ElementIds.deadline);
 				this.isDeadlineChanged = true;
+			}
+		},
+
+		sendAnalyticsCalendarSectionChange(): void
+		{
+			if (!this.isCalendarSectionChanged)
+			{
+				this.sendAnalytics(EventIds.activityTouch, ElementIds.calendarSection);
+				this.isCalendarSectionChanged = true;
 			}
 		},
 
@@ -491,18 +428,15 @@ export const TodoEditor = {
 			}
 		},
 
-		onTextareaInput(event: InputEvent): void
+		handleTextEditorFocus(event): void
 		{
-			const { value } = event.target;
-
-			this.setDescription(value);
+			this.descriptionBeforeFocus = this.textEditor.getText();
 		},
 
-		onTextareaBlur(event: FocusEvent): void
+		handleTextEditorBlur(event: FocusEvent): void
 		{
-			const { value } = event.target;
-
-			if (Type.isStringFilled(value) && value !== this.descriptionBeforeFocus)
+			const description = this.textEditor.getText();
+			if (Type.isStringFilled(description) && description !== this.descriptionBeforeFocus)
 			{
 				this.sendAnalytics(EventIds.activityTouch, ElementIds.description);
 			}
@@ -547,7 +481,7 @@ export const TodoEditor = {
 			block.focused = true;
 			block.sort = this.getNextBlockSortValue();
 
-			this.setTextareaFocused();
+			this.textEditor.focus();
 
 			if (!this.addBlockSended)
 			{
@@ -568,19 +502,6 @@ export const TodoEditor = {
 			});
 
 			return ++maxSortValue;
-		},
-
-		onCopilotTextareaValueChange(event: BaseEvent): void
-		{
-			const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
-			const id = event.getData().id;
-
-			if (this.wasUsed && copilotId === id)
-			{
-				const value = event.getData().value;
-
-				this.setDescription(value);
-			}
 		},
 
 		showActionsPopup(event: BaseEvent): void
@@ -668,17 +589,6 @@ export const TodoEditor = {
 		this.$Bitrix.eventEmitter.subscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 
 		EventEmitter.subscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
-
-		if (this.isCopilotEnabled)
-		{
-			this.copilotTextarea = new CopilotTextarea({
-				id: Text.getRandom(),
-				target: this.$refs.textarea,
-				copilotParams: this.copilotSettings,
-			});
-
-			EventEmitter.subscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-		}
 	},
 
 	beforeUnmount()
@@ -687,86 +597,72 @@ export const TodoEditor = {
 		this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_CALENDAR_CHANGE, this.onCalendarChange);
 
 		EventEmitter.unsubscribe(this.actionsPopup, Events.EVENT_ACTIONS_POPUP_ITEM_CLICK, this.onActionsPopupItemClick);
-
-		if (this.isCopilotEnabled)
-		{
-			EventEmitter.unsubscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-		}
 	},
 
 	template: `
-		<label>
-			<div class="crm-activity__todo-editor-v2_container">
-				<div class="crm-activity__todo-editor-v2_header">
-					<input
-						v-if="wasUsed"
-						type="text"
-						ref="title"
-						class="crm-activity__todo-editor-v2_input_control --title"
-						:value="title"
-						:placeholder="placeholderTitle"
-						maxlength="40"
-						@input="onTitleInput"
-						@focus="onTitleFocus"
-						@blur="onTitleBlur"
-					>
-					<TodoEditorColorSelector
-						ref="colorSelector"
-						:valuesList="colorSettings.valuesList"
-						:selectedValueId="colorSettings.selectedValueId"
-						@onChange="onColorSelectorValueChange"
-					/>
-					<TodoEditorResponsibleUserSelector
-						:userId="currentUserData.userId"
-						:userName="currentUserData.title"
-						:imageUrl="currentUserData.imageUrl"
-						ref="userSelector"
-						class="crm-activity__todo-editor-v2_action-btn"
-					/>
-				</div>
-				<div class="crm-activity__todo-editor-v2_body">
-					<textarea
-						rows="2"
-						ref="textarea"
-						@keydown="onTextareaKeydown"
-						class="crm-activity__todo-editor-v2_input_control"
-						:placeholder="placeholderDescription"
-						@input="onTextareaInput"
-						@focus="onTextareaFocus"
-						@blur="onTextareaBlur"
-						:value="description"
-						:class="{ '--has-scroll': isTextareaToLong }"
-					></textarea>
-					<button 
-						class="crm-activity__todo-show-actions-popup-button ui-btn ui-btn-sm ui-btn-base-light"
-						@click="showActionsPopup"
-					>
-						{{ popupMenuButtonTitle }}
-						<span class="crm-activity__todo-show-actions-popup-button-arrow"></span>
-					</button>
-					<div class="crm-activity__todo-editor-v2_tools" v-if="wasUsed">
-						<div class="crm-activity__todo-editor-v2_left_tools">
-							<div
-								ref="deadline"
-								@click="onDeadlineClick"
-								class="crm-activity__todo-editor-v2_deadline"
+		<div class="crm-activity__todo-editor-v2_container">
+			<div class="crm-activity__todo-editor-v2_editor">
+				<button
+					class="crm-activity__todo-show-actions-popup-button ui-btn ui-btn-sm ui-btn-base-light"
+					@click="showActionsPopup"
+				>
+					{{ popupMenuButtonTitle }}
+					<span class="crm-activity__todo-show-actions-popup-button-arrow"></span>
+				</button>
+				<TextEditorComponent :events="{ onFocus: this.handleTextEditorFocus, onBlur: this.handleTextEditorBlur }" :editor-instance="textEditor">
+					<template #header>
+						<div class="crm-activity__todo-editor-v2_header">
+							<input
+								type="text"
+								ref="title"
+								class="crm-activity__todo-editor-v2_input_control --title"
+								:value="title"
+								:placeholder="placeholderTitle"
+								maxlength="40"
+								@input="onTitleInput"
+								@focus="onTitleFocus"
+								@blur="onTitleBlur"
 							>
+							<TodoEditorColorSelector
+								ref="colorSelector"
+								:valuesList="colorSettings.valuesList"
+								:selectedValueId="colorSettings.selectedValueId"
+								@onChange="onColorSelectorValueChange"
+							/>
+							<TodoEditorResponsibleUserSelector
+								:userId="currentUserData.userId"
+								:userName="currentUserData.title"
+								:imageUrl="currentUserData.imageUrl"
+								ref="userSelector"
+								class="crm-activity__todo-editor-v2_action-btn"
+							/>
+						</div>
+					</template>
+					<template #footer>
+						<div class="crm-activity__todo-editor-v2_tools">
+							<div class="crm-activity__todo-editor-v2_left_tools">
+								<div
+									ref="deadline"
+									@click="onDeadlineClick"
+									class="crm-activity__todo-editor-v2_deadline"
+								>
 								<span class="crm-activity__todo-editor-v2_deadline-pill">
 									<span class="crm-activity__todo-editor-v2_deadline-icon"></span>
 									<span class="crm-activity__todo-editor-v2_deadline-text">{{ deadlineFormatted }}</span>
 								</span>
+								</div>
+								<TodoEditorPingSelector
+									ref="pingSelector"
+									:valuesList="pingSettings.valuesList"
+									:selectedValues="pingOffsets"
+									:deadline="currentDeadline"
+									@onChange="onPingSettingsSelectorValueChange"
+									class="crm-activity__todo-editor-v2_ping_selector"
+								/>
 							</div>
-							<TodoEditorPingSelector
-								ref="pingSelector"
-								:valuesList="pingSettings.valuesList"
-								:selectedValues="pingOffsets"
-								:deadline="currentDeadline"
-								@onChange="onPingSettingsSelectorValueChange"
-								class="crm-activity__todo-editor-v2_ping_selector"
-							/>
 						</div>
-					</div>
-				</div>
+					</template>
+				</TextEditorComponent>
 			</div>
 
 			<div
@@ -790,6 +686,6 @@ export const TodoEditor = {
 					@updateFilledValues="updateFilledValues"
 				/>
 			</div>
-		</label>
+		</div>
 	`,
 };

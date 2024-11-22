@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import { type BBCodeToStringOptions } from '../../nodes/root-node';
 import { typeof BBCodeScheme } from '../bbcode-scheme';
 import {
 	BBCodeNodeScheme,
@@ -45,7 +46,11 @@ export class BBCodeTagScheme extends BBCodeNodeScheme
 		this.setNotAllowedChildrenCallback(options.onNotAllowedChildren);
 	}
 
-	static defaultBlockStringifier(node: BBCodeElementNode): string
+	static defaultBlockStringifier(
+		node: BBCodeElementNode,
+		scheme: BBCodeTagScheme,
+		options: BBCodeToStringOptions = {},
+	): string
 	{
 		const isAllowNewlineBeforeOpeningTag: boolean = (() => {
 			const previewsSibling: ?BBCodeContentNode = node.getPreviewsSibling();
@@ -68,7 +73,7 @@ export class BBCodeTagScheme extends BBCodeNodeScheme
 		node.trimLinebreaks();
 
 		const openingTag: string = node.getOpeningTag();
-		const content: string = node.getContent();
+		const content: string = node.getContent(options);
 		const closingTag: string = node.getClosingTag();
 
 		const isAllowContentLinebreaks: boolean = content.length > 0;

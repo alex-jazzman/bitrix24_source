@@ -38,7 +38,8 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 	const { Project } = require('tasks/layout/task/fields/project');
 	const { Accomplices } = require('tasks/layout/task/fields/accomplices');
 	const { Auditors } = require('tasks/layout/task/fields/auditors');
-	const { DeadlinePeriod, ViewMode, TaskCounter } = require('tasks/enum');
+	const { ViewMode, TaskCounter } = require('tasks/enum');
+	const { getStageByDeadline } = require('tasks/utils/stages');
 	const { Color, Indent } = require('tokens');
 	const { Text5 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
@@ -109,43 +110,6 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 		/**
 		 * @private
-		 * @param {number|undefined} ts
-		 * @return {{id: number}|undefined}
-		 */
-		getNextStageByDeadline(ts)
-		{
-			const stages = this.getDeadlineViewStages();
-			const stageNoDeadline = stages.find((stage) => stage.statusId === DeadlinePeriod.PERIOD_NO_DEADLINE);
-			const stageOverdue = stages.find((stage) => stage.statusId === DeadlinePeriod.PERIOD_OVERDUE);
-			const stageOverTwoWeeks = stages.find((stage) => stage.statusId === DeadlinePeriod.PERIOD_OVER_TWO_WEEKS);
-			const stagesByDeadline = stages
-				.filter((stage) => Boolean(stage.rightBorder))
-				.sort((a, b) => a.rightBorder - b.rightBorder);
-
-			if (!ts)
-			{
-				return stageNoDeadline;
-			}
-
-			if (ts < Date.now())
-			{
-				return stageOverdue;
-			}
-
-			const deadline = Math.round(ts / 1000);
-			for (const stage of stagesByDeadline)
-			{
-				if (deadline <= stage.rightBorder)
-				{
-					return stage;
-				}
-			}
-
-			return stageOverTwoWeeks;
-		}
-
-		/**
-		 * @private
 		 * @param {TasksStageSelector|undefined} ref
 		 */
 		bindStageSelectorRef(ref)
@@ -192,7 +156,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				return;
 			}
 
-			const nextStage = this.getNextStageByDeadline(ts);
+			const nextStage = getStageByDeadline(ts, this.getDeadlineViewStages());
 
 			if (!nextStage || !this.stageSelectorRef)
 			{
@@ -212,7 +176,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				const { deadline } = selectStageById(store.getState(), nextStageId) || {};
 
 				const nextStageByDeadline = Number.isInteger(deadline)
-					? this.getNextStageByDeadline(deadline * 1000)
+					? getStageByDeadline(deadline * 1000, this.getDeadlineViewStages())
 					: null;
 
 				if (nextStageByDeadline && nextStageByDeadline.id !== nextStageId && this.stageSelectorRef)

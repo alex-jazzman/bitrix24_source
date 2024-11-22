@@ -20,6 +20,12 @@ export const AnalyticsEvent = Object.freeze({
 	clickUserFrame: 'click_user_frame',
 	handOn: 'hand_on',
 	clickChat: 'click_chat',
+	click: 'click',
+	create: 'create',
+	edit: 'edit',
+	save: 'save',
+	upload: 'upload',
+	openResume: 'open_resume',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -28,12 +34,17 @@ export const AnalyticsTool = Object.freeze({
 
 export const AnalyticsCategory = Object.freeze({
 	call: 'call',
+	callDocs: 'call_docs',
 });
 
 export const AnalyticsType = Object.freeze({
 	private: 'private',
 	group: 'group',
 	videoconf: 'videoconf',
+	resume: 'resume',
+	doc: 'doc',
+	presentation: 'presentation',
+	sheet: 'sheet',
 });
 
 export const AnalyticsSection = Object.freeze({

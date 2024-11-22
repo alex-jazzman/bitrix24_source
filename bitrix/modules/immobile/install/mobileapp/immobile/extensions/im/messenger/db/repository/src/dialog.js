@@ -52,6 +52,10 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			this.messageTable = new MessageTable();
 		}
 
+		/**
+		 * @param {DialogId} dialogId
+		 * @return {Promise<DialogStoredData|null>}
+		 */
 		async getByDialogId(dialogId)
 		{
 			if (!Feature.isLocalStorageEnabled)
@@ -74,6 +78,35 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			return null;
 		}
 
+		/**
+		 * @param {number} chatId
+		 * @return {Promise<DialogStoredData|null>}
+		 */
+		async getByChatId(chatId)
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return null;
+			}
+
+			const result = await this.dialogTable.getList({
+				filter: {
+					chatId,
+				},
+				limit: 1,
+			});
+
+			if (Type.isArrayFilled(result.items))
+			{
+				return result.items[0];
+			}
+
+			return null;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
 		async deleteById(dialogId)
 		{
 			await this.internal.deleteByIdList([dialogId]);

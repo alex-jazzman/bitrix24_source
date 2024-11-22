@@ -13,8 +13,8 @@ import {
 import { mergeRegister } from 'ui.lexical.utils';
 import { createNodeSelection } from './helpers/create-node-selection';
 
-import type TextEditor from './text-editor';
-import type { DecoratorComponentOptions } from './types/decorator-component-options';
+import { type TextEditor } from './text-editor';
+import { type DecoratorComponentOptions } from './types/decorator-component-options';
 
 export default class DecoratorComponent
 {

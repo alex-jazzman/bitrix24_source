@@ -1043,7 +1043,7 @@ class AddressItem extends EventEmitter
 			Dom.addClass(this._domNodes.detailsContainer, 'visible');
 			if (Type.isDomNode(this._domNodes.detailsToggler))
 			{
-				this._domNodes.detailsToggler.textContent = Loc.getMessage('CRM_ADDRESS_MODE_SHORT');
+				this._domNodes.detailsToggler.textContent = Loc.getMessage('CRM_ADDRESS_MODE_SHORT_MSGVER_1');
 			}
 			if (this._canChangeType)
 			{
@@ -1055,7 +1055,7 @@ class AddressItem extends EventEmitter
 			Dom.removeClass(this._domNodes.detailsContainer, 'visible');
 			if (Type.isDomNode(this._domNodes.detailsToggler))
 			{
-				this._domNodes.detailsToggler.textContent = Loc.getMessage('CRM_ADDRESS_MODE_DETAILED');
+				this._domNodes.detailsToggler.textContent = Loc.getMessage('CRM_ADDRESS_MODE_DETAILED_MSGVER_1');
 			}
 			if (this._canChangeType)
 			{

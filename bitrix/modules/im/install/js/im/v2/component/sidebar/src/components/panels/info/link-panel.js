@@ -198,6 +198,7 @@ export const LinkPanel = {
 				dialogId: this.dialogId,
 				chatId: this.chatId,
 				source: event.source,
+				authorId: event.authorId,
 			};
 
 			this.contextMenu.openMenu(item, event.target);
@@ -260,7 +261,8 @@ export const LinkPanel = {
 						<LinkItem
 							:contextDialogId="dialogId"
 							:searchQuery="searchQuery"
-							:link="link" @contextMenuClick="onContextMenuClick"
+							:link="link" 
+							@contextMenuClick="onContextMenuClick"
 						/>
 					</template>
 				</div>

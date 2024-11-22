@@ -8,8 +8,13 @@
 	const { FeatureId } = require('tasks/enum');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { TasksNavigator } = require('tasks/navigator');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
+
+	const tasksNavigator = new TasksNavigator();
+	tasksNavigator.unsubscribeFromPushNotifications();
+	tasksNavigator.subscribeToPushNotifications();
 
 	class Pull
 	{

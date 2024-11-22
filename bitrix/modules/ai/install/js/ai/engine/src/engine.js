@@ -15,6 +15,7 @@ export class Engine
 	static imageAcceptationUrl				= '/bitrix/services/main/ajax.php?action=ai.api.image.acceptation';
 	static saveImageUrl						= '/bitrix/services/main/ajax.php?action=ai.api.image.save';
 	static getToolingUrl					= '/bitrix/services/main/ajax.php?action=ai.api.tooling.get';
+	static getImageToolingUrl				= '/bitrix/services/main/ajax.php?action=ai.api.image.getTooling';
 	static installKitUrl					= '/bitrix/services/main/ajax.php?action=ai.api.tooling.installKit';
 	static getRolesListUrl					= '/bitrix/services/main/ajax.php?action=ai.api.role.list';
 	static getRolesDialogDataUrl			= '/bitrix/services/main/ajax.php?action=ai.api.role.picker';
@@ -212,9 +213,30 @@ export class Engine
 	{
 		this.#addSystemParameters();
 
+		this.#parameters.category = this.#parameters.promptCategory;
+
 		const data = {
-			category,
 			parameters: this.#parameters,
+			category: this.#parameters.promptCategory,
+			moduleId: this.#moduleId,
+			context: this.#contextId,
+		};
+
+		return ajax.runAction('ai.prompt.getPromptsForUser', {
+			data: Http.Data.convertObjectToFormData(data),
+			method: 'POST',
+			start: false,
+			preparePost: false,
+		});
+	}
+
+	getImagePickerTooling(): Promise<AjaxResponse>
+	{
+		this.#addSystemParameters();
+
+		const data = {
+			parameters: this.#parameters,
+			category: 'image',
 		};
 
 		return new Promise((resolve, reject) => {
@@ -223,6 +245,40 @@ export class Engine
 				method: 'POST',
 				dataType: 'json',
 				url: Engine.getToolingUrl,
+				data: fd,
+				start: false,
+				preparePost: false,
+				onsuccess: (response) => {
+					if (response.status === 'error')
+					{
+						reject(response);
+					}
+					else
+					{
+						resolve(response);
+					}
+				},
+				onfailure: reject,
+			});
+
+			xhr.send(fd);
+		});
+	}
+
+	getImageCopilotTooling(): Promise<AjaxResponse<GetImageCopilotToolingResponseData>>
+	{
+		this.#addSystemParameters();
+
+		const data = {
+			parameters: this.#parameters,
+		};
+
+		return new Promise((resolve, reject) => {
+			const fd = Http.Data.convertObjectToFormData(data);
+			const xhr = ajax({
+				method: 'POST',
+				dataType: 'json',
+				url: Engine.getImageToolingUrl,
 				data: fd,
 				start: false,
 				preparePost: false,
@@ -531,7 +587,9 @@ type EngineRequestResponse<T> = {
 export type GetToolingResultData = {
 	engines: EngineInfo[];
 	history: History;
-	prompts: Prompt[] | null;
+	promptsFavorite: Prompt[] | null;
+	promptsOther: Prompt[] | null;
+	promptsSystem: Prompt[] | null;
 	kits: Kit[];
 	first_launch: boolean;
 	permissions: Permissions;
@@ -548,7 +606,7 @@ type Kit = {
 	install_started: boolean;
 }
 
-type EngineInfo = {
+export type EngineInfo = {
 	agreement: EngineInfoAgreement;
 	code: string;
 	title: string;
@@ -594,6 +652,7 @@ type PromptCommand = {
 	children: Prompt;
 	text: string;
 	type: PromptCommandType;
+	isFavorite: boolean;
 }
 
 type PromptCommandType = null | 'default' | 'simpleTemplate';
@@ -646,4 +705,27 @@ type RoleAvatar = {
 	small: string;
 	medium: string;
 	large: string;
+}
+
+export type GetImageCopilotToolingResponseData = {
+	engines: EngineInfo[];
+	first_launch: boolean;
+	params: ImageCopilotParams;
+	portal_zone: string;
+}
+
+export type ImageCopilotParams = {
+	formats: ImageCopilotFormat[];
+	styles: ImageCopilotStyle[];
+}
+
+export type ImageCopilotFormat = {
+	code: string;
+	name: string;
+}
+
+export type ImageCopilotStyle = {
+	code: string;
+	name: string;
+	preview: string;
 }

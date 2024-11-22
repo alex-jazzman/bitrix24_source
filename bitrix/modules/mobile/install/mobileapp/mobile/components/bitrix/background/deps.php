@@ -14,15 +14,18 @@ return [
 		'catalog:background/barcodescanner',
 		'push/listener',
 
+		'background/notifications',
+
 		'tasks:background/cache-warmup', // warmup dashboard components and cache for faster render
 		'tasks:task', // task background processes (view, .etc)
 		'tasks:task/checklist/uploader', // task checklist uploader
 		'tasks:task/uploader', // task uploader
 		'tasks:task/background', // task background processes (view, .etc)
+		'tasks:background/tasks-notifications',
 
 		'crm:in-app-url/background',
 		"sign:background",
-		'crm:background/timeline-notifications',
+		'crm:background/crm-notifications',
 
 		'files/background-manager', // files background processes (upload, .etc)
 		'ava-menu',
@@ -30,5 +33,8 @@ return [
 		'intranet:intranet-background',
 
 		'bizproc:background/opener',
+
+		'background/notifications/open-desktop',
+		'background/notifications/open-helpdesk',
 	],
 ];

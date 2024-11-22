@@ -3,6 +3,7 @@ $MESS["M_TASKS_DATE_PLAN_AIR_FIELD_NO_DATE_SPECIFIED"] = "Дата не вибр
 $MESS["M_TASKS_DATE_PLAN_AIR_FIELD_TITLE"] = "Планування строків";
 $MESS["M_TASKS_DATE_PLAN_BOTTOM_SHEET_TITLE"] = "Планування строків";
 $MESS["M_TASKS_DATE_PLAN_CHIP_TEXT"] = "Планування строків";
+$MESS["M_TASKS_DATE_PLAN_EDIT_FORM_DATE_CHANGED_FROM_WORK_TIME"] = "Дата змінена з урахуванням робочого часу та вихідних днів.";
 $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_DATE_OUT_OF_RANGE"] = "Дата виходить за рамки проєкту (#DATE#)";
 $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_DATE_TIME"] = "о #TIME#";
 $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_DURATION_RULE_DAY_PLURAL_0"] = "день";

@@ -7,6 +7,7 @@ import type { CompanyEditorOptions } from './types';
 
 const crmEditorSettings = Object.freeze({
 	params: {
+		ENABLE_CONFIGURATION_UPDATE: 'N',
 		ENABLE_PAGE_TITLE_CONTROLS: false,
 		ENABLE_MODE_TOGGLE: false,
 		IS_EMBEDDED: 'N',

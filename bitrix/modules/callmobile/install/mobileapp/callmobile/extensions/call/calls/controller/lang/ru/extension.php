@@ -20,3 +20,4 @@ $MESS["MOBILE_CALL_OPEN_CHAT"] = "Перейти в чат";
 $MESS["MOBILE_CALL_APP_REQUIRED"] = "Требуется установка приложения";
 $MESS["MOBILE_CALL_OPEN_APP_STORE"] = "Перейти в App Store";
 $MESS["MOBILE_CALL_OPEN_PLAY_MARKET"] = "Перейти в Play Market";
+$MESS["CALLMOBILE_MESSAGE_HAS_ACTIVE_CALL_HINT"] = "Сейчас у вас проходит другой звонок. Отключитесь от него, чтобы начать новый";

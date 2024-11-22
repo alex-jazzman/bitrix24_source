@@ -19,7 +19,7 @@ import {
 } from 'ui.lexical.link';
 
 import BasePlugin from '../base-plugin';
-import type TextEditor from '../../text-editor';
+import { type TextEditor } from '../../text-editor';
 
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 

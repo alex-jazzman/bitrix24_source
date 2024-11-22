@@ -21,6 +21,20 @@
 	background-image: url(../../images/common/crm-timeline__copy.svg);
 }
 
+.crm-timeline__card_link_icon.--code-bottom-caret {
+	width: 12px;
+	height: 12px;
+	margin-top: 2px;
+	mask-image: url("../../images/common/crm-timeline__bottom-caret.svg");
+	mask-size: contain;
+	mask-position: center center;
+	background-color: var(--ui-color-palette-gray-70, #828B95);
+}
+
+.crm-timeline__card_link_icon.--code-chat {
+	background-image: url(../../images/common/crm-timeline__chat.svg);
+}
+
 .crm-timeline__card_link.--color-base-50 {
 	color: var(--ui-color-base-50, #a8adb4);
 }

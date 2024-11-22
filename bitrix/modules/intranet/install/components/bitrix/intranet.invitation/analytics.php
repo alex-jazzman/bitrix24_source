@@ -73,13 +73,13 @@ class Analytics
 	}
 
 	public function sendRegistration(
+		int $userId,
 		string $category = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $event = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $status = '',
 		array $userData = []
 	): void
 	{
-		global $USER;
 		$analyticData = $this->getData();
 		$analytic = [
 			'tool' => self::ANALYTIC_TOOL,
@@ -89,7 +89,7 @@ class Analytics
 			'p1' => $this->getAdmin(),
 			'p2' => isset($userData['ADD_SEND_PASSWORD']) && $userData['ADD_SEND_PASSWORD'] === 'Y' ? 'Сonfirm_Y' : 'Сonfirm_N',
 			'p3' => isset($userData['UF_DEPARTMENT']) && count($userData['UF_DEPARTMENT']) > 0 ? 'department_Y' : 'department_N',
-			'p5' => 'userId_' . $USER->getId(),
+			'p5' => 'userId_' . $userId,
 		];
 
 		if ($status !== '')
@@ -113,12 +113,12 @@ class Analytics
 	}
 
 	public function sendInvitation(
+		int $userId,
 		string $subSection,
 		int $analyticEmails = 0,
 		int $analyticPhones = 0
 	): void
 	{
-		global $USER;
 		$analyticData = $this->getData();
 
 		$analyticBase = [
@@ -128,7 +128,7 @@ class Analytics
 			'section' => $analyticData['source'] ?? '',
 			'subSection' => $subSection,
 			'p1' => $this->getAdmin(),
-			'p5' => 'userId_' . $USER->getId(),
+			'p5' => 'userId_' . $userId,
 		];
 
 		if ($analyticEmails > 0)

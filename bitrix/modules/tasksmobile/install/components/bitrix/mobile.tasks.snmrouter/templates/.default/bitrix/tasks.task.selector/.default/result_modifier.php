@@ -70,7 +70,7 @@ foreach ($arResult["LAST_TASKS"] as $task)
 
 	$status = (isset($task['REAL_STATUS']) ? $arResult['STATUSES'][$task['REAL_STATUS']] : '');
 	$task["STATUS"] = GetMessage("TASKS_STATUS_{$status}");
-	$task["STATUS"] = '<span id="bx-task-status-'.$taskId.'">' . ( empty($task["STATUS"]) ? GetMessage("TASKS_STATUS_STATE_UNKNOWN") : $task["STATUS"]) . "</span>";
+	$task["STATUS"] = '<span id="bx-task-status-' . $taskId . '">' . ( empty($task["STATUS"]) ? GetMessage("TASKS_STATUS_STATE_UNKNOWN") : $task["STATUS"]) . "</span>";
 
 	if (!empty($task["DEADLINE"]))
 	{

@@ -22,6 +22,6 @@ $MESS["TASKS_SCRUM_DOD_POPUP_INPUT_PLACEHOLDER"] = "Назва";
 $MESS["TASKS_SCRUM_DOD_POPUP_TITLE_CREATE"] = "Уведіть назву списку";
 $MESS["TASKS_SCRUM_DOD_POPUP_TITLE_EDIT"] = "Перейменуйте список";
 $MESS["TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY"] = "Налаштування збережені";
-$MESS["TASKS_SCRUM_DOD_TITLE"] = "Definition of Done";
+$MESS["TASKS_SCRUM_DOD_TITLE"] = "Критерії готовності завдання (DoD)";
 $MESS["TASKS_SCRUM_DOD_TOOLBAR_SETTINGS"] = "Налаштувати";
 $MESS["TSD_ERROR_POPUP_TITLE"] = "Виникла помилка";

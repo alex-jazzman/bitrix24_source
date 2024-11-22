@@ -4,7 +4,7 @@ import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Core } from 'im.v2.application.core';
 import { DesktopBxLink, Settings } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
-import { DesktopApi } from 'im.v2.lib.desktop-api';
+import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 
 import { CheckUtils } from './classes/check-utils';
 import { Conference } from './classes/conference';
@@ -20,6 +20,7 @@ export class DesktopManager
 	static instance: DesktopManager;
 
 	#desktopIsActive: boolean;
+	#desktopActiveVersion: number;
 	#locationChangedToBx = false;
 	#enableRedirectCounter = 1;
 
@@ -78,6 +79,16 @@ export class DesktopManager
 	setDesktopActive(flag: boolean)
 	{
 		this.#desktopIsActive = flag;
+	}
+
+	setDesktopVersion(version: number)
+	{
+		this.#desktopActiveVersion = version;
+	}
+
+	getDesktopVersion(): number
+	{
+		return this.#desktopActiveVersion;
 	}
 
 	isLocationChangedToBx(): boolean
@@ -197,7 +208,14 @@ export class DesktopManager
 
 	openAccountTab(domainName: string)
 	{
-		this.openBxLink(`bx://v2/${domainName}/openTab`);
+		this.openBxLink(`bx://v2/${domainName}/${DesktopBxLink.openTab}`);
+	}
+
+	openPage(url: string, options: { skipNativeBrowser?: boolean } = {})
+	{
+		const encodedParams = Encoder.encodeParamsJson({ url, options });
+
+		this.openBxLink(`bx://${DesktopBxLink.openPage}/options/${encodedParams}`);
 	}
 
 	checkStatusInDifferentContext(): Promise
@@ -232,6 +250,40 @@ export class DesktopManager
 		}
 
 		return this.checkStatusInDifferentContext();
+	}
+
+	checkForOpenBrowserPage(): Promise
+	{
+		if (!this.isDesktopActive() || !this.isRedirectOptionEnabled())
+		{
+			return Promise.resolve(false);
+		}
+
+		const desktopVersion = this.getDesktopVersion();
+		if (!DesktopApi.isFeatureSupportedInVersion(desktopVersion, DesktopFeature.openPage.id))
+		{
+			return Promise.resolve(false);
+		}
+
+		return new Promise((resolve) => {
+			CheckUtils.testImageLoad(
+				() => {
+					CheckUtils.testImageLoad(
+						() => {
+							resolve(true);
+						},
+						() => {
+							resolve(false);
+						},
+						CheckUtils.IMAGE_DESKTOP_TWO_WINDOW_MODE,
+					);
+				},
+				() => {
+					resolve(false);
+				},
+				CheckUtils.IMAGE_DESKTOP_RUN,
+			);
+		});
 	}
 
 	isRedirectEnabled(): boolean
@@ -287,5 +339,6 @@ export class DesktopManager
 	{
 		const settings = Extension.getSettings('im.v2.lib.desktop');
 		this.setDesktopActive(settings.get('desktopIsActive'));
+		this.setDesktopVersion(settings.get('desktopActiveVersion'));
 	}
 }

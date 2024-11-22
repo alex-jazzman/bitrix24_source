@@ -1,9 +1,8 @@
 .ui-typography-quote {
 	border: 1px solid #e0e2e3;
 	background-color: #f3f6f7;
-	margin: var(--ui-typography-block-space);
-	padding: var(--ui-space-inset-xs);
-	padding-left: var(--ui-space-inset-2xl);
+	margin: var(--ui-typography-block-space-stack) 0;
+	padding: 0 var(--ui-typography-block-space-stack) 0 var(--ui-space-inset-2xl);
 	border-radius: var(--ui-border-radius-sm);
 	position: relative;
 
@@ -11,6 +10,10 @@
 	font-size: var(--ui-typography-font-size);
 	line-height: var(--ui-typography-line-height);
 	color: var(--ui-typography-color-text);
+}
+
+.ui-typography-quote:empty:after {
+	content: '\00A0';
 }
 
 .ui-typography-quote:before {

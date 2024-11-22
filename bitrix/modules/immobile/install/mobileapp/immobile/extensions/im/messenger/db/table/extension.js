@@ -4,6 +4,7 @@
 jn.define('im/messenger/db/table', (require, exports, module) => {
 	const { OptionTable } = require('im/messenger/db/table/option');
 	const { RecentTable } = require('im/messenger/db/table/recent');
+	const { CounterTable } = require('im/messenger/db/table/counter');
 	const { DialogTable } = require('im/messenger/db/table/dialog');
 	const { DialogInternalTable } = require('im/messenger/db/table/internal/dialog');
 	const { UserTable } = require('im/messenger/db/table/user');
@@ -24,6 +25,7 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 	module.exports = {
 		OptionTable,
 		RecentTable,
+		CounterTable,
 		DialogTable,
 		DialogInternalTable,
 		UserTable,

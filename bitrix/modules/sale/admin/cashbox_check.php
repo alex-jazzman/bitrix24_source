@@ -99,6 +99,14 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 				}
 			}
 		}
+		elseif ($_REQUEST['action'] = 'reprint')
+		{
+			$result = \Bitrix\Sale\Cashbox\CheckManager::reprint($id);
+			if (!$result->isSuccess())
+			{
+				$lAdmin->AddGroupError(implode('\n', $result->getErrorMessages()), $id);
+			}
+		}
 	}
 	if ($lAdmin->hasGroupErrors())
 	{
@@ -200,8 +208,18 @@ if ($shouldHideOrderEntities)
 		[
 			'=ref.ORDER_ID' => 'this.ORDER_ID',
 		],
-		['join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER]
+		['join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_LEFT]
 	);
+	$params['select'] = ['*', 'ORDER_BINDING_ORDER_ID' => 'ORDER_BINDING.ORDER_ID'];
+	$params['filter'][] = [
+		'LOGIC' => 'OR',
+		[
+			'=ORDER_ID' => null,
+		],
+		[
+			'!=ORDER_BINDING_ORDER_ID' => null,
+		],
+	];
 }
 $dbResultList = new CAdminUiResult(Internals\CashboxCheckTable::getList($params), $tableId);
 
@@ -352,14 +370,23 @@ while ($check = $dbResultList->Fetch())
 {
 	$row =& $lAdmin->AddRow($check['ID'], $check, false, GetMessage("SALE_EDIT_DESCR"));
 
-	$row->AddField("ID", $check['ID']);
+	$row->AddField(
+		'ID',
+		'<a
+			href="#"
+			onclick="BX.SidePanel.Instance.open(
+				\'/shop/orders/check/details/' . $check['ID'] . '/?IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER\',
+				{width: 500, cacheable: false}
+			);"
+		>' . $check['ID'] . '</a>'
+	);
 
 	$checkClass = $checkTypeMap[$check['TYPE']];
 	$checkName = class_exists($checkClass) ? $checkClass::getName() : '';
 	$row->AddField("CHECK_TYPE", $checkName);
 
 	$orderId = (int)$check['ORDER_ID'];
-	if ($shouldHideOrderEntities)
+	if ($shouldHideOrderEntities && $orderId)
 	{
 		$entityLink = $orderEntityLinkBuilder->getOrderDetailUrl($orderId);
 		if ($orderEntityLinkBuilder instanceof CrmEntityLinkBuilder)
@@ -498,7 +525,7 @@ while ($check = $dbResultList->Fetch())
 	$row->AddField("LINK_PARAMS", $checkLink);
 
 	$errorMessage = null;
-	if (isset($check['ERROR_MESSAGE']))
+	if ($check['ERROR_MESSAGE'] && $check['STATUS'] === 'E')
 	{
 		$errorMessage = ' (' . $check['ERROR_MESSAGE'] . ')';
 	}
@@ -542,6 +569,15 @@ while ($check = $dbResultList->Fetch())
 				"ACTION" => $lAdmin->ActionDoGroup($check["ID"], "check_status", GetFilterParams())
 			];
 		}
+	}
+
+	if ($check['STATUS'] === 'E')
+	{
+		$arActions[] = [
+			'ICON' => 'reprint',
+			'TEXT' => GetMessage('SALE_CHECK_REPRINT'),
+			'ACTION' => $lAdmin->ActionDoGroup($check['ID'], 'reprint'),
+		];
 	}
 
 	if ($arActions)

@@ -11,10 +11,12 @@ import { Guide } from 'ui.tour';
 import 'spotlight';
 import { TagFooter } from 'biconnector.entity-selector';
 import 'ui.alerts';
+import 'ui.forms';
 
 type Props = {
 	gridId: ?string,
 	isNeedShowTopMenuGuide: boolean,
+	isNeedShowDraftGuide: boolean,
 };
 
 type LoginPopupParams = {
@@ -35,10 +37,12 @@ class SupersetDashboardGridManager
 	#tagSelectorDialog: ?Dialog;
 	#topMenuGuideSpotlight: ?BX.SpotLight;
 	#lastPinnedRowId: ?number;
+	#properties: Props;
 
 	constructor(props: Props)
 	{
 		this.#dashboardManager = new DashboardManager();
+		this.#properties = props;
 
 		this.#grid = BX.Main.gridManager.getById(props.gridId)?.instance;
 		this.#filter = BX.Main.filterManager.getById(props.gridId);
@@ -46,7 +50,7 @@ class SupersetDashboardGridManager
 		this.#subscribeToEvents();
 
 		if (
-			props.isNeedShowTopMenuGuide
+			this.#properties.isNeedShowTopMenuGuide
 			&& !PopupWindowManager?.isAnyPopupShown()
 			&& this.#grid.getRows().getBodyFirstChild().actionsButton
 		)
@@ -168,6 +172,10 @@ class SupersetDashboardGridManager
 		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', () => {
 			this.#grid.reload();
 		});
+
+		EventEmitter.subscribe('BIConnector.CreateForm:onDashboardCreated', (event) => {
+			this.#onNewDashboardCreated(event);
+		});
 	}
 
 	#initHints(): void
@@ -231,6 +239,38 @@ class SupersetDashboardGridManager
 			onEvents: true,
 		});
 		guide.start();
+	}
+
+	#showDraftGuide(node: HTMLElement): void
+	{
+		if (!this.#properties.isNeedShowDraftGuide)
+		{
+			return;
+		}
+
+		const labelNode = node.querySelector('.dashboard-status-label.ui-label-default');
+		const cellNode = labelNode ? labelNode.closest('.main-grid-cell') : null
+		const guide = new Guide({
+			steps: [
+				{
+					target: cellNode ?? node,
+					title: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DRAFT_GUIDE_TITLE'),
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DRAFT_GUIDE_TEXT'),
+					events: {
+						onClose: () => {
+							BX.userOptions.save('biconnector', 'draft_guide', 'is_over', true);
+						},
+					},
+					rounded: false,
+					position: 'bottom',
+					areaPadding: 0,
+				},
+			],
+			onEvents: true,
+		});
+
+		guide.start();
+		this.#properties.isNeedShowDraftGuide = false;
 	}
 
 	#colorPinnedRows(): void
@@ -309,6 +349,16 @@ class SupersetDashboardGridManager
 		);
 	}
 
+	showLockedByParamsPopup()
+	{
+		MessageBox.alert(
+			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCKED_PARAM_DASHBOARD_OPEN_DESCRIPTION'),
+			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCKED_PARAM_DASHBOARD_OPEN_TITLE'),
+			(messageBox) => {messageBox.close()},
+			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCKED_PARAM_DASHBOARD_CLOSE_BUTTON'),
+		);
+	}
+
 	restartDashboardLoad(dashboardId: number): void
 	{
 		const row = this.#grid.getRows().getById(dashboardId);
@@ -340,24 +390,12 @@ class SupersetDashboardGridManager
 
 					for (const restartedDashboardId of dashboardIds)
 					{
-						this.updateDashboardStatus(restartedDashboardId, 'L');
+						this.updateDashboardStatus(restartedDashboardId, DashboardManager.DASHBOARD_STATUS_LOAD);
 					}
 				},
 			)
 			.catch()
 		;
-	}
-
-	setDashboardStatusReady(dashboardId: number): void
-	{
-		const row = this.#grid.getRows().getById(dashboardId);
-		if (row)
-		{
-			const label = row.node.getElementsByClassName('dashboard-status-label')[0];
-			Dom.addClass(label, 'ui-label-success');
-			Dom.removeClass(label, 'ui-label-primary');
-			label.querySelector('span').innerText = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_READY');
-		}
 	}
 
 	updateDashboardStatus(dashboardId: number, status: string): void
@@ -369,50 +407,64 @@ class SupersetDashboardGridManager
 			const label = labelWrapper.querySelector('.dashboard-status-label');
 			const reloadBtn = labelWrapper.querySelector('#restart-dashboard-load-btn');
 
+			let labelClass = '';
+			let labelTitle = '';
+
 			switch (status)
 			{
 				case DashboardManager.DASHBOARD_STATUS_READY:
-					if (reloadBtn)
-					{
-						reloadBtn.remove();
-					}
-					Dom.addClass(label, 'ui-label-success');
-					Dom.removeClass(label, 'ui-label-primary');
-					Dom.removeClass(label, 'ui-label-danger');
-					label.querySelector('span').innerText = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_READY');
+					labelClass = 'ui-label-lightgreen';
+					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_READY');
+					break;
+				case DashboardManager.DASHBOARD_STATUS_DRAFT:
+					labelClass = 'ui-label-default';
+					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_DRAFT');
 					break;
 				case DashboardManager.DASHBOARD_STATUS_LOAD:
-					if (reloadBtn)
-					{
-						reloadBtn.remove();
-					}
-					Dom.addClass(label, 'ui-label-primary');
-					Dom.removeClass(label, 'ui-label-success');
-					Dom.removeClass(label, 'ui-label-danger');
-					label.querySelector('span').innerText = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_LOAD');
+					labelClass = 'ui-label-primary';
+					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_LOAD');
 					break;
 				case DashboardManager.DASHBOARD_STATUS_FAILED:
-					if (!reloadBtn)
-					{
-						const createdReloadBtn = this.createReloadBtn(dashboardId);
-						Dom.append(createdReloadBtn, labelWrapper);
-					}
-					Dom.addClass(label, 'ui-label-danger');
-					Dom.removeClass(label, 'ui-label-success');
-					Dom.removeClass(label, 'ui-label-primary');
-					label.querySelector('span').innerText = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED');
+					labelClass = 'ui-label-danger';
+					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED');
 					break;
 				case DashboardManager.DASHBOARD_STATUS_COMPUTED_NOT_LOAD:
-					if (reloadBtn)
-					{
-						reloadBtn.remove();
-					}
-					Dom.addClass(label, 'ui-label-danger');
-					Dom.removeClass(label, 'ui-label-success');
-					Dom.removeClass(label, 'ui-label-primary');
-					label.querySelector('span').innerText = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD');
+					labelClass = 'ui-label-danger';
+					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD');
 					break;
 			}
+
+			if (labelClass === '')
+			{
+				return;
+			}
+
+			if (reloadBtn)
+			{
+				reloadBtn.remove();
+			}
+
+			if (status === DashboardManager.DASHBOARD_STATUS_FAILED)
+			{
+				const createdReloadBtn = this.createReloadBtn(dashboardId);
+				Dom.append(createdReloadBtn, labelWrapper);
+			}
+
+			const labelStatuses = [
+				'ui-label-lightgreen',
+				'ui-label-default',
+				'ui-label-primary',
+				'ui-label-danger',
+			];
+			Dom.addClass(label, labelClass);
+			labelStatuses.forEach((uiStatus: string) => {
+				if (uiStatus !== labelClass)
+				{
+					Dom.removeClass(label, uiStatus);
+				}
+			});
+
+			label.querySelector('span').innerText = labelTitle
 		}
 	}
 
@@ -505,6 +557,37 @@ class SupersetDashboardGridManager
 
 		return this.#dashboardManager.exportDashboard(dashboardId, 'grid_menu');
 	}
+	publish(dashboardId: number): void
+	{
+		this.#dashboardManager.toggleDraft(dashboardId, true)
+			.then(() => {
+				this.updateDashboardStatus(dashboardId, DashboardManager.DASHBOARD_STATUS_READY);
+				this.#grid.updateRow(dashboardId);
+			})
+			.catch(() => {
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_PUBLISH_NOTIFICATION_ERROR'),
+				});
+			})
+		;
+	}
+
+	setDraft(dashboardId: number): void
+	{
+		this.#dashboardManager.toggleDraft(dashboardId, false)
+			.then(() => {
+				this.updateDashboardStatus(dashboardId, DashboardManager.DASHBOARD_STATUS_DRAFT);
+				this.#grid.updateRow(dashboardId, null, null, (result) => {
+					this.#showDraftGuide(this.#grid.getRows().getById(dashboardId).node);
+				});
+			})
+			.catch(() => {
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_SET_DRAFT_NOTIFICATION_ERROR'),
+				});
+			})
+		;
+	}
 
 	deleteDashboard(dashboardId: number): void
 	{
@@ -531,48 +614,35 @@ class SupersetDashboardGridManager
 		);
 	}
 
-	createEmptyDashboard()
+	openCreationSlider()
 	{
-		BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('new', 'report_new', {
-			type: 'custom',
-			c_element: 'new_button',
+		this.#dashboardManager.openCreationSlider();
+	}
+
+	#onNewDashboardCreated(event: Event)
+	{
+		const grid = this.getGrid();
+		const newDashboard = event.data.dashboard;
+		const gridRealtime: BX.Grid.Realtime = grid.getRealtime();
+		gridRealtime.addRow({
+			id: newDashboard.id,
+			columns: newDashboard.columns,
+			actions: newDashboard.actions,
+			insertAfter: this.#lastPinnedRowId,
 		});
 
-		const grid = this.getGrid();
-		grid.tableFade();
-		this.#dashboardManager.createEmptyDashboard()
-			.then((response) => {
-				grid.tableUnfade();
-				const gridRealtime: BX.Grid.Realtime = grid.getRealtime();
-				const newDashboard = response.data.dashboard;
-				gridRealtime.addRow({
-					id: newDashboard.id,
-					columns: newDashboard.columns,
-					actions: newDashboard.actions,
-					insertAfter: this.#lastPinnedRowId,
-				});
+		const editableData = grid.getParam('EDITABLE_DATA');
+		if (BX.type.isPlainObject(editableData))
+		{
+			editableData[newDashboard.id] = { TITLE: newDashboard.title };
+		}
 
-				const editableData = grid.getParam('EDITABLE_DATA');
-				if (BX.type.isPlainObject(editableData))
-				{
-					editableData[newDashboard.id] = { TITLE: newDashboard.title };
-				}
-
-				grid.tableUnfade();
-				const counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
-				counterTotalTextContainer.textContent++;
-				this.#initHints();
-			})
-			.catch((response) => {
-				grid.tableUnfade();
-
-				if (response.errors)
-				{
-					BX.UI.Notification.Center.notify({
-						content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_CREATE_EMPTY_NOTIFICATION_ERROR'),
-					});
-				}
-			});
+		const counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
+		counterTotalTextContainer.textContent++;
+		this.#initHints();
+		setTimeout(() => {
+			this.#showDraftGuide(this.#grid.getRows().getBodyFirstChild().node);
+		}, 1200);
 	}
 
 	#buildDashboardTitleEditor(

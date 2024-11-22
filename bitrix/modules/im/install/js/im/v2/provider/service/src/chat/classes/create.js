@@ -8,7 +8,7 @@ import { RestMethod, UserRole } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { Analytics } from 'im.v2.lib.analytics';
 
-import type { ChatConfig, RestChatConfig } from '../types/chat';
+import type { ChatConfig, RestChatConfig, CollabConfig } from '../types/chat';
 
 const PRIVATE_CHAT = 'CHAT';
 const OPEN_CHAT = 'OPEN';
@@ -46,6 +46,30 @@ export class CreateService
 		this.#sendAnalytics(newDialogId);
 
 		return { newDialogId, newChatId };
+	}
+
+	async createCollab(collabConfig: CollabConfig): Promise<{ newDialogId: string, newChatId: number }>
+	{
+		Logger.warn('ChatService: createCollab', collabConfig);
+
+		const preparedFields = await this.#prepareFields(collabConfig);
+		//
+		// const createResult: RestResult = await this.#restClient.callMethod(RestMethod.imV2ChatAdd, {
+		// 	fields: preparedFields,
+		// }).catch((error) => {
+		// 	// eslint-disable-next-line no-console
+		// 	console.error('ChatService: createCollab error:', error);
+		// 	throw new Error(error);
+		// });
+		//
+		// const { chatId: newChatId } = createResult.data();
+		//
+		// Logger.warn('ChatService: createCollab result', newChatId);
+		// const newDialogId = `chat${newChatId}`;
+		// this.#addChatToModel(newDialogId, preparedFields);
+		// this.#sendAnalytics(newDialogId);
+		//
+		// return { newDialogId, newChatId };
 	}
 
 	async #prepareFields(chatConfig: ChatConfig): RestChatConfig

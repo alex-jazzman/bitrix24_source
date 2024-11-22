@@ -14,10 +14,16 @@ export const AnalyticsEvent = Object.freeze({
 	openSettings: 'open_settings',
 	clickCreateNew: 'click_create_new',
 	openExisting: 'open_existing',
+	clickDelete: 'click_delete',
+	cancelDelete: 'cancel_delete',
+	delete: 'delete',
 	view: 'view',
 	click: 'click',
 	clickEdit: 'click_edit',
 	submitEdit: 'submit_edit',
+	clickCallButton: 'click_call_button',
+	clickStartConf: 'click_start_conf',
+	clickJoin: 'click_join',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -38,6 +44,9 @@ export const AnalyticsCategory = Object.freeze({
 	limit: 'limit',
 	limitBanner: 'limit_banner',
 	toolOff: 'tool_off',
+	message: 'message',
+	chatPopup: 'chat_popup',
+	call: 'call',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -46,7 +55,10 @@ export const AnalyticsType = Object.freeze({
 	channel: 'channel',
 	videoconf: 'videoconf',
 	copilot: 'copilot',
+	deletedMessage: 'deleted_message',
 	limitOfficeChatingHistory: 'limit_office_chating_history',
+	privateCall: 'private',
+	groupCall: 'group',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -55,15 +67,29 @@ export const AnalyticsSection = Object.freeze({
 	chatStart: 'chat_start',
 	chatHistory: 'chat_history',
 	sidebar: 'sidebar',
+	popup: 'popup',
+	activeChat: 'active_chat',
+	comments: 'comments',
+});
+
+export const AnalyticsSubSection = Object.freeze({
+	contextMenu: 'context_menu',
+	sidebar: 'sidebar',
 	chatWindow: 'chat_window',
 	messageLink: 'message_link',
+	chatSidebar: 'chat_sidebar',
+	chatList: 'chat_list',
+	window: 'window',
+});
+
+export const AnalyticsElement = Object.freeze({
+	initialBanner: 'initial_banner',
+	videocall: 'videocall',
+	audiocall: 'audiocall',
+	startButton: 'start_button',
 });
 
 export const AnalyticsStatus = Object.freeze({
 	success: 'success',
 	errorTurnedOff: 'error_turnedoff',
-});
-
-export const AnalyticsSubSection = Object.freeze({
-	contextMenu: 'context_menu',
 });

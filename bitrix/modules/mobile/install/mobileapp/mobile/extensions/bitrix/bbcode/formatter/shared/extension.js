@@ -6,6 +6,8 @@ jn.define('bbcode/formatter/shared', (require, exports, module) => {
 	const { TableFormatter } = require('bbcode/formatter/shared/node-formatters/table-formatter');
 	const { CodeFormatter } = require('bbcode/formatter/shared/node-formatters/code-formatter');
 	const { StripTagFormatter } = require('bbcode/formatter/shared/node-formatters/strip-tag-formatter');
+	const { ListFormatter } = require('bbcode/formatter/shared/node-formatters/list-formatter');
+	const { ListItemFormatter } = require('bbcode/formatter/shared/node-formatters/list-item-formatter');
 
 	module.exports = {
 		DiskNodeFormatter,
@@ -14,5 +16,7 @@ jn.define('bbcode/formatter/shared', (require, exports, module) => {
 		TableFormatter,
 		CodeFormatter,
 		StripTagFormatter,
+		ListFormatter,
+		ListItemFormatter,
 	};
 });

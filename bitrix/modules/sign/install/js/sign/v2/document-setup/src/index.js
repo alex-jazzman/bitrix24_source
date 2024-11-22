@@ -8,11 +8,16 @@ import type { DocumentData } from './type';
 import './style.css';
 
 export type { DocumentData };
+export type DocumentInitiatedType = 'employee' | 'company';
+export const DocumentInitiated: Readonly<Record<string, DocumentInitiatedType>> = Object.freeze({
+	employee: 'employee',
+	company: 'company',
+});
 
 export class DocumentSetup extends EventEmitter
 {
 	blankSelector: BlankSelector;
-	setupData: ?Object;
+	setupData: null | { uid: string, initiatedByType: DocumentInitiatedType, templateUid: ?string, ...};
 	layout: HTMLElement;
 	#notificationContainer: HTMLElement;
 	#changeDomainWarningContainer: ?HTMLElement;
@@ -68,11 +73,14 @@ export class DocumentSetup extends EventEmitter
 		}
 	}
 
-	async #register(blankId: string): Promise<string>
+	async #register(blankId: string, isTemplateMode: boolean = false): Promise<{
+		uid: string,
+		templateUid: string | null
+	}>
 	{
-		const data = await this.#api.register(blankId, this.#scenarioType);
+		const data = await this.#api.register(blankId, this.#scenarioType, isTemplateMode);
 
-		return data?.uid ?? '';
+		return data ?? {};
 	}
 
 	async #change(uid: string, blankId: number): Promise<string>
@@ -115,7 +123,7 @@ export class DocumentSetup extends EventEmitter
 	async #processPages(urls: string[], cb: () => void)
 	{
 		let startIndex = 0;
-		const pagesCount = 20;
+		const pagesCount = 3;
 		while (startIndex < urls.length)
 		{
 			const sliced = urls.slice(startIndex, startIndex + pagesCount);
@@ -211,7 +219,7 @@ export class DocumentSetup extends EventEmitter
 		return this.#api.loadBlocksByDocument(uid);
 	}
 
-	async setup(uid: ?string): Promise<void>
+	async setup(uid: ?string, isTemplateMode: boolean = false): Promise<void>
 	{
 		if (this.isSameBlankSelected())
 		{
@@ -247,9 +255,11 @@ export class DocumentSetup extends EventEmitter
 				this.ready = false;
 				blankId = selectedBlankId || await this.blankSelector.createBlank();
 				const isRegistered = this.#uids.has(blankId);
-				const uid = isRegistered
+
+				const { uid, templateUid } = isRegistered
 					? await this.#change(this.#uids.get(blankId), blankId)
-					: await this.#register(blankId);
+					: await this.#register(blankId, isTemplateMode);
+
 				this.#uids.set(blankId, uid);
 				await this.#api.upload(uid);
 				const [loadedData, blocks] = await Promise.all([
@@ -257,7 +267,7 @@ export class DocumentSetup extends EventEmitter
 					this.#api.loadBlocksByDocument(uid),
 				]);
 				const isTemplate = Boolean(selectedBlankId);
-				this.#setDocumentData({ ...loadedData, blocks, isTemplate });
+				this.#setDocumentData({ ...loadedData, blocks, isTemplate, templateUid });
 			}
 		}
 		catch

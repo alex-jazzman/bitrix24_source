@@ -62,7 +62,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		{
 			const search = this.nativeSearchField;
 
-			search.mode = 'layout';
+			search.mode = this.props.disablePresets ? 'bar' : 'layout';
 
 			search.removeAllListeners('cancel');
 			search.removeAllListeners('hide');
@@ -83,15 +83,22 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		/**
 		 * @public
 		 */
-
 		show()
 		{
 			const search = this.nativeSearchField;
 			search.text = this.text;
 
 			this.createSearchLayoutView();
-			search.show(this.searchLayoutView, 44);
-			this.fetchPresets();
+
+			if (this.props.disablePresets)
+			{
+				search.show();
+			}
+			else
+			{
+				search.show(this.searchLayoutView, 44);
+				this.fetchPresets();
+			}
 		}
 
 		createSearchLayoutView()
@@ -381,6 +388,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		onMoreButtonClick: PropTypes.func,
 		presetId: PropTypes.string,
 		counterId: PropTypes.string,
+		disablePresets: PropTypes.bool,
 	};
 
 	module.exports = { SearchLayout };

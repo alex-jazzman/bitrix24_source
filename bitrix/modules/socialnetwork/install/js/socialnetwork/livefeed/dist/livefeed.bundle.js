@@ -2889,6 +2889,7 @@ this.BX = this.BX || {};
 	    this.entryData = {};
 	    this.feedInitialized = false;
 	    this.moreButtonDataList = new Map();
+	    this.currentScrollPosition = 0;
 	  }
 	  babelHelpers.createClass(Feed, [{
 	    key: "initOnce",
@@ -2946,6 +2947,27 @@ this.BX = this.BX || {};
 	      if (noTasksNotificationReadButton) {
 	        main_core.Event.bind(noTasksNotificationReadButton, 'click', this.setNoTasksNotificationRead.bind(this));
 	      }
+	      main_core.Event.bind(document, 'fullscreenchange', this.handleFullScreenChange.bind(this));
+	      main_core.Event.bind(document, 'scroll', this.handleScrollChange.bind(this));
+	    }
+	  }, {
+	    key: "handleFullScreenChange",
+	    value: function handleFullScreenChange() {
+	      if (!this.getFullScreenElement()) {
+	        window.scrollTo(0, this.currentScrollPosition);
+	      }
+	    }
+	  }, {
+	    key: "handleScrollChange",
+	    value: function handleScrollChange() {
+	      if (!this.getFullScreenElement()) {
+	        this.currentScrollPosition = window.scrollY;
+	      }
+	    }
+	  }, {
+	    key: "getFullScreenElement",
+	    value: function getFullScreenElement() {
+	      return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
 	    }
 	  }, {
 	    key: "init",

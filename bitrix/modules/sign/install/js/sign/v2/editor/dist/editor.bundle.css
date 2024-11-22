@@ -24,7 +24,7 @@
 
 .sign-editor__header_title {
 	color: var(--ui-color-palette-black-base);
-	font: 24px/26px var(--font_os_regular);
+	font: 24px/26px var(--ui-font-family-helvetica);
 	flex-grow: 1;
 	margin: 0 0 10px 0;
 }

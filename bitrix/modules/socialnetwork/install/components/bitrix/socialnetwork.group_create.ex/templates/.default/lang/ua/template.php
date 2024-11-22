@@ -1,5 +1,11 @@
 <?php
 $MESS["SONET_GCE_T_AJAX_ERROR"] = "Виникла помилка при обробці даних форми. Будь ласка, спробуйте ще раз.";
+$MESS["SONET_GCE_T_DEMO_INFO_BTN"] = "Розпочати роботу";
+$MESS["SONET_GCE_T_DEMO_INFO_TEXT_PROJECT"] = "Ви можете розподіляти завдання за проєктами, розуміти, на якому етапі який проєкт перебуває та витрачати менше часу на контроль роботи співробітників.";
+$MESS["SONET_GCE_T_DEMO_INFO_TEXT_SCRUM"] = "Ви можете додавати завдання в беклог, розставляти пріоритети, планувати спринти та комунікації з командою. Це готовий інструмент для роботи команди за методологією Скрам.";
+$MESS["SONET_GCE_T_DEMO_INFO_TEXT_TRIAL"] = "Усі можливості доступні на <span>15 днів</span>.";
+$MESS["SONET_GCE_T_DEMO_INFO_TITLE_PROJECT"] = "Ви активували <span>Проєкти</span>";
+$MESS["SONET_GCE_T_DEMO_INFO_TITLE_SCRUM"] = "Ви активували <span>Скрам</span>";
 $MESS["SONET_GCE_T_STRING_FIELD_ERROR"] = "Не заповнено значення поля.";
 $MESS["SONET_GCE_T_SUCCESS_CREATE"] = "Група успішно створена.";
 $MESS["SONET_GCE_T_SUCCESS_EDIT"] = "Параметри групи успішно змінені.";

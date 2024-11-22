@@ -2,10 +2,12 @@
  * @module im/messenger/lib/element/dialog/message/copilot
  */
 jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, module) => {
+	const { Loc } = require('loc');
+
+	const { MessageType } = require('im/messenger/const');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
 	const { CopilotButtonType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	class CopilotMessage extends TextMessage
@@ -25,7 +27,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 
 		getType()
 		{
-			return 'copilot';
+			return MessageType.copilot;
 		}
 
 		setAvatar(authorId, chatId, messageId)

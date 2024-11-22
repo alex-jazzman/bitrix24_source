@@ -1,0 +1,16 @@
+<?php
+$MESS["CRM_COMMON_ACTION_CREATE_36"] = "Підпис";
+$MESS["CRM_COMMON_ACTION_CREATE_39"] = "Підписати";
+$MESS["SIGN_CMP_START_TPL_DOCS_TITLE"] = "Документи на підпис";
+$MESS["SIGN_CMP_START_TPL_DOCS_TITLE_B2E"] = "Кадрові документи";
+$MESS["SIGN_CMP_START_TPL_MENU_B2E_CURRENT_DOCUMENT"] = "Чекають на мою реакцію";
+$MESS["SIGN_CMP_START_TPL_MENU_B2E_KANBAN_MSGVER_1"] = "Електронний підпис для HR";
+$MESS["SIGN_CMP_START_TPL_MENU_B2E_SAFE"] = "Сейф компанії";
+$MESS["SIGN_CMP_START_TPL_MENU_B2E_SETTINGS"] = "Налаштування";
+$MESS["SIGN_CMP_START_TPL_MENU_CONFIG_PERMISSIONS"] = "Права доступу";
+$MESS["SIGN_CMP_START_TPL_MENU_CONTACTS"] = "Контакти";
+$MESS["SIGN_CMP_START_TPL_MENU_INDEX"] = "Документи";
+$MESS["SIGN_CMP_START_TPL_MENU_INDEX_1"] = "Документи на підпис";
+$MESS["SIGN_CMP_START_TPL_MENU_MYSAFE"] = "Мій сейф";
+$MESS["SIGN_CMP_START_TPL_TOUR_SIGN_BTN_TEXT"] = "Створіть або завантажте перший документ. Надішліть на підпис собі або одразу клієнтові. Переконайтеся, наскільки це швидко, просто й зручно.";
+$MESS["SIGN_CMP_START_TPL_TOUR_SIGN_BTN_TITLE"] = "Додайте документ на підпис";

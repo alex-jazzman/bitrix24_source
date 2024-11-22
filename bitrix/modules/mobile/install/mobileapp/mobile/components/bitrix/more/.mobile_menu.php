@@ -2,12 +2,14 @@
 
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\DiskMobile\AirDiskFeature;
 use Bitrix\Intranet\AI;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Mobile\Config\Feature;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Main\EventManager;
 use Bitrix\MobileApp\Mobile;
@@ -35,13 +37,14 @@ if (CModule::IncludeModule("socialnetwork"))
 {
 	$socNetFeatures = new \Bitrix\Mobile\Component\SocNetFeatures($USER->getId());
 	$allowedFeatures = [];
-	foreach (["tasks", "files"] as $feature)
+	foreach (['tasks', 'files'] as $feature)
 	{
 		$allowedFeatures[$feature] = $socNetFeatures->isEnabledForUser($feature);
 	}
 }
 
 $diskEnabled = Option::get('disk', 'successfully_converted', false) && CModule::includeModule('disk');
+$airDiskEnabled = Feature::isEnabled(AirDiskFeature::class);
 $userId = $USER->getId();
 $siteDir = SITE_DIR;
 $siteId = SITE_ID;
@@ -117,22 +120,6 @@ JS
 		"id" => "doc_user",
 	];
 }
-
-$favoriteItems[] = [
-	"title" => Loc::getMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"),
-	"imageUrl" => $imageDir . "favorite/icon-mydisk.png",
-	"color" => "#20A1E7",
-	"attrs" => [
-		"url" => '/mobile/?mobile_action=disk_folder_list&type=user&path=/&entityId=' . $USER->GetID(),
-		"table_settings" => [
-			"useTagsInSearch" => "NO",
-			"type" => "files",
-		],
-		"_type" => "list",
-		"id" => "doc_user",
-	],
-	"hidden" => $diskEnabled || !$allowedFeatures["files"],
-];
 
 if (
 	IsModuleInstalled('intranetmobile')
@@ -230,6 +217,7 @@ JS
 	];
 }
 
+
 $favoriteItems[] = [
 	"imageUrl" => $imageDir . "favorite/icon-disk.png",
 	"color" => "#3CD162",
@@ -237,19 +225,19 @@ $favoriteItems[] = [
 	"attrs" => [
 		"onclick" => <<<JS
 
-			ComponentHelper.openList({
-				name:"user.disk",
-				object:"list",
-				version:"{$diskComponentVersion}",
-				componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
-				widgetParams:{titleParams: { text:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", type: "section"}, useSearch: true}
-			});
+		ComponentHelper.openList({
+			name:"user.disk",
+			object:"list",
+			version:"{$diskComponentVersion}",
+			componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
+			widgetParams:{titleParams: { text:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", type: "section"}, useSearch: true}
+		});
 
 JS
 		,
 		"id" => "doc_shared",
 	],
-	"hidden" => !$diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
+	"hidden" => $airDiskEnabled || !$diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
 ];
 
 $favoriteItems[] = [
@@ -259,21 +247,22 @@ $favoriteItems[] = [
 	"attrs" => [
 		"onclick" => <<<JS
 
-			PageManager.openList(
+		PageManager.openList(
+		{
+			url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
+			table_settings:
 			{
-				url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
-				table_settings:
-				{
-					useTagsInSearch:"NO",
-					type:"files"
-				}
-			});
+				useTagsInSearch:"NO",
+				type:"files"
+			}
+		});
 JS
 		,
 		"id" => "doc_shared",
 	],
-	"hidden" => $diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
+	"hidden" => $airDiskEnabled || $diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
 ];
+
 
 $favorite = [
 	"title" => Loc::getMessage("MB_SEC_FAVORITE_MSGVER_1"),
@@ -930,28 +919,25 @@ JS,
 }
 
 $useAssets = Mobile::getApiVersion() >= 54;
-return [
-	"menu" => $menuStructure,
-	"popupMenuItems" => [
-		[
-			"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
-			"sectionCode" => "menu",
-			"id" => "switch_account",
-			"iconName" => "log_out",
-			"iconUrl" => !$useAssets ? $imageDir . "settings/change_account_popup.png?5" : null,
-			"onclick" => <<<JS
+$popupMenuItems = [
+	[
+		"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
+		"sectionCode" => "menu",
+		"id" => "switch_account",
+		"iconName" => "log_out",
+		"iconUrl" => !$useAssets ? $imageDir . "settings/change_account_popup.png?5" : null,
+		"onclick" => <<<JS
 				Application.exit();
 JS
-			,
-
-		],
-		[
-			"title" => Loc::getMessage("MENU_PRESET_TAB"),
-			"sectionCode" => "menu",
-			"id" => "tab.settings",
-			"iconName" => "bottom_menu",
-			"iconUrl" => !$useAssets ?$imageDir . "settings/tab_settings.png?9": null,
-			"onclick" => <<<JS
+		,
+	],
+	[
+		"title" => Loc::getMessage("MENU_PRESET_TAB"),
+		"sectionCode" => "menu",
+		"id" => "tab.settings",
+		"iconName" => "bottom_menu",
+		"iconUrl" => !$useAssets ? $imageDir . "settings/tab_settings.png?9" : null,
+		"onclick" => <<<JS
 				PageManager.openComponent("JSStackComponent",{
 						scriptPath: availableComponents["tab.presets"].publicUrl,
 						rootWidget:{
@@ -964,8 +950,11 @@ JS
 						}
 					});
 JS
-			,
-
-		],
+		,
 	],
+];
+
+return [
+	"menu" => $menuStructure,
+	"popupMenuItems" => $popupMenuItems,
 ];

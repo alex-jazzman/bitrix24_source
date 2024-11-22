@@ -4,6 +4,7 @@ import {Popup} from 'main.popup'
 import {Hardware} from '../hardware';
 import {BackgroundDialog} from '../dialogs/background_dialog';
 import 'ui.switcher';
+import Util from '../util';
 
 const DeviceSelectorEvents = {
 	onMicrophoneSelect: "onMicrophoneSelect",
@@ -251,6 +252,22 @@ export class DeviceSelector
 								]
 							})
 							: null,
+						Dom.create("div", {
+							props: {className: "bx-call-view-device-selector-bottom-item"},
+							children: [
+								Dom.create("span", {
+									props: {className: "bx-call-view-device-selector-bottom-item-action"},
+									text: BX.message("CALL_RUN_SELF_TEST"),
+									events: {
+										click: () =>
+										{
+											Util.startSelfTest();
+											this.popup.close();
+										}
+									}
+								}),
+							]
+						}),
 						(this.allowAdvancedSettings && !!BX.MessengerCommon) ?
 							Dom.create("div", {
 								props: {className: "bx-call-view-device-selector-bottom-item"},

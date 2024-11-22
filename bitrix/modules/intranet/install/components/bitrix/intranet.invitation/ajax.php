@@ -303,12 +303,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL,
-			$analyticEmails,
-			$analyticPhones
-		);
-
 		$newUsers = [
 			"ITEMS" => $items
 		];
@@ -319,6 +313,28 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		{
 			$this->addError(new \Bitrix\Main\Error($strError));
 			return false;
+		}
+
+		foreach ($res as $obj)
+		{
+			$isEmail = true;
+
+			if (empty($obj->getId()))
+			{
+				continue;
+			}
+
+			if (!isset($obj->getCustomData()['email']) || empty($obj->getCustomData()['email']))
+			{
+				$isEmail = false;
+			}
+
+			$this->getAnalyticsInstance()->sendInvitation(
+				$obj->getId(),
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL,
+				$isEmail ? $analyticEmails : 0,
+				$isEmail ? 0 : $analyticPhones
+			);
 		}
 
 		return $res;
@@ -343,12 +359,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
-			$countEmails,
-			$countPhones
-		);
-
 		$newUsers = [
 			"ITEMS" => $userData["ITEMS"],
 			"UF_DEPARTMENT" => $departmentId,
@@ -356,6 +366,16 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		];
 
 		$res = $this->registerNewUser($newUsers, 'group', $strError);
+
+		foreach ($res as $obj)
+		{
+			$this->getAnalyticsInstance()->sendInvitation(
+				$obj->getId(),
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
+				$countEmails,
+				$countPhones
+			);
+		}
 
 		if (!empty($strError))
 		{
@@ -411,12 +431,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS,
-			$countEmails,
-			$countPhones
-		);
-
 		if (!empty($errorFormatItems))
 		{
 			$strError = Loc::getMessage("BX24_INVITE_DIALOG_ERROR_"
@@ -439,6 +453,16 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		if (!empty($newUsers))
 		{
 			$res = $this->registerNewUser($newUsers, 'mass', $strError);
+
+			foreach ($res as $obj)
+			{
+				$this->getAnalyticsInstance()->sendInvitation(
+					$obj->getId(),
+					Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS,
+					$countEmails,
+					$countPhones
+				);
+			}
 		}
 
 		if (!empty($strError))
@@ -506,6 +530,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	public function selfAction()
 	{
 		$this->getAnalyticsInstance()->sendRegistration(
+			0,
 			Analytics::ANALYTIC_CATEGORY_SETTINGS,
 			Analytics::ANALYTIC_EVENT_CHANGE_QUICK_REG,
 			Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPost('allow_register')
@@ -552,12 +577,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		{
 			$strError = str_replace("<br>", " ", $strError);
 			$this->addError(new \Bitrix\Main\Error($strError));
-			$this->getAnalyticsInstance()->sendRegistration(status: 'N', userData: $userData);
+			$this->getAnalyticsInstance()->sendRegistration(0, status: 'N', userData: $userData);
 			return false;
 		}
 
-		$this->getAnalyticsInstance()->sendRegistration(status: 'Y', userData: $userData);
-
+		$this->getAnalyticsInstance()->sendRegistration($idAdded, status: 'Y', userData: $userData);
 
 		$res = $this->prepareUsersForResponse([$idAdded]);
 
@@ -568,12 +592,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function inviteIntegratorAction()
 	{
-
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
-			1
-		);
-
 		if (!Loader::includeModule("bitrix24"))
 		{
 			return false;
@@ -622,6 +640,12 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 			return false;
 		}
+
+		$this->getAnalyticsInstance()->sendInvitation(
+			$newIntegratorId,
+			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
+			1
+		);
 
 		CIntranetInviteDialog::logAction($newIntegratorId, 'intranet', 'invite_user', 'integrator_dialog');
 

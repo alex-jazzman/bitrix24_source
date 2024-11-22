@@ -15,4 +15,4 @@ $MESS["CONFERENCE_LIST_PRESET_MY"] = "My items";
 $MESS["CONFERENCE_LIST_STATUS_ACTIVE"] = "Ongoing";
 $MESS["CONFERENCE_LIST_STATUS_FINISHED"] = "Ended";
 $MESS["CONFERENCE_LIST_STATUS_NOT_STARTED"] = "Scheduled";
-$MESS["IM_COMPONENT_MODULE_IM_NOT_INSTALLED"] = "The Web Messenger module is not installed.";
+$MESS["IM_COMPONENT_MODULE_IM_NOT_INSTALLED"] = "The Instant Messenger module is not installed.";

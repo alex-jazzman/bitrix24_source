@@ -12,6 +12,7 @@ jn.define('tasks/layout/task/view-new/ui/extra-settings', (require, exports, mod
 	const { Box } = require('ui-system/layout/box');
 	const { Loc } = require('tasks/loc');
 	const { DatesResolver } = require('tasks/task/datesResolver');
+	const { DatesResolver: DatePlanResolver } = require('tasks/layout/fields/date-plan/dates-resolver');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 	const { connect } = require('statemanager/redux/connect');
@@ -73,11 +74,17 @@ jn.define('tasks/layout/task/view-new/ui/extra-settings', (require, exports, mod
 				...originalDates,
 			});
 
-			datesResolver.setIsMatchWorkTime(isMatchWorkTime);
+			const datePlanResolver = new DatePlanResolver(
+				originalDates.startDatePlan ? originalDates.startDatePlan / 1000 : null,
+				originalDates.endDatePlan ? originalDates.endDatePlan / 1000 : null,
+				task.isMatchWorkTime,
+			);
+			datePlanResolver.setIsMatchWorkTime(isMatchWorkTime);
 
+			datesResolver.setIsMatchWorkTime(isMatchWorkTime);
 			const actualDates = {
-				startDatePlan: datesResolver.getStartDatePlanTs(),
-				endDatePlan: datesResolver.getEndDatePlanTs(),
+				startDatePlan: datePlanResolver.getStartDatePlan(),
+				endDatePlan: datePlanResolver.getEndDatePlan(),
 				deadline: datesResolver.getDeadlineTs(),
 			};
 

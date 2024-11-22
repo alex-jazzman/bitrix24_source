@@ -1,6 +1,8 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Router } from 'crm.router';
 import { ajax as Ajax, Dom, Loc, Reflection, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { sendData as sendAnalyticsData } from 'ui.analytics';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 const namespace = Reflection.namespace('BX.Crm');
@@ -11,6 +13,7 @@ class TypeListComponent
 	grid: BX.Main.grid;
 	errorTextContainer: Element;
 	welcomeMessageContainer: Element;
+	isExternal: boolean;
 
 	constructor(params): void
 	{
@@ -34,6 +37,11 @@ class TypeListComponent
 			if (Type.isElementNode(params.welcomeMessageContainer))
 			{
 				this.welcomeMessageContainer = params.welcomeMessageContainer;
+			}
+
+			if (Type.isBoolean(params.isExternal))
+			{
+				this.isExternal = params.isExternal;
 			}
 		}
 	}
@@ -149,19 +157,38 @@ class TypeListComponent
 			return;
 		}
 
+		const analyticsBuilder = (new Builder.Automation.Type.DeleteEvent())
+			.setSubSection(Dictionary.ELEMENT_GRID_ROW_CONTEXT_MENU)
+			.setIsExternal(this.isExternal)
+			.setId(id)
+		;
+
+		let isCancelRegistered = false;
+
 		MessageBox.show({
 			title: Loc.getMessage('CRM_TYPE_TYPE_DELETE_CONFIRMATION_TITLE'),
 			message: Loc.getMessage('CRM_TYPE_TYPE_DELETE_CONFIRMATION_MESSAGE'),
 			modal: true,
 			buttons: MessageBoxButtons.YES_CANCEL,
 			onYes: (messageBox) => {
+				sendAnalyticsData(
+					analyticsBuilder
+						.setStatus(Dictionary.STATUS_ATTEMPT)
+						.buildData()
+					,
+				);
+
 				Ajax.runAction('crm.controller.type.delete', {
 					analyticsLabel: 'crmTypeListDeleteType',
-					data:
-							{
-								id,
-							},
+					data: { id },
 				}).then((response: {data: {}}) => {
+					sendAnalyticsData(
+						analyticsBuilder
+							.setStatus(Dictionary.STATUS_SUCCESS)
+							.buildData()
+						,
+					);
+
 					const isUrlChanged = Type.isObject(response.data) && (response.data.isUrlChanged === true);
 					if (isUrlChanged)
 					{
@@ -171,9 +198,58 @@ class TypeListComponent
 					}
 
 					this.grid.reloadTable();
-				}).catch(this.showErrorsFromResponse.bind(this));
+				}).catch((response) => {
+					sendAnalyticsData(
+						analyticsBuilder
+							.setStatus(Dictionary.STATUS_ERROR)
+							.buildData()
+						,
+					);
+
+					this.showErrorsFromResponse(response);
+				});
 
 				messageBox.close();
+			},
+			onCancel: (messageBox) => {
+				if (isCancelRegistered)
+				{
+					messageBox.close();
+
+					return;
+				}
+
+				isCancelRegistered = true;
+
+				sendAnalyticsData(
+					analyticsBuilder
+						.setElement(Dictionary.ELEMENT_CANCEL_BUTTON)
+						.setStatus(Dictionary.STATUS_CANCEL)
+						.buildData()
+					,
+				);
+
+				messageBox.close();
+			},
+			popupOptions: {
+				events: {
+					onPopupClose: () => {
+						if (isCancelRegistered)
+						{
+							return;
+						}
+
+						isCancelRegistered = true;
+
+						sendAnalyticsData(
+							analyticsBuilder
+								.setElement(null)
+								.setStatus(Dictionary.STATUS_CANCEL)
+								.buildData()
+							,
+						);
+					},
+				},
 			},
 		});
 	}

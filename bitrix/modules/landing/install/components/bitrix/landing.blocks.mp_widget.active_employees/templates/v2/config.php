@@ -9,7 +9,6 @@ return [
 	'js' => 'script.js',
 	'rel' => [
 		'main.polyfill.core',
-		'landing.widget',
 	],
 	'skip_core' => true,
 ];

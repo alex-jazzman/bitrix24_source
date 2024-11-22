@@ -293,7 +293,7 @@ export const ChatDialog = {
 			const { hasAccess, errorCode } = await AccessManager.checkMessageAccess(messageId);
 			if (!hasAccess && errorCode === AccessErrorCode.messageAccessDeniedByTariff)
 			{
-				Analytics.getInstance().onGoToContextHistoryLimitClick({ dialogId: this.dialogId });
+				Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({ dialogId: this.dialogId });
 				FeatureManager.chatHistory.openFeatureSlider();
 
 				return;

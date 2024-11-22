@@ -1287,24 +1287,33 @@ export class CallUser
 
 	playVideoElements(videoElement)
 	{
-		const isCanPlaying = videoElement && videoElement.srcObject;
-		const isPaused = videoElement && videoElement.paused;
-		const isReadyPlaying = videoElement && videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
+		const hasVideoEl = !!videoElement;
+		const isCanPlaying = hasVideoEl && !!videoElement.srcObject;
+		const isPaused = hasVideoEl && videoElement.paused;
+		const isReadyPlaying = hasVideoEl && videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
+		const isEnded = hasVideoEl && videoElement.ended;
 
-		if (isCanPlaying && isReadyPlaying && !isPaused)
+		if (hasVideoEl && !isPaused)
 		{
 			videoElement.pause();
 		}
 
-		if (isCanPlaying && isReadyPlaying)
+		if (isCanPlaying && isReadyPlaying && !isEnded)
 		{
-			videoElement.play().catch(logPlaybackError)
+			videoElement.play().catch(logPlaybackError);
 		}
 
-		if (isCanPlaying && !isReadyPlaying) {
-			videoElement.addEventListener('loadeddata', () => {
+		if (isCanPlaying && isEnded)
+		{
+			videoElement.load();
+		}
+
+		if (isCanPlaying && !isReadyPlaying && !isEnded && !videoElement.onloadeddata)
+		{
+			videoElement.onloadeddata = () =>
+			{
 				this.playVideoElements(videoElement);
-			})
+			};
 		}
 	}
 
@@ -1332,7 +1341,7 @@ export class CallUser
 						this.elements.preview.srcObject = null;
 					}
 				}
-				else if (this.elements.video.srcObject != this.stream)
+				else if (this.stream && this.elements.video.srcObject?.id !== this.stream?.id)
 				{
 					this.elements.video.srcObject = this.stream;
 					this.playVideoElements(this.elements.video);

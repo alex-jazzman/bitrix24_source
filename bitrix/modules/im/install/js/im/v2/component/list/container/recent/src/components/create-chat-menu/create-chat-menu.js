@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { FeaturePromoter } from 'ui.info-helper';
 
 import { Messenger } from 'im.public';
@@ -12,6 +13,14 @@ import { CreateChatHelp } from './create-chat-help';
 
 import type { JsonObject } from 'main.core';
 import type { MenuOptions } from 'main.popup';
+
+type MenuItemType = {
+	icon: $Values<typeof MenuItemIcon>,
+	title: string,
+	subtitle: string,
+	clickHandler: () => void,
+	showCondition?: () => boolean,
+};
 
 const PromoByChatType = {
 	[ChatType.chat]: PromoId.createGroupChat,
@@ -33,7 +42,6 @@ export const CreateChatMenu = {
 	computed:
 	{
 		ChatType: () => ChatType,
-		MenuItemIcon: () => MenuItemIcon,
 		menuConfig(): MenuOptions
 		{
 			return {
@@ -44,11 +52,35 @@ export const CreateChatMenu = {
 				padding: 0,
 			};
 		},
-		isCopilotAvailable(): boolean
+		menuItems(): MenuItemType[]
 		{
-			// temporary hidden
-			return false;
-			// return FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
+			return [
+				{
+					icon: MenuItemIcon.chat,
+					title: this.loc('IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2'),
+					subtitle: this.loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_V2'),
+					clickHandler: this.onChatCreateClick.bind(this, ChatType.chat),
+				},
+				{
+					icon: MenuItemIcon.channel,
+					title: this.loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2'),
+					subtitle: this.loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3'),
+					clickHandler: this.onChatCreateClick.bind(this, ChatType.channel),
+				},
+				{
+					icon: MenuItemIcon.conference,
+					title: this.loc('IM_RECENT_CREATE_CONFERENCE_TITLE'),
+					subtitle: this.loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2'),
+					clickHandler: this.onChatCreateClick.bind(this, ChatType.videoconf),
+				},
+				{
+					icon: MenuItemIcon.conference,
+					title: this.loc('IM_RECENT_CREATE_COLLAB_TITLE'),
+					subtitle: this.loc('IM_RECENT_CREATE_COLLAB_SUBTITLE'),
+					clickHandler: this.onChatCreateClick.bind(this, ChatType.collab),
+					showCondition: () => FeatureManager.isFeatureAvailable(Feature.collabAvailable),
+				},
+			];
 		},
 	},
 	methods:
@@ -105,6 +137,15 @@ export const CreateChatMenu = {
 		{
 			return PromoByChatType[this.chatTypeToCreate] ?? '';
 		},
+		needToShowMenuItem(showCondition: () => boolean): boolean
+		{
+			if (!Type.isFunction(showCondition))
+			{
+				return true;
+			}
+
+			return showCondition();
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -118,31 +159,16 @@ export const CreateChatMenu = {
 			ref="icon"
 		></div>
 		<MessengerMenu v-if="showPopup" :config="menuConfig" @close="showPopup = false">
-			<MenuItem
-				:icon="MenuItemIcon.chat"
-				:title="loc('IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2')"
-				:subtitle="loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_V2')"
-				@click="onChatCreateClick(ChatType.chat)"
-			/>
-			<MenuItem
-				:icon="MenuItemIcon.channel"
-				:title="loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2')"
-				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3')"
-				@click="onChatCreateClick(ChatType.channel)"
-			/>
-			<MenuItem
-				:icon="MenuItemIcon.conference"
-				:title="loc('IM_RECENT_CREATE_CONFERENCE_TITLE')"
-				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2')"
-				@click="onChatCreateClick(ChatType.videoconf)"
-			/>
-			<MenuItem
-				v-if="isCopilotAvailable"
-				:icon="MenuItemIcon.copilot"
-				:title="loc('IM_RECENT_CREATE_COPILOT_TITLE')"
-				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE')"
-				@click="onCopilotClick"
-			/>
+			<template v-for="{ icon, title, subtitle, clickHandler, showCondition } in menuItems">
+				<MenuItem
+					v-if="needToShowMenuItem(showCondition)"
+					:key="title"
+					:icon="icon"
+					:title="title"
+					:subtitle="subtitle"
+					@click="clickHandler"
+				/>
+			</template>
 			<template #footer>
 				<CreateChatHelp @articleOpen="showPopup = false" />
 			</template>

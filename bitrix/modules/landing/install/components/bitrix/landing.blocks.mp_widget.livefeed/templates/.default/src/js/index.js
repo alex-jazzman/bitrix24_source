@@ -1,8 +1,12 @@
-import { Widget } from 'landing.widget';
-
-export class LivefeedWidget
+export class Livefeed extends BX.Landing.Widget.Base
 {
 	constructor(element, options)
+	{
+		super(element);
+		this.initialize(element, options);
+	}
+
+	initialize(element, options)
 	{
 		if (!element)
 		{
@@ -23,8 +27,7 @@ export class LivefeedWidget
 			gridExtendedClass: 'extended',
 			buttonHideClass: 'hide',
 		};
-		const widget = new Widget(element, widgetOptions);
-		widget.deleteContextDependentContainer();
-		widget.toggleExtendViewButtonBehavior();
+		this.deleteContextDependentContainer(widgetOptions);
+		this.toggleExtendViewButtonBehavior(widgetOptions);
 	}
 }

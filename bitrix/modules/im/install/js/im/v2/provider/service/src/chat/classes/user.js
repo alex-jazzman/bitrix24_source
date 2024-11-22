@@ -168,7 +168,7 @@ export class UserService
 		console.error('UserService: error kicking from chat', error);
 
 		const NotificationTextByErrorCode = {
-			[DeleteUserErrorCode.userInvitedFromStructure]: Loc.getMessage('IM_MESSAGE_SERVICE_KICK_CHAT_STRUCTURE_ERROR'),
+			[DeleteUserErrorCode.userInvitedFromStructure]: Loc.getMessage('IM_MESSAGE_SERVICE_KICK_CHAT_STRUCTURE_ERROR_MSGVER_1'),
 			default: Loc.getMessage('IM_MESSAGE_SERVICE_KICK_CHAT_DEFAULT_ERROR'),
 		};
 

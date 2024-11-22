@@ -63,7 +63,7 @@ $bbFieldNames = isset($arResult['ENTITY_BB_FIELD_NAMES']) && is_array($arResult[
 $hasBBCodeFields = isset($arResult['HAS_BBCODE_FIELDS']) && $arResult['HAS_BBCODE_FIELDS'] === true;
 if ($hasBBCodeFields)
 {
-	Main\UI\Extension::load('ui.text-editor');
+	Main\UI\Extension::load(['ui.text-editor', 'ui.bbcode.formatter.html-formatter']);
 }
 
 foreach ($htmlFieldNames as $fieldName)

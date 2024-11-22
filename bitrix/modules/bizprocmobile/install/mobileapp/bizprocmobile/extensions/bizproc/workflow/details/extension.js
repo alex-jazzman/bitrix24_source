@@ -24,6 +24,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				titleParams: {
 					text: props.title || Loc.getMessage('M_BP_WORKFLOW_DETAILS_WIDGET_TITLE'),
 					textColor: AppTheme.colors.base1,
+					type: 'dialog',
 				},
 				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
@@ -232,7 +233,10 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 						const workflow = response.data.workflow || {};
 
 						this.layout.setTitle(
-							{ text: (workflow.title || Loc.getMessage('M_BP_WORKFLOW_DETAILS_WIDGET_TITLE')) },
+							{
+								text: (workflow.title || Loc.getMessage('M_BP_WORKFLOW_DETAILS_WIDGET_TITLE')),
+								type: 'dialog',
+							},
 						);
 
 						this.setState({
@@ -399,7 +403,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 							fontSize: 14,
 							color: AppTheme.colors.base2,
 						},
-						text: Loc.getMessage('M_BP_WORKFLOW_DETAILS_TIMELINE_BTN'),
+						text: Loc.getMessage('M_BP_WORKFLOW_DETAILS_TIMELINE_BTN_MSGVER_1'),
 					}),
 				),
 				this.renderCounter(),

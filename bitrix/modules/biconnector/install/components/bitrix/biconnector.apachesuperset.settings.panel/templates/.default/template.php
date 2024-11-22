@@ -28,6 +28,7 @@ Extension::load([
 	'ui.entity-editor',
 	'biconnector.apache-superset-cleaner',
 	'biconnector.apache-superset-analytics',
+	'biconnector.dashboard-parameters-selector',
 ]);
 
 

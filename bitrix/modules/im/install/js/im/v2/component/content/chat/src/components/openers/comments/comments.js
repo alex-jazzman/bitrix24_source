@@ -82,7 +82,7 @@ export const CommentsOpener = {
 			const [firstError] = error;
 			if (firstError.code === 'ACCESS_DENIED')
 			{
-				this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR'));
+				this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
 			}
 		},
 		showNotification(text: string)

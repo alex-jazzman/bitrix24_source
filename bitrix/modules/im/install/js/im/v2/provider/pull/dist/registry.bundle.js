@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports,main_core_events,im_v2_lib_uuid,im_v2_provider_service,im_public,im_v2_lib_copilot,im_v2_lib_writing,im_v2_lib_roleManager,ui_vue3_vuex,im_v2_lib_counter,im_v2_lib_utils,im_v2_model,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_desktopApi,im_v2_const,im_v2_lib_notifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_logger,main_core,im_v2_application_core) {
+(function (exports,main_core_events,im_v2_lib_uuid,im_v2_provider_service,im_v2_lib_layout,im_public,im_v2_lib_copilot,im_v2_lib_writing,im_v2_lib_roleManager,im_v2_lib_analytics,ui_vue3_vuex,im_v2_lib_counter,im_v2_lib_utils,im_v2_model,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_desktopApi,im_v2_const,im_v2_lib_notifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_logger,main_core,im_v2_application_core) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -23,8 +23,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _sendScrollEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendScrollEvent");
 	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
 	var _setCopilotRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCopilotRole");
+	var _showNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotification");
 	class MessagePullHandler {
 	  constructor() {
+	    Object.defineProperty(this, _showNotification, {
+	      value: _showNotification2
+	    });
 	    Object.defineProperty(this, _setCopilotRole, {
 	      value: _setCopilotRole2
 	    });
@@ -165,6 +169,15 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      dialogId: params.dialogId,
 	      userId: params.senderId
 	    });
+	    const areChannelCommentsOpened = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/comments/areOpenedForChannelPost'](params.id);
+	    if (areChannelCommentsOpened) {
+	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
+	      im_v2_lib_analytics.Analytics.getInstance().messageDelete.onDeletedPostNotification({
+	        dialogId: params.dialogId,
+	        messageId: params.id
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](main_core.Loc.getMessage('IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND'));
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/delete', {
 	      id: params.id
 	    });
@@ -448,11 +461,20 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  void copilotManager.handleMessageAdd(params.copilot);
 	}
+	function _showNotification2(text) {
+	  BX.UI.Notification.Center.notify({
+	    content: text
+	  });
+	}
 
 	var _store$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _updateChatUsers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateChatUsers");
+	var _showNotification$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotification");
 	class ChatPullHandler {
 	  constructor() {
+	    Object.defineProperty(this, _showNotification$1, {
+	      value: _showNotification2$1
+	    });
 	    Object.defineProperty(this, _updateChatUsers, {
 	      value: _updateChatUsers2
 	    });
@@ -644,6 +666,42 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      }
 	    });
 	  }
+	  handleChatDelete(params) {
+	    im_v2_lib_logger.Logger.warn('ChatPullHandler: handleChatDelete', params);
+	    const currentUserId = im_v2_application_core.Core.getUserId();
+	    if (params.userId === currentUserId) {
+	      return;
+	    }
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('chats/update', {
+	      dialogId: params.dialogId,
+	      fields: {
+	        inited: false
+	      }
+	    });
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('recent/delete', {
+	      id: params.dialogId
+	    });
+	    const isCommentChat = params.type === im_v2_const.ChatType.comment;
+	    if (isCommentChat) {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('counters/delete', {
+	        channelChatId: params.parentChatId,
+	        commentChatId: params.chatId
+	      });
+	    }
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('messages/clearChatCollection', {
+	      chatId: params.chatId
+	    });
+	    const chatIsOpened = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['application/isChatOpen'](params.dialogId);
+	    if (chatIsOpened) {
+	      im_v2_lib_analytics.Analytics.getInstance().chatDelete.onChatDeletedNotification(params.dialogId);
+	      babelHelpers.classPrivateFieldLooseBase(this, _showNotification$1)[_showNotification$1](main_core.Loc.getMessage('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
+	      void im_v2_lib_layout.LayoutManager.getInstance().clearLayoutEntityId();
+	    }
+	    const chatHasCall = im_v2_lib_call.CallManager.getInstance().getCurrentCallDialogId() === params.dialogId;
+	    if (chatHasCall) {
+	      im_v2_lib_call.CallManager.getInstance().leaveCurrentCall();
+	    }
+	  }
 	}
 	function _updateChatUsers2(params) {
 	  if (params.users) {
@@ -655,6 +713,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    fields: {
 	      userCounter: params.userCount
 	    }
+	  });
+	}
+	function _showNotification2$1(text) {
+	  BX.UI.Notification.Center.notify({
+	    content: text
 	  });
 	}
 
@@ -702,11 +765,13 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    im_v2_lib_logger.Logger.warn('DesktopPullHandler: handleDesktopOnline', params);
 	    const desktopManager = im_v2_lib_desktop.DesktopManager.getInstance();
 	    desktopManager.setDesktopActive(true);
+	    desktopManager.setDesktopVersion(params.version);
 	    im_v2_lib_counter.CounterManager.getInstance().removeBrowserTitleCounter();
 	  }
 	  handleDesktopOffline() {
 	    im_v2_lib_logger.Logger.warn('DesktopPullHandler: handleDesktopOffline');
 	    im_v2_lib_desktop.DesktopManager.getInstance().setDesktopActive(false);
+	    im_v2_lib_desktop.DesktopManager.getInstance().setDesktopVersion(0);
 	  }
 	}
 
@@ -866,6 +931,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  handleChatUpdate(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatHandler)[_chatHandler].handleChatUpdate(params);
+	  }
+	  handleChatDelete(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _chatHandler)[_chatHandler].handleChatDelete(params);
 	  }
 	  handleChatConvert(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatHandler)[_chatHandler].handleChatConvert(params);
@@ -1944,5 +2012,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.LinesPullHandler = LinesPullHandler;
 	exports.OnlinePullHandler = OnlinePullHandler;
 
-}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application));
 //# sourceMappingURL=registry.bundle.js.map

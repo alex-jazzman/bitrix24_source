@@ -1,4 +1,7 @@
 <?php
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_F"] = "У потік [url=#FLOW_URL#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Візьміть завдання в роботу.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_M"] = "У потік [url=#FLOW_URL#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Візьміть завдання в роботу.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_N"] = "У потік [url=#FLOW_URL#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Візьміть завдання в роботу.";
 $MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "У потік [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Призначте співробітника, який буде його виконувати.";
 $MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "У потік [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Призначте співробітника, який буде його виконувати.";
 $MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "У потік [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Призначте співробітника, який буде його виконувати.";

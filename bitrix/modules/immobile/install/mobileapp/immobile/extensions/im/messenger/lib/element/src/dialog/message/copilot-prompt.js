@@ -3,8 +3,10 @@
  */
 
 jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, exports, module) => {
-	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
 	const { Loc } = require('loc');
+
+	const { MessageType } = require('im/messenger/const');
+	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -66,7 +68,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 
 		getType()
 		{
-			return 'copilot-promt';
+			return MessageType.copilotPrompt;
 		}
 
 		/**

@@ -49,6 +49,9 @@ export class SpoilerNodeFormatter extends NodeFormatter
 						attrs: {
 							className: 'ui-typography-spoiler-content',
 						},
+						dataset: {
+							spoilerContent: 'true',
+						},
 						children: [
 							...content,
 						],

@@ -165,6 +165,7 @@
 	--ui-icon-set__path_cut: url('/bitrix/js/ui/icon-set/main/images/cut.svg');
 	--ui-icon-set__path_circle-minus: url('/bitrix/js/ui/icon-set/main/images/circle-minus.svg');
 	--ui-icon-set__path_circle-check: url('/bitrix/js/ui/icon-set/main/images/circle-check.svg');
+	--ui-icon-set__path_circle-check-thin: url('/bitrix/js/ui/icon-set/main/images/circle-check-thin.svg');
 	--ui-icon-set__path_circle-plus: url('/bitrix/js/ui/icon-set/main/images/circle-plus.svg');
 	--ui-icon-set__path_unavailable: url('/bitrix/js/ui/icon-set/main/images/unavailable.svg');
 	--ui-icon-set__path_bookmark-1: url('/bitrix/js/ui/icon-set/main/images/bookmark-1.svg');
@@ -407,6 +408,16 @@
 	--ui-icon-set__path_sub_point: url('/bitrix/js/ui/icon-set/main/images/sub-point.svg');
 	--ui-icon-set__path_unsub_point: url('/bitrix/js/ui/icon-set/main/images/unsub-point.svg');
 	--ui-icon-set__path_subtask: url('/bitrix/js/ui/icon-set/main/images/subtask.svg');
+	--ui-icon-set__path_prompts-library: url('/bitrix/js/ui/icon-set/main/images/prompts-library.svg');
+	--ui-icon-set__path_collab: url('/bitrix/js/ui/icon-set/main/images/collab.svg');
+	--ui-icon-set__path_no-picture: url('/bitrix/js/ui/icon-set/main/images/no-picture.svg');
+	--ui-icon-set__path_thread: url('/bitrix/js/ui/icon-set/main/images/thread.svg');
+	--ui-icon-set__path_thread-single: url('/bitrix/js/ui/icon-set/main/images/thread-single.svg');
+	--ui-icon-set__path_busines-process-1: url('/bitrix/js/ui/icon-set/main/images/business-proccess.svg');
+	--ui-icon-set__path_waiting-points: url('/bitrix/js/ui/icon-set/main/images/waiting-points.svg');
+	--ui-icon-set__path_waiting-list: url('/bitrix/js/ui/icon-set/main/images/waiting-list.svg');
+	--ui-icon-set__path_note: url('/bitrix/js/ui/icon-set/main/images/note.svg');
+	--ui-icon-set__path_link-bold: url('/bitrix/js/ui/icon-set/main/images/link-bold.svg');
 }
 
 .ui-icon-set.--shield-2-core-problem {
@@ -2023,4 +2034,44 @@
 
 .ui-icon-set.--subtask {
 	--ui-icon-set__icon-path: var(--ui-icon-set__path_subtask);
+}
+
+.ui-icon-set.--prompts-library {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_prompts-library);
+}
+
+.ui-icon-set.--collab {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_collab);
+}
+
+.ui-icon-set.--no-picture {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_no-picture);
+}
+
+.ui-icon-set.--thread {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_thread);
+}
+
+.ui-icon-set.--thread-single {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_thread-single);
+}
+
+.ui-icon-set.--business-process-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_busines-process-1);
+}
+
+.ui-icon-set.--waiting-points {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_waiting-points);
+}
+
+.ui-icon-set.--waiting-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_waiting-list);
+}
+
+.ui-icon-set.--note {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_note);
+}
+
+.ui-icon-set.--link-bold {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_link-bold);
 }

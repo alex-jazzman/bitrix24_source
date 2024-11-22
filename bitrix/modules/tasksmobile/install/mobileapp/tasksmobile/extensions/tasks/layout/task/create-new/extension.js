@@ -934,6 +934,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							onChange: this.onChangeDatePlan,
 							parentWidget: this.layoutWidget,
 							mode: 'create',
+							onHidden: this.focusTitle,
 						},
 						compact: DatePlanField,
 					},

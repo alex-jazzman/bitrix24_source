@@ -27,6 +27,8 @@ Extension::load([
 	'main.loader',
 	'ui.layout-form',
 	'ui.info-helper',
+	'crm.integration.analytics',
+	'ui.analytics',
 ]);
 
 /** @var CBitrixComponentTemplate $this */
@@ -591,7 +593,10 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			[
 				'TYPE' => 'save',
 			],
-			'cancel' => $arResult['listUrl'],
+			[
+				'TYPE' => 'cancel',
+				'ONCLICK' => 'BX.Crm.Component.TypeDetail.handleCancelButtonClick();'
+			],
 		];
 		if(!$isNew)
 		{

@@ -9614,6 +9614,7 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 			this._wrapper = BX.create("div", { props: { className: "ui-entity-editor-content-block" } });
 		}
 		this.adjustWrapper();
+		this.createAdditionalWrapperBlock();
 
 		if(this.isDragEnabled())
 		{
@@ -9821,6 +9822,10 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 			data[this._requisiteFieldNames.requisiteId] = this._model.getField(this._requisiteFieldNames.requisiteId, "");
 			data[this._requisiteFieldNames.bankDetailId] = this._model.getField(this._requisiteFieldNames.bankDetailId, "");
 		}
+	}
+	BX.Crm.EntityEditorEntity.prototype.getRelatedDataKeys = function()
+	{
+		return [this.getName(), `${this.getName()}_INFO`];
 	}
 	BX.Crm.EntityEditorEntity.prototype.getMessage = function(name)
 	{

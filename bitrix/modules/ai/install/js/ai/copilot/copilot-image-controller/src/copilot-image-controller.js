@@ -1,3 +1,4 @@
+import type { EngineInfo, ImageCopilotFormat, ImageCopilotStyle } from 'ai.engine';
 import { Engine, Text as TextPayload } from 'ai.engine';
 import { Dom, Loc } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
@@ -39,6 +40,9 @@ export class CopilotImageController extends EventEmitter
 	#popupWithoutBackBtn: boolean;
 	#currentGenerateRequestId: number;
 	#useInsertAboveAndUnderTextMenuItems: boolean;
+	#formats: ImageCopilotFormat[] = [];
+	#styles: ImageCopilotStyle[] = [];
+	#engines: EngineInfo[] = [];
 
 	#inputFieldCancelLoadingEventHandler: Function;
 	#inputFieldSubmitEventHandler: Function;
@@ -84,6 +88,15 @@ export class CopilotImageController extends EventEmitter
 		return isImageConfiguratorPopup || isErrorMenu || isResultMenu;
 	}
 
+	async init(): void
+	{
+		const res = await this.#engine.getImageCopilotTooling();
+
+		this.#formats = res.data.params.formats;
+		this.#engines = res.data.engines;
+		this.#styles = res.data.params.styles;
+	}
+
 	showImageConfigurator(): void
 	{
 		if (!this.#imageConfiguratorPopup)
@@ -110,14 +123,25 @@ export class CopilotImageController extends EventEmitter
 				top: 8,
 			},
 			withoutBackBtn: this.#popupWithoutBackBtn,
+			imageConfiguratorOptions: {
+				styles: this.#styles,
+				formats: this.#formats,
+				engines: this.#engines,
+			},
 		});
 
+		if (!this.#inputField.getValue())
+		{
+			this.#imageConfiguratorPopup.disableSubmitButton();
+		}
+
 		this.#imageConfiguratorPopup.subscribe(ImageConfiguratorPopupEvents.completions, (e: BaseEvent) => {
-			const { style, format } = e.getData();
+			const { style, format, engine } = e.getData();
 
 			this.#setPayload({
 				style,
 				format,
+				engine,
 			});
 
 			this.completions();
@@ -242,6 +266,18 @@ export class CopilotImageController extends EventEmitter
 
 	#subscribeToInputFieldEvents(): void
 	{
+		this.#inputField.subscribe(this.#copilotInputEvents.input, (event: BaseEvent) => {
+			const inputFieldValue = event.getData();
+
+			if (inputFieldValue)
+			{
+				this.#imageConfiguratorPopup?.enableSubmitButton();
+			}
+			else
+			{
+				this.#imageConfiguratorPopup?.disableSubmitButton();
+			}
+		});
 		this.#inputField.subscribe(this.#copilotInputEvents.cancelLoading, this.#inputFieldCancelLoadingEventHandler);
 		this.#inputField.subscribe(this.#copilotInputEvents.submit, this.#inputFieldSubmitEventHandler);
 		this.#inputField.subscribe(this.#copilotInputEvents.adjustHeight, this.#inputFieldAdjustHeightEventHandler);
@@ -298,10 +334,11 @@ export class CopilotImageController extends EventEmitter
 		});
 	}
 
-	#setPayload(options: { style: string, format: string }): void
+	#setPayload(options: { style: string, format: string, engine: string }): void
 	{
 		const payload = new TextPayload({
 			prompt: this.#inputField.getValue(),
+			engineCode: options.engine,
 		});
 
 		payload.setMarkers({
@@ -330,11 +367,12 @@ export class CopilotImageController extends EventEmitter
 			return;
 		}
 
-		const { style, format } = this.#imageConfiguratorPopup.getImageConfiguration();
+		const { style, format, engine } = this.#imageConfiguratorPopup.getImageConfiguration();
 
 		this.#setPayload({
 			style,
 			format,
+			engine,
 		});
 
 		this.completions();

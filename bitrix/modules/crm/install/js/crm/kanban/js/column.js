@@ -1492,11 +1492,7 @@
 				gridData.rights.canAddColumn
 			)
 			{
-				this.getGrid().getColumns().forEach(function(column){
-					column.getAddColumnButton().style.visibility = 'hidden';
-				});
-
-				var newColumn = this.getGrid().addColumn({
+				const newColumn = this.getGrid().addColumn({
 					id: "kanban-new-column-" + BX.util.getRandomString(5),
 					type: "BX.CRM.Kanban.DraftColumn",
 					canSort: false,
@@ -1667,7 +1663,12 @@
 					this.layout.items.removeChild(item);
 				}
 			}.bind(this));
-		}
+		},
+
+		hasItem: function(id)
+		{
+			return this.items.some((item) => item.id === id);
+		},
 	};
 
 	BX.CRM.Kanban.DraftColumn = function(options)

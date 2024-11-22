@@ -13,6 +13,7 @@ use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Crm\Tour;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 /**
  * @var array $arParams
@@ -242,8 +243,8 @@ $subSection = $arParams['EXTRA']['ANALYTICS']['c_sub_section'] ?? null;
 							visitParams: <?= \CUtil::PhpToJSObject(\Bitrix\Crm\Activity\Provider\Visit::getPopupParameters(), false, false, true)?>,
 							admins: <?= \CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
 							userId: <?= $arParams['USER_ID'];?>,
-							currentUser: <?=\Bitrix\Main\Web\Json::encode($arParams['LAYOUT_CURRENT_USER'])?>,
-							pingSettings: <?=\Bitrix\Main\Web\Json::encode($arParams['PING_SETTINGS'])?>,
+							currentUser: <?=Json::encode($arParams['LAYOUT_CURRENT_USER'])?>,
+							pingSettings: <?=Json::encode($arParams['PING_SETTINGS'])?>,
 							customFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_FIELDS']));?>,
 							customEditFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_EDIT_FIELDS']));?>,
 							restrictedFields: <?= \CUtil::phpToJSObject($arResult['RESTRICTED_FIELDS']) ?>,
@@ -273,6 +274,10 @@ $subSection = $arParams['EXTRA']['ANALYTICS']['c_sub_section'] ?? null;
 								$arParams['ENTITY_TYPE_CHR'],
 								$arParams['EXTRA']
 							)) ?>",
+							additionalPullTags: <?= Json::encode(PullManager::getInstance()->getAdditionalPullTags(
+								$arParams['ENTITY_TYPE_CHR'],
+								$arParams['EXTRA']
+							)) ?>,
 							moduleId: "<?= \CUtil::JSEscape(PullManager::MODULE_ID) ?>",
 							tariffRestrictions: {
 								// We use negation so as not to confuse when working, since the default has always been allowed
@@ -322,7 +327,7 @@ $subSection = $arParams['EXTRA']['ANALYTICS']['c_sub_section'] ?? null;
 			new BX.Crm.Kanban.PullManager(Kanban);
 
 			const sortSettings = BX.CRM.Kanban.Sort.Settings.createFromJson(
-				'<?= \Bitrix\Main\Web\Json::encode($arResult['SORT_SETTINGS']) ?>',
+				'<?= Json::encode($arResult['SORT_SETTINGS']) ?>',
 			);
 			BX.CRM.Kanban.Sort.SettingsController.init(Kanban, sortSettings);
 

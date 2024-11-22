@@ -25,6 +25,10 @@ export class DepartmentNodeFormatter extends NodeFormatter
 							href: departmentUrl,
 							className: 'ui-typography-mention',
 						},
+						dataset: {
+							mentionEntityId: 'department',
+							mentionId: node.getValue(),
+						},
 					});
 				}
 
@@ -32,6 +36,10 @@ export class DepartmentNodeFormatter extends NodeFormatter
 					tag: 'span',
 					attrs: {
 						className: 'ui-typography-mention',
+					},
+					dataset: {
+						mentionEntityId: 'department',
+						mentionId: node.getValue(),
 					},
 				});
 			},

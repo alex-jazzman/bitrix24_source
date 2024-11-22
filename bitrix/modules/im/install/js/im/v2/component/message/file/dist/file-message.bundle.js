@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_message_unsupported,ui_vue3_directives_lazyload,main_core_events,im_v2_lib_progressbar,im_v2_model,ui_vue3_components_socialvideo,im_v2_provider_service,im_v2_lib_menu,ui_icons_disk,im_v2_lib_utils,main_core,im_v2_component_elements,im_v2_component_message_elements,im_v2_component_message_base,im_v2_const) {
+(function (exports,im_v2_component_message_unsupported,ui_vue3_directives_lazyload,im_v2_model,main_core_events,im_v2_lib_progressbar,im_v2_provider_service,im_v2_lib_menu,ui_icons_disk,im_v2_lib_utils,main_core,im_v2_component_elements,im_v2_component_message_elements,im_v2_component_message_base,im_v2_const) {
 	'use strict';
 
 	function getGalleryElementsConfig(filesCount, index) {
@@ -270,7 +270,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const VideoItem = {
 	  name: 'VideoItem',
 	  components: {
-	    SocialVideo: ui_vue3_components_socialvideo.SocialVideo,
+	    VideoPlayer: im_v2_component_elements.VideoPlayer,
 	    ProgressBar
 	  },
 	  props: {
@@ -345,30 +345,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      const url = (_this$file$urlDownloa = this.file.urlDownload) != null ? _this$file$urlDownloa : this.file.urlShow;
 	      window.open(url, '_blank');
-	    },
-	    getPlayCallback() {
-	      if (this.autoplay) {
-	        return null;
-	      }
-	      return () => {};
 	    }
 	  },
 	  template: `
 		<div
-			@click="download"
 			class="bx-im-video-item__container bx-im-video-item__scope"
 			:class="{'--with-forward': isForward}"
+			@click="download"
 		>
-			<ProgressBar v-if="!isLoaded" :item="file" :messageId="message.id" />
-			<SocialVideo
-				v-bind="viewerAttributes"
-				:id="file.id"
+			<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageItem.id" />
+			<VideoPlayer
+				:fileId="file.id"
 				:src="file.urlShow"
-				:preview="file.urlPreview"
+				:previewImageUrl="file.urlPreview"
 				:elementStyle="imageSize"
-				:autoplay="autoplay"
-				:showControls="isLoaded"
-				:playCallback="getPlayCallback()"
+				:withAutoplay="autoplay"
+				:withPlayerControls="isLoaded"
+				:viewerAttributes="viewerAttributes"
 			/>
 		</div>
 	`
@@ -1049,5 +1042,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.FileMessage = FileMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Vue3.Directives,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Vue3.Components,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Vue3.Directives,BX.Messenger.v2.Model,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const));
 //# sourceMappingURL=file-message.bundle.js.map

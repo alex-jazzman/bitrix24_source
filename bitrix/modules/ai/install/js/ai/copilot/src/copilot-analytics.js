@@ -5,6 +5,7 @@ const Categories = Object.freeze({
 	text: 'text_operations',
 	image: 'image_operations',
 	readonly: 'read_operations',
+	promptSaving: 'prompt_saving',
 });
 
 const Types = Object.freeze({
@@ -37,6 +38,7 @@ const Events = Object.freeze({
 	cancelResult: 'cancel',
 	editResult: 'edit',
 	copyResult: 'copy_text',
+	openPromptsLibrary: 'open_list',
 });
 
 type AnalyticsParam = {
@@ -100,6 +102,11 @@ export class CopilotAnalytics
 	setCategoryImage(): CopilotAnalytics
 	{
 		return this.#setCategory(Categories.image);
+	}
+
+	setCategoryPromptSaving(): CopilotAnalytics
+	{
+		return this.#setCategory(Categories.promptSaving);
 	}
 
 	#setCategory(category: string): CopilotAnalytics
@@ -313,6 +320,13 @@ export class CopilotAnalytics
 	sendEventCancel(): void
 	{
 		this.#event = Events.cancelResult;
+
+		return this.#sendData();
+	}
+
+	sendEventOpenPromptLibrary(): void
+	{
+		this.#event = Events.openPromptsLibrary;
 
 		return this.#sendData();
 	}

@@ -922,4 +922,10 @@ $arUrlRewrite = array(
 		"ID" => "",
 		"PATH" => "/desktop_menu/index.php",
 	],
+	[
+		'CONDITION' => '#^/booking/#',
+		'RULE' => '',
+		'ID' => 'bitrix:booking',
+		'PATH' => '/booking/index.php',
+	],
 );

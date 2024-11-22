@@ -124,7 +124,7 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 				const options = {
 					isShowExtendButton: '<?= $arResult['IS_SHOW_EXTEND_BUTTON'] ?>',
 				};
-				new BX.Landing.Widget.KbWidget(widgetElement, options);
+				new BX.Landing.Widget.Kb(widgetElement, options);
 			}
 		}
 	});

@@ -51,7 +51,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 		/**
 		 * @desc Handler leave chat
 		 * @void
-		 * @private
+		 * @protected
 		 */
 		onClickLeaveChannel()
 		{
@@ -81,7 +81,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 		 * @param {boolean} isEntity.isYou
 		 * @param {boolean?} isEntity.isManager
 		 * @param {LayoutComponent} ref
-		 * @private
+		 * @protected
 		 */
 		onLongClickItem(key, userId, isEntity, ref)
 		{
@@ -144,7 +144,10 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 				{
 					actionsItems.push({
 						actionName: 'channel_remove',
-						callback: this.onClickRemoveParticipant.bind(this, { key }),
+						callback: this.onClickRemoveParticipant.bind(this, {
+							key,
+							userId,
+						}),
 						icon: Icon.BAN,
 					});
 				}

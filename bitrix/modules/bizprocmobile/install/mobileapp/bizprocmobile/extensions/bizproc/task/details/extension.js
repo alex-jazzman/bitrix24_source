@@ -37,6 +37,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					modal: true,
 					titleParams: {
 						text: Type.isString(props.title) ? props.title : Loc.getMessage('BPMOBILE_TASK_DETAILS_TITLE'),
+						type: 'dialog',
 					},
 					backgroundColor: AppTheme.colors.bgSecondary,
 					backdrop: {
@@ -159,7 +160,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 			if (this.layout)
 			{
-				this.layout.back();
 				this.layout.close();
 			}
 		}
@@ -464,7 +464,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				actions: [
 					{
 						id: 'timeline',
-						title: Loc.getMessage('BPMOBILE_TASK_DETAILS_TIMELINE'),
+						title: Loc.getMessage('BPMOBILE_TASK_DETAILS_TIMELINE_MSGVER_1'),
 						onClickCallback: (action, itemId, { parentWidget, parent }) => {
 							parentWidget.close(() => this.openTimeline());
 						},

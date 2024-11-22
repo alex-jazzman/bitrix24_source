@@ -7,6 +7,10 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const { isOnline } = require('device/connection');
 	const { selectRelatedTasksById } = require('tasks/statemanager/redux/slices/tasks/selector');
 
+	const { Views } = require('tasks/statemanager/redux/types');
+	const { selectStages } = require('tasks/statemanager/redux/slices/kanban-settings/selector');
+	const { selectById } = require('tasks/statemanager/redux/slices/stage-settings/selector');
+
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
 		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
 	});
@@ -41,9 +45,9 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 
 	const update = createAsyncThunk(
 		'tasks:tasks/update',
-		({ taskId, serverFields }) => runActionPromise({
+		({ taskId, serverFields, withStageData }) => runActionPromise({
 			action: 'tasksmobile.Task.update',
-			options: { taskId, fields: serverFields },
+			options: { taskId, fields: serverFields, withStageData },
 		}),
 		{ condition },
 	);
@@ -57,7 +61,19 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 				deadline: (deadline ? (new Date(deadline)).toISOString() : null),
 			},
 		}),
-		{ condition },
+		{
+			condition,
+			getPendingMeta: (action, store) => {
+				// prepare stages for deadline view to update task-stages in case of deadline change
+				// this is needed to prepare data for pending reducers
+				const stageIds = selectStages(store.getState(), Views.DEADLINE);
+				const deadlineStages = stageIds.map((id) => selectById(store.getState(), id)).filter(Boolean);
+
+				return {
+					stages: deadlineStages,
+				};
+			},
+		},
 	);
 
 	const delegate = createAsyncThunk(

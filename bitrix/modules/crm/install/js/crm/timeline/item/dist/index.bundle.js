@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,ui_hint,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,crm_ai_copilotTextarea,main_popup,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,crm_field_pingSelector,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,crm_ai_call,ui_notification,main_core,ui_dialogs_messagebox) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_hint,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,crm_field_pingSelector,im_public,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,main_popup,crm_router,calendar_sharing_interface,crm_ai_call,ui_notification,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -743,6 +743,11 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	let ButtonScope = function ButtonScope() {
+	  babelHelpers.classCallCheck(this, ButtonScope);
+	};
+	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
+
 	let ButtonState = function ButtonState() {
 	  babelHelpers.classCallCheck(this, ButtonState);
 	};
@@ -751,6 +756,15 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
 	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
 	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
+
+	let ButtonType = function ButtonType() {
+	  babelHelpers.classCallCheck(this, ButtonType);
+	};
+	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
+	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
+	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
+	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
 
 	const BaseButton = {
 	  props: {
@@ -829,147 +843,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  template: `<button></button>`
 	};
-
-	const AdditionalButtonIcon = Object.freeze({
-	  NOTE: 'note',
-	  SCRIPT: 'script',
-	  PRINT: 'print',
-	  DOTS: 'dots'
-	});
-	const AdditionalButtonColor = Object.freeze({
-	  DEFAULT: 'default',
-	  PRIMARY: 'primary'
-	});
-	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
-	  props: {
-	    iconName: {
-	      type: String,
-	      required: false,
-	      default: '',
-	      validator(value) {
-	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
-	      }
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: AdditionalButtonColor.DEFAULT,
-	      validator(value) {
-	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
-	      }
-	    }
-	  },
-	  computed: {
-	    className() {
-	      return ['crm-timeline__card_add-button', {
-	        [`--icon-${this.iconName}`]: this.iconName,
-	        [`--color-${this.color}`]: this.color,
-	        [`--state-${this.currentState}`]: this.currentState
-	      }];
-	    },
-	    ButtonState() {
-	      return ButtonState;
-	    },
-	    loaderHtml() {
-	      const loader = new main_loader.Loader({
-	        mode: 'inline',
-	        size: 20
-	      });
-	      loader.show();
-	      return loader.layout.outerHTML;
-	    }
-	  },
-	  template: `
-		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
-			<div
-				v-if="currentState === ButtonState.LOADING"
-				v-html="loaderHtml"
-				class="crm-timeline__card_add-button"
-			></div>
-			<div
-				v-else
-				:title="title"
-				@click="executeAction"
-				:class="className">
-			</div>
-		</transition>
-	`
-	});
-
-	const MenuId = 'timeline-more-button-menu';
-	const Menu$1 = {
-	  components: {
-	    AdditionalButton
-	  },
-	  props: {
-	    buttons: Array,
-	    // buttons that didn't fit into footer
-	    items: Object // real menu items
-	  },
-
-	  inject: ['isReadOnly'],
-	  computed: {
-	    isMenuFilled() {
-	      const menuItems = this.menuItems;
-	      return menuItems.length > 0;
-	    },
-	    itemsArray() {
-	      if (!this.items) {
-	        return [];
-	      }
-	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
-	    },
-	    menuItems() {
-	      let result = this.buttons;
-	      if (this.buttons.length && this.itemsArray.length) {
-	        result.push({
-	          delimiter: true
-	        });
-	      }
-	      result = [...result, ...this.itemsArray];
-	      return result;
-	    },
-	    buttonProps() {
-	      return {
-	        color: AdditionalButtonColor.DEFAULT,
-	        icon: AdditionalButtonIcon.DOTS
-	      };
-	    }
-	  },
-	  beforeUnmount() {
-	    const menu = main_popup.MenuManager.getMenuById(MenuId);
-	    if (menu) {
-	      menu.destroy();
-	    }
-	  },
-	  methods: {
-	    showMenu() {
-	      Menu.showMenu(this, this.menuItems, {
-	        id: MenuId,
-	        className: 'crm-timeline__card_more-menu',
-	        width: 230,
-	        angle: false,
-	        cacheable: false,
-	        bindElement: this.$el
-	      });
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
-			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
-		</div>
-	`
-	};
-
-	let ButtonType = function ButtonType() {
-	  babelHelpers.classCallCheck(this, ButtonType);
-	};
-	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
-	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
-	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
-	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
 
 	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
 	  props: {
@@ -1122,6 +995,72 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	});
 
+	const AdditionalButtonIcon = Object.freeze({
+	  NOTE: 'note',
+	  SCRIPT: 'script',
+	  PRINT: 'print',
+	  DOTS: 'dots'
+	});
+	const AdditionalButtonColor = Object.freeze({
+	  DEFAULT: 'default',
+	  PRIMARY: 'primary'
+	});
+	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	  props: {
+	    iconName: {
+	      type: String,
+	      required: false,
+	      default: '',
+	      validator(value) {
+	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
+	      }
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: AdditionalButtonColor.DEFAULT,
+	      validator(value) {
+	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
+	      }
+	    }
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card_add-button', {
+	        [`--icon-${this.iconName}`]: this.iconName,
+	        [`--color-${this.color}`]: this.color,
+	        [`--state-${this.currentState}`]: this.currentState
+	      }];
+	    },
+	    ButtonState() {
+	      return ButtonState;
+	    },
+	    loaderHtml() {
+	      const loader = new main_loader.Loader({
+	        mode: 'inline',
+	        size: 20
+	      });
+	      loader.show();
+	      return loader.layout.outerHTML;
+	    }
+	  },
+	  template: `
+		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
+			<div
+				v-if="currentState === ButtonState.LOADING"
+				v-html="loaderHtml"
+				class="crm-timeline__card_add-button"
+			></div>
+			<div
+				v-else
+				:title="title"
+				@click="executeAction"
+				:class="className">
+			</div>
+		</transition>
+	`
+	});
+
 	const Buttons = {
 	  components: {
 	    Button
@@ -1154,10 +1093,71 @@ this.BX.Crm = this.BX.Crm || {};
 		`
 	};
 
-	let ButtonScope = function ButtonScope() {
-	  babelHelpers.classCallCheck(this, ButtonScope);
+	const MenuId = 'timeline-more-button-menu';
+	const Menu$1 = {
+	  components: {
+	    AdditionalButton
+	  },
+	  props: {
+	    buttons: Array,
+	    // buttons that didn't fit into footer
+	    items: Object // real menu items
+	  },
+
+	  inject: ['isReadOnly'],
+	  computed: {
+	    isMenuFilled() {
+	      const menuItems = this.menuItems;
+	      return menuItems.length > 0;
+	    },
+	    itemsArray() {
+	      if (!this.items) {
+	        return [];
+	      }
+	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
+	    },
+	    menuItems() {
+	      let result = this.buttons;
+	      if (this.buttons.length && this.itemsArray.length) {
+	        result.push({
+	          delimiter: true
+	        });
+	      }
+	      result = [...result, ...this.itemsArray];
+	      return result;
+	    },
+	    buttonProps() {
+	      return {
+	        color: AdditionalButtonColor.DEFAULT,
+	        icon: AdditionalButtonIcon.DOTS
+	      };
+	    }
+	  },
+	  beforeUnmount() {
+	    const menu = main_popup.MenuManager.getMenuById(MenuId);
+	    if (menu) {
+	      menu.destroy();
+	    }
+	  },
+	  methods: {
+	    showMenu() {
+	      Menu.showMenu(this, this.menuItems, {
+	        id: MenuId,
+	        className: 'crm-timeline__card_more-menu',
+	        width: 230,
+	        angle: false,
+	        cacheable: false,
+	        bindElement: this.$el
+	      });
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
+			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
+		</div>
+	`
 	};
-	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
 
 	const Footer = {
 	  components: {
@@ -1260,7 +1260,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  template: `
 		<div :class="containerClassname">
-			<Buttons ref="buttons" :items="baseButtons" />
 			<div class="crm-timeline__card-action_menu">
 				<div
 					v-for="button in visibleAndSortedAdditionalButtons"
@@ -1274,6 +1273,7 @@ this.BX.Crm = this.BX.Crm || {};
 				</div>
 				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
 			</div>
+			<Buttons ref="buttons" :items="baseButtons" />
 		</div>
 	`
 	};
@@ -1310,7 +1310,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      this.isComplete = true;
 	      const action = new Action(this.action);
-	      action.execute(this);
+	      action.execute(this).then(() => {}).catch(() => {
+	        this.isComplete = false;
+	      });
 	    },
 	    onClick() {
 	      if (this.action) {
@@ -1722,8 +1724,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    className() {
 	      return {
 	        'crm-timeline__card-status': true,
-	        '--clickable': !!this.action,
-	        '--hint': !!this.hint
+	        '--clickable': Boolean(this.action),
+	        '--hint': Boolean(this.hint)
 	      };
 	    },
 	    tagTypeToLabelColorDict() {
@@ -1770,6 +1772,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      const action = new Action(this.action);
 	      action.execute(this);
+	    },
+	    showTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      main_core.Runtime.debounce(() => {
+	        BX.UI.Hint.show(this.$el, this.hint, true);
+	      }, 50, this)();
+	    },
+	    hideTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      BX.UI.Hint.hide(this.$el);
 	    }
 	  },
 	  mounted() {
@@ -1785,7 +1801,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  },
 	  template: `
-		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
+		<div
+			ref="tag"
+			:class="className"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+			@click="executeAction"
+		></div>
 	`
 	};
 
@@ -3431,7 +3453,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	const EditableDescription = {
 	  components: {
-	    Button
+	    Button,
+	    TextEditorComponent: ui_textEditor.TextEditorComponent,
+	    HtmlFormatterComponent: ui_bbcode_formatter_htmlFormatter.HtmlFormatterComponent
 	  },
 	  props: {
 	    text: {
@@ -3467,19 +3491,20 @@ this.BX.Crm = this.BX.Crm || {};
 	    copilotSettings: {
 	      type: Object,
 	      required: false,
-	      default: null
+	      default: []
 	    }
+	  },
+	  beforeCreate() {
+	    this.textEditor = null;
 	  },
 	  data() {
 	    return {
-	      value: this.text,
-	      oldValue: this.text,
 	      isEdit: false,
 	      isSaving: false,
 	      isLongText: false,
 	      isCollapsed: false,
-	      isCopilotEnabled: main_core.Type.isPlainObject(this.copilotSettings),
-	      placeholderText: main_core.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER')
+	      bbcode: this.text,
+	      isContentEmpty: main_core.Type.isString(this.text) && this.text.trim() === ''
 	    };
 	  },
 	  inject: ['isReadOnly', 'isLogMessage'],
@@ -3533,8 +3558,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    },
 	    saveTextButtonState() {
-	      const trimValue = this.value.trim();
-	      if (trimValue.length === 0) {
+	      if (this.isContentEmpty) {
 	        return ButtonState.DISABLED;
 	      }
 	      if (this.isSaving) {
@@ -3551,14 +3575,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    startEditing() {
-	      this.destroyCopilot();
 	      this.isEdit = true;
 	      this.isCollapsed = true;
 	      this.$nextTick(() => {
-	        const textarea = this.$refs.textarea;
-	        this.createCopilot(textarea);
-	        this.adjustHeight(textarea);
-	        textarea.focus();
+	        this.getTextEditor().focus(null, {
+	          defaultSelection: 'rootEnd'
+	        });
 	      });
 	      this.emitEvent('EditableDescription:StartEdit');
 	    },
@@ -3573,27 +3595,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      elem.style.height = 0;
 	      elem.style.height = `${elem.scrollHeight}px`;
 	    },
-	    onPressEnter(event) {
-	      if (event.ctrlKey === true || main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true)) {
-	        this.saveText();
-	      }
-	    },
 	    saveText() {
 	      if (this.saveTextButtonState === ButtonState.DISABLED || this.saveTextButtonState === ButtonState.LOADING || !this.isEdit) {
 	        return;
 	      }
-	      if (this.value.trim() === this.oldValue) {
+	      const encodedTrimText = this.getTextEditor().getText().trim();
+	      if (encodedTrimText === this.bbcode) {
 	        this.isEdit = false;
 	        this.emitEvent('EditableDescription:FinishEdit');
+	        return;
 	      }
 	      this.isSaving = true;
-	      const encodedTrimText = this.value.trim();
 
 	      // eslint-disable-next-line promise/catch-or-return
 	      this.executeSaveAction(encodedTrimText).then(() => {
 	        this.isEdit = false;
-	        this.oldValue = encodedTrimText;
-	        this.value = encodedTrimText;
+	        this.bbcode = encodedTrimText;
 	        this.$nextTick(() => {
 	          this.isLongText = this.checkIsLongText();
 	        });
@@ -3605,9 +3622,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    executeSaveAction(text) {
 	      var _actionDescription$ac;
 	      if (!this.saveAction) {
-	        return;
-	      }
-	      if (!this.value) {
 	        return;
 	      }
 
@@ -3624,7 +3638,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.isEdit || this.isSaving) {
 	        return;
 	      }
-	      this.value = this.oldValue;
 	      this.isEdit = false;
 	      this.emitEvent('EditableDescription:FinishEdit');
 	    },
@@ -3632,11 +3645,25 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isSaving) {
 	        return;
 	      }
-	      this.value = '';
-	      this.$refs.textarea.focus();
+	      this.getTextEditor().clear();
+	      this.getTextEditor().focus(null, {
+	        defaultSelection: 'rootEnd'
+	      });
 	    },
 	    copyText() {
-	      const isSuccess = BX.clipboard.copy(this.value);
+	      const selection = window.getSelection();
+	      selection.removeAllRanges();
+	      const range = document.createRange();
+	      const referenceNode = this.$refs.text;
+	      range.selectNodeContents(referenceNode);
+	      selection.addRange(range);
+	      let isSuccess = false;
+	      try {
+	        isSuccess = document.execCommand('copy');
+	      } catch (err) {
+	        // just in case
+	      }
+	      selection.removeAllRanges();
 	      if (isSuccess) {
 	        new main_popup.Popup({
 	          id: `copyTextHint_${main_core.Text.getRandom(8)}`,
@@ -3675,45 +3702,47 @@ this.BX.Crm = this.BX.Crm || {};
 	      const rect = this.$el.getBoundingClientRect();
 	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
 	    },
-	    onCopilotTextareaValueChange(event) {
-	      const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
-	      const id = event.getData().id;
-	      if (this.isEdit && copilotId === id) {
-	        this.value = event.getData().value;
+	    getTextEditor() {
+	      if (this.textEditor !== null) {
+	        return this.textEditor;
 	      }
-	    },
-	    createCopilot(textarea) {
-	      if (this.isCopilotEnabled) {
-	        this.copilotTextarea = new crm_ai_copilotTextarea.CopilotTextarea({
-	          id: main_core.Text.getRandom(),
-	          target: textarea,
-	          copilotParams: this.copilotSettings
-	        });
-	        main_core_events.EventEmitter.subscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-	      }
-	    },
-	    destroyCopilot() {
-	      if (this.isCopilotEnabled) {
-	        main_core_events.EventEmitter.unsubscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-	        delete this.copilotTextarea;
-	      }
+	      this.textEditor = new ui_textEditor.BasicEditor({
+	        removePlugins: ['BlockToolbar'],
+	        maxHeight: 600,
+	        content: this.bbcode,
+	        paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : null),
+	        toolbar: [],
+	        floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'link', 'copilot'],
+	        visualOptions: {
+	          colorBackground: 'transparent',
+	          borderWidth: '0px',
+	          blockSpaceInline: '0px',
+	          blockSpaceStack: '0px'
+	        },
+	        copilot: {
+	          copilotOptions: main_core.Type.isPlainObject(this.copilotSettings) ? this.copilotSettings : null,
+	          triggerBySpace: true
+	        },
+	        events: {
+	          onMetaEnter: () => {
+	            this.saveText();
+	          },
+	          onEscape: () => {
+	            this.cancelEditing();
+	          },
+	          onEmptyContentToggle: event => {
+	            this.isContentEmpty = event.getData().isEmpty;
+	          }
+	        }
+	      });
+	      return this.textEditor;
 	    }
 	  },
 	  watch: {
 	    text(newTextValue) {
-	      // update text from push
-	      this.value = newTextValue;
-	      this.oldValue = newTextValue;
+	      this.bbcode = newTextValue;
 	      this.$nextTick(() => {
 	        this.isLongText = this.checkIsLongText();
-	      });
-	    },
-	    value() {
-	      if (!this.isEdit) {
-	        return;
-	      }
-	      this.$nextTick(() => {
-	        this.adjustHeight(this.$refs.textarea);
 	      });
 	    },
 	    isCollapsed(isCollapsed) {
@@ -3725,15 +3754,25 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	        });
 	      }
+	    },
+	    isSaving(value) {
+	      if (this.textEditor !== null)
+	        // CommentContent uses this method as well
+	        {
+	          this.getTextEditor().setEditable(!value);
+	        }
+	    },
+	    isEdit(value) {
+	      if (value === false && this.textEditor !== null) {
+	        this.textEditor.destroy();
+	        this.textEditor = null;
+	      }
 	    }
 	  },
 	  mounted() {
 	    this.$nextTick(() => {
 	      this.isLongText = this.checkIsLongText();
 	    });
-	  },
-	  beforeUnmount() {
-	    this.destroyCopilot();
 	  },
 	  template: `
 		<div class="crm-timeline__editable-text_wrapper">
@@ -3755,7 +3794,7 @@ this.BX.Crm = this.BX.Crm || {};
 					<i class="crm-timeline__editable-text_fixed-icon --clear"></i>
 				</button>
 				<button
-					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
+					v-if="!isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
 					class="crm-timeline__editable-text_edit-btn"
@@ -3764,29 +3803,16 @@ this.BX.Crm = this.BX.Crm || {};
 				</button>
 				<div class="crm-timeline__editable-text_inner">
 					<div class="crm-timeline__editable-text_content">
-						<textarea
+						<TextEditorComponent
 							v-if="isEdit"
-							ref="textarea"
-							v-model="value"
-							:disabled="!isEdit || isSaving"
-							:placeholder="placeholderText"
-							@keydown.esc="cancelEditing"
-							@keydown.enter="onPressEnter"
-							class="crm-timeline__editable-text_text"
-						></textarea>
+							:editor-instance="this.getTextEditor()"
+						/>
 						<span
 							v-else
 							ref="text"
 							class="crm-timeline__editable-text_text"
 						>
-							{{value}}
-						</span>
-						<span
-							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
-							@click="startEditing"
-							class="crm-timeline__editable-text_text-edit-icon"
-						>
-							<span class="crm-timeline__editable-text_edit-icon"></span>
+							<HtmlFormatterComponent :bbcode="bbcode" />
 						</span>
 					</div>
 					<div
@@ -3821,6 +3847,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	const TYPE_LOAD_FILES_BLOCK = 1;
 	const TYPE_LOAD_TEXT_CONTENT = 2;
+
+	/**
+	 * @extends EditableDescription
+	 */
 	var CommentContent = ui_vue3.BitrixVue.cloneComponent(EditableDescription, {
 	  props: {
 	    filesCount: {
@@ -3842,6 +3872,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  data() {
 	    return {
 	      ...this.parentData(),
+	      value: this.text,
+	      oldValue: this.text,
 	      isTextLoaded: false,
 	      isTextChanged: false,
 	      isMoving: false,
@@ -4071,7 +4103,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.createEditor();
 	  },
 	  template: `
-		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper">
+		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper --comment">
 			<div ref="rootElement" :class="className">
 				<button
 					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
@@ -5066,7 +5098,8 @@ this.BX.Crm = this.BX.Crm || {};
 	var LineOfTextBlocks = {
 	  props: {
 	    blocks: Object,
-	    delimiter: String
+	    delimiter: String,
+	    button: Object
 	  },
 	  mounted() {
 	    const blocks = this.$refs.blocks;
@@ -5091,10 +5124,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!main_core.Type.isObject(this.blocks)) {
 	        return [];
 	      }
-	      return Object.keys(this.blocks).map(id => ({
+	      const blocks = Object.keys(this.blocks).map(id => ({
 	        id,
 	        ...this.blocks[id]
 	      })).filter(item => item.scope !== 'mobile');
+	      if (main_core.Type.isObject(this.button)) {
+	        blocks.push({
+	          id: 'button',
+	          ...this.button
+	        });
+	      }
+	      return blocks;
 	    },
 	    formattedDelimiter() {
 	      return main_core.Text.encode(this.delimiter).replace(' ', '&nbsp;');
@@ -5117,6 +5157,86 @@ this.BX.Crm = this.BX.Crm || {};
 			</span>
 		</span>
 	`
+	};
+
+	var LineOfTextBlocksButton = {
+	  props: {
+	    action: Object,
+	    icon: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    title: String
+	  },
+	  computed: {
+	    href() {
+	      if (!this.action) {
+	        return null;
+	      }
+	      const action = new Action(this.action);
+	      if (action.isRedirect()) {
+	        return action.getValue();
+	      }
+	      return null;
+	    },
+	    linkAttrs() {
+	      if (!this.action) {
+	        return {};
+	      }
+	      const action = new Action(this.action);
+	      if (!action.isRedirect()) {
+	        return {};
+	      }
+	      const attrs = {
+	        href: action.getValue()
+	      };
+	      const target = action.getActionParam('target');
+	      if (target) {
+	        attrs.target = target;
+	      }
+	      return attrs;
+	    },
+	    className() {
+	      return ['crm-timeline__line_of_text_blocks_button'];
+	    },
+	    iconClassName() {
+	      if (!this.icon) {
+	        return [];
+	      }
+	      return ['crm-timeline__line_of_text_blocks_button_icon', `--code-${this.icon}`];
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (this.action) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    },
+	    addAlignRightClass() {
+	      this.$el.parentElement.classList.add('right-fixed-button');
+	    }
+	  },
+	  mounted() {
+	    this.addAlignRightClass();
+	  },
+	  template: `
+			<a
+				v-if="href"
+				v-bind="linkAttrs"
+				:class="className"
+				:title="title"
+			>{{text}}<span v-if="icon" :class="iconClassName"></span>
+			</a>
+			<span
+				v-else
+				@click="executeAction"
+				:class="className"
+				:title="title"
+			>{{text}}<span v-if="icon" :class="iconClassName"></span>
+			</span>
+		`
 	};
 
 	var Money = {
@@ -5887,6 +6007,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        AddressBlock,
 	        TextBlock: Text,
 	        LinkBlock: Link,
+	        LineOfTextBlocksButton,
 	        DateBlock,
 	        WithTitle,
 	        LineOfTextBlocks,
@@ -6140,6 +6261,19 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	let featureResolver = null;
+	let api = null;
+	main_core.Runtime.loadExtension(['sign.v2.api', 'sign.feature-resolver']).then(async exports => {
+	  if (exports !== null && exports !== void 0 && exports.Api && exports !== null && exports !== void 0 && exports.FeatureResolver) {
+	    featureResolver = exports === null || exports === void 0 ? void 0 : exports.FeatureResolver.instance();
+	    api = new exports.Api();
+	  }
+	}).catch(errors => {
+	  ui_notification.UI.Notification.Center.notify({
+	    content: errors[0].message,
+	    autoHideDelay: 5000
+	  });
+	});
 	var _isCancellationInProgress = /*#__PURE__*/new WeakMap();
 	var _cancelWithConfirm = /*#__PURE__*/new WeakSet();
 	var _cancelSigningProcess = /*#__PURE__*/new WeakSet();
@@ -6147,6 +6281,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _showSigningProcess = /*#__PURE__*/new WeakSet();
 	var _modifyDocument = /*#__PURE__*/new WeakSet();
 	var _previewDocument = /*#__PURE__*/new WeakSet();
+	var _createDocumentChat = /*#__PURE__*/new WeakSet();
 	var _resendDocument = /*#__PURE__*/new WeakSet();
 	var _touchSigner = /*#__PURE__*/new WeakSet();
 	var _download = /*#__PURE__*/new WeakSet();
@@ -6159,6 +6294,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _download);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _touchSigner);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _resendDocument);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _createDocumentChat);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _previewDocument);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _modifyDocument);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _showSigningProcess);
@@ -6192,6 +6328,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        _classPrivateMethodGet$5(this, _showSigningProcess, _showSigningProcess2).call(this, processUri);
 	      } else if ((action === 'SignB2eDocument:Preview' || action === 'Activity:SignB2eDocument:Preview') && documentId > 0) {
 	        _classPrivateMethodGet$5(this, _previewDocument, _previewDocument2).call(this, actionData);
+	      } else if ((action === 'SignB2eDocument:CreateDocumentChat' || action === 'Activity:SignB2eDocument:CreateDocumentChat') && documentId > 0) {
+	        if (featureResolver && featureResolver.released('createDocumentChat')) {
+	          _classPrivateMethodGet$5(this, _createDocumentChat, _createDocumentChat2).call(this, actionData);
+	        }
 	      } else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0) {
 	        _classPrivateMethodGet$5(this, _modifyDocument, _modifyDocument2).call(this, actionData);
 	      } else if (action === 'SignB2eDocument:Resend' && documentId > 0 && actionData !== null && actionData !== void 0 && actionData.recipientHash) {
@@ -6301,6 +6441,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  documentId
 	}) {
 	  return crm_router.Router.openSlider(`/sign/b2e/preview/0/?docId=${documentId}&noRedirect=Y`);
+	}
+	async function _createDocumentChat2({
+	  chatType,
+	  documentId
+	}) {
+	  if (api && featureResolver && featureResolver.released('createDocumentChat')) {
+	    const chatId = (await api.createDocumentChat(chatType, documentId, false)).chatId;
+	    im_public.Messenger.openChat(`chat${chatId}`);
+	  }
 	}
 	function _resendDocument2({
 	  documentId,
@@ -6947,7 +7096,8 @@ this.BX.Crm = this.BX.Crm || {};
 	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const COPILOT_BUTTON_DISABLE_DELAY = 5000;
-	const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_LIMIT = 5;
+	const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT = 2;
+	const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT = 5;
 	const COPILOT_HELPDESK_CODE = 18799442;
 	var _isCopilotWelcomeTourShown = /*#__PURE__*/new WeakMap();
 	var _isCopilotBannerShown = /*#__PURE__*/new WeakMap();
@@ -7125,9 +7275,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      ownerId: actionData.ownerId
 	    }
 	  }).then(response => {
-	    var _response$data;
-	    if ((response === null || response === void 0 ? void 0 : response.status) === 'success' && (response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.numberOfManualStarts) >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_LIMIT) {
-	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch', 'copilot-in-call-automatically', 500);
+	    if ((response === null || response === void 0 ? void 0 : response.status) === 'success') {
+	      var _response$data;
+	      const numberOfManualStarts = response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.numberOfManualStarts;
+	      if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT) {
+	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenNeedBuyBoost', 'copilot-in-call-buying-boost', 500);
+	      } else if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT) {
+	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch', 'copilot-in-call-automatically', 500);
+	      }
 	    }
 	  }).catch(response => {
 	    const customData = response.errors[0].customData;
@@ -7889,47 +8044,23 @@ this.BX.Crm = this.BX.Crm || {};
 	  return DealProductList;
 	}(Base);
 	function _addProductToDeal2(actionData, animationCallbacks) {
-	  if (!(actionData && actionData.dealId && actionData.productId)) {
+	  if (!(actionData && actionData.productId)) {
 	    return;
 	  }
 	  if (animationCallbacks.onStart) {
 	    animationCallbacks.onStart();
 	  }
-	  main_core.ajax.runAction('crm.timeline.dealproduct.addtodeal', {
-	    data: {
-	      dealId: actionData.dealId,
-	      productId: actionData.productId,
-	      options: actionData.options || {}
-	    }
-	  }).then(() => {
-	    BX.Crm.EntityEditor.getDefault().reload();
-	    if (babelHelpers.classPrivateFieldGet(this, _productsGrid)) {
-	      babelHelpers.classPrivateFieldGet(this, _productsGrid).reloadGrid(false);
-	    }
-	    ui_notification.UI.Notification.Center.notify({
-	      content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
-	      actions: [{
-	        title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
-	        events: {
-	          click: (event, balloon, action) => {
-	            BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
-	            balloon.close();
-	          }
-	        }
-	      }],
-	      autoHideDelay: 5000
-	    });
-	    babelHelpers.classPrivateFieldGet(this, _item).reloadFromServer().then(() => {
-	      if (animationCallbacks.onStop) {
-	        animationCallbacks.onStop();
-	      }
-	    });
-	  }, response => {
-	    if (animationCallbacks.onStop) {
-	      animationCallbacks.onStop();
-	    }
-	    return true;
+	  BX.onCustomEvent('onAddViewedProductToDeal', [actionData.productId]);
+	  setTimeout(() => {
+	    BX.onCustomEvent('OpenEntityDetailTab', ['tab_products']);
+	  }, 500);
+	  ui_notification.UI.Notification.Center.notify({
+	    content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
+	    autoHideDelay: 5000
 	  });
+	  if (animationCallbacks.onStop) {
+	    animationCallbacks.onStop();
+	  }
 	}
 
 	var ContactList = {
@@ -8037,12 +8168,23 @@ this.BX.Crm = this.BX.Crm || {};
 	          width: 500,
 	          cacheable: false
 	        });
+	      } else if (action === 'OrderCheck:ReprintCheck' && actionData && actionData.checkId) {
+	        main_core.ajax.runAction('crm.ordercheck.reprint', {
+	          data: {
+	            checkId: actionData.checkId
+	          }
+	        }).catch(response => {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: response.errors[0].message,
+	            autoHideDelay: 5000
+	          });
+	        });
 	      }
 	    }
 	  }], [{
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
-	      return item.getType() === 'OrderCheckPrinted' || item.getType() === 'OrderCheckNotPrinted' || item.getType() === 'OrderCheckSent';
+	      return item.getType() === 'OrderCheckPrinted' || item.getType() === 'OrderCheckNotPrinted' || item.getType() === 'OrderCheckSent' || item.getType() === 'OrderCheckPrinting';
 	    }
 	  }]);
 	  return OrderCheck;
@@ -8519,82 +8661,125 @@ this.BX.Crm = this.BX.Crm || {};
 	  return main_core.Type.isNumber(params.commentId) && main_core.Type.isNumber(params.ownerId) && main_core.Type.isNumber(params.ownerTypeId);
 	}
 
-	var sharingSlotsListItem = {
-	  props: {
-	    isEditable: Boolean,
-	    rule: {
-	      from: Number,
-	      to: Number,
-	      weekdays: Array,
-	      slotSize: Number
-	    },
-	    durationFormatted: String,
-	    weekdaysFormatted: String
-	  },
-	  computed: {
-	    itemClassName() {
-	      return 'crm-timeline-calendar-sharing-item-' + (this.isEditable ? 'editable' : 'non-editable');
-	    }
-	  },
-	  methods: {
-	    createItemText() {
-	      return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V2', {
-	        '#WEEKDAYS#': this.weekdaysFormatted,
-	        '#FROM_TIME#': this.formatMinutes(this.rule.from),
-	        '#TO_TIME#': this.formatMinutes(this.rule.to),
-	        '#DURATION#': this.durationFormatted
-	      });
-	    },
-	    formatMinutes(minutes) {
-	      const date = new Date(calendar_util.Util.parseDate('01.01.2000').getTime() + minutes * 60 * 1000);
-	      return calendar_util.Util.formatTime(date);
-	    }
-	  },
-	  template: `
-		<div :class="[itemClassName]">
-			<span :title="createItemText()">{{createItemText()}}</span>
-		</div>
-	`
-	};
-
+	let _$1 = t => t,
+	  _t$1,
+	  _t2,
+	  _t3;
 	var SharingSlotsList = {
+	  data() {
+	    return {
+	      popup: null,
+	      moreLinkRef: null
+	    };
+	  },
 	  props: {
 	    listItems: {
 	      type: Array,
 	      required: true,
 	      default: []
-	    },
-	    isEditable: {
-	      type: Boolean,
-	      required: true,
-	      default: false
 	    }
 	  },
-	  components: {
-	    sharingSlotsListItem
+	  mounted() {
+	    const moreLink = this.$el.querySelector('[data-anchor="more-link"]');
+	    if (!moreLink) {
+	      return;
+	    }
+	    this.moreLinkRef = moreLink;
+	    main_core.Event.bind(this.moreLinkRef, 'click', () => this.openPopup());
+	    main_core.Dom.append(main_core.Tag.render(_t$1 || (_t$1 = _$1`<i/>`)), this.moreLinkRef);
+	  },
+	  computed: {
+	    items() {
+	      return this.listItems.map(item => item.properties);
+	    },
+	    formattedRules() {
+	      return this.items.map(item => this.createItemText(item));
+	    },
+	    firstFormattedRule() {
+	      var _this$formattedRules$;
+	      if (this.doShowMoreLink) {
+	        return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_WITH_MORE', {
+	          '#RANGE#': this.formattedRules[0],
+	          '#MORE_LINK_CLASS#': 'crm-timeline-calendar-sharing-slots-more',
+	          '#AMOUNT#': this.items.length - 1
+	        });
+	      }
+	      return (_this$formattedRules$ = this.formattedRules[0]) !== null && _this$formattedRules$ !== void 0 ? _this$formattedRules$ : '';
+	    },
+	    formattedDuration() {
+	      return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_DURATION', {
+	        '#DURATION#': this.items[0].durationFormatted
+	      });
+	    },
+	    doShowMoreLink() {
+	      return this.items.length > 1;
+	    }
+	  },
+	  methods: {
+	    createItemText(item) {
+	      return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V3', {
+	        '#WEEKDAYS#': main_core.Text.encode(item.weekdaysFormatted),
+	        '#FROM_TIME#': this.formatMinutes(item.rule.from),
+	        '#TO_TIME#': this.formatMinutes(item.rule.to)
+	      });
+	    },
+	    formatMinutes(minutes) {
+	      const date = new Date(calendar_util.Util.parseDate('01.01.2000').getTime() + minutes * 60 * 1000);
+	      return calendar_util.Util.formatTime(date);
+	    },
+	    openPopup() {
+	      var _this$popup;
+	      if (!this.moreLinkRef || (_this$popup = this.popup) !== null && _this$popup !== void 0 && _this$popup.isShown()) {
+	        return;
+	      }
+	      this.popup = new main_popup.Popup(this.getPopupOptions());
+	      this.popup.show();
+	    },
+	    getPopupOptions() {
+	      return {
+	        content: this.getPopupContent(),
+	        autoHide: true,
+	        cacheable: false,
+	        animation: 'fading-slide',
+	        bindElement: this.moreLinkRef,
+	        closeByEsc: true
+	      };
+	    },
+	    getPopupContent() {
+	      const root = main_core.Tag.render(_t2 || (_t2 = _$1`<div></div>`));
+	      this.formattedRules.forEach(item => {
+	        main_core.Dom.append(main_core.Tag.render(_t3 || (_t3 = _$1`<div class="crm-timeline-calendar-sharing-slots-more-popup-item">${0}</div>`), item), root);
+	      });
+	      return root;
+	    }
 	  },
 	  template: `
-		<div>
-			<sharingSlotsListItem
-				v-for="item in listItems"
-				v-bind="item.properties"
-				:is-editable="isEditable"
-			/>
+		<div class="crm-timeline-calendar-sharing-slots">
+			<div class="crm-timeline-calendar-sharing-slots-block" v-html="firstFormattedRule"/>
+			<div class="crm-timeline-calendar-sharing-slots-block">
+				{{formattedDuration}}
+			</div>
 		</div>
 	`
 	};
 
+	let _$2 = t => t,
+	  _t$2;
 	function _classPrivateMethodInitSpec$i(obj, privateSet) { _checkPrivateRedeclaration$l(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$i(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openCalendarEvent = /*#__PURE__*/new WeakSet();
 	var _startVideoconference = /*#__PURE__*/new WeakSet();
+	var _openMembersPopup = /*#__PURE__*/new WeakSet();
+	var _renderMemberMenuItem = /*#__PURE__*/new WeakSet();
 	let Sharing = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Sharing, _Base);
 	  function Sharing(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Sharing);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sharing).call(this, ...args));
+	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _renderMemberMenuItem);
+	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _openMembersPopup);
 	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _startVideoconference);
 	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _openCalendarEvent);
 	    return _this;
@@ -8610,6 +8795,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (actionType !== 'jsEvent') {
 	        return;
 	      }
+	      if (action === 'CalendarSharingInvitationSent:ShowMembers' || action === 'Activity:CalendarSharing:ShowMembers') {
+	        _classPrivateMethodGet$i(this, _openMembersPopup, _openMembersPopup2).call(this, item, Object.values(actionData.members));
+	      }
 	      if (action === 'Activity:CalendarSharing:OpenCalendarEvent') {
 	        _classPrivateMethodGet$i(this, _openCalendarEvent, _openCalendarEvent2).call(this, item, actionData);
 	      }
@@ -8622,9 +8810,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (action === 'CalendarSharingInvitationSent:ShowQr') {
 	        const dialogQr = new calendar_sharing_interface.DialogQr({
 	          sharingUrl: actionData.url,
-	          context: "crm"
+	          context: 'crm'
 	        });
 	        dialogQr.show();
+	      }
+	      if (action === 'Activity:CalendarSharing:CopyLink') {
+	        const isSuccess = BX.clipboard.copy(actionData.url);
+	        if (isSuccess) {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_LINK_IS_COPIED_SHORT'),
+	            autoHideDelay: 5000
+	          });
+	        }
 	      }
 	    }
 	  }, {
@@ -8646,7 +8843,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return crm_router.Router.Instance.openCalendarEventSlider(actionData.eventId, actionData.isSharing);
 	}
 	async function _startVideoconference2(item, actionData) {
-	  let response;
+	  let response = null;
 	  try {
 	    response = await main_core.ajax.runAction('crm.timeline.calendar.sharing.getConferenceChatId', {
 	      data: {
@@ -8661,8 +8858,52 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  const chatId = response.data.chatId;
 	  if (top.window.BXIM && chatId) {
-	    top.window.BXIM.openMessenger('chat' + parseInt(chatId));
+	    top.window.BXIM.openMessenger(`chat${parseInt(chatId, 10)}`);
 	  }
+	}
+	function _openMembersPopup2(item, members) {
+	  const moreButton = item.getContainer().querySelector('[data-id="sharing_member_more_button"]');
+	  if (!moreButton) {
+	    return;
+	  }
+	  const existingPopup = main_popup.PopupManager.getPopupById(`sharing_members_popup_${item.getId()}`);
+	  if (existingPopup) {
+	    return;
+	  }
+	  const menu = main_popup.MenuManager.create({
+	    id: `sharing_members_popup_${item.getId()}`,
+	    bindElement: moreButton,
+	    cacheable: false,
+	    className: 'crm-timeline-sharing-members-popup',
+	    maxHeight: 500,
+	    maxWidth: 300,
+	    animation: 'fading-slide',
+	    closeByEsc: true,
+	    items: members.map(member => ({
+	      html: _classPrivateMethodGet$i(this, _renderMemberMenuItem, _renderMemberMenuItem2).call(this, member),
+	      onclick: () => menu.close()
+	    }))
+	  });
+	  menu.show();
+	}
+	function _renderMemberMenuItem2(member) {
+	  const {
+	    root,
+	    icon
+	  } = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+			<a class="crm-timeline-sharing-members-popup-item" href="${0}" target="_blank">
+				<div class="ui-icon ui-icon-common-user crm-timeline-sharing-members-popup-item-image">
+					<i ref="icon"></i>
+				</div>
+				<span class="crm-timeline-sharing-members-popup-item-title">
+					${0}
+				</span>
+			</a>
+		`), member.SHOW_URL, main_core.Text.encode(member.FORMATTED_NAME));
+	  if (main_core.Type.isStringFilled(member.PHOTO_URL)) {
+	    main_core.Dom.style(icon, 'background-image', `url('${encodeURI(main_core.Text.encode(member.PHOTO_URL))}')`);
+	  }
+	  return root;
 	}
 
 	let Task = /*#__PURE__*/function (_Base) {
@@ -9376,5 +9617,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.Crm.AI,BX.Main,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX,BX.UI.Dialogs));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Main,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX,BX.UI.Dialogs));
 //# sourceMappingURL=index.bundle.js.map

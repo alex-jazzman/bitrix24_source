@@ -8,7 +8,7 @@ jn.define('ui-system/typography/text', (require, exports, module) => {
 	const DefaultTextSize = 4;
 
 	/**
-	 * @typedef {Object} TypographyTextProps
+	 * @typedef {Object & TextProps} TypographyTextProps
 	 * @property {string} [header]
 	 * @property {boolean} [accent]
 	 * @property {Function} [color]

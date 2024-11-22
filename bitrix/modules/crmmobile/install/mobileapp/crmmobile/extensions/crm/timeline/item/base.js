@@ -282,24 +282,31 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @return {Promise}
 		 */
 		showLoader()
 		{
-			if (this.loadingOverlayRef)
-			{
-				this.loadingOverlayRef.show();
-			}
+			return this.loadingOverlayRef ? this.loadingOverlayRef.show() : Promise.resolve();
 		}
 
 		/**
 		 * @public
+		 * @return {Promise}
 		 */
 		hideLoader()
 		{
-			if (this.loadingOverlayRef)
-			{
-				this.loadingOverlayRef.hide();
-			}
+			return this.loadingOverlayRef ? this.loadingOverlayRef.hide() : Promise.resolve();
+		}
+
+		/**
+		 * @public
+		 * @return {Promise}
+		 */
+		refresh()
+		{
+			return new Promise((resolve) => {
+				this.setState({}, resolve);
+			});
 		}
 
 		/**

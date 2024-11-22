@@ -1357,6 +1357,17 @@ export class FormSettingsPanel extends BasePresetPanel
 
 		if (
 			Type.isPlainObject(dictionary.permissions)
+			&& Type.isPlainObject(dictionary.permissions.tariff)
+			&& dictionary.permissions.tariff.restricted === true
+		)
+		{
+			const rootWindow = PageObject.getRootWindow();
+			rootWindow.BX.UI.InfoHelper.show('limit_crm_webform_edit');
+			return;
+		}
+
+		if (
+			Type.isPlainObject(dictionary.permissions)
 			&& Type.isPlainObject(dictionary.permissions.form)
 			&& dictionary.permissions.form.edit === false
 		)

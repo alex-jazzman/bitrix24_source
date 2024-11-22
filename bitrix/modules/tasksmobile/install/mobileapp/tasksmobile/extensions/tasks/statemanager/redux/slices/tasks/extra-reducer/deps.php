@@ -10,5 +10,6 @@ return [
 		'tasks:statemanager/redux/slices/tasks/selector',
 		'type',
 		'utils/object',
+		'tasks:statemanager/redux/types',
 	],
 ];

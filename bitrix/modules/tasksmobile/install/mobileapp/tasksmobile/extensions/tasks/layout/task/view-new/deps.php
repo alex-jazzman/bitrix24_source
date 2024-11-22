@@ -51,6 +51,7 @@ return [
 		'tasks:layout/fields/related-task/theme/air-compact',
 		'tasks:layout/fields/time-tracking',
 		'tasks:layout/fields/time-tracking/theme/air-compact',
+		'tasks:layout/fields/stage-selector',
 
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
@@ -82,6 +83,13 @@ return [
 		'tasks:statemanager/redux/slices/tasks-results',
 		'tasks:statemanager/redux/slices/groups',
 		'tasks:statemanager/redux/slices/flows',
+		'tasks:statemanager/redux/slices/tasks-stages',
+		'tasks:statemanager/redux/slices/kanban-settings',
+		'tasks:statemanager/redux/slices/kanban-settings/action',
+		'tasks:statemanager/redux/slices/tasks-stages',
+
+		'tasks:statemanager/redux/slices/tasks-stages/thunk',
+
 		'tasks:layout/task/form-utils',
 		'type',
 	],

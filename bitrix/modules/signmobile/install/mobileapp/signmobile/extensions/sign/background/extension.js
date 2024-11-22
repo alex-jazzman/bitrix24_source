@@ -41,6 +41,7 @@
 					memberId = 0,
 					forcedBannerOpening = false,
 					isGoskey = false,
+					isExternal = false,
 				} = payload;
 
 				result = {
@@ -51,6 +52,7 @@
 					title: '',
 					url: '',
 					isGoskey,
+					isExternal,
 				};
 
 				const document = payload.document;
@@ -81,6 +83,7 @@
 					role,
 					forcedBannerOpening,
 					isGoskey,
+					isExternal,
 				} = data;
 
 				switch (data.type)
@@ -93,6 +96,7 @@
 							role,
 							goWithoutConfirmation: false,
 							isGoskey,
+							isExternal,
 						});
 						break;
 					case EVENT_NAME_REQUEST_FOR_SIGN_CONFIRMATION:

@@ -17,7 +17,9 @@ import {
 	link,
 	autolink,
 	br,
-	mention,
+	user,
+	department,
+	project,
 	img,
 } from './html';
 
@@ -237,7 +239,7 @@ describe('HtmlFormatter', () => {
 	});
 
 	describe('Span', () => {
-		it('should format span tag to span element', () => {
+		it('should skip span tag', () => {
 			const bbcode = '[span]span[/span]';
 			const result = formatter.format({
 				source: bbcode,
@@ -245,27 +247,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('<span>span</span>'));
-		});
-
-		it('should format p node to paragraph element', () => {
-			const ast = scheme.createRoot({
-				children: [
-					scheme.createElement({
-						name: 'span',
-						children: [
-							scheme.createText('span'),
-						],
-					}),
-				],
-			});
-			const result = formatter.format({
-				source: ast,
-			});
-
-			const html = toHTML(result);
-
-			assert.deepEqual(html, paragraph('<span>span</span>'));
+			assert.deepEqual(html, paragraph('span'));
 		});
 	});
 
@@ -409,7 +391,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, quote('quote'));
+			assert.deepEqual(html, quote(paragraph('quote')));
 		});
 
 		it('should convert quote node to blockquote element', () => {
@@ -425,7 +407,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, quote('quote'));
+			assert.deepEqual(html, quote(paragraph('quote')));
 		});
 	});
 
@@ -542,7 +524,7 @@ describe('HtmlFormatter', () => {
 
 			assert.deepEqual(
 				html,
-				paragraph(mention('/test/user/path/1/', 'test user')),
+				paragraph(user('/test/user/path/1/', 1, 'test user')),
 			);
 		});
 
@@ -565,7 +547,7 @@ describe('HtmlFormatter', () => {
 
 			assert.deepEqual(
 				html,
-				paragraph(mention('/test/project/path/1/', 'test project')),
+				paragraph(project('/test/project/path/1/', 1, 'test project')),
 			);
 		});
 
@@ -588,7 +570,7 @@ describe('HtmlFormatter', () => {
 
 			assert.deepEqual(
 				html,
-				paragraph(mention('/test/department/path/1/', 'test department')),
+				paragraph(department('/test/department/path/1/', 1, 'test department')),
 			);
 		});
 	});

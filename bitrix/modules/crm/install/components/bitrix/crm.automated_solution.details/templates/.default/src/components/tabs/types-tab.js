@@ -1,7 +1,9 @@
+import { Dictionary } from 'crm.integration.analytics';
 import { Router } from 'crm.router';
 import { type BaseEvent } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { TagSelector } from 'ui.entity-selector';
+import { createSaveAnalyticsBuilder, wrapPromiseInAnalytics } from '../../helpers/analytics';
 import { Card } from '../card';
 
 export const TypesTab = {
@@ -136,7 +138,11 @@ export const TypesTab = {
 
 		save(): Promise
 		{
-			return this.$store.dispatch('save');
+			const builder = createSaveAnalyticsBuilder(this.$store)
+				.setElement(Dictionary.ELEMENT_SAVE_IS_REQUIRED_TO_PROCEED_POPUP)
+			;
+
+			return wrapPromiseInAnalytics(this.$store.dispatch('save'), builder);
 		},
 	},
 	template: `

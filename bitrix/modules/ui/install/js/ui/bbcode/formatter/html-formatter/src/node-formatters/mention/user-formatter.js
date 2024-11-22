@@ -25,6 +25,10 @@ export class UserNodeFormatter extends NodeFormatter
 							href: userUrl,
 							className: 'ui-typography-mention',
 						},
+						dataset: {
+							mentionEntityId: 'user',
+							mentionId: node.getValue(),
+						},
 					});
 				}
 
@@ -32,6 +36,10 @@ export class UserNodeFormatter extends NodeFormatter
 					tag: 'span',
 					attrs: {
 						className: 'ui-typography-mention',
+					},
+					dataset: {
+						mentionEntityId: 'user',
+						mentionId: node.getValue(),
 					},
 				});
 			},

@@ -39,11 +39,15 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageIdType,
 		OwnMessageStatus,
 		MessageParams,
+		MessageComponent,
 	} = require('im/messenger/const/message');
 	const { ReactionType } = require('im/messenger/const/reaction-type');
 	const { DialogType } = require('im/messenger/const/dialog-type');
 	const { DialogActionType } = require('im/messenger/const/dialog-action-type');
-	const { SidebarActionType } = require('im/messenger/const/sidebar-action-type');
+	const {
+		SidebarActionType,
+		SidebarContextMenuActionType,
+	} = require('im/messenger/const/sidebar-action-type');
 	const { FileStatus } = require('im/messenger/const/file-status');
 	const {
 		FileType,
@@ -76,6 +80,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	} = require('im/messenger/const/keyboard');
 	const { WaitingEntity } = require('im/messenger/const/waiting-entity');
 	const { OpenRequest } = require('im/messenger/const/open-request');
+	const { OpenDialogContextType } = require('im/messenger/const/context-type');
+	const { UrlGetParameter } = require('im/messenger/const/url-params');
+	const { MessengerInitRestMethod } = require('im/messenger/const/messenger-init-rest');
 
 	module.exports = {
 		AppStatus,
@@ -99,12 +106,14 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		RestMethod,
 		MessageType,
 		MessageIdType,
+		MessageComponent,
 		OwnMessageStatus,
 		MessageParams,
 		ReactionType,
 		DialogType,
 		DialogActionType,
 		SidebarActionType,
+		SidebarContextMenuActionType,
 		FileStatus,
 		FileType,
 		FileEmojiType,
@@ -135,5 +144,8 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		KeyboardButtonAction,
 		WaitingEntity,
 		OpenRequest,
+		OpenDialogContextType,
+		UrlGetParameter,
+		MessengerInitRestMethod,
 	};
 });

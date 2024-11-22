@@ -9,16 +9,17 @@ jn.define('ui-system/blocks/banners/card-banner', (require, exports, module) => 
 	const { PropTypes } = require('utils/validation');
 
 	/**
+	 * @typedef {Object} CardBannerProps
+	 * @param {string} testId
+	 * @param {string | object} [title]
+	 * @param {string | object} [description]
+	 * @param {boolean} [hideCross=false]
+	 * @param {CardDesign} [design=CardDesign.ACCENT]
+	 * @param {image} [image]
+	 * @param {function} [onClose=null]
+	 * @param {function} [onClick=null]
+	 *
 	 * @function CardBanner
-	 * @param {Object} props
-	 * @param {string} props.testId
-	 * @param {string | object} [props.title]
-	 * @param {string | object} [props.description]
-	 * @param {boolean} [props.hideCross=false]
-	 * @param {CardDesign} [props.design=CardDesign.ACCENT]
-	 * @param {image} [props.image]
-	 * @param {function} [props.onClose=null]
-	 * @param {function} [props.onClick=null]
 	 */
 	class CardBanner extends LayoutComponent
 	{
@@ -173,6 +174,9 @@ jn.define('ui-system/blocks/banners/card-banner', (require, exports, module) => 
 
 	module.exports = {
 		CardDesign,
+		/**
+		 * @param {CardBannerProps} props
+		 */
 		CardBanner: (props) => new CardBanner(props),
 	};
 });

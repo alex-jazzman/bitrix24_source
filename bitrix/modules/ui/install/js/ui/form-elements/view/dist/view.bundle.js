@@ -712,8 +712,7 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "setHint",
 	    value: function setHint(key) {
-	      var moreElement = this.renderMoreElement(this.getHelpdeskCode()).outerHTML;
-	      var more = !main_core.Type.isNil(this.getHelpdeskCode()) ? moreElement : '';
+	      var more = main_core.Type.isNil(this.getHelpdeskCode()) ? '' : this.renderMoreElement(this.getHelpdeskCode()).outerHTML;
 	      var hint = this.getHint(key);
 	      babelHelpers.classPrivateFieldGet(this, _hintTitleElement).innerText = !main_core.Type.isNil(hint) ? babelHelpers.classPrivateFieldGet(this, _hintTitle) : '';
 	      babelHelpers.classPrivateFieldGet(this, _hintDescElement$1).innerHTML = !main_core.Type.isNil(hint) ? hint + ' ' + more : '';

@@ -11,6 +11,7 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 	const { Haptics } = require('haptics');
 	const { Icon } = require('assets/icons');
 	const { showToast, Position } = require('toast');
+	const { AnalyticsEvent } = require('analytics');
 
 	class Responsible extends LayoutComponent
 	{
@@ -66,6 +67,7 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 						height: 13,
 						marginLeft: 2,
 					},
+					tintColor: Color.base2.toHex(),
 					named: 'chevron_down',
 				}),
 			);
@@ -176,6 +178,7 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 				return;
 			}
 
+			let selectorWidget = null;
 			const selector = EntitySelectorFactory.createByType(EntitySelectorFactoryType.USER, {
 				provider: {
 					context: 'TASKS_MEMBER_SELECTOR_EDIT_responsible',
@@ -203,6 +206,11 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 						'M_TASKS_DENIED_SELECT_USER_AS_RESPONSIBLE',
 					),
 				},
+				createOptions: {
+					enableCreation: true,
+					analytics: new AnalyticsEvent().setSection('task'),
+					getParentLayout: () => selectorWidget,
+				},
 				events: {
 					onClose: this.onChange,
 					onViewHiddenStrict: this.props.onSelectorHidden,
@@ -216,7 +224,9 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 					},
 				},
 			});
-			void selector.show({}, this.props.parentWidget);
+			void selector.show({}, this.props.parentWidget).then((widget) => {
+				selectorWidget = widget;
+			});
 		}
 	}
 

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 (function (exports,main_core,main_core_events,main_loader,sign_v2_api,sign_v2_helper) {
@@ -11,6 +12,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  entityTypeId: 36,
 	  guid: 'sign_entity_editor',
 	  params: {
+	    ENABLE_CONFIGURATION_UPDATE: 'N',
 	    ENABLE_PAGE_TITLE_CONTROLS: false,
 	    ENABLE_MODE_TOGGLE: true,
 	    IS_EMBEDDED: 'N',

@@ -13,5 +13,7 @@ return [
 		'node-formatters/table-formatter',
 		'node-formatters/text-formatter',
 		'node-formatters/strip-tag-formatter',
+		'node-formatters/list-formatter',
+		'node-formatters/list-item-formatter',
 	],
 ];

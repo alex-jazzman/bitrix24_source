@@ -215,7 +215,8 @@
 
 		sharingDialog()
 		{
-			const component = new DialogSharing({
+			const component = (layoutWidget) => new DialogSharing({
+				layoutWidget,
 				sharing: this.sharing,
 				onSharing: (fields) => {
 					this.sharing.getModel().setFields(fields);
@@ -223,13 +224,12 @@
 				},
 			});
 
-			// eslint-disable-next-line promise/catch-or-return
-			new BottomSheet({ component })
+			void new BottomSheet({ component })
 				.setBackgroundColor(AppTheme.colors.bgNavigation)
 				.setMediumPositionPercent(80)
 				.disableContentSwipe()
 				.open()
-				.then((widget) => component.setLayoutWidget(widget));
+			;
 		}
 
 		closeEditForm()

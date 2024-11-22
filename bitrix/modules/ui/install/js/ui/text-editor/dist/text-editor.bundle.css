@@ -12,8 +12,12 @@
 
 	--ui-text-editor-color-background: #fff;
 	--ui-text-editor-color-selection: rgba(0, 0, 0, 0.13);
-	--ui-text-editor-color-border-base: #ccc;
-	--ui-text-editor-color-border-focus: #2fc6f6;
+
+	--ui-text-editor-border-width: 1px;
+	--ui-text-editor-border-style: solid;
+	--ui-text-editor-border-color-base: #ccc;
+	--ui-text-editor-border-color-focus: #2fc6f6;
+
 	--ui-text-editor-color-text: var(--ui-color-text-primary);
 	--ui-text-editor-color-link: var(--ui-color-link-primary-base);
 	--ui-text-editor-color-toolbar-background: var(--ui-text-editor-color-background);
@@ -23,7 +27,10 @@
 	--ui-text-editor-min-height: auto;
 	--ui-text-editor-max-height: auto;
 
-	border: 1px solid var(--ui-text-editor-color-border-base);
+	border-width: var(--ui-text-editor-border-width);
+	border-style: var(--ui-text-editor-border-style);
+	border-color: var(--ui-text-editor-border-color-base);
+
 	border-radius: var(--ui-text-editor-border-radius);
 	background-color: var(--ui-text-editor-color-background);
 
@@ -31,7 +38,7 @@
 }
 
 .ui-text-editor:focus-within {
-	border-color: var(--ui-text-editor-color-border-focus);
+	border-color: var(--ui-text-editor-border-color-focus);
 }
 
 .ui-text-editor.--expanding,
@@ -266,14 +273,6 @@
 	z-index: 2;
 }
 
-.ui-text-editor__file-image {
-	cursor: default;
-	display: inline-block;
-	position: relative;
-	-webkit-user-select: none;
-	        user-select: none;
-}
-
 .ui-text-editor-file-image-component {
 	display: inline-block;
 }
@@ -298,11 +297,6 @@
 	border-bottom: 1px dashed #2067b0;
 }
 
-.ui-text-editor__file-video {
-	display: inline-block;
-	max-width: 100%;
-}
-
 .ui-text-editor-file-video-component {
 
 }
@@ -315,17 +309,6 @@
 
 .ui-text-editor-file-video-component.--draggable {
 	cursor: grab;
-}
-
-.ui-text-editor-file-video-container {
-	width: 600px;
-	height: 337px;
-	max-width: 100%;
-	background-color: #f5f7f8;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D"http%3A//www.w3.org/2000/svg" viewBox%3D"0 0 42 34"%3E%3Cpath fill%3D"%23D7DCDF" d%3D"M37.625 1.522c-1.237-.413-8.87-.825-16.5-.825-7.63 0-15.262.412-16.5.825C1.325 2.552.5 9.772.5 17.197c0 7.425.825 14.644 4.125 15.675 1.237.413 8.87.825 16.5.825 7.63 0 15.263-.413 16.5-.825 3.3-1.03 4.125-8.25 4.125-15.675 0-7.425-.825-14.644-4.125-15.675zM17 26.478V7.916l12.375 9.28L17 26.48z"/%3E%3C/svg%3E');
-	background-size: 100px 100px;
-	background-repeat: no-repeat;
-	background-position: center;
 }
 
 @keyframes ui-text-editor-copilot-loading {
@@ -436,7 +419,8 @@
 	transform: rotate(180deg);
 }
 
-.ui-text-editor-toolbar:empty {
+.ui-text-editor-toolbar:empty,
+.ui-text-editor-toolbar.--hidden {
 	display: none;
 }
 

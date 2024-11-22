@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 /**
  * @var array $arResult
@@ -106,8 +107,8 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 <script>
 	var AccessRights = new BX.UI.AccessRights({
 		renderTo: document.getElementById('bx-biconnector-role-main'),
-		userGroups: <?= CUtil::PhpToJSObject($arResult['USER_GROUPS']) ?>,
-		accessRights: <?= CUtil::PhpToJSObject($arResult['ACCESS_RIGHTS']) ?>,
+		userGroups: <?= Json::encode($arResult['USER_GROUPS']) ?>,
+		accessRights: <?= Json::encode($arResult['ACCESS_RIGHTS']) ?>,
 		component: 'bitrix:biconnector.apachesuperset.config.permissions',
 		actionSave: 'savePermissions',
 		actionDelete: 'deleteRole',

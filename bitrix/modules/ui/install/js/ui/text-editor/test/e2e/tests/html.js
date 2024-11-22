@@ -197,7 +197,7 @@ export function image(
 }
 
 export function video(
-	url = 'https://d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-rain/rain3.mp4',
+	url = 'https://video.1c-bitrix.ru/bitrix24/themes/video-rain/rain3.mp4',
 	selected = false,
 )
 {
@@ -205,9 +205,7 @@ export function video(
 		<span class="${defaultTheme.video.container}${selected ? ' --selected' : ''}" data-lexical-decorator="true" contenteditable="false">
 			<div class="ui-text-editor-video-component${selected ? ' --selected' : ''}">
 			<div class="ui-text-editor-video-object-container">
-				<video controls="true" class="${defaultTheme.video.object}" width="560" height="315">
-					<source src="${url}">
-				</video>
+				<video controls="true" preload="metadata" playsinline="true" src="${url}" class="${defaultTheme.video.object}" width="560"></video>
 			</div>
 			<div class="ui-text-editor-figure-resizer${selected ? ' --shown' : ''}">
 				<div class="ui-text-editor-figure-resizer-handle --north-east" data-direction="9"></div>

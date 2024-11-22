@@ -46,34 +46,76 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var entityTypeName = BX.CrmEntityType.resolveName(this._entityTypeId).toUpperCase();
-	      return BX.prop.getString(BX.prop.getObject(this._settings, "messages", BX.Crm.BatchMergeManager.messages), name, main_core.Loc.getMessage('CRM_BATCH_MERGER_MANAGER_' + entityTypeName + '_' + name.toUpperCase())
-	      // CRM_BATCH_MERGER_MANAGER_LEAD_TITLE
-	      // CRM_BATCH_MERGER_MANAGER_LEAD_CONFIRMATION
-	      // CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYCAPTION
-	      // CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYSUCCEEDED
-	      // CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYFAILED
-	      // CRM_BATCH_MERGER_MANAGER_DEAL_TITLE
-	      // CRM_BATCH_MERGER_MANAGER_DEAL_CONFIRMATION
-	      // CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYCAPTION
-	      // CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYSUCCEEDED
-	      // CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYFAILED
-	      // CRM_BATCH_MERGER_MANAGER_CONTACT_TITLE
-	      // CRM_BATCH_MERGER_MANAGER_CONTACT_CONFIRMATION
-	      // CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYCAPTION
-	      // CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYSUCCEEDED
-	      // CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYFAILED
-	      // CRM_BATCH_MERGER_MANAGER_COMPANY_TITLE
-	      // CRM_BATCH_MERGER_MANAGER_COMPANY_CONFIRMATION
-	      // CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYCAPTION
-	      // CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYSUCCEEDED
-	      // CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYFAILED
-	      );
+	      var _this$getMessageFromS;
+	      return (_this$getMessageFromS = this.getMessageFromSettings(name)) !== null && _this$getMessageFromS !== void 0 ? _this$getMessageFromS : this.getMessageFromLocalization(name);
 	    }
 	  }, {
 	    key: "getEntityIds",
 	    value: function getEntityIds() {
 	      return this._entityIds;
+	    }
+	  }, {
+	    key: "getEntityTypeId",
+	    value: function getEntityTypeId() {
+	      return this._entityTypeId;
+	    }
+	  }, {
+	    key: "getMessageFromSettings",
+	    value: function getMessageFromSettings(name) {
+	      var _this$_settings$messa, _this$_settings, _this$_settings$messa2;
+	      return (_this$_settings$messa = (_this$_settings = this._settings) === null || _this$_settings === void 0 ? void 0 : (_this$_settings$messa2 = _this$_settings.messages) === null || _this$_settings$messa2 === void 0 ? void 0 : _this$_settings$messa2[name]) !== null && _this$_settings$messa !== void 0 ? _this$_settings$messa : null;
+	    }
+	    /**
+	     * CRM_BATCH_MERGER_MANAGER_LEAD_TITLE
+	     * CRM_BATCH_MERGER_MANAGER_LEAD_CONFIRMATION
+	     * CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYCAPTION
+	     * CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYSUCCEEDED
+	     * CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYFAILED
+	     * CRM_BATCH_MERGER_MANAGER_DEAL_TITLE
+	     * CRM_BATCH_MERGER_MANAGER_DEAL_CONFIRMATION
+	     * CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYCAPTION
+	     * CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYSUCCEEDED
+	     * CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYFAILED
+	     * CRM_BATCH_MERGER_MANAGER_CONTACT_TITLE
+	     * CRM_BATCH_MERGER_MANAGER_CONTACT_CONFIRMATION
+	     * CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYCAPTION
+	     * CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYSUCCEEDED
+	     * CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYFAILED
+	     * CRM_BATCH_MERGER_MANAGER_COMPANY_TITLE
+	     * CRM_BATCH_MERGER_MANAGER_COMPANY_CONFIRMATION
+	     * CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYCAPTION
+	     * CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYSUCCEEDED
+	     * CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYFAILED
+	     * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_TITLE
+	     * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_CONFIRMATION
+	     * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_SUMMARYCAPTION
+	     * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_SUMMARYSUCCEEDED
+	     * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_SUMMARYFAILED
+	     * CRM_BATCH_MERGER_MANAGER_QUOTE_TITLE
+	     * CRM_BATCH_MERGER_MANAGER_QUOTE_CONFIRMATION
+	     * CRM_BATCH_MERGER_MANAGER_QUOTE_SUMMARYCAPTION
+	     * CRM_BATCH_MERGER_MANAGER_QUOTE_SUMMARYSUCCEEDED
+	     * CRM_BATCH_MERGER_MANAGER_QUOTE_SUMMARYFAILED
+	     * CRM_BATCH_MERGER_MANAGER_DYNAMIC_TITLE
+	     * CRM_BATCH_MERGER_MANAGER_DYNAMIC_CONFIRMATION
+	     * CRM_BATCH_MERGER_MANAGER_DYNAMIC_SUMMARYCAPTION
+	     * CRM_BATCH_MERGER_MANAGER_DYNAMIC_SUMMARYSUCCEEDED
+	     * CRM_BATCH_MERGER_MANAGER_DYNAMIC_SUMMARYFAILED
+	     *
+	     * @param name
+	     * @returns {string|null}
+	     */
+	  }, {
+	    key: "getMessageFromLocalization",
+	    value: function getMessageFromLocalization(name) {
+	      var phraseCode = 'CRM_BATCH_MERGER_MANAGER_#ENTITY_TYPE_NAME#_#NAME#'.replace('#ENTITY_TYPE_NAME#', this.getMessageEntityTypeName()).replace('#NAME#', name.toUpperCase());
+	      return main_core.Loc.getMessage(phraseCode);
+	    }
+	  }, {
+	    key: "getMessageEntityTypeName",
+	    value: function getMessageEntityTypeName() {
+	      var entityTypeName = BX.CrmEntityType.isDynamicTypeByTypeId(this.getEntityTypeId()) ? BX.CrmEntityType.names.dynamic : BX.CrmEntityType.resolveName(this.getEntityTypeId());
+	      return entityTypeName.toUpperCase();
 	    }
 	  }, {
 	    key: "setEntityIds",

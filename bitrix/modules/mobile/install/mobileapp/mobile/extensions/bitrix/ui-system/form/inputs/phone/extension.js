@@ -5,16 +5,16 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 	const {
 		getCountryCode,
 		showCountryPicker,
-		getFlagImageByCountryCode,
 		getGlobalCountryCode,
+		getFlagImageByCountryCode,
 	} = require('utils/phone');
 	const { Corner, Indent } = require('tokens');
 	const { phoneUtils } = require('native/phonenumber');
+	const { refSubstitution } = require('utils/function');
+	const { PureComponent } = require('layout/pure-component');
 	const { PropTypes } = require('utils/validation');
 	const { PhoneNumberField } = require('ui-system/typography/phone-field');
-	const { InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
-
-	let changedNumber = false;
+	const { Input, InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
 
 	/**
 	 * @typedef {InputProps} PhoneInputProps
@@ -24,148 +24,141 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 	 *
 	 * @class EmailInputTheme
 	 */
-	class PhoneInput extends InputClass
+	class PhoneInput extends PureComponent
 	{
-		componentWillUnmount()
+		constructor(props)
 		{
-			super.componentWillUnmount();
+			super(props);
 
-			changedNumber = false;
-		}
-
-		initProperties()
-		{
-			super.initProperties();
-
+			this.currentValue = null;
 			this.globalCountryCode = getGlobalCountryCode();
+
+			this.initState(props, true);
 		}
 
-		getStateObject(props)
+		componentWillReceiveProps(nextProps)
 		{
-			const state = super.getStateObject(props);
+			this.initState(nextProps);
+		}
 
-			if (!changedNumber)
+		initState(props, initialState)
+		{
+			this.currentValue = props.value;
+
+			if (initialState)
 			{
-				state.countryCode = this.getCountryCode(props.countryCode);
+				this.state = {
+					countryCode: props.countryCode,
+				};
 			}
-
-			return state;
-		}
-
-		renderContent()
-		{
-			return PhoneNumberField(this.getFieldProps());
 		}
 
 		getFieldProps()
 		{
 			return {
-				...super.getFieldProps(),
+				...this.props,
 				value: this.getValuePhoneNumber(),
-				onChangeText: this.handleOnChangeText,
+				leftContent: this.getLeftContent(),
+				onChange: this.handleOnChangeNumber,
+				onClickLeftContent: this.handleOnClickLeftContent,
 				keyboardType: 'phone-pad',
+				placeholder: null,
 			};
 		}
 
 		getValuePhoneNumber()
 		{
 			const phoneNumber = this.getValue();
-			const { countryCode } = this.state;
+			const phoneCode = this.getPhoneCode();
 
-			if (this.isShowDefaultCountryPhoneCode() && !phoneNumber && countryCode !== this.globalCountryCode)
+			if (this.isShowDefaultCountryPhoneCode() && !this.currentValue && phoneCode)
 			{
-				return `+${this.getPhoneCode()}`;
+				return `+${phoneCode}`;
 			}
 
 			return phoneNumber;
 		}
 
-		async handleOnClickLeftContent()
-		{
-			if (!this.isEnable())
-			{
-				return;
-			}
-
-			super.handleOnClickLeftContent();
-
+		handleOnClickLeftContent = async () => {
 			const { phoneNumber } = await showCountryPicker({ phoneNumber: this.getValue() });
 
-			this.handleOnChange(phoneNumber);
-		}
+			this.handleOnChangeNumber(phoneNumber);
+		};
 
-		handleOnChangeText(value)
-		{
-			changedNumber = true;
+		handleOnChangeNumber = (value) => {
+			this.currentValue = value;
 
 			if (!this.isShowCountryFlag())
 			{
-				super.handleOnChangeText(value);
+				this.handleOnChange(value);
 
 				return;
 			}
 
 			const { countryCode: prevCountryCode } = this.state;
-			const countryCode = value && value !== '+'
-				? getCountryCode(value, this.getInitCountryCode())
-				: this.globalCountryCode;
+			const hasValue = value && value !== '+';
+			const countryCode = hasValue ? this.getCountryCode() : this.globalCountryCode;
 
 			if (countryCode === prevCountryCode)
 			{
-				super.handleOnChangeText(value);
+				this.handleOnChange(value);
 			}
 			else
 			{
 				this.setState(
 					{ countryCode },
 					() => {
-						super.handleOnChange(value);
+						this.handleOnChange(value);
 					},
 				);
 			}
-		}
+		};
 
-		renderLeftContent()
+		getLeftContent()
 		{
 			if (!this.isShowCountryFlag())
 			{
 				return null;
 			}
 
-			return super.renderLeftContent();
-		}
+			const countryCode = this.getCountryCode();
+			const uri = getFlagImageByCountryCode(countryCode);
 
-		getLeftContent()
-		{
-			if (!this.shouldRenderCountryFlag())
+			if (countryCode === this.globalCountryCode || !uri)
 			{
 				return Icon.EARTH;
 			}
 
-			const uri = getFlagImageByCountryCode(this.getCurrentCountryCode());
-
-			return Image({
-				uri,
-				resizeMode: 'contain',
-				named: Icon.EARTH.getIconName(),
-				style: {
-					...this.getFlagSize(),
-					marginRight: Indent.XS.toNumber(),
-					borderRadius: Corner.XS.toNumber(),
+			return View(
+				{
+					style: {
+						width: 22,
+						height: 18,
+						marginRight: Indent.XS.toNumber(),
+					},
 				},
-				onFailure: () => {
-					this.setState({
-						countryCode: this.globalCountryCode,
-					});
-				},
-			});
+				Image({
+					uri,
+					resizeMode: 'contain',
+					named: Icon.EARTH.getIconName(),
+					style: {
+						flex: 1,
+						borderRadius: Corner.XS.toNumber(),
+					},
+					onFailure: this.handleOnFailure,
+				}),
+			);
 		}
+
+		handleOnFailure = () => {
+			this.setState({
+				countryCode: this.globalCountryCode,
+			});
+		};
 
 		getPhoneCode()
 		{
-			const countryCode = this.getInitCountryCode();
-
-			return phoneUtils.getPhoneCode(this.getCountryCode(countryCode));
+			return phoneUtils.getPhoneCode(this.getCountryCode());
 		}
 
 		getCurrentCountryCode()
@@ -175,18 +168,21 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 			return countryCode;
 		}
 
-		getCountryCode(countryCode)
+		getCountryCode()
 		{
-			const phoneNumber = this.getValue();
-
-			return getCountryCode(phoneNumber, countryCode);
+			return getCountryCode(this.getValue(), this.getCurrentCountryCode());
 		}
 
-		getInitCountryCode()
+		getValue()
 		{
-			const { countryCode } = this.props;
+			if (this.currentValue !== null)
+			{
+				return this.currentValue;
+			}
 
-			return countryCode;
+			const { value } = this.state;
+
+			return value;
 		}
 
 		isShowDefaultCountryPhoneCode()
@@ -203,17 +199,19 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 			return Boolean(showCountryFlag);
 		}
 
-		shouldRenderCountryFlag()
+		render()
 		{
-			return this.getCurrentCountryCode() !== this.globalCountryCode;
+			return Input({
+				element: PhoneNumberField,
+				...this.getFieldProps(),
+			});
 		}
 
-		getFlagSize()
+		handleOnChange(value)
 		{
-			return {
-				width: 22,
-				height: 17,
-			};
+			const { onChange } = this.props;
+
+			onChange?.(value);
 		}
 	}
 
@@ -235,7 +233,7 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 		 * @param {PhoneInputProps} props
 		 * @returns {PhoneInput}
 		 */
-		PhoneInput: (props) => new PhoneInput(props),
+		PhoneInput: (props) => refSubstitution(PhoneInput)(props),
 		InputSize,
 		InputMode,
 		InputDesign,

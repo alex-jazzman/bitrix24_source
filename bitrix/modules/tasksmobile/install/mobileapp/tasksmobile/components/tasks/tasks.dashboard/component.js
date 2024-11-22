@@ -781,6 +781,8 @@
 						c_element: this.props.analyticsLabel?.c_element ?? 'title_click',
 						c_sub_section: this.props.analyticsLabel?.c_sub_section ?? params.view?.toLowerCase(),
 					},
+					view: this.state.view,
+					kanbanOwnerId: params.ownerId,
 				});
 			}
 		}

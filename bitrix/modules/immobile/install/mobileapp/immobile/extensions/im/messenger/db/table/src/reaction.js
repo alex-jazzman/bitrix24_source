@@ -17,6 +17,11 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 			return 'b_im_reaction';
 		}
 
+		getPrimaryKey()
+		{
+			return 'messageId';
+		}
+
 		getFields()
 		{
 			return [
@@ -64,6 +69,28 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 			});
 
 			return list;
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @return {Promise<Awaited<{}>>}
+		 */
+		async deleteByChatId(chatId)
+		{
+			if (!Feature.isLocalStorageEnabled || this.readOnly || !Type.isNumber(chatId))
+			{
+				return Promise.resolve({});
+			}
+
+			const query = `
+				DELETE FROM b_im_reaction
+				WHERE messageId IN (
+					SELECT id FROM b_im_message
+					WHERE chatId = ${chatId}
+				);
+			`;
+
+			return this.executeSql({ query });
 		}
 	}
 

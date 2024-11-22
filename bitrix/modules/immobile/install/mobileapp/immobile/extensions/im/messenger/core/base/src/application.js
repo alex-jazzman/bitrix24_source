@@ -29,11 +29,13 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		QueueRepository,
 		PinMessageRepository,
 		CopilotRepository,
+		// CounterRepository,
 		// SidebarFileRepository, TODO: The backend is not ready yet
 	} = require('im/messenger/db/repository');
 	const {
 		applicationModel,
 		recentModel,
+		counterModel,
 		messagesModel,
 		usersModel,
 		dialoguesModel,
@@ -167,10 +169,9 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				this.repository.pinMessage.pinTable.drop();
 				this.repository.pinMessage.pinMessageTable.drop();
 				this.repository.copilot.copilotTable.drop();
+				// this.repository.counter.counterTable.drop();
 				// this.repository.sidebarFile.sidebarFileTable.drop(); TODO: The backend is not ready yet
 
-				Application.storageById(CacheNamespace + CacheName.chatRecent).clear();
-				Application.storageById(CacheNamespace + CacheName.copilotRecent).clear();
 				Application.storageById(CacheNamespace + CacheName.draft).clear();
 
 				logger.warn('CoreApplication drop database complete');
@@ -193,6 +194,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				pinMessage: new PinMessageRepository(),
 				copilot: new CopilotRepository(),
 				// sidebarFile: new SidebarFileRepository(),
+				// counter: new CounterRepository(),
 			};
 		}
 
@@ -201,6 +203,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			return clone({
 				applicationModel,
 				recentModel,
+				counterModel,
 				messagesModel,
 				usersModel,
 				dialoguesModel,
@@ -274,21 +277,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		}
 
 		/**
-		 * @return {{
-		 *  option: OptionRepository,
-		 *  recent: RecentRepository,
-		 *  dialog: DialogRepository,
-		 *  file: FileRepository,
-		 *  user: UserRepository,
-		 *  message: MessageRepository,
-		 *  tempMessage: TempMessageRepository,
-		 *  reaction: ReactionRepository
-		 *  queue: QueueRepository
-		 *  smile: SmileRepository,
-		 *  pinMessage: PinMessageRepository,
-		 *  copilot?: CopilotRepository,
-		 *  sidebarFile: SidebarFileRepository,
-		 * }}
+		 * @return {MessengerCoreRepository}
 		 */
 		getRepository()
 		{

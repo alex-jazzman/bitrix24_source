@@ -4665,6 +4665,7 @@ this.BX.UI = this.BX.UI || {};
 	}
 
 	exports.DatePicker = DatePicker;
+	exports.DatePickerEvent = DatePickerEvent;
 
 }((this.BX.UI.DatePicker = this.BX.UI.DatePicker || {}),BX.Main,BX.Event,BX.Main,BX,BX.Cache));
 //# sourceMappingURL=date-picker.bundle.js.map

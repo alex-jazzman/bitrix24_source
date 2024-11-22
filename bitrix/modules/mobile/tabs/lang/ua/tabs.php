@@ -1,8 +1,6 @@
 <?php
 $MESS["TAB_NAME_CALENDAR"] = "Календар";
 $MESS["TAB_NAME_CALENDAR_SHORT"] = "Календар";
-$MESS["TAB_NAME_CALLTRACKER"] = "Трекер дзвінків";
-$MESS["TAB_NAME_CALLTRACKER_SHORT"] = "Дзвінки";
 $MESS["TAB_NAME_CATALOG_STORE"] = "Складський облік";
 $MESS["TAB_NAME_CATALOG_STORE_SHORT"] = "Склади";
 $MESS["TAB_NAME_CRM"] = "CRM";
@@ -33,7 +31,6 @@ $MESS["TAB_STREAM_NAVIGATION_TAB_MAIL"] = "Пошта";
 $MESS["TAB_STREAM_NAVIGATION_TAB_STREAM"] = "Новини";
 $MESS["TAB_STREAM_NAVIGATION_TAB_STREAM2"] = "Стрічка";
 $MESS["TAB_STREAM_NAVIGATION_TAB_VIDEO"] = "Відеоконференції";
-$MESS["TAB_TASKS_INPUT_PANEL_B24_DISK"] = "Бітрікс24.Диск";
 $MESS["TAB_TASKS_INPUT_PANEL_NEW_TASK"] = "Нове завдання";
 $MESS["TAB_TASKS_NAVIGATION_HEADER"] = "Завдання та Проєкти";
 $MESS["TAB_TASKS_NAVIGATION_TAB_EFFICIENCY"] = "Ефективність";

@@ -196,6 +196,10 @@ class CoreApplication
 				// eslint-disable-next-line no-console
 				console.warn(warn, vm, trace);
 			};
+
+			// todo: remove after updating Vue to 3.3+
+			bitrixVue.config.unwrapInjectedRef = true;
+
 			// eslint-disable-next-line no-param-reassign
 			application.bitrixVue = bitrixVue;
 			bitrixVue.use(this.store).mount(initConfig.el);

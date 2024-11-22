@@ -22,7 +22,14 @@
 		constructor()
 		{
 			this.isReady = false;
+			this.isViewReady = false;
 			EntityReady.addCondition('im.navigation', () => this.isReady);
+			EntityReady.addCondition('im.navigation::view', () => this.isViewReady);
+
+			BX.onViewLoaded(() => {
+				this.isViewReady = true;
+				EntityReady.ready('im.navigation::view');
+			});
 
 			this.firstSetBadge = true;
 			this.counters = {};
@@ -31,10 +38,11 @@
 			this.previousTab = 'none';
 
 			this.tabMapping = {
-				chats: 'im.messenger',
-				openlines: 'im.openlines.recent',
-				notifications: 'im.notify',
-				copilot: 'im.copilot.messenger',
+				chats: ComponentCode.imMessenger,
+				channel: ComponentCode.imChannelMessenger,
+				copilot: ComponentCode.imCopilotMessenger,
+				notifications: ComponentCode.imNotify,
+				openlines: ComponentCode.imOpenlinesRecent,
 			};
 			this.componentMapping = null;
 
@@ -46,7 +54,7 @@
 			BX.addCustomEvent('ImRecent::counter::list', this.onUpdateCounters.bind(this));
 			BX.addCustomEvent('onUpdateCounters', this.onUpdateCounters.bind(this));
 			BX.addCustomEvent(EventType.navigation.broadCastEventWithTabChange, this.onBroadcastEvent.bind(this));
-			BX.addCustomEvent(EventType.navigation.changeTab, this.onTabChangeFromMessenger.bind(this));
+			BX.addCustomEvent(EventType.navigation.changeTab, this.changeTabHandler.bind(this));
 			BX.addCustomEvent(EventType.app.active, this.onAppActive.bind(this));
 			BX.postComponentEvent('requestCounters', [{ component: 'im.navigation' }], 'communication');
 			BX.addCustomEvent('onTabsSelected', this.onRootTabsSelected.bind(this));
@@ -100,14 +108,38 @@
 			});
 		}
 
-		onTabChangeFromMessenger(componentCode)
+		changeTabHandler(componentCode)
 		{
 			if (!tabIdCollection[componentCode])
 			{
+				BX.postComponentEvent(EventType.navigation.changeTabResult, [{
+					componentCode,
+					errorText: `im.navigation: Error changing tab, tab ${componentCode} does not exist.`,
+				}]);
+
+				return;
+			}
+
+			if (
+				componentCode === ComponentCode.imCopilotMessenger
+				&& !BX.componentParameters.get('IS_COPILOT_AVAILABLE', false)
+			)
+			{
+				BX.postComponentEvent(EventType.navigation.changeTabResult, [{
+					componentCode,
+					errorText: `im.navigation: Error changing tab, tab ${componentCode} is disabled.`,
+				}]);
+
 				return;
 			}
 
 			tabs.setActiveItem(tabIdCollection[componentCode]);
+
+			PageManager.getNavigator().makeTabActive();
+
+			BX.postComponentEvent(EventType.navigation.changeTabResult, [{
+				componentCode,
+			}]);
 		}
 
 		onTabSelected(item, changed)
@@ -134,7 +166,10 @@
 				previous: this.previousTab,
 			}, item, changed);
 
-			BX.postComponentEvent('ImMobile.Navigation:tabChanged', [{ newTab: this.currentTab, previousTab: this.previousTab }]);
+			BX.postComponentEvent(EventType.navigation.tabChanged, [{
+				newTab: this.currentTab,
+				previousTab: this.previousTab,
+			}]);
 			this.sendAnalyticsChangeTab();
 		}
 
@@ -186,8 +221,9 @@
 			analytics.send();
 		}
 
-		onUpdateCounters(counters, delay)
+		async onUpdateCounters(counters, delay)
 		{
+			await EntityReady.wait('im.navigation::view');
 			let needUpdate = false;
 			const params = { ...counters };
 			console.info(`${this.constructor.name}.onUpdateCounters params:`, params, delay);

@@ -2,6 +2,7 @@
 $MESS['SIGN_CMP_START_TPL_MENU_INDEX'] = 'Документы';
 $MESS['SIGN_CMP_START_TPL_MENU_INDEX_1'] = 'Документы на подпись';
 $MESS['SIGN_CMP_START_TPL_MENU_MYSAFE'] = 'Мой сейф';
+$MESS['SIGN_CMP_START_TPL_MENU_EMPLOYEE_TEMPLATE_LIST'] = 'Шаблоны документов';
 $MESS['SIGN_CMP_START_TPL_MENU_B2E_SAFE'] = 'Сейф компании';
 $MESS['SIGN_CMP_START_TPL_MENU_B2E_CURRENT_DOCUMENT'] = 'Ждут моей реакции';
 $MESS['SIGN_CMP_START_TPL_MENU_B2E_SETTINGS'] = 'Настройки';

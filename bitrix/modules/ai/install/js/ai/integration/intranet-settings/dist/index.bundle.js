@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.AI = this.BX.AI || {};
 this.BX.AI.Integration = this.BX.AI.Integration || {};
@@ -58,8 +59,12 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	      var _this2 = this;
 	      var groups = this.getValue('fields');
 	      if (groups) {
+	        this.isOpen = true;
 	        for (var groupCode in groups) {
 	          var section = _classPrivateMethodGet(this, _buildGroup, _buildGroup2).call(this, groups[groupCode]);
+	          if (this.isOpen === true) {
+	            this.isOpen = false;
+	          }
 	          if (section) {
 	            section.renderTo(contentNode);
 	          }
@@ -95,7 +100,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    section: {
 	      title: title,
 	      titleIconClasses: 'ui-icon-set ' + ((_icon$code = icon.code) !== null && _icon$code !== void 0 ? _icon$code : _classStaticPrivateFieldSpecGet(AiPage, AiPage, _groupIconDefaultIcon)),
-	      isOpen: true
+	      isOpen: this.isOpen
 	    }
 	  });
 	  if (group.description) {

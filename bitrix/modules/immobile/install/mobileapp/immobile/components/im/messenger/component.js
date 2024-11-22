@@ -1,3 +1,5 @@
+// jn.require('im/messenger/lib/dev/action-timer');
+
 // eslint-disable-next-line no-var
 var REVISION = 19; // API revision - sync with im/lib/revision.php
 
@@ -31,6 +33,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { ChatApplication } = require('im/messenger/core/chat');
 	const { EntityReady } = require('entity-ready');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
+
+	const {
+		AppStatus,
+		EventType,
+		RestMethod,
+		FeatureFlag,
+		ComponentCode,
+		OpenRequest,
+		MessengerInitRestMethod,
+	} = require('im/messenger/const');
 
 	const core = new ChatApplication({
 		localStorage: {
@@ -48,7 +61,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	}
 	serviceLocator.add('core', core);
 
-	const { restManager } = require('im/messenger/lib/rest-manager');
+	const chatInitService = new MessengerInitService({
+		actionName: RestMethod.immobileTabChatLoad,
+	});
+	serviceLocator.add('messenger-init-service', chatInitService);
+
 	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
@@ -63,15 +80,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	} = require('im/messenger/provider/pull/chat');
 	const { PlanLimitsPullHandler } = require('im/messenger/provider/pull/plan-limits');
 	const { SidebarPullHandler } = require('im/messenger/provider/pull/sidebar');
-
-	const {
-		AppStatus,
-		EventType,
-		RestMethod,
-		FeatureFlag,
-		ComponentCode,
-		OpenRequest,
-	} = require('im/messenger/const');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -90,6 +98,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
 	const { SyncFillerChat, SyncFillerDatabase, ComponentCodeService } = require('im/messenger/provider/service');
+	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	/* endregion import */
 
 	class Messenger extends MessengerBase
@@ -116,6 +125,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			super();
 			this.refreshAfterErrorInterval = 10000;
 
+			this.promotion = new Promotion();
 			this.communication = new Communication();
 			EntityReady.addCondition('chat', () => this.isReady);
 		}
@@ -128,6 +138,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			 * @type {CoreApplication}
 			 */
 			this.core = this.serviceLocator.get('core');
+
+			/**
+			 * @type {MessengerInitService}
+			 */
+			this.chatInitService = this.serviceLocator.get('messenger-init-service');
+
 			this.repository = this.core.getRepository();
 
 			/**
@@ -169,11 +185,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		initRequests()
 		{
-			restManager.on(RestMethod.imRevisionGet, {}, this.checkRevision.bind(this));
+			this.chatInitService.onInit(this.checkRevision.bind(this));
 
 			if (this.isNeedRequestPlanLimits())
 			{
-				restManager.once(RestMethod.imV2TariffRestrictionGet, {}, this.updatePlanLimitsData.bind(this));
+				this.chatInitService.onInit(this.updatePlanLimitsData.bind(this));
 			}
 		}
 
@@ -235,11 +251,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.destroyDialog = this.destroyDialog.bind(this);
 			this.uploadFiles = this.uploadFiles.bind(this);
 			this.cancelFileUpload = this.cancelFileUpload.bind(this);
-			this.onDialogAccessError = this.onDialogAccessError.bind(this);
 
 			this.onChatDialogInitComplete = this.onChatDialogInitComplete.bind(this);
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
-			this.onChatDialogAccessError = this.onChatDialogAccessError.bind(this);
 			this.onTaskStatusSuccess = this.onTaskStatusSuccess.bind(this);
 			this.onCallActive = this.onCallActive.bind(this);
 			this.onCallInactive = this.onCallInactive.bind(this);
@@ -283,7 +297,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
 			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
-			BX.addCustomEvent(EventType.messenger.dialogAccessError, this.onDialogAccessError);
 		}
 
 		unsubscribeMessengerEvents()
@@ -300,7 +313,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 			BX.removeCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
 			BX.removeCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
-			BX.removeCustomEvent(EventType.messenger.dialogAccessError, this.onDialogAccessError);
 		}
 
 		/**
@@ -308,9 +320,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		subscribeExternalEvents()
 		{
+			super.subscribeExternalEvents();
 			BX.addCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
 			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
-			BX.addCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
 			BX.addCustomEvent(EventType.call.active, this.onCallActive);
 			BX.addCustomEvent(EventType.call.inactive, this.onCallInactive);
@@ -329,9 +341,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		unsubscribeExternalEvents()
 		{
+			super.unsubscribeExternalEvents();
 			BX.removeCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
 			BX.removeCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
-			BX.removeCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.removeCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
 			BX.removeCustomEvent(EventType.call.active, this.onCallActive);
 			BX.removeCustomEvent(EventType.call.inactive, this.onCallInactive);
@@ -485,7 +497,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
-		async refresh(redrawHeaderTruly)
+		async refresh({ redrawHeaderTruly, shortMode } = {})
 		{
 			this.syncService.clearBackgroundSyncInterval();
 			this.redrawHeaderTruly = redrawHeaderTruly ?? false;
@@ -494,16 +506,31 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			SmileManager.init();
 
 			await this.queueCallBatch();
+			const methodList = [
+				...this.getBaseInitRestMethods(),
+				MessengerInitRestMethod.userData,
+			];
+			if (!shortMode)
+			{
+				methodList.push(
+					MessengerInitRestMethod.promotion,
+					MessengerInitRestMethod.departmentColleagues,
+					MessengerInitRestMethod.tariffRestriction,
+				);
+			}
 
-			return restManager.callBatch()
-				.then(() => this.afterRefresh())
-				.catch((response) => this.afterRefreshError(response))
+			return this.chatInitService.runAction(methodList)
+				.then(() => {
+					this.afterRefresh();
+				})
+				.catch((response) => {
+					this.afterRefreshError(response);
+				})
 				.finally(() => {
 					MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
 
 					Logger.warn('Messenger.refresh complete');
-				})
-			;
+				});
 		}
 
 		queueCallBatch()
@@ -549,14 +576,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		async afterRefreshError(response)
 		{
-			const firstErrorKey = Object.keys(response)[0];
-			if (firstErrorKey)
-			{
-				const firstError = response[firstErrorKey].error();
-				if (firstError.ex.error === 'REQUEST_CANCELED')
-				{
-					Logger.error('Messenger.afterRefreshError', firstError.ex);
+			Logger.error('Messenger.afterRefreshError', response);
+			const errorList = Type.isArray(response) ? response : [response];
 
+			for (const error of errorList)
+			{
+				if (error?.code === 'REQUEST_CANCELED')
+				{
 					return;
 				}
 			}
@@ -754,6 +780,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				return;
 			}
 
+			console.warn(`Dialog opened in ${componentCode}. Look over there`);
 			MessengerEmitter.emit(
 				EventType.messenger.openDialog,
 				{
@@ -943,7 +970,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.log('EventType.chatDialog.initComplete', event);
 
-			Promotion.checkDialog(event.dialogId.toString());
+			this.promotion.checkDialog(event.dialogId.toString());
 		}
 
 		onChatDialogCounterChange(event)
@@ -971,48 +998,20 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
-		onChatDialogAccessError()
-		{
-			Logger.warn('EventType.chatDialog.accessError');
-
-			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
-				message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
-				backgroundColor: '#E6000000',
-				time: 3,
-			});
-
-			this.dialog.deleteCurrentDialog();
-		}
-
-		onDialogAccessError()
-		{
-			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
-				message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
-				backgroundColor: '#E6000000',
-				time: 3,
-			});
-		}
-
 		/* endregion legacy dialog integration */
 
 		/* endregion event handlers */
 
-		checkRevision(response)
+		/**
+		 * @param {immobileTabChatLoadResult} data
+		 */
+		checkRevision(data)
 		{
-			const error = response.error();
-			if (error)
-			{
-				Logger.error('Messenger.checkRevision', error);
+			const revision = data?.mobileRevision;
 
-				return true;
-			}
-
-			const actualRevision = response.data().mobile;
-			if (!Type.isNumber(actualRevision) || REVISION >= actualRevision)
+			if (!Type.isNumber(revision) || REVISION >= revision)
 			{
-				Logger.log('Messenger.checkRevision: current', REVISION, 'actual', actualRevision);
+				Logger.log('Messenger.checkRevision: current', REVISION, 'actual', revision);
 
 				return true;
 			}
@@ -1021,7 +1020,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				'Messenger.checkRevision: reload scripts because revision up',
 				REVISION,
 				' -> ',
-				actualRevision,
+				revision,
 			);
 
 			reloadAllScripts();
@@ -1030,30 +1029,23 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		}
 
 		/**
-		 * @param {*} response
+		 * @param {immobileTabChatLoadResult} data
 		 * @return boolean
 		 */
-		updatePlanLimitsData(response)
+		updatePlanLimitsData(data)
 		{
-			Logger.log(`${this.constructor.name}.updatePlanLimitsData`, response);
-			const error = response.error();
-			if (error)
+			const tariffRestriction = data.tariffRestriction;
+			Logger.log(`${this.constructor.name}.updatePlanLimitsData`, tariffRestriction);
+
+			if (Type.isNil(tariffRestriction?.fullChatHistory?.isAvailable))
 			{
-				Logger.error(`${this.constructor.name}.updatePlanLimitsData has error:`, error);
+				Logger.log(`${this.constructor.name}.updatePlanLimitsData not valid tariffRestriction`, tariffRestriction);
 
 				return false;
 			}
+			MessengerParams.setPlanLimits(tariffRestriction);
 
-			if (Type.isNil(response.data()?.fullChatHistory?.isAvailable))
-			{
-				Logger.error(`${this.constructor.name}.updatePlanLimitsData not valid response`, response.data());
-
-				return false;
-			}
-			const planLimits = response.data();
-			MessengerParams.setPlanLimits(planLimits);
-
-			this.sendToCopilotComponent(planLimits);
+			this.sendToCopilotComponent(tariffRestriction);
 
 			return true;
 		}

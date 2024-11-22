@@ -1,4 +1,4 @@
-declare type PlanLimits = {
+export type PlanLimits = {
 	fullChatHistory?: {
 			isAvailable: boolean,
 			limitDays: number | null,

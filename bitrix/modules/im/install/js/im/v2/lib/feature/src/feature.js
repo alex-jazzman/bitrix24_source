@@ -13,6 +13,7 @@ export const Feature = {
 	zoomActive: 'zoomActive',
 	zoomAvailable: 'zoomAvailable',
 	giphyAvailable: 'giphyAvailable',
+	collabAvailable: 'collabAvailable',
 };
 
 export const FeatureManager = {

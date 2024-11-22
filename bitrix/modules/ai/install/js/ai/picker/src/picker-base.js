@@ -129,7 +129,7 @@ export class PickerBase extends Base
 
 		try
 		{
-			const res = await this.engine.getTooling(category);
+			const res = await this.engine.getImagePickerTooling();
 
 			this.engines = res.data.engines;
 			this.items = res.data.history.items;

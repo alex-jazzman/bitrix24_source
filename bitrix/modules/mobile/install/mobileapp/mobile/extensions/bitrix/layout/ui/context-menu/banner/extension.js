@@ -4,6 +4,7 @@
 jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { qrauth } = require('qrauth/utils');
 	const AppTheme = require('apptheme');
 
 	const BannerPositioning = {

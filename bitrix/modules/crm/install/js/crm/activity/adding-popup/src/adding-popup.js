@@ -1,10 +1,9 @@
-import { TodoEditor } from 'crm.activity.todo-editor';
 import { TodoEditorMode, TodoEditorV2 } from 'crm.activity.todo-editor-v2';
 import { ajax as Ajax, Loc, Tag, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import type { PopupOptions } from 'main.popup';
 import { Popup } from 'main.popup';
-import { ButtonColor, ButtonSize, ButtonState, CancelButton, SaveButton } from 'ui.buttons';
+import { ButtonColor, ButtonSize, CancelButton, SaveButton } from 'ui.buttons';
 import { UI } from 'ui.notification';
 
 import './adding-popup.css';
@@ -25,11 +24,10 @@ export class AddingPopup
 	#pingSettings: Object = null;
 	#calendarSettings: Object = null;
 	#colorSettings: Object = null;
-	#useTodoEditorV2: boolean = false;
 	#popup: ?Popup = null;
 	#popupContainer: HTMLElement = null;
 	#popupToDoEditorContainer: HTMLElement = null;
-	#todoEditor: TodoEditor | TodoEditorV2 | null = null;
+	#todoEditor: TodoEditorV2 | null = null;
 	#eventEmitter: EventEmitter = null;
 	#context: Context = {};
 
@@ -66,22 +64,15 @@ export class AddingPopup
 			}
 		}
 
-		this.#useTodoEditorV2 = params.useTodoEditorV2 ?? null;
-
 		if (Type.isPlainObject(params.context))
 		{
 			this.#context = params.context;
 		}
 	}
 
-	show(bindElement: HTMLElement, mode: String = TodoEditorMode.ADD)
+	async show(mode: String = TodoEditorMode.ADD)
 	{
 		const popup = this.#createPopupIfNotExists();
-
-		if (!this.#useTodoEditorV2)
-		{
-			popup.setBindElement(bindElement);
-		}
 
 		if (popup.isShown())
 		{
@@ -90,7 +81,7 @@ export class AddingPopup
 
 		if (!this.#popupToDoEditorContainer.hasChildNodes())
 		{
-			this.#createToDoEditor();
+			await this.#createToDoEditor();
 
 			popup.setButtons([
 				new SaveButton({
@@ -117,7 +108,7 @@ export class AddingPopup
 				this.#todoEditor.show();
 			});
 			popup.subscribe('onAfterShow', () => {
-				this.#actualizePopupLayout(this.#todoEditor.getDescription());
+				this.#actualizePopupLayout();
 				this.#todoEditor.setFocused();
 			});
 			popup.subscribe('onAfterClose', () => {
@@ -135,11 +126,6 @@ export class AddingPopup
 						.setDescription(activity.description)
 						.setDeadline(activity.deadline)
 					;
-
-					if (Type.isArrayFilled(activity.storageElementIds))
-					{
-						this.#todoEditor.setStorageElementIds(activity.storageElementIds);
-					}
 				}
 			});
 		}
@@ -147,7 +133,7 @@ export class AddingPopup
 		this.#prepareAndShowPopup(popup, mode);
 	}
 
-	#createToDoEditor(): TodoEditor | TodoEditorV2
+	async #createToDoEditor(): TodoEditorV2
 	{
 		// just created, initialize
 		const params = {
@@ -164,27 +150,19 @@ export class AddingPopup
 			popupMode: true,
 		};
 
-		if (this.#useTodoEditorV2)
-		{
-			const analytics = this.#context?.analytics ?? {};
-			const section = analytics.c_section ?? null;
-			const subSection = analytics.c_sub_section ?? null;
+		const analytics = this.#context?.analytics ?? {};
+		const section = analytics.c_section ?? null;
+		const subSection = analytics.c_sub_section ?? null;
 
-			params.calendarSettings = this.#calendarSettings;
-			params.colorSettings = this.#colorSettings;
-			params.defaultDescription = '';
-			params.analytics = {
-				section,
-				subSection,
-			};
+		params.calendarSettings = this.#calendarSettings;
+		params.colorSettings = this.#colorSettings;
+		params.defaultDescription = '';
+		params.analytics = {
+			section,
+			subSection,
+		};
 
-			this.#todoEditor = new TodoEditorV2(params);
-		}
-		else
-		{
-			params.events.onChangeDescription = this.#onChangeEditorDescription.bind(this);
-			this.#todoEditor = new TodoEditor(params);
-		}
+		this.#todoEditor = new TodoEditorV2(params);
 	}
 
 	#prepareAndShowPopup(popup: Popup, mode: String = TodoEditorMode.ADD): void
@@ -255,23 +233,18 @@ export class AddingPopup
 
 	#getPopupTitle(): ?HTMLDivElement
 	{
-		if (this.#useTodoEditorV2)
-		{
-			return Tag.render`
-				<div class="crm-activity-adding-popup-title">
-					${Loc.getMessage('CRM_ACTIVITY_ADDING_POPUP_TITLE')}
-				</div>
-			`;
-		}
-
-		return null;
+		return Tag.render`
+			<div class="crm-activity-adding-popup-title">
+				${Loc.getMessage('CRM_ACTIVITY_ADDING_POPUP_TITLE')}
+			</div>
+		`;
 	}
 
 	#getPopupParams(): PopupOptions
 	{
 		const { innerWidth } = window;
 
-		const params = {
+		return {
 			id: `kanban_planner_menu_${this.#entityId}`,
 			content: this.#popupContainer,
 			cacheable: false,
@@ -285,35 +258,10 @@ export class AddingPopup
 			maxWidth: 737,
 			minHeight: 150,
 			maxHeight: 482,
-		};
-
-		if (this.#useTodoEditorV2)
-		{
-			params.overlay = {
+			overlay: {
 				opacity: 50,
-			};
-		}
-		else
-		{
-			params.angle = {
-				offset: 27,
-			};
-		}
-
-		return params;
-	}
-
-	bindPopup(bindElement: HTMLElement): void
-	{
-		if (!this.#popup || this.#useTodoEditorV2)
-		{
-			return;
-		}
-
-		if (bindElement !== this.#popup.bindElement)
-		{
-			this.#popup.setBindElement(bindElement);
-		}
+			},
+		};
 	}
 
 	#saveAndClose(): void
@@ -346,29 +294,7 @@ export class AddingPopup
 			this.#popup.adjustPosition({
 				forceBindPosition: true,
 			});
-
-			const saveButton = this.#popup.getButton('save');
-
-			if (this.#useTodoEditorV2)
-			{
-				return;
-			}
-
-			if (description.length === 0 && saveButton && !saveButton.getState())
-			{
-				saveButton.setState(ButtonState.DISABLED);
-			}
-			else if (description.length > 0 && saveButton && saveButton.getState() === ButtonState.DISABLED)
-			{
-				saveButton.setState(null);
-			}
 		}
-	}
-
-	#onChangeEditorDescription(event: BaseEvent)
-	{
-		const { description } = event.getData();
-		this.#actualizePopupLayout(description);
 	}
 
 	#onEditorSaveHotkeyPressed()

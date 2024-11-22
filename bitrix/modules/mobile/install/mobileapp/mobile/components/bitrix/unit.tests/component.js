@@ -1,6 +1,6 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 
 	const { testSuites, report, ConsolePrinter, JnLayoutPrinter } = require('testing');
 
@@ -39,7 +39,7 @@
 							paddingHorizontal: 20,
 							paddingVertical: 10,
 							borderWidth: 1,
-							borderColor: AppTheme.colors.bgSeparatorPrimary,
+							borderColor: Color.bgSeparatorPrimary.toHex(),
 							borderRadius: 5,
 						},
 						onClick()
@@ -92,7 +92,9 @@
 				View(
 					{
 						style: {
-							backgroundColor: isSuccess ? AppTheme.colors.accentSoftElementGreen1 : AppTheme.colors.accentMainAlert,
+							backgroundColor: isSuccess
+								? Color.accentSoftElementGreen1.toHex()
+								: Color.accentMainAlert.toHex(),
 							padding: 12,
 							flexDirection: 'row',
 							justifyContent: 'space-between',

@@ -2390,21 +2390,22 @@ if (isset($arResult['LEAD_ID']) && !empty($arResult['LEAD_ID']))
 if (!$isInExportMode)
 {
 	$arResult['CONVERSION'] = array();
+	foreach(LeadConversionDispatcher::getAllConfigurations() as $conversionTypeID => $conversionConfig)
+	{
+		/** @var Bitrix\Crm\Conversion\LeadConversionConfig  $conversionConfig */
+		$schemeID = $conversionConfig->getCurrentSchemeID();
+
+		// we always need schemes for termination control rendering
+		$arResult['CONVERSION']['SCHEMES'][$conversionTypeID] = array(
+			'ORIGIN_URL' => $currentPage,
+			'SCHEME_ID' => $schemeID,
+			'SCHEME_NAME' => \Bitrix\Crm\Conversion\LeadConversionScheme::resolveName($schemeID),
+			'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\LeadConversionScheme::getDescription($schemeID),
+			'SCHEME_CAPTION' => GetMessage('CRM_LEAD_CREATE_ON_BASIS')
+		);
+	}
 	if($arResult['CAN_CONVERT'])
 	{
-		foreach(LeadConversionDispatcher::getAllConfigurations() as $conversionTypeID => $conversionConfig)
-		{
-			/** @var Bitrix\Crm\Conversion\LeadConversionConfig  $conversionConfig */
-			$schemeID = $conversionConfig->getCurrentSchemeID();
-
-			$arResult['CONVERSION']['SCHEMES'][$conversionTypeID] = array(
-				'ORIGIN_URL' => $currentPage,
-				'SCHEME_ID' => $schemeID,
-				'SCHEME_NAME' => \Bitrix\Crm\Conversion\LeadConversionScheme::resolveName($schemeID),
-				'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\LeadConversionScheme::getDescription($schemeID),
-				'SCHEME_CAPTION' => GetMessage('CRM_LEAD_CREATE_ON_BASIS')
-			);
-		}
 		$arResult['CONVERSION']['CONFIGS'] = LeadConversionDispatcher::getJavaScriptConfigurations();
 		$arResult['CONVERTER_ID_PREFIX'] = $arResult['GRID_ID'];
 	}

@@ -7,7 +7,6 @@ export * from './format/bold-formatter';
 export * from './format/underline-formatter';
 export * from './format/italic-formatter';
 export * from './format/strikethrough-formatter';
-export * from './span/span-formatter';
 export * from './table/table-formatter';
 export * from './table/table-head-cell-formatter';
 export * from './table/table-data-cell-formatter';

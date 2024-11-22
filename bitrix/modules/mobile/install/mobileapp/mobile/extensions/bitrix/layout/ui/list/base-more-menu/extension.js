@@ -145,6 +145,7 @@ jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 			counterColor,
 			showIcon = true,
 			iconUrl,
+			icon,
 			checked = false,
 			showCheckedIcon = false,
 			showTopSeparator = false,
@@ -154,17 +155,19 @@ jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 		})
 		{
 			let iconUrlToShow = null;
+			let iconToShow = null;
 			if (showIcon)
 			{
 				iconUrlToShow = iconUrl ?? this.icons[id];
+				iconToShow = icon ?? null;
 			}
 
 			return {
 				id,
 				testId: id,
 				title,
-				showIcon,
 				iconUrl: iconUrlToShow,
+				icon: iconToShow,
 				sectionCode,
 				sectionTitle,
 				checked: (this.selectedCounter === id) || checked,

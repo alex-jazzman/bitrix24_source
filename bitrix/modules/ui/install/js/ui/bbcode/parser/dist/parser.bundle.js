@@ -119,6 +119,11 @@ this.BX.UI = this.BX.UI || {};
 	        });
 	        node.replace(newNode);
 	        newNode.setChildren(node.getChildren());
+	      } else if (['span', 'font'].includes(nodeName)) {
+	        const fragment = scheme.createFragment({
+	          children: node.getChildren()
+	        });
+	        node.replace(fragment);
 	      } else {
 	        const openingTag = node.getOpeningTag();
 	        const closingTag = node.getClosingTag();
@@ -299,7 +304,9 @@ this.BX.UI = this.BX.UI || {};
 	        }
 	      }
 	      if (this.isAllowedLinkify() && this.canBeLinkified(node)) {
-	        const content = node.toString();
+	        const content = node.toString({
+	          encode: false
+	        });
 	        const tokens = ui_linkify.Linkify.tokenize(content);
 	        const nodes = tokens.map(token => {
 	          if (token.t === 'url') {

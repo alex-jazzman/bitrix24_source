@@ -9,6 +9,7 @@ jn.define('im/messenger/const/waiting-entity', (require, exports, module) => {
 				database: 'database',
 				chat: 'chat',
 				copilot: 'copilot',
+				channel: 'channel',
 			},
 		},
 	};

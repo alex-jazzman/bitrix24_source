@@ -57,7 +57,8 @@ $sidebarBusinessProcesses = array_slice($arResult['BUSINESS_PROCESSES'], 0, 4);
 					echo '<div class="landing-widget-bp-content-item-button">';
 					if ($url !== '')
 					{
-						echo '<a href="' . $url . '" target="_blank">' . $buttonText . '</a>';
+						$href = "BX.SidePanel.Instance.open('" . $url . "', { width: 900 });";
+						echo '<a onclick="' . $href . '">' . $buttonText . '</a>';
 					}
 					else
 					{
@@ -119,7 +120,8 @@ $sidebarBusinessProcesses = array_slice($arResult['BUSINESS_PROCESSES'], 0, 4);
 					echo '<div class="landing-widget-bp-content-item-button">';
 					if ($url !== '')
 					{
-						echo '<a href="' . $url . '" target="_blank">' . $buttonText . '</a>';
+						$href = "BX.SidePanel.Instance.open('" . $url . "', { width: 900 });";
+						echo '<a onclick="' . $href . '">' . $buttonText . '</a>';
 					}
 					else
 					{
@@ -153,7 +155,7 @@ $sidebarBusinessProcesses = array_slice($arResult['BUSINESS_PROCESSES'], 0, 4);
 				const options = {
 					isShowExtendButton: '<?= $arResult['IS_SHOW_EXTEND_BUTTON'] ?>',
 				};
-				new BX.Landing.Widget.BpWidget(widget, options);
+				new BX.Landing.Widget.Bp(widget, options);
 			}
 		}
 	});

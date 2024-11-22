@@ -89,8 +89,6 @@ export const TodoEditorColorSelector = {
 	},
 
 	template: `
-		<div class="crm-activity__todo-editor-v2_color-selector">
-			<div ref="itemSelectorRef" v-hint="hint"></div>
-		</div>
+		<div class="crm-activity__todo-editor-v2_color-selector" ref="itemSelectorRef" v-hint="hint"></div>
 	`,
 };

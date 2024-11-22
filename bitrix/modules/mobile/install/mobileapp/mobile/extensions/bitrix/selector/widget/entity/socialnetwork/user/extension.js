@@ -1,6 +1,5 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-	const { openIntranetInviteWidget } = require('intranet/invite-opener');
 	const { Loc } = require('loc');
 
 	/**
@@ -55,13 +54,16 @@
 
 		static getCreateEntityHandler(providerOptions, getParentLayoutFunction = null, analytics = {})
 		{
+			// to prevent cyclical dependency
+			const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+
 			return (text, allowMultipleSelection) => {
 				return new Promise((resolve, reject) => {
 					openIntranetInviteWidget({
 						analytics,
 						multipleInvite: allowMultipleSelection,
 						parentLayout: getParentLayoutFunction ? getParentLayoutFunction() : null,
-						onInviteSendedHandler: (users) => {
+						onInviteSentHandler: (users) => {
 							if (Array.isArray(users) && users.length > 0)
 							{
 								const preparedUsers = users.map((user) => {
@@ -69,8 +71,10 @@
 										id: user.id,
 										type: 'user',
 										entityId: 'user',
-										phone: user.phone,
-										title: user.phone,
+										phone: user.personalMobile,
+										firstName: user.name,
+										lastName: user.lastName,
+										title: user.fullName,
 									};
 								});
 								resolve(preparedUsers);

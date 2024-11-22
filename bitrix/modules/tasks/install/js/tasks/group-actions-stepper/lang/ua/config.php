@@ -1,0 +1,21 @@
+<?php
+$MESS["TASKS_GRID_GROUP_ACTION_CANCELING"] = "Зупиняємо групову дію...";
+$MESS["TASKS_GRID_GROUP_ACTION_COUNTING_ELEMENTS_PROGRESS"] = "Підраховуємо елементи";
+$MESS["TASKS_GRID_GROUP_ACTION_DESCRIPTION"] = "Групова дія може зайняти тривалий час, це залежить від кількості елементів. Дочекайтеся закінчення процесу або скасуйте його.";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME"] = "Групова дія";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDACCOMPLICE"] = "Додаємо співвиконавця в завдання. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDAUDITOR"] = "Додаємо спостерігача в завдання. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDTOFAVORITE"] = "Додаємо завдання в обране. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADJUSTDEADLINE"] = "Переносимо крайній термін у завданнях. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_COMPLETE"] = "Завершуємо вибрані завдання. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_DELETE"] = "Видаляємо вибрані завдання. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_MUTE"] = "Вимикаємо звук у завданнях. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_PING"] = "Надсилаємо пінги співробітникам. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_REMOVEFROMFAVORITE"] = "Прибираємо завдання з обраного. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETDEADLINE"] = "Указуємо крайній термін у завданнях. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETGROUP"] = "Додаємо завдання в групу. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETORIGINATOR"] = "Замінюємо постановника в завданнях. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETRESPONSIBLE"] = "Замінюємо виконавця в завданнях. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL"] = "Вимикаємо контроль після завершення завдання. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_UNMUTE"] = "Вмикаємо звук у завданнях. Процес зупиниться, якщо ви закриєте це вікно";
+$MESS["TASKS_GRID_GROUP_ACTION_NONE"] = "Дія не визначена.";
