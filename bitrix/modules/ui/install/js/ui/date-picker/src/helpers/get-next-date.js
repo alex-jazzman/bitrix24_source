@@ -1,7 +1,7 @@
 import { addDate } from './add-date';
 import { cloneDate } from './clone-date';
 
-export function getNextDate(date, unit, firstWeekDay = 0, increment = 1): Date
+export function getNextDate(date, unit, increment = 1, firstWeekDay = 0): Date
 {
 	let newDate = cloneDate(date);
 	switch (unit)

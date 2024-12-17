@@ -10,6 +10,9 @@ export type StepType = {
 	header: HeaderType,
 	stack: StackType,
 	footer: FooterType,
+	styles?: {
+		minWidth?: number;
+	},
 };
 
 export const headerTypeEnum = Object.freeze({

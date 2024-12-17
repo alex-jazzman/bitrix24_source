@@ -31,6 +31,7 @@ $MESS["BIZPROC_WFS_PAR_IS_SYSTEM_Y"] = "Don't show in manual start menu";
 $MESS["BIZPROC_WFS_PAR_NAME"] = "Title:";
 $MESS["BIZPROC_WFS_PAR_RESTRICT_TRACKING_DESCRIPTION"] = "Events will be logged till #DATE#";
 $MESS["BIZPROC_WFS_PAR_RESTRICT_TRACKING_LABEL"] = "Enable event logging for 7 days";
+$MESS["BIZPROC_WFS_PAR_SHOW_IN_TIMELINE"] = "Show workflow events in the timeline";
 $MESS["BIZPROC_WFS_PAR_SORT"] = "Sort weight:";
 $MESS["BIZPROC_WFS_PROP_BOOL"] = "Yes/No";
 $MESS["BIZPROC_WFS_PROP_DATA"] = "Date";

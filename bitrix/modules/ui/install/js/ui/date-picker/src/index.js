@@ -8,6 +8,8 @@ export {
 	DatePickerEvent,
 };
 
+export * from './helpers';
+
 export type {
 	DatePickerOptions,
 };

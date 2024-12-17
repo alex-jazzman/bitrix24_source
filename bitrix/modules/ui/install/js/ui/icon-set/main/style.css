@@ -418,6 +418,10 @@
 	--ui-icon-set__path_waiting-list: url('/bitrix/js/ui/icon-set/main/images/waiting-list.svg');
 	--ui-icon-set__path_note: url('/bitrix/js/ui/icon-set/main/images/note.svg');
 	--ui-icon-set__path_link-bold: url('/bitrix/js/ui/icon-set/main/images/link-bold.svg');
+	--ui-icon-set__path_edit-menu: url('/bitrix/js/ui/icon-set/main/images/edit-menu.svg');
+	--ui-icon-set__path_demonstration-graphics: url('/bitrix/js/ui/icon-set/main/images/demonstration-graphics.svg');
+	--ui-icon-set__path_calendar-check: url('/bitrix/js/ui/icon-set/main/images/calendar-check.svg');
+	--ui-icon-set__path_sign: url('/bitrix/js/ui/icon-set/main/images/sign.svg')
 }
 
 .ui-icon-set.--shield-2-core-problem {
@@ -2074,4 +2078,20 @@
 
 .ui-icon-set.--link-bold {
 	--ui-icon-set__icon-path: var(--ui-icon-set__path_link-bold);
+}
+
+.ui-icon-set.--edit-menu {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_edit-menu);
+}
+
+.ui-icon-set.--demonstration-graphics {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_demonstration-graphics);
+}
+
+.ui-icon-set.--calendar-check {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_calendar-check);
+}
+
+.ui-icon-set.--sign {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_sign);
 }

@@ -70,7 +70,7 @@ export default class VariableSelector extends Changer
 
 	getSelected(): VariableItem
 	{
-		const selected = this.variables.filter(variable => this.selectedValues.includes(variable.id));
+		const selected = this.variables.filter(variable => this.selectedValues.map(String).includes(String(variable.id)));
 
 		return selected[0];
 	}
@@ -104,7 +104,7 @@ export default class VariableSelector extends Changer
 
 	select(event: BaseEvent, item: MenuItem)
 	{
-		this.selectedValues = [item.id];
+		this.selectedValues = [item.options.id];
 
 		item
 			.getMenuWindow()

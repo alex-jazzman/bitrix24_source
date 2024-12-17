@@ -372,6 +372,7 @@ class BXEditorIframeCopilot
 
 		this.bindHandlers();
 
+		BX.Event.EventEmitter.emit('onHtmlEditorCopilotInit', { copilot: this.copilot });
 		this.copilot.init();
 	}
 
@@ -566,7 +567,10 @@ class BXEditorIframeCopilot
 
 	handleResizeWindow()
 	{
-		this.copilot.adjustWidth(this.getCopilotWidth());
+		if (this.copilot.isShown())
+		{
+			this.copilot.adjustWidth(this.getCopilotWidth());
+		}
 	}
 
 	removeResultNodes()
@@ -675,6 +679,7 @@ class BXEditorIframeCopilot
 	show(showFromSpace = false)
 	{
 		this.copilot.setContext(this.contentEditable.innerText);
+		BX.Event.EventEmitter.emit('onHtmlEditorCopilotShow', { contexText: this.contentEditable.innerText });
 
 		this.insertResultNode.remove();
 		this.getSelection().getRangeAt(0).insertNode(this.insertResultNode);
@@ -709,6 +714,7 @@ class BXEditorIframeCopilot
 	showAtTheBottom()
 	{
 		this.copilot.setContext(this.contentEditable.innerText);
+		BX.Event.EventEmitter.emit('onHtmlEditorCopilotShow', { contexText: this.contentEditable.innerText });
 
 		this.insertResultNode.remove();
 
@@ -820,6 +826,7 @@ class BXEditorIframeCopilot
 
 	copilotButtonClickHandler()
 	{
+		BX.Event.EventEmitter.emit('onHtmlEditorCopilotShow', { contexText: this.contentEditable.innerText });
 		const adjustOptions = this.getAdjustOptions(this.getSelection().getRangeAt(0));
 
 		this.copilot.setSelectedText(this.getSelection().toString());

@@ -5,6 +5,31 @@ export type DateLike = Date | string | number;
 export type DatePickerType = 'date' | 'year' | 'month' | 'time';
 export type DatePickerSelectionMode = 'single' | 'multiple' | 'range' | 'none';
 
+export type DateMatcher = boolean | ((date: Date) => boolean) | Date | Date[];
+export type DateLikeMatcher = boolean | ((date: Date) => boolean) | DateLike | DateLike[];
+
+export type DayColor = {
+	matchers: DateMatcher[],
+	bgColor: string,
+	textColor: string,
+}
+
+export type DayColorOptions = {
+	matcher: DateLikeMatcher | DateLikeMatcher[],
+	bgColor: string,
+	textColor: string,
+};
+
+export type DayMark = {
+	matchers: DateMatcher[],
+	bgColor: string,
+}
+
+export type DayMarkOptions = {
+	matcher: DateLikeMatcher | DateLikeMatcher[],
+	bgColor: string,
+};
+
 export type DatePickerOptions = {
 	targetNode: HTMLElement,
 	startDate?: DateLike,
@@ -48,12 +73,16 @@ export type DatePickerOptions = {
 
 	hideOnSelect?: boolean,
 	toggleSelected?: boolean,
+	hideHeader?: boolean,
 
 	locale?: string,
 
 	minDays?: number,
 	maxDays?: number,
 	fullYear?: boolean,
+
+	dayColors?: DayColorOptions[],
+	dayMarks?: DayMarkOptions[],
 
 	events?: { [eventName: string]: (event: BaseEvent) => void },
 };

@@ -3,7 +3,7 @@ import type { DateLike } from '../date-picker-options';
 import { convertToDbFormat } from './convert-to-db-format';
 import { parseDate } from './parse-date';
 
-export function createDate(value: DateLike, formatDate: string = null): Date
+export function createDate(value: DateLike, formatDate: string = null): Date | null
 {
 	let date = null;
 	if (Type.isStringFilled(value) && Type.isStringFilled(formatDate))

@@ -68,6 +68,8 @@ Class bizproc extends CModule
 		$eventManager->registerEventHandler('forum', 'OnCommentDelete', 'bizproc', $commentsListener, 'onCommentDelete');
 		$eventManager->registerEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
 
+		$eventManager->registerEventHandler('intranet', 'onSettingsProvidersCollect', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onSettingsProvidersCollect');
+
 		return true;
 	}
 
@@ -108,6 +110,8 @@ Class bizproc extends CModule
 		//$eventManager->unRegisterEventHandler('forum', 'OnAfterCommentUpdate', 'bizproc', $commentsListener, 'onAfterCommentUpdate');
 		$eventManager->unRegisterEventHandler('forum', 'OnCommentDelete', 'bizproc', $commentsListener, 'onCommentDelete');
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
+
+		$eventManager->unRegisterEventHandler('intranet', 'onSettingsProvidersCollect', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onSettingsProvidersCollect');
 
 		return true;
 	}

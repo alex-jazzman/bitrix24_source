@@ -37,8 +37,7 @@ create table if not exists b_ai_history
 	CREATED_BY_ID int(18) not null,
 	PRIMARY KEY (ID),
 	INDEX IX_B_CREATED_BY (CREATED_BY_ID),
-	INDEX IX_B_CONTEXT_ID (CONTEXT_ID),
-	INDEX IX_B_CONTEXT (CONTEXT_MODULE, CONTEXT_ID, CREATED_BY_ID, GROUP_ID)
+	INDEX IX_B_AI_HISTORY_PERF_01 (CONTEXT_ID, CREATED_BY_ID, CONTEXT_MODULE, GROUP_ID)
 );
 
 create table if not exists b_ai_engine
@@ -104,6 +103,8 @@ create table if not exists b_ai_role
 	DATE_MODIFY timestamp not null default current_timestamp,
 	PRIMARY KEY (ID),
 	INDEX IX_B_CODE (CODE),
+	INDEX IX_B_IS_NEW (IS_NEW),
+	INDEX IX_B_IS_RECOMMENDED (IS_RECOMMENDED),
 	INDEX IX_B_SORT (SORT),
 	INDEX IX_B_INDUSTRY_CODE (INDUSTRY_CODE)
 );

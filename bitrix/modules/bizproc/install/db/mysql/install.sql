@@ -20,6 +20,8 @@ CREATE TABLE b_bp_workflow_template (
 	ORIGIN_ID VARCHAR(255) NULL,
 	IS_SYSTEM char(1) NOT NULL default 'N',
 	`SORT` INT(10) NOT NULL DEFAULT 10,
+	TYPE varchar(15) NOT NULL DEFAULT 'default',
+	SETTINGS TEXT NULL,
 	primary key (ID),
 	index ix_bp_wf_template_mo(MODULE_ID, ENTITY, DOCUMENT_TYPE)
 );
@@ -40,7 +42,8 @@ CREATE TABLE b_bp_workflow_state (
 	primary key (ID),
 	index ix_bp_ws_document_id(DOCUMENT_ID, ENTITY, MODULE_ID),
 	index ix_bp_ws_document_id1(DOCUMENT_ID_INT, ENTITY, MODULE_ID, STATE),
-	index ix_bp_ws_started_by (STARTED_BY)
+	index ix_bp_ws_started_by (STARTED_BY),
+	index ix_bp_ws_started (STARTED)
 );
 
 CREATE TABLE b_bp_workflow_permissions (
@@ -108,7 +111,8 @@ CREATE TABLE b_bp_task (
 	primary key (ID),
 	index ix_bp_tasks_sort(OVERDUE_DATE, MODIFIED),
 	index ix_bp_tasks_wf(WORKFLOW_ID),
-	index ix_bp_tasks_modified (MODIFIED)
+	index ix_bp_tasks_modified (MODIFIED),
+	index ix_bp_tasks_created (CREATED_DATE)
 );
 
 CREATE TABLE b_bp_task_user (

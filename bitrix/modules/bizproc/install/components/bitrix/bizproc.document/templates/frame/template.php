@@ -129,11 +129,11 @@ foreach ($arDocumentStates as $arDocumentState)
 				</thead>
 				<tbody>
 					<tr>
-						<td class="bizproc-field-name"><?=GetMessage("IBEL_BIZPROC_DATE")?>:</td>
+						<td class="bizproc-field-name"><?=GetMessage("IBEL_BIZPROC_DATE_MSGVER_1")?></td>
 						<td class="bizproc-field-value" data-role="workflow-modified"></td>
 					</tr>
 					<tr>
-						<td class="bizproc-field-name"><?=GetMessage("IBEL_BIZPROC_STATE")?>:</td>
+						<td class="bizproc-field-name"><?=GetMessage("IBEL_BIZPROC_STATE_MSGVER_1")?></td>
 						<td class="bizproc-field-value" data-role="workflow-state"></td>
 					</tr>
 					<tr data-role="events-row">
@@ -145,7 +145,7 @@ foreach ($arDocumentStates as $arDocumentState)
 						</td>
 					</tr>
 					<tr data-role="tasks-row">
-						<td class="bizproc-field-name"><?=GetMessage("IBEL_BIZPROC_TASKS")?>:</td>
+						<td class="bizproc-field-name"><?=GetMessage("IBEL_BIZPROC_TASKS_MSGVER_1")?></td>
 						<td class="bizproc-field-value">
 							<ul class="bizproc-field-value-tasks" data-role="tasks-container">
 

@@ -38,8 +38,7 @@ CREATE TABLE IF NOT EXISTS b_ai_history
 	PRIMARY KEY (ID)
 );
 CREATE INDEX IF NOT EXISTS ix_b_ai_history_created_by_id ON b_ai_history (created_by_id);
-CREATE INDEX IF NOT EXISTS ix_b_ai_history_context_id ON b_ai_history (context_id);
-CREATE INDEX IF NOT EXISTS ix_b_ai_history_context_module_user_group ON b_ai_history (context_module, context_id, created_by_id, group_id);
+CREATE INDEX IF NOT EXISTS ix_b_ai_history_perf_01 ON b_ai_history (context_id, created_by_id, context_module, group_id);
 
 CREATE TABLE IF NOT EXISTS b_ai_engine
 (

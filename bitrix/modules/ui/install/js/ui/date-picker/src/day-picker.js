@@ -1,7 +1,6 @@
 import { Dom, Tag, Loc, Text } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { MemoryCache } from 'main.core.cache';
-import type { BaseCache } from 'main.core.cache';
 import { BasePicker } from './base-picker';
 
 import { addDate } from './helpers/add-date';
@@ -10,6 +9,9 @@ import { cloneDate } from './helpers/clone-date';
 import { createUtcDate } from './helpers/create-utc-date';
 import { floorDate } from './helpers/floor-date';
 import { isDatesEqual } from './helpers/is-dates-equal';
+
+import { type BaseCache } from 'main.core.cache';
+import { type DayMark } from './date-picker-options';
 
 export type DayPickerMonth = {
 	weeks: Array<DayPickerWeek>,
@@ -36,6 +38,9 @@ export type DayPickerDay = {
 	rangeSelected: boolean,
 	focused: boolean,
 	tabIndex: number,
+	bgColor: string | null,
+	textColor: string | null,
+	marks: string[],
 };
 
 import './css/day-picker.css';
@@ -79,21 +84,19 @@ export class DayPicker extends BasePicker
 				this.getNextBtn(),
 			);
 		}
-		else
-		{
-			return this.getHeaderContainer(
-				this.getPrevBtn(),
-				...Array.from({ length: numberOfMonths }).map((_, monthNumber: number) => {
-					return Tag.render`
-						<div class="ui-date-picker-header-title">
-							${this.getHeaderMonth(monthNumber)}
-							${this.getHeaderYear(monthNumber)}
-						</div>
-					`;
-				}),
-				this.getNextBtn(),
-			);
-		}
+
+		return this.getHeaderContainer(
+			this.getPrevBtn(),
+			...Array.from({ length: numberOfMonths }).map((_, monthNumber: number) => {
+				return Tag.render`
+					<div class="ui-date-picker-header-title">
+						${this.getHeaderMonth(monthNumber)}
+						${this.getHeaderYear(monthNumber)}
+					</div>
+				`;
+			}),
+			this.getNextBtn(),
+		);
 	}
 
 	getFullYearHeader(): HTMLElement
@@ -311,7 +314,10 @@ export class DayPicker extends BasePicker
 					data-year="${day.year}"
 					data-tab-priority="true"
 					role="gridcell"
-				><span class="ui-day-picker-day-inner">${day.day}</span></button>
+				>
+					<span class="ui-day-picker-day-inner">${day.day}</span>
+					<span class="ui-day-picker-day-marks"></span>
+				</button>
 			`;
 
 			Dom.append(dayContainer, weekContainer);
@@ -358,6 +364,42 @@ export class DayPicker extends BasePicker
 		if (button.className !== classNames)
 		{
 			button.className = classNames;
+		}
+
+		// Day Colors
+		const currentBgColor: string | null = button.dataset.bgColor || null;
+		const currentTextColor: string | null = button.dataset.textColor || null;
+		if (currentBgColor !== day.bgColor)
+		{
+			Dom.style(button.firstElementChild, '--ui-day-picker-day-bg-color', day.bgColor);
+			Dom.attr(button, 'data-bg-color', day.bgColor);
+		}
+
+		if (currentTextColor !== day.textColor)
+		{
+			Dom.style(button.firstElementChild, '--ui-day-picker-day-text-color', day.textColor);
+			Dom.attr(button, 'data-text-color', day.textColor);
+		}
+
+		// Day Marks
+		const currentMarks: string = button.dataset.marks || '';
+		if (currentMarks !== day.marks.toString())
+		{
+			Dom.clean(button.lastElementChild);
+			if (day.marks.length > 0)
+			{
+				for (const mark of day.marks)
+				{
+					Dom.append(
+						Tag.render`
+							<span class="ui-day-picker-day-mark" style="background-color: ${mark}"></span>
+						`,
+						button.lastElementChild,
+					);
+				}
+			}
+
+			Dom.attr(button, 'data-marks', day.marks.toString());
 		}
 
 		button.tabIndex = day.tabIndex;
@@ -539,6 +581,13 @@ export class DayPicker extends BasePicker
 							: -1
 					);
 
+					const dayColor = this.getDatePicker().getDayColor(date);
+					const marks = this.getDatePicker().getDayMarks(date).map(
+						(dayMark: DayMark): string => {
+							return dayMark.bgColor;
+						},
+					);
+
 					const day: DayPickerDay = {
 						date: cloneDate(date),
 						day: date.getUTCDate(),
@@ -558,6 +607,9 @@ export class DayPicker extends BasePicker
 						rangeInStart,
 						rangeInEnd,
 						rangeInSelected,
+						bgColor: dayColor === null ? null : dayColor.bgColor,
+						textColor: dayColor === null ? null : dayColor.textColor,
+						marks,
 					};
 
 					week.push(day);

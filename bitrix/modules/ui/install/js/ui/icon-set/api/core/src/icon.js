@@ -562,6 +562,10 @@ export const Main = Object.freeze({
 	WAITING_LIST: 'waiting-list',
 	LINK_BOLD: 'link-bold',
 	NOTE: 'note',
+	EDIT_MENU: 'edit-menu',
+	DEMONSTRATION_GRAPHICS: 'demonstration-graphics',
+	CALENDAR_CHECK: 'calendar-check',
+	SIGN: 'sign',
 });
 
 export const ContactCenter = Object.freeze({

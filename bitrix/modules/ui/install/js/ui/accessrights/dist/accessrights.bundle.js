@@ -1525,7 +1525,7 @@ this.BX = this.BX || {};
 	    }
 	  }
 	  getSelected() {
-	    const selected = this.variables.filter(variable => this.selectedValues.includes(variable.id));
+	    const selected = this.variables.filter(variable => this.selectedValues.map(String).includes(String(variable.id)));
 	    return selected[0];
 	  }
 	  showVariablesPopup(event) {
@@ -1548,7 +1548,7 @@ this.BX = this.BX || {};
 	  }
 	  select(event, item) {
 	    var _item$getMenuWindow;
-	    this.selectedValues = [item.id];
+	    this.selectedValues = [item.options.id];
 	    (_item$getMenuWindow = item.getMenuWindow()) == null ? void 0 : _item$getMenuWindow.close();
 	    this.getChanger().innerHTML = '';
 	    this.render();

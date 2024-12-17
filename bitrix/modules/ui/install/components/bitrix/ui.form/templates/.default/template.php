@@ -15,7 +15,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var string $componentPath
  */
 
-\Bitrix\Main\UI\Extension::load('ui.entity-editor');
+\Bitrix\Main\UI\Extension::load([
+	'ui.entity-editor',
+	'main.core',
+]);
 
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
@@ -99,16 +102,14 @@ foreach ($bbFieldNames as $fieldName)
 
 if (!empty($htmlEditorConfigs))
 {
-	Bitrix\Main\Loader::includeModule('fileman');
-
-	foreach ($htmlEditorConfigs as $htmlEditorConfig)
+	foreach ($htmlEditorConfigs as $fieldName => $htmlEditorConfig)
 	{
+		$fieldInfo = $arResult['ENTITY_AVAILABLE_FIELDS_INFO'][$fieldName] ?? [];
 		?>
 		<div id="<?=htmlspecialcharsbx($htmlEditorConfig['containerId'])?>" style="display:none;">
 			<?php
-			$editor = new CHTMLEditor();
-
 			$editorControlsMap = $htmlEditorConfig['controlsMap'];
+			$parserList = [];
 
 			if (is_array($arResult['DISABLED_HTML_CONTROLS']))
 			{
@@ -118,12 +119,14 @@ if (!empty($htmlEditorConfigs))
 					$itemId = $item['id'] ?? false;
 					$isSeparator = $item['separator'] ?? false;
 
-					if (
-						$itemId
-						&& in_array($itemId, $arResult['DISABLED_HTML_CONTROLS'], true)
-					)
+					if ($itemId)
 					{
-						continue;
+						$parserList[] = $itemId;
+
+						if (in_array($itemId, $arResult['DISABLED_HTML_CONTROLS'], true))
+						{
+							continue;
+						}
 					}
 
 					if (
@@ -141,29 +144,47 @@ if (!empty($htmlEditorConfigs))
 				$editorControls = $editorControlsMap;
 			}
 
-			$editor->Show(
+			$chtmlEditorParams = [
+				'name' => $htmlEditorConfig['id'],
+				'id' => $htmlEditorConfig['id'],
+				'siteId' => SITE_ID,
+				'width' => '100%',
+				'minBodyWidth' => 230,
+				'normalBodyWidth' => $arResult["CHTML_EDITOR_PARAMS"]["normalBodyWidth"] ?? 530,
+				'height' => 200,
+				'minBodyHeight' => 200,
+				'showTaskbars' => false,
+				'showNodeNavi' => false,
+				'autoResize' => true,
+				'autoResizeOffset' => 10,
+				'bbCode' => $htmlEditorConfig['bb'],
+				'saveOnBlur' => false,
+				'bAllowPhp' => false,
+				'lazyLoad' => false,
+				'limitPhpAccess' => false,
+				'setFocusAfterShow' => false,
+				'askBeforeUnloadPage' => false,
+				'useFileDialogs' => false,
+				'controlsMap' => $editorControls,
+				'isMentionUnavailable' => $fieldInfo['copilotIntegrationParams']['isMentionUnavailable'] ?? false,
+				'isCopilotTextEnabledBySettings' => $fieldInfo['copilotIntegrationParams']['isCopilotTextEnabledBySettings'] ?? true,
+				'copilotParams' => $fieldInfo['copilotIntegrationParams']['copilotParams'] ?? [],
+			];
+
+			$APPLICATION->IncludeComponent(
+				'bitrix:main.post.form',
+				'',
 				[
-					'name' => $htmlEditorConfig['id'],
-					'id' => $htmlEditorConfig['id'],
-					'siteId' => SITE_ID,
-					'width' => '100%',
-					'minBodyWidth' => 230,
-					'normalBodyWidth' => 530,
-					'height' => 200,
-					'minBodyHeight' => 200,
-					'showTaskbars' => false,
-					'showNodeNavi' => false,
-					'autoResize' => true,
-					'autoResizeOffset' => 10,
-					'bbCode' => $htmlEditorConfig['bb'],
-					'saveOnBlur' => false,
-					'bAllowPhp' => false,
-					'lazyLoad' => true,
-					'limitPhpAccess' => false,
-					'setFocusAfterShow' => false,
-					'askBeforeUnloadPage' => false,
-					'useFileDialogs' => false,
-					'controlsMap' => $editorControls,
+					'PARSER' => $parserList,
+					'BUTTONS' => $fieldInfo['buttons'] ?? [],
+					'UPLOAD_FILE' => false,
+					'LHE' => $chtmlEditorParams,
+					'isAiImageEnabled' => $fieldInfo['postFormSettings']['isAiImageEnabled'] ?? false,
+					'isDnDEnabled' => $fieldInfo['postFormSettings']['isDnDEnabled'] ?? false,
+				],
+				false,
+				[
+					"HIDE_ICONS" => "Y",
 				]
 			);
 			?>

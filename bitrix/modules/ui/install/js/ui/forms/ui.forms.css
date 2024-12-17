@@ -161,6 +161,12 @@ div.ui-ctl-element {
 	padding-left: 0 !important;
 }
 
+.ui-entity-editor-content-block .feed-add-post{
+	border: 1px solid #bbc4cd;
+	border-radius: var(--ui-field-border-radius);
+	overflow: hidden;
+}
+
 /*endregion*/
 
 /*region Round*/

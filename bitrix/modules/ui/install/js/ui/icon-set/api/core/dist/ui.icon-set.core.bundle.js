@@ -565,7 +565,11 @@ this.BX.UI = this.BX.UI || {};
 	  WAITING_POINTS: 'waiting-points',
 	  WAITING_LIST: 'waiting-list',
 	  LINK_BOLD: 'link-bold',
-	  NOTE: 'note'
+	  NOTE: 'note',
+	  EDIT_MENU: 'edit-menu',
+	  DEMONSTRATION_GRAPHICS: 'demonstration-graphics',
+	  CALENDAR_CHECK: 'calendar-check',
+	  SIGN: 'sign'
 	});
 	const ContactCenter = Object.freeze({
 	  DIAL_5: 'dial-5',

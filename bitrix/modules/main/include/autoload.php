@@ -341,6 +341,7 @@ Loader::registerAutoLoadClasses(
 		'CFileTree' => 'classes/general/file_tree.php',
 		'CDesktopMenu' => 'interface/desktop_menu.php',
 		'CAdminTopPanel' => 'interface/top_panel.php',
+		'CUpdateClient' => 'classes/general/update_client.php',
 
 		//deprecated
 		'CUrlRewriter' => 'classes/general/urlrewriter.php',

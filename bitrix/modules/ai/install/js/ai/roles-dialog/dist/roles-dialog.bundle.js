@@ -273,7 +273,7 @@ this.BX = this.BX || {};
 	  return formattedExtraParams;
 	}
 	function _formatCSectionParam2(cSection) {
-	  return cSection.split('_').map(stringPart => {
+	  return cSection.replaceAll('-', '_').split('_').map(stringPart => {
 	    if (Number.isNaN(parseInt(stringPart, 10))) {
 	      return stringPart;
 	    }

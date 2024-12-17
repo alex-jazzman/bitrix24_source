@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Type, Text } from 'main.core';
 import { validateStep } from '../helpers/validate-helpers';
 
 // eslint-disable-next-line no-unused-vars
@@ -34,9 +34,19 @@ export const Step = {
 		{
 			return Type.isPlainObject(this.step.progressBox);
 		},
+		getCustomStyles(): {}
+		{
+			const styles = {};
+			if (this.step.styles?.minWidth)
+			{
+				styles.minWidth = `${Text.toInteger(this.step.styles.minWidth)}px`;
+			}
+
+			return styles;
+		},
 	},
 	template: `
-		<div class="ui-image-stack-steps-step">
+		<div class="ui-image-stack-steps-step" :style="getCustomStyles">
 			<ProgressBox v-if="hasProgressBox" :title="step.progressBox.title"/>
 			<Header :header="step.header"/>
 			<Stack :stack="step.stack"/>

@@ -24,6 +24,11 @@ CBPHelper::decodeTemplatePostData($_POST);
 $arWorkflowParameters = $_POST['arWorkflowParameters'];
 $arWorkflowVariables = $_POST['arWorkflowVariables'];
 $arWorkflowConstants = $_POST['arWorkflowConstants'];
+$workflowTemplateType = $_POST['workflowTemplateType'] ?? null;
+
+$isNotRobot = in_array($workflowTemplateType, ['default', 'custom_robots'], true);
+$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
+$isShowTimelineSettings = MODULE_ID === 'crm' && $isNotRobot && $isAvailable;
 
 $useRestrictedTracking = CBPRuntime::getRuntime()->getTrackingService() instanceof \Bitrix\Bizproc\Service\RestrictedTracking;
 $templateId = (int)($_POST['workflowTemplateId'] ?? 0);
@@ -156,6 +161,11 @@ function WFSStart()
 		document.getElementById('WFStemplate_track_on').checked = true;
 	}
 
+	if (document.getElementById('WFStemplate_show_in_timeline'))
+	{
+		document.getElementById('WFStemplate_show_in_timeline').checked = window.workflowTemplateShowInTimeline === 'Y';
+	}
+
 	if (workflowTemplateAutostart < 8)
 	{
 		document.getElementById('WFStemplate_autostart1').checked = workflowTemplateAutostart & 1;
@@ -260,6 +270,11 @@ function WFSSaveOK(response)
 	if (document.getElementById('WFStemplate_track_on'))
 	{
 		workflowTemplateTrackOn = document.getElementById('WFStemplate_track_on').checked ? 'Y' : 'N';
+	}
+
+	if (document.getElementById('WFStemplate_show_in_timeline'))
+	{
+		workflowTemplateShowInTimeline = document.getElementById('WFStemplate_show_in_timeline').checked ? 'Y' : 'N';
 	}
 
 	if (workflowTemplateAutostart < 8)
@@ -760,8 +775,17 @@ endif;
 		<?php endif; ?>
 	</td>
 </tr>
-<?
-endif;
+<?php endif;
+if ($isShowTimelineSettings): ?>
+	<tr>
+		<td valign="top"></td>
+		<td>
+			<label>
+				<input type="checkbox" value="Y" id="WFStemplate_show_in_timeline"> <?php echo GetMessage('BIZPROC_WFS_PAR_SHOW_IN_TIMELINE')?>
+			</label>
+		</td>
+	</tr>
+<?php endif;
 
 $tabControl->BeginNextTab(['className' => 'bizproc-wf-settings-tab-content bizproc-wf-settings-tab-content-variables']);
 ?>

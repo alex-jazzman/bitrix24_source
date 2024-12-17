@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_popup,main_core_events,main_date,main_core,main_core_cache) {
+(function (exports,main_popup,main_core_events,main_date,main_core_cache,main_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -206,7 +206,7 @@ this.BX.UI = this.BX.UI || {};
 	  return newDate;
 	}
 
-	function getNextDate(date, unit, firstWeekDay = 0, increment = 1) {
+	function getNextDate(date, unit, increment = 1, firstWeekDay = 0) {
 	  let newDate = cloneDate(date);
 	  switch (unit) {
 	    case 'day':
@@ -354,7 +354,8 @@ this.BX.UI = this.BX.UI || {};
 	  _t17,
 	  _t18,
 	  _t19,
-	  _t20;
+	  _t20,
+	  _t21;
 	var _refs$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
 	var _weekdays = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("weekdays");
 	var _mouseOutTimeout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mouseOutTimeout");
@@ -461,18 +462,17 @@ this.BX.UI = this.BX.UI || {};
 						${0}
 					</div>
 				`), this.getFullYearHeader()), this.getNextBtn());
-	    } else {
-	      return this.getHeaderContainer(this.getPrevBtn(), ...Array.from({
-	        length: numberOfMonths
-	      }).map((_, monthNumber) => {
-	        return main_core.Tag.render(_t3$1 || (_t3$1 = _2`
-						<div class="ui-date-picker-header-title">
-							${0}
-							${0}
-						</div>
-					`), this.getHeaderMonth(monthNumber), this.getHeaderYear(monthNumber));
-	      }), this.getNextBtn());
 	    }
+	    return this.getHeaderContainer(this.getPrevBtn(), ...Array.from({
+	      length: numberOfMonths
+	    }).map((_, monthNumber) => {
+	      return main_core.Tag.render(_t3$1 || (_t3$1 = _2`
+					<div class="ui-date-picker-header-title">
+						${0}
+						${0}
+					</div>
+				`), this.getHeaderMonth(monthNumber), this.getHeaderYear(monthNumber));
+	    }), this.getNextBtn());
 	  }
 	  getFullYearHeader() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs$1)[_refs$1].remember('header-full-year', () => {
@@ -657,6 +657,10 @@ this.BX.UI = this.BX.UI || {};
 	          const rangeInSelected = selected && rangeIn && !rangeFrom && !rangeTo;
 	          const focused = available && isDatesEqual(date, focusDate, 'day');
 	          const tabIndex = available && (isDatesEqual(date, focusDate, 'day') || isDatesEqual(date, initialFocusDate, 'day')) ? 0 : -1;
+	          const dayColor = this.getDatePicker().getDayColor(date);
+	          const marks = this.getDatePicker().getDayMarks(date).map(dayMark => {
+	            return dayMark.bgColor;
+	          });
 	          const day = {
 	            date: cloneDate(date),
 	            day: date.getUTCDate(),
@@ -675,7 +679,10 @@ this.BX.UI = this.BX.UI || {};
 	            rangeIn,
 	            rangeInStart,
 	            rangeInEnd,
-	            rangeInSelected
+	            rangeInSelected,
+	            bgColor: dayColor === null ? null : dayColor.bgColor,
+	            textColor: dayColor === null ? null : dayColor.textColor,
+	            marks
 	          };
 	          week.push(day);
 	          prevDay = day;
@@ -775,7 +782,10 @@ this.BX.UI = this.BX.UI || {};
 					data-year="${0}"
 					data-tab-priority="true"
 					role="gridcell"
-				><span class="ui-day-picker-day-inner">${0}</span></button>
+				>
+					<span class="ui-day-picker-day-inner">${0}</span>
+					<span class="ui-day-picker-day-marks"></span>
+				</button>
 			`), day.day, day.month, day.year, day.day);
 	    main_core.Dom.append(dayContainer, weekContainer);
 	    return dayContainer;
@@ -812,6 +822,32 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  if (button.className !== classNames) {
 	    button.className = classNames;
+	  }
+
+	  // Day Colors
+	  const currentBgColor = button.dataset.bgColor || null;
+	  const currentTextColor = button.dataset.textColor || null;
+	  if (currentBgColor !== day.bgColor) {
+	    main_core.Dom.style(button.firstElementChild, '--ui-day-picker-day-bg-color', day.bgColor);
+	    main_core.Dom.attr(button, 'data-bg-color', day.bgColor);
+	  }
+	  if (currentTextColor !== day.textColor) {
+	    main_core.Dom.style(button.firstElementChild, '--ui-day-picker-day-text-color', day.textColor);
+	    main_core.Dom.attr(button, 'data-text-color', day.textColor);
+	  }
+
+	  // Day Marks
+	  const currentMarks = button.dataset.marks || '';
+	  if (currentMarks !== day.marks.toString()) {
+	    main_core.Dom.clean(button.lastElementChild);
+	    if (day.marks.length > 0) {
+	      for (const mark of day.marks) {
+	        main_core.Dom.append(main_core.Tag.render(_t21 || (_t21 = _2`
+							<span class="ui-day-picker-day-mark" style="background-color: ${0}"></span>
+						`), mark), button.lastElementChild);
+	      }
+	    }
+	    main_core.Dom.attr(button, 'data-marks', day.marks.toString());
 	  }
 	  button.tabIndex = day.tabIndex;
 	  return button;
@@ -1297,6 +1333,26 @@ this.BX.UI = this.BX.UI || {};
 	    newDate.setUTCSeconds(seconds);
 	  }
 	  return newDate;
+	}
+
+	function isDateMatch(day, matchers) {
+	  return matchers.some(matcher => {
+	    if (main_core.Type.isFunction(matcher)) {
+	      return matcher(day);
+	    }
+	    if (main_core.Type.isDate(matcher)) {
+	      return isDatesEqual(day, matcher);
+	    }
+	    if (main_core.Type.isArray(matcher)) {
+	      return matcher.some(date => {
+	        return isDatesEqual(day, date);
+	      });
+	    }
+	    if (main_core.Type.isBoolean(matcher)) {
+	      return matcher;
+	    }
+	    return false;
+	  });
 	}
 
 	const keyMap = {
@@ -2750,6 +2806,7 @@ this.BX.UI = this.BX.UI || {};
 	 * @namespace BX.UI.DatePicker
 	 */
 	var _viewDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewDate");
+	var _startDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startDate");
 	var _selectedDates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedDates");
 	var _focusDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("focusDate");
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
@@ -2796,11 +2853,15 @@ this.BX.UI = this.BX.UI || {};
 	var _toggleSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleSelected");
 	var _hideOnSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideOnSelect");
 	var _locale = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("locale");
+	var _hideHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideHeader");
+	var _dayColors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dayColors");
+	var _dayMarks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dayMarks");
 	var _keyboardNavigation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("keyboardNavigation");
 	var _destroying = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroying");
 	var _canSelectDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canSelectDate");
 	var _canDeselectDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canDeselectDate");
 	var _setType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setType");
+	var _createDateMatchers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDateMatchers");
 	var _setSelectionMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSelectionMode");
 	var _getInputField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInputField");
 	var _bindInputEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindInputEvents");
@@ -2940,6 +3001,9 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _setSelectionMode, {
 	      value: _setSelectionMode2
 	    });
+	    Object.defineProperty(this, _createDateMatchers, {
+	      value: _createDateMatchers2
+	    });
 	    Object.defineProperty(this, _setType, {
 	      value: _setType2
 	    });
@@ -2950,6 +3014,10 @@ this.BX.UI = this.BX.UI || {};
 	      value: _canSelectDate2
 	    });
 	    Object.defineProperty(this, _viewDate, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _startDate, {
 	      writable: true,
 	      value: null
 	    });
@@ -3137,6 +3205,18 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _hideHeader, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _dayColors, {
+	      writable: true,
+	      value: []
+	    });
+	    Object.defineProperty(this, _dayMarks, {
+	      writable: true,
+	      value: []
+	    });
 	    Object.defineProperty(this, _keyboardNavigation, {
 	      writable: true,
 	      value: null
@@ -3164,7 +3244,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _timeFormat)[_timeFormat] = main_core.Type.isStringFilled(options.timeFormat) ? options.timeFormat : main_date.DateTimeFormat.getFormat(babelHelpers.classPrivateFieldLooseBase(this, _allowSeconds)[_allowSeconds] ? 'LONG_TIME_FORMAT' : 'SHORT_TIME_FORMAT');
 	    babelHelpers.classPrivateFieldLooseBase(this, _minuteStep)[_minuteStep] = main_core.Type.isNumber(options.minuteStep) && [1, 5, 10, 15, 30].includes(options.minuteStep) ? options.minuteStep : babelHelpers.classPrivateFieldLooseBase(this, _minuteStep)[_minuteStep];
 	    babelHelpers.classPrivateFieldLooseBase(this, _timePickerStyle)[_timePickerStyle] = options.timePickerStyle === 'wheel' ? 'wheel' : babelHelpers.classPrivateFieldLooseBase(this, _timePickerStyle)[_timePickerStyle];
-	    babelHelpers.classPrivateFieldLooseBase(this, _viewDate)[_viewDate] = this.createDate(new Date());
+	    babelHelpers.classPrivateFieldLooseBase(this, _viewDate)[_viewDate] = this.getToday();
 	    babelHelpers.classPrivateFieldLooseBase(this, _useInputEvents)[_useInputEvents] = main_core.Type.isBoolean(options.useInputEvents) ? options.useInputEvents : babelHelpers.classPrivateFieldLooseBase(this, _useInputEvents)[_useInputEvents];
 	    this.setAutoFocus(options.autoFocus);
 	    this.setInputField(options.inputField);
@@ -3174,8 +3254,8 @@ this.BX.UI = this.BX.UI || {};
 	    this.selectDates(options.selectedDates, {
 	      emitEvents: false
 	    });
-	    const startDate = isDateLike(options.startDate) ? this.createDate(options.startDate) : null;
-	    const _viewDate2 = startDate || this.getSelectedDate() || this.createDate(new Date());
+	    babelHelpers.classPrivateFieldLooseBase(this, _startDate)[_startDate] = isDateLike(options.startDate) ? this.createDate(options.startDate) : null;
+	    const _viewDate2 = this.getDefaultViewDate();
 	    this.setViewDate(_viewDate2);
 	    babelHelpers.classPrivateFieldLooseBase(this, _inline)[_inline] = options.inline === true;
 	    let firstWeekDay = settings.get('firstWeekDay', babelHelpers.classPrivateFieldLooseBase(this, _firstWeekDay)[_firstWeekDay]);
@@ -3208,6 +3288,9 @@ this.BX.UI = this.BX.UI || {};
 	    this.setHideByEsc(options.hideByEsc);
 	    this.setCacheable(options.cacheable);
 	    this.setSingleOpening(options.singleOpening);
+	    this.setDayColors(options.dayColors);
+	    this.setDayMarks(options.dayMarks);
+	    this.setHideHeader(options.hideHeader);
 	    this.subscribeFromOptions(options.events);
 	    babelHelpers.classPrivateFieldLooseBase(this, _keyboardNavigation)[_keyboardNavigation] = new KeyboardNavigation(this);
 	  }
@@ -3230,6 +3313,9 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getViewDate() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _viewDate)[_viewDate];
+	  }
+	  getDefaultViewDate() {
+	    return this.getSelectedDate() || babelHelpers.classPrivateFieldLooseBase(this, _startDate)[_startDate] || this.getToday();
 	  }
 	  adjustViewDate(date) {
 	    if (this.isSingleMode()) {
@@ -3815,6 +3901,57 @@ this.BX.UI = this.BX.UI || {};
 	  isSingleOpening() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _singleOpening)[_singleOpening];
 	  }
+	  setDayColors(options) {
+	    if (!main_core.Type.isArray(options)) {
+	      return;
+	    }
+	    const dayColors = [];
+	    for (const option of options) {
+	      if (!main_core.Type.isStringFilled(option.bgColor) && !main_core.Type.isStringFilled(option.textColor)) {
+	        continue;
+	      }
+	      const matchers = babelHelpers.classPrivateFieldLooseBase(this, _createDateMatchers)[_createDateMatchers](option.matcher);
+	      if (main_core.Type.isArrayFilled(matchers)) {
+	        dayColors.push({
+	          bgColor: main_core.Type.isStringFilled(option.bgColor) ? option.bgColor : null,
+	          textColor: main_core.Type.isStringFilled(option.textColor) ? option.textColor : null,
+	          matchers
+	        });
+	      }
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _dayColors)[_dayColors] = dayColors;
+	    if (this.isRendered()) {
+	      this.getPicker().render();
+	    }
+	  }
+	  getDayColor(day) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _dayColors)[_dayColors].find(dayColor => isDateMatch(day, dayColor.matchers)) || null;
+	  }
+	  setDayMarks(options) {
+	    if (!main_core.Type.isArray(options)) {
+	      return;
+	    }
+	    const dayMarks = [];
+	    for (const option of options) {
+	      if (!main_core.Type.isStringFilled(option.bgColor)) {
+	        continue;
+	      }
+	      const matchers = babelHelpers.classPrivateFieldLooseBase(this, _createDateMatchers)[_createDateMatchers](option.matcher);
+	      if (main_core.Type.isArrayFilled(matchers)) {
+	        dayMarks.push({
+	          bgColor: option.bgColor,
+	          matchers
+	        });
+	      }
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _dayMarks)[_dayMarks] = dayMarks;
+	    if (this.isRendered()) {
+	      this.getPicker().render();
+	    }
+	  }
+	  getDayMarks(day) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _dayMarks)[_dayMarks].filter(dayMark => isDateMatch(day, dayMark.matchers));
+	  }
 	  getPopup() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] !== null) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
@@ -3967,6 +4104,9 @@ this.BX.UI = this.BX.UI || {};
 	      if (this.isInline()) {
 	        classes.push('--inline');
 	      }
+	      if (this.shouldHideHeader()) {
+	        classes.push('--hide-header');
+	      }
 	      classes.push(`--${this.getType()}-picker`);
 	      return main_core.Tag.render(_t$6 || (_t$6 = _$5`
 				<div tabindex="-1" onkeyup="${0}" class="${0}">
@@ -4051,6 +4191,21 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	    }
 	  }
+	  setHideHeader(enable) {
+	    if (main_core.Type.isBoolean(enable)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _hideHeader)[_hideHeader] = enable;
+	      if (this.isRendered()) {
+	        if (enable) {
+	          main_core.Dom.addClass(this.getContainer(), '--hide-header');
+	        } else {
+	          main_core.Dom.removeClass(this.getContainer(), '--hide-header');
+	        }
+	      }
+	    }
+	  }
+	  shouldHideHeader() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _hideHeader)[_hideHeader];
+	  }
 	  createDate(date) {
 	    return createDate(date, this.getDateFormat());
 	  }
@@ -4115,6 +4270,36 @@ this.BX.UI = this.BX.UI || {};
 	  if (['date', 'year', 'month', 'time'].includes(type)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] = type;
 	  }
+	}
+	function _createDateMatchers2(matcher) {
+	  if (main_core.Type.isUndefined(matcher)) {
+	    return [];
+	  }
+	  const result = [];
+	  const matchers = main_core.Type.isArray(matcher) ? [...matcher] : [matcher];
+	  matchers.forEach(matcherValue => {
+	    if (main_core.Type.isArray(matcherValue)) {
+	      const dates = [];
+	      matcherValue.forEach(dateLike => {
+	        if (!isDateLike(dateLike)) {
+	          return;
+	        }
+	        const date = this.createDate(matcherValue);
+	        if (date !== null) {
+	          dates.push(date);
+	        }
+	      });
+	      result.push(dates);
+	    } else if (isDateLike(matcherValue)) {
+	      const date = this.createDate(matcherValue);
+	      if (date !== null) {
+	        result.push(date);
+	      }
+	    } else if (main_core.Type.isBoolean(matcherValue) || main_core.Type.isFunction(matcherValue)) {
+	      result.push(matcherValue);
+	    }
+	  });
+	  return result;
 	}
 	function _setSelectionMode2(mode) {
 	  if (this.getType() !== 'date') {
@@ -4525,7 +4710,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  } else {
 	    this.setViewDate(date);
-	    this.setCurrentView('month');
+	    this.setCurrentView('day');
 	  }
 	}
 	function _handleTimeSelect2(event) {
@@ -4652,6 +4837,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.setCurrentView('day');
 	  }
 	  this.setFocusDate(null);
+	  this.setViewDate(this.getDefaultViewDate());
 	  if (this.isSingleOpening()) {
 	    singleOpenDatePicker = null;
 	  }
@@ -4664,8 +4850,36 @@ this.BX.UI = this.BX.UI || {};
 	  this.destroy();
 	}
 
+	function isValidDate(date) {
+	  if (!main_core.Type.isDate(date)) {
+	    return false;
+	  }
+	  return !Number.isNaN(date.getTime());
+	}
+
 	exports.DatePicker = DatePicker;
 	exports.DatePickerEvent = DatePickerEvent;
+	exports.addDate = addDate;
+	exports.addToRange = addToRange;
+	exports.ceilDate = ceilDate;
+	exports.cloneDate = cloneDate;
+	exports.convertToDbFormat = convertToDbFormat;
+	exports.copyTime = copyTime;
+	exports.createDate = createDate;
+	exports.createUtcDate = createUtcDate;
+	exports.floorDate = floorDate;
+	exports.getDate = getDate;
+	exports.getDaysInMonth = getDaysInMonth;
+	exports.getFocusableBoundaryElements = getFocusableBoundaryElements;
+	exports.getNextDate = getNextDate;
+	exports.isDateAfter = isDateAfter;
+	exports.isDateBefore = isDateBefore;
+	exports.isDateLike = isDateLike;
+	exports.isDateMatch = isDateMatch;
+	exports.isDatesEqual = isDatesEqual;
+	exports.isValidDate = isValidDate;
+	exports.parseDate = parseDate;
+	exports.setTime = setTime;
 
-}((this.BX.UI.DatePicker = this.BX.UI.DatePicker || {}),BX.Main,BX.Event,BX.Main,BX,BX.Cache));
+}((this.BX.UI.DatePicker = this.BX.UI.DatePicker || {}),BX.Main,BX.Event,BX.Main,BX.Cache,BX));
 //# sourceMappingURL=date-picker.bundle.js.map

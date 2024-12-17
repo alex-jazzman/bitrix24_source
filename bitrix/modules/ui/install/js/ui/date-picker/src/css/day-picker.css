@@ -4,8 +4,10 @@
 	width: 100%;
 	position: relative;
 	z-index: 1;
+	background-color: #fff;
 
 	--ui-day-picker-range-color: #d7f5ff;
+	--ui-day-picker-day-bg-color: transparent;
 }
 
 .ui-day-picker-content {
@@ -127,6 +129,7 @@
 .ui-day-picker-day-inner {
 	border-radius: var(--ui-border-radius-pill);
 	color: var(--ui-color-text-primary);
+	background-color: var(--ui-day-picker-day-bg-color);
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -153,6 +156,10 @@
 .ui-day-picker-day.--selected .ui-day-picker-day-inner {
 	background-color: var(--ui-color-primary);
 	color: var(--ui-color-on-primary);
+}
+
+.ui-day-picker-day[data-text-color]:not(.--selected, .--range-in) .ui-day-picker-day-inner {
+	color: var(--ui-day-picker-day-text-color);
 }
 
 .ui-day-picker-day.--range-in .ui-day-picker-day-inner {
@@ -209,7 +216,7 @@
 .ui-day-picker-day.--focused:not(.--selected) .ui-day-picker-day-inner:after {
 	content: '';
 	position: absolute;
-	background-color: rgba(47, 198, 246, 0.20);
+	background-color: rgba(var(--ui-color-primary-rgb), 0.20);
 	border-radius: var(--ui-border-radius-pill);
 	top: 0;
 	left: 0;
@@ -218,8 +225,24 @@
 	z-index: 10;
 }
 
+.ui-day-picker-day.--outside[data-bg-color]:not(.--selected, .--range-in) .ui-day-picker-day-inner:after {
+	background-color: rgba(255, 255, 255, 0.3);
+	content: '';
+	position: absolute;
+	border-radius: var(--ui-border-radius-pill);
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 10;
+}
+
+.ui-day-picker-day.--focused[data-bg-color]:not(.--selected) .ui-day-picker-day-inner:after {
+	background-color: rgba(0, 0, 0, 0.05);
+}
+
 .ui-day-picker-day.--focused.--range-in:not(.--selected) .ui-day-picker-day-inner:after {
-	background-color: rgba(47, 198, 246, 0.20);
+	background-color: rgba(var(--ui-color-primary-rgb), 0.20);
 }
 
 .ui-day-picker-day.--selected.--range-from.--range-to.--range-selected .ui-day-picker-day-inner {
@@ -234,6 +257,30 @@
 
 .ui-day-picker-day.--day-off.--selected .ui-day-picker-day-inner {
 	color: var(--ui-color-on-primary);
+}
+
+.ui-day-picker-day-marks {
+	display: flex;
+	position: absolute;
+	bottom: 5px;
+	align-items: center;
+	z-index: 15;
+}
+
+.ui-day-picker-day-mark {
+	width: 4px;
+	height: 4px;
+	background-color: blue;
+	border-radius: var(--ui-border-radius-pill);
+	margin-right: 2px;
+}
+
+.ui-day-picker-day-mark:last-child {
+	margin-right: 0;
+}
+
+.ui-day-picker-day.--outside .ui-day-picker-day-mark {
+	opacity: 0.4;
 }
 
 .ui-date-picker-time-container {

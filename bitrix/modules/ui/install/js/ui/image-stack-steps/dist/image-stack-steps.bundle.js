@@ -657,10 +657,18 @@ this.BX = this.BX || {};
 	  computed: {
 	    hasProgressBox() {
 	      return main_core.Type.isPlainObject(this.step.progressBox);
+	    },
+	    getCustomStyles() {
+	      var _this$step$styles;
+	      const styles = {};
+	      if ((_this$step$styles = this.step.styles) != null && _this$step$styles.minWidth) {
+	        styles.minWidth = `${main_core.Text.toInteger(this.step.styles.minWidth)}px`;
+	      }
+	      return styles;
 	    }
 	  },
 	  template: `
-		<div class="ui-image-stack-steps-step">
+		<div class="ui-image-stack-steps-step" :style="getCustomStyles">
 			<ProgressBox v-if="hasProgressBox" :title="step.progressBox.title"/>
 			<Header :header="step.header"/>
 			<Stack :stack="step.stack"/>

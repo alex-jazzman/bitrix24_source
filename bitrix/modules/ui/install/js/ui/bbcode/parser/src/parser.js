@@ -16,7 +16,7 @@ import { BBCodeEncoder } from 'ui.bbcode.encoder';
 import { Linkify } from 'ui.linkify';
 import { ParserScheme } from './parser-scheme';
 
-const TAG_REGEX: RegExp = /\[\/?(?:\w+|\*).*?]/;
+const TAG_REGEX: RegExp = /\[(\/)?(\w+|\*).*?]/;
 const TAG_REGEX_GS: RegExp = /\[(\/)?(\w+|\*)(.*?)]/gs;
 const isSpecialChar = (symbol: string): boolean => {
 	return ['\n', '\t'].includes(symbol);
@@ -37,6 +37,11 @@ type BBCodeParserOptions = {
 	onUnknown?: (node: BBCodeContentNode, scheme: BBCodeScheme) => void,
 	encoder?: BBCodeEncoder,
 	linkify?: boolean,
+};
+
+type NextTagResult = {
+	tagName: string,
+	isClosedTag: boolean,
 };
 
 class BBCodeParser
@@ -255,6 +260,23 @@ class BBCodeParser
 		return -1;
 	}
 
+	static findNextTag(bbcode: string, startIndex = 0): ?NextTagResult
+	{
+		const nextContent: string = bbcode.slice(startIndex);
+		const matchResult = nextContent.match(new RegExp(TAG_REGEX));
+		if (matchResult)
+		{
+			const [, slash, tagName] = matchResult;
+
+			return {
+				tagName,
+				isClosedTag: slash === '\\',
+			};
+		}
+
+		return null;
+	}
+
 	static trimQuotes(value: string): string
 	{
 		const source = String(value);
@@ -433,7 +455,11 @@ class BBCodeParser
 
 				if (level > 0 && isListItem(stack[level].getName()))
 				{
-					level--;
+					const nextTag: ?NextTagResult = BBCodeParser.findNextTag(bbcode, startIndex);
+					if (Type.isNull(nextTag) || isListItem(nextTag.tagName))
+					{
+						level--;
+					}
 				}
 			}
 		});
