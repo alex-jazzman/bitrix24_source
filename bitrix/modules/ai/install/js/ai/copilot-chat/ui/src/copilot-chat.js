@@ -1,4 +1,4 @@
-import { Tag, Type } from 'main.core';
+import { Tag, Type, Loc, bind, unbind } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, type PopupOptions, type MenuItemOptions } from 'main.popup';
 import { type VueRefValue, BitrixVue, ref } from 'ui.vue3';
@@ -30,6 +30,7 @@ export const CopilotChatEvents = Object.freeze({
 	SET_MESSAGE_STATUS: 'setMessageStatus',
 	SHOW_ERROR_SCREEN: 'showErrorScreen',
 	HIDE_ERROR_SCREEN: 'hideErrorScreen',
+	MESSAGES_SCROLL_TOP: 'messagesListScrollTop',
 });
 
 export const CopilotChatMessageStatus = {
@@ -50,6 +51,9 @@ export type CopilotChatOptions = {
 	userMessageMenuItems: MenuItemOptions[];
 	scrollToTheEndAfterFirstShow: boolean;
 	showCopilotWarningMessage: boolean;
+	userAvatar: string;
+	inputPlaceholder?: string;
+	loaderText?: string;
 }
 
 export class CopilotChat extends EventEmitter
@@ -68,6 +72,9 @@ export class CopilotChat extends EventEmitter
 	#scrollToTheEndAfterFirstShow: VueRefValue<boolean>;
 	#showCopilotWarningMessage: VueRefValue<boolean>;
 	#copilotChatBotOptions: VueRefValue<CopilotChatBotOptions>;
+	#userAvatar: VueRefValue<string>;
+	#inputPlaceholder: string;
+	#loaderText: ?string;
 
 	constructor(options: CopilotChatOptions = {})
 	{
@@ -93,6 +100,9 @@ export class CopilotChat extends EventEmitter
 				: true,
 		);
 		this.#showCopilotWarningMessage = ref(options.showCopilotWarningMessage === true);
+		this.#userAvatar = ref(options.userAvatar ?? '');
+		this.#inputPlaceholder = options.inputPlaceholder ?? Loc.getMessage('AI_COPILOT_CHAT_INPUT_PLACEHOLDER');
+		this.#loaderText = options.loaderText;
 	}
 
 	static getDefaultMinWidth(): number
@@ -105,28 +115,38 @@ export class CopilotChat extends EventEmitter
 		return 669;
 	}
 
-	addUserMessage(message: CopilotChatMessage): void
+	isMessageInList(messageId: number): boolean
 	{
-		const newUserMessage: CopilotChatMessage = {
-			...message,
-			authorId: 1,
-		};
-
-		this.#addNewMessage(newUserMessage);
+		return this.#messages.value.findLast((message) => {
+			return message.id === messageId;
+		});
 	}
 
-	addBotMessage(message: CopilotChatMessage): void
+	addUserMessage(message: CopilotChatMessage, emitEvent: boolean = true): void
 	{
 		const newUserMessage: CopilotChatMessage = {
+			type: 'Default',
+			...message,
+			authorId: 1,
+			status: CopilotChatMessageStatus.DEPART,
+		};
+
+		this.#addNewMessage(newUserMessage, emitEvent);
+	}
+
+	addBotMessage(message: CopilotChatMessage, emitEvent: boolean = true): void
+	{
+		const newUserMessage: CopilotChatMessage = {
+			type: 'Default',
 			...message,
 			authorId: 0,
 			status: null,
 		};
 
-		this.#addNewMessage(newUserMessage);
+		this.#addNewMessage(newUserMessage, emitEvent);
 	}
 
-	addSystemMessage(message: CopilotChatMessage): void
+	addSystemMessage(message: CopilotChatMessage, emitEvent: boolean = true): void
 	{
 		const newSystemMessage: CopilotChatMessage = {
 			...message,
@@ -134,7 +154,7 @@ export class CopilotChat extends EventEmitter
 			status: null,
 		};
 
-		this.#addNewMessage(newSystemMessage);
+		this.#addNewMessage(newSystemMessage, emitEvent);
 	}
 
 	enableInput(): void
@@ -201,6 +221,30 @@ export class CopilotChat extends EventEmitter
 		}));
 	}
 
+	setMessageId(messageId: number, newMessageId: number): void
+	{
+		const message: ?CopilotChatMessage = this.#messages.value.find((currentMessage) => currentMessage.id === messageId);
+
+		if (!message)
+		{
+			return;
+		}
+
+		message.id = newMessageId;
+	}
+
+	setMessageDate(messageId: number, date: string): void
+	{
+		const message: ?CopilotChatMessage = this.#messages.value.find((currentMessage) => currentMessage.id === messageId);
+
+		if (!message)
+		{
+			return;
+		}
+
+		message.dateCreated = date;
+	}
+
 	emitClickOnMessageButton(data: { buttonId: number, messageId: number }): void
 	{
 		const { buttonId, messageId } = data;
@@ -244,7 +288,7 @@ export class CopilotChat extends EventEmitter
 		});
 	}
 
-	#addNewMessage(message: CopilotChatMessage): void
+	#addNewMessage(message: CopilotChatMessage, emitEvent: boolean = true): void
 	{
 		const newMessageId = Math.round(-Math.random() * 1000);
 
@@ -260,6 +304,11 @@ export class CopilotChat extends EventEmitter
 		};
 
 		this.#messages.value.push(newMessage);
+
+		if (emitEvent === false)
+		{
+			return;
+		}
 
 		if (newMessage.authorId === 0)
 		{
@@ -295,8 +344,23 @@ export class CopilotChat extends EventEmitter
 		return Boolean(this.#popup?.isShown());
 	}
 
+	adjustPosition(): void
+	{
+		this.#popup?.adjustPosition({
+			forceBindPosition: true,
+		});
+	}
+
+	setUserAvatar(avatar: string): void
+	{
+		this.#userAvatar.value = avatar;
+	}
+
 	#initPopup(): Popup
 	{
+		const adjustPopupPosition = this.adjustPosition.bind(this);
+		bind(window, 'resize', adjustPopupPosition);
+
 		this.#popup = new Popup({
 			...this.#popupOptions,
 			content: this.#renderPopupContent(),
@@ -316,6 +380,8 @@ export class CopilotChat extends EventEmitter
 					{
 						this.#popupOptions?.events?.onPopupAfterClose();
 					}
+
+					unbind(window, 'resize', adjustPopupPosition);
 				},
 			},
 		});
@@ -355,6 +421,9 @@ export class CopilotChat extends EventEmitter
 			userMessageMenuItems: this.#userMessageMenuItems.value,
 			isShowWarningMessage: this.#showCopilotWarningMessage,
 			botOptions: this.#copilotChatBotOptions.value,
+			userAvatar: this.#userAvatar,
+			inputPlaceholder: this.#inputPlaceholder,
+			loaderText: this.#loaderText,
 		});
 
 		this.#app.mount(appContainer);

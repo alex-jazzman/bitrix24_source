@@ -42,6 +42,17 @@ foreach ($dialog->getMap()['AccessFields']['Map'] as $accessType => $fieldsMap)
 	];
 }
 
+$activityFilter = [
+		'createdocumentactivity',
+		'createcrmcompanydocumentactivity',
+		'createcrmleaddocumentactivity',
+		'createcrmdealdocumentactivity',
+		'createcrmcontactdocumentactivity',
+		'createlistsdocumentactivity',
+		'crmcreatedynamicactivity',
+		'task2activity',
+	];
+
 ?>
 <tr>
 	<td align="right" width="25%"><?=htmlspecialcharsbx($resultTypeField['Name'])?></td>
@@ -90,6 +101,7 @@ foreach ($dialog->getMap()['AccessFields']['Map'] as $accessType => $fieldsMap)
 				Activity: arAllActivities ?? []
 			},
 			template: [rootActivity.Serialize()],
+			activityFilter: <?= \Bitrix\Main\Web\Json::encode($activityFilter) ?>,
 		}).init();
 	})
 </script>

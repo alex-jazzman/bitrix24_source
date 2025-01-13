@@ -412,7 +412,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	}
 	function _getFormatString2(seconds) {
 	  for (const limit of babelHelpers.classPrivateFieldLooseBase(this, _limits)[_limits]) {
-	    if (seconds > limit[0]) {
+	    if (seconds >= limit[0]) {
 	      return limit[1];
 	    }
 	  }

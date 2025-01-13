@@ -65,3 +65,6 @@ $MESS["BP_WF_TAB_G_VAR"] = "Глобальные переменные";
 $MESS["BP_WF_TAB_G_VAR_TITLE"] = "Глобальные переменные Бизнес-процессов";
 $MESS["BIZPROC_WFS_VARIABLEDEF"] = "Значение переменной";
 $MESS["BIZPROC_WFS_PAR_SHOW_IN_TIMELINE"] = "Показывать события этого процесса в таймлайне";
+$MESS["BP_WF_TAB_SHOW_PROCESS"] = "Отображение в воронках";
+$MESS["BP_WF_TAB_SHOW_PROCESS_TITLE"] = "Отображение в CRM и Смарт-процессах";
+$MESS["BP_WF_TAB_SHOW_PROCESS_DESCRIPTION"] = "Выберите, в каких воронках будет отображаться этот бизнес-процесс. В других воронках по умолчанию он будет скрыт";

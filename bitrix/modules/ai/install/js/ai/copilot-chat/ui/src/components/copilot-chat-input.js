@@ -43,6 +43,11 @@ export const CopilotChatInput = {
 			};
 		},
 	},
+	mounted() {
+		setTimeout(() => {
+			this.$refs.textarea.focus();
+		}, 500);
+	},
 	methods: {
 		handleSubmitButton(e: PointerEvent): void {
 			e.target.blur();

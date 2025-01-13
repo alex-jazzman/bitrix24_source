@@ -144,7 +144,7 @@ export const CopilotChatMessageDefault = {
 						:disabled="isSomeButtonSelected || disableAllActions"
 						@click="$emit('buttonClick', button.id)"
 					>
-						{{ button.text }}
+						{{ button.title }}
 					</button>
 				</div>
 			</div>

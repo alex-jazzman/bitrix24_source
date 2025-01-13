@@ -20,4 +20,4 @@ $MESS["CRM_LEAD_LIST_REBUILD_SEMANTICS_PROGRESS_SUMMARY"] = "Опрацьова�
 $MESS["CRM_LEAD_LIST_REBUILD_STATISTICS_COMPLETED_SUMMARY"] = "Оновлення статистичних даних для лідів завершено. Опрацьовано лідів: #PROCESSED_ITEMS#.";
 $MESS["CRM_LEAD_LIST_REBUILD_STATISTICS_NOT_REQUIRED_SUMMARY"] = "Оновлення статистичних даних для лідів не потрібно.";
 $MESS["CRM_LEAD_LIST_REBUILD_STATISTICS_PROGRESS_SUMMARY"] = "Опрацьовано лідів: #PROCESSED_ITEMS# #TOTAL_ITEMS#.";
-$MESS["CRM_LEAD_LIST_ROW_COUNT"] = "Всього: #ROW_COUNT#";
+$MESS["CRM_LEAD_LIST_ROW_COUNT"] = "Усього: #ROW_COUNT#";

@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/bizproc/tools.js');
-CJSCore::Init('bp_starter');
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.alerts',
@@ -14,6 +13,7 @@ CJSCore::Init('bp_starter');
 	'ui.dialogs.messagebox',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'bizproc.workflow.starter',
 ]);
 
 if (!empty($arResult['ERROR_MESSAGE'])):
@@ -27,7 +27,7 @@ $isLazyLoad = isset($arParams['LAZYLOAD']) && $arParams['LAZYLOAD'] === 'Y';
 <div class="bizproc-page-document" data-role="bizproc-document-base">
 <?php if ($arParams['StartWorkflowPermission'] === 'Y'): ?>
 	<div>
-		<span class="ui-btn ui-btn-dropdown ui-btn-primary" data-role="start-button">
+		<span class="ui-btn ui-btn-primary" data-role="start-button">
 			<?= GetMessage('IBEL_BIZPROC_START') ?>
 		</span>
 	</div>
@@ -173,6 +173,8 @@ foreach ($arDocumentStates as $arDocumentState)
 			'documentType' => $arParams["DOCUMENT_TYPE"][2],
 			'canTerminate' => $arParams["StartWorkflowPermission"] == "Y",
 			'canKill' => $arParams["DropWorkflowPermission"] == "Y",
+			'signedDocumentType' => CBPDocument::signDocumentType($arParams['DOCUMENT_TYPE']),
+			'signedDocumentId' => CBPDocument::signDocumentType($arParams['DOCUMENT_ID']),
 		])?>;
 		var workflows = <?=\Bitrix\Main\Web\Json::encode($workflows)?>;
 

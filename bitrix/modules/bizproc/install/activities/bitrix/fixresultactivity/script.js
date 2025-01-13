@@ -40,6 +40,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      this.accessFieldsMap = options.accessFieldsMap;
 	      this.objectTabs = options.objectTabs;
 	      this.template = options.template;
+	      this.activityFilter = options.activityFilter;
 	      if (main_core.Type.isPlainObject(options.currentResultValues)) {
 	        this.currentResultValues = options.currentResultValues;
 	      }
@@ -201,7 +202,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  this.selector = new bizproc_mixedSelector.BpMixedSelector({
 	    targetNode: source,
 	    template: this.template,
+	    exceptErrorMessages: true,
 	    objectTabs: this.objectTabs,
+	    activityFilter: this.activityFilter,
 	    inputNames: {
 	      object: 'result_item_object',
 	      field: 'result_item_field'

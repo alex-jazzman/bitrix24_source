@@ -67,7 +67,7 @@ $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGV
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE"] = "Призначити співробітника адміністратором?";
 $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET"] = "Перевести в інтранет";
 $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"] = "Перевести в інтранет";
-$MESS["INTRANET_USER_PROFILE_MSG_1_invited"] = "Запрошення не прийнято.";
+$MESS["INTRANET_USER_PROFILE_MSG_1_invited"] = "Запрошення ще не прийнято";
 $MESS["INTRANET_USER_PROFILE_NO"] = "Ні";
 $MESS["INTRANET_USER_PROFILE_PASSWORDS"] = "Паролі";
 $MESS["INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити фотографію?";
@@ -109,6 +109,7 @@ $MESS["INTRANET_USER_PROFILE_VIDEOCALL"] = "Відеодзвінок";
 $MESS["INTRANET_USER_PROFILE_VIEW_ACCESS_DENIED"] = "Доступ до перегляду профілю користувача обмежений.";
 $MESS["INTRANET_USER_PROFILE_YES"] = "Так";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Адміністратор";
+$MESS["INTRANET_USER_PROFILE_collaber"] = "Гість";
 $MESS["INTRANET_USER_PROFILE_email"] = "Поштовий користувач";
 $MESS["INTRANET_USER_PROFILE_employee"] = "Дії";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Екстранет";

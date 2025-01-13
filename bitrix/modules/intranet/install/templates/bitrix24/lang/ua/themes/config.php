@@ -45,6 +45,7 @@ $MESS["BITRIX24_THEME_GALACTIC_DREAM"] = "Галактична мрія";
 $MESS["BITRIX24_THEME_GALACTIC_HARMONY"] = "Галактична гармонія";
 $MESS["BITRIX24_THEME_GRASS"] = "Трава";
 $MESS["BITRIX24_THEME_GRASS_EARS"] = "Колосся трави";
+$MESS["BITRIX24_THEME_GRAVITY"] = "Гравітація";
 $MESS["BITRIX24_THEME_GREENFIELD"] = "Зелене поле";
 $MESS["BITRIX24_THEME_HALLOWEEN"] = "Хелловін";
 $MESS["BITRIX24_THEME_HIGHNESS"] = "Висота";

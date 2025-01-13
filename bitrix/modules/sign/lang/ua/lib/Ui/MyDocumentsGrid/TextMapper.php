@@ -1,0 +1,26 @@
+<?php
+$MESS["SIGN_MEMBER_ACTION_APPROVE"] = "Погодити";
+$MESS["SIGN_MEMBER_ACTION_DOWNLOAD"] = "Завантажити";
+$MESS["SIGN_MEMBER_ACTION_EDIT"] = "Заповнити";
+$MESS["SIGN_MEMBER_ACTION_SIGN"] = "Підписати";
+$MESS["SIGN_MEMBER_ACTION_SIGN_WITH_YOU"] = "Підписано вами";
+$MESS["SIGN_MEMBER_ACTION_VIEW"] = "Подивитися";
+$MESS["SIGN_MEMBER_APPROVED"] = "Погоджено";
+$MESS["SIGN_MEMBER_APPROVED_WITH_YOU"] = "Погоджено вами";
+$MESS["SIGN_MEMBER_APPROVED_WITH_YOU_MSGVER_1"] = "Погоджено мною";
+$MESS["SIGN_MEMBER_APPROVES"] = "Погоджує";
+$MESS["SIGN_MEMBER_EDIT"] = "Заповнює";
+$MESS["SIGN_MEMBER_EDITED"] = "Заповнено";
+$MESS["SIGN_MEMBER_EDITED_WITH_YOU"] = "Заповнено вами";
+$MESS["SIGN_MEMBER_EDITED_WITH_YOU_MSGVER_1"] = "Заповнено мною";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_ASSIGNEE"] = "Підписую з боку компанії";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_EDITOR"] = "Заповнюю";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_REVIEWER"] = "Погоджую";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_SIGNER_B2E"] = "Підписую як співробітник";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_SIGNER_E2B"] = "Відправник";
+$MESS["SIGN_MEMBER_SIGNED"] = "Підписано";
+$MESS["SIGN_MEMBER_SIGNED_WITH_YOU_MSGVER_1"] = "Підписано мною";
+$MESS["SIGN_MEMBER_SIGNS"] = "Підписує";
+$MESS["SIGN_MEMBER_STOPPED"] = "Відхилено";
+$MESS["SIGN_MEMBER_STOPPED_WITH_YOU"] = "Відхилено вами";
+$MESS["SIGN_MEMBER_STOPPED_WITH_YOU_MSGVER_1"] = "Відхилено мною";

@@ -29,6 +29,7 @@ $MESS["PROFILE_CHANGED_FAIL"] = "Сталася помилка. Будь лас�
 $MESS["PROFILE_CHANGED_SUCCESS"] = "Профіль успішно збережений!";
 $MESS["PROFILE_EDIT"] = "Зміна профілю";
 $MESS["PROFILE_INFO_MSGVER_1"] = "Профіль";
+$MESS["PROFILE_PERMISSIONS_ALERT_TITLE"] = "Недостатньо прав на перегляд профілю.";
 $MESS["PROFILE_USER_FILES_MSGVER_1"] = "Файли співробітника";
 $MESS["PROFILE_USER_MESSAGES_MSGVER_1"] = "Повідомлення співробітника";
 $MESS["PROFILE_USER_TASKS_MSGVER_1"] = "Завдання співробітника";

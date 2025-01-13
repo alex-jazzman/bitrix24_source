@@ -1260,6 +1260,17 @@
 	margin: 7px 10px;
 }
 
+.bizproc-automation-robot-btn-set.btn-pointer
+{
+	cursor: pointer;
+}
+
+.bizproc-automation-robot-btn-set.--disabled
+{
+	pointer-events: none;
+	cursor: not-allowed;
+}
+
 .bitrix24-light-theme :not(.side-panel) .bizproc-automation-robot-btn-set {
 	color: rgba(255,255,255,.7) !important;
 }

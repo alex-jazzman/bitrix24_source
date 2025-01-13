@@ -1,6 +1,7 @@
 <?php
 $MESS["TEXT_EDITOR_BTN_BOLD"] = "Напівжирний (#keystroke#)";
 $MESS["TEXT_EDITOR_BTN_BULLETED_LIST"] = "Список з маркерами";
+$MESS["TEXT_EDITOR_BTN_CLEAR_FORMATTING"] = "Видалити форматування";
 $MESS["TEXT_EDITOR_BTN_CODE"] = "Уставити код";
 $MESS["TEXT_EDITOR_BTN_COPILOT"] = "CoPilot";
 $MESS["TEXT_EDITOR_BTN_IMAGE"] = "Уставити зображення";
@@ -21,6 +22,9 @@ $MESS["TEXT_EDITOR_BTN_VIDEO"] = "Вставити відео";
 $MESS["TEXT_EDITOR_IMAGE_URL"] = "Адреса малюнка";
 $MESS["TEXT_EDITOR_INVALID_URL"] = "Некоректне посилання";
 $MESS["TEXT_EDITOR_LINK_URL"] = "Адреса посилання";
+$MESS["TEXT_EDITOR_PLACEHOLDER_COPILOT"] = "Натисніть пробіл для запуску CoPilot";
+$MESS["TEXT_EDITOR_PLACEHOLDER_MENTION"] = "Натисніть @, щоб згадати людину";
+$MESS["TEXT_EDITOR_PLACEHOLDER_MENTION_COPILOT"] = "Натисніть @, щоб когось згадати, або пробіл для запуску CoPilot";
 $MESS["TEXT_EDITOR_SPOILER_TITLE"] = "Спойлер";
 $MESS["TEXT_EDITOR_VIDEO_INSERT_HINT"] = "Посилання на YouTube, Vimeo";
 $MESS["TEXT_EDITOR_VIDEO_INSERT_TITLE"] = "Уставити відео";

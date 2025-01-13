@@ -1,0 +1,26 @@
+<?php
+$MESS["ROLE_MASTER_ABOUT_ROLE_MASTER_LINK"] = "Докладніше";
+$MESS["ROLE_MASTER_BACK_TO_EDITOR_BTN"] = "Повернутися в редактор";
+$MESS["ROLE_MASTER_CLOSE_BTN"] = "Закрити";
+$MESS["ROLE_MASTER_EDIT_WARNING_TEXT"] = "Роль зміниться в усіх, хто нею користується.";
+$MESS["ROLE_MASTER_FILE_DROPAREA_TEXT"] = "Перетягніть файли сюди";
+$MESS["ROLE_MASTER_LOADER_TEXT"] = "Зберігаємо роль";
+$MESS["ROLE_MASTER_NEXT_BUTTON"] = "Продовжити";
+$MESS["ROLE_MASTER_POPUP_TITLE"] = "Нова роль";
+$MESS["ROLE_MASTER_POPUP_TITLE_EDIT_MODE"] = "Редагування ролі";
+$MESS["ROLE_MASTER_PREV_BUTTON"] = "Назад";
+$MESS["ROLE_MASTER_REPEAT_REQUEST_BTN"] = "Спробувати ще раз";
+$MESS["ROLE_MASTER_ROLE_AVATAR_AND_NAME_FIELD"] = "Назва й іконка";
+$MESS["ROLE_MASTER_ROLE_AVATAR_AND_NAME_FIELD_PLACEHOLDER"] = "До 70 символів";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD"] = "Опис";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD_PLACEHOLDER"] = "Допоможу проаналізувати великий обсяг даних, поліпшити концепцію, написати пояснювальну записку до проєкту";
+$MESS["ROLE_MASTER_ROLE_MAIN_STEP_TITLE"] = "Назва та доступ";
+$MESS["ROLE_MASTER_ROLE_TEXT_FIELD_PLACEHOLDER"] = "Напишіть тут текст запиту для вашої ролі. Наприклад, ви додаєте роль «Архітектор». Приблизний текст: дій як досвідчений архітектор. Твоє завдання — допомагати мені аналізувати дані, зокрема кліматичні та географічні характеристики.";
+$MESS["ROLE_MASTER_ROLE_TEXT_STEP_TITLE"] = "Додайте запит для ролі";
+$MESS["ROLE_MASTER_ROLE_TEXT_STEP_TITLE_HINT"] = "Задайте роль, сформулюйте завдання і напишіть, на чому зробити акцент";
+$MESS["ROLE_MASTER_ROLE_USERS_WITH_ACCESS_FIELD"] = "Кому доступна";
+$MESS["ROLE_MASTER_SAVE_BUTTON"] = "Зберегти";
+$MESS["ROLE_MASTER_SAVE_PROMPT_ON_ERROR_SHORT_TEXT"] = "Не вдалося зберегти роль.";
+$MESS["ROLE_MASTER_SAVE_PROMPT_ON_ERROR_TEXT"] = "Якщо ситуація повторюється, поверніться в редактор, щоб скопіювати текст запиту й не втратити його.";
+$MESS["ROLE_MASTER_SAVING_DONE"] = "Готово";
+$MESS["ROLE_MASTER_USER_SELECTOR_ADD_BTN"] = "Змінити";

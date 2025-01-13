@@ -5,25 +5,27 @@ export type CopilotChatMessage = {
 	status?: 'sending' | 'delivered' | '';
 	params?: CopilotChatMessageParams;
 	dateCreated?: string;
-	type?: 'default' | 'welcomeFlows' | 'welcomeSiteWithAi' | 'system' | 'buttonClickMessage';
+	type?: 'Default' | 'GreetingFlows' | 'GreetingSiteWithAi' | 'System' | 'ButtonClicked';
 	viewed: boolean;
 };
 
 type CopilotChatMessageParams = {
 	buttons?: CopilotChatMessageButton[];
+	buttonId?: number;
+	messageId?: number;
 }
 
 export type CopilotChatMessageButton = {
 	id: number;
 	text: string;
 	isSelected: boolean;
-	message: string;
+	title: string;
 }
 
 export const CopilotChatMessageType = Object.freeze({
-	DEFAULT: 'default',
-	BUTTON_CLICK_MESSAGE: 'buttonClickMessage',
-	WELCOME_FLOWS: 'welcomeFlows',
-	WELCOME_SITE_WITH_AI: 'welcomeSiteWithAi',
-	SYSTEM: 'system',
+	DEFAULT: 'Default',
+	BUTTON_CLICK_MESSAGE: 'ButtonClicked',
+	WELCOME_FLOWS: 'WelcomeFlows',
+	WELCOME_SITE_WITH_AI: 'GreetingSiteWithAi',
+	SYSTEM: 'System',
 });

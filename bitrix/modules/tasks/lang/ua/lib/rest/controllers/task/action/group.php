@@ -2,6 +2,8 @@
 $MESS["TASKS_ACTION_DAYS_NUM_INVALID_TEXT"] = "Не вказано число, на скільки днів, тижнів або місяців треба перенести крайній термін.";
 $MESS["TASKS_ACTION_DAYS_NUM_INVALID_TEXT_NOT_CORRECT"] = "Не вдалося перенести крайній термін. Укажіть менше значення і спробуйте ще раз.";
 $MESS["TASKS_ACTION_DEADLINE_CANNOT_BE_EMPTY"] = "Крайній термін не вказано.";
+$MESS["TASKS_ACTION_FLOW_CANNOT_BE_EMPTY"] = "Не вибрано потік.";
+$MESS["TASKS_ACTION_FLOW_OFF"] = "Потік із таким ID вимкнений, у нього не можна додати завдання.";
 $MESS["TASKS_ACTION_GROUP_CANNOT_BE_EMPTY"] = "Не вибрано групу.";
 $MESS["TASKS_ACTION_NOT_ALLOWED"] = "Ця дія недоступна.";
 $MESS["TASKS_ACTION_NOT_ALLOWED_IN_TASKS"] = "Ця дія недоступна в таких завданнях: #TASK_LIST#.";

@@ -8,4 +8,5 @@ $MESS["TASKSMOBILE_TARIFF_PLAN_RESTRICTION_TASKS_EFFICIENCY"] = "Ефектив�
 $MESS["TASKSMOBILE_TARIFF_PLAN_RESTRICTION_TASKS_FLOW"] = "Потоки";
 $MESS["TASKSMOBILE_TARIFF_PLAN_RESTRICTION_TASK_CONTROL"] = "Контроль результату";
 $MESS["TASKSMOBILE_TARIFF_PLAN_RESTRICTION_TIME_TRACKING"] = "Облік часу в завданнях";
+$MESS["TASKSMOBILE_TARIFF_PLAN_RESTRICTION_USER_FIELDS"] = "Користувацькі поля";
 $MESS["TASKSMOBILE_TARIFF_PLAN_RESTRICTION_WORK_TIME_MATCH"] = "Пропускати вихідні дні";

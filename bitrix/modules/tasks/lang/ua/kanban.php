@@ -2,6 +2,9 @@
 $MESS["MAIN_KANBAN_NOTIFY_CHANGE_DEADLINE"] = "Крайній термін завдання змінений на #date#";
 $MESS["MAIN_KANBAN_NOTIFY_REMOVE_DEADLINE"] = "Крайній термін завдання був видалений";
 $MESS["MAIN_KANBAN_TITLE_PLACEHOLDER"] = "Назва #тег";
+$MESS["TASKS_KANBAN_COLLAB_NOTIFY_BUTTON"] = "Зрозуміло";
+$MESS["TASKS_KANBAN_COLLAB_NOTIFY_HEADER"] = "Недостатньо прав для встановлення етапів";
+$MESS["TASKS_KANBAN_COLLAB_NOTIFY_TEXT"] = "Попросіть власника колаби додати або змінити стадії канбана.";
 $MESS["TASKS_KANBAN_DIABLE_SORT_TOOLTIP"] = "У вас немає прав на зміну налаштувань проєкту";
 $MESS["TASKS_KANBAN_ITEM_STORY_POINTS_TITLE"] = "Story Points";
 $MESS["TASKS_KANBAN_ME_DISABLE_COMPLETE"] = "Завдання завершене, щоб перемістити його в іншу колонку, відновіть виконання";
@@ -40,6 +43,7 @@ $MESS["TASKS_KANBAN_PANEL_MEMBERS_AUDITOR"] = "Додати спостеріга
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_CORESPONSE"] = "Додати співвиконавця";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_CREATED"] = "Змінити постановника";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_RESPONSE"] = "Змінити відповідального";
+$MESS["TASKS_KANBAN_PANEL_MEMBERS_RESPONSE_MSGVER_1"] = "Змінити виконавця";
 $MESS["TASKS_KANBAN_PANEL_MOVETASK"] = "Завдання перенесені в колонку: #columnName#";
 $MESS["TASKS_KANBAN_PANEL_STAGE"] = "Стадія";
 $MESS["TASKS_KANBAN_POPUP_AT_LEAST_ONE_FIELD"] = "У формі має бути хоча б одне поле.";

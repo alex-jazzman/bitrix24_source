@@ -1,4 +1,5 @@
 import { bind, Dom, Tag } from 'main.core';
+import { type CopilotChat } from 'ai.copilot-chat.ui';
 import type { CopilotChatMessage } from '../../types';
 import { CopilotChatMessageWelcome } from './copilot-chat-message-welcome';
 
@@ -21,7 +22,11 @@ export const CopilotChatMessageSiteWithAi = {
 			default: false,
 		},
 	},
+	inject: ['instance'],
 	computed: {
+		chatInstance(): CopilotChat {
+			return this.instance;
+		},
 		messageInfo(): CopilotChatMessage {
 			return {
 				...this.message,
@@ -36,21 +41,42 @@ export const CopilotChatMessageSiteWithAi = {
 	},
 	methods: {
 		renderContent(): void {
-			const paragraph2 = this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_2', {
-				'#LINK#': `<a href="#" class="${this.disableAllActions ? 'disabled' : ''}" ref="createSiteLink">`,
-				'#/LINK#': '</a>',
-			});
+			const buttons = this.messageInfo.params?.buttons ?? [];
+
+			const isMessageHaveCreateSiteButton = buttons.length > 0;
+
+			const paragraph2 = isMessageHaveCreateSiteButton
+				? this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_2', {
+					'#LINK#': `<a href="#" class="${this.disableAllActions ? 'disabled' : ''}" ref="createSiteLink">`,
+					'#/LINK#': '</a>',
+				}) : ''
+			;
 
 			const content = Tag.render`
-				<div>
+				<div ref="root">
 					<p>${this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_1')}</p>
 					<p>${paragraph2}</p>
 				</div>
 			`;
 
-			bind(content.createSiteLink, 'click', () => {
-				// TODO add some action here
-			});
+			if (isMessageHaveCreateSiteButton)
+			{
+				bind(content.createSiteLink, 'click', () => {
+					if (!this.messageInfo.params?.buttons || this.messageInfo.params.buttons.length === 0)
+					{
+						return;
+					}
+
+					this.chatInstance.addUserMessage({
+						type: 'ButtonClicked',
+						content: this.messageInfo.params?.buttons[0]?.text,
+						params: {
+							messageId: this.messageInfo.id,
+							buttonId: this.messageInfo.params?.buttons[0]?.id,
+						},
+					});
+				});
+			}
 
 			this.$refs.content.innerHTML = '';
 			Dom.append(content.root, this.$refs.content);

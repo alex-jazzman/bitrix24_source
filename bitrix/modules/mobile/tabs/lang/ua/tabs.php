@@ -1,9 +1,14 @@
 <?php
+$MESS["TAB_DISK_NAVIGATION_TAB_COMPANY_FILES"] = "Файли компанії";
+$MESS["TAB_DISK_NAVIGATION_TAB_MY_FILES"] = "Мої файли";
+$MESS["TAB_DISK_NAVIGATION_TAB_RECENT"] = "Нещодавні";
+$MESS["TAB_DISK_NAVIGATION_TAB_SHARED_FILES"] = "Загальні файли";
 $MESS["TAB_NAME_CALENDAR"] = "Календар";
 $MESS["TAB_NAME_CALENDAR_SHORT"] = "Календар";
 $MESS["TAB_NAME_CATALOG_STORE"] = "Складський облік";
 $MESS["TAB_NAME_CATALOG_STORE_SHORT"] = "Склади";
 $MESS["TAB_NAME_CRM"] = "CRM";
+$MESS["TAB_NAME_DISK"] = "Файли";
 $MESS["TAB_NAME_IM_OPENLINES"] = "Відкриті Лінії";
 $MESS["TAB_NAME_IM_OPENLINES_SHORT"] = "Лінії";
 $MESS["TAB_NAME_IM_RECENT"] = "Чати";
@@ -11,6 +16,7 @@ $MESS["TAB_NAME_IM_RECENT_FULL"] = "Чати та Дзвінки";
 $MESS["TAB_NAME_IM_RECENT_SHORT"] = "Чати";
 $MESS["TAB_NAME_MORE"] = "Меню";
 $MESS["TAB_NAME_MORE_SHORT"] = "Ще";
+$MESS["TAB_NAME_MORE_SHORT_MSGVER_1"] = "Ще";
 $MESS["TAB_NAME_NEWS"] = "Новини";
 $MESS["TAB_NAME_NEWS2"] = "Стрічка";
 $MESS["TAB_NAME_NEWS_SHORT"] = "Новини";

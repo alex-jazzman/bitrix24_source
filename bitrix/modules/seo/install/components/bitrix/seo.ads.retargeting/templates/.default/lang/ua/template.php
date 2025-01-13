@@ -17,6 +17,7 @@ $MESS["CRM_ADS_RTG_CABINET_VKONTAKTE"] = "Рекламний кабінет Вк
 $MESS["CRM_ADS_RTG_CABINET_YANDEX"] = "Кабінет Яндекс.Аудиторії";
 $MESS["CRM_ADS_RTG_CANCEL"] = "Скасувати";
 $MESS["CRM_ADS_RTG_CANCEL_ALT"] = "Скасувати";
+$MESS["CRM_ADS_RTG_CHOOSE_AUDIENCE"] = "Виберіть аудиторію";
 $MESS["CRM_ADS_RTG_CHOOSE_USER_LIST"] = "Виберіть список користувачів";
 $MESS["CRM_ADS_RTG_CLOSE"] = "Закрити";
 $MESS["CRM_ADS_RTG_CREATE"] = "Створити";

@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_TIMELINE_BIZPROC_EXEC_TIME"] = "Миттєво";
+$MESS["CRM_TIMELINE_BIZPROC_EXEC_TITLE"] = "Час запуску";

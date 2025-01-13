@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CC_BLL_ACCESS_DENIED"] = "Немає прав для перегляду та редагування списку.";
 $MESS["CC_BLL_ANY"] = "(будь-який)";
 $MESS["CC_BLL_COLUMN_BIZPROC"] = "Бізнес-процеси";
@@ -29,5 +29,5 @@ $MESS["CT_BLL_BIZPROC_STOP"] = "Зупинити бізнес-процес";
 $MESS["CT_BLL_DOWNLOAD"] = "Завантажити";
 $MESS["CT_BLL_ENLARGE"] = "Збільшити";
 $MESS["CT_BLL_GRID_PAGE_SIZES_ALL"] = "Всі";
+$MESS["CT_BLL_INTERNAL_DELETE_ERROR"] = "Не вдалося видалити елемент. Спробуйте ще раз.";
 $MESS["CT_BLL_UN_LOCK_ELEMENT"] = "Розблокувати";
-?>

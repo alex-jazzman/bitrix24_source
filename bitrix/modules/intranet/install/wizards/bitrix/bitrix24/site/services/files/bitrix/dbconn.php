@@ -1,5 +1,5 @@
 <?
-$arLang = array("ru", "en", "de", "ua", "la", "tc", "sc", "br", "fr", "pl", "tr", "ar");
+$arLang = ["ru", "en", "de", "ua", "la", "tc", "sc", "br", "fr", "pl", "tr", "ar", "kz"];
 if (isset($_GET['user_lang']) && in_array($_GET['user_lang'], $arLang))
 {
 	setcookie("USER_LANG", $_GET['user_lang'], time()+9999999, "/");

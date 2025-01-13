@@ -1,4 +1,6 @@
 .ai__copilot-chat-message-welcome {
+	margin-left: -50px;
+	margin-bottom: 8px;
 	border-radius: var(--ui-border-radius-2xl);
 	padding: 20px;
 	background-color: rgba(var(--ui-color-base-solid-rgb), 0.2);

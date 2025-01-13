@@ -2209,32 +2209,6 @@ class CreateDBStep extends CWizardStep
 			@chmod($filePathNew, octdec($this->filePermission));
 		}
 
-		if (strtoupper(substr(PHP_OS, 0, 3)) === "WIN")
-		{
-			$fhtaccess = $_SERVER['DOCUMENT_ROOT'] . '/.htaccess';
-			$f = fopen($fhtaccess, "rb");
-			$fcontent = fread($f, filesize($fhtaccess));
-			fclose($f);
-
-			$fcontent = preg_replace('/RewriteEngine On/is', "RewriteEngine On\r\n\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} -f [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} -l [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} -d\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} [\\xC2-\\xDF][\\x80-\\xBF] [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} \\xE0[\\xA0-\\xBF][\\x80-\\xBF] [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} [\\xE1-\\xEC\\xEE\\xEF][\\x80-\\xBF]{2} [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} \\xED[\\x80-\\x9F][\\x80-\\xBF] [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2} [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} [\\xF1-\\xF3][\\x80-\\xBF]{3} [OR]\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}\r\n" .
-				"RewriteCond %{REQUEST_FILENAME} !/bitrix/virtual_file_system.php$\r\n" .
-				"RewriteRule ^(.*)$ /bitrix/virtual_file_system.php [L]", $fcontent);
-
-			$f = fopen($fhtaccess, "wb+");
-			fwrite($f, $fcontent);
-			fclose($f);
-		}
-
 		//Create .htaccess
 		$filePath = $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/.htaccess";
 		if (file_exists($filePath))

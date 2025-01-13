@@ -1,0 +1,4 @@
+<?php
+$MESS["HUMAN_RESOURCES_ROLE_ADMIN"] = "Адміністратор";
+$MESS["HUMAN_RESOURCES_ROLE_DIRECTOR"] = "Керівник";
+$MESS["HUMAN_RESOURCES_ROLE_EMPLOYEE"] = "Співробітник";

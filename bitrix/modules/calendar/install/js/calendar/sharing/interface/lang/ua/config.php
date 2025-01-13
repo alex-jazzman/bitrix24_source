@@ -16,6 +16,7 @@ $MESS["CALENDAR_SHARING_LINK_LIST_SORT_RECENT"] = "Найуживаніші";
 $MESS["CALENDAR_SHARING_LINK_LIST_TITLE"] = "Спільні слоти";
 $MESS["CALENDAR_SHARING_LIST_EMPTY_TITLE"] = "Тут з'являться посилання на спільні слоти";
 $MESS["CALENDAR_SHARING_SETTINGS_READ_ONLY_HINT"] = "Налаштувати слоти в цій угоді може тільки відповідальний менеджер";
+$MESS["CALENDAR_SHARING_SETTINGS_READ_ONLY_HINT_GROUP"] = "Час для зустрічей у колабі не можна редагувати.";
 $MESS["CALENDAR_SHARING_SETTINGS_SLOT_SIZE"] = "Тривалість слота:";
 $MESS["CALENDAR_SHARING_SETTINGS_SLOT_SIZE_V2"] = "Тривалість слота:";
 $MESS["CALENDAR_SHARING_SETTINGS_SUBTITLE_DEFAULT"] = "За замовчуванням вибрані всі робочі дні";

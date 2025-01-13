@@ -1,0 +1,2 @@
+<?php
+$MESS["HUMANRESOURCES_COMPANY_DATA_IS_INCORRECT"] = "Некоректні дані.";

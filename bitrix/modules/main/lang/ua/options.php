@@ -269,3 +269,4 @@ $MESS["main_sett_add_users"] = "Додати користувачів";
 $MESS["main_sett_public_panel"] = "Панель інструментів публічного розділу";
 $MESS["main_sett_public_panel_hide"] = "Ніколи не показувати панель для користувачів:";
 $MESS["main_sett_public_panel_show"] = "Завжди показувати панель для користувачів:";
+$MESS["SUP_MENU_TURN_EXPERT_MODE_ON"] = "Включити експертний режим:";

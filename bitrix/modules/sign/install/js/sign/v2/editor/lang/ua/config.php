@@ -1,4 +1,5 @@
 <?php
+$MESS["SIGN_EDITOR_BLOCKS_COMPANY"] = "Компанія";
 $MESS["SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E"] = "Співробітник";
 $MESS["SIGN_EDITOR_BLOCKS_FIRST_PARTY"] = "Перша сторона";
 $MESS["SIGN_EDITOR_BLOCKS_FIRST_PARTY_B2E"] = "Компанія і представник";

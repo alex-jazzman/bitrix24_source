@@ -1,3 +1,4 @@
+import { bind } from 'main.core';
 import type { MenuItemOptions } from 'main.popup';
 import { CopilotChatEvents } from '../copilot-chat';
 
@@ -77,10 +78,23 @@ export const CopilotChat = {
 			required: false,
 			default: () => ([]),
 		},
+		userAvatar: {
+			type: Object,
+			required: false,
+		},
 		userMessageMenuItems: {
 			type: Array,
 			required: false,
 			default: () => ([]),
+		},
+		inputPlaceholder: {
+			type: String,
+			required: false,
+			default: '',
+		},
+		loaderText: {
+			type: String,
+			required: false,
 		},
 	},
 	data(): CopilotChatData {
@@ -96,6 +110,9 @@ export const CopilotChat = {
 		};
 	},
 	computed: {
+		userPhoto(): string {
+			return this.userAvatar?.value || '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2';
+		},
 		isInputDisabled(): boolean {
 			return this.disableInput.value === true;
 		},
@@ -206,12 +223,26 @@ export const CopilotChat = {
 				this.scrollMessagesListAfterOpen();
 			}
 		});
+
+		bind(this.$refs.main, 'scroll', (event: Event) => {
+			if (event.target.scrollTop < 100)
+			{
+				this.instance.emit(CopilotChatEvents.MESSAGES_SCROLL_TOP);
+			}
+		});
 	},
 	beforeUnmount() {
 		this.instance.unsubscribe(CopilotChatEvents.ADD_USER_MESSAGE, this.handleAddNewUserMessage);
 	},
 	watch: {
 		'messagesList.length': function(newMessagesCount, oldMessagesCount) {
+			if (newMessagesCount - oldMessagesCount === 1)
+			{
+				requestAnimationFrame(() => {
+					this.scrollMessagesListToTheEnd(true);
+				});
+			}
+
 			requestAnimationFrame(() => {
 				if (oldMessagesCount === 0 && newMessagesCount > 1 && this.isScrollToTheEndAfterMounted)
 				{
@@ -238,7 +269,7 @@ export const CopilotChat = {
 					class="ai__copilot-chat_main-loader-container"
 				>
 					<slot name="loader">
-						<CopilotChatHistoryLoader />
+						<CopilotChatHistoryLoader :text="loaderText" />
 					</slot>
 				</div>
 				<div v-else-if="isShowErrorScreen">
@@ -249,7 +280,7 @@ export const CopilotChat = {
 				<CopilotChatMessages
 					v-else
 					@clickMessageButton="handleClickOnMessageButton"
-					user-avatar="/bitrix/js/ui/icons/b24/images/ui-user.svg?v2"
+					:user-avatar="userPhoto"
 					:copilot-avatar="botData.avatar"
 					:messages="messagesList"
 					:welcome-message-html-element="welcomeMessageHtml"
@@ -267,6 +298,7 @@ export const CopilotChat = {
 				<CopilotChatInput
 					v-if="useInput"
 					:disabled="isInputDisabled"
+					:placeholder="inputPlaceholder"
 					@submit="handleSubmitMessage"
 				/>
 				<div

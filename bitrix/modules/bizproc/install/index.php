@@ -69,6 +69,8 @@ Class bizproc extends CModule
 		$eventManager->registerEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
 
 		$eventManager->registerEventHandler('intranet', 'onSettingsProvidersCollect', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onSettingsProvidersCollect');
+		$eventManager->registerEventHandler('crm', 'DealCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'dealCategoryOnBeforeDelete');
+		$eventManager->registerEventHandler('crm', 'ItemCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'itemCategoryOnBeforeDelete');
 
 		return true;
 	}
@@ -112,6 +114,8 @@ Class bizproc extends CModule
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
 
 		$eventManager->unRegisterEventHandler('intranet', 'onSettingsProvidersCollect', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onSettingsProvidersCollect');
+		$eventManager->unRegisterEventHandler('crm', 'DealCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'dealCategoryOnBeforeDelete');
+		$eventManager->unRegisterEventHandler('crm', 'ItemCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'itemCategoryOnBeforeDelete');
 
 		return true;
 	}

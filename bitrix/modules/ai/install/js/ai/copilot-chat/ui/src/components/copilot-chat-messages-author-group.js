@@ -20,8 +20,8 @@ export const CopilotChatMessagesAuthorGroup = {
 	template: `
 		<CopilotChatNewMessagesLabel v-if="showNewMessagesLabel" />
 		<div class="ai__copilot-chat_messages-author-group">
-			<div v-if="avatar" class="ai__copilot-chat_messages-author-group__avatar">
-				<img :src="avatar" alt="#">
+			<div class="ai__copilot-chat_messages-author-group__avatar">
+				<img v-if="avatar" :src="avatar" alt="#">
 			</div>
 			<div class="ai__copilot-chat_messages-author-group__messages">
 				<slot></slot>

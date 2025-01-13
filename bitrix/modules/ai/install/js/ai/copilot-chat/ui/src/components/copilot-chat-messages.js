@@ -85,6 +85,7 @@ export const CopilotChatMessages = {
 
 				if (groupedMessages[messageIsoDate] === undefined)
 				{
+					// eslint-disable-next-line no-param-reassign
 					groupedMessages[messageIsoDate] = {
 						messages: [],
 						isNewMessagesStartHere: false,
@@ -93,6 +94,7 @@ export const CopilotChatMessages = {
 
 				if (message.viewed === false && isMessagesContainsUnread === false)
 				{
+					// eslint-disable-next-line no-param-reassign
 					groupedMessages[messageIsoDate].isNewMessagesStartHere = true;
 					isMessagesContainsUnread = true;
 				}
@@ -182,9 +184,12 @@ export const CopilotChatMessages = {
 				: this.userAvatar
 			;
 		},
-		getAuthorMessagesGroupAvatar(authorId: number): string
+		getAuthorMessagesGroupAvatar(authorId: number, messages: CopilotChatMessageData[]): string
 		{
-			if (authorId === null || authorId === undefined)
+			const lastMessage = messages.at(-1);
+			const isLastMessageIsWelcome = lastMessage.type !== 'Default' && lastMessage.type !== 'ButtonClicked';
+
+			if (authorId === null || authorId === undefined || isLastMessageIsWelcome)
 			{
 				return null;
 			}
@@ -217,7 +222,7 @@ export const CopilotChatMessages = {
 		>
 			<CopilotChatMessagesAuthorGroup
 				v-for="([authorId, messagesFromCurrentAuthor, showNewMessagesLabel], authorGroupIndex) in messagesGroupedByDayAndAuthor[date]"
-				:avatar="getAuthorMessagesGroupAvatar(authorId)"
+				:avatar="getAuthorMessagesGroupAvatar(authorId, messagesFromCurrentAuthor)"
 				:show-new-messages-label="showNewMessagesLabel"
 			>
 				<ul class="ai__copilot-chat-messages">

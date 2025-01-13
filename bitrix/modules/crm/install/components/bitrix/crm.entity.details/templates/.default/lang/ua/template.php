@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL"] = "Бізнес-процеси";
 $MESS["CRM_ENT_DETAIL_BUTTON_CANCEL"] = "Скасування";
 $MESS["CRM_ENT_DETAIL_BUTTON_SAVE"] = "Зберегти";
 $MESS["CRM_ENT_DETAIL_COMPANY_DELETE_DIALOG_MESSAGE"] = "Ви впевнені, що бажаєте видалити цю компанію?";

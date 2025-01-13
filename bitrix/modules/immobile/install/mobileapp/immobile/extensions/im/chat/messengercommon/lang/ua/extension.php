@@ -2,8 +2,10 @@
 $MESS["IM_CHAT_CALL"] = "Телефонний дзвінок";
 $MESS["IM_CHAT_GENERAL"] = "Загальний чат";
 $MESS["IM_CHAT_GROUP_NEW"] = "Груповий чат";
+$MESS["IM_CHAT_GROUP_NEW_MSGVER_1"] = "Груповий чат";
 $MESS["IM_CHAT_LINES"] = "Відкрита лінія";
 $MESS["IM_CHAT_OPEN_NEW"] = "Канал";
+$MESS["IM_CHAT_OPEN_NEW_MSGVER_1"] = "Відкритий чат";
 $MESS["IM_CL_BOT"] = "Чат-бот";
 $MESS["IM_CL_USER"] = "Користувач";
 $MESS["IM_CL_USER_B24"] = "Співробітник";

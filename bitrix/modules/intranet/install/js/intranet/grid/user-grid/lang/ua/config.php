@@ -1,6 +1,7 @@
 <?php
 $MESS["INTRANET_JS_CONTROL_BALLOON_ADD_DEPARTMENT"] = "Вибрати відділ";
 $MESS["INTRANET_JS_CONTROL_BALLOON_ADMIN"] = "Адміністратор";
+$MESS["INTRANET_JS_CONTROL_BALLOON_COLLABER"] = "Гість";
 $MESS["INTRANET_JS_CONTROL_BALLOON_EXTRANET"] = "Екстранет";
 $MESS["INTRANET_JS_CONTROL_BALLOON_INTEGRATOR"] = "Інтегратор";
 $MESS["INTRANET_JS_CONTROL_BALLOON_INVITATION_NOT_ACCEPTED"] = "Запрошення ще не прийнято";
@@ -62,6 +63,13 @@ $MESS["INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_MESSAGE"] = "Корист�
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_MESSAGE_REMAINING"] = "Користувачі #USER_LIST# і ще #USER_REMAINING# беруть участь у бізнес-процесах, тому їх не можна видалити. Ці користувачі будуть звільнені. Звільнені користувачі не зможуть увійти в Бітрікс24, але їхні дані залишаться.";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_MESSAGE_SINGLE"] = "#USER# бере участь у робочих процесах, тому цього користувача не можна видалити. Користувач буде звільнений. Звільнені користувачі не зможуть увійти в Бітрікс24, але їхні дані залишаться.";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_DELETE_SKIPPED_TITLE"] = "Можна лише звільнити";
+$MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE"] = "Переведіть користувачів #USER_LIST# у групу «Співробітники» в адміністративній частині Бітрікс24, щоб додати у відділ.";
+$MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_CLOUD"] = "Переведіть користувачів #USER_LIST# в інтранет, щоб додати до відділу. Це можна зробити в профілі співробітника.";
+$MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_CLOUD_REMAINING"] = "Переведіть користувачів #USER_LIST# і ще #USER_REMAINING# в інтранет, щоб додати у відділ. Це можна зробити в профілі співробітника.";
+$MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_CLOUD_SINGLE"] = "Переведіть користувача #USER# в інтранет, щоб додати до відділу. Це можна зробити в профілі співробітника.";
+$MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_REMAINING"] = "Переведіть користувачів #USER_LIST# і ще #USER_REMAINING# у групу «Співробітники» в адміністративній частині Бітрікс24, щоб додати у відділ.";
+$MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_SINGLE"] = "Переведіть користувача #USER# у групу «Співробітники» в адміністративній частині Бітрікс24, щоб додати у відділ.";
+$MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_TITLE"] = "Не вдалося змінити відділ зовнішнім користувачам";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_FIRE_MESSAGE"] = "Користувачі не зможуть отримати доступ до вашого Бітрікс24, але їхні дані залишаться. Бажаєте звільнити цих користувачів?";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_FIRE_MESSAGE_BUTTON"] = "Так";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_FIRE_MESSAGE_TITLE"] = "Звільнення користувачів";

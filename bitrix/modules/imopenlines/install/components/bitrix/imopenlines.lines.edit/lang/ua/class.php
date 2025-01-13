@@ -45,6 +45,6 @@ $MESS["OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE_ERROR"] = "Помилка п
 $MESS["OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE_ERROR_UNIQUE"] = "До цієї відкритої лінії вже прив'язаний список швидких відповідей.";
 $MESS["OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_NOT_SELECTED"] = "Не обрано";
 $MESS["OL_COMPONENT_MODULE_CRM_NOT_INSTALLED"] = "Модуль CRM не встановлено";
-$MESS["OL_COMPONENT_MODULE_IM_NOT_INSTALLED"] = "Модуль веб-месенджера не встановлений";
+$MESS["OL_COMPONENT_MODULE_IM_NOT_INSTALLED"] = "Не встановлено модуль «Вебмесенджер».";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "Модуль відкритих ліній не встановлено";
 $MESS["OL_COMPONENT_MODULE_SOCIALNETWORK_NOT_INSTALLED"] = "Модуль соціальної мережі не встановлено";

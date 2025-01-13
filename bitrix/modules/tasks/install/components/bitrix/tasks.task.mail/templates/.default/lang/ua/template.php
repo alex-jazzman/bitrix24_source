@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ADD_COMMENT_F"] = "Додала коментар до завдання";
 $MESS["TASKS_ADD_COMMENT_M"] = "Додав коментар до завдання";
 $MESS["TASKS_ADD_TASK_F"] = "Доручила завдання";
@@ -13,6 +13,7 @@ $MESS["TASKS_FIELD_DELETED_FILES"] = "Видалені файли";
 $MESS["TASKS_FIELD_DEPENDS_ON"] = "Попередні завдання";
 $MESS["TASKS_FIELD_DESCRIPTION"] = "Опис";
 $MESS["TASKS_FIELD_END_DATE_PLAN"] = "Запланована дата закінчення";
+$MESS["TASKS_FIELD_END_DATE_PLAN_MSGVER_1"] = "Запланована дата закінчення";
 $MESS["TASKS_FIELD_GROUP_ID"] = "Група";
 $MESS["TASKS_FIELD_LINK"] = "Перегляд завдання";
 $MESS["TASKS_FIELD_MARK"] = "Оцінка";
@@ -24,7 +25,9 @@ $MESS["TASKS_FIELD_NO_VALUE"] = "немає";
 $MESS["TASKS_FIELD_PARENT_ID"] = "Базове завдання";
 $MESS["TASKS_FIELD_PRIORITY"] = "Пріоритет";
 $MESS["TASKS_FIELD_RESPONSIBLE_ID"] = "Відповідальний";
+$MESS["TASKS_FIELD_RESPONSIBLE_ID_MSGVER_1"] = "Виконавець";
 $MESS["TASKS_FIELD_START_DATE_PLAN"] = "Запланована дата початку";
+$MESS["TASKS_FIELD_START_DATE_PLAN_MSGVER_1"] = "Запланована дата початку";
 $MESS["TASKS_FIELD_STATUS"] = "Статус";
 $MESS["TASKS_FIELD_TAGS"] = "Теги";
 $MESS["TASKS_FIELD_TIME_ESTIMATE"] = "Планові трудовитрати";
@@ -47,4 +50,3 @@ $MESS["TASKS_STATUS_7"] = "Відхилене";
 $MESS["TASKS_TASK"] = "Завдання";
 $MESS["TASKS_UPDATE_TASK_F"] = "Змінила завдання";
 $MESS["TASKS_UPDATE_TASK_M"] = "Змінив завдання";
-?>

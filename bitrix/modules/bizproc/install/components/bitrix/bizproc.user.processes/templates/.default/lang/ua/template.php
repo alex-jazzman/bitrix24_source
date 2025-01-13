@@ -1,4 +1,8 @@
 <?php
+$MESS["BIZPROC_RENDERED_RESULT_NO_RIGHTS_TOOLTIP"] = "Щоб переглядати результати бізнес-процесів, зверніться до керівника або адміністратора вашого Бітрікс24.";
+$MESS["BIZPROC_RENDERED_RESULT_NO_RIGHTS_VIEW"] = "Недостатньо прав для перегляду результату.";
+$MESS["BIZPROC_RENDERED_RESULT_POSITIVE_RESULT_FOR"] = "Бізнес-процес завершено для користувача #USER#.";
+$MESS["BIZPROC_RENDERED_RESULT_VALUE"] = "Результат бізнес-процесу:";
 $MESS["BIZPROC_USER_PROCESSES_TEMPLATE_COUNTERS_COMMENT"] = "Коментарі";
 $MESS["BIZPROC_USER_PROCESSES_TEMPLATE_COUNTERS_LABEL"] = "Завдання:";
 $MESS["BIZPROC_USER_PROCESSES_TEMPLATE_COUNTERS_TASK"] = "Потребують виконання";

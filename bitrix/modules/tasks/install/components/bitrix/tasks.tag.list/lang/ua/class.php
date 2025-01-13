@@ -23,6 +23,7 @@ $MESS["TASKS_TAG_GRID_TASK_ROW_CONTENT_STATUS_7"] = "Відхилене";
 $MESS["TASKS_TAG_LIST_FORBIDDEN_SEE_GROUP_TAGS_DESCRIPTION"] = "Зверніться до учасників групи або адміністратора порталу.";
 $MESS["TASKS_TAG_LIST_FORBIDDEN_SEE_GROUP_TAGS_TITLE"] = "Доступ заборонений";
 $MESS["TASKS_TAG_LIST_FORBIDDEN_SEE_GROUP_TAGS_TITLE_OR_NOT_FOUND"] = "Група не знайдена або доступ до неї заборонений.";
+$MESS["TASKS_TAG_LIST_GROUP_TAGS_COLLAB_APP_TITLE"] = "Теги колаби #PROJECT#";
 $MESS["TASKS_TAG_LIST_GROUP_TAGS_GRID_APP_TITLE"] = "Теги проєкту #PROJECT#";
 $MESS["TASKS_TAG_LIST_MY_TAGS_GRID_APP_TITLE"] = "Мої теги";
 $MESS["TASKS_TAG_LIST_TAGS_APP_TITLE"] = "Теги";

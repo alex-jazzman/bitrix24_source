@@ -174,6 +174,7 @@ $MESS["EC_DATE"] = "Дата";
 $MESS["EC_DD_DENY_EVENT"] = "Ця подія не можна перетягувати";
 $MESS["EC_DD_DENY_TASK"] = "Завдання не можна перетягувати";
 $MESS["EC_DEC"] = "Грудень";
+$MESS["EC_DECLINE_GROUP_DELETING_WITH_EVENTS"] = "Групу не можна видалити, бо в Календарі містяться події.";
 $MESS["EC_DECLINE_INFO"] = "Ви відмовились від участі в даній події";
 $MESS["EC_DECLINE_REC_EVENT"] = "Відмовитися від участі в повторюваній події?";
 $MESS["EC_DEC_R"] = "Грудня";
@@ -390,6 +391,7 @@ $MESS["EC_MEETING_CALENDAR"] = "Додавати в цей календар вс
 $MESS["EC_MEETING_TEXT"] = "Текст запрошення";
 $MESS["EC_MEETING_TEXT2"] = "Запрошення";
 $MESS["EC_MEET_TEXT_CHANGE_ALERT"] = "Увага, зміна тексту запрошення призведе до повторного сповіщення всіх учасників події";
+$MESS["EC_MESS_STATUS_NOTIFY_DOWNLOAD_ICS"] = "Щоб додати зустріч [B]#TITLE#[/B] до зовнішнього календаря, [url=#LINK#][B]завантажте файл ICS[/B][/url].";
 $MESS["EC_MESS_STATUS_NOTIFY_N"] = "Ви відмовилися взяти участь у зустрічі \"#TITLE#\", яка відбудеться #ACTIVE_FROM#";
 $MESS["EC_MESS_STATUS_NOTIFY_N_SITE"] = "Ви відмовилися взяти участь у зустрічі \"[B]#TITLE#[/B]\", яка відбудеться [B]#ACTIVE_FROM#[/B]";
 $MESS["EC_MESS_STATUS_NOTIFY_Y"] = "Ви погодилися взяти участь у зустрічі \"#TITLE#\", яка відбудеться #ACTIVE_FROM#";

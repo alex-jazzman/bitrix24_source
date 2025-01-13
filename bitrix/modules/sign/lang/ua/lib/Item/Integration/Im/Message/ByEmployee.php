@@ -1,0 +1,12 @@
+<?php
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEE"] = "[b]Документ відхилено[/b][br][br]#INITIATOR_NAME# відхилив(-ла) документ «#DOC_NAME#». Уточніть причини та надішліть документ знову.";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEF"] = "[b]Документ відхилено[/b][br][br]#INITIATOR_NAME# відхилила документ «#DOC_NAME#». Уточніть причини та надішліть документ знову.";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEM"] = "[b]Документ відхилено[/b][br][br]#INITIATOR_NAME# відхилив документ «#DOC_NAME#». Уточніть причини та надішліть документ знову.";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_COMPANY"] = "[b]Документ погоджено[/b][br][br]Документ «#DOC_NAME#» від співробітника #INITIATOR_NAME# погоджено, і він перебуває в Сейфі компанії.";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEE"] = "[b]Документ погоджено[/b][br][br]#INITIATOR_NAME# погодив(-ла) документ «#DOC_NAME#». Подивитися і завантажити документ можна у вашому профілі в розділі «Мої документи»[br][br][url=#SIGN_URL#]Відкрити документ[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEF"] = "[b]Документ погоджено[/b][br][br]#INITIATOR_NAME# погодила документ «#DOC_NAME#». Подивитися і завантажити документ можна у вашому профілі в розділі «Мої документи»[br][br][url=#SIGN_URL#]Відкрити документ[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEM"] = "[b]Документ погоджено[/b][br][br]#INITIATOR_NAME# погодив документ «#DOC_NAME#». Подивитися і завантажити документ можна у вашому профілі в розділі «Мої документи»[br][br][url=#SIGN_URL#]Відкрити документ[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_COMPANY"] = "[b]Підпишіть документ[/b][br][br]Співробітник #INITIATOR_NAME# просить вас підписати документ «#DOC_NAME#»[br][br][url=#SIGN_URL#]Перейти до підписання[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_EMPLOYEE"] = "[b]Підпишіть документ перед надсиланням[/b][br][br]Підпишіть документ «#DOC_NAME#» та стежте за його статусом у вашому профілі в розділі «Мої документи»[br][br][url=#SIGN_URL#]Перейти до підписання[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_REVIEWER"] = "[b]Погодьте документ[/b][br][br]Співробітник #INITIATOR_NAME# просить вас погодити документ «#DOC_NAME#»[br][br][url=#SIGN_URL#]Перейти до погодження[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_SIGNED_BY_EMPLOYEE"] = "[b]Документ надіслано[/b][br][br]Ви підписали та надіслали документ «#DOC_NAME#». Коли компанія завершить роботу з документом, ви отримаєте повідомлення[br][br][url=#SIGN_URL#]Відкрити документ[/url]";

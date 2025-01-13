@@ -10,6 +10,7 @@ $MESS["BIZPROC_WFEDIT_CATEGORY_TASKS_1"] = "Завдання";
 $MESS["BIZPROC_WFEDIT_CONSTANTS_SAVE_ERROR"] = "Розмір констант шаблону занадто великий. Не вдалося зберегти шаблон.";
 $MESS["BIZPROC_WFEDIT_CONSTANTS_SAVE_ERROR_MSGVER_1"] = "Розмір параметрів шаблону занадто великий. Не вдалося зберегти шаблон.";
 $MESS["BIZPROC_WFEDIT_DEFAULT_TITLE"] = "Шаблон бізнес-процесу";
+$MESS["BIZPROC_WFEDIT_ERROR_COMPLEX_TYPE"] = "Шаблон не пов'язаний із цим типом елемента.";
 $MESS["BIZPROC_WFEDIT_ERROR_TYPE"] = "Не зазначено тип документа.";
 $MESS["BIZPROC_WFEDIT_ERROR_TYPE_MSGVER_1"] = "Не зазначено тип документа.";
 $MESS["BIZPROC_WFEDIT_IMPORT_ERROR"] = "Помилка імпортування шаблона бізнес-процесу";

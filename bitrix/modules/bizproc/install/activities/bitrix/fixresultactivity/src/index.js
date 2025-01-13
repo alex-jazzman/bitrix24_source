@@ -1,5 +1,5 @@
 import { BpMixedSelector } from 'bizproc.mixed-selector';
-import { Reflection, Type, Event, Dom, Tag, Text, Loc } from 'main.core';
+import { Reflection, Type, Event, Dom, Tag, Text } from 'main.core';
 
 const namespace = Reflection.namespace('BX.Bizproc.Activity');
 
@@ -31,7 +31,7 @@ class FixResultActivity
 		fieldsMap: FieldsMap,
 	}>;
 
-	accessFieldsMap: Object<ResultType, {
+	accessFieldsMap: Object<AccessType, {
 		documentType: [string, string, string],
 		fieldsMap: FieldsMap,
 	}>;
@@ -44,15 +44,17 @@ class FixResultActivity
 	selector: BpMixedSelector;
 	objectTabs;
 	template: Array;
+	activityFilter: Array;
 
 	constructor(options: {
 		formName: string,
 		resultFieldsMap: Object<ResultType, FieldsMap>,
-		accessFieldsMap: Object<ResultType, FieldsMap>,
+		accessFieldsMap: Object<AccessType, FieldsMap>,
 		currentResultValues: Object<FieldId, any>,
 		currentAccessValues: Object<FieldId, any>,
 		objectTabs: any,
 		template: Array,
+		activityFilter: Array,
 	})
 	{
 		this.accessFieldsContainer = document.getElementById('access-fields-container');
@@ -71,6 +73,7 @@ class FixResultActivity
 			this.accessFieldsMap = options.accessFieldsMap;
 			this.objectTabs = options.objectTabs;
 			this.template = options.template;
+			this.activityFilter = options.activityFilter;
 
 			if (Type.isPlainObject(options.currentResultValues))
 			{
@@ -264,7 +267,9 @@ class FixResultActivity
 		this.selector = new BpMixedSelector({
 			targetNode: source,
 			template: this.template,
+			exceptErrorMessages: true,
 			objectTabs: this.objectTabs,
+			activityFilter: this.activityFilter,
 			inputNames: {
 				object: 'result_item_object',
 				field: 'result_item_field',

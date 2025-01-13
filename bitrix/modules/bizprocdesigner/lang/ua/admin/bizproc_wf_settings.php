@@ -31,6 +31,7 @@ $MESS["BIZPROC_WFS_PAR_IS_SYSTEM_Y"] = "Приховати з меню ручн�
 $MESS["BIZPROC_WFS_PAR_NAME"] = "Назва:";
 $MESS["BIZPROC_WFS_PAR_RESTRICT_TRACKING_DESCRIPTION"] = "Запис включено до #DATE#";
 $MESS["BIZPROC_WFS_PAR_RESTRICT_TRACKING_LABEL"] = "Увімкнути запис подій у журнал на 7 днів";
+$MESS["BIZPROC_WFS_PAR_SHOW_IN_TIMELINE"] = "Показувати події цього процесу в таймлайні";
 $MESS["BIZPROC_WFS_PAR_SORT"] = "Сортування:";
 $MESS["BIZPROC_WFS_PROP_BOOL"] = "Так/ні";
 $MESS["BIZPROC_WFS_PROP_DATA"] = "Дата";

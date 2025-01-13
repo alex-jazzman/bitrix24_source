@@ -96,6 +96,8 @@ $MESS["LANDING_BLOCK_HIDDEN_ON_MOBILE"] = "Прихований на&nbsp;при
 $MESS["LANDING_BLOCK_HIDDEN_ON_TABLET"] = "Прихований на&nbsp;пристроях з&nbsp;шириною екрану менше ніж 1120px але&nbsp;більш ніж 575px";
 $MESS["LANDING_BLOCK_REQUIRES_UPDATE_MESSAGE"] = "Для додавання блоку потрібна остання версія модуля &laquo;Сайти 24&raquo;. Перевірте його актуальність в розділі &laquo;<a href='/bitrix/admin/update_system.php' target='_blank'>Marketplace &rarr; Оновлення платформи</a>&raquo;.";
 $MESS["LANDING_BLOCK_RESTRICTED_TEXT"] = "Повноцінна робота блоку буде видною тільки на опублікованій сторінці.";
+$MESS["LANDING_BLOCK_RESTRICTED_TEXT2"] = "Зараз ви бачите тільки зовнішній вигляд блоку. Оцінити всі його функції можна буде після публікації сторінки.";
+$MESS["LANDING_BLOCK_RESTRICTED_TEXT_MAINPAGE"] = "Зараз ви бачите тільки зовнішній вигляд віджета. Оцінити всі його функції можна буде після публікації сторінки.";
 $MESS["LANDING_BLOCK__BLOCK_SOURCE_PLACEHOLDER"] = "Обрати блок";
 $MESS["LANDING_BLOCK__DETAIL_PAGE_LIST_DESCRIPTION"] = "Створюйте детальну сторінку на основі готового шаблону. Вона з'явиться у списку сторінок цього сайту, змінити її можна в будь-який час.";
 $MESS["LANDING_BLOCK__DETAIL_PAGE_PANEL_ADD_PAGE_BUTTON"] = "Створити сторінку";

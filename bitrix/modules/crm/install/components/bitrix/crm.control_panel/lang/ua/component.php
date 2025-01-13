@@ -8,6 +8,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_SALES_FUNNEL"] = "Воронка прода
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_TITLE"] = "CRM-аналітика";
 $MESS["CRM_CTRL_PANEL_ITEM_BI"] = "BI-конструктор";
 $MESS["CRM_CTRL_PANEL_ITEM_BUTTON"] = "Віджет на сайт";
+$MESS["CRM_CTRL_PANEL_ITEM_CALL_ASSESSMENT"] = "Скрипти й мовна аналітика з ШІ";
 $MESS["CRM_CTRL_PANEL_ITEM_CATALOGUE"] = "Каталог";
 $MESS["CRM_CTRL_PANEL_ITEM_CATALOGUE_2"] = "Товари";
 $MESS["CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS"] = "Каталог товарів";

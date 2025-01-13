@@ -23,6 +23,7 @@ $MESS["TASKS_BTN_IMPORT"] = "Імпорт списку";
 $MESS["TASKS_BTN_IMPORT_CSV"] = "з CSV";
 $MESS["TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW"] = "Налаштувати картку перегляду";
 $MESS["TASKS_BTN_LIST_TASK_TEMPLATE"] = "Список всіх шаблонів";
+$MESS["TASKS_BTN_REPORTS"] = "Звіти";
 $MESS["TASKS_BTN_SORT_ACTIVITY_DATE"] = "За активністю";
 $MESS["TASKS_BTN_SORT_ACTIVITY_DATE_MSGVER_1"] = "За датою останньої активності";
 $MESS["TASKS_BTN_SORT_ALLOW_TIME_TRACKING"] = "Враховувати час";

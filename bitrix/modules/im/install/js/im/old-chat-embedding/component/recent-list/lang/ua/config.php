@@ -10,6 +10,6 @@ $MESS["IM_RECENT_CHAT_TYPE_GROUP"] = "Груповий чат";
 $MESS["IM_RECENT_CHAT_TYPE_OPEN"] = "Канал";
 $MESS["IM_RECENT_DELETED_MESSAGE"] = "Це повідомлення було видалено.";
 $MESS["IM_RECENT_EMPTY"] = "Чатів немає";
-$MESS["IM_RECENT_INVITATION_NOT_ACCEPTED"] = "Запрошення не прийнято";
+$MESS["IM_RECENT_INVITATION_NOT_ACCEPTED"] = "Запрошення ще не прийнято";
 $MESS["IM_RECENT_MESSAGE_DRAFT_2"] = "Чернетка: #TEXT#";
 $MESS["IM_RECENT_NEW_USER_POPUP_TEXT"] = "Я з вами в команді!";

@@ -40,9 +40,13 @@ class DataInstallStep extends CWizardStep
 		$arServices = WizardServices::GetServices($_SERVER["DOCUMENT_ROOT"].$wizard->GetPath(), "/site/services/");
 
 		if ($serviceStage == "skip")
+		{
 			$success = true;
+		}
 		else
+		{
 			$success = $this->InstallService($serviceID, $serviceStage);
+		}
 
 		list($nextService, $nextServiceStage, $stepsComplete, $status) = $this->GetNextStep($arServices, $serviceID, $serviceStage);
 

@@ -67,7 +67,7 @@ export class DurationFormatter
 	{
 		for (const limit of this.#limits)
 		{
-			if (seconds > limit[0])
+			if (seconds >= limit[0])
 			{
 				return limit[1];
 			}

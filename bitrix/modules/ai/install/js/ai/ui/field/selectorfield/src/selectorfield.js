@@ -1,5 +1,5 @@
 import { Selector } from 'ui.form-elements.view';
-import { Dom, Event, Tag, Loc } from 'main.core';
+import { Dom, Event, Tag, Loc, Runtime } from 'main.core';
 import { SelectorFieldItemOption, SelectorFieldOptions } from 'types.js';
 import './css/main.css';
 
@@ -126,10 +126,17 @@ export class SelectorField extends Selector
 			selectContentItems.push(contentItemLabel);
 		}
 
+		const loadedIconSets = [];
 		for (const { type, link, text, icon } of this.#additionalItems)
 		{
 			if (type === 'link')
 			{
+				const set = icon.set || 'ui.icon-set.main';
+				if (!loadedIconSets.includes(set))
+				{
+					Runtime.loadExtension(set);
+					loadedIconSets.push(set);
+				}
 				const contentItemLink = Tag.render`
 					<div class="select-link-container">
 						<span class="select-link-icon ui-icon-set ${icon.code}"></span>

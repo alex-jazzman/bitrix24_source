@@ -1,4 +1,7 @@
 <?php
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB"] = "Колаби";
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB_CREATE"] = "Створити";
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB_DESC"] = "Для роботи із зовнішніми командами";
 $MESS["INTRANET_INVITATION_WIDGET_DESC"] = "навіщо запрошувати?";
 $MESS["INTRANET_INVITATION_WIDGET_DISABLED_TEXT"] = "Запрошувати нових співробітників у ваш Бітрікс24 може тільки адміністратор, зверніться до нього, щоб отримати права на запрошення або попросіть його запросити потрібну вам людину.";
 $MESS["INTRANET_INVITATION_WIDGET_EDIT"] = "Налаштувати";

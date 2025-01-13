@@ -25,6 +25,7 @@ $MESS["EC_VIEW_SLIDER_CANCEL_BUTTON"] = "Скасувати";
 $MESS["EC_VIEW_SLIDER_COMMENTS"] = "Коментарі";
 $MESS["EC_VIEW_SLIDER_COPY_LINK"] = "Скопіювати посилання на подію у буфер обміну";
 $MESS["EC_VIEW_SLIDER_DEL"] = "Видалити";
+$MESS["EC_VIEW_SLIDER_DOWNLOAD_V2"] = "Завантажити ICS-файл";
 $MESS["EC_VIEW_SLIDER_EDIT"] = "Редагувати";
 $MESS["EC_VIEW_SLIDER_EVENT_NOT_FOUND"] = "Подія не знайдена або не може бути показана.";
 $MESS["EC_VIEW_SLIDER_IMPORTANT_EVENT"] = "Це важлива подія";

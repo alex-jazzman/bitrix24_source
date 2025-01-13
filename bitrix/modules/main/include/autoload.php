@@ -95,6 +95,7 @@ Loader::registerAutoLoadClasses(
 		'bitrix\\main\\db\\sqlexception' => 'lib/db/sqlexception.php',
 		'bitrix\\main\\db\\sqlqueryexception' => 'lib/db/sqlexception.php',
 		'bitrix\\main\\db\\transactionexception' => 'lib/db/sqlexception.php',
+		'bitrix\\main\\db\\duplicateentryexception' => 'lib/db/sqlexception.php',
 		'bitrix\\main\\db\\sqlexpression' => 'lib/db/sqlexpression.php',
 		'bitrix\\main\\db\\sqlhelper' => 'lib/db/sqlhelper.php',
 		'bitrix\\main\\db\\mysqlcommonconnection' => 'lib/db/mysqlcommonconnection.php',

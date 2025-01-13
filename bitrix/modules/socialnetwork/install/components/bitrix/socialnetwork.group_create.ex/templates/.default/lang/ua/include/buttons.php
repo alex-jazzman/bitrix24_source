@@ -1,5 +1,6 @@
 <?php
 $MESS["SONET_GCE_T_DO_CREATE"] = "Створити групу";
+$MESS["SONET_GCE_T_DO_CREATE_COLLAB"] = "Створити колабу";
 $MESS["SONET_GCE_T_DO_CREATE_PROJECT"] = "Створити проєкт";
 $MESS["SONET_GCE_T_DO_EDIT_2"] = "Змінити";
 $MESS["SONET_GCE_T_DO_INVITE"] = "Надіслати запрошення";

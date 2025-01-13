@@ -86,6 +86,7 @@ $MESS["TASKS_MONTHLY_DAY_NUM_ND"] = "#DAY# числа";
 $MESS["TASKS_MONTHLY_DAY_NUM_RD"] = "#DAY# числа";
 $MESS["TASKS_MONTHLY_DAY_NUM_TH"] = "#DAY# числа";
 $MESS["TASKS_MULTITASK"] = "Завдання кільком відповідальним";
+$MESS["TASKS_MULTITASK_MSGVER_1"] = "Завдання кільком виконавцям";
 $MESS["TASKS_PAUSE_TASK"] = "Призупинити";
 $MESS["TASKS_REDO_TASK"] = "Доопрацювати";
 $MESS["TASKS_REDO_TASK_MSGVER_1"] = "Доопрацювати";

@@ -15,17 +15,21 @@ $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED"] = "Завдання протерм�
 Ефективність знижена.
 Необхідно змінити крайній термін або завершити завдання.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_NO_MEMBERS_V2"] = "Завдання протерміноване. #TASK_COMPLETE_START#Завершіть завдання#TASK_COMPLETE_END# або #DEADLINE_CHANGE_START#змініть крайній термін#DEADLINE_CHANGE_END#.";
+$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SHORT"] = "#MEMBERS#, завдання протерміноване.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON"] = "Завдання майже протерміноване.
 Якщо не пересунути термін, через добу завдання буде протерміноване та знизить ефективність.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_NO_MEMBERS_V2"] = "Завдання майже протерміноване. #TASK_COMPLETE_START#Завершіть завдання#TASK_COMPLETE_END# або #DEADLINE_CHANGE_START#змініть крайній термін#DEADLINE_CHANGE_END#.";
+$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_SHORT"] = "#MEMBERS#, завдання майже протерміноване.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2"] = "#MEMBERS# завдання майже протерміноване.
 #TASK_COMPLETE_START#Завершіть завдання#TASK_COMPLETE_END# або #DEADLINE_CHANGE_START#змініть крайній термін#DEADLINE_CHANGE_END# протягом доби, інакше #EFFICIENCY_START#ефективність#EFFICIENCY_END# буде знижена. ";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2_NO_MEMBERS"] = "Завдання майже протерміноване.
 #TASK_COMPLETE_START#Завершіть завдання#TASK_COMPLETE_END# або #DEADLINE_CHANGE_START#змініть крайній термін#DEADLINE_CHANGE_END#. ";
+$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_WITHOUT_EFFICIENCY"] = "#MEMBERS#, завдання майже протерміноване.\n#TASK_COMPLETE_START#Завершіть завдання#TASK_COMPLETE_END# або #DEADLINE_CHANGE_START#перенесіть термін#DEADLINE_CHANGE_END# протягом доби.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2"] = "#MEMBERS# завдання протерміноване, #EFFICIENCY_START#ефективність#EFFICIENCY_END# знижена.
 #TASK_COMPLETE_START# Завершіть завдання #TASK_COMPLETE_END# або #DEADLINE_CHANGE_START# змініть крайній термін #DEADLINE_CHANGE_END#. ";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2_NO_MEMBERS"] = "Завдання протерміноване.
 #TASK_COMPLETE_START#Завершіть завдання#TASK_COMPLETE_END# або #DEADLINE_CHANGE_START#змініть крайній термін#DEADLINE_CHANGE_END#. ";
+$MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED_WITHOUT_EFFICIENCY"] = "#MEMBERS#, завдання протерміновано.\n#TASK_COMPLETE_START#Завершіть завдання#TASK_COMPLETE_END# або #DEADLINE_CHANGE_START#перенесіть термін#DEADLINE_CHANGE_END#.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS"] = "#MEMBERS# повідомте поточний статус завдання";
 $MESS["COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS_MSGVER_1"] = "#MEMBERS#, повідомте поточний статус завдання.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES"] = "#AUTHOR# змінив(змінила) завдання:\n";
@@ -43,6 +47,7 @@ $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING_Y"] 
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ASSIGNEE"] = "#NEW_VALUE#, вас призначено виконавцем.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS"] = "Додані спостерігачі: #NEW_VALUE#";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CHECKLIST"] = "Чек-лист";
+$MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_COLLAB_ID"] = "Колабу завдання змінено на: #NEW_VALUE#.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CREATED_BY"] = "Призначений постановник: #NEW_VALUE#";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CRM"] = "Елементи CRM:";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CRM_C"] = "Контакти: #OLD_VALUE# &rarr; #NEW_VALUE#";

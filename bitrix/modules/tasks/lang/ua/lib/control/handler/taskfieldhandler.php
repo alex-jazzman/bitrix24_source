@@ -1,8 +1,11 @@
 <?php
 $MESS["ERROR_TASKS_GUID_NON_UNIQUE"] = "GUID має бути унікальним";
+$MESS["TASKS_BAD_ASSIGNEE_EX"] = "Користувач зазначений у полі «Виконавець» не знайдений.";
 $MESS["TASKS_BAD_ASSIGNEE_ID"] = "Виконавець не зазначений.";
+$MESS["TASKS_BAD_ASSIGNEE_IN_GROUP"] = "Виконавець завдання не є учасником у вибраному проєкті.";
 $MESS["TASKS_BAD_CREATED_BY"] = "Не вказаний постановник";
 $MESS["TASKS_BAD_DURATION"] = "У плануванні термінів вказана занадто велика тривалість завдання";
+$MESS["TASKS_BAD_GROUP"] = "Не вибрано проєкт для завдання.";
 $MESS["TASKS_BAD_PARENT_ID"] = "Завдання, зазначене в полі «Надзавдання», не знайдено";
 $MESS["TASKS_BAD_PLAN_DATES"] = "У плануванні термінів вказана дата закінчення менша дати старту";
 $MESS["TASKS_BAD_RESPONSIBLE_ID"] = "Не зазначений відповідальний";

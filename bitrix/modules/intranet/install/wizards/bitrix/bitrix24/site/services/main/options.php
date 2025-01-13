@@ -20,20 +20,15 @@ $obSite->Update(WIZARD_SITE_ID, Array("NAME" => COption::GetOptionString("main",
 
 CGroup::SetSubordinateGroups(WIZARD_PORTAL_ADMINISTRATION_GROUP, Array(WIZARD_EMPLOYEES_GROUP));
 
-if(LANGUAGE_ID == "ru")
+if (LANGUAGE_ID == "ru")
 {
 	$vendor = "1c_bitrix_portal";
-	$license = "~new_license23_0_sign";
-}
-elseif(LANGUAGE_ID == "ua")
-{
-	$vendor = "ua_bitrix_portal";
-	$license = "~new_license20_0_sign";
+	$license = "~new_license24_400_sign";
 }
 else
 {
 	$vendor = "bitrix_portal";
-	$license = "~new_license23_0_sign";
+	$license = "~new_license24_400_sign";
 }
 
 COption::SetOptionString("main", "templates_visual_editor", "Y");

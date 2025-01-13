@@ -28,6 +28,7 @@ $MESS["IM_DIALOG_CHAT_MENU_REPLY"] = "Відповісти";
 $MESS["IM_DIALOG_CHAT_MENU_SAVE"] = "Додати в Обране";
 $MESS["IM_DIALOG_CHAT_MENU_SAVE_ON_DISK"] = "Зберегти на Диск";
 $MESS["IM_DIALOG_CHAT_MENU_SAVE_ON_DISK_SUCCESS"] = "Файл успішно збережений на ваш Диск";
+$MESS["IM_DIALOG_CHAT_MENU_SELECT"] = "Вибрати";
 $MESS["IM_DIALOG_CHAT_MENU_UNPIN"] = "Відкріпити";
 $MESS["IM_DIALOG_CHAT_PINNED_TITLE"] = "Закріплене повідомлення";
 $MESS["IM_DIALOG_CHAT_PINNED_TITLE_NUMBER"] = "Закріплене повідомлення №#NUMBER#";

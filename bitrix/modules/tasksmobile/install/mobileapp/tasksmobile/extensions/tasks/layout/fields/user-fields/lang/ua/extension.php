@@ -1,0 +1,20 @@
+<?php
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_COMPACT_TITLE"] = "Користувацькі поля";
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_COMPACT_TITLE_MULTI"] = "Користувацькі поля: #COUNT#";
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_TITLE"] = "Користувацькі поля";
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_TITLE_MULTI"] = "Користувацькі поля: #COUNT#";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_ADD_VALUE"] = "Додати значення";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_DOUBLE_PLACEHOLDER"] = "Уведіть число";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_FIELDS"] = "Змінити поля";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_OK"] = "Продовжити";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SAVE"] = "Зберегти";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_LENGTH_PLURAL_0"] = "Значення в полі має бути не довшим за #VALUE# символ";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_LENGTH_PLURAL_1"] = "Значення в полі має бути не довшим за #VALUE# символи";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_LENGTH_PLURAL_2"] = "Значення в полі має бути не довшим за #VALUE# символів";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_VALUE"] = "Значення в полі має бути не більшим за #VALUE#";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_LENGTH_PLURAL_0"] = "Значення в полі повинно містити принаймні #VALUE# символ";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_LENGTH_PLURAL_1"] = "Значення в полі повинно містити принаймні #VALUE# символи";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_LENGTH_PLURAL_2"] = "Значення в полі повинно містити принаймні #VALUE# символів";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_VALUE"] = "Значення в полі має бути не меншим за #VALUE#";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_STRING_EDITOR_PLACEHOLDER"] = "Заповніть користувацьке поле, це може бути коротка примітка";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_STRING_PLACEHOLDER"] = "Заповнити";

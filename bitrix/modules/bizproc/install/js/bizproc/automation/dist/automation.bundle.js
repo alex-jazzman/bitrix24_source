@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
-(function (exports,ui_alerts,bizproc_condition,ui_iconSet_main,ui_draganddrop_draggable,ui_entitySelector,main_core_events,main_popup,ui_buttons,main_date,ui_forms,ui_iconSet_actions,ui_hint,bizproc_globals,bizproc_automation,ui_designTokens,ui_fonts_opensans,main_core,ui_tour) {
+(function (exports,ui_alerts,ui_notification,bizproc_condition,ui_iconSet_main,ui_draganddrop_draggable,ui_entitySelector,main_core_events,main_popup,ui_buttons,main_date,ui_forms,ui_iconSet_actions,ui_hint,bizproc_globals,bizproc_automation,ui_designTokens,ui_fonts_opensans,main_core,ui_tour) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -4355,7 +4355,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  popup.show();
 	};
 
-	var _templateObject$4, _templateObject2$3, _templateObject3$3, _templateObject4$3, _templateObject5$2, _templateObject6$2, _templateObject7$2, _templateObject8$2, _templateObject9$2, _templateObject10$2, _templateObject11$1, _templateObject12$1, _templateObject13$1, _templateObject14$1, _templateObject15$1;
+	var _templateObject$4, _templateObject2$3, _templateObject3$3, _templateObject4$3, _templateObject5$2, _templateObject6$2, _templateObject7$2, _templateObject8$2, _templateObject9$2, _templateObject10$2, _templateObject11$1, _templateObject12$1, _templateObject13$1, _templateObject14$1, _templateObject15$1, _templateObject16$1;
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _createForOfIteratorHelper$7(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$7(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -4586,16 +4586,23 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      return Number.isNaN(id) ? 0 : id;
 	    }
 	  }, {
+	    key: "getDocumentType",
+	    value: function getDocumentType() {
+	      return babelHelpers.classPrivateFieldGet(this, _data$2).DOCUMENT_TYPE;
+	    }
+	  }, {
 	    key: "initButtons",
 	    value: function initButtons() {
 	      if (this.isExternalModified()) {
 	        this.createExternalLocker();
 	        this.createManageModeButton();
+	        this.createTerminateRobotsButton();
 	      } else if (babelHelpers.classPrivateFieldGet(this, _viewMode$3).isEdit() && this.getTemplateId() > 0) {
 	        this.createConstantsEditButton();
 	        this.createParametersEditButton();
 	        this.createExternalEditTemplateButton();
 	        this.createManageModeButton();
+	        this.createTerminateRobotsButton();
 	      }
 	    }
 	  }, {
@@ -4708,6 +4715,72 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      }
 	    }
 	  }, {
+	    key: "createTerminateRobotsButton",
+	    value: function createTerminateRobotsButton() {
+	      var _this5 = this;
+	      if (!this.hasRunningRobots() && this.getRunningCustomRobots().length === 0) {
+	        return;
+	      }
+	      var terminateButton = main_core.Tag.render(_templateObject3$3 || (_templateObject3$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"bizproc-automation-robot-btn-set btn-pointer\" target=\"_top\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_ROBOTS_TERMINATE'));
+	      main_core.Event.bind(terminateButton, 'click', function (event) {
+	        event.preventDefault();
+	        _this5.onTerminateRobotsButtonClick(terminateButton);
+	      });
+	      main_core.Dom.append(terminateButton, babelHelpers.classPrivateFieldGet(this, _buttonsNode));
+	    }
+	  }, {
+	    key: "onTerminateRobotsButtonClick",
+	    value: function onTerminateRobotsButtonClick(terminateButton) {
+	      var _this6 = this;
+	      var templateId = this.getTemplateId();
+	      var signedDocument = babelHelpers.classPrivateFieldGet(this, _context).signedDocument;
+	      if (templateId > 0 && signedDocument) {
+	        main_core.Dom.addClass(terminateButton, '--disabled');
+	        main_core.ajax.runAction('bizproc.workflow.terminateByTemplate', {
+	          data: {
+	            templateId: templateId,
+	            signedDocument: signedDocument
+	          }
+	        }).then(function (response) {
+	          _this6.notifyMessage(main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_ROBOTS_STOPPED'));
+	          _this6.stopTemplate();
+	        })["catch"](function (response) {
+	          response.errors.forEach(function (error) {
+	            _this6.notifyMessage(error.message);
+	          });
+	        });
+	      }
+	    }
+	  }, {
+	    key: "stopTemplate",
+	    value: function stopTemplate() {
+	      var loaders = babelHelpers.classPrivateFieldGet(this, _templateNode).querySelectorAll('.bizproc-automation-robot-information.--loader');
+	      loaders.forEach(function (loader) {
+	        main_core.Dom.removeClass(loader, '--loader');
+	      });
+	    }
+	  }, {
+	    key: "notifyMessage",
+	    value: function notifyMessage(message) {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: message,
+	        autoHideDelay: 5000
+	      });
+	    }
+	  }, {
+	    key: "hasRunningRobots",
+	    value: function hasRunningRobots() {
+	      return Boolean(babelHelpers.classPrivateFieldGet(this, _robots).some(function (robot) {
+	        return robot.getLogStatus() === TrackingStatus.RUNNING;
+	      }));
+	    }
+	  }, {
+	    key: "getRunningCustomRobots",
+	    value: function getRunningCustomRobots() {
+	      var _babelHelpers$classPr;
+	      return (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _data$2).CUSTOM_ROBOTS) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : [];
+	    }
+	  }, {
 	    key: "createConstantsEditButton",
 	    value: function createConstantsEditButton() {
 	      if (main_core.Type.isNil(babelHelpers.classPrivateFieldGet(this, _context).constantsEditorUrl)) {
@@ -4717,7 +4790,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      if (url.length === 0) {
 	        return false;
 	      }
-	      var anchor = main_core.Tag.render(_templateObject3$3 || (_templateObject3$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"bizproc-automation-robot-btn-set\" href=\"", "\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Text.encode(url), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_EDIT'));
+	      var anchor = main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"bizproc-automation-robot-btn-set\" href=\"", "\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Text.encode(url), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_EDIT'));
 	      main_core.Dom.append(anchor, babelHelpers.classPrivateFieldGet(this, _buttonsNode));
 	    }
 	  }, {
@@ -4730,34 +4803,39 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      if (url.length === 0 || babelHelpers.classPrivateFieldGet(this, _viewMode$3).isManage()) {
 	        return false;
 	      }
-	      var anchor = main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"bizproc-automation-robot-btn-set\" href=\"", "\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Text.encode(url), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_EDIT'));
+	      var anchor = main_core.Tag.render(_templateObject5$2 || (_templateObject5$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"bizproc-automation-robot-btn-set\" href=\"", "\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Text.encode(url), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_EDIT'));
 	      main_core.Dom.append(anchor, babelHelpers.classPrivateFieldGet(this, _buttonsNode));
 	    }
 	  }, {
 	    key: "createExternalLocker",
 	    value: function createExternalLocker() {
-	      var _this5 = this;
-	      var div = main_core.Tag.render(_templateObject5$2 || (_templateObject5$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-robot-container\">\n\t\t\t\t<div class=\"bizproc-automation-robot-container-wrapper bizproc-automation-robot-container-wrapper-lock\">\n\t\t\t\t\t<div class=\"bizproc-automation-robot-deadline\"></div>\n\t\t\t\t\t<div class=\"bizproc-automation-robot-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_EXTERNAL_EDIT_TEXT'));
+	      var _this7 = this;
+	      var _ref = main_core.Tag.render(_templateObject6$2 || (_templateObject6$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-robot-container\">\n\t\t\t\t<div class=\"bizproc-automation-robot-container-wrapper bizproc-automation-robot-container-wrapper-lock\">\n\t\t\t\t\t<div class=\"bizproc-automation-robot-deadline\"></div>\n\t\t\t\t\t<div class=\"bizproc-automation-robot-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bizproc-automation-robot-information\" ref=\"iconBlock\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_EXTERNAL_EDIT_TEXT')),
+	        root = _ref.root,
+	        iconBlock = _ref.iconBlock;
+	      if (this.getRunningCustomRobots().length > 0) {
+	        main_core.Dom.addClass(iconBlock, '--loader');
+	      }
 	      if (babelHelpers.classPrivateFieldGet(this, _viewMode$3).isEdit()) {
-	        var settingsBtn = main_core.Tag.render(_templateObject6$2 || (_templateObject6$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"bizproc-automation-robot-btn-settings\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_EDIT'));
-	        main_core.Event.bind(div, 'click', function (event) {
+	        var settingsBtn = main_core.Tag.render(_templateObject7$2 || (_templateObject7$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"bizproc-automation-robot-btn-settings\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_EDIT'));
+	        main_core.Event.bind(root, 'click', function (event) {
 	          event.stopPropagation();
-	          if (!babelHelpers.classPrivateFieldGet(_this5, _viewMode$3).isManage()) {
-	            _this5.onExternalEditTemplateButtonClick(div);
+	          if (!babelHelpers.classPrivateFieldGet(_this7, _viewMode$3).isManage()) {
+	            _this7.onExternalEditTemplateButtonClick(root);
 	          }
 	        });
-	        main_core.Dom.append(settingsBtn, div);
-	        var deleteBtn = main_core.Tag.render(_templateObject7$2 || (_templateObject7$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"bizproc-automation-robot-btn-delete\"></span>"])));
+	        main_core.Dom.append(settingsBtn, root);
+	        var deleteBtn = main_core.Tag.render(_templateObject8$2 || (_templateObject8$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"bizproc-automation-robot-btn-delete\"></span>"])));
 	        main_core.Event.bind(deleteBtn, 'click', function (event) {
 	          event.stopPropagation();
-	          if (!babelHelpers.classPrivateFieldGet(_this5, _viewMode$3).isManage()) {
-	            _this5.onUnsetExternalModifiedClick(deleteBtn);
+	          if (!babelHelpers.classPrivateFieldGet(_this7, _viewMode$3).isManage()) {
+	            _this7.onUnsetExternalModifiedClick(deleteBtn);
 	          }
 	        });
-	        main_core.Dom.append(deleteBtn, div.lastChild);
+	        main_core.Dom.append(deleteBtn, root.lastChild);
 	      }
-	      main_core.Dom.append(div, babelHelpers.classPrivateFieldGet(this, _listNode));
-	      babelHelpers.classPrivateFieldSet(this, _templateNode, div);
+	      main_core.Dom.append(root, babelHelpers.classPrivateFieldGet(this, _listNode));
+	      babelHelpers.classPrivateFieldSet(this, _templateNode, root);
 	    }
 	  }, {
 	    key: "onSearch",
@@ -4902,7 +4980,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "openRobotSettingsDialog",
 	    value: function openRobotSettingsDialog(robot, context, saveCallback) {
-	      var _this6 = this;
+	      var _this8 = this;
 	      if (!main_core.Type.isPlainObject(context)) {
 	        context = {};
 	      }
@@ -4911,7 +4989,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      }
 	      var robotBrokenLinks = robot.getBrokenLinks();
 	      var formName = 'bizproc_automation_robot_dialog';
-	      var form = main_core.Tag.render(_templateObject8$2 || (_templateObject8$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<form name=\"", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</form>\n\t\t"])), formName, _classPrivateMethodGet$4(this, _renderExecutionQueue, _renderExecutionQueue2).call(this, robot), this.renderDelaySettings(robot), this.renderConditionSettings(robot), robotBrokenLinks.length > 0 ? this.renderBrokenLinkAlert(robotBrokenLinks) : '');
+	      var form = main_core.Tag.render(_templateObject9$2 || (_templateObject9$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<form name=\"", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</form>\n\t\t"])), formName, _classPrivateMethodGet$4(this, _renderExecutionQueue, _renderExecutionQueue2).call(this, robot), this.renderDelaySettings(robot), this.renderConditionSettings(robot), robotBrokenLinks.length > 0 ? this.renderBrokenLinkAlert(robotBrokenLinks) : '');
 	      bizproc_automation.Designer.getInstance().setRobotSettingsDialog({
 	        template: this,
 	        context: context,
@@ -4948,14 +5026,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	            });
 	            main_core.Dom.append(dialogRows, form);
 	          }
-	          _this6.showRobotSettingsPopup(robot, form, saveCallback);
+	          _this8.showRobotSettingsPopup(robot, form, saveCallback);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "showRobotSettingsPopup",
 	    value: function showRobotSettingsPopup(robot, form, saveCallback) {
-	      var _this7 = this;
+	      var _this9 = this;
 	      var popupMinWidth = 580;
 	      var popupWidth = popupMinWidth;
 	      if (babelHelpers.classPrivateFieldGet(this, _userOptions$1)) {
@@ -4979,7 +5057,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	          descriptionTitle = robotTitle;
 	        }
 	      }
-	      var titleBarContent = main_core.Tag.render(_templateObject9$2 || (_templateObject9$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"popup-window-titlebar-text bizproc-automation-robot-settings-popup-titlebar\">\n\t\t\t\t<span class=\"bizproc-automation-robot-settings-popup-titlebar-text\">", "</span>\n\t\t\t\t<div class=\"ui-hint\">\n\t\t\t\t\t<span class=\"ui-hint-icon\" data-text=\"", "\"></span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(robotTitle), main_core.Text.encode(descriptionTitle));
+	      var titleBarContent = main_core.Tag.render(_templateObject10$2 || (_templateObject10$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"popup-window-titlebar-text bizproc-automation-robot-settings-popup-titlebar\">\n\t\t\t\t<span class=\"bizproc-automation-robot-settings-popup-titlebar-text\">", "</span>\n\t\t\t\t<div class=\"ui-hint\">\n\t\t\t\t\t<span class=\"ui-hint-icon\" data-text=\"", "\"></span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(robotTitle), main_core.Text.encode(descriptionTitle));
 	      HelpHint.bindAll(titleBarContent);
 	      var popup = new main_popup.Popup({
 	        id: Helper.generateUniqueId(),
@@ -4992,7 +5070,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	            var callback = function callback() {
 	              popup.close();
 	              if (isNewRobot) {
-	                _this7.emit('Template:robot:add', {
+	                _this9.emit('Template:robot:add', {
 	                  robot: robot
 	                });
 	              }
@@ -5000,7 +5078,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	                saveCallback(robot);
 	              }
 	            };
-	            _this7.saveRobotSettings(form, robot, callback, button.getContainer());
+	            _this9.saveRobotSettings(form, robot, callback, button.getContainer());
 	          }
 	        }), new ui_buttons.CancelButton({
 	          text: main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_CANCEL_BUTTON_CAPS'),
@@ -5017,16 +5095,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        events: {
 	          onPopupClose: function onPopupClose() {
 	            bizproc_automation.Designer.getInstance().setRobotSettingsDialog(null);
-	            _this7.destroyRobotSettingsControls();
+	            _this9.destroyRobotSettingsControls();
 	            popup.destroy();
-	            _this7.emit('Template:robot:closeSettings');
+	            _this9.emit('Template:robot:closeSettings');
 	          },
 	          onPopupResize: function onPopupResize() {
-	            _this7.onResizeRobotSettings();
+	            _this9.onResizeRobotSettings();
 	          },
 	          onPopupResizeEnd: function onPopupResizeEnd() {
-	            if (babelHelpers.classPrivateFieldGet(_this7, _userOptions$1)) {
-	              babelHelpers.classPrivateFieldGet(_this7, _userOptions$1).set('defaults', 'robot_settings_popup_width', popup.getWidth());
+	            if (babelHelpers.classPrivateFieldGet(_this9, _userOptions$1)) {
+	              babelHelpers.classPrivateFieldGet(_this9, _userOptions$1).set('defaults', 'robot_settings_popup_width', popup.getWidth());
 	            }
 	          }
 	        },
@@ -5063,7 +5141,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "initRobotSettingsControl",
 	    value: function initRobotSettingsControl(robot, controlNode) {
-	      var _this8 = this;
+	      var _this10 = this;
 	      if (!main_core.Type.isArray(this.robotSettingsControls)) {
 	        this.robotSettingsControls = [];
 	      }
@@ -5116,18 +5194,18 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        control.subscribe('onAskConstant', function (event) {
 	          var _event$getData = event.getData(),
 	            fieldProperty = _event$getData.fieldProperty;
-	          control.onFieldSelect(_this8.addConstant(fieldProperty));
+	          control.onFieldSelect(_this10.addConstant(fieldProperty));
 	        });
 	        control.subscribe('onAskParameter', function (event) {
 	          var _event$getData2 = event.getData(),
 	            fieldProperty = _event$getData2.fieldProperty;
-	          control.onFieldSelect(_this8.addParameter(fieldProperty));
+	          control.onFieldSelect(_this10.addParameter(fieldProperty));
 	        });
 	        control.subscribe('onOpenFieldMenu', function (event) {
-	          return _this8.onOpenMenu(event, robot);
+	          return _this10.onOpenMenu(event, robot);
 	        });
 	        control.subscribe('onOpenMenu', function (event) {
-	          return _this8.onOpenMenu(event, robot);
+	          return _this10.onOpenMenu(event, robot);
 	        });
 	      }
 	      BX.UI.Hint.init(controlNode);
@@ -5185,16 +5263,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    key: "renderDelaySettings",
 	    value: function renderDelaySettings(robot) {
 	      var delay = robot.getDelayInterval().clone();
-	      var _ref = main_core.Tag.render(_templateObject10$2 || (_templateObject10$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-popup-settings\">\n\t\t\t\t<div class=\"bizproc-automation-popup-settings-block\">\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-title-wrapper\">\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayTypeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_type\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayValueNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_value\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayValueTypeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_value_type\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayBasisNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_basis\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tref=\"delayWorkTimeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_worktime\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayWaitWorkDayNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_wait_workday\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayInTimeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_in_time\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tclass=\"bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-left\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tref=\"delayIntervalLabelNode\"\n\t\t\t\t\t\t\tclass=\"bizproc-automation-popup-settings-link bizproc-automation-delay-interval-basis\"\n\t\t\t\t\t\t></span>\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(delay.type), main_core.Text.encode(delay.value), main_core.Text.encode(delay.valueType), main_core.Text.encode(delay.basis), delay.workTime ? 1 : 0, delay.waitWorkDay ? 1 : 0, main_core.Text.encode(delay.inTimeString), main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_TO_EXECUTE_TITLE')),
-	        root = _ref.root,
-	        delayTypeNode = _ref.delayTypeNode,
-	        delayValueNode = _ref.delayValueNode,
-	        delayValueTypeNode = _ref.delayValueTypeNode,
-	        delayBasisNode = _ref.delayBasisNode,
-	        delayWorkTimeNode = _ref.delayWorkTimeNode,
-	        delayWaitWorkDayNode = _ref.delayWaitWorkDayNode,
-	        delayInTimeNode = _ref.delayInTimeNode,
-	        delayIntervalLabelNode = _ref.delayIntervalLabelNode;
+	      var _ref2 = main_core.Tag.render(_templateObject11$1 || (_templateObject11$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-popup-settings\">\n\t\t\t\t<div class=\"bizproc-automation-popup-settings-block\">\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-title-wrapper\">\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayTypeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_type\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayValueNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_value\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayValueTypeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_value_type\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayBasisNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_basis\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tref=\"delayWorkTimeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_worktime\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayWaitWorkDayNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_wait_workday\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tref=\"delayInTimeNode\"\n\t\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\t\tname=\"delay_in_time\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tclass=\"bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-left\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tref=\"delayIntervalLabelNode\"\n\t\t\t\t\t\t\tclass=\"bizproc-automation-popup-settings-link bizproc-automation-delay-interval-basis\"\n\t\t\t\t\t\t></span>\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(delay.type), main_core.Text.encode(delay.value), main_core.Text.encode(delay.valueType), main_core.Text.encode(delay.basis), delay.workTime ? 1 : 0, delay.waitWorkDay ? 1 : 0, main_core.Text.encode(delay.inTimeString), main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_TO_EXECUTE_TITLE')),
+	        root = _ref2.root,
+	        delayTypeNode = _ref2.delayTypeNode,
+	        delayValueNode = _ref2.delayValueNode,
+	        delayValueTypeNode = _ref2.delayValueTypeNode,
+	        delayBasisNode = _ref2.delayBasisNode,
+	        delayWorkTimeNode = _ref2.delayWorkTimeNode,
+	        delayWaitWorkDayNode = _ref2.delayWaitWorkDayNode,
+	        delayInTimeNode = _ref2.delayInTimeNode,
+	        delayIntervalLabelNode = _ref2.delayIntervalLabelNode;
 	      var basisFields = [];
 	      var docFields = babelHelpers.classPrivateFieldGet(this, _context).document.getFields();
 	      var minLimitM = babelHelpers.classPrivateFieldGet(this, _delayMinLimitM);
@@ -5253,25 +5331,25 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "renderConditionSettings",
 	    value: function renderConditionSettings(robot) {
-	      var _this9 = this,
-	        _babelHelpers$classPr;
+	      var _this11 = this,
+	        _babelHelpers$classPr2;
 	      var conditionGroup = robot.getCondition();
 	      this.conditionSelector = new bizproc_automation.ConditionGroupSelector(conditionGroup, {
 	        fields: babelHelpers.classPrivateFieldGet(this, _context).document.getFields(),
 	        onOpenFieldMenu: function onOpenFieldMenu(event) {
-	          return _this9.onOpenMenu(event, robot);
+	          return _this11.onOpenMenu(event, robot);
 	        },
 	        onOpenMenu: function onOpenMenu(event) {
-	          return _this9.onOpenMenu(event, robot);
+	          return _this11.onOpenMenu(event, robot);
 	        },
 	        caption: {
 	          head: main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_ROBOT_CONDITION_TITLE')
 	        },
-	        isExpanded: ((_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _userOptions$1)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.get('defaults', 'isConditionGroupExpanded', 'N')) === 'Y'
+	        isExpanded: ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _userOptions$1)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.get('defaults', 'isConditionGroupExpanded', 'N')) === 'Y'
 	      });
 	      this.conditionSelector.subscribe('onToggleGroupViewClick', function (event) {
 	        var data = event.getData();
-	        babelHelpers.classPrivateFieldGet(_this9, _userOptions$1).set('defaults', 'isConditionGroupExpanded', data.isExpanded ? 'Y' : 'N');
+	        babelHelpers.classPrivateFieldGet(_this11, _userOptions$1).set('defaults', 'isConditionGroupExpanded', data.isExpanded ? 'Y' : 'N');
 	      });
 	      return this.conditionSelector.createNode();
 	    }
@@ -5308,16 +5386,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    key: "renderBrokenLinkAlert",
 	    value: function renderBrokenLinkAlert() {
 	      var brokenLinks = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-	      var moreInfoNode = main_core.Tag.render(_templateObject11$1 || (_templateObject11$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-robot-broken-link-full-info\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), brokenLinks.map(function (value) {
+	      var moreInfoNode = main_core.Tag.render(_templateObject12$1 || (_templateObject12$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-robot-broken-link-full-info\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), brokenLinks.map(function (value) {
 	        return main_core.Text.encode(value);
 	      }).join('<br>'));
-	      var showMoreLabel = main_core.Tag.render(_templateObject12$1 || (_templateObject12$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"bizproc-automation-robot-broken-link-show-more\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), main_core.Loc.getMessage('JS_BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR_MORE_INFO'));
+	      var showMoreLabel = main_core.Tag.render(_templateObject13$1 || (_templateObject13$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"bizproc-automation-robot-broken-link-show-more\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), main_core.Loc.getMessage('JS_BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR_MORE_INFO'));
 	      main_core.Event.bindOnce(showMoreLabel, 'click', function () {
 	        main_core.Dom.style(moreInfoNode, 'height', "".concat(moreInfoNode.scrollHeight, "px"));
 	        main_core.Dom.remove(showMoreLabel);
 	      });
-	      var closeBtn = main_core.Tag.render(_templateObject13$1 || (_templateObject13$1 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-alert-close-btn\"></span>"])));
-	      var alert = main_core.Tag.render(_templateObject14$1 || (_templateObject14$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-alert ui-alert-warning ui-alert-icon-info\">\n\t\t\t\t<div class=\"ui-alert-message\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR'), showMoreLabel, moreInfoNode, closeBtn);
+	      var closeBtn = main_core.Tag.render(_templateObject14$1 || (_templateObject14$1 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-alert-close-btn\"></span>"])));
+	      var alert = main_core.Tag.render(_templateObject15$1 || (_templateObject15$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-alert ui-alert-warning ui-alert-icon-info\">\n\t\t\t\t<div class=\"ui-alert-message\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR'), showMoreLabel, moreInfoNode, closeBtn);
 	      main_core.Event.bindOnce(closeBtn, 'click', function () {
 	        main_core.Dom.remove(alert);
 	      });
@@ -5326,7 +5404,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "saveRobotSettings",
 	    value: function saveRobotSettings(form, robot, callback, btnNode) {
-	      var _this10 = this;
+	      var _this12 = this;
 	      if (btnNode) {
 	        main_core.Dom.addClass(btnNode, 'ui-btn-wait');
 	      }
@@ -5355,11 +5433,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	          }
 	          if (response.SUCCESS) {
 	            robot.updateData(response.DATA.robot);
-	            _this10.setDelaySettingsFromForm(formData.data, robot);
-	            _this10.setConditionSettingsFromForm(formData.data, robot);
+	            _this12.setDelaySettingsFromForm(formData.data, robot);
+	            _this12.setConditionSettingsFromForm(formData.data, robot);
 	            robot.draft = false;
 	            robot.reInit();
-	            _this10.markModified();
+	            _this12.markModified();
 	            if (callback) {
 	              callback(response.DATA);
 	            }
@@ -5413,10 +5491,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "getConstants",
 	    value: function getConstants() {
-	      var _this11 = this;
+	      var _this13 = this;
 	      var constants = [];
 	      Object.keys(babelHelpers.classPrivateFieldGet(this, _data$2).CONSTANTS).forEach(function (id) {
-	        var constant = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this11, _data$2).CONSTANTS[id]);
+	        var constant = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this13, _data$2).CONSTANTS[id]);
 	        constant.Id = id;
 	        constant.ObjectId = 'Constant';
 	        constant.SystemExpression = "{=Constant:".concat(id, "}");
@@ -5499,10 +5577,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "getParameters",
 	    value: function getParameters() {
-	      var _this12 = this;
+	      var _this14 = this;
 	      var params = [];
 	      Object.keys(babelHelpers.classPrivateFieldGet(this, _data$2).PARAMETERS).forEach(function (id) {
-	        var param = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this12, _data$2).PARAMETERS[id]);
+	        var param = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this14, _data$2).PARAMETERS[id]);
 	        param.Id = id;
 	        param.ObjectId = 'Template';
 	        param.SystemExpression = "{=Template:".concat(id, "}");
@@ -5586,10 +5664,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "getVariables",
 	    value: function getVariables() {
-	      var _this13 = this;
+	      var _this15 = this;
 	      var variables = [];
 	      Object.keys(babelHelpers.classPrivateFieldGet(this, _data$2).VARIABLES).forEach(function (id) {
-	        var variable = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this13, _data$2).VARIABLES[id]);
+	        var variable = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this15, _data$2).VARIABLES[id]);
 	        variable.Id = id;
 	        variable.ObjectId = 'Variable';
 	        variable.SystemExpression = "{=Variable:".concat(id, "}");
@@ -5720,10 +5798,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	function _renderExecutionQueue2(robot) {
 	  var title = robot.isExecuteAfterPrevious() ? main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_EXECUTION_QUEUE_AFTER_PREVIOUS_TITLE') : main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_EXECUTION_QUEUE_PARALLEL_TITLE');
 	  var value = robot.isExecuteAfterPrevious() ? '1' : '0';
-	  var _ref2 = main_core.Tag.render(_templateObject15$1 || (_templateObject15$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-popup-settings\">\n\t\t\t\t<div class=\"bizproc-automation-popup-settings-block\">\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-link-wrapper\">\n\t\t\t\t\t\t<a ref=\"executionQueueLink\" class=\"bizproc-automation-popup-settings-link\">", "</a>\n\t\t\t\t\t</span>\n\t\t\t\t\t<input ref=\"input\" type=\"hidden\" value=\"", "\" name=\"execute_after_previous\"/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_EXECUTION_QUEUE_TITLE'), title, value),
-	    root = _ref2.root,
-	    executionQueueLink = _ref2.executionQueueLink,
-	    input = _ref2.input;
+	  var _ref3 = main_core.Tag.render(_templateObject16$1 || (_templateObject16$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-popup-settings\">\n\t\t\t\t<div class=\"bizproc-automation-popup-settings-block\">\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-link-wrapper\">\n\t\t\t\t\t\t<a ref=\"executionQueueLink\" class=\"bizproc-automation-popup-settings-link\">", "</a>\n\t\t\t\t\t</span>\n\t\t\t\t\t<input ref=\"input\" type=\"hidden\" value=\"", "\" name=\"execute_after_previous\"/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_JS_AUTOMATION_EXECUTION_QUEUE_TITLE'), title, value),
+	    root = _ref3.root,
+	    executionQueueLink = _ref3.executionQueueLink,
+	    input = _ref3.input;
 	  main_core.Event.bind(executionQueueLink, 'click', function () {
 	    showExecutionQueuePopup({
 	      bindElement: executionQueueLink,
@@ -10514,5 +10592,5 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	exports.Tracker = Tracker;
 	exports.WorkflowStatus = WorkflowStatus;
 
-}((this.BX.Bizproc.Automation = this.BX.Bizproc.Automation || {}),BX.UI,BX.Bizproc,BX,BX.UI.DragAndDrop,BX.UI.EntitySelector,BX.Event,BX.Main,BX.UI,BX.Main,BX,BX,BX,BX.Bizproc,BX.Bizproc.Automation,BX,BX,BX,BX.UI.Tour));
+}((this.BX.Bizproc.Automation = this.BX.Bizproc.Automation || {}),BX.UI,BX,BX.Bizproc,BX,BX.UI.DragAndDrop,BX.UI.EntitySelector,BX.Event,BX.Main,BX.UI,BX.Main,BX,BX,BX,BX.Bizproc,BX.Bizproc.Automation,BX,BX,BX,BX.UI.Tour));
 //# sourceMappingURL=automation.bundle.js.map

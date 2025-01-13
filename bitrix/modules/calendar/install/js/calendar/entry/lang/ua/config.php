@@ -5,6 +5,7 @@ $MESS["CALENDAR_EVENT"] = "Подія";
 $MESS["CALENDAR_EVENT_DO_ADD"] = "Створити";
 $MESS["CALENDAR_EVENT_DO_CANCEL"] = "Скасувати";
 $MESS["CALENDAR_EVENT_DO_DELETE"] = "Видалити";
+$MESS["CALENDAR_EVENT_DO_DOWNLOAD_ICS_V2"] = "Завантажити ICS-файл";
 $MESS["CALENDAR_EVENT_DO_EDIT"] = "Редагувати";
 $MESS["CALENDAR_EVENT_DO_MORE"] = "Ще";
 $MESS["CALENDAR_EVENT_DO_OPEN"] = "Відкрити";

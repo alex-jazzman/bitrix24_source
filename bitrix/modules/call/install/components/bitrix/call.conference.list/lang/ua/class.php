@@ -15,4 +15,4 @@ $MESS["CONFERENCE_LIST_PRESET_MY"] = "Мої";
 $MESS["CONFERENCE_LIST_STATUS_ACTIVE"] = "Іде";
 $MESS["CONFERENCE_LIST_STATUS_FINISHED"] = "Пройшла";
 $MESS["CONFERENCE_LIST_STATUS_NOT_STARTED"] = "Запланована";
-$MESS["IM_COMPONENT_MODULE_IM_NOT_INSTALLED"] = "Модуль веб-месенджера не встановлено";
+$MESS["IM_COMPONENT_MODULE_IM_NOT_INSTALLED"] = "Не встановлено модуль «Вебмесенджер».";

@@ -23,8 +23,3 @@ $arActivityDescription = [
 		],
 	],
 ];
-
-if (!(bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024'))
-{
-	$arActivityDescription['EXCLUDED'] = true;
-}

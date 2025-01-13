@@ -7,6 +7,7 @@ $MESS["TASKS_EXCEL_A"] = "Співвиконавці";
 $MESS["TASKS_EXCEL_ACTIVITY_DATE"] = "Активність";
 $MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "У звіті";
 $MESS["TASKS_EXCEL_ALLOW_CHANGE_DEADLINE"] = "Дозволено змінювати крайній термін";
+$MESS["TASKS_EXCEL_ALLOW_CHANGE_DEADLINE_MSGVER_1"] = "Дозволено змінювати крайній термін";
 $MESS["TASKS_EXCEL_ALLOW_TIME_TRACKING"] = "Враховувати робочий час";
 $MESS["TASKS_EXCEL_ASSIGNEE_NAME"] = "Виконавець";
 $MESS["TASKS_EXCEL_BASE_ID"] = "ID базового завдання";

@@ -114,6 +114,7 @@ $MESS["TASKS_REDO_TASK"] = "Доопрацювати";
 $MESS["TASKS_REDO_TASK_MSGVER_1"] = "Доопрацювати";
 $MESS["TASKS_RENEW_TASK"] = "Поновити";
 $MESS["TASKS_ROW_COUNT_TITLE"] = "Всього";
+$MESS["TASKS_ROW_SHOW_COUNT"] = "Усього: #LINK_START#Показати кількість#LINK_END#";
 $MESS["TASKS_SHOW_ROW_COUNT"] = "Показати кількість";
 $MESS["TASKS_START_TASK"] = "Розпочати виконання";
 $MESS["TASKS_STATUS"] = "Статус";

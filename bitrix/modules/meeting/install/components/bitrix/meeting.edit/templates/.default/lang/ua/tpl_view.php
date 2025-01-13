@@ -1,21 +1,26 @@
-<?
-$MESS["ME_LIST_TITLE"] = "До переліку зборів";
+<?php
+$MESS["ME_ACTION"] = "Почати збори";
+$MESS["ME_AGENDA"] = "Порядок";
+$MESS["ME_CHANGE"] = "змінити";
+$MESS["ME_CLOSE"] = "Завершити збори";
+$MESS["ME_COMMENTS"] = "Коментарі";
+$MESS["ME_COPY"] = "Створити наступні збори";
+$MESS["ME_CURRENT_STATE"] = "Статус";
+$MESS["ME_CURRENT_STATE_MSGVER_1"] = "Статус:";
+$MESS["ME_DATE_START"] = "Початок";
+$MESS["ME_DATE_START_MSGVER_1"] = "Початок:";
 $MESS["ME_DESCR_TITLE"] = "Опис зборів";
 $MESS["ME_EDIT_TITLE"] = "Редагувати";
 $MESS["ME_FILES"] = "Файли";
-$MESS["ME_CHANGE"] = "змінити";
+$MESS["ME_FILES_MSGVER_1"] = "Файли:";
+$MESS["ME_GROUP"] = "Проєкт";
+$MESS["ME_GROUP_MSGVER_1"] = " Проєкт:";
+$MESS["ME_KEEPER"] = "Секретар";
+$MESS["ME_KEEPER_MSGVER_1"] = "Секретар";
+$MESS["ME_LIST_TITLE"] = "До переліку зборів";
+$MESS["ME_MEMBERS"] = "Учасники";
 $MESS["ME_OWNER"] = "Організатор";
 $MESS["ME_PLACE"] = "Місце";
-$MESS["ME_DATE_START"] = "Початок";
-$MESS["ME_CURRENT_STATE"] = "Статус";
-$MESS["ME_KEEPER"] = "Секретар";
-$MESS["ME_MEMBERS"] = "Учасники";
-$MESS["ME_REFUSED"] = "Відмовилися від участі";
-$MESS["ME_ACTION"] = "Почати збори";
-$MESS["ME_CLOSE"] = "Завершити збори";
-$MESS["ME_COPY"] = "Створити наступні збори";
+$MESS["ME_PLACE_MSGVER_1"] = "Мі́сце:";
 $MESS["ME_PREPARE"] = "Відновити збори";
-$MESS["ME_COMMENTS"] = "Коментарі";
-$MESS["ME_AGENDA"] = "Порядок";
-$MESS["ME_GROUP"] = "Проєкт";
-?>
+$MESS["ME_REFUSED"] = "Відмовилися від участі";

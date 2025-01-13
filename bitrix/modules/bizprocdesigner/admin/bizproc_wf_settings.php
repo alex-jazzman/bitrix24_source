@@ -9,6 +9,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_bef
 \Bitrix\Main\Loader::includeModule('bizproc');
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
+use Bitrix\Bizproc\Api\Enum\Template\WorkflowTemplateType;
+
 if (!defined('MODULE_ID') && !defined('ENTITY') && isset($_REQUEST['dts']))
 {
 	$dts = \CBPDocument::unSignDocumentType($_REQUEST['dts']);
@@ -25,10 +27,22 @@ $arWorkflowParameters = $_POST['arWorkflowParameters'];
 $arWorkflowVariables = $_POST['arWorkflowVariables'];
 $arWorkflowConstants = $_POST['arWorkflowConstants'];
 $workflowTemplateType = $_POST['workflowTemplateType'] ?? null;
+$documentCategories = $_POST['documentCategories'] ?? null;
+$workflowTemplateSettings = $_POST['workflowTemplateSettings'] ?? null;
+$workflowTemplateAutostart = $_POST['workflowTemplateAutostart'] ?? null;
+$showCategoryPrefix = \Bitrix\Bizproc\Workflow\Template\WorkflowTemplateSettingsTable::SHOW_CATEGORY_PREFIX;
 
-$isNotRobot = in_array($workflowTemplateType, ['default', 'custom_robots'], true);
-$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-$isShowTimelineSettings = MODULE_ID === 'crm' && $isNotRobot && $isAvailable;
+$isModuleCrm = MODULE_ID === 'crm';
+$isNotRobot = in_array($workflowTemplateType, [
+	WorkflowTemplateType::Default->value,
+	WorkflowTemplateType::CustomRobots->value
+], true);
+$isDefaultType = $workflowTemplateType === WorkflowTemplateType::Default->value;
+$isShowTimelineSettings = $isModuleCrm && $isNotRobot;
+$showTabShowProcess = $isModuleCrm && $documentCategories && $isDefaultType;
+$isNoneEventType = (int)$workflowTemplateAutostart === \CBPDocumentEventType::None;
+$isCreateEventType = (int)$workflowTemplateAutostart === \CBPDocumentEventType::Create;
+$isShownByDefault = $isDefaultType && ($isNoneEventType || $isCreateEventType);
 
 $useRestrictedTracking = CBPRuntime::getRuntime()->getTrackingService() instanceof \Bitrix\Bizproc\Service\RestrictedTracking;
 $templateId = (int)($_POST['workflowTemplateId'] ?? 0);
@@ -163,7 +177,34 @@ function WFSStart()
 
 	if (document.getElementById('WFStemplate_show_in_timeline'))
 	{
-		document.getElementById('WFStemplate_show_in_timeline').checked = window.workflowTemplateShowInTimeline === 'Y';
+		let showInTimeline;
+		if (workflowTemplateSettings['SHOW_IN_TIMELINE'] !== undefined)
+		{
+			showInTimeline = workflowTemplateSettings['SHOW_IN_TIMELINE'];
+		}
+		else
+		{
+			showInTimeline = '<?= $isShownByDefault ? 'Y' : 'N' ?>';
+		}
+		document.getElementById('WFStemplate_show_in_timeline').checked = showInTimeline === 'Y';
+	}
+
+	if (window.documentCategories && window.workflowTemplateSettings)
+	{
+		for (const key in documentCategories)
+		{
+			if (documentCategories.hasOwnProperty(key))
+			{
+				const category = documentCategories[key];
+				const option = `<?= CUtil::JSEscape($showCategoryPrefix) ?>${category.id}`;
+				const element = document.getElementById(option);
+				if (element)
+				{
+					const value = workflowTemplateSettings[option];
+					element.checked = value !== 'N';
+				}
+			}
+		}
 	}
 
 	if (workflowTemplateAutostart < 8)
@@ -261,6 +302,20 @@ function WFSSaveOK(response)
 		}
 	}
 
+	workflowTemplateSettings = {};
+	const settingsTable = document.getElementById('editSettings_edit_table');
+	if (settingsTable)
+	{
+		for (i = 1; i < settingsTable.rows.length; i++)
+		{
+			const input = settingsTable.rows[i].querySelector('input');
+			if (input)
+			{
+				workflowTemplateSettings[input.id] = input.checked ? 'Y' : 'N';
+			}
+		}
+	}
+
 	arWorkflowVariables = WFSAllData['V'];
 	workflowTemplateName = document.getElementById('WFStemplate_name').value;
 	workflowTemplateDescription = document.getElementById('WFStemplate_description').value;
@@ -274,7 +329,10 @@ function WFSSaveOK(response)
 
 	if (document.getElementById('WFStemplate_show_in_timeline'))
 	{
-		workflowTemplateShowInTimeline = document.getElementById('WFStemplate_show_in_timeline').checked ? 'Y' : 'N';
+		workflowTemplateSettings['SHOW_IN_TIMELINE'] =
+			document.getElementById('WFStemplate_show_in_timeline').checked
+				? 'Y'
+				: 'N';
 	}
 
 	if (workflowTemplateAutostart < 8)
@@ -717,6 +775,11 @@ $aTabs[] = ["DIV" => "edit2", "TAB" => GetMessage("BIZPROC_WFS_TAB_PARAM"), "ICO
 $aTabs[] = ["DIV" => "edit3", "TAB" => GetMessage("BP_WF_TAB_VARS"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_VARS_TITLE")];
 $aTabs[] = ["DIV" => "edit5", "TAB" => GetMessage("BP_WF_TAB_CONSTANTS"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_CONSTANTS_TITLE")];
 
+if ($showTabShowProcess)
+{
+	$aTabs[] = ["DIV" => "editSettings", "TAB" => GetMessage("BP_WF_TAB_SHOW_PROCESS"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_SHOW_PROCESS_TITLE")];
+}
+
 if (!empty($arAllowableOperations))
 {
 	$aTabs[] = ["DIV" => "edit4", "TAB" => GetMessage("BP_WF_TAB_PERM"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_PERM_TITLE")];
@@ -736,7 +799,7 @@ $tabControl->BeginNextTab();
 	<td valign="top"><?echo GetMessage("BIZPROC_WFS_PAR_DESC")?></td>
 	<td><textarea cols="35" rows="5"  id="WFStemplate_description"><?=htmlspecialcharsbx($_POST['workflowTemplateDescription'])?></textarea></td>
 </tr>
-<?if ($_POST['workflowTemplateAutostart'] < 8):?>
+<?if ($workflowTemplateAutostart < 8):?>
 <tr>
 	<td valign="top"><?echo GetMessage("BIZPROC_WFS_PAR_AUTO")?></td>
 	<td>
@@ -1009,6 +1072,27 @@ $tabControl->BeginNextTab(['className' => 'bizproc-wf-settings-tab-content bizpr
 		</td>
 	</tr>
 <?php
+if ($showTabShowProcess):
+
+$tabControl->BeginNextTab(['className' => 'adm-detail-content settings-tab']); ?>
+	<tr>
+		<td valign="top"></td>
+		<td>
+			<div class="settings-tab-content-description"><?= GetMessage('BP_WF_TAB_SHOW_PROCESS_DESCRIPTION') ?></div>
+		</td>
+	</tr>
+	<?php foreach ($documentCategories as $category):?>
+	<tr>
+		<td valign="top"></td>
+		<td class="settings-tab-cell">
+			<label>
+				<input type="checkbox" value="Y" id="<?= $showCategoryPrefix ?><?= (int)$category['id'] ?>"> <?= htmlspecialcharsbx($category['name']) ?>
+			</label>
+		</td>
+	</tr>
+	<?php endforeach;
+endif;
+
 if (!empty($arAllowableOperations)):
 	$tabControl->BeginNextTab();
 	$permissions = isset($_POST['arWorkflowTemplate'][0]['Properties']['Permission']) ? $_POST['arWorkflowTemplate'][0]['Properties']['Permission'] : array();

@@ -176,6 +176,7 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 			`), selectedClass, value, name, recommendedLabel);
 	    selectContentItems.push(contentItemLabel);
 	  }
+	  const loadedIconSets = [];
 	  for (const {
 	    type,
 	    link,
@@ -183,6 +184,11 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 	    icon
 	  } of babelHelpers.classPrivateFieldLooseBase(this, _additionalItems)[_additionalItems]) {
 	    if (type === 'link') {
+	      const set = icon.set || 'ui.icon-set.main';
+	      if (!loadedIconSets.includes(set)) {
+	        main_core.Runtime.loadExtension(set);
+	        loadedIconSets.push(set);
+	      }
 	      const contentItemLink = main_core.Tag.render(_t8 || (_t8 = _`
 					<div class="select-link-container">
 						<span class="select-link-icon ui-icon-set ${0}"></span>

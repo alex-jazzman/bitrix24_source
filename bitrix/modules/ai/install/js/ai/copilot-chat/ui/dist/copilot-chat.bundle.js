@@ -403,6 +403,11 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      };
 	    }
 	  },
+	  mounted() {
+	    setTimeout(() => {
+	      this.$refs.textarea.focus();
+	    }, 500);
+	  },
 	  methods: {
 	    handleSubmitButton(e) {
 	      e.target.blur();
@@ -648,8 +653,8 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  template: `
 		<CopilotChatNewMessagesLabel v-if="showNewMessagesLabel" />
 		<div class="ai__copilot-chat_messages-author-group">
-			<div v-if="avatar" class="ai__copilot-chat_messages-author-group__avatar">
-				<img :src="avatar" alt="#">
+			<div class="ai__copilot-chat_messages-author-group__avatar">
+				<img v-if="avatar" :src="avatar" alt="#">
 			</div>
 			<div class="ai__copilot-chat_messages-author-group__messages">
 				<slot></slot>
@@ -659,11 +664,11 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	};
 
 	const CopilotChatMessageType = Object.freeze({
-	  DEFAULT: 'default',
-	  BUTTON_CLICK_MESSAGE: 'buttonClickMessage',
-	  WELCOME_FLOWS: 'welcomeFlows',
-	  WELCOME_SITE_WITH_AI: 'welcomeSiteWithAi',
-	  SYSTEM: 'system'
+	  DEFAULT: 'Default',
+	  BUTTON_CLICK_MESSAGE: 'ButtonClicked',
+	  WELCOME_FLOWS: 'WelcomeFlows',
+	  WELCOME_SITE_WITH_AI: 'GreetingSiteWithAi',
+	  SYSTEM: 'System'
 	});
 
 	const CopilotChatNewMessageVisibilityObserver = {
@@ -919,7 +924,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 						:disabled="isSomeButtonSelected || disableAllActions"
 						@click="$emit('buttonClick', button.id)"
 					>
-						{{ button.text }}
+						{{ button.title }}
 					</button>
 				</div>
 			</div>
@@ -1011,7 +1016,11 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      default: false
 	    }
 	  },
+	  inject: ['instance'],
 	  computed: {
+	    chatInstance() {
+	      return this.instance;
+	    },
 	    messageInfo() {
 	      return {
 	        ...this.message,
@@ -1026,19 +1035,35 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  },
 	  methods: {
 	    renderContent() {
-	      const paragraph2 = this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_2', {
+	      var _this$messageInfo$par, _this$messageInfo$par2;
+	      const buttons = (_this$messageInfo$par = (_this$messageInfo$par2 = this.messageInfo.params) == null ? void 0 : _this$messageInfo$par2.buttons) != null ? _this$messageInfo$par : [];
+	      const isMessageHaveCreateSiteButton = buttons.length > 0;
+	      const paragraph2 = isMessageHaveCreateSiteButton ? this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_2', {
 	        '#LINK#': `<a href="#" class="${this.disableAllActions ? 'disabled' : ''}" ref="createSiteLink">`,
 	        '#/LINK#': '</a>'
-	      });
+	      }) : '';
 	      const content = main_core.Tag.render(_t || (_t = _`
-				<div>
+				<div ref="root">
 					<p>${0}</p>
 					<p>${0}</p>
 				</div>
 			`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_1'), paragraph2);
-	      main_core.bind(content.createSiteLink, 'click', () => {
-	        // TODO add some action here
-	      });
+	      if (isMessageHaveCreateSiteButton) {
+	        main_core.bind(content.createSiteLink, 'click', () => {
+	          var _this$messageInfo$par3, _this$messageInfo$par4, _this$messageInfo$par5, _this$messageInfo$par6, _this$messageInfo$par7;
+	          if (!((_this$messageInfo$par3 = this.messageInfo.params) != null && _this$messageInfo$par3.buttons) || this.messageInfo.params.buttons.length === 0) {
+	            return;
+	          }
+	          this.chatInstance.addUserMessage({
+	            type: 'ButtonClicked',
+	            content: (_this$messageInfo$par4 = this.messageInfo.params) == null ? void 0 : (_this$messageInfo$par5 = _this$messageInfo$par4.buttons[0]) == null ? void 0 : _this$messageInfo$par5.text,
+	            params: {
+	              messageId: this.messageInfo.id,
+	              buttonId: (_this$messageInfo$par6 = this.messageInfo.params) == null ? void 0 : (_this$messageInfo$par7 = _this$messageInfo$par6.buttons[0]) == null ? void 0 : _this$messageInfo$par7.id
+	            }
+	          });
+	        });
+	      }
 	      this.$refs.content.innerHTML = '';
 	      main_core.Dom.append(content.root, this.$refs.content);
 	    }
@@ -1164,12 +1189,14 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	        const messageDeliveryDate = new Date(message.dateCreated);
 	        const messageIsoDate = this.formatISODate(messageDeliveryDate);
 	        if (groupedMessages[messageIsoDate] === undefined) {
+	          // eslint-disable-next-line no-param-reassign
 	          groupedMessages[messageIsoDate] = {
 	            messages: [],
 	            isNewMessagesStartHere: false
 	          };
 	        }
 	        if (message.viewed === false && isMessagesContainsUnread === false) {
+	          // eslint-disable-next-line no-param-reassign
 	          groupedMessages[messageIsoDate].isNewMessagesStartHere = true;
 	          isMessagesContainsUnread = true;
 	        }
@@ -1231,8 +1258,10 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    getMessageAvatarByAuthorId(authorId) {
 	      return this.isMessageFromCopilot(authorId) ? this.copilotAvatar : this.userAvatar;
 	    },
-	    getAuthorMessagesGroupAvatar(authorId) {
-	      if (authorId === null || authorId === undefined) {
+	    getAuthorMessagesGroupAvatar(authorId, messages) {
+	      const lastMessage = messages.at(-1);
+	      const isLastMessageIsWelcome = lastMessage.type !== 'Default' && lastMessage.type !== 'ButtonClicked';
+	      if (authorId === null || authorId === undefined || isLastMessageIsWelcome) {
 	        return null;
 	      }
 	      return this.getMessageAvatarByAuthorId(authorId);
@@ -1264,7 +1293,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 		>
 			<CopilotChatMessagesAuthorGroup
 				v-for="([authorId, messagesFromCurrentAuthor, showNewMessagesLabel], authorGroupIndex) in messagesGroupedByDayAndAuthor[date]"
-				:avatar="getAuthorMessagesGroupAvatar(authorId)"
+				:avatar="getAuthorMessagesGroupAvatar(authorId, messagesFromCurrentAuthor)"
 				:show-new-messages-label="showNewMessagesLabel"
 			>
 				<ul class="ai__copilot-chat-messages">
@@ -1292,11 +1321,18 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	};
 
 	const CopilotChatHistoryLoader = {
+	  props: {
+	    text: {
+	      type: String,
+	      required: false,
+	      default: main_core.Loc.getMessage('AI_COPILOT_CHAT_MESSAGES_HISTORY_LOADER_TEXT')
+	    }
+	  },
 	  beforeMount() {
 	    const color = getComputedStyle(document.body).getPropertyValue('--ui-color-base-02');
 	    this.loader = new main_loader.Loader({
 	      color,
-	      size: 40
+	      size: 60
 	    });
 	  },
 	  mounted() {
@@ -1310,7 +1346,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 		<div class="ai__copilot-chat-history-loader">
 			<div ref="loaderContainer" class="ai__copilot-chat-history-loader_animation-container"></div>
 			<div class="ai__copilot-chat_history-loader_text">
-				{{ $Bitrix.Loc.getMessage('AI_COPILOT_CHAT_MESSAGES_HISTORY_LOADER_TEXT') }}
+				{{ text }}
 			</div>
 		</div>
 	`
@@ -1383,10 +1419,23 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      required: false,
 	      default: () => []
 	    },
+	    userAvatar: {
+	      type: Object,
+	      required: false
+	    },
 	    userMessageMenuItems: {
 	      type: Array,
 	      required: false,
 	      default: () => []
+	    },
+	    inputPlaceholder: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    loaderText: {
+	      type: String,
+	      required: false
 	    }
 	  },
 	  data() {
@@ -1402,6 +1451,10 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    };
 	  },
 	  computed: {
+	    userPhoto() {
+	      var _this$userAvatar;
+	      return ((_this$userAvatar = this.userAvatar) == null ? void 0 : _this$userAvatar.value) || '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2';
+	    },
 	    isInputDisabled() {
 	      return this.disableInput.value === true;
 	    },
@@ -1506,12 +1559,22 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	        this.scrollMessagesListAfterOpen();
 	      }
 	    });
+	    main_core.bind(this.$refs.main, 'scroll', event => {
+	      if (event.target.scrollTop < 100) {
+	        this.instance.emit(CopilotChatEvents.MESSAGES_SCROLL_TOP);
+	      }
+	    });
 	  },
 	  beforeUnmount() {
 	    this.instance.unsubscribe(CopilotChatEvents.ADD_USER_MESSAGE, this.handleAddNewUserMessage);
 	  },
 	  watch: {
 	    'messagesList.length': function (newMessagesCount, oldMessagesCount) {
+	      if (newMessagesCount - oldMessagesCount === 1) {
+	        requestAnimationFrame(() => {
+	          this.scrollMessagesListToTheEnd(true);
+	        });
+	      }
 	      requestAnimationFrame(() => {
 	        if (oldMessagesCount === 0 && newMessagesCount > 1 && this.isScrollToTheEndAfterMounted) {
 	          this.scrollMessagesListToTheEnd();
@@ -1537,7 +1600,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 					class="ai__copilot-chat_main-loader-container"
 				>
 					<slot name="loader">
-						<CopilotChatHistoryLoader />
+						<CopilotChatHistoryLoader :text="loaderText" />
 					</slot>
 				</div>
 				<div v-else-if="isShowErrorScreen">
@@ -1548,7 +1611,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 				<CopilotChatMessages
 					v-else
 					@clickMessageButton="handleClickOnMessageButton"
-					user-avatar="/bitrix/js/ui/icons/b24/images/ui-user.svg?v2"
+					:user-avatar="userPhoto"
 					:copilot-avatar="botData.avatar"
 					:messages="messagesList"
 					:welcome-message-html-element="welcomeMessageHtml"
@@ -1566,6 +1629,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 				<CopilotChatInput
 					v-if="useInput"
 					:disabled="isInputDisabled"
+					:placeholder="inputPlaceholder"
 					@submit="handleSubmitMessage"
 				/>
 				<div
@@ -1596,7 +1660,8 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  ENABLE_INPUT_FIELD: 'enableInputField',
 	  SET_MESSAGE_STATUS: 'setMessageStatus',
 	  SHOW_ERROR_SCREEN: 'showErrorScreen',
-	  HIDE_ERROR_SCREEN: 'hideErrorScreen'
+	  HIDE_ERROR_SCREEN: 'hideErrorScreen',
+	  MESSAGES_SCROLL_TOP: 'messagesListScrollTop'
 	});
 	const CopilotChatMessageStatus = {
 	  DEPART: 'depart',
@@ -1618,6 +1683,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	var _scrollToTheEndAfterFirstShow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToTheEndAfterFirstShow");
 	var _showCopilotWarningMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCopilotWarningMessage");
 	var _copilotChatBotOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotChatBotOptions");
+	var _userAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userAvatar");
+	var _inputPlaceholder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputPlaceholder");
+	var _loaderText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loaderText");
 	var _findMessageButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("findMessageButton");
 	var _setMessageStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMessageStatus");
 	var _addNewMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addNewMessage");
@@ -1625,7 +1693,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
 	class CopilotChat$1 extends main_core_events.EventEmitter {
 	  constructor(options = {}) {
-	    var _options$botOptions;
+	    var _options$botOptions, _options$userAvatar, _options$inputPlaceho;
 	    super(options);
 	    Object.defineProperty(this, _renderPopupContent, {
 	      value: _renderPopupContent2
@@ -1698,6 +1766,18 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _userAvatar, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _inputPlaceholder, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _loaderText, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.setEventNamespace('AI.CopilotChat');
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions] = options || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChatBotOptions)[_copilotChatBotOptions] = ui_vue3.ref((_options$botOptions = options == null ? void 0 : options.botOptions) != null ? _options$botOptions : {});
@@ -1711,6 +1791,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _useChatStatus)[_useChatStatus] = ui_vue3.ref(main_core.Type.isBoolean(options.useChatStatus) ? options.useChatStatus : true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _scrollToTheEndAfterFirstShow)[_scrollToTheEndAfterFirstShow] = ui_vue3.ref(main_core.Type.isBoolean(options.scrollToTheEndAfterFirstShow) ? options.scrollToTheEndAfterFirstShow : true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _showCopilotWarningMessage)[_showCopilotWarningMessage] = ui_vue3.ref(options.showCopilotWarningMessage === true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _userAvatar)[_userAvatar] = ui_vue3.ref((_options$userAvatar = options.userAvatar) != null ? _options$userAvatar : '');
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputPlaceholder)[_inputPlaceholder] = (_options$inputPlaceho = options.inputPlaceholder) != null ? _options$inputPlaceho : main_core.Loc.getMessage('AI_COPILOT_CHAT_INPUT_PLACEHOLDER');
+	    babelHelpers.classPrivateFieldLooseBase(this, _loaderText)[_loaderText] = options.loaderText;
 	  }
 	  static getDefaultMinWidth() {
 	    return 375;
@@ -1718,28 +1801,36 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  static getDefaultHeight() {
 	    return 669;
 	  }
-	  addUserMessage(message) {
-	    const newUserMessage = {
-	      ...message,
-	      authorId: 1
-	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _addNewMessage)[_addNewMessage](newUserMessage);
+	  isMessageInList(messageId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.findLast(message => {
+	      return message.id === messageId;
+	    });
 	  }
-	  addBotMessage(message) {
+	  addUserMessage(message, emitEvent = true) {
 	    const newUserMessage = {
+	      type: 'Default',
+	      ...message,
+	      authorId: 1,
+	      status: CopilotChatMessageStatus.DEPART
+	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _addNewMessage)[_addNewMessage](newUserMessage, emitEvent);
+	  }
+	  addBotMessage(message, emitEvent = true) {
+	    const newUserMessage = {
+	      type: 'Default',
 	      ...message,
 	      authorId: 0,
 	      status: null
 	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _addNewMessage)[_addNewMessage](newUserMessage);
+	    babelHelpers.classPrivateFieldLooseBase(this, _addNewMessage)[_addNewMessage](newUserMessage, emitEvent);
 	  }
-	  addSystemMessage(message) {
+	  addSystemMessage(message, emitEvent = true) {
 	    const newSystemMessage = {
 	      ...message,
 	      authorId: null,
 	      status: null
 	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _addNewMessage)[_addNewMessage](newSystemMessage);
+	    babelHelpers.classPrivateFieldLooseBase(this, _addNewMessage)[_addNewMessage](newSystemMessage, emitEvent);
 	  }
 	  enableInput() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _isInputDisabled)[_isInputDisabled].value = false;
@@ -1780,6 +1871,20 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      }
 	    }));
 	  }
+	  setMessageId(messageId, newMessageId) {
+	    const message = babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.find(currentMessage => currentMessage.id === messageId);
+	    if (!message) {
+	      return;
+	    }
+	    message.id = newMessageId;
+	  }
+	  setMessageDate(messageId, date) {
+	    const message = babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.find(currentMessage => currentMessage.id === messageId);
+	    if (!message) {
+	      return;
+	    }
+	    message.dateCreated = date;
+	  }
 	  emitClickOnMessageButton(data) {
 	    const {
 	      buttonId,
@@ -1808,6 +1913,15 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    var _babelHelpers$classPr2;
 	    return Boolean((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.isShown());
 	  }
+	  adjustPosition() {
+	    var _babelHelpers$classPr3;
+	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.adjustPosition({
+	      forceBindPosition: true
+	    });
+	  }
+	  setUserAvatar(avatar) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _userAvatar)[_userAvatar].value = avatar;
+	  }
 	}
 	function _findMessageButton2(messageId, buttonId) {
 	  var _searchedMessage$para, _searchedMessage$para2;
@@ -1828,7 +1942,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    status
 	  });
 	}
-	function _addNewMessage2(message) {
+	function _addNewMessage2(message, emitEvent = true) {
 	  var _message$viewed;
 	  const newMessageId = Math.round(-Math.random() * 1000);
 	  const isCopilotChatShown = this.isShown();
@@ -1841,6 +1955,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    viewed: (_message$viewed = message == null ? void 0 : message.viewed) != null ? _message$viewed : isCopilotChatShown
 	  };
 	  babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.push(newMessage);
+	  if (emitEvent === false) {
+	    return;
+	  }
 	  if (newMessage.authorId === 0) {
 	    this.emit(CopilotChatEvents.ADD_BOT_MESSAGE, {
 	      message: newMessage
@@ -1852,47 +1969,50 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  }
 	}
 	function _initPopup2() {
-	  var _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9;
+	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10;
+	  const adjustPopupPosition = this.adjustPosition.bind(this);
+	  main_core.bind(window, 'resize', adjustPopupPosition);
 	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = new main_popup.Popup({
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions],
 	    content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](),
-	    minWidth: (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr4.minWidth) != null ? _babelHelpers$classPr3 : CopilotChat$1.getDefaultMinWidth(),
-	    height: (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr6.height) != null ? _babelHelpers$classPr5 : CopilotChat$1.getDefaultHeight(),
+	    minWidth: (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr5.minWidth) != null ? _babelHelpers$classPr4 : CopilotChat$1.getDefaultMinWidth(),
+	    height: (_babelHelpers$classPr6 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr7.height) != null ? _babelHelpers$classPr6 : CopilotChat$1.getDefaultHeight(),
 	    contentNoPaddings: true,
 	    padding: 0,
 	    borderRadius: '16px',
-	    className: `ai__copilot-chat-popup ${(_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions].className) != null ? _babelHelpers$classPr7 : ''}`,
-	    cacheable: (_babelHelpers$classPr8 = (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr9.cacheable) != null ? _babelHelpers$classPr8 : false,
+	    className: `ai__copilot-chat-popup ${(_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions].className) != null ? _babelHelpers$classPr8 : ''}`,
+	    cacheable: (_babelHelpers$classPr9 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr10.cacheable) != null ? _babelHelpers$classPr9 : false,
 	    events: {
 	      onPopupAfterClose: () => {
-	        var _babelHelpers$classPr10, _babelHelpers$classPr11;
+	        var _babelHelpers$classPr11, _babelHelpers$classPr12;
 	        babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = null;
 	        babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].unmount();
-	        if (main_core.Type.isFunction((_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr11 = _babelHelpers$classPr10.events) == null ? void 0 : _babelHelpers$classPr11.onPopupAfterClose)) {
-	          var _babelHelpers$classPr12, _babelHelpers$classPr13;
-	          (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr13 = _babelHelpers$classPr12.events) == null ? void 0 : _babelHelpers$classPr13.onPopupAfterClose();
+	        if (main_core.Type.isFunction((_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr12 = _babelHelpers$classPr11.events) == null ? void 0 : _babelHelpers$classPr12.onPopupAfterClose)) {
+	          var _babelHelpers$classPr13, _babelHelpers$classPr14;
+	          (_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr14 = _babelHelpers$classPr13.events) == null ? void 0 : _babelHelpers$classPr14.onPopupAfterClose();
 	        }
+	        main_core.unbind(window, 'resize', adjustPopupPosition);
 	      }
 	    }
 	  });
 	  return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
 	}
 	function _renderPopupContent2() {
-	  var _babelHelpers$classPr14, _babelHelpers$classPr15, _babelHelpers$classPr16, _babelHelpers$classPr17, _babelHelpers$classPr18;
+	  var _babelHelpers$classPr15, _babelHelpers$classPr16, _babelHelpers$classPr17, _babelHelpers$classPr18, _babelHelpers$classPr19;
 	  const appContainer = main_core.Tag.render(_t$2 || (_t$2 = _$2`<div class="ai__copilot-chat-popup-content"></div>`));
 	  babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = ui_vue3.BitrixVue.createApp({
 	    name: 'CopilotChatPopup',
 	    components: {
 	      CopilotChat: CopilotChat,
-	      ...((_babelHelpers$classPr14 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions]) == null ? void 0 : _babelHelpers$classPr14.vueComponents)
+	      ...((_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions]) == null ? void 0 : _babelHelpers$classPr15.vueComponents)
 	    },
 	    template: `
 				<CopilotChat>
 					<template v-slot:loader>
-						${(_babelHelpers$classPr15 = (_babelHelpers$classPr16 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr16.LOADER) != null ? _babelHelpers$classPr15 : ''}
+						${(_babelHelpers$classPr16 = (_babelHelpers$classPr17 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr17.LOADER) != null ? _babelHelpers$classPr16 : ''}
 					</template>
 					<template v-slot:loaderError>
-						${(_babelHelpers$classPr17 = (_babelHelpers$classPr18 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr18.LOADER_ERROR) != null ? _babelHelpers$classPr17 : ''}
+						${(_babelHelpers$classPr18 = (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr19.LOADER_ERROR) != null ? _babelHelpers$classPr18 : ''}
 					</template>
 				</CopilotChat>
 			`
@@ -1908,7 +2028,10 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    copilotMessageMenuItems: babelHelpers.classPrivateFieldLooseBase(this, _copilotMessageMenuItems)[_copilotMessageMenuItems].value,
 	    userMessageMenuItems: babelHelpers.classPrivateFieldLooseBase(this, _userMessageMenuItems)[_userMessageMenuItems].value,
 	    isShowWarningMessage: babelHelpers.classPrivateFieldLooseBase(this, _showCopilotWarningMessage)[_showCopilotWarningMessage],
-	    botOptions: babelHelpers.classPrivateFieldLooseBase(this, _copilotChatBotOptions)[_copilotChatBotOptions].value
+	    botOptions: babelHelpers.classPrivateFieldLooseBase(this, _copilotChatBotOptions)[_copilotChatBotOptions].value,
+	    userAvatar: babelHelpers.classPrivateFieldLooseBase(this, _userAvatar)[_userAvatar],
+	    inputPlaceholder: babelHelpers.classPrivateFieldLooseBase(this, _inputPlaceholder)[_inputPlaceholder],
+	    loaderText: babelHelpers.classPrivateFieldLooseBase(this, _loaderText)[_loaderText]
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(appContainer);
 	  return appContainer;

@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_TIMELINE_ACTIVITY_DELETE_TAG_CONFIRM"] = "Видалити статус?";
 $MESS["CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM"] = "Ви дійсно бажаєте видалити цю подію?";
 $MESS["CRM_TIMELINE_POSTPONE"] = "Відкласти";
 $MESS["CRM_TIMELINE_POSTPONE_1D"] = "1 день";

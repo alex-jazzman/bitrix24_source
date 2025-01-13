@@ -63,6 +63,7 @@ $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "копіюват
 $MESS["INTRANET_USER_PROFILE_TURNED_ON"] = "Підключена";
 $MESS["INTRANET_USER_PROFILE_TURN_ON"] = "Підключити";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Адміністратор";
+$MESS["INTRANET_USER_PROFILE_collaber"] = "Гість";
 $MESS["INTRANET_USER_PROFILE_email"] = "Поштовий користувач";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Екстранет";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Звільнений";
