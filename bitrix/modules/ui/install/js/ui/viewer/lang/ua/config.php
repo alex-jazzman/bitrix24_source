@@ -1,9 +1,13 @@
 <?php
 $MESS["JS_UI_VIEWER_DEFAULT_ERROR_TITLE"] = "Сталася помилка";
 $MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE"] = "Показати повністю";
+$MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE_MSGVER_1"] = "Відкрити оригінал";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DELETE"] = "Видалити";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD"] = "Скачати";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_EDIT"] = "Редагувати";
+$MESS["JS_UI_VIEWER_ITEM_ACTION_INFO"] = "Докладніше";
+$MESS["JS_UI_VIEWER_ITEM_ACTION_PRINT"] = "Друк";
+$MESS["JS_UI_VIEWER_ITEM_ACTION_ROTATE"] = "Повернути";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_SHARE"] = "Поділитись";
 $MESS["JS_UI_VIEWER_ITEM_PREPARING_TO_PRINT"] = "Підготовка документа до друку: #PROGRESS#%";
 $MESS["JS_UI_VIEWER_ITEM_TRANSFORMATION_ERROR"] = "Помилка при конвертації. Не вдалося відкрити файл";
@@ -15,3 +19,5 @@ $MESS["JS_UI_VIEWER_ITEM_UNKNOWN_DOWNLOAD_ACTION"] = "Скачати файл";
 $MESS["JS_UI_VIEWER_ITEM_UNKNOWN_NOTICE"] = "Але ви можете переглянути його на комп'ютері";
 $MESS["JS_UI_VIEWER_ITEM_UNKNOWN_TITLE"] = "Формат файлу не підтримується";
 $MESS["JS_UI_VIEWER_SINGLE_DOCUMENT_LISTING_PAGES"] = "С. #CURRENT#<div class=\"ui-viewer-single-document-listing-pages-all\">/#ALL#</div>";
+$MESS["JS_UI_VIEWER_SINGLE_DOCUMENT_SCALE_ZOOM_IN"] = "Збільшити";
+$MESS["JS_UI_VIEWER_SINGLE_DOCUMENT_SCALE_ZOOM_OUT"] = "Зменшити";

@@ -8,6 +8,7 @@ $MESS["SONET_UM_CHAT"] = "Чат";
 $MESS["SONET_UM_FILES"] = "Файли";
 $MESS["SONET_UM_FORUM"] = "Обговорення";
 $MESS["SONET_UM_MARKETPLACE_2"] = "Маркет";
+$MESS["SONET_UM_MARKETPLACE_MSGVER_1"] = "Маркет";
 $MESS["SONET_UM_MICROBLOG"] = "Мікроблог";
 $MESS["SONET_UM_PHOTO"] = "Фото";
 $MESS["SONET_UM_SEARCH"] = "Пошук";

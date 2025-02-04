@@ -1,5 +1,9 @@
 <?php
 $MESS["CALL_COMPONENT_AGREEMENTS"] = "Підсумки";
+$MESS["CALL_COMPONENT_AGREEMENTS_COMMON"] = "Що вирішили";
+$MESS["CALL_COMPONENT_AGREEMENTS_MEETINGS"] = "Зустрічі";
+$MESS["CALL_COMPONENT_AGREEMENTS_TASKS"] = "Завдання";
+$MESS["CALL_COMPONENT_COPILOT_DISCLAIMER"] = "Відповіді CoPilot можуть бути #LINK_START#неточні#LINK_END#, перевіряйте важливу інформацію.";
 $MESS["CALL_COMPONENT_EFFICIENCY"] = "Ефективність";
 $MESS["CALL_COMPONENT_EFFICIENCY_0"] = "Не вистачило ясності";
 $MESS["CALL_COMPONENT_EFFICIENCY_50"] = "Є недоліки";
@@ -8,6 +12,7 @@ $MESS["CALL_COMPONENT_EFFICIENCY_100"] = "Відмінно";
 $MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_CLEARLY"] = "Озвучили порядок денний";
 $MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_CONCLUSIONS"] = "Підбили підсумки";
 $MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_COVERED"] = "Обговорили всі пункти порядку денного";
+$MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_COVERED_V2"] = "Обговорили все продуктивно";
 $MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_TIME_EXCEED"] = "Уклалися в таймінг";
 $MESS["CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS"] = "Оцінка від CoPilot";
 $MESS["CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_0"] = "Щоб проводити зустрічі з користю, постарайтеся виконувати всі рекомендації.";
@@ -18,6 +23,8 @@ $MESS["CALL_COMPONENT_EMPTY_INSIGHTS"] = "Не вдалося скласти р�
 $MESS["CALL_COMPONENT_EMPTY_SUMMARY"] = "Не вдалося зробити резюме зустрічі.";
 $MESS["CALL_COMPONENT_EMPTY_TASKS"] = "Не вдалося скласти список завдань.";
 $MESS["CALL_COMPONENT_EMPTY_TRANSCRIPTIONS"] = "Не вдалося зробити розшифровку дзвінка.";
+$MESS["CALL_COMPONENT_EXCEPTION_MEETING"] = "CoPilot визначив, що ця зустріч — <b>#MEETING_TYPE#</b>. У таких зустрічах оцінка ефективності не знижується, якщо деякі пункти не були виконані.";
+$MESS["CALL_COMPONENT_EXCEPTION_MEETING_DAILY"] = "Щоденна нарада";
 $MESS["CALL_COMPONENT_FEEDBACK"] = "Зворотній зв'язок";
 $MESS["CALL_COMPONENT_INSIGHTS_V2"] = "Аналіз";
 $MESS["CALL_COMPONENT_MEETING_CREATE"] = "Створити зустріч за домовленістю";

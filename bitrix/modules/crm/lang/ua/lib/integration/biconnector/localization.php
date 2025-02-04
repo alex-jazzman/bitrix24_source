@@ -1,4 +1,16 @@
 <?php
+$MESS["CRM_ACTIVITY_RELATION_FIELD_ACTIVITY_ID"] = "Ідентифікатор справи";
+$MESS["CRM_ACTIVITY_RELATION_FIELD_OWNER_ID"] = "Ідентифікатор елемента, до якого прив'язана справа.";
+$MESS["CRM_ACTIVITY_RELATION_FIELD_OWNER_TYPE_ID"] = "Ідентифікатор типу елемента, до якого прив'язана справа.";
+$MESS["CRM_ACTIVITY_RELATION_TABLE"] = "Зв'язки справ CRM";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_FIELD_ACTIVITY_ID"] = "ID справи дзвінка ";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_FIELD_ASSESSMENT"] = "Оцінка";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_FIELD_CREATED_AT"] = "Дата створення";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_FIELD_ID"] = "ID";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_FIELD_RATED_USER_ID"] = "ID співробітника";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING"] = "Бере участь у загальному рейтингу";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING_FULL"] = "Оцінка є основною для дзвінка. Y — так, N — ні";
+$MESS["CRM_AI_QUALITY_ASSESSMENT_TABLE"] = "Оцінки розмов за скриптами";
 $MESS["CRM_AUTOMATED_SOLUTION_TABLE"] = "Цифрове робоче місце: #TITLE#";
 $MESS["CRM_DYNAMIC_ITEMS_PROD_FIELD_CUSTOMIZED"] = "Змінено";
 $MESS["CRM_DYNAMIC_ITEMS_PROD_FIELD_CUSTOMIZED_FULL"] = "Товарна позиція була змінена вручну після додавання в угоду. Y — так, N — ні";

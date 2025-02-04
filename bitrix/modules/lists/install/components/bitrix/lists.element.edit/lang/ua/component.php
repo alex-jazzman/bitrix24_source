@@ -1,9 +1,11 @@
-<?
+<?php
 $MESS["CC_BLEE_ACCESS_DENIED"] = "Немає прав для перегляду і редагування списку.";
 $MESS["CC_BLEE_ACCESS_DENIED_STATUS"] = "У вас немає прав на редагування цього запису в його поточному статусі";
 $MESS["CC_BLEE_DELETE_ERROR"] = "Помилка видалення.";
 $MESS["CC_BLEE_ELEMENT_LOCKED"] = "Запис тимчасово заблокований";
 $MESS["CC_BLEE_FIELD_NAME_DEFAULT"] = "Назва";
+$MESS["CC_BLEE_INTERNAL_ERROR_ELEMENT_ADD"] = "Не вдалося створити елемент. Спробуйте ще раз.";
+$MESS["CC_BLEE_INTERNAL_ERROR_ELEMENT_UPDATE"] = "Не вдалося оновити елемент. Спробуйте ще раз.";
 $MESS["CC_BLEE_IS_CONSTANTS_TUNED"] = "Необхідно налаштувати константи Бізнес-процесу.";
 $MESS["CC_BLEE_IS_CONSTANTS_TUNED_NEW"] = "Необхідно налаштувати параметри Бізнес-процесу.";
 $MESS["CC_BLEE_LISTS_FOR_SONET_GROUP_DISABLED"] = "Функціонал списків для цієї групи вимкнений.";
@@ -15,4 +17,3 @@ $MESS["CC_BLEE_UPPER_LEVEL"] = "Верхній рівень";
 $MESS["CC_BLEE_VALIDATE_FIELD_ERROR"] = "Значення поля '#NAME#' не вірно";
 $MESS["CC_BLEE_WRONG_IBLOCK"] = "Вказано невірний список.";
 $MESS["CC_BLEE_WRONG_IBLOCK_TYPE"] = "Невірний тип інформаційного блоку.";
-?>

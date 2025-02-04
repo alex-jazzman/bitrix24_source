@@ -19,6 +19,11 @@ export class PlayerManager
 		}
 	}
 
+	static removePlayer(playerToRemove)
+	{
+		this.#players = this.#players.filter((player: Player) => player !== playerToRemove);
+	}
+
 	static #init(): void
 	{
 		if (this.#isStarted)
@@ -152,11 +157,11 @@ export class PlayerManager
 		}
 	}
 
-	static getElementCoords(id: string): Object
+	static getElementCoords(element: HTMLElement): Object
 	{
 		const VISIBLE_OFFSET = 0.25;
 
-		const box = document.getElementById(id).getBoundingClientRect();
+		const box = element.getBoundingClientRect();
 
 		const elementHeight = box.bottom - box.top;
 		const top = box.top + VISIBLE_OFFSET * elementHeight;
@@ -182,7 +187,13 @@ export class PlayerManager
 	{
 		let visible = false;
 
-		const coords = this.getElementCoords(id);
+		const element = document.getElementById(id);
+		if (element === null)
+		{
+			return false;
+		}
+
+		const coords = this.getElementCoords(element);
 		const clientHeight = document.documentElement.clientHeight;
 
 		let windowTop = window.pageYOffset || document.documentElement.scrollTop;

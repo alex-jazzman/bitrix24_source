@@ -213,6 +213,7 @@ $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL"] = "М
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_CHECKWORD"] = "Зараз ми назавжди видалимо ваш Бітрікс24 з усіма даними. Уведіть слово #CHECKWORD#, щоб підтвердити вашу готовність.";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE"] = "Перед видаленням у вашому Бітрікс24 повинен залишитися лише адміністратор. Решту співробітників потрібно звільнити. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MAIL"] = "Щоб видалити Бітрікс24, напишіть нам на <a class=\"ui-section__link --mail\" href=\"#MAIL_LINK#\">#MAIL#</a>.<br><br> Усі дані видаляються назавжди без можливості відновлення. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Видалити Бітрікс24 може лише адміністратор. Перед видаленням усі співробітники мають бути звільнені. Усі дані, зокрема файли на диску та профілі співробітників, будуть видалені.<br><br>Після видалення ви можете створити Бітрікс24 з такою самою адресою. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NOT_ADMIN"] = "Видалити Бітрікс24 може лише користувач із правами адміністратора.";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_DESCRIPTION"] = "Для роботи з Google Maps потрібен ключ Google API. <a target=\"_blank\" class=\"ui-section__link\" href=\"#GOOGLE_API_URL#\">Отримати ключ</a>";
 $MESS["INTRANET_SETTINGS_SECTION_DOMAIN_NAME1"] = "Придумати адресу";

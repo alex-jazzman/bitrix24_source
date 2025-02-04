@@ -156,7 +156,7 @@
 .ui-access-rights-v2-section-head .ui-access-rights-v2-column-item {
 	align-items: center;
 	flex-direction: row;
-	justify-content: normal;
+	justify-content: space-between;
 	border-left: none;
 	padding-left: 18px;
 }
@@ -247,18 +247,14 @@
 	transition: .11s;
 	transition-delay: .1s;
 	max-width: calc(205px - 20px - 16px - 5px); /* max column width - padding - menu - some padding between text and menu */
+	width: 100%;
+	text-align: center;
+	padding-right: 5px;
 }
 
 .ui-access-rights-v2-role-input {
 	border: none;
-	width: 100%;
-	text-align: center;
-}
-
-.ui-access-rights-v2-role-menu {
-	--ui-icon-set__icon-size: 16px;
-	opacity: var(--ui-opacity-40);
-	cursor: pointer;
+	padding-right: 15px;
 }
 
 .ui-access-rights-v2-column-item .ui-tag-selector-outer-container{
@@ -408,4 +404,19 @@ div.ui-access-rights-v2-members-item-new:last-of-type {
 
 .ui-access-rights-v2-column-item .ui-access-rights-v2-text-ellipsis {
 	max-width: calc(100% - 40px); /* 20px for width paddings */
+}
+
+.ui-access-rights-v2-icon-more {
+	--ui-icon-set__icon-size: 16px;
+	opacity: var(--ui-opacity-40);
+	cursor: pointer;
+}
+
+.ui-access-rights-v2-search-input {
+	background-color: #F6F7F9;
+	border: none;
+}
+
+.ui-access-rights-v2-search-input:focus {
+	background-color: var(--ui-color-palette-white-base);
 }

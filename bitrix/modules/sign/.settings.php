@@ -6,6 +6,7 @@ use Bitrix\Sign\Config;
 use Bitrix\Sign\Connector;
 use Bitrix\Sign\Repository;
 use Bitrix\Sign\Callback;
+use Bitrix\Sign\Service\Sign\Document\GroupService;
 use Bitrix\Sign\Service\CounterService;
 use Bitrix\Sign\Util;
 
@@ -484,11 +485,17 @@ return [
 			'sign.access.service.access' => [
 				'className' => AccessService::class,
 			],
+			'sign.service.document.group' => [
+				'className' => GroupService::class,
+			],
 			'sign.repository.required_field' => [
 				'className' => Repository\RequiredFieldRepository::class,
 			],
 			'sign.repository.document.template' => [
 				'className' => Repository\Document\TemplateRepository::class,
+			],
+			'sign.repository.document.group' => [
+				'className' => Repository\Document\GroupRepository::class,
 			],
 			'sign.service.license' => [
 				'className' => Service\LicenseService::class,

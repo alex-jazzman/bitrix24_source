@@ -3,3 +3,4 @@ $MESS["IBLOCK_GRID_ROW_ACTIONS_DELETE_SECTION_BACK_BUTTON"] = "Скасуват�
 $MESS["IBLOCK_GRID_ROW_ACTIONS_DELETE_SECTION_CONFIRM_BUTTON"] = "Так, видалити";
 $MESS["IBLOCK_GRID_ROW_ACTIONS_DELETE_SECTION_CONFIRM_MESSAGE"] = "Справді видалити розділ і пов'язану з ним інформацію?";
 $MESS["IBLOCK_GRID_ROW_ACTIONS_DELETE_SECTION_NAME"] = "Видалити розділ";
+$MESS["IBLOCK_GRID_ROW_ACTION_DELETE_SECTION_INTERNAL_ERROR"] = "Не вдалося видалити розділ. Спробуйте ще раз.";

@@ -1,4 +1,6 @@
 <?php
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG"] = "Відповідність скрипту";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP"] = "Загальний відсоток відповідності цьому скрипту. У ньому враховуються розмови всіх менеджерів. У цьому скрипті відповідність нижче #LOW_BORDER#% кваліфікується як неякісна розмова, вище #HIGH_BORDER#% — як якісна.";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CALL_TYPE"] = "Тип дзвінка";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CLIENT"] = "Тип клієнта";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_IS_ENABLED"] = "Статус";
@@ -12,3 +14,4 @@ $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_ITEM_DELETE_ERROR"] = "Не вдалос
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_NOT_FOUND"] = "Скрипт не знайдено.";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_NOT_FOUND_MSGVER_1"] = "Скрипт не знайдено.";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_TITLE"] = "Скрипти й мовна аналітика з ШІ";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_TOOLBAR_GUIDE_TITLE"] = "Copilot в CRM: як підвищити ефективність продажів";

@@ -15,6 +15,7 @@ $MESS["CPD_ERROR_EMPTY_DIRECTORY_ITEMS"] = "Додайте елементи дл
 $MESS["CPD_ERROR_EMPTY_LIST_ITEMS"] = "Додайте елементи для списку";
 $MESS["CPD_ERROR_NOT_SUPPORTED_PRODUCT_TYPE"] = "Ви вибрали тип товару «#TYPE#», який не підтримується в новій картці. Подивитися та відредагувати такий товар можна в розділі «Магазин».<br>#LINK#";
 $MESS["CPD_ERROR_NOT_SUPPORTED_PRODUCT_TYPE_BUS"] = "Ви вибрали тип товару \"#TYPE#\", який не підтримується в новій картці. Переглядати й редагувати цей товар можна після перемикання на стару картку в налаштуваннях модуля «Товарний каталог».<br>#LINK#";
+$MESS["CPD_ERROR_SAVE"] = "Не вдалося зберегти зміни, спробуйте ще раз.";
 $MESS["CPD_ERROR_UNKNOWN_PRODUCT_TYPE"] = "Невідомий тип товару.";
 $MESS["CPD_NEW_LIST_ELEMENT_EMPTY_NAME"] = "Новий елемент";
 $MESS["CPD_NEW_PRODUCT_TITLE"] = "Новий товар";

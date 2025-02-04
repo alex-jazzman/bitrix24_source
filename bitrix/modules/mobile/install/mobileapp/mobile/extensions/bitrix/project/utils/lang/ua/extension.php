@@ -1,4 +1,5 @@
 <?php
+$MESS["MOBILE_PROJECT_NO_PROJECT_ERROR"] = "Група не знайдена або доступ заборонений";
 $MESS["MOBILE_PROJECT_TAB_CALENDAR"] = "Календар";
 $MESS["MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE"] = "Календар";
 $MESS["MOBILE_PROJECT_TAB_DRIVE"] = "Диск";

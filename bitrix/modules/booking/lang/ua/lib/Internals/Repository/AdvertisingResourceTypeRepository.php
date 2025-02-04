@@ -1,0 +1,16 @@
+<?php
+$MESS["ADVERTISING_TYPE_DESCRIPTION_CAR_RENT"] = "Легкові та вантажні автомобілі, мототехніка";
+$MESS["ADVERTISING_TYPE_DESCRIPTION_EQUIPMENT_RENT"] = "Будівельна техніка, електроінструмент";
+$MESS["ADVERTISING_TYPE_DESCRIPTION_EXPERT_SERVICES"] = "Консалтинг, ремонт, б'юті-індустрія, фітнес";
+$MESS["ADVERTISING_TYPE_DESCRIPTION_MEDICAL_SERVICES"] = "Лікарі, косметологи, діагностика";
+$MESS["ADVERTISING_TYPE_DESCRIPTION_ROOM_RENT"] = "Банкетні зали, квартири та будинки, фотостудії";
+$MESS["ADVERTISING_TYPE_NAME_CAR_RENT"] = "Оренда автомобілів";
+$MESS["ADVERTISING_TYPE_NAME_EQUIPMENT_RENT"] = "Оренда обладнання";
+$MESS["ADVERTISING_TYPE_NAME_EXPERT_SERVICES"] = "Послуги фахівців";
+$MESS["ADVERTISING_TYPE_NAME_MEDICAL_SERVICES"] = "Медичні послуги";
+$MESS["ADVERTISING_TYPE_NAME_ROOM_RENT"] = "Оренда приміщень";
+$MESS["ADVERTISING_TYPE_RESOURCE_TYPE_NAME_CAR"] = "Автомобіль";
+$MESS["ADVERTISING_TYPE_RESOURCE_TYPE_NAME_DOCTOR"] = "Лікар";
+$MESS["ADVERTISING_TYPE_RESOURCE_TYPE_NAME_EQUIPMENT"] = "Обладнання";
+$MESS["ADVERTISING_TYPE_RESOURCE_TYPE_NAME_EXPERT"] = "Фахівець";
+$MESS["ADVERTISING_TYPE_RESOURCE_TYPE_NAME_ROOM"] = "Приміщення";

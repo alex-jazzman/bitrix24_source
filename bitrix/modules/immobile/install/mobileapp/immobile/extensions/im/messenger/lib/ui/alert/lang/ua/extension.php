@@ -1,5 +1,6 @@
 <?php
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_DESCRIPTION"] = "Канал не можна буде відновити. Видаляться всі публікації, файли та коментарі";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POSTS_TITLE"] = "Видалити публікації?";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POST_DESCRIPTION"] = "Коментарі та реакції теж видаляться";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POST_TITLE"] = "Видалити публікацію?";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_TITLE"] = "Видалити канал?";
@@ -8,6 +9,7 @@ $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_TITLE"] = "Видалит�
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_CONFIRM_YES"] = "Так, видалити";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_DESCRIPTION"] = "Колаба видалиться з усією історією спілкування. Відновити колабу неможливо. ";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_TITLE"] = "Видалити колабу?";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_MESSAGES_TITLE"] = "Видалити повідомлення?";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_CHANNEL_CONFIRM_TITLE"] = "Відписатися від каналу?";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_CHANNEL_CONFIRM_YES"] = "Так, відписатися";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_CHAT_CONFIRM_TITLE"] = "Ви впевнені, що хочете вийти з чату?";
