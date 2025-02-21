@@ -333,6 +333,9 @@
 
 .ui-viewer-close-icon {
 	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	width: 32px;
 	height: 32px;
 	border: 2px solid rgba(255, 255, 255, .1);
@@ -340,36 +343,14 @@
 	background-color: rgba(0,0,0,.1);
 	opacity: 1;
 	transition: .3s;
+	--ui-icon-set__icon-color: rgba(255, 255, 255, .5);
 }
 
 .ui-viewer-close:hover .ui-viewer-close-icon {
 	border: 2px solid rgba(255,255,255,.5);
 	background-color: rgba(0,0,0,.1);
-}
 
-.ui-viewer-close-icon:after,
-.ui-viewer-close-icon:before {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 16px;
-	height: 2px;
-	background: rgba(255, 255, 255, .5);
-	transition: .3s;
-}
-
-.ui-viewer-close-icon:before {
-	transform: translateX(-50%) translateY(-50%) rotate(-45deg);
-}
-
-.ui-viewer-close-icon:after {
-	transform: translateX(-50%) translateY(-50%) rotate(45deg);
-}
-
-.ui-viewer-close:hover .ui-viewer-close-icon:before,
-.ui-viewer-close:hover .ui-viewer-close-icon:after {
-	background: #fff;
+	--ui-icon-set__icon-color: rgba(255, 255, 255, 1);
 }
 
 .ui-viewer-carousel {

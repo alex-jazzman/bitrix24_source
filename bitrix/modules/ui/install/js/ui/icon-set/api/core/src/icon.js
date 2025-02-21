@@ -660,6 +660,8 @@ export const CRM = Object.freeze({
 	CAR: 'car',
 	CRM_PAYMENT: 'crm-payment',
 	INSERT: 'insert',
+	CRM_LETTERS: 'crm-letters',
+	CRM_MAP: 'crm-map',
 	SEND_FILE: 'send-file',
 	BITRIX_1C: 'bitrix-1c',
 });

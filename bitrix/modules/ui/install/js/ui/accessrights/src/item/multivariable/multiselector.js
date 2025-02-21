@@ -153,6 +153,8 @@ export default class MultiSelector extends Changer
 
 		BX.UI.Hint.init(this.getChanger());
 
+		this.selector.setTargetNode(this.getChanger());
+
 		return this.getChanger();
 	}
 

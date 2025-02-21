@@ -50,7 +50,6 @@ videojs.hook('beforesetup', (videoEl, options) => {
 
 export class Player
 {
-	inited: boolean = false;
 	id: string = null;
 	muted: boolean = false;
 	hasStarted: boolean = false;
@@ -304,7 +303,6 @@ export class Player
 		this.muted = params.muted || false;
 
 		this.params = params;
-		this.active = this.isPlayed();
 	}
 
 	#getDefaultOptions(): JsonObject
@@ -345,11 +343,6 @@ export class Player
 
 		this.#fireEvent('onBeforeInit');
 
-		if (videojs.players[this.id])
-		{
-			videojs.players[this.id].dispose();
-		}
-
 		this.vjsPlayer = videojs(this.id, this.params);
 
 		if (this.isAudio)
@@ -358,16 +351,26 @@ export class Player
 			this.#setInitialVolume();
 		}
 
+		this.vjsPlayer.one('loadedmetadata', (event) => {
+			if (!this.isAudio && !(this.vjsPlayer.videoWidth() > 0 && this.vjsPlayer.videoHeight() > 0))
+			{
+				// Throw an error if a video doesn't have dimensions
+				event.stopPropagation();
+				event.stopImmediatePropagation();
+
+				setTimeout(() => {
+					this.vjsPlayer.error(4);
+				}, 0);
+			}
+			else if (this.duration > 0)
+			{
+				this.vjsPlayer.duration(this.duration);
+			}
+		});
+
 		this.vjsPlayer.on('fullscreenchange', () => {
 			this.vjsPlayer.focus();
 		});
-
-		if (this.duration > 0)
-		{
-			this.vjsPlayer.one('loadedmetadata', () => {
-				this.vjsPlayer.duration(this.duration);
-			});
-		}
 
 		this.#proxyEvents();
 
@@ -383,24 +386,23 @@ export class Player
 
 			this.vjsPlayer.one('play', this.#handlePlayOnce.bind(this));
 
-			this.inited = true;
 			if (Type.isFunction(this.onInit))
 			{
 				this.onInit(this);
 			}
 
 			this.#fireEvent('onAfterInit');
-
-			if (this.autostart && !this.lazyload)
-			{
-				setTimeout(() => {
-					if (!this.hasStarted)
-					{
-						this.play();
-					}
-				}, 200);
-			}
 		});
+
+		if (this.autostart && !this.lazyload)
+		{
+			this.vjsPlayer.one('canplay', () => {
+				if (!this.hasStarted)
+				{
+					this.play();
+				}
+			});
+		}
 	}
 
 	isInited(): boolean
@@ -548,7 +550,6 @@ export class Player
 
 		this.vjsPlayer.on('volumechange', () => {
 			this.constructor.#globalSettings.set('volume', this.vjsPlayer.volume());
-			this.active = true;
 		});
 	}
 
@@ -720,12 +721,15 @@ export class Player
 		});
 
 		this.vjsPlayer.on('click', () => {
-			this.active = true;
 			this.#fireEvent('onClick');
 		});
 
 		this.vjsPlayer.on('ended', () => {
 			this.#fireEvent('onEnded');
+		});
+
+		this.vjsPlayer.on('loadedmetadata', () => {
+			this.#fireEvent('onLoadedMetadata');
 		});
 
 		this.vjsPlayer.on('error', () => {
@@ -755,7 +759,11 @@ export class Player
 	{
 		PlayerManager.removePlayer(this);
 
-		this.vjsPlayer.dispose();
+		if (this.vjsPlayer !== null)
+		{
+			this.vjsPlayer.dispose();
+		}
+
 		this.vjsPlayer = null;
 	}
 }

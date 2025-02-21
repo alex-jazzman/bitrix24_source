@@ -1,10 +1,9 @@
-import { Loader } from 'main.loader';
+import { Dom } from 'main.core';
 import { mapGetters, mapState } from 'ui.vue3.vuex';
 import { ServiceLocator } from '../service/service-locator';
 import { Header } from './header';
 import { SearchBox } from './searchbox';
 import { Section } from './section';
-import { Dom } from 'main.core';
 
 export const Grid = {
 	name: 'Grid',
@@ -23,27 +22,7 @@ export const Grid = {
 	},
 	mounted()
 	{
-		this.loader = new Loader({
-			target: this.$refs.container,
-		});
-
 		ServiceLocator.getHint(this.guid).initOwnerDocument(this.$refs.container);
-	},
-	beforeUnmount()
-	{
-		this.loader.destroy();
-	},
-	watch: {
-		isSaving(newValue): void {
-			if (newValue)
-			{
-				this.loader.show();
-			}
-			else
-			{
-				this.loader.hide();
-			}
-		},
 	},
 	methods: {
 		scrollToSection(sectionCode: string) {

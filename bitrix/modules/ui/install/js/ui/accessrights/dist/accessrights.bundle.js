@@ -1755,6 +1755,7 @@ this.BX = this.BX || {};
 	    main_core.Event.bind(variablesValue, 'click', this.showSelector.bind(this));
 	    main_core.Dom.append(variablesValue, this.getChanger());
 	    BX.UI.Hint.init(this.getChanger());
+	    this.selector.setTargetNode(this.getChanger());
 	    return this.getChanger();
 	  }
 	  refresh() {

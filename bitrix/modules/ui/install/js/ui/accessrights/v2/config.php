@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.core.events',
 		'ui.dialogs.messagebox',
-		'main.loader',
 		'ui.buttons',
 		'ui.vue3.components.popup',
 		'ui.entity-selector',

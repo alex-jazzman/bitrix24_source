@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
-(function (exports,main_core_events,ui_dialogs_messagebox,main_loader,ui_buttons,ui_vue3_components_popup,ui_entitySelector,ui_vue3,ui_vue3_directives_hint,ui_vue3_components_switcher,main_popup,ui_ears,ui_hint,ui_vue3_components_richMenu,ui_notification,ui_analytics,ui_vue3_vuex,main_core) {
+(function (exports,main_core_events,ui_dialogs_messagebox,ui_buttons,ui_vue3_components_popup,ui_entitySelector,ui_vue3,ui_vue3_directives_hint,ui_vue3_components_switcher,main_popup,ui_ears,ui_hint,ui_vue3_components_richMenu,ui_notification,ui_analytics,ui_vue3_vuex,main_core) {
 	'use strict';
 
 	/**
@@ -1684,7 +1684,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  },
 	  template: `
 		<div class="ui-access-rights-v2-cell-popup-header-locator" :style="{
-			maxWidth: maxWidth,
+			maxWidth: maxWidth + 'px',
 		}">
 			<SectionIcon/>
 			<span
@@ -1887,8 +1887,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      }
 	      return result;
 	    },
-	    emptyValues() {
-	      return this.$store.getters['accessRights/getEmptyValue'](this.section.sectionCode, this.right.id);
+	    nothingSelectedValues() {
+	      return this.$store.getters['accessRights/getNothingSelectedValue'](this.section.sectionCode, this.right.id);
 	    },
 	    switcherOptions() {
 	      return {
@@ -1969,7 +1969,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    apply() {
 	      let values = this.notSavedValues;
 	      if (values.size <= 0) {
-	        values = this.emptyValues;
+	        values = this.nothingSelectedValues;
 	      }
 	      this.$emit('apply', {
 	        values
@@ -2328,17 +2328,17 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      this.values = newValues;
 	    },
 	    apply() {
-	      this.setEmptyValueIfNoneSelected();
+	      this.setNothingSelectedValueIfNeeded();
 	      this.$emit('apply', {
 	        values: this.values
 	      });
 	      this.$emit('close');
 	    },
-	    setEmptyValueIfNoneSelected() {
+	    setNothingSelectedValueIfNeeded() {
 	      if (this.values.size <= 0) {
-	        const emptyValues = this.$store.getters['accessRights/getEmptyValue'](this.section.sectionCode, this.right.id);
-	        for (const empty of emptyValues) {
-	          this.addValue(empty);
+	        const nothingSelected = this.$store.getters['accessRights/getNothingSelectedValue'](this.section.sectionCode, this.right.id);
+	        for (const nothing of nothingSelected) {
+	          this.addValue(nothing);
 	        }
 	      }
 	    }
@@ -3424,22 +3424,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    })
 	  },
 	  mounted() {
-	    this.loader = new main_loader.Loader({
-	      target: this.$refs.container
-	    });
 	    ServiceLocator.getHint(this.guid).initOwnerDocument(this.$refs.container);
-	  },
-	  beforeUnmount() {
-	    this.loader.destroy();
-	  },
-	  watch: {
-	    isSaving(newValue) {
-	      if (newValue) {
-	        this.loader.show();
-	      } else {
-	        this.loader.hide();
-	      }
-	    }
 	  },
 	  methods: {
 	    scrollToSection(sectionCode) {
@@ -5188,5 +5173,5 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 
 	exports.App = App;
 
-}((this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}),BX.Event,BX.UI.Dialogs,BX,BX.UI,BX.UI.Vue3.Components,BX.UI.EntitySelector,BX.Vue3,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Main,BX.UI,BX,BX.UI.Vue3.Components,BX,BX.UI.Analytics,BX.Vue3.Vuex,BX));
+}((this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}),BX.Event,BX.UI.Dialogs,BX.UI,BX.UI.Vue3.Components,BX.UI.EntitySelector,BX.Vue3,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Main,BX.UI,BX,BX.UI.Vue3.Components,BX,BX.UI.Analytics,BX.Vue3.Vuex,BX));
 //# sourceMappingURL=v2.bundle.js.map

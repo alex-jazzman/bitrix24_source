@@ -176,50 +176,38 @@ this.BX.UI = this.BX.UI || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _players)[_players].length === 0) {
 	    return;
 	  }
-	  let topVisiblePlayer = false;
-	  let isAnyPlaying = false;
+	  let topVisiblePlayer = null;
 	  const players = [...babelHelpers.classPrivateFieldLooseBase(this, _players)[_players]];
 	  for (const [index, player] of players.entries()) {
 	    if (!document.getElementById(player.id)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _players)[_players].splice(index, 1);
 	      continue;
 	    }
-	    if (player.lazyload && !player.inited && this.isVisibleOnScreen(player.id, 2)) {
+	    if (player.lazyload && !player.isInited() && this.isVisibleOnScreen(player.id, 2)) {
 	      player.init();
 	    }
 	    if (!player.autostart) {
 	      continue;
 	    }
-	    if (player.active) {
-	      continue;
-	    }
-	    if (player.isEnded()) {
-	      continue;
-	    }
 	    if (this.isVisibleOnScreen(player.id, 1)) {
-	      if (topVisiblePlayer === false) {
+	      if (topVisiblePlayer === null) {
 	        topVisiblePlayer = player;
 	      }
-	    } else if (player.isPlaying()) {
-	      player.pause();
-	    }
-	    if (player.isPlaying()) {
-	      isAnyPlaying = true;
 	    }
 	  }
-	  if (isAnyPlaying) {
-	    return;
-	  }
-	  if (topVisiblePlayer !== false) {
-	    if (!topVisiblePlayer.inited) {
+	  if (topVisiblePlayer !== null && !topVisiblePlayer.isPlayed() && !topVisiblePlayer.hasStarted) {
+	    if (!topVisiblePlayer.isInited()) {
 	      topVisiblePlayer.autostart = true;
 	    } else if (topVisiblePlayer.isReady() && !topVisiblePlayer.isEnded()) {
+	      for (const [, player] of players.entries()) {
+	        if (player === topVisiblePlayer || !player.autostart) {
+	          continue;
+	        }
+	        if (player.isPlaying()) {
+	          player.pause();
+	        }
+	      }
 	      topVisiblePlayer.mute(true);
-	      main_core.Event.EventEmitter.subscribeOnce(topVisiblePlayer, 'Player:onClick', event => {
-	        setTimeout(() => {
-	          topVisiblePlayer.mute(false);
-	        }, 100);
-	      });
 	      topVisiblePlayer.play();
 	    }
 	  }
@@ -323,7 +311,6 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _getStorageHash, {
 	      value: _getStorageHash2
 	    });
-	    this.inited = false;
 	    this.id = null;
 	    this.muted = false;
 	    this.hasStarted = false;
@@ -456,22 +443,26 @@ this.BX.UI = this.BX.UI || {};
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent]('onBeforeInit');
-	    if (ui_videoJs.videojs.players[this.id]) {
-	      ui_videoJs.videojs.players[this.id].dispose();
-	    }
 	    this.vjsPlayer = ui_videoJs.videojs(this.id, this.params);
 	    if (this.isAudio) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _hideAudioControls)[_hideAudioControls]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _setInitialVolume)[_setInitialVolume]();
 	    }
+	    this.vjsPlayer.one('loadedmetadata', event => {
+	      if (!this.isAudio && !(this.vjsPlayer.videoWidth() > 0 && this.vjsPlayer.videoHeight() > 0)) {
+	        // Throw an error if a video doesn't have dimensions
+	        event.stopPropagation();
+	        event.stopImmediatePropagation();
+	        setTimeout(() => {
+	          this.vjsPlayer.error(4);
+	        }, 0);
+	      } else if (this.duration > 0) {
+	        this.vjsPlayer.duration(this.duration);
+	      }
+	    });
 	    this.vjsPlayer.on('fullscreenchange', () => {
 	      this.vjsPlayer.focus();
 	    });
-	    if (this.duration > 0) {
-	      this.vjsPlayer.one('loadedmetadata', () => {
-	        this.vjsPlayer.duration(this.duration);
-	      });
-	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _proxyEvents)[_proxyEvents]();
 	    this.vjsPlayer.ready(() => {
 	      const controlBar = this.vjsPlayer.getChild('ControlBar');
@@ -482,19 +473,18 @@ this.BX.UI = this.BX.UI || {};
 	        ui_videoJs.videojs.off(playbackButton.el(), 'mouseleave');
 	      }
 	      this.vjsPlayer.one('play', babelHelpers.classPrivateFieldLooseBase(this, _handlePlayOnce)[_handlePlayOnce].bind(this));
-	      this.inited = true;
 	      if (main_core.Type.isFunction(this.onInit)) {
 	        this.onInit(this);
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent]('onAfterInit');
-	      if (this.autostart && !this.lazyload) {
-	        setTimeout(() => {
-	          if (!this.hasStarted) {
-	            this.play();
-	          }
-	        }, 200);
-	      }
 	    });
+	    if (this.autostart && !this.lazyload) {
+	      this.vjsPlayer.one('canplay', () => {
+	        if (!this.hasStarted) {
+	          this.play();
+	        }
+	      });
+	    }
 	  }
 	  isInited() {
 	    return this.vjsPlayer !== null;
@@ -558,7 +548,9 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  destroy() {
 	    PlayerManager.removePlayer(this);
-	    this.vjsPlayer.dispose();
+	    if (this.vjsPlayer !== null) {
+	      this.vjsPlayer.dispose();
+	    }
 	    this.vjsPlayer = null;
 	  }
 	}
@@ -613,7 +605,6 @@ this.BX.UI = this.BX.UI || {};
 	  this.duration = params.duration || null;
 	  this.muted = params.muted || false;
 	  this.params = params;
-	  this.active = this.isPlayed();
 	}
 	function _getDefaultOptions2() {
 	  return {
@@ -655,7 +646,6 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  this.vjsPlayer.on('volumechange', () => {
 	    babelHelpers.classPrivateFieldLooseBase(this.constructor, _globalSettings)[_globalSettings].set('volume', this.vjsPlayer.volume());
-	    this.active = true;
 	  });
 	}
 	function _setInitialVolume2() {
@@ -780,11 +770,13 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent]('onPause');
 	  });
 	  this.vjsPlayer.on('click', () => {
-	    this.active = true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent]('onClick');
 	  });
 	  this.vjsPlayer.on('ended', () => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent]('onEnded');
+	  });
+	  this.vjsPlayer.on('loadedmetadata', () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent]('onLoadedMetadata');
 	  });
 	  this.vjsPlayer.on('error', () => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _fireEvent)[_fireEvent]('onError');

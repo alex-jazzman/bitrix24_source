@@ -26,7 +26,7 @@ export const Locator = {
 	},
 	template: `
 		<div class="ui-access-rights-v2-cell-popup-header-locator" :style="{
-			maxWidth: maxWidth,
+			maxWidth: maxWidth + 'px',
 		}">
 			<SectionIcon/>
 			<span

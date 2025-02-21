@@ -43,6 +43,7 @@
 			extraActions: null,
 			carouselItems: null,
 			carouselContainer: null,
+			carouselScrollable: null,
 		};
 
 		// Compatibility for BX.Disk.Viewer.Actions.runActionEdit
@@ -766,6 +767,7 @@
 		 */
 		processShowItem: function(item, options)
 		{
+
 			this.hideCurrentItem();
 			this.hideLoading();
 			this.unlockExtraActions();
@@ -790,8 +792,6 @@
 			}
 
 			this.layout.itemContainer.appendChild(contentWrapper);
-
-
 
 			item.afterRender();
 			this.adjustControlsSize(item.getContentWidth());
@@ -1170,9 +1170,12 @@
 			{
 				this.layout.close = BX.create('div', {
 					props: {
-						className: 'ui-viewer-close'
+						className: 'ui-viewer-close',
 					},
-					html: '<div class="ui-viewer-close-icon"></div>'
+					html:
+						'<div class="ui-viewer-close-icon">'
+							+ '<div class="ui-icon-set --cross-40"></div>'
+						+ '</div>'
 				});
 			}
 
@@ -1292,14 +1295,16 @@
 
 		open: function(index)
 		{
+
 			this.adjustViewport();
 			this.addBodyPadding();
 
 			var container = this.getViewerContainer();
-			this.baseContainer.appendChild(container);
-			BX.focus(container);
 
-			this.createCarouselItems();
+			const baseContainer = this.baseContainer || document.body;
+			baseContainer.appendChild(container);
+
+			BX.focus(container);
 
 			var component = BX.ZIndexManager.getComponent(container);
 			if (!component)
@@ -1309,8 +1314,10 @@
 
 			BX.ZIndexManager.bringToFront(container);
 
+			this.createCarouselItems(index);
+
 			this.show(index, {
-				asFirstToShow: true
+				asFirstToShow: true,
 			});
 
 			this.bindEvents();
@@ -1425,17 +1432,29 @@
 			{
 				this.layout.carouselContainer = BX.Tag.render`
 					<div class="ui-viewer-carousel">
-						<div 
-							class="ui-viewer-carousel-scrollable" 
-							onscroll="${BX.Runtime.debounce(this.handleCarouselScroll, 200, this)}"
-						>
-							${this.getCarouselItems()}
-						</div>
+						${this.getCarouselScrollable()}
 					<div>
 				`;
 			}
 
 			return this.layout.carouselContainer;
+		},
+
+		getCarouselScrollable: function()
+		{
+			if (!this.layout.carouselScrollable)
+			{
+				this.layout.carouselScrollable = BX.Tag.render`
+					<div 
+						class="ui-viewer-carousel-scrollable" 
+						onscroll="${BX.Runtime.debounce(this.handleCarouselScroll, 200, this)}"
+					>
+						${this.getCarouselItems()}
+					</div>
+				`;
+			}
+
+			return this.layout.carouselScrollable;
 		},
 
 		getCarouselItems: function()
@@ -1457,9 +1476,13 @@
 			return selected ? 72 + margin : 46 + margin;
 		},
 
-		createCarouselItems: function()
+		createCarouselItems: function(selectedIndex)
 		{
-			BX.Dom.clean(this.getCarouselItems());
+			const itemsContainer = this.getCarouselItems();
+			BX.Dom.clean(itemsContainer);
+			BX.Dom.style(itemsContainer, { paddingLeft: null, paddingRight: null });
+			BX.Dom.style(this.getCarouselContainer(), { width: null });
+
 			BX.Dom.remove(this.getCarouselContainer());
 
 			if (!this.isCarouselEnabled())
@@ -1472,6 +1495,11 @@
 				const container = BX.Tag.render`
 					<div class="ui-viewer-carousel-item" data-index="${index}"></div>
 				`;
+
+				if (index === selectedIndex)
+				{
+					BX.Dom.addClass(container, '--selected');
+				}
 
 				if (item.getPreviewUrl() === null)
 				{
@@ -1503,10 +1531,22 @@
 
 			BX.Dom.append(this.getCarouselContainer(), this.getViewerContainer());
 
-			const viewport = this.getCarouselItems().parentNode.parentNode;
-			const offset = viewport.offsetWidth / 2 - this.getCarouselItemWidth(true) / 2;
+			const maxViewportWidth = this.getCarouselItemWidth() * 6 + this.getCarouselItemWidth(true); // 7 items
+			const minViewportWidth = (
+				(this.getItemsCount() - 1) * this.getCarouselItemWidth() + this.getCarouselItemWidth(true) / 2
+			) * 2;
 
-			BX.Dom.style(this.getCarouselItems(), {
+			const viewportWidth = Math.max(
+				this.getCarouselContainer().offsetWidth,
+				Math.min(minViewportWidth, maxViewportWidth),
+			);
+			const offset = viewportWidth / 2 - this.getCarouselItemWidth(true) / 2;
+
+			BX.Dom.style(this.getCarouselContainer(), {
+				width: `${viewportWidth}px`,
+			});
+
+			BX.Dom.style(itemsContainer, {
 				paddingLeft: `${offset}px`,
 				paddingRight: `${offset}px`,
 			});
@@ -1724,6 +1764,11 @@
 			}
 
 			return this.items[index];
+		},
+
+		getItemsCount: function()
+		{
+			return this.items.length;
 		},
 
 		handleClickOnItemContainer: function (event)

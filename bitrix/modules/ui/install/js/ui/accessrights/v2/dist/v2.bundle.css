@@ -4,12 +4,18 @@
 .ui-access-rights-v2-block {
 	position: relative;
 	pointer-events: none;
-	overflow: hidden;
-	height: 100vh;
 }
 
-.ui-access-rights-v2-block .ui-access-rights-v2-section {
-	opacity: .2;
+.ui-access-rights-v2-block::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(241, 244, 246, 0.8);
+	pointer-events: none;
+	z-index: 75;
 	transition: .2s;
 }
 
@@ -20,7 +26,7 @@
 	position: -webkit-sticky;
 	position: sticky;
 	top: 0;
-	z-index: 100;
+	z-index: 50;
 	font-size: var(--ui-font-size-lg);
 }
 

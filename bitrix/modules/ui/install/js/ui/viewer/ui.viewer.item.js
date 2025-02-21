@@ -471,6 +471,11 @@
 			this.src = node.dataset.src || node.src;
 			this.width = node.dataset.width;
 			this.height = node.dataset.height;
+
+			if (!BX.Type.isUndefined(node.dataset.viewerResized))
+			{
+				this.resizedSrc = this.src;
+			}
 		},
 
 		applyReloadOptions(options)
@@ -490,20 +495,27 @@
 				return;
 			}
 
-			if (!this.sourceNode.naturalWidth)
+			if (!this.sourceNode.naturalWidth || this.sourceNode.src.startsWith('data:image'))
 			{
 				return;
 			}
 
-			const offsetHeight = this.controller.getItemContainer().offsetHeight;
-			const offsetWidth = this.controller.getItemContainer().offsetWidth;
-			const scale = offsetHeight / offsetWidth;
-			const realMaxHeight = (offsetHeight - paddingHeight);
-			const realMaxWidth = realMaxHeight / scale;
-
-			if (this.sourceNode.naturalWidth >= realMaxWidth || this.sourceNode.naturalHeight >= realMaxHeight)
+			if (this.sourceNode.src === this.src)
 			{
-				this.resizedSrc = this.sourceNode.src;
+				this.resizedSrc = this.src;
+			}
+			else if (!this.sourceNode.src.endsWith('.gif') && !this.sourceNode.src.endsWith('.webp'))
+			{
+				const offsetHeight = this.controller.getItemContainer().offsetHeight;
+				const offsetWidth = this.controller.getItemContainer().offsetWidth;
+				const scale = offsetHeight / offsetWidth;
+				const realMaxHeight = (offsetHeight - paddingHeight);
+				const realMaxWidth = realMaxHeight / scale;
+
+				if (this.sourceNode.naturalWidth >= realMaxWidth || this.sourceNode.naturalHeight >= realMaxHeight)
+				{
+					this.resizedSrc = this.sourceNode.src;
+				}
 			}
 		},
 
@@ -511,15 +523,21 @@
 		{
 			const promise = new BX.Promise();
 
-			if (!this.shouldRunLocalResize())
+			if (!BX.Type.isStringFilled(this.resizedSrc))
 			{
-				this.resizedSrc = this.src;
-			}
-			this.tryToExportResizedSrcFromSourceNode();
+				if (!this.shouldRunLocalResize())
+				{
+					this.resizedSrc = this.src;
+				}
+				else
+				{
+					this.tryToExportResizedSrcFromSourceNode();
 
-			if (this.controller.getCachedData(this.src))
-			{
-				this.resizedSrc = this.controller.getCachedData(this.src).resizedSrc;
+					if (this.controller.getCachedData(this.src))
+					{
+						this.resizedSrc = this.controller.getCachedData(this.src).resizedSrc;
+					}
+				}
 			}
 
 			if (this.resizedSrc)
@@ -1303,7 +1321,9 @@
 			}
 			else
 			{
-				this.player.vjsPlayer.one('loadedmetadata', this.adjustVideo.bind(this));
+				BX.Event.EventEmitter.subscribeOnce(this.player, 'Player:onLoadedMetadata', () => {
+					this.adjustVideo();
+				});
 			}
 		},
 
@@ -1427,9 +1447,8 @@
 
 				this.controller.showLoading();
 
-				const handleAfterInit = this.handleAfterInit.bind(this);
-				BX.Event.EventEmitter.subscribe(this.player, 'Player:onAfterInit', handleAfterInit);
-				BX.Event.EventEmitter.subscribe(this.player, 'Player:onError', handleAfterInit);
+				BX.Event.EventEmitter.subscribe(this.player, 'Player:onAfterInit', this.handleAfterInit.bind(this));
+				BX.Event.EventEmitter.subscribe(this.player, 'Player:onError', this.handleVideoError.bind(this));
 				BX.Event.EventEmitter.subscribe(this.player, 'Player:onEnterPictureInPicture', () => {
 					this.controller.close();
 				});
@@ -1475,7 +1494,7 @@
 		{
 			if (this.player)
 			{
-				this.player.vjsPlayer.ready(() => {
+				this.player.vjsPlayer.one('canplay', () => {
 					this.player.mute(false);
 					this.player.play();
 					this.player.focus();

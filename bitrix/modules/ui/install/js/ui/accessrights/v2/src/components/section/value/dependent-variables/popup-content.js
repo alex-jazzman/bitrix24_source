@@ -63,8 +63,8 @@ export const PopupContent = {
 
 			return result;
 		},
-		emptyValues(): ?Set<string> {
-			return this.$store.getters['accessRights/getEmptyValue'](this.section.sectionCode, this.right.id);
+		nothingSelectedValues(): ?Set<string> {
+			return this.$store.getters['accessRights/getNothingSelectedValue'](this.section.sectionCode, this.right.id);
 		},
 		switcherOptions(): Object {
 			return {
@@ -170,7 +170,7 @@ export const PopupContent = {
 			let values = this.notSavedValues;
 			if (values.size <= 0)
 			{
-				values = this.emptyValues;
+				values = this.nothingSelectedValues;
 			}
 
 			this.$emit('apply', {

@@ -76,8 +76,7 @@ export class PlayerManager
 			return;
 		}
 
-		let topVisiblePlayer = false;
-		let isAnyPlaying = false;
+		let topVisiblePlayer = null;
 
 		const players = [...this.#players];
 		for (const [index, player] of players.entries())
@@ -89,7 +88,7 @@ export class PlayerManager
 				continue;
 			}
 
-			if (player.lazyload && !player.inited && this.isVisibleOnScreen(player.id, 2))
+			if (player.lazyload && !player.isInited() && this.isVisibleOnScreen(player.id, 2))
 			{
 				player.init();
 			}
@@ -99,59 +98,37 @@ export class PlayerManager
 				continue;
 			}
 
-			if (player.active)
-			{
-				continue;
-			}
-
-			if (player.isEnded())
-			{
-				continue;
-			}
-
 			if (this.isVisibleOnScreen(player.id, 1))
 			{
-				if (topVisiblePlayer === false)
+				if (topVisiblePlayer === null)
 				{
 					topVisiblePlayer = player;
 				}
 			}
-			else if (player.isPlaying())
-			{
-				player.pause();
-			}
-
-			if (player.isPlaying())
-			{
-				isAnyPlaying = true;
-			}
 		}
 
-		if (isAnyPlaying)
+		if (topVisiblePlayer !== null && !topVisiblePlayer.isPlayed() && !topVisiblePlayer.hasStarted)
 		{
-			return;
-		}
-
-		if (topVisiblePlayer !== false)
-		{
-			if (!topVisiblePlayer.inited)
+			if (!topVisiblePlayer.isInited())
 			{
 				topVisiblePlayer.autostart = true;
 			}
 			else if (topVisiblePlayer.isReady() && !topVisiblePlayer.isEnded())
 			{
+				for (const [, player] of players.entries())
+				{
+					if (player === topVisiblePlayer || !player.autostart)
+					{
+						continue;
+					}
+
+					if (player.isPlaying())
+					{
+						player.pause();
+					}
+				}
+
 				topVisiblePlayer.mute(true);
-
-				Event.EventEmitter.subscribeOnce(
-					topVisiblePlayer,
-					'Player:onClick',
-					(event: BaseEvent) => {
-						setTimeout(() => {
-							topVisiblePlayer.mute(false);
-						}, 100);
-					},
-				);
-
 				topVisiblePlayer.play();
 			}
 		}

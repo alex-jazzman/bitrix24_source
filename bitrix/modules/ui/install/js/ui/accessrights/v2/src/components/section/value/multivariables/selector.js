@@ -134,7 +134,7 @@ export const Selector = {
 			this.values = newValues;
 		},
 		apply(): void {
-			this.setEmptyValueIfNoneSelected();
+			this.setNothingSelectedValueIfNeeded();
 
 			this.$emit('apply', {
 				values: this.values,
@@ -142,17 +142,17 @@ export const Selector = {
 
 			this.$emit('close');
 		},
-		setEmptyValueIfNoneSelected(): void {
+		setNothingSelectedValueIfNeeded(): void {
 			if (this.values.size <= 0)
 			{
-				const emptyValues = this.$store.getters['accessRights/getEmptyValue'](
+				const nothingSelected = this.$store.getters['accessRights/getNothingSelectedValue'](
 					this.section.sectionCode,
 					this.right.id,
 				);
 
-				for (const empty of emptyValues)
+				for (const nothing of nothingSelected)
 				{
-					this.addValue(empty);
+					this.addValue(nothing);
 				}
 			}
 		},

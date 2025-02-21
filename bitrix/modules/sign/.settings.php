@@ -548,6 +548,9 @@ return [
 			'sign.service.tour' => [
 				'className' => Service\Tour::class,
 			],
+			'sign.service.b2e.myDocumentsGrid.actionStatus' => [
+				'className' => Service\B2e\MyDocumentsGrid\ActionStatusService::class,
+			],
 			'sign.service.preset.templates' => [
 				'className' => Service\Sign\PresetTemplatesService::class,
 			],
