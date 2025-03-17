@@ -1,5 +1,4 @@
 <?php
-$MESS["IM_B24DISK"] = "Бітрікс24.Диск";
 $MESS["IM_B24DISK_V2"] = "Бітрікс24 Диск";
 $MESS["IM_CAMERA_ROLL"] = "Зняти фото";
 $MESS["IM_CHOOSE_FILE_TITLE"] = "Файли";
@@ -14,7 +13,6 @@ $MESS["IM_EMPTY_TEXT_INVITE"] = "Натисніть на кнопку нижче
 $MESS["IM_LIST_ACTION_ERROR"] = "Ми не змогли підключитися до вашого Бітрікс24 - можливо, у вас погане інтернет-з'єднання. Спробуйте виконати дію пізніше.";
 $MESS["IM_LIST_EMPTY"] = "Немає поточних діалогів";
 $MESS["IM_LIST_LOADING"] = "Завантаження...";
-$MESS["IM_LIST_NOTIFICATIONS"] = "Сповіщення";
 $MESS["IM_M_MESSAGE_SEND"] = "Відправити";
 $MESS["IM_M_TEXTAREA"] = "Написати повідомлення...";
 $MESS["IM_PROMO_VIDEO_01042020_MOBILE"] = "Ми значно покращили відеодзвінки. #BR##BR# Спробуйте прямо зараз! #BR##BR# Економте час і вирішуйте питання голосом.";

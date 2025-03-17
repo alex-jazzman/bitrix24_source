@@ -1,5 +1,4 @@
 <?php
-$MESS["BPAR_PD_TASK_BUTTON_CANCEL_MESSAGE"] = "Текст кнопки відхилення в завданні";
 $MESS["BPAR_PD_TASK_BUTTON_CANCEL_MESSAGE_MSGVER_1"] = "Текст кнопки відхилення в завданні";
 $MESS["BPRIA_PD_CANCEL_TYPE"] = "Тип відхилення";
 $MESS["BPRIA_PD_CANCEL_TYPE_ALL"] = "Усі співробітники";

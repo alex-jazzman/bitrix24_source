@@ -31,7 +31,6 @@ $MESS["MAIN_MAIL_CONFIRM_INVALID_SMTP_SERVER"] = "Неприпустима ад�
 $MESS["MAIN_MAIL_CONFIRM_MENU"] = "Додати відправника";
 $MESS["MAIN_MAIL_CONFIRM_MENU_PLACEHOLDER"] = "Відправник за замовчуванням";
 $MESS["MAIN_MAIL_CONFIRM_MENU_UNKNOWN"] = "Обрати відправника";
-$MESS["MAIN_MAIL_CONFIRM_NAME"] = "Ім'я";
 $MESS["MAIN_MAIL_CONFIRM_NAME_HINT_GENERAL"] = "Ім'я відправника — це перше, на що дивляться одержувачі листа. Допоможіть одержувачу впізнати вас.";
 $MESS["MAIN_MAIL_CONFIRM_NAME_HINT_VARIANTS"] = "Найчастіше пишуть:";
 $MESS["MAIN_MAIL_CONFIRM_NAME_HINT_VARIANT_COMPANY"] = "Назва компанії";

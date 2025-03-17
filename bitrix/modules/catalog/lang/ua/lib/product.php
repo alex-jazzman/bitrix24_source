@@ -25,7 +25,6 @@ $MESS["PRODUCT_ENTITY_PURCHASING_CURRENCY_FIELD"] = "Валюта закупів
 $MESS["PRODUCT_ENTITY_PURCHASING_PRICE_FIELD"] = "Закупівельна ціна";
 $MESS["PRODUCT_ENTITY_QUANTITY_FIELD"] = "Доступна кількість";
 $MESS["PRODUCT_ENTITY_QUANTITY_RESERVED_FIELD"] = "Зарезервована кількість";
-$MESS["PRODUCT_ENTITY_QUANTITY_TRACE_FIELD"] = "Режим кількісного обліку";
 $MESS["PRODUCT_ENTITY_QUANTITY_TRACE_FIELD_MSGVER_1"] = "Режим кількісного обліку";
 $MESS["PRODUCT_ENTITY_RECUR_SCHEME_LENGTH_FIELD"] = "Довжина періоду оплати";
 $MESS["PRODUCT_ENTITY_RECUR_SCHEME_TYPE_FIELD"] = "Одиниця часу періоду оплати";

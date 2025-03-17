@@ -6,7 +6,6 @@ $MESS["CRM_COLUMN_NAME"] = "Ім'я";
 $MESS["CRM_COLUMN_PHONE"] = "Телефон";
 $MESS["CRM_COLUMN_PRODUCTS"] = "Товари";
 $MESS["CRM_COLUMN_SECOND_NAME"] = "По батькові";
-$MESS["CRM_COLUMN_STATUS"] = "Статус";
 $MESS["CRM_COLUMN_STATUS_MSGVER_1"] = "Стадія";
 $MESS["CRM_OPER_EDIT"] = "Редагувати";
 $MESS["CRM_OPER_SHOW"] = "Переглянути";

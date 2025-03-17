@@ -9,7 +9,6 @@ $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_INCORRECT_FORM_DATA_TITLE"] = "Введен
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_LOGIN_BUTTON"] = "Увійти в Apple ID";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_INSTRUCTION"] = "Інструкція";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_1"] = "Увійдіть у ваш Apple ID";
-$MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_2"] = "У розділі \"Паролі застосунків\" створіть і скопіюйте пароль";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_2_MSGVER_1"] = "У розділі \"Паролі застосунків\" створіть і скопіюйте пароль";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_3"] = "Поверніться до налаштувань синхронізації та введіть пароль застосунку";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_TITLE"] = "Для підключення календаря iCloud вам треба отримати пароль застосунку від Apple";

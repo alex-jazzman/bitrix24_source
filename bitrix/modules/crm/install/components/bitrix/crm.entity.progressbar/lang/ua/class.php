@@ -5,5 +5,4 @@ $MESS["CRM_ENTITY_ED_PROG_HAS_INACCESSIBLE_FIELDS"] = "Ви не можете в
 $MESS["CRM_ENTITY_ED_PROG_LEAD_CLOSE"] = "Завершити обробку ліда";
 $MESS["CRM_ENTITY_ED_PROG_ORDER_CLOSE"] = "Завершити обробку замовлення";
 $MESS["CRM_ENTITY_ED_PROG_ORDER_SHIPMENT_CLOSE"] = "Завершити обробку відвантаження";
-$MESS["CRM_ENTITY_ED_PROG_QUOTE_CLOSE"] = "Завершити обробку пропозиції";
 $MESS["CRM_ENTITY_ED_PROG_QUOTE_CLOSE_MSGVER_1"] = "Завершити обробку пропозиції";

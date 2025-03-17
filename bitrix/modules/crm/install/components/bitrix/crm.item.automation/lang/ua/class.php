@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_ITEM_AUTOMATION_BP_MODULE_NOT_INSTALLED"] = "Відсутній модуль bizproc";
 $MESS["CRM_ITEM_AUTOMATION_BP_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль Бізнес-процеси не встановлений.";
 $MESS["CRM_ITEM_AUTOMATION_INVALID_ENTITY_TYPE"] = "Неправильний тип сутності";
 $MESS["CRM_ITEM_AUTOMATION_PAGETITLE"] = "Автоматизація продаж";

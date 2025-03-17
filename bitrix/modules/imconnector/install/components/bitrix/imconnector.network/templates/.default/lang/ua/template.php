@@ -16,7 +16,6 @@ $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_4_DESCRIPTION_3"] = "Видалити
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_5"] = "Доступний в пошуку";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_6"] = "Код для пошуку";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_6_TIP"] = "Вказавши даний код в пошуку веб-месенджера, користувач знайде вашу лінію, навіть якщо вона не доступна в пошуку.";
-$MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_7"] = "Доступні Мультидіалоги";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_7_MSGVER_1"] = "Дозволити паралельні діалоги з клієнтом";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_7_TIP"] = "За увімкненої опції оператори зможуть вести кілька діалогів з одним і тим самим клієнтом одночасно. У разі вимкненої опції створення нового діалогу з клієнтом автоматично закриває поточний.";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_8_MSGVER_1"] = "Скільки діалогів може відкрити клієнт одночасно ";

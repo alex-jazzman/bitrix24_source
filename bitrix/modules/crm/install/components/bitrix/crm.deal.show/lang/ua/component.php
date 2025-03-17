@@ -7,7 +7,6 @@ $MESS["CRM_DEAL_NAV_TITLE_ADD"] = "Додавання угоди";
 $MESS["CRM_DEAL_NAV_TITLE_EDIT"] = "Угода: #NAME#";
 $MESS["CRM_DEAL_NAV_TITLE_LIST"] = "Список угод";
 $MESS["CRM_DEAL_NAV_TITLE_LIST_SHORT"] = "Угоди";
-$MESS["CRM_DEAL_QUOTE_LINK"] = "Угода створена на підставі пропозиції <a href='#URL#'>#TITLE#</a>";
 $MESS["CRM_DEAL_QUOTE_LINK_MSGVER_1"] = "Угода створена на підставі пропозиції <a href='#URL#'>#TITLE#</a>";
 $MESS["CRM_DEAL_SHOW_CONTACT_SELECTOR_HEADER"] = "Контакти, які беруть участь в угоді";
 $MESS["CRM_DEAL_SHOW_FIELD_CLIENT"] = "Клієнт";

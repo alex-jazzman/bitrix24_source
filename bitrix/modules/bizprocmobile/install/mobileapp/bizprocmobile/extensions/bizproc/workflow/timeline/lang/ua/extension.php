@@ -12,7 +12,6 @@ $MESS["BPMOBILE_WORKFLOW_TIMELINE_TASK_WAITING_FOR_ALL"] = "ВИКОНУЮТЬ �
 $MESS["BPMOBILE_WORKFLOW_TIMELINE_TASK_WAITING_FOR_ANY"] = "ВИКОНУЄ БУДЬ-ХТО";
 $MESS["BPMOBILE_WORKFLOW_TIMELINE_TASK_WAITING_FOR_SINGLE"] = "ВИКОНУЄТЬСЯ";
 $MESS["BPMOBILE_WORKFLOW_TIMELINE_TIME_LIMIT_EXCEEDED"] = "Завдання зайняло більше часу, ніж планувалося. Можна оптимізувати процес, щоб скоротити час виконання.";
-$MESS["BPMOBILE_WORKFLOW_TIMELINE_TITLE"] = "Протокол процесу";
 $MESS["BPMOBILE_WORKFLOW_TIMELINE_TITLE_MSGVER_1"] = "Протокол";
 $MESS["BPMOBILE_WORKFLOW_TIMELINE_USER_STATUS_NO"] = "ВІДХИЛЕНО";
 $MESS["BPMOBILE_WORKFLOW_TIMELINE_USER_STATUS_OK"] = "ВИКОНАНО";

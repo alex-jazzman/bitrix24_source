@@ -15,7 +15,6 @@ $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_COPY_ACTION"] = "Копіювати";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_CREATE_PRODUCT"] = "Створити товар";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_CREATE_PRODUCT_TITLE"] = "Створити новий товар у каталозі";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_DELETE_ACTION"] = "Видалити";
-$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT"] = "Укажіть кількість прийнятого на складу товару, щоб провести документ";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT_2"] = "Укажіть кількість товару, щоб провести документ";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT_REALIZATION"] = "Укажіть кількість товару";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_IS_EMPTY"] = "Уведіть принаймні один товар";

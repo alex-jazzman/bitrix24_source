@@ -200,7 +200,7 @@ class UsageStatTable extends Main\Entity\DataManager
 	public static function log(\CRestServer $server)
 	{
 		if (
-			Main\ModuleManager::isModuleInstalled('oauth')
+			\Bitrix\Rest\Integration\OAuthModule::isSupported()
 			&& !defined('REST_FORCE_USAGE_STAT')
 		)
 		{
@@ -374,7 +374,7 @@ class UsageStatTable extends Main\Entity\DataManager
 	public static function finalize()
 	{
 		if (
-			Main\ModuleManager::isModuleInstalled('oauth')
+			\Bitrix\Rest\Integration\OAuthModule::isSupported()
 			&& !defined('REST_FORCE_USAGE_STAT')
 		)
 		{

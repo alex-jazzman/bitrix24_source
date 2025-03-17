@@ -46,14 +46,10 @@ $MESS["CRM_LF_DEAL_ADD_COMMENT_MENTION_TITLE"] = "до запису про ст�
 $MESS["CRM_LF_DEAL_MESSAGE_COMMENT_MENTION_TITLE"] = "до повідомлення в угоді #title#";
 $MESS["CRM_LF_DEAL_PROGRESS_COMMENT_MENTION_TITLE"] = "до запису про зміну стадії угоди #title#";
 $MESS["CRM_LF_DEAL_RESPONSIBLE_COMMENT_MENTION_TITLE"] = "до запису про зміну відповідального для ліда #title#";
-$MESS["CRM_LF_EVENT_ADD"] = "Створено елемент типу \"#ENTITY_TYPE_CAPTION#\"";
-$MESS["CRM_LF_EVENT_BECOME_RESPONSIBLE"] = "Ви призначені відповідальним за елемент типу \"#ENTITY_TYPE_CAPTION#\" \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\"";
 $MESS["CRM_LF_EVENT_FIELD_CHANGED"] = "Змінено значення поля \"#FIELD_CAPTION#\"";
 $MESS["CRM_LF_EVENT_IM_POST"] = "Написав(ла) вам повідомлення \"#title#\"";
 $MESS["CRM_LF_EVENT_IM_POST_F"] = "Написала вам повідомлення \"#title#\"";
 $MESS["CRM_LF_EVENT_IM_POST_M"] = "Написав вам повідомлення \"#title#\"";
-$MESS["CRM_LF_EVENT_NO_LONGER_RESPONSIBLE"] = "Ви перестали бути відповідальним за елемент типу \"#ENTITY_TYPE_CAPTION#\" \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\"";
-$MESS["CRM_LF_EVENT_STAGE_CHANGED"] = "Стадія елемента типу \"#ENTITY_TYPE_CAPTION#\" \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" змінена з \"#START_STAGE_CAPTION#\" на \"#FINAL_STAGE_CAPTION#\"";
 $MESS["CRM_LF_IM_COMMENT_TITLE_ACTIVITY_CALL_ADD"] = "ваш запис про створення нового дзвінка #title#";
 $MESS["CRM_LF_IM_COMMENT_TITLE_ACTIVITY_EMAIL_ADD"] = "ваш запис про створення нового листа #title#";
 $MESS["CRM_LF_IM_COMMENT_TITLE_ACTIVITY_MEETING_ADD"] = "ваш запис про створення нової зустрічі #title#";

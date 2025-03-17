@@ -41,7 +41,6 @@ $MESS["CRM_DEAL_FIELD_ORIGINATOR_ID"] = "Зовнішнє джерело";
 $MESS["CRM_DEAL_FIELD_ORIGIN_ID"] = "Ідентифікатор елемента в зовнішньому джерелі";
 $MESS["CRM_DEAL_FIELD_PROBABILITY"] = "Ймовірність";
 $MESS["CRM_DEAL_FIELD_PRODUCT_ROWS"] = "Товари";
-$MESS["CRM_DEAL_FIELD_QUOTE_ID"] = "Пропозиція";
 $MESS["CRM_DEAL_FIELD_QUOTE_ID_MSGVER_1"] = "Пропозиція";
 $MESS["CRM_DEAL_FIELD_SOURCE_DESCRIPTION"] = "Додатково про джерело";
 $MESS["CRM_DEAL_FIELD_SOURCE_ID"] = "Джерело";

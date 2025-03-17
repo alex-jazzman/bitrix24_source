@@ -9,7 +9,6 @@ $MESS["PRODUCT_COLUMN_PROVIDER_FIELD_PRODUCT_QUANTITY"] = "Доступний з
 $MESS["PRODUCT_COLUMN_PROVIDER_FIELD_PRODUCT_QUANTITY_RESERVED_MSGVER_1"] = "У резерві";
 $MESS["PRODUCT_COLUMN_PROVIDER_FIELD_PURCHASING_PRICE_MSGVER_1"] = "Закупівельна ціна";
 $MESS["PRODUCT_COLUMN_PROVIDER_FIELD_QUANTITY_TRACE_MSGVER_1"] = "Кількісний облік";
-$MESS["PRODUCT_COLUMN_PROVIDER_FIELD_TITLE_AVAILABLE"] = "Доступність товару (не еквівалентна можливості купівлі)";
 $MESS["PRODUCT_COLUMN_PROVIDER_FIELD_TITLE_AVAILABLE_MSGVER_1"] = "Товар є на складі або дозволена купівля навіть за відсутності товару.";
 $MESS["PRODUCT_COLUMN_PROVIDER_FIELD_TITLE_CAN_BUY_ZERO"] = "Дозволити купівлю за відсутності товару (включно з дозволом від'ємної кількості товару)";
 $MESS["PRODUCT_COLUMN_PROVIDER_FIELD_TITLE_MEASURE"] = "Одиниця виміру";

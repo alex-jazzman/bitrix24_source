@@ -1,15 +1,8 @@
 <?php
-$MESS["DOCUMENT_LIST_ACTION_CANCEL_TEXT"] = "Скасувати проведення";
 $MESS["DOCUMENT_LIST_ACTION_CANCEL_TEXT_2"] = "Скасувати проведення";
-$MESS["DOCUMENT_LIST_ACTION_CANCEL_TITLE"] = "Скасувати проведення";
-$MESS["DOCUMENT_LIST_ACTION_CONDUCT_TEXT"] = "Провести документ";
 $MESS["DOCUMENT_LIST_ACTION_CONDUCT_TEXT_2"] = "Провести";
-$MESS["DOCUMENT_LIST_ACTION_CONDUCT_TITLE"] = "Провести документ";
 $MESS["DOCUMENT_LIST_ACTION_DELETE_TEXT"] = "Видалити";
-$MESS["DOCUMENT_LIST_ACTION_DELETE_TITLE"] = "Видалити документ";
 $MESS["DOCUMENT_LIST_ACTION_OPEN_TEXT"] = "Відкрити";
-$MESS["DOCUMENT_LIST_ACTION_OPEN_TITLE"] = "Відкрити документ";
-$MESS["DOCUMENT_LIST_ADD_DOCUMENT_BUTTON"] = "Додати";
 $MESS["DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2"] = "Створити";
 $MESS["DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_DISABLE_HINT"] = "Недостатньо прав для створення документа.";
 $MESS["DOCUMENT_LIST_CANCEL_GROUP_ACTION"] = "Скасувати проведення";
@@ -42,7 +35,6 @@ $MESS["DOCUMENT_LIST_STUB_LINK_QUICKSTART"] = "Як розпочати робо�
 $MESS["DOCUMENT_LIST_STUB_LINK_SHIPMENT"] = "Як фіксувати продажі";
 $MESS["DOCUMENT_LIST_STUB_MIGRATION_LINK"] = "Перенести";
 $MESS["DOCUMENT_LIST_STUB_MIGRATION_MORE"] = "і більше";
-$MESS["DOCUMENT_LIST_STUB_MIGRATION_TITLE"] = "Перенесіть свої документи з інших систем до Бітрікс24";
 $MESS["DOCUMENT_LIST_STUB_MIGRATION_TITLE_MSGVER_1"] = "Перенесіть свої документи з інших систем у Бітрікс24";
 $MESS["DOCUMENT_LIST_STUB_NO_DATA_DESCRIPTION"] = "Спробуйте скинути значення у фільтрі або змінити запит пошуку";
 $MESS["DOCUMENT_LIST_STUB_NO_DATA_TITLE"] = "За вашим запитом нічого не знайдено";

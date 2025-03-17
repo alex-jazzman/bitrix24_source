@@ -7,7 +7,6 @@ $MESS["CRM_ENTITY_TYPE_EXCLUSION"] = "Список виключень";
 $MESS["CRM_ENTITY_TYPE_INVOICE"] = "Рахунок";
 $MESS["CRM_ENTITY_TYPE_LEAD"] = "Лід";
 $MESS["CRM_ENTITY_TYPE_ORDER"] = "Замовлення";
-$MESS["CRM_ENTITY_TYPE_QUOTE"] = "Пропозиція";
 $MESS["CRM_ENTITY_TYPE_QUOTE_MSGVER_1"] = "Пропозиція";
 $MESS["CRM_ENTITY_TYPE_SALETARGET"] = "План продажів";
 $MESS["CRM_ENTITY_TYPE_WEBFORM"] = "CRM-форма";

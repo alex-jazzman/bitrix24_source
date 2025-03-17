@@ -19,6 +19,7 @@ $MESS["IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER"] = "Розкажіть, над 
 $MESS["IM_CREATE_COLLAB_DESCRIPTION_TITLE"] = "Опис";
 $MESS["IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME"] = "Колаба з такою назвою вже є.";
 $MESS["IM_CREATE_COLLAB_ERROR_EMPTY_NAME"] = "Укажіть назву колаби.";
+$MESS["IM_CREATE_COLLAB_ERROR_URL_IN_NAME"] = "Назва колаби не може містити посилання.";
 $MESS["IM_CREATE_COLLAB_TITLE_PLACEHOLDER"] = "Назва колаби";
 $MESS["IM_CREATE_CONFERENCE_CONFIRM"] = "Створити конференцію";
 $MESS["IM_CREATE_CONFERENCE_TITLE_PLACEHOLDER"] = "Уведіть назву відеоконференції";

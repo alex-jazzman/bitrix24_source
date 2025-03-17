@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SUPP_SUBR_BUTTON"] = "Зареєструвати модулі";
 $MESS["SUPP_SUBR_ERR"] = "Помилка реєстрації";
 $MESS["SUPP_SUBR_HINT"] = "Ваша ліцензія дозволяє вам отримати повнофункціональні версії наступних модулів:";
@@ -7,7 +7,6 @@ $MESS["SUP_ACTIVE"] = "Оновлення доступні:";
 $MESS["SUP_ACTIVE_PERIOD"] = "з #DATE_FROM# до #DATE_TO#";
 $MESS["SUP_APPLY"] = "Застосувати";
 $MESS["SUP_CANT_CONNECT"] = "Не встановлено з'єднання з сервером оновлень";
-$MESS["SUP_CANT_CONTRUPDATE"] = "Щоб оновити сайт, скористайтеся, будь ласка, системою оновлень на контролері.";
 $MESS["SUP_CHECK_UPDATES"] = "Перевірити оновлення";
 $MESS["SUP_CHECK_UPDATES_SYSTEM"] = "Оновлення системних модулів";
 $MESS["SUP_EDITION"] = "Редакція продукту:";
@@ -170,4 +169,3 @@ $MESS["SUP_TAB_UPDATES_LIST"] = "Список оновлень";
 $MESS["SUP_TAB_UPDATES_LIST_ALT"] = "Виберіть оновлення, які ви хочете встановити";
 $MESS["SUP_TITLE_BASE"] = "Система оновлень сторонніх модулів";
 $MESS["SUP_USERS"] = "Кількість користувачів:";
-?>

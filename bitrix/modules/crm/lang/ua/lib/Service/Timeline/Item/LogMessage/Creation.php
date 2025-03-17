@@ -9,7 +9,6 @@ $MESS["CRM_TIMELINE_LEAD_CREATION"] = "Створено лід";
 $MESS["CRM_TIMELINE_ORDER_CREATION"] = "Створене замовлення";
 $MESS["CRM_TIMELINE_ORDER_PAYMENT_CREATION"] = "Створена оплата";
 $MESS["CRM_TIMELINE_ORDER_SHIPMENT_CREATION"] = "Створене відвантаження";
-$MESS["CRM_TIMELINE_QUOTE_CREATION"] = "Створено пропозицію";
 $MESS["CRM_TIMELINE_QUOTE_CREATION_MSGVER_1"] = "Створено пропозицію";
 $MESS["CRM_TIMELINE_RECURRING_DEAL_CREATION"] = "Створено шаблон угоди";
 $MESS["CRM_TIMELINE_TASK_CREATION"] = "Створено завдання: #TITLE#";

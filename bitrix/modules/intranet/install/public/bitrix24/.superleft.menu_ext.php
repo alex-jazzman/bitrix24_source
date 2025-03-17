@@ -152,6 +152,18 @@ if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'documents_e
 		""
 	);
 }
+if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
+{
+	$arMenu[] = array(
+		GetMessage("MENU_DISK_FLIPCHARTS"),
+		"/company/personal/user/".$userId."/disk/boards/",
+		[],
+		array(
+			"menu_item_id" => "menu_boards",
+		),
+		""
+	);
+}
 
 if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
 {

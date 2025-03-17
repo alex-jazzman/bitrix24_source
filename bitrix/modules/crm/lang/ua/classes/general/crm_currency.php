@@ -1,6 +1,4 @@
 <?php
-$MESS["CRM_CURRENCY_FIELD_AMOUNT"] = "Номінал";
-$MESS["CRM_CURRENCY_FIELD_AMOUNT_CNT"] = "Курс обміну";
 $MESS["CRM_CURRENCY_FIELD_AMOUNT_CNT_MSGVER_1"] = "Номінал";
 $MESS["CRM_CURRENCY_FIELD_AMOUNT_MSGVER_1"] = "Курс обміну";
 $MESS["CRM_CURRENCY_FIELD_BASE"] = "Базова валюта";

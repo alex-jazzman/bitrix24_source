@@ -13,7 +13,6 @@ $MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компанія";
 $MESS["CRM_ENTITY_TYPE_CONTACT"] = "Контакт";
 $MESS["CRM_ENTITY_TYPE_DEAL"] = "Угода";
 $MESS["CRM_ENTITY_TYPE_LEAD"] = "Лід";
-$MESS["CRM_ENTITY_TYPE_QUOTE"] = "Пропозиція";
 $MESS["CRM_ENTITY_TYPE_QUOTE_MSGVER_1"] = "Пропозиція";
 $MESS["CRM_EVENT_DESC_AFTER"] = "Стало";
 $MESS["CRM_EVENT_DESC_BEFORE"] = "Було";

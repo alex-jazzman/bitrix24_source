@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CAT_ACT_MENU_VIEW_SECTION"] = "Подивитися в публічній частині";
 $MESS["CAT_DISCOUNT_SAVE"] = "Накопичувальні знижки";
 $MESS["CAT_DISCOUNT_SAVE_DESCR"] = "Програми накопичувальних знижок";
@@ -22,7 +22,6 @@ $MESS["CM_COUPONS_EXT"] = "Купони знижок на товар";
 $MESS["CM_COUPONS_TITLE"] = "Купони знижок на товар";
 $MESS["CM_DISCOUNTS3"] = "Знижки на товар";
 $MESS["CM_STORE"] = "Склади";
-$MESS["CM_STORE_DOCS"] = "Документи";
 $MESS["CM_SUBSCRIPTION_PRODUCT"] = "Підписка на товари";
 $MESS["EXTRA"] = "Націнки";
 $MESS["EXTRA_ALT"] = "Типи націнок";
@@ -42,4 +41,3 @@ $MESS["SETUP_UNLOAD_DATA"] = "Експорт даних";
 $MESS["SETUP_UNLOAD_DATA_ALT"] = "Налаштування експорту даних з каталогу";
 $MESS["VAT"] = "Ставки ПДВ";
 $MESS["VAT_ALT"] = "Редагувати ставки ПДВ";
-?>

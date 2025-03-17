@@ -17,7 +17,6 @@ $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_PAYMENT_QR_CODE_DISABLED_NO_TEMPLATE"] =
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_PAYMENT_QR_CODE_TITLE"] = "QR-код для оплати";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_PULIC_LINK_VIEWED"] = "Клієнт перейшов на сторінку документа <a class=\"document-title-link\">#TITLE#</a>";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_EMPTY_FIELDS"] = "Не заповнені поля печаток та підписів.";
-$MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE"] = "В шаблоні немає печаток та підписів.";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE_V2"] = "В шаблоні немає печаток та підписів";
 $MESS["DOCGEN_TAX_INCLUDED"] = "ПДВ включено в ціну";
 $MESS["DOCGEN_TAX_INCLUDED_NOT_VAT"] = "Податок (не ПДВ) включено в ціну";

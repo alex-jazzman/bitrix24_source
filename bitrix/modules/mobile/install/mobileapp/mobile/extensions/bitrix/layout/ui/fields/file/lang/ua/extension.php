@@ -12,7 +12,6 @@ $MESS["FIELDS_FILE_EDIT_VIDEO"] = "Замінити відео";
 $MESS["FIELDS_FILE_MEDIATEKA"] = "Обрати з галереї";
 $MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_CONFIRM"] = "Відкрити доступ";
 $MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_DESCR"] = "Спробуйте завантажити інший файл.";
-$MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_TEXT"] = "Помилка завантаження файлів";
 $MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_TITLE"] = "Неправильний тип файлу";
 $MESS["FIELDS_FILE_OPEN_GALLERY"] = "Перегляд";
 $MESS["FIELDS_FILE_UPLOAD_ALERT_DESCR"] = "Повторіть спробу.\nЯкщо помилка залишиться, зверніться до адміністратора Бітрікс24.";

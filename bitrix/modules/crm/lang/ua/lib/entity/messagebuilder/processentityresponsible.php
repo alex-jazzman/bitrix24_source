@@ -13,7 +13,6 @@ $MESS["CRM_PROCESS_ENTITY_LEAD_BECOME_RESPONSIBLE"] = "Вас призначен
 $MESS["CRM_PROCESS_ENTITY_LEAD_NO_LONGER_RESPONSIBLE"] = "Ви вже не відповідаєте за лід \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_ORDER_BECOME_RESPONSIBLE"] = "Вас призначено відповідальним за замовлення \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_ORDER_NO_LONGER_RESPONSIBLE"] = "Ви вже не відповідаєте за замовлення \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
-$MESS["CRM_PROCESS_ENTITY_QUOTE_BECOME_RESPONSIBLE"] = "Вас призначено відповідальним за пропозицію \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_QUOTE_BECOME_RESPONSIBLE_MSGVER_1"] = "Вас призначено відповідальним за пропозицію \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_QUOTE_NO_LONGER_RESPONSIBLE"] = "Ви вже не відповідаєте за пропозицію \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_RECURRING_DEAL_BECOME_RESPONSIBLE"] = "Вас призначено відповідальним за шаблон угоди \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";

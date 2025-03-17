@@ -2,6 +2,7 @@
 $MESS["ERROR_TASKS_GUID_NON_UNIQUE"] = "GUID має бути унікальним";
 $MESS["TASKS_BAD_ASSIGNEE_EX"] = "Користувач зазначений у полі «Виконавець» не знайдений.";
 $MESS["TASKS_BAD_ASSIGNEE_ID"] = "Виконавець не зазначений.";
+$MESS["TASKS_BAD_ASSIGNEE_IN_COLLAB"] = "Виконавець завдання не є учасником у вибраній колабі.";
 $MESS["TASKS_BAD_ASSIGNEE_IN_GROUP"] = "Виконавець завдання не є учасником у вибраному проєкті.";
 $MESS["TASKS_BAD_CREATED_BY"] = "Не вказаний постановник";
 $MESS["TASKS_BAD_DURATION"] = "У плануванні термінів вказана занадто велика тривалість завдання";

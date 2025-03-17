@@ -11,7 +11,6 @@ $MESS["CRM_ACTIVITY_PLANNER_DEST_2"] = "Змінити";
 $MESS["CRM_ACTIVITY_PLANNER_DISK_ATTACHED_FILES"] = "Прикріплені файли";
 $MESS["CRM_ACTIVITY_PLANNER_DISK_ATTACH_FILE"] = "Прикріпити файли";
 $MESS["CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE"] = "Знайти в Бітрікс24";
-$MESS["CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE_LEGEND"] = "Відкрити вікно \"Бітрікс24.Диск\"";
 $MESS["CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE_LEGEND_MSGVER_1"] = "Відкрити вікно \"Диск\"";
 $MESS["CRM_ACTIVITY_PLANNER_DISK_UPLOAD_FILE"] = "Завантажити файл";
 $MESS["CRM_ACTIVITY_PLANNER_DISK_UPLOAD_FILE_LEGEND"] = "Перетягнути за допомогою Drag'n'drop";

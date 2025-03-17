@@ -1,6 +1,5 @@
 <?php
 $MESS["MAIL_BINDING_CHAT_ACTIVE"] = "Чат";
-$MESS["MAIL_BINDING_CHAT_ERROR"] = "Встановіть модуль \"Чат\"";
 $MESS["MAIL_BINDING_CHAT_ERROR_MSGVER_1"] = "Установіть модуль «Вебмесенджер».";
 $MESS["MAIL_BINDING_CHAT_NOT_ACTIVE"] = "у Чат";
 $MESS["MAIL_BINDING_CHAT_TITLE"] = "Обговорити у чаті";
@@ -14,15 +13,11 @@ $MESS["MAIL_BINDING_CRM_PERMISSION_WORKING_ERROR"] = "Недостатньо п�
 $MESS["MAIL_BINDING_CRM_TITLE"] = "Створити угоду";
 $MESS["MAIL_BINDING_CRM_TITLE_ACTIVE"] = "Відкрити угоду";
 $MESS["MAIL_BINDING_MEETING_ACTIVE"] = "Зустріч";
-$MESS["MAIL_BINDING_MEETING_ACTIVE_MSGVER_1 "] = "Зустріч";
-$MESS["MAIL_BINDING_MEETING_ERROR"] = "Встановіть модуль \"Календар\"";
 $MESS["MAIL_BINDING_MEETING_ERROR_MSGVER_1"] = "Установіть модуль «Календар подій».";
-$MESS["MAIL_BINDING_MEETING_NOT_ACTIVE"] = "у Зустріч";
 $MESS["MAIL_BINDING_MEETING_NOT_ACTIVE_MSG_1"] = "у Календар";
 $MESS["MAIL_BINDING_MEETING_TITLE"] = "Створити зустріч у календарі";
 $MESS["MAIL_BINDING_MEETING_TITLE_ACTIVE"] = "Відкрити зустріч";
 $MESS["MAIL_BINDING_POST_ACTIVE"] = "Новина";
-$MESS["MAIL_BINDING_POST_ERROR"] = "Встановіть модуль \"Соціальна мережа\"";
 $MESS["MAIL_BINDING_POST_ERROR_MSGVER_1"] = "Установіть модуль «Соціальна мережа».";
 $MESS["MAIL_BINDING_POST_NOT_ACTIVE"] = "у Новину";
 $MESS["MAIL_BINDING_POST_TITLE"] = "Обговорити у стрічці";

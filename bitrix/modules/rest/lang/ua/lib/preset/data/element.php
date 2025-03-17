@@ -127,7 +127,6 @@ $MESS["REST_INTEGRATION_PATTERNS_18_TITLE"] = "Інформувати співр
 $MESS["REST_INTEGRATION_PATTERNS_19_DESCRIPTION"] = "Створіть чатбот, який буде стежити за перепискою в чаті та зможе реагувати на ключові слова";
 $MESS["REST_INTEGRATION_PATTERNS_19_INCOMING_QUERY_ITEMS_VALUE_0"] = "Привіт! Я чат-бот!";
 $MESS["REST_INTEGRATION_PATTERNS_19_INCOMING_QUERY_TITLE"] = "Параметри";
-$MESS["REST_INTEGRATION_PATTERNS_19_TITLE"] = "Передавати боту повідомлення з чату";
 $MESS["REST_INTEGRATION_PATTERNS_19_TITLE_MSGVER_1"] = "Передавати боту повідомлення з чату";
 $MESS["REST_INTEGRATION_PATTERNS_1001_DESCRIPTION"] = "Створіть вхідний вебхук, для роботи з даними вашого Бітрікс24 через API";
 $MESS["REST_INTEGRATION_PATTERNS_1001_INCOMING_QUERY_TITLE_ITEMS"] = "Параметри";

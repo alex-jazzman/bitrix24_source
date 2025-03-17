@@ -16,7 +16,6 @@ $MESS["CRM_TIMELINE_CATEGORY_DOCUMENT"] = "Документ";
 $MESS["CRM_TIMELINE_CATEGORY_LINK"] = "Додавання зв'язку";
 $MESS["CRM_TIMELINE_CATEGORY_LOG_MESSAGE"] = "Системна подія";
 $MESS["CRM_TIMELINE_CATEGORY_MODIFICATION"] = "Редагування";
-$MESS["CRM_TIMELINE_CATEGORY_NOTIFICATION"] = "Повідомлення за шаблоном Єдиного Центру Управління";
 $MESS["CRM_TIMELINE_CATEGORY_NOTIFICATION_2"] = "Повідомлення за шаблоном";
 $MESS["CRM_TIMELINE_CATEGORY_ORDER"] = "Замовлення";
 $MESS["CRM_TIMELINE_CATEGORY_ORDER_CHECK"] = "Чек";

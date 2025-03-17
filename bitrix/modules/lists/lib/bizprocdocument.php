@@ -238,7 +238,7 @@ class BizprocDocument extends CIBlockDocument
 				}
 				elseif ($property['USER_TYPE'] == 'DiskFile')
 				{
-					$diskValues = current($property['VALUE']);
+					$diskValues = is_array($property['VALUE']) ? current($property['VALUE']) : null;
 					$userType = \CIBlockProperty::getUserType($property['USER_TYPE']);
 					if (is_array($diskValues))
 					{

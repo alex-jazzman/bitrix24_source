@@ -1,5 +1,4 @@
 <?php
-$MESS["SENDER_INTEGRATION_SEO_MESSAGE_NAME_ADS_FB_MSGVER_1"] = "Аудиторії Facebook + Instagram";
 $MESS["SEO_ADS_FACEBOOK_BUSINESS_FEATURE_HINT"] = "Включити можливості для продажів у Facebook і Instagram";
 $MESS["SEO_ADS_FACEBOOK_BUSINESS_FEATURE_TITLE"] = "Включити можливості для продажів у Facebook і Instagram";
 $MESS["SEO_ADS_FACEBOOK_BUSINESS_LOGIN_BOOK"] = "Бронювати";

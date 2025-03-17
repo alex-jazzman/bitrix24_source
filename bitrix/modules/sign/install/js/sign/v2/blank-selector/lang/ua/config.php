@@ -1,7 +1,6 @@
 <?php
 $MESS["SIGN_BLANK_SELECTOR_CLEAR_ALL"] = "Видалити всі";
 $MESS["SIGN_BLANK_SELECTOR_CREATED_MYSELF"] = "Створено вами";
-$MESS["SIGN_BLANK_SELECTOR_CREATE_NEW_DOC"] = "Документ MS Word";
 $MESS["SIGN_BLANK_SELECTOR_CREATE_NEW_PIC"] = "Зображення";
 $MESS["SIGN_BLANK_SELECTOR_DRAG_AREA"] = "Перетягніть файли сюди";
 $MESS["SIGN_BLANK_SELECTOR_FIELD_ADD_BUTTON_LABEL"] = "Вибрати шаблон документа";

@@ -1,15 +1,8 @@
 <?php
-$MESS["CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT"] = "Скасувати проведення";
 $MESS["CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT_2"] = "Скасувати проведення";
-$MESS["CRM_DOCUMENT_LIST_ACTION_CANCEL_TITLE"] = "Скасувати проведення";
-$MESS["CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT"] = "Провести документ";
 $MESS["CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT_2"] = "Провести";
-$MESS["CRM_DOCUMENT_LIST_ACTION_CONDUCT_TITLE"] = "Провести документ";
 $MESS["CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT"] = "Видалити";
-$MESS["CRM_DOCUMENT_LIST_ACTION_DELETE_TITLE"] = "Видалити документ";
 $MESS["CRM_DOCUMENT_LIST_ACTION_OPEN_TEXT"] = "Відкрити";
-$MESS["CRM_DOCUMENT_LIST_ACTION_OPEN_TITLE"] = "Відкрити документ";
-$MESS["CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON"] = "Додати";
 $MESS["CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2"] = "Створити";
 $MESS["CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_DISABLE_HINT_MSGVER_1"] = "Недостатньо прав для створення документа.";
 $MESS["CRM_DOCUMENT_LIST_CANCEL_GROUP_ACTION"] = "Скасувати проведення";
@@ -21,7 +14,6 @@ $MESS["CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_BOX"] = "У вас недостатн
 $MESS["CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_CLOUD"] = "У вас недостатньо прав на доступ до Складського обліку. Для надання прав зверніться до Адміністратора Бітрікс24. Адміністратору необхідно призначити роль менеджера в розділі налаштувань CRM. <a onclick=\"top.BX.Helper.show('redirect=detail&code=15955386')\" style=\"cursor: pointer; \">Докладніше</a>.";
 $MESS["CRM_DOCUMENT_LIST_HIDDEN_COMPANY"] = "Прихована компанія";
 $MESS["CRM_DOCUMENT_LIST_HIDDEN_CONTACT"] = "Прихований контакт";
-$MESS["CRM_DOCUMENT_LIST_NO_VIEW_RIGHTS_ERROR"] = "Недостатньо прав для перегляду списку документів";
 $MESS["CRM_DOCUMENT_LIST_SELECT_GROUP_ACTION"] = "Оберіть дію";
 $MESS["CRM_DOCUMENT_LIST_STATUS_CANCELLED"] = "Скасовано";
 $MESS["CRM_DOCUMENT_LIST_STATUS_N"] = "Чернетка";

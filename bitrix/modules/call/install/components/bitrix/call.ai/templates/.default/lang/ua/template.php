@@ -29,7 +29,6 @@ $MESS["CALL_COMPONENT_FEEDBACK"] = "Зворотній зв'язок";
 $MESS["CALL_COMPONENT_INSIGHTS_V2"] = "Аналіз";
 $MESS["CALL_COMPONENT_MEETING_CREATE"] = "Створити зустріч за домовленістю";
 $MESS["CALL_COMPONENT_SUMMARY"] = "Резюме";
-$MESS["CALL_COMPONENT_TASKS"] = "Що зробити";
 $MESS["CALL_COMPONENT_TASK_CREATE"] = "Створити завдання за домовленістю";
 $MESS["CALL_COMPONENT_TRANSCRIPTIONS"] = "Розшифровка";
 $MESS["CALL_COMPONENT_USER_PLURAL_0"] = "#USER_COUNT# учасник";

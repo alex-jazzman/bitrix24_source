@@ -1,11 +1,17 @@
 <?php
+$MESS["IM_CHANNEL_CHANGE_TITLE_F"] = "#USER_NAME# змінила назву каналу на «#CHAT_TITLE#».";
+$MESS["IM_CHANNEL_CHANGE_TITLE_M"] = "#USER_NAME# змінив назву каналу на «#CHAT_TITLE#».";
+$MESS["IM_CHANNEL_JOIN_F"] = "#USER_1_NAME# запросила в канал користувача #USER_2_NAME#.";
+$MESS["IM_CHANNEL_JOIN_M"] = "#USER_1_NAME# запросив в канал користувача #USER_2_NAME#.";
 $MESS["IM_CHAT_ACCESS_DENIED_EXTEND_USERS"] = "Недостатньо прав на додавання учасників до чату.";
 $MESS["IM_CHAT_ACCESS_DENIED_KICK_USERS"] = "Недостатньо прав на виключення учасників із чату.";
 $MESS["IM_CHAT_CHANGE_COLOR_F"] = "#USER_NAME# змінила колір чату на \"#CHAT_COLOR#\"";
 $MESS["IM_CHAT_CHANGE_COLOR_M"] = "#USER_NAME# змінив колір чату на \"#CHAT_COLOR#\"";
 $MESS["IM_CHAT_CHANGE_TITLE"] = "Нова тема чату \"#CHAT_TITLE#\"";
 $MESS["IM_CHAT_CHANGE_TITLE_F"] = "#USER_NAME# змінила тему чату на \"#CHAT_TITLE#\"";
+$MESS["IM_CHAT_CHANGE_TITLE_F_MSGVER_1"] = "#USER_NAME# змінила назву чату на «#CHAT_TITLE#».";
 $MESS["IM_CHAT_CHANGE_TITLE_M"] = "#USER_NAME# змінив тему чату на \"#CHAT_TITLE#\"";
+$MESS["IM_CHAT_CHANGE_TITLE_M_MSGVER_1"] = "#USER_NAME# змінив назву чату на «#CHAT_TITLE#».";
 $MESS["IM_CHAT_CREATE_OPEN_F_NEW"] = "#USER_NAME# створила канал \"#CHAT_TITLE#\"";
 $MESS["IM_CHAT_CREATE_OPEN_M_NEW"] = "#USER_NAME# створив канал \"#CHAT_TITLE#\"";
 $MESS["IM_CHAT_CREATE_OPEN_NEW"] = "Був створений канал \"#CHAT_TITLE#\"";

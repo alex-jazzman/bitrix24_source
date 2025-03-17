@@ -23,4 +23,3 @@ $MESS["CPD_NEW_SERVICE_TITLE"] = "Нова послуга";
 $MESS["CPD_NOT_FOUND_ERROR_TITLE"] = "Товар не знайдений або видалений";
 $MESS["CPD_SETS_ENABLE_PRODUCT_SLIDER_LINK"] = "Відкрити налаштування";
 $MESS["CPD_SETS_NOT_SUPPORTED_LINK"] = "Перейти до онлайн-магазину";
-$MESS["CPD_SETS_NOT_SUPPORTED_TITLE"] = "Ви вибрали тип товару «Комплект», який не підтримується в новій картці. Подивитися й відредагувати такий товар можна в розділі «Магазин».<br>#LINK#";

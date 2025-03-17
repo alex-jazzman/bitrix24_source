@@ -8,7 +8,6 @@ $MESS["IMBOT_BOT_POSTFIX_UA"] = "Україна";
 $MESS["IMBOT_ENABLE_GIPHY_BOT"] = "Активувати Giphy";
 $MESS["IMBOT_ENABLE_SUPPORT_BOT"] = "Активувати канал Підтримки Бітрікс24";
 $MESS["IMBOT_HEADER_BOTS"] = "Чат-боти";
-$MESS["IMBOT_SUPPORT_BOT_NAME"] = "Підтримка Бітрікс24 в коробці";
 $MESS["IMBOT_SUPPORT_BOX_ACTIVATION_ERROR"] = "У ході підключення відкритої лінії підтримки виникла помилка: #ERROR#";
 $MESS["IMBOT_SUPPORT_BOX_ACTIVATION_ERROR_UNKNOWN"] = "У ході підключення відкритої лінії підтримки виникла помилка.";
 $MESS["IMBOT_TAB_SETTINGS"] = "Налаштування";

@@ -21,7 +21,6 @@ $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_GOODS"] = "Додам
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_INFORMING_EMPLOYEE"] = "Вчасно повідомимо співробітника або цілий відділ про щось важливе — надішлемо вказаний текст зручним способом";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_MODIFICATION_DATA"] = "Допоможемо працювати зі списками й змінними. Занесемо дані, виконаємо математичні операції.";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_OTHER"] = "Створимо купони, забронюємо послуги, запустимо бізнес-процеси та інше";
-$MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_PAPERWORK"] = "Сформуємо друковану форму за шаблоном для швидкого відправлення клієнту";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_PAPERWORK_MSGVER_1"] = "Сформуємо друковану форму за шаблоном для швидкого відправлення клієнту";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_PAYMENT"] = "Сформуємо й надішлемо клієнту рахунок або посилання на оплату, проконтролюємо оплату.";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_DESCRIPTION_REPEAT_SALES"] = "Створимо повторну угоду, надішлемо спеціальну пропозицію про знижки та акції лояльному клієнту";

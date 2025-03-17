@@ -5,3 +5,4 @@ $MESS["INTRANET_INVITE_DISABLED_BOX_BUTTON_TEXT"] = "OK";
 $MESS["INTRANET_INVITE_DISABLED_BOX_TEXT"] = "У вашому Бітрікс24 вимкнена можливість запрошувати співробітників. Зверніться до адміністратора.";
 $MESS["INTRANET_INVITE_GO_TO_WEB_BUTTON_TEXT"] = "Перейти до вебверсії";
 $MESS["INTRANET_INVITE_OPENER_TITLE"] = "Запросити колег";
+$MESS["INTRANET_INVITE_OPENER_TITLE_MSGVER_1"] = "Запросити співробітників";

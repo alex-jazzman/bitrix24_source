@@ -197,7 +197,6 @@ $MESS["INTRANET_USTAT_COMPANY_INV_BAR_MOBILE"] = "<strong>Залученість
 $MESS["INTRANET_USTAT_COMPANY_INV_BAR_SOCNET"] = "<strong>Залученість</strong> використання соціальної мережі в спільноті";
 $MESS["INTRANET_USTAT_COMPANY_INV_BAR_TASKS"] = "<strong>Залученість</strong> використання завдань в спільноті";
 $MESS["INTRANET_USTAT_SECTION_CRM_HELP_INVOLVEMENT"] = "Показує, який відсоток від усіх учасників спільноти користується CRM за обраний період.";
-$MESS["INTRANET_USTAT_SECTION_DISK_HELP_INVOLVEMENT"] = "Показує, який відсоток від усіх учасників спільноти користується файлами і Бітрікс24.Диск.";
 $MESS["INTRANET_USTAT_SECTION_IM_HELP_INVOLVEMENT"] = "Показує, який відсоток від усіх учасників спільноти користується миттєвими повідомленнями і відеодзвінками за обраний період.";
 $MESS["INTRANET_USTAT_SECTION_LIKES_HELP_INVOLVEMENT"] = "Показує, який відсоток від усіх учасників спільноти ставить позначки \"Мені подобається\" за обраний період.";
 $MESS["INTRANET_USTAT_SECTION_MOBILE_HELP_INVOLVEMENT"] = "Показує, який відсоток від усіх учасників спільноти користується мобільним застосунокм за обраний період.";

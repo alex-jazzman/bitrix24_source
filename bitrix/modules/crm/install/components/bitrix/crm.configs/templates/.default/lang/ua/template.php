@@ -56,7 +56,6 @@ $MESS["CRM_CONFIGS_MYCOMPANY1"] = "Реквізити ваших компані�
 $MESS["CRM_CONFIGS_NO_ACCESS_ERROR"] = "Немає доступу";
 $MESS["CRM_CONFIGS_NUMERATOR_FOR_DOCUMENT"] = "Для документів";
 $MESS["CRM_CONFIGS_NUMERATOR_FOR_INVOICE"] = "Для рахунків";
-$MESS["CRM_CONFIGS_NUMERATOR_FOR_QUOTE"] = "Для пропозицій";
 $MESS["CRM_CONFIGS_NUMERATOR_FOR_QUOTE_MSGVER_1"] = "Для пропозицій";
 $MESS["CRM_CONFIGS_ORDER_FORM"] = "Форма оформлення замовлення";
 $MESS["CRM_CONFIGS_PERMS"] = "Права доступу";

@@ -13,7 +13,6 @@ $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_DISCOUNT_TYPE_FULL"] = "Ідентифік
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_DISCOUNT_TYPE_ID"] = "Ідентифікатор знижки";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_DISCOUNT_TYPE_NAME"] = "Найменування знижки";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_ID"] = "Унікальний ідентифікатор";
-$MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_INSTOCK"] = "Залишок товару на момент продажу";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_MEASURE"] = "Одиниця виміру";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_MEASURE_CODE"] = "ID одиниці виміру";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_MEASURE_FULL"] = "Ідентифікатор і назва одиниці виміру";

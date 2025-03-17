@@ -1,7 +1,6 @@
 <?php
 $MESS["CRM_ALL"] = "Всього";
 $MESS["CRM_MAIL_TEMPLATE_DELETE"] = "Видалити поштовий шаблон";
-$MESS["CRM_MAIL_TEMPLATE_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити \"%s\"?";
 $MESS["CRM_MAIL_TEMPLATE_DELETE_CONFIRM_MSGVER_1"] = "Дійсно видалити #TITLE#?";
 $MESS["CRM_MAIL_TEMPLATE_DELETE_TITLE"] = "Видалити цей поштовий шаблон";
 $MESS["CRM_MAIL_TEMPLATE_EDIT"] = "Редагувати поштовий шаблон";

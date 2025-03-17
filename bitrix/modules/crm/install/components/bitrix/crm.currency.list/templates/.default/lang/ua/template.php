@@ -1,7 +1,6 @@
 <?php
 $MESS["CRM_ALL"] = "Всього";
 $MESS["CRM_CURRENCY_DELETE"] = "Видалити валюту";
-$MESS["CRM_CURRENCY_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити '%s'?";
 $MESS["CRM_CURRENCY_DELETE_CONFIRM_MESSAGE"] = "Справді видалити валюту #CURRENCY#?";
 $MESS["CRM_CURRENCY_DELETE_TITLE"] = "Видалити цю валюту";
 $MESS["CRM_CURRENCY_EDIT"] = "Редагувати валюту";

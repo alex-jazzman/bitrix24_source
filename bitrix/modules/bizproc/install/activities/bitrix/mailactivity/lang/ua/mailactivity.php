@@ -1,11 +1,7 @@
 <?php
-$MESS["BPMA_ATTACHMENT"] = "Вкладення";
 $MESS["BPMA_ATTACHMENT_1"] = "Файли";
-$MESS["BPMA_ATTACHMENT_DISK"] = "Файли Диску";
 $MESS["BPMA_ATTACHMENT_DISK_1"] = "Диск";
-$MESS["BPMA_ATTACHMENT_FILE"] = "Файли";
 $MESS["BPMA_ATTACHMENT_FILE_1"] = "Поля елемента";
-$MESS["BPMA_ATTACHMENT_TYPE"] = "Тип вкладень";
 $MESS["BPMA_ATTACHMENT_TYPE_1"] = "Джерело";
 $MESS["BPMA_EMPTY_PROP1"] = "Властивість 'Відправник' не вказана.";
 $MESS["BPMA_EMPTY_PROP2"] = "Властивість 'Одержувач' не вказана.";

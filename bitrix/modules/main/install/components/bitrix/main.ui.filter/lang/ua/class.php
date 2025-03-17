@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MAIN_UI_FILTER__AFTER"] = "Пізніше ніж";
 $MESS["MAIN_UI_FILTER__AND"] = "і";
 $MESS["MAIN_UI_FILTER__BEFORE"] = "Раніше ніж";
@@ -23,8 +23,6 @@ $MESS["MAIN_UI_FILTER__NONE"] = "Будь-яка дата";
 $MESS["MAIN_UI_FILTER__NOT_SET"] = "Не вказаний";
 $MESS["MAIN_UI_FILTER__NUMBER_LESS"] = "Менше ніж";
 $MESS["MAIN_UI_FILTER__NUMBER_MORE"] = "Більше ніж";
-$MESS["MAIN_UI_FILTER__NUMBER_RANGE"] = "Діапазон";
-$MESS["MAIN_UI_FILTER__NUMBER_SINGLE"] = "Точно";
 $MESS["MAIN_UI_FILTER__PLACEHOLDER"] = "Фільтр";
 $MESS["MAIN_UI_FILTER__PLACEHOLDER_DEFAULT"] = "Фільтр + пошук";
 $MESS["MAIN_UI_FILTER__PLACEHOLDER_LIMITS_EXCEEDED"] = "Досягнутий ліміт, детальніше";
@@ -41,4 +39,3 @@ $MESS["MAIN_UI_FILTER__TODAY"] = "Сьогодні";
 $MESS["MAIN_UI_FILTER__VALUE_REQUIRED"] = "Поле має бути заповнено";
 $MESS["MAIN_UI_FILTER__YES"] = "Так";
 $MESS["MAIN_UI_FILTER__YESTERDAY"] = "Вчора";
-?>

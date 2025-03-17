@@ -1,7 +1,6 @@
 <?php
 $MESS["INTR_MAIL_AJAX_ERROR"] = "Помилка при обробці запиту";
 $MESS["INTR_MAIL_AUTH"] = "Помилка авторизації";
-$MESS["INTR_MAIL_B24_PAGE_TITLE"] = "Бітрікс24.Пошта";
 $MESS["INTR_MAIL_B24_PAGE_TITLE_MSGVER_1"] = "Пошта";
 $MESS["INTR_MAIL_CONTROLLER_INVALID"] = "Сервіс недоступний";
 $MESS["INTR_MAIL_CSRF"] = "Помилка безпеки при відправленні форми.";

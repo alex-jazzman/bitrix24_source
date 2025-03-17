@@ -34,7 +34,5 @@ $MESS["SIGN_B2E_MY_DOCUMENTS_MY_ROLE_SIGNER"] = "Підписую як спів�
 $MESS["SIGN_B2E_MY_DOCUMENTS_REFUSED"] = "Відхилені";
 $MESS["SIGN_B2E_MY_DOCUMENTS_SIGNED"] = "Підписано";
 $MESS["SIGN_B2E_MY_DOCUMENTS_TITLE"] = "Мої документи";
-$MESS["SIGN_MEMBER_ACTION_INVITE_WITH_YOU"] = "Надіслані мною";
 $MESS["SIGN_MEMBER_ACTION_INVITE_WITH_YOU_MSGVER_1"] = "Надіслано мною";
-$MESS["SIGN_MEMBER_ACTION_SIGN_WITH_YOU"] = "Підписано вами";
 $MESS["SIGN_MY_DOCUMENT_LIST_GRID_COUNTER_NEED_ACTION"] = "Потребують уваги";

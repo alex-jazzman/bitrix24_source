@@ -27,7 +27,6 @@ $MESS["MB_SEC_B24_MSGVER_1"] = "Ваш Бітрікс24";
 $MESS["MB_SEC_EXTRANET"] = "ГРУПИ ЕКСТРАНЕТ";
 $MESS["MB_SEC_EXTRANET_MSGVER_1"] = "Групи екстранет";
 $MESS["MB_SEC_FAVORITE"] = "ОБРАНЕ";
-$MESS["MB_SEC_FAVORITE_MSGVER_1"] = "Обране";
 $MESS["MB_SEC_FAVORITE_MSGVER_2"] = "Інструменти";
 $MESS["MB_SEC_GROUPS"] = "ГРУПИ";
 $MESS["MB_SEC_GROUPS_MSGVER_1"] = "Групи";

@@ -1,5 +1,4 @@
 <?php
-$MESS["BPMOBILE_TAB_TASK_LIST"] = "Завдання";
 $MESS["BPMOBILE_TAB_WORKFLOW_LIST"] = "Бізнес-процеси";
 $MESS["BPMOBILE_TAB_WORKFLOW_LIST_ALERT_CONFIRM"] = "OK";
 $MESS["BPMOBILE_TAB_WORKFLOW_LIST_ALERT_EXTRANET_ACCESS_DENIED_TEXT"] = "Ви не можете переглядати бізнес-процеси.";

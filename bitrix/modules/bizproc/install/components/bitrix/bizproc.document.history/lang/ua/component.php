@@ -13,5 +13,4 @@ $MESS["BPADH_RECOVERY_OK"] = "Запис відновлений &#8203;&#8203;з
 $MESS["BPADH_TITLE"] = "Історія документа";
 $MESS["BPADH_VIEW_DOC"] = "Переглянути документ";
 $MESS["BPATT_NO_MODULE_ID"] = "Не вказаний модуль.";
-$MESS["W_WEBDAV_IS_NOT_INSTALLED"] = "Модуль бібліотеки документів не встановлено.";
 $MESS["W_WEBDAV_IS_NOT_INSTALLED_MSGVER_1"] = "Модуль бібліотеки документів не встановлено.";

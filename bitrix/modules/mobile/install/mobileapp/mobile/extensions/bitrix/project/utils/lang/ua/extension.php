@@ -2,7 +2,6 @@
 $MESS["MOBILE_PROJECT_NO_PROJECT_ERROR"] = "Група не знайдена або доступ заборонений";
 $MESS["MOBILE_PROJECT_TAB_CALENDAR"] = "Календар";
 $MESS["MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE"] = "Календар";
-$MESS["MOBILE_PROJECT_TAB_DRIVE"] = "Диск";
 $MESS["MOBILE_PROJECT_TAB_DRIVE_MSGVER_1"] = "Файли";
 $MESS["MOBILE_PROJECT_TAB_MEMBERS_0"] = "#NUM# учасник";
 $MESS["MOBILE_PROJECT_TAB_MEMBERS_1"] = "#NUM# учасники";

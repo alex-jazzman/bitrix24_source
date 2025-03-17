@@ -1,16 +1,10 @@
 <?php
 $MESS["SIGN_CURRENT_DOCUMENT_LIST_TITLE"] = "Кадрові документи";
 $MESS["SIGN_DOCUMENT_DOCUMENT_LIST_TITLE"] = "Підписання";
-$MESS["SIGN_DOCUMENT_GRID_BANNER_PERSONAL_TEXT"] = "Зберігайте підписані документи на комп'ютері, щоб мати до них доступ будь-коли.
-Бітрікс24 не бере на себе відповідальність за зберігання і відсутність доступу до документів.";
-$MESS["SIGN_DOCUMENT_GRID_BANNER_SAFE_TEXT"] = "Зберігайте підписані документи на комп'ютері, щоб мати до них доступ будь-коли.
-Бітрікс24 не бере на себе відповідальність за зберігання і відсутність доступу до документів.";
-$MESS["SIGN_DOCUMENT_GRID_BANNER_TEXT"] = "Рекомендуємо зберігати копії підписаних документів на комп'ютері, щоб мати доступ до них будь-коли.";
 $MESS["SIGN_DOCUMENT_GRID_BANNER_TEXT_MSGVER_1"] = "Рекомендуємо зберігати копії підписаних документів на комп'ютері, щоб мати до них доступ будь-коли. [helpdesklink]Докладніше[/helpdesklink]";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_ACTION"] = "Дія";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_CREATED_BY"] = "Ініціатор";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_CREATE_DATE"] = "Дата створення";
-$MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_DOWNLOAD"] = "Завантажити";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_DOWNLOAD_ACTION_MSGVER_1"] = "Дія";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_ID"] = "ID";
 $MESS["SIGN_DOCUMENT_LIST_COLUMN_NAME_INITIATOR"] = "Представник";

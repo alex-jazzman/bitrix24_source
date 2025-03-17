@@ -7,7 +7,6 @@ $MESS["STORE_LIST_ACTION_DEACTIVATE_TEXT"] = "Деактивувати";
 $MESS["STORE_LIST_ACTION_DEACTIVATE_TITLE"] = "Деактивувати";
 $MESS["STORE_LIST_ACTION_DEFAULT_STORE_DEACTIVATE_ERROR"] = "Заборонено деактивувати склад за замовчуванням";
 $MESS["STORE_LIST_ACTION_DEFAULT_STORE_DELETE_ERROR"] = "Заборонено видаляти склад за замовчуванням";
-$MESS["STORE_LIST_ACTION_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити склад?";
 $MESS["STORE_LIST_ACTION_DELETE_ERROR"] = "Неможливо видалити склад із кодом ##ID#";
 $MESS["STORE_LIST_ACTION_DELETE_POPUP_BUTTON_BACK"] = "Скасувати";
 $MESS["STORE_LIST_ACTION_DELETE_POPUP_BUTTON_CONFIRM"] = "Так, видалити";

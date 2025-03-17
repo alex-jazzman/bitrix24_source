@@ -15,6 +15,5 @@ $MESS["BPWFI_SLIDER_FIELDS_TITLE"] = "Поля для заповнення (об
 $MESS["BPWFI_SLIDER_NAME"] = "Назва";
 $MESS["BPWFI_SLIDER_NOT_MY_TASK"] = "Ви відкрили завдання співробітника #USER#";
 $MESS["BPWFI_SLIDER_TASK"] = "Завдання";
-$MESS["BPWFI_SLIDER_TIMELINE"] = "Протокол";
 $MESS["BPWFI_SLIDER_TIMELINE_MSGVER_1"] = "Протокол";
 $MESS["BPWFI_SLIDER_TYPE"] = "Тип процесу";

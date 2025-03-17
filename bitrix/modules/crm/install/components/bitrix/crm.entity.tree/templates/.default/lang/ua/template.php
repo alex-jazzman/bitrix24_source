@@ -27,7 +27,6 @@ $MESS["CRM_ENTITY_TREE_ORDER"] = "ЗАМОВЛЕННЯ №";
 $MESS["CRM_ENTITY_TREE_ORDER_PAYMENT"] = "ОПЛАТА №";
 $MESS["CRM_ENTITY_TREE_ORDER_SHIPMENT"] = "ВІДВАНТАЖЕННЯ №";
 $MESS["CRM_ENTITY_TREE_PHONE"] = "Телефон";
-$MESS["CRM_ENTITY_TREE_QUOTE"] = "ПРОПОЗИЦІЯ";
 $MESS["CRM_ENTITY_TREE_QUOTE_MSGVER_1"] = "ПРОПОЗИЦІЯ";
 $MESS["CRM_ENTITY_TREE_SOURCE"] = "Джерело";
 $MESS["CRM_ENTITY_TREE_STORE_DOCUMENT_DATE_STATUS"] = "Дата зміни статусу";

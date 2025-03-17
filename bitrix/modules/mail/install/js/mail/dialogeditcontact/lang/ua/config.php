@@ -7,5 +7,5 @@ $MESS["MAIL_DIALOG_EDIT_CONTACT_EMAIL_TITLE"] = "Email-адреса";
 $MESS["MAIL_DIALOG_EDIT_CONTACT_NAME_TITLE"] = "Ім'я";
 $MESS["MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE"] = "Ви точно хочете видалити контакт з адресної книги?";
 $MESS["MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_TITLE"] = "Підтвердження видалення";
-$MESS["MAIL_DIALOG_EDIT_CONTACT_TITLE_BAR_ADD"] = "Додавання контакту";
-$MESS["MAIL_DIALOG_EDIT_CONTACT_TITLE_BAR_EDIT"] = "Редагування контакту";
+$MESS["MAIL_DIALOG_EDIT_CONTACT_TITLE_BAR_ADD_MSGVER_1"] = "Нова адреса";
+$MESS["MAIL_DIALOG_EDIT_CONTACT_TITLE_BAR_EDIT_MSGVER_1"] = "Редагування адреси";

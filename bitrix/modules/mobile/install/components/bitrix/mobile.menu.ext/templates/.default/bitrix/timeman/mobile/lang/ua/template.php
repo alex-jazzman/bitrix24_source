@@ -1,5 +1,4 @@
 <?php
-$MESS["TM_NOTIF_EXPIRED"] = "Ви не закрили попередній робочий день";
 $MESS["TM_NOTIF_EXPIRED_MSGVER_1"] = "Ви не закрили попередній робочий день.";
 $MESS["TM_NOTIF_START"] = "Почніть робочий день";
 $MESS["TM_STATUS_COMPLETED"] = "Завершено";

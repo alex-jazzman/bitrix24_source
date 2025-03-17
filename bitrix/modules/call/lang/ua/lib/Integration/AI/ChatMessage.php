@@ -19,7 +19,6 @@ $MESS["CALL_NOTIFY_COPILOT_ERROR_ERROR_LIMIT_BAAS"] = "Недостатньо б
 $MESS["CALL_NOTIFY_COPILOT_ERROR_SETTINGS_RESTRICTION"] = "Увімкніть CoPilot Follow-up у налаштуваннях вашого Бітрікс24.";
 $MESS["CALL_NOTIFY_COPILOT_ERROR_TARIFF_RESTRICTION"] = "CoPilot Follow-up недоступний на вашому тарифі. Виберіть відповідний тариф.";
 $MESS["CALL_NOTIFY_COPILOT_INSIGHTS"] = "Рекомендації";
-$MESS["CALL_NOTIFY_COPILOT_TASKS"] = "Що зробити";
 $MESS["CALL_NOTIFY_FEEDBACK"] = "[url=#FEEDBACK_URL#]Повідомити про проблему[/url]";
 $MESS["CALL_NOTIFY_TASK_BOOST"] = "Закінчилися запити до CoPilot. Дані [url=#CALL_START#]дзвінка №#CALL_ID#[/url] збережено. Для продовження обробки [url=#BUY_URL#]купіть[/url] бусти та [SEND=#CALL_COMMAND#]запустіть[/SEND] аналіз.";
 $MESS["CALL_NOTIFY_TASK_COMPLETE"] = "CoPilot проаналізував [url=#CALL_START#]дзвінок №#CALL_ID#[/url].";

@@ -1,5 +1,8 @@
 <?php
 $MESS["M_DISK_FILE_ACTIONS_COPY"] = "Копіювати";
+$MESS["M_DISK_FILE_ACTIONS_DOWNLOAD"] = "Завантажити";
+$MESS["M_DISK_FILE_ACTIONS_DOWNLOAD_ERROR_DESCRIPTION"] = "Не вдалося завантажити файл.";
+$MESS["M_DISK_FILE_ACTIONS_DOWNLOAD_ERROR_TITLE"] = "Error";
 $MESS["M_DISK_FILE_ACTIONS_MOVE"] = "Перенести";
 $MESS["M_DISK_FILE_ACTIONS_REMOVE"] = "Видалити";
 $MESS["M_DISK_FILE_ACTIONS_REMOVE_CONFIRM_ACCEPT"] = "Видалити";
@@ -12,4 +15,5 @@ $MESS["M_DISK_FILE_ACTIONS_SEND_TO_CHAT"] = "Надіслати до чату";
 $MESS["M_DISK_FILE_ACTIONS_SHARE"] = "Поділитись";
 $MESS["M_DISK_FILE_ACTIONS_SHARE_ERROR_DESCRIPTION"] = "Не вдалося поділитися файлом";
 $MESS["M_DISK_FILE_ACTIONS_SHARE_ERROR_TITLE"] = "Щось пішло не так";
+$MESS["M_DISK_FILE_ACTIONS_SHARE_LINK"] = "Публічне посилання";
 $MESS["M_DISK_FILE_ACTIONS_SHOW_IN_FOLDER"] = "Відкрити папку з файлом";

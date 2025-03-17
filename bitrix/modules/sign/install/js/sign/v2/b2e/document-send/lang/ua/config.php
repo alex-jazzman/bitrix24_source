@@ -1,14 +1,12 @@
 <?php
-$MESS["SIGN_DOCUMENT_INFO_SEND"] = "Перевірте дані перед надсиланням";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_EMAIL"] = "і через ел. пошту";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_HINT"] = "Посилання на документ прийде в чат Бітрікс24.";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_IDLE"] = "Чат Бітрікс24";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_NOT_SET"] = "Вибрати ще канал";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_SMS"] = "і через SMS";
-$MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_TITLE"] = "Куди надіслати посилання на документ";
+$MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_TITLE_MSGVER_1"] = "Куди надіслати посилання на документ";
 $MESS["SIGN_DOCUMENT_SEND_DEADLINE"] = "Крайній термін: необмежено";
 $MESS["SIGN_DOCUMENT_SEND_FIRST_PARTY"] = "Перша сторона";
-$MESS["SIGN_DOCUMENT_SEND_HEADER"] = "Перевірте дані перед надсиланням";
 $MESS["SIGN_DOCUMENT_SEND_LANG_SELECTOR_HINT"] = "Вибраною мовою буде сформовано сертифікат автентичності підпису.";
 $MESS["SIGN_DOCUMENT_SEND_REMINDER_TYPE_SELECTOR_HINT"] = "HR-бот протягом 3-х днів нагадуватиме відповідальному про новий документ.";
 $MESS["SIGN_DOCUMENT_SEND_SECOND_PARTY"] = "Друга сторона";
@@ -22,4 +20,4 @@ $MESS["SIGN_SEND_SIGNING_REPRESENTATIVE"] = "Представник";
 $MESS["SIGN_SEND_SIGNING_VALIDATION_HEAD_EDITOR"] = "Заповнення";
 $MESS["SIGN_SEND_SIGNING_VALIDATION_HEAD_REVIEWER"] = "Погодження";
 $MESS["SIGN_SEND_SIGNING_VALIDATION_TITLE_EDITOR"] = "Заповнить дані співробітників";
-$MESS["SIGN_SEND_SIGNING_VALIDATION_TITLE_REVIEWER"] = "Погоджує документ";
+$MESS["SIGN_SEND_SIGNING_VALIDATION_TITLE_REVIEWER_MSGVER_1"] = "Погоджує документ";

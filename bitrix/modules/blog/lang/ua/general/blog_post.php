@@ -12,7 +12,6 @@ $MESS["BLG_GP_ERROR_NO_BLOG"] = "Блог з кодом &quot;#ID#&quot; не з
 $MESS["BLG_GP_IM_1A"] = "Написав вам #post#";
 $MESS["BLG_GP_IM_1A_FEMALE"] = "Написала вам #post#";
 $MESS["BLG_GP_IM_1B"] = "повідомлення";
-$MESS["BLG_GP_IM_1_FEMALE_MSGVER_1"] = "Написала вам повідомлення \"#title#\"";
 $MESS["BLG_GP_IM_1_MSGVER_1"] = "Написав вам повідомлення \"#title#\"";
 $MESS["BLG_GP_IM_1_MSGVER_1_FEMALE"] = "Написала вам повідомлення \"#title#\"";
 $MESS["BLG_GP_IM_4B"] = "повідомлення";

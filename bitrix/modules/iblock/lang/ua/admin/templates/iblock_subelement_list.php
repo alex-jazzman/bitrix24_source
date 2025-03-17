@@ -48,7 +48,6 @@ $MESS["IBEL_CATALOG_QUANTITY_RESERVED"] = "Зарезервовано";
 $MESS["IBEL_CATALOG_QUANTITY_TRACE"] = "Зменшувати кількість при замовленні";
 $MESS["IBEL_CATALOG_QUANTITY_TRACE_EXT"] = "Кількісний облік";
 $MESS["IBEL_CATALOG_TYPE"] = "Тип товару";
-$MESS["IBEL_CATALOG_TYPE_MESS_GROUP"] = "набір";
 $MESS["IBEL_CATALOG_TYPE_MESS_GROUP_MSGVER_1"] = "набір";
 $MESS["IBEL_CATALOG_TYPE_MESS_OFFER"] = "пропозиція";
 $MESS["IBEL_CATALOG_TYPE_TITLE"] = "Тип товару";

@@ -1,12 +1,9 @@
 <?php
 $MESS["CRM_SEMA_ACTIVITY_EMAIL_MAX_SIZE_EXCEED"] = "Перевищено максимальний розмір вкладень (#SIZE#)";
 $MESS["CRM_SEMA_ACTIVITY_LINK_LABEL"] = "Відкрити повідомлення";
-$MESS["CRM_SEMA_ATTACHMENT"] = "Вкладення";
 $MESS["CRM_SEMA_ATTACHMENT_1"] = "Файли";
 $MESS["CRM_SEMA_ATTACHMENT_DISK"] = "Диск";
-$MESS["CRM_SEMA_ATTACHMENT_FILE_1"] = "Файли документа";
 $MESS["CRM_SEMA_ATTACHMENT_FILE_2"] = "Поля елемента";
-$MESS["CRM_SEMA_ATTACHMENT_TYPE"] = "Тип вкладень";
 $MESS["CRM_SEMA_ATTACHMENT_TYPE_1"] = "Джерело";
 $MESS["CRM_SEMA_DEFAULT_BODY"] = "[без тексту]";
 $MESS["CRM_SEMA_DEFAULT_SUBJECT"] = "Новий лист (#DATE#)";

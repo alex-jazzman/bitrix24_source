@@ -50,7 +50,6 @@ $MESS["USER_REGISTER_OK"] = "Ви були успішно зареєстрова
 $MESS["USER_STATUS_OFFLINE"] = "Не в мережі";
 $MESS["USER_STATUS_ONLINE"] = "В мережі";
 $MESS["USER_WITH_EMAIL_EXIST"] = "Користувач з таким e-mail(#EMAIL#) вже існує.";
-$MESS["USER_WRONG_HASH"] = "Перевірка збереженої авторизації не пройдена.";
 $MESS["WRONG_CONFIRMATION"] = "Неправильне підтвердження паролю.";
 $MESS["WRONG_DATE_ACTIVE_FROM"] = "Невірна дата початку активності для групи # #GROUP_ID#";
 $MESS["WRONG_DATE_ACTIVE_TO"] = "Невірна дата закінчення активності для групи # #GROUP_ID#";

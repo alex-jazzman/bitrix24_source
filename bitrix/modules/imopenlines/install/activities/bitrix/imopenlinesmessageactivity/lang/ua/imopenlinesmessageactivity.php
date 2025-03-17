@@ -1,10 +1,7 @@
 <?php
-$MESS["IMOL_MA_ATTACHMENT"] = "Вкладення";
 $MESS["IMOL_MA_ATTACHMENT_1"] = "Файли";
 $MESS["IMOL_MA_ATTACHMENT_DISK"] = "Диск";
-$MESS["IMOL_MA_ATTACHMENT_FILE_1"] = "Файли документа";
 $MESS["IMOL_MA_ATTACHMENT_FILE_2"] = "Поля елемента";
-$MESS["IMOL_MA_ATTACHMENT_TYPE"] = "Тип вкладень";
 $MESS["IMOL_MA_ATTACHMENT_TYPE_1"] = "Джерело";
 $MESS["IMOL_MA_EMPTY_MESSAGE"] = "Властивість 'Текст повідомлення' не вказана.";
 $MESS["IMOL_MA_IS_SYSTEM"] = "Приховане повідомлення";

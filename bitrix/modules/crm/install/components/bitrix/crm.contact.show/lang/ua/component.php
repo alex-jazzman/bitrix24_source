@@ -28,7 +28,6 @@ $MESS["CRM_FIELD_CONTACT_DEAL"] = "Угоди контакта";
 $MESS["CRM_FIELD_CONTACT_EVENT"] = "Угоди контакта";
 $MESS["CRM_FIELD_CONTACT_INVOICE"] = "Рахунок контакта";
 $MESS["CRM_FIELD_CONTACT_LEAD"] = "Ліди контакту";
-$MESS["CRM_FIELD_CONTACT_QUOTE"] = "Пропозиції контакту";
 $MESS["CRM_FIELD_CONTACT_QUOTE_MSGVER_1"] = "Пропозиції контакту";
 $MESS["CRM_FIELD_CONTACT_REQUISITE"] = "Реквізити контакту";
 $MESS["CRM_FIELD_CREATED_BY_ID"] = "Створити";

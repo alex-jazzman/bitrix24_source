@@ -7,6 +7,5 @@ $MESS["SIGN_KANBAN_STUB_BODY_FEATURE_5"] = "Автоматизуйте проц�
 $MESS["SIGN_KANBAN_STUB_BTN_DETAILS"] = "Докладніше";
 $MESS["SIGN_KANBAN_STUB_BTN_START"] = "Почати";
 $MESS["SIGN_KANBAN_STUB_HEADER_DESCRIPTION"] = "Безплатно для бізнесу. Зручно для людей.";
-$MESS["SIGN_KANBAN_STUB_HEADER_TITLE"] = "Бітрікс24.Підпис";
 $MESS["SIGN_KANBAN_STUB_HEADER_TITLE_MSGVER_1"] = "Бітрікс24 Підпис";
 $MESS["SIGN_KANBAN_TOOLBAR_BTN_SIGN"] = "Підписати";

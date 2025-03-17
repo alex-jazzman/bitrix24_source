@@ -1,7 +1,5 @@
 <?php
 $MESS["CRM_DOCUMENT_VIEW_COPY_PUBLIC_URL_MESSAGE"] = "Публічне посилання скопійоване в буфер обміну";
-$MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"docs-preview-details-link\">Заповнити <br> або редагувати</a>
-<span class=\"docs-preview-details-text\">реквізити моєї компанії</span>";
 $MESS["CRM_DOCUMENT_VIEW_DOWNLOAD_IN"] = "Завантажити в форматі";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_DOCUMENT"] = "Редагувати документ";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_TEMPLATE"] = "Редагувати шаблон";
@@ -9,8 +7,6 @@ $MESS["CRM_DOCUMENT_VIEW_FEEDBACK"] = "Зворотний зв'язок";
 $MESS["CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES"] = "Немає доступних для відправки файлів";
 $MESS["CRM_DOCUMENT_VIEW_PAYMENT_BUTTON"] = "Прийняти оплату";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_GENERATION_MESSAGE"] = "Йде генерація документу";
-$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE"] = "Готуємо файл PDF до перегляду";
-$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY"] = "Ви можете завантажити документ у форматі DOCX просто зараз або скопіювати посилання й надіслати клієнту";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_READY_MESSAGE"] = "Зараз документ доступний в форматі docx, ви можете отримати на нього посилання, завантажити або відправити клієнту.";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_TIME_MESSAGE"] = "На створення картинки та PDF документа необхідно близько 20 секунд";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_LINK"] = "Публічне посилання";
@@ -26,19 +22,10 @@ $MESS["CRM_DOCUMENT_VIEW_SIGNED"] = "з підписами та печаткою
 $MESS["CRM_DOCUMENT_VIEW_SIGN_AND_STAMP"] = "Печатка й підпис";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Підписати";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "Ви вже почали підписувати документ.";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS"] = "Цей шаблон використовувався %CREATED_AT% для операції \"%TITLE%\", відповідальна особа — \"%INITIATOR%\". Використати знову?";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS_MSG_MSGVER_2"] = "Шаблон із готовим текстом і налаштованими полями вже використовувався для угоди «%TITLE%», відповідальний — «%INITIATOR%». Ви можете продовжити із цим шаблоном або змінити його в разі потреби.";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS_MSG_MSGVER_3"] = "Шаблон з готовим текстом і налаштованими полями вже використовувався для угоди «%TITLE%», відповідальний: %INITIATOR%. Ви можете продовжити із цим шаблоном або створити новий.";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON"] = "Використати інший шаблон";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_1"] = "Використати інший шаблон";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_2"] = "Переглянути й редагувати";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_3"] = "Створити новий";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON"] = "Використати шаблон знову";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_1"] = "Використати шаблон знову";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_2"] = "Використати наявний шаблон";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE"] = "Закрити";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE"] = "Підписання";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_1"] = "Підписання";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_2"] = "Використати готовий шаблон?";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Для відправки по смс необхідне публічне посилання";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "Немає PDF-файлу документа. Швидше за все, під час конвертації сталася помилка.";

@@ -24,7 +24,6 @@ $MESS["BPATL_TITLE_1"] = "Завдання";
 $MESS["BPATL_USER"] = "Користувач";
 $MESS["BPATL_USER_ID"] = "ID користувача";
 $MESS["BPATL_USER_NOT_FOUND"] = "Користувач №#USER_ID# не знайдений";
-$MESS["BPATL_VIEW"] = "Переглянути завдання";
 $MESS["BPATL_VIEW_MSGVER_1"] = "Переглянути завдання";
 $MESS["BPATL_WORKFLOW_NAME"] = "Бізнес-процес";
 $MESS["BPATL_WORKFLOW_STATE"] = "Статус";

@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_SETTINGS_FIELD_HINT_COLLABERS_INVITE_ON"] = "Увімкніть налаштування, щоб співробітники могли запрошувати гостей у колаби. У разі потреби можна обмежити права на запрошення всередині кожної колаби. Якщо налаштування вимкнено, усім співробітникам буде заборонено запрошувати в колаби учасників не з вашої компанії.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON_MSGVER_1"] = "Увімкніть опцію, щоб в Бітрікс24 могли працювати зовнішні користувачі, тобто запрошені в екстранет-групу користувачі з обмеженими правами доступу й без можливості переглядати внутрішньокорпоративну інформацію. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1"] = "Нові користувачі можуть зареєструватися за посиланням від чинних користувачів. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_LF_ON"] = "У стрічці новин усі бачать повідомлення про додавання нових співробітників.";
@@ -9,6 +10,8 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_BIRTH_YEAR"] = "Який вигляд 
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_NUMBER_FORMAT"] = "Який вигляд матиме телефон:";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_USERS_TO_INVITE_ON"] = "Усі співробітники можуть запрошувати до Бітрікс24. Якщо ця опція вимкнена, запрошувати користувачів зможе лише адміністратор.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ADDRESS_FORMAT"] = "Регіон за замовчуванням для адреси:";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_COLLABERS_INVITE"] = "Дозволити запрошувати зовнішніх користувачів у колаби";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_COMPANY_PULSE_DESCRIPTION"] = "Віджет показуватиме активність використання Бітрікс24 у вашій компанії — як часто співробітники ставлять завдання, пишуть повідомлення, заходять у мобільний застосунок.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_COUNTRY_PHONE_NUMBER"] = "Країна за замовчуванням для номера телефону:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_EXTRANET"] = "Екстранет ";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_FAST_REG"] = "Дозволити швидку реєстрацію";

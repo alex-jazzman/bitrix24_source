@@ -6,5 +6,4 @@ $MESS["CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_ITEM_3"] = "Підключа�
 $MESS["CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_ITEM_4"] = "Різноманітні способи оплати, яким клієнт віддає перевагу.";
 $MESS["CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_ITEM_5"] = "Створення клієнтської бази для повторних продажів.";
 $MESS["CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_SUB_TITLE"] = "Приймайте оплату від клієнтів прямо в смартфоні";
-$MESS["CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_TITLE"] = "Бітрікс24.Термінал";
 $MESS["CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_TITLE_MSGVER_1"] = "Бітрікс24 Термінал";

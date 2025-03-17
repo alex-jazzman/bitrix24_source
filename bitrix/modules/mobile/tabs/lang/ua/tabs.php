@@ -2,7 +2,6 @@
 $MESS["TAB_DISK_NAVIGATION_TAB_COMPANY_FILES"] = "Файли компанії";
 $MESS["TAB_DISK_NAVIGATION_TAB_MY_FILES"] = "Мої файли";
 $MESS["TAB_DISK_NAVIGATION_TAB_RECENT"] = "Нещодавні";
-$MESS["TAB_DISK_NAVIGATION_TAB_SHARED_FILES"] = "Загальні файли";
 $MESS["TAB_NAME_CALENDAR"] = "Календар";
 $MESS["TAB_NAME_CALENDAR_SHORT"] = "Календар";
 $MESS["TAB_NAME_CATALOG_STORE"] = "Складський облік";

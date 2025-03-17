@@ -85,8 +85,6 @@ $MESS["CRM_ACTIVITY_MEETING_REMOVE"] = "Видалено зустріч";
 $MESS["CRM_ACTIVITY_MEETING_RESPONSIBLE_IM_NOTIFY"] = "Ви призначені відповідальним за зустріч \"#title#\"";
 $MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING"] = "Новий лист <a target=\"_blank\" href=\"#VIEW_URL#\">\"#SUBJECT#\"</a>";
 $MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_1"] = "Новий лист у <a target=\"_blank\" href=\"#VIEW_URL#\">\"#ENTITY_TITLE#\"</a><br/>Тема: \"#SUBJECT#\"";
-$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMAIL"] = "Вам прийшов <a target=\"_blank\" href=\"#VIEW_URL#\">новий лист</a>.";
-$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMAIL_EXT"] = "Вам прийшов лист <a target=\"_blank\" href=\"#VIEW_URL#\">#SUBJECT#</a> від #ADDRESSER#.";
 $MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMPTY_SUBJECT_1"] = "Новий лист у <a target=\"_blank\" href=\"#VIEW_URL#\">\"#ENTITY_TITLE#\"</a>";
 $MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_MULTI"] = "Нові листи: #COUNT#. <a target=\"_blank\" href=\"#VIEW_URL#\">Перейти в CRM</a>";
 $MESS["CRM_ACTIVITY_OUTGOING_CALL_NO_RESPONSE"] = "Абонент не відповідає або тимчасово недоступний";

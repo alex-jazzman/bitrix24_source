@@ -4,7 +4,6 @@ $MESS["C_PVG_SIMPLE_PRODUCT_POPUP_BUTTON_CLOSE"] = "Закрити";
 $MESS["C_PVG_SIMPLE_PRODUCT_POPUP_BUTTON_COPY"] = "Копіювання товару";
 $MESS["C_PVG_SIMPLE_PRODUCT_POPUP_DOC_LINK_INFO"] = "Детальніше";
 $MESS["C_PVG_SIMPLE_PRODUCT_POPUP_TEXT_MSGVER_1"] = "Створіть новий товар у каталозі або натисніть кнопку «#COPY_BUTTON_NAME#». Ми скопіюємо товар з усіма його властивостями в новий, і тоді ви зможете додати до нього варіації. #LINK_INFO#";
-$MESS["C_PVG_SIMPLE_PRODUCT_POPUP_TITLE"] = "Товар створений як простий, тому до нього не вдасться додати варіації.";
 $MESS["C_PVG_STORE_ADD_NEW_BARCODE"] = "Додати штрихкод";
 $MESS["C_PVG_STORE_ADD_ONE_MORE_BARCODE"] = "Додати ще";
 $MESS["C_PVG_STORE_AMOUNT_POPUP_EMPTY"] = "Товар відсутній на складах";

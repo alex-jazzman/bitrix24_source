@@ -561,12 +561,13 @@ class DBTypeStep extends CWizardStep
 
 class RequirementStep extends CWizardStep
 {
-	protected $memoryMin = 64;
-	protected $memoryRecommend = 256;
-	protected $diskSizeMin = 500;
+	protected $memoryMin = 256;
+	protected $memoryRecommend = 512;
+	protected $diskSizeMin = 1500;
 	protected $phpMinVersion = "8.1.0";
 	protected $apacheMinVersion = "2.0";
-	protected $bitrixVmMinVersion = '7.5.0';
+	protected $nginxMinVersion = "1.22.0";
+	protected $bitrixVmMinVersion = '9.0.0';
 	protected $arCheckFiles = [];
 
 	function InitStep()
@@ -762,9 +763,15 @@ class RequirementStep extends CWizardStep
 			$serverName = $arMatch[1];
 			$serverVersion = $arMatch[2];
 
-			if (strtoupper($serverName) == "APACHE")
+			$serverNameUpper = strtoupper($serverName);
+			if ($serverNameUpper == "APACHE")
 			{
 				$serverMinVersion = $this->apacheMinVersion;
+				return BXInstallServices::VersionCompare($serverVersion, $serverMinVersion);
+			}
+			elseif ($serverNameUpper == "NGINX")
+			{
+				$serverMinVersion = $this->nginxMinVersion;
 				return BXInstallServices::VersionCompare($serverVersion, $serverMinVersion);
 			}
 
@@ -1163,12 +1170,11 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 
 		if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/intranet"))
 		{
-			$min_version = '4.2';
 			if (!($vm = getenv('BITRIX_VA_VER')))
 			{
 				$txt = $this->ShowResult(InstallGetMessage('SC_VMBITRIX_UNKNOWN'), false);
 			}
-			elseif (version_compare($vm, $min_version, '<'))
+			elseif (version_compare($vm, $this->bitrixVmMinVersion, '<'))
 			{
 				$txt = $this->ShowResult(str_replace('#VER#', htmlspecialcharsbx($vm), InstallGetMessage('SC_VMBITRIX_OLD')), false);
 			}
@@ -1180,7 +1186,7 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 			$this->content .= '
 			<tr>
 				<td valign="top">' . InstallGetMessage("SC_VMBITRIX") . '</td>
-				<td valign="top">' . str_replace('#VER#', $min_version, InstallGetMessage('SC_VMBITRIX_RECOMMENDED')) . '</td>
+				<td valign="top">' . str_replace('#VER#', $this->bitrixVmMinVersion, InstallGetMessage('SC_VMBITRIX_RECOMMENDED')) . '</td>
 				<td valign="top">' . $txt . '</td>
 			</tr>';
 		}
@@ -1253,7 +1259,7 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 
 		if ($memoryLimit > 0 && $memoryLimit < $this->memoryMin)
 		{
-			@ini_set("memory_limit", "64M");
+			@ini_set("memory_limit", $this->memoryMin . "M");
 			$memoryLimit = WelcomeStep::unformat(ini_get('memory_limit'));
 		}
 
@@ -1638,6 +1644,20 @@ class CreateDBStep extends CWizardStep
 			return false;
 		}
 
+		$option = $conn->query("select setting from pg_settings where name = 'standard_conforming_strings'")->fetch();
+		if (!isset($option['SETTING']) || $option['SETTING'] != 'on')
+		{
+			$this->SetError(InstallGetMessage("SC_DB_PGSQL_CONFIG_ER"));
+			return false;
+		}
+
+		$option = $conn->query("select setting from pg_settings where name = 'ac_ignore_maclabel'")->fetch();
+		if (isset($option['SETTING']) && $option['SETTING'] == 'false')
+		{
+			$this->SetError(InstallGetMessage("SC_DB_PGSQL_CONFIG_MAC_ER"));
+			return false;
+		}
+
 		if ($this->createDatabase)
 		{
 			$dbResult = $conn->query("SELECT datname FROM pg_database WHERE datname = '" . $conn->getSqlHelper()->forSql($this->dbName) . "'");
@@ -1906,6 +1926,7 @@ class CreateDBStep extends CWizardStep
 			try
 			{
 				$conn->queryExecute("GRANT ALL PRIVILEGES ON `" . addslashes($this->dbName) . "`.* TO '" . addslashes($this->dbUser) . "'@'%'");
+				$conn->queryExecute("GRANT SESSION_VARIABLES_ADMIN ON *.* TO '" . addslashes($this->dbUser) . "'@'%'");
 			}
 			catch (DB\SqlQueryException $e)
 			{
@@ -1931,16 +1952,6 @@ class CreateDBStep extends CWizardStep
 				$this->SetError(InstallGetMessage("ERR_ALTER_DB"));
 				return false;
 			}
-		}
-
-		try
-		{
-			$conn->queryExecute("SET NAMES 'utf8mb4'");
-		}
-		catch (DB\SqlQueryException $e)
-		{
-			$this->SetError($e->getDatabaseMessage());
-			return false;
 		}
 
 		return true;
@@ -2121,26 +2132,21 @@ class CreateDBStep extends CWizardStep
 			$fileContent .= "@umask(~(" . implode(" | ", $umask) . ") & 0777);\n";
 		}
 
-		if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/intranet"))
-		{
-			$fileContent .= "\n@ini_set(\"memory_limit\", \"1024M\");\n";
-		}
-		else
-		{
-			$memoryLimit = WelcomeStep::unformat(ini_get('memory_limit'));
-			if (!$memoryLimit || $memoryLimit == '')
-			{
-				$memoryLimit = WelcomeStep::unformat(get_cfg_var('memory_limit'));
-			}
+		$memoryValue = (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/intranet") ? 1024 : 512);
 
-			if ($memoryLimit > 0 && $memoryLimit < 256 * 1048576)
+		$memoryLimit = WelcomeStep::unformat(ini_get('memory_limit'));
+		if (!$memoryLimit || $memoryLimit == '')
+		{
+			$memoryLimit = WelcomeStep::unformat(get_cfg_var('memory_limit'));
+		}
+
+		if ($memoryLimit > 0 && $memoryLimit < $memoryValue * 1048576)
+		{
+			@ini_set("memory_limit", $memoryValue . "M");
+			$memoryLimit = WelcomeStep::unformat(ini_get('memory_limit'));
+			if ($memoryLimit >= $memoryValue * 1048576)
 			{
-				@ini_set("memory_limit", "512M");
-				$memoryLimit = WelcomeStep::unformat(ini_get('memory_limit'));
-				if ($memoryLimit >= 512 * 1048576)
-				{
-					$fileContent .= "\n@ini_set(\"memory_limit\", \"512M\");\n";
-				}
+				$fileContent .= "\n@ini_set(\"memory_limit\", \"" . $memoryValue . "M\");\n";
 			}
 		}
 
@@ -2179,9 +2185,8 @@ class CreateDBStep extends CWizardStep
 	function CreateAfterConnect()
 	{
 		$after_connNew = "<" . "?php\n" .
-			($this->sqlMode !== false ? "$" . "this->queryExecute(\"SET sql_mode='{$this->sqlMode}'\");\n" : "") .
-			"$" . "this->queryExecute(\"SET NAMES 'utf8mb4'\");\n" .
-			"$" . "this->queryExecute(\"SET collation_connection = '{$this->collation}'\");\n";
+			($this->sqlMode !== false ? "$" . "this->queryExecute(\"SET SESSION sql_mode='{$this->sqlMode}'\");\n" : "") .
+			"$" . "this->queryExecute(\"SET NAMES 'utf8mb4' COLLATE '{$this->collation}'\");\n";
 
 		$filePathNew = $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/after_connect_d7.php";
 
@@ -2263,7 +2268,8 @@ class CreateDBStep extends CWizardStep
 			return false;
 		}
 
-		$DB =& $this->DB;
+		/** @var CDatabase $DB */
+		$DB = $this->DB;
 		$tableName = "b_tmp_bx";
 
 		//Create table
@@ -2294,6 +2300,16 @@ class CreateDBStep extends CWizardStep
 		{
 			$this->SetError(InstallGetMessage("ERR_C_DROP_TBL"));
 			return false;
+		}
+
+		if ($DB->type == 'MYSQL')
+		{
+			$DB->Query("SET NAMES 'utf8mb4'", true);
+			if ($DB->db_Error <> '')
+			{
+				$this->SetError($DB->db_Error);
+				return false;
+			}
 		}
 
 		return true;
@@ -2594,9 +2610,8 @@ class CreateModulesStep extends CWizardStep
 
 	function GetModuleObject($moduleID)
 	{
-		if (!class_exists('CModule'))
+		if ($moduleID != 'main')
 		{
-			global $DB, $DBHost, $DBLogin, $DBPassword, $DBName, $DBDebug, $DBDebugToFile, $APPLICATION, $USER;
 			require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include.php");
 		}
 

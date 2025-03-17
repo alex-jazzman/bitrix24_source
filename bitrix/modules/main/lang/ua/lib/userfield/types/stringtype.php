@@ -10,4 +10,3 @@ $MESS["USER_TYPE_STRING_REGEXP_ERROR"] = "Поле \"#FIELD_NAME#\" не зад�
 $MESS["USER_TYPE_STRING_ROWS"] = "Кількість рядків поля введення";
 $MESS["USER_TYPE_STRING_SIZE"] = "Розмір поля введення для відображення";
 $MESS["USER_TYPE_STRING_VALUE_IS_MULTIPLE"] = "Поле \"#FIELD_NAME#\" не може бути множинним.";
-$MESS["USER_TYPE_STRING_VALUE_IS_NOT_STRING"] = "Значення поля '#name#' має бути рядком.";

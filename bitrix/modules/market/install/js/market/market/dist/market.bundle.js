@@ -58,6 +58,9 @@ this.BX = this.BX || {};
 	        }
 	      },
 	      created() {
+	        this.marketLogoTitle = this.result.MARKET_LOGO_TITLE;
+	        this.marketToolbarTitle = this.result.MARKET_TOOLBAR_TITLE;
+	        this.marketNameMessageCode = this.result.MARKET_NAME_MESSAGE_CODE;
 	        this.categories = this.result.CATEGORIES;
 	        this.searchFilters = this.result.SEARCH_FILTERS;
 	        this.favNumbers = this.result.FAV_NUMBERS;

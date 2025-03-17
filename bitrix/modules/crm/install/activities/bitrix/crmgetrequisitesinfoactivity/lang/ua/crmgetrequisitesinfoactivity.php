@@ -10,6 +10,5 @@ $MESS["CRM_GRI_ENTITY_ID"] = "ID сутності";
 $MESS["CRM_GRI_ENTITY_TYPE"] = "Тип сутності";
 $MESS["CRM_GRI_ENTITY_TYPE_ERROR"] = "Обраний неправильний тип сутності";
 $MESS["CRM_GRI_READ_PERMISSION_ERROR"] = "Недостатньо прав на читання";
-$MESS["CRM_GRI_REQUISITE_PRESET_NOT_EXIST"] = "Не існує шаблону \"#TEMPLATE#\" для сутності типу \"#TYPE#\" з ID \"#ID#\"";
 $MESS["CRM_GRI_REQUISITE_PRESET_NOT_EXIST_1"] = "Шаблон компанії або контактної інформації з таким ідентифікатором не знайдено";
 $MESS["CRM_GRI_REQUISITE_TEMPLATES"] = "Шаблони";

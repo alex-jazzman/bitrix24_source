@@ -1,7 +1,6 @@
 <?php
 $MESS["SONET_NO_USER2GROUP"] = "Запис не знайдений";
 $MESS["SONET_UG_BANMEMBER_MESSAGE"] = "Вас внесли до чорного списку групи '#NAME#'";
-$MESS["SONET_UG_CONFIRM_MEMBER_MESSAGE"] = "Користувач погодився стати членом групи '#NAME#'";
 $MESS["SONET_UG_CONFIRM_MEMBER_MESSAGE_G"] = "Ви прийняті до членів групи '#NAME#'";
 $MESS["SONET_UG_CONFIRM_MEMBER_MESSAGE_MSGVER_1"] = "Користувач погодився стати учасником групи «#NAME#».";
 $MESS["SONET_UG_EMPTY_DATE_CREATE"] = "Дата створення вказана невірно";
@@ -53,7 +52,6 @@ $MESS["SONET_UG_MEMBER2OWNER_MESSAGE_COLLAB"] = "Вас призначено в�
 $MESS["SONET_UG_MOD2MEMBER_MESSAGE"] = "Вас виключили з модераторів групи '#NAME#'";
 $MESS["SONET_UG_OWNER2MEMBER_MESSAGE"] = "Ви перестали бути власником групи \"#NAME#\"";
 $MESS["SONET_UG_OWNER2MEMBER_MESSAGE_COLLAB"] = "Ви перестали бути власником колаби «#NAME#».";
-$MESS["SONET_UG_REJECT_MEMBER_MESSAGE"] = "Користувач відмовився стати членом групи '#NAME#'";
 $MESS["SONET_UG_REJECT_MEMBER_MESSAGE_G"] = "Вам відмовлено в прийомі до членів групи '#NAME#'";
 $MESS["SONET_UG_REJECT_MEMBER_MESSAGE_MSGVER_1"] = "Користувач відмовився стати учасником групи «#NAME#».";
 $MESS["SONET_UG_REQUEST_CONFIRM"] = "Прийняти";

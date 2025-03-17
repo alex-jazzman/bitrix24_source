@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_CREATE_MEETING_AUTO_COMPLETE"] = "Виконати автоматично по завершенню процесу";
 $MESS["CRM_CREATE_MEETING_AUTO_COMPLETE_MSGVER_1"] = "Автоматично завершувати справу під час переходу елемента на іншу стадію";
 $MESS["CRM_CREATE_MEETING_DESCRIPTION"] = "Опис";
 $MESS["CRM_CREATE_MEETING_EMPTY_PROP"] = "Не заповнено обов'язковий параметр: #PROPERTY#";

@@ -218,7 +218,7 @@ class StatTable extends Main\Entity\DataManager
 
 	public static function log(\CRestServer $server)
 	{
-		if(Main\ModuleManager::isModuleInstalled('oauth'))
+		if(\Bitrix\Rest\Integration\OAuthModule::isSupported())
 		{
 			return;
 		}
@@ -295,7 +295,7 @@ class StatTable extends Main\Entity\DataManager
 
 	public static function finalize()
 	{
-		if(Main\ModuleManager::isModuleInstalled('oauth'))
+		if(\Bitrix\Rest\Integration\OAuthModule::isSupported())
 		{
 			return;
 		}

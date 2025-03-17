@@ -6,4 +6,3 @@ $MESS["CRM_KANBAN_ACTIVITY_ENTITY_FIELD_PROVIDER_OWNER"] = "Справу ств�
 $MESS["CRM_KANBAN_ACTIVITY_ENTITY_FIELD_PROVIDER_TYPE_ID"] = "Тип справи";
 $MESS["CRM_KANBAN_ACTIVITY_ENTITY_FIELD_RESPONSIBLE"] = "Відповідальний за справу";
 $MESS["CRM_KANBAN_ACTIVITY_ENTITY_FIELD_SUBJECT"] = "Опис справи";
-$MESS["CRM_KANBAN_ACTIVITY_VIEW_MODE_MOVE_ITEM_TO_COLUMN_BLOCKED_2"] = "Переміщення на цю стадію неможливе.";

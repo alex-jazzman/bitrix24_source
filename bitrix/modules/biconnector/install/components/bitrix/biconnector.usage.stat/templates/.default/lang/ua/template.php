@@ -1,11 +1,9 @@
 <?php
 $MESS["CT_BBSU_COLUMN_ACCESS_KEY"] = "Ключ";
-$MESS["CT_BBSU_COLUMN_DATA_SIZE"] = "Обсяг даних";
 $MESS["CT_BBSU_COLUMN_DATA_SIZE_MSGVER_1"] = "Обсяг даних, Б";
 $MESS["CT_BBSU_COLUMN_FIELDS"] = "Поля";
 $MESS["CT_BBSU_COLUMN_FILTERS"] = "Фільтри";
 $MESS["CT_BBSU_COLUMN_ID"] = "ID";
-$MESS["CT_BBSU_COLUMN_REAL_TIME"] = "Тривалість";
 $MESS["CT_BBSU_COLUMN_REAL_TIME_MSGVER_1"] = "Тривалість, с";
 $MESS["CT_BBSU_COLUMN_ROW_NUM"] = "Кількість рядків";
 $MESS["CT_BBSU_COLUMN_SERVICE_ID"] = "Джерело даних";

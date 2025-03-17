@@ -32,4 +32,3 @@ $MESS["INTRANET_USER_LIST_COLUMN_WORK_PHONE"] = "Робочий телефон";
 $MESS["INTRANET_USER_LIST_COLUMN_WORK_STATE"] = "Область / край компанії";
 $MESS["INTRANET_USER_LIST_COLUMN_WORK_STREET"] = "Вулиця, дім компанії";
 $MESS["INTRANET_USER_LIST_COLUMN_WORK_ZIP"] = "Поштовий індекс компанії";
-$MESS["INTRANET_USER_LIST_COLUMN_WWW"] = "WWW-сторінка";

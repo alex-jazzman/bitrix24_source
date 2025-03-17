@@ -1,3 +1,2 @@
-<?
-$MESS["PHOTO_NS_COMMENT"] = "Ваше фото прокоментовано";
-?>
+<?php
+$MESS["PHOTO_NS_COMMENT_MSGVER_1"] = "Ваше фото прокоментовано.";

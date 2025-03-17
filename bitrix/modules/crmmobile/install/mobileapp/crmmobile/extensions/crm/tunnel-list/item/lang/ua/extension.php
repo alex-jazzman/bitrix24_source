@@ -40,7 +40,6 @@ $MESS["TUNNEL_MENU_DELAY_THROUGH"] = "через";
 $MESS["TUNNEL_MENU_DELAY_TITLE2"] = "Виконати";
 $MESS["TUNNEL_MENU_DELETE"] = "Видалити";
 $MESS["TUNNEL_MENU_DELETE_CONFIRM"] = "Дійсно видалити тунель?";
-$MESS["TUNNEL_MENU_DELETE_CONFIRM_OK"] = "Видалити";
 $MESS["TUNNEL_MENU_PROPERTY_EMPTY"] = "порожній";
 $MESS["TUNNEL_MENU_RESPONSIBLE_TITLE"] = "Відповідальна особа";
 $MESS["TUNNEL_MENU_STAGE_NAME"] = "Назва угоди";

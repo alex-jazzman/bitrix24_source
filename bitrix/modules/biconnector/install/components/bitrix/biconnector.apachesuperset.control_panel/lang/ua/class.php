@@ -3,6 +3,7 @@ $MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_ANALYTICS"] = "Робоче місц�
 $MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_COMMON_SETTINGS"] = "Загальні налаштування";
 $MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_FEEDBACK"] = "Зворотний зв'язок";
 $MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_MARKET"] = "Готові звіти в Маркеті";
+$MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_MARKET_MSGVER_1"] = "Готові звіти в Маркеті";
 $MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_ORDER"] = "Замовити звіт";
 $MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_RIGHTS_SETTINGS"] = "Права доступу";
 $MESS["BICONNECTOR_CONTROL_PANEL_MENU_ITEM_SETTINGS"] = "Налаштування";

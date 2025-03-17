@@ -30,7 +30,6 @@ $MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_QUANTITY_WORDS_TITLE"] = "Кількіс�
 $MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_SECTION_TITLE"] = "Розділ";
 $MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_SORT_TITLE"] = "Сортування";
 $MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_INCLUDED_TITLE"] = "Податок включений у ціну";
-$MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_NAME_TITLE"] = "Відсоток податків (з підтримкою «без ПДВ»)";
 $MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_NAME_TITLE_MSGVER_1"] = "Відсоток податків (із підтримкою без ПДВ)";
 $MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_TITLE"] = "Відсоток податків";
 $MESS["CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_VALUE_SUM_TITLE"] = "Сума податків";

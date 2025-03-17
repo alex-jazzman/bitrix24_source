@@ -1,10 +1,8 @@
 <?php
 $MESS["IM_CHAT_CALL"] = "Телефонний дзвінок";
 $MESS["IM_CHAT_GENERAL"] = "Загальний чат";
-$MESS["IM_CHAT_GROUP_NEW"] = "Груповий чат";
 $MESS["IM_CHAT_GROUP_NEW_MSGVER_1"] = "Груповий чат";
 $MESS["IM_CHAT_LINES"] = "Відкрита лінія";
-$MESS["IM_CHAT_OPEN_NEW"] = "Канал";
 $MESS["IM_CHAT_OPEN_NEW_MSGVER_1"] = "Відкритий чат";
 $MESS["IM_CL_BOT"] = "Чат-бот";
 $MESS["IM_CL_USER"] = "Користувач";
@@ -27,7 +25,6 @@ $MESS["IM_STATUS_GUEST"] = "Не доступний";
 $MESS["IM_STATUS_LINES-ONLINE"] = "Користувач Відкритих ліній";
 $MESS["IM_STATUS_MOBILE"] = "Мобільний клієнт";
 $MESS["IM_STATUS_NA"] = "Не доступний";
-$MESS["IM_STATUS_NETWORK"] = "Бітрікс24.Network";
 $MESS["IM_STATUS_NETWORK_MSGVER_1"] = "Бітрікс24 Мережа";
 $MESS["IM_STATUS_OFFLINE"] = "Не в мережі";
 $MESS["IM_STATUS_ONLINE"] = "Онлайн";

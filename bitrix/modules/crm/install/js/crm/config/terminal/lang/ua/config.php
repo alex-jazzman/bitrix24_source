@@ -19,9 +19,7 @@ $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PHONE_CONFIRMATION_POPUP_MESSAGE"] =
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PHONE_CONFIRMATION_POPUP_OK_CAPTION"] = "Підтвердити";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PHONE_CONFIRMATION_POPUP_TITLE"] = "Підтвердьте номер телефону";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET"] = "Налаштувати";
-$MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SUBTITLE"] = "Виберіть способи оплати, які будуть доступні вашим клієнтам у терміналі. <a href=\"#MORE_INFO_LINK#\">Докладніше</a>";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_TITLE_MSGVER_1"] = "Способи оплати";
-$MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE"] = "Змінити провайдера";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE_MSGVER_1"] = "Змінити провайдера";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_HINT_TEXT"] = "У разі успішної оплати користувачеві надсилатиметься SMS-повідомлення з посиланням на інформацію про успішну оплату. #LINK_START#Докладніше#LINK_END#";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_INFO"] = "Одразу після покупки клієнт отримає SMS з інформацією про оплату:";
@@ -33,7 +31,6 @@ $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_ONBOARDING_TEXT"] = "Ви може�
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_BTN"] = "Під'єднати зовнішній сервіс";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_MORE"] = "Під'єднати ще сервіс";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_UNC_CONNECTED"] = "Надсилання через Бітрікс24. #LINK_START#Як це працює#LINK_END#";
-$MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT"] = "Надіслати SMS через ";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT_MSGVER_2"] = "Через SMS-сервіс %PROVIDER_NAME%";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_UNC_CONNECT_BTN"] = "Надсилати через Бітрікс24";
 $MESS["CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_TITLE"] = "Надсилання сповіщень про успішну оплату";

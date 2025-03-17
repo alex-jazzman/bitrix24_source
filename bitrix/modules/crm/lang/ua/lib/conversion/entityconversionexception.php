@@ -48,5 +48,4 @@ $MESS["CRM_CONV_EX_LEAD_NOT_FOUND"] = "Лід не знайдено.";
 $MESS["CRM_CONV_EX_LEAD_READ_DENIED"] = "Читання ліда заборонено.";
 $MESS["CRM_CONV_EX_LEAD_UPDATE_DENIED"] = "Оновлення ліда заборонено.";
 $MESS["CRM_CONV_EX_NOT_SYNCHRONIZED"] = "Неможливо передати всі дані з ліда. Будь ласка, виконайте синхронізацію полів.";
-$MESS["CRM_CONV_EX_QUOTE_AUTOCREATION_DISABLED"] = "Автоматичне створення пропозицій відключено.";
 $MESS["CRM_CONV_EX_QUOTE_AUTOCREATION_DISABLED_MSGVER_1"] = "Автоматичне створення пропозицій відключено.";

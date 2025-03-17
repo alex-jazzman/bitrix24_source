@@ -1,16 +1,10 @@
 <?php
 $MESS["SONET_GCE_T_AJAX_ERROR"] = "Виникла помилка при обробці даних форми. Будь ласка, спробуйте ще раз.";
-$MESS["SONET_GCE_T_DEMO_INFO_BTN"] = "Розпочати роботу";
 $MESS["SONET_GCE_T_DEMO_INFO_BTN_1"] = "OK";
-$MESS["SONET_GCE_T_DEMO_INFO_TEXT_PROJECT"] = "Ви можете розподіляти завдання за проєктами, розуміти, на якому етапі який проєкт перебуває та витрачати менше часу на контроль роботи співробітників.";
 $MESS["SONET_GCE_T_DEMO_INFO_TEXT_PROJECT_1"] = " ";
-$MESS["SONET_GCE_T_DEMO_INFO_TEXT_SCRUM"] = "Ви можете додавати завдання в беклог, розставляти пріоритети, планувати спринти та комунікації з командою. Це готовий інструмент для роботи команди за методологією Скрам.";
 $MESS["SONET_GCE_T_DEMO_INFO_TEXT_SCRUM_1"] = " ";
-$MESS["SONET_GCE_T_DEMO_INFO_TEXT_TRIAL"] = "Усі можливості доступні на <span>15 днів</span>.";
 $MESS["SONET_GCE_T_DEMO_INFO_TEXT_TRIAL_1"] = "Тепер ви можете запросити членів вашої команди. Ми надаємо безплатний доступ до преміумфункцій управління проєктами на 15 днів, щоб ви могли ознайомитися зі всіма можливостями Бітрікс24.";
-$MESS["SONET_GCE_T_DEMO_INFO_TITLE_PROJECT"] = "Ви активували <span>Проєкти</span>";
 $MESS["SONET_GCE_T_DEMO_INFO_TITLE_PROJECT_1"] = "<span>Дякуємо, що вирішили спробувати Бітрікс24!</span>";
-$MESS["SONET_GCE_T_DEMO_INFO_TITLE_SCRUM"] = "Ви активували <span>Скрам</span>";
 $MESS["SONET_GCE_T_DEMO_INFO_TITLE_SCRUM_1"] = "<span>Дякуємо, що вирішили спробувати Бітрікс24!</span>";
 $MESS["SONET_GCE_T_GROUP_NAME_EXISTS"] = "Група з такою назвою вже існує.";
 $MESS["SONET_GCE_T_GROUP_NAME_EXISTS_PROJECT"] = "Проєкт із такою назвою вже існує.";

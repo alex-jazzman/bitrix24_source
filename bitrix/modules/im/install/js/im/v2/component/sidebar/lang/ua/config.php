@@ -86,6 +86,7 @@ $MESS["IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION"] = "Спробуйте �
 $MESS["IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED"] = "Спробуйте сформулювати інакше або змініть ваш запит.";
 $MESS["IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED"] = "Нічого не знайдено";
 $MESS["IM_SIDEBAR_MUTE_NOT_AVAILABLE"] = "У цьому чаті не можна вимкнути сповіщення.";
+$MESS["IM_SIDEBAR_NOTES_PREVIEW_DESCRIPTION"] = "Бачите лише ви";
 $MESS["IM_SIDEBAR_SEARCH_MESSAGE_PLACEHOLDER"] = "Пошук по чату";
 $MESS["IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE"] = "Тут з'являться повідомлення, які ви шукаєте.";
 $MESS["IM_SIDEBAR_SEARCH_RESULT_START_TITLE"] = "Тут з'являться результати, які ви шукаєте.";

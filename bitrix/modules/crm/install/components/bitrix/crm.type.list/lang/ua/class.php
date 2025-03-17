@@ -7,5 +7,4 @@ $MESS["CRM_TYPE_LIST_CLASS_WELCOME_TEXT"] = "Не обмежуйтеся уго�
 $MESS["CRM_TYPE_LIST_CLASS_WELCOME_TITLE"] = "Тут з'являться ваші смартпроцеси";
 $MESS["CRM_TYPE_LIST_CUSTOM_SECTION_DEFAULT_VALUE"] = "CRM";
 $MESS["CRM_TYPE_LIST_EXTERNAL_DYNAMIC_TYPES_TITLE"] = "Цифрові робочі місця";
-$MESS["CRM_TYPE_LIST_TITLE"] = "Смарт-процеси";
 $MESS["CRM_TYPE_LIST_TITLE_MSGVER_1"] = "Смарт-процеси";

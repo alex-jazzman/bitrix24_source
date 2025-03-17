@@ -21,7 +21,6 @@ $MESS["LM_POPUP_TAB_LAST_CRMEMAILS"] = "Поштові користувачі CR
 $MESS["LM_POPUP_TAB_LAST_DEALS"] = "Угоди";
 $MESS["LM_POPUP_TAB_LAST_LEADS"] = "Ліди";
 $MESS["LM_POPUP_TAB_LAST_MAIL_CONTACTS"] = "Контакти з адресної книги";
-$MESS["LM_POPUP_TAB_LAST_NETWORK"] = "Бітрікс24.Network";
 $MESS["LM_POPUP_TAB_LAST_NETWORK_MSGVER_1"] = "Бітрікс24 Мережа";
 $MESS["LM_POPUP_TAB_LAST_SG"] = "Групи";
 $MESS["LM_POPUP_TAB_LAST_SG_PROJECT"] = "проєкти";

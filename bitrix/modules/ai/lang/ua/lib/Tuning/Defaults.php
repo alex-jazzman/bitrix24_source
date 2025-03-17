@@ -10,7 +10,5 @@ $MESS["AI_SETTINGS_INTERNAL_AUDIO_TITLE"] = "Виберіть модель ШІ 
 $MESS["AI_SETTINGS_INTERNAL_GROUP_COPILOT"] = "CoPilot для текстів і зображень";
 $MESS["AI_SETTINGS_INTERNAL_GROUP_COPILOT_DESCRIPTION"] = "Відкритий CoPilot використовує різні моделі ШІ й ми постійно підключаємо нові. Ви можете вибрати модель, яка підходить вам найкраще.";
 $MESS["AI_SETTINGS_INTERNAL_IMAGE_TITLE"] = "Виберіть модель ШІ для створення зображень";
-$MESS["AI_SETTINGS_INTERNAL_MARKET_LINK"] = "Вибрати в Маркеті";
 $MESS["AI_SETTINGS_INTERNAL_ON_SAVE_TITLE"] = "Вибрати для всіх співробітників";
-$MESS["AI_SETTINGS_INTERNAL_TEXT_FIELDS_HIGHLIGHT_TITLE"] = "Виберіть модель ШІ для обробки розшифрованих дзвінків і заповнення полів у CRM";
 $MESS["AI_SETTINGS_INTERNAL_TEXT_TITLE"] = "Виберіть модель ШІ для створення текстів";

@@ -16,7 +16,6 @@ $MESS["SP_PAYMENT_SUB_TITLE"] = "(оплата через #SUB_TITLE#)";
 $MESS["SP_RP_CONFIRM_DEL_MESSAGE"] = "Ви впевнені, що хочете видалити це обмеження?";
 $MESS["SP_RP_DELETE_DESCR"] = "Видалити";
 $MESS["SP_RP_EDIT_DESCR"] = "Редагувати";
-$MESS["SP_SALESCENTER_MODULE_ERROR"] = "Модуль \"Продажі в чаті\" не встановлено";
 $MESS["SP_SALESCENTER_MODULE_ERROR_MSGVER_1"] = "Модуль \"Центр продажів\" не встановлено.";
 $MESS["SP_SALESCENTER_SALE_ACCESS_DENIED"] = "Доступ заборонено.";
 $MESS["SP_SEO_MODULE_ERROR"] = "Модуль \"Пошукова оптимізація (seo)\" не встановлено";

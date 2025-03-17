@@ -9,3 +9,4 @@ $MESS["IM_MESSAGE_SERVICE_LEAVE_CHAT_STRUCTURE_ERROR"] = "Із цього чат
 $MESS["IM_MESSAGE_SERVICE_LEAVE_COLLAB_DEFAULT_ERROR"] = "Не вдалося вийти з колаби, спробуйте пізніше.";
 $MESS["IM_MESSAGE_SERVICE_SAVE_MESSAGE_SUCCESS"] = "Повідомлення збережено в Обраному. Переглянути повідомлення можна в бічній панелі чату.";
 $MESS["IM_SERVICE_FILE_SAVED_ON_DISK_SUCCESS"] = "Файл успішно збережений на ваш Диск";
+$MESS["IM_SERVICE_FILE_SAVED_ON_DISK_SUCCESS_MSGVER_1"] = "Файл збережено на Диск.";

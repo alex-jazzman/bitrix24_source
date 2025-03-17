@@ -1,4 +1,6 @@
 <?php
+$MESS["IM_CHANNEL_AVATAR_CHANGE_F"] = "#USER_NAME# змінила іконку каналу.";
+$MESS["IM_CHANNEL_AVATAR_CHANGE_M"] = "#USER_NAME# змінив іконку каналу.";
 $MESS["IM_CHANNEL_JOIN_F"] = "#USER_1_NAME# запросила в канал користувача #USER_2_NAME#.";
 $MESS["IM_CHANNEL_JOIN_M"] = "#USER_1_NAME# запросив у канал користувача #USER_2_NAME#.";
 $MESS["IM_CHAT_AVATAR_CHANGE_F"] = "#USER_NAME# змінила іконку чату.";

@@ -20,7 +20,6 @@ $MESS["CRM_FIELD_COMPANY_EVENT"] = "Список компаній";
 $MESS["CRM_FIELD_COMPANY_EVENT_CONTACT"] = "Список подій контактів компанії";
 $MESS["CRM_FIELD_COMPANY_INVOICE"] = "Рахунки компанії";
 $MESS["CRM_FIELD_COMPANY_LEAD"] = "Ліди компанії";
-$MESS["CRM_FIELD_COMPANY_QUOTE"] = "Пропозиції компанії";
 $MESS["CRM_FIELD_COMPANY_QUOTE_MSGVER_1"] = "Пропозиції компанії";
 $MESS["CRM_FIELD_COMPANY_REQUISITE"] = "Реквізити компанії";
 $MESS["CRM_FIELD_COMPANY_TYPE"] = "Тип компанії";

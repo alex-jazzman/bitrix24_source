@@ -101,7 +101,6 @@ $MESS["SONET_FEATURES_forum_answer"] = "Хто може створювати п�
 $MESS["SONET_FEATURES_forum_full"] = "Хто може керувати форумом";
 $MESS["SONET_FEATURES_forum_newtopic"] = "Хто може створювати нові теми";
 $MESS["SONET_FEATURES_forum_view"] = "Хто може переглядати файли";
-$MESS["SONET_FEATURES_marketplace"] = "Маркет";
 $MESS["SONET_FEATURES_marketplace_MSGVER_1"] = "Маркет";
 $MESS["SONET_FEATURES_microblog"] = "Мікроблог";
 $MESS["SONET_FEATURES_microblog_view_post"] = "Хто може переглядати повідомлення";

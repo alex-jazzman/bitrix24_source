@@ -1,7 +1,6 @@
 <?php
 $MESS["GD_CRM_COLUMN_DATE_CREATE"] = "Дата створення";
 $MESS["GD_CRM_COLUMN_DATE_MODIFY"] = "Дата змінення";
-$MESS["GD_CRM_COLUMN_STATUS"] = "Статус";
 $MESS["GD_CRM_COLUMN_STATUS_MSGVER_1"] = "Стадія";
 $MESS["GD_CRM_LEAD_LIST_LEAD_COUNT"] = "Кількість лідів на сторінці";
 $MESS["GD_CRM_ONLY_MY"] = "Тільки мої";

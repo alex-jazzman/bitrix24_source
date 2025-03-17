@@ -1,2 +1,3 @@
 <?php
+$MESS["BIC_SCOPE_MENU_ITEM_MARKETPLACE"] = "Маркет";
 $MESS["BIC_SCOPE_MENU_ITEM_TITLE"] = "BI-конструктор";

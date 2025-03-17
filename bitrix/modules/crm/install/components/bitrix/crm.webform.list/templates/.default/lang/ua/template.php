@@ -42,7 +42,6 @@ $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON"] = "вкл";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON_NOW"] = "активував зараз";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON_STATUS"] = "Форма активна";
 $MESS["CRM_WEBFORM_LIST_ITEM_BTN_GET_SCRIPT"] = "Код на сайт";
-$MESS["CRM_WEBFORM_LIST_ITEM_CONV_CHANGE"] = "Відображено зміну конверсії за останні два тижні";
 $MESS["CRM_WEBFORM_LIST_ITEM_DATE_CREATE"] = "Дата створення";
 $MESS["CRM_WEBFORM_LIST_ITEM_FILL_END"] = "успішно заповнено";
 $MESS["CRM_WEBFORM_LIST_ITEM_FILL_START"] = "всього спроб";

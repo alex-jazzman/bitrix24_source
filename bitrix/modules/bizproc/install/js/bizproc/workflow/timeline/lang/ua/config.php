@@ -32,7 +32,6 @@ $MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ANY"] = "Виконує бу�
 $MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_PROCESS_EXECUTED"] = "Процес виконувався";
 $MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_PROCESS_FINISHED"] = "процес завершено";
 $MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_START_DOC"] = "документ запуску";
-$MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE"] = "У протоколі час відображається точніше, ніж у списку процесів.";
 $MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE_MSGVER_1"] = "У протоколі час відображається точніше, ніж у списку процесів.";
 $MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_VOTED"] = "проголосувало <span>#VOTED#</span> / <span>#TOTAL#</span>";
 $MESS["BIZPROC_WORKFLOW_TIMELINE_SLIDER_ZERO_SECOND_INTERVAL"] = "Миттєво";

@@ -1,3 +1,2 @@
 <?php
-$MESS["CRM_BP_DOCUMENT_QUOTE_ENTITY_NAME"] = "Пропозиція";
 $MESS["CRM_BP_DOCUMENT_QUOTE_ENTITY_NAME_MSGVER_1"] = "Пропозиція";

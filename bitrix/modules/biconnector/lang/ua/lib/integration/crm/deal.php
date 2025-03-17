@@ -26,6 +26,7 @@ $MESS["CRM_BIC_DEAL_FIELD_COMPANY_NAME"] = "Назва компанії";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT"] = "Контакт";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT_FULL"] = "Ідентифікатор і назва контакту";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT_ID"] = "Ідентифікатор контакту";
+$MESS["CRM_BIC_DEAL_FIELD_CONTACT_IDS"] = "Ідентифікатори контактів (множ.)";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT_NAME"] = "Назва контакту";
 $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY"] = "Хто створив";
 $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY_FULL"] = "Ідентифікатор та ім'я користувача, що створив угоду";

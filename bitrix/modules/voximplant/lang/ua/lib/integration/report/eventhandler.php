@@ -9,5 +9,6 @@ $MESS["TELEPHONY_REPORT_EMPLOYEES_WORKLOAD_TITLE"] = "Навантаження �
 $MESS["TELEPHONY_REPORT_LOST_CALLS_TITLE"] = "Втрачені дзвінки";
 $MESS["TELEPHONY_REPORT_LOST_CALLS_TITLE_2"] = "Втрачені дзвінки";
 $MESS["TELEPHONY_REPORT_LOST_CALL_ACTIVITY"] = "Активність дзвінків";
+$MESS["TELEPHONY_REPORT_MARKET_LINK"] = "Бітрікс24 Маркет";
 $MESS["TELEPHONY_REPORT_MISSED_REACTION_TITLE"] = "Реакція на пропущені дзвінки";
 $MESS["TELEPHONY_REPORT_PERIOD_COMPARE_TITLE"] = "Порівняння періодів";

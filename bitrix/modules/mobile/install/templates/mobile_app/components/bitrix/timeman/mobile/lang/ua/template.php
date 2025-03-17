@@ -30,7 +30,6 @@ $MESS["TM_RESUME"] = "Продовжити";
 $MESS["TM_SAVE"] = "Зберегти";
 $MESS["TM_START"] = "Почати робочий день";
 $MESS["TM_STATUS_COMPLETED"] = "Завершено";
-$MESS["TM_STATUS_EXPIRED"] = "Ви <strong>не закрили</strong> <br/>попередній робочий день.";
 $MESS["TM_STATUS_EXPIRED_MSGVER_1"] = "Ви <strong>не закрили</strong> <br/>попередній робочий день.";
 $MESS["TM_STATUS_PAUSED"] = "Перерва";
 $MESS["TM_STATUS_START"] = "Почати";

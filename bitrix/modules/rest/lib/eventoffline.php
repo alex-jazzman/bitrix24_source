@@ -352,4 +352,18 @@ class EventOfflineTable extends Main\Entity\DataManager
 
 		return null;
 	}
+
+	/**
+	 * Removes all application offline event handlers.
+	 *
+	 * @param int $appId Application ID.
+	 *
+	 * @return Main\DB\Result
+	 */
+	public static function deleteByApp(mixed $appId): Main\DB\Result
+	{
+		$connection = Main\Application::getConnection();
+
+		return $connection->query("DELETE FROM ".static::getTableName()." WHERE APP_ID='".$appId."'");
+	}
 }

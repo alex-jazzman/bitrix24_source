@@ -95,7 +95,6 @@ $MESS["LANDING_BLOCK_HIDDEN_ON_DESKTOP"] = "Прихований на&nbsp;пр�
 $MESS["LANDING_BLOCK_HIDDEN_ON_MOBILE"] = "Прихований на&nbsp;пристроях з&nbsp;шириною екрану менше ніж 575px";
 $MESS["LANDING_BLOCK_HIDDEN_ON_TABLET"] = "Прихований на&nbsp;пристроях з&nbsp;шириною екрану менше ніж 1120px але&nbsp;більш ніж 575px";
 $MESS["LANDING_BLOCK_REQUIRES_UPDATE_MESSAGE"] = "Для додавання блоку потрібна остання версія модуля &laquo;Сайти 24&raquo;. Перевірте його актуальність в розділі &laquo;<a href='/bitrix/admin/update_system.php' target='_blank'>Marketplace &rarr; Оновлення платформи</a>&raquo;.";
-$MESS["LANDING_BLOCK_RESTRICTED_TEXT"] = "Повноцінна робота блоку буде видною тільки на опублікованій сторінці.";
 $MESS["LANDING_BLOCK_RESTRICTED_TEXT2"] = "Зараз ви бачите тільки зовнішній вигляд блоку. Оцінити всі його функції можна буде після публікації сторінки.";
 $MESS["LANDING_BLOCK_RESTRICTED_TEXT_MAINPAGE"] = "Зараз ви бачите тільки зовнішній вигляд віджета. Оцінити всі його функції можна буде після публікації сторінки.";
 $MESS["LANDING_BLOCK__BLOCK_SOURCE_PLACEHOLDER"] = "Обрати блок";
@@ -195,8 +194,6 @@ $MESS["LANDING_ENTITIES_MENU_PAGES_EDIT"] = "Редагувати";
 $MESS["LANDING_ENTITIES_MENU_PAGES_LIST"] = "Список сторінок";
 $MESS["LANDING_ENTITIES_MENU_PAGES_SETTINGS"] = "Налаштувати";
 $MESS["LANDING_FIELD_CATALOG_CONSTRUCTOR_PLACEHOLDER_TEXT"] = "Перетягніть сюди блоки з&nbsp;яких буде складатися каталог";
-$MESS["LANDING_FIELD_IMAGE_AI_BUTTON"] = "Створити";
-$MESS["LANDING_FIELD_IMAGE_AI_BUTTON_COMPACT"] = "Створити зображення";
 $MESS["LANDING_FIELD_IMAGE_ALT_PLACEHOLDER"] = "Опис картинки - alt";
 $MESS["LANDING_FIELD_IMAGE_EDIT_BUTTON"] = "Змінити";
 $MESS["LANDING_FIELD_IMAGE_UPLOAD_BUTTON"] = "Завантажити";
