@@ -1,5 +1,11 @@
 <?php
 $MESS["IM_SIDEBAR_ADD_BUTTON_TEXT"] = "Додати";
+$MESS["IM_SIDEBAR_AUTODELETE_NO_PERMISSION"] = "Недостатньо прав для роботи з автовидаленням. [helpdesklink]Докладніше[/helpdesklink]";
+$MESS["IM_SIDEBAR_AUTODELETE_STATUS_1D"] = "Через 1 добу";
+$MESS["IM_SIDEBAR_AUTODELETE_STATUS_1H"] = "Через 1 годину";
+$MESS["IM_SIDEBAR_AUTODELETE_STATUS_1M"] = "Через 1 місяць";
+$MESS["IM_SIDEBAR_AUTODELETE_STATUS_1W"] = "Через 1 тиждень";
+$MESS["IM_SIDEBAR_AUTODELETE_STATUS_CUSTOM"] = "Через #NUMBER# год";
 $MESS["IM_SIDEBAR_AUTODELETE_STATUS_OFF"] = "Вимк.";
 $MESS["IM_SIDEBAR_BRIEFS_EMPTY"] = "Немає резюме зустрічей.";
 $MESS["IM_SIDEBAR_BRIEF_DETAIL_TITLE"] = "Резюме зустрічей";
@@ -90,6 +96,8 @@ $MESS["IM_SIDEBAR_NOTES_PREVIEW_DESCRIPTION"] = "Бачите лише ви";
 $MESS["IM_SIDEBAR_SEARCH_MESSAGE_PLACEHOLDER"] = "Пошук по чату";
 $MESS["IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE"] = "Тут з'являться повідомлення, які ви шукаєте.";
 $MESS["IM_SIDEBAR_SEARCH_RESULT_START_TITLE"] = "Тут з'являться результати, які ви шукаєте.";
+$MESS["IM_SIDEBAR_SHARED_CHATS_TITLE"] = "Загальні чати";
+$MESS["IM_SIDEBAR_SHARED_CHAT_DETAIL_TITLE"] = "Загальні чати";
 $MESS["IM_SIDEBAR_SUPPORT_TICKET_ADD_BUTTON_TEXT"] = "Відкрити новий";
 $MESS["IM_SIDEBAR_SUPPORT_TICKET_DETAIL_TITLE"] = "Усі чати";
 $MESS["IM_SIDEBAR_SUPPORT_TICKET_LIMIT"] = "Перевищено кількість запитань у підтримку, які чекають на вирішення.";

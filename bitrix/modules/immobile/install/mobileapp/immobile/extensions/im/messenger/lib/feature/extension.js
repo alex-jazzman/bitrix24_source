@@ -32,12 +32,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 		static get isChatV2Enabled()
 		{
-			return MessengerParams.isChatM1Enabled() && Feature.isChatV2Supported;
-		}
-
-		static get isChatV2Supported()
-		{
-			return Application.getApiVersion() >= 52;
+			return MessengerParams.isChatM1Enabled();
 		}
 
 		static get isLocalStorageEnabled()
@@ -50,7 +45,6 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 		static get isLocalStorageSupported()
 		{
-			const isSupportedApp = Application.getApiVersion() >= 52;
 			const isSupportedAndroid = (
 				Application.getPlatform() === 'android'
 				&& parseInt(Application.getBuildVersion(), 10) >= 2443
@@ -59,7 +53,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 				&& parseInt(device.version, 10) >= 15
 			;
 
-			return isSupportedApp && (isSupportedAndroid || isSupportedIos);
+			return isSupportedAndroid || isSupportedIos;
 		}
 
 		static get isLocalStorageReadOnlyModeEnable()
@@ -97,39 +91,9 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			dynamicProperties.localStorageReadOnlyModeEnable = true;
 		}
 
-		static get isGoToMessageContextSupported()
-		{
-			return Application.getApiVersion() >= 54;
-		}
-
-		static get isMessagePinSupported()
-		{
-			return Feature.isGoToMessageContextSupported;
-		}
-
-		static get isMessageForwardSupported()
-		{
-			return Feature.isGoToMessageContextSupported;
-		}
-
-		static get isSupportBMPImageType()
-		{
-			return Application.getApiVersion() >= 53;
-		}
-
-		static get isCheckInMessageSupported()
-		{
-			return Application.getApiVersion() >= 54;
-		}
-
 		static get isCallMessageSupported()
 		{
 			return Application.getApiVersion() >= 56;
-		}
-
-		static get isCreateBannerMessageSupported()
-		{
-			return Application.getApiVersion() >= 54;
 		}
 
 		static get isMessageAttachSupported()
@@ -218,11 +182,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 		static get isDevelopmentEnvironment()
 		{
-			return (
-				Application.getApiVersion() >= 44
-				&& Application.isBeta()
-				&& MessengerParams.get('IS_DEVELOPMENT_ENVIRONMENT', false)
-			);
+			return (Application.isBeta() && MessengerParams.get('IS_DEVELOPMENT_ENVIRONMENT', false));
 		}
 
 		static showUnsupportedWidget(options = {}, parentWidget = PageManager)
@@ -245,6 +205,16 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isIconBoxWithLidAvailable()
 		{
 			return Application.getApiVersion() >= 56;
+		}
+
+		static get isSupportedAdditionalTextInStatusField()
+		{
+			return Application.getApiVersion() >= 57;
+		}
+
+		static get isIntranetInvitationAvaliable()
+		{
+			return MessengerParams.getImFeatures().intranetInviteAvailable;
 		}
 	}
 

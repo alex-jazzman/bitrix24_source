@@ -33,7 +33,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 			return GridView({
 				style: {
 					height: this.state.isVisible === true ? 100 : 0,
-					backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgContentTertiary,
+					backgroundColor: Theme.colors.bgContentPrimary,
 					paddingLeft: 12,
 				},
 				params: {

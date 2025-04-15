@@ -55,7 +55,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		EventType,
 		RestMethod,
 		ComponentCode,
-		ViewName,
 	} = require('im/messenger/const');
 
 	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
@@ -146,14 +145,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.storeManager = this.core.getStoreManager();
 		}
 
-		/**
-		 * @override
-		 */
-		checkChatV2Support()
-		{
-			return true;
-		}
-
 		initRequests()
 		{
 			this.collabInitService.onInit(this.checkRevision.bind(this));
@@ -170,7 +161,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					style: {
 						showLoader: true,
 					},
-					viewName: ViewName.recent,
 				}),
 			});
 

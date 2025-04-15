@@ -13,6 +13,7 @@ $MESS["MOBILE_CALL_ALREADY_FINISHED"] = "Звонок уже завершен";
 $MESS["MOBILE_CALL_ERROR"] = "Ошибка";
 $MESS["MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP"] = "Невозможно включить/выключить камеру: приложения второго участника звонка устарело и не поддерживает включение камеры во время звонка";
 $MESS["MOBILE_CALL_ALREADY_JOINED"] = "К звонку невозможно подключиться одновременно с 2-х устройств";
+$MESS["MOBILE_CALL_USERS_LIMIT_EXCEEDED"] = "Не удалось подключиться. В звонке превышено количество участников, допустимое тарифом";
 $MESS["MOBILE_CALL_JOIN_GROUP_CALL"] = "Подключение к групповому звонку";
 $MESS["MOBILE_CALL_WITH_VIDEO"] = "С видео";
 $MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Без видео";

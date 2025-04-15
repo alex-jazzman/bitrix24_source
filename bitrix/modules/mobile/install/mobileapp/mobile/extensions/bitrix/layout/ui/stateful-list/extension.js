@@ -13,6 +13,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
 	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { Loc } = require('loc');
+	const { showOfflineToast, showErrorToast } = require('toast');
 	const {
 		FloatingActionButton,
 		FloatingActionButtonSupportNative,
@@ -29,6 +31,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 	const DEFAULT_BLOCK_PAGE = 1;
 	const MINIMAL_SEARCH_LENGTH = 3;
+
+	const TIME_TO_BAD_REQUEST = 10000;
 
 	const renderType = {
 		cache: 'cache',
@@ -244,9 +248,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			if (this.state.allItemsLoaded)
 			{
-				this.setState({
-					isRefreshing: false,
-				});
+				this.stopRefreshingList();
 
 				return;
 			}
@@ -307,6 +309,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							return;
 						}
 
+						clearTimeout(this.requestRenderTimeout);
+
 						const serverResponseTime = Date.now() - requestStartTime;
 						const remainingTime = useCache ? 0 : Math.max(300 - serverResponseTime, 0);
 
@@ -321,6 +325,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							this.currentRequestUid = null;
 						}, remainingTime);
 					})
+					.setTimeoutHandler(TIME_TO_BAD_REQUEST, this.triggerBadConnectionRequest)
+					.setNetworkErrorHandler(this.triggerOfflineRequest)
 			);
 
 			const newRequestUid = runActionExecutor.getUid();
@@ -331,6 +337,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 
 			this.currentRequestUid = newRequestUid;
+
 			clearTimeout(this.requestRenderTimeout);
 
 			this.showTitleLoader({ useCache, isDefaultBlockPage });
@@ -342,6 +349,35 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			runActionExecutor.call(useCache).catch(console.error);
 		}
+
+		triggerBadConnectionRequest = () => {
+			this.stopRefreshingList();
+			this.hideTitleLoader(false);
+			this.showBadConnectionToast();
+		};
+
+		stopRefreshingList()
+		{
+			this.setState({
+				isRefreshing: false,
+			});
+		}
+
+		showBadConnectionToast()
+		{
+			showErrorToast(
+				{
+					message: Loc.getMessage('M_UI_STATEFUL_LIST_BAD_CONNECTION_TOAST'),
+				},
+				this.layout,
+			);
+		}
+
+		triggerOfflineRequest = () => {
+			this.stopRefreshingList();
+			this.hideTitleLoader(false);
+			showOfflineToast({}, this.layout);
+		};
 
 		/**
 		 * @param {String[]|Number[]} ids
@@ -417,7 +453,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.simpleList?.scrollToBegin(animated);
 		}
 
-		async scrollToTopItem(itemIds, animated = true, blink = false)
+		async scrollToTopItem(itemIds, animated = true, blink = false, checkVisibility = true)
 		{
 			const existingItems = itemIds.filter((id) => this.hasItem(id));
 			if (existingItems.length === 0)
@@ -425,7 +461,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				return;
 			}
 
-			await this.simpleList?.scrollToTopItem(existingItems, animated);
+			await this.simpleList?.scrollToTopItem(existingItems, animated, checkVisibility);
 
 			if (blink)
 			{
@@ -772,6 +808,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			{
 				console.error('StatefulList: drawList error', response.errors);
 
+				this.stopRefreshingList();
+
 				if (response.data)
 				{
 					response.errors
@@ -782,7 +820,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				}
 			}
 
-			let { data } = response;
+			const { data } = response;
 
 			let items = [];
 
@@ -1218,6 +1256,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				accentByDefault: this.isFloatingButtonAccent(),
 				hide: !this.isShowFloatingButton(),
 			};
+
+			if (!this.floatingButton && !floatingButtonParams.hide)
+			{
+				this.initFloatingButton();
+
+				return;
+			}
 
 			this.floatingButton?.setFloatingButton(floatingButtonParams);
 		}

@@ -6,7 +6,6 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 	const { EntityReady } = require('entity-ready');
 	const {
 		EventType,
-		FeatureFlag,
 		ComponentCode,
 		OpenRequest,
 		OpenDialogContextType,
@@ -140,16 +139,6 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		static openLine(options)
 		{
 			return new Promise((resolve, reject) => {
-				if (!FeatureFlag.native.openWebComponentParentWidgetSupported)
-				{
-					reject({
-						text: 'This method is not supported in applications with the API version less than 45.',
-						code: 'UNSUPPORTED_APP_VERSION',
-					});
-
-					return;
-				}
-
 				if (!Type.isObject(options))
 				{
 					reject({

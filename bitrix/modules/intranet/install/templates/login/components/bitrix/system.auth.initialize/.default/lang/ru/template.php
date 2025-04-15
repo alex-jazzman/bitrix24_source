@@ -15,4 +15,5 @@ $MESS ['CT_MAIN_REG_INIT_PERSONAL_PHOTO_DOWNLOAD'] = "Загрузить";
 $MESS ['CT_MAIN_REG_INIT_REQUIRED_COMMENT'] = "Обязательные поля";
 $MESS ['CT_MAIN_REG_INIT_FUTURE_COMMENT'] = "В дальнейшем вы сможете изменить и дополнить данные аккаунта на странице изменения своего профиля.";
 $MESS ['CT_MAIN_REG_INIT_AUTH_LINK'] = "Ссылка на регистрацию недействительна. Пожалуйста, обратитесь к администратору портала.";
+$MESS ['INTRANET_INIT_USER_ALREADY_EXISTS'] = "Вы уже присоединились к этому Битрикс24. Введите логин и пароль, чтобы войти";
 ?>

@@ -60,6 +60,7 @@ $MESS["IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_DESCRIPTION_1_PLURAL_1"] = "З�
 $MESS["IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_DESCRIPTION_1_PLURAL_2"] = "Зараз вам доступна історія чату лише за останні #COUNT# днів.";
 $MESS["IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_DESCRIPTION_2"] = "Щоб отримати доступ до всієї історії та інших корисних можливостей, перейдіть на платний тариф.";
 $MESS["IMMOBILE_DIALOG_SIDEBAR_PLAN_LIMIT_BANNER_TITLE"] = "Відкрийте доступ до повної історії чату";
+$MESS["IMMOBILE_DIALOG_SIDEBAR_PROFILE_DESCRIPTION_NOTES"] = "Бачите лише ви";
 $MESS["IMMOBILE_DIALOG_SIDEBAR_PROFILE_TITLE_NOTES"] = "Мої нотатки";
 $MESS["IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_NO"] = "Скасувати";
 $MESS["IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_TITLE_MSGVER_1"] = "Виключити учасника з чату?";

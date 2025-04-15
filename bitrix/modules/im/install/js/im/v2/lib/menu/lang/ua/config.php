@@ -10,6 +10,7 @@ $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "Подивитися в кан�
 $MESS["IM_LIB_MENU_COPILOT_FEEDBACK"] = "Зворотний зв'язок";
 $MESS["IM_LIB_MENU_FIND_CHATS_WITH_USER"] = "Знайти чати зі співробітником";
 $MESS["IM_LIB_MENU_FIND_CHATS_WITH_USER_MSGVER_1"] = "Знайти спільні чати";
+$MESS["IM_LIB_MENU_FIND_SHARED_CHATS"] = "Знайти спільні чати";
 $MESS["IM_LIB_MENU_HIDE"] = "Приховати чат";
 $MESS["IM_LIB_MENU_HIDE_MSGVER_1"] = "Приховати";
 $MESS["IM_LIB_MENU_LEAVE"] = "Залишити чат";

@@ -135,6 +135,7 @@ type SidebarProfileInfoState = {
 	},
 	dialogType: string | null,
 	title: string,
+	titleColor: string,
 	imageUrl: string,
 	desc: string,
 	guestCount: number,

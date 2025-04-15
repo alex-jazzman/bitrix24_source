@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_OIIE_ERROR_ACCESS_DENIED"] = "Импорттауды орындау үшін құқықтар жеткіліксіз";
+$MESS["CRM_OIIE_FACEBOOK_NO_AUTHORIZATION_PAGE"] = "Парақшаны қосу орындалмады";
+$MESS["CRM_OIIE_FACEBOOK_NO_DEL_PAGE"] = "Парақшаны ажырата алмадыңыз ";
+$MESS["CRM_OIIE_FACEBOOK_NO_DEL_USER"] = "Пайдаланушы тіркелгісінен ажырату орындалмады";
+$MESS["CRM_OIIE_FACEBOOK_NO_IMPORT_AVAILABLE"] = "Тауарларды импорттау мүмкіндігі өшірілген";
+$MESS["CRM_OIIE_FACEBOOK_OK_AUTHORIZATION_PAGE"] = "Парақшаны сәтті қостыңыз";
+$MESS["CRM_OIIE_FACEBOOK_OK_DEL_PAGE"] = "Парақшаны сәтті ажыраттыңыз";
+$MESS["CRM_OIIE_FACEBOOK_OK_DEL_USER"] = "Сіз өз пайдаланушы тіркелгіңізді сәтті ажыраттыңыз";
+$MESS["CRM_OIIE_FACEBOOK_REMOVED_REFERENCE_TO_PAGE"] = "Тауарларды импорттау қазіргі уақытта сіз әкімшілендіруге рұқсатыңыз жоқ топпен жұмыс істеуге бапталған";
+$MESS["CRM_OIIE_FACEBOOK_REPEATING_ERROR"] = "Егер қате ұзақ уақыт бойы қайталанса: арнаны өшіріп, оны қайта баптаңыз.";
+$MESS["CRM_OIIE_FACEBOOK_SESSION_HAS_EXPIRED"] = "Сіздің сессияңыз аяқталды. Нысанды тағы бір мәрте жіберіңіз";
+$MESS["CRM_OIIE_GO_TO_IMPORT"] = "Сіз парақшаны сәтті қостыңыз -<a href=\"#LINK#\">тауарларды импорттауға өту</a>";
+$MESS["CRM_OIIE_IMPORT_CONNECTED"] = "Тауарлар импорты сәтті қосылды";
+$MESS["CRM_OIIE_IMPORT_DISCONNECTED"] = "Тауарлар импорты сәтті өшірілді";
+$MESS["CRM_OIIE_MODULE_NOT_INSTALLED_CATALOG"] = "\"Сауда каталогы\" модулі орнатылмаған";
+$MESS["CRM_OIIE_MODULE_NOT_INSTALLED_CRM"] = "\"CRM\" модулі орнатылмаған";
+$MESS["CRM_OIIE_SETTINGS_NO_DISABLE"] = "Тауарлар импортын өшіру кезінде қате пайда болды";
+$MESS["CRM_OIIE_TITLE"] = "Сіздің дүкеніңізге Instagram қосу";
+$MESS["CRM_OIIE_TITLE_WITH_ASTERISK"] = "Сіздің дүкеніңізге Instagram* қосу";

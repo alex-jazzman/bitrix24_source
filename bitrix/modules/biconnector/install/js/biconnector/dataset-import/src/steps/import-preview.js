@@ -24,6 +24,11 @@ export const ImportPreview = {
 			required: false,
 			default: false,
 		},
+		needShowHeadersWithEmptyRows: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	computed: {
 		isEditMode(): boolean
@@ -156,7 +161,7 @@ export const ImportPreview = {
 							:column-visibility="columnVisibility"
 						/>
 					</div>
-					<div class="import-preview__has-data" v-else-if="hasHeaders">
+					<div class="import-preview__has-data" v-else-if="hasHeaders && needShowHeadersWithEmptyRows">
 						<PreviewTable
 							:headers="headers"
 							:column-visibility="columnVisibility"

@@ -1,7 +1,11 @@
 import { mapGetters } from 'ui.vue3.vuex';
+
 import { Model } from 'booking.const';
+import { NotePopup } from 'booking.component.note-popup';
+import { bookingService } from 'booking.provider.service.booking-service';
 import type { BookingModel } from 'booking.model.bookings';
-import { NotePopup } from './note-popup/note-popup';
+import type { NotePopupSavePayload } from 'booking.component.note-popup';
+
 import './note.css';
 
 export const Note = {
@@ -28,7 +32,7 @@ export const Note = {
 		}),
 		booking(): BookingModel
 		{
-			return this.$store.getters['bookings/getById'](this.bookingId);
+			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
 		},
 		hasNote(): boolean
 		{
@@ -69,6 +73,13 @@ export const Note = {
 
 			this.isPopupShown = false;
 		},
+		async saveBookingNote({ note }: NotePopupSavePayload): Promise<void>
+		{
+			await bookingService.update({
+				id: this.booking.id,
+				note,
+			});
+		},
 	},
 	components: {
 		NotePopup,
@@ -88,9 +99,13 @@ export const Note = {
 		<NotePopup
 			v-if="isPopupShown"
 			:isEditMode="isEditMode && isFeatureEnabled"
-			:bookingId="bookingId"
+			:id="bookingId"
+			:text="booking.note"
 			:bindElement="bindElement"
+			:dataId="bookingId"
+			dataElementPrefix="booking"
 			@close="closeEditPopup"
+			@save="saveBookingNote"
 		/>
 	`,
 };

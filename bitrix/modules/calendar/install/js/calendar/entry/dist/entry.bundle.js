@@ -166,7 +166,7 @@ this.BX = this.BX || {};
 	    if (entry instanceof Entry) {
 	      const slider = calendar_util.Util.getBX().SidePanel.Instance.getTopSlider();
 	      const beforeDeleteHandler = () => {
-	        if (slider && slider.options.type === 'calendar:slider') {
+	        if (slider && slider.getData().get('type') === 'calendar:slider') {
 	          calendar_util.Util.getBX().SidePanel.Instance.close();
 	        }
 	      };

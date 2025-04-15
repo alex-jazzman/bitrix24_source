@@ -47,7 +47,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			this.onItemClick = this.onItemClick.bind(this);
 			this.onTextChanged = this.onTextChanged.bind(this);
 
-			this.debounceSearch = debounce((params) => this.search(params, false), 500, this);
+			this.debounceSearch = debounce((params) => this.search(params, false), 700, this);
 		}
 
 		/**

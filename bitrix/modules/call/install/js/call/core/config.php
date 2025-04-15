@@ -89,6 +89,7 @@ return [
 				'isUserControlFeatureEnabled' => Settings::isUserControlFeatureEnabled(),
 				'isPictureInPictureFeatureEnabled' => Settings::isPictureInPictureFeatureEnabled(),
 				'isNewQOSEnabled' => Settings::isNewQOSEnabled(),
+				'isNewFollowUpSliderEnabled' => Settings::isNewFollowUpSliderEnabled(),
 			],
 		];
 	},

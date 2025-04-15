@@ -7,6 +7,7 @@ namespace Bitrix\Booking\Controller\V1\Response;
 use Bitrix\Booking\Entity\Booking\BookingCollection;
 use Bitrix\Booking\Entity\Favorites\Favorites;
 use Bitrix\Booking\Entity\ResourceType\ResourceTypeCollection;
+use Bitrix\Booking\Entity\WaitListItem\WaitListItemCollection;
 
 class MainPageGetResponse implements \JsonSerializable
 {
@@ -19,6 +20,7 @@ class MainPageGetResponse implements \JsonSerializable
 		public readonly bool $isCurrentSenderAvailable,
 		public readonly bool $isIntersectionForAll = true,
 		public readonly array $counters = [],
+		public readonly WaitListItemCollection $waitListItemCollection,
 	)
 	{
 	}
@@ -36,6 +38,7 @@ class MainPageGetResponse implements \JsonSerializable
 			'counters' => $this->counters,
 			'isIntersectionForAll' => $this->isIntersectionForAll,
 			'isCurrentSenderAvailable' => $this->isCurrentSenderAvailable,
+			'waitListItems' => $this->waitListItemCollection->toArray(),
 		];
 	}
 }

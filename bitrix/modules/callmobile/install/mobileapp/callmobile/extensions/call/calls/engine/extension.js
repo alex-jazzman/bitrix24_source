@@ -82,6 +82,7 @@
 		onUserMicrophoneState: 'onUserMicrophoneState',
 		onUserCameraState: 'onUserCameraState',
 		onUserScreenState: 'onUserScreenState',
+		onUsersLimitExceeded: 'onUsersLimitExceeded',
 		onUserVoiceStarted: 'onUserVoiceStarted',
 		onUserVoiceStopped: 'onUserVoiceStopped',
 		onUserFloorRequest: 'onUserFloorRequest', // request for a permission to speak
@@ -102,6 +103,13 @@
 		onPullEventUserInviteTimeout: 'onPullEventUserInviteTimeout',
 		onReconnected: 'onReconnected',
 		onSwitchTrackRecordStatus: 'onSwitchTrackRecordStatus',
+		onAllParticipantsVideoMuted: 'onAllParticipantsVideoMuted',
+		onAllParticipantsAudioMuted: 'onAllParticipantsAudioMuted',
+		onAllParticipantsScreenshareMuted: 'onAllParticipantsScreenshareMuted',
+
+		onParticipantAudioMuted: 'onParticipantAudioMuted',
+		onParticipantVideoMuted: 'onParticipantVideoMuted',
+		onParticipantScreenshareMuted: 'onParticipantScreenshareMuted',
 	};
 
 	class CallEngine
@@ -823,7 +831,7 @@
 
 		_onCallJoin(e)
 		{
-			console.warn('CallEngine.CallEvents::join', e);
+			console.warn('CallEngine.CallEvents::join', e.callId);
 			this._onCallActive(e.callId);
 		}
 
@@ -848,7 +856,7 @@
 
 		_onCallActive(callId)
 		{
-			console.warn('CallEngine.CallEvents::active', callId, this.calls[callId]);
+			console.warn('CallEngine.CallEvents::active', callId);
 			const call = this.calls[callId];
 			if (call && !(call instanceof CallStub) && callEngine._isCallSupported(call))
 			{
@@ -1403,6 +1411,11 @@
 		isAIServiceEnabled(isConference = false)
 		{
 			return BX.componentParameters.get('isAIServiceEnabled', false) && !isConference;
+		}
+
+		isNewMobileGridEnabled()
+		{
+			return BX.componentParameters.get('isNewMobileGridEnabled', false);
 		}
 	}
 

@@ -31,6 +31,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 
 	const makeAccomplicesFieldConfig = (extra = {}) => mergeImmutable({
 		enableCreation: !(env.isCollaber || env.extranet),
+		canOpenUserList: extra.readOnly,
 		provider: {
 			context: 'TASKS_MEMBER_SELECTOR_EDIT_accomplice',
 			options: {
@@ -65,6 +66,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 	}, extra);
 
 	const makeAuditorsFieldConfig = (extra = {}) => mergeImmutable({
+		canOpenUserList: extra.readOnly,
 		enableCreation: !(env.isCollaber || env.extranet),
 		provider: {
 			context: 'TASKS_MEMBER_SELECTOR_EDIT_auditor',

@@ -38,6 +38,8 @@ export const AnalyticsEvent = Object.freeze({
 	viewNotification: 'view_notification',
 	clickTimeCode: 'click_timecode',
 	playRecord: 'play_record',
+	clickAiOff: 'click_ai_off',
+	delete: 'delete',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -74,6 +76,7 @@ export const AnalyticsSection = Object.freeze({
 	chatWindow: 'chat_window',
 	callMessage: 'call_message',
 	callFollowup: 'call_followup',
+	call: 'call',
 });
 
 export const AnalyticsSubSection = Object.freeze({

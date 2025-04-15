@@ -25,6 +25,9 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 			this.uid = null;
 			this.jsonEnabled = false;
 			this.skipRequestIfCacheExists = false;
+			this.timeout = null;
+			this.onTimeout = null;
+			this.onNetworkError = null;
 		}
 
 		enableJson()
@@ -75,12 +78,29 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 
 			const dataKey = this.jsonEnabled ? 'json' : 'data';
 
+			let timeoutId = null;
+			let isTimeoutActionTriggered = false;
+
+			if (this.timeout)
+			{
+				timeoutId = setTimeout(() => {
+					this.abortCurrentRequest();
+					this.onTimeout?.();
+					isTimeoutActionTriggered = true;
+				}, this.timeout);
+			}
+
 			return BX.ajax.runAction(this.action, {
 				[dataKey]: this.options,
 				navigation: this.navigation,
 				onCreate: this.onRequestCreate.bind(this),
 			})
 				.then((response) => {
+					if (timeoutId)
+					{
+						clearTimeout(timeoutId);
+					}
+
 					if (!response.errors || response.errors.length === 0)
 					{
 						this.getCache().saveData(response);
@@ -91,10 +111,45 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 					return response;
 				})
 				.catch((response) => {
+					if (timeoutId)
+					{
+						clearTimeout(timeoutId);
+					}
+
+					if (
+						response.errors.some((error) => error.code === 'NETWORK_ERROR')
+						&& !isTimeoutActionTriggered
+						&& this.onNetworkError
+					)
+					{
+						this.onNetworkError();
+					}
+
 					this.internalHandler(response);
 
 					return response;
 				});
+		}
+
+		/**
+		 * @public
+		 * @param {Number} timeout
+		 * @param {Function} onTimeout
+		 * @returns {RunActionExecutor}
+		 */
+		setTimeoutHandler(timeout, onTimeout)
+		{
+			this.timeout = timeout;
+			this.onTimeout = onTimeout;
+
+			return this;
+		}
+
+		setNetworkErrorHandler(onNetworkError)
+		{
+			this.onNetworkError = onNetworkError;
+
+			return this;
 		}
 
 		abortCurrentRequest()

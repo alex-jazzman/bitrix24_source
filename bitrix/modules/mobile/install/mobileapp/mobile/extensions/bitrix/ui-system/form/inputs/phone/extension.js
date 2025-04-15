@@ -62,7 +62,6 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 				onChange: this.handleOnChangeNumber,
 				onClickLeftContent: this.handleOnClickLeftContent,
 				keyboardType: 'phone-pad',
-				placeholder: null,
 			};
 		}
 

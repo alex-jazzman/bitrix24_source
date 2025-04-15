@@ -298,6 +298,20 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 	line-height: 1em;
 }
 
+.bp-workflow-result-full {
+	display: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.bp-workflow-result.--expanded .bp-workflow-result-collapsed {
+	display: none;
+}
+
+.bp-workflow-result.--expanded .bp-workflow-result-full {
+	display: inline-block;
+}
+
 .bp-status-panel {
 	min-height: 75px;
 	align-items: center;
@@ -307,7 +321,7 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 .bp-status-item {
 	align-items: center;
 	padding: 0 6px 0 12px;
-	height: 22px;
+	min-height: 22px;
 	/*border-radius: var(--ui-border-radius-3xl);*/
 	/*background-color: var(--ui-color-base-05);*/
 	box-sizing: border-box;
@@ -320,6 +334,7 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 
 .bp-status-name {
 	display: block;
+	height: 22px;
 	margin-right: 4px;
 	font-size: var(--ui-font-size-5xs);
 	font-weight: var(--ui-font-weight-bold);
@@ -417,4 +432,9 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 	min-width: 34px;
 	display: inline-block;
 	text-align: center;
+}
+
+.bizproc-file-not-found {
+	text-decoration: line-through;
+	cursor: not-allowed;
 }

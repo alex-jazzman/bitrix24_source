@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,main_core_events) {
+(function (exports,biconnector_grid_editableColumns,main_core,main_core_events) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -35,6 +35,18 @@
 	    babelHelpers.classPrivateFieldSet(this, _filter, BX.Main.filterManager.getById(props.gridId));
 	    _classPrivateMethodGet(this, _initHints, _initHints2).call(this);
 	    _classPrivateMethodGet(this, _subscribeToEvents, _subscribeToEvents2).call(this);
+	    biconnector_grid_editableColumns.EditableColumnManager.init(props.gridId, [{
+	      name: 'DESCRIPTION',
+	      saveEndpoint: 'biconnector.externalsource.source.updateComment',
+	      onValueCheck: function onValueCheck() {
+	        return true;
+	      },
+	      onSave: function onSave() {
+	        BX.UI.Notification.Center.notify({
+	          content: main_core.Text.encode(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_COMMENT_UPDATED'))
+	        });
+	      }
+	    }]);
 	  }
 	  babelHelpers.createClass(ExternalSourceManager, [{
 	    key: "getGrid",
@@ -83,22 +95,22 @@
 	    value: function openSourceDetail(id, moduleId) {
 	      var sliderLink = '';
 	      var sliderWidth = 0;
-	      var isCacheable = false;
 	      if (moduleId === 'BI') {
 	        sliderLink = new main_core.Uri("/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=".concat(id));
 	        sliderWidth = 564;
-	        isCacheable = false;
 	      } else if (moduleId === 'CRM') {
 	        sliderLink = new main_core.Uri("/crm/tracking/source/edit/".concat(id, "/"));
 	        sliderWidth = 900;
-	        isCacheable = true;
 	      } else {
 	        return;
 	      }
 	      BX.SidePanel.Instance.open(sliderLink.toString(), {
 	        width: sliderWidth,
 	        allowChangeHistory: false,
-	        cacheable: isCacheable
+	        cacheable: false,
+	        events: {
+	          onClose: BX.BIConnector.TrackingAnalyticsHandler.handleSliderClose
+	        }
 	      });
 	    }
 	  }, {
@@ -180,5 +192,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalSourceManager = ExternalSourceManager;
 
-}((this.window = this.window || {}),BX,BX.Event));
+}((this.window = this.window || {}),BX.BIConnector.Grid,BX,BX.Event));
 //# sourceMappingURL=script.js.map

@@ -4,7 +4,6 @@
 jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (require, exports, module) => {
 	const { Loc } = require('loc');
 
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		ActionByUserType,
@@ -150,7 +149,6 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 			return navigationButton({
 				testId: 'create_collab',
-				isNew: true,
 				text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_COLLAB'),
 				subtitle: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_COLLAB_SUBTITLE'),
 				iconSvg: collabIcon,
@@ -163,7 +161,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 		getInviteButton()
 		{
-			if (!MessengerParams.get('INTRANET_INVITATION_CAN_INVITE', false))
+			if (!Feature.isIntranetInvitationAvaliable)
 			{
 				return null;
 			}

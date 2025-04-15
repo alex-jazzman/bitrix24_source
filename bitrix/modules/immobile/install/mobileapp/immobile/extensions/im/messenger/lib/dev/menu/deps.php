@@ -17,12 +17,16 @@ return [
 		'im:messenger/lib/ui/selector',
 		'im:messenger/lib/ui/base/checkbox',
 		'im:messenger/provider/rest',
-		
+
 	],
 	'bundle' => [
 		'./src/menu',
 		'./src/developer-settings',
-		'./src/logging-settings',
+		'./src/logging/settings',
+		'./src/logging/settings-search',
+		'./src/logging/list',
+		'./src/logging/all-enabler',
+		'./src/logging/enabler',
 		'./src/chat-dialog',
 		'./src/chat-dialog-benchmark',
 		'./src/vuex-manager',

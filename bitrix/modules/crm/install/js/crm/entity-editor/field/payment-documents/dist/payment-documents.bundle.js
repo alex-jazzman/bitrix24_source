@@ -1208,20 +1208,16 @@ this.BX = this.BX || {};
 	      });
 	      this._rootNode.innerHTML = '';
 	      this._setupCurrencyFormat();
-	      if (this.hasContent()) {
-	        this._filterSuccessfulDocuments();
-	        this._rootNode.classList.remove('is-hidden');
-	        if (this._isWithOrdersMode) {
-	          this._renderDocumentWithOrdersMode();
-	        } else {
-	          this._renderDocumentWithoutOrdersMode();
-	        }
-	        var checkExists = this._isCheckExists();
-	        if (checkExists) {
-	          this._rootNode.append(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), this._renderChecksDocument()));
-	        }
+	      this._filterSuccessfulDocuments();
+	      this._rootNode.classList.remove('is-hidden');
+	      if (this._isWithOrdersMode) {
+	        this._renderDocumentWithOrdersMode();
 	      } else {
-	        this._rootNode.classList.add('is-hidden');
+	        this._renderDocumentWithoutOrdersMode();
+	      }
+	      var checkExists = this._isCheckExists();
+	      if (checkExists) {
+	        this._rootNode.append(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), this._renderChecksDocument()));
 	      }
 	      main_core_events.EventEmitter.emit('PaymentDocuments:render', [this]);
 	      return this._rootNode;
@@ -1414,14 +1410,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_filterSuccessfulDocuments",
 	    value: function _filterSuccessfulDocuments() {
-	      this._options.DOCUMENTS = this._options.DOCUMENTS.filter(function (item) {
+	      this._options.DOCUMENTS = this._docs().filter(function (item) {
 	        return item.TYPE === 'PAYMENT' && item.PAID === 'Y' || item.TYPE === 'SHIPMENT' && item.DEDUCTED === 'Y' || item.TYPE === 'SHIPMENT_DOCUMENT' && item.DEDUCTED === 'Y' || item.TYPE === 'CHECK' && item.STATUS === 'Y';
 	      });
 	    }
 	  }, {
 	    key: "_isCheckExists",
 	    value: function _isCheckExists() {
-	      var checks = this._options.DOCUMENTS.filter(function (item) {
+	      var checks = this._docs().filter(function (item) {
 	        return item.TYPE === 'CHECK' && item.STATUS === 'Y';
 	      });
 	      return checks.length > 1;

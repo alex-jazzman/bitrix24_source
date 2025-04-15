@@ -1,140 +1,169 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
-/** @global CUser $USER */
+
+/**
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ */
+
 global $USER;
-/** @global CMain $APPLICATION */
 global $APPLICATION;
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/cluster/prolog.php';
 IncludeModuleLangFile(__FILE__);
 
 if (!$USER->isAdmin())
 {
-	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
-$cacheType = COption::GetOptionString('cluster', 'cache_type', 'memcache');
-if (!extension_loaded('memcache') || $cacheType != 'memcache')
+$cacheType = Bitrix\Main\Config\Option::get('cluster', 'cache_type', 'memcache');
+
+if ($cacheType != 'memcache' && $cacheType != 'memcached')
 {
 	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
-	if ($cacheType != 'memcache')
-	{
-		ShowError(GetMessage('CLU_MEMCACHE_DISABLED'));
-	}
-	else
-	{
-		ShowError(GetMessage('CLU_MEMCACHE_NO_EXTENTION'));
-	}
+	ShowError(Loc::getMessage('CLU_MEMCACHE_DISABLED'));
 	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';
 	die();
+}
+
+if (
+	($cacheType == 'memcache' && !extension_loaded('memcache'))
+	|| ($cacheType == 'memcached' && !extension_loaded('memcached'))
+)
+{
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
+	if ($cacheType == 'memcache')
+	{
+		ShowError(Loc::getMessage('CLU_MEMCACHE_NO_EXTENTION'));
+	}
+	elseif ($cacheType == 'memcached')
+	{
+		ShowError(Loc::getMessage('CLU_MEMCACHED_NO_EXTENTION'));
+	}
+
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';
+	die();
+}
+
+if ($cacheType == 'memcache')
+{
+	$cache = CClusterMemcache::class;
+}
+else
+{
+	$cache = Bitrix\Cluster\MemcachedClusterHelper::class;
 }
 
 $group_id = intval($_GET['group_id']);
 if (!CClusterGroup::GetArrayByID($group_id))
 {
-	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
 $errorMessage = null;
-$sTableID = 'tbl_cluster_memcache_list';
-$oSort = new CAdminSorting($sTableID, 'ID', 'ASC');
-$lAdmin = new CAdminList($sTableID, $oSort);
+$tableID = 'tbl_cluster_memcache_list';
+$sort = new CAdminSorting($tableID, 'ID', 'ASC');
+$adminList = new CAdminList($tableID, $sort);
 
-if ($arID = $lAdmin->GroupAction())
+if ($ids = $adminList->GroupAction())
 {
-	foreach ($arID as $ID)
+	foreach ($ids as $id)
 	{
-		if ($ID == '')
+		$id = (int) $id;
+		if ($id <= 0)
 		{
 			continue;
 		}
-		$ID = intval($ID);
+
 		switch ($_REQUEST['action'])
 		{
-		case 'delete':
-			CClusterMemcache::Delete($ID);
-			break;
-		case 'pause':
-			CClusterMemcache::Pause($ID);
-			if (CClusterMemcache::$systemConfigurationUpdate === false)
-			{
-				$errorMessage = new CAdminMessage(GetMessage('CLU_MEMCACHE_LIST_WARNING_NO_CACHE'));
-			}
-			break;
-		case 'resume':
-			CClusterMemcache::Resume($ID);
-			break;
+			case 'delete':
+				$cache::delete($id);
+				break;
+			case 'pause':
+				$cache::pause($id);
+				if ($cache::$systemConfigurationUpdate === false)
+				{
+					$errorMessage = new CAdminMessage(Loc::getMessage('CLU_MEMCACHE_LIST_WARNING_NO_CACHE'));
+				}
+				break;
+			case 'resume':
+				$cache::resume($id);
+				break;
 		}
 	}
 }
 
-$arHeaders = [
+$headers = [
 	[
 		'id' => 'ID',
-		'content' => GetMessage('CLU_MEMCACHE_LIST_ID'),
+		'content' => Loc::getMessage('CLU_MEMCACHE_LIST_ID'),
 		'align' => 'right',
 		'default' => true,
 	],
 	[
 		'id' => 'FLAG',
-		'content' => GetMessage('CLU_MEMCACHE_LIST_FLAG'),
+		'content' => Loc::getMessage('CLU_MEMCACHE_LIST_FLAG'),
 		'align' => 'center',
 		'default' => true,
 	],
 	[
 		'id' => 'STATUS',
-		'content' => GetMessage('CLU_MEMCACHE_LIST_STATUS'),
+		'content' => Loc::getMessage('CLU_MEMCACHE_LIST_STATUS'),
 		'align' => 'center',
 		'default' => true,
 	],
 	[
 		'id' => 'WEIGHT',
-		'content' => GetMessage('CLU_MEMCACHE_LIST_WEIGHT'),
+		'content' => Loc::getMessage('CLU_MEMCACHE_LIST_WEIGHT'),
 		'align' => 'right',
 		'default' => true,
 	],
 	[
 		'id' => 'HOST',
-		'content' => GetMessage('CLU_MEMCACHE_LIST_HOST'),
+		'content' => Loc::getMessage('CLU_MEMCACHE_LIST_HOST'),
 		'align' => 'left',
 		'default' => true,
 	],
 ];
 
-$lAdmin->AddHeaders($arHeaders);
+$adminList->AddHeaders($headers);
 
 if (!isset($_SESSION['MEMCACHE_LIST']))
 {
 	$_SESSION['MEMCACHE_LIST'] = [];
 }
 
-$rsData = CClusterMemcache::GetList();
-
 $uptime = false;
-$rsData = new CAdminResult($rsData, $sTableID);
-while ($arRes = $rsData->Fetch())
+$servers = $cache::GetList();
+$servers = new CAdminResult($servers, $tableID);
+while ($server = $servers->Fetch())
 {
-	if (!$arRes['GROUP_ID'])
+	if (!$server['GROUP_ID'])
 	{
-		$arRes = CClusterMemcache::GetByID($arRes['ID']);
-		$cData = new CClusterMemcache;
-		$cData->Update($arRes['ID'], $arRes);
-		$arRes = CClusterMemcache::GetByID($arRes['ID']);
+		$server = $cache::GetByID($server['ID']);
+		$cData = new $cache;
+		$cData->Update($server['ID'], $server);
+		$server = $cache::GetByID($server['ID']);
 	}
 
-	if ($arRes['GROUP_ID'] != $group_id)
+	if ($server['GROUP_ID'] != $group_id)
 	{
 		continue;
 	}
 
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $adminList->AddRow($server['ID'], $server);
 
-	$row->AddViewField('ID', '<a href="cluster_memcache_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id . '&ID=' . $arRes['ID'] . '">' . $arRes['ID'] . '</a>');
-
-	$arSlaveStatus = CClusterMemcache::GetStatus($arRes['ID']);
+	$row->AddViewField('ID', '<a href="cluster_memcache_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id . '&ID=' . $server['ID'] . '">' . $server['ID'] . '</a>');
+	$slaveStatus = $cache::getServerStatus($server['ID']);
 	$uptime = 0;
 	$get_misses = 0;
 	$limit_maxbytes = 0;
-	foreach ($arSlaveStatus as $key => $value)
+	foreach ($slaveStatus as $key => $value)
 	{
 		if ($key == 'uptime')
 		{
@@ -151,7 +180,7 @@ while ($arRes = $rsData->Fetch())
 	}
 
 	$html = '<table width="100%">';
-	foreach ($arSlaveStatus as $key => $value)
+	foreach ($slaveStatus as $key => $value)
 	{
 		if ($key == 'bytes')
 		{
@@ -215,8 +244,8 @@ while ($arRes = $rsData->Fetch())
 			<tr>
 				<td width="50%" align=right>' . $key . ':</td>
 				<td align=left>' . $value . (
-					isset($_SESSION['MEMCACHE_LIST'][$arRes['ID']]) && $value > $_SESSION['MEMCACHE_LIST'][$arRes['ID']] ?
-					' (<span style="color:green">+' . ($value - $_SESSION['MEMCACHE_LIST'][$arRes['ID']]) . '</span>)' :
+					isset($_SESSION['MEMCACHE_LIST'][$server['ID']]) && $value > $_SESSION['MEMCACHE_LIST'][$server['ID']] ?
+					' (<span style="color:green">+' . ($value - $_SESSION['MEMCACHE_LIST'][$server['ID']]) . '</span>)' :
 					''
 				) . '</td>
 			</tr>
@@ -234,15 +263,15 @@ while ($arRes = $rsData->Fetch())
 
 		if ($key == 'cmd_get')
 		{
-			$_SESSION['MEMCACHE_LIST'][$arRes['ID']] = $value;
+			$_SESSION['MEMCACHE_LIST'][$server['ID']] = $value;
 		}
 	}
 	$html .= '</table>';
 
-	$html = $arRes['STATUS'] . '<br />' . $html;
+	$html = $server['STATUS'] . '<br />' . $html;
 	$row->AddViewField('STATUS', $html);
 
-	if ($arRes['STATUS'] == 'ONLINE' && $uptime > 0)
+	if ($server['STATUS'] == 'ONLINE' && $uptime > 0)
 	{
 		$htmlFLAG = '<div class="lamp-green"></div>';
 	}
@@ -253,11 +282,11 @@ while ($arRes = $rsData->Fetch())
 
 	if ($uptime === false)
 	{
-		$htmlFLAG .= GetMessage('CLU_MEMCACHE_NOCONNECTION');
+		$htmlFLAG .= Loc::getMessage('CLU_MEMCACHE_NOCONNECTION');
 	}
 	else
 	{
-		$htmlFLAG .= GetMessage('CLU_MEMCACHE_UPTIME') . '<br>' . FormatDate([
+		$htmlFLAG .= Loc::getMessage('CLU_MEMCACHE_UPTIME') . '<br>' . FormatDate([
 			's' => 'sdiff',
 			'i' => 'idiff',
 			'H' => 'Hdiff',
@@ -266,34 +295,33 @@ while ($arRes = $rsData->Fetch())
 	}
 
 	$row->AddViewField('FLAG', $htmlFLAG);
-
-	$row->AddViewField('HOST', $arRes['HOST'] . ':' . $arRes['PORT']);
+	$row->AddViewField('HOST', $server['HOST'] . ':' . $server['PORT']);
 
 	$arActions = [];
 	$arActions[] = [
 		'ICON' => 'edit',
 		'DEFAULT' => true,
-		'TEXT' => GetMessage('CLU_MEMCACHE_LIST_EDIT'),
-		'ACTION' => $lAdmin->ActionRedirect('cluster_memcache_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id . '&ID=' . $arRes['ID'])
+		'TEXT' => Loc::getMessage('CLU_MEMCACHE_LIST_EDIT'),
+		'ACTION' => $adminList->ActionRedirect('cluster_memcache_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id . '&ID=' . $server['ID'])
 	];
 
-	if ($arRes['STATUS'] == 'READY')
+	if ($server['STATUS'] == 'READY')
 	{
 		$arActions[] = [
 			'ICON' => 'delete',
-			'TEXT' => GetMessage('CLU_MEMCACHE_LIST_DELETE'),
-			'ACTION' => "if(confirm('" . GetMessage('CLU_MEMCACHE_LIST_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($arRes['ID'], 'delete', 'group_id=' . $group_id)
+			'TEXT' => Loc::getMessage('CLU_MEMCACHE_LIST_DELETE'),
+			'ACTION' => "if(confirm('" . Loc::getMessage('CLU_MEMCACHE_LIST_DELETE_CONF') . "')) " . $adminList->ActionDoGroup($server['ID'], 'delete', 'group_id=' . $group_id)
 		];
 		$arActions[] = [
-			'TEXT' => GetMessage('CLU_MEMCACHE_LIST_START_USING'),
-			'ACTION' => $lAdmin->ActionDoGroup($arRes['ID'], 'resume', 'group_id=' . $group_id),
+			'TEXT' => Loc::getMessage('CLU_MEMCACHE_LIST_START_USING'),
+			'ACTION' => $adminList->ActionDoGroup($server['ID'], 'resume', 'group_id=' . $group_id),
 		];
 	}
-	elseif ($arRes['STATUS'] == 'ONLINE')
+	elseif ($server['STATUS'] == 'ONLINE')
 	{
 		$arActions[] = [
-			'TEXT' => GetMessage('CLU_MEMCACHE_LIST_STOP_USING'),
-			'ACTION' => $lAdmin->ActionDoGroup($arRes['ID'], 'pause', 'group_id=' . $group_id),
+			'TEXT' => Loc::getMessage('CLU_MEMCACHE_LIST_STOP_USING'),
+			'ACTION' => $adminList->ActionDoGroup($server['ID'], 'pause', 'group_id=' . $group_id),
 		];
 	}
 
@@ -303,15 +331,15 @@ while ($arRes = $rsData->Fetch())
 	}
 }
 
-$lAdmin->AddFooter(
+$adminList->AddFooter(
 	[
 		[
-			'title' => GetMessage('MAIN_ADMIN_LIST_SELECTED'),
-			'value' => $rsData->SelectedRowsCount(),
+			'title' => Loc::getMessage('MAIN_ADMIN_LIST_SELECTED'),
+			'value' => $servers->SelectedRowsCount(),
 		],
 		[
 			'counter' => true,
-			'title' => GetMessage('MAIN_ADMIN_LIST_CHECKED'),
+			'title' => Loc::getMessage('MAIN_ADMIN_LIST_CHECKED'),
 			'value' => '0',
 		],
 	]
@@ -319,32 +347,32 @@ $lAdmin->AddFooter(
 
 $aContext = [
 	[
-		'TEXT' => GetMessage('CLU_MEMCACHE_LIST_ADD'),
+		'TEXT' => Loc::getMessage('CLU_MEMCACHE_LIST_ADD'),
 		'LINK' => '/bitrix/admin/cluster_memcache_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id,
-		'TITLE' => GetMessage('CLU_MEMCACHE_LIST_ADD_TITLE'),
+		'TITLE' => Loc::getMessage('CLU_MEMCACHE_LIST_ADD_TITLE'),
 		'ICON' => 'btn_new',
 	],
 	[
-		'TEXT' => GetMessage('CLU_MEMCACHE_LIST_REFRESH'),
+		'TEXT' => Loc::getMessage('CLU_MEMCACHE_LIST_REFRESH'),
 		'LINK' => 'cluster_memcache_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id,
 	],
 ];
 
-$lAdmin->AddAdminContextMenu($aContext, /*$bShowExcel=*/false);
+$adminList->AddAdminContextMenu($aContext, /*$bShowExcel=*/false);
 
 if ($errorMessage)
 {
 	echo $errorMessage->Show();
 }
 
-$lAdmin->CheckListMode();
+$adminList->CheckListMode();
 
-$APPLICATION->SetTitle(GetMessage('CLU_MEMCACHE_LIST_TITLE'));
+$APPLICATION->SetTitle(Loc::getMessage('CLU_MEMCACHE_LIST_TITLE'));
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 
-$lAdmin->DisplayList();
+$adminList->DisplayList();
 
-echo BeginNote(), GetMessage('CLU_MEMCACHE_LIST_NOTE'), EndNote();
+echo BeginNote(), Loc::getMessage('CLU_MEMCACHE_LIST_NOTE'), EndNote();
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';

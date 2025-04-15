@@ -201,7 +201,7 @@ class CrmConfigPermsV2AjaxController extends \Bitrix\Main\Engine\JsonController
 					continue;
 				}
 
-				if (!$this->userPermissions->canUpdatePermission($permission))
+				if (!$this->userPermissions->canChangePermission($permission))
 				{
 					return false;
 				}

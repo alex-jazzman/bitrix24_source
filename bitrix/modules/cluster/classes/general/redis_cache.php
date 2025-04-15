@@ -1,124 +1,55 @@
 <?php
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Data\RedisConnection;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Config\Configuration;
 
 class CPHPCacheRedisCluster extends \Bitrix\Main\Data\CacheEngineRedis
 {
 	private bool $bQueue = false;
-	private static array $servers = [];
+	private static null|array $servers = null;
 	private static array $otherCroups = [];
 
-	protected float|null $timeout = null;
-	protected float|null $readTimeout = null;
-	protected int $failover = \RedisCluster::FAILOVER_NONE;
-
-	public static function LoadConfig() : array
+	public function __construct()
 	{
+		$sid = 'bxcluster';
+		require_once Bitrix\Main\Loader::getLocal('modules/cluster/lib/clustercacheconfig.php');
 
-		static $firstExec = true;
-		if ($firstExec)
+		if (static::$servers === null)
 		{
-			$arList = false;
-			$firstExec = false;
-
-			if (file_exists($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php'))
-			{
-				include $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php';
-			}
-
-			if (defined('BX_REDIS_CLUSTER') && is_array($arList))
-			{
-				foreach ($arList as $server)
-				{
-					if ($server['STATUS'] !== 'ONLINE')
-					{
-						continue;
-					}
-
-					if (defined('BX_CLUSTER_GROUP') && ($server['GROUP_ID'] !== constant('BX_CLUSTER_GROUP')))
-					{
-						self::$otherCroups[$server['GROUP_ID']] = true;
-						continue;
-					}
-
-					self::$servers[] = [
-						'host' => $server['HOST'],
-						'port' => $server['PORT'],
-					];
-				}
-			}
-			else
-			{
-				self::$servers = [];
-			}
+			static::$servers = Bitrix\Cluster\ClusterCacheConfig::getInstance('redis')->getConfig(true, static::$otherCroups);
 		}
 
-		return self::$servers;
-	}
-
-	public function __construct($options = [])
-	{
-		if (self::$engine === null)
+		if (defined('BX_REDIS_CLUSTER'))
 		{
-			static::LoadConfig();
-			if (defined('BX_CLUSTER_GROUP'))
-			{
-				$this->bQueue = true;
-			}
-
-			$config = $this->configure();
-			if ($config && is_array($config))
-			{
-				if (isset($config['failover']))
-				{
-					$this->failover = $config['failover'];
-				}
-
-				if (isset($config['timeout']))
-				{
-					$config['timeout'] = (float) $config['timeout'];
-					if ($config['timeout'] > 0)
-					{
-						$this->timeout = $config['timeout'];
-					}
-				}
-
-				if (isset($config['read_timeout']))
-				{
-					$config['read_timeout'] = (float) $config['read_timeout'];
-					if ($config['read_timeout'] > 0)
-					{
-						$this->readTimeout = $config['read_timeout'];
-					}
-				}
-			}
-
-			$connectionPool = Application::getInstance()->getConnectionPool();
-			$connectionPool->setConnectionParameters(
-				$this->getConnectionName(),
-				[
-					'className' => RedisConnection::class,
-					'servers' => self::$servers,
-					'timeout' => $this->timeout,
-					'readTimeout' => $this->readTimeout,
-					'serializer' => $config['serializer'] ?? null,
-					'failover' => $this->failover,
-					'persistent' => $config['persistent'],
-				]
-			);
-
-			/** @var RedisConnection $engineConnection */
-			$engineConnection = $connectionPool->getConnection($this->getConnectionName());
-			self::$engine = $engineConnection->getResource();
-			self::$isConnected = $engineConnection->isConnected();
+			$sid = BX_REDIS_CLUSTER;
 		}
 
-		$this->sid = BX_REDIS_CLUSTER . $this->sid;
+		if (!empty(static::$servers))
+		{
+			parent::__construct([
+				'servers' => static::$servers,
+				'sid' => $sid
+			]);
+		}
+
+		if (defined('BX_CLUSTER_GROUP'))
+		{
+			$this->bQueue = true;
+		}
 	}
 
-	public function QueueRun($param1, $param2, $param3)
+	protected function configure($options = []): array
+	{
+		$config = parent::configure($options);
+
+		$cacheConfig = Configuration::getValue('cache');
+
+		$config['failover'] = $cacheConfig['failover'] ?? RedisCluster::FAILOVER_NONE;
+
+		return $config;
+	}
+
+	public function QueueRun($param1, $param2, $param3): void
 	{
 		$this->bQueue = false;
 		$this->clean($param1, $param2, $param3);

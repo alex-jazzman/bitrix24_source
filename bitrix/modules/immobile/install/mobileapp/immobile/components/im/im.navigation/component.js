@@ -125,7 +125,7 @@
 
 			if (
 				componentCode === ComponentCode.imCopilotMessenger
-				&& !BX.componentParameters.get('IS_COPILOT_AVAILABLE', false)
+				&& !BX.componentParameters.get('IM_FEATURES', {}).copilotActive
 			)
 			{
 				BX.postComponentEvent(EventType.navigation.changeTabResult, [{

@@ -119,7 +119,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_CREATE_TITLE'),
 				useLargeTitleMode: true,
 				modal: true,
-				backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgNavigation,
+				backgroundColor: Theme.colors.bgContentPrimary,
 				backdrop: {
 					mediumPositionPercent: 85,
 					horizontalSwipeAllowed: false,

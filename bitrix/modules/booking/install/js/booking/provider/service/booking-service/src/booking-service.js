@@ -15,30 +15,42 @@ class BookingService
 	#filterRequests: { [key: string]: Promise } = {};
 	#lastFilterRequest: Promise;
 
-	async add(booking: BookingModel): Promise<void>
+	async add(booking: BookingModel): Promise<{ success: boolean, booking: ?BookingModel }>
 	{
 		const id = booking.id;
 
 		try
 		{
+			await Core.getStore().dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, id);
 			await Core.getStore().dispatch(`${Model.Bookings}/add`, booking);
 
 			const bookingDto = mapModelToDto(booking);
 			const data = await (new ApiClient()).post('Booking.add', { booking: bookingDto });
 			const createdBooking = mapDtoToModel(data);
 
+			const clients = new BookingDataExtractor([data]).getClients();
+			void Core.getStore().dispatch(`${Model.Clients}/upsertMany`, clients);
+
+			await Core.getStore().dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
 			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
 				id,
 				booking: createdBooking,
 			});
 
 			void mainPageService.fetchCounters();
+
+			return {
+				success: true,
+				booking: createdBooking,
+			};
 		}
 		catch (error)
 		{
 			void Core.getStore().dispatch(`${Model.Bookings}/delete`, id);
 
 			console.error('BookingService: add error', error);
+
+			return { success: false };
 		}
 	}
 
@@ -91,7 +103,7 @@ class BookingService
 
 			const clients = new BookingDataExtractor([data]).getClients();
 
-			void Core.getStore().dispatch('clients/upsertMany', clients);
+			void Core.getStore().dispatch(`${Model.Clients}/upsertMany`, clients);
 
 			void mainPageService.fetchCounters();
 		}
@@ -204,7 +216,7 @@ class BookingService
 		}
 	}
 
-	async #extractFilterData({ data, key }: {data: BookingDto[], key: string, date: Date}): Promise<void>
+	async #extractFilterData({ data, key }: { data: BookingDto[], key: string, date: Date }): Promise<void>
 	{
 		const extractor = new BookingDataExtractor(data);
 

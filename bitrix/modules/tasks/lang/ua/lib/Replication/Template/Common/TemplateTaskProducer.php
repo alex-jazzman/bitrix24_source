@@ -1,0 +1,4 @@
+<?php
+$MESS["TASKS_REGULAR_TEMPLATE_TASK_PRODUCER_TASK_CREATED_MSGVER_1"] = "Регулярне завдання створено (##TASK_ID#).";
+$MESS["TASKS_REGULAR_TEMPLATE_TASK_PRODUCER_TASK_CREATED_WITH_ERRORS_MSGVER_1"] = "Регулярне завдання створено з помилками.";
+$MESS["TASKS_REGULAR_TEMPLATE_TASK_PRODUCER_TASK_WAS_NOT_CREATED_MSGVER_1"] = "Регулярне завдання не створено.";

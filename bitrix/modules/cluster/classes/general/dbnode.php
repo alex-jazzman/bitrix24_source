@@ -3,7 +3,76 @@ IncludeModuleLangFile(__FILE__);
 
 abstract class CAllClusterDBNode
 {
-	abstract public function CheckFields(&$arFields, $ID);
+	public function CheckFields(&$arFields, $ID)
+	{
+		global $APPLICATION;
+		$aMsg = [];
+
+		if (array_key_exists('NAME', $arFields))
+		{
+			$arFields['NAME'] = trim($arFields['NAME']);
+		}
+
+		if (array_key_exists('ACTIVE', $arFields))
+		{
+			$arFields['ACTIVE'] = $arFields['ACTIVE'] === 'Y' ? 'Y' : 'N';
+		}
+
+		if (array_key_exists('SELECTABLE', $arFields))
+		{
+			$arFields['SELECTABLE'] = $arFields['SELECTABLE'] === 'N' ? 'N' : 'Y';
+		}
+
+		if (array_key_exists('WEIGHT', $arFields))
+		{
+			$weight = intval($arFields['WEIGHT']);
+			if ($weight < 0)
+			{
+				$weight = 0;
+			}
+			elseif ($weight > 100)
+			{
+				$weight = 100;
+			}
+			$arFields['WEIGHT'] = $weight;
+		}
+
+		if (
+			(isset($arFields['ACTIVE']) && $arFields['ACTIVE'] == 'Y')
+			&& $arFields['ROLE_ID'] != 'SLAVE'
+		)
+		{
+			$obCheck = new CClusterDBNodeCheck;
+			$nodeDB = $obCheck->SlaveNodeConnection(
+				$arFields['DB_HOST'],
+				$arFields['DB_NAME'],
+				$arFields['DB_LOGIN'],
+				$arFields['DB_PASSWORD'],
+				$arFields['ROLE_ID'] == 'MASTER' ? $arFields['MASTER_HOST'] : false,
+				$arFields['ROLE_ID'] == 'MASTER' ? $arFields['MASTER_PORT'] : false
+			);
+			if (is_object($nodeDB))
+			{
+				$arFields['SERVER_ID'] = intval($obCheck->GetServerVariable($nodeDB, 'server_id'));
+			}
+			else
+			{
+				if (!array_key_exists('STATUS', $arFields))
+				{
+					$arFields['STATUS'] = 'OFFLINE';
+				}
+				$aMsg[] = ['id' => '', 'text' => $nodeDB];
+			}
+		}
+
+		if (!empty($aMsg))
+		{
+			$e = new CAdminException($aMsg);
+			$APPLICATION->ThrowException($e);
+			return false;
+		}
+		return true;
+	}
 
 	abstract public static function GetUpTime($node_id);
 
@@ -386,7 +455,7 @@ abstract class CAllClusterDBNode
 		$rsData = $DB->Query('
 			SELECT ID, GROUP_ID, ROLE_ID, DB_HOST
 			FROM b_cluster_dbnode
-			ORDER BY isnull(GROUP_ID), GROUP_ID, ID
+			ORDER BY GROUP_ID IS NULL, GROUP_ID, ID
 		');
 		while ($arData = $rsData->Fetch())
 		{
@@ -453,6 +522,33 @@ abstract class CAllClusterDBNode
 		{
 			return [];
 		}
+	}
+
+	public static function GetModulesForSharding()
+	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$arModules = [];
+
+		if ($connection->getType() === 'mysql')
+		{
+			foreach (GetModuleEvents('cluster', 'OnGetTableList', true) as $arEvent)
+			{
+				$ar = ExecuteModuleEventEx($arEvent);
+				if (is_array($ar))
+				{
+					$cur_node_id = intval(COption::GetOptionString($ar['MODULE']->MODULE_ID, 'dbnode_id'));
+					if ($cur_node_id < 1)
+					{
+						$cur_node_id = 1;
+					}
+					$cur_node_id = CClusterDBNode::GetByID($cur_node_id);
+					$ar['TITLE'] = $ar['MODULE']->MODULE_NAME . ' (' . $cur_node_id['NAME'] . ')';
+					$arModules[$ar['MODULE']->MODULE_ID] = $ar;
+				}
+			}
+		}
+
+		return $arModules;
 	}
 
 	public static function GetListForModuleInstall()

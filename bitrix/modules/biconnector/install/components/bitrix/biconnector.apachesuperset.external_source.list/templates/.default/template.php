@@ -15,7 +15,9 @@ use Bitrix\Main\Web\Json;
  */
 
 Extension::load([
+	'biconnector.grid.editable-columns',
 	'biconnector.dataset-import',
+	'biconnector.apache-superset-analytics',
 	'ui.dialogs.messagebox',
 	'ui.hint',
 	'ui.buttons',
@@ -71,5 +73,6 @@ if ($arResult['ENABLED_TRACKING_SOURCE_DATASET_INFO'])
 		BX.BIConnector.ExternalSourceManager.Instance = new BX.BIConnector.ExternalSourceManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
 		])?>);
+		BX.BIConnector.TrackingAnalyticsHandler.init();
 	});
 </script>

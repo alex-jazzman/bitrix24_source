@@ -1,0 +1,8 @@
+<?php
+$MESS["BICONNECTOR_CONTROLLER_SOURCE_DELETE_ERROR_WRONG_MODULE"] = "Қосылымды жою мүмкін болмады";
+$MESS["BICONNECTOR_CONTROLLER_SOURCE_ERROR_ACCESS"] = "Сыртқы қосылымдарды басқару құқықтары жеткіліксіз";
+$MESS["BICONNECTOR_CONTROLLER_SOURCE_ERROR_FEATURE"] = "Сыртқы қосылымдарды басқару сіздің тарифіңізде қолжетімсіз";
+$MESS["BICONNECTOR_CONTROLLER_SOURCE_ERROR_FIELDS_INCOMPLETE"] = "Барлық өрістер толтырылмаған";
+$MESS["BICONNECTOR_CONTROLLER_SOURCE_ERROR_NOT_FOUND"] = "Қосылым табылмады";
+$MESS["BICONNECTOR_CONTROLLER_SOURCE_ERROR_NOT_SAVED"] = "Өзгерістерді сақтау мүмкін болмады";
+$MESS["BICONNECTOR_CONTROLLER_SOURCE_ERROR_UNKNOWN_TYPE"] = "Белгісіз байланыс түрі";

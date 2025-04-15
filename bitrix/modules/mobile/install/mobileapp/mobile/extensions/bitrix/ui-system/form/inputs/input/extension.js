@@ -145,7 +145,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		}
 
 		initProperties()
-		{}
+		{
+		}
 
 		render()
 		{
@@ -474,9 +475,13 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		{
 			const { style = {} } = this.props;
 			const containerHeight = this.getContainerHeight();
-			const paddingTop = this.shouldRenderLabel() ? Indent.M.toNumber() : 0;
+			const paddingTop = this.getContainerPaddingTop();
 			const paddingBottom = this.getContainerPaddingBottom();
-			const height = containerHeight + paddingTop + paddingBottom + (this.isIOS() ? 0 : 1);
+			const height = (
+				containerHeight
+					? containerHeight + paddingTop + paddingBottom + (this.isIOS() ? 0 : 1)
+					: undefined
+			);
 
 			return {
 				height,
@@ -490,11 +495,31 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		}
 
 		/**
+		 * Indent for errorText
 		 * @protected
 		 */
 		getContainerPaddingBottom()
 		{
-			return this.shouldRenderErrorText() ? Indent.S.toNumber() : 0;
+			if (!this.isNaked() || (this.isNaked() && this.shouldRenderErrorText()))
+			{
+				return Indent.S.toNumber();
+			}
+
+			return 0;
+		}
+
+		/**
+		 * Indent for label
+		 * @protected
+		 */
+		getContainerPaddingTop()
+		{
+			if (!this.isNaked() || (this.isNaked() && this.shouldRenderLabel()))
+			{
+				return Indent.M.toNumber();
+			}
+
+			return 0;
 		}
 
 		/**
@@ -939,7 +964,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				showBBCode: this.shouldShowBBCode(),
 				isScrollEnabled: this.isScrollEnabled(),
 				onSelectionChange: this.handleOnSelectionChange,
-				onCursorPositionChange: this.handleOnSelectionChange,
+				onCursorPositionChange: this.handleOnCursorPositionChange,
 			};
 
 			if (!this.isEnableLineBreak())

@@ -1,0 +1,19 @@
+<?php
+$MESS["CLU_MENU_DBNODE_ITEM"] = "Шардинг";
+$MESS["CLU_MENU_DBNODE_TITLE"] = "Тік шардинг - модульдердің дерекқорына қосылуды басқару";
+$MESS["CLU_MENU_GROUP_ITEM"] = "Серверлер тобы";
+$MESS["CLU_MENU_GROUP_ITEM_TITLE"] = "Серверлер тобын басқару";
+$MESS["CLU_MENU_ITEM"] = "Веб-кластер";
+$MESS["CLU_MENU_MEMCACHE_ITEM"] = "Memcached";
+$MESS["CLU_MENU_MEMCACHE_ITEM_TITLE"] = "Кэштеуді басқару";
+$MESS["CLU_MENU_REDIS_ITEM"] = "Redis";
+$MESS["CLU_MENU_REDIS_ITEM_TITLE"] = "Кэштеуді басқару";
+$MESS["CLU_MENU_SERVER_ITEM"] = "Лицензиялау";
+$MESS["CLU_MENU_SERVER_ITEM_TITLE"] = "Лицензияланатын серверлердің тізімі";
+$MESS["CLU_MENU_SESSION_ITEM"] = "Сессиялар";
+$MESS["CLU_MENU_SESSION_ITEM_TITLE"] = "Дерекқорда сессияларды сақтауды қосу";
+$MESS["CLU_MENU_SLAVE_ITEM"] = "Репликация";
+$MESS["CLU_MENU_SLAVE_ITEM_TITLE"] = "Репликация түйіндерін басқару";
+$MESS["CLU_MENU_TITLE"] = "Веб-кластерді басқару";
+$MESS["CLU_MENU_WEBNODE_ITEM"] = "Веб-серверлер";
+$MESS["CLU_MENU_WEBNODE_ITEM_TITLE"] = "Кластер веб-серверлерінің күйі";

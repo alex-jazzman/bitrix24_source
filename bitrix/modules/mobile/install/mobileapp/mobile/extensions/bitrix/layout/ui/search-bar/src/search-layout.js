@@ -280,10 +280,14 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			this.counterId = null;
 			this.presetId = this.getDefaultPresetId();
 
-			if (this.props.onCancel)
-			{
-				this.props.onCancel({ text: this.text, counterId: this.counterId, presetId: this.presetId });
-			}
+			const { onCancel, useCache } = this.props;
+
+			onCancel?.({
+				text: this.text,
+				counterId: this.counterId,
+				presetId: this.presetId,
+				useCache: useCache?.onCancel,
+			});
 		}
 
 		/**
@@ -331,10 +335,14 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 
 			this.searchLayoutView.setPresetId(this.presetId, this.counterId);
 
-			if (this.props.onSearch)
-			{
-				this.props.onSearch({ text: this.text, counterId: this.counterId, presetId: this.presetId });
-			}
+			const { onSearch, useCache } = this.props;
+
+			onSearch?.({
+				text: this.text,
+				counterId: this.counterId,
+				presetId: this.presetId,
+				useCache: useCache?.onSearch,
+			});
 		}
 
 		/**

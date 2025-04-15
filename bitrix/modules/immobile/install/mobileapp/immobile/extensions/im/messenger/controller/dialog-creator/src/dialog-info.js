@@ -75,7 +75,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 					callback: () => {
 						this.createChat();
 					},
-					color: Theme.isDesignSystemSupported ? Theme.colors.accentMainLink : Theme.colors.accentMainLinks,
+					color: Theme.colors.accentMainLink,
 				},
 			]);
 		}

@@ -19,7 +19,7 @@ final class CB24SearchTitle
 		$userPageURLTemplate = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/', SITE_ID).'user/#user_id#/';
 
 		$userFilter = array(
-			'ACTIVE' => 'Y'
+			'=ACTIVE' => 'Y'
 		);
 
 		$arExternalAuthId = array();
@@ -57,7 +57,7 @@ final class CB24SearchTitle
 
 		$res = \Bitrix\Main\UserTable::getList(array(
 			'filter' => array(
-				'ACTIVE' => 'Y',
+				'=ACTIVE' => 'Y',
 				$userFilter
 			),
 			'select' => array('ID', 'ACTIVE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO', 'WORK_POSITION', 'PERSONAL_PROFESSION')

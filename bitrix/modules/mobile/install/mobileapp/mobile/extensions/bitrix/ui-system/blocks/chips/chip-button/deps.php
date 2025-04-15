@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'tokens',
 		'utils/object',
 		'utils/enums/base',
@@ -9,10 +10,12 @@ return [
 		'utils/enums/style',
 		'ui-system/blocks/icon',
 		'layout/pure-component',
+		'layout/ui/loaders/spinner'
 	],
 	'bundle' => [
 		'./src/design-enum',
 		'./src/mode-enum',
 		'./src/size-enum',
+		'./src/loader-position-enum',
 	],
 ];

@@ -14,8 +14,7 @@ if (!CModule::IncludeModule('crm'))
 // 'Fileman' module always installed
 CModule::IncludeModule('fileman');
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -339,7 +338,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
-			if (isset($_POST['INVOICE_OLD_ENABLED']))
+			if (isset($_POST['INVOICE_OLD_ENABLED']) && Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnablingPossible())
 			{
 				\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->setOldInvoicesEnabled(
 					mb_strtoupper($_POST['INVOICE_OLD_ENABLED']) === 'Y'

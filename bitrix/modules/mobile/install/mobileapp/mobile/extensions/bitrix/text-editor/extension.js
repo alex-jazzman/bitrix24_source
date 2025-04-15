@@ -24,6 +24,7 @@ jn.define('text-editor', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { inAppUrl } = require('in-app-url');
 	const { BBCodeNode } = require('bbcode/model');
+	const { LinebreaksWrapper } = require('bbcode/formatter/shared');
 	const { copyToClipboard } = require('utils/copy');
 
 	const fileFieldPromise = Symbol('fileFieldPromise');
@@ -378,6 +379,17 @@ jn.define('text-editor', (require, exports, module) => {
 						const entry = this.getAdapterBySourceNode(node);
 						if (entry)
 						{
+							if (
+								node.getName() === 'table'
+								|| entry.previewNode.getName() === 'img'
+							)
+							{
+								return LinebreaksWrapper.wrapNode({
+									sourceNode: node,
+									targetNode: entry.previewNode,
+								});
+							}
+
 							return entry.previewNode;
 						}
 

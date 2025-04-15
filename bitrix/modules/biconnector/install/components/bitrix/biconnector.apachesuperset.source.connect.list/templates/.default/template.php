@@ -17,6 +17,7 @@ $APPLICATION->SetTitle(Loc::getMessage('BICONNECTOR_SUPERSET_SOURCE_CONNECT_LIST
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.icons',
+	'biconnector.apache-superset-analytics',
 ]);
 
 /** @var \Bitrix\BIConnector\Superset\ExternalSource\Source[] $sourceList */
@@ -78,5 +79,6 @@ $sourceList = $arResult['SOURCE_LIST'];
 <script>
 	BX.ready(() => {
 		BX.BIConnector.SourceConnectList.Instance = new BX.BIConnector.SourceConnectList();
+		BX.BIConnector.TrackingAnalyticsHandler.init();
 	});
 </script>

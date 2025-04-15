@@ -7,6 +7,7 @@ include('InAppNotifier');
 (() => {
 	const require = (ext) => jn.require(ext);
 
+	const { copyToClipboard } = require('utils/copy');
 	const AppTheme = require('apptheme');
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/disk/';
 	const downloadPath = '/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=';
@@ -634,13 +635,8 @@ include('InAppNotifier');
 						notify.showIndicatorLoading();
 						UserDisk.getPublicLink(item.id, 'file').then(
 							(link) => {
-								Application.copyToClipboard(link);
-								notify.showIndicatorSuccess({
-									hideAfter: 1000,
-									fallbackText: BX.message('USER_DISK_LINK_COPIED'),
-									text: BX.message('USER_DISK_LINK_COPIED'),
-									title: link,
-								}, 500);
+								notify.hideCurrentIndicator();
+								copyToClipboard(link, BX.message('USER_DISK_LINK_COPIED'), true, true);
 							},
 						).catch((e) => {
 							notify.showIndicatorError({

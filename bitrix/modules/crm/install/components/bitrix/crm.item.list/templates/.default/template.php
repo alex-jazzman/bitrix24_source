@@ -27,6 +27,7 @@ Extension::load([
 	'crm.activity.grid-activities-manager',
 	'crm.badge',
 	'ui.design-tokens',
+	'crm.entity-list.binder',
 ]);
 
 $assets = Asset::getInstance();
@@ -49,12 +50,17 @@ if ($this->getComponent()->getErrors())
 
 	return;
 }
-echo CCrmViewHelper::RenderItemStatusSettings($arParams['entityTypeId'], ($arParams['categoryId'] ?? null));
+echo CCrmViewHelper::RenderItemStatusSettings($arParams['entityTypeId'], ($arResult['categoryId'] ?? null));
 /** @see \Bitrix\Crm\Component\Base::addTopPanel() */
 $this->getComponent()->addTopPanel($this);
 
 /** @see \Bitrix\Crm\Component\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
+
+echo \Bitrix\Crm\Tour\Permissions\AutomatedSolution::getInstance()
+	->setEntityTypeId($arParams['entityTypeId'])
+	->build()
+;
 ?>
 
 <div class="ui-alert ui-alert-danger" style="display: none;">
@@ -141,5 +147,15 @@ if (!empty($arResult['restrictedFieldsEngine']))
 			<?= $arResult['RESTRICTED_VALUE_CLICK_CALLBACK']; ?>
 		});
 		<?php endif;?>
+
+		<?php if (isset($arParams['PARENT_ENTITY_TYPE_ID'])):?>
+		BX.Crm.Binder.Manager.Instance.initializeBinder(
+			<?=$arParams['PARENT_ENTITY_TYPE_ID']?>,
+			<?=$arParams['PARENT_ENTITY_ID']?>,
+			<?=CUtil::JSEscape($arResult['jsParams']['entityTypeId'])?>,
+			'<?=CUtil::JSEscape($arResult['jsParams']['gridId'])?>'
+		);
+		<?php endif;?>
+
 	});
 </script>

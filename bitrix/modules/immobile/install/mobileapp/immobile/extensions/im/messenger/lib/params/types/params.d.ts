@@ -20,6 +20,7 @@ declare type ImFeatures = {
 	sidebarLinks: boolean,
 	zoomActive: boolean,
 	zoomAvailable: boolean,
+	intranetInviteAvailable: boolean,
 }
 
 declare type UserInfo = {

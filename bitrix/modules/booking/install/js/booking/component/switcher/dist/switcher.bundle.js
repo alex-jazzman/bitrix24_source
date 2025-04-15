@@ -38,28 +38,29 @@ this.BX.Booking = this.BX.Booking || {};
 	    loading: Boolean,
 	    hiddenText: Boolean
 	  },
-	  data() {
-	    return {
-	      switcher: new ui_switcher.Switcher({
-	        id: this.id,
-	        inputName: this.inputName,
-	        checked: this.modelValue,
-	        size: this.size,
-	        color: this.color,
-	        disabled: this.disabled,
-	        loading: this.loading,
-	        handlers: {
-	          toggled: this.toggle,
-	          checked: this.checked,
-	          unchecked: this.unchecked,
-	          lock: this.lock,
-	          unlock: this.unlock
-	        }
-	      })
-	    };
+	  created() {
+	    this.switcher = new ui_switcher.Switcher({
+	      id: this.id,
+	      inputName: this.inputName,
+	      checked: this.modelValue,
+	      size: this.size,
+	      color: this.color,
+	      disabled: this.disabled,
+	      loading: this.loading,
+	      handlers: {
+	        toggled: this.toggle,
+	        checked: this.checked,
+	        unchecked: this.unchecked,
+	        lock: this.lock,
+	        unlock: this.unlock
+	      }
+	    });
 	  },
 	  mounted() {
 	    this.switcher.renderTo(this.$refs.switcherWrapper);
+	    if (this.modelValue !== this.switcher.checked) {
+	      this.switcher.check(this.modelValue);
+	    }
 	  },
 	  methods: {
 	    checked() {
@@ -80,14 +81,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      this.$emit('toggle', checked);
 	    },
 	    toggleTextVisibility(hidden) {
-	      const node = this.switcher.getNode();
+	      var _this$switcher;
+	      const node = ((_this$switcher = this.switcher) == null ? void 0 : _this$switcher.getNode == null ? void 0 : _this$switcher.getNode()) || null;
+	      if (node === null) {
+	        return;
+	      }
 	      const elOn = node.querySelector('.ui-switcher-enabled');
 	      const elOff = node.querySelector('.ui-switcher-disabled');
 	      if (hidden) {
 	        main_core.Dom.addClass(elOn, 'switcher-transparent-text');
-	        main_core.Dom.addClass(elOn, 'switcher-transparent-text');
+	        main_core.Dom.addClass(elOff, 'switcher-transparent-text');
 	      } else {
-	        main_core.Dom.removeClass(elOff, 'switcher-transparent-text');
+	        main_core.Dom.removeClass(elOn, 'switcher-transparent-text');
 	        main_core.Dom.removeClass(elOff, 'switcher-transparent-text');
 	      }
 	    }

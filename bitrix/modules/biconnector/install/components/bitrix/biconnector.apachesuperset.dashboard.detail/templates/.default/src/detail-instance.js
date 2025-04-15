@@ -57,6 +57,7 @@ export class DetailInstance
 				type: this.#embeddedParams.type.toLowerCase(),
 				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
 				p2: this.#embeddedParams.id,
+				...(config.analyticScope && { p3: ApacheSupersetAnalytics.buildScopeForAnalyticRequest(config.analyticScope) }),
 			});
 
 			return;
@@ -73,6 +74,7 @@ export class DetailInstance
 			type: this.#embeddedParams.type.toLowerCase(),
 			p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
 			p2: this.#embeddedParams.id,
+			...(config.analyticScope && { p3: ApacheSupersetAnalytics.buildScopeForAnalyticRequest(config.analyticScope) }),
 		});
 	}
 

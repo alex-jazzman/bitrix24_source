@@ -94,7 +94,7 @@ export class Action
 				this.#sendAnalytics();
 				resolve(true);
 			}
-			else if (this.isAjaxAction())
+			else if (this.isAjaxAction() || this.isAjaxJsonAction())
 			{
 				this.#startAnimation(vueComponent);
 				vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
@@ -104,7 +104,7 @@ export class Action
 				});
 
 				const ajaxConfig = {
-					data: this.#prepareRunActionParams(this.#actionParams),
+					[this.isAjaxJsonAction() ? 'json' : 'data']: this.#prepareRunActionParams(this.#actionParams),
 				};
 				if (this.#analytics)
 				{
@@ -257,6 +257,11 @@ export class Action
 	isAjaxAction(): boolean
 	{
 		return (this.#type === 'runAjaxAction');
+	}
+
+	isAjaxJsonAction(): boolean
+	{
+		return (this.#type === 'runAjaxJsonAction');
 	}
 
 	isCallRestBatch(): boolean

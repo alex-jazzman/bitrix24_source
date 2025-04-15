@@ -1,6 +1,5 @@
 import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime } from 'main.core';
 import { DateTimeFormat } from 'main.date';
-import { PopupWindowManager } from 'main.popup';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
@@ -8,14 +7,12 @@ import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
 import { Dialog } from 'ui.entity-selector';
 import { Guide } from 'ui.tour';
-import 'spotlight';
 import { TagFooter } from 'biconnector.entity-selector';
 import 'ui.alerts';
 import 'ui.forms';
 
 type Props = {
 	gridId: ?string,
-	isNeedShowTopMenuGuide: boolean,
 	isNeedShowDraftGuide: boolean,
 };
 
@@ -35,7 +32,6 @@ class SupersetDashboardGridManager
 	#grid: BX.Main.grid;
 	#filter: BX.Main.Filter;
 	#tagSelectorDialog: ?Dialog;
-	#topMenuGuideSpotlight: ?BX.SpotLight;
 	#lastPinnedRowId: ?number;
 	#properties: Props;
 
@@ -49,22 +45,6 @@ class SupersetDashboardGridManager
 
 		this.#subscribeToEvents();
 
-		if (
-			this.#properties.isNeedShowTopMenuGuide
-			&& !PopupWindowManager?.isAnyPopupShown()
-			&& this.#grid.getRows().getBodyFirstChild().actionsButton
-		)
-		{
-			this.#topMenuGuideSpotlight = new BX.SpotLight({
-				targetElement: this.#grid.getRows().getBodyFirstChild().actionsButton,
-				targetVertex: 'middle-center',
-				events: {
-					onTargetEnter: () => this.#topMenuGuideSpotlight.close(),
-				},
-			});
-			this.#topMenuGuideSpotlight.show();
-			this.#showTopMenuGuide();
-		}
 		this.#colorPinnedRows();
 		this.#initHints();
 	}
@@ -140,15 +120,17 @@ class SupersetDashboardGridManager
 		BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
 		EventEmitter.subscribe('onPullEvent-biconnector', (event: BaseEvent) => {
 			const [eventName, eventData] = event.data;
-			if (eventName !== 'onSupersetStatusUpdated' || !eventData)
+			if (eventName === 'onSupersetStatusUpdated')
 			{
-				return;
+				const status = eventData?.status;
+				if (status)
+				{
+					this.#onSupersetStatusChange(status);
+				}
 			}
-
-			const status = eventData?.status;
-			if (status)
+			else if (eventName === 'onInitialDashboardsInstalled')
 			{
-				this.#onSupersetStatusChange(status);
+				this.#grid.reload();
 			}
 		});
 
@@ -218,29 +200,6 @@ class SupersetDashboardGridManager
 		}
 	}
 
-	#showTopMenuGuide(): void
-	{
-		const guide = new Guide({
-			steps: [
-				{
-					target: this.#grid.getRows().getBodyFirstChild().node,
-					title: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TITLE'),
-					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TEXT'),
-					events: {
-						onClose: () => {
-							BX.userOptions.save('biconnector', 'top_menu_guide', 'is_over', true);
-						},
-					},
-					rounded: false,
-					position: 'bottom',
-					areaPadding: 0,
-				},
-			],
-			onEvents: true,
-		});
-		guide.start();
-	}
-
 	#showDraftGuide(node: HTMLElement): void
 	{
 		if (!this.#properties.isNeedShowDraftGuide)
@@ -249,7 +208,7 @@ class SupersetDashboardGridManager
 		}
 
 		const labelNode = node.querySelector('.dashboard-status-label.ui-label-default');
-		const cellNode = labelNode ? labelNode.closest('.main-grid-cell') : null
+		const cellNode = labelNode ? labelNode.closest('.main-grid-cell') : null;
 		const guide = new Guide({
 			steps: [
 				{
@@ -1077,12 +1036,12 @@ class SupersetDashboardGridManager
 		filterApi.apply();
 	}
 
-	addToTopMenu(dashboardId: number): Promise
+	addToTopMenu(dashboardId: number, url: string): Promise
 	{
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_SUCCESS'),
 		});
-		this.#switchTopMenuAction(dashboardId, true);
+		this.#switchTopMenuAction(dashboardId, true, url);
 
 		return this.#dashboardManager.addToTopMenu(dashboardId)
 			.then((response) => {})
@@ -1095,12 +1054,12 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	deleteFromTopMenu(dashboardId: number): Promise
+	deleteFromTopMenu(dashboardId: number, url: string): Promise
 	{
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_SUCCESS'),
 		});
-		this.#switchTopMenuAction(dashboardId, false);
+		this.#switchTopMenuAction(dashboardId, false, url);
 
 		return this.#dashboardManager.deleteFromTopMenu(dashboardId)
 			.then((response) => {})
@@ -1113,7 +1072,7 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	#switchTopMenuAction(dashboardId: number, isInTopMenu: boolean)
+	#switchTopMenuAction(dashboardId: number, isInTopMenu: boolean, url: string = '/')
 	{
 		const row = this.#grid.getRows().getById(dashboardId);
 		const rowActions = row?.getActions();
@@ -1128,7 +1087,7 @@ class SupersetDashboardGridManager
 			else if (!isInTopMenu && action.ACTION_ID === 'deleteFromTopMenu')
 			{
 				rowActions[index].ACTION_ID = 'addToTopMenu';
-				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(${dashboardId})`;
+				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(${dashboardId}, \`${url}\`)`;
 				rowActions[index].text = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_ADD_TO_TOP_MENU');
 			}
 		}
@@ -1148,8 +1107,7 @@ class SupersetDashboardGridManager
 			menu.addMenuItem({
 				id: `biconnector_superset_menu_dashboard_${dashboardId}`,
 				text: dashboardTitle,
-				url: `/bi/dashboard/detail/${dashboardId}/?openFrom=menu`,
-				onClick: '',
+				onClick: `window.open(\`${url}\`, '_blank');`,
 			});
 			const menuItem = menu.getItemById(`biconnector_superset_menu_dashboard_${dashboardId}`);
 			const firstMenuItem = menu.getVisibleItems();

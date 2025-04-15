@@ -62,7 +62,7 @@ jn.define('im/messenger/controller/channel-creator/step/add-subscribers', (requi
 					onSearchShow: () => this.searchShow(),
 					onSearchClose: () => this.searchClose(),
 					onChangeText: (text) => this.search(text),
-					isFakeTabsEnabled: Theme.isDesignSystemSupported && MessengerParams.get('HUMAN_RESOURCES_STRUCTURE_AVAILABLE', 'N') === 'Y',
+					isFakeTabsEnabled: MessengerParams.get('HUMAN_RESOURCES_STRUCTURE_AVAILABLE', 'N') === 'Y',
 					ref: (ref) => this.selectorRef = ref,
 				},
 			);

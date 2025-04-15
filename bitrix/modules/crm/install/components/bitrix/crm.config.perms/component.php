@@ -45,8 +45,7 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 

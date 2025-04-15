@@ -20,6 +20,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Mobile\AvaMenu;
+use Bitrix\Main\Engine\CurrentUser;
 
 if ($_SERVER["REQUEST_METHOD"] == "OPTIONS")
 {
@@ -131,7 +132,20 @@ else
 	if ($isSignMobileModuleInstalled && $isSignModuleInstalled)
 	{
 		$service = \Bitrix\SignMobile\Service\Container::instance()->getEventService();
-		$service->checkDocumentsSentForSigning();
+
+		if (method_exists(\Bitrix\SignMobile\Service\EventService::class, 'sendPriorityDocumentNotificationToSign'))
+		{
+			$currentUserId = (int)CurrentUser::get()->getId();
+
+			Main\Application::getInstance()->addBackgroundJob(function () use ($service, $currentUserId)
+			{
+				$service->sendPriorityDocumentNotificationToSign($currentUserId);
+			});
+		}
+		else if(method_exists(\Bitrix\SignMobile\Service\EventService::class, 'checkDocumentsSentForSigning'))
+		{
+			$service->checkDocumentsSentForSigning();
+		}
 	}
 
 	$event = new Bitrix\Main\Event("mobile", "onRequestSyncMail", [

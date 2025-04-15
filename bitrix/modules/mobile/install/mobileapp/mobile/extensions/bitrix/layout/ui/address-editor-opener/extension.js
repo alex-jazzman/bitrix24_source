@@ -5,7 +5,6 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { withCurrentDomain } = require('utils/url');
-	const { Feature } = require('feature');
 
 	/**
 	 * @class AddressEditorOpener
@@ -106,11 +105,6 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 		async requestDeviceGeoPosition()
 		{
 			return new Promise((resolve) => {
-				if (!Feature.isGeoPositionSupported())
-				{
-					resolve(null);
-				}
-
 				device.getLocation({ accuracy: 'approximate' })
 					.then((response) => resolve(response))
 					.catch(() => resolve(null));

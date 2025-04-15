@@ -60,34 +60,35 @@ class CClusterQueue
 
 	public static function Run()
 	{
-		global $DB;
-		$DB->StartUsingMasterOnly();
+		$pool = \Bitrix\Main\Application::getInstance()->getConnectionPool();
+		/* @var \Bitrix\Main\DB\Connection $connection */
+		$connection = $pool->getConnection();
+		$pool->useMasterOnly(true);
 		do
 		{
 			//read data
 			$ids = [];
 			$queue = [];
-			$rs = $DB->Query($DB->TopSql('
+			$rs = $connection->query('
 				SELECT *
 				FROM b_cluster_queue
 				WHERE GROUP_ID = ' . constant('BX_CLUSTER_GROUP') . '
 				ORDER BY ID
-			', 100));
-			while ($ar = $rs->Fetch())
+			', 100);
+			while ($ar = $rs->fetch())
 			{
 				$queueKey = $ar['COMMAND'] . '|' . $ar['PARAM1'] . '|' . $ar['PARAM2'] . '|' . $ar['PARAM3'];
 				$queue[$queueKey] = $ar;
 				$ids[] = intval($ar['ID']);
 			}
 
-			$uid = $DB->DBName . '_cluster_queue_' . constant('BX_CLUSTER_GROUP');
+			$uid = $connection->getDatabase() . '_cluster_queue_' . constant('BX_CLUSTER_GROUP');
 
 			if ($ids)
 			{
-				$lock = $DB->Query("SELECT GET_LOCK('" . $uid . "', 0) as L")->Fetch();
-				if ($lock['L'] == '0')
+				if (!$connection->lock($uid))
 				{
-					$DB->StopUsingMasterOnly();
+					$pool->useMasterOnly(false);
 					return false;
 				}
 			}
@@ -111,11 +112,11 @@ class CClusterQueue
 			//mark as done
 			if ($ids)
 			{
-				$DB->Query('DELETE FROM b_cluster_queue WHERE ID in (' . implode(',', $ids) . ')');
-				$DB->Query("SELECT RELEASE_LOCK('" . $uid . "')");
+				$connection->query('DELETE FROM b_cluster_queue WHERE ID in (' . implode(',', $ids) . ')');
+				$connection->unlock($uid);
 			}
 		}
 		while ($queue);
-		$DB->StopUsingMasterOnly();
+		$pool->useMasterOnly(false);
 	}
 }

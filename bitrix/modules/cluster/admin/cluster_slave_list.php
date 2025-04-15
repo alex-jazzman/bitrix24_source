@@ -152,7 +152,7 @@ $Position = 0;
 $bNote1Show = false;
 $bHasMaster = false;
 while ($arRes = $rsData->Fetch()):
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
 	if ($arRes['ROLE_ID'] == 'MASTER' || $arRes['ROLE_ID'] == 'MAIN')
 	{
@@ -238,7 +238,7 @@ while ($arRes = $rsData->Fetch()):
 				</tr>
 				';
 			}
-			elseif ($key == 'Com_select')
+			elseif ($key == 'Com_select' || $key == 'Rows_returned')
 			{
 				$html .= '
 				<tr>
@@ -265,7 +265,7 @@ while ($arRes = $rsData->Fetch()):
 				</tr>
 				';
 			}
-			else
+			elseif ($value !== null)
 			{
 				$html .= '
 				<tr>
@@ -275,7 +275,7 @@ while ($arRes = $rsData->Fetch()):
 				';
 			}
 
-			if ($key == 'Com_select')
+			if ($key == 'Com_select' || $key == 'Rows_returned')
 			{
 				$_SESSION['SLAVE_LIST'][$arRes['ID']] = $value;
 			}
@@ -355,7 +355,7 @@ while ($arRes = $rsData->Fetch()):
 		'ICON' => 'edit',
 		'DEFAULT' => true,
 		'TEXT' => GetMessage('CLU_SLAVE_LIST_EDIT'),
-		'ACTION' => $lAdmin->ActionRedirect('cluster_slave_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $arRes['GROUP_ID'] . '&ID=' . $arRes['ID'])
+		'ACTION' => $lAdmin->ActionRedirect('cluster_slave_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . ($arRes['GROUP_ID'] ?: 'all') . '&ID=' . $arRes['ID'])
 	];
 
 	if ($arRes['MASTER_ID'] <> '')
@@ -373,10 +373,13 @@ while ($arRes = $rsData->Fetch()):
 				'TEXT' => GetMessage('CLU_SLAVE_LIST_RESUME'),
 				'ACTION' => $lAdmin->ActionDoGroup($arRes['ID'], 'resume', 'group_id=' . ($group_id ?: 'all'))
 			];
-			$arActions[] = [
-				'TEXT' => GetMessage('CLU_SLAVE_LIST_STOP'),
-				'ACTION' => $lAdmin->ActionDoGroup($arRes['ID'], 'stop', 'group_id=' . ($group_id ?: 'all'))
-			];
+			if (is_callable(['CClusterSlave', 'Stop']))
+			{
+				$arActions[] = [
+					'TEXT' => GetMessage('CLU_SLAVE_LIST_STOP'),
+					'ACTION' => $lAdmin->ActionDoGroup($arRes['ID'], 'stop', 'group_id=' . ($group_id ?: 'all'))
+				];
+			}
 		}
 	}
 
@@ -406,7 +409,7 @@ while ($arRes = $rsData->Fetch()):
 		}
 	}
 
-	if ($bHasSQLError)
+	if ($bHasSQLError && is_callable(['CClusterSlave', 'SkipSQLError']))
 	{
 		$arActions[] = [
 			'TEXT' => GetMessage('CLU_SLAVE_LIST_SKIP_SQL_ERROR'),
@@ -450,7 +453,19 @@ $lAdmin->BeginPrologContent();
 $lAdmin->EndPrologContent();
 
 $aContext = [];
-if ($bHasMaster && $group_id > 0)
+if (\Bitrix\Main\Application::getConnection()->getType() === 'pgsql')
+{
+	if ($group_id == 0)
+	{
+		$aContext[] = [
+			'TEXT' => GetMessage('CLU_SLAVE_LIST_ADD'),
+			'LINK' => "javascript:StartWizard('bitrix:cluster.pgsql','&__wiz_group_id=" . $group_id . "')",
+			'TITLE' => GetMessage('CLU_SLAVE_LIST_ADD_TITLE'),
+			'ICON' => 'btn_new',
+		];
+	}
+}
+elseif ($bHasMaster && $group_id > 0)
 {
 	$aContext[] = [
 		'TEXT' => GetMessage('CLU_SLAVE_LIST_ADD'),

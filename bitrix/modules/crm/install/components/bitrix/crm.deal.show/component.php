@@ -37,7 +37,7 @@ $arResult['PERMISSION_ENTITY_TYPE'] = \Bitrix\Crm\Category\DealCategory::convert
 $arResult['EDITABLE_FIELDS'] = array();
 $arResult['CAN_EDIT'] = CCrmDeal::CheckUpdatePermission($arResult['ELEMENT_ID'], $userPermissions);
 
-CCrmDeal::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult, $userPermissions);
+CCrmDeal::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult);
 
 if($arResult['CAN_CONVERT'])
 {

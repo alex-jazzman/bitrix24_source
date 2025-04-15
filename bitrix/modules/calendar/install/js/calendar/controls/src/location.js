@@ -28,6 +28,7 @@ export class Location
 		};
 		this.roomsManager = params.roomsManager || null;
 		this.locationAccess = params.locationAccess || false;
+		this.readOnly = params.readOnly || false;
 		this.disabled = !params.richLocationEnabled;
 		this.hideLocationLock = params.hideLocationLock;
 		this.value = { type: '', text: '', value: '' };
@@ -485,6 +486,11 @@ export class Location
 
 	updateAccessibility()
 	{
+		if (this.readOnly)
+		{
+			return;
+		}
+
 		const params = this.accessibilityParams;
 		this.getLocationAccessibility(params.from, params.to).then(() => {
 			const timezone = (params.timezone && params.timezone !== '')
@@ -515,7 +521,7 @@ export class Location
 
 					for (const event of Location.accessibility[date][roomId])
 					{
-						if (parseInt(event.PARENT_ID) === parseInt(params.currentEventId))
+						if (parseInt(event.PARENT_ID, 10) === parseInt(params.currentEventId, 10))
 						{
 							continue;
 						}
@@ -1051,12 +1057,14 @@ export class Location
 
 	setCategoryManager()
 	{
+		if (this.readOnly)
+		{
+			return;
+		}
+
 		if (!this.categoryManagerFromDB)
 		{
-			this.getCategoryManager()
-				.then(
-					this.getCategoryManagerData(),
-				);
+			this.getCategoryManager().then(this.getCategoryManagerData());
 		}
 	}
 

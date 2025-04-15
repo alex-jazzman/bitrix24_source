@@ -144,8 +144,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 							status: relatedTask.status,
 						},
 					};
-				})
-					.sort((a, b) => a.customData.isCompleted - b.customData.isCompleted);
+				}).sort((a, b) => a.customData.isCompleted - b.customData.isCompleted);
 			}
 
 			return [];
@@ -299,6 +298,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			updateElapsedTime: task.canUpdateElapsedTime,
 			addChecklist: task.canAddChecklist,
 			updateChecklist: task.canUpdateChecklist,
+			editChecklist: task.canUpdateChecklist || task.canAddChecklist,
 			remove: task.canRemove,
 			startTimer: (task.canUseTimer && !task.isTimerRunningForCurrentUser),
 			pauseTimer: (task.canUseTimer && task.isTimerRunningForCurrentUser),
@@ -335,6 +335,13 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			}
 
 			return isTimerRunningForCurrentUser ? TimerState.RUNNING : TimerState.PAUSED;
+		},
+	);
+
+	const selectRunningTask = createDraftSafeSelector(
+		(state) => selectAll(state),
+		(allTasks) => {
+			return allTasks.find((task) => task.isTimerRunningForCurrentUser === true) ?? null;
 		},
 	);
 
@@ -377,5 +384,6 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		selectActions,
 
 		selectTimerState,
+		selectRunningTask,
 	};
 });

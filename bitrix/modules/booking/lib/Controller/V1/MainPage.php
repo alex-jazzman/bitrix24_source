@@ -8,16 +8,25 @@ use Bitrix\Bitrix24\License;
 use Bitrix\Booking\Controller\V1\Response\MainPageGetCountersResponse;
 use Bitrix\Booking\Controller\V1\Response\MainPageGetResponse;
 use Bitrix\Booking\Entity\DatePeriod;
-use Bitrix\Booking\Integration\Booking\ProviderInterface;
+use Bitrix\Booking\Entity\WaitListItem\WaitListItemCollection;
+use Bitrix\Booking\Interfaces\ProviderInterface;
 use Bitrix\Booking\Internals\Container;
-use Bitrix\Booking\Internals\Notifications\MessageSenderPicker;
+use Bitrix\Booking\Internals\Exception\ErrorBuilder;
+use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Internals\Service\Notifications\MessageSenderPicker;
 use Bitrix\Booking\Internals\Repository\CounterRepositoryInterface;
 use Bitrix\Booking\Provider\BookingProvider;
 use Bitrix\Booking\Provider\ClientStatisticsProvider;
 use Bitrix\Booking\Provider\FavoritesProvider;
 use Bitrix\Booking\Provider\MoneyStatisticsProvider;
 use Bitrix\Booking\Provider\OptionProvider;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Booking\Provider\Params\GridParams;
+use Bitrix\Booking\Provider\Params\WaitListItem\WaitListItemFilter;
+use Bitrix\Booking\Provider\Params\WaitListItem\WaitListItemSelect;
 use Bitrix\Booking\Provider\ResourceTypeProvider;
+use Bitrix\Booking\Provider\WaitListItemProvider;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Booking\Entity;
 use Bitrix\Main\Loader;
@@ -34,6 +43,7 @@ class MainPage extends BaseController
 	private ProviderInterface|null $provider;
 	private MoneyStatisticsProvider $moneyStatisticsProvider;
 	private ClientStatisticsProvider $clientStatisticsProvider;
+	private WaitListItemProvider $waitListItemProvider;
 
 	public function __construct(Request $request = null)
 	{
@@ -46,6 +56,7 @@ class MainPage extends BaseController
 		$this->provider = Container::getProviderManager()::getCurrentProvider();
 		$this->moneyStatisticsProvider = new MoneyStatisticsProvider();
 		$this->clientStatisticsProvider = new ClientStatisticsProvider();
+		$this->waitListItemProvider = new WaitListItemProvider();
 	}
 
 	public function getForBookingAction(
@@ -53,9 +64,9 @@ class MainPage extends BaseController
 		int $bookingId,
 		string $timezone,
 		array|null $resourcesIds,
-	): MainPageGetResponse
+	): MainPageGetResponse|null
 	{
-		return $this->handleRequest(function() use ($dateTs, $bookingId, $timezone, $resourcesIds)
+		try
 		{
 			$userId = (int)CurrentUser::get()->getId();
 
@@ -83,6 +94,8 @@ class MainPage extends BaseController
 
 			$resourceTypes = $this->getResourceTypes($userId);
 
+			$waitListItemCollection = new WaitListItemCollection();
+
 			return new MainPageGetResponse(
 				favorites: null,
 				bookingCollection: $bookings,
@@ -92,13 +105,20 @@ class MainPage extends BaseController
 				isCurrentSenderAvailable: MessageSenderPicker::canUseCurrentSender(),
 				isIntersectionForAll: true,
 				counters: $this->counterRepository->getList($userId),
+				waitListItemCollection: $waitListItemCollection,
 			);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
-	public function getAction(int $dateTs): MainPageGetResponse
+	public function getAction(int $dateTs): MainPageGetResponse|null
 	{
-		return $this->handleRequest(function() use ($dateTs)
+		try
 		{
 			$userId = (int)CurrentUser::get()->getId();
 
@@ -112,6 +132,7 @@ class MainPage extends BaseController
 			$favoritesIds = $favorites->getResources()->getEntityIds();
 			$bookings = $this->getBookings($userId, $datePeriod, $favoritesIds);
 			$resourceTypes = $this->getResourceTypes($userId);
+			$waitListItems = $this->getWaitListItems($userId);
 
 			return new MainPageGetResponse(
 				favorites: $favorites,
@@ -122,13 +143,20 @@ class MainPage extends BaseController
 				isCurrentSenderAvailable: MessageSenderPicker::canUseCurrentSender(),
 				isIntersectionForAll: $this->isIntersectionForAll($userId),
 				counters: $this->counterRepository->getList($userId),
+				waitListItemCollection: $waitListItems,
 			);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
-	public function getCountersAction(): MainPageGetCountersResponse
+	public function getCountersAction(): MainPageGetCountersResponse|null
 	{
-		return $this->handleRequest(function()
+		try
 		{
 			$userId = (int)CurrentUser::get()->getId();
 
@@ -138,7 +166,13 @@ class MainPage extends BaseController
 				counters: $this->counterRepository->getList($userId),
 				moneyStatistics: $this->moneyStatisticsProvider->get($userId),
 			);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
 	public function activateDemoAction(): bool
@@ -175,37 +209,66 @@ class MainPage extends BaseController
 			return new Entity\Booking\BookingCollection();
 		}
 
-		return $this->bookingProvider->getList(
+		$bookings = $this->bookingProvider->getList(
+			new GridParams(
+				filter: new BookingFilter([
+					'RESOURCE_ID_OR_HAS_COUNTERS_USER_ID' => [
+						'RESOURCE_ID' => $resourcesIds,
+						'HAS_COUNTERS_USER_ID' => (int)CurrentUser::get()->getId(),
+					],
+					'WITHIN' => [
+						'DATE_FROM' => $datePeriod->getDateFrom()->getTimestamp(),
+						'DATE_TO' => $datePeriod->getDateTo()->getTimestamp(),
+					],
+				]),
+				select: new BookingSelect([
+					'CLIENTS',
+					'RESOURCES',
+					'EXTERNAL_DATA',
+					'NOTE',
+				]),
+			),
 			userId: $userId,
-			filter: [
-				'RESOURCE_ID_OR_HAS_COUNTERS_USER_ID' => [
-					'RESOURCE_ID' => $resourcesIds,
-					'HAS_COUNTERS_USER_ID' => (int)CurrentUser::get()->getId(),
-				],
-				'WITHIN' => [
-					'DATE_FROM' => $datePeriod->getDateFrom()->getTimestamp(),
-					'DATE_TO' => $datePeriod->getDateTo()->getTimestamp(),
-				],
-			],
-			select: [
-				'CLIENTS',
-				'RESOURCES',
-				'EXTERNAL_DATA',
-				'NOTE',
-			],
-			withCounters: true,
-			withClientData: true,
-			withExternalData: true,
 		);
+
+		$this->bookingProvider
+			->withCounters($bookings, $userId)
+			->withClientsData($bookings)
+			->withExternalData($bookings)
+		;
+
+		return $bookings;
 	}
 
 	private function getResourceTypes(int $userId): Entity\ResourceType\ResourceTypeCollection
 	{
-		return $this->resourceTypeProvider->getList($userId);
+		return $this->resourceTypeProvider->getList(new GridParams(), $userId);
 	}
 
 	private function getClientsDataRecent(): array
 	{
 		return $this->provider?->getClientProvider()?->getClientDataRecent() ?? [];
+	}
+
+	private function getWaitListItems(int $userId): WaitListItemCollection
+	{
+		$waitListItems = $this->waitListItemProvider->getList(
+			new GridParams(
+				filter: new WaitListItemFilter(),
+				select: new WaitListItemSelect([
+					'CLIENTS',
+					'EXTERNAL_DATA',
+					'NOTE',
+				]),
+			),
+			$userId,
+		);
+
+		$this->waitListItemProvider
+			->withClientsData($waitListItems)
+			->withExternalData($waitListItems)
+		;
+
+		return $waitListItems;
 	}
 }

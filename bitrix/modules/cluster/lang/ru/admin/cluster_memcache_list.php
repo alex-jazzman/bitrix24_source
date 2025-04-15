@@ -16,6 +16,7 @@ $MESS["CLU_MEMCACHE_UPTIME"] = "время работы";
 $MESS["CLU_MEMCACHE_LIST_TITLE"] = "Подключения к memcached";
 $MESS["CLU_MEMCACHE_NOCONNECTION"] = "нет подключения";
 $MESS["CLU_MEMCACHE_NO_EXTENTION"] = "Отсутствует php расширение memcache.";
+$MESS["CLU_MEMCACHED_NO_EXTENTION"] = "Отсутствует php расширение memcached.";
 $MESS["CLU_MEMCACHE_DISABLED"] = "Использование memcache отключено.";
 $MESS["CLU_MEMCACHE_LIST_WARNING_NO_CACHE"] = "Внимание! Кеширование отключено. Для включения начните использовать одно из подключений к memcached или измените настройки в файле .settings.php.";
 $MESS["CLU_MEMCACHE_LIST_NOTE"] = "<p>Для запуска нескольких веб-серверов необходимо настроить синхронизацию их файловых систем.</p>

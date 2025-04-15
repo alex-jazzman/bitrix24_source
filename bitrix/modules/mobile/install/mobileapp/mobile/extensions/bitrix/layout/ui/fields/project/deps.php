@@ -10,5 +10,6 @@ return [
 		'settings/disabled-tools',
 		'layout/ui/info-helper',
 		'assets/icons',
+		'project/utils',
 	],
 ];

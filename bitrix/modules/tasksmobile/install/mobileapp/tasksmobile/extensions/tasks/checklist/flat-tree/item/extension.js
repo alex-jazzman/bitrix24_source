@@ -390,7 +390,12 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		checkCanAddAccomplice()
 		{
-			return this.action.addAccomplice;
+			if (this.isRoot())
+			{
+				return this.action.addAccomplice;
+			}
+
+			return this.checklist.getRootItem().checkCanAddAccomplice();
 		}
 
 		checkCanUpdate()
@@ -462,6 +467,9 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			return Object.keys(this.getMembers()).length;
 		}
 
+		/**
+		 * @returns {Array<Object>}
+		 */
 		getMembers()
 		{
 			return this.fields.members;

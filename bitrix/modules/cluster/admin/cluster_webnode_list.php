@@ -98,7 +98,7 @@ $rsData = CClusterWebNode::GetList(
 $rsData = new CAdminResult($rsData, $sTableID);
 
 while ($arRes = $rsData->Fetch()):
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
 	$uptime = false;
 	$RestartTime = '';

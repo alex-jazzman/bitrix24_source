@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/dialog/lib/header/button-configuration', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
 	const { Theme } = require('im/lib/theme');
 
 	const { buttonIcons } = require('im/messenger/assets/common');
@@ -13,7 +12,7 @@ jn.define('im/messenger/controller/dialog/lib/header/button-configuration', (req
 		id: 'call_audio',
 		testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
 		type: 'call_audio',
-		color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
+		color: null,
 		badgeCode: 'call_audio',
 	};
 
@@ -22,7 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/header/button-configuration', (req
 		id: 'call_video',
 		testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
 		type: 'call_video',
-		color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
+		color: null,
 		badgeCode: 'call_video',
 	};
 

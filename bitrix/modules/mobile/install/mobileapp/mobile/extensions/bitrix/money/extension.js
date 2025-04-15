@@ -162,4 +162,13 @@
 	Money.init();
 
 	jnexport(Money);
+
+	/**
+	 * @module money
+	 */
+	jn.define('money', (require, exports, module) => {
+		module.exports = {
+			Money,
+		};
+	});
 })();

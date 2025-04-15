@@ -27,9 +27,9 @@ use Bitrix\Main\Localization\Loc;
 
 Container::getInstance()->getLocalization()->loadMessages();
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE))
+$currentUserID = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+if (!$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Lead))
 {
 	return;
 }
@@ -142,29 +142,38 @@ else
 $bConfig = false;
 if ($arParams['TYPE'] === 'list')
 {
-	$bRead   = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ');
-	$bExport = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'EXPORT');
-	$bImport = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'IMPORT');
-	$bAdd    = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD');
-	$bWrite  = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'WRITE');
+	$bRead = $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Lead);
+	$bExport = $userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Lead);
+	$bImport = $userPermissionsService->entityType()->canImportItems(CCrmOwnerType::Lead);
+	$bWrite = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Lead);
 	$bDelete = false;
-	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	$bConfig = $userPermissionsService->isAdminForEntity(CCrmOwnerType::Lead);
 
-	$bDedupe = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'WRITE')
-		&& !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'DELETE');
+	$bDedupe =
+		$userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Lead)
+		&& $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Lead)
+	;
 }
 else
 {
 	$bExport = false;
 	$bImport = false;
 	$bDedupe = false;
-
-	$bRead   = CCrmLead::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bAdd    = CCrmLead::CheckCreatePermission($CrmPerms);
-	$bWrite  = CCrmLead::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bDelete = CCrmLead::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bExclude = \Bitrix\Crm\Exclusion\Access::current()->canWrite();
+	if ($arParams['ELEMENT_ID'] > 0)
+	{
+		$bRead = $userPermissionsService->item()->canRead(CCrmOwnerType::Lead, $arParams['ELEMENT_ID']);
+		$bWrite = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $arParams['ELEMENT_ID']);
+		$bDelete = $userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $arParams['ELEMENT_ID']);
+	}
+	else
+	{
+		$bRead = $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Lead);
+		$bWrite = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Lead);
+		$bDelete = $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Lead);
+	}
+	$bExclude = $userPermissionsService->exclusion()->canEditItems();
 }
+$bAdd = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Lead);
 
 if (isset($arParams['DISABLE_IMPORT']) && $arParams['DISABLE_IMPORT'] === 'Y')
 {
@@ -190,7 +199,7 @@ $conversionSchemeID = $conversionConfig->getCurrentSchemeID();
 
 if($arParams['ELEMENT_ID'] > 0)
 {
-	\CCrmLead::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CrmPerms);
+	\CCrmLead::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 }
 
 $isSliderEnabled = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Lead);

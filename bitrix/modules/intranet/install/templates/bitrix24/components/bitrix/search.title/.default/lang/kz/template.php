@@ -1,0 +1,23 @@
+<?php
+$MESS["CT_BST_GLOBAL_SEARCH"] = "Іздеу";
+$MESS["CT_BST_GLOBAL_SEARCH_CALENDAR"] = "Күнтізбе";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM"] = "CRM";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_ACTIVITY"] = "Менің істерім";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_COMPANY"] = "Компаниялар";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_CONTACT"] = "Байланыс ақпараты";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_DEAL"] = "Мәмілелер";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_DYNAMIC"] = "Смарт-процестердің элементтері";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_INVOICE"] = "Шоттар";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_LEAD"] = "Лидтер";
+$MESS["CT_BST_GLOBAL_SEARCH_CRM_QUOTE_MSGVER_1"] = "Ұсыныстар";
+$MESS["CT_BST_GLOBAL_SEARCH_DISK_MSGVER_1"] = "Диск";
+$MESS["CT_BST_GLOBAL_SEARCH_MORE"] = "Тағы";
+$MESS["CT_BST_GLOBAL_SEARCH_NEWS"] = "Жаңалықтар";
+$MESS["CT_BST_GLOBAL_SEARCH_NO_RESULT"] = "Ештеңе табылған жоқ";
+$MESS["CT_BST_GLOBAL_SEARCH_PROCESS"] = "Менің процестерім";
+$MESS["CT_BST_GLOBAL_SEARCH_SITE"] = "Сайттар";
+$MESS["CT_BST_GLOBAL_SEARCH_STREAM"] = "Жанды лента";
+$MESS["CT_BST_GLOBAL_SEARCH_TASKS"] = "Міндеттер";
+$MESS["CT_BST_SEARCH_BUTTON"] = "Іздеу";
+$MESS["CT_BST_SEARCH_HINT"] = "қызметкерді, құжатты, басқаларды іздеу...";
+$MESS["CT_BST_WAITER_TEXT"] = "Іздеу жүріп жатыр...";

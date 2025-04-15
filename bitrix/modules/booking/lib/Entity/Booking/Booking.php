@@ -4,21 +4,32 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Booking;
 
-use Bitrix\Booking\Entity\BaseEntity;
+use Bitrix\Booking\Entity\Client\Client;
+use Bitrix\Booking\Entity\Client\ClientCollection;
+use Bitrix\Booking\Entity\EntityWithClientRelationInterface;
 use Bitrix\Booking\Entity\DatePeriod;
+use Bitrix\Booking\Entity\DatePeriodCollection;
+use Bitrix\Booking\Entity\EntityInterface;
+use Bitrix\Booking\Entity\EntityWithExternalDataRelationInterface;
 use Bitrix\Booking\Entity\EventInterface;
 use Bitrix\Booking\Entity\EventTrait;
+use Bitrix\Booking\Entity\ExternalData\ExternalDataCollection;
 use Bitrix\Booking\Entity\Resource\Resource;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
-use Bitrix\Booking\Exception\Booking\ConfirmBookingException;
-use Bitrix\Booking\Internals\Feature\BookingConfirmReminder;
-use Bitrix\Booking\Internals\NotificationType;
-use Bitrix\Booking\Internals\Rrule;
-use Bitrix\Booking\Internals\Time;
+use Bitrix\Booking\Internals\Exception\Booking\ConfirmBookingException;
+use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Service\Feature\BookingConfirmReminder;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
+use Bitrix\Booking\Internals\Service\Rrule;
+use Bitrix\Booking\Internals\Service\Time;
 use DateTimeImmutable;
 use DateTimeZone;
 
-class Booking extends BaseEntity implements EventInterface
+class Booking implements
+	EntityInterface,
+	EventInterface,
+	EntityWithClientRelationInterface,
+	EntityWithExternalDataRelationInterface
 {
 	use EventTrait;
 
@@ -120,6 +131,16 @@ class Booking extends BaseEntity implements EventInterface
 		return $this->getClientCollection()->getPrimaryClient();
 	}
 
+	public function getPrimaryClientUrl(): string
+	{
+		$url = Container::getProviderManager()::getProviderByBooking($this)
+			?->getClientProvider()
+			?->getClientUrl($this->getPrimaryClient())
+		;
+
+		return $url ?? '#';
+	}
+
 	public function setClientCollection(ClientCollection $clientCollection): Booking
 	{
 		$this->clientCollection = $clientCollection;
@@ -140,6 +161,20 @@ class Booking extends BaseEntity implements EventInterface
 	public function setDatePeriod(DatePeriod|null $datePeriod): self
 	{
 		$this->datePeriod = $datePeriod;
+
+		return $this;
+	}
+
+	public function setDatePeriodFromArray(array $datePeriod): self
+	{
+		$this->setDatePeriod(
+			new DatePeriod(
+				(new DateTimeImmutable('@' . (int)$datePeriod['from']['timestamp']))
+					->setTimezone(new DateTimeZone((string)$datePeriod['from']['timezone'])),
+				(new DateTimeImmutable('@' . (int)$datePeriod['to']['timestamp']))
+					->setTimezone(new DateTimeZone((string)$datePeriod['to']['timezone']))
+			)
+		);
 
 		return $this;
 	}
@@ -398,7 +433,7 @@ class Booking extends BaseEntity implements EventInterface
 
 		if (isset($props['isDeleted']))
 		{
-			$result->setDeleted((bool)$props['isDeleted'] ?? false);
+			$result->setDeleted((bool)$props['isDeleted']);
 		}
 
 		if (
@@ -408,14 +443,7 @@ class Booking extends BaseEntity implements EventInterface
 			&& !empty($props['datePeriod']['to']['timezone'])
 		)
 		{
-			$result->setDatePeriod(
-				new DatePeriod(
-					(new DateTimeImmutable('@' . (int)$props['datePeriod']['from']['timestamp']))
-						->setTimezone(new DateTimeZone((string)$props['datePeriod']['from']['timezone'])),
-					(new DateTimeImmutable('@' . (int)$props['datePeriod']['to']['timestamp']))
-						->setTimezone(new DateTimeZone((string)$props['datePeriod']['to']['timezone']))
-				)
-			);
+			$result->setDatePeriodFromArray($props['datePeriod']);
 		}
 
 		if (isset($props['resources']))
@@ -502,5 +530,16 @@ class Booking extends BaseEntity implements EventInterface
 			$this->getRrule(),
 			$this->getDatePeriod()
 		);
+	}
+
+	public function getEventDatePeriodCollection(): DatePeriodCollection
+	{
+		$rrule = $this->getEventRrule();
+		if ($rrule)
+		{
+			return $rrule->getDatePeriodCollection();
+		}
+
+		return new DatePeriodCollection($this->getDatePeriod());
 	}
 }

@@ -1,5 +1,9 @@
 import { AppLayout } from '../layout/app-layout';
 import { ImportConfig } from '../layout/import-config';
+import { FileErrorsPopup } from '../popups/file-checking/file-errors-popup';
+import { CheckingProgressPopup } from '../popups/file-checking/checking-progress-popup';
+import { CheckingSuccessPopup } from '../popups/file-checking/checking-success-popup';
+import { CheckingFailedPopup } from '../popups/file-checking/checking-failed-popup';
 import { GenericPopup } from '../popups/generic-popup';
 import { ImportFailurePopup } from '../popups/saving/import-failure-popup';
 import { ImportProgressPopup } from '../popups/saving/import-progress-popup';
@@ -9,6 +13,8 @@ import { FieldsSettingsStep } from '../steps/fields-settings';
 import { FileStep } from '../steps/file';
 import { ImportPreview } from '../steps/import-preview';
 import { BaseApp } from './base-app';
+import { ajax as Ajax, Dom } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
 export const CsvApp = {
 	extends: BaseApp,
@@ -34,10 +40,17 @@ export const CsvApp = {
 				savingSuccess: false,
 				savingFailure: false,
 				editModeFileReplacement: false,
+				checkFileProgress: false,
+				checkFileSuccess: false,
+				checkFileFailure: false,
+				fileErrors: false,
 			},
 			isValidationComplete: true,
 			popupParams: {
 				savingSuccess: {},
+				fileErrors: {
+					isSavingMode: false,
+				},
 			},
 			lastReloadSource: null,
 			initialPreviewData: {},
@@ -46,6 +59,8 @@ export const CsvApp = {
 			isEditModeSaveConfirmed: false,
 			isDataLoadingAnimationDisplayed: false,
 			hasMinimalLoadingAnimationTimePassed: true,
+			checkFileErrors: [],
+			isErrorsChecked: false,
 		};
 	},
 	computed: {
@@ -138,12 +153,14 @@ export const CsvApp = {
 			}
 
 			this.lastChangedStep = 'fields';
+			this.isErrorsChecked = false;
 		},
 		onDatasetReloadNeeded(reloadSource)
 		{
 			this.markAsChanged();
 			this.previewError = '';
 			this.lastReloadSource = reloadSource;
+			this.isErrorsChecked = false;
 
 			if (this.$store.state.config.fileProperties.fileToken)
 			{
@@ -174,6 +191,7 @@ export const CsvApp = {
 				this.$refs.fieldsStep.close();
 				this.toggleStepState('properties', true);
 				this.toggleStepState('fields', true);
+				this.toggleCheckFileButton(true);
 			}
 		},
 		processLoadResponse(response)
@@ -217,13 +235,14 @@ export const CsvApp = {
 			this.toggleStepState('properties', false);
 			this.toggleStepState('fields', false);
 			this.$refs.fieldsStep.validate();
+			this.toggleCheckFileButton(false);
 		},
 		onLoadError(response)
 		{
 			this.stopPreviewLoadingAnimation();
 			this.previewError = response.errors[0]?.message ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_FILE');
 		},
-		onSaveStart()
+		onSaveStart(): Promise
 		{
 			if (!this.isValidatedForSave)
 			{
@@ -231,26 +250,43 @@ export const CsvApp = {
 				this.$refs.fieldsStep.showValidationErrors();
 				this.$refs.propertiesStep.showValidationErrors();
 
-				return false;
+				return Promise.reject();
 			}
 
 			if (this.isEditMode && !this.isEditModeSaveConfirmed && this.$store.state.config.fileProperties.fileToken)
 			{
 				this.togglePopup('editModeFileReplacement', true);
 
-				return false;
+				return Promise.reject();
 			}
 
 			this.togglePopup('savingProgress', true);
+			if (this.isEditMode && !this.$store.state.config.fileProperties.fileToken)
+			{
+				return Promise.resolve();
+			}
 
-			return true;
+			this.popupParams.fileErrors.isSavingMode = true;
+
+			return new Promise((resolve, reject) => {
+				this.checkFile()
+					.then(() => {
+						resolve();
+					})
+					.catch(() => {
+						this.togglePopup('savingProgress', false);
+						this.togglePopup('fileErrors', true);
+						reject();
+					});
+			});
 		},
 		onSaveEnd(response)
 		{
 			const datasetName = response.data.name ?? this.$store.state.config.datasetProperties.name;
+			const datasetId = response.data.id ?? this.$store.state.config.datasetProperties.id;
 			this.popupParams.savingSuccess = {
 				title: datasetName,
-				datasetId: response.data.id,
+				datasetId,
 				fileName: this.$store.state.config.fileProperties.fileName,
 			};
 
@@ -303,6 +339,103 @@ export const CsvApp = {
 		{
 			this.isDataLoadingAnimationDisplayed = false;
 		},
+		onCheckFileClick()
+		{
+			this.popupParams.fileErrors.isSavingMode = false;
+			if (this.previewError)
+			{
+				return;
+			}
+			this.togglePopup('checkFileProgress', true);
+			this.checkFile()
+				.then(() => {
+					this.togglePopup('checkFileProgress', false);
+					this.togglePopup('checkFileSuccess', true);
+				})
+				.catch(() => {
+					this.togglePopup('checkFileProgress', false);
+					this.togglePopup('fileErrors', true);
+				})
+			;
+		},
+		saveIgnoringErrors()
+		{
+			this.togglePopup('fileErrors', false);
+			this.togglePopup('savingProgress', true);
+			this.handleSaveAction();
+		},
+		checkFile(): Promise
+		{
+			if (this.isErrorsChecked)
+			{
+				if (this.checkFileErrors.length > 0)
+				{
+					return Promise.reject();
+				}
+
+				return Promise.resolve();
+			}
+
+			return new Promise((resolve, reject) => {
+				Ajax.runAction('biconnector.externalsource.dataset.checkFile', {
+					data: {
+						type: this.sourceCode,
+						fields: this.loadParams,
+					},
+				})
+					.then((response) => {
+						this.checkFileErrors = this.prepareCheckFileErrors(response.data.checkFileErrors);
+						this.isErrorsChecked = true;
+						if (this.checkFileErrors.length > 0)
+						{
+							reject();
+						}
+						else
+						{
+							resolve();
+						}
+					})
+					.catch((response) => {
+						console.error(response);
+						this.togglePopup('checkFileProgress', false);
+						this.togglePopup('savingProgress', false);
+						this.togglePopup('checkFileFailure', true);
+					})
+				;
+			});
+		},
+		prepareCheckFileErrors(errors: Object): Array
+		{
+			const result = [];
+			Object.keys(errors).forEach((lineNumber) => {
+				errors[lineNumber].forEach((error) => {
+					result.push({
+						lineNumber,
+						errorMessage: error.message,
+						columnName: this.$store.state.config.fieldsSettings[error.customData.field].name,
+					});
+				});
+			});
+
+			return result;
+		},
+		toggleCheckFileButton(disabled: boolean): void
+		{
+			const button = document.querySelector('.biconnector-check-file-button');
+			if (button)
+			{
+				if (disabled)
+				{
+					Dom.addClass(button, 'ui-btn-disabled');
+					Dom.attr(button, 'disabled', true);
+				}
+				else
+				{
+					Dom.removeClass(button, 'ui-btn-disabled');
+					Dom.attr(button, 'disabled', null);
+				}
+			}
+		},
 	},
 	mounted()
 	{
@@ -311,6 +444,12 @@ export const CsvApp = {
 			this.initialPreviewData = this.$store.state.previewData.rows;
 			this.initialFieldsSettings = this.$store.state.config.fieldsSettings;
 		}
+
+		EventEmitter.subscribe('biconnector:dataset-import:onCheckFileClick', this.onCheckFileClick);
+	},
+	beforeUnmount()
+	{
+		EventEmitter.unsubscribe('biconnector:dataset-import:onCheckFileClick', this.onCheckFileClick);
 	},
 	components: {
 		AppLayout,
@@ -323,6 +462,10 @@ export const CsvApp = {
 		ImportSuccessPopup,
 		ImportFailurePopup,
 		GenericPopup,
+		FileErrorsPopup,
+		CheckingProgressPopup,
+		CheckingSuccessPopup,
+		CheckingFailedPopup,
 	},
 	// language=Vue
 	template: `
@@ -408,5 +551,26 @@ export const CsvApp = {
 				</button>
 			</template>
 		</GenericPopup>
+
+		<FileErrorsPopup
+			v-if="shownPopups.fileErrors"
+			@close="togglePopup('fileErrors', false);"
+			@save-ignoring-errors="saveIgnoringErrors()"
+			:errors="checkFileErrors"
+			:is-edit-mode="this.isEditMode"
+			:is-saving-mode="popupParams.fileErrors.isSavingMode"
+		/>
+		<CheckingProgressPopup
+			v-if="shownPopups.checkFileProgress"
+			@close="togglePopup('checkFileProgress', false)"
+		/>
+		<CheckingSuccessPopup
+			v-if="shownPopups.checkFileSuccess"
+			@close="togglePopup('checkFileSuccess', false)"
+		/>
+		<CheckingFailedPopup
+			v-if="shownPopups.checkFileFailure"
+			@close="togglePopup('checkFileFailure', false)"
+		/>
 	`,
 };

@@ -16,16 +16,20 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  CATEGORY_AI_OPERATIONS: 'ai_operations',
 	  CATEGORY_AUTOMATION_OPERATIONS: 'automation_operations',
 	  CATEGORY_KANBAN_OPERATIONS: 'kanban_operations',
+	  CATEGORY_POPUP_OPERATIONS: 'popup_operations',
 	  // region Event const
 	  EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
 	  EVENT_ENTITY_ADD: 'entity_add',
+	  EVENT_ENTITY_CREATE: 'entity_create',
 	  EVENT_ENTITY_CLOSE: 'entity_close',
+	  EVENT_ENTITY_COMPLETE: 'entity_complete',
 	  EVENT_ENTITY_COPY_OPEN: 'entity_copy_open',
 	  EVENT_ENTITY_COPY: 'entity_copy',
 	  EVENT_ENTITY_CONVERT: 'entity_convert',
 	  EVENT_ENTITY_CONVERT_BATCH: 'entity_convert_batch',
 	  EVENT_ENTITY_CONVERT_OPEN: 'entity_convert_open',
 	  EVENT_ENTITY_UPDATE: 'entity_update',
+	  EVENT_ENTITY_EDIT: 'entity_edit',
 	  EVENT_CALL_PARSING: 'call_parsing',
 	  EVENT_AUDIO_TO_TEXT: 'audio_to_text',
 	  EVENT_SUMMARY: 'summary',
@@ -46,6 +50,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  TYPE_DYNAMIC: 'dynamic',
 	  TYPE_CONTACT_CENTER: 'contact_center',
 	  TYPE_ITEM_INDUSTRY: 'item_industry',
+	  TYPE_POPUP_AI_TRANSCRIPT: 'popup_ai_transcript',
 	  // endregion
 
 	  // region Section const
@@ -720,7 +725,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    return filterOutNilValues({
 	      tool: Dictionary.TOOL_CRM,
 	      category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
-	      event: Dictionary.EVENT_ENTITY_ADD,
+	      event: Dictionary.EVENT_ENTITY_CREATE,
 	      type,
 	      c_section: `${type}_section`,
 	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$2)[_subSection$2],
@@ -779,7 +784,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    return filterOutNilValues({
 	      tool: Dictionary.TOOL_CRM,
 	      category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
-	      event: Dictionary.EVENT_ENTITY_CLOSE,
+	      event: Dictionary.EVENT_ENTITY_COMPLETE,
 	      type,
 	      c_section: `${type}_section`,
 	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$3)[_subSection$3],
@@ -1158,6 +1163,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 
 	exports.Builder = Builder;
 	exports.Dictionary = Dictionary;
+	exports.getCrmMode = getCrmMode;
 
 }((this.BX.Crm.Integration.Analytics = this.BX.Crm.Integration.Analytics || {}),BX));
 //# sourceMappingURL=analytics.bundle.js.map

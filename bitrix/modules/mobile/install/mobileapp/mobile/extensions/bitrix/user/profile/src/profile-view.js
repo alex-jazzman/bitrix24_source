@@ -4,6 +4,7 @@
 jn.define('user/profile/src/profile-view', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Profile } = require('user/profile/src/profile');
+	const { copyToClipboard } = require('utils/copy');
 
 	const COMMUNICATION_PATH = '/bitrix/mobileapp/mobile/extensions/bitrix/user/profile/images/communication';
 
@@ -305,7 +306,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 							callback: (item) => {
 								if (item.code === 'copy')
 								{
-									Application.copyToClipboard(valueForOpening);
+									copyToClipboard(valueForOpening);
 								}
 								else if (item.code === 'callbx24')
 								{

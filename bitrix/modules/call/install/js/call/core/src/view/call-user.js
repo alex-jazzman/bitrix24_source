@@ -1,6 +1,6 @@
 import {Dom, Type} from 'main.core';
 import {Menu} from 'main.popup';
-import {UserState} from '../engine/engine';
+import {UserState, Provider} from '../engine/engine';
 import {BackgroundDialog} from '../dialogs/background_dialog';
 import {logPlaybackError} from './tools';
 import type {UserModel} from './user-registry'
@@ -36,6 +36,7 @@ type CallUserElements = {
 	cameraState?: HTMLElement,
 	panel?: HTMLElement,
 	buttonMenu?: HTMLElement,
+	remoteParticipantButtonMenu?: HTMLElement,
 	buttonBackground?: HTMLElement,
 	buttonPin?: HTMLElement,
 	buttonUnPin?: HTMLElement,
@@ -59,6 +60,8 @@ type CallUserParams = {
 
 	onClick: () => void,
 	onPin: () => void,
+	onTurnOffParticipantMic: () => void,
+	onTurnOffParticipantCam: () => void,
 	onUnPin: () => void,
 	onUserRename: () => void,
 	onUserRenameInputFocus: () => void,
@@ -70,6 +73,7 @@ export class CallUser
 	userModel: UserModel
 	elements: CallUserElements = {}
 	menu: ?Menu
+	remoteParticipantMenu: ?Menu
 
 	constructor(config: CallUserParams = {})
 	{
@@ -117,6 +121,8 @@ export class CallUser
 			onUserRenameInputBlur: Type.isFunction(config.onUserRenameInputBlur) ? config.onUserRenameInputBlur : BX.DoNothing,
 			onPin: Type.isFunction(config.onPin) ? config.onPin : BX.DoNothing,
 			onUnPin: Type.isFunction(config.onUnPin) ? config.onUnPin : BX.DoNothing,
+			onTurnOffParticipantMic: Type.isFunction(config.onTurnOffParticipantMic) ? config.onTurnOffParticipantMic : BX.DoNothing,
+			onTurnOffParticipantCam: Type.isFunction(config.onTurnOffParticipantCam) ? config.onTurnOffParticipantCam : BX.DoNothing,
 		};
 		this.checkAspectInterval = setInterval(this.checkVideoAspect.bind(this), 500);
 
@@ -782,6 +788,26 @@ export class CallUser
 				}
 			}
 		});
+
+		this.elements.remoteParticipantButtonMenu = Dom.create("div", {
+			props: {
+				className: "bx-messenger-videocall-user-panel-button"
+			},
+			children: [
+				Dom.create("div", {
+					props: {
+						className: "bx-messenger-videocall-user-panel-button-icon menu"
+					}
+				}),
+			],
+			events: {
+				click: e => {
+					e.stopPropagation();
+					this.showRemoteParticipantMenu();
+				}
+			}
+		});
+
 		this.elements.buttonPin = Dom.create("div", {
 			props: {
 				className: "bx-messenger-videocall-user-panel-button"
@@ -1137,6 +1163,82 @@ export class CallUser
 		this.menu.show();
 	};
 
+	showRemoteParticipantMenu()
+	{
+		if	(this.remoteParticipantMenu)
+		{
+			this.remoteParticipantMenu.destroy();
+			this.remoteParticipantMenu = null;
+		}
+
+		const menuItems = [];
+
+		if (!this.userModel.localUser)
+		{
+			menuItems.push({
+				text: BX.message("CALL_REMOTE_USER_MENU_TURN_OFF_MIC"),
+				className: 'bx-call-remote-user-turn-off-mic',
+				disabled: !this.userModel.microphoneState,
+				onclick: () =>
+				{
+					this.remoteParticipantMenu.destroy();
+					this.callBacks.onTurnOffParticipantMic({userId: this.userModel.id});
+				}
+			});
+
+			menuItems.push({
+				text: BX.message("CALL_REMOTE_USER_MENU_TURN_OFF_CAM"),
+				className: 'bx-call-remote-user-turn-off-cam',
+				disabled: !this.userModel.cameraState,
+				onclick: () =>
+				{
+					this.remoteParticipantMenu.destroy();
+					this.callBacks.onTurnOffParticipantCam({userId: this.userModel.id});
+				}
+			});
+		}
+		if (menuItems.length === 0)
+		{
+			return;
+		}
+
+		let rect = Dom.getRelativePosition(this.elements.remoteParticipantButtonMenu, this.parentContainer)
+		this.remoteParticipantMenu = new Menu({
+			id: 'call-view-user-menu-' + this.userModel.id,
+			className: 'bx-call-remote-user-menu-container',
+			bindElement: {
+				left: rect.left,
+				top: rect.top,
+				bottom: rect.bottom
+			},
+			items: menuItems,
+			targetContainer: this.parentContainer,
+			darkMode: true,
+			autoHide: true,
+			closeByEsc: true,
+			cacheable: false,
+			offsetTop: 0,
+			offsetLeft: 0,
+			bindOptions: {
+				position: 'bottom'
+			},
+			angle: true,
+			overlay: {
+				backgroundColor: 'white', opacity: 0
+			},
+			cacheable: false,
+			events: {
+				onShow: (event) =>
+				{
+					//const popup = event.getTarget();
+					//popup.setAngle({offset: popup.getPopupContainer().offsetWidth / 2});
+				},
+				onPopupDestroy: () => this.remoteParticipantMenu = null
+			}
+		});
+		this.remoteParticipantMenu.show();
+	};
+
 	updateAvatar()
 	{
 		if (this.elements.root)
@@ -1281,6 +1383,22 @@ export class CallUser
 			{
 				this.elements.buttonPin.classList.add("no-text");
 				this.elements.buttonUnPin.classList.add("no-text");
+			}
+		}
+
+		if (!this.userModel.localUser)
+		{
+			this.currentBitrixCall = Util.getCurrentBitrixCall();
+			
+			this.isShowRemoteParticipantButtonMenu =
+			Util.isUserControlFeatureEnabled()
+			&& this.currentBitrixCall
+			&& this.currentBitrixCall.provider !== Provider.Plain
+            && !(this.currentBitrixCall.associatedEntity.type === 'chat' && this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');
+
+			if (this.isShowRemoteParticipantButtonMenu)
+			{
+				this.elements.panel.appendChild(this.elements.remoteParticipantButtonMenu);
 			}
 		}
 	};
@@ -1578,6 +1696,8 @@ export class CallUser
 		{
 			this.elements.nameContainer.classList.remove("extra-padding");
 		}
+
+		this.updateRemoteParticipantMenuState();
 	};
 
 	updateCameraState()
@@ -1603,7 +1723,17 @@ export class CallUser
 		{
 			this.elements.nameContainer.classList.remove("extra-padding");
 		}
+
+		this.updateRemoteParticipantMenuState();
 	};
+
+	updateRemoteParticipantMenuState()
+	{
+		if (this.remoteParticipantMenu)
+		{
+			this.showRemoteParticipantMenu();
+		}
+	}
 
 	updateVideoPaused()
 	{

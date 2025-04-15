@@ -7,8 +7,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity(CCrmOwnerType::Deal))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

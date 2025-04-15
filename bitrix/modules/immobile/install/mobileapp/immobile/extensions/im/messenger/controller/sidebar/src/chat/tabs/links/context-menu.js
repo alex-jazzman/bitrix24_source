@@ -133,6 +133,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/context-menu', (requi
 					notificationText: this.url,
 					notificationIcon: Icon.LINK,
 				},
+				true,
 			);
 			logger.log(`${this.constructor.name}.copyLink`);
 		}

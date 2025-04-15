@@ -610,10 +610,12 @@ if (
 				'counter' => 'menu_invite',
 				'onclick' => <<<JS
 						requireLazy('intranet:invite-opener-new')
-							.then(({ openIntranetInviteWidget }) => {
-								if (openIntranetInviteWidget)
+							.then(({ openIntranetInviteWidget, AnalyticsEvent }) => {
+								if (openIntranetInviteWidget && AnalyticsEvent)
 								{
-									openIntranetInviteWidget({});
+									openIntranetInviteWidget?.({
+										analytics: new AnalyticsEvent().setSection('more_menu')
+									});
 								}
 							});
 				JS,

@@ -176,7 +176,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		id: ActionType.profile,
 		testId: 'MESSAGE_MENU_ACTION_PROFILE',
 		type: ActionViewType.button,
-		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_PROFILE'),
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_PROFILE_MSGVER_1'),
 		iconName: Icon.PERSON.getIconName(),
 		iconFallbackUrl: Url.createFromPath(Icon.PERSON.getPath()).href,
 		iconSvg: icon.profile,

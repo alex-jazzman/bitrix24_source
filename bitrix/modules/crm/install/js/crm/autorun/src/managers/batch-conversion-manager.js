@@ -491,13 +491,10 @@ export class BatchConversionManager
 			}
 
 			this._failedItemCount++;
-			this.#sendAnalyticsData('error');
 		}
 
 		if (state === ProcessState.completed)
 		{
-			this.#sendAnalyticsData('success');
-
 			SummaryPanel.create(
 				this._id,
 				{

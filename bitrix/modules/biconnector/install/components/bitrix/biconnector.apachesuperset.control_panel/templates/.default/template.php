@@ -21,5 +21,6 @@ $APPLICATION->IncludeComponent(
 	[
 		'ID' => 'biconnector_superset_menu',
 		'ITEMS' => $arResult['MENU_ITEMS'],
+		'THEME' => defined('AIR_SITE_TEMPLATE') ? 'air' : null,
 	],
 );

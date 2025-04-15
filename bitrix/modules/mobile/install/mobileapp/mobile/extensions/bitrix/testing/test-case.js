@@ -45,7 +45,7 @@ jn.define('testing/test-case', (require, exports, module) => {
 		/**
 		 * @public
 		 */
-		async execute()
+		async execute(testError)
 		{
 			expectationCount.reset();
 
@@ -142,7 +142,7 @@ jn.define('testing/test-case', (require, exports, module) => {
 
 			if (error instanceof ExpectationFailed)
 			{
-				this.report.fail(`${this.prefix} ${this.title}`, error.expectedValue, error.actualValue);
+				this.report.fail(`${this.prefix} ${this.title}`, error.expectedValue, error.actualValue, error.trace);
 			}
 			else if (error instanceof TimeoutFailed)
 			{

@@ -59,6 +59,7 @@ $MESS["CRM_TIMELINE_EMPTY_COMMENT_MESSAGE"] = "Не вказаний текст 
 $MESS["CRM_TIMELINE_EXPAND"] = "Розгорнути";
 $MESS["CRM_TIMELINE_EXPAND_SM"] = "розгорнути";
 $MESS["CRM_TIMELINE_FASTEN_LIMIT_MESSAGE"] = "Тільки три події можна додати до обраного";
+$MESS["CRM_TIMELINE_FASTEN_LIMIT_MESSAGE_MSGVER_1"] = "Можна закріпити не більше 7 справ.";
 $MESS["CRM_TIMELINE_FILTER_BUTTON_CAPTION"] = "Фільтр";
 $MESS["CRM_TIMELINE_FILTER_EMPTY_RESULT_STUB"] = "Нічого не знайдено. Спробуйте змінити параметри фільтра.";
 $MESS["CRM_TIMELINE_FINAL_SUMMARY_BASKET_BASE_PRICE"] = "Загальна вартість товарів";

@@ -167,7 +167,10 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	    if (this.getMode() === CompactEventForm.EDIT_MODE && this.formDataChanged() && this.checkDataBeforeCloseMode && !fromPopup) {
-	      this.showConfirmClosePopup();
+	      if (this.checkTopSlider()) {
+	        this.showConfirmClosePopup();
+	      }
+
 	      // Workaround to prevent form closing even if user don't want to and presses "cancel" in confirm
 	      if (this.popup) {
 	        this.popup.destroyed = true;
@@ -202,16 +205,12 @@ this.BX = this.BX || {};
 			</div>
 
 			${0}
-
 			${0}
-
 			${0}
 
 			<div class="calendar-field-container calendar-field-container-info">
 				${0}
-
-					${0}
-
+				${0}
 				${0}
 				${0}
 			</div>
@@ -1052,6 +1051,7 @@ this.BX = this.BX || {};
 	    this.DOM.locationWrap = main_core.Tag.render(_t24 || (_t24 = _`<div class="calendar-field-place"></div>`));
 	    this.locationSelector = new calendar_controls.Location({
 	      wrap: this.DOM.locationWrap,
+	      readOnly: !this.canDo('edit'),
 	      richLocationEnabled: this.locationFeatureEnabled,
 	      hideLocationLock: this.isCollabUser,
 	      locationList: this.locationList || [],
@@ -1073,11 +1073,11 @@ this.BX = this.BX || {};
 	    const locationName = this.locationSelector.getTextLocation(calendar_controls.Location.parseStringValue(this.entry.getLocation()));
 	    this.DOM.editLocationInFullForm = main_core.Tag.render(_t25 || (_t25 = _`
 			<div class="calendar-field-place-link">
-				<span class="calendar-notification-text">
+				<span class="calendar-text-link">
 					${0}
 				</span>
 			</div>
-		`), locationName || main_core.Loc.getMessage('EC_REMIND1_ADD'));
+		`), BX.util.htmlspecialchars(locationName) || main_core.Loc.getMessage('EC_REMIND1_ADD'));
 	    main_core.Event.bind(this.DOM.editLocationInFullForm, 'click', () => this.editEntryInSlider('location'));
 	    main_core.Dom.style(this.DOM.editLocationInFullForm, 'display', this.shouldShowFakeLocationControl() ? '' : 'none');
 	    this.DOM.locationOuterWrap = main_core.Tag.render(_t26 || (_t26 = _`

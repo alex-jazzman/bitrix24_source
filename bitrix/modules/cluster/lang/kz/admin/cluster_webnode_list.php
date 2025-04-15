@@ -1,0 +1,20 @@
+<?php
+$MESS["CLU_WEBNODE_LIST_ADD"] = "Жаңа веб-серверді қосу";
+$MESS["CLU_WEBNODE_LIST_ADD_TITLE"] = "Мониторинг үшін жаңа веб-сервер қосу";
+$MESS["CLU_WEBNODE_LIST_DELETE"] = "Жою";
+$MESS["CLU_WEBNODE_LIST_DELETE_CONF"] = "Веб-серверді жою керек пе?";
+$MESS["CLU_WEBNODE_LIST_DESCRIPTION"] = "Сипаттама";
+$MESS["CLU_WEBNODE_LIST_EDIT"] = "Өзгерту";
+$MESS["CLU_WEBNODE_LIST_FLAG"] = "Күйі";
+$MESS["CLU_WEBNODE_LIST_HOST"] = "Сервер";
+$MESS["CLU_WEBNODE_LIST_ID"] = "ID";
+$MESS["CLU_WEBNODE_LIST_NAME"] = "Атауы";
+$MESS["CLU_WEBNODE_LIST_NOTE"] = "<p>Бұл парақшада веб-серверлердің белсенділігі мен ағымдағы жүктеме мәртебелері көрсетілген.</p>
+<p>Веб-сервердің мәртебесін көрсету үшін <a href=\"http://httpd.apache.org/docs/2.2/mod/mod_status.html\">mod_status<a> модулін қосу және баптау қажет. </p>";
+$MESS["CLU_WEBNODE_LIST_REFRESH"] = "Жаңарту";
+$MESS["CLU_WEBNODE_LIST_STATUS"] = "Мәртебе";
+$MESS["CLU_WEBNODE_LIST_STATUS_URL"] = "Мәртебенің URL";
+$MESS["CLU_WEBNODE_LIST_TITLE"] = "Веб-серверлер";
+$MESS["CLU_WEBNODE_NOCONNECTION"] = "қосылым жоқ";
+$MESS["CLU_WEBNODE_STATUS_ERROR"] = "Мәртебені алу қатесі";
+$MESS["CLU_WEBNODE_UPTIME"] = "жұмыс уақыты";

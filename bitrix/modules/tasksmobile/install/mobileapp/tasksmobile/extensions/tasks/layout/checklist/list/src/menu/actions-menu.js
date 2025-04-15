@@ -167,7 +167,14 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 			}
 
 			const { onAddFile, onBlur } = this.props;
-			const { canUpdate, canAdd, canTabOut, canTabIn, hasAnotherCheckLists } = this.getPermissions();
+			const {
+				canUpdate,
+				canAdd,
+				canTabOut,
+				canTabIn,
+				hasAnotherCheckLists,
+				canAddAccomplice,
+			} = this.getPermissions();
 
 			return View(
 				{
@@ -204,7 +211,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.auditor],
 						size: ICON_SIZE,
 						disabled: (
-							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.auditor].isRestricted()
+							!canAddAccomplice || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.auditor].isRestricted()
 						),
 						style: {
 							marginRight: ICON_MARGIN,
@@ -217,7 +224,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.accomplice],
 						size: ICON_SIZE,
 						disabled: (
-							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.accomplice].isRestricted()
+							!canAddAccomplice || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.accomplice].isRestricted()
 						),
 						style: {
 							marginRight: ICON_MARGIN,
@@ -304,7 +311,8 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 
 		renderIconView(iconProps)
 		{
-			const { useRef, onClick, id, ...restProps } = iconProps;
+			const { useRef, onClick, id, disabled, ...restProps } = iconProps;
+			const isRestricted = MEMBER_TYPE_RESTRICTION_FEATURE_META[id]?.isRestricted?.();
 
 			return IconView({
 				testId: this.getTestId(id),
@@ -315,11 +323,12 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 					}
 				},
 				onClick: () => {
-					if (this.isShown)
+					if (this.isShown && (!disabled || isRestricted))
 					{
 						onClick?.(this.targetRefMap.get(id));
 					}
 				},
+				disabled,
 				...restProps,
 			});
 		}

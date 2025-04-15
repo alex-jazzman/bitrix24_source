@@ -156,6 +156,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			},
 			chatJoinButton: {
 				tap: 'tap',
+				hideDone: 'hideDone',
 			},
 			pinPanel: {
 				itemTap: 'itemTap',
@@ -170,6 +171,12 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			},
 			actionPanel: {
 				buttonTap: 'buttonTap',
+			},
+			mentionPanel: {
+				itemTap: 'itemTap',
+			},
+			commentsButton: {
+				tap: 'tap',
 			},
 		},
 		/** Integration (other components events) */

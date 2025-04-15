@@ -1,11 +1,21 @@
 import { StepBlock } from '../layout/step-block';
 import { BaseStep } from './base-step';
 import { FormatTable } from './data-type/format-table';
+import { SyncFieldsButton } from './data-type/sync-fields-button';
 import '../css/fields-settings.css';
 
 export const FieldsSettingsStep = {
-	emits: ['parsingOptionsChanged', 'settingsChanged'],
+	emits: ['parsingOptionsChanged', 'settingsChanged', 'syncFields'],
 	extends: BaseStep,
+	props: {
+		syncFieldsProps: {
+			type: Object,
+			default: {
+				supported: false,
+				disabled: true,
+			},
+		},
+	},
 	computed: {
 		fieldsSettings()
 		{
@@ -37,7 +47,7 @@ export const FieldsSettingsStep = {
 			this.$store.state.config.fieldsSettings.forEach((field, index) => {
 				const invalidFields = {};
 
-				if (!this.isEditMode)
+				if (!field.id)
 				{
 					const nameValidationResult = this.validateName(field.name);
 					if (!nameValidationResult.result)
@@ -57,6 +67,14 @@ export const FieldsSettingsStep = {
 		isEditMode()
 		{
 			return this.$store.getters.isEditMode;
+		},
+		isSyncSupported(): boolean
+		{
+			return this.syncFieldsProps.supported;
+		},
+		isSyncDisabled(): boolean
+		{
+			return this.syncFieldsProps.disabled;
 		},
 	},
 	methods: {
@@ -157,6 +175,7 @@ export const FieldsSettingsStep = {
 	components: {
 		Step: StepBlock,
 		FormatTable,
+		SyncFieldsButton,
 	},
 	// language=Vue
 	template: `
@@ -167,6 +186,7 @@ export const FieldsSettingsStep = {
 			:disabled="disabled"
 			ref="stepBlock"
 		>
+			<SyncFieldsButton v-if="isSyncSupported" :disabled="isSyncDisabled" @button-click="this.$emit('syncFields')"/>
 			<div class="ui-form-row fields-settings">
 				<FormatTable
 					:fields-settings="fieldsSettings"
@@ -175,7 +195,6 @@ export const FieldsSettingsStep = {
 					@row-field-changed="onRowFieldChanged"
 					:unvalidated-rows="unvalidatedRows"
 					ref="formatTable"
-					:is-edit-mode="isEditMode"
 				/>
 			</div>
 		</Step>

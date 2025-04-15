@@ -45,8 +45,7 @@ function __ExtSaleWizardShowError($text)
 	exit();
 }
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 	__ExtSaleWizardShowError(GetMessage('CRM_PERMISSION_DENIED'));
 
 $id = intval($_REQUEST["id"]);

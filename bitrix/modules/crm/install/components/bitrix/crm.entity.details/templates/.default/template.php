@@ -79,8 +79,9 @@ $tabContainerId = "{$guid}_tabs";
 					'CONVERSION_TYPE_ID' => $arResult['CONVERSION_TYPE_ID'],
 					'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'],
 					'CONVERTER_ID' => $arResult['CONVERTER_ID'],
-					'READ_ONLY' => !$arResult['ENABLE_PROGRESS_CHANGE']
-				)
+					'READ_ONLY' => !$arResult['ENABLE_PROGRESS_CHANGE'],
+					'ENTITY_EDITOR_GUID' => $arResult['EDITOR']['GUID'] ?? '',
+				),
 			),
 			$component,
 			array('HIDE_ICONS' => 'Y')
@@ -227,15 +228,21 @@ $tabContainerId = "{$guid}_tabs";
 			]
 		);
 
-		if ($hasBizprocData): ?>
+		if ($hasBizprocData):
+
+			$hasClass = defined('Bitrix\UI\Buttons\Icon::BUSINESS_NEW'); //TODO delete conditional statements in future version
+			$btnBizprocClass =
+				$hasClass
+					? ' ui-btn-primary-border ui-btn-icon-business-new'
+					: ' ui-btn-light-border ui-btn-icon-business bp_starter';
+		?>
 	</div>
 	<div class="crm-entity-bizproc-container">
 		<button
 			id="crm_entity_bp_starter"
-			class="ui-btn ui-btn-sm ui-btn-round ui-btn-light-border ui-btn-no-caps bp_starter"
+			class="ui-btn ui-btn-sm ui-btn-round ui-btn-no-caps<?= $btnBizprocClass ?>"
 			<?= $availabilityLock ? "onclick=\"{$availabilityLock}\"" : "" ?>
 		>
-			<?php $component->includeComponentTemplate('bp_starter_icon'); ?>
 			<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL')?>
 		</button>
 		<?php if (!$availabilityLock): ?>

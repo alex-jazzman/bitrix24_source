@@ -58,9 +58,6 @@ class SupersetDashboardSelector
 					dynamicSearch: true,
 				},
 			],
-			footer: [
-				this.#getFooter(),
-			],
 			enableSearch: true,
 			dropdownMode: true,
 			showAvatars: true,
@@ -119,32 +116,6 @@ class SupersetDashboardSelector
 	#handleSearchClick()
 	{
 		this.#dialog.show();
-	}
-
-	#getFooter(): HTMLElement
-	{
-		const footerLink = Tag.render`<span 
-			class="ui-selector-footer-link ui-selector-footer-link-add">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER')}
-			</span>`;
-
-		Event.bind(footerLink, 'click', () => {
-			if (this.#isMarketInstalled)
-			{
-				BX.SidePanel.Instance.open(this.#marketCollectionUrl, { customLeftBoundary: 0 });
-				BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('market', 'market_call', {
-					c_element: 'detail_button',
-				});
-			}
-			else
-			{
-				BX.UI.Notification.Center.notify({
-					content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER_MARKET_INSTALL_ERROR'),
-				});
-			}
-		});
-
-		return footerLink;
 	}
 
 	#setTitle(text: string)

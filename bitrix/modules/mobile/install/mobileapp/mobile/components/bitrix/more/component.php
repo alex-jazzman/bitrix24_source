@@ -452,6 +452,16 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 });
 
 $events = \Bitrix\Mobile\Tourist::getEvents();
+$winter2024RuReleaseTime = 1732579200; // 26.11.2024
+$winter2024WorldReleaseTime = 1733875200; // 11.12.2024
+
+$isCloud = Loader::includeModule('bitrix24');
+$isRussianRegion = false;
+if ($isCloud)
+{
+	$isRussianRegion = \CBitrix24::getPortalZone() === 'ru';
+}
+$thresholdTime = $isRussianRegion ? $winter2024RuReleaseTime : $winter2024WorldReleaseTime;
 
 $showPresetsCounter = false;
 if (!isset($events['visited_tab_presets']))
@@ -459,23 +469,13 @@ if (!isset($events['visited_tab_presets']))
 	$user = UserTable::getById($USER->GetID())->fetchObject();
 	if ($user && $user->getDateRegister())
 	{
-		$time = 1733875200;
-		if (\CModule::IncludeModule('bitrix24'))
-		{
-			$zone = \CBitrix24::getPortalZone();
-			if ($zone === 'ru')
-			{
-				$time = 1732579200;
-			}
-		}
-
-		$showPresetsCounter = $user->getDateRegister()->getTimestamp() > $time;
+		$showPresetsCounter = $user->getDateRegister()->getTimestamp() > $thresholdTime;
 	}
 }
 
 $usersCount = 0;
 $isUserFirstTimeInInvitations = !isset($events['visit_invitations']);
-$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
+$isUserAdmin = (($isCloud ? \CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
 
 if (
 	$isUserFirstTimeInInvitations
@@ -488,6 +488,29 @@ if (
 }
 
 $showDiskCounter = !isset($events['visited_disk_tabs']);
+if ($showDiskCounter)
+{
+	$portalCreatedTime = null;
+	if ($isCloud)
+	{
+		$portalCreatedTime = (int)\CBitrix24::getCreateTime();
+	}
+	else
+	{
+		$userQueryResult = \Bitrix\Main\UserTable::query()
+			->setSelect(['ID', 'DATE_REGISTER'])
+			->where('ID', 1)
+			->setLimit(1)
+			->fetchObject();
+
+		$portalCreatedTime = $userQueryResult?->getDateRegister()->getTimestamp();
+	}
+
+	if ($portalCreatedTime !== null)
+	{
+		$showDiskCounter = $portalCreatedTime < $thresholdTime;
+	}
+}
 
 $arResult = array_merge($arResult, [
 	"counterList" => $counterList,

@@ -3,7 +3,6 @@
  */
 jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	const { Color } = require('tokens');
-	const { Feature } = require('feature');
 	const { PropTypes } = require('utils/validation');
 	const { outline, Icon } = require('assets/icons');
 	const { OutlineIconTypes } = require('assets/icons/types');
@@ -34,7 +33,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	{
 		static isFallbackUrlSupported()
 		{
-			return Feature.isFallbackUrlSupported();
+			return Application.getApiVersion() >= 55;
 		}
 
 		render()
@@ -90,9 +89,6 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 		getEnumIconParams()
 		{
 			const { icon } = this.props;
-
-			const named = icon.getIconName();
-			const path = icon.getPath();
 			const svgContent = icon.getSvg();
 
 			if (svgContent)
@@ -104,12 +100,26 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				};
 			}
 
-			if (IconView.isFallbackUrlSupported())
+			const named = icon.getIconName();
+			const path = icon.getPath();
+			const domainPath = withCurrentDomain(path);
+			const isFallbackUrlSupported = IconView.isFallbackUrlSupported();
+
+			if (isFallbackUrlSupported)
 			{
 				return {
 					named: {
 						named,
-						fallbackUrl: withCurrentDomain(path),
+						fallbackUrl: domainPath,
+					},
+				};
+			}
+
+			if (path && !isFallbackUrlSupported)
+			{
+				return {
+					svg: {
+						uri: domainPath,
 					},
 				};
 			}

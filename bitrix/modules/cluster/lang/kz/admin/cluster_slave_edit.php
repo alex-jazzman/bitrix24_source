@@ -1,0 +1,19 @@
+<?php
+$MESS["CLU_SLAVE_EDIT_DB_HOST"] = "Деректер базасына қосылу жолы";
+$MESS["CLU_SLAVE_EDIT_DB_LOGIN"] = "Пайдаланушы";
+$MESS["CLU_SLAVE_EDIT_DB_NAME"] = "Дерекқор";
+$MESS["CLU_SLAVE_EDIT_DESCRIPTION"] = "Сипаттама";
+$MESS["CLU_SLAVE_EDIT_EDIT_TITLE1"] = "Slave дерекқор параметрлері";
+$MESS["CLU_SLAVE_EDIT_EDIT_TITLE2"] = "Басты дерекқор параметрлері";
+$MESS["CLU_SLAVE_EDIT_ERROR"] = "Редакциялау үшін қате қосылым көрсетілген.";
+$MESS["CLU_SLAVE_EDIT_ID"] = "ID";
+$MESS["CLU_SLAVE_EDIT_MENU_LIST"] = "Тізім";
+$MESS["CLU_SLAVE_EDIT_MENU_LIST_TITLE"] = "Slave дерекқорларының тізімі";
+$MESS["CLU_SLAVE_EDIT_NAME"] = "Атауы";
+$MESS["CLU_SLAVE_EDIT_SAVE_ERROR"] = "Дерекқорға қосылуды сақтау қатесі";
+$MESS["CLU_SLAVE_EDIT_SELECTABLE1"] = "Резервті көшірме жасау үшін";
+$MESS["CLU_SLAVE_EDIT_SELECTABLE2"] = "Жүктемені азайту";
+$MESS["CLU_SLAVE_EDIT_TAB"] = "Параметрлер";
+$MESS["CLU_SLAVE_EDIT_TAB_TITLE1"] = "Slave дерекқор параметрлерін баптау";
+$MESS["CLU_SLAVE_EDIT_TAB_TITLE2"] = "Басты дерекқор параметрлерін баптау";
+$MESS["CLU_SLAVE_EDIT_WEIGHT"] = "Жүктемені бөлу пайызы (0..100)";

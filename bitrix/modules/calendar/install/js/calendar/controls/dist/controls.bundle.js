@@ -700,6 +700,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    };
 	    this.roomsManager = params.roomsManager || null;
 	    this.locationAccess = params.locationAccess || false;
+	    this.readOnly = params.readOnly || false;
 	    this.disabled = !params.richLocationEnabled;
 	    this.hideLocationLock = params.hideLocationLock;
 	    this.value = {
@@ -1039,6 +1040,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.updateAccessibilityDebounce();
 	  }
 	  updateAccessibility() {
+	    if (this.readOnly) {
+	      return;
+	    }
 	    const params = this.accessibilityParams;
 	    this.getLocationAccessibility(params.from, params.to).then(() => {
 	      const timezone = params.timezone && params.timezone !== '' ? params.timezone : calendar_util.Util.getUserSettings().timezoneName;
@@ -1056,7 +1060,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	            continue;
 	          }
 	          for (const event of Location.accessibility[date][roomId]) {
-	            if (parseInt(event.PARENT_ID) === parseInt(params.currentEventId)) {
+	            if (parseInt(event.PARENT_ID, 10) === parseInt(params.currentEventId, 10)) {
 	              continue;
 	            }
 	            let eventTimezoneOffset = 0;
@@ -1418,6 +1422,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    });
 	  }
 	  setCategoryManager() {
+	    if (this.readOnly) {
+	      return;
+	    }
 	    if (!this.categoryManagerFromDB) {
 	      this.getCategoryManager().then(this.getCategoryManagerData());
 	    }
@@ -2001,9 +2008,12 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    } else if (this.mode === 'inline') {
 	      this.DOM.select = this.DOM.outerWrap;
 	    } else {
-	      this.DOM.select = this.DOM.outerWrap.appendChild(main_core.Tag.render(_t5$3 || (_t5$3 = _$3`<div class="calendar-field calendar-field-select"></div>`)));
+	      this.DOM.select = this.DOM.outerWrap.appendChild(main_core.Tag.render(_t5$3 || (_t5$3 = _$3`
+				<div class="calendar-field calendar-field-select"></div>
+			`)));
 	      this.DOM.innerValue = this.DOM.select.appendChild(main_core.Tag.render(_t6$2 || (_t6$2 = _$3`
-				<div class="calendar-field-select-icon" style="background-color: ${0}"></div>`), this.getCurrentColor()));
+				<div class="calendar-field-select-icon" style="background-color: ${0}"></div>
+			`), this.getCurrentColor()));
 	      if (this.mode === 'full') {
 	        this.DOM.selectInnerText = this.DOM.select.appendChild(main_core.Tag.render(_t7$2 || (_t7$2 = _$3`<span>${0}</span>`), main_core.Text.encode(this.getCurrentTitle())));
 	      }
@@ -2029,7 +2039,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        if (sectionGroup.belongsToView) {
 	          filteredList = sectionList.filter(section => {
 	            return SectionSelector.getSectionType(section) === this.defaultCalendarType && SectionSelector.getSectionOwner(section) === this.defaultOwnerId;
-	          }, this);
+	          });
 	        } else if (sectionGroup.type === 'user' || sectionGroup.type === 'location') {
 	          filteredList = sectionList.filter(section => {
 	            return SectionSelector.getSectionType(section) === 'user' && SectionSelector.getSectionOwner(section) === sectionGroup.ownerId;
@@ -2049,7 +2059,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        }
 	        filteredList = filteredList.filter(section => {
 	          const id = parseInt(section.id || section.ID);
-	          if (sectionIdList.includes(id)) return false;
+	          if (sectionIdList.includes(id)) {
+	            return false;
+	          }
 	          sectionIdList.push(id);
 	          return true;
 	        });
@@ -2075,11 +2087,11 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      offsetLeft = 0;
 	    }
 	    this.sectionMenu = main_popup.MenuManager.create(this.id, this.DOM.select, menuItems, {
+	      offsetLeft,
 	      closeByEsc: true,
 	      autoHide: true,
 	      zIndex: this.zIndex,
 	      offsetTop: 0,
-	      offsetLeft: offsetLeft,
 	      angle: this.mode === 'compact'
 	    });
 	    this.sectionMenu.popupWindow.contentContainer.style.overflow = "auto";
@@ -2124,22 +2136,26 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    });
 	  }
 	  updateSectionImageNode(section) {
+	    var _section;
 	    if (!main_core.Type.isElementNode(this.DOM.selectImageWrap)) {
 	      return;
 	    }
 	    if (section === undefined) {
-	      section = this.sectionList.find(section => {
-	        return parseInt(section.id) === parseInt(this.getCurrentSection().id);
+	      // eslint-disable-next-line no-param-reassign
+	      section = this.sectionList.find(it => {
+	        return parseInt(it.id, 10) === parseInt(this.getCurrentSection().id, 10);
 	      });
 	    }
-	    if (section && section.type) {
-	      const imageSrc = SectionSelector.getSectionImage(section);
-	      let imageNode;
+	    let imageNode;
+	    if ((_section = section) != null && _section.type || this.defaultCalendarType) {
+	      var _section2;
+	      const type = ((_section2 = section) == null ? void 0 : _section2.type) || this.defaultCalendarType;
+	      const imageSrc = section ? SectionSelector.getSectionImage(section) : null;
 	      if (imageSrc) {
-	        imageNode = main_core.Tag.render(_t8$1 || (_t8$1 = _$3`<img class="calendar-field-choice-calendar-img-value" src="${0}">`), encodeURI(imageSrc));
-	      } else if (section.type === 'group') {
+	        imageNode = main_core.Tag.render(_t8$1 || (_t8$1 = _$3`<img class="calendar-field-choice-calendar-img-value" src="${0}" alt="">`), encodeURI(imageSrc));
+	      } else if (type === 'group') {
 	        imageNode = main_core.Tag.render(_t9 || (_t9 = _$3`<div class="ui-icon ui-icon-common-user-group"><i></i></div>`));
-	      } else if (section.type === 'user') {
+	      } else if (type === 'user') {
 	        imageNode = main_core.Tag.render(_t10 || (_t10 = _$3`<div class="ui-icon ui-icon-common-user"><i></i></div>`));
 	      } else {
 	        imageNode = main_core.Tag.render(_t11 || (_t11 = _$3`<div class="ui-icon ui-icon-common-bitrix24"><i></i></div>`));
@@ -2184,7 +2200,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    return section.data ? section.data.IMAGE : section.IMAGE || '';
 	  }
 	  static getSectionOwner(section) {
-	    return parseInt(section.OWNER_ID || section.data.OWNER_ID);
+	    return parseInt(section.OWNER_ID || section.data.OWNER_ID, 10);
 	  }
 	  updateValue() {
 	    if (main_core.Type.isDomNode(this.DOM.innerValue)) {
@@ -3448,9 +3464,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.to = null;
 	    this.setEventNamespace('BX.Calendar.Controls.DateTimeControl');
 	    this.showTimezone = options.showTimezone;
-	    this.inlineEditMode = !!options.inlineEditMode;
+	    this.inlineEditMode = Boolean(options.inlineEditMode);
 	    this.currentInlineEditMode = options.currentInlineEditMode || 'view';
-	    this.UID = uid || 'date-time-' + Math.round(Math.random() * 100000);
+	    this.UID = uid || `date-time-${Math.round(Math.random() * 100000)}`;
 	    this.DOM = {
 	      outerWrap: options.outerWrap || null,
 	      outerContent: options.outerContent || null
@@ -3484,7 +3500,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        this.DOM.toTimeText = this.DOM.rightInnerWrap.appendChild(main_core.Tag.render(_t9$1 || (_t9$1 = _$a`<span class="calendar-field-value calendar-field-value-time"></span>`)));
 	      }
 	      this.DOM.toDate = this.DOM.rightInnerWrap.appendChild(main_core.Tag.render(_t10$1 || (_t10$1 = _$a`
-				<input class="calendar-field calendar-field-datetime" value="" type="text" autocomplete="off" style="width: ${0}px;"/>`), this.DATE_INPUT_WIDTH));
+				<input class="calendar-field calendar-field-datetime" value="" type="text" autocomplete="off" style="width: ${0}px;"/>
+			`), this.DATE_INPUT_WIDTH));
 	      if (this.inlineEditMode) {
 	        this.DOM.toDateText = this.DOM.rightInnerWrap.appendChild(main_core.Tag.render(_t11$1 || (_t11$1 = _$a`<span class="calendar-field-value calendar-field-value-date"></span>`)));
 	      }
@@ -3496,7 +3513,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        input: this.DOM.toTime,
 	        onChangeCallback: this.handleTimeToChange.bind(this)
 	      });
-	      let fullDayWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_t12 || (_t12 = _$a`
+	      const fullDayWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_t12 || (_t12 = _$a`
 				<span class="calendar-event-full-day"></span>
 			`)));
 	      this.DOM.fullDay = fullDayWrap.appendChild(main_core.Tag.render(_t13 || (_t13 = _$a`
@@ -3505,8 +3522,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      fullDayWrap.appendChild(main_core.Tag.render(_t14 || (_t14 = _$a`<label for="{this.UID}">${0}</label>`), main_core.Loc.getMessage('EC_ALL_DAY')));
 	    }
 
-	    //this.DOM.defTimezoneWrap = BX(this.UID + '_timezone_default_wrap');
-	    //this.DOM.defTimezone = BX(this.UID + '_timezone_default');
+	    // this.DOM.defTimezoneWrap = BX(this.UID + '_timezone_default_wrap');
+	    // this.DOM.defTimezone = BX(this.UID + '_timezone_default');
 
 	    if (this.showTimezone) ;
 	    this.bindEventHandlers();
@@ -3587,7 +3604,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    return new Date(parsedDate.getTime() + minutes * 60 * 1000);
 	  }
 	  getValue() {
-	    let value = {
+	    const value = {
 	      fullDay: this.DOM.fullDay.checked,
 	      fromDate: this.DOM.fromDate.value,
 	      toDate: this.DOM.toDate.value,
@@ -3606,8 +3623,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        value.from.setHours(0, 0, 0);
 	        value.to.setHours(0, 0, 0);
 	      } else {
-	        let fromTime = calendar_util.Util.parseTime(value.fromTime),
-	          toTime = calendar_util.Util.parseTime(value.toTime) || fromTime;
+	        const fromTime = calendar_util.Util.parseTime(value.fromTime);
+	        const toTime = calendar_util.Util.parseTime(value.toTime) || fromTime;
 	        if (fromTime && toTime) {
 	          value.from.setHours(fromTime.h, fromTime.m, 0);
 	          value.to.setHours(toTime.h, toTime.m, 0);
@@ -3634,7 +3651,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    }
 	    if (main_core.Type.isDomNode(this.DOM.defTimezone)) {
 	      main_core.Event.bind(this.DOM.defTimezone, 'change', BX.delegate(function () {
-	        //this.calendar.util.setUserOption('timezoneName', this.DOM.defTimezone.value);
+	        // this.calendar.util.setUserOption('timezoneName', this.DOM.defTimezone.value);
 	        if (this.bindFromToDefaultTimezones) {
 	          this.DOM.fromTz.value = this.DOM.toTz.value = this.DOM.defTimezone.value;
 	        }
@@ -3644,22 +3661,22 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      if (main_core.Type.isDomNode(this.DOM.tzButton)) {
 	        main_core.Event.bind(this.DOM.tzButton, 'click', this.switchTimezone.bind(this));
 	      }
-	      main_core.Event.bind(this.DOM.fromTz, 'change', function () {
+	      main_core.Event.bind(this.DOM.fromTz, 'change', () => {
 	        if (this.bindTimezones) {
 	          this.DOM.toTz.value = this.DOM.fromTz.value;
 	        }
 	        this.bindFromToDefaultTimezones = false;
-	      }.bind(this));
-	      main_core.Event.bind(this.DOM.toTz, 'change', function () {
+	      });
+	      main_core.Event.bind(this.DOM.toTz, 'change', () => {
 	        this.bindTimezones = false;
 	        this.bindFromToDefaultTimezones = false;
-	      }.bind(this));
+	      });
 	      this.bindTimezones = this.DOM.fromTz.value === this.DOM.toTz.value;
 	      this.bindFromToDefaultTimezones = this.bindTimezones && this.DOM.fromTz.value === this.DOM.toTz.value && this.DOM.fromTz.value === this.DOM.defTimezone.value;
 	    }
 	  }
 	  static showInputCalendar(e) {
-	    let target = e.target || e.srcElement;
+	    const target = e.target || e.srcElement;
 	    if (main_core.Type.isDomNode(target) && target.nodeName.toLowerCase() === 'input') {
 	      const calendarControl = BX.calendar.get();
 	      if (calendarControl.popup) {
@@ -3735,7 +3752,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    }
 	    if (this.getTo()) {
 	      const difference = this.getFrom().getTime() - this.from.getTime();
-	      this.toMinutes = this.toMinutes + difference / (60 * 1000);
+	      this.toMinutes += difference / (60 * 1000);
 	    }
 	    this.handleValueChange();
 	  }
@@ -3749,7 +3766,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    }
 	    if (this.getTo() < this.getFrom()) {
 	      const difference = this.getTo().getTime() - this.to.getTime();
-	      this.fromMinutes = this.fromMinutes + difference / (60 * 1000);
+	      this.fromMinutes += difference / (60 * 1000);
 	      const newFromDate = new Date(this.from.getTime() + difference);
 	      this.DOM.fromTime.value = calendar_util.Util.formatTime(newFromDate);
 	      this.DOM.fromDate.value = calendar_util.Util.formatDate(newFromDate);
@@ -3773,7 +3790,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      let amPmSymbol = ((_timeSelector$value$t = timeSelector.value.toLowerCase().match(/[ap]/g)) != null ? _timeSelector$value$t : []).pop();
 	      if (!amPmSymbol) {
 	        const hour = parseInt(this.getMinutesAndHours(time).hours);
-	        if (8 <= hour && hour <= 11) {
+	        if (hour >= 8 && hour <= 11) {
 	          amPmSymbol = 'a';
 	        } else {
 	          amPmSymbol = 'p';
@@ -3801,8 +3818,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      minutes
 	    } = this.getMinutesAndHours(value, key);
 	    if (hours && !minutes) {
-	      time = `${hours}`;
-	      if (value.length - time.length === 1 || value.indexOf(':') !== -1) {
+	      time = String(hours);
+	      if (value.length - time.length === 1 || value.includes(':')) {
 	        time += ':';
 	      }
 	    }
@@ -3813,53 +3830,54 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      var _value$toLowerCase$ma;
 	      const amPmSymbol = ((_value$toLowerCase$ma = value.toLowerCase().match(/[ap]/g)) != null ? _value$toLowerCase$ma : []).pop();
 	      if (amPmSymbol === 'a') {
-	        time = this.beautifyTime(time) + ' am';
+	        time = `${time} am`;
 	      }
 	      if (amPmSymbol === 'p') {
-	        time = this.beautifyTime(time) + ' pm';
+	        time = `${time} pm`;
 	      }
 	    }
 	    return time;
 	  }
 	  getMinutesAndHours(value, key) {
-	    let time = this.clearTimeString(value, key);
-	    let hours, minutes;
-	    if (time.indexOf(':') !== -1) {
-	      hours = time.match(/[\d]*:/g)[0].slice(0, -1);
-	      minutes = time.match(/:[\d]*/g)[0].slice(1);
+	    const time = this.clearTimeString(value, key);
+	    // eslint-disable-next-line init-declarations
+	    let hours;
+	    // eslint-disable-next-line init-declarations
+	    let minutes;
+	    if (time.includes(':')) {
+	      hours = time.match(/\d*:/g)[0].slice(0, -1);
+	      minutes = time.match(/:\d*/g)[0].slice(1);
 	    } else {
 	      var _time$match;
-	      const digits = ((_time$match = time.match(/\d/g)) != null ? _time$match : []).splice(0, 4).map(d => parseInt(d));
+	      const digits = ((_time$match = time.match(/\d/g)) != null ? _time$match : []).splice(0, 4).map(d => parseInt(d, 10));
 	      if (digits.length === 4 && digits[0] > this.getMaxHours() / 10) {
 	        digits.pop();
 	      }
 	      if (digits.length === 1) {
-	        hours = `${digits[0]}`;
+	        hours = String(digits[0]);
 	      }
 	      if (digits.length === 2) {
 	        hours = `${digits[0]}${digits[1]}`;
-	        if (parseInt(hours) > this.getMaxHours()) {
-	          hours = `${digits[0]}`;
-	          minutes = `${digits[1]}`;
+	        if (parseInt(hours, 10) > this.getMaxHours()) {
+	          hours = String(digits[0]);
+	          minutes = String(digits[1]);
 	        }
 	      }
 	      if (digits.length === 3) {
 	        if (BX.isAmPmMode()) {
-	          if (digits[0] >= 1) {
-	            hours = `${digits[0]}`;
+	          if (digits[0] > 1) {
+	            hours = String(digits[0]);
 	            minutes = `${digits[1]}${digits[2]}`;
 	          } else {
 	            hours = `${digits[0]}${digits[1]}`;
-	            minutes = `${digits[2]}`;
+	            minutes = String(digits[2]);
 	          }
+	        } else if (parseInt(`${digits[0]}${digits[1]}`, 10) < 24) {
+	          hours = `${digits[0]}${digits[1]}`;
+	          minutes = String(digits[2]);
 	        } else {
-	          if (parseInt(`${digits[0]}${digits[1]}`) < 24) {
-	            hours = `${digits[0]}${digits[1]}`;
-	            minutes = `${digits[2]}`;
-	          } else {
-	            hours = `${digits[0]}`;
-	            minutes = `${digits[1]}${digits[2]}`;
-	          }
+	          hours = String(digits[0]);
+	          minutes = `${digits[1]}${digits[2]}`;
 	        }
 	      }
 	      if (digits.length === 4) {
@@ -3879,18 +3897,19 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    };
 	  }
 	  clearTimeString(str, key) {
-	    let validatedTime = str.replace(/[ap]/g, '').replace(/\D/g, ':'); // remove a and p and replace not digits to :
+	    let validatedTime = str.replaceAll(/[amp]/g, '').trim().replaceAll(/\D/g, ':'); // remove a and p and replace not digits to :
 	    validatedTime = validatedTime.replace(/:*/, ''); // remove everything before first digit
 
 	    // leave only first :
 	    const firstColonIndex = validatedTime.indexOf(':');
-	    validatedTime = validatedTime.substr(0, firstColonIndex + 1) + validatedTime.slice(firstColonIndex + 1).replaceAll(':', '');
+	    validatedTime = validatedTime.slice(0, Math.max(0, firstColonIndex + 1)) + validatedTime.slice(firstColonIndex + 1).replaceAll(':', '');
 
 	    // leave not more than 2 hour digits and 2 minute digits
 	    if (firstColonIndex !== -1) {
-	      const hours = this.formatHours(validatedTime.match(/[\d]*:/g)[0].slice(0, -1));
-	      const minutes = validatedTime.match(/:[\d]*/g)[0].slice(1).slice(0, 3);
-	      if (hours.length === 1 && minutes.length === 3 && !isNaN(parseInt(key)) && this.areTimeDigitsCorrect(`${hours}${minutes}`)) {
+	      const hours = this.formatHours(validatedTime.match(/\d*:/g)[0].slice(0, -1));
+	      const minutes = validatedTime.match(/:\d*/g)[0].slice(1).slice(0, 3);
+	      // eslint-disable-next-line no-restricted-globals
+	      if (hours.length === 1 && minutes.length === 3 && !isNaN(parseInt(key, 10)) && this.areTimeDigitsCorrect(`${hours}${minutes}`)) {
 	        return `${hours}${minutes}`;
 	      }
 	      return `${hours}:${minutes}`;
@@ -3904,14 +3923,14 @@ this.BX.Calendar = this.BX.Calendar || {};
 	  }
 	  formatHours(str) {
 	    const firstDigit = str[0];
-	    if (parseInt(firstDigit) > this.getMaxHours() / 10) {
+	    if (parseInt(firstDigit, 10) > this.getMaxHours() / 10) {
 	      return `0${firstDigit}`;
 	    }
-	    if (parseInt(str) <= this.getMaxHours()) {
+	    if (parseInt(str, 10) <= this.getMaxHours()) {
 	      var _str$;
 	      return `${firstDigit}${(_str$ = str[1]) != null ? _str$ : ''}`;
 	    }
-	    return `${firstDigit}`;
+	    return String(firstDigit);
 	  }
 	  formatMinutes(str) {
 	    var _str$2;
@@ -3925,7 +3944,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    if (this.clearTimeString(time) === '') {
 	      return '';
 	    }
-	    if (time.indexOf(':') === -1) {
+	    if (!time.includes(':')) {
 	      time += ':00';
 	    }
 	    if (time.indexOf(':') === time.length - 1) {
@@ -3943,7 +3962,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    return BX.isAmPmMode() ? 12 : 24;
 	  }
 	  handleFullDayChange() {
-	    let fullDay = this.getFullDayValue();
+	    const fullDay = this.getFullDayValue();
 	    if (fullDay) {
 	      if (main_core.Type.isDomNode(this.DOM.dateTimeWrap)) {
 	        main_core.Dom.addClass(this.DOM.dateTimeWrap, 'calendar-options-item-datetime-hide-time');
@@ -3975,7 +3994,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.toTimeControl.updateDurationHints(this.DOM.fromTime.value, this.DOM.toTime.value, this.DOM.fromDate.value, this.DOM.toDate.value);
 	  }
 	  getFullDayValue() {
-	    return !!this.DOM.fullDay.checked;
+	    return Boolean(this.DOM.fullDay.checked);
 	  }
 	  getMinutesFromFormattedTime(time) {
 	    const parsedTime = calendar_util.Util.parseTime(time);
@@ -4103,7 +4122,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.loadedAccessibilityData = {};
 	    this.REFRESH_PLANNER_DELAY = 500;
 	    this.setEventNamespace('BX.Calendar.Controls.UserPlannerSelector');
-	    this.selectorId = params.id || 'user-selector-' + Math.round(Math.random() * 10000);
+	    this.selectorId = params.id || `user-selector-${Math.round(Math.random() * 10000)}`;
 	    this.BX = calendar_util.Util.getBX();
 	    this.DOM = {
 	      outerWrap: params.outerWrap,
@@ -4528,8 +4547,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    return this.attendeeList.accepted.length + this.attendeeList.requested.length;
 	  }
 	  static getUserAvatarNode(user) {
-	    let imageNode,
-	      img = user.AVATAR || user.SMALL_AVATAR;
+	    let imageNode;
+	    let img = user.AVATAR || user.SMALL_AVATAR;
 	    if (user.COLLAB_USER) {
 	      imageNode = new ui_avatar.AvatarRoundGuest({
 	        size: 22,
@@ -4548,12 +4567,13 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      imageNode = main_core.Tag.render(_t2$7 || (_t2$7 = _$b`<div title="${0}" class="ui-icon ${0}"><i></i></div>`), main_core.Text.encode(user.DISPLAY_NAME), defaultAvatarClass);
 	    } else {
 	      imageNode = main_core.Tag.render(_t3$6 || (_t3$6 = _$b`
-			<img
-				title="${0}"
-				class="calendar-member"
-				id="simple_popup_${0}"
-				src="${0}"
-			>`), main_core.Text.encode(user.DISPLAY_NAME), parseInt(user.ID), encodeURI(img));
+				<img
+					title="${0}"
+					class="calendar-member"
+					id="simple_popup_${0}"
+					src="${0}"
+				>
+			`), main_core.Text.encode(user.DISPLAY_NAME), parseInt(user.ID, 10), encodeURI(img));
 	    }
 	    return imageNode;
 	  }
@@ -4590,11 +4610,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    return this.planner.isShown();
 	  }
 	  hasExternalEmailUsers(attendees = []) {
-	    return !!attendees.find(item => {
-	      return item.EMAIL_USER;
-	    }) || !!this.getEntityList().find(item => {
-	      return item.entityType === 'email';
-	    });
+	    return Boolean(attendees.some(item => item.EMAIL_USER)) || Boolean(this.getEntityList().some(item => item.entityType === 'email'));
 	  }
 	  destroy() {
 	    if (this.userSelectorDialog && this.userSelectorDialog.destroy) {
@@ -4697,7 +4713,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      return;
 	    }
 	    UserPlannerSelector.canEditAttendeesPopupShown = true;
-	    const hintPopup = new BX.PopupWindow('ui-hint-popup-' + +new Date(), this.DOM.changeLink, {
+	    const hintPopup = new BX.PopupWindow(`ui-hint-popup-${Date.now()}`, this.DOM.changeLink, {
 	      darkMode: true,
 	      content: main_core.Loc.getMessage('EC_EDIT_SHARING_EVENTS_FEATURE_POPUP_CONTENT'),
 	      angle: {
@@ -4706,9 +4722,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      },
 	      autoHide: true,
 	      animation: {
-	        showClassName: "calendar-edit-sharing-events-feature-popup-animation-open",
-	        closeClassName: "calendar-edit-sharing-events-feature-popup-animation-close",
-	        closeAnimationType: "animation"
+	        showClassName: 'calendar-edit-sharing-events-feature-popup-animation-open',
+	        closeClassName: 'calendar-edit-sharing-events-feature-popup-animation-close',
+	        closeAnimationType: 'animation'
 	      }
 	    });
 	    setTimeout(() => hintPopup.show(), 500);
@@ -5113,12 +5129,12 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.popup.menuItems.forEach(item => {
 	      const icon = item.layout.item.querySelector('.menu-popup-item-icon');
 	      if (main_core.Type.isPlainObject(item.dataset)) {
-	        icon.appendChild(calendar_controls.UserPlannerSelector.getUserAvatarNode(item.dataset.user));
+	        main_core.Dom.append(calendar_controls.UserPlannerSelector.getUserAvatarNode(item.dataset.user), icon);
 	      }
 	    });
 	  }
 	  getPopup(menuItems) {
-	    return main_popup.MenuManager.create('compact-event-form-attendees' + Math.round(Math.random() * 100000), this.node, menuItems, {
+	    return main_popup.MenuManager.create(`compact-event-form-attendees${Math.round(Math.random() * 100000)}`, this.node, menuItems, {
 	      closeByEsc: true,
 	      autoHide: true,
 	      zIndex: this.zIndex,
@@ -5161,7 +5177,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	            onclick: () => BX.SidePanel.Instance.open(user.URL, {
 	              loader: 'intranet:profile',
 	              cacheable: false,
-	              allowChangeHistory: false,
+	              allowChangeHistory: true,
 	              contentClassName: 'bitrix24-profile-slider-content',
 	              width: 1100
 	            })

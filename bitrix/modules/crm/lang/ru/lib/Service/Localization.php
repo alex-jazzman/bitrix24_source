@@ -232,6 +232,7 @@ $MESS["CRM_LOCALIZATION_FIELD_VALUE_WITH_TITLE"] = "#TITLE# #VALUE#";
 $MESS["CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED"] = "Это действие не поддерживается используемой базой данных";
 
 $MESS["CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED"] = "Недостаточно прав на смену стадии";
+$MESS["CRM_STAGE_UPDATE_LOADING_NOTIFICATION_MESSAGE"] = 'Переносим на стадию <b>#stage#</b>';
 
 $MESS["CRM_LIST_ALL"] = "Всего";
 $MESS["CRM_LIST_ALL_COUNT"] = "Всего: #COUNT#";

@@ -39,12 +39,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		AppStatus,
 		EventType,
 		RestMethod,
-		FeatureFlag,
 		ComponentCode,
 		OpenRequest,
 		MessengerInitRestMethod,
 		Analytics,
-		ViewName,
 	} = require('im/messenger/const');
 
 	const core = new ChatApplication({
@@ -174,27 +172,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.storeManager = this.core.getStoreManager();
 		}
 
-		/**
-		 * @override
-		 */
-		checkChatV2Support()
-		{
-			if (Feature.isChatV2Supported === true)
-			{
-				return true;
-			}
-
-			if (MessengerParams.shouldShowChatV2UpdateHint())
-			{
-				this.showUnsupportedWidget({
-					text: Loc.getMessage('IMMOBILE_MESSENGER_UPDATE_FOR_NEW_FEATURES_HINT'),
-					isOldBuild: false,
-				});
-			}
-
-			return false;
-		}
-
 		showUnsupportedWidget(props = {}, parentWidget = PageManager)
 		{
 			MobileFeature.showDefaultUnsupportedWidget(props, parentWidget);
@@ -232,7 +209,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.recent = new ChatRecent({
 				view: new RecentView({
 					ui: dialogList,
-					viewName: ViewName.recent,
 				}),
 			});
 
@@ -289,11 +265,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		preloadAssets()
 		{
-			if (FeatureFlag.dialog.nativeSupported)
-			{
-				// TODO: generalize the approach to background caching
-				(new ChatAssets()).preloadAssets();
-			}
+			// TODO: generalize the approach to background caching
+			(new ChatAssets()).preloadAssets();
 		}
 
 		/**

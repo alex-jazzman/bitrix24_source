@@ -26,8 +26,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 
 		createTitleStyle()
 		{
-			const dialog = this.getDialogItem();
-			if (dialog?.muteList?.includes(serviceLocator.get('core').getUserId()))
+			if (this.isMute)
 			{
 				this.styles.title = merge(this.styles.title, {
 					additionalImage: {

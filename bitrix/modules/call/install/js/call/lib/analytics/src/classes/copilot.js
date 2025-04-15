@@ -126,4 +126,38 @@ export class Copilot
 			p5: `callId_${params.callId}`,
 		});
 	}
+
+	onClickAIOff(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.clickAiOff,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onSelectAIOff(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.aiOff,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onSelectAIDelete(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.delete,
+			type: params.callType,
+			c_section: AnalyticsSection.call,
+			p5: `callId_${params.callId}`,
+		});
+	}
 }

@@ -23,6 +23,15 @@ class Router
 		BX.SidePanel.Instance.bindAnchors({rules: preparedRules});
 	}
 
+	static bindAnchor(roots: string[], rule: BX.SidePanel.Rule): void
+	{
+		const rules = [
+			this.prependRootsToRuleConditions(roots, rule),
+		];
+
+		BX.SidePanel.Instance.bindAnchors({ rules });
+	}
+
 	/**
 	 * @protected
 	 * @param roots

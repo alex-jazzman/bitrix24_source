@@ -3,14 +3,14 @@
  */
 jn.define('bottom-sheet', (require, exports, module) => {
 	const { Type } = require('type');
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { prepareHexColor } = require('utils/color');
-	const { mergeImmutable } = require('utils/object');
+	const { mergeImmutable, isFunction } = require('utils/object');
 	const { getMediumHeight } = require('utils/page-manager');
 
 	const DEFAULT_TOP_HEIGHT_OFFSET = 70;
 	const DEFAULT_MEDIUM_POSITION_PERCENT = 70;
-	const DEFAULT_BACKGROUND_COLOR = AppTheme.colors.bgSecondary;
+	const DEFAULT_BACKGROUND_COLOR = Color.bgSecondary.toHex();
 
 	const DEFAULT_WIDGET_PARAMS = {
 		modal: true,
@@ -40,14 +40,16 @@ jn.define('bottom-sheet', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef {string | Color} ColorType
+	 *
 	 * @class BottomSheet
 	 */
 	class BottomSheet
 	{
 		/**
-		 * @param {?String} title - Deprecated: use titleParams instead
-		 * @param {?TitleParams} titleParams
-		 * @param {?Object} component
+		 * @param {String} [title] - Deprecated: use titleParams instead
+		 * @param {TitleParams} [titleParams]
+		 * @param {Object} [component]
 		 */
 		constructor({ title = '', titleParams = null, component = null } = {})
 		{
@@ -200,40 +202,44 @@ jn.define('bottom-sheet', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @param {string} navigationBarColor
+		 * @param {ColorType} navigationBarColor
 		 * @return {BottomSheet}
 		 */
 		setNavigationBarColor(navigationBarColor)
 		{
-			if (!Type.isStringFilled(navigationBarColor))
-			{
-				throw new TypeError('navigationBarColor must be a filled string');
-			}
-
-			navigationBarColor = prepareHexColor(navigationBarColor);
-
-			this.widgetOptions.backdrop.navigationBarColor = navigationBarColor;
+			this.widgetOptions.backdrop.navigationBarColor = this.prepareColor(
+				navigationBarColor,
+				'navigationBarColor',
+			);
 
 			return this;
 		}
 
 		/**
 		 * @public
-		 * @param {string} backgroundColor
+		 * @param {ColorType} backgroundColor
 		 * @return {BottomSheet}
 		 */
 		setBackgroundColor(backgroundColor)
 		{
-			if (!Type.isStringFilled(backgroundColor))
-			{
-				throw new TypeError('backgroundColor must be a filled string');
-			}
-
-			backgroundColor = prepareHexColor(backgroundColor);
-
-			this.widgetOptions.backgroundColor = backgroundColor;
+			this.widgetOptions.backgroundColor = this.prepareColor(backgroundColor, 'backgroundColor');
 
 			return this;
+		}
+
+		/**
+		 * @param {ColorType} color
+		 * @param {string} typeColor
+		 * @returns {string}
+		 */
+		prepareColor(color, typeColor)
+		{
+			if (!Type.isStringFilled(color) && !Color.has(color))
+			{
+				throw new TypeError(`${typeColor} must be a filled string`);
+			}
+
+			return Type.isString(color) ? prepareHexColor(color) : color.toHex();
 		}
 
 		/**
@@ -560,7 +566,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 						this.widget.setTitle(this.widgetOptions.titleParams);
 						this.widget.enableNavigationBarBorder(this.widgetOptions.enableNavigationBarBorder);
 
-						const component = typeof this.component === 'function' ? this.component(widget) : this.component;
+						const component = isFunction(this.component) ? this.component(widget) : this.component;
 						this.widget.showComponent(component);
 
 						resolve(this.widget);

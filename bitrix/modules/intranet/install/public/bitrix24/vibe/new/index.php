@@ -1,13 +1,20 @@
 <?php
 
+use Bitrix\Main\Loader;
 use Bitrix\Landing\Mainpage\Manager;
 use Bitrix\Landing\Site\Type;
+use Bitrix\Intranet\MainPage;
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
+}
+
+if (!CModule::IncludeModule('landing'))
+{
+	return;
 }
 
 /** @var array $arParams */
@@ -23,8 +30,18 @@ $arParams['PAGE_URL_SITE_EDIT'] = str_replace(
 	$arParams['PAGE_URL_SITE_EDIT']
 );
 
+if (
+	!Loader::includeModule('landing')
+	|| !(new MainPage\Access())->canEdit()
+)
+{
+	ShowError('Can`t Vibing');
+
+	return;
+}
+
 $template = $request->get('tpl');
-$notRedirectToEdit = ($request->get('no_redirect') == 'Y') ? 'Y' : 'N';
+$notRedirectToEdit = ($request->get('no_redirect') === 'Y') ? 'Y' : 'N';
 if ($template)
 {
 	$manager = new Manager();

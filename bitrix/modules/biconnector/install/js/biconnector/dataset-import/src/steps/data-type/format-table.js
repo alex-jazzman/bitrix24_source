@@ -12,11 +12,6 @@ export const FormatTable = {
 			type: Object,
 			required: false,
 		},
-		isEditMode: {
-			type: Boolean,
-			required: false,
-			default: false,
-		},
 	},
 	emits: [
 		'rowToggle',
@@ -81,7 +76,6 @@ export const FormatTable = {
 						@checkbox-click="onRowCheckboxClicked"
 						@field-change="onRowFieldChanged"
 						:invalid-fields="unvalidatedRows[index] ?? []"
-						:is-edit-mode="isEditMode"
 					/>
 				</template>
 			</tbody>

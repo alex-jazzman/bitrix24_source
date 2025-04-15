@@ -55,6 +55,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onCallUserMicrophoneStateHandler = this.onCallUserMicrophoneState.bind(this);
 			this.onCallUserScreenStateHandler = this.onCallUserScreenState.bind(this);
 			this.onCallUserVideoPausedHandler = this.onCallUserVideoPaused.bind(this);
+			this.onCallUsersLimitExceededHandler = this.onCallUsersLimitExceeded.bind(this);
 			this.onCallUserVoiceStartedHandler = this.onCallUserVoiceStarted.bind(this);
 			this.onCallUserVoiceStoppedHandler = this.onCallUserVoiceStopped.bind(this);
 			this.onCallUserFloorRequestHandler = this.onCallUserFloorRequest.bind(this);
@@ -73,6 +74,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onCallTimeoutHandler = this.onCallTimeout.bind(this);
 			this.onCallReconnectedHandler = this.onCallReconnected.bind(this);
 			this.onUpdateCallCopilotStateHandler = this.onUpdateCallCopilotState.bind(this);
+			this.onAllParticipantsVideoMutedHandler = this.onAllParticipantsVideoMuted.bind(this);
+			this.onAllParticipantsAudioMutedHandler = this.onAllParticipantsAudioMuted.bind(this);
+			this.onAllParticipantsScreenshareMutedHandler = this.onAllParticipantsScreenshareMuted.bind(this);
+
+			this.onParticipantAudioMutedHandler = this.onParticipantAudioMuted.bind(this);
+			this.onParticipantVideoMutedHandler = this.onParticipantVideoMuted.bind(this);
+			this.onParticipantScreenshareMutedHandler = this.onParticipantScreenshareMuted.bind(this);
 
 			this.onMicButtonClickHandler = this.onMicButtonClick.bind(this);
 			this.onFloorRequestButtonClickHandler = this.onFloorRequestButtonClick.bind(this);
@@ -1138,6 +1146,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.on(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler)
 				.on(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler)
 				.on(BX.Call.Event.onUserVideoPaused, this.onCallUserVideoPausedHandler)
+				.on(BX.Call.Event.onUsersLimitExceeded, this.onCallUsersLimitExceededHandler)
 				.on(BX.Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler)
 				.on(BX.Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler)
 				.on(BX.Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler)
@@ -1155,7 +1164,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.on(BX.Call.Event.onPullEventUserInviteTimeout, this.onCallTimeoutHandler)
 				.on(BX.Call.Event.onReconnected, this.onCallReconnectedHandler)
 				.on(BX.Call.Event.onSwitchTrackRecordStatus, this.onUpdateCallCopilotStateHandler)
-
+				.on(BX.Call.Event.onAllParticipantsVideoMuted, this.onAllParticipantsVideoMutedHandler)
+				.on(BX.Call.Event.onAllParticipantsAudioMuted, this.onAllParticipantsAudioMutedHandler)
+				.on(BX.Call.Event.onAllParticipantsScreenshareMuted, this.onAllParticipantsScreenshareMutedHandler)
+				.on(BX.Call.Event.onParticipantAudioMuted, this.onParticipantAudioMutedHandler)
+				.on(BX.Call.Event.onParticipantVideoMuted, this.onParticipantVideoMutedHandler)
+				.on(BX.Call.Event.onParticipantScreenshareMuted, this.onParticipantScreenshareMutedHandler)
 			;
 		}
 
@@ -1170,6 +1184,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.off(BX.Call.Event.onUserStateChanged, this.onCallUserStateChangedHandler)
 				.off(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler)
 				.off(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler)
+				.off(BX.Call.Event.onUsersLimitExceeded, this.onCallUsersLimitExceededHandler)
 				.off(BX.Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler)
 				.off(BX.Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler)
 				.off(BX.Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler)
@@ -1187,6 +1202,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.off(BX.Call.Event.onPullEventUserInviteTimeout, this.onCallTimeoutHandler)
 				.off(BX.Call.Event.onReconnected, this.onCallReconnectedHandler)
 				.off(BX.Call.Event.onSwitchTrackRecordStatus, this.onUpdateCallCopilotStateHandler)
+				.off(BX.Call.Event.onAllParticipantsVideoMuted, this.onAllParticipantsVideoMutedHandler)
+				.off(BX.Call.Event.onAllParticipantsAudioMuted, this.onAllParticipantsAudioMutedHandler)
+				.off(BX.Call.Event.onAllParticipantsScreenshareMuted, this.onAllParticipantsScreenshareMutedHandler)
+				.off(BX.Call.Event.onParticipantAudioMuted, this.onParticipantAudioMutedHandler)
+				.off(BX.Call.Event.onParticipantVideoMuted, this.onParticipantVideoMutedHandler)
+				.off(BX.Call.Event.onParticipantScreenshareMuted, this.onParticipantScreenshareMutedHandler)
 			;
 		}
 
@@ -1512,7 +1533,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setP5(`callId_${this.currentCall.id}`);
 
 			analytics.send();
+			this.muteMicDevice(muted);
+		}
 
+		muteMicDevice(muted){
 			this.currentCall.setMuted(muted);
 			this.callView.setMuted(muted);
 			if (this.nativeCall)
@@ -1558,18 +1582,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (cameraEnabled)
 			{
-				MediaDevices.requestCameraAccess().then(() => {
-					this.currentCall.setVideoEnabled(cameraEnabled);
-					this.callView.setCameraState(cameraEnabled); // should we update button state only if we received local video?
-					this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, true);
-				}).catch(() => {
-					navigator.notification.alert(
-						BX.message('MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA'),
-						() => {},
-						BX.message('MOBILE_CALL_MICROPHONE_ACCESS_DENIED'),
-					);
-					this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, false);
-				});
+				this.switchCameraDeviceState(cameraEnabled);
 			}
 			else
 			{
@@ -1586,18 +1599,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 			this.currentCall.switchCamera();
-			if (Application.getPlatform() === 'android')
-			{
-				setTimeout(() => this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed()), 1000);
-			}
-			else
-			{
-				this.callView.setHideLocalVideo(true);
-				setTimeout(() => {
-					this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed());
-					this.callView.setHideLocalVideo(false);
-				}, 100);
-			}
+
+			setTimeout(
+				() => this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed()),
+				(Application.getPlatform() === 'android' ? 1000 : 100),
+			);
 		}
 
 		onChatButtonClick()
@@ -1846,6 +1852,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
+		onCallUsersLimitExceeded()
+		{
+			navigator.notification.alert(BX.message('MOBILE_CALL_USERS_LIMIT_EXCEEDED'));
+		}
+
 		onCallUserVoiceStarted(userId)
 		{
 			if (this.callView)
@@ -2081,6 +2092,61 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
+		onAllParticipantsAudioMuted(){
+			this.currentCall.setMuted(true);
+			this.callView.setMuted(true);
+			if (this.nativeCall)
+			{
+				this.nativeCall.mute(true);
+			}
+		}
+
+		onParticipantAudioMuted(params){
+			if(this.currentCall.userId == params.data.userId){
+				this.currentCall.setMuted(true);
+				this.callView.setMuted(true);
+				if (this.nativeCall)
+				{
+					this.nativeCall.mute(true);
+				}
+			}
+		}
+
+		switchCameraDeviceState(state){
+			MediaDevices.requestCameraAccess().then(() => {
+				this.currentCall.setVideoEnabled(state);
+				this.callView.setCameraState(state); // should we update button state only if we received local video?
+				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, true);
+			}).catch(() => {
+				navigator.notification.alert(
+					BX.message('MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA'),
+					() => {},
+					BX.message('MOBILE_CALL_MICROPHONE_ACCESS_DENIED'),
+				);
+				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, false);
+			});
+		}
+
+		onAllParticipantsVideoMuted(){
+			this.switchCameraDeviceState(false)
+		}
+
+		onParticipantVideoMuted(params){
+			if(this.currentCall.userId == params.data.userId){
+				this.switchCameraDeviceState(false)
+			}
+		}
+
+		onAllParticipantsScreenshareMuted(){
+			this.callView.setUserScreenState(false)
+		}
+
+		onParticipantScreenshareMuted(params){
+			if(this.currentCall.userId == params.data.userId){
+				this.callView.setUserScreenState(false)
+			}
+		}
+
 		onNativeCallAnswered(nativeAction)
 		{
 			CallUtil.log('onNativeCallAnswered');
@@ -2281,7 +2347,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		async test(status = 'call', viewProps = {})
 		{
-			const users = [4, 5, 6, 7, 8, 9, 10, 11, 12 /*13, 14, 15 */, 464, 473];
+			const users = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 464, 473];
 			this.currentCall = new DummyCall();
 
 			await this.openCallView({
@@ -2296,7 +2362,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.bindViewEvents();
 			users.forEach((userId) => this.callView.addUser(userId, userId > 10 ? BX.Call.UserState.Connected : BX.Call.UserState.Idle));
 			this.callView.unpinUser();
-			users.forEach(userId => this.callView.setUserFloorRequestState(userId, true));
+			// users.forEach(userId => this.callView.setUserFloorRequestState(userId, true));
 
 			this.currentCall.getLocalMedia();
 
@@ -2305,6 +2371,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				AVATAR_HR: 'Y',
 			});
 			this.callView.updateUserData(response.data());
+			this.callView.setUserMicrophoneState(473, false);
 
 			const stream = await MediaDevices.getUserMedia({ audio: true, video: true });
 			CallUtil.log('trying get video');

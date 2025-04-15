@@ -8,16 +8,23 @@
 	text-underline-offset: 3px;
 }
 
+.booking-actions-popup__item-overbooking-button.--disabled {
+	opacity: 0.5;
+	cursor: unset;
+	user-select: none;
+}
+
 .booking-actions-popup__item-overbooking-row {
 	display: flex;
-	align-items: right;
+	align-items: flex-end;
 }
 
-.booking-actions-popup__item-overbooking-icon {
+.booking-actions-popup__item-overbooking-button {
 	display: flex;
 	align-items: center;
+	cursor: pointer;
 }
 
-.booking-actions-popup__item-overbooking-icon.--end {
+.booking-actions-popup__item-overbooking-button.--end {
 	margin-left: 12px;
 }

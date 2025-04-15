@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_OIIV_COLUMN_CAPTION"] = "Қолтаңба";
+$MESS["CRM_OIIV_COLUMN_IMPORTED"] = "Импортталды";
+$MESS["CRM_OIIV_COLUMN_MEDIA_TYPE"] = "Жарияланым түрі";
+$MESS["CRM_OIIV_COLUMN_MEDIA_TYPE_CAROUSEL_ALBUM"] = "Карусель";
+$MESS["CRM_OIIV_COLUMN_MEDIA_TYPE_PICTURE"] = "Кескін";
+$MESS["CRM_OIIV_COLUMN_MEDIA_TYPE_VIDEO"] = "Бейне";
+$MESS["CRM_OIIV_COLUMN_NEW"] = "Жаңа";
+$MESS["CRM_OIIV_COLUMN_PERMALINK"] = "Жарияланымға сілтеме";
+$MESS["CRM_OIIV_COLUMN_TIMESTAMP"] = "Жариялау күні";
+$MESS["CRM_OIIV_DEFAULT_PRODUCT_NAME"] = "Атаусыз";
+$MESS["CRM_OIIV_FACEBOOK_NO_ACTIVE_CONNECTOR"] = "Бұл коннектор белсенді емес";
+$MESS["CRM_OIIV_FACEBOOK_REMOVED_REFERENCE_TO_PAGE"] = "Тауарларды импорттау қазіргі уақытта сіз әкімшілендіруге рұқсатыңыз жоқ топпен жұмыс істеуге бапталған";
+$MESS["CRM_OIIV_MODULE_NOT_INSTALLED_CATALOG"] = "\"Сауда каталогы\" модулі орнатылмаған";
+$MESS["CRM_OIIV_MODULE_NOT_INSTALLED_CRM"] = "\"CRM\" модулі орнатылмаған";
+$MESS["CRM_OIIV_PRESET_IMPORTED"] = "Импортталғандар";
+$MESS["CRM_OIIV_PRESET_NOT_IMPORTED"] = "Импортталмағандар";
+$MESS["CRM_OIIV_PRESET_RECENT"] = "Жаңа";
+$MESS["CRM_OIIV_TITLE"] = "Тауарларды Битрикс24 дүкеніне импорттау";

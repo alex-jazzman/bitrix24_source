@@ -78,6 +78,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		UPDATE_ACCOMPLICES: 'updateAccomplices',
 		UPDATE_DEADLINE: 'updateDeadline',
 		UPDATE_PROJECT: 'updateProject',
+		EDIT_CHECKLIST: 'editChecklist',
 	};
 
 	const TaskField = {
@@ -124,7 +125,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		[TaskField.FLOW]: TaskActionAccess.UPDATE,
 		[TaskField.RESULT]: TaskActionAccess.UPDATE,
 		[TaskField.FILES]: TaskActionAccess.UPDATE,
-		[TaskField.CHECKLIST]: TaskActionAccess.UPDATE,
+		[TaskField.CHECKLIST]: TaskActionAccess.EDIT_CHECKLIST,
 		[TaskField.AUDITORS]: TaskActionAccess.UPDATE,
 		[TaskField.TAGS]: TaskActionAccess.UPDATE,
 		[TaskField.CRM]: TaskActionAccess.UPDATE,
@@ -176,6 +177,9 @@ jn.define('tasks/enum', (require, exports, module) => {
 		TASK_TIMER_STOP: 'task_timer_stop',
 
 		USER_OPTION_CHANGED: 'user_option_changed',
+
+		REACTION_UPDATE: 'rating_vote',
+		TASK_VIEW_ADD: 'add',
 	};
 
 	const TimerState = {
@@ -205,6 +209,23 @@ jn.define('tasks/enum', (require, exports, module) => {
 		STRING: 'string',
 	};
 
+	const EntityType = {
+		TASK: 'TASK',
+	};
+
+	const ReactionActionType = {
+		ADD: 'ADD',
+		CHANGE: 'CHANGE',
+		CANCEL: 'CANCEL',
+	};
+
+	const LikesTemplate = {
+		STANDART: 'standart',
+		STANDART_TEXT: 'standart_text',
+		LIKE_GRAPHIC: 'like_graphic',
+		LIKE: 'like',
+	};
+
 	module.exports = {
 		ViewMode,
 		WorkMode,
@@ -223,5 +244,8 @@ jn.define('tasks/enum', (require, exports, module) => {
 		TaskFieldActionAccess,
 		TimerState,
 		UserFieldType,
+		EntityType,
+		ReactionActionType,
+		LikesTemplate,
 	};
 });

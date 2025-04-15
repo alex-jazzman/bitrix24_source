@@ -1,6 +1,10 @@
 <?php
 $MESS["BXD_CALL_BG_MASK_TITLE"] = "3D avatar and background";
 $MESS["BXD_CALL_BG_TITLE"] = "Select background";
+$MESS["CALL_AI_RECORD_STOP_MESSAGE"] = "Do you want to disable CoPilot for this call? You will still receive the call transcript recorded up until this moment. If you need to totally erase the transcript, delete the call recording.";
+$MESS["CALL_AI_RECORD_STOP_NO_BUTTON"] = "Delete recording and disable";
+$MESS["CALL_AI_RECORD_STOP_TITLE"] = "Disable CoPilot for this call";
+$MESS["CALL_AI_RECORD_STOP_YES_BUTTON"] = "Disable only";
 $MESS["CALL_BUTTON_COPILOT_TITLE"] = "CoPilot Follow-Up";
 $MESS["CALL_CONNECTED_ERROR"] = "Connection could not be established";
 $MESS["CALL_COPILOT_POPUP_BUTTON_BUY_BOOST"] = "Buy credits";
@@ -36,6 +40,15 @@ $MESS["CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON"] = "Yes";
 $MESS["CALL_RECORD_AUDIO_WITH_COPILOT_TITLE"] = "Call record";
 $MESS["CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON"] = "No";
 $MESS["CALL_RUN_SELF_TEST"] = "Run test";
+$MESS["CALL_TURN_OFF_CAM_FOR_ALL_PARTICIPANTS"] = "Disable video for all participants";
+$MESS["CALL_TURN_OFF_MIC_FOR_ALL_PARTICIPANTS"] = "Mute all participants";
+$MESS["CALL_TURN_OFF_SCREENSHARE_FOR_ALL_PARTICIPANTS"] = "Disable screen sharing for all participants";
+$MESS["CALL_USER_TURNED_OFF_CAM_FOR_ALL_F"] = "#NAME# disabled video for all participants.";
+$MESS["CALL_USER_TURNED_OFF_CAM_FOR_ALL_M"] = "#NAME# disabled video for all participants.";
+$MESS["CALL_USER_TURNED_OFF_MIC_FOR_ALL_F"] = "#NAME# muted all participants.";
+$MESS["CALL_USER_TURNED_OFF_MIC_FOR_ALL_M"] = "#NAME# muted all participants.";
+$MESS["CALL_YOU_TURNED_OFF_CAM_FOR_ALL"] = "You disabled video for all participants.";
+$MESS["CALL_YOU_TURNED_OFF_MIC_FOR_ALL"] = "You muted all participants.";
 $MESS["IM_M_CALL_BAD_NETWORK_HINT"] = "Due to ongoing connectivity issues we have interrupted video transmission for some call participants on your device to maintain sound quality.";
 $MESS["IM_M_CALL_CONNECTION_QUALITY_HINT"] = "Connection quality";
 $MESS["IM_M_CALL_POOR_CONNECTION_WITH_USER"] = "Call participant has a slow Internet connection.";

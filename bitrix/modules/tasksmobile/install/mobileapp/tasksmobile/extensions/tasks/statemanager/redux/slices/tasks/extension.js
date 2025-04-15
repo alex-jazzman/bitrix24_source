@@ -9,7 +9,6 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 	const { ExpirationRegistry } = require('tasks/statemanager/redux/slices/tasks/expiration-registry');
 	const { sliceName, tasksAdapter, initialState } = require('tasks/statemanager/redux/slices/tasks/meta');
 	const { TaskModel } = require('tasks/statemanager/redux/slices/tasks/model/task');
-	const { mapStateToTaskModel } = require('tasks/statemanager/redux/slices/tasks/mapper');
 	const {
 		selectAll,
 		selectById,
@@ -43,6 +42,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectActions,
 		selectTimerState,
 		selectDatePlan,
+		selectRunningTask,
 	} = require('tasks/statemanager/redux/slices/tasks/selector');
 	const {
 		create,
@@ -175,13 +175,6 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 					});
 				}
 			},
-			taskUpdatedFromOldTaskModel: (state, { payload }) => {
-				const { task: oldTaskModel } = payload;
-				// eslint-disable-next-line no-underscore-dangle
-				const task = state.entities[oldTaskModel._id];
-
-				tasksAdapter.upsertOne(state, TaskModel.prepareReduxTaskFromOldTaskModel(oldTaskModel, task));
-			},
 			taskExpired: (state, { payload }) => {
 				const { taskId } = payload;
 				const task = state.entities[taskId];
@@ -253,6 +246,15 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				tasksAdapter.upsertOne(state, {
 					...task,
 					commentsCount: task.commentsCount + 1,
+				});
+			},
+			updateViewsCount: (state, { payload }) => {
+				const { taskId, totalCounter } = payload;
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					viewsCount: totalCounter,
 				});
 			},
 			tasksRead: (state, { payload }) => {
@@ -357,7 +359,6 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		tasksAdded,
 		tasksUpserted,
 		setRelatedTasks,
-		taskUpdatedFromOldTaskModel,
 		taskExpired,
 		taskRemoved,
 		markAsRemoved,
@@ -365,23 +366,22 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateChecklist,
 		updateUploadingFiles,
 		commentWritten,
+		updateViewsCount,
 		tasksRead,
 		setTimeElapsed,
 		setAttachedFiles,
 	} = actions;
 
 	ExpirationRegistry.setReducers({ taskExpired });
-	ExpirationRegistry.setSelectors({ selectWillExpire });
+	ExpirationRegistry.setSelectors({ selectWillExpire, selectByTaskIdOrGuid });
 	ReducerRegistry.register(sliceName, tasksReducer);
 
 	module.exports = {
 		tasksReducer,
-		mapStateToTaskModel,
 
 		tasksAdded,
 		tasksUpserted,
 		setRelatedTasks,
-		taskUpdatedFromOldTaskModel,
 		taskExpired,
 		taskRemoved,
 		markAsRemoved,
@@ -389,6 +389,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateChecklist,
 		updateUploadingFiles,
 		commentWritten,
+		updateViewsCount,
 		tasksRead,
 		setTimeElapsed,
 		setAttachedFiles,
@@ -423,6 +424,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectSubTasksIdsByTaskId,
 		selectRelatedTasksById,
 		selectTimerState,
+		selectRunningTask,
 		selectDatePlan,
 		selectWithCreationError,
 

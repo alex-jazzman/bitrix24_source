@@ -74,7 +74,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			$this->addError(new \Bitrix\Main\Error('Entity not found'));
 		}
-		elseif(!$entity->checkReadPermissions(0))
+		elseif(!$entity->checkReadPermissions())
 		{
 			$this->addError(new \Bitrix\Main\Error('Access denied'));
 		}
@@ -100,7 +100,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-		if (!Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 

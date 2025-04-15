@@ -138,8 +138,8 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 			this.emailInputRef?.focus();
 		};
 
-		close = () => {
-			this.layoutWidget?.close();
+		close = (callback) => {
+			this.layoutWidget?.close(callback);
 		};
 
 		disableButtonLoading = () => {

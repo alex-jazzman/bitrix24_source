@@ -91,7 +91,9 @@ jn.define('im/messenger/controller/sidebar/collab/profile-buttons-controller', (
 			return [
 				new ProfileButtonView(
 					{
-						icon: Icon.FILE,
+						buttonIcon: {
+							icon: Icon.FILE,
+						},
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_FILES'),
 						counter: this.state[CollabEntity.files],
 						disable: !this.state.collabId,
@@ -127,7 +129,9 @@ jn.define('im/messenger/controller/sidebar/collab/profile-buttons-controller', (
 				),
 				new ProfileButtonView(
 					{
-						icon: Icon.CALENDAR_WITH_SLOTS,
+						buttonIcon: {
+							icon: Icon.CALENDAR_WITH_SLOTS,
+						},
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_CALENDAR'),
 						counter: this.state[CollabEntity.calendar],
 						disable: !this.state.collabId,
@@ -164,7 +168,9 @@ jn.define('im/messenger/controller/sidebar/collab/profile-buttons-controller', (
 				),
 				new ProfileButtonView(
 					{
-						icon: Icon.CIRCLE_CHECK,
+						buttonIcon: {
+							icon: Icon.CIRCLE_CHECK,
+						},
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_TASKS'),
 						counter: this.state[CollabEntity.tasks],
 						disable: !this.state.collabId,
@@ -198,7 +204,10 @@ jn.define('im/messenger/controller/sidebar/collab/profile-buttons-controller', (
 				this.renderSeparator(),
 				new ProfileButtonView(
 					{
-						icon: this.state.isMute ? Icon.NOTIFICATION_OFF : Icon.NOTIFICATION,
+						buttonIcon: {
+							icon: this.state.isMute ? Icon.NOTIFICATION_OFF : Icon.NOTIFICATION,
+							testId: this.state.isMute ? 'outline/notification_off' : 'outline/notification',
+						},
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_MUTE'),
 						callback: () => this.onClickMuteBtn(),
 						testId: 'SIDEBAR_COLLAB_BUTTON_MUTE',
@@ -206,7 +215,9 @@ jn.define('im/messenger/controller/sidebar/collab/profile-buttons-controller', (
 				),
 				new ProfileButtonView(
 					{
-						icon: Icon.SEARCH,
+						buttonIcon: {
+							icon: Icon.SEARCH,
+						},
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_SEARCH'),
 						callback: () => this.onClickSearchBtn(),
 						disable: true,

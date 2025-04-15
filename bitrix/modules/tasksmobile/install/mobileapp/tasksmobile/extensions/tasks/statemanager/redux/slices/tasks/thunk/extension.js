@@ -10,7 +10,6 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const { Views } = require('tasks/statemanager/redux/types');
 	const { selectStages } = require('tasks/statemanager/redux/slices/kanban-settings/selector');
 	const { selectById } = require('tasks/statemanager/redux/slices/stage-settings/selector');
-
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
 		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
 	});

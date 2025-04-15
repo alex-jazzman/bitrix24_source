@@ -19,5 +19,6 @@ $MESS["MOBILE_CALL_OPEN_APP_STORE"] = "Open App Store";
 $MESS["MOBILE_CALL_OPEN_CHAT"] = "Open chat";
 $MESS["MOBILE_CALL_OPEN_PLAY_MARKET"] = "Open Play Market";
 $MESS["MOBILE_CALL_UNSUPPORTED_VERSION"] = "Your application is out of date. Please update to make calls.";
+$MESS["MOBILE_CALL_USERS_LIMIT_EXCEEDED"] = "Cannot join the call because the number of call participants is already maximum possible allowed by the current plan.";
 $MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Without video";
 $MESS["MOBILE_CALL_WITH_VIDEO"] = "With video";

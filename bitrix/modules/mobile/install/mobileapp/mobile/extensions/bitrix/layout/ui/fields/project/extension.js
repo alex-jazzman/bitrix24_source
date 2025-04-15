@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/fields/project', (require, exports, module) => {
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { WorkgroupUtil } = require('project/utils');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { Icon } = require('assets/icons');
@@ -137,7 +138,18 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		openEntity(projectId, isCollab = false, dialogId = '')
 		{
-			ProjectViewManager.open(env.userId, projectId, this.getParentWidget(), isCollab, dialogId);
+			if (isCollab)
+			{
+				ProjectViewManager.open(env.userId, projectId, this.getParentWidget(), isCollab, dialogId);
+
+				return;
+			}
+
+			void WorkgroupUtil.openProject(null, {
+				projectId,
+				siteId: env.siteId,
+				siteDir: env.siteDir,
+			});
 		}
 
 		async handleAdditionalFocusActions()

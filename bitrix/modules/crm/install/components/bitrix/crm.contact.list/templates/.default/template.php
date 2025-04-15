@@ -22,6 +22,7 @@ use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
@@ -44,6 +45,7 @@ Bitrix\Main\UI\Extension::load(
 		'crm.badge',
 		'ui.design-tokens',
 		'crm.template.editor',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -310,7 +312,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			);
 		}
 		if (
-			\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartInvoice)
+			\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(\CCrmOwnerType::SmartInvoice)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
@@ -480,46 +482,20 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			{
 				\Bitrix\Main\UI\Extension::load(['bp_starter']);
 
-				$arActions[] = array('SEPARATOR' => true);
-
-				if(isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
-					$arActions[] = array(
-						'TITLE' => GetMessage('CRM_CONTACT_BIZPROC_TITLE'),
-						'TEXT' => GetMessage('CRM_CONTACT_BIZPROC'),
-						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_BIZPROC_LIST'])."');"
-					);
-
-				if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-				{
-					$starterConfig = \Bitrix\Main\Web\Json::encode(
-						CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Contact, $arContact['ID'])
-					);
-					$reloadGridAction = 'function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');}';
-					$arActions[] = [
-						'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CONTACT_BIZPROC_LIST_TITLE'),
-						'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CONTACT_BIZPROC_LIST'),
-						'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
-					];
-				}
-				elseif(!empty($arContact['BIZPROC_LIST']))
-				{
-					$arBizprocList = array();
-					foreach($arContact['BIZPROC_LIST'] as $arBizproc)
-					{
-						$arBizprocList[] = array(
-							'TITLE' => $arBizproc['DESCRIPTION'],
-							'TEXT' => $arBizproc['NAME'],
-							'ONCLICK' => isset($arBizproc['ONCLICK'])
-								? $arBizproc['ONCLICK']
-								: "jsUtils.Redirect([], '".CUtil::JSEscape($arBizproc['PATH_TO_BIZPROC_START'])."');"
-						);
-					}
-					$arActions[] = array(
-						'TITLE' => GetMessage('CRM_CONTACT_BIZPROC_LIST_TITLE'),
-						'TEXT' => GetMessage('CRM_CONTACT_BIZPROC_LIST'),
-						'MENU' => $arBizprocList
-					);
-				}
+				$arActions[] = ['SEPARATOR' => true];
+				$arActions[] = [
+					'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CONTACT_BIZPROC_LIST_TITLE'),
+					'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CONTACT_BIZPROC_LIST'),
+					'ONCLICK' => (
+						$toolsManager->checkBizprocAvailability()
+							? CCrmBizProcHelper::getShowTemplatesJsAction(
+								CCrmOwnerType::Contact,
+								$arContact['ID'],
+								'function(){BX.Main.gridManager.reload(\'' . CUtil::JSEscape($arResult['GRID_ID']) . '\');}'
+							)
+							: $availabilityManager->getBizprocAvailabilityLock()
+					),
+				];
 			}
 		}
 	}
@@ -648,19 +624,39 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 
 if($arResult['ENABLE_TOOLBAR'])
 {
+	$relationCode = $arParams['PARENT_ENTITY_TYPE_ID'] . '-' . $arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Contact;
+	$targetId = 'relation-button-' . $relationCode;
+	$linkButton = [
+		'ATTRIBUTES' => [
+			'ID' => $targetId
+		],
+		'TEXT' => Loc::getMessage('CRM_CONTACT_LIST_LINK_CONTACT'),
+		'TITLE' => Loc::getMessage('CRM_CONTACT_LIST_LINK_CONTACT'),
+		'SQUARE' => true,
+		'ONCLICK' => sprintf(
+			<<<js
+(function() {
+	const selector = BX.Crm.Binder.Manager.Instance.createRelatedSelector(
+		'%s',
+		'%s'
+	);
+	if (selector)
+	{
+		selector.show();
+	}
+})()
+js,
+			\CUtil::JSEscape('relation-' . $relationCode),
+			\CUtil::JSEscape($targetId),
+		),
+	];
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
 			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => array(
-				array(
-					'TEXT' => GetMessage('CRM_CONTACT_LIST_ADD_SHORT'),
-					'TITLE' => GetMessage('CRM_CONTACT_LIST_ADD'),
-					'LINK' => $arResult['PATH_TO_CONTACT_ADD'],
-					'ICON' => 'btn-new'
-				)
-			)
+			'BUTTONS' => [$linkButton]
 		),
 		$component,
 		array('HIDE_ICONS' => 'Y')
@@ -780,6 +776,15 @@ BX.ready(
 					"makeCall": "<?= GetMessageJS('CRM_SIP_MGR_MAKE_CALL')?>"
 				};
 			}
+
+			<?php if (isset($arParams['PARENT_ENTITY_TYPE_ID'])):?>
+			BX.Crm.Binder.Manager.Instance.initializeBinder(
+				<?=$arParams['PARENT_ENTITY_TYPE_ID']?>,
+				<?=$arParams['PARENT_ENTITY_ID']?>,
+				<?=\CCrmOwnerType::Contact?>,
+				'<?=CUtil::JSEscape($arResult['GRID_ID'])?>'
+			);
+			<?php endif;?>
 		}
 );
 </script>

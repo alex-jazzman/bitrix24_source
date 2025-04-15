@@ -13,11 +13,13 @@ export type ResourceCreationWizardState = {
 	fetching: boolean,
 	step: number;
 	globalSchedule: boolean;
+	slotLengthId: SlotLengthId;
 	isSaving: boolean;
 	isCompanyScheduleAccess: boolean;
 	invalidResourceName: boolean;
 	invalidResourceType: boolean;
 	weekStart: string;
+	checkedForAll: { [type: string]: boolean };
 }
 
 export type InitPayload = {
@@ -42,3 +44,5 @@ export type AdvertisingResourceType = {
 	description: string;
 	relatedResourceTypeId: number;
 }
+
+export type SlotLengthId = 0 | 60 | 120 | 1440 | 10080;

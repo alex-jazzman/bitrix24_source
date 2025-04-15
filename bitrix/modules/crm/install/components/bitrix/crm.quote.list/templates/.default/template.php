@@ -19,6 +19,7 @@ use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
@@ -43,6 +44,7 @@ Bitrix\Main\UI\Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -369,10 +371,11 @@ $APPLICATION->IncludeComponent('bitrix:main.user.link',
 if ($arResult['ENABLE_TOOLBAR'])
 {
 	$addButton =array(
-		'TEXT' => GetMessage('CRM_QUOTE_LIST_ADD_SHORT_MSGVER_1'),
-		'TITLE' => GetMessage('CRM_QUOTE_LIST_ADD_MSGVER_1'),
+		'TEXT' => Loc::getMessage('CRM_QUOTE_LIST_ADD_MSGVER_1'),
+		'TITLE' => Loc::getMessage('CRM_QUOTE_LIST_ADD_MSGVER_1'),
 		'LINK' => $arResult['PATH_TO_QUOTE_ADD'],
-		'ICON' => 'btn-new'
+		'HIGHLIGHT' => true,
+		'SQUARE' => true,
 	);
 
 	if ($arResult['ADD_EVENT_NAME'] !== '')

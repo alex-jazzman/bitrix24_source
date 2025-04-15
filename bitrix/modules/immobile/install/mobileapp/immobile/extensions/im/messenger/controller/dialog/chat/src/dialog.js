@@ -47,7 +47,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		OpenDialogContextType,
 		MessageIdType,
 		AttachPickerId,
-		ViewName,
 	} = require('im/messenger/const');
 
 	const { defaultUserIcon, ReactionAssets } = require('im/messenger/assets/common');
@@ -427,7 +426,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			/** @protected */
 			this.statusFieldTapHandler = this.statusFieldTapHandler.bind(this);
 			/** @private */
-			this.chatJoinButtonTapHandler = this.onChatJoinButtonTapHandler.bind(this);
+			this.chatJoinButtonTapHandler = this.chatJoinButtonTapHandler.bind(this);
 			/** @private */
 			this.messageAvatarTapHandler = this.messageAvatarTapHandler.bind(this);
 			/** @private */
@@ -523,8 +522,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on(EventType.dialog.scrollToNewMessages, this.scrollToNewMessagesHandler)
 				.on(EventType.dialog.playbackCompleted, this.playbackCompletedHandler)
 				.on(EventType.dialog.urlTap, this.urlTapHandler)
-				.on(EventType.dialog.statusFieldTap, this.statusFieldTapHandler)
-				.on(EventType.dialog.chatJoinButtonTap, this.chatJoinButtonTapHandler)
 				.on(EventType.dialog.audioRecordingStart, this.audioRecordingStartHandler)
 				.on(EventType.dialog.audioRecordingFinish, this.audioRecordingFinishHandler)
 				.on(EventType.dialog.submitAudio, this.submitAudioHandler)
@@ -559,6 +556,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.view.textField.on(EventType.dialog.textField.quoteTap, this.quoteTapHandler);
 			this.view.textField.on(EventType.dialog.textField.changeText, this.changeTextHandler);
 			this.view.textField.on(EventType.dialog.textField.cancelQuote, this.cancelReplyHandler);
+
+			this.view.statusField.on(EventType.dialog.statusField.tap, this.statusFieldTapHandler);
+			this.view.chatJoinButton.on(EventType.dialog.chatJoinButton.tap, this.chatJoinButtonTapHandler);
 
 			this.messageMenuComponent.subscribeEvents();
 			this.pinManager?.subscribeViewEvents();
@@ -1057,16 +1057,18 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				};
 			}
 
+			const avatar = ChatAvatar.createFromDialogId(currentUser.id).getReactionAvatarProps();
 			if (currentUser && currentUser.avatar !== '')
 			{
 				return {
 					imageUrl: currentUser.avatar,
-					avatar: ChatAvatar.createFromDialogId(currentUser.id).getReactionAvatarProps(),
+					avatar,
 				};
 			}
 
 			return {
 				defaultIconSvg: defaultUserIcon(currentUser.color),
+				avatar,
 			};
 		}
 
@@ -1583,7 +1585,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				dialogId: this.getDialogId(),
 				chatId: this.getChatId(),
 				lastReadId: this.getDialog().lastReadId,
-				viewName: ViewName.dialog,
 			});
 			if (this.contextMessageId)
 			{
@@ -1851,28 +1852,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		{
 			if (this.needScrollToBottom)
 			{
-				if (Feature.isGoToMessageContextSupported)
-				{
-					await this.contextManager.goToBottomMessageContext();
-				}
-				else
-				{
-					await this.view.scrollToBottomSmoothly();
-				}
-
+				await this.contextManager.goToBottomMessageContext();
 				this.needScrollToBottom = false;
 			}
 			else
 			{
-				if (Feature.isGoToMessageContextSupported)
-				{
-					await this.contextManager.goToLastReadMessageContext();
-				}
-				else
-				{
-					await this.view.scrollToLastReadMessage();
-				}
-
+				await this.contextManager.goToLastReadMessageContext();
 				this.needScrollToBottom = true;
 			}
 		}
@@ -2411,7 +2396,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		/**
 		 * @private
 		 */
-		onChatJoinButtonTapHandler()
+		chatJoinButtonTapHandler()
 		{
 			const dialog = this.getDialog();
 
@@ -3594,7 +3579,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			{
 				this.messageService.createUsersReadCache();
 			}
-			this.view.setStatusField(statusField.statusType, statusField.statusText);
+			this.view.setStatusField(statusField.type, statusField.text, statusField.additionalText);
 		}
 
 		/**
@@ -4104,7 +4089,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		joinUserChat()
 		{
 			this.chatService.joinChat(this.getDialogId())
-				.catch((data) => logger.error('Dialog.onChatJoinButtonTapHandler.error', data));
+				.catch((data) => logger.error(`${this.constructor.name}.joinUserChat.joinChat.error`, data));
 		}
 
 		/**

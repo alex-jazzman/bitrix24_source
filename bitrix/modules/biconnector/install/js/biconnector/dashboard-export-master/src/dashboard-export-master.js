@@ -171,8 +171,8 @@ export class DashboardExportMaster
 						<div class="bic-setting-value" id="bic-setting-switcher"></div>
 					</div>
 
-					<div class="bic-export-hint">${Loc.getMessage('BIC_EXPORT_HINT')}</div>
-					<div class="bic-export-hint disabled">${Loc.getMessage('BIC_EXPORT_HINT_WITH_NO_SETTINGS')}</div>
+					<div class="bic-export-hint">${Loc.getMessage('BIC_EXPORT_HINT_MSGVER_1')}</div>
+					<div class="bic-export-hint disabled">${Loc.getMessage('BIC_EXPORT_HINT_WITH_NO_SETTINGS_MSGVER_1')}</div>
 
 					<div class="bic-setting-item bic-setting-item-period">
 						<div class="bic-setting-title">${Loc.getMessage('BIC_EXPORT_PERIOD')}</div>

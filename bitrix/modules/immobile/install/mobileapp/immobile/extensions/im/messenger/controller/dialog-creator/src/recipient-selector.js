@@ -31,7 +31,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 		{
 			const config = {
 				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECIPIENT_SELECTOR_TITLE'),
-				backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgContentTertiary,
+				backgroundColor: Theme.colors.bgContentPrimary,
 				onReady: layoutWidget =>
 				{
 					this.layout = layoutWidget;
@@ -83,7 +83,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 							this.layout
 						);
 					},
-					color: Theme.isDesignSystemSupported ? Theme.colors.accentMainLink : Theme.colors.accentMainLinks,
+					color: Theme.colors.accentMainLink,
 				},
 			]);
 		}

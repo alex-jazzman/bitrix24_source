@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'loc',
 		'apptheme',
-		'feature',
 		'assets/common',
 		'layout/socialnetwork/project/create',
 		'layout/socialnetwork/project/edit',

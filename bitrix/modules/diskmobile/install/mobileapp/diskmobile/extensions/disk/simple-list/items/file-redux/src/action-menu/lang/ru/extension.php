@@ -5,6 +5,7 @@ $MESS['M_DISK_FILE_ACTIONS_MOVE'] = 'Переместить';
 $MESS['M_DISK_FILE_ACTIONS_SEND_TO_CHAT'] = 'Отправить в чат';
 $MESS['M_DISK_FILE_ACTIONS_COPY'] = 'Копировать';
 $MESS['M_DISK_FILE_ACTIONS_RENAME'] = 'Переименовать';
+$MESS['M_DISK_FILE_ACTIONS_SHOW_IN_FOLDER'] = 'Открыть папку с файлом';
 $MESS['M_DISK_FILE_ACTIONS_REMOVE'] = 'Удалить';
 $MESS['M_DISK_FILE_ACTIONS_REMOVE_FOLDER_CONFIRM_TITLE'] = 'Удалить папку?';
 $MESS['M_DISK_FILE_ACTIONS_REMOVE_FILE_CONFIRM_TITLE'] = 'Удалить файл?';

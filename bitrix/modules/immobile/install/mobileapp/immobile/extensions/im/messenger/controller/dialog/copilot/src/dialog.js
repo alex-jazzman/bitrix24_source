@@ -209,7 +209,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 					.replace('...', ' ')
 				;
 				this.view.textField.replaceText(currentText.length, currentText.length, text);
-				this.view.textField.showKeyboard?.();
+				this.view.textField.showKeyboard();
 
 				return true;
 			}

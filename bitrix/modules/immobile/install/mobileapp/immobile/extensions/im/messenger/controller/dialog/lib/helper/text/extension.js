@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
+	const { copyToClipboard } = require('utils/copy');
 
 	const { parser } = require('im/messenger/lib/parser');
 	const { Notification } = require('im/messenger/lib/ui/notification');
@@ -20,6 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 		 * @param {?string} options.notificationText
 		 * @param {?Icon} options.notificationIcon
 		 * @param {?PageManager} options.parentWidget
+		 * @param {boolean} forceCopy
 		 */
 		static copyToClipboard(
 			clipboardText,
@@ -28,19 +30,33 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 				notificationIcon = null,
 				parentWidget = PageManager,
 			},
+			forceCopy = false,
 		)
 		{
 			const text = Type.isStringFilled(clipboardText) ? clipboardText : '';
-			Application.copyToClipboard(parser.prepareCopy({ text }));
 
-			const title = notificationText ?? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED');
-			const icon = notificationIcon instanceof Icon ? notificationIcon : Icon.COPY;
-			const toastParams = {
-				message: title,
-				icon,
-			};
+			copyToClipboard(
+				parser.prepareCopy({ text }),
+				undefined,
+				false,
+				forceCopy,
+			)
+				.then(({ hasCopyToClipboardAutoNotification = false }) => {
+					if (hasCopyToClipboardAutoNotification)
+					{
+						return;
+					}
 
-			return Notification.showToastWithParams(toastParams, parentWidget);
+					const title = notificationText ?? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED');
+					const icon = notificationIcon instanceof Icon ? notificationIcon : Icon.COPY;
+					const toastParams = {
+						icon,
+						message: title,
+					};
+
+					Notification.showToastWithParams(toastParams, parentWidget);
+				})
+				.catch(console.error);
 		}
 	}
 

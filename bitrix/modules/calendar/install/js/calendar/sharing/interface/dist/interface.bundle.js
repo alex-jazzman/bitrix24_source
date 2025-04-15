@@ -2698,6 +2698,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        targetContainer: document.body,
 	        className: 'calendar-sharing__dialog',
 	        closeByEsc: true,
+	        closeIcon: babelHelpers.classPrivateFieldLooseBase(this, _isExternalSharing)[_isExternalSharing](),
 	        autoHide: true,
 	        padding: 0,
 	        width: 470,
@@ -2767,7 +2768,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    return (_slider$iframeSrc = slider.iframeSrc) == null ? void 0 : _slider$iframeSrc.match(/\/workgroups\/group\/(\d+)\/calendar\//i);
 	  }
 	  checkAndClosePopupOnSlider(event) {
-	    var _event$getData$;
+	    var _event$getData$, _babelHelpers$classPr2;
 	    if (!this.isShown()) {
 	      return;
 	    }
@@ -2780,16 +2781,16 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    if (!groupId) {
 	      return;
 	    }
-	    const currentGroupId = babelHelpers.classPrivateFieldLooseBase(this, _settingsModel$1)[_settingsModel$1].getCalendarContext().sharingObjectId;
-	    if (groupId !== currentGroupId) {
+	    const currentGroupId = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _settingsModel$1)[_settingsModel$1].getCalendarContext()) == null ? void 0 : _babelHelpers$classPr2.sharingObjectId;
+	    if (currentGroupId && groupId !== currentGroupId) {
 	      return;
 	    }
 	    this.closePopup();
 	  }
 	}
 	function _isExternalSharing2() {
-	  var _babelHelpers$classPr2;
-	  return Boolean((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _settingsModel$1)[_settingsModel$1].getCalendarContext()) == null ? void 0 : _babelHelpers$classPr2.externalSharing);
+	  var _babelHelpers$classPr3;
+	  return Boolean((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _settingsModel$1)[_settingsModel$1].getCalendarContext()) == null ? void 0 : _babelHelpers$classPr3.externalSharing);
 	}
 	function _getAngleConfig2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isExternalSharing)[_isExternalSharing]()) {

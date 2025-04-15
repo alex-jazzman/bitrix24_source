@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Model;
 
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\ExpressionField;
@@ -57,8 +58,7 @@ final class BookingTable extends DataManager
 				->configureAutocomplete(),
 
 			(new StringField('NAME'))
-				->addValidator(new LengthValidator(1, 255))
-				->configureRequired(),
+				->addValidator(new LengthValidator(null, 255)),
 
 			(new IntegerField('DATE_FROM'))
 				->configureRequired(),
@@ -135,7 +135,12 @@ final class BookingTable extends DataManager
 			(new OneToMany('FAILURE_LOG_ITEMS', BookingMessageFailureLogTable::class, 'BOOKING'))
 				->configureJoinType(Join::TYPE_LEFT),
 
-			(new Reference('NOTE', NotesTable::getEntity(), Join::on('this.ID', 'ref.BOOKING_ID')))
+			(new Reference(
+				'NOTE',
+				NotesTable::getEntity(),
+				Join::on('this.ID', 'ref.ENTITY_ID')
+					->where('ref.ENTITY_TYPE', EntityType::Booking->value)
+			))
 				->configureJoinType(Join::TYPE_LEFT)
 				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		];

@@ -1076,7 +1076,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	  if (menu.length === 1) {
 	    const linkBtn = main_core.Tag.render(_t15 || (_t15 = _$2`
-				<a class="ui-btn ui-btn-light-border ui-btn-themes" href="${0}">
+				<a class="ui-btn ui-btn-light-border ui-btn-themes" href="${0}" target="_blank">
 					${0}
 				</a>
 			`), main_core.Text.encode(menu[0].URL), main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_BUTTON')));
@@ -1113,7 +1113,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    items: menu.map(item => {
 	      return {
 	        text: item.TEXT,
-	        href: item.URL
+	        href: item.URL,
+	        target: '_blank'
 	      };
 	    })
 	  }).show();
@@ -1122,7 +1123,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  let btn = null;
 	  if (menu.length === 1) {
 	    btn = main_core.Tag.render(_t17 || (_t17 = _$2`
-				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs" href="${0}">
+				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs" href="${0}" target="_blank">
 					<span class="ui-btn-text">${0}</span>
 				</a>
 			`), main_core.Text.encode(menu[0].URL), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK'));

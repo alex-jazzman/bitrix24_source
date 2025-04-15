@@ -201,6 +201,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				this.title.color = Color.collabAccentPrimaryAlt.toHex();
 			}
 
+			if (user.type === UserType.extranet)
+			{
+				this.title.color = Color.accentMainWarning.toHex();
+			}
+
 			return this;
 		}
 
@@ -251,6 +256,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 
 			this.userColor = user?.color ?? UserColor.default;
+
+			if (user?.type === UserType.extranet)
+			{
+				this.userColor = Color.accentMainWarning.toHex();
+			}
 
 			return this;
 		}
@@ -441,10 +451,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 								}
 
 								const chatAvatar = ChatAvatar.createFromDialogId(userModel.id);
+								result.avatar = chatAvatar.getReactionAvatarProps();
 								if (userModel.avatar !== '')
 								{
-									result.avatar = chatAvatar.getReactionAvatarProps();
-
 									/** @deprecated */
 									result.imageUrl = userModel.avatar;
 
@@ -634,6 +643,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			if (isYourMessage)
 			{
 				this.showAvatar = false;
+
+				return this;
 			}
 
 			if (Type.isBoolean(shouldShowAvatar))

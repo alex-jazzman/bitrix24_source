@@ -3,10 +3,13 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Localization\Loc;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
+
 /** @global CUser $USER */
-global $USER;
 /** @global CMain $APPLICATION */
+
+global $USER;
 global $APPLICATION;
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/cluster/prolog.php';
 IncludeModuleLangFile(__FILE__);
 
@@ -184,11 +187,6 @@ $arHeaders = [
 
 $lAdmin->AddHeaders($arHeaders);
 
-if (!isset($_SESSION['REDIS_LIST']))
-{
-	$_SESSION['REDIS_LIST'] = [];
-}
-
 function serverSort($a, $b)
 {
 	if ($a['MODE'] == $b['MODE'])
@@ -199,7 +197,6 @@ function serverSort($a, $b)
 }
 
 $data = CClusterRedis::getList();
-
 $uptime = false;
 $data = new CAdminResult($data, $tableID);
 
@@ -279,7 +276,7 @@ foreach ($servers as $server)
 		}
 	}
 
-	$row =& $lAdmin->AddRow($server['ID'], $server);
+	$row = & $lAdmin->AddRow($server['ID'], $server);
 
 	$row->AddViewField('ID', '<a href="cluster_redis_edit.php?lang=' . LANGUAGE_ID
 		. '&group_id=' . $group_id . '&ID=' . $server['ID'] . '">' . $server['ID'] . '</a>');

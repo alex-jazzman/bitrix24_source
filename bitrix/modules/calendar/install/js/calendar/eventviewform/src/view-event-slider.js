@@ -74,10 +74,12 @@ export const ViewEventSlider = {
 			{
 				this.loadCommentsView();
 			}
+
 			if (this.isWebdavEvent)
 			{
 				this.executeScripts(this.$refs.filesView);
 			}
+
 			Event.bind(document, 'visibilitychange', this.handleBackgroundPulls);
 		}
 		Event.bind(this.$refs.sliderDetailContent, 'mouseup', this.quote);
@@ -219,6 +221,7 @@ export const ViewEventSlider = {
 				location: this.entry.getLocation(),
 				entry: this.entry,
 			};
+
 			this.reloadPlannerCallback(plannerData);
 		},
 		handleBackgroundPulls()
@@ -241,7 +244,8 @@ export const ViewEventSlider = {
 			{
 				return;
 			}
-			if (event.data[1].fields.CAL_TYPE === 'location')
+
+			if (event.data[1]?.fields?.CAL_TYPE === 'location')
 			{
 				return;
 			}
@@ -260,7 +264,7 @@ export const ViewEventSlider = {
 		},
 		updateParams(event: BaseEvent)
 		{
-			if (parseInt(event.data[1].fields.PARENT_ID, 10) !== parseInt(this.params.parentId, 10))
+			if (parseInt(event.data[1]?.fields?.PARENT_ID, 10) !== parseInt(this.params.parentId, 10))
 			{
 				this.reloadPlanner();
 
@@ -275,7 +279,7 @@ export const ViewEventSlider = {
 				data: {
 					entryId: this.eventId,
 					dateFrom: Util.formatDate(pullData.DATE_FROM),
-					timezoneOffset: pullData.TZ_OFFSET_FROM
+					timezoneOffset: pullData.TZ_OFFSET_FROM,
 				},
 			}).then((response) => {
 				const newData = response.data;
@@ -505,7 +509,7 @@ export const ViewEventSlider = {
 
 							</div>
 						</div>
-						<div class="calendar-slider-sidebar-layout-main calendar-slider-sidebar-border-bottom calendar-slider-sidebar-remind" v-if="isRemind">
+						<div class="calendar-slider-sidebar-layout-main calendar-slider-sidebar-border-bottom calendar-slider-sidebar-remind" v-if="isRemind && showComments">
 							<div class="calendar-slider-sidebar-row">
 								<div class="calendar-slider-sidebar-string-name">{{$Bitrix.Loc.getMessage('EC_VIEW_REMINDERS')}}:</div>
 								<span class="calendar-slider-sidebar-remind-link calendar-slider-sidebar-string-value" :id="id + '_add_reminder_link'" style="display: none;">
@@ -516,9 +520,8 @@ export const ViewEventSlider = {
 						</div>
 						<div class="calendar-slider-sidebar-row calendar-slider-sidebar-border-bottom" v-if="isRrule">
 							<div class="calendar-slider-sidebar-string-name">{{$Bitrix.Loc.getMessage('EC_T_REPEAT')}}:</div>
-							<div class="calendar-slider-sidebar-string-value">{{rruleDescription}}</div>
+							<div class="calendar-slider-sidebar-string-value calendar-slider-sidebar-rrule-desc">{{rruleDescription}}</div>
 						</div>
-
 					</div>
 					<div class="calendar-slider-sidebar-copy" style="display: none;">
 						<span class="calendar-slider-sidebar-copy-link">{{$Bitrix.Loc.getMessage('EC_VIEW_SLIDER_COPY_LINK')}}</span>

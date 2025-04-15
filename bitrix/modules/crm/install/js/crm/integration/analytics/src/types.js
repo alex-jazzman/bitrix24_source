@@ -18,7 +18,7 @@ export type CrmMode = 'crmMode_simple' | 'crmMode_classic';
 export type EntityAddEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
-	event: Dictionary.EVENT_ENTITY_ADD,
+	event: Dictionary.EVENT_ENTITY_CREATE,
 	type: 'lead' | 'deal' | 'smart_invoice' | 'quote' | 'contact' | 'company' | 'dynamic',
 	c_section: Dictionary.SECTION_LEAD
 		| Dictionary.SECTION_DEAL
@@ -43,14 +43,15 @@ export type EntityAddEvent = {
 	c_element?: Dictionary.ELEMENT_CREATE_BUTTON | Dictionary.ELEMENT_QUICK_BUTTON,
 	status?: EventStatus,
 	p1: CrmMode,
-	p2?: 'category_smartDocumentContact' | 'category_catalogContractorContact' | 'category_catalogContractorCompany',
-	p3?: 'myCompany_1' | 'myCompany_0',
+	p2?: string,
+	p3?: 'category_smartDocumentContact' | 'category_catalogContractorContact' | 'category_catalogContractorCompany',
+	p4?: 'myCompany_1' | 'myCompany_0',
 };
 
 export type EntityCloseEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
-	event: Dictionary.EVENT_ENTITY_CLOSE,
+	event: Dictionary.EVENT_ENTITY_COMPLETE,
 	type: 'lead' | 'deal',
 	c_section: Dictionary.SECTION_LEAD
 		| Dictionary.SECTION_DEAL

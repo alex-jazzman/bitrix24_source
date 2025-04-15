@@ -159,6 +159,7 @@ jn.define('imconnector/connectors/telegram/view/edit', (require, exports, module
 								width: 282,
 								height: 45,
 							},
+							forceCopy: true,
 						}),
 						complete: CompleteButton({
 							text: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_COPY_LINK_COMPLETE'),

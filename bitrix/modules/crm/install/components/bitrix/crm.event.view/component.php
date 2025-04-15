@@ -18,7 +18,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$entityType = $arParams['ENTITY_TYPE'] ?? null;
+$entityType = $arParams['ENTITY_TYPE'] ?? '';
 $toolsManager = Container::getInstance()->getIntranetToolsManager();
 $isAvailable = (
 	$entityType
@@ -32,9 +32,31 @@ if(!$isAvailable)
 	return;
 }
 
-if (!(CCrmPerms::IsAccessEnabled()))
+$entityTypeID = CCrmOwnerType::ResolveID($entityType);
+
+$entityId = (isset($arParams['ENTITY_ID']) && !is_array($arParams['ENTITY_ID']) && $arParams['ENTITY_ID'] > 0)
+	? $arParams['ENTITY_ID']
+	: null
+;
+
+$arFilter = [];
+
+if ($entityTypeID !== CCrmOwnerType::Undefined && $entityId > 0)
 {
-	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead((int)$entityTypeID, (int)$entityId))
+	{
+		$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
+		$this->IncludeComponentTemplate();
+
+		return;
+	}
+	$arFilter['CHECK_PERMISSIONS'] = 'N';
+}
+elseif (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
+{
+	$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
+	$this->IncludeComponentTemplate();
+
 	return;
 }
 
@@ -107,7 +129,6 @@ if (!RestrictionManager::isHistoryViewPermitted())
 	return;
 }
 
-$arFilter = array();
 $arSort = array();
 
 $bInternal = false;
@@ -121,24 +142,6 @@ if (isset($arParams['INTERNAL_EDIT']) && $arParams['INTERNAL_EDIT'] === 'Y')
 }
 $arResult['GADGET'] =  isset($arParams['GADGET']) && $arParams['GADGET'] == 'Y'? 'Y': 'N';
 $isInGadgetMode = $arResult['GADGET'] === 'Y';
-
-$entityType = isset($arParams['ENTITY_TYPE']) ? $arParams['ENTITY_TYPE'] : '';
-$entityTypeID = CCrmOwnerType::ResolveID($entityType);
-
-$entityId = (isset($arParams['ENTITY_ID']) && !is_array($arParams['ENTITY_ID']) && $arParams['ENTITY_ID'] > 0)
-	? $arParams['ENTITY_ID']
-	: null;
-
-if ($entityTypeID !== CCrmOwnerType::Undefined && $entityId > 0)
-{
-	if (!\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($entityTypeID, $entityId))
-	{
-		$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
-		$this->IncludeComponentTemplate();
-		return;
-	}
-	$arFilter['CHECK_PERMISSIONS'] = 'N';
-}
 
 if ($entityType !== '')
 {
@@ -286,25 +289,25 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 
 	if(!$arResult['INTERNAL'])
 	{
-		$enabledEntityTypeNames = array();
-		$currentUserPerms = CCrmPerms::GetCurrentUserPermissions();
-		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::LeadName, BX_CRM_PERM_NONE, 'READ'))
+		$enabledEntityTypeNames = [];
+		$entityPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType();
+		if ($entityPermissions->canReadItems(CCrmOwnerType::Lead))
 		{
 			$enabledEntityTypeNames[] = \CCrmOwnerType::LeadName;
 		}
-		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::ContactName, BX_CRM_PERM_NONE, 'READ'))
+		if ($entityPermissions->canReadItems(CCrmOwnerType::Contact))
 		{
 			$enabledEntityTypeNames[] = \CCrmOwnerType::ContactName;
 		}
-		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::CompanyName, BX_CRM_PERM_NONE, 'READ'))
+		if ($entityPermissions->canReadItems(CCrmOwnerType::Company))
 		{
 			$enabledEntityTypeNames[] = \CCrmOwnerType::CompanyName;
 		}
-		if(CCrmDeal::CheckReadPermission(0, $currentUserPerms))
+		if ($entityPermissions->canReadItems(CCrmOwnerType::Deal))
 		{
 			$enabledEntityTypeNames[] = \CCrmOwnerType::DealName;
 		}
-		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::QuoteName, BX_CRM_PERM_NONE, 'READ'))
+		if ($entityPermissions->canReadItems(CCrmOwnerType::Quote))
 		{
 			$enabledEntityTypeNames[] = \CCrmOwnerType::QuoteName;
 		}

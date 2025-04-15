@@ -1142,7 +1142,7 @@ this.BX = this.BX || {};
 	        result.push({
 	          id: 'edit',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_EDIT'),
-	          iconUrl: "".concat(this.iconUrlFolderPath, "pencil.png"),
+	          iconUrl: "".concat(this.iconUrlFolderPath, "edit.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            BlogPost$$1.edit({
@@ -1156,7 +1156,7 @@ this.BX = this.BX || {};
 	        }, {
 	          id: 'delete',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_DELETE'),
-	          iconName: 'delete',
+	          iconUrl: `${this.iconUrlFolderPath}delete.png`,
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            BlogPost$$1["delete"]({
@@ -1189,7 +1189,7 @@ this.BX = this.BX || {};
 	        result.push({
 	          id: 'follow',
 	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_".concat(this.followValue ? 'Y' : 'N')),
-	          iconUrl: "".concat(this.iconUrlFolderPath, "eye.png"),
+	          iconUrl: "".concat(this.iconUrlFolderPath, this.followValue ? "watch.png" : "unwatch.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            FollowManagerInstance.setFollow({
@@ -1244,7 +1244,7 @@ this.BX = this.BX || {};
 	          result.push({
 	            id: 'createTask',
 	            title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_CREATE_TASK'),
-	            iconUrl: "".concat(this.iconUrlFolderPath, "n_check.png"),
+	            iconUrl: "".concat(this.iconUrlFolderPath, "task.png"),
 	            sectionCode: this.sectionCode,
 	            action: function action() {
 	              oMSL.createTask({

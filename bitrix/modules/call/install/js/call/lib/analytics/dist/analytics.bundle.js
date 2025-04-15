@@ -43,7 +43,9 @@ this.BX.Call = this.BX.Call || {};
 	  viewPopup: 'view_popup',
 	  viewNotification: 'view_notification',
 	  clickTimeCode: 'click_timecode',
-	  playRecord: 'play_record'
+	  playRecord: 'play_record',
+	  clickAiOff: 'click_ai_off',
+	  delete: 'delete'
 	});
 	const AnalyticsTool = Object.freeze({
 	  im: 'im',
@@ -75,7 +77,8 @@ this.BX.Call = this.BX.Call || {};
 	  chatList: 'chat_list',
 	  chatWindow: 'chat_window',
 	  callMessage: 'call_message',
-	  callFollowup: 'call_followup'
+	  callFollowup: 'call_followup',
+	  call: 'call'
 	});
 	const AnalyticsSubSection = Object.freeze({
 	  finishButton: 'finish_button',
@@ -209,6 +212,34 @@ this.BX.Call = this.BX.Call || {};
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.callFollowup,
 	      event: AnalyticsEvent.playRecord,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onClickAIOff(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.clickAiOff,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onSelectAIOff(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.aiOff,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onSelectAIDelete(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.delete,
+	      type: params.callType,
+	      c_section: AnalyticsSection.call,
 	      p5: `callId_${params.callId}`
 	    });
 	  }

@@ -9,13 +9,15 @@ jn.define('collab/invite', (require, exports, module) => {
 	const { Type } = require('type');
 	const { ajaxPublicErrorHandler } = require('error');
 	const { addEmployeeToCollab } = require('collab/invite/src/api');
-	const { showSuccessInvitationToast } = require('collab/invite/src/utils');
+	const {
+		showSuccessInvitationToast,
+		openGuestsInviteRestrictionsBox,
+	} = require('collab/invite/src/utils');
 	const { Haptics } = require('haptics');
 	const { Alert, ButtonType } = require('alert');
 	const { CollabInviteAnalytics } = require('collab/invite/src/analytics');
-	const { MemoryStorage } = require('native/memorystore');
+	const { NotifyManager } = require('notify-manager');
 	const { Feature } = require('feature');
-	const { isEqual } = require('utils/object');
 
 	const TabType = {
 		GUESTS: 'guests',
@@ -45,9 +47,23 @@ jn.define('collab/invite', (require, exports, module) => {
 			this.tabsWidget = tabsWidget;
 			this.tabsWidget.preventBottomSheetDismiss(true);
 			this.tabsWidget.on('preventDismiss', this.#preventDismiss);
+			this.tabsWidget.on('onTabSelected', this.#onTabSelected);
 			const widgets = this.tabsWidget.nestedWidgets();
 			this.#initGuestsTab(widgets.guests);
 			this.#initEmployeesSelector(widgets.employees);
+		};
+
+		#onTabSelected = async (item) => {
+			const { canInviteCollabers } = this.settings;
+			if (!canInviteCollabers && item.id === TabType.GUESTS && Feature.isSelectorWidgetOnViewHiddenEventBugFixed())
+			{
+				this.inviteBoxInstance = await openGuestsInviteRestrictionsBox({
+					parentWidget: this.tabsWidget,
+					onClose: () => {
+						this.tabsWidget.setActiveItem(TabType.EMPLOYEES);
+					},
+				});
+			}
 		};
 
 		#preventDismiss = () => {
@@ -73,7 +89,8 @@ jn.define('collab/invite', (require, exports, module) => {
 					{
 						type: ButtonType.DEFAULT,
 						text: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
-					}],
+					},
+				],
 			);
 		};
 
@@ -92,6 +109,7 @@ jn.define('collab/invite', (require, exports, module) => {
 				isBitrix24Included: this.settings?.isBitrix24Included ?? false,
 				inviteLink: this.settings?.inviteLink ?? null,
 				analytics: this.analytics,
+				canInviteCollabers: this.settings?.canInviteCollabers ?? false,
 			});
 
 			layout.showComponent(this.guestsTabInstance);
@@ -147,35 +165,59 @@ jn.define('collab/invite', (require, exports, module) => {
 		};
 
 		#getTabsData = () => {
+			const { canInviteCollabers } = this.settings;
+
+			const guestsTab = {
+				id: TabType.GUESTS,
+				title: Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TITLE'),
+				widget: {
+					name: 'layout',
+					code: TabType.GUESTS,
+				},
+			};
+
+			const employeesTab = {
+				id: TabType.EMPLOYEES,
+				title: Loc.getMessage('COLLAB_INVITE_TAB_EMPLOYEES_TITLE'),
+				widget: {
+					name: 'selector',
+					code: TabType.EMPLOYEES,
+					settings: {
+						objectName: 'selector',
+						sendButtonName: Loc.getMessage('COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT'),
+					},
+				},
+			};
+
+			const items = !canInviteCollabers && Feature.isSelectorWidgetOnViewHiddenEventBugFixed()
+				? [employeesTab, guestsTab]
+				: [guestsTab, employeesTab];
+			items[0].active = true;
+
 			return {
-				items: [
-					{
-						id: TabType.GUESTS,
-						active: true,
-						title: Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TITLE'),
-						widget: {
-							name: 'layout',
-							code: TabType.GUESTS,
-						},
-					},
-					{
-						id: TabType.EMPLOYEES,
-						title: Loc.getMessage('COLLAB_INVITE_TAB_EMPLOYEES_TITLE'),
-						widget: {
-							name: 'selector',
-							code: TabType.EMPLOYEES,
-							settings: {
-								objectName: 'selector',
-								sendButtonName: Loc.getMessage('COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT'),
-							},
-						},
-					},
-				],
+				items,
 			};
 		};
 
-		open = () => {
-			void this.#initSettings();
+		open = async () => {
+			await NotifyManager.showLoadingIndicator();
+			const response = await this.#fetchInviteSettings(this.props.collabId);
+			NotifyManager.hideLoadingIndicatorWithoutFallback();
+
+			const { errors, data } = response;
+			if (errors && errors.length > 0)
+			{
+				return;
+			}
+
+			this.settings = data;
+			if (!data.canCurrentUserInvite)
+			{
+				await this.#showNoPermissionsToInviteAlert();
+
+				return;
+			}
+
 			const widgetParams = {
 				titleParams: {
 					text: Loc.getMessage('COLLAB_INVITE_TITLE'),
@@ -199,77 +241,12 @@ jn.define('collab/invite', (require, exports, module) => {
 				.catch(console.error);
 		};
 
-		#initSettings = async () => {
-			this.settings = await this.#getInviteSettingsFromCache(this.props.collabId);
-			void this.#fetchAndUpdateInviteSettings(this.props.collabId);
-		};
-
-		#fetchAndUpdateInviteSettings = async (collabId) => {
-			const response = await BX.ajax.runAction('mobile.Collab.getInviteSettings', {
+		#fetchInviteSettings = async (collabId) => {
+			return BX.ajax.runAction('mobile.Collab.getInviteSettings', {
 				json: {
 					collabId,
 				},
 			}).catch(ajaxPublicErrorHandler);
-
-			const { errors, data } = response;
-			if (errors && errors.length > 0)
-			{
-				this.#close();
-
-				return null;
-			}
-
-			if (!data.canCurrentUserInvite)
-			{
-				await this.#showNoPermissionsToInviteAlert();
-				this.#close();
-
-				return null;
-			}
-
-			await this.#addInviteSettingsToCache(data, collabId);
-			if (!isEqual(this.settings, data))
-			{
-				this.settings = data;
-				this.guestsTabInstance?.update({
-					pending: false,
-					isBitrix24Included: this.settings.isBitrix24Included,
-					inviteLink: this.settings.inviteLink,
-				});
-			}
-
-			return response;
-		};
-
-		#addInviteSettingsToCache = async (settings, collabId) => {
-			if (Feature.isMemoryStorageSupported())
-			{
-				const store = new MemoryStorage('collabInviteSettings');
-				await store.set(`collab-invite-settings-${collabId}`, {
-					settings,
-					time: Date.now(),
-				});
-			}
-		};
-
-		#isCachedWithinLast48Hours = (time) => {
-			const twelveHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
-
-			return time > twelveHoursAgo;
-		};
-
-		#getInviteSettingsFromCache = async (collabId) => {
-			if (Feature.isMemoryStorageSupported())
-			{
-				const store = new MemoryStorage('collabInviteSettings');
-				const data = await store.get(`collab-invite-settings-${collabId}`);
-				if (data && this.#isCachedWithinLast48Hours(data.time))
-				{
-					return data.settings;
-				}
-			}
-
-			return null;
 		};
 
 		#showNoPermissionsToInviteAlert = () => {

@@ -5,7 +5,6 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/factory', (require, 
 	const { CustomMessageFactory } = require('im/messenger/lib/element/dialog/message/custom/factory');
 	const { CheckInMessage } = require('im/messenger/lib/element/dialog/message/check-in/message');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -15,11 +14,6 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/factory', (require, 
 	{
 		static create(modelMessage, options = {})
 		{
-			if (!Feature.isCheckInMessageSupported)
-			{
-				return new TextMessage(modelMessage, options);
-			}
-
 			try
 			{
 				return new CheckInMessage(modelMessage, options);

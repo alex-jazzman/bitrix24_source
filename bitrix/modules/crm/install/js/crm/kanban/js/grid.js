@@ -268,11 +268,21 @@ BX.CRM.Kanban.Grid.prototype = {
 
 				this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
 
-				if(
-					!BX.findParent(el.target, {className: 'main-kanban-item'})
-					&& !BX.findParent(el.target, {className: 'ui-action-panel'})
-					&& !BX.findParent(el.target, {className: 'ui-action-panel-item-popup-menu'})
-					&& !BX.findParent(el.target, {className: 'bx-finder-popup'})
+				const availableParentTags = [
+					'main-kanban-item',
+					'ui-action-panel',
+					'ui-action-panel-item-popup-menu',
+					'bx-finder-popup',
+					'responsible-user-selector-dialog',
+				];
+
+				const hasAvailableParent = availableParentTags
+					.find((className) => BX.findParent(el.target, { className }))
+				;
+
+				if (
+					!hasAvailableParent
+					&& ((top.BX.SidePanel?.Instance?.getTopSlider()?.url ?? '').indexOf('/company/personal/user/') !== 0)
 				)
 				{
 					const popup = BX.PopupWindowManager.getCurrentPopup();
@@ -3504,25 +3514,66 @@ BX.CRM.Kanban.Grid.prototype = {
 			icon: '/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-responsible.svg',
 			onclick: (event, item) => {
 				setTimeout(() => {
-					const userSelector = BX.UI.EntityEditorUserSelector.create(
-						'selector_assigned',
-						{
-							callback: (selector, item) => {
-								BX.CRM.Kanban.Actions.setAssigned(this, item);
-								userSelector.close();
-							},
-						}
-					);
-
-					const target = (
+					const targetNode = (
 						BX.type.isUndefined(item.layout.container)
 							? item.actionPanel.layout.more
 							: item.layout.container
 					);
-					userSelector.open(target);
+
+					this.getResponsibleUserSelectorDialog(targetNode).show();
 				}, 100);
 			},
 		});
+	},
+
+	getResponsibleUserSelectorDialog(targetNode)
+	{
+		return new BX.UI.EntitySelector.Dialog({
+			id: 'crm-kanban-responsible-user-selector-dialog',
+			targetNode,
+			context: 'CRM_KANBAN_RESPONSIBLE_USER',
+			multiple: false,
+			enableSearch: true,
+			width: 450,
+			entities: [
+				{
+					id: 'user',
+					options: {
+						inviteEmployeeLink: false,
+						emailUsers: false,
+						inviteGuestLink: false,
+						intranetUsersOnly: true,
+					},
+				},
+				{
+					id: 'structure-node',
+					options: {
+						selectMode: 'usersOnly',
+					},
+				},
+			],
+			events: {
+				'Item:onSelect': (event) => {
+					this.onResponsibleUserSelect(event);
+				},
+			},
+			popupOptions: {
+				className: 'responsible-user-selector-dialog',
+			},
+		});
+	},
+
+	onResponsibleUserSelect(event)
+	{
+		const { item: selectedItem } = event.getData();
+
+		if (selectedItem)
+		{
+			BX.CRM.Kanban.Actions.setAssigned(this, {
+				entityId: selectedItem.getId(),
+				name: BX.Text.encode(selectedItem.getTitle()),
+			});
+		}
 	},
 
 	isBlockedIncomingMoving: function(column)

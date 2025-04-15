@@ -38,10 +38,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		AppStatus,
 		EventType,
 		RestMethod,
-		FeatureFlag,
 		ComponentCode,
 		MessengerInitRestMethod,
-		ViewName,
 	} = require('im/messenger/const');
 
 	const core = new CopilotApplication({
@@ -149,14 +147,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.storeManager = this.core.getStoreManager();
 		}
 
-		/**
-		 * @override
-		 */
-		checkChatV2Support()
-		{
-			return true;
-		}
-
 		initRequests()
 		{
 			this.copilotInitService.onInit(this.checkRevision.bind(this));
@@ -174,7 +164,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 						chatCreateButtonColor: AppTheme.colors.accentMainCopilot || AppTheme.colors.accentBrandBlue,
 						showLoader: true,
 					},
-					viewName: ViewName.recent,
 				}),
 			});
 
@@ -219,11 +208,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		preloadAssets()
 		{
-			if (FeatureFlag.dialog.nativeSupported)
-			{
-				// TODO: generalize the approach to background caching
-				(new CopilotAssets()).preloadAssets();
-			}
+			// TODO: generalize the approach to background caching
+			(new CopilotAssets()).preloadAssets();
 		}
 
 		/**

@@ -25,7 +25,6 @@ $MESS["MENU_IMOL_DETAILED_STATISTICS"] = "Statistics Details";
 $MESS["MENU_IMOL_LIST_LINES"] = "List";
 $MESS["MENU_IMOL_PERMISSIONS"] = "Access Permissions";
 $MESS["MENU_IMOL_STATISTICS"] = "Statistics";
-$MESS["MENU_IM_MESSENGER"] = "Chat and Calls";
 $MESS["MENU_IM_MESSENGER_COLLAB"] = "Collabs";
 $MESS["MENU_IM_MESSENGER_NEW"] = "Messenger";
 $MESS["MENU_KNOWLEDGE"] = "Knowledge base";

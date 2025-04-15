@@ -391,7 +391,10 @@ export class BitrixCall extends AbstractCall
 
 		if (this.BitrixCall)
 		{
-			this.signaling.sendMicrophoneState(!this.muted);
+			if (!event.data.calledProgrammatically)
+			{
+				this.signaling.sendMicrophoneState(!this.muted);
+			}
 
 			if (this.muted)
 			{
@@ -419,7 +422,10 @@ export class BitrixCall extends AbstractCall
 
 		if (this.BitrixCall)
 		{
-			this.signaling.sendCameraState(this.videoEnabled);
+			if (!event.data.calledProgrammatically)
+			{
+				this.signaling.sendCameraState(this.videoEnabled);
+			}
 
 			if (this.videoEnabled)
 			{
@@ -609,6 +615,16 @@ export class BitrixCall extends AbstractCall
 		}
 		this.floorRequestActive = requestActive;
 		this.BitrixCall.raiseHand(requestActive);
+	};
+
+	turnOffAllParticipansStream(options)
+	{
+		this.BitrixCall.turnOffAllParticipansStream(options);
+	};
+
+	turnOffParticipantStream(options)
+	{
+		this.BitrixCall.turnOffParticipantStream(options);
 	};
 
 	sendRecordState(recordState)
@@ -1071,6 +1087,10 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.on('MessageReceived', this.#onCallMessageReceived);
 		this.BitrixCall.on('HandRaised', this.#onCallHandRaised);
 		this.BitrixCall.on('VoiceStarted', this.#onEndpointVoiceStart);
+		this.BitrixCall.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
+		this.BitrixCall.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
+		this.BitrixCall.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
+		this.BitrixCall.on('ParticipantMuted', this.#onParticipantMuted);
 		this.BitrixCall.on('VoiceEnded', this.#onEndpointVoiceEnd);
 		this.BitrixCall.on('Reconnecting', this.#onCallReconnecting);
 		this.BitrixCall.on('Reconnected', this.#onCallReconnected);
@@ -1083,6 +1103,7 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
 		this.BitrixCall.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
 	};
+	
 
 	removeCallEvents()
 	{
@@ -1100,6 +1121,9 @@ export class BitrixCall extends AbstractCall
 			this.BitrixCall.on('ParticipantLeaved', BX.DoNothing);
 			this.BitrixCall.on('MessageReceived', BX.DoNothing);
 			this.BitrixCall.on('HandRaised', BX.DoNothing);
+			this.BitrixCall.on('AllParticipantsAudioMuted', BX.DoNothing);
+			this.BitrixCall.on('AllParticipantsVideoMuted', BX.DoNothing);
+			this.BitrixCall.on('YouMuteAllParticipants', BX.DoNothing);
 			this.BitrixCall.on('VoiceStarted', BX.DoNothing);
 			this.BitrixCall.on('VoiceEnded', BX.DoNothing);
 			this.BitrixCall.on('Reconnecting', BX.DoNothing);
@@ -1756,6 +1780,11 @@ export class BitrixCall extends AbstractCall
 		{
 			peer.removeMediaRenderer(e.mediaRenderer);
 		}
+		
+		this.runCallback(CallEvent.onUserCameraState, {
+			userId: p.userId,
+			cameraState: false
+		});
 
 		console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
 	};
@@ -2223,6 +2252,34 @@ export class BitrixCall extends AbstractCall
 		this.runCallback(CallEvent.onUserFloorRequest, {
 			userId: p.userId,
 			requestActive: p.isHandRaised
+		})
+	}
+
+	#onAllParticipantsAudioMuted = (p) =>
+	{
+		this.runCallback(CallEvent.onAllParticipantsAudioMuted, {
+			userId: p.from_sid
+		})
+	}
+
+	#onAllParticipantsVideoMuted = (p) =>
+	{
+		this.runCallback(CallEvent.onAllParticipantsVideoMuted, {
+			userId: p.from_sid
+		})
+	}
+
+	#onYouMuteAllParticipants = (p) =>
+	{
+		this.runCallback(CallEvent.onYouMuteAllParticipants, {
+			data: p
+		})
+	}
+
+	#onParticipantMuted = (p) =>
+	{
+		this.runCallback(CallEvent.onParticipantMuted, {
+			data: p
 		})
 	}
 

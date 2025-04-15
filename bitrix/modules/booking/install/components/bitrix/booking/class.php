@@ -5,10 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Booking\BookingFeature;
+use Bitrix\Booking\Internals\Service\Enum\AhaMoment;
+use Bitrix\Booking\Service\BookingFeature;
 use Bitrix\Booking\Component;
-use Bitrix\Booking\Integration\Pull\PushService;
-use Bitrix\Booking\Internals\Journal\EventProcessor\PushPull\PushPullCommandType;
+use Bitrix\Booking\Internals\Integration\Pull\PushService;
+use Bitrix\Booking\Internals\Service\Journal\EventProcessor\PushPull\PushPullCommandType;
 use Bitrix\Booking\Provider\AhaMomentProvider;
 use Bitrix\Booking\Provider\ClientStatisticsProvider;
 use Bitrix\Booking\Provider\MoneyStatisticsProvider;
@@ -19,6 +20,7 @@ use Bitrix\Main\Loader;
 class BookingComponent extends CBitrixComponent
 {
 	private const EDITING_BOOKING_ID_PARAM = 'editingBookingId';
+	private const EDITING_WAIT_LIST_ITEM_ID_PARAM = 'editingWaitListItemId';
 
 	public function executeComponent(): void
 	{
@@ -45,12 +47,17 @@ class BookingComponent extends CBitrixComponent
 		$this->arResult['IS_SLIDER'] = $this->request->get('IFRAME') === 'Y';
 		$this->arResult['FILTER_ID'] = Component\Booking\Filter::getId();
 		$this->arResult['editingBookingId'] = $this->getEditingBookingId();
+		$this->arResult['editingWaitListItemId'] = $this->getEditingWaitListItemId();
 		$this->arResult['AHA_MOMENTS'] = (new AhaMomentProvider())->get($userId);
 
 		$clientStatisticsProvider = new ClientStatisticsProvider();
 		$this->arResult['TOTAL_CLIENTS'] = $clientStatisticsProvider->getTotalClients();
 		$this->arResult['TOTAL_CLIENTS_TODAY'] = $clientStatisticsProvider->getTotalClientsToday($userId);
 		$this->arResult['MONEY_STATISTICS'] = (new MoneyStatisticsProvider())->get($userId);
+
+		$this->arResult['embedItems'] = $this->getEmbedItems();
+
+		$this->checkIfShouldShowBanner();
 
 		$this->subscribeToPull($userId);
 
@@ -62,6 +69,43 @@ class BookingComponent extends CBitrixComponent
 		$request = Context::getCurrent()->getRequest();
 
 		return (int)$request->getQueryList()->get(self::EDITING_BOOKING_ID_PARAM);
+	}
+
+	private function getEditingWaitListItemId(): int
+	{
+		$request = Context::getCurrent()->getRequest();
+
+		return (int)$request->getQueryList()->get(self::EDITING_WAIT_LIST_ITEM_ID_PARAM);
+	}
+
+	private function getEmbedItems(): array
+	{
+		$embedParams = Context::getCurrent()?->getRequest()->getQueryList()->get('embed');
+
+		if (!$embedParams)
+		{
+			return [];
+		}
+
+		$decodedEmbedParams = \Bitrix\Main\Web\Json::decode($embedParams);
+
+		if (!is_array($decodedEmbedParams))
+		{
+			return [];
+		}
+
+		$result = [];
+
+		foreach ($decodedEmbedParams as $item)
+		{
+			$result[] = [
+				'module' =>	$item['module'] ?? '',
+				'code' => $item['code'] ?? '',
+				'id' => (int)($item['id'] ?? 0),
+			];
+		}
+
+		return $result;
 	}
 
 	private function subscribeToPull(int $userId): void
@@ -114,5 +158,33 @@ class BookingComponent extends CBitrixComponent
 		}
 
 		return (string)$timeZone;
+	}
+
+	/**
+	 * Check if banner should be shown depend on embedded items.
+	 */
+	private function checkIfShouldShowBanner(): void
+	{
+		// if banner already shown before, then not need to continue
+		$shouldShowBanner = (bool)($this->arResult['AHA_MOMENTS'][AhaMoment::Banner->value] ?? false);
+		if (!$shouldShowBanner)
+		{
+			return;
+		}
+
+		// if query has embedded item crm-deal means booking window opens from crm-deal page,
+		// so banner already shown there, no need to show it again
+		$isDealEmbed = array_filter(
+			$this->arResult['embedItems'] ?? [],
+			static fn (array $embedItem) => $embedItem['module'] === 'crm' && $embedItem['code'] === 'DEAL',
+		);
+		if (!$isDealEmbed)
+		{
+			return;
+		}
+
+		// force set banner aha-moment to not show in this request,
+		// but it will be shown in future requests anyway
+		$this->arResult['AHA_MOMENTS'][AhaMoment::Banner->value] = false;
 	}
 }

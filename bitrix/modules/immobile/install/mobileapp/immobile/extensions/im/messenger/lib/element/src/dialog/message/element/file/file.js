@@ -3,12 +3,10 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
 	const {
 		Icon,
 		resolveFileIcon,
 	} = require('assets/icons');
-	const { EasyIcon } = require('layout/ui/file/icon');
 
 	const { getArrowInCircle } = require('im/messenger/assets/common');
 	const {
@@ -132,13 +130,6 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		 */
 		#getIconSvg()
 		{
-			if (!MobileFeature.isAirStyleSupported())
-			{
-				const easyIcon = EasyIcon(this.fileModel.extension, 24);
-
-				return easyIcon?.children[0]?.props?.svg?.content || '';
-			}
-
 			const fileIconType = getFileIconTypeByExtension(this.fileModel.extension);
 
 			return resolveFileIcon(this.fileModel.extension, fileIconType).getSvg();

@@ -13,6 +13,7 @@ $MESS["REST_MP_SUBSCRIPTION_BUTTON_TITLE2"] = "Безкоштовно на 15 д
 $MESS["REST_MP_SUBSCRIPTION_DEMO_EULA_LINK"] = "https://www.bitrix.ua/download/files/manuals/ua/EULA_Bitrix24_Market.html";
 $MESS["REST_MP_SUBSCRIPTION_DEMO_EULA_TITLE"] = "Я ознайомлений та згоден з <a href=\"#LINK#\" target=\"_blank\">ліцензійною угодою</a>";
 $MESS["REST_MP_SUBSCRIPTION_DEMO_TEXT_1"] = "Встановіть і використовуйте будь-які застосунки, доступні в <a href=\"javascript:void(0)\" onclick=\"#ONCLICK#\" >Бітрікс24.Маркет</a> безкоштовно протягом 15 днів.";
+$MESS["REST_MP_SUBSCRIPTION_DEMO_TEXT_1_MSGVER_1"] = "Установіть і використовуйте будь-які застосунки, доступні в <a href=\"javascript:void(0)\" onclick=\"#ONCLICK#\" >Бітрікс24 Маркет</a> безплатно протягом 15 днів.";
 $MESS["REST_MP_SUBSCRIPTION_DEMO_TEXT_2"] = "Спробуйте наскільки зручно працювати із сотнями додаткових можливостей безкоштовно та продовжіть передплату, коли відчуєте користь для вашої компанії.";
 $MESS["REST_MP_SUBSCRIPTION_DEMO_TITLE"] = "15 днів безкоштовно!";
 $MESS["REST_MP_SUBSCRIPTION_ERROR_OPEN_BUY_URL"] = "Невідома помилка відкриття сторінки.";
@@ -25,6 +26,8 @@ $MESS["REST_MP_SUBSCRIPTION_TEXT_3_LI_3"] = "аналітичні звіти;";
 $MESS["REST_MP_SUBSCRIPTION_TEXT_3_LI_4"] = "інструменти лідогенерації та інтеграції із зовнішніми сервісами;";
 $MESS["REST_MP_SUBSCRIPTION_TEXT_3_LI_5"] = "додаткові роботи та бізнес-процеси;";
 $MESS["REST_MP_SUBSCRIPTION_TEXT_3_LI_6"] = "тематичні шаблони сайтів;";
+$MESS["REST_MP_SUBSCRIPTION_TEXT_3_MSGVER_1"] = "<a href=\"javascript:void(0)\" onclick=\"#ONCLICK#\" >Підписка на Бітрікс24 Маркет</a> — це:";
 $MESS["REST_MP_SUBSCRIPTION_TEXT_4"] = "Підключайте необмежену кількість застосунків і віджетів за фіксовану ціну <a href=\"javascript:void(0)\" onclick=\"#ONCLICK#\">передплати</a>.";
 $MESS["REST_MP_SUBSCRIPTION_TEXT_5"] = "Розширюйте можливості Бітрікс24, щоб зробити ваш бізнес ще сильніше.";
 $MESS["REST_MP_SUBSCRIPTION_TITLE"] = "Передплата на Маркет";
+$MESS["REST_MP_SUBSCRIPTION_TITLE_MSGVER_1"] = "Підписка на Маркет";

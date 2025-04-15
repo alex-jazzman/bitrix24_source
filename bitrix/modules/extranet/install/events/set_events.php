@@ -28,7 +28,14 @@ while($lang = $langs->Fetch())
 		"NAME" => GetMessage("EXTRANET_INVITATION_NAME"),
 		"DESCRIPTION" => GetMessage("EXTRANET_INVITATION_DESC"),
 	));
-	
+
+	$et = new CEventType;
+	$et->Add(array(
+		"LID" => $lid,
+		"EVENT_NAME" => "COLLAB_INVITATION",
+		"NAME" => GetMessage("EXTRANET_INVITATION_NAME"),
+		"DESCRIPTION" => GetMessage("EXTRANET_INVITATION_DESC"),
+	));
 	
 	$arSites = array();
 	$sites = CSite::GetList("", "", Array("LANGUAGE_ID"=>$lid));

@@ -1712,14 +1712,6 @@ form.profile-post-form {
 	color: #fff;
 }
 
-#socialnetwork_profile_menu_effective_counter .main-buttons-item-counter {
-	background: #4fc3f7;
-}
-
-#socialnetwork_profile_menu_effective_counter .main-buttons-item-counter:after {
-	content: '%';
-}
-
 .intranet-user-profile-stresslevel-widget {
 
 }

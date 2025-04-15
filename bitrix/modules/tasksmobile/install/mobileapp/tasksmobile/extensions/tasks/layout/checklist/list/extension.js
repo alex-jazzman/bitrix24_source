@@ -2,14 +2,14 @@
  * @module tasks/layout/checklist/list
  */
 jn.define('tasks/layout/checklist/list', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { Color } = require('tokens');
 	const { unique } = require('utils/array');
 	const { throttle } = require('utils/function');
 	const { UserField } = require('layout/ui/fields/user');
+	const { UserListManager } = require('layout/ui/user-list');
 	const { ListViewQueueWorker } = require('layout/list-view-queue-worker');
-	const { MainChecklistItem } = require('tasks/layout/checklist/list/src/main-item');
-	const { RootChecklistItem } = require('tasks/layout/checklist/list/src/root-item');
+	const { MainChecklistItem } = require('tasks/layout/checklist/list/src/item/main-item');
+	const { RootChecklistItem } = require('tasks/layout/checklist/list/src/item/root-item');
 	const { toastMovedItem, toastEmptyPersonalList, toastNoRights } = require('tasks/layout/checklist/list/src/toasts');
 	const { ChecklistActionsMenu } = require('tasks/layout/checklist/list/src/menu/actions-menu');
 	const { ChecklistsMenu } = require('tasks/layout/checklist/list/src/menu/checklists-menu');
@@ -372,7 +372,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		/**
 		 * @private
 		 * @param {object} item
-		 * @return {BaseChecklistItem|null}
 		 */
 		renderChecklistItem(item)
 		{
@@ -498,7 +497,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 
 			const blurItemRef = this.getItemRef(item.getId());
-			const shouldBeDeletedOnBlur = !this.saveFocus && !blurItemRef.getTextValue() && item.shouldRemove();
+			const shouldBeDeletedOnBlur = !this.saveFocus && !blurItemRef?.getTextValue() && item.shouldRemove();
 
 			if ((shouldBeDeletedOnBlur && !item.isRoot()))
 			{
@@ -517,12 +516,15 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @return {Promise<void>}
 		 */
 		handleOnToggleImportant = () => {
-			this.handleOnChange();
+			const focusedItem = this.getFocusedItem();
+			this.getFocusedItemRef()?.toggleImportant();
 
-			return this.getFocusedItemRef()?.toggleImportant();
+			if (focusedItem?.hasItemTitle())
+			{
+				this.handleOnChange();
+			}
 		};
 
 		handleOnAddFile = () => {
@@ -807,20 +809,28 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		 * @param {string} memberType
 		 */
 		openUserSelectionManager = (itemId, memberType) => {
+			const item = this.checklist.getItemById(itemId);
+			const userIds = item.getMembersIds(memberType);
+			const userConfig = this.getUserFieldConfig(memberType);
+
 			if (!this.checklist.canAddAccomplice())
 			{
-				this.showToastNoRights();
+				const config = userConfig();
+				const membersMap = item.getMembers();
+				void UserListManager.open({
+					title: config.selectorTitle,
+					users: userIds.map((id) => membersMap[id]),
+					testId: `checklist-user-list-${memberType}`,
+					layoutWidget: this.getParentWidget(),
+				});
 
 				return;
 			}
 
 			this.setSaveFocus(true);
-			const item = this.checklist.getItemById(itemId);
-			const userConfig = this.getUserFieldConfig(memberType);
-
 			const userFieldInstance = UserField({
 				id: memberType,
-				value: item.getMembersIds(memberType),
+				value: userIds,
 				readOnly: false,
 				required: false,
 				multiple: true,
@@ -830,7 +840,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 					groupId: this.props.groupId,
 					parentWidget: this.getParentWidget(),
 				}),
-				title: Loc.getMessage(`TASKSMOBILE_LAYOUT_CHECKLIST_${memberType.toUpperCase()}_SELECTOR_TITLE`),
 				onSelectorHidden: this.handleOnFocusItem,
 				onChange: this.#handleOnChangeUsers({ item, memberType }),
 			});

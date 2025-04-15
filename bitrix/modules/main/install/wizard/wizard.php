@@ -2076,6 +2076,22 @@ class CreateDBStep extends CWizardStep
 
 		$ar["crypto"] = ["value" => ["crypto_key" => md5("some" . uniqid("", true))], "readonly" => true];
 
+		$ar["messenger"] = [
+			"value" => [
+				"run_mode" => \Bitrix\Main\Messenger\Config\WorkerRunMode::BackgroundInWeb->value,
+				"brokers" => [
+					"default" => [
+						"type" => \Bitrix\Main\Messenger\Internals\Broker\DbBroker::TYPE_CODE,
+						"params" => [
+							"table" => \Bitrix\Main\Messenger\Internals\Storage\Db\Model\MessengerMessageTable::class,
+						]
+					],
+				],
+				"queues" => [],
+			],
+			"readonly" => true,
+		];
+
 		if (!$fp = @fopen($filePath, "wb"))
 		{
 			$this->SetError(str_replace("#ROOT#", $_SERVER["DOCUMENT_ROOT"], InstallGetMessage("ERR_C_SAVE_DBCONN")));

@@ -5730,13 +5730,16 @@ this.BX = this.BX || {};
 	      }
 	  }
 	  requestAnimationFrame(() => {
+	    var _error$customData, _error$customData2;
 	    ai_ajaxErrorHandler.AjaxErrorHandler.handleTextGenerateError({
 	      baasOptions: {
 	        bindElement: babelHelpers.classPrivateFieldLooseBase(this, _bindElement$3)[_bindElement$3],
 	        context: babelHelpers.classPrivateFieldLooseBase(this, _copilotTextControllerEngine)[_copilotTextControllerEngine].getContextId(),
 	        useAngle: true
 	      },
-	      errorCode: error.getCode()
+	      errorCode: error.getCode(),
+	      showSliderWithMsg: error == null ? void 0 : (_error$customData = error.customData) == null ? void 0 : _error$customData.showSliderWithMsg,
+	      sliderCode: error == null ? void 0 : (_error$customData2 = error.customData) == null ? void 0 : _error$customData2.sliderCode
 	    });
 	  });
 	}

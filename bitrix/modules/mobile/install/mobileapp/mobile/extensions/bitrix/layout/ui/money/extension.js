@@ -42,4 +42,13 @@
 	}
 
 	jnexport(MoneyView);
+
+	/**
+	 * @module layout/ui/money
+	 */
+	jn.define('layout/ui/money', (require, exports, module) => {
+		module.exports = {
+			MoneyView,
+		};
+	});
 })();

@@ -219,7 +219,7 @@ export class EntryManager {
 		{
 			const slider = Util.getBX().SidePanel.Instance.getTopSlider();
 			const beforeDeleteHandler = () => {
-				if (slider && slider.options.type === 'calendar:slider')
+				if (slider && slider.getData().get('type') === 'calendar:slider')
 				{
 					Util.getBX().SidePanel.Instance.close();
 				}

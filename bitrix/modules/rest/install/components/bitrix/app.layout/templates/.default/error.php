@@ -37,7 +37,7 @@ if($arParams['IS_SLIDER'])
 }
 
 Loader::includeModule('ui');
-Extension::load(['ui.common', 'ui.fonts.opensans']);
+Extension::load(['ui.common', 'ui.fonts.opensans', 'ui.info-helper']);
 
 Loc::loadMessages(__FILE__);
 $arResult['ERROR_TITLE'] = ($arResult['ERROR_TITLE']) ?: Loc::getMessage("REST_APP_LAYOUT_ERROR_TITLE_DEFAULT");
@@ -49,7 +49,7 @@ if($arParams['SET_TITLE'] == 'Y')
 	$needPadding = true;
 }
 
-if (!empty($arResult['HELPER_DATA']['URL'])):?>
+if (!empty($arResult['HELPER_DATA']['URL']) && !isset($arResult['HELPER_DATA']['CODE'])):?>
 <div
 	id="appframe_layout_<?=$arResult['APP_SID']?>"
 	class="app-frame-layout "
@@ -78,7 +78,12 @@ else:
 	</div>
 	<p><?=$arResult['ERROR_MESSAGE']; ?></p>
 </div>
-<?php
+<?php if(isset($arResult['HELPER_DATA']['CODE'])):?>
+	<script>
+		top.BX.UI.InfoHelper.show('<?=\CUtil::JSescape($arResult['HELPER_DATA']['CODE'])?>');
+	</script>
+	<?php
+	endif;
 endif;
 if($arParams['IS_SLIDER'])
 {

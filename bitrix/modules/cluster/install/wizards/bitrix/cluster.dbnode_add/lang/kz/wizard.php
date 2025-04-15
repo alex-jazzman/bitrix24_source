@@ -1,0 +1,21 @@
+<?php
+$MESS["CLUWIZ_DBNODE_ADD_CANCELSTEP_BUTTONTITLE"] = "Жабу";
+$MESS["CLUWIZ_DBNODE_ADD_CANCELSTEP_CONTENT"] = "Шебердің жұмысы үзілді.";
+$MESS["CLUWIZ_DBNODE_ADD_CANCELSTEP_TITLE"] = "Шебердің жұмысы үзілді";
+$MESS["CLUWIZ_DBNODE_ADD_CHEKED"] = "Тексерілді.";
+$MESS["CLUWIZ_DBNODE_ADD_DATABASE_NOT_SUPPORTED"] = "Шебер орнатылған дерекқор түрін қолдамайды.";
+$MESS["CLUWIZ_DBNODE_ADD_FINALSTEP_BUTTONTITLE"] = "Дайын";
+$MESS["CLUWIZ_DBNODE_ADD_FINALSTEP_CONTENT"] = "Шебердің жұмысы аяқталды.";
+$MESS["CLUWIZ_DBNODE_ADD_FINALSTEP_TITLE"] = "Шебердің жұмысы аяқталды";
+$MESS["CLUWIZ_DBNODE_ADD_NO_MODULE_ERROR"] = "Кластерді қолдау модулі орнатылмаған. Шебердің жұмысын жалғастыру мүмкін емес.";
+$MESS["CLUWIZ_DBNODE_ADD_STEP1_CONTENT"] = "Қосу шебері жаңа дерекқорды қосуға көмектеседі және веб-кластерді баптау үшін маңызды басты дерекқордың негізгі параметрлерін тексереді.<br />";
+$MESS["CLUWIZ_DBNODE_ADD_STEP1_TITLE"] = "Жаңа модульдер дерекқорын қосу шебері.";
+$MESS["CLUWIZ_DBNODE_ADD_STEP2_DB_HOST"] = "Деректер базасына қосылу жолы";
+$MESS["CLUWIZ_DBNODE_ADD_STEP2_DB_LOGIN"] = "Пайдаланушы";
+$MESS["CLUWIZ_DBNODE_ADD_STEP2_DB_NAME"] = "Дерекқор";
+$MESS["CLUWIZ_DBNODE_ADD_STEP2_DB_PASSWORD"] = "Құпиясөз";
+$MESS["CLUWIZ_DBNODE_ADD_STEP2_TITLE"] = "Жаңа дерекқорды қосу параметрлері.";
+$MESS["CLUWIZ_DBNODE_ADD_STEP3_CONN_ERROR"] = "Дерекқорға қосылу мүмкін болмады. Алдыңғы қадамға оралып, қосылу параметрлерін түзетіңіз.";
+$MESS["CLUWIZ_DBNODE_ADD_STEP3_TITLE"] = "Дерекқорды баптау параметрлерін тексеру.";
+$MESS["CLUWIZ_DBNODE_ADD_STEP4_NAME"] = "Қосылу атауы";
+$MESS["CLUWIZ_DBNODE_ADD_STEP4_TITLE"] = "Қосылу баптаулары.";

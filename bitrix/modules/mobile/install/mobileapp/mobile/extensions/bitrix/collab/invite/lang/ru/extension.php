@@ -42,6 +42,12 @@ $MESS['COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'] = 'Пригл
 $MESS['COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'] = 'Продолжить приглашение';
 
 $MESS['COLLAB_INVITE_TOAST_INVITE_BUTTON_TEXT'] = 'Пригласить ещё';
-
 $MESS['COLLAB_INVITE_PERMISSIONS_ALERT_TITLE'] = "Недостаточно прав";
 $MESS['COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION'] = "Приглашать участников в эту коллабу может только её владелец или модератор";
+
+$MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_TITLE'] = 'Пригласить гостя в коллабу';
+$MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_TITLE'] = "Приглашение гостей\nотключено";
+$MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION'] = "Обратитесь к администратору\nвашего Битрикс24";
+$MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION_FOR_ADMIN'] = "Вы можете включить эту возможность\nв настройках Битрикс24\nна своем компьютере";
+$MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_BUTTON_TEXT'] = 'Закрыть';
+$MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT'] = "Подробнее";

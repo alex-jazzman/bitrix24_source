@@ -16,6 +16,7 @@ return [
 		'disk:move',
 		'disk:copy',
 		'disk:rights',
+		'disk:opener/folder',
 		'disk:statemanager/redux/slices/files/selector',
 		'statemanager/redux/store',
 	],

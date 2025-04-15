@@ -1,0 +1,24 @@
+<?php
+$MESS["CLUWIZ_ALL_OK"] = "To add a slave database, you have to configure replication manually and run the wizard again.";
+$MESS["CLUWIZ_CANCELSTEP_BUTTONTITLE"] = "Close";
+$MESS["CLUWIZ_CANCELSTEP_CONTENT"] = "The wizard has been canceled.";
+$MESS["CLUWIZ_CANCELSTEP_TITLE"] = "Wizard canceled";
+$MESS["CLUWIZ_CREATE_BY_USER"] = "I will create this function manually";
+$MESS["CLUWIZ_CREATE_BY_WIZARD"] = "Use the wizard to create this function";
+$MESS["CLUWIZ_ERROR_CREATE_FUNCTION"] = "Cannot create the replication monitor function.";
+$MESS["CLUWIZ_ERROR_GRANT_REPLICATION"] = "Cannot get permission to manage replication.";
+$MESS["CLUWIZ_ERRROR_CONNECT"] = "Error connecting to the database.";
+$MESS["CLUWIZ_FINALSTEP_BUTTONTITLE"] = "Done";
+$MESS["CLUWIZ_FINALSTEP_CONTENT"] = "The wizard has finished successfully.";
+$MESS["CLUWIZ_FINALSTEP_TITLE"] = "Wizard has finished";
+$MESS["CLUWIZ_FUNCTION_ERROR"] = "Cannot find function to monitor replication status.";
+$MESS["CLUWIZ_GRANT_BY_USER"] = "I will get permission manually";
+$MESS["CLUWIZ_GRANT_BY_WIZARD"] = "Use the wizard to obtain permisson";
+$MESS["CLUWIZ_HOST"] = "Server:";
+$MESS["CLUWIZ_NEW_NODE"] = "Add slave #CLIENT_ADDR#";
+$MESS["CLUWIZ_NO_MODULE_ERROR"] = "The Web Cluster module is not installed. The Wizard will now abort.";
+$MESS["CLUWIZ_OLD_NODE"] = "Delete slave ##NODE_ID#";
+$MESS["CLUWIZ_REPLICATION_GRANT_ERROR"] = "Insufficient permission to manage replication.";
+$MESS["CLUWIZ_ROOT_PASSWORD"] = "Admin password:";
+$MESS["CLUWIZ_ROOT_USER"] = "User name (admin):";
+$MESS["CLUWIZ_STEP1_TITLE"] = "Check replication status";

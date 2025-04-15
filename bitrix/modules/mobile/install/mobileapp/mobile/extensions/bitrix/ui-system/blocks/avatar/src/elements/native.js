@@ -29,14 +29,20 @@ jn.define('ui-system/blocks/avatar/src/elements/native', (require, exports, modu
 
 		getAvatarProps()
 		{
-			return {
+			const avatarProps = {
 				ref: this.handleForwardRef,
-				onAvatarClick: this.handleOnClick,
 				onUriLoadFailure: () => {
 					console.error('Avatar image loading failed');
 				},
 				...this.getAvatarNativeProps(),
 			};
+
+			if (this.hasOnClick())
+			{
+				avatarProps.onClick = this.handleOnClick;
+			}
+
+			return avatarProps;
 		}
 
 		getAvatarNativeProps()

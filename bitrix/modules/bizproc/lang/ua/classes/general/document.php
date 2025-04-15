@@ -27,4 +27,5 @@ $MESS["BPCGDOC_WI_B24_LIMITS_MESSAGE"] = "На вашому порталі на 
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE"] = "Деякі бізнес-процеси(#CNT#), які ви запустили, некоректно завершилися.
 [URL=#PATH#]Перейдіть до списку, щоб ознайомитися з ними[/URL].";
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_TITLE"] = "Помічник порталу";
+$MESS["BPCGDOC_WI_LOCKED_NOTICE_TITLE_MSGVER_1"] = "Системне сповіщення";
 $MESS["BPCGDOC_YES"] = "Так";

@@ -50,31 +50,6 @@ if ($isCompositeMode)
 									<?
 									$b24Languages = [];
 									include($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/languages.php");
-									if (!\Bitrix\Main\Loader::includeModule('bitrix24') && false)
-									{
-										$cultures = Bitrix\Main\Localization\LanguageTable::getList([
-											'select' => [
-												'NAME',
-												'CULTURE_CODE' => 'CULTURE.CODE',
-											],
-											'filter' => [
-												'=ACTIVE' => 'Y'
-											]
-										]);
-										$languages = [];
-										while ($culture = $cultures->fetch())
-										{
-											if (in_array($culture['LID'], array_keys($b24Languages)))
-											{
-												$languages[$culture['LID']] = [
-													"NAME" => $b24Languages[$culture['LID']]['NAME'] ?? $culture['NAME'],
-													"IS_BETA" => false
-												];
-											}
-										}
-										$b24Languages = $languages;
-										unset($languages);
-									}
 									?>
 									<span class="bx-lang-btn <?=LANGUAGE_ID?>" id="bx-lang-btn" onclick="B24.openLanguagePopup(this)">
 										<span class="bx-lang-btn-icon"><?=$b24Languages[LANGUAGE_ID]["NAME"]?></span>
@@ -221,8 +196,7 @@ $APPLICATION->IncludeComponent(
 	<?php
 		endif;
 	?>
-
-	if (document.referrer.length > 0 && document.referrer.startsWith(location.origin) === false)
+	if (document.referrer.startsWith(location.origin) === false)
 	{
 		BX.Runtime.loadExtension('intranet.recognize-links');
 	}

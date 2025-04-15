@@ -1391,10 +1391,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        this._errors = errors;
 	      }
 	      this._failedItemCount++;
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData]('error');
 	    }
 	    if (state === ProcessState.completed) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData]('success');
 	      SummaryPanel.create(this._id, {
 	        container: this._containerId,
 	        data: {

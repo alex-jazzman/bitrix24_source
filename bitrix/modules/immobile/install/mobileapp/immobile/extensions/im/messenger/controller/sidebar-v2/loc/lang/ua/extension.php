@@ -1,0 +1,3 @@
+<?php
+$MESS["IMMOBILE_SIDEBAR_V2_COMMON_COPY_LINK_SUCCESS"] = "Посилання оновлено.";
+$MESS["IMMOBILE_SIDEBAR_V2_COMMON_TABS_COMMON_CHATS_TITLE"] = "Чати з користувачем";

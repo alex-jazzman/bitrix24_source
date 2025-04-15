@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals;
 
-use Bitrix\Booking\Integration\Booking\ProviderManager;
-use Bitrix\Booking\Internals\Journal\JournalServiceInterface;
+use Bitrix\Booking\Internals\Repository\ORM\Mapper\WaitListItemMapper;
+use Bitrix\Booking\Internals\Repository\WaitListItemRepositoryInterface;
+use Bitrix\Booking\Internals\Service\BookingService;
+use Bitrix\Booking\Internals\Service\ClientService;
+use Bitrix\Booking\Internals\Service\ExternalDataService;
+use Bitrix\Booking\Internals\Service\Journal\JournalServiceInterface;
 use Bitrix\Booking\Internals\Repository\AdvertisingResourceTypeRepository;
 use Bitrix\Booking\Internals\Repository\BookingClientRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
@@ -25,6 +29,11 @@ use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceSlotRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
+use Bitrix\Booking\Internals\Service\Notifications\MessageSender;
+use Bitrix\Booking\Internals\Service\Overbooking\OverlapPolicy;
+use Bitrix\Booking\Internals\Service\ProviderManager;
+use Bitrix\Booking\Internals\Service\ResourceService;
+use Bitrix\Booking\Internals\Service\WaitListItemService;
 use Bitrix\Main\Access\BaseAccessController;
 use Bitrix\Main\DI\ServiceLocator;
 
@@ -162,5 +171,50 @@ class Container
 	public static function getOptionRepository(): OptionRepositoryInterface
 	{
 		return self::getService('booking.option.repository');
+	}
+
+	public static function getMessageSender(): MessageSender
+	{
+		return self::getService('booking.message.sender');
+	}
+
+	public static function getWaitListItemRepositoryMapper(): WaitListItemMapper
+	{
+		return self::getService('booking.wait.list.item.repository.mapper');
+	}
+
+	public static function getWaitListItemRepository(): WaitListItemRepositoryInterface
+	{
+		return self::getService('booking.wait.list.item.repository');
+	}
+
+	public static function getBookingService(): BookingService
+	{
+		return self::getService('booking.internals.booking.service');
+	}
+
+	public static function getClientService(): ClientService
+	{
+		return self::getService('booking.internals.client.service');
+	}
+
+	public static function getExternalDataService(): ExternalDataService
+	{
+		return self::getService('booking.internals.external.data.service');
+	}
+
+	public static function getResourceService(): ResourceService
+	{
+		return self::getService('booking.internals.resource.service');
+	}
+
+	public static function getWaitListItemService(): WaitListItemService
+	{
+		return self::getService('booking.internals.wait.list.item.service');
+	}
+
+	public static function getOverBookingOverlapPolicy(): OverlapPolicy
+	{
+		return self::getService('booking.overbooking.overlap.policy');
 	}
 }

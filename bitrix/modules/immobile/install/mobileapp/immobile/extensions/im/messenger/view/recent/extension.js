@@ -6,12 +6,13 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Runtime } = require('runtime');
 	const { Loc } = require('loc');
+	const { Icon } = require('assets/icons');
+	const { getTopMenuNotificationsButton } = require('im/messenger/api/notifications-opener');
 
 	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 
 	const {
 		EventType,
-		FeatureFlag,
 		ComponentCode,
 		ActionByUserType,
 	} = require('im/messenger/const');
@@ -68,14 +69,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			this.ui.on(EventType.recent.scroll, Runtime.throttle(this.onScroll, 50, this));
 
-			if (FeatureFlag.list.itemWillDisplaySupported)
-			{
-				this.ui.on(EventType.recent.itemWillDisplay, this.itemWillDisplayHandler);
-			}
-			else
-			{
-				this.ui.on(EventType.recent.scroll, Runtime.debounce(this.onScroll, 50, this));
-			}
+			this.ui.on(EventType.recent.itemWillDisplay, this.itemWillDisplayHandler);
 		}
 
 		initTopMenu()
@@ -90,12 +84,12 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 						id: 'readAll',
 						title: Loc.getMessage('IMMOBILE_RECENT_VIEW_READ_ALL'),
 						sectionCode: 'general',
-						iconName: 'read',
+						iconName: Icon.CHATS_WITH_CHECK.getIconName(),
 					},
 				);
 			}
 
-			if (FeatureFlag.isDevelopmentEnvironment)
+			if (Feature.isDevelopmentEnvironment)
 			{
 				topMenuButtons.push(
 					{
@@ -120,21 +114,25 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					return;
 				}
 
-				if (FeatureFlag.isDevelopmentEnvironment && event === 'onItemSelected')
+				if (Feature.isDevelopmentEnvironment && event === 'onItemSelected')
 				{
 					if (item.id === 'developer-menu')
 					{
-						showMessengerDeveloperMenu();
+						window.showMessengerDeveloperMenu();
 					}
 
 					if (item.id === 'developer-reload')
 					{
+						// eslint-disable-next-line no-undef
 						reload();
 					}
 				}
 			};
 
-			const buttons = [];
+			const buttons = [
+				getTopMenuNotificationsButton(),
+			];
+
 			if (topMenuButtons.length > 0)
 			{
 				topMenuPopup.setData(topMenuButtons, [{ id: 'general' }], topMenuButtonHandler);
@@ -227,12 +225,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				&& !UserPermission.canPerformActionByUserType(ActionByUserType.createChannel)
 				&& !UserPermission.canPerformActionByUserType(ActionByUserType.createCollab)
 			);
-			if (this.isMessengerComponent() && userCanNotCreateChats)
-			{
-				return false;
-			}
 
-			return true;
+			return !(this.isMessengerComponent() && userCanNotCreateChats);
 		}
 
 		isCopilotComponent()
@@ -334,7 +328,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			logger.log(`${this.constructor.name}.addItems`, items);
 
-			this.ui.addItems(items, true);
+			this.ui.addItems(items, false);
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
 			});
@@ -391,6 +385,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			return this.itemCollection[id];
 		}
 
+		getItems()
+		{
+			return this.itemCollection;
+		}
+
 		stopRefreshing()
 		{
 			this.ui.stopRefreshing();
@@ -424,9 +423,9 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		showWelcomeScreen()
 		{
-			let options;
+			let options = {};
 
-			if (MessengerParams.get('INTRANET_INVITATION_CAN_INVITE', false))
+			if (Feature.isIntranetInvitationAvaliable)
 			{
 				options = {
 					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_1'),

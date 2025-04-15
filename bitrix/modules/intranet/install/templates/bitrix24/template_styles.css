@@ -3796,7 +3796,8 @@ a.td1:hover {
 }
 
 .feed-user-avatar.feed-user-avatar-collaber {
-	box-shadow: 0 0 0 2px white, 0 0 0 3px rgb(0, 169, 78);
+	outline:  2px solid rgb(0, 169, 78);
+	border: 2px #fff;
 }
 
 .feed-user-avatar.feed-user-avatar-collaber i {

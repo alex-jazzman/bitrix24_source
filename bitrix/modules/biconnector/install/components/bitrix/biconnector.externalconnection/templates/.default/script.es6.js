@@ -230,9 +230,7 @@ class ExternalConnectionForm
 		this.#checkConnectButton.setState(ButtonState.WAITING);
 
 		return new Promise((resolve, reject) => {
-			Ajax.runComponentAction('bitrix:biconnector.externalconnection', 'checkConnection', {
-				mode: 'class',
-				signedParameters: this.#props.signedParameters,
+			Ajax.runAction('biconnector.externalsource.source.checkConnectionByData', {
 				data: {
 					data: this.#getConnectionValues(),
 				},

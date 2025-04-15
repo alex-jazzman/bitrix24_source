@@ -1,0 +1,27 @@
+<?php
+$MESS["CLUWIZ_CANCELSTEP_BUTTONTITLE"] = "Жабу";
+$MESS["CLUWIZ_CANCELSTEP_CONTENT"] = "Шебердің жұмысы үзілді.";
+$MESS["CLUWIZ_CANCELSTEP_TITLE"] = "Шебердің жұмысы үзілді";
+$MESS["CLUWIZ_CHEKED"] = "Тексерілді.";
+$MESS["CLUWIZ_DATABASE_NOT_SUPPORTED"] = "Шебер орнатылған дерекқор түрін қолдамайды.";
+$MESS["CLUWIZ_FINALSTEP_BUTTONTITLE"] = "Дайын";
+$MESS["CLUWIZ_FINALSTEP_CONTENT"] = "Шебердің жұмысы аяқталды.";
+$MESS["CLUWIZ_FINALSTEP_TITLE"] = "Шебердің жұмысы аяқталды";
+$MESS["CLUWIZ_NO_GROUP_ERROR"] = "Серверлер тобы орнатылмаған.";
+$MESS["CLUWIZ_NO_MODULE_ERROR"] = "Кластерді қолдау модулі орнатылмаған. Шебердің жұмысын жалғастыру мүмкін емес.";
+$MESS["CLUWIZ_STEP1_CONTENT"] = "Қосу шебері жаңа master-slave дерекқорын қосуға көмектеседі және репликацияны баптау үшін маңызды басты дерекқордың негізгі параметрлерін тексереді.<br />";
+$MESS["CLUWIZ_STEP1_TITLE"] = "Жаңа master-slave дерекқорын қосу шебері.";
+$MESS["CLUWIZ_STEP2_DB_HOST"] = "Дерекқор серверінің мекенжайы";
+$MESS["CLUWIZ_STEP2_DB_LOGIN"] = "Пайдаланушы";
+$MESS["CLUWIZ_STEP2_DB_NAME"] = "Дерекқор";
+$MESS["CLUWIZ_STEP2_DB_NAME_HINT"] = "(тақырып дерекқордың master атауымен сәйкес келуі керек)";
+$MESS["CLUWIZ_STEP2_DB_PASSWORD"] = "Құпиясөз";
+$MESS["CLUWIZ_STEP2_MASTER_CONN"] = "Master дерекқорына қосылу параметрлері:";
+$MESS["CLUWIZ_STEP2_MASTER_HOST"] = "IP мекенжайы немесе сервер атауы";
+$MESS["CLUWIZ_STEP2_MASTER_PORT"] = "Порт нөмірі";
+$MESS["CLUWIZ_STEP2_TITLE"] = "Master-slave дерекқорына қосылу параметрлері.";
+$MESS["CLUWIZ_STEP4_CONN_ERROR"] = "Дерекқорға қосылу мүмкін болмады. Алдыңғы қадамға оралып, қосылу параметрлерін түзетіңіз.";
+$MESS["CLUWIZ_STEP4_SLAVE_IS_RUNNING"] = "Көрсетілген дерекқорда master дерекқорымен репликация процесі басталды.";
+$MESS["CLUWIZ_STEP4_TITLE"] = "Дерекқорды баптау параметрлерін тексеру.";
+$MESS["CLUWIZ_STEP5_NAME"] = "Қосылу атауы";
+$MESS["CLUWIZ_STEP5_TITLE"] = "Қосылу баптаулары.";

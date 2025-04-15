@@ -1,0 +1,24 @@
+<?php
+$MESS["CALLMOBILE_MESSAGE_HAS_ACTIVE_CALL_HINT"] = "Қазір сізде басқа қоңырау бар. Жаңасын бастау үшін одан ажыраңыз";
+$MESS["MOBILE_CALL_ALREADY_FINISHED"] = "Қоңырау аяқталды";
+$MESS["MOBILE_CALL_ALREADY_JOINED"] = "Қоңырауға бір уақытта 2 құрылғыдан қосылу мүмкін емес";
+$MESS["MOBILE_CALL_APP_REQUIRED"] = "Қосымшаны орнату қажет";
+$MESS["MOBILE_CALL_ERROR"] = "Қате";
+$MESS["MOBILE_CALL_INTERNAL_ERROR"] = "Қосымшаның ішкі қатесі. Қате коды #ERROR_CODE#";
+$MESS["MOBILE_CALL_JOIN_GROUP_CALL"] = "Топтық қоңырауға қосылу";
+$MESS["MOBILE_CALL_MICROPHONE_ACCESS_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["MOBILE_CALL_MICROPHONE_CAMERA_REQUIRED"] = "Бейне қоңырау шалу үшін камера мен микрофонға қол жеткізу қажет. Қосымшаға қол жеткізуге мүмкіндік беру үшін баптауларға өтіңіз?";
+$MESS["MOBILE_CALL_MICROPHONE_CANCEL"] = "Болдырмау";
+$MESS["MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA"] = "Камераны қосу үшін қосымшаға камераға қол жеткізуге рұқсат беру керек";
+$MESS["MOBILE_CALL_MICROPHONE_REQUIRED"] = "Қоңырау шалу үшін микрофонға қол жеткізу қажет. Қосымшаға қол жеткізуге мүмкіндік беру үшін баптауларға өтіңіз?";
+$MESS["MOBILE_CALL_MICROPHONE_SETTINGS"] = "Баптауларды ашу";
+$MESS["MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP"] = "Камераны қосу/өшіру мүмкін емес: екінші қоңырау шалушының қосымшалары ескірген және қоңырау кезінде камераны қосуды қолдамайды";
+$MESS["MOBILE_CALL_NO_MICROPHONE_ACCESS"] = "Микрофон қолжетімсіз";
+$MESS["MOBILE_CALL_NO_MICROPHONE_CAMERA_ACCESS"] = "Микрофонға және камераға қолжетімділік жоқ";
+$MESS["MOBILE_CALL_OPEN_APP_STORE"] = "App Store-ға өту";
+$MESS["MOBILE_CALL_OPEN_CHAT"] = "Чатқа өту";
+$MESS["MOBILE_CALL_OPEN_PLAY_MARKET"] = "Play Market-ке өту";
+$MESS["MOBILE_CALL_UNSUPPORTED_VERSION"] = "Сіздің қосымшаңыздың нұсқасы ескірген. Қоңырау шалу үшін қосымшаны жаңартыңыз";
+$MESS["MOBILE_CALL_USERS_LIMIT_EXCEEDED"] = "Қосылу мүмкін болмады. Қоңырауда тарифпен рұқсат етілген қатысушылар саны асып кетті";
+$MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Бейнесіз";
+$MESS["MOBILE_CALL_WITH_VIDEO"] = "Бейнемен";

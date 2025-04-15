@@ -73,6 +73,7 @@ $MESS["CRM_CONFIGS_SMS_MARKETPLACE"] = "Застосунки для SMS";
 $MESS["CRM_CONFIGS_SMS_PROVIDER"] = "SMS сповіщення через #PROVIDER#";
 $MESS["CRM_CONFIGS_STATUS"] = "Довідники";
 $MESS["CRM_CONFIGS_TAB_APPS_2"] = "Бітрікс24.Маркет";
+$MESS["CRM_CONFIGS_TAB_APPS_2_MSGVER_1"] = "Маркет";
 $MESS["CRM_CONFIGS_TAB_AUTOMATION"] = "Роботи і Бізнес-процеси";
 $MESS["CRM_CONFIGS_TAB_CREATION_ON_THE_BASIS"] = "Створення на підставі";
 $MESS["CRM_CONFIGS_TAB_INTEGRATION"] = "Інтеграції";

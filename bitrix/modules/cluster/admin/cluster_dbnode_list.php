@@ -121,7 +121,7 @@ $rsData = CClusterDBNode::GetList(
 $rsData = new CAdminResult($rsData, $sTableID);
 
 while ($arRes = $rsData->Fetch()):
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 	$uptime = CClusterDBNode::GetUpTime($arRes['ID']);
 	$arModules = CClusterDBNode::GetModules($arRes['ID']);
 
@@ -212,7 +212,7 @@ while ($arRes = $rsData->Fetch()):
 	{
 		if ($arRes['STATUS'] == 'READY')
 		{
-			if ($DB->type === 'MYSQL')
+			if (CClusterDBNode::GetModulesForSharding())
 			{
 				$arActions[] = [
 					'TEXT' => GetMessage('CLU_DBNODE_LIST_START_USING_DB'),
@@ -228,13 +228,10 @@ while ($arRes = $rsData->Fetch()):
 		}
 		elseif ($arRes['STATUS'] == 'ONLINE')
 		{
-			if ($DB->type === 'MYSQL')
-			{
-				$arActions[] = [
-					'TEXT' => GetMessage('CLU_DBNODE_LIST_STOP_USING_DB'),
-					'ACTION' => "javascript:StartWizard('bitrix:cluster.module_move', '&__wiz_node_id=" . $arRes['ID'] . '&__wiz_status=' . $arRes['STATUS'] . "')",
-				];
-			}
+			$arActions[] = [
+				'TEXT' => GetMessage('CLU_DBNODE_LIST_STOP_USING_DB'),
+				'ACTION' => "javascript:StartWizard('bitrix:cluster.module_move', '&__wiz_node_id=" . $arRes['ID'] . '&__wiz_status=' . $arRes['STATUS'] . "')",
+			];
 		}
 	}
 	if (!empty($arActions))

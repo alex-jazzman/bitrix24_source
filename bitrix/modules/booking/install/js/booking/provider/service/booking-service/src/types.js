@@ -9,6 +9,7 @@ export type BookingDto = {
 	clients: ClientDto[],
 	counter: number,
 	counters: Array,
+	createdAt: number,
 	name: string,
 	datePeriod: {
 		from: {

@@ -122,42 +122,15 @@ foreach ($bbFieldNames as $fieldName)
 	];
 }
 
-if(Main\Loader::includeModule('socialnetwork'))
+// @todo: remove?
+if (Main\Loader::includeModule('socialnetwork'))
 {
 	\CJSCore::init(array('socnetlogdest'));
 
-	$destSort = CSocNetLogDestination::GetDestinationSort(
-			array('DEST_CONTEXT' => \Bitrix\Crm\Entity\EntityEditor::getUserSelectorContext())
-	);
-	$last = array();
-	CSocNetLogDestination::fillLastDestination($destSort, $last);
-
-	$destUserIDs = array();
-	if(isset($last['USERS']))
-	{
-		foreach($last['USERS'] as $code)
-		{
-			$destUserIDs[] = str_replace('U', '', $code);
-		}
-	}
-
-	$dstUsers = CSocNetLogDestination::GetUsers(array('id' => $destUserIDs));
-	$structure = CSocNetLogDestination::GetStucture(array('LAZY_LOAD' => true));
-	$socnetGroups = CSocNetLogDestination::getSocnetGroup();
-
-	$department = $structure['department'];
-	$departmentRelation = $structure['department_relation'];
-	$departmentRelationHead = $structure['department_relation_head'];
 	?><script>
 		BX.ready(
 			function()
 			{
-				BX.UI.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($dstUsers)?>;
-				BX.UI.EntityEditorUserSelector.socnetGroups =  <?=CUtil::PhpToJSObject($socnetGroups)?>;
-				BX.UI.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($department)?>;
-				BX.UI.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($departmentRelation)?>;
-				BX.UI.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($last, CASE_LOWER))?>;
-
 				BX.Crm.EntityEditorCrmSelector.contacts = {};
 				BX.Crm.EntityEditorCrmSelector.contactsLast = {};
 

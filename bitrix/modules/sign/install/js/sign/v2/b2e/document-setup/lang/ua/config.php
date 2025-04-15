@@ -1,5 +1,21 @@
 <?php
+$MESS["SIGN_DOCUMENT_SETUP_ADD_ANOTHER_DOCUMENT"] = "Ще документ";
+$MESS["SIGN_DOCUMENT_SETUP_ADD_DOCUMENT"] = "Додати документ";
+$MESS["SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_HINT"] = "Ви редагуєте зараз";
+$MESS["SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE"] = "Можна надіслати на підпис одразу кілька документів одночасно. Кожен документ буде підписано окремо.";
+$MESS["SIGN_DOCUMENT_SETUP_DATE_LABEL"] = "Дата створення документа";
+$MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON"] = "Скасувати";
+$MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON"] = "Змінити";
+$MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE"] = "Ви можете надіслати на підпис до 20 документів одночасно.";
+$MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_POPUP"] = "Ліміт за кількістю документів вичерпано.";
 $MESS["SIGN_DOCUMENT_SETUP_HEADER"] = "Підготуйте документ на підпис";
 $MESS["SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL"] = "Назва документа";
 $MESS["SIGN_DOCUMENT_SETUP_TITLE_HINT"] = "Назву документа бачать усі сторони.";
 $MESS["SIGN_DOCUMENT_SETUP_TITLE_LABEL"] = "Назва";
+$MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_CANCEL"] = "Скасувати";
+$MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_CONFIRM"] = "Замінити";
+$MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_SELECT_CONFIRM"] = "Усе одно замінити";
+$MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_SELECT_DESCRIPTION"] = "Після заміни застосуються налаштування документа, вибраного з недавніх. Налаштування полів редагованого шаблону не збережуться.";
+$MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_TITLE"] = "Замінити документ?";
+$MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_UPLOAD_CONFIRM"] = "Замінити";
+$MESS["SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_UPLOAD_DESCRIPTION"] = "Після заміни документа за потреби скоригуйте місце розташування доданих у редакторі полів.";

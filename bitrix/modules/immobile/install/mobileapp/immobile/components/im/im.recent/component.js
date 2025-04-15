@@ -4,11 +4,13 @@
  * @bxjs_lang_path component.php
  */
 
-var { ChatSelector } = jn.require('im/chat/selector/chat');
+var { AnalyticsEvent } = jn.require('analytics');
 var { EntityReady } = jn.require('entity-ready');
+var { ChatSelector } = jn.require('im/chat/selector/chat');
 var { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
 var { Theme } = jn.require('im/lib/theme');
-var { AnalyticsEvent } = jn.require('analytics');
+var { Feature } = jn.require('im/messenger/lib/feature');
+const { getTopMenuNotificationsButton: _getTopMenuNotificationsButton } = jn.require('im/messenger/api/notifications-opener');
 
 var REVISION = 19; // api revision - sync with im/lib/revision.php
 
@@ -1377,7 +1379,7 @@ RecentList.openEmptyScreen = function()
 	let params = {};
 	if (this.isRecent())
 	{
-		if (BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false))
+		if (Feature.isIntranetInvitationAvaliable)
 		{
 			params = {
 				upperText: BX.message('IM_EMPTY_TEXT_1'),
@@ -3297,8 +3299,15 @@ RecentList.topMenu.init = function()
 		return false;
 	}
 
-	if (!this.base.isRecent())
+	if (!this.base.isRecent() && !this.base.isOpenlinesRecent())
 	{
+		return false;
+	}
+
+	if (this.base.isOpenlinesRecent())
+	{
+		dialogList.setRightButtons([_getTopMenuNotificationsButton()]);
+
 		return false;
 	}
 
@@ -4201,7 +4210,7 @@ RecentList.chatCreate.open = function()
 
 			SEARCH_MIN_SIZE: this.base.searchMinTokenLength,
 
-			INTRANET_INVITATION_CAN_INVITE: BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false),
+			INTRANET_INVITATION_CAN_INVITE: Feature.isIntranetInvitationAvaliable,
 			INTRANET_INVITATION_REGISTER_URL: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
 			INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID: BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
 			INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
@@ -4225,7 +4234,7 @@ RecentList.chatCreate.open = function()
 					topPosition: 100,
 				},
 				supportInvites: (
-					BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false)
+					Feature.isIntranetInvitationAvaliable
 					&& Application.getApiVersion() >= 34
 				),
 			},

@@ -1,17 +1,24 @@
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
-import { Model } from 'booking.const';
-import type { BookingModel } from 'booking.model.bookings';
 
-import { busySlots } from '../../../lib/busy-slots/busy-slots';
+import { Model } from 'booking.const';
+import { busySlots } from 'booking.lib.busy-slots';
+import { Drag } from 'booking.lib.drag';
+import type { BookingModel, BookingModelUi } from 'booking.model.bookings';
+
 import type { BookingUiDuration } from './booking/types';
 import { Booking } from './booking/booking';
 import { BusySlot } from './busy-slot/busy-slot';
 import { Cell } from './cell/cell';
+import { QuickFilterLine } from './quick-filter-line/quick-filter-line';
+import {
+	createBookingModelUi,
+	splitBookingsByResourceId,
+	getResourceBookingUiGroups,
+} from './libs';
 import './bookings.css';
 
+const { mapGetters: mapBookingsGetters } = createNamespacedHelpers(Model.Bookings);
 const { mapGetters: mapInterfaceGetters } = createNamespacedHelpers(Model.Interface);
-
-const MinUiBookingDurationMs = 15 * 60 * 1000;
 
 export const Bookings = {
 	name: 'Bookings',
@@ -22,6 +29,9 @@ export const Bookings = {
 		};
 	},
 	computed: {
+		...mapBookingsGetters({
+			overbookingMap: 'overbookingMap',
+		}),
 		...mapInterfaceGetters({
 			resourcesIds: 'resourcesIds',
 			selectedDateTs: 'selectedDateTs',
@@ -30,12 +40,28 @@ export const Bookings = {
 			selectedCells: 'selectedCells',
 			hoveredCell: 'hoveredCell',
 			busySlots: 'busySlots',
+			quickFilter: 'quickFilter',
+			isFeatureEnabled: 'isFeatureEnabled',
+			editingBookingId: 'editingBookingId',
+			embedItems: 'embedItems',
 		}),
+		resourcesHash(): string
+		{
+			const resources = this.$store.getters[`${Model.Resources}/getByIds`](this.resourcesIds)
+				.map(({ id, slotRanges }) => ({ id, slotRanges }))
+			;
+
+			return JSON.stringify(resources);
+		},
 		bookingsHash(): string
 		{
-			return JSON.stringify(this.bookings);
+			const bookings = this.bookings
+				.map(({ id, dateFromTs, dateToTs }) => ({ id, dateFromTs, dateToTs }))
+			;
+
+			return JSON.stringify(bookings);
 		},
-		bookings(): BookingModel[]
+		bookings(): BookingModelUi[]
 		{
 			const dateTs = this.selectedDateTs;
 
@@ -52,11 +78,9 @@ export const Bookings = {
 			return bookings.flatMap((booking) => {
 				return booking.resourcesIds
 					.filter((resourceId: number) => this.resourcesIds.includes(resourceId))
-					.map((resourceId: number) => ({
-						...booking,
-						resourcesIds: [resourceId],
-					}))
-				;
+					.map((resourceId: number) => {
+						return createBookingModelUi(resourceId, booking, this.overbookingMap.get(booking.id));
+					});
 			});
 		},
 		cells(): CellDto[]
@@ -67,32 +91,57 @@ export const Bookings = {
 
 			return cells.filter((cell: CellDto) => cell && cell.toTs > dateFromTs && dateToTs > cell.fromTs);
 		},
+		quickFilterHours(): number[]
+		{
+			const activeHours = new Set(Object.values(this.quickFilter.active));
+
+			return Object.values(this.quickFilter.hovered).filter((hour) => !activeHours.has(hour));
+		},
+		resourceBookings(): Map<number, BookingModelUi>
+		{
+			return splitBookingsByResourceId(this.bookings);
+		},
+		resourceBookingsUiGroupsMap(): Map<number, BookingUiDuration[]>
+		{
+			return getResourceBookingUiGroups(this.resourceBookings);
+		},
+		embedEditingMode(): boolean
+		{
+			return (
+				this.isFeatureEnabled
+				&& (
+					this.editingBookingId > 0
+					|| (this.embedItems?.length ?? 0) > 0
+				)
+			);
+		},
 	},
 	mounted(): void
 	{
 		this.startInterval();
+
+		if (this.isFeatureEnabled)
+		{
+			const dataId = this.editingBookingId ? `[data-id="${this.editingBookingId}"]` : '';
+
+			this.dragManager = new Drag({
+				container: this.$el.parentElement,
+				draggable: `.booking-booking-booking${dataId}`,
+			});
+		}
+	},
+	beforeUnmount(): void
+	{
+		this.dragManager?.destroy();
 	},
 	methods: {
 		generateBookingKey(booking: BookingModel): string
 		{
 			return `${booking.id}-${booking.resourcesIds[0]}`;
 		},
-		getUiBookings(resourceId: number): BookingUiDuration[]
+		getBookingUiGroupsByResourceId(resourceId: number): BookingUiDuration[]
 		{
-			return this.bookings
-				.filter((booking) => booking.resourcesIds?.[0] === resourceId)
-				.map((booking) => {
-					const duration = booking.dateToTs - booking.dateFromTs;
-
-					return {
-						id: booking.id,
-						fromTs: booking.dateFromTs,
-						toTs: duration < MinUiBookingDurationMs
-							? booking.dateFromTs + MinUiBookingDurationMs
-							: booking.dateToTs
-						,
-					};
-				});
+			return this.resourceBookingsUiGroupsMap.get(resourceId) || [];
 		},
 		startInterval(): void
 		{
@@ -110,7 +159,11 @@ export const Bookings = {
 		{
 			void busySlots.loadBusySlots();
 		},
-		resourcesIds(): void
+		resourcesHash(): void
+		{
+			void busySlots.loadBusySlots();
+		},
+		overbookingMap(): void
 		{
 			void busySlots.loadBusySlots();
 		},
@@ -119,16 +172,22 @@ export const Bookings = {
 		Booking,
 		BusySlot,
 		Cell,
+		QuickFilterLine,
 	},
 	template: `
-		<div class="booking-booking-bookings">
+		<div
+			class="booking-booking-bookings"
+			:class="{
+				'embed-editing-mode': embedEditingMode,
+			}"
+		>
 			<TransitionGroup name="booking-transition-booking">
 				<template v-for="booking of bookings" :key="generateBookingKey(booking)">
 					<Booking
 						:bookingId="booking.id"
 						:resourceId="booking.resourcesIds[0]"
 						:nowTs
-						:uiBookings="getUiBookings(booking.resourcesIds[0])"
+						:bookingUiGroups="getBookingUiGroupsByResourceId(booking.resourcesIds[0])"
 					/>
 				</template>
 			</TransitionGroup>
@@ -140,6 +199,11 @@ export const Bookings = {
 			<template v-for="cell of cells" :key="cell.id">
 				<Cell
 					:cell="cell"
+				/>
+			</template>
+			<template v-for="hour of quickFilterHours" :key="hour">
+				<QuickFilterLine
+					:hour="hour"
 				/>
 			</template>
 		</div>

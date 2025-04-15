@@ -59,6 +59,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    clients,
 	    counter: bookingDto.counter,
 	    counters: bookingDto.counters,
+	    createdAt: bookingDto.createdAt,
 	    name: bookingDto.name,
 	    dateFromTs: bookingDto.datePeriod.from.timestamp * 1000,
 	    timezoneFrom: bookingDto.datePeriod.from.timezone,
@@ -133,20 +134,31 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  async add(booking) {
 	    const id = booking.id;
 	    try {
+	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, id);
 	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/add`, booking);
 	      const bookingDto = mapModelToDto(booking);
 	      const data = await new booking_lib_apiClient.ApiClient().post('Booking.add', {
 	        booking: bookingDto
 	      });
 	      const createdBooking = mapDtoToModel(data);
+	      const clients = new BookingDataExtractor([data]).getClients();
+	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, clients);
+	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
 	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/update`, {
 	        id,
 	        booking: createdBooking
 	      });
 	      void booking_provider_service_mainPageService.mainPageService.fetchCounters();
+	      return {
+	        success: true,
+	        booking: createdBooking
+	      };
 	    } catch (error) {
 	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/delete`, id);
 	      console.error('BookingService: add error', error);
+	      return {
+	        success: false
+	      };
 	    }
 	  }
 	  async addList(bookings) {
@@ -189,7 +201,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	        booking: updatedBooking
 	      });
 	      const clients = new BookingDataExtractor([data]).getClients();
-	      void booking_core.Core.getStore().dispatch('clients/upsertMany', clients);
+	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, clients);
 	      void booking_provider_service_mainPageService.mainPageService.fetchCounters();
 	    } catch (error) {
 	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/update`, {

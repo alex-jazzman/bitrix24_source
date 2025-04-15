@@ -30,7 +30,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if($id > 0)
 		{
-			if(!Permissions\Order::checkUpdatePermission($id, $this->userPermissions))
+			if (
+				!\Bitrix\Crm\Service\Container::getInstance()
+					->getUserPermissions()
+					->item()
+					->canRead(\CCrmOwnerType::Order, $id)
+			)
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 				return;
@@ -78,7 +83,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 		else
 		{
-			if(!Permissions\Order::checkCreatePermission($this->userPermissions))
+			if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Order))
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 				return;

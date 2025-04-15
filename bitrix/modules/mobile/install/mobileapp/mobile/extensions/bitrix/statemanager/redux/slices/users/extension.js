@@ -6,8 +6,8 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { createSlice } = require('statemanager/redux/toolkit');
 	const { sliceName, usersAdapter } = require('statemanager/redux/slices/users/meta');
-	const { usersSelector } = require('statemanager/redux/slices/users/selector');
-	const { updateUserThunk } = require('statemanager/redux/slices/users/thunk');
+	const { usersSelector, selectNonExistentUsersByIds } = require('statemanager/redux/slices/users/selector');
+	const { updateUserThunk, fetchUsersIfNotLoaded } = require('statemanager/redux/slices/users/thunk');
 
 	const initialState = StateCache.getReducerState(sliceName, usersAdapter.getInitialState());
 
@@ -58,6 +58,26 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		avatarSize100: user.imageUrl,
 		isExtranet: user.entityType === 'extranet',
 		isCollaber: user.entityType === 'collaber',
+	});
+
+	const prepareUserFromRest = (user) => ({
+		id: Number(user.ID),
+		login: user.LOGIN,
+		name: user.NAME,
+		lastName: user.LAST_NAME,
+		secondName: user.SECOND_NAME,
+		fullName: user.NAME_FORMATTED,
+		email: user.EMAIL,
+		workPhone: user.WORK_PHONE,
+		workPosition: user.WORK_POSITION,
+		link: `/company/personal/user/${user.ID}/`,
+		avatarSizeOriginal: user.PERSONAL_PHOTO_ORIGINAL,
+		avatarSize100: user.PERSONAL_PHOTO_ORIGINAL,
+		isAdmin: user.STATUS === 'admin',
+		isCollaber: user.STATUS === 'collaber',
+		isExtranet: user.STATUS === 'extranet',
+		personalMobile: user.PERSONAL_MOBILE,
+		personalPhone: user.PERSONAL_PHONE,
 	});
 
 	const usersSlice = createSlice({
@@ -130,6 +150,13 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 
 						usersAdapter.upsertOne(state, preparedData);
 					}
+				})
+				.addCase(fetchUsersIfNotLoaded.fulfilled, (state, action) => {
+					const { data, isSuccess } = action.payload;
+					if (isSuccess && data)
+					{
+						usersAdapter.upsertMany(state, data.map((user) => prepareUserFromRest(user)));
+					}
 				});
 		},
 	});
@@ -148,6 +175,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 	module.exports = {
 		usersReducer: reducer,
 		usersSelector,
+		selectNonExistentUsersByIds,
 		usersUpserted,
 		usersAdded,
 		usersAddedFromEntitySelector,

@@ -6,9 +6,14 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\HttpContext;
 use Bitrix\Intranet\MainPage;
 
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var \CMain $APPLICATION */
+/** @var \CBitrixComponent $component */
+
 if (
-	isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] == 'Y' ||
-	isset($_REQUEST['landing_mode']) && $_REQUEST['landing_mode'] == 'edit'
+	(isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
+	|| (isset($_REQUEST['landing_mode']) && $_REQUEST['landing_mode'] === 'edit')
 )
 {
 	define('SITE_TEMPLATE_ID', 'landing24');
@@ -68,7 +73,10 @@ else
 	}
 	else
 	{
-		if (Loader::includeModule('landing') && (new MainPage\Access())->canEdit(false))
+		if (
+			Loader::includeModule('landing')
+			&& (new MainPage\Access())->canEdit()
+		)
 		{
 			$APPLICATION->IncludeComponent(
 				'bitrix:landing.start',

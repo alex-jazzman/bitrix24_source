@@ -18,6 +18,7 @@ $MESS["CRM_TAB_LIVEFEED_TITLE2"] = "Налаштування стрічки Но
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG"] = "Кошик";
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Налаштування кошика";
 $MESS["CRM_TAB_REST_2"] = "Маркет";
+$MESS["CRM_TAB_REST_2_MSGVER_1"] = "Маркет";
 $MESS["CRM_TAB_REST_TITLE"] = "Параметри застосунків";
 $MESS["CRM_TAB_STATUS_CONFIG"] = "Довідники";
 $MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Налаштування довідників";

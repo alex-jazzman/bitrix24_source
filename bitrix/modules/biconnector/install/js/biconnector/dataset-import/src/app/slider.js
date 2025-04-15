@@ -15,15 +15,10 @@ export class Slider
 		}
 
 		const options = {
-			width: 1240,
 			allowChangeHistory: false,
 			cacheable: false,
+			customLeftBoundary: 0,
 		};
-
-		if (screen.width <= 1440)
-		{
-			options.customLeftBoundary = 0;
-		}
 
 		SidePanel.Instance.open(
 			sliderLink.toString(),

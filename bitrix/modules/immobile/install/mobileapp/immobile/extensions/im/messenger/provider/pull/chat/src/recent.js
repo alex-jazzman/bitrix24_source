@@ -52,7 +52,6 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 				chat: params.chat,
 				user: userData,
 				counter: params.counter,
-				liked: false,
 				lastActivityDate: params.lastActivityDate,
 				message,
 			});

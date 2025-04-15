@@ -55,14 +55,14 @@ jn.define('crm/stage-list', (require, exports, module) => {
 
 		calculateHeight(stages)
 		{
-			const stagesHeight = stages.length * MIN_STAGE_HEIGHT + 5;
+			const stagesHeight = stages.length * MIN_STAGE_HEIGHT;
 			if (!this.showTunnels)
 			{
 				return stagesHeight;
 			}
 
 			const tunnelsHeight = this.tunnels.length > 0
-				? this.tunnels.length * TUNNEL_HEIGHT + FIRST_TUNNEL_ADDITIONAL_HEIGHT
+				? this.tunnels.length * TUNNEL_HEIGHT + FIRST_TUNNEL_ADDITIONAL_HEIGHT - 5
 				: 0;
 
 			return stagesHeight + tunnelsHeight;

@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'tokens',
 		'utils/enums/base',
+		'utils/url',
 		'assets/icons/types',
 	],
 	'bundle' => [
@@ -11,5 +12,6 @@ return [
 		'./src/base',
 		'./src/outline',
 		'./src/disk',
+		'./src/reaction',
 	],
 ];

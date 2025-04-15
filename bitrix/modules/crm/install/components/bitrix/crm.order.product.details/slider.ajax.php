@@ -65,10 +65,31 @@ else
 {
 	$orderId = isset($_REQUEST['order_id']) ? (int)$_REQUEST['order_id'] : 0;
 
-	if (!(check_bitrix_sessid()
+	$accessAllow = false;
+	if (
+		check_bitrix_sessid()
 		&& \Bitrix\Crm\Security\EntityAuthorization::IsAuthorized()
-		&& \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($orderId))
 	)
+	{
+		$serviceContainer = \Bitrix\Crm\Service\Container::getInstance();
+		if ($orderId > 0)
+		{
+			$accessAllow = $serviceContainer
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::Order, $orderId)
+			;
+		}
+		else
+		{
+			$accessAllow = $serviceContainer
+				->getUserPermissions()
+				->entityType()
+				->canAddItems(\CCrmOwnerType::Order)
+			;
+		}
+	}
+	if (!$accessAllow)
 	{
 		ShowError(GetMessage('CRM_ACCESS_DENIED'));
 	}

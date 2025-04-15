@@ -250,11 +250,8 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			return [];
 		};
 
-		close = () => {
-			if (this.selector)
-			{
-				this.selector.close();
-			}
+		close = (callback) => {
+			this.selector?.close(callback ?? null);
 		};
 
 		enableSendButtonLoadingIndicator(enable = true)

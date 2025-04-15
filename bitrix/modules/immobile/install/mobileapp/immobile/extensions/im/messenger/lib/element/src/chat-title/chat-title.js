@@ -209,7 +209,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (dialog.extranet === true)
 			{
-				this.nameColor = Theme.colors.accentExtraBrown;
+				this.nameColor = Theme.colors.accentExtraOrange;
 
 				return;
 			}
@@ -242,7 +242,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (user.extranet === true)
 			{
-				this.nameColor = Theme.colors.accentExtraBrown;
+				this.nameColor = Theme.colors.accentExtraOrange;
 
 				return;
 			}

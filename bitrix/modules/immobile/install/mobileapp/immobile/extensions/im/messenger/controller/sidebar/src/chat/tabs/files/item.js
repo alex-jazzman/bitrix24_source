@@ -9,7 +9,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 	const { getExtension } = require('utils/file');
 	const { dayMonth, shortTime } = require('utils/date/formats');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
-	const { EasyIcon } = require('layout/ui/file/icon');
 
 	const { Theme } = require('im/lib/theme');
 	const { ChatAvatar } = require('im/messenger/lib/element');
@@ -97,11 +96,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 		{
 			const { name } = this.file;
 			const extension = getExtension(name);
-
-			if (!MobileFeature.isAirStyleSupported())
-			{
-				return EasyIcon(extension, 24);
-			}
 
 			const fileIconType = getFileIconTypeByExtension(extension);
 			const fileIcon = resolveFileIcon(extension, fileIconType);

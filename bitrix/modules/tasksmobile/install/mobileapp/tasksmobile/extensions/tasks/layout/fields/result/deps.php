@@ -20,6 +20,7 @@ return [
 		'ui-system/blocks/avatar',
 		'ui-system/layout/card',
 		'ui-system/typography/text',
+		'ui-system/blocks/chips/chip-button',
 		'utils/date',
 
 		'tasks:layout/action-menu/actions',

@@ -209,24 +209,58 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			}
 
 			this.logger.info(`${this.getClassName()}.handleChatUserAdd`, params, extra);
-			const dialogId = params.dialogId;
+			const {
+				dialogId,
+				newUsers,
+				userCount,
+				users,
+				chatExtranet = false,
+			} = params;
 
-			if (params.newUsers.includes(MessengerParams.getUserId()))
+			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
+			/** @type {Partial<DialoguesModelState>} */
+			const dialogUpdatingFields = {};
+
+			let needUpdateRecent = false;
+			if (Boolean(dialogModel?.extranet) !== chatExtranet)
+			{
+				dialogUpdatingFields.extranet = chatExtranet;
+				needUpdateRecent = true;
+			}
+
+			if (newUsers.includes(MessengerParams.getUserId()))
+			{
+				dialogUpdatingFields.role = UserRole.member;
+			}
+
+			if (Object.keys(dialogUpdatingFields).length > 0)
 			{
 				this.store.dispatch('dialoguesModel/update', {
 					dialogId,
-					fields: {
-						role: UserRole.member,
-					},
-				});
+					fields: dialogUpdatingFields,
+				})
+					.then(() => {
+						if (!needUpdateRecent)
+						{
+							return;
+						}
+						const recentItem = this.store.getters['recentModel/getById'](dialogId);
+						if (!recentItem)
+						{
+							return;
+						}
+
+						this.store.dispatch('recentModel/set', [recentItem]);
+					})
+				;
 			}
 
-			this.store.dispatch('usersModel/set', Object.values(params.users))
+			this.store.dispatch('usersModel/set', Object.values(users))
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserAdd.usersModel/set.catch:`, err));
 			this.store.dispatch('dialoguesModel/addParticipants', {
 				dialogId,
-				participants: params.newUsers,
-				userCounter: params.userCount,
+				participants: newUsers,
+				userCounter: userCount,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserAdd.dialoguesModel/addParticipants.catch:`, err));
 		}
 
@@ -307,6 +341,28 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 						`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`,
 						error,
 					);
+				})
+			;
+
+			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
+			if (!dialogModel || dialogModel.extranet === params.chatExtranet)
+			{
+				return;
+			}
+			this.store.dispatch('dialoguesModel/update', {
+				dialogId,
+				fields: {
+					extranet: params.chatExtranet,
+				},
+			})
+				.then(() => {
+					const recentItem = this.store.getters['recentModel/getById'](dialogId);
+					if (!recentItem)
+					{
+						return;
+					}
+
+					this.store.dispatch('recentModel/set', [recentItem]);
 				})
 			;
 		}

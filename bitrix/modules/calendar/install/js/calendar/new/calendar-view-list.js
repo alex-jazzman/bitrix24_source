@@ -66,7 +66,7 @@
 				},
 		}));
 		this.streamScrollWrap.addEventListener('scroll', this.scrollHandle.bind(this));
-		this.streamScrollWrap.addEventListener('wheel', this.mouseWheelHandle.bind(this));
+		this.streamScrollWrap.addEventListener('wheel', this.mouseWheelHandle.bind(this), { passive: true });
 
 		this.streamContentWrap = this.streamScrollWrap.appendChild(BX.create('DIV', {
 			props: {
@@ -1263,7 +1263,6 @@
 			this.streamScrollWrap.style.height = this.calendar.viewsCont.style.height;
 			this.loadMoreEntriesDebounce({mode: 'next'});
 		}
-		event.preventDefault();
 	};
 
 	ListView.prototype.getFirstVisibleDate = function()

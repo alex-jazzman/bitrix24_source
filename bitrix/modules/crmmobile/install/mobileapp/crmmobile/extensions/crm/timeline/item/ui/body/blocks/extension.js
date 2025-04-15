@@ -34,6 +34,12 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 	const { TimelineMailContactListBlock: ContactList } = require('crm/timeline/item/ui/body/blocks/mail-contact-list');
 	const { TimelineItemBodyItemSelector: ItemSelector } = require('crm/timeline/item/ui/body/blocks/item-selector');
 	const { TimelineItemBodyAddressBlock: AddressBlock } = require('crm/timeline/item/ui/body/blocks/address-block');
+	const { TimelineItemBodyWorkflowEfficiency: WorkflowEfficiency } = require(
+		'crm/timeline/item/ui/body/blocks/workflow-efficiency',
+	);
+	const { TimelineItemBodyAvatarsStackSteps: AvatarsStackSteps } = require(
+		'crm/timeline/item/ui/body/blocks/avatars-stack-steps',
+	);
 
 	const AvailableBlocks = {
 		TextBlock,
@@ -58,6 +64,8 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		ItemSelector,
 		DatePill,
 		AddressBlock,
+		WorkflowEfficiency,
+		AvatarsStackSteps,
 	};
 
 	/**

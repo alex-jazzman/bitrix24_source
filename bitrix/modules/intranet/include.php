@@ -1,6 +1,11 @@
-<?
-if (!CModule::IncludeModule('iblock'))
+<?php
+
+use Bitrix\Main\ModuleManager;
+
+if (!ModuleManager::isModuleInstalled('iblock'))
+{
 	return false;
+}
 
 $GLOBALS['INTR_DEPARTMENTS_CACHE'] = array();
 $GLOBALS['INTR_DEPARTMENTS_CACHE_VALUE'] = array();
@@ -108,7 +113,7 @@ CJSCore::RegisterExt("sidepanel_bitrix24", ["rel" => ["intranet.sidepanel.bitrix
 if(
 	(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
 	&& (
-		!CModule::IncludeModule('landing')
+		!ModuleManager::isModuleInstalled('landing')
 		|| !defined("SITE_TEMPLATE_ID")
 		|| SITE_TEMPLATE_ID !== 'pub'
 	)

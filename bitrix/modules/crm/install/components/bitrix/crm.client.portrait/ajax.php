@@ -75,9 +75,10 @@ $sendError = function($error) use ($sendResponse)
 switch ($action)
 {
 	case 'SET_LOAD_TARGET':
-		$CrmPerms = new CCrmPerms($curUser->GetID());
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+		{
 			die('ACCESS DENIED');
+		}
 
 		$entityContext = isset($_REQUEST['entity_context']) && is_array($_REQUEST['entity_context']) ? $_REQUEST['entity_context'] : array();
 		$entityType = isset($entityContext['entityType']) ? (string)$entityContext['entityType'] : '';

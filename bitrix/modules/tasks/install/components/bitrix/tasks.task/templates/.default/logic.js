@@ -1398,6 +1398,8 @@ BX.namespace('Tasks.Component');
 								useAngle: false,
 							},
 							errorCode: err?.errors?.[0]?.code ?? 'undefined_error',
+							showSliderWithMsg: err?.errors?.[0]?.customData?.showSliderWithMsg,
+							sliderCode: err?.errors?.[0]?.customData?.sliderCode,
 						});
 					}).finally(() => {
 						BX.Dom.removeClass(makeChecklistBtn, 'tasks-btn-ai-checklist-wait');

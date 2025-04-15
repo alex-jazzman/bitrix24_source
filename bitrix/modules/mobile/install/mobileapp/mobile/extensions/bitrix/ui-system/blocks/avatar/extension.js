@@ -34,6 +34,8 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 
 		/**
 		 * @param {SelectorParams} params
+		 *
+		 * @return {AvatarBaseProps}
 		 */
 		static resolveEntitySelectorParams(params)
 		{

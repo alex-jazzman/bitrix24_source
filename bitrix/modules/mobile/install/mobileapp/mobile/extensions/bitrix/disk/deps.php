@@ -6,5 +6,6 @@ return [
 		"helpers/holder",
 		"user/list",
 		"notify",
+		'utils/copy',
 	],
 ];

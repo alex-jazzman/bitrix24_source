@@ -235,6 +235,7 @@ class CRestUtil
 					"NOTIFY_MODULE" => "rest",
 					"NOTIFY_TAG" => "REST|APP_INSTALL_NOTIFY|".$USER->GetID()."|TO|".$id,
 					"NOTIFY_SUB_TAG" => "REST|APP_INSTALL_NOTIFY",
+					"NOTIFY_EVENT" => "admin_notification",
 					"NOTIFY_MESSAGE" => GetMessage(
 						"REST_APP_INSTALL_NOTIFY_TEXT",
 						array(

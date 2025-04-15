@@ -270,7 +270,7 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 	};
 
 	NumberField.propTypes = {
-		value: PropTypes.number,
+		value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		shouldShowToolbar: PropTypes.bool,
 		hideZero: PropTypes.bool,
 		decimalSeparator: PropTypes.oneOf(['.', ',']),

@@ -7,7 +7,6 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
 	const { CounterView } = require('layout/ui/counter-view');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const { Color, Component, Indent } = require('tokens');
 	const { Card, CardDesign } = require('ui-system/layout/card');
 	const { ChipStatus, ChipStatusDesign, ChipStatusMode } = require('ui-system/blocks/chips/chip-status');
@@ -21,6 +20,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { AvatarStack } = require('ui-system/blocks/avatar-stack');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { FlowAiAdvice } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice');
+	const { openActionMenu } = require('tasks/layout/flow/action-menu');
 	const { showToast } = require('toast');
 
 	class FlowContent extends PureComponent
@@ -128,6 +128,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 		get active()
 		{
 			return this.flow?.active ?? false;
+		}
+
+		get isPinned()
+		{
+			return this.flow?.isPinned ?? false;
 		}
 
 		get enableFlowUrl()
@@ -279,7 +284,6 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 						marginTop: Indent.XL2.toNumber(),
 						zIndex: 1,
 					},
-					onClick: this.cardClickHandler,
 					design: this.getCardDesign(),
 				},
 				this.renderHeader(),
@@ -288,12 +292,8 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			);
 		}
 
-		cardClickHandler = () => {
-			void requireLazy('tasks:layout/flow/detail').then(({ FlowDetail }) => {
-				FlowDetail.open({
-					flowId: this.id,
-				});
-			});
+		toShowHeaderToolbar = () => {
+			return true;
 		};
 
 		renderHeader()
@@ -301,25 +301,95 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			const plannedCompletionText = this.preparePlannedCompletionTimeText();
 
 			return View(
-				{},
-				H4({
-					testId: `${this.testId}-name`,
-					text: this.flowName,
-					numberOfLines: 2,
-					ellipsize: 'end',
-				}),
-				plannedCompletionText && Text6({
-					testId: `${this.testId}-planned-completion-time`,
-					text: plannedCompletionText,
-					color: Color.base4,
-					numberOfLines: 1,
-					ellipsize: 'end',
+				{
 					style: {
-						marginTop: Indent.XS.toNumber(),
+						flexDirection: 'row',
 					},
-				}),
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+						},
+					},
+					H4({
+						testId: `${this.testId}-name`,
+						text: this.flowName,
+						numberOfLines: 2,
+						ellipsize: 'end',
+					}),
+					plannedCompletionText && Text6({
+						testId: `${this.testId}-planned-completion-time`,
+						text: plannedCompletionText,
+						color: Color.base4,
+						numberOfLines: 1,
+						ellipsize: 'end',
+						style: {
+							marginTop: Indent.XS.toNumber(),
+						},
+					}),
+				),
+				this.toShowHeaderToolbar() && this.renderHeaderToolbar(),
 			);
 		}
+
+		getMenuClickableZoneStyle = () => {
+			return {
+				flexDirection: 'row',
+				paddingBottom: 18,
+				paddingLeft: 10,
+			};
+		};
+
+		renderHeaderToolbar = () => {
+			return View(
+				{},
+				View(
+					{
+						style: this.getMenuClickableZoneStyle(),
+						onClick: this.#onMoreMenuZoneClick,
+					},
+					this.isPinned && this.#renderPinIcon(),
+					this.#renderMoreButton(),
+				),
+			);
+		};
+
+		#renderMoreButton = () => {
+			return IconView({
+				forwardRef: this.#bindMoreMenuButtonRef,
+				icon: Icon.MORE,
+				size: 20,
+				color: Color.base5,
+				style: {
+					marginLeft: Indent.M.toNumber(),
+				},
+			});
+		};
+
+		#bindMoreMenuButtonRef = (ref) => {
+			this.moreMenuButtonRef = ref;
+			this.props.menuViewRef?.(ref);
+		};
+
+		#onMoreMenuZoneClick = () => {
+			openActionMenu({
+				testId: `${this.testId}-more-menu`,
+				target: this.moreMenuButtonRef,
+				flowId: this.id,
+			});
+		};
+
+		#renderPinIcon = () => {
+			return IconView({
+				icon: Icon.PIN,
+				size: 20,
+				color: Color.base5,
+				style: {
+					marginLeft: Indent.M.toNumber(),
+				},
+			});
+		};
 
 		preparePlannedCompletionTimeText()
 		{
@@ -745,7 +815,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				return;
 			}
 
-			openTaskCreateForm({
+			Entry.openTaskCreation({
 				initialTaskData: {
 					flowId: this.id,
 				},
@@ -766,7 +836,6 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				flowId: this.id,
 				flowName: this.flowName,
 				flowEfficiency: this.efficiency,
-				canCreateTask: this.active,
 				analyticsLabel: this.props.analyticsLabel,
 			});
 		}

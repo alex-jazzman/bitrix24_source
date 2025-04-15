@@ -202,7 +202,11 @@ export class CompactEventForm extends EventEmitter
 			&& !fromPopup
 		)
 		{
-			this.showConfirmClosePopup();
+			if (this.checkTopSlider())
+			{
+				this.showConfirmClosePopup();
+			}
+
 			// Workaround to prevent form closing even if user don't want to and presses "cancel" in confirm
 			if (this.popup)
 			{
@@ -256,16 +260,12 @@ export class CompactEventForm extends EventEmitter
 			</div>
 
 			${this.getDateTimeControl()}
-
 			${this.getUserPlannerSelector()}
-
 			${this.getRelationControl()}
 
 			<div class="calendar-field-container calendar-field-container-info">
 				${this.getTypeInfoControl()}
-
-					${this.getLocationControl()}
-
+				${this.getLocationControl()}
 				${this.DOM.remindersOuterWrap = Tag.render`
 				<div class="calendar-field-block">
 					<div class="calendar-field-title">${Loc.getMessage('EC_REMIND_LABEL')}:</div>
@@ -1437,6 +1437,7 @@ export class CompactEventForm extends EventEmitter
 		this.locationSelector = new Location(
 			{
 				wrap: this.DOM.locationWrap,
+				readOnly: !this.canDo('edit'),
 				richLocationEnabled: this.locationFeatureEnabled,
 				hideLocationLock: this.isCollabUser,
 				locationList: this.locationList || [],
@@ -1463,8 +1464,8 @@ export class CompactEventForm extends EventEmitter
 		const locationName = this.locationSelector.getTextLocation(Location.parseStringValue(this.entry.getLocation()));
 		this.DOM.editLocationInFullForm = Tag.render`
 			<div class="calendar-field-place-link">
-				<span class="calendar-notification-text">
-					${locationName || Loc.getMessage('EC_REMIND1_ADD')}
+				<span class="calendar-text-link">
+					${BX.util.htmlspecialchars(locationName) || Loc.getMessage('EC_REMIND1_ADD')}
 				</span>
 			</div>
 		`;
@@ -2375,7 +2376,8 @@ export class CompactEventForm extends EventEmitter
 
 	couldBeClosedByEsc()
 	{
-		return !PopupManager._popups.find((popup) => { return popup && popup.getId() !== this.popupId && popup.isShown();
+		return !PopupManager._popups.find((popup) => {
+			return popup && popup.getId() !== this.popupId && popup.isShown();
 		});
 	}
 

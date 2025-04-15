@@ -1,7 +1,9 @@
 import { Dom, Text, Event, Loc, Tag } from 'main.core';
 import { DesktopApi, DesktopAccount } from 'im.v2.lib.desktop-api';
+import { showDesktopDeleteConfirm } from 'im.v2.lib.confirm';
 import {Menu, Popup} from 'main.popup';
-
+import { PopupManager } from 'main.popup';
+import { PopupType } from 'im.v2.const';
 export class Account
 {
 	static defaultAvatar = '/bitrix/js/im/images/blank.gif';
@@ -56,7 +58,7 @@ export class Account
 	{
 		const currentUserId = Loc.getMessage('USER_ID');
 		this.accounts = ('undefined' !== typeof BXDesktopSystem) ? DesktopApi.getAccountList() : [];
-		this.currentUser = this.accounts.find((account) => account.id === currentUserId);
+		this.currentUser = this.accounts.find((account) => account.id === currentUserId && account.portal === location.hostname);
 
 		this.viewPopupAccounts();
 	}
@@ -248,12 +250,14 @@ export class Account
 
 	addContextMenu(account: DesktopAccount, index: number): void
 	{
-		let button = document.getElementById("ui-icon-set-" + index);
-		if (this.contextPopup[index])
+		const button = document.getElementById(`ui-icon-set-${index}`);
+		const popup = this.popup;
+		const contextPopup = this.contextPopup;
+		if (contextPopup[index])
 		{
-			this.contextPopup[index].destroy();
+			contextPopup[index].destroy();
 		}
-		this.contextPopup[index] = new Menu({
+		contextPopup[index] = new Menu({
 			bindElement: button,
 			className: 'intranet__desktop-menu_context',
 			items: [
@@ -263,13 +267,12 @@ export class Account
 						onclick: function(event, item) {
 							const { host } = account;
 							BXDesktopSystem?.AccountDisconnect(host);
-							if (this.contextPopup[index])
+							if (contextPopup[index])
 							{
-								this.contextPopup[index].close();
+								contextPopup[index].close();
 							}
-							this.popup.close();
-							window.location.reload();
-						}
+							popup.close();
+						},
 					}
 					:
 					{
@@ -277,35 +280,41 @@ export class Account
 						onclick: function(event, item) {
 							const { host, login, protocol } = account;
 							const userLang = navigator.language;
-							BXDesktopSystem?.AccountConnect(host, login, protocol, userLang);
-							if (this.contextPopup[index])
+							DesktopApi.connectAccount(host, login, protocol, userLang);
+							if (contextPopup[index])
 							{
-								this.contextPopup[index].close();
+								contextPopup[index].close();
 							}
-							this.popup.close();
-						}
+							popup.close();
+						},
 					},
 				{
 					text: Loc.getMessage('MENU_ACCOUNT_POPUP_REMOVE'),
-					onclick: function(event, item) {
-						const { host, login } = account;
-						BXDesktopSystem?.AccountDelete(host, login);
-						if (this.contextPopup[index])
+					onclick: async function(event, item) {
+						const userChoice = await showDesktopDeleteConfirm();
+						if (userChoice === true)
 						{
-							this.contextPopup[index].close();
+							const { host, login } = account;
+							DesktopApi.deleteAccount(host, login);
+
+							PopupManager.getPopupById(PopupType.userProfile)?.close();
 						}
-						this.popup.close();
-						window.location.reload();
-					}
+
+						if (contextPopup[index])
+						{
+							contextPopup[index].close();
+						}
+						popup.close();
+					},
 				},
 			],
 		});
 
 		Event.bind(button, 'click', (event) => {
-			let index: number = parseInt(event.target.id.replace('ui-icon-set-', ''));
-			if (this.contextPopup[index])
+			const index: number = parseInt(event.target.id.replace('ui-icon-set-', ''));
+			if (contextPopup[index])
 			{
-				this.contextPopup[index].show();
+				contextPopup[index].show();
 			}
 		});
 	}

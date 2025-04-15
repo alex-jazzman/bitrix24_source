@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["CLU_MEMCACHED_NO_EXTENTION"] = "The memcached PHP extension is not installed.";
 $MESS["CLU_MEMCACHE_DISABLED"] = "memcache is disabled.";
 $MESS["CLU_MEMCACHE_EDIT_EDIT_TITLE"] = "Edit Memcached Connection";
 $MESS["CLU_MEMCACHE_EDIT_HOST"] = "Server";
@@ -12,5 +13,5 @@ $MESS["CLU_MEMCACHE_EDIT_TAB"] = "Parameters";
 $MESS["CLU_MEMCACHE_EDIT_TAB_TITLE"] = "Memcached Server Connection Parameters";
 $MESS["CLU_MEMCACHE_EDIT_WARNING"] = "Attention! There already exists a memcached server connection. Some versions of memcached extension feature an error resulting in significant decrease of performance if multiple connections exist. Use <a href=\"#link#\">Performance Monitor</a> to evaluate your system's performance before and after you add another connection. Should a significant disparity occur, try installing a different version of memcached.";
 $MESS["CLU_MEMCACHE_EDIT_WEIGHT"] = "Load, % (0..100)";
-$MESS["CLU_MEMCACHE_NO_EXTENTION"] = "A PHP extension \"Memcached\" is not installed.";
-?>
+$MESS["CLU_MEMCACHE_NO_EXTENTION"] = "A PHP extension \"Memcache\" is not installed.";
+$MESS["CLU_MEMCACHED_NO_EXTENTION"] = "A PHP extension \"Memcached\" is not installed.";

@@ -43,7 +43,7 @@ export default class WorkflowEventManager
 			'BX.Crm.Timeline.Bizproc::onAfterWorkflowStarted',
 			{
 				stepId: 'on-after-started-workflow',
-				target: '.bp_starter',
+				target: '#crm_entity_bp_starter',
 			},
 		);
 	}

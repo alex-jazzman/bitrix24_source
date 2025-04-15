@@ -863,7 +863,7 @@ export class Timeline
 		if (menu.length === 1)
 		{
 			const linkBtn = Tag.render`
-				<a class="ui-btn ui-btn-light-border ui-btn-themes" href="${Text.encode(menu[0].URL)}">
+				<a class="ui-btn ui-btn-light-border ui-btn-themes" href="${Text.encode(menu[0].URL)}" target="_blank">
 					${Text.encode(Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_BUTTON'))}
 				</a>
 			`;
@@ -910,6 +910,7 @@ export class Timeline
 				return {
 					text: item.TEXT,
 					href: item.URL,
+					target: '_blank',
 				};
 			}),
 		})).show();
@@ -921,7 +922,7 @@ export class Timeline
 		if (menu.length === 1)
 		{
 			btn = Tag.render`
-				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs" href="${Text.encode(menu[0].URL)}">
+				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs" href="${Text.encode(menu[0].URL)}" target="_blank">
 					<span class="ui-btn-text">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK')}</span>
 				</a>
 			`;

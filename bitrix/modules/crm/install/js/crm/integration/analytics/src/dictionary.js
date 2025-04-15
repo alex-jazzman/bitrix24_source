@@ -10,17 +10,21 @@ export const Dictionary = Object.freeze({
 	CATEGORY_AI_OPERATIONS: 'ai_operations',
 	CATEGORY_AUTOMATION_OPERATIONS: 'automation_operations',
 	CATEGORY_KANBAN_OPERATIONS: 'kanban_operations',
+	CATEGORY_POPUP_OPERATIONS: 'popup_operations',
 
 	// region Event const
 	EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
 	EVENT_ENTITY_ADD: 'entity_add',
+	EVENT_ENTITY_CREATE: 'entity_create',
 	EVENT_ENTITY_CLOSE: 'entity_close',
+	EVENT_ENTITY_COMPLETE: 'entity_complete',
 	EVENT_ENTITY_COPY_OPEN: 'entity_copy_open',
 	EVENT_ENTITY_COPY: 'entity_copy',
 	EVENT_ENTITY_CONVERT: 'entity_convert',
 	EVENT_ENTITY_CONVERT_BATCH: 'entity_convert_batch',
 	EVENT_ENTITY_CONVERT_OPEN: 'entity_convert_open',
 	EVENT_ENTITY_UPDATE: 'entity_update',
+	EVENT_ENTITY_EDIT: 'entity_edit',
 
 	EVENT_CALL_PARSING: 'call_parsing',
 	EVENT_AUDIO_TO_TEXT: 'audio_to_text',
@@ -44,6 +48,7 @@ export const Dictionary = Object.freeze({
 	TYPE_DYNAMIC: 'dynamic',
 	TYPE_CONTACT_CENTER: 'contact_center',
 	TYPE_ITEM_INDUSTRY: 'item_industry',
+	TYPE_POPUP_AI_TRANSCRIPT: 'popup_ai_transcript',
 	// endregion
 
 	// region Section const

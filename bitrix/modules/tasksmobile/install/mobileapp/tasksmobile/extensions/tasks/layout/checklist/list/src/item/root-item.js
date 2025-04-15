@@ -1,11 +1,11 @@
 /**
- * @module tasks/layout/checklist/list/src/root-item
+ * @module tasks/layout/checklist/list/src/item/root-item
  */
-jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module) => {
+jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Indent, Color } = require('tokens');
 	const { Text5 } = require('ui-system/typography/text');
-	const { BaseChecklistItem } = require('tasks/layout/checklist/list/src/base-item');
+	const { BaseChecklistItem } = require('tasks/layout/checklist/list/src/item/base-item');
 
 	const FOCUS = 'focus';
 	const BLUR = 'blur';

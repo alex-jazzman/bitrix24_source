@@ -10,7 +10,7 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 	const { Box } = require('ui-system/layout/box');
 	const { PhoneTab } = require('intranet/invite-new/src/tab/phone');
 	const { LinkTab } = require('intranet/invite-new/src/tab/link');
-	const { IntranetInviteAnalytics } = require('intranet/invite-new/src/analytics');
+	const { AnalyticsEvent, IntranetInviteAnalytics } = require('intranet/invite-new/src/analytics');
 
 	const Tabs = {
 		PHONE: 'phone',
@@ -250,5 +250,5 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { Invite, IntranetInviteAnalytics };
+	module.exports = { Invite, AnalyticsEvent, IntranetInviteAnalytics };
 });

@@ -281,6 +281,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				newElement.lastActivityDate = element.lastActivityDate;
 			}
 
+			if (typeof element.defaultUserRecord === 'boolean' && newElement.options?.defaultUserRecord)
+			{
+				newElement.options.defaultUserRecord = element.defaultUserRecord;
+			}
+
 			if (typeof element.user !== 'undefined')
 			{
 				element.user.id = parseInt(element.user.id);
@@ -320,6 +325,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 					newElement.lines.id = parseInt(element.lines.id);
 					newElement.lines.status = parseInt(element.lines.status);
 				}
+			}
+
+			if (typeof element.liked !== 'undefined')
+			{
+				newElement.liked = element.liked;
 			}
 
 			return newElement;

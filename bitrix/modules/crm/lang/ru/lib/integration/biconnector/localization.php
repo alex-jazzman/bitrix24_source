@@ -102,6 +102,9 @@ $MESS['CRM_QUOTE_FIELD_CLOSED'] = "Завершено";
 $MESS['CRM_QUOTE_FIELD_OPPORTUNITY'] = "Ожидаемая сумма";
 $MESS['CRM_QUOTE_FIELD_TAX_VALUE'] = "Налог";
 $MESS['CRM_QUOTE_FIELD_CURRENCY_ID'] = "Валюта";
+$MESS['CRM_QUOTE_FIELD_OPPORTUNITY_ACCOUNT'] = "Ожидаемая сумма счета";
+$MESS['CRM_QUOTE_FIELD_TAX_VALUE_ACCOUNT'] = "Налоговый счет";
+$MESS['CRM_QUOTE_FIELD_ACCOUNT_CURRENCY_ID'] = "Идентификатор валюты счета";
 $MESS['CRM_QUOTE_FIELD_COMMENTS'] = "Комментарии";
 $MESS['CRM_QUOTE_FIELD_BEGINDATE'] = "Дата выставления";
 $MESS['CRM_QUOTE_FIELD_CLOSEDATE'] = "Дата завершения";
@@ -171,10 +174,16 @@ $MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_TYPE_ID'] = "Идентификатор
 
 //CRM_AI_QUALITY_ASSESSMENT table/field for CoPilot quality assessment descriptions
 $MESS['CRM_AI_QUALITY_ASSESSMENT_TABLE'] = "Оценки разговоров по скриптам";
-$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ID'] = "ID";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ID'] = "ID оценки качества";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_CREATED_AT'] = "Дата создания";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ACTIVITY_ID'] = "ID дела звонка";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ASSESSMENT'] = "Оценка";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING'] = "Участвует в общем рейтинге";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING_FULL'] = "Оценка является основной для звонка. Y - да, N - нет";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_RATED_USER_ID'] = "ID сотрудника";
+
+//CRM_QUOTE_UF table/field for Quote user fields descriptions
+$MESS['CRM_QUOTE_UF_TABLE'] = "Пользовательские поля в предложениях";
+$MESS['CRM_QUOTE_UF_FIELD_QUOTE_ID'] = "ID предложения";
+$MESS['CRM_QUOTE_UF_FIELD_DATE_CREATE'] = "Дата создания";
+$MESS['CRM_QUOTE_UF_FIELD_CLOSEDATE'] = "Дата завершения";

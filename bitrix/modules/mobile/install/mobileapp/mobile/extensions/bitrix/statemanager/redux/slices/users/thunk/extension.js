@@ -4,6 +4,7 @@
 jn.define('statemanager/redux/slices/users/thunk', (require, exports, module) => {
 	const { createAsyncThunk } = require('statemanager/redux/toolkit');
 	const { sliceName } = require('statemanager/redux/slices/users/meta');
+	const { selectNonExistentUsersByIds } = require('statemanager/redux/slices/users/selector');
 
 	/**
 	 * @function updateUserThunk
@@ -55,5 +56,76 @@ jn.define('statemanager/redux/slices/users/thunk', (require, exports, module) =>
 		},
 	);
 
-	module.exports = { updateUserThunk };
+	/**
+	 * @function fetchUsersIfNotLoaded
+	 * @param {Array} userIds
+	 */
+	const fetchUsersIfNotLoaded = createAsyncThunk(
+		`${sliceName}/fetchUsersIfNotLoaded`,
+		async ({ userIds }, { rejectWithValue, getState }) => {
+			try
+			{
+				const usersToLoad = selectNonExistentUsersByIds(getState(), userIds);
+
+				if (usersToLoad.length === 0)
+				{
+					return {
+						isSuccess: false,
+						data: [],
+					};
+				}
+
+				return await fetchUsers(usersToLoad, rejectWithValue);
+			}
+			catch (response)
+			{
+				return rejectWithValue({
+					error: response?.error,
+				});
+			}
+		},
+	);
+
+	/**
+	 * @function fetchUsers
+	 * @param {Array} userIds
+	 * @param {Function} rejectWithValue
+	 */
+	const fetchUsers = async (userIds, rejectWithValue) => {
+		try
+		{
+			const params = {
+				filter: {
+					ID: userIds,
+				},
+			};
+
+			const response = await BX.rest.callMethod('mobile.user.get', params);
+
+			if (!response?.answer?.result)
+			{
+				return rejectWithValue({
+					error: response?.answer?.error,
+					error_description: response?.answer?.error_description,
+				});
+			}
+
+			return {
+				isSuccess: response.status === 200,
+				data: response.answer.result,
+			};
+		}
+		catch (response)
+		{
+			return rejectWithValue({
+				error: response?.answer?.error,
+				error_description: response?.answer?.error_description,
+			});
+		}
+	};
+
+	module.exports = {
+		updateUserThunk,
+		fetchUsersIfNotLoaded,
+	};
 });

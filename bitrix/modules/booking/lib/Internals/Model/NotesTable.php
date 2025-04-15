@@ -7,6 +7,7 @@ namespace Bitrix\Booking\Internals\Model;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
 /**
  * Class NotesTable
@@ -43,10 +44,20 @@ final class NotesTable extends DataManager
 				->configurePrimary()
 				->configureAutocomplete(),
 
+			/** @deprecated  */
 			(new IntegerField('BOOKING_ID'))
-				->configureRequired(),
+				->configureRequired(false)
+				->configureDefaultValue(null),
+
+			(new IntegerField('ENTITY_ID'))
+				->configureRequired()
+				->configureDefaultValue(0),
 
 			(new StringField('DESCRIPTION'))
+				->configureRequired(),
+
+			(new StringField('ENTITY_TYPE'))
+				->addValidator(new LengthValidator(1, 255))
 				->configureRequired(),
 		];
 	}

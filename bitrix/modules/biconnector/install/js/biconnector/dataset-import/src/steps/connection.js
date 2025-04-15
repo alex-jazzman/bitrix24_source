@@ -88,7 +88,7 @@ export const ConnectionStep = {
 				tableName: null,
 			});
 
-			Ajax.runAction('biconnector.externalsource.source.checkConnection', {
+			Ajax.runAction('biconnector.externalsource.source.checkExistingConnection', {
 				data: {
 					sourceId,
 				},

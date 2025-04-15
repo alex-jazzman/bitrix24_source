@@ -13,6 +13,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -37,6 +39,8 @@ $isMenuMode = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === 'Y';
 $isGetResult = isset($arParams['GET_RESULT']) && $arParams['GET_RESULT'] === 'Y';
 $isShowOutput = ($isMenuMode || $isGetResult) === false;
 
+$userPermissionsService = Container::getInstance()->getUserPermissions();
+
 if (!CModule::IncludeModule('crm'))
 {
 	if ($isShowOutput)
@@ -48,8 +52,7 @@ if (!CModule::IncludeModule('crm'))
 }
 
 if (
-	!CCrmPerms::IsAccessEnabled()
-	&& !Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
+	!$userPermissionsService->entityType()->canReadSomeItemsInCrm()
 )
 {
 	if ($isShowOutput)
@@ -60,8 +63,6 @@ if (
 	return;
 }
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$userPerms = Container::getInstance()->getUserPermissions();
 $router = Container::getInstance()->getRouter();
 
 /** @global CMain $APPLICATION */
@@ -359,8 +360,8 @@ if($arResult['ID'] === '')
 	$arResult['ID'] = 'DEFAULT';
 }
 
-$isAdmin = CCrmPerms::IsAdmin();
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+$currentUserID = $userPermissionsService->getUserId();
+$isAdmin = $userPermissionsService->isAdmin();
 
 $enableIdleCounter = CCrmUserCounterSettings::GetValue(CCrmUserCounterSettings::ReckonActivitylessItems, true);
 $counterExtras = isset($arParams['COUNTER_EXTRAS']) && is_array($arParams['COUNTER_EXTRAS'])
@@ -385,7 +386,7 @@ $analyticsEventBuilder = (new Crm\Integration\Analytics\Builder\Entity\AddOpenEv
 	->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CONTROL_PANEL_CREATE_BUTTON)
 ;
 
-if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
+if($isAdmin || $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Lead))
 {
 	$counter = EntityCounterFactory::create(
 		CCrmOwnerType::Lead,
@@ -395,7 +396,7 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 	);
 
 	$actions = array();
-	if($isAdmin || CCrmLead::CheckCreatePermission($userPermissions))
+	if($isAdmin || $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Lead))
 	{
 		if($isSliderEnabled)
 		{
@@ -452,7 +453,7 @@ if (!empty($leadItem) && $isLeadEnabled)
 	$stdItems["LEAD"] = $leadItem;
 }
 
-if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
+if($isAdmin || $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Deal))
 {
 	$counter = EntityCounterFactory::create(
 		CCrmOwnerType::Deal,
@@ -462,7 +463,7 @@ if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
 	);
 
 	$actions = array();
-	if($isAdmin || CCrmDeal::CheckCreatePermission($userPermissions, $currentCategoryID))
+	if($isAdmin || $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID))
 	{
 		if($isSliderEnabled)
 		{
@@ -511,7 +512,7 @@ if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
 	);
 }
 
-if($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
+if($isAdmin || $userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Contact, 0))
 {
 	$counter = EntityCounterFactory::create(
 		CCrmOwnerType::Contact,
@@ -525,8 +526,8 @@ if($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
 		)
 	);
 
-	$actions = array();
-	if($isAdmin || CCrmContact::CheckCreatePermission($userPermissions))
+	$actions = [];
+	if($isAdmin || $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Contact, 0))
 	{
 		if($isSliderEnabled)
 		{
@@ -569,7 +570,7 @@ if($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
 	);
 }
 
-if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
+if($isAdmin || $userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Company, 0))
 {
 	$counter = EntityCounterFactory::create(
 		CCrmOwnerType::Company,
@@ -584,7 +585,7 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 	);
 
 	$actions = array();
-	if($isAdmin || CCrmCompany::CheckCreatePermission($userPermissions))
+	if($isAdmin || $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Company, 0))
 	{
 		if($isSliderEnabled)
 		{
@@ -633,10 +634,10 @@ if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 	$invoiceEntityTypeId = \CCrmOwnerType::Invoice;
 }
 
-if ($isAdmin || Container::getInstance()->getUserPermissions()->canReadType($invoiceEntityTypeId))
+if ($isAdmin || $userPermissionsService->entityType()->canReadItems($invoiceEntityTypeId))
 {
 	$actions = [];
-	if (Crm\Security\EntityAuthorization::checkCreatePermission($invoiceEntityTypeId))
+	if ($userPermissionsService->entityType()->canAddItems($invoiceEntityTypeId))
 	{
 		$actions[] = [
 			'ID' => 'CREATE',
@@ -705,35 +706,32 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 	];
 }
 
-if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+if (Loader::includeModule('catalog') && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
 {
-	if (Loader::includeModule('catalog') && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
-	{
-		$stdItems['CATALOGUE'] = array(
-			'ID' => 'CATALOG',
-			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CATALOG'), // 'menu_crm_catalog',
-			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS'),
-			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
-			'ICON' => 'catalog',
-		);
+	$stdItems['CATALOGUE'] = array(
+		'ID' => 'CATALOG',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CATALOG'), // 'menu_crm_catalog',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS'),
+		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
+		'ICON' => 'catalog',
+	);
 
-		if (Catalog\Config\State::isExternalCatalog())
-		{
-			\Bitrix\Main\UI\Extension::load('catalog.external-catalog-stub');
-			$stdItems['CATALOGUE']['ON_CLICK'] = 'event.preventDefault();BX.Catalog.ExternalCatalogStub.showCatalogStub();';
-		}
-	}
-	else
+	if (Catalog\Config\State::isExternalCatalog())
 	{
-		$stdItems['CATALOGUE'] = array(
-			'ID' => 'PRODUCT',
-			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('PRODUCT'), // 'menu_crm_catalog',
-			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
-			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
-			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_LIST']),
-			'ICON' => 'catalog'
-		);
+		\Bitrix\Main\UI\Extension::load('catalog.external-catalog-stub');
+		$stdItems['CATALOGUE']['ON_CLICK'] = 'event.preventDefault();BX.Catalog.ExternalCatalogStub.showCatalogStub();';
 	}
+}
+else
+{
+	$stdItems['CATALOGUE'] = array(
+		'ID' => 'PRODUCT',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('PRODUCT'), // 'menu_crm_catalog',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
+		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
+		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_LIST']),
+		'ICON' => 'catalog'
+	);
 }
 
 if (\CCrmSaleHelper::isWithOrdersMode())
@@ -818,7 +816,7 @@ if (
 	&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
 	&& \Bitrix\Main\Loader::includeModule('sign')
 	&& \Bitrix\Sign\Config\Storage::instance()->isAvailable()
-	&& $userPerms->canReadTypeInCategory(\CCrmOwnerType::Contact, $this->counterPartyCategories[\CCrmOwnerType::Contact])
+	&& $userPermissionsService->entityType()->canReadItemsInCategory(\CCrmOwnerType::Contact, $this->counterPartyCategories[\CCrmOwnerType::Contact])
 )
 {
 	$counterPartyContactMenuId = $this->resolveCounterpartyMenuId(\CCrmOwnerType::Contact);
@@ -826,7 +824,7 @@ if (
 	$counter = EntityCounterFactory::create(
 		\CCrmOwnerType::Contact,
 		EntityCounterType::ALL,
-		$userPerms->getUserId(),
+		$currentUserID,
 		array_merge(
 			$counterExtras,
 			[
@@ -855,7 +853,7 @@ $stdItems['SETTINGS'] = array(
 	'ICON' => 'settings'
 );
 
-if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if ($isAdmin || $userPermissionsService->isCrmAdmin())
 {
 	$stdItems['MY_COMPANY'] = [
 		'ID' => 'MY_COMPANY',
@@ -944,10 +942,10 @@ if (Loader::includeModule('catalog'))
 	}
 }
 
-if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
+if($isAdmin || $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Quote))
 {
 	$actions = array();
-	if($isAdmin || CCrmQuote::CheckCreatePermission($userPermissions))
+	if($isAdmin || $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Quote))
 	{
 		if($isSliderEnabled)
 		{
@@ -1017,7 +1015,7 @@ $stdItems['RECYCLE_BIN'] = array(
 	'IS_DISABLED' => true
 );
 
-if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
+if($isAdmin || $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Deal))
 {
 	$stdItems['DEAL_FUNNEL'] = array(
 		'ID' => 'DEAL_FUNNEL',
@@ -1068,7 +1066,7 @@ if (!RestrictionManager::isHistoryViewPermitted())
 $stdItems['EVENT'] = $eventItem;
 unset($eventItem);
 
-if($isAdmin || !$userPermissions->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'READ'))
+if($isAdmin || $userPermissionsService->webForm()->canRead())
 {
 	$stdItems['WEBFORM'] = array(
 		'ID' => 'WEBFORM',
@@ -1081,7 +1079,7 @@ if($isAdmin || !$userPermissions->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'READ'))
 	);
 }
 
-if($isAdmin || !$userPermissions->HavePerm('BUTTON', BX_CRM_PERM_NONE, 'READ'))
+if($isAdmin || $userPermissionsService->siteButton()->canRead())
 {
 	$stdItems['SITEBUTTON'] = array(
 		'ID' => 'SITEBUTTON',
@@ -1104,21 +1102,6 @@ if ($this->isOldPortal())
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_START']),
 		'IS_DISABLED' => true
 	);
-
-	if (AvailabilityHelper::isAvailable())
-	{
-		$stdItems['STREAM'] = array(
-			'ID' => 'STREAM',
-			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('STREAM'), // 'menu_crm_stream',
-			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM'),
-			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM_TITLE'),
-			'URL' =>  CComponentEngine::MakePathFromTemplate(
-				isset($arParams['PATH_TO_STREAM']) ? $arParams['PATH_TO_STREAM'] : '#SITE_DIR#crm/stream/'
-			),
-			'ICON' => 'feed',
-			'IS_DISABLED' => true
-		);
-	}
 }
 
 $stdItems['MY_ACTIVITY'] = array(
@@ -1223,18 +1206,32 @@ if (Crm\Terminal\AvailabilityManager::getInstance()->isAvailable())
 }
 
 if (
-	Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
+	$userPermissionsService->copilotCallAssessment()->canRead()
 	&& !Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments::isWaiting()
-	&& Crm\Integration\AI\AIManager::isAiCallProcessingEnabled()
+	&& AIManager::isAvailable()
 )
 {
-	$stdItems['CALL_ASSESSMENT'] = [
+	$deadline = new \Datetime('2025-04-01 00:00:00'); //todo remove after deadline date
+	$isCrmCopilotEnabled = Bitrix24Manager::isFeatureEnabled(AIManager::AI_COPILOT_FEATURE_NAME);
+	$callAssessmentMenuItem = [
 		'ID' => 'CALL_ASSESSMENT',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CALL_ASSESSMENT'),
 		'URL' => '/crm/copilot-call-assessment/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CALL_ASSESSMENT'),
-		'IS_NEW' => true,
+		'IS_NEW' => ($deadline > (new \Datetime())),  //todo remove after deadline date
 	];
+	if (!$isCrmCopilotEnabled)
+	{
+		unset($callAssessmentMenuItem['URL']);
+		$callAssessmentMenuItem['IS_LOCKED'] = true;
+		$callAssessmentMenuItem['ON_CLICK'] = Bitrix24Manager::prepareLicenseInfoHelperScript(
+			[
+				'ID' => AIManager::AI_COPILOT_FEATURE_RESTRICTED_SLIDER_CODE,
+			]
+		);
+	}
+
+	$stdItems['CALL_ASSESSMENT'] = $callAssessmentMenuItem;
 }
 
 if (Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::isMainMenuEnabled())
@@ -1401,7 +1398,7 @@ foreach($dynamicTypesMap->getTypes() as $type)
 			$defaultCategory = $dynamicTypesMap->getDefaultCategory($type->getEntityTypeId());
 			if ($defaultCategory)
 			{
-				$isCanAdd = Container::getInstance()->getUserPermissions()->checkAddPermissions(
+				$isCanAdd = $userPermissionsService->entityType()->canAddItemsInCategory(
 					$type->getEntityTypeId(),
 					$defaultCategory->getId()
 				);
@@ -1418,7 +1415,7 @@ foreach($dynamicTypesMap->getTypes() as $type)
 			];
 		}
 	}
-	if ($userPerms->canReadType($type->getEntityTypeId()))
+	if ($userPermissionsService->entityType()->canReadItems($type->getEntityTypeId()))
 	{
 		$id = CCrmOwnerType::ResolveName($type->getEntityTypeId());
 		$stdItems[$id] = [
@@ -1446,7 +1443,7 @@ foreach($dynamicTypesMap->getTypes() as $type)
 }
 
 $defaultDynamicItems = [];
-if ($userPerms->canWriteConfig())
+if ($userPermissionsService->isCrmAdmin())
 {
 	if (!empty($dynamicSubItems))
 	{
@@ -1478,6 +1475,15 @@ else
 		'MENU_ID' => 'menu_dynamic_list',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
 		'SUB_ITEMS' => $dynamicStdSubItems,
+	];
+}
+
+if (Bitrix\Crm\Feature::enabled(\Bitrix\Crm\Feature\ShowLinkToFeaturesInMenu::class))
+{
+	$stdItems['FEATURES_LIST'] = [
+		'ID' => 'FEATURES_LIST',
+		'NAME' => \Bitrix\Crm\Feature\ShowLinkToFeaturesInMenu::getMenuTitle(),
+		'URL' => '/crm/configs/?expert',
 	];
 }
 

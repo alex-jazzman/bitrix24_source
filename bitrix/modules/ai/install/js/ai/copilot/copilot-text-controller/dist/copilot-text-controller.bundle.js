@@ -2195,7 +2195,7 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _handleGenerateError2(res) {
-	  var _res$errors, _res$errors$;
+	  var _res$errors, _res$errors$, _res$errors2, _firstError$customDat, _firstError$customDat2;
 	  const maxGenerateRestartErrors = 4;
 	  const firstErrorCode = res == null ? void 0 : (_res$errors = res.errors) == null ? void 0 : (_res$errors$ = _res$errors[0]) == null ? void 0 : _res$errors$.code;
 	  if (res instanceof Error) {
@@ -2276,13 +2276,16 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu].open();
 	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _copilotContainer$2)[_copilotContainer$2], '--error');
 	  }
+	  const firstError = res == null ? void 0 : (_res$errors2 = res.errors) == null ? void 0 : _res$errors2[0];
 	  ai_ajaxErrorHandler.AjaxErrorHandler.handleTextGenerateError({
 	    baasOptions: {
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].getContainer().querySelector('.ai__copilot_input-field-baas-point'),
 	      context: babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].getContextId(),
 	      useAngle: false
 	    },
-	    errorCode: firstErrorCode
+	    errorCode: firstErrorCode,
+	    showSliderWithMsg: firstError == null ? void 0 : (_firstError$customDat = firstError.customData) == null ? void 0 : _firstError$customDat.showSliderWithMsg,
+	    sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode
 	  });
 	}
 	function _initErrorMenu2() {

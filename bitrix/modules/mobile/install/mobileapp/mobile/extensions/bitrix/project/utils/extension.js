@@ -5,6 +5,8 @@
 	const require = (extension) => jn.require(extension);
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { qrauth } = require('qrauth/utils');
+	const { showToast } = require('toast');
+	const { NotifyManager } = require('notify-manager');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
 	const projectCache = new Map();
@@ -301,14 +303,25 @@
 			}]);
 		}
 
-		static onTabSelectedCalendar(url)
+		static async onTabSelectedCalendar(groupId, url)
 		{
-			qrauth.open({
-				redirectUrl: url || '',
-				showHint: true,
-				title: BX.message('MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE'),
-				analyticsSection: 'project',
-			});
+			const { Entry } = await requireLazy('calendar:entry');
+			if (false)
+			{
+				void Entry.openGroupCalendarView({
+					groupId,
+					title: BX.message('MOBILE_PROJECT_TAB_CALENDAR'),
+				});
+			}
+			else
+			{
+				qrauth.open({
+					redirectUrl: url || '',
+					showHint: true,
+					title: BX.message('MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE'),
+					analyticsSection: 'project',
+				});
+			}
 		}
 
 		static async openProject(item, initialParams)
@@ -339,17 +352,23 @@
 				return;
 			}
 
-			if (item === null)
+			if (item)
 			{
-				BX.postComponentEvent('project.background::showLoadingIndicator');
+				WorkgroupUtil.openComponent(item, params);
 
-				WorkgroupUtil.getProjectData(params)
-					.then((result) => {
-						BX.postComponentEvent('project.background::hideLoadingIndicator');
+				return;
+			}
 
+			void NotifyManager.showLoadingIndicator();
+
+			WorkgroupUtil.getProjectData(params)
+				.then(
+					(result) => {
 						const data = result.data || null;
 						if (!data)
 						{
+							WorkgroupUtil.showProjectErrorToast();
+
 							return;
 						}
 
@@ -373,14 +392,17 @@
 							},
 							params,
 						);
-					})
-					.catch(() => BX.postComponentEvent('project.background::hideLoadingIndicator'))
-				;
-			}
-			else
-			{
-				WorkgroupUtil.openComponent(item, params);
-			}
+					},
+					() => WorkgroupUtil.showProjectErrorToast(),
+				)
+				.catch(() => WorkgroupUtil.showProjectErrorToast())
+				.finally(() => NotifyManager.hideLoadingIndicatorWithoutFallback())
+			;
+		}
+
+		static showProjectErrorToast()
+		{
+			showToast({ message: BX.message('MOBILE_PROJECT_NO_PROJECT_ERROR') });
 		}
 
 		static openComponent(item, params)

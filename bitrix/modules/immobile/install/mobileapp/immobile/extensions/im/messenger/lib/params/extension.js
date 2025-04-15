@@ -159,6 +159,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 				sidebarLinks: false,
 				zoomActive: false,
 				zoomAvailable: false,
+				intranetInviteAvailable: false,
 			});
 		}
 

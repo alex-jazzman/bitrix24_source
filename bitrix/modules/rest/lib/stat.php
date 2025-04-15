@@ -49,9 +49,9 @@ use Bitrix\Main;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Stat_Query query()
- * @method static EO_Stat_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Stat_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Stat_Result getById($id)
- * @method static EO_Stat_Result getList(array $parameters = array())
+ * @method static EO_Stat_Result getList(array $parameters = [])
  * @method static EO_Stat_Entity getEntity()
  * @method static \Bitrix\Rest\EO_Stat createObject($setDefaultValues = true)
  * @method static \Bitrix\Rest\EO_Stat_Collection createCollection()

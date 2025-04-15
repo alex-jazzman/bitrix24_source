@@ -64,7 +64,7 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
         <td width="60%"><input type="text" class="have-url" name="TRANSFORMER_CONTROLLER_URL" value="<?=htmlspecialcharsbx(Option::get(
 			'transformer',
 			'transformer_controller_url',
-			\Bitrix\Main\DI\ServiceLocator::getInstance()->get('transformer.http.controllerResolver')->getDefaultCloudControllerUrl(),
+			\Bitrix\Main\DI\ServiceLocator::getInstance()->get('transformer.service.http.controllerResolver')->getDefaultCloudControllerUrl(),
 		));?>" /></td>
     </tr>
     <tr>

@@ -4,21 +4,12 @@
 jn.define('layout/ui/menu', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Color } = require('tokens');
-	const { Feature } = require('feature');
 	const { qrauth } = require('qrauth/utils');
 	const { mergeImmutable } = require('utils/object');
 	const { MenuPosition } = require('layout/ui/menu/src/menu-position');
+	const { Icon } = require('assets/icons');
 
 	const DEFAULT_MENU_SECTION_NAME = 'main';
-
-	const airStyleSupported = Feature.isAirStyleSupported();
-
-	let iconsPath = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/menu/icons/';
-
-	if (airStyleSupported)
-	{
-		iconsPath += 'outline-';
-	}
 
 	/**
 	 * @class UIMenuType
@@ -169,6 +160,9 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 			{
 				for (const item of action.params.nextMenu.items)
 				{
+					item.iconUrl = this.getIconUrl(item);
+					item.iconName = this.getIconName(item);
+
 					actionsFlatMap.set(item.id, { params: item, callbacks: { onItemSelected: item.onItemSelected } });
 					if (item.nextMenu?.items)
 					{
@@ -192,7 +186,8 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 					return {
 						id: 'desktop',
 						title: BX.message('UI_MENU_ITEM_TYPE_DESKTOP_MSGVER_1'),
-						iconUrl: `${iconsPath}desktop.png`,
+						iconUrl: null,
+						icon: Icon.GO_TO,
 						onItemSelected: (data) => () => {
 							const promise = new Promise((resolve) => {
 								const { qrUrl, qrUrlCallback } = data;
@@ -231,7 +226,8 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 					return {
 						id: 'helpdesk',
 						title: BX.message('UI_MENU_ITEM_TYPE_HELPDESK'),
-						iconUrl: `${iconsPath}helpdesk.png`,
+						iconUrl: null,
+						icon: Icon.QUESTION,
 						onItemSelected: (data) => () => {
 							helpdesk.openHelpArticle(data.articleCode, 'helpdesk');
 						},

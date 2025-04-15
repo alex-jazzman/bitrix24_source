@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_CRM_FORM"] = "Файлдағы сіздің CRM-нысандарыңызды сақтау үшін \"Экспорттау\" басыңыз";
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_CRM_SMART_ROBOTS"] = "Файлдағы сіздің Ақылды сценарийлеріңізді сақтау үшін \"Экспорттау\" басыңыз";
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_VERTICAL_CRM"] = "Файлдағы сіздің CRM баптауларын сақтау үшін \"Экспорттау\" басыңыз";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_CRM_FORM"] = "CRM-нысандарын экспорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_CRM_SMART_ROBOTS"] = "Ақылды сценарийлерді экспорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_IMPORT_CRM_SMART_ROBOTS"] = "Ақылды сценарийлерді импорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_VERTICAL_CRM"] = "Салалық CRM экспорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_CRM_FORM"] = "Бірнеше минут ішінде бизнесіңіз үшін дайын CRM-нысандар алыңыз!";
+$MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_CRM_SMART_ROBOTS"] = "Бірнеше минут ішінде бизнесіңіз үшін дайын Ақылды сценарийлер алыңыз!";
+$MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_VERTICAL_CRM"] = "Бірнеше минут ішінде бизнесіңіз үшін дайын CRM алыңыз!";
+$MESS["CRM_CONFIGURATION_MANIFEST_IMPORT_DESCRIPTION_UPLOAD_CRM_SMART_ROBOTS"] = "Ақылды сценарий баптаулары бар файлды жүктеп алыңыз";
+$MESS["CRM_CONFIGURATION_MANIFEST_IMPORT_INSTALL_FINISH_TEXT_CRM_SMART_ROBOTS"] = "Ақылды сценарийлерді импорттау сәтті ақталды";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_CRM_FORM"] = "CRM-нысандарын экспорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_CRM_SMART_ROBOTS"] = "Ақылды сценарийлерді экспорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_IMPORT_CRM_SMART_ROBOTS"] = "Ақылды сценарийлерді импорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_VERTICAL_CRM"] = "Салалық CRM экспорттау";
+$MESS["CRM_CONFIGURATION_MANIFEST_TITLE_CRM_FORM"] = "CRM-нысандар";
+$MESS["CRM_CONFIGURATION_MANIFEST_TITLE_CRM_SMART_ROBOTS"] = "Ақылды сценарийлер";
+$MESS["CRM_CONFIGURATION_MANIFEST_TITLE_VERTICAL_CRM"] = "Салалық CRM";

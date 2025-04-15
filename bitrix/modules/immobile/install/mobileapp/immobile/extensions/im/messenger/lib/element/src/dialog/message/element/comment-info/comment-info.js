@@ -133,13 +133,13 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 			const colorUtils = new ColorUtils();
 
 			return users.map((user) => {
-				const result = {};
-
 				const chatAvatar = ChatAvatar.createFromDialogId(user.id);
+				const result = {
+					avatar: chatAvatar.getMessageCommentInfoAvatarProps(),
+				};
+
 				if (user.avatar !== '')
 				{
-					result.avatar = chatAvatar.getMessageCommentInfoAvatarProps();
-
 					/** @deprecated */
 					result.imageUrl = user.avatar;
 

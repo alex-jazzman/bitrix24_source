@@ -1839,7 +1839,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  openFirstDashboard() {
 	    const dashboard = babelHelpers.classPrivateFieldLooseBase(this, _dashboards)[_dashboards][0];
 	    if (dashboard) {
-	      main_sidepanel.SidePanel.Instance.open(dashboard.url);
+	      window.open(dashboard.url, '_blank');
 	    }
 	  }
 	}
@@ -1850,7 +1850,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      tabId: dashboard.id,
 	      text: dashboard.title,
 	      onclick: () => {
-	        main_sidepanel.SidePanel.Instance.open(dashboard.url);
+	        window.open(dashboard.url, '_blank');
 	      }
 	    });
 	  });

@@ -303,12 +303,13 @@ if (
 		$items['effective_counter'] = [
 			'TEXT' => GetMessage('SONET_UM_EFFICIENCY'),
 			'ON_CLICK' => "BX.SidePanel.Instance.open('{$efficiencyUrl}', { width: 1000 })",
-			'COUNTER' => $efficiencyCounter,
-			'MAX_COUNTER_SIZE' => 100,
-			'COUNTER_ID' => 'effective_counter',
 			'ID' => 'effective_counter',
 			'CLASS' => 'effective_counter',
 			'IS_ACTIVE' => (mb_strpos($requestUri, $efficiencyUrl) === 0),
+			'SUPER_TITLE' => [
+				'TEXT' => $efficiencyCounter . '%',
+				'CLASS' => 'effective_counter',
+			],
 		];
 	}
 }

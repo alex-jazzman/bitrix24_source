@@ -247,6 +247,24 @@ export class EmployeePage extends BaseSettingsPage
 			EmployeePage.addToSectionHelper(inviteToUserField, sectionSettings);
 		}
 
+		if (this.hasValue('allow_invite_collabers'))
+		{
+			let inviteCollabersField = new Checker(this.getValue('allow_invite_collabers'));
+
+			EventEmitter.subscribe(
+				inviteCollabersField.switcher,
+				'toggled',
+				() =>
+				{
+					this.getAnalytic()?.addEventConfigEmployee(
+						AnalyticSettingsEvent.CHANGE_COLLABERS_INVITATION,
+						inviteCollabersField.isChecked()
+					);
+				}
+			);
+			EmployeePage.addToSectionHelper(inviteCollabersField, sectionSettings);
+		}
+
 		if (this.hasValue('show_fired_employees'))
 		{
 			let showQuitField = new Checker(this.getValue('show_fired_employees'));

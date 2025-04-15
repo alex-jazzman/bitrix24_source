@@ -1,4 +1,6 @@
 <?php
+$MESS["LANDING_SITE_TILE_COPILOT_GENERATED_TEXT"] = "CoPilot створює сайт";
+$MESS["LANDING_SITE_TILE_COPILOT_LABEL"] = "Створено з CoPilot";
 $MESS["LANDING_SITE_TILE_CREATE_DOMAIN_NAME"] = "Придумайте красиву адресу сайту";
 $MESS["LANDING_SITE_TILE_DELETE_ALERT_MESSAGE"] = "Дійсно видалити?";
 $MESS["LANDING_SITE_TILE_DELETE_ALERT_TITLE"] = "Увага!";

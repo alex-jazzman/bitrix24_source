@@ -12,7 +12,7 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	function showDeleteChannelAlert({ deleteCallback, cancelCallback })
 	{
 		confirmDestructiveAction({
-			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_TITLE'),
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_TITLE_MSGVER_1'),
 			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_DESCRIPTION'),
 			onDestruct: deleteCallback,
 			onCancel: cancelCallback,
@@ -26,7 +26,7 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	function showDeleteChatAlert({ deleteCallback, cancelCallback })
 	{
 		confirmDestructiveAction({
-			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_TITLE'),
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_TITLE_MSGVER_1'),
 			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_DESCRIPTION'),
 			onDestruct: deleteCallback,
 			onCancel: cancelCallback,

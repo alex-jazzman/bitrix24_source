@@ -4,7 +4,7 @@
 jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, module) => {
 	const { Indent, Color } = require('tokens');
 	const { Text4 } = require('ui-system/typography/text');
-	const { IconView } = require('ui-system/blocks/icon');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { DeadlinePill } = require('tasks/layout/deadline-pill');
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { Line, Circle } = require('utils/skeleton');
@@ -133,12 +133,12 @@ jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, mo
 					),
 				),
 				(field.isReadOnly() || field.isRestricted()) && IconView({
-					icon: 'chevronRight',
+					icon: Icon.CHEVRON_TO_THE_RIGHT,
 					size: 20,
 					color: Color.base5,
 				}),
 				(!isLoading && !field.isReadOnly() && !field.isRestricted()) && IconView({
-					icon: 'cross',
+					icon: Icon.CROSS,
 					size: 20,
 					color: Color.base5,
 					onClick: () => field.removeEntity(id),

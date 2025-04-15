@@ -9,6 +9,8 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
+	const { CounterPrefix, CounterValue, CounterPostfix } = require('im/messenger/lib/element/recent/item/chat/const/test-id');
+
 	/**
 	 * @class ChannelItem
 	 */
@@ -93,7 +95,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				return this;
 			}
 
-			if (dialog?.muteList?.includes(serviceLocator.get('core').getUserId()))
+			if (this.isMute)
 			{
 				this.styles.counter.backgroundColor = Theme.colors.base5;
 
@@ -113,6 +115,43 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 				return this;
 			}
+
+			return this;
+		}
+
+		/**
+		 * @return RecentItem
+		 */
+		createCounterTestId()
+		{
+			const commentCounters = this.getCommentsCounterItem();
+			const dialogCounters = this.getDialogItem().counter;
+
+			if (this.messageCount === 0 && !this.unread && commentCounters === 0)
+			{
+				this.counterTestId = null;
+
+				return this;
+			}
+
+			const prefix = CounterPrefix.counter;
+			const value = dialogCounters > 0 || commentCounters > 0 ? dialogCounters || commentCounters : CounterValue.unread;
+
+			let postfix = '';
+			if (this.isMute)
+			{
+				postfix = CounterPostfix.muted;
+			}
+			else if (dialogCounters > 0)
+			{
+				postfix = CounterPostfix.unmuted;
+			}
+			else
+			{
+				postfix = CounterPostfix.watch;
+			}
+
+			this.counterTestId = `${prefix}-${value}-${postfix}`;
 
 			return this;
 		}

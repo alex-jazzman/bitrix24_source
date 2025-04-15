@@ -4,11 +4,11 @@ return [
 	'extensions' => [
 		'loc',
 		'type',
-		'utils/object',
-		'tokens',
-		'assets/icons',
-		'utils/url',
 		'selector/providers/common',
-		'utils/function',
+	],
+	'bundle' => [
+		'./src/entities/user',
+		'./src/entities/meta-user',
+		'./src/entities/department',
 	],
 ];

@@ -116,6 +116,7 @@ jn.define('tokens/src/color', (require, exports, module) => {
 	Color.chatOverallBaseWhite2 = new Color('chatOverallBaseWhite2', AppTheme.realColors.chatOverallBaseWhite2);
 	Color.chatOverallColorGray = new Color('chatOverallColorGray', AppTheme.realColors.chatOverallColorGray);
 	Color.chatOverallFixedBlack = new Color('chatOverallFixedBlack', AppTheme.realColors.chatOverallFixedBlack);
+	Color.chatOverallFixedWhite = new Color('chatOverallFixedWhite', AppTheme.realColors.chatOverallFixedWhite);
 	Color.chatOverallInvertAlert = new Color('chatOverallInvertAlert', AppTheme.realColors.chatOverallInvertAlert);
 	Color.chatOverallOverlay = new Color('chatOverallOverlay', AppTheme.realColors.chatOverallOverlay);
 	Color.chatOverallPattern1_1 = new Color('chatOverallPattern1_1', AppTheme.realColors.chatOverallPattern1_1);

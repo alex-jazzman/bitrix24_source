@@ -3,7 +3,7 @@
  */
 jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	const { Notify } = require('notify');
-	const { Invite, IntranetInviteAnalytics } = require('intranet/invite-new');
+	const { Invite, IntranetInviteAnalytics, AnalyticsEvent } = require('intranet/invite-new');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { InviteStatusBox } = require('intranet/invite-status-box');
@@ -301,5 +301,5 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		PageManager.openWidget('layout', config);
 	};
 
-	module.exports = { openIntranetInviteWidget, ErrorCode };
+	module.exports = { openIntranetInviteWidget, AnalyticsEvent, ErrorCode };
 });

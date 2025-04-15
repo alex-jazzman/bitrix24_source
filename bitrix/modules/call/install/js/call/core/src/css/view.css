@@ -1550,6 +1550,8 @@
 	background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.30703 14.0001C8.30703 15.4027 7.16994 16.5398 5.76728 16.5398C4.36462 16.5398 3.22754 15.4027 3.22754 14.0001C3.22754 12.5974 4.36462 11.4603 5.76728 11.4603C7.16994 11.4603 8.30703 12.5974 8.30703 14.0001ZM16.5397 14.0001C16.5397 15.4027 15.4026 16.5398 14 16.5398C12.5973 16.5398 11.4602 15.4027 11.4602 14.0001C11.4602 12.5974 12.5973 11.4603 14 11.4603C15.4026 11.4603 16.5397 12.5974 16.5397 14.0001ZM22.2327 16.5398C23.6354 16.5398 24.7724 15.4027 24.7724 14.0001C24.7724 12.5974 23.6354 11.4603 22.2327 11.4603C20.83 11.4603 19.693 12.5974 19.693 14.0001C19.693 15.4027 20.83 16.5398 22.2327 16.5398Z' fill='%23EEF2F4'/%3E%3C/svg%3E%0A");
 }
 
+.bx-call-remote-user-menu-container,
+.bx-call-remote-user-menu-container .popup-window-angly--arrow,
 .bx-messenger-videocall-hangup-options-container,
 .bx-messenger-videocall-hangup-options-container .popup-window-angly--arrow,
 .bx-messenger-videocall-document-options-container,
@@ -1557,22 +1559,37 @@
 	background-color: #22272B;
 }
 
+.bx-call-remote-user-menu-container .menu-popup-item-text,
 .bx-messenger-videocall-hangup-options-container .menu-popup-item-text,
 .bx-messenger-videocall-document-options-container .menu-popup-item-text {
 	color: #FFF;
 	background-color: #22272B;
 }
 
+.bx-call-remote-user-menu-container .menu-popup-item:hover,
 .bx-messenger-videocall-hangup-options-container .menu-popup-item:hover,
 .bx-messenger-videocall-document-options-container .menu-popup-item:hover {
 	opacity: .8;
 	background-color: #22272B;
 }
 
+.bx-call-remote-user-menu-container .menu-popup-item:hover .menu-popup-item-text,
 .bx-messenger-videocall-hangup-options-container .menu-popup-item:hover .menu-popup-item-text,
 .bx-messenger-videocall-document-options-container .menu-popup-item:hover .menu-popup-item-text {
 	color: #FFF;
 	background-color: #22272B;
+}
+
+.bx-call-remote-user-menu-container .bx-call-remote-user-turn-off-mic .menu-popup-item-icon {
+	width: 22px;
+	height: 22px;
+	background-image: url('../../../images/remote-participant-menu-icon-no-audio.svg');
+}
+
+.bx-call-remote-user-menu-container .bx-call-remote-user-turn-off-cam .menu-popup-item-icon {
+	width: 24px;
+	height: 24px;
+	background-image: url('../../../images/remote-participant-menu-icon-no-video.svg');
 }
 
 .bx-messenger-videocall-panel-background-copilot-coming-soon {
@@ -4140,4 +4157,79 @@ bx-messenger-videocall-page-navigator.left.active.force-visible{
 }
 .bx-messenger-videocall-width-lt-450 .bx-messenger-videocall-watermark {
 	display: none;
+}
+
+.bx-call-view-participants-control-stream-button {
+	margin: 0 4px;
+	cursor: pointer;
+	display: inline-block;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	position: absolute;
+	bottom: 0;
+	white-space: nowrap;
+}
+
+.bx-call-view-participants-control-stream-button-action {	
+	color: #A8ADB4;
+	border-bottom: 1px dashed #A8ADB4;
+}
+
+.bx-call-view-participants-control-stream-button:hover .bx-call-view-participants-control-stream-button-action {
+	color: #959CA4;
+	border-bottom: 1px dashed #959CA4;
+}
+
+.bx-call-view-participants-control-stream-button-icon {
+	width: 18px;
+	height: 15px;
+	background-repeat: no-repeat;
+	background-position: center;
+	margin-right: 2px;
+	display: inline-block;
+	top: 2px;
+    position: relative;
+}
+
+.bx-call-view-participants-control-stream-button-icon-mic {
+	background-image: url('../../../images/microphone-crossed.svg');
+}
+
+.bx-call-view-participants-control-stream-button-icon-cam {
+	background-image: url('../../../images/camera-crossed.svg');
+	margin-left: 1px;
+}
+
+.bx-call-view-participants-control-stream-button-icon-screenshare {
+	background-image: url('../../../images/camera-crossed.svg');
+}
+
+.bx-call-view-participants-control-stream-notify-icon {
+	width: 22px;
+	height: 22px;
+	background-repeat: no-repeat;
+	background-position: center;
+	margin-right: 16px;
+	display: inline-block;
+    position: relative;
+	vertical-align: -6px;
+}
+
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-mic-muted  {
+	background-image: url('../../../images/notify-mic-muted.svg');
+}
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-cam-muted  {
+	background-image: url('../../../images/notify-cam-muted.svg');
+}
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-screenshare-muted  {
+	background-image: url('../../../images/notify-screenshare-muted.svg');
+}
+
+.bx-call-view-device-selector-menu-container {
+	position: relative;
+    padding-bottom: 20px;
+	min-width: 200px;
+}
+
+.bx-call-remote-user-menu-container .popup-window-angly-top {
+	margin-left: 6px!important;
 }

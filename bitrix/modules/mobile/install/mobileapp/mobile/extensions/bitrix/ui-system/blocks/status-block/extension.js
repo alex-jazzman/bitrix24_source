@@ -74,7 +74,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 
 		renderStatusContent()
 		{
-			const { testId, forwardRef, verticalAlign } = this.props;
+			const { testId, forwardRef, verticalAlign, style = {} } = this.props;
 
 			return Area(
 				{
@@ -84,6 +84,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 						flexGrow: 1,
 						justifyContent: Align.resolve(verticalAlign, Align.CENTER).toString(),
 						alignItems: 'center',
+						...style,
 					},
 				},
 				this.renderImage(),

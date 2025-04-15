@@ -259,6 +259,9 @@ $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_MAIL"] = "Написать
 $MESS["INTRANET_SETTINGS_PORTAL_DELETE_MAIL_SUBJECT"] = "Запрос на удаление #PORTAL_URL#";
 $MESS["INTRANET_SETTINGS_PORTAL_DELETE_MAIL_BODY"] = "Здравствуйте!%0D%0AПожалуйста, удалите мой #PORTAL_URL# со всеми данными.";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NOT_ADMIN"] = "Удалить Битрикс24 может только пользователь с правами администратора. ";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_BOUND"] = "Перед удалением необходимо отключить ваш Битрикс24 от филиальной сети. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NETWORK"] = "Для удаления Битрикс24 нужно привязать к аккаунту электронную почту, чтобы мы могли отправить вам код подтверждения. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_NETWORK_LINK"] = "Привязать электронную почту";
 
 $MESS["INTRANET_SETTINGS_TITLE_TOOL_TASKS"] = "Задачи и проекты";
 $MESS["INTRANET_SETTINGS_TITLE_TOOL_TEAMWORK"] = "Совместная работа";

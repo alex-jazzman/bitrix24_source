@@ -13,7 +13,6 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 	const { PlanLimitsBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/plan-limits');
 	const { SignMessage } = require('im/messenger/lib/element/dialog/message/banner/banners/sign/banner');
 	const { MessageParams } = require('im/messenger/const');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -23,11 +22,6 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 	{
 		static create(modelMessage, options = {})
 		{
-			if (!Feature.isCreateBannerMessageSupported)
-			{
-				return new TextMessage(modelMessage, options);
-			}
-
 			try
 			{
 				const optionsBanner = {

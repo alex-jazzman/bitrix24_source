@@ -52,7 +52,7 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 
 		get skipTimeAgoAfterSeconds()
 		{
-			return BX.prop.getNumber(this.props, 'skipTimeAgoAfterSeconds', 3600);
+			return BX.prop.getNumber(this.props, 'skipTimeAgoAfterSeconds', 3600 * 4);
 		}
 
 		get futureAllowed()

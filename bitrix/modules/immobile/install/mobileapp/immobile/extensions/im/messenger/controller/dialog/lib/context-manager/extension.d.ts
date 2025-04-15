@@ -5,7 +5,6 @@ declare type GoToMessageContextEvent = {
 	parentMessageId?: string,
 	withMessageHighlight?: boolean,
 	targetMessagePosition?: string,
-	showNotificationIfUnsupported?: boolean,
 	showPlanLimitWidget?: boolean,
 }
 

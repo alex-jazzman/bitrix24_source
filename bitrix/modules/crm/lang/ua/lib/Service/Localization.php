@@ -128,6 +128,7 @@ $MESS["CRM_QUOTE_TITLE_PLACEHOLDER_MSGVER_1"] = "Пропозиція №#ID#";
 $MESS["CRM_SMART_INVOICE_ADD_HINT"] = "У вас недостатньо прав на створення рахунків. Зверніться до адміністратора Бітрікс24 або співробітника, відповідального за CRM.";
 $MESS["CRM_SMART_INVOICE_TITLE"] = "Рахунок №#NUMBER# від #BEGINDATE#";
 $MESS["CRM_SMART_INVOICE_TITLE_PLACEHOLDER"] = "Рахунок №#ID#";
+$MESS["CRM_STAGE_UPDATE_LOADING_NOTIFICATION_MESSAGE"] = "Переносимо на стадію <b>«#stage#»</b>";
 $MESS["CRM_TYPE_CATEGORY_ACCESS_DENIED"] = "Доступ до напрямку обмежений";
 $MESS["CRM_TYPE_CATEGORY_ADD_ERROR_SYSTEM"] = "Додавання системної категорії заборонено";
 $MESS["CRM_TYPE_CATEGORY_DEFAULT_NAME"] = "Загальне";

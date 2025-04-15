@@ -3,7 +3,6 @@
 
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
-	const { Feature } = require('feature');
 	const { debounce } = require('utils/function');
 	const { Logger, LogType } = require('utils/logger');
 	const { PresetList } = require('tasks/layout/presetList');
@@ -13,7 +12,6 @@
 	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const platform = Application.getPlatform();
-	const isAirStyleSupported = Feature.isAirStyleSupported();
 
 	const Mode = {
 		PROJECT: 'tasks_project',
@@ -371,19 +369,10 @@
 	{
 		static get counterColors()
 		{
-			if (isAirStyleSupported)
-			{
-				return {
-					gray: AppTheme.realColors.base4,
-					green: AppTheme.realColors.accentMainSuccess,
-					red: AppTheme.realColors.accentMainAlert,
-				};
-			}
-
 			return {
-				gray: AppTheme.colors.base4,
-				green: AppTheme.colors.accentMainSuccess,
-				red: AppTheme.colors.accentMainAlert,
+				gray: AppTheme.realColors.base4,
+				green: AppTheme.realColors.accentMainSuccess,
+				red: AppTheme.realColors.accentMainAlert,
 			};
 		}
 
@@ -429,11 +418,7 @@
 			const projectListItems = [
 				{
 					id: Filter.counterTypes.sonetTotalExpired,
-					title: (
-						isAirStyleSupported
-							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_EXPIRED')
-							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_EXPIRED')
-					),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_EXPIRED'),
 					sectionCode: MY_COUNTERS_SECTION,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalExpired),
@@ -443,11 +428,7 @@
 				},
 				{
 					id: Filter.counterTypes.sonetTotalComments,
-					title: (
-						isAirStyleSupported
-							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_COMMENTS')
-							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS')
-					),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_COMMENTS'),
 					sectionCode: MY_COUNTERS_SECTION,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalComments),
@@ -457,11 +438,7 @@
 				},
 				{
 					id: Filter.counterTypes.sonetForeignExpired,
-					title: (
-						isAirStyleSupported
-							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_EXPIRED')
-							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_EXPIRED')
-					),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_EXPIRED'),
 					sectionCode: OTHER_COUNTERS_SECTION,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignExpired),
@@ -471,11 +448,7 @@
 				},
 				{
 					id: Filter.counterTypes.sonetForeignComments,
-					title: (
-						isAirStyleSupported
-							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_COMMENTS')
-							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS')
-					),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_COMMENTS'),
 					sectionCode: OTHER_COUNTERS_SECTION,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignComments),
@@ -511,7 +484,7 @@
 			items.push({
 				id: 'readAll',
 				title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ_ALL'),
-				iconName: isAirStyleSupported ? 'chats_with_check' : 'read',
+				iconName: 'chats_with_check',
 				sectionCode: DEFAULT_SECTION,
 				showTopSeparator: true,
 			});
@@ -788,12 +761,13 @@
 		onJoinAction(project)
 		{
 			const projectId = String(project.id);
+			const projectObject = this.list.projectList.get(projectId);
 
-			if (project.isOpened)
+			if (projectObject.isOpened)
 			{
-				project.joinProject().then(() => this.list.updateItem(projectId)).catch(console.error);
+				projectObject.joinProject().then(() => this.list.updateItem(projectId)).catch(console.error);
 
-				const projectItem = ProjectList.prepareListItem(project);
+				const projectItem = ProjectList.prepareListItem(projectObject);
 				projectItem.joinButtonState = 'animated';
 				this.list.list.updateItem({ id: projectId }, projectItem);
 			}

@@ -6,15 +6,15 @@ namespace Bitrix\Booking\Internals\Repository\ORM\Mapper;
 
 use Bitrix\Booking\Entity\Booking\Booking;
 use Bitrix\Booking\Entity\Booking\BookingVisitStatus;
-use Bitrix\Booking\Entity\Booking\ClientCollection;
-use Bitrix\Booking\Entity\Booking\ExternalDataCollection;
+use Bitrix\Booking\Entity\Client\ClientCollection;
 use Bitrix\Booking\Entity\DatePeriod;
+use Bitrix\Booking\Entity\ExternalData\ExternalDataCollection;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
 use Bitrix\Booking\Internals\Model\BookingTable;
 use Bitrix\Booking\Internals\Model\EO_BookingResource;
 use Bitrix\Booking\Internals\Model\EO_Resource;
 use Bitrix\Booking\Internals\Model\EO_Booking;
-use Bitrix\Booking\Internals\Rrule;
+use Bitrix\Booking\Internals\Service\Rrule;
 use Bitrix\Main\Type\DateTime;
 use DateTimeImmutable;
 use DateTimeZone;

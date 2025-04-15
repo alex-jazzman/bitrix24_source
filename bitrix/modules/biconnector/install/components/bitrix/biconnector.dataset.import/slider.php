@@ -37,6 +37,7 @@ $APPLICATION->IncludeComponent(
 		'USE_BACKGROUND_CONTENT' => false,
 		'USE_PADDING' => false,
 		'USE_UI_TOOLBAR' => 'Y',
+		'USE_UI_TOOLBAR_MARGIN' => false,
 	]
 );
 

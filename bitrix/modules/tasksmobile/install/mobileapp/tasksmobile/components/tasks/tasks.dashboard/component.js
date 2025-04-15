@@ -14,7 +14,6 @@
 		TasksDashboardMoreMenu,
 		TasksDashboardSorting,
 	} = require('tasks/dashboard');
-	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { SearchLayout } = require('layout/ui/search-bar');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
@@ -23,16 +22,16 @@
 	const { Haptics } = require('haptics');
 	const { fetchStages } = require('tasks/statemanager/redux/slices/kanban-settings');
 	const { taskStageAdded, taskStageUpserted } = require('tasks/statemanager/redux/slices/tasks-stages');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
+	const { Entry } = require('tasks/entry');
 	const { CalendarSettings } = require('tasks/task/calendar');
 	const { Pull: TasksPull } = require('layout/ui/stateful-list/pull');
 	const { Views } = require('tasks/statemanager/redux/types');
-	const { mergeImmutable } = require('utils/object');
+	const { mergeImmutable, isObjectLike } = require('utils/object');
 	const { executeIfOnline } = require('tasks/layout/online');
 	const { Feature } = require('feature');
 	const { showToast } = require('toast');
 	const { Type } = require('type');
-	const { DeadlinePeriod, FeatureId } = require('tasks/enum');
+	const { DeadlinePeriod, FeatureId, PullCommand } = require('tasks/enum');
 	const { fetchDisabledTools } = require('settings/disabled-tools');
 	const {
 		tasksUpserted,
@@ -44,7 +43,6 @@
 		selectWithCreationError,
 		remove,
 		taskRemoved,
-		mapStateToTaskModel,
 		readAllForRole,
 		readAllForProject,
 	} = require('tasks/statemanager/redux/slices/tasks');
@@ -62,8 +60,6 @@
 	const { Alert, makeButton, makeDestructiveButton } = require('alert');
 	const { AnalyticsEvent } = require('analytics');
 	const { Link4, LinkMode, LinkDesign } = require('ui-system/blocks/link');
-
-	const AIR_STYLE_SUPPORTED = Feature.isAirStyleSupported();
 
 	class TasksDashboard extends LayoutComponent
 	{
@@ -107,7 +103,7 @@
 				this.props.projectId,
 				this.props.isTabsMode,
 				this.props.tabsGuid,
-				this.getInitialPresetId(),
+				this.props.defaultPresetId,
 				this.getInitialRole(),
 				this.props.isRootComponent,
 				this.props.siteId,
@@ -136,7 +132,7 @@
 				view,
 				displayFields,
 				calendarSettings,
-				canCreateTask,
+				canCreateTask = false,
 			} = this.getCachedSettings();
 
 			this.sorting = new TasksDashboardSorting({
@@ -164,21 +160,25 @@
 					getOwnerId: () => ownerId || currentUserId,
 				},
 				this.getAnalyticsLabel(),
+				!(this.sorting.getType() === TasksDashboardSorting.types.ACTIVITY),
 			);
 
 			this.search = new SearchLayout({
 				layout,
 				id: 'my_tasks',
 				cacheId: `my_tasks_${env.userId}`,
-				presetId: this.getInitialPresetId(),
+				presetId: this.props.defaultPresetId,
 				searchDataAction: 'tasksmobile.Filter.getSearchBarPresets',
 				searchDataActionParams: {
 					groupId: projectId,
 				},
+				useCache: {
+					onSearch: false,
+					onCancel: true,
+				},
 				onSearch: this.onSearch,
 				onCancel: this.onSearch,
 				onCheckRestrictions: this.onCheckRestrictions,
-				getDefaultPresetId: this.getDefaultPresetId,
 			});
 
 			this.navigationTitle = new NavigationTitle(this.getNavigationTitleParams());
@@ -213,14 +213,6 @@
 		{
 			return TasksDashboardFilter.roleType.all;
 		}
-
-		getInitialPresetId = () => {
-			return TasksDashboardFilter.presetType.default;
-		};
-
-		getDefaultPresetId = () => {
-			return TasksDashboardFilter.presetType.default;
-		};
 
 		getNavigationTitleParams()
 		{
@@ -333,6 +325,11 @@
 			this.updateSettingsCache({ view });
 		}
 
+		updateCanCreateTaskInCache(canCreateTask)
+		{
+			this.updateSettingsCache({ canCreateTask });
+		}
+
 		updateCalendarSettingsInCache(calendarSettings)
 		{
 			this.updateSettingsCache({ calendarSettings });
@@ -342,6 +339,11 @@
 		{
 			const cache = this.getSettingsActionExecutor().getCache();
 			const response = cache.getData();
+
+			if (!isObjectLike(response?.data))
+			{
+				return;
+			}
 
 			cache.saveData(mergeImmutable(response, {
 				data: {
@@ -379,8 +381,11 @@
 		async fetchSettings()
 		{
 			const response = await this.getSettingsActionExecutor().call(false);
-
-			await this.redrawNewSettings(response);
+			if (response?.status === 'success')
+			{
+				this.updateSettingsCache(response.data);
+				await this.redrawNewSettings(response);
+			}
 		}
 
 		getSettingsActionExecutor()
@@ -401,7 +406,6 @@
 				view: viewFromResponse,
 				displayFields: displayFieldsFromResponse,
 				calendarSettings: calendarSettingsFromResponse,
-				canCreateTask: canCreateTaskFromResponse,
 			} = this.getPreparedSettings(response);
 
 			CalendarSettings.setSettings(calendarSettingsFromResponse);
@@ -409,7 +413,6 @@
 			const {
 				view = viewFromResponse,
 				displayFields = displayFieldsFromResponse,
-				canCreateTask = canCreateTaskFromResponse,
 			} = this.getCachedSettings();
 
 			const validView = this.getValidView(view);
@@ -419,7 +422,6 @@
 			return new Promise((resolve) => {
 				this.setState({
 					displayFields,
-					canCreateTask,
 					loading: false,
 					view: validView,
 				}, resolve);
@@ -592,6 +594,12 @@
 		{
 			if (this.sorting.getType() === sorting)
 			{
+				this.sorting.toggleOrder();
+				this.moreMenu.setIsASC(this.sorting.getIsASC());
+				this.setState({ isASC: this.sorting.getIsASC() }, () => {
+					this.reload();
+				});
+
 				return;
 			}
 
@@ -608,6 +616,7 @@
 			this.sorting.setIsASC(!(this.sorting.getType() === TasksDashboardSorting.types.ACTIVITY));
 
 			this.moreMenu.setSelectedSorting(this.sorting.getType());
+			this.moreMenu.setIsASC(this.sorting.getIsASC());
 		}
 
 		onReadAllClick()
@@ -664,7 +673,15 @@
 		 */
 		onItemsLoaded(responseData, context)
 		{
-			const { users = [], items = [], groups = [], flows = [], tasksStages = [] } = responseData || {};
+			const {
+				users = [],
+				items = [],
+				groups = [],
+				flows = [],
+				tasksStages = [],
+				canCreateTask = null,
+			} = responseData || {};
+
 			const isCache = context === 'cache';
 
 			const actions = [];
@@ -698,16 +715,27 @@
 			{
 				dispatch(batchActions(actions));
 			}
+
+			if (canCreateTask !== null)
+			{
+				this.updateCanCreateTaskInCache(canCreateTask);
+				if (this.state.canCreateTask !== canCreateTask)
+				{
+					this.setState({
+						canCreateTask,
+					});
+				}
+			}
 		}
 
-		onSearch({ text, presetId })
+		onSearch({ text, presetId, useCache = false })
 		{
 			this.tasksDashboardFilter.setPresetId(presetId);
 			this.tasksDashboardFilter.setSearchString(text);
 			this.updateMoreMenuButton();
 
 			// todo avoid setting state and duplicated ajax request
-			this.setState({}, () => this.reload());
+			this.setState({}, () => this.reload(!useCache));
 		}
 
 		onCheckRestrictions()
@@ -774,7 +802,7 @@
 								layoutWidget: layout,
 							};
 
-							openTaskCreateForm(taskCreateParameters);
+							Entry.openTaskCreation(taskCreateParameters);
 						},
 					),
 					makeDestructiveButton(
@@ -807,18 +835,21 @@
 			}
 			else
 			{
-				// eslint-disable-next-line no-undef
-				const oldTaskModel = new Task({ id: this.props.currentUserId });
-				oldTaskModel.setData(mapStateToTaskModel(task));
-				oldTaskModel.open(layout, 'tasks.dashboard', {
-					analyticsLabel: {
-						...this.getAnalyticsLabel(),
-						c_element: this.getAnalyticsLabel()?.c_element ?? 'title_click',
-						c_sub_section: this.getAnalyticsLabel()?.c_sub_section ?? params.view?.toLowerCase(),
+				Entry.openTask(
+					{ id },
+					{
+						userId: this.props.currentUserId,
+						parentWidget: layout,
+						context: 'tasks.dashboard',
+						analyticsLabel: {
+							...this.getAnalyticsLabel(),
+							c_element: this.getAnalyticsLabel().c_element ?? 'title_click',
+							c_sub_section: this.getAnalyticsLabel().c_sub_section ?? params.view?.toLowerCase(),
+						},
+						view: this.state.view,
+						kanbanOwnerId: params.ownerId,
 					},
-					view: this.state.view,
-					kanbanOwnerId: params.ownerId,
-				});
+				);
 			}
 		}
 
@@ -844,6 +875,7 @@
 				[ActionMenu.action.unmute]: true,
 				[ActionMenu.action.unfollow]: true,
 				[ActionMenu.action.read]: true,
+				[ActionMenu.action.openChat]: true,
 				[ActionMenu.action.share]: true,
 				[ActionMenu.action.remove]: true,
 			};
@@ -859,7 +891,7 @@
 				actions: Object.keys(actions),
 				shouldBackOnRemove: false,
 				layoutWidget: layout,
-				engine: AIR_STYLE_SUPPORTED ? new TopMenuEngine() : null,
+				engine: new TopMenuEngine(),
 				analyticsLabel: {
 					...this.getAnalyticsLabel(),
 					module: 'tasks',
@@ -942,7 +974,7 @@
 				taskCreateParameters.initialTaskData.flowId = this.props.flowId;
 			}
 
-			openTaskCreateForm(taskCreateParameters);
+			Entry.openTaskCreation(taskCreateParameters);
 		}
 
 		onPanList()
@@ -1009,13 +1041,10 @@
 
 		reload(skipUseCache = true)
 		{
-			if (this.currentView && this.currentView.reload)
-			{
-				this.currentView.reload({
-					menuButtons: this.getLayoutMenuButtons(),
-					skipUseCache,
-				});
-			}
+			this.currentView?.reload?.({
+				menuButtons: this.getLayoutMenuButtons(),
+				skipUseCache,
+			});
 		}
 
 		onPullToRefreshForEmptyScreen()
@@ -1183,45 +1212,49 @@
 
 		onPullCallback(data)
 		{
-			return new Promise((resolve) => {
+			return new Promise((resolve, reject) => {
 				const commands = {
-					task_add: TasksPull.command.ADDED,
-					task_update: TasksPull.command.UPDATED,
-					task_view: TasksPull.command.UPDATED,
-					user_option_changed: TasksPull.command.UPDATED,
-					comment_add: TasksPull.command.UPDATED,
-					comment_read_all: TasksPull.command.RELOAD,
-					task_remove: TasksPull.command.DELETED,
-					task_result_create: TasksPull.command.UPDATED,
-					task_result_delete: TasksPull.command.UPDATED,
-					task_timer_start: TasksPull.command.UPDATED,
-					task_timer_stop: TasksPull.command.UPDATED,
+					[PullCommand.TASK_ADD]: TasksPull.command.ADDED,
+					[PullCommand.TASK_UPDATE]: TasksPull.command.UPDATED,
+					[PullCommand.TASK_REMOVE]: TasksPull.command.DELETED,
+					[PullCommand.TASK_VIEW]: TasksPull.command.UPDATED,
+					[PullCommand.COMMENT_ADD]: TasksPull.command.UPDATED,
+					[PullCommand.COMMENT_READ_ALL]: TasksPull.command.RELOAD,
+					[PullCommand.TASK_RESULT_CREATE]: TasksPull.command.UPDATED,
+					[PullCommand.TASK_RESULT_DELETE]: TasksPull.command.UPDATED,
+					[PullCommand.TASK_TIMER_START]: TasksPull.command.UPDATED,
+					[PullCommand.TASK_TIMER_STOP]: TasksPull.command.UPDATED,
+					[PullCommand.USER_OPTION_CHANGED]: TasksPull.command.UPDATED,
 				};
-				if (commands[data.command])
+				const { command, params } = data;
+
+				if (commands[command])
 				{
-					const taskId = this.parseTaskId(data.params);
+					const taskId = (params.TASK_ID ?? params.taskId ?? params.entityXmlId ?? 0).toString();
+					const task = selectByTaskIdOrGuid(store.getState(), taskId);
+
+					if (command === PullCommand.TASK_VIEW && !task?.newCommentsCount)
+					{
+						reject(new Error('No need to update task without new comments on view command'));
+
+						return;
+					}
+
+					if (command === PullCommand.TASK_UPDATE && params.updateDate === task?.updateDate)
+					{
+						reject(new Error('No need to update the task as we already have the actual data for it'));
+
+						return;
+					}
 
 					resolve({
 						params: {
-							eventName: commands[data.command],
-							items: [
-								{
-									id: taskId,
-									data: {
-										id: taskId,
-										name: data.params.AFTER?.TITLE || taskId,
-									},
-								},
-							],
+							eventName: commands[command],
+							items: [{ id: taskId }],
 						},
 					});
 				}
 			});
-		}
-
-		parseTaskId(data)
-		{
-			return (data.TASK_ID ?? data.taskId ?? data.entityXmlId ?? 0).toString();
 		}
 
 		// endregion
@@ -1235,7 +1268,7 @@
 					resizableByKeyboard: true,
 					testId: `TASKS_DASHBOARD_${this.getValidView(this.state.view)}`,
 				},
-				this.state.loading && new LoadingScreenComponent({ showAirStyle: AIR_STYLE_SUPPORTED }),
+				this.state.loading && new LoadingScreenComponent({ showAirStyle: true }),
 				this.isSelectedView(Views.PLANNER) && this.renderPlannerView(),
 				this.isSelectedView(Views.DEADLINE) && this.renderDeadlineView(),
 				this.isSelectedView(Views.KANBAN) && this.renderKanbanView(),
@@ -1314,11 +1347,13 @@
 						projectId: this.props.projectId,
 						searchParams: this.getSearchParams(),
 						order: this.sorting.getType(),
+						isASC: this.sorting.getIsASC() ? 1 : 0,
 					},
 					updateItemStage: {
 						projectId: this.props.projectId,
 						searchParams: this.getSearchParams(),
 						order: this.sorting.getType(),
+						isASC: this.sorting.getIsASC() ? 1 : 0,
 					},
 				},
 				actionCallbacks: {
@@ -1329,7 +1364,7 @@
 				getEmptyListComponent: this.getEmptyListComponent,
 				onItemClick: this.onItemClick,
 				onItemLongClick: this.onItemLongClick,
-				isShowFloatingButton: this.state.canCreateTask && this.props.canCreateTask,
+				isShowFloatingButton: this.state.canCreateTask,
 				onFloatingButtonClick: this.onFloatingButtonClick,
 				onPanList: this.onPanList,
 				onItemAdded: this.onItemAdded,
@@ -1555,13 +1590,7 @@
 
 		getEmptyListImage(viewType, search = false)
 		{
-			const air = AIR_STYLE_SUPPORTED ? 'air-' : '';
-			let fileName = `${air}${viewType}${search ? '-search' : ''}.svg`;
-
-			if (AIR_STYLE_SUPPORTED && !search)
-			{
-				fileName = 'air-dashboard.svg';
-			}
+			const fileName = (search ? `air-${viewType}-search.svg` : 'air-dashboard.svg');
 
 			return makeLibraryImagePath(fileName, 'empty-states', 'tasks');
 		}
@@ -1573,31 +1602,21 @@
 			const imageParams = {
 				resizeMode: 'contain',
 				style: {
-					width: AIR_STYLE_SUPPORTED ? 327 : 172,
-					height: AIR_STYLE_SUPPORTED ? 140 : 172,
+					width: 327,
+					height: 140,
 				},
 				svg: { uri },
 			};
 
-			return AIR_STYLE_SUPPORTED
-				? StatusBlock({
-					title,
-					description,
-					buttons,
-					emptyScreen: true,
-					image: Image(imageParams),
-					onRefresh: this.onPullToRefreshForEmptyScreen,
-					testId: 'TASKS_DASHBOARD_EMPTY_SCREEN',
-				})
-				: new EmptyScreen({
-					title,
-					description,
-					image: imageParams,
-					styles: {
-						paddingHorizontal: 20,
-					},
-					onRefresh: this.onPullToRefreshForEmptyScreen,
-				});
+			return StatusBlock({
+				title,
+				description,
+				buttons,
+				emptyScreen: true,
+				image: Image(imageParams),
+				onRefresh: this.onPullToRefreshForEmptyScreen,
+				testId: 'TASKS_DASHBOARD_EMPTY_SCREEN',
+			});
 		}
 
 		getEmptyListProps()
@@ -1709,15 +1728,28 @@
 			tasksNavigator.subscribeToPushNotifications();
 		});
 	}
+	const groupId = Number(BX.componentParameters.get('GROUP_ID', 0));
+	const collabId = Number(BX.componentParameters.get('COLLAB_ID', 0));
+
+	let defaultPresetId = TasksDashboardFilter.presetType.default;
+	let presets = [];
+
+	const fetchPresets = async () => {
+		const projectId = collabId || groupId;
+
+		const presetsResponse = await BX.ajax.runAction('tasksmobile.Filter.getTaskListPresets', { data: { groupId: projectId } });
+
+		presets = presetsResponse.data;
+
+		defaultPresetId = presets.find((preset) => preset.default)?.id;
+	};
 
 	Promise.allSettled([
+		fetchPresets(),
 		fetchDisabledTools(),
 		tariffPlanRestrictionsReady(),
 	])
 		.then(() => {
-			const groupId = Number(BX.componentParameters.get('GROUP_ID', 0));
-			const collabId = Number(BX.componentParameters.get('COLLAB_ID', 0));
-
 			const component = new TasksDashboard({
 				isRootComponent,
 				currentUserId: Number(env.userId),
@@ -1727,11 +1759,13 @@
 				flowId: Number(BX.componentParameters.get('FLOW_ID', 0)),
 				flowName: BX.componentParameters.get('FLOW_NAME', null),
 				flowEfficiency: BX.componentParameters.get('FLOW_EFFICIENCY', null),
-				canCreateTask: BX.componentParameters.get('CAN_CREATE_TASK', true),
 				isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
 				tabsGuid: BX.componentParameters.get('TABS_GUID', ''),
 				analyticsLabel: BX.componentParameters.get('ANALYTICS_LABEL', { c_section: 'tasks' }),
 				siteId: BX.componentParameters.get('SITE_ID', ''),
+
+				defaultPresetId,
+				presets,
 			});
 
 			BX.onViewLoaded(() => {

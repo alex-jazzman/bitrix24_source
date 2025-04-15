@@ -130,6 +130,13 @@ this.BX.Booking = this.BX.Booking || {};
 	  Recent: 'recents'
 	});
 
+	const EntityTypeId = Object.freeze({
+	  Company: 'COMPANY',
+	  Contact: 'CONTACT',
+	  Deal: 'DEAL',
+	  Lead: 'LEAD'
+	});
+
 	const EventName = Object.freeze({
 	  CloseWizard: 'booking:resource-creation-wizard:close'
 	});
@@ -158,6 +165,25 @@ this.BX.Booking = this.BX.Booking || {};
 	  Crm: 'crm'
 	});
 
+	const NotificationOn = Object.freeze({
+	  info: 'isInfoNotificationOn',
+	  confirmation: 'isConfirmationNotificationOn',
+	  reminder: 'isReminderNotificationOn',
+	  delayed: 'isDelayedNotificationOn',
+	  feedback: 'isFeedbackNotificationOn'
+	});
+	const TemplateType = Object.freeze({
+	  info: 'templateTypeInfo',
+	  confirmation: 'templateTypeConfirmation',
+	  reminder: 'templateTypeReminder',
+	  delayed: 'templateTypeDelayed',
+	  feedback: 'templateTypeFeedback'
+	});
+	const NotificationFieldsMap = Object.freeze({
+	  NotificationOn,
+	  TemplateType
+	});
+
 	const Option = Object.freeze({
 	  BookingEnabled: 'aha_banner',
 	  IntersectionForAll: 'IntersectionForAll',
@@ -178,6 +204,43 @@ this.BX.Booking = this.BX.Booking || {};
 	  Sms: 'sms'
 	});
 
+	const BookingCounterType = Object.freeze({
+	  Delayed: 'booking_delayed',
+	  Unconfirmed: 'booking_unconfirmed'
+	});
+
+	const AnalyticsTool = Object.freeze({
+	  booking: 'booking'
+	});
+	const AnalyticsCategory = Object.freeze({
+	  booking: 'booking',
+	  waitlist: 'waitlist'
+	});
+	const AnalyticsEvent = Object.freeze({
+	  showPopup: 'show_popup',
+	  clickAddResource: 'click_add_resource',
+	  addResourceStep1: 'add_resource_step1',
+	  addResourceStep2: 'add_resource_step2',
+	  addResourceFinish: 'add_resource_finish',
+	  acceptAgreement: 'accept_agreement'
+	});
+	const AnalyticsType = Object.freeze({
+	  showPopup: 'show_popup',
+	  clickAddResource: 'click_add_resource'
+	});
+	const AnalyticsCSection = Object.freeze({
+	  booking: 'booking',
+	  crm: 'crm',
+	  mainMenu: 'main_menu'
+	});
+	const AnalyticsElement = Object.freeze({
+	  addButton: 'add_button'
+	});
+	const AnalyticsCSubSection = Object.freeze({
+	  accept: 'accept',
+	  deny: 'deny'
+	});
+
 	exports.AhaMoment = AhaMoment;
 	exports.HelpDesk = HelpDesk;
 	exports.BusySlot = BusySlot;
@@ -185,12 +248,22 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.DateFormat = DateFormat;
 	exports.EntitySelectorEntity = EntitySelectorEntity;
 	exports.EntitySelectorTab = EntitySelectorTab;
+	exports.EntityTypeId = EntityTypeId;
 	exports.EventName = EventName;
 	exports.Limit = Limit;
 	exports.Model = Model;
 	exports.Module = Module;
+	exports.NotificationFieldsMap = NotificationFieldsMap;
 	exports.Option = Option;
 	exports.NotificationChannel = NotificationChannel;
+	exports.BookingCounterType = BookingCounterType;
+	exports.AnalyticsTool = AnalyticsTool;
+	exports.AnalyticsCategory = AnalyticsCategory;
+	exports.AnalyticsEvent = AnalyticsEvent;
+	exports.AnalyticsType = AnalyticsType;
+	exports.AnalyticsCSection = AnalyticsCSection;
+	exports.AnalyticsElement = AnalyticsElement;
+	exports.AnalyticsCSubSection = AnalyticsCSubSection;
 
 }((this.BX.Booking.Const = this.BX.Booking.Const || {})));
 //# sourceMappingURL=const.bundle.js.map

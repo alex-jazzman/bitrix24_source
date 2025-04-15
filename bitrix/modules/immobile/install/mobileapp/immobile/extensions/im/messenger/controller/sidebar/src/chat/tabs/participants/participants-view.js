@@ -4,7 +4,6 @@
 jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-view', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
 	const { Icon } = require('assets/icons');
 	const { withPressed } = require('utils/color');
 	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
@@ -516,7 +515,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 							this.removeParticipant(itemPos.index, itemPos.section, userId);
 						}
 					},
-					Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_TITLE'),
+					Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_TITLE_MSGVER_1'),
 					[
 						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_NO'),
 						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_YES'),
@@ -767,16 +766,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						testId: 'ITEM_ELLIPSIS_BUTTON',
 					};
 
-					if (MobileFeature.isAirStyleSupported())
-					{
-						imageButtonProps.iconName = Icon.MORE.getIconName();
-					}
-					else
-					{
-						imageButtonProps.svg = {
-							content: buttonIcons.ellipsis(),
-						};
-					}
+					imageButtonProps.iconName = Icon.MORE.getIconName();
 
 					return View(
 						{

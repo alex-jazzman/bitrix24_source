@@ -80,24 +80,25 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 		update(itemList)
 		{
-			let viewItemList = RecentConverter.toList(itemList);
-			viewItemList = viewItemList.map((item) => {
-				const collectionItem = this.view.getItem(item.id.toString());
-				if (collectionItem && isEqual(collectionItem, item))
-				{
-					return null;
-				}
+			const viewItemList = RecentConverter.toList(itemList);
+			const collection = this.view.getItems();
 
-				return {
-					filter: { id: item.id.toString() },
-					element: item,
-				};
-			});
-			viewItemList = viewItemList.filter((item) => item);
+			if (collection)
+			{
+				const collectionKeys = Object.keys(collection);
+
+				collectionKeys.forEach((itemId) => {
+					const hasItem = viewItemList.some((item) => item.id === itemId);
+					if (!hasItem)
+					{
+						viewItemList.push(collection[itemId]);
+					}
+				});
+			}
 
 			if (viewItemList.length > 0)
 			{
-				this.view.updateItems(viewItemList);
+				this.view.setItems(viewItemList);
 
 				return true;
 			}

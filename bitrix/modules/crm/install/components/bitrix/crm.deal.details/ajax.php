@@ -1471,20 +1471,18 @@ elseif($action === 'DELETE')
 	}
 
 	$categoryID = CCrmDeal::GetCategoryID($ID);
-	$permissionAttrs = \CCrmDeal::GetPermissionAttributes(array($ID), $categoryID);
 
 	if(!\CCrmDeal::CheckDeletePermission(
 		$ID,
 		$currentUserPermissions,
-		$categoryID,
-		array('ENTITY_ATTRS' => $permissionAttrs))
-	)
+		$categoryID
+	))
 	{
 		__CrmDealDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	$bizProc = new CCrmBizProc('DEAL');
-	if (!$bizProc->Delete($ID, $permissionAttrs, array('DealCategoryId' => $categoryID)))
+	if (!$bizProc->Delete($ID, null, array('DealCategoryId' => $categoryID)))
 	{
 		__CrmDealDetailsEndJsonResonse(array('ERROR' => $bizProc->LAST_ERROR));
 	}

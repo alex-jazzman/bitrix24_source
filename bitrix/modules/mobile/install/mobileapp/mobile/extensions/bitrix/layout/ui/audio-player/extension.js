@@ -8,7 +8,6 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 	const { AudioPlayerTimings } = require('layout/ui/audio-player/timings');
 	const { EventEmitter } = require('event-emitter');
 	const { RangeSlider } = require('layout/ui/range-slider');
-	const { Feature } = require('feature');
 
 	const { Alert } = require('alert');
 
@@ -367,7 +366,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 
 			this.player.on('play', () => {
 				this.lastDevice = this.player.getCurrentDevice();
-				if (this.proximityState && !AudioPlayer.isHeadphone(this.lastDevice) && Feature.canChangeAudioDevice())
+				if (this.proximityState && !AudioPlayer.isHeadphone(this.lastDevice))
 				{
 					this.player.selectAudioDevice(AUDIO_DEVICES.RECEIVER);
 				}

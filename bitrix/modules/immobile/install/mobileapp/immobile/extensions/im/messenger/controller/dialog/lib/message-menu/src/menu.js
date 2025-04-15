@@ -613,6 +613,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 					notificationIcon: Icon.LINK,
 					parentWidget: this.locator.get('view').ui,
 				},
+				true,
 			);
 		}
 
@@ -646,13 +647,6 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onPin(message)
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
-			}
-
 			if (!isOnline())
 			{
 				Notification.showOfflineToast();
@@ -676,13 +670,6 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onUnpin(message)
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
-			}
-
 			if (!isOnline())
 			{
 				Notification.showOfflineToast();
@@ -734,13 +721,6 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onForward(message)
 		{
-			if (!Feature.isMessageForwardSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
-			}
-
 			if (!isOnline())
 			{
 				Notification.showOfflineToast();
@@ -850,6 +830,28 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			this.locator.get('message-service')
 				.delete(messageModel, this.dialogId)
 			;
+
+			this.#deleteQuotingMessage(message.id);
+		}
+
+		/**
+		 * @param {string} messageId
+		 */
+		#deleteQuotingMessage(messageId)
+		{
+			const isQuoteInProcess = this.locator.get('reply-manager')?.isQuoteInProcess;
+			if (!isQuoteInProcess)
+			{
+				return;
+			}
+
+			const quoteMessage = this.locator.get('reply-manager').getQuoteMessage();
+			if (quoteMessage?.id !== messageId)
+			{
+				return;
+			}
+
+			this.locator.get('reply-manager').finishQuotingMessage();
 		}
 
 		/**
@@ -984,16 +986,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			this.locator.get('disk-service')
 				.save(file.id)
 				.then(() => {
-					const successMessages = {
-						[FileType.image]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_DISK_SUCCESS'),
-						[FileType.video]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_DISK_SUCCESS'),
-						[FileType.audio]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_AUDIO_TO_DISK_SUCCESS'),
-					};
-					const successMessage = successMessages[file.type];
-					if (successMessages)
-					{
-						Notification.showToastWithParams({ message: successMessage, svgType: 'catalogueSuccess' }, this.locator.get('view').ui);
-					}
+					const successMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_DISK_SUCCESS');
+					Notification.showToastWithParams({ message: successMessage, svgType: 'catalogueSuccess' }, this.locator.get('view').ui);
 
 					AnalyticsService.getInstance().sendDownloadToDisk({
 						fileType: file.type,
@@ -1002,7 +996,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				})
 				.catch((error) => {
 					logger.error(`${this.constructor.name}.onDownloadToDisk.catch`, error);
-					const errorMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK_FAILURE');
+					const errorMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK_FAILURE_MSGVER_1');
 					Notification.showToastWithParams(
 						{ message: errorMessage, svgType: 'catalogue', backgroundColor: Theme.colors.accentMainAlert },
 						this.locator.get('view').ui,

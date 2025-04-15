@@ -76,7 +76,7 @@ export class DashboardManager
 	{
 		const attentionText = dashboardInfo.type === 'SYSTEM'
 			? Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_LOGIN_POPUP_COPY_SYSTEM_DASHBOARD_ATTENTION')
-			: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_LOGIN_POPUP_COPY_MARKET_DASHBOARD_ATTENTION')
+			: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_LOGIN_POPUP_COPY_MARKET_DASHBOARD_ATTENTION_MSGVER_1')
 		;
 		const confirmContent = Tag.render`
 			<div class="dashboard-login-popup-copy-attention">
@@ -321,7 +321,7 @@ export class DashboardManager
 	static openDatasetListSlider()
 	{
 		BX.SidePanel.Instance.open(
-			'/bi/dataset',
+			'/bi/dataset/',
 			{
 				cacheable: false,
 				allowChangeHistory: true,

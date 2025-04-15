@@ -6,10 +6,11 @@ import { GenericPopup } from '../popups/generic-popup';
 import { ImportFailurePopup } from '../popups/saving/import-failure-popup';
 import { ImportProgressPopup } from '../popups/saving/import-progress-popup';
 import { ImportSuccessPopup } from '../popups/saving/import-success-popup';
+import { SyncFieldsPopup } from '../popups/sync/sync-fields-popup';
 import { ConnectionStep } from '../steps/connection';
+import { DatasetPropertiesStep } from '../steps/dataset-properties';
 import { FieldsSettingsStep } from '../steps/fields-settings';
 import { ImportPreview } from '../steps/import-preview';
-import { DatasetPropertiesStep } from '../steps/dataset-properties';
 import { BaseApp } from './base-app';
 
 export const ExternalConnectionApp = {
@@ -36,12 +37,16 @@ export const ExternalConnectionApp = {
 				savingSuccess: false,
 				savingFailure: false,
 				loadFailure: false,
+				syncFields: false,
 			},
 			isValidationComplete: true,
 			popupParams: {
 				savingSuccess: {},
 				loadFailure: {
 					messages: [],
+				},
+				syncFields: {
+					isChange: false,
 				},
 			},
 			isLoading: false,
@@ -125,6 +130,13 @@ export const ExternalConnectionApp = {
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_EMPTY_STATE_EXTERNAL')
 			;
 		},
+		syncFieldsProps(): Object
+		{
+			return {
+				supported: this.isEditMode,
+				disabled: this.isLoading,
+			};
+		},
 	},
 	mounted()
 	{
@@ -187,6 +199,7 @@ export const ExternalConnectionApp = {
 			this.$store.commit('setFieldsSettings', []);
 			this.$refs.propertiesStep.validate();
 			this.previewError = '';
+			this.previewDataLoaded = false;
 		},
 		sendConnectionSelectorAnalytics()
 		{
@@ -272,18 +285,52 @@ export const ExternalConnectionApp = {
 			}
 
 			this.previewDataLoaded = true;
-			const headers = [];
-			responseData.headers.forEach((header, index) => {
-				headers.push(this.prepareHeader(header, index));
-			});
+			if (this.lastChangedStep === 'connection')
+			{
+				const headers = [];
+				responseData.headers.forEach((header, index) => {
+					headers.push(this.prepareHeader(header, index));
+				});
 
-			this.$store.commit('setFieldsSettings', headers);
+				this.$store.commit('setFieldsSettings', headers);
+			}
+
 			this.$store.commit('setPreviewData', responseData.data);
+		},
+		onSyncSuccess(response)
+		{
+			this.processSyncResponse(response);
+
+			this.$refs.propertiesStep.open();
+			this.$refs.fieldsStep.open();
+			this.toggleStepState('properties', false);
+			this.toggleStepState('fields', false);
+			this.$refs.propertiesStep.validate();
+			this.$refs.fieldsStep.validate();
+		},
+		processSyncResponse(response)
+		{
+			const responseData = response.data;
+			if (responseData)
+			{
+				this.previewDataLoaded = true;
+				const headers = [];
+				responseData.headers.forEach((header, index) => {
+					headers.push(this.prepareHeader(header, index));
+				});
+
+				this.$store.commit('setFieldsSettings', headers);
+				this.$store.commit('setPreviewData', responseData.data);
+			}
+
+			this.sendAnalytics({
+				event: 'sync_fields',
+				status: response.status,
+			});
 		},
 		prepareHeader(header, index)
 		{
-			return {
-				id: header.id,
+			const result = {
 				visible: header.visible,
 				type: header.type,
 				name: header.name && header.name.length > 0 ? header.name : `FIELD_${index}`,
@@ -291,27 +338,35 @@ export const ExternalConnectionApp = {
 				originalName: header.externalCode,
 				externalCode: header.externalCode,
 			};
+
+			if (header.id)
+			{
+				result.id = header.id;
+			}
+
+			return result;
 		},
-		onSaveStart(): boolean
+		onSaveStart(): Promise
 		{
 			if (!this.isValidatedForSave)
 			{
 				this.$refs.fieldsStep.showValidationErrors();
 				this.$refs.propertiesStep.showValidationErrors();
 
-				return false;
+				return Promise.reject();
 			}
 
 			this.togglePopup('savingProgress', true);
 
-			return true;
+			return Promise.resolve();
 		},
 		onSaveEnd(response)
 		{
 			const datasetName = response.data.name ?? this.$store.state.config.datasetProperties.name;
+			const datasetId = response.data.id ?? this.$store.state.config.datasetProperties.id;
 			this.popupParams.savingSuccess = {
 				title: datasetName,
-				datasetId: response.data.id,
+				datasetId,
 				link: response.data.url,
 			};
 
@@ -344,6 +399,26 @@ export const ExternalConnectionApp = {
 		{
 			this.togglePopup('savingFailure', false);
 		},
+		onSyncFields()
+		{
+			this.isLoading = true;
+			Ajax.runAction('biconnector.externalsource.dataset.syncField', {
+				data: {
+					id: this.datasetId,
+				},
+			})
+				.then((response) => {
+					this.isLoading = false;
+					this.onSyncSuccess(response);
+					this.popupParams.syncFields.isChange = response.data.isChanged;
+					this.togglePopup('syncFields', true);
+				})
+				.catch((response) => {
+					this.isLoading = false;
+					this.processSyncResponse(response);
+					this.previewError = response.errors[0]?.message ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
+				});
+		},
 	},
 	components: {
 		AppLayout,
@@ -355,6 +430,7 @@ export const ExternalConnectionApp = {
 		ImportProgressPopup,
 		ImportSuccessPopup,
 		ImportFailurePopup,
+		SyncFieldsPopup,
 		GenericPopup,
 	},
 	// language=Vue
@@ -381,7 +457,7 @@ export const ExternalConnectionApp = {
 						ref="propertiesStep"
 						@validation="onStepValidation('properties', $event)"
 						@properties-changed="onDatasetPropertiesChanged"
-						dataset-source-code="external"
+						:dataset-source-code="'external_' + sourceCode"
 					/>
 					<FieldsSettingsStep
 						:is-open-initially="isEditMode"
@@ -391,6 +467,8 @@ export const ExternalConnectionApp = {
 						@parsing-options-changed="onParsingOptionsChanged"
 						@settings-changed="onFieldsChanged"
 						:hint="fieldsSettingsStepHint"
+						:sync-fields-props="syncFieldsProps"
+						@sync-fields="onSyncFields"
 					/>
 				</ImportConfig>
 			</template>
@@ -399,6 +477,7 @@ export const ExternalConnectionApp = {
 					:empty-state-text="emptyStateText"
 					:is-loading="isLoading"
 					:error="previewError"
+					:needShowHeadersWithEmptyRows="true"
 				/>
 			</template>
 		</AppLayout>
@@ -442,5 +521,12 @@ export const ExternalConnectionApp = {
 				<button @click="togglePopup('loadFailure')" class="ui-btn ui-btn-md ui-btn-primary">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_ERROR_POPUP_CLOSE') }}</button>
 			</template>
 		</GenericPopup>
+
+		<SyncFieldsPopup
+			v-if="shownPopups.syncFields"
+			:is-change="popupParams.syncFields.isChange"
+			@close="togglePopup('syncFields', false)"
+		>
+		</SyncFieldsPopup>
 	`,
 };

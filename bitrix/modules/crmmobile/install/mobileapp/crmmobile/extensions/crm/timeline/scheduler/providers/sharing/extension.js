@@ -451,7 +451,9 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 				NotifyManager.hideLoadingIndicator(true);
 				Haptics.notifySuccess();
 				this.onActivityCreate(response);
-				this.close(() => copyToClipboard(link.url, Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_LINK_COPIED')));
+				this.close(() => {
+					copyToClipboard(link.url, Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_LINK_COPIED'), true, true);
+				});
 			}).catch((error) => {
 				NotifyManager.hideLoadingIndicator(false);
 				Haptics.notifyFailure();

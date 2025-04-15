@@ -1,70 +1,40 @@
 <?php
-
 use Bitrix\Main\Loader;
 
 class CPHPCacheMemcacheCluster extends \Bitrix\Main\Data\CacheEngineMemcache
 {
 	private bool $bQueue = false;
-	private static array $servers = [];
+	private static null|array $servers = null;
 	private static array $otherGroups = [];
-
-	public static function LoadConfig() : array
-	{
-		static $firstExec = true;
-		if ($firstExec)
-		{
-			$arList = false;
-			$firstExec = false;
-
-			if (file_exists($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/memcache.php'))
-			{
-				include $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/memcache.php';
-			}
-
-			if (defined('BX_MEMCACHE_CLUSTER') && is_array($arList))
-			{
-				foreach ($arList as $server)
-				{
-					if ($server['STATUS'] !== 'ONLINE')
-					{
-						continue;
-					}
-
-					if (defined('BX_CLUSTER_GROUP') && ($server['GROUP_ID'] !== constant('BX_CLUSTER_GROUP')))
-					{
-						self::$otherGroups[$server['GROUP_ID']] = true;
-						continue;
-					}
-
-					self::$servers[] = [
-						'host' => $server['HOST'],
-						'port' => $server['PORT'],
-						'weight' => $server['WEIGHT']
-					];
-				}
-			}
-			else
-			{
-				self::$servers = [];
-			}
-		}
-
-		return self::$servers;
-	}
 
 	public function __construct($options = [])
 	{
-		parent::__construct([
-			'servers' => static::LoadConfig(),
-			'type' => 'memcache'
-		]);
+		$sid = 'bxcluster';
+		require_once Bitrix\Main\Loader::getLocal('modules/cluster/lib/clustercacheconfig.php');
+
+		if (static::$servers === null)
+		{
+			static::$servers = Bitrix\Cluster\ClusterCacheConfig::getInstance()->getConfig(true, self::$otherGroups);
+		}
+
+		if (defined('BX_MEMCACHE_CLUSTER'))
+		{
+			$sid = BX_MEMCACHE_CLUSTER;
+		}
+
+		if (!empty(static::$servers))
+		{
+			parent::__construct([
+				'servers' => static::$servers,
+				'type' => 'memcache',
+				'sid' => $sid
+			]);
+		}
 
 		if (defined('BX_CLUSTER_GROUP'))
 		{
 			$this->bQueue = true;
 		}
-
-		$this->sid = BX_MEMCACHE_CLUSTER . $this->sid;
 	}
 
 	public function QueueRun($param1, $param2, $param3)

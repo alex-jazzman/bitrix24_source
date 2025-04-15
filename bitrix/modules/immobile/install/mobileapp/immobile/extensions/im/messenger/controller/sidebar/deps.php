@@ -23,7 +23,6 @@ return [
 		'tokens',
 		'ui-system/layout/card',
 		'ui-system/blocks/badges/counter',
-		'ui-system/blocks/badges/counter/src/design-enum',
 		'selector/widget/entity/socialnetwork/user',
 
 		'im:lib/theme',

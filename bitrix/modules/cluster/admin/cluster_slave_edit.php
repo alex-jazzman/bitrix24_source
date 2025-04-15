@@ -19,7 +19,7 @@ $ID = intval($_REQUEST['ID'] ?? 0);
 $group_id = intval($_REQUEST['group_id']);
 if (!CClusterGroup::GetArrayByID($group_id))
 {
-	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+	$group_id = 'all';
 }
 
 $aTabs = [

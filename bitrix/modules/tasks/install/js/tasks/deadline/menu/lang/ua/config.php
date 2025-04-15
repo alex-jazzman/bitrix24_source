@@ -1,0 +1,19 @@
+<?php
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_DAY"] = "1 день";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_WEEK"] = "1 тиждень";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_2_WEEKS"] = "2 тижні";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_3_DAYS"] = "3 дні";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_CUSTOM"] = "Свій варіант";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_EMPTY"] = "Без терміну";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_HINT"] = "Крайній термін за вмовчанням вказуватиметься у всіх завданнях, які ви створюєте. За необхідності ви зможете змінювати його.";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_TITLE"] = "Крайній термін за вмовчанням";
+$MESS["TASKS_DEADLINE_MENU_ERROR_DESCRIPTION"] = "Перезавантажте сторінку та спробуйте ще раз.";
+$MESS["TASKS_DEADLINE_MENU_ERROR_TITLE"] = "Щось пішло не так";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_DELIMITER"] = "Нагадувати вказувати термін";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_DONT_SKIP"] = "Нагадувати щоразу";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_HINT"] = "Нагадаємо вказати крайній термін, якщо ви не вкажете його в завданні.";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOREVER"] = "Не нагадувати ніколи";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_DAY"] = "Не нагадувати сьогодні";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_MONTH"] = "Не нагадувати цього місяця";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_WEEK"] = "Не нагадувати цього тижня";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_TITLE"] = "Робота з термінами";

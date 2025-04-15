@@ -3319,4 +3319,16 @@ class BizprocDocument extends CIBlockDocument
 	{
 		return in_array($feature, array(\CBPDocumentService::FEATURE_MARK_MODIFIED_FIELDS));
 	}
+
+	public static function getBizprocEditorUrl($documentType): ?string
+	{
+		$iblockId = intval(mb_substr($documentType[2], mb_strlen(self::DOCUMENT_TYPE_PREFIX)));
+		if ($iblockId > 0)
+		{
+
+			return sprintf('/bizproc/processes/%d/bp_edit/#ID#/', $iblockId);
+		}
+
+		return null;
+	}
 }

@@ -306,6 +306,8 @@ export class CopilotContextMenu extends EventEmitter
 					useAngle: true,
 				},
 				errorCode: error.getCode(),
+				showSliderWithMsg: error?.customData?.showSliderWithMsg,
+				sliderCode: error?.customData?.sliderCode,
 			});
 		});
 	}

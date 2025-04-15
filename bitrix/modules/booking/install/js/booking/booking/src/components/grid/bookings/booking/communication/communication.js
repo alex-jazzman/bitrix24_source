@@ -5,7 +5,12 @@ import 'ui.icon-set.main';
 import './communication.css';
 
 export const Communication = {
-	data(): Object
+	name: 'BookingCommunication',
+	directives: { hint },
+	components: {
+		Icon,
+	},
+	setup(): Object
 	{
 		return {
 			IconSet,
@@ -21,10 +26,6 @@ export const Communication = {
 				},
 			};
 		},
-	},
-	directives: { hint },
-	components: {
-		Icon,
 	},
 	template: `
 		<div v-hint="soonHint" class="booking-booking-booking-communication">

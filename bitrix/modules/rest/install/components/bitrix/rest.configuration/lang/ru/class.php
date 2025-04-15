@@ -9,4 +9,5 @@ $MESS['REST_CONFIGURATION_TITLE_PAGE_PLACEMENT'] = 'Отраслевые реш�
 $MESS["REST_CONFIGURATION_TITLE_NEW_APP"] = "Новые приложения";
 $MESS["REST_CONFIGURATION_BTN_SHOW_ALL"] = "смотреть все";
 $MESS["REST_CONFIGURATION_APP_SECTION_TITLE_2"] = "Битрикс24.Маркет";
+$MESS["REST_CONFIGURATION_APP_SECTION_TITLE_2_MSGVER_1"] = "Маркетплейс";
 $MESS['REST_CONFIGURATION_ERROR_PLACEMENT'] = 'Ошибка, нет данных для отображения';

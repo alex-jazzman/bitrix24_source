@@ -111,6 +111,10 @@
 	background-color: var(--ui-color-palette-orange-20, #fff1d6);
 }
 
+.crm-timeline__card-logo.--pale-blue {
+	background-color: rgba(135, 186, 202, 0.3);
+}
+
 .crm-timeline__card-logo_icon.--custom-bg > i{
 	mask-image: none;
 	background-color: transparent;
@@ -508,4 +512,10 @@
 
 .crm-timeline__card-logo_add-icon.--icon-comment > i {
 	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__comment.svg');
+}
+
+.crm-timeline__card-logo_icon.--booking-wait-list-item > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/booking/crm-timeline__booking-wait-list-item-calendar.svg');
 }

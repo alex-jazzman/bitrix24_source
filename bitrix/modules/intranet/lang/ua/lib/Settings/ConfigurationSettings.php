@@ -1,5 +1,6 @@
 <?php
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON"] = "Будь-який співробітник може встановити застосунок із Маркета, якщо це не заборонено розробником застосунку. Якщо ця опція вимкнена, установлювати застосунки може лише адміністратор.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON_MSGVER_1"] = "Будь-який співробітник може встановити застосунок із Маркета, якщо це не заборонено розробником застосунку. Якщо ця опція вимкнена, установлювати застосунки може лише адміністратор.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON_MSGVER_1"] = "У співробітників у профілі є замір рівня стресу. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON"] = "Будь-який співробітник може купити тариф для вашого Бітрікс24. Якщо ця опція вимкнена, купити тариф може лише адміністратор.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1"] = "Дані про географічне місцеперебування користувачів збираються. #MORE_DETAILS#";
@@ -10,6 +11,7 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24"] = "Який вигля
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_CLICK_ON_MSGVER_1"] = "Переходи фіксуються. Ви можете використовувати це для автоматизації продажів.<br> До прикладу, надіслати менеджеру повідомлення, що клієнт перейшов за посиланням на оплату. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_ON"] = "Лист позначається як «прочитаний».";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION"] = "Дозволити всім співробітникам встановлювати застосунки з Маркета";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION_MSGVER_1"] = "Дозволити всім співробітникам встановлювати застосунки з Маркета";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL"] = "Дозволити заміряти рівень стресу й показувати результат у профілі";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF"] = "Дозволити всім сплачувати тариф";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS"] = "Виберіть провайдера мап";

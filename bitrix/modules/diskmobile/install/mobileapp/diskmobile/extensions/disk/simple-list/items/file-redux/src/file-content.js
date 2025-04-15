@@ -543,6 +543,7 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 				this.diskObject.id,
 				this.props.order,
 				this.props.context,
+				this.props.relativeFolderId,
 				this.parentWidget,
 			).show(this.containerRef);
 		};

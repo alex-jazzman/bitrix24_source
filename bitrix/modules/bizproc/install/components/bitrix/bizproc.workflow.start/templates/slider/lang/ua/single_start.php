@@ -9,6 +9,7 @@ $MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DURATION_DESCRIPTION"] = "Н�
 $MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DURATION_UNDEFINED_DESCRIPTION"] = "Для розрахунку середнього часу виконання процесу поки що недостатньо даних";
 $MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EMPTY_DURATION"] = "немає даних";
 $MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EMPTY_RECOMMENDATION"] = "Немає опису.";
+$MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EMPTY_RECOMMENDATION_1"] = "Вам буде зручніше працювати з процесом, якщо адміністратор заповнить опис.";
 $MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_CANCEL"] = "Не скасовувати";
 $MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_CONFIRM"] = "Так, скасувати";
 $MESS["BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_DESCRIPTION"] = "Якщо ви скасуєте запуск процесу, інформація в полях не збережеться.";

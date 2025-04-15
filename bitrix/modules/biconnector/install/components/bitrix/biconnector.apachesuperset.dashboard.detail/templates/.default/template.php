@@ -32,6 +32,7 @@ if (isset($arResult['OPEN_LOGIN_POPUP']) && $arResult['OPEN_LOGIN_POPUP'])
 	$analyticSource = 'copy';
 }
 
+$analyticScope = Context::getCurrent()->getRequest()->get('scope');
 
 if (!empty($arResult['ERROR_MESSAGES']))
 {
@@ -97,6 +98,7 @@ if (!$limitManager->checkLimitWarning())
 }
 
 ?>
+
 <style>
 	.dashboard-header {
 		--forward-icon: url("<?= $templateFolder . '/images/forward.svg' ?>");
@@ -140,6 +142,15 @@ if (!$limitManager->checkLimitWarning())
 <script>
 	BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 	BX.ready(() => {
+
+		<?php if ($arResult['CAN_SEND_STARTUP_METRIC']): ?>
+		BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('infrastructure', 'start', {
+			c_element: 'system',
+			status: 'success',
+		});
+		BX.ajax.runAction('biconnector.superset.onStartupMetricSend');
+		<?php endif; ?>
+
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
 			<?= Json::encode([
 				'appNodeId' => 'dashboard',
@@ -147,6 +158,7 @@ if (!$limitManager->checkLimitWarning())
 				'canExport' => $arResult['CAN_EXPORT'],
 				'canEdit' => $arResult['CAN_EDIT'],
 				'analyticSource' => $analyticSource,
+				'analyticScope' => $analyticScope,
 				'dashboardEmbeddedParams' => [
 					'guestToken' => $arResult['GUEST_TOKEN'],
 					'uuid' => $arResult['DASHBOARD_UUID'],

@@ -45,6 +45,7 @@ Bitrix\Main\UI\Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -514,47 +515,19 @@ js,
 				\Bitrix\Main\UI\Extension::load(['bp_starter']);
 
 				$arActions[] = ['SEPARATOR' => true];
-				if (isset($arLead['PATH_TO_BIZPROC_LIST']) && $arLead['PATH_TO_BIZPROC_LIST'] !== '')
-				{
-					$arActions[] = [
-						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_TITLE'),
-						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC'),
-						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_BIZPROC_LIST'])."');"
-					];
-				}
-
-				if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-				{
-					$starterConfig = \Bitrix\Main\Web\Json::encode(
-						CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Lead, $arLead['ID'])
-					);
-					$reloadGridAction = 'function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');}';
-					$arActions[] = [
-						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
-						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST'),
-						'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
-					];
-				}
-				elseif (!empty($arLead['BIZPROC_LIST']))
-				{
-					$arBizprocList = [];
-					foreach($arLead['BIZPROC_LIST'] as $arBizproc)
-					{
-						$arBizprocList[] = [
-							'TITLE' => $arBizproc['DESCRIPTION'],
-							'TEXT' => $arBizproc['NAME'],
-							'ONCLICK' => isset($arBizproc['ONCLICK'])
-								? $arBizproc['ONCLICK']
-								: "jsUtils.Redirect([], '".CUtil::JSEscape($arBizproc['PATH_TO_BIZPROC_START'])."');"
-						];
-					}
-
-					$arActions[] = [
-						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
-						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST'),
-						'MENU' => $arBizprocList
-					];
-				}
+				$arActions[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST'),
+					'ONCLICK' => (
+						$toolsManager->checkBizprocAvailability()
+							? CCrmBizProcHelper::getShowTemplatesJsAction(
+								CCrmOwnerType::Lead,
+								$arLead['ID'],
+								'function(){BX.Main.gridManager.reload(\'' . CUtil::JSEscape($arResult['GRID_ID']) . '\');}'
+							)
+							: $availabilityManager->getBizprocAvailabilityLock()
+					),
+				];
 			}
 		}
 	}
@@ -714,24 +687,53 @@ js,
 
 if ($arResult['ENABLE_TOOLBAR'])
 {
-	$addButton =array(
-		'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
-		'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
+	$addButton = [
+		'TEXT' => Loc::getMessage('CRM_LEAD_LIST_NEW_DEAL'),
+		'TITLE' => Loc::getMessage('CRM_LEAD_LIST_NEW_DEAL'),
 		'LINK' => $arResult['PATH_TO_LEAD_ADD'],
-		'ICON' => 'btn-new'
-	);
+		'SQUARE' => true,
+		'HIGHLIGHT' => true,
+	];
 
 	if (!empty($arResult['ADD_EVENT_NAME']))
 	{
 		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
 	}
 
+	$relationCode = $arParams['PARENT_ENTITY_TYPE_ID'] . '-' . $arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Lead;
+	$targetId = 'relation-button-' . $relationCode;
+	$linkButton = [
+		'ATTRIBUTES' => [
+			'ID' => $targetId
+		],
+		'TEXT' => Loc::getMessage('CRM_LEAD_LIST_LINK_LEAD'),
+		'TITLE' => Loc::getMessage('CRM_LEAD_LIST_LINK_LEAD'),
+		'SQUARE' => true,
+		'ONCLICK' => sprintf(
+			<<<js
+(function() {
+	const selector = BX.Crm.Binder.Manager.Instance.createRelatedSelector(
+		'%s',
+		'%s'
+	);
+	if (selector)
+	{
+		selector.show();
+	}
+})()
+js,
+			\CUtil::JSEscape('relation-' . $relationCode),
+			\CUtil::JSEscape($targetId),
+		),
+	];
+
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
 			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => array($addButton)
+			'BUTTONS' => [$addButton, $linkButton],
 		),
 		$component,
 		array('HIDE_ICONS' => 'Y')
@@ -891,6 +893,15 @@ $APPLICATION->IncludeComponent(
 				'gridId' => $arResult['GRID_ID'],
 				'progressBarContainerId' => 'crm-lead-list-progress-bar-container',
 			]) ?>);
+
+			<?php if (isset($arParams['PARENT_ENTITY_TYPE_ID'])):?>
+			BX.Crm.Binder.Manager.Instance.initializeBinder(
+				<?=$arParams['PARENT_ENTITY_TYPE_ID']?>,
+				<?=$arParams['PARENT_ENTITY_ID']?>,
+				<?=\CCrmOwnerType::Lead?>,
+				'<?= CUtil::JSEscape($arResult['GRID_ID'])?>'
+			);
+			<?php endif;?>
 		}
 	);
 </script>

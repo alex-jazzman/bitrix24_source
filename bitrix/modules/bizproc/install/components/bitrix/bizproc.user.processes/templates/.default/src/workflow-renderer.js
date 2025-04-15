@@ -64,6 +64,14 @@ export class WorkflowRenderer
 		const collapsedDescription = Dom.create('span', { html: description?.replace(/(<br \/>)+/gm, ' ') }).textContent.replace(/\n+/, ' ').slice(0, lengthLimit);
 		const collapsed = description?.length > lengthLimit;
 
+		const descriptionNode = Tag.render`
+			<span class="bp-user-processes__description">
+				${description}
+			</span>
+		`;
+
+		BX.UI.Hint.init(descriptionNode);
+
 		return Tag.render`
 				<div class="bp-user-processes">
 					<a class="bp-user-processes__title-link ui-typography-text-lg"
@@ -75,9 +83,7 @@ export class WorkflowRenderer
 							${Text.encode(collapsedDescription)}
 							...<a href="#" onclick="this.closest('div').classList.add('--expanded'); return false;" class="bp-user-processes__description-link">${Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_DESCRIPTION_MORE')}</a>
 						</span>
-						<span class="bp-user-processes__description">
-							${description}
-						</span>
+						${descriptionNode}
 					</div>
 			</div>
 		`;
@@ -102,8 +108,11 @@ export class WorkflowRenderer
 		if (!this.#data.task || this.#data.userId !== this.#currentUserId)
 		{
 			const completedClassName = this.#data.isCompleted ? '--success' : '';
+			const lengthLimit = 74; // 80 symbols without length of "...etc"
 			let result = '';
 			let noRightsClass = '';
+			let resultNode = '';
+
 			if (this.#data.isCompleted && (this.#data.workflowResult !== null))
 			{
 				if (this.#data.workflowResult.status === WorkflowResultStatus.BB_CODE_RESULT)
@@ -113,33 +122,66 @@ export class WorkflowRenderer
 
 				if (this.#data.workflowResult.status === WorkflowResultStatus.USER_RESULT)
 				{
-					result = Loc.getMessage('BIZPROC_RENDERED_RESULT_POSITIVE_RESULT_FOR', { '#USER#': this.#data.workflowResult.text ?? '' });
+					result = Loc.getMessage(
+						'BIZPROC_RENDERED_RESULT_POSITIVE_RESULT_FOR',
+						{ '#USER#': this.#data.workflowResult.text ?? '' },
+					);
 				}
 
 				if (this.#data.workflowResult.status === WorkflowResultStatus.NO_RIGHTS_RESULT)
 				{
 					noRightsClass = 'no-rights';
-					result = `${Loc.getMessage('BIZPROC_RENDERED_RESULT_NO_RIGHTS_VIEW')} <span data-hint="${Loc.getMessage('BIZPROC_RENDERED_RESULT_NO_RIGHTS_TOOLTIP')}"></span>`;
+					result = `${Loc.getMessage('BIZPROC_RENDERED_RESULT_NO_RIGHTS_VIEW')} <span data-hint="${Loc.getMessage(
+						'BIZPROC_RENDERED_RESULT_NO_RIGHTS_TOOLTIP',
+					)}"></span>`;
 				}
+
+				const cleanResult = Dom.create(
+					'span',
+					{ html: result?.replace(/(<br \/>)+/gm, ' ') },
+				).textContent.replace(/\n+/, ' ');
+				const collapsedResult = cleanResult.slice(0, lengthLimit);
+				const collapsed = cleanResult?.length > lengthLimit;
+
+				if (collapsed)
+				{
+					resultNode = Tag.render`
+						<div class="bp-workflow-result  ${noRightsClass}">
+							<span class="bp-workflow-result-collapsed">
+								${Text.encode(collapsedResult)}
+								...
+								<a href="#" onclick="this.closest('div').classList.add('--expanded'); return false;">
+									${Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_DESCRIPTION_MORE')}
+								</a>
+							</span>
+							<span class="bp-workflow-result-full">
+								${result}
+							</span>
+						</div>
+					`;
+				}
+				else
+				{
+					resultNode = Tag.render`
+						<div class="bp-workflow-result  ${noRightsClass} --expanded">
+							<span class="bp-workflow-result-full">
+								${result}
+							</span>
+						</div>
+					`;
+				}
+
+				BX.UI.Hint.init(resultNode);
 			}
 
-			const panel = Tag.render`
+			return Tag.render`
 				<div class="bp-status-panel ${completedClassName}">
-						<div class="bp-status-item">
-							<div class="bp-status-name">${Text.encode(this.#data.statusText.toUpperCase())}</div>
-							<div class="bp-workflow-result ${noRightsClass}">${result}</div>
-						</div>
+					<div class="bp-status-item">
+						<div class="bp-status-name">${Text.encode(this.#data.statusText.toUpperCase())}</div>
+						${resultNode}
+					</div>
 				</div>
 			`;
-			if (
-				(this.#data.workflowResult !== null)
-				&& (this.#data.workflowResult.status === WorkflowResultStatus.NO_RIGHTS_RESULT)
-			)
-			{
-				BX.UI.Hint.init(panel);
-			}
-
-			return panel;
 		}
 
 		return this.renderTaskName();
@@ -201,9 +243,9 @@ export class WorkflowRenderer
 
 		return (
 			(new Summary({
-					workflowId: this.#data.workflowId,
-					data: this.#data.taskProgress.timeStep,
-				})
+				workflowId: this.#data.workflowId,
+				data: this.#data.taskProgress.timeStep,
+			})
 			).render()
 		);
 	}

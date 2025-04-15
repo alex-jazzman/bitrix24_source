@@ -106,7 +106,7 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			});
 		}).name('log:entry');
 
-		inAppUrl.register('/workgroups/group/:groupId/$', ({ groupId }) => {
+		inAppUrl.register('/workgroups/group/:groupId/', ({ groupId }) => {
 			void WorkgroupUtil.openProject(null, {
 				projectId: groupId,
 				siteId: env.siteId,

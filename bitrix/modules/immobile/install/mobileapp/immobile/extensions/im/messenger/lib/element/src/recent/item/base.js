@@ -23,6 +23,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		ProfileAction,
 		HideAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
+	const { CounterPrefix, CounterValue, CounterPostfix } = require('im/messenger/lib/element/recent/item/chat/const/test-id');
 	const { parser } = require('im/messenger/lib/parser');
 
 	const RecentItemSectionCode = Object.freeze({
@@ -76,6 +77,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				counter: {},
 			};
 			this.isSuperEllipseIcon = false;
+			this.counterTestId = '';
 
 			this
 				.initParams(modelItem, options)
@@ -99,7 +101,16 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				.createAvatarStyle()
 				.createDateStyle()
 				.createCounterStyle()
+				.createCounterTestId()
 			;
+		}
+
+		/**
+		 * @return Boolean
+		 */
+		get isMute()
+		{
+			return Boolean(this.getDialogItem()?.muteList?.includes(serviceLocator.get('core').getUserId()));
 		}
 
 		/**
@@ -431,11 +442,28 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createCounterStyle()
 		{
-			const dialog = this.getDialogItem();
-			this.styles.counter.backgroundColor = dialog?.muteList?.includes(serviceLocator.get('core').getUserId())
-				? Theme.colors.base5
-				: Theme.colors.accentMainPrimaryalt
-			;
+			this.styles.counter.backgroundColor = this.isMute ? Theme.colors.base5 : Theme.colors.accentMainPrimaryalt;
+
+			return this;
+		}
+
+		/**
+		 * @return RecentItem
+		 */
+		createCounterTestId()
+		{
+			if (this.messageCount === 0 && !this.unread)
+			{
+				this.counterTestId = null;
+
+				return this;
+			}
+
+			const prefix = CounterPrefix.counter;
+			const value = this.messageCount > 0 ? this.messageCount : CounterValue.unread;
+			const postfix = this.isMute ? CounterPostfix.muted : CounterPostfix.unmuted;
+
+			this.counterTestId = `${prefix}-${value}-${postfix}`;
 
 			return this;
 		}
@@ -532,9 +560,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 		getMuteAction()
 		{
-			const dialog = this.getDialogItem();
-
-			return dialog?.muteList?.includes(serviceLocator.get('core').getUserId()) ? UnmuteAction : MuteAction;
+			return this.isMute ? UnmuteAction : MuteAction;
 		}
 
 		getHideAction()

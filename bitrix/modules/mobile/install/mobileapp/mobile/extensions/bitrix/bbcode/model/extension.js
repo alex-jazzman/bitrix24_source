@@ -1124,7 +1124,6 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      const nextSibling = node.getNextSibling();
 	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === BBCodeNode.ELEMENT_NODE && !nextSibling.getTagScheme().getGroup().includes('#inline'));
 	    })();
-	    node.trimLinebreaks();
 	    const openingTag = node.getOpeningTag();
 	    const content = node.getContent(options);
 	    const closingTag = node.getClosingTag();
@@ -1509,19 +1508,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      name: 'p',
 	      group: ['#block'],
 	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
-	      stringify(node) {
-	        // Temporary implementation for mobile compatibility
-
-	        node.trimLinebreaks();
-	        const openingTag = node.getOpeningTag();
-	        const content = node.getContent(options);
-	        const closingTag = node.getClosingTag();
-	        const isAllowNewlineBeforeOpeningTag = (() => {
-	          const previewsSibling = node.getPreviewsSibling();
-	          return previewsSibling && previewsSibling.getName() !== '#linebreak';
-	        })();
-	        return [isAllowNewlineBeforeOpeningTag ? '\n' : '', openingTag, content, '\n', closingTag].join('');
-	      },
+	      stringify: BBCodeTagScheme.defaultBlockStringifier,
 	      allowedIn: ['#root', '#shadowRoot']
 	    }), new BBCodeTagScheme({
 	      name: 'list',

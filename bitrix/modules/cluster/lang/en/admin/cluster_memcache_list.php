@@ -18,6 +18,7 @@ $MESS["CLU_MEMCACHE_LIST_TITLE"] = "Memcached Connections";
 $MESS["CLU_MEMCACHE_LIST_WARNING_NO_CACHE"] = "Attention! Cache is off. To enable, use a memcached connection or edit parameters in .settings.php.";
 $MESS["CLU_MEMCACHE_LIST_WEIGHT"] = "Weight (%)";
 $MESS["CLU_MEMCACHE_NOCONNECTION"] = "disconnected";
-$MESS["CLU_MEMCACHE_NO_EXTENTION"] = "A PHP extension \"Memcached\" is not installed.";
+$MESS["CLU_MEMCACHE_NO_EXTENTION"] = "A PHP extension \"Memcache\" is not installed.";
+$MESS["CLU_MEMCACHED_NO_EXTENTION"] = "A PHP extension \"Memcached\" is not installed.";
 $MESS["CLU_MEMCACHE_UPTIME"] = "uptime";
 ?>

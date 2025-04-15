@@ -5,7 +5,6 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('loc');
 	const { Icon } = require('assets/icons');
-	const { Feature: MobileFeature } = require('feature');
 	const { showSafeToast, showOfflineToast, showErrorToast, Position } = require('toast');
 	const { mergeImmutable } = require('utils/object');
 
@@ -159,16 +158,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 
 			if (params.icon && params.icon instanceof Icon)
 			{
-				if (MobileFeature.isAirStyleSupported())
-				{
-					toastParams.iconName = params.icon.getIconName();
-				}
-				else
-				{
-					toastParams.svg = {
-						url: params.icon.getPath(),
-					};
-				}
+				toastParams.iconName = params.icon.getIconName();
 			}
 
 			if (params.backgroundColor)

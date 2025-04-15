@@ -2,6 +2,8 @@
 	let UserModel = function(config) {
 		this.data = {
 			id: BX.prop.getInteger(config, 'id', 0),
+			firstName: BX.prop.getString(config, 'firstName', ''),
+			lastName: BX.prop.getString(config, 'lastName', ''),
 			name: BX.prop.getString(config, 'name', ''),
 			avatar: BX.prop.getString(config, 'avatar', ''),
 			gender: BX.prop.getString(config, 'gender', ''),

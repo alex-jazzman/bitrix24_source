@@ -19,18 +19,18 @@ $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 $CCrmQuote = new CCrmQuote();
 $arResult['ELEMENT_ID'] = $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
-if ($arResult['ELEMENT_ID'] <= 0 || $CCrmQuote->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+if ($arResult['ELEMENT_ID'] <= 0 || !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
 $arResult['EDITABLE_FIELDS'] = array();
-$arResult['CAN_EDIT'] = CCrmQuote::CheckUpdatePermission($arResult['ELEMENT_ID'], $CCrmQuote->cPerms);
+$arResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Quote, $arResult['ELEMENT_ID']);
 $arResult['PREFIX'] = isset($arParams['~PREFIX']) ? $arParams['~PREFIX'] : 'crm_quote_show';
 $arResult['TACTILE_FORM_ID'] = 'CRM_QUOTE_EDIT_V12';
 
-CCrmQuote::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult, $CCrmQuote->cPerms);
+CCrmQuote::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult);
 
 if($arResult['CAN_CONVERT'])
 {
@@ -513,10 +513,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'LEAD_ID',
 	'name' => GetMessage('CRM_QUOTE_FIELD_LEAD_ID'),
 	'value' => isset($arResult['ELEMENT']['LEAD_TITLE'])
-		? ($CCrmQuote->cPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ')
+		? (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Lead))
 			? $arResult['ELEMENT']['LEAD_TITLE'] :
 			'<a href="'.$arResult['PATH_TO_LEAD_SHOW'].'" bx-tooltip-user-id="LEAD_'.$arResult['ELEMENT']['~LEAD_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.lead.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_lead">'.$arResult['ELEMENT']['LEAD_TITLE'].'</a>'
-		) : '',
+		: '',
 	'type' => 'custom',
 	'isTactile' => true
 );
@@ -1039,7 +1039,7 @@ if (CCrmDeal::CheckReadPermission($dealID, $userPermissions))
 	}
 }
 
-if (!$CCrmQuote->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
+if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Invoice))
 {
 	$arResult['FIELDS']['tab_invoice'][] = array(
 		'id' => 'QUOTE_INVOICE',

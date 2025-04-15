@@ -215,7 +215,7 @@ jn.define('im/messenger/lib/dev/menu/dialog-snippets', (require, exports, module
 				// eslint-disable-next-line no-await-in-loop
 				await MessageRest.send({
 					dialogId,
-					text: messageText,
+					text: String(messageText),
 				});
 
 				this.setState({

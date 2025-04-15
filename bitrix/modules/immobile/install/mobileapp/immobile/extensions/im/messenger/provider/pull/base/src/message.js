@@ -39,6 +39,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		{
 			super(options);
 
+			this.messageViews = {};
 			this.writingTimer = 25000;
 		}
 
@@ -66,10 +67,11 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				message: recentParams.message,
 				counter: recentParams.counter,
 				lastActivityDate: recentParams.dateLastActivity,
+				defaultUserRecord: false,
+				liked: false,
 			});
 
 			recentItem.message.status = recentParams.message.senderId === userId ? 'received' : '';
-
 			const userPromise = this.setUsers(params);
 
 			if (!recentItem)
@@ -324,24 +326,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				})
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleAddReaction.usersModel/addShort.catch err:`, err));
 
-			if (this.store.getters['applicationModel/isDialogOpen'](dialogId))
-			{
-				return;
-			}
-
-			const recentItem = this.store.getters['recentModel/getById'](dialogId);
-			const isOwnLike = MessengerParams.getUserId() === userId;
-			const isOwnLastMessage = MessengerParams.getUserId() === recentItem.message.senderId;
-			if (isOwnLike || !isOwnLastMessage)
-			{
-				return;
-			}
-
-			this.store.dispatch('recentModel/like', {
-				messageId: actualReactionsState.messageId,
-				id: dialogId,
-				liked: true,
-			});
+			this.#updateRecentReaction(dialogId, userId, actualReactionsState.messageId, true);
 		}
 
 		/**
@@ -359,7 +344,11 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 				return;
 			}
-			const { actualReactions: { reaction: actualReactionsState, usersShort } } = params;
+			const {
+				actualReactions: { reaction: actualReactionsState, usersShort },
+				dialogId,
+				userId,
+			} = params;
 
 			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
 			if (!message)
@@ -371,6 +360,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				usersShort,
 				reactions: [actualReactionsState],
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleDeleteReaction.messagesModel.catch err:`, err));
+
+			this.#updateRecentReaction(dialogId, userId, actualReactionsState.messageId, false);
 		}
 
 		async handleStartWriting(params, extra, command)
@@ -787,16 +778,22 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			const hasFirstViewer = Boolean(dialogModelState.lastMessageViews?.firstViewer);
 			if (hasFirstViewer)
 			{
-				// FIXME this case occurs when the user is using 2 or more devices at the same time ( work only first user )
-				//  need wait update while this bug in backend will be fix
-				const isDoubleFirstViewer = params.userId === dialogModelState.lastMessageViews.firstViewer.userId;
-				if (DialogHelper.isDialogId(params.dialogId) && !isDoubleFirstViewer)
+				const isDialog = DialogHelper.isDialogId(params.dialogId);
+				const hasViewerByUserId = this.#checkMessageViewsRegistry(params.userId, dialogModelState.lastMessageId);
+				if (isDialog && !hasViewerByUserId)
 				{
 					this.store.dispatch('dialoguesModel/incrementLastMessageViews', {
 						dialogId: params.dialogId,
-					}).catch(
-						(err) => this.logger.error(`${this.getClassName()}.updateChatLastMessageViews.dialoguesModel/incrementLastMessageViews.catch:`, err),
-					);
+					})
+						.then(() => {
+							this.#updateMessageViewsRegistry(params.userId, dialogModelState.lastMessageId);
+						})
+						.catch(
+							(error) => this.logger.error(
+								`${this.getClassName()}.updateChatLastMessageViews.dialoguesModel/incrementLastMessageViews.catch:`,
+								error,
+							),
+						);
 				}
 
 				return;
@@ -812,9 +809,13 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 						date: params.date,
 						messageId: dialogModelState.lastMessageId,
 					},
-				}).catch(
-					(err) => this.logger.error(`${this.getClassName()}.updateChatLastMessageViews.dialoguesModel/setLastMessageViews.catch:`, err),
-				);
+				})
+					.then(() => {
+						this.#updateMessageViewsRegistry(params.userId, dialogModelState.lastMessageId);
+					})
+					.catch(
+						(err) => this.logger.error(`${this.getClassName()}.updateChatLastMessageViews.dialoguesModel/setLastMessageViews.catch:`, err),
+					);
 			}
 		}
 
@@ -1223,6 +1224,59 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			});
 
 			return (userName ? `${userName}: ` : '') + simplifiedMessageText;
+		}
+
+		/**
+		 * @param {number} userId
+		 * @param {number} messageId
+		 * @return {boolean}
+		 */
+		#checkMessageViewsRegistry(userId, messageId)
+		{
+			return Boolean(this.messageViews[messageId]?.has(userId));
+		}
+
+		/**
+		 * @param {number} userId
+		 * @param {number} messageId
+		 */
+		#updateMessageViewsRegistry(userId, messageId)
+		{
+			if (!this.messageViews[messageId])
+			{
+				this.messageViews[messageId] = new Set();
+			}
+
+			this.messageViews[messageId].add(userId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {number} userId
+		 * @param {number} messageId
+		 * @param {boolean} liked
+		 * @return {boolean}
+		 */
+		#updateRecentReaction(dialogId, userId, messageId, liked)
+		{
+			if (this.store.getters['applicationModel/isDialogOpen'](dialogId))
+			{
+				return;
+			}
+
+			const recentItem = this.store.getters['recentModel/getById'](dialogId);
+			const isOwnLike = MessengerParams.getUserId() === userId;
+			const isOwnLastMessage = MessengerParams.getUserId() === recentItem.message.senderId;
+			if (isOwnLike || !isOwnLastMessage)
+			{
+				return;
+			}
+
+			this.store.dispatch('recentModel/like', {
+				messageId,
+				id: dialogId,
+				liked,
+			}).catch((err) => this.logger.error(`${this.getClassName()}.updateRecentReaction.recentModel/like.catch:`, err));
 		}
 	}
 

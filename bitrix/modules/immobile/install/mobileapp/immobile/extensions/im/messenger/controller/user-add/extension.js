@@ -154,7 +154,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			this.subscribeExternalEvents()
 			// eslint-disable-next-line es/no-optional-chaining
 			const mediumPositionPercent = this.options.widgetOptions?.mediumPositionPercent || 50;
-			const backgroundColor = Theme.isDesignSystemSupported ? Theme.colors.bgSecondary : Theme.colors.bgContentTertiary;
+			const backgroundColor = Theme.colors.bgSecondary;
 			const widgetConfig = {
 				title: this.title,
 				backgroundColor,

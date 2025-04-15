@@ -60,11 +60,6 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 
 		#animateToggle()
 		{
-			if (this.isDisabled())
-			{
-				return Promise.resolve();
-			}
-
 			return new Promise((resolve) => {
 				const animate = parallel(
 					transition(this.thumbRef, {
@@ -189,6 +184,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 		getTrackStyle()
 		{
 			return {
+				position: 'relative',
 				...this.getTrackColor(this.isChecked()),
 				...this.#getSize().getTrackStyle(this.isDisabled()),
 			};
@@ -211,6 +207,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 		{
 			const { compact = false, size } = this.props;
 
+			/** @deprecated use @param {size} */
 			if (compact)
 			{
 				return SwitcherSize.S;
@@ -219,9 +216,12 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 			return SwitcherSize.resolve(size, SwitcherSize.M);
 		}
 
+		/**
+		 * @returns {SwitcherMode}
+		 */
 		#getMode()
 		{
-			const { mode = SwitcherMode.SOLID } = this.props;
+			const mode = this.props?.mode || SwitcherMode.SOLID;
 
 			return this.isDisabled() ? mode.getDisabled() : mode;
 		}
@@ -262,7 +262,6 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 	}
 
 	Switcher.defaultProps = {
-		compact: false,
 		checked: false,
 		useState: true,
 		trackColor: {},

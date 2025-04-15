@@ -65,7 +65,7 @@ $arMenu = [
 		[
 			"real_link" => getLeftMenuItemLink(
 				"tasks_panel_menu",
-				"/company/personal/user/".$userId."/tasks/"
+				"/company/personal/user/".$userId."/tasks/?ta_sec=left_menu"
 			),
 			"name" => "tasks",
 			"counter_id" => "tasks_total",
@@ -203,9 +203,9 @@ else
 	];
 }
 
-if (Loader::includeModule('booking') && \Bitrix\Booking\BookingFeature::isOn())
+if (Loader::includeModule('booking') && \Bitrix\Booking\Service\BookingFeature::isOn())
 {
-	$counterId = (\Bitrix\Booking\BookingFeature::isFeatureEnabled() ? 'booking_total' : '');
+	$counterId = (\Bitrix\Booking\Service\BookingFeature::isFeatureEnabled() ? 'booking_total' : '');
 
 	$arMenu[] = [
 		GetMessage("MENU_BOOKING"),
@@ -319,7 +319,7 @@ if (
 {
 	$arMenu[] = [
 		Loc::getMessage('MENU_IM_MESSENGER_COLLAB'),
-		'/online/?IM_COLLAB=0',
+		'/online/?IM_COLLAB',
 		[],
 		[
 			'menu_item_id' => 'menu_im_collab',

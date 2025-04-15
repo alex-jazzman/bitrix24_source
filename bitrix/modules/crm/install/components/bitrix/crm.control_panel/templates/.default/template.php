@@ -20,6 +20,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		"ID" => $arResult["CRM_PANEL_MENU_CONTAINER_ID"],
 		"ITEMS" => $arResult["ITEMS"],
+		"THEME" => defined("AIR_SITE_TEMPLATE") ? "air" : null,
 	)
 );
 

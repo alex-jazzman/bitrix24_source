@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,ui_vue3,calendar_sharing_interface,calendar_sharing_analytics,crm_messagesender,ui_buttons,main_loader,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditorV2,crm_tourManager,main_core_events,ui_designTokens,main_core,crm_zoom) {
+(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,calendar_sharing_interface,calendar_sharing_analytics,crm_messagesender,ui_buttons,main_loader,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditorV2,main_core_events,ui_designTokens,crm_zoom,ui_vue3,crm_integration_ui_bannerDispatcher,crm_tourManager,main_core,ui_analytics) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
@@ -813,6 +813,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.toName = null;
 	    this.toPhoneId = null;
 	    this.openLineItems = null;
+	    this.hasClients = false;
 	    this.isFetchedConfig = false;
 	    this.isSending = false;
 	    Object.defineProperty(this, _chatServiceButtons, {
@@ -1026,7 +1027,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isEntityInEditorMode)[_isEntityInEditorMode]()) {
 	      await babelHelpers.classPrivateFieldLooseBase(this, _showEditorInEditModePopup)[_showEditorInEditModePopup]();
 	    }
-	    if (!this.selectedClient) {
+	    if (!this.selectedClient && !this.hasClients) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _showNotSelectedClientNotify)[_showNotSelectedClientNotify]();
 	      return;
 	    }
@@ -1228,11 +1229,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    communications,
 	    openLineItems,
 	    marketplaceUrl,
-	    services
+	    services,
+	    hasClients
 	  } = data;
 	  this.currentChannelId = currentChannelId;
 	  this.channels = channels;
 	  this.communications = communications;
+	  this.hasClients = hasClients;
 	  this.openLineItems = openLineItems;
 	  this.marketplaceUrl = marketplaceUrl;
 	  babelHelpers.classPrivateFieldLooseBase(this, _services)[_services] = services;
@@ -1241,6 +1244,9 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _setCommunicationsParams2() {
 	  if (this.communications.length === 0) {
+	    this.toPhoneId = null;
+	    this.selectedClient = null;
+	    this.toName = null;
 	    return;
 	  }
 	  const communication = this.communications[0];
@@ -7643,6 +7649,254 @@ this.BX.Crm = this.BX.Crm || {};
 	  this.emitFinishEditEvent();
 	}
 
+	const UserOptions$2 = main_core.Reflection.namespace('BX.userOptions');
+	var _checkOption = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkOption");
+	class Options {
+	  constructor() {
+	    Object.defineProperty(this, _checkOption, {
+	      value: _checkOption2
+	    });
+	  }
+	  saveUserOption(optionName) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkOption)[_checkOption](optionName);
+	    UserOptions$2.save('crm', Options.BOOKING_ADS_OPTION, optionName, 1);
+	  }
+	}
+	function _checkOption2(optionName) {
+	  if (![Options.START_BANNER, Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME, Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME].includes(optionName)) {
+	    throw new Error(`User option with name: ${optionName} unsupported`);
+	  }
+	}
+	Options.BOOKING_ADS_OPTION = 'booking_ads';
+	Options.START_BANNER = 'start_banner';
+	Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME = 'before_first_resource';
+	Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME = 'after_first_resource';
+
+	class Tour$3 extends BaseTour {
+	  /**
+	   * @override
+	   * */
+	  saveUserOption(optionName = null) {
+	    new Options().saveUserOption(optionName);
+	  }
+	}
+
+	function Resolvable() {
+	  let resolve;
+	  const promise = new Promise(res => {
+	    resolve = res;
+	  });
+	  promise.resolve = resolve;
+	  return promise;
+	}
+
+	class BannerAnalytics {
+	  static sendShowPopup() {
+	    const options = {
+	      tool: BannerAnalytics.ANALYTICS_TOOL_BOOKING,
+	      category: BannerAnalytics.ANALYTICS_CATEGORY_BOOKING,
+	      event: 'show_popup',
+	      c_section: BannerAnalytics.ANALYTICS_SECTION_CRM
+	    };
+	    ui_analytics.sendData(options);
+	  }
+	  static sendClickEnable() {
+	    const options = {
+	      tool: BannerAnalytics.ANALYTICS_TOOL_BOOKING,
+	      category: BannerAnalytics.ANALYTICS_CATEGORY_BOOKING,
+	      event: 'click_enable',
+	      c_section: BannerAnalytics.ANALYTICS_SECTION_CRM
+	    };
+	    ui_analytics.sendData(options);
+	  }
+	}
+	BannerAnalytics.ANALYTICS_TOOL_BOOKING = 'booking';
+	BannerAnalytics.ANALYTICS_CATEGORY_BOOKING = 'booking';
+	BannerAnalytics.ANALYTICS_SECTION_CRM = 'crm';
+
+	var _bannerDispatcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bannerDispatcher");
+	var _showBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showBanner");
+	var _renderBannerComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderBannerComponent");
+	var _createBannerComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createBannerComponent");
+	var _shouldShowBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowBanner");
+	var _setBannerShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setBannerShown");
+	var _showAha = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAha");
+	var _shouldShowAha = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAha");
+	var _getAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAhaParams");
+	var _getBeforeFirstResourceAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBeforeFirstResourceAhaParams");
+	var _getAfterFirstResourceAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAfterFirstResourceAhaParams");
+	class Booking extends Item {
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _getAfterFirstResourceAhaParams, {
+	      value: _getAfterFirstResourceAhaParams2
+	    });
+	    Object.defineProperty(this, _getBeforeFirstResourceAhaParams, {
+	      value: _getBeforeFirstResourceAhaParams2
+	    });
+	    Object.defineProperty(this, _getAhaParams, {
+	      value: _getAhaParams2
+	    });
+	    Object.defineProperty(this, _shouldShowAha, {
+	      value: _shouldShowAha2
+	    });
+	    Object.defineProperty(this, _showAha, {
+	      value: _showAha2
+	    });
+	    Object.defineProperty(this, _setBannerShown, {
+	      value: _setBannerShown2
+	    });
+	    Object.defineProperty(this, _shouldShowBanner, {
+	      value: _shouldShowBanner2
+	    });
+	    Object.defineProperty(this, _createBannerComponent, {
+	      value: _createBannerComponent2
+	    });
+	    Object.defineProperty(this, _renderBannerComponent, {
+	      value: _renderBannerComponent2
+	    });
+	    Object.defineProperty(this, _showBanner, {
+	      value: _showBanner2
+	    });
+	    Object.defineProperty(this, _bannerDispatcher, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _bannerDispatcher)[_bannerDispatcher] = new crm_integration_ui_bannerDispatcher.BannerDispatcher();
+	  }
+	  showSlider() {
+	    var _this$getSettings;
+	    const entities = (_this$getSettings = this.getSettings()) == null ? void 0 : _this$getSettings.entities;
+	    const embedEntities = JSON.stringify(entities);
+	    const url = `/booking/?embed=${embedEntities}`;
+	    if (BX.SidePanel) {
+	      BX.SidePanel.Instance.open(url, {
+	        customLeftBoundary: 0
+	      });
+	    } else {
+	      window.open(url);
+	    }
+	  }
+	  supportsLayout() {
+	    return false;
+	  }
+	  showTour() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _showBanner)[_showBanner]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _showAha)[_showAha]();
+	  }
+	}
+	function _showBanner2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldShowBanner)[_shouldShowBanner]()) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _bannerDispatcher)[_bannerDispatcher].toQueue(async onDone => {
+	    const bannerClosed = babelHelpers.classPrivateFieldLooseBase(this, _renderBannerComponent)[_renderBannerComponent]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _setBannerShown)[_setBannerShown]();
+	    await bannerClosed;
+	    onDone();
+	  }, crm_integration_ui_bannerDispatcher.Priority.CRITICAL);
+	}
+	async function _renderBannerComponent2() {
+	  const bannerClosed = new Resolvable();
+	  const app = await babelHelpers.classPrivateFieldLooseBase(this, _createBannerComponent)[_createBannerComponent](bannerClosed.resolve);
+	  const content = main_core.Dom.create('div');
+	  main_core.Dom.append(content, document.body);
+	  app.mount(content);
+	  return bannerClosed;
+	}
+	async function _createBannerComponent2(onBannerClose) {
+	  const {
+	    PromoBanner
+	  } = await main_core.Runtime.loadExtension('booking.component.promo-banner');
+	  const app = ui_vue3.BitrixVue.createApp({
+	    components: {
+	      PromoBanner
+	    },
+	    data() {
+	      return {
+	        isBannerShown: true
+	      };
+	    },
+	    methods: {
+	      onClose() {
+	        this.isBannerShown = false;
+	        onBannerClose();
+	      },
+	      buttonClick() {
+	        BannerAnalytics.sendClickEnable();
+	      }
+	    },
+	    template: '<PromoBanner v-if="isBannerShown" type="crm" @buttonClick="buttonClick" @close="onClose" />'
+	  });
+	  app.mixin({
+	    methods: {
+	      loc(name, replacements) {
+	        return main_core.Loc.getMessage(name, replacements);
+	      }
+	    }
+	  });
+	  return app;
+	}
+	function _shouldShowBanner2() {
+	  var _this$getSettings2;
+	  return ((_this$getSettings2 = this.getSettings()) == null ? void 0 : _this$getSettings2.shouldShowBanner) || false;
+	}
+	function _setBannerShown2() {
+	  new Options().saveUserOption(Options.START_BANNER);
+	  BannerAnalytics.sendShowPopup();
+	}
+	function _showAha2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAha)[_shouldShowAha]()) {
+	    return;
+	  }
+	  const ahaParams = babelHelpers.classPrivateFieldLooseBase(this, _getAhaParams)[_getAhaParams]();
+	  if (!ahaParams) {
+	    return;
+	  }
+	  const guideBindElement = document.querySelector('.main-buttons-inner-container .main-buttons-item[data-id="booking"]');
+	  if (!guideBindElement) {
+	    return;
+	  }
+	  const tour = new Tour$3({
+	    ...ahaParams,
+	    guideBindElement
+	  });
+	  tour.getGuide().getPopup().setAutoHide(true);
+	  crm_tourManager.TourManager.getInstance().registerWithLaunch(tour);
+	}
+	function _shouldShowAha2() {
+	  var _this$getSettings3;
+	  return Boolean((_this$getSettings3 = this.getSettings()) == null ? void 0 : _this$getSettings3.ahaMoments.length);
+	}
+	function _getAhaParams2() {
+	  var _this$getSettings4;
+	  switch ((_this$getSettings4 = this.getSettings()) == null ? void 0 : _this$getSettings4.ahaMoments[0]) {
+	    case Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME:
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getBeforeFirstResourceAhaParams)[_getBeforeFirstResourceAhaParams]();
+	    case Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME:
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getAfterFirstResourceAhaParams)[_getAfterFirstResourceAhaParams]();
+	    default:
+	      return null;
+	  }
+	}
+	function _getBeforeFirstResourceAhaParams2() {
+	  return {
+	    itemCode: 'booking_before_first_resource',
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TITLE'),
+	    text: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TEXT'),
+	    userOptionName: Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME,
+	    articleCode: 23712054
+	  };
+	}
+	function _getAfterFirstResourceAhaParams2() {
+	  return {
+	    itemCode: 'booking_after_first_resource',
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TITLE'),
+	    text: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TEXT'),
+	    userOptionName: Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME
+	  };
+	}
+
 	class Factory {
 	  static createItem(id, context, settings) {
 	    let item = null;
@@ -7694,6 +7948,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        break;
 	      case 'einvoice_app_installer':
 	        item = new EInvoiceApp();
+	        break;
+	      case 'booking':
+	        item = new Booking();
 	        break;
 	      default:
 	        item = null;
@@ -7919,5 +8176,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.Vue3,BX.Calendar.Sharing,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.UI,BX,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Crm,BX.Event,BX,BX,BX.Crm));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.Calendar.Sharing,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.UI,BX,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Event,BX,BX.Crm,BX.Vue3,BX.Crm.Integration.UI,BX.Crm,BX,BX.UI.Analytics));
 //# sourceMappingURL=toolbar.bundle.js.map

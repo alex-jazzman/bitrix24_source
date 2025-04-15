@@ -67,6 +67,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require(
 		'tasks/statemanager/redux/slices/groups',
 	);
+	const { reactionsUpserted } = require('statemanager/redux/slices/reactions');
+	const { reactionsVoteSignTokenUpserted } = require('statemanager/redux/slices/reactions-vote-key');
+	const { settingsUpserted } = require('statemanager/redux/slices/settings');
 	const { fetch, setFromServer } = require('tasks/statemanager/redux/slices/tasks-results');
 	const { observeCreationError } = require('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer');
 	const { AnalyticsEvent } = require('analytics');
@@ -113,6 +116,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			super(props);
 
 			this.layout = null;
+			this.markedAsViewed = true;
 
 			/** @type {Form|null|undefined} */
 			this.formRef = null;
@@ -328,6 +332,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 			else
 			{
+				this.markedAsViewed = false;
 				new AnalyticsEvent(this.analyticsLabel).setStatus('success').send();
 				this.layout.setTitle({ useProgress: false }, true);
 
@@ -371,6 +376,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						WITH_CHECKLIST_DATA: (withChecklistData ? 'Y' : 'N'),
 						WORK_MODE: WorkModeByViewMode[this.view],
 						KANBAN_OWNER_ID: this.kanbanOwnerId,
+						MARKED_AS_VIEWED: this.markedAsViewed ? 'Y' : 'N',
 					},
 				})
 					.setHandler((response) => {
@@ -411,7 +417,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		#getDiskFolderId()
 		{
-			return getDiskFolderId().then(({ diskFolderId }) => {
+			return getDiskFolderId(this.#task?.groupId).then(({ diskFolderId }) => {
 				this.checklistController.setDiskConfig({ folderId: diskFolderId });
 			});
 		}
@@ -421,6 +427,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			const {
 				tasks = [],
 				users = [],
+				reactions = [],
+				reactionsVoteSignToken = null,
+				reactionsTemplateSettings = null,
 				groups = [],
 				relatedtaskids = [],
 				taskstage = [],
@@ -431,6 +440,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			const actions = [
 				tasks.length > 0 && tasksUpserted(tasks),
 				users.length > 0 && usersUpserted(users),
+				reactions.length > 0 && reactionsUpserted(reactions),
+				reactionsVoteSignToken && reactionsVoteSignTokenUpserted(reactionsVoteSignToken),
+				reactionsTemplateSettings && settingsUpserted(reactionsTemplateSettings),
 				groups.length > 0 && groupsUpserted(groups),
 				relatedtaskids.length > 0 && setRelatedTasks({ taskId: this.#taskId, relatedTasks: relatedtaskids }),
 				Type.isArray(results) && setFromServer({ taskId: this.#taskId, results }),
@@ -605,6 +617,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				ActionMenu.action.extraSettings,
 				ActionMenu.action.copyId,
 				ActionMenu.action.copy,
+				ActionMenu.action.openChat,
 				ActionMenu.action.share,
 				ActionMenu.action.remove,
 			];
@@ -1040,7 +1053,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						onChange: this.onChangeField,
 						onBlur: this.onBlurField,
 						scrollableProvider: this.scrollableProvider,
-						// renderAfterCompactBar: this.renderLikes,
+						renderAfterCompactBar: this.renderLikes,
 						onChangeProjectField: this.onChangeProjectField,
 						onChangeSubTaskField: this.onChangeSubTaskField,
 						onChangeRelatedTaskField: this.onChangeRelatedTaskField,
@@ -1093,6 +1106,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 		}
 
+		isLikesPanelEnabled()
+		{
+			return Application.getApiVersion() >= 59;
+		}
+
 		renderBeforeCompactFields(form)
 		{
 			return ActionButtons({
@@ -1114,10 +1132,16 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		renderLikes()
 		{
-			return LikesPanel({
-				taskId: this.#taskId,
-				testId: this.getTestId('LikesPanel'),
-			});
+			if (this.isLikesPanelEnabled())
+			{
+				return LikesPanel({
+					userId: this.props.userId,
+					taskId: this.#taskId,
+					testId: this.getTestId('LikesPanel'),
+				});
+			}
+
+			return View({});
 		}
 
 		#renderCommentsButton()

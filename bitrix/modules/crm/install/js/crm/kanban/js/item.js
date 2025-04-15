@@ -791,25 +791,37 @@ BX.CRM.Kanban.Item.prototype = {
 
 		for (let i = 0; i < this.data.badges.length; i++)
 		{
-			const badge = this.data.badges[i];
+			const badgeData = this.data.badges[i];
 
 			const badgeValueClass = 'crm-kanban-item-badges-item-value crm-kanban-item-badges-status';
 			const badgeValueStyle = `
-				background-color: ${badge.backgroundColor};
-				border-color: ${badge.backgroundColor};
-				color: ${badge.textColor};
+				background-color: ${badgeData.backgroundColor};
+				border-color: ${badgeData.backgroundColor};
+				color: ${badgeData.textColor};
+			`;
+
+			const badgeTextItem = BX.Tag.render`
+				<div class="${badgeValueClass}" style="${badgeValueStyle}">${badgeData.textValue}</div>
 			`;
 
 			const item = BX.Tag.render`
 				<div class="crm-kanban-item-badges-item">
 					<div class="crm-kanban-item-badges-item-title">
-						<div class="crm-kanban-item-badges-item-title-text">${badge.fieldName}</div>
+						<div class="crm-kanban-item-badges-item-title-text">${badgeData.fieldName}</div>
 					</div>
-					<div class="${badgeValueClass}" style="${badgeValueStyle}">${badge.textValue}</div>
+					${badgeTextItem}
 				</div>
 			`;
 
 			BX.Dom.append(item, this.badgesWrapper);
+
+			if (BX.Type.isStringFilled(badgeData?.hint))
+			{
+				const badge = new BX.Crm.Badge(badgeTextItem);
+				badge.init({
+					hint: badgeData.hint,
+				});
+			}
 		}
 	},
 

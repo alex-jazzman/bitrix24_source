@@ -491,10 +491,64 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addLinkTo",
 	    value: function addLinkTo(destination, robotAction) {
-	      var _this6 = this;
 	      var preventSave = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+	      if (!babelHelpers.toConsumableArray(this.links).some(function (link) {
+	        return link.to === destination;
+	      })) {
+	        var linksRoot = this.getLinksRoot();
+	        var path = this.getLinkPath(destination);
+	        var line = d3.line();
+	        var fromId = this.data.column.getId().replace(':', '-');
+	        var toId = destination.data.column.getId().replace(':', '-');
+	        var arrowId = "".concat(fromId, "-").concat(toId);
+	        var arrow = linksRoot.select('defs').append('svg:marker').attr('id', arrowId).attr('refX', 8).attr('refY', 6).attr('markerWidth', 30).attr('markerHeight', 30).attr('markerUnits', 'userSpaceOnUse').attr('orient', 'auto').append('path').attr('d', 'M 0 0 12 6 0 12 3 6').attr('class', 'crm-st-svg-link-arrow').select(function selectCallback() {
+	          return this.parentNode;
+	        });
+	        var linkNode = linksRoot.append('path').attr('class', 'crm-st-svg-link').attr('marker-end', "url(#".concat(arrowId, ")")).attr('d', line(path));
+	        this.showTunnelButton(path);
+	        var link = {
+	          from: this,
+	          to: destination,
+	          node: linkNode,
+	          robotAction: robotAction,
+	          arrow: arrow,
+	          path: path
+	        };
+	        this.emit('Marker:linkFrom', {
+	          link: link,
+	          preventSave: preventSave
+	        });
+	        destination.emit('Marker:linkTo', {
+	          link: link,
+	          preventSave: preventSave
+	        });
+	        this.links.add(link);
+	        var menu = this.getTunnelsListMenu();
+	        var id = menu.getMenuItems().length;
+	        menu.addMenuItem({
+	          id: "#".concat(id),
+	          text: main_core.Text.encode(destination.name),
+	          events: {
+	            onMouseEnter: function onMouseEnter() {
+	              Marker.highlightLink(link);
+	            },
+	            onMouseLeave: function onMouseLeave() {
+	              Marker.unhighlightLinks();
+	            }
+	          },
+	          items: this.getTunnelMenuItems(link)
+	        });
+	      }
+	      if (this.links.size > 1) {
+	        this.setTunnelsCounterValue(this.links.size);
+	      }
+	    }
+	  }, {
+	    key: "addStubLinkTo",
+	    value: function addStubLinkTo(destination) {
+	      var _this6 = this;
 	      setTimeout(function () {
-	        if (!babelHelpers.toConsumableArray(_this6.links).some(function (link) {
+	        if (!babelHelpers.toConsumableArray(_this6.stubLinks).some(function (link) {
 	          return link.to === destination;
 	        })) {
 	          var linksRoot = _this6.getLinksRoot();
@@ -503,76 +557,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          var fromId = _this6.data.column.getId().replace(':', '-');
 	          var toId = destination.data.column.getId().replace(':', '-');
 	          var arrowId = "".concat(fromId, "-").concat(toId);
-	          var arrow = linksRoot.select('defs').append('svg:marker').attr('id', arrowId).attr('refX', 8).attr('refY', 6).attr('markerWidth', 30).attr('markerHeight', 30).attr('markerUnits', 'userSpaceOnUse').attr('orient', 'auto').append('path').attr('d', 'M 0 0 12 6 0 12 3 6').attr('class', 'crm-st-svg-link-arrow').select(function selectCallback() {
-	            return this.parentNode;
-	          });
-	          var linkNode = linksRoot.append('path').attr('class', 'crm-st-svg-link').attr('marker-end', "url(#".concat(arrowId, ")")).attr('d', line(path));
-	          _this6.showTunnelButton(path);
-	          var link = {
-	            from: _this6,
-	            to: destination,
-	            node: linkNode,
-	            robotAction: robotAction,
-	            arrow: arrow,
-	            path: path
-	          };
-	          _this6.emit('Marker:linkFrom', {
-	            link: link,
-	            preventSave: preventSave
-	          });
-	          destination.emit('Marker:linkTo', {
-	            link: link,
-	            preventSave: preventSave
-	          });
-	          _this6.links.add(link);
-	          var menu = _this6.getTunnelsListMenu();
-	          var id = menu.getMenuItems().length;
-	          menu.addMenuItem({
-	            id: "#".concat(id),
-	            text: main_core.Text.encode(destination.name),
-	            events: {
-	              onMouseEnter: function onMouseEnter() {
-	                Marker.highlightLink(link);
-	              },
-	              onMouseLeave: function onMouseLeave() {
-	                Marker.unhighlightLinks();
-	              }
-	            },
-	            items: _this6.getTunnelMenuItems(link)
-	          });
-	        }
-	        if (_this6.links.size > 1) {
-	          _this6.setTunnelsCounterValue(_this6.links.size);
-	        }
-	      });
-	    }
-	  }, {
-	    key: "addStubLinkTo",
-	    value: function addStubLinkTo(destination) {
-	      var _this7 = this;
-	      setTimeout(function () {
-	        if (!babelHelpers.toConsumableArray(_this7.stubLinks).some(function (link) {
-	          return link.to === destination;
-	        })) {
-	          var linksRoot = _this7.getLinksRoot();
-	          var path = _this7.getLinkPath(destination);
-	          var line = d3.line();
-	          var fromId = _this7.data.column.getId().replace(':', '-');
-	          var toId = destination.data.column.getId().replace(':', '-');
-	          var arrowId = "".concat(fromId, "-").concat(toId);
 	          var arrow = linksRoot.select('defs').append('svg:marker').attr('id', arrowId).attr('refX', 8).attr('refY', 6).attr('markerWidth', 30).attr('markerHeight', 30).attr('markerUnits', 'userSpaceOnUse').attr('orient', 'auto').append('path').attr('d', 'M 0 0 12 6 0 12 3 6').attr('class', 'crm-st-svg-link-arrow crm-st-svg-link-arrow-stub').select(function selectCallback() {
 	            return this.parentNode;
 	          });
 	          var linkNode = linksRoot.append('path').attr('class', 'crm-st-svg-link crm-st-svg-link-stub').attr('marker-end', "url(#".concat(arrowId, ")")).attr('d', line(path));
-	          _this7.showTunnelStubButton(path);
+	          _this6.showTunnelStubButton(path);
 	          var link = {
-	            from: _this7,
+	            from: _this6,
 	            to: destination,
 	            node: linkNode,
 	            arrow: arrow,
 	            path: path
 	          };
-	          _this7.emit('Marker:stubLinkFrom', {
+	          _this6.emit('Marker:stubLinkFrom', {
 	            link: link,
 	            preventSave: true
 	          });
@@ -580,7 +577,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            link: link,
 	            preventSave: true
 	          });
-	          _this7.stubLinks.add(link);
+	          _this6.stubLinks.add(link);
 	        }
 	      });
 	    }
@@ -660,10 +657,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "removeAllLinks",
 	    value: function removeAllLinks() {
-	      var _this8 = this;
+	      var _this7 = this;
 	      var preventSave = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      this.links.forEach(function (link) {
-	        return _this8.removeLink(link, preventSave);
+	        return _this7.removeLink(link, preventSave);
 	      });
 	    }
 	  }, {
@@ -694,41 +691,41 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "removeAllStubLinks",
 	    value: function removeAllStubLinks() {
-	      var _this9 = this;
+	      var _this8 = this;
 	      this.stubLinks.forEach(function (link) {
-	        return _this9.removeStubLink(link);
+	        return _this8.removeStubLink(link);
 	      });
 	    }
 	  }, {
 	    key: "isLinked",
 	    value: function isLinked() {
-	      var _this10 = this;
+	      var _this9 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && (item.from === _this10 || item.to === _this10);
+	        return !item.hidden && (item.from === _this9 || item.to === _this9);
 	      });
 	    }
 	  }, {
 	    key: "isLinkedFrom",
 	    value: function isLinkedFrom() {
-	      var _this11 = this;
+	      var _this10 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && item.from === _this11;
+	        return !item.hidden && item.from === _this10;
 	      });
 	    }
 	  }, {
 	    key: "isLinkedTo",
 	    value: function isLinkedTo() {
-	      var _this12 = this;
+	      var _this11 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && item.to === _this12;
+	        return !item.hidden && item.to === _this11;
 	      });
 	    }
 	  }, {
 	    key: "isLinkedStub",
 	    value: function isLinkedStub() {
-	      var _this13 = this;
+	      var _this12 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && (item.from === _this13 || item.to === _this13);
+	        return !item.hidden && (item.from === _this12 || item.to === _this12);
 	      });
 	    }
 	  }, {
@@ -745,9 +742,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getStubTunnelButton",
 	    value: function getStubTunnelButton() {
-	      var _this14 = this;
+	      var _this13 = this;
 	      return this.cache.remember('tunnelStubButton', function () {
-	        var button = main_core.Runtime.clone(_this14.getTunnelButton());
+	        var button = main_core.Runtime.clone(_this13.getTunnelButton());
 	        main_core.Dom.addClass(button, 'crm-st-tunnel-button-stub');
 	        return button;
 	      });
@@ -766,10 +763,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTunnelButton",
 	    value: function getTunnelButton() {
-	      var _this15 = this;
+	      var _this14 = this;
 	      var canEdit = this.data.column.data.isCategoryEditable;
 	      return this.cache.remember('tunnelButton', function () {
-	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-tunnel-button\" \n\t\t\t\t\t onmouseenter=\"", "\"\n\t\t\t\t\t onmouseleave=\"", "\"\n\t\t\t\t\t onclick=\"", "\"\n\t\t\t\t\t title=\"", "\"\n\t\t\t\t\t style=\"", "\"\n\t\t\t\t>", "</div>\n\t\t\t"])), _this15.onTunnelButtonMouseEnter.bind(_this15), Marker.onTunnelButtonMouseLeave, _this15.onTunnelButtonClick.bind(_this15), main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE'), !canEdit ? 'pointer-events: none;' : '', main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL'));
+	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-tunnel-button\" \n\t\t\t\t\t onmouseenter=\"", "\"\n\t\t\t\t\t onmouseleave=\"", "\"\n\t\t\t\t\t onclick=\"", "\"\n\t\t\t\t\t title=\"", "\"\n\t\t\t\t\t style=\"", "\"\n\t\t\t\t>", "</div>\n\t\t\t"])), _this14.onTunnelButtonMouseEnter.bind(_this14), Marker.onTunnelButtonMouseLeave, _this14.onTunnelButtonClick.bind(_this14), main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE'), !canEdit ? 'pointer-events: none;' : '', main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL'));
 	      });
 	    } /** @private */
 	  }, {
@@ -795,7 +792,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTunnelsListMenu",
 	    value: function getTunnelsListMenu() {
-	      var _this16 = this;
+	      var _this15 = this;
 	      return this.cache.remember('tunnelsListMenu', new main_popup.PopupMenuWindow({
 	        bindElement: this.getTunnelButton(),
 	        items: [],
@@ -803,10 +800,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        menuShowDelay: 0,
 	        events: {
 	          onPopupClose: function onPopupClose() {
-	            return _this16.deactivateTunnelButton();
+	            return _this15.deactivateTunnelButton();
 	          },
 	          onPopupShow: function onPopupShow() {
-	            return _this16.activateTunnelButton();
+	            return _this15.activateTunnelButton();
 	          }
 	        }
 	      }));
@@ -878,7 +875,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getLinkPath",
 	    value: function getLinkPath(target) {
-	      var _this17 = this;
+	      var _this16 = this;
 	      var targetPosition = target.getPointRect();
 	      var currentPosition = this.getDispatcherRect();
 	      var baseOffset = 80;
@@ -899,7 +896,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).reduce(function (acc, link) {
 	        var from = link.from,
 	          currentPath = link.path;
-	        if (from !== _this17) {
+	        if (from !== _this16) {
 	          /**
 	           * Horizon lines
 	           * 1x -> 2x

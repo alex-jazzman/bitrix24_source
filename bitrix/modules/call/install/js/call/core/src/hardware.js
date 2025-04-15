@@ -242,6 +242,24 @@ class HardwareManager extends EventEmitter
 			this.emit(Events.onChangeCameraOn, {isCameraOn: this._isCameraOn});
 		}
 	}
+	
+	/* 
+	
+	the setter "isCameraOn" is duplicated by that function  
+	to emit additional params in "onChangeCameraOn" event
+	
+	for task-565624 off all participants mic/cam/screenshare
+	
+	*/
+	
+	setIsCameraOn(options) 
+	{
+		if (this._isCameraOn !== options.isCameraOn)
+		{
+			this._isCameraOn = options.isCameraOn;
+			this.emit(Events.onChangeCameraOn, options);
+		}
+	}
 
 	get isMicrophoneMuted()
 	{
@@ -254,6 +272,24 @@ class HardwareManager extends EventEmitter
 		{
 			this._isMicrophoneMuted = isMicrophoneMuted;
 			this.emit(Events.onChangeMicrophoneMuted, {isMicrophoneMuted: this._isMicrophoneMuted});
+		}
+	}
+	
+	/* 
+	
+	the setter "isMicrophoneMuted" is duplicated by that function  
+	to emit additional params in "onChangeMicrophoneMuted" event
+	
+	for task-565624 off all participants mic/cam/screenshare
+	
+	*/
+	
+	setIsMicrophoneMuted(options) 
+	{
+		if (this._isMicrophoneMuted !== options.isMicrophoneMuted)
+		{
+			this._isMicrophoneMuted = options.isMicrophoneMuted;
+			this.emit(Events.onChangeMicrophoneMuted, options);
 		}
 	}
 

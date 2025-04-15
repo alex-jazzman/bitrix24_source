@@ -303,6 +303,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		 * @param {AvatarStackProps} props
 		 */
 		AvatarStack: (props) => new AvatarStack(props),
+		AvatarStackClass: AvatarStack,
 		AvatarShape,
 		AvatarEntityType,
 		AvatarStackDirection: ElementsStackDirection,

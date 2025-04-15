@@ -62,6 +62,7 @@ export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 		clients,
 		counter: bookingDto.counter,
 		counters: bookingDto.counters,
+		createdAt: bookingDto.createdAt,
 		name: bookingDto.name,
 		dateFromTs: bookingDto.datePeriod.from.timestamp * 1000,
 		timezoneFrom: bookingDto.datePeriod.from.timezone,

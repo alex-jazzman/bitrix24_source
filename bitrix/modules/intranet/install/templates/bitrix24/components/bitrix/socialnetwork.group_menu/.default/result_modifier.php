@@ -75,6 +75,11 @@ $sampleKeysList = [
 
 if ($arResult['Group']['PROJECT'] === 'Y')
 {
+	if ($arResult['CanView']['tasks'] ?? false)
+	{
+		$firstMenuItemCode = 'tasks';
+	}
+
 	$sampleKeysList = [
 		'tasks' => 0,
 		'general' => 1,

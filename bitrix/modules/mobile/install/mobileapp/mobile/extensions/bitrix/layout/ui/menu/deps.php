@@ -2,11 +2,11 @@
 return [
 	'extensions' => [
 		'alert',
-		'feature',
 		'tokens',
 		'utils/object',
 		'qrauth/utils',
 		'utils/enums/base',
+		'assets/icons',
 	],
 	'bundle' => [
 		'./src/menu-position'

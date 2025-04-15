@@ -31,7 +31,6 @@ export default class DesktopMenu
 	initTheme(): void
 	{
 		this.theme = new Theme();
-		this.theme.init();
 	}
 
 	getItemsController(): ItemsController

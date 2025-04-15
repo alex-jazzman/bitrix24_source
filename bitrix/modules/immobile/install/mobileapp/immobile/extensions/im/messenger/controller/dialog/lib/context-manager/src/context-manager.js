@@ -192,19 +192,10 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			parentMessageId = null,
 			withMessageHighlight = true,
 			targetMessagePosition = AfterScrollMessagePosition.top,
-			showNotificationIfUnsupported = true,
 			showPlanLimitWidget = true,
 			context = OpenDialogContextType.default,
 		})
 		{
-			if (!Feature.isGoToMessageContextSupported && showNotificationIfUnsupported)
-			{
-				Notification.showComingSoon();
-				this.#log('goToMessageContext() method is not supported');
-
-				return;
-			}
-
 			this.#log(`goToMessageContext: dialogId: ${dialogId}, messageId: ${messageId}, parentMessageId: ${parentMessageId}, withMessageHighlight: ${withMessageHighlight}`);
 
 			const messageIdAsNumber = parseInt(messageId, 10);
@@ -294,7 +285,6 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				messageId: this.#getDialogById(this.#dialogId).lastMessageId,
 				withMessageHighlight: false,
 				targetMessagePosition: AfterScrollMessagePosition.bottom,
-				showNotificationIfUnsupported: false,
 				showPlanLimitWidget: false,
 			};
 
@@ -315,13 +305,6 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			if (!Type.isNumber(postMessageId))
 			{
 				throw new TypeError('ContextManager.goToPostMessageContext: postMessageId must be a number value.');
-			}
-
-			if (!Feature.isGoToMessageContextSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
 			}
 
 			if (this.#isMessageRendered(postMessageId))
@@ -355,13 +338,6 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			if (!Type.isNumber(commentChatId))
 			{
 				throw new TypeError('ContextManager.goToMessageContextByCommentChatId: commentChatId must be a number value.');
-			}
-
-			if (!Feature.isGoToMessageContextSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
 			}
 
 			this.#topLoader.show();

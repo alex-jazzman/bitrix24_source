@@ -2201,7 +2201,8 @@ export class View
 				[DeviceSelector.Events.onChangeFaceImprove]: this._onChangeFaceImprove.bind(this),
 				[DeviceSelector.Events.onAdvancedSettingsClick]: () => this.eventEmitter.emit(EventName.onOpenAdvancedSettings),
 				[DeviceSelector.Events.onDestroy]: () => this.deviceSelector = null,
-				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {})
+				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {}),
+				[DeviceSelector.Events.onTurnOffStreamForAll]: this._onTurnOffStreamForAll.bind(this),
 			}
 		});
 		this.deviceSelector.show();
@@ -5575,6 +5576,14 @@ export class View
 		this.eventEmitter.emit(EventName.onButtonClick, {
 			buttonName: 'floorRequest',
 			node: e.target
+		});
+	};
+
+	_onTurnOffStreamForAll(e)
+	{
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'turnOffAllParticipansStream',
+			data: e.data
 		});
 	};
 

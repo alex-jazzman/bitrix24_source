@@ -5,8 +5,8 @@ use Bitrix\Crm\Integration\UI\EntitySelector\ActivityProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
-use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MailRecipientProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 
@@ -629,5 +629,13 @@ return array(
 				(int)\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_ttl', 24*30))
 			)->setLevel(\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_level', \Psr\Log\LogLevel::INFO)),
 		],
+	],
+	'console' => [
+		'value' => [
+			'commands' => [
+				\Bitrix\Crm\Cli\GenerateEntitiesCommand::class,
+			],
+		],
+		'readonly' => true,
 	],
 );

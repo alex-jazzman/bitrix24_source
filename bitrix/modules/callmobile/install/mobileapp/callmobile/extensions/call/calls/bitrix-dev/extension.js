@@ -35,6 +35,12 @@
 		showUsers: 'Call::showUsers',
 		showAll: 'Call::showAll',
 		hideAll: 'Call::hideAll',
+		audioMutedEvent: 'audioMutedEvent',
+		videoMutedEvent: 'videoMutedEvent',
+		screenShareMutedEvent: 'screenShareMutedEvent',
+		participantAudioMutedEvent: 'participantAudioMutedEvent',
+		participantVideoMutedEvent: 'participantVideoMutedEvent',
+		participantScreenshareMutedEvent: 'participantScreenshareMutedEvent',
 	};
 
 	const BitrixCallDevEvent = {
@@ -123,8 +129,11 @@
 
 			this.__onCallDisconnectedHandler = this.__onCallDisconnected.bind(this);
 			this.__onCallMessageReceivedHandler = this.__onCallMessageReceived.bind(this);
+			this.__onMuteAllParticipantsHandler = this.__onMuteAllParticipants.bind(this);
 			this.__onCallEndpointAddedHandler = this.__onCallEndpointAdded.bind(this);
 			this.__onCallReconnectedHandler = this.__onCallReconnected.bind(this);
+			this.__onMuteAllParticipantsHandler = this.__onMuteAllParticipants.bind(this);
+			this.__onUsersLimitExceededHandler = this.__onUsersLimitExceeded.bind(this);
 
 			this.__onSDKLogMessageHandler = this.__onSDKLogMessage.bind(this);
 
@@ -718,7 +727,9 @@
 			this.bitrixCallDev.on(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
+			this.bitrixCallDev.on(JNBXCall.Events.OnUsersLimitExceeded, this.__onUsersLimitExceededHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
+			this.bitrixCallDev.on(JNBXCall.Events.muteAllParticipants, this.__onMuteAllParticipantsHandler);
 		}
 
 		removeCallEvents()
@@ -730,6 +741,7 @@
 				this.bitrixCallDev.off(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
+				this.bitrixCallDev.off(JNBXCall.Events.OnUsersLimitExceeded, this.__onUsersLimitExceededHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
 			}
 		}
@@ -1192,6 +1204,37 @@
 			}
 		}
 
+		__onUsersLimitExceeded()
+		{
+			this.log(`__onUsersLimitExceeded`);
+			this.eventEmitter.emit(BX.Call.Event.onUsersLimitExceeded);
+		}
+
+		__onMuteAllParticipants(data)
+		{
+			const type = data.track.type;
+			switch (type)
+			{
+				case clientEvents.audioMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsAudioMuted);
+					break;
+				}
+
+				case clientEvents.videoMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsVideoMuted);
+					break;
+				}
+
+				case clientEvents.screenShareMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsScreenshareMuted);
+					break;
+				}
+			}
+		}
+
 		__onCallMessageReceived(call, callMessage)
 		{
 			let message;
@@ -1211,6 +1254,10 @@
 			{
 				case clientEvents.voiceStarted:
 				{
+					if (message.senderId == this.userId)
+					{
+						this.requestFloor(false);
+					}
 					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStarted, [message.senderId]);
 
 					break;
@@ -1278,6 +1325,48 @@
 				{
 					CallUtil.warn(`scenario log url: ${message.logUrl}`);
 
+					break;
+				}
+
+				case clientEvents.audioMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsAudioMuted);
+					break;
+				}
+
+				case clientEvents.videoMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsVideoMuted);
+					break;
+				}
+
+				case clientEvents.screenShareMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsScreenshareMuted);
+					break;
+				}
+
+				case clientEvents.participantAudioMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onParticipantAudioMuted, [{
+						data: message,
+					}]);
+					break;
+				}
+
+				case clientEvents.participantVideoMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onParticipantVideoMuted, [{
+						data: message,
+					}]);
+					break;
+				}
+
+				case clientEvents.participantScreenshareMutedEvent:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onParticipantScreenshareMuted, [{
+						data: message,
+					}]);
 					break;
 				}
 

@@ -82,7 +82,7 @@ $tabControl->BeginNextTab();
 <?php if (COption::GetOptionString('security', 'session') == 'Y'):?>
 	<tr>
 		<td valign="top" colspan="2" align="left">
-			<?php echo CAdminMessage::ShowMessage(['TYPE' => 'OK', 'MESSAGE' => GetMessage('CLU_SESSION_DB_ON')])?>
+			<?php CAdminMessage::ShowMessage(['TYPE' => 'OK', 'MESSAGE' => GetMessage('CLU_SESSION_DB_ON')])?>
 		</td>
 	</tr>
 	<tr>
@@ -93,7 +93,7 @@ $tabControl->BeginNextTab();
 <?php else:?>
 	<tr>
 		<td valign="top" colspan="2" align="left">
-			<?php echo CAdminMessage::ShowMessage(GetMessage('CLU_SESSION_DB_OFF'))?>
+			<?php CAdminMessage::ShowMessage(GetMessage('CLU_SESSION_DB_OFF'))?>
 		</td>
 	</tr>
 	<?php if (CSecuritySession::CheckSessionId(session_id())):?>
@@ -105,7 +105,7 @@ $tabControl->BeginNextTab();
 	<?php else:?>
 	<tr>
 		<td valign="top" colspan="2" align="left">
-			<?php echo CAdminMessage::ShowMessage(GetMessage('CLU_SESSION_SESSID_WARNING'))?>
+			<?php CAdminMessage::ShowMessage(GetMessage('CLU_SESSION_SESSID_WARNING'))?>
 		</td>
 	</tr>
 	<?php endif;?>

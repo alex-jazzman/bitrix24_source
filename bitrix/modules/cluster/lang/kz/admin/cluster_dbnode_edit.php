@@ -1,0 +1,21 @@
+<?php
+$MESS["CLU_DBNODE_EDIT_ACTIVE"] = "Белсенділік";
+$MESS["CLU_DBNODE_EDIT_ADD_TITLE"] = "Дерекқорға жаңа қосылу";
+$MESS["CLU_DBNODE_EDIT_DB_HOST"] = "Деректер базасына қосылу жолы";
+$MESS["CLU_DBNODE_EDIT_DB_LOGIN"] = "Пайдаланушы";
+$MESS["CLU_DBNODE_EDIT_DB_NAME"] = "Дерекқор";
+$MESS["CLU_DBNODE_EDIT_DB_PASSWORD"] = "Құпиясөз";
+$MESS["CLU_DBNODE_EDIT_DESCRIPTION"] = "Сипаттама";
+$MESS["CLU_DBNODE_EDIT_EDIT_TITLE"] = "Дерекқорға қосылуды редакциялау";
+$MESS["CLU_DBNODE_EDIT_ERROR"] = "Редакциялау үшін қате қосылым көрсетілген.";
+$MESS["CLU_DBNODE_EDIT_ID"] = "ID";
+$MESS["CLU_DBNODE_EDIT_MENU_DELETE"] = "Жою";
+$MESS["CLU_DBNODE_EDIT_MENU_DELETE_CONF"] = "Қосылымды жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CLU_DBNODE_EDIT_MENU_DELETE_TITLE"] = "Қосылымды жою";
+$MESS["CLU_DBNODE_EDIT_MENU_LIST"] = "Тізім";
+$MESS["CLU_DBNODE_EDIT_MENU_LIST_TITLE"] = "Қосылымдар тізімі";
+$MESS["CLU_DBNODE_EDIT_NAME"] = "Атауы";
+$MESS["CLU_DBNODE_EDIT_ORACLE_DB_NAME"] = "Деректер базасына қосылу жолы";
+$MESS["CLU_DBNODE_EDIT_SAVE_ERROR"] = "Дерекқорға қосылуды сақтау қатесі";
+$MESS["CLU_DBNODE_EDIT_TAB"] = "Қосылу";
+$MESS["CLU_DBNODE_EDIT_TAB_TITLE"] = "Дерекқорға қосылуды редакциялау";

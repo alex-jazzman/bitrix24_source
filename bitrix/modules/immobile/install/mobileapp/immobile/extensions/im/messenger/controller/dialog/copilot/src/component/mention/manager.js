@@ -98,7 +98,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 			this.view.textField.on(EventType.dialog.textField.changeState, this.changeTextStateHandler);
 			this.view.textField.on(EventType.dialog.textField.focus, this.onFocusInput);
 			this.view.textField.on(EventType.dialog.textField.blur, this.onBlurInput);
-			this.view.mentionPanel.on('itemTap', this.mentionItemSelectedHandler);
+			this.view.mentionPanel.on(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
 		}
 
 		/**
@@ -116,7 +116,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 			this.view.textField.off(EventType.dialog.textField.changeState, this.changeTextStateHandler);
 			this.view.textField.off(EventType.dialog.textField.focus, this.onFocusInput);
 			this.view.textField.off(EventType.dialog.textField.blur, this.onBlurInput);
-			this.view.mentionPanel.off('itemTap', this.mentionItemSelectedHandler);
+			this.view.mentionPanel.off(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
 		}
 
 		/**
@@ -160,7 +160,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 
 		isHasInputText()
 		{
-			return this.view.textField.getText()?.length;
+			return this.view.textField.getText().length;
 		}
 
 		/**

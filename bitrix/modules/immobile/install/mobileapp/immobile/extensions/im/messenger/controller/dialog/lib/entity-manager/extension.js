@@ -58,8 +58,8 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 
 			try
 			{
-				const { openTaskCreateForm } = await requireLazy('tasks:layout/task/create/opener');
-				openTaskCreateForm(params);
+				const { Entry } = await requireLazy('tasks:entry');
+				Entry.openTaskCreation(params);
 
 				AnalyticsService.getInstance().sendOpenCreateTask(this.dialogId);
 			}

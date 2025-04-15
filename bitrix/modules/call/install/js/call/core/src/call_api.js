@@ -858,77 +858,7 @@ export class Call {
 				this.setLog(`Deleting a track with id ${trackId} from a participant with id ${participantId} failed: ${e}`, LOG_LEVEL.ERROR);
 			}
 		} else if (data?.trackMuted) {
-			const participant = this.#privateProperties.remoteParticipants[data.trackMuted.track.publisher];
-			const trackId = data.trackMuted.track.shortId;
-			if (data.trackMuted.track.publisher == this.#privateProperties.userId)
-			{
-				const track = Object.values(this.#privateProperties.localTracks)?.find(track => track?.sid === trackId);
-				if (track)
-				{
-					if (track.source === MediaStreamsKinds.Camera)
-					{
-						if (!data.trackMuted.muted && track.muted && !this.#privateProperties.mediaMutedBySystem)
-						{
-							this.triggerEvents('PublishSucceed', [track.source]);
-						}
-						else if (!this.#privateProperties.mediaMutedBySystem)
-						{
-							this.triggerEvents('PublishPaused', [track.source]);
-						}
-
-						if (this.#privateProperties.videoQueue)
-						{
-							this.#processVideoQueue();
-						}
-					}
-					else if(track.source === MediaStreamsKinds.Microphone)
-					{
-						this.triggerEvents('PublishPaused', [track.source, data.trackMuted.muted]);
-					}
-				}
-				return;
-			}
-
-			if (!participant) {
-				if (data.trackMuted.track.publisher != this.#privateProperties.userId)
-				{
-					this.setLog(`Got mute signal (${data.trackMuted.muted}) for a non-existent participant with id ${data.trackMuted.track.publisher}`, LOG_LEVEL.WARNING);
-				}
-				return;
-			}
-
-			const track = Object.values(participant.tracks)?.find(track => track?.id === trackId);
-			const awaitedTrack = this.#privateProperties.tracksDataFromSocket[trackId];
-			if (awaitedTrack && !track)
-			{
-				this.#privateProperties.tracksDataFromSocket[trackId].muted = data.trackMuted.muted;
-				this.setLog(`Got mute signal (${data.trackMuted.muted}) for a non-received track with id ${trackId}`, LOG_LEVEL.WARNING);
-				return;
-			}
-			else if (!track)
-			{
-				this.setLog(`Got mute signal (${data.trackMuted.muted}) for a non-existent track with id ${trackId}`, LOG_LEVEL.WARNING);
-				return;
-			}
-
-			if (track.source === MediaStreamsKinds.Microphone)
-			{
-				participant.isMutedAudio = data.trackMuted.muted;
-				const eventName = data.trackMuted.muted
-					? 'RemoteMediaMuted'
-					: 'RemoteMediaUnmuted';
-				this.setLog(`Got mute signal (${data.trackMuted.muted}) for audio from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
-				this.triggerEvents(eventName, [participant, track]);
-			}
-			else if (track.source === MediaStreamsKinds.Camera)
-			{
-				participant.isMutedVideo = data.trackMuted.muted;
-				const eventName = data.trackMuted.muted
-					? 'RemoteMediaRemoved'
-					: 'RemoteMediaAdded';
-				this.setLog(`Got mute signal (${data.trackMuted.muted}) for video from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
-				this.triggerEvents(eventName, [participant, track]);
-			}
+			this.#trackMutedHandler(data.trackMuted);
 		} else if (data?.trickle) {
 			this.#addIceCandidate(data.trickle);
 		} else if (data?.newMessage) {
@@ -1023,8 +953,13 @@ export class Call {
 						leaveInformation: {code: data.leave.code, reason: data.leave.reason}
 					}]);
 			}
+		} else if (data?.allParticipantMuted) {
+			this.#allParticipantMutedHandler(data.allParticipantMuted);
+		} else if (data?.onParticipantMuted) { // task-568199
+			this.#participantMutedHandler(data.onParticipantMuted);
 		}
 	};
+
 	socketOnOpenHandler() {
 		window.addEventListener('unload', this.sendLeaveBound)
 	};
@@ -2100,6 +2035,87 @@ export class Call {
 		this.#sendSignal({ raiseHand: { raised } });
 	}
 
+	turnOffAllParticipansStream(options) {
+		if(options?.data){
+			if(options.data?.typeOfStream){
+
+				switch (options.data.typeOfStream){
+					case 'mic':
+						this.#sendSignal({ muteAllParticipants: {'audioMutedEvent': { 'muted': true }}});
+						this.sendMessage(JSON.stringify({eventName: 'audioMutedEvent' })); // hook for mobile
+						break;
+					case 'cam':
+						this.#sendSignal({ muteAllParticipants: {'videoMutedEvent': { 'muted': true }}});
+						this.sendMessage(JSON.stringify({eventName: 'videoMutedEvent' })); // hook for mobile
+						break;
+					case 'screenshare':
+						this.#sendSignal({ muteAllParticipants: {'screenShareMutedEvent': { 'muted': true }}});
+						this.sendMessage(JSON.stringify({eventName: 'screenShareMutedEvent' })); // hook for mobile
+						break;
+				}
+			} else {
+				this.setLog(`No typeOfStream passed in options in turnOffAllParticipansStream`, LOG_LEVEL.ERROR);
+
+				return;
+			}
+		} else {
+			this.setLog(`No options passed to turnOffAllParticipansStream`, LOG_LEVEL.ERROR);
+
+			return;
+		}
+	}
+
+	turnOffParticipantStream(options) {
+		if(options.typeOfStream){
+			switch (options.typeOfStream){
+				case 'mic':
+					this.#sendSignal({
+						muteParticipant: {
+							'participantID': (options.userId + ''), // must be a String type
+							'audioMutedEvent': { 'muted': true }
+						}
+					});
+					
+					this.sendMessage(JSON.stringify({
+						eventName: 'participantAudioMutedEvent', 
+						userId: (options.userId + ''),
+						fromUserId: (options.fromUserId + '')
+						})); 
+					break;
+				case 'cam':
+					this.#sendSignal({
+						muteParticipant: {
+							'participantID': (options.userId + ''), // must be a String type
+							'videoMutedEvent': { 'muted': true }
+						}
+					});
+					this.sendMessage(JSON.stringify({
+						eventName: 'participantVideoMutedEvent', 
+						userId: (options.userId + ''),
+						fromUserId: (options.fromUserId + '')
+						})); 
+					break;
+				case 'screenshare':
+					this.#sendSignal({
+						muteParticipant: {
+							'participantID': (options.userId + ''), // must be a String type
+							'screenShareMutedEvent': { 'muted': true }
+						}
+					});
+					this.sendMessage(JSON.stringify({
+						eventName: 'participantScreenshareMutedEvent', 
+						userId: (options.userId + ''),
+						fromUserId: (options.fromUserId + '')
+						})); 
+					break;
+			}
+		} else {
+			this.setLog(`No typeOfStream passed in options in turnOffParticipantStream`, LOG_LEVEL.ERROR);
+
+			return;
+		}
+	}
+
 	async getLocalVideo() {
 		if (this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState !== 'live')
 		{
@@ -2882,6 +2898,168 @@ export class Call {
 				}
 			}
 		})
+	}
+
+	#trackMutedHandler(data) {
+		const participant = this.#privateProperties.remoteParticipants[data.track.publisher];
+		const trackId = data.track.shortId;
+		if (data.track.publisher == this.#privateProperties.userId)
+		{
+			const track = Object.values(this.#privateProperties.localTracks)?.find(track => track?.sid === trackId);
+			if (track)
+			{
+				if (track.source === MediaStreamsKinds.Camera)
+				{
+					if (!data.muted && track.muted && !this.#privateProperties.mediaMutedBySystem)
+					{
+						this.triggerEvents('PublishSucceed', [track.source]);
+					}
+					else if (!this.#privateProperties.mediaMutedBySystem)
+					{
+						this.triggerEvents('PublishPaused', [track.source]);
+					}
+
+					if (this.#privateProperties.videoQueue)
+					{
+						this.#processVideoQueue();
+					}
+				}
+				else if(track.source === MediaStreamsKinds.Microphone)
+				{
+					this.triggerEvents('PublishPaused', [track.source, data.muted]);
+				}
+			}
+			return;
+		}
+
+		if (!participant) {
+			if (data.track.publisher != this.#privateProperties.userId)
+			{
+				this.setLog(`Got mute signal (${data.muted}) for a non-existent participant with id ${data.track.publisher}`, LOG_LEVEL.WARNING);
+			}
+			return;
+		}
+
+		const track = Object.values(participant.tracks)?.find(track => track?.id === trackId);
+		const awaitedTrack = this.#privateProperties.tracksDataFromSocket[trackId];
+		if (awaitedTrack && !track)
+		{
+			this.#privateProperties.tracksDataFromSocket[trackId].muted = data.muted;
+			this.setLog(`Got mute signal (${data.muted}) for a non-received track with id ${trackId}`, LOG_LEVEL.WARNING);
+			return;
+		}
+		else if (!track)
+		{
+			this.setLog(`Got mute signal (${data.muted}) for a non-existent track with id ${trackId}`, LOG_LEVEL.WARNING);
+			return;
+		}
+
+		if (track.source === MediaStreamsKinds.Microphone)
+		{
+			this.#microphoneMuteUnmuteHandler({track: track, isMuted: data.muted, participant: participant});
+			this.setLog(`Got mute signal (${data.muted}) for audio from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+		}
+		else if (track.source === MediaStreamsKinds.Camera)
+		{
+			this.#cameraMuteUnmuteHandler({track: track, isMuted: data.muted, participant: participant});
+			this.setLog(`Got mute signal (${data.muted}) for video from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+
+		}
+	}
+
+	#microphoneMuteUnmuteHandler(options) {
+		options.participant.isMutedAudio = options.isMuted;
+
+		const eventName = options.isMuted
+			? 'RemoteMediaMuted'
+			: 'RemoteMediaUnmuted';
+
+		this.triggerEvents(eventName, [options.participant, options.track]);
+	}
+
+	#cameraMuteUnmuteHandler(options) {
+		options.participant.isMutedVideo = options.isMuted;
+
+		const eventName = options.isMuted
+			? 'RemoteMediaRemoved'
+			: 'RemoteMediaAdded';
+
+		this.triggerEvents(eventName, [options.participant, options.track]);
+	}
+
+	#participantMutedHandler(data) {
+		if (data.user_id === data.from_sid) // we not accept mute participant by himself by this method
+		{
+			return;
+		}
+
+		if (data.user_id != this.#privateProperties.userId)
+		{
+			const participant = this.#privateProperties.remoteParticipants[data.user_id];
+
+			if (!participant)
+			{
+				this.setLog(`Got a onParticipantMuted event for non-existent user (user_id: ${data.user_id})`, LOG_LEVEL.WARNING);
+				return;
+			}
+
+			if (data?.track.muted) // tbh always should be in "true"..
+			{
+				if (data.track.type === 0 && participant.audioEnabled)
+				{ // audio
+					const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Microphone);
+
+					this.#microphoneMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+				}
+				else if (data.track.type === 1 && participant.videoEnabled)
+				{ // video
+					const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Camera);
+
+					this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+				}
+			}
+		}
+
+		this.triggerEvents('ParticipantMuted', [data]);
+	}
+
+	#allParticipantMutedHandler(data) {
+		if (data.from_sid == this.#privateProperties.userId)
+		{
+			this.triggerEvents('YouMuteAllParticipants', [data]);
+		} else {
+			if (data?.track.type === 0){
+				this.triggerEvents('AllParticipantsAudioMuted', [data]);
+			} else if (data.track.type === 1){
+				this.triggerEvents('AllParticipantsVideoMuted', [data]);
+			}
+		}
+
+		if (data?.track.muted) // tbh always should be in "true"..
+		{
+			for (let i in this.#privateProperties.remoteParticipants) {
+
+				if (this.#privateProperties.remoteParticipants.hasOwnProperty(i)){
+
+					let  participant = this.#privateProperties.remoteParticipants[i];
+
+					if (participant.userId != data.from_sid){
+						if (data.track.type === 0 && participant.audioEnabled){ // audio
+							const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Microphone);
+
+							this.#microphoneMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+
+						} else if(data.track.type === 1 && participant.videoEnabled){ // video
+							const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Camera);
+
+							this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+						} else if(data.track.type === 2){ // screenshare
+
+						}
+					}
+				}
+			}
+		}
 	}
 
 	#createPeerConnection() {

@@ -188,9 +188,7 @@
 	  var _this3 = this;
 	  babelHelpers.classPrivateFieldGet(this, _checkConnectButton).setState(ui_buttons.ButtonState.WAITING);
 	  return new Promise(function (resolve, reject) {
-	    main_core.ajax.runComponentAction('bitrix:biconnector.externalconnection', 'checkConnection', {
-	      mode: 'class',
-	      signedParameters: babelHelpers.classPrivateFieldGet(_this3, _props).signedParameters,
+	    main_core.ajax.runAction('biconnector.externalsource.source.checkConnectionByData', {
 	      data: {
 	        data: _classPrivateMethodGet(_this3, _getConnectionValues, _getConnectionValues2).call(_this3)
 	      }

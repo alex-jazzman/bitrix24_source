@@ -38,7 +38,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		RestMethod,
 		ComponentCode,
 		NavigationTab,
-		ViewName,
 	} = require('im/messenger/const');
 
 	const core = new ChannelApplication({
@@ -146,14 +145,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.storeManager = this.core.getStoreManager();
 		}
 
-		/**
-		 * @override
-		 */
-		checkChatV2Support()
-		{
-			return true;
-		}
-
 		initRequests()
 		{
 			this.channelInitService.onInit(this.checkRevision.bind(this));
@@ -167,7 +158,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.recent = new ChannelRecent({
 				view: new RecentView({
 					ui: DialogList,
-					viewName: ViewName.recent,
 				}),
 			});
 			await this.recent.init();

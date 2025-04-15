@@ -1,5 +1,6 @@
 import { Event, Loc, Type } from 'main.core';
 import { EventName, Model } from 'booking.const';
+import { RcwAnalytics } from 'booking.lib.analytics';
 import { Step } from './step';
 
 export class ResourceSettingsStep extends Step
@@ -22,7 +23,7 @@ export class ResourceSettingsStep extends Step
 
 	async next(): Promise<void>
 	{
-		const store = this.getStore();
+		const store = this.store;
 
 		if (!store.state[Model.ResourceCreationWizard].resource.name)
 		{
@@ -45,7 +46,8 @@ export class ResourceSettingsStep extends Step
 			return;
 		}
 
-		return super.next();
+		await super.next();
+		RcwAnalytics.sendAddResourceStep2();
 	}
 
 	async back()

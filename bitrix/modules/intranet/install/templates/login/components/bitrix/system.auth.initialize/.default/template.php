@@ -76,10 +76,15 @@ $APPLICATION->SetTitle(GetMessage("CT_MAIN_REG_INIT_TITLE"));?>
 		});
 	</script>
 <?elseif(!$USER->IsAuthorized()):?>
-	<br/>
-	<div class="login-text">
-	<?echo str_replace("#LINK#", "/", GetMessage("CT_MAIN_REG_INIT_AUTH_LINK"));?>
-	</div>
+
+	<?php if (in_array('E30', $arResult["MESSAGE_CODE"])): ?>
+		<?php $GLOBALS["APPLICATION"]->AuthForm(\Bitrix\Main\Localization\Loc::getMessage('INTRANET_INIT_USER_ALREADY_EXISTS')); ?>
+	<?php else: ?>
+			<br/>
+			<div class="login-text">
+				<?echo str_replace("#LINK#", "/", GetMessage("CT_MAIN_REG_INIT_AUTH_LINK"));?>
+			</div>
+	<?php endif;?>
 <?endif?>
 
 

@@ -1,8 +1,8 @@
 <?
-use \Bitrix\Crm\Order\Permissions,
-	\Bitrix\Main\Localization\Loc,
+use \Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\Loader,
 	\Bitrix\Crm\Order;
+use Bitrix\Crm\Service\Container;
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -15,9 +15,8 @@ if(!Loader::IncludeModule('crm') || !Loader::IncludeModule('sale'))
 }
 
 global $APPLICATION;
-$userPermissions =  \CCrmPerms::GetCurrentUserPermissions();
 
-if(!CCrmPerms::IsAuthorized() || !Permissions\Order::checkReadPermission(0, $userPermissions))
+if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Order))
 {
 	return;
 }

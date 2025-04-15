@@ -35,6 +35,7 @@ $MESS["TOP_MENU_MARKETING"] = "Маркетинг";
 $MESS["TOP_MENU_MARKETING2"] = "Маркетинг";
 $MESS["TOP_MENU_MARKETPLACE_2"] = "Застосунки";
 $MESS["TOP_MENU_MARKETPLACE_3"] = "Маркет";
+$MESS["TOP_MENU_MARKETPLACE_3_MSGVER_1"] = "Маркет";
 $MESS["TOP_MENU_ONEC"] = "1С + CRM Бітрікс24";
 $MESS["TOP_MENU_OPENLINES"] = "Відкриті лінії";
 $MESS["TOP_MENU_PHOTO"] = "Фотографії";

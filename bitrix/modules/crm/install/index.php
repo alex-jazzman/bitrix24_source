@@ -1665,6 +1665,30 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
 			'onBookingDelete'
 		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onWaitListItemAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemAdd'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onWaitListItemUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemUpdate'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onWaitListItemDelete',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemDelete'
+		);
 	}
 
 	private function installAgents()
@@ -2499,6 +2523,30 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
 			'onBookingDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onWaitListItemAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemAdd'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onWaitListItemUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemUpdate'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onWaitListItemDelete',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemDelete'
 		);
 	}
 

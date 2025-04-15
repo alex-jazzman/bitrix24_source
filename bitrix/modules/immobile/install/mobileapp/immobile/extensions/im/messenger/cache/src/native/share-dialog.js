@@ -8,7 +8,6 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 	const { throttle } = require('utils/function');
 	const { utils } = require('native/im');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { FeatureFlag } = require('im/messenger/const/feature-flag');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ComponentCode } = require('im/messenger/const');
 
@@ -24,13 +23,6 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 			recentItemList = clone(recentItemList);
 
 			return new Promise((resolve, reject) => {
-				if (!FeatureFlag.native.imUtilsModuleSupported)
-				{
-					reject(new Error('imUtilsModule not supported by the current app version'));
-
-					return;
-				}
-
 				const componentCode = MessengerParams.getComponentCode();
 				if (componentCode === ComponentCode.imCopilotMessenger)
 				{

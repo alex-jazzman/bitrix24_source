@@ -15,6 +15,7 @@ $MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT"] = "У кожній галузі
 $MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT_2"] = "У кожній категорії зібрані ролі CoPilot, пов'язані з цією сферою діяльності. Це допоможе вам витрачати менше часу на складання запитів і спростить роботу з CoPilot.";
 $MESS["AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION"] = "Заповніть форму зворотного зв'язку, якщо не знайшли відповідної ролі.";
 $MESS["AI_COPILOT_ROLES_HELP_ITEM_TITLE"] = "Розкажіть нам про свої побажання";
+$MESS["AI_COPILOT_ROLES_LIBRARY_COLLABER_ACCESS_DENIED"] = "Бібліотека ролей доступна лише для співробітників компанії.";
 $MESS["AI_COPILOT_ROLES_LIBRARY_TITLE"] = "Бібліотека ролей";
 $MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER"] = "Ролі";
 $MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER_HINT"] = "Роль допомагає CoPilot відповісти на запит з урахуванням особливостей професії. Так ви отримаєте точнішу відповідь і не витратите багато часу на формулювання запиту.";

@@ -10,7 +10,7 @@ jn.define('intranet/invite-new/src/analytics', (require, exports, module) => {
 	{
 		constructor(props)
 		{
-			this.analytics = this.getCommonAnalyticsData(props.analytics);
+			this.analytics = this.getCommonAnalyticsData(props?.analytics);
 		}
 
 		setDepartmentParam(isDepartmentSelected)
@@ -129,5 +129,6 @@ jn.define('intranet/invite-new/src/analytics', (require, exports, module) => {
 
 	module.exports = {
 		IntranetInviteAnalytics,
+		AnalyticsEvent,
 	};
 });

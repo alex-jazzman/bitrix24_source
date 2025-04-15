@@ -24,7 +24,6 @@
 	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
-	const { Feature } = require('feature');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CrmNavigator } = require('crm/navigator');
 	const { qrauth } = require('qrauth/utils');
@@ -349,10 +348,8 @@
 				},
 				TabView({
 					style: {
-						height: Feature.isAirStyleSupported() ? 50 : 44,
-						backgroundColor: Feature.isAirStyleSupported()
-							? AppTheme.realColors.bgNavigation
-							: AppTheme.colors.bgNavigation,
+						height: 50,
+						backgroundColor: AppTheme.realColors.bgNavigation,
 					},
 					ref: (ref) => {
 						this.tabViewRef = ref;

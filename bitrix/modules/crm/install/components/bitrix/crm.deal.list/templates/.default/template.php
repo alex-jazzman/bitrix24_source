@@ -46,6 +46,7 @@ Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -390,45 +391,28 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 			{
 				\Bitrix\Main\UI\Extension::load(['bp_starter']);
 
-				$arActions[] = array('SEPARATOR' => true);
-				if (isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
-					$arActions[] = array(
-						'TITLE' => GetMessage('CRM_DEAL_BIZPROC_TITLE'),
-						'TEXT' => GetMessage('CRM_DEAL_BIZPROC'),
-						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arDeal['PATH_TO_BIZPROC_LIST'])."');"
-					);
+				$arActions[] = ['SEPARATOR' => true];
 
-				if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+				$toolsManager = Container::getInstance()->getIntranetToolsManager();
+				if ($toolsManager->checkBizprocAvailability())
 				{
-					$starterConfig = \Bitrix\Main\Web\Json::encode(
-						CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Deal, $arDeal['ID'])
-					);
-					$reloadGridAction = 'function(){BX.Main.gridManager.reload(\'' . CUtil::JSEscape($arResult['GRID_ID']) . '\');}';
-					$arActions[] = [
-						'TITLE' => Loc::getMessage('CRM_DEAL_BIZPROC_LIST_TITLE'),
-						'TEXT' => Loc::getMessage('CRM_DEAL_BIZPROC_LIST'),
-						'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
-					];
-				}
-				elseif (!empty($arDeal['BIZPROC_LIST']))
-				{
-					$arBizprocList = [];
-					foreach ($arDeal['BIZPROC_LIST'] as $arBizproc)
-					{
-						$arBizprocList[] = array(
-							'TITLE' => $arBizproc['DESCRIPTION'],
-							'TEXT' => $arBizproc['NAME'],
-							'ONCLICK' => isset($arBizproc['ONCLICK']) ?
-								$arBizproc['ONCLICK']
-								: "jsUtils.Redirect([], '".CUtil::JSEscape($arBizproc['PATH_TO_BIZPROC_START'])."');"
-						);
-					}
-					$arActions[] = array(
-						'TITLE' => GetMessage('CRM_DEAL_BIZPROC_LIST_TITLE'),
-						'TEXT' => GetMessage('CRM_DEAL_BIZPROC_LIST'),
-						'MENU' => $arBizprocList
+					$onBizprocListClick = CCrmBizProcHelper::getShowTemplatesJsAction(
+						CCrmOwnerType::Deal,
+						$arDeal['ID'],
+						'function(){BX.Main.gridManager.reload(\'' . CUtil::JSEscape($arResult['GRID_ID']) . '\');}'
 					);
 				}
+				else
+				{
+					$availabilityManager = AvailabilityManager::getInstance();
+					$onBizprocListClick = $availabilityManager->getBizprocAvailabilityLock();
+				}
+
+				$arActions[] = [
+					'TITLE' => Loc::getMessage('CRM_DEAL_BIZPROC_LIST_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_DEAL_BIZPROC_LIST'),
+					'ONCLICK' => $onBizprocListClick,
+				];
 			}
 		}
 	}
@@ -682,12 +666,13 @@ $APPLICATION->IncludeComponent('bitrix:main.user.link',
 
 if ($arResult['ENABLE_TOOLBAR'])
 {
-	$addButton =array(
-		'TEXT' => GetMessage('CRM_DEAL_LIST_ADD_SHORT'),
-		'TITLE' => GetMessage('CRM_DEAL_LIST_ADD'),
+	$addButton = [
+		'TEXT' => Loc::getMessage('CRM_DEAL_LIST_NEW_DEAL'),
+		'TITLE' => Loc::getMessage('CRM_DEAL_LIST_NEW_DEAL'),
 		'LINK' => $arResult['PATH_TO_DEAL_ADD'],
-		'ICON' => 'btn-new'
-	);
+		'SQUARE' => true,
+		'HIGHLIGHT' => true,
+	];
 
 	$urlParams = [];
 	if (isset($arResult['DEAL_ADD_URL_PARAMS']) && is_array($arResult['DEAL_ADD_URL_PARAMS']))
@@ -729,12 +714,48 @@ if ($arResult['ENABLE_TOOLBAR'])
 		unset($addButton['LINK']);
 	}
 
+	$linkButton = null;
+	if ($arParams['PARENT_ENTITY_TYPE_ID'] && $arParams['PARENT_ENTITY_ID'])
+	{
+		$relationCode = $arParams['PARENT_ENTITY_TYPE_ID'] . '-' . $arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Deal;
+		$targetId = 'relation-button-' . $relationCode;
+		$linkButton = [
+			'ATTRIBUTES' => [
+				'ID' => $targetId
+			],
+			'TEXT' => Loc::getMessage('CRM_DEAL_LIST_LINK_DEAL'),
+			'TITLE' => Loc::getMessage('CRM_DEAL_LIST_LINK_DEAL'),
+			'SQUARE' => true,
+			'ONCLICK' => sprintf(
+				<<<js
+(function() {
+	const selector = BX.Crm.Binder.Manager.Instance.createRelatedSelector(
+		'%s',
+		'%s'
+	);
+	if (selector)
+	{
+		selector.show();
+	}
+})()
+js,
+				\CUtil::JSEscape('relation-' . $relationCode),
+				\CUtil::JSEscape($targetId),
+			),
+		];
+	}
+
+	$buttons = [$addButton];
+	if ($linkButton)
+	{
+		$buttons[] = $linkButton;
+	}
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
 			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => array($addButton)
+			'BUTTONS' => $buttons,
 		),
 		$component,
 		array('HIDE_ICONS' => 'Y')
@@ -925,6 +946,15 @@ $APPLICATION->IncludeComponent(
 			BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
 				<?=$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'];?>
 			});
+			<?php endif;?>
+
+			<?php if (isset($arParams['PARENT_ENTITY_TYPE_ID'])):?>
+			BX.Crm.Binder.Manager.Instance.initializeBinder(
+				<?=$arParams['PARENT_ENTITY_TYPE_ID']?>,
+				<?=$arParams['PARENT_ENTITY_ID']?>,
+				<?=\CCrmOwnerType::Deal?>,
+				'<?=CUtil::JSEscape($arResult['GRID_ID'])?>'
+			);
 			<?php endif;?>
 		}
 	);

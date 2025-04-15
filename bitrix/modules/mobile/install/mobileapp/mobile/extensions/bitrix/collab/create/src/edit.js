@@ -23,8 +23,22 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 	const CollabSettingsItem = {
 		PERMISSIONS: 'permissions',
 		SECURITY: 'security',
+		TASK_PERMISSIONS: 'taskPermissions',
 	};
 
+	/**
+	 * @typedef {Object} CollabCreateEditProps
+	 * @property {string} testId
+	 * @property {string} name
+	 * @property {string} description
+	 * @property {string} image
+	 * @property {boolean} isEditMode
+	 * @property {function} onChange
+	 * @property {function} onCreateButtonClick
+	 * @property {function} onSettingsItemClick
+
+	 * @class CollabCreateEdit
+	 */
 	class CollabCreateEdit extends LayoutComponent
 	{
 		constructor(props)
@@ -65,7 +79,8 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 			this.#initializeState(props);
 		}
 
-		#initializeState = (props) => {
+		#initializeState(props)
+		{
 			this.state = {
 				name: props.name ?? '',
 				isCollabNameExists: null,
@@ -73,7 +88,7 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 				image: props.image ?? null,
 				pending: false,
 			};
-		};
+		}
 
 		render()
 		{
@@ -83,7 +98,6 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 					resizableByKeyboard: true,
 					footer: this.#renderSaveButton(),
 					onClick: this.#hideKeyboard,
-					onPan: this.#hideKeyboard,
 				},
 				this.#renderEditableFields(),
 			);
@@ -188,7 +202,6 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 						style: {
 							height: 60,
 							flex: 1,
-							paddingTop: Indent.M.getValue(),
 							paddingLeft: Indent.XL2.getValue(),
 						},
 					},
@@ -264,8 +277,14 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 					items: [
 						{
 							id: CollabSettingsItem.PERMISSIONS,
-							title: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE'),
-							subtitle: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_SUBTITLE'),
+							title: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE_MSGVER_1'),
+							subtitle: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_SUBTITLE_MSGVER_1'),
+							design: SettingSelectorListItemDesign.OPENER,
+						},
+						{
+							id: CollabSettingsItem.TASK_PERMISSIONS,
+							title: Loc.getMessage('M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_TITLE'),
+							subtitle: Loc.getMessage('M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_SUBTITLE'),
 							design: SettingSelectorListItemDesign.OPENER,
 						},
 						/* {
@@ -458,6 +477,10 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 	}
 
 	module.exports = {
+		/**
+		 * @param {CollabCreateEditProps} props
+		 * @returns {CollabCreateEdit}
+		 */
 		CollabCreateEdit: (props) => new CollabCreateEdit(props),
 		CollabSettingsItem,
 	};

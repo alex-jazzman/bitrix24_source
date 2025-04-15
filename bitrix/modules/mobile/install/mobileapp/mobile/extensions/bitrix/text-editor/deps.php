@@ -5,6 +5,8 @@ return [
 		'apptheme',
 		'assets/icons',
 		'bbcode/ast-processor',
+		'bbcode/formatter',
+		'bbcode/formatter/shared',
 		'bbcode/parser',
 		'bottom-sheet',
 		'event-emitter',

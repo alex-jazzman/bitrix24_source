@@ -426,7 +426,23 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_COLLAB)=([^&]+)(&IM_MESSAGE=([^&]+))?/i
+					/\?IM_COLLAB\b$/i,
+				],
+				handler: function(event, link)
+				{
+					if (!window.BXIM)
+					{
+						return;
+					}
+
+					BX.Messenger.Public.openCollab();
+
+					event.preventDefault();
+				}
+			},
+			{
+				condition: [
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_COLLAB)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
 				],
 				handler: function(event, link)
 				{
@@ -438,6 +454,7 @@
 					var type = link.matches[1];
 					var dialogId = decodeURI(link.matches[2]);
 					const messageId = link.matches[4] ? Number(link.matches[4]) : 0;
+					const botContext = link.matches[5] ?? '';
 
 					if (type === "IM_HISTORY")
 					{
@@ -453,7 +470,21 @@
 					}
 					else if (type === 'IM_COLLAB')
 					{
-						BX.Messenger.Public.openCollab();
+						BX.Messenger.Public.openCollab(dialogId);
+					}
+					else if (botContext.length !== 0)
+					{
+						let decodedContext = {};
+						try
+						{
+							decodedContext = JSON.parse(decodeURIComponent(botContext));
+						}
+						catch (error)
+						{
+							console.error('Intranet bindings: incorrect bot context', error);
+						}
+
+						BX.Messenger.Public.openChatWithBotContext(dialogId, decodedContext);
 					}
 					else
 					{
@@ -771,16 +802,6 @@
 			},
 			{
 				condition: [
-					new RegExp('/bi/dashboard/detail/(\\w+)/'),
-				],
-				options: {
-					cacheable: false,
-					customLeftBoundary: 0,
-					loader: 'report:analytics',
-				},
-			},
-			{
-				condition: [
 					/^\/bitrix\/components\/bitrix\/biconnector.externalconnection\/slider.php\?sourceId=\d+/,
 				],
 				options: {
@@ -1040,7 +1061,7 @@
 						return;
 					}
 					event.preventDefault();
-					BX.Runtime.loadExtension('calendar.util').then(() => 
+					BX.Runtime.loadExtension('calendar.util').then(() =>
 						BX.Calendar.Util.downloadIcsFileByEventId(eventId)
 					);
 				},
@@ -1317,6 +1338,8 @@
 				condition: [
 					new RegExp(siteDir + "call/[0-9]+/($|\\?)", "i"),
 					new RegExp("/call/($|\\?)", "i"),
+					new RegExp("/call/detail/[0-9]+", "i"),
+					new RegExp("/extranet/call/detail/[0-9]+", "i"),
 				],
 				handler: function(event, link)
 				{

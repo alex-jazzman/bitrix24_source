@@ -210,8 +210,8 @@ $MESS["INTRANET_USTAT_TELLABOUT_IM_TEXT"] = "Коллеги, каким инст
 [IMG]https://www.bitrix24.ru/images/ustat/ru/im8.png[/IMG]
 
 [LIST]
-[*]Для MacOS  [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
-[*]Для Windows [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
+[*]Для MacOS  [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
+[*]Для Windows [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
 [/LIST]
 
 Резюмируя вышесказанное: у нас есть инструмент, способный заменить и объединить разнообразные мессенджеры, внутреннюю телефонию и даже СМС, которыми мы до сих пор пользовались. С помощью чата и видеозвонков в Битрикс 24 мы можем общаться с коллегами в любом удобном режиме – один на один или группой, текстовыми сообщениями или голосом.
@@ -279,8 +279,8 @@ $MESS["INTRANET_USTAT_TELLABOUT_DISK_TEXT_MSGVER_1"] = "Как сейчас пр
 
 Десктоп-приложение можно скачать с сайта bitrix24.ru:
 [LIST]
-[*]Для MacOS  [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
-[*]Для Windows [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
+[*]Для MacOS  [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
+[*]Для Windows [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
 [/LIST]
 
 Вам надо просто назначить привычную папку с документами на вашем компьютере как папку с документами для Битрикс24. Все остальное сделает программа: сама загрузит файлы на портал и будет отслеживать изменение в файлах и заменять файлы при необходимости.

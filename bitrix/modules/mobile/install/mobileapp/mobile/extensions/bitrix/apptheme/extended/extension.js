@@ -5,6 +5,8 @@ jn.define('apptheme/extended', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { transparent } = require('utils/color');
 	const { colors } = require('apptheme/list');
+	const { Theme } = require('apptheme/extended/src/theme-enum');
+	const { AppTheme: NativeAppTheme } = require('native/apptheme');
 
 	AppTheme.extend('shadow', {
 		Primary: [
@@ -19,5 +21,15 @@ jn.define('apptheme/extended', (require, exports, module) => {
 	 */
 	AppTheme.getColorByThemeId = (themeId = 'light') => colors[themeId];
 
-	module.exports = { AppTheme };
+	/**
+	 *
+	 * @param {'light' | 'dark' | 'newlight' | 'newdark'} id
+	 */
+	AppTheme.setId = (id) => {
+		const themeId = id.startsWith('new') ? id : `new${id}`;
+
+		NativeAppTheme.setId(themeId);
+	};
+
+	module.exports = { AppTheme, Theme };
 });

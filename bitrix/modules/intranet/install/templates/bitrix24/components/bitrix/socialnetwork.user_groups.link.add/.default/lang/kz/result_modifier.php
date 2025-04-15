@@ -1,0 +1,14 @@
+<?php
+$MESS["SONET_C36_FILTER_LIST_YES"] = "Иә";
+$MESS["SONET_C36_T_FILTER_CLOSED"] = "Мұрағаттық";
+$MESS["SONET_C36_T_FILTER_EXTRANET"] = "Экстранет";
+$MESS["SONET_C36_T_FILTER_FAVORITES"] = "Таңдаулылар";
+$MESS["SONET_C36_T_FILTER_LANDING_MSGVER_1"] = "Сыртқы жарияланымдар үшін";
+$MESS["SONET_C36_T_FILTER_MEMBER"] = "Қатысушы";
+$MESS["SONET_C36_T_FILTER_NAME"] = "Атауы";
+$MESS["SONET_C36_T_FILTER_OWNER"] = "Иесі";
+$MESS["SONET_C36_T_FILTER_OWNER_INTRANET"] = "Иесі / Басшысы";
+$MESS["SONET_C36_T_FILTER_PROJECT"] = "Жоба";
+$MESS["SONET_C36_T_FILTER_PROJECT_DATE_FINISH"] = "Жобаның аяқталуы";
+$MESS["SONET_C36_T_FILTER_PROJECT_DATE_START"] = "Жобаның басталуы";
+$MESS["SONET_C36_T_FILTER_TAG"] = "Тег";

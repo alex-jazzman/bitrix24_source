@@ -31,8 +31,15 @@ jn.define('statemanager/redux/store', (require, exports, module) => {
 
 	const store = configureStore({
 		reducer,
-		// eslint-disable-next-line unicorn/prefer-spread
-		middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(middlewares),
+		middleware: (getDefaultMiddleware) => {
+			return [
+				...getDefaultMiddleware({
+					immutableCheck: isBeta,
+					serializableCheck: isBeta,
+				}),
+				...middlewares,
+			];
+		},
 		enhancers: [batchedSubscribe(debounceNotify)],
 		devTools: isBeta,
 	});

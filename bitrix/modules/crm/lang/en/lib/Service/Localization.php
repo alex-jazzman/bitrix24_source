@@ -128,6 +128,7 @@ $MESS["CRM_QUOTE_TITLE_PLACEHOLDER_MSGVER_1"] = "Estimate ##ID#";
 $MESS["CRM_SMART_INVOICE_ADD_HINT"] = "You do not have permission to create invoices. Please contact your Bitrix24 administrator or person in charge of the CRM.";
 $MESS["CRM_SMART_INVOICE_TITLE"] = "Invoice ##NUMBER# of #BEGINDATE#";
 $MESS["CRM_SMART_INVOICE_TITLE_PLACEHOLDER"] = "Invoice ##ID#";
+$MESS["CRM_STAGE_UPDATE_LOADING_NOTIFICATION_MESSAGE"] = "Move to stage <b>#stage#</b> is in progress.";
 $MESS["CRM_TYPE_CATEGORY_ACCESS_DENIED"] = "Access to pipeline was denied";
 $MESS["CRM_TYPE_CATEGORY_ADD_ERROR_SYSTEM"] = "Cannot add a system pipeline";
 $MESS["CRM_TYPE_CATEGORY_DEFAULT_NAME"] = "New pipeline";

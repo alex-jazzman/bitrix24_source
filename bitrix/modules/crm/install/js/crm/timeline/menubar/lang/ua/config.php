@@ -1,4 +1,8 @@
 <?php
+$MESS["CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TEXT"] = "У вашому Бітрікс24 вже налаштований Онлайн-запис, ви можете просто зараз записувати клієнтів прямо з угоди на послуги, оренду або доставлення.";
+$MESS["CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TITLE"] = "Усе готово до роботи";
+$MESS["CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TEXT"] = "Записуйте клієнтів прямо з угоди на послуги, оренду або доставлення.";
+$MESS["CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TITLE"] = "Онлайн-запис у CRM";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON"] = "Скасувати";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS"] = "Канали комунікації";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS"] = "Як це працює?";

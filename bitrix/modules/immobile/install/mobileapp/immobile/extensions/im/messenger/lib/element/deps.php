@@ -56,6 +56,7 @@ return [
 		'./src/recent/item/user/collaber',
 		'./src/recent/item/user/invited',
 		'./src/recent/item/user/network',
+		'./src/recent/const/test-id',
 		'./src/dialog/message/element/attach/attach',
 		'./src/dialog/message/element/keyboard/keyboard',
 		'./src/dialog/message/element/audio/audio',

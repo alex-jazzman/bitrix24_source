@@ -125,8 +125,6 @@ else
 $APPLICATION->SetTitle(is_array($server) ? Loc::getMessage('CLU_REDIS_EDIT_EDIT_TITLE') : Loc::getMessage('CLU_REDIS_EDIT_NEW_TITLE'));
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 
-$arRedisServers = CClusterRedis::loadConfig();
-
 $aMenu = [[
 	'TEXT' => Loc::getMessage('CLU_REDIS_EDIT_MENU_LIST'),
 	'TITLE' => Loc::getMessage('CLU_REDIS_EDIT_MENU_LIST_TITLE'),

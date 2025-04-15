@@ -8,6 +8,27 @@ jn.define('disk/file-grid/folder-files', (require, exports, module) => {
 
 	class FolderFilesGrid extends BaseFileGrid
 	{
+		constructor(props)
+		{
+			super(props);
+
+			this.scrollToItemId = props.scrollToItemId;
+		}
+
+		onListRef = (ref) => {
+			if (ref)
+			{
+				this.stateFulListRef = ref;
+				if (this.scrollToItemId)
+				{
+					setTimeout(() => {
+						void this.scrollToFirstOf([this.scrollToItemId], true, true, false);
+						this.scrollToItemId = null;
+					}, 500);
+				}
+			}
+		};
+
 		getId()
 		{
 			return 'FolderFilesGrid';

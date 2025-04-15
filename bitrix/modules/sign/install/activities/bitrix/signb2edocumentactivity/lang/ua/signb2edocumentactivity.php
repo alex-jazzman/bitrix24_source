@@ -1,0 +1,27 @@
+<?php
+$MESS["SIGN_ACTIVITIES_IS_SUBSCRIPTION_ENABLED"] = "Чекати завершення бізнес-процесу";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_CREATE_TEMPLATE"] = "Створити новий";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EDITOR"] = "Хто заповнюватиме";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EMPLOYEE"] = "Співробітники, які будуть підписувати документ";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_COPY_FAILED"] = "Не вдалося створити копію документа.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_EMPLOYEE_NOT_SET"] = "Виберіть співробітників, які підписуватимуть документ.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_EMPTY_TEMPLATE_ID"] = "Не вибрано шаблон документа.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_ID"] = "Не вдалося визначити ID вихідного документа.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_TYPE"] = "Не вдалося визначити тип вихідного документа.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_TEMPLATE_TYPE"] = "Неправильний тип шаблону документа.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_MAX_REVIEWER_LIMIT_EXCEEDED"] = "Можна додати максимум стільки погоджувачів: #LIMIT#.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_MEMBERS_NOT_SET"] = "Не вдалося сформувати список співробітників, які підписуватимуть документ.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_TEMPLATE_NOT_FOUND"] = "Шаблон документа не знайдено.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNABLE_TO_CREATE_DOC"] = "Не вдалося створити документ.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNABLE_TO_CREATE_DOC_ACTIVITY"] = "Не вдалося створити Справу в картці документа.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNABLE_TO_CREATE_DOC_RELATION"] = "Не вдалося створити зв'язок для документа.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNAVAILABLE"] = "Робот недоступний.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UPDATE_FAILED"] = "Не вдалося оновити документ.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_INVALID_EVENT_TYPE"] = "Неправильний тип події.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_REPRESENTATIVE"] = "Хто підписуватиме від імені компанії";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_REVIEWER"] = "Хто погоджуватиме";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ROBOT_ROLE_DEPUTY_HEAD_TITLE"] = "Заступник керівника відділу";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ROBOT_ROLE_HEAD_TITLE"] = "Керівник відділу";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ROBOT_TITLE"] = "Підписати документ зі співробітником";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_TEMPLATE_ID"] = "Додайте готовий шаблон документа або створіть новий";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_WAITING_FOR_SIGN"] = "Процес очікує на завершення підписання.";

@@ -741,6 +741,10 @@ a.crm-timeline__card-title:hover {
 	background-color: var(--ui-color-palette-orange-20, #fff1d6);
 }
 
+.crm-timeline__card-logo.--pale-blue {
+	background-color: rgba(135, 186, 202, 0.3);
+}
+
 .crm-timeline__card-logo_icon.--custom-bg > i{
 	-webkit-mask-image: none;
 	        mask-image: none;
@@ -1209,6 +1213,13 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__card-logo_add-icon.--icon-comment > i {
 	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='30' height='30' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.874 7.664a3.75 3.75 0 00-3.75 3.75v7.217a3.75 3.75 0 003.75 3.75H9.4v2.78c0 .785.955 1.173 1.503.61l3.293-3.39h6.97a3.75 3.75 0 003.75-3.75v-7.217a3.75 3.75 0 00-3.75-3.75H8.875zm-.49 4.552c0-.588.476-1.065 1.064-1.065h8.989a1.065 1.065 0 010 2.129H9.448a1.064 1.064 0 01-1.064-1.064zm1.064 3.162a1.064 1.064 0 000 2.13h8.989a1.064 1.064 0 100-2.13H9.448z' fill='%232FC6F6'/%3E%3C/svg%3E");
 	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='30' height='30' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.874 7.664a3.75 3.75 0 00-3.75 3.75v7.217a3.75 3.75 0 003.75 3.75H9.4v2.78c0 .785.955 1.173 1.503.61l3.293-3.39h6.97a3.75 3.75 0 003.75-3.75v-7.217a3.75 3.75 0 00-3.75-3.75H8.875zm-.49 4.552c0-.588.476-1.065 1.064-1.065h8.989a1.065 1.065 0 010 2.129H9.448a1.064 1.064 0 01-1.064-1.064zm1.064 3.162a1.064 1.064 0 000 2.13h8.989a1.064 1.064 0 100-2.13H9.448z' fill='%232FC6F6'/%3E%3C/svg%3E");
+}
+
+.crm-timeline__card-logo_icon.--booking-wait-list-item > i {
+	background-color: transparent;
+	-webkit-mask-image: none;
+	        mask-image: none;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='81' height='80' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M65.5 22a5 5 0 00-5-5h-40a5 5 0 00-5 5v38a5 5 0 005 5h40a5 5 0 005-5V22z' fill='%2387BACA'/%3E%3Crect x='64.5' y='64' width='48' height='47' rx='4' transform='rotate(180 64.5 64)' fill='%23fff'/%3E%3Cpath d='M65.5 20.33A6.33 6.33 0 0059.17 14H21.83a6.33 6.33 0 00-6.33 6.33V23h50v-2.67z' fill='%2387BACA'/%3E%3Cellipse opacity='.5' cx='1.892' cy='1.903' rx='1.892' ry='1.903' transform='matrix(-1 0 0 1 51.985 17)' fill='%23F9FAFB'/%3E%3Cellipse opacity='.5' cx='1.892' cy='1.903' rx='1.892' ry='1.903' transform='matrix(-1 0 0 1 32.2 17)' fill='%23F9FAFB'/%3E%3Cpath opacity='.161' fill='%2300789E' d='M65.5 23h-50v1h50z'/%3E%3Crect opacity='.6' x='23.5' y='29' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect opacity='.6' x='23.5' y='38' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect opacity='.6' x='23.5' y='47' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect opacity='.6' x='32.5' y='29' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect opacity='.6' x='32.5' y='38' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect opacity='.6' x='32.5' y='47' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect opacity='.6' x='41.5' y='29' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect opacity='.6' x='41.5' y='38' width='7' height='7' rx='2' fill='%2387BACA'/%3E%3Crect x='50.5' y='29' width='7' height='7' rx='2' fill='%23DFE0E3'/%3E%3Crect x='50.5' y='38' width='7' height='7' rx='2' fill='%23DFE0E3'/%3E%3C/svg%3E");
 }
 
 .crm-timeline__client-mark {

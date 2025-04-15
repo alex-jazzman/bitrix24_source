@@ -81,12 +81,14 @@ jn.define('navigator/more-tab', (require, exports, module) => {
 
 		async onInviteNotification()
 		{
-			const { openIntranetInviteWidget } = await requireLazy('intranet:invite-opener-new') || {};
-			if (openIntranetInviteWidget)
+			const { openIntranetInviteWidget, AnalyticsEvent } = await requireLazy('intranet:invite-opener-new') || {};
+			if (openIntranetInviteWidget && AnalyticsEvent)
 			{
 				this.makeTabActive();
 
-				openIntranetInviteWidget({});
+				openIntranetInviteWidget({
+					analytics: new AnalyticsEvent().setSection('marketing_push'),
+				});
 			}
 			else
 			{

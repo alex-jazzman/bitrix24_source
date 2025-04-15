@@ -9,14 +9,13 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 	const { parser } = require('im/messenger/lib/parser');
 	const { DialogConverter } = require('im/messenger/lib/converter');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { isOnline } = require('device/connection');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--pin-manager')
+	const logger = LoggerManager.getInstance().getLogger('dialog--pin-manager');
 
 	const ButtonType = {
 		delete: 'delete',
@@ -75,11 +74,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 
 		subscribeStoreEvents()
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				return;
-			}
-
 			serviceLocator.get('core').getStoreManager()
 				.on('messagesModel/pinModel/setChatCollection', this.onSetChatCollection)
 				.on('messagesModel/pinModel/add', this.onAddPin)
@@ -93,11 +87,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 
 		unsubscribeStoreEvents()
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				return;
-			}
-
 			serviceLocator.get('core').getStoreManager()
 				.off('messagesModel/pinModel/setChatCollection', this.onSetChatCollection)
 				.off('messagesModel/pinModel/add', this.onAddPin)
@@ -114,11 +103,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 
 		subscribeViewEvents()
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				return;
-			}
-
 			this.locator.get('view').pinPanel.on(EventType.dialog.pinPanel.buttonTap, this.onButtonTap);
 			this.locator.get('view').pinPanel.on(EventType.dialog.pinPanel.itemTap, this.onPinPanelTap);
 		}
@@ -164,11 +148,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 
 		getPinPanelParams()
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				return null;
-			}
-
 			const lastPin = this.getLastPin();
 			if (!lastPin)
 			{
@@ -302,11 +281,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 
 		showDiscussionMessage(messageId)
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				return;
-			}
-
 			setTimeout(() => {
 				// timeout is necessary because the messages do not have time to be processed by the native
 				this.discussionMessageId = messageId;

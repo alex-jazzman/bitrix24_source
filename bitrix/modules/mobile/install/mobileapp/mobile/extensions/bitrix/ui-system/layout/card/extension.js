@@ -121,12 +121,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			{
 				...restProps,
 				testId,
-				onClick: () => {
-					if (onClick)
-					{
-						onClick();
-					}
-				},
+				onClick,
 				style: {
 					position: 'relative',
 					paddingLeft,

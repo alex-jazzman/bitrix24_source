@@ -19,6 +19,6 @@ $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EXPORT_ERROR"] = "Cannot export dashboar
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_EMPTY"] = "Dashboard name is required";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_FOUND"] = "This dashboard no longer exists. Refresh the page";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_READY"] = "The dashboard is still being installed. Wait for the installation to complete and try again";
-$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM"] = "Cannot rename built-in or Market dashboards. Create a copy of this dashboard and rename it";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM_MSGVER_1"] = "Cannot rename built-in or Market dashboards. Create a copy of this dashboard and rename it";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_UNHANDLED"] = "Cannot change dashboard name, try again";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_UNAVAILABLE"] = "Cannot change dashboard name, try again later";

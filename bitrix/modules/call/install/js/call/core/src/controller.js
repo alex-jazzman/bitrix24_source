@@ -204,6 +204,10 @@ export class CallController extends EventEmitter
 		this._onCallToggleRemoteParticipantVideoHandler = this._onCallToggleRemoteParticipantVideo.bind(this);
 		this._onCallUserVoiceStartedHandler = this._onCallUserVoiceStarted.bind(this);
 		this._onCallUserVoiceStoppedHandler = this._onCallUserVoiceStopped.bind(this);
+		this._onAllParticipantsAudioMutedHandler = this._onAllParticipantsAudioMuted.bind(this);
+		this._onAllParticipantsVideoMutedHandler = this._onAllParticipantsVideoMuted.bind(this);
+		this._onYouMuteAllParticipantsHandler = this._onYouMuteAllParticipants.bind(this);
+		this._onParticipantMutedHandler = this._onParticipantMuted.bind(this);
 		this._onUserStatsReceivedHandler = this._onUserStatsReceived.bind(this);
 		this._onCallUserScreenStateHandler = this._onCallUserScreenState.bind(this);
 		this._onCallUserRecordStateHandler = this._onCallUserRecordState.bind(this);
@@ -676,6 +680,10 @@ export class CallController extends EventEmitter
 		this.currentCall.addEventListener(CallEvent.onToggleRemoteParticipantVideo, this._onCallToggleRemoteParticipantVideoHandler);
 		this.currentCall.addEventListener(CallEvent.onUserVoiceStarted, this._onCallUserVoiceStartedHandler);
 		this.currentCall.addEventListener(CallEvent.onUserVoiceStopped, this._onCallUserVoiceStoppedHandler);
+		this.currentCall.addEventListener(CallEvent.onAllParticipantsAudioMuted, this._onAllParticipantsAudioMutedHandler);
+		this.currentCall.addEventListener(CallEvent.onAllParticipantsVideoMuted, this._onAllParticipantsVideoMutedHandler);
+		this.currentCall.addEventListener(CallEvent.onYouMuteAllParticipants, this._onYouMuteAllParticipantsHandler);
+		this.currentCall.addEventListener(CallEvent.onParticipantMuted, this._onParticipantMutedHandler);
 		this.currentCall.addEventListener(CallEvent.onUserStatsReceived, this._onUserStatsReceivedHandler);
 		this.currentCall.addEventListener(CallEvent.onCallFailure, this._onCallFailureHandler);
 		this.currentCall.addEventListener(CallEvent.onNetworkProblem, this._onNetworkProblemHandler);
@@ -717,6 +725,10 @@ export class CallController extends EventEmitter
 		this.currentCall.removeEventListener(CallEvent.onToggleRemoteParticipantVideo, this._onCallToggleRemoteParticipantVideoHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserVoiceStarted, this._onCallUserVoiceStartedHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserVoiceStopped, this._onCallUserVoiceStoppedHandler);
+		this.currentCall.removeEventListener(CallEvent.onAllParticipantsAudioMuted, this._onAllParticipantsAudioMutedHandler);
+		this.currentCall.removeEventListener(CallEvent.onAllParticipantsVideoMuted, this._onAllParticipantsVideoMutedHandler);
+		this.currentCall.removeEventListener(CallEvent.onYouMuteAllParticipants, this._onYouMuteAllParticipantsHandler);
+		this.currentCall.removeEventListener(CallEvent.onParticipantMuted, this._onParticipantMutedHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserStatsReceived, this._onUserStatsReceivedHandler);
 		this.currentCall.removeEventListener(CallEvent.onCallFailure, this._onCallFailureHandler);
 		this.currentCall.removeEventListener(CallEvent.onNetworkProblem, this._onNetworkProblemHandler);
@@ -747,6 +759,8 @@ export class CallController extends EventEmitter
 		this.callView.setCallback(View.Event.onOpenAdvancedSettings, this._onCallViewOpenAdvancedSettings.bind(this));
 		this.callView.setCallback(View.Event.onReplaceSpeaker, this._onCallViewReplaceSpeaker.bind(this));
 		this.callView.setCallback(View.Event.onHasMainStream, this._onCallViewHasMainStream.bind(this));
+		this.callView.setCallback(View.Event.onTurnOffParticipantMic, this._onCallViewTurnOffParticipantMic.bind(this));
+		this.callView.setCallback(View.Event.onTurnOffParticipantCam, this._onCallViewTurnOffParticipantCam.bind(this));
 		this.callView.setCallback(View.Event.onToggleSubscribe, this._onCallToggleSubscribe.bind(this));
 		this.callView.setCallback(View.Event.onUserClick, this._onCallUserClick.bind(this));
 	}
@@ -1465,7 +1479,20 @@ export class CallController extends EventEmitter
 			return;
 		}
 
-		if (this.callView || this.initCallPromise)
+		const hasActiveCall = this.callView && this.currentCall;
+
+		if (hasActiveCall && this.currentCall.id === callId)
+		{
+			this.unfold();
+			return;
+		}
+
+		if (hasActiveCall && this.currentCall.id !== callId)
+		{
+			this.leaveCurrentCall();
+		}
+
+		if (this.initCallPromise)
 		{
 			return;
 		}
@@ -2819,6 +2846,7 @@ export class CallController extends EventEmitter
 			toggleSpeaker: this._onCallViewToggleSpeakerButtonClick.bind(this),
 			showChat: this._onCallViewShowChatButtonClick.bind(this),
 			floorRequest: this._onCallViewFloorRequestButtonClick.bind(this),
+			turnOffAllParticipansStream: this._onCallViewTurnOffAllParticipansStreamButtonClick.bind(this),
 			showHistory: this._onCallViewShowHistoryButtonClick.bind(this),
 			fullscreen: this._onCallViewFullScreenButtonClick.bind(this),
 			document: this._onCallViewDocumentButtonClick.bind(this),
@@ -2980,6 +3008,11 @@ export class CallController extends EventEmitter
 		}
 	}
 
+	_onCallViewTurnOffAllParticipansStreamButtonClick(options)
+	{
+		this.currentCall.turnOffAllParticipansStream(options);
+	}
+
 	/**
 	 * Returns list of users, that are not currently connected
 	 * @return {Array}
@@ -3039,14 +3072,8 @@ export class CallController extends EventEmitter
 		});
 	}
 
-	_onCallViewToggleMuteButtonClick(e)
+	_onCallViewToggleMuteHandler(e)
 	{
-		Analytics.getInstance().onToggleMicrophone({
-			muted: e.muted,
-			callId: this.currentCall.id,
-			callType: this.getCallType(),
-		});
-
 		const currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
 		if (currentRoom && currentRoom.speaker != this.userId && !e.muted)
 		{
@@ -3059,7 +3086,7 @@ export class CallController extends EventEmitter
 			this.currentCall.setMicrophoneId(Hardware.defaultMicrophone);
 		}
 
-		Hardware.isMicrophoneMuted = e.muted;
+		Hardware.setIsMicrophoneMuted({isMicrophoneMuted: e.muted, calledProgrammatically: !!e.calledProgrammatically});
 
 		if (this.floatingWindow)
 		{
@@ -3079,6 +3106,17 @@ export class CallController extends EventEmitter
 		{
 			BXDesktopSystem.CallRecordMute(e.muted);
 		}
+	}
+
+	_onCallViewToggleMuteButtonClick(e)
+	{
+		Analytics.getInstance().onToggleMicrophone({
+			muted: e.muted,
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
+		this._onCallViewToggleMuteHandler(e);
 	}
 
 	_onCallViewRecordButtonClick(event)
@@ -3159,6 +3197,10 @@ export class CallController extends EventEmitter
 											{
 												this._startRecordCall(View.RecordType.Audio);
 											},
+											title: BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
+											message: BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
+											yesButtonText: BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON'),
+											noButtonText:  BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON'),
 										})
 
 										this.recordWhenCopilotActivePopup.show();
@@ -3221,17 +3263,57 @@ export class CallController extends EventEmitter
 
 	_onChangeStateCopilot()
 	{
-		const action = !this.currentCall.isCopilotActive ? 'call.Track.start' : 'call.Track.stop';
+		if (this.currentCall.isCopilotActive)
+		{
+			Analytics.getInstance().copilot.onClickAIOff({
+				callId: this.currentCall.id,
+				callType: this.getCallType(),
+			});
+
+			this.deleteCopilotRecordPopup = new RecordWithCopilotPopup({
+				onClose: ()=> this.deleteCopilotRecordPopup = null,
+				onClickYesButton: () => {
+					Analytics.getInstance().copilot.onSelectAIOff({
+						callId: this.currentCall.id,
+						callType: this.getCallType(),
+					});
+
+					this._onChangeStateCopilotAction('call.Track.stop');
+				},
+				onClickNoButton: () => {
+					Analytics.getInstance().copilot.onSelectAIDelete({
+						callId: this.currentCall.id,
+						callType: this.getCallType(),
+					});
+
+					this._onChangeStateCopilotAction('call.Track.destroy');
+				},
+				title: BX.message('CALL_AI_RECORD_STOP_TITLE'),
+				message: BX.message('CALL_AI_RECORD_STOP_MESSAGE'),
+				yesButtonText: BX.message('CALL_AI_RECORD_STOP_YES_BUTTON'),
+				noButtonText:  BX.message('CALL_AI_RECORD_STOP_NO_BUTTON'),
+			})
+
+			this.deleteCopilotRecordPopup.show();
+
+			return;
+		}
+
+		this._onChangeStateCopilotAction('call.Track.start');
+		Analytics.getInstance().copilot.onAIRecordStatusChanged({
+			isAIOn: true,
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+	}
+
+	_onChangeStateCopilotAction(action)
+	{
 		BX.ajax.runAction(action, {
 			data: { callId: this.currentCall.id }
 		}).then(() => {
 			const newCopilotState = !this.currentCall.isCopilotActive;
 			this._onUpdateCallCopilotState(newCopilotState);
-			Analytics.getInstance().copilot.onAIRecordStatusChanged({
-				isAIOn: newCopilotState,
-				callId: this.currentCall.id,
-				callType: this.getCallType(),
-			});
 
 			if (!newCopilotState)
 			{
@@ -3418,15 +3500,10 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	_onCallViewToggleVideoButtonClick(e)
+	_onCallViewToggleVideoButtonClickHandler(e)
 	{
-		Analytics.getInstance().onToggleCamera({
-			video: e.video,
-			callId: this.currentCall.id,
-			callType: this.getCallType(),
-		});
+		Hardware.setIsCameraOn({isCameraOn: e.video, calledProgrammatically: !!e.calledProgrammatically});
 
-		Hardware.isCameraOn = e.video;
 		if (!Hardware.initialized)
 		{
 			return;
@@ -3444,6 +3521,17 @@ export class CallController extends EventEmitter
 		{
 			this.currentCall.setCameraId(Hardware.defaultCamera);
 		}
+	}
+
+	_onCallViewToggleVideoButtonClick(e)
+	{
+		Analytics.getInstance().onToggleCamera({
+			video: e.video,
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
+		this._onCallViewToggleVideoButtonClickHandler(e);
 	}
 
 	_onCallViewToggleSpeakerButtonClick(e)
@@ -3561,6 +3649,16 @@ export class CallController extends EventEmitter
 		{
 			this.currentCall.setMainStream(e.userId);
 		}
+	}
+
+	_onCallViewTurnOffParticipantMic(e)
+	{
+		this.currentCall.turnOffParticipantStream({typeOfStream: 'mic', userId: e.userId, fromUserId: CallEngine.getCurrentUserId()});
+	}
+
+	_onCallViewTurnOffParticipantCam(e)
+	{
+		this.currentCall.turnOffParticipantStream({typeOfStream: 'cam', userId: e.userId, fromUserId: CallEngine.getCurrentUserId()});
 	}
 
 	_onCallViewChangeHdVideo(e)
@@ -4224,6 +4322,127 @@ export class CallController extends EventEmitter
 		}
 	}
 
+	_onAllParticipantsAudioMuted(e)
+	{
+		const userModel = this.callView.userRegistry.get(e.userId);
+
+		BX.UI.Notification.Center.notify({
+			content: '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-mic-muted"></div>' + (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_MIC_FOR_ALL", {
+				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : 'M'),
+				name: userModel.data.name
+			}))),
+			category: 'allParticipantsAudioMuted',
+			position: "top-right",
+			autoHideDelay: 15000,
+			closeButton: true
+		});
+
+		this._onCallViewToggleMuteHandler({muted: true, calledProgrammatically: true});
+	}
+
+	_onAllParticipantsVideoMuted(e)
+	{
+
+		const userModel = this.callView.userRegistry.get(e.userId);
+
+		BX.UI.Notification.Center.notify({
+			content: '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-cam-muted"></div>' + (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_CAM_FOR_ALL", {
+				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : 'M'),
+				name: userModel.data.name
+			}))),
+			category: 'allParticipantsVideoMuted',
+			position: "top-right",
+			autoHideDelay: 15000,
+			closeButton: true
+		});
+
+		this._onCallViewToggleVideoButtonClickHandler({video: false, calledProgrammatically: true});
+	}
+
+	_onParticipantMuted(e)
+	{
+		if (e.data?.track.muted) // tbh always should be in "true"..
+		{
+			let contentIcon = 'mic';
+			let contentPhrase = '';
+			const initiatorUserModel = this.callView.userRegistry.get(e.data.from_sid);
+			const targetUserModel = this.callView.userRegistry.get(e.data.user_id);
+			const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+			if (e.data.user_id == CallEngine.getCurrentUserId())
+			{
+				if (e.data.track.type === 0)
+				{
+					contentPhrase = 'CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_MIC' + '_' + initiatorGender;
+					this._onCallViewToggleMuteHandler({muted: true, calledProgrammatically: true});
+				}
+				else if (e.data.track.type === 1)
+				{
+					contentIcon = 'cam';
+					contentPhrase = 'CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_CAM' + '_' + initiatorGender;
+					this._onCallViewToggleVideoButtonClickHandler({video: false, calledProgrammatically: true});
+				}
+			}
+			else
+			{
+				if (e.data.from_sid == CallEngine.getCurrentUserId())
+				{
+					if (e.data.track.type === 0)
+					{
+						contentPhrase = 'CALL_CONTROL_YOU_TURNED_OFF_USER_MIC';
+					}
+					else if (e.data.track.type === 1)
+					{
+						contentIcon = 'cam';
+						contentPhrase = 'CALL_CONTROL_YOU_TURNED_OFF_USER_CAM';
+					}
+				}
+				else
+				{
+					if (e.data.track.type === 0)
+					{
+						contentPhrase = 'CALL_CONTROL_MODERATOR_TURNED_OFF_USER_MIC' + '_' + initiatorGender;
+					}
+					else if (e.data.track.type === 1)
+					{
+						contentIcon = 'cam';
+						contentPhrase = 'CALL_CONTROL_MODERATOR_TURNED_OFF_USER_CAM' + '_' + initiatorGender;
+					}
+				}
+			}
+
+			let notifyContent =
+				'<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-'+contentIcon+'-muted"></div>'
+				+ (Text.encode(Util.getCustomMessage(contentPhrase, {
+					gender: initiatorGender,
+					initiator_name: initiatorUserModel.data.name,
+					target_name: targetUserModel.data.name,
+				})));
+
+			BX.UI.Notification.Center.notify({
+				content: notifyContent,
+				position: "top-right",
+				autoHideDelay: 15000,
+				closeButton: true,
+			});
+		}
+	}
+
+	_onYouMuteAllParticipants(e)
+	{
+		let typesOfMute = {0: 'mic', 1: 'cam'};
+		let typesOfMuteMessage = {0: 'CALL_YOU_TURNED_OFF_MIC_FOR_ALL', 1: 'CALL_YOU_TURNED_OFF_CAM_FOR_ALL'};
+		let content = '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-'+(typesOfMute[e.data.track.type])+'-muted"></div>' + (BX.message[(typesOfMuteMessage[e.data.track.type])]);
+
+		BX.UI.Notification.Center.notify({
+			content: content,
+			category: 'youMuteAllParticipants_'+(typesOfMute[e.data.track.type]),
+			position: "top-right",
+			autoHideDelay: 15000,
+			closeButton: true
+		});
+	}
+
 	_onUserStatsReceived(e)
 	{
 		if (this.callView)
@@ -4270,7 +4489,6 @@ export class CallController extends EventEmitter
 
 	_onCallUserRecordState(event)
 	{
-		console.warn('_onCallUserRecordState', event);
 		this.callRecordState = event.recordState.state;
 		this.callView.setRecordState(event.recordState);
 

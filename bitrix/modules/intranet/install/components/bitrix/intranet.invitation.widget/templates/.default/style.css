@@ -177,6 +177,12 @@
 	color: #525c69;
 }
 
+.intranet-invitation-widget-item--collab:hover .intranet-invitation-widget-item-btn:hover {
+	border-color: #BBED21;
+	background: #BBED21;
+	color: var(--ui-color-palette-gray-90);
+}
+
 .intranet-invitation-widget-item--company:hover .intranet-invitation-widget-item-btn,
 .intranet-invitation-widget-item--wide:hover .intranet-invitation-widget-item-btn {
 	border-color: #edeef0;
@@ -298,9 +304,9 @@
 
 .intranet-invitation-widget-invite-main:hover .intranet-invitation-widget-item-btn--invite:hover {
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .23);
-	background: #fff;
-	opacity: .9;
-	color: #525c69;
+	border-color: #BBED21;
+	background: #BBED21;
+	color: var(--ui-color-palette-gray-90);
 }
 
 .intranet-invitation-widget-item-btn--invite:before {

@@ -12,3 +12,4 @@ $MESS["M_DISK_FILE_ACTIONS_SEND_TO_CHAT"] = "Send to the chat";
 $MESS["M_DISK_FILE_ACTIONS_SHARE"] = "Share";
 $MESS["M_DISK_FILE_ACTIONS_SHARE_ERROR_DESCRIPTION"] = "Could not share file.";
 $MESS["M_DISK_FILE_ACTIONS_SHARE_ERROR_TITLE"] = "Something's gone wrong";
+$MESS["M_DISK_FILE_ACTIONS_SHOW_IN_FOLDER"] = "Open containing folder";

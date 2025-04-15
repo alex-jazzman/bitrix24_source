@@ -29,9 +29,10 @@ return [
 		'haptics',
 		'im:messenger/api/dialog-opener',
 	],
-    'bundle' => [
+	'bundle' => [
 		'./src/intro',
 		'./src/permissions',
+		'./src/task-permissions',
 		'./src/edit',
 		'./src/security',
 		'./src/image',

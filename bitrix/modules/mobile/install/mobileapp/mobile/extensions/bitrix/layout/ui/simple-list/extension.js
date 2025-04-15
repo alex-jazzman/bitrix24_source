@@ -17,7 +17,6 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { StatusBlock, makeLibraryImagePath } = require('ui-system/blocks/status-block');
 	const { OptimizedListView } = require('layout/ui/optimized-list-view');
 	const { isNil } = require('utils/type');
-	const { Feature } = require('feature');
 	const { FloatingButtonComponent } = require('layout/ui/floating-button');
 	const { MenuEngine } = require('layout/ui/simple-list/menu-engine');
 
@@ -698,6 +697,9 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						}
 					}
 				},
+				viewabilityConfig: {
+					waitForInteraction: true,
+				},
 				renderLoadMore: () => {
 					if (this.state.allItemsLoaded)
 					{
@@ -796,7 +798,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				{
 					style: this.getStyle('container'),
 				},
-				new LoadingScreenComponent({ showAirStyle }),
+				new LoadingScreenComponent({ backgroundColor: this.colors.bgPrimary }),
 			);
 		}
 
@@ -1105,7 +1107,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		replaceRows(items)
 		{
-			if (!Feature.isListViewUpdateRowByKeySupported() || !items || items.length === 0)
+			if (!items || items.length === 0)
 			{
 				return new Promise((resolve) => {
 					resolve();

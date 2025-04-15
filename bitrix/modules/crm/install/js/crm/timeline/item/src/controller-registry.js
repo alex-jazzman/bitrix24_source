@@ -30,7 +30,8 @@ import { Zoom } from './controllers/zoom';
 import { Sms } from './controllers/sms';
 import { WhatsApp } from './controllers/whatsapp';
 import { Bizproc } from './controllers/bizproc/bizproc';
-import { Booking } from './controllers/booking';
+import { Booking } from './controllers/booking/booking';
+import { WaitListItem } from './controllers/booking/wait-list-item';
 
 ControllerManager.registerController(Activity);
 ControllerManager.registerController(CommonContentBlocks);
@@ -63,3 +64,4 @@ ControllerManager.registerController(Sms);
 ControllerManager.registerController(WhatsApp);
 ControllerManager.registerController(Bizproc);
 ControllerManager.registerController(Booking);
+ControllerManager.registerController(WaitListItem);

@@ -1,5 +1,6 @@
 <?php
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_CONNECT_DISK_ON_MSGVER_1"] = "Після вступу до групи диск групи буде під'єднано до особистого диска співробітника. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Учасники чатів зможуть керувати опцією автовидалення повідомлень. Повідомлення в чатах з увімкненим автовидаленням автоматично видалятимуться через вибраний проміжок часу.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_BLOCK_DOC_ON_MSGVER_1"] = "Блокування не дає кільком співробітникам одночасно редагувати документ. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_EDIT_DOC_ON"] = "Співробітники, у яких є доступ до повідомлення з документом, можуть його редагувати. Ви можете вимкнути редагування в кожному повідомленні вручну.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_POST_GEN_CHANNEL"] = "Вибрані підписники можуть додавати публікації в канал «Новини компанії». #MORE_DETAILS#";
@@ -12,6 +13,7 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_PUBLISH_TO_ALL_DEFAULT_ON"] = "У новом
 $MESS["INTRANET_SETTINGS_FIELD_HINT_URL_PREVIEW_ON"] = "У посиланні показується зображення і короткий опис сайту.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE"] = "Надсилати автоматичне повідомлення про призначення або зміну адміністратора в загальний чат";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK"] = "Автоматично під'єднувати диск групи під час вступу співробітника в групу";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Дозволити вмикати автовидалення повідомлень у чатах";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC"] = "Дозволити блокувати документ під час редагування";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC"] = "Дозволити редагувати документи в стрічці новин, завданнях, чатах або коментарях";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE"] = "Надсилати автоматичне повідомлення про звільнення співробітника в загальний чат";

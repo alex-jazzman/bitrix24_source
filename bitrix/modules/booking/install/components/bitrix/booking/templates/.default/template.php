@@ -18,15 +18,17 @@ Loader::includeModule('booking');
 
 $APPLICATION->SetTitle(Loc::getMessage('BOOKING_BOOKING_TITLE'));
 
+$bodyClass = $APPLICATION->getPageProperty('BodyClass') || '';
+$bodyClasses = explode(' ', $bodyClass);
+$additionalBodyClasses = ['no-footer'];
+
 if ($arResult['IS_SLIDER'])
 {
-	$bodyClass = $APPLICATION->getPageProperty('BodyClass') || '';
-	$bodyClasses = explode(' ', $bodyClass);
-	$additionalBodyClasses = ['booking-booking-slider'];
-	$newBodyClass = implode(' ', array_merge($bodyClasses, $additionalBodyClasses));
-
-	$APPLICATION->SetPageProperty('BodyClass', $newBodyClass);
+	$additionalBodyClasses[] = 'booking-booking-slider';
 }
+
+$newBodyClass = implode(' ', array_merge($bodyClasses, $additionalBodyClasses));
+$APPLICATION->SetPageProperty('BodyClass', $newBodyClass);
 
 $toolbarAfterTitleContainerId = 'booking-toolbar-after-title-container';
 $toolbarCounterPanelContainerId = 'booking-toolbar-counter-panel-container';
@@ -56,10 +58,12 @@ Extension::load('booking.booking');
 		const timezone = '<?= $arResult['timezone'] ?>' || Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const filterId = '<?= $arResult['FILTER_ID'] ?>';
 		const editingBookingId = <?= (int)$arResult['editingBookingId'] ?>;
+		const editingWaitListItemId = <?= (int)$arResult['editingWaitListItemId'] ?>;
 		const ahaMoments = <?= Json::encode($arResult['AHA_MOMENTS']) ?>;
 		const totalClients = <?= (int)$arResult['TOTAL_CLIENTS'] ?>;
 		const totalClientsToday = <?= (int)$arResult['TOTAL_CLIENTS_TODAY'] ?>;
 		const moneyStatistics = <?= Json::encode($arResult['MONEY_STATISTICS']) ?>;
+		const embedItems = <?= Json::encode($arResult['embedItems']) ?>;
 
 		new BX.Booking.Booking({
 			container,
@@ -73,10 +77,12 @@ Extension::load('booking.booking');
 			timezone,
 			filterId,
 			editingBookingId,
+			editingWaitListItemId,
 			ahaMoments,
 			totalClients,
 			totalClientsToday,
 			moneyStatistics,
+			embedItems,
 		});
 	});
 </script>

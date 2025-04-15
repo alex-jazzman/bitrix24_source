@@ -114,8 +114,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 						.then(() => this.executeStoredPullEvents())
 						.catch((error) => Logger.error(error))
 					;
-
-					this.checkChatV2Support();
 					await this.refresh();
 				}
 				catch (error)
@@ -226,14 +224,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		executeStoredPullEvents()
 		{
 			Logger.info('MessengerBase.executeStoredPullEvents method is not override');
-		}
-
-		/**
-		 * @abstract
-		 */
-		checkChatV2Support()
-		{
-			Logger.info('MessengerBase.checkChatV2Support method is not override');
 		}
 
 		/**

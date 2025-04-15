@@ -1,4 +1,5 @@
-import { Reflection, Uri, Text, ajax as Ajax } from 'main.core';
+import { EditableColumnManager } from 'biconnector.grid.editable-columns';
+import { Reflection, Uri, Text, Loc, ajax as Ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import 'ui.alerts';
 import 'ui.forms';
@@ -21,6 +22,22 @@ class ExternalSourceManager
 		this.#filter = BX.Main.filterManager.getById(props.gridId);
 		this.#initHints();
 		this.#subscribeToEvents();
+
+		EditableColumnManager.init(
+			props.gridId,
+			[
+				{
+					name: 'DESCRIPTION',
+					saveEndpoint: 'biconnector.externalsource.source.updateComment',
+					onValueCheck: () => true,
+					onSave: () => {
+						BX.UI.Notification.Center.notify({
+							content: Text.encode(Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_COMMENT_UPDATED')),
+						});
+					},
+				},
+			],
+		);
 	}
 
 	#subscribeToEvents()
@@ -100,19 +117,16 @@ class ExternalSourceManager
 	{
 		let sliderLink = '';
 		let sliderWidth = 0;
-		let isCacheable = false;
 
 		if (moduleId === 'BI')
 		{
 			sliderLink = new Uri(`/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${id}`);
 			sliderWidth = 564;
-			isCacheable = false;
 		}
 		else if (moduleId === 'CRM')
 		{
 			sliderLink = new Uri(`/crm/tracking/source/edit/${id}/`);
 			sliderWidth = 900;
-			isCacheable = true;
 		}
 		else
 		{
@@ -124,7 +138,10 @@ class ExternalSourceManager
 			{
 				width: sliderWidth,
 				allowChangeHistory: false,
-				cacheable: isCacheable,
+				cacheable: false,
+				events: {
+					onClose: BX.BIConnector.TrackingAnalyticsHandler.handleSliderClose,
+				},
 			},
 		);
 	}

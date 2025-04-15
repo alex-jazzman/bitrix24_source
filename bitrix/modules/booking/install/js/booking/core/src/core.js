@@ -31,6 +31,11 @@ export type BookingParams = {
 	totalClients: number,
 	totalClientsToday: number,
 	moneyStatistics: MoneyStatistics,
+	embedItems: {
+		id: number,
+		code: string,
+		module: string,
+	}[],
 };
 
 class CoreApplication
@@ -87,6 +92,19 @@ class CoreApplication
 				isFeatureEnabled: this.#params.isFeatureEnabled,
 				canTurnOnTrial: this.#params.canTurnOnTrial,
 				canTurnOnDemo: this.#params.canTurnOnDemo,
+				embedItems: this.#params.embedItems.map((item: { id: number, code: string, module: string }) => {
+					return {
+						value: item.id,
+						entityTypeId: item.code,
+						moduleId: item.module,
+						data: {
+							opportunity: 0,
+							currencyId: '',
+							createdTimestamp: 0,
+							formattedOpportunity: '',
+						},
+					};
+				}),
 			}))
 			.addModel(ResourceTypes.create())
 			.addModel(Resources.create())

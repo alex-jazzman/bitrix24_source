@@ -117,7 +117,7 @@ else
 						<div class="rest-configuration-start-icon"></div>
 						<div class="rest-configuration-start-icon-circle"></div>
 					</div>
-					<p class="rest-configuration-info"><?=Loc::getMessage("REST_CONFIGURATION_IMPORT_ROLLBACK_MODE_DESCRIPTION_2");?></p>
+					<p class="rest-configuration-info"><?=\Bitrix\Rest\Integration\Market\Label::isRenamedMarket() ? Loc::getMessage("REST_CONFIGURATION_IMPORT_ROLLBACK_MODE_DESCRIPTION_2_MSGVER_1") : Loc::getMessage("REST_CONFIGURATION_IMPORT_ROLLBACK_MODE_DESCRIPTION_2");?></p>
 					<form method="post">
 						<?=bitrix_sessid_post()?>
 						<? foreach($arResult['ROLLBACK_ITEMS'] as $item):?>

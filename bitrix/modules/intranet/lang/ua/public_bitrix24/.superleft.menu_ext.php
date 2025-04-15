@@ -36,6 +36,7 @@ $MESS["MENU_MAIL_CHANGE_SETTINGS"] = "Змінити налаштування";
 $MESS["MENU_MARKETING"] = "Маркетинг";
 $MESS["MENU_MARKETPLACE_ALL"] = "Всі застосунки";
 $MESS["MENU_MARKETPLACE_APPS_2"] = "Маркет";
+$MESS["MENU_MARKETPLACE_APPS_2_MSGVER_1"] = "Маркет";
 $MESS["MENU_ONEC_SECTION"] = "1С + CRM Бітрікс24";
 $MESS["MENU_OPENLINES_LINES_SINGLE"] = "Відкриті лінії";
 $MESS["MENU_PHOTO"] = "Фотографії";

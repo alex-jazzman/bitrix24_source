@@ -12,7 +12,7 @@ jn.define('apptheme', (require, exports, module) => {
 	};
 
 	const { colors: localColors, styles, typography } = require('apptheme/list');
-	const nativeAppTheme = (Application.getApiVersion() >= 52) ? require('native/apptheme')?.AppTheme : undefined;
+	const nativeAppTheme = require('native/apptheme')?.AppTheme;
 
 	const componentTokens = {
 		[DARK]: {}, [LIGHT]: {},

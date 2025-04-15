@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/chat-avatar
  */
 jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 	const { Typography } = require('tokens');
 	const { Theme } = require('im/lib/theme');
@@ -16,6 +17,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		UserType,
 	} = require('im/messenger/const');
 	const { AvatarShape } = require('ui-system/blocks/avatar');
+	const { ColorUtils } = require('im/messenger/lib/utils/color');
 
 	const AvatarDetailFields = Object.freeze({
 		accentType: {
@@ -30,11 +32,27 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		},
 	});
 
+	const themeId = AppTheme.id;
+	const DefaultUserNamedIcon = {
+		[UserType.collaber]: `collab_user_${themeId}`,
+		[UserType.extranet]: `extranet_user_${themeId}`,
+		[UserType.user]: `default_user_${themeId}`,
+	};
+
 	/**
 	 * @class ChatAvatar
 	 */
 	class ChatAvatar
 	{
+		/** @type {ColorUtils} */
+		static #colorUtils;
+
+		static get colorUtils()
+		{
+			this.#colorUtils ??= new ColorUtils();
+
+			return this.#colorUtils;
+		}
 		/**
 		 *
 		 * @param {string || number} dialogId
@@ -56,6 +74,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			this.isSuperEllipseIcon = false;
 			this.type = null;
 			this.dialogId = dialogId;
+			this.extranet = false;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -84,6 +103,13 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			this.avatar = Type.isStringFilled(dialogModel.avatar) ? dialogModel.avatar : null;
 			this.title = dialogModel.name;
 			this.type = dialogModel.type;
+			this.extranet = dialogModel.extranet;
+
+			if (this.extranet)
+			{
+				this.color = Theme.colors.accentExtraOrange;
+			}
+
 			if (this.type === DialogType.collab)
 			{
 				this.color = Theme.colors.collabAccentPrimary;
@@ -317,8 +343,9 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			return this.getAvatarProps({
 				placeholder: {
-					letters: {
-						fontSize: 9,
+					type: 'svg',
+					svg: {
+						named: this.#getDefaultUserNamedIcon(),
 					},
 				},
 				style: {
@@ -335,8 +362,9 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			return this.getAvatarProps({
 				placeholder: {
-					letters: {
-						fontSize: 9,
+					type: 'svg',
+					svg: {
+						named: this.#getDefaultUserNamedIcon(),
 					},
 				},
 				style: {
@@ -434,14 +462,12 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		#getAvatarCollabFields()
 		{
 			const defaultFields = this.#getAvatarDefaultFields();
-			const collabFields = {
-				type: AvatarShape.HEXAGON.value,
-				accentType: AvatarDetailFields.accentType.green,
-				hideOutline: false,
-				backBorderWidth: 2,
-			};
 
-			return { ...defaultFields, ...collabFields };
+			return {
+				...defaultFields,
+				...this.#getCollabFields(),
+				type: AvatarShape.HEXAGON.value,
+			};
 		}
 
 		/**
@@ -451,13 +477,8 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		#getAvatarCollaberFields()
 		{
 			const defaultFields = this.#getAvatarDefaultFields();
-			const collaberFields = {
-				accentType: AvatarDetailFields.accentType.green,
-				hideOutline: false,
-				backBorderWidth: 2,
-			};
 
-			return { ...defaultFields, ...collaberFields };
+			return { ...defaultFields, ...this.#getCollabFields() };
 		}
 
 		/**
@@ -467,13 +488,32 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		#getAvatarExtranetFields()
 		{
 			const defaultFields = this.#getAvatarDefaultFields();
-			const collaberFields = {
+
+			return { ...defaultFields, ...this.#getExtranetFields() };
+		}
+
+		/**
+		 * @returns {Partial<AvatarDetail>}
+		 */
+		#getExtranetFields()
+		{
+			return {
 				accentType: AvatarDetailFields.accentType.orange,
 				hideOutline: false,
 				backBorderWidth: 2,
 			};
+		}
 
-			return { ...defaultFields, ...collaberFields };
+		/**
+		 * @returns {Partial<AvatarDetail>}
+		 */
+		#getCollabFields()
+		{
+			return {
+				accentType: AvatarDetailFields.accentType.green,
+				hideOutline: false,
+				backBorderWidth: 2,
+			};
 		}
 
 		/**
@@ -483,10 +523,21 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		#getAvatarChannelFields()
 		{
 			const defaultFields = this.#getAvatarDefaultFields();
+			/** @type {Partial<AvatarDetail>} */
 			const channelFields = {
 				type: AvatarShape.SQUARE.value,
 				radius: Theme.corner.S.toNumber(),
 			};
+
+			if (this.extranet)
+			{
+				return {
+					...defaultFields,
+					...channelFields,
+					...this.#getExtranetFields(),
+					hideOutline: true,
+				};
+			}
 
 			return { ...defaultFields, ...channelFields };
 		}
@@ -497,7 +548,18 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		#getAvatarChatFields()
 		{
-			return this.#getAvatarDefaultFields();
+			const defaultFields = this.#getAvatarDefaultFields();
+
+			if (this.extranet)
+			{
+				return {
+					...defaultFields,
+					...this.#getExtranetFields(),
+					hideOutline: true,
+				};
+			}
+
+			return defaultFields;
 		}
 
 		/**
@@ -628,6 +690,29 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 
 			return null;
+		}
+
+		#getDefaultUserNamedIcon()
+		{
+			const user = this.store.getters['usersModel/getById'](this.dialogId);
+
+			switch (user.type)
+			{
+				case UserType.extranet:
+				{
+					return DefaultUserNamedIcon[UserType.extranet];
+				}
+
+				case UserType.collaber:
+				{
+					return DefaultUserNamedIcon[UserType.collaber];
+				}
+
+				default:
+				{
+					return DefaultUserNamedIcon[UserType.user];
+				}
+			}
 		}
 	}
 

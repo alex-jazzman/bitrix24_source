@@ -688,5 +688,4 @@ $MESS['CALENDAR_SHARING_COMPONENT_CLASS_CALENDAR_TITLE'] = 'Слоты';
 $MESS['CALENDAR_SHARING_COMPONENT_CLASS_EVENT_TITLE'] = 'Встреча';
 $MESS["EC_LOCATION_REPEAT_BUSY"] = "В эти даты переговорная занята: #DATES#. Укажите другое место проведения или сохраните встречу с текущей переговорной.";
 $MESS["EC_LOCATION_REPEAT_BUSY_TOO_MANY"] = "В эти даты переговорная занята: #DATES# и т.д. Укажите другое место проведения или сохраните встречу с текущей переговорной.";
-$MESS['EC_DECLINE_GROUP_DELETING_WITH_EVENTS'] = 'Группа не может быть удалена, так как в Календаре содержатся события.'
-?>
+$MESS['EC_DECLINE_GROUP_DELETING_WITH_EVENTS'] = 'Группа не может быть удалена, так как в Календаре содержатся события.';

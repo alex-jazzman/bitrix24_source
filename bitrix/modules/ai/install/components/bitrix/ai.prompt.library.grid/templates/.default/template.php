@@ -13,7 +13,9 @@ global $APPLICATION;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
-use \Bitrix\Main\Engine\CurrentUser;
+use Bitrix\AI\Services\CopilotAccessCheckerService;
+use Bitrix\AI\Container;
+use Bitrix\Main\Application;
 
 \Bitrix\Main\UI\Extension::load(['ui.icon-set, ui.icon-set.main', 'ui.hint', 'ui.forms', 'ui.analytics']);
 
@@ -22,11 +24,14 @@ $APPLICATION->setTitle(Loc::getMessage('PROMPT_LIBRARY_TITLE'));
 
 <div>
 <?php
-/** @var \Bitrix\AI\Guard\ShowCopilotGuard $showCopilotGuard */
-$showCopilotGuard = \Bitrix\AI\Container::init()->getItem(\Bitrix\AI\Guard\ShowCopilotGuard::class);
-if (!$showCopilotGuard->hasAccess(CurrentUser::get()->getId()))
+/** @var CopilotAccessCheckerService $copilotAccessCheckerService */
+$copilotAccessCheckerService = Container::init()->getItem(CopilotAccessCheckerService::class);
+$userId = Bitrix\AI\Facade\User::getCurrentUserId();
+$hasAccess = $copilotAccessCheckerService->canShowInFrontend($userId);
+
+if (!$hasAccess)
 {
-	\Bitrix\Main\Application::getInstance()->end();
+	Application::getInstance()->end();
 }
 
 $grid = $arResult['GRID'];
@@ -43,7 +48,7 @@ if (empty($userListInOption))
 {
 	$userListInOption = [];
 }
-$userId = Bitrix\AI\Facade\User::getCurrentUserId();
+
 $showSimpleTour = false;
 if (!in_array($userId, $userListInOption))
 {

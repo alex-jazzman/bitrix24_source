@@ -76,19 +76,9 @@ class CModuleMoveStep1 extends CBaseModuleMoveWizardStep
 			if (is_array($arNode))
 			{
 				$arModules = [];
-				foreach (GetModuleEvents('cluster', 'OnGetTableList', true) as $arEvent)
+				foreach (CClusterDBNode::GetModulesForSharding() as $module_id => $module_info)
 				{
-					$ar = ExecuteModuleEventEx($arEvent);
-					if (is_array($ar))
-					{
-						$cur_node_id = intval(COption::GetOptionString($ar['MODULE']->MODULE_ID, 'dbnode_id'));
-						if ($cur_node_id < 1)
-						{
-							$cur_node_id = 1;
-						}
-						$cur_node_id = CClusterDBNode::GetByID($cur_node_id);
-						$arModules[$ar['MODULE']->MODULE_ID] = $ar['MODULE']->MODULE_NAME . ' (' . $cur_node_id['NAME'] . ')';
-					}
+					$arModules[$module_id] = $module_info['TITLE'];
 				}
 
 				$arNodes = [];

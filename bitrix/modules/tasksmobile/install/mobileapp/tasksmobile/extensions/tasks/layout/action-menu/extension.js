@@ -40,6 +40,7 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 				copy: ActionId.COPY,
 				copyId: ActionId.COPY_ID,
 				extraSettings: ActionId.EXTRA_SETTINGS,
+				openChat: ActionId.OPEN_CHAT,
 			};
 		}
 
@@ -71,6 +72,7 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 			const actionsToCloseMenu = new Set([
 				ActionId.COPY_ID,
 				ActionId.REMOVE,
+				ActionId.OPEN_CHAT,
 				ActionId.SHARE,
 			]);
 

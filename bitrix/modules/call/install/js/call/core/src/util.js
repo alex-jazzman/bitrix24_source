@@ -1,5 +1,5 @@
 import { Type, Extension } from 'main.core'
-import {CallEngine, Provider} from './engine/engine';
+import { CallEngine, Provider } from './engine/engine';
 import { MediaStreamsKinds } from './call_api';
 import { View } from './view/view';
 import { CallAI } from './call_ai';
@@ -550,6 +550,20 @@ function getConferenceProvider(): string{
 	return Provider.Plain;
 }
 
+function getCurrentBitrixCall()
+{
+	for (let callId in CallEngine.calls)
+	{
+		if(CallEngine.calls[callId].BitrixCall)
+		{
+			return CallEngine.calls[callId];
+			break;
+		}
+	}
+
+	return false;
+}
+
 function setCodecToReport(report, codecs, reportsWithoutCodecs)
 {
 	if (codecs[report.codecId])
@@ -823,6 +837,11 @@ const isNewQOSEnabled = () =>
 	return Extension.getSettings('call.core')?.isNewQOSEnabled;
 }
 
+const isNewFollowUpSliderEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isNewFollowUpSliderEnabled;
+}
+
 export default {
 	updateUserData,
 	setUserData,
@@ -863,6 +882,7 @@ export default {
     stopMediaStreamVideoTracks,
     stopMediaStreamAudioTracks,
 	getConferenceProvider,
+	getCurrentBitrixCall,
 	setCodecToReport,
 	saveReportWithoutCodecs,
 	processReportsWithoutCodecs,
@@ -883,4 +903,5 @@ export default {
 	isUserControlFeatureEnabled,
 	isPictureInPictureFeatureEnabled,
 	isNewQOSEnabled,
+	isNewFollowUpSliderEnabled,
 }

@@ -2,8 +2,8 @@ import { Button as UIButton, ButtonColor, ButtonSize, ButtonState, ButtonIcon } 
 import { Type } from 'main.core';
 
 export const Button = {
-	emits: ['click'],
 	name: 'UiButton',
+	emits: ['click'],
 	props: {
 		text: {
 			type: String,
@@ -44,7 +44,6 @@ export const Button = {
 			},
 			dataset: this.dataset,
 			className: this.buttonClass,
-			disabled: this.disabled,
 		});
 	},
 	mounted(): void
@@ -93,10 +92,10 @@ export const Button = {
 		disabled: {
 			handler(disabled): void
 			{
-				this.button?.setDisabled(disabled === false);
-				this.button?.setDisabled(disabled === true);
+				this.button?.setDisabled(Boolean(disabled));
 			},
 			immediate: true,
+			flush: 'sync',
 		},
 		waiting: {
 			handler(waiting): void

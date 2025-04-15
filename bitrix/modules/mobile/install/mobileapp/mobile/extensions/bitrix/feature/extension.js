@@ -2,8 +2,6 @@
  * @module feature
  */
 jn.define('feature', (require, exports, module) => {
-	const { AppUpdateNotifier } = require('app-update-notifier');
-	const { isESClass } = require('utils/type');
 	const isAndroid = Application.getPlatform() === 'android';
 
 	/**
@@ -11,26 +9,6 @@ jn.define('feature', (require, exports, module) => {
 	 */
 	class Feature
 	{
-		static isReceivePaymentSupported()
-		{
-			return minApiVersion(49, 'isReceivePaymentSupported');
-		}
-
-		static isBackgroundGradientSupported()
-		{
-			return minApiVersion(50, 'isBackgroundGradientSupported');
-		}
-
-		static isGradientWithTextSupported()
-		{
-			return Application.getPlatform() === 'android' || minApiVersion(52, 'isGradientWithTextSupported');
-		}
-
-		static isGeoPositionSupported()
-		{
-			return minApiVersion(51, 'isGeoPositionSupported');
-		}
-
 		/**
 		 * Some devices will automatically show notification, when you copy something to clipboard,
 		 * so you don't have to show it manually.
@@ -43,58 +21,21 @@ jn.define('feature', (require, exports, module) => {
 			return isAndroid && deviceVersion > 12;
 		}
 
-		static isPreventBottomSheetDismissSupported()
+		static async showDefaultUnsupportedWidget(props = {}, parentWidget = PageManager)
 		{
-			return minApiVersion(52, 'isPreventBottomSheetDismissSupported');
-		}
+			const { AppUpdateNotifier } = await requireLazy('app-update-notifier');
 
-		static showDefaultUnsupportedWidget(props = {}, parentWidget = PageManager)
-		{
 			AppUpdateNotifier.open(props, parentWidget);
-		}
-
-		static canChangeAudioDevice()
-		{
-			return minApiVersion(52, 'canChangeAudioDevice');
 		}
 
 		static isToastSupported()
 		{
-			return minApiVersion(52, 'isToastSupported') && Boolean(require('native/notify'));
+			return Boolean(require('native/notify'));
 		}
 
-		static isToastPositionSupported()
+		static isSafeAreaSupportedOnAndroid()
 		{
-			return minApiVersion(53, 'isToastPositionSupported');
-		}
-
-		static isListViewUpdateRowByKeySupported()
-		{
-			return minApiVersion(53, 'isListViewUpdateRowByKeySupported');
-		}
-
-		static isAirStyleSupported()
-		{
-			if (minApiVersion(54, 'isAirStyleSupported'))
-			{
-				const { AppTheme } = require('native/apptheme');
-
-				return AppTheme.getId().startsWith('new');
-			}
-
-			return false;
-		}
-
-		static isMemoryStorageSupported()
-		{
-			if (minApiVersion(54, 'isMemoryStorageSupported'))
-			{
-				const { MemoryStorage } = require('native/memorystore') || {};
-
-				return typeof MemoryStorage === 'function' || isESClass(MemoryStorage);
-			}
-
-			return false;
+			return isAndroid && minApiVersion(59, 'isSafeAreaSupportedOnAndroid');
 		}
 
 		static isOpenImageNonContextSupported()
@@ -130,6 +71,16 @@ jn.define('feature', (require, exports, module) => {
 		static isListViewMoveRowToSectionEndSupported()
 		{
 			return minApiVersion(56, 'isListViewMoveRowToSectionEndSupported');
+		}
+
+		static isSelectorWidgetOnViewHiddenEventBugFixed()
+		{
+			if (isAndroid)
+			{
+				return minApiVersion(59, 'isSelectorWidgetOnViewHiddenEventBugFixed');
+			}
+
+			return true;
 		}
 	}
 

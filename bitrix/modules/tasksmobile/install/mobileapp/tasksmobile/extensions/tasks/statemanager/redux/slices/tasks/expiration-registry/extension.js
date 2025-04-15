@@ -2,7 +2,8 @@
  * @module tasks/statemanager/redux/slices/tasks/expiration-registry
  */
 jn.define('tasks/statemanager/redux/slices/tasks/expiration-registry', (require, exports, module) => {
-	const { dispatch } = require('statemanager/redux/store');
+	const store = require('statemanager/redux/store');
+	const { dispatch } = store;
 
 	class ExpirationRegistry
 	{
@@ -33,10 +34,15 @@ jn.define('tasks/statemanager/redux/slices/tasks/expiration-registry', (require,
 
 		/**
 		 * @public
-		 * @param {TaskModel} task
+		 * @param {TaskModel|undefined} task
 		 */
 		handleDeadlineTimerForTask(task)
 		{
+			if (!task)
+			{
+				return;
+			}
+
 			const { id, deadline } = task;
 			const { selectWillExpire } = this.selectors;
 
@@ -70,7 +76,22 @@ jn.define('tasks/statemanager/redux/slices/tasks/expiration-registry', (require,
 				this.removeTimer(taskId);
 			}
 
+			const oneDayInMs = 86_400_000;
 			const deadlineInMs = deadline * 1000;
+			const timeout = Math.max(deadlineInMs - Date.now(), 0);
+
+			if (timeout > oneDayInMs * 25)
+			{
+				const timerId = setTimeout(() => {
+					this.removeTimer(taskId);
+					this.handleDeadlineTimerForTask(this.selectors.selectByTaskIdOrGuid(store.getState(), taskId));
+				}, oneDayInMs * 25);
+
+				this.registry.set(taskId, timerId);
+
+				return;
+			}
+
 			const timerId = setTimeout(() => {
 				this.removeTimer(taskId);
 				if (this.reducers.taskExpired)
@@ -82,7 +103,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/expiration-registry', (require,
 						}),
 					);
 				}
-			}, Math.max(deadlineInMs - Date.now(), 0));
+			}, timeout);
 
 			this.registry.set(taskId, timerId);
 		}

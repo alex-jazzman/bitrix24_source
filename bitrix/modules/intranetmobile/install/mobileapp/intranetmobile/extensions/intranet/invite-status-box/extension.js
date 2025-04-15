@@ -4,17 +4,16 @@
 jn.define('intranet/invite-status-box', (require, exports, module) => {
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { BottomSheet } = require('bottom-sheet');
-	const { Color, Indent, Component } = require('tokens');
+	const { Color } = require('tokens');
 	const { makeLibraryImagePath } = require('asset-manager');
-	const { Box } = require('ui-system/layout/box');
+	const { Box, BoxFooter } = require('ui-system/layout/box');
 	const {
 		Button,
 		ButtonSize,
 		ButtonDesign,
 	} = require('ui-system/form/buttons/button');
 
-	const IS_SAFE_AREA_BOTTOM_AVAILABLE = device.screen.safeArea.bottom > 0;
-	const SAFE_AREA = 38;
+	const DEFAULT_HEIGHT = 425;
 
 	/**
 	 * @class InviteStatusBox
@@ -61,18 +60,45 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 			return this.props.buttonText ?? null;
 		}
 
-		get buttonTestId()
+		get buttonDesign()
 		{
-			return this.testId ? `${this.testId}-button` : '';
+			return this.props.buttonDesign ?? ButtonDesign.OUTLINE_ACCENT_1;
 		}
 
-		onButtonClick = () => {
-			if (this.props.onButtonClick)
-			{
-				this.props.onButtonClick();
-			}
+		get height()
+		{
+			return this.props.height ?? DEFAULT_HEIGHT;
+		}
 
-			this.parentWidget.close();
+		get shouldCloseOnButtonClick()
+		{
+			return this.props.shouldCloseOnButtonClick ?? true;
+		}
+
+		get statusBlockButtons()
+		{
+			return this.props.statusBlockButtons ?? [];
+		}
+
+		get statusBlockStyle()
+		{
+			return this.props.statusBlockStyle ?? {};
+		}
+
+		#getTestId = (suffix) => {
+			const prefix = this.testId;
+
+			return suffix ? `${prefix}-${suffix}` : prefix;
+		};
+
+		onButtonClick = () => {
+			const { onButtonClick, onClose } = this.props;
+			onButtonClick?.(this.parentWidget);
+			if (this.shouldCloseOnButtonClick)
+			{
+				onClose?.(this.parentWidget);
+				this.parentWidget.close();
+			}
 		};
 
 		/**
@@ -81,35 +107,53 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 		 * @param {Object} [data.parentWidget]
 		 * @param {string} [data.testId]
 		 * @param {string} [data.imageName]
+		 * @param {string} [data.imageUri]
 		 * @param {string} [data.title]
 		 * @param {string} [data.description]
 		 * @param {string} [data.buttonText]
+		 * @param {ButtonDesign} [data.buttonDesign]
 		 * @param {Function} [data.onButtonClick]
+		 * @param {Array<Button>} [data.statusBlockButtons]
+		 * @param {Object} [data.statusBlockStyle]
+		 * @param {number} [data.height]
+		 * @param {Function} [data.onClose]
+		 * @param {boolean} [data.shouldCloseOnButtonClick = true]
 		 */
-		static open(data)
+		static async open(data)
 		{
-			const { backdropTitle } = data;
+			const { backdropTitle, height, onClose } = data;
 			const parentWidget = data.parentWidget ?? PageManager;
 			const inviteStatusBox = new InviteStatusBox(data);
 
-			void new BottomSheet({
-				titleParams: {
-					text: backdropTitle,
-					type: 'dialog',
-					useLargeTitleMode: true,
-				},
-				component: (widget) => {
-					inviteStatusBox.setParentWidget(widget);
+			return new Promise((resolve) => {
+				new BottomSheet({
+					titleParams: {
+						text: backdropTitle,
+						type: 'dialog',
+						useLargeTitleMode: true,
+					},
+					component: (widget) => {
+						inviteStatusBox.setParentWidget(widget);
+						widget.preventBottomSheetDismiss(true);
+						widget.on('preventDismiss', () => {
+							onClose?.(widget);
+							widget.close();
+						});
 
-					return inviteStatusBox;
-				},
-			}).setParentWidget(parentWidget)
-				.setBackgroundColor(Color.bgSecondary.toHex())
-				.setNavigationBarColor(Color.bgSecondary.toHex())
-				.setMediumPositionHeight(425)
-				.disableResizeContent()
-				.open()
-			;
+						return inviteStatusBox;
+					},
+				}).setParentWidget(parentWidget)
+					.showOnTop()
+					.setBackgroundColor(Color.bgSecondary.toHex())
+					.setNavigationBarColor(Color.bgSecondary.toHex())
+					.enableOnlyMediumPosition()
+					.setMediumPositionHeight(height ?? DEFAULT_HEIGHT)
+					.open()
+					.then(() => {
+						resolve(inviteStatusBox);
+					})
+					.catch(console.error);
+			});
 		}
 
 		render()
@@ -117,43 +161,49 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 			return Box(
 				{
 					style: {
-						height: 375,
-						maxHeight: 375,
-						paddingBottom: IS_SAFE_AREA_BOTTOM_AVAILABLE ? 0 : SAFE_AREA,
+						height: this.height,
+						maxHeight: this.height,
 					},
+					footer: this.#renderButton(),
 					safeArea: {
-						bottom: true,
+						bottom: false,
 					},
 				},
 				StatusBlock({
-					testId: this.testId,
+					emptyScreen: false,
+					testId: this.#getTestId('status-block'),
 					title: this.title,
 					image: this.renderImage,
 					description: this.description,
+					buttons: this.statusBlockButtons,
+					style: this.statusBlockStyle,
 				}),
-				View(
-					{
-						style: {
-							width: '100%',
-							paddingVertical: Indent.XL.toNumber(),
-							paddingHorizontal: Component.paddingLrMore.toNumber(),
-						},
-					},
-					Button({
-						testId: this.buttonTestId,
-						size: ButtonSize.L,
-						text: this.buttonText,
-						design: ButtonDesign.OUTLINE_ACCENT_1,
-						stretched: true,
-						onClick: this.onButtonClick,
-					}),
-				),
+			);
+		}
+
+		#renderButton()
+		{
+			return BoxFooter(
+				{
+					safeArea: true,
+					testId: this.#getTestId('box-footer'),
+				},
+				Button({
+					testId: this.#getTestId('button'),
+					size: ButtonSize.L,
+					text: this.buttonText,
+					design: this.buttonDesign,
+					stretched: true,
+					onClick: this.onButtonClick,
+				}),
 			);
 		}
 
 		get renderImage()
 		{
-			if (!this.props.imageName)
+			const uri = this.props.imageUri
+				?? makeLibraryImagePath(this.props.imageName, 'invite-status-box', 'intranet');
+			if (!uri)
 			{
 				return null;
 			}
@@ -165,7 +215,7 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 					height: 120,
 				},
 				svg: {
-					uri: makeLibraryImagePath(this.props.imageName, 'invite-status-box', 'intranet'),
+					uri,
 				},
 			});
 		}

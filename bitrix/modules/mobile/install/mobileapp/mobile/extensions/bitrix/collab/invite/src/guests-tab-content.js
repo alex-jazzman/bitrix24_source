@@ -26,7 +26,10 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 	const { ajaxPublicErrorHandler } = require('error');
 	const { inviteGuestsToCollab, addEmployeeToCollab } = require('collab/invite/src/api');
 	const { AvatarEntityType } = require('ui-system/blocks/avatar');
-	const { showSuccessInvitationToast } = require('collab/invite/src/utils');
+	const {
+		showSuccessInvitationToast,
+		openGuestsInviteRestrictionsBox,
+	} = require('collab/invite/src/utils');
 	const { QRInvite } = require('layout/ui/qr-invite');
 	const { Notify } = require('notify');
 	const { Line } = require('utils/skeleton');
@@ -147,6 +150,8 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 
 		#renderButtons()
 		{
+			const { canInviteCollabers, boxLayout } = this.props;
+
 			return BoxFooter(
 				{
 					safeArea: true,
@@ -163,7 +168,15 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 						style: {
 							marginBottom: Indent.L.toNumber(),
 						},
-						onClick: () => {
+						onClick: async () => {
+							if (!canInviteCollabers)
+							{
+								await openGuestsInviteRestrictionsBox({
+									parentWidget: boxLayout,
+								});
+
+								return;
+							}
 							dialogs.showSharingDialog({
 								title: Loc.getMessage('INTRANET_SHARING_LINK_DIALOG_TITLE'),
 								message: this.#getSharingMessageWithLink(),
@@ -182,8 +195,8 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 						size: ButtonSize.S,
 						design: ButtonDesign.PLAN_ACCENT,
 						stretched: true,
-						onClick: () => {
-							this.#openOtherInviteCasesMenu();
+						onClick: async () => {
+							await this.#openOtherInviteCasesMenu();
 						},
 					},
 				),
@@ -222,7 +235,17 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 			});
 		};
 
-		#openOtherInviteCasesMenu = () => {
+		#openOtherInviteCasesMenu = async () => {
+			const { canInviteCollabers, boxLayout } = this.props;
+			if (!canInviteCollabers)
+			{
+				await openGuestsInviteRestrictionsBox({
+					parentWidget: boxLayout,
+				});
+
+				return;
+			}
+
 			this.menu = new UIMenu(this.#getInviteCasesItems());
 			this.menu.show({
 				target: this.inviteCasesButtonRef,
@@ -272,12 +295,10 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 					};
 				});
 
-				this.#closeInviteBox();
-				setTimeout(async () => {
-					await Notify.showIndicatorLoading();
-					await this.#inviteUsers(usersToInvite, []);
-					Notify.hideCurrentIndicator();
-				}, 500);
+				await this.#closeInviteBox();
+				await Notify.showIndicatorLoading();
+				await this.#inviteUsers(usersToInvite, []);
+				Notify.hideCurrentIndicator();
 
 				return;
 			}
@@ -307,10 +328,9 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 			const invitedUsers = this.#addIdFieldToUserItems(invitedContacts, 'phone');
 			if (usersToInvite.length > 0)
 			{
-				selectorInstance.close();
-				setTimeout(async () => {
+				selectorInstance.close(async () => {
 					this.nameCheckerInstance = await this.#openNameCheckerForPhones(usersToInvite, invitedUsers);
-				}, 500);
+				});
 
 				return;
 			}
@@ -445,13 +465,13 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 		#handleInviteResponse = async (response, multipleInvitation) => {
 			if (response?.status === 'success')
 			{
+				await this.#closeInviteBox();
 				showSuccessInvitationToast({
 					collabId: this.props.collabId,
 					analytics: this.props.analytics,
 					multipleInvitation,
 					isTextForInvite: true,
 				});
-				this.#closeInviteBox();
 
 				return;
 			}
@@ -568,6 +588,16 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 		};
 
 		#openEmailInputBox = async () => {
+			const { canInviteCollabers, boxLayout } = this.props;
+			if (!canInviteCollabers)
+			{
+				await openGuestsInviteRestrictionsBox({
+					parentWidget: boxLayout,
+				});
+
+				return;
+			}
+
 			this.inviteByEmailBoxRef = await openEmailInputBox({
 				testId: this.testId,
 				parentLayout: this.props.layout,
@@ -637,12 +667,10 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 					id: email,
 				}));
 
-				this.#closeInviteBox();
-				setTimeout(async () => {
-					await Notify.showIndicatorLoading();
-					await this.#inviteUsers(usersToInvite, []);
-					Notify.hideCurrentIndicator();
-				}, 500);
+				await this.#closeInviteBox();
+				await Notify.showIndicatorLoading();
+				await this.#inviteUsers(usersToInvite, []);
+				Notify.hideCurrentIndicator();
 
 				return;
 			}
@@ -671,10 +699,9 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 			const invitedUsers = this.#addIdFieldToUserItems(invitedEmails, 'email');
 			if (usersToInvite.length > 0)
 			{
-				this.inviteByEmailBoxRef?.close();
-				setTimeout(async () => {
+				this.inviteByEmailBoxRef?.close(async () => {
 					this.nameCheckerInstance = await this.#openNameCheckerForEmails(usersToInvite, invitedUsers);
-				}, 500);
+				});
 
 				return;
 			}
@@ -789,9 +816,12 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 			await this.#inviteUsers(usersToInvite, alreadyInvitedUsers);
 		};
 
-		#closeInviteBox = () => {
-			this.props.layout?.close();
-			this.props.boxLayout?.close?.();
+		#closeInviteBox = async () => {
+			const { boxLayout } = this.props;
+
+			return new Promise((resolve) => {
+				boxLayout?.close?.(resolve);
+			});
 		};
 
 		#renderNameCheckerAvatar()

@@ -5,7 +5,6 @@ return [
 		'type',
 		'tokens',
 		'utils/type',
-		'utils/color',
 		'utils/object',
 		'utils/string',
 		'utils/enums/base',

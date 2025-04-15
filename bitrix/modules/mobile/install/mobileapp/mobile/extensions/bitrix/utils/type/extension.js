@@ -39,10 +39,17 @@
 	 * @module utils/type
 	 */
 	jn.define('utils/type', (require, exports, module) => {
+
+		function isBoolean(value)
+		{
+			return value === true || value === false;
+		}
+
 		module.exports = {
 			isNil,
 			isRegExp,
 			isESClass,
+			isBoolean,
 			isValidDateObject,
 		};
 	});

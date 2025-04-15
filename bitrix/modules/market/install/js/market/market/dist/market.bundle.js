@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_vue3_pinia,ui_vue3,market_toolbar,market_main,market_listApps,main_core_events) {
 	'use strict';

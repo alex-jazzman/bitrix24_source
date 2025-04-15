@@ -29,11 +29,6 @@ export const TableRow = {
 			required: false,
 			default: {},
 		},
-		isEditMode: {
-			type: Boolean,
-			required: false,
-			default: false,
-		},
 	},
 	data()
 	{
@@ -107,6 +102,10 @@ export const TableRow = {
 					autoHide: false,
 				},
 			};
+		},
+		canEdit(): boolean
+		{
+			return !Boolean(this.fieldSettings?.id > 0);
 		},
 	},
 	emits: [
@@ -202,20 +201,20 @@ export const TableRow = {
 				<input class="format-table__checkbox" ref="visibilityCheckbox" type="checkbox" @change="onCheckboxClick" :checked="enabled">
 			</td>
 			<td class="format-table__cell">
-				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :is-edit-mode="isEditMode" />
+				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :can-edit="canEdit" />
 			</td>
 			<td class="format-table__cell">
 				<div
 					class="ui-ctl ui-ctl-textbox ui-ctl-w100 format-table__name-control"
 					:class="{
 						'format-table__text-input--invalid': displayedValidationErrors.name && !isNameValid,
-						'format-table__text-input--disabled': isEditMode,
-						'ui-ctl-after-icon': !isEditMode && !isNameValid,
+						'format-table__text-input--disabled': !canEdit,
+						'ui-ctl-after-icon': canEdit && !isNameValid,
 					}"
 				>
 					<input
 						class="ui-ctl-element format-table__text-input format-table__name-input"
-						:disabled="isEditMode"
+						:disabled="!canEdit"
 						type="text"
 						:placeholder="$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_PLACEHOLDER')"
 						name="name"

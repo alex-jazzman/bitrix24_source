@@ -16,12 +16,6 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 	class NestedDepartmentSelector extends BaseTreeSelector
 	{
 		/**
-		 * @typedef {Object} WidgetParams
-		 * @property {string} title - Title of backdrop.
-		 * @property {Object} backdrop - Backdrop settings.
-		 * @property {number} backdrop.mediumPositionPercent - Medium position percentage for the backdrop.
-		 * @property {boolean} backdrop.horizontalSwipeAllowed - Whether horizontal swipe is allowed.
-		 *
 		 * @typedef {Object} Events
 		 * @property {Function} onClose - Handler for the close event.
 		 *
@@ -56,42 +50,66 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 		 */
 		constructor(options = {})
 		{
-			const provider = Type.isPlainObject(options.provider) ? options.provider : {};
-			const providerOptions = Type.isPlainObject(options.provider?.options) ? options.provider?.options : {};
+			super(options);
 
-			super(NestedDepartmentSelectorEntity, {
-				...options,
-				searchOptions: {
-					...options.searchOptions,
-					onSearchCancelled: (data) => this.#onSearchCancelled(data),
-					onSearch: (data) => this.#onSearch(data),
-				},
-				provider: {
-					...provider,
-					options: {
-						...providerOptions,
-						onItemsLoadedFromServer: (items) => this.#onItemsLoadedFromServer(items),
-						onRecentLoaded: (items) => this.#onRecentLoaded(items),
-						getScopeId: () => this.getCurrentScopeId(),
-						findInTree: Navigator.findInTree,
-					},
-				},
-				shouldAnimate: true,
-			});
-
-			this.navigator = new Navigator({
-				onCurrentNodeChanged: this.#onDepartmentNodeChanged,
-			});
-
-			this.leftButtons = Type.isArrayFilled(options?.leftButtons) ? options?.leftButtons : [];
+			this.createNavigator();
 
 			this.entity.addEvents({
 				onScopeChanged: this.#onScopeChanged,
 				onItemSelected: this.onItemSelected,
 			});
 
-			this.recentTitle = options.widgetParams.title ?? NestedDepartmentSelectorEntity.getTitle();
-			this.nodeEntityId = 'department';
+			this.recentTitle = this.options.widgetParams.title ?? NestedDepartmentSelectorEntity.getTitle();
+		}
+
+		getEntity()
+		{
+			return NestedDepartmentSelectorEntity;
+		}
+
+		getNodeEntityId()
+		{
+			return 'department';
+		}
+
+		prepareOptions(options)
+		{
+			return {
+				...options,
+				shouldAnimate: true,
+			};
+		}
+
+		prepareProvider(options)
+		{
+			const provider = { ...options.provider };
+			const preparedProvider = Type.isPlainObject(provider) ? provider : {};
+			const providerOptions = Type.isPlainObject(preparedProvider?.options) ? preparedProvider?.options : {};
+
+			return {
+				...provider,
+				options: {
+					...providerOptions,
+					onItemsLoadedFromServer: (items) => this.#onItemsLoadedFromServer(items),
+					onRecentLoaded: (items) => this.#onRecentLoaded(items),
+					getScopeId: () => this.getCurrentScopeId(),
+					findInTree: Navigator.findInTree,
+				},
+			};
+		}
+
+		prepareSearchOptions(options)
+		{
+			return {
+				...options.searchOptions,
+				onSearchCancelled: (data) => this.#onSearchCancelled(data),
+				onSearch: (data) => this.#onSearch(data),
+			};
+		}
+
+		getExternalLeftButtons()
+		{
+			return Type.isArrayFilled(this.options?.leftButtons) ? this.options?.leftButtons : [];
 		}
 
 		getCurrentScopeId = () => {
@@ -106,30 +124,19 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			];
 		}
 
-		#setScopeById = ({ scopeId, shouldResetSearch = true }) => {
-			this.#onScopeChanged({
-				scope: { id: scopeId },
-				shouldResetSearch,
-			});
-
-			this.getSelector().getWidget().setScopeById(
-				this.getCurrentScopeId(),
-			);
-		};
-
 		#onRecentLoaded = (items) => {
 			this.setTitle(
 				this.recentTitle,
 			);
 
-			const rootDepartment = items.find(({ entityId }) => entityId === this.nodeEntityId);
+			const rootDepartment = items.find(({ entityId }) => entityId === this.getNodeEntityId());
 
 			this.getNavigator().init(rootDepartment);
 		};
 
 		#onItemsLoadedFromServer = (items) => {
 			let scopes = null;
-			if (items.some(({ entityId }) => entityId === this.nodeEntityId))
+			if (items.some(({ entityId }) => entityId === this.getNodeEntityId()))
 			{
 				scopes = this.#getScopes();
 			}
@@ -141,10 +148,6 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			}
 
 			this.getSelector().getWidget()?.setScopes(scopes);
-		};
-
-		#onDepartmentNodeChanged = (node) => {
-			this.setTitle(node?.title);
 		};
 
 		#onScopeChanged = ({ text, scope, shouldResetSearch = true }) => {
@@ -275,6 +278,7 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			switch (this.getCurrentScopeId())
 			{
 				case ScopesIds.DEPARTMENT:
+					// eslint-disable-next-line no-case-declarations
 					const children = await this.getOrLoadNodeChildren(
 						navigator.getCurrentNode(),
 					);

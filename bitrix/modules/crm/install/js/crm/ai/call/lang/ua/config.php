@@ -11,6 +11,7 @@ $MESS["CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_TEXT"] = "Щоб проана�
 $MESS["CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_TITLE"] = "Аналіз розмови за скриптом";
 $MESS["CRM_COPILOT_CALL_QUALITY_ERROR_TEXT"] = "Спробуйте запустити аналіз ще раз трохи пізніше. Якщо ситуація повториться, перевірте запити до CoPilot.";
 $MESS["CRM_COPILOT_CALL_QUALITY_ERROR_TITLE"] = "CoPilot не зміг оцінити розмову";
+$MESS["CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER_MSGVER_1"] = "Відповіді CoPilot можуть бути неточними, перевіряйте важливу інформацію. #LINK_START#Докладніше#LINK_END#";
 $MESS["CRM_COPILOT_CALL_QUALITY_EXPLANATION_IS_PENDING_TITLE"] = "CoPilot аналізує розмову";
 $MESS["CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING"] = "Не бере участі в загальному рейтингу";
 $MESS["CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE"] = "CoPilot оцінив розмову";

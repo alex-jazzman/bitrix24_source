@@ -1873,7 +1873,7 @@ this.BX = this.BX || {};
 	  }
 	  checkTopSlider() {
 	    const slider = calendar_util.Util.getBX().SidePanel.Instance.getTopSlider();
-	    return slider && slider.options.type === 'calendar:slider';
+	    return slider && slider.getData().get('type') === 'calendar:slider';
 	  }
 	  showError(errorList) {
 	    let errorText = '';

@@ -11,6 +11,7 @@ $MESS["REST_CONFIGURATION_IMPORT_FINISH_DESCRIPTION_MSGVER_1"] = "Готово! 
 $MESS["REST_CONFIGURATION_IMPORT_FINISH_ERROR_DESCRIPTION"] = "Налаштування імпортовані, але з деякими помилками.";
 $MESS["REST_CONFIGURATION_IMPORT_INSTALL_APP_TITLE_BLOCK"] = "Встановлення застосунку";
 $MESS["REST_CONFIGURATION_IMPORT_ROLLBACK_MODE_DESCRIPTION_2"] = "Для видалення застосунку, який використовується, необхідно обрати один з доступних варіантів налаштування вашого Бітрікс24, або обрати в Бітрікс24.Маркет новий застосунок";
+$MESS["REST_CONFIGURATION_IMPORT_ROLLBACK_MODE_DESCRIPTION_2_MSGVER_1"] = "Щоб видалити використовуваний застосунок, необхідно вибрати один із доступних варіантів налаштування вашого Бітрікс24 або вибрати в Бітрікс24 Маркет новий застосунок.";
 $MESS["REST_CONFIGURATION_IMPORT_ROLLBACK_SUBMIT_BTN"] = "Застосувати";
 $MESS["REST_CONFIGURATION_IMPORT_ROLLBACK_TITLE_BLOCK"] = "Відновлення галузевих налаштувань";
 $MESS["REST_CONFIGURATION_IMPORT_SAVE_FILE_BTN"] = "Завантажити";

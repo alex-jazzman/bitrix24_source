@@ -74,6 +74,12 @@ jn.define('im/messenger/controller/sidebar/channel/profile-info', (require, expo
 				newState.desc = ChatTitle.getChatDescriptionByDialogType(newState.dialogType);
 			}
 
+			const titleColor = this.getTitleColor();
+			if (this.state.titleColor !== titleColor)
+			{
+				newState.titleColor = titleColor;
+			}
+
 			if (Object.keys(newState).length > 0)
 			{
 				this.setState(newState);

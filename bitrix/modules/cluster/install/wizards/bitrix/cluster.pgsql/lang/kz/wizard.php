@@ -1,0 +1,24 @@
+<?php
+$MESS["CLUWIZ_ALL_OK"] = "Бапталған қосылымдар ағымдағы репликация күйіне сәйкес келеді. Ешқандай әрекет қажет емес";
+$MESS["CLUWIZ_CANCELSTEP_BUTTONTITLE"] = "Жабу";
+$MESS["CLUWIZ_CANCELSTEP_CONTENT"] = "Шебердің жұмысы үзілді.";
+$MESS["CLUWIZ_CANCELSTEP_TITLE"] = "Шебердің жұмысы үзілді";
+$MESS["CLUWIZ_CREATE_BY_USER"] = "Мен функцияны өзім жасаймын.";
+$MESS["CLUWIZ_CREATE_BY_WIZARD"] = "Шебер функциясын жасаңыз.";
+$MESS["CLUWIZ_ERROR_CREATE_FUNCTION"] = "Мониторинг функциясын құру мүмкін болмады.";
+$MESS["CLUWIZ_ERROR_GRANT_REPLICATION"] = "Репликацияны басқару құқығын беру мүмкін болмады.";
+$MESS["CLUWIZ_ERRROR_CONNECT"] = "Дерекқорға қосылу қатесі.";
+$MESS["CLUWIZ_FINALSTEP_BUTTONTITLE"] = "Дайын";
+$MESS["CLUWIZ_FINALSTEP_CONTENT"] = "Шебердің жұмысы аяқталды.";
+$MESS["CLUWIZ_FINALSTEP_TITLE"] = "Шебердің жұмысы аяқталды";
+$MESS["CLUWIZ_FUNCTION_ERROR"] = "Репликация күйін мониторинг жасайтын функция табылған жоқ.";
+$MESS["CLUWIZ_GRANT_BY_USER"] = "Мен құқықты өзім беремін.";
+$MESS["CLUWIZ_GRANT_BY_WIZARD"] = "Шебердің құқықтарын беру.";
+$MESS["CLUWIZ_HOST"] = "Сервер:";
+$MESS["CLUWIZ_NEW_NODE"] = "Slave #CLIENT_ADDR# қосыңыз";
+$MESS["CLUWIZ_NO_MODULE_ERROR"] = "Кластерді қолдау модулі орнатылмаған. Шебердің жұмысын жалғастыру мүмкін емес.";
+$MESS["CLUWIZ_OLD_NODE"] = "Slave ##NODE_ID# жою";
+$MESS["CLUWIZ_REPLICATION_GRANT_ERROR"] = "Репликацияны басқаруға жеткілікті құқықтар жоқ.";
+$MESS["CLUWIZ_ROOT_PASSWORD"] = "Әкімші құпиясөзі:";
+$MESS["CLUWIZ_ROOT_USER"] = "Пайдаланушы аты (әкімші):";
+$MESS["CLUWIZ_STEP1_TITLE"] = "Репликация күйін тексеру.";

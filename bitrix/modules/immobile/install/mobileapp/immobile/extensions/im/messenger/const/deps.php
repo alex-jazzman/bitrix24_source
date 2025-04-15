@@ -13,8 +13,7 @@ return [
 		'./src/connection-status',
 		'./src/counter',
 		'./src/event-type',
-		'./src/events-checkpoint',
-		'./src/feature-flag',
+		'./src/event-filter',
 		'./src/recent',
 		'./src/rest',
 		'./src/user',
@@ -47,6 +46,5 @@ return [
 		'./src/widget',
 		'./src/entity-selector',
 		'./src/collab',
-		'./src/view',
 	],
 ];

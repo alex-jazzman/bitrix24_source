@@ -8,6 +8,9 @@ return [
 		'require-lazy',
 		'user/profile',
 		'utils/date',
+		'project/utils',
+
+		'im:messenger/api/dialog-opener',
 
 		'statemanager/redux/connect',
 		'tasks:statemanager/redux/slices/flows',

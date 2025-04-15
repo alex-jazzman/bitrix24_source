@@ -200,7 +200,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
 	          _classPrivateMethodGet(this, _sendAnalytics, _sendAnalytics2).call(this);
 	          resolve(true);
-	        } else if (this.isAjaxAction()) {
+	        } else if (this.isAjaxAction() || this.isAjaxJsonAction()) {
 	          _classPrivateMethodGet(this, _startAnimation, _startAnimation2).call(this, vueComponent);
 	          vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	            action: babelHelpers.classPrivateFieldGet(this, _value),
@@ -208,7 +208,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
 	          });
 	          const ajaxConfig = {
-	            data: _classPrivateMethodGet(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
+	            [this.isAjaxJsonAction() ? 'json' : 'data']: _classPrivateMethodGet(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
 	          };
 	          if (babelHelpers.classPrivateFieldGet(this, _analytics)) {
 	            ajaxConfig.analytics = babelHelpers.classPrivateFieldGet(this, _analytics);
@@ -322,6 +322,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "isAjaxAction",
 	    value: function isAjaxAction() {
 	      return babelHelpers.classPrivateFieldGet(this, _type) === 'runAjaxAction';
+	    }
+	  }, {
+	    key: "isAjaxJsonAction",
+	    value: function isAjaxJsonAction() {
+	      return babelHelpers.classPrivateFieldGet(this, _type) === 'runAjaxJsonAction';
 	    }
 	  }, {
 	    key: "isCallRestBatch",
@@ -6388,20 +6393,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    hasResult() {
 	      return this.workflowResult !== undefined;
 	    },
-	    href() {
-	      if (this.author && this.author.link) {
-	        return this.author.link;
-	      }
-	      return '';
-	    },
-	    imageStyle() {
-	      if (this.author && this.author.avatarSize100) {
-	        return {
-	          backgroundImage: `url('${encodeURI(this.author.avatarSize100)}')`
-	        };
-	      }
-	      return {};
-	    },
 	    workflowResultHtml() {
 	      var _this$workflowResult$, _this$workflowResult;
 	      if (this.workflowResult && this.workflowResult.status === bizproc_types.WorkflowResultStatus.NO_RIGHTS_RESULT) {
@@ -6428,10 +6419,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      }
 	      if (this.workflowResult && this.workflowResult.status === bizproc_types.WorkflowResultStatus.USER_RESULT) {
-	        var _this$workflowResult$2;
-	        return main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_NO_RESULT', {
-	          '#USER#': (_this$workflowResult$2 = this.workflowResult.text) !== null && _this$workflowResult$2 !== void 0 ? _this$workflowResult$2 : ''
-	        });
+	        var _this$workflowResult$3;
+	        if (this.author) {
+	          var _this$workflowResult$2;
+	          return main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_NO_RESULT', {
+	            '#USER#': (_this$workflowResult$2 = this.workflowResult.text) !== null && _this$workflowResult$2 !== void 0 ? _this$workflowResult$2 : ''
+	          });
+	        }
+	        return (_this$workflowResult$3 = this.workflowResult.text) !== null && _this$workflowResult$3 !== void 0 ? _this$workflowResult$3 : '';
 	      }
 	      return null;
 	    }
@@ -10386,6 +10381,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  const responsibleId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.responsibleId);
 	  if (responsibleId > 0 && main_core.Text.toInteger((_item$getCurrentUser = item.getCurrentUser()) === null || _item$getCurrentUser === void 0 ? void 0 : _item$getCurrentUser.userId) === responsibleId) {
 	    _classPrivateMethodGet$s(this, _doTask, _doTask2).call(this, actionData, item);
+	    return;
 	  }
 	  ui_notification.UI.Notification.Center.notify({
 	    content: main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED')),
@@ -10532,6 +10528,39 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Booking;
 	}(Base);
 
+	let WaitListItem = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(WaitListItem, _Base);
+	  function WaitListItem() {
+	    babelHelpers.classCallCheck(this, WaitListItem);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WaitListItem).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(WaitListItem, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:WaitListItem:ShowWaitListItem') {
+	        const url = `/booking/?editingWaitListItemId=${actionData.id}`;
+	        BX.SidePanel.Instance.open(url, {
+	          customLeftBoundary: 0
+	        });
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:WaitListItem';
+	    }
+	  }]);
+	  return WaitListItem;
+	}(Base);
+
 	ControllerManager.registerController(Activity);
 	ControllerManager.registerController(CommonContentBlocks);
 	ControllerManager.registerController(OpenLines);
@@ -10563,6 +10592,7 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(WhatsApp);
 	ControllerManager.registerController(Bizproc);
 	ControllerManager.registerController(Booking);
+	ControllerManager.registerController(WaitListItem);
 
 	exports.Item = Item$1;
 	exports.ConfigurableItem = ConfigurableItem;

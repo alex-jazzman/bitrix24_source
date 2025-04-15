@@ -23,134 +23,142 @@ $arOptions['GADGETS']['CRM_COMPANY_LIST@8538']['SETTINGS']['TITLE_STD'] = GetMes
 WizardServices::SetUserOption('intranet', '~gadgets_crm', $arOptions, $common = true);
 
 $CCrmRole = new CCrmRole();
-$arRoles = array(
-	'adm' => array(
-		'NAME' => GetMessage('CRM_ROLE_ADMIN'),
-		'RELATION' => array(
-			'LEAD' => array(
-				'READ' => array('-' => 'X'),
-				'ADD' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X'),
-				'DELETE' => array('-' => 'X')
-			),
-			'DEAL' => array(
-				'READ' => array('-' => 'X'),
-				'ADD' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X'),
-				'DELETE' => array('-' => 'X')
-			),
-			'CONTACT' => array(
-				'READ' => array('-' => 'X'),
-				'ADD' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X'),
-				'DELETE' => array('-' => 'X')
-			),
-			'COMPANY' => array(
-				'READ' => array('-' => 'X'),
-				'ADD' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X'),
-				'DELETE' => array('-' => 'X'),
-			),
-			'INVOICE' => array(
-				'READ' => array('-' => 'X'),
-				'ADD' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X'),
-				'DELETE' => array('-' => 'X')
-			),
-			'QUOTE' => array(
-				'READ' => array('-' => 'X'),
-				'ADD' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X'),
-				'DELETE' => array('-' => 'X')
-			),
-			'WEBFORM' => array(
-				'READ' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X')
-			),
-			'BUTTON' => array(
-				'READ' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X')
-			),
-			'EXCLUSION' => array(
-				'READ' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X')
-			),
-			'CONFIG' => array(
-				'WRITE' => array('-' => 'X'),
-			)
-		)
-	),
-	'man' => array(
-		'NAME' => GetMessage('CRM_ROLE_MAN'),
-		'RELATION' => array(
-			'LEAD' => array(
-				'READ' => array('-' => 'A'),
-				'ADD' => array('-' => 'A'),
-				'WRITE' => array('-' => 'A'),
-				'DELETE' => array('-' => 'A')
-			),
-			'DEAL' => array(
-				'READ' => array('-' => 'A'),
-				'ADD' => array('-' => 'A'),
-				'WRITE' => array('-' => 'A'),
-				'DELETE' => array('-' => 'A')
-			),
-			'CONTACT' => array(
-				'READ' => array('-' => 'A'),
-				'ADD' => array('-' => 'A'),
-				'WRITE' => array('-' => 'A'),
-				'DELETE' => array('-' => 'A')
-			),
-			'COMPANY' => array(
-				'READ' => array('-' => 'X'),
-				'ADD' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X'),
-				'DELETE' => array('-' => 'X'),
-			),
-			'INVOICE' => array(
-				'READ' => array('-' => 'A'),
-				'ADD' => array('-' => 'A'),
-				'WRITE' => array('-' => 'A'),
-				'DELETE' => array('-' => 'A')
-			),
-			'QUOTE' => array(
-				'READ' => array('-' => 'A'),
-				'ADD' => array('-' => 'A'),
-				'WRITE' => array('-' => 'A'),
-				'DELETE' => array('-' => 'A')
-			),
-			'WEBFORM' => array(
-				'READ' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X')
-			),
-			'BUTTON' => array(
-				'READ' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X')
-			),
-			'EXCLUSION' => array(
-				'READ' => array('-' => 'X'),
-				'WRITE' => array('-' => 'X')
-			)
-		)
-	)
-);
+
+if (method_exists(\Bitrix\Crm\Security\Role\RolePreset::class, 'GetDefaultRolesPreset'))
+{
+	$arRoles = \Bitrix\Crm\Security\Role\RolePreset::GetDefaultRolesPreset();
+}
+else
+{
+	$arRoles = [
+		'ADMIN' => [
+			'NAME' => GetMessage('CRM_ROLE_ADMIN'),
+			'RELATION' => [
+				'LEAD' => [
+					'READ' => ['-' => 'X'],
+					'ADD' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X'],
+					'DELETE' => ['-' => 'X']
+				],
+				'DEAL' => [
+					'READ' => ['-' => 'X'],
+					'ADD' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X'],
+					'DELETE' => ['-' => 'X']
+				],
+				'CONTACT' => [
+					'READ' => ['-' => 'X'],
+					'ADD' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X'],
+					'DELETE' => ['-' => 'X']
+				],
+				'COMPANY' => [
+					'READ' => ['-' => 'X'],
+					'ADD' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X'],
+					'DELETE' => ['-' => 'X'],
+				],
+				'INVOICE' => [
+					'READ' => ['-' => 'X'],
+					'ADD' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X'],
+					'DELETE' => ['-' => 'X']
+				],
+				'QUOTE' => [
+					'READ' => ['-' => 'X'],
+					'ADD' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X'],
+					'DELETE' => ['-' => 'X']
+				],
+				'WEBFORM' => [
+					'READ' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X']
+				],
+				'BUTTON' => [
+					'READ' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X']
+				],
+				'EXCLUSION' => [
+					'READ' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X']
+				],
+				'CONFIG' => [
+					'WRITE' => ['-' => 'X'],
+				]
+			]
+		],
+		'MANAGER' => [
+			'NAME' => GetMessage('CRM_ROLE_MAN'),
+			'RELATION' => [
+				'LEAD' => [
+					'READ' => ['-' => 'A'],
+					'ADD' => ['-' => 'A'],
+					'WRITE' => ['-' => 'A'],
+					'DELETE' => ['-' => 'A']
+				],
+				'DEAL' => [
+					'READ' => ['-' => 'A'],
+					'ADD' => ['-' => 'A'],
+					'WRITE' => ['-' => 'A'],
+					'DELETE' => ['-' => 'A']
+				],
+				'CONTACT' => [
+					'READ' => ['-' => 'A'],
+					'ADD' => ['-' => 'A'],
+					'WRITE' => ['-' => 'A'],
+					'DELETE' => ['-' => 'A']
+				],
+				'COMPANY' => [
+					'READ' => ['-' => 'X'],
+					'ADD' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X'],
+					'DELETE' => ['-' => 'X'],
+				],
+				'INVOICE' => [
+					'READ' => ['-' => 'A'],
+					'ADD' => ['-' => 'A'],
+					'WRITE' => ['-' => 'A'],
+					'DELETE' => ['-' => 'A']
+				],
+				'QUOTE' => [
+					'READ' => ['-' => 'A'],
+					'ADD' => ['-' => 'A'],
+					'WRITE' => ['-' => 'A'],
+					'DELETE' => ['-' => 'A']
+				],
+				'WEBFORM' => [
+					'READ' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X']
+				],
+				'BUTTON' => [
+					'READ' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X']
+				],
+				'EXCLUSION' => [
+					'READ' => ['-' => 'X'],
+					'WRITE' => ['-' => 'X']
+				]
+			]
+		]
+	];
+}
 
 $iRoleIDAdm = $iRoleIDMan = 0;
 $obRole = CCrmRole::GetList(array(), array());
 while ($arRole = $obRole->Fetch())
 {
-	if ($arRole['NAME'] == GetMessage('CRM_ROLE_ADMIN'))
+	if ($arRole['NAME'] == $arRoles['ADMIN']['NAME'])
 		$iRoleIDAdm = $arRole['ID'];
-	else if ($arRole['NAME'] == GetMessage('CRM_ROLE_MAN'))
+	else if ($arRole['NAME'] == $arRoles['MANAGER']['NAME'])
 		$iRoleIDMan = $arRole['ID'];
 }
 
 $arRel = array();
 if ($iRoleIDAdm <= 0)
-	$iRoleIDAdm = $CCrmRole->Add($arRoles['adm']);
+	$iRoleIDAdm = $CCrmRole->Add($arRoles['ADMIN']);
 
 if ($iRoleIDMan <= 0)
-	$iRoleIDMan = $CCrmRole->Add($arRoles['man']);
+	$iRoleIDMan = $CCrmRole->Add($arRoles['MANAGER']);
 
 $arRel['G1'] = array($iRoleIDAdm);
 if (defined('WIZARD_EMPLOYEES_GROUP') && WIZARD_EMPLOYEES_GROUP > 0)

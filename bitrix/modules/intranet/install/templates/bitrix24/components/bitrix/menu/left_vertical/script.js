@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_buttons,main_core_event,im_v2_lib_desktopApi,main_core,main_popup,main_core_events,ui_dialogs_messagebox,ui_bannerDispatcher,ui_analytics) {
+(function (exports,ui_buttons,main_core_event,main_core,main_popup,main_core_events,ui_dialogs_messagebox,ui_bannerDispatcher,ui_analytics) {
 	'use strict';
 
 	var Options = /*#__PURE__*/function () {
@@ -2408,8 +2409,9 @@ this.BX = this.BX || {};
 	          babelHelpers.classPrivateFieldSet(this, _updateCountersLastValue, babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue) + (countersDynamic['hide'] !== undefined ? countersDynamic['hide'] : 0));
 	        }
 	        var visibleValue = babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue) > 99 ? '99+' : babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue) < 0 ? '0' : babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue);
-	        if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	          im_v2_lib_desktopApi.DesktopApi.setBrowserIconBadge(visibleValue);
+	        var DesktopApi = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopApi');
+	        if (DesktopApi && DesktopApi.isDesktop()) {
+	          DesktopApi.setBrowserIconBadge(visibleValue);
 	        }
 	      }
 	      babelHelpers.toConsumableArray(this.items.entries()).forEach(function (_ref8) {
@@ -4391,5 +4393,5 @@ this.BX = this.BX || {};
 
 	exports.Menu = Menu;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.Messenger.v2.Lib,BX,BX.Main,BX.Event,BX.UI.Dialogs,BX.UI,BX.UI.Analytics));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX,BX.Main,BX.Event,BX.UI.Dialogs,BX.UI,BX.UI.Analytics));
 //# sourceMappingURL=script.js.map

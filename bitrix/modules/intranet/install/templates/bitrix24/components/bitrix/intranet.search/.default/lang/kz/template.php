@@ -1,0 +1,21 @@
+<?php
+$MESS["INTR_COMP_IS_TPL_BANNER_OUTLOOK"] = "Қызметкерлер тізімін Microsoft Outlook байланыстары ретінде экспорттауға болады";
+$MESS["INTR_COMP_IS_TPL_BANNER_OUTLOOK_BUTTON"] = "Экспортты орындау";
+$MESS["INTR_COMP_IS_TPL_FILTER_ALPH"] = "Әліпби бойынша";
+$MESS["INTR_COMP_IS_TPL_FILTER_ALPH_LETTER1"] = "-";
+$MESS["INTR_COMP_IS_TPL_FILTER_ALPH_LETTER2"] = "б";
+$MESS["INTR_COMP_IS_TPL_FILTER_AZ"] = "А-Я";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_CARDDAV"] = "CardDAV синхрондау ";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_CARDDAV_TITLE"] = "Қызметкерлер тізімін CardDAV (iPhone, iPad және т.б.) хаттамасын қолдайтын қосымшалармен және құрылғылармен синхрондау ";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_EXCEL"] = "Excel-ге экспорттау";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_EXCEL_TITLE"] = "Іздеу нәтижелерін Microsoft Excel бағдарламасына экспорттау";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_OUTLOOK"] = "Outlook-пен синхрондау";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_OUTLOOK_TITLE"] = "Қызметкерлер тізімін Microsoft Outlook байланыстарымен синхрондау";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_ACTIVE"] = "Компания";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_ADD"] = "Қызметкерді қосу";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_ALL"] = "Барлығы";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_EXTRANET"] = "Экстранет";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_FIRED"] = "Жұмыстан шығарылғандар";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_INACTIVE"] = "Шақырылғандар";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_INVITE"] = "Қызметкерлерді шақыру";
+$MESS["INTR_COMP_IS_TPL_TOOLBAR_USER_MORE"] = "Тағы";

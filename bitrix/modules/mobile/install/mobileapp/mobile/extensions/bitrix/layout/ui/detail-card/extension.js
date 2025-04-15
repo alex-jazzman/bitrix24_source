@@ -17,11 +17,10 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
 	const { Loc } = require('loc');
-	const { Feature } = require('feature');
 	const { qrauth } = require('qrauth/utils');
 
 	const CACHE_ID = 'DETAIL_CARD';
-	const TAB_HEADER_HEIGHT = Feature.isAirStyleSupported() ? 50 : 44;
+	const TAB_HEADER_HEIGHT = 50;
 	const TOP_TOOLBAR_HEIGHT = 60;
 	const MAIN_TAB = 'main';
 	const MAX_TAB_COUNTER_VALUE = 99;
@@ -578,9 +577,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			return TabView({
 				style: {
 					height: TAB_HEADER_HEIGHT,
-					backgroundColor: Feature.isAirStyleSupported()
-						? AppTheme.realColors.bgNavigation
-						: AppTheme.colors.bgNavigation,
+					backgroundColor: AppTheme.realColors.bgNavigation,
 				},
 				params: {
 					styles: {

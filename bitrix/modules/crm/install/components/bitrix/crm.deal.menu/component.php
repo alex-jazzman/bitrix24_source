@@ -30,9 +30,9 @@ use Bitrix\Main\Loader;
 
 Container::getInstance()->getLocalization()->loadMessages();
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!CCrmDeal::CheckReadPermission(0, $CrmPerms))
+$currentUserID = Container::getInstance()->getContext()->getUserId();
+$userPermissionsService = Container::getInstance()->getUserPermissions();
+if (!$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Deal))
 {
 	return;
 }
@@ -171,29 +171,26 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 $arResult['BUTTONS'] = [];
 
 $isInSlider = isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y';
-$currentCategoryID = $arResult['CATEGORY_ID'] ?? -1;
+$currentCategoryID = $arResult['CATEGORY_ID'] ?? null;
 $bConfig = false;
 if ($arParams['TYPE'] === 'list')
 {
-	$bRead = CCrmDeal::CheckReadPermission(0, $CrmPerms, $currentCategoryID);
-	$bExport = CCrmDeal::CheckExportPermission($CrmPerms, $currentCategoryID);
-	$bImport = CCrmDeal::CheckImportPermission($CrmPerms, $currentCategoryID) && ($arParams['IS_RECURRING'] ?? null) !== 'Y';
-	$bAdd = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
-	$bWrite = CCrmDeal::CheckUpdatePermission(0, $CrmPerms, $currentCategoryID);
-
+	$bRead = $userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
+	$bExport = $userPermissionsService->entityType()->canExportItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
+	$bImport = $userPermissionsService->entityType()->canImportItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID) && ($arParams['IS_RECURRING'] ?? null) !== 'Y';
+	$bWrite = $userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
 	$bDelete = false;
-	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	$bConfig = $userPermissionsService->isCrmAdmin();
 }
 else
 {
 	$bExport = false;
 	$bImport = false;
-	$bRead = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
-	$bAdd = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
-	$bWrite = CCrmDeal::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
-	$bDelete = CCrmDeal::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
-
+	$bRead = $userPermissionsService->item()->canRead(CCrmOwnerType::Deal, $arParams['ELEMENT_ID']);
+	$bWrite = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Deal, $arParams['ELEMENT_ID']);
+	$bDelete = $userPermissionsService->item()->canDelete(CCrmOwnerType::Deal, $arParams['ELEMENT_ID']);
 }
+$bAdd = $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
 
 $bExclude = \Bitrix\Crm\Exclusion\Access::current()->canWrite();
 
@@ -263,7 +260,7 @@ if ($arParams['TYPE'] === 'details')
 
 	if($arParams['IS_RECURRING'] !== 'Y')
 	{
-		CCrmDeal::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CrmPerms);
+		CCrmDeal::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 		if($arResult['CAN_CONVERT'])
 		{
 			$schemeID = \Bitrix\Crm\Conversion\DealConversionConfig::getCurrentSchemeID();
@@ -377,7 +374,10 @@ if ($arParams['TYPE'] === 'details')
 	{
 		$moveToCategoryIDs = array_values(
 			array_diff(
-				\CCrmDeal::GetPermittedToMoveCategoryIDs(),
+				$userPermissionsService
+					->category()
+					->getAvailableForAddingCategoriesIds(CCrmOwnerType::Deal)
+				,
 				array($arResult['CATEGORY_ID'])
 			)
 		);
@@ -473,7 +473,10 @@ if($arParams['TYPE'] === 'list')
 
 	$categoryIDs = $arResult['CATEGORY_ID'] >= 0
 		? [$arResult['CATEGORY_ID']]
-		: CCrmDeal::GetPermittedToCreateCategoryIDs($CrmPerms);
+		: $userPermissionsService
+			->category()
+			->getAvailableForAddingCategoriesIds(CCrmOwnerType::Deal)
+	;
 
 	$categoryCount = count($categoryIDs);
 	if ($categoryCount > 1)
@@ -874,7 +877,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
 
 if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
 	&& !empty($arParams['ELEMENT_ID'])
-	&& CCrmDeal::CheckConvertPermission($arParams['ELEMENT_ID'], CCrmOwnerType::Undefined, $CrmPerms)
+	&& (
+		$userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Invoice)
+		|| $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Quote)
+	)
 	&& $arParams['IS_RECURRING'] !== 'Y'
 )
 {

@@ -13,5 +13,5 @@ $MESS["BIC_EXTERNAL_DASHBOARD_CONFIG"] = "Analytics hub access";
 $MESS["BIC_SETTINGS_ACCESS"] = "Edit settings";
 $MESS["BIC_SETTINGS_EDIT_RIGHTS"] = "Manage access permissions";
 $MESS["HINT_BIC_DASHBOARD_DELETE"] = "Applicable to custom dashboards only. Built-in dashboards cannot be deleted.";
-$MESS["HINT_BIC_DASHBOARD_EDIT"] = "Applicable to custom dashboards only. Built-in dashboards and those downloaded from Market are read-only.";
-$MESS["HINT_BIC_DASHBOARD_EXPORT"] = "Applicable to custom dashboards only. Built-in dashboards and those downloaded from Market cannot be exported.";
+$MESS["HINT_BIC_DASHBOARD_EDIT_MSGVER_1"] = "Applicable to custom dashboards only. Built-in dashboards and those downloaded from Market are read-only.";
+$MESS["HINT_BIC_DASHBOARD_EXPORT_MSGVER_1"] = "Applicable to custom dashboards only. Built-in dashboards and those downloaded from Market cannot be exported.";

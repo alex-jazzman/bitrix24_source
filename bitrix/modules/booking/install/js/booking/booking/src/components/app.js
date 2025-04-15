@@ -7,6 +7,7 @@ import { dictionaryService } from 'booking.provider.service.dictionary-service';
 import { bookingService } from 'booking.provider.service.booking-service';
 import { calendarService } from 'booking.provider.service.calendar-service';
 import { resourceDialogService } from 'booking.provider.service.resource-dialog-service';
+import { SectionAnalytics } from 'booking.lib.analytics';
 import { mousePosition } from 'booking.lib.mouse-position';
 import type { BookingModel } from 'booking.model.bookings';
 
@@ -32,13 +33,17 @@ export const App = {
 			loader: new Loader(),
 		};
 	},
+	beforeMount(): void
+	{
+		mousePosition.init();
+	},
 	async mounted(): Promise<void>
 	{
-		mousePosition.bindMouseMove();
-
 		this.showLoader();
 		expandOffHours.setExpanded(true);
 		this.addAfterTitle();
+
+		SectionAnalytics.sendOpenSection();
 
 		await Promise.all([
 			dictionaryService.fetchData(),
@@ -46,6 +51,10 @@ export const App = {
 		]);
 
 		void this.$store.dispatch(`${Model.Interface}/setIsLoaded`, true);
+	},
+	beforeUnmount(): void
+	{
+		mousePosition.destroy();
 	},
 	computed: {
 		...mapGetters({

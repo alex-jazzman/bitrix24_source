@@ -235,6 +235,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.activityDate = serverTask.activityDate;
 			}
 
+			if (!Type.isUndefined(serverTask.updateDate))
+			{
+				preparedTask.updateDate = serverTask.updateDate;
+			}
+
 			if (!Type.isUndefined(serverTask.startDatePlan))
 			{
 				preparedTask.startDatePlan = serverTask.startDatePlan;
@@ -280,13 +285,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.counter = serverTask.counter;
 			}
 
-			if (
-				!Type.isUndefined(serverTask.actions)
-				&& !Type.isUndefined(serverTask.actionsOld)
-			)
+			if (!Type.isUndefined(serverTask.actions))
 			{
-				preparedTask.actionsOld = serverTask.actionsOld;
-
 				const actions = FieldChangeRegistry.removeChangedFields(preparedTask.id, serverTask.actions);
 
 				preparedTask.canRead = actions.canRead ?? preparedTask.canRead;
@@ -350,282 +350,6 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 			return preparedTask;
 		}
 
-		static prepareReduxTaskFromOldTaskModel(oldTaskModel, existingReduxTask = null)
-		{
-			const preparedTask = { ...TaskModel.getEmptyReduxTask(), ...existingReduxTask };
-
-			// eslint-disable-next-line no-underscore-dangle
-			if (!Type.isUndefined(oldTaskModel._id))
-			{
-				// eslint-disable-next-line no-underscore-dangle
-				preparedTask.id = Number(oldTaskModel._id);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.title))
-			{
-				preparedTask.name = oldTaskModel.title;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.description))
-			{
-				preparedTask.description = oldTaskModel.description;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.parsedDescription))
-			{
-				preparedTask.parsedDescription = oldTaskModel.parsedDescription;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.groupId))
-			{
-				preparedTask.groupId = Number(oldTaskModel.groupId);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.flowId))
-			{
-				preparedTask.flowId = Number(oldTaskModel.flowId);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.timeElapsed))
-			{
-				preparedTask.timeElapsed = Number(oldTaskModel.timeElapsed);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.timeEstimate))
-			{
-				preparedTask.timeEstimate = Number(oldTaskModel.timeEstimate);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.commentsCount))
-			{
-				preparedTask.commentsCount = Number(oldTaskModel.commentsCount);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.serviceCommentsCount))
-			{
-				preparedTask.serviceCommentsCount = Number(oldTaskModel.serviceCommentsCount);
-			}
-
-			// eslint-disable-next-line no-underscore-dangle
-			if (!Type.isUndefined(oldTaskModel._counter))
-			{
-				// eslint-disable-next-line no-underscore-dangle
-				const { counters } = oldTaskModel._counter;
-
-				preparedTask.newCommentsCount = counters.newComments + counters.mutedNewComments + counters.projectNewComments;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.parentId))
-			{
-				preparedTask.parentId = Number(oldTaskModel.parentId);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.status))
-			{
-				preparedTask.status = Number(oldTaskModel.status);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.subStatus))
-			{
-				preparedTask.subStatus = Number(oldTaskModel.subStatus);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.priority))
-			{
-				preparedTask.priority = Number(oldTaskModel.priority);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.mark))
-			{
-				preparedTask.mark = oldTaskModel.mark;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.creator))
-			{
-				preparedTask.creator = Number(oldTaskModel.creator.id);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.responsible))
-			{
-				preparedTask.responsible = Number(oldTaskModel.responsible.id);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.accomplices))
-			{
-				preparedTask.accomplices = Object.keys(oldTaskModel.accomplices).map((userId) => Number(userId));
-			}
-
-			if (!Type.isUndefined(oldTaskModel.auditors))
-			{
-				preparedTask.auditors = Object.keys(oldTaskModel.auditors).map((userId) => Number(userId));
-			}
-
-			if (!Type.isUndefined(oldTaskModel.relatedTasks))
-			{
-				preparedTask.relatedTasks = (Type.isArray(oldTaskModel.relatedTasks) ? [] : oldTaskModel.relatedTasks);
-			}
-
-			// if (!Type.isUndefined(oldTaskModel.subTasks))
-			// {
-			// 	preparedTask.subTasks = (Type.isArray(oldTaskModel.subTasks) ? [] : oldTaskModel.subTasks);
-			// }
-
-			if (!Type.isUndefined(oldTaskModel.crm))
-			{
-				preparedTask.crm = Object.values(oldTaskModel.crm);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.tags))
-			{
-				preparedTask.tags = Object.values(oldTaskModel.tags).map((tag) => ({ id: tag.id, name: tag.title }));
-			}
-
-			if (!Type.isUndefined(oldTaskModel.files))
-			{
-				preparedTask.files = oldTaskModel.files;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.isMuted))
-			{
-				preparedTask.isMuted = oldTaskModel.isMuted;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.isPinned))
-			{
-				preparedTask.isPinned = oldTaskModel.isPinned;
-			}
-
-			// eslint-disable-next-line no-underscore-dangle
-			if (!Type.isUndefined(oldTaskModel._actions))
-			{
-				// eslint-disable-next-line no-underscore-dangle
-				preparedTask.isInFavorites = oldTaskModel._actions.canRemoveFromFavorite;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.isResultRequired))
-			{
-				preparedTask.isResultRequired = oldTaskModel.isResultRequired;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.isResultExists))
-			{
-				preparedTask.isResultExists = oldTaskModel.isResultExists;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.isOpenResultExists))
-			{
-				preparedTask.isOpenResultExists = oldTaskModel.isOpenResultExists;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.isMatchWorkTime))
-			{
-				preparedTask.isMatchWorkTime = oldTaskModel.isMatchWorkTime;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.allowChangeDeadline))
-			{
-				preparedTask.allowChangeDeadline = oldTaskModel.allowChangeDeadline;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.allowTimeTracking))
-			{
-				preparedTask.allowTimeTracking = oldTaskModel.allowTimeTracking;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.allowTaskControl))
-			{
-				preparedTask.allowTaskControl = oldTaskModel.allowTaskControl;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.isTimerRunningForCurrentUser))
-			{
-				preparedTask.isTimerRunningForCurrentUser = oldTaskModel.isTimerRunningForCurrentUser;
-			}
-
-			let isDeadlineChanged = false;
-			if (!Type.isUndefined(oldTaskModel.deadline))
-			{
-				const oldDeadline = preparedTask.deadline;
-				const newDeadline = oldTaskModel.deadline / 1000;
-
-				preparedTask.deadline = newDeadline;
-				isDeadlineChanged = (newDeadline !== oldDeadline);
-			}
-
-			if (!Type.isUndefined(oldTaskModel.activityDate))
-			{
-				preparedTask.activityDate = oldTaskModel.activityDate / 1000;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.startDatePlan))
-			{
-				preparedTask.startDatePlan = oldTaskModel.startDatePlan / 1000;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.endDatePlan))
-			{
-				preparedTask.endDatePlan = oldTaskModel.endDatePlan / 1000;
-			}
-
-			// todo: startDate and endDate
-			// if (!Type.isUndefined(oldTaskModel.startDate))
-			// {
-			// 	preparedTask.startDate = oldTaskModel.startDate;
-			// }
-			//
-			// if (!Type.isUndefined(oldTaskModel.endDate))
-			// {
-			// 	preparedTask.endDate = oldTaskModel.endDate;
-			// }
-
-			if (!Type.isUndefined(oldTaskModel.checklist))
-			{
-				preparedTask.checklist = oldTaskModel.checklist;
-			}
-
-			if (!Type.isUndefined(oldTaskModel.checklistDetails))
-			{
-				preparedTask.checklistDetails = oldTaskModel.checklistDetails;
-			}
-
-			// eslint-disable-next-line no-underscore-dangle
-			if (!Type.isUndefined(oldTaskModel._counter))
-			{
-				// eslint-disable-next-line no-underscore-dangle
-				preparedTask.counter = oldTaskModel._counter;
-			}
-
-			// eslint-disable-next-line no-underscore-dangle
-			if (!Type.isUndefined(oldTaskModel._actions))
-			{
-				// eslint-disable-next-line no-underscore-dangle
-				const actions = oldTaskModel._actions;
-
-				preparedTask.actionsOld = actions.actions;
-				preparedTask.canUpdateDeadline = actions.canChangeDeadline;
-				preparedTask.canDelegate = actions.canDelegate;
-				preparedTask.canTake = actions.canTake;
-				preparedTask.canRemove = actions.canRemove;
-				preparedTask.canUseTimer = actions.canStartTimer || actions.canPauseTimer;
-				preparedTask.canStart = actions.canStart;
-				preparedTask.canPause = actions.canPause;
-				preparedTask.canComplete = actions.canComplete;
-				preparedTask.canRenew = actions.canRenew;
-				preparedTask.canApprove = actions.canApprove;
-				preparedTask.canDisapprove = actions.canDisapprove;
-				preparedTask.canDefer = actions.canDefer;
-			}
-
-			preparedTask.isExpired = (oldTaskModel.isExpired && !oldTaskModel.isCompletedCounts && !oldTaskModel.isDeferred);
-
-			if (!existingReduxTask || isDeadlineChanged)
-			{
-				ExpirationRegistry.handleDeadlineTimerForTask(preparedTask);
-			}
-
-			return preparedTask;
-		}
-
 		/**
 		 *
 		 * @returns {TaskReduxModel}
@@ -680,6 +404,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 
 				deadline: undefined,
 				activityDate: undefined,
+				updateDate: undefined,
 				startDatePlan: undefined,
 				endDatePlan: undefined,
 				startDate: undefined,
@@ -702,7 +427,6 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 					color: '',
 					value: 0,
 				},
-				actionsOld: {},
 
 				canRead: false,
 				canUpdate: false,
@@ -787,6 +511,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 
 				deadline: null,
 				activityDate: Math.ceil(Date.now() / 1000),
+				updateDate: null,
 				startDatePlan: null,
 				endDatePlan: null,
 				startDate: null,
@@ -809,7 +534,6 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 					color: '',
 					value: 0,
 				},
-				actionsOld: {},
 
 				canRead: true,
 				canUpdate: true,

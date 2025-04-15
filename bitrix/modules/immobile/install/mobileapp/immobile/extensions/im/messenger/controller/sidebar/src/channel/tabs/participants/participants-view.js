@@ -166,6 +166,38 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 		{
 			return Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_TITLE_CHANNEL');
 		}
+
+		/**
+		 * @desc Handler remove participant
+		 * @param {object} event
+		 * @param {string} event.key  - string key item
+		 * @void
+		 * @protected
+		 */
+		onClickRemoveParticipant(event)
+		{
+			setTimeout(() => {
+				navigator.notification.confirm(
+					'',
+					(buttonId) => {
+						if (buttonId === 2)
+						{
+							const {
+								key,
+								userId,
+							} = event;
+							const itemPos = this.listViewRef.getElementPosition(key);
+							this.removeParticipant(itemPos.index, itemPos.section, userId);
+						}
+					},
+					Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_SUBSCRIBER_CONFIRM_TITLE'),
+					[
+						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_NO'),
+						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_YES'),
+					],
+				);
+			}, 10);
+		}
 	}
 
 	module.exports = { ChannelParticipantsView };

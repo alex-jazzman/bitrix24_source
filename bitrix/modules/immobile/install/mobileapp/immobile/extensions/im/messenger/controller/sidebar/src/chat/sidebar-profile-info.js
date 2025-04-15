@@ -42,6 +42,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				title: props.headData.title,
 				desc: props.headData.desc,
 				imageUrl: props.headData.imageUrl,
+				titleColor: this.getTitleColor(),
 			};
 
 			this.setRestService();
@@ -167,7 +168,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				},
 				Text({
 					style: {
-						color: ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor(),
+						color: this.state.titleColor,
 						fontSize: 17,
 						fontWeight: '500',
 						textStyle: 'normal',
@@ -346,6 +347,11 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			return departmentName;
 		}
 
+		getTitleColor()
+		{
+			return ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor();
+		}
+
 		componentDidMount()
 		{
 			logger.log('SidebarProfileBtn.view.componentDidMount');
@@ -432,6 +438,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 			logger.info(`${this.constructor.name}.onUpdateDialogState---------->`, mutation);
 
+			/** @type {Partial<SidebarProfileInfoState>} */
 			const newState = Object.create(null);
 			if (Type.isString(fields?.name) && fields?.name !== this.state.title)
 			{
@@ -441,6 +448,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			if (Type.isString(fields?.avatar) && fields?.avatar !== this.state.imageUrl)
 			{
 				newState.imageUrl = fields.avatar;
+			}
+
+			const titleColor = this.getTitleColor();
+			if (this.state.titleColor !== titleColor)
+			{
+				newState.titleColor = titleColor;
 			}
 
 			if (Object.keys(newState).length > 0)

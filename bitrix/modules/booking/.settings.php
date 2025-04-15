@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\Booking\Integration\Ui\EntitySelector;
+use Bitrix\Booking\Internals\Integration\Ui\EntitySelector;
 
 return [
 	'controllers' => [
@@ -111,7 +111,7 @@ return [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\JournalRepository::class,
 			],
 			'booking.journal.service' => [
-				'className' => \Bitrix\Booking\Internals\Journal\JournalService::class,
+				'className' => \Bitrix\Booking\Internals\Service\Journal\JournalService::class,
 			],
 			'booking.resource.slot.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceSlotRepository::class,
@@ -142,18 +142,86 @@ return [
 				},
 			],
 			'booking.counter.repository' => [
-				'className' => \Bitrix\Booking\Internals\Repository\Cache\Static\CounterRepository::class,
-				'constructorParams' => static function() {
-					return [
-						'implementation' => new \Bitrix\Booking\Internals\Repository\ORM\CounterRepository()
-					];
-				},
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\CounterRepository::class,
 			],
 			'booking.provider.manager' => [
-				'className' => \Bitrix\Booking\Integration\Booking\ProviderManager::class,
+				'className' => \Bitrix\Booking\Internals\Service\ProviderManager::class,
 			],
 			'booking.option.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\OptionRepository::class,
+			],
+			'booking.message.sender' => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\MessageSender::class,
+			],
+			'booking.wait.list.item.repository.mapper' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\Mapper\WaitListItemMapper::class,
+				'constructorParams' => static function() {
+					return [
+						'clientMapper' => \Bitrix\Booking\Internals\Container::getClientRepositoryMapper(),
+						'externalDataItemMapper' => \Bitrix\Booking\Internals\Container::getExternalDataItemRepositoryMapper(),
+					];
+				},
+			],
+			'booking.wait.list.item.repository' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\WaitListItemRepository::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getWaitListItemRepositoryMapper(),
+					];
+				},
+			],
+			'booking.overbooking.overlap.policy' => [
+				'className' => \Bitrix\Booking\Internals\Service\Overbooking\OverlapPolicy::class,
+			],
+			'booking.internals.booking.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\BookingService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'resourceService' => \Bitrix\Booking\Internals\Container::getResourceService(),
+						'clientService' => \Bitrix\Booking\Internals\Container::getClientService(),
+						'externalDataService' => \Bitrix\Booking\Internals\Container::getExternalDataService(),
+						'overbookingOverlapPolicy' => \Bitrix\Booking\Internals\Container::getOverBookingOverlapPolicy(),
+					];
+				},
+			],
+			'booking.internals.client.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\ClientService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingClientRepository' => \Bitrix\Booking\Internals\Container::getBookingClientRepository(),
+					];
+				},
+			],
+			'booking.internals.external.data.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\ExternalDataService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingClientRepository' => \Bitrix\Booking\Internals\Container::getBookingClientRepository(),
+						'bookingExternalDataRepository' => \Bitrix\Booking\Internals\Container::getBookingExternalDataRepository(),
+						'clientService' => \Bitrix\Booking\Internals\Container::getClientService(),
+					];
+				},
+			],
+			'booking.internals.resource.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\ResourceService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingResourceRepository' => \Bitrix\Booking\Internals\Container::getBookingResourceRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'resourceTypeRepository' => \Bitrix\Booking\Internals\Container::getResourceTypeRepository(),
+					];
+				},
+			],
+			'booking.internals.wait.list.item.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\WaitListItemService::class,
+				'constructorParams' => static function() {
+					return [
+						'waitListItemRepository' => \Bitrix\Booking\Internals\Container::getWaitListItemRepository(),
+						'clientService' => \Bitrix\Booking\Internals\Container::getClientService(),
+						'externalDataService' => \Bitrix\Booking\Internals\Container::getExternalDataService(),
+					];
+				},
 			],
 		],
 	],

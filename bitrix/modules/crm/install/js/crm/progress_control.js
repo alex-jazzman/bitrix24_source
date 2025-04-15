@@ -1184,6 +1184,9 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		this._isFrozen = false;
 		this._isReadOnly = false;
 		this.permissionChecker = null;
+		this.isLoading = false;
+		this.loadingNotificationMessage = null;
+		this.throttleShowLoadingNotificationCallback = null;
 
 		this._entityEditorDialog = null;
 
@@ -1222,6 +1225,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			this._entityType = this.getSetting("entityType");
 			this._currentStepId = this.getSetting("currentStepId");
 			this._infoTypeId = this.getSetting("infoTypeId", "");
+			this.loadingNotificationMessage = this.getSetting('loadingNotificationMessage', null);
 
 			this._enableCustomColors = this.getSetting("enableCustomColors");
 
@@ -1383,6 +1387,11 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		},
 		isDisableStep(step)
 		{
+			if (this.isLoading)
+			{
+				return true;
+			}
+
 			if (['success', 'failure'].includes(step.getSemantics()))
 			{
 				return !this.isHasPermissionToMoveTerminationStages();
@@ -1423,7 +1432,14 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		{
 			this._closeTerminationDialog();
 
-			if(!step || this._isReadOnly || this._isFrozen || this._entityEditorDialog !== null)
+			if (this.isLoading)
+			{
+				this.throttleShowLoadingNotification();
+
+				return;
+			}
+
+			if (!step || this._isReadOnly || this._isFrozen || this._entityEditorDialog !== null)
 			{
 				return;
 			}
@@ -1517,6 +1533,12 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		{
 			var stepIndex = this._findStepInfoIndex(this._currentStepId);
 			return stepIndex >= 0 ? this._stepInfos[stepIndex] : null;
+		},
+		getCurrentStepName: function()
+		{
+			const stepInfo = this.getCurrentStepInfo();
+
+			return stepInfo?.name ?? null;
 		},
 		isCustomColorsEnabled: function()
 		{
@@ -1999,6 +2021,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				}
 			}
 
+			this.setLoading(true);
 				if (BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(type))
 			{
 				BX.ajax.runAction(serviceUrl, {
@@ -2079,6 +2102,8 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		},
 		_onSaveRequestSuccess: function(data)
 		{
+			this.setLoading(false);
+
 			var checkErrors = BX.prop.getObject(data, "CHECK_ERRORS", null);
 			if(checkErrors)
 			{
@@ -2112,6 +2137,8 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		},
 		_onSaveRequestFailure: function(data)
 		{
+			this.setLoading(false);
+
 			if (this._analyticsData)
 			{
 				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
@@ -2225,7 +2252,40 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			this._analyticsData.status = status;
 
 			BX.UI.Analytics.sendData(this._analyticsData);
-		}
+		},
+		setLoading(isLoading)
+		{
+			if (this.isLoading === isLoading)
+			{
+				return;
+			}
+
+			this.isLoading = isLoading;
+			this.adjustDisableOfSteps();
+		},
+		showLoadingNotification()
+		{
+			if (!this.loadingNotificationMessage)
+			{
+				return;
+			}
+
+			const stageName = BX.Text.encode(this.getCurrentStepName());
+
+			BX.UI.Notification.Center.notify({
+				content: this.loadingNotificationMessage.replace('#stage#', stageName),
+				autoHideDelay: 3000,
+			});
+		},
+		throttleShowLoadingNotification()
+		{
+			if (this.throttleShowLoadingNotificationCallback === null)
+			{
+				this.throttleShowLoadingNotificationCallback = BX.throttle(this.showLoadingNotification.bind(this), 300);
+			}
+
+			this.throttleShowLoadingNotificationCallback();
+		},
 	};
 
 	BX.CrmProgressControl.items = {};

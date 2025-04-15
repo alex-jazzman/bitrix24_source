@@ -35,6 +35,12 @@ return [
 			'intranet.customSection.manager' => [
 				'className' => '\\Bitrix\\Intranet\\CustomSection\\Manager',
 			],
+			'intranet.customSection.provider.registry' => [
+				'className' => '\\Bitrix\\Intranet\\CustomSection\\Provider\\Registry',
+			],
+			'intranet.customSection.repository' => [
+				'className' => '\\Bitrix\\Intranet\\CustomSection\\Repository',
+			],
 			'intranet.option.mobile_app' => [
 				'constructor' => function () {
 					return new \Bitrix\Intranet\Service\MobileAppSettings(

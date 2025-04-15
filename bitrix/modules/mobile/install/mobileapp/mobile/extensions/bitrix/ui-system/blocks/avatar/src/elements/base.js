@@ -3,6 +3,7 @@
  */
 jn.define('ui-system/blocks/avatar/src/elements/base', (require, exports, module) => {
 	const { withCurrentDomain } = require('utils/url');
+	const { isFunction } = require('utils/object');
 	const { Component, Corner, Color } = require('tokens');
 	const { PureComponent } = require('layout/pure-component');
 	const { getFirstLetters } = require('layout/ui/user/empty-avatar');
@@ -29,7 +30,7 @@ jn.define('ui-system/blocks/avatar/src/elements/base', (require, exports, module
 	 * 	@property {AvatarAccentGradient} [accentGradient]
 	 * 	@property {Array} [accentGradientColors]
 	 * 	@property {boolean} [useLetterImage=true]
-	 * 	@property {boolean} [withRedux=false]
+	 * 	@property {boolean} [withRedux=true]
 	 * 	@property {Color} [backgroundColor=Color.bgSecondary]
 	 * 	@property {Object} [style={}]
 	 * 	@property {Function} [onClick]
@@ -184,10 +185,7 @@ jn.define('ui-system/blocks/avatar/src/elements/base', (require, exports, module
 		handleOnClick = () => {
 			const { onClick } = this.props;
 
-			if (onClick)
-			{
-				onClick({ id: this.getUserId() });
-			}
+			onClick?.({ id: this.getUserId() });
 		};
 
 		getBackgroundColor()
@@ -346,13 +344,20 @@ jn.define('ui-system/blocks/avatar/src/elements/base', (require, exports, module
 
 			return backBorderWidth;
 		}
+
+		hasOnClick()
+		{
+			const { onClick } = this.props;
+
+			return isFunction(onClick);
+		}
 	}
 
 	AvatarBase.defaultProps = {
 		size: 32,
 		icon: null,
 		outline: null,
-		withRedux: false,
+		withRedux: true,
 		useLetterImage: true,
 		backBorderWidth: null,
 	};

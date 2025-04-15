@@ -83,7 +83,20 @@ this.BX = this.BX || {};
 	    moneyStatistics: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].moneyStatistics,
 	    isFeatureEnabled: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isFeatureEnabled,
 	    canTurnOnTrial: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].canTurnOnTrial,
-	    canTurnOnDemo: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].canTurnOnDemo
+	    canTurnOnDemo: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].canTurnOnDemo,
+	    embedItems: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].embedItems.map(item => {
+	      return {
+	        value: item.id,
+	        entityTypeId: item.code,
+	        moduleId: item.module,
+	        data: {
+	          opportunity: 0,
+	          currencyId: '',
+	          createdTimestamp: 0,
+	          formattedOpportunity: ''
+	        }
+	      };
+	    })
 	  })).addModel(booking_model_resourceTypes.ResourceTypes.create()).addModel(booking_model_resources.Resources.create()).addModel(booking_model_favorites.Favorites.create()).addModel(booking_model_dictionary.Dictionary.create()).addModel(booking_model_mainResources.MainResources.create());
 	  const builderResult = await babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].build();
 	  return builderResult.store;

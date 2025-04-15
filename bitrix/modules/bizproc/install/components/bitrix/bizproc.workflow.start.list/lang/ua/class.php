@@ -1,5 +1,6 @@
 <?php
 $MESS["BIZPROC_WORKFLOW_START_EMPTY_DESCRIPTION"] = "Опис відсутній";
+$MESS["BIZPROC_WORKFLOW_START_EMPTY_DESCRIPTION_1"] = "Вам буде зручніше працювати з процесом, якщо адміністратор заповнить опис.";
 $MESS["BIZPROC_WORKFLOW_START_LIST_ADD_TEMPLATE_BUTTON"] = "Створити";
 $MESS["BIZPROC_WORKFLOW_START_LIST_AVERAGE_WAITING_TIME_MSGVER_1"] = "Середній час виконання: #TIME#";
 $MESS["BIZPROC_WORKFLOW_START_LIST_DOCUMENT_TYPE_ERROR"] = "Для цього елемента бізнес-процеси недоступні.";

@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'loc',
 		'utils/object',
 		'device/connection',

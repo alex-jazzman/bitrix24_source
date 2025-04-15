@@ -162,6 +162,7 @@ $MESS["CRM_ENTITY_ED_RESET_CONFIG"] = "Скинути налаштування";
 $MESS["CRM_ENTITY_ED_RESET_CONFIG_2"] = "Скинути налаштування на початковий вигляд картки";
 $MESS["CRM_ENTITY_ED_RESET_CONFIG_FOR_ALL"] = "Скинути налаштування для всіх користувачів";
 $MESS["CRM_ENTITY_ED_REST_SECTION_2"] = "Маркет";
+$MESS["CRM_ENTITY_ED_REST_SECTION_MSGVER_1"] = "Маркет";
 $MESS["CRM_ENTITY_ED_SAVE"] = "Зберегти";
 $MESS["CRM_ENTITY_ED_SAVE_CONFIG_FOR_ALL"] = "Зберегти налаштування для всіх користувачів";
 $MESS["CRM_ENTITY_ED_SECTION_OPEN_DETAILS"] = "відкрити";

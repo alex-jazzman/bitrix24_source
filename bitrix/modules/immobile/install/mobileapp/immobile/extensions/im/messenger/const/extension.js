@@ -23,8 +23,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { ConnectionStatus } = require('im/messenger/const/connection-status');
 	const { CounterType } = require('im/messenger/const/counter');
 	const { EventType } = require('im/messenger/const/event-type');
-	const { EventsCheckpointType } = require('im/messenger/const/events-checkpoint');
-	const { FeatureFlag } = require('im/messenger/const/feature-flag');
+	const { EventFilterType } = require('im/messenger/const/event-filter');
 	const {
 		RestMethod,
 	} = require('im/messenger/const/rest');
@@ -96,8 +95,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { MessengerInitRestMethod } = require('im/messenger/const/messenger-init-rest');
 	const { DialogPermissions, RightsLevel } = require('im/messenger/const/permission');
 	const { WidgetTitleParamsType } = require('im/messenger/const/widget');
-	const { EntitySelectorElementType} = require('im/messenger/const/entity-selector');
-	const { ViewName} = require('im/messenger/const/view');
+	const { EntitySelectorElementType } = require('im/messenger/const/entity-selector');
 
 	module.exports = {
 		AppStatus,
@@ -116,8 +114,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		ConnectionStatus,
 		CounterType,
 		EventType,
-		EventsCheckpointType,
-		FeatureFlag,
+		EventFilterType,
 		ChatTypes,
 		MessageStatus,
 		SubTitleIconType,
@@ -173,6 +170,5 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		RightsLevel,
 		WidgetTitleParamsType,
 		EntitySelectorElementType,
-		ViewName,
 	};
 });

@@ -1,0 +1,2 @@
+<?php
+$MESS["INTRANET_JS_CREATE_PORTAL_BUTTON_TITLE"] = "Битрикс24 жасаңыз";

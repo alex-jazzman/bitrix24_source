@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Entity\Booking;
 
 use Bitrix\Booking\Entity\BaseEntityCollection;
+use Bitrix\Booking\Entity\Client\ClientCollection;
 use Bitrix\Booking\Entity\DatePeriod;
 use Bitrix\Booking\Entity\EventInterface;
+use Bitrix\Booking\Entity\ExternalData\ExternalDataCollection;
 
 /**
  * @method \Bitrix\Booking\Entity\Booking\Booking|null getFirstCollectionItem()

@@ -95,6 +95,10 @@ export const CallEvent = {
 	onUserVoiceStarted: 'onUserVoiceStarted',
 	onUserVoiceStopped: 'onUserVoiceStopped',
 	onUserFloorRequest: 'onUserFloorRequest', // request for a permission to speak
+	onAllParticipantsAudioMuted: 'onAllParticipantsAudioMuted',
+	onAllParticipantsVideoMuted: 'onAllParticipantsVideoMuted',
+	onYouMuteAllParticipants: 'onYouMuteAllParticipants',
+	onParticipantMuted: 'onParticipantMuted',
 	onUserEmotion: 'onUserEmotion',
 	onUserStatsReceived: 'onUserStatsReceived',
 	onCustomMessage: 'onCustomMessage',

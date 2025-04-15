@@ -367,6 +367,19 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 			}, delay);
 		}
 
+		/**
+		 * @public
+		 * @param {number[]} itemIds
+		 * @param {boolean} animated
+		 * @param {boolean} blink
+		 * @param {boolean} checkVisibility
+		 * @return {Promise<void>}
+		 */
+		async scrollToFirstOf(itemIds, animated = true, blink = false, checkVisibility = true)
+		{
+			return this.stateFulListRef?.scrollToTopItem(itemIds, animated, blink, checkVisibility);
+		}
+
 		showStorageName()
 		{
 			return false;
@@ -741,6 +754,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				},
 				parentWidget: this.parentWidget,
 				showStorageName: this.showStorageName(),
+				relativeFolderId: this.getFolderId(),
 			}));
 		};
 

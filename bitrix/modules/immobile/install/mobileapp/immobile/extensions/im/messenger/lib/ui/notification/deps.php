@@ -5,7 +5,6 @@ return [
 		'loc',
 		'assets/icons',
 		'toast',
-		'feature',
 		'im:lib/theme',
 		'im:messenger/lib/logger',
 	],

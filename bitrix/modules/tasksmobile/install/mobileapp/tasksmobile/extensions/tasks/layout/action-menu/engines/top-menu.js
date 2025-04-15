@@ -33,18 +33,24 @@ jn.define('tasks/layout/action-menu/engines/top-menu', (require, exports, module
 		 *     onClickCallback: function,
 		 *     isDestructive?: boolean,
 		 *     sectionCode?: string,
-		 *     data?: { svgUri?: string, outlineIconUri?: string },
+		 *     data?: { svgUri?: string, outlineIconUri?: string, outlineIconContent?: BaseIcon },
 		 * }[]} actions
 		 * @return {object[]}
 		 */
 		prepareItems(actions)
 		{
-			return actions.map((action) => ({
-				...action,
-				testId: action.id,
-				iconUrl: action.data?.outlineIconUri || action.data?.svgUri,
-				onItemSelected: action.onClickCallback,
-			}));
+			return actions.map((action) => {
+				const icon = action.data?.outlineIconContent;
+				const iconUrl = icon ? undefined : (action.data?.outlineIconUri || action.data?.svgUri);
+
+				return {
+					...action,
+					testId: action.id,
+					icon,
+					iconUrl,
+					onItemSelected: action.onClickCallback,
+				};
+			});
 		}
 	}
 

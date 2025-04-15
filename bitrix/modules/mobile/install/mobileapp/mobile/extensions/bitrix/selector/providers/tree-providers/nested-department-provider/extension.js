@@ -5,9 +5,9 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 	const { Loc } = require('loc');
 	const { CommonSelectorProvider } = require('selector/providers/common');
 	const { Type } = require('type');
-	const { Color } = require('tokens');
-	const { Icon } = require('assets/icons');
-	const { withCurrentDomain } = require('utils/url');
+	const { UserEntity } = require('selector/providers/tree-providers/nested-department-provider/src/entities/user');
+	const { MetaUserEntity } = require('selector/providers/tree-providers/nested-department-provider/src/entities/meta-user');
+	const { DepartmentEntity } = require('selector/providers/tree-providers/nested-department-provider/src/entities/department');
 
 	const ScopesIds = {
 		RECENT: 'recent',
@@ -25,6 +25,15 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 			this.setOptions(options);
 
 			this.recentItems = null;
+			this.entities = [
+				this.options.addMetaUser && new MetaUserEntity(),
+				new UserEntity(),
+				new DepartmentEntity({
+					shouldAddCounters: () => this.options.getScopeId() === ScopesIds.DEPARTMENT,
+					allowFlatDepartments: this.options.allowFlatDepartments,
+					allowSelectRootDepartment: this.options.allowSelectRootDepartment,
+				}),
+			].filter(Boolean);
 		}
 
 		setOptions(options)
@@ -82,7 +91,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 			const response = await BX.ajax.runAction('ui.entityselector.getChildren', {
 				json: {
 					dialog: this.getAjaxDialog(),
-					parentItem: { id: department.id, entityId: 'department' },
+					parentItem: { id: department.id, entityId: DepartmentEntity.getId() },
 				},
 				getParameters: {
 					context: this.context,
@@ -98,7 +107,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 
 			children = children.map((child) => ({
 				...child,
-				type: child.entityId === 'department' ? 'button' : 'selectable',
+				type: child.entityId === DepartmentEntity.getId() ? 'button' : 'selectable',
 			}));
 
 			return children;
@@ -112,30 +121,25 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 				preselectedItems: preselectedItemsIds = [],
 			} = dialog;
 
-			const departmentRoot = items.find(({ entityId }) => entityId === 'department');
+			const departmentRoot = items.find(({ entityId }) => entityId === DepartmentEntity.getId());
+			this.resolveEntity(
+				DepartmentEntity.getId(),
+			).setRoot(departmentRoot);
 
 			let metaUser = false;
 
 			const recentItems = [...preselectedItemsIds, ...recentItemsIds]
 				.map(([entity, id]) => {
-					const isEqual = (item) => (
-						String(item.id) === String(id)
-						&& String(item.entityId) === String(entity)
-					);
+					const item = this.resolveEntity(entity)?.findItem(id, items);
 
-					switch (entity)
+					if (entity === MetaUserEntity.getId())
 					{
-						case 'department':
-							return this.options.findInTree(departmentRoot, (currentNode) => isEqual(currentNode));
-						case 'user':
-							return items.find((item) => isEqual(item));
-						case 'meta-user':
-							metaUser = items.find((item) => isEqual(item));
+						metaUser = item;
 
-							return null;
-						default:
-							return null;
+						return null;
 					}
+
+					return item;
 				})
 				.filter(Boolean);
 
@@ -188,65 +192,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 
 		getEntities()
 		{
-			return [
-				this.options.addMetaUser && this.getMetaUserEntity(),
-				this.getUserEntity(),
-				this.getDepartmentEntity(),
-			].filter(Boolean);
-		}
-
-		getUserEntity()
-		{
-			return {
-				id: 'user',
-				dynamicLoad: true,
-				dynamicSearch: true,
-				filters: [],
-				options: {
-					emailUsers: true,
-					inviteEmployeeLink: false,
-				},
-				searchable: true,
-				substituteEntityId: null,
-			};
-		}
-
-		getDepartmentEntity()
-		{
-			const scopeId = this.options.getScopeId();
-
-			return {
-				id: 'department',
-				dynamicLoad: true,
-				dynamicSearch: true,
-				filters: [],
-				options: {
-					allowFlatDepartments: this.options.allowFlatDepartments,
-					allowSelectRootDepartment: this.options.allowSelectRootDepartment,
-					selectMode: 'usersAndDepartments',
-					shouldCountSubdepartments: scopeId === ScopesIds.DEPARTMENT,
-					shouldCountUsers: scopeId === ScopesIds.DEPARTMENT,
-				},
-				searchable: true,
-				substituteEntityId: null,
-			};
-		}
-
-		getMetaUserEntity()
-		{
-			return {
-				id: 'meta-user',
-				dynamicLoad: true,
-				dynamicSearch: false,
-				filters: [],
-				options: {
-					'all-users': {
-						allowView: true,
-					},
-				},
-				searchable: true,
-				substituteEntityId: null,
-			};
+			return this.entities.map((entity) => entity.getEntityForDialog());
 		}
 
 		getRecentItems()
@@ -256,7 +202,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 
 		prepareItemForDrawing(entity)
 		{
-			const preparedEntity = super.prepareItemForDrawing(entity);
+			let preparedEntity = super.prepareItemForDrawing(entity);
 
 			preparedEntity.params.customData = {
 				...preparedEntity.params.customData,
@@ -265,37 +211,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 
 			preparedEntity.styles ??= {};
 
-			switch (entity.entityId)
-			{
-				case 'meta-user':
-					preparedEntity.imageUrl = this.getAvatarImage('THREE_PERSONS');
-					// new styles' set up
-					preparedEntity.styles.image = ImageStyles.metaUser;
-					preparedEntity.styles.selectedImage = ImageStyles.metaUser;
-					// old styles' set up
-					preparedEntity.color = Color.accentMainSuccess.getValue();
-					preparedEntity.typeIconFrame = 1;
-
-					break;
-				case 'department':
-					preparedEntity.imageUrl = this.getAvatarImage('GROUP');
-					preparedEntity.shortTitle = entity.shortTitle;
-					preparedEntity.subtitle = entity.subtitle;
-
-					// new styles' set up
-					preparedEntity.styles.image = entity?.styles?.image ?? ImageStyles.department;
-					preparedEntity.styles.selectedImage = entity?.styles?.selectedImage ?? ImageStyles.department;
-					// old styles' set up
-					preparedEntity.typeIconFrame ??= 1;
-					preparedEntity.color = preparedEntity.typeIconFrame === 2 ? null : Color.accentExtraAqua.getValue();
-
-					break;
-				case 'user':
-					preparedEntity.styles.image = ImageStyles.user;
-
-					break;
-				default:
-			}
+			preparedEntity = this.resolveEntity(entity.entityId)?.prepareItemForDrawing(preparedEntity, entity);
 
 			if (entity.type === 'button')
 			{
@@ -310,12 +226,17 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 			return preparedEntity;
 		}
 
+		resolveEntity(entityId)
+		{
+			return this.entities.find((entity) => entityId === entity.constructor.getId());
+		}
+
 		prepareItems(items)
 		{
 			const preparedItems = items.map((item) => {
 				const { subdepartmentsCount, usersCount } = (item.customData || {});
 
-				if (item.type !== 'button' || item.entityId !== 'department')
+				if (item.type !== 'button' || item.entityId !== DepartmentEntity.getId())
 				{
 					return item;
 				}
@@ -348,44 +269,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 
 			return super.prepareItems(preparedItems);
 		}
-
-		getAvatarImage(name)
-		{
-			return withCurrentDomain(Icon[name].getPath());
-		}
 	}
-
-	const ImageStyles = {
-		metaUser: {
-			backgroundColor: Color.accentMainSuccess.getValue(),
-			image: {
-				tintColor: Color.baseWhiteFixed.getValue(),
-				contentHeight: 26,
-				borderRadiusPx: 6,
-			},
-			border: {
-				color: Color.accentMainSuccess.getValue(),
-				width: 2,
-			},
-		},
-		department: {
-			backgroundColor: Color.accentExtraAqua.getValue(),
-			image: {
-				tintColor: Color.baseWhiteFixed.getValue(),
-				contentHeight: 26,
-				borderRadiusPx: 6,
-			},
-			border: {
-				color: Color.accentExtraAqua.getValue(),
-				width: 2,
-			},
-		},
-		user: {
-			border: {
-				width: 0,
-			},
-		},
-	};
 
 	module.exports = { NestedDepartmentProvider, ScopesIds };
 });

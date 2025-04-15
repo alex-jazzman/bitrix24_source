@@ -37,6 +37,7 @@ $MESS["MEASURE_STRESS"] = "Заміряти";
 $MESS["MENU_AI"] = "Лабораторія AI";
 $MESS["MENU_BITRIX24_INVITE"] = "Запросити";
 $MESS["MENU_BITRIX24_MENU_BOTTOM"] = "Нижнє меню";
+$MESS["MENU_BITRIX24_SUPPORT24"] = "Підтримка";
 $MESS["MENU_CATALOG"] = "Товарный каталог";
 $MESS["MENU_CATALOG_STORE"] = "Складський облік";
 $MESS["MENU_CHANGE_ACCOUNT"] = "Змінити акаунт";

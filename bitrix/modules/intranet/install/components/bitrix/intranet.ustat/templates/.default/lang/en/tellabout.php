@@ -109,8 +109,8 @@ Go to the menu item My Workspace > Files and install the Bitrix24 Desktop App on
 
 The Desktop app can be downloaded at www.bitrix24.com:
 [LIST]
-[*]For MacOS [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
-[*]For Windows [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
+[*]For MacOS [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
+[*]For Windows [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
 [/LIST]
 Bitrix24 Drive will create a folder in your file manager that you can use like any other folder. However, the contents of that folder will be synced with a file library in Bitrix24. If you are working offline, then the files will be saved as usual, and as soon as a connection to Bitrix24 is restored, the system will sync automatically.
 
@@ -207,8 +207,8 @@ You can stay in touch even without a browser open, by using the Bitrix24 Desktop
 [IMG WIDTH=500 HEIGHT=313]https://www.bitrix24.com/images/ustat/en/im8.jpg[/IMG]
 
 [LIST]
-[*]For MacOS [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
-[*]For Windows [URL]http://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
+[*]For MacOS [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.dmg[/URL]
+[*]For Windows [URL]https://dl.bitrix24.com/b24/bitrix24_desktop.exe[/URL]
 [/LIST]
 Summarizing what we've said so far: we have an instrument that can replace and unit all types of messengers, internal phone calls, and even SMSes - all of which are still being used in one form or another. Using the chat and video calls in Bitrix24, we can communicate exactly as needed - depending on the urgency of the conversation.
 

@@ -53,6 +53,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.messageIdsStack = [];
 			this.unreadSeparatorAdded = false;
 			this.idAfterUnreadSeparatorMessage = '0';
+			this.idBeforeUnreadSeparatorMessage = '0';
 			this.nextTickCallbackList = [];
 			/** @type {Set<string>} */
 			this.uploadingMessageCollection = new Set();
@@ -206,13 +207,19 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 						delete this.viewMessageCollection[UnreadSeparatorMessage.getDefaultId()];
 						this.unreadSeparatorAdded = false;
 						this.idAfterUnreadSeparatorMessage = '0';
+						this.idBeforeUnreadSeparatorMessage = '0';
 
 						deletingMessages.push(UnreadSeparatorMessage.getDefaultId());
 					}
 					else
 					{
-						this.idAfterUnreadSeparatorMessage = this.getRealNextMessage(id).id;
+						this.idAfterUnreadSeparatorMessage = this.getRealNextMessage(id)?.id;
 					}
+				}
+
+				if (this.idBeforeUnreadSeparatorMessage === String(id))
+				{
+					this.idBeforeUnreadSeparatorMessage = this.getRealPreviousMessage(String(id))?.id ?? '0';
 				}
 
 				let previousMessage = this.getPreviousMessage(id);
@@ -295,7 +302,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			this.updateMessageIndex(this.messageList);
 
-			const viewMessageList = DialogConverter.createMessageList(clone(messageList.reverse()), this.dialogId);
+			const viewMessageList = DialogConverter.createMessageList(clone(messageList).reverse(), this.dialogId);
 			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
 
 			const messageForStack = [...viewMessageListWithTemplate];
@@ -474,16 +481,15 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			this.updateMessageIndex(messageList);
 			const viewMessageList = DialogConverter.createMessageList(clone(messageList), this.dialogId);
+
+			viewMessageList.unshift(this.viewMessageCollection[this.messageIdsStack[0]]);
+
 			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
 
-			this.putMessageIdToStackStart(viewMessageListWithTemplate);
-			const packNearbyMessages = [
-				this.getNextMessage(viewMessageListWithTemplate[0].id),
-				...viewMessageListWithTemplate,
-			];
-			const viewMessageListToPush = this.processTopNearbyMessages(packNearbyMessages);
+			const viewMessageListToPush = this.processTopNearbyMessages([...viewMessageListWithTemplate]);
 
 			const updateMessage = viewMessageListToPush.shift();
+			this.putMessageIdToStackStart(viewMessageListToPush);
 			await this.updateViewMessages([updateMessage]);
 			await this.view.pushMessages(viewMessageListToPush);
 
@@ -544,128 +550,98 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 */
 		async addMessagesBetween(messagesMap)
 		{
-			for (let [pointedMessageId, messageList] of messagesMap.entries())
+			logger.log(`${this.constructor.name}.addMessagesBetween messagesMap`, messagesMap);
+			for (const [pointedMessageId, messageList] of messagesMap.entries())
 			{
-				logger.info('MessageRenderer.addMessageListBetween:', pointedMessageId, messageList);
+				logger.info(`${this.constructor.name}.addMessageListBetween:`, pointedMessageId, messageList);
 
-				const viewMessageList = DialogConverter.createMessageList(clone(messageList), this.dialogId);
-				const referenceMessage = this.viewMessageCollection[pointedMessageId];
+				// section prepare message list
+				const viewMessageList = DialogConverter.createMessageList([...messageList], this.dialogId);
+				const pointMessage = this.viewMessageCollection[pointedMessageId];
 				const nextMessage = this.getRealNextMessage(pointedMessageId);
-				const maybeNextMessage = this.getNextMessage(pointedMessageId); // maybe date or unread separator
 
-				viewMessageList.unshift(referenceMessage);
+				viewMessageList.unshift(pointMessage);
 				viewMessageList.push(nextMessage);
 
-				let viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList.reverse()).reverse();
+				let viewMessageListWithTemplate = this.addTemplateMessagesToList([...viewMessageList].reverse());
+				logger.log(`${this.constructor.name}.addMessagesBetween viewMessageListWithTemplate`, [...viewMessageListWithTemplate]);
 
-				viewMessageListWithTemplate = viewMessageListWithTemplate.filter((message) => {
-					return message.id !== referenceMessage.id && message.id !== nextMessage.id;
-				});
-
-				if (nextMessage.id !== maybeNextMessage.id) // To be separator
+				/*
+				 The separator is necessary for the correct formatting of the styles of the latest inserted message.
+				 (show avatar and large margin)
+				*/
+				if (
+					pointMessage.id === this.idBeforeUnreadSeparatorMessage
+					&& !this.hasUnreadSeparatorIn(viewMessageListWithTemplate)
+				)
 				{
-					const { after, before } = this.sliceBetweenPackMessagesBySeparator(maybeNextMessage.id, viewMessageListWithTemplate, messageList);
+					logger.log(`${this.constructor.name}.addMessageListBetween: point message is idBeforeUnreadSeparatorMessage. Need inserting unread separator`);
+					const messageAfterUnreadSeparator = this.getMessageAfterUnreadSeparator();
+					if (
+						messageAfterUnreadSeparator instanceof DateSeparatorMessage
+						&& viewMessageListWithTemplate.some((message) => message.id === messageAfterUnreadSeparator.id)
+					)
+					{
+						logger.log(`${this.constructor.name}.addMessageListBetween: after unread separator comes date separator, which is present in inserting messages. Need deleting date separator`);
 
-					if (before.length > 0 && after.length === 0)
-					{
-						viewMessageListWithTemplate = before;
+						await this.deleteDateSeparator(messageAfterUnreadSeparator.id);
 					}
-					else if (before.length === 0 && after.length > 0)
-					{
-						viewMessageListWithTemplate = after;
-						pointedMessageId = maybeNextMessage.id;
-					}
-					else
-					{
-						return this.addMessagesBetween(new Map([
-							[pointedMessageId, before
-								.map((message) => messageList
-									.find((modelMessage) => String(message.id) === String(modelMessage.id))),
-							],
-							[before[before.length - 1].id, after
-								.map((message) => messageList
-									.find((modelMessage) => String(message.id) === String(modelMessage.id))),
-							],
-						]));
-					}
+					viewMessageListWithTemplate = this.insertUnreadSeparator(messageList, [...viewMessageListWithTemplate]);
 				}
 
-				if (!this.putMessagesToMessageListById(pointedMessageId, messageList))
+				const messageListWithStyles = this.processNearbyMessagesList(viewMessageListWithTemplate);
+				logger.log(`${this.constructor.name}.addMessageListBetween: messages with styles`, messageListWithStyles);
+
+				/** @type {Map<Message, Array<Message>>} */
+				const messageInsertMap = new Map();
+				let lastPointMessage = null;
+				for (const message of [...messageListWithStyles].reverse()) // reverse for get message list in ascending order
 				{
-					logger.error('We could not find the reference message either in the MessageList or in the stack. Messages will not be inserted', pointedMessageId, messageList);
-
-					continue;
+					if (this.viewMessageCollection[message.id])
+					{
+						messageInsertMap.set(message, []);
+						lastPointMessage = message;
+						continue;
+					}
+					messageInsertMap.get(lastPointMessage).push(message);
 				}
+				logger.log(`${this.constructor.name}.addMessageListBetween: inserting map`, messageInsertMap);
+				// end section prepare message list
 
-				this.putMessagesIdToStackById(pointedMessageId, [...viewMessageListWithTemplate]);
-
+				// section update local collections
 				this.updateMessageIndex(messageList);
-
-				const packAuthorPreviousMessages = this.getPackAuthorPreviousMessages(messageList[0]);
-
-				if (packAuthorPreviousMessages.length > 0)
-				{
-					viewMessageListWithTemplate.reverse();
-					const packAuthorMessages = [
-						this.getNextMessage(viewMessageListWithTemplate[0].id),
-						...viewMessageListWithTemplate,
-						...packAuthorPreviousMessages,
-					];
-
-					const viewMessageListToAdd = this.processBottomNearbyMessages(packAuthorMessages);
-					void viewMessageListToAdd.shift();
-					if (packAuthorPreviousMessages.length > 0)
-					{
-						const updateMessageList = viewMessageListToAdd.slice(viewMessageListWithTemplate.length);
-						await this.updateViewMessages(updateMessageList);
-						const addMessageList = viewMessageListToAdd.slice(0, viewMessageListWithTemplate.length);
-						await this.view.insertMessages(pointedMessageId, addMessageList, 'below');
-						viewMessageListWithTemplate.forEach((message) => {
-							this.viewMessageCollection[message.id] = message;
-						});
-					}
-					else
-					{
-						await this.view.insertMessages(pointedMessageId, viewMessageListToAdd, 'below');
-						viewMessageListWithTemplate.forEach((message) => {
-							this.viewMessageCollection[message.id] = message;
-						});
-					}
-
-					continue;
-				}
-
-				const packNearbyMessages = [
-					this.getNextMessage(viewMessageListWithTemplate[viewMessageListWithTemplate.length - 1].id),
-					...viewMessageListWithTemplate,
-				];
-
-				const viewMessageListToPush = this.processTopNearbyMessages([...packNearbyMessages]);
-
-				const updateMessage = viewMessageListToPush.shift();
-				await this.updateViewMessages([updateMessage]);
-				await this.view.insertMessages(pointedMessageId, [...viewMessageListToPush].reverse(), 'below');
-
-				viewMessageListWithTemplate.forEach((message) => {
+				messageListWithStyles.forEach((message) => {
 					this.viewMessageCollection[message.id] = message;
 				});
+				this.putMessagesToMessageListById(pointedMessageId, messageList);
+				this.putMessagesCollectionToStack(messageInsertMap);
+				// end section local collections
+
+				// section interaction with native
+				for (const [localPointMessage, insertedMessageList] of messageInsertMap)
+				{
+					if (!Type.isArrayFilled(insertedMessageList))
+					{
+						continue;
+					}
+
+					await this.view.insertMessages(localPointMessage.id, [...insertedMessageList].reverse(), 'below');
+				}
+				const updatedMessageList = [];
+				for (const localPointMessage of messageInsertMap.keys())
+				{
+					const messageModel = this.getMessage(localPointMessage.id);
+					if (!messageModel.id)
+					{
+						continue;
+					}
+
+					updatedMessageList.push(messageModel);
+				}
+				logger.log(`${this.constructor.name}.addMessageListBetween: updating messageList`, updatedMessageList);
+				await this.updateMessageList(updatedMessageList, null, true);
+				// end section interaction with native
 			}
-		}
-
-		/**
-		 *
-		 * @param {string} separatorId
-		 * @param {Array<Message>} messageList
-		 * @return {{before: Array<Message>, after: Array<Message>}}
-		 */
-		sliceBetweenPackMessagesBySeparator(separatorId, messageList)
-		{
-			const separatorIndex = messageList.findIndex((message) => message.id === separatorId);
-
-			return {
-				before: messageList.slice(0, separatorIndex),
-				after: messageList.slice(separatorIndex + 1),
-			};
 		}
 
 		/**
@@ -995,7 +971,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 		/**
 		 * @param {Array<MessagesModelState>} messageList
-		 * @param {string} section
+		 * @param {string | null} section
 		 * @param {boolean} skipCheckEquality
 		 */
 		async updateMessageList(messageList, section = null, skipCheckEquality = false)
@@ -1209,47 +1185,51 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 * @desc Method push message id after pointed id
-		 * @param {string|number} pointedId
-		 * @param {string|number} messageId
-		 * @return {boolean}
-		 * @private
+		 * @desc messageIdsStack stores all message IDs except for the unread separator message, so two cases need to be handled
+		 * 1) messageCollection stores [ pointMessage1 => [], UnreadSeparator => [message1, message2]]
+		 * 2) messageCollection stores [ pointMessage1 => [message1, ...], UnreadSeparator => [message2, message3,...]]
+		 * @param {Map<Message | UnreadSeparatorMessage, Array<Message>>} messageCollection
 		 */
-		putMessageIdToStackById(pointedId, messageId)
+		putMessagesCollectionToStack(messageCollection)
 		{
-			const indexId = this.messageIdsStack.findIndex((id) => id === pointedId || id === Number(pointedId));
-			if (indexId === -1)
+			logger.log(`${this.constructor.name}.putMessagesCollectionToStack`, messageCollection);
+
+			let lastPointMessage = null;
+			let useLastPointMessage = false;
+			for (const [localPointMessage, messageList] of messageCollection)
 			{
-				return false;
+				useLastPointMessage = false;
+				if (Type.isNull(lastPointMessage))
+				{
+					lastPointMessage = localPointMessage;
+				}
+
+				if (!Type.isArrayFilled(messageList))
+				{
+					continue;
+				}
+
+				if (localPointMessage instanceof UnreadSeparatorMessage)
+				{
+					useLastPointMessage = true;
+				}
+
+				const pointMessageId = useLastPointMessage
+					? lastPointMessage.id
+					: localPointMessage.id
+				;
+
+				const index = this.messageIdsStack.indexOf(pointMessageId);
+				if (index === -1)
+				{
+					logger.error(`${this.constructor.name}.putMessagesCollectionToStack error: messageId not fount in stack`, pointMessageId);
+					continue;
+				}
+
+				const messageIdList = messageList.map((message) => message.id);
+				this.messageIdsStack.splice(index + 1, 0, ...messageIdList);
+				lastPointMessage = messageList[messageList.length - 1];
 			}
-
-			const beforeId = this.messageIdsStack.slice(0, indexId);
-			const afterId = this.messageIdsStack.slice(indexId);
-			this.messageIdsStack = [...beforeId, messageId, ...afterId];
-
-			return true;
-		}
-
-		/**
-		 * @param {string || number} pointedId
-		 * @param {Array<Message>} messageList
-		 */
-		putMessagesIdToStackById(pointedId, messageList)
-		{
-			const indexId = this.messageIdsStack.findIndex((id) => id === pointedId || Number(id) === pointedId);
-			if (indexId === -1)
-			{
-				return false;
-			}
-
-			const messagesId = messageList
-				.map((message) => message.id)
-				.filter((messageId) => !messageId.includes(MessageIdType.templateSeparatorUnread))
-			;
-
-			this.messageIdsStack.splice(indexId + 1, 0, ...messagesId);
-
-			return true;
 		}
 
 		/**
@@ -1331,11 +1311,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					}
 					const previousMessageDate = this.toDateCode(previousMessage.date);
 					const newestMessageDate = this.toDateCode(newestMessage.date);
-					if (previousMessageDate !== newestMessageDate)
-					{
-						const dateSeparatorSystemMessage = this.getSeparator(newestMessage.date);
-						messageListWithTemplate.push(dateSeparatorSystemMessage);
-					}
 
 					const isUnread = !Uuid.isV4(newestMessage.id) && dialogModelState.lastReadId < newestMessage.id && newestMessage.unread;
 					if (
@@ -1347,7 +1322,14 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 						logger.warn(`${this.constructor.name}: Unread separator displayed by isNewestMessage branch`);
 						messageListWithTemplate.push(new UnreadSeparatorMessage());
 						this.unreadSeparatorAdded = true;
-						this.idAfterUnreadSeparatorMessage = String(messageList[index].id);
+						this.idAfterUnreadSeparatorMessage = String(newestMessage.id);
+						this.idBeforeUnreadSeparatorMessage = String(previousMessage.id);
+					}
+
+					if (previousMessageDate !== newestMessageDate)
+					{
+						const dateSeparatorSystemMessage = this.getSeparator(newestMessage.date);
+						messageListWithTemplate.push(dateSeparatorSystemMessage);
 					}
 
 					messageListWithTemplate.push(message);
@@ -1368,7 +1350,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				;
 				const isUnreadCurrent = !Uuid.isV4(currentMessage.id)
 					&& dialogModelState.lastReadId < currentMessage.id
-					&& currentMessage.unread;
+					&& currentMessage.unread
+				;
 
 				if (
 					isReadPrevious
@@ -1381,6 +1364,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					messageListWithTemplate.push(new UnreadSeparatorMessage());
 					this.unreadSeparatorAdded = true;
 					this.idAfterUnreadSeparatorMessage = String(messageList[index].id);
+					this.idBeforeUnreadSeparatorMessage = String(previousMessage.id);
 				}
 
 				const previousMessageDate = this.toDateCode(previousMessage.date);
@@ -1554,6 +1538,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				{
 					this.preparePrivateMessage(message, modelMessage);
 				}
+				else
+				{
+					message.setShowAvatar(modelMessage, true);
+				}
 
 				if (message.type === MessageType.systemText)
 				{
@@ -1720,6 +1708,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 		/**
 		 * @private
+		 * @return {MessagesModelState | {}}
 		 */
 		getMessage(messageId)
 		{
@@ -1777,6 +1766,16 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		deleteIdFromStackById(messageId)
 		{
 			this.messageIdsStack = this.messageIdsStack.filter((id) => id !== messageId);
+		}
+
+		async deleteDateSeparator(id)
+		{
+			delete this.viewMessageCollection[id];
+			this.messageIdCollection.delete(id);
+			this.deleteIdFromStackById(id);
+			this.messageList = this.messageList.filter((message) => message.id !== id);
+
+			await this.view.removeMessagesByIds([id]);
 		}
 
 		/**
@@ -1894,6 +1893,32 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @param {Array<Message>} messageList
+		 */
+		hasUnreadSeparatorIn(messageList)
+		{
+			return messageList.some((message) => message instanceof UnreadSeparatorMessage);
+		}
+
+		/**
+		 * @desc re
+		 * @returns {Message|null}
+		 */
+		getMessageAfterUnreadSeparator()
+		{
+			const unreadSeparatorIndex = this.view.messageList
+				.findIndex((message) => message instanceof UnreadSeparatorMessage)
+			;
+
+			if (unreadSeparatorIndex === -1)
+			{
+				return null;
+			}
+
+			return this.view.messageList[unreadSeparatorIndex - 1];
+		}
+
+		/**
 		 * @return {Promise<boolean>}
 		 */
 		async pushPlanLimitMessage()
@@ -1930,6 +1955,76 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				.setP1(Analytics.P1[dialogType]);
 
 			analytics.send();
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 * @param {Array<Message>} viewMessageList
+		 * @return {Array<Message>}
+		 */
+		insertUnreadSeparator(messageList, viewMessageList)
+		{
+			const result = [...viewMessageList];
+			let firstUnreadMessage = null;
+			let lastReadMessage = null;
+			for (const message of messageList)
+			{
+				const messageId = String(message.id);
+				if (
+					messageId === this.idBeforeUnreadSeparatorMessage
+					|| messageId === this.idAfterUnreadSeparatorMessage
+					|| message.unread === false
+				)
+				{
+					lastReadMessage = messageId;
+
+					continue;
+				}
+
+				firstUnreadMessage = messageId;
+				break;
+			}
+
+			if (Type.isNull(firstUnreadMessage))
+			{
+				// Observe the sequence of separators. First unread, after Date separator
+				const insertPosition = result[1] instanceof DateSeparatorMessage
+					? 2
+					: 1
+				;
+				result.splice(
+					insertPosition,
+					0,
+					this.viewMessageCollection[UnreadSeparatorMessage.getDefaultId()],
+				);
+				// reassign idBeforeUnreadSeparatorMessage
+				if (!Type.isNull(lastReadMessage))
+				{
+					this.idBeforeUnreadSeparatorMessage = lastReadMessage;
+				}
+
+				return result;
+			}
+
+			const index = result.findIndex((message) => message.id === firstUnreadMessage);
+			this.idAfterUnreadSeparatorMessage = firstUnreadMessage;
+			if (!Type.isNull(lastReadMessage))
+			{
+				this.idBeforeUnreadSeparatorMessage = lastReadMessage;
+			}
+
+			// Observe the sequence of separators. First unread, after Date separator
+			const insertPosition = result[index + 1] instanceof DateSeparatorMessage
+				? index + 2
+				: index + 1
+			;
+			result.splice(
+				insertPosition,
+				0,
+				this.viewMessageCollection[UnreadSeparatorMessage.getDefaultId()],
+			);
+
+			return result;
 		}
 	}
 

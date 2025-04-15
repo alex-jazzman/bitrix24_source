@@ -6,6 +6,7 @@ $MESS["SIGN_SETTINGS_B2E_COMPANY"] = "Компанія";
 $MESS["SIGN_SETTINGS_B2E_EMPLOYEES"] = "Співробітники";
 $MESS["SIGN_SETTINGS_B2E_TITLE_SUB"] = "Пройдіть кілька простих кроків";
 $MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT"] = "Документ надіслано на підпис.";
+$MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP"] = "Документи надіслано на підпис.";
 $MESS["SIGN_SETTINGS_SEND_DOCUMENT"] = "Надсилання";
 $MESS["SIGN_SETTINGS_SEND_FOR_SIGN"] = "Надіслати на підпис";
 $MESS["SIGN_SETTINGS_TITLE"] = "Новий документ на підпис";

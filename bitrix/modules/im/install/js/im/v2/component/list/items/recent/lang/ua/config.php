@@ -8,6 +8,7 @@ $MESS["IM_LIST_RECENT_ACTIVE_CALL_RETURN"] = "Повернутися в дзві
 $MESS["IM_LIST_RECENT_BIRTHDAY"] = "Святкує сьогодні день народження!";
 $MESS["IM_LIST_RECENT_BIRTHDAY_DATE"] = "сьогодні";
 $MESS["IM_LIST_RECENT_CHAT_SELF"] = "це ви";
+$MESS["IM_LIST_RECENT_CHAT_SELF_SUBTITLE"] = "Бачите лише ви";
 $MESS["IM_LIST_RECENT_CHAT_TYPE_GROUP_V2"] = "Груповий чат";
 $MESS["IM_LIST_RECENT_CHAT_TYPE_OPEN_CHANNEL"] = "Відкритий канал";
 $MESS["IM_LIST_RECENT_CHAT_TYPE_PRIVATE_CHANNEL"] = "Закритий канал";

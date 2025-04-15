@@ -6,7 +6,7 @@ jn.define('im/messenger/provider/data/chat/getter', (require, exports, module) =
 	const { mergeImmutable } = require('utils/object');
 	const { DataProviderResult } = require('im/messenger/provider/data/result');
 	const { BaseDataProvider } = require('im/messenger/provider/data/base');
-	const { dialogDefaultElement } = require('im/messenger/model');
+	const { dialogDefaultElement } = require('im/messenger/model/dialogues');
 
 	/**
 	 * @class ChatGetter

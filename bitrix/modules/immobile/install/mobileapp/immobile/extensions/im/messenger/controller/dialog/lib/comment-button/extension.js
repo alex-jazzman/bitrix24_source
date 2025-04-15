@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports, module) => {
 	const { debounce } = require('utils/function');
-	const { DialogType } = require('im/messenger/const');
+	const { DialogType, EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -37,7 +37,7 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 
 		subscribeViewEvents()
 		{
-			this.view.commentsButton.on('tap', this.onButtonTap);
+			this.view.commentsButton.on(EventType.dialog.commentsButton.tap, this.onButtonTap);
 		}
 
 		get channelComments()

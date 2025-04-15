@@ -1,6 +1,7 @@
 /**
  * @module call/calls/layout
  */
+
 jn.define('call/calls/layout', (require, exports, module) => {
 	include('Calls');
 
@@ -10,7 +11,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 	const { FloorRequestsList } = require('call/calls/layout/floor-requests-list');
 	const { ParticipantsList } = require('call/calls/layout/participants-list');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
-
+	const { Icon, IconView } = require('ui-system/blocks/icon');
+	const { Avatar, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
+	const Utils = require('src/util')
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/layout/`;
 
 	const LARGE_AVATAR_SIZE = 180;
@@ -357,6 +360,24 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			paddingRight: Indent.XL.toNumber(),
 			alignSelf: 'flex-start',
 		},
+		deviceOffHint: {
+			flexDirection: 'row',
+			height: 32,
+			backgroundColor: Color.baseBlackFixed.toHex(0.5),
+			paddingLeft: Indent.S.toNumber(),
+			paddingRight: Indent.XL.toNumber(),
+			borderRadius: Corner.M.toNumber(),
+			alignContent: 'center',
+			alignItems: 'center',
+			justifyItems: 'center',
+		},
+		deviceOffHintText: {
+			marginLeft: 2,
+			fontSize: 15,
+			fontWeight: 400,
+			lineHeight: 18,
+			color: Color.baseWhiteFixed.toHex(),
+		},
 	};
 
 	const EventName = {
@@ -411,7 +432,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				remoteStream: null,
 				localStream: null,
 				mirrorLocalVideo: true,
-				hideLocalVideo: false,
 				showParticipants: true,
 				showUserSelector: true,
 				centralUserId: this.userId,
@@ -429,6 +449,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				soundOutputDevice: props.soundOutputDevice || CallUtil.getSdkAudioManager().currentDevice,
 				copilotAvailable: Boolean(props.copilotAvailable),
 				copilotEnabled: Boolean(props.copilotEnabled),
+				associatedEntityAvatarColor: props.associatedEntityAvatarColor,
 			};
 
 			this.localUserModel = new UserModel({
@@ -484,6 +505,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				if (!this.userData[userId])
 				{
 					this.userData[userId] = {
+						first_name: '',
+						last_name: '',
 						name: '',
 						workPosition: '',
 						extranet: false,
@@ -494,6 +517,14 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					};
 				}
 
+				if (userData[userId].first_name)
+				{
+					this.userData[userId].first_name = userData[userId].first_name;
+				}
+				if (userData[userId].last_name)
+				{
+					this.userData[userId].last_name = userData[userId].last_name;
+				}
 				if (userData[userId].name)
 				{
 					this.userData[userId].name = userData[userId].name;
@@ -532,6 +563,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				const userModel = this.userRegistry.get(userId);
 				if (userModel)
 				{
+					userModel.firstName = this.userData[userId].first_name;
+					userModel.lastName = this.userData[userId].last_name;
 					userModel.name = this.userData[userId].name;
 					userModel.workPosition = this.userData[userId].workPosition;
 					userModel.avatar = this.userData[userId].avatar_hr;
@@ -562,6 +595,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				return;
 			} */
 			const userModel = this.userRegistry.get(userId);
+
 			if (!userModel)
 			{
 				return;
@@ -801,18 +835,18 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 		}
 
-		setHideLocalVideo(hideLocalVideo)
-		{
-			this.setState({
-				hideLocalVideo,
-			});
-		}
-
 		setMuted(isMuted)
 		{
 			this.localUserModel.microphoneState = !isMuted;
 			this.setState({
 				microphoneState: !isMuted,
+			});
+		}
+
+		setScreenState(screenState)
+		{
+			this.setState({
+				screenState: screenState,
 			});
 		}
 
@@ -1134,7 +1168,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		renderLocalStream(showInFrame, bottomMargin)
 		{
-			if (!this.state.localStream || this.state.hideLocalVideo)
+			if (!this.state.localStream)
 			{
 				return null;
 			}
@@ -1198,8 +1232,56 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					style: styles.overlay,
 					clickable: false,
 				},
-
 				this.renderBottomPanel(),
+			);
+		}
+
+		renderDeviceHints(bottomMargin)
+		{
+			const userModel = this.userRegistry.get(this.state.centralUserId);
+
+			let height = 32 * (userModel.cameraState ? 0 : 1) + 32 * (userModel.microphoneState ? 0 : 1);
+			if (height === 64)
+			{
+				height += 6;
+			}
+
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						bottom: 0,
+						left: 16 + getSafeArea().left,
+						width: '100%',
+						height,
+						marginBottom: bottomMargin,
+						alignItems: 'flex-start',
+						justifyItems: 'space-between',
+						justifyContent: 'space-between',
+					},
+				},
+				!userModel.microphoneState && this.renderDeviceOffHint(userModel.firstName, userModel.gender, 'microphone'),
+				!userModel.cameraState && this.renderDeviceOffHint(userModel.firstName, userModel.gender, 'camera'),
+			);
+		}
+
+		renderDeviceOffHint(firstName, gender, device)
+		{
+			const phrase = `MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_${device === 'camera' ? 'CAMERA' : 'MICROPHONE'}_${gender === 'F' ? 'F' : 'M'}`;
+
+			return View(
+				{
+					style: styles.deviceOffHint,
+				},
+				IconView({
+					size: 20,
+					color: Color.baseWhiteFixed,
+					icon: device === 'camera' ? Icon.CAMERA_OFF : Icon.MICROPHONE_OFF,
+				}),
+				Text({
+					style: styles.deviceOffHintText,
+					text: BX.message(phrase).replace('#FIRST_NAME#', firstName),
+				}),
 			);
 		}
 
@@ -1242,10 +1324,45 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					},
 				),
 				Text({
-					style: { marginLeft: 2, marginRight: 12, fontWeight: 400, fontSize: 15 },
+					style: {
+						marginLeft: 2,
+						marginRight: 12,
+						fontWeight: 400,
+						fontSize: 15,
+						color: Color.baseWhiteFixed.toHex(),
+					},
 					text: BX.message('MOBILE_CALL_JUMP_TO_PRESENTER'),
 				}),
 			);
+		}
+
+		/**
+		 * @param {string} uri
+		 * @param {string} text
+		 * @param {string || null} color
+		 */
+		renderCenterAvatar(uri, text, color)
+		{
+			const avatar = Avatar({
+				uri,
+				name: text,
+				entityType: AvatarEntityType.OTHER,
+				size: 180,
+				useLetterImage: true,
+				backgroundColor: Utils.convertHexToColorEnum(color),
+				shape: AvatarShape.NONE,
+			});
+
+			return View(
+				{
+					style: {
+						alignItems: 'center',
+						justifyContent: 'center',
+						flexGrow: 1,
+					},
+				},
+				avatar,
+			)
 		}
 
 		renderCenter()
@@ -1259,10 +1376,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				&& !this.state.centralUserVideoPaused
 			;
 			const showArrows = this.state.connectedUsers.length > 1;
-
-			const avatar = this.userRegistry.get(this.state.centralUserId).avatar
-				? { uri: encodeURI(this.userRegistry.get(this.state.centralUserId).avatar) }
-				: { svg: { content: Icons.emptyAvatar } };
 
 			return View(
 				{
@@ -1287,19 +1400,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						svg: { content: Icons.arrowLeft },
 					}),
 				),
-				showLargeAvatar && View(
-					{
-						style: {
-							alignItems: 'center',
-							justifyContent: 'center',
-							flexGrow: 1,
-						},
-					},
-					Image({
-						style: styles.largeAvatar,
-						resizeMode: 'cover',
-						...avatar,
-					}),
+				showLargeAvatar && this.renderCenterAvatar(
+					this.userRegistry.get(this.state.centralUserId).avatar,
+					this.userRegistry.get(this.state.centralUserId).name,
+					CallUtil.userData[this.centralUserId].color,
 				),
 				showArrows && View(
 					{
@@ -1392,9 +1496,19 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		 */
 		renderTop(props)
 		{
-			const avatar = this.state.associatedEntityAvatar && !isAvatarBlank(this.state.associatedEntityAvatar)
-				? { uri: encodeURI(this.state.associatedEntityAvatar) }
-				: { svg: { content: Icons.emptyAvatar } };
+			const avatar = View(
+				{
+					style: {
+						marginLeft: 12
+					},
+				},
+				Avatar({
+					uri: encodeURI(this.state.associatedEntityAvatar),
+					name: BX.utils.html.htmlDecode(this.state.associatedEntityName),
+					size: 32,
+					backgroundColor: Utils.convertHexToColorEnum(this.state.associatedEntityAvatarColor),
+				}),
+			)
 
 			const showFullHeader = (this.state.status !== 'call' && Boolean(this.state.localStream))
 				|| (this.state.status === 'call' && this.state.isGroupCall)
@@ -1421,15 +1535,12 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						text: this.state.chatCounter.toString(),
 					}),
 					Image({
+						testId: 'call-button-backToChat',
 						style: { width: 24, height: 24 },
 						svg: { content: Icons.arrowBack },
 						onClick: () => this.emit(EventName.ChatButtonClick),
 					}),
-					showFullHeader && Image({
-						style: { width: 32, height: 32, borderRadius: 16, marginLeft: 12 },
-						resizeMode: 'cover',
-						...avatar,
-					}),
+					showFullHeader && avatar,
 					showFullHeader && View(
 						{
 							style: { flex: 1, flexDirection: 'column', marginLeft: 12 },
@@ -1497,12 +1608,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							text: BX.utils.html.htmlDecode(this.state.associatedEntityName),
 						}),
 					),
-
-					Image({
-						style: { width: 180, height: 180, borderRadius: 90 },
-						resizeMode: 'cover',
-						...avatar,
-					}),
+					this.renderCenterAvatar(
+						encodeURI(this.state.associatedEntityAvatar),
+						BX.utils.html.htmlDecode(this.state.associatedEntityName),
+						this.state.associatedEntityAvatarColor,
+					),
 				),
 			);
 		}
@@ -1606,9 +1716,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				showJumpToPresenter && this.renderJumpToPresenter(),
 				needCentralUser && this.renderCenter(),
 				!showLocalVideoInFrame && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
-				this.renderOverlay(),
 				showLocalVideoInFrame && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
+				this.renderOverlay(),
 				this.renderFloorRequests(bottomMargin),
+				!this.state.isGroupCall && this.renderDeviceHints(bottomMargin),
 				needCentralUser && this.renderCurrentUser(this.userRegistry.get(this.state.centralUserId), bottomMargin),
 			);
 		}
@@ -2022,6 +2133,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		{
 			// todo: move userRegistry to controller maybe?
 			const userModel = this.userRegistry.get(userId);
+
 			if (!userModel)
 			{
 				return false;
@@ -2056,6 +2168,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					},
 				};
 			}
+
+			const avatar = Avatar({
+				uri: userModel.avatar,
+				name: userModel.name,
+				size: 26,
+				backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[userId].color),
+			});
 
 			const menuItems = [
 				{
@@ -2099,6 +2218,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			userMenu = new CallMenu({
 				items: menuItems,
+				avatar: avatar,
 				onClose: () => userMenu.destroy(),
 				onDestroy: () => userMenu = null,
 			});
@@ -2109,6 +2229,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		{
 			const component = new ParticipantsList({
 				avatarPath: this.state.associatedEntityAvatar,
+				avatarColor: this.state.associatedEntityAvatarColor,
 				title: this.state.associatedEntityName,
 				subtitle: BX.message('MOBILE_CALL_MENU_PARTICIPANTS_VIDEOCONFERENCE'),
 				userList: this.getParticipants(),
@@ -2126,6 +2247,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 
 			bottomSheet.open();
+			this.b = bottomSheet;
 		}
 
 		toggleCopilotPopup()

@@ -2,12 +2,12 @@
  * @module entity-ready
  */
 jn.define('entity-ready', (require, exports, module) => {
-
 	class EntityReady
 	{
 		constructor()
 		{
 			this.readyEntitiesCollection = new Set();
+			this.listenUnreadyEvent();
 		}
 
 		addCondition(entityId, condition)
@@ -27,8 +27,7 @@ jn.define('entity-ready', (require, exports, module) => {
 
 		wait(entityId)
 		{
-			return new Promise((resolve) =>
-			{
+			return new Promise((resolve) => {
 				if (this.readyEntitiesCollection.has(entityId))
 				{
 					return resolve();
@@ -54,9 +53,21 @@ jn.define('entity-ready', (require, exports, module) => {
 			BX.postComponentEvent('EntityReady::ready', [entityId]);
 		}
 
+		unready(entityId)
+		{
+			BX.postComponentEvent('EntityReady::unready', [entityId]);
+		}
+
 		isReady(entityId)
 		{
 			return this.readyEntitiesCollection.has(entityId);
+		}
+
+		listenUnreadyEvent()
+		{
+			BX.addCustomEvent('EntityReady::unready', (entityId) => {
+				this.readyEntitiesCollection.delete(entityId);
+			});
 		}
 	}
 

@@ -72,7 +72,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const { TaskFlowField } = require('tasks/layout/fields/flow/theme/air');
 	const { TaskFlowField: TaskFlowFieldCompact } = require('tasks/layout/fields/flow/theme/air-compact');
 	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking');
-	const { TimeTrackingField: TimeTrackingFieldCompact } = require('tasks/layout/fields/time-tracking/theme/air-compact');
+	const { TimeTrackingField: TimeTrackingFieldCompact } = require(
+		'tasks/layout/fields/time-tracking/theme/air-compact',
+	);
 	const { ActionButtonsView } = require('tasks/layout/task/view-new/ui/action-buttons');
 	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
 
@@ -490,6 +492,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						config: makeAccomplicesFieldConfig({
 							items: accomplices.filter(Boolean),
 							groupId: task.groupId,
+							readOnly: !actions[TaskFieldActionAccess[Field.ACCOMPLICES]],
 						}),
 						restrictionPolicy: getFieldRestrictionPolicy(Field.ACCOMPLICES),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.ACCOMPLICES, parentWidget),
@@ -512,6 +515,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						onContentClick: onFieldContentClick,
 						config: makeAuditorsFieldConfig({
 							items: auditors.filter(Boolean),
+							readOnly: !actions[TaskFieldActionAccess[Field.AUDITORS]],
 						}),
 						restrictionPolicy: getFieldRestrictionPolicy(Field.AUDITORS),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.AUDITORS, parentWidget),

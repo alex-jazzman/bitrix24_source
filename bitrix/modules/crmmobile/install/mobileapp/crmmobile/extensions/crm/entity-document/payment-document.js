@@ -8,7 +8,6 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 	const { EntityDocumentProductGrid } = require('crm/entity-document/product/product-grid');
 	const { EventEmitter } = require('event-emitter');
 	const { handleErrors } = require('crm/error');
-	const { Feature } = require('feature');
 	const { TypeId } = require('crm/type');
 	const { Moment } = require('utils/date');
 	const { date, shortTime } = require('utils/date/formats');
@@ -176,13 +175,6 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 		onClickSendMessageButton()
 		{
 			this.layoutWidget.close(() => {
-				if (!Feature.isReceivePaymentSupported())
-				{
-					Feature.showDefaultUnsupportedWidget();
-
-					return;
-				}
-
 				if (this.resendParams.entityHasContact && !this.resendParams.contactHasPhone)
 				{
 					const multiFieldDrawer = new MultiFieldDrawer({

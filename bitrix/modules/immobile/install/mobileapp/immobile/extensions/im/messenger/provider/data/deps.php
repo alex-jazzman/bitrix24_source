@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'im:messenger/lib/di/service-locator',
+		'im:messenger/model/dialogues',
 	],
 	'bundle' => [
 		'./src/base',

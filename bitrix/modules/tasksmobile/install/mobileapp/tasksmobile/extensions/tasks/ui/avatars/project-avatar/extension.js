@@ -8,6 +8,9 @@ jn.define('tasks/ui/avatars/project-avatar', (require, exports, module) => {
 	const { reduxConnect } = require('tasks/ui/avatars/project-avatar/src/providers/redux');
 	const { projectSelectorDataProvider } = require('tasks/ui/avatars/project-avatar/src/providers/selector');
 
+	/**
+	 * @class ProjectAvatar
+	 */
 	class ProjectAvatar extends AvatarClass
 	{
 		static resolveEntitySelectorParams(params)

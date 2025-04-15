@@ -5,7 +5,6 @@
 jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, exports, module) => {
 	const {
 		DialogType,
-		FeatureFlag,
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -140,7 +139,6 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			return (this.#isImage() || this.#isVideo() || this.#isAudio())
 				&& !this.#isDeleted()
 				&& !this.#isGallery()
-				&& FeatureFlag.native.utilsSaveToLibrarySupported
 			;
 		}
 

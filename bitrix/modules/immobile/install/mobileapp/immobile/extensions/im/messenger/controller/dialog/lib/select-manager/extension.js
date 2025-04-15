@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
-	const { EventType, EventsCheckpointType } = require('im/messenger/const');
+	const { EventType, EventFilterType } = require('im/messenger/const');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--select-manager');
 
@@ -89,7 +89,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			logger.log(`${this.constructor.name}.enableMultiSelectMode`);
 			await this.checkQuoteInProcess();
 			await this.checkForwardInProcess();
-			this.activateSelectEventsCheckpoint();
+			this.activateSelectEventFilter();
 			this.setSelectedMessageIdList([actionSelectMessageId]);
 			this.subscribeView();
 			await this.viewEnableSelectMessagesMode();
@@ -108,7 +108,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		{
 			logger.log(`${this.constructor.name}.disableSelectMessagesMode`);
 			this.restoreQuoteMessageProcess();
-			this.deactivateSelectEventsCheckpoint();
+			this.deactivateSelectEventFilter();
 			await this.viewDisableSelectMessagesMode();
 			this.updateRightHeaderButton();
 			this.restoreLeftHeaderButton();
@@ -130,7 +130,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.view.selector.off(EventType.dialog.multiSelect.maxCountExceeded, this.onMaxCountExceeded);
 			this.view.selector.off(EventType.dialog.multiSelect.selected, this.onMessageSelected);
 			this.view.selector.off(EventType.dialog.multiSelect.unselected, this.onMessageUnselected);
-			this.view.actionPanel.removeAll();
+			this.view.actionPanel.off(EventType.dialog.actionPanel.buttonTap, this.onButtonTap);
 		}
 
 		async onTapCancelMultipleSelectHeaderButton()
@@ -209,14 +209,14 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			Notification.showComingSoon();
 		}
 
-		activateSelectEventsCheckpoint()
+		activateSelectEventFilter()
 		{
-			this.view.eventsCheckpoint.activateCheckpoint(EventsCheckpointType.selectMessagesMode);
+			this.view.eventFilter.activateEventFilter(EventFilterType.selectMessagesMode);
 		}
 
-		deactivateSelectEventsCheckpoint()
+		deactivateSelectEventFilter()
 		{
-			this.view.eventsCheckpoint.deactivateCheckpoint(EventsCheckpointType.selectMessagesMode);
+			this.view.eventFilter.deactivateEventFilter(EventFilterType.selectMessagesMode);
 		}
 
 		async checkQuoteInProcess()

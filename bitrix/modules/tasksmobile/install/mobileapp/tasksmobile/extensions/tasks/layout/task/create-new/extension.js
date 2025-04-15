@@ -131,7 +131,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				initialTaskData: CreateNew.removeRestrictedFieldsFromTaskData(data.initialTaskData),
 				view: (data.view || ViewMode.LIST),
 				stage: data.stage,
-				loadStagesParams: data.loadStagesParams,
 				closeAfterSave: data.closeAfterSave !== false,
 				context: data.context,
 				copyId: data.copyId,
@@ -176,6 +175,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 			this.layoutHeight = 0;
 			this.keyboardHeight = 0;
+			this.isSheetHeightUpdateAllowed = !isAndroid;
 
 			this.state = {
 				isLoading: true,
@@ -183,6 +183,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				titleMaxHeight: TITLE_MIN_HEIGHT,
 				flowId: Number(this.props.initialTaskData?.flowId),
 				flowLoading: false,
+				checklistFilesLoading: false,
 			};
 
 			/** @type {BottomPanel|null} */
@@ -222,9 +223,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				this.#preloadFlowData(),
 				this.#preloadDefaultCollab(),
 				this.#preloadUserFields(),
-				getDiskFolderId().then(({ diskFolderId }) => {
-					this.diskFolderId = diskFolderId;
-				}),
 				tariffPlanRestrictionsReady(),
 				CalendarSettings.loadSettings(),
 			];
@@ -392,7 +390,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			});
 		}
 
-		doFinalInitAction()
+		async doFinalInitAction()
 		{
 			this.layoutWidget.on('preventDismiss', () => this.showConfirmOnFormClosing());
 			this.layoutWidget.on('onViewHidden', () => {
@@ -400,6 +398,13 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			});
 
 			this.init();
+
+			await getDiskFolderId(this.task?.group?.id)
+				.then(({ diskFolderId }) => {
+					this.diskFolderId = diskFolderId;
+					this.checklistController?.setDiskConfig({ folderId: diskFolderId });
+				});
+
 			this.setState(
 				{ isLoading: false },
 				() => {
@@ -417,6 +422,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 										});
 										this.layoutHeight = height;
 										this.keyboardHeight = height - CreateNew.getStartingLayoutHeight(this.hasParentTask());
+
+										if (isAndroid)
+										{
+											this.isSheetHeightUpdateAllowed = true;
+											this.updateSheetHeight();
+										}
 									})
 									.catch(() => console.error)
 								;
@@ -512,12 +523,18 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					setTimeout(this.focusTitle, isAndroid ? 500 : 100);
 				},
 				onChange: (controller) => {
-					// this.refreshBottomPanelDebounced();
 					const { completed, uncompleted } = controller.getReduxData();
 
 					this.extraFieldsFormRef
 						?.getCompactField(Fields.CHECKLIST)
 						?.triggerChange({ completed, uncompleted });
+					const hasUploadingFiles = controller.hasUploadingFiles();
+					if (this.state.checklistFilesLoading !== hasUploadingFiles)
+					{
+						this.setState({ checklistFilesLoading: hasUploadingFiles }, () => {
+							this.refreshBottomPanelDebounced();
+						});
+					}
 				},
 			});
 
@@ -576,9 +593,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			const title = this.task.title || '';
 			const isExtraFieldsValid = this.extraFieldsFormRef ? this.extraFieldsFormRef.isValid() : true;
 			const hasUploadingFiles = this.extraFieldsFormRef ? this.extraFieldsFormRef.hasUploadingFiles() : false;
-			// const hasCheckListUploadingFiles = this.checklistController.hasUploadingFiles();
 
-			return title.length > 0 && isExtraFieldsValid && !hasUploadingFiles;
+			return title.length > 0 && isExtraFieldsValid && !hasUploadingFiles && !this.state.checklistFilesLoading;
 		}
 
 		hasParentTask()
@@ -588,7 +604,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 		updateSheetHeight()
 		{
-			if (!this.titleHeight || !this.descriptionHeight)
+			if (!this.titleHeight || !this.descriptionHeight || !this.isSheetHeightUpdateAllowed)
 			{
 				return;
 			}
@@ -883,7 +899,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								checklistController: this.checklistController,
 								clickStrategy: ClickStrategy.OPEN,
 							},
-							loading: false,
+							loading: this.state.checklistFilesLoading,
 						},
 						compact: ChecklistField,
 					},
@@ -1606,7 +1622,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				crm: this.task.crm || [],
 
 				files: this.task.files,
-				uploadedFiles: this.task.uploadedFiles,
 				relatedTaskId: this.task.relatedTaskId,
 
 				checklist: { completed, uncompleted },
