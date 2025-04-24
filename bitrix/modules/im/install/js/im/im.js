@@ -6784,7 +6784,7 @@ BX.MessengerChat.prototype.openMessenger = function(userId, params)
 		clearTimeout(this.popupMessengerDesktopTimeout);
 		this.popupMessengerDesktopTimeout = setTimeout(BX.delegate(function(){
 			var acceptButton = BX.delegate(function(){
-				window.open(BX.browser.IsMac()? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg": "http://dl.bitrix24.com/b24/bitrix24_desktop.exe", "desktopApp");
+				window.open(BX.browser.IsMac()? "https://dl.bitrix24.com/b24/bitrix24_desktop.dmg": "https://dl.bitrix24.com/b24/bitrix24_desktop.exe", "desktopApp");
 				this.BXIM.settings.bxdNotify = false;
 				this.BXIM.saveSettings({'bxdNotify': this.BXIM.settings.bxdNotify});
 				this.hideTopLine();

@@ -4731,6 +4731,10 @@ class CAllUser extends CDBResult
 		{
 			return false;
 		}
+		if (str_ends_with($arPath[1], "/bitrix/.settings.php") && !$USER->CanDoOperation('edit_php'))
+		{
+			return false;
+		}
 		if (str_ends_with($arPath[1], "/.access.php"))
 		{
 			return false;

@@ -416,7 +416,7 @@ export class DeviceButton
 
 	getIconContainerClass()
 	{
-		return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this.class + (this.enabled ? "" : "-off");
+		return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this.class + (this.enabled ? "" : "-off") + (this.arrowHidden ? " bx-messenger-videocall-panel-item-with-arrow-icon-container-arrow-hidden" : "");
 	};
 
 	enable()

@@ -186,10 +186,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 		renderDescription()
 		{
-			if (this.props.isNotes)
-			{
-				return null;
-			}
+			const color = this.props.isNotes ? Theme.colors.base4 : Theme.colors.base1;
 
 			return View(
 				{
@@ -200,7 +197,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				},
 				Text({
 					style: {
-						color: Theme.colors.base1,
+						color,
 						fontSize: 14,
 						fontWeight: '400',
 						textStyle: 'normal',
@@ -349,7 +346,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 		getTitleColor()
 		{
-			return ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor();
+			return ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor({ useNotes: this.props.isNotes });
 		}
 
 		componentDidMount()

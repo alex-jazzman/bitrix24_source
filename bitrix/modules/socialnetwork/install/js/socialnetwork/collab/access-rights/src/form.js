@@ -93,7 +93,7 @@ export class Form extends EventEmitter
 				<form ref="form" class="${uiStyles} sn-collab__access-right-form">
 					<div class="sn-collab__access-right-form-box">
 						<div class="sn-collab__access-right-form-box-label">
-							${Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_MANAGEMENT_LABEL')}
+							${Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_MANAGEMENT_LABEL_MSGVER_1')}
 						</div>
 						${this.#layout.ownerField.render()}
 						${this.#layout.moderatorsField.render()}

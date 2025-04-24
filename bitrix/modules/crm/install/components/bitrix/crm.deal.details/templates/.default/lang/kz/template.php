@@ -7,7 +7,6 @@ $MESS["CRM_DEAL_CONV_DIALOG_SYNC_FILED_LIST_TITLE"] = "Қандай өрісте
 $MESS["CRM_DEAL_CONV_DIALOG_SYNC_LEGEND"] = "Таңдалған мәндерде мәміледен деректерді жіберуге болатын өрістер жоқ. Барлық қолжетімді ақпаратты сақтау үшін жетіспейтін өрістер жасалатын мәндерді таңдаңыз.";
 $MESS["CRM_DEAL_CONV_DIALOG_TITLE"] = "Мәміле негізінде мән құру";
 $MESS["CRM_DEAL_CONV_GENERAL_ERROR"] = "Жалпы түрлендіру қатесі.";
-$MESS["CRM_DEAL_DETAIL_ATTR_GR_TYPE_GENERAL"] = "Барлық сатылар мен иірімдер үшін";
 $MESS["CRM_DEAL_DETAIL_ATTR_GR_TYPE_JUNK"] = "Сәтсіз";
 $MESS["CRM_DEAL_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "Жұмыста + табысты";
 $MESS["CRM_DEAL_DETAIL_ATTR_REQUIRED_FULL"] = "Сатыдан бастап міндетті";

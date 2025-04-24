@@ -14,10 +14,14 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		DialogType,
 		BotType,
 		UserType,
+		UserInputAction,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const {
+		DialogHelper,
+		UserHelper,
+	} = require('im/messenger/lib/helper');
+	const { ChatTitleAssets } = require('im/messenger/assets/common');
 
 	const ChatType = Object.freeze({
 		user: 'user',
@@ -57,8 +61,9 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			this.nameColor = AppTheme.colors.base1;
 			this.description = null;
 			this.userCounter = 0;
-			this.writingList = [];
+			this.inputActions = [];
 			this.dialogType = null;
+			this.isCurrentUser = UserHelper.isCurrentUser(dialogId);
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -71,7 +76,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				this.createUserTitle(options);
 			}
 
-			this.setWritingList();
+			this.setInputActions();
 		}
 
 		/**
@@ -165,11 +170,6 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 
 			this.name = user.name;
-			if (options.showItsYou && user.id === MessengerParams.getUserId())
-			{
-				this.name = `${this.name} (${Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_ITS_YOU')})`;
-			}
-
 			if (Type.isStringFilled(user.work_position))
 			{
 				this.description = user.work_position;
@@ -300,12 +300,12 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.name)
 			{
-				titleParams.text = this.getTitle();
+				titleParams.text = this.getTitle(options);
 			}
 
 			if (useTextColor)
 			{
-				titleParams.textColor = this.getTitleColor();
+				titleParams.textColor = this.getTitleColor(options);
 			}
 
 			if (this.description)
@@ -313,11 +313,17 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				titleParams.detailText = this.getDescription();
 			}
 
-			if (this.writingList.length > 0)
+			if (this.inputActions.length > 0)
 			{
-				titleParams.detailText = this.buildWritingListText();
-				titleParams.isWriting = true;
+				titleParams.detailText = this.#buildInputActionTextPrivateChat();
+				titleParams.detailLottie = this.#buildDetailLottie();
+				titleParams.hasInputActions = true;
 				titleParams.detailTextColor = Theme.colors.accentMainPrimaryalt;
+			}
+
+			if (this.isCurrentUser)
+			{
+				titleParams.detailLottie = null;
 			}
 
 			return titleParams;
@@ -399,10 +405,11 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				titleParams.detailText = this.description;
 			}
 
-			if (this.writingList.length > 0)
+			if (this.inputActions.length > 0)
 			{
-				titleParams.detailText = this.buildWritingListText();
-				titleParams.isWriting = true;
+				titleParams.detailText = this.buildInputActionTextGroupChat();
+				titleParams.detailLottie = this.#buildDetailLottie();
+				titleParams.hasInputActions = true;
 				titleParams.detailTextColor = this.dialogType === DialogType.copilot
 					? Theme.colors.accentMainCopilot
 					: Theme.colors.accentMainPrimaryalt;
@@ -412,11 +419,16 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		}
 
 		/**
-		 *
+		 * @param {boolean} useNotes
 		 * @return {string|null}
 		 */
-		getTitle()
+		getTitle({ useNotes = false } = {})
 		{
+			if (useNotes && this.isCurrentUser)
+			{
+				return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_NOTES');
+			}
+
 			if (
 				Feature.isDevelopmentEnvironment
 				&& DeveloperSettings.getSettingValue('showDialogIds')
@@ -429,17 +441,31 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			return this.name;
 		}
 
-		getTitleColor()
+		/**
+		 * @param {boolean} useNotes
+		 * @returns {*|string}
+		 */
+		getTitleColor({ useNotes = false } = {})
 		{
+			if (useNotes && this.isCurrentUser)
+			{
+				return Color.base1.toHex();
+			}
+
 			return this.nameColor;
 		}
 
 		/**
-		 *
+		 * @param {boolean} useNotes
 		 * @return {string|null}
 		 */
-		getDescription()
+		getDescription({ useNotes = false } = {})
 		{
+			if (useNotes)
+			{
+				return '';
+			}
+
 			return this.description;
 		}
 
@@ -448,95 +474,181 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 * @void
 		 * @private
 		 */
-		setWritingList()
+		setInputActions()
 		{
 			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
 			if (!dialogModel)
 			{
-				this.writingList = [];
-
 				return;
 			}
 
-			const currentUserId = serviceLocator.get('core').getUserId();
-			this.writingList = dialogModel?.writingList.filter((user) => user.userId !== currentUserId);
+			this.inputActions = dialogModel.inputActions;
 		}
 
 		/**
-		 * @desc Build text 'who writing'
 		 * @return {string}
-		 * @private
 		 */
-		buildWritingListText()
+		buildInputActionTextGroupChat()
 		{
-			let text = '';
-			const countName = this.writingList.length;
+			return Feature.isLottieInChatTitleAvailable
+				? this.#buildInputActionTextGroupChat()
+				: this.#buildInputActionTextGroupChatOldVersion();
+		}
 
-			if (!DialogHelper.isDialogId(this.dialogId))
-			{
-				return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_WRITING');
-			}
+		/**
+		 * @return {string}
+		 */
+		#buildInputActionTextGroupChatOldVersion()
+		{
+			const userCount = this.inputActions.length;
+			const firstUser = this.inputActions[0];
+			const secondUser = this.inputActions[1];
 
-			const firstUser = this.store.getters['usersModel/getById'](this.writingList[0].userId);
-			if (!firstUser)
+			if (userCount === 1)
 			{
-				return text;
-			}
-
-			let firstUserName = firstUser.firstName ? firstUser.firstName : firstUser.lastName;
-			if (firstUserName.length < 2) // TODO this if need remove after find bug empty name
-			{
-				const indexSpace = this.writingList[0].userName.indexOf(' ');
-				if (indexSpace !== -1)
-				{
-					firstUserName = this.writingList[0].userName.slice(0, indexSpace);
-				}
-			}
-
-			if (countName === 1)
-			{
-				text = Loc.getMessage(
+				return Loc.getMessage(
 					'IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_ONE',
 					{
-						'#USERNAME_1#': firstUserName,
+						'#USERNAME_1#': firstUser.userFirstName,
 					},
 				);
 			}
-			else if (countName === 2)
+
+			if (userCount === 2)
 			{
-				const secondUser = this.store.getters['usersModel/getById'](this.writingList[1].userId);
-				if (secondUser)
-				{
-					text = Loc.getMessage(
-						'IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_TWO',
-						{
-							'#USERNAME_1#': firstUserName,
-							'#USERNAME_2#': secondUser.firstName ? secondUser.firstName : secondUser.lastName,
-						},
-					);
-				}
-				else
-				{
-					text = Loc.getMessage(
-						'IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_ONE',
-						{
-							'#USERNAME_1#': firstUserName,
-						},
-					);
-				}
+				return Loc.getMessage(
+					'IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_TWO',
+					{
+						'#USERNAME_1#': firstUser.userFirstName,
+						'#USERNAME_2#': secondUser.userFirstName,
+					},
+				);
+			}
+
+			if (userCount > 2)
+			{
+				return Loc.getMessage(
+					'IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_MORE',
+					{
+						'#USERNAME_1#': firstUser.userFirstName,
+						'#USERS_COUNT#': userCount - 1,
+					},
+				);
+			}
+
+			return '';
+		}
+
+		/**
+		 * @return {string}
+		 */
+		#buildInputActionTextGroupChat()
+		{
+			const userCount = this.inputActions.length;
+			const firstUser = this.inputActions[0];
+			const secondUser = this.inputActions[1];
+
+			if (userCount === 1)
+			{
+				const { userFirstName } = firstUser;
+
+				return userFirstName;
+			}
+
+			if (userCount === 2)
+			{
+				return `${firstUser.userFirstName}, ${secondUser.userFirstName}`;
+			}
+
+			if (userCount > 2)
+			{
+				return Loc.getMessage(
+					'IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_MORE_V2',
+					{
+						'#USERNAME_1#': firstUser.userFirstName,
+						'#USERS_COUNT#': userCount - 1,
+					},
+				);
+			}
+
+			return '';
+		}
+
+		/**
+		 * @return {string}
+		 */
+		#buildInputActionTextPrivateChat()
+		{
+			const inputActionsByUser = this.inputActions[0];
+			let messages = {};
+
+			if (Feature.isLottieInChatTitleAvailable)
+			{
+				messages = {
+					[UserInputAction.writing]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_WRITING_V1',
+					[UserInputAction.recordingVoice]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_RECORDING_VOICE',
+					[UserInputAction.sendingFile]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_SENDING_FILE',
+				};
 			}
 			else
 			{
-				text = Loc.getMessage(
-					'IMMOBILE_ELEMENT_CHAT_TITLE_WRITING_MORE',
-					{
-						'#USERNAME_1#': firstUserName,
-						'#USERS_COUNT#': countName - 1,
-					},
-				);
+				messages = {
+					[UserInputAction.writing]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_WRITING_V2',
+					[UserInputAction.recordingVoice]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_RECORDING_VOICE_V2',
+					[UserInputAction.sendingFile]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_SENDING_FILE_V2',
+				};
 			}
 
-			return text;
+			const { actions } = inputActionsByUser;
+			if (!messages[actions[0]])
+			{
+				return '';
+			}
+
+			return Loc.getMessage(messages[actions[0]]);
+		}
+
+		/**
+		 * @return {string}
+		 */
+		#buildDetailLottie()
+		{
+			if (!Feature.isLottieInChatTitleAvailable)
+			{
+				return null;
+			}
+
+			const userCount = this.inputActions.length;
+			const firstUser = this.inputActions[0];
+
+			const lottie = {
+				[UserInputAction.writing]: ChatTitleAssets.getLottieUrl(UserInputAction.writing, this.dialogType),
+				[UserInputAction.recordingVoice]: ChatTitleAssets.getLottieUrl(UserInputAction.recordingVoice, this.dialogType),
+				[UserInputAction.sendingFile]: ChatTitleAssets.getLottieUrl(UserInputAction.sendingFile, this.dialogType),
+			};
+
+			if (userCount === 1)
+			{
+				const { actions } = firstUser;
+
+				if (lottie[actions[0]])
+				{
+					return {
+						uri: lottie[actions[0]],
+					};
+				}
+
+				return null;
+			}
+
+			if (userCount > 1)
+			{
+				return {
+					uri: ChatTitleAssets.getLottieUrl(UserInputAction.writing, this.dialogType),
+				};
+			}
+
+			return null;
 		}
 
 		/**

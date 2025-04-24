@@ -9,8 +9,8 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 	const { EventType } = require('im/messenger/const');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--notification');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('pull-handler--notification');
 
 	/**
 	 * @class NotificationPullHandler
@@ -68,6 +68,8 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 					title: Loc.getMessage('IMMOBILE_PULL_HANDLER_NOTIFICATION_TITLE'),
 					text: (userName ? `${userName}: ` : '') + purifiedNotificationText,
 					avatar: params.userAvatar ? params.userAvatar : '',
+				}).catch((error) => {
+					this.logger.error(`${this.getClassName()}.handleNotifyAdd notify error:`, error);
 				});
 			}
 		}

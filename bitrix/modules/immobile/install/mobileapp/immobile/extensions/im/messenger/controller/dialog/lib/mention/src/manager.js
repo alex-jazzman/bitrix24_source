@@ -9,14 +9,14 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { Type } = require('type');
 
 	const MENTION_SYMBOL = new Set(['@', '+']);
 	const CLOSE_MENTION_SYMBOLS = new Set([' ', '\n']);
 	const MENTION_PREFIX = new Set([' ', '\n']);
 
-	const logger = LoggerManager.getInstance().getLogger('mention');
+	const logger = getLogger('mention');
 
 	class MentionManager
 	{

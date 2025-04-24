@@ -68,6 +68,16 @@
 	--im-button__background-color_collab-hover: var(--im-color-collab-50);
 	--im-button__border-color_collab-border: var(--im-color-collab-60);
 	--im-button__border-color_collab-border-hover: var(--im-color-collab-50);
+
+	--im-button__color_delete-hover: var(--im-color-accent-red);
+	--im-button__color_delete: var(--im-color-palette-red-60);
+
+	--im-button__color_forward: var(--im-color-palette-white-base);
+	--im-button__color_forward-hover: var(--im-color-palette-white-base);
+	--im-button__background-color_forward: var(--im-color-accent-blue);
+	--im-button__background-color_forward-hover: var(--im-color-palette-blue-70);
+	--im-button__border-color_forward-border: var(--im-color-accent-blue);
+	--im-button__border-color_forward-border-hover: var(--im-color-palette-blue-70);
 }
 
 .bx-im-button__container {
@@ -243,6 +253,25 @@
 	--im-button__color: var(--im-button__color_collab);
 	--im-button__color_hover: var(--im-button__color_collab-hover);
 }
+
+.bx-im-button__container.--color-delete {
+	--im-button__background-color: transparent;
+	--im-button__background-color_hover: transparent;
+	--im-button__border-color: transparent;
+	--im-button__border-color_hover: transparent;
+	--im-button__color: var(--im-button__color_delete);
+	--im-button__color_hover: var(--im-button__color_delete-hover);
+}
+
+.bx-im-button__container.--color-forward {
+	--im-button__background-color: var(--im-button__background-color_forward);
+	--im-button__background-color_hover: var(--im-button__background-color_forward-hover);
+	--im-button__border-color: var(--im-button__border-color_forward-border);
+	--im-button__border-color_hover: var(--im-button__border-color_forward-border-hover);
+	--im-button__color: var(--im-button__color_forward);
+	--im-button__color_hover: var(--im-button__color_forward-hover);
+}
+
 /* End color */
 
 /* Border radius */
@@ -402,10 +431,13 @@
 
 .bx-im-button__container .bx-im-button__icon.--delete {
 	--im-button_icon: url('images/delete.svg');
+	background-image: var(--im-button_icon);
 }
 
 .bx-im-button__container .bx-im-button__icon.--forward {
 	--im-button_icon: url('images/forward.svg');
+	background-image: var(--im-button_icon);
+	background-size: contain;
 }
 
 /* icons for colors */

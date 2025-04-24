@@ -52,7 +52,7 @@ Extension::load([
 	'pull.queuemanager',
 ]);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 
 $data = $arResult['DATA'];
 ?>
@@ -82,7 +82,7 @@ $data = $arResult['DATA'];
 			PERSONAL: '<?=$arParams['PERSONAL']?>',
 			TIMELINE_MODE: '<?=$arParams['TIMELINE_MODE']?>',
 		},
-		siteTemplateId: <?=(SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
+		siteTemplateId: <?=(SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air' ? '"transparent"' : 'null')?>,
 		sprintSelected: <?=($arParams['SPRINT_SELECTED'] == 'Y' && $arParams['SPRINT_ID'] ? 'true' : 'false')?>,
 		isActiveSprint: <?=($arParams['IS_ACTIVE_SPRINT'] == 'Y' ? 'true' : 'false')?>,
 		parentTasks: <?=CUtil::PhpToJSObject($data['parentTasks'], false, false, true)?>

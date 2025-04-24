@@ -123,11 +123,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  comment: [im_v2_const.ChatType.comment],
 	  generalChannel: [im_v2_const.ChatType.generalChannel],
 	  collab: [im_v2_const.ChatType.collab],
-	  lines: [im_v2_const.ChatType.lines]
+	  lines: [im_v2_const.ChatType.lines],
+	  notes: ['notes']
 	};
 	const MainPanelBlock = Object.freeze({
 	  support: 'support',
 	  chat: 'chat',
+	  notes: 'notes',
 	  user: 'user',
 	  copilot: 'copilot',
 	  copilotInfo: 'copilotInfo',
@@ -210,6 +212,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    [MainPanelBlock.chat]: 10,
 	    [MainPanelBlock.info]: 20,
 	    [MainPanelBlock.file]: 30
+	  },
+	  [MainPanelType.notes]: {
+	    [MainPanelBlock.notes]: 10,
+	    [MainPanelBlock.tariffLimit]: 15,
+	    [MainPanelBlock.info]: 20,
+	    [MainPanelBlock.file]: 30,
+	    [MainPanelBlock.fileUnsorted]: 30
 	  }
 	};
 
@@ -232,9 +241,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function getMainPanelType(dialogId) {
 	  var _MainPanelType$chatTy;
-	  const chatType = getChatType(dialogId);
 	  if (isSupportChat(dialogId)) {
 	    return MainPanelType.support24Question;
+	  }
+	  const chatType = getChatType(dialogId);
+	  if (chatType === im_v2_const.ChatType.user && Number.parseInt(dialogId, 10) === im_v2_application_core.Core.getUserId()) {
+	    return MainPanelType.notes;
 	  }
 	  return (_MainPanelType$chatTy = MainPanelType[chatType]) != null ? _MainPanelType$chatTy : MainPanelType.chat;
 	}
@@ -1362,7 +1374,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
 	    },
 	    viewerAttributes() {
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: this.file.viewerAttrs,
+	        previewImageSrc: this.imageSrc,
+	        context: im_v2_const.FileViewerContext.sidebarMain
+	      });
 	    },
 	    isImage() {
 	      return this.file.type === 'image';
@@ -1378,6 +1394,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isViewerAvailable() {
 	      return Object.keys(this.viewerAttributes).length > 0;
+	    },
+	    imageSrc() {
+	      const isAnimation = ['gif', 'webp'].includes(this.file.extension);
+	      return isAnimation ? this.file.urlShow : this.file.urlPreview;
 	    }
 	  },
 	  methods: {
@@ -1385,39 +1405,44 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (this.isViewerAvailable) {
 	        return;
 	      }
-	      const urlToOpen = this.file.urlShow ? this.file.urlShow : this.file.urlDownload;
-	      window.open(urlToOpen, '_blank');
+	      window.open(this.file.urlDownload, '_blank');
 	    }
 	  },
 	  template: `
-		<div 
-			class="bx-im-sidebar-file-preview-item__container bx-im-sidebar-file-preview-item__scope" 
-			v-bind="viewerAttributes" 
+		<div
+			class="bx-im-sidebar-file-preview-item__container bx-im-sidebar-file-preview-item__scope"
 			@click="download" 
 			:title="file.name"
 		>
 			<img
 				v-if="isImage"
+				v-bind="viewerAttributes"
 				v-lazyload
 				data-lazyload-dont-hide
-				:data-lazyload-src="file.urlShow"
+				:data-lazyload-src="imageSrc"
 				:title="file.name"
 				:alt="file.name"
 				class="bx-im-sidebar-file-preview-item__preview-box"
 			/>
 			<div 
-				v-else-if="isVideo" 
+				v-else-if="isVideo"
 				class="bx-im-sidebar-file-preview-item__preview-box bx-im-sidebar-file-preview-item__preview-video-box"
 				:style="previewImageStyles"
+				v-bind="viewerAttributes"
 			>
-				<video v-if="!hasPreview" class="bx-im-sidebar-file-preview-item__preview-video" preload="metadata" :src="file.urlDownload"></video>
+				<video 
+					v-if="!hasPreview" 
+					:src="file.urlDownload"
+					preload="metadata" 
+					class="bx-im-sidebar-file-preview-item__preview-video" 
+				></video>
 				<div class="bx-im-sidebar-file-preview-item__preview-video-play-button"></div>
 				<div class="bx-im-sidebar-file-preview-item__preview-video-play-icon"></div>
 			</div>
-			<div v-else-if="isAudio" class="bx-im-sidebar-file-preview-item__preview-box">
+			<div v-else-if="isAudio" v-bind="viewerAttributes" class="bx-im-sidebar-file-preview-item__preview-box">
 				<div class="bx-im-sidebar-file-preview-item__preview-audio-play-button"></div>
 			</div>
-			<div v-else class="bx-im-sidebar-file-preview-item__preview-box">
+			<div v-else v-bind="viewerAttributes" class="bx-im-sidebar-file-preview-item__preview-box">
 				<div :class="fileIconClass"><i></i></div>
 			</div>
 			<div class="bx-im-sidebar-file-preview-item__text">{{ fileShortName }}</div>
@@ -1934,6 +1959,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getAddMembersToChatItem() {
 	    if (this.isBot()) {
+	      return null;
+	    }
+	    if (this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10)) {
 	      return null;
 	    }
 	    const hasCreateChatAccess = this.permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
@@ -3459,11 +3487,55 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
+	const NotesPreview = {
+	  name: 'NotesPreview',
+	  components: {
+	    ChatAvatar: im_v2_component_elements.ChatAvatar,
+	    ChatTitle: im_v2_component_elements.ChatTitle
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    ChatAvatarType: () => im_v2_component_elements.ChatAvatarType,
+	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    ChatTitleType: () => im_v2_component_elements.ChatTitleType
+	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-sidebar-notes-preview">
+			<div class="bx-im-sidebar-notes-preview__avatar">
+				<ChatAvatar 
+					:avatarDialogId="dialogId"
+					:contextDialogId="dialogId"
+					:size="AvatarSize.XXXL"
+					:customType="ChatAvatarType.notes"
+				/>
+			</div>
+			<div class="bx-im-sidebar-notes-preview__head">
+				<ChatTitle :dialogId="dialogId" :customType="ChatTitleType.notes" :showItsYou="false"/>
+				<span class="bx-im-sidebar-notes-preview__description">
+					{{ loc('IM_SIDEBAR_NOTES_PREVIEW_DESCRIPTION') }}
+				</span>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
 	const MainPanel = {
 	  name: 'MainPanel',
 	  components: {
 	    MainHeader,
 	    ChatPreview,
+	    NotesPreview,
 	    PostPreview,
 	    UserPreview,
 	    SupportPreview,
@@ -4325,11 +4397,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return {};
 	      }
 	      return {
-	        backgroundImage: `url('${this.file.urlPreview}')`
+	        backgroundImage: `url('${this.imageSrc}')`
 	      };
 	    },
 	    hasPreview() {
-	      return this.file.urlPreview !== '';
+	      return main_core.Type.isStringFilled(this.file.urlPreview);
 	    },
 	    isImage() {
 	      return this.file.type === 'image';
@@ -4338,13 +4410,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.file.type === 'video';
 	    },
 	    viewerAttributes() {
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: this.file.viewerAttrs,
+	        previewImageSrc: this.imageSrc,
+	        context: im_v2_const.FileViewerContext.sidebarTabMedia
+	      });
 	    },
 	    videoDurationText() {
 	      if (this.videoDuration === 0) {
 	        return '--:--';
 	      }
 	      return this.formatTime(this.videoDuration);
+	    },
+	    canBeOpenedWithViewer() {
+	      var _BX$UI;
+	      return this.file.viewerAttrs && ((_BX$UI = BX.UI) == null ? void 0 : _BX$UI.Viewer);
+	    },
+	    imageSrc() {
+	      const isAnimation = ['gif', 'webp'].includes(this.file.extension);
+	      return isAnimation ? this.file.urlShow : this.file.urlPreview;
 	    }
 	  },
 	  methods: {
@@ -4375,6 +4459,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        file: this.file,
 	        messageId: this.sidebarFileItem.messageId
 	      }, event.currentTarget);
+	    },
+	    download() {
+	      if (this.file.progress !== 100 || this.canBeOpenedWithViewer) {
+	        return;
+	      }
+	      window.open(this.file.urlDownload, '_blank');
 	    }
 	  },
 	  template: `
@@ -4397,12 +4487,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					@click="onContextMenuClick"
 				></button>
 			</div>
-			<div 
+			<div
 				v-if="isImage"
 				class="bx-im-sidebar-file-media-detail-item__content --image" 
 				:style="previewPicture"
 				v-bind="viewerAttributes"
 				:title="file.name"
+				@click="download"
 			>
 			</div>
 			<div
@@ -4411,12 +4502,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:style="previewPicture"
 				v-bind="viewerAttributes"
 				:title="file.name"
+				@click="download"
 			>
-				<video 
+				<video
 					v-show="!hasPreview"
+					:src="file.urlDownload"
 					ref="video"
 					class="bx-im-sidebar-file-media-detail-item__video" 
-					preload="metadata" :src="file.urlDownload"
+					preload="metadata" 
 					@durationchange="handleVideoEvent"
 					@loadeddata="handleVideoEvent"
 					@loadedmetadata="handleVideoEvent"
@@ -4459,18 +4552,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getMenuItems() {
 	    return [this.getOpenContextMessageItem(), this.getDownloadFileItem(), this.getSaveFileOnDiskItem(), this.getDeleteFileItem()];
 	  }
-	  getViewFileItem() {
-	    const viewerAttributes = im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.context.file.viewerAttrs);
-	    if (!viewerAttributes || this.context.file.type === 'audio') {
-	      return null;
-	    }
-	    return {
-	      html: this.getViewHtml(viewerAttributes),
-	      onclick: function () {
-	        this.menuInstance.close();
-	      }.bind(this)
-	    };
-	  }
 	  getDownloadFileItem() {
 	    if (!this.context.file.urlDownload) {
 	      return null;
@@ -4509,16 +4590,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        this.menuInstance.close();
 	      }.bind(this)
 	    };
-	  }
-	  getViewHtml(viewerAttributes) {
-	    const div = main_core.Dom.create('div', {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_VIEW_FILE')
-	    });
-	    Object.entries(viewerAttributes).forEach(attribute => {
-	      const [attributeName, attributeValue] = attribute;
-	      div.setAttribute(attributeName, attributeValue);
-	    });
-	    return div;
 	  }
 	  getDownloadHtml(urlDownload, fileName) {
 	    const a = main_core.Dom.create('a', {
@@ -4948,7 +5019,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
 	    },
 	    viewerAttributes() {
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: this.file.viewerAttrs,
+	        previewImageSrc: this.file.urlPreview,
+	        context: im_v2_const.FileViewerContext.sidebarTabBriefs
+	      });
 	    },
 	    isViewerAvailable() {
 	      return Object.keys(this.viewerAttributes).length > 0;
@@ -4959,8 +5034,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (this.isViewerAvailable) {
 	        return;
 	      }
-	      const urlToOpen = this.file.urlShow ? this.file.urlShow : this.file.urlDownload;
-	      window.open(urlToOpen, '_blank');
+	      window.open(this.file.urlDownload, '_blank');
 	    },
 	    onContextMenuClick(event) {
 	      this.$emit('contextMenuClick', {
@@ -5176,6 +5250,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: String,
 	      default: '',
 	      required: false
+	    },
+	    viewerContext: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -5207,7 +5285,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
 	    },
 	    viewerAttributes() {
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: this.file.viewerAttrs,
+	        previewImageSrc: this.file.urlPreview,
+	        context: this.viewerContext
+	      });
 	    },
 	    isViewerAvailable() {
 	      return Object.keys(this.viewerAttributes).length > 0;
@@ -5221,8 +5303,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (this.isViewerAvailable) {
 	        return;
 	      }
-	      const urlToOpen = this.file.urlShow ? this.file.urlShow : this.file.urlDownload;
-	      window.open(urlToOpen, '_blank');
+	      window.open(this.file.urlDownload, '_blank');
 	    },
 	    onContextMenuClick(event) {
 	      this.$emit('contextMenuClick', {
@@ -5236,7 +5317,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div 
 			class="bx-im-sidebar-file-document-detail-item__container bx-im-sidebar-file-document-detail-item__scope"
 			@mouseover="showContextButton = true"
-			@mouseleave="showContextButton = false"		
+			@mouseleave="showContextButton = false"
 		>
 			<div class="bx-im-sidebar-file-document-detail-item__icon-container">
 				<div :class="fileIconClass"><i></i></div>
@@ -5258,7 +5339,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							<ChatTitle :dialogId="authorId" :showItsYou="false" />
 						</template>
 						<span v-else class="bx-im-sidebar-file-document-detail-item__system-author-text">
-							{{$Bitrix.Loc.getMessage('IM_SIDEBAR_SYSTEM_USER')}}
+							{{ $Bitrix.Loc.getMessage('IM_SIDEBAR_SYSTEM_USER') }}
 						</span>
 					</div>
 				</div>
@@ -5316,6 +5397,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
+	    FileViewerContext: () => im_v2_const.FileViewerContext,
 	    files() {
 	      if (this.isSearch) {
 	        return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileTypes.other);
@@ -5398,6 +5480,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:fileItem="file"
 					:contextDialogId="dialogId"
 					:searchQuery="searchQuery"
+					:viewerContext="FileViewerContext.sidebarTabOther"
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>
@@ -5469,6 +5552,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
+	    FileViewerContext: () => im_v2_const.FileViewerContext,
 	    files() {
 	      if (this.isSearch) {
 	        return this.$store.getters['sidebar/files/getSearchResultCollection'](this.chatId, im_v2_const.SidebarFileTypes.document);
@@ -5551,6 +5635,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:fileItem="file"
 					:searchQuery="searchQuery"
 					:contextDialogId="dialogId"
+					:viewerContext="FileViewerContext.sidebarTabDocuments"
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>
@@ -5790,6 +5875,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  computed: {
 	    SidebarDetailBlock: () => im_v2_const.SidebarDetailBlock,
+	    FileViewerContext: () => im_v2_const.FileViewerContext,
 	    files() {
 	      return this.$store.getters['sidebar/files/get'](this.chatId, im_v2_const.SidebarFileTypes.fileUnsorted);
 	    },
@@ -5864,6 +5950,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						v-for="file in dateGroup.items"
 						:fileItem="file"
 						:contextDialogId="dialogId"
+						:viewerContext="FileViewerContext.sidebarTabFileUnsorted"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>

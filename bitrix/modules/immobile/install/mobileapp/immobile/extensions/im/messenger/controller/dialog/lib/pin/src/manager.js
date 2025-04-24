@@ -7,15 +7,15 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType } = require('im/messenger/const');
 	const { parser } = require('im/messenger/lib/parser');
-	const { DialogConverter } = require('im/messenger/lib/converter');
+	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { isOnline } = require('device/connection');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--pin-manager');
+	const logger = getLogger('dialog--pin-manager');
 
 	const ButtonType = {
 		delete: 'delete',
@@ -59,7 +59,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			this.onAddPin = this.onAddPin.bind(this);
 			this.onDeletePin = this.onDeletePin.bind(this);
 			this.onUpdatePin = this.onUpdatePin.bind(this);
-			this.onUpdateMessage = this.onUpdateMessage.bind(this);
+			this.onUpdateMessages = this.onUpdateMessages.bind(this);
 			this.onDeleteMessagesByIdList = this.onDeleteMessagesByIdList.bind(this);
 			this.onUpdateDiscussionMessage = this.onUpdateDiscussionMessage.bind(this);
 			this.onUpdateDialog = this.onUpdateDialog.bind(this);
@@ -78,7 +78,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				.on('messagesModel/pinModel/setChatCollection', this.onSetChatCollection)
 				.on('messagesModel/pinModel/add', this.onAddPin)
 				.on('messagesModel/pinModel/delete', this.onDeletePin)
-				.on('messagesModel/pinModel/updateMessage', this.onUpdateMessage)
+				.on('messagesModel/pinModel/updateMessages', this.onUpdateMessages)
 				.on('messagesModel/pinModel/updatePin', this.onUpdatePin)
 				.on('messagesModel/pinModel/deleteMessagesByIdList', this.onDeleteMessagesByIdList)
 				.on('dialoguesModel/update', this.onUpdateDialog)
@@ -92,7 +92,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				.off('messagesModel/pinModel/add', this.onAddPin)
 				.off('messagesModel/pinModel/delete', this.onDeletePin)
 				.off('messagesModel/pinModel/deleteByIdList', this.onDeletePin)
-				.off('messagesModel/pinModel/updateMessage', this.onUpdateMessage)
+				.off('messagesModel/pinModel/updateMessages', this.onUpdateMessages)
 				.off('messagesModel/pinModel/updatePin', this.onUpdatePin)
 				.off('messagesModel/pinModel/deleteMessagesByIdList', this.onDeleteMessagesByIdList)
 				.off('dialoguesModel/update', this.onUpdateDialog)
@@ -138,6 +138,19 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		 */
 		onUpdateDiscussionMessage(mutation)
 		{
+			if (mutation.payload.actionName === 'updateList')
+			{
+				const messageList = mutation.payload.data.messageList;
+				messageList.forEach((message) => {
+					if (Number(message.id) === Number(this.discussionMessageId))
+					{
+						this.updateDiscussionMessage();
+					}
+				});
+
+				return;
+			}
+
 			if (Number(mutation.payload.data.id) !== Number(this.discussionMessageId))
 			{
 				return;
@@ -410,7 +423,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 
 			const user = this.store.getters['usersModel/getById'](modelMessage.authorId);
 
-			const message = DialogConverter.createMessage(modelMessage);
+			const message = MessageUiConverter.createMessage(modelMessage);
 
 			if (user)
 			{
@@ -549,11 +562,12 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		}
 
 		/**
-		 * @param {MutationPayload<PinUpdateMessageData, PinUpdateMessageActions>} payload
+		 * @param {MutationPayload<PinUpdateMessagesData, PinUpdateMessageActions>} payload
 		 */
-		onUpdateMessage({ payload })
+		onUpdateMessages({ payload })
 		{
-			if (!this.isPinInCurrentDialog(payload.data.chatId))
+			const chatId = payload.data.messageList[0]?.chatId;
+			if (!this.isPinInCurrentDialog(chatId))
 			{
 				return;
 			}

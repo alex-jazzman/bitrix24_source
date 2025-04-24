@@ -66,6 +66,8 @@ type CallUserParams = {
 	onUserRename: () => void,
 	onUserRenameInputFocus: () => void,
 	onUserRenameInputBlur: () => void,
+
+	avatarBackground: ?string,
 }
 
 export class CallUser
@@ -94,6 +96,7 @@ export class CallUser
 		this._videoRenderer = null;
 		this._previewRenderer = null;
 		this._flipVideo = false;
+		this._tracksSubscriptionFailed = {};
 
 		this.hidden = false;
 		this.videoBlurState = false;
@@ -137,7 +140,7 @@ export class CallUser
 		this.connectionStats = {};
 		this.connectionStatsVisible = false;
 
-		this.avatarBackground = Util.getAvatarBackground();
+		this.avatarBackground = config.avatarBackground || Util.getAvatarBackground();
 
 		this.removeAvatarPulseTimer = null;
 		this.hideUserNameTimer = null;
@@ -278,7 +281,7 @@ export class CallUser
 			const currentVideoRendererKind = this._videoRenderer?.kind;
 			const newVideoRendererKind = videoRenderer?.kind;
 
-			if (videoRenderer.stream)
+			if (videoRenderer?.stream)
 			{
 				if (newVideoRendererKind === 'sharing' && currentVideoRendererKind === 'video')
 				{
@@ -456,6 +459,23 @@ export class CallUser
 		{
 			this.showConnectionStats();
 		}
+	}
+	
+	showTrackSubscriptionFailed(track)
+	{
+		this._tracksSubscriptionFailed[track.sid] = track;
+	}
+	
+	_formatFailedSubscribtionTracks()
+	{
+		let result = '';
+		
+		for (let track in this._tracksSubscriptionFailed)
+		{
+			result += (this._tracksSubscriptionFailed[track].source + ` ` + track + `\n`);
+		}
+		
+		return result;
 	}
 
 	render()
@@ -888,6 +908,15 @@ export class CallUser
 		const cameraStats = this.connectionStats?.[MediaStreamsKinds.Camera];
 		const screenStats = this.connectionStats?.[MediaStreamsKinds.Screen];
 		const audioStats = this.connectionStats?.[MediaStreamsKinds.Microphone];
+		
+		const failedTracksResult = this._formatFailedSubscribtionTracks();
+		
+		if (failedTracksResult)
+		{
+			statsString += `Failed subscribe to:\n`;
+			statsString += failedTracksResult;
+		}
+		
 
 		if (cameraStats || !screenStats)
 		{
@@ -1803,6 +1832,11 @@ export class CallUser
 
 	hasVideo()
 	{
+		if (this.userModel.state != UserState.Connected && (!!this._videoTrack || !!this._videoRenderer))
+		{
+			console.warn(`We have videoRenderer but UserState is not connected; State ${this.userModel.state}  UserId: ${this.userModel.id}`);
+			Util.sendLog({'description': 'We have videoRenderer but UserState is not connected', 'state': this.userModel.state, 'usrId': this.userModel.id});
+		}
 		return this.userModel.state == UserState.Connected && (!!this._videoTrack || !!this._videoRenderer);
 	};
 
@@ -1853,9 +1887,11 @@ export class CallUser
 		let limitationsString = '';
 
 		resultString += `Bitrate: ${videoStats?.bitrate || 0}\n`;
+		resultString += `Track ID: ${videoStats?.trackIdentifier || 'no track id!'}\n`;
 		resultString += `PacketsLost: ${videoStats?.packetsLostExtended || 0}\n`;
 		resultString += `Codec: ${videoStats?.codecName || '-'}\n`;
-		resultString += `Resolution: ${videoStats?.frameWidth || 0}x${videoStats?.frameHeight || 0} `;
+		resultString += `Resolution: ${videoStats?.frameWidth || 0}x${videoStats?.frameHeight || 0} \n`;
+		resultString += `In Remote Tracks: ${videoStats?.inRemoteTracks || 'U'} \n`;
 
 		if (videoStats?.qualityLimitationReason)
 		{

@@ -451,9 +451,9 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 		$fromValue = $activity['SETTINGS']['EMAIL_META']['__email'];
 	}
 
-	$ownerTypeId = (int) $arParams['ACTIVITY']['OWNER_TYPE_ID'];
+	$ownerTypeId = (int)$arParams['ACTIVITY']['OWNER_TYPE_ID'];
 	$ownerType = \CCrmOwnerType::ResolveName($ownerTypeId);
-	$ownerId = (int) $arParams['ACTIVITY']['OWNER_ID'];
+	$ownerId = (int)$arParams['ACTIVITY']['OWNER_ID'];
 
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',

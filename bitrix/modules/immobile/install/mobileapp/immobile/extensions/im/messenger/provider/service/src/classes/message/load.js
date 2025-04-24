@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/message/load', (require, exports, module) => {
 	const { Type } = require('type');
+	const { uniqBy } = require('utils/array');
 
 	const { DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -12,10 +13,10 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { DialogHelper, DateHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const logger = LoggerManager.getInstance().getLogger('message-service--load');
+	const logger = getLogger('message-service--load');
 
 	const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
@@ -55,6 +56,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			this.reactions = null;
 		}
 
+		get className()
+		{
+			return this.constructor.name;
+		}
+
 		async loadUnread()
 		{
 			if (Feature.isLocalStorageEnabled && this.isUnreadLoadingFromDb === false)
@@ -67,7 +73,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				}
 				catch (error)
 				{
-					logger.error('LoadService.loadUnreadMessagesFromDb error: ', error);
+					logger.error(`${this.className}.loadUnreadMessagesFromDb error: `, error);
 				}
 				finally
 				{
@@ -80,11 +86,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				return Promise.resolve(false);
 			}
 
-			logger.warn('LoadService: loadUnread');
+			logger.warn(`${this.className}: loadUnread`);
 			const lastUnreadMessageId = this.store.getters['messagesModel/getLastId'](this.chatId);
 			if (!lastUnreadMessageId)
 			{
-				logger.warn('LoadService: no lastUnreadMessageId, cant load unread');
+				logger.warn(`${this.className}: no lastUnreadMessageId, cant load unread`);
 
 				return Promise.resolve(false);
 			}
@@ -102,7 +108,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			};
 
 			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(async (result) => {
-				logger.warn('LoadService: loadUnread result', result);
+				logger.warn(`${this.className}: loadUnread result`, result);
 				this.preparedUnreadMessages = result.messages.sort((a, b) => a.id - b.id);
 				this.preparedUnreadMessages = await this.contextCreator
 					.createMessageDoublyLinkedListForDialog(this.getDialog(), this.preparedUnreadMessages)
@@ -121,7 +127,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 				return true;
 			}).catch((error) => {
-				logger.error('LoadService: loadUnread error:', error);
+				logger.error(`${this.className}: loadUnread error:`, error);
 				this.isUnreadLoading = false;
 			});
 		}
@@ -130,10 +136,17 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 		{
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](this.chatId);
 
+			const DialogTypesWithoutLocalStorage = [
+				DialogType.openChannel,
+				DialogType.channel,
+				DialogType.comment,
+				DialogType.generalChannel,
+			];
+
 			if (
 				Feature.isLocalStorageEnabled
 				&& this.isHistoryLoadingFromDb === false
-				&& ![DialogType.openChannel, DialogType.channel, DialogType.comment, DialogType.generalChannel].includes(dialog?.type)
+				&& !DialogTypesWithoutLocalStorage.includes(dialog?.type)
 			)
 			{
 				this.isHistoryLoadingFromDb = true;
@@ -144,7 +157,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				}
 				catch (error)
 				{
-					logger.error('LoadService.loadHistoryMessagesFromDb error: ', error);
+					logger.error(`${this.className}.loadHistoryMessagesFromDb error: `, error);
 				}
 				finally
 				{
@@ -157,11 +170,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				return Promise.resolve(false);
 			}
 
-			logger.warn('LoadService: loadHistory');
+			logger.warn(`${this.className}: loadHistory`);
 			const lastHistoryMessageId = this.store.getters['messagesModel/getFirstId'](this.chatId);
 			if (!lastHistoryMessageId)
 			{
-				logger.warn('LoadService: no lastHistoryMessageId, cant load unread');
+				logger.warn(`${this.className}: no lastHistoryMessageId, cant load unread`);
 
 				return Promise.resolve();
 			}
@@ -179,7 +192,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			};
 
 			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(async (result) => {
-				logger.warn('LoadService: loadHistory result', result);
+				logger.warn(`${this.className}: loadHistory result`, result);
 				const hasPrevPage = result.hasNextPage; // FIXME convert key name when back and web switch to two keys
 				this.preparedHistoryMessages = result.messages.sort((a, b) => a.id - b.id);
 				this.preparedHistoryMessages = await this.contextCreator
@@ -206,7 +219,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 				return true;
 			}).catch((error) => {
-				logger.error('LoadService: loadHistory error:', error);
+				logger.error(`${this.className}: loadHistory error:`, error);
 				this.isHistoryLoading = false;
 			});
 		}
@@ -225,7 +238,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				fromMessageId: lastHistoryMessageId,
 				limit: LoadService.getMessageRequestLimit(),
 			};
-			logger.log('LoadService: loadHistoryMessagesFromDb', options);
+			logger.log(`${this.className}: loadHistoryMessagesFromDb`, options);
 			const result = await this.messageRepository.getTopPage(options);
 			const resultWithValidPlan = this.checkPlanLimits(result);
 			await this.updateModelsByDbResult(resultWithValidPlan);
@@ -233,9 +246,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			const resultTemp = await this.tempMessageRepository.getList();
 			if (Type.isArrayFilled(resultTemp.messageList))
 			{
-				await this.store.dispatch('messagesModel/setTemporaryMessages', {
-					messages: resultTemp.messageList,
-				});
+				await this.store.dispatch('messagesModel/setTemporaryMessages', resultTemp.messageList);
 			}
 		}
 
@@ -253,7 +264,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				fromMessageId: lastUnreadMessageId,
 				limit: LoadService.getMessageRequestLimit(),
 			};
-			logger.log('LoadService: loadUnreadMessagesFromDb', options);
+			logger.log(`${this.className}: loadUnreadMessagesFromDb`, options);
 			const result = await this.messageRepository.getBottomPage(options);
 			const resultWithValidPlan = this.checkPlanLimits(result);
 			await this.updateModelsByDbResult(resultWithValidPlan);
@@ -261,7 +272,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		async loadFirstPage()
 		{
-			logger.log('MessageService: loadFirstPage for: ', this.chatId);
+			logger.log(`${this.className}: loadFirstPage for: `, this.chatId);
 			this.isHistoryLoading = true;
 
 			const messageTailParams = {
@@ -280,7 +291,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			// because imV2ChatMessageTail does not return this field for the first page
 			result.hasPrevPage = false;
 
-			logger.log('MessageService: loadFirstPage result', result);
+			logger.log(`${this.className}: loadFirstPage result`, result);
 			this.isHistoryLoading = false;
 
 			return result;
@@ -310,7 +321,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 					shouldExtractResponseByMethod: true,
 				});
 
-				logger.log('MessageService: loadContext result ', response);
+				logger.log(`${this.className}: loadContext result `, response);
 				this.isHistoryLoading = false;
 				this.isUnreadLoading = false;
 
@@ -318,7 +329,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			}
 			catch (error)
 			{
-				logger.log('MessageService: loadContext error ', error);
+				logger.log(`${this.className}: loadContext error `, error);
 				this.isHistoryLoading = false;
 				this.isUnreadLoading = false;
 
@@ -334,7 +345,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 		 */
 		async loadContextByCommentChatId(commentChatId)
 		{
-			logger.log('MessageService: loadContextByChatId for: ', commentChatId);
+			logger.log(`${this.className}: loadContextByChatId for: `, commentChatId);
 			this.isHistoryLoading = true;
 			this.isUnreadLoading = true;
 
@@ -347,7 +358,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 					this.isHistoryLoading = false;
 					this.isUnreadLoading = false;
 				});
-			logger.log('MessageService: loadContextByChatId result ', result);
+			logger.log(`${this.className}: loadContextByChatId result `, result);
 			this.isHistoryLoading = false;
 			this.isUnreadLoading = false;
 
@@ -365,7 +376,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		async updateModelByContextResult(result)
 		{
-			logger.log('MessageService.updateModelByContextResult: ', result);
+			logger.log(`${this.className}.updateModelByContextResult: `, result);
 
 			await this.updateModels(result);
 			await this.drawContextMessages(result);
@@ -401,12 +412,12 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				result,
 			};
 
-			logger.log('MessageService.loadLocalStorageContext result: ', result);
+			logger.log(`${this.className}.loadLocalStorageContext result: `, result);
 			if (!result.hasContextMessage)
 			{
 				response.isCompleteContext = false;
 
-				logger.log('MessageService.loadLocalStorageContext: no message with ID = ', messageId);
+				logger.log(`${this.className}.loadLocalStorageContext: no message with ID = `, messageId);
 
 				return response;
 			}
@@ -423,9 +434,55 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			return response;
 		}
 
+		/**
+		 * @param {number} messageId
+		 * @return {Promise<{result: MessageRepositoryContext, isCompleteContext: boolean}>}
+		 */
+		async loadLocalStorageContextWithPush(messageId)
+		{
+			if (!this.#checkShouldLoadFromDb())
+			{
+				return {
+					isCompleteContext: false,
+					result: {},
+				};
+			}
+			const pushMessages = await this.messageRepository.getPushPage({
+				chatId: this.chatId,
+				fromMessageId: messageId,
+			});
+
+			let localStorageContext = await this.loadLocalStorageContext(messageId);
+
+			if (!Type.isArrayFilled(pushMessages.messageList))
+			{
+				return localStorageContext;
+			}
+
+			if (localStorageContext.isCompleteContext === false)
+			{
+				/*
+				If we could not get the context by the push message id,
+				then we are trying to get the context by the minimum previous message id before the push
+				 */
+				let { previousId: minPreviousId } = pushMessages.messageList[0];
+
+				pushMessages.messageList.forEach((pushMessage) => {
+					minPreviousId = pushMessage.previousId < minPreviousId ? pushMessage.previousId : minPreviousId;
+				});
+
+				logger.warn(`${this.className}.loadLocalStorageContextWithPush: load context again with min previous id from push message`, minPreviousId);
+				localStorageContext = await this.loadLocalStorageContext(minPreviousId);
+			}
+
+			localStorageContext.result = this.#fillContextWithPush(localStorageContext.result, pushMessages);
+
+			return localStorageContext;
+		}
+
 		async updateModelByLocalStorageContextResult(result)
 		{
-			logger.log('MessageService.updateModelByLocalStorageContextResult: ', result);
+			logger.log(`${this.className}.updateModelByLocalStorageContextResult: `, result);
 
 			if (Type.isArrayFilled(result.userList))
 			{
@@ -858,6 +915,22 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			}
 
 			return messageList;
+		}
+
+		/**
+		 * @param {MessageRepositoryContext} context
+		 * @param {MessageRepositoryPage} pushPage
+		 * @return {MessageRepositoryContext}
+		 */
+		#fillContextWithPush(context, pushPage)
+		{
+			return {
+				messageList: uniqBy([...context.messageList, ...pushPage.messageList], 'id'),
+				userList: uniqBy([...context.userList, ...pushPage.userList], 'id'),
+				fileList: uniqBy([...context.fileList, ...pushPage.fileList], 'id'),
+				reactionList: uniqBy([...context.reactionList, ...pushPage.reactionList], 'messageId'),
+				additionalMessageList: uniqBy([...context.additionalMessageList, ...pushPage.additionalMessageList], 'id'),
+			};
 		}
 	}
 

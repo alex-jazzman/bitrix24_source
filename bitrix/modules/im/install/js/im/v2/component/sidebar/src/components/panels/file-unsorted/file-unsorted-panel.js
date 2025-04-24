@@ -1,7 +1,7 @@
 import { EventEmitter } from 'main.core.events';
 
 import { Loader } from 'im.v2.component.elements';
-import { EventType, SidebarDetailBlock, SidebarFileTypes } from 'im.v2.const';
+import { EventType, FileViewerContext, SidebarDetailBlock, SidebarFileTypes } from 'im.v2.const';
 
 import { DateGroup } from '../../elements/date-group/date-group';
 import { DetailHeader } from '../../elements/detail-header/detail-header';
@@ -40,6 +40,7 @@ export const FileUnsortedPanel = {
 	computed:
 	{
 		SidebarDetailBlock: () => SidebarDetailBlock,
+		FileViewerContext: () => FileViewerContext,
 		files(): ImModelSidebarFileItem[]
 		{
 			return this.$store.getters['sidebar/files/get'](this.chatId, SidebarFileTypes.fileUnsorted);
@@ -128,6 +129,7 @@ export const FileUnsortedPanel = {
 						v-for="file in dateGroup.items"
 						:fileItem="file"
 						:contextDialogId="dialogId"
+						:viewerContext="FileViewerContext.sidebarTabFileUnsorted"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>

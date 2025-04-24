@@ -11,15 +11,16 @@ import {
 	MessageService,
 	SendingService,
 	UploadingService,
+	InputSenderService,
 } from 'im.v2.provider.service';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
 import { Textarea } from 'im.v2.lib.textarea';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { InputAction } from 'im.v2.lib.input-action';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
 import { ResizeDirection, ResizeManager } from './classes/resize-manager';
-import { TypingService } from './classes/typing-service';
 import { AudioInput } from './components/audio-input/audio-input';
 import { SmileSelector } from './components/smile-selector/smile-selector';
 import { UploadMenu } from './components/upload-menu/upload-menu';
@@ -33,7 +34,7 @@ import './css/textarea.css';
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 import type { InsertTextEvent, InsertMentionEvent } from 'im.v2.const';
-import type { ForwardedEntityConfig } from 'im.v2.provider.service';
+import type { ForwardedEntityConfig, PanelContextWithMultipleIds } from 'im.v2.provider.service';
 
 const MESSAGE_ACTION_PANELS = new Set([PanelType.edit, PanelType.reply, PanelType.forward, PanelType.forwardEntity]);
 const TextareaHeight = {
@@ -189,7 +190,7 @@ export const ChatTextarea = {
 
 			if (Type.isStringFilled(newValue))
 			{
-				this.getTypingService().startTyping();
+				this.getInputActionService().startAction(InputAction.writing);
 			}
 		},
 	},
@@ -197,7 +198,7 @@ export const ChatTextarea = {
 	{
 		this.initResizeManager();
 		this.restoreTextareaHeight();
-		this.restoreDraft();
+		void this.restorePanel();
 		this.initSendingService();
 
 		EventEmitter.subscribe(EventType.textarea.insertMention, this.onInsertMention);
@@ -220,6 +221,7 @@ export const ChatTextarea = {
 	beforeUnmount()
 	{
 		this.resizeManager.destroy();
+		this.unbindUploadingService();
 		EventEmitter.unsubscribe(EventType.textarea.insertMention, this.onInsertMention);
 		EventEmitter.unsubscribe(EventType.textarea.insertText, this.onInsertText);
 		EventEmitter.unsubscribe(EventType.textarea.editMessage, this.onEditMessage);
@@ -253,7 +255,7 @@ export const ChatTextarea = {
 				this.getSendingService().sendMessage({ text, dialogId: this.dialogId });
 			}
 
-			this.getTypingService().stopTyping();
+			this.getInputActionService().stopAction(InputAction.writing);
 			this.clear();
 			this.getDraftManager().clearDraft(this.dialogId);
 			SoundNotificationManager.getInstance().playOnce(SoundType.send);
@@ -264,7 +266,7 @@ export const ChatTextarea = {
 		{
 			if (this.editMode && text === '')
 			{
-				void this.getMessageService().deleteMessage(this.panelContext.messageId);
+				void this.getMessageService().deleteMessages([this.panelContext.messageId]);
 			}
 			else if (this.editMode && text !== '')
 			{
@@ -415,7 +417,20 @@ export const ChatTextarea = {
 			this.resizedTextareaHeight = savedHeight;
 			this.textareaHeight = savedHeight;
 		},
-		async restoreDraft()
+		checkMessageExists(messageId: number): boolean
+		{
+			return this.$store.getters['messages/isExists'](messageId);
+		},
+		verifyPanelContext(panelContext: PanelContextWithMultipleIds): boolean
+		{
+			if (panelContext.messagesIds)
+			{
+				return panelContext.messagesIds.every((messageId) => this.checkMessageExists(messageId));
+			}
+
+			return this.checkMessageExists(panelContext.messageId);
+		},
+		async restorePanel()
 		{
 			const {
 				text = '',
@@ -425,8 +440,15 @@ export const ChatTextarea = {
 				},
 			} = await this.getDraftManager().getDraft(this.dialogId);
 
+			const noPanel = this.panelType === PanelType.none;
+
+			if (!noPanel && !this.verifyPanelContext(panelContext))
+			{
+				return;
+			}
+
 			this.text = text;
-			if (this.panelType === PanelType.none)
+			if (noPanel)
 			{
 				this.panelType = panelType;
 			}
@@ -646,7 +668,13 @@ export const ChatTextarea = {
 		onMessageDeleted(event: BaseEvent<{ messageId: number }>)
 		{
 			const { messageId } = event.getData();
+
 			if (this.panelContext.messageId === messageId)
+			{
+				this.closePanel();
+			}
+
+			if (this.panelContext.messagesIds && this.panelContext.messagesIds.includes(messageId))
 			{
 				this.closePanel();
 			}
@@ -700,14 +728,14 @@ export const ChatTextarea = {
 		{
 			return this.sendingService;
 		},
-		getTypingService(): TypingService
+		getInputActionService(): InputSenderService
 		{
-			if (!this.typingService)
+			if (!this.inputSenderService)
 			{
-				this.typingService = new TypingService(this.dialogId);
+				this.inputSenderService = new InputSenderService(this.dialogId);
 			}
 
-			return this.typingService;
+			return this.inputSenderService;
 		},
 		getDraftManager(): DraftManager
 		{
@@ -731,10 +759,38 @@ export const ChatTextarea = {
 		{
 			if (!this.uploadingService)
 			{
-				this.uploadingService = UploadingService.getInstance();
+				this.initUploadingService();
 			}
 
 			return this.uploadingService;
+		},
+		initUploadingService()
+		{
+			this.uploadingService = UploadingService.getInstance();
+
+			this.startFileUploadAction = () => {
+				this.getInputActionService().startAction(InputAction.sendingFile);
+			};
+
+			this.stopFileUploadAction = () => {
+				this.getInputActionService().stopAction(InputAction.sendingFile);
+			};
+			this.uploadingService.subscribe(UploadingService.event.uploadStart, this.startFileUploadAction);
+			this.uploadingService.subscribe(UploadingService.event.uploadComplete, this.stopFileUploadAction);
+			this.uploadingService.subscribe(UploadingService.event.uploadCancel, this.stopFileUploadAction);
+			this.uploadingService.subscribe(UploadingService.event.uploadError, this.stopFileUploadAction);
+		},
+		unbindUploadingService()
+		{
+			if (!this.uploadingService)
+			{
+				return;
+			}
+
+			this.uploadingService.unsubscribe(UploadingService.event.uploadStart, this.startFileUploadAction);
+			this.uploadingService.unsubscribe(UploadingService.event.uploadComplete, this.stopFileUploadAction);
+			this.uploadingService.unsubscribe(UploadingService.event.uploadCancel, this.stopFileUploadAction);
+			this.uploadingService.unsubscribe(UploadingService.event.uploadError, this.stopFileUploadAction);
 		},
 		onSendFilesFromPreviewPopup(event)
 		{

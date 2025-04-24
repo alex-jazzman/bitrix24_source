@@ -59,6 +59,17 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {number} userId
+		 * @return {boolean}
+		 */
+		static isCurrentUser(userId)
+		{
+			const currentUserId = serviceLocator.get('core').getUserId();
+
+			return currentUserId === Number(userId);
+		}
+
+		/**
 		 * @param {UsersModelState} userModel
 		 */
 		constructor(userModel)

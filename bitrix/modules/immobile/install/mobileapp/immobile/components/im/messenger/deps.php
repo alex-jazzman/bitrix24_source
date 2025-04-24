@@ -35,6 +35,8 @@ return [
 		'im:messenger/provider/pull/sidebar',
 		'im:messenger/provider/pull/plan-limits',
 		'im:messenger/provider/push',
+		'im:messenger/provider/push/message-handler/chat',
+		'im:messenger/provider/push/message-handler/database',
 		'im:messenger/provider/service',
 		'im:messenger/provider/data',
 		'im:messenger/provider/service/messenger-init',

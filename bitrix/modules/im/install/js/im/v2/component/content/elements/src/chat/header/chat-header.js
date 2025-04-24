@@ -52,6 +52,10 @@ export const ChatHeader = {
 			type: Boolean,
 			default: true,
 		},
+		withAddToChatButton: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['buttonPanelReady', 'compactModeChange'],
 	data(): JsonObject
@@ -98,7 +102,7 @@ export const ChatHeader = {
 		},
 		showAddToChatButton(): boolean
 		{
-			if (this.isBot)
+			if (this.isBot || !this.withAddToChatButton)
 			{
 				return false;
 			}

@@ -52,7 +52,7 @@ export const ContextMenu = {
 		},
 		isBulkActionsMode(): boolean
 		{
-			return this.$store.getters['messages/select/getBulkActionsMode'];
+			return this.$store.getters['messages/select/isBulkActionsModeActive'](this.dialogId);
 		},
 	},
 	methods:

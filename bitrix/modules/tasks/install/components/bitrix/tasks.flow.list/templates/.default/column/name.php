@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\View;
 use Bitrix\Main\Application;
@@ -69,7 +70,8 @@ if (!function_exists('renderNameColumn'))
 
 		if ($data['demo'] && $data['editable'])
 		{
-			$nameClick = 'BX.Tasks.Flow.EditForm.createInstance({ flowId: ' . $flowId . ' })';
+			$isFeatureTrialable = Json::encode($arResult['isFeatureTrialable']);
+			$nameClick = "BX.Tasks.Flow.EditForm.createInstance({ flowId: {$flowId}, isFeatureTrialable: '{$isFeatureTrialable}' })";
 		}
 		else
 		{

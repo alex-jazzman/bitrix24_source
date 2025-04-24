@@ -30,6 +30,7 @@ return [
 		'im:messenger/lib/counters',
 		'im:messenger/model',
 		'im:messenger/view/dialog',
+		'im:messenger/provider/push/message-handler/copilot',
 		'im:messenger/provider/pull/chat',
 		'im:messenger/provider/pull/copilot',
 		'im:messenger/provider/pull/plan-limits',

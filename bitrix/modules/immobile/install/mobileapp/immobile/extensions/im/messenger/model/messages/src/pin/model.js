@@ -4,14 +4,14 @@
  */
 jn.define('im/messenger/model/messages/pin/model', (require, exports, module) => {
 	const { Type } = require('type');
-	const { merge } = require('utils/object');
+	const { mergeImmutable } = require('utils/object');
 
 	const { validate: validateMessage } = require('im/messenger/model/messages/validator');
 	const { messageDefaultElement } = require('im/messenger/model/messages/default-element');
 	const { validate: validatePin } = require('im/messenger/model/messages/pin/validator');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--messages-pin');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--messages-pin');
 
 	/**
 	 * @type {PinMessengerModel}
@@ -243,12 +243,57 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 					return;
 				}
 
-				store.commit('updateMessage', {
+				store.commit('updateMessages', {
 					actionName: 'updateMessage',
 					data: {
-						id,
+						messageList: [{
+							id,
+							chatId: messageModel.chatId,
+							fields,
+						}],
+					},
+				});
+			},
+
+			/**
+			 * @function messagesModel/pinModel/updateMessages
+			 */
+			updateMessages: async (store, payload) => {
+				const { messageList } = payload;
+				if (!Type.isArrayFilled(messageList))
+				{
+					return false;
+				}
+
+				const messageModel = store.rootGetters['messagesModel/getById'](messageList[0].id);
+				const unpinnedMessageIdList = [];
+				const updatePinnedMessageList = [];
+				messageList.forEach((messageData) => {
+					if (messageData.fields?.params?.IS_PINNED === 'N')
+					{
+						unpinnedMessageIdList.push(messageData.id);
+					}
+
+					updatePinnedMessageList.push({
+						...messageData,
 						chatId: messageModel.chatId,
-						fields,
+					});
+				});
+
+				if (unpinnedMessageIdList.length > 0)
+				{
+					await store.commit('deleteMessagesByIdList', {
+						actionName: 'updateMessages',
+						data: {
+							idList: unpinnedMessageIdList,
+						},
+					});
+				}
+
+				return store.commit('updateMessages', {
+					actionName: 'updateMessages',
+					data: {
+						messageList: updatePinnedMessageList,
 					},
 				});
 			},
@@ -483,23 +528,25 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 			},
 
 			/**
-			 *
 			 * @param state
-			 * @param {MutationPayload<PinUpdateMessageData, PinUpdateMessageActions>} payload
+			 * @param {MutationPayload<PinUpdateMessagesData, PinUpdateMessageActions>} payload
 			 */
-			updateMessage: (state, payload) => {
-				logger.log('pinModel.updateMessage', payload);
+			updateMessages: (state, payload) => {
+				logger.log('pinModel.updateMessages', payload);
 
-				const { id, fields } = payload.data;
-
-				if (!(id in state.messageCollection))
+				if (Type.isArrayFilled(payload.data.messageList))
 				{
-					return;
+					payload.data.messageList.forEach((message) => {
+						const id = message.id;
+						if (!(id in state.messageCollection))
+						{
+							return;
+						}
+
+						state.messageCollection[id] = mergeImmutable(state.messageCollection[id], message.fields);
+					});
 				}
-
-				state.messageCollection[id] = merge(state.messageCollection[id], fields);
 			},
-
 		},
 	};
 

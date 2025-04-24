@@ -8,7 +8,6 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 // js/css
@@ -265,7 +264,7 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
-		array(
+		[
 			'ENTITY_TYPE' => $entityType,
 			'VIEW_MODE' => $kanbanViewMode ?? ViewMode::MODE_STAGES,
 			'USE_ITEM_PLANNER' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
@@ -306,7 +305,7 @@ else
 					],
 				],
 			],
-		),
+		],
 		$component
 	);
 

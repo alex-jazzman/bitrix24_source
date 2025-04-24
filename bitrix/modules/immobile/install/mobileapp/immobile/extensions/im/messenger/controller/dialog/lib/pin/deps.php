@@ -7,7 +7,7 @@ return [
 		'device/connection',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/parser',
-		'im:messenger/lib/converter',
+		'im:messenger/lib/converter/ui/message',
 		'im:messenger/lib/params',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/notification',

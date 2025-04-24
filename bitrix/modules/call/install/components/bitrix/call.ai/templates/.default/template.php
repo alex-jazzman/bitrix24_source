@@ -203,12 +203,12 @@ if (!empty($arResult['FEEDBACK_URL']))
 		<div class="bx-call-component-call-ai__tab-content-wrapper">
 			<div id="TabAgreements" class="bx-call-component-call-ai__tab-content">
 			<?
-			if ($overview?->agreements || $overview?->meetings || $overview?->tasks)
+			if ($overview?->agreements || $overview?->meetings || $overview?->tasks || $overview?->actionItems)
 			{
 				if ($overview?->agreements)
 				{
 					?>
-				<div class="bx-call-component-call-ai__recommendations__title"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS_COMMON') ?></div>
+					<div class="bx-call-component-call-ai__recommendations__title"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS_COMMON') ?></div>
 					<ol class="bx-call-component-call-ai__result-list">
 					<?
 					foreach ($overview->agreements as $row)
@@ -223,10 +223,37 @@ if (!empty($arResult['FEEDBACK_URL']))
 					</ol>
 					<?
 				}
+				if ($overview?->actionItems)
+				{
+					?>
+					<div class="bx-call-component-call-ai__recommendations__title"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS_TASKS') ?></div>
+					<ol class="bx-call-component-call-ai__result-list">
+					<?
+					foreach ($overview->actionItems as $row)
+					{
+						?>
+						<li class="bx-call-component-call-ai__result-list-item">
+							<p class="bx-call-component-call-ai__task-description">
+								<?= $row->action_item ?>
+							</p>
+							<span
+								class="bx-call-component-call-ai__task-button"
+								data-user-id="<?= $arResult['CURRENT_USER_ID'] ?>"
+								data-description="<?= htmlspecialcharsbx($row->actionItemMentionLess) ?>"
+								data-auditors="">
+									<?= Loc::getMessage('CALL_COMPONENT_TASK_CREATE') ?>
+								</span>
+						</li>
+						<?
+					}
+					?>
+					</ol>
+					<?
+				}
 				if ($overview?->tasks)
 				{
 					?>
-				<div class="bx-call-component-call-ai__recommendations__title"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS_TASKS') ?></div>
+					<div class="bx-call-component-call-ai__recommendations__title"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS_TASKS') ?></div>
 					<ol class="bx-call-component-call-ai__result-list">
 					<?
 					foreach ($overview->tasks as $row)
@@ -308,8 +335,18 @@ if (!empty($arResult['FEEDBACK_URL']))
 			<div id="TabSummary" class="bx-call-component-call-ai__tab-content">
 			<?
 
-			if ($summary?->summary)
+			if ($summary?->summary || $overview?->detailedTakeaways)
 			{
+				if ($overview?->detailedTakeaways)
+				{
+					?>
+					<div class="bx-call-component-call-ai-resume-block">
+						<p class="bx-call-component-call-ai-resume-block__description">
+							<?= $overview->detailedTakeaways ?>
+						</p>
+					</div>
+					<?
+				}
 				foreach ($summary->summary as $row)
 				{
 					?>

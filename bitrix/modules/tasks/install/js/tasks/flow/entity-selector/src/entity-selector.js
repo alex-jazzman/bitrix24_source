@@ -13,7 +13,7 @@ type FlowData = {
 	efficiency: ?number,
 }
 
-type FlowParams = {
+export type FlowParams = {
 	id: number,
 	name: ?string,
 	efficiency: ?number,
@@ -21,6 +21,8 @@ type FlowParams = {
 	limitCode: string,
 	isFeatureEnabled: boolean,
 	isFeatureTrialable: boolean,
+
+	context?: string,
 }
 
 type Params = {
@@ -179,11 +181,7 @@ export class EntitySelector
 		this.#dialog = new EntitySelectorDialog({
 			isExtranet: this.#isExtranet,
 			toggleFlowParams: this.#toggleFlowParams,
-
-			flowId: this.#flowParams.id,
-			flowLimitCode: this.#flowParams.limitCode,
-			isFeatureEnabled: this.#flowParams.isFeatureEnabled,
-			isFeatureTrialable: this.#flowParams.isFeatureTrialable,
+			flowParams: this.#flowParams,
 		});
 
 		return this.#dialog;

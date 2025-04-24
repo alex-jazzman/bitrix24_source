@@ -229,6 +229,7 @@ this.BX.UI = this.BX.UI || {};
 	  WARNING_CIRCLE: 'warning-circle',
 	  INFO_CIRCLE: 'info-circle',
 	  WARNING: 'warning',
+	  WARNING_ALARM: 'warning-alarm',
 	  INFO: 'info',
 	  HELP: 'help',
 	  SMS: 'sms',

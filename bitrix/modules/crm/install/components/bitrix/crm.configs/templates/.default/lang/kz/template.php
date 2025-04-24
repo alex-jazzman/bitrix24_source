@@ -73,6 +73,7 @@ $MESS["CRM_CONFIGS_SMS_MARKETPLACE"] = "СМС үшін қосымшалар";
 $MESS["CRM_CONFIGS_SMS_PROVIDER"] = "#PROVIDER# арқылы СМС хабарлау";
 $MESS["CRM_CONFIGS_STATUS"] = "Анықтамалықтар";
 $MESS["CRM_CONFIGS_TAB_APPS_2"] = "Битрикс24.Маркет";
+$MESS["CRM_CONFIGS_TAB_APPS_2_MSGVER_1"] = "Маркетплейс";
 $MESS["CRM_CONFIGS_TAB_AUTOMATION"] = "Роботтар мен бизнес-процесстер";
 $MESS["CRM_CONFIGS_TAB_CREATION_ON_THE_BASIS"] = "Негізінде жасау";
 $MESS["CRM_CONFIGS_TAB_INTEGRATION"] = "Интеграциялар";

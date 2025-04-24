@@ -9,5 +9,6 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/const',
 		'im:messenger/controller/dialog/lib/header',
+		'im:messenger/controller/selector/forward',
 	],
 ];

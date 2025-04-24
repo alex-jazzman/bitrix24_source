@@ -11,8 +11,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 	const { DateService } = require('im/messenger/provider/service/classes/sync/date');
 	const { LoadService } = require('im/messenger/provider/service/classes/sync/load');
 	const { PullEventQueue } = require('im/messenger/provider/service/classes/sync/pull-event-queue');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('sync-service');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('sync-service');
 
 	const LAST_SYNC_ID_OPTION = 'SYNC_SERVICE_LAST_ID';
 	const LAST_SYNC_SERVER_DATE_OPTION = 'SYNC_SERVICE_LAST_SERVER_DATE';
@@ -52,6 +52,11 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			this.addedMessageIds = new Set();
 			this.deletedChatIds = new Set();
 			this.deletedMessageIds = new Set();
+			/**
+			 * @private
+			 * @type {MessageRepository}
+			 */
+			this.messageRepository = serviceLocator.get('core').getRepository().message;
 		}
 
 		get isSyncInProgress()
@@ -331,6 +336,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 		async doSyncCompleteActions()
 		{
 			await this.dateService.updateLastSyncDate();
+
+			await this.messageRepository.clearPushMessages();
 			this.emitStoredPullEvents();
 			this.syncInProgress = false;
 

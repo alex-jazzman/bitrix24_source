@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
-(function (exports,ui_vue3,ui_pinner,ui_section,ui_alerts,ui_hint,ui_sidepanel_layout,ui_iconSet_crm,ui_switcher,ui_uploader_stackWidget,main_loader,ui_ears,main_popup,ui_analytics,ui_buttons,main_core_events,ui_entitySelector,ui_iconSet_api_vue,ui_vue3_directives_hint,ui_vue3_vuex,main_core,ui_sidepanel) {
+(function (exports,ui_vue3,ui_pinner,ui_section,ui_alerts,ui_hint,ui_sidepanel_layout,ui_iconSet_crm,ui_switcher,ui_uploader_stackWidget,main_loader,ui_ears,main_popup,ui_analytics,ui_buttons,ui_entitySelector,ui_iconSet_api_vue,ui_vue3_directives_hint,main_core_events,ui_vue3_vuex,main_core,ui_sidepanel) {
 	'use strict';
 
 	const AppLayout = {
@@ -238,9 +238,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      });
 	    },
 	    downloadLog() {
+	      var _this$$store$state$co;
 	      const link = document.createElement('a');
 	      link.href = this.reportDownloadLink;
-	      link.download = 'import_errors.html';
+	      link.download = `${(_this$$store$state$co = this.$store.state.config.datasetProperties.name) != null ? _this$$store$state$co : 'csv_dataset'}_errors.html`;
 	      main_core.Dom.append(link, document.body);
 	      link.click();
 	      main_core.Dom.remove(link);
@@ -430,7 +431,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			:options="popupOptions" 
 		>
 			<div class="file-check file-check-success">
-				<div class="file-check-icon-success"></div>
+				<div class="biconnector-save-progress-popup__success-logo file-check-icon-success"></div>
 				<div class="file-check-title">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_CHECK_OK_TITLE') }}</div>
 				<div class="file-check-subtitle">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_CHECK_OK_SUBTITLE') }}</div>
 				<button @click="this.onClose" class="ui-btn ui-btn-md ui-btn-primary file-check-button">
@@ -470,7 +471,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			:options="popupOptions" 
 		>
 			<div class="file-check file-check-failed">
-				<div class="file-check-icon-failed"></div>
+				<div class="biconnector-save-progress-popup__failure-logo file-check-icon-failed"></div>
 				<div class="file-check-title">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_CHECK_FAILED_TITLE') }}</div>
 				<div class="file-check-subtitle">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_CHECK_FAILED_SUBTITLE') }}</div>
 				<button @click="this.onClose" class="ui-btn ui-btn-md ui-btn-primary file-check-button">
@@ -561,15 +562,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  },
 	  // language=Vue
 	  template: `
-		<Popup id="saveProgress" @close="this.onClose" :options="popupOptions" wrapper-class="dataset-import-popup--full-height">
-			<div class="dataset-save-progress-popup">
-				<div class="dataset-save-progress-popup__content">
+		<Popup id="saveProgress" @close="this.onClose" :options="popupOptions" wrapper-class="biconnector-popup--full-height">
+			<div class="biconnector-save-progress-popup">
+				<div class="biconnector-save-progress-popup__content">
 					<slot name="icon"></slot>
-					<div class="dataset-save-progress-popup__texts">
-						<h3 class="dataset-save-progress-popup__header">{{ title }}</h3>
-						<p class="dataset-save-progress-popup__description" v-if="description">{{ description }}</p>
+					<div class="biconnector-save-progress-popup__texts">
+						<h3 class="biconnector-save-progress-popup__header">{{ title }}</h3>
+						<p class="biconnector-save-progress-popup__description" v-if="description">{{ description }}</p>
 					</div>
-					<div class="dataset-save-progress-popup__buttons"><slot name="buttons"></slot></div>
+					<div class="biconnector-save-progress-popup__buttons"><slot name="buttons"></slot></div>
 				</div>
 			</div>
 		</Popup>
@@ -604,7 +605,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			:description="description"
 		>
 			<template v-slot:icon>
-				<div class="dataset-save-progress-popup__failure-logo"></div>
+				<div class="biconnector-save-progress-popup__failure-logo"></div>
 			</template>
 			<template v-slot:buttons>
 				<button @click="onClick" class="ui-btn ui-btn-md ui-btn-primary">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_BUTTON') }}</button>
@@ -650,7 +651,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			:options="popupOptions"
 		>
 			<template v-slot:icon>
-				<div ref="loader" class="dataset-save-progress-loader"></div>
+				<div ref="loader" class="biconnector-save-progress-loader"></div>
 			</template>
 		</SaveProgressPopup>
 	`
@@ -713,11 +714,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			:description="description"
 		>
 			<template v-slot:icon>
-				<div class="dataset-save-progress-popup__success-logo"></div>
+				<div class="biconnector-save-progress-popup__success-logo"></div>
 			</template>
 			<template v-slot:buttons>
 				<a class="ui-btn ui-btn-md ui-btn-primary" @click="onButtonClick" ref="openDatasetButton">
-					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON') }}
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON_MSGVER_1') }}
 				</a>
 				<a class="ui-btn ui-btn-md ui-btn-light-border" @click="onOneMoreButtonClick" ref="oneMoreButton" v-if="showMoreButton">
 					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_ONE_MORE_BUTTON') }}
@@ -3205,7 +3206,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return {
 	        visible: true,
 	        type: header.type,
-	        name: header.name && header.name.length > 0 ? header.name : `field_${index}`,
+	        name: header.name && header.name.length > 0 ? header.name : `FIELD_${index}`,
 	        originalType: null,
 	        originalName: header.externalCode,
 	        externalCode: header.externalCode
@@ -3583,7 +3584,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      addButtonCaptionMore: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_CHANGE'),
 	      dialogOptions: {
 	        id: this.options.selectorId,
-	        items: this.prepareItems(this.items),
+	        items: this.preparedItems,
 	        enableSearch: true,
 	        dropdownMode: true,
 	        showAvatars: true,
@@ -3622,7 +3623,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			</span>
 		`), this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_FOOTER'));
 	    main_core.Event.bind(footer, 'click', () => {
-	      const link = '/bitrix/components/bitrix/biconnector.externalconnection/slider.php';
+	      const link = '/bitrix/components/bitrix/biconnector.externalconnection/slider.php?closeAfterCreate=Y';
 	      BX.SidePanel.Instance.open(link, {
 	        width: 564,
 	        allowChangeHistory: false,
@@ -3633,21 +3634,21 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    this.selector = selector;
 	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', event => {
 	      const [messageEvent] = event.getData();
-	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreated') {
-	        this.addSelectedItem(messageEvent);
+	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave') {
+	        this.onConnectionSave(messageEvent);
 	      }
 	    });
 	  },
-	  methods: {
-	    prepareItems(items) {
+	  computed: {
+	    preparedItems() {
 	      const selectorItems = [];
-	      items.forEach(item => {
+	      this.items.forEach(item => {
 	        const itemOptions = {
 	          id: item.ID,
 	          title: item.TITLE,
 	          entityId: this.options.selectorId,
 	          tabs: this.name,
-	          link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${item.ID}`,
+	          link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${item.ID}&closeAfterCreate=Y`,
 	          linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
 	          customData: {
 	            connectionType: item.TYPE
@@ -3662,25 +3663,43 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        selectorItems.push(itemOptions);
 	      });
 	      return selectorItems;
-	    },
-	    addSelectedItem(event) {
+	    }
+	  },
+	  methods: {
+	    onConnectionSave(event) {
+	      const selector = this.selector;
+	      const dialog = selector.getDialog();
 	      const itemOptions = event.getData().connection;
-	      const item = this.selector.getDialog().addItem({
+	      let item = dialog.getItem({
 	        id: itemOptions.id,
-	        title: itemOptions.name,
-	        entityId: this.options.selectorId,
-	        tabs: this.name,
-	        link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${itemOptions.id}`,
-	        linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
-	        avatar: `/bitrix/images/biconnector/database-connections/${itemOptions.type}.svg`,
-	        customData: {
-	          connectionType: itemOptions.type
-	        }
+	        entityId: this.options.selectorId
 	      });
 	      if (item) {
+	        item.setTitle({
+	          text: main_core.Text.decode(itemOptions.name),
+	          type: 'text'
+	        });
+	        if (item.isSelected()) {
+	          selector.removeTags();
+	          item.deselect();
+	          item.select();
+	        }
+	      } else {
+	        item = dialog.addItem({
+	          id: itemOptions.id,
+	          title: itemOptions.name,
+	          entityId: this.options.selectorId,
+	          tabs: this.name,
+	          link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${itemOptions.id}&closeAfterCreate=Y`,
+	          linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
+	          avatar: `/bitrix/images/biconnector/database-connections/${itemOptions.type}.svg`,
+	          customData: {
+	            connectionType: itemOptions.type
+	          }
+	        });
 	        item.select();
 	      }
-	      this.selector.getDialog().hide();
+	      dialog.hide();
 	    }
 	  },
 	  // language=Vue
@@ -3743,7 +3762,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        entities: [{
 	          id: 'biconnector-external-table',
 	          dynamicLoad: false,
-	          dynamicSearch: true
+	          dynamicSearch: true,
+	          options: {
+	            ...(this.connectionId && {
+	              connectionId: this.connectionId
+	            })
+	          }
 	        }]
 	      },
 	      events: {
@@ -3756,9 +3780,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      }
 	    });
 	    main_core.Dom.addClass(selector.getDialog().getContainer(), 'biconnector-dataset-entity-selector');
-	    selector.setLocked(!this.isDisabled);
+	    selector.setLocked(!(this.connectionId > 0 && !this.isDisabled));
 	    selector.renderTo(node);
 	    this.selector = selector;
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', event => {
+	      const [messageEvent] = event.getData();
+	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave') {
+	        this.selector.removeTags();
+	      }
+	    });
 	  },
 	  computed: {
 	    set() {
@@ -3827,7 +3857,6 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  },
 	  data() {
 	    return {
-	      connectionId: this.$store.state.config.connection,
 	      tableId: this.$store.state.config.table,
 	      connectionSelectorId: 'biconnector-external-connection',
 	      tableSelectorId: 'biconnector-external-table',
@@ -3956,13 +3985,27 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      this.$emit('validation', false);
 	    },
 	    openConnectionSlider() {
-	      const link = `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${this.selectedConnectionId}`;
+	      const link = `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${this.selectedConnectionId}&closeAfterCreate=Y`;
 	      BX.SidePanel.Instance.open(link, {
 	        width: 564,
 	        allowChangeHistory: false,
 	        cacheable: false
 	      });
+	    },
+	    handleSliderMessage(event) {
+	      const [messageEvent] = event.getData();
+	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave') {
+	        const connectionProperties = this.$store.getters.connectionProperties;
+	        connectionProperties.connectionName = main_core.Text.decode(messageEvent.data.connection.name);
+	        this.$store.commit('setConnectionProperties', connectionProperties);
+	      }
 	    }
+	  },
+	  mounted() {
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', this.handleSliderMessage);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onMessage', this.handleSliderMessage);
 	  },
 	  emits: ['tableSelected', 'tableDeselected'],
 	  template: `
@@ -4124,8 +4167,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    }
 	  },
 	  mounted() {
-	    var _this$$store$state$co3;
-	    if (!this.$store.getters.hasData && (_this$$store$state$co3 = this.$store.state.config.connectionProperties) != null && _this$$store$state$co3.connectionId) {
+	    var _this$$store$state$co3, _this$$store$state$co4;
+	    if (!this.$store.getters.hasData && (_this$$store$state$co3 = this.$store.state.config.connectionProperties) != null && _this$$store$state$co3.connectionId && (_this$$store$state$co4 = this.$store.state.config.connectionProperties) != null && _this$$store$state$co4.tableName) {
 	      this.loadDataset();
 	    }
 	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', this.onSliderEvent);
@@ -4136,7 +4179,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  methods: {
 	    onSliderEvent(event) {
 	      const [messageEvent] = event.getData();
-	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreated') {
+	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave') {
 	        this.onConnectionCreated();
 	      } else if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreationError') {
 	        this.onConnectionCreationError();
@@ -4594,12 +4637,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	}
 
 	class Slider {
-	  static open(sourceId, datasetId = 0) {
+	  static open(sourceId, datasetId = 0, connection = {}) {
 	    const componentLink = '/bitrix/components/bitrix/biconnector.dataset.import/slider.php';
 	    const sliderLink = new main_core.Uri(componentLink);
 	    sliderLink.setQueryParam('sourceId', sourceId);
 	    if (datasetId) {
 	      sliderLink.setQueryParam('datasetId', datasetId);
+	    }
+	    if (Object.keys(connection).length > 0) {
+	      sliderLink.setQueryParam('connection', connection);
 	    }
 	    const options = {
 	      allowChangeHistory: false,
@@ -4613,5 +4659,5 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	exports.AppFactory = AppFactory;
 	exports.Slider = Slider;
 
-}((this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}),BX.Vue3,BX,BX.UI,BX.UI,BX,BX.UI.SidePanel,BX,BX.UI,BX.UI.Uploader,BX,BX.UI,BX.Main,BX.UI.Analytics,BX.UI,BX.Event,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives,BX.Vue3.Vuex,BX,BX));
+}((this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}),BX.Vue3,BX,BX.UI,BX.UI,BX,BX.UI.SidePanel,BX,BX.UI,BX.UI.Uploader,BX,BX.UI,BX.Main,BX.UI.Analytics,BX.UI,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives,BX.Event,BX.Vue3.Vuex,BX,BX));
 //# sourceMappingURL=dataset-import.bundle.js.map

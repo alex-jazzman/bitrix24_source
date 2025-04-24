@@ -69,10 +69,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
 	    },
 	    isBulkActionsMode() {
-	      return this.$store.getters['messages/select/getBulkActionsMode'];
+	      return this.$store.getters['messages/select/isBulkActionsModeActive'](this.dialogId);
 	    },
 	    isMessageSelected() {
-	      return this.$store.getters['messages/select/isMessageSelected'](this.message.id);
+	      return this.$store.getters['messages/select/isMessageSelected'](this.message.id, this.dialogId);
 	    },
 	    showMessageAngle() {
 	      const hasAfterContent = Boolean(this.$slots['after-message']);

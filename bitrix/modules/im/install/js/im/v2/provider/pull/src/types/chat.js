@@ -2,6 +2,7 @@ import type { JsonObject } from 'main.core';
 
 import { CounterType } from 'im.v2.const';
 
+import type { InputActionType } from 'im.v2.lib.input-action';
 import type { RawUser } from './common';
 
 type CounterTypeItem = $Values<typeof CounterType>;
@@ -42,6 +43,13 @@ export type StartWritingParams = {
 	dialogId: string,
 	userId: number,
 	userName: string
+};
+
+export type InputActionNotifyParams = {
+	dialogId: string,
+	userId: number,
+	userName: string,
+	type: InputActionType,
 };
 
 export type ChatUnreadParams = {

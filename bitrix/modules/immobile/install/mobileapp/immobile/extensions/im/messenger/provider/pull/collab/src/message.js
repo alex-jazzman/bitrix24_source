@@ -31,6 +31,11 @@ jn.define('im/messenger/provider/pull/collab/message', (require, exports, module
 
 		handleMessage(params, extra, command)
 		{}
+
+		isNeedNotify()
+		{
+			return false;
+		}
 	}
 
 	module.exports = {

@@ -1,12 +1,11 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Web\Json;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Access\TaskAccessController;
-use Bitrix\Tasks\Helper\Filter;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
-\Bitrix\Main\UI\Extension::load([
+
+Extension::load([
 	'ui.stepprocessing',
+	'tasks.deadline.menu',
 ]);
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -291,6 +290,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			]
 		});
 		<?php endif?>
+
+		menuItemsOptions.push({
+			tabId: 'popupMenuOptions',
+			delimiter: true,
+		});
+
+		const deadlineMenu = new BX.Tasks.Deadline.Menu();
+		menuItemsOptions.push(...deadlineMenu.menuItems);
 
 		<?php if($arParams['USE_EXPORT'] == 'Y'):?>
 

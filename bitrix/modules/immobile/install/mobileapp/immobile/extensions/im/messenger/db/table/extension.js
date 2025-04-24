@@ -13,6 +13,7 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 		MessageTable,
 		MessageTableGetLinkedListDirection,
 	} = require('im/messenger/db/table/message');
+	const { MessagePushTable } = require('im/messenger/db/table/message-push');
 	const { TempMessageTable } = require('im/messenger/db/table/temp-message');
 	const { ReactionTable } = require('im/messenger/db/table/reaction');
 	const { QueueTable } = require('im/messenger/db/table/queue');
@@ -31,6 +32,7 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 		UserTable,
 		FileTable,
 		MessageTable,
+		MessagePushTable,
 		MessageTableGetLinkedListDirection,
 		TempMessageTable,
 		ReactionTable,

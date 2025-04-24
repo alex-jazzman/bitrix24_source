@@ -9,13 +9,13 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Counters } = require('im/messenger/lib/counters');
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const {
 		DialogType,
 	} = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--copilot-message');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('pull-handler--copilot-message');
 
 	/**
 	 * @class CopilotMessagePullHandler
@@ -66,7 +66,7 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 			const userData = recentParams.message.senderId > 0
 				? recentParams.users[recentParams.message.senderId]
 				: { id: 0 };
-			const recentItem = RecentConverter.fromPushToModel({
+			const recentItem = RecentDataConverter.fromPushToModel({
 				id: dialogId,
 				chat: recentParams.chat[recentParams.chatId],
 				user: userData,
@@ -90,11 +90,14 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 						const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
 						const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
 						const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
+
 						Notifier.notify({
 							dialogId: dialog.dialogId,
 							title: dialogTitle,
 							text: this.createMessageChatNotifyText(recentItem.message.text, userName),
 							avatar,
+						}).catch((error) => {
+							this.logger.error(`${this.getClassName()}.handleMessageChat notify error:`, error);
 						});
 					}
 
@@ -123,7 +126,7 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 						this.setMessage(params);
 					}
 
-					this.checkWritingTimer(dialogId, userData);
+					this.checkTimerInputAction(dialogId, userData.id);
 				});
 			});
 		}

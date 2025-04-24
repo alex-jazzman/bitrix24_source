@@ -1,4 +1,5 @@
 import Util from './util';
+import {Event} from 'main.core';
 
 export const MediaStreamsKinds = {
 	Camera: 1,
@@ -74,22 +75,24 @@ const MONITORING_EVENTS_NAME_LIST = {
 	LOCAL_SCREEN_STREAM_PUBLICATION_FAILED: 23,
 };
 
+const MONITORING_METRICS_NAME_LIST = {
+	COUNT_TRACKS: 'COUNT_TRACKS',
+	PACKET_LOST_RECEIVE: 'PACKET_LOST_RECEIVE',
+	BITRATE_IN: 'BITRATE_IN',
+	BITRATE_OUT: 'BITRATE_OUT',
+	CONN_SCORE_CURRENT: 'CONN_SCORE_CURRENT',
+	FRAMES_LOSS: 'FRAMES_LOSS',
+	FREEZE_COUNT: 'FREEZE_COUNT',
+	TOTAL_FREEZE_DURATION: 'TOTAL_FREEZE_DURATION',
+	JITTER: 'JITTER',
+	FRAMES_DECODED: 'FRAMES_DECODED',
+	FRAMES_DROPPED: 'FRAMES_DROPPED',
+	FRAMES_RECEIVED: 'FRAMES_RECEIVED',
+	PACKET_LOST_SEND: 'PACKET_LOST_SEND'
+};
+
 const MONITORING_EVENTS_LIST = {
-	metrics: {
-		PACKET_LOST_SEND: [],
-		PACKET_LOST_RECEIVE: [],
-		COUNT_TRACKS: {video: 0, audio: 0},
-		BITRATE_IN: [],
-		BITRATE_OUT: [],
-		CONN_SCORE_CURRENT: [],
-		JITTER: [],
-		TOTAL_FREEZE_DURATION: [],
-		FREEZE_COUNT: [],
-		FRAMES_DECODED: [],
-		FRAMES_DROPPED: [],
-		FRAMES_RECEIVED: [],
-		FRAMES_LOSS: [],
-	},
+	metrics: {},
 	startTimestamp: 0,
 	events: []
 };
@@ -213,8 +216,10 @@ export class Call {
 		this.monitoringIntervalTime = 10000;
 		this.countMetricsInMetricsInterval = this.monitoringDelayTime / this.#privateProperties.statsTimeout;
 		this.monitoringInterval = null;
-		this.currentMonitoringEventsObject = JSON.parse(JSON.stringify(MONITORING_EVENTS_LIST));
+		this.currentMonitoringEventsObject = null;
 		this.startTimestampGrabMetrics = null;
+
+		this.currentMonitoringErrorsObject = {};
 
 		this.prevInboundRtpStatsSum = {
 			freezeCount: 0,
@@ -224,6 +229,10 @@ export class Call {
 			framesDropped: 0,
 			framesReceived: 0,
 		};
+
+		Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', (event) => {
+			this.setLog(event.data);
+		});
 	}
 
 	get isMediaMutedBySystem()
@@ -242,6 +251,44 @@ export class Call {
 	clearMonitoringEvents()
 	{
 		this.monitoringEvents = [];
+	}
+
+	calcBitrateSumFromArray({ bitrateArray })
+	{
+		if (bitrateArray && Array.isArray(bitrateArray))
+		{
+			return bitrateArray.reduce((acc, currentValue) => acc + currentValue.bitrate || 0, 0);
+		}
+
+		return 0;
+	}
+
+	addValidatedMonitoringMetricWithLogging({ additionalData, metricValue, metricKey })
+	{
+		const { video, audio } = this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.COUNT_TRACKS];
+
+		let currentValue = metricValue;
+		const isValidMetricValue = typeof currentValue === 'number' && currentValue > 0 && !Number.isNaN(currentValue);
+
+		if (!isValidMetricValue && !this.currentMonitoringErrorsObject[metricKey])
+		{
+			this.currentMonitoringErrorsObject[metricKey] = [];
+		}
+
+		if (!isValidMetricValue)
+		{
+			currentValue = 0;
+
+			this.currentMonitoringErrorsObject[metricKey].push({
+				metricValue,
+				countVideoTracks: video,
+				countAudioTracks: audio,
+				timestamp: Date.now(),
+				additionalData: additionalData || 'none',
+			});
+		}
+
+		this.currentMonitoringEventsObject.metrics[metricKey].push(currentValue);
 	}
 
 	addMonitoringEvents({ name, value = undefined, withCounter = false })
@@ -267,7 +314,11 @@ export class Call {
 
 	setClearValuesForCurrentMonitoringEventsObject()
 	{
-		this.currentMonitoringEventsObject = JSON.parse(JSON.stringify(MONITORING_EVENTS_LIST));
+		this.currentMonitoringEventsObject = {
+			metrics: this.fillDefaultValueMonitoringMetrics(),
+			startTimestamp: Date.now(),
+			events: []
+		};
 	}
 
 	getCountRemoteTracks()
@@ -304,15 +355,38 @@ export class Call {
 		}
 	}
 
+	getDefaultValueMonitoringMetric(key)
+	{
+		switch (key)
+		{
+			case 'COUNT_TRACKS':
+				return {
+					video: 0,
+					audio: 0,
+				};
+			default:
+				return [];
+		}
+	}
+
+	fillDefaultValueMonitoringMetrics()
+	{
+		return Object.entries(MONITORING_METRICS_NAME_LIST).reduce((acc, [key, value]) => {
+			acc[value] = this.getDefaultValueMonitoringMetric(key);
+			return acc;
+		}, {});
+	}
+
 	startAggregateMonitoringEvents()
 	{
 		this.startTimestampGrabMetrics = Date.now();
-		this.currentMonitoringEventsObject.startTimestamp = this.startTimestampGrabMetrics;
+
+		this.setClearValuesForCurrentMonitoringEventsObject();
 
 		this.monitoringInterval = setInterval(() => {
 			const { countVideoTracks, countAudioTracks } = this.getCountRemoteTracks();
 
-			this.currentMonitoringEventsObject.metrics.COUNT_TRACKS = {
+			this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.COUNT_TRACKS] = {
 				video: countVideoTracks,
 				audio: countAudioTracks,
 			};
@@ -330,6 +404,21 @@ export class Call {
 			this.sendMonitoringEvents();
 		}, this.monitoringDelayTime);
 
+	}
+
+	sendLogMonitoringErrors()
+	{
+		const isErrorsListNotEmpty = !!Object.keys(this.currentMonitoringErrorsObject);
+
+		if (isErrorsListNotEmpty)
+		{
+			Object.entries(this.currentMonitoringErrorsObject).forEach(([key, value]) =>
+			{
+				this.setLog(`Monitoring errors for key - ${key}.\n${JSON.stringify(value)}`, LOG_LEVEL.ERROR)
+			});
+		}
+
+		this.currentMonitoringErrorsObject = {};
 	}
 
 	sendMonitoringEvents(withRestart = true)
@@ -369,16 +458,16 @@ export class Call {
 		});
 
 		const objForSend = {
-			audioSubscribed: this.currentMonitoringEventsObject.metrics.COUNT_TRACKS.audio,
-			videoSubscribed: this.currentMonitoringEventsObject.metrics.COUNT_TRACKS.video,
-			packetLoss: this.currentMonitoringEventsObject.metrics.PACKET_LOST_RECEIVE,
-			bitrateIn: this.currentMonitoringEventsObject.metrics.BITRATE_IN,
-			bitrateOut: this.currentMonitoringEventsObject.metrics.BITRATE_OUT,
-			connScore:  this.currentMonitoringEventsObject.metrics.CONN_SCORE_CURRENT,
-			framesLoss: this.currentMonitoringEventsObject.metrics.FRAMES_LOSS,
-			freezeCount: this.currentMonitoringEventsObject.metrics.FREEZE_COUNT,
-			totalFreezesDuration: this.currentMonitoringEventsObject.metrics.TOTAL_FREEZE_DURATION,
-			jitter: this.currentMonitoringEventsObject.metrics.JITTER,
+			audioSubscribed: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.COUNT_TRACKS].audio,
+			videoSubscribed: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.COUNT_TRACKS].video,
+			packetLoss: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.PACKET_LOST_RECEIVE],
+			bitrateIn: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_IN],
+			bitrateOut: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_OUT],
+			connScore:  this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.CONN_SCORE_CURRENT],
+			framesLoss: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_LOSS],
+			freezeCount: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FREEZE_COUNT],
+			totalFreezesDuration: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.TOTAL_FREEZE_DURATION],
+			jitter: this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.JITTER],
 			events: eventsToSend,
 		};
 
@@ -386,11 +475,12 @@ export class Call {
 
 		this.#sendSignal({ sendQoS: objForSend });
 
+		this.sendLogMonitoringErrors();
+
 		clearInterval(this.monitoringInterval);
 		this.monitoringInterval = null;
 		clearTimeout(this.monitoringTimeout);
 		this.monitoringTimeout = null;
-		this.setClearValuesForCurrentMonitoringEventsObject();
 
 		if (withRestart)
 		{
@@ -897,7 +987,8 @@ export class Call {
 						&& !remoteParticipant.screenSharingEnabled
 					) {
 						participants[remoteParticipant.userId] = participant.score;
-						this.setLog(`Quality of connection with a participant with id ${remoteParticipant.userId} (sid: ${remoteParticipant.sid}) changed to ${participant.score}`, hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING);
+						// commented out for now, since a lot of log generated by this
+						//this.setLog(`Quality of connection with a participant with id ${remoteParticipant.userId} (sid: ${remoteParticipant.sid}) changed to ${participant.score}`, hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING);
 						this.#privateProperties.remoteParticipants[remoteParticipant.userId].connectionQuality = participant.score;
 					}
 
@@ -908,7 +999,10 @@ export class Call {
 					{
 						if (participant.participantSid === this.#privateProperties.localParticipantSid)
 						{
-							this.currentMonitoringEventsObject.metrics.CONN_SCORE_CURRENT.push(participant.score);
+							this.addValidatedMonitoringMetricWithLogging({
+								metricKey: MONITORING_METRICS_NAME_LIST.CONN_SCORE_CURRENT,
+								metricValue: participant.score,
+							});
 						}
 					});
 
@@ -923,8 +1017,8 @@ export class Call {
 					{
 						participants[this.#privateProperties.userId] = participant.score;
 						this.#privateProperties.localConnectionQuality =  participant.score;
-
-						this.setLog(`Quality of connection with a mediaserver changed to ${participant.score}`, hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING);
+						// commented out for now, since a lot of log generated by this
+						//this.setLog(`Quality of connection with a mediaserver changed to ${participant.score}`, hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING);
 						// this.#toggleRemoteParticipantVideo(Object.keys(participantsToUpdate), hasGoodQuality);
 					}
 				});
@@ -1194,6 +1288,8 @@ export class Call {
 						withCounter: true
 					});
 				});
+
+				this.triggerEvents('TrackSubscriptionFailed', [{participant: participant, track: track}]);
 			}
 		}, this.#privateProperties.subscriptionTimeout);
 
@@ -1858,19 +1954,26 @@ export class Call {
 		}
 	}
 
-	async disableVideo(bySystem = false)
+	async disableVideo(options)
 	{
+		const bySystem = options?.bySystem || false;
+		const calledFrom = options?.calledFrom || '';
+		const hasQueue = this.#privateProperties.videoQueue !== VIDEO_QUEUE.INITIAL;
+		
+		this.setLog(`Start disabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
+		//console.warn(`Start disabling video - isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, calledFrom: ${calledFrom}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `);
 		if (this.#privateProperties.isReconnecting)
 		{
 			return;
 		}
-		const hasQueue = this.#privateProperties.videoQueue !== VIDEO_QUEUE.INITIAL;
+		
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.DISABLE;
+		
 		if (hasQueue)
 		{
 			return;
 		}
-		this.setLog('Start disabling video', LOG_LEVEL.INFO);
+		
 		const track = this.#privateProperties.cameraStream?.getVideoTracks()[0];
 		if (track && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
 		{
@@ -1914,12 +2017,20 @@ export class Call {
 		}
 	}
 
-	async enableVideo(skipUnpause = false) {
+	async enableVideo(options) /* {calledFrom: 'processVideoQueue', skipUnpause: true} */
+	{
+		const skipUnpause = options?.skipUnpause || false;
+		const calledFrom = options?.calledFrom || '';
+		const hasQueue = this.#privateProperties.videoQueue !== VIDEO_QUEUE.INITIAL;
+		
+		this.setLog(`Start enabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, skipUnpause: ${skipUnpause}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
+		//console.warn(`Start enabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, skipUnpause: ${skipUnpause}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
+		
 		if (this.#privateProperties.isReconnecting)
 		{
 			return;
 		}
-		const hasQueue = this.#privateProperties.videoQueue !== VIDEO_QUEUE.INITIAL;
+		
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.ENABLE;
 		if (hasQueue)
 		{
@@ -1936,7 +2047,7 @@ export class Call {
 				this.onPublishFailed(MediaStreamsKinds.Camera);
 			}
 		}
-		this.setLog('Start enabling video', LOG_LEVEL.INFO);
+		
 		let hasTrack = !!this.#privateProperties.cameraStream?.getVideoTracks()[0];
 		let track = await this.getLocalVideo();
 
@@ -1987,11 +2098,11 @@ export class Call {
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 		if (videoQueue === VIDEO_QUEUE.ENABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState !== 'live')
 		{
-			this.enableVideo();
+			this.enableVideo({calledFrom: 'processVideoQueue'});
 		}
 		else if (videoQueue === VIDEO_QUEUE.DISABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState === 'live' && !this.#privateProperties.mediaMutedBySystem)
 		{
-			this.disableVideo();
+			this.disableVideo({calledFrom: 'processVideoQueue'});
 		}
 	}
 
@@ -2510,7 +2621,7 @@ export class Call {
 		track.onmute = (event) =>
 		{
 			this.#privateProperties.mediaMutedBySystem = false;
-			this.disableVideo(true);
+			this.disableVideo({calledFrom: 'track.onmute', bySystem: true});
 			this.disableAudio(true);
 			this.#privateProperties.mediaMutedBySystem = true;
 			this.triggerEvents('MediaMutedBySystem', [true]);
@@ -2523,7 +2634,7 @@ export class Call {
 				this.#privateProperties.mediaMutedBySystem = false;
 				this.triggerEvents('MediaMutedBySystem', [false]);
 			}
-			this.enableVideo();
+			this.enableVideo({calledFrom: 'track.onunmute'});
 			if (this.#privateProperties.needToEnableAudioAfterSystemMuted)
 			{
 				this.enableAudio();
@@ -2548,6 +2659,7 @@ export class Call {
 			const version = this.#privateProperties.clientVersion + (desktopVersion ? ` (desktopApi: ${desktopVersion})` : '');
 			const data = {
 				timestamp: Math.floor(Date.now() / 1000),
+				timestampMS: Date.now(),
 				event: log,
 				client: this.#privateProperties.clientPlatform,
 				appVersion: version,
@@ -2580,6 +2692,7 @@ export class Call {
 	}
 
 	#sendLog(log, level) {
+
 		const signal = {
 			sendLog: {
 				userName: `${this.#privateProperties.userId}`,
@@ -2757,6 +2870,7 @@ export class Call {
 			: 'ParticipantJoined'
 		const remoteParticipant = new Participant(participant, this.#privateProperties.socketConnect)
 		this.#privateProperties.remoteParticipants[userId] = remoteParticipant;
+
 		this.triggerEvents(participantEvent, [remoteParticipant]);
 		if (participant.participantTracks)
 		{
@@ -3107,12 +3221,11 @@ export class Call {
 					const remoteReports = {};
 					const reportsWithoutRemoteInfo = {};
 					let isQualityLimitationSent = false;
-					let totalBitrateOut = 0;
+					let totalBitrateOut = [];
 
 					stats.forEach((report) =>
 					{
 						statsOutput.push(report);
-
 
 						if (report.type === 'codec')
 						{
@@ -3129,7 +3242,16 @@ export class Call {
 
 								this.checkQosFeatureAndExecutionCallback(() =>
 								{
-									this.currentMonitoringEventsObject.metrics.PACKET_LOST_SEND.push(currentPercentPacketLost);
+									this.addValidatedMonitoringMetricWithLogging({
+										additionalData: {
+											currentReportPacketsSent: reportsWithoutRemoteInfo[reportId]?.packetsSent,
+											prevReportPacketsSent: this.#privateProperties.reportsForOutgoingTracks[reportId]?.packetsSent,
+											prevReportPacketsLost: this.#privateProperties.reportsForOutgoingTracks[reportId]?.packetsLost,
+											remoteReportPacketsLost: report?.packetsLost,
+										},
+										metricKey: MONITORING_METRICS_NAME_LIST.PACKET_LOST_SEND,
+										metricValue: currentPercentPacketLost,
+									});
 								});
 
 								if (!packetLostEventAdded && currentPercentPacketLost > this.#privateProperties.packetLostThreshold)
@@ -3171,7 +3293,11 @@ export class Call {
 									: MediaStreamsKinds.Camera;
 							}
 
-							totalBitrateOut += report.bitrate;
+							totalBitrateOut.push({
+								bitrate: report.bitrate,
+								kind: report.kind,
+								contentType: report.contentType,
+							});
 
 							if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent)
 							{
@@ -3212,16 +3338,27 @@ export class Call {
 
 					this.checkQosFeatureAndExecutionCallback(() =>
 					{
-						const formattedBitrateOut = Number.parseFloat((totalBitrateOut / 1000000).toFixed(2));
+						const bitrateSumOut = this.calcBitrateSumFromArray({ bitrateArray: totalBitrateOut});
+						const formattedBitrateOut = Number.parseFloat((bitrateSumOut / 1000000).toFixed(2));
 
-						if (this.currentMonitoringEventsObject.metrics.BITRATE_OUT.length < this.countMetricsInMetricsInterval)
+						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_OUT].length < this.countMetricsInMetricsInterval)
 						{
-							this.currentMonitoringEventsObject.metrics.BITRATE_OUT.push(formattedBitrateOut);
+							this.addValidatedMonitoringMetricWithLogging({
+								additionalData: {
+									bitrateList: totalBitrateOut,
+									bitrateSumOut,
+									formattedBitrateOut,
+								},
+								metricKey: MONITORING_METRICS_NAME_LIST.BITRATE_OUT,
+								metricValue: formattedBitrateOut,
+							});
 						}
 					});
 
 					statsAll.sender = statsOutput;
 				});
+
+
 
 				await this.recipient.getStats(null).then((stats) =>
 				{
@@ -3229,7 +3366,7 @@ export class Call {
 					const participantsWithLargeDataLoss = new Map();
 					const codecs = {};
 					const reportsWithoutCodecs = {};
-					let totalBitrateIn = 0;
+					let totalBitrateIn = [];
 					let currentPacketLostReceiveCount = 0;
 
 					const inboundRtpStatsArray = {
@@ -3244,6 +3381,7 @@ export class Call {
 
 					stats.forEach((report) =>
 					{
+
 						if (report.type === 'inbound-rtp' && report.kind === 'video')
 						{
 							const { freezeCount, totalFreezesDuration, jitter, framesDecoded, framesDropped, framesReceived } = report;
@@ -3268,6 +3406,8 @@ export class Call {
 							const packetsLostData = Util.calcRemotePacketsLost(report, this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier]);
 
 							report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
+
+
 							this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier] = report;
 
 							const realTrackId = this.#privateProperties.realTracksIds[report.trackIdentifier];
@@ -3288,12 +3428,18 @@ export class Call {
 									currentPacketLostReceiveCount = currentPercentPacketLost;
 								}
 
-								totalBitrateIn += report.bitrate;
+								totalBitrateIn.push({
+									bitrate: report.bitrate,
+									kind: report.kind,
+									contentType: report.contentType,
+								});
 
 								if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs))
 								{
 									Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
 								}
+
+								report.inRemoteTracks = (!!(this.#privateProperties.remoteTracks[track.userId] && this.#privateProperties.remoteTracks[track.userId][realTrackId]) ? 'Y' : 'N');
 							}
 
 							if (packetsLostData.currentPercentPacketLost > this.#privateProperties.packetLostThreshold)
@@ -3322,7 +3468,7 @@ export class Call {
 
 						const addValueInboundRTCStatsToMetrics = ({ key, metricsKey, isSum, decimal = 0, interval }) =>
 						{
-							if (this.currentMonitoringEventsObject.metrics[metricsKey].length >= this.countMetricsInMetricsInterval)
+							if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST[metricsKey]].length >= this.countMetricsInMetricsInterval)
 							{
 								return;
 							}
@@ -3332,35 +3478,70 @@ export class Call {
 							const diffInboundRtpStatsArraySumByKey = prevInboundRtpStatsArraySumByKey && !!isSum ? inboundRtpStatsArraySumByKey - prevInboundRtpStatsArraySumByKey : inboundRtpStatsArraySumByKey;
 							const metricValue = !!countVideoTracks ? diffInboundRtpStatsArraySumByKey / countVideoTracks : 0;
 
-							this.currentMonitoringEventsObject.metrics[metricsKey].push(round(metricValue, decimal));
+							this.addValidatedMonitoringMetricWithLogging({
+								additionalData: {
+									inboundRtpStatsArrayByKey: inboundRtpStatsArray[key],
+									inboundRtpStatsArraySumByKey,
+									prevInboundRtpStatsArraySumByKey: prevInboundRtpStatsArraySumByKey,
+									diffInboundRtpStatsArraySumByKey,
+									metricValue,
+								},
+								metricKey: metricsKey,
+								metricValue: round(metricValue, decimal),
+							});
 							this.prevInboundRtpStatsSum[key] = inboundRtpStatsArraySumByKey;
 						}
 
-						addValueInboundRTCStatsToMetrics({ key: 'jitter', metricsKey: 'JITTER', isSum: false, decimal: 3 });
-						addValueInboundRTCStatsToMetrics({ key: 'freezeCount', metricsKey: 'FREEZE_COUNT', isSum: true, interval: true });
-						addValueInboundRTCStatsToMetrics({ key: 'totalFreezesDuration', metricsKey: 'TOTAL_FREEZE_DURATION', isSum: true, decimal: 3, interval: true });
-						addValueInboundRTCStatsToMetrics({ key:'framesDecoded', metricsKey:'FRAMES_DECODED', isSum:true, interval: true });
-						addValueInboundRTCStatsToMetrics({ key:'framesDropped', metricsKey: 'FRAMES_DROPPED', isSum: true, interval: true });
+						addValueInboundRTCStatsToMetrics({ key: 'jitter', metricsKey: MONITORING_METRICS_NAME_LIST.JITTER, isSum: false, decimal: 3 });
+						addValueInboundRTCStatsToMetrics({ key: 'freezeCount', metricsKey: MONITORING_METRICS_NAME_LIST.FREEZE_COUNT, isSum: true, interval: true });
+						addValueInboundRTCStatsToMetrics({ key: 'totalFreezesDuration', metricsKey: MONITORING_METRICS_NAME_LIST.TOTAL_FREEZE_DURATION, isSum: true, decimal: 3, interval: true });
+						addValueInboundRTCStatsToMetrics({ key:'framesDecoded', metricsKey:MONITORING_METRICS_NAME_LIST.FRAMES_DECODED, isSum:true, interval: true });
+						addValueInboundRTCStatsToMetrics({ key:'framesReceived', metricsKey:MONITORING_METRICS_NAME_LIST.FRAMES_RECEIVED, isSum:true, interval: true });
+						addValueInboundRTCStatsToMetrics({ key:'framesDropped', metricsKey: MONITORING_METRICS_NAME_LIST.FRAMES_DROPPED, isSum: true, interval: true });
 						// addValueInboundRTCStatsToMetrics({ key: 'framesLoss', metricsKey: 'FRAMES_LOSS', isSum: true });
 
-						if (this.currentMonitoringEventsObject.metrics.FRAMES_LOSS.length < this.countMetricsInMetricsInterval)
+						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_LOSS].length < this.countMetricsInMetricsInterval)
 						{
-							const currentFramesReceived = this.currentMonitoringEventsObject.metrics.FRAMES_RECEIVED.slice(-1)[0];
-							const currentFramesDropped = this.currentMonitoringEventsObject.metrics.FRAMES_DROPPED.slice(-1)[0];
+							const currentFramesReceivedArray = this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_RECEIVED];
+							const currentFramesDroppedArray = this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_DROPPED];
+							const currentFramesReceived = currentFramesReceivedArray.slice(-1)[0];
+							const currentFramesDropped = currentFramesDroppedArray.slice(-1)[0];
 							const currentFramesLoss = !!currentFramesReceived ? currentFramesDropped / currentFramesReceived : 0;
-							this.currentMonitoringEventsObject.metrics.FRAMES_LOSS.push(currentFramesLoss > 0 ? round(currentFramesLoss * 100, 0)  : 0);
+
+							this.addValidatedMonitoringMetricWithLogging({
+								additionalData: {
+									currentFramesReceivedArray,
+									currentFramesDroppedArray,
+									currentFramesReceived,
+									currentFramesDropped,
+									currentFramesLoss,
+								},
+								metricKey: MONITORING_METRICS_NAME_LIST.FRAMES_LOSS,
+								metricValue: currentFramesLoss > 0 ? round(currentFramesLoss * 100, 0)  : 0,
+							});
+						}
+						const bitrateSumIn = this.calcBitrateSumFromArray({ bitrateArray: totalBitrateIn });
+						const formattedBitrateIn = Number.parseFloat((bitrateSumIn / 1000000).toFixed(2));
+
+						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_IN].length < this.countMetricsInMetricsInterval)
+						{
+							this.addValidatedMonitoringMetricWithLogging({
+								additionalData: {
+									bitrateList: totalBitrateIn,
+									bitrateSumIn,
+									formattedBitrateIn,
+								},
+								metricKey: MONITORING_METRICS_NAME_LIST.BITRATE_IN,
+								metricValue: formattedBitrateIn,
+							});
 						}
 
-						const formattedBitrateIn = Number.parseFloat((totalBitrateIn / 1000000).toFixed(2));
-
-						if (this.currentMonitoringEventsObject.metrics.BITRATE_IN.length < this.countMetricsInMetricsInterval)
+						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.PACKET_LOST_RECEIVE].length < this.countMetricsInMetricsInterval)
 						{
-							this.currentMonitoringEventsObject.metrics.BITRATE_IN.push(formattedBitrateIn);
-						}
-
-						if (this.currentMonitoringEventsObject.metrics.PACKET_LOST_RECEIVE.length < this.countMetricsInMetricsInterval)
-						{
-							this.currentMonitoringEventsObject.metrics.PACKET_LOST_RECEIVE.push(currentPacketLostReceiveCount);
+							this.addValidatedMonitoringMetricWithLogging({
+								metricKey: MONITORING_METRICS_NAME_LIST.PACKET_LOST_RECEIVE,
+								metricValue: currentPacketLostReceiveCount,
+							});
 						}
 
 						if (currentPacketLostReceiveCount > this.#privateProperties.packetLostThreshold)

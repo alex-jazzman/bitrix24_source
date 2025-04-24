@@ -11,7 +11,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 	const { EventType, ComponentCode, DialogType, OpenDialogContextType, Analytics } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { SoftLoader } = require('im/messenger/lib/helper');
@@ -21,7 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 	const { AnalyticsEvent } = require('analytics');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--context-manager');
+	const logger = getLogger('dialog--context-manager');
 
 	/**
 	 * @class ContextManager

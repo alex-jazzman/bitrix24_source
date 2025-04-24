@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_COMPANY_DETAIL_ATTR_GR_TYPE_GENERAL"] = "Барлық кезеңдер мен иірімдер үшін";
 $MESS["CRM_COMPANY_DETAIL_ATTR_GR_TYPE_JUNK"] = "Сәтсіз";
 $MESS["CRM_COMPANY_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "Жұмыста + табысты";
 $MESS["CRM_COMPANY_DETAIL_ATTR_REQUIRED_FULL"] = "Кезеңнен бастап міндетті";

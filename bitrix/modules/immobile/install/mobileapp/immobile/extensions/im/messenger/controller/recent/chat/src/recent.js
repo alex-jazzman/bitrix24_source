@@ -7,12 +7,12 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { DialogRest } = require('im/messenger/provider/rest');
-	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
-	const logger = LoggerManager.getInstance().getLogger('recent--chat-recent');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('recent--chat-recent');
 
 	/**
 	 * @class ChatRecent
@@ -133,7 +133,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 				status = 'remote';
 			}
 
-			const callItem = RecentConverter.toCallItem(status, call);
+			const callItem = RecentUiConverter.toCallItem(status, call);
 
 			this.saveCall(callItem);
 			this.drawCall(callItem);

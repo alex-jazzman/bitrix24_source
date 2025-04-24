@@ -2,7 +2,7 @@ import 'main.date';
 
 import { Core } from 'im.v2.application.core';
 import { Settings, Layout } from 'im.v2.const';
-import { ChatAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { ChatAvatar, AvatarSize, ChatTitle, InputActionIndicator } from 'im.v2.component.elements';
 
 import { MessageText } from './message-text';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
@@ -15,7 +15,7 @@ import type { ImModelRecentItem, ImModelChat, ImModelMessage } from 'im.v2.model
 // @vue/component
 export const CopilotItem = {
 	name: 'CopilotItem',
-	components: { ChatAvatar, ChatTitle, MessageText },
+	components: { ChatAvatar, ChatTitle, MessageText, InputActionIndicator },
 	props:
 	{
 		item: {
@@ -71,9 +71,9 @@ export const CopilotItem = {
 
 			return Boolean(isMuted);
 		},
-		isSomeoneTyping(): boolean
+		hasActiveInputAction(): boolean
 		{
-			return this.dialog.writingList.length > 0;
+			return this.$store.getters['chats/inputActions/isChatActive'](this.recentItem.dialogId);
 		},
 		showLastMessage(): boolean
 		{
@@ -124,7 +124,7 @@ export const CopilotItem = {
 							:withSpecialTypes="false"
 							:size="AvatarSize.XL"
 						/>
-						<div v-if="isSomeoneTyping" class="bx-im-list-copilot-item__avatar_typing"></div>
+						<InputActionIndicator v-if="hasActiveInputAction" />
 					</div>
 				</div>
 				<div class="bx-im-list-copilot-item__content_container">

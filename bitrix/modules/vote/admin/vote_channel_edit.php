@@ -39,7 +39,7 @@ $message = null;
 ********************************************************************/
 $ID = intval($ID);
 
-if ((!empty($save) || !empty($apply)) && $REQUEST_METHOD == "POST" && $VOTE_RIGHT>="W" && check_bitrix_sessid())
+if ((!empty($save) || !empty($apply)) && $_SERVER['REQUEST_METHOD'] == "POST" && $VOTE_RIGHT>="W" && check_bitrix_sessid())
 {
 	$arFields = array_intersect_key($_REQUEST,
 		array_flip(array("TITLE", "SYMBOLIC_NAME", "ACTIVE", "HIDDEN", "C_SORT", "VOTE_SINGLE", "USE_CAPTCHA", "SITE", "GROUP_ID")));

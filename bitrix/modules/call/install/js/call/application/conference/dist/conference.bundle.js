@@ -766,7 +766,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            _this13.setError(im_const.ConferenceErrorCode.missingMicrophone);
 	          }
 	          if (!_this13.isViewerMode()) {
-	            _this13.callView.unblockButtons(["camera", "microphone"]);
+	            _this13.checkAvailableCamera();
+	            _this13.checkAvailableMicrophone();
 	            _this13.callView.enableMediaSelection();
 	          }
 	          Call.Hardware.subscribe(Call.Hardware.Events.deviceChanged, _this13._onDeviceChange.bind(_this13));
@@ -788,6 +789,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function _onDeviceChange(e) {
 	      var _this14 = this;
 	      if (!this.currentCall || !this.currentCall.ready) {
+	        this.checkAvailableCamera();
+	        this.checkAvailableMicrophone();
 	        return;
 	      }
 	      var allAddedDevice = e.data.added;
@@ -828,6 +831,67 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    }
 	  }, {
+	    key: "setDefaultCameraIfNeeded",
+	    value: function setDefaultCameraIfNeeded() {
+	      if (!Call.Hardware.hasCamera() || !!Call.Hardware.defaultCamera && !!Call.Hardware.cameraList.length && Call.Hardware.cameraList.some(function (cameraItem) {
+	        return cameraItem.deviceId === Call.Hardware.defaultCamera;
+	      })) {
+	        return;
+	      }
+	      if (!Call.Hardware.defaultCamera && !!Call.Hardware.cameraList.length) {
+	        Call.Hardware.defaultCamera = Call.Hardware.cameraList[0].deviceId;
+	        return;
+	      }
+	      Call.Hardware.defaultCamera = '';
+	    }
+	  }, {
+	    key: "setDefaultMicrophoneIfNeeded",
+	    value: function setDefaultMicrophoneIfNeeded() {
+	      if (!Call.Hardware.hasMicrophone() || !!Call.Hardware.defaultMicrophone && !!Call.Hardware.microphoneList.length && Call.Hardware.microphoneList.some(function (micItem) {
+	        return micItem.deviceId === Call.Hardware.defaultMicrophone;
+	      })) {
+	        return;
+	      }
+	      if (!Call.Hardware.defaultMicrophone && !!Call.Hardware.microphoneList.length) {
+	        Call.Hardware.defaultMicrophone = Call.Hardware.microphoneList[0].deviceId;
+	        return;
+	      }
+	      Call.Hardware.defaultMicrophone = '';
+	    }
+	  }, {
+	    key: "checkAvailableCamera",
+	    value: function checkAvailableCamera() {
+	      var isCameraButtonHasBlocked = this.callView.isButtonBlocked('camera');
+	      if (!this.currentCall && !Call.Hardware.hasCamera()) {
+	        this.callView.blockSwitchCamera();
+	      } else {
+	        this.callView.unblockSwitchCamera();
+	      }
+	      this.setDefaultCameraIfNeeded();
+	      var isActiveState = Call.Hardware.hasCamera() && Call.Hardware.defaultCamera;
+	      if (!this.currentCall && isCameraButtonHasBlocked) {
+	        this.template.$emit('setCameraState', isActiveState);
+	        this.template.$emit('cameraSelected', Call.Hardware.defaultCamera);
+	      }
+	      this.callView.updateButtons();
+	    }
+	  }, {
+	    key: "checkAvailableMicrophone",
+	    value: function checkAvailableMicrophone() {
+	      if (!this.currentCall && !Call.Hardware.hasMicrophone()) {
+	        this.callView.blockSwitchMicrophone();
+	      } else {
+	        this.callView.unblockSwitchMicrophone();
+	      }
+	      this.setDefaultMicrophoneIfNeeded();
+	      var isActiveState = Call.Hardware.hasMicrophone();
+	      if (!this.currentCall) {
+	        this.template.$emit('setMicState', isActiveState);
+	        this.template.$emit('micSelected', Call.Hardware.defaultCamera);
+	      }
+	      this.callView.updateButtons();
+	    }
+	  }, {
 	    key: "useDevicesInCurrentCall",
 	    value: function useDevicesInCurrentCall(deviceList) {
 	      var isForceUse = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
@@ -843,6 +907,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              this.currentCall.setMicrophoneId(newDeviceId);
 	              this.callView.setMicrophoneId(newDeviceId);
 	            }
+	            this.checkAvailableMicrophone();
 	            break;
 	          case "videoinput":
 	            if (deviceInfo.deviceId === 'default' || isForceUse) {
@@ -851,6 +916,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (this.reconnectingCameraId === deviceInfo.deviceId && !Call.Hardware.isCameraOn) {
 	              this.updateCameraSettingsInCurrentCallAfterReconnecting(deviceInfo.deviceId);
 	            }
+	            this.checkAvailableCamera();
 	            break;
 	          case "audiooutput":
 	            if (this.callView && deviceInfo.deviceId === 'default' || isForceUse) {
@@ -886,12 +952,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                this.callView.setMicrophoneId(deviceId);
 	              }
 	            }
+	            this.checkAvailableMicrophone();
 	            break;
 	          case "videoinput":
 	            if (this.currentCall.cameraId == deviceInfo.deviceId) {
 	              var cameraIds = Object.keys(Call.Hardware.cameraList);
 	              this.currentCall.setCameraId(cameraIds.length > 0 ? cameraIds[0] : "");
 	            }
+	            this.checkAvailableCamera();
 	            break;
 	          case "audiooutput":
 	            if (this.callView && this.callView.speakerId == deviceInfo.deviceId) {
@@ -957,6 +1025,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (Call.Hardware.defaultCamera) {
 	          _this15.currentCall.setCameraId(Call.Hardware.defaultCamera);
 	        }
+	        _this15.checkAvailableMicrophone();
+	        _this15.checkAvailableCamera();
 	        if (!im_lib_utils.Utils.device.isMobile()) {
 	          _this15.callView.setLayout(Call.View.Layout.Grid);
 	        }
@@ -1068,6 +1138,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (Call.Hardware.defaultCamera) {
 	            _this16.currentCall.setCameraId(Call.Hardware.defaultCamera);
 	          }
+	          _this16.checkAvailableMicrophone();
+	          _this16.checkAvailableCamera();
 	          _this16.updateCallUser(_this16.currentCall.userId, {
 	            microphoneState: !Call.Hardware.isMicrophoneMuted
 	          });
@@ -1694,6 +1766,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "onCallViewToggleMuteButtonClick",
 	    value: function onCallViewToggleMuteButtonClick(event) {
 	      var _this$currentCall2;
+	      if (!Call.Hardware.hasMicrophone() && !event.data.muted) {
+	        return;
+	      }
 	      call_lib_analytics.Analytics.getInstance().onToggleMicrophone({
 	        muted: event.data.muted,
 	        callId: this.currentCall ? this.currentCall.id : 0,
@@ -1793,6 +1868,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewToggleVideoButtonClick",
 	    value: function onCallViewToggleVideoButtonClick(event) {
+	      if (!Call.Hardware.hasCamera() && event.data.video) {
+	        this.showNotification(BX.message('IM_CALL_NO_CAMERA_ERROR'));
+	        return;
+	      }
 	      call_lib_analytics.Analytics.getInstance().onToggleCamera({
 	        video: event.data.video,
 	        callId: this.currentCall ? this.currentCall.id : 0,
@@ -2233,8 +2312,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }
 	        if (!this.currentCall.callFromMobile && !this.isViewerMode()) {
-	          this.callView.unblockSwitchCamera();
-	          this.callView.updateButtons();
+	          this.checkAvailableCamera();
+	          this.checkAvailableMicrophone();
 	        }
 	      }
 	      if (this.currentCall && Call.Hardware.isCameraOn && e.tag === 'main' && e.stream.getVideoTracks().length === 0) {
@@ -2449,7 +2528,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return;
 	      }
 	      if (!this.isViewerMode()) {
-	        this.callView.unblockButtons(['camera', 'floorRequest', 'screen']);
+	        this.callView.unblockButtons(['floorRequest', 'screen']);
+	        this.checkAvailableCamera();
+	        this.checkAvailableMicrophone();
 	      }
 	      if (this.callView.getConnectedUserCount(false)) {
 	        this.callView.unblockButtons(['record']);

@@ -9,9 +9,9 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
 	const { EventType, ComponentCode, DialogType } = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('recent--copilot-recent');
+	const logger = getLogger('recent--copilot-recent');
 
 	/**
 	 * @class CopilotRecent

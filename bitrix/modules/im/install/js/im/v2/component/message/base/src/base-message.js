@@ -76,11 +76,11 @@ export const BaseMessage = {
 		},
 		isBulkActionsMode(): boolean
 		{
-			return this.$store.getters['messages/select/getBulkActionsMode'];
+			return this.$store.getters['messages/select/isBulkActionsModeActive'](this.dialogId);
 		},
 		isMessageSelected(): boolean
 		{
-			return this.$store.getters['messages/select/isMessageSelected'](this.message.id);
+			return this.$store.getters['messages/select/isMessageSelected'](this.message.id, this.dialogId);
 		},
 		showMessageAngle(): boolean
 		{

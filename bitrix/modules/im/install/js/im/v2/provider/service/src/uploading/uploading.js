@@ -1,4 +1,4 @@
-import { BaseEvent } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
 import { runAction } from 'im.v2.lib.rest';
 
@@ -24,7 +24,9 @@ import type {
 	UploadFromDragAndDrop,
 } from './types/uploading';
 
-export class UploadingService
+const EVENT_NAMESPACE = 'BX.Messenger.v2.Service.UploadingService';
+
+export class UploadingService extends EventEmitter
 {
 	#store: Store;
 	#restClient: RestClient;
@@ -45,6 +47,13 @@ export class UploadingService
 		}
 	} = {};
 
+	static event = {
+		uploadStart: 'uploadStart',
+		uploadComplete: 'uploadComplete',
+		uploadError: 'uploadError',
+		uploadCancel: 'uploadCancel',
+	};
+
 	static instance = null;
 
 	static getInstance(): UploadingService
@@ -59,6 +68,9 @@ export class UploadingService
 
 	constructor()
 	{
+		super();
+		this.setEventNamespace(EVENT_NAMESPACE);
+
 		this.#store = Core.getStore();
 		this.#restClient = Core.getRestClient();
 		this.#sendingService = SendingService.getInstance();
@@ -270,6 +282,7 @@ export class UploadingService
 		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadStart, (event: BaseEvent) => {
 			const { file } = event.getData();
 			this.#updateFileSizeInStore(file);
+			this.emit(UploadingService.event.uploadStart);
 		});
 
 		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadProgress, (event: BaseEvent) => {
@@ -292,6 +305,7 @@ export class UploadingService
 			this.#setPreviewSentStatus(uploaderId, temporaryFileId);
 
 			void this.#tryCommit(uploaderId);
+			this.emit(UploadingService.event.uploadComplete);
 		});
 
 		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadError, (event: BaseEvent) => {
@@ -300,11 +314,13 @@ export class UploadingService
 			this.#setMessageError(file.getCustomData('tempMessageId'));
 			this.#showError(error);
 			Logger.error('UploadingService: upload error', error);
+			this.emit(UploadingService.event.uploadError);
 		});
 
 		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadCancel, (event: BaseEvent) => {
 			const { tempMessageId, tempFileId } = event.getData();
 			this.#cancelUpload(tempMessageId, tempFileId);
+			this.emit(UploadingService.event.uploadCancel);
 		});
 	}
 
@@ -425,10 +441,8 @@ export class UploadingService
 
 	async #uploadPreview(file: UploaderFile): Promise
 	{
-		if (
-			this.#getFileType(file.getBinary()) === FileType.file
-			|| file.getExtension() === 'gif'
-		)
+		const needPreview = this.#getFileType(file.getBinary()) === FileType.video || file.isAnimated();
+		if (!needPreview)
 		{
 			return Promise.resolve();
 		}
@@ -526,6 +540,7 @@ export class UploadingService
 			status: file.isFailed() ? FileStatus.error : FileStatus.progress,
 			progress: 0,
 			authorName: this.#getCurrentUser().name,
+			urlDownload: URL.createObjectURL(file.getBinary()),
 			...previewData,
 		});
 	}
@@ -578,7 +593,7 @@ export class UploadingService
 
 		if (file.getClientPreview())
 		{
-			previewData.urlShow = URL.createObjectURL(file.getBinary());
+			previewData.urlPreview = URL.createObjectURL(file.getClientPreview());
 		}
 
 		return previewData;

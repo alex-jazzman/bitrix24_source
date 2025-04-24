@@ -165,7 +165,9 @@ $tabContainerId = "{$guid}_tabs";
 	{
 		$menuTabs[] = [
 			'ID' => 'crm_rest_marketplace',
-			'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_REST_BUTTON_2'),
+			'TEXT' => \Bitrix\Crm\Integration\Market\Label::isRenamedMarket()
+				? \Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_REST_BUTTON_MSGVER_1')
+				: \Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_REST_BUTTON_2'),
 			'ON_CLICK' => 'BX.rest.Marketplace.open(' . \CUtil::PhpToJSObject($arResult['REST_PLACEMENT_CONFIG']) . ')',
 		];
 	}
@@ -224,7 +226,7 @@ $tabContainerId = "{$guid}_tabs";
 				"ITEMS" => $menuTabs,
 				"DISABLE_SETTINGS" => true,
 				"EDIT_MODE" => $mode,
-				"THEME" => 'flat-adaptive',
+				"THEME" => 'flat',
 			]
 		);
 

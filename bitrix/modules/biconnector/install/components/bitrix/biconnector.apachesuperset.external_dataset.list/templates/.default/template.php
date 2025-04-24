@@ -21,7 +21,6 @@ Extension::load([
 	'ui.buttons',
 	'ui.icons',
 	'ui.icon-set.actions',
-	'ui.alerts',
 ]);
 
 if (!empty($arResult['ERROR_MESSAGE']))

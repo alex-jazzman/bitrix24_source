@@ -10,8 +10,8 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { reactionDefaultElement } = require('im/messenger/model/messages/reactions/default-element');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--messages-reactions');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--messages-reactions');
 
 	const USERS_TO_SHOW = 3;
 

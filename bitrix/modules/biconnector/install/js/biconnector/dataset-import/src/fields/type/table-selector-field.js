@@ -1,5 +1,5 @@
 import { Dom } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { BaseField } from './base-field';
 import { TagSelector } from 'ui.entity-selector';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
@@ -24,7 +24,7 @@ export const TableSelectorField = {
 	mounted()
 	{
 		const node = this.$refs['entity-selector'];
-		const selector = new TagSelector({
+		const selector: TagSelector = new TagSelector({
 			id: this.options.selectorId,
 			multiple: false,
 			addButtonCaption: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_SELECT'),
@@ -51,6 +51,9 @@ export const TableSelectorField = {
 					id: 'biconnector-external-table',
 					dynamicLoad: false,
 					dynamicSearch: true,
+					options: {
+						...(this.connectionId && { connectionId: this.connectionId }),
+					},
 				}],
 			},
 			events: {
@@ -63,10 +66,18 @@ export const TableSelectorField = {
 			},
 		});
 		Dom.addClass(selector.getDialog().getContainer(), 'biconnector-dataset-entity-selector');
-		selector.setLocked(!this.isDisabled);
+		selector.setLocked(!(this.connectionId > 0 && !this.isDisabled));
 		selector.renderTo(node);
 
 		this.selector = selector;
+
+		EventEmitter.subscribe('SidePanel.Slider:onMessage', (event) => {
+			const [messageEvent] = event.getData();
+			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave')
+			{
+				this.selector.removeTags();
+			}
+		});
 	},
 	computed: {
 		set(): Set

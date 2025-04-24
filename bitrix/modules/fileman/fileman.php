@@ -551,6 +551,9 @@ class CFileMan
 		$DOC_ROOT_TO = CSite::GetSiteDocRoot($site_to);
 		$strWarning = '';
 
+		$path_from = Rel2Abs('/', $path_from);
+		$path_to = Rel2Abs('/', $path_to);
+
 		//check: if we copy to the same directory
 		if(mb_strpos($DOC_ROOT_TO.$path_to."/", $DOC_ROOT_FROM.$path_from."/") === 0)
 			return GetMessage("FILEMAN_LIB_BAD_FOLDER").": \"".$path_from."\".\n";
@@ -585,8 +588,10 @@ class CFileMan
 				return GetMessage("FILEMAN_FILEMAN_FILE_READ_DENY")." \"".$path_from."\".\n";
 
 			// Copying php or system file without PHP or LPA access
-			if (!($USER->CanDoOperation('edit_php') || $USER->CanDoFileOperation('fm_lpa', $arPath) || !(HasScriptExtension($Elem["NAME"]) || mb_substr($Elem["NAME"], 0, 1) == ".")))
+			if (!($USER->CanDoOperation('edit_php') || $USER->CanDoFileOperation('fm_lpa', [$site_from, $path_from]) || !(HasScriptExtension($path_from) || mb_substr($path_from, 0, 1) == ".")))
+			{
 				return GetMessage("FILEMAN_FILEMAN_FILE_READ_DENY")." \"".$path_from."\".\n";
+			}
 
 			// If we can't move source-file
 			if($bDeleteAfterCopy &&  !$USER->CanDoFileOperation('fm_delete_file', Array($site_from, $path_from)))

@@ -175,10 +175,20 @@ $currentCategoryID = $arResult['CATEGORY_ID'] ?? null;
 $bConfig = false;
 if ($arParams['TYPE'] === 'list')
 {
-	$bRead = $userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
-	$bExport = $userPermissionsService->entityType()->canExportItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
-	$bImport = $userPermissionsService->entityType()->canImportItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID) && ($arParams['IS_RECURRING'] ?? null) !== 'Y';
-	$bWrite = $userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
+	if (is_null($currentCategoryID) || $currentCategoryID == -1)
+	{
+		$bRead = $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Deal);
+		$bExport = $userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Deal);
+		$bImport = $userPermissionsService->entityType()->canImportItems(CCrmOwnerType::Deal) && ($arParams['IS_RECURRING'] ?? null) !== 'Y';
+		$bWrite = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Deal);
+	}
+	else
+	{
+		$bRead = $userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
+		$bExport = $userPermissionsService->entityType()->canExportItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
+		$bImport = $userPermissionsService->entityType()->canImportItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID) && ($arParams['IS_RECURRING'] ?? null) !== 'Y';
+		$bWrite = $userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Deal, $currentCategoryID);
+	}
 	$bDelete = false;
 	$bConfig = $userPermissionsService->isCrmAdmin();
 }
@@ -752,8 +762,6 @@ if($arParams['TYPE'] === 'list')
 		$arResult['EXPORT_EXCEL_PARAMS']['id'] = $stExportId. '_EXCEL';
 		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
 		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('DEAL_EXPORT_EXCEL_TITLE');
-
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
 		$arResult['BUTTONS'][] = array(
 			'TITLE' => Loc::getMessage('DEAL_EXPORT_CSV_TITLE'),

@@ -21,6 +21,7 @@ export type {
 	CollabInfo as ImModelCollabInfo,
 	CollabEntityInfo as ImModelCollabEntityInfo,
 } from './type/chat';
+export type { InputActionState, ChatInputActions as ImModelInputActions } from './chats/nested-modules/input-actions';
 export type { User as ImModelUser, Bot as ImModelBot } from './type/user';
 export type { File as ImModelFile } from './type/file';
 export type {

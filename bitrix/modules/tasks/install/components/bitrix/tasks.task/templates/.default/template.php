@@ -1,8 +1,9 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Deadline\Configuration;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
@@ -35,6 +36,8 @@ Extension::load([
 	'tasks.analytics',
 	'tasks.limit',
 	'tasks.flow.entity-selector',
+	'tasks.deadline.notification',
+	'pull.client',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -63,6 +66,11 @@ if (!empty($arResult['ERROR']))
 		}
 	}
 }
+
+$userId = (int)($arParams['USER_ID'] ?? 0);
+
+$deadlineUserOption = $arResult['DATA']['DEADLINE_USER_OPTION'] ?? null;
+
 ?>
 
 <?php
@@ -1335,6 +1343,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 			'limitCode' => FlowFeature::LIMIT_CODE,
 			'isFeatureEnabled' => FlowFeature::isFeatureEnabled() || FlowFeature::canTurnOnTrial(),
 			'isFeatureTrialable' => FlowFeature::isFeatureEnabledByTrial(),
+
+			'context' => Analytics::SUB_SECTION['task_card'],
 		],
 		'toggleFlowParams' => [
 			'scope' => 'taskEdit',
@@ -1345,6 +1355,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 			'taskId' => (int)($taskData['ID'] ?? 0),
 			'taskDescription' => $taskData['DESCRIPTION'] ?? '',
 		],
+		'deadlineNotificationSkipped' => $deadlineUserOption?->isNotificationSkipped() ?? false,
 		'id' => $arResult['TEMPLATE_DATA']['ID'],
 		'isFlowForm' => $arResult['isFlowForm'],
 		'isProjectLimitExceeded' => $isProjectLimitExceeded,
@@ -1381,6 +1392,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		'relatedSubTaskDeadlinesEnabled' => $relatedSubTaskDeadlinesEnabled,
 		'isExtranetUser' => Bitrix\Tasks\Integration\Extranet\User::isExtranet(),
 		'canEditTask' => (bool)$arResult['canEditTask'],
+		'isDeadlineNotificationAvailable' => Configuration::isDeadlineNotificationAvailable($userId),
 	))?>;
 
 	<?php /*
@@ -1410,7 +1422,6 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 	<?php
 		$tasksAiPromo = new \Bitrix\Tasks\Promotion\TasksAi();
-		$userId = (int)($arParams['USER_ID'] ?? 0);
 		$shouldShowAiPromo = $tasksAiPromo->shouldShow($userId);
 
 		if ($shouldShowAiPromo)

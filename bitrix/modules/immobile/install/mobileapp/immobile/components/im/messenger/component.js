@@ -80,7 +80,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		ChatDialogPullHandler,
 		ChatUserPullHandler,
 		ChatRecentPullHandler,
-		DesktopPullHandler,
 		NotificationPullHandler,
 		OnlinePullHandler,
 	} = require('im/messenger/provider/pull/chat');
@@ -99,6 +98,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { Promotion } = require('im/messenger/lib/promotion');
 	const { PushHandler } = require('im/messenger/provider/push');
+	const { DatabasePushMessageHandler } = require('im/messenger/provider/push/message-handler/database');
+	const { ChatPushMessageHandler } = require('im/messenger/provider/push/message-handler/chat');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
@@ -136,6 +137,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			super();
 			this.refreshAfterErrorInterval = 10000;
+			this.pushUpdateListPromise = null;
 
 			this.promotion = new Promotion();
 			this.communication = new Communication();
@@ -242,7 +244,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.openChannelCreate = this.openChannelCreate.bind(this);
 			this.openCollabCreate = this.openCollabCreate.bind(this);
 			this.openNotifications = this.openNotifications.bind(this);
-			this.refresh = this.refresh.bind(this);
+			this.onFailRestoreConnection = this.onFailRestoreConnection.bind(this);
+			this.onShortRefresh = this.onShortRefresh.bind(this);
 			this.destroyDialog = this.destroyDialog.bind(this);
 
 			this.onChatDialogInitComplete = this.onChatDialogInitComplete.bind(this);
@@ -284,7 +287,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.createChannel, this.openChannelCreate);
 			BX.addCustomEvent(EventType.messenger.createCollab, this.openCollabCreate);
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
-			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
+			BX.addCustomEvent(EventType.messenger.refresh, this.onShortRefresh);
 			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 		}
 
@@ -300,7 +303,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.messenger.createChannel, this.openChannelCreate);
 			BX.removeCustomEvent(EventType.messenger.createCollab, this.openCollabCreate);
 			BX.removeCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
-			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
+			BX.removeCustomEvent(EventType.messenger.refresh, this.onShortRefresh);
 			BX.removeCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 		}
 
@@ -320,7 +323,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
 			BX.addCustomEvent(EventType.app.paused, this.onAppPaused);
 			BX.addCustomEvent(EventType.app.active, this.onAppActive);
-			BX.addCustomEvent(EventType.app.failRestoreConnection, this.refresh);
+			BX.addCustomEvent(EventType.app.failRestoreConnection, this.onFailRestoreConnection);
 			BX.addCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
 			jnComponent.on(EventType.jnComponent.openRequest, this.openRequestRouter);
 		}
@@ -341,7 +344,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
 			BX.removeCustomEvent(EventType.app.paused, this.onAppPaused);
 			BX.removeCustomEvent(EventType.app.active, this.onAppActive);
-			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.refresh);
+			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.onFailRestoreConnection);
 			BX.removeCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
 			jnComponent.off(EventType.jnComponent.openRequest, this.openRequestRouter);
 		}
@@ -406,6 +409,16 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
+		initPushMessageHandlers()
+		{
+			this.databasePushMessageHandler = new DatabasePushMessageHandler();
+			this.pushHandler = new PushHandler();
+			this.chatPushMessageHandler = new ChatPushMessageHandler();
+		}
+
+		/**
+		 * @override
+		 */
 		initPullHandlers()
 		{
 			BX.PULL.subscribe(new ChatApplicationPullHandler());
@@ -415,7 +428,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.PULL.subscribe(new ChatDialogPullHandler());
 			BX.PULL.subscribe(new ChatUserPullHandler());
 			BX.PULL.subscribe(new ChatRecentPullHandler());
-			BX.PULL.subscribe(new DesktopPullHandler());
 			BX.PULL.subscribe(new NotificationPullHandler());
 			BX.PULL.subscribe(new OnlinePullHandler());
 			BX.PULL.subscribe(new SidebarPullHandler());
@@ -452,56 +464,80 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		executeStoredPullEvents()
 		{
-			if (!Feature.isLocalStorageEnabled)
+			if (Feature.isInstantPushEnabled)
 			{
-				PushHandler.updateList();
+				this.pushHandler.updateList(false)
+					.then(() => {
+						this.pushHandler.executeAction();
+						this.pushHandler.clearHistory();
+					})
+					.catch((error) => {
+						Logger.warn('Messenger.executeStoredPullEvents error:', error);
+					})
+				;
+
+				return;
 			}
 
-			PushHandler.executeAction();
+			this.pushHandler.executeAction();
+			this.pushHandler.clearHistory();
+		}
+
+		async fillDataBaseFromPush()
+		{
+			if (Feature.isInstantPushEnabled)
+			{
+				const eventList = await this.pushHandler.getPushEventList();
+
+				await this.databasePushMessageHandler.handleMessageBatch(eventList);
+			}
 		}
 
 		onAppActiveBefore()
 		{
 			BX.onViewLoaded(() => {
-				if (!Feature.isLocalStorageEnabled)
-				{
-					MessengerEmitter.emit(EventType.dialog.external.disableScrollToBottom);
+				MessengerEmitter.emit(EventType.dialog.external.disableScrollToBottom);
 
-					PushHandler.updateList();
-				}
+				this.pushUpdateListPromise = this.pushHandler.updateList();
 
-				this.refresh();
+				this.refresh({ shortMode: true });
 			});
 		}
 
 		onAppActive()
 		{
-			BX.onViewLoaded(() => {
-				PushHandler.executeAction();
+			BX.onViewLoaded(async () => {
+				if (this.pushUpdateListPromise instanceof Promise)
+				{
+					await this.pushUpdateListPromise;
+				}
+
+				this.pushHandler.executeAction();
 			});
 		}
 
 		onAppPaused()
 		{
-			PushHandler.clearHistory();
+			this.chatInitService.clearCommonActionResultStore();
+			this.pushHandler.clearHistory();
 		}
 
 		/**
+		 * @param {object} params
+		 * @param {boolean} params.shortMode
 		 * @override
 		 */
-		async refresh({ shortMode } = {})
+		async refresh(params = {})
 		{
+			const { shortMode = false } = params;
+
 			this.syncService.clearBackgroundSyncInterval();
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			SmileManager.init();
 
 			await this.queueCallBatch();
-			const methodList = [
-				...this.getBaseInitRestMethods(),
-				MessengerInitRestMethod.userData,
-			];
-
+			const methodList = this.getBaseInitRestMethods();
 			if (!shortMode)
 			{
 				methodList.push(
@@ -746,7 +782,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					MessengerEmitter.emit(EventType.navigation.changeTab, componentCode, ComponentCode.imNavigation);
 				}
 
-				this.visibilityManager.checkIsDialogVisible({ dialogId: openDialogOptions.dialogId })
+				this.visibilityManager.checkIsDialogVisible({
+					dialogId: openDialogOptions.dialogId,
+					currentContextOnly: true,
+				})
 					.then((isVisible) => {
 						if (isVisible)
 						{
@@ -820,6 +859,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			BX.postComponentEvent('onTabChange', ['notifications'], ComponentCode.imNavigation);
+		}
+
+		onShortRefresh()
+		{
+			Logger.log('EventType.messenger.refresh');
+
+			this.refresh({ shortMode: true });
 		}
 
 		openChatSearch()
@@ -956,6 +1002,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			Logger.log('Messenger.Setting.Chat.Change:', setting);
 		}
 
+		onFailRestoreConnection()
+		{
+			Logger.log('EventType.app.failRestoreConnection');
+
+			this.refresh();
+		}
+
 		/* region legacy dialog integration */
 
 		onChatDialogInitComplete(event)
@@ -1053,9 +1106,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		destructor()
 		{
+			// TODO: remove all of this
 			this.unsubscribeStoreEvents();
 			this.unsubscribeMessengerEvents();
 			this.unsubscribeExternalEvents();
+			this.databasePushMessageHandler.destructor();
+			this.chatPushMessageHandler.destructor();
 
 			if (this.connectionService)
 			{

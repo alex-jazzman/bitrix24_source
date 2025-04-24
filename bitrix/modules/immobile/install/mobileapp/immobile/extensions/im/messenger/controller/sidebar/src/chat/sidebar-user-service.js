@@ -33,18 +33,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-user-service', (require,
 		 */
 		getTitleDataById(id = this.dialogId, isCopilot = false, isNotes = this.isNotes)
 		{
-			if (isNotes)
-			{
-				return {
-					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PROFILE_TITLE_NOTES'),
-					desc: null,
-				};
-			}
-
 			const chatTitle = ChatTitle.createFromDialogId(id);
 			const titleData = {
-				title: chatTitle.getTitle(),
-				desc: chatTitle.getDescription(),
+				title: chatTitle.getTitle({ useNotes: true }),
+				desc: isNotes
+					? Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PROFILE_DESCRIPTION_NOTES')
+					: chatTitle.getDescription(),
 			};
 
 			if (isCopilot)

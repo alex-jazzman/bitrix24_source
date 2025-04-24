@@ -185,6 +185,12 @@ export class RecentModel extends BuilderModel
 					return false;
 				}
 
+				const isSelfChat = Number.parseInt(dialogId, 10) === Core.getUserId();
+				if (isSelfChat)
+				{
+					return false;
+				}
+
 				const showBirthday = this.store.getters['application/settings/get'](Settings.recent.showBirthday);
 				const hasTodayMessage = this.#hasTodayMessage(currentItem.messageId);
 

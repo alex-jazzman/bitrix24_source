@@ -31,7 +31,6 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 
 			foreach ($entityIds as $entityId)
 			{
-
 				if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 				{
 					$entityType = \Bitrix\Crm\Integration\Recyclebin\Dynamic::getEntityName($entityTypeId);
@@ -55,7 +54,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 		catch (\Exception $e)
 		{
-			$this->errorCollection[] = new Error($e->getMessage(), $e->getCode());
+			$this->errorCollection[] = new \Bitrix\Main\Error($e->getMessage(), $e->getCode());
 
 			return null;
 		}

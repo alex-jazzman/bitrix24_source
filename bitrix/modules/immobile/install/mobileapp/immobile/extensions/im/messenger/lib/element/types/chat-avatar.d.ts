@@ -26,5 +26,10 @@ export type AvatarDetail = {
 		letters: {
 			fontSize: number,
 		},
+		svg?: {
+			named: string,
+			tintColor: string,
+			size: number
+		}
 	},
 }

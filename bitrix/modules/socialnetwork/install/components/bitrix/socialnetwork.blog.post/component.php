@@ -108,7 +108,7 @@ $arResult["bPublicPage"] = (isset($arParams["PUB"]) && $arParams["PUB"] === "Y")
 
 if ($arResult["bExtranetUser"] && !$arResult["bPublicPage"])
 {
-	$arUserIdVisible = CExtranet::GetMyGroupsUsersSimple(SITE_ID);
+	$arUserIdVisible = CExtranet::getMyGroupsUsersSimple(CExtranet::getExtranetSiteId());
 }
 
 $arParams['FORM_ID'] = ($arParams['FORM_ID'] ?? '');

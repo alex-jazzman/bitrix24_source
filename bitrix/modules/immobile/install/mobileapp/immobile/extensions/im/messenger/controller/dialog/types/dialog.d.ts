@@ -2,7 +2,7 @@ import {DialogId} from "../../../types/common";
 import {DialoguesModelState} from "../../../model/types/dialogues";
 import {MessengerCoreStore } from "../../../../core/types/store";
 import {IServiceLocator} from "../../../lib/di/service-locator/types";
-import { ForwardMessageIds} from "../lib/reply-manager/types/reply-manager";
+import {ForwardMessageIds} from "../lib/reply-manager/types/reply-manager";
 
 declare type DialogOpenOptions = {
 	dialogId: string,
@@ -51,6 +51,7 @@ declare type DialogLocatorServices = {
 	'message-renderer': MessageRenderer,
 	'message-service': MessageService,
 	'reply-manager': ReplyManager,
+	'select-manager': SelectManager,
 	'store': MessengerCoreStore,
 	'view': DialogView,
 	'emitter': DialogEmitter,

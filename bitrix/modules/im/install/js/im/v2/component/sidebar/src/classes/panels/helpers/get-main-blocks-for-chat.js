@@ -14,10 +14,16 @@ export function getMainBlocksForChat(dialogId: string): string[]
 
 function getMainPanelType(dialogId: string): $Keys<typeof MainPanelType>
 {
-	const chatType = getChatType(dialogId);
 	if (isSupportChat(dialogId))
 	{
 		return MainPanelType.support24Question;
+	}
+
+	const chatType = getChatType(dialogId);
+
+	if (chatType === ChatType.user && Number.parseInt(dialogId, 10) === Core.getUserId())
+	{
+		return MainPanelType.notes;
 	}
 
 	return MainPanelType[chatType] ?? MainPanelType.chat;

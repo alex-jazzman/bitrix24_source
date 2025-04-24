@@ -35,7 +35,6 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		async saveFromModel(fileList)
 		{
 			const fileListToAdd = [];
-
 			fileList.forEach((file) => {
 				const fileToAdd = this.fileTable.validate(file);
 
@@ -48,7 +47,6 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		async saveFromRest(fileList)
 		{
 			const fileListToAdd = [];
-
 			fileList.forEach((file) => {
 				const fileToAdd = this.validateRestFile(file);
 
@@ -56,6 +54,24 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 			});
 
 			return this.fileTable.add(fileListToAdd, true);
+		}
+
+		async saveFromPush(fileList)
+		{
+			const fileListMergePromiseList = [];
+			fileList.forEach((file) => {
+				const fileToAdd = this.validatePushFile(file);
+				const mergePromise = this.fileTable.merge(fileToAdd.id, (existingFile) => {
+					return {
+						...existingFile,
+						...fileToAdd,
+					};
+				});
+
+				fileListMergePromiseList.push(mergePromise);
+			});
+
+			return Promise.all(fileListMergePromiseList);
 		}
 
 		validateRestFile(file)
@@ -166,6 +182,11 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 			}
 
 			return result;
+		}
+
+		validatePushFile(file)
+		{
+			return this.validateRestFile(file);
 		}
 	}
 

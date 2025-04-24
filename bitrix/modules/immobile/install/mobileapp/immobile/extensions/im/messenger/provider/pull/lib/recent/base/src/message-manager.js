@@ -5,7 +5,7 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 	const { Type } = require('type');
 	const { DialogType, MessageStatus } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	/* global ChatMessengerCommon */
 
 	/**
@@ -44,7 +44,7 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 
 			const message = this.prepareRecentMessage();
 
-			const recentItem = RecentConverter.fromPushToModel({
+			const recentItem = RecentDataConverter.fromPushToModel({
 				id: this.getDialogId(),
 				chat: this.getChat(),
 				user: this.getSender(),
@@ -148,6 +148,11 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 		isChannelChat()
 		{
 			return [DialogType.channel, DialogType.openChannel, DialogType.generalChannel].includes(this.getChatType());
+		}
+
+		isGeneralChannelChat()
+		{
+			return this.getChatType() === DialogType.generalChannel;
 		}
 
 		isOpenChannelChat()

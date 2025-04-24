@@ -1,6 +1,7 @@
 import { Type } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
+import { FileViewerContext } from 'im.v2.const';
 import { VideoPlayer } from	'im.v2.component.elements';
 
 import { ProgressBar } from './progress-bar';
@@ -56,7 +57,11 @@ export const VideoItem = {
 		},
 		viewerAttributes(): Object
 		{
-			return Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+			return Utils.file.getViewerDataAttributes({
+				viewerAttributes: this.file.viewerAttrs,
+				previewImageSrc: this.file.urlPreview,
+				context: FileViewerContext.dialog,
+			});
 		},
 		imageSize(): {width: string, height: string, backgroundSize: string}
 		{
@@ -117,8 +122,7 @@ export const VideoItem = {
 				return;
 			}
 
-			const url = this.file.urlDownload ?? this.file.urlShow;
-			window.open(url, '_blank');
+			window.open(this.file.urlDownload, '_blank');
 		},
 	},
 	template: `
@@ -130,7 +134,7 @@ export const VideoItem = {
 			<ProgressBar v-if="!isLoaded && handleLoading" :item="file" :messageId="messageItem.id" />
 			<VideoPlayer
 				:fileId="file.id"
-				:src="file.urlShow"
+				:src="file.urlDownload"
 				:previewImageUrl="file.urlPreview"
 				:elementStyle="imageSize"
 				:withAutoplay="autoplay"

@@ -14,8 +14,8 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const { EventType, MessageType, MessageIdType, AttachPickerId, EventFilterType } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { AnalyticsService } = require('im/messenger/provider/service/analytics');
 	const {
 		UnreadSeparatorMessage,
@@ -44,7 +44,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	});
 
 	const messagesCountToPageLoad = 20;
-	const logger = LoggerManager.getInstance().getLogger('dialog--view');
+	const logger = getLogger('dialog--view');
 
 	/**
 	 * @class DialogView
@@ -83,6 +83,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			 */
 			this.readingMessageId = options.lastReadId;
 			this.messageIdToScrollAfterSet = options.lastReadId;
+			this.delayedMessageListToRead = [];
 			/**
 			 * @private
 			 * @type {VisibilityManager}
@@ -477,16 +478,14 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 			else
 			{
-				setTimeout(() => {
-					this.scrollToFirstUnreadMessage(
-						false,
-						() => this.afterSetMessages(),
-					);
-					if (!this.unreadSeparatorAdded)
-					{
-						this.afterSetMessages();
-					}
-				}, 0);
+				this.scrollToFirstUnreadMessage(
+					false,
+					() => this.afterSetMessages(),
+				);
+				if (!this.unreadSeparatorAdded)
+				{
+					this.afterSetMessages();
+				}
 			}
 
 			this.resetContextOptions();
@@ -524,6 +523,25 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					indexList,
 					messageList,
 				} = this.getViewableMessages();
+
+				const messageIdList = messageList
+					.map((message) => message.id)
+					.filter((messageId) => {
+						return !String(messageId).startsWith(MessageIdType.templateSeparatorUnread)
+							&& !String(messageId).startsWith(MessageIdType.templateSeparatorDate)
+						;
+					})
+				;
+				const hasPushUnreadMessage = serviceLocator.get('core').getStore()
+					.getters['messagesModel/hasUnreadPushMessage'](messageIdList)
+				;
+
+				if (hasPushUnreadMessage)
+				{
+					this.delayedMessageListToRead = messageList;
+
+					return;
+				}
 				this.shouldEmitMessageRead = true;
 
 				logger.log(`${this.constructor.name}.afterSetMessages: visible messages:`, messageList);
@@ -534,6 +552,21 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 				this.readVisibleUnreadMessages(messageList);
 			}, 200);
+		}
+
+		readDelayedMessageList()
+		{
+			if (!Type.isArrayFilled(this.delayedMessageListToRead))
+			{
+				return;
+			}
+
+			logger.log('DialogView.readDelayedMessageList: ', this.delayedMessageListToRead);
+
+			this.readVisibleUnreadMessages(this.delayedMessageListToRead);
+			this.shouldEmitMessageRead = true;
+
+			this.delayedMessageListToRead = [];
 		}
 
 		/**
@@ -1442,14 +1475,20 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			};
 		}
 
-		async enableSelectMessagesMode()
+		/**
+		 * @param {boolean} [animated=false]
+		 */
+		async enableSelectMessagesMode(animated = false)
 		{
-			return this.selector.setEnabled(true);
+			return this.selector.setEnabled(true, animated);
 		}
 
-		async disableSelectMessagesMode()
+		/**
+		 * @param {boolean} [animated=false]
+		 */
+		async disableSelectMessagesMode(animated = false)
 		{
-			return this.selector.setEnabled(false);
+			return this.selector.setEnabled(false, animated);
 		}
 
 		/**
@@ -1469,9 +1508,12 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return this.actionPanel.show(titleData, buttons);
 		}
 
-		async actionPanelHide()
+		/**
+		 * @param {boolean} [animated=false]
+		 */
+		async actionPanelHide(animated = false)
 		{
-			return this.actionPanel.hide();
+			return this.actionPanel.hide(animated);
 		}
 
 		/**

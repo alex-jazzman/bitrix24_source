@@ -12,12 +12,12 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 	const { MessageService } = require('im/messenger/provider/service/message');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--chat-service');
+	const logger = getLogger('dialog--chat-service');
 
 	/**
 	 * @class LoadService
@@ -364,7 +364,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			const userId = message.author_id || message.authorId;
 			const userData = extractor.getUsers().filter((user) => user.id === userId);
 
-			const recentItem = RecentConverter.fromPushToModel({
+			const recentItem = RecentDataConverter.fromPushToModel({
 				id: extractor.getDialogId(),
 				chat: extractor.getMainChat(),
 				user: userData,

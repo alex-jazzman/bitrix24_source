@@ -171,6 +171,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			},
 			actionPanel: {
 				buttonTap: 'buttonTap',
+				disabledButtonTap: 'disabledButtonTap',
 			},
 			mentionPanel: {
 				itemTap: 'itemTap',
@@ -219,6 +220,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		},
 		calendar: {
 			addMeeting: 'Calendar.EventEditForm::onAfterEventSave',
+		},
+		push: {
+			messageBatch: 'ImMobile.Push:messageBatch',
+			completeExecuteBatch: 'ImMobile.Push:completeExecuteBatch',
 		},
 	});
 

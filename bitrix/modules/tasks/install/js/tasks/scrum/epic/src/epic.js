@@ -6,6 +6,7 @@ import {Label} from 'ui.label';
 import {UI} from 'ui.notification';
 
 import {RequestSender} from './request.sender';
+import { Filter } from './filter';
 
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
@@ -61,6 +62,8 @@ export class Epic extends EventEmitter
 		this.formData = null;
 
 		this.listData = null;
+		this.filterData = null;
+		this.filter = null;
 
 		this.editorHandler = null;
 
@@ -212,6 +215,8 @@ export class Epic extends EventEmitter
 
 		this.gridId = 'EntityEpicsGrid_' + this.groupId;
 
+		this.filterId = this.gridId;
+
 		const sidePanelId = 'tasks-scrum-epic-list-side-panel';
 
 		this.subscribeListToEvents(sidePanelId);
@@ -224,18 +229,7 @@ export class Epic extends EventEmitter
 					return Layout.createContent({
 						extensions: ['tasks.scrum.epic'],
 						title: Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TITLE'),
-						toolbar: ({Button}) => {
-							return [
-								new Button({
-									text: Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON'),
-									color: Button.Color.PRIMARY,
-									onclick: () => {
-										this.showAddForm();
-									}
-								}),
-							];
-						},
-						content: this.createListContent.bind(this),
+						content: this.createContainerContent.bind(this),
 						design: {
 							section: false
 						},
@@ -243,7 +237,13 @@ export class Epic extends EventEmitter
 					});
 				},
 				events: {
-					onLoad: this.onLoadList.bind(this)
+					onLoad: (event) => {
+						this.onLoadFilter(event);
+						this.onLoadList(event);
+					},
+					onClose: () => {
+						this.filter?.release();
+					},
 				}
 			}
 		);
@@ -467,7 +467,7 @@ export class Epic extends EventEmitter
 	{
 		return new Promise((resolve, reject) => {
 			ajax.runAction(
-				'bitrix:tasks.scrum.epic.getList',
+				'bitrix:tasks.scrum.epic.list',
 				{
 					data: {
 						groupId: this.groupId,
@@ -484,6 +484,28 @@ export class Epic extends EventEmitter
 				})
 			;
 		});
+	}
+
+	createFilterContent(): Promise
+	{
+		return new Promise((resolve, reject) => {
+			ajax.runAction(
+				'bitrix:tasks.scrum.epic.filter.get',
+				{
+					data: {
+						groupId: this.groupId,
+						gridId: this.gridId,
+					}
+				}
+			)
+				.then((response) => {
+					this.filterData = response.data;
+					resolve(this.renderFilter())
+				})
+				.catch((response) => {
+					this.requestSender.showErrorAlert(response);
+				});
+		})
 	}
 
 	createTasksListContent(completed: boolean): Promise
@@ -563,6 +585,18 @@ export class Epic extends EventEmitter
 		});
 	}
 
+	createContainerContent(): Promise
+	{
+		return Promise.all([
+			this.createFilterContent(),
+			this.createListContent(),
+		])
+			.then(([filterContent, listContent]) => {
+				return this.renderContainer(filterContent, listContent);
+			})
+		;
+	}
+
 	getEpic(): Promise
 	{
 		return new Promise((resolve, reject) => {
@@ -614,6 +648,24 @@ export class Epic extends EventEmitter
 				this.requestSender.showErrorAlert(response);
 			})
 		;
+	}
+
+	onLoadFilter(event)
+	{
+		this.sidePanel = event.getSlider();
+
+		const filterContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-filter');
+
+		if (this.filterData?.html)
+		{
+			Runtime.html(filterContainer, this.filterData.html)
+				.then(() => {
+					this.filter = new Filter({
+						filterId: this.filterId,
+					})
+				})
+			;
+		}
 	}
 
 	onLoadList(event)
@@ -731,7 +783,7 @@ export class Epic extends EventEmitter
 
 	getListUrl(): string
 	{
-		return '/bitrix/services/main/ajax.php?action=bitrix:tasks.scrum.epic.getList';
+		return '/bitrix/services/main/ajax.php?action=bitrix:tasks.scrum.epic.list';
 	}
 
 	renderAddForm(): HTMLElement
@@ -744,6 +796,26 @@ export class Epic extends EventEmitter
 				</div>
 			</div>
 		`;
+	}
+
+	renderContainer(filterContent, listContent): HTMLElement
+	{
+		return Tag.render`
+			<div class="tasks-scrum-epic-container">
+				<div class="tasks-scrum-epic-toolbar">
+					<button class="ui-btn ui-btn-success" onclick="${this.showAddForm.bind(this)}">
+						<span class="ui-btn-text">${Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON')}</span>
+					</button>
+					${filterContent}
+				</div>
+				${listContent}
+			</div>
+		`;
+	}
+
+	renderFilter(): HTMLElement
+	{
+		return Tag.render`<div class="tasks-scrum-epic-filter"></div>`;
 	}
 
 	renderList(): HTMLElement

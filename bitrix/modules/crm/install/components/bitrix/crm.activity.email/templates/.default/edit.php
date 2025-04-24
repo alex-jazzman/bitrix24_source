@@ -298,8 +298,8 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 		$fromValue = $activity['__parent']['SETTINGS']['EMAIL_META']['__email'];
 	}
 
-	$ownerTypeId = (int) $activity['OWNER_TYPE_ID'];
-	$ownerId = (int) $activity['OWNER_ID'];
+	$ownerTypeId = (int)$activity['OWNER_TYPE_ID'];
+	$ownerId = (int)$activity['OWNER_ID'];
 
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',

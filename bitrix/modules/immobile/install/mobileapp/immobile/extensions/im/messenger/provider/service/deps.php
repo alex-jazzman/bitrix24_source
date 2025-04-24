@@ -11,6 +11,7 @@ return [
 		'utils/object',
 		'utils/file',
 		'utils/function',
+		'utils/array',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/helper',
@@ -26,6 +27,7 @@ return [
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',
 		'im:messenger/lib/page-navigation',
+		'im:messenger/lib/converter/data/recent',
 		'im:messenger/provider/data',
 	],
 	'bundle' => [
@@ -60,6 +62,7 @@ return [
 		'./src/classes/chat/comments',
 		'./src/classes/chat/update',
 		'./src/classes/chat/create',
+		'./src/classes/chat/input-action-notify',
 		'./src/classes/message/load',
 		'./src/classes/message/reaction',
 		'./src/classes/message/status',

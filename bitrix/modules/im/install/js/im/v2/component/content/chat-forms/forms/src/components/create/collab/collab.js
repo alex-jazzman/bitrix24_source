@@ -20,11 +20,13 @@ import type { AccessRightsFormResult } from './components/rights-section';
 const CreateCollabErrorCode = {
 	emptyName: 'name',
 	duplicateName: 'ERROR_GROUP_NAME_EXISTS',
+	urlInName: 'ERROR_NAME_CONTAINS_URL',
 };
 
 const NotificationTextByErrorCode = {
 	[CreateCollabErrorCode.emptyName]: Loc.getMessage('IM_CREATE_COLLAB_ERROR_EMPTY_NAME'),
 	[CreateCollabErrorCode.duplicateName]: Loc.getMessage('IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME'),
+	[CreateCollabErrorCode.urlInName]: Loc.getMessage('IM_CREATE_COLLAB_ERROR_URL_IN_NAME'),
 	default: Loc.getMessage('IM_CREATE_CHAT_ERROR'),
 };
 

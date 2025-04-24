@@ -10,8 +10,8 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 	const { validate } = require('im/messenger/model/comment/validator');
 	const { commentDefaultElement } = require('im/messenger/model/comment/default-element');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--comment');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--comment');
 
 	const LAST_USERS_TO_SHOW = 3;
 

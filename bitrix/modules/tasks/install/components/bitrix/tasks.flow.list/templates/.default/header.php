@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\UI\Buttons;
@@ -29,9 +30,13 @@ $APPLICATION->setPageProperty(
 
 if ($arResult['canCreateFlow'])
 {
+	$editFormParams = Json::encode([
+		'isFeatureTrialable' => $arResult['isFeatureTrialable'],
+	]);
+
 	$click = (
 		($arResult['isFeatureEnabled'] || $arResult['canTurnOnTrial'])
-			? 'BX.Tasks.Flow.EditForm.createInstance'
+			? new Buttons\JsCode("BX.Tasks.Flow.EditForm.createInstance({$editFormParams});")
 			: new Buttons\JsCode('BX.Tasks.Flow.Grid.showFlowLimit();')
 	);
 
@@ -58,7 +63,7 @@ Toolbar::addFilter([
 	'THEME' => \Bitrix\Main\UI\Filter\Theme::LIGHT,
 ]);
 
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
+$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air';
 
 if ($isBitrix24Template)
 {
@@ -110,7 +115,10 @@ $isTrial = $arResult['isFeatureTrialable'] ? 'Y' : 'N';
 			</span>
 		</div>
 		<?php
+		if ($arResult['isBiAnalyticsAvailable'])
+		{
 			include_once ('bi-analytics.php');
+		}
 		?>
 	</div>
 </div>

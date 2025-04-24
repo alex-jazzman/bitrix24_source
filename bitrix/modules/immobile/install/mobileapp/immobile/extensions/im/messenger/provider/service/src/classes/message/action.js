@@ -2,15 +2,15 @@
  * @module im/messenger/provider/service/classes/message/action
  */
 jn.define('im/messenger/provider/service/classes/message/action', (require, exports, module) => {
+	/* global ChatMessengerCommon */
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
-	const { Counters } = require('im/messenger/lib/counters');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { runAction } = require('im/messenger/lib/rest');
-	const { EventType, RestMethod, DialogType } = require('im/messenger/const');
+	const { RestMethod, DialogType } = require('im/messenger/const');
 	const { QueueService } = require('im/messenger/provider/service/queue');
 
 	class ActionService
@@ -42,27 +42,48 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		{
 			if (modelMessage.error)
 			{
-				this.fullDeleteMessage(modelMessage, dialogId)
+				this.fullDeleteMessage([modelMessage], dialogId)
 					.catch((error) => Logger.error(error));
 
 				return;
 			}
 
-			await this.saveMessage(modelMessage);
+			await this.saveMessages([modelMessage]);
 
-			this.#localDelete(modelMessage, dialogId)
-				.then(() => this.deleteRequest(modelMessage.id))
+			this.#localDelete([modelMessage], dialogId)
+				.then(() => this.deleteRequest([modelMessage.id]))
 				.catch((errors) => {
 					Logger.error('ActionService.delete.deleteRequest.catch: ', errors);
 
-					this.restoreMessage(modelMessage.id, dialogId);
+					return this.restoreMessage([modelMessage.id], dialogId);
 				})
-				.finally(() => this.deleteTemporaryMessage(modelMessage.id))
-				.catch((errors) => Logger.error('ActionService.delete.deleteTemporaryMessage.catch: ', errors))
+				.finally(() => this.deleteTemporaryMessages([modelMessage.id]))
+				.catch((errors) => Logger.error('ActionService.delete.deleteTemporaryMessages.catch: ', errors))
 			;
 		}
 
-		async #localDelete(modelMessage, dialogId)
+		/**
+		 * @param {Array<string|number>} listId
+		 * @param {string} dialogId
+		 */
+		async deleteByIdList(listId, dialogId)
+		{
+			const messageModels = this.store.getters['messagesModel/getListByIds'](listId);
+			await this.saveMessages(messageModels);
+
+			this.#localDelete(messageModels, dialogId)
+				.then(() => this.deleteRequest(listId))
+				.catch((error) => {
+					Logger.error(`${this.constructor.name}.deleteByIdList.deleteRequest.catch: `, error);
+
+					return this.restoreMessage(listId, dialogId);
+				})
+				.finally(() => this.deleteTemporaryMessages(listId))
+				.catch((error) => Logger.error(`${this.constructor.name}.deleteByIdList.deleteTemporaryMessages.catch: `, error))
+			;
+		}
+
+		async #localDelete(messageModels, dialogId)
 		{
 			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
 
@@ -71,7 +92,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				case DialogType.comment:
 				{
 					return this.updateMessage(
-						modelMessage,
+						messageModels,
 						Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED'),
 						dialogId,
 						true,
@@ -84,26 +105,37 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				case DialogType.generalChannel:
 				case DialogType.openChannel:
 				{
-					return this.fullDeleteMessage(modelMessage, dialogId)
+					return this.fullDeleteMessage(messageModels, dialogId)
 						.catch((error) => Logger.error(error))
 					;
 				}
 
 				default:
 				{
-					if (this.isViewedByOtherUsers(modelMessage))
+					const viewedMessages = [];
+					const newMessages = [];
+					messageModels.forEach((message) => {
+						if (this.isViewedByOtherUsers(message))
+						{
+							return viewedMessages.push(message);
+						}
+
+						return newMessages.push(message);
+					});
+
+					if (newMessages)
 					{
-						return this.updateMessage(
-							modelMessage,
-							Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED'),
-							dialogId,
-							true,
-						)
-							.catch((error) => Logger.error(error))
-						;
+						await this.fullDeleteMessage(newMessages, dialogId).catch((error) => Logger.error(error));
 					}
 
-					return this.fullDeleteMessage(modelMessage, dialogId).catch((r) => Logger.error(r));
+					return this.updateMessage(
+						viewedMessages,
+						Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED'),
+						dialogId,
+						true,
+					)
+						.catch((error) => Logger.error(error))
+					;
 				}
 			}
 		}
@@ -117,31 +149,32 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		async updateText(messageId, text, dialogId)
 		{
 			const getMessageStateModel = this.store.getters['messagesModel/getById'](messageId);
-			await this.saveMessage(getMessageStateModel);
+			await this.saveMessages([getMessageStateModel]);
 
-			const clientDonePromise = this.updateMessage(getMessageStateModel, text, dialogId).catch((r) => Logger.error(r));
+			const clientDonePromise = this.updateMessage([getMessageStateModel], text, dialogId)
+				.catch((r) => Logger.error(r));
 
 			clientDonePromise
 				.then(() => this.updateRequest(getMessageStateModel.id, text))
 				.catch((errors) => {
 					Logger.error('ActionService.updateText.updateRequest.catch: ', errors);
 
-					this.restoreMessage(getMessageStateModel.id, dialogId);
+					return this.restoreMessage([getMessageStateModel.id], dialogId);
 				})
-				.finally(() => this.deleteTemporaryMessage(getMessageStateModel.id))
-				.catch((errors) => Logger.error('ActionService.updateText.deleteTemporaryMessage.catch: ', errors))
+				.finally(() => this.deleteTemporaryMessages([getMessageStateModel.id]))
+				.catch((errors) => Logger.error('ActionService.updateText.deleteTemporaryMessages.catch: ', errors))
 			;
 		}
 
 		/**
 		 * @desc call a rest request delete message
-		 * @param {number|string} messageId
+		 * @param {Array<MessageId>} messageIdList
 		 * @return {Promise}
 		 */
-		deleteRequest(messageId)
+		deleteRequest(messageIdList)
 		{
 			const deleteData = {
-				id: messageId,
+				messageIds: messageIdList,
 			};
 			if (this.isAvailableInternet())
 			{
@@ -152,7 +185,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				RestMethod.imV2ChatMessageDelete,
 				deleteData,
 				1,
-				messageId,
+				messageIdList,
 			);
 		}
 
@@ -180,7 +213,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				RestMethod.imV2ChatMessageUpdate,
 				updateData,
 				1,
-				messageId,
+				[messageId],
 			);
 		}
 
@@ -195,60 +228,58 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 
 		/**
 		 * @desc delete temporary message from vuex store
-		 * @param {number|string} messageId
+		 * @param {Array<MessageId>} messageIdList
 		 */
-		deleteTemporaryMessage(messageId)
+		deleteTemporaryMessages(messageIdList)
 		{
-			this.store.dispatch('messagesModel/deleteTemporaryMessage', { id: messageId })
+			this.store.dispatch('messagesModel/deleteTemporaryMessages', { ids: messageIdList })
 				.catch((errors) => {
-					Logger.error('ActionService.deleteTemporaryMessage from store error: ', errors);
+					Logger.error('ActionService.deleteTemporaryMessages from store error: ', errors);
 				});
 		}
 
 		/**
 		 * @desc save a message in local or vuex store
-		 * @param {MessagesModelState} modelMessage
+		 * @param {Array<MessagesModelState>} modelMessages
 		 * @return {Promise}
 		 */
-		saveMessage(modelMessage)
+		saveMessages(modelMessages)
 		{
-			return this.saveMessageToVuexStore(modelMessage).catch(
-				(err) => Logger.error('ActionService.saveMessage messagesModel catch', err),
+			return this.saveMessagesToVuexStore(modelMessages).catch(
+				(err) => Logger.error('ActionService.saveMessages messagesModel catch', err),
 			);
 		}
 
 		/**
 		 * @desc save a message in vuex store
-		 * @param {MessagesModelState} modelMessage
+		 * @param {Array<MessagesModelState>} modelMessages
 		 */
-		async saveMessageToVuexStore(modelMessage)
+		async saveMessagesToVuexStore(modelMessages)
 		{
-			await this.store.dispatch('messagesModel/setTemporaryMessages', modelMessage);
+			await this.store.dispatch('messagesModel/setTemporaryMessages', modelMessages);
 		}
 
 		/**
 		 * @desc update a message and recent
-		 * @param {MessagesModelState} modelMessage
+		 * @param {Array<MessagesModelState>} modelMessages
 		 * @param {string} dialogId
 		 * @param {string} text
 		 * @param {boolean} [isDeleted=false]
 		 */
-		async updateMessage(modelMessage, text, dialogId, isDeleted = false)
+		async updateMessage(modelMessages, text, dialogId, isDeleted = false)
 		{
-			if (!modelMessage.id)
-			{
-				return;
-			}
+			const preparedMessageList = modelMessages.map((message) => {
+				const preparedMessage = { ...message, text };
+				if (isDeleted)
+				{
+					preparedMessage.params = { ...message.params, IS_DELETED: 'Y', ATTACH: [] };
+				}
 
-			const params = isDeleted
-				? { ...modelMessage.params, IS_DELETED: 'Y', ATTACH: [] } : modelMessage.params;
-			await this.store.dispatch('messagesModel/update', {
-				id: modelMessage.id,
-				fields: {
-					text,
-					params,
-					files: modelMessage.files,
-				},
+				return preparedMessage;
+			});
+
+			await this.store.dispatch('messagesModel/updateList', {
+				messageList: preparedMessageList,
 			});
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
@@ -257,8 +288,9 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				return;
 			}
 
-			const messageRecentData = clone(modelMessage);
-			if (recentItem.message.id === modelMessage.id)
+			const lastMessage = preparedMessageList.sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+			const messageRecentData = clone(lastMessage);
+			if (recentItem.message.id === modelMessages[0]?.id)
 			{
 				messageRecentData.text = ChatMessengerCommon.purifyText(text, messageRecentData.params);
 				messageRecentData.file = Array.isArray(messageRecentData.files) && messageRecentData.files.length > 0;
@@ -276,39 +308,41 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		}
 
 		/**
-		 * @desc call full delete message and recent for store
-		 * @param {MessagesModelState} modelMessage
+		 * @desc full delete messages
+		 * @param {Array<MessagesModelState>} modelMessages
 		 * @param {string} dialogId
 		 */
-		async fullDeleteMessage(modelMessage, dialogId)
+		async fullDeleteMessage(modelMessages, dialogId)
 		{
-			const messages = this.store.getters['messagesModel/getByChatId'](modelMessage.chatId);
-
-			if (!Type.isArrayFilled(messages))
-			{
-				return;
-			}
-
-			const lastMessage = messages.length > 1 ? messages[messages.length - 1] : null;
-			const newLastMessage = messages.length > 2 ? messages[messages.length - 2] : null;
-
-			this.store.dispatch('messagesModel/delete', { id: modelMessage.id })
-				.catch((err) => Logger.error('ActionService.fullDeleteMessage messagesModel catch', err))
+			await this.store.dispatch('messagesModel/deleteByIdList', { idList: modelMessages.map((message) => message.id) })
+				.catch((error) => Logger.error(`${this.constructor.name}.fullDeleteMessage catch:`, error))
 			;
-
-			if (lastMessage?.id !== modelMessage.id)
-			{
-				return;
-			}
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 			if (!recentItem)
 			{
-				return;
+				return false;
 			}
 
+			const currentRecentMessageId = recentItem.message?.id;
+			const deletedRecentMessage = modelMessages.find((modelMessage) => {
+				if (modelMessage.id === currentRecentMessageId)
+				{
+					return modelMessage;
+				}
+
+				return false;
+			});
+
+			if (Type.isNil(deletedRecentMessage))
+			{
+				return false;
+			}
+
+			const messages = this.store.getters['messagesModel/getByChatId'](modelMessages[0].chatId);
+			const newLastMessage = messages.length > 1 ? messages[messages.length - 1] : null;
 			let newRecentItem = recentItem;
-			if (recentItem.uploadingState?.message?.id === modelMessage.id)
+			if (recentItem.uploadingState?.message?.id === deletedRecentMessage.id)
 			{
 				newRecentItem = {
 					...recentItem,
@@ -329,7 +363,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 			}
 			else
 			{
-				return;
+				return false;
 			}
 
 			const dialogItem = this.store.getters['dialoguesModel/getById'](dialogId);
@@ -337,24 +371,13 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				dialogItem,
 				{
 					message: {
-						senderId: newLastMessage.authorId,
-						id: newLastMessage.id,
+						senderId: newLastMessage?.authorId,
+						id: newLastMessage?.id,
 					},
 				},
 			);
 
-			try
-			{
-				await this.store.dispatch('recentModel/set', [newRecentItem])
-					.then(() => {
-						this.saveShareDialogCache();
-					})
-				;
-			}
-			catch (error)
-			{
-				Logger.error(`${this.constructor.name}.fullDeleteMessage.recentModel/set.catch:`, error);
-			}
+			return this.updateRecentItem(newRecentItem);
 		}
 
 		/**
@@ -404,7 +427,18 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		 */
 		async updateRecentItem(recentItem)
 		{
-			return this.store.dispatch('recentModel/set', [recentItem]);
+			try
+			{
+				await this.store.dispatch('recentModel/set', [recentItem])
+					.then(() => {
+						this.saveShareDialogCache();
+					})
+				;
+			}
+			catch (error)
+			{
+				Logger.error(`${this.constructor.name}.updateRecentItem.recentModel/set.catch:`, error);
+			}
 		}
 
 		/**
@@ -420,48 +454,79 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		{
 			const firstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
 			ShareDialogCache.saveRecentItemList(firstPage)
-				.then((cache) => {
+				?.then((cache) => {
 					Logger.log('ActionService: Saving recent items for the share dialog is successful.', cache);
 				})
-				.catch((cache) => {
+				?.catch((cache) => {
 					Logger.log('ActionService: Saving recent items for share dialog failed.', firstPage, cache);
 				})
 			;
 		}
 
 		/**
-		 * @param {string|numberOriginal} messageId
-		 * @param {string|numberOriginal} dialogId
+		 * @param {Array<MessageId>} messageIdList
+		 * @param {DialogId} dialogId
 		 */
-		restoreMessage(messageId, dialogId)
+		async restoreMessage(messageIdList, dialogId)
 		{
-			const tempMessage = this.store.getters['messagesModel/getTemporaryMessageById'](messageId);
-			if (!tempMessage)
+			const tempMessages = this.store.getters['messagesModel/getTemporaryMessagesByIdList'](messageIdList);
+			if (!Type.isArrayFilled(tempMessages))
 			{
 				return false;
 			}
 
-			if (this.isViewedByOtherUsers(tempMessage))
+			const updateMessages = [];
+			const addMessages = [];
+			tempMessages.forEach((message) => {
+				// eslint-disable-next-line no-param-reassign
+				message.params = { ...message.params, IS_DELETED: 'N' };
+				if (this.isViewedByOtherUsers(message))
+				{
+					return updateMessages.push(message);
+				}
+
+				return addMessages.push(message);
+			});
+
+			if (updateMessages.length > 0)
 			{
-				return this.store.dispatch('messagesModel/update', {
-					id: messageId,
-					fields: {
-						...tempMessage,
-					},
+				await this.store.dispatch('messagesModel/updateList', {
+					messageList: updateMessages,
 				});
 			}
 
-			return this.store.dispatch('messagesModel/add', tempMessage)
-				.then(() => {
-					const scrollToBottomEventData = {
-						dialogId,
-						withAnimation: true,
-						force: true,
-					};
+			if (addMessages.length > 0)
+			{
+				await this.store.dispatch('messagesModel/addList', { messageList: addMessages });
+			}
 
-					BX.postComponentEvent(EventType.dialog.external.scrollToBottom, [scrollToBottomEventData]);
-				})
-				.catch((ex) => Logger.error('ActionService.restoreMessage.add error', ex));
+			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
+			if (!recentItem)
+			{
+				return false;
+			}
+
+			const messages = this.store.getters['messagesModel/getByChatId'](tempMessages[0].chatId);
+			const newLastMessage = messages.length > 1 ? messages[messages.length - 1] : null;
+			const newRecentItem = recentItem;
+			if (newLastMessage)
+			{
+				newRecentItem.message = {
+					text: newLastMessage.text,
+					date: newLastMessage.date,
+					author_id: newLastMessage.authorId,
+					id: newLastMessage.id,
+					file: newLastMessage.files ? (newLastMessage.files.length > 0) : false,
+				};
+
+				newRecentItem.lastActivityDate = newLastMessage.date;
+			}
+			else
+			{
+				return false;
+			}
+
+			return this.updateRecentItem(newRecentItem);
 		}
 	}
 

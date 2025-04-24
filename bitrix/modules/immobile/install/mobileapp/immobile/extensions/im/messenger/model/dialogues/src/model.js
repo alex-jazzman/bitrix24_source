@@ -272,6 +272,23 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				}
 			},
 
+			/** @function dialoguesModel/setFromPush */
+			setFromPush: (store, payload) => {
+				if (!Type.isArrayFilled(payload))
+				{
+					return;
+				}
+
+				const dialogList = payload.map((dialog) => validate(dialog));
+
+				store.commit('setFromPush', {
+					actionName: 'setFromPush',
+					data: {
+						dialogList,
+					},
+				});
+			},
+
 			/** @function dialoguesModel/add */
 			add: (store, payload) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
@@ -380,7 +397,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				}
 
 				if (payload.isForceUpdate === false
-					&& isEqual(existingItem.tariffRestrictions, payload.tariffRestrictions, true))
+					&& isEqual(existingItem.tariffRestrictions, payload.tariffRestrictions))
 				{
 					return false;
 				}
@@ -398,49 +415,94 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				return true;
 			},
 
-			/** @function dialoguesModel/updateWritingList */
-			updateWritingList: (store, payload) => {
-				const existingItem = store.state.collection[String(payload.dialogId)];
+			/** @function dialoguesModel/setInputAction */
+			setInputAction: (store, payload) => {
+				const { dialogId, userId, userFirstName, type } = payload;
+				const existingItem = store.state.collection[String(dialogId)];
 
 				if (!existingItem)
 				{
 					return false;
 				}
 
-				const oldWritingList = clone(existingItem.writingList);
-				let newWritingList = clone(oldWritingList);
-				let isHasChange = false;
-				payload.fields.writingList.forEach((user) => {
-					const userId = user.userId;
-					const isWriting = user.isWriting;
-
-					const userIndex = oldWritingList.findIndex((user) => user.userId === userId);
-					if (userIndex !== -1 && !isWriting)
-					{
-						isHasChange = true;
-						newWritingList = newWritingList.filter((el, index) => index !== userIndex);
-					}
-
-					if (userIndex === -1)
-					{
-						isHasChange = true;
-						newWritingList.push({ ...user });
-					}
-				});
-
-				const validateList = validate({ writingList: newWritingList });
-				if (isHasChange)
+				const inputActions = clone(existingItem.inputActions);
+				const indexInputActionsByUser = inputActions.findIndex((item) => item.userId === userId);
+				const inputActionsByUser = inputActions[indexInputActionsByUser];
+				const hasCurrentAction = inputActionsByUser?.actions.includes(type);
+				if (hasCurrentAction)
 				{
-					store.commit('update', {
-						actionName: 'updateWritingList',
-						data: {
-							dialogId: payload.dialogId,
-							fields: validateList,
-						},
+					return false;
+				}
+
+				const currentAction = inputActionsByUser?.actions ?? [];
+				const newInputActions = {
+					dialogId,
+					userId,
+					userFirstName,
+					actions: [...currentAction, type],
+				};
+
+				let validatedInputActions = [];
+				if (indexInputActionsByUser === -1)
+				{
+					validatedInputActions = validate({
+						inputActions: [...inputActions, newInputActions],
+					});
+				}
+				else
+				{
+					inputActions.splice(indexInputActionsByUser, 1, newInputActions);
+					validatedInputActions = validate({
+						inputActions,
 					});
 				}
 
-				return true;
+				store.commit('update', {
+					actionName: 'updateInputAction',
+					data: {
+						dialogId,
+						fields: validatedInputActions,
+					},
+				});
+			},
+
+			/** @function dialoguesModel/removeInputAction */
+			removeInputAction: (store, payload) => {
+				const { dialogId, userId, userFirstName } = payload;
+				const existingItem = store.state.collection[String(dialogId)];
+
+				if (!existingItem)
+				{
+					return false;
+				}
+				const inputActions = clone(existingItem.inputActions);
+				const indexInputActionsByUser = inputActions.findIndex((item) => item.userId === userId);
+				const actions = inputActions[indexInputActionsByUser]?.actions;
+
+				const newActions = actions.slice(1);
+				if (newActions.length === 0)
+				{
+					inputActions.splice(indexInputActionsByUser, 1);
+				}
+				else
+				{
+					const newInputActions = {
+						dialogId,
+						userId,
+						userFirstName,
+						actions: newActions,
+					};
+
+					inputActions.splice(indexInputActionsByUser, 1, newInputActions);
+				}
+
+				store.commit('update', {
+					actionName: 'updateInputAction',
+					data: {
+						dialogId,
+						fields: validate({ inputActions }),
+					},
+				});
 			},
 
 			/** @function dialoguesModel/delete */
@@ -826,6 +888,25 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 
 			/**
 			 * @param state
+			 * @param {MutationPayload<DialoguesSetFromPushData, DialoguesSetFromPushActions>} payload
+			 */
+			setFromPush: (state, payload) => {
+				logger.log('dialoguesModel: setFromPush mutation', payload);
+
+				const { dialogList } = payload.data;
+
+				for (const dialog of dialogList)
+				{
+					state.collection[dialog.dialogId] = {
+						...dialogDefaultElement,
+						...state.collection[dialog.dialogId],
+						...dialog,
+					};
+				}
+			},
+
+			/**
+			 * @param state
 			 * @param {MutationPayload<DialoguesAddData, DialoguesAddActions>} payload
 			 */
 			add: (state, payload) => {
@@ -862,7 +943,6 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 			 */
 			update: (state, payload) => {
 				logger.log('dialoguesModel: update mutation', payload);
-
 				const {
 					dialogId,
 					fields,

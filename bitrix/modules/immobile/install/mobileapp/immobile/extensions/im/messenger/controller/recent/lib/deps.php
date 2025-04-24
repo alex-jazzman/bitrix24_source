@@ -9,7 +9,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/cache/share-dialog',
-		'im:messenger/lib/converter',
+		'im:messenger/lib/converter/ui/recent',
 		'im:messenger/lib/element',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/params',

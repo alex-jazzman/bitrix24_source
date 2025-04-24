@@ -1,6 +1,8 @@
-import { ajax as Ajax, Dom, Event, Loc, Tag, Reflection } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Tag, Text, Reflection } from 'main.core';
 import { BaseEvent } from 'main.core.events';
+import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonManager, ButtonState } from 'ui.buttons';
+import { Slider as ImportSlider } from 'biconnector.dataset-import';
 
 type SettingField = {
 	name: string,
@@ -10,9 +12,10 @@ type SettingField = {
 }
 
 type Props = {
-	sourceFields: { id: number, title: string, type: string },
+	sourceFields: { id: number, title: string, type: string, active: boolean },
 	fieldsConfig: { [key: string]: SettingField[] },
 	supportedDatabases: { code: string; name: string }[],
+	closeAfterCreate: boolean,
 }
 
 class ExternalConnectionForm
@@ -270,10 +273,18 @@ class ExternalConnectionForm
 				});
 			})
 			.then((response) => {
-				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreated', {
+				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSave', {
 					connection: response.data.connection,
 				});
-				BX.SidePanel.Instance.getTopSlider().close();
+				if (this.#props.closeAfterCreate)
+				{
+					this.#closeSlider();
+				}
+				else
+				{
+					this.#showSaveSuccessPopup(response.data.connection);
+					saveButton.setWaiting(false);
+				}
 			})
 			.catch((response) => {
 				saveButton.setWaiting(false);
@@ -289,6 +300,90 @@ class ExternalConnectionForm
 				}
 				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreationError');
 			});
+	}
+
+	#showSaveSuccessPopup(connection: { id: any, name: string, type: string })
+	{
+		let popup: ?Popup = null;
+
+		// show for new or active sources only
+		const showCreateDatasetButton = !(Object.hasOwn(this.#props.sourceFields, 'id')) || this.#props.sourceFields.active;
+		const createDatasetButton = showCreateDatasetButton ? Tag.render`
+			<a class="ui-btn ui-btn-md ui-btn-primary">
+				${Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET')}
+			</a>
+		` : false;
+
+		const closeButton = Tag.render`
+			<a class="ui-btn ui-btn-md ui-btn-light-border">
+				${Loc.getMessage('EXTERNAL_CONNECTION_CLOSE')}
+			</a>
+		`;
+
+		const onPopupClose = () => {
+			this.#closeSlider();
+		};
+
+		const sourceType = this.#props.sourceFields.type ?? this.#props.supportedDatabases[0].code;
+
+		Event.bind(createDatasetButton, 'click', () => {
+			onPopupClose();
+			ImportSlider.open(sourceType, 0, {
+				connectionId: connection.id,
+				connectionType: connection.type,
+			});
+		});
+
+		Event.bind(closeButton, 'click', () => {
+			onPopupClose();
+		});
+
+		const isEditMode = Boolean(this.#props.sourceFields.id);
+		const popupMessageCode = isEditMode ? 'EXTERNAL_CONNECTION_EDIT_SUCCESS' : 'EXTERNAL_CONNECTION_SAVE_SUCCESS';
+		const popupText = Loc.getMessage(
+			popupMessageCode,
+			{ '#CONNECTION_TITLE#': Text.encode(this.#getConnectionValues().title) },
+		);
+
+		const popupContent = Tag.render`
+			<div class="biconnector-popup--full-height">
+				<div class="biconnector-save-progress-popup">
+					<div class="biconnector-save-progress-popup__content">
+						<div class="biconnector-save-progress-popup__success-logo"></div>
+						<div class="biconnector-save-progress-popup__texts">
+							<h3 class="biconnector-save-progress-popup__header">${popupText}</h3>
+						</div>
+						<div class="biconnector-save-progress-popup__buttons">
+							${createDatasetButton}
+							${closeButton}
+						</div>
+					</div>
+				</div>
+			</div>
+		`;
+
+		popup = new Popup({
+			content: popupContent,
+			autoHide: true,
+			events: {
+				onPopupClose,
+				onPopupDestroy: onPopupClose,
+			},
+			fixed: true,
+			width: 500,
+			minHeight: 299,
+			closeIcon: true,
+			noAllPaddings: true,
+			overlay: true,
+		});
+
+		popup.show();
+	}
+
+	#closeSlider()
+	{
+		BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSliderClose');
+		BX.SidePanel.Instance.getTopSlider().close();
 	}
 }
 

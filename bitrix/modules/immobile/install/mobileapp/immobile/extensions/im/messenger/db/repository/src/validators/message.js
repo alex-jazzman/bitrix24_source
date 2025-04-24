@@ -162,6 +162,81 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 		return result;
 	}
 
+	function validatePush(message)
+	{
+		const result = {};
+
+		if (Type.isNumber(message.id))
+		{
+			result.id = message.id;
+		}
+
+		if (Type.isNumber(message.chatId))
+		{
+			result.chatId = message.chatId;
+		}
+
+		if (Type.isNumber(message.senderId) || Type.isStringFilled(message.senderId))
+		{
+			result.authorId = Number(message.senderId);
+		}
+
+		if (Type.isStringFilled(message.date))
+		{
+			result.date = DateHelper.cast(message.date);
+		}
+		else if (Type.isDate(message.date))
+		{
+			result.date = message.date;
+		}
+
+		if (Type.isNumber(message.text) || Type.isStringFilled(message.text))
+		{
+			result.text = message.text.toString();
+		}
+
+		if (Type.isPlainObject(message.params))
+		{
+			const { params, fileIds, attach, richLinkId } = validateParams(message.params);
+			result.params = params;
+			result.files = fileIds;
+
+			if (Type.isUndefined(result.attach))
+			{
+				result.attach = attach;
+			}
+
+			if (Type.isUndefined(result.richLinkId))
+			{
+				result.richLinkId = richLinkId;
+			}
+		}
+
+		if (Type.isNumber(message.prevId))
+		{
+			result.previousId = message.prevId;
+		}
+
+		if (Type.isNumber(message.recipientId) || Type.isStringFilled(message.recipientId))
+		{
+			result.dialogId = message.recipientId;
+		}
+
+		if (Type.isNumber(message.textOriginal) || Type.isStringFilled(message.textOriginal))
+		{
+			result.textOriginal = message.textOriginal.toString();
+		}
+
+		result.system = message.system === 'Y';
+
+		if (Type.isBoolean(message.push))
+		{
+			result.push = message.push;
+		}
+
+		return result;
+	}
+
 	function validateParams(rawParams)
 	{
 		const params = {};
@@ -220,5 +295,8 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 		return { params, fileIds, attach, richLinkId, keyboard };
 	}
 
-	module.exports = { validate };
+	module.exports = {
+		validate,
+		validatePush,
+	};
 });

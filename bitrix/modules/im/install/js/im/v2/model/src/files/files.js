@@ -334,7 +334,8 @@ export class FilesModel extends BuilderModel
 				!file.urlDownload
 				|| file.urlDownload.startsWith('http')
 				|| file.urlDownload.startsWith('bx')
-				|| file.urlPreview.startsWith('file')
+				|| file.urlDownload.startsWith('file')
+				|| file.urlDownload.startsWith('blob')
 			)
 			{
 				result.urlDownload = file.urlDownload;
@@ -365,71 +366,7 @@ export class FilesModel extends BuilderModel
 
 		if (Type.isPlainObject(file.viewerAttrs))
 		{
-			result.viewerAttrs = this.validateViewerAttributes(file.viewerAttrs);
-		}
-
-		return result;
-	}
-
-	validateViewerAttributes(viewerAttrs): ImModelFile['ViewerAttrs']
-	{
-		const result = {
-			viewer: true,
-		};
-
-		if (Type.isString(viewerAttrs.actions))
-		{
-			result.actions = viewerAttrs.actions;
-		}
-
-		if (Type.isString(viewerAttrs.objectId))
-		{
-			result.objectId = viewerAttrs.objectId;
-		}
-
-		if (Type.isString(viewerAttrs.src))
-		{
-			result.src = viewerAttrs.src;
-		}
-
-		if (Type.isString(viewerAttrs.title))
-		{
-			result.title = viewerAttrs.title;
-		}
-
-		if (Type.isString(viewerAttrs.viewerGroupBy))
-		{
-			result.viewerGroupBy = viewerAttrs.viewerGroupBy;
-		}
-
-		if (Type.isString(viewerAttrs.viewerType))
-		{
-			result.viewerType = viewerAttrs.viewerType;
-		}
-
-		if (Type.isString(viewerAttrs.viewerPreview))
-		{
-			result.viewerPreview = viewerAttrs.viewerPreview;
-		}
-
-		if (Type.isString(viewerAttrs.viewerTypeClass))
-		{
-			result.viewerTypeClass = viewerAttrs.viewerTypeClass;
-		}
-
-		if (Type.isBoolean(viewerAttrs.viewerSeparateItem))
-		{
-			result.viewerSeparateItem = viewerAttrs.viewerSeparateItem;
-		}
-
-		if (Type.isString(viewerAttrs.viewerExtension))
-		{
-			result.viewerExtension = viewerAttrs.viewerExtension;
-		}
-
-		if (Type.isNumber(viewerAttrs.imChatId))
-		{
-			result.imChatId = viewerAttrs.imChatId;
+			result.viewerAttrs = file.viewerAttrs;
 		}
 
 		return result;

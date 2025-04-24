@@ -20,6 +20,10 @@ const TitleIcons = {
 	birthday: 'birthday',
 };
 
+export const ChatTitleType = {
+	notes: 'notes',
+};
+
 export const ChatTitle = {
 	name: 'ChatTitle',
 	props: {
@@ -54,6 +58,10 @@ export const ChatTitle = {
 		twoLine: {
 			type: Boolean,
 			default: false,
+		},
+		customType: {
+			type: String,
+			default: '',
 		},
 	},
 	computed:
@@ -98,6 +106,11 @@ export const ChatTitle = {
 		},
 		dialogName(): string
 		{
+			if (this.customType === ChatTitleType.notes)
+			{
+				return this.loc('IM_SEARCH_MY_NOTES');
+			}
+
 			if (this.text)
 			{
 				return Text.encode(this.text);
@@ -130,6 +143,11 @@ export const ChatTitle = {
 					return DialogSpecialType.support24;
 				}
 
+				return '';
+			}
+
+			if (this.isSelfChat)
+			{
 				return '';
 			}
 
@@ -166,7 +184,7 @@ export const ChatTitle = {
 		},
 		leftIcon(): string
 		{
-			if (!this.withLeftIcon)
+			if (!this.withLeftIcon || this.isSelfChat)
 			{
 				return '';
 			}
@@ -256,9 +274,14 @@ export const ChatTitle = {
 		},
 		tooltipText(): string
 		{
+			if (this.customType === ChatTitleType.notes)
+			{
+				return this.loc('IM_SEARCH_MY_NOTES');
+			}
+
 			if (this.isSelfChat && this.showItsYou)
 			{
-				return `${this.dialog.name} (${this.$Bitrix.Loc.getMessage('IM_LIST_RECENT_CHAT_SELF')})`;
+				return `${this.dialog.name} (${this.loc('IM_LIST_RECENT_CHAT_SELF')})`;
 			}
 
 			return this.dialog.name;
@@ -268,19 +291,25 @@ export const ChatTitle = {
 			return this.$store.getters['application/settings/get'](Settings.recent.showBirthday);
 		},
 	},
+	methods: {
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
+		},
+	},
 	template: `
 		<div :class="containerClasses" class="bx-im-chat-title__scope bx-im-chat-title__container">
 			<span class="bx-im-chat-title__content">
 				<span v-if="leftIcon" :class="'--' + leftIcon" class="bx-im-chat-title__icon"></span>
 				<span
-					:class="[specialColor? '--' + specialColor : '']"
+					:class="[specialColor ? '--' + specialColor : '']"
 					:style="{color: color}"
 					:title="tooltipText"
 					class="bx-im-chat-title__text"
 					v-html="dialogName"
 				></span>
 				<strong v-if="isSelfChat && showItsYou">
-					<span class="bx-im-chat-title__text --self">({{ $Bitrix.Loc.getMessage('IM_LIST_RECENT_CHAT_SELF') }})</span>
+					<span class="bx-im-chat-title__text --self">({{ loc('IM_LIST_RECENT_CHAT_SELF') }})</span>
 				</strong>
 				<span v-if="withMute && isChatMuted" class="bx-im-chat-title__muted-icon"></span>
 			</span>

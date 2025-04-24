@@ -848,11 +848,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	const CreateCollabErrorCode = {
 	  emptyName: 'name',
-	  duplicateName: 'ERROR_GROUP_NAME_EXISTS'
+	  duplicateName: 'ERROR_GROUP_NAME_EXISTS',
+	  urlInName: 'ERROR_NAME_CONTAINS_URL'
 	};
 	const NotificationTextByErrorCode = {
 	  [CreateCollabErrorCode.emptyName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_EMPTY_NAME'),
 	  [CreateCollabErrorCode.duplicateName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME'),
+	  [CreateCollabErrorCode.urlInName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_URL_IN_NAME'),
 	  default: main_core.Loc.getMessage('IM_CREATE_CHAT_ERROR')
 	};
 	const CollabCreation = {
@@ -1660,11 +1662,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	const UpdateCollabErrorCode = {
 	  emptyName: 'name',
-	  duplicateName: 'ERROR_GROUP_NAME_EXISTS'
+	  duplicateName: 'ERROR_GROUP_NAME_EXISTS',
+	  urlInName: 'ERROR_NAME_CONTAINS_URL'
 	};
 	const NotificationTextByErrorCode$1 = {
 	  [UpdateCollabErrorCode.emptyName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_EMPTY_NAME'),
 	  [UpdateCollabErrorCode.duplicateName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME'),
+	  [UpdateCollabErrorCode.urlInName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_URL_IN_NAME'),
 	  default: main_core.Loc.getMessage('IM_UPDATE_CHAT_ERROR')
 	};
 

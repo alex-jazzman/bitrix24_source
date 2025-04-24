@@ -66,6 +66,7 @@ export const LatestSearchResult = {
 				:key="item.dialogId"
 				:dialogId="item.dialogId"
 				:selected="isSelected(item.dialogId)"
+				:replaceWithNotes="showMyNotes"
 				@clickItem="$emit('clickItem', $event)"
 				@openContextMenu="$emit('openContextMenu', $event)"
 			/>

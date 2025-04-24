@@ -13,6 +13,13 @@ jn.define('im/messenger/const/waiting-entity', (require, exports, module) => {
 				channel: 'sync-filler-channel',
 			},
 		},
+		push: {
+			messageHandler: {
+				database: 'database',
+				chat: 'chat',
+				copilot: 'copilot',
+			},
+		},
 	};
 
 	module.exports = { WaitingEntity };

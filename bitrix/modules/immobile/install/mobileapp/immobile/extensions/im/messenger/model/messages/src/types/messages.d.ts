@@ -1,8 +1,7 @@
-import {MessengerModel, PayloadData} from "../../../base";
-import {DialogType} from "../../../dialogues/src/types";
-import {ReactionsModelState} from "../reactions/types";
-import {KeyboardButtonConfig} from "./keyboard";
-
+import {MessengerModel, PayloadData} from '../../../base';
+import {DialogType} from '../../../dialogues/src/types';
+import {ReactionsModelState, MessageId} from '../reactions/types';
+import {KeyboardButtonConfig} from './keyboard';
 
 declare type MessagesModelCollection = {
 	collection: Record<number | string, MessagesModelState>,
@@ -25,14 +24,7 @@ export type MessagesModelState = {
 	date: Date,
 	text: string,
 	loadText: string,
-	params?: {
-		ATTACH?: Array<Object>,
-		TS: string,
-		REACTION: Object, //don't use. See property reactions
-		URL_ONLY?: 'Y' | 'N',
-		URL_ID?: Array<string>,
-		componentId: string,
-	},
+	params?: MessageParams,
 	replaces: Array<Object>,
 	files: Array<number | string>,
 	unread: boolean,
@@ -54,6 +46,16 @@ export type MessagesModelState = {
 	attach: Array<AttachConfig>,
 	keyboard: Array<KeyboardButtonConfig>,
 	richLinkId: number,
+}
+
+declare type MessageParams = {
+	ATTACH?: Array<Object>,
+	FILE_ID?: Array<Object>,
+	TS: string,
+	REACTION: Object, // Don't use. See property reactions
+	URL_ONLY?: 'Y' | 'N',
+	URL_ID?: Array<string>,
+	componentId: string,
 }
 
 declare type AttachConfig = {
@@ -160,11 +162,13 @@ export type MessagesModelActions =
 	| 'messagesModel/store'
 	| 'messagesModel/storeToLocalDatabase'
 	| 'messagesModel/setFromLocalDatabase'
+	| 'messagesModel/setFromPush'
 	| 'messagesModel/add'
 	| 'messagesModel/addToChatCollection'
 	| 'messagesModel/setPinned'
 	| 'messagesModel/updateWithId'
 	| 'messagesModel/update'
+	| 'messagesModel/updateList'
 	| 'messagesModel/updateParams'
 	| 'messagesModel/delete'
 	| 'messagesModel/readMessages'
@@ -183,6 +187,7 @@ export type MessagesModelActions =
 export type MessagesModelMutation =
 	'messagesModel/setChatCollection'
 	| 'messagesModel/store'
+	| 'messagesModel/setFromPush'
 	| 'messagesModel/setPinned'
 	| 'messagesModel/updateWithId'
 	| 'messagesModel/update'
@@ -244,16 +249,24 @@ export interface MessagesUpdateWithIdData extends PayloadData
 
 export type MessagesUpdateActions =
 	'update'
+	| 'updateList'
 	| 'readMessages'
 	| 'setViewedByOthers'
 	| 'updateLoadTextProgress'
 	| 'setAudioState'
 	| 'deleteAttach'
 	;
+export type MessageUpdateData =
+	{
+		id: number;
+		fields: Partial<MessagesModelState>;
+	}
+
 export interface MessagesUpdateData extends PayloadData
 {
-	id: number;
-	fields: Partial<MessagesModelState>;
+	id?: number;
+	fields?: Partial<MessagesModelState>;
+	messageList?: Array<MessageUpdateData>;
 }
 
 
@@ -263,7 +276,7 @@ export type MessagesDeleteActions =
 	;
 export interface MessagesDeleteData extends PayloadData
 {
-	id: number;
+	messageIdList: Array<MessageId>;
 }
 
 
@@ -305,5 +318,12 @@ export interface MessagesDeleteFromUploadingCollectionData extends PayloadData
 {
 	id: string;
 }
+
+export type MessagesSetFromPushActions = 'setFromPush';
+export interface MessagesSetFromPushData extends PayloadData
+{
+	messageList: Array<MessagesModelState>,
+}
+
 
 /* endregion mutation types */

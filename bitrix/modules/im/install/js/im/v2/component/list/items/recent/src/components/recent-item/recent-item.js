@@ -2,13 +2,13 @@ import 'main.date';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings, Layout } from 'im.v2.const';
-import { ChatAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { ChatAvatar, AvatarSize, ChatTitle, ChatAvatarType, ChatTitleType, InputActionIndicator } from 'im.v2.component.elements';
+import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import { MessageText } from './components/message-text';
 import { ItemCounter } from './components/item-counter';
 import { MessageStatus } from './components/message-status';
-import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
-import { ChannelManager } from 'im.v2.lib.channel';
 
 import './css/recent-item.css';
 
@@ -17,7 +17,7 @@ import type { ImModelRecentItem, ImModelChat, ImModelMessage } from 'im.v2.model
 // @vue/component
 export const RecentItem = {
 	name: 'RecentItem',
-	components: { ChatAvatar, ChatTitle, MessageText, MessageStatus, ItemCounter },
+	components: { ChatAvatar, ChatTitle, MessageText, MessageStatus, ItemCounter, InputActionIndicator },
 	props: {
 		item: {
 			type: Object,
@@ -72,6 +72,18 @@ export const RecentItem = {
 		{
 			return ChannelManager.isChannel(this.recentItem.dialogId);
 		},
+		isNotes(): boolean
+		{
+			return Number.parseInt(this.recentItem.dialogId, 10) === Core.getUserId();
+		},
+		avatarType(): string
+		{
+			return this.isNotes ? ChatAvatarType.notes : '';
+		},
+		chatType(): string
+		{
+			return this.isNotes ? ChatTitleType.notes : '';
+		},
 		isChatSelected(): boolean
 		{
 			const canBeSelected = [Layout.chat.name, Layout.updateChat.name, Layout.collab.name];
@@ -95,9 +107,9 @@ export const RecentItem = {
 
 			return Boolean(isMuted);
 		},
-		isSomeoneTyping(): boolean
+		hasActiveInputAction(): boolean
 		{
-			return this.dialog.writingList.length > 0;
+			return this.$store.getters['chats/inputActions/isChatActive'](this.recentItem.dialogId);
 		},
 		needsBirthdayPlaceholder(): boolean
 		{
@@ -146,14 +158,20 @@ export const RecentItem = {
 							:avatarDialogId="recentItem.dialogId" 
 							:contextDialogId="recentItem.dialogId" 
 							:size="AvatarSize.XL" 
-							:withSpecialTypeIcon="!isSomeoneTyping" 
+							:withSpecialTypeIcon="!hasActiveInputAction"
+							:customType="avatarType"
 						/>
-						<div v-if="isSomeoneTyping" class="bx-im-list-recent-item__avatar_typing"></div>
+						<InputActionIndicator v-if="hasActiveInputAction" />
 					</div>
 				</div>
 				<div class="bx-im-list-recent-item__content_container">
 					<div class="bx-im-list-recent-item__content_header">
-						<ChatTitle :dialogId="recentItem.dialogId" :withMute="true" />
+						<ChatTitle 
+							:dialogId="recentItem.dialogId" 
+							:withMute="true" 
+							:customType="chatType"
+							:showItsYou="false"
+						/>
 						<div class="bx-im-list-recent-item__date">
 							<MessageStatus :item="item" />
 							<span>{{ formattedDate }}</span>

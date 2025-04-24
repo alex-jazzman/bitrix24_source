@@ -304,6 +304,7 @@ export const ChatSearch = {
 					:items="result.usersAndChats"
 					:selectMode="selectMode"
 					:selectedItems="selectedItems"
+					:showMyNotes="showMyNotes"
 					:isLoading="isServerLoading"
 					:query="cleanQuery"
 					@clickItem="onClickItem"

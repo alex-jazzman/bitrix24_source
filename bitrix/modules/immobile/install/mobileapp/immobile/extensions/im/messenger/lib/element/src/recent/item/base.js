@@ -2,12 +2,16 @@
  * @module im/messenger/lib/element/recent/item/base
  */
 jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
 	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
-	const { DateHelper } = require('im/messenger/lib/helper');
+	const {
+		DateHelper,
+		UserHelper,
+	} = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const {
 		Path,
@@ -323,21 +327,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			const dialog = this.getDialogItem();
 			let subtitleStyle = {};
 
-			if (dialog?.writingList?.length > 0)
-			{
-				subtitleStyle = {
-					animation: {
-						color: '#777777',
-						type: 'bubbles',
-					},
-				};
-
-				this.styles.subtitle = subtitleStyle;
-
-				return this;
-			}
-
-			if (dialog?.writingList?.length > 0)
+			const hasInputAction = Type.isArrayFilled(dialog?.inputActions);
+			if (hasInputAction)
 			{
 				subtitleStyle = {
 					animation: {
@@ -392,22 +383,34 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					url = this.getImageUrlByFileName('status_reaction.png');
 					sizeMultiplier = 1.2;
 				}
-				else if (message.status === MessageStatus.received)
+				else
 				{
-					name = 'message_send';
-				}
-				else if (message.status === MessageStatus.error)
-				{
-					name = 'message_error';
-				}
-				else if (message.status === MessageStatus.delivered)
-				{
-					name = 'message_delivered';
-				}
-				else if (item.pinned)
-				{
-					name = 'message_pin';
-					sizeMultiplier = 0.9;
+					switch (message.status)
+					{
+						case MessageStatus.received: {
+							name = 'message_send';
+
+							break;
+						}
+
+						case MessageStatus.error: {
+							name = 'message_error';
+
+							break;
+						}
+
+						case MessageStatus.delivered: {
+							name = 'message_delivered';
+
+							break;
+						}
+
+						default: if (item.pinned)
+						{
+							name = 'message_pin';
+							sizeMultiplier = 0.9;
+						}
+					}
 				}
 			}
 			else if (item.pinned)

@@ -12,10 +12,13 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		DialogType,
 		ComponentCode,
 		OpenDialogContextType,
+		WaitingEntity,
 	} = require('im/messenger/const');
 	const { EntityReady } = require('entity-ready');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('push-handler');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { ComponentRequestBroadcaster } = require('im/messenger/lib/component-request-broadcaster');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('push-handler');
 
 	class PushHandler
 	{
@@ -27,6 +30,11 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			this.manager.setOnChangeListener(this.handleChange.bind(this));
 
 			this.storedPullEvents = [];
+		}
+
+		get className()
+		{
+			return this.constructor.name;
 		}
 
 		getStoredPullEvents()
@@ -45,30 +53,52 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			});
 		}
 
-		updateList()
+		getComponentsForSend()
 		{
-			const list = this.manager.get();
+			return [
+				ComponentCode.imMessenger,
+				ComponentCode.imCopilotMessenger,
+			];
+		}
+
+		async getRawPushEvents()
+		{
+			if (!Feature.isInstantPushEnabled)
+			{
+				const pushEvents = this.manager.get();
+				logger.log(`${this.constructor.name}.get push sync`, pushEvents);
+
+				return pushEvents;
+			}
+
+			const pushEvents = await this.manager.getAsync();
+			logger.log(`${this.constructor.name}.get push async`, pushEvents);
+
+			return pushEvents;
+		}
+
+		/**
+		 * @return {Promise<Array<MessengerPushEvent>>}
+		 */
+		async getPushEventList()
+		{
+			const list = await this.getRawPushEvents();
+			/** @type {Array<MessengerPushEvent>} */
+			const eventList = [];
 
 			if (!list || !list.IM_MESS || list.IM_MESS.length <= 0)
 			{
-				logger.info('PushHandler.updateList: list is empty');
+				logger.info(`${this.className}.getPushEventList: list is empty`);
 
-				return true;
+				return eventList;
 			}
 
-			logger.info('PushHandler.updateList: parse push messages', list.IM_MESS);
-
-			const isDialogOpen = this.store.getters['applicationModel/isSomeDialogOpen'];
+			logger.info(`${this.className}.getPushEventList: parse push messages`, list.IM_MESS);
 
 			list.IM_MESS.forEach((push) => {
-				if (!push.data)
+				if (push?.data?.cmd !== 'message' && push?.data?.cmd !== 'messageChat')
 				{
-					return false;
-				}
-
-				if (!(push.data.cmd === 'message' || push.data.cmd === 'messageChat'))
-				{
-					return false;
+					return;
 				}
 
 				let senderMessage = '';
@@ -83,7 +113,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 				if (!senderMessage)
 				{
-					return false;
+					return;
 				}
 
 				const event = {
@@ -95,10 +125,10 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				event.params.userInChat[event.params.chatId] = [MessengerParams.getUserId()];
 
 				event.params.message.text = senderMessage.toString()
-					.replace(/&/g, '&amp;')
-					.replace(/"/g, '&quot;')
-					.replace(/</g, '&lt;')
-					.replace(/>/g, '&gt;')
+					.replaceAll('&', '&amp;')
+					.replaceAll('"', '&quot;')
+					.replaceAll('<', '&lt;')
+					.replaceAll('>', '&gt;')
 				;
 
 				if (push.senderCut)
@@ -111,8 +141,29 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 					event.params.message.textOriginal = event.params.message.text;
 				}
 
+				eventList.push({
+					command: event.command,
+					params: event.params,
+					extra: push.extra,
+				});
+			});
+			eventList.sort((event1, event2) => {
+				return event1.params.message.id - event2.params.message.id;
+			});
+
+			return eventList;
+		}
+
+		async updateList(needClearHistory = true)
+		{
+			const eventList = await this.getPushEventList();
+			logger.info(`${this.className}.updateList: parse push messages`, eventList);
+
+			const isDialogOpen = this.store.getters['applicationModel/isSomeDialogOpen'];
+
+			eventList.forEach((event) => { // TODO: delete after transferring the openlines dialog to a new widget
 				const storedEvent = clone(event.params);
-				if (storedEvent.message.params.FILE_ID && storedEvent.message.params.FILE_ID.length > 0)
+				if (storedEvent.message.params?.FILE_ID?.length > 0)
 				{
 					storedEvent.message.text = '';
 					storedEvent.message.textOriginal = '';
@@ -124,28 +175,73 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				}
 				else
 				{
-					this.storedPullEvents = this.storedPullEvents.filter((event) => event.message.id !== storedEvent.message.id);
+					this.storedPullEvents = this.storedPullEvents
+						.filter((pullEvent) => pullEvent.message.id !== storedEvent.message.id)
+					;
 					this.storedPullEvents.push(storedEvent);
-				}
-
-				const recentItem = this.store.getters['recentModel/getById'](event.params.dialogId);
-				if (!recentItem || recentItem.message.id < event.params.message.id)
-				{
-					BX.PULL.emit({
-						type: 'server',
-						moduleId: event.module_id,
-						data: {
-							command: event.command,
-							params: event.params,
-							extra: push.extra,
-						},
-					});
 				}
 			});
 
-			this.manager.clear();
+			if (Feature.isInstantPushEnabled && eventList.length > 0)
+			{
+				try
+				{
+					await this.sendEventsToComponents(eventList);
+				}
+				catch (error)
+				{
+					logger.error(`${this.className}: an error occurred when broadcasting push messages`, eventList, error);
+				}
+				finally
+				{
+					logger.warn(`${this.className}: broadcasting messages was completed`);
+				}
+			}
 
-			return true;
+			if (needClearHistory)
+			{
+				this.clearHistory();
+			}
+
+			return eventList;
+		}
+
+		/**
+		 *
+		 * @param {Array<MessengerPushEvent>} eventList
+		 * @return {Promise<void>}
+		 */
+		async sendEventsToComponents(eventList)
+		{
+			const requestOptionList = [];
+			if (MessengerParams.isComponentAvailable(ComponentCode.imMessenger))
+			{
+				requestOptionList.push(
+					{
+						toComponent: ComponentCode.imMessenger,
+						data: eventList,
+						handlerId: WaitingEntity.push.messageHandler.chat,
+					},
+					{
+						toComponent: ComponentCode.imMessenger,
+						data: eventList,
+						handlerId: WaitingEntity.push.messageHandler.database,
+					},
+				);
+			}
+
+			if (MessengerParams.isComponentAvailable(ComponentCode.imCopilotMessenger))
+			{
+				requestOptionList.push({
+					toComponent: ComponentCode.imCopilotMessenger,
+					data: eventList,
+					handlerId: WaitingEntity.push.messageHandler.copilot,
+				});
+			}
+
+			return ComponentRequestBroadcaster.getInstance()
+				.send(EventType.push.messageBatch, requestOptionList)
+			;
 		}
 
 		async executeAction()
@@ -161,7 +257,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				return false;
 			}
 
-			logger.info('PushHandler.executeAction: execute push-notification', push);
+			logger.info(`${this.className}.executeAction: execute push-notification`, push);
 
 			const pushParams = ChatDataConverter.getPushFormat(push);
 
@@ -170,10 +266,21 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				const userId = parseInt(pushParams.ACTION.slice(8), 10);
 				if (userId > 0)
 				{
-					MessengerEmitter.emit(EventType.messenger.openDialog, {
+					const openDialogParams = {
 						dialogId: userId,
 						context: OpenDialogContextType.push,
-					}, ComponentCode.imMessenger);
+					};
+
+					if (Feature.isInstantPushEnabled)
+					{
+						openDialogParams.messageId = pushParams.PARAMS.MESSAGE_ID;
+					}
+
+					MessengerEmitter.emit(
+						EventType.messenger.openDialog,
+						openDialogParams,
+						ComponentCode.imMessenger,
+					);
 				}
 
 				return true;
@@ -209,11 +316,17 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 						BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
 					}
 
-					MessengerEmitter.emit(
-						EventType.messenger.openDialog,
-						{ dialogId: `chat${chatId}`, context: OpenDialogContextType.push },
-						componentCode,
-					);
+					const openDialogParams = {
+						dialogId: `chat${chatId}`,
+						context: OpenDialogContextType.push,
+					};
+
+					if (Feature.isInstantPushEnabled)
+					{
+						openDialogParams.messageId = pushParams.PARAMS.MESSAGE_ID;
+					}
+
+					MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, componentCode);
 				}
 
 				return true;
@@ -234,6 +347,6 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 	}
 
 	module.exports = {
-		PushHandler: new PushHandler(),
+		PushHandler,
 	};
 });

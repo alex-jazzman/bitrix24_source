@@ -79,7 +79,6 @@ $MESS["CRM_ORD_PROP_GROUP_FIZ1"] = "Жеке деректер";
 $MESS["CRM_ORD_PROP_GROUP_FIZ2"] = "Жеткізу деректері";
 $MESS["CRM_ORD_PROP_GROUP_UR1"] = "Компания деректері";
 $MESS["CRM_ORD_PROP_GROUP_UR2"] = "Байланыс ақпараты";
-$MESS["CRM_PAGE_FUNNEL"] = "Сауда иірімі";
 $MESS["CRM_PERM_D"] = "Қолжетімділік жабық";
 $MESS["CRM_PERM_R"] = "Беттерді оқу";
 $MESS["CRM_PERM_W"] = "Беттерді құру / өзгерту";

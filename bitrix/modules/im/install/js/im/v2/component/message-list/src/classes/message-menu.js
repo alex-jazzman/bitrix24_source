@@ -83,6 +83,7 @@ export class MessageMenu extends BaseMenu
 			onclick: () => {
 				EventEmitter.emit(EventType.dialog.openBulkActionsMode, {
 					messageId: this.context.id,
+					dialogId: this.context.dialogId,
 				});
 				this.menuInstance.close();
 			},
@@ -478,7 +479,7 @@ export class MessageMenu extends BaseMenu
 		}
 
 		const messageService = new MessageService({ chatId });
-		void messageService.deleteMessage(messageId);
+		void messageService.deleteMessages([messageId]);
 	}
 
 	async #isDeletionCancelled(): Promise<boolean>

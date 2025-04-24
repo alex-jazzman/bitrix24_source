@@ -440,7 +440,7 @@ BX.addCustomEvent('Tasks.Toolbar:onItem', function(event) {
 </script>
 
 <?php
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
 if ($isBitrix24Template)
 {
 	$this->SetViewTarget('inside_pagetitle');

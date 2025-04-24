@@ -51,6 +51,11 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 			return this.loadService.loadLocalStorageContext(messageId);
 		}
 
+		async loadLocalStorageContextWithPush(messageId)
+		{
+			return this.loadService.loadLocalStorageContextWithPush(messageId);
+		}
+
 		/**
 		 * @description Enables flags that the current dialog has pages up and down
 		 * @return {Promise<*>}
@@ -140,6 +145,11 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 		delete(message, dialogId)
 		{
 			return this.actionService.delete(message, dialogId);
+		}
+
+		deleteByIdList(listId, dialogId)
+		{
+			return this.actionService.deleteByIdList(listId, dialogId);
 		}
 
 		openUsersReadMessageList(messageId)

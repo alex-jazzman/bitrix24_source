@@ -211,7 +211,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      };
 	    },
 	    viewerAttributes() {
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: this.file.viewerAttrs,
+	        previewImageSrc: this.sourceLink,
+	        context: im_v2_const.FileViewerContext.dialog
+	      });
 	    },
 	    canBeOpenedWithViewer() {
 	      var _BX$UI;
@@ -233,24 +237,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isVideo() {
 	      return this.file.type === im_v2_const.FileType.video;
 	    },
-	    previewSourceLink() {
-	      // for a video, we use "urlPreview", because there is an image preview.
-	      // for an image, we use "urlShow", because for large gif files in "urlPreview" we have
-	      // a static image (w/o animation) .
-	      return this.isVideo ? this.file.urlPreview : this.file.urlShow;
+	    sourceLink() {
+	      return this.file.urlPreview;
 	    },
 	    allowLazyLoad() {
-	      return !this.previewSourceLink.startsWith('blob:');
+	      return !this.sourceLink.startsWith('blob:');
 	    }
 	  },
 	  methods: {
 	    download() {
-	      var _this$file$urlDownloa;
 	      if (this.file.progress !== 100 || this.canBeOpenedWithViewer) {
 	        return;
 	      }
-	      const url = (_this$file$urlDownloa = this.file.urlDownload) != null ? _this$file$urlDownloa : this.file.urlShow;
-	      window.open(url, '_blank');
+	      window.open(this.file.urlDownload, '_blank');
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -262,8 +261,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div 
-			v-bind="viewerAttributes" 
+		<div
 			class="bx-im-gallery-item__container" 
 			:class="{'--with-forward': isForward}"
 			@click="download"
@@ -271,19 +269,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		>
 			<img
 				v-if="allowLazyLoad"
+				v-bind="viewerAttributes"
 				v-lazyload
 				data-lazyload-dont-hide
-				:data-lazyload-src="previewSourceLink"
+				:data-lazyload-src="sourceLink"
 				:title="imageTitle"
 				:alt="file.name"
 				class="bx-im-gallery-item__source"
+				draggable="false"
 			/>
 			<img
 				v-else
-				:src="previewSourceLink"
+				v-bind="viewerAttributes"
+				:src="sourceLink"
 				:title="imageTitle"
 				:alt="file.name"
 				class="bx-im-gallery-item__source"
+				draggable="false"
 			/>
 			<ProgressBar v-if="handleLoading && !isLoaded" :item="file" :messageId="messageItem.id" :withLabels="!isGallery" />
 			<div v-if="isVideo" class="bx-im-gallery-item__play-icon-container">
@@ -340,7 +342,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.file.viewerAttrs && ((_BX$UI = BX.UI) == null ? void 0 : _BX$UI.Viewer);
 	    },
 	    viewerAttributes() {
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: this.file.viewerAttrs,
+	        previewImageSrc: this.file.urlPreview,
+	        context: im_v2_const.FileViewerContext.dialog
+	      });
 	    },
 	    imageSize() {
 	      let newWidth = this.file.image.width;
@@ -381,12 +387,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    download() {
-	      var _this$file$urlDownloa;
 	      if (this.file.progress !== 100 || this.canBeOpenedWithViewer) {
 	        return;
 	      }
-	      const url = (_this$file$urlDownloa = this.file.urlDownload) != null ? _this$file$urlDownloa : this.file.urlShow;
-	      window.open(url, '_blank');
+	      window.open(this.file.urlDownload, '_blank');
 	    }
 	  },
 	  template: `
@@ -398,7 +402,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<ProgressBar v-if="!isLoaded && handleLoading" :item="file" :messageId="messageItem.id" />
 			<VideoPlayer
 				:fileId="file.id"
-				:src="file.urlShow"
+				:src="file.urlDownload"
 				:previewImageUrl="file.urlPreview"
 				:elementStyle="imageSize"
 				:withAutoplay="autoplay"
@@ -713,7 +717,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.file.viewerAttrs && ((_BX$UI = BX.UI) == null ? void 0 : _BX$UI.Viewer);
 	    },
 	    viewerAttributes() {
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: this.file.viewerAttrs,
+	        previewImageSrc: this.file.urlPreview,
+	        context: im_v2_const.FileViewerContext.dialog
+	      });
 	    },
 	    isLoaded() {
 	      return this.file.progress === 100;
@@ -735,12 +743,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    download() {
-	      var _this$file$urlDownloa;
 	      if (this.file.progress !== 100 || this.canBeOpenedWithViewer) {
 	        return;
 	      }
-	      const url = (_this$file$urlDownloa = this.file.urlDownload) != null ? _this$file$urlDownloa : this.file.urlShow;
-	      window.open(url, '_blank');
+	      window.open(this.file.urlDownload, '_blank');
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -754,16 +760,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  template: `
 		<div class="bx-im-base-file-item__container">
-			<div class="bx-im-base-file-item__icon-container" ref="loader-icon" v-bind="viewerAttributes" @click="download">
-				<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageId" :withLabels="false" />
-				<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
-				<div v-else :class="iconClass" class="bx-im-base-file-item__type-icon ui-icon"><i></i></div>
-			</div>
-			<div class="bx-im-base-file-item__content" v-bind="viewerAttributes" @click="download">
-				<span :title="file.name" class="bx-im-base-file-item__title">
-					{{ fileShortName }}
-				</span>
-				<div class="bx-im-base-file-item__size">{{ fileSize }}</div>
+			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
+				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
+					<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageId" :withLabels="false" />
+					<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
+					<div v-else :class="iconClass" class="bx-im-base-file-item__type-icon ui-icon"><i></i></div>
+				</div>
+				<div class="bx-im-base-file-item__content">
+					<span :title="file.name" class="bx-im-base-file-item__title">
+						{{ fileShortName }}
+					</span>
+					<div class="bx-im-base-file-item__size">{{ fileSize }}</div>
+				</div>
 			</div>
 			<div 
 				class="bx-im-base-file-item__download-icon"
@@ -879,7 +887,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<AudioPlayer
 				:id="file.id"
 				:messageId="messageId"
-				:src="file.urlShow"
+				:src="file.urlDownload"
 				:file="file"
 				:timelineType="Math.floor(Math.random() * 5)"
 				:authorId="file.authorId"

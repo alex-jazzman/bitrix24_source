@@ -237,7 +237,7 @@ export class LayoutManager
 
 		if (CHAT_LAYOUTS.has(name) && entityId)
 		{
-			this.#closeBulkActionsMode();
+			this.#clearBulkActionsCollection();
 		}
 	}
 
@@ -256,9 +256,9 @@ export class LayoutManager
 		}
 	}
 
-	#closeBulkActionsMode()
+	#clearBulkActionsCollection()
 	{
-		BulkActionsManager.getInstance().disableBulkMode();
+		BulkActionsManager.getInstance().clearCollection();
 	}
 
 	#closeChannelComments()

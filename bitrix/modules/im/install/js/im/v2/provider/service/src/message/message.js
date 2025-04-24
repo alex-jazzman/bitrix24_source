@@ -140,9 +140,9 @@ export class MessageService
 	// endregion 'edit'
 
 	// region 'delete'
-	deleteMessage(messageId: number | string): Promise
+	deleteMessages(messageIds: number[])
 	{
-		this.#deleteService.deleteMessage(messageId);
+		this.#deleteService.deleteMessages(messageIds);
 	}
 	// endregion 'delete'
 }

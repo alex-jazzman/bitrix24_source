@@ -2,8 +2,8 @@
 * @module im/messenger/lib/rest
 */
 jn.define('im/messenger/lib/rest', (require, exports, module) => {
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('network');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('network');
 
 	/**
 	 * @template T

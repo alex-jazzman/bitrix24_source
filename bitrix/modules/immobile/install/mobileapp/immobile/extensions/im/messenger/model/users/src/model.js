@@ -10,8 +10,8 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 	const { validate } = require('im/messenger/model/users/validator');
 	const { userDefaultElement } = require('im/messenger/model/users/default-element');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--users');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--users');
 
 	/** @type {UsersModel} */
 	const usersModel = {
@@ -211,6 +211,23 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function usersModel/setFromPush */
+			setFromPush: (store, payload) => {
+				if (!Type.isArrayFilled(payload))
+				{
+					return;
+				}
+
+				const userList = payload.map((dialog) => validate(store, dialog));
+
+				store.commit('setFromPush', {
+					actionName: 'setFromPush',
+					data: {
+						userList,
+					},
+				});
+			},
+
 			/** @function usersModel/addShort */
 			addShort: (store, payload) => {
 				if (!Type.isArray(payload) && Type.isPlainObject(payload))
@@ -363,6 +380,25 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				userList.forEach((user) => {
 					state.collection[user.id] = user;
 				});
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<UsersSetFromPushData, UsersSetFromPushActions>} payload
+			 */
+			setFromPush: (state, payload) => {
+				logger.log('usersModel: setFromPush mutation', payload);
+
+				const { userList } = payload.data;
+
+				for (const user of userList)
+				{
+					state.collection[user.id] = {
+						...userDefaultElement,
+						...state.collection[user.id],
+						...user,
+					};
+				}
 			},
 
 			/**

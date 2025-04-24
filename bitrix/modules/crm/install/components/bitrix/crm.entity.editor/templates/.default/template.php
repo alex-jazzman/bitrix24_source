@@ -155,7 +155,7 @@ if (Main\Loader::includeModule('socialnetwork'))
 if($arResult['REST_USE'])
 {
 	?><span id="<?=htmlspecialcharsbx($restSectionButtonID)?>" class="crm-entity-add-app-link">
-		<?=GetMessage('CRM_ENTITY_ED_REST_SECTION_2')?>
+		<?=Crm\Integration\Market\Label::isRenamedMarket() ? GetMessage('CRM_ENTITY_ED_REST_SECTION_MSGVER_1') : GetMessage('CRM_ENTITY_ED_REST_SECTION_2')?>
 	</span><?
 }
 

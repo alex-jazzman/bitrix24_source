@@ -65,7 +65,7 @@ $can = $arResult["CAN"]["TASK"]["ACTION"] ?? [];
 $userFields = $arResult["AUX_DATA"]["USER_FIELDS"] ?? [];
 $diskUfCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
 $mailUfCode = \Bitrix\Tasks\Integration\Mail\UserField::getMainSysUFCode();
-$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
+$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air');
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 $taskRecurrentRestrict = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
@@ -1101,6 +1101,8 @@ if (!empty($request->get('ta_sec')))
 			limitCode: '<?= FlowFeature::LIMIT_CODE ?>',
 			isFeatureEnabled: <?= Json::encode(FlowFeature::isFeatureEnabled() || FlowFeature::canTurnOnTrial()) ?>,
 			isFeatureTrialable: <?= Json::encode(FlowFeature::isFeatureEnabledByTrial()) ?>,
+
+			context: '<?= Analytics::SUB_SECTION['task_card'] ?>',
 		},
 		toggleFlowParams: {
 			scope: 'taskView',

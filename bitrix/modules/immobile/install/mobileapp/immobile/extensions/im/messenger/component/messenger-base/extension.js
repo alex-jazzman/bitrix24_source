@@ -88,21 +88,28 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.dialogCreator = null;
 			this.visibilityManager = VisibilityManager.getInstance();
 
-			this.init();
+			this.initPromise = this.init();
+
+			this.initPromise.catch((error) => {
+				Logger.error(`${this.constructor.name} init error`, error);
+			});
 		}
 
-		init()
+		async init()
 		{
 			this.initCore();
 			this.bindMethods();
 			this.preloadAssets();
 			this.initRequests();
+			this.initPushMessageHandlers();
+			await this.fillDataBaseFromPush();
 
 			BX.onViewLoaded(async () => {
 				try
 				{
 					await this.initComponents();
 					this.subscribeEvents();
+
 					this.initPullHandlers();
 					this.initServices();
 					await this.initCurrentUser();
@@ -180,6 +187,11 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			Logger.info('MessengerBase.unsubscribeExternalEvents method is not override');
 		}
 
+		initPushMessageHandlers()
+		{
+			Logger.info('MessengerBase.initPushMessageHandlers method is not override');
+		}
+
 		initPullHandlers()
 		{
 			Logger.info('MessengerBase.initPullHandlers method is not override');
@@ -224,6 +236,11 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		executeStoredPullEvents()
 		{
 			Logger.info('MessengerBase.executeStoredPullEvents method is not override');
+		}
+
+		async fillDataBaseFromPush()
+		{
+			Logger.info('MessengerBase.fillDataBaseFromPush method is not override');
 		}
 
 		/**
@@ -288,12 +305,8 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		getBaseInitRestMethods()
 		{
 			return [
-				MessengerInitRestMethod.portalCounters,
 				MessengerInitRestMethod.recentList,
 				MessengerInitRestMethod.imCounters,
-				MessengerInitRestMethod.mobileRevision,
-				MessengerInitRestMethod.serverTime,
-				MessengerInitRestMethod.desktopStatus,
 			];
 		}
 	}

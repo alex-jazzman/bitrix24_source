@@ -89,6 +89,18 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				);
 			}
 
+			if (Feature.isDevModeEnabled)
+			{
+				topMenuButtons.push(
+					{
+						id: 'developer-console',
+						title: 'Developer console',
+						sectionCode: 'general',
+						iconName: 'edit',
+					},
+				);
+			}
+
 			if (Feature.isDevelopmentEnvironment)
 			{
 				topMenuButtons.push(
@@ -106,7 +118,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				);
 			}
 
-			const topMenuButtonHandler = (event, item) => {
+			const topMenuButtonHandler = async (event, item) => {
 				if (event === 'onItemSelected' && item.id === 'readAll')
 				{
 					this.emitCustomEvent(EventType.recent.readAll);
@@ -125,6 +137,15 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					{
 						// eslint-disable-next-line no-undef
 						reload();
+					}
+				}
+
+				if (Feature.isDevModeEnabled && event === 'onItemSelected')
+				{
+					if (item.id === 'developer-console')
+					{
+						const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+						Console.open();
 					}
 				}
 			};

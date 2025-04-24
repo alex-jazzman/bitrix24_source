@@ -7,8 +7,7 @@ import { channelChatId, commentChatId } from '../../../model/types/comment';
 import { ChatsCopilotDataItem, CopilotRoleData, MessageCopilotDataItem } from '../../../model/types/dialogues/copilot';
 import { PlanLimits } from '../../../lib/params/types/params';
 
-declare type immobileTabChatLoadResult = {
-	departmentColleagues: unknown[] | null,
+declare type immobileTabsLoadCommonResult = {
 	desktopStatus: {
 		isOnline: boolean,
 		version: number,
@@ -30,10 +29,17 @@ declare type immobileTabChatLoadResult = {
 			notify: number,
 		},
 	},
+	mobileRevision: number,
 	portalCounters: {
 		result: Object,
 		time: number,
 	},
+	serverTime: string,
+	userData: UsersModelState,
+}
+
+declare type immobileTabChatLoadResult = Partial<immobileTabsLoadCommonResult> & {
+	departmentColleagues?: unknown[] | null,
 	recentList: {
 		additionalMessages: Array<RawMessage>,
 		birthdayList: unknown[], // TODO: concrete type
@@ -44,38 +50,10 @@ declare type immobileTabChatLoadResult = {
 		hasNextPage: boolean,
 		items: RecentItemData[],
 	},
-	userData: UsersModelState,
-	mobileRevision: number,
-	serverTime: string,
-	tariffRestriction: PlanLimits,
+	tariffRestriction?: PlanLimits,
 }
 
-declare type immobileTabChannelLoadResult = {
-	desktopStatus: {
-		isOnline: boolean,
-		version: number,
-	},
-	imCounters: {
-		channelComment: Record<channelChatId, Record<commentChatId, number>>,
-		chat: Record<string, number>,
-		chatMuted: number[],
-		chatUnread: number[],
-		collab: Record<number, number>,
-		copilot: Record<number, number>,
-		lines: unknown[],
-		type: {
-			all: number,
-			chat: number,
-			collab: number,
-			copilot: number,
-			lines: number,
-			notify: number,
-		},
-	},
-	portalCounters: {
-		result: Object,
-		time: number,
-	},
+declare type immobileTabChannelLoadResult = Partial<immobileTabsLoadCommonResult> & {
 	recentList: {
 		additionalMessages: Array<RawMessage>,
 		birthdayList: unknown[], // TODO: concrete type
@@ -88,37 +66,9 @@ declare type immobileTabChannelLoadResult = {
 		reminders: unknown[],
 		users: UsersModelState[],
 	},
-	userData: UsersModelState,
-	mobileRevision: number,
-	serverTime: string,
 }
 
-declare type immobileTabCopilotLoadResult = {
-	desktopStatus: {
-		isOnline: boolean,
-		version: number,
-	},
-	imCounters: {
-		channelComment: Record<channelChatId, Record<commentChatId, number>>,
-		chat: Record<string, number>,
-		chatMuted: number[],
-		chatUnread: number[],
-		collab: Record<number, number>,
-		copilot: Record<number, number>,
-		lines: unknown[],
-		type: {
-			all: number,
-			chat: number,
-			collab: number,
-			copilot: number,
-			lines: number,
-			notify: number,
-		},
-	},
-	portalCounters: {
-		result: Object,
-		time: number,
-	},
+declare type immobileTabCopilotLoadResult = Partial<immobileTabsLoadCommonResult> & {
 	recentList: {
 		birthdayList: unknown[], // TODO: concrete type
 		copilot: {
@@ -131,6 +81,4 @@ declare type immobileTabCopilotLoadResult = {
 		hasNextPage: boolean,
 		items: RecentItemData[],
 	},
-	mobileRevision: number,
-	serverTime: string,
 }

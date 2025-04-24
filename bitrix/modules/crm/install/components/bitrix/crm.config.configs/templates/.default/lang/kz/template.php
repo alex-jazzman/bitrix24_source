@@ -18,6 +18,7 @@ $MESS["CRM_TAB_LIVEFEED_TITLE2"] = "Жанды лента баптаулары";
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG"] = "Себет";
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Себет баптаулары";
 $MESS["CRM_TAB_REST_2"] = "Маркет";
+$MESS["CRM_TAB_REST_2_MSGVER_1"] = "Маркетплейс";
 $MESS["CRM_TAB_REST_TITLE"] = "Қосымша баптаулары";
 $MESS["CRM_TAB_STATUS_CONFIG"] = "Анықтамалықтар";
 $MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Анықтамалық баптаулары";

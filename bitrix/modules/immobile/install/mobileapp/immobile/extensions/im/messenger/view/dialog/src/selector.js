@@ -27,12 +27,13 @@ jn.define('im/messenger/view/dialog/selector', (require, exports, module) => {
 
 		/**
 		 * @param {boolean} value
+		 * @param {boolean} animated
 		 */
-		async setEnabled(value)
+		async setEnabled(value, animated)
 		{
 			if (this.isUiAvailable())
 			{
-				return this.ui.setEnabled(value);
+				return this.ui.setEnabled(value, animated);
 			}
 
 			return false;

@@ -581,6 +581,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      case 'plist':
 	        icon = 'set';
 	        break;
+	      case 'board':
+	        icon = 'board';
+	        break;
 	      default:
 	        icon = 'empty';
 	    }
@@ -660,16 +663,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const secondPart = fileNameWithoutExtension.slice(-SYMBOLS_TO_TAKE_BEFORE_EXTENSION).trim();
 	    return `${firstPart}${DELIMITER}${secondPart}.${extension}`;
 	  },
-	  getViewerDataAttributes(viewerAttributes) {
+	  getViewerDataAttributes({
+	    viewerAttributes,
+	    previewImageSrc,
+	    context
+	  }) {
+	    const dataAttributes = {};
 	    if (!viewerAttributes) {
-	      return {};
+	      return dataAttributes;
 	    }
-	    const dataAttributes = {
-	      'data-viewer': true
-	    };
 	    Object.entries(viewerAttributes).forEach(([key, value]) => {
 	      dataAttributes[`data-${main_core.Text.toKebabCase(key)}`] = value;
 	    });
+
+	    // it should be the same link, which we use in src attribute in <img> or <video> tag
+	    if (previewImageSrc) {
+	      dataAttributes['data-viewer-preview'] = previewImageSrc;
+	    }
+	    if (context) {
+	      dataAttributes['data-viewer-group-by'] = `${context}${dataAttributes['data-viewer-group-by']}`;
+	    }
+	    dataAttributes['data-viewer'] = true;
 	    return dataAttributes;
 	  },
 	  createDownloadLink(text, urlDownload, fileName) {

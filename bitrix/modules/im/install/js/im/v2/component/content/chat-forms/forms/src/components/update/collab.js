@@ -27,11 +27,13 @@ import type { AccessRightsFormResult } from '../create/collab/components/rights-
 const UpdateCollabErrorCode = {
 	emptyName: 'name',
 	duplicateName: 'ERROR_GROUP_NAME_EXISTS',
+	urlInName: 'ERROR_NAME_CONTAINS_URL',
 };
 
 const NotificationTextByErrorCode = {
 	[UpdateCollabErrorCode.emptyName]: Loc.getMessage('IM_CREATE_COLLAB_ERROR_EMPTY_NAME'),
 	[UpdateCollabErrorCode.duplicateName]: Loc.getMessage('IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME'),
+	[UpdateCollabErrorCode.urlInName]: Loc.getMessage('IM_CREATE_COLLAB_ERROR_URL_IN_NAME'),
 	default: Loc.getMessage('IM_UPDATE_CHAT_ERROR'),
 };
 

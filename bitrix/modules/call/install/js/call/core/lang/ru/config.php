@@ -39,6 +39,8 @@ $MESS["CALL_COPILOT_POPUP_BUTTON_ENABLE"] = "Подключить к этому 
 $MESS["CALL_COPILOT_POPUP_BUTTON_DISABLE"] = "Отключить в этом звонке ";
 $MESS["CALL_COPILOT_POPUP_CONCERN_NOT_ACCEPTED"] = "Будет доступно, как только администратор вашего Битрикс24 примет новое Лицензионное соглашение";
 $MESS["CALL_COPILOT_POPUP_TARIFF_UP"]="Повысить тариф";
+$MESS["CALL_BUTTON_GO_TO_CALL"]="В звонок";
+$MESS["CALL_BUTTON_STOP_SCREEN"]="Стоп";
 $MESS["CALL_COPILOT_POPUP_SETTINGS_DISABLED"] = "Будет доступно, когда администратор вашего Битрикс24 включит CoPilot в видеозвонках";
 $MESS["CALL_REMOTE_USER_MENU_TURN_OFF_MIC"] = "Выкл. микрофон";
 $MESS["CALL_REMOTE_USER_MENU_TURN_OFF_CAM"] = "Выкл. камеру";
@@ -57,16 +59,18 @@ $MESS["CALL_USER_TURNED_OFF_CAM_FOR_ALL_M"] = "#NAME# выключил всем 
 
 $MESS["CALL_YOU_TURNED_OFF_CAM_FOR_ALL"] = "Вы выключили всем камеры";
 $MESS["CALL_YOU_TURNED_OFF_MIC_FOR_ALL"] = "Вы выключили всем микрофоны";
+$MESS["CALL_COPILOT_BUTTON_ON_HINT"] = "CoPilot анализирует эффективность встречи";
+$MESS["CALL_COPILOT_BUTTON_OFF_HINT"] = "Включить AI для анализа эффективности встречи";
 
-$MESS["CALL_CONTROL_YOU_TURNED_OFF_USER_MIC"] = "Вы выключили микрофон участника #TARGET_NAME#";
-$MESS["CALL_CONTROL_YOU_TURNED_OFF_USER_CAM"] = "Вы выключили камеру участника #TARGET_NAME#";
+$MESS["CALL_CONTROL_YOU_TURNED_OFF_USER_MIC"] = "Вы отключили микрофон у #TARGET_NAME#";
+$MESS["CALL_CONTROL_YOU_TURNED_OFF_USER_CAM"] = "Вы отключили камеру у #TARGET_NAME#";
 
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_MIC_M"] = "#INITIATOR_NAME# выключил микрофон участника #TARGET_NAME#";
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_CAM_M"] = "#INITIATOR_NAME# выключил камеру участника #TARGET_NAME#";
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_MIC_F"] = "#INITIATOR_NAME# выключила микрофон участника #TARGET_NAME#";
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_CAM_F"] = "#INITIATOR_NAME# выключила камеру участника #TARGET_NAME#";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_MIC_M"] = "#INITIATOR_NAME# отключил микрофон у #TARGET_NAME#";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_CAM_M"] = "#INITIATOR_NAME# отключил камеру у #TARGET_NAME#";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_MIC_F"] = "#INITIATOR_NAME# отключила микрофон у #TARGET_NAME#";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_CAM_F"] = "#INITIATOR_NAME# отключила камеру у #TARGET_NAME#";
 
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_MIC_M"] = "#INITIATOR_NAME# выключил ваш микрофон";
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_CAM_M"] = "#INITIATOR_NAME# выключил вашу камеру";
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_MIC_F"] = "#INITIATOR_NAME# выключила ваш микрофон";
-$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_CAM_F"] = "#INITIATOR_NAME# выключила вашу камеру";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_MIC_M"] = "#INITIATOR_NAME# отключил ваш микрофон";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_CAM_M"] = "#INITIATOR_NAME# отключил вашу камеру";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_MIC_F"] = "#INITIATOR_NAME# отключила ваш микрофон";
+$MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_YOUR_CAM_F"] = "#INITIATOR_NAME# отключила вашу камеру";

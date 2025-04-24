@@ -14,15 +14,15 @@ declare type PinModelState = {
 declare type Pin = Omit<PinModelState, 'message'>
 
 declare type PinModelCollection = {
-	collection: Record<number, Array<Pin>>,
-	messageCollection: Record<number, MessagesModelState>,
+	collection: Record<number, Array<Pin>>
+	messageCollection: Record<number, MessagesModelState>
 }
 
 export type PinMessengerModel = MessengerModel<PinModelCollection>;
 
 declare type PinSetChatCollectionPayload = {
-	pins?: Array<RawPin>,
-	messages?: Array<RawMessage>,
+	pins?: Array<RawPin>
+	messages?: Array<RawMessage>
 }
 
 declare type PinSetPayload = {
@@ -48,6 +48,7 @@ export type PinModelActions =
 	| 'messagesModel/pinModel/delete'
 	| 'messagesModel/pinModel/deleteByIdList'
 	| 'messagesModel/pinModel/updateMessage'
+	| 'messagesModel/pinModel/updateMessages'
 	| 'messagesModel/pinModel/deleteMessagesByChatId'
 	| 'messagesModel/pinModel/deleteMessagesByIdList'
 	| 'messagesModel/pinModel/deleteMessage'
@@ -60,7 +61,7 @@ export type PinModelMutation =
 	| 'messagesModel/pinModel/deleteByChatId'
 	| 'messagesModel/pinModel/deleteByIdList'
 	| 'messagesModel/pinModel/deleteMessagesByIdList'
-	| 'messagesModel/pinModel/updateMessage'
+	| 'messagesModel/pinModel/updateMessages'
 
 export type PinSetChatCollectionActions = 'setChatCollection' | 'setFromLocalDatabase';
 export interface PinSetChatCollectionData extends PayloadData
@@ -111,9 +112,13 @@ export interface PinDeleteMessagesByIdListData extends PayloadData
 }
 
 export type PinUpdateMessageActions = 'updateMessage';
-export interface PinUpdateMessageData extends PayloadData
+export type PinUpdateMessageData = {
+	id?: number,
+	chatId?: number,
+	fields?: Partial<MessagesModelState>,
+}
+
+export interface PinUpdateMessagesData extends PayloadData
 {
-	id: number,
-	chatId: number,
-	fields: Partial<MessagesModelState>
+	messageList?: Array<PinUpdateMessageData>,
 }

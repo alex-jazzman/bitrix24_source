@@ -8,8 +8,8 @@ jn.define('im/messenger/model/application/model', (require, exports, module) => 
 
 	const { AppStatus } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--application');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--application');
 
 	/**
 	 * @type {ApplicationModel}

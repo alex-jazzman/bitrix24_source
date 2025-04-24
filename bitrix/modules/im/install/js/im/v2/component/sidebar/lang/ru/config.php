@@ -1,5 +1,6 @@
 <?php
 $MESS['IM_SIDEBAR_HEADER_TITLE'] = "О чате";
+$MESS['IM_SIDEBAR_NOTES_PREVIEW_DESCRIPTION'] = "Видны только вам";
 $MESS['IM_SIDEBAR_CHANNEL_HEADER_TITLE'] = "О канале";
 $MESS['IM_SIDEBAR_COMMENTS_HEADER_TITLE'] = "О посте";
 $MESS['IM_SIDEBAR_COLLAB_HEADER_TITLE'] = "О коллабе";
@@ -38,7 +39,6 @@ $MESS['IM_SIDEBAR_CHATSWITHUSER_DETAIL_TITLE'] = "Чаты с сотрудник
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_TITLE'] = "Все чаты";
 
 //context menu
-$MESS['IM_SIDEBAR_MENU_VIEW_FILE'] = "Просмотреть";
 $MESS['IM_SIDEBAR_MENU_EDIT_FILE'] = "Редактировать";
 $MESS['IM_SIDEBAR_MENU_DOWNLOAD_FILE'] = "Скачать файл";
 $MESS['IM_SIDEBAR_MENU_SAVE_FILE_ON_DISK_MSGVER_1'] = "Сохранить на Битрикс24 Диск";

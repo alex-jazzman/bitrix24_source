@@ -10,6 +10,8 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 	 */
 	class LoggerManager
 	{
+		#externalConsole;
+
 		/**
 		 * @return LoggerManager
 		 */
@@ -33,6 +35,17 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 			Object.entries(this.config).forEach(([loggerName, loggerConfig]) => {
 				this.getLogger(loggerName);
 			});
+			this.#externalConsole = null;
+		}
+
+		getExternalConsole()
+		{
+			return this.#externalConsole;
+		}
+
+		setExternalConsole(console)
+		{
+			this.#externalConsole = console;
 		}
 
 		/**
@@ -76,27 +89,74 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 
 		getLoggerProxy()
 		{
-			const saveConfig = this.saveConfig.bind(this);
-
 			return {
-				get(target, property, receiver)
-				{
-					const handler = target[property];
-					if (Type.isFunction(handler) && (property === 'enable' || property === 'disable'))
-					{
-						return function(...args) {
-							const result = handler.apply(target, args);
-							if (result === true)
-							{
-								saveConfig();
-							}
+				get: (target, property) => {
+					const logger = target;
+					const methodName = property;
+					const method = logger[methodName];
 
-							return result;
-						};
+					if (this.checkShouldSaveConfig(method, methodName))
+					{
+						return this.getCallMethodAndSaveConfigHandler(logger, method);
 					}
 
-					return handler;
+					if (this.checkShouldPrintToExternalConsole(method, methodName))
+					{
+						return this.getCallMethodAndPrintToExternalConsoleHandler(logger, method, methodName);
+					}
+
+					return method;
 				},
+			};
+		}
+
+		checkShouldSaveConfig(method, methodName)
+		{
+			const saveConfigMethodNameList = [
+				'enable',
+				'disable',
+			];
+
+			return Type.isFunction(method) && saveConfigMethodNameList.includes(methodName);
+		}
+
+		getCallMethodAndSaveConfigHandler(logger, method)
+		{
+			return (...args) => {
+				const result = method.apply(logger, args);
+				if (result === true)
+				{
+					this.saveConfig();
+				}
+
+				return result;
+			};
+		}
+
+		checkShouldPrintToExternalConsole(method, methodName)
+		{
+			const printMethodNameList = [
+				'log',
+				'info',
+				'warn',
+				'error',
+				'trace',
+			];
+
+			return Type.isFunction(method) && printMethodNameList.includes(methodName);
+		}
+
+		getCallMethodAndPrintToExternalConsoleHandler(logger, method, methodName)
+		{
+			return (...args) => {
+				const result = method.apply(logger, args);
+				// it works because the method name matches the logging level name
+				if (logger.isEnabledLogType(methodName))
+				{
+					this.getExternalConsole()?.[methodName](args);
+				}
+
+				return result;
 			};
 		}
 
@@ -122,7 +182,17 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 		}
 	}
 
+	/**
+	 * @param {string} name
+	 * @param {object} options
+	 * @return Logger
+	 */
+	const getLogger = (name, options = {}) => {
+		return LoggerManager.getInstance().getLogger(name, options);
+	};
+
 	module.exports = {
 		LoggerManager,
+		getLogger,
 	};
 });

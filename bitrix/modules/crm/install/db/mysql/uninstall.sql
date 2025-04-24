@@ -239,3 +239,4 @@ DROP TABLE IF EXISTS b_crm_responsible_queue_config;
 DROP TABLE IF EXISTS b_crm_responsible_queue_config_members;
 DROP TABLE IF EXISTS b_crm_responsible_queue;
 DROP TABLE IF EXISTS b_crm_log;
+DROP TABLE IF EXISTS b_crm_copilot_call_assessment_availability;

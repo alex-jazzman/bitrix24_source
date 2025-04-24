@@ -5,9 +5,9 @@ jn.define('im/messenger/provider/service/classes/message/rich', (require, export
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { RestMethod } = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('rich-service--message');
+	const logger = getLogger('rich-service--message');
 	class RichService
 	{
 		constructor()

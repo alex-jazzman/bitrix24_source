@@ -139,7 +139,7 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 			);
 			popup.show();
 
-			setTimeout(function(){ popup.close(); }, 1500);
+			setTimeout(function(){ popup.close(); popup.destroy(); }, 1500);
 		},
 		onTabOpenRequest: function(tabName)
 		{

@@ -85,6 +85,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
+	const { CopilotPushMessageHandler } = require('im/messenger/provider/push/message-handler/copilot');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
@@ -326,6 +327,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
+		initPushMessageHandlers()
+		{
+			this.copilotPushMessageHandler = new CopilotPushMessageHandler();
+		}
+
+		/**
+		 * @override
+		 */
 		initPullHandlers()
 		{
 			BX.PULL.subscribe(new CopilotDialogPullHandler());
@@ -385,12 +394,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			await SmileManager.init();
 
 			await this.queueCallBatch();
-			const methodList = [
-				...this.getBaseInitRestMethods(),
-				MessengerInitRestMethod.userData,
-			];
 
-			return this.copilotInitService.runAction(methodList)
+			return this.copilotInitService.runAction(this.getBaseInitRestMethods())
 				.then(() => {
 					this.afterRefresh();
 				})
@@ -499,7 +504,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			PageManager.getNavigator().makeTabActive();
-			this.visibilityManager.checkIsDialogVisible({ dialogId: openDialogOptions.dialogId })
+			this.visibilityManager.checkIsDialogVisible({
+				dialogId: openDialogOptions.dialogId,
+				currentContextOnly: true,
+			})
 				.then((isVisible) => {
 					if (isVisible)
 					{

@@ -5,11 +5,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogType, UserRole } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
-	const logger = LoggerManager.getInstance().getLogger('helpers--dialog');
+	const logger = getLogger('helpers--dialog');
 
 	/**
 	 * @class DialogHelper
@@ -33,6 +33,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		 */
 		static isDialogId(dialogId)
 		{
+			if (!Type.isStringFilled(dialogId) && !Type.isNumber(dialogId))
+			{
+				return false;
+			}
+
 			return (
 				dialogId.toString().startsWith('chat')
 				&& Type.isNumber(Number(dialogId.slice(4)))
@@ -161,6 +166,26 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		get isGeneralChannel()
 		{
 			return this.dialogModel.type === DialogType.generalChannel;
+		}
+
+		get isExtranet()
+		{
+			return this.dialogModel.extranet === true;
+		}
+
+		get isAnnouncement()
+		{
+			return this.dialogModel.type === DialogType.announcement;
+		}
+
+		get isSupport24Notifier()
+		{
+			return this.dialogModel.type === DialogType.support24Notifier;
+		}
+
+		get isSupport24Question()
+		{
+			return this.dialogModel.type === DialogType.support24Question;
 		}
 
 		get isCurrentUserOwner()

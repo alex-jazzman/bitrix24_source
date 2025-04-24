@@ -116,7 +116,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  components: {
 	    ChatAvatar: im_v2_component_elements.ChatAvatar,
 	    ChatTitle: im_v2_component_elements.ChatTitle,
-	    MessageText
+	    MessageText,
+	    InputActionIndicator: im_v2_component_elements.InputActionIndicator
 	  },
 	  props: {
 	    item: {
@@ -159,8 +160,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      });
 	      return Boolean(isMuted);
 	    },
-	    isSomeoneTyping() {
-	      return this.dialog.writingList.length > 0;
+	    hasActiveInputAction() {
+	      return this.$store.getters['chats/inputActions/isChatActive'](this.recentItem.dialogId);
 	    },
 	    showLastMessage() {
 	      return this.$store.getters['application/settings/get'](im_v2_const.Settings.recent.showLastMessage);
@@ -203,7 +204,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							:withSpecialTypes="false"
 							:size="AvatarSize.XL"
 						/>
-						<div v-if="isSomeoneTyping" class="bx-im-list-copilot-item__avatar_typing"></div>
+						<InputActionIndicator v-if="hasActiveInputAction" />
 					</div>
 				</div>
 				<div class="bx-im-list-copilot-item__content_container">

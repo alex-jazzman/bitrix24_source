@@ -15,5 +15,6 @@ return [
 		'./src/object',
 		'./src/color',
 		'./src/emoji-regex',
+		'./src/promise',
 	],
 ];

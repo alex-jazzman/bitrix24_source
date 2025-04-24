@@ -1,8 +1,8 @@
 /* eslint-disable */
-(function (exports,main_core,main_core_events,ui_buttons) {
+(function (exports,main_core,main_core_events,main_popup,ui_buttons,biconnector_datasetImport) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -21,9 +21,13 @@
 	var _updateConnectionStatus = /*#__PURE__*/new WeakSet();
 	var _getConnectionValues = /*#__PURE__*/new WeakSet();
 	var _onCheckConnectClick = /*#__PURE__*/new WeakSet();
+	var _showSaveSuccessPopup = /*#__PURE__*/new WeakSet();
+	var _closeSlider = /*#__PURE__*/new WeakSet();
 	var ExternalConnectionForm = /*#__PURE__*/function () {
 	  function ExternalConnectionForm(props) {
 	    babelHelpers.classCallCheck(this, ExternalConnectionForm);
+	    _classPrivateMethodInitSpec(this, _closeSlider);
+	    _classPrivateMethodInitSpec(this, _showSaveSuccessPopup);
 	    _classPrivateMethodInitSpec(this, _onCheckConnectClick);
 	    _classPrivateMethodInitSpec(this, _getConnectionValues);
 	    _classPrivateMethodInitSpec(this, _updateConnectionStatus);
@@ -56,6 +60,7 @@
 	  babelHelpers.createClass(ExternalConnectionForm, [{
 	    key: "onClickSave",
 	    value: function onClickSave() {
+	      var _this = this;
 	      var saveButton = ui_buttons.ButtonManager.createFromNode(document.querySelector('#connection-button-save'));
 	      saveButton.setWaiting(true);
 	      var connectionValues = _classPrivateMethodGet(this, _getConnectionValues, _getConnectionValues2).call(this);
@@ -69,10 +74,15 @@
 	          }
 	        });
 	      }).then(function (response) {
-	        BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreated', {
+	        BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSave', {
 	          connection: response.data.connection
 	        });
-	        BX.SidePanel.Instance.getTopSlider().close();
+	        if (babelHelpers.classPrivateFieldGet(_this, _props).closeAfterCreate) {
+	          _classPrivateMethodGet(_this, _closeSlider, _closeSlider2).call(_this);
+	        } else {
+	          _classPrivateMethodGet(_this, _showSaveSuccessPopup, _showSaveSuccessPopup2).call(_this, response.data.connection);
+	          saveButton.setWaiting(false);
+	        }
 	      })["catch"](function (response) {
 	        var _response$errors;
 	        saveButton.setWaiting(false);
@@ -111,7 +121,7 @@
 	  var _babelHelpers$classPr,
 	    _sourceFields$title,
 	    _sourceFields$type,
-	    _this = this;
+	    _this2 = this;
 	  var fieldsNode = babelHelpers.classPrivateFieldGet(this, _node).querySelector('.fields-wrapper');
 	  var sourceFields = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _props).sourceFields) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : {};
 	  var fields = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"form-fields\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100\">\n\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t<select class=\"ui-ctl-element\" data-code=\"type\"></select>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\t\tplaceholder=\"", "\" \n\t\t\t\t\t\t\t\tdata-code=\"title\"\n\t\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_FIELD_TYPE'), main_core.Loc.getMessage('EXTERNAL_CONNECTION_FIELD_NAME'), main_core.Loc.getMessage('EXTERNAL_CONNECTION_FIELD_NAME_PLACEHOLDER'), (_sourceFields$title = sourceFields.title) !== null && _sourceFields$title !== void 0 ? _sourceFields$title : '');
@@ -137,7 +147,7 @@
 	    var fieldNode = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\ttype=\"", "\" \n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\t\tdata-code=\"", "\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\" \n\t\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), field.name, fieldType, field.code, field.placeholder, (_sourceFields$field$c = sourceFields[field.code]) !== null && _sourceFields$field$c !== void 0 ? _sourceFields$field$c : '');
 	    main_core.Dom.append(fieldNode, fields);
 	    main_core.Event.bind(fieldNode, 'input', function () {
-	      return _classPrivateMethodGet(_this, _clearConnectionStatus, _clearConnectionStatus2).call(_this);
+	      return _classPrivateMethodGet(_this2, _clearConnectionStatus, _clearConnectionStatus2).call(_this2);
 	    });
 	  });
 	}
@@ -148,13 +158,13 @@
 	  _classPrivateMethodGet(this, _clearConnectionStatus, _clearConnectionStatus2).call(this);
 	}
 	function _initCheckConnectButton2() {
-	  var _this2 = this;
+	  var _this3 = this;
 	  var connectButton = new ui_buttons.Button({
 	    text: main_core.Loc.getMessage('EXTERNAL_CONNECTION_CHECK_BUTTON'),
 	    color: ui_buttons.ButtonColor.PRIMARY,
 	    onclick: function onclick(button, event) {
 	      event.preventDefault();
-	      _classPrivateMethodGet(_this2, _onCheckConnectClick, _onCheckConnectClick2).call(_this2)["catch"](function () {});
+	      _classPrivateMethodGet(_this3, _onCheckConnectClick, _onCheckConnectClick2).call(_this3)["catch"](function () {});
 	    },
 	    noCaps: true
 	  });
@@ -185,25 +195,74 @@
 	  return result;
 	}
 	function _onCheckConnectClick2() {
-	  var _this3 = this;
+	  var _this4 = this;
 	  babelHelpers.classPrivateFieldGet(this, _checkConnectButton).setState(ui_buttons.ButtonState.WAITING);
 	  return new Promise(function (resolve, reject) {
 	    main_core.ajax.runAction('biconnector.externalsource.source.checkConnectionByData', {
 	      data: {
-	        data: _classPrivateMethodGet(_this3, _getConnectionValues, _getConnectionValues2).call(_this3)
+	        data: _classPrivateMethodGet(_this4, _getConnectionValues, _getConnectionValues2).call(_this4)
 	      }
 	    }).then(function (response) {
-	      _classPrivateMethodGet(_this3, _updateConnectionStatus, _updateConnectionStatus2).call(_this3, true);
-	      babelHelpers.classPrivateFieldGet(_this3, _checkConnectButton).setState(null);
+	      _classPrivateMethodGet(_this4, _updateConnectionStatus, _updateConnectionStatus2).call(_this4, true);
+	      babelHelpers.classPrivateFieldGet(_this4, _checkConnectButton).setState(null);
 	      resolve(response);
 	    })["catch"](function (response) {
-	      _classPrivateMethodGet(_this3, _updateConnectionStatus, _updateConnectionStatus2).call(_this3, false, response.errors[0].message);
-	      babelHelpers.classPrivateFieldGet(_this3, _checkConnectButton).setState(null);
+	      _classPrivateMethodGet(_this4, _updateConnectionStatus, _updateConnectionStatus2).call(_this4, false, response.errors[0].message);
+	      babelHelpers.classPrivateFieldGet(_this4, _checkConnectButton).setState(null);
 	      reject();
 	    });
 	  });
 	}
+	function _showSaveSuccessPopup2(connection) {
+	  var _this5 = this,
+	    _babelHelpers$classPr2;
+	  var popup = null;
+
+	  // show for new or active sources only
+	  var showCreateDatasetButton = !Object.hasOwn(babelHelpers.classPrivateFieldGet(this, _props).sourceFields, 'id') || babelHelpers.classPrivateFieldGet(this, _props).sourceFields.active;
+	  var createDatasetButton = showCreateDatasetButton ? main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-btn ui-btn-md ui-btn-primary\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET')) : false;
+	  var closeButton = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-btn ui-btn-md ui-btn-light-border\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CLOSE'));
+	  var onPopupClose = function onPopupClose() {
+	    _classPrivateMethodGet(_this5, _closeSlider, _closeSlider2).call(_this5);
+	  };
+	  var sourceType = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _props).sourceFields.type) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : babelHelpers.classPrivateFieldGet(this, _props).supportedDatabases[0].code;
+	  main_core.Event.bind(createDatasetButton, 'click', function () {
+	    onPopupClose();
+	    biconnector_datasetImport.Slider.open(sourceType, 0, {
+	      connectionId: connection.id,
+	      connectionType: connection.type
+	    });
+	  });
+	  main_core.Event.bind(closeButton, 'click', function () {
+	    onPopupClose();
+	  });
+	  var isEditMode = Boolean(babelHelpers.classPrivateFieldGet(this, _props).sourceFields.id);
+	  var popupMessageCode = isEditMode ? 'EXTERNAL_CONNECTION_EDIT_SUCCESS' : 'EXTERNAL_CONNECTION_SAVE_SUCCESS';
+	  var popupText = main_core.Loc.getMessage(popupMessageCode, {
+	    '#CONNECTION_TITLE#': main_core.Text.encode(_classPrivateMethodGet(this, _getConnectionValues, _getConnectionValues2).call(this).title)
+	  });
+	  var popupContent = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-popup--full-height\">\n\t\t\t\t<div class=\"biconnector-save-progress-popup\">\n\t\t\t\t\t<div class=\"biconnector-save-progress-popup__content\">\n\t\t\t\t\t\t<div class=\"biconnector-save-progress-popup__success-logo\"></div>\n\t\t\t\t\t\t<div class=\"biconnector-save-progress-popup__texts\">\n\t\t\t\t\t\t\t<h3 class=\"biconnector-save-progress-popup__header\">", "</h3>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"biconnector-save-progress-popup__buttons\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), popupText, createDatasetButton, closeButton);
+	  popup = new main_popup.Popup({
+	    content: popupContent,
+	    autoHide: true,
+	    events: {
+	      onPopupClose: onPopupClose,
+	      onPopupDestroy: onPopupClose
+	    },
+	    fixed: true,
+	    width: 500,
+	    minHeight: 299,
+	    closeIcon: true,
+	    noAllPaddings: true,
+	    overlay: true
+	  });
+	  popup.show();
+	}
+	function _closeSlider2() {
+	  BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSliderClose');
+	  BX.SidePanel.Instance.getTopSlider().close();
+	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalConnectionForm = ExternalConnectionForm;
 
-}((this.window = this.window || {}),BX,BX.Event,BX.UI));
+}((this.window = this.window || {}),BX,BX.Event,BX.Main,BX.UI,BX.BIConnector.DatasetImport));
 //# sourceMappingURL=script.js.map

@@ -51,7 +51,9 @@ export const ForwardContent = {
 		{
 			const { dialogId } = event;
 
-			EventEmitter.emit(EventType.dialog.closeBulkActionsMode);
+			EventEmitter.emit(EventType.dialog.closeBulkActionsMode, {
+				dialogId,
+			});
 
 			await Messenger.openChat(dialogId);
 

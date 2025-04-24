@@ -58,8 +58,17 @@ export const MessageText = {
 		{
 			return this.$store.getters['application/settings/get'](Settings.recent.showLastMessage);
 		},
+		notesText(): string
+		{
+			return this.loc('IM_LIST_RECENT_CHAT_SELF_SUBTITLE');
+		},
 		hiddenMessageText(): string
 		{
+			if (this.isNotes)
+			{
+				return this.notesText;
+			}
+
 			if (this.isUser)
 			{
 				return this.$store.getters['users/getPosition'](this.recentItem.dialogId);
@@ -119,6 +128,10 @@ export const MessageText = {
 		isChat(): boolean
 		{
 			return !this.isUser;
+		},
+		isNotes(): boolean
+		{
+			return Number.parseInt(this.recentItem.dialogId, 10) === Core.getUserId();
 		},
 	},
 	methods:

@@ -195,6 +195,7 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = [
 			'contextId' => 'tasks_' . $arResult['TEMPLATE_DATA']['ID'],
 			'category' => 'tasks',
 		],
+		'ctrlEnterHandler' => 'taskCtrlEnterHandler',
 	],
 	//"USE_CLIENT_DATABASE" => "Y",
 	//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')

@@ -2,9 +2,15 @@
  * @module im/messenger/lib/notifier
  */
 jn.define('im/messenger/lib/notifier', (require, exports, module) => {
+	/* global InAppNotifier, include, ChatUtils  */
 	const { Type } = require('type');
+	const { transparent } = require('utils/color');
+
+	const { Theme } = require('im/lib/theme');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
+	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/**
 	 * @class Notifier
@@ -16,6 +22,7 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			include('InAppNotifier');
 
 			this.delayShow = {};
+			this.visibilityManager = VisibilityManager.getInstance();
 
 			this.isInitialized = !Type.isUndefined(InAppNotifier);
 			if (this.isInitialized)
@@ -46,9 +53,9 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 		 * @param {string} [options.avatar]
 		 * @param delay
 		 *
-		 * @returns {boolean} has a notification been sent
+		 * @returns {Promise<boolean>} has a notification been sent
 		 */
-		notify(options, delay)
+		async notify(options, delay = true)
 		{
 			if (!this.isInitialized || !options.dialogId)
 			{
@@ -66,23 +73,35 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 				return true;
 			}
 
-			if (PageManager.getNavigator().isActiveTab())
+			/** @type NavigationContext * */
+			const navigationContext = await PageManager.getNavigator().getNavigationContext();
+			if (navigationContext.isTabActive)
 			{
-				const page = PageManager.getNavigator().getVisible();
-				if (page.type !== 'Web')
-				{
-					return false;
-				}
-
-				if (page.type === 'Web' && page.pageId === `im-${options.dialogId}`)
+				const activeTabInfo = await this.visibilityManager.getActiveTabInfo();
+				if (activeTabInfo.componentCode === MessengerParams.getComponentCode())
 				{
 					return false;
 				}
 			}
 
+			const isDialogVisible = await this.visibilityManager.checkIsDialogVisible({
+				dialogId: options.dialogId,
+			});
+			if (isDialogVisible)
+			{
+				return false;
+			}
+
+			this.showNotification(options);
+
+			return true;
+		}
+
+		showNotification(options)
+		{
 			const notification = {
 				title: ChatUtils.htmlspecialcharsback(options.title),
-				backgroundColor: '#E6000000',
+				backgroundColor: transparent(Theme.colors.baseBlackFixed, 0.8),
 				message: ChatUtils.htmlspecialcharsback(options.text),
 				data: options,
 			};
@@ -93,8 +112,6 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			}
 
 			InAppNotifier.showNotification(notification);
-
-			return true;
 		}
 	}
 

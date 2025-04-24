@@ -1371,6 +1371,16 @@
 					event.preventDefault();
 				},
 			},
+			{
+				condition: [
+					new RegExp("/bitrix/components/bitrix/voting\.attached\.result/slider\.php", "i"),
+				],
+				options: {
+					cacheable: false,
+					width: 480,
+					copyLinkLabel: true,
+				},
+			},
 		]
 	});
 

@@ -42,7 +42,7 @@ jn.define('im/messenger/lib/utils/user', (require, exports, module) => {
 			// truly online, last activity date < 5 minutes ago - show status text
 			else if (isOnline && !lastSeenText)
 			{
-				text = this.getStatusTextForLastDate(userData.status);
+				text = this.getStatusTextForLastDate(userData.status ?? '');
 			}
 			// last activity date > 5 minutes ago - "Was online X minutes ago"
 			else if (lastSeenText)

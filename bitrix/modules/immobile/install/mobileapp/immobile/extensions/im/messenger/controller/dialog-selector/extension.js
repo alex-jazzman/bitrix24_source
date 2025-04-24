@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { EventType } = require('im/messenger/const');
-	const { SearchConverter } = require('im/messenger/lib/converter');
+	const { RecentSearchUiConverter } = require('im/messenger/lib/converter/ui/recent-search');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
@@ -166,7 +166,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 
 						recentUserListIndex[recentUserChat.id] = true;
 
-						userItems.push(SearchConverter.toUserCarouselItem(userStateModel));
+						userItems.push(RecentSearchUiConverter.toUserCarouselItem(userStateModel));
 					}
 				});
 			}
@@ -185,7 +185,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 						return;
 					}
 
-					userItems.push(SearchConverter.toUserCarouselItem(user));
+					userItems.push(RecentSearchUiConverter.toUserCarouselItem(user));
 				});
 			}
 

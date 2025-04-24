@@ -922,7 +922,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.showContextMenu && !this.messageHasError;
 	    },
 	    isBulkActionsMode() {
-	      return this.$store.getters['messages/select/getBulkActionsMode'];
+	      return this.$store.getters['messages/select/isBulkActionsModeActive'](this.dialogId);
 	    }
 	  },
 	  methods: {
@@ -997,7 +997,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        const messageService = new im_v2_provider_service.MessageService({
 	          chatId: this.context.chatId
 	        });
-	        messageService.deleteMessage(this.context.id);
+	        messageService.deleteMessages([this.context.id]);
 	        this.menuInstance.close();
 	      }
 	    };

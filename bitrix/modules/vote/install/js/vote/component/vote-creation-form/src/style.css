@@ -1,0 +1,147 @@
+.vote-creation-form {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+}
+
+.vote-creation-form__questions,
+.vote-creation-form__settings {
+	background: var( --ui-color-palette-white-base);
+	padding: 18px;
+	border-radius: 12px;
+	box-shadow: 0 2px 4px 0 #00000005;
+}
+
+.vote-creation-form__question:not(:last-child) {
+	border-bottom: 1px solid #e2e2e2;
+	padding-bottom: 25px;
+}
+
+.vote-creation-form__question:not(:first-child) {
+	margin-top: 25px;
+}
+
+.vote-creation-form .ui-ctl-textarea {
+	width: 100%;
+	height: auto;
+	min-height: auto;
+}
+
+.vote-creation-form .ui-ctl-textarea textarea.ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+	padding-top: 14px;
+	padding-bottom: 14px;
+	overflow-y: hidden;
+	height: 48px;
+}
+
+.vote-creation-form__question_label,
+.vote-creation-form__settings_title {
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-black-base);
+	margin: 0 0 18px 0;
+}
+
+.vote-creation-form__question_answer-options {
+	color: var(--ui-color-palette-black-base);
+	margin: 20px 0;
+}
+
+.vote-creation-form__question_answer-options,
+.vote-creation-form__question_add-answer {
+	font-size: 15px;
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.vote-creation-form__answers {
+	position: relative;
+}
+
+.vote-creation-form__answers.--pointer-events-disabled,
+.vote-creation-form__answers:not(.--pointer-events-disabled) .vote-creation-form__answer_ghost {
+	pointer-events: none;
+}
+
+.vote-creation-form__answer {
+	display: flex;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.vote-creation-form__answer_dnd-icon {
+	cursor: grab;
+	--ui-icon-set__icon-color: #d0d0d0;
+}
+
+.vote-creation-form__answer_dnd-icon:active {
+	cursor: grabbing;
+}
+
+.vote-creation-form__answer_ghost {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+	width: 100%;
+}
+
+.vote-creation-form__answer_position-pointer {
+	width: 100%;
+	border: 1px dashed var(--ui-color-palette-blue-40);
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.vote-creation-form__answer_trash {
+	cursor: pointer;
+	width: 22px;
+	height: 22px;
+	background: url('./images/trash.svg') no-repeat;
+}
+
+.vote-creation-form__question_add-answer {
+	margin: 8px 0;
+	color: #a7a7a7;
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	cursor: pointer;
+}
+
+.vote-creation-form__question_plus {
+	background: url('./images/plus.svg') no-repeat;
+	width: 20px;
+	height: 20px;
+}
+
+.vote-creation-form__question_multiple-answers,
+.vote-creation-form__settings_setting {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 14px;
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-black-base);
+	margin-top: 20px;
+}
+
+.vote-creation-form__add-question-btn.ui-btn {
+	margin-top: 25px;
+	--ui-btn-padding: 0 8px;
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.vote-creation-form__add-question-btn.ui-btn::before {
+	content: '';
+	background-color: #555555;
+	background-size: contain;
+    mask-image: url('./images/plus.svg');
+	width: 20px;
+	height: 20px;
+	margin-right: 5px;
+}
+
+.vote-creation-form__settings {
+	margin-top: 15px;
+}

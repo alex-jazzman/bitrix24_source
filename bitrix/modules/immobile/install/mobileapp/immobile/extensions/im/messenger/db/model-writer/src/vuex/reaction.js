@@ -5,10 +5,11 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, module) => {
 	const { Type } = require('type');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const logger = LoggerManager.getInstance().getLogger('repository--reaction');
+	const logger = getLogger('repository--reaction');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
+	const { clone } = require('utils/object');
 
 	class ReactionWriter extends Writer
 	{

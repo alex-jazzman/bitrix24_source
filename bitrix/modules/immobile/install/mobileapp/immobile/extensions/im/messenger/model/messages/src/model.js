@@ -19,6 +19,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 	const logger = LoggerManager.getInstance().getLogger('model--messages');
 
 	const TEMPORARY_MESSAGE_PREFIX = 'temporary';
+	const MODULE_NAME_MESSAGES_MODEL = 'messagesModel';
 
 	/** @type {MessagesMessengerModel} */
 	const messagesModel = {
@@ -256,6 +257,25 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				return clone(message);
 			},
 
+			/** @function messagesModel/getTemporaryMessagesByIdList */
+			getTemporaryMessagesByIdList: (state) => (messageIdList) => {
+				if (!Type.isArrayFilled(messageIdList))
+				{
+					return [];
+				}
+
+				const list = [];
+				messageIdList.forEach((messageId) => {
+					const temporaryMessage = state.temporaryMessages[messageId.toString()];
+					if (temporaryMessage)
+					{
+						list.push(temporaryMessage);
+					}
+				});
+
+				return clone(list);
+			},
+
 			/**
 			 * @function messagesModel/getFirstUnreadId
 			 * @return {number || null}
@@ -319,14 +339,36 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			isUploadingMessage: (state) => (id) => {
 				return state.uploadingMessageCollection.has(id);
 			},
+
+			/**
+			 * @function messagesModel/hasUnreadPushMessage
+			 * @return {boolean}
+			 */
+			hasUnreadPushMessage: (state) => (messageIdList) => {
+				return messageIdList.some((messageId) => {
+					const messageData = state.collection[messageId];
+					if (!messageData)
+					{
+						return false;
+					}
+
+					return messageData.unread === true && messageData.push === true;
+				});
+			},
+			/**
+			 * @function messagesModel/isPushMessage
+			 * @return {boolean}
+			 */
+			isPushMessage: (state) => (messageId) => {
+				return state.collection[messageId]?.push === true;
+			},
 		},
 		actions: {
 			/** @function messagesModel/forceUpdateByChatId */
 			forceUpdateByChatId: async (store, { chatId }) => {
-				const moduleName = 'messagesModel';
 				const actionName = 'forceUpdateByChatId';
 
-				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+				const waiter = new MessengerMutationHandlersWaiter(MODULE_NAME_MESSAGES_MODEL, actionName);
 				waiter.addMutation('store');
 				waiter.addMutation('setChatCollection');
 				const handlersComplete = waiter.waitComplete();
@@ -354,9 +396,8 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 
 			/** @function messagesModel/setChatCollection */
 			setChatCollection: async (store, { messages, clearCollection }) => {
-				const moduleName = 'messagesModel';
 				const actionName = 'setChatCollection';
-				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+				const waiter = new MessengerMutationHandlersWaiter(MODULE_NAME_MESSAGES_MODEL, actionName);
 
 				clearCollection = clearCollection || false;
 				if (!Array.isArray(messages) && Type.isPlainObject(messages))
@@ -445,6 +486,41 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 			},
 
+			/** @function messagesModel/setFromPush */
+			setFromPush: (store, payload) => {
+				if (!Type.isArrayFilled(payload))
+				{
+					return;
+				}
+
+				const messageList = payload.map((message) => {
+					const result = validate(message);
+
+					if (!store.state.collection[message.id])
+					{
+						result.unread = true;
+						result.viewed = false;
+					}
+
+					return result;
+				});
+				messageList.sort((message1, message2) => message1.id - message2.id);
+
+				store.commit('setFromPush', {
+					actionName: 'setFromPush',
+					data: {
+						messageList,
+					},
+				});
+
+				store.commit('setChatCollection', {
+					actionName: 'setFromPush',
+					data: {
+						messageList,
+					},
+				});
+			},
+
 			/** @function messagesModel/store */
 			store: (store, messages) => {
 				if (!Array.isArray(messages) && Type.isPlainObject(messages))
@@ -495,10 +571,9 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 
 			/** @function messagesModel/add */
 			add: async (store, payload) => {
-				const moduleName = 'messagesModel';
 				const actionName = 'add';
 
-				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+				const waiter = new MessengerMutationHandlersWaiter(MODULE_NAME_MESSAGES_MODEL, actionName);
 				waiter.addMutation('store');
 				waiter.addMutation('setChatCollection');
 				const handlersComplete = waiter.waitComplete();
@@ -511,7 +586,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				if (message.files.some((fileId) => Uuid.isV4(fileId)))
 				{
 					store.commit('addToUploadingCollection', {
-						actionName: 'add',
+						actionName,
 						data: {
 							id: message.id,
 						},
@@ -531,6 +606,47 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					actionUid: waiter.actionUid,
 					data: {
 						messageList: [message],
+					},
+				});
+
+				await handlersComplete;
+			},
+
+			/** @function messagesModel/addList */
+			addList: async (store, payload) => {
+				if (!Type.isArrayFilled(payload.messageList))
+				{
+					return;
+				}
+
+				const actionName = 'addList';
+				const waiter = new MessengerMutationHandlersWaiter(MODULE_NAME_MESSAGES_MODEL, actionName);
+				waiter.addMutation('store');
+				waiter.addMutation('setChatCollection');
+				const handlersComplete = waiter.waitComplete();
+
+				const preparedMessageList = payload.messageList.map((message) => {
+					return { ...messageDefaultElement, ...validate(message) };
+				}).sort((a, b) => sortCollection(a, b));
+
+				if (preparedMessageList.length === 0)
+				{
+					return;
+				}
+
+				store.commit('store', {
+					actionName,
+					actionUid: waiter.actionUid,
+					data: {
+						messageList: preparedMessageList,
+					},
+				});
+
+				store.commit('setChatCollection', {
+					actionName,
+					actionUid: waiter.actionUid,
+					data: {
+						messageList: preparedMessageList,
 					},
 				});
 
@@ -651,11 +767,58 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 			},
 
+			/** @function messagesModel/updateList */
+			updateList: (store, { messageList }) => {
+				if (!Type.isArrayFilled(messageList))
+				{
+					return false;
+				}
+
+				const updateMessagesData = messageList.map((message) => {
+					return {
+						id: message.id,
+						fields: validate(message),
+					};
+				});
+
+				updateMessagesData.forEach((updateMessageData) => {
+					if (
+						store.getters.isUploadingMessage(updateMessageData.id)
+						&& updateMessageData.fields?.files?.every?.((fileId) => Type.isNumber(Number(fileId)))
+					)
+					{
+						store.commit('deleteFromUploadingCollection', {
+							actionName: 'update',
+							data: {
+								id: updateMessageData.id,
+							},
+						});
+					}
+				});
+
+				const preparedUpdateMessagesData = updateMessagesData.filter((updateMessageData) => {
+					const storedMessage = store.state.collection[updateMessageData.id];
+
+					return !isEqual(storedMessage, mergeImmutable(storedMessage, updateMessageData.fields));
+				});
+
+				const data = {
+					messageList: preparedUpdateMessagesData,
+				};
+
+				store.commit('update', {
+					actionName: 'updateList',
+					data,
+				});
+
+				return store.dispatch('pinModel/updateMessages', data);
+			},
+
 			/** @function messagesModel/updateParams */
 			updateParams: async (store, { id, params }) => {
 				if (!store.state.collection[id])
 				{
-					return Promise.resolve(null);
+					return null;
 				}
 
 				const { params: formatedParams } = validate({ params });
@@ -692,6 +855,8 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 						skipCheckEquality: true,
 					});
 				}
+
+				return null;
 			},
 
 			/** @function messagesModel/deleteByChatId */
@@ -711,16 +876,27 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			deleteByIdList: (store, payload) => {
 				const { idList } = payload;
 
-				store.dispatch('pinModel/deleteMessagesByIdList', { idList });
-
 				idList.forEach((id) => {
-					store.commit('delete', {
-						actionName: 'deleteByIdList',
-						data: {
-							id,
-						},
-					});
+					if (store.getters.isUploadingMessage(id))
+					{
+						store.commit('deleteFromUploadingCollection', {
+							actionName: 'delete',
+							data: {
+								id,
+								chatId: store.state.collection[id].chatId,
+							},
+						});
+					}
 				});
+
+				store.commit('delete', {
+					actionName: 'deleteByIdList',
+					data: {
+						messageIdList: idList,
+					},
+				});
+
+				return store.dispatch('pinModel/deleteMessagesByIdList', { idList });
 			},
 
 			/** @function messagesModel/delete */
@@ -743,7 +919,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				store.commit('delete', {
 					actionName: 'delete',
 					data: {
-						id,
+						messageIdList: [id],
 					},
 				});
 			},
@@ -1054,6 +1230,25 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 
 			/**
 			 * @param state
+			 * @param {MutationPayload<MessagesSetFromPushData, MessagesSetFromPushActions>} payload
+			 */
+			setFromPush: (state, payload) => {
+				logger.log('messagesModel: setFromPush mutation', payload);
+
+				const { messageList } = payload.data;
+
+				for (const message of messageList)
+				{
+					state.collection[message.id] = mergeImmutable(
+						messageDefaultElement,
+						state.collection[message.id] ?? {},
+						message,
+					);
+				}
+			},
+
+			/**
+			 * @param state
 			 * @param {MutationPayload<MessagesSetTemporaryMessagesData, MessagesSetTemporaryMessagesActions>} payload
 			 */
 			setTemporaryMessages: (state, payload) => {
@@ -1101,12 +1296,21 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			update: (state, payload) => {
 				logger.log('messagesModel: update mutation', payload);
 
-				const {
-					id,
-					fields,
-				} = payload.data;
+				if (Type.isArrayFilled(payload.data.messageList))
+				{
+					payload.data.messageList.forEach((messages) => {
+						state.collection[messages.id] = mergeImmutable(state.collection[messages.id], messages.fields);
+					});
+				}
+				else
+				{
+					const {
+						id,
+						fields,
+					} = payload.data;
 
-				state.collection[id] = mergeImmutable(state.collection[id], fields);
+					state.collection[id] = mergeImmutable(state.collection[id], fields);
+				}
 			},
 
 			/**
@@ -1115,24 +1319,23 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			 */
 			delete: (state, payload) => {
 				logger.log('messagesModel: delete mutation', payload);
-				const {
-					id,
-				} = payload.data;
+				const { messageIdList } = payload.data;
 
-				const message = state.collection[id];
-				if (!message)
-				{
-					return;
-				}
+				messageIdList.forEach((messageId) => {
+					const message = state.collection[messageId];
+					if (!message)
+					{
+						return;
+					}
 
-				const { chatId } = message;
+					const { chatId } = message;
+					if (Type.isSet(state.chatCollection[chatId]))
+					{
+						state.chatCollection[chatId].delete(messageId);
+					}
 
-				if (Type.isSet(state.chatCollection[chatId]))
-				{
-					state.chatCollection[chatId].delete(id);
-				}
-
-				delete state.collection[id];
+					delete state.collection[messageId];
+				});
 			},
 
 			/**

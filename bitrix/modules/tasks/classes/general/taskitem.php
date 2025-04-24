@@ -768,11 +768,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$arFields = $arTemplate;
 
 		$arFields['CREATED_DATE'] = \Bitrix\Tasks\UI::formatDateTime($userTime);
-		$arFields['ACCOMPLICES'] = unserialize($arFields['ACCOMPLICES'], ['allowed_classes' => false]);
-		$arFields['AUDITORS'] = unserialize($arFields['AUDITORS'], ['allowed_classes' => false]);
-		$arFields['TAGS'] = unserialize($arFields['TAGS'], ['allowed_classes' => false]);
-		$arFields['FILES'] = unserialize($arFields['FILES'], ['allowed_classes' => false]);
-		$arFields['DEPENDS_ON'] = unserialize($arFields['DEPENDS_ON'], ['allowed_classes' => false]);
+		$arFields['ACCOMPLICES'] = unserialize($arFields['ACCOMPLICES'] ?? '', ['allowed_classes' => false]);
+		$arFields['AUDITORS'] = unserialize($arFields['AUDITORS'] ?? '', ['allowed_classes' => false]);
+		$arFields['TAGS'] = unserialize($arFields['TAGS'] ?? '', ['allowed_classes' => false]);
+		$arFields['FILES'] = unserialize($arFields['FILES'] ?? '', ['allowed_classes' => false]);
+		$arFields['DEPENDS_ON'] = unserialize($arFields['DEPENDS_ON'] ?? '', ['allowed_classes' => false]);
 		$arFields['REPLICATE'] = 'N';
 		$arFields['CHANGED_BY'] = $arFields['CREATED_BY'];
 		$arFields['CHANGED_DATE'] = $arFields['CREATED_DATE'];
@@ -790,7 +790,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		unset($arFields['ID'], $arFields['REPLICATE'], $arFields['REPLICATE_PARAMS']);
 
-		$datePlanValues = array('DEADLINE', 'START_DATE_PLAN', 'END_DATE_PLAN');
+		$datePlanValues = array('START_DATE_PLAN', 'END_DATE_PLAN');
 		foreach ($datePlanValues as $value)
 		{
 			if ($arTemplate[$value.'_AFTER'])
@@ -798,6 +798,19 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$newValue = $userTime + $arTemplate[$value.'_AFTER'];
 				$arFields[$value] = \Bitrix\Tasks\UI::formatDateTime($newValue);
 			}
+		}
+
+		if ($arTemplate['DEADLINE_AFTER'])
+		{
+			$calendar = \Bitrix\Tasks\Integration\Calendar\Calendar::createFromPortalSchedule();
+
+			$arFields['DEADLINE'] = $calendar->getClosestDate(
+				new \Bitrix\Main\Type\DateTime(),
+				$arTemplate['DEADLINE_AFTER'],
+				$arTemplate['MATCH_WORK_TIME'] === 'Y',
+			);
+
+			unset($arFields['MATCH_WORK_TIME']);
 		}
 
 		$multitaskMode = false;
@@ -3457,6 +3470,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		{
 			$parentId = (int)($fields['PARENT_ID'] ?? null);
 			$event = $parentId ? Analytics::EVENT['subtask_add'] : Analytics::EVENT['task_create'];
+			$params = array_merge(
+				$fields['TASKS_ANALYTICS_PARAMS'] ?? [],
+				[
+					'p3' => 'auditorsCount_' . count($fields['AUDITORS'] ?? []),
+					'p5' => 'accomplicesCount_' . count($fields['ACCOMPLICES'] ?? []),
+				]
+			);
 
 			Analytics::getInstance($userId)->onTaskCreate(
 				$fields['TASKS_ANALYTICS_CATEGORY'] ?: Analytics::TASK_CATEGORY,
@@ -3465,7 +3485,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$fields['TASKS_ANALYTICS_ELEMENT'] ?? null,
 				$fields['TASKS_ANALYTICS_SUB_SECTION'] ?? null,
 				$status,
-				$fields['TASKS_ANALYTICS_PARAMS'] ?? [],
+				$params,
 			);
 		}
 	}

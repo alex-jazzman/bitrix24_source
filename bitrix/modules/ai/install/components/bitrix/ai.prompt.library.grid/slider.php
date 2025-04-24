@@ -8,6 +8,22 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_be
 
 global $APPLICATION;
 
+use Bitrix\AI\Container;
+use Bitrix\AI\Services\CopilotAccessCheckerService;
+use Bitrix\Main\Application;
+
+if (\Bitrix\Main\Loader::includeModule('ai'))
+{
+	/** @var CopilotAccessCheckerService $copilotAccessCheckerService */
+	$copilotAccessCheckerService = Container::init()->getItem(CopilotAccessCheckerService::class);
+	$userId = Bitrix\AI\Facade\User::getCurrentUserId();
+
+	if (!$copilotAccessCheckerService->canShowLibrariesInFrontend($userId))
+	{
+		Application::getInstance()->end();
+	}
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',

@@ -1,9 +1,7 @@
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Reflection, Loc, Text, ajax as Ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import 'spotlight';
-import 'ui.alerts';
-import 'ui.forms';
+import { Button, ButtonColor, CancelButton } from 'ui.buttons';
 
 type Props = {
 	gridId: ?string,
@@ -52,16 +50,6 @@ class ExternalDatasetManager
 		});
 	}
 
-	getGrid(): BX.Main.grid
-	{
-		return this.#grid;
-	}
-
-	getFilter(): BX.Main.Filter
-	{
-		return this.#filter;
-	}
-
 	handleCreatedByClick(ownerData: Object)
 	{
 		this.handleDatasetFilterChange({
@@ -88,7 +76,7 @@ class ExternalDatasetManager
 
 	handleDatasetFilterChange(fieldData: Object)
 	{
-		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
+		const filterFieldsValues = this.#filter.getFilterFieldsValues();
 		let currentFilteredField = filterFieldsValues[fieldData.fieldId] ?? [];
 		let currentFilteredFieldLabel = filterFieldsValues[`${fieldData.fieldId}_label`] ?? [];
 
@@ -103,7 +91,7 @@ class ExternalDatasetManager
 			currentFilteredFieldLabel.push(fieldData.TITLE);
 		}
 
-		const filterApi = this.getFilter().getApi();
+		const filterApi = this.#filter.getApi();
 		const filterToExtend = {};
 		filterToExtend[fieldData.fieldId] = currentFilteredField;
 		filterToExtend[`${fieldData.fieldId}_label`] = currentFilteredFieldLabel;
@@ -112,19 +100,19 @@ class ExternalDatasetManager
 		filterApi.apply();
 	}
 
-	deleteDataset(id) {
-		const messageBox = new BX.UI.Dialogs.MessageBox({
+	deleteDataset(id: number) {
+		const messageBox = new MessageBox({
 			message: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION'),
 			title: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE'),
 			buttons: [
-				new BX.UI.Button({
-					color: BX.UI.Button.Color.DANGER,
+				new Button({
+					color: ButtonColor.DANGER,
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_YES'),
 					onclick: (button) => {
 						button.setWaiting();
 						this.deleteDatasetAjaxAction(id)
 							.then(() => {
-								this.getGrid().reload();
+								this.#grid.reload();
 								messageBox.close();
 							})
 							.catch((response) => {
@@ -136,9 +124,9 @@ class ExternalDatasetManager
 							});
 					},
 				}),
-				new BX.UI.CancelButton({
+				new CancelButton({
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_NO'),
-					onclick: (button) => messageBox.close(),
+					onclick: () => messageBox.close(),
 				}),
 			],
 		});
@@ -146,13 +134,42 @@ class ExternalDatasetManager
 		messageBox.show();
 	}
 
-	deleteDatasetAjaxAction(datasetId: int): Promise
+	deleteDatasetAjaxAction(datasetId: number): Promise
 	{
 		return Ajax.runAction('biconnector.externalsource.dataset.delete', {
 			data: {
 				id: datasetId,
 			},
 		});
+	}
+
+	createChart(datasetId: number): void
+	{
+		this.#grid.tableFade();
+		Ajax.runAction(
+			'biconnector.externalsource.dataset.getEditUrl',
+			{
+				data: {
+					id: datasetId,
+				},
+			},
+		)
+			.then((response) => {
+				const link = response.data;
+				if (link)
+				{
+					window.open(link, '_blank').focus();
+				}
+				this.#grid.tableUnfade();
+			})
+			.catch((response) => {
+				this.#grid.tableUnfade();
+				if (response.errors)
+				{
+					this.#notifyErrors(response.errors);
+				}
+			})
+		;
 	}
 
 	showSupersetError(): void

@@ -6794,12 +6794,14 @@ this.BX.Crm = this.BX.Crm || {};
 	var _resendDocument = /*#__PURE__*/new WeakSet();
 	var _touchSigner = /*#__PURE__*/new WeakSet();
 	var _download = /*#__PURE__*/new WeakSet();
+	var _modifyDateSignUntil = /*#__PURE__*/new WeakSet();
 	let SignB2eDocument = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(SignB2eDocument, _Base);
 	  function SignB2eDocument(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, SignB2eDocument);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SignB2eDocument).call(this, ...args));
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _modifyDateSignUntil);
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _download);
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _touchSigner);
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _resendDocument);
@@ -6867,6 +6869,8 @@ this.BX.Crm = this.BX.Crm || {};
 	            messageBox.close();
 	          }
 	        });
+	      } else if (action === 'SignB2eDocument:ModifyDateSignUntil') {
+	        _classPrivateMethodGet$6(this, _modifyDateSignUntil, _modifyDateSignUntil2).call(this, item, actionData, animationCallbacks);
 	      }
 	    }
 	  }], [{
@@ -7013,6 +7017,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  main_core.Dom.document.body.appendChild(link);
 	  link.click();
 	  document.body.removeChild(link);
+	  if (animationCallbacks.onStop) {
+	    animationCallbacks.onStop();
+	  }
+	}
+	async function _modifyDateSignUntil2(item, actionData, animationCallbacks) {
+	  if (!actionData.uid || !actionData.valueTs) {
+	    return;
+	  }
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+	  const {
+	    uid,
+	    valueTs
+	  } = actionData;
+	  try {
+	    await api.modifyDateSignUntil(uid, valueTs);
+	  } catch {
+	    item.forceRefreshLayout();
+	  }
 	  if (animationCallbacks.onStop) {
 	    animationCallbacks.onStop();
 	  }

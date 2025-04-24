@@ -2,13 +2,14 @@
  * @module im/messenger/controller/dialog/lib/scroll-manager
  */
 jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports, module) => {
+	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType, AppStatus } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--scroll-manager');
+	const logger = getLogger('dialog--scroll-manager');
 
 	const BOTTOM_MESSAGE_INDEX = 0;
 
@@ -20,14 +21,17 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 		/**
 		 * @param {DialogView} view
 		 * @param {number || string} dialogId
+		 * @param {boolean} skipFirstScrollToFirstUnread It is necessary to disable automatic scrolling
+		 * when you click on the push notification that appears after a refresh.
 		 */
-		constructor({ view, dialogId })
+		constructor({ view, dialogId, skipFirstScrollToFirstUnreadMessages = false })
 		{
 			this.view = view;
 			this.dialogId = dialogId;
 			this.visibilityManager = VisibilityManager.getInstance();
 			this.store = serviceLocator.get('core').getStore();
 			this.needScrollToFirstUnread = true;
+			this.skipFirstScrollToFirstUnreadMessages = skipFirstScrollToFirstUnreadMessages;
 
 			this.isScrollToBottomEnable = true;
 			this.scrollToBottomHandler = this.onScrollToBottom.bind(this);
@@ -133,6 +137,13 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 			logger.log(`${this.constructor.name}.onScrollToFirstUnread isDialogOnScreen`, isDialogOnScreen);
 			if (!isDialogOnScreen)
 			{
+				return;
+			}
+
+			if (this.skipFirstScrollToFirstUnreadMessages)
+			{
+				this.skipFirstScrollToFirstUnreadMessages = false;
+
 				return;
 			}
 

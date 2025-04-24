@@ -10,8 +10,8 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 		FieldType,
 		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('database-table--dialog');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('database-table--dialog');
 
 	/**
 	 * @extends {Table<DialogStoredData>}
@@ -60,6 +60,32 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'role', type: FieldType.text, defaultValue: FieldDefaultValue.noneText },
 				{ name: 'permissions', type: FieldType.json },
 			];
+		}
+
+		async getById(dialogId)
+		{
+			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			{
+				return null;
+			}
+
+			const result = await this.getList({
+				filter: {
+					dialogId,
+				},
+			});
+
+			if (Type.isArrayFilled(result.items))
+			{
+				if (result.items.length > 1)
+				{
+					logger.error(`${this.constructor.table}.getById: duplicate dialog in table`, dialogId, result);
+				}
+
+				return result.items[0];
+			}
+
+			return null;
 		}
 
 		/**

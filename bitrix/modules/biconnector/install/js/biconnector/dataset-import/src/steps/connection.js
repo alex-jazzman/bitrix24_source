@@ -1,9 +1,10 @@
-import { ajax as Ajax } from 'main.core';
+import { ajax as Ajax, Text } from 'main.core';
 import { BaseStep } from './base-step';
 import { ConnectionSelectorField } from '../fields/type/connection-selector-field';
 import { CustomField } from '../fields/type/custom-field';
 import { TableSelectorField } from '../fields/type/table-selector-field';
 import { StringField } from '../fields/type/string-field';
+import { EventEmitter } from 'main.core.events';
 import '../css/connection.css';
 
 export const ConnectionStep = {
@@ -17,7 +18,6 @@ export const ConnectionStep = {
 	data(): Object
 	{
 		return {
-			connectionId: this.$store.state.config.connection,
 			tableId: this.$store.state.config.table,
 			connectionSelectorId: 'biconnector-external-connection',
 			tableSelectorId: 'biconnector-external-table',
@@ -165,13 +165,31 @@ export const ConnectionStep = {
 		},
 		openConnectionSlider()
 		{
-			const link = `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${this.selectedConnectionId}`;
+			const link = `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${this.selectedConnectionId}&closeAfterCreate=Y`;
 			BX.SidePanel.Instance.open(link, {
 				width: 564,
 				allowChangeHistory: false,
 				cacheable: false,
 			});
 		},
+		handleSliderMessage(event)
+		{
+			const [messageEvent] = event.getData();
+			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave')
+			{
+				const connectionProperties = this.$store.getters.connectionProperties;
+				connectionProperties.connectionName = Text.decode(messageEvent.data.connection.name);
+				this.$store.commit('setConnectionProperties', connectionProperties);
+			}
+		},
+	},
+	mounted()
+	{
+		EventEmitter.subscribe('SidePanel.Slider:onMessage', this.handleSliderMessage);
+	},
+	beforeUnmount()
+	{
+		EventEmitter.unsubscribe('SidePanel.Slider:onMessage', this.handleSliderMessage);
 	},
 	emits: [
 		'tableSelected',

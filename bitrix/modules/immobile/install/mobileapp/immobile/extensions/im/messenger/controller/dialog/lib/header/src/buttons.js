@@ -369,13 +369,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 		 */
 		checkSelectMessagesModeEnabled()
 		{
-			const view = this.dialogLocator.get('view');
-			if (view)
-			{
-				return view.getSelectEnable();
-			}
-
-			return false;
+			return this.dialogLocator.get('select-manager')?.isSelectMessagesModeEnabled() ?? false;
 		}
 	}
 

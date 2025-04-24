@@ -120,10 +120,39 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 		});
 	}
 
+	/**
+	 * @param {function} deleteCallback
+	 * @param {function} cancelCallback
+	 */
+	function showDeleteChannelPostsAlert({ deleteCallback, cancelCallback })
+	{
+		confirmDestructiveAction({
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POSTS_TITLE'),
+			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POST_DESCRIPTION'),
+			onDestruct: deleteCallback,
+			onCancel: cancelCallback,
+		});
+	}
+
+	/**
+	 * @param {function} deleteCallback
+	 * @param {function} cancelCallback
+	 */
+	function showDeleteMessagesAlert({ deleteCallback, cancelCallback })
+	{
+		confirmDestructiveAction({
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_MESSAGES_TITLE'),
+			onDestruct: deleteCallback,
+			onCancel: cancelCallback,
+		});
+	}
+
 	module.exports = {
 		showDeleteChatAlert,
 		showDeleteChannelAlert,
 		showDeleteChannelPostAlert,
+		showDeleteChannelPostsAlert,
+		showDeleteMessagesAlert,
 		showRemoveParticipantCollabAlert,
 		showDeleteCollabAlert,
 		showLeaveCollabAlert,

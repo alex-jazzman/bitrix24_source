@@ -68,6 +68,7 @@
 	--ui-icon-set__path_warning-circle: url('/bitrix/js/ui/icon-set/main/images/warning-circle.svg');
 	--ui-icon-set__path_info-circle: url('/bitrix/js/ui/icon-set/main/images/info-circle.svg');
 	--ui-icon-set__path_warning: url('/bitrix/js/ui/icon-set/main/images/warning.svg');
+	--ui-icon-set__path_warning-alarm: url('/bitrix/js/ui/icon-set/main/images/warning-alarm.svg');
 	--ui-icon-set__path_info: url('/bitrix/js/ui/icon-set/main/images/info.svg');
 	--ui-icon-set__path_help: url('/bitrix/js/ui/icon-set/main/images/help.svg');
 	--ui-icon-set__path_sms: url('/bitrix/js/ui/icon-set/main/images/sms.svg');
@@ -778,6 +779,10 @@
 
 .ui-icon-set.--warning {
 	--ui-icon-set__icon-path: var(--ui-icon-set__path_warning);
+}
+
+.ui-icon-set.--warning-alarm {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_warning-alarm);
 }
 
 .ui-icon-set.--info {

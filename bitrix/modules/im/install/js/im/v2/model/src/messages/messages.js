@@ -152,6 +152,12 @@ export class MessagesModel extends BuilderModel
 
 				return Type.isStringFilled(message.forward.id);
 			},
+			/** @function messages/isExists */
+			isExists: (state: MessagesState) => (id: number | string) => {
+				const message = state.collection[id];
+
+				return message && !message.isDeleted;
+			},
 			/** @function messages/isInChatCollection */
 			isInChatCollection: (state: MessagesState) => (payload: {messageId: number}): boolean => {
 				const { messageId } = payload;

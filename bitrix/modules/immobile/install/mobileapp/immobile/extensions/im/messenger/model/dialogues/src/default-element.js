@@ -29,7 +29,7 @@ jn.define('im/messenger/model/dialogues/default-element', (require, exports, mod
 		savedPositionMessageId: 0,
 		managerList: [],
 		readList: [],
-		writingList: [],
+		inputActions: [],
 		muteList: [],
 		textareaMessage: '',
 		quoteId: 0,

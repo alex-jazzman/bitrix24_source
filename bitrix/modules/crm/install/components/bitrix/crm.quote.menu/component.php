@@ -351,7 +351,6 @@ if ($arParams['TYPE'] === 'list')
 		unset($stExportId);
 	}
 
-	$isAddDelimiter = true;
 	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Quote);
 	if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
 	{
@@ -359,18 +358,12 @@ if ($arParams['TYPE'] === 'list')
 	}
 	if ($permissionItem->canShow())
 	{
-		$isAddDelimiter = false;
 		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
 		$arResult['BUTTONS'][] = $permissionItem->toInterfaceToolbarButton();
 	}
 
 	if (count($arResult['BUTTONS']) > 1)
 	{
-		if ($isAddDelimiter)
-		{
-			$arResult['BUTTONS'][] = ['SEPARATOR' => true];
-		}
-
 		//Force start new bar after first button
 		array_splice($arResult['BUTTONS'], 1, 0, array(array('NEWBAR' => true)));
 	}

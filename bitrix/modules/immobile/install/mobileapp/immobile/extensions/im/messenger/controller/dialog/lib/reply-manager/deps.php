@@ -10,5 +10,6 @@ return [
 		'im:messenger/lib/parser',
 		'im:messenger/lib/params',
 		'im:messenger/lib/date-formatter',
+		'im:messenger/lib/converter/ui/message',
 	],
 ];

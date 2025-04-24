@@ -63,7 +63,7 @@ export class UploaderWrapper extends EventEmitter
 			imageResizeHeight: 1280,
 			imageResizeMode: 'contain',
 			imageResizeFilter: (file: UploaderFile) => {
-				return !file.getCustomData('sendAsFile') && file.getExtension() !== 'gif';
+				return !file.getCustomData('sendAsFile') && !file.isAnimated();
 			},
 			imageResizeMimeType: 'image/jpeg',
 			imageResizeMimeTypeMode: 'force',

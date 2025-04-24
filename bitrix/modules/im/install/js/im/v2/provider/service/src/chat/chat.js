@@ -33,6 +33,11 @@ export class ChatService
 		return this.#loadService.loadChat(dialogId);
 	}
 
+	loadChatByChatId(chatId: number): Promise
+	{
+		return this.#loadService.loadChatByChatId(chatId);
+	}
+
 	loadChatWithMessages(dialogId: string): Promise
 	{
 		return this.#loadService.loadChatWithMessages(dialogId);

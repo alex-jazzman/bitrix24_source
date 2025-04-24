@@ -6,8 +6,11 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 	include('InAppNotifier');
 
 	const { Loc } = require('loc');
+	const { transparent } = require('utils/color');
 
+	const { Theme } = require('im/lib/theme');
 	const { MessengerToast, ToastType } = require('im/messenger/lib/ui/notification/messenger-toast');
+	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
 
 	/**
 	 * @class Notify
@@ -19,8 +22,16 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 			InAppNotifier.showNotification({
 				title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_COMING_SOON'),
 				time: 1,
-				backgroundColor: '#E6000000',
+				backgroundColor: transparent(Theme.colors.baseBlackFixed, 0.8),
 			});
+		}
+
+		/**
+		 * @param {ShowNotifierParams} params
+		 */
+		static showNotifier(params)
+		{
+			MessengerNotifier.show(params);
 		}
 
 		/**

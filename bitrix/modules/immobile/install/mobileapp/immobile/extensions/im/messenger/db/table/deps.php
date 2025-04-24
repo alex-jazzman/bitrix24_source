@@ -17,6 +17,7 @@ return [
 		'./src/user',
 		'./src/file',
 		'./src/message',
+		'./src/message-push',
 		'./src/temp-message',
 		'./src/reaction',
 		'./src/queue',

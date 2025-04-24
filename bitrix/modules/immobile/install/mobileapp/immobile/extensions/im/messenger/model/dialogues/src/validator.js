@@ -239,9 +239,9 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			fields.writingList = fields.writing_list;
 		}
 
-		if (Type.isArray(fields.writingList))
+		if (Type.isArray(fields.inputActions))
 		{
-			result.writingList = prepareWritingList(fields.writingList);
+			result.inputActions = prepareInputActions(fields.inputActions);
 		}
 
 		if (!Type.isUndefined(fields.manager_list))
@@ -493,25 +493,31 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 	}
 
 	/**
-	 * @param writingList
+	 * @param {Array<InputActionNotify>} inputAction
+	 * @return {Array<InputActionNotify>}
 	 */
-	function prepareWritingList(writingList)
+	function prepareInputActions(inputAction)
 	{
 		const result = [];
 
-		writingList.forEach((user) => {
+		inputAction.forEach((inputAction) => {
 			const item = {};
+			const isValidUserId = Type.isNumber(inputAction.userId);
+			const isValidUserFirstName = Type.isString(inputAction.userFirstName);
+			const isValidActions = Type.isArrayFilled(inputAction.actions)
+				&& inputAction.actions.every((action) => Type.isString(action))
+			;
 
-			if (!user.userId)
+			if (!isValidUserId || !isValidUserFirstName || !isValidActions)
 			{
-				return false;
+				return;
 			}
 
-			item.userId = Number.parseInt(user.userId, 10);
-			item.userName = user.userName;
-			result.push(item);
+			item.userId = inputAction.userId;
+			item.userFirstName = inputAction.userFirstName;
+			item.actions = inputAction.actions;
 
-			return true;
+			result.push(item);
 		});
 
 		return result;

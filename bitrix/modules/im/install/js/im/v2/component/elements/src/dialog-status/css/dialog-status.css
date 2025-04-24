@@ -38,28 +38,11 @@
 	background-image: url('./images/read.svg');
 }
 
-.bx-im-dialog-chat-status__icon.--typing::before {
-	width: 19px;
-	height: 16px;
-	background-image: url('./images/typing.svg');
-	background-repeat: no-repeat;
-	background-size: 10px;
-	background-position: 0 3px;
-	content: '';
-	position: absolute;
-	margin-top: -1px;
-	margin-left: 1px;
-	animation: im-avatar-typing 1.6s linear infinite;
-}
-
-@keyframes im-avatar-typing {
-	0% { background-position-x: 0; }
-	20% { background-position-x: 3px; transform:rotate(-20deg); }
-	35% { background-position-x: 3px; transform:rotate(0deg); }
-	50% { background-position-x: 1px; transform:rotate(-30deg); }
-	65% { background-position-x: 3px; transform:rotate(0deg); }
-	80% { background-position-x: 3px; }
-	100% { background-position-x: 0; }
+.bx-im-dialog-chat-status__animation {
+	width: 18px;
+	height: 18px;
+	margin-right: 8px;
+	flex-shrink: 0;
 }
 
 .bx-im-dialog-chat-status__text {
@@ -83,4 +66,28 @@
 	width: 100%;
 	height: 1px;
 	background-color: var(--im-dialog-chat-status__background-color_more-users);
+}
+
+.im-dialog-status-animation-enter-active,
+.im-dialog-status-animation-leave-active {
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.im-dialog-status-animation-enter-from {
+	opacity: 0;
+	transform: translateY(20px);
+}
+
+.im-dialog-status-animation-enter-to {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.im-dialog-status-animation-leave-from {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.im-dialog-status-animation-leave-to {
+	opacity: 0;
 }

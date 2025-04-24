@@ -54,6 +54,11 @@ export class BasePullHandler
 		this.#messageHandler.handleMessageUpdate(params);
 	}
 
+	handleMessageDeleteV2(params)
+	{
+		this.#messageHandler.handleMessageDeleteV2(params);
+	}
+
 	handleMessageDelete(params)
 	{
 		this.#messageHandler.handleMessageDelete(params);
@@ -131,9 +136,9 @@ export class BasePullHandler
 		this.#chatHandler.handleChatUserLeave(params);
 	}
 
-	handleStartWriting(params)
+	handleInputActionNotify(params)
 	{
-		this.#chatHandler.handleStartWriting(params);
+		this.#chatHandler.handleInputActionNotify(params);
 	}
 
 	handleChatUnread(params)

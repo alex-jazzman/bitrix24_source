@@ -47,7 +47,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            case 0:
 	              _context.next = 2;
 	              return exports.EditForm.createInstance({
-	                flowName: ''
+	                flowName: '',
+	                isFeatureTrialable: _this2.getOption('isFeatureTrialable'),
+	                context: _this2.getOption('context', '')
 	              });
 	            case 2:
 	              editForm = _context.sent;
@@ -386,8 +388,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _params$1 = /*#__PURE__*/new WeakMap();
+	var _isExtranet = /*#__PURE__*/new WeakMap();
 	var _toggleFlow = /*#__PURE__*/new WeakMap();
+	var _flowParams = /*#__PURE__*/new WeakMap();
 	var _dialog = /*#__PURE__*/new WeakMap();
 	var _selectedItemBeforeUpdate = /*#__PURE__*/new WeakMap();
 	var _createDialog = /*#__PURE__*/new WeakSet();
@@ -399,11 +402,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _classPrivateMethodInitSpec$3(this, _addFooter);
 	    _classPrivateMethodInitSpec$3(this, _createFlow);
 	    _classPrivateMethodInitSpec$3(this, _createDialog);
-	    _classPrivateFieldInitSpec$2(this, _params$1, {
+	    _classPrivateFieldInitSpec$2(this, _isExtranet, {
 	      writable: true,
 	      value: void 0
 	    });
 	    _classPrivateFieldInitSpec$2(this, _toggleFlow, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _flowParams, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -415,15 +422,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _params$1, params);
-	    babelHelpers.classPrivateFieldSet(this, _toggleFlow, ToggleFlowFactory.get(babelHelpers.classPrivateFieldGet(this, _params$1).toggleFlowParams));
+	    babelHelpers.classPrivateFieldSet(this, _flowParams, params.flowParams);
+	    babelHelpers.classPrivateFieldSet(this, _isExtranet, params.isExtranet);
+	    babelHelpers.classPrivateFieldSet(this, _toggleFlow, ToggleFlowFactory.get(params.toggleFlowParams));
 	    babelHelpers.classPrivateFieldSet(this, _selectedItemBeforeUpdate, null);
 	  }
 	  babelHelpers.createClass(EntitySelectorDialog, [{
 	    key: "show",
 	    value: function show(target) {
-	      if (!babelHelpers.classPrivateFieldGet(this, _params$1).isFeatureEnabled) {
-	        ui_infoHelper.InfoHelper.show(babelHelpers.classPrivateFieldGet(this, _params$1).flowLimitCode);
+	      if (!babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureEnabled) {
+	        ui_infoHelper.InfoHelper.show(babelHelpers.classPrivateFieldGet(this, _flowParams).limitCode);
 	        return;
 	      }
 	      if (!babelHelpers.classPrivateFieldGet(this, _dialog)) {
@@ -444,7 +452,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    dropdownMode: true,
 	    enableSearch: true,
 	    cacheable: true,
-	    preselectedItems: [['flow', babelHelpers.classPrivateFieldGet(this, _params$1).flowId]],
+	    preselectedItems: [['flow', babelHelpers.classPrivateFieldGet(this, _flowParams).id]],
 	    entities: [{
 	      id: 'flow',
 	      options: {
@@ -502,7 +510,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	    },
 	    searchOptions: {
-	      allowCreateItem: !babelHelpers.classPrivateFieldGet(this, _params$1).isExtranet,
+	      allowCreateItem: !babelHelpers.classPrivateFieldGet(this, _isExtranet),
 	      footerOptions: {
 	        label: BX.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_CREATE_BUTTON')
 	      }
@@ -510,19 +518,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    recentTabOptions: {
 	      stub: 'BX.Tasks.Flow.EmptyStub',
 	      stubOptions: {
-	        showArrow: !babelHelpers.classPrivateFieldGet(this, _params$1).isExtranet
+	        showArrow: !babelHelpers.classPrivateFieldGet(this, _isExtranet)
 	      }
 	    }
 	  }));
-	  if (!babelHelpers.classPrivateFieldGet(this, _params$1).isExtranet) {
+	  if (!babelHelpers.classPrivateFieldGet(this, _isExtranet)) {
 	    babelHelpers.classPrivateFieldSet(this, _dialog, _classPrivateMethodGet$3(this, _addFooter, _addFooter2).call(this, babelHelpers.classPrivateFieldGet(this, _dialog)));
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _dialog);
 	}
 	function _createFlow2(flowName) {
+	  var _this2 = this;
 	  return main_core.Runtime.loadExtension('tasks.flow.edit-form').then(function (exports) {
+	    var _babelHelpers$classPr;
 	    return exports.EditForm.createInstance({
-	      flowName: flowName
+	      flowName: flowName,
+	      isFeatureTrialable: babelHelpers.classPrivateFieldGet(_this2, _flowParams).isFeatureTrialable,
+	      context: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this2, _flowParams).context) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : ''
 	    });
 	  }).then(function (editForm) {
 	    return new Promise(function (resolve) {
@@ -536,7 +548,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  });
 	}
 	function _addFooter2(dialog) {
-	  var footer = new Footer(babelHelpers.classPrivateFieldGet(this, _dialog));
+	  var _babelHelpers$classPr2;
+	  var footer = new Footer(babelHelpers.classPrivateFieldGet(this, _dialog), {
+	    isFeatureTrialable: babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureTrialable,
+	    context: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _flowParams).context) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : ''
+	  });
 	  dialog.setFooter(footer.render());
 	  return dialog;
 	}
@@ -585,10 +601,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _flowSelectorContainer = /*#__PURE__*/new WeakMap();
 	var _taskId$1 = /*#__PURE__*/new WeakMap();
-	var _isExtranet = /*#__PURE__*/new WeakMap();
+	var _isExtranet$1 = /*#__PURE__*/new WeakMap();
 	var _canEditTask = /*#__PURE__*/new WeakMap();
 	var _toggleFlowParams = /*#__PURE__*/new WeakMap();
-	var _flowParams = /*#__PURE__*/new WeakMap();
+	var _flowParams$1 = /*#__PURE__*/new WeakMap();
 	var _dialog$1 = /*#__PURE__*/new WeakMap();
 	var _subscribeEvents = /*#__PURE__*/new WeakSet();
 	var _onTaskUpdated = /*#__PURE__*/new WeakSet();
@@ -619,7 +635,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _isExtranet, {
+	    _classPrivateFieldInitSpec$4(this, _isExtranet$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -631,7 +647,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _flowParams, {
+	    _classPrivateFieldInitSpec$4(this, _flowParams$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -640,10 +656,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _taskId$1, _params.taskId);
-	    babelHelpers.classPrivateFieldSet(this, _isExtranet, _params.isExtranet);
+	    babelHelpers.classPrivateFieldSet(this, _isExtranet$1, _params.isExtranet);
 	    babelHelpers.classPrivateFieldSet(this, _canEditTask, _params.canEditTask);
 	    babelHelpers.classPrivateFieldSet(this, _toggleFlowParams, _params.toggleFlowParams);
-	    babelHelpers.classPrivateFieldSet(this, _flowParams, _params.flowParams);
+	    babelHelpers.classPrivateFieldSet(this, _flowParams$1, _params.flowParams);
 	    babelHelpers.classPrivateFieldSet(this, _flowSelectorContainer, document.getElementById('tasks-flow-selector-container'));
 	    _classPrivateMethodGet$5(this, _subscribeEvents, _subscribeEvents2).call(this);
 	  }
@@ -686,7 +702,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return _context.abrupt("return");
 	        case 4:
 	          flowId = Number((_params$AFTER$FLOW_ID = params.AFTER.FLOW_ID) !== null && _params$AFTER$FLOW_ID !== void 0 ? _params$AFTER$FLOW_ID : 0);
-	          isFlowChange = babelHelpers.classPrivateFieldGet(this, _flowParams).id !== flowId;
+	          isFlowChange = babelHelpers.classPrivateFieldGet(this, _flowParams$1).id !== flowId;
 	          if (isFlowChange) {
 	            _context.next = 8;
 	            break;
@@ -743,14 +759,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return _loadFlowData3.apply(this, arguments);
 	}
 	function _updateFlow2$1(flowData) {
-	  babelHelpers.classPrivateFieldGet(this, _flowParams).id = flowData.id;
-	  babelHelpers.classPrivateFieldGet(this, _flowParams).name = flowData.name;
-	  babelHelpers.classPrivateFieldGet(this, _flowParams).efficiency = flowData.efficiency;
+	  babelHelpers.classPrivateFieldGet(this, _flowParams$1).id = flowData.id;
+	  babelHelpers.classPrivateFieldGet(this, _flowParams$1).name = flowData.name;
+	  babelHelpers.classPrivateFieldGet(this, _flowParams$1).efficiency = flowData.efficiency;
 	  this.show(babelHelpers.classPrivateFieldGet(this, _flowSelectorContainer));
 	}
 	function _render2() {
 	  var _this = this;
-	  var flowFeatureEnabledClass = babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureEnabled ? '' : '--tariff-lock';
+	  var flowFeatureEnabledClass = babelHelpers.classPrivateFieldGet(this, _flowParams$1).isFeatureEnabled ? '' : '--tariff-lock';
 	  var flowCanChangeClass = babelHelpers.classPrivateFieldGet(this, _canEditTask) ? 'ui-btn-dropdown' : '--disable';
 	  var flowBtnClasses = 'ui-btn ui-btn-round ui-btn-xs ui-btn-no-caps';
 	  var container = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button \n\t\t\t\tclass=\"tasks-flow__selector ", " ", " ", "\" \n\t\t\t\tid=\"tasks-flow-selector\"\n\t\t\t>\t\t\n\t\t\t</button>\n\t\t"])), flowBtnClasses, flowFeatureEnabledClass, flowCanChangeClass);
@@ -761,10 +777,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      babelHelpers.classPrivateFieldGet(_this, _dialog$1).show(babelHelpers.classPrivateFieldGet(_this, _flowSelectorContainer));
 	    });
 	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _flowParams).id) {
+	  if (babelHelpers.classPrivateFieldGet(this, _flowParams$1).id) {
 	    main_core.Dom.addClass(container, 'ui-btn-secondary-light');
-	    container.append(_classPrivateMethodGet$5(this, _renderFlowName, _renderFlowName2).call(this, babelHelpers.classPrivateFieldGet(this, _flowParams).name));
-	    container.append(_classPrivateMethodGet$5(this, _renderEfficiency, _renderEfficiency2).call(this, babelHelpers.classPrivateFieldGet(this, _flowParams).efficiency));
+	    container.append(_classPrivateMethodGet$5(this, _renderFlowName, _renderFlowName2).call(this, babelHelpers.classPrivateFieldGet(this, _flowParams$1).name));
+	    container.append(_classPrivateMethodGet$5(this, _renderEfficiency, _renderEfficiency2).call(this, babelHelpers.classPrivateFieldGet(this, _flowParams$1).efficiency));
 	  } else {
 	    main_core.Dom.addClass(container, 'ui-btn-base-light');
 	    container.append(_classPrivateMethodGet$5(this, _renderFlowName, _renderFlowName2).call(this, main_core.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_FLOW_EMPTY')));
@@ -776,12 +792,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 	function _createDialog2$1() {
 	  babelHelpers.classPrivateFieldSet(this, _dialog$1, new EntitySelectorDialog({
-	    isExtranet: babelHelpers.classPrivateFieldGet(this, _isExtranet),
+	    isExtranet: babelHelpers.classPrivateFieldGet(this, _isExtranet$1),
 	    toggleFlowParams: babelHelpers.classPrivateFieldGet(this, _toggleFlowParams),
-	    flowId: babelHelpers.classPrivateFieldGet(this, _flowParams).id,
-	    flowLimitCode: babelHelpers.classPrivateFieldGet(this, _flowParams).limitCode,
-	    isFeatureEnabled: babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureEnabled,
-	    isFeatureTrialable: babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureTrialable
+	    flowParams: babelHelpers.classPrivateFieldGet(this, _flowParams$1)
 	  }));
 	  return babelHelpers.classPrivateFieldGet(this, _dialog$1);
 	}

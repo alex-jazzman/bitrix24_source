@@ -484,7 +484,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		 */
 		onClickInfoBLock()
 		{
-			if (!this.isGroupDialog && !this.isBot)
+			if (!this.isGroupDialog && !this.isBot && !this.isNotes)
 			{
 				this.callUserProfile();
 			}

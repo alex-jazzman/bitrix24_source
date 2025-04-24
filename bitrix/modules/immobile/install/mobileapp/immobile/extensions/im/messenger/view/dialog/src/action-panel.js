@@ -22,11 +22,14 @@ jn.define('im/messenger/view/dialog/action-panel', (require, exports, module) =>
 			};
 		}
 
-		async hide()
+		/**
+		 * @param {boolean} animated
+		 */
+		async hide(animated)
 		{
 			if (this.isUiAvailable())
 			{
-				return this.ui.hide();
+				return this.ui.hide(animated);
 			}
 
 			return false;

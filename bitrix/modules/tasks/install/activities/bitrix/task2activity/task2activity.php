@@ -490,7 +490,6 @@ class CBPTask2Activity extends CBPActivity implements
 
 		if (
 			$this->TaskId
-			&& (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024')
 			&& method_exists($this, 'fixResult')
 		)
 		{
@@ -710,7 +709,15 @@ class CBPTask2Activity extends CBPActivity implements
 		$runtime = CBPRuntime::GetRuntime();
 		$runtime->StartRuntime();
 		$documentService = $runtime->GetService('DocumentService');
-		$document = $documentService->GetDocument($this->GetDocumentId());
+
+		if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+		{
+			$document = $documentService->GetDocument($this->GetDocumentId(), select: ['STATUS_ID', 'STAGE_ID']);
+		}
+		else
+		{
+			$document = $documentService->GetDocument($this->GetDocumentId());
+		}
 
 		switch ($documentType)
 		{

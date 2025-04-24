@@ -20,7 +20,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		OwnMessageStatus,
 		MessageParams,
 	} = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { isOnline } = require('device/connection');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -28,9 +28,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { showDeleteChannelPostAlert } = require('im/messenger/lib/ui/alert');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
-	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
+	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
-	const { SelectManager } = require('im/messenger/controller/dialog/lib/select-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { AnalyticsService } = require('im/messenger/provider/service');
@@ -69,7 +68,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { MessageCreateMenu } = require('im/messenger/controller/dialog/lib/message-create-menu');
 	const { MessageHelper } = require('im/messenger/lib/helper');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--message-menu');
+	const logger = getLogger('dialog--message-menu');
 
 	/**
 	 * @class MessageMenu
@@ -728,12 +727,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			const forwardController = new ForwardSelector();
-			forwardController.open({
+			const forwardSelector = new ForwardSelector({
 				messageIds: [message.id],
 				fromDialogId: this.dialogId,
 				locator: this.locator,
 			});
+			forwardSelector.open();
 		}
 
 		/**
@@ -789,6 +788,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onDelete(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
@@ -1019,7 +1025,14 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onMultiSelect(message)
 		{
-			(new SelectManager(this.locator, this.dialogId))
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			this.locator.get('select-manager')
 				.enableMultiSelectMode(message.id)
 				.catch((error) => logger.error(`${this.constructor.name}.onMultiSelect(${message.id}).enableMultiSelectMode catch:`, error))
 			;

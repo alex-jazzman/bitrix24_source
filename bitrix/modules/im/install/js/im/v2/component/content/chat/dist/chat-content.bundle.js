@@ -790,6 +790,38 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const NotesContent = {
+	  name: 'NotesContent',
+	  components: {
+	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
+	    ChatHeader: im_v2_component_content_elements.ChatHeader,
+	    ChatTitle: im_v2_component_elements.ChatTitle
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    titleType() {
+	      return Number.parseInt(this.dialogId, 10) === im_v2_application_core.Core.getUserId() ? im_v2_component_elements.ChatTitleType.notes : '';
+	    }
+	  },
+	  template: `
+		<BaseChatContent :dialogId="dialogId">
+			<template #header>
+				<ChatHeader :dialogId="dialogId" :withCallButton="false" :withAddToChatButton="false">
+					<template #title>
+						<ChatTitle :dialogId="dialogId" :customType="titleType" :showItsYou="false"/>
+					</template>
+				</ChatHeader>
+			</template>
+		</BaseChatContent>
+	`
+	};
+
+	// @vue/component
 	const BaseEmptyState = {
 	  props: {
 	    text: {
@@ -1067,7 +1099,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    CollabContent,
 	    MultidialogContent,
 	    EmptyState: BaseEmptyState,
-	    ChannelEmptyState
+	    ChannelEmptyState,
+	    NotesContent
 	  },
 	  props: {
 	    dialogId: {
@@ -1076,9 +1109,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  emits: ['close'],
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    layout() {
 	      return this.$store.getters['application/getLayout'];
@@ -1097,6 +1127,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    isMultidialog() {
 	      return this.$store.getters['sidebar/multidialog/isSupport'](this.dialogId);
+	    },
+	    isNotes() {
+	      return Number.parseInt(this.dialogId, 10) === im_v2_application_core.Core.getUserId();
 	    },
 	    isGuest() {
 	      return this.dialog.role === im_v2_const.UserRole.guest;
@@ -1219,6 +1252,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<ChannelContent v-else-if="isChannel" :dialogId="dialogId" />
 			<CollabContent v-else-if="isCollab" :dialogId="dialogId" />
 			<MultidialogContent v-else-if="isMultidialog" :dialogId="dialogId" />
+			<NotesContent v-else-if="isNotes" :dialogId="dialogId" />
 			<BaseChatContent v-else :dialogId="dialogId" />
 		</div>
 	`

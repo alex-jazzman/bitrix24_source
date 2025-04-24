@@ -27,7 +27,7 @@ Extension::load([
 ]);
 
 $showViewMode = (isset($arParams['SHOW_VIEW_MODE']) && $arParams['SHOW_VIEW_MODE'] === 'Y');
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 $isExtranetUser = (bool)Bitrix\Tasks\Integration\Extranet\User::isExtranet();
 if ($isBitrix24Template)
 {

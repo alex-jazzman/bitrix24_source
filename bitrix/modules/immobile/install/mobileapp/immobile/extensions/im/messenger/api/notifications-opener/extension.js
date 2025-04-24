@@ -7,6 +7,8 @@ jn.define('im/messenger/api/notifications-opener', (require, exports, module) =>
 	function getTopMenuNotificationsButton(parentWidget)
 	{
 		return {
+			id: 'notification',
+			testId: 'notification_badge',
 			type: 'notification',
 			badgeCode: 'notifications',
 			callback: () => showNotificationList(parentWidget),

@@ -108,6 +108,7 @@ BX.namespace('Tasks.Component');
 
 		this.handleEvent();
 		this.clearNewAnalyticsParams();
+		this.clearEventParams();
 		this.temporalCommentFix();
 
 		if (
@@ -1031,6 +1032,18 @@ BX.namespace('Tasks.Component');
 			url.searchParams.delete('ta_el');
 			window.history.replaceState(null, null, url.toString());
 		}
+	};
+
+	BX.Tasks.Component.TaskView.prototype.clearEventParams = function ()
+	{
+		const url = new URL(window.location.href);
+
+		url.searchParams.delete('EVENT_TYPE');
+		url.searchParams.delete('EVENT_TASK_ID');
+		url.searchParams.delete('EVENT_OPTIONS[STAY_AT_PAGE]');
+		url.searchParams.delete('EVENT_OPTIONS[SCOPE]');
+		url.searchParams.delete('EVENT_OPTIONS[FIRST_GRID_TASK_CREATION_TOUR_GUIDE]');
+		window.history.replaceState(null, null, url.toString());
 	};
 
 }).call(this);

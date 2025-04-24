@@ -7,12 +7,12 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 
-	const logger = LoggerManager.getInstance().getLogger('sync-service');
+	const logger = getLogger('sync-service');
 
 	/**
 	 * @class SyncFillerBase

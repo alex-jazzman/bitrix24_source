@@ -60,6 +60,10 @@ export type PanelContext = {
 	[prop: string]: JsonValue,
 }
 
+export type PanelContextWithMultipleIds = PanelContext & {
+	messagesIds: number[],
+}
+
 export class SendingService
 {
 	#store: Store;

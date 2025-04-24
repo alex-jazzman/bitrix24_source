@@ -162,6 +162,7 @@ $MESS["CRM_ENTITY_ED_RESET_CONFIG"] = "Баптауларды қалпына к�
 $MESS["CRM_ENTITY_ED_RESET_CONFIG_2"] = "Баптауларды бастапқы карта түріне келтіру";
 $MESS["CRM_ENTITY_ED_RESET_CONFIG_FOR_ALL"] = "Барлық пайдаланушылар үшін баптауларды қалпына келтіру";
 $MESS["CRM_ENTITY_ED_REST_SECTION_2"] = "Маркет";
+$MESS["CRM_ENTITY_ED_REST_SECTION_MSGVER_1"] = "Маркетплейс";
 $MESS["CRM_ENTITY_ED_SAVE"] = "Сақтау";
 $MESS["CRM_ENTITY_ED_SAVE_CONFIG_FOR_ALL"] = "Барлық пайдаланушылар үшін баптауларды сақтау";
 $MESS["CRM_ENTITY_ED_SECTION_OPEN_DETAILS"] = "ашу";

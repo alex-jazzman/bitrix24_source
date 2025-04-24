@@ -35,7 +35,7 @@ jn.define('im/messenger/view/dialog/comments-button', (require, exports, module)
 		/**
 		 * @param {boolean} [isAnimated=false]
 		 */
-		hide({ isAnimated = false })
+		hide({ isAnimated = false } = {})
 		{
 			if (this.isUiAvailable())
 			{

@@ -21,6 +21,7 @@ UI\Extension::load([
 	"ui.design-tokens",
 	"ui.fonts.opensans",
 	"ui.buttons",
+	"ui.buttons.icons",
 ]);
 
 if(SITE_TEMPLATE_ID === 'bitrix24')

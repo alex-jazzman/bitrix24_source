@@ -1,12 +1,15 @@
 import 'ui.icons';
 import { Text } from 'main.core';
 
-import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
 import { Utils } from 'im.v2.lib.utils';
-import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { FileViewerContext } from 'im.v2.const';
 import { highlightText } from 'im.v2.lib.text-highlighter';
+import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
+import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
 
 import '../css/brief-item.css';
+
+import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const BriefItem = {
@@ -28,7 +31,8 @@ export const BriefItem = {
 		},
 	},
 	emits: ['contextMenuClick'],
-	data() {
+	data(): JsonObject
+	{
 		return {
 			showContextButton: false,
 		};
@@ -61,7 +65,11 @@ export const BriefItem = {
 		},
 		viewerAttributes(): Object
 		{
-			return Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+			return Utils.file.getViewerDataAttributes({
+				viewerAttributes: this.file.viewerAttrs,
+				previewImageSrc: this.file.urlPreview,
+				context: FileViewerContext.sidebarTabBriefs,
+			});
 		},
 		isViewerAvailable(): boolean
 		{
@@ -77,8 +85,7 @@ export const BriefItem = {
 				return;
 			}
 
-			const urlToOpen = this.file.urlShow ? this.file.urlShow : this.file.urlDownload;
-			window.open(urlToOpen, '_blank');
+			window.open(this.file.urlDownload, '_blank');
 		},
 		onContextMenuClick(event)
 		{

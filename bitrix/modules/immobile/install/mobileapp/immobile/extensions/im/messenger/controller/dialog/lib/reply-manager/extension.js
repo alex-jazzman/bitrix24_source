@@ -18,7 +18,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 	const { parser } = require('im/messenger/lib/parser');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
-	const { DialogConverter } = require('im/messenger/lib/converter');
+	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 
 	const QUOTE_DELIMITER = '-'.repeat(54);
 	const SHORT_NAME_SYMBOLS_LIMIT = 12;
@@ -87,7 +87,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 
-			const quoteMessage = DialogConverter.createMessage(modelMessage);
+			const quoteMessage = MessageUiConverter.createMessage(modelMessage);
 			const isSystemMessage = modelMessage.authorId === 0;
 			// const isAudioMessage = message.type === MessageType.audio;
 			// const isEmptyText = !modelMessage.text || modelMessage.text === '';
@@ -182,7 +182,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		setEditMessage(message)
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-			const editMessage = DialogConverter.createMessage(modelMessage);
+			const editMessage = MessageUiConverter.createMessage(modelMessage);
 			editMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_MESSAGE_EDIT_FIELD');
 
 			const isAudioMessage = message.type === MessageType.audio;
@@ -213,7 +213,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				const messageModel = this.store.getters['messagesModel/getById'](Number(message));
 
 				// eslint-disable-next-line no-param-reassign
-				message = DialogConverter.createMessage(messageModel);
+				message = MessageUiConverter.createMessage(messageModel);
 			}
 
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
@@ -577,7 +577,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		 */
 		isHasQuote(message)
 		{
-			return message.params.replyId;
+			return Boolean(message.params?.replyId);
 		}
 	}
 

@@ -6,8 +6,8 @@ jn.define('im/messenger/provider/service/classes/sync/date', (require, exports, 
 	const {
 		DateHelper,
 	} = require('im/messenger/lib/helper');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('sync-service');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('sync-service');
 	const SECOND = 1000;
 	const MINUTE = 60 * SECOND;
 

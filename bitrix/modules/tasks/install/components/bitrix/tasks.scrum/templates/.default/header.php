@@ -68,7 +68,7 @@ $viewName = $this->getComponent()->getTemplatePage();
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 
 /** @var Filter $filterInstance */
 $filterInstance = $arResult['filterInstance'];

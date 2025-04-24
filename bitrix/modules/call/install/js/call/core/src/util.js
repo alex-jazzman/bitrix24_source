@@ -4,6 +4,8 @@ import { MediaStreamsKinds } from './call_api';
 import { View } from './view/view';
 import { CallAI } from './call_ai';
 
+import {Event} from 'main.core';
+
 const blankAvatar = '/bitrix/js/im/images/blank.gif';
 
 let userData = {}
@@ -452,6 +454,7 @@ function reportConnectionResult(callId, connectionResult)
 
 function sendTelemetryEvent(options)
 {
+	/*
 	const url = (document.location.protocol == "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
 	const req = new XMLHttpRequest();
 	req.open("POST", url, true);
@@ -461,6 +464,7 @@ function sendTelemetryEvent(options)
 	options.d = document.location.host;
 	const query = BX.util.buildQueryString(options);
 	req.send(query);
+	*/
 }
 
 const isDesktop = () =>
@@ -503,11 +507,10 @@ function stopMediaStreamAudioTracks(mediaStream)
 
     mediaStream.getAudioTracks().forEach(function (track)
     {
-        if (track.readyState == 'live' && track.kind === 'audio') {
+        if (track.kind === 'audio') {
             track.stop();
+			mediaStream.removeTrack(track);
         }
-
-        mediaStream.removeTrack(track);
     });
 }
 
@@ -520,11 +523,10 @@ function stopMediaStreamVideoTracks(mediaStream)
 
     mediaStream.getTracks().forEach(function (track)
     {
-        if (track.readyState == 'live' && track.kind === 'video') {
+        if (track.kind === 'video') {
             track.stop();
+			mediaStream.removeTrack(track);
         }
-
-        mediaStream.removeTrack(track);
     });
 }
 
@@ -842,6 +844,15 @@ const isNewFollowUpSliderEnabled = () =>
 	return Extension.getSettings('call.core')?.isNewFollowUpSliderEnabled;
 }
 
+/* ws logger */
+
+function sendLog(params)
+{
+	const evnt = new Event.BaseEvent({data: params});
+	Event.EventEmitter.emit('BX.Call.Logger:sendLog', evnt);
+}
+
+
 export default {
 	updateUserData,
 	setUserData,
@@ -903,5 +914,6 @@ export default {
 	isUserControlFeatureEnabled,
 	isPictureInPictureFeatureEnabled,
 	isNewQOSEnabled,
+	sendLog,
 	isNewFollowUpSliderEnabled,
 }

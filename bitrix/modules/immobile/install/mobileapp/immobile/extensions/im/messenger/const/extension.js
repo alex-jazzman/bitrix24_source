@@ -38,6 +38,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		UserRole,
 		UserColor,
 	} = require('im/messenger/const/user');
+	const { UserInputAction } = require('im/messenger/const/dialog-status');
 	const {
 		MessageType,
 		MessageIdType,
@@ -139,6 +140,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		UserExternalType,
 		UserRole,
 		UserColor,
+		UserInputAction,
 		Color,
 		Path,
 		DraftType,

@@ -1,6 +1,7 @@
 import 'ui.icons.disk';
-
 import { Type } from 'main.core';
+
+import { FileType, FileViewerContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 
 import { ProgressBar } from './progress-bar';
@@ -53,7 +54,11 @@ export const BaseFileItem = {
 		},
 		viewerAttributes(): Object
 		{
-			return Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+			return Utils.file.getViewerDataAttributes({
+				viewerAttributes: this.file.viewerAttrs,
+				previewImageSrc: this.file.urlPreview,
+				context: FileViewerContext.dialog,
+			});
 		},
 		isLoaded(): boolean
 		{
@@ -87,8 +92,7 @@ export const BaseFileItem = {
 				return;
 			}
 
-			const url = this.file.urlDownload ?? this.file.urlShow;
-			window.open(url, '_blank');
+			window.open(this.file.urlDownload, '_blank');
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{
@@ -104,16 +108,18 @@ export const BaseFileItem = {
 	},
 	template: `
 		<div class="bx-im-base-file-item__container">
-			<div class="bx-im-base-file-item__icon-container" ref="loader-icon" v-bind="viewerAttributes" @click="download">
-				<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageId" :withLabels="false" />
-				<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
-				<div v-else :class="iconClass" class="bx-im-base-file-item__type-icon ui-icon"><i></i></div>
-			</div>
-			<div class="bx-im-base-file-item__content" v-bind="viewerAttributes" @click="download">
-				<span :title="file.name" class="bx-im-base-file-item__title">
-					{{ fileShortName }}
-				</span>
-				<div class="bx-im-base-file-item__size">{{ fileSize }}</div>
+			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
+				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
+					<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageId" :withLabels="false" />
+					<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
+					<div v-else :class="iconClass" class="bx-im-base-file-item__type-icon ui-icon"><i></i></div>
+				</div>
+				<div class="bx-im-base-file-item__content">
+					<span :title="file.name" class="bx-im-base-file-item__title">
+						{{ fileShortName }}
+					</span>
+					<div class="bx-im-base-file-item__size">{{ fileSize }}</div>
+				</div>
 			</div>
 			<div 
 				class="bx-im-base-file-item__download-icon"

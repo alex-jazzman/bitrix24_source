@@ -9,7 +9,7 @@ import { UserManager } from 'im.v2.lib.user';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { CallManager } from 'im.v2.lib.call';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { WritingManager } from 'im.v2.lib.writing';
+import { InputActionListener } from 'im.v2.lib.input-action';
 import { Logger } from 'im.v2.lib.logger';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 import { Analytics } from 'im.v2.lib.analytics';
@@ -19,7 +19,7 @@ import type {
 	ChatManagersParams,
 	ChatUserAddParams,
 	ChatUserLeaveParams,
-	StartWritingParams,
+	InputActionNotifyParams,
 	ChatUnreadParams,
 	ChatMuteNotifyParams,
 	ChatRenameParams,
@@ -144,20 +144,13 @@ export class ChatPullHandler
 		this.#updateChatUsers(params);
 	}
 
-	handleStartWriting(params: StartWritingParams)
+	handleInputActionNotify(params: InputActionNotifyParams)
 	{
-		if (params.userId === Core.getUserId())
-		{
-			return;
-		}
-		Logger.warn('ChatPullHandler: handleStartWriting', params);
-		const { dialogId, userId, userName } = params;
-		WritingManager.getInstance().startWriting({ dialogId, userId, userName });
+		Logger.warn('ChatPullHandler: handleInputActionNotify', params);
+		InputActionListener.getInstance().startAction(params);
 		this.#store.dispatch('users/update', {
-			id: userId,
-			fields: {
-				lastActivityDate: new Date(),
-			},
+			id: params.userId,
+			fields: { lastActivityDate: new Date() },
 		});
 	}
 

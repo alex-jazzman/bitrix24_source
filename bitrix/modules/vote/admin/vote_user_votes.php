@@ -240,7 +240,7 @@ require_once ($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_adm
 ?>
 <a name="tb"></a>
 
-<?echo ShowError($strError);?>
+<? ShowError($strError);?>
 <form name="form1" method="GET" action="<?=$APPLICATION->GetCurPage()?>?">
 <?
 $oFilter = new CAdminFilter(

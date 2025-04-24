@@ -2576,7 +2576,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldGet(this, _popups).set(popupId, new main_popup.Popup({
 	      bindElement: _classPrivateMethodGet$c(this, _getPopupPosition, _getPopupPosition2).call(this, popupWidth),
 	      className: 'ai__picker-popup',
-	      autoHide: true,
+	      autoHide: false,
 	      closeByEsc: false,
 	      width: popupWidth,
 	      height: _classPrivateMethodGet$c(this, _getPopupMaxHeight, _getPopupMaxHeight2).call(this),
@@ -2599,8 +2599,9 @@ this.BX = this.BX || {};
 	          _classPrivateMethodGet$c(_this, _fixOverlayFreez, _fixOverlayFreez2).call(_this, popupId);
 	          main_core.Dom.style(document.body, 'overflow-x', 'hidden');
 	        },
-	        onPopupAfterClose: function onPopupAfterClose() {
+	        onPopupAfterClose: function onPopupAfterClose(popup) {
 	          main_core.Dom.style(document.body, 'overflow-x', null);
+	          popup.destroy();
 	        },
 	        onAfterShow: function onAfterShow() {
 	          main_core.bind(window, 'resize', adjustPosition);

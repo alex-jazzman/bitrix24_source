@@ -14,6 +14,7 @@ Extension::load([
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.hint',
+	'tasks.deadline.menu',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");

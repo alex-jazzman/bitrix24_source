@@ -5,8 +5,8 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 	const { MentionManager } = require('im/messenger/controller/dialog/lib/mention');
 	const { CopilotMentionProvider } = require('im/messenger/controller/dialog/copilot/component/mention/provider');
 	const { EventType } = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('mention');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('mention');
 
 	/**
 	 * @class CopilotMentionManager

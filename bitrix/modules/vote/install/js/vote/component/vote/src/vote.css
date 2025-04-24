@@ -1,0 +1,12 @@
+.vote-display-inner {
+	padding: 9px 14px 13px;
+}
+
+.bx-im-reaction-list__vote {
+	padding: 0 14px 12px;
+}
+
+.vote-display__loader {
+	height: 44px;
+	padding-top: 7px;
+}

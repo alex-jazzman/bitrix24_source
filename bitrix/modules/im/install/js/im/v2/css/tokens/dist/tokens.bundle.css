@@ -132,6 +132,8 @@
 	--im-color-palette-red-solid-rgb: 240, 55, 27;
 	--im-color-palette-red-50: var(--ui-color-palette-red-50, #ff5752);
 	--im-color-palette-red-50-rgb: 255, 87, 82;
+	--im-color-palette-red-60: var(--ui-color-palette-red-60, #f4433e);
+	--im-color-palette-red-60-rgb: 244, 67, 62;
 	--im-color-palette-red-20: var(--ui-color-palette-red-20, #ffe8e8);
 	--im-color-palette-red-20-rgb: 255, 232, 232;
 	--im-color-palette-green-70: var(--ui-color-palette-green-70, #7fa800);

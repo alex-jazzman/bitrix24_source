@@ -31,3 +31,9 @@ $MESS['TASKS_FLOW_LIST_FLOW_PIN_CANCEL'] = 'Отмена';
 $MESS['TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE'] = 'CoPilot еще собирает данные';
 $MESS['TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION'] = 'Когда в потоке будет 10 задач, CoPilot напишет рекомендации по эффективности';
 $MESS['TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_SHOW_EXAMPLE'] = 'Пример рекомендации';
+
+$MESS['TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE'] = 'Что-то пошло не так';
+$MESS['TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION'] = 'CoPilot попробует ещё раз подготовить рекомендации, подождите немного';
+
+$MESS['TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE'] = 'CoPilot анализирует данные';
+$MESS['TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION'] = 'Рекомендации скоро будут готовы, подождите немного';

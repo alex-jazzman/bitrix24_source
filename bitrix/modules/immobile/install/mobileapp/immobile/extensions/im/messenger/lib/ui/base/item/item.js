@@ -168,7 +168,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 						onFailure: (e) => Logger.error(e),
 					})
 					: null,
-				!!this.props.data.status && Image({
+				Type.isStringFilled(this.props.data.status) && Image({
 					style: {
 						width: 18,
 						height: 18,

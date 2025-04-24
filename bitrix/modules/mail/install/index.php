@@ -80,6 +80,10 @@ Class mail extends CModule
 			$eventManager->registerEventHandler('ai', 'onTuningLoad', 'mail', '\Bitrix\Mail\Integration\AI\EventHandler', 'onTuningLoad');
 			$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'mail', '\Bitrix\Mail\Integration\AI\Controller', 'onContextGetMessages');
 
+			$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberUpdated');
+			$eventManager->registerEventHandler('humanresources', 'OnMemberAdded', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberAdded');
+			$eventManager->registerEventHandler('humanresources', 'OnMemberDeleted', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberDeleted');
+
 			RegisterModule("mail");
 
 			if (CModule::IncludeModule("mail"))
@@ -298,6 +302,10 @@ Class mail extends CModule
 
 		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'mail', '\Bitrix\Mail\Integration\AI\EventHandler', 'onTuningLoad');
 		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'mail', '\Bitrix\Mail\Integration\AI\Controller', 'onContextGetMessages');
+
+		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberUpdated', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberUpdated');
+		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberAdded', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberAdded');
+		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberDeleted', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberDeleted');
 
 		//delete agents
 		CAgent::RemoveModuleAgents("mail");

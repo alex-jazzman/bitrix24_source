@@ -20,6 +20,10 @@ export const MessageSelectButton = {
 	name: 'MessageSelectButton',
 	props:
 	{
+		contextDialogId: {
+			type: String,
+			required: true,
+		},
 		message: {
 			type: Object,
 			required: true,
@@ -33,7 +37,7 @@ export const MessageSelectButton = {
 		},
 		selectedMessages(): Set<number>
 		{
-			return this.$store.getters['messages/select/getCollection'];
+			return this.$store.getters['messages/select/getCollection'](this.contextDialogId);
 		},
 		bulkActionMessageLimit(): number
 		{
@@ -43,7 +47,7 @@ export const MessageSelectButton = {
 		},
 		isMessageSelected(): boolean
 		{
-			return this.$store.getters['messages/select/isMessageSelected'](this.messageItem.id);
+			return this.$store.getters['messages/select/isMessageSelected'](this.messageItem.id, this.contextDialogId);
 		},
 		isSelectionLimitReached(): boolean
 		{
@@ -79,7 +83,10 @@ export const MessageSelectButton = {
 				return;
 			}
 
-			this.$store.dispatch('messages/select/toggle', this.messageItem.id);
+			this.$store.dispatch('messages/select/toggleMessageSelection', {
+				messageId: this.messageItem.id,
+				dialogId: this.contextDialogId,
+			});
 		},
 		showNotification(text: string)
 		{

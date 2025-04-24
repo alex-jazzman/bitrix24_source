@@ -303,6 +303,16 @@ class HardwareManager extends EventEmitter
 		return Object.keys(this.cameraList).length > 0;
 	}
 
+	hasMicrophone()
+	{
+		if (!this.initialized)
+		{
+			throw new Error("HardwareManager is not initialized yet");
+		}
+
+		return Object.keys(this.microphoneList).length > 0;
+	}
+
 	getMicrophoneList()
 	{
 		if (!this.initialized)
@@ -375,6 +385,8 @@ class HardwareManager extends EventEmitter
 				}
 			});
 
+			this._currentDeviceList = devices;
+
 			if (!shouldSkipDeviceChangedEvent)
 			{
 				this.emit(Events.deviceChanged, {
@@ -383,7 +395,6 @@ class HardwareManager extends EventEmitter
 				});
 			}
 
-			this._currentDeviceList = devices;
 			this.updating = false;
 		})
 	}

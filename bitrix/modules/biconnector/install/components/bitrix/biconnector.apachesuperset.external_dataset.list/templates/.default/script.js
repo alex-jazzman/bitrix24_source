@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,ui_dialogs_messagebox,main_core,main_core_events) {
+(function (exports,ui_dialogs_messagebox,main_core,main_core_events,ui_buttons) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -37,16 +37,6 @@
 	    _classPrivateMethodGet(this, _initHints, _initHints2).call(this);
 	  }
 	  babelHelpers.createClass(ExternalDatasetManager, [{
-	    key: "getGrid",
-	    value: function getGrid() {
-	      return babelHelpers.classPrivateFieldGet(this, _grid);
-	    }
-	  }, {
-	    key: "getFilter",
-	    value: function getFilter() {
-	      return babelHelpers.classPrivateFieldGet(this, _filter);
-	    }
-	  }, {
 	    key: "handleCreatedByClick",
 	    value: function handleCreatedByClick(ownerData) {
 	      this.handleDatasetFilterChange(_objectSpread({
@@ -71,7 +61,7 @@
 	    key: "handleDatasetFilterChange",
 	    value: function handleDatasetFilterChange(fieldData) {
 	      var _filterFieldsValues$f, _filterFieldsValues;
-	      var filterFieldsValues = this.getFilter().getFilterFieldsValues();
+	      var filterFieldsValues = babelHelpers.classPrivateFieldGet(this, _filter).getFilterFieldsValues();
 	      var currentFilteredField = (_filterFieldsValues$f = filterFieldsValues[fieldData.fieldId]) !== null && _filterFieldsValues$f !== void 0 ? _filterFieldsValues$f : [];
 	      var currentFilteredFieldLabel = (_filterFieldsValues = filterFieldsValues["".concat(fieldData.fieldId, "_label")]) !== null && _filterFieldsValues !== void 0 ? _filterFieldsValues : [];
 	      if (fieldData.IS_FILTERED) {
@@ -85,7 +75,7 @@
 	        currentFilteredField.push(fieldData.ID);
 	        currentFilteredFieldLabel.push(fieldData.TITLE);
 	      }
-	      var filterApi = this.getFilter().getApi();
+	      var filterApi = babelHelpers.classPrivateFieldGet(this, _filter).getApi();
 	      var filterToExtend = {};
 	      filterToExtend[fieldData.fieldId] = currentFilteredField;
 	      filterToExtend["".concat(fieldData.fieldId, "_label")] = currentFilteredFieldLabel;
@@ -96,16 +86,16 @@
 	    key: "deleteDataset",
 	    value: function deleteDataset(id) {
 	      var _this = this;
-	      var messageBox = new BX.UI.Dialogs.MessageBox({
+	      var messageBox = new ui_dialogs_messagebox.MessageBox({
 	        message: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION'),
 	        title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE'),
-	        buttons: [new BX.UI.Button({
-	          color: BX.UI.Button.Color.DANGER,
+	        buttons: [new ui_buttons.Button({
+	          color: ui_buttons.ButtonColor.DANGER,
 	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_YES'),
 	          onclick: function onclick(button) {
 	            button.setWaiting();
 	            _this.deleteDatasetAjaxAction(id).then(function () {
-	              _this.getGrid().reload();
+	              babelHelpers.classPrivateFieldGet(_this, _grid).reload();
 	              messageBox.close();
 	            })["catch"](function (response) {
 	              messageBox.close();
@@ -114,9 +104,9 @@
 	              }
 	            });
 	          }
-	        }), new BX.UI.CancelButton({
+	        }), new ui_buttons.CancelButton({
 	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_NO'),
-	          onclick: function onclick(button) {
+	          onclick: function onclick() {
 	            return messageBox.close();
 	          }
 	        })]
@@ -129,6 +119,28 @@
 	      return main_core.ajax.runAction('biconnector.externalsource.dataset.delete', {
 	        data: {
 	          id: datasetId
+	        }
+	      });
+	    }
+	  }, {
+	    key: "createChart",
+	    value: function createChart(datasetId) {
+	      var _this2 = this;
+	      babelHelpers.classPrivateFieldGet(this, _grid).tableFade();
+	      main_core.ajax.runAction('biconnector.externalsource.dataset.getEditUrl', {
+	        data: {
+	          id: datasetId
+	        }
+	      }).then(function (response) {
+	        var link = response.data;
+	        if (link) {
+	          window.open(link, '_blank').focus();
+	        }
+	        babelHelpers.classPrivateFieldGet(_this2, _grid).tableUnfade();
+	      })["catch"](function (response) {
+	        babelHelpers.classPrivateFieldGet(_this2, _grid).tableUnfade();
+	        if (response.errors) {
+	          _classPrivateMethodGet(_this2, _notifyErrors, _notifyErrors2).call(_this2, response.errors);
 	        }
 	      });
 	    }
@@ -151,17 +163,17 @@
 	  manager.init(babelHelpers.classPrivateFieldGet(this, _grid).getContainer());
 	}
 	function _subscribeToEvents2() {
-	  var _this2 = this;
+	  var _this3 = this;
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
 	    var _event$getData = event.getData(),
 	      _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
 	      messageEvent = _event$getData2[0];
 	    if (messageEvent.getEventId() === 'BIConnector.dataset-import:onDatasetCreated') {
-	      babelHelpers.classPrivateFieldGet(_this2, _grid).reload();
+	      babelHelpers.classPrivateFieldGet(_this3, _grid).reload();
 	    }
 	  });
 	  main_core_events.EventEmitter.subscribe('Grid::updated', function () {
-	    _classPrivateMethodGet(_this2, _initHints, _initHints2).call(_this2);
+	    _classPrivateMethodGet(_this3, _initHints, _initHints2).call(_this3);
 	  });
 	}
 	function _notifyErrors2(errors) {
@@ -173,5 +185,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalDatasetManager = ExternalDatasetManager;
 
-}((this.window = this.window || {}),BX.UI.Dialogs,BX,BX.Event));
+}((this.window = this.window || {}),BX.UI.Dialogs,BX,BX.Event,BX.UI));
 //# sourceMappingURL=script.js.map

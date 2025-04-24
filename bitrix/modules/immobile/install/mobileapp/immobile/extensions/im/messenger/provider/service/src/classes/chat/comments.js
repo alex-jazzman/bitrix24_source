@@ -6,9 +6,9 @@ jn.define('im/messenger/provider/service/classes/chat/comments', (require, expor
 	const { runAction } = require('im/messenger/lib/rest');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Counters } = require('im/messenger/lib/counters');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--chat-service');
+	const logger = getLogger('dialog--chat-service');
 
 	/**
 	 * @class CommentsService

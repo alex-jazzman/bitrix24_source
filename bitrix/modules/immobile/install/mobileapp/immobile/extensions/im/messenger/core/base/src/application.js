@@ -47,10 +47,10 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 	} = require('im/messenger/model');
 
 	const {
-		LoggerManager,
+		getLogger,
 		Logger,
 	} = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('core');
+	const logger = getLogger('core');
 
 	/**
 	 * @class CoreApplication
@@ -162,6 +162,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				this.repository.user.userTable.drop();
 				this.repository.file.fileTable.drop();
 				this.repository.message.messageTable.drop();
+				this.repository.message.messagePushTable.drop();
 				this.repository.tempMessage.tempMessageTable.drop();
 				this.repository.reaction.reactionTable.drop();
 				this.repository.queue.queueTable.drop();

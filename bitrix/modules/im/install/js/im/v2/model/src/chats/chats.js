@@ -7,7 +7,8 @@ import { Utils } from 'im.v2.lib.utils';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
 import { chatFieldsConfig } from './format/field-config';
-import { CollabsModel } from './nested-modules/collabs';
+import { CollabsModel } from './nested-modules/collabs/collabs';
+import { InputActionsModel } from './nested-modules/input-actions';
 
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 import type { Chat as ImModelChat } from '../type/chat';
@@ -26,7 +27,10 @@ export class ChatsModel extends BuilderModel
 
 	getNestedModules(): { [moduleName: string]: BuilderModel }
 	{
-		return { collabs: CollabsModel };
+		return {
+			collabs: CollabsModel,
+			inputActions: InputActionsModel,
+		};
 	}
 
 	getState(): ChatState
@@ -59,7 +63,7 @@ export class ChatsModel extends BuilderModel
 			},
 			savedPositionMessageId: 0,
 			managerList: [],
-			writingList: [],
+			inputActionList: {},
 			muteList: [],
 			quoteId: 0,
 			ownerId: 0,

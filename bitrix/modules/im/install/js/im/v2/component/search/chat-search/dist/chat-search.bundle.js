@@ -308,14 +308,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    query: {
 	      type: String,
 	      default: ''
+	    },
+	    replaceWithNotes: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  emits: ['clickItem', 'openContextMenu'],
 	  computed: {
 	    AvatarSize: () => im_v2_component_elements.AvatarSize,
-	    user() {
-	      return this.$store.getters['users/get'](this.dialogId, true);
-	    },
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -324,6 +325,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isUser() {
 	      return this.dialog.type === im_v2_const.ChatType.user;
+	    },
+	    isNotes() {
+	      if (!this.replaceWithNotes) {
+	        return false;
+	      }
+	      return Number.parseInt(this.dialogId, 10) === im_v2_application_core.Core.getUserId();
+	    },
+	    avatarType() {
+	      if (!this.replaceWithNotes) {
+	        return '';
+	      }
+	      return this.isNotes ? im_v2_component_elements.ChatAvatarType.notes : '';
+	    },
+	    titleType() {
+	      if (!this.replaceWithNotes) {
+	        return '';
+	      }
+	      return this.isNotes ? im_v2_component_elements.ChatTitleType.notes : '';
 	    },
 	    position() {
 	      if (!this.isUser) {
@@ -342,10 +361,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return (_ItemTextByChatType$t = ItemTextByChatType[this.dialog.type]) != null ? _ItemTextByChatType$t : ItemTextByChatType.default;
 	    },
 	    itemText() {
+	      if (this.isNotes) {
+	        return this.notesText;
+	      }
 	      return this.isUser ? this.userItemText : this.chatItemText;
 	    },
 	    itemTextForTitle() {
+	      if (this.isNotes) {
+	        return this.notesText;
+	      }
 	      return this.isUser ? this.position : this.chatItemText;
+	    },
+	    notesText() {
+	      return this.loc('IM_LIST_RECENT_CHAT_SELF_SUBTITLE');
 	    },
 	    formattedDate() {
 	      if (!this.dateMessage) {
@@ -386,20 +414,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			:class="{'--selected': selected}"
 		>
 			<div class="bx-im-search-item__avatar-container">
-				<ChatAvatar 
+				<ChatAvatar
 					:avatarDialogId="dialogId" 
 					:contextDialogId="dialogId" 
-					:size="AvatarSize.XL" 
+					:size="AvatarSize.XL"
+					:customType="avatarType"
 				/>
 			</div>
-			<div class="bx-im-search-item__content-container">
+			<div class="bx-im-search-item__content-container" :class="{'--centered': isNotes}">
 				<div class="bx-im-search-item__content_header">
-					<ChatTitleWithHighlighting :dialogId="dialogId" :textToHighlight="query" />
+					<ChatTitleWithHighlighting
+						:dialogId="dialogId"
+						:textToHighlight="query"
+						:customType="titleType"
+						:showItsYou="!replaceWithNotes"
+					/>
 					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
 						<span>{{ formattedDate }}</span>
 					</div>
 				</div>
-				<div class="bx-im-search-item__item-text" :title="itemTextForTitle" v-html="itemText"></div>
+				<div v-if="itemText" class="bx-im-search-item__item-text" :title="itemTextForTitle" v-html="itemText"></div>
 			</div>
 			<div v-if="selected" class="bx-im-chat-search-item__selected"></div>
 		</div>
@@ -669,6 +703,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:key="item.dialogId"
 				:dialogId="item.dialogId"
 				:selected="isSelected(item.dialogId)"
+				:replaceWithNotes="showMyNotes"
 				@clickItem="$emit('clickItem', $event)"
 				@openContextMenu="$emit('openContextMenu', $event)"
 			/>
@@ -761,6 +796,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:selectMode="selectMode"
 				:isSelected="isSelected(item)"
 				:query="query"
+				:replaceWithNotes="showMyNotes"
 				@clickItem="$emit('clickItem', $event)"
 				@openContextMenu="$emit('openContextMenu', $event)"
 			/>
@@ -1004,6 +1040,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:items="result.usersAndChats"
 					:selectMode="selectMode"
 					:selectedItems="selectedItems"
+					:showMyNotes="showMyNotes"
 					:isLoading="isServerLoading"
 					:query="cleanQuery"
 					@clickItem="onClickItem"

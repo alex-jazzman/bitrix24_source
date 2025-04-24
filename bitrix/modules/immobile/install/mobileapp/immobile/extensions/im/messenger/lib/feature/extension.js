@@ -20,6 +20,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		{
 			return Application.storage.getObject('settings.chat', {
 				chatBetaEnable: false,
+				chatDevModeEnable: false,
 				localStorageEnable: true,
 				autoplayVideo: true,
 			});
@@ -180,9 +181,19 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 56;
 		}
 
+		static get isInstantPushEnabled()
+		{
+			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 59;
+		}
+
 		static get isDevelopmentEnvironment()
 		{
 			return (Application.isBeta() && MessengerParams.get('IS_DEVELOPMENT_ENVIRONMENT', false));
+		}
+
+		static get isDevModeEnabled()
+		{
+			return Feature.getChatSettings().chatDevModeEnable;
 		}
 
 		static showUnsupportedWidget(options = {}, parentWidget = PageManager)
@@ -200,6 +211,16 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isImagePickerCustomFieldsSupported()
 		{
 			return Application.getApiVersion() >= 56;
+		}
+
+		static get isLottieInChatTitleAvailable()
+		{
+			return Application.getApiVersion() >= 59;
+		}
+
+		static get isNotesIconAvailable()
+		{
+			return Application.getApiVersion() >= 59;
 		}
 
 		static get isIconBoxWithLidAvailable()

@@ -4,6 +4,8 @@
  * @module im/messenger/controller/dialog/copilot/dialog
  */
 jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, module) => {
+	const { Uuid } = require('utils/uuid');
+
 	const {
 		CopilotButtonType,
 		EventType,
@@ -13,7 +15,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { MessageService } = require('im/messenger/provider/service');
-	const { LoggerManager, Logger } = require('im/messenger/lib/logger');
+	const { getLogger, Logger } = require('im/messenger/lib/logger');
 
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
@@ -21,7 +23,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	const { CopilotMessageMenu } = require('im/messenger/controller/dialog/copilot/component/message-menu');
 	const { CopilotMentionManager } = require('im/messenger/controller/dialog/copilot/component/mention/manager');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--dialog');
+	const logger = getLogger('dialog--dialog');
 	const { AnalyticsEvent } = require('analytics');
 
 	/**
@@ -101,9 +103,9 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				.off('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter);
 		}
 
-		initManagers()
+		async initManagers()
 		{
-			super.initManagers();
+			await super.initManagers();
 		}
 
 		initMentionManager()
@@ -128,6 +130,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			} = options;
 
 			this.dialogId = dialogId;
+			this.dialogCode = `im.dialog-${this.getDialogId()}-${Uuid.getV4()}`;
 			this.contextMessageId = messageId ?? null;
 			this.withMessageHighlight = withMessageHighlight ?? false;
 			void this.store.dispatch('applicationModel/openDialogId', dialogId);

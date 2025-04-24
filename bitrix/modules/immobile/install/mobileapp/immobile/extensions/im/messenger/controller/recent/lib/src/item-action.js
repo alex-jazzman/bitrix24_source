@@ -20,14 +20,14 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		UserRest,
 	} = require('im/messenger/provider/rest');
 	const { ProfileView } = require('user/profile');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { Notification } = require('im/messenger/lib/ui/notification');
-	const { LoggerManager } = require('im/messenger/lib/logger');
 	const {
 		RecentDataProvider,
 		ChatDataProvider,
 	} = require('im/messenger/provider/data');
 
-	const logger = LoggerManager.getInstance().getLogger('recent--item-action');
+	const logger = getLogger('recent--item-action');
 
 	/**
 	 * @class ItemAction

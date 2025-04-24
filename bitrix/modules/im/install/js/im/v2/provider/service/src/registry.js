@@ -9,6 +9,7 @@ export { SettingsService } from './settings/settings';
 export { LinesService } from './lines/lines';
 export { CopilotService } from './copilot/copilot';
 export { CommentsService } from './comments/comments';
+export { InputSenderService } from './input-sender/input-sender';
 
 export type {
 	RawChat,
@@ -28,4 +29,5 @@ export type {
 export type {
 	ForwardedEntityConfig,
 	PanelContext,
+	PanelContextWithMultipleIds,
 } from './sending/sending';

@@ -28,7 +28,7 @@ if ($arResult['AVAILABLE'])
 if ($arResult['AVAILABLE'])
 {
 	?><span class="bx-contentview-wrap-block" id="bx-contentview-cnt-popup-cont-<?=htmlspecialcharsbx($arResult['CONTENT_ID'])?>" style="display:none;"><?
-		?><span class="bx-contentview-popup-name-new contentview-name"><?
+		?><span class="bx-contentview-popup-name-link contentview-name"><?
 			?><?=GetMessage("SCVC_TEMPLATE_POPUP_TITLE")?><?
 		?></span><?
 		?><span class="bx-contentview-popup-outer"><span class="bx-contentview-popup"><?

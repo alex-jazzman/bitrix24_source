@@ -16,6 +16,7 @@ if (
 
 $request = Application::getInstance()->getContext()->getRequest();
 $sourceId = (int)$request->get('sourceId');
+$closeAfterCreate = $request->get('closeAfterCreate') === 'Y' ? 'Y' : 'N';
 
 global $APPLICATION;
 $APPLICATION->IncludeComponent(
@@ -24,6 +25,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
 			'SOURCE_ID' => $sourceId,
+			'CLOSE_AFTER_CREATE' => $closeAfterCreate,
 		],
 
 		'CLOSE_AFTER_SAVE' => true,

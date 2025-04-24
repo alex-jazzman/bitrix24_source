@@ -312,17 +312,14 @@ $arResult['EXPORT_EXCEL_PARAMS'] = [
 		),
 	],
 	'optionsFields' => [
-		'EXPORT_ALL_FIELDS' => [
-			'name' => 'COLUMNS',
-			'type' => 'checkbox',
-			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_1'),
-			'value' => 'N'
-		],
-		'REQUISITE_MULTILINE' => [
-			'name' => 'ALL_COLUMNS',
-			'type' => 'checkbox',
-			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_2'),
-			'value' => 'N'
+		'updateMethod' => [
+			'name' => 'EXPORT_COLUMNS',
+			'type' => 'radio',
+			'list' => [
+				'COLUMNS_FROM_LIST' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_1'),
+				'ALL_COLUMNS' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_2'),
+			],
+			'value' => 'ALL_COLUMNS',
 		],
 	],
 	'messages' => [
@@ -350,6 +347,7 @@ if (ProjectLimit::canTurnOnTrial())
 				limitFeatureId: '<?= ProjectLimit::getFeatureId() ?>',
 			};
 			BX.Tasks.GridActions.groupId = '<?= (int)$arParams['GROUP_ID']?>';
+			BX.Tasks.GridActions.ownerId = '<?= (int)$arResult['OWNER_ID']?>';
 
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',

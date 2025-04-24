@@ -6,7 +6,9 @@ $MESS["REST_MARKETPLACE_NOTIFICATION_REST_BUY_URL"] = 'https://goodbye2020.bitri
 
 $MESS["REST_MARKETPLACE_NOTIFICATION_SUBSCRIPTION_MARKET_DEMO_END_MESS"] = 'Деморежим подписки закончился. На любом коммерческом тарифе вы можете установить до 2 бесплатных приложений. #BTN#';
 $MESS["REST_MARKETPLACE_NOTIFICATION_SUBSCRIPTION_MARKET_DEMO_END_MESS_MSGVER_1"] = 'Деморежим подписки закончился. На любом коммерческом тарифе вы можете установить до 2 бесплатных приложений.';
+$MESS["REST_MARKETPLACE_NOTIFICATION_SUBSCRIPTION_MARKET_DEMO_END_MESS_MSGVER_2"] = 'Демо-режим подписки на Маркетплейс закончился. Оформите подписку, чтобы продолжить работу с приложениями';
 $MESS["REST_MARKETPLACE_NOTIFICATION_SUBSCRIPTION_MARKET_DEMO_END_BTN"] = 'Купить тариф';
+$MESS["REST_MARKETPLACE_NOTIFICATION_SUBSCRIPTION_MARKET_DEMO_END_BTN_MSGVER_1"] = 'Оформить подписку';
 $MESS["REST_MARKETPLACE_NOTIFICATION_SUBSCRIPTION_MARKET_DEMO_END_URL"] = '/settings/license_all.php';
 
 $MESS["REST_MARKETPLACE_NOTIFICATION_SUBSCRIPTION_MARKET_TARIFF_MARKET_MESS"] = 'Деморежим подписки закончился. Чтобы продолжать пользоваться установленными и другими приложениями, перейдите на расширенный тариф с подпиской. #BTN#';

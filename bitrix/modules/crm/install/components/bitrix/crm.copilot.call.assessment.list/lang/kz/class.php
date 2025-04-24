@@ -1,6 +1,13 @@
 <?php
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY"] = "Белсенділік";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_MESSAGE"] = "Скрипті өшіру керек пе?";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_OK_BTN"] = "Иә, өшіру";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_TITLE"] = "Скрипті өшіру";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG"] = "Скриптке сәйкестік";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP"] = "Осы скриптке сәйкестіктің жалпы пайызы. Онда барлық менеджерлердің әңгімелері ескеріледі. Бұл скриптте #LOW_BORDER#% төмен сәйкестік сапасыз әңгіме ретінде, ал #HIGH_BORDER#% жоғары сәйкестік сапалы әңгіме ретінде бағаланады.";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_CUSTOM"] = "#WEEKDAY_TYPE#, #FROM# бастап #TO# дейін";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_HINT"] = "Скрипт қазір белсенді емес. Скрипт баптауларында әрекет уақытын әрқашан өзгертуге болады";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_PERIOD"] = " #FROM# бастап #TO# дейін";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CALL_TYPE"] = "Қоңырау түрі";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CLIENT"] = "Клиент түрі";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_GIST"] = "Критерийлер";

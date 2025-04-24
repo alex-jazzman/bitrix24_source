@@ -1,0 +1,42 @@
+html:has(.bx-call-picture-in-picture-window),
+body:has(.bx-call-picture-in-picture-window) {
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+}
+
+.bx-call-picture-in-picture-window {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: linear-gradient(124.23deg, #182D47 8.51%, #492045 116.85%);
+	padding: 3px 6px 6px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.bx-call-picture-in-picture-window, .bx-call-picture-in-picture-window * {
+	box-sizing: border-box;
+}
+
+.bx-call-picture-in-picture-window__user {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	-webkit-box-flex: 1;
+	flex: 1 1 auto;
+}
+
+.bx-call-picture-in-picture-window__user .bx-messenger-videocall-user {
+	width: 100%;
+	height: 100%;
+}
+
+.bx-call-picture-in-picture-window__actions {
+	width: 100%;
+	display: flex;
+	gap: 8px;
+	flex: 0 0 auto;
+	justify-content: center;
+}

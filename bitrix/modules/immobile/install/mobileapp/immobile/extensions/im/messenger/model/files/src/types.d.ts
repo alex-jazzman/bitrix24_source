@@ -54,12 +54,14 @@ export type FilesModelActions =
 	'filesModel/setState'
 	| 'filesModel/set'
 	| 'filesModel/setFromLocalDatabase'
+	| 'filesModel/setFromPush'
 	| 'filesModel/updateWithId'
 	| 'filesModel/delete'
 	| 'filesModel/deleteByChatId'
 
 export type FilesModelMutation =
 	'filesModel/setState'
+	| 'filesModel/setFromPush'
 	| 'filesModel/add'
 	| 'filesModel/update'
 	| 'filesModel/updateWithId'
@@ -107,3 +109,10 @@ export interface FilesDeleteByChatIdData extends PayloadData
 {
 	chatId: number;
 }
+
+export type FilesSetFromPushActions = 'setFromPush';
+export interface FilesSetFromPushData extends PayloadData
+{
+	fileList: Array<FilesModelState>,
+}
+

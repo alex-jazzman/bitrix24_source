@@ -95,6 +95,7 @@ $currentUrl = $uri->getUri();
 			currentUrl: '<?= CUtil::JSEscape($currentUrl) ?>',
 			isAhaShownOnMyTasksColumn: <?= $arResult['isAhaShownOnMyTasksColumn'] === true ? 'true' : 'false' ?>,
 			isAhaShownCopilotAdvice: <?= $arResult['isAhaShownCopilotAdvice'] === true ? 'true' : 'false' ?>,
+			isFeatureTrialable: <?= $arResult['isFeatureTrialable'] === true ? 'true' : 'false' ?>,
 			flowLimitCode: '<?= \Bitrix\Tasks\Flow\FlowFeature::LIMIT_CODE ?>',
 		});
 

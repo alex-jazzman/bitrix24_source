@@ -10,6 +10,7 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 	const { CommentsService } = require('im/messenger/provider/service/classes/chat/comments');
 	const { UpdateService } = require('im/messenger/provider/service/classes/chat/update');
 	const { CreateService } = require('im/messenger/provider/service/classes/chat/create');
+	const { InputActionNotifyService } = require('im/messenger/provider/service/classes/chat/input-action-notify');
 
 	/**
 	 * @class ChatService
@@ -30,10 +31,19 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 		#updateService;
 		/** @type {CreateService} */
 		#createService;
+		/** @type {InputActionNotifyService} */
+		#inputActionNotifyService;
 
 		constructor()
 		{
 			this.store = serviceLocator.get('core').getStore();
+		}
+
+		get inputActionNotifyService()
+		{
+			this.#inputActionNotifyService = this.#inputActionNotifyService ?? new InputActionNotifyService();
+
+			return this.#inputActionNotifyService;
 		}
 
 		get loadService()
@@ -83,6 +93,21 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 			this.#createService = this.#createService ?? new CreateService();
 
 			return this.#createService;
+		}
+
+		async writingMessageNotify(dialogId)
+		{
+			return this.inputActionNotifyService.writingMessageNotify(dialogId);
+		}
+
+		async recordVoiceMessageNotify(dialogId)
+		{
+			return this.inputActionNotifyService.recordVoiceMessageNotify(dialogId);
+		}
+
+		async uploadFileMessageNotify(dialogId)
+		{
+			return this.inputActionNotifyService.uploadFileMessageNotify(dialogId);
 		}
 
 		loadChatWithMessages(dialogId)

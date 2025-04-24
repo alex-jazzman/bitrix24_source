@@ -6,11 +6,10 @@
 jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { Worker } = require('im/messenger/lib/helper/worker');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { isEqual } = require('utils/object');
-	const logger = LoggerManager.getInstance().getLogger('recent--renderer');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('recent--renderer');
 
 	/**
 	 * @class RecentRenderer
@@ -73,14 +72,14 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 		add(itemList)
 		{
-			this.view.addItems(RecentConverter.toList(itemList));
+			this.view.addItems(RecentUiConverter.toList(itemList));
 
 			return true;
 		}
 
 		update(itemList)
 		{
-			const viewItemList = RecentConverter.toList(itemList);
+			const viewItemList = RecentUiConverter.toList(itemList);
 			const collection = this.view.getItems();
 
 			if (collection)

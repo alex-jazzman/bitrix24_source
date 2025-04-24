@@ -28,3 +28,4 @@ $MESS["IM_CREATE_COLLAB_BANNER_TEXT_1"] = "Создайте коллабу, чт
 $MESS["IM_CREATE_COLLAB_BANNER_TEXT_2"] = "Пригласить участников можно сразу после создания коллабы. [learn-more]Подробнее[/learn-more]";
 $MESS["IM_CREATE_COLLAB_ERROR_EMPTY_NAME"] = "Укажите название коллабы";
 $MESS["IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME"] = "Коллаба с таким названием уже есть";
+$MESS["IM_CREATE_COLLAB_ERROR_URL_IN_NAME"] = "Название коллабы не может содержать ссылку";

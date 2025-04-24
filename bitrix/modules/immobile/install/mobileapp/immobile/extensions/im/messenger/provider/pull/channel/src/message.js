@@ -5,9 +5,9 @@
 jn.define('im/messenger/provider/pull/channel/message', (require, exports, module) => {
 	const { ChatMessagePullHandler } = require('im/messenger/provider/pull/chat');
 	const { ChannelRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/channel');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-message');
+	const logger = getLogger('pull-handler--chat-message');
 
 	/**
 	 * @class ChannelMessagePullHandler
@@ -23,7 +23,11 @@ jn.define('im/messenger/provider/pull/channel/message', (require, exports, modul
 		handleMessageChat(params, extra, command)
 		{
 			const recentMessageManager = this.getRecentMessageManager(params, extra);
-			if (!recentMessageManager.isOpenChannelChat() && !recentMessageManager.isCommentChat())
+			if (
+				!recentMessageManager.isOpenChannelChat()
+				&& !recentMessageManager.isCommentChat()
+				&& !recentMessageManager.isGeneralChannelChat()
+			)
 			{
 				return;
 			}
@@ -64,9 +68,9 @@ jn.define('im/messenger/provider/pull/channel/message', (require, exports, modul
 				.then(() => this.setFiles(params))
 				.then(() => {
 					this.setMessage(params);
-					this.checkWritingTimer(
+					this.checkTimerInputAction(
 						recentMessageManager.getDialogId(),
-						recentMessageManager.getSender(),
+						recentMessageManager.getSenderId(),
 					);
 				})
 			;
@@ -77,11 +81,9 @@ jn.define('im/messenger/provider/pull/channel/message', (require, exports, modul
 			this.logger.info(`${this.getClassName()}.handleMessage and nothing happened`, params, extra);
 		}
 
-		isNeedNotify(params)
+		isNeedNotify()
 		{
-			const recentMessageManager = this.getRecentMessageManager(params);
-
-			return !recentMessageManager.isCommentChat() && recentMessageManager.isUserInChat();
+			return false;
 		}
 
 		getRecentMessageManager(params, extra = {})

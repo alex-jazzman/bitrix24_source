@@ -36,14 +36,14 @@ jn.define('im/messenger/provider/service/queue', (require, exports, module) => {
 		 * @param {string} requestName
 		 * @param {object} requestData
 		 * @param {number} priority
-		 * @param {string|number} messageId
+		 * @param {Array<MessageId>} messageIdList
 		 * @return {Promise}
 		 */
-		putRequest(requestName, requestData, priority, messageId)
+		putRequest(requestName, requestData, priority, messageIdList)
 		{
 			return this.store.dispatch(
 				'queueModel/add',
-				{ requestName, requestData, priority, messageId },
+				{ requestName, requestData, priority, messageIdList },
 			);
 		}
 
@@ -55,8 +55,8 @@ jn.define('im/messenger/provider/service/queue', (require, exports, module) => {
 		 */
 		clearRequestByBatchResult(batchResponse, withTemporaryMessage = false)
 		{
-			const requests = this.store.getters['queueModel/getQueue'];
-			if (requests.length === 0)
+			const queue = this.store.getters['queueModel/getQueue'];
+			if (!Type.isArrayFilled(queue))
 			{
 				return Promise.resolve(true);
 			}
@@ -64,22 +64,26 @@ jn.define('im/messenger/provider/service/queue', (require, exports, module) => {
 			const removeRequest = [];
 			const removeTemporaryMessageIds = [];
 			const keysBatch = Object.keys(batchResponse);
-			requests.forEach((req) => {
-				if (req.messageId !== 0 && !Type.isUndefined(req.messageId))
-				{
-					const requestResponseKey = keysBatch.find(
-						(key) => key.includes(req.requestName) && key.includes(req.messageId),
-					);
-					const requestResponse = batchResponse[requestResponseKey];
-					if (requestResponse && (requestResponse.status !== ErrorCode.NO_INTERNET_CONNECTION))
-					{
-						removeRequest.push(req);
-					}
 
-					if (withTemporaryMessage)
-					{
-						removeTemporaryMessageIds.push(req.messageId);
-					}
+			queue.forEach((req) => {
+				if (!Type.isArrayFilled(req.messageIdList))
+				{
+					return;
+				}
+
+				const requestResponseKey = keysBatch.find(
+					(key) => key.includes(req.requestName) && key.includes(req.messageIdList[0]),
+				);
+
+				const requestResponse = batchResponse[requestResponseKey];
+				if (requestResponse && (requestResponse.status !== ErrorCode.NO_INTERNET_CONNECTION))
+				{
+					removeRequest.push(req);
+				}
+
+				if (withTemporaryMessage)
+				{
+					removeTemporaryMessageIds.push(...req.messageIdList);
 				}
 			});
 

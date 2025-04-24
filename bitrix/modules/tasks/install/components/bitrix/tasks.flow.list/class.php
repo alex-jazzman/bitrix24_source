@@ -28,7 +28,7 @@ use Bitrix\Tasks\Flow\Control\Exception\CommandNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotDeletedException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
-use Bitrix\Tasks\Flow\Grid\Preload\TotalTasksCountPreloader;
+use Bitrix\Tasks\Flow\Grid\Preload\CopilotAdviceInfoPreloader;
 use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionDictionary;
 use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionRepository;
 use Bitrix\Tasks\InvalidCommandException;
@@ -60,6 +60,7 @@ use Bitrix\Tasks\Flow\Provider\TaskProvider;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Integration\Extranet\User;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 
 final class TasksFlowListComponent extends CBitrixComponent implements Controllerable, Errorable
 {
@@ -203,6 +204,7 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 
 		$this->arResult['guidePhotoClass'] = $this->getGuidePhotoClass();
 
+		$this->arResult['isBiAnalyticsAvailable'] = (new Settings())->isToolAvailable('crm_bi');
 		$this->sendAnalytics();
 
 		$this->includeComponentTemplate();
@@ -716,10 +718,11 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 		(new AverageCompletedTimePreloader())->preload(...$flowCollection->getIdList());
 
 		(new TasksCountPreloader())->preload($this->userId, ...$flowCollection->getIdList());
-		(new TotalTasksCountPreloader())->preload(...$flowCollection->getIdList());
 
 		(new UserPreloader())->preload(...$flowCollection->getOwnerIdList());
 		(new ProjectPreloader())->preload($this->userId, ...$flowCollection->getGroupIdList());
+
+		(new CopilotAdviceInfoPreloader())->preload(...$flowCollection->getIdList());
 	}
 
 	private function sendAnalytics(): void

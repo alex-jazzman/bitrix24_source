@@ -23,8 +23,6 @@ const PreloadAttribute = Object.freeze({
 	auto: 'auto',
 });
 
-const LazyLoadSuccessState = 'success';
-
 // @vue/component
 export const VideoPlayer = {
 	name: 'VideoPlayer',
@@ -33,7 +31,7 @@ export const VideoPlayer = {
 	props:
 	{
 		fileId: {
-			type: Number,
+			type: [Number, String],
 			default: 0,
 		},
 		src: {
@@ -65,7 +63,6 @@ export const VideoPlayer = {
 	{
 		return {
 			preloadAttribute: PreloadAttribute.none,
-			previewLoaded: false,
 			loaded: false,
 			loading: false,
 			state: State.none,
@@ -83,11 +80,11 @@ export const VideoPlayer = {
 		},
 		showStartButton(): boolean
 		{
-			return this.withPlayerControls && this.isAutoPlayDisabled && this.previewLoaded;
+			return this.withPlayerControls && this.isAutoPlayDisabled;
 		},
 		showInterface(): boolean
 		{
-			return this.withPlayerControls && this.previewLoaded && !this.showStartButton;
+			return this.withPlayerControls && !this.showStartButton;
 		},
 		formattedTime(): string
 		{
@@ -130,7 +127,6 @@ export const VideoPlayer = {
 	{
 		if (!this.previewImageUrl)
 		{
-			this.previewLoaded = true;
 			this.preloadAttribute = PreloadAttribute.metadata;
 		}
 	},
@@ -305,11 +301,6 @@ export const VideoPlayer = {
 
 			return this.observer;
 		},
-		lazyLoadCallback(event: {element: HTMLElement, state: string})
-		{
-			const { state } = event;
-			this.previewLoaded = state === LazyLoadSuccessState;
-		},
 	},
 	template: `
 		<div class="bx-im-video-player__container" @click.stop="handleContainerClick">
@@ -333,19 +324,12 @@ export const VideoPlayer = {
 					<span class="bx-im-video-player__sound" :class="{'--muted': isMuted}"></span>
 				</div>
 			</FadeAnimation>
-			<div class="bx-im-video-player__video-container" ref="body" v-bind="viewerAttributes">
-				<img
-					v-if="previewImageUrl"
-					v-lazyload="{callback: lazyLoadCallback}"
-					data-lazyload-dont-hide
-					:data-lazyload-src="previewImageUrl"
-					:style="elementStyle"
-					class="bx-im-video-player__preview-image"
-					alt=""
-				/>
+			<div class="bx-im-video-player__video-container" ref="body">
 				<video
+					v-bind="viewerAttributes"
 					:src="src"
 					class="bx-im-video-player__video"
+					:poster="previewImageUrl"
 					ref="source"
 					:preload="preloadAttribute"
 					playsinline

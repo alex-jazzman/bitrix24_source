@@ -24,6 +24,16 @@ export const FileIconType = Object.freeze({
 	quote: 'quote',
 });
 
+export const FileViewerContext = Object.freeze({
+	dialog: 'dialog',
+	sidebarMain: 'sidebarMain',
+	sidebarTabBriefs: 'sidebarTabBriefs',
+	sidebarTabDocuments: 'sidebarTabDocuments',
+	sidebarTabMedia: 'sidebarTabMedia',
+	sidebarTabOther: 'sidebarTabOther',
+	sidebarTabFileUnsorted: 'sidebarTabFileUnsorted',
+});
+
 export const AudioPlaybackRate = Object.freeze({
 	1: 1,
 	1.5: 1.5,

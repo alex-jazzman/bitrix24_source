@@ -1,8 +1,8 @@
-import { ReactionType, ReactionUser } from '../../../model/types/messages/reactions';
-import { UsersModelState } from '../../../model/types/users';
-import { DialoguesModelState } from '../../../model/types/dialogues';
-import {RawChat, RawFile, RawMessage, RawPin, RawUser} from "../../../service/src/types/sync-list-result";
-import {RawReaction} from "../../../../model/types/messages/reactions";
+import {ReactionType, ReactionUser, RawReaction} from '../../../../model/messages/src/reactions/types';
+import {UsersModelState} from '../../../../model/users/src/types';
+import {DialoguesModelState} from '../../../../model/dialogues/src/types';
+import {RawChat, RawFile, RawMessage, RawPin, RawUser} from '../../../service/src/types/sync-list-result';
+import {MessageParams} from '../../../../model/messages/src/types/messages';
 
 export type AddReactionParams = {
 	actualReactions: {
@@ -34,7 +34,7 @@ type MessagePullHandlerMessageDeleteCompleteParams = {
 		firstViewers: Array<number>,
 		countOfViewers: number,
 	},
-	muted: false,
+	muted: boolean,
 	newLastMessage: {
 		id: number,
 		uuid: string,
@@ -55,8 +55,49 @@ type MessagePullHandlerMessageDeleteCompleteParams = {
 	text: string,
 	toUserId: number,
 	type: string,
-	unread: false,
+	unread: boolean,
 };
+
+type MessagePullHandlerMessageDeleteV2Params = {
+	chatId: number,
+	counter: number,
+	dialogId: string | number,
+	fromUserId: number,
+	counterType: string, // see im/messenger/const/counter
+	lastMessageViews: {
+		messageId: number,
+		firstViewers: Array<number>,
+		countOfViewers: number,
+	},
+	messages: Array<DeleteV2MessageObject>,
+	muted: boolean,
+	newLastMessage: {
+		id: number,
+		uuid: string,
+		author_id: number,
+		chat_id: number,
+		date: string,
+		isSystem: boolean,
+		text: string,
+		unread: boolean,
+		viewedByOthers: boolean,
+		viewed: boolean,
+		params: object,
+		replaces: Array<any>,
+		files?: Array<any>,
+	},
+	toUserId: number,
+	unread: boolean,
+	type: 'private' | 'chat',
+};
+
+type DeleteV2MessageObject = {
+	completelyDeleted: boolean,
+	id: number,
+	params: MessageParams,
+	senderId: number,
+	text: string,
+}
 
 type MessagePullHandlerUpdateDialogParams = {
 	dialogId: string | number,

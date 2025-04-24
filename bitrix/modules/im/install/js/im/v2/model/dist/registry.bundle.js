@@ -1032,67 +1032,117 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class SelectModel extends ui_vue3_vuex.BuilderModel {
 	  getState() {
 	    return {
-	      collection: new Set(),
-	      isBulkActionsMode: false
+	      collection: {}
 	    };
 	  }
 	  getGetters() {
 	    return {
 	      /** @function messages/select/getCollection */
-	      getCollection: state => {
-	        return state.collection;
+	      getCollection: state => dialogId => {
+	        if (!state.collection[dialogId]) {
+	          return null;
+	        }
+	        const preparedCollection = [...state.collection[dialogId]];
+	        const filteredMessageIds = preparedCollection.filter(messageId => {
+	          return im_v2_application_core.Core.getStore().getters['messages/isExists'](messageId);
+	        });
+	        return new Set(filteredMessageIds);
 	      },
-	      /** @function messages/select/getBulkActionsMode */
-	      getBulkActionsMode: state => {
-	        return state.isBulkActionsMode;
+	      /** @function messages/select/isBulkActionsModeActive */
+	      isBulkActionsModeActive: state => dialogId => {
+	        return Boolean(state.collection[dialogId]);
 	      },
 	      /** @function messages/select/isMessageSelected */
-	      isMessageSelected: state => messageId => {
-	        return state.collection.has(messageId);
+	      isMessageSelected: state => (messageId, dialogId) => {
+	        if (!state.collection[dialogId]) {
+	          return false;
+	        }
+	        return state.collection[dialogId].has(messageId);
 	      }
 	    };
 	  }
 	  getActions() {
 	    return {
-	      /** @function messages/select/toggle */
-	      toggle: (store, messageId) => {
-	        if (store.state.collection.has(messageId)) {
-	          store.commit('delete', messageId);
-	        } else {
-	          store.commit('add', messageId);
-	        }
-	      },
-	      /** @function messages/select/deleteByMessageId */
-	      deleteByMessageId: (store, messageId) => {
-	        if (!store.state.collection.has(messageId)) {
+	      /** @function messages/select/enableBulkMode */
+	      enableBulkMode: (store, payload) => {
+	        const {
+	          messageId,
+	          dialogId
+	        } = payload;
+	        if (store.state.collection[dialogId]) {
 	          return;
 	        }
-	        store.commit('delete', messageId);
+	        store.commit('enableBulkMode', {
+	          messageId,
+	          dialogId
+	        });
 	      },
-	      /** @function messages/select/toggleBulkActionsMode */
-	      toggleBulkActionsMode: (store, active) => {
-	        store.commit('toggleBulkActionsMode', active);
+	      /** @function messages/select/disableBulkMode */
+	      disableBulkMode: (store, payload) => {
+	        const {
+	          dialogId
+	        } = payload;
+	        if (!store.state.collection[dialogId]) {
+	          return;
+	        }
+	        store.commit('disableBulkMode', {
+	          dialogId
+	        });
 	      },
-	      /** @function messages/select/clear */
-	      clear: store => {
-	        store.commit('clear');
+	      /** @function messages/select/toggleMessageSelection */
+	      toggleMessageSelection: (store, payload) => {
+	        const {
+	          messageId,
+	          dialogId
+	        } = payload;
+	        if (!store.state.collection[dialogId]) {
+	          return;
+	        }
+	        store.commit('toggleMessageSelection', {
+	          messageId,
+	          dialogId
+	        });
+	      },
+	      /** @function messages/select/clearCollection */
+	      clearCollection: store => {
+	        store.commit('clearCollection');
 	      }
 	    };
 	  }
 	  getMutations() {
 	    return {
-	      add: (state, messageId) => {
-	        state.collection.add(messageId);
-	      },
-	      delete: (state, messageId) => {
-	        state.collection.delete(messageId);
-	      },
-	      toggleBulkActionsMode: (state, active) => {
+	      enableBulkMode: (state, payload) => {
+	        const {
+	          messageId,
+	          dialogId
+	        } = payload;
+
 	        // eslint-disable-next-line no-param-reassign
-	        state.isBulkActionsMode = active;
+	        state.collection[dialogId] = new Set();
+	        state.collection[dialogId].add(messageId);
 	      },
-	      clear: state => {
-	        state.collection.clear();
+	      disableBulkMode: (state, payload) => {
+	        const {
+	          dialogId
+	        } = payload;
+
+	        // eslint-disable-next-line no-param-reassign
+	        delete state.collection[dialogId];
+	      },
+	      toggleMessageSelection: (state, payload) => {
+	        const {
+	          messageId,
+	          dialogId
+	        } = payload;
+	        if (state.collection[dialogId].has(messageId)) {
+	          state.collection[dialogId].delete(messageId);
+	          return;
+	        }
+	        state.collection[dialogId].add(messageId);
+	      },
+	      clearCollection: state => {
+	        // eslint-disable-next-line no-param-reassign
+	        state.collection = {};
 	      }
 	    };
 	  }
@@ -1241,6 +1291,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return false;
 	        }
 	        return main_core.Type.isStringFilled(message.forward.id);
+	      },
+	      /** @function messages/isExists */
+	      isExists: state => id => {
+	        const message = state.collection[id];
+	        return message && !message.isDeleted;
 	      },
 	      /** @function messages/isInChatCollection */
 	      isInChatCollection: state => payload => {
@@ -1912,19 +1967,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  return result;
 	};
-	const prepareWritingList = writingList => {
-	  const result = [];
-	  writingList.forEach(element => {
-	    const item = {};
-	    if (!element.userId) {
-	      return;
-	    }
-	    item.userId = Number.parseInt(element.userId, 10);
-	    item.userName = main_core.Text.decode(element.userName);
-	    result.push(item);
-	  });
-	  return result;
-	};
 	const prepareMuteList = muteList => {
 	  const result = [];
 	  if (main_core.Type.isArray(muteList)) {
@@ -2072,10 +2114,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  targetFieldName: 'public',
 	  checkFunction: main_core.Type.isPlainObject
 	}, {
-	  fieldName: 'writingList',
-	  targetFieldName: 'writingList',
-	  checkFunction: main_core.Type.isArray,
-	  formatFunction: prepareWritingList
+	  fieldName: 'inputActionList',
+	  targetFieldName: 'inputActionList',
+	  checkFunction: main_core.Type.isPlainObject
 	}, {
 	  fieldName: 'managerList',
 	  targetFieldName: 'managerList',
@@ -2300,13 +2341,152 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	/* eslint-disable no-param-reassign */
+	class InputActionsModel extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function chats/inputActions/getByDialogId */
+	      getByDialogId: state => dialogId => {
+	        const chatActionList = state.collection[dialogId];
+	        if (!chatActionList || chatActionList.length === 0) {
+	          return null;
+	        }
+	        return chatActionList;
+	      },
+	      /** @function chats/inputActions/isChatActive */
+	      isChatActive: state => dialogId => {
+	        const chatActionList = state.collection[dialogId];
+	        if (!chatActionList) {
+	          return false;
+	        }
+	        return chatActionList.length > 0;
+	      },
+	      /** @function chats/inputActions/isActionActive */
+	      isActionActive: state => payload => {
+	        const {
+	          dialogId,
+	          type,
+	          userId
+	        } = payload;
+	        if (!state.collection[dialogId]) {
+	          return false;
+	        }
+	        const chatActionList = state.collection[dialogId];
+	        return this.isAlreadyActive(chatActionList, type, userId);
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function chats/inputActions/start */
+	      start: (store, payload) => {
+	        const {
+	          dialogId,
+	          type,
+	          userId
+	        } = payload;
+	        if (!store.state.collection[dialogId]) {
+	          store.commit('initCollection', dialogId);
+	        }
+	        const chatActionList = store.state.collection[dialogId];
+	        const isAlreadyActive = this.isAlreadyActive(chatActionList, type, userId);
+	        if (isAlreadyActive) {
+	          return;
+	        }
+	        store.commit('start', payload);
+	      },
+	      /** @function chats/inputActions/stop */
+	      stop: (store, payload) => {
+	        const {
+	          dialogId,
+	          type,
+	          userId
+	        } = payload;
+	        const chatActionList = store.state.collection[dialogId];
+	        if (!chatActionList) {
+	          return;
+	        }
+	        const isAlreadyActive = this.isAlreadyActive(chatActionList, type, userId);
+	        if (!isAlreadyActive) {
+	          return;
+	        }
+	        store.commit('stop', payload);
+	      },
+	      /** @function chats/inputActions/stopUserActionsInChat */
+	      stopUserActionsInChat: (store, payload) => {
+	        const {
+	          dialogId
+	        } = payload;
+	        const chatActionList = store.state.collection[dialogId];
+	        if (!chatActionList) {
+	          return;
+	        }
+	        store.commit('stopUserActionsInChat', payload);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      start: (state, payload) => {
+	        const {
+	          dialogId,
+	          type,
+	          userId,
+	          userName
+	        } = payload;
+	        const chatActionList = state.collection[dialogId];
+	        chatActionList.push({
+	          type,
+	          userId,
+	          userName
+	        });
+	      },
+	      stop: (state, payload) => {
+	        const {
+	          dialogId,
+	          type,
+	          userId
+	        } = payload;
+	        const chatActionList = state.collection[dialogId];
+	        state.collection[dialogId] = chatActionList.filter(userRecord => {
+	          return userRecord.userId !== userId || userRecord.type !== type;
+	        });
+	      },
+	      stopUserActionsInChat: (state, payload) => {
+	        const {
+	          dialogId,
+	          userId
+	        } = payload;
+	        const chatActionList = state.collection[dialogId];
+	        state.collection[dialogId] = chatActionList.filter(userRecord => {
+	          return userRecord.userId !== userId;
+	        });
+	      },
+	      initCollection: (state, dialogId) => {
+	        state.collection[dialogId] = [];
+	      }
+	    };
+	  }
+	  isAlreadyActive(list, type, userId) {
+	    return list.some(userRecord => {
+	      return userRecord.userId === userId && userRecord.type === type;
+	    });
+	  }
+	}
+
+	/* eslint-disable no-param-reassign */
 	class ChatsModel extends ui_vue3_vuex.BuilderModel {
 	  getName() {
 	    return 'chats';
 	  }
 	  getNestedModules() {
 	    return {
-	      collabs: CollabsModel
+	      collabs: CollabsModel,
+	      inputActions: InputActionsModel
 	    };
 	  }
 	  getState() {
@@ -2336,7 +2516,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      savedPositionMessageId: 0,
 	      managerList: [],
-	      writingList: [],
+	      inputActionList: {},
 	      muteList: [],
 	      quoteId: 0,
 	      ownerId: 0,
@@ -3437,7 +3617,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	    }
 	    if (main_core.Type.isString(file.urlDownload)) {
-	      if (!file.urlDownload || file.urlDownload.startsWith('http') || file.urlDownload.startsWith('bx') || file.urlPreview.startsWith('file')) {
+	      if (!file.urlDownload || file.urlDownload.startsWith('http') || file.urlDownload.startsWith('bx') || file.urlDownload.startsWith('file') || file.urlDownload.startsWith('blob')) {
 	        result.urlDownload = file.urlDownload;
 	      } else {
 	        result.urlDownload = im_v2_application_core.Core.getHost() + file.urlDownload;
@@ -3451,46 +3631,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	    }
 	    if (main_core.Type.isPlainObject(file.viewerAttrs)) {
-	      result.viewerAttrs = this.validateViewerAttributes(file.viewerAttrs);
-	    }
-	    return result;
-	  }
-	  validateViewerAttributes(viewerAttrs) {
-	    const result = {
-	      viewer: true
-	    };
-	    if (main_core.Type.isString(viewerAttrs.actions)) {
-	      result.actions = viewerAttrs.actions;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.objectId)) {
-	      result.objectId = viewerAttrs.objectId;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.src)) {
-	      result.src = viewerAttrs.src;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.title)) {
-	      result.title = viewerAttrs.title;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.viewerGroupBy)) {
-	      result.viewerGroupBy = viewerAttrs.viewerGroupBy;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.viewerType)) {
-	      result.viewerType = viewerAttrs.viewerType;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.viewerPreview)) {
-	      result.viewerPreview = viewerAttrs.viewerPreview;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.viewerTypeClass)) {
-	      result.viewerTypeClass = viewerAttrs.viewerTypeClass;
-	    }
-	    if (main_core.Type.isBoolean(viewerAttrs.viewerSeparateItem)) {
-	      result.viewerSeparateItem = viewerAttrs.viewerSeparateItem;
-	    }
-	    if (main_core.Type.isString(viewerAttrs.viewerExtension)) {
-	      result.viewerExtension = viewerAttrs.viewerExtension;
-	    }
-	    if (main_core.Type.isNumber(viewerAttrs.imChatId)) {
-	      result.imChatId = viewerAttrs.imChatId;
+	      result.viewerAttrs = file.viewerAttrs;
 	    }
 	    return result;
 	  }
@@ -3866,6 +4007,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        const hasBirthday = this.store.getters['users/hasBirthday'](dialogId);
 	        if (!hasBirthday) {
+	          return false;
+	        }
+	        const isSelfChat = Number.parseInt(dialogId, 10) === im_v2_application_core.Core.getUserId();
+	        if (isSelfChat) {
 	          return false;
 	        }
 	        const showBirthday = this.store.getters['application/settings/get'](im_v2_const.Settings.recent.showBirthday);

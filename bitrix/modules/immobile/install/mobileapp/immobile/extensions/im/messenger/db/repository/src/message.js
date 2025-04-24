@@ -10,13 +10,18 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		UserTable,
 		ReactionTable,
 		MessageTable,
+		MessagePushTable,
 		MessageTableGetLinkedListDirection,
 	} = require('im/messenger/db/table');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { merge } = require('utils/object');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const { validate } = require('im/messenger/db/repository/validators/message');
+	const {
+		validate,
+		validatePush,
+	} = require('im/messenger/db/repository/validators/message');
 
-	const logger = LoggerManager.getInstance().getLogger('repository--message');
+	const logger = getLogger('repository--message');
 
 	/**
 	 * @class MessageRepository
@@ -29,6 +34,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			this.userTable = new UserTable();
 			this.reactionTable = new ReactionTable();
 			this.messageTable = new MessageTable();
+			this.messagePushTable = new MessagePushTable();
 		}
 
 		/**
@@ -180,6 +186,27 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 
 			const dateFinish = Date.now();
 			logger.log('MessageRepository.getBottomPage result: ', messageList, `${dateFinish - dateStart} ms.`);
+
+			return messageList;
+		}
+
+		/**
+		 * @param {number} options.chatId
+		 * @param {number} [options.fromMessageId]
+		 *
+		 * @return {Promise<MessageRepositoryPage>}
+		 */
+		async getPushPage(options)
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return this.#getDefaultPageResult();
+			}
+
+			const getListResult = await this.messagePushTable.getPage(options);
+			const messageList = await this.#getMessagesWithAdditionalData(getListResult);
+
+			logger.log('MessageRepository.getPushPage result', messageList);
 
 			return messageList;
 		}
@@ -351,6 +378,49 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			return this.messageTable.add(messageListToAdd, true);
 		}
 
+		/**
+		 * @param {Array<RawMessage>} messageList
+		 * @return {Promise<any>}
+		 */
+		async updateFromRest(messageList)
+		{
+			const updatedMessageIdList = messageList.map((message) => message.id);
+			const existingMessages = await this.messageTable.getListByIds(updatedMessageIdList, false);
+
+			const existingMessagesCollection = {};
+			existingMessages.items.forEach((message) => {
+				existingMessagesCollection[message.id] = message;
+			});
+
+			const updatedMessageList = [];
+			messageList.forEach((message) => {
+				const existingMessage = existingMessagesCollection[message.id];
+
+				if (existingMessage)
+				{
+					const validatedMessage = this.messageTable.validate(validate(message));
+					updatedMessageList.push(merge(existingMessage, validatedMessage));
+				}
+			});
+
+			return this.messageTable.add(updatedMessageList, true);
+		}
+
+		async saveFromPush(messageList)
+		{
+			const messageListToAdd = [];
+
+			messageList.forEach((message) => {
+				const messageToAdd = this.messagePushTable.validate(
+					validatePush(message),
+				);
+
+				messageListToAdd.push(messageToAdd);
+			});
+
+			return this.messagePushTable.add(messageListToAdd, true);
+		}
+
 		async deleteByIdList(idList)
 		{
 			const messageList = await this.messageTable.getListByIds(idList, true);
@@ -411,6 +481,11 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			});
 
 			return Promise.all(deletePromiseList);
+		}
+
+		async clearPushMessages()
+		{
+			return this.messagePushTable.truncate();
 		}
 
 		/**

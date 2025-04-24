@@ -9,7 +9,6 @@ $MESS['IM_LIB_MENU_UNPIN_MSGVER_1'] = "Открепить";
 $MESS['IM_LIB_MENU_MUTE_2'] = "Выключить звук";
 $MESS['IM_LIB_MENU_UNMUTE_2'] = "Включить звук";
 $MESS['IM_LIB_MENU_OPEN_PROFILE_V2'] = "Открыть профиль";
-$MESS['IM_LIB_MENU_OPEN_OWN_PROFILE'] = "Мой профиль";
 $MESS['IM_LIB_MENU_OPEN_CALENDAR_V2'] = "Открыть календарь";
 $MESS['IM_LIB_MENU_OPEN_OWN_CALENDAR'] = "Мой календарь";
 $MESS['IM_LIB_MENU_CALL_2'] = "Видеозвонок";

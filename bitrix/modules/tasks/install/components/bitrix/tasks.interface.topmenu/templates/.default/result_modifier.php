@@ -12,8 +12,11 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Flow\Integration\BIConnector\FlowBIAnalytics;
+use Bitrix\Tasks\Integration\BIConnector\TaskBIAnalytics;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Extranet\User;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
@@ -251,14 +254,24 @@ $arResult['ITEMS'][] = [
 	'COUNTER_ID' => 'tasks_scrum_counter',
 ];
 }
+
 if ($arParams["SHOW_SECTION_MANAGE"] !== "N")
 {
+	$taskManageUri = new Uri($tasksLink . 'departments/' . $strIframe);
+	$demoSuffix = Bitrix24::isFeatureEnabledByTrial(Bitrix24\FeatureDictionary::TASK_SUPERVISOR_VIEW) ? 'Y' : 'N';
+
+	$taskManageUri->addParams([
+		'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['lead'],
+		'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['section_button'],
+		'p1' => 'isDemo_' . $demoSuffix,
+	]);
+
 	$taskSuperVisorExceeded = !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_SUPERVISOR_VIEW);
 
 	$counter = intval($arResult["SECTION_MANAGE_COUNTER"]);
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_MANAGE"),
-		"URL" => $tasksLink.'departments/'.$strIframe,
+		"URL" => $taskManageUri->getUri(),
 		"ID" => "view_departments",
 		'COUNTER' => $counter,
 		'COUNTER_ID' => 'departments_counter',
@@ -301,73 +314,81 @@ if (
 	$arResult['ITEMS'][] = $reportItem;
 }
 
+$portalSettings = Settings::getInstance();
+
 if (!$isCollaber)
 {
-	$efficiencyMenuItem = [];
-	$biMenuItem = [];
+	$taskBI = TaskBIAnalytics::getInstance();
 
-	if (Loader::includeModule('biconnector')
-		&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService'))
-	{
-		/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorTasksEfficiency::getMenuItemData */
-		$efficiencyMenuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
-			\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_TASKS_EFFICIENCY,
-		);
+	$tasksEfficiencyBIMenuItem = $taskBI->getTasksEfficiencyDashboardsMenuItems();
+	$tasksBIMenuItem = $taskBI->getTasksDashboardsMenuItems();
 
-		/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorTasks::getMenuItemData */
-		$biMenuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
-			\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_TASKS,
-		);
-	}
+	$flowBI = FlowBIAnalytics::getInstance();
+
+	$flowsBIMenuItem = $flowBI->getFlowsDashboardsMenuItems();
+
+	$efficiencyItemId = 'view_effective';
+
+	$isEfficiencyAvailable = $portalSettings->isToolAvailableByMenuId($efficiencyItemId);
+
+	$efficiencyCounter = $isEfficiencyAvailable ? (int)$arResult['EFFECTIVE_COUNTER'] . '%' : '';
+
+	$efficiencyMenu = [
+		'ID' => $efficiencyItemId . '_menu',
+		'TEXT' => Loc::getMessage('TASKS_PANEL_TAB_EFFECTIVE'),
+		'ITEMS' => $tasksEfficiencyBIMenuItem['ITEMS'] ?? [],
+		'SUPER_TITLE' => [
+			'TEXT' => $efficiencyCounter,
+			'CLASS' => 'tasks-counter-wrapper',
+		],
+	];
+
+	$efficiencyMenu['ITEMS'] = array_merge($efficiencyMenu['ITEMS'], $flowsBIMenuItem);
 
 	$efficiencyItem = [
 		'TEXT' => Loc::getMessage('TASKS_PANEL_TAB_EFFECTIVE'),
 		'URL' => "{$tasksLink}effective/{$strIframe}",
-		'ID' => 'view_effective',
-		'MAX_COUNTER_SIZE' => 100,
+		'ID' => $efficiencyItemId,
 		'IS_ACTIVE' => (($arParams['MARK_SECTION_EFFECTIVE'] ?? 'N') === 'Y'),
-		'COUNTER' => (int)$arResult['EFFECTIVE_COUNTER'],
-		'COUNTER_ID' => 'tasks_efficiency_counter',
+		'SUPER_TITLE' => [
+			'TEXT' => $efficiencyCounter,
+		],
 	];
+
 	if (!$tasksEfficiencyEnabled)
 	{
 		$efficiencyItem['IS_LOCKED'] = true;
 		unset($efficiencyItem['COUNTER']);
 	}
 
-	$isEfficiencyAvailable = true;
-	if (Loader::includeModule('intranet'))
-	{
-		$toolsManager = \Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance();
-
-		$isEfficiencyAvailable = $toolsManager->checkAvailabilityByMenuId($efficiencyItem['ID']);
-	}
-
-	if (!empty($efficiencyMenuItem))
+	if (!empty($efficiencyMenu['ITEMS']))
 	{
 		if ($isEfficiencyAvailable)
 		{
-			$efficiencyMenuItem['ITEMS'][] = $efficiencyItem;
+			$efficiencyMenu['ITEMS'][] = $efficiencyItem;
 		}
-
-		$arResult['ITEMS'][] = $efficiencyMenuItem;
 	}
 	elseif ($isEfficiencyAvailable)
 	{
-		$arResult['ITEMS'][] = $efficiencyItem;
+		$efficiencyMenu = $efficiencyItem;
 	}
 
-	if (!empty($biMenuItem))
+	if (!empty($efficiencyMenu['ITEMS']) || $isEfficiencyAvailable)
 	{
-		$arResult['ITEMS'][] = $biMenuItem;
+		$arResult['ITEMS'][] = $efficiencyMenu;
+	}
+
+	if (!empty($tasksBIMenuItem))
+	{
+		$arResult['ITEMS'][] = $tasksBIMenuItem;
 	}
 }
 
 if ($arResult["BX24_RU_ZONE"] && !User::isExtranet())
 {
 	$arResult['ITEMS'][] = array(
-		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
-		"URL" => \Bitrix\Tasks\Integration\Market\Router::getCategoryPath('tasks'),
+		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"),
+		"URL" => \Bitrix\Tasks\Integration\Market\Router::getBasePath(),
 		"ID" => "view_apps",
 		'IS_DISABLED' => true,
 	);
@@ -433,13 +454,10 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 	$arResult['ITEMS'][] = $rightsButton;
 }
 
-if (class_exists('\Bitrix\Intranet\Settings\Tools\ToolsManager'))
+foreach ($arResult['ITEMS'] as $key => $item)
 {
-	foreach ($arResult['ITEMS'] as $key => $item)
+	if (!$portalSettings->isToolAvailableByMenuId($item['ID']))
 	{
-		if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByMenuId($item['ID']))
-		{
-			unset($arResult['ITEMS'][$key]);
-		}
+		unset($arResult['ITEMS'][$key]);
 	}
 }

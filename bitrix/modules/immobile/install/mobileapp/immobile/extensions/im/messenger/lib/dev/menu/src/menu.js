@@ -169,9 +169,20 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 				});
 			}
 
+			const consoleButton = BannerButton({
+				title: 'Console',
+				description: 'for standalone debug',
+				backgroundColor: AppTheme.colors.accentSoftBlue1,
+				onClick: async () => {
+					const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+					Console.open();
+				},
+			});
+
 			return [
 				developerSettingsButton,
 				this.renderButtonSection([logSettingsSearchButton, logSettingsButton], 'Logging'),
+				consoleButton,
 				// chatDialogVisualTest,
 				// chatDialogBenchmark,
 				vuexPlaygroundButton,

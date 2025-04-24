@@ -100,6 +100,7 @@ export const CallEvent = {
 	onYouMuteAllParticipants: 'onYouMuteAllParticipants',
 	onParticipantMuted: 'onParticipantMuted',
 	onUserEmotion: 'onUserEmotion',
+	onTrackSubscriptionFailed: 'onTrackSubscriptionFailed',
 	onUserStatsReceived: 'onUserStatsReceived',
 	onCustomMessage: 'onCustomMessage',
 	onLocalMediaReceived: 'onLocalMediaReceived',

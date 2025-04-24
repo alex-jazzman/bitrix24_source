@@ -303,7 +303,7 @@ $assets = array(
 		'js'  => array(
 			$assetRoot.'cjstask.js',
 		),
-		'rel' => array('ajax', 'json'),
+		'rel' => array('ajax'),
 		'bundle_js' => 'tasks'
 	),
 	array(
@@ -311,7 +311,7 @@ $assets = array(
 		'js'  => array(
 			$assetRoot.'task-quick-popups.js',
 		),
-		'rel' => array('popup', 'ajax', 'json', 'CJSTask'),
+		'rel' => array('popup', 'ajax', 'CJSTask'),
 	),
 	array(
 		'code' => 'tasks_style_legacy',

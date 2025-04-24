@@ -12,9 +12,9 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 	} = require('im/messenger/db/table');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { DialogInternalRepository } = require('im/messenger/db/repository/internal/dialog');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
-	const logger = LoggerManager.getInstance().getLogger('repository--dialog');
+	const logger = getLogger('repository--dialog');
 
 	/**
 	 * @class DialogRepository
@@ -149,6 +149,24 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			await this.internal.saveByDialogList(dialogListToAdd);
 
 			return this.dialogTable.add(dialogListToAdd, true);
+		}
+
+		async saveFromPush(dialogList)
+		{
+			const dialogListMergePromiseList = [];
+			dialogList.forEach((dialog) => {
+				const dialogToAdd = this.validatePushDialog(dialog);
+				const mergePromise = this.dialogTable.merge(dialogToAdd.dialogId, (existingDialog) => {
+					return {
+						...existingDialog,
+						...dialogToAdd,
+					};
+				});
+
+				dialogListMergePromiseList.push(mergePromise);
+			});
+
+			return Promise.all(dialogListMergePromiseList);
 		}
 
 		/**
@@ -360,6 +378,11 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			result.permissions = mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions);
 
 			return result;
+		}
+
+		validatePushDialog(dialog)
+		{
+			return this.validateRestDialog(dialog);
 		}
 
 		/**

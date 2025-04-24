@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\UI\Filter\Theme;
 
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
 $filterId = $arParams["FILTER_ID"] ?? null;
 ?>
 

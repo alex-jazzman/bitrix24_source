@@ -137,7 +137,7 @@ export const FileErrorsPopup = {
 		{
 			const link = document.createElement('a');
 			link.href = this.reportDownloadLink;
-			link.download = 'import_errors.html';
+			link.download = `${this.$store.state.config.datasetProperties.name ?? 'csv_dataset'}_errors.html`;
 			Dom.append(link, document.body);
 			link.click();
 			Dom.remove(link);

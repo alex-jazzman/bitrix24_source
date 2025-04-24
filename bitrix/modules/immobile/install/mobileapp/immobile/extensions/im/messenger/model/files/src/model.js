@@ -231,6 +231,28 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 				}
 			},
 
+			/** @function filesModel/setFromPush */
+			setFromPush: (store, payload) => {
+				if (!Type.isArrayFilled(payload))
+				{
+					return;
+				}
+
+				const fileList = payload.map((rawFile) => {
+					const file = validate(store, { ...rawFile });
+					file.templateId = file.id;
+
+					return file;
+				});
+
+				store.commit('setFromPush', {
+					actionName: 'setFromPush',
+					data: {
+						fileList,
+					},
+				});
+			},
+
 			/** @function filesModel/updateWithId */
 			updateWithId: (store, payload) => {
 				const { id, fields } = payload;
@@ -288,6 +310,25 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 				} = payload.data;
 
 				state.collection = collection;
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<FilesSetFromPushData, FilesSetFromPushActions>} payload
+			 */
+			setFromPush: (state, payload) => {
+				logger.log('filesModel: setFromPush mutation', payload);
+
+				const { fileList } = payload.data;
+
+				for (const file of fileList)
+				{
+					state.collection[file.id] = {
+						...fileDefaultElement,
+						...state.collection[file.id],
+						...file,
+					};
+				}
 			},
 
 			/**

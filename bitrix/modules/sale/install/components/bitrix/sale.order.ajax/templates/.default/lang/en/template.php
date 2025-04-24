@@ -135,4 +135,4 @@ $MESS["STOF_SYS_PASSWORD"] = "Generate login and password";
 $MESS["SUCCESS_PRELOAD_TEXT_DEFAULT"] = "You previously shopped with us and we remember you, so we have taken the liberty to fill in the fields for you.<br />
 If the information is correct, click \"#ORDER_BUTTON#\".
 ";
-$MESS["USE_COUPON_DEFAULT"] = "Apply coupon";
+$MESS['USE_COUPON_DEFAULT'] = "Apply coupon";

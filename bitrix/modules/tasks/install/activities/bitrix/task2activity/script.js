@@ -580,7 +580,7 @@
 	      for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
 	        var _tagName = _step4.value;
 	        babelHelpers.classPrivateFieldGet(_this7, _tagsSelector).addTag({
-	          id: String(Math.random()),
+	          id: _tagName,
 	          title: _tagName,
 	          entityId: 'task-tag',
 	          customData: {

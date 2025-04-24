@@ -12,8 +12,8 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 		FieldType,
 		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('database-table--message');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('database-table--message');
 
 	const MessageTableGetLinkedListDirection = Object.freeze({
 		top: 'top',

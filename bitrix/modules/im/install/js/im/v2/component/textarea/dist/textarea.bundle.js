@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,rest_client,im_v2_lib_desktopApi,im_v2_lib_smileManager,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,im_v2_component_message_file,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,im_v2_lib_inputAction,im_v2_lib_desktopApi,im_v2_lib_smileManager,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,im_v2_component_message_file,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -369,68 +369,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  onHeightChange: 'onHeightChange',
 	  onResizeStop: 'onResizeStop'
 	};
-
-	const TYPING_DURATION = 15000;
-	const TYPING_REQUEST_TIMEOUT = 5000;
-	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
-	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
-	var _isTyping = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTyping");
-	var _typingTimeout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("typingTimeout");
-	var _typingRequestTimeout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("typingRequestTimeout");
-	var _isSelfChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSelfChat");
-	class TypingService {
-	  constructor(dialogId) {
-	    Object.defineProperty(this, _isSelfChat, {
-	      value: _isSelfChat2
-	    });
-	    Object.defineProperty(this, _dialogId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _restClient, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isTyping, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _typingTimeout, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _typingRequestTimeout, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId] = dialogId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient] = im_v2_application_core.Core.getRestClient();
-	  }
-	  startTyping() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isTyping)[_isTyping] || babelHelpers.classPrivateFieldLooseBase(this, _isSelfChat)[_isSelfChat]()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _isTyping)[_isTyping] = true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _typingTimeout)[_typingTimeout] = setTimeout(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _isTyping)[_isTyping] = false;
-	    }, TYPING_DURATION);
-	    babelHelpers.classPrivateFieldLooseBase(this, _typingRequestTimeout)[_typingRequestTimeout] = setTimeout(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient].callMethod(im_v2_const.RestMethod.imDialogWriting, {
-	        'DIALOG_ID': babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]
-	      }).catch(error => {
-	        console.error('TypingService: startTyping error', error);
-	      });
-	    }, TYPING_REQUEST_TIMEOUT);
-	  }
-	  stopTyping() {
-	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _typingTimeout)[_typingTimeout]);
-	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _typingRequestTimeout)[_typingRequestTimeout]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isTyping)[_isTyping] = false;
-	  }
-	}
-	function _isSelfChat2() {
-	  return Number.parseInt(babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId], 10) === im_v2_application_core.Core.getUserId();
-	}
 
 	const RecognizerEvent = {
 	  audioend: 'audioend',
@@ -5218,7 +5156,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
 	var _storeUpdater = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storeUpdater");
-	var _restClient$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _searchConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchConfig");
 	var _searchRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchRequest");
 	var _getDialogIdAndDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIdAndDate");
@@ -5234,7 +5172,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _restClient$1, {
+	    Object.defineProperty(this, _restClient, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -5244,7 +5182,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig] = searchConfig;
 	    babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater] = new im_v2_lib_search.StoreUpdater();
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1] = im_v2_application_core.Core.getRestClient();
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient] = im_v2_application_core.Core.getRestClient();
 	  }
 	  async search(query) {
 	    const items = await babelHelpers.classPrivateFieldLooseBase(this, _searchRequest)[_searchRequest](query);
@@ -5261,7 +5199,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	    let users = [];
 	    try {
-	      const response = await babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1].callMethod(im_v2_const.RestMethod.imV2ChatUserList, queryParams);
+	      const response = await babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient].callMethod(im_v2_const.RestMethod.imV2ChatUserList, queryParams);
 	      users = response.data();
 	    } catch (error) {
 	      console.error('Mention search service: load chat participants error', error);
@@ -6621,14 +6559,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.adjustTextareaHeight();
 	      this.getDraftManager().setDraftText(this.dialogId, newValue);
 	      if (main_core.Type.isStringFilled(newValue)) {
-	        this.getTypingService().startTyping();
+	        this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.writing);
 	      }
 	    }
 	  },
 	  created() {
 	    this.initResizeManager();
 	    this.restoreTextareaHeight();
-	    this.restoreDraft();
+	    void this.restorePanel();
 	    this.initSendingService();
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
@@ -6647,6 +6585,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  beforeUnmount() {
 	    this.resizeManager.destroy();
+	    this.unbindUploadingService();
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
@@ -6673,7 +6612,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          dialogId: this.dialogId
 	        });
 	      }
-	      this.getTypingService().stopTyping();
+	      this.getInputActionService().stopAction(im_v2_lib_inputAction.InputAction.writing);
 	      this.clear();
 	      this.getDraftManager().clearDraft(this.dialogId);
 	      im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
@@ -6682,7 +6621,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    handlePanelAction(text) {
 	      if (this.editMode && text === '') {
-	        void this.getMessageService().deleteMessage(this.panelContext.messageId);
+	        void this.getMessageService().deleteMessages([this.panelContext.messageId]);
 	      } else if (this.editMode && text !== '') {
 	        this.getMessageService().editMessageText(this.panelContext.messageId, text);
 	      } else if (this.forwardMode) {
@@ -6795,7 +6734,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.resizedTextareaHeight = savedHeight;
 	      this.textareaHeight = savedHeight;
 	    },
-	    async restoreDraft() {
+	    checkMessageExists(messageId) {
+	      return this.$store.getters['messages/isExists'](messageId);
+	    },
+	    verifyPanelContext(panelContext) {
+	      if (panelContext.messagesIds) {
+	        return panelContext.messagesIds.every(messageId => this.checkMessageExists(messageId));
+	      }
+	      return this.checkMessageExists(panelContext.messageId);
+	    },
+	    async restorePanel() {
 	      const {
 	        text = '',
 	        panelType = im_v2_const.TextareaPanelType.none,
@@ -6803,8 +6751,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          messageId: 0
 	        }
 	      } = await this.getDraftManager().getDraft(this.dialogId);
+	      const noPanel = this.panelType === im_v2_const.TextareaPanelType.none;
+	      if (!noPanel && !this.verifyPanelContext(panelContext)) {
+	        return;
+	      }
 	      this.text = text;
-	      if (this.panelType === im_v2_const.TextareaPanelType.none) {
+	      if (noPanel) {
 	        this.panelType = panelType;
 	      }
 	      this.panelContext = panelContext;
@@ -7003,6 +6955,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (this.panelContext.messageId === messageId) {
 	        this.closePanel();
 	      }
+	      if (this.panelContext.messagesIds && this.panelContext.messagesIds.includes(messageId)) {
+	        this.closePanel();
+	      }
 	    },
 	    initResizeManager() {
 	      this.resizeManager = new ResizeManager({
@@ -7049,11 +7004,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    getSendingService() {
 	      return this.sendingService;
 	    },
-	    getTypingService() {
-	      if (!this.typingService) {
-	        this.typingService = new TypingService(this.dialogId);
+	    getInputActionService() {
+	      if (!this.inputSenderService) {
+	        this.inputSenderService = new im_v2_provider_service.InputSenderService(this.dialogId);
 	      }
-	      return this.typingService;
+	      return this.inputSenderService;
 	    },
 	    getDraftManager() {
 	      if (!this.draftManager) {
@@ -7071,9 +7026,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getUploadingService() {
 	      if (!this.uploadingService) {
-	        this.uploadingService = im_v2_provider_service.UploadingService.getInstance();
+	        this.initUploadingService();
 	      }
 	      return this.uploadingService;
+	    },
+	    initUploadingService() {
+	      this.uploadingService = im_v2_provider_service.UploadingService.getInstance();
+	      this.startFileUploadAction = () => {
+	        this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.sendingFile);
+	      };
+	      this.stopFileUploadAction = () => {
+	        this.getInputActionService().stopAction(im_v2_lib_inputAction.InputAction.sendingFile);
+	      };
+	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadStart, this.startFileUploadAction);
+	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadComplete, this.stopFileUploadAction);
+	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadCancel, this.stopFileUploadAction);
+	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadError, this.stopFileUploadAction);
+	    },
+	    unbindUploadingService() {
+	      if (!this.uploadingService) {
+	        return;
+	      }
+	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadStart, this.startFileUploadAction);
+	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadComplete, this.stopFileUploadAction);
+	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadCancel, this.stopFileUploadAction);
+	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadError, this.stopFileUploadAction);
 	    },
 	    onSendFilesFromPreviewPopup(event) {
 	      this.text = '';
@@ -7195,5 +7172,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Calendar.Sharing,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Message,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Calendar.Sharing,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Message,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=textarea.bundle.js.map

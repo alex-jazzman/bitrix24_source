@@ -458,7 +458,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			PageManager.getNavigator().makeTabActive();
-			this.visibilityManager.checkIsDialogVisible(openDialogOptions.dialogId)
+			this.visibilityManager.checkIsDialogVisible({
+				dialogId: openDialogOptions.dialogId,
+				currentContextOnly: true,
+			})
 				.then((isVisible) => {
 					if (isVisible)
 					{

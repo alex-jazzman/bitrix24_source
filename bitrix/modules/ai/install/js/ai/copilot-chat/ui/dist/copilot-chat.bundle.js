@@ -1459,7 +1459,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    }
 	  },
 	  mounted() {
-	    const warningMessage = main_core.Tag.render(_t$1 || (_t$1 = _$1`<span>${0}</span>`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_ANSWER_WARNING', {
+	    const warningMessage = main_core.Tag.render(_t$1 || (_t$1 = _$1`<span>${0}</span>`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_ANSWER_WARNING_1', {
 	      '#LINK_START#': '<a ref="link" href="#">',
 	      '#LINK_END#': '</a>'
 	    }));

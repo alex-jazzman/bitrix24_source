@@ -265,6 +265,34 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					}
 				}
 			},
+			getDropdown(searchOptions, items, creationLegend)
+			{
+				return new BX.UI.Dropdown(
+					{
+						searchAction: 'crm.api.entity.search',
+						searchOptions,
+						searchResultRenderer: null,
+						targetElement: this._searchInput,
+						items,
+						enableCreation: BX.prop.getBoolean(this._settings, 'enableCreation', false),
+						enableCreationOnBlur: this._enableQuickEdit,
+						autocompleteDelay: 500,
+						context: { origin: 'crm.entity.editor', isEmbedded: this._editor.isEmbedded() },
+						messages:
+							{
+								creationLegend,
+								notFound: this.getMessage('notFound'),
+							},
+						events:
+							{
+								onSelect: this.onEntitySelect.bind(this),
+								onAdd: this.onEntityAdd.bind(this),
+								onReset: this.onEntityReset.bind(this),
+								onGetNewAlertContainer: this.onEntitySearch.bind(this),
+							},
+					},
+				);
+			},
 			layout: function(options)
 			{
 				if(this._hasLayout)
@@ -372,35 +400,19 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					creationLegend = this.getMessage(this._entityTypeName.toLowerCase() + "ToCreateLegend");
 				}
 
-				this.prepareDropdownItems().then((items) => {
-					this._searchControl = new BX.UI.Dropdown(
-						{
-							searchAction: 'crm.api.entity.search',
-							searchOptions,
-							searchResultRenderer: null,
-							targetElement: this._searchInput,
-							items,
-							enableCreation: BX.prop.getBoolean(this._settings, 'enableCreation', false),
-							enableCreationOnBlur: this._enableQuickEdit,
-							autocompleteDelay: 500,
-							context: { origin: 'crm.entity.editor', isEmbedded: this._editor.isEmbedded() },
-							messages:
-								{
-									creationLegend,
-									notFound: this.getMessage('notFound')
-								},
-							events:
-								{
-									onSelect: this.onEntitySelect.bind(this),
-									onAdd: this.onEntityAdd.bind(this),
-									onReset: this.onEntityReset.bind(this),
-									onGetNewAlertContainer: this.onEntitySearch.bind(this)
-								},
-						},
-					);
-
+				if (!this._editor.isModeToggleEnabled())
+				{
+					this._searchControl = this.getDropdown(searchOptions, [], creationLegend);
 					this.buildInputLayout(icon, boxWrapper);
-				})
+				}
+				else
+				{
+					this.prepareDropdownItems().then((items) => {
+						this._searchControl = this.getDropdown(searchOptions, items, creationLegend);
+
+						this.buildInputLayout(icon, boxWrapper);
+					});
+				}
 
 				this._deleteButton = BX.create("div", { props: { className: "crm-entity-widget-btn-close" } });
 				if(!this._enableDeletion)

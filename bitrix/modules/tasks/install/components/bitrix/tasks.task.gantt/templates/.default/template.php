@@ -15,7 +15,7 @@ use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\UI\ScopeDictionary;
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 
 // todo: tmp, move phrases
 Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/tasks/install/components/bitrix/tasks.task.list/templates/.default/template.php');

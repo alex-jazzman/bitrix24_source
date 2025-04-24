@@ -43,6 +43,7 @@ $MESS["IM_CREATE_COLLAB_DESCRIPTION_PLACEHOLDER"] = "Tell other users what this 
 $MESS["IM_CREATE_COLLAB_DESCRIPTION_TITLE"] = "Collab description";
 $MESS["IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME"] = "A collab with this name already exists.";
 $MESS["IM_CREATE_COLLAB_ERROR_EMPTY_NAME"] = "Enter collab name.";
+$MESS["IM_CREATE_COLLAB_ERROR_URL_IN_NAME"] = "Collab name must not include URL.";
 $MESS["IM_CREATE_COLLAB_TITLE_PLACEHOLDER"] = "Collab name";
 $MESS["IM_CREATE_CONFERENCE_CONFIRM"] = "Create conference";
 $MESS["IM_CREATE_CONFERENCE_TITLE_PLACEHOLDER"] = "Enter video conference name";

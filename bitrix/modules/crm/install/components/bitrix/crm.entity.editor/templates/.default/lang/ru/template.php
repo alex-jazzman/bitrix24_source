@@ -13,6 +13,7 @@ $MESS["CRM_ENTITY_ED_CREATE_FIELD"] = "Создать поле";
 $MESS["CRM_ENTITY_ED_SELECT_FIELD"] = "Выбрать поле";
 $MESS["CRM_ENTITY_ED_CREATE_SECTION"] = "Создать раздел";
 $MESS["CRM_ENTITY_ED_REST_SECTION_2"] = "Маркет";
+$MESS["CRM_ENTITY_ED_REST_SECTION_MSGVER_1"] = "Маркетплейс";
 $MESS["CRM_ENTITY_ED_DELETE_SECTION"] = "Удалить раздел";
 $MESS["CRM_ENTITY_ED_CHANGE_USER"] = "Сменить";
 $MESS["CRM_ENTITY_ED_EXPAND_COMMENT"] = "Развернуть";

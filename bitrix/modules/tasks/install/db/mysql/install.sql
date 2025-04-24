@@ -919,5 +919,46 @@ create table if not exists b_tasks_flow_copilot_collected_data
 (
 	FLOW_ID int not null,
 	DATA  text,
+	STATUS varchar(255),
+	index b_tasks_flow_copilot_collected_data_status_idx (STATUS),
 	primary key (FLOW_ID)
+);
+
+create table if not exists b_tasks_onboarding_queue
+(
+	ID int not null auto_increment,
+	TASK_ID int not null,
+	USER_ID int not null,
+	TYPE varchar(150) not null,
+	NEXT_EXECUTION datetime not null,
+	CREATED_DATE datetime default now(),
+	CODE varchar(150) not null ,
+	PROCESSED_DATE datetime default null,
+	IS_PROCESSED tinyint default 0,
+
+	primary key (ID),
+	index ix_b_tasks_onboarding_queue_execution_processed (NEXT_EXECUTION, IS_PROCESSED)
+);
+
+create table if not exists b_tasks_onboarding_queue_job_count
+(
+	ID int not null auto_increment,
+	CODE varchar(150) not null ,
+	JOB_COUNT int default 0,
+
+	primary key (ID),
+	unique index ix_b_tasks_onboarding_queue_job_count_code (CODE)
+);
+
+create table if not exists b_tasks_deadline_user_option
+(
+	ID int not null auto_increment,
+	USER_ID int not null,
+	DEFAULT_DEADLINE int default 0,
+	IS_EXACT_DEADLINE_TIME tinyint default 0,
+	SKIP_NOTIFICATION_PERIOD varchar(16) not null default '',
+	SKIP_NOTIFICATION_START_DATE datetime default null,
+
+	primary key (ID),
+	unique index ix_b_tasks_deadline_user_option_user_id (USER_ID)
 );

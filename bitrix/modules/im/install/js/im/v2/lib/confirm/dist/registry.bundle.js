@@ -31,6 +31,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      message: text,
 	      modal: true,
 	      buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
+	      popupOptions: {
+	        closeByEsc: true
+	      },
 	      onYes: messageBox => {
 	        resolve(true);
 	        messageBox.close();
@@ -209,6 +212,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    title: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TITLE'),
 	    text: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT'),
 	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHANNEL_POST_TEXT_CONFIRM')
+	  });
+	};
+	const showDeleteMessagesConfirm = title => {
+	  return showTwoButtonConfirm({
+	    title,
+	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_MESSAGES_TITLE')
 	  });
 	};
 
@@ -6899,6 +6908,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.showDesktopConfirm = showDesktopConfirm;
 	exports.showDesktopDeleteConfirm = showDesktopDeleteConfirm;
 	exports.showDeleteChannelPostConfirm = showDeleteChannelPostConfirm;
+	exports.showDeleteMessagesConfirm = showDeleteMessagesConfirm;
 	exports.showDownloadAllFilesConfirm = showDownloadAllFilesConfirm;
 	exports.showNotificationsModeSwitchConfirm = showNotificationsModeSwitchConfirm;
 	exports.showKickUserConfirm = showKickUserConfirm;

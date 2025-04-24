@@ -1,5 +1,6 @@
 <?php
 $MESS["AI_COPILOT_CHAT_ANSWER_WARNING"] = "*CoPilot жауаптары дұрыс болмауы мүмкін, маңызды ақпаратты тексеріңіз. #LINK_START#Толығырақ#LINK_END#";
+$MESS["AI_COPILOT_CHAT_ANSWER_WARNING_1"] = "*CoPilot жауаптары дұрыс болмауы мүмкін, маңызды ақпаратты тексеріңіз. #LINK_START#Толығырақ#LINK_END#";
 $MESS["AI_COPILOT_CHAT_INPUT_PLACEHOLDER"] = "Сұрағыңызды жазыңыз";
 $MESS["AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_RETRY"] = "Тағы бір рет көру";
 $MESS["AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_TEXT"] = "Кейінірек жүктеп алыңыз немесе \"тағы бір рет көру\" батырмасын басыңыз";

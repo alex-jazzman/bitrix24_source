@@ -7,8 +7,8 @@ jn.define('im/messenger/db/repository/copilot', (require, exports, module) => {
 		CopilotTable,
 	} = require('im/messenger/db/table');
 	const { Type } = require('type');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('repository--copilot');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('repository--copilot');
 
 	/**
 	 * @class CopilotRepository

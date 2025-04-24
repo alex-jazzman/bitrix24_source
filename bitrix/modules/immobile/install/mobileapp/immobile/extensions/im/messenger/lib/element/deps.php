@@ -11,6 +11,7 @@ return [
 		'in-app-url',
 		'utils/color',
 		'utils/object',
+		'utils/url',
 		'layout/ui/file/icon',
 		'layout/ui/plan-restriction',
 		'layout/ui/friendly-date',
@@ -31,6 +32,7 @@ return [
 		'im:messenger/lib/plan-limit',
 		'im:messenger/lib/dev/settings',
 		'im:messenger/lib/integration/immobile/calls',
+		'layout/ui/user/empty-avatar',
 	],
 	'bundle' => [
 		'./src/chat-avatar/chat-avatar',

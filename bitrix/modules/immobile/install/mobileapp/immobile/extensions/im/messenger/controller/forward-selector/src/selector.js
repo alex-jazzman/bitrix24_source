@@ -13,9 +13,9 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 	const { ForwardSelectorView } = require('im/messenger/controller/forward-selector/view');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Notification } = require('im/messenger/lib/ui/notification');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('forward-selector');
+	const logger = getLogger('forward-selector');
 
 	/**
 	 * @class ForwardSelector

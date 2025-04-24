@@ -1,31 +1,16 @@
-import { Text, type JsonObject } from 'main.core';
-
-import { ChatType } from 'im.v2.const';
-import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
-
-import { AdditionalUsers } from './additional-users';
+import { InputActions } from './components/input-actions';
+import { ReadStatus } from './components/read-status';
 
 import './css/dialog-status.css';
 
-import type { ImModelChat } from 'im.v2.model';
-
-type LastMessageViews = {
-	countOfViewers: number,
-	firstViewer?: {
-		userId: number,
-		userName: string,
-		date: Date
-	},
-	messageId: number
-};
-
-const TYPING_USERS_COUNT = 3;
-const MORE_USERS_CSS_CLASS = 'bx-im-dialog-chat-status__user-count';
+import type { JsonObject } from 'main.core';
+import type { ImModelChat, ImModelInputActions } from 'im.v2.model';
 
 // @vue/component
 export const DialogStatus = {
-	components: { AdditionalUsers },
-	props: {
+	components: { InputActions, ReadStatus },
+	props:
+	{
 		dialogId: {
 			required: true,
 			type: String,
@@ -34,8 +19,7 @@ export const DialogStatus = {
 	data(): JsonObject
 	{
 		return {
-			showAdditionalUsers: false,
-			additionalUsersLinkElement: null,
+			enterAnimationFinished: false,
 		};
 	},
 	computed:
@@ -44,131 +28,30 @@ export const DialogStatus = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		isUser(): boolean
+		chatInputActions(): ?ImModelInputActions
 		{
-			return this.dialog.type === ChatType.user;
+			return this.$store.getters['chats/inputActions/getByDialogId'](this.dialogId);
 		},
-		isChat(): boolean
+		showInputStatus(): boolean
 		{
-			return !this.isUser;
+			return this.dialog.inited && this.chatInputActions;
 		},
-		typingStatus(): string
+		showReadStatus(): boolean
 		{
-			if (!this.dialog.inited || this.dialog.writingList.length === 0)
-			{
-				return '';
-			}
-
-			const firstTypingUsers = this.dialog.writingList.slice(0, TYPING_USERS_COUNT);
-			const text = firstTypingUsers.map((element) => element.userName).join(', ');
-			const remainingUsersCount = this.dialog.writingList.length - TYPING_USERS_COUNT;
-			if (remainingUsersCount > 0)
-			{
-				return this.loc('IM_ELEMENTS_STATUS_TYPING_PLURAL_MORE', {
-					'#USERS#': text,
-					'#COUNT#': remainingUsersCount,
-				});
-			}
-
-			if (this.dialog.writingList.length > 1)
-			{
-				return this.loc('IM_ELEMENTS_STATUS_TYPING_PLURAL', {
-					'#USERS#': text,
-				});
-			}
-
-			return this.loc('IM_ELEMENTS_STATUS_TYPING', { '#USER#': text });
-		},
-		readStatus(): string
-		{
-			if (!this.dialog.inited)
-			{
-				return '';
-			}
-
-			if (this.lastMessageViews.countOfViewers === 0)
-			{
-				return '';
-			}
-
-			if (this.isUser)
-			{
-				return this.formatUserViewStatus();
-			}
-
-			return this.formatChatViewStatus();
-		},
-		lastMessageViews(): LastMessageViews
-		{
-			return this.dialog.lastMessageViews;
-		},
-		additionalUsersLinkElementSelector(): string
-		{
-			return `.${MORE_USERS_CSS_CLASS}[data-id="${this.dialogId}"]`;
-		},
-	},
-	methods:
-	{
-		formatUserViewStatus(): string
-		{
-			const { date } = this.lastMessageViews.firstViewer;
-
-			return this.loc('IM_ELEMENTS_STATUS_READ_USER_MSGVER_1', {
-				'#DATE#': DateFormatter.formatByTemplate(date, DateTemplate.messageReadStatus),
-			});
-		},
-		formatChatViewStatus(): string
-		{
-			const { countOfViewers, firstViewer } = this.lastMessageViews;
-			if (countOfViewers === 1)
-			{
-				return this.loc('IM_ELEMENTS_STATUS_READ_CHAT', {
-					'#USER#': Text.encode(firstViewer.userName),
-				});
-			}
-
-			return this.loc('IM_ELEMENTS_STATUS_READ_CHAT_PLURAL', {
-				'#USERS#': Text.encode(firstViewer.userName),
-				'#LINK_START#': `<span class="${MORE_USERS_CSS_CLASS}" data-id="${this.dialogId}">`,
-				'#COUNT#': countOfViewers - 1,
-				'#LINK_END#': '</span>',
-			});
-		},
-		onClick(event: PointerEvent)
-		{
-			if (!event.target.matches(this.additionalUsersLinkElementSelector))
-			{
-				return;
-			}
-
-			this.onMoreUsersClick();
-		},
-		onMoreUsersClick()
-		{
-			this.additionalUsersLinkElement = document.querySelector(this.additionalUsersLinkElementSelector);
-			this.showAdditionalUsers = true;
-		},
-		loc(phraseCode: string, replacements: {[string]: string} = {}): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			return this.dialog.inited && this.dialog.lastMessageViews.countOfViewers > 0;
 		},
 	},
 	template: `
-		<div @click="onClick" class="bx-im-dialog-chat-status__container">
-			<div v-if="typingStatus" class="bx-im-dialog-chat-status__content">
-				<div class="bx-im-dialog-chat-status__icon --typing"></div>
-				<div class="bx-im-dialog-chat-status__text">{{ typingStatus }}</div>
-			</div>
-			<div v-else-if="readStatus" class="bx-im-dialog-chat-status__content">
-				<div class="bx-im-dialog-chat-status__icon --read"></div>
-				<div v-html="readStatus" class="bx-im-dialog-chat-status__text"></div>
-			</div>
-			<AdditionalUsers
-				:dialogId="dialogId"
-				:show="showAdditionalUsers"
-				:bindElement="additionalUsersLinkElement || {}"
-				@close="showAdditionalUsers = false"
-			/>
+		<div class="bx-im-dialog-chat-status__container">
+			<Transition
+				name="im-dialog-status-animation"
+				mode="out-in"
+				@before-enter="enterAnimationFinished = false"
+				@enter="enterAnimationFinished = true"
+			>
+				<InputActions v-if="showInputStatus" :dialogId="dialogId" :enterAnimationFinished="enterAnimationFinished" />
+				<ReadStatus v-else-if="showReadStatus" :dialogId="dialogId" />
+			</Transition>
 		</div>
 	`,
 };

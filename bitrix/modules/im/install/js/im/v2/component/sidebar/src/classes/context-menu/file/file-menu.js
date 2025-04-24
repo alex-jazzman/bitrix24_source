@@ -2,8 +2,6 @@ import 'ui.viewer';
 import 'ui.notification';
 import { Loc, Dom } from 'main.core';
 
-import { Utils } from 'im.v2.lib.utils';
-
 import { SidebarMenu } from '../sidebar-base-menu';
 import { FileManager } from './file-manager';
 
@@ -37,22 +35,6 @@ export class FileMenu extends SidebarMenu
 			this.getSaveFileOnDiskItem(),
 			this.getDeleteFileItem(),
 		];
-	}
-
-	getViewFileItem(): ?MenuItem
-	{
-		const viewerAttributes = Utils.file.getViewerDataAttributes(this.context.file.viewerAttrs);
-		if (!viewerAttributes || this.context.file.type === 'audio')
-		{
-			return null;
-		}
-
-		return {
-			html: this.getViewHtml(viewerAttributes),
-			onclick: function() {
-				this.menuInstance.close();
-			}.bind(this),
-		};
 	}
 
 	getDownloadFileItem(): ?MenuItem
@@ -104,20 +86,6 @@ export class FileMenu extends SidebarMenu
 				this.menuInstance.close();
 			}.bind(this),
 		};
-	}
-
-	getViewHtml(viewerAttributes: { [key: string]: string }): HTMLDivElement
-	{
-		const div = Dom.create('div', {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_VIEW_FILE'),
-		});
-
-		Object.entries(viewerAttributes).forEach((attribute) => {
-			const [attributeName, attributeValue] = attribute;
-			div.setAttribute(attributeName, attributeValue);
-		});
-
-		return div;
 	}
 
 	getDownloadHtml(urlDownload: string, fileName: string): HTMLAnchorElement

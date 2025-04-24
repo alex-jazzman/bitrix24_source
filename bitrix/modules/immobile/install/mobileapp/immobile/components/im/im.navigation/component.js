@@ -9,6 +9,7 @@
 	const { Analytics, EventType, ComponentCode, NavigationTab } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 
 	const tabIdCollection = {
 		[ComponentCode.imMessenger]: NavigationTab.imMessenger,
@@ -21,6 +22,8 @@
 
 	class NavigationManager
 	{
+		#currentTab;
+
 		constructor()
 		{
 			this.isReady = false;
@@ -36,9 +39,6 @@
 			this.firstSetBadge = true;
 			this.counters = {};
 
-			this.currentTab = BX.componentParameters.get('firstTabId', 'chats');
-			this.previousTab = 'none';
-
 			this.tabMapping = {
 				chats: ComponentCode.imMessenger,
 				channel: ComponentCode.imChannelMessenger,
@@ -48,6 +48,12 @@
 				openlines: ComponentCode.imOpenlinesRecent,
 			};
 			this.componentMapping = null;
+
+			this.#currentTab = BX.componentParameters.get('firstTabId', 'chats');
+			this.previousTab = 'none';
+
+			this.visibilityManager = VisibilityManager.getInstance();
+			void this.saveActiveTabInfo();
 
 			// navigation
 			tabs.on('onTabSelected', this.onTabSelected.bind(this));
@@ -71,6 +77,26 @@
 			}
 
 			this.isReady = true;
+		}
+
+		set currentTab(tab)
+		{
+			this.#currentTab = tab;
+
+			void this.saveActiveTabInfo();
+		}
+
+		get currentTab()
+		{
+			return this.#currentTab;
+		}
+
+		saveActiveTabInfo()
+		{
+			return this.visibilityManager.saveActiveTabInfo({
+				tabId: this.currentTab,
+				componentCode: this.tabMapping[this.currentTab],
+			});
 		}
 
 		onAppActive()

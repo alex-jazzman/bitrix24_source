@@ -1,15 +1,16 @@
-import { SidebarDetailBlock, SidebarFileTypes } from 'im.v2.const';
+import { Extension } from 'main.core';
+
 import { Loader } from 'im.v2.component.elements';
+import { SidebarDetailBlock, SidebarFileTypes, FileViewerContext } from 'im.v2.const';
 
 import { File } from '../../../../classes/panels/file';
-import { FileSearch } from '../../../../classes/panels/search/file-search';
-import { DateGroup } from '../../../elements/date-group/date-group';
 import { DocumentDetailItem } from './document-detail-item';
-import { DetailEmptyState as StartState, DetailEmptyState } from '../../../elements/detail-empty-state/detail-empty-state';
-import { DetailEmptySearchState } from '../../../elements/detail-empty-search-state/detail-empty-search-state';
+import { DateGroup } from '../../../elements/date-group/date-group';
 import { FileMenu } from '../../../../classes/context-menu/file/file-menu';
+import { FileSearch } from '../../../../classes/panels/search/file-search';
 import { SidebarCollectionFormatter } from '../../../../classes/sidebar-collection-formatter';
-import { Extension } from 'main.core';
+import { DetailEmptySearchState } from '../../../elements/detail-empty-search-state/detail-empty-search-state';
+import { DetailEmptyState as StartState, DetailEmptyState } from '../../../elements/detail-empty-state/detail-empty-state';
 
 import '../css/document-tab.css';
 
@@ -56,6 +57,7 @@ export const DocumentTab = {
 	computed:
 	{
 		SidebarDetailBlock: () => SidebarDetailBlock,
+		FileViewerContext: () => FileViewerContext,
 		files(): ImModelSidebarFileItem[]
 		{
 			if (this.isSearch)
@@ -158,6 +160,7 @@ export const DocumentTab = {
 					:fileItem="file"
 					:searchQuery="searchQuery"
 					:contextDialogId="dialogId"
+					:viewerContext="FileViewerContext.sidebarTabDocuments"
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>

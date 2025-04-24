@@ -120,9 +120,13 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				$clientInfo = $controller->getClientInfo([
 					'sessionId' => $this->request['SALES_CENTER_SESSION_ID'],
 				]);
-				if (isset($clientInfo['DEAL_ID']) && $clientInfo['DEAL_ID'] > 0)
+				if (
+					isset($clientInfo['OWNER_ID']) && $clientInfo['OWNER_ID'] > 0
+					&& isset($clientInfo['OWNER_TYPE_ID']) && $clientInfo['OWNER_TYPE_ID'] > 0
+				)
 				{
-					$productData['DEAL_ID'] = $clientInfo['DEAL_ID'];
+					$productData['OWNER_ID'] = $clientInfo['OWNER_ID'];
+					$productData['OWNER_TYPE_ID'] = $clientInfo['OWNER_TYPE_ID'];
 				}
 			}
 		}

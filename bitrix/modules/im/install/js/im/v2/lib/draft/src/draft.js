@@ -139,7 +139,10 @@ export class DraftManager
 
 	async getDraft(dialogId: number): Promise<Draft>
 	{
-		await this.initPromise;
+		if (!this.inited)
+		{
+			await this.initDraftHistory();
+		}
 		const draft = this.drafts[dialogId] ?? {};
 
 		return Promise.resolve(draft);

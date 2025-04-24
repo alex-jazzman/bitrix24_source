@@ -47,13 +47,11 @@ $MESS["CRM_KANBAN_MASS_CONVERT_DISABLE_MSGVER_1"] = "Бұл сатыға жап�
 $MESS["CRM_KANBAN_MASS_CONVERT_SOON"] = "Канбан үшін лидтердің жаппай  түрлендірілуі әзірше қолжетімсіз. Бірақ біз бұл міндетпен жұмыс істеп жатырмыз және ол жақын арада жүзеге асырылады.";
 $MESS["CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2"] = "Бұл сатыға өту мүмкін емес";
 $MESS["CRM_KANBAN_NOTIFY_BUTTON"] = "Мәлімдеме жіберу";
-$MESS["CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY"] = "Мәмілелер иірімге ауыстырылды: #categoryName#";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY_LINK2"] = "Мәмілелер иірімге ауыстырылды: href=\"#categoryLink#\">#categoryName#</a>";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_DELETE"] = "Мәмілелер жойылды";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_IGNORE"] = "Мәмілелер ерекшеліктер тізіміне қосылды";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_SETASSIGNED"] = "Мәмілелер жауаптыға тағайындалды: #assignedName#";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_STATUS"] = "Мәмілелер сатыға ауыстырылды: #statusName#";
-$MESS["CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY"] = "Элементтер иірімге ауыстырылды: #categoryName#";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY_LINK2"] = "Элементтер иірімге ауыстырылды: <a href=\"#categoryLink#\">#categoryName#</a>";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_DELETE"] = "Элементтер жойылды";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_SETASSIGNED"] = "Элементтер жауаптыға тағайындалды: #assignedName#";

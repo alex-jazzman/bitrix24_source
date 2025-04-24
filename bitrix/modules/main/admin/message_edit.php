@@ -197,7 +197,16 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST['save']) || !empty($_
 		if(array_key_exists("NEW_FILE", $_POST) && is_array($_POST["NEW_FILE"]))
 		{
 			foreach($_POST["NEW_FILE"] as $index=>$value)
-				$arFiles[$index] = CFile::MakeFileArray($value);
+			{
+				$path = Rel2Abs("/", $value);
+				if ($USER->CanDoOperation('edit_php') || !HasScriptExtension($path))
+				{
+					if ($USER->CanDoFileOperation('fm_view_file', [SITE_ID, $path]))
+					{
+						$arFiles[$index] = CFile::MakeFileArray($_SERVER['DOCUMENT_ROOT'] . $path);
+					}
+				}
+			}
 		}
 
 		//Copy
@@ -268,7 +277,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST['save']) || !empty($_
 		if (!empty($_POST['save']))
 		{
 			if (!empty($_REQUEST["type"]))
-				LocalRedirect(BX_ROOT."/admin/type_edit.php?EVENT_NAME=".$EVENT_NAME."&lang=".LANGUAGE_ID);
+				LocalRedirect(BX_ROOT."/admin/type_edit.php?EVENT_NAME=" . $_REQUEST["EVENT_NAME"] . "&lang=".LANGUAGE_ID);
 			else
 				LocalRedirect(BX_ROOT."/admin/message_admin.php?lang=".LANGUAGE_ID);
 		}

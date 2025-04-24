@@ -17,7 +17,6 @@ return [
 		'im:messenger/controller/user-profile',
 		'im:messenger/controller/forward-selector',
 		'im:messenger/lib/params',
-		'im:messenger/lib/converter',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/permission-manager',
@@ -27,8 +26,9 @@ return [
 		'im:messenger/lib/ui/alert',
 		'im:messenger/controller/dialog/lib/message-create-menu',
 		'im:messenger/controller/dialog/lib/helper/text',
-		'im:messenger/controller/dialog/lib/select-manager',
 		'im:messenger/provider/service',
+
+		'im:messenger/controller/selector/forward'
 	],
 	'bundle' => [
 		'./src/action',

@@ -19,6 +19,9 @@ return [
 			'Im.Messenger' => [
 				'className' => \Bitrix\Im\V2\Service\Messenger::class,
 			],
+			'Im.PullSender' => [
+				'className' => \Bitrix\Im\V2\Pull\Sender::class,
+			],
 			'Im.Services.Message' => [
 				'className' => \Bitrix\Im\Services\Message::class,
 			],

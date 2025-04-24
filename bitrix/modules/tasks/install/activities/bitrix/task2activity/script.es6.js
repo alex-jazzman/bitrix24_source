@@ -458,7 +458,7 @@ class Task2Activity
 			for (const tagName of newTags.values())
 			{
 				this.#tagsSelector.addTag({
-					id: String(Math.random()),
+					id: tagName,
 					title: tagName,
 					entityId: 'task-tag',
 					customData: {

@@ -11,8 +11,8 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { EventType } = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('chat-counters');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('chat-counters');
 
 	/**
 	 * @class ChatCounters

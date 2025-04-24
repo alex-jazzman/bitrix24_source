@@ -20,7 +20,6 @@ use Bitrix\Tasks\Update\TemplateConverter;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
-use Bitrix\Tasks\Integration\SocialNetwork\Collab\CollabRegistry;
 
 Loc::loadMessages(__FILE__);
 
@@ -413,6 +412,7 @@ endif?>
 								'HIDE_FILTER'      => 'Y',
 								'BASE_TEMPLATE_ID' => $template->getId(),
 								'SET_TITLE'        => 'N',
+								'GRID_ID' => $arResult['GRID_ID'] ?? null,
 							)), null, array("HIDE_ICONS" => "Y")
 						);
 						?>

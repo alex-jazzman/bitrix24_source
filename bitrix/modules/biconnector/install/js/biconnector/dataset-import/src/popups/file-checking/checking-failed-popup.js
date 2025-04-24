@@ -33,7 +33,7 @@ export const CheckingFailedPopup = {
 			:options="popupOptions" 
 		>
 			<div class="file-check file-check-failed">
-				<div class="file-check-icon-failed"></div>
+				<div class="biconnector-save-progress-popup__failure-logo file-check-icon-failed"></div>
 				<div class="file-check-title">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_CHECK_FAILED_TITLE') }}</div>
 				<div class="file-check-subtitle">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_CHECK_FAILED_SUBTITLE') }}</div>
 				<button @click="this.onClose" class="ui-btn ui-btn-md ui-btn-primary file-check-button">

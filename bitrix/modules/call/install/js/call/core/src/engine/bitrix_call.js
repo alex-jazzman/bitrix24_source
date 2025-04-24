@@ -18,6 +18,8 @@ import {SimpleVAD} from './simple_vad'
 import {Hardware} from '../hardware';
 import Util from '../util'
 
+import {Event} from 'main.core';
+
 /**
  * Implements Call interface
  * Public methods:
@@ -434,14 +436,14 @@ export class BitrixCall extends AbstractCall
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
 				this.localVideoShown = true;
-				this.BitrixCall.enableVideo();
+				this.BitrixCall.enableVideo({calledFrom: 'setVideoEnabled'});
 			}
 			else
 			{
 				if (this.localVideoShown)
 				{
 					this.localVideoShown = false;
-					this.BitrixCall.disableVideo();
+					this.BitrixCall.disableVideo({calledFrom: 'setVideoEnabled'});
 				}
 			}
 		}
@@ -504,7 +506,7 @@ export class BitrixCall extends AbstractCall
 						{
 							this.#setPublishingState(MediaStreamsKinds.Camera, true);
 							this.localVideoShown = true;
-							this.BitrixCall.enableVideo(true);
+							this.BitrixCall.enableVideo({calledFrom: 'switchActiveVideoDevice', skipUnpause: true});
 						}
 					}
 					else
@@ -1044,7 +1046,7 @@ export class BitrixCall extends AbstractCall
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);
 			}
-			this.BitrixCall.enableVideo();
+			this.BitrixCall.enableVideo({calledFrom: 'onCallConnected'});
 		}
 
 		if (this.videoAllowedFrom == UserMnemonic.none)
@@ -1102,8 +1104,9 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
 		this.BitrixCall.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
 		this.BitrixCall.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
+		this.BitrixCall.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
 	};
-	
+
 
 	removeCallEvents()
 	{
@@ -1136,6 +1139,7 @@ export class BitrixCall extends AbstractCall
 			this.BitrixCall.on('UpdatePacketLoss', BX.DoNothing);
 			this.BitrixCall.on('ConnectionQualityChanged', BX.DoNothing);
 			this.BitrixCall.on('ToggleRemoteParticipantVideo', BX.DoNothing);
+			this.BitrixCall.on('TrackSubscriptionFailed', BX.DoNothing);
 		}
 	};
 
@@ -1394,6 +1398,8 @@ export class BitrixCall extends AbstractCall
 		{
 			return;
 		}
+		
+		Util.sendLog({'description': 'GOT A #onPullEventHangup from user', 'pullEvent': '#onPullEventHangup', params: params});
 
 		this.peers[senderId].participant = null;
 		this.peers[senderId].setReady(false);
@@ -1729,7 +1735,6 @@ export class BitrixCall extends AbstractCall
 		const peer = this.peers[p.userId];
 		if (peer)
 		{
-			peer.addMediaRenderer(e.mediaRenderer);
 			// temporary solution to play new streams
 			// todo: need to find what cause the problem itself
 			if (!peer.participant)
@@ -1737,6 +1742,7 @@ export class BitrixCall extends AbstractCall
 				peer.participant = p;
 				peer.updateCalculatedState();
 			}
+			peer.addMediaRenderer(e.mediaRenderer);
 		}
 
 		switch (t.source)
@@ -1780,11 +1786,14 @@ export class BitrixCall extends AbstractCall
 		{
 			peer.removeMediaRenderer(e.mediaRenderer);
 		}
-		
-		this.runCallback(CallEvent.onUserCameraState, {
-			userId: p.userId,
-			cameraState: false
-		});
+
+		if (t.source === MediaStreamsKinds.Camera)
+		{
+			this.runCallback(CallEvent.onUserCameraState, {
+				userId: p.userId,
+				cameraState: false
+			});
+		}
 
 		console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
 	};
@@ -1942,7 +1951,7 @@ export class BitrixCall extends AbstractCall
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);
 			}
-			this.BitrixCall.enableVideo();
+			this.BitrixCall.enableVideo({calledFrom: 'onCallReconnected'});
 		}
 
 		if (this.screenShared || this.waitingLocalScreenShare)
@@ -2060,6 +2069,11 @@ export class BitrixCall extends AbstractCall
 		}
 	};
 
+	#onTrackSubscriptionFailed = (params) =>	
+	{
+		this.runCallback(CallEvent.onTrackSubscriptionFailed, params);
+	}
+	
 	#onCallStatsReceived = (stats) =>
 	{
 		const usersToSendReports = {};
@@ -2089,7 +2103,6 @@ export class BitrixCall extends AbstractCall
 				{
 					usersToSendReports[report.userId][report.source] = report;
 				}
-
 			}
 		});
 

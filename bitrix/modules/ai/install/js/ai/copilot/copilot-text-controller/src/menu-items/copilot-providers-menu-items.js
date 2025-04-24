@@ -24,12 +24,20 @@ export class CopilotProvidersMenuItems
 			icon: ActionsIconSet.PLUS_50,
 		};
 
+		const isLibraryAvailable = Extension.getSettings('ai.copilot').get('isLibraryVisible');
+
 		let result = [
 			...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController),
 			connectAiMenuItem,
-			{ separator: true },
-			getMarketMenuItem(),
 		];
+
+		if (isLibraryAvailable)
+		{
+			result.push(
+				{ separator: true },
+				getMarketMenuItem(),
+			);
+		}
 
 		if (canEditSettings)
 		{

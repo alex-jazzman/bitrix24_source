@@ -1,14 +1,21 @@
+import { Core } from 'im.v2.application.core';
 import { Text, Loc } from 'main.core';
 
 import { ChatType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { highlightText } from 'im.v2.lib.text-highlighter';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
-import { ChatAvatar, AvatarSize, ChatTitleWithHighlighting } from 'im.v2.component.elements';
+import {
+	ChatAvatar,
+	AvatarSize,
+	ChatTitleWithHighlighting,
+	ChatAvatarType,
+	ChatTitleType,
+} from 'im.v2.component.elements';
 
 import '../css/search-item.css';
 
-import type { ImModelChat, ImModelUser } from 'im.v2.model';
+import type { ImModelChat } from 'im.v2.model';
 
 const ItemTextByChatType = {
 	[ChatType.openChannel]: Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
@@ -43,15 +50,15 @@ export const SearchItem = {
 			type: String,
 			default: '',
 		},
+		replaceWithNotes: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['clickItem', 'openContextMenu'],
 	computed:
 	{
 		AvatarSize: () => AvatarSize,
-		user(): ImModelUser
-		{
-			return this.$store.getters['users/get'](this.dialogId, true);
-		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -63,6 +70,33 @@ export const SearchItem = {
 		isUser(): boolean
 		{
 			return this.dialog.type === ChatType.user;
+		},
+		isNotes(): boolean
+		{
+			if (!this.replaceWithNotes)
+			{
+				return false;
+			}
+
+			return Number.parseInt(this.dialogId, 10) === Core.getUserId();
+		},
+		avatarType(): string
+		{
+			if (!this.replaceWithNotes)
+			{
+				return '';
+			}
+
+			return this.isNotes ? ChatAvatarType.notes : '';
+		},
+		titleType(): string
+		{
+			if (!this.replaceWithNotes)
+			{
+				return '';
+			}
+
+			return this.isNotes ? ChatTitleType.notes : '';
 		},
 		position(): string
 		{
@@ -88,11 +122,25 @@ export const SearchItem = {
 		},
 		itemText(): string
 		{
+			if (this.isNotes)
+			{
+				return this.notesText;
+			}
+
 			return this.isUser ? this.userItemText : this.chatItemText;
 		},
 		itemTextForTitle(): string
 		{
+			if (this.isNotes)
+			{
+				return this.notesText;
+			}
+
 			return this.isUser ? this.position : this.chatItemText;
+		},
+		notesText(): string
+		{
+			return this.loc('IM_LIST_RECENT_CHAT_SELF_SUBTITLE');
 		},
 		formattedDate(): ?string
 		{
@@ -140,20 +188,26 @@ export const SearchItem = {
 			:class="{'--selected': selected}"
 		>
 			<div class="bx-im-search-item__avatar-container">
-				<ChatAvatar 
+				<ChatAvatar
 					:avatarDialogId="dialogId" 
 					:contextDialogId="dialogId" 
-					:size="AvatarSize.XL" 
+					:size="AvatarSize.XL"
+					:customType="avatarType"
 				/>
 			</div>
-			<div class="bx-im-search-item__content-container">
+			<div class="bx-im-search-item__content-container" :class="{'--centered': isNotes}">
 				<div class="bx-im-search-item__content_header">
-					<ChatTitleWithHighlighting :dialogId="dialogId" :textToHighlight="query" />
+					<ChatTitleWithHighlighting
+						:dialogId="dialogId"
+						:textToHighlight="query"
+						:customType="titleType"
+						:showItsYou="!replaceWithNotes"
+					/>
 					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
 						<span>{{ formattedDate }}</span>
 					</div>
 				</div>
-				<div class="bx-im-search-item__item-text" :title="itemTextForTitle" v-html="itemText"></div>
+				<div v-if="itemText" class="bx-im-search-item__item-text" :title="itemTextForTitle" v-html="itemText"></div>
 			</div>
 			<div v-if="selected" class="bx-im-chat-search-item__selected"></div>
 		</div>

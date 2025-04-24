@@ -13,7 +13,7 @@ declare interface JNChatMultiSelector extends JNChatBaseClassInterface<DialogSel
 	off<T extends keyof DialogSelectorEvents>(eventType: T, handler: DialogSelectorEvents[T]): void;
 	once<T extends keyof DialogSelectorEvents>(eventType: T, handler: DialogSelectorEvents[T]): void;
 
-	setEnabled(isEnabled: boolean): Promise<void>;
+	setEnabled(isEnabled: boolean, animated: boolean): Promise<void>;
 	select(itemIdList: Array<string>): Promise<void>;
 	unselect(itemIdList: Array<string>): Promise<void>;
 	getSelectedItems(): Array<string>;

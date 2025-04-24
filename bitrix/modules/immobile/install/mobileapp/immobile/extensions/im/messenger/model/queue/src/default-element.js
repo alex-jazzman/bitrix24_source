@@ -8,7 +8,7 @@ jn.define('im/messenger/model/queue/default-element', (require, exports, module)
 		requestName: '',
 		requestData: {},
 		priority: 0,
-		messageId: 0,
+		messageIdList: [],
 	});
 
 	module.exports = {

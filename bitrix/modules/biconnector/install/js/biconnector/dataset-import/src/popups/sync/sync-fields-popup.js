@@ -1,6 +1,5 @@
 import type { PopupOptions } from 'main.popup';
 import { Popup } from '../../layout/popup';
-import '../../css/save-progress-popup.css';
 
 export const SyncFieldsPopup = {
 	emits: ['close'],

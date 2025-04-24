@@ -336,35 +336,35 @@
 	background-image: url('./images/efficiency-chart_gray.svg');
 }
 
-.tasks-flow__not-enough-tasks-popup-title {
+.tasks-flow__copilot-advice-error-popup-title {
 	display: flex;
 	align-items: center;
 	padding-bottom: 4px;
 }
 
-.tasks-flow__not-enough-tasks-popup-icon.ui-icon-set {
+.tasks-flow__copilot-advice-error-popup-icon.ui-icon-set {
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-base-color: var(--ui-color-copilot-primary);
 }
 
-.tasks-flow__not-enough-tasks-popup-title-text {
+.tasks-flow__copilot-advice-error-popup-title-text {
 	color: var(--ui-color-copilot-primary);
 	font-size: var(--ui-font-size-lg);
 	font-weight: var(--ui-font-weight-medium);
 }
 
-.tasks-flow__not-enough-tasks-popup-description {
+.tasks-flow__copilot-advice-error-popup-description {
 	font-size: var(--ui-font-size-xs);
 	padding-bottom: 8px;
 }
 
-.tasks-flow__not-enough-tasks-popup-example {
+.tasks-flow__copilot-advice-error-popup-example {
 	display: flex;
 	justify-content: flex-end;
 	padding-bottom: 2px;
 }
 
-.tasks-flow__not-enough-tasks-popup-example-text {
+.tasks-flow__copilot-advice-error-popup-example-text {
 	font-size: var(--ui-font-size-xs);
 	color: var(--ui-color-palette-gray-50);
 	cursor: pointer;
@@ -374,7 +374,7 @@
 	text-decoration-color: var(--ui-color-palette-gray-50);
 }
 
-.tasks-flow__not-enough-tasks-popup-example-text:hover {
+.tasks-flow__copilot-advice-error-popup-example-text:hover {
 	color: var(--ui-color-palette-gray-70);
 	text-decoration-color: var(--ui-color-palette-gray-70);
 }

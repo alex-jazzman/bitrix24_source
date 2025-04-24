@@ -225,6 +225,7 @@ export const Main = Object.freeze({
 	WARNING_CIRCLE: 'warning-circle',
 	INFO_CIRCLE: 'info-circle',
 	WARNING: 'warning',
+	WARNING_ALARM: 'warning-alarm',
 	INFO: 'info',
 	HELP: 'help',
 	SMS: 'sms',

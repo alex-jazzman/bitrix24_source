@@ -65,6 +65,7 @@ export const SearchResult = {
 				:selectMode="selectMode"
 				:isSelected="isSelected(item)"
 				:query="query"
+				:replaceWithNotes="showMyNotes"
 				@clickItem="$emit('clickItem', $event)"
 				@openContextMenu="$emit('openContextMenu', $event)"
 			/>

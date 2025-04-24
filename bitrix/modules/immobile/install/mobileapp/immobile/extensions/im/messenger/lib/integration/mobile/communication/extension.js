@@ -22,7 +22,6 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 			this.initMessenger = this.initMessenger.bind(this);
 			this.handleUserCountersGet = this.handleUserCountersGet.bind(this);
 			this.handleServerTime = this.handleServerTime.bind(this);
-			this.handleDesktopStatusGet = this.handleDesktopStatusGet.bind(this);
 		}
 
 		subscribeInitMessengerEvent()
@@ -45,23 +44,12 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 			BX.postComponentEvent('onUpdateServerTime', [serverTime], 'communication');
 		}
 
-		handleDesktopStatusGet(desktopStatus)
-		{
-			Logger.info('Communication.handleDesktopStatusGet', desktopStatus);
-			BX.postComponentEvent('setDesktopStatus', [desktopStatus], 'communication');
-		}
-
 		/**
 		 * @param {immobileTabChatLoadResult | immobileTabChannelLoadResult | immobileTabCopilotLoadResult} data
 		 */
 		initMessenger(data)
 		{
-			const { desktopStatus, serverTime, portalCounters } = data;
-
-			if (desktopStatus)
-			{
-				this.handleDesktopStatusGet(desktopStatus);
-			}
+			const { serverTime, portalCounters } = data;
 
 			if (serverTime)
 			{

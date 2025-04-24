@@ -461,7 +461,6 @@ if (isset($arParams['TYPE']) && $arParams['TYPE'] === 'list')
 			'LINK' => $arParams['PATH_TO_LEAD_GENERATOR'],
 			'ICON' => 'btn-migration'
 		);
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 	}
 
 	if ($bExport && !$isInSlider)

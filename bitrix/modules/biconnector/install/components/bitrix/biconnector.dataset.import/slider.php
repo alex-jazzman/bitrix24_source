@@ -27,6 +27,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 			'sourceId' => (string)($request->get('sourceId') ?? 0),
 			'datasetId' => (int)($request->get('datasetId') ?? 0),
+			'connection' => is_array($request->get('connection')) ? $request->get('connection') : [],
 		],
 
 		'CLOSE_AFTER_SAVE' => false,

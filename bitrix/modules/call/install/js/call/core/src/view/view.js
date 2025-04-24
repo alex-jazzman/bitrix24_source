@@ -1,8 +1,9 @@
-import {Browser, Dom, Runtime, Text, Type} from 'main.core';
+import { Browser, Dom, Runtime, Text, Type, Loc } from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Popup} from 'main.popup';
 import {DesktopApi} from 'im.v2.lib.desktop-api';
 import { CopilotNotify, CopilotNotifyType } from './copilot-notify';
+import { PictureInPictureWindow } from './pictureInPictureWindow';
 
 import {UserModel, UserRegistry} from './user-registry'
 import * as Buttons from './buttons';
@@ -90,7 +91,10 @@ const EventName = {
 	onDeviceSelectorShow: 'onDeviceSelectorShow',
 	onOpenAdvancedSettings: 'onOpenAdvancedSettings',
 	onHasMainStream: 'onHasMainStream',
-	onToggleSubscribe: 'onToggleSubscribe'
+	onTurnOffParticipantMic: 'onTurnOffParticipantMic',
+	onTurnOffParticipantCam: 'onTurnOffParticipantCam',
+	onToggleSubscribe: 'onToggleSubscribe',
+	onUnfold: 'onUnfold',
 };
 
 const beginingPosition = -1;
@@ -220,6 +224,8 @@ export class View
 			onUserRenameInputFocus: this._onUserRenameInputFocus.bind(this),
 			onUserRenameInputBlur: this._onUserRenameInputBlur.bind(this),
 			onClick: this._onUserClick.bind(this),
+			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
+			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
 			onPin: this._onUserPin.bind(this),
 			onUnPin: this._onUserUnPin.bind(this),
 		});
@@ -410,6 +416,8 @@ export class View
 		this.isCopilotFeaturesEnabled = config.isCopilotFeaturesEnabled || false;
 		this.isCopilotActive = config.isCopilotActive || false;
 		this.copilotNotify = null;
+
+		this.pictureInPictureCallWindow = null;
 	};
 
 	openArticle(articleCode)
@@ -435,6 +443,11 @@ export class View
 		}
 
 		if (!enabled && articleCode) {
+			if (this.size === View.Size.Folded)
+			{
+				this._onBodyClick();
+			}
+
 			this.openArticle(articleCode)
 		}
 	}
@@ -927,6 +940,11 @@ export class View
 		this.presenterId = newPresenterId;
 		this.userRegistry.users.forEach(userModel => userModel.presenter = (userModel.id == this.presenterId));
 
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setCurrentUser(this.getPictureInPictureCallWindowUser());
+		}
+
 		if (this.pinnedUser === null)
 		{
 			this.setCentralUser(newPresenterId);
@@ -1257,6 +1275,12 @@ export class View
 				this.buttons.camera.disable();
 			}
 		}
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
+			this.pictureInPictureCallWindow.updateButtons();
+		}
 	};
 
 	setMuted = (event) =>
@@ -1280,6 +1304,12 @@ export class View
 			}
 		}
 		this.userRegistry.get(this.userId).microphoneState = !this.isMuted;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
+			this.pictureInPictureCallWindow.updateButtons();
+		}
 	};
 
 	setLocalUserId(userId)
@@ -1374,6 +1404,8 @@ export class View
 			onClick: this._onUserClick.bind(this),
 			onPin: this._onUserPin.bind(this),
 			onUnPin: this._onUserUnPin.bind(this),
+			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
+			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
 		});
 
 		this.screenUsers[userId] = new CallUser({
@@ -1561,6 +1593,18 @@ export class View
 		{
 			this.localUser.showStats(stats);
 		}
+
+		this.pictureInPictureCallWindow?.setStats(userId, stats);
+	}
+
+	setTrackSubscriptionFailed(data)
+	{
+		if (this.users[data.participant.userId])
+		{
+			if(data.participant.userId && data.track){
+				this.users[data.participant.userId].showTrackSubscriptionFailed(data.track);
+			}			
+		}
 	}
 
 	setUserMicrophoneState(userId, isMicrophoneOn)
@@ -1733,6 +1777,7 @@ export class View
 		if (mediaRenderer) // for Bitrix calls
 		{
 			this.localUser.videoRenderer = mediaRenderer;
+			this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, mediaRenderer);
 		}
 		else
 		{
@@ -1925,6 +1970,7 @@ export class View
 				this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
 			}
 			user.videoRenderer = null;
+			this.pictureInPictureCallWindow?.setVideoRenderer(userId, null);
 			return;
 		}
 
@@ -1939,6 +1985,7 @@ export class View
 
 		const userHasCameraVideo = user.hasCameraVideo();
 		user.videoRenderer = mediaRenderer;
+		this.pictureInPictureCallWindow?.setVideoRenderer(userId, mediaRenderer);
 
 		if (mediaRenderer.stream && mediaRenderer.kind === 'video')
 		{
@@ -1974,6 +2021,8 @@ export class View
 			this.updateUserList();
 			this.setUserScreenState(userId, track !== null);
 		}
+
+		this.pictureInPictureCallWindow?.setUserMedia(userId, kind, track);
 	};
 
 	removeScreenUsers()
@@ -2541,6 +2590,11 @@ export class View
 			BX.remove(this.elements.root);
 		}
 
+		if (this.pictureInPictureCallWindow)
+		{
+			this.toggleStatePictureInPictureCallWindow(false)
+		}
+
 		this.visible = false;
 		this.eventEmitter.emit(EventName.onClose);
 	};
@@ -2584,6 +2638,12 @@ export class View
 			this.updateButtons();
 			this.updateUserList();
 			this.resumeVideo();
+		}
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
+			this.pictureInPictureCallWindow.updateButtons();
 		}
 	};
 
@@ -2732,8 +2792,7 @@ export class View
 
 	blockAddUser()
 	{
-		this.blockedButtons['add'] = true;
-
+		this.blockButtons(['add']);
 		if (this.elements.userList.addButton)
 		{
 			Dom.remove(this.elements.userList.addButton);
@@ -2742,14 +2801,14 @@ export class View
 
 	unblockAddUser()
 	{
-		this.blockedButtons['add'] = false;
+		this.unblockButtons(['add']);
 
 		this.updateButtons();
 	};
 
 	blockSwitchCamera()
 	{
-		this.blockedButtons['camera'] = true;
+		this.blockButtons(['camera']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleCameraAvailability(false);
@@ -2758,7 +2817,7 @@ export class View
 
 	unblockSwitchCamera()
 	{
-		delete this.blockedButtons['camera'];
+		this.unblockButtons(['camera']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleCameraAvailability(true);
@@ -2767,7 +2826,7 @@ export class View
 
 	blockSwitchMicrophone()
 	{
-		this.blockedButtons['microphone'] = true;
+		this.blockButtons(['microphone']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleMicrophoneAvailability(false);
@@ -2776,7 +2835,7 @@ export class View
 
 	unblockSwitchMicrophone()
 	{
-		delete this.blockedButtons['microphone'];
+		this.unblockButtons(['microphone']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleMicrophoneAvailability(true);
@@ -2785,12 +2844,12 @@ export class View
 
 	blockScreenSharing()
 	{
-		this.blockedButtons['screen'] = true;
+		this.blockButtons(['screen']);
 	};
 
 	blockHistoryButton()
 	{
-		this.blockedButtons['history'] = true;
+		this.blockButtons(['history']);
 	};
 
 	/**
@@ -2812,6 +2871,11 @@ export class View
 				this.buttons[buttonName].setBlocked(true);
 			}
 		})
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow());
+		}
 	};
 
 	/**
@@ -2831,7 +2895,12 @@ export class View
 			{
 				this.buttons[buttonName].setBlocked(this.isButtonBlocked(buttonName));
 			}
-		})
+		});
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow());
+		}
 	};
 
 	disableMediaSelection()
@@ -2987,7 +3056,7 @@ export class View
 	render()
 	{
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall"},
+			props: {className: "bx-messenger-videocall bx-messenger-videocall-scope"},
 			children: [
 				this.elements.wrap = Dom.create("div", {
 					props: {className: `bx-messenger-videocall-wrap ${this.isCopilotActive ? 'bx-messenger-videocall-wrap-with-copilot' : ''}`},
@@ -4041,6 +4110,39 @@ export class View
 							blocked: this.isButtonBlocked("copilot"),
 							onClick: this._onCopilotButtonClick.bind(this),
 							isComingSoon: !this.isCopilotFeaturesEnabled,
+							onMouseOver: e =>
+							{
+								this.hintManager.popupParameters.events = null;
+								this.hintManager.popupParameters.events = {
+									onShow: function onShow(event) {
+										const popup = event.getTarget();
+										const elementOffsetWidth = e.currentTarget?.offsetWidth;
+										const popupOffsetWidth = popup.getPopupContainer()?.offsetWidth;
+
+										if (!elementOffsetWidth || !popupOffsetWidth)
+										{
+											return;
+										}
+
+										const offsetLeft = (elementOffsetWidth / 2 - popupOffsetWidth / 2);
+
+										popup.setOffset({
+											offsetLeft,
+										});
+									},
+								};
+								const hintText = this.isCopilotActive
+									? Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT')
+									: Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT')
+								;
+								this.hintManager.show(e.currentTarget, hintText);
+							},
+							onMouseOut: e => {
+								if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget))
+								{
+									this.hintManager.hide();
+								}
+							},
 						});
 					}
 					else
@@ -4437,6 +4539,125 @@ export class View
 		return this.elements.panel.scrollWidth - totalButtonWidth - 32;
 	};
 
+	getPictureInPictureCallWindowGetButtonsList()
+	{
+		const buttonsList = ["microphone", "camera"];
+
+		if (this.size === View.Size.Folded)
+		{
+			buttonsList.push("returnToCall");
+		}
+
+		if (this.getButtonActive('screen'))
+		{
+			buttonsList.push("stop-screen");
+		}
+
+		// if (this.getButtonList().includes('copilot'))
+		// {
+		// 	buttonsList.push("copilot");
+		// }
+
+		return buttonsList;
+	}
+
+	getPictureInPictureCallWindowUserModel()
+	{
+		const currentUserId = this.presenterId || this.userId;
+
+		return this.userRegistry.get(currentUserId);
+	}
+
+	getPictureInPictureCallWindowUser()
+	{
+		const currentUserId = this.presenterId || this.userId;
+
+		if (this.userId === currentUserId)
+		{
+			return this.localUser;
+		}
+
+		return this.users[currentUserId];
+	}
+
+	getBlockedButtonsListPictureInPictureCallWindow()
+	{
+		const blockedButtons = [];
+
+		if (this.isButtonBlocked('camera'))
+		{
+			blockedButtons.push('camera');
+		}
+
+		if (this.isButtonBlocked('microphone'))
+		{
+			blockedButtons.push('microphone');
+		}
+
+		if (this.isButtonBlocked('screen'))
+		{
+			blockedButtons.push('screen');
+		}
+
+		return blockedButtons;
+	}
+
+	toggleStatePictureInPictureCallWindow(isActive, isBitrixCall = false)
+	{
+		if (isActive && !this.pictureInPictureCallWindow && isBitrixCall && Util.isPictureInPictureFeatureEnabled())
+		{
+			this.pictureInPictureCallWindow = new PictureInPictureWindow({
+				userModel: this.getPictureInPictureCallWindowUserModel(),
+				currentUser: this.getPictureInPictureCallWindowUser(),
+				isCopilotFeaturesEnabled: this.isCopilotFeaturesEnabled,
+				buttons: this.getPictureInPictureCallWindowGetButtonsList(),
+				blockedButtons: this.getBlockedButtonsListPictureInPictureCallWindow(),
+				allowPinButton: false,
+				allowBackgroundItem: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
+				allowMaskItem: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
+				onClose: () => {
+					this.pictureInPictureCallWindow = null;
+				},
+				onButtonClick: ({ buttonName, event }) => {
+					switch (buttonName)
+					{
+						case "microphone":
+							this._onMicrophoneButtonClick(event);
+							break;
+						case "camera":
+							this._onCameraButtonClick(event);
+							break;
+						case "returnToCall":
+							this._onBodyClick(event);
+							break;
+						case "stop-screen":
+							this._onScreenButtonClick(event);
+							break;
+						case "copilot":
+							if (this.size === View.Size.Folded)
+							{
+								this._onBodyClick(event);
+							}
+
+							if (this.buttons.copilot)
+							{
+								this.buttons.copilot.click();
+							}
+							break;
+						default:
+							break;
+					}
+				}
+			});
+			this.pictureInPictureCallWindow.checkAvailableAndCreate();
+		}
+
+		if (!isActive && this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.close();
+		}
+	}
+
 	setButtonActive(buttonName, isActive)
 	{
 		if (!this.buttons[buttonName])
@@ -4445,6 +4666,13 @@ export class View
 		}
 
 		this.buttons[buttonName].setActive(isActive);
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
+			this.pictureInPictureCallWindow.updateButtons();
+		}
+
 	};
 
 	getButtonActive(buttonName)
@@ -4621,7 +4849,10 @@ export class View
 			this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
 		}
 
-
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.updateButtons();
+		}
 
 		this.renderAddUserButtonInList();
 	};
@@ -5270,6 +5501,22 @@ export class View
 			this.setLayout(Layouts.Grid)
 		}
 		this.unpinUser();
+	};
+
+	_onTurnOffParticipantMic(e)
+	{
+		console.warn('_onTurnOffParticipantMic', e);
+		this.eventEmitter.emit(EventName.onTurnOffParticipantMic, {
+			userId: e.userId
+		});
+	};
+
+	_onTurnOffParticipantCam(e)
+	{
+		console.warn('_onTurnOffParticipantCam', e);
+		this.eventEmitter.emit(EventName.onTurnOffParticipantCam, {
+			userId: e.userId
+		});
 	};
 
 	_onRecordToggleClick(e)

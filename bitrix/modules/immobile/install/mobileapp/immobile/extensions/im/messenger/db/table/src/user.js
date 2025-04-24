@@ -10,6 +10,9 @@ jn.define('im/messenger/db/table/user', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
 
+	/**
+	 * @extends {Table<UserStoredData>}
+	 */
 	class UserTable extends Table
 	{
 		getName()

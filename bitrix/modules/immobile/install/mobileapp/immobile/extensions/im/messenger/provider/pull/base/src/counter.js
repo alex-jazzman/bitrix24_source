@@ -56,6 +56,14 @@ jn.define('im/messenger/provider/pull/base/counter', (require, exports, module) 
 			this.handleCounters(params);
 		}
 
+		/**
+		 * @param {MessagePullHandlerMessageDeleteV2Params} params
+		 */
+		handleMessageDeleteV2(params)
+		{
+			this.handleCounters(params);
+		}
+
 		handleReadMessage(params)
 		{
 			this.handleCounters(params);

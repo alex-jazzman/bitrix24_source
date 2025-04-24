@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { RestMethod, DialogType } = require('im/messenger/const');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -11,7 +11,7 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 	const { runAction } = require('im/messenger/lib/rest');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 
-	const logger = LoggerManager.getInstance().getLogger('read-service--chat');
+	const logger = getLogger('read-service--chat');
 	const READ_TIMEOUT = 300;
 
 	/**

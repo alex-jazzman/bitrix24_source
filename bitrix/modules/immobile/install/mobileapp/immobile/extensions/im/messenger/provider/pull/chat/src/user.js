@@ -5,10 +5,10 @@
  */
 jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { Counters } = require('im/messenger/lib/counters');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-user');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('pull-handler--chat-user');
 
 	/**
 	 * @class ChatUserPullHandler
@@ -24,7 +24,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 
 			logger.info('ChatUserPullHandler.handleUserInvite', params);
 
-			const recentModel = RecentConverter.fromPushUserInviteToModel(params);
+			const recentModel = RecentDataConverter.fromPushUserInviteToModel(params);
 
 			this.store.dispatch('usersModel/set', [params.user])
 				.catch((err) => logger.error('ChatUserPullHandler.handleUserInvite.usersModel/set.catch:', err));
@@ -73,7 +73,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 
 		updateUser(params)
 		{
-			const recentItem = RecentConverter.fromPushToModel({
+			const recentItem = RecentDataConverter.fromPushToModel({
 				id: params.user.id,
 				user: params.user,
 			});

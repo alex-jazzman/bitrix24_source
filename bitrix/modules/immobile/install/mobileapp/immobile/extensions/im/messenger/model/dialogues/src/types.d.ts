@@ -45,7 +45,7 @@ export type DialoguesModelState = {
 	savedPositionMessageId: number,
 	managerList: Array<any>, //todo concrete type
 	readList: Array<any>, // FIXME remove this field from model and table
-	writingList: Array<WritingUserData>,
+	inputActions: Array<InputActionNotify>,
 	muteList: Array<any>, //todo concrete type
 	textareaMessage: string,
 	quoteId: number,
@@ -84,10 +84,13 @@ export type LastMessageViews = {
 	isGroupDialog?: boolean,
 }
 
-export type WritingUserData = {
+export type InputActionNotify = {
 	userId: number
-	userName: string
+	userFirstName: string
+	actions: InputActionNotifyType[]
 }
+
+export type InputActionNotifyType = 'writing' | 'recordingVoice' | 'sendingPhoto' | 'sendingFile'
 
 export type DialogPermissions = {
 	manageUsersAdd: PermissionRoles,
@@ -116,11 +119,13 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/set'
 	| 'dialoguesModel/setFromLocalDatabase'
 	| 'dialoguesModel/setCollectionFromLocalDatabase'
+	| 'dialoguesModel/setFromPush'
 	| 'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
 	| 'dialoguesModel/deleteFromModel'
-	| 'dialoguesModel/updateWritingList'
+	| 'dialoguesModel/setInputAction'
+	| 'dialoguesModel/removeInputAction'
 	| 'dialoguesModel/decreaseCounter'
 	| 'dialoguesModel/updateUserCounter'
 	| 'dialoguesModel/updateManagerList'
@@ -138,6 +143,7 @@ export type DialoguesModelActions =
 
 export type DialoguesModelMutation =
 	'dialoguesModel/add'
+	| 'dialoguesModel/setFromPush'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
 
@@ -165,7 +171,7 @@ export type DialoguesUpdateActions =
 	| 'updateCollection'
 	| 'updateType'
 	| 'updateTariffRestrictions'
-	| 'updateWritingList'
+	| 'updateInputAction'
 	| 'decreaseCounter'
 	| 'updateUserCounter'
 	| 'mute'
@@ -211,3 +217,17 @@ export interface DialogUpdateTariffRestrictionsPayload
 	tariffRestrictions: TariffRestrictions,
 	isForceUpdate?: boolean,
 }
+
+
+export type DialoguesSetFromPushActions = 'setFromPush';
+export interface DialoguesSetFromPushData extends PayloadData
+{
+	dialogList: Array<DialoguesModelState>,
+}
+
+export interface DialogPayloadDataItem
+{
+	dialogId: DialogId,
+	fields: Partial<DialoguesModelState>,
+}
+

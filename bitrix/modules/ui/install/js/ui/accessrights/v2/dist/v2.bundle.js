@@ -2344,7 +2344,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    addValue(value) {
 	      const newValues = main_core.Runtime.clone(this.values);
 	      newValues.add(value);
-	      if (newValues.length >= this.right.variables.size) {
+	      if (newValues.size >= this.right.variables.size) {
 	        this.setValues(new Set([this.right.allSelectedCode]));
 	      } else {
 	        this.setValues(newValues);

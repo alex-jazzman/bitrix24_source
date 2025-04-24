@@ -20,6 +20,7 @@ import { MultidialogPreview } from './blocks/multidialog';
 import { TariffLimitPreview } from './blocks/tariff-limit';
 import { CollabHelpdeskPreview } from './blocks/collab-helpdesk';
 import { SidebarSkeleton } from '../../elements/skeleton/skeleton';
+import { NotesPreview } from './blocks/notes-preview';
 
 import './css/main-panel.css';
 
@@ -32,6 +33,7 @@ export const MainPanel = {
 	components: {
 		MainHeader,
 		ChatPreview,
+		NotesPreview,
 		PostPreview,
 		UserPreview,
 		SupportPreview,

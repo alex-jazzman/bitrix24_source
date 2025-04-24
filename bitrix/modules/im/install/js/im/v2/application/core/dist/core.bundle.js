@@ -103,6 +103,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (config.components) {
 	      initConfig.components = config.components;
 	    }
+	    if (config.data) {
+	      initConfig.data = config.data;
+	    }
 	    return new Promise(resolve => {
 	      initConfig.created = function () {
 	        resolve(this);

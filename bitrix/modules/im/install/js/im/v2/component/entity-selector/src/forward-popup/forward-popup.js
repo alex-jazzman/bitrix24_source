@@ -33,6 +33,7 @@ export const ForwardPopup = {
 				autoHide: false,
 				contentPadding: 0,
 				contentBackground: '#fff',
+				overlay: true,
 				className: 'bx-im-entity-selector-forward__scope',
 			};
 		},

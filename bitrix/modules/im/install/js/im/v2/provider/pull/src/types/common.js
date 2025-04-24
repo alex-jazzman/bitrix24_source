@@ -140,6 +140,14 @@ export type RawMessage = {
 	},
 };
 
+export type MultipleRawMessage = {
+	id: number,
+	senderId: number,
+	completelyDeleted: boolean,
+	params: Object<string, any>,
+	text: string,
+}
+
 export type RawMultidialog = {
 	botId: string,
 	dialogId: string,

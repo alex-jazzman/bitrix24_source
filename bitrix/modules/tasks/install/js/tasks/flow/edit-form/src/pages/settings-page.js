@@ -113,6 +113,11 @@ export class SettingsPage extends FormPage
 		this.#flow = flow;
 	}
 
+	getFlowId(): ?number
+	{
+		return this.#flow.id ?? null;
+	}
+
 	getId(): string
 	{
 		return 'settings';
@@ -335,13 +340,16 @@ export class SettingsPage extends FormPage
 						features: {
 							tasks: [],
 						},
+						flow: true,
 						checkFeatureForCreate: true,
 						'!type': ['collab'],
-						isFromFlowCreationForm: true,
 					},
 				},
 			],
 			values: this.#flow.groupId ? [['project', this.#flow.groupId]] : [],
+			dialogEvents: {
+				onLoad: this.onDialogLoad,
+			},
 		});
 
 		this.#layout.taskTemplate = new ValueChecker({
@@ -390,6 +398,9 @@ export class SettingsPage extends FormPage
 					? this.#flow.responsibleList[0][1]
 					: this.#currentUser,
 			]],
+			dialogEvents: {
+				onLoad: this.onDialogLoad,
+			},
 		});
 
 		const { root: queueDistribution, radio: queueRadio } = this.#renderDistributionType({
@@ -447,6 +458,9 @@ export class SettingsPage extends FormPage
 			enableDepartments,
 			values: responsibleValues,
 			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_QUEUE_SELECTOR_LABEL'),
+			dialogEvents: {
+				onLoad: this.onDialogLoad,
+			},
 		});
 	}
 

@@ -8,8 +8,8 @@ jn.define('im/messenger/provider/service/classes/message-context-creator', (requ
 	const { Type } = require('type');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('message-context-creator');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('message-context-creator');
 
 	/**
 	 * @class MessageContextCreator

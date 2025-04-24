@@ -105,7 +105,7 @@ if (!empty($_POST["save"]))
 	\Bitrix\Main\Application::getInstance()->terminate();
 }
 
-$APPLICATION->ShowTitle(GetMessage("BIZPROC_WFS_TITLE"));
+$APPLICATION->ShowTitle(GetMessage("BIZPROC_WFS_TITLE_MSGVER_1"));
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -141,7 +141,7 @@ CBPDocument::AddShowParameterInit(MODULE_ID, "only_users", $_POST['document_type
 ?>
 <script>
 BX.namespace('BX.Bizproc');
-BX.WindowManager.Get().SetTitle('<?= GetMessageJS("BIZPROC_WFS_TITLE") ?>');
+BX.WindowManager.Get().SetTitle('<?= GetMessageJS("BIZPROC_WFS_TITLE_MSGVER_1") ?>');
 
 var WFSAllData = {};
 WFSAllData['P'] = <?=(is_array($arWorkflowParameters) && !empty($arWorkflowParameters) ?CUtil::PhpToJSObject($arWorkflowParameters):'{}')?>;

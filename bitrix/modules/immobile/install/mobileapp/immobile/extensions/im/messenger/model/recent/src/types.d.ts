@@ -54,6 +54,7 @@ export type RecentModelActions =
 	'recentModel/setState'
 	| 'recentModel/set'
 	| 'recentModel/like'
+	| 'recentModel/setFromPush'
 	| 'recentModel/delete'
 	| 'recentModel/deleteFromModel'
 	| 'recentModel/clearAllCounters'

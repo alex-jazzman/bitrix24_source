@@ -46,6 +46,16 @@ export class LoadService
 		return this.#requestChat(RestMethod.imV2ChatShallowLoad, params);
 	}
 
+	loadChatByChatId(chatId: number): Promise
+	{
+		const params = {
+			chatId,
+			messageLimit: MessageService.getMessageRequestLimit(),
+		};
+
+		return this.#requestChat(RestMethod.imV2ChatLoad, params);
+	}
+
 	loadChatWithMessages(dialogId: string): Promise
 	{
 		const params = {

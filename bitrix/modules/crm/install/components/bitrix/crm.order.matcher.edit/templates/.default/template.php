@@ -31,6 +31,7 @@ if (!$arResult['FORM']['LICENCE_BUTTON_CAPTION'])
 	"ui.design-tokens",
 	"ui.fonts.opensans",
 	"ui.buttons",
+	"ui.entity-selector",
 ]);
 
 if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
@@ -256,7 +257,7 @@ require 'js_templates.php';
 					<div class="crm-orderform-edit-task-options-item crm-orderform-edit-task-options-item-destination">
 						<span class="crm-orderform-edit-task-options-item-param"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_ASSIGNED_BY1')?>:</span>
 						<div class="crm-orderform-edit-task-options-item-open-inner">
-							<div id="crm-orderform-edit-responsible" data-config="<?=htmlspecialcharsbx(Json::encode($arResult['CONFIG_ASSIGNED_BY']))?>"></div>
+							<div id="crm-orderform-edit-responsible"></div>
 
 							<? if ($arResult['ASSIGNED_BY']['IS_SUPPORTED_WORK_TIME']): ?>
 								<div style="margin: 15px 0 0 0;">
@@ -366,6 +367,7 @@ require 'js_templates.php';
 					relations: <?=CUtil::PhpToJSObject($arResult['FORM']['RELATIONS'])?>,
 					allRelations: <?=CUtil::PhpToJSObject($arResult['FORM']['ALL_RELATIONS'])?>,
 					relationEntities: <?=CUtil::PhpToJSObject($arResult['RELATION_ENTITIES'])?>,
+					assignedBy: <?= \Bitrix\Main\Web\Json::encode($arResult['CONFIG_ASSIGNED_BY']) ?>,
 					templates: {
 						field: 'tmpl_field_%type%',
 						dependency: 'tmpl_field_dependency',

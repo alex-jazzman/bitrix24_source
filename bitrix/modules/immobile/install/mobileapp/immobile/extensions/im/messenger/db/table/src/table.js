@@ -10,8 +10,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('database-table--table');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('database-table--table');
 
 	const FieldType = Object.freeze({
 		integer: 'integer',
@@ -332,6 +332,10 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			;
 		}
 
+		/**
+		 * @param {Array<TStoredItem>} items
+		 * @return {Promise<void>}
+		 */
 		async addIfNotExist(items)
 		{
 			try
@@ -344,6 +348,23 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		/**
 		 *
+		 * @param id
+		 * @param {(item: TStoredItem | null) => TStoredItem} preparedItemCallback
+		 * @return {Promise<void>}
+		 */
+		async merge(id, preparedItemCallback)
+		{
+			const storedItem = await this.getById(id);
+
+			const preparedItem = preparedItemCallback(storedItem);
+
+			// TODO remove after insert method validate into add and update
+			const validatedStoredItem = this.validate(preparedItem);
+
+			return this.add([validatedStoredItem]);
+		}
+
+		/**
 		 * @param {TableGetListOptions<TStoredItem>} options
 		 * @return {Promise<{items: Array<TStoredItem>}>}
 		 */
@@ -466,6 +487,10 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return result;
 		}
 
+		/**
+		 * @param options
+		 * @return {Promise<Awaited<{}>>|*}
+		 */
 		update(options)
 		{
 			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
@@ -600,6 +625,11 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return restoredRow;
 		}
 
+		/**
+		 * @param selectResult
+		 * @param shouldRestoreRows
+		 * @return {{items: *[]}}
+		 */
 		convertSelectResultToGetListResult(selectResult, shouldRestoreRows)
 		{
 			const {

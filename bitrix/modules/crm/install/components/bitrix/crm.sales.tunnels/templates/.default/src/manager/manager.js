@@ -1,4 +1,4 @@
-import { Reflection, Event, Loc, Cache, Type } from 'main.core';
+import { Cache, Event, Loc, Reflection, Type } from 'main.core';
 import { PopupWindow, PopupWindowButtonLink } from 'main.popup';
 import { UI } from 'ui.notification';
 import { Category } from '../category/category';
@@ -160,6 +160,7 @@ export default class Manager
 			})
 			.then((response) => {
 				this.addCategoryFromOptions(response.data);
+				this.isChanged = true;
 
 				const allStages = this.getStages();
 				const newStages = [

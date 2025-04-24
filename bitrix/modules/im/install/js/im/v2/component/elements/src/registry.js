@@ -1,12 +1,12 @@
 export { AvatarSize } from './avatar/components/base/avatar';
-export { ChatAvatar } from './avatar/chat-avatar';
+export { ChatAvatar, ChatAvatarType } from './avatar/chat-avatar';
 export { CollaberAvatar } from './avatar/components/collab/collaber';
 export { CollabChatAvatar } from './avatar/components/collab/collab-chat';
 export { ExtranetUserAvatar } from './avatar/components/extranet/extranet-user-avatar';
 export { ExtranetChatAvatar } from './avatar/components/extranet/extranet-chat-avatar';
 export { MessageAvatar } from './avatar/message-avatar';
 export { EmptyAvatar, EmptyAvatarType } from './avatar/empty-avatar';
-export { ChatTitle } from './chat-title/chat-title';
+export { ChatTitle, ChatTitleType } from './chat-title/chat-title';
 export { MessageAuthorTitle } from './message-author-title/message-author-title';
 export { Button, ButtonColor, ButtonSize, ButtonIcon } from './button/button';
 export { MessengerPopup } from './popup/popup';
@@ -34,6 +34,7 @@ export { CopilotRolesDialog } from './copilot-roles-dialog/copilot-roles-dialog'
 export { ChatHint } from './hint/hint';
 export { VideoPlayer } from './videoplayer/videoplayer';
 export { SegmentButton } from './segment-button/segment-button';
+export { InputActionIndicator } from './input-action-indicator/input-action-indicator';
 
 export type { CustomColorScheme } from './button/button';
 export type { DropdownItem } from './dropdown/dropdown';

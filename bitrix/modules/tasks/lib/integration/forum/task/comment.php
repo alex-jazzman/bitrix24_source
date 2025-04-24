@@ -17,6 +17,8 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\CRM\Timeline;
@@ -156,7 +158,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				{
 					$taskData = \CTaskItem::getInstance($taskId, $data['AUTHOR_ID']);
 					$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
-					$accomplices = $taskData['ACCOMPLICES'];
+					$accomplices = $taskData['ACCOMPLICES'] ?? [];
 					$accomplices = (is_array($accomplices) ? $accomplices : $accomplices->export());
 					$accomplices = array_map('intval', $accomplices);
 
@@ -665,8 +667,10 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				)
 			);
 
-			if (!$bCrmTask)
-			{
+			// 1. commented in 2025 because of http://jabber.bx/view.php?id=192038
+			// 2. added in 2014 because of http://jabber.bx/view.php?id=48069
+			// if (!$bCrmTask)
+			// {
 				$dbRes = \CSocNetLog::getList(
 					array("ID" => "DESC"),
 					array(
@@ -722,7 +726,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 						}
 					}
 				}
-			}
+			// }
 
 			if ((int)($log_id ?? null) > 0)
 			{
@@ -893,7 +897,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		$recipientsIds = static::getTaskMembersByTaskId($taskId, $occurAsUserId);
-		$userIdToShareList = static::processMentions($arData);
+		$userIdToShareList = static::processMentions($arData, (int)$messageAuthorId);
 
 		if (is_array($userIdToShareList))
 		{
@@ -1443,7 +1447,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		$log->add($fields);
 	}
 
-	private static function processMentions(array $fields): array
+	private static function processMentions(array $fields, int $authorId): array
 	{
 		$newMentionedUserIds = [];
 
@@ -1500,7 +1504,15 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		{
 			foreach ($mentionedUserIds as $userId)
 			{
-				if (!in_array($userId, $taskMembers))
+				if (
+					!in_array($userId, $taskMembers)
+					&& TaskAccessController::can(
+						$authorId,
+						ActionDictionary::ACTION_TASK_ADD_AUDITORS,
+						$task->getId(),
+						$userId
+					)
+				)
 				{
 					$newMentionedUserIds[] = (int)$userId;
 				}

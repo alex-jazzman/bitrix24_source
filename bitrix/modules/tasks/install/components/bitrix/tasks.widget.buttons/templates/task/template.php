@@ -122,7 +122,7 @@ $taskData = $arParams["TASK"];
 
 	<script>
 		BX.message({
-			TASKS_REST_BUTTON_TITLE_2: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE_2')?>',
+			TASKS_REST_BUTTON_TITLE_MSGVER_1: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE_MSGVER_1')?>',
 			TASKS_DELETE_SUCCESS: '<?= Loader::includeModule('recyclebin') ? Task::getDeleteMessage((int)$arParams['USER_ID']) : Loc::getMessage('TASKS_DELETE_SUCCESS') ?>'
 		});
 	</script>

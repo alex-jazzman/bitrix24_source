@@ -627,9 +627,13 @@ this.BX = this.BX || {};
 	      disabled: true,
 	      icon: ui_iconSet_api_core.Actions.PLUS_50
 	    };
-	    let result = [...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController), connectAiMenuItem, {
-	      separator: true
-	    }, getMarketMenuItem()];
+	    const isLibraryAvailable = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	    let result = [...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController), connectAiMenuItem];
+	    if (isLibraryAvailable) {
+	      result.push({
+	        separator: true
+	      }, getMarketMenuItem());
+	    }
 	    if (canEditSettings) {
 	      const settingsPageLink = main_core.Extension.getSettings('ai.copilot.copilot-text-controller').settingsPageLink;
 	      result = [...result, {
@@ -693,7 +697,7 @@ this.BX = this.BX || {};
 	      }),
 	      notHighlight: true
 	    };
-	    const promptMasterMenuItem = copilotTextController.getLastCommandCode() === 'zero_prompt' && copilotTextController.isReadonly() === false && copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null ? {
+	    const promptMasterMenuItem = isPromptMasterAvailable(copilotTextController) ? {
 	      code: 'prompt-master',
 	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_CREATE_PROMPT'),
 	      icon: ui_iconSet_api_core.Main.BOOKMARK_1,
@@ -808,6 +812,10 @@ this.BX = this.BX || {};
 	    })
 	  };
 	}
+	function isPromptMasterAvailable(copilotTextController) {
+	  const isLibraryAvailable = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	  return copilotTextController.getLastCommandCode() === 'zero_prompt' && copilotTextController.isReadonly() === false && copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null && isLibraryAvailable;
+	}
 
 	class CopilotGeneralMenuItems extends CopilotMenuItems {
 	  static getMenuItems(options) {
@@ -831,35 +839,14 @@ this.BX = this.BX || {};
 	      }),
 	      labelText: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_LABEL_NEW')
 	    }] : [];
-	    return [...imageMenuItem, favouriteSectionSeparator, ...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true), ...(copilotTextController.isReadonly() === false ? [{
+	    const promptLibraryItem = getPromptLibraryItem(copilotTextController);
+	    return [...imageMenuItem, favouriteSectionSeparator, ...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true), ...(shouldDisplayCustomPromptSection(copilotTextController, userPrompts) ? [{
 	      code: 'user-prompt-separator',
 	      separator: true,
 	      title: main_core.Loc.getMessage('AI_COPILOT_USER_PROMPTS_MENU_SECTION'),
 	      text: main_core.Loc.getMessage('AI_COPILOT_USER_PROMPTS_MENU_SECTION'),
 	      isNew: true
-	    }, ...getGeneralMenuItemsFromPrompts(userPrompts, copilotTextController, false), {
-	      code: 'promptLib',
-	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_AI_PROMPT_LIB'),
-	      icon: ui_iconSet_api_core.Main.PROMPTS_LIBRARY,
-	      highlightText: true,
-	      command: async () => {
-	        if (BX.SidePanel) {
-	          copilotTextController.getAnalytics().setCategoryPromptSaving();
-	          copilotTextController.getAnalytics().sendEventOpenPromptLibrary();
-	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library.grid/slider.php', {
-	            cacheable: false,
-	            events: {
-	              onCloseStart: () => {
-	                copilotTextController.getAnalytics().setCategoryText();
-	                copilotTextController.updateGeneralMenuPrompts();
-	              }
-	            }
-	          });
-	        } else {
-	          window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
-	        }
-	      }
-	    }] : []), ...getGeneralMenuItemsFromPrompts(systemPrompts, copilotTextController), ...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings), {
+	    }, ...getGeneralMenuItemsFromPrompts(userPrompts, copilotTextController, false), promptLibraryItem] : []), ...getGeneralMenuItemsFromPrompts(systemPrompts, copilotTextController), ...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings), {
 	      code: 'about_open_copilot',
 	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT'),
 	      icon: ui_iconSet_api_core.Main.INFO,
@@ -933,6 +920,39 @@ this.BX = this.BX || {};
 	    }),
 	    icon: ui_iconSet_api_core.Main.COPILOT_AI
 	  }];
+	}
+	function getPromptLibraryItem(copilotTextController) {
+	  const isLibraryVisible = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	  if (isLibraryVisible) {
+	    return {
+	      code: 'promptLib',
+	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_AI_PROMPT_LIB'),
+	      icon: ui_iconSet_api_core.Main.PROMPTS_LIBRARY,
+	      highlightText: true,
+	      command: async () => {
+	        if (BX.SidePanel) {
+	          copilotTextController.getAnalytics().setCategoryPromptSaving();
+	          copilotTextController.getAnalytics().sendEventOpenPromptLibrary();
+	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library.grid/slider.php', {
+	            cacheable: false,
+	            events: {
+	              onCloseStart: () => {
+	                copilotTextController.getAnalytics().setCategoryText();
+	                copilotTextController.updateGeneralMenuPrompts();
+	              }
+	            }
+	          });
+	        } else {
+	          window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
+	        }
+	      }
+	    };
+	  }
+	  return null;
+	}
+	function shouldDisplayCustomPromptSection(copilotTextController, userPrompt) {
+	  const isLibraryAvailable = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	  return copilotTextController.isReadonly() === false && isLibraryAvailable || userPrompt.length > 0;
 	}
 
 	class BaseMenuItem extends main_core_events.EventEmitter {

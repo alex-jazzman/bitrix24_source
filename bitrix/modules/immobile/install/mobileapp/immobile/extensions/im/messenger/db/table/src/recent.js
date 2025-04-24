@@ -14,6 +14,9 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 	const { DialogType } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 
+	/**
+	 * @extends {Table<RecentStoredData>}
+	 */
 	class RecentTable extends Table
 	{
 		getName()

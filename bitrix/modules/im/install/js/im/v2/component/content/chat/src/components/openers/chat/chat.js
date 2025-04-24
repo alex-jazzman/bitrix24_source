@@ -10,10 +10,12 @@ import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatService } from 'im.v2.provider.service';
 import { AccessErrorCode } from 'im.v2.lib.access';
 import { BaseChatContent } from 'im.v2.component.content.elements';
+import { Core } from 'im.v2.application.core';
 
 import { ChannelContent } from '../../content/channel/channel';
 import { CollabContent } from '../../content/collab/collab';
 import { MultidialogContent } from '../../content/multidialog/multidialog';
+import { NotesContent } from '../../content/notes/notes-content';
 import { BaseEmptyState as EmptyState } from './components/empty-state/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
 import { UserService } from './classes/user-service';
@@ -21,7 +23,6 @@ import { CollabEmptyState } from './components/empty-state/collab/collab';
 
 import './css/default-chat-content.css';
 
-import type { JsonObject } from 'main.core';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { ImModelChat, ImModelLayout } from 'im.v2.model';
 
@@ -34,7 +35,15 @@ const EmptyStateComponentByLayout = {
 // @vue/component
 export const ChatOpener = {
 	name: 'ChatOpener',
-	components: { BaseChatContent, ChannelContent, CollabContent, MultidialogContent, EmptyState, ChannelEmptyState },
+	components: {
+		BaseChatContent,
+		ChannelContent,
+		CollabContent,
+		MultidialogContent,
+		EmptyState,
+		ChannelEmptyState,
+		NotesContent,
+	},
 	props:
 	{
 		dialogId: {
@@ -43,10 +52,6 @@ export const ChatOpener = {
 		},
 	},
 	emits: ['close'],
-	data(): JsonObject
-	{
-		return {};
-	},
 	computed:
 	{
 		layout(): ImModelLayout
@@ -72,6 +77,10 @@ export const ChatOpener = {
 		isMultidialog(): boolean
 		{
 			return this.$store.getters['sidebar/multidialog/isSupport'](this.dialogId);
+		},
+		isNotes(): boolean
+		{
+			return Number.parseInt(this.dialogId, 10) === Core.getUserId();
 		},
 		isGuest(): boolean
 		{
@@ -239,6 +248,7 @@ export const ChatOpener = {
 			<ChannelContent v-else-if="isChannel" :dialogId="dialogId" />
 			<CollabContent v-else-if="isCollab" :dialogId="dialogId" />
 			<MultidialogContent v-else-if="isMultidialog" :dialogId="dialogId" />
+			<NotesContent v-else-if="isNotes" :dialogId="dialogId" />
 			<BaseChatContent v-else :dialogId="dialogId" />
 		</div>
 	`,

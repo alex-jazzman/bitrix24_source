@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 	const { clone } = require('utils/object');
 	const { RecentRenderer } = require('im/messenger/controller/recent/lib/renderer');
 	const { ItemAction } = require('im/messenger/controller/recent/lib/item-action');
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentService } = require('im/messenger/provider/service');
 	const { Worker } = require('im/messenger/lib/helper');
@@ -217,7 +217,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 				return;
 			}
 
-			firstPage = RecentConverter.toList(firstPage);
+			firstPage = RecentUiConverter.toList(firstPage);
 
 			this.view.setItems([...this.callList, ...firstPage]);
 
@@ -456,7 +456,8 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		dialogUpdateHandler(mutation)
 		{
 			const dialogId = mutation.payload.data.dialogId;
-			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
+			const recentItem = clone(this.store.getters['recentModel/getById'](String(dialogId)));
+
 			if (recentItem)
 			{
 				this.updateItems([recentItem]);

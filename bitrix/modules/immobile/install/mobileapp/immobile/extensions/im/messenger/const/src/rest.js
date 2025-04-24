@@ -90,12 +90,12 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 
+		imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
+
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',
 		imDialogRead: 'im.dialog.read',
 		imDialogUnread: 'im.dialog.unread',
-		imDialogWriting: 'im.dialog.writing',
-		imDialogStartRecordVoice: 'im.v2.Chat.startRecordVoice',
 		imDialogRestrictionsGet: 'im.dialog.restrictions.get',
 		imDialogReadAll: 'im.dialog.read.all',
 		imDialogContextGet: 'im.dialog.context.get',

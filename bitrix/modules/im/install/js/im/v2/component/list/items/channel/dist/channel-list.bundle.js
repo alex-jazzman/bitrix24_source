@@ -148,9 +148,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      });
 	      return Boolean(isMuted);
 	    },
-	    isSomeoneTyping() {
-	      return this.dialog.writingList.length > 0;
-	    },
 	    needsBirthdayPlaceholder() {
 	      return this.$store.getters['recent/needsBirthdayPlaceholder'](this.recentItem.dialogId);
 	    },

@@ -59,6 +59,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 	  imV2AccessCheck: 'im.v2.Access.check',
 	  imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
+	  imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
 	  imV2DiskFileSave: 'im.v2.Disk.File.save',
 	  imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
 	  imCallBetaCreateRoom: 'im.call.beta.createRoom',
@@ -293,6 +294,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  call: 'call',
 	  attach: 'attach',
 	  quote: 'quote'
+	});
+	const FileViewerContext = Object.freeze({
+	  dialog: 'dialog',
+	  sidebarMain: 'sidebarMain',
+	  sidebarTabBriefs: 'sidebarTabBriefs',
+	  sidebarTabDocuments: 'sidebarTabDocuments',
+	  sidebarTabMedia: 'sidebarTabMedia',
+	  sidebarTabOther: 'sidebarTabOther',
+	  sidebarTabFileUnsorted: 'sidebarTabFileUnsorted'
 	});
 	const AudioPlaybackRate = Object.freeze({
 	  1: 1,
@@ -848,6 +858,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.FileStatus = FileStatus;
 	exports.FileType = FileType;
 	exports.FileIconType = FileIconType;
+	exports.FileViewerContext = FileViewerContext;
 	exports.AudioPlaybackRate = AudioPlaybackRate;
 	exports.AudioPlaybackState = AudioPlaybackState;
 	exports.MessageType = MessageType;

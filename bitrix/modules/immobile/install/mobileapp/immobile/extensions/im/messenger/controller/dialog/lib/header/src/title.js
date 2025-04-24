@@ -9,7 +9,10 @@ jn.define('im/messenger/controller/dialog/lib/header/title', (require, exports, 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserUtils } = require('im/messenger/lib/utils');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const {
+		DialogHelper,
+		UserHelper,
+	} = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -53,15 +56,26 @@ jn.define('im/messenger/controller/dialog/lib/header/title', (require, exports, 
 			const result = {
 				...avatar.getTitleParams(),
 				avatar: avatar.getDialogHeaderAvatarProps(),
-				...title.getTitleParams(),
+				...title.getTitleParams({
+					useNotes: true,
+				}),
 			};
 
-			let status = '';
-			if (DialogHelper.isChatId(dialogId) && !result.isWriting)
+			if (UserHelper.isCurrentUser(dialogId))
 			{
-				status = (new UserUtils()).getLastDateText(store.getters['usersModel/getById'](dialogId));
+				result.detailText = '';
+
+				return result;
 			}
 
+			let status = '';
+			if (DialogHelper.isChatId(dialogId) && !result.hasInputActions)
+			{
+				const userData = store.getters['usersModel/getById'](dialogId);
+				status = userData.status ? (new UserUtils()).getLastDateText(userData) : result.detailText;
+			}
+
+			let detailLottie = null;
 			const appStatus = serviceLocator.get('core').getAppStatus();
 			switch (appStatus)
 			{
@@ -78,11 +92,13 @@ jn.define('im/messenger/controller/dialog/lib/header/title', (require, exports, 
 					break;
 
 				default:
+					detailLottie = result.detailLottie;
 					break;
 			}
 
 			if (status)
 			{
+				result.detailLottie = detailLottie;
 				result.detailText = status;
 			}
 

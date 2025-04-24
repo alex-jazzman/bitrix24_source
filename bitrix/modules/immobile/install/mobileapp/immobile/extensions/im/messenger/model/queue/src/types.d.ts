@@ -5,7 +5,7 @@ export type QueueModelState = {
 	requestName: string,
 	requestData: object,
 	priority: number,
-	messageId: number,
+	messageIdList: Array<number>,
 };
 
 export type QueueModelActions =

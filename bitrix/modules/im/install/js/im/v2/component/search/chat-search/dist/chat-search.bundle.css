@@ -69,6 +69,11 @@
 	padding: 8px 13px 0 12px;
 }
 
+.bx-im-search-item__content-container.--centered {
+	justify-content: center;
+	padding-bottom: 8px;
+}
+
 .bx-im-search-item__item-text {
 	font: var(--im-font-size-md)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	color: var(--im-search-item__color_item-text);

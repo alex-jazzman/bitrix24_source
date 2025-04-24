@@ -17,6 +17,7 @@ use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Socialnetwork;
+use Bitrix\Tasks\Util\UserField;
 
 if (!Main\Loader::includeModule('bizproc'))
 {
@@ -275,7 +276,7 @@ class Task implements \IBPWorkflowDocument
 				'Type' => 'datetime',
 			],
 			'MARK' => [
-				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_MARK'),
+				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_MARK_MSGVER_1'),
 				'Type' => 'select',
 				'Editable' => true,
 				'Options' => [
@@ -395,7 +396,7 @@ class Task implements \IBPWorkflowDocument
 			],
 			'filter' => [
 				'=ENTITY_ID' => 'TASKS_TASK',
-				'%=FIELD_NAME' => 'UF_AUTO_%'
+				'!@FIELD_NAME' => UserField::getSystemFields(),
 			],
 			'runtime' => [
 				\Bitrix\Main\UserFieldTable::getLabelsReference('LABELS', LANGUAGE_ID),
@@ -435,7 +436,17 @@ class Task implements \IBPWorkflowDocument
 	{
 		//$task = \Bitrix\Tasks\Item\Task::getInstance($documentId, 1);
 		//$fields = $task->getData();
-		$res = \CTasks::GetByID($documentId, false);
+		$args = func_get_args();
+		$select = $args[2] ?? [];
+		if (empty($select))
+		{
+			$res = \CTasks::GetByID($documentId, false);
+		}
+		else
+		{
+			$res = \CTasks::GetByID($documentId, false, ['select' => $select]);
+		}
+
 		$fields = $res ? $res->fetch() : null;
 
 		if (!$fields)
@@ -856,7 +867,7 @@ class Task implements \IBPWorkflowDocument
 		return 0;
 	}
 
-	private static function convertFieldsToDocument(array &$fields)
+	public static function convertFieldsToDocument(array &$fields, array $required = []): void
 	{
 		$fields['IS_IMPORTANT'] = ($fields['PRIORITY'] > Priority::AVERAGE) ? 'Y' : 'N';
 
@@ -902,7 +913,7 @@ class Task implements \IBPWorkflowDocument
 		}
 
 		$fields['GROUP_ID_PRINTABLE'] = Loc::getMessage('TASKS_BP_DOCUMENT_GROUP_ID_PRINTABLE_DEFAULT');
-		if ($fields['GROUP_ID'] > 0)
+		if (($fields['GROUP_ID'] > 0) && (isset($required['GROUP_ID_PRINTABLE']) || empty($required)))
 		{
 			$fields['GROUP_ID_PRINTABLE'] = $fields['GROUP_ID'];
 			if (Main\Loader::includeModule('socialnetwork'))
@@ -921,7 +932,7 @@ class Task implements \IBPWorkflowDocument
 			$fields['GROUP_ID'] = null;
 		}
 
-		if (isset($fields['FLOW_ID']) && $fields['FLOW_ID'] > 0)
+		if ((isset($fields['FLOW_ID']) && $fields['FLOW_ID'] > 0) && (isset($required['FLOW_OWNER']) || empty($required)))
 		{
 			$flowOwnerId = FlowRegistry::getInstance()->get($fields['FLOW_ID'])->getOwnerId();
 			$fields['FLOW_OWNER'] =  'user_' . $flowOwnerId;
@@ -932,7 +943,7 @@ class Task implements \IBPWorkflowDocument
 			$fields['PARENT_ID'] = null;
 		}
 
-		if (is_array($fields['COMMENT_RESULT']))
+		if (isset($fields['COMMENT_RESULT']) && (is_array($fields['COMMENT_RESULT'])))
 		{
 			$results = [];
 			/** @var \Bitrix\Tasks\Internals\Task\Result\Result $result */
@@ -945,7 +956,7 @@ class Task implements \IBPWorkflowDocument
 			unset($results, $result);
 		}
 
-		if (is_array($fields['COMMENT_RESULT_LAST']))
+		if (isset($fields['COMMENT_RESULT_LAST']) && (is_array($fields['COMMENT_RESULT_LAST'])))
 		{
 			$fields['COMMENT_RESULT_LAST'] = htmlspecialcharsback($fields['COMMENT_RESULT_LAST']['TEXT']);
 		}
@@ -981,7 +992,12 @@ class Task implements \IBPWorkflowDocument
 			&& TaskLimit::isLimitExceeded()
 		)
 		{
-			throw new \Exception(Loc::getMessage('TASKS_BP_DOCUMENT_RESUME_RESTRICTED'));
+			$code =
+				defined('\CBPRuntime::EXCEPTION_CODE_INSTANCE_TARIFF_LIMIT_EXCEED')
+					? \CBPRuntime::EXCEPTION_CODE_INSTANCE_TARIFF_LIMIT_EXCEED
+					: 402
+			;
+			throw new \Exception(Loc::getMessage('TASKS_BP_DOCUMENT_RESUME_RESTRICTED'), $code);
 		}
 	}
 
@@ -1053,7 +1069,7 @@ class Task implements \IBPWorkflowDocument
 		return $multiple ? $result : reset($result);
 	}
 
-	private static function setFlowMessages(array $fields): array
+	public static function setFlowMessages(array $fields): array
 	{
 		$flowId = (int)($fields['FLOW_ID'] ?? 0);
 

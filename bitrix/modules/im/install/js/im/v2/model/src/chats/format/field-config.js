@@ -6,7 +6,6 @@ import {
 	prepareAvatar,
 	prepareChatName,
 	prepareLastMessageViews,
-	prepareWritingList,
 	prepareManagerList,
 	prepareMuteList,
 } from './format-functions';
@@ -130,10 +129,9 @@ export const chatFieldsConfig: FieldsConfig = [
 		checkFunction: Type.isPlainObject,
 	},
 	{
-		fieldName: 'writingList',
-		targetFieldName: 'writingList',
-		checkFunction: Type.isArray,
-		formatFunction: prepareWritingList,
+		fieldName: 'inputActionList',
+		targetFieldName: 'inputActionList',
+		checkFunction: Type.isPlainObject,
 	},
 	{
 		fieldName: 'managerList',

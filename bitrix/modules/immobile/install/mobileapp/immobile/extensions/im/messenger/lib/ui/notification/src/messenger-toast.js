@@ -8,9 +8,9 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 	const { showSafeToast, showOfflineToast, showErrorToast, Position } = require('toast');
 	const { mergeImmutable } = require('utils/object');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('notifications');
+	const logger = getLogger('notifications');
 
 	const ToastType = {
 		unsubscribeFromComments: 'unsubscribeFromComments',

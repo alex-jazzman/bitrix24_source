@@ -143,6 +143,7 @@ export const ExternalConnectionApp = {
 		if (
 			!this.$store.getters.hasData
 			&& this.$store.state.config.connectionProperties?.connectionId
+			&& this.$store.state.config.connectionProperties?.tableName
 		)
 		{
 			this.loadDataset();
@@ -158,7 +159,7 @@ export const ExternalConnectionApp = {
 		onSliderEvent(event)
 		{
 			const [messageEvent] = event.getData();
-			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreated')
+			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave')
 			{
 				this.onConnectionCreated();
 			}

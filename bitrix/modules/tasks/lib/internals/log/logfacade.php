@@ -2,8 +2,13 @@
 
 namespace Bitrix\Tasks\Internals\Log;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Configuration;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\SystemException;
+use ReflectionClass;
 use Throwable;
 
 final class LogFacade
@@ -38,6 +43,43 @@ final class LogFacade
 		self::getLogger()->collect($error->getMessage());
 	}
 
+	public static function handle(string|Throwable|Error $error, string $wrapperClass = SystemException::class): void
+	{
+		$exceptionHandler = Application::getInstance()->getExceptionHandler();
+
+		if ($error instanceof Throwable)
+		{
+			$exceptionHandler->writeToLog($error);
+
+			return;
+		}
+
+		$errorMessage = match (true)
+		{
+			$error instanceof Error => $error->getMessage(),
+			is_string($error) => $error,
+		};
+
+		$reflector = new ReflectionClass($wrapperClass);
+
+		if (!$reflector->isInstantiable() || !$reflector->isSubclassOf(Throwable::class))
+		{
+			return;
+		}
+
+		$exception = $reflector->newInstance($errorMessage);
+
+		$exceptionHandler->writeToLog($exception);
+	}
+
+	public static function logWarn(string $message, int $level = E_USER_WARNING): void
+	{
+		if (self::isDevMode() || Option::get('tasks', 'tasks_log_warnings', 'N') === 'Y')
+		{
+			trigger_error($message, $level);
+		}
+	}
+
 	private static function getLogger(string $marker = Log::DEFAULT_MARKER): Log
 	{
 		if (!isset(self::$loggers[$marker]))
@@ -46,5 +88,12 @@ final class LogFacade
 		}
 
 		return self::$loggers[$marker];
+	}
+
+	private static function isDevMode(): bool
+	{
+		$exceptionHandling = Configuration::getValue('exception_handling');
+
+		return !empty($exceptionHandling['debug']);
 	}
 }

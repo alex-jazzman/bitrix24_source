@@ -3,7 +3,6 @@ import { EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { Utils } from 'im.v2.lib.utils';
-import { Core } from 'im.v2.application.core';
 import { ChatService } from 'im.v2.provider.service';
 import { showKickUserConfirm } from 'im.v2.lib.confirm';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -96,11 +95,9 @@ export class UserMenu extends BaseMenu
 		}
 
 		const profileUri = Utils.user.getProfileLink(this.context.user.id);
-		const isCurrentUser = this.context.user.id === Core.getUserId();
-		const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_PROFILE' : 'IM_LIB_MENU_OPEN_PROFILE_V2';
 
 		return {
-			text: Loc.getMessage(phraseCode),
+			text: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 			href: profileUri,
 			onclick: () => {
 				this.menuInstance.close();

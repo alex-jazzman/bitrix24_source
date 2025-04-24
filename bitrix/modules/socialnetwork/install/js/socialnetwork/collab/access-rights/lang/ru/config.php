@@ -1,6 +1,6 @@
 <?php
 $MESS['SN_COLLAB_ACCESS_RIGHTS'] = 'Права доступа';
-$MESS['SN_COLLAB_ACCESS_RIGHTS_MANAGEMENT_LABEL'] = 'Управление коллабой';
+$MESS['SN_COLLAB_ACCESS_RIGHTS_MANAGEMENT_LABEL_MSGVER_1'] = 'Управление коллабой';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_TASKS_LABEL'] = 'Задачи коллабы';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_OWNER_LABEL'] = 'Владелец';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_OWNER_LABEL_HINT'] = 'Владелец имеет доступ ко всей информации в коллабе. Может изменять любые настройки коллабы и назначать модераторов';

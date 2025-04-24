@@ -5,9 +5,10 @@ $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_DESCRIPTION'] = 'Автоматизир�
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_RECOMMENDATION'] = 'Рекомендации';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_CONSTANTS'] = 'Константы';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_FIELDS'] = 'Запуск процесса';
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_STATUS'] = 'Статус процесса';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DURATION'] = 'нет данных';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_ZERO_DURATION'] = 'мгновенно';
-$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION'] = 'Нет описания';
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION_1'] = 'Вам будет удобнее работать с процессом, если администратор заполнит описание';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_COLLAPSE_DESCRIPTION'] = 'Свернуть';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXPAND_DESCRIPTION'] = 'Развернуть';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE'] = 'Среднее время выполнения';
@@ -32,4 +33,6 @@ $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CONFIRM'] = 'Да, отме�
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CANCEL'] = 'Не отменять';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_TITLE'] = 'Отменить запуск процесса?';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_DESCRIPTION'] = 'Если вы отмените запуск процесса, информация в полях не сохранится';
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_SUCCESS_START'] = 'Бизнес-процесс запущен';
+
 

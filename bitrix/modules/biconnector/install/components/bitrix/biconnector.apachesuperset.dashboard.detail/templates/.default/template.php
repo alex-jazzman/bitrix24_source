@@ -73,6 +73,7 @@ Extension::load([
 	'ui.hint',
 	'loc',
 	'sidepanel',
+	'main.date',
 ]);
 
 $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
@@ -132,6 +133,7 @@ if (!$limitManager->checkLimitWarning())
 		<div class="dashboard-header-buttons">
 			<button id="edit-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-edit"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
 			<button id="download-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-download"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></button>
+			<button id="share-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-share"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?></button>
 			<div id="more-btn" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more"><i></i></div>
 		</div>
 	</div>

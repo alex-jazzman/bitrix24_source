@@ -4,7 +4,7 @@
  */
 jn.define('im/messenger/model/queue/model', (require, exports, module) => {
 	const { Type } = require('type');
-	const { clone } = require('utils/object');
+	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -38,7 +38,7 @@ jn.define('im/messenger/model/queue/model', (require, exports, module) => {
 						request.id = Uuid.getV4();
 					}
 
-					if (!Type.isUndefined(request.messageId))
+					if (Type.isArrayFilled(request.messageIdList))
 					{
 						oldSomeRequestIds = [...oldSomeRequestIds, ...findDoubleRequestByMessageId(store, request)];
 					}
@@ -72,7 +72,7 @@ jn.define('im/messenger/model/queue/model', (require, exports, module) => {
 
 				let oldSomeRequestIds = [];
 				requests.forEach((request) => {
-					if (!Type.isUndefined(request.messageId))
+					if (!Type.isUndefined(request.messageIdList))
 					{
 						oldSomeRequestIds = [...oldSomeRequestIds, ...findDoubleRequestByMessageId(store, request)];
 					}
@@ -128,7 +128,10 @@ jn.define('im/messenger/model/queue/model', (require, exports, module) => {
 		const ids = [];
 		const collectionClone = clone(store.state.collection);
 		collectionClone.forEach((requestClone) => {
-			if ((requestClone.requestName === request.requestName) && (requestClone.messageId === request.messageId))
+			if (
+				(requestClone.requestName === request.requestName)
+				&& (isEqual(requestClone.messageIdList, request.messageIdList))
+			)
 			{
 				ids.push(requestClone.id);
 			}

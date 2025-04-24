@@ -6,8 +6,8 @@
 jn.define('im/messenger/model/recent/search/model', (require, exports, module) => {
 	const { validate } = require('im/messenger/model/recent/search/validator');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--messages-search');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--messages-search');
 
 	/** @type {RecentSearchModel} */
 	const searchModel = {

@@ -22,7 +22,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 {
 	IncludeModuleLangFile(__FILE__);
 
-	$action = $_REQUEST['action'] ?? null;
+	$action = (is_string($_REQUEST['action'] ?? null) ? $_REQUEST['action'] : null);
 	if (!CModule::IncludeModule('timeman'))
 	{
 		echo "{error: 'timeman module not installed', type: 'fatal'}";

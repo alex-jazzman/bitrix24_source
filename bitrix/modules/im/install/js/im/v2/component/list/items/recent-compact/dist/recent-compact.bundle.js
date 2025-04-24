@@ -62,6 +62,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return {
 	        '--no-counter': this.totalCounter === 0
 	      };
+	    },
+	    getAvatarType() {
+	      return Number.parseInt(this.recentItem.dialogId, 10) === im_v2_application_core.Core.getUserId() ? im_v2_component_elements.ChatAvatarType.notes : '';
 	    }
 	  },
 	  methods: {
@@ -81,6 +84,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:avatarDialogId="recentItem.dialogId"
 						:size="AvatarSize.M" 
 						:withSpecialTypes="false"
+						:customType="getAvatarType"
 					/>
 					<div v-if="totalCounter > 0" :class="{'--muted': isChatMuted}" class="bx-im-list-recent-compact-item__avatar_counter">
 						{{ formattedCounter }}

@@ -48,7 +48,7 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Loc::loadMessages(__FILE__);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 
@@ -400,7 +400,7 @@ else
 				: 'false'?>,
 			canAddItem: <?= $arResult['ACCESS_CREATE_PERMS'] ? 'true' : 'false'?>,
 			canSortItem: <?= $arResult['ACCESS_SORT_PERMS'] ? 'true' : 'false'?>,
-			bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
+			bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air' ? '"transparent"' : 'null')?>,
 			addItemTitleText: "<?= Loc::getMessage('KANBAN_QUICK_TASK');?>",
 			addDraftItemInfo: "<?= Loc::getMessage('KANBAN_QUICK_TASK_ITEM_INFO');?>",
 			columns: <?= CUtil::PhpToJSObject($data['columns'], false, false, true)?>,
@@ -588,7 +588,7 @@ if ($show)
 		<?php endif;?>
 		<a href="https://helpdesk.bitrix24.<?= $popupDomain ?>/open/<?= $popupUrlId ?>/" target="_blank"
 		   data-helpId="<?= $popupUrlId ?>"<?php
-		if (SITE_TEMPLATE_ID === 'bitrix24')
+		if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 		{
 			?> id="kanban-readmore"<?php
 		} ?> class="tasks-kanban-popup-text-redmore">

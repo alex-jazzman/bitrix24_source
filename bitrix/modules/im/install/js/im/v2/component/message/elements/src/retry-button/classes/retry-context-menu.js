@@ -55,7 +55,7 @@ export class RetryContextMenu extends BaseMenu
 			html: `<span class="bx-im-message-retry-button__context-menu-delete">${phrase}</span>`,
 			onclick: () => {
 				const messageService = new MessageService({ chatId: this.context.chatId });
-				messageService.deleteMessage(this.context.id);
+				messageService.deleteMessages([this.context.id]);
 				this.menuInstance.close();
 			},
 		};

@@ -114,7 +114,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      text: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_SELECT'),
 	      onclick: () => {
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.openBulkActionsMode, {
-	          messageId: this.context.id
+	          messageId: this.context.id,
+	          dialogId: this.context.dialogId
 	        });
 	        this.menuInstance.close();
 	      }
@@ -417,7 +418,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const messageService = new im_v2_provider_service.MessageService({
 	    chatId
 	  });
-	  void messageService.deleteMessage(messageId);
+	  void messageService.deleteMessages([messageId]);
 	}
 	async function _isDeletionCancelled2() {
 	  const {
@@ -621,6 +622,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MessageSelectButton = {
 	  name: 'MessageSelectButton',
 	  props: {
+	    contextDialogId: {
+	      type: String,
+	      required: true
+	    },
 	    message: {
 	      type: Object,
 	      required: true
@@ -631,14 +636,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.message;
 	    },
 	    selectedMessages() {
-	      return this.$store.getters['messages/select/getCollection'];
+	      return this.$store.getters['messages/select/getCollection'](this.contextDialogId);
 	    },
 	    bulkActionMessageLimit() {
 	      const settings = main_core.Extension.getSettings('im.v2.component.message-list');
 	      return settings.get('multipleActionMessageLimit');
 	    },
 	    isMessageSelected() {
-	      return this.$store.getters['messages/select/isMessageSelected'](this.messageItem.id);
+	      return this.$store.getters['messages/select/isMessageSelected'](this.messageItem.id, this.contextDialogId);
 	    },
 	    isSelectionLimitReached() {
 	      return this.selectedMessages.size === this.bulkActionMessageLimit && !this.isMessageSelected;
@@ -662,7 +667,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        this.showNotification(this.loc('IM_MESSAGE_LIST_MAX_LIMIT_SELECTED_MESSAGES'));
 	        return;
 	      }
-	      this.$store.dispatch('messages/select/toggle', this.messageItem.id);
+	      this.$store.dispatch('messages/select/toggleMessageSelection', {
+	        messageId: this.messageItem.id,
+	        dialogId: this.contextDialogId
+	      });
 	    },
 	    showNotification(text) {
 	      BX.UI.Notification.Center.notify({
@@ -718,7 +726,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.contextDialog.type === im_v2_const.ChatType.user;
 	    },
 	    isBulkActionsMode() {
-	      return this.$store.getters['messages/select/getBulkActionsMode'];
+	      return this.$store.getters['messages/select/isBulkActionsModeActive'](this.contextDialogId);
 	    },
 	    authorGroup() {
 	      return this.item;
@@ -791,7 +799,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div class="bx-im-message-list-author-group__container" :class="containerClasses">
 			<template v-for="(message, index) in authorGroup.messages">
 				<Transition name="bx-im-select-button-transition">
-					<MessageSelectButton v-if="isBulkActionsMode" :message="message" />
+					<MessageSelectButton v-if="isBulkActionsMode" :contextDialogId="contextDialogId" :message="message" />
 				</Transition>
 				<div v-if="isAvatarNeeded(index)" class="bx-im-message-list-author-group__avatar">
 					<MessageAvatar

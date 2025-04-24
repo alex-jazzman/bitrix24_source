@@ -64,6 +64,10 @@ export const BaseChatContent = {
 			type: Boolean,
 			default: true,
 		},
+		withHeader: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	data(): JsonObject
 	{
@@ -89,7 +93,7 @@ export const BaseChatContent = {
 		},
 		isBulkActionsMode(): boolean
 		{
-			return this.$store.getters['messages/select/getBulkActionsMode'];
+			return this.$store.getters['messages/select/isBulkActionsModeActive'](this.dialogId);
 		},
 		hasCommentsOnTop(): boolean
 		{
@@ -118,8 +122,10 @@ export const BaseChatContent = {
 				textareaHeight = Height.blockedTextarea;
 			}
 
+			const headerHeight = this.withHeader ? Height.chatHeader : 0;
+
 			return {
-				height: `calc(100% - ${Height.chatHeader}px - ${textareaHeight}px)`,
+				height: `calc(100% - ${headerHeight}px - ${textareaHeight}px)`,
 			};
 		},
 	},
@@ -143,13 +149,11 @@ export const BaseChatContent = {
 		this.initTextareaResizeManager();
 		this.bindEvents();
 
-		BulkActionsManager.getInstance().init();
+		BulkActionsManager.init();
 	},
 	beforeUnmount()
 	{
 		this.unbindEvents();
-
-		BulkActionsManager.getInstance().destroy();
 	},
 	methods:
 	{
@@ -208,7 +212,7 @@ export const BaseChatContent = {
 	template: `
 		<div class="bx-im-content-chat__scope bx-im-content-chat__container" :class="containerClasses" :style="backgroundStyle">
 			<div class="bx-im-content-chat__content" ref="content">
-				<slot name="header">
+				<slot v-if="withHeader" name="header">
 					<ChatHeader :dialogId="dialogId" :key="dialogId" />
 				</slot>
 				<div :style="dialogContainerStyle" class="bx-im-content-chat__dialog_container">
@@ -223,7 +227,7 @@ export const BaseChatContent = {
 				</div>
 				<!-- Textarea -->
 				<Transition name="bx-im-panel-transition">
-					<BulkActionsPanel v-if="isBulkActionsMode"/>
+					<BulkActionsPanel v-if="isBulkActionsMode" :dialogId="dialogId"/>
 					<div v-else-if="canSend" v-textarea-observer class="bx-im-content-chat__textarea_container" ref="textarea-container">
 						<slot name="textarea" :onTextareaMount="onTextareaMount">
 							<ChatTextarea

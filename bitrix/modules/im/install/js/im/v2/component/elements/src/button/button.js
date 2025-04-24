@@ -21,6 +21,8 @@ export const ButtonColor = {
 	PrimaryBorder: 'primary-border',
 	Link: 'link',
 	Collab: 'collab',
+	Delete: 'delete',
+	Forward: 'forward',
 };
 
 export const ButtonIcon = {

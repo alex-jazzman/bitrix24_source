@@ -45,7 +45,7 @@ CJSCore::init("spotlight");
 Loc::loadMessages(__FILE__);
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view ');
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
 
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 

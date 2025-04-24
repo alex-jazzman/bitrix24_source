@@ -613,7 +613,23 @@ return array(
 	],
 	'loggers' => [
 		'value' => [
-			'Default' => static fn() => (new \Bitrix\Crm\Service\Logger\DbLogger('Default', 168))->setLevel(\Psr\Log\LogLevel::ERROR),
+			'Default' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('Default', 168))
+						->setLevel(\Psr\Log\LogLevel::ERROR)
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.Default', 9))
+							->setLevel(\Psr\Log\LogLevel::CRITICAL)
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
 			'Integration.AI' => static function () {
 				if (\Bitrix\Main\Loader::includeModule('bitrix24') || \Bitrix\Main\Config\Option::get('crm', 'USE_ADDM2LOG_FOR_AI', false))
 				{

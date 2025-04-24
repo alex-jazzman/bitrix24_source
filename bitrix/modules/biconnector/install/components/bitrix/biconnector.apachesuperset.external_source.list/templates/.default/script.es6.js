@@ -51,7 +51,7 @@ class ExternalSourceManager
 			const eventId = messageEvent.getEventId();
 			if (
 				eventId === 'BIConnector:ExternalConnectionGrid:reload'
-				|| eventId === 'BIConnector:ExternalConnection:onConnectionCreated'
+				|| eventId === 'BIConnector:ExternalConnection:onConnectionSave'
 			)
 			{
 				this.#grid.reload();

@@ -6,6 +6,7 @@ import { prepareSettingsSection } from './functions/settings';
 
 import type { ForwardedEntityConfig } from 'im.v2.provider.service';
 import type { CreatableChatType } from 'im.v2.component.content.chat-forms.forms';
+import type { ChatEmbeddedApplicationType, ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
 
 type Opener = {
 	openChat: (dialogId?: string, text?: string) => Promise,
@@ -355,6 +356,23 @@ class Messenger
 
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('IM_SERVICE_FILE_SAVED_ON_DISK_SUCCESS_MSGVER_1'),
+		});
+	}
+
+	async initApplication(
+		applicationName: ChatEmbeddedApplicationType,
+		config: JsonObject,
+	): Promise<ChatEmbeddedApplicationInstance>
+	{
+		const launch = Reflection.getClass('BX.Messenger.v2.Application.Launch');
+		if (!launch)
+		{
+			return Promise.reject();
+		}
+
+		return launch(applicationName, {
+			...config,
+			embedded: true,
 		});
 	}
 }

@@ -871,6 +871,7 @@ BX.Tasks.GridActions = {
 
 		if (!action.includes("none") && (data.forAll !== 'N' || data.selectedIds.length))
 		{
+			data.ownerId = this.ownerId;
 			const groupActions = new BX.Tasks.GroupActionsStepper({
 				action,
 				data,
@@ -928,7 +929,7 @@ BX.Tasks.GridActions = {
 			data.accompliceId = Number(gridActions.accompliceId);
 		}
 
-		if (action === 'setgroup')
+		if (action === 'setgroup' || action === 'setcollab')
 		{
 			data.specifyGroupId = Number(gridActions.groupId);
 		}
@@ -1464,11 +1465,21 @@ BX(function() {
 			this.fillTaskListItems(options.taskList);
 			this.colorPinnedRows();
 			this.showStub();
+			this.clearAnalyticsParams();
 
 			if (options.arParams && options.arParams['LAZY_LOAD'])
 			{
 				this.grid.reload();
 			}
+		},
+
+		clearAnalyticsParams()
+		{
+			const uri = new BX.Uri(window.location.href);
+
+			uri.removeQueryParam('ta_cat', 'ta_sec', 'ta_sub', 'ta_el', 'p1', 'p2', 'p3', 'p4', 'p5');
+
+			window.history.replaceState(null, null, uri.toString());
 		},
 
 		subscribeToPull()

@@ -170,7 +170,7 @@
 	      _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
 	      messageEvent = _event$getData2[0];
 	    var eventId = messageEvent.getEventId();
-	    if (eventId === 'BIConnector:ExternalConnectionGrid:reload' || eventId === 'BIConnector:ExternalConnection:onConnectionCreated') {
+	    if (eventId === 'BIConnector:ExternalConnectionGrid:reload' || eventId === 'BIConnector:ExternalConnection:onConnectionSave') {
 	      babelHelpers.classPrivateFieldGet(_this3, _grid).reload();
 	    }
 	  });

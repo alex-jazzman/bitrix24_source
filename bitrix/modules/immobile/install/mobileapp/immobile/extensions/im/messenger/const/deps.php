@@ -20,6 +20,7 @@ return [
 		'./src/color',
 		'./src/message',
 		'./src/dialog-type',
+		'./src/dialog-status',
 		'./src/permission',
 		'./src/sidebar-action-type',
 		'./src/file-type',

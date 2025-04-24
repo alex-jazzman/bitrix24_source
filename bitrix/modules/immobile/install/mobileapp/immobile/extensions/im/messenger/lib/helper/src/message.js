@@ -9,11 +9,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		MessageComponent,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { emojiRegex } = require('im/messenger/lib/utils');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 
-	const logger = LoggerManager.getInstance().getLogger('helpers--message');
+	const logger = getLogger('helpers--message');
 
 	/**
 	 * @desc It's Set should be sync with serverComponentList in the im module

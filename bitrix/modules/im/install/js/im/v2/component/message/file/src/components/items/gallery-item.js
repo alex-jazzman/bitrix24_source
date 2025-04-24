@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 import { lazyload } from 'ui.vue3.directives.lazyload';
 
-import { FileType } from 'im.v2.const';
+import { FileType, FileViewerContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { ImModelMessage } from 'im.v2.model';
 
@@ -107,7 +107,11 @@ export const GalleryItem = {
 		},
 		viewerAttributes(): Object
 		{
-			return Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+			return Utils.file.getViewerDataAttributes({
+				viewerAttributes: this.file.viewerAttrs,
+				previewImageSrc: this.sourceLink,
+				context: FileViewerContext.dialog,
+			});
 		},
 		canBeOpenedWithViewer(): boolean
 		{
@@ -137,16 +141,13 @@ export const GalleryItem = {
 		{
 			return this.file.type === FileType.video;
 		},
-		previewSourceLink(): string
+		sourceLink(): string
 		{
-			// for a video, we use "urlPreview", because there is an image preview.
-			// for an image, we use "urlShow", because for large gif files in "urlPreview" we have
-			// a static image (w/o animation) .
-			return this.isVideo ? this.file.urlPreview : this.file.urlShow;
+			return this.file.urlPreview;
 		},
 		allowLazyLoad(): boolean
 		{
-			return !this.previewSourceLink.startsWith('blob:');
+			return !this.sourceLink.startsWith('blob:');
 		},
 	},
 	methods:
@@ -158,8 +159,7 @@ export const GalleryItem = {
 				return;
 			}
 
-			const url = this.file.urlDownload ?? this.file.urlShow;
-			window.open(url, '_blank');
+			window.open(this.file.urlDownload, '_blank');
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{
@@ -171,8 +171,7 @@ export const GalleryItem = {
 		},
 	},
 	template: `
-		<div 
-			v-bind="viewerAttributes" 
+		<div
 			class="bx-im-gallery-item__container" 
 			:class="{'--with-forward': isForward}"
 			@click="download"
@@ -180,19 +179,23 @@ export const GalleryItem = {
 		>
 			<img
 				v-if="allowLazyLoad"
+				v-bind="viewerAttributes"
 				v-lazyload
 				data-lazyload-dont-hide
-				:data-lazyload-src="previewSourceLink"
+				:data-lazyload-src="sourceLink"
 				:title="imageTitle"
 				:alt="file.name"
 				class="bx-im-gallery-item__source"
+				draggable="false"
 			/>
 			<img
 				v-else
-				:src="previewSourceLink"
+				v-bind="viewerAttributes"
+				:src="sourceLink"
 				:title="imageTitle"
 				:alt="file.name"
 				class="bx-im-gallery-item__source"
+				draggable="false"
 			/>
 			<ProgressBar v-if="handleLoading && !isLoaded" :item="file" :messageId="messageItem.id" :withLabels="!isGallery" />
 			<div v-if="isVideo" class="bx-im-gallery-item__play-icon-container">

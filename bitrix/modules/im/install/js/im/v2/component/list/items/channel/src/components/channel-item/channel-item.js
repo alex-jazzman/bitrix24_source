@@ -88,10 +88,6 @@ export const ChannelItem = {
 
 			return Boolean(isMuted);
 		},
-		isSomeoneTyping(): boolean
-		{
-			return this.dialog.writingList.length > 0;
-		},
 		needsBirthdayPlaceholder(): boolean
 		{
 			return this.$store.getters['recent/needsBirthdayPlaceholder'](this.recentItem.dialogId);

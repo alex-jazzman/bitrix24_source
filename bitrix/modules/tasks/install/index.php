@@ -227,6 +227,17 @@ class tasks extends CModule
 			'onTuningLoad',
 		);
 
+		// onboarding
+		$this->registerOnboardingEvents();
+
+		$eventManager->registerEventHandler(
+			'baas',
+			'onPackagePurchased',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Integration\AI\Control\AdviceService',
+			'onBoostActivated'
+		);
+
 		$this->InstallTasks();
 
 		CModule::includeModule('tasks');
@@ -844,6 +855,16 @@ class tasks extends CModule
 			'onTuningLoad',
 		);
 
+		// onboarding
+		$this->unRegisterOnboardingEvents();
+
+		$eventManager->unRegisterEventHandler(
+			'baas',
+			'onPackagePurchased',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Integration\AI\Control\AdviceService',
+			'onBoostActivated',
+		);
 
 		// remove tasks from socnetlog table
 		if (
@@ -1100,7 +1121,7 @@ class tasks extends CModule
 			'tasks_task_template_read' => array(
 				'BINDING' => 'task_template',
 				'OPERATIONS' => array(
-					'read'
+					'read',
 				),
 			),
 			'tasks_task_template_full' => array(
@@ -1109,7 +1130,7 @@ class tasks extends CModule
 					'read',
 					'update',
 					'delete',
-				)
+				),
 			),
 		);
 	}
@@ -1158,5 +1179,63 @@ class tasks extends CModule
 			$GLOBALS["errors"] = $this->errors;
 			$APPLICATION->IncludeAdminFile(GetMessage("TASKS_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/unstep2.php");
 		}
+	}
+
+	private function registerOnboardingEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserAuthorize',
+			'tasks',
+			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
+			'OnUserInitialize'
+		);
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserUpdate',
+			'tasks',
+			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
+			'OnAfterUserUpdate',
+		);
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'tasks',
+			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
+			'OnAfterUserDelete',
+		);
+	}
+
+	private function unRegisterOnboardingEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserAuthorize',
+			'tasks',
+			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
+			'OnUserInitialize'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserUpdate',
+			'tasks',
+			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
+			'OnAfterUserUpdate',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'tasks',
+			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
+			'OnAfterUserDelete',
+		);
 	}
 }

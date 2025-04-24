@@ -1,3 +1,4 @@
+import { Core } from 'im.v2.application.core';
 import { Loc, Type } from 'main.core';
 
 import { ChatService } from 'im.v2.provider.service';
@@ -128,6 +129,11 @@ export class MainMenu extends RecentMenu
 	getAddMembersToChatItem(): MenuItem
 	{
 		if (this.isBot())
+		{
+			return null;
+		}
+
+		if (this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10))
 		{
 			return null;
 		}

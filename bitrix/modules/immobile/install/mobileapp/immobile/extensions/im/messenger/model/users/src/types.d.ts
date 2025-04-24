@@ -45,6 +45,7 @@ export type UsersModelState = {
 export type UsersModelActions =
 	'usersModel/setState'
 	| 'usersModel/set'
+	| 'usersModel/setFromPush'
 	| 'usersModel/update'
 	| 'usersModel/delete'
 	| 'usersModel/merge'
@@ -54,6 +55,7 @@ export type UsersModelActions =
 export type UsersModelMutation =
 	'usersModel/set'
 	| 'usersModel/setState'
+	| 'usersModel/setFromPush'
 	| 'usersModel/delete'
 	| 'usersModel/merge'
 
@@ -79,6 +81,12 @@ export type UsersDeleteActions = 'delete';
 export interface UsersDeleteData extends PayloadData
 {
 	id: number;
+}
+
+export type UsersSetFromPushActions = 'setFromPush';
+export interface UsersSetFromPushData extends PayloadData
+{
+	userList: Array<UsersModelState>,
 }
 
 export type UsersModelCollection = {

@@ -7,8 +7,8 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 	const { counterDefaultElement } = require('im/messenger/model/counter/default-element');
 	const { validate } = require('im/messenger/model/comment/validator');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--counter');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--counter');
 
 	/**
 	 *

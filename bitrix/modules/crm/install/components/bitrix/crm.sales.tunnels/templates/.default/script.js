@@ -2821,6 +2821,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        sort: this.getMaxSort() + 10
 	      }).then(function (response) {
 	        _this5.addCategoryFromOptions(response.data);
+	        _this5.isChanged = true;
 	        var allStages = _this5.getStages();
 	        var newStages = [].concat(babelHelpers.toConsumableArray(response.data.STAGES.P), babelHelpers.toConsumableArray(response.data.STAGES.S), babelHelpers.toConsumableArray(response.data.STAGES.F));
 	        newStages.forEach(function (item) {

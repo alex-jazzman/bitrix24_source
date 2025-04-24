@@ -27,6 +27,8 @@ BX.namespace('Tasks.Component');
 			{
 				this.callConstruct(BX.Tasks.Util.Widget);
 
+				this.setHtmlEditorCtrlEnterHandler();
+
 				this.instances.calendar = false;
 				this.instances.helpWindow = false;
 
@@ -46,6 +48,9 @@ BX.namespace('Tasks.Component');
 				this.isExtranetUser = (this.option('isExtranetUser') === true);
 				this.canEditTask = (this.option('canEditTask') === true);
 
+				this.isDeadlineNotificationAvailable = (this.option('isDeadlineNotificationAvailable') === true);
+				this.deadlineNotificationSkipped = (this.option('deadlineNotificationSkipped') === true);
+
 				this.fireTaskEvent();
 
 				if(this.option('doInit'))
@@ -64,13 +69,20 @@ BX.namespace('Tasks.Component');
 
 				this.onTitleChange();
 				this.onResponsibleChange();
-				this.checkNoWorkDays(this.getTaskData().MATCH_WORK_TIME === 'Y');
+
+				this.matchWorkTime = this.getTaskData().MATCH_WORK_TIME === 'Y';
+				this.checkNoWorkDays(this.matchWorkTime);
 
 				this.calendarSettings = this.option('calendarSettings');
 
 				this.aiCommandExecutor = null;
 
 				this.changingFlow = false;
+			},
+
+			setHtmlEditorCtrlEnterHandler: function()
+			{
+				window.taskCtrlEnterHandler = this.onFormKeyDown.bind(this);
 			},
 
 			initFlowSelector()
@@ -363,6 +375,28 @@ BX.namespace('Tasks.Component');
 						}
 
 					}, this));
+
+					BX.PULL.subscribe({
+						moduleId: 'tasks',
+						command: 'skip_deadline_notification_period_changed',
+						callback: function(params) {
+							const period = params.period;
+
+							if (!BX.Type.isString(period))
+							{
+								return;
+							}
+
+							if (period === '')
+							{
+								this.deadlineNotificationSkipped = false;
+							}
+							else
+							{
+								this.deadlineNotificationSkipped = true;
+							}
+						}.bind(this),
+					});
 				}
 
 				// all block togglers
@@ -415,17 +449,22 @@ BX.namespace('Tasks.Component');
 
 				BX.Event.EventEmitter.subscribe(
 					'BX.Tasks.MemberSelector:projectSelected',
-					BX.delegate(this.onProjectSelected, this)
+					BX.delegate(this.onProjectSelected, this),
 				);
 
 				BX.Event.EventEmitter.subscribe(
 					'BX.Tasks.MemberSelector:projectDeselected',
-					BX.delegate(this.onProjectDeselected, this)
+					BX.delegate(this.onProjectDeselected, this),
 				);
 
 				BX.Event.EventEmitter.subscribe(
 					'BX.Main.User.SelectorController:itemRendered',
-					BX.delegate(this.onItemRendered, this)
+					BX.delegate(this.onItemRendered, this),
+				);
+
+				BX.Event.EventEmitter.subscribe(
+					'BX.Tasks.Deadline.Notification:onBeforeSubmit',
+					BX.delegate(this.onBeforeSubmitByDeadlineNotification, this),
 				);
 
 				var instance = BX.Tasks.Component.TasksWidgetMemberSelector.getInstance(this.sys.id + '-project');
@@ -631,15 +670,91 @@ BX.namespace('Tasks.Component');
 
 			onSubmitClick: function(node, e)
 			{
-				if(this.vars.submitting)
+				if (this.vars.submitting)
 				{
 					BX.PreventDefault(e);
+
 					return;
 				}
 
 				BX.addClass(node, 'ui-btn-clock');
-
 				this.vars.submitting = true;
+
+				const deadlineNotification = this.getDeadlineNotification(e.target);
+				if (!deadlineNotification)
+				{
+					return;
+				}
+
+				BX.PreventDefault(e);
+
+				deadlineNotification.show();
+			},
+
+			getDeadlineNotification: function(targetButton)
+			{
+				const isDeadlineNotificationNeeded = (
+					this.isDeadlineNotificationAvailable
+					&& !this.deadlineNotificationSkipped
+					&& !this.isScrumProject
+					&& !this.isFlowForm
+					&& !this.isEditMode()
+				);
+
+				if (!isDeadlineNotificationNeeded)
+				{
+					return null;
+				}
+
+				const targetForm = this.control('form');
+				const projectInput = this.getProjectInput();
+				const targetInput = this.getDeadlineInput();
+
+				if (
+					!BX.Type.isElementNode(targetForm)
+					|| !BX.Type.isElementNode(projectInput)
+					|| !BX.Type.isElementNode(targetInput)
+					|| targetInput.value !== ''
+				)
+				{
+					return null;
+				}
+
+				if (!this.deadlineNotification)
+				{
+					const matchWorkTime = this.matchWorkTime ?? false;
+
+					this.deadlineNotification = new BX.Tasks.Deadline.Notification({
+						targetForm,
+						targetInput,
+						targetButton,
+						matchWorkTime,
+					});
+				}
+
+				return this.deadlineNotification;
+			},
+
+			getProjectInput: function()
+			{
+				const projectBlock = this.control('se-project-block');
+				if (!BX.Type.isElementNode(projectBlock))
+				{
+					return null;
+				}
+
+				return projectBlock.querySelector('input[name*="[SE_PROJECT]"]');
+			},
+
+			getDeadlineInput: function()
+			{
+				const datePlanManager = this.control('date-plan-manager');
+				if (!BX.Type.isElementNode(datePlanManager))
+				{
+					return null;
+				}
+
+				return datePlanManager.querySelector('input[name$="[DEADLINE]"]');
 			},
 
 			onProjectSelected: function(event)
@@ -651,6 +766,12 @@ BX.namespace('Tasks.Component');
 			{
 				const node = document.querySelector('input.tasks-task-temporary-crm-input');
 				node && node.remove();
+			},
+
+			onBeforeSubmitByDeadlineNotification: function()
+			{
+				this.setEditorBeforeUnloadEvent(false);
+				BX.Tasks.CheckListInstance.getTreeStructure().appendRequestLayout();
 			},
 
 			onProjectDeselected: function(event)
@@ -694,7 +815,7 @@ BX.namespace('Tasks.Component');
 					.then(
 						function(response)
 						{
-							var isScrumProject = response.data;
+							this.isScrumProject = response.data;
 
 							var unChosenContainer = this.control('unchosen-blocks');
 							if (!BX.type.isElementNode(unChosenContainer))
@@ -704,7 +825,7 @@ BX.namespace('Tasks.Component');
 
 							var scrumFields = ['EPIC'];
 
-							if (isScrumProject)
+							if (this.isScrumProject)
 							{
 								scrumFields
 									.forEach(function (scrumField) {
@@ -744,26 +865,37 @@ BX.namespace('Tasks.Component');
 			{
 				e = e || window.event;
 
-				var prevent = false;
-				if(BX.Tasks.Util.isEnter(e))
+				if (
+					e.type !== 'keydown'
+					|| (!e.ctrlKey && !e.metaKey)
+					|| !BX.Tasks.Util.isEnter(e)
+				)
 				{
-					if((e.ctrlKey || e.metaKey) && e.type === 'keydown')
-					{
-						var tagDialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
-						if (tagDialog && tagDialog.isOpen())
-						{
-							return;
-						}
-
-						this.submit();
-						prevent = true;
-					}
+					return;
 				}
 
-				if(prevent)
+				const tagDialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
+				if (tagDialog && tagDialog.isOpen())
 				{
-					BX.PreventDefault(e);
+					return;
 				}
+
+				BX.PreventDefault(e);
+
+				const deadlineNotification = this.getDeadlineNotification();
+				if (!deadlineNotification)
+				{
+					this.submit();
+
+					return;
+				}
+
+				if (document.activeElement)
+				{
+					document.activeElement.blur();
+				}
+
+				deadlineNotification.show();
 			},
 
 			onChooseBlock: function(node)
@@ -1137,8 +1269,11 @@ BX.namespace('Tasks.Component');
 
 			onWorktimeChange: function(node)
 			{
-				this.checkNoWorkDays(node.checked);
-				this.instances.projectPlan.setMatchWorkTime(node.checked);
+				const checked = node.checked;
+
+				this.checkNoWorkDays(checked);
+				this.instances.projectPlan.setMatchWorkTime(checked);
+				this.matchWorkTime = checked;
 			},
 
 			checkNoWorkDays: function(matchWorkTime)

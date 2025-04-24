@@ -8,6 +8,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 	const { Theme } = require('im/lib/theme');
 	const { SubTitleIconType } = require('im/messenger/const');
+	const { UserHelper } = require('im/messenger/lib/helper');
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -78,6 +79,25 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 		createSubtitleStyle()
 		{
+			const dialog = this.getDialogItem();
+			let subtitleStyle = {};
+
+			const hasInputAction = Type.isArrayFilled(dialog?.inputActions);
+
+			if (hasInputAction && !UserHelper.isCurrentUser(this.id))
+			{
+				subtitleStyle = {
+					animation: {
+						color: '#777777',
+						type: 'bubbles',
+					},
+				};
+
+				this.styles.subtitle = subtitleStyle;
+
+				return this;
+			}
+
 			if (this.checkNeedsBirthdayPlaceholder())
 			{
 				this.styles.subtitle = {

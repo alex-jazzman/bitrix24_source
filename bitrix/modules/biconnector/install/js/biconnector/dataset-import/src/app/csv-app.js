@@ -219,7 +219,7 @@ export const CsvApp = {
 			return {
 				visible: true,
 				type: header.type,
-				name: header.name && header.name.length > 0 ? header.name : `field_${index}`,
+				name: header.name && header.name.length > 0 ? header.name : `FIELD_${index}`,
 				originalType: null,
 				originalName: header.externalCode,
 				externalCode: header.externalCode,

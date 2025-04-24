@@ -13,8 +13,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const { recentDefaultElement } = require('im/messenger/model/recent/default-element');
 	const { validate } = require('im/messenger/model/recent/validator');
 
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('model--recent');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('model--recent');
 
 	/** @type {RecentMessengerModel} */
 	const recentModel = {
@@ -64,12 +64,9 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getSortedCollection: (state) => () => {
-				const collectionAsArray = Object.values(state.collection).filter((item) => {
-					const isBirthdayPlaceholder = item.options.birthdayPlaceholder;
-					const isInvitedUser = item.options.defaultUserRecord;
-
-					return !isBirthdayPlaceholder && !isInvitedUser && item.message.id;
-				});
+				const collectionAsArray = Object.values(state.collection).filter(
+					(item) => Boolean(item.message.id),
+				);
 
 				return [...collectionAsArray].sort((a, b) => {
 					return b.message.date - a.message.date;
@@ -238,39 +235,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					return false;
 				}
 
-				const newItems = [];
-				const existingItems = [];
-
-				result.forEach((recentItem) => {
-					const existingItem = findItemById(store, recentItem.id);
-					if (existingItem)
-					{
-						// if we already got chat - we should not update it
-						// with default user chat (unless it's an accepted invitation)
-						const defaultUserElement = (
-							recentItem.options
-							&& recentItem.options.defaultUserRecord
-							&& !recentItem.invitation
-						);
-
-						if (defaultUserElement)
-						{
-							return;
-						}
-
-						existingItems.push({
-							index: existingItem.index,
-							fields: recentItem,
-						});
-					}
-					else
-					{
-						newItems.push({
-							fields: recentItem,
-						});
-					}
-				});
-
+				const { newItems, existingItems } = splitItemsByExistence(store, result);
 				if (newItems.length > 0)
 				{
 					store.commit('add', {
@@ -292,6 +257,38 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 
 				return true;
+			},
+
+			/** @function recentModel/setFromPush */
+			setFromPush: (store, payload) => {
+				if (!Type.isArrayFilled(payload))
+				{
+					return;
+				}
+
+				const result = payload.map((recentItem) => validate(recentItem));
+
+				const { newItems, existingItems } = splitItemsByExistence(store, result);
+
+				if (newItems.length > 0)
+				{
+					store.commit('add', {
+						actionName: 'setFromPush',
+						data: {
+							recentItemList: newItems,
+						},
+					});
+				}
+
+				if (existingItems.length > 0)
+				{
+					store.commit('update', {
+						actionName: 'setFromPush',
+						data: {
+							recentItemList: existingItems,
+						},
+					});
+				}
 			},
 
 			/** @function recentModel/update */
@@ -623,6 +620,44 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		}
 
 		return 0;
+	}
+
+	function splitItemsByExistence(store, items)
+	{
+		const newItems = [];
+		const existingItems = [];
+
+		items.forEach((recentItem) => {
+			const existingItem = findItemById(store, recentItem.id);
+			if (existingItem)
+			{
+				// if we already got chat - we should not upd ate it
+				// with default user chat (unless it's an accepted invitation)
+				const defaultUserElement = (
+					recentItem.options
+					&& recentItem.options.defaultUserRecord
+					&& !recentItem.invitation
+				);
+
+				if (defaultUserElement)
+				{
+					return;
+				}
+
+				existingItems.push({
+					index: existingItem.index,
+					fields: recentItem,
+				});
+			}
+			else
+			{
+				newItems.push({
+					fields: recentItem,
+				});
+			}
+		});
+
+		return { newItems, existingItems };
 	}
 
 	module.exports = { recentModel };

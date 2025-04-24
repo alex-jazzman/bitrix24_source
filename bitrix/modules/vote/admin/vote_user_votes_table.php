@@ -319,7 +319,7 @@ if ($vote["COUNTER"] > 0)
 ?>
 <a name="tb"></a>
 
-<?echo ShowError($strError);?>
+<? ShowError($strError);?>
 <form name="form1" method="GET" action="<?=$APPLICATION->GetCurPage()?>?">
 <?
 $oFilter = new CAdminFilter(

@@ -16,7 +16,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _handleLayoutChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLayoutChange");
 	var _handleChatChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleChatChange");
 	var _handleSameChatReopen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSameChatReopen");
-	var _closeBulkActionsMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeBulkActionsMode");
+	var _clearBulkActionsCollection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearBulkActionsCollection");
 	var _closeChannelComments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeChannelComments");
 	var _handleContextAccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleContextAccess");
 	var _getChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChat");
@@ -40,8 +40,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _closeChannelComments, {
 	      value: _closeChannelComments2
 	    });
-	    Object.defineProperty(this, _closeBulkActionsMode, {
-	      value: _closeBulkActionsMode2
+	    Object.defineProperty(this, _clearBulkActionsCollection, {
+	      value: _clearBulkActionsCollection2
 	    });
 	    Object.defineProperty(this, _handleSameChatReopen, {
 	      value: _handleSameChatReopen2
@@ -206,7 +206,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  } = this.getLayout();
 	  const CHAT_LAYOUTS = new Set([im_v2_const.ChatType.chat, im_v2_const.ChatType.channel, im_v2_const.ChatType.copilot, im_v2_const.ChatType.lines, im_v2_const.ChatType.openlinesV2, im_v2_const.ChatType.collab]);
 	  if (CHAT_LAYOUTS.has(name) && entityId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _closeBulkActionsMode)[_closeBulkActionsMode]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _clearBulkActionsCollection)[_clearBulkActionsCollection]();
 	  }
 	}
 	function _handleSameChatReopen2(config) {
@@ -222,8 +222,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  }
 	}
-	function _closeBulkActionsMode2() {
-	  im_v2_lib_bulkActions.BulkActionsManager.getInstance().disableBulkMode();
+	function _clearBulkActionsCollection2() {
+	  im_v2_lib_bulkActions.BulkActionsManager.getInstance().clearCollection();
 	}
 	function _closeChannelComments2() {
 	  const {

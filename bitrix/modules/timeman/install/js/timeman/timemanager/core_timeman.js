@@ -1660,6 +1660,14 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 
 	if (DATA.STATE != 'CLOSED' || DATA.CAN_OPEN)
 	{
+		const settings = BX.Extension.getSettings('timeman');
+		const featureCheckInStartEnabled = settings.get('featureCheckInStartEnabled');
+		const canCheckInPopupShow = (
+			featureCheckInStartEnabled
+			&& Boolean(DATA.CAN_OPEN)
+			&& DATA.CAN_OPEN !== 'REOPEN'
+		);
+
 		this.MAIN_BUTTON = this.MAIN_ROW_CELL_BTN.appendChild(BX.create('DIV', {
 			props: {className: 'tm-popup-button-handler'},
 			children: [
@@ -1667,7 +1675,11 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 					props: {className: 'ui-btn ' + (DATA.STATE != 'CLOSED' ? 'ui-btn-danger ui-btn-icon-stop' : 'ui-btn-success ui-btn-icon-start') },
 					text: BX.message('JS_CORE_TM_' + btn),
 					events: {
-						click: BX.proxy(this.MainButtonClick, this)
+						click: (
+							(canCheckInPopupShow)
+								? this.showCheckInStartPopup.bind(this)
+								: BX.proxy(this.MainButtonClick, this)
+						),
 					},
 				})
 			]
@@ -1691,7 +1703,11 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 			this.MAIN_ROW_CELL_BTN.appendChild(BX.create('SPAN', {
 				props: {className: 'tm-popup-change-time-link'},
 				events: {
-					click: BX.proxy(this.ShowClock, this)
+					click: (
+						(canCheckInPopupShow)
+							? this.showCheckInStartPopup.bind(this)
+							: BX.proxy(this.ShowClock, this)
+					),
 				},
 				text: BX.message('JS_CORE_TM_CHTIME_' + DATA.STATE)
 			}));
@@ -2301,6 +2317,20 @@ BX.CTimeManWindow.prototype.PauseButtonClick = function(e)
 {
 	var action = this.PARENT.DATA.INFO.PAUSED ? this.ACTIONS.REOPEN : this.ACTIONS.PAUSE;
 	return action(e);
+}
+
+BX.CTimeManWindow.prototype.showCheckInStartPopup = async function()
+{
+	const { UserStatisticsLink } = await BX.Runtime.loadExtension('stafftrack.user-statistics-link');
+
+	if (!UserStatisticsLink)
+	{
+		return;
+	}
+
+	this.userStatisticsLink ??= new UserStatisticsLink({ intent: 'check-in' });
+
+	this.userStatisticsLink.show();
 }
 
 BX.CTimeManWindow.prototype.MainButtonClick = function(e)

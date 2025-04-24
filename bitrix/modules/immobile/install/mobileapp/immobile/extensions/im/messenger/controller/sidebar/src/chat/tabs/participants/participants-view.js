@@ -265,20 +265,25 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 */
 		setStyleItem(item, index)
 		{
+			const chatAvatar = ChatAvatar.createFromDialogId(item.id);
+			const chatTitle = ChatTitle.createFromDialogId(item.id);
+			const title = chatTitle.getTitle();
+			const subtitle = chatTitle.getDescription();
+
 			return {
 				type: 'item',
 				key: index.toString(),
 				userId: item.id,
-				title: item.title,
+				title,
+				subtitle,
 				isYou: item.isYou,
 				isCopilot: item.isCopilot,
 				isManager: item.isManager,
 				isYouTitle: item.isYouTitle,
-				subtitle: item.desc,
 				avatarUri: item.imageUrl,
 				avatarColor: item.imageColor,
 				// TODO: switch to ChatAvatar for CoPilot
-				avatar: item.isCopilot ? null : ChatAvatar.createFromDialogId(item.id).getListItemAvatarProps(),
+				avatar: item.isCopilot ? null : chatAvatar.getListItemAvatarProps(),
 				status: item.statusSvg,
 				crownStatus: item.crownStatus,
 				isSuperEllipseAvatar: item.isSuperEllipseAvatar,
@@ -322,7 +327,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 							marginBottom: 4,
 							fontSize: 16,
 							fontWeight: 500,
-							color: item.id ? ChatTitle.createFromDialogId(item.id).getTitleColor() : Theme.colors.base1,
+							color: item.id ? chatTitle.getTitleColor() : Theme.colors.base1,
 						},
 						isYouTitle: {
 							marginLeft: 4,

@@ -30,6 +30,7 @@ jn.define('im/messenger/model/messages/default-element', (require, exports, modu
 		keyboard: [],
 		richLinkId: null,
 		forward: {},
+		push: false,
 	});
 
 	module.exports = {

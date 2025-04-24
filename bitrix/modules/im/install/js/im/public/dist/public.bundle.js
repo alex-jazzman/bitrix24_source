@@ -89,6 +89,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!this.v2enabled) {
 	      return Promise.resolve(false);
 	    }
+	    const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
+	    if (DesktopManager.isDesktop()) {
+	      return Promise.resolve(true);
+	    }
 	    const anchorElement = main_core.Dom.create({
 	      tag: 'a',
 	      attrs: {
@@ -99,7 +103,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return Promise.resolve(false);
 	    }
 	    const skipNativeBrowser = Boolean(options.skipNativeBrowser);
-	    const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 	    const isRedirectAllowed = await (DesktopManager == null ? void 0 : DesktopManager.getInstance().checkForOpenBrowserPage());
 	    if (isRedirectAllowed) {
 	      return DesktopManager == null ? void 0 : DesktopManager.getInstance().openPage(anchorElement.href, {
@@ -349,6 +352,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    BX.UI.Notification.Center.notify({
 	      content: main_core.Loc.getMessage('IM_SERVICE_FILE_SAVED_ON_DISK_SUCCESS_MSGVER_1')
+	    });
+	  }
+	  async initApplication(applicationName, config) {
+	    const launch = main_core.Reflection.getClass('BX.Messenger.v2.Application.Launch');
+	    if (!launch) {
+	      return Promise.reject();
+	    }
+	    return launch(applicationName, {
+	      ...config,
+	      embedded: true
 	    });
 	  }
 	}

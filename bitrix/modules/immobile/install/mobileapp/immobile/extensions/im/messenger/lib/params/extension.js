@@ -189,6 +189,13 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		{
 			return this.get('MULTIPLE_ACTION_MESSAGE_LIMIT', 20);
 		}
+
+		isComponentAvailable(componentCode)
+		{
+			const availableComponents = this.get('AVAILABLE_MESSENGER_COMPONENTS', {});
+
+			return Boolean(availableComponents[componentCode]);
+		}
 	}
 
 	module.exports = {

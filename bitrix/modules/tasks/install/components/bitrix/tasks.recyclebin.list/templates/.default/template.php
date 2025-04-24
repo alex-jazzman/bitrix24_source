@@ -8,7 +8,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
+$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air';
 if($isBitrix24Template)
 {
 	$this->SetViewTarget('below_pagetitle', 0);

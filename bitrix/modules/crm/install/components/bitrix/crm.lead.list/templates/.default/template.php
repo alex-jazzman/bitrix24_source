@@ -322,7 +322,6 @@ js,
 					];
 				}
 
-				$arActions[] = ['SEPARATOR' => true];
 				$arActions[] = [
 					'TITLE' => Loc::getMessage('CRM_LEAD_CREATE_ON_BASIS_TITLE'),
 					'TEXT' => Loc::getMessage('CRM_LEAD_CREATE_ON_BASIS'),

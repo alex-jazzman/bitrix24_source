@@ -44,7 +44,9 @@ $arTabs[] = array(
 
 $arTabs[] = array(
 	'id' => 'tab_rest',
-	'name' => GetMessage('CRM_TAB_REST_2'),
+	'name' => \Bitrix\Crm\Integration\Market\Label::isRenamedMarket()
+		? GetMessage('CRM_TAB_REST_2_MSGVER_1')
+		: GetMessage('CRM_TAB_REST_2'),
 	'title' => GetMessage('CRM_TAB_REST_TITLE'),
 	'icon' => '',
 	'fields' => $arResult['FIELDS']['tab_rest']

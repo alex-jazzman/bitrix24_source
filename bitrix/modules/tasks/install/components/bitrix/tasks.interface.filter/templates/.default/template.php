@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
 
 \Bitrix\Main\Loader::includeModule('ui');
 Extension::load([
@@ -127,4 +127,3 @@ if ($arResult['showPresetTourGuide'])
 </script>
 <?php
 }
-

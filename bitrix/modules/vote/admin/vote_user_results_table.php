@@ -30,7 +30,7 @@ if (
 )
 {
 	require_once ($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
-	echo ShowError(GetMessage("VOTE_RESULT_NOT_FOUND"));
+	ShowError(GetMessage("VOTE_RESULT_NOT_FOUND"));
 	require_once ($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 	die();
 }

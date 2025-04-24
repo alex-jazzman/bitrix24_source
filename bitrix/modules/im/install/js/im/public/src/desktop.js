@@ -15,6 +15,13 @@ class Desktop
 			return Promise.resolve(false);
 		}
 
+		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
+
+		if (DesktopManager.isDesktop())
+		{
+			return Promise.resolve(true);
+		}
+
 		const anchorElement: HTMLAnchorElement = Dom.create({ tag: 'a', attrs: { href: url } });
 		if (anchorElement.host !== location.host)
 		{
@@ -22,7 +29,6 @@ class Desktop
 		}
 
 		const skipNativeBrowser = Boolean(options.skipNativeBrowser);
-		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 
 		const isRedirectAllowed = await DesktopManager?.getInstance().checkForOpenBrowserPage();
 		if (isRedirectAllowed)

@@ -13,10 +13,10 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 	const {
 		DialogType,
 	} = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { ChatRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/chat');
 
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-message');
+	const logger = getLogger('pull-handler--chat-message');
 
 	/**
 	 * @class ChatMessagePullHandler
@@ -97,9 +97,9 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 						this.setMessage(params);
 					}
 
-					this.checkWritingTimer(
+					this.checkTimerInputAction(
 						recentMessageManager.getDialogId(),
-						recentMessageManager.getSender(),
+						recentMessageManager.getSenderId(),
 					);
 				})
 			;
@@ -213,11 +213,14 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
 				const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
 				const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
+
 				Notifier.notify({
 					dialogId: dialog.dialogId,
 					title: dialogTitle,
 					text: this.createMessageChatNotifyText(messageText, userName),
 					avatar,
+				}).catch((error) => {
+					this.logger.error(`${this.getClassName()}.messageNotify notify error:`, error);
 				});
 			}
 		}
@@ -225,6 +228,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 		async setCommentInfo(params)
 		{
 			const chat = params.chat?.[params.chatId];
+			const parentChatId = chat.parent_chat_id;
 
 			if (Type.isNumber(params.counter))
 			{
@@ -235,22 +239,36 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 					dialogId: params.dialogId,
 					newUserId: params.message.senderId,
 					chatCounterMap: {
-						[chat.parent_chat_id]: {
+						[parentChatId]: {
 							[chat.id]: params.counter,
 						},
 					},
 				});
+			}
+			else
+			{
+				await this.store.dispatch('commentModel/setComment', {
+					messageId: chat.parent_message_id,
+					chatId: params.chatId,
+					messageCount: chat.message_count,
+					dialogId: params.dialogId,
+					newUserId: params.message.senderId,
+				});
+			}
 
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](parentChatId);
+			if (!dialog)
+			{
 				return;
 			}
 
-			await this.store.dispatch('commentModel/setComment', {
-				messageId: chat.parent_message_id,
-				chatId: params.chatId,
-				messageCount: chat.message_count,
-				dialogId: params.dialogId,
-				newUserId: params.message.senderId,
-			});
+			const recentItem = this.store.getters['recentModel/getById'](dialog.dialogId);
+			if (!recentItem)
+			{
+				return;
+			}
+
+			await this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
 		getRecentMessageManager(params, extra = {})

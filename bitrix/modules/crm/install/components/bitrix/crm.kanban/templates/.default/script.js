@@ -442,6 +442,7 @@ BX.Crm.KanbanComponent.onSpecialItemDraw = function(item, layout)
 };
 
 /**
+ * @deprecated
  * Intranet user selector.
  * Copy-paste from
  * crm/install/components/bitrix/crm.entity.editor/templates/.default/script.js

@@ -5,8 +5,8 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-copilo
 	const { SyncFillerBase } = require('im/messenger/provider/service/classes/sync/fillers/sync-filler-base');
 	const { EventType, ComponentCode, BotCode, WaitingEntity } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('sync-service');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('sync-service');
 
 	/**
 	 * @class SyncFillerCopilot

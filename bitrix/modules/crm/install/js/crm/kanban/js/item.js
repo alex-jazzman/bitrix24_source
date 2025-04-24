@@ -403,7 +403,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 		this.clientNameItems = [];
 		if (
-			data.contactId
+			this.getContactId()
 			&& data.contactName
 			&& gridData.customFields.includes('CLIENT')
 		)
@@ -412,7 +412,7 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 
 		if (
-			data.companyId
+			this.getCompanyId()
 			&& data.companyName
 			&& gridData.customFields.includes('CLIENT')
 		)
@@ -520,7 +520,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 	appendLastActivityUser(lastActivity)
 	{
-		const lastActivityBy = lastActivity.user;
+		const lastActivityBy = this.getUserConfigById(lastActivity?.user?.id) ?? lastActivity.user;
 		if (!BX.Type.isPlainObject(lastActivityBy))
 		{
 			return;
@@ -551,6 +551,20 @@ BX.CRM.Kanban.Item.prototype = {
 		`;
 
 		BX.Dom.append(userPic, this.lastActivityBy);
+	},
+
+	getUserConfigById(id)
+	{
+		const gridData = this.getGridData();
+
+		if (!BX.Type.isArrayFilled(gridData.itemsConfig?.users))
+		{
+			return null;
+		}
+
+		return gridData.itemsConfig?.users.find((user) => {
+			return Number(user.id) === Number(id);
+		}) ?? null;
 	},
 
 	getFormattedLastActiveDateTime(lastActivityTimeInUserTimezone, userNow)
@@ -665,20 +679,26 @@ BX.CRM.Kanban.Item.prototype = {
 			return;
 		}
 
+		const fieldConfig = this.getFieldConfig(field);
+		if (!fieldConfig)
+		{
+			return;
+		}
+
 		let titleIcon = null;
-		if (BX.Type.isObject(field.icon) && BX.Type.isArrayFilled(field.icon.url))
+		if (BX.Type.isObject(fieldConfig.icon) && BX.Type.isArrayFilled(fieldConfig.icon.url))
 		{
 			titleIcon = BX.Tag.render`
 				<div class="crm-kanban-item-fields-item-title-icon">
-					<img src="${field.icon.url}" title="${field.icon.title ?? ''}" alt="">
+					<img src="${fieldConfig.icon.url}" title="${fieldConfig.icon.title ?? ''}" alt="">
 				</div>
 			`;
 		}
 
 		const titleText = BX.Tag.render`<div class="crm-kanban-item-fields-item-title-text"></div>`;
-		titleText.innerHTML = field.title;
+		titleText.innerHTML = fieldConfig.title;
 
-		const fieldsElement = BX.Dom.create('div', this.getFieldParams(field));
+		const fieldsElement = BX.Dom.create('div', this.getFieldParams({ ...field, ...fieldConfig }));
 		const fieldsItem = BX.Tag.render`
 			<div class="crm-kanban-item-fields-item">
 				<div class="crm-kanban-item-fields-item-title">
@@ -690,6 +710,43 @@ BX.CRM.Kanban.Item.prototype = {
 		`;
 
 		BX.Dom.append(fieldsItem, this.fieldsWrapper);
+	},
+
+	/**
+	 * for kanban api v2
+	 * @param {Object} field
+	 * @returns {Object}
+	 */
+	getFieldConfig(field)
+	{
+		const config = this.getFieldsConfig().find((item) => {
+			return field.code === item.code;
+		}) ?? field;
+
+		if (config.type === 'user')
+		{
+			config.value = this.getUserConfigById(field.value) ?? field.value;
+		}
+
+		return config;
+	},
+
+	/**
+	 * for kanban api v2
+	 * @returns {Array<Object>}
+	 */
+	getFieldsConfig()
+	{
+		return this.getItemsConfigData().fields ?? [];
+	},
+
+	/**
+	 * for kanban api v2
+	 * @returns {Object}
+	 */
+	getItemsConfigData()
+	{
+		return this.getGridData().itemsConfig ?? {};
 	},
 
 	/**
@@ -743,6 +800,32 @@ BX.CRM.Kanban.Item.prototype = {
 	{
 		const params = {};
 
+		// for api v2
+		if (!BX.Type.isPlainObject(field.value) || BX.Type.isArray(field.value))
+		{
+			if (BX.Type.isArray(field.value))
+			{
+				const results = [];
+				field.value.forEach((userId) => {
+					const userTypeFieldConfigData = (this.getItemsConfigData().users?.find((user) => user.id === Number(userId)) ?? null);
+					if (BX.Type.isPlainObject(userTypeFieldConfigData))
+					{
+						const info = this.getInfoFromUserTypeFieldValue(userTypeFieldConfigData);
+						results.push(info.balloon);
+					}
+				});
+
+				params.html = results.join(', ');
+
+				return params;
+			}
+
+			const userTypeFieldConfigData = this.getItemsConfigData().users?.find((user) => user.id === Number(field.value)) ?? null;
+			const info = this.getInfoFromUserTypeFieldValue(userTypeFieldConfigData);
+
+			params.html = info.balloon;
+		}
+
 		if (field.html !== true)
 		{
 			params.text = this.getMessage('noname');
@@ -752,30 +835,26 @@ BX.CRM.Kanban.Item.prototype = {
 
 		if (BX.Type.isPlainObject(field.value))
 		{
-			let itemUserPic = '';
-			let itemUserName = '';
-			if (field.value.link === '')
+			const info = this.getInfoFromUserTypeFieldValue(field.value);
+
+			if (field.code === 'ASSIGNED_BY_ID')
 			{
-				itemUserPic = '<span class="crm-kanban-item-fields-item-value-userpic"></span>';
-				itemUserName = `<span class="crm-kanban-item-fields-item-value-name">${field.value.title}</span>`;
+				params.html = `
+					<div class="crm-kanban-item-fields-item-value-user">
+						${info.picture}
+						${info.name}
+					</div>
+				`;
 			}
 			else
 			{
-				let userPic = '';
-				if (field.value.picture)
-				{
-					userPic = ` style="background-image: url(${encodeURI(field.value.picture)})"`;
-				}
-				itemUserPic = `<a class="crm-kanban-item-fields-item-value-userpic" href="${field.value.link}"${userPic}></a>`;
-				itemUserName = `<a class="crm-kanban-item-fields-item-value-name" href="${field.value.link}">${field.value.title}</a>`;
+				const html = info.balloon ?? `${info.picture}\n${info.name}`;
+				params.html = `
+					<div class="crm-kanban-item-fields-item-value-user">
+						${html}
+					</div>
+				`;
 			}
-
-			params.html = `
-				<div class="crm-kanban-item-fields-item-value-user">
-					${itemUserPic}
-					${itemUserName}
-				</div>
-			`;
 		}
 		else
 		{
@@ -785,13 +864,46 @@ BX.CRM.Kanban.Item.prototype = {
 		return params;
 	},
 
+	getInfoFromUserTypeFieldValue(value)
+	{
+		if (!BX.Type.isPlainObject(value))
+		{
+			return {};
+		}
+
+		let itemUserPic = '';
+		let itemUserName = '';
+		if (value.link === '')
+		{
+			itemUserPic = '<span class="crm-kanban-item-fields-item-value-userpic"></span>';
+			itemUserName = `<span class="crm-kanban-item-fields-item-value-name">${value.title}</span>`;
+		}
+		else
+		{
+			let userPic = '';
+			if (value.picture)
+			{
+				userPic = ` style="background-image: url(${encodeURI(value.picture)})"`;
+			}
+			itemUserPic = `<a class="crm-kanban-item-fields-item-value-userpic" href="${value.link}"${userPic}></a>`;
+			itemUserName = `<a class="crm-kanban-item-fields-item-value-name" href="${value.link}">${value.title}</a>`;
+		}
+
+		return {
+			picture: itemUserPic,
+			name: itemUserName,
+			balloon: value.balloon,
+		};
+	},
+
 	layoutBadges()
 	{
 		BX.Dom.clean(this.badgesWrapper);
 
-		for (let i = 0; i < this.data.badges.length; i++)
+		const badges = this.getBadges();
+		for (let i = 0; i < badges.length; i++)
 		{
-			const badgeData = this.data.badges[i];
+			const badgeData = badges[i];
 
 			const badgeValueClass = 'crm-kanban-item-badges-item-value crm-kanban-item-badges-status';
 			const badgeValueStyle = `
@@ -1247,7 +1359,8 @@ BX.CRM.Kanban.Item.prototype = {
 	 * @param {String} type of entity.
 	 * @returns {String}
 	 */
-	getActivityMessage(type) {
+	getActivityMessage(type)
+	{
 		const content = BX.create('span');
 		const typeTranslateCode = /DYNAMIC_(\d+)/.test(type) ? 'DYNAMIC' : type;
 		content.innerHTML = BX.Loc.getMessage(`CRM_KANBAN_ACTIVITY_CHANGE_${typeTranslateCode}_MSGVER_1`)
@@ -1375,8 +1488,8 @@ BX.CRM.Kanban.Item.prototype = {
 		{
 			// eslint-disable-next-line no-undef
 			BXIM.phoneTo(item.value, {
-				ENTITY_TYPE: (item.clientType === undefined ? data.contactType : item.clientType),
-				ENTITY_ID: (item.clientId === undefined ? data.contactId : item.clientId),
+				ENTITY_TYPE: (item.clientType === undefined ? this.getContactType() : item.clientType),
+				ENTITY_ID: (item.clientId === undefined ? this.getContactId() : item.clientId),
 			});
 		}
 		// eslint-disable-next-line no-undef
@@ -1439,16 +1552,16 @@ BX.CRM.Kanban.Item.prototype = {
 			fields.forEach((field) => {
 				let clientType = '';
 				let clientId = '';
-				const data = this.getData();
+
 				if (category === 'company')
 				{
 					clientType = 'CRM_COMPANY';
-					clientId = data.companyId;
+					clientId = this.getCompanyId();
 				}
 				else if (category === 'contact')
 				{
 					clientType = 'CRM_CONTACT';
-					clientId = data.contactId;
+					clientId = this.getContactId();
 				}
 
 				menuItems.push({
@@ -1650,9 +1763,11 @@ BX.CRM.Kanban.Item.prototype = {
 
 		const data = this.getData();
 		const gridData = this.getGridData();
-		const pingSettings = data.pingSettings || gridData.pingSettings;
-		const colorSettings = data.colorSettings || gridData.colorSettings;
-		const calendarSettings = data.calendarSettings || gridData.calendarSettings;
+
+		const pingSettings = data.pingSettings || gridData.itemsConfig?.pingSettings;
+		const colorSettings = data.colorSettings || gridData.itemsConfig?.colorSettings;
+		const calendarSettings = data.calendarSettings || gridData.itemsConfig?.calendarSettings;
+
 		const settings = {
 			pingSettings,
 			colorSettings,
@@ -1750,7 +1865,7 @@ BX.CRM.Kanban.Item.prototype = {
 		const column = this.getColumn();
 		const columnData = column.getData();
 
-		if (data.activityProgress > 0)
+		if (this.getActivityProgress() > 0)
 		{
 			this.switchVisible(this.activityExist, true);
 			this.switchVisible(this.activityEmpty, false);
@@ -1794,12 +1909,11 @@ BX.CRM.Kanban.Item.prototype = {
 
 		const gridData = this.getGrid().getData();
 		const errorCounterByActivityResponsible = gridData.showErrorCounterByActivityResponsible || false;
-		const data = this.getData();
 		const userId = gridData.userId;
 
 		const html = errorCounterByActivityResponsible
-			? this.makeCounterHtmlByActivityResponsible(data, userId)
-			: this.makeCounterHtmlByEntityResponsible(data, userId)
+			? this.makeCounterHtmlByActivityResponsible(userId)
+			: this.makeCounterHtmlByEntityResponsible(userId)
 		;
 
 		if (BX.Type.isStringFilled(html))
@@ -1808,17 +1922,16 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 	},
 
-	makeCounterHtmlByActivityResponsible(data, userId)
+	makeCounterHtmlByActivityResponsible(userId)
 	{
-		let html = '';
-
-		const userActStat = data.activitiesByUser[userId] || {};
+		const userActStat = this.getActivitiesByUser()[userId] || {};
 
 		const userActivityError = userActStat.activityError || 0;
 		const userActivityIncoming = userActStat.incoming || 0;
 		const userActivityProgress = userActStat.activityProgress || 0;
 		const userActivityCounterTotal = userActStat.activityCounterTotal || 0;
 
+		let html = '';
 		if (userActivityIncoming > 0 && userActivityError > 0)
 		{
 			html = this.getActivityCounterHtml(
@@ -1848,9 +1961,9 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 		else
 		{
-			if (data.activityCounterTotal > 0)
+			if (this.getActivityCounterTotal() > 0)
 			{
-				html = this.getActivityCounterHtml(data.activityCounterTotal);
+				html = this.getActivityCounterHtml(this.getActivityCounterTotal());
 			}
 			else
 			{
@@ -1863,16 +1976,16 @@ BX.CRM.Kanban.Item.prototype = {
 		return html;
 	},
 
-	makeCounterHtmlByEntityResponsible(data, userId)
+	makeCounterHtmlByEntityResponsible(userId)
 	{
-		let html = '';
 		const isCurrentUserResponsibleToElement = userId === BX.prop.getNumber(this.data, 'assignedBy', 0);
 
-		const activityProgress = data.activityProgress || 0;
-		const activityError = data.activityError || 0;
-		const activityIncomingTotal = data.activityIncomingTotal || 0;
-		const activityCounterTotal = data.activityCounterTotal || 0;
+		const activityProgress = this.getActivityProgress();
+		const activityError = this.getActivityError();
+		const activityIncomingTotal = this.getActivityIncomingTotal();
+		const activityCounterTotal = this.getActivityCounterTotal();
 
+		let html = '';
 		if (isCurrentUserResponsibleToElement)
 		{
 			if (activityIncomingTotal > 0 && activityError > 0)
@@ -1913,7 +2026,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 		if (activityCounterTotal > 0)
 		{
-			html = this.getActivityCounterHtml(data.activityCounterTotal);
+			html = this.getActivityCounterHtml(this.getActivityCounterTotal());
 		}
 		else if (activityProgress > 0)
 		{
@@ -1967,6 +2080,8 @@ BX.CRM.Kanban.Item.prototype = {
 
 	showTooltip(content, target, white)
 	{
+		this.hideTooltip();
+
 		const blackOverlay = {
 			background: 'black',
 			opacity: 0,
@@ -1974,8 +2089,8 @@ BX.CRM.Kanban.Item.prototype = {
 		const overlay = white ? blackOverlay : null;
 		const className = `crm-kanban-without-tooltip ${white ? 'crm-kanban-without-tooltip-white' : 'crm-kanban-tooltip-animate'}`;
 
-		this.popupTooltip = BX.PopupWindowManager.create(
-			'kanban_tooltip',
+		this.popupTooltip = new BX.PopupWindow(
+			`kanban_tooltip_${this.id}`,
 			target,
 			{
 				className,
@@ -2001,7 +2116,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 	hideTooltip()
 	{
-		this.popupTooltip.destroy();
+		this.popupTooltip?.destroy();
 	},
 
 	createShadow()
@@ -2189,6 +2304,7 @@ BX.CRM.Kanban.Item.prototype = {
 					return;
 				}
 
+				// eslint-disable-next-line unicorn/no-this-assignment
 				const item = this;
 				item.isAnimationInProgress = true;
 
@@ -2247,7 +2363,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 		if (
 			grid.getData().viewMode === BX.Crm.Kanban.ViewMode.MODE_ACTIVITIES
-			&& this.getData().activityIncomingTotal > 0
+			&& this.getActivityIncomingTotal() > 0
 		)
 		{
 			return true;
@@ -2256,6 +2372,81 @@ BX.CRM.Kanban.Item.prototype = {
 		const itemColumnData = this.getColumn().getData();
 
 		return (grid.getTypeInfoParam('disableMoveToWin') && itemColumnData.type === 'WIN');
+	},
+
+	/**
+	 * @returns {boolean}
+	 */
+	isCountable()
+	{
+		return (this.countable ?? true);
+	},
+
+	/**
+	 * @returns {boolean}
+	 */
+	isDraggable()
+	{
+		return ((this.draggable ?? true) && this.getGrid().canSortItems());
+	},
+
+	/**
+	 * @returns {boolean}
+	 */
+	isDroppable()
+	{
+		return (this.droppable ?? true);
+	},
+
+	/**
+	 * @returns {{PHONE: (boolean), EMAIL: (boolean), IM: (boolean), WEB: (boolean)}}
+	 */
+	getRequiredFm()
+	{
+		return {
+			PHONE: this.isRequiredFmField('PHONE'),
+			EMAIL: this.isRequiredFmField('EMAIL'),
+			IM: this.isRequiredFmField('IM'),
+			WEB: this.isRequiredFmField('WEB'),
+		};
+	},
+
+	/**
+	 * @param {string} fieldName
+	 * @returns {boolean}
+	 */
+	isRequiredFmField(fieldName)
+	{
+		const data = this.getData();
+
+		if (fieldName === 'PHONE')
+		{
+			return data.required_fm?.PHONE ?? true;
+		}
+
+		if (fieldName === 'EMAIL')
+		{
+			return data.required_fm?.EMAIL ?? true;
+		}
+
+		if (fieldName === 'IM')
+		{
+			return data.required_fm?.IM ?? true;
+		}
+
+		if (fieldName === 'WEB')
+		{
+			return data.required_fm?.WEB ?? true;
+		}
+
+		return false;
+	},
+
+	isValidFmFieldName(fieldName)
+	{
+		const fieldNames = ['PHONE', 'EMAIL', 'IM', 'WEB'];
+
+		return fieldNames.includes(fieldName);
 	},
 
 	getCurrentUser()
@@ -2268,6 +2459,86 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 
 		return currentUser;
+	},
+
+	/**
+	 * @returns {number}
+	 */
+	getActivityIncomingTotal()
+	{
+		return this.getData().activityIncomingTotal ?? 0;
+	},
+
+	/**
+	 * @returns {number}
+	 */
+	getActivityCounterTotal()
+	{
+		return this.getData().activityCounterTotal ?? 0;
+	},
+
+	/**
+	 * @returns {number}
+	 */
+	getActivityErrorTotal()
+	{
+		return this.getData().activityErrorTotal ?? 0;
+	},
+
+	/**
+	 * @returns {number}
+	 */
+	getActivityProgress()
+	{
+		return this.getData().activityProgress ?? 0;
+	},
+
+	/**
+	 * @returns {number}
+	 */
+	getActivityError()
+	{
+		return this.getData().activityError ?? 0;
+	},
+
+	/**
+	 * @returns {Object}
+	 */
+	getActivitiesByUser()
+	{
+		return this.getData().activitiesByUser ?? {};
+	},
+
+	/**
+	 * @returns {Object[]}
+	 */
+	getBadges()
+	{
+		return this.getData().badges ?? [];
+	},
+
+	/**
+	 * @returns {string}
+	 */
+	getContactId()
+	{
+		return this.getData().contactId ?? '';
+	},
+
+	/**
+	 * @returns {string}
+	 */
+	getCompanyId()
+	{
+		return this.getData().companyId ?? '';
+	},
+
+	/**
+	 * @returns {string}
+	 */
+	getContactType()
+	{
+		return this.getData().contactType ?? '';
 	},
 
 	/**
@@ -2285,14 +2556,12 @@ BX.CRM.Kanban.Item.prototype = {
 	 * @property {number} activityError
 	 * @property {number} activityIncomingTotal
 	 * @property {number} activityProgress
-	 * @property {number} activityShow
+	 * @property {number} activityErrorTotal
 	 * @property {string} activityStageId
-	 * @property {number} activityTotal
 	 * @property {string} assignedBy
 	 * @property {Object[]} badges
 	 * @property {Object} calendarSettings
 	 * @property {Object} colorSettings
-	 * @property {string} columnColor
 	 * @property {string} columnId
 	 * @property {string} companyId
 	 * @property {string} contactId
@@ -2308,7 +2577,6 @@ BX.CRM.Kanban.Item.prototype = {
 	 * @property {boolean} isAutomationDebugItem
 	 * @property {Object} lastActivity
 	 * @property {string} link
-	 * @property {string} modifyByAvatar
 	 * @property {string} modifyById
 	 * @property {string} name
 	 * @property {number} page

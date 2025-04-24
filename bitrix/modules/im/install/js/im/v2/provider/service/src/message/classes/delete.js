@@ -20,20 +20,36 @@ export class DeleteService
 		this.#store = Core.getStore();
 	}
 
-	async deleteMessage(messageId: number | string)
+	async deleteMessages(messageIds: number[])
 	{
-		Logger.warn('MessageService: deleteMessage', messageId);
+		Logger.warn('MessageService: deleteMessage', messageIds);
 
-		if (Utils.text.isUuidV4(messageId))
+		const deleteMessageIds = [];
+
+		messageIds.forEach((messageId) => {
+			if (Utils.text.isUuidV4(messageId))
+			{
+				this.#deleteTemporaryMessage(messageId);
+
+				return;
+			}
+
+			this.#sendDeleteEvent(messageId);
+			this.#updateModels(messageId);
+
+			deleteMessageIds.push(messageId);
+		});
+
+		if (deleteMessageIds.length > 0)
 		{
-			this.#deleteTemporaryMessage(messageId);
-
-			return;
+			void this.#deleteMessageOnServer(deleteMessageIds);
 		}
+	}
 
-		this.#sendDeleteEvent(messageId);
-
+	#updateModels(messageId: number)
+	{
 		const message: ImModelMessage = this.#store.getters['messages/getById'](messageId);
+
 		if (this.#canDeleteCompletely(message))
 		{
 			void this.#completeMessageDelete(message);
@@ -56,8 +72,6 @@ export class DeleteService
 				replyId: 0,
 			},
 		});
-
-		return this.#deleteMessageOnServer(message.id);
 	}
 
 	#canDeleteCompletely(message: ImModelMessage): boolean
@@ -92,8 +106,6 @@ export class DeleteService
 		this.#store.dispatch('messages/delete', {
 			id: message.id,
 		});
-
-		return this.#deleteMessageOnServer(message.id);
 	}
 
 	#updateRecentForCompleteDelete(newLastId: number)
@@ -128,10 +140,10 @@ export class DeleteService
 		});
 	}
 
-	#deleteMessageOnServer(messageId: number): Promise
+	#deleteMessageOnServer(messageIds: number[]): Promise
 	{
 		return runAction(RestMethod.imV2ChatMessageDelete, {
-			data: { id: messageId },
+			data: { messageIds },
 		}).catch((error) => {
 			// eslint-disable-next-line no-console
 			console.error('MessageService: deleteMessage error:', error);

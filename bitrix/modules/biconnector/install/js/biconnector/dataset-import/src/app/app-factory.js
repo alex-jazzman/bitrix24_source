@@ -13,7 +13,9 @@ const codeMap = {
 type AppParams = {
 	dataFormatTemplates: DataFormatTemplate,
 	encodings: Array,
-	separator: Array,
+	separators: Array,
+	reservedNames: Array,
+	connections: Array,
 };
 
 export class AppFactory

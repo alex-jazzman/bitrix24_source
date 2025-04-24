@@ -6,12 +6,12 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-databa
 	const { clone } = require('utils/object');
 	const { EventType, ComponentCode, WaitingEntity } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { ChatDataProvider } = require('im/messenger/provider/data');
 
 	const { SyncFillerBase } = require('im/messenger/provider/service/classes/sync/fillers/sync-filler-base');
 
-	const logger = LoggerManager.getInstance().getLogger('sync-service');
+	const logger = getLogger('sync-service');
 
 	/**
 	 * @class SyncFillerDatabase
@@ -262,21 +262,7 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-databa
 			if (Type.isArrayFilled(messages))
 			{
 				logger.log('SyncService: updatedMessages', messages);
-
-				const updatedMessageIdList = messages.map((message) => message.id);
-				const existingMessages = await this.messageRepository.messageTable.getListByIds(updatedMessageIdList, false);
-				const existingMessagesIdCollection = {};
-				existingMessages.items.forEach((message) => {
-					existingMessagesIdCollection[message.id] = true;
-				});
-
-				const updatedMessagesToSave = messages.filter((message) => existingMessagesIdCollection[message.id]);
-				if (Type.isArrayFilled(updatedMessagesToSave))
-				{
-					logger.log('SyncService: updatedMessagesToSave', updatedMessagesToSave);
-
-					await this.messageRepository.saveFromRest(updatedMessagesToSave);
-				}
+				await this.messageRepository.updateFromRest(messages);
 			}
 		}
 

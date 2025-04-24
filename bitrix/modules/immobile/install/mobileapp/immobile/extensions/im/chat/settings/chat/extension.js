@@ -60,6 +60,7 @@
 				autoplayVideo: true,
 				backgroundType: SettingsChat.BackgroundType.lightGray,
 				chatBetaEnable: false,
+				chatDevModeEnable: false,
 				localStorageEnable: true,
 			});
 
@@ -75,12 +76,25 @@
 					.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE_V2'))
 					.setValue(this.values.chatBetaEnable)
 				;
-				items.push(chatBetaEnableSwitch);
 
 				if (typeof chatBetaEnableSwitch.setTestId === 'function')
 				{
 					chatBetaEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_BETA_ENABLE');
 				}
+
+				items.push(chatBetaEnableSwitch);
+
+				const chatDevModeEnableSwitch = FormItem
+					.create('chatDevModeEnable', FormItemType.SWITCH, BX.message('SE_CHAT_DEV_MODE_ENABLE_TITLE'))
+					.setValue(this.values.chatDevModeEnable)
+				;
+
+				if (typeof chatDevModeEnableSwitch.setTestId === 'function')
+				{
+					chatDevModeEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_DEV_ENABLE');
+				}
+
+				items.push(chatDevModeEnableSwitch);
 
 				// // TODO this setting may need to be reverted
 				// const bitrixCallDevEnableSwitch = FormItem.create(
@@ -198,7 +212,11 @@
 				value: item.value,
 			});
 
-			if (item && item.id === 'localStorageEnable')
+			const restartRequiringItems = [
+				'localStorageEnable',
+				'chatDevModeEnable',
+			];
+			if (item && restartRequiringItems.includes(item.id))
 			{
 				Application.relogin();
 			}

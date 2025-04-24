@@ -127,7 +127,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  async getDraft(dialogId) {
 	    var _this$drafts$dialogId;
-	    await this.initPromise;
+	    if (!this.inited) {
+	      await this.initDraftHistory();
+	    }
 	    const draft = (_this$drafts$dialogId = this.drafts[dialogId]) != null ? _this$drafts$dialogId : {};
 	    return Promise.resolve(draft);
 	  }

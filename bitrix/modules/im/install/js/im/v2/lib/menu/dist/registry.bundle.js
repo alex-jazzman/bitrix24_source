@@ -532,8 +532,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.user.id);
-	    const isCurrentUser = this.context.user.id === im_v2_application_core.Core.getUserId();
-	    const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_PROFILE' : 'IM_LIB_MENU_OPEN_PROFILE_V2';
+	    const phraseCode = 'IM_LIB_MENU_OPEN_PROFILE_V2';
 	    return {
 	      text: main_core.Loc.getMessage(phraseCode),
 	      href: profileUri,

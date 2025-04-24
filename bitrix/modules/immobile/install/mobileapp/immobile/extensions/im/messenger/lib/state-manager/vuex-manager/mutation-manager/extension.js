@@ -5,8 +5,8 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 	const { MutationManager } = require('statemanager/vuex-manager');
 
 	const { MessengerMutationManagerEvent } = require('im/messenger/lib/state-manager/vuex-manager/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('core--messenger-mutation-manager');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('core--messenger-mutation-manager');
 
 	/**
 	 * @class MessengerMutationManager

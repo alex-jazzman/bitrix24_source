@@ -11,11 +11,13 @@ export const MainPanelType = {
 	generalChannel: [ChatType.generalChannel],
 	collab: [ChatType.collab],
 	lines: [ChatType.lines],
+	notes: ['notes'],
 };
 
 export const MainPanelBlock = Object.freeze({
 	support: 'support',
 	chat: 'chat',
+	notes: 'notes',
 	user: 'user',
 	copilot: 'copilot',
 	copilotInfo: 'copilotInfo',
@@ -99,5 +101,12 @@ export const MainPanels = {
 		[MainPanelBlock.chat]: 10,
 		[MainPanelBlock.info]: 20,
 		[MainPanelBlock.file]: 30,
+	},
+	[MainPanelType.notes]: {
+		[MainPanelBlock.notes]: 10,
+		[MainPanelBlock.tariffLimit]: 15,
+		[MainPanelBlock.info]: 20,
+		[MainPanelBlock.file]: 30,
+		[MainPanelBlock.fileUnsorted]: 30,
 	},
 };

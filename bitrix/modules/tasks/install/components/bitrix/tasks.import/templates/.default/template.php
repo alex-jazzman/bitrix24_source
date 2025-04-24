@@ -353,7 +353,7 @@ if ($arResult['IFRAME'])
 											</div>
 											<div class="tasks-entity-widget-content">
 												<div class="tasks-import-required-fields" id="required_fields_container">
-													<?= Loc::getMessage('TASKS_IMPORT_FIELDS_REQUIRED_FIELDS')?>:
+													<?= Loc::getMessage('TASKS_IMPORT_FIELDS_REQUIRED_FIELDS')?>
 													<?= HtmlFilter::encode(implode(', ', $arResult['IMPORT_FILE_PARAMETERS']['REQUIRED_FIELDS'])) ?>.
 												</div>
 												<?

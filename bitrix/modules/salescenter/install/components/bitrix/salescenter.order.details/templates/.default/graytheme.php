@@ -200,7 +200,7 @@ else
 						<div
 							class="salescenter-order-details__item-button"
 							data-role="document-share-action"
-							data-title="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['title'])?>"
+							data-title="<?=CUtil::JSEscape($arResult['DOCUMENT']['title'])?>"
 							data-url="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['url'])?>"
 						>
 							<a href="javascript:void(0);">

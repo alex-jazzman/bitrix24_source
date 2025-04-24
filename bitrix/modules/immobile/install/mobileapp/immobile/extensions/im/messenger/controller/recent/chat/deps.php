@@ -8,7 +8,7 @@ return [
 		'im:messenger/cache',
 		'im:messenger/provider/rest',
 		'im:messenger/lib/logger',
-		'im:messenger/lib/converter',
+		'im:messenger/lib/converter/ui/recent',
 		'im:messenger/provider/rest',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/counters',

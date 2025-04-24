@@ -42,7 +42,7 @@ export const AudioItem = {
 			<AudioPlayer
 				:id="file.id"
 				:messageId="messageId"
-				:src="file.urlShow"
+				:src="file.urlDownload"
 				:file="file"
 				:timelineType="Math.floor(Math.random() * 5)"
 				:authorId="file.authorId"

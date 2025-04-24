@@ -66,7 +66,6 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 		async saveFromRest(userList)
 		{
 			const userListToAdd = [];
-
 			userList.forEach((user) => {
 				const userToAdd = this.userTable.validate(this.validateRestUser(user));
 
@@ -74,6 +73,24 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			});
 
 			return this.userTable.add(userListToAdd, true);
+		}
+
+		async saveFromPush(userList)
+		{
+			const userListMergePromiseList = [];
+			userList.forEach((user) => {
+				const userToAdd = this.validatePushUser(user);
+				const mergePromise = this.userTable.merge(userToAdd.id, (existingUser) => {
+					return {
+						...existingUser,
+						...userToAdd,
+					};
+				});
+
+				userListMergePromiseList.push(mergePromise);
+			});
+
+			return Promise.all(userListMergePromiseList);
 		}
 
 		validateRestUser(user)
@@ -269,6 +286,11 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			}
 
 			return result;
+		}
+
+		validatePushUser(user)
+		{
+			return this.validateRestUser(user);
 		}
 	}
 

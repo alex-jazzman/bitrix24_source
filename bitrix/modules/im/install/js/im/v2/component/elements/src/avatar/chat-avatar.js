@@ -6,14 +6,19 @@ import { Avatar, AvatarSize } from './components/base/avatar';
 import { CollabChatAvatar } from './components/collab/collab-chat';
 import { CollaberAvatar } from './components/collab/collaber';
 import { ExtranetChatAvatar } from './components/extranet/extranet-chat-avatar';
+import { ChatNotesAvatar } from './chat-notes-avatar';
 
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
+export const ChatAvatarType = {
+	notes: 'notes',
+};
+
 // @vue/component
 export const ChatAvatar = {
 	name: 'ChatAvatar',
-	components: { Avatar, CollabAvatar: CollabChatAvatar, CollaberAvatar, ExtranetUserAvatar },
+	components: { Avatar, CollabAvatar: CollabChatAvatar, CollaberAvatar, ExtranetUserAvatar, ChatNotesAvatar },
 	props: {
 		avatarDialogId: {
 			type: [String, Number],
@@ -42,6 +47,10 @@ export const ChatAvatar = {
 		withTooltip: {
 			type: Boolean,
 			default: true,
+		},
+		customType: {
+			type: String,
+			default: '',
 		},
 	},
 	computed: {
@@ -88,6 +97,11 @@ export const ChatAvatar = {
 		},
 		avatarComponent(): BitrixVueComponentProps
 		{
+			if (this.customType === ChatAvatarType.notes)
+			{
+				return ChatNotesAvatar;
+			}
+
 			if (this.isExtranet)
 			{
 				return ExtranetUserAvatar;

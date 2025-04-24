@@ -34,7 +34,7 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 	return;
 }
 
-$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
+$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air');
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
 if ($taskLimitExceeded)

@@ -227,6 +227,11 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.uploadFileId = fields.uploadFileId;
 		}
 
+		if (Type.isBoolean(fields.push))
+		{
+			result.push = fields.push;
+		}
+
 		return result;
 	}
 

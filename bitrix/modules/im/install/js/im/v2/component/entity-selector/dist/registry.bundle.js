@@ -866,7 +866,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        dialogId
 	      } = event;
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeBulkActionsMode);
+	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeBulkActionsMode, {
+	        dialogId
+	      });
 	      await im_public.Messenger.openChat(dialogId);
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertForward, {
 	        messagesIds: this.messagesIds,
@@ -928,6 +930,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        autoHide: false,
 	        contentPadding: 0,
 	        contentBackground: '#fff',
+	        overlay: true,
 	        className: 'bx-im-entity-selector-forward__scope'
 	      };
 	    },

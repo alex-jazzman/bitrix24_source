@@ -1,11 +1,14 @@
 import 'ui.icons';
-import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
-import { Utils } from 'im.v2.lib.utils';
-import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
-import { highlightText } from 'im.v2.lib.text-highlighter';
 import { Text } from 'main.core';
 
+import { Utils } from 'im.v2.lib.utils';
+import { highlightText } from 'im.v2.lib.text-highlighter';
+import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
+import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+
 import '../css/document-detail-item.css';
+
+import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const DocumentDetailItem = {
@@ -25,9 +28,14 @@ export const DocumentDetailItem = {
 			default: '',
 			required: false,
 		},
+		viewerContext: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['contextMenuClick'],
-	data() {
+	data(): JsonObject
+	{
 		return {
 			showContextButton: false,
 		};
@@ -65,7 +73,11 @@ export const DocumentDetailItem = {
 		},
 		viewerAttributes(): Object
 		{
-			return Utils.file.getViewerDataAttributes(this.file.viewerAttrs);
+			return Utils.file.getViewerDataAttributes({
+				viewerAttributes: this.file.viewerAttrs,
+				previewImageSrc: this.file.urlPreview,
+				context: this.viewerContext,
+			});
 		},
 		isViewerAvailable(): boolean
 		{
@@ -85,8 +97,7 @@ export const DocumentDetailItem = {
 				return;
 			}
 
-			const urlToOpen = this.file.urlShow ? this.file.urlShow : this.file.urlDownload;
-			window.open(urlToOpen, '_blank');
+			window.open(this.file.urlDownload, '_blank');
 		},
 		onContextMenuClick(event)
 		{
@@ -101,7 +112,7 @@ export const DocumentDetailItem = {
 		<div 
 			class="bx-im-sidebar-file-document-detail-item__container bx-im-sidebar-file-document-detail-item__scope"
 			@mouseover="showContextButton = true"
-			@mouseleave="showContextButton = false"		
+			@mouseleave="showContextButton = false"
 		>
 			<div class="bx-im-sidebar-file-document-detail-item__icon-container">
 				<div :class="fileIconClass"><i></i></div>
@@ -123,7 +134,7 @@ export const DocumentDetailItem = {
 							<ChatTitle :dialogId="authorId" :showItsYou="false" />
 						</template>
 						<span v-else class="bx-im-sidebar-file-document-detail-item__system-author-text">
-							{{$Bitrix.Loc.getMessage('IM_SIDEBAR_SYSTEM_USER')}}
+							{{ $Bitrix.Loc.getMessage('IM_SIDEBAR_SYSTEM_USER') }}
 						</span>
 					</div>
 				</div>

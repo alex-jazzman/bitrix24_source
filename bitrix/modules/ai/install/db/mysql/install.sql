@@ -77,6 +77,7 @@ create table if not exists b_ai_prompt
 	IS_NEW TINYINT(1) UNSIGNED default 0,
     IS_ACTIVE TINYINT(1) UNSIGNED default 1,
 	IS_SYSTEM char(1) not null default 'N',
+	JSON_OUTPUT_SCHEMA text default null,
 	DATE_CREATE timestamp NOT NULL DEFAULT current_timestamp,
 	DATE_MODIFY timestamp NOT NULL DEFAULT current_timestamp,
 	PRIMARY KEY (ID),

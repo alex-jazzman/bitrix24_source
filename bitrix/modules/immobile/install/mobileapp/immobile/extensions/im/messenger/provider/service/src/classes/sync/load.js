@@ -18,8 +18,8 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { runAction } = require('im/messenger/lib/rest');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('sync-service');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('sync-service');
 
 	/**
 	 * @class LoadService
