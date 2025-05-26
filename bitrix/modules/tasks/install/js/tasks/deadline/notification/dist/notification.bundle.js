@@ -82,8 +82,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	  const matchWorkTime = options.matchWorkTime;
 	  babelHelpers.classPrivateFieldLooseBase(this, _matchWorkTime)[_matchWorkTime] = main_core.Type.isBoolean(matchWorkTime) ? matchWorkTime : false;
+	  const addZero = unit => `0${unit}`.slice(-2);
 	  const pickerOptions = {
-	    defaultTime: defaultTime.toLocaleTimeString(),
+	    defaultTime: `${addZero(defaultTime.getHours())}:${addZero(defaultTime.getMinutes())}`,
 	    targetNode: babelHelpers.classPrivateFieldLooseBase(this, _input)[_input],
 	    enableTime: true,
 	    cutZeroTime: false,

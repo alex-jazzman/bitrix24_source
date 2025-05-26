@@ -29,14 +29,14 @@
 			this.isFireUserEnabled = params.isFireUserEnabled === "Y";
 			this.showSonetAdmin = params.showSonetAdmin === "Y";
 			this.languageId = params.languageId;
-			this.initialFields = params.initialFields;
 			this.siteId = params.siteId;
 			this.isCloud = params.isCloud === "Y";
 			this.isRusCloud = params.isRusCloud === "Y";
 			this.isCurrentUserIntegrator = params.isCurrentUserIntegrator === "Y";
-			this.personalMobile = this.initialFields["PERSONAL_MOBILE"];
+			this.personalMobile = params.personalMobile;
+			this.personalPhoto = params.personalPhoto;
 			this.isCurrentUserAdmin = params.isCurrentUserAdmin;
-			this.avatarUri = BX.type.isNotEmptyString(this.initialFields.PHOTO) ? this.initialFields.PHOTO : null;
+			this.avatarUri = BX.type.isNotEmptyString(params.photo) ? params.photo : null;
 			this.userpicUploadAttribute = params.userpicUploadAttribute ?? '';
 
 			this.entityEditorInstance = new namespace.EntityEditor({
@@ -154,7 +154,7 @@
 		{
 			return BX.Tag.render`
 				<div class="intranet-user-profile-userpic-remove" id="intranet-user-profile-photo-remove"
-					${this.initialFields.PERSONAL_PHOTO ? '' : 'hidden'}>
+					${this.personalPhoto ? '' : 'hidden'}>
 				</div>
 			`;
 		},

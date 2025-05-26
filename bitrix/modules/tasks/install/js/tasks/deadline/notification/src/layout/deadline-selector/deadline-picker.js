@@ -64,8 +64,9 @@ export class DeadlinePicker extends EventEmitter
 		const matchWorkTime = options.matchWorkTime;
 		this.#matchWorkTime = Type.isBoolean(matchWorkTime) ? matchWorkTime : false;
 
+		const addZero = (unit: number) => `0${unit}`.slice(-2);
 		const pickerOptions = {
-			defaultTime: defaultTime.toLocaleTimeString(),
+			defaultTime: `${addZero(defaultTime.getHours())}:${addZero(defaultTime.getMinutes())}`,
 			targetNode: this.#input,
 			enableTime: true,
 			cutZeroTime: false,

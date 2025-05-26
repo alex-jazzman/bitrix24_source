@@ -803,21 +803,21 @@ do{ //one iteration loop
 
 		$arIBlock["EDIT_FILE_BEFORE"] = (string)$arIBlock["EDIT_FILE_BEFORE"];
 		$arIBTYPE["EDIT_FILE_BEFORE"] = (string)$arIBTYPE["EDIT_FILE_BEFORE"];
-		if(
-			$arIBlock["EDIT_FILE_BEFORE"] != ''
-			&& (mb_substr($arIBlock["EDIT_FILE_BEFORE"], -4) == '.php')
-			&& is_file($_SERVER["DOCUMENT_ROOT"].$arIBlock["EDIT_FILE_BEFORE"])
+		if (
+			$arIBlock['EDIT_FILE_BEFORE'] !== ''
+			&& (Main\IO\Path::getExtension($arIBlock['EDIT_FILE_BEFORE']) === 'php')
+			&& is_file($_SERVER['DOCUMENT_ROOT'] . $arIBlock['EDIT_FILE_BEFORE'])
 		)
 		{
-			include($_SERVER["DOCUMENT_ROOT"].$arIBlock["EDIT_FILE_BEFORE"]);
+			include($_SERVER['DOCUMENT_ROOT'] . $arIBlock['EDIT_FILE_BEFORE']);
 		}
-		elseif(
-			$arIBTYPE["EDIT_FILE_BEFORE"] != ''
-			&& (mb_substr($arIBTYPE["EDIT_FILE_BEFORE"], -4) == '.php')
-			&& is_file($_SERVER["DOCUMENT_ROOT"].$arIBTYPE["EDIT_FILE_BEFORE"])
+		elseif (
+			$arIBTYPE['EDIT_FILE_BEFORE'] !== ''
+			&& (Main\IO\Path::getExtension($arIBTYPE['EDIT_FILE_BEFORE']) === 'php')
+			&& is_file($_SERVER['DOCUMENT_ROOT'] . $arIBTYPE['EDIT_FILE_BEFORE'])
 		)
 		{
-			include($_SERVER["DOCUMENT_ROOT"].$arIBTYPE["EDIT_FILE_BEFORE"]);
+			include($_SERVER['DOCUMENT_ROOT'] . $arIBTYPE['EDIT_FILE_BEFORE']);
 		}
 
 		if (

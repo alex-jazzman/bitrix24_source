@@ -970,7 +970,9 @@ if ($arResult["adminRightsRestricted"])
 			formId: '<?= (!empty($arResult["ProfileBlogPost"]["formParams"]) ? CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["FORM_ID"]) : '') ?>',
 			lheId: '<?= (!empty($arResult["ProfileBlogPost"]["formParams"]) ? CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["LHE"]["id"]) : '') ?>'
 		},
-		initialFields: <?=CUtil::PhpToJSObject($arResult["User"])?>,
+		personalMobile: '<?= \CUtil::JSEscape($arResult["User"]["PERSONAL_MOBILE"] ?? '') ?>',
+		personalPhoto: '<?= \CUtil::JSEscape($arResult["User"]["PERSONAL_PHOTO"] ?? '') ?>',
+		photo: '<?= \CUtil::JSEscape($arResult["User"]["PHOTO"] ?? '')  ?>',
 		gridId: '<?='INTRANET_USER_GRID_'.SITE_ID?>',
 		isCurrentUserAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>',
 		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>,

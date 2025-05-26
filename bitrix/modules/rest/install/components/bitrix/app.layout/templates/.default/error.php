@@ -17,6 +17,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Loader;
+use Bitrix\Rest\PlacementTable;
 
 if($arParams['IS_SLIDER'])
 {
@@ -78,7 +79,7 @@ else:
 	</div>
 	<p><?=$arResult['ERROR_MESSAGE']; ?></p>
 </div>
-<?php if(isset($arResult['HELPER_DATA']['CODE'])):?>
+<?php if(isset($arResult['HELPER_DATA']['CODE']) && $arParams['PLACEMENT'] === PlacementTable::PLACEMENT_DEFAULT):?>
 	<script>
 		top.BX.UI.InfoHelper.show('<?=\CUtil::JSescape($arResult['HELPER_DATA']['CODE'])?>');
 	</script>

@@ -390,6 +390,7 @@ if(
 						);
 						if ($code !== '')
 						{
+							$arResult['HELPER_DATA']['CODE'] = $code;
 							$arResult['HELPER_DATA']['TEMPLATE_URL'] = \Bitrix\UI\InfoHelper::getUrl();
 							$arResult['HELPER_DATA']['URL'] = str_replace(
 								'/code/',

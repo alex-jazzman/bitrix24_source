@@ -80,6 +80,7 @@ $MESS["IB_E_FIELD_TRANS_OTHER"] = "Replace Other Characters With:";
 $MESS["IB_E_FIELD_TRANS_SPACE"] = "Replace Whitespace With:";
 $MESS["IB_E_FILE_AFTER"] = "File with element editing form:";
 $MESS["IB_E_FILE_BEFORE"] = "Save operation handler:";
+$MESS["IB_E_FILE_FIELD_HINT"] = "You need administrator permissions to change this parameter.";
 $MESS["IB_E_GOTO_BP"] = "Business Process Templates";
 $MESS["IB_E_GROUP_ACCESS_TITLE"] = "User Group Permissions";
 $MESS["IB_E_IB_PROPERTY_DETAIL"] = "Information Block Property Parameters";
