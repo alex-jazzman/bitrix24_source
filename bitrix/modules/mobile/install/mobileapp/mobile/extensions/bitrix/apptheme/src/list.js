@@ -1,8 +1,8 @@
 /**
- * @module apptheme/list
+ * @module apptheme/src/list
  * @return String
  */
-jn.define('apptheme/list', (require, exports, module) => {
+jn.define('apptheme/src/list', (require, exports, module) => {
 	const colors = {
 		light: {
 			accentBrandBlue: '#2FC6F6',
@@ -126,6 +126,14 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#ffffff',
 			chatMyChannelCmnt: '#ffffff',
 			chatMyChannelSuccess: '#ffffff',
+			chatMyPoll0_1: '#ffffff',
+			chatMyPoll1: '#ffffff',
+			chatMyPoll2: '#ffffff',
+			chatMyPoll3: '#ffffff',
+			chatOtherPoll0_1: '#ffffff',
+			chatOtherPoll1: '#ffffff',
+			chatOtherPoll2: '#ffffff',
+			chatOtherPoll3: '#ffffff',
 			chatOverallBannerBg: '#ffffff',
 			chatOverallFixedWhite: '#ffffff',
 			chatOverallInvertAlert: '#ffffff',
@@ -271,6 +279,14 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#ffffff',
 			chatMyChannelCmnt: '#ffffff',
 			chatMyChannelSuccess: '#ffffff',
+			chatMyPoll0_1: '#ffffff',
+			chatMyPoll1: '#ffffff',
+			chatMyPoll2: '#ffffff',
+			chatMyPoll3: '#ffffff',
+			chatOtherPoll0_1: '#ffffff',
+			chatOtherPoll1: '#ffffff',
+			chatOtherPoll2: '#ffffff',
+			chatOtherPoll3: '#ffffff',
 			chatOverallBannerBg: '#ffffff',
 			chatOverallFixedWhite: '#ffffff',
 			chatOverallInvertAlert: '#ffffff',
@@ -416,6 +432,14 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#D8EEBA',
 			chatMyChannelCmnt: '#E0F5C3',
 			chatMyChannelSuccess: '#1BCE7B',
+			chatMyPoll0_1: '#80A4E548',
+			chatMyPoll1: '#DAFDA8',
+			chatMyPoll2: '#C2F17E',
+			chatMyPoll3: '#9FE043',
+			chatOtherPoll0_1: '#6692C5FF',
+			chatOtherPoll1: '#EDF7FF',
+			chatOtherPoll2: '#C4E6FF',
+			chatOtherPoll3: '#92C5FF',
 			chatOverallBannerBg: '#8CFFFFFF',
 			chatOverallFixedWhite: '#EBEBEB',
 			chatOverallInvertAlert: '#FFFFFF',
@@ -561,6 +585,14 @@ jn.define('apptheme/list', (require, exports, module) => {
 			chatMyChannelBorder: '#33FFFFFF',
 			chatMyChannelCmnt: '#1B79E6',
 			chatMyChannelSuccess: '#33FFFFFF',
+			chatMyPoll0_1: '#33FFFFFF',
+			chatMyPoll1: '#3385E6',
+			chatMyPoll2: '#438FE8',
+			chatMyPoll3: '#5C9DEB',
+			chatOtherPoll0_1: '#4D0077FF',
+			chatOtherPoll1: '#21282D',
+			chatOtherPoll2: '#224269',
+			chatOtherPoll3: '#2E80DD',
 			chatOverallBannerBg: '#99070707',
 			chatOverallFixedWhite: '#E7E7E7',
 			chatOverallInvertAlert: '#FF5752',

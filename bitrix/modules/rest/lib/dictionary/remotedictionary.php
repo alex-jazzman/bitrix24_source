@@ -117,14 +117,7 @@ class RemoteDictionary extends Dictionary
 	 */
 	protected function getDictionaryUri()
 	{
-		if(Loader::includeModule('bitrix24'))
-		{
-			$lang = \CBitrix24::getLicensePrefix();
-		}
-		else
-		{
-			$lang = $this->language;
-		}
+		$lang = Application::getInstance()->getLicense()->getRegion();
 
 		$baseUrl = array_key_exists($lang, $this->baseUrl)
 			? $this->baseUrl[$lang]

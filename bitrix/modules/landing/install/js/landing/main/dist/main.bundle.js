@@ -1044,31 +1044,6 @@ this.BX = this.BX || {};
 	      });
 	    }
 	    /**
-	     * Initialises feedback form
-	     */
-	    // eslint-disable-next-line class-methods-use-this
-	  }, {
-	    key: "initFeedbackForm",
-	    value: function initFeedbackForm() {
-	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	      (function (w, d, u, b) {
-	        w.Bitrix24FormObject = b;
-	        w[b] = w[b] || function () {
-	          // eslint-disable-next-line prefer-rest-params
-	          arguments[0].ref = u;
-	          // eslint-disable-next-line prefer-rest-params
-	          (w[b].forms = w[b].forms || []).push(arguments[0]);
-	        };
-	        if (w[b].forms) return;
-	        var s = d.createElement('script');
-	        var r = 1 * new Date();
-	        s.async = 1;
-	        s.src = "".concat(u, "?").concat(r);
-	        var h = d.getElementsByTagName('script')[0];
-	        h.parentNode.insertBefore(s, h);
-	      })(rootWindow, rootWindow.document, 'https://product-feedback.bitrix24.com/bitrix/js/crm/form_loader.js', 'b24formFeedBack');
-	    }
-	    /**
 	     * Creates blocks list panel sidebar button
 	     * @param {string} category
 	     * @param {object} options

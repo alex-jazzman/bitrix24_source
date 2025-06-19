@@ -2,6 +2,8 @@
 $MESS["IM_ELEMENTS_ATTACH_RICH_FILE_NO_NAME"] = "Без назви";
 $MESS["IM_ELEMENTS_ATTACH_RICH_LINK_DELETE"] = "Прибрати попередній перегляд посилання";
 $MESS["IM_ELEMENTS_AUTO_DELETE_NO_PERMISSION"] = "Недостатньо прав для роботи з автовидаленням. [helpdesklink]Докладніше[/helpdesklink]";
+$MESS["IM_ELEMENTS_AUTO_DELETE_POPUP_INFO"] = "Виберіть, через який час повідомлення в цьому чаті видалятимуться. Якщо вимкнути автовидалення, старі повідомлення видаляться за минулим розкладом.";
+$MESS["IM_ELEMENTS_AUTO_DELETE_POPUP_TITLE"] = "Автовидалення повідомлень";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_GROUP_CHAT"] = "Груповий чат";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_HISTORY"] = "Історія";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_NO_ACCESS"] = "Немає доступу";

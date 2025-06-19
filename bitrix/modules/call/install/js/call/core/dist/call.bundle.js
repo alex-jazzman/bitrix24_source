@@ -15472,7 +15472,7 @@ this.BX = this.BX || {};
 	      }
 	    };
 	    _this.deviceList = [];
-	    _this.turnServer = (main_core.Browser.isFirefox() ? BX.message('turn_server_firefox') : BX.message('turn_server')) || 'turn.calls.bitrix24.com';
+	    _this.turnServer = BX.message('turn_server');
 	    _this.turnServerLogin = BX.message('turn_server_login') || 'bitrix';
 	    _this.turnServerPassword = BX.message('turn_server_password') || 'bitrix';
 	    _this.pingUsersInterval = setInterval(_this.pingUsers.bind(babelHelpers.assertThisInitialized(_this)), pingPeriod);
@@ -24019,19 +24019,7 @@ this.BX = this.BX || {};
 	    }
 	  });
 	}
-	function sendTelemetryEvent(options) {
-	  /*
-	  const url = (document.location.protocol == "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
-	  const req = new XMLHttpRequest();
-	  req.open("POST", url, true);
-	  req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	  req.withCredentials = true;
-	  options.op = "call";
-	  options.d = document.location.host;
-	  const query = BX.util.buildQueryString(options);
-	  req.send(query);
-	  */
-	}
+	function sendTelemetryEvent(options) {}
 	var isDesktop = function isDesktop() {
 	  return typeof BXDesktopSystem != "undefined" || typeof BXDesktopWindow != "undefined";
 	};

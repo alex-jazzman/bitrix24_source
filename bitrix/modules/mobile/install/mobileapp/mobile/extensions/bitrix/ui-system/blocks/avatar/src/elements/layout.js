@@ -5,8 +5,8 @@ jn.define('ui-system/blocks/avatar/src/elements/layout', (require, exports, modu
 	const { isEmpty } = require('utils/object');
 	const { SafeImage } = require('layout/ui/safe-image');
 	const { UserLetters } = require('layout/ui/user/empty-avatar');
-	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient-enum');
-	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape-enum');
+	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
+	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
 	const { AvatarBase } = require('ui-system/blocks/avatar/src/elements/base');
 
 	/**
@@ -153,10 +153,13 @@ jn.define('ui-system/blocks/avatar/src/elements/layout', (require, exports, modu
 
 		renderEmptyAvatar()
 		{
+			const { url, named } = this.getEmptyAvatar();
+
 			return Image({
+				named,
 				style: this.getImageStyle(),
 				svg: {
-					uri: this.getEmptyAvatar(),
+					url,
 				},
 			});
 		}

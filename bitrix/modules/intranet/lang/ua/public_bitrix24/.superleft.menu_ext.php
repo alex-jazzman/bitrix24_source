@@ -15,6 +15,7 @@ $MESS["MENU_CRM_TRACKING"] = "Наскрізна аналітика";
 $MESS["MENU_CRM_WEBFORM"] = "CRM-форми";
 $MESS["MENU_DEVOPS"] = "Розробникам";
 $MESS["MENU_DISK_DOCUMENTS"] = "Документи Онлайн";
+$MESS["MENU_DISK_FLIPCHARTS"] = "Дошки";
 $MESS["MENU_DISK_SECTION_MSGVER_1"] = "Диск";
 $MESS["MENU_EMPLOYEE"] = "Співробітники";
 $MESS["MENU_GROUP_SECTION"] = "Групи";

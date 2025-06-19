@@ -1,0 +1,22 @@
+<?php
+$MESS["VOTE_ANONYMOUS"] = "Анонімне опитування";
+$MESS["VOTE_BUTTON"] = "Голосувати";
+$MESS["VOTE_NOTICE_COMPLETED"] = "опитування завершено";
+$MESS["VOTE_NOTICE_ERROR_MESSAGE_COMPLETE"] = "Не вдалося завершити опитування.";
+$MESS["VOTE_NOTICE_ERROR_MESSAGE_REVOKE"] = "Не вдалося переголосувати.";
+$MESS["VOTE_NOTICE_ERROR_MESSAGE_SUBMIT"] = "Не вдалося проголосувати.";
+$MESS["VOTE_NOTICE_REVOKE_IS_NOT_AVAILABLE"] = "не можна переголосувати";
+$MESS["VOTE_POPUP_BTN_CANCEL"] = "Скасувати";
+$MESS["VOTE_POPUP_BTN_COMPLETE"] = "Завершити";
+$MESS["VOTE_POPUP_TEXT"] = "Результати збережуться, але ніхто інший уже не зможе проголосувати. Опитування не можна буде відновити.";
+$MESS["VOTE_POPUP_TITLE"] = "Завершити опитування?";
+$MESS["VOTE_PUBLIC"] = "Публічне опитування";
+$MESS["VOTE_RESULT_COUNT_PLURAL_0"] = "#COUNT# голос";
+$MESS["VOTE_RESULT_COUNT_PLURAL_1"] = "#COUNT# голоси";
+$MESS["VOTE_RESULT_COUNT_PLURAL_2"] = "#COUNT# голосів";
+$MESS["VOTE_REVOKE"] = "Переголосувати";
+$MESS["VOTE_SHOW_RESULTS"] = "Переглянути результати";
+$MESS["VOTE_SUMMARY_COUNT_NO_VOTES"] = "Немає голосів";
+$MESS["VOTE_SUMMARY_COUNT_PLURAL_0"] = "Проголосувала #COUNT# особа";
+$MESS["VOTE_SUMMARY_COUNT_PLURAL_1"] = "Проголосувало #COUNT# особи";
+$MESS["VOTE_SUMMARY_COUNT_PLURAL_2"] = "Проголосувало #COUNT# осіб";

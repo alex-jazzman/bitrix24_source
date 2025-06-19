@@ -51,17 +51,6 @@ class CatalogFeedbackComponent extends CBitrixComponent
 				'sender_page' => $this->arParams['SENDER_PAGE'] ?? '',
 			];
 		}
-		else
-		{
-			$this->arResult['domain'] = 'https://product-feedback.bitrix24.com';
-			$this->arResult['presets'] = [
-				'from_domain' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : Option::get('main', 'server_name', ''),
-				'b24_plan' => $this->getLicenseType(),
-				'b24_zone' => $this->getPortalZone(),
-				'c_name' => CurrentUser::get()->getFullName(),
-				'user_status' => CurrentUser::get()->isAdmin() ? 'yes' : 'no',
-			];
-		}
 
 		$this->includeComponentTemplate();
 	}

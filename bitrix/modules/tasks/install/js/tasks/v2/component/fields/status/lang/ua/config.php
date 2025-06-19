@@ -1,0 +1,13 @@
+<?php
+$MESS["TASKS_V2_STATUS_COMPLETED"] = "Виконане";
+$MESS["TASKS_V2_STATUS_COMPLETED_AT"] = "Виконане #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_CREATED_AT"] = "Поставлено #DATE# о #TIME#";
+$MESS["TASKS_V2_STATUS_DEFERRED"] = "Відкладене";
+$MESS["TASKS_V2_STATUS_DEFERRED_AT"] = "Відкладене #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_IN_PROGRESS"] = "У роботі";
+$MESS["TASKS_V2_STATUS_IN_PROGRESS_FROM"] = "Виконується з #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_PENDING"] = "Очікує на виконання";
+$MESS["TASKS_V2_STATUS_PENDING_FROM"] = "Очікує на виконання з #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED"] = "На перевірці";
+$MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM"] = "На перевірці з #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_TITLE"] = "Статус:";

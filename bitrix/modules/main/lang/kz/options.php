@@ -2,7 +2,6 @@
 $MESS["FILL_TO_MAIL_M"] = "email мекенжайын тақырыпатқа көшіру:";
 $MESS["MAIN_ADMIN_DEFAULT_LANG"] = "Әкімшілік бөлімге арналған әдепкі тіл:";
 $MESS["MAIN_AUDIT_OPTIONS"] = "Журналға жазуға арналған оқиғалар";
-$MESS["MAIN_CATALOG_STAT_SETTINGS"] = "Ұсыныстар сервисі";
 $MESS["MAIN_COMPRES_CSS_JS"] = "Біріктірілген CSS және JS файлдарының сығымдалған көшірмесін жасау:";
 $MESS["MAIN_CONVERT_UNIX_NEWLINE_2_WINDOWS"] = "Email жіберу кезінде жаңа<br> Unix пішімі жолының символдарын Windows пішіміне түрлендіру:";
 $MESS["MAIN_DISK_SPACE"] = "Дискілік кеңістікті шектеу (Мб):";
@@ -26,7 +25,6 @@ $MESS["MAIN_EVENT_LOG_TASK"] = "Қолжетімділік деңгейінің 
 $MESS["MAIN_EVENT_LOG_USER_DELETE"] = "Пайдаланушыны жоюды жазу:";
 $MESS["MAIN_EVENT_LOG_USER_EDIT"] = "Пайдаланушыны редакциялауды жазу:";
 $MESS["MAIN_EVENT_LOG_USER_GROUPS"] = "Пайдаланушы топтарының өзгеруін жазу:";
-$MESS["MAIN_GATHER_CATALOG_STAT"] = "Тауарларды ұсыну сервисін пайдалану";
 $MESS["MAIN_GATHER_USER_STAT"] = "Сайтқа кіру статистикасын жинау";
 $MESS["MAIN_LEFT_MENU_TYPE"] = "Сайт картасының қалған деңгейлеріне арналған мәзір түрі:";
 $MESS["MAIN_MOVE_JS_TO_BODY"] = "Барлық Javascript-ті парақшаның соңына жылжыту:";

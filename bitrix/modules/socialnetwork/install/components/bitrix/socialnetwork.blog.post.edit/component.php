@@ -2541,7 +2541,7 @@ if (
 				defined("SITE_SERVER_NAME")
 				&& SITE_SERVER_NAME <> ''
 					? SITE_SERVER_NAME
-					: COption::GetOptionString("main", "server_name", "www.bitrixsoft.com")
+					: COption::GetOptionString("main", "server_name")
 			);
 
 			if ($serverName == '')

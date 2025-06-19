@@ -10,6 +10,21 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 	const { Navigator } = require('selector/widget/entity/tree-selectors/shared/navigator');
 	const { Color } = require('tokens');
 
+	const SCOPES = {
+		[ScopesIds.RECENT]: {
+			id: ScopesIds.RECENT,
+			title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_RECENT'),
+		},
+		[ScopesIds.DEPARTMENT]: {
+			id: ScopesIds.DEPARTMENT,
+			title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_DEPARTMENTS'),
+		},
+		[ScopesIds.PROJECT]: {
+			id: ScopesIds.PROJECT,
+			title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_GROUPS'),
+		},
+	};
+
 	/**
 	 * @class NestedDepartmentSelector
 	 */
@@ -60,6 +75,12 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			});
 
 			this.recentTitle = this.options.widgetParams.title ?? NestedDepartmentSelectorEntity.getTitle();
+			this.tabConfig = this.createTabConfig(options.customTabsConfig);
+		}
+
+		hasDepartmentScope()
+		{
+			return Object.prototype.hasOwnProperty.call(this.tabConfig, ScopesIds.DEPARTMENT);
 		}
 
 		getEntity()
@@ -90,8 +111,9 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 				...provider,
 				options: {
 					...providerOptions,
+					enabledTabs: this.createTabConfig(options.customTabsConfig),
 					onItemsLoadedFromServer: (items) => this.#onItemsLoadedFromServer(items),
-					onRecentLoaded: (items) => this.#onRecentLoaded(items),
+					onInitialItemsLoad: (items) => this.#onInitialItemsLoad(items),
 					getScopeId: () => this.getCurrentScopeId(),
 					findInTree: Navigator.findInTree,
 				},
@@ -116,27 +138,52 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			return this.scopeId || {};
 		};
 
-		#getScopes()
+		createTabConfig(customTabsConfig = null)
 		{
-			return [
-				{ id: ScopesIds.RECENT, title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_RECENT') },
-				{ id: ScopesIds.DEPARTMENT, title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_DEPARTMENTS') },
-			];
+			const defaultTabs = {
+				[ScopesIds.RECENT]: SCOPES[ScopesIds.RECENT],
+			};
+
+			if (!customTabsConfig || !Type.isArrayFilled(customTabsConfig))
+			{
+				defaultTabs[ScopesIds.DEPARTMENT] = SCOPES[ScopesIds.DEPARTMENT];
+
+				return defaultTabs;
+			}
+
+			customTabsConfig.forEach((id) => {
+				if (SCOPES[id] && id !== ScopesIds.RECENT)
+				{
+					defaultTabs[id] = SCOPES[id];
+				}
+			});
+
+			return defaultTabs;
 		}
 
-		#onRecentLoaded = (items) => {
+		#getScopes()
+		{
+			return Object.entries(this.tabConfig)
+				.map(([id, config]) => ({ id, title: config.title }))
+			;
+		}
+
+		#onInitialItemsLoad = (items) => {
 			this.setTitle(
 				this.recentTitle,
 			);
 
-			const rootDepartment = items.find(({ entityId }) => entityId === this.getNodeEntityId());
+			if (this.hasDepartmentScope())
+			{
+				const rootDepartment = items.find(({ entityId }) => entityId === this.getNodeEntityId());
 
-			this.getNavigator().init(rootDepartment);
+				this.getNavigator().init(rootDepartment);
+			}
 		};
 
 		#onItemsLoadedFromServer = (items) => {
 			let scopes = null;
-			if (items.some(({ entityId }) => entityId === this.getNodeEntityId()))
+			if (items.some(({ entityId }) => entityId === this.getNodeEntityId() || this.options.customTabsConfig))
 			{
 				scopes = this.#getScopes();
 			}
@@ -153,13 +200,14 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 		#onScopeChanged = ({ text, scope, shouldResetSearch = true }) => {
 			this.scopeId = scope.id;
 
-			const navigator = this.getNavigator();
+			if (this.hasDepartmentScope())
+			{
+				const navigator = this.getNavigator();
+
+				navigator.setCurrentNodeById(navigator.getRootNode());
+			}
 
 			this.setLeftButtons();
-
-			navigator.setCurrentNodeById(
-				navigator.getRootNode(),
-			);
 
 			if (shouldResetSearch)
 			{
@@ -170,20 +218,13 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 		};
 
 		#setItemsByScope = ({ text, scope }) => {
-			let title = '';
+			const scopeHandlers = {
+				[ScopesIds.RECENT]: () => this.recentTitle,
+				[ScopesIds.DEPARTMENT]: () => this.getNavigator().getCurrentNode().title,
+				[ScopesIds.PROJECT]: () => '',
+			};
 
-			switch (scope.id)
-			{
-				case ScopesIds.RECENT:
-					title = this.recentTitle;
-					break;
-
-				case ScopesIds.DEPARTMENT:
-					title = this.getNavigator().getCurrentNode().title;
-					break;
-
-				default:
-			}
+			const title = scopeHandlers[scope.id] ? scopeHandlers[scope.id]() : '';
 
 			this.setTitle(title);
 
@@ -272,24 +313,29 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 
 		async #getItemsByScope()
 		{
-			const navigator = this.getNavigator();
 			const provider = this.getSelector().getProvider();
 
-			switch (this.getCurrentScopeId())
-			{
-				case ScopesIds.DEPARTMENT:
-					// eslint-disable-next-line no-case-declarations
-					const children = await this.getOrLoadNodeChildren(
-						navigator.getCurrentNode(),
-					);
+			const scopeHandlers = {
+				[ScopesIds.DEPARTMENT]: async () => {
+					const navigator = this.getNavigator();
+					const children = await this.getOrLoadNodeChildren(navigator.getCurrentNode());
 
 					return this.getPreparedItems(children);
-				case ScopesIds.RECENT:
-
+				},
+				[ScopesIds.RECENT]: async () => {
 					return provider.prepareItems(provider.getRecentItems());
-				default:
-					return [];
-			}
+				},
+				[ScopesIds.PROJECT]: async () => {
+					const groups = await provider.loadGroups();
+
+					return provider.prepareItems(groups);
+				},
+			};
+
+			const currentScopeId = this.getCurrentScopeId();
+			const handler = scopeHandlers[currentScopeId];
+
+			return handler ? handler() : [];
 		}
 	}
 

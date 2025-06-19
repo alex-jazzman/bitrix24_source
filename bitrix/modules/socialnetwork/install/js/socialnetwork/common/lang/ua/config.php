@@ -2,6 +2,7 @@
 $MESS["SONET_EXT_COMMON_AJAX_ERROR"] = "Виникла помилка обробки запиту";
 $MESS["SONET_EXT_COMMON_B24_SONET_GROUP_FEATURES_TEXT"] = "<p>Права доступу дозволяють зручно організувати робочий процес в групах для всієї компанії. Ви можете налаштувати, з якими інструментами співробітники зможуть працювати, а з якими ні.<p> Налаштування прав доступу можливе лише на розширених тарифах.";
 $MESS["SONET_EXT_COMMON_B24_SONET_GROUP_FEATURES_TITLE"] = "Отримайте додаткові можливості для вашого Бітрікс24";
+$MESS["SONET_EXT_COMMON_GROUP_MENU_CONVERT_TO_COLLAB"] = "Перенести до колаби";
 $MESS["SONET_EXT_COMMON_GROUP_MENU_COPY"] = "Копіювати групу";
 $MESS["SONET_EXT_COMMON_GROUP_MENU_COPY_PROJECT"] = "Копіювати проєкт";
 $MESS["SONET_EXT_COMMON_GROUP_MENU_COPY_SCRUM"] = "Копіювати скрам";

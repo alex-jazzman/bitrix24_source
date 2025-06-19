@@ -933,7 +933,7 @@ class Call
 			return static::getMaxCallServerParticipants();
 		}
 
-		return (int)Option::get('im', 'turn_server_max_users');
+		return (int)Option::get('call', 'turn_server_max_users');
 	}
 
 	public static function getMaxCallServerParticipants(): int
@@ -1097,6 +1097,28 @@ class Call
 		}
 
 		return (bool)Option::get("im", "call_server_enabled");
+	}
+
+	public static function getTurnServer(): string
+	{
+		if (Option::get('call', 'turn_server_self') == 'Y')
+		{
+			$turnServer = Option::get('call', 'turn_server');
+		}
+		else
+		{
+			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+			if (in_array($region, ['ru', 'by', 'kz']))
+			{
+				$turnServer = 'turn.bitrix24.tech';
+			}
+			else
+			{
+				$turnServer = 'turn.calls.bitrix24.com';
+			}
+		}
+
+		return $turnServer;
 	}
 
 	public static function isBitrixCallEnabled(): bool

@@ -1,0 +1,6 @@
+<?php
+$MESS["DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK"] = "Публічний доступ";
+$MESS["DISK_BOARDS_HEADER_BTN_SHARING_SHARE"] = "Запросити до редагування";
+$MESS["DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS"] = "Права доступу";
+$MESS["DISK_FLIPCHART_EDITOR_AUTOSAVE"] = "Автозбереження";
+$MESS["DISK_FLIPCHART_EDITOR_HEADER_BOARDS"] = "Дошки";

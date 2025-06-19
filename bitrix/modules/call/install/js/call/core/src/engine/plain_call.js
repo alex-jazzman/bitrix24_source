@@ -104,7 +104,7 @@ export class PlainCall extends AbstractCall
 
 		this.deviceList = [];
 
-		this.turnServer = (Browser.isFirefox() ? BX.message('turn_server_firefox') : BX.message('turn_server')) || 'turn.calls.bitrix24.com';
+		this.turnServer = BX.message('turn_server');
 		this.turnServerLogin = BX.message('turn_server_login') || 'bitrix';
 		this.turnServerPassword = BX.message('turn_server_password') || 'bitrix';
 

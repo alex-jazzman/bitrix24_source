@@ -4,17 +4,16 @@
 jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 	const { Feature } = require('feature');
 	const { PureComponent } = require('layout/pure-component');
-	const { makeLibraryImagePath } = require('asset-manager');
 	const { AvatarNative } = require('ui-system/blocks/avatar/src/elements/native');
 	const { reduxConnect } = require('ui-system/blocks/avatar/src/providers/redux');
 	const {
 		selectorDataProvider,
 		SelectorDataProviderClass,
 	} = require('ui-system/blocks/avatar/src/providers/selector');
-	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient-enum');
-	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape-enum');
-	const { AvatarElementType } = require('ui-system/blocks/avatar/src/enums/element-type-enum');
-	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type-enum');
+	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
+	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
+	const { AvatarElementType } = require('ui-system/blocks/avatar/src/enums/element-type');
+	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 	const { AvatarView, AvatarViewClass } = require('ui-system/blocks/avatar/src/elements/layout');
 
 	/**
@@ -56,11 +55,6 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 			return Feature.isNativeAvatarSupported();
 		}
 
-		static getEmptyAvatar(emptyAvatar)
-		{
-			return makeLibraryImagePath(emptyAvatar, 'empty-avatar');
-		}
-
 		/**
 		 * @param {AvatarBaseProps} params
 		 */
@@ -77,14 +71,12 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 				...restEntityParams
 			} = AvatarEntityType.resolveType(entityType).getValue();
 
-			const emptyAvatar = Avatar.getEmptyAvatar(paramsEmptyAvatar || placeholder.emptyAvatar);
-
 			return {
 				...restEntityParams,
 				...restParams,
 				placeholder: {
 					...placeholder,
-					emptyAvatar,
+					emptyAvatar: paramsEmptyAvatar || placeholder.emptyAvatar,
 				},
 			};
 		}

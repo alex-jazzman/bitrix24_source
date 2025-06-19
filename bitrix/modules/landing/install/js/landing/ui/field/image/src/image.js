@@ -695,10 +695,16 @@ export class Image extends TextField
 						text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_UNSPLASH"),
 						onclick: this.onUnsplashShow.bind(this),
 					},
-					{
-						text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_GOOGLE"),
-						onclick: this.onGoogleShow.bind(this),
-					},
+					...(
+						Env.getInstance().getOptions()['google_images_available']
+							? [
+								{
+									text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_GOOGLE"),
+									onclick: this.onGoogleShow.bind(this),
+								},
+							]
+							: []
+					),
 					// {
 					// 	text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_PARTNER"),
 					// 	className: "landing-ui-disabled"

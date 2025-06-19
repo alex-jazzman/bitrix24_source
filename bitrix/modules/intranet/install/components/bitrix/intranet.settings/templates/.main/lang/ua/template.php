@@ -126,6 +126,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL"] = "Адреса ел. 
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT"] = "Надіслати повідомлення з кодом авторизації в «Сповіщення»";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD"] = "Період, у який усі мають увімкнути двофакторну автентифікацію:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "Дозволити публікувати повідомлення для всіх співробітників";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = "Дозволити публікувати повідомлення для всіх співробітників";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Публікувати повідомлення для всіх співробітників за замовчуванням";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = "Обов'язково для всіх співробітників";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = "Перелічіть дозволені IP-адреси, розділяючи їх комами, або діапазони IP-адрес через дефіс";

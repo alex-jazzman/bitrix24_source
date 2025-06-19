@@ -8,3 +8,4 @@ $MESS["AVA_MENU_NAME_START_SIGNING"] = "Мої документи";
 $MESS["AVA_MENU_NAME_SWITCH_ACCOUNT"] = "Змінити акаунт";
 $MESS["AVA_MENU_NAME_TIMEMAN"] = "Робочий час";
 $MESS["AVA_MENU_NAME_TIMEMAN_MSGVER_1"] = "Робочий час";
+$MESS["AVA_MENU_NAME_WHATS_NEW"] = "Що нового";

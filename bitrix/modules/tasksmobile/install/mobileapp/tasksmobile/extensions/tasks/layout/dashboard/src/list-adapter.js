@@ -113,6 +113,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					ref: this.bindRef,
 					animationTypes: this.props.animationTypes,
 					currentView: this.props.currentView,
+					requestTimeoutInMilliseconds: this.props.requestTimeoutInMilliseconds,
 				}),
 			);
 		}

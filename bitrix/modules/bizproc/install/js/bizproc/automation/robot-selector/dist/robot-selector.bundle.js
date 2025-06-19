@@ -1387,7 +1387,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  let msg = (_Text$encode2 = main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_SEARCH_NOT_FOUND'))) != null ? _Text$encode2 : '';
 	  const feedbackParams = {
 	    id: Math.random() + '',
-	    portalUri: 'https://product-feedback.bitrix24.com/',
 	    forms: [{
 	      zones: ['by', 'kz', 'ru'],
 	      id: 438,

@@ -1521,13 +1521,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  babelHelpers.createClass(Slider, null, [{
 	    key: "openFeedbackForm",
 	    value: function openFeedbackForm() {
-	      var url = new main_core.Uri('/bitrix/components/bitrix/catalog.feedback/slider.php');
-	      url.setQueryParams({
-	        feedback_type: 'feedback'
-	      });
-	      return Slider.open(url.toString(), {
-	        width: 735
-	      });
+	      BX.UI.Feedback.Form.open(Slider.getFeedbackParams());
 	    }
 	  }, {
 	    key: "openIntegrationRequestForm",
@@ -1569,6 +1563,39 @@ this.BX.Catalog = this.BX.Catalog || {};
 	          resolve();
 	        }
 	      });
+	    }
+	  }, {
+	    key: "getFeedbackParams",
+	    value: function getFeedbackParams() {
+	      return {
+	        id: "catalog-feedback-".concat(parseInt(Math.random() * 1000, 10)),
+	        forms: [{
+	          id: 384,
+	          lang: 'ru',
+	          sec: '0pskpd',
+	          zones: ['ru', 'by', 'kz']
+	        }, {
+	          id: 392,
+	          lang: 'en',
+	          sec: 'siqjqa',
+	          zones: ['en', 'ua']
+	        }, {
+	          id: 388,
+	          lang: 'es',
+	          sec: '53t2bu',
+	          zones: ['es']
+	        }, {
+	          id: 390,
+	          lang: 'de',
+	          sec: 'mhglfc',
+	          zones: ['de']
+	        }, {
+	          id: 386,
+	          lang: 'com.br',
+	          sec: 't6tdpy',
+	          zones: ['com.br']
+	        }]
+	      };
 	    }
 	  }]);
 	  return Slider;

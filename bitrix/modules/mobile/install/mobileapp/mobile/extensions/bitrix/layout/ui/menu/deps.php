@@ -6,6 +6,7 @@ return [
 		'utils/object',
 		'qrauth/utils',
 		'utils/enums/base',
+		'utils/prop',
 		'assets/icons',
 	],
 	'bundle' => [

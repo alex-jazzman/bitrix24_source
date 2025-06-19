@@ -12,6 +12,7 @@ $MESS["LANDING_BLOCK_MESSAGE_ERROR_EVAL"] = "При виконанні дано�
 $MESS["LANDING_BLOCK_MESSAGE_ERROR_LIMIT_BUTTON"] = "Перейти на розширений тариф";
 $MESS["LANDING_BLOCK_NOT_FOUND"] = "Блок або його вміст не знайдено";
 $MESS["LANDING_BLOCK_SEPARATOR_PARTNER_2"] = "Бітрікс24 Маркет";
+$MESS["LANDING_BLOCK_SEPARATOR_PARTNER_2_MSGVER_1"] = "Маркет";
 $MESS["LANDING_BLOCK_TEXT_FULL"] = "Розмір блоку перевищує максимально допустимий";
 $MESS["LANDING_BLOCK_TITLE"] = "Заголовок сторінки";
 $MESS["LANDING_BLOCK_WRONG_VERSION"] = "Версія блоку не відповідає версії модуля";

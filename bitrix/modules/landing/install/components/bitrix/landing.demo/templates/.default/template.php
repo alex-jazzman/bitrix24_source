@@ -135,7 +135,11 @@ if (!$component->isAjax())
 	}
 
 	// create empty button
-	if ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP')
+	if (
+		$arParams['TYPE'] === 'KNOWLEDGE'
+		|| $arParams['TYPE'] === 'GROUP'
+		|| $arResult['MARKET_DISABLE']
+	)
 	{
 		$emptyTpl = !$arParams['SITE_ID']
 			? 'empty-multipage/main'
@@ -171,7 +175,11 @@ if (!$component->isAjax())
 
 <div class="grid-tile-wrap" id="grid-tile-wrap">
 	<div class="grid-tile-inner" id="grid-tile-inner">
-		<?php if (
+		<?php if ($arResult['MARKET_DISABLE']): ?>
+			<span class="landing-item landing-item-market-disable">
+				<span class="landing-item-market-disable-title"><?= Loc::getMessage('LANDING_TPL_MARKET_DISABLE') ?></span>
+			</span>
+		<?php elseif (
 			$arParams['TYPE'] === 'PAGE'
 			&& (count($arResult['DEMO']) > 0)
 		): ?>

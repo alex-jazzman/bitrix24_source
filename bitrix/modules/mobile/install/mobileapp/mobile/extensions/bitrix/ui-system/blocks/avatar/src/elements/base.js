@@ -5,13 +5,14 @@ jn.define('ui-system/blocks/avatar/src/elements/base', (require, exports, module
 	const { withCurrentDomain } = require('utils/url');
 	const { isFunction } = require('utils/object');
 	const { Component, Corner, Color } = require('tokens');
+	const { makeLibraryImagePath } = require('asset-manager');
 	const { PureComponent } = require('layout/pure-component');
 	const { getFirstLetters } = require('layout/ui/user/empty-avatar');
-	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape-enum');
-	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type-enum');
-	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient-enum');
+	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
+	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
+	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
 	const { getBackgroundColorStyles: getLettresBackgroundColor } = require('layout/ui/user/empty-avatar');
-	const { AvatarNativePlaceholderType } = require('ui-system/blocks/avatar/src/enums/native-placeholder-type-enum');
+	const { AvatarNativePlaceholderType } = require('ui-system/blocks/avatar/src/enums/native-placeholder-type');
 
 	/**
 	 * 	@typedef AvatarBaseProps
@@ -230,12 +231,18 @@ jn.define('ui-system/blocks/avatar/src/elements/base', (require, exports, module
 		{
 			const { emptyAvatar } = this.getPlaceholderParams();
 
-			return emptyAvatar;
-		}
+			const svgParams = {
+				url: emptyAvatar === 'string'
+					? emptyAvatar
+					: makeLibraryImagePath(emptyAvatar, 'empty-avatar'),
+			};
 
-		isIOs()
-		{
-			return Application.getPlatform() === 'ios';
+			if (emptyAvatar?.named)
+			{
+				svgParams.named = emptyAvatar.named.getNamed();
+			}
+
+			return svgParams;
 		}
 
 		isAccent()

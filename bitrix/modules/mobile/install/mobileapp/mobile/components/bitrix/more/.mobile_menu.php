@@ -3,7 +3,6 @@
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\DiskMobile\AirDiskFeature;
-use Bitrix\Intranet\AI;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -13,6 +12,8 @@ use Bitrix\Mobile\Config\Feature;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Main\EventManager;
 use Bitrix\MobileApp\Mobile;
+use Bitrix\Im\V2\Chat\CopilotChat;
+use Bitrix\Tasks\Flow\Integration\AI\FlowCopilotFeature;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -317,7 +318,11 @@ if (
 	!$isExtranetUser
 	&& IsModuleInstalled('crm')
 	&& CModule::IncludeModule('crm')
-	&& CCrmPerms::IsAccessEnabled()
+	&& (
+		method_exists(\Bitrix\Crm\Service\UserPermissions::class, 'entityType')
+		? \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrmOrAutomatedSolutions()
+		: CCrmPerms::IsAccessEnabled()
+	)
 )
 {
 	$crmIsInitialized = \Bitrix\Crm\Settings\Crm::wasInitiated();
@@ -845,37 +850,55 @@ JS
 
 }
 
-if (Loader::includeModule("intranet") && !$isExtranetUser)
+if (
+	Loader::includeModule('intranet')
+	&& !$isExtranetUser
+	&& Loader::includeModule('ai')
+)
 {
-	$assistantApp = AI\Center::getAssistantApp();
-	$assistantAppId = is_array($assistantApp) && $assistantApp["ACTIVE"] === "Y" ? intval($assistantApp["ID"]) : 0;
-	$assistants = AI\Center::getAssistants();
+	$isCopilotAvailable = CopilotChat::isActive() && CopilotChat::isAvailable();
+	$availableFeatures = [
+		'crm' => true,
+		'flow-up' => true,
+	];
 
-	if ($assistantAppId > 0 && count($assistants) > 0)
+	if (Loader::includeModule('im'))
 	{
-		$items = [];
-		foreach ($assistants as $assistant)
-		{
-			$hidden = isset($assistant['data']['featureEnabled']) && $assistant['data']['featureEnabled'] === false;
-			$items[] = [
-				"title" => $assistant["name"],
-				"hidden" => $hidden,
-				"attrs" => [
-					"url" =>
-						"/mobile/marketplace/?id=$assistantAppId&" .
-						"lazyload=Y&mobileMode=Y&assistantId={$assistant["id"]}",
-					"cache" => false,
-				],
-			];
-		}
-
-		$menuStructure[] = [
-			"title" => Loc::getMessage("MENU_AI"),
-			"sort" => 110,
-			"hidden" => false,
-			"items" => $items,
-		];
+		$availableFeatures['copilotChat'] = CopilotChat::isActive() && CopilotChat::isAvailable();
 	}
+
+	if (Loader::includeModule('tasks') && Loader::includeModule('tasksmobile'))
+	{
+		$availableFeatures['flowCopilot'] = FlowCopilotFeature::isOn();
+	}
+
+	$menuStructure[] = [
+		'title' => Loc::getMessage('MENU_AI_MSGVER_1'),
+		'sort' => 110,
+		'hidden' => false,
+		'items' => [
+			[
+				'title' => Loc::getMessage('MENU_COPILOT'),
+				'hidden' => false,
+				'imageName' => 'copilot',
+				'isNew' => true,
+				'attrs' => [
+					'availableFeatures' => $availableFeatures,
+					'onclick' => <<<JS
+						requireLazy('copilot-features')
+							.then(({ openCopilotFeatures }) => {
+								if (openCopilotFeatures)
+								{
+									openCopilotFeatures(item.params.availableFeatures);
+								}
+							});
+JS
+					,
+				],
+				'tag' => Loc::getMessage('MENU_TAG_NEW'),
+			],
+		],
+	];
 }
 
 if (Option::get('mobile', 'developers_menu_section', 'N') === 'Y')

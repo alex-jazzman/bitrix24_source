@@ -400,16 +400,11 @@ class CBitrixXscan
         }
         else
         {
-            $sHost = COption::GetOptionString("main", "update_site", "www.bitrixsoft.com");
-            $proxyAddr = COption::GetOptionString("main", "update_site_proxy_addr", "");
-            $proxyPort = COption::GetOptionString("main", "update_site_proxy_port", "");
-            $proxyUserName = COption::GetOptionString("main", "update_site_proxy_user", "");
-            $proxyPassword = COption::GetOptionString("main", "update_site_proxy_pass", "");
+            $sHost = \Bitrix\Main\Application::getInstance()->getLicense()->getDomainStoreLicense();
             $dbtype = mb_strtolower($DB->type);
             $http = new \Bitrix\Main\Web\HttpClient();
-            $http->setProxy($proxyAddr, $proxyPort, $proxyUserName, $proxyPassword);
 
-            $data = $http->get("https://{$sHost}/bitrix/updates/checksum.php?check_sum=Y&module_id={$module}&ver={$version}&dbtype={$dbtype}&mode=2");
+            $data = $http->get($sHost . "/bitrix/updates/checksum.php?check_sum=Y&module_id={$module}&ver={$version}&dbtype={$dbtype}&mode=2");
             $result = @unserialize(gzinflate($data), ['allowed_classes' => false]);
 
             $static_cache[$key] = [];

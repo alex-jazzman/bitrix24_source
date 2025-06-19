@@ -536,7 +536,7 @@ if(((!empty($arPost) && ($arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLIS
 										if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '')
 											$serverName = SITE_SERVER_NAME;
 										else
-											$serverName = COption::GetOptionString("main", "server_name", "www.bitrixsoft.com");
+											$serverName = COption::GetOptionString("main", "server_name");
 									}
 
 									if(mb_strpos($commentUrl, "?") !== false)

@@ -1,5 +1,6 @@
 <?php
 $MESS["IM_TEXTAREA_AUDIO_INPUT_ERROR"] = "Не вдалося розпізнати мову, спробуйте пізніше.";
+$MESS["IM_TEXTAREA_AUTO_DELETE_TITLE"] = "У цьому чаті ввімкнено автовидалення повідомлень";
 $MESS["IM_TEXTAREA_CHANNEL_PLACEHOLDER"] = "Додайте публікацію";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_SUBTITLE"] = "ШІ створить будь-яку картинку за вашим описом.";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_TITLE"] = "Створити зображення";
@@ -76,12 +77,14 @@ $MESS["IM_TEXTAREA_SELECT_FROM_COMPUTER"] = "Вибрати на комп'юте
 $MESS["IM_TEXTAREA_SELECT_LOCAL_FILE"] = "Файл з комп'ютера";
 $MESS["IM_TEXTAREA_SELECT_MEETING"] = "Подія чи зустріч";
 $MESS["IM_TEXTAREA_SELECT_TASK"] = "Завдання";
+$MESS["IM_TEXTAREA_SELECT_VOTE"] = "Опитування";
 $MESS["IM_TEXTAREA_SMILE_SELECTOR_SMILES_TAB"] = "Смайли";
 $MESS["IM_TEXTAREA_UNKNOWN_ERROR"] = "Не вдалося вийти з колаби, спробуйте пізніше.";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_CANCEL"] = "Скасувати";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_SEND"] = "Надіслати";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_COMPUTED_TITLE"] = "Вибрано: #COUNT#";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_10"] = "Можна надіслати максимум 10 файлів за раз.";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_100"] = "Можна надіслати не більш як 100 файлів за раз.";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILE_UPLOAD_ERROR"] = "Завантаження файлу недоступне.";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER"] = "Додати коментар";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER_2"] = "Додати підпис";

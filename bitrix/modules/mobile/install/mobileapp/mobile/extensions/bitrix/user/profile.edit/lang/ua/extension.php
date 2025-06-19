@@ -6,6 +6,7 @@ $MESS["COMMUNICATE_MESSAGE"] = "Написати повідомлення";
 $MESS["COMMUNICATE_VIDEO"] = "Відеодзвінок";
 $MESS["COMMUNICATE_WITH"] = "Зв'язатись";
 $MESS["DELETE_ACCOUNT"] = "Видалити акаунт";
+$MESS["DELETE_B24"] = "Видалити мій Бітрікс24";
 $MESS["DEPARTMENTS"] = "Підрозділи";
 $MESS["EMAIL"] = "Email";
 $MESS["ERROR"] = "Помилка";

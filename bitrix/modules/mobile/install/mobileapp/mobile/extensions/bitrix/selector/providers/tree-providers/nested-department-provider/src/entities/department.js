@@ -5,16 +5,17 @@
 jn.define('selector/providers/tree-providers/nested-department-provider/src/entities/department', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
-	const { withCurrentDomain } = require('utils/url');
+	const { BaseEntity } = require('selector/providers/tree-providers/nested-department-provider/src/entities/base-entity');
 	const { Navigator } = require('selector/widget/entity/tree-selectors/shared/navigator');
 
 	/**
 	 * @class DepartmentEntity
 	 */
-	class DepartmentEntity
+	class DepartmentEntity extends BaseEntity
 	{
 		constructor(options)
 		{
+			super();
 			this.options = options;
 			this.root = null;
 		}
@@ -29,7 +30,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 			this.root = root;
 		}
 
-		getEntityForDialog()
+		getEntityOptions()
 		{
 			const {
 				shouldAddCounters,
@@ -38,60 +39,40 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 			} = this.options;
 
 			return {
-				id: DepartmentEntity.getId(),
-				dynamicLoad: true,
-				dynamicSearch: true,
-				filters: [],
-				options: {
-					allowFlatDepartments,
-					allowSelectRootDepartment,
-					selectMode: 'usersAndDepartments',
-					shouldCountSubdepartments: shouldAddCounters(),
-					shouldCountUsers: shouldAddCounters(),
-				},
-				searchable: true,
-				substituteEntityId: null,
+				allowFlatDepartments,
+				allowSelectRootDepartment,
+				selectMode: 'usersAndDepartments',
+				shouldCountSubdepartments: shouldAddCounters(),
+				shouldCountUsers: shouldAddCounters(),
 			};
 		}
 
 		prepareItemForDrawing(item, initialEntity)
 		{
 			const departmentImageStyles = {
-				backgroundColor: Color.accentExtraAqua.getValue(),
+				backgroundColor: Color.accentExtraAqua.toHex(),
 				image: {
-					tintColor: Color.baseWhiteFixed.getValue(),
+					tintColor: Color.baseWhiteFixed.toHex(),
 					contentHeight: 26,
 					borderRadiusPx: 6,
 				},
 				border: {
-					color: Color.accentExtraAqua.getValue(),
+					color: Color.accentExtraAqua.toHex(),
 					width: 2,
 				},
 			};
 
-			return {
-				...item,
-				imageUrl: withCurrentDomain(Icon.GROUP.getPath()),
-				shortTitle: initialEntity.shortTitle,
-				subtitle: initialEntity.subtitle,
-				// new styles' set up
-				styles: {
-					...item.styles,
-					image: initialEntity?.styles?.image ?? departmentImageStyles,
-					selectedImage: initialEntity?.styles?.selectedImage ?? departmentImageStyles,
-				},
-				// old styles' set up
-				typeIconFrame: item.typeIconFrame ?? 1,
-				color: item.typeIconFrame === 2 ? null : Color.accentExtraAqua.getValue(),
-			};
+			return this.prepareCommonStyles({
+				item,
+				initialEntity,
+				imageStyles: departmentImageStyles,
+				imageUrl: Icon.GROUP.getPath(),
+			});
 		}
 
-		findItem(id)
+		findItem(id, items)
 		{
-			return Navigator.findInTree(this.root, (item) => (
-				String(item.id) === String(id)
-				&& String(item.entityId) === DepartmentEntity.getId()
-			));
+			return Navigator.findInTree(this.root, (item) => this.isEqualById(item, id));
 		}
 	}
 

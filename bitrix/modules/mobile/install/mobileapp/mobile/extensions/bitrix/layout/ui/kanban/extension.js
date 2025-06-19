@@ -536,6 +536,7 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 				onListReloaded: this.props.onListReloaded,
 				showTitleLoader: this.props.showTitleLoader,
 				hideTitleLoader: this.props.hideTitleLoader,
+				requestTimeoutInMilliseconds: this.props.requestTimeoutInMilliseconds,
 			});
 		}
 

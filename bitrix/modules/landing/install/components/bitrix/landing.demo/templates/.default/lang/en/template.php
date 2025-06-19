@@ -22,3 +22,4 @@ $MESS["LANDING_TPL_TITLE_GROUP"] = "Select a knowledge base template";
 $MESS["LANDING_TPL_TITLE_KNOWLEDGE"] = "Select a knowledge base template";
 $MESS["LANDING_TPL_TITLE_PAGE"] = "Select a site template";
 $MESS["LANDING_TPL_TITLE_STORE"] = "Select an online store template";
+$MESS["LANDING_TPL_MARKET_DISABLE"] = "Templates are temporarily unavailable";

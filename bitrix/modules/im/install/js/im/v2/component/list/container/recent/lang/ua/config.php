@@ -1,5 +1,6 @@
 <?php
 $MESS["IM_RECENT_CREATE_CHANNEL_SUBTITLE"] = "Використовуйте публічні чати для публікації новин.";
+$MESS["IM_RECENT_CREATE_CHANNEL_SUBTITLE_MSGVER_1"] = "Для публікації новин";
 $MESS["IM_RECENT_CREATE_CHANNEL_SUBTITLE_V2"] = "Використовуйте канали для публікації новин.";
 $MESS["IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3"] = "Для публікації новин";
 $MESS["IM_RECENT_CREATE_CHANNEL_TITLE"] = "Канал";
@@ -22,11 +23,18 @@ $MESS["IM_RECENT_CREATE_CHAT_WHAT_TO_CHOOSE"] = "Що вибрати?";
 $MESS["IM_RECENT_CREATE_COLLAB_DESCRIPTION_BANNER"] = "Усередині [color_highlight]завдання, файли, календар[/color_highlight] та інші інструменти";
 $MESS["IM_RECENT_CREATE_COLLAB_NEW_BADGE"] = "Нове";
 $MESS["IM_RECENT_CREATE_COLLAB_SUBTITLE"] = "Для спільної роботи із зовнішніми командами та клієнтами";
+$MESS["IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1"] = "Для спільної роботи із зовнішніми командами та клієнтами";
 $MESS["IM_RECENT_CREATE_COLLAB_TITLE"] = "Колаба";
 $MESS["IM_RECENT_CREATE_CONFERENCE_SUBTITLE"] = "Відео- й аудіоповідомлення та конференції.";
+$MESS["IM_RECENT_CREATE_CONFERENCE_SUBTITLE_MSGVER_1"] = "Для зустрічей із зовнішніми учасниками";
 $MESS["IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2"] = "Для зустрічей із зовнішніми учасниками";
 $MESS["IM_RECENT_CREATE_CONFERENCE_TITLE"] = "Відеоконференція";
+$MESS["IM_RECENT_CREATE_COPILOT_ROLE_SELECTION_TITLE"] = "Вибрати роль для CoPilot";
+$MESS["IM_RECENT_CREATE_COPILOT_SUBTITLE"] = "Для вирішення завдань і генерації ідей з AI";
+$MESS["IM_RECENT_CREATE_COPILOT_SUBTITLE_MSGVER_1"] = "Для розв’язання завдань і генерації ідей з AI";
+$MESS["IM_RECENT_CREATE_COPILOT_TITLE"] = "Чат із CoPilot";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE"] = "Спілкуйтеся з колегами й командами.";
+$MESS["IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_MSGVER_1"] = "Для обговорення питань";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_V2"] = "Для обговорення питань";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_TITLE"] = "Груповий чат";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2"] = "Груповий чат";

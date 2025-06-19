@@ -10,7 +10,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const IMAGE_CHECK_URL = 'http://127.0.0.1:20141';
 	const IMAGE_CHECK_TIMEOUT = 500;
 	const IMAGE_CLASS = 'bx-im-messenger__out-of-view';
-	const INTERNET_CHECK_URL = '//www.bitrixsoft.com/200.ok';
 	const checkTimeoutList = {};
 	const CheckUtils = {
 	  testImageLoad(successCallback, failureCallback, image = IMAGE_DESKTOP_RUN) {
@@ -52,8 +51,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  testInternetConnection() {
 	    const currentTimestamp = Date.now();
+	    const settings = main_core.Extension.getSettings('im.v2.lib.desktop');
+	    const internetCheckUrl = settings.get('internetCheckUrl');
 	    return new Promise(resolve => {
-	      fetch(`${INTERNET_CHECK_URL}.${currentTimestamp}`).then(response => {
+	      fetch(`${internetCheckUrl}.${currentTimestamp}`).then(response => {
 	        if (response.status === 200) {
 	          resolve(true);
 	          return;

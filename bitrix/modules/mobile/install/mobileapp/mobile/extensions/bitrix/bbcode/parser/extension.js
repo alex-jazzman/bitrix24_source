@@ -41,7 +41,7 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	}
 
-	const TAG_REGEX = /\[\/?(?:\w+|\*).*?]/;
+	const TAG_REGEX = /\[(\/)?(\w+|\*).*?]/;
 	const TAG_REGEX_GS = /\[(\/)?(\w+|\*)(.*?)]/gs;
 	const isSpecialChar = symbol => {
 	  return ['\n', '\t'].includes(symbol);
@@ -185,6 +185,18 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	    }
 	    return -1;
 	  }
+	  static findNextTag(bbcode, startIndex = 0) {
+	    const nextContent = bbcode.slice(startIndex);
+	    const matchResult = nextContent.match(new RegExp(TAG_REGEX));
+	    if (matchResult) {
+	      const [, slash, tagName] = matchResult;
+	      return {
+	        tagName,
+	        isClosedTag: slash === '\\'
+	      };
+	    }
+	    return null;
+	  }
 	  static trimQuotes(value) {
 	    const source = String(value);
 	    if (/^["'].*["']$/g.test(source)) {
@@ -290,7 +302,10 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	          stack[level].appendChild(...this.parseText(content));
 	        }
 	        if (level > 0 && isListItem(stack[level].getName())) {
-	          level--;
+	          const nextTag = BBCodeParser.findNextTag(bbcode, startIndex);
+	          if (Type.isNull(nextTag) || isListItem(nextTag.tagName)) {
+	            level--;
+	          }
 	        }
 	      }
 	    });

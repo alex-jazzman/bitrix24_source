@@ -13,17 +13,17 @@ jn.define('settings/disabled-tools', (require, exports, module) => {
 	 */
 	async function checkDisabledToolById(toolId, showLoadingIndicator = true)
 	{
+		let loadingPromise = null;
 		if (showLoadingIndicator)
 		{
-			NotifyManager.showLoadingIndicator();
+			loadingPromise = NotifyManager.showLoadingIndicator();
 		}
 
 		const disabledTools = await getDisabledTools();
 
-		if (showLoadingIndicator)
-		{
+		loadingPromise?.then(() => {
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
-		}
+		}).catch(console.error);
 
 		if (!Type.isNil(disabledTools))
 		{

@@ -6,6 +6,6 @@ return [
 		'utils/enums/base'
 	],
 	'bundle' => [
-		'./src/theme-enum'
+		'./src/theme-enum',
 	]
 ];

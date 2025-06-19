@@ -21,7 +21,6 @@ class Analytics extends Base
 {
 	public function openDefaultAnalyticsPageAction()
 	{
-		//$componentName = 'bitrix:report.analytics.base';
 		$componentName = 'bitrix:ui.sidepanel.wrapper';
 		$params = [
 			'POPUP_COMPONENT_NAME' => 'bitrix:report.analytics.base',

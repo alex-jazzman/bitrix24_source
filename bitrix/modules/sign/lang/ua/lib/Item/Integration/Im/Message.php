@@ -1,5 +1,6 @@
 <?php
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_CANCELLED"] = "[b]Підписання документа скасовано[/b][br][br]Документ «#DOC_NAME#» більше не доступний для підписання.[br][br][url=#GRID_URL#]До процесу підписання[/url]";
+$MESS["SIGN_CALLBACK_CHAT_DOCUMENT_EXPIRED_TO_COMPANY"] = "[b]Закінчився строк підписання[/b][br][br]Документ #DOC_NAME# недоступний для розгляду. Ви можете запустити процес наново[br][br][url=#GRID_URL#]До процесу підписання[/url]";
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_STOPPEDF_MSGVER_2"] = "[b]Підписання документа скасовано[/b][br][br]#INITIATOR_NAME# скасувала підписання документа «#DOC_NAME#». Документ більше не доступний для підписання.[br][br][br][url=#GRID_URL#]До процесу підписання[/url]";
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_STOPPEDM_MSGVER_2"] = "[b]Підписання документа скасовано[/b][br][br]#INITIATOR_NAME# скасував підписання документа «#DOC_NAME#». Документ більше не доступний для підписання.[br][br][br][url=#GRID_URL#]До процесу підписання[/url]";
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_STOPPED_MSGVER_2"] = "[b]Підписання документа скасовано[/b][br][br]#INITIATOR_NAME# скасував(-ла) підписання документа «#DOC_NAME#». Документ більше не доступний для підписання.[br][br][br][url=#GRID_URL#]До процесу підписання[/url]";

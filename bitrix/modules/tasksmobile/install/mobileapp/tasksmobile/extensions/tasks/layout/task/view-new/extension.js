@@ -1135,7 +1135,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			if (this.isLikesPanelEnabled())
 			{
 				return LikesPanel({
-					userId: this.props.userId,
+					userId: Number(this.props.userId),
 					taskId: this.#taskId,
 					testId: this.getTestId('LikesPanel'),
 				});

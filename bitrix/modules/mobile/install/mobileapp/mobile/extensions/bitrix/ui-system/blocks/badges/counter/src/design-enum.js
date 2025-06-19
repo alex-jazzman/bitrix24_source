@@ -6,9 +6,9 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 	const { BaseEnum } = require('utils/enums/base');
 
 	/**
-	 * @class BadgeCounterDesignType
-	 * @template TBadgeModeType
-	 * @extends {BaseEnum<BadgeCounterDesignType>}
+	 * @class BadgeCounterDesign
+	 * @template TBadgeCounterDesign
+	 * @extends {BaseEnum<BadgeCounterDesign>}
 	 */
 	class BadgeCounterDesign extends BaseEnum
 	{

@@ -1,4 +1,5 @@
 <?php
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_EXPIRED_TO_EMPLOYEE"] = "[b]Закінчився строк розгляду документа[/b][br][br]Документ #DOC_NAME# недоступний для розгляду. Ви можете запустити процес наново[br][br][url=#SIGN_URL#]Відкрити документ[/url]";
 $MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEE"] = "[b]Документ відхилено[/b][br][br]#INITIATOR_NAME# відхилив(-ла) документ «#DOC_NAME#». Уточніть причини та надішліть документ знову.";
 $MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEF"] = "[b]Документ відхилено[/b][br][br]#INITIATOR_NAME# відхилила документ «#DOC_NAME#». Уточніть причини та надішліть документ знову.";
 $MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEM"] = "[b]Документ відхилено[/b][br][br]#INITIATOR_NAME# відхилив документ «#DOC_NAME#». Уточніть причини та надішліть документ знову.";

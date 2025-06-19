@@ -35,6 +35,7 @@ CJSCore::registerExt('marketplace', array(
 		'REST_BUY_SUBSCRIPTION_URL' => \Bitrix\Rest\Marketplace\Url::getSubscriptionBuyUrl(),
 		'CAN_BUY_SUBSCRIPTION' => \Bitrix\Rest\Marketplace\Client::canBuySubscription() ? 'Y' : 'N',
 		'CAN_ACTIVATE_DEMO_SUBSCRIPTION' => \Bitrix\Rest\Marketplace\Client::isSubscriptionDemoAvailable() ? 'Y' : 'N',
+		'REST_MARKETPLACE_EULA_URL' => \Bitrix\Rest\Infrastructure\Market\MarketUrl::createByDefault()->getEulaUrl(),
 	),
 	'rel' => array('ajax', 'popup', 'access', 'sidepanel', 'ui.notification'),
 ));

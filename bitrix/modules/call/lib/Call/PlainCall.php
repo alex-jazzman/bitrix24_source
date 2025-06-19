@@ -39,7 +39,7 @@ class PlainCall extends Call
 
 	public function getMaxUsers(): int
 	{
-		return (int)Option::get('im', 'turn_server_max_users');
+		return (int)Option::get('call', 'turn_server_max_users');
 	}
 
 	/**

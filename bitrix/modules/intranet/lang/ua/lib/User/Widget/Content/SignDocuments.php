@@ -1,0 +1,3 @@
+<?php
+$MESS["INTRANET_USER_WIDGET_CONTENT_SIGN_DOCUMENTS_DESCRIPTION"] = "Заява на відпустку, відрядження та інше";
+$MESS["INTRANET_USER_WIDGET_CONTENT_SIGN_DOCUMENTS_TITLE"] = "Мої документи";

@@ -102,9 +102,7 @@ jn.define('ui-system/blocks/avatar/src/elements/native', (require, exports, modu
 			}
 			else
 			{
-				placeholderSvgParams = {
-					uri: this.getEmptyAvatar(),
-				};
+				placeholderSvgParams = this.getEmptyAvatar();
 			}
 
 			return placeholderSvgParams;

@@ -50,6 +50,9 @@ $MESS["INTRANET_USER_PROFILE_QRCODE_BODY2"] = "Використовуйте ва
 <br><br>
 <b>Нікому не показуйте цей код.</b> У ньому зашифрована інформація для входу під вашим ім'ям.";
 $MESS["INTRANET_USER_PROFILE_QRCODE_TITLE2"] = "Вхід у мобільний застосунок Бітрікс24";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_CREATE_DOCUMENT"] = "Створити";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE"] = "Мої документи";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE_HINT"] = "Заяви на відпустку, відрядження та інші";
 $MESS["INTRANET_USER_PROFILE_SOON"] = "Скоро";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_BUTTON"] = "Як заміряти?";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"] = "стрес";

@@ -780,12 +780,22 @@
 			};
 		}
 
-		onItemsLoaded(data)
+		/**
+		 * @param {object} data
+		 * @param {string} renderType
+		 * @param {object} config
+		 */
+		onItemsLoaded(data, renderType, config)
 		{
 			if (data?.event === 'refreshPresets')
 			{
 				this.searchRef?.refreshPresets();
 			}
+
+			const filterText = config?.data?.extra?.filter?.search;
+			const hasResult = Array.isArray(data?.items) && data?.items.length > 0;
+
+			this.searchRef?.updateLastSearchResultStatus?.(hasResult, filterText);
 		}
 
 		getPermissions()

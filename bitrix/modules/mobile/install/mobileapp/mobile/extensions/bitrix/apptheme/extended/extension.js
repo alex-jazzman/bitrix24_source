@@ -4,7 +4,6 @@
 jn.define('apptheme/extended', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { transparent } = require('utils/color');
-	const { colors } = require('apptheme/list');
 	const { Theme } = require('apptheme/extended/src/theme-enum');
 	const { AppTheme: NativeAppTheme } = require('native/apptheme');
 
@@ -19,7 +18,7 @@ jn.define('apptheme/extended', (require, exports, module) => {
 	 * @param {'light' | 'dark'} themeId
 	 * @return {string}
 	 */
-	AppTheme.getColorByThemeId = (themeId = 'light') => colors[themeId];
+	AppTheme.getColorByThemeId = (themeId = 'light') => AppTheme.colors[themeId];
 
 	/**
 	 *

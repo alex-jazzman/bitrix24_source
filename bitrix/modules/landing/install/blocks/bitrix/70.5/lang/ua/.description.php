@@ -1,0 +1,8 @@
+<?php
+$MESS["LANDING_BLOCK_WIDGET_70_5_NAME"] = "Блок із трьома кнопками, заголовком, текстом і зображенням";
+$MESS["LANDING_BLOCK_WIDGET_70_5_NODE_CARD"] = "Картка";
+$MESS["LANDING_BLOCK_WIDGET_70_5_NODE_CARD_BUTTON"] = "Кнопка";
+$MESS["LANDING_BLOCK_WIDGET_70_5_NODE_CARD_BUTTON_TEXT"] = "Текст кнопки";
+$MESS["LANDING_BLOCK_WIDGET_70_5_NODE_IMG"] = "Картинка";
+$MESS["LANDING_BLOCK_WIDGET_70_5_NODE_TEXT"] = "Текст";
+$MESS["LANDING_BLOCK_WIDGET_70_5_NODE_TITLE"] = "Заголовок";

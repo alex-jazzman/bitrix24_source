@@ -7,12 +7,14 @@ use Bitrix\Im\V2\Common\ContextCustomer;
 use Bitrix\ImOpenLines\V2\Queue\Queue;
 use Bitrix\ImOpenLines\V2\Status\Status;
 use Bitrix\Im\V2\TariffLimit\Limit;
+use Bitrix\Main\Application;
 
 class Config implements \JsonSerializable
 {
 	use ContextCustomer;
 
 	private const NODE = '#bx-im-external-recent-list';
+	private const RU_REGIONS = ['ru', 'by', 'kz', 'uz'];
 
 	private bool $isDesktop = false;
 
@@ -42,6 +44,17 @@ class Config implements \JsonSerializable
 			'sessionStatusMap' => $this->getSessionStatusMap(),
 			'tariffRestrictions' => $this->getTariffRestrictions(),
 		];
+	}
+
+	public function getInternetCheckLink(): string
+	{
+		$region = Application::getInstance()->getLicense()->getRegion();
+
+		return
+			in_array($region, self::RU_REGIONS, true)
+				? '//www.1c-bitrix.ru/200.ok'
+				: '//www.bitrixsoft.com/200.ok'
+			;
 	}
 
 	protected function getPreloadedList(): array

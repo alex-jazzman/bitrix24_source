@@ -1,4 +1,6 @@
 <?php
+$MESS["BIZPROC_CMP_WORKFLOW_START_CONSTANTS_ACCESS_DENIED"] = "Лише адміністратор може налаштовувати константи.";
+$MESS["BIZPROC_CMP_WORKFLOW_START_CONSTANTS_NOT_FOUND"] = "У шаблону бізнес-процесу немає констант.";
 $MESS["BIZPROC_CMP_WORKFLOW_START_TEMPLATE_NOT_FOUND"] = "Бізнес-процес недоступний. Можливо, він видалений або процес не можна запустити вручну.";
 $MESS["BIZPROC_CMP_WORKFLOW_START_TEMPLATE_NO_PERMISSIONS"] = "Недостатньо прав для запуску бізнес-процесу. Зверніться до керівника або адміністратора вашого Бітрікс24.";
 $MESS["BPABS_EMPTY_DOC_ID"] = "Не зазначений код документа, для якого запускається бізнес-процес.";

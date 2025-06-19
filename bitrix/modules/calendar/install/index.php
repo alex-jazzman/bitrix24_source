@@ -353,6 +353,14 @@ class calendar extends CModule
 			toClass: '\Bitrix\Calendar\Integration\SocialNetwork\Collab\CollabEvent',
 			toMethod: 'onCollabAdd',
 		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'socialnetwork',
+			eventType: 'OnWorkgroupConvert',
+			toModuleId: 'calendar',
+			toClass: '\Bitrix\Calendar\Integration\SocialNetwork\Collab\Converter\ConverterEventHandler',
+			toMethod: 'onConvert',
+		);
 	}
 
 	function InstallAgents()
@@ -499,6 +507,14 @@ class calendar extends CModule
 			toModuleId: 'calendar',
 			toClass: '\Bitrix\Calendar\Integration\SocialNetwork\Collab\CollabEvent',
 			toMethod: 'onCollabAdd',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'socialnetwork',
+			eventType: 'OnWorkgroupConvert',
+			toModuleId: 'calendar',
+			toClass: '\Bitrix\Calendar\Integration\SocialNetwork\Collab\Converter\ConverterEventHandler',
+			toMethod: 'onConvert',
 		);
 	}
 

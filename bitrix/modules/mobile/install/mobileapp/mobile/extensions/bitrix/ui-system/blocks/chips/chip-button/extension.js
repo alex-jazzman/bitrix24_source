@@ -37,6 +37,11 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	 * @property {Function} [forwardRef]
 	 * @property {Color} [backgroundColor]
 	 * @property {Color} [iconColor]
+	 * @property {SpinnerDesign} [loaderDesign]
+	 * @property {Function} [onClick]
+	 * @property {Function} [onLongClick]
+	 * @property {Function} [onLayout]
+	 * @property {string} [testId]
 	 *
 	 * @class ChipButton
 	 */

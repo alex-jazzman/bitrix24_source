@@ -28,6 +28,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS"] = "Створюва�
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT"] = "Текст кнопки «Вподобайка»:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT"] = "Максимальна кількість записів в історії документа:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "Дозволити публікувати повідомлення для всіх співробітників";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = "Дозволити публікувати повідомлення для всіх співробітників";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Публікувати повідомлення для всіх співробітників за замовчуванням";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER"] = "Переглядати документи з допомогою";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CHANNELS"] = "Загальні канали";

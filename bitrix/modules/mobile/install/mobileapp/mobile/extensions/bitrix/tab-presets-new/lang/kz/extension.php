@@ -1,0 +1,23 @@
+<?php
+$MESS["PRESET_INFO_CANCEL"] = "Болдырмау";
+$MESS["PRESET_INFO_SELECT"] = "Таңдау";
+$MESS["PRESET_INFO_SELECTED"] = "Таңдалды";
+$MESS["PRESET_MANUAL_SETTINGS_BANNER_DESCRIPTION"] = "Мәзірге қажетті тармақтарды қосыңыз, қалғандары Тағы бөлімінде жасырылатын болады. Элементтерді жылжытып, өзіңізге ыңғайлы етіп орналастыруға болады.";
+$MESS["PRESET_MANUAL_SETTINGS_BANNER_TITLE"] = "Өз мәзіріңізді жасаңыз";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_HIDE"] = "Жасыру";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_SAVE"] = "Дайын";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_SHOW"] = "Мәзірде көрсету";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MENU_TITLE"] = "Төменгі мәзірдегі тармақтар";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE"] = "Тағы бөліміндегі тармақтар";
+$MESS["PRESET_MANUAL_SETTINGS_TITLE"] = "Өз мәзіріңіз";
+$MESS["TAB_PRESETS_NEW_APPLY_ERROR"] = "Өзгерістерді сақтау мүмкін болмады, қайталап көріңіз";
+$MESS["TAB_PRESETS_NEW_BANNER_DESCRIPTION"] = "Сіз қажетті құралдар арасында ауыса аласыз, қалғандары Тағы бөлімінде жасырылған болады.";
+$MESS["TAB_PRESETS_NEW_BANNER_TITLE"] = "Төменгі мәзірді таңдаңыз";
+$MESS["TAB_PRESETS_NEW_CONFIRM_ACCEPT"] = "Ауыстыру";
+$MESS["TAB_PRESETS_NEW_CONFIRM_CLOSE"] = "Болдырмау";
+$MESS["TAB_PRESETS_NEW_CONFIRM_DESCRIPTION"] = "Сіз әрқашан басқа мәзірді таңдай аласыз немесе өзіңіздікін жасай аласыз.";
+$MESS["TAB_PRESETS_NEW_CONFIRM_TITLE"] = "Төменгі мәзірді ауыстыру керек пе?";
+$MESS["TAB_PRESETS_NEW_EDIT"] = "Өзгерту";
+$MESS["TAB_PRESETS_NEW_ERROR"] = "Баптауларға өту мүмкін болмады, қайталап көріңіз. Егер қате қайталанса, сіздің Битрикс24 әкімшісіне хабарласыңыз";
+$MESS["TAB_PRESETS_NEW_SELECT"] = "Таңдау";
+$MESS["TAB_PRESETS_NEW_SELECTED"] = "Таңдалды";

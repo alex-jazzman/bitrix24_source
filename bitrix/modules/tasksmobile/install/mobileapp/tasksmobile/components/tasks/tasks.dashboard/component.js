@@ -1386,6 +1386,7 @@
 					deleteRow: 'fade',
 					moveRow: true,
 				},
+				requestTimeoutInMilliseconds: 60000,
 			};
 
 			return mergeImmutable(defaults, overrides);
@@ -1721,7 +1722,7 @@
 	const isRootComponent = BX.componentParameters.get('IS_ROOT_COMPONENT', false);
 	if (isRootComponent)
 	{
-		void requireLazy('tasks:navigator').then(({ TasksNavigator }) => {
+		void requireLazy('tasks:navigator', false).then(({ TasksNavigator }) => {
 			const tasksNavigator = new TasksNavigator();
 
 			tasksNavigator.unsubscribeFromPushNotifications();

@@ -1735,6 +1735,7 @@ $str_SECTION_PAGE_URL="#SITE_DIR#/".$arIBTYPE["ID"]."/list.php?SECTION_ID=#SECTI
 $str_DETAIL_PAGE_URL="#SITE_DIR#/".$arIBTYPE["ID"]."/detail.php?ID=#ELEMENT_ID#";
 $str_CANONICAL_PAGE_URL="";
 $str_SORT="500";
+$str_XML_ID = '';
 $str_VERSION="1";
 $str_RSS_ACTIVE="N";
 $str_RSS_TTL="24";

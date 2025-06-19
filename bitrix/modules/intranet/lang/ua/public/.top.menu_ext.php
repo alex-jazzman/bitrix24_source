@@ -19,6 +19,7 @@ $MESS["TOP_MENU_CRM_TRACKING"] = "Наскрізна аналітика";
 $MESS["TOP_MENU_DEPARTMENTS"] = "Підрозділи";
 $MESS["TOP_MENU_DEVOPS"] = "Розробникам";
 $MESS["TOP_MENU_DISK"] = "Диск";
+$MESS["TOP_MENU_DISK_BOARDS"] = "Дошки";
 $MESS["TOP_MENU_DISK_DOCUMENTS"] = "Документи";
 $MESS["TOP_MENU_FAVORITE"] = "Вибране";
 $MESS["TOP_MENU_GROUPS"] = "Групи";

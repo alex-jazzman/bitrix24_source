@@ -15,6 +15,7 @@ $MESS["LANDING_TPL_EMPTY_REPO_EXPIRED_LINK"] = "Пожалуйста, #LINK1#п�
 $MESS["LANDING_TPL_LOAD_APP_TEMPLATE_2"] = "<span>Загрузить</span> шаблон из Битрикс24.Маркет";
 $MESS["LANDING_TPL_LABEL_NEW"] = "новое";
 $MESS["LANDING_TPL_FEEDBACK_TITLE"] = "Не нашли нужный шаблон?";
+$MESS["LANDING_TPL_MARKET_DISABLE"] = "Шаблоны временно недоступны";
 $MESS["LANDING_TPL_FEEDBACK_MESSAGE_2"] = "Поделитесь с нами, какая тематика шаблона вам нужна";
 $MESS["LANDING_TPL_FEEDBACK_SEND"] = "Написать";
 $MESS["LANDING_TPL_CREATE_EMPTY"] = "Пустой шаблон";

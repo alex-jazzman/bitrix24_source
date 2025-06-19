@@ -57,11 +57,11 @@ return [
 
 		return [
 			'lang_additional' => [
-				'turn_server' => Option::get('im', 'turn_server'),
-				'turn_server_firefox' => Option::get('im', 'turn_server_firefox'),
-				'turn_server_login' => Option::get('im', 'turn_server_login'),
-				'turn_server_password' => Option::get('im', 'turn_server_password'),
-				'turn_server_max_users' => Option::get('im', 'turn_server_max_users'),
+				'turn_server' => \Bitrix\Im\Call\Call::getTurnServer(),
+				'turn_server_firefox' => \Bitrix\Im\Call\Call::getTurnServer(),
+				'turn_server_login' => Option::get('call', 'turn_server_login'),
+				'turn_server_password' => Option::get('call', 'turn_server_password'),
+				'turn_server_max_users' => Option::get('call', 'turn_server_max_users'),
 				'call_server_enabled' => \Bitrix\Im\Call\Call::isCallServerEnabled() ? 'Y' : 'N',
 				'call_beta_ios_enabled' => \Bitrix\Im\Call\Call::isIosBetaEnabled() ? 'Y' : 'N',
 				'call_server_max_users' => \Bitrix\Im\Call\Call::getMaxCallServerParticipants(),

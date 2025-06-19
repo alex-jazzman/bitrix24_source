@@ -30,6 +30,13 @@ jn.define('disk/statemanager/redux/slices/files/model/file', (require, exports, 
 			preparedFile.updateTime = (new Date(preparedFile.updateTime)).getTime() / 1000;
 			preparedFile.createTime = (new Date(preparedFile.createTime)).getTime() / 1000;
 
+			if (preparedFile.links?.external)
+			{
+				preparedFile.links.external.deathTime = preparedFile.links.external?.deathTime
+					? (new Date(preparedFile.links.external.deathTime) - Date.now()) / 1000
+					: null;
+			}
+
 			return preparedFile;
 		}
 	}

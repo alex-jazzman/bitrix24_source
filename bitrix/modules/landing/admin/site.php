@@ -328,23 +328,38 @@ if ($cmp == 'landing_edit')
 		{
 			$createType = 'PAGE';
 		}
+
 		if ($tpl = $request->get('tpl'))
 		{
-			$APPLICATION->IncludeComponent(
-				'bitrix:landing.demo_preview',
-				'.default',
-				array(
-					'TYPE' => $createType,
-					'CODE' => $tpl,
-					'SITE_ID' => $siteId,
-					'PAGE_URL_BACK' => $landingsPage,
-					'SITE_WORK_MODE' => 'Y',
-					'LANG_ID' => LANGUAGE_ID,
-					'ADMIN_SECTION' => 'Y',
-					'ACTION_FOLDER' => $actionFolder,
-				),
-				$component
-			);
+			$canUseMarket = Manager::isB24();
+			$availableTemplates = ['empty'];
+
+			if (
+				$createType === 'PAGE'
+				&& !$canUseMarket
+				&& !in_array($tpl, $availableTemplates, true)
+			)
+			{
+				\showError('Template install is temporarily unavailable.');
+			}
+			else
+			{
+				$APPLICATION->IncludeComponent(
+					'bitrix:landing.demo_preview',
+					'.default',
+					array(
+						'TYPE' => $createType,
+						'CODE' => $tpl,
+						'SITE_ID' => $siteId,
+						'PAGE_URL_BACK' => $landingsPage,
+						'SITE_WORK_MODE' => 'Y',
+						'LANG_ID' => LANGUAGE_ID,
+						'ADMIN_SECTION' => 'Y',
+						'ACTION_FOLDER' => $actionFolder,
+					),
+					$component
+				);
+			}
 		}
 		else
 		{

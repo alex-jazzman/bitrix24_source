@@ -1,10 +1,17 @@
 <?php
 $MESS["SIGN_ACCESS_RIGHTS"] = "Доступ до редагування прав доступу";
+$MESS["SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE"] = "Видалення полів із додатковою інформацією";
 $MESS["SIGN_B2E_MY_SAFE"] = "Доступ до розділу \"Сейф компанії\"";
 $MESS["SIGN_B2E_MY_SAFE_DOCUMENTS"] = "Доступ до документів сейфа";
 $MESS["SIGN_B2E_PROFILE_FIELDS_ADD"] = "Додавання полів у розділі з інформацією для документів у профілі співробітника";
+$MESS["SIGN_B2E_PROFILE_FIELDS_DELETE_MSG_VER_1"] = "Видалення полів з основною інформацією про співробітника";
 $MESS["SIGN_B2E_PROFILE_FIELDS_EDIT"] = "Зміна розділу з інформацією для документів у профілі співробітника";
 $MESS["SIGN_B2E_PROFILE_FIELDS_READ"] = "Перегляд розділу з інформацією для документів у профілі співробітника";
+$MESS["SIGN_B2E_TEMPLATES_1"] = "Доступ до недавніх документів";
+$MESS["SIGN_B2E_TEMPLATE_CREATE"] = "Право на створення шаблону";
+$MESS["SIGN_B2E_TEMPLATE_DELETE"] = "Право на видалення шаблону";
+$MESS["SIGN_B2E_TEMPLATE_EDIT"] = "Право на зміну шаблону";
+$MESS["SIGN_B2E_TEMPLATE_READ"] = "Право на перегляд шаблону";
 $MESS["SIGN_MY_SAFE"] = "Доступ до розділу \"Мій сейф\"";
 $MESS["SIGN_MY_SAFE_DOCUMENTS"] = "Доступ до документів сейфа";
 $MESS["SIGN_TEMPLATES"] = "Доступ до шаблонів документа";

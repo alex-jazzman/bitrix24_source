@@ -89,17 +89,6 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 			super(props);
 
 			this.likeButtonRef = null;
-			this.setReaction = this.#setReaction.bind(this);
-		}
-
-		componentDidMount()
-		{
-			menu.on('reactionTap', this.setReaction);
-		}
-
-		componentWillUnmount()
-		{
-			menu.off('reactionTap', this.setReaction);
 		}
 
 		get #reactions()
@@ -154,6 +143,14 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 
 		#openReactionPicker()
 		{
+			const pickerHandle = (reactionId) => {
+				this.#setReaction(reactionId, ACTION_TYPE.POSITIVE);
+
+				menu.off('reactionTap', pickerHandle);
+			};
+
+			menu.on('reactionTap', pickerHandle);
+
 			const menuData = {
 				reactionList: ReactionIcon.getDataForContextMenu(),
 			};

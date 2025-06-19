@@ -2,7 +2,6 @@
 $MESS["FILL_TO_MAIL_M"] = "E-mail address in caption:";
 $MESS["MAIN_ADMIN_DEFAULT_LANG"] = "Control Panel default language:";
 $MESS["MAIN_AUDIT_OPTIONS"] = "Events in Log";
-$MESS["MAIN_CATALOG_STAT_SETTINGS"] = "Recommendation Service";
 $MESS["MAIN_COMPRES_CSS_JS"] = "Compress merged CSS and JS files:";
 $MESS["MAIN_CONVERT_UNIX_NEWLINE_2_WINDOWS"] = "Convert Unix CR to Windows CR+LF when sending e-mails:";
 $MESS["MAIN_DISK_SPACE"] = "Available disk space (MB):";
@@ -26,7 +25,6 @@ $MESS["MAIN_EVENT_LOG_TASK"] = "Changes of access permission level:";
 $MESS["MAIN_EVENT_LOG_USER_DELETE"] = "User deletion:";
 $MESS["MAIN_EVENT_LOG_USER_EDIT"] = "User profile updates:";
 $MESS["MAIN_EVENT_LOG_USER_GROUPS"] = "User group updates:";
-$MESS["MAIN_GATHER_CATALOG_STAT"] = "Use product recommendation service";
 $MESS["MAIN_GATHER_USER_STAT"] = "Collect site traffic statistics";
 $MESS["MAIN_LEFT_MENU_TYPE"] = "Menu type for other levels:";
 $MESS["MAIN_MOVE_JS_TO_BODY"] = "Move JavaScript to the page bottom:";

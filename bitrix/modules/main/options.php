@@ -275,7 +275,7 @@ $arAllOptions = array(
 	),
 	"update" => Array(
 		Array("update_devsrv", GetMessage("MAIN_OPTIONS_UPDATE_DEVSRV"), "N", Array("checkbox", "Y")),
-		Array("update_site", GetMessage("MAIN_UPDATE_SERVER"), "www.bitrixsoft.com", Array("text", 30)),
+		Array("update_site", GetMessage("MAIN_UPDATE_SERVER"), "www.1c-bitrix.ru", Array("text", 30)),
 		Array("update_use_https", GetMessage('MAIN_UPDATE_USE_HTTPS'), "N", Array("checkbox", "Y")),
 		Array("update_site_proxy_addr", GetMessage("MAIN_UPDATE_SERVER_PR_AD"), "", Array("text", 30)),
 		Array("update_site_proxy_port", GetMessage("MAIN_UPDATE_SERVER_PR_PR"), "", Array("text", 30)),
@@ -295,12 +295,6 @@ $arAllOptions = array(
 		Array("auth_controller_sso", GetMessage("MAIN_OPTION_CTRL_THR"), "N", Array("checkbox", "Y")),
 	),
 );
-
-if (\Bitrix\Main\Analytics\SiteSpeed::isOn() && \Bitrix\Main\Analytics\Catalog::isOn())
-{
-	$arAllOptions["main"][] = GetMessage("MAIN_CATALOG_STAT_SETTINGS");
-	$arAllOptions["main"][] = array("gather_catalog_stat", GetMessage("MAIN_GATHER_CATALOG_STAT"), "Y", Array("checkbox", "Y"));
-}
 
 $arAllOptions["main"][] = GetMessage("main_options_map");
 $arAllOptions["main"][] = Array("map_top_menu_type", GetMessage("MAIN_TOP_MENU_TYPE"), "top", Array("text", 30));

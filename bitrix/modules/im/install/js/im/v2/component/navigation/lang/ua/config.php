@@ -1,4 +1,7 @@
 <?php
+$MESS["IM_CONTENT_COPILOT_PROMO_HINT_ACTION"] = "Створити новий чат із CoPilot";
+$MESS["IM_CONTENT_COPILOT_PROMO_HINT_DESCRIPTION"] = "Обговорити з ним питання або придумати ідею стало ще простіше.";
+$MESS["IM_CONTENT_COPILOT_PROMO_HINT_TITLE"] = "CoPilot тепер у загальному списку чатів";
 $MESS["IM_NAVIGATION_ACTIVE_CALL_CONFIRM"] = "Справді закрити сторінку? У разі закриття ви відключитеся від дзвінка.";
 $MESS["IM_NAVIGATION_CALLS"] = "Дзвінки";
 $MESS["IM_NAVIGATION_CALLS_V2"] = "Телефонія";
@@ -6,6 +9,7 @@ $MESS["IM_NAVIGATION_CHANNELS"] = "Канали";
 $MESS["IM_NAVIGATION_CHATS"] = "Чати";
 $MESS["IM_NAVIGATION_COLLAB"] = "Колаби";
 $MESS["IM_NAVIGATION_COPILOT"] = "CoPilot";
+$MESS["IM_NAVIGATION_MAIN_PAGE"] = "Бітрікс24";
 $MESS["IM_NAVIGATION_MARKET"] = "Застосунку";
 $MESS["IM_NAVIGATION_MARKET_TITLE"] = "Маркет";
 $MESS["IM_NAVIGATION_NOTIFICATIONS"] = "Сповіщення";

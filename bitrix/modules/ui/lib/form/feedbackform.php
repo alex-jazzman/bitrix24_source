@@ -3,6 +3,7 @@ namespace Bitrix\UI\Form;
 
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\License\UrlProvider;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
@@ -25,7 +26,7 @@ class FeedbackForm
 		$this->id = $id;
 		$this->isCloud = Loader::includeModule('bitrix24');
 		$this->title = Loc::getMessage('UI_FEEDBACK_FORM_BUTTON');
-		$this->portalUri = 'https://product-feedback.bitrix24.com';
+		$this->portalUri = 'https://' . (new UrlProvider())->getFeedbackDomain();
 	}
 
 	public function getId()

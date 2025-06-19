@@ -36,6 +36,12 @@ $MESS["LANDING_SITE_TILE_NOT_PUBLISHED_MSG_STORE"] = "Магазин ще не �
 $MESS["LANDING_SITE_TILE_NOT_PUBLISHED_TITLE"] = "Перегляд сайту";
 $MESS["LANDING_SITE_TILE_NOT_PUBLISHED_TITLE_STORE"] = "Перегляд магазину";
 $MESS["LANDING_SITE_TILE_OPEN"] = "Відкрити";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_BUTTON"] = "Створити сайт з AI";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION"] = "Демонстраційний режим увімкнеться автоматично ↓";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_1"] = "Коротко опишіть, що вам потрібно";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2"] = "AI сам підбере дизайн, створить картинки, напише текст";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3"] = "Ви отримаєте готовий сайт за кілька хвилин";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_TITLE"] = "<div class=\"landing-site_title-popup-title-node\">AI створить сайт,</div> <div class=\"landing-site_title-popup-title-node-2\">поки ви п'єте каву</div>";
 $MESS["LANDING_SITE_TILE_POPUP_COPY_LINK"] = "Копіювати посилання";
 $MESS["LANDING_SITE_TILE_POPUP_COPY_LINK_COMPLETE"] = "Посилання скопійоване";
 $MESS["LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER"] = "Зробити тестове замовлення";

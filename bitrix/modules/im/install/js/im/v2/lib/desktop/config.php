@@ -1,7 +1,21 @@
 <?php
+
+use Bitrix\Im\V2\Application\Config;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
+}
+
+$desktopIsActive = false;
+$desktopActiveVersion = 0;
+$internetCheckUrl = '';
+
+if (\Bitrix\Main\Loader::includeModule('im'))
+{
+	$desktopIsActive = CIMMessenger::CheckDesktopStatusOnline();
+	$desktopActiveVersion = $desktopIsActive ? CIMMessenger::GetDesktopVersion() : 0;
+	$internetCheckUrl = (new Config())->getInternetCheckLink();
 }
 
 return [
@@ -22,7 +36,8 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'desktopIsActive' => CIMMessenger::CheckDesktopStatusOnline(),
-		'desktopActiveVersion' => CIMMessenger::CheckDesktopStatusOnline() ? CIMMessenger::GetDesktopVersion() : 0
+		'desktopIsActive' => $desktopIsActive,
+		'desktopActiveVersion' => $desktopActiveVersion,
+		'internetCheckUrl' => $internetCheckUrl,
 	]
 ];

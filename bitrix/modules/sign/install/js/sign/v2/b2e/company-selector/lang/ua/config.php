@@ -1,5 +1,6 @@
 <?php
 $MESS["SIGN_B2E_ADD_COMPANY"] = "Додати компанію";
+$MESS["SIGN_B2E_COMPANIES_CHANGE_INN_1"] = "Заповнити";
 $MESS["SIGN_B2E_COMPANIES_EDIT"] = "Редагувати";
 $MESS["SIGN_B2E_COMPANIES_NOT_CHANGED"] = "Компанія не вибрана.";
 $MESS["SIGN_B2E_COMPANIES_SELECT_BUTTON"] = "Вибрати";
@@ -22,3 +23,4 @@ $MESS["SIGN_B2E_PROVIDER_SES_NAME"] = "Електронний підпис дл�
 $MESS["SIGN_B2E_SELECT_COMPANY"] = "Компанія";
 $MESS["SIGN_B2E_SELECT_PROVIDER_WITHOUT_INN"] = "Під'єднано #DATE#";
 $MESS["SIGN_B2E_SELECT_PROVIDER_WITHOUT_INN_DATE"] = "Під'єднано";
+$MESS["SIGN_V2_B2E_COMPANY_SELECTOR_SAVE_AND_EDIT_REQUIRE_CRM_PERMISSION"] = "Для створення нових компаній або зміни реквізитів необхідний доступ до CRM. Якщо доступу немає, зверніться до адміністратора вашого Бітрікс24.";

@@ -6,7 +6,9 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\Dictionary\Integration;
+use Bitrix\Rest\Infrastructure\Integration\DocUrl;
 
 Loc::loadMessages(__FILE__);
 
@@ -103,14 +105,13 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'crm.contact.get',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'custom_sync',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_10_INCOMING_QUERY_INFORMATION_URL',
 						'ITEMS' => [
 							[
 								'title' => 'ID',
 								'value' => '42',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/contacts/crm_contact_get.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/contacts/crm-contact-get',
 					],
 				],
 				'OUTGOING_NEEDED' => 'Y',
@@ -146,7 +147,6 @@ class Element extends Base
 						'ITEMS_TITLE.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_2_INCOMING_QUERY_TITLE',
 						'METHOD' => 'crm.contact.add',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_2_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_2_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -179,7 +179,7 @@ class Element extends Base
 								'value' => 'WORK',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/contacts/crm_contact_add.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/contacts/crm-contact-add',
 					],
 				],
 				'OUTGOING_NEEDED' => 'N',
@@ -215,7 +215,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'crm.contact.list',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_3_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_3_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -237,7 +236,7 @@ class Element extends Base
 								'value' => 'EMAIL',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/contacts/crm_contact_list.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/contacts/crm-contact-list',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -266,7 +265,6 @@ class Element extends Base
 						'ITEMS_TITLE.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_4_INCOMING_QUERY_TITLE',
 						'METHOD' => 'user.add',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_4_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_4_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -286,7 +284,7 @@ class Element extends Base
 								'value' => '1',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/users/user_add.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/user/user-add.html',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -316,7 +314,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'crm.lead.update',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_5_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_5_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -330,7 +327,7 @@ class Element extends Base
 								'value' => 'CONVERTED',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/leads/crm_lead_update.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/leads/crm-lead-update',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -360,7 +357,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'tasks.task.add',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_6_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_6_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -378,7 +374,7 @@ class Element extends Base
 								'value' => '1',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/tasks/task/tasks/tasks_task_add.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/tasks/tasks-task-add',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -408,7 +404,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'im.notify',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_7_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_7_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -426,7 +421,6 @@ class Element extends Base
 								'value' => 'SYSTEM',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=93&CHAPTER_ID=07693',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -456,7 +450,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'log.blogpost.add',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_8_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_8_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -474,7 +467,7 @@ class Element extends Base
 								'value' => 'UA',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/log/log_blogpost_add.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/log/log-blogpost-add',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -504,7 +497,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'crm.deal.update',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_9_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_9_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -522,7 +514,7 @@ class Element extends Base
 								'value' => '1',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/cdeals/crm_deal_update.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/deals/crm-deal-update',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -552,7 +544,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'tasks.task.get',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_11_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_11_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -562,7 +553,7 @@ class Element extends Base
 								'value' => '42',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/tasks/task/tasks/tasks_task_get.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/tasks/tasks-task-get',
 					],
 				],
 				'OUTGOING_NEEDED' => 'Y',
@@ -600,7 +591,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'crm.contact.get',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_12_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_12_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -610,7 +600,7 @@ class Element extends Base
 								'value' => '42',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/contacts/crm_contact_get.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/contacts/crm-contact-get',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -648,7 +638,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'crm.contact.update',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_13_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_13_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -658,7 +647,7 @@ class Element extends Base
 								'value' => '42',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/contacts/crm_contact_get.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/contacts/crm-contact-get',
 					],
 				],
 				'WIDGET_LIST' => [
@@ -696,7 +685,6 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'crm.lead.get',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_14_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [
 							'DESCRIPTION.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_14_DESCRIPTION_METHOD_DESCRIPTION',
 						],
@@ -706,7 +694,7 @@ class Element extends Base
 								'value' => '42',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/leads/crm_lead_get.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/leads/crm-lead-get',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -748,13 +736,12 @@ class Element extends Base
 						'CODE' => 'params',
 						'METHOD' => 'task.elapseditem.getlist',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_15_INCOMING_QUERY_INFORMATION_URL',
 						'ITEMS' => [
 							[
 								'title' => 'FIELDS[TITLE]',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/tasks/task/elapseditem/getlist.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/tasks/elapsed-item/task-elapsed-item-get-list',
 					],
 				],
 				'OUTGOING_NEEDED' => 'Y',
@@ -792,7 +779,6 @@ class Element extends Base
 					[
 						'METHOD' => 'crm.lead.get',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_17_INCOMING_QUERY_INFORMATION_URL',
 						'DESCRIPTION_METHOD' => [],
 						'ITEMS_TITLE.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_17_INCOMING_QUERY_TITLE',
 						'CODE' => 'params',
@@ -802,7 +788,7 @@ class Element extends Base
 								'value' => '42',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/leads/crm_lead_get.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/leads/crm-lead-get',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -885,7 +871,6 @@ class Element extends Base
 						'ITEMS_TITLE.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_1_INCOMING_QUERY_TITLE',
 						'METHOD' => 'crm.lead.add',
 						'METHOD_DOWNLOAD_EXAMPLE_TYPE' => 'query',
-						'QUERY_INFORMATION_URL.MESSAGE_CODE' => 'REST_INTEGRATION_PATTERNS_1_INCOMING_QUERY_INFORMATION_URL',
 						'ITEMS' => [
 							[
 								'title' => 'FIELDS[TITLE]',
@@ -918,7 +903,7 @@ class Element extends Base
 								'value' => 'WORK',
 							],
 						],
-						'QUERY_INFORMATION_URL' => 'https://dev.1c-bitrix.ru/rest_help/crm/leads/crm_lead_add.php',
+						'QUERY_INFORMATION_URL' => '/api-reference/crm/leads/crm-lead-add',
 					],
 				],
 				'OUTGOING_NEEDED' => 'D',
@@ -1012,7 +997,7 @@ class Element extends Base
 		{
 			$remoteDictionary = new Integration();
 			$dictionary = $remoteDictionary->toArray();
-			if (!empty($dictionary))
+			if (!empty($dictionary) && false)
 			{
 				$dictionaryCode = array_column($dictionary, 'code');
 				$key = array_search($code, $dictionaryCode, true);
@@ -1034,6 +1019,8 @@ class Element extends Base
 			if (empty($result) && !empty(static::DEFAULT_DATA[$code]))
 			{
 				$result = static::changeMessage(static::DEFAULT_DATA[$code]);
+				$docUrl = DocUrl::createByDefault()->getDocUrl();
+				static::changeInformationUrl($result, $docUrl);
 			}
 
 			$cache->endDataCache($result);
@@ -1076,11 +1063,14 @@ class Element extends Base
 
 			if (empty($result))
 			{
+				$docUrl = DocUrl::createByDefault()->getDocUrl();
+
 				foreach (static::DEFAULT_DATA as $data)
 				{
 					if ($sectionCode === $data['SECTION_CODE'])
 					{
 						$data = static::changeMessage($data);
+						static::changeInformationUrl($result, $docUrl);
 						$result[$data['CODE']] = $data;
 					}
 				}
@@ -1090,5 +1080,17 @@ class Element extends Base
 		}
 
 		return $result;
+	}
+
+	private static function changeInformationUrl(array &$data, Uri $docUrl): void
+	{
+		$informationUrl = $data['OPTIONS']['QUERY'][0]['QUERY_INFORMATION_URL'] ?? '';
+
+		if (empty($informationUrl))
+		{
+			return;
+		}
+
+		$data['OPTIONS']['QUERY'][0]['QUERY_INFORMATION_URL'] = (string)$docUrl->setPath($informationUrl);
 	}
 }

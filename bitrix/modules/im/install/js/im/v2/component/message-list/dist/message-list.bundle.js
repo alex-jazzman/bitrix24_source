@@ -44,6 +44,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getMenuItems() {
+	    const isCurrentUser = this.context.user.id === im_v2_application_core.Core.getUserId();
+	    if (isCurrentUser) {
+	      return [this.getProfileItem()];
+	    }
 	    return [this.getMentionItem(), this.getSendItem(), this.getProfileItem(), this.getKickItem()];
 	  }
 	}
@@ -750,10 +754,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	      if (copilotManager.isCopilotBot(this.authorDialogId)) {
-	        return false;
-	      }
-	      const isCurrentUser = authorUser.id === im_v2_application_core.Core.getUserId();
-	      if (isCurrentUser) {
 	        return false;
 	      }
 	      const isBotChat = this.isUser && this.contextUser.type === im_v2_const.UserType.bot;

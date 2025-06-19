@@ -433,10 +433,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          items: [{
 	            text: landing_loc.Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_UNSPLASH"),
 	            onclick: this.onUnsplashShow.bind(this)
-	          }, {
+	          }].concat(babelHelpers.toConsumableArray(landing_env.Env.getInstance().getOptions()['google_images_available'] ? [{
 	            text: landing_loc.Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_GOOGLE"),
 	            onclick: this.onGoogleShow.bind(this)
-	          },
+	          }] : []), [
 	          // {
 	          // 	text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_PARTNER"),
 	          // 	className: "landing-ui-disabled"
@@ -447,7 +447,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          }, {
 	            text: landing_loc.Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_LINK"),
 	            onclick: this.onLinkShow.bind(this)
-	          }],
+	          }]),
 	          events: {
 	            onPopupClose: function () {
 	              this.bindElement.classList.remove("landing-ui-active");

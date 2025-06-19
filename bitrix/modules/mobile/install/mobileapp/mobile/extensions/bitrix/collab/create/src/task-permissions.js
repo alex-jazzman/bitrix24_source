@@ -44,7 +44,7 @@ jn.define('collab/create/src/task-permissions', (require, exports, module) => {
 		{
 			super(props);
 			this.settingsSelectorItemsRefsMap = new Map();
-			this.invitersMenu = null;
+			this.permissionsMenu = null;
 			this.#initializeState(props);
 		}
 
@@ -199,10 +199,10 @@ jn.define('collab/create/src/task-permissions', (require, exports, module) => {
 		};
 
 		#onPermissionsItemClick = (item) => {
-			new UIMenu(this.#getPermissionValueTypesItemsForMenu(item.id))
-				.show({
-					target: this.settingsSelectorItemsRefsMap.get(item.id).ref,
-				});
+			this.permissionsMenu = new UIMenu(this.#getPermissionValueTypesItemsForMenu(item.id));
+			this.permissionsMenu.show({
+				target: this.settingsSelectorItemsRefsMap.get(item.id).ref,
+			});
 		};
 	}
 

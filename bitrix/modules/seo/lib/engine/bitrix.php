@@ -14,7 +14,10 @@ use Bitrix\Seo\IEngine;
 
 if (!defined("BITRIX_CLOUD_ADV_URL"))
 {
-	define("BITRIX_CLOUD_ADV_URL", 'https://cloud-adv.bitrix.info');
+	$domain = (new \Bitrix\Main\License\UrlProvider())->getTechDomain();
+	$cloudAdvUrl = 'https://cloud-adv.' . $domain;
+
+	define("BITRIX_CLOUD_ADV_URL", $cloudAdvUrl);
 }
 
 if (!defined("SEO_BITRIX_API_URL"))

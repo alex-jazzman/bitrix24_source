@@ -10,11 +10,11 @@ class Settings
 	public static function getMobileOptions(): array
 	{
 		return array_merge([
-			'useCustomTurnServer' => Option::get('im', 'turn_server_self') === 'Y',
-			'turnServer' => Option::get('im', 'turn_server', ''),
-			'turnServerLogin' => Option::get('im', 'turn_server_login', ''),
-			'turnServerPassword' => Option::get('im', 'turn_server_password', ''),
-			'callLogService' => Option::get('im', 'call_log_service', ''),
+			'useCustomTurnServer' => Option::get('call', 'turn_server_self') === 'Y',
+			'turnServer' => \Bitrix\Im\Call\Call::getTurnServer(),
+			'turnServerLogin' => Option::get('call', 'turn_server_login', ''),
+			'turnServerPassword' => Option::get('call', 'turn_server_password', ''),
+			'callLogService' => Option::get('call', 'call_log_service', ''),
 			'sfuServerEnabled' => Im\Call\Call::isCallServerEnabled(),
 			'bitrixCallsEnabled' => Im\Call\Call::isBitrixCallEnabled(),
 			'callBetaIosEnabled' => Im\Call\Call::isIosBetaEnabled(),

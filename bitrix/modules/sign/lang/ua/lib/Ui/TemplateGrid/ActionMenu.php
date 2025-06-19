@@ -1,0 +1,2 @@
+<?php
+$MESS["SIGN_TEMPLATE_LIST_PANEL_ACTION_DELETE"] = "Видалити";

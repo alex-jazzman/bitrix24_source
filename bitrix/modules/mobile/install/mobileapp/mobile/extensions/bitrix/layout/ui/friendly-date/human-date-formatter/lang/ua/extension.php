@@ -1,0 +1,5 @@
+<?php
+$MESS["MOBILE_UI_VIEW_DATE_AT_TIME"] = "#DATE# о #TIME#";
+$MESS["MOBILE_UI_VIEW_JUST_NOW"] = "щойно";
+$MESS["MOBILE_UI_VIEW_TODAY"] = "сьогодні в #TIME#";
+$MESS["MOBILE_UI_VIEW_YESTERDAY"] = "учора о #TIME#";

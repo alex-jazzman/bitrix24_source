@@ -6,7 +6,7 @@
 // region environment initialization
 if (!defined("UPDATE_SYSTEM_VERSION"))
 {
-	define("UPDATE_SYSTEM_VERSION", "25.100.250");
+	define("UPDATE_SYSTEM_VERSION", "25.100.500");
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");

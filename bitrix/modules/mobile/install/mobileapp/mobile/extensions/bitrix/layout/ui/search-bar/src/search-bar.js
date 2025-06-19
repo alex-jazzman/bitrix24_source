@@ -366,6 +366,8 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 		 */
 		onCancel()
 		{
+			this.lastSearchResultStatus = null;
+
 			const newState = mergeImmutable(this.state, {
 				search: '',
 				counterId: null,
@@ -457,6 +459,15 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 				return;
 			}
 
+			if (
+				params
+				&& this.shouldPreventSearchByLastResultStatus(text)
+				&& !this.hasPresetOrCounterChanged(params)
+			)
+			{
+				return;
+			}
+
 			const newState = {
 				search: text,
 				counterId: null,
@@ -507,6 +518,28 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 					callback();
 				}
 			});
+		}
+
+		/**
+		 * @param {string} text
+		 * @return {boolean}
+		 */
+		shouldPreventSearchByLastResultStatus(text)
+		{
+			return Boolean(
+				this.lastSearchResultStatus
+				&& !this.lastSearchResultStatus.hasResult
+				&& text.startsWith(this.lastSearchResultStatus.filterText),
+			);
+		}
+
+		hasPresetOrCounterChanged(params)
+		{
+			const { preset, counter } = params;
+			const presetId = preset?.id || null;
+			const counterId = counter?.code || null;
+
+			return Boolean(presetId !== this.state.presetId || counterId !== this.state.counterId);
 		}
 
 		/**
@@ -652,6 +685,19 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 		{
 			const searchParams = (active ? params : {});
 			this.search(searchParams, false);
+		}
+
+		/**
+		 * @public
+		 * @param {boolean} hasResult
+		 * @param {string} filterText
+		 */
+		updateLastSearchResultStatus(hasResult, filterText)
+		{
+			this.lastSearchResultStatus = {
+				hasResult,
+				filterText,
+			};
 		}
 
 		// endregion

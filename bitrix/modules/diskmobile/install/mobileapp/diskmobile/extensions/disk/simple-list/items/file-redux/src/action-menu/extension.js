@@ -6,12 +6,13 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 	const { confirmDestructiveAction, Alert } = require('alert');
 	const { Icon } = require('assets/icons');
 	const { UIMenu } = require('layout/ui/menu');
-	const { Filesystem } = require('native/filesystem');
+	const { Filesystem, utils } = require('native/filesystem');
 	const { withCurrentDomain } = require('utils/url');
 	const { isEmpty } = require('utils/object');
 
 	const { FolderCode } = require('disk/enum');
 	const { RenameDialog } = require('disk/dialogs/rename');
+	const { ExternalLinkDialog } = require('disk/dialogs/external-link');
 	const { removeObject } = require('disk/remove');
 	const { moveObject } = require('disk/move');
 	const { copyObject } = require('disk/copy');
@@ -75,30 +76,56 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 			const actions = [];
 			if (this.object?.links?.download)
 			{
-				actions.push({
-					id: 'share',
-					title: Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE'),
-					sectionCode: Sections.SHARING,
-					iconName: Icon.SHARE,
-					onItemSelected: () => {
-						dialogs.showLoadingIndicator();
-						Filesystem.downloadFile(withCurrentDomain(this.object.links.download))
-							.then((localUrl) => {
-								dialogs.showSharingDialog({
-									uri: localUrl,
+				actions.push(
+					{
+						id: 'share',
+						title: Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE'),
+						sectionCode: Sections.SHARING,
+						iconName: Icon.SHARE,
+						onItemSelected: () => {
+							dialogs.showLoadingIndicator();
+							Filesystem.downloadFile(withCurrentDomain(this.object.links.download))
+								.then((localUrl) => {
+									dialogs.showSharingDialog({
+										uri: localUrl,
+									});
+									dialogs.hideLoadingIndicator();
+								}).catch(e => {
+									console.error(e);
+									Alert.alert(
+										Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE_ERROR_TITLE'),
+										Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE_ERROR_DESCRIPTION'),
+									);
+									dialogs.hideLoadingIndicator();
 								});
-								dialogs.hideLoadingIndicator();
-							}).catch(e => {
-								console.error(e);
-								Alert.alert(
-									Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE_ERROR_TITLE'),
-									Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE_ERROR_DESCRIPTION'),
-								);
-								dialogs.hideLoadingIndicator();
-							});
+						},
+						sort: 100,
 					},
-					sort: 100,
-				});
+					{
+						id: 'download',
+						title: Loc.getMessage('M_DISK_FILE_ACTIONS_DOWNLOAD'),
+						sectionCode: Sections.SHARING,
+						iconName: Icon.DOWNLOAD,
+						onItemSelected: () => {
+							dialogs.showLoadingIndicator();
+							Filesystem.downloadFile(withCurrentDomain(this.object.links.download))
+								.then((localUrl) => {
+									dialogs.hideLoadingIndicator();
+									utils.saveFile(localUrl)
+										.catch(() => dialogs.showSharingDialog({ uri: localUrl }));
+								})
+								.catch((e) => {
+									console.error(e);
+									Alert.alert(
+										Loc.getMessage('M_DISK_FILE_ACTIONS_DOWNLOAD_ERROR_TITLE'),
+										Loc.getMessage('M_DISK_FILE_ACTIONS_DOWNLOAD_ERROR_DESCRIPTION'),
+									);
+									dialogs.hideLoadingIndicator();
+								});
+						},
+						sort: 150,
+					},
+				);
 			}
 
 			if (this.rights.canRename)
@@ -133,6 +160,20 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 					},
 				);
 			}
+
+			actions.push({
+				id: 'shareLink',
+				title: Loc.getMessage('M_DISK_FILE_ACTIONS_SHARE_LINK'),
+				sectionCode: Sections.SHARING,
+				iconName: Icon.LINK,
+				onItemSelected: () => {
+					ExternalLinkDialog.open({
+						objectId: this.objectId,
+						onSave: () => {},
+					}, this.parentWidget);
+				},
+				sort: 350,
+			});
 
 			if (this.object.id === this.object.realObjectId)
 			{

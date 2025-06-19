@@ -53,7 +53,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		render()
 		{
-			const { testId, style = {} } = this.props;
+			const { testId, style = {}, additionalContent } = this.props;
 
 			return View(
 				{
@@ -88,6 +88,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 						this.renderSwitch(),
 					),
 					this.renderSubtitle(),
+					this.state.checked ? additionalContent : null,
 				),
 			);
 		}
@@ -200,7 +201,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		#getSwitchSize()
 		{
-			return SwitcherSize.XL;
+			return this.props.switcherSize ?? SwitcherSize.XL;
 		}
 
 		#getEllipsize(value)

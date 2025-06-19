@@ -11,7 +11,7 @@ jn.define('apptheme', (require, exports, module) => {
 		newlight: 'light',
 	};
 
-	const { colors: localColors, styles, typography } = require('apptheme/list');
+	const { colors: localColors, styles, typography } = require('apptheme/src/list');
 	const nativeAppTheme = require('native/apptheme')?.AppTheme;
 
 	const componentTokens = {

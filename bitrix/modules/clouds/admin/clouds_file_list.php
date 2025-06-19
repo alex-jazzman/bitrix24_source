@@ -370,7 +370,7 @@ if ($USER->CanDoOperation('clouds_upload') && is_array($arID))
 					else
 					{
 						$pos = $obUpload->GetPos();
-						if ($pos > $fileSize)
+						if ($pos >= $fileSize)
 						{
 							if ($obUpload->Finish())
 							{
@@ -599,7 +599,7 @@ if ($USER->CanDoOperation('clouds_upload') && is_array($arID))
 				else
 				{
 					$pos = $obUpload->GetPos();
-					if ($pos > $fileSize)
+					if ($pos >= $fileSize)
 					{
 						if ($obUpload->Finish())
 						{

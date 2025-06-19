@@ -617,6 +617,13 @@ BX.rest.Marketplace = (function(){
 
 		openDemoSubscription: function(callback)
 		{
+			const canActivateDemoSubscription = BX.message('CAN_ACTIVATE_DEMO_SUBSCRIPTION');
+
+			if (canActivateDemoSubscription !== 'Y')
+			{
+				return;
+			}
+
 			var btnConfirm = new BX.UI.Button({
 				color: BX.UI.Button.Color.SUCCESS,
 				state: BX.UI.Button.State.DISABLED,
@@ -751,7 +758,7 @@ BX.rest.Marketplace = (function(){
 															attrs: {
 																for: "mp_demo_subscription_license",
 															},
-															html: BX.message("REST_MP_SUBSCRIPTION_DEMO_EULA_TITLE").replace('#LINK#', BX.message("REST_MP_SUBSCRIPTION_DEMO_EULA_LINK"))
+															html: BX.message('REST_MP_SUBSCRIPTION_DEMO_EULA_TITLE').replace('#LINK#', BX.message('REST_MARKETPLACE_EULA_URL'))
 														}
 													)
 												]

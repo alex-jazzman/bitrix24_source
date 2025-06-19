@@ -818,10 +818,14 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 
 		#closeInviteBox = async () => {
 			const { boxLayout } = this.props;
+			if (!this.onClose)
+			{
+				this.onClose = new Promise((resolve) => {
+					boxLayout?.close?.(resolve);
+				});
+			}
 
-			return new Promise((resolve) => {
-				boxLayout?.close?.(resolve);
-			});
+			return this.onClose;
 		};
 
 		#renderNameCheckerAvatar()

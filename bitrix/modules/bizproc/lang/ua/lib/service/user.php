@@ -1,9 +1,13 @@
 <?php
 $MESS["BP_SERVICE_USER_ACTIVE"] = "Активний";
 $MESS["BP_SERVICE_USER_DEPARTMENT"] = "Підрозділ (список ID)";
+$MESS["BP_SERVICE_USER_DEPARTMENT_1"] = "Список ID підрозділів співробітника (застаріло)";
 $MESS["BP_SERVICE_USER_DEPARTMENT_PRINTABLE"] = "Підрозділ (назви)";
+$MESS["BP_SERVICE_USER_DEPARTMENT_PRINTABLE_1"] = "Список назв підрозділів співробітника (застаріло)";
 $MESS["BP_SERVICE_USER_EMAIL"] = "E-mail";
 $MESS["BP_SERVICE_USER_HEAD"] = "Керівник";
+$MESS["BP_SERVICE_USER_HR_NODE"] = "Список підрозділів співробітника";
+$MESS["BP_SERVICE_USER_HR_NODE_IDS"] = "Список ID підрозділів співробітника";
 $MESS["BP_SERVICE_USER_IS_ABSENT"] = "Відсутній (за графіком відсутностей)";
 $MESS["BP_SERVICE_USER_LAST_NAME"] = "Прізвище";
 $MESS["BP_SERVICE_USER_LOGIN"] = "Логін";

@@ -486,6 +486,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return {
 				height,
 				paddingTop,
+				paddingBottom,
 				position: 'relative',
 				width: '100%',
 				backgroundColor: this.getBackgroundColor(),

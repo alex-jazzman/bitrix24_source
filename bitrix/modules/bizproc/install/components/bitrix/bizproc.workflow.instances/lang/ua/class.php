@@ -27,6 +27,7 @@ $MESS["BPWI_OWNED_UNTIL"] = "Заблокований до";
 $MESS["BPWI_PAGE_TITLE"] = "Запущені бізнес-процеси";
 $MESS["BPWI_TERMINATE_LABEL"] = "Зупинити";
 $MESS["BPWI_WORKFLOW_ID_ANY"] = "(будь-який)";
+$MESS["BPWI_WS_DOCUMENT_ID"] = "Елемент CRM";
 $MESS["BPWI_WS_MODULE_ID"] = "Модуль";
 $MESS["BPWI_WS_STARTED"] = "Дата початку";
 $MESS["BPWI_WS_STARTED_BY"] = "Запустив";

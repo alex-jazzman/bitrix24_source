@@ -61,8 +61,6 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 		{
 			const footerContent = this.renderFooterContent();
 
-			console.log(this.#getPaddingBottom(), 'this.#getPaddingBottom()');
-
 			if (!footerContent)
 			{
 				return null;

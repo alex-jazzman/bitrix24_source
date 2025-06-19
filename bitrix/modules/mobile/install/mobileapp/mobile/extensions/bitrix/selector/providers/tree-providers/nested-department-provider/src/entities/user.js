@@ -2,34 +2,67 @@
  * @module selector/providers/tree-providers/nested-department-provider/src/entities/user
  */
 jn.define('selector/providers/tree-providers/nested-department-provider/src/entities/user', (require, exports, module) => {
+	const { AvatarClass } = require('ui-system/blocks/avatar');
+	const { SelectorDataProvider } = require('layout/ui/user/user-name');
+	const { BaseEntity } = require('selector/providers/tree-providers/nested-department-provider/src/entities/base-entity');
+
+	const ENTITY_TYPE = {
+		employee: 'employee',
+	};
 
 	/**
 	 * @class UserEntity
 	 */
-	class UserEntity
+	class UserEntity extends BaseEntity
 	{
 		static getId()
 		{
 			return 'user';
 		}
 
-		getEntityForDialog()
+		getEntityOptions()
 		{
 			return {
-				id: UserEntity.getId(),
-				dynamicLoad: true,
-				dynamicSearch: true,
-				filters: [],
-				options: {
-					emailUsers: true,
-					inviteEmployeeLink: false,
-				},
-				searchable: true,
-				substituteEntityId: null,
+				emailUsers: true,
+				inviteEmployeeLink: false,
 			};
 		}
 
-		prepareItemForDrawing(item)
+		prepareItemForDrawing(item, initialEntity)
+		{
+			const isAvatarSupported = AvatarClass.isNativeSupported();
+			const isEmployee = item.params?.entityType === ENTITY_TYPE.employee;
+
+			if (!item.id || !isAvatarSupported)
+			{
+				return this.getDefaultItemsStyles(item);
+			}
+
+			const preparedParams = this.getPreparedParamsForAvatar(item);
+			const avatarParams = AvatarClass.resolveEntitySelectorParams({ ...preparedParams, withRedux: true });
+			const avatar = AvatarClass.getAvatar(avatarParams).getAvatarNativeProps();
+			const userNameStyle = SelectorDataProvider.getUserTitleStyle(preparedParams);
+
+			if (!isEmployee)
+			{
+				return this.getNonEmployeeStyles(item, avatar, userNameStyle);
+			}
+
+			return this.getDefaultItemsStyles(item);
+		}
+
+		getPreparedParamsForAvatar(item)
+		{
+			return {
+				...item,
+				customData: item.params?.customData,
+				entityId: item.params?.entityId,
+				entityType: item.params?.entityType,
+				avatar: item.imageUrl,
+			};
+		}
+
+		getDefaultItemsStyles(item)
 		{
 			return {
 				...item,
@@ -44,12 +77,13 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 			};
 		}
 
-		findItem(id, items)
+		getNonEmployeeStyles(item, avatar, userNameStyle)
 		{
-			return items.find((item) => (
-				String(item.id) === String(id)
-				&& String(item.entityId) === UserEntity.getId()
-			));
+			return {
+				...item,
+				avatar,
+				styles: userNameStyle,
+			};
 		}
 	}
 

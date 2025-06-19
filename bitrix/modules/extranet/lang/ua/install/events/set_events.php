@@ -1,4 +1,5 @@
 <?php
+$MESS["EXTRANET_COLLAB_JOIN_SUBJECT"] = "Ви приєдналися до колаби";
 $MESS["EXTRANET_INVITATION_DESC"] = "#CHECKWORD# — Контрольний рядок
 #USER_ID# — ID користувача
 #EMAIL# — E-mail користувача

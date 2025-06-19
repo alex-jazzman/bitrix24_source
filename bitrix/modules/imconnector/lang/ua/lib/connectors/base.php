@@ -1,6 +1,7 @@
 <?php
 $MESS["IMCONNECTOR_CONTACT_NAME"] = "ПІБ:";
 $MESS["IMCONNECTOR_CONTACT_PHONE"] = "Номер телефону:";
+$MESS["IMCONNECTOR_ERROR_EXPIRED_ACCESS_TOKEN"] = "Закінчився термін дії авторизаційного токена. Щоб відновити роботу відкритої лінії, вимкніть і знову під'єднайте цей канал у [url=#LINK#]Контакт-центрі[/url].";
 $MESS["IMCONNECTOR_FORWARDED_MESSAGE"] = "Переслане повідомлення:";
 $MESS["IMCONNECTOR_GUEST_USER"] = "Гість";
 $MESS["IMCONNECTOR_LINK_TO_ORIGINAL_POST"] = "Посилання на вихідний пост: #LINK#";

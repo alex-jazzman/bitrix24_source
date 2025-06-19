@@ -83,7 +83,7 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 						flexGrow: 1,
 						...containerStyle,
 					},
-					onClick: () => {
+					onClick: this.isClickable() && (() => {
 						if (onClick && (useBBCodeEditor || !canExpand || !this.isExpandable()))
 						{
 							onClick();
@@ -92,7 +92,7 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 						{
 							this.toggleExpand();
 						}
-					},
+					}),
 					onLongClick: () => this.handleContentLongClick(),
 				},
 				BBCodeText({
@@ -102,6 +102,18 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 					testId,
 				}),
 			);
+		}
+
+		isClickable()
+		{
+			const {
+				onClick,
+				useBBCodeEditor,
+				canExpand,
+
+			} = this.props;
+
+			return ((onClick && (useBBCodeEditor || !canExpand || !this.isExpandable())) || canExpand);
 		}
 
 		handleContentLongClick()

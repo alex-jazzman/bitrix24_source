@@ -606,7 +606,6 @@ export class RobotSelector extends EventEmitter
 
 		const feedbackParams = {
 			id: Math.random()+'',
-			portalUri: 'https://product-feedback.bitrix24.com/',
 			forms: [
 				{zones: ['by', 'kz', 'ru'], id: 438, lang: 'ru', sec: 'odyyl1'},
 				{zones: ['com.br'], id: 436, lang: 'br', sec: '8fb4et'},

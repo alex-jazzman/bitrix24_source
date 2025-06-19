@@ -14,6 +14,7 @@ $MESS["LANDING_TPL_LABEL_NEW"] = "нове";
 $MESS["LANDING_TPL_LABEL_SUBSCRIPTION"] = "За підпискою";
 $MESS["LANDING_TPL_LIMIT_REACHED_TITLE"] = "Перевищено обмеження";
 $MESS["LANDING_TPL_LOAD_APP_TEMPLATE_2"] = "<span>Завантажити</span> шаблон із Бітрікс24.Маркет";
+$MESS["LANDING_TPL_LOAD_APP_TEMPLATE_2_MSGVER_1"] = "<span>Завантажити</span> шаблон із Бітрікс24 Маркет";
 $MESS["LANDING_TPL_NOT_FOUND_BUTTON"] = "Написати";
 $MESS["LANDING_TPL_NOT_FOUND_TITLE"] = "Не знайшли потрібний шаблон?";
 $MESS["LANDING_TPL_PAGE_LIMIT_REACHED_TEXT"] = "<p>На вашому тарифному плані є обмеження за кількістю створених сторінок. Щоб додати нові сторінки, перейдіть на інший тарифний план .</p><p> У верхньому тарифі  &laquo;Компанія&raquo; кількість сторінок не обмежена.</p>";

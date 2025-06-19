@@ -405,6 +405,12 @@
 								openDialogOptions.withMessageHighlight = true;
 							}
 
+							if (params.botContextData)
+							{
+								openDialogOptions.botContextData = params.botContextData;
+								openDialogOptions.context = 'link';
+							}
+
 							if (params.dialogType === MessengerDialogType.chat)
 							{
 								BXMobileApp.Events.postToComponent(
@@ -830,6 +836,7 @@
 		{
 			const chatRegs = [
 				/\/online\/\?IM_DIALOG=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
+				/\/online\/\?IM_DIALOG=(\d+|chat\d+)&BOT_CONTEXT=([^&#]*)/i,
 				/\/online\/\?IM_DIALOG=(\d+|chat\d+)/i,
 				/\/online\/\?IM_COPILOT=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
 				/\/online\/\?IM_COPILOT=(\d+|chat\d+)/i,
@@ -887,16 +894,26 @@
 				}
 
 				const dialogId = result[1];
-				const messageId = result[2];
 				const openDialogParams = {
 					dialogType,
 					dialogId,
 					fallbackUrl: url,
 				};
 
-				if (messageId)
+				if (result[2] && result[0].includes('IM_MESSAGE'))
 				{
-					openDialogParams.messageId = parseInt(messageId, 10);
+					openDialogParams.messageId = parseInt(result[2], 10);
+				}
+				else if (result[2] && result[0].includes('BOT_CONTEXT'))
+				{
+					try
+					{
+						openDialogParams.botContextData = decodeURIComponent(result[2]);
+					}
+					catch (error)
+					{
+						console.error('BX.MobileTools.getMessengerOpenDialogParamsFromUrl decodeURIComponent error:', error);
+					}
 				}
 
 				return openDialogParams;

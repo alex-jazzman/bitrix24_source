@@ -764,6 +764,13 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    this.trimStartLinebreaks();
 	    this.trimEndLinebreaks();
 	  }
+	  trimLinebreaksOnce() {
+	    [this.getFirstChild(), this.getLastChild()].forEach(child => {
+	      if (child && child.getName() === '#linebreak') {
+	        child.remove();
+	      }
+	    });
+	  }
 	  toString(options = {}) {
 	    const tagScheme = this.getTagScheme();
 	    const stringifier = tagScheme.getStringifier();
@@ -1124,6 +1131,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      const nextSibling = node.getNextSibling();
 	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === BBCodeNode.ELEMENT_NODE && !nextSibling.getTagScheme().getGroup().includes('#inline'));
 	    })();
+	    node.trimLinebreaksOnce();
 	    const openingTag = node.getOpeningTag();
 	    const content = node.getContent(options);
 	    const closingTag = node.getClosingTag();

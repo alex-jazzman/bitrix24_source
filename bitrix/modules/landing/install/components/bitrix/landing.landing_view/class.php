@@ -659,6 +659,7 @@ class LandingViewComponent extends LandingBaseComponent
 				$options['ai_image_available'] = $arResult['AI_IMAGE_AVAILABLE'];
 				$options['ai_image_active'] = $arResult['AI_IMAGE_ACTIVE'];
 				$options['ai_unactive_info_code'] = $arResult['AI_UNACTIVE_INFO_CODE'];
+				$options['google_images_available'] = Manager::isB24();
 				$options['allow_minisites'] = \Bitrix\Landing\Restriction\Form::isMinisitesAllowed();
 				$options['folder_id'] = $landing->getFolderId();
 				$options['version'] = Manager::getVersion();

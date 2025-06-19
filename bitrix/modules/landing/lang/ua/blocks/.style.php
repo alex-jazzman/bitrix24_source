@@ -48,6 +48,7 @@ $MESS["LANDING_BLOCK_STYLE_BORDER_SIDES_COLOR"] = "Колір бокових р�
 $MESS["LANDING_BLOCK_STYLE_BORDER_TOP_COLOR"] = "Колір верхньої рамки";
 $MESS["LANDING_BLOCK_STYLE_BORDER_WIDTH"] = "Товщина рамки";
 $MESS["LANDING_BLOCK_STYLE_BUTTON_COLOR"] = "Колір кнопки";
+$MESS["LANDING_BLOCK_STYLE_BUTTON_COLOR_HOVER"] = "Колір кнопки під час наведення";
 $MESS["LANDING_BLOCK_STYLE_COLOR_HOVER"] = "Колір при наведенні";
 $MESS["LANDING_BLOCK_STYLE_COLUMNS_ON_ROW"] = "Колонок в одному рядку";
 $MESS["LANDING_BLOCK_STYLE_DEVICE_DISPLAY"] = "Видимість на пристроях";

@@ -454,17 +454,7 @@ function reportConnectionResult(callId, connectionResult)
 
 function sendTelemetryEvent(options)
 {
-	/*
-	const url = (document.location.protocol == "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
-	const req = new XMLHttpRequest();
-	req.open("POST", url, true);
-	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	req.withCredentials = true;
-	options.op = "call";
-	options.d = document.location.host;
-	const query = BX.util.buildQueryString(options);
-	req.send(query);
-	*/
+
 }
 
 const isDesktop = () =>

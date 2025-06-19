@@ -297,7 +297,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 						if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 						{
-							this.props.actionCallbacks.loadItems(response?.data, renderType.cache);
+							this.props.actionCallbacks.loadItems(response?.data, renderType.cache, config);
 						}
 
 						this.drawListFromCache(response, blockPage, appendItems);
@@ -317,7 +317,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						this.requestRenderTimeout = setTimeout(() => {
 							if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 							{
-								this.props.actionCallbacks.loadItems(response?.data, renderType.ajax);
+								this.props.actionCallbacks.loadItems(response?.data, renderType.ajax, config);
 							}
 
 							this.drawListFromAjax(response, blockPage, appendItems);
@@ -325,7 +325,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							this.currentRequestUid = null;
 						}, remainingTime);
 					})
-					.setTimeoutHandler(TIME_TO_BAD_REQUEST, this.triggerBadConnectionRequest)
+					.setTimeoutHandler(
+						this.props.requestTimeoutInMilliseconds ?? TIME_TO_BAD_REQUEST,
+						this.triggerBadConnectionRequest,
+					)
 					.setNetworkErrorHandler(this.triggerOfflineRequest)
 			);
 

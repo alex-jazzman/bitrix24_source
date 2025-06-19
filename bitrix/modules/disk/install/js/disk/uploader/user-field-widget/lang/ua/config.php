@@ -2,6 +2,7 @@
 $MESS["DISK_UF_WIDGET_ALLOW_DOCUMENT_EDIT"] = "Дозволити редагування документів";
 $MESS["DISK_UF_WIDGET_ALLOW_PHOTO_COLLAGE"] = "Дозволити колаж фото";
 $MESS["DISK_UF_WIDGET_CANCEL_BUTTON_TITLE"] = "Скасувати";
+$MESS["DISK_UF_WIDGET_CREATE_BOARD"] = "Дошка";
 $MESS["DISK_UF_WIDGET_CREATE_DOCUMENT"] = "Створити документ";
 $MESS["DISK_UF_WIDGET_CREATE_DOCX"] = "Документ";
 $MESS["DISK_UF_WIDGET_CREATE_PPTX"] = "Презентація";

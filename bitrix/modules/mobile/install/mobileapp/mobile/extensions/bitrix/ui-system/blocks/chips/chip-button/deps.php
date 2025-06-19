@@ -10,7 +10,8 @@ return [
 		'utils/enums/style',
 		'ui-system/blocks/icon',
 		'layout/pure-component',
-		'layout/ui/loaders/spinner'
+		'layout/ui/loaders/spinner',
+		'ui-system/typography/text',
 	],
 	'bundle' => [
 		'./src/design-enum',

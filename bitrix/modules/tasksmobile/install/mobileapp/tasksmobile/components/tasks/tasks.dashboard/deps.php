@@ -31,7 +31,6 @@ return [
 		'tasks:layout/online',
 		'tasks:dashboard',
 		'tasks:entry',
-		'tasks:navigator',
 		'tasks:task/calendar',
 		'tasks:statemanager/redux/slices/groups',
 		'tasks:statemanager/redux/slices/kanban-settings',
