@@ -26,10 +26,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
@@ -734,7 +731,19 @@ $APPLICATION->IncludeComponent(
 			? $arResult['PAGINATION'] : array(),
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
-		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Contact))->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get(),
+		'COUNTER_PANEL' => [
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::ContactName,
+			'EXTRAS' => [
+				'CATEGORY_ID' => (int)($arResult['CATEGORY_ID'] ?? 0),
+			],
+			'PATH_TO_ENTITY_LIST' => $pathToList,
+		],
+		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Contact))
+			->setItems([
+				NavigationBarPanel::ID_REPEAT_SALE,
+			])
+			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get()
+		,
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,

@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 	const { compareWords } = require('utils/string');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogType } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getWordsFromText } = require('im/messenger/controller/search/experimental/get-words-from-text');
 
 	class RecentLocalSearchService
@@ -20,13 +21,30 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 
 		/**
 		 * @param {Array<string>} queryWords
-		 * @return {Array<string>}
+		 * @return {Promise<Array<string>>}
 		 */
-		search(queryWords)
+		async search(queryWords)
 		{
-			const recentCollection = this.getItemsFromRecent(queryWords);
+			const searchDbResult = await this.searchInLocalDb(queryWords.join(' '));
+			void await this.#setChatsToStorage(searchDbResult);
+			const recentStoreCollection = this.getItemsFromRecentStore(queryWords);
 
-			return this.getDialogIds(recentCollection);
+			return this.getDialogIds(recentStoreCollection);
+		}
+
+		/**
+		 * @description The local database is being searched. The result is recorded in the storage
+		 * @param {string} query
+		 * @return {Promise<Array<DialoguesModelState>>}
+		 */
+		async searchInLocalDb(query)
+		{
+			const recentRepository = serviceLocator.get('core').getRepository().recent;
+			const searchDbResult = await recentRepository.searchByText({
+				searchText: query,
+			});
+
+			return searchDbResult.items;
 		}
 
 		/**
@@ -34,7 +52,7 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 		 * @param queryWords
 		 * @return {Map<string, RecentLocalItem>}
 		 */
-		getItemsFromRecent(queryWords)
+		getItemsFromRecentStore(queryWords)
 		{
 			const recentItems = this.getAllRecentItems();
 
@@ -211,6 +229,26 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 			return [...recentCollection.values()].map((item) => {
 				return item.dialogId.toString();
 			});
+		}
+
+		/**
+		 * @param {Array<DialoguesModelState>} dialogues
+		 * @returns {Promise<void>}
+		 */
+		async #setChatsToStorage(dialogues)
+		{
+			const chats = dialogues.map((dialog) => dialog.chat);
+			await this.store.dispatch('dialoguesModel/set', chats);
+
+			const userRepository = serviceLocator.get('core').getRepository().user;
+			const userIds = chats
+				.filter((chat) => DialogHelper.isChatId(chat.dialogId))
+				.map((chat) => Number(chat.dialogId));
+			const users = await userRepository.userTable.getListByIds(userIds);
+			await this.store.dispatch('usersModel/setFromLocalDatabase', users.items);
+
+			const recentItems = dialogues.map((dialog) => this.prepareRecentItem(dialog));
+			await this.store.dispatch('recentModel/searchModel/set', recentItems);
 		}
 	}
 

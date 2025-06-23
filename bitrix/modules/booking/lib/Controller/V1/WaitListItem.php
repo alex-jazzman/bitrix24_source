@@ -11,6 +11,7 @@ use Bitrix\Booking\Entity;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
 use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Provider\WaitListItemProvider;
 use Bitrix\Main\Engine\CurrentUser;
 
 class WaitListItem extends BaseController
@@ -125,7 +126,16 @@ class WaitListItem extends BaseController
 
 	public function deleteListAction(CurrentUser $currentUser, array $ids): array
 	{
-		foreach ($ids as $id)
+		$filteredIds = array_values(array_filter($ids, 'is_int'));
+
+		if (count($filteredIds) !== count($ids))
+		{
+			$this->addError(ErrorBuilder::build('ids should contain only integers'));
+
+			return [];
+		}
+
+		foreach ($filteredIds as $id)
 		{
 			$command = new RemoveWaitListItemCommand(
 				id: $id,
@@ -161,5 +171,24 @@ class WaitListItem extends BaseController
 		}
 
 		return $result->getWaitListItem();
+	}
+
+	public function getAction(CurrentUser $currentUser, int $id): Entity\WaitListItem\WaitListItem|null
+	{
+		$waitListItem = null;
+
+		try
+		{
+			$waitListItem = (new WaitListItemProvider())
+				->getById(id: $id, userId: (int)$currentUser->getId())
+			;
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+		}
+
+		return $waitListItem;
 	}
 }

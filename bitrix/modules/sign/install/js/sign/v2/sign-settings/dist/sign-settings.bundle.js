@@ -52,7 +52,6 @@ this.BX.Sign = this.BX.Sign || {};
 	var _isGroupDocuments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isGroupDocuments");
 	var _renderPages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPages");
 	var _subscribeOnEditorEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnEditorEvents");
-	var _getPagesUrls = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPagesUrls");
 	var _executeEditorActionsForGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("executeEditorActionsForGroup");
 	var _appendOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendOverlay");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
@@ -75,9 +74,6 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    Object.defineProperty(this, _executeEditorActionsForGroup, {
 	      value: _executeEditorActionsForGroup2
-	    });
-	    Object.defineProperty(this, _getPagesUrls, {
-	      value: _getPagesUrls2
 	    });
 	    Object.defineProperty(this, _subscribeOnEditorEvents, {
 	      value: _subscribeOnEditorEvents2
@@ -165,13 +161,15 @@ this.BX.Sign = this.BX.Sign || {};
 	    this.documentsGroup = new Map();
 	    this.documentsGroupUids = [];
 	    const {
-	      languages
+	      languages,
+	      needSkipEditorStep
 	    } = (_config$documentSendC = config.documentSendConfig) != null ? _config$documentSendC : {};
 	    const EditorConstructor = main_core.Reflection.getClass('top.BX.Sign.V2.Editor');
 	    this.editor = new EditorConstructor(type, {
 	      languages,
 	      isTemplateMode: this.isTemplateMode(),
-	      documentInitiatedByType: initiatedByType
+	      documentInitiatedByType: initiatedByType,
+	      needSkipEditorStep
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview] = new sign_v2_preview.Preview({
 	      layout: {
@@ -314,6 +312,15 @@ this.BX.Sign = this.BX.Sign || {};
 	      step.subscribe(type, method);
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnEditorEvents)[_subscribeOnEditorEvents]();
+	  }
+	  async getPagesUrls(data) {
+	    const documentUrls = [];
+	    const handler = urls => {
+	      const targetDocument = this.documentsGroup.get(data.uid);
+	      documentUrls.push(...urls);
+	      targetDocument.urls = documentUrls;
+	    };
+	    await this.documentSetup.waitForPagesList(data, handler);
 	  }
 	  async setupDocument(uid, preparedPages = false) {
 	    if (this.documentSetup.isSameBlankSelected()) {
@@ -489,11 +496,15 @@ this.BX.Sign = this.BX.Sign || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = [];
 	  this.disablePreviewReady();
 	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(documentData.blocks);
+	  this.editor.setUrls([], 0);
 	  this.wizard.toggleBtnActiveState('back', true);
-	  const handler = (urls, totalPages) => {
+	  const handler = (urls, totalPages, newBlocks) => {
 	    this.enablePreviewReady();
 	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = urls;
 	    this.editor.setUrls(urls, totalPages);
+	    if (main_core.Type.isArray(newBlocks)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(newBlocks);
+	    }
 	    this.wizard.toggleBtnActiveState('back', false);
 	  };
 	  this.documentSetup.waitForPagesList(documentData, handler, preparedPages);
@@ -515,22 +526,13 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	  });
 	}
-	async function _getPagesUrls2(data) {
-	  const documentUrls = [];
-	  const handler = urls => {
-	    const targetDocument = this.documentsGroup.get(data.uid);
-	    documentUrls.push(...urls);
-	    targetDocument.urls = documentUrls;
-	  };
-	  await this.documentSetup.waitForPagesList(data, handler);
-	}
 	async function _executeEditorActionsForGroup2(uid) {
 	  this.editor.setUrls([], 0);
 	  const setupData = this.documentsGroup.get(uid);
 	  if (!setupData.urls) {
 	    const openEditorButton = babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`span[data-id="${setupData.id}"]`);
 	    main_core.Dom.addClass(openEditorButton, 'ui-btn-clock');
-	    await babelHelpers.classPrivateFieldLooseBase(this, _getPagesUrls)[_getPagesUrls](setupData);
+	    await this.getPagesUrls(setupData);
 	    main_core.Dom.removeClass(openEditorButton, 'ui-btn-clock');
 	    this.documentSetup.blankSelector.disableSelectedBlank(setupData.blankId);
 	    this.documentSetup.resetDocument();

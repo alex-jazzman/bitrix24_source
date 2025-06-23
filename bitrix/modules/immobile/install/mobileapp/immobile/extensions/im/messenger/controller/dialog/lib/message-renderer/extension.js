@@ -12,7 +12,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessageIdType, MessageType, DialogType, MessageParams } = require('im/messenger/const');
-	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Analytics } = require('im/messenger/const');
 	const { AnalyticsEvent } = require('analytics');
@@ -31,12 +30,15 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 	 */
 	class MessageRenderer
 	{
-		constructor({ view, chatId, dialogId })
+		constructor({ chatId, dialogLocator })
 		{
+			/** @type {DialogLocator} */
+			this.dialogLocator = dialogLocator;
+
 			/** @type {DialogView} */
-			this.view = view;
+			this.view = this.dialogLocator.get('view');
+			this.dialogId = this.dialogLocator.get('dialogId');
 			this.chatId = chatId;
-			this.dialogId = dialogId;
 
 			this.store = serviceLocator.get('core').getStore();
 			this.resetState();
@@ -116,11 +118,12 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 */
 		async renderInternal(messageList, sectionCodeToUpdate = null)
 		{
-			logger.log('MessageRenderer.renderInternal:', messageList);
+			logger.log('MessageRenderer.renderInternal messageList:', messageList);
+			const messageListWithoutDuplicates = this.filterDuplicateMessages(messageList);
 
 			if (sectionCodeToUpdate !== null)
 			{
-				const updateMessageList = messageList
+				const updateMessageList = messageListWithoutDuplicates
 					.filter((message) => this.isMessageRendered(message.id))
 				;
 				logger.log('MessageRenderer.renderInternal updateMessageList with sectionCode ', updateMessageList, sectionCodeToUpdate);
@@ -139,19 +142,19 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			if (this.messageList.length === 0)
 			{
-				await this.setMessageList(messageList);
+				await this.setMessageList(messageListWithoutDuplicates);
 
 				this.doTick();
 
 				return;
 			}
 
-			await this.killDoubleMessage(messageList);
-			await this.killUploadingMessages(messageList);
+			await this.killDoubleMessage(messageListWithoutDuplicates);
+			await this.killUploadingMessages(messageListWithoutDuplicates);
 
 			const newMessageList = [];
 			const updateMessageList = [];
-			messageList.forEach((message) => {
+			messageListWithoutDuplicates.forEach((message) => {
 				const updateRealMessage = this.messageIdCollection.has(message.id);
 				const updateTemplateMessage = this.messageIdCollection.has(message.templateId);
 				if (updateRealMessage || updateTemplateMessage)
@@ -182,6 +185,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			return this.messageIdCollection.has(messageId);
 		}
 
+		/**
+		 * @param {Array<MessageId>} messageIdList
+		 */
 		async delete(messageIdList)
 		{
 			logger.info('MessageRenderer.delete:', messageIdList);
@@ -306,7 +312,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			this.updateMessageIndex(this.messageList);
 
-			const viewMessageList = MessageUiConverter.createMessageList(clone(messageList).reverse(), this.dialogId);
+			const viewMessageList = this.dialogLocator.get('message-ui-converter').createMessageList(clone(messageList).reverse());
 			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
 
 			const messageForStack = [...viewMessageListWithTemplate];
@@ -408,6 +414,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {MessagesModelState} message
 		 * @returns {boolean}
 		 */
@@ -427,6 +434,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {MessagesModelState} message
 		 * @returns {boolean}
 		 */
@@ -456,6 +464,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {MessagesModelState} message
 		 * @return {number| string | null}
 		 */
@@ -502,7 +511,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			messageList = messageList.reverse();
 
 			this.updateMessageIndex(messageList);
-			const viewMessageList = MessageUiConverter.createMessageList(clone(messageList), this.dialogId);
+			const viewMessageList = this.dialogLocator.get('message-ui-converter').createMessageList(clone(messageList));
 
 			viewMessageList.unshift(this.viewMessageCollection[this.messageIdsStack[0]]);
 
@@ -526,16 +535,16 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Add a message to the end of the view message collection
 		 * @param {Array<MessagesModelState>} messageList
-		 * @private
 		 */
 		async addMessageListBelow(messageList)
 		{
 			logger.info('MessageRenderer.addMessageListBelow:', messageList);
 			this.updateMessageIndex(messageList);
 
-			const viewMessageList = MessageUiConverter.createMessageList(clone(messageList), this.dialogId);
+			const viewMessageList = this.dialogLocator.get('message-ui-converter').createMessageList(clone(messageList));
 			const endedMessage = this.getBottomMessage();
 
 			viewMessageList.unshift(endedMessage);
@@ -568,6 +577,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {Map<number, Array<MessagesModelState>>} messagesMap
 		 */
 		async addMessagesBetween(messagesMap)
@@ -578,7 +588,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				logger.info(`${this.constructor.name}.addMessageListBetween:`, pointedMessageId, messageList);
 
 				// section prepare message list
-				const viewMessageList = MessageUiConverter.createMessageList([...messageList], this.dialogId);
+				const viewMessageList = this.dialogLocator.get('message-ui-converter').createMessageList([...messageList]);
 				const pointMessage = this.viewMessageCollection[pointedMessageId];
 				const nextMessage = this.getRealNextMessage(pointedMessageId);
 
@@ -667,9 +677,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc force update view message by list
 		 * @param {Array<Message>} viewMessageList
-		 * @private
 		 */
 		async updateViewMessages(viewMessageList)
 		{
@@ -691,8 +701,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 * @desc update view message by id
 		 * @private
+		 * @desc update view message by id
 		 * @param {number} id
 		 * @param {Message} message
 		 * @param {string | null} section
@@ -710,6 +720,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {AudioMessage} message
 		 * @return {AudioMessage}
 		 */
@@ -727,10 +738,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Returns previous pack messages ( find by authorId )
 		 * @param {MessagesModelState} currentModelMessage
 		 * @return {Array<Message>} packMessage
-		 * @private
 		 */
 		getPackAuthorPreviousMessages(currentModelMessage)
 		{
@@ -880,6 +891,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			return indexId === -1 ? null : this.viewMessageCollection[this.messageIdsStack[indexId - 1]];
 		}
 
+		/**
+		 * @private
+		 * @param currentMessageId
+		 * @return {Message|null}
+		 */
 		getRealPreviousMessage(currentMessageId)
 		{
 			const currentMessageIndex = this.messageIdsStack.indexOf(String(currentMessageId));
@@ -912,10 +928,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Returns next message by id
 		 * @param {number} currentMessageId
 		 * @return {Message|null|undefined}
-		 * @private
 		 */
 		getNextMessage(currentMessageId)
 		{
@@ -947,6 +963,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param currentMessageId
 		 * @return {Message|null}
 		 */
@@ -982,9 +999,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Return bottom (last) message from messageIdCollection
 		 * @return {Message}
-		 * @private
 		 */
 		getBottomMessage()
 		{
@@ -1019,11 +1036,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			});
 
 			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			const options = MessageUiConverter.prepareSharedOptionsForMessages(dialog);
+			const options = this.dialogLocator.get('message-ui-converter').prepareSharedOptionsForMessages(dialog);
 
 			for (const messageListItem of messageList)
 			{
-				const viewMessageItem = MessageUiConverter.createMessage(messageListItem, options);
+				const viewMessageItem = this.dialogLocator.get('message-ui-converter').createMessage(messageListItem, options);
 				const packAuthorMessages = this.getPackAuthorNeighborMessages(messageListItem);
 				const indexPackMessage = packAuthorMessages.findIndex(
 					(message) => message.id === viewMessageItem.id || message.id === messageListItem.templateId,
@@ -1082,9 +1099,54 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
+		 * @description Filters duplicate messages in the list, leaving the last of the duplicates.
+		 * This is necessary to avoid displaying the same message multiple times.
+		 * @param {Array<MessagesModelState>} messageList
+		 * @return {Array<MessagesModelState>}
+		 */
+		filterDuplicateMessages(messageList)
+		{
+			const filteredInfo = {
+				wasFiltered: false,
+				duplicateIds: new Set(),
+			};
+
+			const messageListWithoutDuplicates = [];
+			/**
+			 * @type {Map<string|number, {index: number}>}
+			 */
+			const existingMessageCollection = new Map();
+			messageList.forEach((message, index) => {
+				const existingMessage = existingMessageCollection.get(message.id);
+				if (Type.isUndefined(existingMessage))
+				{
+					existingMessageCollection.set(message.id, {
+						index,
+					});
+					messageListWithoutDuplicates.push(message);
+
+					return;
+				}
+
+				const messageIndex = existingMessage.index;
+				messageListWithoutDuplicates[messageIndex] = message;
+				filteredInfo.wasFiltered = true;
+				filteredInfo.duplicateIds.add(message.id);
+			});
+
+			if (filteredInfo.wasFiltered)
+			{
+				logger.warn('MessageRenderer.filterDuplicateMessages:', filteredInfo, messageList, messageListWithoutDuplicates);
+			}
+
+			return messageListWithoutDuplicates;
+		}
+
+		/**
+		 * @private
 		 * @desc Start check for double message with templateId and delete it
 		 * @param {Array} messageList
-		 * @private
 		 */
 		async killDoubleMessage(messageList)
 		{
@@ -1107,7 +1169,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 *
+		 * @private
 		 * @param {Array<MessagesModelState>} messageList
 		 * @returns {Promise<void>}
 		 */
@@ -1151,6 +1213,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {Array<MessagesModelState>} messageList
 		 */
 		markUploadingMessages(messageList)
@@ -1180,9 +1243,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Method push id to the end ( upper ) stack
 		 * @param {Array<Message>} messageList
-		 * @private
 		 */
 		putMessageIdToStack(messageList)
 		{
@@ -1195,9 +1258,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Method unshift id to the start ( down ) stack
 		 * @param {Array<MessagesModelState>} messageList
-		 * @private
 		 */
 		putMessageIdToStackStart(messageList)
 		{
@@ -1210,6 +1273,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc messageIdsStack stores all message IDs except for the unread separator message, so two cases need to be handled
 		 * 1) messageCollection stores [ pointMessage1 => [], UnreadSeparator => [message1, message2]]
 		 * 2) messageCollection stores [ pointMessage1 => [message1, ...], UnreadSeparator => [message2, message3,...]]
@@ -1258,7 +1322,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 *
+		 * @private
 		 * @param {string || number} pointedId
 		 * @param {Array<MessagesModelState>} messageList
 		 * @return {boolean}
@@ -1654,10 +1718,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Set property for message in private chat
 		 * @param {Message} message
 		 * @param {MessagesModelState} modelMessage
-		 * @private
 		 */
 		preparePrivateMessage(message, modelMessage)
 		{
@@ -1667,9 +1731,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Set property for system message with type 'system-text' (manage participant, change title and other)
 		 * @param {Message} message
-		 * @private
 		 */
 		prepareSystemMessage(message)
 		{
@@ -1678,9 +1742,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Set property for unsupported message with type 'unsupported'
 		 * @param {UnsupportedMessage} message
-		 * @private
 		 */
 		prepareUnsupportedMessage(message)
 		{
@@ -1688,12 +1752,12 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Set margins to message by his position
 		 * @param {MessagesModelState} previousModelMessage
 		 * @param {MessagesModelState} modelMessage
 		 * @param {MessagesModelState} nextModelMessage
 		 * @param {Message} message
-		 * @private
 		 */
 		setMargins(previousModelMessage, modelMessage, nextModelMessage, message)
 		{
@@ -1749,10 +1813,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Find model by id or templateId from store or current context
 		 * @param {String|Number} messageId
 		 * @return {MessagesModelState|null}
-		 * @private
 		 */
 		getMessageModelByAnyId(messageId)
 		{
@@ -1777,9 +1841,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc Remove id from this.messageIdsStack with filter and mutation current data
 		 * @param {MessagesModelState} messageModel
-		 * @private
 		 */
 		deleteIdFromStack(messageModel)
 		{
@@ -1791,11 +1855,17 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.messageIdsStack = this.messageIdsStack.filter((el, index) => index !== indexDeletedMessage);
 		}
 
+		/**
+		 * @private
+		 */
 		deleteIdFromStackById(messageId)
 		{
 			this.messageIdsStack = this.messageIdsStack.filter((id) => id !== messageId);
 		}
 
+		/**
+		 * @private
+		 */
 		async deleteDateSeparator(id)
 		{
 			delete this.viewMessageCollection[id];
@@ -1806,6 +1876,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			await this.view.removeMessagesByIds([id]);
 		}
 
+		/**
+		 * @private
+		 */
 		async deleteUnreadSeparator()
 		{
 			delete this.viewMessageCollection[MessageIdType.templateSeparatorUnread];
@@ -1854,6 +1927,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.nextTickCallbackList.push(callback);
 		}
 
+		/**
+		 * @private
+		 */
 		doTick()
 		{
 			this.nextTickCallbackList.forEach((callback) => callback());
@@ -1861,6 +1937,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @return {boolean}
 		 */
 		isHistoryLimitExceeded()
@@ -1869,6 +1946,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @return {PlanLimitsBanner}
 		 */
 		getPlanLimitMessage()
@@ -1886,10 +1964,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				},
 			};
 
-			return MessageUiConverter.createMessage(messageBanner);
+			return this.dialogLocator.get('message-ui-converter').createMessage(messageBanner);
 		}
 
 		/**
+		 * @private
 		 * @return {boolean}
 		 */
 		isHasPlanLimitMessage()
@@ -1898,6 +1977,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @desc remove the limit banner.
 		 * This is necessary due to asynchronous data retrieval and
 		 * asynchronous rendering of the native (the native does not have time).
@@ -1912,6 +1992,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @return {boolean}
 		 */
 		isPlanMessageOnTop()
@@ -1922,6 +2003,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @return {boolean}
 		 */
 		isHasPrevMorePage()
@@ -1932,6 +2014,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {Array<Message>} messageList
 		 */
 		hasUnreadSeparatorIn(messageList)
@@ -1940,7 +2023,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 * @desc re
+		 * @private
 		 * @returns {Message|null}
 		 */
 		getMessageAfterUnreadSeparator()
@@ -1958,6 +2041,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @return {Promise<boolean>}
 		 */
 		async pushPlanLimitMessage()
@@ -1978,6 +2062,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {DialogId} dialogId
 		 * @param {string} section
 		 */
@@ -1997,6 +2082,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
+		 * @private
 		 * @param {Array<MessagesModelState>} messageList
 		 * @param {Array<Message>} viewMessageList
 		 * @return {Array<Message>}

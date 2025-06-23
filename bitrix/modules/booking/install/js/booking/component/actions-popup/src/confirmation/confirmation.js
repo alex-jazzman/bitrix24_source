@@ -153,7 +153,10 @@ export const Confirmation = {
 		ConfirmationMenu,
 	},
 	template: `
-		<div class="booking-actions-popup__item booking-actions-popup__item-confirmation-content">
+		<div
+			class="booking-actions-popup__item booking-actions-popup__item-confirmation-content"
+			:class="{ '--disabled': disabled }"
+		>
 			<Loader v-if="isLoading" class="booking-actions-popup__item-confirmation-loader"/>
 			<template v-else>
 				<div :class="['booking-actions-popup-item-icon', stateClass]">

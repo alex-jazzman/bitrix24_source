@@ -49,6 +49,15 @@ export class ChatEntities
 		});
 	}
 
+	onCreateVoteFromTextareaClick(dialogId: string)
+	{
+		this.#onClick({
+			dialogId,
+			event: AnalyticsEvent.clickCreatePoll,
+			section: AnalyticsSection.chatTextarea,
+		});
+	}
+
 	#onClick({ dialogId, event, section })
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);

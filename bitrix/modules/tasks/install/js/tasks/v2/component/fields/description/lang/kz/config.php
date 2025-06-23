@@ -1,0 +1,17 @@
+<?php
+$MESS["TASKS_V2_CHANGE_DESCRIPTION"] = "Сипаттама";
+$MESS["TASKS_V2_DESCRIPTION_ACTION_ATTACH_TITLE"] = "Тіркеу";
+$MESS["TASKS_V2_DESCRIPTION_ACTION_COPILOT_TITLE"] = "CoPilot";
+$MESS["TASKS_V2_DESCRIPTION_ACTION_MENTION_TITLE"] = "Адамды атап өту";
+$MESS["TASKS_V2_DESCRIPTION_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["TASKS_V2_DESCRIPTION_BUTTON_EDIT"] = "Редакциялау";
+$MESS["TASKS_V2_DESCRIPTION_BUTTON_SAVE"] = "Сақтау";
+$MESS["TASKS_V2_DESCRIPTION_EDITOR_PLACEHOLDER"] = "Адамды атап өту үшін @ батырмасын немесе CoPilot іске қосу үшін бос орын батырмасын басыңыз ";
+$MESS["TASKS_V2_DESCRIPTION_INLINE_EDITOR_PLACEHOLDER"] = "Сипаттама";
+$MESS["TASKS_V2_DESCRIPTION_PREVIEW_BUTTON_EDIT"] = "өзгерту";
+$MESS["TASKS_V2_DESCRIPTION_PREVIEW_BUTTON_MORE"] = "тағы";
+$MESS["TASKS_V2_DESCRIPTION_TITLE"] = "Міндеттің сипаттамасы";
+$MESS["TASKS_V2_DESCRIPTION_WARNING_POPUP_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["TASKS_V2_DESCRIPTION_WARNING_POPUP_BUTTON_CLOSE"] = "Жабу";
+$MESS["TASKS_V2_DESCRIPTION_WARNING_POPUP_DESCRIPTION"] = "Егер сіз міндеттің сипаттамасын жапсаңыз, барлық сақталмаған өзгерістер жоғалады";
+$MESS["TASKS_V2_DESCRIPTION_WARNING_POPUP_TITLE"] = "Міндет сипаттамасын жабу керек пе?";

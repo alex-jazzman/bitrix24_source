@@ -1,5 +1,4 @@
 import { Store } from 'ui.vue3.vuex';
-import { Loc } from 'main.core';
 
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Messenger } from 'im.public';
@@ -13,6 +12,7 @@ import { InputActionListener } from 'im.v2.lib.input-action';
 import { Logger } from 'im.v2.lib.logger';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 import { Analytics } from 'im.v2.lib.analytics';
+import { Notifier } from 'im.v2.lib.notifier';
 
 import type {
 	ChatOwnerParams,
@@ -26,6 +26,7 @@ import type {
 	ChatAvatarParams,
 	ChatConvertParams,
 	ChatDeleteParams,
+	MessagesAutoDeleteDelayParams,
 } from '../../types/chat';
 import type { RawUser, RawChat } from '../../types/common';
 import type { ImModelChat } from 'im.v2.model';
@@ -226,14 +227,30 @@ export class ChatPullHandler
 	handleChatConvert(params: ChatConvertParams)
 	{
 		Logger.warn('ChatPullHandler: handleChatConvert', params);
-		const { dialogId, newType, newPermissions } = params;
+		const { dialogId, oldType, newType, newPermissions, newTypeParams } = params;
+		const fields = {
+			type: newType,
+			permissions: newPermissions,
+		};
+
+		if ([newType, oldType].includes(ChatType.collab))
+		{
+			fields.diskFolderId = 0;
+		}
+
 		this.#store.dispatch('chats/update', {
 			dialogId,
-			fields: {
-				type: newType,
-				permissions: newPermissions,
-			},
+			fields,
 		});
+
+		const dialog = this.#store.getters['chats/get'](dialogId);
+		if (newType === ChatType.collab && dialog?.chatId > 0)
+		{
+			this.#store.dispatch('chats/collabs/set', {
+				chatId: dialog.chatId,
+				collabInfo: newTypeParams.collabInfo,
+			});
+		}
 	}
 
 	handleChatCopilotRoleUpdate(params)
@@ -254,6 +271,16 @@ export class ChatPullHandler
 			fields: {
 				role: getChatRoleForUser(params.chat),
 				...params.chat,
+			},
+		});
+	}
+
+	handleChatFieldsUpdate(params: Partial<RawChat> & {dialogId: string, chatId: number})
+	{
+		void this.#store.dispatch('chats/update', {
+			dialogId: params.dialogId,
+			fields: {
+				...params,
 			},
 		});
 	}
@@ -297,7 +324,7 @@ export class ChatPullHandler
 		if (chatIsOpened)
 		{
 			Analytics.getInstance().chatDelete.onChatDeletedNotification(params.dialogId);
-			this.#showNotification(Loc.getMessage('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
+			Notifier.chat.onNotFoundError();
 			void LayoutManager.getInstance().clearCurrentLayoutEntityId();
 			void LayoutManager.getInstance().deleteLastOpenedElementById(params.dialogId);
 		}
@@ -309,10 +336,24 @@ export class ChatPullHandler
 		}
 	}
 
+	handleMessagesAutoDeleteDelayChanged(params: MessagesAutoDeleteDelayParams)
+	{
+		Logger.warn('ChatPullHandler: handleMessagesAutoDeleteDelayChanged', params);
+
+		const { chatId, delay } = params;
+
+		void this.#store.dispatch('chats/autoDelete/set', {
+			chatId,
+			delay,
+		});
+	}
+
 	#updateChatUsers(params: {
 		users?: {[userId: string]: RawUser},
 		dialogId: string,
-		userCount: number
+		userCount: number,
+		chatExtranet: boolean,
+		containsCollaber: boolean,
 	})
 	{
 		if (params.users)
@@ -323,12 +364,11 @@ export class ChatPullHandler
 
 		this.#store.dispatch('chats/update', {
 			dialogId: params.dialogId,
-			fields: { userCounter: params.userCount },
+			fields: {
+				userCounter: params.userCount,
+				extranet: params.chatExtranet,
+				containsCollaber: params.containsCollaber,
+			},
 		});
-	}
-
-	#showNotification(text: string): void
-	{
-		BX.UI.Notification.Center.notify({ content: text });
 	}
 }

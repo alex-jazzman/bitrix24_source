@@ -360,6 +360,17 @@ else
 	$avaMenuManager = new AvaMenu\Manager($context);
 	$profile = new AvaMenu\Profile\Profile();
 
+	$userType = $profile->getUserType();
+	$isCollabToolEnabled = true;
+	if (
+		Bitrix\Main\Loader::includeModule('intranet')
+		&& class_exists('\Bitrix\Intranet\Settings\Tools\ToolsManager')
+		&& $userType === 'collaber'
+	)
+	{
+		$isCollabToolEnabled = \Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('collab');
+	}
+
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
@@ -373,7 +384,7 @@ else
 		"newStyleSupported" => true,
 		"tabs" => $menuTabs,
 		"user" => [
-			"type" => $profile->getUserType(),
+			"type" => $userType,
 			"avatar" => $profile->getAvatar(),
 		],
 		'avamenu' => [
@@ -425,6 +436,7 @@ else
 			"menu" => ["url" => $siteDir . "mobile/left.php?version=" . $moduleVersion],
 			"notification" => ["url" => $siteDir . "mobile/im/notify.php"],
 		],
+		"isCollabToolEnabled" => $isCollabToolEnabled,
 	];
 
 	if (\Bitrix\Main\Loader::includeModule('bitrix24'))

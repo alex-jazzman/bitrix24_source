@@ -1,11 +1,14 @@
+// eslint-disable-next-line max-classes-per-file
 import { Type, Text, Tag, Dom, ajax as Ajax, Cache, Loc, Runtime, Reflection } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Loader } from 'main.loader';
+import type { EntityErrorOptions } from '../entity/entity-error-options';
 
 import Item from '../item/item';
 import Tab from './tabs/tab';
 import Entity from '../entity/entity';
+import EntityErrorCollection from '../entity/entity-error-collection';
 import TagSelector from '../tag-selector/tag-selector';
 import Navigation from './navigation';
 import SliderIntegration from './integration/slider-integration';
@@ -1989,6 +1992,11 @@ export default class Dialog extends EventEmitter
 						this.focusOnFirstNode();
 					}
 
+					if (Type.isArrayFilled(response.data.dialog.errors))
+					{
+						this.emitEntityErrors(response.data.dialog.errors);
+					}
+
 					this.emit('onLoad');
 				}
 			})
@@ -2422,5 +2430,18 @@ export default class Dialog extends EventEmitter
 			recentItemsLimit: this.getRecentItemsLimit(),
 			clearUnavailableItems: this.shouldClearUnavailableItems(),
 		};
+	}
+
+	/** @internal */
+	emitEntityErrors(errorOptions: EntityErrorOptions[]): void
+	{
+		const errorCollection = EntityErrorCollection.create(errorOptions);
+
+		this.emit('Entity:onError', { errors: [...errorCollection] });
+
+		this.getEntities().forEach((entity: Entity) => {
+			const entityId = entity.getId();
+			this.emit(`Entity:${entityId}:onError`, { errors: errorCollection.getByEntityId(entityId) });
+		});
 	}
 }

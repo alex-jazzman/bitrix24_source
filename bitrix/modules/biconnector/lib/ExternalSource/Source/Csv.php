@@ -8,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\BIConnector;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalDataset;
 use Bitrix\BIConnector\ExternalSource\DatasetManager;
+use Bitrix\BIConnector\ExternalSource\Type;
 
 class Csv extends Base
 {
@@ -39,9 +40,11 @@ class Csv extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function getEntityList(): array
+	public function getEntityList(): Main\Result
 	{
-		return [self::getFullTableName($this->dataset->getName())];
+		$result = new Main\Result;
+
+		return $result->setData([self::getFullTableName($this->dataset->getName())]);
 	}
 
 	/**
@@ -55,7 +58,7 @@ class Csv extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function getFirstNData(string $entityName, int $n): array
+	public function getFirstNData(string $entityName, int $n, array $fields = []): array
 	{
 		$result = [];
 
@@ -107,6 +110,11 @@ class Csv extends Base
 		/** @var ExternalDataset $dataset */
 		$dataset = $event->getParameter('dataset');
 		$name = $dataset->getName();
+
+		if (Type::tryFrom($dataset->getType()) !== Type::Csv)
+		{
+			return new Main\EventResult(Main\EventResult::SUCCESS);
+		}
 
 		$connection = Main\Application::getInstance()->getConnection();
 		try

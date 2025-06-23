@@ -46,6 +46,8 @@ use Bitrix\Main\UI\UiTour;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork;
+use Bitrix\Disk\QuickAccess;
+use Bitrix\Main\DI\ServiceLocator;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -328,6 +330,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 		if ($this->gridOptions->getViewMode() === FolderListOptions::VIEW_MODE_TILE)
 		{
+			$scopeTokenService = ServiceLocator::getInstance()->get('disk.scopeTokenService');
 			$isEnabledObjectLock = Configuration::isEnabledObjectLock();
 			$this->arResult['TILE_ITEMS'] = [];
 			foreach ($this->arResult['GRID']['ROWS'] as $row)
@@ -360,11 +363,13 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 				if ($object instanceof File && TypeFile::isImage($object))
 				{
+					$accessInfo = $scopeTokenService->grantAccessWithScope($object, $this->gridOptions->getGridId());
 					$info['image'] = \Bitrix\Main\Engine\UrlManager::getInstance()->create('disk.api.file.showImage', [
 						'fileId' => $object->getId(),
 						'signature' => \Bitrix\Disk\Security\ParameterSigner::getImageSignature($object->getId(), 400, 400),
 						'width' => 400,
 						'height' => 400,
+						'_esd' => $accessInfo['encryptedScope'],
 					]);
 				}
 				elseif ($object instanceof File && $object->getPreviewId())
@@ -441,12 +446,16 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 		$parameters['order'] = $this->gridOptions->getOrderForOrm();
 
-		if ($this->isCollaber())
+		if ($isStorageCurrentUser && $this->isCollaber())
 		{
 			$folderForUploadedFilesId = $this->storage->getFolderForUploadedFiles()?->getId();
+			$folderForCreatedFilesId = $this->storage->getFolderForCreatedFiles()?->getId();
 			if ($folderForUploadedFilesId !== null)
 			{
-				$parameters['filter']['!=ID'] = $folderForUploadedFilesId;
+				$parameters['filter']['!=ID'] = [
+					$folderForUploadedFilesId,
+					$folderForCreatedFilesId,
+				];
 			}
 		}
 

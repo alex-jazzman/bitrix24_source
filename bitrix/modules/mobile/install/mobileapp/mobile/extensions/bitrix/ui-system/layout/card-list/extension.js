@@ -8,28 +8,74 @@ jn.define('ui-system/layout/card-list', (require, exports, module) => {
 	const { ScrollView } = require('layout/ui/scroll-view');
 
 	/**
-	 * @function CardList
-	 * @param {Object} props
-	 * @param {boolean} [props.divided]
-	 * @param {boolean} [props.withScroll=true]
-	 * @param {...Area} children
+	 * @typedef {Object} CardListProps
+	 * @property {boolean} [divided]
+	 * @property {boolean} [withScroll=true]
+	 * @property {boolean} [horizontal=false]
+	 * @property {...Card} children
+	 *
+	 * @class CardList
 	 */
-	function CardList(props = {}, ...children)
+	class CardList extends LayoutComponent
 	{
-		PropTypes.validate(CardList.propTypes, props, 'CardList');
+		render()
+		{
+			return this.withScroll()
+				? this.renderScroll()
+				: this.renderView();
+		}
 
-		const {
-			divided = true,
-			withScroll = true,
-			...restProps
-		} = props;
+		renderView()
+		{
+			const style = {};
 
-		const ViewElement = withScroll ? ScrollView : View;
-		const style = withScroll ? { height: '100%' } : {};
+			if (this.isHorizontal())
+			{
+				style.flexDirection = 'row';
+			}
 
-		return ViewElement(
-			mergeImmutable(restProps, { style }),
-			...children.map((child, index) => {
+			return View(
+				mergeImmutable(
+					{
+						style,
+					},
+					this.getRestProps(),
+				),
+				...this.getChildren(),
+			);
+		}
+
+		renderScroll()
+		{
+			return ScrollView(
+				mergeImmutable(
+					{
+						style: {
+							height: '100%',
+						},
+						horizontal: this.isHorizontal(),
+					},
+					this.getRestProps(),
+				),
+				...this.getChildren(),
+			);
+		}
+
+		getRestProps()
+		{
+			const { horizontal, withScroll, children, ...restProps } = this.props;
+
+			return restProps;
+		}
+
+		getChildren()
+		{
+			const {
+				divided = true,
+				children,
+			} = this.props;
+
+			return children.map((child, index) => {
 				const isFirst = index === 0;
 
 				if (!divided || isFirst)
@@ -37,27 +83,56 @@ jn.define('ui-system/layout/card-list', (require, exports, module) => {
 					return child;
 				}
 
-				return View(
-					{
-						style: {
-							marginTop: Component.cardListGap.toNumber(),
-						},
+				return this.renderDividedWrapper(child);
+			});
+		}
+
+		renderDividedWrapper(child)
+		{
+			const marginType = this.isHorizontal() ? 'marginLeft' : 'marginTop';
+
+			return View(
+				{
+					style: {
+						[marginType]: Component.cardListGap.toNumber(),
 					},
-					child,
-				);
-			}),
-		);
+				},
+				child,
+			);
+		}
+
+		withScroll()
+		{
+			const { withScroll = true } = this.props;
+
+			return Boolean(withScroll);
+		}
+
+		isHorizontal()
+		{
+			const { horizontal = false } = this.props;
+
+			return Boolean(horizontal);
+		}
 	}
 
 	CardList.defaultProps = {
 		divided: true,
 		withScroll: true,
+		horizontal: false,
 	};
 
 	CardList.propTypes = {
 		divided: PropTypes.bool,
 		withScroll: PropTypes.bool,
+		horizontal: PropTypes.bool,
 	};
 
-	module.exports = { CardList };
+	module.exports = {
+		/**
+		 * @param {CardListProps} props
+		 * @param {Object[]} children
+		 */
+		CardList: (props, ...children) => new CardList({ ...props, children }),
+	};
 });

@@ -15,4 +15,5 @@ enum AhaMoment: string
 	case ResourceIntersection = 'resource_intersection';
 	case ExpandGrid = 'expand_grid';
 	case SelectResources = 'select_resources';
+	case CyclePopup = 'cycle_popup';
 }

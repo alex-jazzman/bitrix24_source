@@ -21,17 +21,20 @@ class Recent extends Registry implements RestConvertible, PopupDataAggregatable
 	{
 		$messageIds = [];
 		$chats = [];
+		$chatIds = [];
 
 		foreach ($this as $item)
 		{
 			$messageIds[] = $item->getMessageId();
 			$chats[] = Chat::getInstance($item->getChatId());
+			$chatIds[] = $item->getChatId();
 		}
 
 		return new PopupData([
 			new MessagePopupItem($messageIds, true),
 			new Chat\ChatPopupItem($chats),
 			new BirthdayPopupItem(),
+			new Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs($chatIds),
 		], $excludedList);
 	}
 

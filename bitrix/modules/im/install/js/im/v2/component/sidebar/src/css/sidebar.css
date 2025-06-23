@@ -3,6 +3,9 @@
 
 	height: 100%;
 	position: relative;
+}
+
+.bx-im-sidebar__container.--opened {
 	border-left: 1px solid rgb(0 0 0 / 6%);
 }
 

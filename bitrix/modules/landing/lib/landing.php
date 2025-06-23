@@ -3,13 +3,18 @@ namespace Bitrix\Landing;
 
 use Bitrix\Landing\Block\BlockRepo;
 use Bitrix\Landing\Internals\BlockTable;
-use \Bitrix\Main\Application;
+use Bitrix\Landing\Metrika\Events;
+use Bitrix\Landing\Metrika\Types;
+use Bitrix\Landing\Site\Type;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
-use \Bitrix\Main\Event;
-use \Bitrix\Main\EventResult;
-use \Bitrix\Main\Page\Asset;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\ModuleManager;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Rest\AppTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -22,14 +27,14 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		'CREATED_BY_ID', 'MODIFIED_BY_ID', 'DATE_CREATE',
 		'DATE_MODIFY', 'DATE_PUBLIC', 'INITIATOR_APP_CODE', 'VIEWS', 'TPL_CODE',
 		'ACTIVE', 'PUBLIC', 'SITE_CODE', 'SITE_SPECIAL', 'RULE',
-		'SITE_VERSION', 'SITE_LANG', 'SITE_TPL_CODE'
+		'SITE_VERSION', 'SITE_LANG', 'SITE_TPL_CODE',
 	];
 
 	/**
 	 * Meta keys, than can be changed
 	 */
 	protected const META_KEYS_MODIFIABLE = [
-		'DATE_MODIFY', 'DATE_PUBLIC', 'ACTIVE', 'PUBLIC'
+		'DATE_MODIFY', 'DATE_PUBLIC', 'ACTIVE', 'PUBLIC',
 	];
 
 	/**
@@ -186,7 +191,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 * Instance of Error.
 	 * @var Error
 	 */
-	protected $error = null;
+	protected Error $error;
 
 	/**
 	 * Current landing rights.
@@ -339,7 +344,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					$params['blocks_limit'] ?? null,
 					[
 						'id' => $params['blocks_id'] ?? 0,
-						'deleted' => isset($params['deleted']) && $params['deleted'] === true
+						'deleted' => isset($params['deleted']) && $params['deleted'] === true,
 					]
 				);
 			}
@@ -386,7 +391,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	{
 		$returnCheckDelete = false;
 		$filter = [
-			'ID' => $id
+			'ID' => $id,
 		];
 
 		if ($deleted)
@@ -1441,7 +1446,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 */
 	protected function parseLocalUrl(string $content): string
 	{
-		$pattern = '/([",\'\;]{1})(page:|block:|user:)?#(landing|block|dynamic|user)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
+		$pattern = '/([",\'\;]{1})(page:|block:|user:|help:)?#(landing|block|dynamic|user|helpdesk=|slider=)([\w\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
 		$patternWithoutUser = '/([",\'\;]{1})(page:|block:)?#(landing|block|dynamic)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
 		static $isIframe = null;
 
@@ -1504,6 +1509,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				'BLOCK' => array(),
 				'USER' => array(),
 				'DYNAMIC' => array(),
+				'HELP' => array(),
 			);
 			for ($i = 0, $c = count($matches[0]); $i < $c; $i++)
 			{
@@ -1519,6 +1525,10 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				else if (mb_strtoupper($matches[3][$i]) == 'USER')
 				{
 					$urls['USER'][] = $matches[4][$i];
+				}
+				else if ($matches[2][$i] === 'help:')
+				{
+					$urls['HELP'][] = $matches[4][$i];
 				}
 				else
 				{
@@ -1702,6 +1712,30 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					function($matches)
 					{
 						return Domain::getHostUrl() . '/company/personal/user/' . $matches[3] . '/';
+					},
+					$content
+				);
+			}
+
+			// replace help urls
+			if (!empty($urls['HELP']))
+			{
+				$patternForHelpdesk = '/help:#helpdesk=(\d+)/i';
+				$content = preg_replace_callback(
+					$patternForHelpdesk,
+					function($matches)
+					{
+						return "javascript:BX.Helper.show('redirect=detail&code=" . $matches[1] . "')";
+					},
+					$content
+				);
+
+				$patternForSlider = '/help:#slider=(\w+)/i';
+				$content = preg_replace_callback(
+					$patternForSlider,
+					function($matches)
+					{
+						return "javascript:BX.UI.InfoHelper.show('" . $matches[1] . "')";
 					},
 					$content
 				);
@@ -1903,6 +1937,19 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	public static function getSiteType(): string
 	{
 		return self::$siteType;
+	}
+
+	public function getSpecialType(): ?string
+	{
+		if (
+			($this->getMeta()['SITE_SPECIAL'] ?? 'N') === 'Y'
+			&& ($this->getMeta()['SITE_CODE'] ?? '') !== ''
+		)
+		{
+			return Type::getSiteSpecialType($this->getMeta()['SITE_CODE']);
+		}
+
+		return null;
 	}
 
 	/**
@@ -2107,16 +2154,54 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Publication current landing.
-	 * @param int|int[]|null $blockId Publication only this block(s).
+	 * @param null $blockId Publication only this block(s).
+	 * @param Metrika\FieldsDto|null $metrikaFields - params for analytic. If not set anything - analytic not sent
 	 * @return boolean
 	 */
-	public function publication($blockId = null): bool
+	public function publication($blockId = null, ?Metrika\FieldsDto $metrikaFields = null): bool
 	{
+		$result = false;
+
+		$specialType = $this->getSpecialType();
+		$category =
+			$specialType === Type::PSEUDO_SCOPE_CODE_FORMS
+				? Metrika\Categories::CrmForms
+				: Metrika\Categories::getBySiteType(self::$siteType)
+		;
+		$metrika = new Metrika\Metrika($category, Metrika\Events::publishSite);
+
 		if ($this->canPublication())
 		{
-			return Mutator::landingPublication($this, $blockId);
+			$result = Mutator::landingPublication($this, $blockId);
 		}
-		return false;
+		else
+		{
+			$metrika->setError('access_denied');
+		}
+
+		if (!$result && !empty($this->getError()->getErrors()))
+		{
+			$errors = [];
+			foreach ($this->getError()->getErrors() as $error)
+			{
+				$errors[] = $error->getCode();
+			}
+			if (!empty($errors))
+			{
+				$metrika->setError(implode('|', $errors));
+			}
+		}
+
+		if ($metrikaFields)
+		{
+			$metrika->setType($metrikaFields->type ?? null);
+			$metrika->setSubSection($metrikaFields->subSection ?? null);
+			$metrika->setElement($metrikaFields->element ?? null);
+
+			$metrika->send();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -2178,12 +2263,26 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 */
 	public function addBlock(string $code, array $data = array(), bool $saveInLastUsed = false)
 	{
+		$metrika = new Metrika\Metrika(
+			Metrika\Categories::getBySiteType(self::$siteType),
+			Metrika\Events::addWidget,
+		);
+
 		if (!$this->canEdit())
 		{
 			$this->error->addError(
 				'ACCESS_DENIED',
 				Loc::getMessage('LANDING_BLOCK_ACCESS_DENIED')
 			);
+
+			if (self::$siteType === Type::SCOPE_CODE_MAINPAGE)
+			{
+				$metrika
+					->setError('ACCESS_DENIED')
+					->send()
+				;
+			}
+
 			return false;
 		}
 
@@ -2210,7 +2309,23 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				$history->push('ADD_BLOCK', ['block' => $block]);
 			}
 
+			if (self::$siteType === Type::SCOPE_CODE_MAINPAGE)
+			{
+				$metrika
+					->setType(self::getBlockMetrikaType($block))
+					->send()
+				;
+			}
+
 			return $block->getId();
+		}
+
+		if (self::$siteType === Type::SCOPE_CODE_MAINPAGE)
+		{
+			$metrika
+				->setError('BLOCK_NOT_FOUND')
+				->send()
+			;
 		}
 
 		return false;
@@ -2261,6 +2376,11 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			$this->blocks[$id] = new Block($id);
 		}
 
+		$metrika = new Metrika\Metrika(
+			Metrika\Categories::getBySiteType(self::$siteType),
+			Metrika\Events::deleteWidget,
+		);
+
 		if (
 			isset($this->blocks[$id]) &&
 			$this->blocks[$id]->exist() &&
@@ -2278,6 +2398,14 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				}
 				if ($this->blocks[$id]->save())
 				{
+					if (self::$siteType === Type::SCOPE_CODE_MAINPAGE)
+					{
+						$metrika
+							->setType(self::getBlockMetrikaType($this->blocks[$id]))
+							->send()
+						;
+					}
+
 					if ($mark)
 					{
 						if (History::isActive())
@@ -2295,6 +2423,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 						);
 					}
 					$this->touch();
+
 					return true;
 				}
 				else
@@ -2302,6 +2431,14 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					$this->error->copyError(
 						$this->blocks[$id]->getError()
 					);
+
+					if (self::$siteType === Type::SCOPE_CODE_MAINPAGE)
+					{
+						$metrika
+							->setError('SAVE_ERROR')
+							->send()
+						;
+					}
 				}
 			}
 			else
@@ -2310,6 +2447,14 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					'ACCESS_DENIED',
 					Loc::getMessage('LANDING_BLOCK_ACCESS_DENIED')
 				);
+				if (self::$siteType === Type::SCOPE_CODE_MAINPAGE)
+				{
+					$metrika
+						->setError('ACCESS_DENIED')
+						->send()
+					;
+				}
+
 				return false;
 			}
 		}
@@ -2319,10 +2464,44 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				'BLOCK_NOT_FOUND',
 				Loc::getMessage('LANDING_BLOCK_NOT_FOUND')
 			);
+			if (self::$siteType === Type::SCOPE_CODE_MAINPAGE)
+			{
+				$metrika
+					->setError('BLOCK_NOT_FOUND')
+					->send()
+				;
+			}
+
 			return false;
 		}
 
 		return false;
+	}
+
+	protected static function getBlockMetrikaType(Block $block): Types
+	{
+		// todo: now just for widget. If need - add self::$siteType === Type::SCOPE_CODE_MAINPAGE checking
+		$type = Types::widgetSystem;
+		if ($block->getRepoId())
+		{
+			$type = Types::widgetPartner;
+			$manifest = $block->getManifest();
+			$appCode = $manifest['block']['app_code'] ?? null;
+			if ($appCode)
+			{
+				$app = AppTable::getList([
+					'filter' => [
+						'=CODE' => $appCode,
+					],
+				])->fetch();
+				if ($app && $app['STATUS'] === AppTable::STATUS_LOCAL)
+				{
+					$type = Types::widgetLocal;
+				}
+			}
+		}
+
+		return $type;
 	}
 
 	/**

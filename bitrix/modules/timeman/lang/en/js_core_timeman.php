@@ -96,6 +96,7 @@ $MESS["JS_CORE_TM_MONITOR"] = "Personal worktime assistant";
 $MESS["JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR"] = "Please start the Bitrix24 desktop application to measure your work efficiency.";
 $MESS["JS_CORE_TM_MONITOR_ENABLED"] = "Personal worktime assistant is enabled";
 $MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON"] = "Enable Personal worktime assistant";
+$MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON_NEW"] = "Personal worktime assistant";
 $MESS["JS_CORE_TM_MONITOR_GET_DESKTOP_BUTTON"] = "Download Bitrix24";
 $MESS["JS_CORE_TM_MONITOR_OPEN_ERROR"] = "Personal worktime assistant is only available in the new version of Bitrix24 for Windows and Mac";
 $MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION"] = "Remember to share your working time report with your supervisor.";

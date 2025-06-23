@@ -11,7 +11,6 @@ $MESS["CRM_STORE_DOCUMENT_SHIPMENT_COMMENTS"] = "Түсініктеме";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_CREATION_PAGE_TITLE_MSGVER_1"] = "Сатуды құру";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_CUSTOM_PRICE_DELIVERY"] = "Пайдаланушылық баға";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_DELIVERY_SERVICE"] = "Жеткізу қызметі";
-$MESS["CRM_STORE_DOCUMENT_SHIPMENT_DOCUMENT_BUTTON"] = "Құжат";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_BOX"] = "Сізде қойма есебіне қолжетімділік құқығы жеткіліксіз. Құқықтарды алу үшін портал әкімшісіне хабарласыңыз. Толық ақпарат <a href=\"https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=25010\" target=\"_blank\">Битрикс24 сервисінің әкімшісі оқу курсының мақаласы</a>.";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_CLOUD"] = "Сізде қойма есебіне қолжетімділік құқығы жеткіліксіз. Құқықтарды алу үшін Битрикс24 әкімшісіне хабарласыңыз. Әкімші сізге CRM баптаулары бөлімінде менеджер рөлін тағайындауы керек. Толық ақпарат <a onclick=\"top.BX.Helper.show('redirect=detail&code=15955386')\" style=\"cursor: pointer; \">Қолдау24 мақаласы</a>.";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_EXTRA_SERVICES"] = "Қосымша қызметтер";

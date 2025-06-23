@@ -1,6 +1,6 @@
 import { PopupOptions } from 'main.popup';
 
-import { MessengerPopup } from 'im.v2.component.elements';
+import { MessengerPopup } from 'im.v2.component.elements.popup';
 
 import '../../css/add-to-chat-hint.css';
 
@@ -44,10 +44,9 @@ export const AddToChatHint = {
 	},
 	template: `
 		<MessengerPopup
-			v-slot="{enableAutoHide, disableAutoHide}"
 			:config="config"
-			@close="$emit('close')"
 			:id="POPUP_ID"
+			@close="$emit('close')"
 		>
 			<div class="bx-im-copilot-add-to-chat-hint__title">
 				{{ loc('IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_TITLE') }}

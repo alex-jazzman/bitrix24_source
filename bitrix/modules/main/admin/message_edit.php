@@ -196,14 +196,14 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST['save']) || !empty($_
 		//New from media library and file structure
 		if(array_key_exists("NEW_FILE", $_POST) && is_array($_POST["NEW_FILE"]))
 		{
-			foreach($_POST["NEW_FILE"] as $index=>$value)
+			foreach ($_POST["NEW_FILE"] as $index => $value)
 			{
-				$path = Rel2Abs("/", $value);
-				if ($USER->CanDoOperation('edit_php') || !HasScriptExtension($path))
+				if ($USER->CanAccessFile($value))
 				{
-					if ($USER->CanDoFileOperation('fm_view_file', [SITE_ID, $path]))
+					$fileArray = CFile::MakeFileArray($_SERVER['DOCUMENT_ROOT'] . Rel2Abs("/", $value));
+					if (!empty($fileArray))
 					{
-						$arFiles[$index] = CFile::MakeFileArray($_SERVER['DOCUMENT_ROOT'] . $path);
+						$arFiles[$index] = $fileArray;
 					}
 				}
 			}
@@ -359,7 +359,6 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 <input type="hidden" name="COPY_ID" value="<?echo $COPY_ID?>" />
 <input type="hidden" name="type" value="<?echo htmlspecialcharsbx($_REQUEST["type"] ?? '')?>" />
 <script>
-<!--
 var t=null;
 function PutString(str, field)
 {
@@ -401,7 +400,6 @@ function PutAttachString(str)
 		BX.fireEvent(t, 'change');
 	}
 }
-//-->
 </script>
 <?
 $aMenu = array(

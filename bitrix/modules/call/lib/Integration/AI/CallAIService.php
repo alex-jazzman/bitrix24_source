@@ -18,6 +18,8 @@ use Bitrix\Call\NotifyService;
 use Bitrix\Call\Integration\AI\Task\AITask;
 use Bitrix\Call\Model\CallAITaskTable;
 use Bitrix\Call\Model\CallOutcomeTable;
+use Bitrix\Call\Model\CallTrackTable;
+use Bitrix\Call\Integration\AI\Outcome\OutcomeCollection;
 
 
 final class CallAIService
@@ -187,6 +189,7 @@ final class CallAIService
 		$payload = $payloadResult->getData()['payload'];
 		$context = $task->getAIEngineContext();
 		$engine = $task->getAIEngine($context);
+		$call = Registry::getCallWithId($task->getCallId());
 
 		if (
 			$payload instanceof \Bitrix\AI\Payload\IPayload
@@ -200,7 +203,6 @@ final class CallAIService
 				&& CallAISettings::isAutoStartRecordingEnable()
 			)
 			{
-				$call = Registry::getCallWithId($task->getCallId());
 				if ($call->autoStartRecording())
 				{
 					$payload->setCost(0);
@@ -614,9 +616,10 @@ final class CallAIService
 	/**
 	 * Agent to run ai tasks check.
 	 * @param int $callId
+	 * @param int $repeat
 	 * @return string
 	 */
-	public static function expectCallAiTask(int $callId): string
+	public static function expectCallAiTask(int $callId, int $repeat = 1): string
 	{
 		Loader::includeModule('im');
 
@@ -627,17 +630,22 @@ final class CallAIService
 		}
 
 		$service = self::getInstance();
+		$notifyService = NotifyService::getInstance();
 
-		$result = $service->checkCallAiTask($callId);
+		$result = $service->checkCallAiTask($callId, $repeat);
 		if (!$result->isSuccess())
 		{
-			$notifyService = NotifyService::getInstance();
 			$notifyService->sendTaskFailedMessage($result->getError(), $call);
+		}
+		elseif ($result->getData()['wait_more'] === true)
+		{
+			$notifyService->sendTaskWaitMessage($call);
 		}
 
 		if ($result->getData()['repeat'] === true)
 		{
-			return __METHOD__. "({$callId});"; // wait more
+			$repeat ++;
+			return __METHOD__. "({$callId}, {$repeat});"; // wait more
 		}
 
 		return '';
@@ -645,9 +653,10 @@ final class CallAIService
 
 	/**
 	 * @param int $callId
+	 * @param int $repeat
 	 * @return Result
 	 */
-	public function checkCallAiTask(int $callId): Result
+	public function checkCallAiTask(int $callId, int $repeat = 1): Result
 	{
 		$result = new Result();
 		$result->setData(['repeat' => false]);
@@ -723,7 +732,51 @@ final class CallAIService
 
 		$log("Check ai task: Call #{$callId}, Trackpack not received.");
 
+		if ($repeat <= 1)
+		{
+			return $result->setData([
+				'repeat' => true,
+				'wait_more' => true,
+			]);
+		}
+
 		return $result->addError(new CallAIError(CallAIError::AI_TRACKPACK_NOT_RECEIVED));
 	}
 	//endregion
+
+	/**
+	 * @param int $callId
+	 * @return Result
+	 */
+	public function dropCallAiFollowUp(int $callId): Result
+	{
+		$result = new Result();
+
+		$taskList = CallAITaskTable::query()
+			->where('CALL_ID', $callId)
+			->exec()
+		;
+		while ($row = $taskList->fetchObject())
+		{
+			$task = AITask::buildBySource($row);
+			$task->drop();
+		}
+
+		$outcomeCollection = OutcomeCollection::getOutcomesByCallId($callId);
+		foreach ($outcomeCollection as $outcome)
+		{
+			$outcome->drop();
+		}
+
+		$trackList = CallTrackTable::query()
+			->where('CALL_ID', $callId)
+			->exec()
+		;
+		while ($track = $trackList->fetchObject())
+		{
+			$track->drop();
+		}
+
+		return $result;
+	}
 }

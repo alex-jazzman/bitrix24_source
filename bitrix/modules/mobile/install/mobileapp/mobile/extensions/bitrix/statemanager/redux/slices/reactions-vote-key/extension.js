@@ -4,7 +4,11 @@
 jn.define('statemanager/redux/slices/reactions-vote-key', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { createSlice, createDraftSafeSelector } = require('statemanager/redux/toolkit');
-	const { keySliceName, initialState, reactionsVoteSignTokenAdapter } = require('statemanager/redux/slices/reactions-vote-key/meta');
+	const {
+		keySliceName,
+		initialState,
+		reactionsVoteSignTokenAdapter,
+	} = require('statemanager/redux/slices/reactions-vote-key/meta');
 	const {
 		selectAll,
 	} = reactionsVoteSignTokenAdapter.getSelectors((state) => state[keySliceName]);
@@ -25,6 +29,11 @@ jn.define('statemanager/redux/slices/reactions-vote-key', (require, exports, mod
 			return keyEntry ? keyEntry.voteSignToken : null;
 		},
 		(voteSignToken) => voteSignToken,
+	);
+
+	const selectIsVoteSignTokenLoaded = createDraftSafeSelector(
+		(state, entityType, entityId) => selectVoteSignTokenByEntityId(state, entityType, entityId),
+		(voteSignToken) => Boolean(voteSignToken),
 	);
 
 	const reactionsVoteSignTokenSlice = createSlice({
@@ -48,5 +57,6 @@ jn.define('statemanager/redux/slices/reactions-vote-key', (require, exports, mod
 		reactionsVoteSignTokenUpserted,
 		selectVoteSignTokensByTaskId,
 		selectVoteSignTokenByEntityId,
+		selectIsVoteSignTokenLoaded,
 	};
 });

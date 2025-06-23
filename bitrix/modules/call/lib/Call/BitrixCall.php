@@ -20,6 +20,11 @@ class BitrixCall extends Call
 	 */
 	protected function initCall(): void
 	{
+		if ($this->scheme === self::SCHEME_JWT)
+		{
+			return;
+		}
+
 		if (!$this->endpoint)
 		{
 			$this->uuid = Util::generateUUID();

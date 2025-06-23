@@ -1172,6 +1172,12 @@ class CCrmStatus
 				'SYSTEM' => 'Y'
 			],
 			[
+				'NAME' => Loc::getMessage('CRM_STATUS_TYPE_SOURCE_REPEAT_SALE'),
+				'STATUS_ID' => 'REPEAT_SALE',
+				'SORT' => 76,
+				'SYSTEM' => 'Y'
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_CALLBACK'),
 				'STATUS_ID' => 'CALLBACK',
 				'SORT' => 77,

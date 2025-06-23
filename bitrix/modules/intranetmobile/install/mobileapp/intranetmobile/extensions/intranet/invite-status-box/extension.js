@@ -65,6 +65,11 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 			return this.props.buttonDesign ?? ButtonDesign.OUTLINE_ACCENT_1;
 		}
 
+		get buttonTestId()
+		{
+			return this.testId ? `${this.testId}-button` : '';
+		}
+
 		get height()
 		{
 			return this.props.height ?? DEFAULT_HEIGHT;
@@ -113,10 +118,10 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 		 * @param {string} [data.buttonText]
 		 * @param {ButtonDesign} [data.buttonDesign]
 		 * @param {Function} [data.onButtonClick]
+		 * @param {Function} [data.onClose]
+		 * @param {number} [data.height]
 		 * @param {Array<Button>} [data.statusBlockButtons]
 		 * @param {Object} [data.statusBlockStyle]
-		 * @param {number} [data.height]
-		 * @param {Function} [data.onClose]
 		 * @param {boolean} [data.shouldCloseOnButtonClick = true]
 		 */
 		static async open(data)
@@ -139,18 +144,20 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 							onClose?.(widget);
 							widget.close();
 						});
+						resolve(inviteStatusBox);
 
 						return inviteStatusBox;
 					},
 				}).setParentWidget(parentWidget)
-					.showOnTop()
 					.setBackgroundColor(Color.bgSecondary.toHex())
 					.setNavigationBarColor(Color.bgSecondary.toHex())
-					.enableOnlyMediumPosition()
 					.setMediumPositionHeight(height ?? DEFAULT_HEIGHT)
+					.disableResizeContent()
 					.open()
-					.then(() => {
-						resolve(inviteStatusBox);
+					.then((layout) => {
+						layout.on('onViewHidden', () => {
+							data.onClose?.();
+						});
 					})
 					.catch(console.error);
 			});
@@ -202,7 +209,7 @@ jn.define('intranet/invite-status-box', (require, exports, module) => {
 		get renderImage()
 		{
 			const uri = this.props.imageUri
-				?? makeLibraryImagePath(this.props.imageName, 'invite-status-box', 'intranet');
+					?? makeLibraryImagePath(this.props.imageName, 'invite-status-box', 'intranet');
 			if (!uri)
 			{
 				return null;

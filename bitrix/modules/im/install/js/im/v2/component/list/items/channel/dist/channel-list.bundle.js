@@ -3,14 +3,14 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_date,im_v2_component_elements,im_v2_lib_utils,im_v2_lib_parser,im_v2_lib_dateFormatter,im_v2_lib_logger,im_v2_lib_user,im_v2_application_core,im_v2_lib_rest,main_core,im_v2_const,im_v2_lib_layout,im_v2_lib_menu) {
+(function (exports,im_v2_component_elements_listLoadingState,main_date,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_utils,im_v2_lib_parser,im_v2_lib_dateFormatter,im_v2_lib_logger,im_v2_lib_user,im_v2_application_core,im_v2_lib_rest,main_core,im_v2_const,im_v2_lib_layout,im_v2_lib_menu) {
 	'use strict';
 
 	// @vue/component
 	const MessageText = {
 	  name: 'MessageText',
 	  components: {
-	    MessageAvatar: im_v2_component_elements.MessageAvatar
+	    MessageAvatar: im_v2_component_elements_avatar.MessageAvatar
 	  },
 	  props: {
 	    item: {
@@ -19,7 +19,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    recentItem() {
 	      return this.item;
 	    },
@@ -91,8 +91,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const ChannelItem = {
 	  name: 'ChannelItem',
 	  components: {
-	    ChatAvatar: im_v2_component_elements.ChatAvatar,
-	    ChatTitle: im_v2_component_elements.ChatTitle,
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
+	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle,
 	    MessageText
 	  },
 	  props: {
@@ -105,7 +105,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    return {};
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    recentItem() {
 	      return this.item;
 	    },
@@ -289,8 +289,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	    }
 	  };
-	  const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2RecentChannelTail, queryParams).catch(error => {
-	    // eslint-disable-next-line no-console
+	  const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2RecentChannelTail, queryParams).catch(([error]) => {
 	    console.error('Im.ChannelList: page request error', error);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _pagesLoaded)[_pagesLoaded]++;
@@ -383,7 +382,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  name: 'ChannelList',
 	  components: {
 	    EmptyState,
-	    LoadingState: im_v2_component_elements.ListLoadingState,
+	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState,
 	    ChannelItem
 	  },
 	  emits: ['chatClick'],
@@ -480,5 +479,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChannelList = ChannelList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Component.Elements,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=channel-list.bundle.js.map

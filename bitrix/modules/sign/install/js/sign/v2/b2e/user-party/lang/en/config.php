@@ -9,4 +9,6 @@ $MESS["SIGN_USER_PARTY_SEND_LINK_CHAT"] = "to the chat";
 $MESS["SIGN_USER_PARTY_SEND_LINK_EMAIL"] = "via email";
 $MESS["SIGN_USER_PARTY_SEND_LINK_MORE"] = "More...";
 $MESS["SIGN_USER_PARTY_SEND_LINK_SMS"] = "via SMS";
+$MESS["SIGN_USER_PARTY_TAB_DOCUMENTS"] = "Documents";
 $MESS["SIGN_USER_PARTY_VIEW_SHOW_MORE"] = "and #EMPLOYEE_COUNT# more";
+$MESS["SIGN_USER_PARTY_DESCRIPTION_WITHOUT_LINK"] = "It may be required by your applicable law to sign an agreement to deal electronically with your employee prior to initiating an electronic signature process";

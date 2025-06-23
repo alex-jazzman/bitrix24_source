@@ -34,10 +34,6 @@ export const BookingMessage = {
 		...mapGetters({
 			isCurrentSenderAvailable: `${Model.Interface}/isCurrentSenderAvailable`,
 		}),
-		menuId(): string
-		{
-			return `booking-message-menu-${this.bookingId}`;
-		},
 		booking(): BookingModel
 		{
 			return this.$store.getters['bookings/getById'](this.bookingId);

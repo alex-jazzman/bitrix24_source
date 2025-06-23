@@ -790,7 +790,7 @@
 			}
 			result[result.length] = {
 				text: this.documentsText,
-				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.documentList + '\', null, 930)'
+				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.documentList + '\', null, 1060)'
 			};
 		}
 		if(this.links.templateList)
@@ -803,7 +803,7 @@
 			}
 			result[result.length] = {
 				text: this.templatesText,
-				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.templateList + '\', null, 930)'
+				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.templateList + '\', null, 1060)'
 			}
 		}
 

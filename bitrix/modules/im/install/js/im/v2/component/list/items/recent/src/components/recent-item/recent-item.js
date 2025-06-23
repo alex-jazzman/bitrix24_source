@@ -2,12 +2,14 @@ import 'main.date';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings, Layout } from 'im.v2.const';
-import { ChatAvatar, AvatarSize, ChatTitle, ChatAvatarType, ChatTitleType, InputActionIndicator } from 'im.v2.component.elements';
+import { InputActionIndicator } from 'im.v2.component.list.items.elements.input-action-indicator';
+import { ChatTitle, ChatTitleType } from 'im.v2.component.elements.chat-title';
+import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements.avatar';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
 import { ChannelManager } from 'im.v2.lib.channel';
 
 import { MessageText } from './components/message-text';
-import { ItemCounter } from './components/item-counter';
+import { ItemCounters } from './components/item-counter';
 import { MessageStatus } from './components/message-status';
 
 import './css/recent-item.css';
@@ -17,7 +19,7 @@ import type { ImModelRecentItem, ImModelChat, ImModelMessage } from 'im.v2.model
 // @vue/component
 export const RecentItem = {
 	name: 'RecentItem',
-	components: { ChatAvatar, ChatTitle, MessageText, MessageStatus, ItemCounter, InputActionIndicator },
+	components: { ChatAvatar, ChatTitle, MessageText, MessageStatus, ItemCounters, InputActionIndicator },
 	props: {
 		item: {
 			type: Object,
@@ -169,6 +171,7 @@ export const RecentItem = {
 						<ChatTitle 
 							:dialogId="recentItem.dialogId" 
 							:withMute="true" 
+							:withAutoDelete="true"
 							:customType="chatType"
 							:showItsYou="false"
 						/>
@@ -179,7 +182,7 @@ export const RecentItem = {
 					</div>
 					<div class="bx-im-list-recent-item__content_bottom">
 						<MessageText :item="recentItem" />
-						<ItemCounter :item="recentItem" :isChatMuted="isChatMuted" />
+						<ItemCounters :item="recentItem" :isChatMuted="isChatMuted" />
 					</div>
 				</div>
 			</div>

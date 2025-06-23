@@ -47,6 +47,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 			this.getSelectedView = callbacks.getSelectedView;
 			this.getOwnerId = callbacks.getOwnerId;
 			this.getProjectId = callbacks.getProjectId;
+			this.isScrumProject = callbacks.isScrumProject;
 
 			this.openViewSwitcher = callbacks.openViewSwitcher;
 			this.onListClick = callbacks.onListClick;
@@ -176,7 +177,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 
 		getViewSwitcherMenuItems = () => {
 			return Object.values(Views)
-				.filter((view) => !(view === Views.KANBAN && this.getProjectId() === null))
+				.filter((view) => !(view === Views.KANBAN && (this.getProjectId() === null || this.isScrumProject())))
 				.map((view) => ({
 					id: view,
 					title: Loc.getMessage(`M_TASKS_VIEW_ROUTER_MENU_TITLE_${view}`),

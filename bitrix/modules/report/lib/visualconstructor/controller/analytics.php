@@ -2,7 +2,6 @@
 
 namespace Bitrix\Report\VisualConstructor\Controller;
 
-use Bitrix\ImOpenLines\Integrations\Report\Filter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\UI\Filter\Options;
@@ -25,6 +24,7 @@ class Analytics extends Base
 		$params = [
 			'POPUP_COMPONENT_NAME' => 'bitrix:report.analytics.base',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+			'USE_UI_TOOLBAR' => 'Y',
 		];
 		return new Component($componentName, '', $params);
 	}

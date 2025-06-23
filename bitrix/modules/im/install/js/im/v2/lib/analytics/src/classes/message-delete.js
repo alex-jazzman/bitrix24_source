@@ -1,7 +1,7 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { MessageComponentManager } from 'im.v2.lib.message-component-manager';
+import { MessageComponentManager } from 'im.v2.lib.message-component';
 
 import {
 	AnalyticsCategory,
@@ -54,6 +54,10 @@ export class MessageDelete
 	onNotFoundNotification({ dialogId }: {dialogId: string})
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		if (!chat)
+		{
+			return;
+		}
 
 		sendData({
 			tool: AnalyticsTool.im,

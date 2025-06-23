@@ -4,13 +4,13 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2023 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 namespace Bitrix\Main\Web\Http;
 
-use Psr\Log;
 use Bitrix\Main\Diag;
+use Psr\Log;
 use Psr\Http\Message\RequestInterface;
 
 class Handler implements Log\LoggerAwareInterface, DebugInterface
@@ -75,31 +75,27 @@ class Handler implements Log\LoggerAwareInterface, DebugInterface
 		{
 			$logger = Diag\Logger::create('main.HttpClient', [$this, $this->request]);
 
-			if ($logger !== null)
-			{
-				$this->setLogger($logger);
-			}
+			$this->setLogger($logger ?? new Log\NullLogger());
 		}
 
-		return $this->logger;
+		return ($this->logger instanceof Log\NullLogger ? null : $this->logger);
 	}
 
-	public function log(string $logMessage, int $level): void
+	public function log(string $logMessage, int $level, array $context = []): void
 	{
 		if (($logger = $this->getLogger()) && ($this->debugLevel & $level))
 		{
-			$message = '';
-			$context = [];
 			if (!$this->logStarted)
 			{
 				$this->logStarted = true;
-				$message = "\n{delimiter}\n{date} - {host}\n{trace}";
-				$context =  ['trace' => Diag\Helper::getBackTrace(10, DEBUG_BACKTRACE_IGNORE_ARGS, 5)];
+
+				$headMessage = "\n{delimiter}\n{date} - {host}\n{trace}";
+				$headContext =  ['trace' => Diag\Helper::getBackTrace(10, DEBUG_BACKTRACE_IGNORE_ARGS, 5)];
+
+				$logger->debug($headMessage, $headContext);
 			}
 
-			$message .= $logMessage;
-
-			$logger->debug($message, $context);
+			$logger->debug($logMessage, $context);
 		}
 	}
 

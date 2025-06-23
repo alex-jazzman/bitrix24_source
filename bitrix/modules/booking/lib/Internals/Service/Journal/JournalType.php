@@ -12,8 +12,9 @@ enum JournalType: string
 	case BookingDeleted = 'bookingDeleted';
 	case BookingCanceled = 'bookingCanceled';
 	case BookingConfirmed = 'bookingConfirmed';
-	case BookingDelayedNotificationInitialized = 'bookingDelayedNotificationInitialized';
-	case BookingManagerConfirmNotificationSent = 'bookingManagerConfirmNotificationSent';
+	case BookingDelayedCounterActivated = 'bookingDelayedCounterActivated';
+	case BookingConfirmCounterActivated = 'bookingConfirmCounterActivated';
+	case BookingComingSoonNotificationSent = 'bookingComingSoonNotificationSent';
 
 	case ResourceAdded = 'resourceAdded';
 	case ResourceUpdated = 'resourceUpdated';

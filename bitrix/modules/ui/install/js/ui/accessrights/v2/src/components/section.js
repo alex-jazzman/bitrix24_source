@@ -5,6 +5,7 @@ import { Header } from './section/header';
 import { TitleColumn } from './section/title-column';
 import { SyncHorizontalScroll } from './util/sync-horizontal-scroll';
 
+// @vue/component
 export const Section = {
 	name: 'Section',
 	components: { Column, SyncHorizontalScroll, TitleColumn, Header, ColumnList },

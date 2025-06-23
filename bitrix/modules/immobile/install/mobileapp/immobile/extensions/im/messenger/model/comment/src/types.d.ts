@@ -11,6 +11,12 @@ declare type CommentInfoModelState = {
 	showLoader: boolean,
 }
 
+declare type RelationCommentInfo = {
+	commentChatId: number,
+	parentMessageId: number,
+	parentChatId: number,
+};
+
 declare type CommentModelActions = 'commentModel/setComments'
 	| 'commentModel/setComment'
 	| 'commentModel/updateComment'
@@ -18,6 +24,7 @@ declare type CommentModelActions = 'commentModel/setComments'
 	| 'commentModel/setCommentWithCounter'
 	| 'commentModel/deleteComments'
 	| 'commentModel/deleteChannelCounters'
+	| 'commentModel/clearAllCounters'
 	| 'commentModel/subscribe'
 	| 'commentModel/unsubscribe'
 	| 'commentModel/showLoader'
@@ -36,9 +43,11 @@ declare type CommentsSetCommentsData = {
 	commentList: Array<CommentInfoModelState>
 }
 
-declare type CommentsSetCountersActions = 'setCounters';
+declare type CommentsSetCountersActions = 'setCounters' | 'clearAllCounters';
 declare type CommentsSetCountersData = {
-	chatCounterMap: Record<channelChatId, Record<commentChatId, number>>
+	chatCounterMap: Record<channelChatId, Record<commentChatId, number>>,
+	affectedChannels?: Array<number>, // for clearAllCounters action
+	affectedComments?: Array<number>, // for clearAllCounters action
 }
 
 declare type CommentsDeleteChannelCountersActions = 'commentModel/deleteChannelCounters';

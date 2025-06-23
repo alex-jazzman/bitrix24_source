@@ -4,10 +4,12 @@ return [
 	'extensions' => [
 		'type',
 		'utils/object',
+		'utils/url',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/permission-manager',
+		'utils/array',
 	],
 	'bundle' => [
 		'./src/model',

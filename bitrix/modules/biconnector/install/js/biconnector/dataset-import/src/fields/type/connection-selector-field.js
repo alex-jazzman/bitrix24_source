@@ -1,4 +1,4 @@
-import { Dom, Event, Tag, Text } from 'main.core';
+import { Dom, Event, Tag, Type, Text } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { BaseField } from './base-field';
 import { Dialog, Item, TagSelector } from 'ui.entity-selector';
@@ -105,9 +105,10 @@ export const ConnectionSelectorField = {
 						connectionType: item.TYPE,
 					},
 				};
-				if (item.TYPE)
+
+				if (item.AVATAR)
 				{
-					itemOptions.avatar = `/bitrix/images/biconnector/database-connections/${item.TYPE}.svg`;
+					itemOptions.avatar = item.AVATAR;
 				}
 
 				if (this.connectionId)
@@ -124,13 +125,19 @@ export const ConnectionSelectorField = {
 	methods: {
 		onConnectionSave(event)
 		{
+			const itemOptions: {id: number, name: string, type: string, avatar: ?string} = event.getData().connection;
+			if (!Type.isStringFilled(itemOptions?.avatar))
+			{
+				itemOptions.avatar = `/bitrix/images/biconnector/database-connections/${itemOptions.type}.svg`;
+			}
+
 			const selector: TagSelector = this.selector;
 			const dialog: Dialog = selector.getDialog();
-			const itemOptions: {id: number, name: string, type: string} = event.getData().connection;
 			let item: ?Item = dialog.getItem({
 				id: itemOptions.id,
 				entityId: this.options.selectorId,
 			});
+
 			if (item)
 			{
 				item.setTitle({ text: Text.decode(itemOptions.name), type: 'text' });

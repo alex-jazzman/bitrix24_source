@@ -15,6 +15,10 @@
 	height: calc(100vh - 188px);
 }
 
+.template-air .crm-copilot__call-assessment_page-wrapper {
+	height: calc(100vh - 206px);
+}
+
 .crm-copilot__call-assessment_breadcrumbs-wrapper {
 	display: flex;
 	flex-direction: row;
@@ -391,23 +395,8 @@
 	opacity: var(--ui-opacity-full);
 }
 
-.crm-copilot__call-assessment_title-wrapper {
-	display: flex;
-	width: 100%;
-}
-
-.crm-copilot__call-assessment_title-item {
-	flex: 1;
-	display: inline-block;
-	box-sizing: border-box;
-	border: none;
-	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) #cfd6da;
-	background-color: transparent;
-	color: var(--ui-color-palette-white-base);
-	word-wrap: break-word;
-	font: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
-	margin: -1px 0 0 -2px;
+.copilot-call-assessment-details .ui-toolbar-edit-title-input {
+	color: var(--ui-color-palette-white-base) !important;
 }
 
 .crm-copilot__call-assessment-help-link {
@@ -703,99 +692,4 @@
 
 .crm-copilot__call-assessment-ai-disabled .ui-icon-set:hover {
 	opacity: var(--ui-opacity-full);
-}
-
-.crm-copilot__call-assessment-availability-rows {
-	padding: 14px 24px;
-	border-radius: var(--ui-border-radius-sm);
-	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) rgba(0, 0, 0, 0.11);
-	margin-top: 12px;
-}
-
-.crm-copilot__call-assessment-availability-row {
-	display: flex;
-	align-items: center;
-	margin: 6px 0;
-}
-
-.crm-copilot__call-assessment-availability-selector-row {
-	display: flex;
-	align-items: center;
-}
-
-.crm-copilot__call-assessment-availability-selector-delimiter {
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='12' height='2' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath opacity='.4' d='M.82.048h10.36v1.12H.82V.048z' fill='%23333'/%3E%3C/svg%3E") center center no-repeat;
-	width: 14px;
-	height: 20px;
-	margin: 0 5px 0 14px;
-}
-
-.crm-copilot__call-assessment-availability-selector-input {
-	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-15);
-	border-radius: 512px;
-	padding: 5px 27px 5px 14px;
-	color: var(--ui-color-palette-gray-90);
-	font-size: var(--ui-font-size-md);
-	height: var(--ui-font-size-5xl);
-	cursor: pointer;
-}
-
-.ui-ctl-element.crm-copilot__call-assessment-availability-selector-input.--weekday-type {
-	width: 200px;
-}
-
-.crm-copilot__call-assessment-availability-selector-input.--time {
-	width: 60px;
-}
-
-.crm-copilot__call-assessment-availability-selector-input.--invalid {
-	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-red-solid);;
-}
-
-.crm-copilot__call-assessment-availability-selector-button {
-	width: 26px;
-	height: 26px;
-	border-radius: 64px;
-	background-position: center center;
-	background-repeat: no-repeat;
-	background-color: var(--ui-color-palette-gray-02);
-	cursor: pointer;
-	margin-left: 16px;
-	transition: background-color 300ms;
-}
-
-.crm-copilot__call-assessment-availability-selector-button:hover,
-.crm-copilot__call-assessment-availability-selector-chevron:hover
-{
-	background-color: var(--ui-color-palette-gray-04);
-}
-
-.crm-copilot__call-assessment-availability-selector-button.--add {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='21' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.166 5.5h1.667v4.167h4.166v1.666h-4.166V15.5H9.166v-4.167H4.999V9.667h4.167V5.5z' fill='%23D5D7DB'/%3E%3C/svg%3E");
-}
-
-.crm-copilot__call-assessment-availability-selector-button.--remove {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='21' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5 11.333V9.666h9.999v1.667H5z' fill='%23D5D7DB'/%3E%3C/svg%3E");
-}
-
-.crm-copilot__call-assessment-availability-selector-row-wrapper {
-	display: flex;
-	align-items: center;
-}
-
-.crm-copilot__call-assessment-availability-selector-chevron {
-	width: 26px;
-	height: 26px;
-	border-radius: 64px;
-	background-position: center center;
-	background-repeat: no-repeat;
-	background-color: var(--ui-color-palette-gray-02);
-	cursor: pointer;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.723 6.792l-3.773 3.773-.95.935-.932-.935-3.773-3.773-1.331 1.331 6.045 6.045 6.045-6.045-1.33-1.331z' fill='%23828B95' opacity='.2'/%3E%3C/svg%3E");
-	margin-left: -35px;
-	transition: all .2s;
-}
-
-.crm-copilot__call-assessment-availability-selector-chevron.--expanded {
-	transform: rotate(-180deg);
 }

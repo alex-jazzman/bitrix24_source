@@ -2,26 +2,25 @@ import { EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { EventType } from 'im.v2.const';
-import { ChatSearchInput } from 'im.v2.component.search.chat-search-input';
-import { ChatSearch } from 'im.v2.component.search.chat-search';
+import { Analytics } from 'im.v2.lib.analytics';
+import { ForwardSearch, ChatSearchInput } from 'im.v2.component.search';
 
 import type { JsonObject } from 'main.core';
 
 import './forward-content.css';
 
-const searchConfig = Object.freeze({
-	chats: true,
-	users: true,
-});
-
 // @vue/component
 export const ForwardContent = {
 	name: 'ForwardContent',
-	components: { ChatSearch, ChatSearchInput },
+	components: { ForwardSearch, ChatSearchInput },
 	props:
 	{
 		messagesIds: {
 			type: Array,
+			required: true,
+		},
+		dialogId: {
+			type: String,
 			required: true,
 		},
 	},
@@ -33,9 +32,9 @@ export const ForwardContent = {
 			isLoading: false,
 		};
 	},
-	computed:
+	beforeUnmount()
 	{
-		searchConfig: () => searchConfig,
+		Analytics.getInstance().messageForward.onClosePopup();
 	},
 	methods:
 	{
@@ -45,9 +44,10 @@ export const ForwardContent = {
 		},
 		onUpdateSearch(query: string)
 		{
-			this.searchQuery = query;
+			Analytics.getInstance().messageForward.onStartSearch({ dialogId: this.dialogId });
+			this.searchQuery = query.trim().toLowerCase();
 		},
-		async onSelectItem(event)
+		async onSelectItem(event: {dialogId: string, nativeEvent: KeyboardEvent})
 		{
 			const { dialogId } = event;
 
@@ -77,10 +77,9 @@ export const ForwardContent = {
 				/>
 			</div>
 			<div class="bx-im-entity-selector-forward__search-result-container">
-				<ChatSearch
-					:searchMode="true"
-					:searchQuery="searchQuery"
-					:searchConfig="searchConfig"
+				<ForwardSearch
+					:query="searchQuery"
+					:dialogId="dialogId"
 					@clickItem="onSelectItem"
 					@loading="onLoading"
 				/>

@@ -77,6 +77,13 @@ final class CreateDocumentByCallTemplateScenario
 			return $fileResult;
 		}
 
+		if (empty($fileResult->getData()['bfile']))
+		{
+			$result->addError(new Error("Could not create file by template ({$templateId})"));
+
+			return $result;
+		}
+
 		$fileArray = $fileResult->getData()['bfile'];
 		$chatTitle = $this->getChatTitle($this->call->getAssociatedEntity());
 

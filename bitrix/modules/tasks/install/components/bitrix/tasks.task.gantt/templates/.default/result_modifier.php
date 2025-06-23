@@ -47,12 +47,16 @@ if ($arResult['IS_COLLAB'])
 	);
 	Toolbar::deleteFavoriteStar();
 
-	$this->SetViewTarget('in_pagetitle') ?>
-	<div class="sn-collab-icon__wrapper">
-		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
-	</div>
-	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
-	<?php $this->EndViewTarget();
+	$collabName = HtmlFilter::encode($arResult['COLLAB_NAME']);
+
+	Toolbar::addBeforeTitleBoxHtml(
+		'<div class="sn-collab-icon__wrapper">' .
+		'<div id="sn-collab-icon-' . HtmlFilter::encode($arResult['OWNER_ID']) . '" class="sn-collab-icon__hexagon-bg"></div>' .
+		'</div>'
+	);
+	Toolbar::addUnderTitleHtml(
+		'<div class="sn-collab__subtitle" title="' . $collabName . '">' . $collabName . '</div>'
+	);
 }
 //endregion TITLE
 

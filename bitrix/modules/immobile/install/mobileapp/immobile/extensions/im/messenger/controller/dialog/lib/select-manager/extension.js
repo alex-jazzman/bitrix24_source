@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const { isEqual } = require('utils/object');
+	const { Color } = require('tokens');
 	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
@@ -29,7 +30,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 	});
 
 	const ButtonDesignType = Object.freeze({
-		filled: 'filled',
+		outlineAccent1: 'outline-accent-1',
 		outline: 'outline',
 		outlineNoAccent: 'outline-no-accent',
 	});
@@ -41,6 +42,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 	{
 		/** @type {Array<string>} */
 		#selectedMessageIdList = [];
+		#isButtonForwardAvailable = true;
 		#isButtonDeleteAvailable = true;
 		/** @type {Array<ActionPanelButton|null>} */
 		#actionPanelButtons = [];
@@ -64,12 +66,24 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.view = this.locator.get('view');
 			/** @type {MessengerCoreStore} */
 			this.store = this.locator.get('store');
-			/** @type {HeaderButtons} */
-			this.headerButtons = this.locator.get('header-buttons');
-			/** @type {ReplyManager} */
-			this.replyManager = this.locator.get('reply-manager');
 
 			this.bindMethods();
+		}
+
+		/**
+		 * @return {ReplyManager}
+		 */
+		get replyManager()
+		{
+			return this.locator.get('reply-manager');
+		}
+
+		/**
+		 * @return {HeaderButtonsController}
+		 */
+		get headerButtons()
+		{
+			return this.locator.get('header-buttons');
 		}
 
 		bindMethods()
@@ -207,7 +221,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			logger.log(`${this.constructor.name}.onDisabledButtonTap id:`, buttonId);
 			switch (buttonId)
 			{
-				case ButtonId.forward: return false;
+				case ButtonId.forward: return this.showUnavailableForwardActionToast();
 				case ButtonId.delete: return this.showUnavailableDeleteActionToast();
 				default: return false;
 			}
@@ -246,8 +260,20 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			showDeleteMessagesAlert({ deleteCallback });
 		}
 
+		showUnavailableForwardActionToast()
+		{
+			Notification.showNotifier({
+				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON_UNAVAILABLE_ACTION_NOTIFIER'),
+			});
+		}
+
 		showUnavailableDeleteActionToast()
 		{
+			if (this.#selectedMessageIdList.length === 0)
+			{
+				return;
+			}
+
 			Notification.showNotifier({
 				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_DELETE_BUTTON_UNAVAILABLE_ACTION_NOTIFIER'),
 			});
@@ -296,6 +322,13 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		setSelectedMessageIdList(value = [])
 		{
 			this.#selectedMessageIdList = value;
+		}
+
+		checkForwardButtonAvailable()
+		{
+			this.#isButtonForwardAvailable = (
+				!this.#selectedMessageIdList.some((messageId) => MessageHelper.createById(messageId)?.isVote)
+			);
 		}
 
 		checkDeleteButtonAvailable()
@@ -457,26 +490,31 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		 */
 		getButtons()
 		{
+			this.checkForwardButtonAvailable();
 			this.checkDeleteButtonAvailable();
 
-			const disabledForwardButton = this.#selectedMessageIdList.length === 0;
+			const disabledForwardButton = (this.#selectedMessageIdList.length === 0 || !this.#isButtonForwardAvailable);
 			const disabledDeleteButton = (this.#selectedMessageIdList.length === 0 || !this.#isButtonDeleteAvailable);
+			const customStyleDeleteButton = disabledDeleteButton
+				? {}
+				: { borderColor: Color.accentMainAlert.toHex() };
 
 			return [
-				{
-					id: ButtonId.forward,
-					iconName: ButtonIconName.forward,
-					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON'),
-					height: ButtonHeight.L,
-					design: ButtonDesignType.filled,
-					disabled: disabledForwardButton,
-				},
 				{
 					id: ButtonId.delete,
 					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_DELETE_BUTTON'),
 					height: ButtonHeight.L,
 					design: ButtonDesignType.outline,
 					disabled: disabledDeleteButton,
+					customStyle: customStyleDeleteButton,
+				},
+				{
+					id: ButtonId.forward,
+					rightIconName: ButtonIconName.forward,
+					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON'),
+					height: ButtonHeight.L,
+					design: ButtonDesignType.outlineAccent1,
+					disabled: disabledForwardButton,
 				},
 			];
 		}

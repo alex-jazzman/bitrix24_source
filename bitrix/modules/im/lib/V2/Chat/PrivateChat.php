@@ -6,6 +6,7 @@ use Bitrix\Im\Model\RecentTable;
 use Bitrix\Im\User;
 use Bitrix\Im\Recent;
 use Bitrix\Im\Notify;
+use Bitrix\Im\V2\Call\CallToken;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Entity\User\NullUser;
 use Bitrix\Im\V2\Entity\User\UserBot;
@@ -76,6 +77,11 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 		return $this;
 	}
 
+	public function getDefaultManageMessagesAutoDelete(): string
+	{
+		return Chat::MANAGE_RIGHTS_MEMBER;
+	}
+
 	public function getDialogId(?int $contextUserId = null): ?string
 	{
 		$this->dialogId = $this->getCompanion($contextUserId)->getId();
@@ -126,6 +132,17 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 		$otherUser = $this->getCompanion($bot->getId());
 
 		return Network::getBotAsMultidialog($bot->getId(), $otherUser->getId());
+	}
+
+	public function filterUsersToMentionAnchor(array $userIds): array
+	{
+		$companionId = $this->getCompanionId();
+		if (in_array($companionId, $userIds, true))
+		{
+			return [$companionId => $companionId];
+		}
+
+		return [];
 	}
 
 	protected function prepareMessage(Message $message): void
@@ -180,6 +197,18 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 	public function getCompanionId(?int $userId = null): ?int
 	{
 		return $this->getCompanion($userId)->getId();
+	}
+
+	protected function getUsersToAddToRecent(): array
+	{
+		// We always return both users because the merge strategy is used for private chats.
+		return $this->getRelations()->getUserIds();
+	}
+
+	protected function updateRecentItems(Message $message): void
+	{
+		// We do not update recent items because the merge strategy is chosen for private chats.
+		return;
 	}
 
 	protected function getFieldsForRecent(int $userId, Message $message): array
@@ -526,8 +555,12 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 
 	public function getPopupData(array $excludedList = []): PopupData
 	{
-		$userIds = [$this->getContext()->getUserId(), $this->getCompanion()->getId()];
+		$userId = $this->getContext()->getUserId();
 
-		return new PopupData([new UserPopupItem($userIds)], $excludedList);
+		return parent::getPopupData($excludedList)
+			->add(new UserPopupItem([$userId, $this->getCompanion()->getId()]))
+			->add(new Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs([$this->getChatId()]))
+			->add(new CallToken($this->getId(), $userId))
+		;
 	}
 }

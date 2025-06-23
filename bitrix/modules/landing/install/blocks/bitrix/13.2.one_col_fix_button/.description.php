@@ -24,16 +24,7 @@ return [
 		'.landing-block-node-button' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_6_ONE_COL_FIX_BUTTON_NODES_LANDINGBLOCKNODEBUTTON'),
 			'type' => [
-				//button
-				'button-color',
-				'button-type',
-				'button-size',
-				'button-padding',
-				'border-radius',
-				'color',
-				'color-hover',
-				'font-family',
-				'text-transform',
+				'button',
 			],
 		],
 	],

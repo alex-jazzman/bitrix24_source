@@ -220,6 +220,7 @@
 	align-items: center;
 }
 
+.tasks-flow__create-about .ui-ctl-textarea,
 .tasks-flow__create-about .ui-form-textarea textarea {
 	min-height: 32px;
 	height: 72px;

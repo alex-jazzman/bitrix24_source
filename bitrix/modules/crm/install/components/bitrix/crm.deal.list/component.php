@@ -996,7 +996,22 @@ if ($arParams['IS_RECURRING'] === 'Y')
 				'name' => Loc::getMessage('CRM_COLUMN_COMMENTS'),
 				'sort' => false /*because of MSSQL*/,
 				'editable' => false,
-			]
+			],
+			[
+				'id' => 'MOVED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_BY'),
+				'sort' => 'moved_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'MOVED_TIME',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_TIME'),
+				'sort' => 'moved_time',
+				'editable' => false,
+				'type' => 'date',
+				'class' => 'date',
+			],
 		]
 	);
 }
@@ -1215,7 +1230,22 @@ else
 				'name' => Loc::getMessage('CRM_COLUMN_WEBFORM'),
 				'sort' => 'webform_id',
 				'type' => 'list',
-			]
+			],
+			[
+				'id' => 'MOVED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_BY'),
+				'sort' => 'moved_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'MOVED_TIME',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_TIME'),
+				'sort' => 'moved_time',
+				'editable' => false,
+				'type' => 'date',
+				'class' => 'date',
+			],
 		]
 	);
 }
@@ -1255,7 +1285,7 @@ if (
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
 }
 
-if ($bInternal)
+if ($bInternal && ($arParams['USE_ALL_HEADER_SECTIONS'] ?? null !== true))
 {
 	$arResult['HEADERS_SECTIONS'] = [
 		[
@@ -1757,6 +1787,14 @@ if (in_array('CREATED_BY', $arSelect, true))
 	$addictFields = array(
 		'CREATED_BY_LOGIN', 'CREATED_BY_NAME', 'CREATED_BY_LAST_NAME', 'CREATED_BY_SECOND_NAME'
 	);
+	$arSelect = array_merge($arSelect,$addictFields);
+	unset($addictFields);
+}
+
+if (in_array('MOVED_BY', $arSelect, true))
+{
+	$addictFields = ['MOVED_BY_LOGIN', 'MOVED_BY_NAME', 'MOVED_BY_LAST_NAME', 'MOVED_BY_SECOND_NAME'];
+
 	$arSelect = array_merge($arSelect,$addictFields);
 	unset($addictFields);
 }
@@ -2547,6 +2585,14 @@ foreach($arResult['DEAL'] as &$arDeal)
 	}
 
 	$arDeal['PATH_TO_USER_CREATOR'] = $arDeal['CREATED_BY_SHOW_URL'] ?? '';
+
+	if (!empty($arDeal['MOVED_BY_ID']))
+	{
+		$arDeal['MOVED_BY'] = $arDeal['MOVED_BY_ID'];
+		$arDeal['~MOVED_BY'] = $arDeal['MOVED_BY_ID'];
+	}
+
+	$arDeal['PATH_TO_USER_MOVED'] = $arDeal['MOVED_BY_SHOW_URL'] ?? '';
 
 	if (!empty($arDeal['MODIFY_BY_ID']))
 	{

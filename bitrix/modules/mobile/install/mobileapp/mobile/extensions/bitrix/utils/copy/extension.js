@@ -26,9 +26,7 @@ jn.define('utils/copy', (require, exports, module) => {
 		{
 			await Application.copyToClipboard(value, forceCopy);
 
-			const hasCopyToClipboardAutoNotification = Feature.hasCopyToClipboardAutoNotification();
-
-			if (showDefaultNotification && !hasCopyToClipboardAutoNotification)
+			if (showDefaultNotification)
 			{
 				showSafeToast({
 					message: notificationTitle,
@@ -36,7 +34,7 @@ jn.define('utils/copy', (require, exports, module) => {
 				});
 			}
 
-			return { hasCopyToClipboardAutoNotification };
+			return { hasCopyToClipboardAutoNotification: Feature.hasCopyToClipboardAutoNotification() };
 		}
 		catch (error)
 		{

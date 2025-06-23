@@ -62,7 +62,7 @@
 
 	--im-font-family-open-sans: var(--ui-font-family-open-sans, var(--im-messenger__font_open-sans));
 	--im-font-family-helvetica: var(--ui-font-family-helvetica, var(--im-messenger__font_helvetica));
-	--im-font-family-system: var(--ui-font-family-system, var(--im-messenger__font_system));
+	--im-font-family-system: var(--ui-font-family-primary, var(--im-messenger__font_system));
 
 	--im-font-size-5xl: var(--ui-font-size-5xl, 28px);
 	--im-font-size-4xl: var(--ui-font-size-4xl, 24px);
@@ -152,7 +152,7 @@
 	--im-color-palette-blue-90-rgb: 0, 100, 132;
 	--im-color-palette-blue-70: var(--ui-color-palette-blue-70, #008dba);
 	--im-color-palette-blue-70-rgb: 0, 141, 186;
-	--im-color-palette-blue-60: var(--ui-color-palette-blue-60, #1aa9d9);
+	--im-color-palette-blue-60: var(--ui-color-palette-blue-60, #11a9d9);
 	--im-color-palette-blue-60-rgb: 17, 169, 217;
 	--im-color-palette-blue-50: var(--ui-color-palette-blue-50, #2fc6f6);
 	--im-color-palette-blue-50-rgb: 47, 198, 246;
@@ -191,5 +191,5 @@
 	--im-color-collab-10: #f2fee2;
 
 	--im-color-extranet-orange-60: #e89b06;
-
+	--im-color-accent-main-primary: #0075ff;
 }

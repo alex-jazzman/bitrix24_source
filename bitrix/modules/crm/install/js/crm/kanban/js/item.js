@@ -1,4 +1,5 @@
 // eslint-disable-next-line max-lines-per-function
+
 (function() {
 'use strict';
 
@@ -532,7 +533,7 @@ BX.CRM.Kanban.Item.prototype = {
 			const pictureUrl = new BX.Uri(lastActivityBy.picture);
 			const backgroundUrl = encodeURI(BX.Text.encode(pictureUrl.toString()));
 
-			pictureStyle = `style="background-image: url(${backgroundUrl})"`;
+			pictureStyle = `style="background-image: url('${backgroundUrl}')"`;
 		}
 
 		const hasLink = (
@@ -698,7 +699,13 @@ BX.CRM.Kanban.Item.prototype = {
 		const titleText = BX.Tag.render`<div class="crm-kanban-item-fields-item-title-text"></div>`;
 		titleText.innerHTML = fieldConfig.title;
 
-		const fieldsElement = BX.Dom.create('div', this.getFieldParams({ ...field, ...fieldConfig }));
+		const fieldParamsData = { ...field, ...fieldConfig };
+		if (BX.Type.isBoolean(field.html))
+		{
+			fieldParamsData.html = field.html;
+		}
+
+		const fieldsElement = BX.Dom.create('div', this.getFieldParams(fieldParamsData));
 		const fieldsItem = BX.Tag.render`
 			<div class="crm-kanban-item-fields-item">
 				<div class="crm-kanban-item-fields-item-title">
@@ -883,7 +890,7 @@ BX.CRM.Kanban.Item.prototype = {
 			let userPic = '';
 			if (value.picture)
 			{
-				userPic = ` style="background-image: url(${encodeURI(value.picture)})"`;
+				userPic = ` style="background-image: url('${encodeURI(BX.Text.encode(value.picture))}')"`;
 			}
 			itemUserPic = `<a class="crm-kanban-item-fields-item-value-userpic" href="${value.link}"${userPic}></a>`;
 			itemUserName = `<a class="crm-kanban-item-fields-item-value-name" href="${value.link}">${value.title}</a>`;

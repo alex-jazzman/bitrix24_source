@@ -20,6 +20,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		copilotPrompt: 'copilot-promt',
 		banner: 'banner',
 		checkIn: 'check-in',
+		vote: 'vote',
 	});
 
 	const MessageIdType = {
@@ -44,6 +45,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 
 			ConferenceCreationMessage: 'ConferenceCreationMessage',
 
+			OwnChatCreationMessage: 'OwnChatCreationMessage',
 			ChatCreationMessage: 'ChatCreationMessage',
 			GeneralChatCreationMessage: 'GeneralChatCreationMessage',
 			SignMessage: 'SignMessage',
@@ -57,6 +59,11 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 			CheckInMessage: 'CheckInMessage',
 
 			CallMessage: 'CallMessage',
+
+			ErrorMessage: 'ErrorMessage',
+			VoteMessage: 'VoteMessage',
+
+			ConvertToCollabMessage: 'ConvertToCollabMessage',
 		},
 	});
 
@@ -86,6 +93,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		generalChatCreationMessage: 'GeneralChatCreationMessage',
 		generalChannelCreationMessage: 'GeneralChannelCreationMessage',
 		channelCreationMessage: 'ChannelCreationMessage',
+		vote: 'VoteMessage',
 	});
 
 	module.exports = {

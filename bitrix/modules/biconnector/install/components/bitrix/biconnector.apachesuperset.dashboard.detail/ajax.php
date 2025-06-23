@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\BIConnector\Superset\ActionFilter\BIConstructorAccess;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO;
@@ -20,14 +19,6 @@ if (!Loader::includeModule('biconnector'))
 
 class SupersetDashboardDetailAjax extends \Bitrix\Main\Engine\Controller
 {
-	protected function getDefaultPreFilters(): array
-	{
-		return [
-			...parent::getDefaultPreFilters(),
-			new BIConstructorAccess(),
-		];
-	}
-
 	public function sendDashboardToChatAction(CurrentUser $user, $dialogId, string $content, string $dashboardName, string $fileExtension): ?bool
 	{
 		if ($fileExtension !== 'jpeg' && $fileExtension !== 'pdf')

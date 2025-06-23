@@ -28,10 +28,7 @@ use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -769,9 +766,20 @@ $APPLICATION->IncludeComponent(
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']) ? $arResult['PAGINATION'] : [],
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
+		'COUNTER_PANEL' => $isMyCompanyMode ? null : [
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::CompanyName,
+			'EXTRAS' => [
+				'CATEGORY_ID' => (int)($arResult['CATEGORY_ID'] ?? 0),
+			],
+		],
 		'NAVIGATION_BAR' => $isMyCompanyMode
 			? null
-			: (new NavigationBarPanel(CCrmOwnerType::Company))->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get(),
+			: (new NavigationBarPanel(CCrmOwnerType::Company))
+				->setItems([
+					NavigationBarPanel::ID_REPEAT_SALE,
+				])
+				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get()
+		,
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => [
 			'ID' => $gridManagerID,

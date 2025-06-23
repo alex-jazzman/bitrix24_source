@@ -1,5 +1,6 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die;
 
 use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\User;
@@ -52,7 +53,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			$currentUserPerms = \CSocNetUserPerms::initUserPerms(
 				$USER->GetID(),
 				$this->userId,
-				\CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false)
+				\CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false),
 			);
 
 			if (
@@ -70,6 +71,10 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return false;
 	}
 
+	/**
+	 * @deprecated
+	 * @use \Bitrix\Intranet\Controller\User::fireAction
+	 */
 	public function fireUserAction()
 	{
 		$currentUser = CurrentUser::get();
@@ -77,7 +82,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		$result = \Bitrix\Intranet\Util::deactivateUser([
 			'userId' => $this->userId,
 			'currentUserId' => $currentUser->getId(),
-			'isCurrentUserAdmin' => $currentUser->isAdmin()
+			'isCurrentUserAdmin' => $currentUser->isAdmin(),
 		]);
 
 		if ($result && $this->userId > 0)
@@ -89,6 +94,10 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return $result;
 	}
 
+	/**
+	 * @deprecated
+	 * @use \Bitrix\Intranet\Controller\User::restoreAction
+	 */
 	public function hireUserAction()
 	{
 		$currentUser = CurrentUser::get();
@@ -96,7 +105,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return \Bitrix\Intranet\Util::activateUser([
 			'userId' => $this->userId,
 			'currentUserId' => $currentUser->getId(),
-			'isCurrentUserAdmin' => $currentUser->isAdmin()
+			'isCurrentUserAdmin' => $currentUser->isAdmin(),
 		]);
 	}
 
@@ -114,7 +123,19 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		$user = new CUser;
+		$userData = \Bitrix\Main\UserTable::query()
+			->setSelect(['ID', 'CONFIRM_CODE', 'ACTIVE'])
+			->addFilter('ID', $this->userId)
+			->fetch();
+
+		if (empty($userData['CONFIRM_CODE']) || $userData['ACTIVE'] !== 'Y')
+		{
+			$this->addError(new \Bitrix\Main\Error(GetMessage('INTRANET_USER_PROFILE_DELETE_ERROR')));
+
+			return false;
+		}
+
+		$user = new CUser();
 		$res = $user->Delete($this->userId);
 
 		if (!$res)
@@ -154,21 +175,23 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		if (intval($departmentId) <= 0)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("INTRANET_USER_PROFILE_EMPTY_DEPARTMENT_ERROR")));
+
 			return false;
 		}
 
 		if ($isEmail == 'Y')
 		{
-			$ID_TRANSFERRED = CIntranetInviteDialog::TransferEmailUser($this->userId, array(
-				'UF_DEPARTMENT' => (int) $departmentId
-			));
+			$ID_TRANSFERRED = CIntranetInviteDialog::TransferEmailUser($this->userId, [
+				'UF_DEPARTMENT' => (int)$departmentId,
+			]);
 
 			if (!$ID_TRANSFERRED)
 			{
 				if($e = $GLOBALS["APPLICATION"]->GetException())
 				{
 					$strError = $e->GetString();
-					return array($strError);
+
+					return [$strError];
 				}
 			}
 			else
@@ -178,37 +201,38 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 		else
 		{
-			$obUser = new CUser;
+			$obUser = new CUser();
 			$arGroups = $obUser->GetUserGroup(intval($this->userId));
 			$ID = 0;
 			if (is_array($arGroups))
 			{
-				$arGroups = array_diff($arGroups, array(11, 13));
+				$arGroups = array_diff($arGroups, [11, 13]);
 				$arGroups[] = "11";
 
-				$arNewFields = array(
+				$arNewFields = [
 					"GROUP_ID" => $arGroups,
-					"UF_DEPARTMENT" => array(intval($departmentId))
-				);
+					"UF_DEPARTMENT" => [intval($departmentId)],
+				];
 
 				$ID = $obUser->Update($this->userId, $arNewFields);
 			}
 			if(!$ID)
 			{
 				$this->addError(new \Bitrix\Main\Error(preg_split("/<br>/", $obUser->LAST_ERROR)));
+
 				return false;
 			}
 			else
 			{
 				if (Loader::includeModule("im"))
 				{
-					$arMessageFields = array(
+					$arMessageFields = [
 						"TO_USER_ID" => $this->userId,
 						"FROM_USER_ID" => 0,
 						"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
 						"NOTIFY_MODULE" => "bitrix24",
 						"NOTIFY_MESSAGE" => Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY"),
-					);
+					];
 					\CIMNotify::Add($arMessageFields);
 				}
 
@@ -226,14 +250,14 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		$userData = \Bitrix\Main\UserTable::getList(array(
-			'select' => array('ID', 'PERSONAL_PHOTO'),
-			'filter' => array(
-				'=ID' => $this->userId
-			),
-		))->fetch();
+		$userData = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID', 'PERSONAL_PHOTO'],
+			'filter' => [
+				'=ID' => $this->userId,
+			],
+		])->fetch();
 
-		$user = new CUser;
+		$user = new CUser();
 		$newPhotoFile = $this->getRequest()->getFile('newPhoto');
 
 		//region delete after ui 22.1200.0
@@ -251,11 +275,12 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			$newPhotoFile['del'] = $userData['PERSONAL_PHOTO'];
 		}
 
-		$res = $user->Update($this->userId, array('PERSONAL_PHOTO' => $newPhotoFile));
+		$res = $user->Update($this->userId, ['PERSONAL_PHOTO' => $newPhotoFile]);
 
 		if (!$res)
 		{
 			$this->addError(new \Bitrix\Main\Error($user->LAST_ERROR));
+
 			return false;
 		}
 
@@ -264,21 +289,21 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 		}
 
-		$newUserData = \Bitrix\Main\UserTable::getList(array(
-			'select' => array('ID', 'PERSONAL_PHOTO'),
-			'filter' => array(
-				'=ID' => $this->userId
-			),
-		))->fetch();
+		$newUserData = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID', 'PERSONAL_PHOTO'],
+			'filter' => [
+				'=ID' => $this->userId,
+			],
+		])->fetch();
 
 
 		if (
 			//region TODO: delete after ui 22.1200.0
-			!isset($newPhotoMaskFile) &&
-			class_exists(UI\Avatar\Mask\Helper::class) &&
-			method_exists(UI\Avatar\Mask\Helper::class, 'getMaskedFile') &&
+			!isset($newPhotoMaskFile)
+			&& class_exists(UI\Avatar\Mask\Helper::class)
+			&& method_exists(UI\Avatar\Mask\Helper::class, 'getMaskedFile')
 			//endregion
-			($newPhotoMaskFile = UI\Avatar\Mask\Helper::getMaskedFile('newPhoto'))
+			&& ($newPhotoMaskFile = UI\Avatar\Mask\Helper::getMaskedFile('newPhoto'))
 		)
 		{
 			UI\Avatar\Mask\Helper::save($newUserData["PERSONAL_PHOTO"], $newPhotoMaskFile);
@@ -291,11 +316,11 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			{
 				$fileTmp = \CFile::ResizeImageGet(
 					$file,
-					array('width' => 512, 'height' => 512),
+					['width' => 512, 'height' => 512],
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					false,
 					false,
-					true
+					true,
 				);
 
 				return $fileTmp['src'];
@@ -310,38 +335,39 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		$userData = \Bitrix\Main\UserTable::getList(array(
-			"select" => array('ID', 'PERSONAL_PHOTO'),
-			"filter" => array(
-				"=ID" => $this->userId
-			),
-		))->fetch();
+		$userData = \Bitrix\Main\UserTable::getList([
+			"select" => ['ID', 'PERSONAL_PHOTO'],
+			"filter" => [
+				"=ID" => $this->userId,
+			],
+		])->fetch();
 
 		if (!$userData["PERSONAL_PHOTO"])
 		{
 			return;
 		}
 
-		$fields = array(
-			"PERSONAL_PHOTO" => array(
+		$fields = [
+			"PERSONAL_PHOTO" => [
 				"old_file" => $userData["PERSONAL_PHOTO"],
-				"del" => $userData["PERSONAL_PHOTO"]
-			)
-		);
+				"del" => $userData["PERSONAL_PHOTO"],
+			],
+		];
 
-		$user = new CUser;
+		$user = new CUser();
 		$res = $user->Update($this->userId, $fields);
 
 		if (!$res)
 		{
 			$this->addError(new \Bitrix\Main\Error($user->LAST_ERROR));
+
 			return false;
 		}
 	}
 
 	protected function getGroupsId(&$employeesGroupId, &$portalAdminGroupId)
 	{
-		[ $employeesGroupId, $portalAdminGroupId ] = \Bitrix\Intranet\Util::getGroupsId();
+		[$employeesGroupId, $portalAdminGroupId] = \Bitrix\Intranet\Util::getGroupsId();
 	}
 
 	public function setAdminRightsAction()
@@ -351,7 +377,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return \Bitrix\Intranet\Util::setAdminRights([
 			'userId' => $this->userId,
 			'currentUserId' => $currentUser->getId(),
-			'isCurrentUserAdmin' => $currentUser->isAdmin()
+			'isCurrentUserAdmin' => $currentUser->isAdmin(),
 		]);
 	}
 
@@ -362,7 +388,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return \Bitrix\Intranet\Util::removeAdminRights([
 			'userId' => $this->userId,
 			'currentUserId' => $currentUser->getId(),
-			'isCurrentUserAdmin' => $currentUser->isAdmin()
+			'isCurrentUserAdmin' => $currentUser->isAdmin(),
 		]);
 	}
 
@@ -380,22 +406,24 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		$userData = \Bitrix\Main\UserTable::getList(array(
-			"select" => array('ID', 'EMAIL', 'UF_DEPARTMENT', 'ACTIVE'),
-			"filter" => array(
-				"=ID" => $this->userId
-			),
-		))->fetch();
+		$userData = \Bitrix\Main\UserTable::getList([
+			"select" => ['ID', 'EMAIL', 'UF_DEPARTMENT', 'ACTIVE'],
+			"filter" => [
+				"=ID" => $this->userId,
+			],
+		])->fetch();
 
 		if (!check_email($userData["EMAIL"]))
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("INTRANET_USER_PROFILE_EMAIL_ERROR")));
+
 			return false;
 		}
 
 		if (!Integrator::isMoreIntegratorsAvailable())
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_COUNT_ERROR")));
+
 			return false;
 		}
 
@@ -403,15 +431,17 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		if (!Integrator::checkPartnerEmail($userData["EMAIL"], $error))
 		{
 			$this->addError($error);
+
 			return false;
 		}
 
-		$fields = array("ACTIVE" => "Y");
+		$fields = ["ACTIVE" => "Y"];
 
 		if (empty($userData["UF_DEPARTMENT"]))
 		{
 			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
-				->departmentRepository();
+				->departmentRepository()
+			;
 			if ($department = $departmentRepository->getRootDepartment())
 			{
 				$fields["UF_DEPARTMENT"][] = $department->getId();
@@ -419,13 +449,13 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 
 		//prepare groups
-		$arGroups = array(1);
+		$arGroups = [1];
 		$rsGroups = CGroup::GetList(
 			'',
 			'',
-			array(
-				"STRING_ID" => "PORTAL_ADMINISTRATION_".SITE_ID
-			)
+			[
+				"STRING_ID" => "PORTAL_ADMINISTRATION_" . SITE_ID,
+			],
 		);
 		while($arGroup = $rsGroups->Fetch())
 		{
@@ -441,7 +471,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return true;
 	}
 
-	public function fieldsSettingsAction($fieldsView = array(), $fieldsEdit = array())
+	public function fieldsSettingsAction($fieldsView = [], $fieldsEdit = [])
 	{
 		if (
 			!(
@@ -454,7 +484,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		$newFieldsView = array();
+		$newFieldsView = [];
 
 		if (is_array($fieldsView))
 		{
@@ -465,7 +495,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 		Option::set("intranet", "user_profile_view_fields", implode(",", $newFieldsView), SITE_ID);
 
-		$newFieldsEdit = array();
+		$newFieldsEdit = [];
 
 		if (is_array($fieldsEdit))
 		{
@@ -522,7 +552,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 				'PATH_TO_USER_PROFILE' => $urls['PATH_TO_USER_PROFILE'] ?? '',
 				'PATH_TO_USER_STRESSLEVEL' => $urls['PATH_TO_USER_STRESSLEVEL'] ?? '',
 				'PATH_TO_USER_COMMON_SECURITY' => $urls['PATH_TO_USER_COMMON_SECURITY'] ?? '',
-			]
+			],
 		);
 	}
 }

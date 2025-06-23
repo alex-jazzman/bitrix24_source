@@ -18,6 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Grid\MenuActionsPreparer;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -28,10 +29,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -213,7 +211,8 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		);
 	}
 
-	if ($allowExclude && $arDeal['CAN_EXCLUDE'])
+	$excludeMenuItems = $arParams['EXCLUDE_MENU_ITEMS'] ?? [];
+	if ($allowExclude && $arDeal['CAN_EXCLUDE'] && !in_array('EXCLUDE', $excludeMenuItems))
 	{
 		$pathToExclude = CUtil::JSEscape($arDeal['PATH_TO_DEAL_EXCLUDE']);
 		$arActions[] = array(
@@ -227,7 +226,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		);
 	}
 
-	$arActions[] = array('SEPARATOR' => true);
+	$arActions[] = ['SEPARATOR' => true];
 
 	if (!$isInternal && $arParams['IS_RECURRING'] !== 'Y')
 	{
@@ -437,6 +436,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 
 	$dateCreate = $arDeal['DATE_CREATE'] ?? '';
 	$dateModify = $arDeal['DATE_MODIFY'] ?? '';
+	$movedTime = $arDeal['MOVED_TIME'] ?? '';
 	$webformId = null;
 	if (isset($arDeal['WEBFORM_ID']))
 	{
@@ -471,7 +471,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 
 	$resultItem = array(
 		'id' => $arDeal['ID'],
-		'actions' => $arActions,
+		'actions' => (new MenuActionsPreparer())->prepare($arActions),
 		'data' => $arDeal,
 		'editable' => !$arDeal['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
@@ -510,6 +510,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				'PROBABILITY' => $probability,
 				'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
 				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+				'MOVED_TIME' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($movedTime), $now),
 				'TYPE_ID' => $typeId,
 				'SOURCE_ID' => $sourceId,
 				'EVENT_ID' => $eventId,
@@ -535,7 +536,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				'IS_RETURN_CUSTOMER' => $arDeal['IS_RETURN_CUSTOMER'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'IS_REPEATED_APPROACH' => $arDeal['IS_REPEATED_APPROACH'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'ORIGINATOR_ID' => $arDeal['ORIGINATOR_NAME'] ?? '',
-				'CREATED_BY' => isset($arDeal['~CREATED_BY']) && $arDeal['~CREATED_BY'] > 0
+				'CREATED_BY' => isset($arDeal['~CREATED_BY']) && isset($arDeal['CREATED_BY_FORMATTED_NAME']) && $arDeal['~CREATED_BY'] > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml([
 						'PREFIX' => "DEAL_{$arDeal['~ID']}_CREATOR",
 						'USER_ID' => $arDeal['~CREATED_BY'],
@@ -543,7 +544,15 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_CREATOR']
 					])
 					: '',
-				'MODIFY_BY' => isset($arDeal['~MODIFY_BY']) && $arDeal['~MODIFY_BY'] > 0
+				'MOVED_BY' => isset($arDeal['~MOVED_BY']) && isset($arDeal['MOVED_BY_FORMATTED_NAME']) && $arDeal['~MOVED_BY'] > 0
+					? CCrmViewHelper::PrepareUserBaloonHtml([
+						'PREFIX' => "DEAL_{$arDeal['~ID']}_MOVED",
+						'USER_ID' => $arDeal['~MOVED_BY'],
+						'USER_NAME' => $arDeal['MOVED_BY_FORMATTED_NAME'],
+						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_MOVED'],
+					])
+					: '',
+				'MODIFY_BY' => isset($arDeal['~MODIFY_BY']) && isset($arDeal['MODIFY_BY_FORMATTED_NAME']) && $arDeal['~MODIFY_BY'] > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml(
 						array(
 							'PREFIX' => "DEAL_{$arDeal['~ID']}_MODIFIER",
@@ -655,6 +664,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
+
 $APPLICATION->IncludeComponent('bitrix:main.user.link',
 	'',
 	array(
@@ -863,13 +873,18 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
+		'COUNTER_PANEL' => $isRecurring ? null : [
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
+			'EXTRAS' => ['DEAL_CATEGORY_ID' => $arResult['CATEGORY_ID']],
+		],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
 			->setItems([
 				NavigationBarPanel::ID_KANBAN,
 				NavigationBarPanel::ID_LIST,
 				NavigationBarPanel::ID_ACTIVITY,
 				NavigationBarPanel::ID_CALENDAR,
-				NavigationBarPanel::ID_AUTOMATION
+				NavigationBarPanel::ID_REPEAT_SALE,
+				NavigationBarPanel::ID_AUTOMATION,
 			], NavigationBarPanel::ID_LIST)
 			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 			->get(),

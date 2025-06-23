@@ -275,14 +275,26 @@ else
 
 	if (in_array('lists', $arResult['tabs'], true))
 	{
+		if (CLists::isFeatureEnabled())
+		{
+			$showBizprocNotify = "BX.UI.InfoHelper.show('limit_automation_off');";
+			$showBizprocStarter = "BX.Socialnetwork.Livefeed.PostFormTabs.getInstance().clickStartWorkflowButton();";
+			$isBizprocAvailable =
+				Loader::includeModule('bizproc')
+				&& class_exists(\Bitrix\Bizproc\Integration\Intranet\ToolsManager::class)
+				&& \Bitrix\Bizproc\Integration\Intranet\ToolsManager::getInstance()->isBizprocAvailable()
+			;
+			$jsHandler = $isBizprocAvailable ? $showBizprocStarter : $showBizprocNotify;
+		}
+		else
+		{
+			$jsHandler = "BX.UI.InfoHelper.show('limit_office_bp_stream');";
+		}
+
 		$arTabs[] = [
 			"ID" => "lists",
 			"NAME" => Loc::getMessage("BLOG_TAB_LISTS"),
-			"ONCLICK" => (
-				!CLists::isFeatureEnabled()
-					? "BX.UI.InfoHelper.show('limit_office_bp_stream');"
-					: "BX.Socialnetwork.Livefeed.PostFormTabs.getInstance().getLists();"
-			)
+			"ONCLICK" => $jsHandler
 		];
 	}
 
@@ -964,19 +976,7 @@ HTML;
 				if (in_array('lists', $arResult['tabs'], true))
 				{
 					?>
-					<div id="feed-add-post-content-lists" style="display: none;">
-						<?php
-						$APPLICATION->IncludeComponent("bitrix:lists.live.feed", "",
-							[
-								"SOCNET_GROUP_ID" => $arParams["SOCNET_GROUP_ID"],
-								"DESTINATION" => $arResult["PostToShow"],
-								"IBLOCK_ID" => $_GET['bp_setting'] ?? 0
-							],
-							null,
-							[ "HIDE_ICONS" => "Y" ]
-						);
-						?>
-					</div>
+					<div id="feed-add-post-content-lists" style="display: none;"></div>
 					<?php
 				}
 

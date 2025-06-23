@@ -5,8 +5,8 @@
  */
 jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 	const { Type } = require('type');
-	const { clone, isEqual } = require('utils/object');
-
+	const { unique } = require('utils/array');
+	const { clone, isEqual, mergeImmutable } = require('utils/object');
 	const { validate, preparePermissions } = require('im/messenger/model/dialogues/validator');
 	const { dialogDefaultElement } = require('im/messenger/model/dialogues/default-element');
 	const { copilotModel } = require('im/messenger/model/dialogues/copilot/model');
@@ -139,12 +139,26 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					return item.parentChatId === parentChatId;
 				});
 			},
+
+			/**
+			 * @function dialoguesModel/getBackgroundId
+			 * @return {DialogBackgroundId|null}
+			 */
+			getBackgroundId: (state, getters) => (dialogId) => {
+				const dialogModel = getters.getById(dialogId);
+				if (!dialogModel)
+				{
+					return null;
+				}
+
+				return dialogModel.backgroundId ?? null;
+			},
 		},
 		actions: {
 			/** @function dialoguesModel/setState */
 			setState: (store, payload) => {
 				Object.entries(payload.collection).forEach(([key, value]) => {
-					payload.collection[key] = { ...dialogDefaultElement, ...payload.collection[key] };
+					payload.collection[key] = mergeImmutable(dialogDefaultElement, payload.collection[key]);
 				});
 
 				store.commit('setState', {
@@ -183,7 +197,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 							actionName: 'set',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogDefaultElement, ...element },
+								fields: mergeImmutable(dialogDefaultElement, element),
 							},
 						});
 					}
@@ -218,7 +232,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 							actionName: 'setFromLocalDatabase',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogDefaultElement, ...element },
+								fields: mergeImmutable(dialogDefaultElement, element),
 							},
 						});
 					}
@@ -250,7 +264,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					{
 						addItems.push({
 							dialogId: element.dialogId,
-							fields: { ...dialogDefaultElement, ...element },
+							fields: mergeImmutable(dialogDefaultElement, element),
 						});
 					}
 				});
@@ -306,7 +320,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 							actionName: 'add',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogDefaultElement, ...element },
+								fields: mergeImmutable(dialogDefaultElement, element),
 							},
 						});
 					}
@@ -342,11 +356,11 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 
 				const newPermissions = preparePermissions(payload.fields);
 
-				const permissions = {
-					...ChatPermission.getActionGroupsByChatType(existingItem.type),
-					...existingItem.permissions,
-					...newPermissions,
-				};
+				const permissions = mergeImmutable(
+					ChatPermission.getActionGroupsByChatType(existingItem.type),
+					existingItem.permissions,
+					newPermissions,
+				);
 
 				store.commit('update', {
 					actionName: 'updatePermissions',
@@ -457,7 +471,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					});
 				}
 
-				store.commit('update', {
+				return store.commit('update', {
 					actionName: 'updateInputAction',
 					data: {
 						dialogId,
@@ -496,7 +510,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					inputActions.splice(indexInputActionsByUser, 1, newInputActions);
 				}
 
-				store.commit('update', {
+				return store.commit('update', {
 					actionName: 'updateInputAction',
 					data: {
 						dialogId,
@@ -711,9 +725,15 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				}
 
 				const validData = validate(
-					{ participants: newParticipants, lastLoadParticipantId: payload.lastLoadParticipantId },
+					{
+						participants: newParticipants,
+						lastLoadParticipantId: payload.lastLoadParticipantId,
+						hasNextPage: payload.hasNextPage,
+					},
 				);
-				const uniqId = validData.participants.filter((userId) => !existingItem.participants.includes(userId));
+				const uniqId = unique(validData.participants
+					.filter((userId) => !existingItem.participants.includes(userId)));
+
 				if (uniqId.length === 0)
 				{
 					return false;
@@ -725,10 +745,11 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				const fields = {
 					participants: newState,
 					userCounter,
+					hasNextPage: validData.hasNextPage,
 					lastLoadParticipantId: validData.lastLoadParticipantId || existingItem.lastLoadParticipantId,
 				};
 
-				store.commit('update', {
+				return store.commit('update', {
 					actionName: 'addParticipants',
 					data: {
 						dialogId: payload.dialogId,
@@ -760,7 +781,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				);
 				const userCounter = payload.userCounter || existingItem.userCounter;
 
-				store.commit('update', {
+				return store.commit('update', {
 					actionName: 'removeParticipants',
 					data: {
 						removeData: validUsersId.participants,
@@ -781,6 +802,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				const {
 					lastMessageViews: defaultLastMessageViews,
 				} = dialogDefaultElement;
+
 				store.commit('update', {
 					actionName: 'clearLastMessageViews',
 					data: {
@@ -855,19 +877,19 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 
 			/** @function dialoguesModel/clearAllCounters */
 			clearAllCounters: (store, payload) => {
-				Object.values(store.state.collection).forEach((dialogItem) => {
-					if (dialogItem.counter > 0)
+				const affectedDialogs = [];
+				Object.keys(store.state.collection).forEach((dialogId) => {
+					if (store.state.collection[dialogId].counter !== 0)
 					{
-						store.commit('update', {
-							actionName: 'clearAllCounters',
-							data: {
-								dialogId: dialogItem.dialogId,
-								fields: {
-									counter: 0,
-								},
-							},
-						});
+						affectedDialogs.push(dialogId);
 					}
+				});
+
+				store.commit('clearAllCounters', {
+					actionName: 'clearAllCounters',
+					data: {
+						affectedDialogs,
+					},
 				});
 			},
 		},
@@ -897,11 +919,11 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 
 				for (const dialog of dialogList)
 				{
-					state.collection[dialog.dialogId] = {
-						...dialogDefaultElement,
-						...state.collection[dialog.dialogId],
-						...dialog,
-					};
+					state.collection[dialog.dialogId] = mergeImmutable(
+						dialogDefaultElement,
+						state.collection[dialog.dialogId],
+						dialog,
+					);
 				}
 			},
 
@@ -948,7 +970,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					fields,
 				} = payload.data;
 
-				state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
+				state.collection[dialogId] = mergeImmutable(state.collection[dialogId], fields);
 			},
 
 			/**
@@ -964,7 +986,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 						fields,
 					} = item;
 
-					state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
+					state.collection[dialogId] = mergeImmutable(state.collection[dialogId], fields);
 				});
 			},
 
@@ -980,6 +1002,21 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				} = payload.data;
 
 				delete state.collection[dialogId];
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<DialoguesClearAllCountersData, DialoguesClearAllCountersActions>} payload
+			 */
+			clearAllCounters: (state, payload) => {
+				logger.log('dialoguesModel: cleat all counters', payload);
+
+				Object.keys(state.collection).forEach((dialogId) => {
+					state.collection[dialogId] = {
+						...state.collection[dialogId],
+						counter: 0,
+					};
+				});
 			},
 		},
 	};

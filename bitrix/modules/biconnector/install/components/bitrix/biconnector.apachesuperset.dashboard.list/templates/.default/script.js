@@ -949,6 +949,10 @@
 	  var menu = BX.Main.interfaceButtonsManager.getById('biconnector_superset_menu');
 	  if (isInTopMenu && dashboardTitle) {
 	    menu.addMenuItem({
+	      ID: "biconnector_superset_menu_dashboard_".concat(dashboardId),
+	      TEXT: dashboardTitle,
+	      ON_CLICK: "window.open(`".concat(url, "`, '_blank');"),
+	      // TODO: Temporary workaround for compatibility with main 25.300.0, remove after that version is released
 	      id: "biconnector_superset_menu_dashboard_".concat(dashboardId),
 	      text: dashboardTitle,
 	      onClick: "window.open(`".concat(url, "`, '_blank');")

@@ -54,7 +54,7 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 					break;
 			}
 
-			this.id = `call${call.id}`;
+			this.id = `call${call.associatedEntity.id}`;
 			this.title = call.associatedEntity.name;
 			this.subtitle = itemConfig.text;
 			this.imageUrl = this.prepareAvatarUrl(call.associatedEntity.avatar);
@@ -78,6 +78,7 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 			this.params = {
 				call: {
 					id: call.id,
+					uuid: call.uuid,
 					provider: call.provider,
 					associatedEntity: call.associatedEntity,
 				},

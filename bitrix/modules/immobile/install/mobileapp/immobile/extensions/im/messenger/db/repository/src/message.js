@@ -12,6 +12,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		MessageTable,
 		MessagePushTable,
 		MessageTableGetLinkedListDirection,
+		VoteTable,
 	} = require('im/messenger/db/table');
 	const { merge } = require('utils/object');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -35,6 +36,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			this.reactionTable = new ReactionTable();
 			this.messageTable = new MessageTable();
 			this.messagePushTable = new MessagePushTable();
+			this.voteTable = new VoteTable();
 		}
 
 		/**
@@ -105,6 +107,29 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 
 		/**
 		 * @param {number} chatId
+		 * @param {string} searchText
+		 * @param {'asc'|'desc'} order='asc'
+		 * @param {number} limit=50
+		 *
+		 * @returns {{items: *[]}}
+		 */
+		async searchByText({
+			chatId,
+			searchText,
+			order = 'asc',
+			limit = 50,
+		})
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return this.#getDefaultPageResult();
+			}
+
+			return this.messageTable.searchByText(chatId, searchText, order, limit);
+		}
+
+		/**
+		 * @param {number} chatId
 		 * @param {number} messageId
 		 *
 		 * @return {Promise<MessageRepositoryPage>}
@@ -122,6 +147,23 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			logger.log('MessageRepository.get result: ', messageList);
 
 			return messageList;
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @return {Promise}
+		 */
+		async getMessageById(messageId)
+		{
+			logger.log('MessageRepository.getMessageById request: ', messageId);
+
+			const message = await this.messageTable.getById(messageId);
+			if (!message)
+			{
+				return null;
+			}
+
+			return message;
 		}
 
 		/**
@@ -268,6 +310,11 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 					...contextMessage.reactionList,
 					...bottomPage.reactionList,
 				],
+				voteList: [
+					...topPage.voteList,
+					...contextMessage.voteList,
+					...bottomPage.voteList,
+				],
 				hasContextMessage: Type.isArrayFilled(contextMessage.messageList),
 			};
 
@@ -341,12 +388,15 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			const userIdList = new Set([...authorIdList, ...reactionUserIdList]);
 			const userList = await this.userTable.getListByIds([...userIdList]);
 
+			const voteList = await this.voteTable.getListByIds([...messageIdList]);
+
 			return {
 				messageList: modelMessageList.reverse(),
 				additionalMessageList: additionalMessageList.items,
 				userList: userList.items,
 				fileList: fileList.items,
 				reactionList: reactionList.items,
+				voteList: voteList.items,
 			};
 		}
 
@@ -448,6 +498,15 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			catch (error)
 			{
 				logger.error('MessageRepository: fileTable.deleteByIdList error: ', error);
+			}
+
+			try
+			{
+				await this.voteTable.deleteByIdList(idList);
+			}
+			catch (error)
+			{
+				logger.error('MessageRepository: voteTable.deleteByIdList error: ', error);
 			}
 		}
 

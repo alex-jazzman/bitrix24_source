@@ -8,7 +8,7 @@ import { UserManager } from 'im.v2.lib.user';
 import { UuidManager } from 'im.v2.lib.uuid';
 import { InputActionListener } from 'im.v2.lib.input-action';
 import { EventType, DialogScrollThreshold, UserRole, ChatType } from 'im.v2.const';
-import { MessageService } from 'im.v2.provider.service';
+import { MessageService } from 'im.v2.provider.service.message';
 
 import { MessageDeleteManager } from './classes/message-delete-manager';
 
@@ -54,6 +54,7 @@ export class MessagePullHandler
 		this.#setAdditionalEntities(params);
 		this.#setCommentInfo(params);
 		this.#setCopilotRole(params);
+		this.#setMessagesAutoDeleteConfig(params);
 
 		const messageWithTemplateId = this.#store.getters['messages/isInChatCollection']({
 			messageId: params.message.templateId,
@@ -84,18 +85,18 @@ export class MessagePullHandler
 		// it's an opponent message or our own message from somewhere else
 		else if (!messageWithRealId && !messageWithTemplateId)
 		{
-			const hasLoadingMessage: boolean = this.#store.getters['messages/hasLoadingMessageByMessageId'](
-				params.message.templateId,
-			);
-			if (hasLoadingMessage)
-			{
-				void this.#store.dispatch('messages/deleteLoadingMessageByMessageId', {
-					messageId: params.message.templateId,
-				});
-			}
-
 			Logger.warn('New message pull handler: we dont have this message', params.message);
 			this.#handleAddingMessageToModel(params);
+		}
+
+		const hasLoadingMessage: boolean = this.#store.getters['messages/hasLoadingMessageByMessageId'](
+			params.message.templateId,
+		);
+		if (hasLoadingMessage)
+		{
+			void this.#store.dispatch('messages/delete', {
+				id: params.message.templateId,
+			});
 		}
 
 		InputActionListener.getInstance().stopUserActionsInChat({
@@ -356,7 +357,7 @@ export class MessagePullHandler
 		const RELOAD_LIMIT = MessageService.getMessageRequestLimit() * 5;
 		if (dialog.inited && !chatIsOpened && unreadMessages.length > RELOAD_LIMIT)
 		{
-			this.#store.dispatch('messages/store', params.message);
+			void this.#store.dispatch('messages/store', params.message);
 			const messageService = new MessageService({ chatId: params.chatId });
 			messageService.reloadMessageList();
 
@@ -490,6 +491,12 @@ export class MessagePullHandler
 
 		const copilotManager = new CopilotManager();
 		void copilotManager.handleMessageAdd(params.copilot);
+	}
+
+	#setMessagesAutoDeleteConfig(params: MessageAddParams)
+	{
+		const { messagesAutoDeleteConfigs } = params;
+		void this.#store.dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 	}
 
 	#prepareDeleteMessageParams(

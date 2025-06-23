@@ -12,6 +12,7 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 		FieldType,
 		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
+	const { getFullTextSearchVariants } = require('im/messenger/db/helper/fulltext');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('database-table--message');
 
@@ -137,6 +138,50 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 			}
 
 			return linkedList;
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @param {string} searchText
+		 * @param {'asc'|'desc'} order='asc'
+		 * @param {number} limit=50
+		 * @param {boolean} shouldRestoreRows=true
+		 *
+		 * @returns {{items: *[]}}
+		 */
+		async searchByText(
+			chatId,
+			searchText,
+			order = 'asc',
+			limit = 50,
+			shouldRestoreRows = true,
+		)
+		{
+			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isStringFilled(searchText))
+			{
+				return {
+					items: [],
+				};
+			}
+
+			const { sqlCondition, values } = getFullTextSearchVariants('text', searchText);
+
+			const result = await this.executeSql({
+				query: `
+					SELECT * 
+					FROM ${this.getName()} 
+					WHERE 
+						(chatId = ?) AND ${sqlCondition}
+					ORDER BY id ${order}
+					LIMIT ${limit}
+				`,
+				values: [
+					chatId,
+					...values,
+				],
+			});
+
+			return this.prepareListResult(result, shouldRestoreRows);
 		}
 
 		async add(messageList, replace = true)

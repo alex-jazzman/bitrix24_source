@@ -16,9 +16,11 @@ export type ResourceCreationWizardState = {
 	slotLengthId: SlotLengthId;
 	isSaving: boolean;
 	isCompanyScheduleAccess: boolean;
+	companyScheduleUrl: string;
 	invalidResourceName: boolean;
 	invalidResourceType: boolean;
 	weekStart: string;
+	isChannelChoiceAvailable: boolean;
 	checkedForAll: { [type: string]: boolean };
 }
 

@@ -231,9 +231,14 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 			'items' => $menuItems,
 			'closeByEsc' => true,
 			'angle' => true,
-			'offsetLeft' => 115,
+			'offsetLeft' => 20,
 			'autoHide' => true,
 		]);
+
+		$splitButton->getAttributeCollection()->addJsonOption(
+			'menuTarget',
+			\Bitrix\UI\Buttons\Split\Type::MENU
+		);
 
 		Toolbar::addButton($splitButton, ButtonLocation::AFTER_TITLE);
 	}

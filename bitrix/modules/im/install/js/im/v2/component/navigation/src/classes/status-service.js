@@ -13,22 +13,21 @@ export class StatusService
 		this.restClient = Core.getRestClient();
 	}
 
-	changeStatus(status: string): Promise
+	changeStatus(status: string): void
 	{
 		if (!UserStatus[status])
 		{
-			return false;
+			return;
 		}
 
 		Logger.warn(`StatusService: change current user status to ${status}`);
 		this.store.dispatch('users/setStatus', { status });
 		this.store.dispatch('application/settings/set', { status });
 
-		return this.restClient.callMethod(RestMethod.imUserStatusSet, {
-			STATUS: status
-		}).catch((error) => {
-			// eslint-disable-next-line no-console
-			console.error('StatusService: changeStatus error', error);
-		});
+		const payload = { STATUS: status };
+		this.restClient.callMethod(RestMethod.imUserStatusSet, payload)
+			.catch((result: RestResult) => {
+				console.error('StatusService: changeStatus error', result.error());
+			});
 	}
 }

@@ -2772,6 +2772,7 @@ select.calendar-field-select::-ms-expand {
 }
 
 @media (-webkit-min-device-pixel-ratio: 0) {
+	input.calendar-field-select,
 	select.calendar-field-select {
 		padding-right: 24px !important;
 	}
@@ -3854,7 +3855,7 @@ select:not(:-internal-list-box) {
 	width: max-content;
 	height: max-content;
 	color: #bdc1c6;
-	font: var(--ui-font-size-xs, 12px)/var(--ui-font-size-xs, 12px) var(--ui-font-family-system);
+	font: var(--ui-font-size-xs, 12px)/var(--ui-font-size-xs, 12px) var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .calendar-slider-sidebar-user-more-container:hover {
@@ -9225,7 +9226,6 @@ input.calendar-field.calendar-field-select.calendar-field-location-select-border
 .calendar-collab-icon__wrapper {
 	grid-area: icon;
 	position: relative;
-	top: -1px;
 	width: var(--hexagon-width);
 	height: var(--hexagon-height);
 	display: flex;
@@ -9246,4 +9246,11 @@ input.calendar-field.calendar-field-select.calendar-field-location-select-border
 	text-overflow: ellipsis;
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-normal);
+	color: rgba( var(--ui-color-on-primary-alt-rgb), var(--ui-opacity-70));
+	white-space: nowrap;
+}
+
+.bitrix24-default-theme .calendar-collab__subtitle,
+.bitrix24-dark-theme .calendar-collab__subtitle {
+	color: var(--ui-color-base-default);
 }

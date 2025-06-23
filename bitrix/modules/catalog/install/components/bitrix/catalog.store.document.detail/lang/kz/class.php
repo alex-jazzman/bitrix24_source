@@ -5,7 +5,6 @@ $MESS["CATALOG_STORE_DOCUMENT_CONDUCT_BUTTON"] = "Құжатты өткізу";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_CANCEL_ERROR"] = "Құжатты өткізуді болдырмау кезінде қате пайда болды";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_CARD_NO_WRITE_RIGHTS_ERROR"] = "Құжат карточкасын сақтау үшін жеткілікті құқықтар жоқ.";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_CONDUCT_ERROR"] = "Құжатты өткізу кезінде қате пайда болды";
-$MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOCUMENT_BUTTON"] = "Құжат";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOCUMENT_NOT_FOUND_ERROR"] = "Құжат табылмады";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOCUMENT_TYPE_NOT_SPECIFIED_ERROR"] = "Құжаттың түрі көрсетілмеген";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOC_TYPE_A"] = "Тауардың қоймаға кірісі";

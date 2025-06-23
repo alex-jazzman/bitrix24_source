@@ -31,6 +31,21 @@ class Settings
 		return false;
 	}
 
+	public static function getSidebarV2Features(): array
+	{
+		$option = fn(string $name): bool => \Bitrix\Main\Config\Option::get('immobile', $name, 'N') === 'Y';
+
+		return [
+			'directChatSidebar' => $option('sidebar_v2_direct_chat_enabled'),
+			'groupChatSidebar' => $option('sidebar_v2_group_chat_enabled'),
+			'collabSidebar' => $option('sidebar_v2_collab_enabled'),
+			'channelSidebar' => $option('sidebar_v2_channel_enabled'),
+			'copilotSidebar' => $option('sidebar_v2_copilot_enabled'),
+			'commentsSidebar' => $option('sidebar_v2_comments_enabled'),
+			'notesSidebar' => $option('sidebar_v2_notes_enabled'),
+		];
+	}
+
 	public static function isChatLocalStorageAvailable(): bool
 	{
 		if (!self::isChatM1Enabled())

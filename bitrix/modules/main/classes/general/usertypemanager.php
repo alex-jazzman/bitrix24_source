@@ -2148,7 +2148,7 @@ class CUserTypeManager
 						$arFields[$FIELD_NAME] = call_user_func_array([$arUserField["USER_TYPE"]["CLASS_NAME"], "onbeforesave"], [$arUserField, $arFields[$FIELD_NAME], $user_id]);
 					}
 
-					$modified = (!array_key_exists('VALUE_RAW', $arUserField) || $arFields[$FIELD_NAME] != $arUserField['VALUE_RAW']);
+					$modified = (!array_key_exists('VALUE_RAW', $arUserField) || $arFields[$FIELD_NAME] !== $arUserField['VALUE_RAW']);
 					if ($modified)
 					{
 						if ((string)$arFields[$FIELD_NAME] !== '')
@@ -2218,7 +2218,7 @@ class CUserTypeManager
 						$serialized = serialize($arInsert[$arUserField["ID"]]);
 					}
 
-					$modified = (!array_key_exists('VALUE_RAW', $arUserField) || $serialized != $arUserField['VALUE_RAW']);
+					$modified = (!array_key_exists('VALUE_RAW', $arUserField) || $serialized !== $arUserField['VALUE_RAW']);
 					if ($modified)
 					{
 						$arUpdate[$FIELD_NAME] = $serialized;

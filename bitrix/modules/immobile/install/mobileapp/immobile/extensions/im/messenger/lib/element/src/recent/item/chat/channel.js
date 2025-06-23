@@ -3,11 +3,16 @@
  */
 jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
-	const { ComponentCode } = require('im/messenger/const');
+	const {
+		ComponentCode,
+		AnchorType,
+	} = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 
 	const { CounterPrefix, CounterValue, CounterPostfix } = require('im/messenger/lib/element/recent/item/chat/const/test-id');
 
@@ -32,12 +37,12 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 		{
 			super.initParams(modelItem, options);
 
-			const dialog = this.params.model.dialog;
+			this.dialog = this.params.model.dialog;
 
 			this.params.model = {
 				...this.params.model,
 				commentsCounter: serviceLocator.get('core').getStore()
-					.getters['commentModel/getChannelCounters'](dialog?.chatId),
+					.getters['commentModel/getChannelCounters'](this.dialog?.chatId),
 			};
 
 			return this;
@@ -76,8 +81,10 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			{
 				this.messageCount = dialog.counter;
 			}
-
-			this.messageCount += this.getCommentsCounterItem();
+			else if (this.getCommentsCounterItem())
+			{
+				this.messageCount = this.getCommentsCounterItem();
+			}
 
 			return this;
 		}
@@ -109,7 +116,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				return this;
 			}
 
-			if (this.getCommentsCounterItem() > 0)
+			if (this.getCommentsCounterItem() > 0 && !dialog.counter)
 			{
 				this.styles.counter.backgroundColor = Theme.colors.accentMainSuccess;
 
@@ -180,6 +187,29 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 		getCommentsCounterItem()
 		{
 			return this.params.model.commentsCounter;
+		}
+
+		createCommentsStyle()
+		{
+			const hasMention = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](this.dialog?.chatId, AnchorType.mention);
+
+			if (
+				this.getCommentsCounterItem()
+				&& this.getDialogItem().counter
+				&& !hasMention
+			)
+			{
+				this.styles.comments = {
+					backgroundColor: Color.accentMainSuccess.toHex(),
+					image: {
+						name: Icon.SMALL_MESSAGE_2.getIconName(),
+						tintColor: Color.baseWhiteFixed.toHex(),
+						contentHeight: 16,
+					},
+				};
+			}
+
+			return this;
 		}
 	}
 

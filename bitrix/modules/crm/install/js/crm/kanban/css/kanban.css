@@ -706,6 +706,10 @@
 	box-sizing: border-box;
 }
 
+.bitrix24-light-theme .crm-kanban-total-price-total {
+	color: #fff;
+}
+
 .crm-kanban-ear-animate {
 	-webkit-animation: crm-kanban-ear-animate .4s linear forwards;
 	animation: crm-kanban-ear-animate .4s linear forwards;

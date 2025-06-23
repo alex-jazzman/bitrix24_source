@@ -39,7 +39,7 @@
 	pointer-events: none;
 }
 
-.app-body .ui-side-panel-toolbar {
+.app-body .ui-side-panel-header {
 	position: sticky;
 	top: 0;
 	background-color: var(--ui-color-palette-gray-05);

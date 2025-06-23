@@ -10,6 +10,7 @@ import { BitrixVue } from 'ui.vue3';
 import { ViewEventSlider } from './view-event-slider';
 import { CalendarSection } from 'calendar.sectionmanager';
 import 'viewer';
+import { DateTimeFormat } from 'main.date'; // need for planner.js
 import { RelationInterface } from 'calendar.entityrelation';
 import { AvatarRoundGuest } from 'ui.avatar';
 

@@ -872,6 +872,8 @@ export class PlainCall extends AbstractCall
 			return;
 		}
 
+		this.waitingLocalScreenShare = true;
+
 		this.getDisplayMedia().then((stream) =>
 		{
 			this.localStreams["screen"] = stream;
@@ -884,6 +886,10 @@ export class PlainCall extends AbstractCall
 			this.runCallback(CallEvent.onUserScreenState, {
 				userId: this.userId,
 				screenState: true,
+			});
+
+			this.runCallback(CallEvent.onLocalScreenUpdated, {
+				track: stream.getVideoTracks()?.[0] || null,
 			});
 
 			if (this.ready)
@@ -900,7 +906,10 @@ export class PlainCall extends AbstractCall
 		}).catch((e) =>
 		{
 			this.log(e);
-		});
+		}).finally(() =>
+		{
+			this.waitingLocalScreenShare = false;
+		})
 	};
 
     onLocalVideoTrackEnded()
@@ -1019,6 +1028,10 @@ export class PlainCall extends AbstractCall
 			screenState: false,
 		});
 
+		this.runCallback(CallEvent.onLocalScreenUpdated, {
+			track: null,
+		});
+
 		for (let userId in this.peers)
 		{
 			if (this.peers[userId].calculatedState === UserState.Connected)
@@ -1030,7 +1043,7 @@ export class PlainCall extends AbstractCall
 
 	isScreenSharingStarted()
 	{
-		return this.localStreams["screen"] instanceof MediaStream;
+		return this.localStreams["screen"] instanceof MediaStream || this.waitingLocalScreenShare;
 	};
 
 	onLocalVoiceStarted()

@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 /** @var array $arResult */
 /** @var \CMain $APPLICATION */
 
+use Bitrix\Landing\Metrika;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 
@@ -18,7 +19,7 @@ $request = $context->getRequest();
 // some pages we should open only in slider
 if ($request->get('IFRAME') !== 'Y' && $context->getServer()->getRequestMethod() === 'GET')
 {
-	if (!in_array($this->getPageName(), ['template', 'sites', 'site_show', 'landing_view', 'roles', 'role_edit', 'notes']))
+	if (!in_array($this->getPageName(), ['template', 'sites', 'site_show', 'landing_view', 'roles', 'role_edit', 'notes', 'ai']))
 	{
 		$session->set('LANDING_OPEN_SIDE_PANEL', Application::getInstance()->getContext()->getRequest()->getRequestUri());
 		//when opening link to create page in existing site
@@ -138,23 +139,34 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 		return $component;
 	};
 
+	$metrika = new Metrika\Metrika(
+		Metrika\Categories::getBySiteType($arParams['TYPE']),
+		Metrika\Events::openMarket,
+	);
 	if (
-		$this->getPageName() == 'site_show'
-		&& $arResult['ACCESS_PAGE_NEW'] == 'Y'
+		$this->getPageName() === 'site_show'
+		&& $arResult['ACCESS_PAGE_NEW'] === 'Y'
 	)
 	{
 		$link = $getComponent()->getUrlAdd(false, [
 			'context_section' => 'pages_list',
 			'context_element' => 'top_button',
 		]);
+		$metrika
+			->setSection(Metrika\Sections::page)
+			->setSubSection('from_page_list')
+		;
+		$link = $metrika->parametrizeUri($link);
 		$title = Loc::getMessage('LANDING_TPL_ADD_PAGE');
 	}
-	else if ($arResult['ACCESS_SITE_NEW'] == 'Y')
+	else if ($arResult['ACCESS_SITE_NEW'] === 'Y')
 	{
 		$link = $getComponent()->getUrlAdd(true, [
 			'context_section' => 'site_list',
 			'context_element' => 'top_button',
 		]);
+		$metrika->setSection(Metrika\Sections::site);
+		$link = $metrika->parametrizeUri($link);
 		$title = Loc::getMessage('LANDING_TPL_ADD_SITE_2');
 	}
 
@@ -204,11 +216,11 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 	}
 
 	if (
-		($arResult['VARS']['site_show'] ?? 0) <= 0 &&
-		(LANGUAGE_ID === 'ru' || LANGUAGE_ID === 'ua') &&
-		($arParams['TYPE'] == 'PAGE' || $arParams['TYPE'] == 'STORE') &&
-		!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') &&
-		\Bitrix\Main\ModuleManager::isModuleInstalled('sale')
+		($arResult['VARS']['site_show'] ?? 0) <= 0
+		&& (LANGUAGE_ID === 'ru' || LANGUAGE_ID === 'ua')
+		&& ($arParams['TYPE'] === 'PAGE' || $arParams['TYPE'] === 'STORE')
+		&& !\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+		&& \Bitrix\Main\ModuleManager::isModuleInstalled('sale')
 	)
 	{
 		$settingsLink[] = [

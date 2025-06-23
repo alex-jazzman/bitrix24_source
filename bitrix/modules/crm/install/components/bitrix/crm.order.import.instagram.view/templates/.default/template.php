@@ -1,10 +1,12 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
-	die();
+<?php
 
-use \Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
+ * @global \CMain $APPLICATION
  *  @var array $arParams
  *  @var array $arResult
  *  @var CrmOrderConnectorInstagramView $component
@@ -14,10 +16,20 @@ use \Bitrix\Main\Localization\Loc;
  *  @var string $componentPath
  */
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
+Loader::includeModule('ui');
+
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-all-paddings no-background');
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'currency',
@@ -32,25 +44,34 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 	'ui.progressbar',
 ]);
 
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.order.import.instagram.edit/templates/.default/style.css');
+Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.order.import.instagram.edit/templates/.default/style.css');
 
-$this->setViewTarget('pagetitle', 10);
-?>
-<div class="pagetitle-container pagetitle-align-right-container" data-tile-grid="tile-grid-stop-close">
-	<button class="ui-btn ui-btn-primary"
-			data-entity="tile-grid-import-more"
-			style="display: none;">
-		<?=Loc::getMessage('CRM_OIIV_IMPORT_MORE')?>
-	</button>
-	<a class="ui-btn ui-btn-md ui-btn-light-border"
-			href="<?=htmlspecialcharsbx($arParams['PATH_TO_CONNECTOR_INSTAGRAM_FEEDBACK'])?>">
-		<?=Loc::getMessage('CRM_OIIV_IMPORT_FEEDBACK');?>
-	</a>
-	<a class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"
-			href="<?=htmlspecialcharsbx($arParams['PATH_TO_CONNECTOR_INSTAGRAM_EDIT_FULL'])?>"></a>
-</div>
-<?
-$this->endViewTarget();
+Toolbar::addButton(new Buttons\Button([
+	'color' => Buttons\Color::PRIMARY,
+	'text' => Loc::getMessage('CRM_OIIV_IMPORT_MORE'),
+	'styles' => [
+		'display' => 'none',
+	],
+	'dataset' => [
+		'entity' => 'tile-grid-import-more',
+		'toolbar-collapsed-icon' => Buttons\Icon::ADD,
+	],
+]));
+
+Toolbar::addButton(new Buttons\Button([
+	'text' => Loc::getMessage('CRM_OIIV_IMPORT_FEEDBACK'),
+	'link' => $arParams['PATH_TO_CONNECTOR_INSTAGRAM_FEEDBACK'],
+	'classList' => [
+		Buttons\Color::LIGHT_BORDER,
+	],
+	'dataset' => [
+		'toolbar-collapsed-icon' => Buttons\Icon::INFO,
+	],
+]));
+
+ToolBar::addButton(new Buttons\SettingsButton([
+	'link' => $arParams['PATH_TO_CONNECTOR_INSTAGRAM_EDIT_FULL'],
+]));
 
 include 'messages.php';
 
@@ -78,7 +99,7 @@ if ($arResult['FORM']['STEP'] == '3')
 			</div>
 			<div class="crm-order-instagram-edit-block crm-order-instagram-edit-block-view">
 				<div data-tile-grid="tile-grid-stop-close" data-entity="filter">
-					<?
+					<?php
 					$APPLICATION->IncludeComponent(
 						'bitrix:main.ui.filter',
 						'',
@@ -103,7 +124,7 @@ if ($arResult['FORM']['STEP'] == '3')
 						<?=Loc::getMessage('CRM_OIIV_UNSELECT_ALL')?>
 					</button>
 				</div>
-				<?
+				<?php
 				if (!empty($arResult['GRID']))
 				{
 					$generateEmptyBlock = 'function()
@@ -195,14 +216,12 @@ if ($arResult['FORM']['STEP'] == '3')
 	<div data-entity="store-footer" data-tile-grid="tile-grid-stop-close"></div>
 	<div data-entity="step-import-footer" data-tile-grid="tile-grid-stop-close"></div>
 
-	<?
-	switch (LANGUAGE_ID)
+	<?php
+	$iconClass = match (LANGUAGE_ID)
 	{
-		case 'ru':
-			$iconClass = 'crm-order-instagram-view-block-b24-icon'; break;
-		default:
-			$iconClass = 'crm-order-instagram-view-block-b24-icon crm-order-instagram-view-block-b24-icon-en'; break;
-	}
+		'ru' => 'crm-order-instagram-view-block-b24-icon',
+		default => 'crm-order-instagram-view-block-b24-icon crm-order-instagram-view-block-b24-icon-en',
+	};
 	?>
 	<div data-entity="import-step-process" style="display: none;">
 		<div class="crm-order-instagram-edit-block">
@@ -219,7 +238,7 @@ if ($arResult['FORM']['STEP'] == '3')
 			</div>
 		</div>
 	</div>
-	<?
+	<?php
 }
 ?>
 <script>
@@ -230,7 +249,7 @@ if ($arResult['FORM']['STEP'] == '3')
 			BX.Currency.setCurrencies(<?=CUtil::PhpToJSObject($arResult['CURRENCIES'], false, true, true)?>);
 		}
 
-		BX.message(<?=CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__))?>);
+		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 
 		window.top.BX.UI.Notification.Center.setStackDefaults(
 			window.top.BX.UI.Notification.Position.TOP_RIGHT,
@@ -245,7 +264,7 @@ if ($arResult['FORM']['STEP'] == '3')
 			window.top.BX.UI.Notification.Center.getBalloonById('new-media-notification').close();
 		}
 
-		<?
+		<?php
 		if (!empty($arResult['NOTIFICATIONS']))
 		{
 			foreach ($arResult['NOTIFICATIONS'] as $notification)
@@ -256,7 +275,7 @@ if ($arResult['FORM']['STEP'] == '3')
 					category: 'InstagramStore::general',
 					width: 'auto'
 				});
-				<?
+				<?php
 			}
 
 			$component::markSessionNotificationsRead();

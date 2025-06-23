@@ -110,6 +110,7 @@ if(typeof BX.UI.EntitySchemeElement === "undefined")
 		this._originalTitle = "";
 		this._optionFlags = 0;
 		this._options = {};
+		this._immutableOptions = {};
 
 		this._isEditable = true;
 		this._isShownAlways = false;
@@ -185,6 +186,7 @@ if(typeof BX.UI.EntitySchemeElement === "undefined")
 
 			this._optionFlags = BX.prop.getInteger(this._settings, "optionFlags", 0);
 			this._options = BX.prop.getObject(this._settings, "options", {});
+			this._immutableOptions = BX.prop.getObject(this._settings, 'immutableOptions', {});
 
 			this._elements = [];
 			var elementData = BX.prop.getArray(this._settings, "elements", []);
@@ -253,6 +255,10 @@ if(typeof BX.UI.EntitySchemeElement === "undefined")
 		getOptions: function()
 		{
 			return this._options;
+		},
+		getImmutableOptions()
+		{
+			return this._immutableOptions;
 		},
 		getOptionFlags: function()
 		{

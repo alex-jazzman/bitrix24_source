@@ -7,7 +7,7 @@ import type { BookingModel } from 'booking.model.bookings';
 import type { BookingUIFilter, BookingListFilter } from 'booking.lib.booking-filter';
 
 import { BookingDataExtractor } from './booking-data-extractor';
-import { mapModelToDto, mapDtoToModel } from './mappers';
+import { mapModelToDto, mapDtoToModel, mapModelToCreateFromWaitListItemDto } from './mappers';
 import type { BookingDto } from './types';
 
 class BookingService
@@ -18,21 +18,25 @@ class BookingService
 	async add(booking: BookingModel): Promise<{ success: boolean, booking: ?BookingModel }>
 	{
 		const id = booking.id;
+		const $store = Core.getStore();
 
 		try
 		{
-			await Core.getStore().dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, id);
-			await Core.getStore().dispatch(`${Model.Bookings}/add`, booking);
+			await $store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, id);
+			await $store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, id);
+			await $store.dispatch(`${Model.Bookings}/add`, booking);
 
 			const bookingDto = mapModelToDto(booking);
 			const data = await (new ApiClient()).post('Booking.add', { booking: bookingDto });
 			const createdBooking = mapDtoToModel(data);
 
 			const clients = new BookingDataExtractor([data]).getClients();
-			void Core.getStore().dispatch(`${Model.Clients}/upsertMany`, clients);
+			void $store.dispatch(`${Model.Clients}/upsertMany`, clients);
 
-			await Core.getStore().dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
-			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
+			await $store.dispatch(`${Model.Interface}/setAnimationPause`, true);
+			await $store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, createdBooking.id);
+			await $store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
+			await $store.dispatch(`${Model.Bookings}/update`, {
 				id,
 				booking: createdBooking,
 			});
@@ -46,25 +50,35 @@ class BookingService
 		}
 		catch (error)
 		{
-			void Core.getStore().dispatch(`${Model.Bookings}/delete`, id);
+			void $store.dispatch(`${Model.Bookings}/delete`, id);
 
 			console.error('BookingService: add error', error);
 
 			return { success: false };
 		}
+		finally
+		{
+			await $store.dispatch(`${Model.Interface}/setAnimationPause`, false);
+		}
 	}
 
 	async addList(bookings: BookingModel[]): Promise<void>
 	{
+		const $store = Core.getStore();
+
 		try
 		{
+			await $store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, bookings.map(({ id }) => id));
 			const bookingList = bookings.map((booking) => mapModelToDto(booking));
 
 			const api = new ApiClient();
 			const data = await api.post('Booking.addList', { bookingList });
 			const createdBookings = data.map((d) => mapDtoToModel(d));
 
-			await Core.getStore().dispatch(`${Model.Bookings}/upsertMany`, createdBookings);
+			await Promise.all([
+				$store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, createdBookings.map(({ id }) => id)),
+				$store.dispatch(`${Model.Bookings}/upsertMany`, createdBookings),
+			]);
 
 			void mainPageService.fetchCounters();
 
@@ -87,6 +101,7 @@ class BookingService
 		{
 			if (booking.clients)
 			{
+				// eslint-disable-next-line no-param-reassign
 				booking.primaryClient ??= booking.clients[0];
 			}
 
@@ -151,6 +166,65 @@ class BookingService
 		catch (error)
 		{
 			console.error('BookingService: delete list error', error);
+		}
+	}
+
+	async createFromWaitListItem(waitListItemId: number, booking: BookingModel): Promise<{ success: boolean, booking?: BookingModel }>
+	{
+		const $store = Core.getStore();
+		const id = booking.id;
+		const waitListItem = { ...$store.getters[`${Model.WaitList}/getById`](waitListItemId) };
+
+		try
+		{
+			if ($store.getters[`${Model.Interface}/isWaitListItemCreatedFromEmbed`](waitListItemId))
+			{
+				await $store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, id);
+			}
+
+			await $store.dispatch(`${Model.WaitList}/delete`, waitListItemId);
+			await $store.dispatch(`${Model.Bookings}/add`, booking);
+
+			const createFromWaitListItemDto = mapModelToCreateFromWaitListItemDto(
+				waitListItemId,
+				booking,
+			);
+			const data = await (new ApiClient()).post('Booking.createFromWaitListItem', createFromWaitListItemDto);
+			const createdBooking = mapDtoToModel(data);
+
+			await $store.dispatch(`${Model.Interface}/setAnimationPause`, true);
+			const clients = new BookingDataExtractor([data]).getClients();
+			await Promise.all([
+				$store.dispatch(`${Model.Clients}/upsertMany`, clients),
+				$store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id),
+				$store.dispatch(`${Model.Bookings}/update`, {
+					id,
+					booking: createdBooking,
+				}),
+				$store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, createdBooking.id),
+			]);
+
+			void mainPageService.fetchCounters();
+
+			return {
+				success: true,
+				booking: createdBooking,
+			};
+		}
+		catch (error)
+		{
+			await $store.dispatch(`${Model.Bookings}/delete`, id);
+			await $store.dispatch(`${Model.WaitList}/upsert`, waitListItem);
+
+			console.error('BookingService: add from wait list item error', error);
+
+			return {
+				success: false,
+			};
+		}
+		finally
+		{
+			await $store.dispatch(`${Model.Interface}/setAnimationPause`, false);
 		}
 	}
 

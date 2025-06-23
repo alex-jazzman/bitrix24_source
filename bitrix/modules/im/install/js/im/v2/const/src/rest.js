@@ -31,6 +31,7 @@ export const RestMethod = Object.freeze({
 	imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
 	imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
 	imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
+	imV2ChatAnchorRead: 'im.v2.Chat.Anchor.read',
 	imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 	imV2ChatUserList: 'im.v2.Chat.User.list',
 	imV2ChatListShared: 'im.v2.Chat.listShared',
@@ -39,6 +40,8 @@ export const RestMethod = Object.freeze({
 	imV2ChatCommentReadAll: 'im.v2.Chat.Comment.readAll',
 	imV2ChatAddManagers: 'im.v2.Chat.addManagers',
 	imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
+	imV2ChatMessageDisappear: 'im.v2.Chat.Message.disappear',
+	imV2ChatSetMessagesAutoDeleteDelay: 'im.v2.Chat.setMessagesAutoDeleteDelay',
 	imV2SettingsGeneralUpdate: 'im.v2.Settings.General.update',
 	imV2SettingsNotifyUpdate: 'im.v2.Settings.Notify.update',
 	imV2SettingsNotifySwitchScheme: 'im.v2.Settings.Notify.switchScheme',
@@ -54,6 +57,15 @@ export const RestMethod = Object.freeze({
 	imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 	imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
 	imV2DiskFileSave: 'im.v2.Disk.File.save',
+	imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
+	imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
+
+	imV2RecentPin: 'im.v2.Chat.pin',
+	imV2RecentUnpin: 'im.v2.Chat.unpin',
+
+	imV2AnchorRead: 'im.v2.Anchor.read',
+
+	imV2PromotionRead: 'im.v2.Promotion.read',
 
 	imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
 	imCallBetaCreateRoom: 'im.call.beta.createRoom',

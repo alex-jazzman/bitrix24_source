@@ -1,10 +1,9 @@
-import 'ui.notification';
 import { EventEmitter } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
 import { Analytics } from 'im.v2.lib.analytics';
-import { ChatService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { ChatType, EventType, PopupType, SidebarDetailBlock, UserRole } from 'im.v2.const';
 import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
 import {
@@ -79,6 +78,7 @@ export const GroupChatUpdating = {
 		{
 			return this.dialog.chatId;
 		},
+		ChatType: () => ChatType,
 		collapsedUsers(): TagSelectorElement[]
 		{
 			if (!this.areUsersCollapsed)
@@ -214,9 +214,6 @@ export const GroupChatUpdating = {
 				manageMessages: this.rights.manageMessages,
 			}).catch(() => {
 				this.isUpdating = false;
-				BX.UI.Notification.Center.notify({
-					content: this.loc('IM_UPDATE_CHAT_ERROR'),
-				});
 			});
 
 			this.isUpdating = false;
@@ -285,7 +282,8 @@ export const GroupChatUpdating = {
 			<div class="bx-im-content-chat-forms__members_container">
 				<ChatMembersSelector 
 					:customElements="collapsedUsers"
-					:chatMembers="chatMembers" 
+					:chatMembers="chatMembers"
+					:allowTeamsSelect="dialog.type !== ChatType.videoconf"
 					@membersChange="onMembersChange" 
 				/>
 			</div>
@@ -293,6 +291,7 @@ export const GroupChatUpdating = {
 				:isAvailableInSearch="settings.isAvailableInSearch"
 				:description="settings.description"
 				:withSearchOption="canChangeSearchAvailability"
+				:withAutoDeleteOption="false"
 				@chatTypeChange="onChatTypeChange"
 				@descriptionChange="onDescriptionChange"
 			/>

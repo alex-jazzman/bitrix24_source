@@ -4145,6 +4145,123 @@ this.BX.UI = this.BX.UI || {};
 	  return Tab;
 	}();
 
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	/**
+	 * @namespace BX.UI.Uploader
+	 */
+	var _entityId = /*#__PURE__*/new WeakMap();
+	let EntityError = /*#__PURE__*/function (_BaseError) {
+	  babelHelpers.inherits(EntityError, _BaseError);
+	  function EntityError(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, EntityError);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(EntityError).call(this, ...args));
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _entityId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    return _this;
+	  }
+	  babelHelpers.createClass(EntityError, [{
+	    key: "setEntityId",
+	    value: function setEntityId(entityId) {
+	      if (main_core.Type.isStringFilled(entityId)) {
+	        babelHelpers.classPrivateFieldSet(this, _entityId, entityId);
+	      }
+	    }
+	  }, {
+	    key: "getEntityId",
+	    value: function getEntityId() {
+	      return babelHelpers.classPrivateFieldGet(this, _entityId);
+	    }
+	  }]);
+	  return EntityError;
+	}(main_core.BaseError);
+
+	let _Symbol$iterator;
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _errors = /*#__PURE__*/new WeakMap();
+	_Symbol$iterator = Symbol.iterator;
+	/**
+	 * @namespace BX.UI.Uploader
+	 */
+	let EntityErrorCollection = /*#__PURE__*/function () {
+	  function EntityErrorCollection() {
+	    babelHelpers.classCallCheck(this, EntityErrorCollection);
+	    _classPrivateFieldInitSpec$1(this, _errors, {
+	      writable: true,
+	      value: []
+	    });
+	  }
+	  babelHelpers.createClass(EntityErrorCollection, [{
+	    key: "getByEntityId",
+	    value: function getByEntityId(entityId) {
+	      return babelHelpers.classPrivateFieldGet(this, _errors).filter(error => error.getEntityId() === entityId);
+	    }
+	  }, {
+	    key: "add",
+	    value: function add(item) {
+	      babelHelpers.classPrivateFieldGet(this, _errors).push(item);
+	    }
+	  }, {
+	    key: "has",
+	    value: function has(item) {
+	      return babelHelpers.classPrivateFieldGet(this, _errors).includes(item);
+	    }
+	  }, {
+	    key: "clear",
+	    value: function clear() {
+	      babelHelpers.classPrivateFieldSet(this, _errors, []);
+	    }
+	  }, {
+	    key: "getIndex",
+	    value: function getIndex(item) {
+	      return babelHelpers.classPrivateFieldGet(this, _errors).indexOf(item);
+	    }
+	  }, {
+	    key: "getByIndex",
+	    value: function getByIndex(index) {
+	      if (main_core.Type.isNumber(index) && index >= 0) {
+	        const error = babelHelpers.classPrivateFieldGet(this, _errors)[index];
+	        return main_core.Type.isUndefined(error) ? null : error;
+	      }
+	      return null;
+	    }
+	  }, {
+	    key: _Symbol$iterator,
+	    value: function () {
+	      return babelHelpers.classPrivateFieldGet(this, _errors)[Symbol.iterator]();
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(errorOptions) {
+	      const errorCollection = new this();
+	      errorOptions.forEach(errorOption => {
+	        if (!main_core.Type.isStringFilled(errorOption.entityId)) {
+	          return;
+	        }
+	        const error = new EntityError();
+	        error.setEntityId(errorOption.entityId);
+	        if (main_core.Type.isStringFilled(errorOption.message)) {
+	          error.setMessage(errorOption.message);
+	        }
+	        if (!main_core.Type.isNil(errorOption.code)) {
+	          error.setCode(errorOption.code);
+	        }
+	        if (main_core.Type.isArrayFilled(errorOption.customData)) {
+	          error.setCustomData(errorOption.customData);
+	        }
+	        errorCollection.add(error);
+	      });
+	      return errorCollection;
+	    }
+	  }]);
+	  return EntityErrorCollection;
+	}();
+
 	let _$5 = t => t,
 	  _t$5,
 	  _t2$2,
@@ -6436,10 +6553,15 @@ this.BX.UI = this.BX.UI || {};
 	        subtitle: main_core.Loc.getMessage('UI_SELECTOR_SEARCH_STUB_SUBTITLE_MSGVER_1')
 	      }
 	    };
-	    const options = Object.assign({}, defaults, tabOptions);
+	    const options = {
+	      ...defaults,
+	      ...tabOptions
+	    };
 	    options.id = 'search';
 	    options.stubOptions.autoShow = false;
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SearchTab).call(this, dialog, options));
+
+	    // eslint-disable-next-line no-param-reassign
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "lastSearchQuery", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "queryCache", new Set());
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "queryXhr", null);
@@ -6474,10 +6596,8 @@ this.BX.UI = this.BX.UI || {};
 	        if (!this.isEmptyResult()) {
 	          this.getStub().hide();
 	        }
-	      } else {
-	        if (!this.getSearchLoader().isShown()) {
-	          this.toggleEmptyResult();
-	        }
+	      } else if (!this.getSearchLoader().isShown()) {
+	        this.toggleEmptyResult();
 	      }
 	    }
 	  }, {
@@ -6513,29 +6633,33 @@ this.BX.UI = this.BX.UI || {};
 	        }
 	        if (matchSortA !== null && matchSortB === null) {
 	          return -1;
-	        } else if (matchSortA === null && matchSortB !== null) {
+	        }
+	        if (matchSortA === null && matchSortB !== null) {
 	          return 1;
 	        }
 	        const contextSortA = a.getItem().getContextSort();
 	        const contextSortB = b.getItem().getContextSort();
 	        if (contextSortA !== null && contextSortB === null) {
 	          return -1;
-	        } else if (contextSortA === null && contextSortB !== null) {
-	          return 1;
-	        } else if (contextSortA !== null && contextSortB !== null) {
-	          return contextSortB - contextSortA;
-	        } else {
-	          const globalSortA = a.getItem().getGlobalSort();
-	          const globalSortB = b.getItem().getGlobalSort();
-	          if (globalSortA !== null && globalSortB === null) {
-	            return -1;
-	          } else if (globalSortA === null && globalSortB !== null) {
-	            return 1;
-	          } else if (globalSortA !== null && globalSortB !== null) {
-	            return globalSortB - globalSortA;
-	          }
-	          return 0;
 	        }
+	        if (contextSortA === null && contextSortB !== null) {
+	          return 1;
+	        }
+	        if (contextSortA !== null && contextSortB !== null) {
+	          return contextSortB - contextSortA;
+	        }
+	        const globalSortA = a.getItem().getGlobalSort();
+	        const globalSortB = b.getItem().getGlobalSort();
+	        if (globalSortA !== null && globalSortB === null) {
+	          return -1;
+	        }
+	        if (globalSortA === null && globalSortB !== null) {
+	          return 1;
+	        }
+	        if (globalSortA !== null && globalSortB !== null) {
+	          return globalSortB - globalSortA;
+	        }
+	        return 0;
 	      });
 	      this.getRootNode().disableRender();
 	      matchResults.forEach(matchResult => {
@@ -6655,11 +6779,14 @@ this.BX.UI = this.BX.UI || {};
 	            items.add(item);
 	          });
 	          const isTabEmpty = this.isEmptyResult();
-	          const matchResults = SearchEngine.matchItems(Array.from(items.values()), this.getLastSearchQuery());
+	          const matchResults = SearchEngine.matchItems([...items.values()], this.getLastSearchQuery());
 	          this.appendResults(matchResults);
 	          if (isTabEmpty && this.getDialog().shouldFocusOnFirst()) {
 	            this.getDialog().focusOnFirstNode();
 	          }
+	        }
+	        if (main_core.Type.isArrayFilled(response.data.dialog.errors)) {
+	          this.getDialog().emitEntityErrors(response.data.dialog.errors);
 	        }
 	        this.toggleEmptyResult();
 	        this.getDialog().emit('SearchTab:onLoad', {
@@ -8237,6 +8364,9 @@ this.BX.UI = this.BX.UI || {};
 	          if (this.shouldFocusOnFirst()) {
 	            this.focusOnFirstNode();
 	          }
+	          if (main_core.Type.isArrayFilled(response.data.dialog.errors)) {
+	            this.emitEntityErrors(response.data.dialog.errors);
+	          }
 	          this.emit('onLoad');
 	        }
 	      }).catch(error => {
@@ -8606,6 +8736,20 @@ this.BX.UI = this.BX.UI || {};
 	        recentItemsLimit: this.getRecentItemsLimit(),
 	        clearUnavailableItems: this.shouldClearUnavailableItems()
 	      };
+	    } /** @internal */
+	  }, {
+	    key: "emitEntityErrors",
+	    value: function emitEntityErrors(errorOptions) {
+	      const errorCollection = EntityErrorCollection.create(errorOptions);
+	      this.emit('Entity:onError', {
+	        errors: [...errorCollection]
+	      });
+	      this.getEntities().forEach(entity => {
+	        const entityId = entity.getId();
+	        this.emit(`Entity:${entityId}:onError`, {
+	          errors: errorCollection.getByEntityId(entityId)
+	        });
+	      });
 	    }
 	  }], [{
 	    key: "createHeader",
@@ -8676,7 +8820,8 @@ this.BX.UI = this.BX.UI || {};
 	  BaseFooter,
 	  DefaultFooter,
 	  BaseStub,
-	  DefaultStub
+	  DefaultStub,
+	  EntityError
 	};
 
 	exports.EntitySelector = EntitySelector;
@@ -8691,6 +8836,7 @@ this.BX.UI = this.BX.UI || {};
 	exports.DefaultFooter = DefaultFooter;
 	exports.BaseStub = BaseStub;
 	exports.DefaultStub = DefaultStub;
+	exports.EntityError = EntityError;
 
 }((this.BX.UI.EntitySelector = this.BX.UI.EntitySelector || {}),BX.Main,BX.Collections,BX.Event,BX,BX));
 //# sourceMappingURL=entity-selector.bundle.js.map

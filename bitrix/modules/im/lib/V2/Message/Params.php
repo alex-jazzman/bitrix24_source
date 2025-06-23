@@ -620,6 +620,10 @@ class Params extends Registry
 				$prepareResult = $item->prepareFields();
 				if ($prepareResult->isSuccess())
 				{
+					if ($prepareResult->getData()['SKIP_SAVE'] ?? false)
+					{
+						continue;
+					}
 					if ($item->isChanged())
 					{
 						$dataEntityCollection->add($item->getDataEntity());
@@ -649,6 +653,10 @@ class Params extends Registry
 						$prepareResult = $subItem->prepareFields();
 						if ($prepareResult->isSuccess())
 						{
+							if ($prepareResult->getData()['SKIP_SAVE'] ?? false)
+							{
+								continue;
+							}
 							if ($subItem->isChanged())
 							{
 								$dataEntityCollection->add($subItem->getDataEntity());

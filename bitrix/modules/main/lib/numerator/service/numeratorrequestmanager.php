@@ -39,7 +39,7 @@ class NumeratorRequestManager
 	public function saveFromRequest()
 	{
 		$numeratorConfig = $this->request->getPost(Numerator::getType());
-		$id = $numeratorConfig ['id'];
+		$id = $numeratorConfig ['id'] ?? null;
 		if ($id)
 		{
 			$result = $this->updateNextSequentialNumber($id);

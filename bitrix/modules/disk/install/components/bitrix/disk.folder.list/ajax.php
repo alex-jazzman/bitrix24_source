@@ -22,8 +22,10 @@ use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Ui;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
@@ -834,7 +836,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		foreach($changedDomainRights as $rights)
 		{
-			list($old, $new) = $rights;
+			[$old, $new] = $rights;
 
 			$taskName = $rightsManager->getTaskNameById($new['TASK_ID']);
 			switch($taskName)
@@ -867,7 +869,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		foreach($changedDomainRights as $rights)
 		{
-			list($old, $new) = $rights;
+			[$old, $new] = $rights;
 
 			$sharingId = $rightsManager->getIdBySharingDomain($old['DOMAIN']);
 			if(!$sharingId)
@@ -1301,6 +1303,14 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 							"CODE" => \Bitrix\Main\FinderDestTable::convertRights(array_unique($destinationCodes))
 						]);
 					}
+
+					if ((int)$object->getType() === ObjectTable::TYPE_FILE && (int)$object->getRealObject()->getTypeFile() === TypeFile::FLIPCHART)
+					{
+						Application::getInstance()->addBackgroundJob(function() {
+							$event = new AnalyticsEvent('give_access', 'boards', 'boards');
+							$event->send();
+						});
+					}
 				}
 			}
 			if($needToOverwrite)
@@ -1315,8 +1325,10 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				foreach($needToOverwrite as $sharingRow)
 				{
 					$sharingDomain = $rightsManager->getSharingDomain($sharingRow['ID']);
+					$isSharingToGroup = $sharingRow['TYPE'] == SharingTable::TYPE_TO_GROUP;
+					$accessCodeSuffix = $isSharingToGroup ? '_K' : ''; // todo refactor. Move this logic to Sharing
 					$newRights[] = array(
-						'ACCESS_CODE' => $sharingRow['TO_ENTITY'],
+						'ACCESS_CODE' => $sharingRow['TO_ENTITY'] . $accessCodeSuffix,
 						'TASK_ID' => $rightsManager->getTaskIdByName($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]),
 						'DOMAIN' => $sharingDomain,
 					);
@@ -1659,7 +1671,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	protected function processActionDisableExternalLink($objectId)
 	{
 		/** @var ExternalLink $extLink */
-		list(, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[, $extLink] = $this->getObjectAndExternalLink($objectId);
 		if(!$extLink || $extLink->delete())
 		{
 			$this->sendJsonSuccessResponse();
@@ -1670,7 +1682,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	protected function processActionGetExternalLink($objectId)
 	{
 		/** @var ExternalLink $extLink */
-		list(, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if(!$extLink)
 		{
@@ -1697,7 +1709,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	{
 		/** @var File|Folder $object */
 		/** @var ExternalLink $extLink */
-		list($object, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if($forceCreate && !$extLink)
 		{
@@ -1745,7 +1757,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	{
 		/** @var File|Folder $object */
 		/** @var ExternalLink $extLink */
-		list($object, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if(!$extLink)
 		{
@@ -1812,7 +1824,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	protected function processActionGenerateExternalLink($objectId)
 	{
 		/** @var File|Folder $object */
-		list($object, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 		if(!$extLink)
 		{
 			$extLink = $object->addExternalLink(array(

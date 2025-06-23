@@ -26,6 +26,7 @@ class ToDo extends BaseActivity
 	public function save(array $options = [], $useCurrentSettings = false): Result
 	{
 		$this->tryAppendTags();
+
 		return parent::save($options, $useCurrentSettings);
 	}
 

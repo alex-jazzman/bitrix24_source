@@ -32,6 +32,7 @@ $MESS["BITRIX24_LOGO_TEXT"] = "Битрикс24 &mdash; әлеуметтік и�
 $MESS["BITRIX24_LOGO_TOOLTIP"] = "Басты бетке";
 $MESS["BITRIX24_MENU_SETTINGS"] = "Мәзірді баптау";
 $MESS["BITRIX24_PHOTO_CREATE"] = "Фотосурет";
+$MESS["BITRIX24_SEARCH_COLLAB"] = "Коллабтар";
 $MESS["BITRIX24_SEARCH_DOCUMENT"] = "Құжаттар";
 $MESS["BITRIX24_SEARCH_EMPLOYEE"] = "Қызметкерлер";
 $MESS["BITRIX24_SEARCH_GROUP"] = "Топтар";

@@ -18,10 +18,13 @@ use Bitrix\Sign\Document;
 use Bitrix\Sign\Internal;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Model\ItemBinder\DocumentBinder;
+use Bitrix\Sign\Type\Document\ExternalDateCreateSourceType;
 use Bitrix\Sign\Type\Document\EntityType;
+use Bitrix\Sign\Type\Document\ExternalIdSourceType;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\Document\SchemeType;
 use Bitrix\Sign\Type\DocumentScenario;
+use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Type\ProviderCode;
 
 class DocumentRepository
@@ -84,9 +87,15 @@ class DocumentRepository
 			->setCreatedFromDocumentId($item->createdFromDocumentId)
 			->setInitiatedByType($item->initiatedByType->toInt())
 			->setHcmlinkCompanyId($item->hcmLinkCompanyId)
+			->setDateSignUntil($item->dateSignUntil)
 			->setDateStatusChanged($item->dateStatusChanged)
 			->setGroupId($item->groupId)
 			->setRepresentativeId($item->representativeId)
+			->setExternalIdSourceType(($item->externalIdSourceType ?? ExternalIdSourceType::MANUAL)->toInt())
+			->setExternalDateCreateSourceType(($item->externalDateCreateSourceType ?? ExternalDateCreateSourceType::MANUAL)->toInt())
+			->setHcmlinkDateSettingId($item->hcmLinkDateSettingId)
+			->setHcmlinkExternalIdSettingId($item->hcmLinkExternalIdSettingId)
+			->setHcmlinkDocumentTypeSettingId($item->hcmLinkDocumentTypeSettingId)
 			->save()
 		;
 
@@ -138,7 +147,7 @@ class DocumentRepository
 		}
 
 		$document->setDateModify(new DateTime());
-
+		
 		$result = $document->save()
 			->setData(['document' => $item])
 		;
@@ -147,7 +156,7 @@ class DocumentRepository
 		{
 			$item->initOriginal();
 		}
-
+		
 		return $result;
 	}
 
@@ -177,6 +186,18 @@ class DocumentRepository
 			->fetchObject();
 
 		return $document === null ? null : $this->extractItemFromModel($document);
+	}
+
+	public function getIdByUid(string $uid): ?int
+	{
+		$document = Internal\DocumentTable::query()
+			->setSelect(['ID'])
+			->where('UID', $uid)
+			->setLimit(1)
+			->fetch()
+		;
+
+		return $document['ID'] ?? null;
 	}
 
 	/**
@@ -225,12 +246,37 @@ class DocumentRepository
 			->where('ENTITY_TYPE', EntityType::SMART_B2E)
 			->where('INITIATED_BY_TYPE', InitiatedByType::COMPANY->toInt())
 			->setLimit($limit)
-			->addOrder('DATE_CREATE', 'DESC')
+			->addOrder('ID', 'DESC')
 			->fetchCollection()
 		;
 		return $models === null
 			? new Item\DocumentCollection()
 			: $this->extractItemCollectionByModelCollection($models)
+		;
+	}
+
+	/**
+	 * @param string[] $statusList
+	 * @see DocumentStatus
+	 */
+	public function listLastB2eNotInStatus(int $limit = 10, array $statusList = []): Item\DocumentCollection
+	{
+		$models = Internal\DocumentTable::query()
+			->addSelect('*')
+			->where('ENTITY_TYPE', EntityType::SMART_B2E)
+			->where('INITIATED_BY_TYPE', InitiatedByType::COMPANY->toInt())
+			->setLimit($limit)
+			->addOrder('ID', 'DESC')
+		;
+
+		if (!empty($statusList))
+		{
+			$models->whereNotIn('STATUS', $statusList);
+		}
+
+		return $models === null
+			? new Item\DocumentCollection()
+			: $this->extractItemCollectionByModelCollection($models->fetchCollection())
 		;
 	}
 
@@ -241,7 +287,7 @@ class DocumentRepository
 			->addSelect('*')
 			->where('CREATED_BY_ID', $id)
 			->setLimit($limit)
-			->addOrder('DATE_CREATE', 'DESC')
+			->addOrder('ID', 'DESC')
 			->fetchCollection()
 		;
 
@@ -262,7 +308,7 @@ class DocumentRepository
 			->addSelect('*')
 			->where('GROUP_ID', $groupId)
 			->setLimit($limit)
-			->addOrder('DATE_CREATE', 'DESC')
+			->addOrder('ID', 'DESC')
 			->fetchCollection()
 		;
 
@@ -314,6 +360,7 @@ class DocumentRepository
 			version:               $model->getVersion(),
 			createdById:           $model->getCreatedById(),
 			groupId: 			   $model->getGroupId(),
+			companyEntityId:       $model->getCompanyEntityId(),
 			companyUid:            $model->getCompanyUid(),
 			representativeId:      $model->getRepresentativeId(),
 			scheme:                $this->getSchemeTypeById($model->getScheme()),
@@ -329,7 +376,13 @@ class DocumentRepository
 			createdFromDocumentId: $model->getCreatedFromDocumentId(),
 			initiatedByType:       InitiatedByType::tryFromInt($model->getInitiatedByType()) ?? InitiatedByType::COMPANY,
 			hcmLinkCompanyId:      $model->getHcmlinkCompanyId(),
+			dateSignUntil:         $model->getDateSignUntil(),
 			dateStatusChanged:     $model->getDateStatusChanged(),
+			externalDateCreateSourceType: ExternalDateCreateSourceType::tryFromInt($model->getExternalDateCreateSourceType()) ?? ExternalDateCreateSourceType::MANUAL,
+			hcmLinkDateSettingId:       $model->getHcmlinkDateSettingId(),
+			externalIdSourceType:       ExternalIdSourceType::tryFromInt($model->getExternalIdSourceType()) ?? ExternalIdSourceType::MANUAL,
+			hcmLinkExternalIdSettingId: $model->getHcmlinkExternalIdSettingId(),
+			hcmLinkDocumentTypeSettingId: $model->getHcmlinkDocumentTypeSettingId(),
 		);
 	}
 
@@ -456,8 +509,13 @@ class DocumentRepository
         return Internal\DocumentTable::delete($documentItem->id);
     }
 
-	public function listByIds(array $ids)
+	public function listByIds(array $ids): Item\DocumentCollection
 	{
+		if (empty($ids))
+		{
+			return new Item\DocumentCollection();
+		}
+
 		$models = Internal\DocumentTable::query()
 			->addSelect('*')
 			->whereIn('ID', $ids)
@@ -596,6 +654,22 @@ class DocumentRepository
 		return $document === null ? null : $this->extractItemFromModel($document);
 	}
 
+	public function getByTemplateIds(int ...$ids): Item\DocumentCollection
+	{
+		if (empty($ids))
+		{
+			return new Item\DocumentCollection();
+		}
+
+		$documents = Internal\DocumentTable::query()
+			->setSelect(['*'])
+			->whereIn('TEMPLATE_ID', $ids)
+			->fetchCollection()
+		;
+
+		return $this->extractItemCollectionByModelCollection($documents);
+	}
+
 	public function deleteByTemplateId(int $id): Result
 	{
 		Internal\DocumentTable::deleteByFilter(
@@ -626,7 +700,7 @@ class DocumentRepository
 			->whereIn('CREATED_FROM_DOCUMENT_ID', $createdFromDocumentIds)
 			->where('INITIATED_BY_TYPE', $initiatedByType->toInt())
 			->where('CREATED_BY_ID', $createdById)
-			->addOrder('DATE_CREATE', 'DESC')
+			->addOrder('ID', 'DESC')
 			->fetchObject()
 		;
 
@@ -655,6 +729,24 @@ class DocumentRepository
 			->fetchCollection()
 		;
 
+		return $models === null
+			? new Item\DocumentCollection()
+			: $this->extractItemCollectionByModelCollection($models)
+		;
+	}
+
+	public function listByUids(array $uids): Item\DocumentCollection
+	{
+		if (empty($uids))
+		{
+			return new Item\DocumentCollection();
+		}
+
+		$models = Internal\DocumentTable::query()
+			->addSelect('*')
+			->whereIn('UID', $uids)
+			->fetchCollection()
+		;
 		return $models === null
 			? new Item\DocumentCollection()
 			: $this->extractItemCollectionByModelCollection($models)

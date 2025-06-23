@@ -26,11 +26,11 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 	const { ajaxPublicErrorHandler } = require('error');
 	const { inviteGuestsToCollab, addEmployeeToCollab } = require('collab/invite/src/api');
 	const { AvatarEntityType } = require('ui-system/blocks/avatar');
+	const { QRInvite, QrEntity } = require('layout/ui/qr-invite');
 	const {
 		showSuccessInvitationToast,
 		openGuestsInviteRestrictionsBox,
 	} = require('collab/invite/src/utils');
-	const { QRInvite } = require('layout/ui/qr-invite');
 	const { Notify } = require('notify');
 	const { Line } = require('utils/skeleton');
 	const { isNil } = require('utils/type');
@@ -540,11 +540,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 		};
 
 		#getAlreadyInvitedUsersFormattedPhones = (users) => {
-			return users.reduce((acc, user, index) => {
-				const separator = index === 0 ? '' : ', ';
-
-				return `${acc}${separator}${user.name} ${getFormattedNumber(user.formattedPhone)}`;
-			}, '');
+			return users.map((user) => `${user.name} ${getFormattedNumber(user.formattedPhone)}`).join(', ');
 		};
 
 		#getAlreadyInvitedUsersFormattedEmails = (users) => {
@@ -575,7 +571,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 						await this.#openEmailInputBox();
 					},
 				},
-				this.isBitrix24Included && {
+				{
 					id: 'qr',
 					testId: `${this.testId}-case-menu-item-qr`,
 					title: Loc.getMessage('COLLAB_INVITE_CASE_ITEM_QR'),
@@ -638,10 +634,8 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 			const { avatarUri, entityName } = this.#getDataForQRInvite(collabResponse);
 
 			await QRInvite.open({
-				entityId: this.props.collabId,
-				entityType: 'collab',
+				entityType: QrEntity.COLLAB,
 				parentWidget: this.props.layout,
-				bottomText: Loc.getMessage('COLLAB_INVITE_QR_SHARING_MESSAGE_TEXT'),
 				uri: this.inviteLink,
 				entityName,
 				avatarUri,
@@ -658,9 +652,11 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 				return;
 			}
 
+			const uniqueEmails = [...new Set(emails)];
+
 			if (this.#isCollaberOrExtranet())
 			{
-				const usersToInvite = emails.map((email) => ({
+				const usersToInvite = uniqueEmails.map((email) => ({
 					email,
 					isValidEmail: true,
 					inviteStatus: EmployeeStatus.NOT_REGISTERED.getValue(),
@@ -675,8 +671,8 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 				return;
 			}
 
-			const response = await this.#getEmailsInviteStatus(emails);
-			if (!this.#isInviteStatusResponseValid(response, emails.length))
+			const response = await this.#getEmailsInviteStatus(uniqueEmails);
+			if (!this.#isInviteStatusResponseValid(response, uniqueEmails.length))
 			{
 				this.inviteByEmailBoxRef?.disableButtonLoading();
 
@@ -687,12 +683,11 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 				invalidEmails,
 				notInvitedEmails,
 				invitedEmails,
-			} = this.#getEmailsGroupsFromResponse(response, emails);
+			} = this.#getEmailsGroupsFromResponse(response, uniqueEmails);
 
 			if (invalidEmails.length > 0)
 			{
-				const existsAnotherEmailsToProcess = invitedEmails.length > 0 || notInvitedEmails.length > 0;
-				await this.#showInvalidEmailsMessage(invalidEmails, existsAnotherEmailsToProcess);
+				await this.#showInvalidEmailsMessage(invalidEmails);
 			}
 
 			const usersToInvite = this.#addIdFieldToUserItems(notInvitedEmails, 'email');

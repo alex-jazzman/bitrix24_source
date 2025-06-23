@@ -17,7 +17,6 @@ jn.define('im/messenger/lib/element/dialog/message/banner/configuration', (requi
 		}
 
 		/**
-		 * @protected
 		 * @return {string | null}
 		 */
 		getMetaDataKey()

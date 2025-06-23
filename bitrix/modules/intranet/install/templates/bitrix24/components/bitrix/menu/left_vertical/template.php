@@ -178,7 +178,7 @@ $mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 						<?endif ?>
 						data-storage="<?= $item['PARAMS']['storage'] ?? '' ?>"
 						data-counter-id="<?=$counterId?>"
-						data-link="<?=$curLink?>"
+						data-link="<?=htmlspecialcharsbx("$curLink")?>"
 						data-all-links="<?=$addLinks?>"
 						data-type="<?=$item["ITEM_TYPE"]?>"
 						data-delete-perm="<?=$item["DELETE_PERM"]?>"
@@ -204,11 +204,15 @@ $mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 							?><a href="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link"])?>" class="menu-item-plus">
 								<span class="menu-item-plus-icon"></span>
 							</a><?
+						elseif (isset($item["PARAMS"]["sub_link_onclick"])):
+							?><a href="javascript:void(0)" class="menu-item-plus"
+								 onclick="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link_onclick"])?>">
+								<span class="menu-item-plus-icon"></span>
+							</a><?
 						endif
-
 						?><a
 							class="menu-item-link"
-							href="<?=(isset($item["PARAMS"]["onclick"])) ? "javascript:void(0)" : $curLink?>"
+							href="<?=(isset($item["PARAMS"]["onclick"])) ? "javascript:void(0)" : htmlspecialcharsbx($curLink)?>"
 							<?if (isset($item["OPEN_IN_NEW_PAGE"]) && ($item["OPEN_IN_NEW_PAGE"] === "Y")):?>
 								target="_blank"
 								data-slider-ignore-autobinding="true"
@@ -217,9 +221,9 @@ $mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 								<?=htmlspecialcharsbx($item["PARAMS"]["onclick"])?>
 							<?endif?>">
 							<span class="menu-item-icon-box"><span class="menu-item-icon"></span></span><?
-							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text"><?
-							echo $item["TEXT"];
-							?></span><?
+							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text">
+							<?= htmlspecialcharsbx($item['TEXT']) ?>
+							</span><?
 							if (isset($item["PARAMS"]["is_beta"]))
 							{
 								?><span class="menu-item-beta">beta</span><?
@@ -356,8 +360,6 @@ $mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 
 				$arJsParams = array(
 					"LICENSE_PATH" => $arResult["B24_LICENSE_PATH"],
-					"COUNTER_URL" => $arResult["LICENSE_BUTTON_COUNTER_URL"],
-					"HOST" => $arResult["HOST_NAME"]
 				);
 				?>
 				<div class="menu-license-all-container">
@@ -498,6 +500,7 @@ BX.message({
 	MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION: '<?=GetMessageJS("MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION")?>',
 	COUNTER_PROJECTS_MAJOR: '<?= \Bitrix\Main\Loader::includeModule('tasks') ? CUtil::JSEscape(TasksCounterDictionary::COUNTER_PROJECTS_MAJOR) : "" ?>',
 	COUNTER_SCRUM_TOTAL_COMMENTS: '<?= \Bitrix\Main\Loader::includeModule('tasks') ? CUtil::JSEscape(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS) : "" ?>',
+	mainpage_settings_path: '<?= (new Bitrix\Intranet\Site\FirstPage\MainFirstPage())->getSettingsPath() ?>',
 });
 BX.Intranet.LeftMenu = new BX.Intranet.Menu(<?=CUtil::PhpToJSObject($arJSParams)?>);
 <?

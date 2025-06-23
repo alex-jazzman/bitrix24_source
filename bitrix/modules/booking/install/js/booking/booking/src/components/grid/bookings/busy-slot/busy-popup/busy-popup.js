@@ -7,14 +7,19 @@ import { BusySlot, Model } from 'booking.const';
 import type { ResourceModel } from 'booking.model.resources';
 import './busy-popup.css';
 
+// @vue/component
 export const BusyPopup = {
-	emits: ['close'],
+	name: 'BusyPopup',
+	components: {
+		Popup,
+	},
 	props: {
 		busySlot: {
 			type: Object,
 			required: true,
 		},
 	},
+	emits: ['close'],
 	computed: {
 		...mapGetters({
 			offset: `${Model.Interface}/offset`,
@@ -76,6 +81,15 @@ export const BusyPopup = {
 			});
 		},
 	},
+	watch: {
+		mousePosition: {
+			handler(): void
+			{
+				this.adjustPosition();
+			},
+			deep: true,
+		},
+	},
 	methods: {
 		adjustPosition(): void
 		{
@@ -93,20 +107,9 @@ export const BusyPopup = {
 			this.$emit('close');
 		},
 	},
-	watch: {
-		mousePosition: {
-			handler(): void
-			{
-				this.adjustPosition();
-			},
-			deep: true,
-		},
-	},
-	components: {
-		Popup,
-	},
 	template: `
 		<Popup
+			v-if="mousePosition.left !== 0 && mousePosition.top !== 0"
 			:id="popupId"
 			:config="config"
 			ref="popup"

@@ -187,7 +187,7 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 					canSortColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canSortColumn'] ?>,
 					canSortItem: true,
 					canChangeItemStage: <?= $arResult['CONFIG_BY_VIEW_MODE']['canChangeItemStage'] ?>,
-					bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
+					bgColor: 'transparent',
 					columns: <?= CUtil::PhpToJSObject(array_values($data['columns']), false, false, true)?>,
 					items: <?= CUtil::PhpToJSObject($data['items'], false, false, true)?>,
 					dropZones: <?= CUtil::PhpToJSObject(array_values($data['dropzones']), false, false, true)?>,

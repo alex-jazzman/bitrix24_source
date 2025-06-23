@@ -59,6 +59,7 @@ $MESS["CRM_TIMELINE_EMPTY_COMMENT_MESSAGE"] = "Хабарлама мәтіні �
 $MESS["CRM_TIMELINE_EXPAND"] = "Ашу";
 $MESS["CRM_TIMELINE_EXPAND_SM"] = "ашу";
 $MESS["CRM_TIMELINE_FASTEN_LIMIT_MESSAGE"] = "Таңдаулыларға тек үш оқиғаны қосуға болады";
+$MESS["CRM_TIMELINE_FASTEN_LIMIT_MESSAGE_MSGVER_1"] = "7-ден көп емес істі бекітуге болады";
 $MESS["CRM_TIMELINE_FILTER_BUTTON_CAPTION"] = "Сүзгі";
 $MESS["CRM_TIMELINE_FILTER_EMPTY_RESULT_STUB"] = "Ештеңе табылмады. Сүзгі параметрлерін өзгертіп көріңіз.";
 $MESS["CRM_TIMELINE_FINAL_SUMMARY_BASKET_BASE_PRICE"] = "Тауарлардың жалпы құны";

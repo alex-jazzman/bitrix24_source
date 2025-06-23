@@ -6,7 +6,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
 	const { withPressed } = require('utils/color');
-	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 
 	const { Theme } = require('im/lib/theme');
 	const { buttonIcons } = require('im/messenger/assets/common');
@@ -27,11 +26,14 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ParticipantManager } = require('im/messenger/controller/participant-manager');
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { showLeaveChatAlert } = require('im/messenger/lib/ui/alert');
 
-	const { ParticipantsService } = require('im/messenger/controller/sidebar/chat/tabs/participants/participants-service');
+	const { ParticipantsService } = require(
+		'im/messenger/controller/sidebar/chat/tabs/participants/participants-service');
 	const { BaseSidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/base/view');
+
+	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
 	/**
 	 * @class SidebarParticipantsView
@@ -77,7 +79,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		{
 			super.bindMethods();
 			this.onUpdateDialogStore = this.onUpdateDialogStore.bind(this);
-			this.onCloseUserSelector = this.onCloseUserSelector.bind(this);
 		}
 
 		/**
@@ -220,7 +221,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 					});
 				},
 				onLoadMore: platform === 'ios' ? this.iosOnLoadMore.bind(this) : this.androidOnLoadMore.bind(this),
-				renderLoadMore: platform === 'ios' ? this.iosRenderLoadMore.bind(this) : this.androidRenderLoadMore.bind(this),
+				renderLoadMore: platform === 'ios' ? this.iosRenderLoadMore.bind(this) : this.androidRenderLoadMore.bind(
+					this),
 			});
 		}
 
@@ -267,8 +269,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		{
 			const chatAvatar = ChatAvatar.createFromDialogId(item.id);
 			const chatTitle = ChatTitle.createFromDialogId(item.id);
-			const title = chatTitle.getTitle();
-			const subtitle = chatTitle.getDescription();
+			const title = chatTitle.getTitle({ isNotes: false });
+			const subtitle = chatTitle.getDescription({ isNotes: false });
 
 			return {
 				type: 'item',
@@ -825,44 +827,18 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				return Promise.resolve();
 			}
 
-			SocialNetworkUserSelector.make({
-				initSelectedIds: [],
-				createOptions: {
-					enableCreation: false,
-				},
-				allowMultipleSelection: true,
-				closeOnSelect: true,
-				provider: {
-					context: 'IMMOBILE_SIDEBAR_ADD_PARTICIPANTS',
-					options: {
-						recentItemsLimit: 20,
-						maxUsersInRecentTab: 20,
-					},
-				},
-				events: {
-					onClose: this.onCloseUserSelector,
-				},
-				widgetParams: {
-					title: this.getUserAddWidgetTitle(),
-					backdrop: {
-						mediumPositionPercent: 70,
-						horizontalSwipeAllowed: false,
-					},
-					sendButtonName: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_NAME_BTN'),
-				},
-			})
-				.show({})
-				.catch(logger.error);
+			const memberSelector = new MemberSelector({
+				onSelectMembers: this.onSelectMembers,
+			});
+
+			memberSelector.open();
+
+			return Promise.resolve();
 		}
 
 		sendAnalyticsAboutOpeningParticipantAddWidget()
 		{
 			AnalyticsService.getInstance().sendUserAddButtonClicked({ dialogId: this.props.dialogId });
-		}
-
-		getUserAddWidgetTitle()
-		{
-			return Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_TITLE_MSGVER_1');
 		}
 
 		androidOnLoadMore()
@@ -921,16 +897,14 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		}
 
 		/**
-		 * @param {Array<object>} selectedUsers
+		 * @param {Array<Number>} selectedUsersIds
 		 */
-		onCloseUserSelector(selectedUsers)
-		{
+		onSelectMembers = (selectedUsersIds) => {
 			const isCreateChat = !this.isGroupDialog();
-			const addUsersIds = selectedUsers.map((user) => user.id);
 			const currentUsersIdsList = new Set(
 				this.state.participants.map((user) => user.id),
 			);
-			const uniqueId = addUsersIds.filter((id) => !currentUsersIdsList.has(id));
+			const uniqueId = selectedUsersIds.filter((id) => !currentUsersIdsList.has(id));
 			if (uniqueId.length > 0)
 			{
 				if (isCreateChat)
@@ -950,7 +924,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						));
 				}
 			}
-		}
+		};
 	}
 
 	module.exports = { SidebarParticipantsView };

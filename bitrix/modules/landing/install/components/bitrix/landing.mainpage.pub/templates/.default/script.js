@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
-(function (exports) {
+(function (exports,main_core,landing_metrika) {
 	'use strict';
 
 	var DiskFile = /*#__PURE__*/function () {
@@ -61,130 +61,52 @@ this.BX.Landing = this.BX.Landing || {};
 	  return DiskFile;
 	}();
 
-	var SearchResult = /*#__PURE__*/function () {
-	  /**
-	   * Constructor.
-	   */
-	  function SearchResult() {
-	    babelHelpers.classCallCheck(this, SearchResult);
-	    this.scrollToFirstBlock();
-	  }
-
-	  /**
-	   * Finds first highlight word and scroll to it.
-	   * @return {void}
-	   */
-	  babelHelpers.createClass(SearchResult, [{
-	    key: "scrollToFirstBlock",
-	    value: function scrollToFirstBlock() {
-	      var result = document.querySelector('.landing-highlight');
-	      if (result) {
-	        var parent = result.parentNode;
-	        while (parent) {
-	          if (parent.classList.contains('block-wrapper')) {
-	            window.scrollTo({
-	              top: parent.offsetTop,
-	              behavior: 'smooth'
-	            });
-	            break;
-	          }
-	          parent = parent.parentNode;
-	        }
-	      }
-	    }
-	  }]);
-	  return SearchResult;
-	}();
-
-	var TimeStamp = /*#__PURE__*/function () {
-	  /**
-	   * Constructor.
-	   */
-	  function TimeStamp() {
-	    babelHelpers.classCallCheck(this, TimeStamp);
-	    this.removeTimestamp();
-	  }
-
-	  /**
-	   * Removes 'ts' param from query string.
-	   * @return {void}
-	   */
-	  babelHelpers.createClass(TimeStamp, [{
-	    key: "removeTimestamp",
-	    value: function removeTimestamp() {
-	      var uri = window.location.toString();
-	      uri = uri.replace(/(ts=[\d]+[&]*)/, '');
-	      if (uri.slice(-1) === '?' || uri.slice(-1) === '&') {
-	        uri = uri.slice(0, -1);
-	      }
-	      window.history.replaceState({}, document.title, uri);
-	    }
-	  }]);
-	  return TimeStamp;
-	}();
-
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var Analytics = /*#__PURE__*/function () {
 	  /**
 	   * Constructor.
 	   */
-	  function Analytics() {
+	  function Analytics(options) {
+	    var _this = this;
 	    babelHelpers.classCallCheck(this, Analytics);
-	    document.addEventListener('click', this.onClick.bind(this));
+	    this.isPublished = options.isPublished;
+	    var blocks = [].slice.call(document.getElementsByClassName('block-wrapper'));
+	    if (main_core.Type.isArray(blocks) && blocks.length > 0) {
+	      blocks.forEach(function (block) {
+	        block.addEventListener('click', _this.onClick.bind(_this));
+	      });
+	    }
 	  }
 
 	  /**
 	   * Click callback.
 	   *
+	   * @param {MouseEvent} event
 	   * @return {void}
 	   */
 	  babelHelpers.createClass(Analytics, [{
 	    key: "onClick",
 	    value: function onClick(event) {
-	      var parent = null;
-	      var currentElement = event.target;
-	      if (currentElement.tagName.toLowerCase() !== 'a') {
+	      var target = event.target;
+	      if (!(target.tagName.toLowerCase() === 'a' || target.parentNode && target.parentNode.tagName.toLowerCase() === 'a' || target.firstElementChild && target.firstElementChild.tagName.toLowerCase() === 'a' || target.tagName.toLowerCase() === 'button' || target.hasAttribute('data-pseudo-url'))) {
 	        return;
 	      }
-	      while (currentElement) {
-	        if (currentElement.classList) {
-	          if (currentElement.classList.contains('workarea-content-paddings')) {
-	            break;
-	          }
-	          if (currentElement.classList.contains('block-wrapper')) {
-	            parent = currentElement;
-	            break;
-	          }
+	      var widgetId = '';
+	      var blockWrapper = event.currentTarget;
+	      blockWrapper.classList.forEach(function (className) {
+	        if (className !== 'block-wrapper') {
+	          widgetId += className;
 	        }
-	        currentElement = currentElement.parentElement;
-	      }
-	      if (parent && parent.classList) {
-	        var code = '';
-	        var _iterator = _createForOfIteratorHelper(parent.classList),
-	          _step;
-	        try {
-	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	            var className = _step.value;
-	            if (className !== 'block-wrapper') {
-	              code = className;
-	              break;
-	            }
-	          }
-	        } catch (err) {
-	          _iterator.e(err);
-	        } finally {
-	          _iterator.f();
+	      });
+	      widgetId = widgetId.replace('block-', '');
+	      var metrika = new landing_metrika.Metrika(true);
+	      metrika.sendData({
+	        category: 'vibe',
+	        event: 'click_on_button',
+	        c_section: this.isPublished ? 'active_page' : 'preview_page',
+	        params: {
+	          'widget-id': widgetId
 	        }
-	        code = code.replace('block-', 'widget-id_');
-	        BX.UI.Analytics.sendData({
-	          tool: 'landing',
-	          category: 'vibe',
-	          event: 'click_on_button',
-	          p2: code
-	        });
-	      }
+	      });
 	    }
 	  }]);
 	  return Analytics;
@@ -283,10 +205,8 @@ this.BX.Landing = this.BX.Landing || {};
 	}();
 
 	exports.DiskFile = DiskFile;
-	exports.SearchResult = SearchResult;
-	exports.TimeStamp = TimeStamp;
 	exports.Analytics = Analytics;
 	exports.Pseudolinks = Pseudolinks;
 
-}((this.BX.Landing.Pub = this.BX.Landing.Pub || {})));
+}((this.BX.Landing.Pub = this.BX.Landing.Pub || {}),BX,BX.Landing));
 //# sourceMappingURL=script.js.map

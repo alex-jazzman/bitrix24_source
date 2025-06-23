@@ -3,29 +3,64 @@
  *
  * @package bitrix
  * @subpackage ui
- * @copyright 2001-2022 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 /*
 	<span v-hint="$Bitrix.Loc.getMessage('HINT_HTML')" data-hint-html>Html code</span>
 	<span v-hint="{text: 'Text node'}">Plain text</span>
 	<span v-hint="{html: '<b>Html</b> code'}">Html code</span>
-	<span v-hint="{text: 'Custom position top and light mode', position: 'top', popupOptions: {darkMode: false}}">Text top on light panel</span>
+	<span v-hint="{text: 'Custom position top and light mode', position: 'top', popupOptions: {darkMode: false}}">
+		Text top on light panel
+	</span>
 */
 
-import {Tooltip} from './tooltip';
-import {Event} from 'main.core';
+import { Event, Type } from 'main.core';
 import 'ui.hint';
 
+import { tooltip, type HintParams } from './tooltip';
+export type { HintParams };
+
 export const hint = {
-	beforeMount(element: HTMLElement, bindings): void
+	async mounted(element: HTMLElement, { value }: { value: HintParams | Function }): Promise<void>
 	{
-		if (!bindings.value)
+		if (!value)
 		{
 			return;
 		}
 
-		Event.bind(element, 'mouseenter', () => Tooltip.show(element, bindings));
-		Event.bind(element, 'mouseleave', () => Tooltip.hide());
-	}
+		Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
+		Event.bind(element, 'mouseleave', () => hideTooltip());
+		Event.bind(element, 'click', () => hideTooltip());
+	},
 };
+
+let showTimeout = null;
+
+function onMouseEnter(element: HTMLElement, params: HintParams): void
+{
+	clearTimeouts();
+	showTimeout = setTimeout(() => showTooltip(element, params), params.timeout ?? 0);
+}
+
+function showTooltip(element: HTMLElement, params: HintParams): void
+{
+	clearTimeouts();
+	tooltip.show(element, params);
+}
+
+function hideTooltip(): void
+{
+	clearTimeouts();
+	tooltip.hide();
+}
+
+function clearTimeouts(): void
+{
+	clearTimeout(showTimeout);
+}
+
+function getParams(value: HintParams | Function): HintParams
+{
+	return Type.isFunction(value) ? value() : value;
+}

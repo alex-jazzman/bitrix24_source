@@ -18,7 +18,9 @@ jn.define('bottom-sheet', (require, exports, module) => {
 			text: '',
 			type: 'common',
 		},
+		preventBottomSheetDismiss: false,
 		enableNavigationBarBorder: false,
+		preventBottomSheetDismiss: false,
 		backgroundColor: DEFAULT_BACKGROUND_COLOR,
 		backdrop: {
 			showOnTop: false,
@@ -196,6 +198,28 @@ jn.define('bottom-sheet', (require, exports, module) => {
 		hideNavigationBarBorder()
 		{
 			this.widgetOptions.enableNavigationBarBorder = false;
+
+			return this;
+		}
+
+		/**
+		 * @public
+		 * @return {BottomSheet}
+		 */
+		preventBottomSheetDismiss()
+		{
+			this.widgetOptions.preventBottomSheetDismiss = true;
+
+			return this;
+		}
+
+		/**
+		 * @public
+		 * @return {BottomSheet}
+		 */
+		allowBottomSheetDismiss()
+		{
+			this.widgetOptions.preventBottomSheetDismiss = false;
 
 			return this;
 		}
@@ -565,6 +589,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 
 						this.widget.setTitle(this.widgetOptions.titleParams);
 						this.widget.enableNavigationBarBorder(this.widgetOptions.enableNavigationBarBorder);
+						this.widget.preventBottomSheetDismiss(this.widgetOptions.preventBottomSheetDismiss);
 
 						const component = isFunction(this.component) ? this.component(widget) : this.component;
 						this.widget.showComponent(component);

@@ -77,6 +77,15 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @param {() => Array<UIMenuActionProps>} provider
+		 */
+		setProvider(provider)
+		{
+			this.provider = provider;
+		}
+
+		/**
+		 * @public
 		 * @function show
 		 * @params {object} options
 		 * @params {MenuPosition} [options.position]

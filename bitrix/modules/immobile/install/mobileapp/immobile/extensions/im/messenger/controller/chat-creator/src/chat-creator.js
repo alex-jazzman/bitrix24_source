@@ -41,7 +41,7 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 
 					SEARCH_MIN_SIZE: MessengerParams.get('SEARCH_MIN_SIZE', 3),
 
-					INTRANET_INVITATION_CAN_INVITE: Feature.isIntranetInvitationAvaliable,
+					INTRANET_INVITATION_CAN_INVITE: Feature.isIntranetInvitationAvailable,
 					INTRANET_INVITATION_REGISTER_URL: MessengerParams.get('INTRANET_INVITATION_REGISTER_URL', ''),
 					INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID: MessengerParams.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
 					INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM: MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
@@ -70,7 +70,7 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 							showOnTop: true,
 							topPosition: 100,
 						},
-						supportInvites: Feature.isIntranetInvitationAvaliable,
+						supportInvites: Feature.isIntranetInvitationAvailable,
 					},
 				},
 			});

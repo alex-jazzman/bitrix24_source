@@ -3,16 +3,21 @@
 return [
 	'extensions' => [
 		'type',
+		'im:messenger/const',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/feature',
-		'im:messenger/const',
+		'im:messenger/lib/logger',
 		'im:messenger/lib/di/service-locator',
+		'im:messenger/db/const',
+		'im:messenger/db/helper/fulltext',
+		'im:messenger/db/helper/start-words',
 	],
 	'bundle' => [
 		'./src/table',
 		'./src/option',
 		'./src/recent',
 		'./src/counter',
+		'./src/draft',
 		'./src/dialog',
 		'./src/user',
 		'./src/file',
@@ -27,5 +32,8 @@ return [
 		'./src/internal/dialog',
 		'./src/copilot',
 		'./src/sidebar/file',
+		'./src/comment',
+		'./src/vote',
+		'./src/read-message-queue',
 	],
 ];

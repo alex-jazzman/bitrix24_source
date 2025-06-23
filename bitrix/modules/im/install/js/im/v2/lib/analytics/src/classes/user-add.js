@@ -10,8 +10,24 @@ import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
 
 import type { ImModelChat } from 'im.v2.model';
 
+type SelectUserParams = {
+	dialogId: string,
+	position: number,
+};
+
+type SelectUserWithSourceParams = SelectUserParams & {
+	source: $Values<typeof SelectUserSource>,
+};
+
+const SelectUserSource = Object.freeze({
+	recent: 'recent',
+	searchResult: 'search_result',
+});
+
 export class UserAdd
 {
+	#hasSearchedBefore: boolean = false;
+
 	onChatSidebarClick(dialogId: string)
 	{
 		this.#onAddUserClick(dialogId, AnalyticsSection.chatSidebar);
@@ -20,6 +36,65 @@ export class UserAdd
 	onChatHeaderClick(dialogId: string)
 	{
 		this.#onAddUserClick(dialogId, AnalyticsSection.chatHeader);
+	}
+
+	onStartSearch({ dialogId }: { dialogId: string })
+	{
+		if (this.#hasSearchedBefore)
+		{
+			return;
+		}
+		this.#hasSearchedBefore = true;
+
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: getCategoryByChatType(chat.type),
+			event: AnalyticsEvent.startSearch,
+			c_section: AnalyticsSection.userAdd,
+			p1: `chatType_${chat.type}`,
+			p2: getUserType(),
+		});
+	}
+
+	onClosePopup()
+	{
+		this.#hasSearchedBefore = false;
+	}
+
+	onSelectUserFromRecent({ dialogId, position }: SelectUserParams)
+	{
+		this.#onSelectUser({
+			dialogId,
+			position,
+			source: SelectUserSource.recent,
+		});
+	}
+
+	onSelectUserFromSearchResult({ dialogId, position }: SelectUserParams)
+	{
+		this.#onSelectUser({
+			dialogId,
+			position,
+			source: SelectUserSource.searchResult,
+		});
+	}
+
+	#onSelectUser({ dialogId, position, source }: SelectUserWithSourceParams)
+	{
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: getCategoryByChatType(chat.type),
+			event: AnalyticsEvent.selectUser,
+			type: source,
+			c_section: AnalyticsSection.userAdd,
+			p1: `chatType_${chat.type}`,
+			p2: getUserType(),
+			p3: `position_${position}`,
+		});
 	}
 
 	#onAddUserClick(dialogId: string, element: AnalyticsSection.chatSidebar | AnalyticsSection.chatHeader)

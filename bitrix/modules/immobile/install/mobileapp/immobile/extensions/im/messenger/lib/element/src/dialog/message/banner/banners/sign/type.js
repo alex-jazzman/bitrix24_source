@@ -46,6 +46,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		employeeStoppedToCompanyV2: 'employeeStoppedToCompanyV2',
 		employeeStoppedToCompanyV2M: 'employeeStoppedToCompanyV2M',
 		employeeStoppedToCompanyV2F: 'employeeStoppedToCompanyV2F',
+		documentExpiredToCompany: 'documentExpiredToCompany',
 		documentStoppedToInitiator: 'documentStoppedToInitiator',
 		documentStoppedToInitiatorM: 'documentStoppedToInitiatorM',
 		documentStoppedToInitiatorF: 'documentStoppedToInitiatorF',
@@ -72,6 +73,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		byEmployeeStoppedToEmployee: 'byEmployeeStoppedToEmployee',
 		byEmployeeStoppedToEmployeeM: 'byEmployeeStoppedToEmployeeM',
 		byEmployeeStoppedToEmployeeF: 'byEmployeeStoppedToEmployeeF',
+		byEmployeeExpiredToEmployee: 'byEmployeeExpiredToEmployee',
 	});
 
 	const ImageName = Object.freeze({

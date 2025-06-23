@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Provider\Trait;
 
 use Bitrix\Booking\Entity\BaseEntityCollection;

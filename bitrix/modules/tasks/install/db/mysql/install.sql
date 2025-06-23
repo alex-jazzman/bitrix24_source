@@ -937,7 +937,9 @@ create table if not exists b_tasks_onboarding_queue
 	IS_PROCESSED tinyint default 0,
 
 	primary key (ID),
-	index ix_b_tasks_onboarding_queue_execution_processed (NEXT_EXECUTION, IS_PROCESSED)
+	index ix_b_tasks_onboarding_queue_execution_processed (NEXT_EXECUTION, IS_PROCESSED),
+	index ix_b_tasks_onboarding_queue_user_id_task_id_type (USER_ID, TASK_ID, TYPE),
+	index ix_b_tasks_onboarding_queue_type (TYPE)
 );
 
 create table if not exists b_tasks_onboarding_queue_job_count
@@ -961,4 +963,18 @@ create table if not exists b_tasks_deadline_user_option
 
 	primary key (ID),
 	unique index ix_b_tasks_deadline_user_option_user_id (USER_ID)
+);
+
+create table if not exists b_tasks_task_chat (
+	TASK_ID  INT(11) UNSIGNED NOT NULL,
+	CHAT_ID  INT(11) UNSIGNED NOT NULL,
+	INDEX task_chat_index (TASK_ID, CHAT_ID)
+);
+
+create table if not exists b_tasks_task_result_file (
+	ID int not null auto_increment,
+	RESULT_ID  int(11) unsigned not null,
+	FILE_ID int(11) not null ,
+	PRIMARY KEY (ID),
+	index task_result_file_index (RESULT_ID)
 );

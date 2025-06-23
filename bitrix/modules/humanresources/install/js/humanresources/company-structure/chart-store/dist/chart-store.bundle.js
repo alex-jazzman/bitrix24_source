@@ -14,6 +14,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }),
 	  actions: {
 	    async refreshDepartments(nodeIds) {
+	      if (nodeIds.length === 0) {
+	        return;
+	      }
 	      const [departments, currentDepartments] = await Promise.all([humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.getByIds', {
 	        nodeIds
 	      }), humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.current')]);
@@ -36,7 +39,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    changeCurrentDepartment(oldDepartmentId, newDepartmentId) {
 	      const currentDepartments = this.currentDepartments.filter(departmentId => {
-	        return departmentId !== oldDepartmentId;
+	        return departmentId !== oldDepartmentId && departmentId !== newDepartmentId;
 	      });
 	      if (!newDepartmentId) {
 	        this.currentDepartments = currentDepartments;

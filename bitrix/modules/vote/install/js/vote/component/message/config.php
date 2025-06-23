@@ -12,6 +12,7 @@ return [
 		'im.v2.component.message.base',
 		'im.v2.component.message.elements',
 		'vote.component.vote',
+		'vote.analytics',
 	],
 	'skip_core' => true,
 ];

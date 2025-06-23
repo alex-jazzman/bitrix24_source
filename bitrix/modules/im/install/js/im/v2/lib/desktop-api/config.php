@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Im\V2\Service\Locator;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -14,6 +17,7 @@ return [
 		'./dist/desktop-api.bundle.js',
 	],
 	'rel' => [
+		'im.v2.lib.desktop-api',
 		'im.v2.lib.utils',
 		'im.v2.lib.logger',
 		'main.core',
@@ -24,5 +28,6 @@ return [
 	'settings' => [
 		'isChatWindow' => defined('BX_DESKTOP') && BX_DESKTOP,
 		'v2' => !\Bitrix\Im\Settings::isLegacyChatActivated(),
+		'isAirDesignEnabled' => Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
 	]
 ];

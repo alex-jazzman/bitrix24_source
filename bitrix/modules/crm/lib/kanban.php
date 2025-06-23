@@ -1579,6 +1579,7 @@ abstract class Kanban
 					$data = [
 						'code' => $field['code'],
 						'value' => $field['value'] ?? null,
+						'html' => $field['html'] ?? null,
 					];
 
 					if (isset($field['config']))

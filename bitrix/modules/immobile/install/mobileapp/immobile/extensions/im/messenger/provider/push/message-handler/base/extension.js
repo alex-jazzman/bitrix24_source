@@ -239,8 +239,16 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 
 			for (const event of eventList)
 			{
+				const message = this.getHelper(event).getMessage();
+
+				// if params are empty then they have an array type.
+				if (Type.isPlainObject(message.params) && Type.isArrayFilled(message.params?.FILE_ID))
+				{
+					message.params.FILE_ID = message.params.FILE_ID.map((fileId) => Number(fileId));
+				}
+
 				messages.push({
-					...event.params.message,
+					...message,
 				});
 			}
 
@@ -337,7 +345,7 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 			return {
 				dialogId: params.dialogId,
 				counter: params.counter,
-				type: DialogType.user,
+				type: DialogType.private,
 				name: sender.name,
 				avatar: sender.avatar,
 				color: sender.color,

@@ -1,17 +1,17 @@
-import {Type, Dom, Cache, Tag, Text, Runtime} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {Env} from 'landing.env';
-import {Loc} from 'landing.loc';
-import {Content} from 'landing.ui.panel.content';
-import {SaveBlock} from 'landing.ui.panel.saveblock';
-import {SliderHacks} from 'landing.sliderhacks';
-import {PageObject} from 'landing.pageobject';
+import { Type, Dom, Cache, Tag, Text, Runtime } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Env } from 'landing.env';
+import { Loc } from 'landing.loc';
+import { Content } from 'landing.ui.panel.content';
+import { SaveBlock } from 'landing.ui.panel.saveblock';
+import { SliderHacks } from 'landing.sliderhacks';
+import { PageObject } from 'landing.pageobject';
+import { Backend } from 'landing.backend';
+import { ExternalControls } from './external.controls';
 import hasBlock from './internal/has-block';
 import hasCreateButton from './internal/has-create-button';
 import onAnimationEnd from './internal/on-animation-end';
 import isEmpty from './internal/is-empty';
-import {ExternalControls} from './external.controls';
-import {Backend} from 'landing.backend';
 
 BX.Landing.getMode = () => 'edit';
 
@@ -940,7 +940,7 @@ export class Main extends EventEmitter
 				},
 			};
 
-			BX.Landing.Backend.getInstance()
+			Backend.getInstance()
 				.batch(action, requestBody, {action})
 				.then((res) => {
 					this.currentBlock = block;
@@ -1045,7 +1045,7 @@ export class Main extends EventEmitter
 				void this.hideBlockLoader();
 				this.enableAddBlockButtons();
 				BX.onCustomEvent('BX.Landing.Block:onAfterAdd', res);
-				this.sendAnalyticsData('onAddBlock', res);
+
 				return p;
 			});
 	}
@@ -1304,7 +1304,7 @@ export class Main extends EventEmitter
 					});
 			}
 
-			return BX.Landing.Backend.getInstance()
+			return Backend.getInstance()
 				.action('Block::getContent', {
 					block: restoreId,
 					lid,
@@ -1352,7 +1352,6 @@ export class Main extends EventEmitter
 		{
 			this.adjustEmptyAreas();
 		}
-		this.sendAnalyticsData('onDeleteBlock', block);
 	}
 
 
@@ -1368,7 +1367,6 @@ export class Main extends EventEmitter
 			Dom.addClass(main, 'landing-ui-overlay');
 		}
 	}
-
 
 	/**
 	 * Hides page overlay
@@ -1386,69 +1384,5 @@ export class Main extends EventEmitter
 	reloadSlider(url: string): Promise<any>
 	{
 		return SliderHacks.reloadSlider(url, window.parent);
-	}
-
-	sendAnalyticsData(action, data)
-	{
-		const code = data.manifest.code;
-		const block = this.getBlockFromRepository(code);
-		let analyticsCategory = '';
-		let p2 = '';
-		let analyticsEvent = '';
-		const type = BX.Landing.Env.getInstance().getType();
-		if (type === 'MAINPAGE')
-		{
-			analyticsCategory = 'vibe';
-			if (action === 'onAddBlock')
-			{
-				analyticsEvent = 'add_widget';
-			}
-
-			if (action === 'onDeleteBlock')
-			{
-				analyticsEvent = 'delete_widget';
-			}
-			const widgetCode = code.replaceAll(/[._]/g, '-');
-			p2 = `widget-id_${widgetCode}`;
-		}
-		else
-		{
-			analyticsCategory = 'site'; // site ||  shop || kb
-			if (action === 'onAddBlock')
-			{
-				analyticsEvent = 'add_block';
-			}
-
-			if (action === 'onDeleteBlock')
-			{
-				analyticsEvent = 'delete_block';
-			}
-			const blockCode = code.replaceAll(/[._]/g, '-');
-			p2 = `widget-id_${blockCode}`;
-		}
-		let itemType = '';
-		let p1 = '';
-		if (block.repo_id)
-		{
-			itemType = 'partner'; // partner || local
-			if (block.app_code)
-			{
-				p1 = block.app_code.replaceAll(/[._]/g, '-'); // appCode || local
-			}
-		}
-		else
-		{
-			itemType = 'system';
-			p1 = 'system';
-		}
-
-		BX.UI.Analytics.sendData({
-			tool: 'landing',
-			category: analyticsCategory,
-			event: analyticsEvent,
-			type: itemType,
-			p1,
-			p2,
-		});
 	}
 }

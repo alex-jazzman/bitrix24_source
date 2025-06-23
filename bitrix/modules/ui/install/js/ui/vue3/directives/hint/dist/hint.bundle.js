@@ -1,93 +1,93 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Vue3 = this.BX.Vue3 || {};
-(function (exports,main_popup,main_core) {
+(function (exports,ui_hint,main_core,main_popup) {
 	'use strict';
 
 	let _ = t => t,
 	  _t;
+	var _getText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getText");
 	class Tooltip {
 	  constructor() {
+	    Object.defineProperty(this, _getText, {
+	      value: _getText2
+	    });
 	    this.popup = null;
 	  }
-	  show(element, bindings = {}) {
-	    if (this.popup) {
-	      this.popup.close();
-	    }
-	    let popupOptions = {};
-	    let text;
-	    if (main_core.Type.isObject(bindings.value)) {
-	      if (bindings.value.text) {
-	        text = main_core.Text.encode(bindings.value.text);
-	      } else if (bindings.value.html) {
-	        text = bindings.value.html;
-	      }
-	      if (main_core.Type.isObject(bindings.value.popupOptions)) {
-	        popupOptions = bindings.value.popupOptions;
-	      }
-	      if (bindings.value.position === 'top') {
-	        if (!main_core.Type.isObject(popupOptions.bindOptions)) {
-	          popupOptions.bindOptions = {};
-	        }
-	        popupOptions.bindOptions.position = 'top';
-	      }
-	    } else {
-	      text = bindings.value;
-	      if (main_core.Type.isUndefined(element.dataset.hintHtml)) {
-	        text = main_core.Text.encode(text);
-	      }
-	    }
-	    popupOptions.bindElement = element;
-	    if (main_core.Type.isUndefined(popupOptions.id)) {
-	      popupOptions.id = 'bx-vue-hint';
-	    }
-	    if (main_core.Type.isUndefined(popupOptions.darkMode)) {
-	      popupOptions.darkMode = true;
-	    }
-	    if (main_core.Type.isUndefined(popupOptions.content)) {
-	      const content = main_core.Tag.render(_t || (_t = _`<span class='ui-hint-content'></span>`));
-	      content.innerHTML = text;
-	      popupOptions.content = content;
-	    }
-	    if (main_core.Type.isUndefined(popupOptions.autoHide)) {
-	      popupOptions.autoHide = true;
-	    }
-	    if (!main_core.Type.isObject(popupOptions.bindOptions)) {
-	      popupOptions.bindOptions = {};
-	    }
-	    if (main_core.Type.isUndefined(popupOptions.bindOptions.position)) {
-	      popupOptions.bindOptions.position = 'bottom';
-	    }
-	    popupOptions.cacheable = false;
+	  show(element, params) {
+	    var _params$popupOptions;
+	    this.hide();
+	    const popupOptions = {
+	      id: 'bx-vue-hint',
+	      bindElement: element,
+	      bindOptions: {
+	        position: params.position === 'top' ? 'top' : 'bottom'
+	      },
+	      content: main_core.Tag.render(_t || (_t = _`
+				<span class='ui-hint-content'>${0}</span>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _getText)[_getText](element, params)),
+	      darkMode: true,
+	      autoHide: true,
+	      cacheable: false,
+	      ...((_params$popupOptions = params.popupOptions) != null ? _params$popupOptions : null)
+	    };
 	    this.popup = new main_popup.Popup(popupOptions);
 	    this.popup.show();
 	  }
 	  hide() {
-	    if (this.popup) {
-	      this.popup.close();
-	    }
+	    var _this$popup;
+	    (_this$popup = this.popup) == null ? void 0 : _this$popup.close();
 	  }
 	}
-	const TooltipManager = new Tooltip();
+	function _getText2(element, params) {
+	  if (main_core.Type.isStringFilled(params) && main_core.Type.isUndefined(element.dataset.hintHtml)) {
+	    return main_core.Text.encode(params);
+	  }
+	  return params.html || main_core.Text.encode(params.text) || params;
+	}
+	const tooltip = new Tooltip();
 
 	/**
 	 * Hint Vue directive
 	 *
 	 * @package bitrix
 	 * @subpackage ui
-	 * @copyright 2001-2022 Bitrix
+	 * @copyright 2001-2025 Bitrix
 	 */
 	const hint = {
-	  beforeMount(element, bindings) {
-	    if (!bindings.value) {
+	  async mounted(element, {
+	    value
+	  }) {
+	    if (!value) {
 	      return;
 	    }
-	    main_core.Event.bind(element, 'mouseenter', () => TooltipManager.show(element, bindings));
-	    main_core.Event.bind(element, 'mouseleave', () => TooltipManager.hide());
+	    main_core.Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
+	    main_core.Event.bind(element, 'mouseleave', () => hideTooltip());
+	    main_core.Event.bind(element, 'click', () => hideTooltip());
 	  }
 	};
+	let showTimeout = null;
+	function onMouseEnter(element, params) {
+	  var _params$timeout;
+	  clearTimeouts();
+	  showTimeout = setTimeout(() => showTooltip(element, params), (_params$timeout = params.timeout) != null ? _params$timeout : 0);
+	}
+	function showTooltip(element, params) {
+	  clearTimeouts();
+	  tooltip.show(element, params);
+	}
+	function hideTooltip() {
+	  clearTimeouts();
+	  tooltip.hide();
+	}
+	function clearTimeouts() {
+	  clearTimeout(showTimeout);
+	}
+	function getParams(value) {
+	  return main_core.Type.isFunction(value) ? value() : value;
+	}
 
 	exports.hint = hint;
 
-}((this.BX.Vue3.Directives = this.BX.Vue3.Directives || {}),BX.Main,BX));
+}((this.BX.Vue3.Directives = this.BX.Vue3.Directives || {}),BX,BX,BX.Main));
 //# sourceMappingURL=hint.bundle.js.map

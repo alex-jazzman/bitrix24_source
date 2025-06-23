@@ -12,6 +12,7 @@ return [
 		'./src/chat',
 		'./src/chat/getter',
 		'./src/chat/deleter',
+		'./src/chat/entity-updater',
 		'./src/recent',
 		'./src/recent/deleter',
 	],

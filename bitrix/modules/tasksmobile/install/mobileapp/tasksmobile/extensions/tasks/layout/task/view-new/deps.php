@@ -55,9 +55,11 @@ return [
 		'layout/ui/fields/crm-element/theme/air-compact',
 		'layout/ui/fields/file-with-background-attach/theme/air',
 		'layout/ui/fields/file-with-background-attach/theme/air-compact',
-		'layout/ui/friendly-date',
 		'layout/ui/reaction-list',
 		'layout/ui/viewer-list',
+		'layout/ui/friendly-date',
+		'layout/ui/friendly-date/formatter-factory',
+
 		'tasks:layout/fields/subtask/theme/air',
 		'tasks:layout/fields/subtask/theme/air-compact',
 		'tasks:layout/fields/related-task/theme/air',
@@ -113,6 +115,7 @@ return [
 		'tasks:layout/task/form-utils',
 		'tasks:layout/task/parent-task',
 		'type',
+		'app-rating-manager',
 	],
 	'bundle' => [
 		'./ui/likes-panel',

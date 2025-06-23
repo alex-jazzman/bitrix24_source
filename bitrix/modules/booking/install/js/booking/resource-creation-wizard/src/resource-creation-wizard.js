@@ -1,4 +1,4 @@
-import { Event } from 'main.core';
+import { Event, Tag } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
 import type { VueCreateAppResult } from 'ui.vue3';
 
@@ -54,10 +54,9 @@ export class ResourceCreationWizard
 
 	#makeContainer(): HTMLElement
 	{
-		const container = document.createElement('div');
-		container.id = 'booking-resource-creation-wizard-app';
-
-		return container;
+		return Tag.render`
+			<div id="booking-resource-creation-wizard-app" class="booking-resource-creation-wizard-app"></div>
+		`;
 	}
 
 	open(resourceId: ResourceId = null): void

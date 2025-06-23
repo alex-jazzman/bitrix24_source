@@ -66,4 +66,4 @@ $MESS["CT_BLLE_TOOLBAR_LIST_COPY_TITLE_PROCESS"] = "Creates a duplicate of this 
 $MESS["CT_BLLE_TOOLBAR_LIST_TITLE"] = "View and edit list elements";
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_PROCESSES"] = "Move to workflows";
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_WARNING_PROCESS"] = "Are you sure you want to move this list?";
-$MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT"] = "BACK TO LIST";
+$MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "Back to list";

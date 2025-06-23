@@ -1,7 +1,6 @@
 <?php
 $MESS['SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL'] = 'Название документа';
 $MESS['SIGN_DOCUMENT_SETUP_TITLE_TEMPLATE_HEAD_LABEL'] = 'Название шаблона';
-$MESS['SIGN_DOCUMENT_SETUP_TITLE_LABEL'] = 'Название';
 $MESS['SIGN_DOCUMENT_SETUP_NUM_LABEL'] = 'Регистрационный номер';
 $MESS['SIGN_DOCUMENT_SETUP_TITLE_HINT'] = 'Название документа видят все стороны';
 $MESS['SIGN_DOCUMENT_SETUP_TYPE'] = 'Код документа';
@@ -22,3 +21,11 @@ $MESS['SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON'] = 'Изменить';
 $MESS['SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON'] = 'Отмена';
 $MESS['SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE'] = 'Можно отправить на подпись сразу несколько документов одновременно. Каждый документ будет подписан отдельно';
 $MESS['SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_HINT'] = 'Вы редактируете сейчас';
+
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_UPLOAD_CONFIRM'] = 'Заменить';
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_SELECT_CONFIRM'] = 'Все равно заменить';
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_CONFIRM'] = 'Заменить';
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_CANCEL'] = 'Отмена';
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_TITLE'] = 'Заменить документ?';
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_UPLOAD_DESCRIPTION'] = 'После замены документа при необходимости скорректируйте местоположение добавленных в редакторе полей';
+$MESS['SIGN_V2_B2E_DOCUMENT_SETUP_COMPONENTS_POPUP_SELECT_DESCRIPTION'] = 'После замены применятся настройки документа, выбранного из недавних. Настройка полей редактируемого шаблона не сохранится';

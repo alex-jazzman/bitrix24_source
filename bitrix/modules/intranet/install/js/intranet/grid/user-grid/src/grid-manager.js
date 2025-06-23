@@ -157,6 +157,20 @@ export class GridManager
 			this.confirmUser(action, () => {
 				const row = this.#grid.getRows().getById(params.userId);
 				row?.stateLoad();
+
+				if (action === 'restore' || action === 'fire')
+				{
+					BX.ajax.runAction(`intranet.user.${action}`, {
+						data: {
+							userId,
+						},
+					}).then(() => {
+						row?.update();
+					});
+
+					return;
+				}
+
 				BX.ajax.runComponentAction('bitrix:intranet.user.list', 'setActivity', {
 					mode: 'class',
 					data: {
@@ -210,7 +224,7 @@ export class GridManager
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_TITLE');
 			case 'delete':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_TITLE');
-			case 'deactivate':
+			case 'fire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_TITLE');
 			case 'deactivateInvited':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_TITLE');
@@ -230,7 +244,7 @@ export class GridManager
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_MESSAGE');
 			case 'delete':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_MESSAGE');
-			case 'deactivate':
+			case 'fire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_MESSAGE');
 			case 'deactivateInvited':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_MESSAGE');
@@ -251,7 +265,7 @@ export class GridManager
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_BUTTON');
 			case 'delete':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_BUTTON');
-			case 'deactivate':
+			case 'fire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_BUTTON');
 			case 'deactivateInvited':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_BUTTON');

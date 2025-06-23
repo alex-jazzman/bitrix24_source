@@ -1,15 +1,17 @@
+import { Extension } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
 import { Analytics } from 'im.v2.lib.analytics';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
-import { ChatType, EventType, Layout, LocalStorageKey } from 'im.v2.const';
+import { ChatType, EventType, Layout, LocalStorageKey, ErrorCode } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { AccessErrorCode, AccessManager } from 'im.v2.lib.access';
+import { AccessManager } from 'im.v2.lib.access';
 import { FeatureManager } from 'im.v2.lib.feature';
 import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
 
+import type { SettingsCollection } from 'main.core.collections';
 import type { ImModelLayout, ImModelChat } from 'im.v2.model';
 
 type EntityId = string;
@@ -89,12 +91,12 @@ export class LayoutManager
 		});
 	}
 
-	restoreLastLayout(): Promise
+	prepareInitialLayout(): Promise
 	{
 		const layoutConfig = LocalStorageManager.getInstance().get(LocalStorageKey.layoutConfig);
 		if (!layoutConfig)
 		{
-			return Promise.resolve();
+			return this.setLayout({ name: Layout.chat.name });
 		}
 
 		Logger.warn('LayoutManager: last layout was restored', layoutConfig);
@@ -164,6 +166,25 @@ export class LayoutManager
 		});
 	}
 
+	isEmbeddedMode(): boolean
+	{
+		return this.isAirDesignEnabled() && this.isQuickAccessHidden();
+	}
+
+	isAirDesignEnabled(): boolean
+	{
+		const settings: SettingsCollection = Extension.getSettings('im.v2.lib.layout');
+
+		return settings.get('isAirDesignEnabled', true);
+	}
+
+	isQuickAccessHidden(): boolean
+	{
+		const settings: SettingsCollection = Extension.getSettings('im.v2.lib.layout');
+
+		return settings.get('isQuickAccessHidden', false);
+	}
+
 	async #onGoToMessageContext(event: BaseEvent<{dialogId: string, messageId: number}>): void
 	{
 		const { dialogId, messageId } = event.getData();
@@ -178,10 +199,8 @@ export class LayoutManager
 			return;
 		}
 
-		const isCopilotLayout = type === ChatType.copilot;
-
 		void this.setLayout({
-			name: isCopilotLayout ? Layout.copilot.name : Layout.chat.name,
+			name: Layout.chat.name,
 			entityId: dialogId,
 			contextId: messageId,
 		});
@@ -227,12 +246,12 @@ export class LayoutManager
 	{
 		const { name, entityId } = this.getLayout();
 		const CHAT_LAYOUTS = new Set([
-			ChatType.chat,
-			ChatType.channel,
-			ChatType.copilot,
-			ChatType.lines,
-			ChatType.openlinesV2,
-			ChatType.collab,
+			Layout.chat.name,
+			Layout.channel.name,
+			Layout.copilot.name,
+			Layout.openlines.name,
+			Layout.openlinesV2.name,
+			Layout.collab.name,
 		]);
 
 		if (CHAT_LAYOUTS.has(name) && entityId)
@@ -280,7 +299,7 @@ export class LayoutManager
 		}
 
 		const { hasAccess, errorCode } = await AccessManager.checkMessageAccess(messageId);
-		if (!hasAccess && errorCode === AccessErrorCode.messageAccessDeniedByTariff)
+		if (!hasAccess && errorCode === ErrorCode.message.accessDeniedByTariff)
 		{
 			Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({ dialogId });
 			FeatureManager.chatHistory.openFeatureSlider();

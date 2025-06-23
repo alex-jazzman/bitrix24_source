@@ -34,7 +34,6 @@ $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_TITLE"] = "Не можем отправ
 $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_DESCRIPTION"] = "Эти e-mail указаны в неправильном формате: #emailString#";
 $MESS["COLLAB_INVITE_DETAILS_LINK_TEXT"] = "Подробнее";
 $MESS["COLLAB_INVITE_SHARING_MESSAGE_TEXT"] = "Присоединяйтесь к коллабе. Здесь мы общаемся в чате, созваниваемся и вместе идём к результату #link#";
-$MESS["COLLAB_INVITE_QR_SHARING_MESSAGE_TEXT"] = "Сканируйте QR-код и присоединяйтесь к коллабе";
 
 $MESS['COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'] = 'Пригласить участников позже?';
 $MESS['COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'] = 'Приглашения ещё не отправлены. Вы в любой момент можете пригласить этих и других участников в коллабу';

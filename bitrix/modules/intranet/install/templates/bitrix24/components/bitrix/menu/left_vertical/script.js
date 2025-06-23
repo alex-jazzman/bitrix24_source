@@ -845,12 +845,18 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getSimilarToUrl",
 	    value: function getSimilarToUrl(currentUri) {
+	      var _this3 = this;
 	      var result = [];
 	      this.links.forEach(function (link, index) {
 	        if (areUrlsEqual(link, currentUri)) {
-	          result.push({
-	            priority: index > 0 ? 0 : 1,
+	          var priority = 0;
+	          if (index === 0)
 	            // main link is in higher priority
+	            {
+	              priority = _this3.getCode() === 'default' ? 2 : 1;
+	            }
+	          result.push({
+	            priority: priority,
 	            url: link
 	          });
 	        }
@@ -945,7 +951,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showMessage",
 	    value: function showMessage(message) {
-	      var _this3 = this;
+	      var _this4 = this;
 	      if (this.showMessagePopup) {
 	        this.showMessagePopup.close();
 	      }
@@ -957,15 +963,15 @@ this.BX = this.BX || {};
 	        angle: true,
 	        events: {
 	          onClose: function onClose() {
-	            _this3.showMessagePopup = null;
+	            _this4.showMessagePopup = null;
 	          }
 	        },
 	        autoHide: true
 	      });
 	      this.showMessagePopup.show();
 	      setTimeout(function () {
-	        if (_this3.showMessagePopup) {
-	          _this3.showMessagePopup.close();
+	        if (_this4.showMessagePopup) {
+	          _this4.showMessagePopup.close();
 	        }
 	      }, 3000);
 	    }
@@ -1045,9 +1051,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showUpdate",
 	    value: function showUpdate(item) {
-	      var _this4 = this;
+	      var _this5 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this4.showForm(item.container, item.getEditFields(), resolve, reject);
+	        _this5.showForm(item.container, item.getEditFields(), resolve, reject);
 	      });
 	    }
 	  }, {
@@ -1072,7 +1078,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showForm",
 	    value: function showForm(bindElement, itemInfo, resolve, reject) {
-	      var _this5 = this;
+	      var _this6 = this;
 	      if (this.popup) {
 	        this.popup.close();
 	      }
@@ -1100,7 +1106,7 @@ this.BX = this.BX || {};
 	        content: form,
 	        buttons: [new ui_buttons.SaveButton({
 	          onclick: function onclick() {
-	            if (_this5.checkForm(form)) {
+	            if (_this6.checkForm(form)) {
 	              var itemInfoToSave = {};
 	              babelHelpers.toConsumableArray(form.elements).forEach(function (node) {
 	                itemInfoToSave[node.name] = node.value;
@@ -1108,15 +1114,15 @@ this.BX = this.BX || {};
 	              if (form.elements['openInNewPage']) {
 	                itemInfoToSave['openInNewPage'] = form.elements["openInNewPage"].checked ? 'Y' : 'N';
 	              }
-	              _this5.backendSaveItem(itemInfoToSave).then(function () {
+	              _this6.backendSaveItem(itemInfoToSave).then(function () {
 	                resolve(itemInfoToSave);
-	                _this5.popup.close();
+	                _this6.popup.close();
 	              })["catch"](Utils.catchError);
 	            }
 	          }
 	        }), new ui_buttons.CancelButton({
 	          onclick: function onclick() {
-	            _this5.popup.close();
+	            _this6.popup.close();
 	          }
 	        })]
 	      });
@@ -1697,7 +1703,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openSettings",
 	    value: function openSettings() {
-	      BX.SidePanel.Instance.open('/settings/configs/?analyticContext=left_menu&page=mainpage');
+	      var url = "".concat(main_core.Loc.getMessage('mainpage_settings_path'), "&analyticContext=left_menu");
+	      BX.SidePanel.Instance.open(url);
 	    }
 	  }]);
 	  return ItemMainPage;
@@ -1987,27 +1994,24 @@ this.BX = this.BX || {};
 	          changeActiveItem = true;
 	        } else if (theMostOfTheLinks.uri.getPath().length === linkUri.getPath().length) {
 	          var actualParams = babelHelpers.classPrivateFieldGet(_this, _actualLink).getQueryParams();
-	          var maxCount = Object.keys(actualParams).length;
 	          var theMostOfTheLinkServiceData = {
 	            params: theMostOfTheLinks.uri.getQueryParams(),
-	            mismatches: maxCount
+	            matches: 0
 	          };
 	          var comparedLinkParams = {
 	            params: linkUri.getQueryParams(),
-	            mismatches: maxCount
+	            matches: 0
 	          };
-	          Array.from(Object.keys(actualParams)).forEach(function (key) {
-	            if (String(actualParams[key]) === String(theMostOfTheLinkServiceData.params[key])) {
-	              theMostOfTheLinkServiceData.mismatches--;
+	          for (var _i = 0, _Object$keys = Object.keys(actualParams); _i < _Object$keys.length; _i++) {
+	            var key = _Object$keys[_i];
+	            if (key in actualParams && key in theMostOfTheLinkServiceData.params && String(actualParams[key]) === String(theMostOfTheLinkServiceData.params[key])) {
+	              theMostOfTheLinkServiceData.matches++;
 	            }
-	            if (String(actualParams[key]) === String(comparedLinkParams.params[key])) {
-	              comparedLinkParams.mismatches--;
+	            if (key in actualParams && key in comparedLinkParams.params && String(actualParams[key]) === String(comparedLinkParams.params[key])) {
+	              comparedLinkParams.matches++;
 	            }
-	          });
-	          if (link.priority > 0 && item instanceof ItemSystem) {
-	            link.priority += 1;
 	          }
-	          if (theMostOfTheLinkServiceData.mismatches > comparedLinkParams.mismatches || theMostOfTheLinks.priority < link.priority) {
+	          if (comparedLinkParams.matches > theMostOfTheLinkServiceData.matches || comparedLinkParams.matches === theMostOfTheLinkServiceData.matches && Object.keys(comparedLinkParams.params).length < Object.keys(theMostOfTheLinkServiceData.params).length || theMostOfTheLinks.priority < link.priority) {
 	            changeActiveItem = true;
 	          }
 	        }
@@ -3297,6 +3301,8 @@ this.BX = this.BX || {};
 	      this.menuHeader.querySelector(".menu-items-header-title").addEventListener('click', this.handleBurgerClick.bind(this, true));
 	      this.upButton = this.menuContainer.querySelector(".menu-btn-arrow-up");
 	      this.upButton.addEventListener("click", this.handleUpButtonClick.bind(this));
+	      this.upButton.addEventListener("mouseenter", this.handleUpButtonMouseEnter.bind(this));
+	      this.upButton.addEventListener("mouseleave", this.handleUpButtonMouseLeave.bind(this));
 	      this.menuMoreButton = this.menuContainer.querySelector(".menu-favorites-more-btn");
 	      this.menuMoreButton.addEventListener("click", this.handleShowHiddenClick.bind(this));
 	      var helperItem = this.menuContainer.querySelector(".menu-help-btn");
@@ -3872,6 +3878,11 @@ this.BX = this.BX || {};
 	        this.reverseUpButton();
 	      }
 	      setTimeout(this.releaseSliding.bind(this), 100);
+	    }
+	  }, {
+	    key: "handleUpButtonMouseEnter",
+	    value: function handleUpButtonMouseEnter() {
+	      this.blockSliding();
 	    }
 	  }, {
 	    key: "handleUpButtonMouseLeave",

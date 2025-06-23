@@ -72,13 +72,14 @@ export class Preview
 		}
 
 		const { width: pageWidth, height: pageHeight } = this.#page.getBoundingClientRect();
-		const widthRatio = widthPx / (width / 100 * pageWidth);
-		const heightRatio = heightPx / (height / 100 * pageHeight);
-		const fontSize = (parseFloat(style['fontSize']) || 14 ) / widthRatio;
+
+		const widthRatio = widthPx / (width / 100 * (pageWidth > 0 ? pageWidth : 446));
+		const heightRatio = heightPx / (height / 100 * (pageHeight > 0 ? pageHeight : 630));
+		const fontSize = (parseFloat(style.fontSize) || 14) / widthRatio;
 		const padding = `${5 / heightRatio}px ${8 / widthRatio}px`;
 		Object.assign(inlineStyles, {
 			padding,
-			fontSize: `${fontSize}px`
+			fontSize: `${fontSize}px`,
 		});
 
 		return inlineStyles;
@@ -145,7 +146,6 @@ export class Preview
 
 		return Tag.render`<img src="data:image;base64,${url}" />`;
 	}
-
 	#getTextLayout(block): ?HTMLElement
 	{
 		let text = block.data.text;

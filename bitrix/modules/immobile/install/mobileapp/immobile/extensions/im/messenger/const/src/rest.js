@@ -63,9 +63,14 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
 		imV2ChatMessagePin: 'im.v2.Chat.Message.pin',
 		imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
+		imV2ChatMessageSearch: 'im.v2.Chat.Message.search',
+		imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
 
 		imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 		imV2ChatPinCount: 'im.v2.Chat.Pin.count',
+
+		imV2ChatPin: 'im.v2.Chat.pin',
+		imV2ChatUnpin: 'im.v2.Chat.unpin',
 
 		imV2ChatJoin: 'im.v2.Chat.join',
 		imV2ChatAddUsers: 'im.v2.Chat.addUsers',
@@ -75,6 +80,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
 
 		imV2ChatUpdate: 'im.v2.Chat.update',
+		imV2ChatListShared: 'im.v2.Chat.listShared',
 		imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 		imV2ChatSetTitle: 'im.v2.Chat.setTitle',
 		imV2ChatSetManageUI: 'im.v2.Chat.setManageUI',
@@ -91,6 +97,13 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 
 		imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
+
+		imv2ChatSetMessagesAutoDeleteDelay: 'im.v2.Chat.setMessagesAutoDeleteDelay',
+
+		imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
+
+		imV2AnchorRead: 'im.v2.Anchor.read',
+		imV2AnchorReadChat: 'im.v2.Chat.Anchor.read',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',
@@ -113,6 +126,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imDiskFilePreviewUpload: 'disk.api.file.attachPreview',
 		imDiskFileDelete: 'im.disk.file.delete',
 		imDiskFileSave: 'im.disk.file.save',
+		imV2DiskFileSave: 'im.v2.Disk.File.save',
 
 		imRecentGet: 'im.recent.get',
 		imRecentList: 'im.recent.list',
@@ -157,6 +171,14 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		socialnetworkCollabMemberDelete: 'socialnetwork.collab.Member.delete',
 		socialnetworkCollabDelete: 'socialnetwork.collab.Collab.delete',
 		socialnetworkCollabMemberLeave: 'socialnetwork.collab.Member.leave',
+
+		voteIntegrationImSend: 'vote.Integration.Im.send',
+		voteAttachedVoteVote: 'vote.AttachedVote.vote',
+		voteAttachedVoteStop: 'vote.AttachedVote.stop',
+		voteAttachedVoteRecall: 'vote.AttachedVote.recall',
+		voteAttachedVoteGetMany: 'vote.AttachedVote.getMany',
+		voteAttachedVoteGetWithVoted: 'vote.AttachedVote.getWithVoted',
+		voteAttachedVoteGetAnswerVoted: 'vote.AttachedVote.getAnswerVoted',
 	});
 
 	module.exports = {

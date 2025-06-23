@@ -60,6 +60,7 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 			{
 				logger = this.createLogger(name);
 				this.loggerCollection.set(name, logger);
+				this.saveConfig();
 			}
 
 			return logger;

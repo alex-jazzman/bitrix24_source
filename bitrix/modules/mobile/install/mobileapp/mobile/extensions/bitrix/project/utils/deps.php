@@ -14,5 +14,6 @@ return [
 		'rest',
 		'tariff-plan-restriction',
 		'toast',
+		'collab/service/access',
 	],
 ];

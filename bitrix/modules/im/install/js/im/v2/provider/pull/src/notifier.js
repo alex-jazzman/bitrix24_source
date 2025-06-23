@@ -2,7 +2,7 @@ import { Core } from 'im.v2.application.core';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { SoundType, UserStatus, LocalStorageKey, Settings, RawSettings, UserType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
-import { NotifierManager } from 'im.v2.lib.notifier';
+import { MessageNotifierManager } from 'im.v2.lib.message-notifier';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { CallManager } from 'im.v2.lib.call';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
@@ -59,7 +59,7 @@ export class NotifierPullHandler
 		const dialog = this.store.getters['chats/get'](params.dialogId, true);
 		const user = this.store.getters['users/get'](message.authorId);
 
-		NotifierManager.getInstance().showMessage({
+		MessageNotifierManager.getInstance().showMessage({
 			message,
 			dialog,
 			user,
@@ -114,7 +114,7 @@ export class NotifierPullHandler
 
 		this.#flashDesktopIcon();
 
-		NotifierManager.getInstance().showNotification(notification, user);
+		MessageNotifierManager.getInstance().showNotification(notification, user);
 
 		this.#updateLastNotificationId(params.id);
 	}

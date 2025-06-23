@@ -615,10 +615,10 @@ class DepartmentProvider extends BaseProvider
 		}
 
 		return SectionTable::getList([
-				'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
-				'filter' => $filter,
-				'order' => ['LEFT_MARGIN' => 'asc'],
-				'limit' => $limit,
+			'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
+			'filter' => $filter,
+			'order' => ['LEFT_MARGIN' => 'asc'],
+			'limit' => $limit,
 		])->fetchCollection();
 	}
 

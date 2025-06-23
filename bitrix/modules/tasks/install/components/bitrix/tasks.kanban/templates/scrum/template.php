@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -87,6 +88,22 @@ $data = $arResult['DATA'];
 		isActiveSprint: <?=($arParams['IS_ACTIVE_SPRINT'] == 'Y' ? 'true' : 'false')?>,
 		parentTasks: <?=CUtil::PhpToJSObject($data['parentTasks'], false, false, true)?>
 	});
+
+	<?php if ($arResult['needToShowInviteToMobile']) : ?>
+		BX.ready(function() {
+			BX.Runtime.loadExtension('tasks.promo.invite-to-mobile').then(() => {
+				const inviteToMobile = new BX.Tasks.Promo.InviteToMobile({
+					appLink: <?= Json::encode($arResult['inviteToMobileLink']) ?>,
+				});
+
+				inviteToMobile.show();
+				<?php
+					$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+					$inviteToMobileService->setShown($arParams['USER_ID']);
+				?>
+			});
+		});
+	<?php endif; ?>
 
 	BX.ready(function() {
 		BX.Tasks.KanbanAjaxComponent.Parameters = new BX.Tasks.KanbanAjaxComponent({

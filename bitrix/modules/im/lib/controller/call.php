@@ -95,7 +95,14 @@ class Call extends Engine\Controller
 
 				try
 				{
-					$call = CallFactory::createWithEntity($type, $provider, $entityType, $entityId, $currentUserId);
+					$call = CallFactory::createWithEntity(
+						type: $type,
+						provider: $provider,
+						entityType: $entityType,
+						entityId: $entityId,
+						initiatorId: $currentUserId,
+						scheme: \Bitrix\Im\Call\Call::SCHEME_CLASSIC,
+					);
 				}
 				catch (\Throwable $e)
 				{
@@ -165,7 +172,7 @@ class Call extends Engine\Controller
 			'call' => $call->toArray($initiatorId),
 			'connectionData' => $call->getConnectionData($currentUserId),
 			'users' => $users,
-			'userData' => Util::getUsers($users),
+			'userData' => $call->prepareUserData($users),
 			'publicChannels' => $publicChannels,
 			'logToken' => $call->getLogToken($currentUserId),
 		];
@@ -195,7 +202,7 @@ class Call extends Engine\Controller
 	 * @param int[] $newUsers
 	 * @return array|null
 	 */
-	public function createChildCallAction($parentId, $newProvider, $newUsers): ?array
+	public function createChildCallAction(int $parentId, string $newProvider, array $newUsers): ?array
 	{
 		$parentCall = Registry::getCallWithId($parentId);
 		if (!$parentCall)
@@ -236,7 +243,7 @@ class Call extends Engine\Controller
 			'call' => $childCall->toArray(),
 			'connectionData' => $childCall->getConnectionData($currentUserId),
 			'users' => $users,
-			'userData' => Util::getUsers($users),
+			'userData' => $childCall->prepareUserData($users),
 			'logToken' => $childCall->getLogToken($currentUserId)
 		];
 	}
@@ -292,7 +299,7 @@ class Call extends Engine\Controller
 	 * @param int $callId
 	 * @return array|null
 	 */
-	public function interruptAction($callId): ?array
+	public function interruptAction(int $callId): ?array
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -322,7 +329,7 @@ class Call extends Engine\Controller
 	 * @param int $callId
 	 * @return array|null
 	 */
-	public function getAction($callId): ?array
+	public function getAction(int $callId): ?array
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -351,7 +358,7 @@ class Call extends Engine\Controller
 	 * @param string $repeated
 	 * @return true|null
 	 */
-	public function inviteAction($callId, array $userIds, $video = "N", $show = "Y", $legacyMobile = "N", $repeated = "N"): ?bool
+	public function inviteAction(int $callId, array $userIds, $video = "N", $show = "Y", $legacyMobile = "N", $repeated = "N"): ?bool
 	{
 		$isVideo = ($video === "Y");
 		$isShow = ($show === "Y");
@@ -470,7 +477,7 @@ class Call extends Engine\Controller
 	 * @param int $callId
 	 * @return void|null
 	 */
-	public function cancelAction($callId)
+	public function cancelAction(int $callId)
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -493,7 +500,7 @@ class Call extends Engine\Controller
 	 * @param string $legacyMobile
 	 * @return void|null
 	 */
-	public function answerAction($callId, $callInstanceId, $legacyMobile = "N")
+	public function answerAction(int $callId, $callInstanceId, $legacyMobile = "N")
 	{
 		$isLegacyMobile = $legacyMobile === "Y";
 		$call = Registry::getCallWithId($callId);
@@ -602,7 +609,7 @@ class Call extends Engine\Controller
 	 * @param bool $retransmit
 	 * @return bool
 	 */
-	public function pingAction($callId, $requestId, $retransmit = true)
+	public function pingAction(int $callId, $requestId, $retransmit = true)
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -643,7 +650,7 @@ class Call extends Engine\Controller
 	 * @param int $callId
 	 * @return void|null
 	 */
-	public function onShareScreenAction($callId)
+	public function onShareScreenAction(int $callId)
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -672,7 +679,7 @@ class Call extends Engine\Controller
 	 * @param int $callId
 	 * @return void|null
 	 */
-	public function onStartRecordAction($callId)
+	public function onStartRecordAction(int $callId)
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -703,7 +710,7 @@ class Call extends Engine\Controller
 	 * @param bool $restart
 	 * @return void|null
 	 */
-	public function negotiationNeededAction($callId, $userId, $restart = false)
+	public function negotiationNeededAction(int $callId, int $userId, $restart = false)
 	{
 		$restart = (bool)$restart;
 		$call = Registry::getCallWithId($callId);
@@ -737,7 +744,7 @@ class Call extends Engine\Controller
 	 * @param string $userAgent
 	 * @return void|null
 	 */
-	public function connectionOfferAction($callId, $userId, $connectionId, $sdp, $userAgent)
+	public function connectionOfferAction(int $callId, int $userId, $connectionId, $sdp, $userAgent)
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -770,7 +777,7 @@ class Call extends Engine\Controller
 	 * @param string $userAgent
 	 * @return void|null
 	 */
-	public function connectionAnswerAction($callId, $userId, $connectionId, $sdp, $userAgent)
+	public function connectionAnswerAction(int $callId, int $userId, $connectionId, $sdp, $userAgent)
 	{
 		$currentUserId = $this->getCurrentUser()->getId();
 		$call = Registry::getCallWithId($callId);
@@ -802,7 +809,7 @@ class Call extends Engine\Controller
 	 * @param array $candidates
 	 * @return void|null
 	 */
-	public function iceCandidateAction($callId, $userId, $connectionId, array $candidates)
+	public function iceCandidateAction(int $callId, int $userId, $connectionId, array $candidates)
 	{
 		// mobile can alter key order, so we recover it
 		ksort($candidates);
@@ -831,7 +838,7 @@ class Call extends Engine\Controller
 	 * @param bool $retransmit
 	 * @return void|null
 	 */
-	public function hangupAction($callId, $callInstanceId, $retransmit = true)
+	public function hangupAction(int $callId, $callInstanceId, $retransmit = true)
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -912,7 +919,7 @@ class Call extends Engine\Controller
 	 * @param int[] $userIds
 	 * @return null|array
 	 */
-	public function getUsersAction($callId, array $userIds = [])
+	public function getUsersAction(int $callId, array $userIds = [])
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -946,7 +953,7 @@ class Call extends Engine\Controller
 			return null;
 		}
 
-		return Util::getUsers($allowedUserIds);
+		return $call->prepareUserData($allowedUserIds);
 	}
 
 	/**
@@ -955,7 +962,7 @@ class Call extends Engine\Controller
 	 * @param int $userId
 	 * @return null|array
 	 */
-	public function getUserStateAction($callId, int $userId = 0)
+	public function getUserStateAction(int $callId, int $userId = 0)
 	{
 		$currentUserId = (int)$this->getCurrentUser()->getId();
 		$call = Registry::getCallWithId($callId);

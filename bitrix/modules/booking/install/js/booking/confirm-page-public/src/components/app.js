@@ -55,7 +55,10 @@ export const App = {
 
 				this.confirmedBooking.isDeleted = true;
 
-				if (this.confirmedContext === 'delayed.pub.page')
+				if (
+					this.confirmedContext === 'delayed.pub.page'
+					|| this.confirmedContext === 'info.pub.page'
+				)
 				{
 					this.confirmedContext = 'cancel.pub.page';
 				}

@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const logger = getLogger('dialog--scroll-manager');
 
@@ -34,6 +35,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 			this.skipFirstScrollToFirstUnreadMessages = skipFirstScrollToFirstUnreadMessages;
 
 			this.isScrollToBottomEnable = true;
+			this.replyMessageId = null;
 			this.scrollToBottomHandler = this.onScrollToBottom.bind(this);
 			this.scrollToFirstUnreadHandler = this.onScrollToFirstUnread.bind(this);
 			this.disableScrollToBottomHandler = this.disableScrollToBottom.bind(this);
@@ -113,12 +115,10 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 				withAnimation,
 				() => {
 					setTimeout(() => {
-						this.view.enableReadingEvent();
-						this.view.enableShowScrollButton();
-
-						const { messageList } = this.view.getViewableMessages();
-
-						this.view.readVisibleUnreadMessages(messageList);
+						this.#processAfterScrollEnd()
+							.catch((error) => {
+								logger.error(`${this.constructor.name}.#processAfterScrollEnd`, error);
+							});
 					}, 300);
 				},
 				AfterScrollMessagePosition.top,
@@ -218,6 +218,22 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 			return Boolean(lastReadMessage);
 		}
 
+		/**
+		 * @param {number} messageId
+		 * @return {boolean}
+		 */
+		checkMessageIsAbove(messageId)
+		{
+			let actualMessageList = this.view.getCompletelyVisibleMessages()?.messageList;
+
+			if (!actualMessageList)
+			{
+				actualMessageList = this.view.isMessageWithIdOnScreen(messageId);
+			}
+
+			return Number(actualMessageList?.[0]?.id) > messageId;
+		}
+
 		onAppPaused()
 		{
 			const { indexList } = this.view.getCompletelyVisibleMessages();
@@ -231,6 +247,75 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 			{
 				this.needScrollToFirstUnread = false;
 			}
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {MessageId} quoteMessageId
+		 * @param {MessageId} replyMessageId
+		 */
+		saveReplyMessageId(dialogId, quoteMessageId, replyMessageId)
+		{
+			if (!Feature.isBackToReplyAvailable)
+			{
+				return;
+			}
+
+			const isAnotherDialog = dialogId !== this.dialogId;
+			if (isAnotherDialog)
+			{
+				return;
+			}
+
+			if (this.checkMessageOnScreen(quoteMessageId))
+			{
+				return;
+			}
+
+			logger.log(`${this.constructor.name}.saveReplyMessageId:`, replyMessageId);
+			this.replyMessageId = replyMessageId;
+		}
+
+		clearReplyMessageId()
+		{
+			this.replyMessageId = null;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		shouldBackToReplyMessage()
+		{
+			if (Type.isNil(this.replyMessageId))
+			{
+				return false;
+			}
+
+			if (this.checkMessageOnScreen(this.replyMessageId))
+			{
+				this.clearReplyMessageId();
+
+				return false;
+			}
+
+			if (this.checkMessageIsAbove(this.replyMessageId))
+			{
+				this.clearReplyMessageId();
+
+				return false;
+			}
+
+			return true;
+		}
+
+		async #processAfterScrollEnd()
+		{
+			this.view.enableReadingEvent();
+			this.view.enableShowScrollButton();
+
+			const { messageList } = await this.view.getViewableMessages();
+
+			this.view.readVisibleUnreadMessages(messageList);
 		}
 	}
 

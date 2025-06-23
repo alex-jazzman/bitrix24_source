@@ -8,12 +8,10 @@ return [
 	'css' => 'script.css',
 	'js' => 'script.js',
 	'rel' => [
-		'main.popup',
+		'ui.counterpanel',
 		'main.core',
 		'main.core.events',
-		'ui.analytics',
 		'tasks.viewed',
-		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

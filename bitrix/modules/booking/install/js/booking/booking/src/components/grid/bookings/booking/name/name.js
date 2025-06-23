@@ -1,9 +1,17 @@
+// @vue/component
+
 import { Model } from 'booking.const';
+import { Name } from 'booking.component.booking';
 import type { BookingModel } from 'booking.model.bookings';
 import type { ClientData, ClientModel } from 'booking.model.clients';
+
 import './name.css';
 
-export const Name = {
+export const BookingName = {
+	name: 'BookingName',
+	components: {
+		Name,
+	},
 	props: {
 		bookingId: {
 			type: [Number, String],
@@ -31,14 +39,14 @@ export const Name = {
 		},
 	},
 	template: `
-		<div
-			class="booking-booking-booking-name"
-			:title="bookingName"
-			data-element="booking-booking-name"
-			:data-id="bookingId"
-			:data-resource-id="resourceId"
-		>
-			{{ bookingName }}
-		</div>
+		<Name
+			:name="bookingName"
+			className="booking-booking-booking-name"
+			:dataAttributes="{
+				'data-element': 'booking-booking-name',
+				'data-id': bookingId,
+				'data-resource-id':resourceId,
+			}"
+		/>
 	`,
 };

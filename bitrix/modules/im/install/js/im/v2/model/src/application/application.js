@@ -93,6 +93,12 @@ export class ApplicationModel extends BuilderModel
 					entityId: this.validateLayoutEntityId(name, entityId),
 					contextId,
 				};
+
+				EventEmitter.emit(EventType.layout.onLayoutChange, {
+					from: previousLayout,
+					to: newLayout,
+				});
+
 				if (previousLayout.name === newLayout.name && previousLayout.entityId === newLayout.entityId)
 				{
 					return;
@@ -100,11 +106,6 @@ export class ApplicationModel extends BuilderModel
 
 				store.commit('updateLayout', {
 					layout: newLayout,
-				});
-
-				EventEmitter.emit(EventType.layout.onLayoutChange, {
-					from: previousLayout,
-					to: newLayout,
 				});
 			},
 		};

@@ -14,15 +14,15 @@ $MESS["UPDATES_ACTIVATE_CONTACT_INFO"] = "Басқа байланыс ақпар
 $MESS["UPDATES_ACTIVATE_CONTACT_PERSON"] = "Бағдарламалық өнімнің осы көшірмесін пайдалануға<br/>жауапты байланыс тұлғасы";
 $MESS["UPDATES_ACTIVATE_CONTACT_PHONE"] = "Байланыс телефон нөмірі";
 $MESS["UPDATES_ACTIVATE_EMAIL"] = "Бағдарламалық өнімді лицензиялау және пайдалану мәселелері<br/>бойынша байланыс үшін иесінің e-mail";
-$MESS["UPDATES_ACTIVATE_GENERATE_USER"] = "Менің сайтта аккаунтым жоқ <a href=\"http://www.1c-bitrix.ru\">www.1c-bitrix.ru</a>, мен жаңасын жасағым келеді";
+$MESS["UPDATES_ACTIVATE_GENERATE_USER"] = "Менің сайтта аккаунтым жоқ <a href=\"https://www.1c-bitrix.ru\">www.1c-bitrix.ru</a>, мен жаңасын жасағым келеді";
 $MESS["UPDATES_ACTIVATE_GENERATE_USER_NO"] = "Мен сайтта тіркелдім және өнімнің техникалық қолдауы мен дистрибутивтеріне қол жеткізу үшін деректерімді пайдаланғым келеді";
 $MESS["UPDATES_ACTIVATE_LICENSE_TITLE"] = "Лицензиялық кілтті белсендіру ";
 $MESS["UPDATES_ACTIVATE_NAME"] = "Өнім иесі компанияның толық заңды атауы<br/> немесе жеке меншік иесінің аты-жөні";
 $MESS["UPDATES_ACTIVATE_PHONE"] = "Өнімнің осы көшірмесінің иесінің телефоны (аймақ коды көрсетілген)";
-$MESS["UPDATES_ACTIVATE_SITE_TEXT"] = "Сіз техникалық қолдауға <a href=\"http://www.1c-bitrix.ru/support/\">рұқсат</a>,
-<a href=\"http://www.1c-bitrix.ru/support/forum/forum7/\">жабық клиенттік форумға</a>,
-<br/>сондай-ақ <a href=\"http://www.1c-bitrix.ru/download/private/index.php\">өнімнің дистрибутивтерін бастапқы код ретінде сақтауға рұқсат ала аласыз</a>.
- <br/>Ол үшін сізге сайтта аккаунт қажет<a href=\"http://www.1c-bitrix.ru\">www.1c-bitrix.ru</a>";
+$MESS["UPDATES_ACTIVATE_SITE_TEXT"] = "Сіз техникалық қолдауға <a href=\"https://www.1c-bitrix.ru/support/\">рұқсат</a>,
+<a href=\"https://www.1c-bitrix.ru/support/forum/forum7/\">жабық клиенттік форумға</a>,
+<br/>сондай-ақ <a href=\"https://www.1c-bitrix.ru/download/private/index.php\">өнімнің дистрибутивтерін бастапқы код ретінде сақтауға рұқсат ала аласыз</a>.
+ <br/>Ол үшін сізге сайтта аккаунт қажет<a href=\"https://www.1c-bitrix.ru\">www.1c-bitrix.ru</a>";
 $MESS["UPDATES_ACTIVATE_SITE_URL_NEW"] = "Өнімнің осы көшірмесі қолжетімді болатын тестілік мекенжайларды<br/>қоса алғанда, мекенжайлар тізімі";
 $MESS["UPDATES_ACTIVATE_SUCCESS"] = "Кілтті белсендіру сәтті өтті";
 $MESS["UPDATES_ACTIVATE_USER_EMAIL"] = "E-mail";

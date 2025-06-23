@@ -1,0 +1,9 @@
+.tasks-full-card-footer-create {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.tasks-full-card-footer-template-button.ui-btn {
+	margin-left: auto;
+}

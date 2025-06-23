@@ -3,12 +3,14 @@
  */
 jn.define('im/messenger/provider/pull/chat/counter', (require, exports, module) => {
 	const { CounterType } = require('im/messenger/const');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { BaseCounterPullHandler } = require('im/messenger/provider/pull/base/counter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-counter');
 
 	/**
+	 * @deprecated
 	 * @class ChatCounterPullHandler
 	 */
 	class ChatCounterPullHandler extends BaseCounterPullHandler
@@ -30,13 +32,22 @@ jn.define('im/messenger/provider/pull/chat/counter', (require, exports, module) 
 				counterType,
 			} = params;
 
-			if (
-				counterType === CounterType.chat
-				|| counterType === CounterType.collab
-			)
+			const types = [CounterType.chat, CounterType.collab];
+			if (Feature.isCopilotInDefaultTabAvailable)
 			{
-				Counters.chatCounter.detail[dialogId] = counter;
-				Counters.update();
+				types.push(CounterType.copilot);
+			}
+
+			if (types.includes(counterType))
+			{
+				TabCounters.chatCounter.detail[dialogId] = counter;
+				TabCounters.update();
+			}
+
+			if (!Feature.isCopilotInDefaultTabAvailable && counterType === CounterType.copilot)
+			{
+				TabCounters.copilotCounter.detail[dialogId] = counter;
+				TabCounters.update();
 			}
 		}
 	}

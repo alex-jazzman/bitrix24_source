@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
 (function (exports,main_core,ui_buttons) {
@@ -18,12 +19,10 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "ajaxUrl", '/bitrix/components/bitrix/disk.folder.list/ajax.php');
 	    babelHelpers.defineProperty(this, "destFormName", 'folder-list-destFormName');
 	  }
-
 	  babelHelpers.createClass(LegacyPopup, [{
 	    key: "showSharingDetailWithChangeRights",
 	    value: function showSharingDetailWithChangeRights(params) {
 	      var _this = this;
-
 	      this.entityToNewShared = {};
 	      this.loadedReadOnlyEntityToNewShared = {};
 	      params = params || {};
@@ -42,7 +41,6 @@ this.BX.Disk = this.BX.Disk || {};
 	              message: response.errors.pop().message
 	            });
 	          }
-
 	          var objectOwner = {
 	            name: response.owner.name,
 	            avatar: response.owner.avatar,
@@ -56,12 +54,10 @@ this.BX.Disk = this.BX.Disk || {};
 	            events: {
 	              onAfterPopupShow: function onAfterPopupShow() {
 	                BX.addCustomEvent('onChangeRightOfSharing', _this.onChangeRightOfSharing.bind(_this));
-
 	                for (var i in response.members) {
 	                  if (!response.members.hasOwnProperty(i)) {
 	                    continue;
 	                  }
-
 	                  _this.entityToNewShared[response.members[i].entityId] = {
 	                    item: {
 	                      id: response.members[i].entityId,
@@ -72,7 +68,6 @@ this.BX.Disk = this.BX.Disk || {};
 	                    right: response.members[i].right
 	                  };
 	                }
-
 	                BX.SocNetLogDestination.init({
 	                  name: _this.destFormName,
 	                  searchInput: BX('feed-add-post-destination-input'),
@@ -110,7 +105,6 @@ this.BX.Disk = this.BX.Disk || {};
 	                if (BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog()) {
 	                  BX.SocNetLogDestination.closeDialog();
 	                }
-
 	                BX.removeCustomEvent('onChangeRightOfSharing', _this.onChangeRightOfSharing.bind(_this));
 	              }
 	            },
@@ -191,8 +185,14 @@ this.BX.Disk = this.BX.Disk || {};
 	                      if (!response) {
 	                        return;
 	                      }
-
-	                      response.message = BX.message('JS_DISK_SHARING_LEGACY_POPUP_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+	                      var name = params.object.name.split('.');
+	                      var ext = name.pop().toLowerCase();
+	                      name = name.join('.');
+	                      if (name && ext === 'board') {
+	                        response.message = BX.message('JS_DISK_SHARING_LEGACY_POPUP_OK_BOARD_SHARE_MODIFIED').replace('#FILE#', name);
+	                      } else {
+	                        response.message = BX.message('JS_DISK_SHARING_LEGACY_POPUP_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+	                      }
 	                      BX.Disk.showModalWithStatusAction(response);
 	                    }
 	                  });
@@ -214,7 +214,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "showSharingDetailWithSharing",
 	    value: function showSharingDetailWithSharing(params) {
 	      var _this2 = this;
-
 	      this.entityToNewShared = {};
 	      this.loadedReadOnlyEntityToNewShared = {};
 	      params = params || {};
@@ -233,7 +232,6 @@ this.BX.Disk = this.BX.Disk || {};
 	              message: response.errors.pop().message
 	            });
 	          }
-
 	          var objectOwner = {
 	            name: response.owner.name,
 	            avatar: response.owner.avatar,
@@ -248,12 +246,10 @@ this.BX.Disk = this.BX.Disk || {};
 	            events: {
 	              onAfterPopupShow: function onAfterPopupShow() {
 	                BX.addCustomEvent('onChangeRightOfSharing', _this2.onChangeRightOfSharing.bind(_this2));
-
 	                for (var i in response.members) {
 	                  if (!response.members.hasOwnProperty(i)) {
 	                    continue;
 	                  }
-
 	                  _this2.entityToNewShared[response.members[i].entityId] = {
 	                    item: {
 	                      id: response.members[i].entityId,
@@ -264,7 +260,6 @@ this.BX.Disk = this.BX.Disk || {};
 	                    right: response.members[i].right
 	                  };
 	                }
-
 	                _this2.loadedReadOnlyEntityToNewShared = BX.clone(_this2.entityToNewShared, true);
 	                BX.SocNetLogDestination.init({
 	                  name: _this2.destFormName,
@@ -303,7 +298,6 @@ this.BX.Disk = this.BX.Disk || {};
 	                if (BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog()) {
 	                  BX.SocNetLogDestination.closeDialog();
 	                }
-
 	                BX.removeCustomEvent('onChangeRightOfSharing', _this2.onChangeRightOfSharing.bind(_this2));
 	              }
 	            },
@@ -384,7 +378,6 @@ this.BX.Disk = this.BX.Disk || {};
 	                      if (!response) {
 	                        return;
 	                      }
-
 	                      BX.Disk.showModalWithStatusAction(response);
 	                    }
 	                  });
@@ -433,18 +426,15 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "onUnSelectDestination",
 	    value: function onUnSelectDestination(item, type, search) {
 	      var entityId = item.id;
-
 	      if (!!this.loadedReadOnlyEntityToNewShared[entityId]) {
 	        return false;
 	      }
-
 	      delete this.entityToNewShared[entityId];
 	      var child = BX.findChild(BX('bx-disk-popup-shared-people-list'), {
 	        attribute: {
 	          'data-dest-id': '' + entityId + ''
 	        }
 	      }, true);
-
 	      if (child) {
 	        BX.remove(child);
 	      }
@@ -462,7 +452,6 @@ this.BX.Disk = this.BX.Disk || {};
 	      BX.style(BX('feed-add-post-destination-input-box'), 'display', 'inline-block');
 	      BX.style(BX('bx-destination-tag'), 'display', 'none');
 	      BX.focus(BX('feed-add-post-destination-input'));
-
 	      if (BX.SocNetLogDestination.popupWindow) {
 	        BX.SocNetLogDestination.popupWindow.adjustPosition({
 	          forceTop: true
@@ -473,7 +462,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "onCloseDialogDestination",
 	    value: function onCloseDialogDestination() {
 	      var input = BX('feed-add-post-destination-input');
-
 	      if (!BX.SocNetLogDestination.isOpenSearch() && input && input.value.length <= 0) {
 	        BX.style(BX('feed-add-post-destination-input-box'), 'display', 'none');
 	        BX.style(BX('bx-destination-tag'), 'display', 'inline-block');
@@ -492,7 +480,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "onCloseSearchDestination",
 	    value: function onCloseSearchDestination() {
 	      var input = BX('feed-add-post-destination-input');
-
 	      if (!BX.SocNetLogDestination.isOpenSearch() && input && input.value.length > 0) {
 	        BX.style(BX('feed-add-post-destination-input-box'), 'display', 'none');
 	        BX.style(BX('bx-destination-tag'), 'display', 'inline-block');
@@ -503,42 +490,34 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "onKeyDownDestination",
 	    value: function onKeyDownDestination(event) {
 	      var BXSocNetLogDestinationFormName = this.destFormName;
-
 	      if (event.keyCode == 8 && BX('feed-add-post-destination-input').value.length <= 0) {
 	        BX.SocNetLogDestination.sendEvent = false;
 	        BX.SocNetLogDestination.deleteLastItem(BXSocNetLogDestinationFormName);
 	      }
-
 	      return true;
 	    }
 	  }, {
 	    key: "onKeyUpDestination",
 	    value: function onKeyUpDestination(event) {
 	      var BXSocNetLogDestinationFormName = this.destFormName;
-
 	      if (event.keyCode == 16 || event.keyCode == 17 || event.keyCode == 18 || event.keyCode == 20 || event.keyCode == 244 || event.keyCode == 224 || event.keyCode == 91) {
 	        return false;
 	      }
-
 	      if (event.keyCode == 13) {
 	        BX.SocNetLogDestination.selectFirstSearchItem(BXSocNetLogDestinationFormName);
 	        return BX.PreventDefault(event);
 	      }
-
 	      if (event.keyCode == 27) {
 	        BX('feed-add-post-destination-input').value = '';
 	      } else {
 	        BX.SocNetLogDestination.search(BX('feed-add-post-destination-input').value, true, BXSocNetLogDestinationFormName);
 	      }
-
 	      if (BX.SocNetLogDestination.sendEvent && BX.SocNetLogDestination.isOpenDialog()) {
 	        BX.SocNetLogDestination.closeDialog();
 	      }
-
 	      if (event.keyCode == 8) {
 	        BX.SocNetLogDestination.sendEvent = true;
 	      }
-
 	      return BX.PreventDefault(event);
 	    }
 	  }]);
@@ -548,7 +527,6 @@ this.BX.Disk = this.BX.Disk || {};
 	var SharingControlType = function SharingControlType() {
 	  babelHelpers.classCallCheck(this, SharingControlType);
 	};
-
 	babelHelpers.defineProperty(SharingControlType, "WITHOUT_EDIT", 'without-edit');
 	babelHelpers.defineProperty(SharingControlType, "WITH_CHANGE_RIGHTS", 'with-change-rights');
 	babelHelpers.defineProperty(SharingControlType, "WITH_SHARING", 'with-sharing');

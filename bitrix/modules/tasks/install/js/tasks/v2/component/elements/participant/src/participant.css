@@ -1,0 +1,26 @@
+.tasks-field-participant {
+	overflow: hidden;
+	max-width: max-content;
+	padding: 0 3px;
+	margin: 0 -3px;
+	border-radius: 10px;
+}
+
+.tasks-field-participant:focus-visible {
+	outline: var(--ui-border-width-thick) solid var(--ui-color-design-outline-a1-content-divider);
+}
+
+.tasks-field-participant-cant-change {
+	color: var(--ui-color-base-8);
+	font-size: var(--ui-font-size-lg);
+}
+
+.tasks-field-participant-cant-change span {
+	border-bottom: var(--ui-border-width-thin) dashed rgba(255, 255, 255, 0.5);
+	cursor: pointer;
+	transition: border-color 180ms;
+}
+
+.tasks-field-participant-cant-change span:hover {
+	border-color: rgba(255, 255, 255, 0.8);
+}

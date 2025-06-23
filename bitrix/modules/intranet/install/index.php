@@ -117,12 +117,21 @@ Class intranet extends CModule
 		RegisterModuleDependences("main", "OnGetRatingsObjects", "intranet", "CRatingsComponentsIntranet", "OnGetRatingObject", 200);
 
 		//auth provider
-		RegisterModuleDependences("main", "OnAuthProvidersBuildList", "intranet", "CIntranetAuthProvider", "GetProviders");
-		RegisterModuleDependences('main', 'OnBeforeUserUpdate', 'intranet', 'CIntranetAuthProvider', 'OnBeforeUserUpdate');
-		RegisterModuleDependences('main', 'OnAfterUserAdd', 'intranet', 'CIntranetAuthProvider', 'OnAfterUserAdd');
-		RegisterModuleDependences('iblock', 'OnBeforeIBlockSectionUpdate', 'intranet', 'CIntranetAuthProvider', 'OnBeforeIBlockSectionUpdate');
-		RegisterModuleDependences('iblock', 'OnAfterIBlockSectionDelete', 'intranet', 'CIntranetAuthProvider', 'OnAfterIBlockSectionDelete');
-		RegisterModuleDependences("search", "OnSearchCheckPermissions", "intranet", "CIntranetAuthProvider", "OnSearchCheckPermissions");
+		RegisterModuleDependences("main","OnAuthProvidersBuildList","intranet","CIntranetAuthProvider","GetProviders",);
+		RegisterModuleDependences(
+			'iblock',
+			'OnAfterIBlockSectionDelete',
+			'intranet',
+			'CIntranetAuthProvider',
+			'OnAfterIBlockSectionDelete'
+		);
+		RegisterModuleDependences("search","OnSearchCheckPermissions","intranet","CIntranetAuthProvider","OnSearchCheckPermissions",);
+
+		RegisterModuleDependences('humanresources','OnMemberAdded','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
+		RegisterModuleDependences('humanresources','OnMemberUpdated','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
+		RegisterModuleDependences('humanresources','OnMemberDeleted','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
+		RegisterModuleDependences('humanresources','OnNodeUpdated','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onNodeUpdated',);
+		RegisterModuleDependences('humanresources','OnNodeDeleted','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onNodeDeleted',);
 
 		// activity pulse
 		RegisterModuleDependences("crm", "OnAfterCrmContactAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onAfterCrmContactAddEvent");

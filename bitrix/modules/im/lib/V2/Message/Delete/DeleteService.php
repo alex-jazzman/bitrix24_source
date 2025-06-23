@@ -8,6 +8,7 @@ use Bitrix\Im\Model\MessageIndexTable;
 use Bitrix\Im\Recent;
 use Bitrix\Im\V2\Analytics\MessageAnalytics;
 use Bitrix\Im\V2\Analytics\MessageContent;
+use Bitrix\Im\V2\Anchor\DI\AnchorContainer;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Common\ContextCustomer;
 use Bitrix\Im\V2\Link\Url\UrlService;
@@ -186,6 +187,8 @@ class DeleteService
 
 		(new UrlService())->deleteUrlsByMessages($this->messages);
 
+		$this->deleteAnchors();
+
 		$this->sendAnalyticsData();
 	}
 
@@ -209,7 +212,7 @@ class DeleteService
 		$mode = $this->messagesDeletionModes[$messageId];
 
 		return $mode === DeletionMode::Complete;
-	}
+		}
 
 	/**
 	 * Set deletion mode for one of the message type
@@ -425,6 +428,7 @@ class DeleteService
 			}
 
 			$pullMessage['extra']['is_shared_event'] = true;
+			$pullMessage['params']['recentConfig']['sections'] = $this->chat->getRecentSectionsForGuest();
 
 			if ($this->chat->getType() === Chat::IM_TYPE_COMMENT)
 			{
@@ -508,6 +512,7 @@ class DeleteService
 			'muted' => false,
 			'counter' => 0,
 			'counterType' => $this->chat->getCounterType()->value,
+			'recentConfig' => $this->chat->getRecentConfig()->toPullFormat(),
 		];
 
 		foreach ($this->messages as $message)
@@ -543,7 +548,7 @@ class DeleteService
 			'command' => 'messageDeleteV2',
 			'params' => $params,
 			'push' => ['badge' => 'Y'],
-			'extra' => Common::getPullExtra()
+			'extra' => Common::getPullExtra(),
 		];
 	}
 
@@ -761,5 +766,12 @@ class DeleteService
 		$this->messages->fillParams();
 
 		return (new MessageContent($this->messages[$id]))->getComponentName();
+	}
+
+	private function deleteAnchors(): void
+	{
+		$readService = AnchorContainer::getInstance()->getReadService()->setContext($this->getContext());
+
+		$readService->readByMessageIds($this->messages->getIds());
 	}
 }

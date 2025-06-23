@@ -48,7 +48,8 @@
 	width: 22px;
 	min-width: 22px;
 	height: 22px;
-	background-size: cover;
+	background-size: contain;
+	background-repeat: no-repeat;
 	background-position: center;
 }
 

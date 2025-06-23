@@ -1,21 +1,18 @@
-import { Cache, Dom, Event, Loc, Tag, Type, Extension } from 'main.core';
+import { Dom, Event, Extension, Loc, Tag, Type } from 'main.core';
+import { MemoryCache } from 'main.core.cache';
+import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { Api } from 'sign.v2.api';
-import { SignDropdown } from 'sign.v2.b2e.sign-dropdown';
 import { FeatureStorage } from 'sign.feature-storage';
+import { DocumentInitiated, type DocumentInitiatedType } from 'sign.type';
+import { Api } from 'sign.v2.api';
 import { DocumentCounters } from 'sign.v2.b2e.document-counters';
-import { type BlankSelectorConfig } from 'sign.v2.blank-selector';
-import { type DocumentInitiatedType, DocumentInitiated } from 'sign.type';
+import { SignDropdown } from 'sign.v2.b2e.sign-dropdown';
+import { type BlankSelectorConfig, type ToggleEvent } from 'sign.v2.blank-selector';
 import { type DocumentDetails, DocumentSetup as BaseDocumentSetup } from 'sign.v2.document-setup';
 import { Helpdesk, Hint } from 'sign.v2.helper';
-import { isTemplateMode } from 'sign.v2.sign-settings';
-import { DateSelector } from './date-selector';
+import { NewBlankForTemplatePopupManager } from './components/template/new-blank-for-template-popup-manager';
+import 'sign.v2.ui.notice';
 import './style.css';
-
-type RegionDocumentType = {
-	code: string,
-	description: string,
-};
 
 const HelpdeskCodes = Object.freeze({
 	HowToWorkWithTemplates: '23174934',
@@ -23,16 +20,12 @@ const HelpdeskCodes = Object.freeze({
 
 export class DocumentSetup extends BaseDocumentSetup
 {
-	#cache = new Cache.MemoryCache();
+	#cache: MemoryCache<any> = new MemoryCache();
 	#api: Api;
 	#region: string;
-	#regionDocumentTypes: Array<RegionDocumentType>;
 	#senderDocumentTypes: DocumentInitiatedType[];
-	#documentTypeDropdown: HTMLElement;
 	#documentSenderTypeDropdown: HTMLElement;
-	#documentNumberInput: HTMLInputElement | null = null;
 	#documentTitleInput: HTMLInputElement;
-	#dateSelector: DateSelector | null = null;
 	headerLayout: HTMLElement;
 	documentCounters: DocumentCounters | null = null;
 	#b2eDocumentLimitCount: number;
@@ -40,20 +33,23 @@ export class DocumentSetup extends BaseDocumentSetup
 	#currentEditedId: number;
 	#currentEditButton: HTMLElement;
 	#currentEditBlock: HTMLElement;
+	#isOpenedFromRobot: boolean = false;
+	#isOpenedFromTemplateFolder: boolean = false;
 	documentSectionLayout: HTMLElement;
 	documentSectionInnerLayout: HTMLElement;
 
 	constructor(blankSelectorConfig: BlankSelectorConfig)
 	{
 		super(blankSelectorConfig);
-		const { region, regionDocumentTypes, documentMode, b2eDocumentLimitCount } = blankSelectorConfig;
+		const { region, b2eDocumentLimitCount, isOpenedFromRobot, isOpenedFromTemplateFolder } = blankSelectorConfig;
 		this.#api = new Api();
 		this.#region = region;
-		this.#regionDocumentTypes = regionDocumentTypes;
 		this.#senderDocumentTypes = Object.values(DocumentInitiated);
 		this.#b2eDocumentLimitCount = b2eDocumentLimitCount;
 		this.editMode = false;
 		this.onClickShowHintPopup = this.showHintPopup.bind(this);
+		this.#isOpenedFromRobot = isOpenedFromRobot;
+		this.#isOpenedFromTemplateFolder = isOpenedFromTemplateFolder;
 
 		this.#documentTitleInput = Tag.render`
 			<input
@@ -63,37 +59,16 @@ export class DocumentSetup extends BaseDocumentSetup
 				oninput="${({ target }) => this.setDocumentTitle(target.value)}"
 			/>
 		`;
-		if (this.isRuRegion() && !isTemplateMode(documentMode))
-		{
-			this.#documentNumberInput = Tag.render`<input type="text" class="ui-ctl-element" maxlength="255" />`;
-			this.#dateSelector = new DateSelector();
-		}
 
 		this.#disableDocumentInputs();
 		this.disableAddButton();
 
-		this.blankSelector.subscribe('toggleSelection', ({ data }) => {
-			this.setDocumentTitle(data.title);
-			if (data.selected)
-			{
-				this.#enableDocumentInputs();
-				this.enableAddButton();
-			}
-		});
-		this.blankSelector.subscribe('addFile', ({ data }) => {
-			this.isFileAdded = true;
-			this.setDocumentTitle(data.title);
-			this.#enableDocumentInputs();
-			this.enableAddButton();
-		});
 		this.#init();
 	}
 
 	#init(): void
 	{
-		this.#initDocumentType();
 		this.#initDocumentSenderType();
-		const documentTypeLayout = this.#getDocumentTypeLayout();
 		const title = this.isTemplateMode()
 			? Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_TEMPLATE_HEAD_LABEL')
 			: Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL');
@@ -107,8 +82,11 @@ export class DocumentSetup extends BaseDocumentSetup
 			</div>
 		`;
 
-		Dom.append(documentTypeLayout, this.layout);
-		Dom.append(this.#getDocumentSenderTypeLayout(), this.layout);
+		if (!this.#isOpenedFromTemplateFolder)
+		{
+			Dom.append(this.#getDocumentSenderTypeLayout(), this.layout);
+		}
+
 		Dom.append(titleLayout, this.layout);
 
 		if (!this.isTemplateMode() && FeatureStorage.isGroupSendingEnabled())
@@ -116,6 +94,27 @@ export class DocumentSetup extends BaseDocumentSetup
 			this.documentCounters = new DocumentCounters({
 				documentCountersLimit: this.#b2eDocumentLimitCount,
 			});
+			Dom.append(this.documentCounters.getLayout(), this.layout);
+
+			const addDocumentLayout = this.#getAddDocumentLayout();
+			Dom.append(addDocumentLayout, this.layout);
+		}
+		Hint.create(this.layout);
+
+		this.#subscribeOnEvents();
+	}
+
+	#subscribeOnEvents(): void
+	{
+		const blankSelector = this.blankSelector;
+		blankSelector.subscribe(blankSelector.events.toggleSelection, this.#onBlankSelectorToggleSelection.bind(this));
+		blankSelector.subscribe(blankSelector.events.addFile, this.#onBlankSelectorAddFile.bind(this));
+		blankSelector.subscribe(
+			blankSelector.events.beforeAddFileSuccessfully,
+			this.#onBlankSelectorBeforeAddFileSuccessfully.bind(this),
+		);
+		if (!this.isTemplateMode() && FeatureStorage.isGroupSendingEnabled())
+		{
 			this.documentCounters.subscribe('limitNotExceeded', () => {
 				this.enableAddButton();
 				this.#setAddDocumentNoticeText();
@@ -126,77 +125,144 @@ export class DocumentSetup extends BaseDocumentSetup
 				this.#setDocumentLimitNoticeText();
 				this.emit('documentsLimitExceeded');
 			});
-			Dom.append(this.documentCounters.getLayout(), this.layout);
-
-			const addDocumentLayout = this.#getAddDocumentLayout();
-			Dom.append(addDocumentLayout, this.layout);
 		}
-		Hint.create(this.layout);
 	}
 
-	#isDocumentTypeVisible(): boolean
+	#onBlankSelectorAddFile(event: BaseEvent<{ title: string }>)
 	{
-		return this.#regionDocumentTypes?.length;
+		const data = event.getData();
+		this.isFileAdded = true;
+		this.enableDocumentInputs();
+		this.enableAddButton();
+		if (!this.isTemplateMode() || !this.isEditActionMode())
+		{
+			this.setDocumentTitle(data.title);
+		}
+		const popupManager = NewBlankForTemplatePopupManager.getOrCreateForObject(this);
+		// Document title will update after popup confirmation
+		if (popupManager.isUploadPopupCompletedOnce())
+		{
+			this.setDocumentTitle(data.title);
+		}
+	}
+
+	#onBlankSelectorToggleSelection(event: ToggleEvent): void
+	{
+		if (this.blankIsNotSelected && this.editMode)
+		{
+			return;
+		}
+
+		const data = event.getData();
+
+		const handleEvent = () => {
+			this.setDocumentTitle(data.title);
+			if (data.selected)
+			{
+				this.enableDocumentInputs();
+				this.enableAddButton();
+			}
+		};
+
+		if (!this.isEditActionMode() || !this.isTemplateMode())
+		{
+			handleEvent();
+
+			return;
+		}
+
+		const popupManager = NewBlankForTemplatePopupManager.getOrCreateForObject(this);
+		if (popupManager.isSelectBlankPopupCompletedOnce())
+		{
+			handleEvent();
+
+			return;
+		}
+
+		const extra = data.extra;
+		if (!data.selected || extra?.isInitial || extra?.skipSelectPopupShow)
+		{
+			return;
+		}
+
+		const previousSelectedBlankId = data.previousSelectedBlankId;
+
+		popupManager.showSelectBlankPopup();
+		popupManager.subscribeOnce(popupManager.events.selectBlankPopup.onConfirm, handleEvent);
+		popupManager.subscribeOnce(
+			popupManager.events.selectBlankPopup.onCancel,
+			() => {
+				popupManager.unsubscribe(
+					popupManager.events.selectBlankPopup.onConfirm,
+					handleEvent,
+				);
+				if (Type.isNumber(previousSelectedBlankId) && previousSelectedBlankId > 0)
+				{
+					this.blankSelector.selectBlank(previousSelectedBlankId, { skipSelectPopupShow: true });
+				}
+			},
+		);
+	}
+
+	#onBlankSelectorBeforeAddFileSuccessfully(event: BaseEvent): void
+	{
+		if (!this.isTemplateMode() || !this.isEditActionMode())
+		{
+			return;
+		}
+
+		const newBlankPopupManager = NewBlankForTemplatePopupManager.getOrCreateForObject(this);
+		const lastSelectedBlank = this.blankSelector.selectedBlankId;
+
+		if (newBlankPopupManager.isUploadPopupCompletedOnce())
+		{
+			return;
+		}
+
+		newBlankPopupManager.showUploadPopup();
+		const onCancelListener = () => {
+			this.blankSelector.clearFiles();
+			this.blankSelector.selectBlank(lastSelectedBlank, { skipSelectPopupShow: true });
+		};
+
+		const onConfirmListener = () => {
+			this.blankSelector.getBlank();
+			const title = this.blankSelector.getUploadedFileName(0);
+			if (Type.isStringFilled(title))
+			{
+				this.setDocumentTitle(title);
+			}
+		};
+
+		const unsubscribeAnotherListenerDecorator = (
+			listener: (event?: BaseEvent) => any,
+			unsubscribedListener: (event?: BaseEvent) => any,
+		) => {
+			return (event: BaseEvent) => {
+				listener(event);
+				newBlankPopupManager.unsubscribe(
+					newBlankPopupManager.events.uploadPopup.onCancel,
+					unsubscribedListener,
+				);
+				newBlankPopupManager.unsubscribe(
+					newBlankPopupManager.events.uploadPopup.onConfirm,
+					unsubscribedListener,
+				);
+			};
+		};
+		newBlankPopupManager.subscribeOnce(
+			newBlankPopupManager.events.uploadPopup.onCancel,
+			unsubscribeAnotherListenerDecorator(onCancelListener, onConfirmListener),
+		);
+		newBlankPopupManager.subscribeOnce(
+			newBlankPopupManager.events.uploadPopup.onConfirm,
+			unsubscribeAnotherListenerDecorator(onConfirmListener, onCancelListener),
+		);
 	}
 
 	isRuRegion(): boolean
 	{
 		return this.#region === 'ru';
-	}
-
-	#initDocumentType(): void
-	{
-		if (!this.#isDocumentTypeVisible())
-		{
-			return;
-		}
-
-		this.#documentTypeDropdown = new SignDropdown({
-			tabs: [{ id: 'b2e-document-codes', title: ' ' }],
-			entities: [
-				{ id: 'b2e-document-code', searchFields: [{ name: 'caption', system: true }] },
-			],
-			className: 'sign-b2e-document-setup__type-selector',
-			withCaption: true,
-			isEnableSearch: true,
-		});
-		this.#regionDocumentTypes.forEach((item) => {
-			if (Type.isPlainObject(item)
-				&& Type.isStringFilled(item.code)
-				&& Type.isStringFilled(item.description))
-			{
-				const { code, description } = item;
-				this.#documentTypeDropdown.addItem({
-					id: code,
-					title: code,
-					caption: `(${description})`,
-					entityId: 'b2e-document-code',
-					tabs: 'b2e-document-codes',
-					deselectable: false,
-				});
-			}
-		});
-		this.#documentTypeDropdown.selectItem(this.#regionDocumentTypes[0].code);
-	}
-
-	#getDocumentTypeLayout(): HTMLElement | null
-	{
-		if (!this.#isDocumentTypeVisible())
-		{
-			return null;
-		}
-
-		return Tag.render`
-			<div class="sign-b2e-settings__item">
-				<p class="sign-b2e-settings__item_title">
-					<span>${Loc.getMessage('SIGN_DOCUMENT_SETUP_TYPE')}</span>
-					<span
-						data-hint="${Loc.getMessage('SIGN_DOCUMENT_SETUP_TYPE_HINT')}"
-					></span>
-				</p>
-				${this.#documentTypeDropdown.getLayout()}
-			</div>
-		`;
 	}
 
 	#initDocumentSenderType(): void
@@ -230,12 +296,17 @@ export class DocumentSetup extends BaseDocumentSetup
 				});
 			}
 		});
-		this.#documentSenderTypeDropdown.selectItem(this.#senderDocumentTypes[0]);
+		const selectedKey = this.#isOpenedFromRobot ? 1 : 0;
+		const selectedItem = this.#senderDocumentTypes[selectedKey] ?? null;
+		if (selectedItem)
+		{
+			this.#documentSenderTypeDropdown.selectItem(selectedItem);
+		}
 	}
 
 	#getDocumentSenderTypeLayout(): HTMLElement | null
 	{
-		if (!this.isTemplateMode() || !this.isSenderTypeAvailable())
+		if (!this.isTemplateMode() || !this.isSenderTypeAvailable() || this.#isOpenedFromRobot)
 		{
 			return null;
 		}
@@ -261,43 +332,16 @@ export class DocumentSetup extends BaseDocumentSetup
 		);
 	}
 
-	#getDocumentNumberLayout(): HTMLElement | null
-	{
-		if (!this.isRuRegion() || this.isTemplateMode())
-		{
-			return null;
-		}
-
-		return Tag.render`
-			<div class="sign-b2e-document-setup__title-item --num">
-				<p class="sign-b2e-document-setup__title-text">
-					<span>${Loc.getMessage('SIGN_DOCUMENT_SETUP_NUM_LABEL')}</span>
-					<span
-						data-hint="${Loc.getMessage('SIGN_DOCUMENT_SETUP_NUM_LABEL_HINT')}"
-					></span>
-				</p>
-				<div class="ui-ctl ui-ctl-textbox">
-					${this.#documentNumberInput}
-				</div>
-			</div>
-		`;
-	}
-
 	#getDocumentTitleLayout(): HTMLElement
 	{
 		return Tag.render`
 			<div>
-				<div class="sign-b2e-document-setup__title-item ${this.#getDocumentTitleFullClass()}">
-					<p class="sign-b2e-document-setup__title-text">
-						${Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_LABEL')}
-					</p>
+				<div class="sign-b2e-document-setup__title-item --full">
 					<div class="ui-ctl ui-ctl-textbox">
 						${this.#documentTitleInput}
 					</div>
 				</div>
-				${this.#getDocumentNumberLayout()}
 				${this.#getDocumentHintLayout()}
-				${this.#dateSelector?.getLayout()}
 			</div>
 		`;
 	}
@@ -333,7 +377,7 @@ export class DocumentSetup extends BaseDocumentSetup
 	{
 		return this.#cache.remember('addDocumentNotice', () => {
 			return Tag.render`
-				<p class="sign-b2e-document-setup__add-notice">${Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE')}</p>
+				<p class="sign-wizard__notice">${Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE')}</p>
 			`;
 		});
 	}
@@ -418,13 +462,11 @@ export class DocumentSetup extends BaseDocumentSetup
 		Event.bind(editButton, 'click', (event) => {
 			this.#onClickEditDocument(documentData, event);
 		});
-		const documentTypeDropdownLayout = this.#isDocumentTypeVisible() ? this.#getDocumentTypeDropdownLayout() : '';
 
 		return Tag.render`
 			<div class="sign-b2e-document-setup__document-block" data-id="document-id-${documentData.id}">
 				<div class="sign-b2e-document-setup__document-block_inner">
 					<div class="sign-b2e-document-setup__document-block_title">${documentData.title}</div>
-					${documentTypeDropdownLayout}
 				</div>
 				<div class="sign-b2e-document-setup__document-block_btn">
 					${editButton}
@@ -437,24 +479,11 @@ export class DocumentSetup extends BaseDocumentSetup
 		`;
 	}
 
-	#getDocumentTypeDropdownLayout(): HTMLElement
-	{
-		return Tag.render`
-			<div class="sign-b2e-document-setup__document-block_info">${this.#documentTypeDropdown.getSelectedCaption()}</div>
-		`;
-	}
-
 	updateDocumentBlock(id: number): void
 	{
 		const editedBlock = this.layout.querySelector(`[data-id="document-id-${id}"]`);
 		const titleNode = editedBlock.querySelector('.sign-b2e-document-setup__document-block_title');
 		titleNode.textContent = this.#documentTitleInput.title;
-
-		if (this.#isDocumentTypeVisible())
-		{
-			const infoNode = editedBlock.querySelector('.sign-b2e-document-setup__document-block_info');
-			infoNode.textContent = this.#documentTypeDropdown.getSelectedCaption();
-		}
 	}
 
 	replaceDocumentBlock(oldDocument, newDocument): void
@@ -518,7 +547,7 @@ export class DocumentSetup extends BaseDocumentSetup
 			// eslint-disable-next-line no-param-reassign
 			editButton.textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON');
 			this.editMode = true;
-			this.#enableDocumentInputs();
+			this.enableDocumentInputs();
 			this.enableAddButton();
 			this.#currentEditedId = id;
 			this.#currentEditButton = editButton;
@@ -556,28 +585,6 @@ export class DocumentSetup extends BaseDocumentSetup
 		return this.headerLayout;
 	}
 
-	#getDocumentTitleFullClass(): string
-	{
-		if (this.isTemplateMode())
-		{
-			return '--full';
-		}
-
-		return this.isRuRegion() ? '' : '--full';
-	}
-
-	#sendDocumentType(uid: string): Promise<void>
-	{
-		if (!this.#isDocumentTypeVisible())
-		{
-			return Promise.resolve();
-		}
-
-		const type = this.#documentTypeDropdown.getSelectedId();
-
-		return this.#api.changeRegionDocumentType(uid, type);
-	}
-
 	#sendDocumentSenderType(uid: string): Promise<void>
 	{
 		if (!this.isTemplateMode() || !this.isSenderTypeAvailable())
@@ -591,48 +598,10 @@ export class DocumentSetup extends BaseDocumentSetup
 		return this.#api.changeSenderDocumentType(uid, senderType);
 	}
 
-	#sendDocumentNumber(uid: string): Promise<void>
-	{
-		if (!this.isRuRegion() || this.isTemplateMode())
-		{
-			return Promise.resolve();
-		}
-
-		return this.#api.changeExternalId(uid, this.#documentNumberInput.value);
-	}
-
-	#sendDocumentDate(uid: string): Promise<void>
-	{
-		if (!this.isRuRegion() || this.isTemplateMode())
-		{
-			return Promise.resolve();
-		}
-
-		return this.#api.changeExternalDate(uid, this.#dateSelector.getSelectedDate());
-	}
-
-	setDocumentNumber(number: string): void
-	{
-		this.#documentNumberInput.value = number;
-	}
-
 	setDocumentTitle(title: string = ''): void
 	{
 		this.#documentTitleInput.value = title;
 		this.#documentTitleInput.title = title;
-	}
-
-	setDocumentType(regionDocumentType: string = ''): void
-	{
-		if (!this.#isDocumentTypeVisible())
-		{
-			return;
-		}
-
-		const isDocumentTypeExist = this.#regionDocumentTypes.some((item) => item.code === regionDocumentType);
-		const documentType = isDocumentTypeExist ? regionDocumentType : this.#regionDocumentTypes[0].code;
-
-		this.#documentTypeDropdown.selectItem(documentType);
 	}
 
 	setDocumentSenderType(initiatedByType: string): void
@@ -723,7 +692,11 @@ export class DocumentSetup extends BaseDocumentSetup
 	{
 		try
 		{
-			await super.setup(uid, this.isTemplateMode());
+			const copyBlocksFromPreviousBlank = this.isEditActionMode()
+				&& this.isTemplateMode()
+				&& this.blankSelector.isFilesReadyForUpload();
+
+			await super.setup(uid, this.isTemplateMode(), copyBlocksFromPreviousBlank);
 			if (!this.setupData || this.blankIsNotSelected)
 			{
 				this.ready = true;
@@ -733,16 +706,9 @@ export class DocumentSetup extends BaseDocumentSetup
 
 			if (uid)
 			{
-				const { title, externalId, externalDateCreate, initiatedByType, regionDocumentType } = this.setupData;
+				const { title, initiatedByType } = this.setupData;
 				this.setDocumentTitle(title);
 				this.setDocumentSenderType(initiatedByType);
-				this.setDocumentType(regionDocumentType);
-
-				if (this.isRuRegion() && !this.isTemplateMode())
-				{
-					this.setDocumentNumber(externalId);
-					this.#dateSelector.setDateInCalendar(new Date(externalDateCreate));
-				}
 
 				return;
 			}
@@ -759,27 +725,19 @@ export class DocumentSetup extends BaseDocumentSetup
 		this.ready = true;
 	}
 
-	async updateDocumentData(documentData: DocumentDetails): Promise<DocumentDetails>
+	async updateDocumentData(documentData: DocumentDetails): Promise<DocumentDetails | undefined>
 	{
 		if (!documentData)
 		{
 			return;
 		}
+
 		await Promise.all([
-			this.#sendDocumentType(documentData.uid),
 			this.#sendDocumentSenderType(documentData.uid),
-			this.#sendDocumentNumber(documentData.uid),
-			this.#sendDocumentDate(documentData.uid),
 		]);
 
 		const { value: title } = this.#documentTitleInput;
 		const { templateUid } = this.setupData;
-		const externalId = this.#documentNumberInput?.value;
-		let regionDocumentType = null;
-		if (this.#isDocumentTypeVisible())
-		{
-			regionDocumentType = this.#documentTypeDropdown.getSelectedId();
-		}
 		const modifyDocumentTitleResponse = await this.#api.modifyTitle(documentData.uid, title);
 		const { blankTitle } = modifyDocumentTitleResponse;
 		if (blankTitle)
@@ -788,9 +746,7 @@ export class DocumentSetup extends BaseDocumentSetup
 			this.blankSelector.modifyBlankTitle(blankId, blankTitle);
 		}
 
-		documentData = { ...documentData, title, externalId, regionDocumentType, templateUid };
-
-		return documentData;
+		return { ...documentData, title, templateUid };
 	}
 
 	#validateInput(input: HTMLElement): boolean
@@ -816,10 +772,7 @@ export class DocumentSetup extends BaseDocumentSetup
 
 	validate(): boolean
 	{
-		const isValidTitle = this.#validateInput(this.#documentTitleInput);
-		const isValidNumber = this.#validateInput(this.#documentNumberInput);
-
-		return isValidTitle && isValidNumber;
+		return this.#validateInput(this.#documentTitleInput);
 	}
 
 	isSenderTypeAvailable(): boolean
@@ -834,33 +787,20 @@ export class DocumentSetup extends BaseDocumentSetup
 		this.blankSelector.resetSelectedBlank();
 		this.setDocumentTitle('');
 
-		if (this.isRuRegion())
-		{
-			this.setDocumentNumber('');
-		}
-
 		this.isFileAdded = false;
 		this.#disableDocumentInputs();
 		this.disableAddButton();
 	}
 
-	#enableDocumentInputs(): void
+	enableDocumentInputs(): void
 	{
 		this.#documentTitleInput.disabled = false;
-		if (this.#documentNumberInput)
-		{
-			this.#documentNumberInput.disabled = false;
-		}
 		this.blankIsNotSelected = false;
 	}
 
 	#disableDocumentInputs(): void
 	{
 		this.#documentTitleInput.disabled = true;
-		if (this.#documentNumberInput)
-		{
-			this.#documentNumberInput.disabled = true;
-		}
 		this.blankIsNotSelected = true;
 	}
 }

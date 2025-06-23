@@ -18,6 +18,7 @@ use Bitrix\Im\Disk\Sender;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
+use Bitrix\Main\Engine\ActionFilter\HttpMethod;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
@@ -36,6 +37,7 @@ final class MessengerCall extends Engine\Controller
 			'createResumeByTemplate' => [
 				'+prefilters' => [
 					new Engine\ActionFilter\B24Feature("disk_im_call_resume"),
+					new HttpMethod([HttpMethod::METHOD_GET, HttpMethod::METHOD_POST]),
 				]
 			],
 			'selectTemplateOrOpenExisting' => [
@@ -43,7 +45,12 @@ final class MessengerCall extends Engine\Controller
 					new Engine\ActionFilter\B24Feature("disk_im_call_resume"),
 				]
 			],
-			'createDocumentInCall' => ['-prefilters' => [Csrf::class]],
+			'createDocumentInCall' => [
+				'-prefilters' => [Csrf::class],
+				'+prefilters' => [
+					new HttpMethod([HttpMethod::METHOD_GET, HttpMethod::METHOD_POST])
+				],
+			],
 			'selectTemplate' => ['-prefilters' => [Csrf::class]],
 		];
 	}
@@ -54,16 +61,33 @@ final class MessengerCall extends Engine\Controller
 		$autoWiredParameters[] = new ExactParameter(
 			Call::class,
 			'call',
-			function ($className, int $callId) {
-				$call = Call::loadWithId($callId);
+			function ($className, $callUuid = '')
+			{
+				if ($this->getRequest()->isPost())
+				{
+					$sourceParametersList = $this->getSourceParametersList()[0];
+				}
+				else
+				{
+					$sourceParametersList = $this->getSourceParametersList()[1];
+				}
 
+				$call = null;
+				if (!empty($sourceParametersList['callUuid']))
+				{
+					$call = Call::loadWithUuid((string)$sourceParametersList['callUuid']);
+				}
+				elseif (!empty($sourceParametersList['callId']))
+				{
+					$call = Call::loadWithId((int)$sourceParametersList['callId']);
+				}
 				if (!$call)
 				{
 					return null;
 				}
 
 				$associatedEntity = $call->getAssociatedEntity();
-				if (!$associatedEntity->checkAccess($this->getCurrentUser()->getId()))
+				if (!$associatedEntity?->checkAccess($this->getCurrentUser()->getId()))
 				{
 					return null;
 				}
@@ -95,6 +119,13 @@ final class MessengerCall extends Engine\Controller
 		if (!Loader::includeModule('im'))
 		{
 			$this->addError(new Error("Required module 'im' was not found"));
+
+			return false;
+		}
+
+		if (!Loader::includeModule('call'))
+		{
+			$this->addError(new Error("Required module 'call' was not found"));
 
 			return false;
 		}

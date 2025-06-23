@@ -723,7 +723,10 @@ $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 	array('id' => 'PRODUCT_ID', 'name' => GetMessage('CRM_COLUMN_PRODUCT_ID'), 'sort' => false, 'default' => $isInExportMode, 'editable' => false, 'type' => 'list'),
 	array('id' => 'WEBFORM_ID', 'name' => GetMessage('CRM_COLUMN_WEBFORM'), 'sort' => 'webform_id', 'default' => false, 'type' => 'list'),
 	array('id' => 'IS_RETURN_CUSTOMER', 'name' => GetMessage('CRM_COLUMN_IS_RETURN_CUSTOMER1'), 'sort' => 'is_return_customer', 'default' => false, 'type' => 'list'),
-	array('id' => 'LEAD_CLIENT', 'name' => GetMessage('CRM_COLUMN_CLIENT'), 'sort' => 'lead_client', 'default' => false, 'editable' => false)
+	array('id' => 'LEAD_CLIENT', 'name' => GetMessage('CRM_COLUMN_CLIENT'), 'sort' => 'lead_client', 'default' => false, 'editable' => false),
+	array('id' => 'MOVED_BY', 'name' => Loc::getMessage('CRM_COLUMN_MOVED_BY'), 'sort' => 'moved_by', 'editable' => false, 'class' => 'username'),
+	// array('id' => 'MOVED_TIME', 'name' => Loc::getMessage('CRM_COLUMN_MOVED_TIME'), 'sort' => 'moved_time', 'editable' => false, 'class' => 'date'),
+	array('id' => 'MOVED_TIME', 'name' => GetMessage('CRM_COLUMN_MOVED_TIME'), 'sort' => 'date_modify', 'first_order' => 'desc', 'default' => false, 'class' => 'date'),
 ));
 
 Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
@@ -756,6 +759,7 @@ if (
 }
 
 $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Lead);
+$userDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\RelatedUsers(CCrmOwnerType::Lead);
 
 $arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
 	->sections($factory);
@@ -1227,6 +1231,14 @@ else
 			$arSelectMap['MODIFY_BY_SECOND_NAME'] = true;
 	}
 
+	if(isset($arSelectMap['MOVED_BY']))
+	{
+		$arSelectMap['MOVED_BY_LOGIN'] =
+		$arSelectMap['MOVED_BY_NAME'] =
+		$arSelectMap['MOVED_BY_LAST_NAME'] =
+		$arSelectMap['MOVED_BY_SECOND_NAME'] = true;
+	}
+
 	// Always need to remove the menu items
 	if(!isset($arSelectMap['STATUS_ID']))
 	{
@@ -1416,6 +1428,7 @@ if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSele
 }
 
 $observersDataProvider->prepareSelect($arSelect);
+$userDataProvider->prepareSelect($arSelect);
 
 // For calendar view
 if (isset($arParams['CALENDAR_MODE_LIST']) && !in_array('DATE_CREATE', $arSelect))
@@ -1836,6 +1849,7 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['LEAD']))
 }
 
 $observersDataProvider->appendResult($arResult['LEAD']);
+$userDataProvider->appendResult($arResult['LEAD']);
 
 $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Lead,
@@ -1969,6 +1983,11 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['PATH_TO_USER_MODIFIER'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_PROFILE'] ?? '',
 		array('user_id' => $arLead['MODIFY_BY'] ?? null)
+	);
+
+	$arLead['PATH_TO_USER_MOVED'] = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_USER_PROFILE'] ?? '',
+		['user_id' => $arLead['MOVED_BY'] ?? null]
 	);
 
 	$arLead['~CREATED_BY_FORMATTED_NAME'] = CUser::FormatName(

@@ -2,6 +2,10 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
+
+/* currently don't need to preinstall market apps */
+return;
+
 if(!Bitrix\Main\Loader::includeModule("bitrix24"))
 {
 	return;

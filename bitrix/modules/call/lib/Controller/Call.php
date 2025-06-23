@@ -95,7 +95,7 @@ class Call extends JwtController
 	 */
 	public function getCallTokenAction(DTO\CallTokenRequest $tokenRequest): array
 	{
-		$callToken = $tokenRequest->chatId ? JwtCall::getCallToken($tokenRequest->chatId, $tokenRequest->additionalData) : '';
+		$callToken = $tokenRequest->chatId ? JwtCall::getCallToken($tokenRequest->chatId, $this->getCurrentUser()->getId(), $tokenRequest->additionalData) : '';
 
 		return [
 			'callToken' => $callToken,
@@ -131,12 +131,13 @@ class Call extends JwtController
 			$userId = $callRequest->initiatorUserId;
 
 			$call = CallFactory::createWithEntity(
-				$callRequest->callType,
-				$callRequest->provider,
-				EntityType::CHAT,
-				\Bitrix\Im\Dialog::getDialogId($callRequest->chatId, $userId),
-				$userId,
-				$callRequest->callUuid,
+				type: $callRequest->callType,
+				provider: $callRequest->provider,
+				entityType: EntityType::CHAT,
+				entityId: \Bitrix\Im\Dialog::getDialogId($callRequest->chatId, $userId),
+				initiatorId: $userId,
+				callUuid: $callRequest->roomId ?: $callRequest->callUuid,
+				scheme: \Bitrix\Im\Call\Call::SCHEME_JWT,
 			);
 
 			if ($call->hasErrors())
@@ -187,47 +188,21 @@ class Call extends JwtController
 	{
 		Loader::includeModule('im');
 
-		$call = Registry::getCallWithUuid($callRequest->callUuid);
+		$call = Registry::getCallWithUuid($callRequest->roomId ?: $callRequest->callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
 			return null;
 		}
-		$userId = $callRequest->userId;
-		if (!empty($userId) && !$call->checkAccess($userId))
+		$userId = $callRequest->userId ?: $call->getInitiatorId();
+		$call->setActionUserId($userId);
+
+		if ($call->isAudioRecordEnabled())
 		{
-			$this->addError(new Error("You do not have access to the parent call", "access_denied"));
-			return null;
+			$call->disableAudioRecord();
 		}
 
-		if ($callRequest->isAudioRecord)
-		{
-			$call
-				->setActionUserId($callRequest->audioRecordingInitiatorId)
-				->enableAudioRecord()
-				->enableAiAnalyze()
-				->save()
-			;
-		}
-		else
-		{
-			$call
-				->setActionUserId($callRequest->audioRecordingInitiatorId)
-				->disableAudioRecord()
-				->disableAiAnalyze()
-				->save()
-			;
-		}
-
-		if (empty($userId))
-		{
-			$call->setActionUserId($call->getInitiatorId());
-		}
-		else
-		{
-			$call->setActionUserId($userId);
-		}
-
+		$call->save();
 		$call->finishCall();
 
 		if ($callRequest->requestId)
@@ -328,7 +303,8 @@ class Call extends JwtController
 		Loader::includeModule('im');
 
 		$isLegacyMobile = $userRequest->legacyMobile === 'Y';
-		$call = Registry::getCallWithUuid($userRequest->callUuid);
+		$callUuid = $userRequest->roomId ?: $userRequest->callUuid;
+		$call = Registry::getCallWithUuid($callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage('IM_REST_CALL_ERROR_CALL_NOT_FOUND'), 'call_not_found'));
@@ -341,7 +317,7 @@ class Call extends JwtController
 			return null;
 		}
 
-		$lockName = static::getLockNameWithCallId('user'.$currentUserId, $userRequest->callUuid);
+		$lockName = static::getLockNameWithCallId('user'.$currentUserId, $callUuid);
 		if (!Application::getConnection()->lock($lockName, static::LOCK_TTL))
 		{
 			$this->addError(new \Bitrix\Main\Error('Could not get exclusive lock', 'could_not_lock'));
@@ -365,9 +341,9 @@ class Call extends JwtController
 		Loader::includeModule('im');
 
 		$currentUserId = $this->getCurrentUser()->getId();
+		$callUuid = $userRequest->roomId ?: $userRequest->callUuid;
 
-		$call = Registry::getCallWithUuid($userRequest->callUuid);
-
+		$call = Registry::getCallWithUuid($callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
@@ -392,7 +368,7 @@ class Call extends JwtController
 			return null;
 		}
 
-		$lockName = static::getLockNameWithCallId('user'.$currentUserId, $userRequest->callUuid);
+		$lockName = static::getLockNameWithCallId('user'.$currentUserId, $callUuid);
 		if (!Application::getConnection()->lock($lockName, static::LOCK_TTL))
 		{
 			$this->addError(new \Bitrix\Main\Error("Could not get exclusive lock", "could_not_lock"));
@@ -428,7 +404,8 @@ class Call extends JwtController
 	public function userStatusAction(DTO\CallUserRequest $callUserRequest)
 	{
 		$isLegacyMobile = $callUserRequest->legacyMobile === "Y";
-		if (!$callUserRequest->callUuid)
+		$callUuid = $callUserRequest->roomId ?: $callUserRequest->callUuid;
+		if (!$callUuid)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
 			return null;
@@ -436,7 +413,7 @@ class Call extends JwtController
 
 		Loader::includeModule('im');
 
-		$call = Registry::getCallWithUuid($callUserRequest->callUuid);
+		$call = Registry::getCallWithUuid($callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
@@ -455,10 +432,7 @@ class Call extends JwtController
 				$this->setUserStateReady($call, $user->userId, $isLegacyMobile);
 			}
 
-			$call->getSignaling()->sendConnectedUsers(
-				$callUserRequest->connectedUsers,
-				$isLegacyMobile
-			);
+			$call->getSignaling()->sendConnectedUsers($callUserRequest->connectedUsers, $isLegacyMobile);
 		}
 
 		if (!empty($callUserRequest->disconnectedUsers))
@@ -476,9 +450,7 @@ class Call extends JwtController
 				$callUser->updateLastSeen(new DateTime());
 			}
 
-			$call->getSignaling()->sendDisconnectedUsers(
-				$callUserRequest->disconnectedUsers,
-			);
+			$call->getSignaling()->sendDisconnectedUsers($callUserRequest->disconnectedUsers);
 		}
 	}
 
@@ -506,9 +478,11 @@ class Call extends JwtController
 		}
 
 		$childCall = $parentCall->createChildCall(
-			$callRequest->callUuid,
+			$callRequest->roomId ?: $callRequest->callUuid,
 			\Bitrix\Im\Dialog::getDialogId($callRequest->chatId, $currentUserId),
-			$callRequest->provider
+			$callRequest->provider,
+			\Bitrix\Im\Call\Call::SCHEME_JWT,
+			$currentUserId
 		);
 		if ($childCall->hasErrors())
 		{
@@ -518,7 +492,7 @@ class Call extends JwtController
 
 		$this->setUserStateReady($childCall, $currentUserId, $callRequest->legacyMobile);
 
-		$users = $childCall->getAssociatedEntity()->getUsers();
+		$users = array_diff($childCall->getAssociatedEntity()->getUsers(), [$currentUserId]);
 
 		$this->inviteUsers(
 			$childCall,
@@ -555,10 +529,11 @@ class Call extends JwtController
 		$isLegacyMobile = ($userRequest->legacyMobile === "Y");
 		$isRepeated = ($userRequest->repeated === "Y");
 		$userIds = array_map('intVal', $userRequest->users);
+		$callUuid = $userRequest->roomId ?: $userRequest->callUuid;
 
 		Loader::includeModule('im');
 
-		$call = Registry::getCallWithUuid($userRequest->callUuid);
+		$call = Registry::getCallWithUuid($callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
@@ -582,7 +557,7 @@ class Call extends JwtController
 			'IS_MOBILE' => ($isLegacyMobile ? 'Y' : 'N')
 		]);
 
-		$lockName = static::getLockNameWithCallId('invite', $userRequest->callUuid);
+		$lockName = static::getLockNameWithCallId('invite', $callUuid);
 		if (!Application::getConnection()->lock($lockName, static::LOCK_TTL))
 		{
 			$this->addError(new \Bitrix\Main\Error("Could not get exclusive lock", "could_not_lock"));
@@ -605,15 +580,16 @@ class Call extends JwtController
 	{
 		Loader::includeModule('im');
 		$currentUserId = $this->getCurrentUser()->getId();
+		$callUuid = $userRequest->roomId ?: $userRequest->callUuid;
 
-		$call = Registry::getCallWithUuid($userRequest->callUuid);
+		$call = Registry::getCallWithUuid($callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
 			return null;
 		}
 
-		$lockName = static::getLockNameWithCallId('user'.$currentUserId, $userRequest->callUuid);
+		$lockName = static::getLockNameWithCallId('user'.$currentUserId, $callUuid);
 		if (!Application::getConnection()->lock($lockName, static::LOCK_TTL))
 		{
 			$this->addError(new \Bitrix\Main\Error('Could not get exclusive lock', 'could_not_lock'));
@@ -638,7 +614,7 @@ class Call extends JwtController
 		{
 			return ['result' => false];
 		}
-		$callToken = JwtCall::getCallToken($chatId, ['parentUuid' => $userRequest->callUuid]);
+		$callToken = JwtCall::getCallToken($chatId, $currentUserId, ['parentUuid' => $callUuid]);
 
 		Application::getConnection()->unlock($lockName);
 
@@ -677,7 +653,9 @@ class Call extends JwtController
 	public function onShareScreenAction(DTO\UserRequest $userRequest)
 	{
 		Loader::includeModule('im');
-		$call = Registry::getCallWithUuid($userRequest->callUuid);
+		$callUuid = $userRequest->roomId ?: $userRequest->callUuid;
+
+		$call = Registry::getCallWithUuid($callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
@@ -708,7 +686,9 @@ class Call extends JwtController
 	public function onStartRecordAction(DTO\UserRequest $userRequest)
 	{
 		Loader::includeModule('im');
-		$call = Registry::getCallWithUuid($userRequest->callUuid);
+		$callUuid = $userRequest->roomId ?: $userRequest->callUuid;
+
+		$call = Registry::getCallWithUuid($callUuid);
 		if (!$call)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("IM_REST_CALL_ERROR_CALL_NOT_FOUND"), "call_not_found"));
@@ -815,7 +795,7 @@ class Call extends JwtController
 			'userData' => Util::getUsers($users),
 			'publicChannels' => $publicChannels,
 			'logToken' => $call->getLogToken($currentUserId),
-			'callToken' => JwtCall::getCallToken($call->getChatId())
+			'callToken' => JwtCall::getCallToken($call->getChatId(), $currentUserId)
 		];
 		if ($isNew)
 		{

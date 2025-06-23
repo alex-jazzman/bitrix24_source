@@ -265,6 +265,7 @@ export class FieldsPanel extends Content
 					.forEach(([categoryId, category]) => {
 						if (
 							categoryId !== 'CATALOG'
+							&& category !== 'BOOKING'
 							&& categoryId !== 'ACTIVITY'
 							&& categoryId !== 'INVOICE'
 						)
@@ -547,6 +548,7 @@ export class FieldsPanel extends Content
 				if (
 					(
 						categoryId !== 'CATALOG'
+						&& categoryId !== 'BOOKING'
 						&& categoryId !== 'ACTIVITY'
 						&& categoryId !== 'INVOICE'
 					)

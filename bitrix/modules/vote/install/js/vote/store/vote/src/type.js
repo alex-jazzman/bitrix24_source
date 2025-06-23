@@ -3,6 +3,7 @@ export type VoteElementState = {
 	questions: number[],
 	isAnonymous: boolean,
 	isVoted: boolean,
+	isLoading: boolean,
 	canEdit: boolean,
 	canVote: boolean,
 	canRevoke: boolean,

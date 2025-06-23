@@ -11,58 +11,65 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	} = require('im/messenger/const');
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openChatsTab()
+	async function openChatsTab(options)
 	{
-		return openTab(ComponentCode.imMessenger);
+		return openTab(ComponentCode.imMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openCopilotTab()
+	async function openCopilotTab(options)
 	{
-		return openTab(ComponentCode.imCopilotMessenger);
+		return openTab(ComponentCode.imCopilotMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openChannelsTab()
+	async function openChannelsTab(options)
 	{
-		return openTab(ComponentCode.imChannelMessenger);
+		return openTab(ComponentCode.imChannelMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openCollabsTab()
+	async function openCollabsTab(options)
 	{
-		return openTab(ComponentCode.imCollabMessenger);
+		return openTab(ComponentCode.imCollabMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openLinesTab()
+	async function openLinesTab(options)
 	{
-		return openTab(ComponentCode.imOpenlinesRecent);
+		return openTab(ComponentCode.imOpenlinesRecent, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openNotificationsTab()
+	async function openNotificationsTab(options)
 	{
-		return openTab(ComponentCode.imNotify);
+		return openTab(ComponentCode.imNotify, options);
 	}
 
 	/**
 	 * @param {string} tabComponentCode
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openTab(tabComponentCode)
+	async function openTab(tabComponentCode, options)
 	{
 		if (!Object.values(ComponentCode).includes(tabComponentCode))
 		{
@@ -85,7 +92,7 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 			reject,
 		);
 
-		sendChangeTabEvent(tabComponentCode);
+		sendChangeTabEvent(tabComponentCode, options);
 
 		return promise;
 	}
@@ -132,11 +139,11 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 		return handler;
 	}
 
-	function sendChangeTabEvent(tabComponentCode)
+	function sendChangeTabEvent(tabComponentCode, options)
 	{
 		BX.postComponentEvent(
 			EventType.navigation.changeTab,
-			[tabComponentCode],
+			[tabComponentCode, options],
 			ComponentCode.imNavigation,
 		);
 	}

@@ -1,17 +1,16 @@
-// @vue/component
-
 import { Event, Type } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { Model, DraggedElementKind } from 'booking.const';
 import { isRealId } from 'booking.lib.is-real-id';
+import { BookingAnalytics } from 'booking.lib.analytics';
 import { bookingService } from 'booking.provider.service.booking-service';
 import type {
 	BookingModel,
 	OverbookingMapItem,
 	OverbookingResourceIntersections,
 } from 'booking.model.bookings';
-import type { Occupancy } from 'booking.model.interface';
+import type { Occupancy, DraggedDataTransfer } from 'booking.model.interface';
 
 import { Actions } from './actions/actions';
 import { BookingBase } from './booking-base';
@@ -30,6 +29,7 @@ import type { ActionsPopupOptions } from './actions/actions';
 
 export type { BookingUiDuration };
 
+// @vue/component
 export const Booking = {
 	name: 'Booking',
 	props: {
@@ -66,9 +66,13 @@ export const Booking = {
 			overbookingMap: `${Model.Bookings}/overbookingMap`,
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
 			deletingBookings: `${Model.Interface}/deletingBookings`,
-			draggedBookingId: `${Model.Interface}/draggedBookingId`,
-			editingBookingId: `${Model.Interface}/editingBookingId`,
+			animationPause: `${Model.Interface}/animationPause`,
 			isBookingCreatedFromEmbed: `${Model.Interface}/isBookingCreatedFromEmbed`,
+			editingBookingId: `${Model.Interface}/editingBookingId`,
+			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
+			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			getWaitListItemById: `${Model.WaitList}/getById`,
+			getResourceById: `${Model.Resources}/getById`,
 		}),
 		booking(): BookingModel
 		{
@@ -161,8 +165,20 @@ export const Booking = {
 	methods: {
 		dragMouseEnter(): void
 		{
-			if (this.dropArea)
+			if (this.dropArea || !this.draggedDataTransfer.id)
 			{
+				return;
+			}
+
+			if (this.draggedDataTransfer.kind === DraggedElementKind.WaitListItem)
+			{
+				this.freeSpace = {
+					fromTs: this.booking.dateFromTs,
+					toTs: this.booking.dateToTs,
+					resourcesIds: this.booking.resourcesIds,
+				};
+				this.dropArea = true;
+
 				return;
 			}
 
@@ -228,14 +244,28 @@ export const Booking = {
 			this.dropArea = false;
 			this.freeSpace = null;
 		},
-		dropBooking(): void
+		async dropElement(): void
 		{
-			const id = this.draggedBookingId;
+			const id = this.draggedDataTransfer.id;
 			if (!id || !this.freeSpace)
 			{
 				return;
 			}
 
+			if (this.draggedDataTransfer.kind === DraggedElementKind.Booking)
+			{
+				await this.dropBooking(id);
+
+				return;
+			}
+
+			if (this.draggedDataTransfer.kind === DraggedElementKind.WaitListItem)
+			{
+				await this.dropWaitListItem(id);
+			}
+		},
+		async dropBooking(id: number | string): Promise<void>
+		{
 			const droppedBooking = this.getBookingById(id);
 			const { dateFromTs, dateToTs } = findTimeForDroppedBooking(this.freeSpace, this.booking, droppedBooking);
 			const overbooking = {
@@ -254,21 +284,48 @@ export const Booking = {
 
 			if (!isRealId(id))
 			{
-				void this.$store.dispatch(`${Model.Bookings}/update`, { id, booking: overbooking });
+				await this.$store.dispatch(`${Model.Bookings}/update`, { id, booking: overbooking });
 
 				return;
 			}
 
-			void bookingService.update({
+			await bookingService.update({
 				id,
 				...overbooking,
 			});
+		},
+		async dropWaitListItem(id: number): Promise<void>
+		{
+			const droppedWaitListItem = this.getWaitListItemById(id);
+			const clients = [...droppedWaitListItem.clients];
+			const resource = this.getResourceById(this.resourceId);
+			const timezone = resource?.slotRanges?.[0]?.timezone;
+
+			const overbooking: BookingModel = {
+				id: `wl${id}`,
+				resourcesIds: [this.resourceId],
+				name: droppedWaitListItem.name,
+				note: droppedWaitListItem.note,
+				clients,
+				primaryClient: clients.length > 0 ? clients[0] : undefined,
+				externalData: [...droppedWaitListItem.externalData],
+				dateFromTs: this.booking.dateFromTs,
+				dateToTs: this.booking.dateToTs,
+				timezoneFrom: timezone,
+				timezoneTo: timezone,
+			};
+			const result = await bookingService.createFromWaitListItem(id, overbooking);
+
+			if (result.success && result.booking)
+			{
+				BookingAnalytics.sendAddBooking({ isOverbooking: true });
+			}
 		},
 		startDropHandler(): void
 		{
 			Event.bind(this.$el, 'mousemove', this.dragMouseEnter, { capture: true });
 			Event.bind(this.$el, 'mouseleave', this.dragMouseLeave, { capture: true });
-			Event.bind(this.$el, 'mouseup', this.dropBooking, { capture: true });
+			Event.bind(this.$el, 'mouseup', this.dropElement, { capture: true });
 		},
 		stopDropHandler(): void
 		{
@@ -276,25 +333,33 @@ export const Booking = {
 			this.freeSpace = null;
 			Event.unbind(this.$el, 'mousemove', this.dragMouseEnter, { capture: true });
 			Event.unbind(this.$el, 'mouseleave', this.dragMouseLeave, { capture: true });
-			Event.unbind(this.$el, 'mouseup', this.dropBooking, { capture: true });
+			Event.unbind(this.$el, 'mouseup', this.dropElement, { capture: true });
 		},
 	},
 	watch: {
-		draggedBookingId(draggedBookingId: number | null): void
-		{
-			if (draggedBookingId === this.bookingId || this.hasOverbooking)
+		draggedDataTransfer: {
+			handler(draggedDataTransfer: DraggedDataTransfer): void
 			{
-				return;
-			}
+				if (this.hasOverbooking)
+				{
+					return;
+				}
 
-			if (draggedBookingId === null)
-			{
-				this.stopDropHandler();
-			}
-			else
-			{
-				this.startDropHandler();
-			}
+				if (draggedDataTransfer.kind === DraggedElementKind.Booking && draggedDataTransfer.id === this.bookingId)
+				{
+					return;
+				}
+
+				if (!draggedDataTransfer || !draggedDataTransfer.kind || !draggedDataTransfer.id)
+				{
+					this.stopDropHandler();
+				}
+				else
+				{
+					this.startDropHandler();
+				}
+			},
+			deep: true,
 		},
 	},
 	components: {
@@ -313,6 +378,7 @@ export const Booking = {
 				'--shifted': isShifted && !realBooking,
 				'--drop-area': dropArea,
 				'--accent': hasAccent,
+				'not-transition': animationPause,
 			}"
 			:width="bookingWidth"
 		>

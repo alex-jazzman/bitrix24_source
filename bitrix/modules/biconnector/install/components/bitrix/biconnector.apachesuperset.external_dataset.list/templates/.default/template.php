@@ -16,6 +16,7 @@ use Bitrix\Main\Web\Json;
 
 Extension::load([
 	'biconnector.dataset-import',
+	'biconnector.dataset-import.file-export',
 	'ui.dialogs.messagebox',
 	'ui.hint',
 	'ui.buttons',

@@ -1,8 +1,34 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Catalog = this.BX.Catalog || {};
-(function (exports,catalog_entityCard,catalog_storeEnableWizard,main_popup,ui_buttons,currency_currencyCore,ui_entitySelector,main_core_events,ui_feedback_form,main_core) {
+(function (exports,catalog_entityCard,catalog_storeEnableWizard,main_popup,ui_buttons,ui_label,currency_currencyCore,ui_entitySelector,main_core_events,ui_feedback_form,main_core) {
 	'use strict';
+
+	/**
+	 * @namespace {BX.UI}
+	 */
+	var LabelColor = function LabelColor() {
+	  babelHelpers.classCallCheck(this, LabelColor);
+	};
+	babelHelpers.defineProperty(LabelColor, "DEFAULT", 'ui-label-default');
+	babelHelpers.defineProperty(LabelColor, "DANGER", 'ui-label-danger');
+	babelHelpers.defineProperty(LabelColor, "SUCCESS", 'ui-label-success');
+	babelHelpers.defineProperty(LabelColor, "WARNING", 'ui-label-warning');
+	babelHelpers.defineProperty(LabelColor, "PRIMARY", 'ui-label-primary');
+	babelHelpers.defineProperty(LabelColor, "SECONDARY", 'ui-label-secondary');
+	babelHelpers.defineProperty(LabelColor, "LIGHT", 'ui-label-light');
+	babelHelpers.defineProperty(LabelColor, "TAG_SECONDARY", 'ui-label-tag-secondary');
+	babelHelpers.defineProperty(LabelColor, "TAG_LIGHT", 'ui-label-tag-light');
+	babelHelpers.defineProperty(LabelColor, "LIGHT_BLUE", 'ui-label-lightblue');
+	babelHelpers.defineProperty(LabelColor, "LIGHT_GREEN", 'ui-label-lightgreen');
+	babelHelpers.defineProperty(LabelColor, "ORANGE", 'ui-label-orange');
+	babelHelpers.defineProperty(LabelColor, "LIGHT_ORANGE", 'ui-label-lightorange');
+	babelHelpers.defineProperty(LabelColor, "YELLOW", 'ui-label-yellow');
+	babelHelpers.defineProperty(LabelColor, "LIGHT_YELLOW", 'ui-label-lightyellow');
+	babelHelpers.defineProperty(LabelColor, "LIGHT_RED", 'ui-label-lightred');
+	babelHelpers.defineProperty(LabelColor, "LAVENDER", 'ui-label-lavender');
+	babelHelpers.defineProperty(LabelColor, "COPILOT_LIGHT", 'ui-label-copilot-light');
+	babelHelpers.defineProperty(LabelColor, "COPILOT_LIGHT_REVERSE", 'ui-label-copilot-light-reverse');
 
 	var StoreDocumentFieldConfigurator = /*#__PURE__*/function (_BX$UI$EntityEditorFi) {
 	  babelHelpers.inherits(StoreDocumentFieldConfigurator, _BX$UI$EntityEditorFi);
@@ -843,7 +869,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  return ModelFactory;
 	}();
 
-	var _templateObject$1, _templateObject2$1, _templateObject3$1;
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5, _templateObject6;
 	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
 	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
@@ -868,7 +894,11 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    _this.inventoryManagementSource = settings.inventoryManagementSource;
 	    _this.lockedCancellation = settings.lockedCancellation || false;
 	    _this.activeTabId = 'main';
+	    _this.insidePageTitleConfig = settings.insidePageTitleConfig || {};
 	    _this.isTabAnalyticsSent = false;
+	    if (main_core.Type.isPlainObject(_this.insidePageTitleConfig)) {
+	      _this.appendInsidePageTitle(_this.insidePageTitleConfig);
+	    }
 	    _this.setSliderText();
 	    _this.addCopyLinkPopup();
 	    _this.subscribeToEvents();
@@ -884,6 +914,46 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    return _this;
 	  }
 	  babelHelpers.createClass(DocumentCard, [{
+	    key: "appendInsidePageTitle",
+	    value: function appendInsidePageTitle(config) {
+	      var _BX$UI, _BX$UI$ToolbarManager;
+	      var toolbar = (_BX$UI = BX.UI) === null || _BX$UI === void 0 ? void 0 : (_BX$UI$ToolbarManager = _BX$UI.ToolbarManager) === null || _BX$UI$ToolbarManager === void 0 ? void 0 : _BX$UI$ToolbarManager.getDefaultToolbar();
+	      var titleContainer = toolbar === null || toolbar === void 0 ? void 0 : toolbar.titleContainer.querySelector('.ui-toolbar-title-item-box');
+	      if (!titleContainer) {
+	        return;
+	      }
+	      var editButton = null;
+	      var pageLink = null;
+	      if (config.enableEditTitle) {
+	        editButton = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_edit\" class=\"pagetitle-edit-button\"></span>\n\t\t\t"])));
+	      }
+	      if (config.enablePageLink) {
+	        pageLink = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"", "\" class=\"page-link-btn\"></span>\n\t\t\t"])), this.settings.copyLinkButtonId);
+	      }
+	      if (editButton || pageLink) {
+	        var buttonContainer = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_btn_wrapper\" class=\"pagetitile-button-container\"></span>\n\t\t\t"])));
+	        if (editButton) {
+	          main_core.Dom.append(editButton, buttonContainer);
+	        }
+	        if (pageLink) {
+	          main_core.Dom.append(pageLink, buttonContainer);
+	        }
+	        main_core.Dom.append(buttonContainer, titleContainer);
+	      }
+	      if (config.enableStatusLabel) {
+	        var labelOptions = {
+	          text: config.statusLabel.text,
+	          color: config.statusLabel.color,
+	          size: ui_label.LabelSize.LG,
+	          link: '',
+	          fill: true,
+	          customClass: 'document-status-label'
+	        };
+	        var label = new ui_label.Label(labelOptions);
+	        main_core.Dom.append(label.render(), titleContainer);
+	      }
+	    }
+	  }, {
 	    key: "initDocumentTypeSelector",
 	    value: function initDocumentTypeSelector() {
 	      var _this2 = this;
@@ -1437,16 +1507,16 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "getCancellationPopupContent",
 	    value: function getCancellationPopupContent() {
-	      var moreLink = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<a href=\"#\" class=\"ui-form-link\">", "</a>"])), main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_LINK'));
+	      var moreLink = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["<a href=\"#\" class=\"ui-form-link\">", "</a>"])), main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_LINK'));
 	      main_core.Event.bind(moreLink, 'click', function () {
 	        var articleId = 17858278;
 	        top.BX.Helper.show("redirect=detail&code=".concat(articleId));
 	      });
-	      var descriptionHtml = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>", "</div>\n\t\t"])), main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_HINT', {
+	      var descriptionHtml = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>", "</div>\n\t\t"])), main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_HINT', {
 	        '#HELP_LINK#': '<help-link></help-link>'
 	      }));
 	      main_core.Dom.replace(descriptionHtml.querySelector('help-link'), moreLink);
-	      return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<h3>", "</h3>\n\t\t\t\t<div>", "\n\t\t\t\t<br>", "<div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_TITLE'), main_core.Text.encode(main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_QUESTION')), descriptionHtml);
+	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<h3>", "</h3>\n\t\t\t\t<div>", "\n\t\t\t\t<br>", "<div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_TITLE'), main_core.Text.encode(main_core.Loc.getMessage('CANCEL_CONDUCT_CANCELLATION_POPUP_QUESTION')), descriptionHtml);
 	    }
 	  }], [{
 	    key: "getInstance",
@@ -1606,5 +1676,5 @@ this.BX.Catalog = this.BX.Catalog || {};
 	exports.FeedbackButton = Button;
 	exports.Slider = Slider;
 
-}((this.BX.Catalog.DocumentCard = this.BX.Catalog.DocumentCard || {}),BX.Catalog.EntityCard,BX.Catalog.Store,BX.Main,BX.UI,BX.Currency,BX.UI.EntitySelector,BX.Event,BX.UI.Feedback,BX));
+}((this.BX.Catalog.DocumentCard = this.BX.Catalog.DocumentCard || {}),BX.Catalog.EntityCard,BX.Catalog.Store,BX.Main,BX.UI,BX.UI,BX.Currency,BX.UI.EntitySelector,BX.Event,BX.UI.Feedback,BX));
 //# sourceMappingURL=document-card.bundle.js.map

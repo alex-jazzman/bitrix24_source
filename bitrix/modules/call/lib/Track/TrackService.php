@@ -42,7 +42,7 @@ final class TrackService
 	{
 		return
 			!$track->getDownloaded()
-			&& $track->hasDownloadUrl()
+			&& !empty($track->getDownloadUrl())
 		;
 	}
 
@@ -54,9 +54,8 @@ final class TrackService
 		}
 
 		return
-			!$track->hasDiskFileId()
-			&& $track->getDiskFileId() > 0
-			&& $track->hasFileId()
+			!$track->getDiskFileId()
+			&& $track->getFileId()
 		;
 	}
 

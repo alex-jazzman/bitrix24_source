@@ -96,6 +96,11 @@ export const ConfirmationMenu = {
 				return;
 			}
 
+			if (this.disabled)
+			{
+				return;
+			}
+
 			if (this.menuPopup?.popupWindow?.isShown())
 			{
 				this.destroy();
@@ -172,7 +177,7 @@ export const ConfirmationMenu = {
 			:data-booking-id="dataId"
 			:data-element="dataElementPrefix + '-menu-confirmation-button'"
 			class="booking-actions-popup-button-with-chevron"
-			:class="{'--lock': !isFeatureEnabled}"
+			:class="{'--lock': !isFeatureEnabled || disabled}"
 			buttonClass="ui-btn-shadow"
 			:disabled="disabled || !isFeatureEnabled"
 			:text="loc('BB_ACTIONS_POPUP_CONFIRMATION_BTN_LABEL')"

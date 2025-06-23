@@ -121,43 +121,59 @@ jn.define('collab/invite', (require, exports, module) => {
 				return;
 			}
 
-			const selector = EntitySelectorFactory.createByType(EntitySelectorFactory.Type.USER, {
-				provider: {},
-				createOptions: {
-					enableCreation: false,
-				},
-				integrateSelectorToParentLayout: true,
-				allowMultipleSelection: true,
-				closeOnSelect: true,
-				events: {
-					onSelectedChanged: (selectedEmployees) => {
-						this.selectedEmployees = selectedEmployees;
-					},
-					onClose: async (selectedUsers) => {
-						setTimeout(async () => {
-							if (Type.isArrayFilled(selectedUsers))
-							{
-								await Notify.showIndicatorLoading();
-								const userIds = selectedUsers.map((user) => user.id);
-								await addEmployeeToCollab(this.props.collabId, userIds);
-								this.#close();
-								showSuccessInvitationToast({
-									collabId: this.props.collabId,
-									analytics: this.props.analytics,
-									multipleInvitation: selectedUsers.length > 0,
-									isTextForInvite: false,
-								});
-								Notify.hideCurrentIndicator();
-							}
-						}, 500);
-					},
-				},
-				widgetParams: {
-					title: '',
-				},
-			});
+			try
+			{
+				const { MemberSelector } = require('im/messenger/controller/selector/member');
+				const memberSelector = new MemberSelector({
+					integrateSelectorToParentLayout: true,
+					onSelectMembers: this.#onSelectMembers,
+				});
+				memberSelector.open(layout);
+			}
+			catch (e)
+			{
+				console.warn(e);
 
-			selector.show({}, layout);
+				const selector = EntitySelectorFactory.createByType(EntitySelectorFactory.Type.USER, {
+					provider: {},
+					createOptions: {
+						enableCreation: false,
+					},
+					integrateSelectorToParentLayout: true,
+					allowMultipleSelection: true,
+					closeOnSelect: true,
+					events: {
+						onSelectedChanged: (selectedEmployees) => {
+							this.selectedEmployees = selectedEmployees;
+						},
+						onClose: async (selectedUsers) => {
+							this.#onSelectMembers(selectedUsers.map((user) => user.id));
+						},
+					},
+					widgetParams: {
+						title: '',
+					},
+				});
+				selector.show({}, layout);
+			}
+		};
+
+		#onSelectMembers = async (membersIds) => {
+			setTimeout(async () => {
+				if (Type.isArrayFilled(membersIds))
+				{
+					await Notify.showIndicatorLoading();
+					await addEmployeeToCollab(this.props.collabId, membersIds);
+					this.#close();
+					showSuccessInvitationToast({
+						collabId: this.props.collabId,
+						analytics: this.props.analytics,
+						multipleInvitation: membersIds.length > 0,
+						isTextForInvite: false,
+					});
+					Notify.hideCurrentIndicator();
+				}
+			}, 500);
 		};
 
 		#close = () => {

@@ -964,6 +964,40 @@ export default class PostFormTabs extends EventEmitter
 		}
 	};
 
+	clickStartWorkflowButton(): void
+	{
+		Runtime
+			.loadExtension('bizproc.router')
+			.then(({ Router }) => {
+				if (Type.isFunction(Router.openUserProcessesStart))
+				{
+					const options = {
+						requestMethod: 'get',
+						requestParams: { apply_filter: 'Y', LIVEFEED_PRESET: 'show_livefeed' },
+						events: {
+							onCloseStart: () => {
+								if (BX.Livefeed && BX.Livefeed.PageInstance)
+								{
+									BX.Livefeed.PageInstance.refresh();
+								}
+								else
+								{
+									window.location.reload();
+								}
+							},
+						},
+					};
+
+					Router.openUserProcessesStart(options);
+				}
+				else
+				{
+					this.getLists(); // TODO delete in future version
+				}
+			})
+			.catch((e) => console.error(e));
+	}
+
 	getMenuItems(tabs, createOnclickLists)
 	{
 		const menuItemsLists = [];

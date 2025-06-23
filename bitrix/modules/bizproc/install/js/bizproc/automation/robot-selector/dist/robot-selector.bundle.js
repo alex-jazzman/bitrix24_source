@@ -1418,7 +1418,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return `<b>${title}</b><br/>${msg}`;
 	}
 	function _getGroupsFooter2() {
-	  const url = '/marketplace/category/%category%/'.replace('%category%', babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].get('marketplaceRobotCategory'));
+	  const marketplaceRobotCategory = babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].get('marketplaceRobotCategory');
+	  let url;
+	  if (marketplaceRobotCategory.startsWith('automation')) {
+	    url = '/market/collection/%category%/'.replace('%category%', marketplaceRobotCategory);
+	  } else {
+	    url = '/marketplace/category/crm_bots/';
+	  }
 	  return `
 			<a class="bizproc-creating-robot__menu-market" href="${url}">
 				<div class='bizproc-creating-robot__menu_item-market'>

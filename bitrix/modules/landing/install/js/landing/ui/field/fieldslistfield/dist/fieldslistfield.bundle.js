@@ -1,7 +1,8 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
-(function (exports,ui_designTokens,landing_loc,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_fileLimit,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,landing_pageobject,main_loader,landing_ui_field_productfield,calendar_resourcebookinguserfield,socnetlogdest,ui_hint,landing_ui_component_iconbutton,main_core,landing_ui_field_basefield) {
+(function (exports,ui_designTokens,landing_loc,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_fileLimit,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,landing_pageobject,main_loader,landing_ui_field_productfield,booking_crmForms_settings,calendar_resourcebookinguserfield,socnetlogdest,ui_hint,landing_ui_component_iconbutton,main_core,landing_ui_field_basefield) {
 	'use strict';
 
 	var _templateObject, _templateObject2;
@@ -245,17 +246,20 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      return '';
 	    }
 	  }, {
-	    key: "createResourceBookingFieldController",
-	    value: function createResourceBookingFieldController(options) {
+	    key: "createCustomFieldController",
+	    value: function createCustomFieldController(options) {
 	      if (options.type === 'resourcebooking') {
 	        var root = landing_pageobject.PageObject.getRootWindow();
 	        var crmField = this.getCrmFieldById(options.id);
 	        return root.BX.Calendar.ResourcebookingUserfield.initCrmFormFieldController({
-	          field: _objectSpread(_objectSpread({}, options), {}, {
+	          field: _objectSpread(_objectSpread({}, options.sourceOptions), {}, {
 	            dict: crmField,
 	            node: main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div><div class=\"crm-webform-resourcebooking-wrap\"></div></div>"])))
 	          })
 	        });
+	      }
+	      if (options.type === 'booking') {
+	        return new booking_crmForms_settings.Settings(options, this.data.formOptions);
 	      }
 	      return null;
 	    }
@@ -281,7 +285,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          listItemOptions.description = options.label || (crmField ? crmField.caption : '');
 	          listItemOptions.editable = true;
 	          listItemOptions.isSeparator = false;
-	          listItemOptions.fieldController = this.createResourceBookingFieldController(options);
+	          listItemOptions.fieldController = this.createCustomFieldController(listItemOptions);
 	          if (options.editing.supportAutocomplete) {
 	            var autocompleteButton = new landing_ui_component_iconbutton.IconButton({
 	              id: 'autocomplete',
@@ -942,11 +946,21 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "onItemEdit",
 	    value: function onItemEdit(event) {
 	      var _this11 = this;
+	      var listItem = event.getTarget();
 	      var _event$getTarget = event.getTarget(),
 	        options = _event$getTarget.options;
 	      if (options.fieldController) {
 	        event.preventDefault();
 	        options.fieldController.showSettingsPopup();
+	        if (options.sourceOptions.settingsData) {
+	          options.form.unsubscribe('onChange', listItem.onFormChange);
+	          options.form.subscribe('onChange', listItem.onFormChange);
+	          options.fieldController.settingsPopup.subscribeOnce('onClose', function () {
+	            options.sourceOptions.settingsData = options.fieldController.getSettings();
+	            options.form.emit('onChange');
+	          });
+	          return;
+	        }
 	        setTimeout(function () {
 	          options.fieldController.settingsPopup.subscribeOnce('onClose', function () {
 	            options.sourceOptions.booking.settings_data = options.fieldController.getSettings().data;
@@ -1048,10 +1062,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  return FieldsListField;
 	}(landing_ui_field_basefield.BaseField);
 	function _getFieldsPanelAllowedTypes2() {
-	  return ['list', 'string', 'checkbox', 'date', 'text', 'typed_string', 'file', 'datetime', 'integer', 'double', 'enumeration', 'url', 'money', 'boolean', 'resourcebooking', 'radio', 'bool', 'hr', 'br', 'phone', 'email', 'page', 'section'];
+	  return ['list', 'string', 'checkbox', 'date', 'text', 'typed_string', 'file', 'datetime', 'integer', 'double', 'enumeration', 'url', 'money', 'boolean', 'booking', 'resourcebooking', 'radio', 'bool', 'hr', 'br', 'phone', 'email', 'page', 'section'];
 	}
 
 	exports.FieldsListField = FieldsListField;
 
-}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX,BX.Landing,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Landing,BX,BX.Landing.Ui.Field,BX.Calendar,BX,BX,BX.Landing.UI.Component,BX,BX.Landing.UI.Field));
+}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX,BX.Landing,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Landing,BX,BX.Landing.Ui.Field,BX.Booking.CrmForms,BX.Calendar,BX,BX,BX.Landing.UI.Component,BX,BX.Landing.UI.Field));
 //# sourceMappingURL=fieldslistfield.bundle.js.map

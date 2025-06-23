@@ -45,14 +45,28 @@ export const SelectableBackground = Object.freeze({
 });
 
 export const SpecialBackgroundId = {
-	collab: 'collab-v2',
+	collab: 'collab',
+	martaAI: 'martaAI',
+	copilot: 'copilot',
 };
 
+const COPILOT_BACKGROUND_ID = 4;
 export const SpecialBackground = {
 	[SpecialBackgroundId.collab]: {
 		color: '#76c68b',
 		type: ThemeType.dark,
 	},
+	[SpecialBackgroundId.martaAI]: {
+		color: '#4596f9',
+		type: ThemeType.dark,
+	},
+	[SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID],
+};
+
+export const ImageFileByBackgroundId = {
+	[SpecialBackgroundId.collab]: 'collab-v2',
+	[SpecialBackgroundId.martaAI]: 'marta-ai',
+	[SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString(),
 };
 
 export type BackgroundItem = {

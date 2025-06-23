@@ -858,6 +858,7 @@ export class FormSettingsPanel extends BasePresetPanel
 						Reflect.has(value, 'embedding')
 						|| Reflect.has(value, 'callback')
 						|| Reflect.has(value, 'whatsapp')
+						|| Reflect.has(value, 'bookingResourceAutoSelection')
 						|| (
 							Reflect.has(value, 'name')
 							&& Reflect.has(value, 'data')

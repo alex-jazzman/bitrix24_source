@@ -235,7 +235,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 														<tr>
 															<td height="100%" valign="top"></td>
 															<td valign="top" align="left" style="padding-top: 20px;">
-																<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/?IM_NOTIFY=Y" style="display: inline-block; border-radius: 23px; padding: 0 30px; vertical-align: middle; text-decoration: none; height: 47px; background-color: #2fc6f6;">
+																<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/online/?IM_NOTIFY=Y" style="display: inline-block; border-radius: 23px; padding: 0 30px; vertical-align: middle; text-decoration: none; height: 47px; background-color: #2fc6f6;">
 																	<b style="line-height: 47px;font-family: Helvetica Neue, Helvetica, Arial, sans-serif;color: #fff;">
 																		<?=($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE" ? GetMessage("INTRANET_OPEN") : GetMessage("INTRANET_OPEN_NOTIFY"))?>
 																	</b>
@@ -250,7 +250,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 										<table border="0" cellpadding="0" cellspacing="0" style="margin:0; padding:0; width: 100%;">
 											<tr>
 												<td align="right" style="padding: 20px 0 0; text-align: right;">
-													<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/?IM_SETTINGS=NOTIFY" style="color: #a9adb3;font-size: 13px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"><?=GetMessage("INTRANET_CHANGE_NOTIFY_SETTINGS")?></a>
+													<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/online/?IM_SETTINGS=NOTIFY" style="color: #a9adb3;font-size: 13px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"><?=GetMessage("INTRANET_CHANGE_NOTIFY_SETTINGS")?></a>
 												</td>
 											</tr>
 										</table>
@@ -338,7 +338,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 														<tr>
 															<td height="100%" valign="top"></td>
 															<td valign="top" align="left" style="padding-top: 20px;">
-																<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/?IM_NOTIFY=Y" style="display: inline-block; border-radius: 23px; padding: 0 30px; vertical-align: middle; text-decoration: none; height: 47px; background-color: #2fc6f6;">
+																<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/online/?IM_NOTIFY=Y" style="display: inline-block; border-radius: 23px; padding: 0 30px; vertical-align: middle; text-decoration: none; height: 47px; background-color: #2fc6f6;">
 																	<b style="line-height: 47px;font-family: Helvetica Neue, Helvetica, Arial, sans-serif;color: #fff;">
 																		<?=(in_array($arParams["TEMPLATE_TYPE"], array("IM_NEW_MESSAGE", "IM_NEW_MESSAGE_GROUP")) ? GetMessage("INTRANET_OPEN") : GetMessage("INTRANET_OPEN_NOTIFY"))?>
 																	</b>
@@ -353,7 +353,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 										<table border="0" cellpadding="0" cellspacing="0" style="margin:0; padding:0; width: 100%;">
 											<tr>
 												<td align="right" style="padding: 20px 0 0; text-align: right;">
-													<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/?IM_SETTINGS=NOTIFY" style="color: #a9adb3;font-size: 13px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"><?=GetMessage("INTRANET_CHANGE_NOTIFY_SETTINGS")?></a>
+													<a href="<?=$httpPrefix?>://<?=$arParams["SERVER_NAME"]?>/online/?IM_SETTINGS=NOTIFY" style="color: #a9adb3;font-size: 13px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"><?=GetMessage("INTRANET_CHANGE_NOTIFY_SETTINGS")?></a>
 												</td>
 											</tr>
 										</table>

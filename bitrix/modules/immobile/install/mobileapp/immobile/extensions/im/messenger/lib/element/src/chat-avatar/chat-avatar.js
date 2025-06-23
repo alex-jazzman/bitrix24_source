@@ -4,8 +4,8 @@
 jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Type } = require('type');
-	const { Typography, Color } = require('tokens');
 	const { Icon } = require('assets/icons');
+	const { Typography, Color } = require('tokens');
 	const { Theme } = require('im/lib/theme');
 	const { merge } = require('utils/object');
 	const { withCurrentDomain } = require('utils/url');
@@ -15,7 +15,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { DialogType, UserType } = require('im/messenger/const');
+	const { DialogType, UserType, BotCode } = require('im/messenger/const');
 	const { AvatarShape } = require('ui-system/blocks/avatar');
 	const { ColorUtils } = require('im/messenger/lib/utils');
 
@@ -26,6 +26,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			orange: 'orange',
 			green: 'green',
 			blue: 'blue',
+			purple: 'purple',
 		},
 		placeholderType: {
 			auto: 'auto',
@@ -49,6 +50,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	{
 		/** @type {ColorUtils} */
 		static #colorUtils;
+		#avatar;
 
 		static get colorUtils()
 		{
@@ -72,7 +74,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			this.store = serviceLocator.get('core').getStore();
 			this.messengerStore = serviceLocator.get('core').getMessengerStore();
-			this.avatar = null;
+			this.#avatar = null;
 			this.color = null;
 			this.title = null;
 			this.isSuperEllipseIcon = false;
@@ -94,6 +96,24 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		static getImagePath()
 		{
 			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/src/chat-avatar/images/`;
+		}
+
+		/**
+		 * @private
+		 * @param uri
+		 */
+		set avatar(uri)
+		{
+			this.#avatar = withCurrentDomain(uri);
+		}
+
+		/**
+		 * @private
+		 * @return {string|null}
+		 */
+		get avatar()
+		{
+			return this.#avatar;
 		}
 
 		createDialogAvatar(dialogId)
@@ -227,7 +247,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getMentionAvatarProps()
 		{
-			const avatarProps = this.getAvatarProps();
+			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.S.toNumber();
 			avatarProps.placeholder.letters.fontSize = 13;
 
@@ -239,7 +259,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getMessageAvatarProps()
 		{
-			const avatarProps = this.getAvatarProps();
+			const avatarProps = this.#getAvatarProps();
 			avatarProps.placeholder.letters.fontSize = 15;
 
 			return avatarProps;
@@ -248,15 +268,14 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		/**
 		 * @return {AvatarDetail}
 		 */
-		getRecentItemAvatarProps()
+		getRecentItemAvatarProps({ useNotes = true } = {})
 		{
-			const avatarProps = this.getAvatarProps({
-				placeholder: {
-					svg: {
-						size: 38,
-					},
-				},
-			}, { useNotes: true });
+			if (useNotes && this.isCurrentUser)
+			{
+				return this.getAvatarNotesProps();
+			}
+
+			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.M.toNumber();
 
 			return avatarProps;
@@ -267,13 +286,12 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getDialogHeaderAvatarProps()
 		{
-			const avatarProps = this.getAvatarProps({
-				placeholder: {
-					svg: {
-						size: 22,
-					},
-				},
-			}, { useNotes: true });
+			if (this.isCurrentUser)
+			{
+				return this.getAvatarNotesProps(22);
+			}
+
+			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.S.toNumber();
 			avatarProps.placeholder.letters.fontSize = 12;
 
@@ -281,30 +299,36 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		}
 
 		/**
+		 * @deprecated
 		 * @return {AvatarDetail}
 		 */
 		getSidebarTitleAvatarProps()
 		{
-			const avatarProps = this.getAvatarProps({
-				placeholder: {
-					svg: {
-						size: 48,
-					},
-				},
-			}, { useNotes: true });
-			avatarProps.radius = Theme.corner.L.toNumber();
-			avatarProps.placeholder.letters.fontSize = 30;
+			let avatarProps = {};
+
+			if (this.isCurrentUser)
+			{
+				avatarProps = this.getAvatarNotesProps(48);
+			}
+			else
+			{
+				avatarProps = this.#getAvatarProps();
+				avatarProps.radius = Theme.corner.L.toNumber();
+				avatarProps.placeholder.letters.fontSize = 30;
+			}
+
 			avatarProps.style = this.#getSizeStyle(72);
 
 			return avatarProps;
 		}
 
 		/**
+		 * @deprecated
 		 * @return {AvatarDetail}
 		 */
 		getSidebarTabItemDescriptionAvatarProps()
 		{
-			return this.getAvatarProps({
+			return this.#getAvatarProps({
 				backBorderWidth: 1,
 				placeholder: {
 					letters: {
@@ -328,13 +352,12 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getRecentSearchItemAvatarProps()
 		{
-			const avatarProps = this.getAvatarProps({
-				placeholder: {
-					svg: {
-						size: 28,
-					},
-				},
-			}, { useNotes: true });
+			if (this.isCurrentUser)
+			{
+				return this.getAvatarNotesProps(28);
+			}
+
+			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.S.toNumber();
 			avatarProps.placeholder.letters.fontSize = 15;
 
@@ -349,14 +372,29 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			const { useNotes } = options;
 			const { fontSize } = Typography.h5.getValue();
 
-			return this.getAvatarProps({
+			if (useNotes && this.isCurrentUser)
+			{
+				return this.getAvatarNotesProps();
+			}
+
+			return this.#getAvatarProps({
 				placeholder: {
 					letters: {
 						fontSize,
 					},
 				},
 				style: this.#getSizeStyle(40),
-			}, { useNotes });
+			});
+		}
+
+		/**
+		 * @public
+		 * @param {Partial<AvatarDetail>} customAvatarProps
+		 * @return {AvatarDetail}
+		 */
+		getBaseAvatarProps(customAvatarProps)
+		{
+			return this.#getAvatarProps(customAvatarProps);
 		}
 
 		/**
@@ -364,7 +402,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getReactionAvatarProps()
 		{
-			return this.getAvatarProps({
+			return this.#getAvatarProps({
 				style: this.#getSizeStyle(18),
 				placeholder: {
 					letters: null,
@@ -377,39 +415,12 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getMessageCommentInfoAvatarProps()
 		{
-			return this.getAvatarProps({
+			return this.#getAvatarProps({
 				style: this.#getSizeStyle(28),
 				placeholder: {
 					letters: null,
 				},
 			});
-		}
-
-		/**
-		 * @private
-		 * @param {Partial<AvatarDetail>} customAvatarProps
-		 * @param {boolean} useNotes
-		 * @return {AvatarDetail}
-		 */
-		getAvatarProps(customAvatarProps = {}, { useNotes = false } = {})
-		{
-			if (useNotes && this.isCurrentUser)
-			{
-				return this.getAvatarNotesProps(customAvatarProps.placeholder?.svg?.size);
-			}
-
-			// eslint-disable-next-line init-declarations
-			let avatarProps;
-			if (DialogHelper.isDialogId(this.dialogId))
-			{
-				avatarProps = this.getChatAvatarProps();
-			}
-			else
-			{
-				avatarProps = this.getUserAvatarProps();
-			}
-
-			return merge(avatarProps, customAvatarProps);
 		}
 
 		/**
@@ -423,6 +434,11 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				case DialogType.collab:
 				{
 					return this.#getAvatarCollabFields();
+				}
+
+				case DialogType.copilot:
+				{
+					return this.#getAvatarCopilotFields();
 				}
 
 				case DialogType.channel:
@@ -452,31 +468,30 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				return this.#getAvatarUserFields();
 			}
 
-			// eslint-disable-next-line sonarjs/no-small-switch
-			switch (user.type)
+			if (user.type === UserType.collaber)
 			{
-				case UserType.collaber:
-				{
-					return this.#getAvatarCollaberFields();
-				}
-
-				case UserType.extranet:
-				{
-					return this.#getAvatarExtranetFields();
-				}
-
-				default:
-				{
-					return this.#getAvatarUserFields();
-				}
+				return this.#getAvatarCollaberFields();
 			}
+
+			if (user.type === UserType.extranet)
+			{
+				return this.#getAvatarExtranetFields();
+			}
+
+			if (user.botData?.code === BotCode.copilot)
+			{
+				return this.#getAvatarCopilotFields();
+			}
+
+			return this.#getAvatarUserFields();
 		}
 
 		/**
 		 * @param {number} size
 		 * @return {AvatarDetail}
 		 */
-		getAvatarNotesProps(size = 38) {
+		getAvatarNotesProps(size = 38)
+		{
 			const defaultFields = this.#getAvatarDefaultFields();
 
 			if (!Feature.isNotesIconAvailable)
@@ -504,6 +519,39 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 						size,
 					},
 				},
+			};
+		}
+
+		/**
+		 * @param {Partial<AvatarDetail>} customAvatarProps
+		 * @return {AvatarDetail}
+		 */
+		#getAvatarProps(customAvatarProps = {})
+		{
+			let avatarProps = {};
+			if (DialogHelper.isDialogId(this.dialogId))
+			{
+				avatarProps = this.getChatAvatarProps();
+			}
+			else
+			{
+				avatarProps = this.getUserAvatarProps();
+			}
+
+			return merge(avatarProps, customAvatarProps);
+		}
+
+		/**
+		 * @private
+		 * @return {AvatarDetail}
+		 */
+		#getAvatarCopilotFields()
+		{
+			const defaultFields = this.#getAvatarDefaultFields();
+
+			return {
+				...defaultFields,
+				...this.#getCopilotFields(),
 			};
 		}
 
@@ -563,6 +611,23 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			return {
 				accentType: AvatarDetailFields.accentType.green,
+				hideOutline: false,
+				backBorderWidth: 2,
+			};
+		}
+
+		/**
+		 * @returns {Partial<AvatarDetail>}
+		 */
+		#getCopilotFields()
+		{
+			if (!Feature.isChatAvatarAccentTypePurpleAvailable || !Feature.isCopilotInDefaultTabAvailable)
+			{
+				return {};
+			}
+
+			return {
+				accentType: AvatarDetailFields.accentType.purple,
 				hideOutline: false,
 				backBorderWidth: 2,
 			};

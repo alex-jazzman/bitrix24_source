@@ -1,0 +1,127 @@
+.tasks-field-files {
+	display: flex;
+	align-items: center;
+}
+
+.tasks-field-files-main {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.tasks-field-files-main .ui-icon-set {
+	margin-right: 6px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-files-text {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-field-files-text.--add {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-files-add {
+	margin-left: auto;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-files-add:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+
+
+.tasks-field-files-sheet {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.tasks-field-files-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 10px;
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-files-title {
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-field-files-header .ui-icon-set {
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.tasks-field-files-header .ui-icon-set:hover {
+	opacity: 1;
+}
+
+.tasks-field-files-list {
+	overflow: auto;
+	margin: 15px 0;
+}
+
+.tasks-field-files-footer {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: auto;
+	padding-top: 10px;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-files-popup {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+.tasks-field-files-popup-files {
+	overflow-y: scroll;
+	padding: 0 5px 15px 0;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tasks-field-files-popup-files {
+		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.tasks-field-files-popup-files::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: 5px;
+}
+
+.tasks-field-files-popup-files::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.tasks-field-files-popup-files::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.11);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.tasks-field-files-popup-footer {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	margin-top: auto;
+	padding-top: 18px;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-files-popup-add-buttons {
+	display: flex;
+	gap: 10px;
+}

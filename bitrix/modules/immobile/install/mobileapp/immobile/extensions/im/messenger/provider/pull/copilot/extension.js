@@ -6,11 +6,13 @@ jn.define('im/messenger/provider/pull/copilot', (require, exports, module) => {
 	const { CopilotMessagePullHandler } = require('im/messenger/provider/pull/copilot/message');
 	const { CopilotFilePullHandler } = require('im/messenger/provider/pull/copilot/file');
 	const { CopilotUserPullHandler } = require('im/messenger/provider/pull/copilot/user');
+	const { CopilotCounterPullHandler } = require('im/messenger/provider/pull/copilot/counter');
 
 	module.exports = {
 		CopilotDialogPullHandler,
 		CopilotMessagePullHandler,
 		CopilotFilePullHandler,
 		CopilotUserPullHandler,
+		CopilotCounterPullHandler,
 	};
 });

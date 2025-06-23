@@ -19,7 +19,7 @@ export const FileItem = {
 			default: false,
 		},
 	},
-	emits: ['onRemoveItem'],
+	emits: ['removeItem'],
 	computed: {
 		hasError(): boolean
 		{
@@ -38,7 +38,7 @@ export const FileItem = {
 	methods: {
 		onRemoveClick()
 		{
-			this.$emit('onRemoveItem', { file: this.file });
+			this.$emit('removeItem', { file: this.file });
 		},
 	},
 	template: `

@@ -3901,33 +3901,41 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "cancel",
 	    value: function cancel(params = {}) {
-	      var _params$analytics, _params$analytics2, _params$analytics3;
+	      var _babelHelpers$classPr3;
 	      const animateCollapse = _classPrivateMethodGet$4(this, _shouldAnimateCollapse, _shouldAnimateCollapse2).call(this);
 	      if ((params === null || params === void 0 ? void 0 : params.sendAnalytics) === false) {
 	        this.getTextEditor().collapse(animateCollapse);
 	        return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	      }
-	      const analytics = _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this);
+	      const data = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.getData();
+	      this.sendAnalyticsCancelEvent({
+	        ...data,
+	        ...(params === null || params === void 0 ? void 0 : params.analytics)
+	      });
+	      this.getTextEditor().collapse(animateCollapse);
+	      return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
+	    }
+	  }, {
+	    key: "sendAnalyticsCancelEvent",
+	    value: function sendAnalyticsCancelEvent(params) {
+	      const analytics = _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this, params);
 	      if (analytics === null) {
-	        this.getTextEditor().collapse(animateCollapse);
-	        return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
+	        return;
 	      }
 	      analytics.setEvent(EventIds.activityCancel).setElement(ElementIds.cancelButton);
-	      const subSection = params === null || params === void 0 ? void 0 : (_params$analytics = params.analytics) === null || _params$analytics === void 0 ? void 0 : _params$analytics.subSection;
+	      const subSection = params === null || params === void 0 ? void 0 : params.subSection;
 	      if (main_core.Type.isStringFilled(subSection)) {
 	        analytics.setSubSection(subSection);
 	      }
-	      const element = params === null || params === void 0 ? void 0 : (_params$analytics2 = params.analytics) === null || _params$analytics2 === void 0 ? void 0 : _params$analytics2.element;
+	      const element = params === null || params === void 0 ? void 0 : params.element;
 	      if (main_core.Type.isStringFilled(element)) {
 	        analytics.setElement(element);
 	      }
-	      const notificationSkipPeriod = params === null || params === void 0 ? void 0 : (_params$analytics3 = params.analytics) === null || _params$analytics3 === void 0 ? void 0 : _params$analytics3.notificationSkipPeriod;
+	      const notificationSkipPeriod = params === null || params === void 0 ? void 0 : params.notificationSkipPeriod;
 	      if (main_core.Type.isStringFilled(notificationSkipPeriod)) {
 	        analytics.setNotificationSkipPeriod(notificationSkipPeriod);
 	      }
 	      analytics.send();
-	      this.getTextEditor().collapse(animateCollapse);
-	      return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	    }
 	  }, {
 	    key: "resetToDefaults",
@@ -4318,9 +4326,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  const settings = main_core.Extension.getSettings('crm.activity.todo-editor-v2');
 	  return (settings === null || settings === void 0 ? void 0 : settings.canUseCalendarBlock) === true;
 	}
-	function _getAnalyticsInstance2() {
-	  var _babelHelpers$classPr3;
-	  const data = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.getData();
+	function _getAnalyticsInstance2(data = null) {
+	  var _data, _babelHelpers$classPr4;
+	  // eslint-disable-next-line no-param-reassign
+	  data = (_data = data) !== null && _data !== void 0 ? _data : (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getData();
 	  if (!data) {
 	    return null;
 	  }

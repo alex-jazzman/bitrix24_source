@@ -1,7 +1,6 @@
-import { Core } from 'im.v2.application.core';
-import { Loc, Type } from 'main.core';
+import { Loc } from 'main.core';
 
-import { ChatService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { Utils } from 'im.v2.lib.utils';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { LayoutManager } from 'im.v2.lib.layout';
@@ -9,10 +8,9 @@ import { ActionByRole, ActionByUserType, ChatType, Layout } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Analytics } from 'im.v2.lib.analytics';
 import { showDeleteChatConfirm } from 'im.v2.lib.confirm';
+import { Notifier } from 'im.v2.lib.notifier';
 
 import type { MenuItem } from 'im.v2.lib.menu';
-
-const NotEmptyCollabErrorCodes = new Set(['TASKS_NOT_EMPTY', 'DISK_NOT_EMPTY', 'CALENDAR_NOT_EMPTY']);
 
 export class MainMenu extends RecentMenu
 {
@@ -128,12 +126,7 @@ export class MainMenu extends RecentMenu
 
 	getAddMembersToChatItem(): MenuItem
 	{
-		if (this.isBot())
-		{
-			return null;
-		}
-
-		if (this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10))
+		if (this.isBot() || this.isChatWithCurrentUser())
 		{
 			return null;
 		}
@@ -166,30 +159,16 @@ export class MainMenu extends RecentMenu
 
 	async #deleteChat(): ?MenuItem
 	{
-		try
-		{
-			await (new ChatService()).deleteChat(this.context.dialogId);
-			void LayoutManager.getInstance().clearCurrentLayoutEntityId();
-		}
-		catch
-		{
-			this.#showNotification(Loc.getMessage('IM_SIDEBAR_MENU_DELETE_CHAT_ERROR'));
-		}
+		await (new ChatService()).deleteChat(this.context.dialogId);
+		void LayoutManager.getInstance().clearCurrentLayoutEntityId();
 	}
 
 	async #deleteCollab(): ?MenuItem
 	{
-		try
-		{
-			this.#showNotification(Loc.getMessage('IM_SIDEBAR_MENU_DELETE_COLLAB_NOTIFICATION'));
-			await (new ChatService()).deleteCollab(this.context.dialogId);
-			void LayoutManager.getInstance().clearCurrentLayoutEntityId();
-			void LayoutManager.getInstance().deleteLastOpenedElementById(this.context.dialogId);
-		}
-		catch (errors)
-		{
-			this.#handleDeleteCollabError(errors);
-		}
+		Notifier.collab.onBeforeDelete();
+		await (new ChatService()).deleteCollab(this.context.dialogId);
+		void LayoutManager.getInstance().clearCurrentLayoutEntityId();
+		void LayoutManager.getInstance().deleteLastOpenedElementById(this.context.dialogId);
 	}
 
 	async #isDeletionCancelled(): Promise<boolean>
@@ -205,29 +184,6 @@ export class MainMenu extends RecentMenu
 		}
 
 		return false;
-	}
-
-	#handleDeleteCollabError(errors): void
-	{
-		if (!Type.isArrayFilled(errors))
-		{
-			return;
-		}
-
-		const [firstError] = errors;
-		if (NotEmptyCollabErrorCodes.has(firstError.code))
-		{
-			this.#showNotification(Loc.getMessage('IM_SIDEBAR_MENU_DELETE_COLLAB_WITH_ENTITIES_ERROR'));
-
-			return;
-		}
-
-		this.#showNotification(Loc.getMessage('IM_SIDEBAR_MENU_DELETE_COLLAB_ERROR'));
-	}
-
-	#showNotification(content: string): void
-	{
-		BX.UI.Notification.Center.notify({ content });
 	}
 
 	#isPersonalChat(): boolean

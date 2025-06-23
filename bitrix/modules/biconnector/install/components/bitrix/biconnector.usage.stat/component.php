@@ -123,9 +123,16 @@ while ($data = $logList->fetch())
 		$data['SOURCE_ID'] = $tables[$data['SOURCE_ID']];
 	}
 
-	$str = number_format($data['ROW_NUM'], 0, '.', ' ');
-	$str = str_replace(' ', '<span></span>', $str);
-	$data['ROW_NUM'] = '<span class="biconnector-usage-stat-number">' . $str . '</span>';
+	if ($data['ROW_NUM'] === null)
+	{
+		$data['ROW_NUM'] = Loc::getMessage('CC_BBUS_ROWS_NO_DATA');
+	}
+	else
+	{
+		$str = number_format($data['ROW_NUM'], 0, '.', ' ');
+		$str = str_replace(' ', '<span></span>', $str);
+		$data['ROW_NUM'] = '<span class="biconnector-usage-stat-number">' . $str . '</span>';
+	}
 
 	if ($data['DATA_SIZE'])
 	{

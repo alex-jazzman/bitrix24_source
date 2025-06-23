@@ -1,20 +1,22 @@
+import { Analytics } from 'im.v2.lib.analytics';
 import { Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { Analytics as CallAnalytics } from 'call.lib.analytics';
 
 import { Core } from 'im.v2.application.core';
 import { ActionByRole, EventType, SidebarDetailBlock, ChatType, UserType, ActionByUserType } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
-import { ChatService, RecentService } from 'im.v2.provider.service';
+import { RecentService } from 'im.v2.provider.service.recent';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { Utils } from 'im.v2.lib.utils';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { Messenger } from 'im.public';
-import { Analytics as CallAnalytics } from 'call.lib.analytics';
+import { InviteManager } from 'im.v2.lib.invite';
 
 import { BaseMenu } from '../base/base';
-import { InviteManager } from './invite-manager';
 
 import type { MenuItem } from 'im.v2.lib.menu';
 import type { ImModelRecentItem, ImModelUser, ImModelChat } from 'im.v2.model';
@@ -125,7 +127,9 @@ export class RecentMenu extends BaseMenu
 				}
 				else
 				{
+					const dialog = this.store.getters['chats/get'](this.context.dialogId, true);
 					this.chatService.pinChat(this.context.dialogId);
+					Analytics.getInstance().onPinChat(dialog);
 				}
 				this.menuInstance.close();
 			},
@@ -229,7 +233,7 @@ export class RecentMenu extends BaseMenu
 
 	getChatsWithUserItem(): ?MenuItem
 	{
-		if (!this.isUser() || this.isBot())
+		if (!this.isUser() || this.isBot() || this.isChatWithCurrentUser())
 		{
 			return null;
 		}
@@ -237,7 +241,7 @@ export class RecentMenu extends BaseMenu
 		const isAnyChatOpened = this.store.getters['application/getLayout'].entityId.length > 0;
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_FIND_CHATS_WITH_USER_MSGVER_1'),
+			text: Loc.getMessage('IM_LIB_MENU_FIND_SHARED_CHATS'),
 			onclick: async () => {
 				if (!isAnyChatOpened)
 				{
@@ -364,6 +368,11 @@ export class RecentMenu extends BaseMenu
 		const { type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
 
 		return type === ChatType.collab;
+	}
+
+	isChatWithCurrentUser(): boolean
+	{
+		return this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10);
 	}
 
 	#leaveChat(): ?MenuItem

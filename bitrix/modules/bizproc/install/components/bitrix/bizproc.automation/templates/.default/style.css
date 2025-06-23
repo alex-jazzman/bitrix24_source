@@ -557,10 +557,6 @@
 	margin-left: 30px;
 }
 
-.automation-toolbar-search {
-	margin-left: 12px;
-}
-
 .bitrix24-light-theme .automation-toolbar-search {
 
 }
@@ -599,7 +595,6 @@
 	max-width: 200px;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	display: inline-block;
 }
 
 .automation-base-node-edit {

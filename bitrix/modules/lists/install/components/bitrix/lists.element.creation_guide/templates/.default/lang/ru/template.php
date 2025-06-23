@@ -35,4 +35,8 @@ $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_TITLE'] = 'Отменить 
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_DESCRIPTION'] = 'Если вы отмените запуск процесса, информация в полях не сохранится';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_SUCCESS_START'] = 'Бизнес-процесс запущен';
 
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_NETWORK_ERROR'] = 'Что-то пошло не так, попробуйте запустить процесс ещё раз';
+
+
+
 

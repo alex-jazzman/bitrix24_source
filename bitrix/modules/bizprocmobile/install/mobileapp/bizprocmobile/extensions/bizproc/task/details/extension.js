@@ -2,6 +2,7 @@
  * @module bizproc/task/details
  */
 jn.define('bizproc/task/details', (require, exports, module) => {
+	const { Color } = require('tokens');
 	const AppTheme = require('apptheme');
 	const { Alert, confirmClosing } = require('alert');
 	const { EventEmitter } = require('event-emitter');
@@ -22,9 +23,9 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 	const { TaskUserStatus } = require('bizproc/task/task-constants');
 	const { TaskFields } = require('bizproc/task/fields');
-	const { Skeleton } = require('bizproc/task/details/skeleton');
 	const { WorkflowComments } = require('bizproc/workflow/comments');
 	const { TaskDetailsButtons } = require('bizproc/task/details/buttons');
+	const { WorkflowDetailsSkeleton } = require('bizproc/skeleton');
 
 	class TaskDetails extends PureComponent
 	{
@@ -37,12 +38,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					titleParams: {
 						text: Type.isString(props.title) ? props.title : Loc.getMessage('BPMOBILE_TASK_DETAILS_TITLE'),
 						type: 'dialog',
+						textColor: Color.base4.toHex(),
 					},
-					backgroundColor: AppTheme.colors.bgSecondary,
 					backdrop: {
 						onlyMediumPosition: false,
 						mediumPositionPercent: 90,
-						navigationBarColor: AppTheme.colors.bgSecondary,
 						swipeAllowed: true,
 						swipeContentAllowed: true,
 						horizontalSwipeAllowed: false,
@@ -191,7 +191,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			if (!this.task.id)
 			{
-				return new Skeleton({});
+				return WorkflowDetailsSkeleton();
 			}
 
 			// todo: add RPA tasks?
@@ -283,6 +283,13 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							url: file.url,
 							name: file.name,
 						});
+
+						return;
+					}
+
+					if (url === '/dev/null')
+					{
+						Alert.alert(Loc.getMessage('BPMOBILE_TASK_DETAILS_FILE_NOT_FOUND'));
 
 						return;
 					}

@@ -1,50 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_events,landing_env,landing_loc,landing_ui_panel_content,landing_ui_panel_saveblock,landing_sliderhacks,landing_pageobject,main_core,landing_backend) {
+(function (exports,main_core_events,landing_env,landing_loc,landing_ui_panel_content,landing_ui_panel_saveblock,landing_sliderhacks,landing_pageobject,landing_backend,main_core) {
 	'use strict';
-
-	/**
-	 * Checks that element contains block
-	 * @param {HTMLElement} element
-	 * @return {boolean}
-	 */
-	function hasBlock(element) {
-	  return !!element && !!element.querySelector('.block-wrapper');
-	}
-
-	/**
-	 * Checks that element contains "Add new Block" button
-	 * @param {HTMLElement} element
-	 * @return {boolean}
-	 */
-	function hasCreateButton(element) {
-	  return !!element && !!element.querySelector('button[data-id="insert_first_block"]');
-	}
-
-	function onAnimationEnd(element, animationName) {
-	  return new Promise(function (resolve) {
-	    var onAnimationEndListener = function onAnimationEndListener(event) {
-	      if (!animationName || event.animationName === animationName) {
-	        resolve(event);
-	        main_core.Event.bind(element, 'animationend', onAnimationEndListener);
-	      }
-	    };
-	    main_core.Event.bind(element, 'animationend', onAnimationEndListener);
-	  });
-	}
-
-	function isEmpty(value) {
-	  if (main_core.Type.isNil(value)) {
-	    return true;
-	  }
-	  if (main_core.Type.isArrayLike(value)) {
-	    return !value.length;
-	  }
-	  if (main_core.Type.isObject(value)) {
-	    return Object.keys(value).length <= 0;
-	  }
-	  return true;
-	}
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -462,6 +419,49 @@ this.BX = this.BX || {};
 	      this.postExternalCommand(babelHelpers.classPrivateFieldGet(this, _postMessages).hideAll, {});
 	    }
 	  }
+	}
+
+	/**
+	 * Checks that element contains block
+	 * @param {HTMLElement} element
+	 * @return {boolean}
+	 */
+	function hasBlock(element) {
+	  return !!element && !!element.querySelector('.block-wrapper');
+	}
+
+	/**
+	 * Checks that element contains "Add new Block" button
+	 * @param {HTMLElement} element
+	 * @return {boolean}
+	 */
+	function hasCreateButton(element) {
+	  return !!element && !!element.querySelector('button[data-id="insert_first_block"]');
+	}
+
+	function onAnimationEnd(element, animationName) {
+	  return new Promise(function (resolve) {
+	    var onAnimationEndListener = function onAnimationEndListener(event) {
+	      if (!animationName || event.animationName === animationName) {
+	        resolve(event);
+	        main_core.Event.bind(element, 'animationend', onAnimationEndListener);
+	      }
+	    };
+	    main_core.Event.bind(element, 'animationend', onAnimationEndListener);
+	  });
+	}
+
+	function isEmpty(value) {
+	  if (main_core.Type.isNil(value)) {
+	    return true;
+	  }
+	  if (main_core.Type.isArrayLike(value)) {
+	    return !value.length;
+	  }
+	  if (main_core.Type.isObject(value)) {
+	    return Object.keys(value).length <= 0;
+	  }
+	  return true;
 	}
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -1236,7 +1236,7 @@ this.BX = this.BX || {};
 	            }
 	          }
 	        };
-	        BX.Landing.Backend.getInstance().batch(action, requestBody, {
+	        landing_backend.Backend.getInstance().batch(action, requestBody, {
 	          action: action
 	        }).then(function (res) {
 	          _this6.currentBlock = block;
@@ -1327,7 +1327,6 @@ this.BX = this.BX || {};
 	        void _this7.hideBlockLoader();
 	        _this7.enableAddBlockButtons();
 	        BX.onCustomEvent('BX.Landing.Block:onAfterAdd', res);
-	        _this7.sendAnalyticsData('onAddBlock', res);
 	        return p;
 	      });
 	    }
@@ -1531,7 +1530,7 @@ this.BX = this.BX || {};
 	            return result;
 	          });
 	        }
-	        return BX.Landing.Backend.getInstance().action('Block::getContent', {
+	        return landing_backend.Backend.getInstance().action('Block::getContent', {
 	          block: restoreId,
 	          lid: lid,
 	          fields: fields,
@@ -1574,7 +1573,6 @@ this.BX = this.BX || {};
 	      if (!block.parent.querySelector('.block-wrapper')) {
 	        this.adjustEmptyAreas();
 	      }
-	      this.sendAnalyticsData('onDeleteBlock', block);
 	    }
 	    /**
 	     * Shows page overlay
@@ -1605,56 +1603,6 @@ this.BX = this.BX || {};
 	    value: function reloadSlider(url) {
 	      return landing_sliderhacks.SliderHacks.reloadSlider(url, window.parent);
 	    }
-	  }, {
-	    key: "sendAnalyticsData",
-	    value: function sendAnalyticsData(action, data) {
-	      var code = data.manifest.code;
-	      var block = this.getBlockFromRepository(code);
-	      var analyticsCategory = '';
-	      var p2 = '';
-	      var analyticsEvent = '';
-	      var type = BX.Landing.Env.getInstance().getType();
-	      if (type === 'MAINPAGE') {
-	        analyticsCategory = 'vibe';
-	        if (action === 'onAddBlock') {
-	          analyticsEvent = 'add_widget';
-	        }
-	        if (action === 'onDeleteBlock') {
-	          analyticsEvent = 'delete_widget';
-	        }
-	        var widgetCode = code.replaceAll(/[._]/g, '-');
-	        p2 = "widget-id_".concat(widgetCode);
-	      } else {
-	        analyticsCategory = 'site'; // site ||  shop || kb
-	        if (action === 'onAddBlock') {
-	          analyticsEvent = 'add_block';
-	        }
-	        if (action === 'onDeleteBlock') {
-	          analyticsEvent = 'delete_block';
-	        }
-	        var blockCode = code.replaceAll(/[._]/g, '-');
-	        p2 = "widget-id_".concat(blockCode);
-	      }
-	      var itemType = '';
-	      var p1 = '';
-	      if (block.repo_id) {
-	        itemType = 'partner'; // partner || local
-	        if (block.app_code) {
-	          p1 = block.app_code.replaceAll(/[._]/g, '-'); // appCode || local
-	        }
-	      } else {
-	        itemType = 'system';
-	        p1 = 'system';
-	      }
-	      BX.UI.Analytics.sendData({
-	        tool: 'landing',
-	        category: analyticsCategory,
-	        event: analyticsEvent,
-	        type: itemType,
-	        p1: p1,
-	        p2: p2
-	      });
-	    }
 	  }]);
 	  return Main;
 	}(main_core_events.EventEmitter);
@@ -1665,5 +1613,5 @@ this.BX = this.BX || {};
 
 	exports.Main = Main;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX.Event,BX.Landing,BX.Landing,BX.Landing.UI.Panel,BX.Landing.UI.Panel,BX.Landing,BX.Landing,BX,BX.Landing));
+}((this.BX.Landing = this.BX.Landing || {}),BX.Event,BX.Landing,BX.Landing,BX.Landing.UI.Panel,BX.Landing.UI.Panel,BX.Landing,BX.Landing,BX.Landing,BX));
 //# sourceMappingURL=main.bundle.js.map

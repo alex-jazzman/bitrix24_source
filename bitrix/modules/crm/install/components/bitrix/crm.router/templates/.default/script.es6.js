@@ -1,4 +1,4 @@
-import { Reflection, Runtime, Type } from "main.core";
+import { Reflection, Runtime, Type } from 'main.core';
 
 const namespace = Reflection.namespace('BX.Crm.Component');
 

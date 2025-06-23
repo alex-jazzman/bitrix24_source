@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_utils,im_v2_component_elements,im_v2_component_list_items_recent,im_v2_application_core,im_v2_lib_rest,im_v2_lib_logger,im_v2_lib_user,main_core,im_v2_const,im_v2_lib_layout,im_v2_lib_menu) {
+(function (exports,im_v2_lib_draft,im_v2_lib_utils,im_v2_component_elements_listLoadingState,im_v2_component_list_items_recent,im_v2_application_core,im_v2_lib_rest,im_v2_lib_logger,im_v2_lib_user,main_core,im_v2_const,im_v2_lib_layout,im_v2_lib_menu) {
 	'use strict';
 
 	// @vue/component
@@ -103,8 +103,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	    }
 	  };
-	  const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2RecentCollabTail, queryParams).catch(error => {
-	    // eslint-disable-next-line no-console
+	  const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2RecentCollabTail, queryParams).catch(([error]) => {
 	    console.error('Im.CollabList: page request error', error);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _pagesLoaded)[_pagesLoaded]++;
@@ -125,15 +124,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    chats,
 	    messages,
 	    files,
-	    recentItems
+	    recentItems,
+	    messagesAutoDeleteConfigs
 	  } = restResult;
 	  const chatsWithCounters = babelHelpers.classPrivateFieldLooseBase(this, _getChatsWithCounters)[_getChatsWithCounters](chats, recentItems);
 	  const usersPromise = new im_v2_lib_user.UserManager().setUsersToModel(users);
 	  const dialoguesPromise = im_v2_application_core.Core.getStore().dispatch('chats/set', chatsWithCounters);
+	  const autoDeletePromise = im_v2_application_core.Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 	  const messagesPromise = im_v2_application_core.Core.getStore().dispatch('messages/store', messages);
 	  const filesPromise = im_v2_application_core.Core.getStore().dispatch('files/set', files);
 	  const recentPromise = im_v2_application_core.Core.getStore().dispatch('recent/setCollab', recentItems);
-	  return Promise.all([usersPromise, dialoguesPromise, messagesPromise, filesPromise, recentPromise]);
+	  return Promise.all([usersPromise, dialoguesPromise, messagesPromise, filesPromise, recentPromise, autoDeletePromise]);
 	}
 	function _getChatsWithCounters2(chats, recentItems) {
 	  const chatMap = {};
@@ -210,7 +211,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  name: 'CollabList',
 	  components: {
 	    EmptyState,
-	    LoadingState: im_v2_component_elements.ListLoadingState,
+	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState,
 	    RecentItem: im_v2_component_list_items_recent.RecentItem
 	  },
 	  emits: ['chatClick'],
@@ -227,9 +228,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    preparedItems() {
 	      return [...this.collection].sort((a, b) => {
-	        const firstMessage = this.$store.getters['messages/getById'](a.messageId);
-	        const secondMessage = this.$store.getters['messages/getById'](b.messageId);
-	        return secondMessage.date - firstMessage.date;
+	        const firstDate = this.$store.getters['recent/getSortDate'](a.dialogId);
+	        const secondDate = this.$store.getters['recent/getSortDate'](b.dialogId);
+	        return secondDate - firstDate;
 	      });
 	    },
 	    pinnedItems() {
@@ -248,6 +249,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  created() {
 	    this.contextMenuManager = new CollabRecentMenu();
+	    void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 	  },
 	  beforeUnmount() {
 	    this.contextMenuManager.destroy();
@@ -316,5 +318,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CollabList = CollabList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=collab-list.bundle.js.map

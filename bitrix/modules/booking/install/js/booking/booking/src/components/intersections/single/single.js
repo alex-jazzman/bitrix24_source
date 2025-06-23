@@ -49,7 +49,7 @@ export const Single = {
 		{
 			return new TagSelector({
 				multiple: true,
-				addButtonCaption: this.loc('BOOKING_BOOKING_ADD_INTERSECTION'),
+				addButtonCaption: this.loc('BOOKING_BOOKING_ADD_INTERSECTION_MSGVER_1'),
 				showCreateButton: false,
 				maxHeight: 50,
 				dialogOptions: {

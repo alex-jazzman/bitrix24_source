@@ -10,21 +10,23 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		CopilotButtonType,
 		EventType,
 		BotCode,
-		Analytics,
 		DialogWidgetType,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
-	const { MessageService } = require('im/messenger/provider/service');
-	const { getLogger, Logger } = require('im/messenger/lib/logger');
+	const { MessageService } = require('im/messenger/provider/services/message');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+
+	const { getLogger } = require('im/messenger/lib/logger');
+	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
+	const { DialogConfigurator } = require('im/messenger/controller/dialog/lib/configurator');
 
 	const { CopilotMessageMenu } = require('im/messenger/controller/dialog/copilot/component/message-menu');
 	const { CopilotMentionManager } = require('im/messenger/controller/dialog/copilot/component/mention/manager');
 
 	const logger = getLogger('dialog--dialog');
-	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class CopilotDialog
@@ -49,13 +51,11 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			return false;
 		}
 
-		initComponents()
+		async initMessageMenu()
 		{
-			super.initComponents();
-
-			this.messageMenuComponent = new CopilotMessageMenu({
-				serviceLocator: this.locator,
-				dialogId: this.getDialogId(),
+			this.messageMenu = await CopilotMessageMenu.create({
+				getDialog: this.getDialog.bind(this),
+				dialogLocator: this.locator,
 			});
 		}
 
@@ -127,10 +127,19 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				messageId,
 				withMessageHighlight,
 				dialogTitleParams,
+				integrationSettings,
 			} = options;
+
+			this.configurator = new DialogConfigurator(integrationSettings);
+			this.locator.add('configurator', this.configurator);
+			this.headerTitleControllerClassLoadPromise = this.configurator.getHeaderTitleControllerClass();
+			this.headerButtonsControllerClassLoadPromise = this.configurator.getHeaderButtonsControllerClass();
 
 			this.dialogId = dialogId;
 			this.dialogCode = `im.dialog-${this.getDialogId()}-${Uuid.getV4()}`;
+			this.locator.add('dialogId', this.dialogId);
+			this.messageUiConverter = new MessageUiConverter({ dialogId, dialogCode: this.dialogCode });
+			this.locator.add('message-ui-converter', this.messageUiConverter);
 			this.contextMessageId = messageId ?? null;
 			this.withMessageHighlight = withMessageHighlight ?? false;
 			void this.store.dispatch('applicationModel/openDialogId', dialogId);
@@ -162,7 +171,11 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				}
 			}
 
-			this.createWidget(titleParams);
+			this.createWidget(titleParams)
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.createWidget error:`, error);
+				})
+			;
 		}
 
 		/**
@@ -170,7 +183,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		 * @param index
 		 * @param {Message} message
 		 */
-		onMessageAvatarLongTap(index, message)
+		messageAvatarLongTapHandler(index, message)
 		{
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			const dialogModel = this.store.getters['usersModel/getById'](messageModel.authorId);
@@ -180,7 +193,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				return;
 			}
 
-			super.onMessageAvatarLongTap(index, message);
+			super.messageAvatarLongTapHandler(index, message);
 		}
 
 		/**
@@ -260,41 +273,16 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		sendAnalyticsOpenDialog()
 		{
 			super.sendAnalyticsOpenDialog();
-
 			if (this.openingContext === OpenDialogContextType.chatCreation)
 			{
 				return;
 			}
 
-			const userCounter = this.getDialog().userCounter;
-
-			const element = this.openingContext === OpenDialogContextType.push
-				? Analytics.Element.push
-				: null
-			;
-			const p3type = userCounter > 2 ? Analytics.CopilotChatType.multiuser : Analytics.CopilotChatType.private;
-			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.Tool.ai)
-				.setCategory(Analytics.Category.chatOperations)
-				.setEvent(Analytics.Event.openChat)
-				.setType(Analytics.Type.ai)
-				.setSection(Analytics.Section.copilotTab)
-				.setElement(element)
-				.setP3(p3type)
-				.setP5(`chatId_${this.getDialog()?.chatId}`);
-
-			try
-			{
-				analytics.send();
-			}
-			catch (err)
-			{
-				Logger.error(`${this.constructor.name}.sendAnalyticsOpenDialog.send.catch:`, err);
-			}
+			AnalyticsService.getInstance().sendOpenCopilotDialog({
+				dialogId: this.dialogId,
+				context: this.openingContext,
+			});
 		}
-
-		manageTextField(isFirstCall = false)
-		{}
 	}
 
 	module.exports = { CopilotDialog };

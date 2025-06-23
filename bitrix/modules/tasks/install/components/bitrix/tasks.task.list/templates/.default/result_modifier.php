@@ -82,13 +82,16 @@ if ($arResult["IS_COLLAB"])
 	Toolbar::deleteFavoriteStar();
 	$shortTitle = Loc::getMessage('TASKS_TITLE');
 
-	$this->SetViewTarget('in_pagetitle') ?>
+	$collabName = HtmlFilter::encode($arResult['COLLAB_NAME']);
 
-	<div class="sn-collab-icon__wrapper">
-		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
-	</div>
-	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
-	<?php $this->EndViewTarget();
+	Toolbar::addBeforeTitleBoxHtml(
+		'<div class="sn-collab-icon__wrapper">' .
+		'<div id="sn-collab-icon-' . HtmlFilter::encode($arResult['OWNER_ID']) . '" class="sn-collab-icon__hexagon-bg"></div>' .
+		'</div>'
+	);
+	Toolbar::addUnderTitleHtml(
+		'<div class="sn-collab__subtitle" title="' . $collabName . '">' . $collabName . '</div>'
+	);
 }
 
 $APPLICATION->SetPageProperty('title', $title);

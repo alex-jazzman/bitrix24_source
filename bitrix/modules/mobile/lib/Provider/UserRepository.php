@@ -9,6 +9,7 @@ use Bitrix\Main\UserTable;
 
 class UserRepository
 {
+	static private ?array $adminIdMap = null;
 	static private ?array $intranetUsers = null;
 	static private array $usersData = [];
 
@@ -24,7 +25,6 @@ class UserRepository
 			'WORK_POSITION',
 			'EMAIL',
 			'WORK_PHONE',
-			'UF_DEPARTMENT',
 		];
 	}
 
@@ -132,19 +132,20 @@ class UserRepository
 
 	private static function isAdmin($userId): bool
 	{
-		if (
-			Loader::IncludeModule('bitrix24')
-			&& class_exists('CBitrix24')
-			&& method_exists('CBitrix24', 'IsPortalAdmin')
-		)
+		if (static::$adminIdMap === null)
 		{
-			return \CBitrix24::IsPortalAdmin($userId);
+			$adminIdList = [];
+
+			$dbAdminList = \CAllGroup::GetGroupUserEx(1);
+			while ($admin = $dbAdminList->fetch())
+			{
+				$adminIdList[] = (int)$admin['USER_ID'];
+			}
+
+			static::$adminIdMap = array_fill_keys($adminIdList, true);
 		}
 
-		$userGroups = \CUser::GetUserGroup($userId);
-		Collection::normalizeArrayValuesByInt($userGroups);
-
-		return in_array(1, $userGroups, true);
+		return isset(static::$adminIdMap[$userId]);
 	}
 
 	private static function getUserFullName(array $user): string

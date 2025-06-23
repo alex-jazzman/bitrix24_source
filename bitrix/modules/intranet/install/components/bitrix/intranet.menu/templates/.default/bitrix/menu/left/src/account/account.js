@@ -175,7 +175,7 @@ export class Account
 			avatarUrl = account.protocol + '://' + account.portal + account.avatar;
 		}
 
-		return `url('${Text.encode(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : avatarUrl)}')`;
+		return `url('${BX.util.htmlspecialchars(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : BX.util.htmlspecialchars(avatarUrl))}')`;
 	}
 
 	viewPopupAccounts(): void

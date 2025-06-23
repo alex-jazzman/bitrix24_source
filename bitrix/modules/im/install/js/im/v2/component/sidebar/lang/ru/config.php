@@ -1,16 +1,12 @@
 <?php
-$MESS['IM_SIDEBAR_HEADER_TITLE'] = "О чате";
 $MESS['IM_SIDEBAR_NOTES_PREVIEW_DESCRIPTION'] = "Видны только вам";
-$MESS['IM_SIDEBAR_CHANNEL_HEADER_TITLE'] = "О канале";
-$MESS['IM_SIDEBAR_COMMENTS_HEADER_TITLE'] = "О посте";
-$MESS['IM_SIDEBAR_COLLAB_HEADER_TITLE'] = "О коллабе";
 $MESS['IM_SIDEBAR_COMMENTS_POST_PREVIEW_TITLE'] = "Комментарии";
 $MESS['IM_SIDEBAR_ENABLE_NOTIFICATION_TITLE_2'] = "Звук";
 $MESS['IM_SIDEBAR_ENABLE_AUTODELETE_TITLE'] = "Автоудаление сообщений";
-$MESS['IM_SIDEBAR_AUTODELETE_STATUS_OFF'] = "Выкл";
+$MESS['IM_SIDEBAR_AUTODELETE_NO_PERMISSION'] = "Недостаточно прав для работы с автоудалением. [helpdesklink]Подробнее[/helpdesklink]";
+
 $MESS['IM_SIDEBAR_CREATE_GROUP_CHAT'] = "Создать групповой чат";
 $MESS['IM_SIDEBAR_COPY_INVITE_LINK'] = "Скопировать ссылку на чат";
-$MESS['IM_SIDEBAR_COPIED_SUCCESS'] = "Ссылка скопирована";
 $MESS['IM_SIDEBAR_CHAT_DESCRIPTION_SHOW'] = "Показать полностью...";
 $MESS['IM_SIDEBAR_LINKS_NOT_AVAILABLE'] = "Подождите, идёт конвертация...";
 $MESS['IM_SIDEBAR_MUTE_NOT_AVAILABLE'] = "В этом чате нельзя отключить уведомления";
@@ -28,6 +24,7 @@ $MESS['IM_SIDEBAR_MEMBERS_DETAIL_TITLE'] = "Участники: #NUMBER#";
 $MESS['IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE'] = "Подписчики: #NUMBER#";
 $MESS['IM_SIDEBAR_FAVORITE_DETAIL_TITLE'] = "Избранное";
 $MESS['IM_SIDEBAR_LINK_DETAIL_TITLE'] = "Ссылки из сообщений";
+$MESS['IM_SIDEBAR_SHARED_CHATS_TITLE'] = "Общие чаты";
 $MESS['IM_SIDEBAR_TASK_DETAIL_TITLE'] = "Задачи";
 $MESS['IM_SIDEBAR_MEDIA_DETAIL_TITLE'] = "Медиа и файлы";
 $MESS['IM_SIDEBAR_FILEUNSORTED_DETAIL_TITLE'] = "Медиа и файлы";
@@ -35,7 +32,7 @@ $MESS['IM_SIDEBAR_MEETING_DETAIL_TITLE'] = "Встречи";
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_DETAIL_TITLE'] = "Все чаты";
 $MESS['IM_SIDEBAR_BRIEF_DETAIL_TITLE'] = "Резюме встреч";
 $MESS['IM_SIDEBAR_MARKET_DETAIL_TITLE'] = "Приложения";
-$MESS['IM_SIDEBAR_CHATSWITHUSER_DETAIL_TITLE'] = "Чаты с сотрудником";
+$MESS['IM_SIDEBAR_SHARED_CHAT_DETAIL_TITLE'] = "Общие чаты";
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_TITLE'] = "Все чаты";
 
 //context menu
@@ -48,10 +45,6 @@ $MESS['IM_SIDEBAR_MENU_INVITE_MEMBERS_V2'] = "Добавить участник�
 $MESS['IM_SIDEBAR_MENU_INVITE_SUBSCRIBERS'] = "Добавить подписчиков";
 $MESS['IM_SIDEBAR_MENU_UPDATE_CHAT'] = "Редактировать";
 $MESS['IM_SIDEBAR_MENU_DELETE_CHAT'] = "Удалить";
-$MESS['IM_SIDEBAR_MENU_DELETE_CHAT_ERROR'] = "Не удалось выполнить действие. Попробуйте позже";
-$MESS['IM_SIDEBAR_MENU_DELETE_COLLAB_NOTIFICATION'] = "Удаляем коллабу. Это займёт какое-то время";
-$MESS['IM_SIDEBAR_MENU_DELETE_COLLAB_ERROR'] = "Не удалось удалить коллабу, попробуйте позже";
-$MESS['IM_SIDEBAR_MENU_DELETE_COLLAB_WITH_ENTITIES_ERROR'] = "Нельзя удалить коллабу, пока в ней есть файлы, задачи и встречи";
 $MESS['IM_SIDEBAR_MENU_JOIN_CHAT'] = "Присоединиться к чату";
 $MESS['IM_SIDEBAR_MENU_KICK_FROM_CHAT'] = "Исключить из чата";
 $MESS['IM_SIDEBAR_MENU_REMOVE_FROM_SAVED_V2'] = "Убрать из Избранного";
@@ -66,6 +59,8 @@ $MESS['IM_SIDEBAR_MENU_MANAGER_REMOVE'] = "Исключить из админи�
 
 // empty states
 $MESS['IM_SIDEBAR_LINKS_EMPTY'] = "Нет ссылок";
+$MESS['IM_SIDEBAR_AUDIO_EMPTY'] = "Нет аудио";
+$MESS['IM_SIDEBAR_MEDIA_EMPTY'] = "Нет медиа";
 $MESS['IM_SIDEBAR_FILES_EMPTY'] = "Нет файлов";
 $MESS['IM_SIDEBAR_FAVORITES_EMPTY'] = "Нет избранного";
 $MESS['IM_SIDEBAR_TASKS_EMPTY'] = "Нет задач";
@@ -81,9 +76,8 @@ $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED'] = "Ничего не на�
 //tabs
 $MESS['IM_SIDEBAR_FILES_MEDIA_TAB'] = "Медиа";
 $MESS['IM_SIDEBAR_FILES_AUDIO_TAB'] = "Аудио";
-$MESS['IM_SIDEBAR_FILES_DOCUMENT_TAB'] = "Документы";
+$MESS['IM_SIDEBAR_FILES_FILE_TAB'] = "Файлы";
 $MESS['IM_SIDEBAR_FILES_BRIEF_TAB'] = "Резюме";
-$MESS['IM_SIDEBAR_FILES_OTHER_TAB'] = "Другое";
 
 //chat types
 $MESS['IM_SIDEBAR_CHAT_TYPE_GROUP_V2'] = "Групповой чат";

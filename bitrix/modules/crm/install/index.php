@@ -625,6 +625,7 @@ class crm extends CModule
 			false,
 		);
 
+		\Bitrix\Main\Config\Option::set('crm', 'repeat_sale_segment_initialization', 'Y');
 		(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
 
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
@@ -1325,6 +1326,14 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onMessageStatusUpdate'
+		);
+
+		$eventManager->registerEventHandler(
 			'sale',
 			'OnDeliveryRequestCreated',
 			'crm',
@@ -1689,6 +1698,22 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
 			'onWaitListItemDelete'
 		);
+
+		$eventManager->registerEventHandler(
+			'intranet',
+			'onLicenseHasChanged',
+			'crm',
+			'\Bitrix\Crm\RepeatSale\AgentsManager',
+			'onLicenseHasChanged'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onBookingComingSoonNotificationSent',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingComingSoonNotificationSent'
+		);
 	}
 
 	private function installAgents()
@@ -1880,6 +1905,45 @@ class crm extends CModule
 			100,
 			false,
 			false
+		);
+
+		/**
+		 * @see \Bitrix\Crm\Agent\RepeatSale\OnlyCalcSchedulerAgent
+		 */
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\RepeatSale\OnlyCalcSchedulerAgent::run();',
+			'crm',
+			'N',
+			3600,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+		);
+
+		/**
+		 * @see \Bitrix\Crm\Agent\RepeatSale\JobExecutorAgent
+		 */
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\RepeatSale\JobExecutorAgent::run();',
+			'crm',
+			'N',
+			60, // @todo set correct interval
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 800, 'FULL'),
+		);
+
+		/**
+		 * @see \Bitrix\Crm\Agent\Copilot\AiQueueBufferAgent
+		 */
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Copilot\AiQueueBufferAgent::run();',
+			'crm',
+			'N',
+			60 * 10,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
 		);
 	}
 
@@ -2181,6 +2245,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Notification',
 			'onMessageStatusUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onMessageStatusUpdate'
 		);
 
 		$eventManager->unRegisterEventHandler(
@@ -2547,6 +2619,22 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
 			'onWaitListItemDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onBookingComingSoonNotificationSent',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingComingSoonNotificationSent'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'intranet',
+			'onLicenseHasChanged',
+			'crm',
+			'\Bitrix\Crm\RepeatSale\AgentsManager',
+			'onLicenseHasChanged'
 		);
 	}
 

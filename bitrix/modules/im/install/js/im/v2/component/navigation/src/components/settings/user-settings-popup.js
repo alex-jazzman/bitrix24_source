@@ -1,4 +1,4 @@
-import { MessengerPopup } from 'im.v2.component.elements';
+import { MessengerPopup } from 'im.v2.component.elements.popup';
 
 import { UserSettingsContent } from './user-settings-content';
 

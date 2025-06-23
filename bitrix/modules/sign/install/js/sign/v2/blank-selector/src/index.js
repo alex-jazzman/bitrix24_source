@@ -2,7 +2,7 @@ import { Tag, Loc, Dom, Event, Type, Reflection, Cache } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 import { Popup } from 'main.popup';
-import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { EventEmitter, BaseEvent } from 'main.core.events';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
@@ -11,7 +11,7 @@ import { Api } from 'sign.v2.api';
 import { ListItem } from './list-item';
 import { Blank } from './blank';
 import { BlankField } from './blank-field';
-import type { BlankSelectorConfig, BlankData, ListItemProps, BlankProps } from './types/type';
+import type { BlankSelectorConfig, BlankData, ListItemProps, BlankProps, ToggleEvent } from './types/type';
 import './style.css';
 
 type RemoveOptions = {
@@ -49,13 +49,19 @@ const errorPopupOptions = {
 };
 
 export { BlankField, ListItem };
-export type { BlankSelectorConfig };
+export type { BlankSelectorConfig, ToggleEvent };
 
 export class BlankSelector extends EventEmitter
 {
+	events = Object.freeze({
+		beforeAddFileSuccessfully: 'beforeAddFileSuccessfully',
+		toggleSelection: 'toggleSelection',
+		addFile: 'addFile',
+	});
+
 	#cache = new Cache.MemoryCache();
 	selectedBlankId: number;
-	#blanks: Map<string, ListItem>;
+	#blanks: Map<string, Blank<BlankProps>>;
 	#tileWidget: TileWidget;
 	#tileWidgetContainer: HTMLElement;
 	#uploadButtonsContainer: HTMLElement;
@@ -183,12 +189,19 @@ export class BlankSelector extends EventEmitter
 			&& imagesLimit - filesLength >= addedFiles.length;
 	}
 
-	#onFileBeforeAdd(event: BaseEvent)
+	#onFileBeforeAdd(uploaderEvent: BaseEvent<{ files: UploaderFile[] }>): void
 	{
-		const { files: addedFiles } = event.getData();
+		const { files: addedFiles } = uploaderEvent.getData();
 		const valid = this.#checkForFilesValid(addedFiles);
 		if (valid)
 		{
+			const selfEvent = new BaseEvent({ data: { files: addedFiles } });
+			this.emit(this.events.beforeAddFileSuccessfully, selfEvent);
+			if (selfEvent.isDefaultPrevented())
+			{
+				return;
+			}
+
 			return;
 		}
 
@@ -210,7 +223,7 @@ export class BlankSelector extends EventEmitter
 			),
 		});
 		errorPopup.show();
-		event.preventDefault();
+		uploaderEvent.preventDefault();
 	}
 
 	#getImagesLimit(): number
@@ -226,7 +239,24 @@ export class BlankSelector extends EventEmitter
 		const title = event.data.file.getName();
 		this.#toggleTileVisibility(true);
 		this.resetSelectedBlank();
-		this.emit('addFile', { title: this.#normalizeTitle(title) });
+		this.emit(this.events.addFile, { title: this.#normalizeTitle(title) });
+	}
+
+	getUploadedFileName(fileIndex: number): string | null
+	{
+		const uploader = this.#tileWidget.getUploader();
+		const files = uploader.getFiles();
+		if (files.length === 0)
+		{
+			return null;
+		}
+		const file = files.at(fileIndex);
+		if (!file)
+		{
+			return null;
+		}
+
+		return this.#normalizeTitle(file.getName());
 	}
 
 	#onFileRemove(event: BaseEvent)
@@ -356,8 +386,12 @@ export class BlankSelector extends EventEmitter
 		const blank = firstFile.getCustomData(firstFile.getId());
 		try
 		{
-			const filesIds = files.map((file) => file.getServerFileId());
-			const blankData = await this.#api.createBlank(filesIds, this.#config.type ?? null, isTemplateMode(this.#config.documentMode));
+			const filesIds = files.map((file): string => file.getServerFileId());
+			const blankData = await this.#api.createBlank(
+				filesIds,
+				this.#config.type ?? null,
+				isTemplateMode(this.#config.documentMode),
+			);
 			this.#setupBlank({
 				...blankData,
 				userName: Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
@@ -457,12 +491,14 @@ export class BlankSelector extends EventEmitter
 
 	resetSelectedBlank()
 	{
-		const blank = this.#blanks.get(this.selectedBlankId);
+		const previousSelectedBlankId = this.selectedBlankId;
+		const blank = this.getBlank(this.selectedBlankId);
+
 		blank?.deselect();
 		this.selectedBlankId = 0;
 		if (blank)
 		{
-			this.emit('toggleSelection', { selected: false });
+			this.emit(this.events.toggleSelection, { selected: false, previousSelectedBlankId });
 		}
 		this.#enableSaveButtonIntoSlider();
 	}
@@ -498,8 +534,9 @@ export class BlankSelector extends EventEmitter
 		}
 	}
 
-	async selectBlank(blankId: number)
+	async selectBlank(blankId: number, eventExtraOptions: Object = {}): Promise<void>
 	{
+		const previousSelectedBlankId = this.selectedBlankId;
 		if (blankId !== this.selectedBlankId)
 		{
 			this.resetSelectedBlank();
@@ -507,16 +544,26 @@ export class BlankSelector extends EventEmitter
 
 		this.selectedBlankId = blankId;
 		this.#toggleTileVisibility(false);
-		let blank = this.#blanks.get(blankId);
+		let blank = this.getBlank(blankId);
 
 		if (!blank)
 		{
 			await this.loadBlankById(blankId);
-			blank = this.#blanks.get(blankId);
+			blank = this.getBlank(blankId);
 		}
 		const { title } = blank.getProps();
 		blank.select();
-		this.emit('toggleSelection', { id: blankId, selected: true, title: this.#normalizeTitle(title) });
+
+		this.emit(
+			this.events.toggleSelection,
+			{
+				id: blankId,
+				selected: true,
+				title: this.#normalizeTitle(title),
+				extra: eventExtraOptions,
+				previousSelectedBlankId,
+			},
+		);
 	}
 
 	deleteBlank(blankId: number)

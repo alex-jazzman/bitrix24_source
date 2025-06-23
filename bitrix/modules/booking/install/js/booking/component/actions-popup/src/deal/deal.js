@@ -18,9 +18,14 @@ import type { DealData } from 'booking.model.bookings';
 
 import './deal.css';
 
+// @vue/component
 export const Deal = {
 	name: 'ActionsPopupDeal',
-	emits: ['freeze', 'unfreeze'],
+	components: {
+		Button,
+		Icon,
+		Loader,
+	},
 	props: {
 		/**
 		 * @type DealData
@@ -45,7 +50,12 @@ export const Deal = {
 			type: String,
 			default: '',
 		},
+		dataAttributes: {
+			type: Object,
+			default: null,
+		},
 	},
+	emits: ['freeze', 'unfreeze'],
 	data(): Object
 	{
 		return {
@@ -56,6 +66,26 @@ export const Deal = {
 			isLoading: false,
 			saveDealDebounce: Runtime.debounce(this.saveDeal, 10, this),
 		};
+	},
+	computed: {
+		...mapGetters({
+			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
+		}),
+		menuId(): string
+		{
+			return `${this.dataElementPrefix}-actions-popup-deal-menu-${this.dataId}`;
+		},
+		dateFormatted(): string
+		{
+			if (!this.deal.data.createdTimestamp)
+			{
+				return '';
+			}
+
+			const format = DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
+
+			return DateTimeFormat.format(format, this.deal.data.createdTimestamp);
+		},
 	},
 	mounted(): void
 	{
@@ -88,26 +118,6 @@ export const Deal = {
 	beforeUnmount(): void
 	{
 		Event.unbind(document, 'scroll', this.adjustPosition, true);
-	},
-	computed: {
-		...mapGetters({
-			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
-		}),
-		menuId(): string
-		{
-			return `${this.dataElementPrefix}-actions-popup-deal-menu-${this.dataId}`;
-		},
-		dateFormatted(): string
-		{
-			if (!this.deal.data.createdTimestamp)
-			{
-				return '';
-			}
-
-			const format = DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
-
-			return DateTimeFormat.format(format, this.deal.data.createdTimestamp);
-		},
 	},
 	methods: {
 		freeze(): void
@@ -238,11 +248,6 @@ export const Deal = {
 			);
 		},
 	},
-	components: {
-		Button,
-		Icon,
-		Loader,
-	},
 	template: `
 		<div
 			class="booking-actions-popup__item booking-actions-popup__item-deal-content"
@@ -264,14 +269,14 @@ export const Deal = {
 								class="booking-actions-popup__item-deal-profit"
 								:data-element="dataElementPrefix + '-menu-deal-profit'"
 								:data-profit="deal.data.opportunity"
-								:data-booking-id="dataId"
+								v-bind="dataAttributes"
 								v-html="deal.data.formattedOpportunity"
 							></div>
 							<div
 								class="booking-actions-popup-item-subtitle"
 								:data-element="dataElementPrefix + '-menu-deal-ts'"
 								:data-ts="deal.data.createdTimestamp * 1000"
-								:data-booking-id="dataId"
+								v-bind="dataAttributes"
 							>
 								{{ dateFormatted }}
 							</div>
@@ -287,7 +292,7 @@ export const Deal = {
 					<template v-if="deal">
 						<Button
 							:data-element="dataElementPrefix + '-menu-deal-open-button'"
-							:data-booking-id="dataId"
+							v-bind="dataAttributes"
 							buttonClass="ui-btn-shadow"
 							:text="loc('BB_ACTIONS_POPUP_DEAL_OPEN')"
 							:size="ButtonSize.EXTRA_SMALL"
@@ -297,7 +302,7 @@ export const Deal = {
 						/>
 						<Button
 							:data-element="dataElementPrefix + '-menu-deal-more-button'"
-							:data-booking-id="dataId"
+							v-bind="dataAttributes"
 							buttonClass="ui-btn-shadow"
 							:size="ButtonSize.EXTRA_SMALL"
 							:color="ButtonColor.LIGHT"
@@ -311,7 +316,7 @@ export const Deal = {
 					<template v-else>
 						<Button
 							:data-element="dataElementPrefix + '-menu-deal-create-button'"
-							:data-booking-id="dataId"
+							v-bind="dataAttributes"
 							class="booking-actions-popup-plus-button"
 							:class="{'--lock': !isFeatureEnabled}"
 							buttonClass="ui-btn-shadow"
@@ -327,7 +332,7 @@ export const Deal = {
 							class="booking-menu-deal-add-button"
 							:class="{'--lock': !isFeatureEnabled}"
 							:data-element="dataElementPrefix + '-menu-deal-add-button'"
-							:data-booking-id="dataId"
+							v-bind="dataAttributes"
 							buttonClass="ui-btn-shadow"
 							:text="loc('BB_ACTIONS_POPUP_DEAL_BTN_LABEL')"
 							:size="ButtonSize.EXTRA_SMALL"

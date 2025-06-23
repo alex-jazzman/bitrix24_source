@@ -7090,48 +7090,44 @@ class CAllCrmActivity
 
 		$arCalEventFields['SECTIONS'] = [\CCalendar::GetCrmSection($responsibleID, true)];
 
-		$calendarEventId = isset($arFields['CALENDAR_EVENT_ID']) ? (int)$arFields['CALENDAR_EVENT_ID'] : 0;
+		$calendarEventId = (int)($arFields['CALENDAR_EVENT_ID'] ?? 0);
 
 		if($calendarEventId > 0)
 		{
-			$arPresentEventFields = \Bitrix\Crm\Integration\Calendar::getEvent($calendarEventId);
+			$arPresentEventFields = \Bitrix\Crm\Integration\Calendar::getEvent($calendarEventId, true);
 			if(is_array($arPresentEventFields))
 			{
-				$presentResponsibleID = isset($arPresentEventFields['OWNER_ID']) ? (int)$arPresentEventFields['OWNER_ID'] : 0;
-				if($presentResponsibleID === $responsibleID)
-				{
-					$arCalEventFields['ID'] = $calendarEventId;
-				}
+				$arCalEventFields['ID'] = $calendarEventId;
 
 				if(!empty($arPresentEventFields['RRULE']))
 				{
 					$arCalEventFields['RRULE'] = CCalendarEvent::ParseRRULE($arPresentEventFields['RRULE']);
 				}
-			}
 
-			if (
-				!empty($prevEnrichedDescription)
-				&& trim($description) !== trim($prevEnrichedDescription)
-			)
-			{
-				$culture = \Bitrix\Main\Context::getCurrent()?->getCulture();
-				$date = new DateTime();
-				if ($culture)
+				if (
+					!empty($prevEnrichedDescription)
+					&& trim($description) !== trim($prevEnrichedDescription)
+				)
 				{
-					$date->format($culture->getShortDateFormat() . ' ' . $culture->getShortTimeFormat());
+					$culture = \Bitrix\Main\Context::getCurrent()?->getCulture();
+					$date = new DateTime();
+					if ($culture)
+					{
+						$date->format($culture->getShortDateFormat() . ' ' . $culture->getShortTimeFormat());
+					}
+					$descriptionSubtitle = Loc::getMessage(
+						'CRM_ACTIVITY_CALENDAR_SUBTITLE',
+						['#DATE#' => $date]
+					);
+					$arCalEventFields['DESCRIPTION'] =
+						$arPresentEventFields['DESCRIPTION']
+						. PHP_EOL
+						. PHP_EOL
+						. $descriptionSubtitle
+						. PHP_EOL
+						. $arCalEventFields['DESCRIPTION']
+					;
 				}
-				$descriptionSubtitle = Loc::getMessage(
-					'CRM_ACTIVITY_CALENDAR_SUBTITLE',
-					['#DATE#' => $date]
-				);
-				$arCalEventFields['DESCRIPTION'] =
-					$arPresentEventFields['DESCRIPTION']
-					. PHP_EOL
-					. PHP_EOL
-					. $descriptionSubtitle
-					. PHP_EOL
-					. $arCalEventFields['DESCRIPTION']
-				;
 			}
 		}
 		if(isset($arFields['NOTIFY_TYPE']) && (int)$arFields['NOTIFY_TYPE'] !== CCrmActivityNotifyType::None)

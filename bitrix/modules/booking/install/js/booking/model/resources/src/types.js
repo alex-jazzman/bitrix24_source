@@ -10,19 +10,37 @@ export type ResourceModel = {
 	slotRanges: SlotRange[],
 	counter: number | null,
 	isMain: false,
-	isConfirmationNotificationOn: boolean,
-	isFeedbackNotificationOn: boolean,
-	isInfoNotificationOn: boolean,
-	isDelayedNotificationOn: boolean,
-	isReminderNotificationOn: boolean,
-	templateTypeConfirmation: string,
-	templateTypeFeedback: string,
-	templateTypeInfo: string,
-	templateTypeDelayed: string,
-	templateTypeReminder: string,
 	createdBy: number,
 	createdAt: number,
 	updatedAt: number | null,
+
+	// info
+	isInfoNotificationOn: boolean,
+	templateTypeInfo: string,
+	infoNotificationDelay: number,
+
+	// confirmation
+	isConfirmationNotificationOn: boolean,
+	templateTypeConfirmation: string,
+	confirmationNotificationDelay: number,
+	confirmationNotificationRepetitions: number,
+	confirmationNotificationRepetitionsInterval: number,
+	confirmationCounterDelay: number,
+
+	// reminder
+	isReminderNotificationOn: boolean,
+	templateTypeReminder: string,
+	reminderNotificationDelay: number,
+
+	// delayed
+	isDelayedNotificationOn: boolean,
+	templateTypeDelayed: string,
+	delayedNotificationDelay: number,
+	delayedCounterDelay: number,
+
+	// feedback
+	isFeedbackNotificationOn: boolean,
+	templateTypeFeedback: string,
 };
 
 export type SlotRange = {

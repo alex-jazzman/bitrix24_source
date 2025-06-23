@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,main_popup,ui_iconSet_api_vue,main_sidepanel,main_core) {
+(function (exports,main_popup,ui_iconSet_api_vue,ui_hint,ui_entitySelector,ui_iconSet_actions,humanresources_companyStructure_utils,main_core) {
 	'use strict';
 
 	const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
@@ -148,6 +148,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    titleBar: {
 	      type: String,
 	      required: false
+	    },
+	    containerDataTestId: {
+	      type: String,
+	      required: false
 	    }
 	  }
 	};
@@ -227,7 +231,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			:id="id"
 			@close="close"
 		>
-			<div class="hr-structure-components-action-menu-container">
+			<div
+				class="hr-structure-components-action-menu-container"
+				:data-test-id="containerDataTestId"
+			>
 			<template v-for="(item, index) in items">
 				<div
 					class="hr-structure-components-action-menu-item-wrapper"
@@ -273,21 +280,32 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Object,
 	      required: false,
 	      default: null
+	    },
+	    dataTestId: {
+	      type: String,
+	      required: false
 	    }
 	  },
 	  methods: {
-	    capitalizedText(text) {
-	      return text.charAt(0).toUpperCase() + text.slice(1);
+	    getColor(bIcon) {
+	      var _bIcon$color;
+	      if (bIcon.colorTokenName) {
+	        return humanresources_companyStructure_utils.getColorCode(bIcon.colorTokenName);
+	      }
+	      return (_bIcon$color = bIcon.color) != null ? _bIcon$color : 'black';
 	    }
 	  },
 	  template: `
-		<div class="hr-structure-route-action-popup-menu-item">
+		<div
+			class="hr-structure-route-action-popup-menu-item"
+			:data-test-id="dataTestId"
+		>
 			<div class="hr-structure-route-action-popup-menu-item__content">
 				<BIcon
 					v-if="bIcon"
 					:name="bIcon.name"
 					:size="bIcon.size || 20"
-					:color="bIcon.color || 'black'"
+					:color="getColor(bIcon)"
 				/>
 				<div
 					v-if="!bIcon && imageClass"
@@ -303,9 +321,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<div
 						class="hr-structure-route-action-popup-menu-item__content-title"
 					>
-						{{ capitalizedText(this.title) }}
+						{{ this.title }}
 					</div>
-					<div class="hr-structure-route-action-popup-menu-item__content-description">{{ capitalizedText(this.description) }}</div>
+					<div class="hr-structure-route-action-popup-menu-item__content-description">{{ this.description }}</div>
 				</div>
 			</div>
 		</div>
@@ -324,6 +342,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			:id="id"
 			:items="items"
 			:bindElement="bindElement"
+			:containerDataTestId="containerDataTestId"
 			:width="260"
 			v-slot="{item}"
 			@close="this.$emit('close')"
@@ -333,6 +352,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				:title="item.title"
 				:description="item.description"
 				:imageClass="item.imageClass"
+				:dataTestId="item.dataTestId"
 				:bIcon="item.bIcon"
 			/>
 		</BaseActionMenu>
@@ -360,6 +380,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: String,
 	      required: false,
 	      default: ''
+	    },
+	    dataTestId: {
+	      type: String,
+	      required: false
 	    }
 	  },
 	  computed: {
@@ -371,7 +395,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	  },
 	  template: `
-		<div class="hr-structure-action-popup-menu-item">
+		<div
+			class="hr-structure-action-popup-menu-item"
+			:data-test-id="dataTestId"
+		>
 			<div class="hr-structure-action-popup-menu-item__content">
 				<div
 					class="hr-structure-action-popup-menu-item__content-title"
@@ -396,6 +423,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			:id="id"
 			:items="items"
 			:bindElement="bindElement"
+			:containerDataTestId="containerDataTestId"
 			:width="260"
 			:delimiter="false"
 			v-slot="{item}"
@@ -406,6 +434,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				:title="item.title"
 				:imageClass="item.imageClass"
 				:color="item.color"
+				:dataTestId="item.dataTestId"
 				@click="this.$emit('action', item.id)"
 			/>
 		</BaseActionMenu>
@@ -435,6 +464,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: String,
 	      required: false,
 	      default: null
+	    },
+	    dataTestId: {
+	      type: String,
+	      required: false
 	    }
 	  },
 	  methods: {
@@ -443,7 +476,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	  },
 	  template: `
-		<div class="hr-structure-route-action-popup-menu-item">
+		<div
+			class="hr-structure-route-action-popup-menu-item"
+			:data-test-id="dataTestId"
+		>
 			<div class="hr-structure-route-action-popup-menu-item__content">
 				<img
 					:src="!this.avatar ? '/bitrix/js/humanresources/company-structure/org-chart/src/images/default-user.svg' : encodeURI(this.avatar)"
@@ -476,7 +512,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (!url) {
 	        return;
 	      }
-	      main_sidepanel.SidePanel.Instance.open(url, {
+	      BX.SidePanel.Instance.open(url, {
 	        cacheable: false
 	      });
 	    }
@@ -490,6 +526,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			:width="260"
 			:delimiter="false"
 			:titleBar="titleBar"
+			:containerDataTestId="containerDataTestId"
 			:angleOffset="35"
 			v-slot="{item}"
 			@close="this.$emit('close')"
@@ -500,6 +537,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				:avatar="item.avatar"
 				:workPosition="item.workPosition"
 				:color="item.color"
+				:dataTestId="item.dataTestId"
 				@click="this.openUserUrl(item.url)"
 			/>
 		</BaseActionMenu>
@@ -576,6 +614,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Number,
 	      required: false,
 	      default: 300
+	    },
+	    confirmButtonClass: {
+	      type: String,
+	      required: false,
+	      default: 'ui-btn-primary'
 	    }
 	  },
 	  methods: {
@@ -659,8 +702,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						</div>
 						<div class="hr-confirmation-popup__buttons-container">
 							<button
-								class="ui-btn ui-btn-primary ui-btn-round"
-								:class="{ 'ui-btn-wait': showActionButtonLoader, 'ui-btn-disabled': lockActionButton }"
+								class="ui-btn ui-btn-round"
+								:class="{ 
+									'ui-btn-wait': showActionButtonLoader, 
+									'ui-btn-disabled': lockActionButton, 
+									[confirmButtonClass]: true
+								}"
 								@click="performAction"
 							>
 								{{ confirmBtnText ?? '' }}
@@ -705,6 +752,294 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	};
 
+	let _$1 = t => t,
+	  _t$1;
+	class BaseManagementDialogHeader extends ui_entitySelector.BaseHeader {
+	  render() {
+	    return main_core.Tag.render(_t$1 || (_t$1 = _$1``));
+	  }
+	}
+
+	let _$2 = t => t,
+	  _t$2;
+	class BaseManagementDialogFooter extends ui_entitySelector.BaseFooter {
+	  render() {
+	    return main_core.Tag.render(_t$2 || (_t$2 = _$2``));
+	  }
+	}
+
+	// eslint-disable-next-line no-unused-vars
+	const ManagementDialog = {
+	  name: 'ManagementDialog',
+	  emits: ['managementDialogAction', 'close'],
+	  props: {
+	    id: {
+	      type: String,
+	      required: true
+	    },
+	    title: {
+	      type: String,
+	      required: false
+	    },
+	    description: {
+	      type: String,
+	      required: false
+	    },
+	    entities: {
+	      type: Array,
+	      required: true
+	    },
+	    isActive: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    hiddenItemsIds: {
+	      type: Array,
+	      required: false,
+	      default: []
+	    },
+	    confirmButtonText: {
+	      type: String,
+	      required: false
+	    },
+	    /** @var { ManagementDialogDataTestIds } dataTestIds */
+	    dataTestIds: {
+	      type: Object,
+	      required: false,
+	      default: {}
+	    },
+	    /** @var TabOptions */
+	    recentTabOptions: {
+	      type: Object,
+	      required: false,
+	      default: {}
+	    }
+	  },
+	  data() {
+	    return {
+	      headerContainer: HTMLElement | null,
+	      footerContainer: HTMLElement | null,
+	      selectedItemsCount: 0
+	    };
+	  },
+	  created() {
+	    this.instance = this.getDialogInstance();
+	    this.instance.show();
+	  },
+	  beforeUnmount() {
+	    if (!this.instance || !this.instance.isOpen()) {
+	      return;
+	    }
+	    this.instance.destroy();
+	  },
+	  methods: {
+	    getDialogInstance() {
+	      var _Dialog$getById;
+	      if (this.instance) {
+	        return this.instance;
+	      }
+	      (_Dialog$getById = ui_entitySelector.Dialog.getById(this.id)) == null ? void 0 : _Dialog$getById.destroy();
+	      const config = this.getDialogConfig();
+	      this.instance = new ui_entitySelector.Dialog(config);
+	      this.headerContainer = this.instance.getHeader().getContainer();
+	      this.footerContainer = this.instance.getFooter().getContainer();
+	      if (this.dataTestIds.containerDataTestId) {
+	        main_core.Dom.attr(this.instance.getContainer(), 'data-test-id', this.dataTestIds.containerDataTestId);
+	      }
+	      return this.instance;
+	    },
+	    getDialogConfig() {
+	      return {
+	        id: this.id,
+	        width: 400,
+	        height: 511,
+	        multiple: true,
+	        cacheable: false,
+	        dropdownMode: true,
+	        compactView: false,
+	        enableSearch: true,
+	        showAvatars: true,
+	        autoHide: false,
+	        popupOptions: {
+	          overlay: {
+	            opacity: 40
+	          }
+	        },
+	        header: BaseManagementDialogHeader,
+	        footer: BaseManagementDialogFooter,
+	        recentTabOptions: this.recentTabOptions,
+	        entities: this.entities,
+	        events: {
+	          'Item:onSelect': () => {
+	            this.selectedItemsCount++;
+	          },
+	          'Item:onDeselect': () => {
+	            this.selectedItemsCount--;
+	          },
+	          onLoad: event => {
+	            const dialog = event.getTarget();
+	            this.toggleItems(dialog);
+	          },
+	          'SearchTab:onLoad': event => {
+	            const dialog = event.getTarget();
+	            this.toggleItems(dialog);
+	          },
+	          onDestroy: () => {
+	            this.instance = null;
+	            this.$emit('close');
+	          },
+	          onHide: () => {
+	            this.$emit('close');
+	          }
+	        }
+	      };
+	    },
+	    onActionItemClick() {
+	      var _this$instance$getSel;
+	      if (this.isActive || !this.selectedItemsCount) {
+	        return;
+	      }
+	      const selectedItems = (_this$instance$getSel = this.instance.getSelectedItems()) != null ? _this$instance$getSel : [];
+	      this.$emit('managementDialogAction', selectedItems);
+	    },
+	    closeDialog() {
+	      this.$emit('close');
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    toggleItems(dialog) {
+	      if (this.hiddenItemsIds.length === 0) {
+	        return;
+	      }
+	      const items = dialog.getItems();
+	      items.forEach(item => {
+	        const hidden = this.hiddenItemsIds.includes(item.id);
+	        item.setHidden(hidden);
+	      });
+	    }
+	  },
+	  template: `
+		<div>
+			<teleport :to="headerContainer">
+				<div class="hr-management-dialog__header_container">
+					<div class="hr-management-dialog__header_content-container">
+						<div class="hr-management-dialog__header_title">{{title}}</div>
+						<div v-if="description" class="hr-management-dialog__header_subtitle">{{description}}</div>
+					</div>
+					<div
+						class="ui-icon-set --cross-40 hr-management-dialog__header_close-button"
+						@click="closeDialog"
+						:data-test-id="dataTestIds.closeButtonDataTestId"
+					/>
+				</div>
+			</teleport>
+			<teleport :to="footerContainer">
+				<div class="hr-management-dialog__footer_container">
+					<button
+						class="ui-btn ui-btn ui-btn-sm ui-btn-primary ui-btn-round"
+						:class="{ 'ui-btn-wait': isActive, 'ui-btn-disabled': !selectedItemsCount, }"
+						@click="onActionItemClick"
+						:data-test-id="dataTestIds.confirmButtonDataTestId"
+					>
+						{{ confirmButtonText ?? loc('HUMANRESOURCES_STRUCTURE_COMPONENTS_MANAGEMENT_DIALOG_CONFIRM_BUTTON') }}
+					</button>
+					<button
+						class="ui-btn ui-btn ui-btn-sm ui-btn-light-border ui-btn-round"
+						@click="closeDialog"
+						:data-test-id="dataTestIds.cancelButtonDataTestId"
+					>
+						{{ loc('HUMANRESOURCES_STRUCTURE_COMPONENTS_MANAGEMENT_DIALOG_CANCEL_BUTTON') }}
+					</button>
+				</div>
+			</teleport>
+		</div>
+	`
+	};
+
+	const getChatDialogEntity = function () {
+	  return {
+	    id: 'im-chat-only',
+	    dynamicLoad: true,
+	    dynamicSearch: true,
+	    filters: [{
+	      id: 'im.chatOnlyDataFilter',
+	      options: {
+	        includeSubtitle: true
+	      }
+	    }],
+	    tagOptions: {
+	      default: {
+	        textColor: '#11A9D9',
+	        bgColor: '#D3F4FF',
+	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-chat-tag.svg'
+	      }
+	    },
+	    itemOptions: {
+	      default: {
+	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-chat-item.svg'
+	      }
+	    },
+	    options: {
+	      searchChatTypes: ['O', 'C']
+	    }
+	  };
+	};
+	const getChannelDialogEntity = function () {
+	  return {
+	    id: 'im-chat-only',
+	    filters: [{
+	      id: 'im.chatOnlyDataFilter',
+	      options: {
+	        includeSubtitle: true
+	      }
+	    }],
+	    dynamicLoad: true,
+	    dynamicSearch: true,
+	    tagOptions: {
+	      default: {
+	        textColor: '#8DBB00',
+	        bgColor: '#EAF6C3',
+	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-channel-tag.svg',
+	        avatarOptions: {
+	          borderRadius: '50%'
+	        }
+	      }
+	    },
+	    itemOptions: {
+	      default: {
+	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-channel-item.svg',
+	        avatarOptions: {
+	          borderRadius: '6px'
+	        }
+	      }
+	    },
+	    options: {
+	      searchChatTypes: ['N', 'J']
+	    }
+	  };
+	};
+	const ChatTypeDict = Object.freeze({
+	  chat: 'chat',
+	  channel: 'channel'
+	});
+	const getChatRecentTabOptions = function (entityType, chatType) {
+	  let title = '';
+	  if (chatType === ChatTypeDict.chat) {
+	    title = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_TEAM_STUB_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_DEPARTMENT_STUB_TITLE');
+	  } else {
+	    title = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_TEAM_STUB_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_TITLE');
+	  }
+	  return {
+	    visible: false,
+	    stub: true,
+	    stubOptions: {
+	      title
+	    }
+	  };
+	};
+
 	exports.BasePopup = BasePopup;
 	exports.BaseActionMenu = BaseActionMenu;
 	exports.RouteActionMenu = RouteActionMenu;
@@ -712,6 +1047,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	exports.UserListActionMenu = UserListActionMenu;
 	exports.ConfirmationPopup = ConfirmationPopup;
 	exports.Hint = Hint;
+	exports.ManagementDialog = ManagementDialog;
+	exports.getChatDialogEntity = getChatDialogEntity;
+	exports.getChannelDialogEntity = getChannelDialogEntity;
+	exports.getChatRecentTabOptions = getChatRecentTabOptions;
+	exports.ChatTypeDict = ChatTypeDict;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX.UI.IconSet,BX,BX));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX.UI.IconSet,BX,BX.UI.EntitySelector,BX,BX.Humanresources.CompanyStructure,BX));
 //# sourceMappingURL=structure-components.bundle.js.map

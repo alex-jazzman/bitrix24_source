@@ -61,6 +61,8 @@ $MESS["MENU_MY_DOCUMENTS"] = "Мои документы";
 
 $MESS['MENU_BITRIX24_INVITE'] = 'Пригласить';
 $MESS['MENU_BITRIX24_MENU_BOTTOM'] = 'Нижнее меню';
+$MESS['MENU_BITRIX24_SUPPORT24'] = 'Поддержка';
+$MESS['MENU_BITRIX24_SUPPORT24_ERROR_TEXT'] = 'Не удалось открыть чат с поддержкой, попробуйте ещё раз';
 $MESS['MENU_COPILOT'] = "CoPilot";
 
 $MESS['MENU_TAG_NEW'] = 'Новое';

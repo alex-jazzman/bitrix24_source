@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,im_v2_lib_logger,im_v2_application_core,ui_dexie,im_v2_lib_localStorage,im_v2_const) {
+(function (exports,main_core,main_core_events,im_v2_lib_logger,im_v2_application_core,im_v2_const,ui_dexie,im_v2_lib_localStorage) {
 	'use strict';
 
 	const DB_NAME = 'bx-im-drafts';
@@ -77,7 +77,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.inited = true;
 	    let draftHistory = null;
 	    try {
-	      draftHistory = await IndexedDbManager.getInstance().get(this.getStorageKey(), {});
+	      draftHistory = await IndexedDbManager.getInstance().get(STORAGE_KEY, {});
 	    } catch (error) {
 	      // eslint-disable-next-line no-console
 	      console.error('DraftManager: error initing draft history', error);
@@ -130,8 +130,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!this.inited) {
 	      await this.initDraftHistory();
 	    }
-	    const draft = (_this$drafts$dialogId = this.drafts[dialogId]) != null ? _this$drafts$dialogId : {};
-	    return Promise.resolve(draft);
+	    return (_this$drafts$dialogId = this.drafts[dialogId]) != null ? _this$drafts$dialogId : {};
 	  }
 	  clearDraft(dialogId) {
 	    delete this.drafts[dialogId];
@@ -147,7 +146,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!this.canSetRecentItemDraftText(dialogId)) {
 	      return;
 	    }
-	    void im_v2_application_core.Core.getStore().dispatch(this.getDraftMethodName(), {
+	    void im_v2_application_core.Core.getStore().dispatch('recent/setDraft', {
 	      id: dialogId,
 	      text
 	    });
@@ -156,10 +155,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      from
 	    } = event.getData();
-	    if (from.name !== this.getLayoutName() || from.entityId === '') {
+	    const dialogId = from.entityId;
+	    if (dialogId === '') {
 	      return;
 	    }
-	    const dialogId = from.entityId;
 	    setTimeout(async () => {
 	      const {
 	        text = ''
@@ -174,7 +173,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }, WRITE_TO_STORAGE_TIMEOUT);
 	  }
 	  saveToIndexedDb() {
-	    IndexedDbManager.getInstance().set(this.getStorageKey(), this.prepareDrafts());
+	    IndexedDbManager.getInstance().set(STORAGE_KEY, this.prepareDrafts());
 	  }
 	  prepareDrafts() {
 	    const result = {};
@@ -192,15 +191,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    return result;
 	  }
-	  getLayoutName() {
-	    return im_v2_const.Layout.chat.name;
-	  }
-	  getStorageKey() {
-	    return STORAGE_KEY;
-	  }
-	  getDraftMethodName() {
-	    return 'recent/setRecentDraft';
-	  }
 	  canSetRecentItemDraftText(dialogId) {
 	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 	    if (!chat) {
@@ -211,28 +201,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	DraftManager.instance = null;
 
-	const STORAGE_KEY$1 = 'copilotDraft';
-	class CopilotDraftManager extends DraftManager {
-	  static getInstance() {
-	    if (!CopilotDraftManager.instance) {
-	      CopilotDraftManager.instance = new CopilotDraftManager();
-	    }
-	    return CopilotDraftManager.instance;
-	  }
-	  getLayoutName() {
-	    return im_v2_const.Layout.copilot.name;
-	  }
-	  getStorageKey() {
-	    return STORAGE_KEY$1;
-	  }
-	  getDraftMethodName() {
-	    return 'recent/setCopilotDraft';
-	  }
-	}
-	CopilotDraftManager.instance = null;
-
 	exports.DraftManager = DraftManager;
-	exports.CopilotDraftManager = CopilotDraftManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Dexie3,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.DexieExport,BX.Messenger.v2.Lib));
 //# sourceMappingURL=draft.bundle.js.map

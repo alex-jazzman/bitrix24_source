@@ -196,7 +196,7 @@ export class Skeleton
 		`;
 
 		Event.bind(hintLink, 'click', () => {
-			top.BX.Helper.show('redirect=detail&code=18897300');
+			BX.Helper.show('redirect=detail&code=18897300');
 		});
 
 		return Tag.render`

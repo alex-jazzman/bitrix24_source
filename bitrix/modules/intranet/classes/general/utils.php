@@ -207,14 +207,20 @@ class CIntranetUtils
 						$departments[] = DepartmentBackwardAccessCode::makeById((int)$department);
 					}
 				);
-				$nodes = \Bitrix\HumanResources\Service\Container::getNodeRepository()
-					->findAllByAccessCodes($departments);
 
-				foreach ($nodes as $node)
+				$departmentsChunk = array_chunk($departments, 200);
+
+				foreach ($departmentsChunk as $chunk)
 				{
-					$sectionId = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
-					$INTR_DEPARTMENTS_CACHE[] = $sectionId;
-					$INTR_DEPARTMENTS_CACHE_VALUE[$sectionId] = $node->name;
+					$nodes = \Bitrix\HumanResources\Service\Container::getNodeRepository()
+						->findAllByAccessCodes($chunk);
+
+					foreach ($nodes as $node)
+					{
+						$sectionId = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
+						$INTR_DEPARTMENTS_CACHE[] = $sectionId;
+						$INTR_DEPARTMENTS_CACHE_VALUE[$sectionId] = $node->name;
+					}
 				}
 			}
 			elseif (Loader::includeModule('iblock'))
@@ -1211,9 +1217,9 @@ class CIntranetUtils
 		$arManagerIDs = array();
 		foreach ($arDepartments as $section_id)
 		{
-			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id];
+			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id] ?? null;
 
-			if ($arSection['UF_HEAD'] && $arSection['UF_HEAD'] != $skipUserId)
+			if (isset($arSection['UF_HEAD']) && $arSection['UF_HEAD'] && $arSection['UF_HEAD'] != $skipUserId)
 			{
 				$arManagers[$arSection['UF_HEAD']] = null;
 				$arManagerIDs[] = $arSection['UF_HEAD'];
@@ -1909,6 +1915,7 @@ class CIntranetUtils
 							'FROM_USER_ID'   => 0,
 							'NOTIFY_TYPE'    => IM_NOTIFY_SYSTEM,
 							'NOTIFY_MODULE'  => 'intranet',
+							'NOTIFY_EVENT' => 'admin_notification',
 							'NOTIFY_MESSAGE' => str_replace(
 								array('#DOMAIN#', '#SERVER#'),
 								array(htmlspecialcharsbx($service['SERVER']), $siteUrl),
@@ -2226,8 +2233,6 @@ class CIntranetUtils
 
 		switch ($portalZone)
 		{
-			case "ua_bitrix_portal":
-				return "ua";
 			case "bitrix_portal":
 				return "en";
 			case "1c_bitrix_portal":

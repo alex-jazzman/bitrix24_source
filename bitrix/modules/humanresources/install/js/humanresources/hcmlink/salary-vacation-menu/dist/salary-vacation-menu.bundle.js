@@ -43,6 +43,7 @@ this.BX.HumanResources = this.BX.HumanResources || {};
 	      value: null
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode] = mode;
+	    babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings] = main_core.Extension.getSettings('humanresources.hcmlink.salary-vacation-menu');
 	  }
 	  async load() {
 	    if (main_core.Type.isObject(babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings])) {

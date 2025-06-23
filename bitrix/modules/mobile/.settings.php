@@ -9,4 +9,11 @@ return [
 		],
 		'readonly' => true,
 	],
+	'feature-flags' => [
+		'value' => [
+			\Bitrix\Mobile\Feature\SupportFeature::class,
+			\Bitrix\Mobile\Feature\WhatsNewFeature::class,
+		],
+		'readonly' => true,
+	],
 ];

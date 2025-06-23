@@ -1,12 +1,14 @@
-import {Tag, Type} from 'main.core';
+import {Tag, Type, Text } from 'main.core';
 
 export class BrowserHistory
 {
 	wrapper: HTMLElement;
+	isAir: boolean = false;
 	items = [];
 
-	constructor()
+	constructor(isAir: boolean)
 	{
+		this.isAir = isAir;
 		this.wrapper = document.getElementById("history-items");
 	}
 
@@ -34,8 +36,8 @@ export class BrowserHistory
 			let title = '';
 			if (Type.isStringFilled(item.title))
 			{
-				icoName = this.getShortName(item.title);
-				title = item.title;
+				icoName = this.getShortName(Text.encode(item.title));
+				title = Text.encode(item.title);
 			}
 			else
 			{
@@ -55,8 +57,8 @@ export class BrowserHistory
 				return;
 			}
 
-			let url = item.url;
-			if (item.url.includes('/online/'))
+			let url = Text.encode(item.url);
+			if (!this.isAir && item.url.includes('/online/'))
 			{
 				url = 'bx://v2/' + location.hostname + '/chat/';
 			}

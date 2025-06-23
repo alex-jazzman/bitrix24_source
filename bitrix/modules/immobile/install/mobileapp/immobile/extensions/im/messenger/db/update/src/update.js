@@ -23,6 +23,10 @@ jn.define('im/messenger/db/update/update', (require, exports, module) => {
 		await version.execute(12);
 		await version.execute(13);
 		await version.execute(14);
+		await version.execute(15);
+		await version.execute(16);
+		await version.execute(17);
+		await version.execute(18);
 	};
 
 	module.exports = {

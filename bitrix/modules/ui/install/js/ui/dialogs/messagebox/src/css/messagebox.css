@@ -34,3 +34,10 @@
 	line-height: normal;
 	white-space: normal;
 }
+
+.ui-message-box.--air .popup-window-buttons
+{
+	display: flex;
+	justify-content: center;
+	gap: 6px;
+}

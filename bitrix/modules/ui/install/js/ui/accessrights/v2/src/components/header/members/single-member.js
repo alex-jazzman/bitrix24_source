@@ -29,6 +29,11 @@ export const SingleMember = {
 				return 'ui-icon-common-user-group';
 			}
 
+			if (this.member.type === 'structureteams')
+			{
+				return 'ui-icon-common-my-plan';
+			}
+
 			return 'ui-icon-common-user';
 		},
 	},

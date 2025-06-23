@@ -2,7 +2,8 @@ import 'main.date';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings, Layout } from 'im.v2.const';
-import { ChatAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { ChatTitle } from 'im.v2.component.elements.chat-title';
 
 import { MessageText } from './components/message-text';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';

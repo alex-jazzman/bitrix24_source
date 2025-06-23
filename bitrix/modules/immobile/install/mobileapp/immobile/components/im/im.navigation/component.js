@@ -1,24 +1,42 @@
 'use strict';
+/* global tabs */
+(async () => {
 
-(() => {
 	console.log('Navigation is loaded.');
 	const require = jn.require;
 
 	const { EntityReady } = require('entity-ready');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { NavigationApplication } = require('im/messenger/core/navigation');
+	const core = new NavigationApplication({
+		localStorage: {
+			enable: true,
+			readOnly: false,
+		},
+	});
+	try
+	{
+		await core.init();
+	}
+	catch (error)
+	{
+		console.error('NavigationApplication init error:', error);
+	}
+	serviceLocator.add('core', core);
+
+	const emitter = new JNEventEmitter();
+	serviceLocator.add('emitter', emitter);
+
+	const { NotifyManager } = require('notify-manager');
 	const { AnalyticsEvent } = require('analytics');
-	const { Analytics, EventType, ComponentCode, NavigationTab } = require('im/messenger/const');
+
+	const { Analytics, EventType, ComponentCode, NavigationTab, NavigationTabByComponent } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 
-	const tabIdCollection = {
-		[ComponentCode.imMessenger]: NavigationTab.imMessenger,
-		[ComponentCode.imChannelMessenger]: NavigationTab.imChannelMessenger,
-		[ComponentCode.imCopilotMessenger]: NavigationTab.imCopilotMessenger,
-		[ComponentCode.imCollabMessenger]: NavigationTab.imCollabMessenger,
-		[ComponentCode.imNotify]: NavigationTab.imNotify,
-		[ComponentCode.imOpenlinesRecent]: NavigationTab.imOpenlinesRecent,
-	};
+	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
+	const { ConnectionService } = require('im/messenger/provider/services/connection');
+	const { NavigationCounterHandler } = require('im/messenger/lib/counters/counter-manager/navigation');
 
 	class NavigationManager
 	{
@@ -26,6 +44,7 @@
 
 		constructor()
 		{
+			this.core = core;
 			this.isReady = false;
 			this.isViewReady = false;
 			EntityReady.addCondition('im.navigation', () => this.isReady);
@@ -53,6 +72,7 @@
 			this.previousTab = 'none';
 
 			this.visibilityManager = VisibilityManager.getInstance();
+			this.counterHandler = NavigationCounterHandler.getInstance();
 			void this.saveActiveTabInfo();
 
 			// navigation
@@ -62,11 +82,16 @@
 			// counters
 			BX.addCustomEvent('ImRecent::counter::list', this.onUpdateCounters.bind(this));
 			BX.addCustomEvent('onUpdateCounters', this.onUpdateCounters.bind(this));
-			BX.addCustomEvent(EventType.navigation.broadCastEventWithTabChange, this.onBroadcastEvent.bind(this));
+			BX.addCustomEvent(EventType.navigation.broadCastEventWithTabChange, this.onBroadcastEventTabChange.bind(this));
+			BX.addCustomEvent(EventType.navigation.broadCastEventCheckTabPreload, this.onBroadcastEventCheckTabPreload.bind(this));
 			BX.addCustomEvent(EventType.navigation.changeTab, this.changeTabHandler.bind(this));
 			BX.addCustomEvent(EventType.app.active, this.onAppActive.bind(this));
 			BX.postComponentEvent('requestCounters', [{ component: 'im.navigation' }], 'communication');
-			BX.addCustomEvent('onTabsSelected', this.onRootTabsSelected.bind(this));
+			BX.addCustomEvent(EventType.navigation.onRootTabsSelected, this.onRootTabsSelected.bind(this));
+			BX.addCustomEvent(EventType.navigation.closeAll, this.closeAll.bind(this));
+			BX.addCustomEvent(EventType.app.changeStatus, this.onAppStatusChange.bind(this));
+
+			this.connectionService = ConnectionService.getInstance();
 
 			EntityReady.ready('im.navigation');
 
@@ -77,6 +102,7 @@
 			}
 
 			this.isReady = true;
+			this.currentTabOptions = {};
 		}
 
 		set currentTab(tab)
@@ -137,9 +163,9 @@
 			});
 		}
 
-		changeTabHandler(componentCode)
+		changeTabHandler(componentCode, options = {})
 		{
-			if (!tabIdCollection[componentCode])
+			if (!NavigationTabByComponent[componentCode])
 			{
 				BX.postComponentEvent(EventType.navigation.changeTabResult, [{
 					componentCode,
@@ -177,13 +203,31 @@
 				return;
 			}
 
-			tabs.setActiveItem(tabIdCollection[componentCode]);
+			this.currentTabOptions = options;
+
+			tabs.setActiveItem(NavigationTabByComponent[componentCode]);
 
 			PageManager.getNavigator().makeTabActive();
 
 			BX.postComponentEvent(EventType.navigation.changeTabResult, [{
 				componentCode,
 			}]);
+		}
+
+		async closeAll()
+		{
+			return new Promise((resolve, reject) => {
+				PageManager.getNavigator().popTo('im.tabs')
+					.then(() => {
+						BX.postComponentEvent(EventType.navigation.closeAllComplete, [{ isSuccess: true }]);
+						resolve();
+					})
+					.catch((error) => {
+						BX.postComponentEvent(EventType.navigation.closeAllComplete, [{ isSuccess: false }]);
+
+						reject(new Error(`NavigationManager.closeAll error: ${error}`));
+					});
+			});
 		}
 
 		onTabSelected(item, changed)
@@ -224,7 +268,11 @@
 				newTab: this.currentTab,
 				previousTab: this.previousTab,
 			}]);
-			this.sendAnalyticsChangeTab();
+
+			const { analytics = {} } = this.currentTabOptions || {};
+			this.sendAnalyticsChangeTab(analytics);
+
+			this.currentTabOptions = {};
 		}
 
 		/**
@@ -242,7 +290,7 @@
 			}
 		}
 
-		sendAnalyticsChangeTab()
+		sendAnalyticsChangeTab(analyticsOptions = {})
 		{
 			if (this.currentTab === 'copilot') // TODO delete this, when will be universal event like below
 			{
@@ -257,10 +305,10 @@
 
 			const type = this.currentTab === 'chats' ? Analytics.Type.chat : Analytics.Type[this.currentTab];
 			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.Tool.im)
-				.setCategory(Analytics.Category.messenger)
-				.setEvent(Analytics.Event.openTab)
-				.setType(type);
+				.setTool(analyticsOptions.tool ?? Analytics.Tool.im)
+				.setCategory(analyticsOptions.category ?? Analytics.Category.messenger)
+				.setEvent(analyticsOptions.event ?? Analytics.Event.openTab)
+				.setType(analyticsOptions.type ?? type);
 
 			analytics.send();
 		}
@@ -363,7 +411,7 @@
 				NavigationTab.imCopilotMessenger,
 				NavigationTab.imCollabMessenger,
 			].forEach((tab) => {
-				const counter = this.counters[tab] ? this.counters[tab] : 0;
+				const counter = this.counters[tab] ?? 0;
 				tabs.updateItem(tab, {
 					counter,
 					label: counter ? counter.toString() : '',
@@ -372,23 +420,21 @@
 		}
 
 		/**
-		 *
-		 * @param {{
-		 * 	broadCastEvent: string,
-		 * 	toTab: string,
-		 * 	data: Object,
-		 * }} params
+		 * @param {onBroadcastEventParams} [params]
 		 */
-		onBroadcastEvent(params)
+		async onBroadcastEventTabChange(params)
 		{
-			if (!tabIdCollection[params.toTab])
+			const componentCodeByTab = this.getComponentCodeByTab(params.toTab);
+			if (!componentCodeByTab)
 			{
+				console.error(`${this.constructor.name}.onBroadcastEventTabChange error - missing componentCode for ${params.toTab}`);
+
 				return;
 			}
-			console.info(`${this.constructor.name}.onBroadcastEvent params:`, params);
+			console.info(`${this.constructor.name}.onBroadcastEventTabChange params:`, params);
 
 			if (
-				params.toTab === ComponentCode.imCollabMessenger
+				componentCodeByTab === ComponentCode.imCollabMessenger
 				&& !Feature.isCollabSupported
 			)
 			{
@@ -396,21 +442,124 @@
 			}
 			else
 			{
-				tabs.setActiveItem(tabIdCollection[params.toTab]);
+				await this.handleBroadcastEventSetActiveItem(params.toTab, componentCodeByTab);
 			}
 
-			MessengerEmitter.emit(params.broadCastEvent, params.data, params.toTab);
+			MessengerEmitter.emit(params.broadCastEvent, params.data, componentCodeByTab);
+		}
+
+		/**
+		 * @param {onBroadcastEventParams} [params]
+		 */
+		async onBroadcastEventCheckTabPreload(params)
+		{
+			const componentCodeByTab = this.getComponentCodeByTab(params.toTab);
+			if (!componentCodeByTab)
+			{
+				console.error(`${this.constructor.name}.onBroadcastEventCheckTabPreload error - missing componentCode for ${params.toTab}`);
+
+				return;
+			}
+			console.info(`${this.constructor.name}.onBroadcastEventCheckTabPreload params:`, params);
+
+			if ([NavigationTab.imMessenger, NavigationTab.imOpenlinesRecent, NavigationTab.imNotify].includes(params.toTab))
+			{
+				MessengerEmitter.emit(params.broadCastEvent, params.data, componentCodeByTab);
+
+				return;
+			}
+
+			const emitData = params.data;
+			const ready = EntityReady.isReady(`${componentCodeByTab}::launched`);
+			if (!ready)
+			{
+				await this.checkIsOpenDialogByComponentLaunched(componentCodeByTab);
+
+				emitData.backToMessenegerTab = true;
+			}
+
+			MessengerEmitter.emit(params.broadCastEvent, params.data, componentCodeByTab);
 		}
 
 		handleCollabsAreNotSupported()
 		{
 			console.log(`${this.constructor.name}.handleCollabsAreNotSupported`);
 
-			tabs.setActiveItem(tabIdCollection[ComponentCode.imMessenger]);
+			tabs.setActiveItem(NavigationTabByComponent[ComponentCode.imMessenger]);
 			Feature.showUnsupportedWidget();
 			this.currentTab = NavigationTab.imMessenger;
+		}
+
+		/**
+		 * @param {NavigationTab} navigationTab
+		 * @param {ComponentCode} componentCode
+		 */
+		handleBroadcastEventSetActiveItem(navigationTab, componentCode)
+		{
+			console.log(`${this.constructor.name}.handleBroadcastEventSetActiveItem:`, navigationTab);
+
+			if (this.currentTab === navigationTab)
+			{
+				return true;
+			}
+
+			if ([NavigationTab.imMessenger, NavigationTab.imOpenlinesRecent, NavigationTab.imNotify].includes(navigationTab))
+			{
+				tabs.setActiveItem(navigationTab);
+
+				return true;
+			}
+
+			const ready = EntityReady.isReady(`${componentCode}::launched`);
+			if (!ready)
+			{
+				return this.checkIsOpenDialogByComponentLaunched(componentCode);
+			}
+
+			tabs.setActiveItem(navigationTab);
+
+			return true;
+		}
+
+		/**
+		 * @param {ComponentCode} componentCode
+		 */
+		async checkIsOpenDialogByComponentLaunched(componentCode)
+		{
+			try
+			{
+				if (!Feature.isIOSChangeTabInBackgroundAvailable)
+				{
+					Feature.showUnsupportedWidget();
+
+					return;
+				}
+
+				void NotifyManager.showLoadingIndicator();
+
+				tabs.setActiveItem(NavigationTabByComponent[componentCode]);
+
+				await EntityReady.wait(`${componentCode}::ready`);
+
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+			}
+			catch (error)
+			{
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				console.error(`${this.constructor.name}.checkIsOpenDialogByComponentLaunched catch:`, error);
+			}
+		}
+
+		/**
+		 * @param {{name: string, value: string}} event
+		 */
+		onAppStatusChange(event)
+		{
+			core.setAppStatus(event.name, event.value);
 		}
 	}
 
 	window.Navigation = new NavigationManager();
-})();
+})().catch((error) => {
+	console.error(error);
+});

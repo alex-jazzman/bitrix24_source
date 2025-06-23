@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Internals\Service\Journal\EventProcessor\WaitListItem;
 
 use Bitrix\Booking\Command\WaitListItem\AddWaitListItemCommand;

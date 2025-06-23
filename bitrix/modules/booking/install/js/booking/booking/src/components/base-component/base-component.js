@@ -25,7 +25,7 @@ export const BaseComponent = {
 	template: `
 		<div
 			id="booking-content"
-			class="booking"
+			class="booking --ui-context-content-light"
 			:style="{
 				'--from-hour': fromHour,
 				'--to-hour': toHour,

@@ -56,9 +56,6 @@ $siteTemplate = Manager::getTemplateId($site);
 
 define('SMN_SITE_ID', $site);
 
-// refresh block repo
-\Bitrix\Landing\Block::getRepository();
-
 // check module rights
 if ($application->getGroupRight('landing') < 'W')
 {
@@ -363,18 +360,24 @@ if ($cmp == 'landing_edit')
 		}
 		else
 		{
-			$APPLICATION->IncludeComponent(
-				'bitrix:landing.demo',
-				'.default',
-				array(
-					'TYPE' => $createType,
-					'ACTION_FOLDER' => $actionFolder,
-					'SITE_ID' => $siteId,
-					'PAGE_URL_SITES' => $landingsPage,
-					'PAGE_URL_LANDING_VIEW' => $viewPage,
-					'SITE_WORK_MODE' => 'Y'
-				),
-				$component
+			$APPLICATION->includeComponent(
+				'bitrix:ui.sidepanel.wrapper',
+				'',
+				[
+					'POPUP_COMPONENT_NAME' => 'bitrix:landing.demo',
+					'POPUP_COMPONENT_TEMPLATE_NAME' => '.default',
+					'POPUP_COMPONENT_PARAMS' => [
+						'TYPE' => $createType,
+						'ACTION_FOLDER' => $actionFolder,
+						'SITE_ID' => $siteId,
+						'PAGE_URL_SITES' => $landingsPage,
+						'PAGE_URL_LANDING_VIEW' => $viewPage,
+						'SITE_WORK_MODE' => 'Y',
+					],
+					'POPUP_COMPONENT_PARENT' => $component,
+					'USE_PADDING' => false,
+					'USE_UI_TOOLBAR' => 'Y',
+				]
 			);
 		}
 	}

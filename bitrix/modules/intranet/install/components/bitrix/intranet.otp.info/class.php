@@ -12,7 +12,7 @@ class CIntranetOtpInfoComponent extends CBitrixComponent
 	public function executeComponent(): void
 	{
 		global $USER;
-		
+
 		if (
 			!Loader::includeModule('security')
 			|| !$USER->IsAuthorized()
@@ -61,11 +61,17 @@ class CIntranetOtpInfoComponent extends CBitrixComponent
 			}
 		}
 
-		$this->arParams['PATH_TO_PROFILE_SECURITY'] = trim($this->arParams['PATH_TO_PROFILE_SECURITY']);
+		$this->arParams['PATH_TO_PROFILE_SECURITY'] = trim($this->arParams['PATH_TO_PROFILE_SECURITY'] ?? '');
 
-		if($this->arParams['PATH_TO_PROFILE_SECURITY'] == '')
+		if(empty($this->arParams['PATH_TO_PROFILE_SECURITY']))
 		{
-			$this->arParams['PATH_TO_PROFILE_SECURITY'] = SITE_DIR . 'company/personal/user/#user_id#/security/';
+			$isExtranet = (
+				\Bitrix\Main\ModuleManager::isModuleInstalled('extranet')
+				&& \COption::getOptionString('extranet', 'extranet_site') === SITE_ID
+			);
+
+			$path = $isExtranet ? SITE_DIR . 'contacts/personal' : SITE_DIR . 'company/personal';
+			$this->arParams['PATH_TO_PROFILE_SECURITY'] = $path . '/user/#user_id#/security/';
 		}
 
 		$this->arResult['PATH_TO_PROFILE_SECURITY'] = \CComponentEngine::MakePathFromTemplate(

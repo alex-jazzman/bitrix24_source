@@ -4,12 +4,13 @@ import { Text } from 'main.core';
 import { Utils } from 'im.v2.lib.utils';
 import { FileViewerContext } from 'im.v2.const';
 import { highlightText } from 'im.v2.lib.text-highlighter';
-import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
-import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { ChatTitle } from 'im.v2.component.elements.chat-title';
+import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 
 import '../css/brief-item.css';
 
 import type { JsonObject } from 'main.core';
+import type { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
 
 // @vue/component
 export const BriefItem = {

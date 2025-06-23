@@ -72,9 +72,10 @@
 	--im-messagee-list-author-group__background-color_hover: #FFFFFF4D;
 	--im-messagee-list-author-group__background-color_active: var(--im-color-palette-blue-50);
 	--im-message-list-author-group__width_select-button: 54px;
+	--im-message-list-author-group__height_avatar-container: 42px;
 
 	display: grid;
-	grid-template-columns: 0 auto 100%;
+	grid-template-columns: 0 auto 100%;;
 	width: 100%;
 }
 
@@ -106,10 +107,10 @@
 
 .bx-im-message-list-author-group__avatar {
 	position: sticky;
-	display: flex;
-	align-items: flex-end;
+	align-self: end;
 	bottom: 0;
 	grid-column: 2;
+	max-height: var(--im-message-list-author-group__height_avatar-container);
 	z-index: 75;
 	margin-right: 12px;
 	cursor: pointer;

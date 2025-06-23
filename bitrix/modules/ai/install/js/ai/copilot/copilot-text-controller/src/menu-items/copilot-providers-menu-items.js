@@ -28,12 +28,12 @@ export class CopilotProvidersMenuItems
 
 		let result = [
 			...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController),
-			connectAiMenuItem,
 		];
 
 		if (isLibraryAvailable)
 		{
 			result.push(
+				connectAiMenuItem,
 				{ separator: true },
 				getMarketMenuItem(),
 			);

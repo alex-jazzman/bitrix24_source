@@ -128,7 +128,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		/**
 		 * @param actionType
 		 * @param {UsersModelState||number} userData
-		 * @return {*|boolean|boolean}
+		 * @return {boolean}
 		 */
 		canPerformActionByUserType(actionType, userData)
 		{
@@ -143,7 +143,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 
 		/**
 		 * @param {UsersModelState||number} userData
-		 * @return {*|boolean|boolean}
+		 * @return {boolean}
 		 */
 		canLeaveFromCollab(userData)
 		{
@@ -155,6 +155,22 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			const permissionsByUserType = this.getPermissionByUserType(this.userData);
 
 			return permissionsByUserType?.[ActionByUserType.leaveCollab] ?? false;
+		}
+
+		/**
+		 * @param {UsersModelState||number} userData
+		 * @return {boolean}
+		 */
+		canChangeMessagesAutoDeleteDelay(userData)
+		{
+			if (!this.setUserData(userData))
+			{
+				return false;
+			}
+
+			const permissionsByUserType = this.getPermissionByUserType(this.userData);
+
+			return permissionsByUserType?.[ActionByUserType.changeMessagesAutoDeleteDelay] ?? false;
 		}
 
 		/**

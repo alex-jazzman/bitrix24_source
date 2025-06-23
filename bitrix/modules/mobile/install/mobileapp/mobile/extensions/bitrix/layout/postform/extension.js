@@ -407,7 +407,13 @@
 						'background',
 					);
 
-					postFormLayoutWidget.close();
+					postFormLayoutWidget.close(() => {
+						BX.postComponentEvent(
+							'livefeed.postform::onClose',
+							[],
+							'background',
+						);
+					});
 				})
 				.catch((error) => {
 					console.error(error.message);

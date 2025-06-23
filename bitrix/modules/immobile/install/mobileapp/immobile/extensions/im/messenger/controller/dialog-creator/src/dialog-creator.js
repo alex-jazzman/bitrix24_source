@@ -9,7 +9,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+
 	const {
 		RestMethod,
 		DialogType,
@@ -18,11 +19,12 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		BotCode,
 		Analytics,
 		OpenDialogContextType,
+		NavigationTab,
+		NavigationTabByComponent,
 	} = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { AnalyticsEvent } = require('analytics');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
-	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
 	const { Feature } = require('im/messenger/lib/feature');
 
 	class DialogCreator
@@ -57,14 +59,6 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			);
 		}
 
-		createChannelDialog()
-		{
-			ChannelCreator.open({
-				userList: this.prepareItems(this.getUserList()),
-				analytics: new AnalyticsEvent().setSection(Analytics.Section.channelTab),
-			});
-		}
-
 		async createCollab()
 		{
 			if (!Feature.isCollabSupported)
@@ -79,6 +73,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				const { openCollabCreate } = await requireLazy('collab/create');
 
 				await openCollabCreate({
+					navigationTab: NavigationTab.imCollabMessenger,
 					// todo provide some analytics here
 				});
 			}
@@ -96,7 +91,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				showOpenFeedbackItem: true,
 				openWidgetConfig: {
 					backdrop: {
-						mediumPositionPercent: 75,
+						mediumPositionPercent: 85,
 						horizontalSwipeAllowed: false,
 						onlyMediumPosition: false,
 					},
@@ -120,21 +115,13 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		sendAnalyticsStartCreateCopilotDialog()
 		{
-			try
-			{
-				const analytics = new AnalyticsEvent()
-					.setTool(Analytics.Tool.im)
-					.setCategory(Analytics.Category.copilot)
-					.setEvent(Analytics.Event.clickCreateNew)
-					.setType(Analytics.Type.copilot)
-					.setSection(Analytics.Section.copilotTab);
-
-				analytics.send();
-			}
-			catch (e)
-			{
-				console.error(`${this.constructor.name}.sendAnalyticsStartCreateCopilotDialog.catch:`, e);
-			}
+			AnalyticsService.getInstance()
+				.sendStartCreation({
+					category: Analytics.Category.copilot,
+					type: Analytics.Type.copilot,
+					section: Analytics.Section.copilotTab,
+				})
+			;
 		}
 
 		callRestCreateCopilotDialog(fields)
@@ -149,12 +136,16 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 					setTimeout(
 						() => {
 							MessengerEmitter.emit(
-								EventType.messenger.openDialog,
+								EventType.navigation.broadCastEventCheckTabPreload,
 								{
-									dialogId: `chat${chatId}`,
-									context: OpenDialogContextType.chatCreation,
+									broadCastEvent: EventType.messenger.openDialog,
+									toTab: NavigationTabByComponent[ComponentCode.imCopilotMessenger],
+									data: {
+										dialogId: `chat${chatId}`,
+										context: OpenDialogContextType.chatCreation,
+									},
 								},
-								ComponentCode.imCopilotMessenger,
+								ComponentCode.imNavigation,
 							);
 
 							const analytics = new AnalyticsEvent()

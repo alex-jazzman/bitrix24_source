@@ -61,9 +61,9 @@
 				props: {
 					className: 'landing-ui-card-label landing-ui-card-label-repo'
 				},
-				text: BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_MARKET'),
+				text: BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_MARKET_MSGVER_1'),
 				dataset: {
-					hint: BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_MARKET_HINT'),
+					hint: BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_MARKET_HINT_MSGVER_1'),
 					hintNoIcon: 'Y',
 				},
 			});

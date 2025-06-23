@@ -7,6 +7,7 @@ jn.define('feature', (require, exports, module) => {
 	/**
 	 * @class Feature
 	 */
+
 	class Feature
 	{
 		/**
@@ -73,6 +74,11 @@ jn.define('feature', (require, exports, module) => {
 			return minApiVersion(56, 'isListViewMoveRowToSectionEndSupported');
 		}
 
+		static isMultiEmailInputSupported()
+		{
+			return minApiVersion(58, 'isMultiEmailInputSupported');
+		}
+
 		static isSelectorWidgetOnViewHiddenEventBugFixed()
 		{
 			if (isAndroid)
@@ -81,6 +87,21 @@ jn.define('feature', (require, exports, module) => {
 			}
 
 			return true;
+		}
+
+		static isMultipleFilesDownloadSupported()
+		{
+			return minApiVersion(60, 'isMultipleFilesDownloadSupported');
+		}
+
+		static isNativeStoreSupported()
+		{
+			return Boolean(require('native/store'));
+		}
+
+		static canUseAnimatedCounter()
+		{
+			return !isAndroid || minApiVersion(60, 'canUseAnimatedCounter');
 		}
 	}
 

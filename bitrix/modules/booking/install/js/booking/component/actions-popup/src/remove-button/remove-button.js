@@ -7,19 +7,23 @@ type RemoveButtonData = {
 	iconSet: { [string]: string },
 }
 
+// @vue/component
 export const RemoveButton = {
 	name: 'RemoveButton',
-	emits: ['remove'],
+	components: {
+		Icon,
+	},
 	props: {
-		dataId: {
-			type: [String, Number],
-			required: true,
+		showLabel: {
+			type: Boolean,
+			default: false,
 		},
-		dataElementPrefix: {
-			type: String,
-			default: '',
+		dataAttributes: {
+			type: Object,
+			default: () => ({}),
 		},
 	},
+	emits: ['remove'],
 	setup(): RemoveButtonData
 	{
 		const iconSet = IconSet;
@@ -28,20 +32,17 @@ export const RemoveButton = {
 			iconSet,
 		};
 	},
-	components: {
-		Icon,
-	},
 	template: `
 		<div
 			class="booking-actions-popup__item-remove-button"
-			:data-element="dataElementPrefix + '-menu-remove-button'"
-			:data-booking-id="dataId"
+			:title="loc('BB_ACTIONS_POPUP_OVERBOOKING_REMOVE')"
+			v-bind="dataAttributes"
 			@click="$emit('remove')"
 		>
-			<div class="booking-actions-popup__item-overbooking-label">
+			<Icon :name="iconSet.TRASH_BIN" color="var(--ui-color-palette-gray-60)"/>
+			<div v-if="showLabel" class="booking-actions-popup__item-overbooking-label">
 				{{ loc('BB_ACTIONS_POPUP_OVERBOOKING_REMOVE') }}
 			</div>
-			<Icon :name="iconSet.TRASH_BIN"/>
 		</div>
 	`,
 };

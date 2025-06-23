@@ -7,6 +7,7 @@ return [
 			'\\Bitrix\\Tasks\\Scrum\\Controllers' => 'scrum',
 			'\\Bitrix\\Tasks\\Flow\\Controllers' => 'flow',
 			'\\Bitrix\\Tasks\\Deadline\\Controllers' => 'deadline',
+			'\\Bitrix\\Tasks\\V2\\Controller' => 'v2',
 		],
 		'defaultNamespace' => '\\Bitrix\\Tasks\\Rest\\Controllers',
 		'restIntegration' => [

@@ -3,6 +3,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+
 \Bitrix\Main\UI\Extension::load([
 	'ui.icon-set.main',
 	'ui.banner-dispatcher',
@@ -96,15 +97,12 @@ if ($isCompositeMode)
 
 								if ($isBitrix24Cloud && $partnerID = COption::GetOptionString("bitrix24", "partner_id", ""))
 								{
-									if ($partnerID != "9409443") //sber
-									{
-										$arParamsPartner = [];
-										$arParamsPartner["MESS"] = [
-											"BX24_PARTNER_TITLE" => GetMessage("BITRIX24_PARTNER_POPUP_TITLE"),
-											"BX24_BUTTON_SEND" => GetMessage("BITRIX24_PARTNER_POPUP_BUTTON"),
-										];
-										?><a href="javascript:void(0)" onclick="showPartnerForm(<?= CUtil::PhpToJSObject($arParamsPartner) ?>); return false;" class="footer-link"><?=GetMessage("BITRIX24_PARTNER_CONNECT")?></a><?php
-									}
+									$arParamsPartner = [];
+									$arParamsPartner["MESS"] = [
+										"BX24_PARTNER_TITLE" => GetMessage("BITRIX24_PARTNER_POPUP_TITLE"),
+										"BX24_BUTTON_SEND" => GetMessage("BITRIX24_PARTNER_POPUP_BUTTON"),
+									];
+									?><a href="javascript:void(0)" onclick="showPartnerForm(<?= CUtil::PhpToJSObject($arParamsPartner) ?>); return false;" class="footer-link"><?=GetMessage("BITRIX24_PARTNER_CONNECT")?></a><?php
 								}
 								elseif (!$isCollaber && Bitrix\Main\Loader::includeModule('bitrix24'))
 								{
@@ -175,6 +173,7 @@ $APPLICATION->IncludeComponent(
 		'SHIFTED_POSITION' => $imBarExists ? ['right' => '7px', 'bottom' => '20px'] : ['right' => '25px', 'bottom' => '20px'],
 	]
 );
+$APPLICATION->includeComponent('bitrix:intranet.invitation.notification', '', []);
 ?><script>
 	BX.message({
 		"BITRIX24_CS_ONLINE" : "<?=GetMessageJS("BITRIX24_CS_ONLINE")?>",
@@ -196,7 +195,13 @@ $APPLICATION->IncludeComponent(
 	<?php
 		endif;
 	?>
-	if (document.referrer.startsWith(location.origin) === false)
+	if (BX.browser.IsMobile())
+	{
+		BX.Runtime.loadExtension('intranet.mobile-popup').then((exports) => {
+			(new exports.MobilePopup()).show();
+		});
+	}
+	else if (document.referrer !== '' && document.referrer.startsWith(location.origin) === false)
 	{
 		BX.Runtime.loadExtension('intranet.recognize-links');
 	}

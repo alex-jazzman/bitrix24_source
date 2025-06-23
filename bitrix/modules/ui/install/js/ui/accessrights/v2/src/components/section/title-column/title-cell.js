@@ -87,7 +87,6 @@ export const TitleCell = {
 		<div
 			class='ui-access-rights-v2-column-item-text ui-access-rights-v2-column-item-title'
 			@click="toggleGroup"
-			:title="right.title"
 			:style="{
 				cursor: right.groupHead ? 'pointer' : null,
 			}"
@@ -102,10 +101,12 @@ export const TitleCell = {
 					'--plus-in-circle': !right.isGroupExpanded,
 				}"
 			></span>
-			<span class="ui-access-rights-v2-text-ellipsis" :style="{
+			<span class="ui-access-rights-v2-text-wrap" :style="{
 				'margin-left': !right.groupHead && !right.group ? '23px' : null,
-			}">{{ right.title }}</span>
-			<Hint v-once v-if="right.hint" :html="right.hint" />
+			}">
+				{{ right.title }}
+				<Hint v-once v-if="right.hint" :html="right.hint" />
+			</span>
 		</div>
 		<div
 			ref="icon" 

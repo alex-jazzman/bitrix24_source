@@ -1,14 +1,13 @@
 // eslint-disable-next-line no-param-reassign
 
 /**
- * @module im/messenger/model/draft/model
+ * @module im/messenger/model/draft/src/model
  */
-jn.define('im/messenger/model/draft/model', (require, exports, module) => {
+jn.define('im/messenger/model/draft/src/model', (require, exports, module) => {
 	const { Type } = require('type');
-
-	const { DraftCache } = require('im/messenger/cache');
-	const { draftDefaultElement } = require('im/messenger/model/draft/default-element');
-	const { validate } = require('im/messenger/model/draft/validator');
+	const { DraftType } = require('im/messenger/const');
+	const { draftDefaultElement } = require('im/messenger/model/draft/src/default-element');
+	const { validate } = require('im/messenger/model/draft/src/validator');
 
 	/** @type {DraftModel} */
 	const draftModel = {
@@ -37,6 +36,13 @@ jn.define('im/messenger/model/draft/model', (require, exports, module) => {
 					},
 				});
 			},
+
+			setFromLocalDatabase: (store, payload) => {
+				payload.forEach((item) => {
+					store.dispatch('set', item);
+				});
+			},
+
 			/**
 			 * @function draftModel/set
 			 * @param store
@@ -48,28 +54,32 @@ jn.define('im/messenger/model/draft/model', (require, exports, module) => {
 					return;
 				}
 
-				const validPayload = validate(payload);
+				const validPayload = {
+					...validate(payload),
+					lastActivityDate: new Date(),
+				};
+				const dialogId = validPayload.dialogId;
+				const existingItem = store.state.collection[dialogId];
+				const mutationName = existingItem ? 'update' : 'add';
+				const mutationFields = existingItem ? validPayload : { ...draftDefaultElement, ...validPayload };
 
-				const existingItem = store.state.collection[validPayload.dialogId];
-
-				if (existingItem)
+				if (DraftType.reply !== mutationFields.type && !mutationFields.text.trim())
 				{
-					store.commit('update', {
+					store.commit('delete', {
 						actionName: 'set',
 						data: {
-							dialogId: validPayload.dialogId,
-							fields: validPayload,
+							dialogId,
 						},
 					});
 
 					return;
 				}
 
-				store.commit('add', {
+				store.commit(mutationName, {
 					actionName: 'set',
 					data: {
-						dialogId: validPayload.dialogId,
-						fields: { ...draftDefaultElement, ...validPayload },
+						dialogId,
+						fields: mutationFields,
 					},
 				});
 			},
@@ -123,8 +133,6 @@ jn.define('im/messenger/model/draft/model', (require, exports, module) => {
 
 				// eslint-disable-next-line no-param-reassign
 				state.collection[dialogId] = fields;
-
-				DraftCache.save(state);
 			},
 
 			/**
@@ -138,9 +146,10 @@ jn.define('im/messenger/model/draft/model', (require, exports, module) => {
 				} = payload.data;
 
 				// eslint-disable-next-line no-param-reassign
-				state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
-
-				DraftCache.save(state);
+				state.collection[dialogId] = {
+					...state.collection[dialogId],
+					...fields,
+				};
 			},
 
 			/**
@@ -154,8 +163,6 @@ jn.define('im/messenger/model/draft/model', (require, exports, module) => {
 
 				// eslint-disable-next-line no-param-reassign
 				delete state.collection[dialogId];
-
-				DraftCache.save(state);
 			},
 		},
 	};

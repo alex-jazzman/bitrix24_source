@@ -19,6 +19,7 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		getFileIconTypeByExtension,
 	} = require('im/messenger/lib/helper/file');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper/entity-selector');
+	const { CounterHelper } = require('im/messenger/lib/helper/counter');
 
 	module.exports = {
 		DateHelper: new DateHelper(),
@@ -34,5 +35,6 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		getFileTypeByExtension,
 		getFileIconTypeByExtension,
 		EntitySelectorHelper,
+		CounterHelper,
 	};
 });

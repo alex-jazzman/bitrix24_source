@@ -8,9 +8,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 /** @var array $arParams */
 /** @var array $arResult */
 
+use Bitrix\Crm\Tracking\Provider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
@@ -27,17 +29,18 @@ Extension::load([
 ]);
 
 $containerId = 'crm-tracking-channel-pool';
+
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.feedback.form',
+	'',
+	[ ...Provider::getFeedbackParameters(), 'VIEW_TARGET' => false ],
+);
+
+Toolbar::addRightCustomHtml(ob_get_clean(), ['align' => 'right']);
 ?>
 
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-tracking-channel-pool-wrap">
-
-	<?
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		\Bitrix\Crm\Tracking\Provider::getFeedbackParameters()
-	);
-	?>
 
 	<form method="post">
 		<?=bitrix_sessid_post();?>

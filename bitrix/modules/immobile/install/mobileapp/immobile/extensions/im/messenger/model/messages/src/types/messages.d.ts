@@ -2,6 +2,7 @@ import {MessengerModel, PayloadData} from '../../../base';
 import {DialogType} from '../../../dialogues/src/types';
 import {ReactionsModelState, MessageId} from '../reactions/types';
 import {KeyboardButtonConfig} from './keyboard';
+import {VoteModelState} from '../vote/types';
 
 declare type MessagesModelCollection = {
 	collection: Record<number | string, MessagesModelState>,
@@ -46,6 +47,7 @@ export type MessagesModelState = {
 	attach: Array<AttachConfig>,
 	keyboard: Array<KeyboardButtonConfig>,
 	richLinkId: number,
+	vote?: VoteModelState,
 }
 
 declare type MessageParams = {
@@ -56,6 +58,7 @@ declare type MessageParams = {
 	URL_ONLY?: 'Y' | 'N',
 	URL_ID?: Array<string>,
 	componentId: string,
+	COMPONENT_PARAMS?: Object,
 }
 
 declare type AttachConfig = {

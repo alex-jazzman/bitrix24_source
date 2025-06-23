@@ -1158,6 +1158,12 @@ return [
 				['name' => 'g-bg-brown--before', 'value' => 'g-bg-brown--before'],
 			],
 		],
+		'background-color-after' => [
+			'name' => Loc::getMessage('LANDING_BLOCK_STYLE_BG_COLOR_BEFORE'),
+			'type' => 'color',
+			'subtype' => 'bg-color-after',
+			'items' => [],
+		],
 		'background-size' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_STYLE_BACKGROUND_SIZE'),
 			'property' => 'background-size',
@@ -2939,6 +2945,12 @@ return [
 				['name' => 'g-theme-bitrix-btn-v6', 'value' => 'g-theme-bitrix-btn-v6'],
 			],
 		],
+		'button-color-hover' => [
+			'name' => Loc::getMessage('LANDING_BLOCK_STYLE_BUTTON_COLOR_HOVER'),
+			'type' => 'color',
+			'subtype' => 'bg-color-hover',
+			'items' => [],
+		],
 		'animation' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_STYLE_ANIMATION'),
 			'property' => 'animation-name',
@@ -3350,12 +3362,14 @@ return [
 		],
 		'button' => [
 			'button-color',
+			'button-color-hover',
 			'button-type',
 			'button-size',
 			'button-padding',
 			'border-radius',
 			'color',
 			'color-hover',
+			'border-color-hover',
 			'font-family',
 			'text-transform',
 		],

@@ -73,6 +73,7 @@ jn.define('sign/dialog/banners/responsereviewmobile', (require, exports, module)
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'responseReviewMobileBanner-button-confirm',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_RESPONSE_REVIEW_MOBILE_BUTTON_CONFIRM'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -85,6 +86,7 @@ jn.define('sign/dialog/banners/responsereviewmobile', (require, exports, module)
 						},
 					}),
 					Button({
+						testId: 'responseReviewMobileBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_RESPONSE_REVIEW_MOBILE_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

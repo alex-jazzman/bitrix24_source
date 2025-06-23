@@ -506,5 +506,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.TaskQueue = TaskQueue;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX,BX.Main,BX.Tasks,BX,BX));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX,BX.Main,BX.Tasks,BX.SidePanel,BX));
 //# sourceMappingURL=task-queue.bundle.js.map

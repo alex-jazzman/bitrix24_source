@@ -32,6 +32,13 @@ class Product
 		$params = $event->getParameters();
 		$result = &$params[1];
 		$languageId = $params[2];
+
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_product')
+		{
+			return;
+		}
+
 		$result['crm_product'] = [
 			'TABLE_NAME' => 'b_catalog_product',
 			'TABLE_ALIAS' => 'P',

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,booking_core,booking_const,booking_lib_duration,booking_provider_service_resourceDialogService,booking_lib_resourcesDateCache) {
+(function (exports,booking_core,booking_const,booking_lib_slotRanges,booking_provider_service_resourceDialogService,booking_lib_resourcesDateCache) {
 	'use strict';
 
 	const minBookingViewMs = 15 * 60 * 1000;
@@ -11,7 +11,7 @@ this.BX.Booking = this.BX.Booking || {};
 	var _selectedWeekDay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedWeekDay");
 	var _selectedDateTs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedDateTs");
 	var _offset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("offset");
-	var _timezoneOffset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timezoneOffset");
+	var _timezone = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timezone");
 	var _resourcesIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourcesIds");
 	var _intersections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("intersections");
 	var _draggedBooking = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedBooking");
@@ -25,19 +25,11 @@ this.BX.Booking = this.BX.Booking || {};
 	var _rangesOverlap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rangesOverlap");
 	var _sliceOverbookingFromBookingRange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sliceOverbookingFromBookingRange");
 	var _getResource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResource");
-	var _getNextDay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNextDay");
-	var _getPreviousDay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPreviousDay");
 	var _getOverbookingMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOverbookingMap");
 	class BusySlots {
 	  constructor() {
 	    Object.defineProperty(this, _getOverbookingMap, {
 	      value: _getOverbookingMap2
-	    });
-	    Object.defineProperty(this, _getPreviousDay, {
-	      value: _getPreviousDay2
-	    });
-	    Object.defineProperty(this, _getNextDay, {
-	      value: _getNextDay2
 	    });
 	    Object.defineProperty(this, _getResource, {
 	      value: _getResource2
@@ -83,8 +75,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      get: _get_resourcesIds,
 	      set: void 0
 	    });
-	    Object.defineProperty(this, _timezoneOffset, {
-	      get: _get_timezoneOffset,
+	    Object.defineProperty(this, _timezone, {
+	      get: _get_timezone,
 	      set: void 0
 	    });
 	    Object.defineProperty(this, _offset, {
@@ -168,8 +160,8 @@ this.BX.Booking = this.BX.Booking || {};
 	function _get_offset() {
 	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offset`];
 	}
-	function _get_timezoneOffset() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/timezoneOffset`];
+	function _get_timezone() {
+	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/timezone`];
 	}
 	function _get_resourcesIds() {
 	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/resourcesIds`];
@@ -214,66 +206,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    return [];
 	  }
 	  const bookingRanges = babelHelpers.classPrivateFieldLooseBase(this, _getBookings)[_getBookings]().filter(booking => booking.resourcesIds.includes(resourceId)).map(booking => babelHelpers.classPrivateFieldLooseBase(this, _calculateMinutesRange)[_calculateMinutesRange](booking));
-	  const minutesInDay = booking_lib_duration.Duration.getUnitDurations().d / booking_lib_duration.Duration.getUnitDurations().i;
-	  const slotRanges = resource.slotRanges.map(slotRange => {
-	    const timeZone = slotRange.timezone;
-	    const date = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs]);
-	    const dateInTimezone = new Date(date.toLocaleString('en-US', {
-	      timeZone
-	    }));
-	    const dateInUTC = new Date(date.toLocaleString('en-US', {
-	      timeZone: 'UTC'
-	    }));
-	    const timezoneOffset = (dateInTimezone.getTime() - dateInUTC.getTime()) / 1000;
-	    const minutesOffset = (babelHelpers.classPrivateFieldLooseBase(this, _timezoneOffset)[_timezoneOffset] - timezoneOffset) / 60;
-	    return {
-	      ...slotRange,
-	      from: slotRange.from + minutesOffset,
-	      to: slotRange.to + minutesOffset
-	    };
-	  }).map(slotRange => {
-	    if (slotRange.from > minutesInDay) {
-	      return {
-	        ...slotRange,
-	        from: slotRange.from - minutesInDay,
-	        to: slotRange.to - minutesInDay,
-	        weekDays: slotRange.weekDays.map(weekDay => babelHelpers.classPrivateFieldLooseBase(this, _getNextDay)[_getNextDay](weekDay))
-	      };
-	    }
-	    if (slotRange.to < 0) {
-	      return {
-	        ...slotRange,
-	        from: slotRange.from + minutesInDay,
-	        to: slotRange.to + minutesInDay,
-	        weekDays: slotRange.weekDays.map(weekDay => babelHelpers.classPrivateFieldLooseBase(this, _getPreviousDay)[_getPreviousDay](weekDay))
-	      };
-	    }
-	    return slotRange;
-	  }).flatMap(slotRange => {
-	    if (slotRange.from < 0) {
-	      return [{
-	        ...slotRange,
-	        from: 0
-	      }, ...slotRange.weekDays.map(weekDay => ({
-	        ...slotRange,
-	        from: minutesInDay + slotRange.from,
-	        to: minutesInDay,
-	        weekDays: [babelHelpers.classPrivateFieldLooseBase(this, _getPreviousDay)[_getPreviousDay](weekDay)]
-	      }))];
-	    }
-	    if (slotRange.to > minutesInDay) {
-	      return [{
-	        ...slotRange,
-	        to: minutesInDay
-	      }, ...slotRange.weekDays.map(weekDay => ({
-	        ...slotRange,
-	        from: 0,
-	        to: slotRange.to - minutesInDay,
-	        weekDays: [babelHelpers.classPrivateFieldLooseBase(this, _getNextDay)[_getNextDay](weekDay)]
-	      }))];
-	    }
-	    return slotRange;
-	  }).filter(slotRange => slotRange.weekDays.includes(babelHelpers.classPrivateFieldLooseBase(this, _selectedWeekDay)[_selectedWeekDay]));
+	  const slotRanges = booking_lib_slotRanges.SlotRanges.applyTimezone(resource.slotRanges, babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs], babelHelpers.classPrivateFieldLooseBase(this, _timezone)[_timezone]).filter(slotRange => slotRange.weekDays.includes(babelHelpers.classPrivateFieldLooseBase(this, _selectedWeekDay)[_selectedWeekDay]));
 	  const freeRanges = this.filterSlotRanges([...slotRanges, ...bookingRanges]);
 	  const busyRanges = [0, ...freeRanges.flatMap(({
 	    from,
@@ -432,12 +365,6 @@ this.BX.Booking = this.BX.Booking || {};
 	}
 	function _getResource2(resourceId) {
 	  return booking_core.Core.getStore().getters[`${booking_const.Model.Resources}/getById`](resourceId);
-	}
-	function _getNextDay2(weekDay) {
-	  return booking_const.DateFormat.WeekDays[(booking_const.DateFormat.WeekDays.indexOf(weekDay) + 1) % 7];
-	}
-	function _getPreviousDay2(weekDay) {
-	  return booking_const.DateFormat.WeekDays[(booking_const.DateFormat.WeekDays.indexOf(weekDay) + 7 - 1) % 7];
 	}
 	function _getOverbookingMap2() {
 	  return booking_core.Core.getStore().getters[`${booking_const.Model.Bookings}/overbookingMap`];

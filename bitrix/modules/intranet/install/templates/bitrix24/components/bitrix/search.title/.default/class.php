@@ -531,7 +531,7 @@ final class CB24SearchTitle
 				}, $chain);
 
 				$result[] = array(
-					'NAME' => $menuItem['TEXT'],
+					'NAME' => htmlspecialcharsbx($menuItem['TEXT']),
 					'URL' => $url,
 					'CHAIN' => $chain,
 					'MODULE_ID' => '',
@@ -610,10 +610,11 @@ final class CB24SearchTitle
 				)
 				{
 					$arResult["customSonetGroupsCategoryId"] = $i;
-					$arResult["CATEGORIES"][$i]["ITEMS"] = array_filter(
+					$sonetgroups = array_filter(
 						CB24SearchTitle::getSonetGroups($searchString),
 						fn ($group) => $group['GROUP_TYPE'] !== 'collab'
 					);
+					$arResult["CATEGORIES"][$i]["ITEMS"] = array_values($sonetgroups);
 
 					if ($arResult["customResultEmpty"] && !empty($arResult["CATEGORIES"][$i]["ITEMS"]))
 					{
@@ -633,10 +634,11 @@ final class CB24SearchTitle
 					&& CollabFeature::isOn()
 				)
 				{
-					$arResult["CATEGORIES"][$i]["ITEMS"] = array_filter(
+					$collabs = array_filter(
 						CB24SearchTitle::getSonetGroups($searchString),
 						fn ($group) => $group['GROUP_TYPE'] === 'collab'
 					);
+					$arResult["CATEGORIES"][$i]["ITEMS"] = array_values($collabs);
 
 					if ($arResult["customResultEmpty"] && !empty($arResult["CATEGORIES"][$i]["ITEMS"]))
 					{

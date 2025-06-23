@@ -16,7 +16,7 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { showDeleteCollabAlert, showLeaveCollabAlert } = require('im/messenger/lib/ui/alert');
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { SidebarHeaderContextMenuActionType } = require('im/messenger/const');
 	const { ParticipantsService } = require('im/messenger/controller/sidebar/chat/tabs/participants/participants-service');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');

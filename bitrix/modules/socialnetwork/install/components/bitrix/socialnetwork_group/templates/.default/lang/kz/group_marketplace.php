@@ -1,0 +1,3 @@
+<?php
+$MESS["GROUP_MARKETPLACE_TITLE_2"] = "Маркет";
+$MESS["GROUP_MARKETPLACE_TITLE_MSGVER_1"] = "Маркетплейс";

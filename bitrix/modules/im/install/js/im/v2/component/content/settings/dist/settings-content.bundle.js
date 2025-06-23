@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_logger,im_v2_lib_helpdesk,ui_feedback_form,im_v2_component_dialog_chat,im_v2_lib_theme,im_v2_lib_user,ui_forms,main_core,im_v2_application_core,im_v2_lib_rest,im_v2_lib_utils,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_const,im_v2_provider_service) {
+(function (exports,im_v2_lib_logger,im_v2_lib_helpdesk,ui_feedback_form,im_v2_component_dialog_chat,im_v2_lib_theme,im_v2_lib_demo,ui_forms,im_v2_component_elements_hint,main_core,im_v2_application_core,im_v2_lib_rest,im_v2_lib_utils,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_const,im_v2_lib_feature,im_v2_lib_layout,im_v2_provider_service_settings) {
 	'use strict';
 
 	const SectionMetaData = {
@@ -65,6 +65,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const disabledSections = new Set([im_v2_const.SettingsSection.message]);
 	      if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	        disabledSections.add(im_v2_const.SettingsSection.desktop);
+	      }
+	      if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isNotificationsStandalone)) {
+	        disabledSections.add(im_v2_const.SettingsSection.notification);
 	      }
 	      return disabledSections;
 	    },
@@ -167,7 +170,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onBackgroundClick(backgroundId) {
 	      const preparedBackgroundId = Number.parseInt(backgroundId, 10);
-	      const settingsService = new im_v2_provider_service.SettingsService();
+	      const settingsService = new im_v2_provider_service_settings.SettingsService();
 	      settingsService.changeSetting(im_v2_const.Settings.appearance.background, preparedBackgroundId);
 	    }
 	  },
@@ -206,7 +209,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getSettingsService() {
 	      if (!this.settingsService) {
-	        this.settingsService = new im_v2_provider_service.SettingsService();
+	        this.settingsService = new im_v2_provider_service_settings.SettingsService();
 	      }
 	      return this.settingsService;
 	    }
@@ -237,50 +240,32 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const DEMO_DIALOG_ID = 'settings';
-	const demoChat = {
-	  dialogId: DEMO_DIALOG_ID,
-	  chatId: -1,
-	  type: im_v2_const.ChatType.chat,
-	  inited: true,
-	  role: im_v2_const.UserRole.guest
-	};
-	const demoUser = {
-	  id: -1,
-	  name: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_USER_NAME')
-	};
-	const demoMessage1 = {
-	  id: -3,
-	  chatId: demoChat.chatId,
-	  authorId: demoUser.id,
-	  text: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_1'),
-	  viewedByOthers: true
-	};
-	const demoMessage2 = {
-	  id: -2,
-	  chatId: demoChat.chatId,
-	  authorId: im_v2_application_core.Core.getUserId(),
-	  replyId: demoMessage1.id,
-	  text: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_2'),
-	  viewedByOthers: true
-	};
-	const demoMessage3 = {
-	  id: -1,
-	  chatId: demoChat.chatId,
-	  authorId: demoUser.id,
-	  text: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_3'),
-	  viewedByOthers: true
-	};
-	const DemoManager = {
-	  initModels() {
-	    im_v2_application_core.Core.getStore().dispatch('chats/set', demoChat);
-	    const userManager = new im_v2_lib_user.UserManager();
-	    userManager.addUsersToModel([demoUser]);
-	    const messages = [demoMessage1, demoMessage2, demoMessage3];
-	    im_v2_application_core.Core.getStore().dispatch('messages/setChatCollection', {
-	      messages
-	    });
-	  }
+	const initDemoData = () => {
+	  const chatBuilder = new im_v2_lib_demo.DemoChatBuilder();
+	  chatBuilder.addChat({
+	    role: im_v2_const.UserRole.guest
+	  });
+	  const demoUser = chatBuilder.addUser({
+	    name: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_USER_NAME')
+	  });
+	  const firstMessage = chatBuilder.addMessage({
+	    authorId: demoUser.id,
+	    text: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_1'),
+	    viewedByOthers: true
+	  });
+	  chatBuilder.addMessage({
+	    authorId: im_v2_application_core.Core.getUserId(),
+	    replyId: firstMessage.id,
+	    text: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_2'),
+	    viewedByOthers: true
+	  });
+	  chatBuilder.addMessage({
+	    authorId: demoUser.id,
+	    text: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_DEMO_CHAT_MESSAGE_3'),
+	    viewedByOthers: true
+	  });
+	  chatBuilder.save();
+	  return chatBuilder.getChat().dialogId;
 	};
 
 	// @vue/component
@@ -292,7 +277,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    ChatAlignment
 	  },
 	  data() {
-	    return {};
+	    return {
+	      fakeDialogId: ''
+	    };
 	  },
 	  computed: {
 	    containerClasses() {
@@ -304,7 +291,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  created() {
-	    DemoManager.initModels();
+	    this.fakeDialogId = initDemoData();
 	  },
 	  methods: {
 	    loc(phraseCode) {
@@ -315,7 +302,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-settings-section-content__body">
 			<div class="bx-im-settings-section-content__block">
 				<div class="bx-im-content-chat__container bx-im-settings-appearance__demo-chat_container" :class="containerClasses" :style="backgroundStyle">
-					<ChatDialog :dialogId="'settings'" />
+					<ChatDialog :dialogId="fakeDialogId" />
 				</div>
 			</div>
 			<div class="bx-im-settings-section-content__block">
@@ -338,6 +325,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	// @vue/component
 	const CheckboxOption = {
 	  name: 'CheckboxOption',
+	  components: {
+	    ChatHint: im_v2_component_elements_hint.ChatHint
+	  },
 	  props: {
 	    value: {
 	      type: Boolean,
@@ -352,11 +342,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: Boolean,
 	      required: false,
 	      default: false
+	    },
+	    hintText: {
+	      type: String,
+	      required: false,
+	      default: ''
 	    }
 	  },
 	  emits: ['change'],
-	  data() {
-	    return {};
+	  computed: {
+	    hasHint() {
+	      return this.hintText.length > 0;
+	    }
 	  },
 	  methods: {
 	    onInput(event) {
@@ -367,7 +364,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-settings-checkbox__container bx-im-settings-section-content__block_option" :class="{ '--no-text': text === '' }">
 			<label class="ui-ctl ui-ctl-checkbox">
 				<input type="checkbox" :checked="value" :disabled="disabled" @input="onInput" class="ui-ctl-element">
-				<div v-if="text" class="ui-ctl-label-text">{{ text }}</div>
+				<span v-if="text" class="ui-ctl-label-text">{{ text }}</span>
+				<ChatHint v-if="hasHint" :text="hintText" />
 			</label>
 		</div>
 	`
@@ -467,7 +465,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getSettingsService() {
 	      if (!this.settingsService) {
-	        this.settingsService = new im_v2_provider_service.SettingsService();
+	        this.settingsService = new im_v2_provider_service_settings.SettingsService();
 	      }
 	      return this.settingsService;
 	    },
@@ -511,11 +509,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        userId: im_v2_application_core.Core.getUserId(),
 	        scheme: newScheme
 	      }
-	    }).catch(error => {
-	      // eslint-disable-next-line no-console
+	    }).catch(([error]) => {
 	      console.error('NotificationService: switchScheme error', error);
 	    });
-	    return im_v2_application_core.Core.getStore().dispatch('application/settings/set', {
+	    void im_v2_application_core.Core.getStore().dispatch('application/settings/set', {
 	      notifications: newNotificationsSettings
 	    });
 	  },
@@ -526,13 +523,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type,
 	      value
 	    } = payload;
-	    im_v2_application_core.Core.getStore().dispatch('application/settings/setNotificationOption', {
+	    void im_v2_application_core.Core.getStore().dispatch('application/settings/setNotificationOption', {
 	      moduleId,
 	      optionName,
 	      type,
 	      value
 	    });
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsNotifyUpdate, {
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsNotifyUpdate, {
 	      data: {
 	        userId: im_v2_application_core.Core.getUserId(),
 	        moduleId,
@@ -540,8 +537,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        type,
 	        value
 	      }
-	    }).catch(error => {
-	      // eslint-disable-next-line no-console
+	    }).catch(([error]) => {
 	      console.error('NotificationService: changeExpertOption error', error);
 	    });
 	  }
@@ -692,15 +688,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    SimpleNotificationList,
 	    ExpertNotificationList
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    enableSound() {
 	      return this.$store.getters['application/settings/get'](im_v2_const.Settings.notification.enableSound);
 	    },
 	    enableAutoRead() {
 	      return this.$store.getters['application/settings/get'](im_v2_const.Settings.notification.enableAutoRead);
+	    },
+	    isDndEnabled() {
+	      return this.$store.getters['application/settings/get'](im_v2_const.Settings.user.status) === im_v2_const.UserStatus.dnd;
 	    },
 	    notificationMode() {
 	      return this.$store.getters['application/settings/get'](im_v2_const.Settings.notification.mode);
@@ -727,6 +723,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    onEnableAutoReadChange(newValue) {
 	      this.getSettingsService().changeSetting(im_v2_const.Settings.notification.enableAutoRead, newValue);
 	    },
+	    onEnableDnDChange(newValue) {
+	      const preparedValue = newValue ? im_v2_const.UserStatus.dnd : im_v2_const.UserStatus.online;
+	      this.getSettingsService().changeStatus(preparedValue);
+	    },
 	    async onNotificationModeChange(newValue) {
 	      const isChangingToSimple = newValue === im_v2_const.NotificationSettingsMode.simple;
 	      if (isChangingToSimple) {
@@ -746,7 +746,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getSettingsService() {
 	      if (!this.settingsService) {
-	        this.settingsService = new im_v2_provider_service.SettingsService();
+	        this.settingsService = new im_v2_provider_service_settings.SettingsService();
 	      }
 	      return this.settingsService;
 	    },
@@ -769,6 +769,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:value="enableAutoRead"
 					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_AUTO_READ')"
 					@change="onEnableAutoReadChange"
+				/>
+				<CheckboxOption
+					:value="isDndEnabled"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_DND')"
+					:hintText="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_DND_HINT')"
+					@change="onEnableDnDChange"
 				/>
 			</div>
 		</div>
@@ -828,7 +834,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getSettingsService() {
 	      if (!this.settingsService) {
-	        this.settingsService = new im_v2_provider_service.SettingsService();
+	        this.settingsService = new im_v2_provider_service_settings.SettingsService();
 	      }
 	      return this.settingsService;
 	    },
@@ -857,9 +863,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  components: {
 	    CheckboxOption
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    showBirthday() {
 	      return this.$store.getters['application/settings/get'](im_v2_const.Settings.recent.showBirthday);
@@ -883,7 +886,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getSettingsService() {
 	      if (!this.settingsService) {
-	        this.settingsService = new im_v2_provider_service.SettingsService();
+	        this.settingsService = new im_v2_provider_service_settings.SettingsService();
 	      }
 	      return this.settingsService;
 	    },
@@ -945,6 +948,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    sendTelemetry() {
 	      return im_v2_lib_desktopApi.DesktopApi.getTelemetryStatus();
+	    },
+	    isAirDesignEnabled() {
+	      return im_v2_lib_layout.LayoutManager.getInstance().isAirDesignEnabled();
+	    },
+	    isRedirectAvailable() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isDesktopRedirectAvailable);
 	    }
 	  },
 	  methods: {
@@ -981,7 +990,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getSettingsService() {
 	      if (!this.settingsService) {
-	        this.settingsService = new im_v2_provider_service.SettingsService();
+	        this.settingsService = new im_v2_provider_service_settings.SettingsService();
 	      }
 	      return this.settingsService;
 	    },
@@ -996,6 +1005,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_STARTUP') }}
 				</div>
 				<CheckboxOption
+					v-if="!isAirDesignEnabled"
 					:value="twoWindowMode"
 					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_TWO_WINDOW_MODE_V2')"
 					@change="onTwoWindowModeChange"
@@ -1011,6 +1021,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_LINKS') }}
 				</div>
 				<CheckboxOption
+					v-if="isRedirectAvailable"
 					:value="openPortalLinkInDesktop"
 					:text="openPortalLinkInDesktopPhrase"
 					@change="onOpenPortalLinkInDesktopChange"
@@ -1136,5 +1147,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SettingsContent = SettingsContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Feedback,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Feedback,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
 //# sourceMappingURL=settings-content.bundle.js.map

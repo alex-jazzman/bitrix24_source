@@ -47,7 +47,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog/message/unread-separator');
 	const { CopilotMessage } = require('im/messenger/lib/element/dialog/message/copilot');
 	const { CopilotPromptMessage } = require('im/messenger/lib/element/dialog/message/copilot-prompt');
-	const { CopilotErrorMessage } = require('im/messenger/lib/element/dialog/message/copilot-error');
+	const { ErrorMessage } = require('im/messenger/lib/element/dialog/message/error');
 	const { CheckInMessageFactory } = require('im/messenger/lib/element/dialog/message/check-in/factory');
 	const { CheckInMessageHandler } = require('im/messenger/lib/element/dialog/message/check-in/handler');
 	const { GalleryMessageFactory } = require('im/messenger/lib/element/dialog/message/gallery/factory');
@@ -56,6 +56,8 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { BannerMessageHandler } = require('im/messenger/lib/element/dialog/message/banner/handler');
 	const { CallMessageFactory } = require('im/messenger/lib/element/dialog/message/call/factory');
 	const { CallMessageHandler } = require('im/messenger/lib/element/dialog/message/call/handler');
+	const { VoteMessageFactory } = require('im/messenger/lib/element/dialog/message/vote/factory');
+	const { VoteMessageHandler } = require('im/messenger/lib/element/dialog/message/vote/handler');
 
 	module.exports = {
 		ChatAvatar,
@@ -99,7 +101,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		UnreadSeparatorMessage,
 		CopilotMessage,
 		CopilotPromptMessage,
-		CopilotErrorMessage,
+		ErrorMessage,
 		CheckInMessageFactory,
 		CheckInMessageHandler,
 		GalleryMessageFactory,
@@ -110,5 +112,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		MessageTextAlign,
 		CallMessageFactory,
 		CallMessageHandler,
+		VoteMessageFactory,
+		VoteMessageHandler,
 	};
 });

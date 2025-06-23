@@ -1,4 +1,5 @@
 <?php
+
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_COMING_SOON'] = 'Скоро появится';
 
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SUBSCRIBE_COMMENTS'] = 'Вы следите за комментариями к публикации';
@@ -14,3 +15,7 @@ $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGE_NOT_FOUND'] = 'Сообщен�
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SEND_FILES_GALLERY_LIMIT_EXCEEDED'] = 'Можно отправить не больше 100 файлов за раз';
 
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SELECT_MESSAGE_LIMIT'] = 'Выбрано максимальное количество сообщений';
+$MESS['IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGES_AUTO_DELETE_DISABLED'] = 'Автоудаление отключено администратором вашего Битрикс24';
+
+$MESS['IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_AUTO_DELETE_ENABLED'] = 'Автоудаление включено';
+$MESS['IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_AUTO_DELETE_DISABLED'] = 'Автоудаление отключено';

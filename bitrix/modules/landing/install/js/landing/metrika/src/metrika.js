@@ -26,7 +26,7 @@ export class Metrika
 			return;
 		}
 
-		this.formSelector= '.bitrix24forms';
+		this.formSelector = '.bitrix24forms';
 		this.widgetBlockItemSelector = '.landing-b24-widget-button-social-item';
 		this.formBlocks = [...document.querySelectorAll(this.formSelector)];
 		this.siteType = this.getSiteType();
@@ -213,27 +213,49 @@ export class Metrika
 	 */
 	sendData(data: AnalyticsOptions): void
 	{
-		Runtime.loadExtension('ui.analytics')
+		Runtime
+			.loadExtension('ui.analytics')
 			.then(exports => {
-				data.tool = Metrika.TOOL_NAME;
+				const preparedData = {
+					tool: Metrika.TOOL_NAME,
+				};
+
+				[
+					'category',
+					'event',
+					'type',
+					'c_section',
+					'c_sub_section',
+					'c_element',
+					'status',
+				].forEach(key =>
+				{
+					if (data[key])
+					{
+						preparedData[key] = data[key];
+					}
+				});
+
 				if (data.params && Type.isObject(data.params))
 				{
 					let i = 1;
 					const maxParams = 5;
-					for (let param in data.params)
-					{
+					Object.keys(data.params).forEach(param => {
 						if (i <= maxParams)
 						{
 							const key = 'p' + i++;
 							Text.toCamelCase(param);
-							data[key] = Text.toCamelCase(param) + '_' + Text.toCamelCase(data.params[param]);
+							preparedData[key] = Text.toCamelCase(param) + '_' + Text.toCamelCase(data.params[param]);
 						}
-					}
-					delete data.params;
+					});
+					delete preparedData.params;
 				}
 
 				const {sendData} = exports;
-				sendData(data);
+				sendData(preparedData);
+			})
+			.catch(err => {
+				console.error('Metrika send error', err);
 			})
 		;
 	}

@@ -13,8 +13,12 @@ use Bitrix\Tasks\Flow\Kanban\BizProcService;
 use Bitrix\Tasks\Flow\Kanban\KanbanService;
 use Bitrix\Tasks\Flow\Provider\FlowMemberFacade;
 use Bitrix\Tasks\Flow\Template\Access\Permission\TemplatePermissionService;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\UserOption\Service\AutoMuteService;
 use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
+use Bitrix\Tasks\V2\Access\Factory\ControllerFactory;
+use Bitrix\Tasks\V2\Access\Factory\ControllerFactoryInterface;
+use Bitrix\Tasks\V2\Internals\Service\Link\LinkBuilderFactory;
 
 return [
 	'value' => [
@@ -82,5 +86,24 @@ return [
 			'className' => AutoMuteService::class,
 		],
 		// endregion
+
+		// region task access
+		'tasks.access.controller.factory' => [
+			'constructor' => static fn(): ControllerFactoryInterface => ControllerFactory::getInstance(),
+		],
+		// endregion
+		// region task registry
+		'tasks.task.registry' => [
+			'constructor' => static fn(): TaskRegistry => TaskRegistry::getInstance(),
+		],
+		// endregion
+
+		// region link
+		'tasks.link.builder.factory' => [
+			'constructor' => static fn(): LinkBuilderFactory => LinkBuilderFactory::getInstance(),
+		],
+		// endregion
+
+		// region start resolvers
 	],
 ];

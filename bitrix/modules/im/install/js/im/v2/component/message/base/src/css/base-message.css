@@ -211,12 +211,16 @@
 	background: url('./images/arrow-opponent.svg?v2');
 }
 
+.bx-im-message-base__wrap.--opponent:last-child.--has-error .bx-im-message-base__body::before {
+	background: url('./images/arrow-left-error.svg');
+}
+
 .bx-im-content-chat__container.--left-align .bx-im-message-base__wrap.--self:last-child .bx-im-message-base__body::before {
 	background: url('./images/arrow-self-left.svg?v2');
 }
 
 .bx-im-content-chat__container.--left-align .bx-im-message-base__wrap.--has-error.--self:last-child .bx-im-message-base__body::before {
-	background: url('./images/arrow-self-left-error.svg?v2');
+	background: url('./images/arrow-left-error.svg');
 }
 /* end left */
 
@@ -232,7 +236,7 @@
 }
 
 .bx-im-content-chat__container.--center-align .bx-im-message-base__wrap.--has-error.--self:last-child .bx-im-message-base__body::before {
-	background: url('./images/arrow-self-error.svg?v2');
+	background: url('./images/arrow-right-error.svg');
 }
 /* end right */
 

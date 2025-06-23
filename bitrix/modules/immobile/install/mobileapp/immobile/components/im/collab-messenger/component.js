@@ -22,14 +22,26 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
+	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
+	QuickRecentLoader.renderItemsOnViewLoaded();
+
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { isEqual } = require('utils/object');
+	const { EntityReady } = require('entity-ready');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { CollabApplication } = require('im/messenger/core/collab');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { EntityReady } = require('entity-ready');
+	const {
+		AppStatus,
+		EventType,
+		RestMethod,
+		ComponentCode,
+		Analytics,
+	} = require('im/messenger/const');
+
+	EntityReady.ready(`${ComponentCode.imCollabMessenger}::launched`);
 
 	const core = new CollabApplication({
 		localStorage: {
@@ -50,21 +62,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const emitter = new JNEventEmitter();
 	serviceLocator.add('emitter', emitter);
 
-	const {
-		AppStatus,
-		EventType,
-		RestMethod,
-		ComponentCode,
-	} = require('im/messenger/const');
-
-	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
+	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const collabInitService = new MessengerInitService({
 		actionName: RestMethod.immobileTabCollabLoad,
 	});
 	serviceLocator.add('messenger-init-service', collabInitService);
 
 	const { Feature } = require('im/messenger/lib/feature');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 
 	const {
 		CollabMessagePullHandler,
@@ -74,6 +79,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		CollabUserPullHandler,
 		CollabInfoPullHandler,
 	} = require('im/messenger/provider/pull/collab');
+	const { VotePullHandler } = require('im/messenger/provider/pull/vote');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
@@ -86,9 +92,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const {
-		SyncFillerCollab,
-	} = require('im/messenger/provider/service');
+	const { SyncFillerCollab } = require('im/messenger/provider/services/sync/fillers/collab');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { SidebarLazyFactory } = require('im/messenger/controller/sidebar-v2/factory');
 
 	/* endregion import */
 
@@ -116,7 +122,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			super();
 			this.refreshAfterErrorInterval = 10000;
 
-			EntityReady.addCondition('collab-messenger', () => this.isReady);
+			EntityReady.addCondition(`${ComponentCode.imCollabMessenger}::ready`, () => this.isReady);
 		}
 
 		initCore()
@@ -170,11 +176,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			this.searchSelector = new RecentSelector(dialogList);
 			this.chatCreator = new ChatCreator();
-
-			if (Application.getApiVersion() >= 47)
-			{
-				this.dialogCreator = new DialogCreator();
-			}
+			this.dialogCreator = new DialogCreator();
 		}
 
 		/**
@@ -184,7 +186,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
-			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
 			this.openChatSearch = this.openChatSearch.bind(this);
 			this.closeChatSearch = this.closeChatSearch.bind(this);
 			this.openChatCreate = this.openChatCreate.bind(this);
@@ -203,9 +204,16 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
+		preloadAssets()
+		{
+			SidebarLazyFactory.preload();
+		}
+
+		/**
+		 * @override
+		 */
 		subscribeMessengerEvents()
 		{
-			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
@@ -217,7 +225,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		unsubscribeMessengerEvents()
 		{
 			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.removeCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
@@ -315,12 +322,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		initPullHandlers()
 		{
+			super.initPullHandlers();
 			BX.PULL.subscribe(new CollabDialogPullHandler());
 			BX.PULL.subscribe(new CollabMessagePullHandler());
-			BX.PULL.subscribe(new CollabCounterPullHandler());
+			// deprecated. delete after counters in memoryStorage go to prod
+			//BX.PULL.subscribe(new CollabCounterPullHandler());
 			BX.PULL.subscribe(new CollabFilePullHandler());
 			BX.PULL.subscribe(new CollabUserPullHandler());
 			BX.PULL.subscribe(new CollabInfoPullHandler());
+			BX.PULL.subscribe(new VotePullHandler());
 		}
 
 		/**
@@ -376,7 +386,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshErrorNoticeFlag = false;
 			ChatTimer.stop('collab-recent', 'error', true);
 
-			Counters.update();
+			TabCounters.update();
 
 			return this.ready();
 		}
@@ -428,7 +438,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			if (this.isFirstLoad)
 			{
 				Logger.warn(`${this.constructor.name}.ready`);
-				EntityReady.ready('collab-messenger');
+				EntityReady.ready(`${ComponentCode.imCollabMessenger}::ready`);
 			}
 
 			this.isFirstLoad = false;
@@ -472,6 +482,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					this.dialog.open(openDialogOptions);
 
 					this.recent.view.renderChatCreateButton();
+
+					if (openDialogOptions.backToMessenegerTab)
+					{
+						MessengerEmitter.emit(
+							EventType.navigation.changeTab,
+							ComponentCode.imMessenger,
+							ComponentCode.imNavigation,
+						);
+					}
 				})
 				.catch((error) => {
 					Logger.error(error);
@@ -493,9 +512,20 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.searchSelector.close();
 		}
 
-		openChatCreate()
+		async openChatCreate()
 		{
 			Logger.log(`${this.constructor.name}.createChat`);
+
+			if (this.dialogCreator !== null)
+			{
+				await this.dialogCreator.createCollab();
+
+				AnalyticsService.getInstance().sendStartCreation({
+					section: Analytics.Section.collabTab,
+					category: Analytics.Category.collab,
+					type: Analytics.Type.collab,
+				});
+			}
 		}
 
 		onNotificationReload()
@@ -509,14 +539,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		onTaskStatusSuccess(taskId, result)
 		{
 			Logger.log(`${this.constructor.name}.chatDialog.taskStatusSuccess`, taskId, result);
-		}
-
-		getOpenDialogParams(options = {})
-		{
-			const openDialogParamsResponseEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
-
-			const params = Dialog.getOpenDialogParams(options);
-			BX.postComponentEvent(openDialogParamsResponseEvent, [params], ComponentCode.imCollabMessenger);
 		}
 
 		/**

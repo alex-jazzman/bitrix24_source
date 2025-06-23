@@ -49,6 +49,10 @@
 	fill: #fff;
 }
 
+.ui-avatar.--copilot {
+	--ui-avatar-base-color-rgb: var(--ui-color-copilot-secondary-rgb);
+}
+
 .ui-avatar.--guest {
 	--ui-avatar-base-color-rgb: var(--ui-avatar-color-collab-rgb);
 }
@@ -88,6 +92,12 @@
 .ui-avatar.--hexagon.--accent .ui-avatar-border {
 	fill-rule: evenodd;
 	d: path("M87.126 21.0224L59.7625 6.05561C54.3025 3.06921 47.6975 3.06921 42.2376 6.0556L14.8741 21.0224C9.01831 24.2253 5.3766 30.3681 5.3766 37.0426V64.9573C5.3766 71.6319 9.0183 77.7746 14.8741 80.9775L42.2376 95.9443C47.6975 98.9307 54.3025 98.9307 59.7625 95.9443L87.126 80.9775C92.9818 77.7746 96.6235 71.6319 96.6235 64.9573V37.0426C96.6235 30.3681 92.9818 24.2253 87.126 21.0224ZM61.5572 2.77436C54.979 -0.823711 47.0211 -0.823713 40.4429 2.77436L13.0794 17.7412C6.0242 21.6001 1.6366 29.001 1.6366 37.0426V64.9573C1.6366 72.9989 6.02419 80.3998 13.0794 84.2588L40.4429 99.2256C47.0211 102.824 54.979 102.824 61.5572 99.2256L88.9207 84.2588C95.9759 80.3998 100.363 72.9989 100.363 64.9573V37.0426C100.363 29.001 95.9759 21.6001 88.9207 17.7412L61.5572 2.77436Z");
+}
+
+.ui-avatar.--hexagon.--copilot .ui-avatar-border,
+.ui-avatar.--round.--copilot .ui-avatar-border,
+.ui-avatar.--square.--copilot .ui-avatar-border {
+	fill: rgba(var(--ui-color-copilot-secondary-rgb), 1);
 }
 
 .ui-avatar.--hexagon.--guest .ui-avatar-border,

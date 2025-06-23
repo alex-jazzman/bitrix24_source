@@ -3,12 +3,12 @@
  */
 jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { merge } = require('utils/object');
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { merge } = require('utils/object');
-	const { Theme } = require('im/lib/theme');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class CopilotItem
@@ -34,18 +34,6 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 					},
 				});
 			}
-
-			return this;
-		}
-
-		/**
-		 * @override
-		 * @return RecentItem
-		 */
-		createCounterStyle()
-		{
-			const color = Theme.colors.accentMainCopilot ?? Theme.colors.accentMainPrimaryalt;
-			this.styles.counter.backgroundColor = color;
 
 			return this;
 		}
@@ -107,10 +95,22 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 
 		createActions()
 		{
-			this.actions = [
-				this.getHideAction(),
-				this.getPinAction(),
-			];
+			if (Feature.isCopilotInDefaultTabAvailable)
+			{
+				this.actions = [
+					this.getMuteAction(),
+					this.getHideAction(),
+					this.getPinAction(),
+					this.getReadAction(),
+				];
+			}
+			else
+			{
+				this.actions = [
+					this.getHideAction(),
+					this.getPinAction(),
+				];
+			}
 
 			return this;
 		}

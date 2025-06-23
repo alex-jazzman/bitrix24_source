@@ -10,7 +10,7 @@ use Bitrix\Main\ORM\Query\Query;
 
 interface BookingRepositoryInterface
 {
-	public function getQuery(): Query;
+	public function getQuery(FilterInterface|null $filter = null): Query;
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,

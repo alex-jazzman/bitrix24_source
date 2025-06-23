@@ -49,11 +49,11 @@ export class SignSettings
 		this.#type = type;
 		this.documentsGroup = new Map();
 		this.documentsGroupUids = [];
-		const { languages } = config.documentSendConfig ?? {};
+		const { languages, needSkipEditorStep } = config.documentSendConfig ?? {};
 		const EditorConstructor = Reflection.getClass('top.BX.Sign.V2.Editor');
 		this.editor = new EditorConstructor(
 			type,
-			{ languages, isTemplateMode: this.isTemplateMode(), documentInitiatedByType: initiatedByType },
+			{ languages, isTemplateMode: this.isTemplateMode(), documentInitiatedByType: initiatedByType, needSkipEditorStep },
 		);
 		this.#preview = new Preview({ layout: { getAfterPreviewLayoutCallback: () => this.getAfterPreviewLayout() } });
 	}
@@ -193,12 +193,16 @@ export class SignSettings
 		this.#preview.urls = [];
 		this.disablePreviewReady();
 		this.#preview.setBlocks(documentData.blocks);
-
+		this.editor.setUrls([], 0);
 		this.wizard.toggleBtnActiveState('back', true);
-		const handler = (urls, totalPages): void => {
+		const handler = (urls, totalPages, newBlocks): void => {
 			this.enablePreviewReady();
 			this.#preview.urls = urls;
 			this.editor.setUrls(urls, totalPages);
+			if (Type.isArray(newBlocks))
+			{
+				this.#preview.setBlocks(newBlocks);
+			}
 			this.wizard.toggleBtnActiveState('back', false);
 		};
 
@@ -332,7 +336,7 @@ export class SignSettings
 		this.#subscribeOnEditorEvents();
 	}
 
-	async #getPagesUrls(data: DocumentDetails): Promise
+	async getPagesUrls(data: DocumentDetails): Promise
 	{
 		const documentUrls = [];
 		const handler = (urls): void => {
@@ -353,7 +357,7 @@ export class SignSettings
 		{
 			const openEditorButton = this.#container.querySelector(`span[data-id="${setupData.id}"]`);
 			Dom.addClass(openEditorButton, 'ui-btn-clock');
-			await this.#getPagesUrls(setupData);
+			await this.getPagesUrls(setupData);
 			Dom.removeClass(openEditorButton, 'ui-btn-clock');
 			this.documentSetup.blankSelector.disableSelectedBlank(setupData.blankId);
 			this.documentSetup.resetDocument();
@@ -385,7 +389,7 @@ export class SignSettings
 		Dom.append(this.#currentOverlay, this.#overlayContainer);
 	}
 
-	async setupDocument(uid?: string, preparedPages: boolean = false): Promise<DocumentDetails> | null
+	async setupDocument(uid?: string, preparedPages: boolean = false): Promise<DocumentDetails>
 	{
 		if (this.documentSetup.isSameBlankSelected())
 		{
@@ -447,7 +451,9 @@ export class SignSettings
 			: Loc.getMessage('SIGN_SETTINGS_SEND_FOR_SIGN');
 		this.wizard = new Wizard(metadata, {
 			back: { className: 'ui-btn-light-border' },
-			next: { className: 'ui-btn-primary' },
+			next: {
+				className: 'ui-btn-primary',
+			},
 			complete: {
 				className: 'ui-btn-primary',
 				title,

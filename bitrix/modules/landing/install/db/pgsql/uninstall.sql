@@ -30,3 +30,8 @@ drop table if exists b_landing_urlchecker_host;
 drop table if exists b_landing_block_last_used;
 drop table if exists b_landing_history;
 drop table if exists b_landing_history_step;
+drop table if exists b_landing_copilot_generations;
+drop table if exists b_landing_copilot_requests;
+drop table if exists b_landing_copilot_steps;
+drop table if exists b_landing_copilot_request_to_entities;
+drop table if exists b_landing_copilot_request_to_step;

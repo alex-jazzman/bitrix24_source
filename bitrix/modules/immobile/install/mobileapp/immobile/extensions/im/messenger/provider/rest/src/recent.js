@@ -5,6 +5,7 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { RestMethod } = require('im/messenger/const');
+	const { runAction } = require('im/messenger/lib/rest');
 	const { callMethod } = require('im/messenger/lib/rest');
 
 	/**
@@ -82,30 +83,44 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			return BX.rest.callMethod(RestMethod.imV2RecentCollabTail, methodParams);
 		}
 
-		pinChat(options = {})
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		pinChat(dialogId)
 		{
-			const methodParams = {};
-
-			if (!options.dialogId)
+			if (!dialogId)
 			{
-				throw new Error('RecentRest: options.dialogId is required.');
+				throw new Error(`${this.constructor.name}: dialogId is required.`);
 			}
 
-			if (!DialogHelper.isDialogId(options.dialogId) && !DialogHelper.isChatId(options.dialogId))
+			if (!DialogHelper.isDialogId(dialogId) && !DialogHelper.isChatId(dialogId))
 			{
-				throw new Error('RecentRest: options.dialogId is invalid.');
+				throw new Error(`${this.constructor.name}: dialogId is invalid.`);
 			}
 
-			methodParams.DIALOG_ID = options.dialogId;
+			const data = { dialogId };
 
-			if (!Type.isBoolean(options.shouldPin))
+			return runAction(RestMethod.imV2ChatPin, { data });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		unpinChat(dialogId)
+		{
+			if (!dialogId)
 			{
-				throw new TypeError('RecentRest: options.shouldPin must be boolean value.');
+				throw new Error(`${this.constructor.name}: dialogId is required.`);
 			}
 
-			methodParams.PIN = options.shouldPin ? 'Y' : 'N';
+			if (!DialogHelper.isDialogId(dialogId) && !DialogHelper.isChatId(dialogId))
+			{
+				throw new Error(`${this.constructor.name}: dialogId is invalid.`);
+			}
 
-			return BX.rest.callMethod(RestMethod.imRecentPin, methodParams);
+			const data = { dialogId };
+
+			return runAction(RestMethod.imV2ChatUnpin, { data });
 		}
 
 		hideChat(options = {})

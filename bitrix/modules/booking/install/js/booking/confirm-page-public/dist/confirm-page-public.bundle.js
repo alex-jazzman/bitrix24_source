@@ -60,6 +60,9 @@ this.BX = this.BX || {};
 	      if (this.context === 'delayed.pub.page') {
 	        return this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMATION_WAITING');
 	      }
+	      if (this.context === 'info.pub.page') {
+	        return this.loc('BOOKING_CONFIRM_PAGE_BOOKING_INFO');
+	      }
 	      return this.isBookingCanceled ? this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CANCELED') : this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMED');
 	    }
 	  },
@@ -523,6 +526,12 @@ this.BX = this.BX || {};
 	    },
 	    showCancelBtn() {
 	      return this.context !== 'manager.view.details';
+	    },
+	    showCancelPopup() {
+	      return this.context === 'cancel.pub.page' || this.context === 'info.pub.page';
+	    },
+	    showConfirmPopup() {
+	      return this.context === 'delayed.pub.page';
 	    }
 	  },
 	  watch: {
@@ -549,14 +558,14 @@ this.BX = this.BX || {};
 			</a>
 		</div>
 		<CancelPopup 
-			v-if="context === 'cancel.pub.page'"
+			v-if="showCancelPopup"
 			:showPopup="showPopup" 
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"
 			@popupClosed="closePopup"
 		/>
 		<ConfirmPopup
-			v-if="context === 'delayed.pub.page'"
+			v-if="showConfirmPopup"
 			:showPopup="showPopup"
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"
@@ -638,7 +647,7 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        this.confirmedBooking.isDeleted = true;
-	        if (this.confirmedContext === 'delayed.pub.page') {
+	        if (this.confirmedContext === 'delayed.pub.page' || this.confirmedContext === 'info.pub.page') {
 	          this.confirmedContext = 'cancel.pub.page';
 	        }
 	      } catch (error) {

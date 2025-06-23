@@ -23,10 +23,10 @@ $listElementUrl = CHTTP::urlAddParams(str_replace(
 ), array("list_section_id" => ""));
 
 $returnButton = new Bitrix\UI\Buttons\Button([
-	'text' => Loc::getMessage('CT_BL_TOOLBAR_RETURN_LIST_ELEMENT'),
+	'text' => Loc::getMessage('CT_BL_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1'),
 	'color' => Bitrix\UI\Buttons\Color::LINK,
 	'link' => $listElementUrl,
-	'className' => 'lists-list-back',
+	'icon' => Bitrix\UI\Buttons\Icon::BACK,
 ]);
 $returnButton->setSize(Bitrix\UI\Buttons\Size::SMALL);
 Bitrix\UI\Toolbar\Facade\Toolbar::addButton($returnButton);

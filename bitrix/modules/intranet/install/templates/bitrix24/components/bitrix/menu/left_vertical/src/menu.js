@@ -107,6 +107,9 @@ export default class Menu
 
 		this.upButton = this.menuContainer.querySelector(".menu-btn-arrow-up");
 		this.upButton.addEventListener("click", this.handleUpButtonClick.bind(this));
+		this.upButton.addEventListener("mouseenter", this.handleUpButtonMouseEnter.bind(this));
+		this.upButton.addEventListener("mouseleave", this.handleUpButtonMouseLeave.bind(this));
+
 		this.menuMoreButton = this.menuContainer.querySelector(".menu-favorites-more-btn");
 		this.menuMoreButton.addEventListener("click", this.handleShowHiddenClick.bind(this));
 
@@ -792,6 +795,11 @@ export default class Menu
 		}
 
 		setTimeout(this.releaseSliding.bind(this), 100);
+	}
+
+	handleUpButtonMouseEnter()
+	{
+		this.blockSliding();
 	}
 
 	handleUpButtonMouseLeave()

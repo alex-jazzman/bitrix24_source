@@ -11,6 +11,7 @@ import './css/layout/body/logo.css';
 import './css/content-blocks/client-mark.css';
 import './css/content-blocks/copilot/call-scoring-pill.css';
 import './css/content-blocks/copilot/call-scoring.css';
+import './css/content-blocks/copilot/copilot-launch-button.css';
 import './css/layout/note.css';
 import './css/content-blocks/with-title.css';
 import './css/content-blocks/file-list.css';

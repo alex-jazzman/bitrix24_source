@@ -11,6 +11,7 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 	const { UpdateService } = require('im/messenger/provider/service/classes/chat/update');
 	const { CreateService } = require('im/messenger/provider/service/classes/chat/create');
 	const { InputActionNotifyService } = require('im/messenger/provider/service/classes/chat/input-action-notify');
+	const { BotService } = require('im/messenger/provider/service/classes/chat/bot');
 
 	/**
 	 * @class ChatService
@@ -33,6 +34,8 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 		#createService;
 		/** @type {InputActionNotifyService} */
 		#inputActionNotifyService;
+		/** @type {BotService} */
+		#botService;
 
 		constructor()
 		{
@@ -93,6 +96,13 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 			this.#createService = this.#createService ?? new CreateService();
 
 			return this.#createService;
+		}
+
+		get botService()
+		{
+			this.#botService = this.#botService ?? new BotService();
+
+			return this.#botService;
 		}
 
 		async writingMessageNotify(dialogId)
@@ -183,7 +193,6 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 
 		/**
 		 * @param {DialogId} dialogId
-		 *
 		 * @return {Promise<*|T>}
 		 */
 		leaveFromChat(dialogId)
@@ -234,6 +243,26 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 		createChat(params)
 		{
 			return this.createService.createChat(params);
+		}
+
+		/**
+		 *
+		 * @param {CreateCopilotParams} params
+		 * @return {Promise<{chatId: number}>}
+		 */
+		createCopilot(params)
+		{
+			return this.createService.createCopilot(params);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {object} context
+		 * @return {Promise<any>}
+		 */
+		sendContext(dialogId, context)
+		{
+			return this.botService.sendContext(dialogId, context);
 		}
 	}
 

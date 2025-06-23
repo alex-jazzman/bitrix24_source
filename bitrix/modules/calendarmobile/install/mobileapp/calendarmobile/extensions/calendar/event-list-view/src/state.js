@@ -26,6 +26,7 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 	 * @property {function(value)} setSearchString
 	 * @property {function(value)} setPreset
 	 * @property {function(value)} setPresetId
+	 * @property {function(value)} setHiddenSections
 	 */
 	class State extends BaseState
 	{
@@ -40,6 +41,7 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 		 *
 		 * @param props {Object}
 		 * @param [props.counters] {Object}
+		 * @param [props.hiddenSections] {Array}
 		 * @param [props.calType] {String}
 		 * @param [props.ownerId] {Number}
 		 * @param [props.showDeclined] {Boolean}
@@ -48,9 +50,10 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 		 */
 		init(props)
 		{
-			this.counters = props.counters;
 			this.calType = props.calType;
-			this.ownerId = props.ownerId;
+			this.ownerId = Number(props.ownerId);
+			this.counters = props.counters;
+			this.hiddenSections = props.hiddenSections;
 
 			this.showDeclined = props.showDeclined;
 			this.showWeekNumbers = props.showWeekNumbers;

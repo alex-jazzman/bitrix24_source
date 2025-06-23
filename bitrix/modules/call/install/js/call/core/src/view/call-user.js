@@ -62,12 +62,17 @@ type CallUserParams = {
 	onPin: () => void,
 	onTurnOffParticipantMic: () => void,
 	onTurnOffParticipantCam: () => void,
+	onTurnOffParticipantScreenshare: () => void,
 	onUnPin: () => void,
 	onUserRename: () => void,
 	onUserRenameInputFocus: () => void,
 	onUserRenameInputBlur: () => void,
 
 	avatarBackground: ?string,
+	alwaysShowName?: boolean;
+	flipVideo: ?boolean;
+	hiddenFloorRequest: ?boolean;
+	hiddenRemoteParticipantButtonMenu: ?boolean;
 }
 
 export class CallUser
@@ -80,7 +85,7 @@ export class CallUser
 	constructor(config: CallUserParams = {})
 	{
 		this.userModel = config.userModel;
-		this.userModel.subscribe("changed", this._onUserFieldChanged.bind(this));
+		this.userModel.subscribe('changed', this._onUserFieldChanged.bind(this));
 		this.parentContainer = config.parentContainer;
 		this.screenSharingUser = Type.isBoolean(config.screenSharingUser) ? config.screenSharingUser : false;
 		this.allowBackgroundItem = Type.isBoolean(config.allowBackgroundItem) ? config.allowBackgroundItem : true;
@@ -95,9 +100,11 @@ export class CallUser
 		this._stream = this._videoTrack ? new MediaStream([this._videoTrack]) : null;
 		this._videoRenderer = null;
 		this._previewRenderer = null;
-		this._flipVideo = false;
+		this._flipVideo = config.flipVideo || false;
 		this._tracksSubscriptionFailed = {};
-
+		this._alwaysShowName = config.alwaysShowName;
+		this._hiddenFloorRequest = config.hiddenFloorRequest;
+		this._hiddenRemoteParticipantButtonMenu = config.hiddenRemoteParticipantButtonMenu
 		this.hidden = false;
 		this.videoBlurState = false;
 		this.isChangingName = false;
@@ -126,8 +133,11 @@ export class CallUser
 			onUnPin: Type.isFunction(config.onUnPin) ? config.onUnPin : BX.DoNothing,
 			onTurnOffParticipantMic: Type.isFunction(config.onTurnOffParticipantMic) ? config.onTurnOffParticipantMic : BX.DoNothing,
 			onTurnOffParticipantCam: Type.isFunction(config.onTurnOffParticipantCam) ? config.onTurnOffParticipantCam : BX.DoNothing,
+			onTurnOffParticipantScreenshare: Type.isFunction(config.onTurnOffParticipantScreenshare) ? config.onTurnOffParticipantScreenshare : BX.DoNothing,
 		};
 		this.checkAspectInterval = setInterval(this.checkVideoAspect.bind(this), 500);
+
+		this.resizeObserver = null;
 
 		this.hintManager = BX.UI.Hint.createInstance({
 			popupParameters: {
@@ -148,9 +158,27 @@ export class CallUser
 		this.init();
 	};
 
+	initMouseMoveHandler()
+	{
+		this.onMouseMoveHandler = (evt) => {
+			if (!this._alwaysShowName)
+			{
+				this.showUserName();
+			}
+		};
+	}
+
+	initUserNameState()
+	{
+		if (this._alwaysShowName)
+		{
+			this.toggleStateUserName(true);
+		}
+	}
+
 	init()
 	{
-		this.onMouseMoveHandler = this.showUserName.bind(this);
+		this.initMouseMoveHandler();
 		document.addEventListener('mousemove', this.onMouseMoveHandler);
 	}
 
@@ -391,10 +419,10 @@ export class CallUser
 		this._hasConnectionProblem = hasConnectionProblem;
 		if (this._hasConnectionProblem)
 		{
-			this.elements.connectionProblem.classList.add("connection-problem-visible");
+			this.elements.connectionProblem.classList.add('connection-problem-visible');
 		}
 		else {
-			this.elements.connectionProblem.classList.remove("connection-problem-visible");
+			this.elements.connectionProblem.classList.remove('connection-problem-visible');
 		}
 	}
 
@@ -460,21 +488,21 @@ export class CallUser
 			this.showConnectionStats();
 		}
 	}
-	
+
 	showTrackSubscriptionFailed(track)
 	{
 		this._tracksSubscriptionFailed[track.sid] = track;
 	}
-	
+
 	_formatFailedSubscribtionTracks()
 	{
 		let result = '';
-		
+
 		for (let track in this._tracksSubscriptionFailed)
 		{
 			result += (this._tracksSubscriptionFailed[track].source + ` ` + track + `\n`);
 		}
-		
+
 		return result;
 	}
 
@@ -484,78 +512,78 @@ export class CallUser
 		{
 			return this.elements.root;
 		}
-		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-user"},
+		this.elements.root = Dom.create('div', {
+			props: {className: 'bx-messenger-videocall-user'},
 			dataset: {userId: this.userModel.id, order: this.userModel.order},
 			children: [
-				this.elements.videoBorder = Dom.create("div", {
+				this.elements.videoBorder = Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-border",
+						className: 'bx-messenger-videocall-user-border',
 					},
 				}),
-				this.elements.container = Dom.create("div", {
-					props: {className: "bx-messenger-videocall-user-inner"},
+				this.elements.container = Dom.create('div', {
+					props: {className: 'bx-messenger-videocall-user-inner'},
 					children: [
-						this.elements.avatarContainer = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-avatar-border"},
+						this.elements.avatarContainer = Dom.create('div', {
+							props: {className: 'bx-messenger-videocall-user-avatar-border'},
 							children: [
-								this.elements.avatar = Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-avatar"},
+								this.elements.avatar = Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-avatar'},
 									text: ''
 								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-avatar-overlay-border"}
+								Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-avatar-overlay-border'}
 								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-avatar-pulse-element", style: "animation-delay: -2s;"}
+								Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-avatar-pulse-element', style: 'animation-delay: -2s;'}
 								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-avatar-pulse-element", style: "animation-delay: -1.5s;"}
+								Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-avatar-pulse-element', style: 'animation-delay: -1.5s;'}
 								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-avatar-pulse-element", style: "animation-delay: -1s;"}
+								Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-avatar-pulse-element', style: 'animation-delay: -1s;'}
 								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-avatar-pulse-element", style: "animation-delay: -0.5s;"}
+								Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-avatar-pulse-element', style: 'animation-delay: -0.5s;'}
 								}),
 							]
 						}),
-						this.elements.panel = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-panel"}
+						this.elements.panel = Dom.create('div', {
+							props: {className: 'bx-messenger-videocall-user-panel'}
 						}),
-						this.elements.state = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-status-text"},
+						this.elements.state = Dom.create('div', {
+							props: {className: 'bx-messenger-videocall-user-status-text'},
 							text: this.getStateMessage(this.userModel.state)
 						}),
-						this.elements.userBottomContainer = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-bottom"},
+						this.elements.userBottomContainer = Dom.create('div', {
+							props: {className: 'bx-messenger-videocall-user-bottom'},
 							children: [
-								this.elements.nameContainer = Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-name-container" + ((this.userModel.allowRename && !this.userModel.wasRenamed) ? " hidden" : "")},
+								this.elements.nameContainer = Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-name-container' + ((this.userModel.allowRename && !this.userModel.wasRenamed) ? ' hidden' : '')},
 									children: [
-										this.elements.name = Dom.create("span", {
-											props: {className: "bx-messenger-videocall-user-name", title: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name)},
-											text: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name),
+										this.elements.name = Dom.create('span', {
+											props: {className: 'bx-messenger-videocall-user-name', title: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace('#NAME#', this.userModel.name) : this.userModel.name)},
+											text: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace('#NAME#', this.userModel.name) : this.userModel.name),
 										}),
-										this.elements.changeNameIcon = Dom.create("div", {
-											props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-change-name-icon hidden"},
+										this.elements.changeNameIcon = Dom.create('div', {
+											props: {className: 'bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-change-name-icon hidden'},
 										})],
 									events: {
 										click: this.toggleNameInput.bind(this)
 									}
 								}),
-								this.elements.changeNameContainer = Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-change-name-container hidden"},
+								this.elements.changeNameContainer = Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-change-name-container hidden'},
 									children: [
-										this.elements.changeNameCancel = Dom.create("div", {
-											props: {className: "bx-messenger-videocall-user-change-name-cancel"},
+										this.elements.changeNameCancel = Dom.create('div', {
+											props: {className: 'bx-messenger-videocall-user-change-name-cancel'},
 											events: {
 												click: this.toggleNameInput.bind(this)
 											}
 										}),
-										this.elements.changeNameInput = Dom.create("input", {
+										this.elements.changeNameInput = Dom.create('input', {
 											props: {
-												className: "bx-messenger-videocall-user-change-name-input"
+												className: 'bx-messenger-videocall-user-change-name-input'
 											}, attrs: {
 												type: 'text', value: this.userModel.name
 											}, events: {
@@ -567,27 +595,27 @@ export class CallUser
 												},
 											}
 										}),
-										this.elements.changeNameConfirm = Dom.create("div", {
-											props: {className: "bx-messenger-videocall-user-change-name-confirm"},
+										this.elements.changeNameConfirm = Dom.create('div', {
+											props: {className: 'bx-messenger-videocall-user-change-name-confirm'},
 											events: {
 												click: this.changeName.bind(this)
 											}
 										}),
-										this.elements.changeNameLoader = Dom.create("div", {
-											props: {className: "bx-messenger-videocall-user-change-name-loader hidden"},
+										this.elements.changeNameLoader = Dom.create('div', {
+											props: {className: 'bx-messenger-videocall-user-change-name-loader hidden'},
 											children: [
-												Dom.create("div", {
-													props: {className: "bx-messenger-videocall-user-change-name-loader-icon"}
+												Dom.create('div', {
+													props: {className: 'bx-messenger-videocall-user-change-name-loader-icon'}
 												})
 											]
 										})
 									]
 								}),
-								this.elements.introduceYourselfContainer = Dom.create("div", {
-									props: {className: "bx-messenger-videocall-user-introduce-yourself-container" + (!this.userModel.allowRename || this.userModel.wasRenamed ? " hidden" : "")},
+								this.elements.introduceYourselfContainer = Dom.create('div', {
+									props: {className: 'bx-messenger-videocall-user-introduce-yourself-container' + (!this.userModel.allowRename || this.userModel.wasRenamed ? ' hidden' : '')},
 									children: [
-										Dom.create("div", {
-											props: {className: "bx-messenger-videocall-user-introduce-yourself-text"},
+										Dom.create('div', {
+											props: {className: 'bx-messenger-videocall-user-introduce-yourself-text'},
 											text: BX.message('IM_CALL_GUEST_INTRODUCE_YOURSELF'),
 										})
 									],
@@ -597,11 +625,11 @@ export class CallUser
 								}),
 							]
 						}),
-						this.elements.floorRequest = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-floor-request bx-messenger-videocall-floor-request-icon"}
+						this.elements.floorRequest = Dom.create('div', {
+							props: {className: 'bx-messenger-videocall-user-floor-request bx-messenger-videocall-floor-request-icon'}
 						}),
-						this.elements.statsOverlay = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-stats-overlay"},
+						this.elements.statsOverlay = Dom.create('div', {
+							props: {className: 'bx-messenger-videocall-user-stats-overlay'},
 						})
 					]
 				}),
@@ -625,18 +653,18 @@ export class CallUser
 			this.updateAvatarPulseState()
 		}
 
-		this.elements.debugPanel = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-user-debug-panel"},
+		this.elements.debugPanel = Dom.create('div', {
+			props: {className: 'bx-messenger-videocall-user-debug-panel'},
 			children: [
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-debug-panel-button connection-stats"
+						className: 'bx-messenger-videocall-user-debug-panel-button connection-stats'
 					},
 					children: [
-						this.elements.connectionQualityIcon = Dom.create("div", {
+						this.elements.connectionQualityIcon = Dom.create('div', {
 							props: {
-								className: "bx-messenger-videocall-user-debug-panel-button-icon connection-quality-icon",
-								title: BX.message("IM_M_CALL_CONNECTION_QUALITY_HINT"),
+								className: 'bx-messenger-videocall-user-debug-panel-button-icon connection-quality-icon',
+								title: BX.message('IM_M_CALL_CONNECTION_QUALITY_HINT'),
 							},
 						}),
 					],
@@ -656,19 +684,19 @@ export class CallUser
 						}
 					}
 				}),
-				this.elements.connectionProblem = Dom.create("div", {
+				this.elements.connectionProblem = Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-debug-panel-button connection-problem"
+						className: 'bx-messenger-videocall-user-debug-panel-button connection-problem'
 					},
 					children: [
-						Dom.create("div", {
+						Dom.create('div', {
 							props: {
-								className: "bx-messenger-videocall-user-debug-panel-button-icon connection-problem-icon"
+								className: 'bx-messenger-videocall-user-debug-panel-button-icon connection-problem-icon'
 							},
 							events: {
 								mouseover: (e) =>
 								{
-									this.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_POOR_CONNECTION_WITH_USER"));
+									this.hintManager.show(e.currentTarget, BX.message('IM_M_CALL_POOR_CONNECTION_WITH_USER'));
 								},
 								mouseout: (e) =>
 								{
@@ -683,48 +711,48 @@ export class CallUser
 
 		if (this.userModel.localUser)
 		{
-			this.elements.root.classList.add("bx-messenger-videocall-user-self");
+			this.elements.root.classList.add('bx-messenger-videocall-user-self');
 		}
 
 		if (this.userModel.avatar !== '')
 		{
-			this.elements.root.style.setProperty("--avatar", "url('" + this.userModel.avatar + "')");
+			this.elements.root.style.setProperty('--avatar', "url('" + this.userModel.avatar + "')");
 			this.elements.avatar.innerText = '';
-			this.elements.root.style.removeProperty("--avatar-background");
+			this.elements.root.style.removeProperty('--avatar-background');
 		}
 		else
 		{
-			this.elements.root.style.removeProperty("--avatar");
-			this.elements.root.style.setProperty("--avatar-background", this.avatarBackground);
+			this.elements.root.style.removeProperty('--avatar');
+			this.elements.root.style.setProperty('--avatar-background', this.avatarBackground);
 			this.elements.avatar.innerText = this.getAvatarInnerText();
 		}
 
-		this.elements.videoContainer = Dom.create("div", {
+		this.elements.videoContainer = Dom.create('div', {
 			props: {
-				className: "bx-messenger-videocall-video-container",
+				className: 'bx-messenger-videocall-video-container',
 			},
 			children: [
-				this.elements.video = Dom.create("video", {
+				this.elements.video = Dom.create('video', {
 					props: {
-						className: "bx-messenger-videocall-video", volume: 0, autoplay: true
+						className: 'bx-messenger-videocall-video', volume: 0, autoplay: true
 					},
 					attrs: {
 						playsinline: true, muted: true
 					}
 				}),
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-preview",
+						className: 'bx-messenger-videocall-preview',
 					},
 					children: [
-						Dom.create("div", {
+						Dom.create('div', {
 							props: {
-								className: "bx-messenger-videocall-preview-container",
+								className: 'bx-messenger-videocall-preview-container',
 							},
 							children: [
-								this.elements.preview = Dom.create("video", {
+								this.elements.preview = Dom.create('video', {
 									props: {
-										className: "bx-messenger-videocall-preview-video", volume: 0, autoplay: true,
+										className: 'bx-messenger-videocall-preview-video', volume: 0, autoplay: true,
 									},
 									attrs: {
 										playsinline: true, muted: true
@@ -745,42 +773,42 @@ export class CallUser
 
 		if (this.flipVideo)
 		{
-			this.elements.video.classList.add("bx-messenger-videocall-video-flipped");
+			this.elements.video.classList.add('bx-messenger-videocall-video-flipped');
 		}
 		if (this.userModel.screenState)
 		{
-			this.elements.video.classList.add("bx-messenger-videocall-video-contain");
+			this.elements.video.classList.add('bx-messenger-videocall-video-contain');
 		}
 
 		if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon())
 		{
-			this.elements.nameContainer.classList.add("extra-padding");
+			this.elements.nameContainer.classList.add('extra-padding');
 		}
 
 		//this.elements.nameContainer.appendChild(this.elements.micState);
 
 		// todo: show button only if user have the permission to remove user
-		/*this.elements.removeButton = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-user-close"}
+		/*this.elements.removeButton = Dom.create('div', {
+			props: {className: 'bx-messenger-videocall-user-close'}
 		});
 
 		this.elements.container.appendChild(this.elements.removeButton);*/
 
-		this.elements.buttonBackground = Dom.create("div", {
+		this.elements.buttonBackground = Dom.create('div', {
 			props: {
-				className: "bx-messenger-videocall-user-panel-button"
+				className: 'bx-messenger-videocall-user-panel-button'
 			},
 			children: [
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-panel-button-icon background"
+						className: 'bx-messenger-videocall-user-panel-button-icon background'
 					}
 				}),
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-panel-button-text"
+						className: 'bx-messenger-videocall-user-panel-button-text'
 					},
-					text: BX.message("IM_CALL_CHANGE_BACKGROUND")
+					text: BX.message('IM_CALL_CHANGE_BACKGROUND')
 				})
 			],
 			events: {
@@ -790,14 +818,14 @@ export class CallUser
 				}
 			}
 		});
-		this.elements.buttonMenu = Dom.create("div", {
+		this.elements.buttonMenu = Dom.create('div', {
 			props: {
-				className: "bx-messenger-videocall-user-panel-button"
+				className: 'bx-messenger-videocall-user-panel-button'
 			},
 			children: [
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-panel-button-icon menu"
+						className: 'bx-messenger-videocall-user-panel-button-icon menu'
 					}
 				}),
 			],
@@ -809,39 +837,42 @@ export class CallUser
 			}
 		});
 
-		this.elements.remoteParticipantButtonMenu = Dom.create("div", {
-			props: {
-				className: "bx-messenger-videocall-user-panel-button"
-			},
-			children: [
-				Dom.create("div", {
-					props: {
-						className: "bx-messenger-videocall-user-panel-button-icon menu"
+		if (!this._hiddenRemoteParticipantButtonMenu)
+		{
+			this.elements.remoteParticipantButtonMenu = Dom.create('div', {
+				props: {
+					className: 'bx-messenger-videocall-user-panel-button'
+				},
+				children: [
+					Dom.create('div', {
+						props: {
+							className: 'bx-messenger-videocall-user-panel-button-icon menu'
+						}
+					}),
+				],
+				events: {
+					click: e => {
+						e.stopPropagation();
+						this.showRemoteParticipantMenu();
 					}
-				}),
-			],
-			events: {
-				click: e => {
-					e.stopPropagation();
-					this.showRemoteParticipantMenu();
 				}
-			}
-		});
+			});
+		}
 
-		this.elements.buttonPin = Dom.create("div", {
+		this.elements.buttonPin = Dom.create('div', {
 			props: {
-				className: "bx-messenger-videocall-user-panel-button"
+				className: 'bx-messenger-videocall-user-panel-button'
 			},
 			children: [
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-panel-button-icon pin"
+						className: 'bx-messenger-videocall-user-panel-button-icon pin'
 					}
 				}),
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-panel-button-text"
-					}, text: BX.message("IM_CALL_PIN")
+						className: 'bx-messenger-videocall-user-panel-button-text'
+					}, text: BX.message('IM_CALL_PIN')
 				})
 			],
 			events: {
@@ -852,21 +883,21 @@ export class CallUser
 				}
 			}
 		});
-		this.elements.buttonUnPin = Dom.create("div", {
+		this.elements.buttonUnPin = Dom.create('div', {
 			props: {
-				className: "bx-messenger-videocall-user-panel-button"
+				className: 'bx-messenger-videocall-user-panel-button'
 			},
 			children: [
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-panel-button-icon unpin"
+						className: 'bx-messenger-videocall-user-panel-button-icon unpin'
 					}
 				}),
-				Dom.create("div", {
+				Dom.create('div', {
 					props: {
-						className: "bx-messenger-videocall-user-panel-button-text"
+						className: 'bx-messenger-videocall-user-panel-button-text'
 					},
-					text: BX.message("IM_CALL_UNPIN")
+					text: BX.message('IM_CALL_UNPIN')
 				})
 			],
 			events: {
@@ -879,14 +910,14 @@ export class CallUser
 		});
 
 		this.elements.userBottomContainer.appendChild(
-			Dom.create("div", {
-				props: {className: "bx-messenger-videocall-user-device-state-container"},
+			Dom.create('div', {
+				props: {className: 'bx-messenger-videocall-user-device-state-container'},
 				children: [
-					this.elements.cameraState = Dom.create("div", {
-						props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")},
+					this.elements.cameraState = Dom.create('div', {
+						props: {className: 'bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera' + (!this.isVisibleCameraStateIcon() ? ' hidden' : '')},
 					}),
-					this.elements.micState = Dom.create("div", {
-						props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")},
+					this.elements.micState = Dom.create('div', {
+						props: {className: 'bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic' + (!this.isVisibleMicStateIcon() ? ' hidden' : '')},
 					}),
 				],
 			}),
@@ -908,15 +939,15 @@ export class CallUser
 		const cameraStats = this.connectionStats?.[MediaStreamsKinds.Camera];
 		const screenStats = this.connectionStats?.[MediaStreamsKinds.Screen];
 		const audioStats = this.connectionStats?.[MediaStreamsKinds.Microphone];
-		
+
 		const failedTracksResult = this._formatFailedSubscribtionTracks();
-		
+
 		if (failedTracksResult)
 		{
 			statsString += `Failed subscribe to:\n`;
 			statsString += failedTracksResult;
 		}
-		
+
 
 		if (cameraStats || !screenStats)
 		{
@@ -953,8 +984,8 @@ export class CallUser
 
 	setIncomingVideoConstraints(width, height)
 	{
-		this.incomingVideoConstraints.width = typeof (width) === "undefined" ? this.incomingVideoConstraints.width : width;
-		this.incomingVideoConstraints.height = typeof (height) === "undefined" ? this.incomingVideoConstraints.height : height;
+		this.incomingVideoConstraints.width = typeof (width) === 'undefined' ? this.incomingVideoConstraints.width : width;
+		this.incomingVideoConstraints.height = typeof (height) === 'undefined' ? this.incomingVideoConstraints.height : height;
 
 		if (!this.videoRenderer)
 		{
@@ -1008,35 +1039,35 @@ export class CallUser
 
 		switch (eventData.fieldName)
 		{
-			case "id":
+			case 'id':
 				return this.updateId();
-			case "name":
+			case 'name':
 				return this.updateName();
-			case "avatar":
+			case 'avatar':
 				return this.updateAvatar();
-			case "state":
+			case 'state':
 				return this.updateState();
-			case "talking":
+			case 'talking':
 				return this.updateTalking();
-			case "microphoneState":
+			case 'microphoneState':
 				return this.updateMicrophoneState();
-			case "cameraState":
+			case 'cameraState':
 				return this.updateCameraState();
-			case "videoPaused":
+			case 'videoPaused':
 				return this.updateVideoPaused();
-			case "floorRequestState":
+			case 'floorRequestState':
 				return this.updateFloorRequestState();
-			case "screenState":
+			case 'screenState':
 				return this.updateScreenState();
-			case "pinned":
+			case 'pinned':
 				return this.updatePanel();
-			case "allowRename":
+			case 'allowRename':
 				return this.updateRenameAllowed();
-			case "wasRenamed":
+			case 'wasRenamed':
 				return this.updateWasRenamed();
-			case "renameRequested":
+			case 'renameRequested':
 				return this.updateRenameRequested();
-			case "order":
+			case 'order':
 				return this.updateOrder();
 
 		}
@@ -1150,7 +1181,7 @@ export class CallUser
 		if (this.userModel.localUser && this.allowBackgroundItem)
 		{
 			menuItems.push({
-				text: (this.allowMaskItem ? BX.message("IM_CALL_CHANGE_BG_MASK") : BX.message("IM_CALL_CHANGE_BACKGROUND")),
+				text: (this.allowMaskItem ? BX.message('IM_CALL_CHANGE_BG_MASK') : BX.message('IM_CALL_CHANGE_BACKGROUND')),
 				onclick: () =>
 				{
 					this.menu.close();
@@ -1204,34 +1235,54 @@ export class CallUser
 
 		if (!this.userModel.localUser)
 		{
-			menuItems.push({
-				text: BX.message("CALL_REMOTE_USER_MENU_TURN_OFF_MIC"),
-				className: 'bx-call-remote-user-turn-off-mic',
-				disabled: !this.userModel.microphoneState,
-				onclick: () =>
-				{
-					this.remoteParticipantMenu.destroy();
-					this.callBacks.onTurnOffParticipantMic({userId: this.userModel.id});
-				}
-			});
-
-			menuItems.push({
-				text: BX.message("CALL_REMOTE_USER_MENU_TURN_OFF_CAM"),
-				className: 'bx-call-remote-user-turn-off-cam',
-				disabled: !this.userModel.cameraState,
-				onclick: () =>
-				{
-					this.remoteParticipantMenu.destroy();
-					this.callBacks.onTurnOffParticipantCam({userId: this.userModel.id});
-				}
-			});
+			if (this.userModel.microphoneState)
+			{
+				menuItems.push({
+					text: BX.message('CALL_REMOTE_USER_DROPDOWN_MENU_TURN_OFF_MIC'),
+					className: 'bx-call-remote-user-turn-off-mic',
+					disabled: !this.userModel.microphoneState,
+					onclick: () =>
+					{
+						this.remoteParticipantMenu.destroy();
+						this.callBacks.onTurnOffParticipantMic({userId: this.userModel.id});
+					}
+				});
+			}
+			
+			if (this.userModel.cameraState)
+			{
+				menuItems.push({
+					text: BX.message('CALL_REMOTE_USER_DROPDOWN_MENU_TURN_OFF_CAM'),
+					className: 'bx-call-remote-user-turn-off-cam',
+					disabled: !this.userModel.cameraState,
+					onclick: () =>
+					{
+						this.remoteParticipantMenu.destroy();
+						this.callBacks.onTurnOffParticipantCam({userId: this.userModel.id});
+					}
+				});
+			}	
+			if (this.userModel.screenState)
+			{
+				menuItems.push({
+					text: BX.message('CALL_REMOTE_USER_DROPDOWN_MENU_TURN_OFF_SCREENSHARE'),
+					className: 'bx-call-remote-user-turn-off-screenshare',
+					disabled: !this.userModel.screenState,
+					onclick: () =>
+					{
+						this.remoteParticipantMenu.destroy();
+						this.callBacks.onTurnOffParticipantScreenshare({userId: this.userModel.id});
+					}
+				});
+			}		
 		}
 		if (menuItems.length === 0)
 		{
 			return;
 		}
 
-		let rect = Dom.getRelativePosition(this.elements.remoteParticipantButtonMenu, this.parentContainer)
+		let rect = Dom.getRelativePosition(this.elements.remoteParticipantButtonMenu, this.parentContainer);
+
 		this.remoteParticipantMenu = new Menu({
 			id: 'call-view-user-menu-' + this.userModel.id,
 			className: 'bx-call-remote-user-menu-container',
@@ -1245,13 +1296,11 @@ export class CallUser
 			darkMode: true,
 			autoHide: true,
 			closeByEsc: true,
-			cacheable: false,
+			angle: true,
 			offsetTop: 0,
-			offsetLeft: 0,
 			bindOptions: {
 				position: 'bottom'
 			},
-			angle: true,
 			overlay: {
 				backgroundColor: 'white', opacity: 0
 			},
@@ -1259,10 +1308,16 @@ export class CallUser
 			events: {
 				onShow: (event) =>
 				{
-					//const popup = event.getTarget();
-					//popup.setAngle({offset: popup.getPopupContainer().offsetWidth / 2});
+					const popup = event.getTarget();
+					popup.adjustPosition();
+
+					this.elements.root.classList.add('bx-messenger-videocall-user-dropdown-menu-opened');
 				},
-				onPopupDestroy: () => this.remoteParticipantMenu = null
+				onPopupDestroy: () =>
+				{
+					this.elements.root.classList.remove('bx-messenger-videocall-user-dropdown-menu-opened');
+					this.remoteParticipantMenu = null;
+				}
 			}
 		});
 		this.remoteParticipantMenu.show();
@@ -1274,14 +1329,14 @@ export class CallUser
 		{
 			if (this.userModel.avatar !== '')
 			{
-				this.elements.root.style.setProperty("--avatar", "url('" + this.userModel.avatar + "')");
+				this.elements.root.style.setProperty('--avatar', "url('" + this.userModel.avatar + "')");
 				this.elements.avatar.innerText = '';
-				this.elements.root.style.removeProperty("--avatar-background");
+				this.elements.root.style.removeProperty('--avatar-background');
 			}
 			else
 			{
-				this.elements.root.style.removeProperty("--avatar");
-				this.elements.root.style.setProperty("--avatar-background", this.avatarBackground);
+				this.elements.root.style.removeProperty('--avatar');
+				this.elements.root.style.setProperty('--avatar-background', this.avatarBackground);
 				this.elements.avatar.innerText = this.getAvatarInnerText();
 			}
 		}
@@ -1308,7 +1363,7 @@ export class CallUser
 
 		if (this.elements.name)
 		{
-			this.elements.name.innerText = this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name;
+			this.elements.name.innerText = this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace('#NAME#', this.userModel.name) : this.userModel.name;
 		}
 		if (this.userModel.avatar === '' && this.elements.avatar)
 		{
@@ -1405,27 +1460,29 @@ export class CallUser
 
 			if (width > 250)
 			{
-				this.elements.buttonPin.classList.remove("no-text");
-				this.elements.buttonUnPin.classList.remove("no-text");
+				this.elements.buttonPin.classList.remove('no-text');
+				this.elements.buttonUnPin.classList.remove('no-text');
 			}
 			else
 			{
-				this.elements.buttonPin.classList.add("no-text");
-				this.elements.buttonUnPin.classList.add("no-text");
+				this.elements.buttonPin.classList.add('no-text');
+				this.elements.buttonUnPin.classList.add('no-text');
 			}
 		}
 
 		if (!this.userModel.localUser)
 		{
 			this.currentBitrixCall = Util.getCurrentBitrixCall();
-			
+
 			this.isShowRemoteParticipantButtonMenu =
 			Util.isUserControlFeatureEnabled()
+			&& Util.canControlChangeSettings()
+			&& (this.userModel.microphoneState || this.userModel.cameraState || this.userModel.screenState)
 			&& this.currentBitrixCall
-			&& this.currentBitrixCall.provider !== Provider.Plain
-            && !(this.currentBitrixCall.associatedEntity.type === 'chat' && this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');
+			&& this.currentBitrixCall.provider !== Provider.Plain;
+            //&& !(this.currentBitrixCall.associatedEntity.type === 'chat' && this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');
 
-			if (this.isShowRemoteParticipantButtonMenu)
+			if (this.isShowRemoteParticipantButtonMenu && this.elements.remoteParticipantButtonMenu)
 			{
 				this.elements.panel.appendChild(this.elements.remoteParticipantButtonMenu);
 			}
@@ -1502,19 +1559,19 @@ export class CallUser
 
 			if (this.videoRenderer?.kind === 'video' && this.flipVideo)
 			{
-				this.elements.video.classList.toggle("bx-messenger-videocall-video-flipped", this.flipVideo);
-				this.elements.preview.classList.toggle("bx-messenger-videocall-video-flipped", !this.flipVideo);
+				this.elements.video.classList.toggle('bx-messenger-videocall-video-flipped', this.flipVideo);
+				this.elements.preview.classList.toggle('bx-messenger-videocall-video-flipped', !this.flipVideo);
 			}
 			else if (this.videoRenderer?.kind === 'sharing' && this.flipVideo)
 			{
-				this.elements.video.classList.toggle("bx-messenger-videocall-video-flipped", !this.flipVideo);
-				this.elements.preview.classList.toggle("bx-messenger-videocall-video-flipped", this.flipVideo);
+				this.elements.video.classList.toggle('bx-messenger-videocall-video-flipped', !this.flipVideo);
+				this.elements.preview.classList.toggle('bx-messenger-videocall-video-flipped', this.flipVideo);
 			}
 			else
 			{
-				this.elements.video.classList.toggle("bx-messenger-videocall-video-flipped", this.flipVideo);
+				this.elements.video.classList.toggle('bx-messenger-videocall-video-flipped', this.flipVideo);
 			}
-			this.elements.video.classList.toggle("bx-messenger-videocall-video-contain", this.userModel.screenState);
+			this.elements.video.classList.toggle('bx-messenger-videocall-video-contain', this.userModel.screenState);
 		}
 		else
 		{
@@ -1598,24 +1655,75 @@ export class CallUser
 		switch (userState)
 		{
 			case UserState.Idle:
-				return "";
+				return '';
 			case UserState.Calling:
-				return BX.message("IM_M_CALL_STATUS_WAIT_ANSWER");
+				return BX.message('IM_M_CALL_STATUS_WAIT_ANSWER');
 			case UserState.Declined:
-				return BX.message("IM_M_CALL_STATUS_DECLINED");
+				return BX.message('IM_M_CALL_STATUS_DECLINED');
 			case UserState.Ready:
 			case UserState.Connecting:
-				return BX.message("IM_M_CALL_STATUS_WAIT_CONNECT");
+				return BX.message('IM_M_CALL_STATUS_WAIT_CONNECT');
 			case UserState.Connected:
-				return videoPaused ? BX.message("IM_M_CALL_STATUS_VIDEO_PAUSED") : "";
+				return videoPaused ? BX.message('IM_M_CALL_STATUS_VIDEO_PAUSED') : '';
 			case UserState.Failed:
-				return BX.message("IM_M_CALL_STATUS_CONNECTION_ERROR");
+				return BX.message('IM_M_CALL_STATUS_CONNECTION_ERROR');
 			case UserState.Unavailable:
-				return BX.message("IM_M_CALL_STATUS_UNAVAILABLE");
+				return BX.message('IM_M_CALL_STATUS_UNAVAILABLE');
 			default:
-				return "";
+				return '';
 		}
 	};
+
+	setAdditionalVariableForRootElements()
+	{
+		if (this.elements.root)
+		{
+			this.elements.root.style.setProperty('--user-preview-container-padding', this.elements.root.offsetWidth * 0.025  + 'px');
+		}
+	}
+
+	onResize()
+	{
+		this.setAdditionalVariableForRootElements();
+	}
+
+	toggleResizeObserver(isActive)
+	{
+		if (isActive)
+		{
+			this.activateResizeObserver();
+		}
+		else
+		{
+			this.deactivateResizeObserver();
+		}
+	}
+
+	deactivateResizeObserver()
+	{
+		if (this.resizeObserver && this.elements.root)
+		{
+			this.resizeObserver.unobserve(this.elements.root);
+		}
+
+		if (this.resizeObserver)
+		{
+			this.resizeObserver.disconnect();
+			this.resizeObserver = null;
+		}
+	}
+
+	activateResizeObserver() {
+		if (!this.resizeObserver)
+		{
+			this.resizeObserver = new BX.ResizeObserver(this.onResize.bind(this));
+		}
+
+		if (this.resizeObserver && this.elements.root)
+		{
+			this.resizeObserver.observe(this.elements.root);
+		}
+	}
 
 	mount(parent, force)
 	{
@@ -1623,6 +1731,9 @@ export class CallUser
 		if (!this.elements.root)
 		{
 			this.render();
+			this.initUserNameState();
+			this.setAdditionalVariableForRootElements();
+			this.toggleResizeObserver(true);
 		}
 
 		if (this.isMounted() && this.elements.root.parentElement == parent && !force)
@@ -1643,6 +1754,7 @@ export class CallUser
 			return false;
 		}
 
+		this.toggleResizeObserver(false);
 		this.elements.video.srcObject = null;
 		this.elements.preview.srcObject = null;
 		Dom.remove(this.elements.root);
@@ -1709,21 +1821,21 @@ export class CallUser
 		}
 		if (!this.isVisibleMicStateIcon())
 		{
-			this.elements.micState.classList.add("hidden");
+			this.elements.micState.classList.add('hidden');
 		}
 		else
 		{
-			this.elements.micState.classList.remove("hidden");
+			this.elements.micState.classList.remove('hidden');
 			this.clearAvatarPulseTimer();
 		}
 
 		if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon())
 		{
-			this.elements.nameContainer.classList.add("extra-padding");
+			this.elements.nameContainer.classList.add('extra-padding');
 		}
 		else
 		{
-			this.elements.nameContainer.classList.remove("extra-padding");
+			this.elements.nameContainer.classList.remove('extra-padding');
 		}
 
 		this.updateRemoteParticipantMenuState();
@@ -1737,20 +1849,20 @@ export class CallUser
 		}
 		if (!this.isVisibleCameraStateIcon())
 		{
-			this.elements.cameraState.classList.add("hidden");
+			this.elements.cameraState.classList.add('hidden');
 		}
 		else
 		{
-			this.elements.cameraState.classList.remove("hidden");
+			this.elements.cameraState.classList.remove('hidden');
 		}
 
 		if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon())
 		{
-			this.elements.nameContainer.classList.add("extra-padding");
+			this.elements.nameContainer.classList.add('extra-padding');
 		}
 		else
 		{
-			this.elements.nameContainer.classList.remove("extra-padding");
+			this.elements.nameContainer.classList.remove('extra-padding');
 		}
 
 		this.updateRemoteParticipantMenuState();
@@ -1762,6 +1874,8 @@ export class CallUser
 		{
 			this.showRemoteParticipantMenu();
 		}
+		
+		this.updatePanelDeferred();
 	}
 
 	updateVideoPaused()
@@ -1780,17 +1894,17 @@ export class CallUser
 
 	updateFloorRequestState()
 	{
-		if (!this.elements.floorRequest)
+		if (!this.elements.floorRequest || this._hiddenFloorRequest)
 		{
 			return;
 		}
 		if (this.userModel.floorRequestState)
 		{
-			this.elements.floorRequest.classList.add("active");
+			this.elements.floorRequest.classList.add('active');
 		}
 		else
 		{
-			this.elements.floorRequest.classList.remove("active");
+			this.elements.floorRequest.classList.remove('active');
 		}
 	};
 
@@ -1802,11 +1916,11 @@ export class CallUser
 		}
 		if (this.userModel.screenState)
 		{
-			this.elements.video.classList.add("bx-messenger-videocall-video-contain");
+			this.elements.video.classList.add('bx-messenger-videocall-video-contain');
 		}
 		else
 		{
-			this.elements.video.classList.remove("bx-messenger-videocall-video-contain");
+			this.elements.video.classList.remove('bx-messenger-videocall-video-contain');
 		}
 	};
 
@@ -1854,11 +1968,11 @@ export class CallUser
 
 		if (this.elements.video.videoHeight > this.elements.video.videoWidth)
 		{
-			this.elements.video.classList.add("bx-messenger-videocall-video-vertical");
+			this.elements.video.classList.add('bx-messenger-videocall-video-vertical');
 		}
 		else
 		{
-			this.elements.video.classList.remove("bx-messenger-videocall-video-vertical");
+			this.elements.video.classList.remove('bx-messenger-videocall-video-vertical');
 		}
 	};
 
@@ -1962,6 +2076,22 @@ export class CallUser
 		return limitations ? `${limitations}\n\n${result}` : result;
 	};
 
+	toggleStateUserName(isActive)
+	{
+		if (!this.elements.nameContainer)
+		{
+			return;
+		}
+
+		const activeClassName = 'active';
+		const hasActiveClass = this.elements.nameContainer.classList.contains(activeClassName);
+
+		if (hasActiveClass !== isActive)
+		{
+			this.elements.nameContainer.classList.toggle(activeClassName);
+		}
+	}
+
 	showUserName()
 	{
 		if (this.hideUserNameTimer)
@@ -1970,11 +2100,17 @@ export class CallUser
 			this.hideUserNameTimer = null;
 		}
 
-		if (this.elements.nameContainer)
+		if (!this.elements.nameContainer)
 		{
-			this.elements.nameContainer.classList.add('active');
+			return;
+		}
+
+		this.toggleStateUserName(true);
+
+		if (!this._alwaysShowName)
+		{
 			this.hideUserNameTimer = setTimeout(() => {
-				this.elements.nameContainer.classList.remove('active')
+				this.toggleStateUserName(false);
 			}, 5000)
 		}
 	};
@@ -1988,7 +2124,7 @@ export class CallUser
 		}
 		this.releaseStream();
 		clearInterval(this.checkAspectInterval);
-
+		this.toggleResizeObserver(false);
 		document.removeEventListener('mousemove', this.onMouseMoveHandler);
 	};
 
@@ -2001,8 +2137,8 @@ export class CallUser
 		}
 
 		this.removeAvatarPulseTimer = setTimeout(() => {
-			this.elements.avatarContainer.classList.remove("bx-messenger-videocall-user-avatar-pulse");
-			this.elements.root.classList.remove("bx-messenger-videocall-user-talking");
+			this.elements.avatarContainer.classList.remove('bx-messenger-videocall-user-avatar-pulse');
+			this.elements.root.classList.remove('bx-messenger-videocall-user-talking');
 		}, 1000);
 	}
 
@@ -2014,8 +2150,8 @@ export class CallUser
 			this.removeAvatarPulseTimer = null;
 		}
 
-		this.elements.avatarContainer.classList.remove("bx-messenger-videocall-user-avatar-pulse");
-		this.elements.root.classList.remove("bx-messenger-videocall-user-talking");
+		this.elements.avatarContainer.classList.remove('bx-messenger-videocall-user-avatar-pulse');
+		this.elements.root.classList.remove('bx-messenger-videocall-user-talking');
 	}
 
 	updateAvatarPulseState()
@@ -2026,12 +2162,11 @@ export class CallUser
 			this.removeAvatarPulseTimer = null;
 		}
 
-		this.elements.avatarContainer.classList.add("bx-messenger-videocall-user-avatar-pulse");
+		this.elements.avatarContainer.classList.add('bx-messenger-videocall-user-avatar-pulse');
 
 		if (this.userModel.talking)
 		{
-			this.elements.root.classList.add("bx-messenger-videocall-user-talking");
+			this.elements.root.classList.add('bx-messenger-videocall-user-talking');
 		}
 	}
 }
-

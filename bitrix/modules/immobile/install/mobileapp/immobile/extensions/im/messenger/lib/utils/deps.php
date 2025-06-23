@@ -16,5 +16,6 @@ return [
 		'./src/color',
 		'./src/emoji-regex',
 		'./src/promise',
+		'./src/async-queue',
 	],
 ];

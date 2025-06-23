@@ -1,3 +1,4 @@
+import { Text } from 'main.core';
 import { sendData } from 'ui.analytics';
 
 import { ChatType, Layout, UserRole } from 'im.v2.const';
@@ -23,6 +24,10 @@ import { Supervisor } from './classes/supervisor';
 import { CheckIn } from './classes/check-in';
 import { Copilot } from './classes/copilot';
 import { AttachMenu } from './classes/attach-menu';
+import { Vote } from './classes/vote-create';
+import { MessagePins } from './classes/message-pins';
+import { MessageForward } from './classes/message-forward';
+import { DesktopUpdateBanner } from './classes/desktop-update-banner';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -32,9 +37,12 @@ export { CreateChatContext } from './const';
 export { getCollabId } from './helpers/get-collab-id';
 export { getUserType } from './helpers/get-user-type';
 
+const PseudoChatTypeForNotes = 'notes';
+
 export class Analytics
 {
 	#excludedChats: Set<DialogId> = new Set();
+	#chatsWithTyping: Set<DialogId> = new Set();
 	#currentTab: string = Layout.chat.name;
 
 	chatCreate: ChatCreate = new ChatCreate();
@@ -50,6 +58,10 @@ export class Analytics
 	copilot: Copilot = new Copilot();
 	attachMenu: AttachMenu = new AttachMenu();
 	messageFiles: MessageFiles = new MessageFiles();
+	vote: Vote = new Vote();
+	messagePins: MessagePins = new MessagePins();
+	messageForward: MessageForward = new MessageForward();
+	desktopUpdateBanner: DesktopUpdateBanner = new DesktopUpdateBanner();
 
 	static #instance: Analytics;
 
@@ -110,6 +122,11 @@ export class Analytics
 		});
 	}
 
+	#isNotes(dialog: ImModelChat): boolean
+	{
+		return Number.parseInt(dialog.dialogId, 10) === Core.getUserId();
+	}
+
 	onOpenChat(dialog: ImModelChat)
 	{
 		if (this.#excludedChats.has(dialog.dialogId))
@@ -119,6 +136,7 @@ export class Analytics
 			return;
 		}
 
+		this.#chatsWithTyping.delete(dialog.dialogId);
 		const chatType = getChatType(dialog);
 
 		if (chatType === ChatType.copilot)
@@ -133,12 +151,15 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chatType),
 			event: AnalyticsEvent.openExisting,
-			type: chatType,
+			type: this.#isNotes(dialog) ? PseudoChatTypeForNotes : chatType,
 			c_section: `${currentLayout}_tab`,
 			p2: getUserType(),
-			p3: `isMember_${isMember}`,
-			p5: `chatId_${dialog.chatId}`,
 		};
+
+		if (!this.#isNotes(dialog))
+		{
+			params.p5 = `chatId_${dialog.chatId}`;
+		}
 
 		if (chatType === ChatType.comment)
 		{
@@ -151,6 +172,57 @@ export class Analytics
 		{
 			params.p4 = getCollabId(dialog.chatId);
 		}
+
+		if (chatType !== ChatType.copilot)
+		{
+			params.p3 = `isMember_${isMember}`;
+		}
+
+		if (chatType === ChatType.copilot)
+		{
+			const role = Core.getStore().getters['copilot/chats/getRole'](dialog.dialogId);
+			params.p4 = `role_${Text.toCamelCase(role.code)}`;
+		}
+
+		sendData(params);
+	}
+
+	onPinChat(dialog: ImModelChat)
+	{
+		if (!this.#isNotes(dialog))
+		{
+			return;
+		}
+
+		const chatType = getChatType(dialog);
+
+		const params = {
+			tool: AnalyticsTool.im,
+			category: getCategoryByChatType(chatType),
+			event: AnalyticsEvent.pinChat,
+			p1: `chatType_${this.#isNotes(dialog) ? PseudoChatTypeForNotes : chatType}`,
+		};
+
+		sendData(params);
+	}
+
+	onTypeMessage(dialog: ImModelChat)
+	{
+		if (!this.#isNotes(dialog) || this.#chatsWithTyping.has(dialog.dialogId))
+		{
+			return;
+		}
+
+		this.#chatsWithTyping.add(dialog.dialogId);
+
+		const chatType = getChatType(dialog);
+
+		const params = {
+			tool: AnalyticsTool.im,
+			category: getCategoryByChatType(chatType),
+			event: AnalyticsEvent.typeMessage,
+			p1: `chatType_${this.#isNotes(dialog) ? PseudoChatTypeForNotes : chatType}`,
+		};
 
 		sendData(params);
 	}

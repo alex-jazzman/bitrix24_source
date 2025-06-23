@@ -31,13 +31,12 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @function recentModel/getRecentPage
 			 * @return {Array<RecentModelState>}
 			 */
-			getRecentPage: (state) => (pageNumber, itemsPerPage) => {
+			getRecentPage: (state, getters, rootState, rootGetters) => (pageNumber, itemsPerPage) => {
 				const list = [...state.collection];
 
 				return list
 					.splice((pageNumber - 1) * itemsPerPage, itemsPerPage)
-					.sort(sortListByLastActivityDateWithPinned)
-				;
+					.sort(sortListByLastActivityDateWithPinned(rootGetters));
 			},
 
 			/**
@@ -55,8 +54,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			getUserList: (state, getters, rootState, rootGetters) => () => {
 				return state.collection.filter((recentItem) => {
 					return !recentItem.id.startsWith('chat') && rootGetters['usersModel/getById'](recentItem.id);
-				})
-					.sort(sortListByLastActivityDate);
+				}).sort(sortListByLastActivityDate);
 			},
 
 			/**
@@ -225,6 +223,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					payload.forEach((recentItem) => {
 						if (Type.isPlainObject(recentItem))
 						{
+							checkUploadingState(store, recentItem);
+
 							result.push(validate(recentItem));
 						}
 					});
@@ -586,12 +586,10 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	}
 
 	/**
-	 * @param {RecentModelState} a
-	 * @param {RecentModelState} b
 	 * @returns {number}
+	 * @param rootGetters
 	 */
-	function sortListByLastActivityDateWithPinned(a, b)
-	{
+	const sortListByLastActivityDateWithPinned = (rootGetters) => (a, b) => {
 		if (!a.pinned && b.pinned)
 		{
 			return 1;
@@ -602,25 +600,20 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			return -1;
 		}
 
-		const aLastActivityDate = a.uploadingState?.lastActivityDate > a.lastActivityDate
-			? a.uploadingState.lastActivityDate
-			: a.lastActivityDate
-		;
-		const bLastActivityDate = b.uploadingState?.lastActivityDate > b.lastActivityDate
-			? b.uploadingState.lastActivityDate
-			: b.lastActivityDate
-		;
+		const getDate = (date) => date?.getTime() || new Date(0);
+		const getLastActivityDate = (item) => {
+			const draft = rootGetters['draftModel/getById'](item.id)?.lastActivityDate;
+			const uploading = item.uploadingState?.lastActivityDate;
+			const recent = item.lastActivityDate;
 
-		if (aLastActivityDate && bLastActivityDate)
-		{
-			const timestampA = new Date(aLastActivityDate).getTime();
-			const timestampB = new Date(bLastActivityDate).getTime();
+			return new Date(Math.max(getDate(draft), getDate(uploading), getDate(recent)));
+		};
 
-			return timestampB - timestampA;
-		}
+		const aLastActivityDate = getLastActivityDate(a);
+		const bLastActivityDate = getLastActivityDate(b);
 
-		return 0;
-	}
+		return bLastActivityDate - aLastActivityDate;
+	};
 
 	function splitItemsByExistence(store, items)
 	{
@@ -631,7 +624,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			const existingItem = findItemById(store, recentItem.id);
 			if (existingItem)
 			{
-				// if we already got chat - we should not upd ate it
+				// if we already got chat, we should not upd ate it
 				// with default user chat (unless it's an accepted invitation)
 				const defaultUserElement = (
 					recentItem.options
@@ -658,6 +651,20 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		});
 
 		return { newItems, existingItems };
+	}
+
+	function checkUploadingState(store, recentItem)
+	{
+		const existingItem = findItemById(store, recentItem.id);
+		if (!existingItem)
+		{
+			return;
+		}
+
+		if (recentItem.message?.uuid && recentItem.message?.uuid === existingItem.element.uploadingState?.message?.id)
+		{
+			recentItem.uploadingState = null;
+		}
 	}
 
 	module.exports = { recentModel };

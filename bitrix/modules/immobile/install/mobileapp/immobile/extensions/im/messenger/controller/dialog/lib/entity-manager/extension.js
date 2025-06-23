@@ -14,7 +14,8 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 		RestMethod,
 		EventType,
 	} = require('im/messenger/const');
-	const { AnalyticsService } = require('im/messenger/provider/service/analytics');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { VoteCreation } = require('im/messenger/controller/vote/creation');
 
 	/**
 	 * @class EntityManager
@@ -261,6 +262,20 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 		#unsubscribeCalendarEvent()
 		{
 			BX.removeCustomEvent(EventType.calendar.addMeeting, this.#onCalendarEntrySaveHandler.bind());
+		}
+
+		createVote(dialogCallback)
+		{
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+
+			if (dialog?.chatId > 0)
+			{
+				VoteCreation.open({
+					dialogCallback,
+					chatId: dialog.chatId,
+				});
+				AnalyticsService.getInstance().sendOpenCreateVote(this.dialogId);
+			}
 		}
 	}
 

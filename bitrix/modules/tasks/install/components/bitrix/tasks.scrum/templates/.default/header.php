@@ -37,6 +37,7 @@ Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.analytics',
+	'ui.navigationpanel',
 ]);
 
 Extension::load('date');
@@ -207,8 +208,8 @@ if ($isBitrix24Template)
 }
 ?>
 
-	<div class="task-interface-toolbar">
-		<div id="tasks-scrum-switcher" class="task-interface-toolbar--item --visible"></div>
+	<div class="ui-actions-bar">
+		<div id="tasks-scrum-switcher" class="ui-actions-bar__panel"></div>
 		<?php
 		if ($viewName === 'plan')
 		{
@@ -231,9 +232,7 @@ if ($isBitrix24Template)
 			);
 		}
 		?>
-		<div id="tasks-scrum-sprint-stats" class=
-		"tasks-scrum-sprint-stats task-interface-toolbar--item --without-bg --align-right"></div>
-		<div id="tasks-scrum-right-container" class="task-interface-toolbar--item --align-right">
+		<div id="tasks-scrum-right-container" class="ui-actions-bar__buttons">
 		</div>
 	</div>
 

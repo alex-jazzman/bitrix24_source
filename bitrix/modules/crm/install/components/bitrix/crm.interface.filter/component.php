@@ -27,5 +27,6 @@ if(empty($gridContext) && isset($arParams['FILTER_FIELDS']))
 }
 $arResult['FILTER_INFO'] = ($gridContext['FILTER_INFO'] ?? []);
 $arResult['SHOW_AUTOMATION_VIEW'] = ($arParams['SHOW_AUTOMATION_VIEW'] ?? true);
+$arResult['SHOW_REPEAT_SALE_VIEW'] = ($arParams['SHOW_REPEAT_SALE_VIEW'] ?? true);
 
 $this->IncludeComponentTemplate();

@@ -1,10 +1,63 @@
-import { settingsFunctions } from './settings';
+import { Dom, Event, Extension, Type } from 'main.core';
+
+import { Path } from 'im.v2.const';
+import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 import { Utils } from 'im.v2.lib.utils';
-import { Type, Event, Dom, Extension } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { EventType } from 'im.v2.const';
+
+import { settingsFunctions } from './settings';
+
+type TabsList = {
+	url: string,
+	height: number,
+	width: number,
+	id: string,
+	inMainWindow: boolean,
+	popup: boolean,
+	windowClass: string
+}
 
 export const windowFunctions = {
+	async handlePortalTabActivation(): Promise
+	{
+		const hasActiveTab = await this.hasActivePortalTab();
+
+		if (hasActiveTab)
+		{
+			return Promise.resolve();
+		}
+
+		this.activatePortalFirstTab();
+
+		return Promise.resolve();
+	},
+	activatePortalFirstTab()
+	{
+		BXDesktopSystem.ActivateFirstTab();
+	},
+	hasActivePortalTab(): Promise
+	{
+		return BXDesktopSystem.HasActiveTab();
+	},
+	setTabWithChatPageActive()
+	{
+		this.setActiveTabUrl(`${location.origin}${Path.online}`);
+	},
+	isTabWithChatPageActive(): boolean
+	{
+		const tabsList = this.getTabsList();
+
+		return tabsList.some((tab) => tab.visible && tab.url.includes(Path.online));
+	},
+	hasTabWithChatPage(): TabsList
+	{
+		const tabsList = this.getTabsList();
+
+		return tabsList.some((tab) => tab.url.includes(Path.online));
+	},
+	getTabsList(): TabsList[]
+	{
+		return BXDesktopSystem.BrowserList();
+	},
 	isTwoWindowMode(): boolean
 	{
 		return Boolean(BXDesktopSystem?.IsTwoWindowsMode());
@@ -28,6 +81,17 @@ export const windowFunctions = {
 			)
 		);
 	},
+	isActiveTab(): boolean
+	{
+		return (
+			this.isDesktop()
+			&& BXDesktopSystem.IsActiveTab()
+		);
+	},
+	showBrowserWindow()
+	{
+		BXDesktopWindow.ExecuteCommand('show.main');
+	},
 	setActiveTab(target = window)
 	{
 		if (!Type.isObject(target))
@@ -35,6 +99,10 @@ export const windowFunctions = {
 			return;
 		}
 		target.BXDesktopSystem?.SetActiveTab();
+	},
+	setActiveTabUrl(url: string)
+	{
+		BXDesktopSystem.SetActiveTabUrl(url);
 	},
 	showWindow(target = window)
 	{
@@ -46,7 +114,13 @@ export const windowFunctions = {
 	},
 	activateWindow(target = window)
 	{
-		this.setActiveTab(target);
+		// all tabs with the same URL are activated when a call is received, since
+		// the setActiveTab method does not work correctly yet
+		if (!DesktopApi.isAirDesignEnabledInDesktop())
+		{
+			this.setActiveTab(target);
+		}
+
 		this.showWindow(target);
 	},
 	hideWindow(target = window)
@@ -71,10 +145,7 @@ export const windowFunctions = {
 	},
 	reloadWindow()
 	{
-		const event = new BaseEvent();
-		EventEmitter.emit(window, EventType.desktop.onReload, event);
-
-		location.reload();
+		BXDesktopSystem.Login({});
 	},
 	findWindow(name: string = ''): ?Window
 	{
@@ -84,8 +155,8 @@ export const windowFunctions = {
 	},
 	openPage(url: string, options: { skipNativeBrowser?: boolean } = {}): Promise
 	{
-		const anchorElement: HTMLAnchorElement = Dom.create({ tag: 'a', attrs: { href: url } });
-		if (anchorElement.host !== location.host)
+		const targetUrl = new URL(url);
+		if (targetUrl.host !== location.host)
 		{
 			setTimeout(() => this.hideWindow(), 100);
 
@@ -101,7 +172,7 @@ export const windowFunctions = {
 				return Promise.resolve(false);
 			}
 
-			Utils.browser.openLink(anchorElement.href);
+			Utils.browser.openLink(targetUrl.href);
 
 			// workaround timeout, if application is activated on hit, it cant be hidden immediately
 			setTimeout(() => this.hideWindow(), 100);
@@ -109,9 +180,13 @@ export const windowFunctions = {
 			return Promise.resolve(true);
 		}
 
-		this.createTab(anchorElement.href);
+		this.createTab(targetUrl.href);
 
 		return Promise.resolve(true);
+	},
+	openInBrowser(url: string)
+	{
+		BXDesktopSystem.OpenInBrowser(url);
 	},
 	createTab(path: string): void
 	{

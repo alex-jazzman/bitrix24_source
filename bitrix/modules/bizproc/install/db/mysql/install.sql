@@ -447,6 +447,35 @@ CREATE TABLE b_bp_workflow_template_user_option
 	USER_ID int NOT NULL,
 	OPTION_CODE int NOT NULL,
 	PRIMARY KEY (ID),
-	UNIQUE KEY UX_BP_TEMPLATE_USER_OPTION (TEMPLATE_ID, USER_ID, OPTION_CODE),
-	INDEX IX_BP_USER_OPTION (USER_ID, OPTION_CODE)
+	UNIQUE KEY ux_bp_template_user_option (TEMPLATE_ID, USER_ID, OPTION_CODE),
+	INDEX ix_bp_user_option (USER_ID, OPTION_CODE)
+);
+
+CREATE TABLE b_bp_document_type_user_option
+(
+	ID int NOT NULL AUTO_INCREMENT,
+	MODULE_ID varchar(32) NULL,
+	ENTITY varchar(64) NOT NULL,
+	DOCUMENT_TYPE varchar(128) NOT NULL,
+	USER_ID int NOT NULL,
+	OPTION_CODE int NOT NULL,
+	UNIQUE KEY ux_bp_document_type_user_option (MODULE_ID, ENTITY, DOCUMENT_TYPE, USER_ID, OPTION_CODE),
+	KEY ix_bp_document_type_user_option (MODULE_ID, ENTITY, USER_ID, OPTION_CODE),
+	PRIMARY KEY (ID)
+);
+
+CREATE TABLE b_bp_workflow_template_draft
+(
+    ID int NOT NULL AUTO_INCREMENT,
+	MODULE_ID varchar(32) NOT NULL,
+	ENTITY varchar(64) NOT NULL,
+	DOCUMENT_TYPE varchar(128) NOT NULL,
+    TEMPLATE_ID int NULL,
+    TEMPLATE_DATA mediumblob NOT NULL,
+	STATUS int NOT NULL DEFAULT 0,
+    USER_ID int NOT NULL,
+    CREATED datetime NOT NULL,
+    PRIMARY KEY (ID),
+    INDEX ix_bp_wf_draft_template (TEMPLATE_ID),
+    INDEX ix_bp_wf_draft_user (USER_ID)
 );

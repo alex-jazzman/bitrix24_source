@@ -2,6 +2,8 @@
  * @module utils/date/formats
  */
 jn.define('utils/date/formats', (require, exports, module) => {
+	const { Loc } = require('loc');
+
 	const useCultureSettings = (formatName, fallback = '') => {
 		return function() {
 			const phpFormat = dateFormatter.formats[formatName];
@@ -43,6 +45,28 @@ jn.define('utils/date/formats', (require, exports, module) => {
 	/** @example 19 Feb 2040 */
 	const mediumDate = useCultureSettings('mediumDate', 'd MMM Y');
 
+	function monthYear(moment)
+	{
+		const monthsNominative = [
+			Loc.getMessage('MOBILE_MONTH_0_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_1_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_2_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_3_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_4_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_5_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_6_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_7_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_8_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_9_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_10_NOMINATIVE'),
+			Loc.getMessage('MOBILE_MONTH_11_NOMINATIVE'),
+		];
+		const month = monthsNominative[moment.date.getMonth()];
+		const year = moment.date.getFullYear();
+
+		return `'${month} ${year}'`;
+	}
+
 	module.exports = {
 		shortTime,
 		isAmPmMode,
@@ -55,5 +79,6 @@ jn.define('utils/date/formats', (require, exports, module) => {
 		longTime,
 		longDate,
 		mediumDate,
+		monthYear,
 	};
 });

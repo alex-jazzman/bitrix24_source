@@ -101,6 +101,7 @@ jn.define('im/messenger/provider/service/messenger-init', (require, exports, mod
 
 		/**
 		 * @param {string[]} methodList
+		 * @return {MessengerInitActionData}
 		 */
 		#prepareActionData(methodList)
 		{
@@ -116,7 +117,23 @@ jn.define('im/messenger/provider/service/messenger-init', (require, exports, mod
 				data.methodList = this.#mergeUniqueMethods(methodList);
 			}
 
-			return data;
+			return this.#prepareOptions(data);
+		}
+
+		/**
+		 * @param {object} data
+		 * @param {Array<string>} data.methodList
+		 * @return {MessengerInitActionData}
+		 */
+		#prepareOptions(data)
+		{
+			const preparedData = { ...data };
+			if (preparedData.methodList.includes('portalCounters'))
+			{
+				preparedData.options = { siteId: env.siteId };
+			}
+
+			return preparedData;
 		}
 
 		async #waitChatCommonActionResult()
@@ -133,6 +150,7 @@ jn.define('im/messenger/provider/service/messenger-init', (require, exports, mod
 			const commonActionResult = this.actionCommonMethodList.reduce((result, key) => {
 				if (key in actionResult)
 				{
+					// eslint-disable-next-line no-param-reassign
 					result[key] = actionResult[key];
 				}
 

@@ -21,6 +21,8 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 			this.store = serviceLocator.get('core').getStore();
 			/** @type {QueueService} */
 			this.queueServiceInstanse = null;
+
+			this.shareDialogCache = new ShareDialogCache();
 		}
 
 		get queueService()
@@ -314,7 +316,9 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		 */
 		async fullDeleteMessage(modelMessages, dialogId)
 		{
-			await this.store.dispatch('messagesModel/deleteByIdList', { idList: modelMessages.map((message) => message.id) })
+			const idList = modelMessages.map((message) => message.id);
+
+			await this.store.dispatch('messagesModel/deleteByIdList', { idList })
 				.catch((error) => Logger.error(`${this.constructor.name}.fullDeleteMessage catch:`, error))
 			;
 
@@ -452,15 +456,10 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 
 		saveShareDialogCache()
 		{
-			const firstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
-			ShareDialogCache.saveRecentItemList(firstPage)
-				?.then((cache) => {
-					Logger.log('ActionService: Saving recent items for the share dialog is successful.', cache);
-				})
-				?.catch((cache) => {
-					Logger.log('ActionService: Saving recent items for share dialog failed.', firstPage, cache);
-				})
-			;
+			this.shareDialogCache.saveRecentItemList()
+				.catch((error) => {
+					Logger.error(`${this.constructor.name} Saving recent items for share dialog failed..`, error);
+				});
 		}
 
 		/**

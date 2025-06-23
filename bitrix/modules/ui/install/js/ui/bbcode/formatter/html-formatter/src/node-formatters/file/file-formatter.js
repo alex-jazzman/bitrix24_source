@@ -42,7 +42,7 @@ export class FileNodeFormatter extends NodeFormatter
 					return createTextNode();
 				}
 
-				const info: UploaderFileInfo = data.files.find((file: UploaderFileInfo): boolean => {
+				const info: UploaderFileInfo = data?.files?.find((file: UploaderFileInfo): boolean => {
 					return file.serverFileId.toString() === serverFileId.toString();
 				});
 

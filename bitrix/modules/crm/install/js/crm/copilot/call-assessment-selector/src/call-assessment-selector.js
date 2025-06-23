@@ -1,9 +1,9 @@
-import { Dom, Event, Type, Text } from 'main.core';
+import { Dom, Event, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import type { PopupOptions } from 'main.popup';
 import { Dialog, DialogOptions, Item, type ItemOptions } from 'ui.entity-selector';
-import { PullManager } from './pull-manager';
 import type { DisplayStrategy } from './display-strategy';
+import { PullManager } from './pull-manager';
 
 import 'ui.design-tokens';
 
@@ -275,11 +275,12 @@ export class CallAssessmentSelector
 	{
 		const { target } = clickEvent;
 		if (
-			target?.closest('.ui-selector-dialog') === null
+			target?.closest('.call-quality__script-selector') === null
+			&& target?.closest('.ui-selector-dialog') === null
 			&& this.#displayStrategy.getTargetNode() !== target
 		)
 		{
-			this.#dialog?.hide();
+			this.close();
 		}
 	}
 

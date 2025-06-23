@@ -13,7 +13,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 		selectIsOnlyMyReaction,
 	} = require('statemanager/redux/slices/reactions/selector');
 	const { Type } = require('type');
-	const { selectVoteSignTokenByEntityId } = require('statemanager/redux/slices/reactions-vote-key');
+	const { selectVoteSignTokenByEntityId, selectIsVoteSignTokenLoaded } = require('statemanager/redux/slices/reactions-vote-key');
 	const { selectReactionsTemplate } = require('statemanager/redux/slices/settings/selector');
 	const { handleReactionChange } = require('statemanager/redux/slices/reactions');
 	const { Text6 } = require('ui-system/typography/text');
@@ -51,6 +51,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 		reactionLength,
 		isOnlyMyReaction,
 		voteSignToken,
+		hasVoteSignToken,
 	}) => {
 		const isTemplateLoaded = !Type.isUndefined(template);
 		const isReactionTemplate = template === LIKE || template === LIKE_GRAPHIC;
@@ -61,6 +62,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 				style: Styles.likesPanel,
 			},
 			isTemplateLoaded
+				&& hasVoteSignToken
 				? (isReactionTemplate
 					? new LikeButton({
 						reactions,
@@ -93,7 +95,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 
 		get #reactions()
 		{
-			return this.props.reactions ?? [];
+			return this.props.reactions ?? null;
 		}
 
 		get #userId()
@@ -313,9 +315,6 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 			alignItems: 'center',
 		},
 		reactionView: {
-			// width: 54, // iOS only
-			// minHeight: 28, // iOS only
-
 			display: 'flex',
 			flexDirection: 'row',
 			justifyContent: 'flex-start',
@@ -323,7 +322,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 			marginRight: 8,
 		},
 		defaultLikeButton: {
-			paddingVertical: Indent.XS.toNumber(), // some troubles with Indent.XS2
+			paddingVertical: Indent.XS.toNumber(),
 			paddingRight: Indent.L.toNumber(),
 			paddingLeft: Indent.S.toNumber(),
 			flexDirection: 'row',
@@ -341,6 +340,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 		const reactionLength = selectTotalReactionsCountByEntity(state, taskId, EntityType.TASK);
 		const isOnlyMyReaction = selectIsOnlyMyReaction(state, taskId, EntityType.TASK, userId);
 		const voteSignToken = selectVoteSignTokenByEntityId(state, EntityType.TASK, taskId);
+		const hasVoteSignToken = selectIsVoteSignTokenLoaded(state, EntityType.TASK, taskId);
 
 		return {
 			reactions,
@@ -349,6 +349,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 			reactionLength,
 			isOnlyMyReaction,
 			voteSignToken,
+			hasVoteSignToken,
 		};
 	};
 

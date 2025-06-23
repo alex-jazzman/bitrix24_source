@@ -161,7 +161,7 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 		onCopyMenuItemClickHandler()
 		{
 			this.menu.close(() => {
-				copyToClipboard(this.link.shortUrl, Loc.getMessage('CALENDARMOBILE_SHARING_LINK_COPIED'));
+				copyToClipboard(this.link.shortUrl, Loc.getMessage('CALENDARMOBILE_SHARING_LINK_COPIED'), true, true);
 			});
 		}
 

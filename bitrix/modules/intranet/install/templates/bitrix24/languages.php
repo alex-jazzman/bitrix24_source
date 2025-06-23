@@ -70,7 +70,7 @@ $b24Languages = array(
 		"IS_BETA" => false
 	),
 	"ar" => [
-		"NAME" => "عربي",
+		"NAME" => "اَلْعَرَبِيَّةُ",
 		"IS_BETA" => true
 	],
 	"kz" => [

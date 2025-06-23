@@ -167,7 +167,8 @@ this.BX = this.BX || {};
 	    padding,
 	    offsetTop,
 	    blurBackground,
-	    useAngle
+	    useAngle,
+	    popupLoader
 	  }) {
 	    this.id = main_core.Type.isString(id) ? id : null;
 	    this.target = main_core.Type.isElementNode(target) ? target : null;
@@ -183,6 +184,7 @@ this.BX = this.BX || {};
 	    this.offsetTop = main_core.Type.isNumber(offsetTop) ? offsetTop : 0;
 	    this.blurBlackground = main_core.Type.isBoolean(blurBackground) ? blurBackground : false;
 	    this.useAngle = main_core.Type.isUndefined(useAngle) || useAngle !== false;
+	    this.popupLoader = popupLoader instanceof main_popup.Popup ? popupLoader : null;
 	  }
 	  getItems() {
 	    return this.items;
@@ -201,23 +203,28 @@ this.BX = this.BX || {};
 	    if (!this.popup) {
 	      const popupWidth = this.width ? this.width : 350;
 	      const popupId = this.id ? this.id + '-popup' : null;
-	      this.popup = new main_popup.Popup(popupId, this.target, {
-	        className: 'ui-popupcomponentmaker',
-	        contentBackground: 'transparent',
-	        contentPadding: this.contentPadding,
-	        angle: this.useAngle ? {
-	          offset: popupWidth / 2 - 16
-	        } : false,
+	      if (this.popupLoader) {
+	        this.popup = this.popupLoader;
+	      } else {
+	        this.popup = new main_popup.Popup(popupId, this.target, {
+	          angle: this.useAngle ? {
+	            offset: popupWidth / 2 - 16
+	          } : false
+	        });
+	      }
+	      main_core.Dom.addClass(this.popup.getPopupContainer(), 'ui-popupcomponentmaker');
+	      this.popup.setContent(this.getContentWrapper());
+	      this.popup.setContentBackground('transparent');
+	      this.popup.setContentPadding(this.contentPadding);
+	      this.popup.setOffset({
 	        offsetTop: this.offsetTop,
-	        width: popupWidth,
-	        offsetLeft: -(popupWidth / 2) + (this.target ? this.target.offsetWidth / 2 : 0) + 40,
-	        autoHide: true,
-	        closeByEsc: true,
-	        padding: this.padding,
-	        animation: 'fading-slide',
-	        content: this.getContentWrapper(),
-	        cacheable: this.cacheable
+	        offsetLeft: -(popupWidth / 2) + (this.target ? this.target.offsetWidth / 2 : 0) + 40
 	      });
+	      this.popup.setWidth(popupWidth);
+	      this.popup.setAutoHide(true);
+	      this.popup.setPadding(this.padding);
+	      this.popup.setAnimation('fading-slide');
+	      this.popup.setCacheable(this.cacheable);
 	      if (this.blurBlackground) {
 	        main_core.Dom.addClass(this.popup.getPopupContainer(), 'popup-with-radius');
 	        this.setBlurBackground();

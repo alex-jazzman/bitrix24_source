@@ -32,15 +32,31 @@ $APPLICATION->SetPageProperty('BodyClass', $newBodyClass);
 
 $toolbarAfterTitleContainerId = 'booking-toolbar-after-title-container';
 $toolbarCounterPanelContainerId = 'booking-toolbar-counter-panel-container';
+$toolbarSettingsButtonContainerId = 'booking-toolbar-settings-button';
 $toolbar = new Toolbar(
 	afterTitleContainerId: $toolbarAfterTitleContainerId,
 	counterPanelContainerId: $toolbarCounterPanelContainerId,
+	settingsButtonContainerId: $toolbarSettingsButtonContainerId,
 );
 $toolbar->build();
 
 Extension::load('booking.core');
 Extension::load('booking.booking');
 
+if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
+{
+	$this->setViewTarget('above_pagetitle');
+	$APPLICATION->IncludeComponent(
+		'bitrix:main.interface.buttons',
+		'',
+		[
+			'ID' => 'booking_main',
+			'ITEMS' => $arResult['MENU_ITEMS'],
+			'THEME' => defined('AIR_SITE_TEMPLATE') ? 'air' : null,
+		]
+	);
+	$this->endViewTarget();
+}
 ?>
 
 <div id="booking"></div>
@@ -50,6 +66,7 @@ Extension::load('booking.booking');
 		const container = document.getElementById('booking');
 		const afterTitleContainer = document.getElementById('<?= $toolbarAfterTitleContainerId?>');
 		const counterPanelContainer = document.getElementById('<?= $toolbarCounterPanelContainerId?>');
+		const settingsButtonContainer = document.getElementById('<?= $toolbarSettingsButtonContainerId?>');
 		const isSlider = <?= $arResult['IS_SLIDER'] ? 'true' : 'false'?>;
 		const currentUserId = <?= (int)$arResult['currentUserId'] ?>;
 		const isFeatureEnabled = <?= $arResult['isFeatureEnabled'] ? 'true' : 'false'?>;
@@ -64,11 +81,14 @@ Extension::load('booking.booking');
 		const totalClientsToday = <?= (int)$arResult['TOTAL_CLIENTS_TODAY'] ?>;
 		const moneyStatistics = <?= Json::encode($arResult['MONEY_STATISTICS']) ?>;
 		const embedItems = <?= Json::encode($arResult['embedItems']) ?>;
+		const isCalendarExpanded = <?= $arResult['isCalendarExpanded'] ? 'true' : 'false'?>;
+		const isWaitListExpanded = <?= $arResult['isWaitListExpanded'] ? 'true' : 'false'?>;
 
 		new BX.Booking.Booking({
 			container,
 			afterTitleContainer,
 			counterPanelContainer,
+			settingsButtonContainer,
 			isSlider,
 			currentUserId,
 			isFeatureEnabled,
@@ -83,6 +103,8 @@ Extension::load('booking.booking');
 			totalClientsToday,
 			moneyStatistics,
 			embedItems,
+			isCalendarExpanded,
+			isWaitListExpanded,
 		});
 	});
 </script>

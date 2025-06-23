@@ -63,13 +63,38 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		async loadUnread()
 		{
-			if (Feature.isLocalStorageEnabled && this.isUnreadLoadingFromDb === false)
+			const lastUnreadMessageId = this.store.getters['messagesModel/getLastId'](this.chatId);
+			logger.warn(`${this.className}: start load unread by message id ${lastUnreadMessageId}`);
+
+			if (!lastUnreadMessageId)
+			{
+				logger.warn(`${this.className}: no lastUnreadMessageId, cant load unread`);
+
+				return false;
+			}
+
+			if (Feature.isLocalStorageEnabled && this.isUnreadLoadingFromDb === true)
+			{
+				logger.warn(`${this.className}: load from the database is already underway, cant load unread`, lastUnreadMessageId);
+
+				return false;
+			}
+
+			if (!Feature.isLocalStorageEnabled && this.isUnreadLoading === true)
+			{
+				logger.warn(`${this.className}: load from the server is already underway, cant load unread`, lastUnreadMessageId);
+
+				return false;
+			}
+
+			let loadFromDbResult = null;
+			if (Feature.isLocalStorageEnabled)
 			{
 				this.isUnreadLoadingFromDb = true;
 
 				try
 				{
-					await this.loadUnreadMessagesFromDb();
+					loadFromDbResult = await this.#loadUnreadMessagesFromDb();
 				}
 				catch (error)
 				{
@@ -81,79 +106,63 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				}
 			}
 
-			if (this.isUnreadLoading || !this.getDialog().hasNextPage)
+			if (loadFromDbResult === false && this.isUnreadLoading === true)
 			{
-				return Promise.resolve(false);
-			}
+				logger.warn(`${this.className}: load unread from db result is empty, but loading from server is processed. cant load unread`, lastUnreadMessageId);
 
-			logger.warn(`${this.className}: loadUnread`);
-			const lastUnreadMessageId = this.store.getters['messagesModel/getLastId'](this.chatId);
-			if (!lastUnreadMessageId)
-			{
-				logger.warn(`${this.className}: no lastUnreadMessageId, cant load unread`);
-
-				return Promise.resolve(false);
+				return false;
 			}
 
 			this.isUnreadLoading = true;
-
-			const query = {
-				chatId: this.chatId,
-				filter: {
-					lastId: lastUnreadMessageId,
-				},
-				order: {
-					id: 'ASC',
-				},
-			};
-
-			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(async (result) => {
-				logger.warn(`${this.className}: loadUnread result`, result);
-				this.preparedUnreadMessages = result.messages.sort((a, b) => a.id - b.id);
-				this.preparedUnreadMessages = await this.contextCreator
-					.createMessageDoublyLinkedListForDialog(this.getDialog(), this.preparedUnreadMessages)
-				;
-				this.preparedUnreadMessages = this.addUploadingMessagesToMessageList(this.preparedUnreadMessages);
-
-				this.reactions = {
-					reactions: result.reactions,
-					usersShort: result.usersShort,
-				};
-
-				return this.updateModels(result);
-			}).then(() => {
-				this.drawPreparedUnreadMessages();
+			try
+			{
+				await this.#loadUnreadMessagesFromServer(lastUnreadMessageId);
+			}
+			catch (error)
+			{
+				logger.error(`${this.className}.loadUnreadMessagesFromServer error: `, error);
+			}
+			finally
+			{
 				this.isUnreadLoading = false;
+			}
 
-				return true;
-			}).catch((error) => {
-				logger.error(`${this.className}: loadUnread error:`, error);
-				this.isUnreadLoading = false;
-			});
+			return true;
 		}
 
 		async loadHistory()
 		{
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](this.chatId);
+			const lastHistoryMessageId = this.store.getters['messagesModel/getFirstId'](this.chatId);
+			logger.log(`${this.className}: start load history by message id ${lastHistoryMessageId}`);
 
-			const DialogTypesWithoutLocalStorage = [
-				DialogType.openChannel,
-				DialogType.channel,
-				DialogType.comment,
-				DialogType.generalChannel,
-			];
+			if (!lastHistoryMessageId)
+			{
+				logger.warn(`${this.className}: no lastHistoryMessageId, cant load history`);
 
-			if (
-				Feature.isLocalStorageEnabled
-				&& this.isHistoryLoadingFromDb === false
-				&& !DialogTypesWithoutLocalStorage.includes(dialog?.type)
-			)
+				return false;
+			}
+
+			if (Feature.isLocalStorageEnabled && this.isHistoryLoadingFromDb === true)
+			{
+				logger.warn(`${this.className}: load from the database is already underway, cant load history`, lastHistoryMessageId);
+
+				return false;
+			}
+
+			if (!Feature.isLocalStorageEnabled && this.isHistoryLoading === true)
+			{
+				logger.warn(`${this.className}: load from the server is already underway, cant load history`, lastHistoryMessageId);
+
+				return false;
+			}
+
+			let loadFromDbResult = null;
+			if (Feature.isLocalStorageEnabled)
 			{
 				this.isHistoryLoadingFromDb = true;
-
 				try
 				{
-					await this.loadHistoryMessagesFromDb();
+					loadFromDbResult = await this.#loadHistoryMessagesFromDb(lastHistoryMessageId);
 				}
 				catch (error)
 				{
@@ -165,21 +174,73 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				}
 			}
 
-			if (this.isHistoryLoading || !this.getDialog().hasPrevPage)
+			if (loadFromDbResult === false && this.isHistoryLoading === true)
 			{
-				return Promise.resolve(false);
-			}
+				logger.warn(`${this.className}: load history from db result is empty, but loading from server is processed. cant load history`, lastHistoryMessageId);
 
-			logger.warn(`${this.className}: loadHistory`);
-			const lastHistoryMessageId = this.store.getters['messagesModel/getFirstId'](this.chatId);
-			if (!lastHistoryMessageId)
-			{
-				logger.warn(`${this.className}: no lastHistoryMessageId, cant load unread`);
-
-				return Promise.resolve();
+				return false;
 			}
 
 			this.isHistoryLoading = true;
+			try
+			{
+				await this.#loadHistoryMessagesFromServer(lastHistoryMessageId);
+			}
+			catch (error)
+			{
+				logger.error(`${this.className}.loadHistoryMessagesFromServer error: `, error);
+			}
+			finally
+			{
+				this.isHistoryLoading = false;
+			}
+
+			return true;
+		}
+
+		/**
+		 * @param {number} lastHistoryMessageId
+		 * @returns {Promise<boolean>} return boolean as a check for the fullness of the result from the database.
+		 */
+		async #loadHistoryMessagesFromDb(lastHistoryMessageId)
+		{
+			if (!this.#shouldLoadFromDb())
+			{
+				logger.warn(`${this.className}: should not load history messages from the database by current chat`);
+
+				return false;
+			}
+
+			const options = {
+				chatId: this.chatId,
+				fromMessageId: lastHistoryMessageId,
+				limit: LoadService.getMessageRequestLimit(),
+			};
+
+			logger.log(`${this.className}: loadHistoryMessagesFromDb`, options);
+
+			const result = await this.messageRepository.getTopPage(options);
+			const resultWithValidPlan = this.checkPlanLimits(result);
+			await this.updateModelsByDbResult(resultWithValidPlan);
+
+			const resultTemp = await this.tempMessageRepository.getList();
+			if (Type.isArrayFilled(resultTemp.messageList))
+			{
+				await this.store.dispatch('messagesModel/setTemporaryMessages', resultTemp.messageList);
+			}
+
+			return Type.isArrayFilled(result.messageList);
+		}
+
+		async #loadHistoryMessagesFromServer(lastHistoryMessageId)
+		{
+			if (!this.getDialog().hasPrevPage)
+			{
+				logger.warn(`${this.className}: all history messages are loaded from server by current chat`);
+
+				return Promise.resolve(false);
+			}
+			logger.log(`${this.className}: load history from server by messageId ${lastHistoryMessageId}`);
 
 			const query = {
 				chatId: this.chatId,
@@ -215,49 +276,25 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				{
 					await this.updateForceTariffRestrictions(result.tariffRestrictions);
 				}
-				this.isHistoryLoading = false;
 
 				return true;
 			}).catch((error) => {
-				logger.error(`${this.className}: loadHistory error:`, error);
-				this.isHistoryLoading = false;
+				logger.error(`${this.className}: loadHistoryMessagesFromServer error:`, error);
 			});
 		}
 
-		async loadHistoryMessagesFromDb()
+		/**
+		 * @param {number} lastUnreadMessageId
+		 * @returns {Promise<boolean>} return boolean as a check for the fullness of the result from the database.
+		 */
+		async #loadUnreadMessagesFromDb(lastUnreadMessageId)
 		{
-			if (!this.#checkShouldLoadFromDb())
+			if (!this.#shouldLoadFromDb())
 			{
-				return;
+				logger.warn(`${this.className}: should not load unread messages from the database by current chat`);
+
+				return false;
 			}
-
-			const lastHistoryMessageId = this.store.getters['messagesModel/getFirstId'](this.chatId);
-
-			const options = {
-				chatId: this.chatId,
-				fromMessageId: lastHistoryMessageId,
-				limit: LoadService.getMessageRequestLimit(),
-			};
-			logger.log(`${this.className}: loadHistoryMessagesFromDb`, options);
-			const result = await this.messageRepository.getTopPage(options);
-			const resultWithValidPlan = this.checkPlanLimits(result);
-			await this.updateModelsByDbResult(resultWithValidPlan);
-
-			const resultTemp = await this.tempMessageRepository.getList();
-			if (Type.isArrayFilled(resultTemp.messageList))
-			{
-				await this.store.dispatch('messagesModel/setTemporaryMessages', resultTemp.messageList);
-			}
-		}
-
-		async loadUnreadMessagesFromDb()
-		{
-			if (!this.#checkShouldLoadFromDb())
-			{
-				return;
-			}
-
-			const lastUnreadMessageId = this.store.getters['messagesModel/getLastId'](this.chatId);
 
 			const options = {
 				chatId: this.chatId,
@@ -268,6 +305,47 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			const result = await this.messageRepository.getBottomPage(options);
 			const resultWithValidPlan = this.checkPlanLimits(result);
 			await this.updateModelsByDbResult(resultWithValidPlan);
+
+			return Type.isArrayFilled(result.messageList);
+		}
+
+		async #loadUnreadMessagesFromServer(lastUnreadMessageId)
+		{
+			if (!this.getDialog().hasNextPage)
+			{
+				logger.warn(`${this.className}: all unread messages are loaded from server by current chat`);
+
+				return false;
+			}
+			const query = {
+				chatId: this.chatId,
+				filter: {
+					lastId: lastUnreadMessageId,
+				},
+				order: {
+					id: 'ASC',
+				},
+			};
+
+			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(async (result) => {
+				logger.warn(`${this.className}: loadUnread result`, result);
+				this.preparedUnreadMessages = result.messages.sort((a, b) => a.id - b.id);
+				this.preparedUnreadMessages = await this.contextCreator
+					.createMessageDoublyLinkedListForDialog(this.getDialog(), this.preparedUnreadMessages)
+				;
+				this.preparedUnreadMessages = this.addUploadingMessagesToMessageList(this.preparedUnreadMessages);
+
+				this.reactions = {
+					reactions: result.reactions,
+					usersShort: result.usersShort,
+				};
+
+				return this.updateModels(result);
+			}).then(() => {
+				this.drawPreparedUnreadMessages();
+
+				return true;
+			});
 		}
 
 		async loadFirstPage()
@@ -388,7 +466,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 		 */
 		async loadLocalStorageContext(messageId)
 		{
-			if (!this.#checkShouldLoadFromDb())
+			if (!this.#shouldLoadFromDb())
 			{
 				return {
 					isCompleteContext: false,
@@ -440,7 +518,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 		 */
 		async loadLocalStorageContextWithPush(messageId)
 		{
-			if (!this.#checkShouldLoadFromDb())
+			if (!this.#shouldLoadFromDb())
 			{
 				return {
 					isCompleteContext: false,
@@ -732,40 +810,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			return this.store.getters['dialoguesModel/getByChatId'](this.chatId);
 		}
 
-		#isChannel()
-		{
-			const dialog = this.getDialog();
-
-			return [DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(dialog.type);
-		}
-
-		#isComment()
-		{
-			const dialog = this.getDialog();
-
-			return dialog.type === DialogType.comment;
-		}
-
-		#isCurrentUserGuest()
+		#shouldLoadFromDb()
 		{
 			const helper = DialogHelper.createByChatId(this.chatId);
 
-			return Boolean(helper?.isCurrentUserGuest);
-		}
-
-		#checkShouldLoadFromDb()
-		{
-			if (this.#isComment())
-			{
-				return false;
-			}
-
-			if (this.#isChannel() && this.#isCurrentUserGuest())
-			{
-				return false;
-			}
-
-			return true;
+			return Boolean(helper.isLocalStorageSupported);
 		}
 
 		/**

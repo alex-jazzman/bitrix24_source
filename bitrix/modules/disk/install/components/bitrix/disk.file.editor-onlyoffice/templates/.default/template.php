@@ -24,6 +24,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
@@ -232,7 +233,7 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 			edit: '<?= ($arResult['EDITOR']['ALLOW_EDIT'] && $editButton) ? $editButton->getUniqId() : '' ?>',
 			setupSharing: '<?= $setupSharingButton ? $setupSharingButton->getUniqId() : '' ?>'
 		},
-        pullConfig: <?=CUtil::PhpToJsObject($arResult['PULL_CONFIG'])?>,
+        pullConfig: <?= Json::encode($arResult['PULL_CONFIG']) ?>,
 		publicChannel: '<?= $arResult['PUBLIC_CHANNEL'] ?>',
         linkToEdit: '<?= $arResult['EDITOR']['ALLOW_EDIT']? $arResult['LINK_TO_EDIT'] : '' ?>',
         linkToView: '<?= $arResult['LINK_OPEN_NEW_WINDOW'] ?>',

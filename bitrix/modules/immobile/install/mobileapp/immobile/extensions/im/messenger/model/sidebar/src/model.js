@@ -1,15 +1,16 @@
 /* eslint-disable no-param-reassign */
 
 /**
- * @module im/messenger/model/sidebar/model
+ * @module im/messenger/model/sidebar/src/model
  */
-jn.define('im/messenger/model/sidebar/model', (require, exports, module) => {
+jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => {
 	const { Type } = require('type');
 
 	const { SidebarFileType } = require('im/messenger/const');
-	const { sidebarFilesModel } = require('im/messenger/model/sidebar/files/model');
-	const { sidebarLinksModel } = require('im/messenger/model/sidebar/links/model');
-	const { sidebarDefaultElement } = require('im/messenger/model/sidebar/default-element');
+	const { sidebarFilesModel } = require('im/messenger/model/sidebar/src/files/model');
+	const { sidebarLinksModel } = require('im/messenger/model/sidebar/src/links/model');
+	const { sidebarCommonChatsModel } = require('im/messenger/model/sidebar/src/common-chats/model');
+	const { sidebarDefaultElement } = require('im/messenger/model/sidebar/src/default-element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/** @type {SidebarModel} */
@@ -21,6 +22,7 @@ jn.define('im/messenger/model/sidebar/model', (require, exports, module) => {
 		modules: {
 			sidebarFilesModel,
 			sidebarLinksModel,
+			sidebarCommonChatsModel,
 		},
 		getters: {
 			/**
@@ -66,8 +68,13 @@ jn.define('im/messenger/model/sidebar/model', (require, exports, module) => {
 				}
 
 				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
-				const linksIsHistoryLimitExceeded = rootGetters['sidebarModel/sidebarLinksModel/isHistoryLimitExceeded'](dialog.chatId);
-				const filesIsHistoryLimitExceeded = rootGetters['sidebarModel/sidebarFilesModel/isHistoryLimitExceeded'](dialog.chatId, SidebarFileType.document);
+				const linksIsHistoryLimitExceeded = rootGetters['sidebarModel/sidebarLinksModel/isHistoryLimitExceeded'](
+					dialog.chatId,
+				);
+				const filesIsHistoryLimitExceeded = rootGetters['sidebarModel/sidebarFilesModel/isHistoryLimitExceeded'](
+					dialog.chatId,
+					SidebarFileType.document,
+				);
 
 				return filesIsHistoryLimitExceeded || linksIsHistoryLimitExceeded;
 			},
@@ -146,7 +153,8 @@ jn.define('im/messenger/model/sidebar/model', (require, exports, module) => {
 			},
 
 			/** @function sidebarModel/update */
-			update(store, payload) {
+			update(store, payload)
+			{
 				const existingItem = store.state.collection[payload.dialogId];
 				if (!existingItem)
 				{

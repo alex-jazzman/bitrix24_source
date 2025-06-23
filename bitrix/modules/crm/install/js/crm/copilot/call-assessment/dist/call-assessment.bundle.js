@@ -2174,57 +2174,20 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t,
-	  _t2;
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _app = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("app");
 	var _layoutComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layoutComponent");
-	var _titleId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleId");
-	var _titleEditButtonId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleEditButtonId");
-	var _titleInputContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleInputContainer");
-	var _titleNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleNode");
-	var _titleInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleInput");
-	var _inputEditButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputEditButton");
 	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
 	var _textEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textEditor");
 	var _isReadOnly = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReadOnly");
 	var _isEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEnabled");
 	var _initTitleInlineEditing = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTitleInlineEditing");
-	var _bindTitleInlineEditingStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindTitleInlineEditingStart");
-	var _appendTitleInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendTitleInput");
-	var _hideTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideTitle");
-	var _bindTitleInlineEditingFinish = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindTitleInlineEditingFinish");
-	var _getInputEditButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInputEditButton");
-	var _hideInputAndShowTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideInputAndShowTitle");
-	var _getTitleNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitleNode");
 	var _getTextEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTextEditor");
 	class CallAssessment$1 {
 	  constructor(containerId, _params = {}) {
 	    var _params$config$readOn, _params$config, _params$config$isEnab, _params$config2, _params$config3, _params$config$isCopy, _params$config4, _params$config$baasSe, _params$config5;
 	    Object.defineProperty(this, _getTextEditor, {
 	      value: _getTextEditor2
-	    });
-	    Object.defineProperty(this, _getTitleNode, {
-	      value: _getTitleNode2
-	    });
-	    Object.defineProperty(this, _hideInputAndShowTitle, {
-	      value: _hideInputAndShowTitle2
-	    });
-	    Object.defineProperty(this, _getInputEditButton, {
-	      value: _getInputEditButton2
-	    });
-	    Object.defineProperty(this, _bindTitleInlineEditingFinish, {
-	      value: _bindTitleInlineEditingFinish2
-	    });
-	    Object.defineProperty(this, _hideTitle, {
-	      value: _hideTitle2
-	    });
-	    Object.defineProperty(this, _appendTitleInput, {
-	      value: _appendTitleInput2
-	    });
-	    Object.defineProperty(this, _bindTitleInlineEditingStart, {
-	      value: _bindTitleInlineEditingStart2
 	    });
 	    Object.defineProperty(this, _initTitleInlineEditing, {
 	      value: _initTitleInlineEditing2
@@ -2238,30 +2201,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    Object.defineProperty(this, _layoutComponent, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleId, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleEditButtonId, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleInputContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleNode, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleInput, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _inputEditButton, {
 	      writable: true,
 	      value: null
 	    });
@@ -2303,124 +2242,31 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _layoutComponent)[_layoutComponent] = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	  }
-	  onTitleInlineEditingStart() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] !== null) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendTitleInput)[_appendTitleInput]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _hideTitle)[_hideTitle]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindTitleInlineEditingFinish)[_bindTitleInlineEditingFinish]();
-	  }
-	  onTitleInputBlur(event) {
-	    this.onTitleInlineEditingFinish(event, false);
-	  }
-	  onTitleInputEnterPressed(event) {
-	    if (event.key === 'Enter') {
-	      this.onTitleInlineEditingFinish(event, false);
-	    }
-	  }
-	  onTitleInlineEditingFinish(event, checkTarget = true) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] === null || babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput] === null) {
-	      return;
-	    }
-	    if (checkTarget && (event.target === babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput] || event.target === babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton]())) {
-	      return;
-	    }
-	    const title = babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].value;
-	    if (!main_core.Type.isStringFilled(title)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].focus();
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = title;
-	    babelHelpers.classPrivateFieldLooseBase(this, _layoutComponent)[_layoutComponent].setTitle(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]);
-	    main_core.Event.unbind(document, 'mousedown', this.onTitleInlineEditingFinish);
-	    main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'keyup', this.onTitleInputEnterPressed);
-	    main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'blur', this.onTitleInputBlur);
-	    babelHelpers.classPrivateFieldLooseBase(this, _hideInputAndShowTitle)[_hideInputAndShowTitle]();
-	  }
 	}
 	function _initTitleInlineEditing2(params) {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isReadOnly)[_isReadOnly]) {
 	    return;
 	  }
-	  this.onTitleInlineEditingStart = this.onTitleInlineEditingStart.bind(this);
-	  this.onTitleInlineEditingFinish = this.onTitleInlineEditingFinish.bind(this);
-	  this.onTitleInputEnterPressed = this.onTitleInputEnterPressed.bind(this);
-	  this.onTitleInputBlur = this.onTitleInputBlur.bind(this);
+	  const ToolbarManager = main_core.Reflection.getClass('BX.UI.ToolbarManager');
+	  const toolbar = ToolbarManager == null ? void 0 : ToolbarManager.getDefaultToolbar();
+	  if (toolbar) {
+	    const ToolbarEvents = main_core.Reflection.getClass('BX.UI.ToolbarEvents');
+	    toolbar.subscribe(ToolbarEvents.finishEditing, ({
+	      data
+	    }) => {
+	      const {
+	        updatedTitle
+	      } = data;
+	      babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = updatedTitle;
+	      babelHelpers.classPrivateFieldLooseBase(this, _layoutComponent)[_layoutComponent].setTitle(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]);
+	    });
+	  }
 	  const {
-	    config,
 	    data
 	  } = params;
-	  const {
-	    titleId,
-	    titleEditButtonId
-	  } = config != null ? config : {};
-	  if (!main_core.Type.isStringFilled(titleId) || !main_core.Type.isStringFilled(titleEditButtonId)) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleEditButtonId)[_titleEditButtonId] = titleEditButtonId;
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleId)[_titleId] = titleId;
 	  if (main_core.Type.isString(data == null ? void 0 : data.title)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = data.title;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _bindTitleInlineEditingStart)[_bindTitleInlineEditingStart]();
-	}
-	function _bindTitleInlineEditingStart2() {
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton](), 'click', this.onTitleInlineEditingStart);
-	}
-	function _appendTitleInput2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput] = main_core.Tag.render(_t || (_t = _`
-			<input value="${0}" type="text" class="crm-copilot__call-assessment_title-item" />
-		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]));
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] = main_core.Tag.render(_t2 || (_t2 = _`
-			<div class="crm-copilot__call-assessment_title-wrapper">
-				${0}
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput]);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer], babelHelpers.classPrivateFieldLooseBase(this, _getTitleNode)[_getTitleNode]().parentNode);
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].focus();
-	  const length = babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].value.length;
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].selectionStart = length;
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].selectionEnd = length;
-	  main_core.Dom.addClass(document.querySelector('.copilot-call-assessment-pagetitle-description'), '--title-edit');
-	}
-	function _hideTitle2() {
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getTitleNode)[_getTitleNode](), {
-	    display: 'none'
-	  });
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton](), {
-	    display: 'none'
-	  });
-	}
-	function _bindTitleInlineEditingFinish2() {
-	  main_core.Event.bind(document, 'mousedown', this.onTitleInlineEditingFinish);
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'keyup', this.onTitleInputEnterPressed);
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'blur', this.onTitleInputBlur);
-	}
-	function _getInputEditButton2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _inputEditButton)[_inputEditButton] === null) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputEditButton)[_inputEditButton] = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _titleEditButtonId)[_titleEditButtonId]);
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _inputEditButton)[_inputEditButton];
-	}
-	function _hideInputAndShowTitle2() {
-	  const titleNode = babelHelpers.classPrivateFieldLooseBase(this, _getTitleNode)[_getTitleNode]();
-	  titleNode.innerText = babelHelpers.classPrivateFieldLooseBase(this, _title)[_title];
-	  main_core.Dom.style(titleNode, {
-	    display: 'inline-block'
-	  });
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton](), {
-	    display: 'inline-block'
-	  });
-	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] = null;
-	  main_core.Dom.removeClass(document.querySelector('.copilot-call-assessment-pagetitle-description'), '--title-edit');
-	}
-	function _getTitleNode2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode] === null) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode] = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _titleId)[_titleId]);
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode];
 	}
 	function _getTextEditor2({
 	  prompt: content

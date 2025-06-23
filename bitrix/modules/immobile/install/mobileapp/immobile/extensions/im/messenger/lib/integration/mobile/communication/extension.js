@@ -34,7 +34,7 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 			const counters = portalCounters.result;
 			const time = portalCounters.time ? { start: portalCounters.time } : null;
 
-			Logger.info('Counters.handleUserCountersGet', counters, time);
+			Logger.info('TabCounters.handleUserCountersGet', counters, time);
 			BX.postComponentEvent('onSetUserCounters', [counters, time], 'communication');
 		}
 

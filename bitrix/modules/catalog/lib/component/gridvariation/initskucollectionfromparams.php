@@ -48,7 +48,11 @@ trait InitSkuCollectionFromParams
 			}
 
 
-			$form = $isServiceForm ? new GridServiceForm($sku) : new GridVariationForm($sku);
+			$form =
+				$isServiceForm
+					? new GridServiceForm($sku)
+					: new GridVariationForm($sku)
+			;
 			$fields = $form->prepareFieldsValues($row);
 
 			$sku->setFields($fields);
@@ -63,9 +67,9 @@ trait InitSkuCollectionFromParams
 				$sku->getPriceCollection()->setValues($fields['PRICES']);
 			}
 
-			if (isset($fields['MEASURE']))
+			if (isset($fields['MEASURE_RATIO']))
 			{
-				$sku->getMeasureRatioCollection()->setDefault($fields['MEASURE']);
+				$sku->getMeasureRatioCollection()->setDefault((float)$fields['MEASURE_RATIO']);
 			}
 
 			if (isset($fields['BARCODES']))

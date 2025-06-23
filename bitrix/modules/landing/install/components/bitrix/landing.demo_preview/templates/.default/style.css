@@ -269,17 +269,24 @@ input {
 	display: inline;
 	overflow: hidden;
 	max-width: 240px;
-	color: #535c69;
+	color: var(--ui-color-primary);
 	vertical-align: top;
 }
 
-.landing-ui-panel-top-logo-text-mainpage {
+.landing-ui-panel-top-logo-text.left-spaced {
 	margin-left: 5px;
+	color: #005893;
 }
 
 .landing-ui-panel-top-logo-color {
 	display: inline;
-	color: #2fc6f7;
+	color: #005893;
+}
+
+.landing-ui-panel-top-logo-icon {
+	font-size: 14px;
+	margin-bottom: 5px;
+	color: #005893;
 }
 
 .landing-template-demo-preview-header-logo {

@@ -54,14 +54,14 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 	};
 
 	const MuteAction = {
-		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_MUTE'),
+		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_MUTE_MSGVER_1'),
 		identifier: 'mute',
 		iconName: Icon.NOTIFICATION_OFF.getIconName(),
 		color: Theme.colors.base3,
 	};
 
 	const UnmuteAction = {
-		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_UNMUTE'),
+		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_UNMUTE_MSGVER_1'),
 		identifier: 'unmute',
 		iconName: Icon.NOTIFICATION.getIconName(),
 		color: Theme.colors.base3,

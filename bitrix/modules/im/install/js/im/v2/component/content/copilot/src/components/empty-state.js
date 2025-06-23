@@ -1,15 +1,13 @@
 import { Messenger } from 'im.public';
-import { Button as ChatButton, ButtonSize, CopilotRolesDialog } from 'im.v2.component.elements';
+import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
+import { ChatButton, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
 import { Color } from 'im.v2.const';
-import { ThemeManager } from 'im.v2.lib.theme';
-import { CopilotService } from 'im.v2.provider.service';
-
-import { COPILOT_BACKGROUND_ID } from '../const/const';
+import { SpecialBackground, ThemeManager } from 'im.v2.lib.theme';
+import { CopilotService } from 'im.v2.provider.service.copilot';
 
 import '../css/empty-state.css';
 
 import type { JsonObject } from 'main.core';
-import type { CustomColorScheme } from 'im.v2.component.elements';
 import type { BackgroundStyle } from 'im.v2.lib.theme';
 
 const BUTTON_BACKGROUND_COLOR = '#fff';
@@ -32,7 +30,7 @@ export const EmptyState = {
 		ButtonSize: () => ButtonSize,
 		backgroundStyle(): BackgroundStyle
 		{
-			return ThemeManager.getBackgroundStyleById(COPILOT_BACKGROUND_ID);
+			return ThemeManager.getBackgroundStyleById(SpecialBackground.copilot);
 		},
 		preparedText(): string
 		{
@@ -66,17 +64,10 @@ export const EmptyState = {
 			const newDialogId = await this.getCopilotService().createChat({ roleCode })
 				.catch(() => {
 					this.isCreatingChat = false;
-					this.showCreateChatError();
 				});
 
 			this.isCreatingChat = false;
 			void Messenger.openCopilot(newDialogId);
-		},
-		showCreateChatError()
-		{
-			BX.UI.Notification.Center.notify({
-				content: this.loc('IM_CONTENT_COPILOT_EMPTY_STATE_ERROR_CREATING_CHAT'),
-			});
 		},
 		getCopilotService(): CopilotService
 		{

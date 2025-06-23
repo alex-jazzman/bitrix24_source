@@ -2,10 +2,26 @@ import type IButton from './ibutton';
 import ButtonTag from './button/button-tag';
 import { Type, Tag, Dom, Event } from 'main.core';
 import { type BaseButtonOptions } from './base-button-options';
+import 'ui.design-tokens.air';
 import './ui.buttons.css';
+import './ui.air-buttons.css';
+import { ButtonCounter, type ButtonCounterOptions } from './button-counter';
+import { getCounterSize } from './helpers/counter-size';
+import { ButtonCounterSize } from './index';
+
+export type SetCounterOptions = {
+	counter: ButtonCounterOptions;
+	position: 'left' | 'right';
+}
 
 export default class BaseButton implements IButton
 {
+	#useAirDesign: boolean = false;
+	#leftCounter: ?ButtonCounter;
+	#rightCounter: ?ButtonCounter;
+	#leftCounterContainer: ?HTMLElement;
+	#rightCounterContainer: ?HTMLElement;
+
 	constructor(options: BaseButtonOptions)
 	{
 		options = Type.isPlainObject(options) ? options : {};
@@ -42,6 +58,7 @@ export default class BaseButton implements IButton
 			this.setDisabled();
 		}
 
+		this.setAirDesign(this.options.useAirDesign === true);
 		this.setText(this.options.text);
 		this.setCounter(this.options.counter);
 		this.setProps(this.options.props);
@@ -49,6 +66,25 @@ export default class BaseButton implements IButton
 		this.addClass(this.options.className);
 		this.setLink(this.options.link);
 		this.setMaxWidth(this.options.maxWidth);
+
+		if (this.hasAirDesign())
+		{
+			if (this.options.leftCounter)
+			{
+				this.setLeftCounter({
+					...this.options.leftCounter,
+					size: getCounterSize(this.options.size),
+				});
+			}
+
+			if (this.options.rightCounter)
+			{
+				this.setRightCounter({
+					...this.options.rightCounter,
+					size: getCounterSize(this.options.size),
+				});
+			}
+		}
 
 		this.bindEvent('click', this.options.onclick);
 		this.bindEvents(this.options.events);
@@ -60,6 +96,25 @@ export default class BaseButton implements IButton
 	init(): void
 	{
 		// needs to initialize private properties in derived classes.
+	}
+
+	setAirDesign(use: boolean): void
+	{
+		this.#useAirDesign = use === true;
+
+		if (use === true)
+		{
+			Dom.addClass(this.getContainer(), '--air');
+		}
+		else
+		{
+			Dom.removeClass(this.getContainer(), '--air');
+		}
+	}
+
+	hasAirDesign(): boolean
+	{
+		return this.#useAirDesign;
 	}
 
 	/**
@@ -147,19 +202,19 @@ export default class BaseButton implements IButton
 	 */
 	setText(text: string): this
 	{
-		if (Type.isString(text))
+		if (Type.isString(text) || this.hasAirDesign())
 		{
-			this.text = text;
+			this.text = text || '';
 
 			if (this.isInputType())
 			{
-				this.getContainer().value = text;
+				this.getContainer().value = this.text;
 			}
-			else if (text.length > 0)
+			else if (this.text.length > 0 || this.hasAirDesign())
 			{
 				if (this.textNode === null)
 				{
-					this.textNode = Tag.render`<span class="ui-btn-text"></span>`;
+					this.textNode = Tag.render`<span class="ui-btn-text"><span class="ui-btn-text-inner"></span></span>`;
 				}
 
 				if (!this.textNode.parentNode)
@@ -167,7 +222,14 @@ export default class BaseButton implements IButton
 					Dom.prepend(this.textNode, this.getContainer());
 				}
 
-				this.textNode.textContent = text;
+				if (this.textNode.querySelector('.ui-btn-text-inner'))
+				{
+					this.textNode.querySelector('.ui-btn-text-inner').textContent = text;
+				}
+				else
+				{
+					this.textNode.textContent = text;
+				}
 			}
 			else
 			{
@@ -191,6 +253,132 @@ export default class BaseButton implements IButton
 	}
 
 	/**
+	 * Use for buttons with air option
+	 * Use only to create or delete a counter. Update counter value via getLeftCounter() method.
+	 *
+	 * @param options Object | null Object for creating. null for deleting.
+	 *
+	 * @return void
+	 */
+	setLeftCounter(options: ButtonCounterOptions | null): this
+	{
+		if (this.hasAirDesign() === false)
+		{
+			console.warn('Left counter works only with air buttons. Use setLeftCounter or useAirDesign option in constructor.');
+
+			return this;
+		}
+
+		if (!options)
+		{
+			this.#removeLeftCounter();
+
+			return this;
+		}
+
+		if (this.#leftCounter)
+		{
+			return this;
+		}
+
+		this.#removeLeftCounter();
+		this.#leftCounter = new ButtonCounter({
+			...options,
+			size: Type.isString(options.size) ? options.size : ButtonCounterSize.MEDIUM,
+		});
+
+		if (this.textNode)
+		{
+			this.#leftCounterContainer = Tag.render`
+				<div class="ui-btn-left-counter">
+					${this.#leftCounter.render()}
+				</div>
+			`;
+
+			Dom.prepend(this.#leftCounterContainer, this.textNode);
+			Dom.addClass(this.getContainer(), '--with-left-counter');
+		}
+
+		return this;
+	}
+
+	/**
+	 * Use for buttons with air option
+	 * Use only to create or delete a counter. Update counter value via getRightCounter() method.
+	 *
+	 * @param options Object | null Object for creating. null for deleting.
+	 *
+	 * @return void
+	 * */
+	setRightCounter(options: ButtonCounterOptions | null): this
+	{
+		if (this.hasAirDesign() === false)
+		{
+			console.warn('Right counter works only with air buttons. Use setRightCounter or useAirDesign option in constructor.');
+
+			return this;
+		}
+
+		if (!options)
+		{
+			this.#removeRightCounter();
+
+			return this;
+		}
+
+		if (this.#rightCounter)
+		{
+			return this;
+		}
+
+		this.#removeRightCounter();
+
+		this.#rightCounter = new ButtonCounter({
+			...options,
+			size: Type.isString(options.size) ? options.size : ButtonCounterSize.MEDIUM,
+		});
+
+		if (this.textNode)
+		{
+			this.#rightCounterContainer = Tag.render`
+				<div class="ui-btn-right-counter">${this.#rightCounter.render()}</div>
+			`;
+
+			Dom.append(this.#rightCounterContainer, this.textNode);
+			Dom.addClass(this.getContainer(), '--with-right-counter');
+		}
+
+		return this;
+	}
+
+	getLeftCounter(): ButtonCounter
+	{
+		return this.#leftCounter;
+	}
+
+	getRightCounter(): ButtonCounter
+	{
+		return this.#rightCounter;
+	}
+
+	#removeLeftCounter(): void
+	{
+		Dom.remove(this.#leftCounterContainer);
+		Dom.removeClass(this.getContainer(), '--with-left-counter');
+		this.#leftCounterContainer = null;
+		this.#leftCounter = null;
+	}
+
+	#removeRightCounter(): void
+	{
+		Dom.remove(this.#rightCounterContainer);
+		Dom.removeClass(this.getContainer(), '--with-right-counter');
+		this.#rightCounterContainer = null;
+		this.#rightCounter = null;
+	}
+
+	/**
+	 * use for old buttons (without useAirTheme option)
 	 *
 	 * @param {number | string} counter
 	 * @return {this}
@@ -209,6 +397,13 @@ export default class BaseButton implements IButton
 		}
 		else if ((Type.isNumber(counter) && counter > 0) || Type.isStringFilled(counter))
 		{
+			if (this.hasAirDesign())
+			{
+				console.warn('Use setCounter or counter option only for not air buttons. For fir buttons use setLeftCounter or setRightCounter methods or leftCounter or rightCounter options.');
+
+				return this;
+			}
+
 			if (this.isInputType())
 			{
 				throw new Error('BX.UI.Button: an input button cannot have a counter.');
@@ -243,7 +438,7 @@ export default class BaseButton implements IButton
 	 */
 	setLink(link: string): this
 	{
-		if (Type.isString(link))
+		if (Type.isStringFilled(link))
 		{
 			if (this.getTag() !== ButtonTag.LINK)
 			{

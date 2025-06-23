@@ -2,6 +2,7 @@
  * @module im/messenger/provider/push
  */
 jn.define('im/messenger/provider/push', (require, exports, module) => {
+	/* @global ChatDataConverter */
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -13,6 +14,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		ComponentCode,
 		OpenDialogContextType,
 		WaitingEntity,
+		NavigationTabByComponent,
 	} = require('im/messenger/const');
 	const { EntityReady } = require('entity-ready');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -51,14 +53,6 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			BX.onViewLoaded(() => {
 				this.updateList();
 			});
-		}
-
-		getComponentsForSend()
-		{
-			return [
-				ComponentCode.imMessenger,
-				ComponentCode.imCopilotMessenger,
-			];
 		}
 
 		async getRawPushEvents()
@@ -124,12 +118,11 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 				event.params.userInChat[event.params.chatId] = [MessengerParams.getUserId()];
 
-				event.params.message.text = senderMessage.toString()
-					.replaceAll('&', '&amp;')
-					.replaceAll('"', '&quot;')
-					.replaceAll('<', '&lt;')
-					.replaceAll('>', '&gt;')
-				;
+				event.params.message.text = this.#sanitizeMessageText(senderMessage);
+				event.params.message.text = this.#removeAttachmentSuffixFromMessageText(
+					event.params.message.text,
+					push.attachmentSuffix,
+				);
 
 				if (push.senderCut)
 				{
@@ -213,31 +206,28 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		 */
 		async sendEventsToComponents(eventList)
 		{
-			const requestOptionList = [];
-			if (MessengerParams.isComponentAvailable(ComponentCode.imMessenger))
-			{
-				requestOptionList.push(
-					{
-						toComponent: ComponentCode.imMessenger,
-						data: eventList,
-						handlerId: WaitingEntity.push.messageHandler.chat,
-					},
-					{
-						toComponent: ComponentCode.imMessenger,
-						data: eventList,
-						handlerId: WaitingEntity.push.messageHandler.database,
-					},
-				);
-			}
-
-			if (MessengerParams.isComponentAvailable(ComponentCode.imCopilotMessenger))
-			{
-				requestOptionList.push({
+			const requestOptionList = [
+				{
+					toComponent: ComponentCode.imMessenger,
+					data: eventList,
+					handlerId: WaitingEntity.push.messageHandler.chat,
+				},
+				{
+					toComponent: ComponentCode.imMessenger,
+					data: eventList,
+					handlerId: WaitingEntity.push.messageHandler.database,
+				},
+				{
 					toComponent: ComponentCode.imCopilotMessenger,
 					data: eventList,
 					handlerId: WaitingEntity.push.messageHandler.copilot,
-				});
-			}
+				},
+				{
+					toComponent: ComponentCode.imNavigation,
+					data: eventList,
+					handlerId: WaitingEntity.push.messageHandler.counter,
+				},
+			];
 
 			return ComponentRequestBroadcaster.getInstance()
 				.send(EventType.push.messageBatch, requestOptionList)
@@ -301,33 +291,53 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				}
 
 				const chatId = parseInt(pushParams.ACTION.slice(8), 10);
-				if (chatId > 0)
+				if (chatId === 0)
 				{
-					let componentCode = ComponentCode.imMessenger;
-					if (push.data[1] && push.data[1][13] && push.data[1][13] === DialogType.copilot)
-					{
-						componentCode = ComponentCode.imCopilotMessenger;
-
-						await EntityReady.wait('copilot-messenger');
-						BX.postComponentEvent('onTabChange', ['copilot'], ComponentCode.imNavigation);
-					}
-					else
-					{
-						BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
-					}
-
-					const openDialogParams = {
-						dialogId: `chat${chatId}`,
-						context: OpenDialogContextType.push,
-					};
-
-					if (Feature.isInstantPushEnabled)
-					{
-						openDialogParams.messageId = pushParams.PARAMS.MESSAGE_ID;
-					}
-
-					MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, componentCode);
+					return false;
 				}
+
+				const openDialogParams = {
+					dialogId: `chat${chatId}`,
+					context: OpenDialogContextType.push,
+				};
+
+				if (Feature.isInstantPushEnabled)
+				{
+					openDialogParams.messageId = pushParams.PARAMS.MESSAGE_ID;
+				}
+
+				if (Feature.isCopilotInDefaultTabAvailable)
+				{
+					BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
+					MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, ComponentCode.imMessenger);
+
+					return true;
+				}
+
+				let componentCode = ComponentCode.imMessenger;
+				if (push.data[1] && push.data[1][13] && push.data[1][13] === DialogType.copilot)
+				{
+					componentCode = ComponentCode.imCopilotMessenger;
+					BX.postComponentEvent('onTabChange', ['copilot'], ComponentCode.imNavigation);
+
+					await EntityReady.wait(`${ComponentCode.imCopilotMessenger}::ready`);
+				}
+				else
+				{
+					BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
+				}
+
+				MessengerEmitter.emit(
+					EventType.navigation.broadCastEventCheckTabPreload,
+					{
+						broadCastEvent: EventType.messenger.openDialog,
+						toTab: NavigationTabByComponent[componentCode],
+						data: {
+							...openDialogParams,
+						},
+					},
+					ComponentCode.imNavigation,
+				);
 
 				return true;
 			}
@@ -343,6 +353,30 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		clearHistory()
 		{
 			this.manager.clear();
+		}
+
+		/**
+		 * @param {string} text
+		 * @return {string}
+		 */
+		#sanitizeMessageText(text)
+		{
+			return text.toString()
+				.replaceAll('&', '&amp;')
+				.replaceAll('"', '&quot;')
+				.replaceAll('<', '&lt;')
+				.replaceAll('>', '&gt;')
+			;
+		}
+
+		/**
+		 * @param {string} text
+		 * @param {string} attachmentSuffix
+		 * @returns {string}
+		 */
+		#removeAttachmentSuffixFromMessageText(text, attachmentSuffix)
+		{
+			return text.replaceAll(attachmentSuffix, '');
 		}
 	}
 

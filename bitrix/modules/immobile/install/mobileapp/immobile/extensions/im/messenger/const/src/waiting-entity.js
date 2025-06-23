@@ -6,19 +6,25 @@ jn.define('im/messenger/const/waiting-entity', (require, exports, module) => {
 	const WaitingEntity = {
 		sync: {
 			filler: {
-				database: 'sync-filler-database',
-				chat: 'sync-filler-chat',
-				copilot: 'sync-filler-copilot',
-				collab: 'sync-filler-collab',
-				channel: 'sync-filler-channel',
+				database: 'immobile::sync-filler-database',
+				chat: 'immobile::sync-filler-chat',
+				copilot: 'immobile::sync-filler-copilot',
+				collab: 'immobile::sync-filler-collab',
+				channel: 'immobile::sync-filler-channel',
+				counter: 'immobile::sync-filler-counter',
 			},
 		},
 		push: {
 			messageHandler: {
-				database: 'database',
-				chat: 'chat',
-				copilot: 'copilot',
+				database: 'immobile::database-push-handler',
+				chat: 'immobile::chat-push-handler',
+				copilot: 'immobile::copilot-push-handler',
+				counter: 'immobile::counter-push-handler',
 			},
+		},
+		core: {
+			navigation: 'immobile::navigation-core',
+			chat: 'immobile::chat-core',
 		},
 	};
 

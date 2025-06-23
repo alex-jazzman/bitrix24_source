@@ -23,3 +23,6 @@ $MESS['SIGN_KANBAN_BUTTON_TITLE_SIGN_B2E_ITEM_CATEGORY'] = 'От компани�
 $MESS['SIGN_KANBAN_BUTTON_TITLE_SIGN_B2E_EMPLOYEE_ITEM_CATEGORY'] = 'От сотрудников';
 $MESS['SIGN_CMP_START_TPL_MENU_B2E_HCMLINK_INTEGRATION_TOUR_TITLE'] = 'Подключите коннектор КЭДО + 1С';
 $MESS['SIGN_CMP_START_TPL_MENU_B2E_HCMLINK_INTEGRATION_TOUR_DESCRIPTION'] = 'Теперь можно синхронизировать данные сотрудников с 1С, а не заполнять их вручную';
+$MESS['SIGN_TOOLBAR_CREATE_BUTTON_TITLE'] = 'Создать';
+$MESS['SIGN_TOOLBAR_CREATE_BUTTON_TITLE_DOCUMENT'] = 'Документ';
+$MESS['SIGN_TOOLBAR_CREATE_BUTTON_TITLE_ON_TEMPLATE'] = 'Создать по шаблону';

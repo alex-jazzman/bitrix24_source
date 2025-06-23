@@ -116,12 +116,13 @@ else
 		<div class="landing-template-demo-preview-header-logo">
 			<span class="landing-ui-panel-top-logo-text"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_BITRIX')?></span>
 			<span class="landing-ui-panel-top-logo-color">24</span>
+			<span class="landing-ui-panel-top-logo-icon far fa-clock-three"></span>
 			<?php if ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP'):?>
-				<span class="landing-ui-panel-top-logo-text">.<?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_KB')?></span>
+				<span class="landing-ui-panel-top-logo-text left-spaced"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_KB')?></span>
 			<?php elseif ($isCreateMainpage) : ?>
-				<span class="landing-ui-panel-top-logo-text landing-ui-panel-top-logo-text-mainpage"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_MAINPAGE')?></span>
+				<span class="landing-ui-panel-top-logo-text left-spaced"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_MAINPAGE')?></span>
 			<?php else:?>
-				<span class="landing-ui-panel-top-logo-text">.<?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_SITE')?></span>
+				<span class="landing-ui-panel-top-logo-text left-spaced"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_SITE')?></span>
 			<?php endif;?>
 		</div>
 		<div class="landing-template-demo-preview-header-title">
@@ -423,6 +424,8 @@ else
 		$popupTextCode = 'LANDING_TPL_POPUP_TEXT_KB';
 	}
 
+	$isKnowledgeBase = $arParams['TYPE'] === Type::SCOPE_CODE_KNOWLEDGE || $arParams['TYPE'] === Type::SCOPE_CODE_GROUP;
+
 	?>
 	BX.Landing.TemplatePreviewInstance = BX.Landing.TemplatePreview.getInstance({
 		createStore: <?= ($isCreateStore ? 'true' : 'false') ?>,
@@ -444,8 +447,7 @@ else
 		siteId: <?= ($arParams['SITE_ID'] > 0) ? $arParams['SITE_ID'] : 0 ?>,
 		replaceLid: <?= $arParams['REPLACE_LID'] ?? 0 ?>,
 		isCrmForm: '<?= $arParams['IS_CRM_FORM'] ?? 'N' ?>',
-		context_section: '<?= isset($arParams['CONTEXT_SECTION']) ? CUtil::JSEscape($arParams['CONTEXT_SECTION']) : null ?>',
-		context_element: '<?= isset($arParams['CONTEXT_ELEMENT']) ? CUtil::JSEscape($arParams['CONTEXT_ELEMENT']) : null ?>',
+		isKnowledgeBase: '<?= $isKnowledgeBase ? 'Y' : 'N' ?>',
 		langId: "<?= is_string($arParams['LANG_ID']) ? $arParams['LANG_ID'] : ''?>",
 		folderId: <?= ($arResult['FOLDER_ID'] ?? 0 && $arResult['FOLDER_ID'] > 0) ? $arResult['FOLDER_ID'] : 0 ?>,
 		adminSection: <?= $arParams['ADMIN_SECTION'] === 'Y' ? 'true' : 'false'?>,
@@ -457,55 +459,6 @@ else
 		new BX.Landing.SaveBtn(document.querySelector(".landing-template-preview-create"));
 	});
 	<?php endif;?>
-
-	let templateAppCode;
-	let analyticCategory;
-	const type = '<?= $arParams['TYPE']?>';
-	switch (type) {
-		case 'MAINPAGE':
-			analyticCategory = 'vibe';
-			templateAppCode = '<?= $template['APP_CODE']?>';
-			break;
-		case 'PAGE':
-			analyticCategory = 'site';
-			templateAppCode = '<?= $template['APP_CODE']?>';
-			break;
-		case 'STORE':
-			analyticCategory = 'store';
-			templateAppCode = '<?= $arParams['CODE']?>';
-			break;
-		case 'KNOWLEDGE':
-			analyticCategory = 'kb';
-			templateAppCode = '<?= $arParams['CODE']?>';
-			break;
-	}
-	templateAppCode = templateAppCode.replaceAll('_', '-')
-	BX.UI.Analytics.sendData({
-		tool: 'landing',
-		category: analyticCategory,
-		event: 'preview_template',
-		p1: templateAppCode,
-	});
-
-	let createTemplateButton = document.querySelector('.landing-template-demo-preview-header .ui-btn-success');
-	if (createTemplateButton)
-	{
-		let status = 'success';
-		<?php if ($marketSubscriptionNeeded):?>
-		status = 'error_market';
-		<?php endif;?>
-		createTemplateButton.onclick = function()
-		{
-			BX.UI.Analytics.sendData({
-				tool: 'landing',
-				category: analyticCategory,
-				event: 'create_template',
-				status,
-				p1: templateAppCode,
-			});
-		};
-	}
-
 </script>
 
 <script>

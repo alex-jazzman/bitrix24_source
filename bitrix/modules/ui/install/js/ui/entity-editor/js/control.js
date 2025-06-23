@@ -1349,6 +1349,31 @@ if(typeof BX.UI.EntityEditorField === "undefined")
 			titleNode.appendChild(marker);
 		}
 
+		const titleOptions = this.getSchemeElement().getImmutableOptions()?.titleOptions;
+		if (BX.Type.isPlainObject(titleOptions))
+		{
+			const rightIconOptions = titleOptions.rightIconOptions;
+			if (BX.Type.isPlainObject(rightIconOptions))
+			{
+				const rightIcon = new BX.UI.IconSet.Icon({
+					icon: rightIconOptions.icon,
+					size: BX.Text.toInteger(rightIconOptions.size),
+					color: rightIconOptions.color,
+					hoverMode: rightIconOptions.hoverMode,
+				});
+
+				const rightIconContainer = BX.Tag.render`<span class="ui-entity-editor-block-title-text-right-icon"></span>`;
+				if (BX.Type.isStringFilled(rightIconOptions.title))
+				{
+					rightIconContainer.title = rightIconOptions.title;
+				}
+
+				rightIcon.renderTo(rightIconContainer);
+
+				titleNode.append(rightIconContainer);
+			}
+		}
+
 		var hint = this.createTitleHint();
 		if (hint)
 		{
@@ -3122,9 +3147,19 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 		this._contentContainer = BX.create("div", {props: { className: "ui-entity-editor-section-content" } });
 		var isViewMode = this._mode === BX.UI.EntityEditorMode.view ;
 
-		var wrapperClassName = isViewMode
-			? "ui-entity-editor-section"
-			: "ui-entity-editor-section-edit";
+		const wrapperClassNames = isViewMode
+			? ['ui-entity-editor-section']
+			: ['ui-entity-editor-section-edit'];
+
+		const sectionData = this.getSchemeElement().getImmutableOptions();
+		if (BX.Type.isPlainObject(sectionData))
+		{
+			const wrapperClassList = sectionData.wrapperClassList;
+			if (BX.Type.isArray(wrapperClassList))
+			{
+				wrapperClassNames.push(...wrapperClassList);
+			}
+		}
 
 		this._enableToggling = this.isModeToggleEnabled() && this._schemeElement.getDataBooleanParam("enableToggling", true);
 		this._toggleButton = BX.create("span",
@@ -3165,6 +3200,7 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 
 		this._titleMode = BX.UI.EntityEditorMode.view;
 
+		const wrapperClassName = wrapperClassNames.join(' ');
 		this._wrapper = BX.create("div", { props: { className: wrapperClassName }});
 
 		if(this._schemeElement.isTitleEnabled())
@@ -3239,7 +3275,8 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 			this._wrapper.appendChild(this._headerContainer);
 		}
 
-		this._wrapper.appendChild(this._contentContainer);
+		const content = BX.Tag.render`<div class="ui-entity-editor-section-content-wrapper">${this._contentContainer}</div>`;
+		this._wrapper.appendChild(content);
 
 		if(!BX.type.isPlainObject(options))
 		{

@@ -86,7 +86,7 @@ this.BX.Vote = this.BX.Vote || {};
 	}, {
 	  fieldName: 'counter',
 	  targetFieldName: 'counter',
-	  checkFunction: main_core.Type.isString,
+	  checkFunction: im_v2_model.isNumberOrString,
 	  formatFunction: im_v2_model.convertToNumber
 	}, {
 	  fieldName: 'percent',
@@ -108,6 +108,7 @@ this.BX.Vote = this.BX.Vote || {};
 	      questions: [],
 	      isAnonymous: false,
 	      isVoted: false,
+	      isLoading: false,
 	      canEdit: false,
 	      canVote: false,
 	      canRevoke: false,
@@ -236,6 +237,10 @@ this.BX.Vote = this.BX.Vote || {};
 	    /** @function vote/resetVoteCompleted */
 	    resetVoteCompleted: (store, payload) => {
 	      store.commit('resetVoteCompleted', payload);
+	    },
+	    /** @function vote/setLoadingStatus */
+	    setLoadingStatus: (store, payload) => {
+	      store.commit('setLoadingStatus', payload);
 	    }
 	  },
 	  mutations: {
@@ -285,6 +290,15 @@ this.BX.Vote = this.BX.Vote || {};
 	    },
 	    resetVoteCompleted: (state, payload) => {
 	      state.voteCollection[payload.voteId].isCompleted = false;
+	    },
+	    setLoadingStatus: (state, payload) => {
+	      const {
+	        voteId,
+	        isLoading
+	      } = payload;
+	      if (state.voteCollection[voteId]) {
+	        state.voteCollection[voteId].isLoading = isLoading;
+	      }
 	    }
 	  },
 	  formatVoteFields(fields) {

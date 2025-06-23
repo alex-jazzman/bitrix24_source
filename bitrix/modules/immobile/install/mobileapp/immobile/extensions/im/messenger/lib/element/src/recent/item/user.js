@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { Color } = require('tokens');
 	const { merge } = require('utils/object');
 
 	const { Theme } = require('im/lib/theme');

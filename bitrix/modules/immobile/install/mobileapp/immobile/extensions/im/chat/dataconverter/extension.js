@@ -841,7 +841,7 @@ ChatDataConverter.getActionList = function(element)
 		if (element.chat.type !== 'announcement' && element.chat.type !== 'support24Question')
 		{
 			result.push({
-				title: element.chat.mute_list && element.chat.mute_list[this.userId] ? BX.message('ELEMENT_MENU_UNMUTE') : BX.message('ELEMENT_MENU_MUTE'),
+				title: element.chat.mute_list && element.chat.mute_list[this.userId] ? BX.message('ELEMENT_MENU_UNMUTE_MSGVER_1') : BX.message('ELEMENT_MENU_MUTE_MSGVER_1'),
 				identifier: element.chat.mute_list && element.chat.mute_list[this.userId] ? 'unmute' : 'mute',
 				iconName: `action_${element.chat.mute_list && element.chat.mute_list[this.userId] ? 'unmute' : 'mute'}`,
 				color: '#aaabac',
@@ -1252,7 +1252,7 @@ ChatDataConverter.getCallListElement = function(callStatus, call)
 	}
 
 	return {
-		id: `call${call.id}`,
+		id: `call${call.associatedEntity.id}`,
 		title: call.associatedEntity.name,
 		subtitle: elementConfig.text,
 		imageUrl: ChatUtils.getAvatar(call.associatedEntity.avatar),
@@ -1261,7 +1261,7 @@ ChatDataConverter.getCallListElement = function(callStatus, call)
 		color: '#368c00',
 		sectionCode: 'call',
 		params: {
-			call: { id: call.id, provider: call.provider, associatedEntity: call.associatedEntity },
+			call: { id: call.id, uuid: call.uuid, provider: call.provider, associatedEntity: call.associatedEntity },
 			isLocal: callStatus === 'local',
 			canJoin: elementConfig.canJoin,
 			type: 'call',

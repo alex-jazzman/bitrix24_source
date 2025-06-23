@@ -159,3 +159,13 @@
 .ui-entity-editor-content-block .ui-tag-selector-outer-container {
 	border-radius: var(--ui-border-radius-2xs);
 }
+
+.ui-page-slider-workarea,.ui-side-panel-header {
+	width: 740px;
+}
+
+@media (max-width: 789px) {
+	.ui-page-slider-workarea,.ui-side-panel-header {
+		width: auto;
+	}
+}

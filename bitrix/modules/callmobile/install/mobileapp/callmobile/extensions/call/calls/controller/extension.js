@@ -2,13 +2,14 @@
 
 jn.define('call/calls/controller', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
-	const { Analytics, DialogType } = require('call/const');
+	const { Analytics, DialogType, EventType } = require('call/const');
 	const { CallLayout } = require('call/calls/layout');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('loc');
 	const { Tourist } = require('tourist');
+	const { Toast } = jn.require('native/notify')
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
 
@@ -51,6 +52,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.ignoreLeaveAnalyticsEvent = false;
 
 			this.onCallUserInvitedHandler = this.onCallUserInvited.bind(this);
+			this.onCallUserJoinedHandler = this.onCallUserJoined.bind(this);
 			this.onCallUserStateChangedHandler = this.onCallUserStateChanged.bind(this);
 			this.onCallUserMicrophoneStateHandler = this.onCallUserMicrophoneState.bind(this);
 			this.onCallUserScreenStateHandler = this.onCallUserScreenState.bind(this);
@@ -74,6 +76,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onCallTimeoutHandler = this.onCallTimeout.bind(this);
 			this.onCallReconnectedHandler = this.onCallReconnected.bind(this);
 			this.onUpdateCallCopilotStateHandler = this.onUpdateCallCopilotState.bind(this);
+			this.onRecorderStatusChangedHandler = this.onRecorderStatusChanged.bind(this);
+			this.onChatUsersCountUpdateHandler = this.onChatUsersCountUpdate.bind(this);
 			this.onAllParticipantsVideoMutedHandler = this.onAllParticipantsVideoMuted.bind(this);
 			this.onAllParticipantsAudioMutedHandler = this.onAllParticipantsAudioMuted.bind(this);
 			this.onAllParticipantsScreenshareMutedHandler = this.onAllParticipantsScreenshareMuted.bind(this);
@@ -81,6 +85,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onParticipantAudioMutedHandler = this.onParticipantAudioMuted.bind(this);
 			this.onParticipantVideoMutedHandler = this.onParticipantVideoMuted.bind(this);
 			this.onParticipantScreenshareMutedHandler = this.onParticipantScreenshareMuted.bind(this);
+
+			this.onUserPermissionsChangedHandler = this.onUserPermissionsChanged.bind(this);
+			this.onRoomSettingsChangedHandler = this.onRoomSettingsChanged.bind(this);
+			this.onCallConnectedHandler = this.onCallConnected.bind(this);
 
 			this.onMicButtonClickHandler = this.onMicButtonClick.bind(this);
 			this.onFloorRequestButtonClickHandler = this.onFloorRequestButtonClick.bind(this);
@@ -95,6 +103,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onSelectAudioDeviceHandler = this.onSelectAudioDevice.bind(this);
 			this.onToggleSubscriptionRemoteVideoHandler = this.onToggleSubscriptionRemoteVideo.bind(this);
 			this.onChangeStateCopilotHandler = this.onChangeStateCopilot.bind(this);
+			this.onRecordStateHandler = this.onRecordState.bind(this);
 
 			this.onNativeCallAnsweredHandler = this.onNativeCallAnswered.bind(this);
 			this.onNativeCallEndedHandler = this.onNativeCallEnded.bind(this);
@@ -109,6 +118,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			this.isAppPaused = false;
 			this.canProximitySensorBeEnabled = false;
+
+			this.lastCalledChangeSettingsUserName = Loc.getMessage('CALLMOBILE_DEFAULT_NAME_OF_MODERATOR');
 		}
 
 		init()
@@ -117,6 +128,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			BX.addCustomEvent('onCallInvite', this.onCallInvite.bind(this));
 			// new incoming call (from CallEngine)
 			BX.addCustomEvent('CallEvents::incomingCall', this.onIncomingCall.bind(this));
+			BX.addCustomEvent(EventType.callMobile.chatUserChanged, this.onChatUserChanged.bind(this));
 
 			// try join existing call (from chat)
 			BX.addCustomEvent('CallEvents::joinCall', this.onJoinCall.bind(this));
@@ -124,6 +136,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			BX.addCustomEvent('onAppActive', this.onAppActive.bind(this));
 			BX.addCustomEvent('onAppPaused', this.onAppPaused.bind(this));
 			BX.addCustomEvent('ImRecent::counter::messages', this.onImMessagesCounter.bind(this));
+			BX.addCustomEvent(EventType.imMobile.setCurrentUser, this.onSetCurrentUser.bind(this));
 
 			BX.PULL.subscribe({
 				type: 'server',
@@ -155,7 +168,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		getAssociatedEntityType()
 		{
-			if (!this.currentCall)
+			if (!this.currentCall || !this.currentCall?.associatedEntity?.advanced)
 			{
 				return '';
 			}
@@ -171,6 +184,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 
 			return this.currentCall.associatedEntity.advanced.entityId;
+		}
+
+		_getCallIdentifier(call)
+		{
+			if (!call)
+			{
+				return null;
+			}
+			return CallUtil.isLegacyCall(call.provider) ? call.id : call.uuid;
 		}
 
 		sendStartCallAnalytics()
@@ -196,7 +218,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						? Analytics.AnalyticsAIStatus.aiOn
 						: Analytics.AnalyticsAIStatus.aiOff
 				)
-				.setP5(`callId_${this.currentCall.id}`)
+				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
 			;
 
 			if (this.getAssociatedEntityType() === DialogType.collab)
@@ -204,6 +226,25 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				const collabId = this.getAssociatedEntityId();
 				analytics.setP4(`collabId_${collabId}`);
 			}
+
+			analytics.send();
+		}
+
+		sendStartCallErrorAnalytics(errorCode)
+		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.startCall)
+				.setType(this.getCallType())
+				.setStatus(`error_${errorCode}`)
+				.setP3(
+					this.currentCall.isCopilotActive
+						? Analytics.AnalyticsAIStatus.aiOn
+						: Analytics.AnalyticsAIStatus.aiOff
+				)
+				.setP5('callId_0')
+			;
 
 			analytics.send();
 		}
@@ -217,7 +258,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setType(this.getCallType())
 				.setStatus(status)
 				.setP3(this.getAnalyticsUserType())
-				.setP5(`callId_${this.currentCall.id}`)
+				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
 			;
 
 			if (mediaParams)
@@ -254,6 +295,25 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			analytics.send();
 		}
 
+		sendJoinCallErrorAnalytics(errorCode, callId)
+		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.call)
+				.setEvent(Analytics.AnalyticsEvent.connect)
+				.setType(this.getCallType())
+				.setStatus(`error_${errorCode}`)
+				.setP3(
+					this.currentCall.isCopilotActive
+						? Analytics.AnalyticsAIStatus.aiOn
+						: Analytics.AnalyticsAIStatus.aiOff
+				)
+				.setP5(`callId_${callId}`)
+			;
+
+			analytics.send();
+		}
+
 		sendStartCopilotRecordAnalytics(errorCode = null)
 		{
 			const errorCodes = {
@@ -270,7 +330,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setType(this.getCallType())
 				.setStatus(errorCode ? errorCodes[errorCode] : Analytics.AnalyticsStatus.success)
 				.setSection(Analytics.AnalyticsSection.callFollowup)
-				.setP5(`callId_${this.currentCall.id}`)
+				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
 			;
 
 			const userCount = this.getActiveCallUsers().length;
@@ -284,36 +344,36 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onCallInvite(e)
 		{
-			let dialogId;
-			let
-				dialogData;
-			if ('dialogId' in e)
-			{
-				if (e.dialogId.startsWith('chat'))
-				{
-					dialogData = e.chatData || {};
-				}
-				else
-				{
-					dialogData = e.userData && e.userData[e.dialogId] || {};
-				}
-				dialogId = e.dialogId;
-			}
-			else if ('userId' in e)
-			{
-				dialogData = e.userData && e.userData[e.userId] || {};
-				dialogId = e.userId;
-			}
-			else
+			const dialogId = e.dialogId || e.userId;
+			if (!dialogId)
 			{
 				CallUtil.error('Can not start call. No userId or dialogId in event');
 				navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E001'));
 
 				return;
 			}
-			let { name, avatar, color, type } = dialogData;
-			avatar = decodeURI(avatar);
-			this.startCall(dialogId, e.video, { name, avatar, color, type });
+
+			const chatData = e.chatData || {};
+			const userData = e.userData || {};
+			const dialogData = {
+					advanced: {
+						chatType: chatData.type,
+						entityType: chatData.entityType,
+						entityId: chatData.entityId,
+						entityData1: chatData.entityData1,
+						entityData2: chatData.entityData2,
+						entityData3: chatData.entityData3,
+					},
+					id: chatData.dialogId,
+					chatId: chatData.chatId,
+					name: chatData.name,
+					avatar: decodeURI(chatData.avatar) || '/bitrix/js/im/images/blank.gif',
+					avatarColor: chatData.color,
+					type: chatData.type,
+					userCounter: chatData.userCounter
+			};
+
+			this.startCall(dialogId, e.video, dialogData, userData);
 		}
 
 		maybeShowLocalVideo(show)
@@ -350,17 +410,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			if (this.localVideoStream)
 			{
-				MediaDevices.stopCapture();
-
 				if (destroy)
 				{
+					MediaDevices.stopStreaming();
 					this.localVideoStream = null;
 					return;
 				}
+
+				MediaDevices.stopCapture();
 			}
 		}
 
-		startCall(dialogId, video, associatedDialogData = {})
+		startCall(dialogId, video, associatedDialogData = {}, userData = {})
 		{
 			console.log('CallController.startCall', dialogId, video, associatedDialogData);
 			if (!CallUtil.isDeviceSupported())
@@ -375,7 +436,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				if (this.currentCall?.associatedEntity.id === dialogId)
 				{
-					this.onJoinCall(this.currentCall.id);
+					this.onJoinCall({
+						callId: this.currentCall.id,
+						callUuid: this.currentCall.uuid,
+						associatedEntity: associatedDialogData,
+					});
 					return;
 				}
 				else
@@ -389,17 +454,50 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				}
 			}
 			dialogId = dialogId.toString();
+			const call = callEngine.getCallWithDialogId(dialogId);
+
+			if (call)
+			{
+				this.joinCall({
+					video,
+					callId: call.id,
+					callUuid: call.uuid,
+					associatedEntity: call.associatedEntity,
+				});
+
+				return;
+			}
+
 			let provider = BX.Call.Provider.Plain;
 			const isGroupChat = dialogId.toString().slice(0, 4) === 'chat';
-			if (callEngine.isCallServerAllowed() && isGroupChat)
+			if (isGroupChat)
 			{
-				provider = BX.Call.Provider.Voximplant;
+				if (callEngine.isBitrixCallServerEnabled())
+				{
+					provider = BX.Call.Provider.Bitrix;
+				}
+				else if (callEngine.isCallServerAllowed())
+				{
+					provider = BX.Call.Provider.Voximplant;
+				}
+			}
+
+			let isLegacyCall = false;
+
+			this.onConnectToCallClick = Date.now();
+
+			isLegacyCall = CallUtil.isLegacyCall(provider);
+			if (!isLegacyCall && !CallUtil.isJwtCallsSupported())
+			{
+				CallUtil.error(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				this.clearEverything();
+
+				return;
 			}
 
 			if (isGroupChat && callEngine.isBitrixCallServerEnabled())
 			{
-				provider = BX.Call.Provider.BitrixDev;
-
 				this.startCallPromise = this.requestDeviceAccess(video).then(() => {
 					// we have to start media stream retrieving
 					// so we can use it in the callView before we connect to the call
@@ -410,13 +508,17 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						isGroupCall: isGroupChat,
 						associatedEntityName: associatedDialogData.name,
 						associatedEntityAvatar: associatedDialogData.avatar,
-						associatedEntityAvatarColor: associatedDialogData.color,
+						associatedEntityAvatarColor: associatedDialogData.avatarColor,
 						cameraState: video,
 						chatCounter: this.chatCounter,
 						copilotAvailable: CallUtil.isAIServiceEnabled(associatedDialogData.type === 'videoconf'),
 						copilotEnabled: false, // will be changed after the backend's response
 					}, video);
 				}).then(() => {
+					CallUtil.setUserData(userData);
+					this.callView.updateUserData(userData);
+					this.callView.updateTotalUsersCount(associatedDialogData.userCounter);
+
 					BX.postComponentEvent('CallEvents::viewOpened', []);
 					BX.postWebEvent('CallEvents::viewOpened', {});
 					this.bindViewEvents();
@@ -425,15 +527,19 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					return this.maybeShowLocalVideo(video);
 				}).then(() => {
 					this.callProvider = provider;
-
-					return callEngine.createCall({
+					const callConfig = {
 						type: associatedDialogData.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
 						entityType: 'chat',
 						entityId: dialogId,
 						provider,
 						videoEnabled: Boolean(video),
 						joinExisting: isGroupChat,
-					});
+						chatInfo: associatedDialogData
+					};
+
+					return isLegacyCall
+						? callEngine.createLegacyCall(callConfig)
+						: callEngine.createJwtCall(callConfig);
 				})
 					.then((createResult) => {
 						console.log('startCall.BitrixDev.createCall.createResult', createResult);
@@ -453,11 +559,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						device.setIdleTimerDisabled(true);
 						this.changeProximitySensorStatus(true);
 
-						this.callView.appendUsers(this.currentCall.getUsers());
 						this.callView.updateCopilotState(this.currentCall.isCopilotActive);
-						CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
-							(userData) => this.callView.updateUserData(userData),
-						);
+						if (isLegacyCall)
+						{
+							this.callView.appendUsers(this.currentCall.getUsers());
+							CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
+								(userData) => this.callView.updateUserData(userData),
+							);
+						}
 
 						media.audioPlayer().playSound('call_outgoing', 10);
 
@@ -475,10 +584,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						}
 						else
 						{
-							if (this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount())
+							if (associatedDialogData.userCounter > this.getMaxActiveMicrophonesCount())
 							{
-								this.currentCall.setMuted(true);
-								this.callView.setMuted(true);
+								//this.currentCall.setMuted(true);
+								//this.callView.setMuted(true);
+								this.muteMicDevice(true);
 							}
 
 							this.sendJoinCallAnalytics(
@@ -506,13 +616,17 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						console.error('startCall.BitrixDev.createCall.createResult.catch', error);
 
 						CallUtil.error(error);
+						let errorCode = error.code;
+
 						if (error instanceof DeviceAccessError)
 						{
 							CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
+							errorCode = error.name;
 						}
 						else if (error instanceof CallJoinedElseWhereError)
 						{
 							navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_JOINED'));
+							errorCode = error.name;
 						}
 						else if ('code' in error && error.code === 'ALREADY_FINISHED')
 						{
@@ -522,6 +636,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						{
 							navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 						}
+
+						this.sendStartCallErrorAnalytics(errorCode);
+
 						this.clearEverything();
 					});
 
@@ -538,7 +655,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					isGroupCall: isGroupChat,
 					associatedEntityName: associatedDialogData.name,
 					associatedEntityAvatar: associatedDialogData.avatar,
-					associatedEntityAvatarColor: associatedDialogData.color,
+					associatedEntityAvatarColor: associatedDialogData.avatarColor,
 					cameraState: video,
 					chatCounter: this.chatCounter,
 					copilotAvailable: CallUtil.isAIServiceEnabled(false),
@@ -553,14 +670,19 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return this.maybeShowLocalVideo(video);
 			}).then(() => {
 				this.callProvider = provider;
-
-				return callEngine.createCall({
+				isLegacyCall = CallUtil.isLegacyCall(provider);
+				const callConfig = {
 					entityType: 'chat',
 					entityId: dialogId,
 					provider,
-					videoEnabled: !!video,
+					videoEnabled: Boolean(video),
 					joinExisting: isGroupChat,
-				});
+					chatInfo: associatedDialogData
+				};
+
+				return isLegacyCall
+					? callEngine.createLegacyCall(callConfig)
+					: callEngine.createJwtCall(callConfig);
 			})
 				.then((createResult) => {
 					this.currentCall = createResult.call;
@@ -571,9 +693,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 					this.callView.appendUsers(this.currentCall.getUsers());
 					this.callView.updateCopilotState(this.currentCall.isCopilotActive);
-					CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
-						(userData) => this.callView.updateUserData(userData),
-					);
+					if (isLegacyCall)
+					{
+						CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
+							(userData) => this.callView.updateUserData(userData),
+						);
+					}
+					this.callView.updateTotalUsersCount(associatedDialogData.userCounter);
 
 					media.audioPlayer().playSound('call_outgoing', 10);
 					if (createResult.isNew)
@@ -607,13 +733,17 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				})
 				.catch((error) => {
 					CallUtil.error(error);
+
+					let errorCode = error.code;
 					if (error instanceof DeviceAccessError)
 					{
 						CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
+						errorCode = error.name;
 					}
 					else if (error instanceof CallJoinedElseWhereError)
 					{
 						navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_JOINED'));
+						errorCode = error.name;
 					}
 					else if ('code' in error && error.code === 'ALREADY_FINISHED')
 					{
@@ -623,27 +753,71 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					{
 						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 					}
+
+					this.sendStartCallErrorAnalytics(errorCode);
+
 					this.clearEverything();
 				});
 		}
 
-		joinCall(callId, video)
+		joinCall(callInfo)
 		{
 			if (this.callView || this.currentCall)
 			{
 				return;
 			}
 
-			this.requestDeviceAccess(video).then(() => {
-				return callEngine.getCallWithId(callId);
+			let isLegacyCall = false;
+			let provider = BX.Call.Provider.Plain;
+			const isGroupChat = callInfo.associatedEntity.id.toString().slice(0, 4) === 'chat';
+
+			if (isGroupChat && callEngine.isBitrixCallServerEnabled())
+			{
+				provider = BX.Call.Provider.Bitrix;
+			}
+			else if (isGroupChat && callEngine.isCallServerAllowed())
+			{
+				provider = BX.Call.Provider.Voximplant;
+			}
+
+			const call = callEngine.legacyCalls[callInfo.callId] || callEngine.jwtCalls[callInfo.callUuid];
+			if (call)
+			{
+				provider = call.provider;
+			}
+
+			isLegacyCall = CallUtil.isLegacyCall(provider, call?.scheme);
+			if (!isLegacyCall && !CallUtil.isJwtCallsSupported()) {
+				CallUtil.error(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				this.clearEverything();
+
+				return;
+			}
+
+			this.requestDeviceAccess(callInfo.video).then(() => {
+				this.onConnectToCallClick = Date.now();
+
+				const callConfig = {
+					provider,
+					type: callInfo.associatedEntity.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
+					entityType: 'chat',
+					entityId: callInfo.associatedEntity.id,
+					videoEnabled: Boolean(callInfo.video),
+					joinExisting: isGroupChat,
+					roomId: callInfo.callUuid,
+					chatInfo: callInfo.associatedEntity,
+				};
+
+				return isLegacyCall
+					? callEngine.getLegacyCallWithId(callInfo.callId)
+					: callEngine.getJwtCallWithId(callInfo.callUuid, callConfig);
 			}).then((result) => {
 				this.currentCall = result.call;
 				device.setIdleTimerDisabled(true);
 				this.changeProximitySensorStatus(true);
 
-				const isVideoconf = this.currentCall.associatedEntity.type === 'chat'
-					&& this.currentCall.associatedEntity.advanced['chatType'] === 'videoconf'
-				;
+				const isVideoconf = this.currentCall.associatedEntity.advanced['chatType'] === 'videoconf';
 
 				return this.openCallView({
 					status: 'call',
@@ -667,23 +841,29 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.bindViewEvents();
 				this.callView.appendUsers(this.currentCall.getUsers());
 
-				if (this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount())
+				if (this.currentCall.associatedEntity.userCounter > this.getMaxActiveMicrophonesCount())
 				{
-					this.currentCall.setMuted(true);
-					this.callView.setMuted(true);
+					//this.currentCall.setMuted(true);
+					//this.callView.setMuted(true);
+					this.muteMicDevice(true);
 				}
 
-				CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
-					(userData) => this.callView.updateUserData(userData),
-				);
+				if (isLegacyCall)
+				{
+					CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
+						(userData) => this.callView.updateUserData(userData),
+					);
+				}
+				this.callView.updateTotalUsersCount(callInfo.associatedEntity.userCounter);
 				this.bindCallEvents();
 
 				this.currentCall.answer({
-					useVideo: !!video,
+					useVideo: !!callInfo.video,
 				});
 			})
 				.catch((error) => {
 					CallUtil.error(error);
+					let errorCode = error?.code;
 					if (error.code && error.code == 'ALREADY_FINISHED')
 					{
 						navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_FINISHED'));
@@ -691,15 +871,23 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					else if (error instanceof CallJoinedElseWhereError)
 					{
 						navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_JOINED'));
+						errorCode = error.name;
 					}
 					else if (error instanceof DeviceAccessError)
 					{
-						CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
+						CallUtil.showDeviceAccessConfirm(callInfo.video, () => Application.openSettings());
+						errorCode = error.name;
 					}
 					else
 					{
 						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 					}
+
+					const analyticsCallId = isLegacyCall
+						? callInfo.callId
+						: callInfo.callUuid
+					;
+					this.sendJoinCallErrorAnalytics(errorCode, analyticsCallId);
 				});
 		}
 
@@ -707,7 +895,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			CallUtil.warn('CallController.onIncomingCall', e);
 
-			const newCall = callEngine.calls[e.callId];
+			const newCall = callEngine.legacyCalls[e.callId] || callEngine.jwtCalls[e.callUuid];
 
 			if (!this.canCallBeAnswered(newCall))
 			{
@@ -718,11 +906,24 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (!CallUtil.isDeviceSupported())
 			{
-				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				InAppNotifier.showNotification({
+					message: BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'),
+				});
 				return;
 			}
 
 			const provider = e.provider;
+
+			if (!CallUtil.isLegacyCall(provider, newCall?.scheme) && !CallUtil.isJwtCallsSupported()) {
+				CallUtil.error(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				InAppNotifier.showNotification({
+					message: BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'),
+				});
+				this.clearEverything();
+
+				return;
+			}
+
 			const isDevCallEnabled = provider === BX.Call.Provider.Bitrix && callEngine.isBitrixCallServerEnabled();
 
 			if (!isDevCallEnabled && provider !== BX.Call.Provider.Plain && provider !== BX.Call.Provider.Voximplant)
@@ -741,11 +942,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (this.currentCall)
 			{
-				if (this.currentCall.id == newCall.id)
+				if (this.currentCall.id === newCall.id || this.currentCall.uuid === newCall.uuid)
 				{
 					// do nothing
 				}
-				else if (this.currentCall.id == newCall.parentId)
+				else if (this.currentCall.uuid === newCall.parentUuid || (this.currentCall.id && (this.currentCall.id === newCall.parentId)))
 				{
 					if (!this.childCall)
 					{
@@ -788,7 +989,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						.setEvent(Analytics.AnalyticsEvent.connect)
 						.setType(callType)
 						.setStatus(Analytics.AnalyticsStatus.busy)
-						.setP5(`callId_${newCall.id}`);
+						.setP5(`callId_${this._getCallIdentifier(newCall)}`);
 
 					analytics.send();
 
@@ -807,7 +1008,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			const video = e.video === true;
 
-			this.currentCall = callEngine.calls[newCall.id];
+			this.currentCall = callEngine.legacyCalls[e.callId] || callEngine.jwtCalls[e.callUuid];
 
 			if ('callservice' in window)
 			{
@@ -853,7 +1054,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.changeProximitySensorStatus(true);
 			this.bindCallEvents();
 			this.bindNativeCallEvents();
-			this.currentCall.setVideoEnabled(video);
+			//this.currentCall.setVideoEnabled(video);
 			this.callProvider = provider;
 			this.showIncomingCall({
 				video,
@@ -888,14 +1089,30 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 				return;
 			}
-			this.currentCall.setVideoEnabled(useVideo);
 			if (this.callAnswered)
 			{
 				CallUtil.log('Call already answered');
+				return;
 			}
 			this.callAnswered = true;
+			//this.currentCall.setVideoEnabled(useVideo);
 
-			this.requestDeviceAccess(useVideo).then(() => {
+			const isLegacyCall = CallUtil.isLegacyCall(this.currentCall.provider, this.currentCall?.scheme);
+			const needToRequestToken = !isLegacyCall && !tokenManager.getTokenCached(this.currentCall.associatedEntity.chatId);
+			const callTokenPromise = needToRequestToken ? tokenManager.getToken(this.currentCall.associatedEntity.chatId) : Promise.resolve();
+
+			callTokenPromise.then(() => {
+				return isLegacyCall ? Promise.resolve() : CallUtil.getCallConnectionDataById(this.currentCall.uuid);
+			}).then((response) => {
+				if (!isLegacyCall)
+				{
+					this.currentCall.setConnectionData({
+						mediaServerUrl: response.result.mediaServerUrl,
+						roomData: response.result.roomData,
+					});
+				}
+				return this.requestDeviceAccess(useVideo);
+			}).then(() => {
 				if (!useVideo)
 				{
 					this.onCallLocalMediaStopped();
@@ -940,9 +1157,30 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.childCall.on(BX.Call.Event.onStreamReceived, this.onChildCallFirstStreamHandler);
 			this.childCall.on(BX.Call.Event.onLocalMediaReceived, this.onCallLocalMediaReceivedHandler);
 
-			this.childCall.answer({
-				useVideo: this.currentCall.isVideoEnabled(),
-			});
+			const isLegacyCall = CallUtil.isLegacyCall(this.childCall.provider, this.childCall?.scheme);
+			if (isLegacyCall)
+			{
+				this.childCall.answer({
+					useVideo: this.currentCall.isVideoEnabled(),
+				});
+			}
+			else
+			{
+				tokenManager.getToken(this.childCall.associatedEntity.chatId).then(() => {
+					return CallUtil.getCallConnectionDataById(this.childCall.uuid);
+				}).then((response) => {
+					this.childCall.setConnectionData({
+						mediaServerUrl: response.result.mediaServerUrl,
+						roomData: response.result.roomData,
+					});
+
+					this.childCall.answer({
+						useVideo: this.currentCall.isVideoEnabled(),
+					});
+				}).catch((error) => {
+					CallUtil.error(error);
+				})
+			}
 		}
 
 		showIncomingCall(params)
@@ -952,9 +1190,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				params = {};
 			}
 
-			const isVideoconf = this.currentCall.associatedEntity.type === 'chat'
-				&& this.currentCall.associatedEntity.advanced['chatType'] === 'videoconf'
-			;
+			const isVideoconf = this.currentCall.associatedEntity.advanced['chatType'] === 'videoconf';
 
 			params.video = params.video === true;
 
@@ -994,11 +1230,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.callView.addUser(userId, userStates[userId]);
 				}
 
-				if (this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount())
+				if (this.currentCall.associatedEntity.userCounter > this.getMaxActiveMicrophonesCount())
 				{
-					this.currentCall.setMuted(true);
-					this.callView.setMuted(true);
+					//this.currentCall.setMuted(true);
+					//this.callView.setMuted(true);
+					this.muteMicDevice(true);
 				}
+				this.callView.updateTotalUsersCount(this.currentCall.associatedEntity.userCounter);
 
 				BX.rest.callMethod('im.call.getUsers', {
 					callId: this.currentCall.id,
@@ -1029,7 +1267,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			// window.BXIM.repeatSound('ringtone', 3500, true);
 		}
 
-		onJoinCall(callId)
+		onJoinCall(callInfo)
 		{
 			if (!CallUtil.isDeviceSupported())
 			{
@@ -1040,7 +1278,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (this.currentCall)
 			{
-				if (this.currentCall.id == callId)
+				if (this.currentCall.id == callInfo.callId || this.currentCall.uuid == callInfo.callUuid)
 				{
 					this.unfold();
 				}
@@ -1065,14 +1303,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 						if (button == openChatButton)
 						{
-							BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ callId }], 'im.messenger');
+							BX.postComponentEvent('onOpenDialog', [{ dialogId: callInfo.associatedEntity.id }, true], 'im.recent');
+							BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ dialogId: callInfo.associatedEntity.id }], 'im.messenger');
 
 							return;
 						}
 
 						if (button == startCallWithVideo || button == startCallWithoutVideo)
 						{
-							this.joinCall(callId, button == startCallWithVideo);
+							this.joinCall({
+								video: button == startCallWithVideo,
+								...callInfo
+							});
 						}
 					},
 					BX.message('MOBILE_CALL_JOIN_GROUP_CALL'),
@@ -1142,6 +1384,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 			this.currentCall
 				.on(BX.Call.Event.onUserInvited, this.onCallUserInvitedHandler)
+				.on(BX.Call.Event.onUserJoined, this.onCallUserJoinedHandler)
 				.on(BX.Call.Event.onUserStateChanged, this.onCallUserStateChangedHandler)
 				.on(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler)
 				.on(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler)
@@ -1164,12 +1407,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.on(BX.Call.Event.onPullEventUserInviteTimeout, this.onCallTimeoutHandler)
 				.on(BX.Call.Event.onReconnected, this.onCallReconnectedHandler)
 				.on(BX.Call.Event.onSwitchTrackRecordStatus, this.onUpdateCallCopilotStateHandler)
+				.on(BX.Call.Event.onRecorderStatusChanged, this.onRecorderStatusChangedHandler)
+				.on(BX.Call.Event.onChatUsersCountUpdate, this.onChatUsersCountUpdateHandler)
 				.on(BX.Call.Event.onAllParticipantsVideoMuted, this.onAllParticipantsVideoMutedHandler)
 				.on(BX.Call.Event.onAllParticipantsAudioMuted, this.onAllParticipantsAudioMutedHandler)
 				.on(BX.Call.Event.onAllParticipantsScreenshareMuted, this.onAllParticipantsScreenshareMutedHandler)
 				.on(BX.Call.Event.onParticipantAudioMuted, this.onParticipantAudioMutedHandler)
 				.on(BX.Call.Event.onParticipantVideoMuted, this.onParticipantVideoMutedHandler)
 				.on(BX.Call.Event.onParticipantScreenshareMuted, this.onParticipantScreenshareMutedHandler)
+				.on(BX.Call.Event.onUserPermissionsChanged, this.onUserPermissionsChangedHandler)
+				.on(BX.Call.Event.onRoomSettingsChanged, this.onRoomSettingsChangedHandler)
+				.on(BX.Call.Event.onCallConnected, this.onCallConnectedHandler)
+				.on(BX.Call.Event.onRecordState, this.onRecordStateHandler)
 			;
 		}
 
@@ -1181,6 +1430,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 			this.currentCall
 				.off(BX.Call.Event.onUserInvited, this.onCallUserInvitedHandler)
+				.off(BX.Call.Event.onUserJoined, this.onCallUserJoinedHandler)
 				.off(BX.Call.Event.onUserStateChanged, this.onCallUserStateChangedHandler)
 				.off(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler)
 				.off(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler)
@@ -1202,12 +1452,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.off(BX.Call.Event.onPullEventUserInviteTimeout, this.onCallTimeoutHandler)
 				.off(BX.Call.Event.onReconnected, this.onCallReconnectedHandler)
 				.off(BX.Call.Event.onSwitchTrackRecordStatus, this.onUpdateCallCopilotStateHandler)
+				.off(BX.Call.Event.onRecorderStatusChanged, this.onRecorderStatusChangedHandler)
+				.off(BX.Call.Event.onChatUsersCountUpdate, this.onChatUsersCountUpdateHandler)
 				.off(BX.Call.Event.onAllParticipantsVideoMuted, this.onAllParticipantsVideoMutedHandler)
 				.off(BX.Call.Event.onAllParticipantsAudioMuted, this.onAllParticipantsAudioMutedHandler)
 				.off(BX.Call.Event.onAllParticipantsScreenshareMuted, this.onAllParticipantsScreenshareMutedHandler)
 				.off(BX.Call.Event.onParticipantAudioMuted, this.onParticipantAudioMutedHandler)
 				.off(BX.Call.Event.onParticipantVideoMuted, this.onParticipantVideoMutedHandler)
 				.off(BX.Call.Event.onParticipantScreenshareMuted, this.onParticipantScreenshareMutedHandler)
+				.off(BX.Call.Event.onUserPermissionsChanged, this.onUserPermissionsChangedHandler)
+				.off(BX.Call.Event.onRoomSettingsChanged, this.onRoomSettingsChangedHandler)
+				.off(BX.Call.Event.onCallConnected, this.onCallConnectedHandler)
+				.off(BX.Call.Event.onRecordState, this.onRecordStateHandler)
 			;
 		}
 
@@ -1283,6 +1539,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						this.rootWidget.showComponent(this.callView);
 						this.callViewPromise = null;
 
+						const style = 'background-color: #AA00AA; color: white;';
+						console.log(`%c[debug] Time from click 'Start call' to show call card: ${Date.now() - this.onConnectToCallClick} ms`, style);
+						this.onCallViewRenderToMediaReceived = Date.now();
+
+						const localUserData = CallUtil.userData[env.userId];
+						if (localUserData)
+						{
+							this.callView.updateUserData({
+								[env.userId]: localUserData,
+							});
+						}
+
 						if (showLocalVideo && this.localVideoStream)
 						{
 							this.callView.setVideoStream(env.userId, this.localVideoStream, (MediaDevices.cameraDirection === 'front'));
@@ -1301,7 +1569,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			return this.callViewPromise;
 		}
 
-		fold()
+		async fold()
 		{
 			if (!this.currentCall || !this.callView)
 			{
@@ -1315,16 +1583,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				associatedAvatar = encodeURI(CallUtil.makeAbsolute(this.currentCall.associatedEntity.avatar));
 			}
-			uicomponent.widgetLayer().hide().then(() => {
-				callInterface.indicator().setMode('active');
-				callInterface.indicator().imageUrl = associatedAvatar;
-				callInterface.indicator().show();
-				callInterface.indicator().once('tap', () => this.unfold());
-				this.changeProximitySensorStatus(false);
+			await uicomponent.widgetLayer().hide();
+			callInterface.indicator().setMode('active');
+			callInterface.indicator().imageUrl = associatedAvatar;
+			callInterface.indicator().show();
+			callInterface.indicator().once('tap', () => this.unfold());
+			this.changeProximitySensorStatus(false);
 
-				BX.postComponentEvent('CallEvents::viewClosed', []);
-				BX.postWebEvent('CallEvents::viewClosed', {});
-			});
+			BX.postComponentEvent('CallEvents::viewClosed', []);
+			BX.postWebEvent('CallEvents::viewClosed', {});
 		}
 
 		unfold()
@@ -1433,6 +1700,16 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
+		onSetCurrentUser(userData)
+		{
+			CallUtil.setUserData(userData);
+
+			if (this.callView)
+			{
+				this.callView.updateUserData(userData);
+			}
+		}
+
 		onAppActive()
 		{
 			this.isAppPaused = false;
@@ -1520,6 +1797,16 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				return;
 			}
+
+			if (!CallUtil.havePermissionToBroadcast('mic'))
+			{
+				this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT', {
+						'#NAME#': this.lastCalledChangeSettingsUserName,
+					}),
+				});
+				return;
+			}
+
 			const muted = !this.currentCall.isMuted();
 
 			const analyticsEvent = muted ? Analytics.AnalyticsEvent.micOff : Analytics.AnalyticsEvent.micOn;
@@ -1530,7 +1817,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setEvent(analyticsEvent)
 				.setType(this.getCallType())
 				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setP5(`callId_${this.currentCall.id}`);
+				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
 
 			analytics.send();
 			this.muteMicDevice(muted);
@@ -1552,6 +1839,16 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
+			if (!CallUtil.havePermissionToBroadcast('cam'))
+			{
+				this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_CAM_HINT', {
+						'#NAME#': this.lastCalledChangeSettingsUserName,
+					}),
+				});
+
+				return;
+			}
+
 			const cameraEnabled = !this.currentCall.isVideoEnabled();
 
 			const analyticsEvent = cameraEnabled
@@ -1565,7 +1862,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setEvent(analyticsEvent)
 				.setType(this.getCallType())
 				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setP5(`callId_${this.currentCall.id}`);
+				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
 
 			analytics.send();
 
@@ -1580,16 +1877,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
-			if (cameraEnabled)
-			{
-				this.switchCameraDeviceState(cameraEnabled);
-			}
-			else
-			{
-				this.currentCall.setVideoEnabled(cameraEnabled);
-				this.callView.setCameraState(cameraEnabled); // should we update button state only if we received local video?
-				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, false);
-			}
+			this.switchCameraDeviceState(cameraEnabled);
 		}
 
 		onReplaceCameraClick()
@@ -1599,38 +1887,47 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 			this.currentCall.switchCamera();
-
-			setTimeout(
-				() => this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed()),
-				(Application.getPlatform() === 'android' ? 1000 : 100),
-			);
+			if (Application.getPlatform() === 'android')
+			{
+				setTimeout(() => this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed()), 1000);
+			}
+			else
+			{
+				this.callView.setHideLocalVideo(true);
+				setTimeout(() => {
+					this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed());
+					this.callView.setHideLocalVideo(false);
+				}, 100);
+			}
 		}
 
 		onChatButtonClick()
 		{
-			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.AnalyticsTool.im)
-				.setCategory(Analytics.AnalyticsCategory.call)
-				.setEvent(Analytics.AnalyticsEvent.clickChat)
-				.setType(this.getCallType())
-				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setP5(`callId_${this.currentCall.id}`);
+			this.fold().then(() => {
+				if (this.currentCall)
+				{
+					const analytics = new AnalyticsEvent()
+						.setTool(Analytics.AnalyticsTool.im)
+						.setCategory(Analytics.AnalyticsCategory.call)
+						.setEvent(Analytics.AnalyticsEvent.clickChat)
+						.setType(this.getCallType())
+						.setSection(Analytics.AnalyticsSection.callWindow)
+						.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
 
-			analytics.send();
+					analytics.send();
 
-			this.fold();
-			if (this.currentCall)
-			{
-				BX.postComponentEvent('onOpenDialog', [{ dialogId: this.currentCall.associatedEntity.id }, true], 'im.recent');
-				BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ dialogId: this.currentCall.associatedEntity.id }], 'im.messenger');
-			}
+					BX.postComponentEvent('onOpenDialog', [{ dialogId: this.currentCall.associatedEntity.id }, true], 'im.recent');
+					BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ dialogId: this.currentCall.associatedEntity.id }], 'im.messenger');
+				}
+			});
 		}
 
 		onPrivateChatButtonClick(userId)
 		{
-			this.fold();
-			BX.postComponentEvent('onOpenDialog', [{ dialogId: userId }, true], 'im.recent');
-			BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ dialogId: userId }], 'im.messenger');
+			this.fold().then(() => {
+				BX.postComponentEvent('onOpenDialog', [{ dialogId: userId }, true], 'im.recent');
+				BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ dialogId: userId }], 'im.messenger');
+			});
 		}
 
 		onFloorRequestButtonClick()
@@ -1641,7 +1938,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setEvent(Analytics.AnalyticsEvent.handOn)
 				.setType(this.getCallType())
 				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setP5(`callId_${this.currentCall.id}`);
+				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
 
 			analytics.send();
 
@@ -1693,31 +1990,31 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onHangupButtonClick()
 		{
-			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.AnalyticsTool.im)
-				.setCategory(Analytics.AnalyticsCategory.call)
-				.setEvent(Analytics.AnalyticsEvent.disconnect)
-				.setType(this.getCallType())
-				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setSubSection(Analytics.AnalyticsSubSection.finishButton)
-				.setStatus(Analytics.AnalyticsStatus.quit)
-				.setP1(
-					this.currentCall.isVideoEnabled()
-						? Analytics.AnalyticsEvent.cameraOn
-						: Analytics.AnalyticsEvent.cameraOff,
-				)
-				.setP2(
-					this.currentCall.isMuted()
-						? Analytics.AnalyticsEvent.micOff
-						: Analytics.AnalyticsEvent.micOn,
-				)
-				.setP5(`callId_${this.currentCall.id}`);
-
-			this.ignoreLeaveAnalyticsEvent = true;
-			analytics.send();
-
 			if (this.currentCall)
 			{
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.AnalyticsTool.im)
+					.setCategory(Analytics.AnalyticsCategory.call)
+					.setEvent(Analytics.AnalyticsEvent.disconnect)
+					.setType(this.getCallType())
+					.setSection(Analytics.AnalyticsSection.callWindow)
+					.setSubSection(Analytics.AnalyticsSubSection.finishButton)
+					.setStatus(Analytics.AnalyticsStatus.quit)
+					.setP1(
+						this.currentCall.isVideoEnabled()
+							? Analytics.AnalyticsEvent.cameraOn
+							: Analytics.AnalyticsEvent.cameraOff,
+					)
+					.setP2(
+						this.currentCall.isMuted()
+							? Analytics.AnalyticsEvent.micOff
+							: Analytics.AnalyticsEvent.micOn,
+					)
+					.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+
+				this.ignoreLeaveAnalyticsEvent = true;
+				analytics.send();
+
 				this.currentCall.hangup();
 			}
 			this.clearEverything();
@@ -1732,9 +2029,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onToggleSubscriptionRemoteVideo(toggleList)
 		{
-			if (this.currentCall.toggleSubscriptionRemoteVideo)
+			if (this.currentCall.toggleSubscriptionRemoteVideoHandler)
 			{
-				this.currentCall.toggleSubscriptionRemoteVideo(toggleList);
+				this.currentCall.toggleSubscriptionRemoteVideoHandler(toggleList);
 			}
 		}
 
@@ -1764,35 +2061,81 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				return;
 			}
-			const action = copilotEnabled ? 'call.Track.start' : 'call.Track.stop';
-			BX.ajax.runAction(action, {
-				data: { callId: this.currentCall.id },
-			}).then(() => {
+
+			if (CallUtil.isLegacyCall(this.currentCall.provider, this.currentCall?.scheme))
+			{
+				const action = copilotEnabled ? 'call.Track.start' : 'call.Track.stop';
+				BX.ajax.runAction(action, {
+					data: { callId: this.currentCall.id },
+				}).then(() => {
+					const newCopilotState = !this.currentCall.isCopilotActive;
+					this.onUpdateCallCopilotState({
+						isTrackRecordOn: newCopilotState,
+						senderId: env.userId,
+					});
+
+					if (newCopilotState)
+					{
+						this.sendStartCopilotRecordAnalytics();
+					}
+				}).catch((error) => {
+					const errorCode = error.errors[0].code;
+
+					this.sendStartCopilotRecordAnalytics(errorCode);
+				});
+			}
+			else
+			{
 				const newCopilotState = !this.currentCall.isCopilotActive;
 				this.onUpdateCallCopilotState({
 					isTrackRecordOn: newCopilotState,
 					senderId: env.userId,
 				});
+				this.currentCall.toggleRecorderState();
 
 				if (newCopilotState)
 				{
 					this.sendStartCopilotRecordAnalytics();
 				}
-			}).catch((error) => {
-				const errorCode = error.errors[0].code;
+			}
+		}
 
-				this.sendStartCopilotRecordAnalytics(errorCode);
-			});
+		onRecordState(recordState)
+		{
+			if (this.callView)
+			{
+				this.callView.setRecordState(recordState);
+			}
 		}
 
 		onCallUserInvited(e)
 		{
 			if (this.callView)
 			{
+				if (CallUtil.isLegacyCall(this.currentCall.provider, this.currentCall?.scheme))
+				{
+					this.callView.addUser(e.userId);
+					CallUtil.getUsers(this.currentCall.id, [e.userId]).then(
+						(userData) => this.callView.updateUserData(userData),
+					);
+				}
+				else
+				{
+					CallUtil.setUserData(e.userData);
+					this.callView.updateUserData(e.userData);
+					this.callView.addUser(e.userId);
+				}
+			}
+		}
+
+		onCallUserJoined(e)
+		{
+			console.log('onCallUserJoined', e);
+			if (this.callView)
+			{
+				CallUtil.setUserData(e.userData);
+				this.callView.updateUserData(e.userData);
 				this.callView.addUser(e.userId);
-				CallUtil.getUsers(this.currentCall.id, [e.userId]).then(
-					(userData) => this.callView.updateUserData(userData),
-				);
 			}
 		}
 
@@ -1909,15 +2252,36 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		onCallRTCStatsReceived()
 		{}
 
-		onCallCallFailure()
+		onCallCallFailure(errorCode)
 		{
+			const errorMessage = errorCode === BX.Call.CallError.SecurityKeyChanged
+				? BX.message('CALLMOBILE_SECURITY_KEY_CHANGED').replace('[break]', '\n')
+				: BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E003');
+
 			CallUtil.error('onCallFailure');
 			this.clearEverything();
-			navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E003'));
+			navigator.notification.alert(errorMessage);
 		}
 
 		onCallStreamReceived(userId, stream)
 		{
+
+			if (this.onCallViewRenderToMediaReceived)
+			{
+				const style = 'background-color: #00F; color: white;'
+				console.log(`%c[debug] Time from view render to the first media received: ${Date.now() - this.onCallViewRenderToMediaReceived} ms`, style);
+
+				this.onCallViewRenderToMediaReceived = null;
+			}
+
+			if (this.onConnectToCallClick)
+			{
+				const style = 'background-color: #AA00AA; color: white;';
+				console.log(`%c[debug] Time from click to the first media received: ${Date.now() - this.onConnectToCallClick} ms`, style);
+
+				this.onConnectToCallClick = null;
+			}
+
 			if (this.callView)
 			{
 				this.callView.setVideoStream(userId, stream);
@@ -1952,7 +2316,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setP1(`callLength_${CallUtil.getTimeInSeconds(this.callStartTime)}`)
 				.setP3(`maxUserCount_${this.getMaxActiveCallUsers().length}`)
 				.setP4(`chatId_${this.normalizeChatId(this.currentCall.associatedEntity.id)}`)
-				.setP5(`callId_${this.currentCall.id}`);
+				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
 
 			analytics.send();
 
@@ -1963,7 +2327,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (oldCall.muted)
 			{
-				this.currentCall.setMuted(true);
+				//this.currentCall.setMuted(true);
+				this.muteMicDevice(true);
 			}
 
 			this.bindCallEvents();
@@ -2009,7 +2374,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
-			if (this.currentCall)
+			if (this.currentCall?.uuid === e.callUuid)
 			{
 				this.currentCall.hangup();
 			}
@@ -2032,7 +2397,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					.setP1(`callLength_${CallUtil.getTimeInSeconds(this.callStartTime)}`)
 					.setP3(`maxUserCount_${this.getMaxActiveCallUsers().length}`)
 					.setP4(`chatId_${this.normalizeChatId(this.currentCall.associatedEntity.id)}`)
-					.setP5(`callId_${this.currentCall.id}`);
+					.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
 
 				analytics.send();
 			}
@@ -2060,12 +2425,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 			const muted = this.currentCall.isMuted();
-			this.currentCall.setMuted(muted);
+			/*this.currentCall.setMuted(muted);
 			this.callView.setMuted(muted);
 			if (this.nativeCall)
 			{
 				this.nativeCall.mute(muted);
-			}
+			}*/
+
+			this.muteMicDevice(muted);
 		}
 
 		onUpdateCallCopilotState({ isTrackRecordOn, senderId })
@@ -2075,7 +2442,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
-			this.currentCall.isCopilotActive = isTrackRecordOn;
+			if (CallUtil.isLegacyCall(this.currentCall.provider, this.currentCall?.scheme))
+			{
+				this.currentCall.isCopilotActive = isTrackRecordOn;
+			}
+
 			this.callView.updateCopilotState(this.currentCall.isCopilotActive);
 			if (isTrackRecordOn && senderId !== env.userId)
 			{
@@ -2092,31 +2463,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
-		onAllParticipantsAudioMuted(){
-			this.currentCall.setMuted(true);
-			this.callView.setMuted(true);
-			if (this.nativeCall)
-			{
-				this.nativeCall.mute(true);
-			}
-		}
-
-		onParticipantAudioMuted(params){
-			if(this.currentCall.userId == params.data.userId){
-				this.currentCall.setMuted(true);
-				this.callView.setMuted(true);
-				if (this.nativeCall)
-				{
-					this.nativeCall.mute(true);
-				}
-			}
-		}
-
 		switchCameraDeviceState(state){
+			if (!CallUtil.havePermissionToBroadcast('cam') && state)
+			{
+				return;
+			}
 			MediaDevices.requestCameraAccess().then(() => {
 				this.currentCall.setVideoEnabled(state);
 				this.callView.setCameraState(state); // should we update button state only if we received local video?
-				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, true);
+				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, state);
 			}).catch(() => {
 				navigator.notification.alert(
 					BX.message('MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA'),
@@ -2127,24 +2482,287 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			});
 		}
 
-		onAllParticipantsVideoMuted(){
-			this.switchCameraDeviceState(false)
+		__createCallControlToast(params)
+		{
+			//const avatar = params.avatarUrl ? CallUtil.makeAbsolute(params.avatarUrl) : '';
+			//Avatar not added yet because currently Toast can't support more than one color image
+
+			const callControlToast = new Toast(
+				{
+					message: params.message,
+					time: 5,
+					position: 'top',
+					offset: 10,
+					backgroundColor: '#085DC1',
+				}, this.rootWidget);
+
+			callControlToast.show();
 		}
 
-		onParticipantVideoMuted(params){
-			if(this.currentCall.userId == params.data.userId){
-				this.switchCameraDeviceState(false)
+		__createHintControlToast(params)
+		{
+			const hintControlToast = new Toast(
+			{
+				message: params.message,
+				time: 5,
+				offset: 10,
+				position: 'top',
+			}, this.rootWidget);
+
+			hintControlToast.show();
+		}
+
+		onAllParticipantsAudioMuted(params){
+			if(env.userId != params.fromUserId){
+				/*this.currentCall.setMuted(true);
+				this.callView.setMuted(true);
+				if (this.nativeCall)
+				{
+					this.nativeCall.mute(true);
+				}*/
+
+				this.muteMicDevice(true);
+
+				const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+				const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+				let contentPhrase = 'CALLMOBILE_USER_TURNED_OFF_MIC_FOR_ALL_' + initiatorGender;
+
+				const content = CallUtil.getCustomMessage(contentPhrase, {
+					gender: initiatorGender,
+					name: initiatorUserModel.data.name,
+				});
+
+				this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
 			}
 		}
 
-		onAllParticipantsScreenshareMuted(){
-			this.callView.setUserScreenState(false)
+		onParticipantAudioMuted(params){
+			if(env.userId == params.toUserId){
+				/*this.currentCall.setMuted(true);
+				this.callView.setMuted(true);
+				if (this.nativeCall)
+				{
+					this.nativeCall.mute(true);
+				}*/
+
+				this.muteMicDevice(true);
+
+				const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+				const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+				let contentPhrase = 'CALLMOBILE_USER_TURNED_OFF_YOUR_MIC_' + initiatorGender;
+
+				const content = CallUtil.getCustomMessage(contentPhrase, {
+					gender: initiatorGender,
+					name: initiatorUserModel.data.name,
+				});
+
+				this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
+			}
 		}
 
-		onParticipantScreenshareMuted(params){
-			if(this.currentCall.userId == params.data.userId){
-				this.callView.setUserScreenState(false)
+		onAllParticipantsVideoMuted(params)
+		{
+			if(env.userId != params.fromUserId){
+				this.switchCameraDeviceState(false);
+
+				const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+				const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+				let contentPhrase = 'CALLMOBILE_USER_TURNED_OFF_CAM_FOR_ALL_' + initiatorGender;
+
+				const content = CallUtil.getCustomMessage(contentPhrase, {
+					gender: initiatorGender,
+					name: initiatorUserModel.data.name,
+				});
+
+				this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
 			}
+		}
+
+		onParticipantVideoMuted(params)
+		{
+			if(env.userId == params.toUserId){
+				this.switchCameraDeviceState(false);
+
+				const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+				const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+				let contentPhrase = 'CALLMOBILE_USER_TURNED_OFF_YOUR_CAM_' + initiatorGender;
+
+				const content = CallUtil.getCustomMessage(contentPhrase, {
+					gender: initiatorGender,
+					name: initiatorUserModel.data.name,
+				});
+
+				this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
+			}
+		}
+
+		onAllParticipantsScreenshareMuted(params)
+		{
+			if(env.userId != params.fromUserId){
+				this.callView.setUserScreenState(false);
+
+				const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+				const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+				let contentPhrase = 'CALLMOBILE_USER_TURNED_OFF_SCREENSHARE_FOR_ALL_' + initiatorGender;
+
+				const content = CallUtil.getCustomMessage(contentPhrase, {
+					gender: initiatorGender,
+					name: initiatorUserModel.data.name,
+				});
+
+				this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
+			}
+		}
+
+		onParticipantScreenshareMuted(params)
+		{
+			this.callView.setUserScreenState(params.toUserId, false);
+
+			if(env.userId == params.toUserId){
+				const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+				const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+				let contentPhrase = 'CALLMOBILE_USER_TURNED_OFF_YOUR_SCREENSHARE_' + initiatorGender;
+
+				const content = CallUtil.getCustomMessage(contentPhrase, {
+					gender: initiatorGender,
+					name: initiatorUserModel.data.name,
+				});
+
+				this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
+			}
+		}
+
+		onUserPermissionsChanged(params)
+		{
+			const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+			const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+			let contentPhrase = 'CALLMOBILE_ADMIN_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_' + initiatorGender;
+
+			if (!params.allow)
+			{
+				contentPhrase = 'CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_' + initiatorGender;
+				const floorState = this.callView.getUserFloorRequestState(env.userId);
+
+				if (floorState)
+				{
+					this.onFloorRequestButtonClick();
+				}
+			}
+
+			const content = CallUtil.getCustomMessage(contentPhrase, {
+				gender: initiatorGender,
+				name: initiatorUserModel.data.name,
+			});
+
+			this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
+		}
+
+		onRoomSettingsChanged(params)
+		{
+			let typesOfMute = {'audio': 'mic', 'video': 'cam', 'screen_share': 'screenshare'};
+
+			let content = '';
+			let isAllow = false;
+
+			const initiatorUserModel = this.callView.userRegistry.get(params.fromUserId);
+			const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+
+			if (params.eft === true)
+			{
+				this.lastCalledChangeSettingsUserName = initiatorUserModel.data.name;
+
+				if (params.fromUserId != env.userId)
+				{
+					const typesOfMuteMessage =
+					{
+						'audio': 'CALLMOBILE_USER_NOT_ALLOW_TURN_ON_MIC',
+						'video': 'CALLMOBILE_USER_NOT_ALLOW_TURN_ON_CAM',
+						'screen_share': 'CALLMOBILE_USER_NOT_ALLOW_TURN_ON_SCREENSHARE',
+					};
+
+					let contentPhrase = typesOfMuteMessage[params.act] + '_' + initiatorGender;
+
+					content = CallUtil.getCustomMessage(contentPhrase, {
+						gender: initiatorGender,
+						name: initiatorUserModel.data.name,
+					});
+				}
+			}
+			else
+			{
+				isAllow = true;
+				if (params.fromUserId != env.userId)
+				{
+					const typesOfMuteMessage =
+					{
+						'audio': 'CALLMOBILE_USER_ALLOW_TURN_ON_MIC',
+						'video': 'CALLMOBILE_USER_ALLOW_TURN_ON_CAM',
+						'screen_share': 'CALLMOBILE_USER_ALLOW_TURN_ON_SCREENSHARE',
+					};
+
+					let contentPhrase = typesOfMuteMessage[params.act] + '_' + initiatorGender;
+
+					content = CallUtil.getCustomMessage(contentPhrase, {
+						gender: initiatorGender,
+						name: initiatorUserModel.data.name,
+					});
+
+				}
+			}
+
+			this.__createCallControlToast({message: content, avatarUrl: initiatorUserModel.data.avatar});
+		}
+
+		onCallConnected()
+		{
+			const cameraEnabled = this.currentCall.isVideoEnabled();
+			const microphoneMuted = this.currentCall.isMuted();
+
+			if (!CallUtil.havePermissionToBroadcast('cam') && cameraEnabled)
+			{
+				this.switchCameraDeviceState(false);
+				this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_CAM_HINT', {
+						'#NAME#': this.lastCalledChangeSettingsUserName,
+					}),
+				});
+			}
+
+			if (!CallUtil.havePermissionToBroadcast('mic') && !microphoneMuted)
+			{
+				this.muteMicDevice(true);
+				this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT', {
+						'#NAME#': this.lastCalledChangeSettingsUserName,
+					}),
+				});
+			}
+		}
+
+		onRecorderStatusChanged({ status, error })
+		{
+			this.onUpdateCallCopilotState({
+				isTrackRecordOn: status,
+				senderId: error ? env.userId : '',
+			});
+		}
+
+		onChatUserChanged(chatInfo)
+		{
+			if (this.currentCall?.associatedEntity.id === chatInfo.dialogId)
+			{
+				this.callView.updateTotalUsersCount(chatInfo.userCount);
+			}
+		}
+
+		onChatUsersCountUpdate(users)
+		{
+			this.callView.updateTotalUsersCount(users);
 		}
 
 		onNativeCallAnswered(nativeAction)
@@ -2196,8 +2814,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onNativeCallMuted(muted)
 		{
-			this.currentCall.setMuted(muted);
-			this.callView.setMuted(muted);
+			//this.currentCall.setMuted(muted);
+			//this.callView.setMuted(muted);
+			this.muteMicDevice(muted);
 		}
 
 		onNativeCallVideoIntent()
@@ -2213,7 +2832,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		canCallBeAnswered(call)
 		{
 			const isEnoughTimeAfterDecline = (this.callInviteTime + this.callDeclineTimeout) < Date.now();
-			const isSwitchToGroupCall = this.currentCall && !this.currentCall.parentId && call.parentId;
+			const isSwitchToGroupCall = this.currentCall && !this.currentCall.parentId && !this.currentCall.parentUuid && (call.parentId || call.parentUuid);
 			if (!this.callInviteTime || isEnoughTimeAfterDecline || isSwitchToGroupCall)
 			{
 				return true;

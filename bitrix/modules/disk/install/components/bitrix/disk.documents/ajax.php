@@ -151,7 +151,14 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 
 		if ($trackedObject->getFile()->getTypeFile() == Disk\TypeFile::FLIPCHART)
 		{
-			$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($trackedObject->getFileId());
+			if ($trackedObject->getAttachedObjectId())
+			{
+				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($trackedObject->getAttachedObjectId());
+			}
+			else
+			{
+				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($trackedObject->getFileId());
+			}
 			array_unshift(
 				$actions,
 				[

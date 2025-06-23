@@ -6,7 +6,7 @@
 jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('pull-handler--chat-user');
 
@@ -42,11 +42,17 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 			logger.info('ChatUserPullHandler.handleBotDelete', params);
 
 			this.store.dispatch('recentModel/delete', { id: params.botId })
-				.then(() => Counters.update())
+				.then(() => TabCounters.update())
 				.catch((err) => logger.error('ChatUserPullHandler.handleDeleteBot.recentModel/delete.catch:', err))
 			;
 		}
 
+		/**
+		 * @param {UserUpdateParams} params
+		 * @param {object} extra
+		 * @param {object} command
+		 * @void
+		 */
 		handleUserUpdate(params, extra, command)
 		{
 			if (this.interceptEvent(params, extra, command))
@@ -59,6 +65,31 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 			this.updateUser(params);
 		}
 
+		/**
+		 * @desc this handler works for the scenario of adding a new bot to the portal (new registration)
+		 * @param {BotUpdateParams} params
+		 * @param {object} extra
+		 * @param {object} command
+		 * @void
+		 */
+		handleBotAdd(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			this.logger.info('ChatUserPullHandler.handleBotAdd', params);
+
+			this.updateUser(params);
+		}
+
+		/**
+		 * @param {BotUpdateParams} params
+		 * @param {object} extra
+		 * @param {object} command
+		 * @void
+		 */
 		handleBotUpdate(params, extra, command)
 		{
 			if (this.interceptEvent(params, extra, command))
@@ -71,6 +102,10 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 			this.updateUser(params);
 		}
 
+		/**
+		 * @param {BotUpdateParams|UserUpdateParams} params
+		 * @void
+		 */
 		updateUser(params)
 		{
 			const recentItem = RecentDataConverter.fromPushToModel({

@@ -45,6 +45,16 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 			},
 
 			/**
+			 * @function messagesModel/pinModel/getPinsCounter
+			 * @param state
+			 * @param getters
+			 * @return {number}
+			 */
+			getPinsCounter: (state, getters) => (chatId) => {
+				return getters.getListByChatId(chatId).length;
+			},
+
+			/**
 			 * @function messagesModel/pinModel/getPin
 			 * @param state
 			 * @return {PinModelState || null}

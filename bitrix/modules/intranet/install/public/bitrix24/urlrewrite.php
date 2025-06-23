@@ -994,8 +994,33 @@ $arUrlRewrite = array(
 		'PATH' => '/extranet/call/index.php',
 	],
 	[
-		'CONDITION' => '#^/disk/boards/([0-9]+)/([0-9a-zA-Z]+)#',
-		'RULE' => 'action=disk.integration.flipchart.$2&fileId=$1',
+		'CONDITION' => '#^/disk/boards/([0-9]+)/openAttachedDocument#',
+		'RULE' => 'action=disk.integration.flipchart.openAttachedDocument&attachedObjectId=$1',
 		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/openDocument#',
+		'RULE' => 'action=disk.integration.flipchart.openDocument&fileId=$1',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/openAttached#',
+		'RULE' => 'action=disk.integration.flipchart.openAttachedDocument&attachedObjectId=$1',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/open#',
+		'RULE' => 'action=disk.integration.flipchart.openDocument&fileId=$1',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/vote-result/([0-9a-z\.]+)#',
+		'RULE' => "signedAttachId=\$1",
+		'PATH' => '/vote-result/index.php',
+	],
+	[
+		'CONDITION' => '#^/extranet/vote-result/([0-9a-z\.]+)#',
+		'RULE' => "signedAttachId=\$1",
+		'PATH' => '/extranet/vote-result/index.php',
 	],
 );

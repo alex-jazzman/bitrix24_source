@@ -24,6 +24,7 @@ use Bitrix\Im\V2\Rest\PopupData;
 use Bitrix\Im\V2\Rest\PopupDataAggregatable;
 use Bitrix\Im\V2\Rest\RestEntity;
 use Bitrix\Im\V2\Result;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -32,6 +33,7 @@ class FileItem implements RestEntity, PopupDataAggregatable
 {
 	use ContextCustomer;
 
+	private const QUICK_ACCESS_SCOPE_PREFIX = 'chat_';
 	private const MAX_PREVIEW_IMAGE_SIZE = 1280;
 	private const ANIMATED_IMAGE_EXTENSIONS = ['gif', 'webp'];
 
@@ -88,6 +90,11 @@ class FileItem implements RestEntity, PopupDataAggregatable
 	public static function removeDiskBbCodesFromText(string $text): string
 	{
 		return preg_replace("/\[DISK\=([0-9]+)\]/i", '', $text);
+	}
+
+	public static function getQuickAccessScope(int $chatId): string
+	{
+		return self::QUICK_ACCESS_SCOPE_PREFIX . $chatId;
 	}
 
 	public function setDiskFile(File $diskFile): self
@@ -355,6 +362,41 @@ class FileItem implements RestEntity, PopupDataAggregatable
 		return in_array($this->getDiskFile()?->getExtension(), self::ANIMATED_IMAGE_EXTENSIONS, true);
 	}
 
+	private function getQuickAccessSupportedFileTypes(): array
+	{
+		return [TypeFile::IMAGE, TypeFile::VIDEO];
+	}
+
+	private function isQuickAccessSupported(): bool
+	{
+		$diskFile = $this->getDiskFile();
+		$diskFileType = $diskFile ? (int)$diskFile->getTypeFile() : null;
+		$supportedTypes = $this->getQuickAccessSupportedFileTypes();
+
+		return in_array($diskFileType, $supportedTypes, true);
+	}
+
+	private function getQuickAccessToken(): ?string
+	{
+		$file = $this->getDiskFile();
+		$chatId = $this->getChatId();
+		if (
+			$file === null
+			|| $chatId === null
+			|| !$this->isQuickAccessSupported()
+			|| !ServiceLocator::getInstance()->has('disk.scopeTokenService')
+		)
+		{
+			return null;
+		}
+
+		$scope = self::getQuickAccessScope($chatId);
+		$scopeTokenService = ServiceLocator::getInstance()->get('disk.scopeTokenService');
+
+		return $scopeTokenService?->getEncryptedScopeForObject($file, $scope);
+
+	}
+
 	private function getShowLink(): string
 	{
 		if (TypeFile::isImage($this->getDiskFile() ?? ''))
@@ -393,6 +435,12 @@ class FileItem implements RestEntity, PopupDataAggregatable
 				self::MAX_PREVIEW_IMAGE_SIZE,
 				self::MAX_PREVIEW_IMAGE_SIZE
 			);
+		}
+
+		$quickAccessToken = $this->getQuickAccessToken();
+		if ($quickAccessToken !== null)
+		{
+			$params['_esd'] = $quickAccessToken;
 		}
 
 		// Adding the file extension to the end of the URL to ensure that various parsers and clients

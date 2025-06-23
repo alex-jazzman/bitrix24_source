@@ -9772,64 +9772,76 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 		}
 
 
-		$storageTypeID = $fields['STORAGE_TYPE_ID'] = CCrmActivity::GetDefaultStorageTypeID();
+		$storageTypeID = CCrmActivity::GetDefaultStorageTypeID();
 		unset($fields['STORAGE_ELEMENT_IDS']);
-		if($storageTypeID === StorageType::WebDav)
+		unset($fields['STORAGE_TYPE_ID']);
+		if ($storageTypeID === StorageType::WebDav)
 		{
 			$webdavElements = isset($fields['WEBDAV_ELEMENTS']) && is_array($fields['WEBDAV_ELEMENTS'])
-				? $fields['WEBDAV_ELEMENTS'] : array();
+				?
+				$fields['WEBDAV_ELEMENTS']
+				: []
+			;
 
-			$prevStorageElementIDs = $currentFields['STORAGE_ELEMENT_IDS'] ?? array();
-			$oldStorageElementIDs = array();
-			foreach($webdavElements as &$element)
+			$prevStorageElementIDs = $currentFields['STORAGE_ELEMENT_IDS'] ?? [];
+			$oldStorageElementIDs = [];
+			foreach ($webdavElements as &$element)
 			{
 				$elementID = isset($element['ELEMENT_ID']) ? intval($element['ELEMENT_ID']) : 0;
-				if($elementID > 0)
+				if ($elementID > 0)
 				{
-					if(!isset($fields['STORAGE_ELEMENT_IDS']))
+					if (!isset($fields['STORAGE_ELEMENT_IDS']))
 					{
-						$fields['STORAGE_ELEMENT_IDS'] = array();
+						$fields['STORAGE_ELEMENT_IDS'] = [];
 					}
 					$fields['STORAGE_ELEMENT_IDS'][] = $elementID;
 				}
 
 				$oldElementID = isset($element['OLD_ELEMENT_ID']) ? intval($element['OLD_ELEMENT_ID']) : 0;
-				if($oldElementID > 0
-					&& ($elementID > 0 || (isset($element['DELETE']) && $element['DELETE'] === true)))
+				if (
+					$oldElementID > 0
+					&& ($elementID > 0 || (isset($element['DELETE']) && $element['DELETE'] === true))
+				)
 				{
-					if(in_array($oldElementID, $prevStorageElementIDs))
+					if (in_array($oldElementID, $prevStorageElementIDs))
 					{
 						$oldStorageElementIDs[] = $oldElementID;
 					}
 				}
 			}
-			unset($element);
 		}
-		else if($storageTypeID === StorageType::Disk)
+		elseif ($storageTypeID === StorageType::Disk)
 		{
 			$diskFiles = isset($fields['FILES']) && is_array($fields['FILES'])
-				? $fields['FILES'] : array();
+				? $fields['FILES']
+				: []
+			;
 
-			if(empty($diskFiles))
+			if (empty($diskFiles))
 			{
 				//For backward compatibility only
 				$diskFiles = isset($fields['WEBDAV_ELEMENTS']) && is_array($fields['WEBDAV_ELEMENTS'])
-					? $fields['WEBDAV_ELEMENTS'] : array();
+					? $fields['WEBDAV_ELEMENTS']
+					: []
+				;
 			}
 
-			foreach($diskFiles as &$fileInfo)
+			foreach ($diskFiles as &$fileInfo)
 			{
 				$fileID = isset($fileInfo['FILE_ID']) ? (int)$fileInfo['FILE_ID'] : 0;
-				if($fileID > 0)
+				if ($fileID > 0)
 				{
-					if(!isset($fields['STORAGE_ELEMENT_IDS']))
+					if (!isset($fields['STORAGE_ELEMENT_IDS']))
 					{
-						$fields['STORAGE_ELEMENT_IDS'] = array();
+						$fields['STORAGE_ELEMENT_IDS'] = [];
 					}
 					$fields['STORAGE_ELEMENT_IDS'][] = $fileID;
 				}
 			}
-			unset($fileInfo);
+		}
+		if (!empty($fields['STORAGE_ELEMENT_IDS']))
+		{
+			$fields['STORAGE_TYPE_ID'] = $storageTypeID;
 		}
 
 		$regEvent = true;

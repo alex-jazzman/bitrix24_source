@@ -8,6 +8,7 @@ jn.define('ui-system/blocks/avatar/src/elements/base', (require, exports, module
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { PureComponent } = require('layout/pure-component');
 	const { getFirstLetters } = require('layout/ui/user/empty-avatar');
+	const { PropTypes } = require('utils/validation');
 	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
 	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');

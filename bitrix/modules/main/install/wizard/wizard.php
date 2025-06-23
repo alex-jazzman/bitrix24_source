@@ -167,14 +167,7 @@ class AgreementStep4VM extends CWizardStep
 	function InitStep()
 	{
 		$this->SetStepID("agreement");
-		if ($_SERVER['BITRIX_ENV_TYPE'] <> "crm")
-		{
-			$this->SetNextStep("check_license_key");
-		}
-		else
-		{
-			$this->SetNextStep("create_modules");
-		}
+		$this->SetNextStep("check_license_key");
 		$this->SetNextCaption(InstallGetMessage("NEXT_BUTTON"));
 		$this->SetPrevCaption(InstallGetMessage("PREVIOUS_BUTTON"));
 		$this->SetTitle(InstallGetMessage("INS_STEP2_TITLE"));
@@ -2787,11 +2780,6 @@ class CreateAdminStep extends CWizardStep
 		$wizard = $this->GetWizard();
 		$wizard->SetDefaultVar("login", "admin");
 		$wizard->SetDefaultVar("email", "");
-
-		if ($_SERVER['BITRIX_ENV_TYPE'] == "crm")
-		{
-			$wizard->SetDefaultVar("lic_key_variant", "Y");
-		}
 	}
 
 	function OnPostForm()
@@ -2846,18 +2834,15 @@ class CreateAdminStep extends CWizardStep
 			return false;
 		}
 
-		if ($_SERVER['BITRIX_ENV_TYPE'] == "crm")
+		if (trim($userName) == '')
 		{
-			if (trim($userName) == '')
-			{
-				$this->SetError(InstallGetMessage("ACT_KEY_BAD_NAME"), "user_name");
-				return false;
-			}
-			if (trim($userSurname) == '')
-			{
-				$this->SetError(InstallGetMessage("ACT_KEY_BAD_LAST_NAME"), "user_surname");
-				return false;
-			}
+			$this->SetError(InstallGetMessage("ACT_KEY_BAD_NAME"), "user_name");
+			return false;
+		}
+		if (trim($userSurname) == '')
+		{
+			$this->SetError(InstallGetMessage("ACT_KEY_BAD_LAST_NAME"), "user_surname");
+			return false;
 		}
 
 		$admin = $DB->Query("SELECT * FROM b_user WHERE ID=1", true);
@@ -2911,18 +2896,6 @@ class CreateAdminStep extends CWizardStep
 			COption::SetOptionString("main", "update_devsrv", $devsrv);
 		}
 
-		if ($_SERVER['BITRIX_ENV_TYPE'] == "crm")
-		{
-			if ($wizard->GetVar("lic_key_variant") == "Y")
-			{
-				$key = BXInstallServices::GetRegistrationKey($userName, $userSurname, $email, 'mysql');
-				if ($key !== false)
-				{
-					BXInstallServices::CreateLicenseFile($key);
-				}
-			}
-		}
-
 		$wizardName = BXInstallServices::GetConfigWizard();
 		if ($wizardName === false)
 		{
@@ -2954,8 +2927,6 @@ class CreateAdminStep extends CWizardStep
 
 	function ShowStep()
 	{
-		$crm = ($_SERVER['BITRIX_ENV_TYPE'] == "crm");
-
 		$this->content = '
 		<table border="0" class="data-table">
 			<tr>
@@ -2978,18 +2949,13 @@ class CreateAdminStep extends CWizardStep
 				<td>' . $this->ShowInputField("text", "email", ["size" => "30"]) . '</td>
 			</tr>
 			<tr>
-				<td nowrap align="right">' . ($crm ? '<span style="color:red">*</span>' : '') . InstallGetMessage("INS_NAME") . '</td>
+				<td nowrap align="right"><span style="color:red">*</span>&nbsp;' . InstallGetMessage("INS_NAME") . '</td>
 				<td>' . $this->ShowInputField("text", "user_name", ["size" => "30"]) . '</td>
 			</tr>
 			<tr>
-				<td nowrap align="right">' . ($crm ? '<span style="color:red">*</span>' : '') . InstallGetMessage("INS_LAST_NAME") . '</td>
+				<td nowrap align="right"><span style="color:red">*</span>&nbsp;' . InstallGetMessage("INS_LAST_NAME") . '</td>
 				<td>' . $this->ShowInputField("text", "user_surname", ["size" => "30"]) . '</td>
-			</tr>';
-		if ($crm)
-		{
-			$this->content .= '<tr><td colspan="2"><label>' . $this->ShowCheckboxField("lic_key_variant", "Y") . InstallGetMessage("ACT_KEY") . '</label></td></tr>';
-		}
-		$this->content .= '
+			</tr>
 		</table>';
 	}
 }
@@ -4051,23 +4017,16 @@ if (defined("WIZARD_DEFAULT_TONLY") && WIZARD_DEFAULT_TONLY === true)
 elseif (BXInstallServices::IsShortInstall())
 {
 	//Short installation
-	$arSteps = ["AgreementStep4VM"];
-
-	if ($_SERVER['BITRIX_ENV_TYPE'] <> "crm")
-	{
-		$arSteps[] = "CheckLicenseKey";
-		$arSteps[] = "CreateModulesStep";
-		$arSteps[] = "CreateAdminStep";
-		$arSteps[] = "SelectWizardStep";
-		$arSteps[] = "LoadModuleStep";
-		$arSteps[] = "LoadModuleActionStep";
-		$arSteps[] = "SelectWizard1Step";
-	}
-	else
-	{
-		$arSteps[] = "CreateModulesStep";
-		$arSteps[] = "CreateAdminStep";
-	}
+	$arSteps = [
+		"AgreementStep4VM",
+		"CheckLicenseKey",
+		"CreateModulesStep",
+		"CreateAdminStep",
+		"SelectWizardStep",
+		"LoadModuleStep",
+		"LoadModuleActionStep",
+		"SelectWizard1Step",
+	];
 }
 else
 {

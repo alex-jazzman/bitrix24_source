@@ -3,17 +3,24 @@
 	BX.namespace("BX.Call.AI");
 
 	const Analytics = BX.Call.Lib?.Analytics;
+	const isNewFollowUpSliderEnabled = BX.Call.Util?.isNewFollowUpSliderEnabled();
 
 	BX.Call.AI.Tabs = {
 		callId: null,
 		tabsList: [],
+		tabTitle: [],
+		tabContents: [],
+		contentWrapper: [],
 		tabButtons: [],
 		taskButtons: [],
 		meetingButtons: [],
 		mensionElements: [],
 		userListAppInstance: null,
-		audioPlayerInstance: null,
+		audioPlayerInstance: {},
 		playbackMarks: [],
+		scrolling: false,
+		scrollTimer: null,
+		deletePopupInstance: null,
 		init: function()
 		{
 			this.tabsList = document.getElementsByClassName('bx-call-component-call-ai__tab-content');
@@ -23,6 +30,7 @@
 			this.initAudioPlayer();
 			this.initUserList();
 			this.initPlaybackMarks();
+			this.initGradeChart();
 		},
 		onTabClick: function(e)
 		{
@@ -97,6 +105,16 @@
 				this.tabButtons[0].click();
 			}
 
+			this.tabTitle = document.querySelectorAll('.bx-call-component-call-ai__tab-title');
+			for (let i = 0; i < this.tabTitle.length; i++)
+			{
+				this.tabTitle[i].addEventListener('click', this.scrollToTab.bind(this));
+			}
+
+			this.tabContents = document.querySelectorAll('.bx-call-component-call-ai__tab-details');
+			this.contentWrapper = document.querySelector('.bx-call-component-call-ai__tab-content-wrapper');
+			this.contentWrapper.addEventListener('scroll', this.changeTitleForScroll.bind(this));
+
 			this.taskButtons = document.getElementsByClassName('bx-call-component-call-ai__task-button');
 			for (let i = 0; i < this.taskButtons.length; i++) {
 				this.taskButtons[i].addEventListener('click', this.onCreateTaskClick.bind(this));
@@ -114,6 +132,9 @@
 
 			const disclaimerLink = document.getElementsByClassName('bx-call-component-call-ai__disclaimer-link');
 			disclaimerLink[0]?.addEventListener('click', this.clickDisclaimer.bind(this));
+
+			const deleteBtn = document.getElementsByClassName('bx-call-component-call-ai__delete');
+			deleteBtn[0]?.addEventListener('click', this.deleteFollowUp.bind(this));
 		},
 		initAudioPlayer: function()
 		{
@@ -130,30 +151,33 @@
 				return;
 			}
 
-			const { audioSrc } = audioRecordContainer[0].dataset;
 			const callId = this.callId;
 
-			if (!audioSrc)
-			{
-				return;
-			}
+			for (let i = 0; i < audioRecordContainer.length; i++) {
+				const { audioSrc, audioId } = audioRecordContainer[i].dataset;
 
-			this.audioPlayerInstance = BitrixVue.createApp({
-				components: {
-					AudioPlayer: BX.Call.Component.Elements.AudioPlayer
-				},
-				data() {
-					return {
-						audioSrc,
-						analyticsCallback: () => {
-							Analytics.getInstance().copilot.onAIPlayRecord({ callId });
-						},
-					};
-				},
-				template: `
-					<AudioPlayer :src="audioSrc" :analyticsCallback="analyticsCallback" ref="AudioPlayerRef"/>
-				`,
-			}).mount('.bx-call-component-call-ai__call-audio-record');
+				if (!audioSrc)
+				{
+					continue;
+				}
+
+				this.audioPlayerInstance[audioId] = BitrixVue.createApp({
+					components: {
+						AudioPlayer: BX.Call.Component.Elements.AudioPlayer,
+					},
+					data() {
+						return {
+							audioSrc,
+							analyticsCallback: () => {
+								Analytics.getInstance().copilot.onAIPlayRecord({ callId });
+							},
+						};
+					},
+					template: `
+						<AudioPlayer :src="audioSrc" :analyticsCallback="analyticsCallback" ref="AudioPlayerRef"/>
+					`,
+				}).mount(`#bx-call-component-call-ai__call-audio-record-${audioId}`);
+			}
 		},
 		initUserList: function()
 		{
@@ -164,6 +188,12 @@
 
 			const BitrixVue = BX.Vue3.BitrixVue;
 			const userListContainer = document.getElementsByClassName('bx-call-component-call-ai-page__title-users-container');
+
+			if (userListContainer.length === 0)
+			{
+				return;
+			}
+
 			const { callId } = userListContainer[0].dataset;
 
 			if (!callId)
@@ -180,6 +210,8 @@
 						isLoadingUsers: true,
 						callId,
 						usersData: [],
+						withBorder: !isNewFollowUpSliderEnabled,
+						withIcon: isNewFollowUpSliderEnabled,
 					};
 				},
 				created()
@@ -195,25 +227,35 @@
 					});
 				},
 				template: `
-					<UserList :loading="isLoadingUsers" :usersData="usersData" />
+					<UserList :loading="isLoadingUsers" :usersData="usersData" :withBorder="withBorder" :withIcon="withIcon"/>
 				`,
 			}).mount('.bx-call-component-call-ai-page__title-users-container');
 		},
 		initPlaybackMarks: function()
 		{
-			if (!this.audioPlayerInstance)
+			if (Object.keys(this.audioPlayerInstance).length === 0)
 			{
 				return;
 			}
 
-			this.playbackMarks = document.getElementsByClassName('bx-call-component-call-ai-decryption-block__time');
-			for (let i = 0; i < this.playbackMarks.length; i++)
-			{
-				this.playbackMarks[i].addEventListener('click', () => {
-					Analytics.getInstance().copilot.onAIRecordTimeCodeClick({ callId: this.callId });
-					this.audioPlayerInstance.$refs.AudioPlayerRef.choosePlaybackTime(this.getTimeInSeconds(i));
-				});
-			}
+			this.playbackMarks = document.getElementsByClassName('bx-call-component-call-ai__time-code');
+
+			Object.keys(this.audioPlayerInstance).forEach(key => {
+				for (let i = 0; i < this.playbackMarks.length; i++)
+				{
+					const { audioId } = this.playbackMarks[i].dataset;
+
+					if (audioId !== key)
+					{
+						continue;
+					}
+
+					this.playbackMarks[i].addEventListener('click', () => {
+						Analytics.getInstance().copilot.onAIRecordTimeCodeClick({ callId: this.callId });
+						this.audioPlayerInstance[key].$refs.AudioPlayerRef.choosePlaybackTime(this.getTimeInSeconds(i));
+					});
+				}
+			});
 		},
 		clickMension: function(e)
 		{
@@ -228,7 +270,7 @@
 		},
 		clickDisclaimer: function()
 		{
-			const infoHelper = top.BX.UI.InfoHelper;
+			const infoHelper = top.BX.Helper || window.top.BX.Helper;
 			const ARTICLE_CODE = '20412666';
 
 			if (!infoHelper)
@@ -238,10 +280,262 @@
 
 			if (infoHelper.isOpen())
 			{
-				infoHelper.close()
+				infoHelper.close();
 			}
 
-			infoHelper.show(ARTICLE_CODE);
+			infoHelper.show(`redirect=detail&code=${ARTICLE_CODE}`);
+		},
+		scrollToTab: function(e)
+		{
+			this.scrolling = true;
+			const tabId = e.target.dataset.tabId;
+			const element = document.getElementById(tabId);
+
+			if (element)
+			{
+				for (let i = 0; i < this.tabTitle.length; i++)
+				{
+					this.tabTitle[i].classList.remove('--active');
+				}
+				e.target.classList.add('--active');
+
+				const parent = element.offsetParent;
+				const elementRect = element.getBoundingClientRect();
+				const parentRect = parent.getBoundingClientRect();
+
+				const offsetTop = elementRect.top - parentRect.top + parent.scrollTop;
+				const marginTop = parseFloat(window.getComputedStyle(element).marginTop);
+
+				parent.scrollTo({
+					top: offsetTop - marginTop,
+					behavior: 'smooth',
+				});
+			}
+
+			if (this.scrollTimer)
+			{
+				clearTimeout(this.scrollTimer);
+				this.scrollTimer = null;
+			}
+
+			this.scrollTimer = setTimeout(() => {
+				this.scrolling = false;
+				this.scrollTimer = null;
+			}, 1000);
+		},
+		changeTitleForScroll: function() {
+			if (this.scrolling) {
+				return;
+			}
+
+			let activeTab = null;
+
+			this.tabContents.forEach((content, index) => {
+				const rect = content.getBoundingClientRect();
+				const parentRect = this.contentWrapper.getBoundingClientRect();
+
+				if (rect.top <= parentRect.top + 100 && rect.bottom >= parentRect.top + 100) {
+					activeTab = this.tabTitle[index];
+				}
+			});
+
+			if (activeTab) {
+				this.tabTitle.forEach(title => title.classList.remove('--active'));
+				activeTab.classList.add('--active');
+			}
+		},
+		generateGradientElevent: function(gradientName, startColor, stopColor, gradientType)
+		{
+			const svgNS = 'http://www.w3.org/2000/svg';
+			const gradient = document.createElementNS(svgNS, gradientType);
+			gradient.setAttribute('id', gradientName);
+			gradient.setAttribute('x1', '0%');
+			gradient.setAttribute('y1', '0%');
+			gradient.setAttribute('x2', '100%');
+			gradient.setAttribute('y2', '100%');
+
+			const stop1 = document.createElementNS(svgNS, 'stop');
+			stop1.setAttribute('offset', '0%');
+			stop1.setAttribute('stop-color', startColor);
+			gradient.appendChild(stop1);
+
+			const stop2 = document.createElementNS(svgNS, 'stop');
+			stop2.setAttribute('offset', '100%');
+			stop2.setAttribute('stop-color', stopColor);
+			gradient.appendChild(stop2);
+
+			const svg = document.createElementNS(svgNS, 'svg');
+			svg.setAttribute('width', '0');
+			svg.setAttribute('height', '0');
+			svg.appendChild(gradient);
+			document.body.appendChild(svg);
+
+			return gradientName;
+		},
+		initGradeChart: function()
+		{
+			const chartContainer = document.getElementsByClassName('bx-call-component-call-ai__grade-value-wrapper');
+
+			if (chartContainer.length === 0)
+			{
+				return;
+			}
+
+			let { efficiencyValue } = chartContainer[0].dataset;
+
+			if (!efficiencyValue)
+			{
+				efficiencyValue = 0;
+			}
+
+			this.generateGradientElevent(
+				'bx-call-component-call-ai__gradient-primary',
+				'#29D887',
+				'#30AC73',
+				'linearGradient',
+			);
+			this.generateGradientElevent(
+				'bx-call-component-call-ai__gradient-secondary',
+				'#EBF0F3',
+				'#DBDBDB',
+				'radialGradient',
+			);
+
+			let chartData = [];
+			let chartColors = [];
+
+			if (Number(efficiencyValue) === 100)
+			{
+				chartData = [{
+					percentage: 100,
+				}];
+
+				chartColors = [
+					'url(#bx-call-component-call-ai__gradient-primary)',
+				];
+			}
+			else if (Number(efficiencyValue) > 0)
+			{
+				chartData = [{
+					percentage: 1,
+				}, {
+					percentage: efficiencyValue,
+				}, {
+					percentage: 1,
+				}, {
+					percentage: 100 - efficiencyValue - 2,
+				}];
+
+				chartColors = [
+					'#F8F6FD',
+					'url(#bx-call-component-call-ai__gradient-primary)',
+					'#F8F6FD',
+					'url(#bx-call-component-call-ai__gradient-secondary)',
+				];
+			}
+			else
+			{
+				chartData = [{
+					percentage: 100,
+				}];
+
+				chartColors = [
+					'url(#bx-call-component-call-ai__gradient-secondary)',
+				];
+			}
+
+			AmCharts.makeChart('bx-call-component-call-ai__grade-chart', {
+				type: 'pie',
+				dataProvider: chartData,
+				titleField: 'status',
+				valueField: 'percentage',
+				balloonText: '',
+				labelText: '',
+				innerRadius: '85%',
+				colors: chartColors,
+				legend: {
+					enabled: false,
+				},
+				responsive: {
+					enabled: true,
+					addDefaultRules: true,
+					rules: [
+						{
+							minWidth: 200,
+							minHeight: 200,
+							overrides: {
+								innerRadius: '85%',
+							},
+						},
+					],
+				},
+				startDuration: 0,
+				width: '100%',
+				height: '100%',
+				pullOutRadius: 0,
+				pullOutOnlyOne: false,
+				outlineAlpha: 0,
+				startEffect: 'elastic',
+				pullOutEffect: 'elastic',
+				listeners: [{
+					event: 'clickSlice',
+					method: (e) => {
+						return false;
+					},
+				}],
+			});
+		},
+		deleteFollowUp: function()
+		{
+			if (!BX.Vue3 || !isNewFollowUpSliderEnabled)
+			{
+				return;
+			}
+
+			const BitrixVue = BX.Vue3.BitrixVue;
+
+			if (this.deletePopupInstance)
+			{
+				this.deletePopupInstance.unmount();
+				this.deletePopupInstance = null;
+			}
+
+			const callId = this.callId;
+
+			this.deletePopupInstance = BitrixVue.createApp({
+				components: {
+					CallActionPopup: BX.Call.Component.Elements.CallActionPopup,
+				},
+				data() {
+					return {
+						titleText: BX.Loc.getMessage('CALL_COMPONENT_DELETE_FOLLOWUP_TITLE'),
+						descriptionText: BX.Loc.getMessage('CALL_COMPONENT_DELETE_FOLLOWUP_DESCRIPTION'),
+						okText: BX.Loc.getMessage('CALL_COMPONENT_DELETE_FOLLOWUP_OK_BTN'),
+						okAction: () => {
+							BX.ajax.runAction('call.FollowUp.drop', {
+								data: { callId },
+							}).then(() => {
+								const topSlider = BX.SidePanel.Instance.getTopSlider();
+								if (topSlider)
+								{
+									topSlider.close();
+								}
+							}).catch(e => {
+								console.error('FollowUp delete error', e);
+							});
+						},
+					};
+				},
+				template: `
+					<CallActionPopup
+						:titleText="titleText"
+						:descriptionText="descriptionText"
+						:okText="okText"
+						:okAction="okAction"
+					/>
+				`,
+			});
+			this.deletePopupInstance.mount('.bx-call-component-call-ai__delete-popup');
 		},
 	};
 

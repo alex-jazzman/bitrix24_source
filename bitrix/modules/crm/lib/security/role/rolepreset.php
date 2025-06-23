@@ -14,7 +14,6 @@ use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Localization\Loc;
 use CCrmOwnerType;
-use function Symfony\Component\String\s;
 
 final class RolePreset {
 
@@ -57,6 +56,10 @@ final class RolePreset {
 						'READ' => ['-' => 'X'],
 						'WRITE' => ['-' => 'X'],
 					],
+					'RS' => [
+						'READ' => ['-' => 'X'],
+						'WRITE' => ['-' => 'X'],
+					],
 				],
 			],
 			self::HEAD => [
@@ -91,6 +94,10 @@ final class RolePreset {
 						'READ' => ['-' => 'X'],
 						'WRITE' => ['-' => 'X'],
 					],
+					'RS' => [
+						'READ' => ['-' => 'X'],
+						'WRITE' => ['-' => 'X'],
+					],
 				],
 			],
 			self::DEPUTY => [
@@ -122,6 +129,10 @@ final class RolePreset {
                     ],
 
 					'CCA' => [
+						'READ' => ['-' => 'X'],
+						'WRITE' => ['-' => 'X'],
+					],
+					'RS' => [
 						'READ' => ['-' => 'X'],
 						'WRITE' => ['-' => 'X'],
 					],
@@ -171,6 +182,10 @@ final class RolePreset {
                     ],
 
 					'CCA' => [
+						'READ' => ['-' => 'X'],
+						'WRITE' => ['-' => 'X'],
+					],
+					'RS' => [
 						'READ' => ['-' => 'X'],
 						'WRITE' => ['-' => 'X'],
 					],

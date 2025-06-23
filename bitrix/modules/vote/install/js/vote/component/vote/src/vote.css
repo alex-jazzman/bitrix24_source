@@ -1,9 +1,5 @@
 .vote-display-inner {
-	padding: 9px 14px 13px;
-}
-
-.bx-im-reaction-list__vote {
-	padding: 0 14px 12px;
+	padding: 12px 14px 3px 15px;
 }
 
 .vote-display__loader {

@@ -38,6 +38,7 @@
 			this.isCurrentUserAdmin = params.isCurrentUserAdmin;
 			this.avatarUri = BX.type.isNotEmptyString(params.photo) ? params.photo : null;
 			this.userpicUploadAttribute = params.userpicUploadAttribute ?? '';
+			this.actionsAvailability = params.actionsAvailability;
 
 			this.entityEditorInstance = new namespace.EntityEditor({
 				managerInstance: this,
@@ -108,7 +109,7 @@
 		{
 			const avatarOptions = {
 				size: 212,
-				userpicPath: this.avatarUri,
+				userpicPath: this.avatarUri ? encodeURI(this.avatarUri) : null,
 			};
 
 			if (this.userStatus === 'collaber')
@@ -161,11 +162,6 @@
 
 		initAvailableActions: function()
 		{
-			if (!this.canEditProfile)
-			{
-				return;
-			}
-
 			var actionElement = document.querySelector("[data-role='user-profile-actions-button']");
 			if (BX.type.isDomNode(actionElement))
 			{
@@ -302,11 +298,8 @@
 			}
 
 			if (
-				this.isCurrentUserAdmin === 'Y'
-				&& this.userStatus !== "fired"
-				&& this.userStatus !== "waiting"
-				&& !this.isOwnProfile
-				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
+				this.actionsAvailability.fire
+				&& !BX.util.in_array(this.userStatus, ['email', 'shop'])
 			)
 			{
 				itemText = BX.message("INTRANET_USER_PROFILE_FIRE");
@@ -332,7 +325,7 @@
 				});
 			}
 
-			if (this.isCurrentUserAdmin === 'Y' && this.userStatus === "fired" && !this.isOwnProfile)
+			if (this.actionsAvailability.restore)
 			{
 				menuItems.push({
 					text: BX.message("INTRANET_USER_PROFILE_HIRE"),
@@ -344,7 +337,7 @@
 				});
 			}
 
-			if (this.isCurrentUserAdmin === 'Y' && this.userStatus === "waiting" && !this.isOwnProfile)
+			if (this.actionsAvailability.confirm)
 			{
 				menuItems.push({
 					text: BX.message("INTRANET_USER_PROFILE_ACTION_CONFIRM"),
@@ -354,7 +347,10 @@
 						this.confirmUserRequest('Y');
 					}, this)
 				});
+			}
 
+			if (this.actionsAvailability.decline)
+			{
 				menuItems.push({
 					text: BX.message("INTRANET_USERPROFILE_ACTION_REFUSE"),
 					className: "menu-popup-no-icon",
@@ -375,7 +371,10 @@
 						this.reinviteUser();
 					}, this)
 				});
+			}
 
+			if (this.actionsAvailability.delete)
+			{
 				menuItems.push({
 					text: BX.message("INTRANET_USER_PROFILE_DELETE"),
 					className: "menu-popup-no-icon",
@@ -666,12 +665,11 @@
 				.then((response) => {
 					if (response.data)
 					{
+						this.avatar.setUserPic(encodeURI(response.data));
 						(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
 							userId: this.userId,
 							url: response.data,
 						}]);
-
-						this.avatar.setUserPic(encodeURI(response.data));
 					}
 
 					this.hideLoader({ loader });
@@ -799,10 +797,11 @@
 		{
 			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
 
-			BX.ajax.runComponentAction(this.componentName, "fireUser", {
+			BX.ajax.runAction('intranet.user.fire', {
 				signedParameters: this.signedParameters,
-				mode: 'ajax',
-				data: {}
+				data: {
+					userId: this.userId,
+				},
 			}).then(function (response) {
 				if (response.data === true)
 				{
@@ -824,10 +823,11 @@
 		{
 			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
 
-			BX.ajax.runComponentAction(this.componentName, "hireUser", {
+			BX.ajax.runAction('intranet.user.restore', {
 				signedParameters: this.signedParameters,
-				mode: 'ajax',
-				data: {}
+				data: {
+					userId: this.userId,
+				},
 			}).then(function (response) {
 				if (response.data === true)
 				{

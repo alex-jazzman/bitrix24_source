@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Internals\Service;
 
 use Bitrix\Booking\Entity;
@@ -7,10 +9,14 @@ use Bitrix\Booking\Internals\Exception\Booking\CreateBookingException;
 use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
+use Bitrix\Booking\Internals\Service\Overbooking\IntersectionResult;
 use Bitrix\Booking\Internals\Service\Overbooking\OverlapPolicy;
+use Bitrix\Booking\Provider\BookingProvider;
 
 class BookingService
 {
+	private BookingProvider $bookingProvider;
+
 	public function __construct(
 		private readonly BookingRepositoryInterface $bookingRepository,
 		private readonly ResourceService $resourceService,
@@ -19,6 +25,7 @@ class BookingService
 		private readonly OverlapPolicy $overbookingOverlapPolicy
 	)
 	{
+		$this->bookingProvider = new BookingProvider();
 	}
 
 	public function create(Entity\Booking\Booking $newBooking, int $userId): Entity\Booking\Booking
@@ -78,7 +85,9 @@ class BookingService
 		return $booking;
 	}
 
-	public function checkBookingBeforeCreating(Entity\Booking\Booking $booking, bool $allowOverbooking): void
+	public function checkBookingBeforeCreating(
+		Entity\Booking\Booking $booking,
+	): void
 	{
 		if ($booking->getResourceCollection()->isEmpty())
 		{
@@ -90,37 +99,37 @@ class BookingService
 			throw new Exception('Date period is not specified');
 		}
 
-		$this->checkIntersection($booking, $allowOverbooking);
-
 		if ($booking->isAutoConfirmed())
 		{
 			$booking->setConfirmed(true);
 		}
 	}
 
-	private function checkIntersection(Entity\Booking\Booking $newBooking, bool $allowOverbooking): void
+	public function checkIntersection(Entity\Booking\Booking $booking, bool $allowOverbooking): IntersectionResult
 	{
 		if ($allowOverbooking)
 		{
-			$intersectingBookings = $this->overbookingOverlapPolicy->getIntersectionsList(
-				$newBooking,
-				$this->bookingRepository->getIntersectionsList($newBooking)
+			$intersectionResult = $this->overbookingOverlapPolicy->getIntersectionsList(
+				$booking,
+				$this->bookingRepository->getIntersectionsList($booking)
 			);
-			$isResourceAvailable = $intersectingBookings->isEmpty();
 		}
 		else
 		{
-			$intersectingBookings = $this->bookingRepository->getIntersectionsList($newBooking);
-			$isResourceAvailable = $intersectingBookings->isEmpty();
+			$intersectingBookings = $this->bookingRepository->getIntersectionsList($booking);
+			$intersectionResult = (new IntersectionResult($intersectingBookings))
+				->setIsSuccess($intersectingBookings->isEmpty());
 		}
 
-		if (!$isResourceAvailable)
+		if (!$intersectionResult->isSuccess())
 		{
 			throw new Exception(
 				'Some resources are unavailable for the requested time range: '
-				. implode(',', $intersectingBookings->getEntityIds()),
+				. implode(',', $intersectionResult->getBookingCollection()->getEntityIds()),
 				Exception::CODE_BOOKING_INTERSECTION
 			);
 		}
+
+		return $intersectionResult;
 	}
 }

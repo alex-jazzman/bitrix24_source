@@ -20,5 +20,8 @@ return [
 		'./src/pin/validator',
 		'./src/reactions/model',
 		'./src/reactions/default-element',
+		'./src/vote/model',
+		'./src/vote/default-element',
+		'./src/vote/validator',
 	],
 ];

@@ -1,5 +1,5 @@
 <?php
-$MESS["PRODUCT_ENTITY_AVAILABLE_FIELD"] = "Сатып алуға қолжетімділік";
+$MESS['PRODUCT_ENTITY_AVAILABLE_FIELD'] = "Сатып алуға қолжетімділік";
 $MESS["PRODUCT_ENTITY_BARCODE_MULTI_FIELD"] = "Әр данаға арналған бірегей штрихкодтар";
 $MESS["PRODUCT_ENTITY_BUNDLE_FIELD"] = "Жинақтың бар болуы";
 $MESS["PRODUCT_ENTITY_CAN_BUY_ZERO_FIELD"] = "Тауар болмаған кезде сатып алуға рұқсат";

@@ -7,18 +7,19 @@ use Bitrix\Im\Model\MessageTable;
 use Bitrix\Im\Model\RecentTable;
 use Bitrix\Im\Model\RelationTable;
 use Bitrix\Im\Model\UserTable;
+use Bitrix\Im\V2\Application\Features;
 use Bitrix\Im\V2\Chat;
-use Bitrix\Im\V2\Chat\ChannelChat;
+use Bitrix\Im\V2\Chat\Background\Background;
+use Bitrix\Im\V2\Chat\TextField\TextFieldEnabled;
 use Bitrix\Im\V2\Common\ContextCustomer;
 use Bitrix\Im\V2\Entity\User\User;
 use Bitrix\Im\V2\Entity\User\UserBot;
 use Bitrix\Im\V2\Entity\User\UserCollection;
+use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Integration\HumanResources\Department\Department;
 use Bitrix\Im\V2\Integration\Socialnetwork\Group;
 use Bitrix\Im\V2\Permission\ActionGroup;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\ExpressionField;
@@ -40,27 +41,40 @@ class RecentProvider extends BaseProvider
 {
 	use ContextCustomer;
 
-	private const LIMIT = 30;
-	private const ENTITY_ID = 'im-recent-v2';
+	protected const ENTITY_ID = 'im-recent-v2';
+
+	protected const LIMIT = 30;
 	private const ENTITY_TYPE_USER = 'im-user';
 	private const ENTITY_TYPE_CHAT = 'im-chat';
 	private const WITH_CHAT_BY_USERS_OPTION = 'withChatByUsers';
 	private const ONLY_WITH_MANAGE_MESSAGES_RIGHT_OPTION = 'onlyWithManageMessagesRight';
+	protected const ONLY_WITH_OWNER_RIGHT_OPTION = 'onlyWithOwnerRight';
+	protected const ONLY_WITH_NULL_ENTITY_TYPE_OPTION = 'onlyWithNullEntityType';
 	private const EXCLUDE_FROM_RECENT_OPTION = 'excludeFromRecent';
-	private const INCLUDE_ONLY_OPTION = 'includeOnly';
+	protected const INCLUDE_ONLY_OPTION = 'includeOnly';
 	private const EXCLUDE_OPTION = 'exclude';
 	private const SEARCH_FLAGS_OPTION = 'searchFlags';
-	private const FLAG_USERS = 'users';
-	private const FLAG_CHATS = 'chats';
-	private const FLAG_BOTS = 'bots';
+	protected const FLAG_USERS = 'users';
+	protected const FLAG_CHATS = 'chats';
+	protected const FLAG_BOTS = 'bots';
 	private const ALLOWED_SEARCH_FLAGS = [self::FLAG_USERS, self::FLAG_CHATS, self::FLAG_BOTS];
+	protected const SEARCH_CHAT_TYPES_OPTION = 'searchChatTypes';
+	protected const EXCLUDE_IDS_OPTION = 'excludeIds';
+	protected const ALLOWED_SEARCH_CHAT_TYPES = [
+		Chat::IM_TYPE_CHAT,
+		Chat::IM_TYPE_OPEN,
+		Chat::IM_TYPE_CHANNEL,
+		Chat::IM_TYPE_OPEN_CHANNEL,
+		Chat::IM_TYPE_COLLAB,
+	];
 	private const WITH_CHAT_BY_USERS_DEFAULT = false;
 	private const ONLY_WITH_MANAGE_MESSAGE_RIGHT_DEFAULT = false;
+	private const ONLY_WITH_OWNER_RIGHT_DEFAULT = false;
+	private const ONLY_WITH_NULL_ENTITY_TYPE_DEFAULT = false;
 	private const SEARCH_FLAGS_DEFAULT = [
 		self::FLAG_USERS => true,
 		self::FLAG_CHATS => true,
 	];
-
 	private string $preparedSearchString;
 	private string $originalSearchString;
 	private array $userIds;
@@ -71,6 +85,8 @@ class RecentProvider extends BaseProvider
 	{
 		$this->options[self::WITH_CHAT_BY_USERS_OPTION] = self::WITH_CHAT_BY_USERS_DEFAULT;
 		$this->options[self::ONLY_WITH_MANAGE_MESSAGES_RIGHT_OPTION] = self::ONLY_WITH_MANAGE_MESSAGE_RIGHT_DEFAULT;
+		$this->options[self::ONLY_WITH_OWNER_RIGHT_OPTION] = self::ONLY_WITH_OWNER_RIGHT_DEFAULT;
+		$this->options[self::ONLY_WITH_NULL_ENTITY_TYPE_OPTION] = self::ONLY_WITH_NULL_ENTITY_TYPE_DEFAULT;
 		if (isset($options[self::WITH_CHAT_BY_USERS_OPTION]) && is_bool($options[self::WITH_CHAT_BY_USERS_OPTION]))
 		{
 			$this->options[self::WITH_CHAT_BY_USERS_OPTION] = $options[self::WITH_CHAT_BY_USERS_OPTION];
@@ -82,6 +98,18 @@ class RecentProvider extends BaseProvider
 		if (isset($options[self::EXCLUDE_FROM_RECENT_OPTION]) && is_array($options[self::EXCLUDE_FROM_RECENT_OPTION]))
 		{
 			$this->options[self::EXCLUDE_FROM_RECENT_OPTION] = $options[self::EXCLUDE_FROM_RECENT_OPTION];
+		}
+		if (isset($options[self::SEARCH_CHAT_TYPES_OPTION]) && is_array($options[self::SEARCH_CHAT_TYPES_OPTION]))
+		{
+			$this->options[self::SEARCH_CHAT_TYPES_OPTION] = $options[self::SEARCH_CHAT_TYPES_OPTION];
+		}
+		else
+		{
+			$this->options[self::SEARCH_CHAT_TYPES_OPTION] = static::ALLOWED_SEARCH_CHAT_TYPES;
+		}
+		if (isset($options[self::EXCLUDE_IDS_OPTION]) && is_array($options[self::EXCLUDE_IDS_OPTION]))
+		{
+			$this->options[self::EXCLUDE_IDS_OPTION] = $options[self::EXCLUDE_IDS_OPTION];
 		}
 		$this->prepareSearchFlags($options);
 		parent::__construct();
@@ -98,11 +126,11 @@ class RecentProvider extends BaseProvider
 	{
 		$this->originalSearchString = $searchQuery->getQuery();
 		$this->preparedSearchString = $this->prepareSearchString($searchQuery->getQuery());
+		$searchQuery->setCacheable(false);
 		if (!Content::canUseFulltextSearch($this->preparedSearchString))
 		{
 			return;
 		}
-		$searchQuery->setCacheable(false);
 		$items = $this->getSortedLimitedBlankItems();
 		$this->fillItems($items);
 		$dialog->addItems($items);
@@ -129,7 +157,7 @@ class RecentProvider extends BaseProvider
 
 		foreach ($defaultItems as $itemId)
 		{
-			$dialog->getRecentItems()->add(new RecentItem(['id' => $itemId, 'entityId' => self::ENTITY_ID]));
+			$dialog->getRecentItems()->add(new RecentItem(['id' => $itemId, 'entityId' => static::ENTITY_ID]));
 		}
 	}
 
@@ -210,7 +238,7 @@ class RecentProvider extends BaseProvider
 
 		return new Item([
 			'id' => $dialogId,
-			'entityId' => self::ENTITY_ID,
+			'entityId' => static::ENTITY_ID,
 			'entityType' => $entityType,
 			'sort' => $sort,
 			'customData' => $customData,
@@ -231,23 +259,37 @@ class RecentProvider extends BaseProvider
 			if ($item->getEntityType() === self::ENTITY_TYPE_USER)
 			{
 				$userIds[] = $id;
+
+				continue;
 			}
-			else
-			{
-				$chats[$id] = Chat::getInstance($id);
-			}
+
+			$chats[$id] = Chat::getInstance($id);
 		}
+
 		$users = new UserCollection($userIds);
 		$users->fillOnlineData();
+		$privateChatIds = \Bitrix\Im\Dialog::getChatIds($userIds, $this->getContext()->getUserId());
+		$copilotRoles = $this->getCopilotRoles($this->filterCopilotChats($chats));
 		Chat::fillSelfRelations($chats);
+
 		foreach ($items as $item)
 		{
 			$customData = $item->getCustomData()->getValues();
 			if ($item->getEntityType() === self::ENTITY_TYPE_USER)
 			{
 				$user = $users->getById($customData['id']);
-				$customData = array_merge($customData, $user->toRestFormat());
-				$item->setTitle($user->getName())->setAvatar($user->getAvatar())->setCustomData($customData);
+				$customData['user'] = $user->toRestFormat();
+
+				$chatId = (int)$privateChatIds[$customData['id']];
+				$customData['chat']['textFieldEnabled'] = (new TextFieldEnabled($chatId))->get();
+				$customData['chat']['backgroundId'] = (new Background($chatId))->get();
+				$customData['copilot'] = null;
+
+				$item
+					->setTitle($user->getName())
+					->setAvatar($user->getAvatar())
+					->setCustomData($customData)
+				;
 			}
 			if ($item->getEntityType() === self::ENTITY_TYPE_CHAT)
 			{
@@ -256,10 +298,51 @@ class RecentProvider extends BaseProvider
 				{
 					continue;
 				}
-				$customData = array_merge($customData, $chat->toRestFormat(['CHAT_SHORT_FORMAT' => true]));
-				$item->setTitle($chat->getTitle())->setAvatar($chat->getAvatar())->setCustomData($customData);
+
+				$customData['chat'] = $chat->toRestFormat(['CHAT_SHORT_FORMAT' => true]);
+				$customData['copilot'] = $copilotRoles[$chat->getId()] ?? null;
+				$item
+					->setTitle($chat->getTitle())
+					->setAvatar($chat->getAvatar())
+					->setCustomData($customData)
+				;
 			}
 		}
+	}
+
+	/**
+	 * @param Chat\CopilotChat[] $copilotChats
+	 * @return array
+	 */
+	private function getCopilotRoles(array $copilotChats): array
+	{
+		$roleManager = new RoleManager();
+
+		$roleCodes = [];
+		foreach ($copilotChats as $chat)
+		{
+			$chatId = (int)$chat->getId();
+			$roleCodes[$chatId] = $roleManager->getMainRole($chatId);
+		}
+
+		$roles = $roleManager->getRoles($roleCodes);
+
+		$result = [];
+		foreach ($roleCodes as $chatId => $code)
+		{
+			$result[$chatId] = $roles[$code] ?? $roles[RoleManager::getDefaultRoleCode()];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Chat[] $chats
+	 * @return Chat\CopilotChat[]
+	 */
+	private function filterCopilotChats(array $chats): array
+	{
+		return array_filter($chats, static fn($chat) => $chat instanceof Chat\CopilotChat);
 	}
 
 	private function getItemsWithDates(): array
@@ -398,7 +481,7 @@ class RecentProvider extends BaseProvider
 		;
 	}
 
-	private function getChatItemsByRawResult(array $raw, array $additionalCustomData = []): array
+	protected function getChatItemsByRawResult(array $raw, array $additionalCustomData = []): array
 	{
 		$result = [];
 
@@ -423,7 +506,7 @@ class RecentProvider extends BaseProvider
 		return $result;
 	}
 
-	private function getCommonChatQuery(string $joinType = Join::TYPE_LEFT): Query
+	protected function getCommonChatQuery(string $joinType = Join::TYPE_LEFT): Query
 	{
 		$query = ChatTable::query()
 			->setSelect(['ID', 'IS_MEMBER', 'MESSAGE_DATE_CREATE' => 'MESSAGE.DATE_CREATE', 'DATE_CREATE'])
@@ -452,7 +535,7 @@ class RecentProvider extends BaseProvider
 				))->configureValueType(BooleanField::class)
 			)
 			->setLimit(self::LIMIT)
-			->whereIn('TYPE', [Chat::IM_TYPE_CHAT, Chat::IM_TYPE_OPEN, Chat::IM_TYPE_CHANNEL, Chat::IM_TYPE_OPEN_CHANNEL, Chat::IM_TYPE_COLLAB])
+			->whereIn('TYPE', $this->getAllowedChatTypesForQuery())
 		;
 		if ($joinType === Join::TYPE_LEFT)
 		{
@@ -461,10 +544,47 @@ class RecentProvider extends BaseProvider
 
 		if ($this->options[self::ONLY_WITH_MANAGE_MESSAGES_RIGHT_OPTION])
 		{
-			\Bitrix\Im\V2\Permission::getRoleOrmFilter($query, ActionGroup::ManageMessages, 'RELATION', '');
+			\Bitrix\Im\V2\Permission\Filter::getRoleOrmFilter($query, ActionGroup::ManageMessages, 'RELATION', '');
+		}
+
+		if ($this->options[self::ONLY_WITH_OWNER_RIGHT_OPTION])
+		{
+			$query->where('AUTHOR_ID', $this->getContext()->getUserId());
+		}
+
+		if ($this->options[self::ONLY_WITH_NULL_ENTITY_TYPE_OPTION])
+		{
+			$query->where(Query::filter()
+				->logic('or')
+				->whereNull('ENTITY_TYPE')
+				->where('ENTITY_TYPE', ''))
+			;
+		}
+
+		if (isset($this->options[self::EXCLUDE_IDS_OPTION]) && is_array($this->options[self::EXCLUDE_IDS_OPTION]))
+		{
+			$query->whereNotIn('ID', $this->options[self::EXCLUDE_IDS_OPTION]);
 		}
 
 		return $query;
+	}
+
+	protected function getAllowedChatTypesForQuery(): array
+	{
+		$types = [
+			Chat::IM_TYPE_CHAT,
+			Chat::IM_TYPE_OPEN,
+			Chat::IM_TYPE_CHANNEL,
+			Chat::IM_TYPE_OPEN_CHANNEL,
+			Chat::IM_TYPE_COLLAB,
+		];
+
+		if (Features::isCopilotInDefaultTabAvailable())
+		{
+			$types[] = Chat::IM_TYPE_COPILOT;
+		}
+
+		return $types;
 	}
 
 	private function getRelationFilter(): ConditionTree

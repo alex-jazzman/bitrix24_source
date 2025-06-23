@@ -321,7 +321,7 @@ if(
 			if(COption::GetOptionString("main", "event_log_register", "N") === "Y" && $res)
 			{
 				$res_log["user"] = (!empty($_POST["NAME"]) || !empty($_POST["LAST_NAME"])) ? trim(($_POST["NAME"] ?? '')." ".($_POST["LAST_NAME"] ?? '')) : ($_POST["LOGIN"] ?? '');
-				CEventLog::Log("SECURITY", "USER_REGISTER", "main", $ID, serialize($res_log));
+				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "USER_REGISTER", "main", $ID, serialize($res_log));
 			}
 			$new = "Y";
 		}

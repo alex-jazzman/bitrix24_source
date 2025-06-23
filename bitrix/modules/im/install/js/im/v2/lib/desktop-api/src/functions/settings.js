@@ -1,4 +1,9 @@
+import { Extension } from 'main.core';
+
+import type { SettingsCollection } from 'main.core.collections';
+
 export const DesktopSettingsKey = {
+	hideImTab: 'bxd_hide_im_tab',
 	smoothing: 'bxd_camera_smoothing',
 	smoothing_v2: 'bxd_camera_smoothing_v2',
 	telemetry: 'bxd_telemetry',
@@ -6,6 +11,19 @@ export const DesktopSettingsKey = {
 };
 
 export const settingsFunctions = {
+	getSliderBindingsStatus(): boolean
+	{
+		const result = this.getCustomSetting(DesktopSettingsKey.sliderBindingsStatus, '1');
+
+		return result === '1';
+	},
+	isAirDesignEnabledInDesktop(): boolean
+	{
+		// duplicate setting from im.v2.lib.layout to minimize dependencies in external usages
+		const settings: SettingsCollection = Extension.getSettings('im.v2.lib.layout');
+
+		return this.isDesktop() && settings.get('isAirDesignEnabled', true);
+	},
 	getCameraSmoothingStatus(): boolean
 	{
 		return this.getCustomSetting(DesktopSettingsKey.smoothing, '0') === '1';

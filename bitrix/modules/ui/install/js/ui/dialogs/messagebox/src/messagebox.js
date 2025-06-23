@@ -1,7 +1,7 @@
 import { Type, Loc, Cache } from 'main.core';
 import { Popup } from 'main.popup';
 import MessageBoxButtons from './messageboxbuttons';
-import 'ui.buttons';
+import { AirButtonStyle } from 'ui.buttons';
 
 /**
  * @namespace {BX.UI.Dialogs}
@@ -20,6 +20,7 @@ export default class MessageBox
 	buttons = [];
 	mediumButtonSize: false;
 	cacheable: false;
+	useAirDesign: boolean = false;
 
 	okCallback = null;
 	cancelCallback = null;
@@ -44,6 +45,7 @@ export default class MessageBox
 		this.setCancelCallback(options.onCancel);
 		this.setYesCallback(options.onYes);
 		this.setNoCallback(options.onNo);
+		this.useAirDesign = options.useAirDesign === true;
 
 		if (Type.isBoolean(options.mediumButtonSize))
 		{
@@ -203,9 +205,18 @@ export default class MessageBox
 	{
 		if (this.popupWindow === null)
 		{
+			let className = this.isMediumButtonSize()
+				? 'ui-message-box ui-message-box-medium-buttons'
+				: 'ui-message-box';
+
+			if (this.useAirDesign)
+			{
+				className += ' --air';
+			}
+
 			this.popupWindow = new Popup({
 				bindElement: null,
-				className: this.isMediumButtonSize() ? 'ui-message-box ui-message-box-medium-buttons' : 'ui-message-box',
+				className,
 				content: this.getMessage(),
 				titleBar: this.getTitle(),
 				minWidth: this.minWidth,
@@ -385,7 +396,8 @@ export default class MessageBox
 				text: Loc.getMessage('UI_MESSAGE_BOX_OK_CAPTION'),
 				events: {
 					click: this.handleButtonClick
-				}
+				},
+				useAirDesign: this.useAirDesign,
 			});
 		});
 	}
@@ -403,7 +415,9 @@ export default class MessageBox
 				text: Loc.getMessage('UI_MESSAGE_BOX_CANCEL_CAPTION'),
 				events: {
 					click: this.handleButtonClick
-				}
+				},
+				useAirDesign: this.useAirDesign,
+				style: AirButtonStyle.PLAIN,
 			});
 		});
 	}
@@ -422,7 +436,8 @@ export default class MessageBox
 				text: Loc.getMessage('UI_MESSAGE_BOX_YES_CAPTION'),
 				events: {
 					click: this.handleButtonClick
-				}
+				},
+				useAirDesign: this.useAirDesign,
 			});
 		});
 	}
@@ -441,7 +456,9 @@ export default class MessageBox
 				text: Loc.getMessage('UI_MESSAGE_BOX_NO_CAPTION'),
 				events: {
 					click: this.handleButtonClick
-				}
+				},
+				useAirDesign: this.useAirDesign,
+				style: AirButtonStyle.PLAIN,
 			});
 		});
 	}

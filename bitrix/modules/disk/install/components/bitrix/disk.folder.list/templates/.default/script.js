@@ -872,7 +872,7 @@ BX.Disk.FolderListClass = (function (){
 		}).show();
 	};
 
-	FolderListClass.prototype.runCreatingFile = function (documentType, service) {
+	FolderListClass.prototype.runCreatingFile = function (documentType, service, onSuccess = null) {
 
 		if (BX.message('disk_restriction'))
 		{
@@ -887,6 +887,10 @@ BX.Disk.FolderListClass = (function (){
 				targetFolderId: BX.Disk.Page.getFolder().id
 			}).then(function (response) {
 				this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.object.id))
+				if (onSuccess)
+				{
+					onSuccess(response);
+				}
 			}.bind(this));
 
 			return;
@@ -900,6 +904,10 @@ BX.Disk.FolderListClass = (function (){
 				if (response.status === 'success')
 				{
 					this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.object.id))
+					if (onSuccess)
+					{
+						onSuccess(response);
+					}
 				}
 			}.bind(this)
 		});
@@ -3251,7 +3259,17 @@ BX.Disk.FolderListClass = (function (){
 												}
 												else
 												{
-													response.message = BX.message('DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+													let name = params.object.name.split('.');
+													const ext = name.pop().toLowerCase();
+													name = name.join('.');
+													if (name && ext === 'board')
+													{
+														response.message = BX.message('DISK_FOLDER_LIST_OK_BOARD_SHARE_MODIFIED').replace('#FILE#', name);
+													}
+													else
+													{
+														response.message = BX.message('DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+													}
 												}
 												BX.Disk.showModalWithStatusAction(response);
 												this.showSharingIcon(objectId);
@@ -5184,7 +5202,7 @@ BX.Disk.FolderListClass = (function (){
 
 		removeItemById: function (itemId)
 		{
-			BX.fireEvent(document, 'click');
+			BX.fireEvent(document.body, 'click');
 
 			if (this.isGrid())
 			{

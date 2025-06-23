@@ -1,9 +1,7 @@
 <?php
 $MESS["IM_LIB_INVITE_CANCEL"] = "Cancel invitation";
 $MESS["IM_LIB_INVITE_CANCEL_CONFIRM"] = "Are you sure you want to cancel invitation?";
-$MESS["IM_LIB_INVITE_CANCEL_DONE"] = "Invitation has been canceled.";
 $MESS["IM_LIB_INVITE_RESEND"] = "Invite again";
-$MESS["IM_LIB_INVITE_RESEND_DONE"] = "Invitation has been sent.";
 $MESS["IM_LIB_MENU_CALL_2"] = "Video call";
 $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "View in channel";
 $MESS["IM_LIB_MENU_COPILOT_FEEDBACK"] = "Feedback";

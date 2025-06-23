@@ -45,6 +45,14 @@ jn.define('im/messenger/db/update/version', (require, exports, module) => {
 			return this.version;
 		}
 
+		/**
+		 * @return {Promise<number>}
+		 */
+		async getWithoutCache()
+		{
+			return Number(await this.optionRepostory.get(this.optionName, 0));
+		}
+
 		async set(version)
 		{
 			await this.optionRepostory.set(this.optionName, version);

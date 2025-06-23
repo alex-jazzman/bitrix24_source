@@ -108,7 +108,6 @@
 	 */
 	var ACCESS_X = "X";
 
-
 	function getTypeSettings(prop)
 	{
 		let lp = BX.Landing.Main.getInstance();
@@ -380,10 +379,14 @@
 					showOptions.state = 'presets';
 				}
 
-				void BX.Landing.UI.Panel.FormSettingsPanel
-					.getInstance()
-					.show(showOptions)
-				;
+				const formSettingsPanelInstance = BX.Landing.UI.Panel.FormSettingsPanel.getInstance();
+				if (
+					formSettingsPanelInstance
+					&& element.ownerDocument === BX.Landing.PageObject.getEditorWindow().document
+				)
+				{
+					formSettingsPanelInstance.show(showOptions);
+				}
 			}
 		}
 
@@ -411,9 +414,7 @@
 		bind(top, "storage", this.onStorage);
 	};
 
-
 	BX.Landing.Block.storage = new BX.Landing.Collection.BlockCollection();
-
 
 	BX.Landing.Block.prototype = {
 		/**
@@ -581,11 +582,13 @@
 		createEvent: function(options)
 		{
 			return new BlockEvent({
+				blockId: this.id,
 				block: this.node,
 				node: !!options && !!options.node ? options.node : null,
+				content: this.content,
 				card: !!options && !!options.card ? options.card : null,
 				data: (!!options && options.data) || {},
-				onForceInit: this.forceInit.bind(this)
+				onForceInit: this.forceInit.bind(this),
 			});
 		},
 
@@ -3319,13 +3322,13 @@
 						items: typeSettings.items,
 						help: typeSettings.help,
 						onChange: onChange.bind(this),
-						onReset: onReset.bind(this)
+						onReset: onReset.bind(this),
 					});
 
 					// when field changed
 					function onChange(value, items, postfix, affect) {
 						// false handler by some fields events
-						if (value instanceof  BX.Event.BaseEvent)
+						if (value instanceof BX.Event.BaseEvent)
 						{
 							return;
 						}

@@ -262,6 +262,11 @@ $arAllOptions = array(
 		Array("event_log_task", GetMessage("MAIN_EVENT_LOG_TASK"), "N", Array("checkbox", "Y")),
 		Array("event_log_marketplace", GetMessage("MAIN_EVENT_LOG_MARKETPLACE"), "N", Array("checkbox", "Y")),
 
+		GetMessage('main_option_additional_log_title'),
+		Array("event_log_syslog", GetMessage('main_option_event_log_syslog'), "N", Array("checkbox", "Y")),
+		Array("event_log_filelog", GetMessage('main_option_event_log_file'), "N", Array("checkbox", "Y")),
+		Array("event_log_filelog_path", GetMessage('main_option_event_log_file_path'), "", Array("text", 30)),
+
 		GetMessage("MAIN_OPT_PROFILE"),
 		Array("user_profile_history", GetMessage("MAIN_OPT_PROFILE_HYSTORY"), "N", Array("checkbox", "Y")),
 		Array("profile_history_cleanup_days", GetMessage("MAIN_OPT_HISTORY_DAYS"), "0", Array("text", 5)),

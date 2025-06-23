@@ -71,6 +71,11 @@ export const VisitMenu = {
 		},
 		openMenu(): void
 		{
+			if (this.disabled)
+			{
+				return;
+			}
+
 			if (!this.isFeatureEnabled)
 			{
 				limit.show();
@@ -156,7 +161,7 @@ export const VisitMenu = {
 			:data-booking-id="dataId"
 			:disabled="disabled || !isFeatureEnabled"
 			class="booking-actions-popup-button-with-chevron"
-			:class="{'--lock': !isFeatureEnabled}"
+			:class="{'--lock': !isFeatureEnabled || disabled}"
 			buttonClass="ui-btn-shadow"
 			:text="loc('BB_ACTIONS_POPUP_VISIT_BTN_LABEL')"
 			:size="ButtonSize.EXTRA_SMALL"

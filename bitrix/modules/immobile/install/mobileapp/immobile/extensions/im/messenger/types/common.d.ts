@@ -1,5 +1,5 @@
 // @ts-ignore
-import {JNBaseClassInterface} from '../../../../../../../../mobile/dev/janative/api'
+import { JNBaseClassInterface } from '../../../../../../../../mobile/dev/janative/api'
 
 export type DialogId = number | string;
 
@@ -10,3 +10,5 @@ export declare interface JNChatBaseClassInterface<TEvent extends Record<string, 
 
 	once<T extends keyof TEvent>(eventName: T, handler: TEvent[T]): void;
 }
+
+export declare interface IChatRecentList extends BaseList {}

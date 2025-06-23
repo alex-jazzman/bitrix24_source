@@ -46,6 +46,9 @@ if (isset($_GET['alias']))
 	}
 }
 
+// we embed the messenger on the /online/ page, so we don't need chat bar (quick-access).
+define("AIR_TEMPLATE_HIDE_CHAR_BAR", true);
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/public/desktop_app/router.php");

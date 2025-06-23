@@ -1,3 +1,5 @@
+import { DraggedElementKind } from 'booking.const';
+
 export type InterfaceModelState = {
 	isFeatureEnabled: boolean,
 	canTurnOnTrial: boolean,
@@ -8,11 +10,14 @@ export type InterfaceModelState = {
 	scroll: number,
 	offHoursHover: boolean,
 	offHoursExpanded: boolean,
+	waitListExpanded: boolean,
+	calendarExpanded: boolean,
 	fromHour: number,
 	toHour: number,
 	selectedDateTs: number,
 	viewDateTs: number,
 	deletingBookings: { [key: number ]: number },
+	deletingWaitListItemIds: { [key: number ]: number },
 	selectedCells: { [key: string ]: Object },
 	hoveredCell: CellDto,
 	busySlots: { [key: string ]: Object },
@@ -31,13 +36,17 @@ export type InterfaceModelState = {
 	quickFilter: QuickFilter,
 	timezone: string,
 	editingBookingId: number,
+	editingWaitListItemId: number,
 	draggedBookingId: number,
 	draggedBookingResourceId: number,
+	draggedDataTransfer: DraggedDataTransfer,
 	resizedBookingId: number,
 	mousePosition: MousePosition,
 	isCurrentSenderAvailable: boolean,
 	isShownTrialPopup: boolean,
+	animationPause: boolean,
 	createdFromEmbedBookings: { [key: number | string ]: number | string },
+	createdFromEmbedWaitListItems: { [key: number | string ]: number | string },
 }
 
 export type Intersections = {
@@ -77,3 +86,9 @@ export type Occupancy = {
 	toTs: number,
 	resourcesIds: number[],
 };
+
+export type DraggedDataTransfer = {
+	id: number,
+	resourceId: number,
+	kind: $Values<typeof DraggedElementKind> | null,
+}

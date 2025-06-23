@@ -1,11 +1,15 @@
-<?
-define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC','Y');
-define('NO_AGENT_CHECK', true);
-define('DisableEventsCheck', true);
+<?php
+
+const NO_KEEP_STATISTIC = 'Y';
+const NO_AGENT_STATISTIC = 'Y';
+const NO_AGENT_CHECK = true;
+const DisableEventsCheck = true;
+
+/**
+ * @global \CMain $APPLICATION
+ */
 
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Order\Permissions;
 use Bitrix\Main\Localization\Loc;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');

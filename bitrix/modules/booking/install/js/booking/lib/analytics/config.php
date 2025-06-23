@@ -8,8 +8,8 @@ return [
 	'js' => 'dist/analytics.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.analytics',
 		'booking.core',
+		'ui.analytics',
 		'booking.const',
 	],
 	'skip_core' => false,

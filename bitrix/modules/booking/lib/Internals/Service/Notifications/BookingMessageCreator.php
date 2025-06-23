@@ -136,7 +136,7 @@ abstract class BookingMessageCreator
 			return '';
 		}
 
-		return $user['NAME'] ?? '';
+		return $user['NAME'] ?: ' ';
 	}
 
 	protected function getDateFrom(): string

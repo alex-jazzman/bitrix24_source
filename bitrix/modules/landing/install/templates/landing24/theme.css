@@ -1993,12 +1993,6 @@ h1.g-line-height-0, h2.g-line-height-0, h3.g-line-height-0, h4.g-line-height-0, 
 .g-bg--after::after {
   background: transparent !important;
   background: var(--bg--after) !important;
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
   pointer-events: none;
 }
 
@@ -7247,6 +7241,10 @@ small,
   cursor: pointer;
 }
 
+.g-cursor-default {
+  cursor: default;
+}
+
 /*------------------------------------
   Overflows
 ------------------------------------*/
@@ -7745,6 +7743,18 @@ small,
 }
 .g-color-primary--before::before, .g-color-primary--after::after {
   color: var(--primary);
+}
+
+.g-color-primary-dark-v1, .g-color-primary-dark-v1--hover:hover {
+  color: var(--primary-darken-1) !important;
+}
+
+.g-color-primary-dark-v2, .g-color-primary-dark-v2--hover:hover {
+  color: var(--primary-darken-2) !important;
+}
+
+.g-color-primary-dark-v3, .g-color-primary-dark-v3--hover:hover {
+  color: var(--primary-darken-3) !important;
 }
 
 /* Secondary Colors */
@@ -29445,7 +29455,7 @@ img.u-block-hover__main--mover-down {
 .u-blockquote-v7::before {
   content: "";
   position: absolute;
-  top: 0;
+  top: 10px;
   left: 50%;
   display: block;
   width: 35px;
@@ -30192,6 +30202,52 @@ main:not(.landing-edit-mode) .block-26-8-separator {
 main:not(.landing-edit-mode) .block-store-menu-sidebar .landing-block {
   overflow-y: auto;
   height: calc(100vh - 100px);
+}
+
+/* GRID */
+.d-grid {
+  display: grid;
+}
+
+.bg-hover:hover .bg-hover-prev-white {
+  background-color: #fff !important;
+}
+
+.card-before::before {
+  position: relative;
+  top: 16px;
+  transition: 0.3s;
+}
+
+.color-hover:hover .color-hover-prev-before::before {
+  color: var(--color) !important;
+}
+
+.arrow-1::before,
+.arrow-1::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 12px;
+  border-radius: 9999px;
+  -webkit-transform-origin: 50% calc(100% - 1px);
+          transform-origin: 50% calc(100% - 1px);
+}
+
+.arrow-1::before {
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+}
+
+.arrow-1::after {
+  -webkit-transform: rotate(-45deg);
+          transform: rotate(-45deg);
+}
+
+.color-white {
+  color: #fff !important;
 }
 
 /*------------------------------------

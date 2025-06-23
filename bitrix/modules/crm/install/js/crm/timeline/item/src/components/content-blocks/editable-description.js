@@ -1,6 +1,8 @@
-import { Loc, Runtime, Text, Type } from 'main.core';
+import { Dom, Runtime, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
+import { BasicEditor, TextEditorComponent } from 'ui.text-editor';
+import { HtmlFormatterComponent } from 'ui.bbcode.formatter.html-formatter';
 
 import { Action } from '../../action';
 import { Button } from '../layout/button';
@@ -8,12 +10,14 @@ import { ButtonState } from '../enums/button-state';
 import { ButtonType } from '../enums/button-type';
 import { EditableDescriptionHeight } from '../enums/editable-description-height';
 import { EditableDescriptionBackgroundColor } from '../enums/editable-description-background-color';
-import { TextEditorComponent, BasicEditor } from 'ui.text-editor';
-import { HtmlFormatterComponent } from 'ui.bbcode.formatter.html-formatter';
+import CopilotHeader from '../content-blocks/internal/copilot/header-text';
+import CopilotFooter from '../content-blocks/internal/copilot/footer-text';
 
 export const EditableDescription = {
 	components: {
 		Button,
+		CopilotHeader,
+		CopilotFooter,
 		TextEditorComponent,
 		HtmlFormatterComponent,
 	},
@@ -53,6 +57,11 @@ export const EditableDescription = {
 			required: false,
 			default: [],
 		},
+		copilotResultCfg: {
+			type: Object,
+			required: false,
+			default: [],
+		},
 	},
 
 	beforeCreate()
@@ -69,6 +78,12 @@ export const EditableDescription = {
 			isCollapsed: false,
 			bbcode: this.text,
 			isContentEmpty: Type.isString(this.text) && this.text.trim() === '',
+			isCopied: this.copied,
+			isCopilotHeader: Type.isStringFilled(this.copilotResultCfg?.header),
+			isCopilotFooter: Type.isStringFilled(this.copilotResultCfg?.footer)
+				|| (Type.isBoolean(this.copilotResultCfg?.footer) && this.copilotResultCfg?.footer === true),
+			isCopilotAnimated: Type.isStringFilled(this.copilotResultCfg?.header)
+				&& Type.isBoolean(this.copilotResultCfg?.animated) && this.copilotResultCfg?.animated === true,
 		};
 	},
 
@@ -88,6 +103,17 @@ export const EditableDescription = {
 					'--is-edit': this.isEdit,
 					'--is-long': this.isLongText,
 					'--is-expanded': this.isCollapsed || !this.isLongText,
+					'--copiloted': this.isCopiloted,
+				},
+			];
+		},
+
+		textClassName(): Array
+		{
+			return [
+				'crm-timeline__editable-text_text',
+				{
+					'--hidden': this.isCopilotAnimated,
 				},
 			];
 		},
@@ -119,7 +145,12 @@ export const EditableDescription = {
 
 		isCopied(): boolean
 		{
-			return !this.isEdit && this.copied;
+			return !this.isEdit && this.isCopied;
+		},
+
+		isCopiloted(): boolean
+		{
+			return !this.isEdit && (this.isCopilotHeader || this.isCopilotFooter);
 		},
 
 		saveTextButtonProps(): Object
@@ -187,13 +218,13 @@ export const EditableDescription = {
 				value: eventName,
 			});
 
-			action.execute(this);
+			void action.execute(this);
 		},
 
-		adjustHeight(elem): void
+		adjustHeight(elem: HTMLElement): void
 		{
-			elem.style.height = 0;
-			elem.style.height = `${elem.scrollHeight}px`;
+			Dom.style(elem, 'height', 0);
+			Dom.style(elem, 'height', `${elem.scrollHeight}px`);
 		},
 
 		saveText(): void
@@ -287,7 +318,7 @@ export const EditableDescription = {
 			{
 				isSuccess = document.execCommand('copy');
 			}
-			catch (err)
+			catch
 			{
 				// just in case
 			}
@@ -298,7 +329,7 @@ export const EditableDescription = {
 			{
 				new Popup({
 					id: `copyTextHint_${Text.getRandom(8)}`,
-					content: Loc.getMessage('CRM_TIMELINE_ITEM_TEXT_IS_COPIED'),
+					content: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_TEXT_IS_COPIED'),
 					bindElement: this.$refs.copyTextBtn,
 					darkMode: true,
 					autoHide: true,
@@ -362,7 +393,7 @@ export const EditableDescription = {
 				removePlugins: ['BlockToolbar'],
 				maxHeight: 600,
 				content: this.bbcode,
-				paragraphPlaceholder: Loc.getMessage(
+				paragraphPlaceholder: this.$Bitrix.Loc.getMessage(
 					Type.isPlainObject(this.copilotSettings)
 						? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT'
 						: null,
@@ -401,7 +432,7 @@ export const EditableDescription = {
 	},
 
 	watch: {
-		text(newTextValue): void
+		text(newTextValue: string): void
 		{
 			this.bbcode = newTextValue;
 
@@ -410,7 +441,21 @@ export const EditableDescription = {
 			});
 		},
 
-		isCollapsed(isCollapsed): void
+		copied(newValue: boolean): void
+		{
+			this.isCopied = newValue;
+		},
+
+		copilotResultCfg(newValue: Object): void
+		{
+			this.isCopilotHeader = Type.isStringFilled(newValue.header);
+			this.isCopilotFooter = Type.isStringFilled(newValue.footer)
+				|| (Type.isBoolean(newValue.footer) && newValue.footer === true);
+			this.isCopilotAnimated = Type.isStringFilled(newValue.header)
+				&& Type.isBoolean(newValue.animated) && newValue.animated === true;
+		},
+
+		isCollapsed(isCollapsed: boolean): void
 		{
 			if (isCollapsed === false && this.isInViewport() === false)
 			{
@@ -476,6 +521,12 @@ export const EditableDescription = {
 					<i class="crm-timeline__editable-text_edit-icon"></i>
 				</button>
 				<div class="crm-timeline__editable-text_inner">
+					<CopilotHeader 
+						v-if="isCopilotHeader"
+						:text="this.copilotResultCfg?.header"
+						:animated = "this.isCopilotAnimated"
+						class="crm-timeline__editable-text-copilot-header"
+					></CopilotHeader>
 					<div class="crm-timeline__editable-text_content">
 						<TextEditorComponent
 							v-if="isEdit"
@@ -484,7 +535,7 @@ export const EditableDescription = {
 						<span
 							v-else
 							ref="text"
-							class="crm-timeline__editable-text_text"
+							:class="textClassName"
 						>
 							<HtmlFormatterComponent :bbcode="bbcode" />
 						</span>
@@ -515,6 +566,10 @@ export const EditableDescription = {
 					{{ expandButtonText }}
 				</button>
 			</div>
+			<CopilotFooter
+				v-if="isCopilotFooter"
+				class="crm-timeline__editable-text-copilot-footer"
+			></CopilotFooter>
 		</div>
 	`,
 };

@@ -1,5 +1,6 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { memberRoles, postData } from 'humanresources.company-structure.api';
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import type { TreeItem } from './types';
 import type { UserData } from 'humanresources.company-structure.utils';
 
@@ -27,17 +28,19 @@ export const OrgChartActions = {
 		const removableDepartment = departments.get(removableDepartmentId);
 		const {
 			parentId,
+			entityType,
 			children: removableDeparmentChildren = [],
 			userCount: removableDepartmentUserCount,
 			heads: removableDeparmentHeads,
 			employees: removableDeparmentEmployees = [],
 		} = removableDepartment;
+		const parentDepartment = departments.get(parentId);
+
 		removableDeparmentChildren.forEach((childId) => {
 			const department = departments.get(childId);
 			department.parentId = parentId;
 		});
-		const parentDepartment = departments.get(parentId);
-		if (removableDepartmentUserCount > 0)
+		if ((removableDepartmentUserCount > 0) && (entityType === EntityTypes.department))
 		{
 			const parentDepartmentUsersIds = new Set([
 				...parentDepartment.heads,
@@ -59,7 +62,7 @@ export const OrgChartActions = {
 		}
 
 		parentDepartment.children = [...parentDepartment.children, ...removableDeparmentChildren];
-		if (currentDepartments.includes(removableDepartmentId))
+		if (currentDepartments.includes(removableDepartmentId) && (entityType === EntityTypes.department))
 		{
 			store.changeCurrentDepartment(removableDepartmentId, parentId);
 		}
@@ -91,5 +94,39 @@ export const OrgChartActions = {
 				userCount: department.userCount + 1,
 			});
 		}
+	},
+	orderDepartments: async (draggedId: number, targetId: number, direction: number, count: number): Promise<boolean> => {
+		const { departments } = useChartStore();
+		const department = departments.get(draggedId);
+		const { parentId } = department;
+		const parentDepartment = departments.get(parentId);
+		const { children } = parentDepartment;
+		const targetIndex = children.indexOf(targetId);
+		const newChildren = children.filter((childId) => childId !== draggedId);
+		newChildren.splice(targetIndex, 0, draggedId);
+		departments.set(parentId, { ...parentDepartment, children: newChildren });
+		try
+		{
+			await postData('humanresources.api.Structure.Node.changeOrder', {
+				nodeId: draggedId,
+				direction,
+				count,
+			});
+
+			return true;
+		}
+		catch
+		{
+			departments.set(parentId, { ...parentDepartment, children });
+
+			return false;
+		}
+	},
+	clearNodesChatLists: (nodeIds: Array<Number>): void => {
+		const { departments } = useChartStore();
+		nodeIds.forEach((nodeId) => {
+			const department = departments.get(nodeId);
+			departments.set(nodeId, { ...department, chats: null, channels: null });
+		});
 	},
 };

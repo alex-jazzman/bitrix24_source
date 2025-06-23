@@ -55,6 +55,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      button.append(slot);
 	    }
 	    this.$refs.button.replaceWith(button);
+	    if (this.disabled) {
+	      this.button.setDisabled(this.disabled);
+	    }
 	  },
 	  watch: {
 	    text: {

@@ -27,16 +27,19 @@
 .ui-selector-popup-animation-close {
 	animation: ui-selector-popup-animation-close 200ms;
 	animation-fill-mode: both;
+	pointer-events: none;
 }
 
 @keyframes ui-selector-popup-animation-show {
 	0% {
 		opacity: 0;
 		transform: translate3d(0, 25px, 0);
+		pointer-events: none;
 	}
 	100% {
 		opacity: 1;
 		transform: translate3d(0, 0px, 0);
+		pointer-events: all;
 	}
 }
 

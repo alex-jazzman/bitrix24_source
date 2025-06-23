@@ -664,7 +664,7 @@ if (
 		{
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TAB);
 			$restPlacementHandlerList = array_filter($restPlacementHandlerList, function($placement) use ($arParams) {
-				$groupIdOption = (string)$placement['OPTIONS']['groupId'];
+				$groupIdOption = (string)($placement['OPTIONS']['groupId'] ?? '');
 				if ($groupIdOption == '')
 				{
 					return true;

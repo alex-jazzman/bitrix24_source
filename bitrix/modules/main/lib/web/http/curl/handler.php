@@ -153,7 +153,7 @@ class Handler extends Http\Handler
 		if ($data === "\r\n")
 		{
 			// got all headers
-			$this->log("\n<<<RESPONSE\n" . $this->responseHeaders . "\n", HttpDebug::RESPONSE_HEADERS);
+			$this->log("\n<<<RESPONSE\n{headers}\n", HttpDebug::RESPONSE_HEADERS, ['headers' => $this->responseHeaders]);
 
 			// build the response for the next stage
 			$this->response = $this->responseBuilder->createFromString($this->responseHeaders);
@@ -220,12 +220,12 @@ class Handler extends Http\Handler
 			$logUri = new Uri((string)$this->request->getUri());
 			$logUri->convertToUnicode();
 
-			$this->log("***CONNECT to " . $logUri . "\n", HttpDebug::CONNECT);
+			$this->log("***CONNECT to {uri}\n", HttpDebug::CONNECT, ['uri' => $logUri]);
 
 			$request = $this->request->getMethod() . ' ' . $this->request->getRequestTarget() . ' HTTP/' . $this->request->getProtocolVersion() . "\n"
 				. implode("\n", $headers) . "\n";
 
-			$this->log(">>>REQUEST\n" . $request, HttpDebug::REQUEST_HEADERS);
+			$this->log(">>>REQUEST\n{request}", HttpDebug::REQUEST_HEADERS, ['request' => $request]);
 		}
 
 		return $headers;
@@ -237,5 +237,23 @@ class Handler extends Http\Handler
 	public function getHandle(): \CurlHandle
 	{
 		return $this->handle;
+	}
+
+	public function getInfo(): array
+	{
+		$stat = curl_getinfo($this->handle);
+
+		$handshake = 0.0;
+		if ($this->request->getUri()->getScheme() === 'https')
+		{
+			$handshake = round((float)curl_getinfo($this->handle, CURLINFO_APPCONNECT_TIME), 6);
+		}
+
+		return [
+			'connect' => round($stat['connect_time'] ?? 0.0, 6),
+			'handshake' => $handshake,
+			'request' => round($stat['pretransfer_time'] ?? 0.0, 6),
+			'total' => round($stat['total_time'] ?? 0.0, 6),
+		];
 	}
 }

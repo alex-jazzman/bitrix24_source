@@ -127,12 +127,19 @@ export default class Item
 		this.links.forEach((link, index) => {
 			if (areUrlsEqual(link, currentUri))
 			{
+				let priority = 0;
+				if (index === 0) // main link is in higher priority
+				{
+					priority = this.getCode() === 'default' ? 2 : 1;
+				}
+
 				result.push({
-					priority: index > 0 ? 0 : 1, // main link is in higher priority
-					url: link
-				})
+					priority,
+					url: link,
+				});
 			}
 		});
+
 		return result;
 	}
 
@@ -301,7 +308,7 @@ export default class Item
 			}
 			EventEmitter.unsubscribe(EventEmitter.GLOBAL_TARGET, Options.eventName('onItemDeleteAsFavorites'), this.onDeleteAsFavorites);
 			EventEmitter.decrementMaxListeners(EventEmitter.GLOBAL_TARGET, Options.eventName('onItemDeleteAsFavorites'));
-			}
+		}
 	}
 
 	static detect(node)
@@ -340,8 +347,8 @@ export default class Item
 						<span class="menu-item-icon">W</span>
 					</span>
 					<span class="menu-item-link-text " data-role="item-text">${text}</span>
-					${counterId ? 
-					`<span class="menu-item-index-wrap">
+					${counterId ?
+			`<span class="menu-item-index-wrap">
 						<span data-role="counter"
 							data-counter-value="${counterValue}" class="menu-item-index" id="menu-counter-${counterId}">${counterValue}</span>
 					</span>` : '' }

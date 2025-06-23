@@ -41,18 +41,14 @@ abstract class Factory
 {
 	protected const STAGES_CACHE_TTL = 86400;
 
+	protected ?Field\Collection $userFieldCollection = null;
 	protected $fieldsCollection;
 	protected $categories;
-	protected $stages;
-	protected $stageCollections;
 	protected $userType;
 	protected $editorAdapter;
 	protected $isParentFieldsAdded = false;
 	protected $itemsCategoryCache = [];
 	private array $itemsStageCache = [];
-
-	/** @var StatusTable */
-	protected $statusTableClassName = StatusTable::class;
 
 	protected $itemClassName = Item::class;
 
@@ -588,10 +584,11 @@ abstract class Factory
 	 * Returns number of items filtered by $filter.
 	 *
 	 * @param array $filter
+	 * @param null|int $ttl
 	 *
 	 * @return int
 	 */
-	public function getItemsCount(array $filter = []): int
+	public function getItemsCount(array $filter = [], ?int $ttl = null): int
 	{
 		$this->addParentFieldsReferences();
 		$tableName = $this->getDataClass()::getTableName();
@@ -603,7 +600,45 @@ abstract class Factory
 		$params = $this->replaceCommonFieldNames(['filter' => $filter]);
 		$normalizedFilter = $params['filter'] ?? [];
 
-		return $this->getDataClass()::getCount($normalizedFilter);
+		$cache = [];
+		if ($ttl > 0)
+		{
+			$cache['ttl'] = $ttl;
+		}
+
+		return $this->getDataClass()::getCount($normalizedFilter, $cache);
+	}
+
+	public function getItemsOpportunityAccountAmount(array $filter = [], ?int $ttl = null): int
+	{
+		if (!isset($this->getFieldsInfo()['OPPORTUNITY_ACCOUNT']))
+		{
+			throw new InvalidOperationException('Error calc amount for opportunity_account field for entity ' . $this->getEntityTypeId());
+		}
+
+		$this->addParentFieldsReferences();
+		$tableName = $this->getDataClass()::getTableName();
+		if (!Application::getConnection()->isTableExists($tableName))
+		{
+			return 0;
+		}
+
+		$params = $this->replaceCommonFieldNames(['filter' => $filter]);
+		$normalizedFilter = $params['filter'] ?? [];
+
+		$query = $this->getDataClass()::query()
+			->addSelect(new \Bitrix\Main\ORM\Fields\ExpressionField('SUM', 'SUM(OPPORTUNITY)'))
+			->setFilter($normalizedFilter)
+		;
+
+		if ($ttl >= 0)
+		{
+			$query->setCacheTtl($ttl);
+		}
+
+		$result = $query->exec()->fetch();
+
+		return (int)$result['SUM'];
 	}
 
 	/**
@@ -1252,6 +1287,29 @@ abstract class Factory
 	}
 
 	/**
+	 * Returns collection of all user fields of this entity type. (Even those, that are not visible for current user).
+	 *
+	 * @return Field\Collection
+	 */
+	public function getUserFieldsCollection(): Field\Collection
+	{
+		if ($this->userFieldCollection === null)
+		{
+			$fields = [];
+			$userFields = $this->getUserFields();
+			foreach ($this->getUserFieldsInfo() as $name => $info)
+			{
+				$info['USER_FIELD'] = $userFields[$name];
+				$fields[] = $this->createField($name, $info);
+			}
+
+			$this->userFieldCollection = new Field\Collection($fields);
+		}
+
+		return $this->userFieldCollection;
+	}
+
+	/**
 	 * Returns collection of all fields of this entity type. (Even those, that are not visible for current user).
 	 *
 	 * @return Field\Collection
@@ -1261,18 +1319,13 @@ abstract class Factory
 		if ($this->fieldsCollection === null)
 		{
 			$fields = [];
-			$userFields = $this->getUserFields();
 			foreach ($this->getFieldsInfo() as $name => $info)
 			{
 				$fields[$name] = $this->createField($name, $info);
 			}
-			foreach ($this->getUserFieldsInfo() as $name => $info)
-			{
-				$info['USER_FIELD'] = $userFields[$name];
-				$fields[$name] = $this->createField($name, $info);
-			}
 
 			$this->fieldsCollection = new Field\Collection($fields);
+			$this->fieldsCollection->merge($this->getUserFieldsCollection());
 		}
 
 		return $this->fieldsCollection;
@@ -1293,6 +1346,7 @@ abstract class Factory
 	{
 		$this->clearUserFieldsInfoCache();
 		$this->fieldsCollection = null;
+		$this->userFieldCollection = null;
 
 		return $this;
 	}
@@ -1545,6 +1599,11 @@ abstract class Factory
 		return $this->isStagesSupported();
 	}
 
+	public function getStageBroker(): Broker\Stage
+	{
+		return Container::getInstance()->getStageBroker($this->getEntityTypeId());
+	}
+
 	/**
 	 * Returns stages for $categoryId.
 	 *
@@ -1554,59 +1613,25 @@ abstract class Factory
 	 */
 	public function getStages(int $categoryId = null): EO_Status_Collection
 	{
-		if(!isset($this->stageCollections[$categoryId]))
-		{
-			$filter = [
-				'=ENTITY_ID' => $this->getStagesEntityId($categoryId),
-			];
-
-			$this->stageCollections[$categoryId] = $this->statusTableClassName::getList([
-				'order' => [
-					'SORT' => 'ASC',
-				],
-				'filter' => $filter,
-				'cache' => ['ttl' => static::STAGES_CACHE_TTL],
-			])->fetchCollection();
-			foreach($this->stageCollections[$categoryId] as $stage)
-			{
-				$this->stages[$stage->getStatusId()] = $stage;
-			}
-		}
-
-		return $this->stageCollections[$categoryId];
+		return $this->getStageBroker()->getByCategoryId($categoryId);
 	}
 
 	public function purgeStagesCache(): Factory
 	{
-		$this->stageCollections = [];
-		$this->stages = [];
+		$this->getStageBroker()->clearCache();
 
 		return $this;
 	}
 
 	public function getStage(string $statusId): ?EO_Status
 	{
-		if (isset($this->stages[$statusId]))
-		{
-			return $this->stages[$statusId];
-		}
+		return $this->getStageBroker()->getById($statusId);
+	}
 
-		if ($this->isCategoriesSupported())
-		{
-			$stagesArrays = [];
-			foreach ($this->getCategories() as $category)
-			{
-				$stagesArrays[] = $this->getStages($category->getId())->getAll();
-			}
-
-			$stages = $stagesArrays ? array_merge(...$stagesArrays) : [];
-		}
-		else
-		{
-			$stages = $this->getStages()->getAll();
-		}
-
-		foreach ($stages as $stage)
+	public function getStageFromCategory(int $categoryId, string $statusId): ?EO_Status
+	{
+		$stageCollection = $this->getStages($categoryId);
+		foreach ($stageCollection->getAll() as $stage)
 		{
 			if ($stage->getStatusId() === $statusId)
 			{

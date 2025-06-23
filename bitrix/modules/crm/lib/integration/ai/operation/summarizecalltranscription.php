@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\AI\Operation;
 
+use Bitrix\AI\Engine;
+use Bitrix\AI\Quality;
 use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
@@ -62,11 +64,6 @@ class SummarizeCallTranscription extends AbstractOperation
 				'original_message' => $this->transcription,
 			])->getResult()
 		;
-	}
-
-	protected function getStubPayload(): string
-	{
-		return 'Stub call summary';
 	}
 
 	final protected function getContextLanguageId(): string
@@ -160,5 +157,13 @@ class SummarizeCallTranscription extends AbstractOperation
 	protected static function getJobFinishEventBuilder(): AIBaseEvent
 	{
 		return new SummaryEvent();
+	}
+
+	protected static function setQuality(Engine $engine): void
+	{
+		if (isset(Quality::QUALITIES['summarize']) && method_exists($engine->getIEngine(), 'setQuality'))
+		{
+			$engine->getIEngine()->setQuality(Quality::QUALITIES['summarize']);
+		}
 	}
 }

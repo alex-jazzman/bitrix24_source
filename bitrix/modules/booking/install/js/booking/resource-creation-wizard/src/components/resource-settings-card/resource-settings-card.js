@@ -126,6 +126,7 @@ export const ResourceSettingsCard = {
 			resource: 'getResource',
 			companyScheduleSlots: 'getCompanyScheduleSlots',
 			isCompanyScheduleAccess: 'isCompanyScheduleAccess',
+			companyScheduleUrl: 'companyScheduleUrl',
 			isGlobalSchedule: 'isGlobalSchedule',
 		}),
 		resourceName(): string
@@ -193,6 +194,7 @@ export const ResourceSettingsCard = {
 				:initialTimezone="initialTimezone"
 				:currentTimezone="timezone"
 				:isCompanyScheduleAccess="isCompanyScheduleAccess"
+				:companyScheduleUrl="companyScheduleUrl"
 				@update="updateSlotRanges"
 				@updateGlobalSchedule="updateGlobalSchedule"
 				@getGlobalSchedule="fetchData"

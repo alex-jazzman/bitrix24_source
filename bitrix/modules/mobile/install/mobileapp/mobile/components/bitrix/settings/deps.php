@@ -14,5 +14,7 @@ return [
 		"settings/tabs",
 		"settings/system",
 		"settings/calltracker",
+		"settings/feedback-form",
+		'settings/developer',
 	],
 ];

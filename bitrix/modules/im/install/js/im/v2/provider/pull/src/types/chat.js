@@ -25,6 +25,7 @@ export type ChatUserAddParams = {
 	chatTitle: string,
 	chatOwner: number,
 	chatExtranet: boolean,
+	containsCollaber: boolean,
 	users: {[userId: string]: RawUser},
 	newUsers: number[],
 	userCount: number
@@ -36,7 +37,9 @@ export type ChatUserLeaveParams = {
 	dialogId: string,
 	message: string,
 	userCount: number,
-	userId: number
+	userId: number,
+	chatExtranet: boolean,
+	containsCollaber: boolean,
 };
 
 export type StartWritingParams = {
@@ -95,6 +98,7 @@ export type ChatConvertParams = {
 	oldType: string,
 	newType: string,
 	newPermissions: JsonObject,
+	newTypeParams: ?JsonObject,
 };
 
 export type ChatDeleteParams = {
@@ -103,4 +107,10 @@ export type ChatDeleteParams = {
 	userId: string,
 	type: string,
 	parentChatId: number,
+};
+
+export type MessagesAutoDeleteDelayParams = {
+	chatId: number,
+	dialogId: string,
+	delay: number,
 };

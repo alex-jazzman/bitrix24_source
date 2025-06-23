@@ -1,21 +1,5 @@
-.tasks-flow__pagetitle-view .pagetitle-below {
-	min-height: 52px;
-	display: flex;
-	align-items: center;
-	margin-right: var(--ui-space-inline-sm);
-	border-top: var(--ui-border-width-thin) solid rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-40));
-}
-
-.bitrix24-dark-theme .tasks-flow__pagetitle-view .pagetitle-below {
-	border-top-color: rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-5));
-}
-
 .tasks-flow__grid-column-center .main-grid-head-title {
 	padding-right: 0;
-}
-
-.tasks-flow__pagetitle-view .task-interface-toolbar {
-	min-height: 31px;
 }
 
 .tasks-flow__list-cell.--disable {
@@ -560,11 +544,6 @@
 	line-height: 25px;
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-semi-bold, 600);
-}
-
-.tasks-flow__additional-items {
-	display: flex;
-	justify-content: space-between;
 }
 
 #tasks-flow-list .main-grid-cell-counter:empty {

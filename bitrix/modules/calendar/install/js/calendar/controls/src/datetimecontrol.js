@@ -4,9 +4,16 @@ import { Type, Event, Loc, Dom, Tag } from 'main.core';
 import { Util } from 'calendar.util';
 import { TimeSelector } from './timeselector';
 import { EventEmitter, BaseEvent } from 'main.core.events';
+import { DatePicker } from 'ui.date-picker';
+import { Menu, MenuItem } from 'main.popup';
 
 export class DateTimeControl extends EventEmitter
 {
+	#dateFromPicker: DatePicker;
+	#dateToPicker: DatePicker;
+	#tzFromMenu: Menu;
+	#tzToMenu: Menu;
+
 	DATE_INPUT_WIDTH = 110;
 	TIME_INPUT_WIDTH = 90;
 	zIndex = 4200;
@@ -178,17 +185,23 @@ export class DateTimeControl extends EventEmitter
 
 			if (value.timezoneFrom !== undefined && Type.isDomNode(this.DOM.fromTz))
 			{
-				this.DOM.fromTz.value = value.timezoneFrom;
+				this.DOM.fromTz.dataset.value = value.timezoneFrom;
+				this.DOM.fromTz.value = this.getTimezoneNameWithShift(value.timezoneFrom);
 			}
 
 			if (value.timezoneTo !== undefined && Type.isDomNode(this.DOM.toTz))
 			{
-				this.DOM.toTz.value = value.timezoneTo;
+				this.DOM.toTz.dataset.value = value.timezoneTo;
+				this.DOM.toTz.value = this.getTimezoneNameWithShift(value.timezoneTo);
 			}
 
-			if (value.timezoneName !== undefined
-				&& (value.timezoneName !== value.timezoneFrom
-					|| value.timezoneName !== value.timezoneTo))
+			if (
+				value.timezoneName !== undefined
+				&& (
+					value.timezoneName !== value.timezoneFrom
+					|| value.timezoneName !== value.timezoneTo
+				)
+			)
 			{
 				this.switchTimezone(true);
 			}
@@ -206,19 +219,39 @@ export class DateTimeControl extends EventEmitter
 		this.fromTimeControl.highlightValue(this.from);
 		this.toTimeControl.highlightValue(this.to);
 		this.updateToTimeDurationHints();
+		this.initDatePicker();
 	}
 
-	getFrom()
+	initDatePicker()
+	{
+		this.#dateFromPicker ??= new DatePicker({
+			targetNode: this.DOM.fromDate,
+			selectedDates: [this.from.getTime()],
+			events: {
+				onSelect: this.#onDateFromSelected,
+			},
+		});
+
+		this.#dateToPicker ??= new DatePicker({
+			targetNode: this.DOM.toDate,
+			selectedDates: [this.to.getTime()],
+			events: {
+				onSelect: this.#onDateToSelected,
+			},
+		});
+	}
+
+	getFrom(): ?Date
 	{
 		return this.getDateWithTime(this.DOM.fromDate.value, this.fromMinutes);
 	}
 
-	getTo()
+	getTo(): ?Date
 	{
 		return this.getDateWithTime(this.DOM.toDate.value, this.toMinutes);
 	}
 
-	getDateWithTime(date, minutes)
+	getDateWithTime(date, minutes): ?Date
 	{
 		const parsedDate = Util.parseDate(date);
 		if (!parsedDate)
@@ -237,8 +270,12 @@ export class DateTimeControl extends EventEmitter
 			toDate: this.DOM.toDate.value,
 			fromTime: this.DOM.fromTime.value,
 			toTime: this.DOM.toTime.value,
-			timezoneFrom: this.DOM.fromTz ? this.DOM.fromTz.value : (this.value.timezoneFrom || this.value.timezoneName || null),
-			timezoneTo: this.DOM.toTz ? this.DOM.toTz.value : (this.value.timezoneTo || this.value.timezoneName || null),
+			timezoneFrom: this.DOM.fromTz
+				? this.DOM.fromTz.dataset.value
+				: (this.value.timezoneFrom || this.value.timezoneName || null),
+			timezoneTo: this.DOM.toTz
+				? this.DOM.toTz.dataset.value
+				: (this.value.timezoneTo || this.value.timezoneName || null),
 		};
 
 		value.from = Util.parseDate(value.fromDate);
@@ -273,16 +310,14 @@ export class DateTimeControl extends EventEmitter
 
 	bindEventHandlers()
 	{
-		Event.bind(this.DOM.fromDate, 'click', DateTimeControl.showInputCalendar);
-		Event.bind(this.DOM.fromDate, 'change', this.handleDateFromChange.bind(this));
-		Event.bind(this.DOM.toDate, 'click', DateTimeControl.showInputCalendar);
-		Event.bind(this.DOM.toDate, 'change', this.handleDateToChange.bind(this));
+		Event.bind(this.DOM.fromDate, 'click', this.showDateFromInputCalendar.bind(this));
+		Event.bind(this.DOM.toDate, 'click', this.showDateToInputCalendar.bind(this));
 
 		Event.bind(this.DOM.fromTime, 'input', this.handleTimeInput.bind(this));
 		Event.bind(this.DOM.toTime, 'input', this.handleTimeInput.bind(this));
 
-		Event.bind(this.DOM.fromTz, 'change', this.handleValueChange.bind(this));
-		Event.bind(this.DOM.toTz, 'change', this.handleValueChange.bind(this));
+		Event.bind(this.DOM.fromTz, 'click', this.showTzFromMenu.bind(this));
+		Event.bind(this.DOM.toTz, 'click', this.showTzToMenu.bind(this));
 
 		Event.bind(this.DOM.fullDay, 'click', () => {
 			this.handleFullDayChange();
@@ -298,9 +333,9 @@ export class DateTimeControl extends EventEmitter
 		{
 			Event.bind(this.DOM.defTimezone, 'change', BX.delegate(function()
 			{
-				// this.calendar.util.setUserOption('timezoneName', this.DOM.defTimezone.value);
 				if (this.bindFromToDefaultTimezones)
 				{
+					this.DOM.fromTz.dataset.value = this.DOM.toTz.dataset.value = this.DOM.defTimezone.value;
 					this.DOM.fromTz.value = this.DOM.toTz.value = this.DOM.defTimezone.value;
 				}
 			}, this));
@@ -313,67 +348,126 @@ export class DateTimeControl extends EventEmitter
 				Event.bind(this.DOM.tzButton, 'click', this.switchTimezone.bind(this));
 			}
 
-			Event.bind(this.DOM.fromTz, 'change', () => {
-				if (this.bindTimezones)
-				{
-					this.DOM.toTz.value = this.DOM.fromTz.value;
-				}
-				this.bindFromToDefaultTimezones = false;
-			});
-
-			Event.bind(this.DOM.toTz, 'change', () => {
-				this.bindTimezones = false;
-				this.bindFromToDefaultTimezones = false;
-			});
-
 			this.bindTimezones = this.DOM.fromTz.value === this.DOM.toTz.value;
 			this.bindFromToDefaultTimezones = this.bindTimezones
-				&& this.DOM.fromTz.value === this.DOM.toTz.value
-				&& this.DOM.fromTz.value === this.DOM.defTimezone.value;
+				&& this.DOM.fromTz.dataset.value === this.DOM.toTz.dataset.value
+				&& this.DOM.fromTz.dataset.value === this.DOM.defTimezone.value;
 		}
 	}
 
-	static showInputCalendar(e)
+	showDateFromInputCalendar(e)
 	{
 		const target = e.target || e.srcElement;
 		if (Type.isDomNode(target) && target.nodeName.toLowerCase() === 'input')
 		{
-			const calendarControl = BX.calendar.get();
-			if (calendarControl.popup)
-			{
-				// Workaround hack for BX.calendar - it works as singleton and we trying to reinit it
-				calendarControl.popup.destroy();
-				calendarControl.popup = null;
-				calendarControl._current_layer = null;
-				calendarControl._layers = {};
-			}
-
-			if (calendarControl.popup_month)
-			{
-				calendarControl.popup_month.destroy();
-				calendarControl.popup_month = null;
-			}
-
-			if (calendarControl.popup_year)
-			{
-				calendarControl.popup_year.destroy();
-				calendarControl.popup_year = null;
-			}
-			calendarControl.Show({ node: target.parentNode, field: target, bTime: false });
-			BX.onCustomEvent(window, 'onCalendarControlChildPopupShown');
-
-			const calendarPopup = calendarControl.popup;
-			if (calendarPopup)
-			{
-				BX.removeCustomEvent(calendarPopup, 'onPopupClose', DateTimeControl.inputCalendarClosePopupHandler);
-				BX.addCustomEvent(calendarPopup, 'onPopupClose', DateTimeControl.inputCalendarClosePopupHandler);
-			}
+			this.#dateFromPicker.show();
 		}
 	}
 
-	static inputCalendarClosePopupHandler()
+	showDateToInputCalendar(e)
 	{
-		BX.onCustomEvent(window, 'onCalendarControlChildPopupClosed');
+		const target = e.target || e.srcElement;
+		if (Type.isDomNode(target) && target.nodeName.toLowerCase() === 'input')
+		{
+			this.#dateToPicker.show();
+		}
+	}
+
+	showTzFromMenu()
+	{
+		this.#tzFromMenu ??= new Menu({
+			id: `${this.UID}-calendar-tz-from-menu`,
+			bindElement: this.DOM.fromTz,
+			closeByEsc: true,
+			items: this.getMenuItems(this.#selectTimezoneFrom),
+			maxHeight: 300,
+		});
+
+		this.#tzFromMenu.show();
+	}
+
+	showTzToMenu()
+	{
+		this.#tzToMenu ??= new Menu({
+			id: `${this.UID}-calendar-tz-to-menu`,
+			bindElement: this.DOM.toTz,
+			closeByEsc: true,
+			items: this.getMenuItems(this.#selectTimezoneTo),
+			maxHeight: 300,
+		});
+
+		this.#tzToMenu.show();
+	}
+
+	getMenuItems(callback): Array
+	{
+		const result = [];
+		const timezoneList = Object.values(Util.getTimezoneList());
+
+		for (const timezone of timezoneList)
+		{
+			result.push(new MenuItem({
+				text: timezone.title,
+				onclick: () => callback(timezone),
+			}));
+		}
+
+		return result;
+	}
+
+	#selectTimezoneFrom = (item) => {
+		this.DOM.fromTz.value = item.title;
+		this.DOM.fromTz.dataset.value = item.timezone_id;
+		this.#tzFromMenu.close();
+
+		if (this.showTimezone)
+		{
+			if (this.bindTimezones)
+			{
+				this.DOM.toTz.value = this.DOM.fromTz.value;
+				this.DOM.toTz.dataset.value = this.DOM.fromTz.dataset.value;
+			}
+			this.bindFromToDefaultTimezones = false;
+		}
+
+		this.handleValueChange();
+	};
+
+	#selectTimezoneTo = (item) => {
+		this.DOM.toTz.value = item.title;
+		this.DOM.toTz.dataset.value = item.timezone_id;
+		this.#tzToMenu.close();
+
+		if (this.showTimezone)
+		{
+			this.bindTimezones = false;
+			this.bindFromToDefaultTimezones = false;
+		}
+
+		this.handleValueChange();
+	};
+
+	#onDateFromSelected = (event) => {
+		const { date } = event.getData();
+		this.DOM.fromDate.value = Util.formatDate(this.createDateFromUtc(date).getTime());
+		this.handleDateFromChange();
+	};
+
+	#onDateToSelected = (event) => {
+		const { date } = event.getData();
+		this.DOM.toDate.value = Util.formatDate(this.createDateFromUtc(date).getTime());
+		this.handleDateToChange();
+	};
+
+	createDateFromUtc(date: Date): Date
+	{
+		return new Date(
+			date.getUTCFullYear(),
+			date.getUTCMonth(),
+			date.getUTCDate(),
+			date.getUTCHours(),
+			date.getUTCMinutes(),
+		);
 	}
 
 	handleDateFromChange()
@@ -389,6 +483,7 @@ export class DateTimeControl extends EventEmitter
 		const difference = this.getFrom().getTime() - this.from.getTime();
 
 		this.DOM.toDate.value = Util.formatDate(this.to.getTime() + difference);
+		this.#dateToPicker.selectDate(this.to.getTime() + difference);
 
 		this.handleValueChange();
 	}
@@ -412,12 +507,14 @@ export class DateTimeControl extends EventEmitter
 			toDate.setHours(this.to.getHours(), this.to.getMinutes(), 0, 0);
 			const fromDate = new Date(toDate.getTime() - duration);
 			this.DOM.fromDate.value = Util.formatDate(fromDate);
+			this.#dateFromPicker.selectDate(toDate.getTime() - duration);
 		}
 
 		if (this.getTo() < this.getFrom())
 		{
 			this.DOM.toDate.value = this.DOM.fromDate.value;
 			this.DOM.toTime.value = this.DOM.fromTime.value;
+			this.#dateToPicker.selectDate(this.from.getTime());
 			this.toMinutes = this.getMinutesFromFormattedTime(this.DOM.toTime.value);
 		}
 		this.handleValueChange();
@@ -848,5 +945,17 @@ export class DateTimeControl extends EventEmitter
 				Dom.addClass(this.DOM.outerWrap, 'calendar-datetime-inline-mode-view');
 			}
 		}
+	}
+
+	getTimezoneNameWithShift(timezoneValue): string
+	{
+		const timezoneList = Util.getTimezoneList();
+
+		if (Type.isObject(timezoneList))
+		{
+			return timezoneList[timezoneValue]?.title || timezoneValue;
+		}
+
+		return timezoneValue;
 	}
 }

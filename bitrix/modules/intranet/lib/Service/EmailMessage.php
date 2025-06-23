@@ -2,7 +2,9 @@
 
 namespace Bitrix\Intranet\Service;
 
-class EmailMessage
+use Bitrix\Intranet\Contract\SendableContract;
+
+class EmailMessage implements SendableContract
 {
 	public function __construct(
 		private string $eventName,
@@ -15,7 +17,7 @@ class EmailMessage
 
 	}
 
-	public function sendImmediately()
+	public function sendImmediately(): void
 	{
 		\CEvent::SendImmediate(
 			$this->eventName,
@@ -26,7 +28,7 @@ class EmailMessage
 		);
 	}
 
-	public function send()
+	public function send(): void
 	{
 		\CEvent::Send(
 			$this->eventName,

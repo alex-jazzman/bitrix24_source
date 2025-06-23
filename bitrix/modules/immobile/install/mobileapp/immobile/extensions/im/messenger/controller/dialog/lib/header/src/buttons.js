@@ -2,19 +2,18 @@
  * @module im/messenger/controller/dialog/lib/header/buttons
  */
 jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { isOnline } = require('device/connection');
 
 	const { DialogType, UserRole, BotCode, Analytics } = require('im/messenger/const');
-	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
+	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
-	const { UserAdd } = require('im/messenger/controller/user-add');
+	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
 	const {
 		CallAudioButton,
@@ -290,14 +289,14 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 			switch (buttonId)
 			{
 				case CallVideoButton.id: {
-					Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatWindow);
-					Calls.createVideoCall(this.dialogId);
+					CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatWindow);
+					CallManager.getInstance().createVideoCall(this.dialogId);
 					break;
 				}
 
 				case CallAudioButton.id: {
-					Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatWindow);
-					Calls.createAudioCall(this.dialogId);
+					CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatWindow);
+					CallManager.getInstance().createAudioCall(this.dialogId);
 					break;
 				}
 
@@ -328,29 +327,30 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 
 		callUserAddWidget()
 		{
-			Logger.log(`${this.constructor.name}.callUserAddWidget`);
+			Logger.log(`${this.constructor.name}.callMemberSelector`);
 
-			UserAdd.open(
-				{
-					dialogId: this.dialogId,
-					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_USER_ADD_WIDGET_TITTLE'),
-					textRightBtn: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_USER_ADD_WIDGET_BTN'),
-					callback: {
-						onAddUser: (event) => Logger.log(`${this.constructor.name}.callUserAddWidget.callback event:`, event),
-					},
-					widgetOptions: { mediumPositionPercent: 65 },
-					usersCustomFilter: (user) => {
-						if (user?.botData?.code)
-						{
-							return user?.botData?.code === BotCode.copilot;
-						}
+			const memberSelector = new MemberSelector({
+				onSelectMembers: this.onSelectMembers,
+			});
 
-						return true;
-					},
-					isCopilotDialog: this.isCopilot,
-				},
-			);
+			memberSelector.open();
 		}
+
+		onSelectMembers = (membersIds) => {
+			const chatSettings = Application.storage.getObject('settings.chat', {
+				historyShow: true,
+			});
+
+			const chatId = this.store.getters['dialoguesModel/getById'](this.dialogId).chatId;
+			const showHistory = chatSettings.historyShow;
+
+			const chatService = this.dialogLocator.get('chat-service');
+			chatService.addToChat(chatId, membersIds, showHistory)
+				.catch((errors) => {
+					Logger.error('MemberSelector.onSelectMembers error: ', errors);
+				})
+			;
+		};
 
 		/**
 		 * @param {DialoguesModelState?} dialogData

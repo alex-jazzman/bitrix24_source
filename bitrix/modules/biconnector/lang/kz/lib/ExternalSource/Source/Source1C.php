@@ -1,5 +1,4 @@
 <?php
-$MESS["BICONNECTOR_1C_CONNECTION_ERROR_ACTIVATE_ENTITY"] = "BI Құрастырушыға жүктеу үшін нысанды іске қосу мүмкін болмады.";
 $MESS["BICONNECTOR_1C_CONNECTION_ERROR_CANT_CONNECT"] = "1С-пен байланыс орнату мүмкін болмады";
 $MESS["BICONNECTOR_1C_CONNECTION_ERROR_CONNECTION_NOT_FOUND"] = "1С-те Битрикс Аналитика модулі орнатылмаған.";
 $MESS["BICONNECTOR_1C_CONNECTION_ERROR_PASSWORD"] = "Логин немесе құпиясөз дұрыс емес";

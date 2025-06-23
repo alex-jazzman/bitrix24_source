@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["PERFMON_MNU_SECT"] = "Производительность";
 $MESS["PERFMON_MNU_SECT_TITLE"] = "Монитор производительности";
 $MESS["PERFMON_MNU_HIT_LIST"] = "Хиты";
@@ -28,4 +29,5 @@ $MESS["PERFMON_MNU_PAGES"] = "Страницы";
 $MESS["PERFMON_MNU_PAGES_ALT"] = "Отчет по страницам с итоговыми параметрами.";
 $MESS["PERFMON_MNU_HISTORY"] = "История";
 $MESS["PERFMON_MNU_HISTORY_ALT"] = "История замеров выполненных в панели производительности.";
-?>
+$MESS['PERFMON_MNU_CACHE_HITRATE'] = 'Эффективность кеша';
+$MESS['PERFMON_MNU_CACHE_HITRATE_ALT'] = 'Просмотр эффективности кеша';

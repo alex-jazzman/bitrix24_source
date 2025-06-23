@@ -35,6 +35,7 @@
 		showUsers: 'Call::showUsers',
 		showAll: 'Call::showAll',
 		hideAll: 'Call::hideAll',
+		onActionSent: 'onActionSent',
 		audioMutedEvent: 'audioMutedEvent',
 		videoMutedEvent: 'videoMutedEvent',
 		screenShareMutedEvent: 'screenShareMutedEvent',
@@ -57,11 +58,12 @@
 		constructor(params)
 		{
 			this.id = params.id;
-			this.roomId = params.roomId;
+			this.uuid = params.uuid;
 			this.instanceId = params.instanceId;
 			this.parentId = params.parentId || null;
 			this.direction = params.direction;
 			this.type = params.type || BX.Call.Type.Instant; // @see {BX.Call.Type}
+			this.scheme = params.scheme;
 
 			this.ready = false;
 			this.userId = env.userId;
@@ -129,10 +131,8 @@
 
 			this.__onCallDisconnectedHandler = this.__onCallDisconnected.bind(this);
 			this.__onCallMessageReceivedHandler = this.__onCallMessageReceived.bind(this);
-			this.__onMuteAllParticipantsHandler = this.__onMuteAllParticipants.bind(this);
 			this.__onCallEndpointAddedHandler = this.__onCallEndpointAdded.bind(this);
 			this.__onCallReconnectedHandler = this.__onCallReconnected.bind(this);
-			this.__onMuteAllParticipantsHandler = this.__onMuteAllParticipants.bind(this);
 			this.__onUsersLimitExceededHandler = this.__onUsersLimitExceeded.bind(this);
 
 			this.__onSDKLogMessageHandler = this.__onSDKLogMessage.bind(this);
@@ -146,6 +146,11 @@
 			this.lastSelfPingReceivedTimeout = null;
 
 			this.created = new Date();
+		}
+
+		get provider()
+		{
+			return BX.Call.Provider.Bitrix;
 		}
 
 		log()
@@ -291,13 +296,13 @@
 			switch (this._joinStatus)
 			{
 				case BX.Call.JoinStatus.Local:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, local: true }]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: true }]);
 					break;
 				case BX.Call.JoinStatus.Remote:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, local: false }]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: false }]);
 					break;
 				case BX.Call.JoinStatus.None:
-					this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id }]);
+					this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id, callUuid: this.uuid }]);
 					break;
 			}
 		}
@@ -314,7 +319,7 @@
 				return;
 			}
 			this._active = newActive;
-			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [this.id]);
+			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [{ callId: this.id, callUuid: this.uuid }]);
 		}
 
 		bindClientEvents()
@@ -627,7 +632,7 @@
 				}
 
 				const clientOptions = {
-					roomId: this.roomId,
+					roomId: this.uuid,
 					endpoint: this.connectionData.endpoint,
 					token: this.connectionData.jwt,
 				};
@@ -720,6 +725,11 @@
 			});
 		}
 
+		updateUsersCount(users)
+		{
+			this.eventEmitter.emit(BX.Call.Event.onChatUsersCountUpdate, [users]);
+		}
+
 		bindCallEvents()
 		{
 			this.bitrixCallDev.on(JNBXCall.Events.Disconnected, this.__onCallDisconnectedHandler);
@@ -729,7 +739,6 @@
 			this.bitrixCallDev.on(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.OnUsersLimitExceeded, this.__onUsersLimitExceededHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
-			this.bitrixCallDev.on(JNBXCall.Events.muteAllParticipants, this.__onMuteAllParticipantsHandler);
 		}
 
 		removeCallEvents()
@@ -801,6 +810,8 @@
 				}
 				this.eventEmitter.emit(BX.Call.Event.onUserInvited, [{ userId }]);
 			}
+
+			this.updateUsersCount(this.users.length);
 		}
 
 		isAnyoneParticipating(withCalling)
@@ -1086,7 +1097,7 @@
 			let logData = {};
 
 			const evt = e && typeof e === 'object' ? e : {};
-			const { headers, leaveInformation } = evt;
+			const { headers } = evt;
 
 			if (headers)
 			{
@@ -1096,19 +1107,11 @@
 				};
 			}
 
-			if (leaveInformation)
-			{
-				logData = {
-					...logData,
-					leaveInformation,
-				};
-			}
-
 			this.log('__onCallDisconnected', (Object.keys(logData).length ? logData : null));
 
-			if (this.ready && leaveInformation)
+			if (this.ready && headers.leaveInformation)
 			{
-				this.hangup(leaveInformation.code, leaveInformation.reason);
+				this.hangup(headers.leaveInformation.code, headers.leaveInformation.reason);
 			}
 
 			this.ready = false;
@@ -1119,6 +1122,102 @@
 			this.bitrixCallDev = null;
 
 			this.joinStatus = BX.Call.JoinStatus.None;
+		}
+
+		__onCallMessageReceived(call, callMessage)
+		{
+			let message;
+			try
+			{
+				message = JSON.parse(callMessage.message);
+			}
+			catch (err)
+			{
+				this.log('Could not parse scenario message.', err);
+
+				return;
+			}
+
+			const eventName = message.eventName;
+			switch (eventName)
+			{
+				case clientEvents.voiceStarted:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStarted, [message.senderId]);
+
+					break;
+				}
+
+				case clientEvents.voiceStopped:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStopped, [message.senderId]);
+
+					break;
+				}
+
+				case clientEvents.microphoneState:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [
+						message.senderId,
+						message.microphoneState === 'Y',
+					]);
+
+					break;
+				}
+
+				case clientEvents.screenState:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserScreenState, [
+						message.senderId,
+						message.screenState === 'Y',
+					]);
+
+					break;
+				}
+
+				case clientEvents.videoPaused:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserVideoPaused, [
+						message.senderId,
+						message.videoPaused === 'Y',
+					]);
+
+					break;
+				}
+
+				case clientEvents.floorRequest:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [
+						message.senderId,
+						message.requestActive === 'Y',
+					]);
+
+					break;
+				}
+
+				case clientEvents.emotion:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserEmotion, [
+						message.senderId,
+						message.toUserId,
+						message.emotion,
+					]);
+
+					break;
+				}
+
+				case 'scenarioLogUrl':
+				{
+					CallUtil.warn(`scenario log url: ${message.logUrl}`);
+
+					break;
+				}
+
+				default:
+				{
+					this.log(`Unknown scenario event ${eventName}`);
+				}
+			}
 		}
 
 		__onCallReconnected()
@@ -1210,172 +1309,7 @@
 			this.eventEmitter.emit(BX.Call.Event.onUsersLimitExceeded);
 		}
 
-		__onMuteAllParticipants(data)
-		{
-			const type = data.track.type;
-			switch (type)
-			{
-				case clientEvents.audioMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsAudioMuted);
-					break;
-				}
-
-				case clientEvents.videoMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsVideoMuted);
-					break;
-				}
-
-				case clientEvents.screenShareMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsScreenshareMuted);
-					break;
-				}
-			}
-		}
-
-		__onCallMessageReceived(call, callMessage)
-		{
-			let message;
-			try
-			{
-				message = JSON.parse(callMessage.message);
-			}
-			catch (err)
-			{
-				this.log('Could not parse scenario message.', err);
-
-				return;
-			}
-
-			const eventName = message.eventName;
-			switch (eventName)
-			{
-				case clientEvents.voiceStarted:
-				{
-					if (message.senderId == this.userId)
-					{
-						this.requestFloor(false);
-					}
-					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStarted, [message.senderId]);
-
-					break;
-				}
-
-				case clientEvents.voiceStopped:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStopped, [message.senderId]);
-
-					break;
-				}
-
-				case clientEvents.microphoneState:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [
-						message.senderId,
-						message.microphoneState === 'Y',
-					]);
-
-					break;
-				}
-
-				case clientEvents.screenState:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onUserScreenState, [
-						message.senderId,
-						message.screenState === 'Y',
-					]);
-
-					break;
-				}
-
-				case clientEvents.videoPaused:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onUserVideoPaused, [
-						message.senderId,
-						message.videoPaused === 'Y',
-					]);
-
-					break;
-				}
-
-				case clientEvents.floorRequest:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [
-						message.senderId,
-						message.requestActive === 'Y',
-					]);
-
-					break;
-				}
-
-				case clientEvents.emotion:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onUserEmotion, [
-						message.senderId,
-						message.toUserId,
-						message.emotion,
-					]);
-
-					break;
-				}
-
-				case 'scenarioLogUrl':
-				{
-					CallUtil.warn(`scenario log url: ${message.logUrl}`);
-
-					break;
-				}
-
-				case clientEvents.audioMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsAudioMuted);
-					break;
-				}
-
-				case clientEvents.videoMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsVideoMuted);
-					break;
-				}
-
-				case clientEvents.screenShareMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onAllParticipantsScreenshareMuted);
-					break;
-				}
-
-				case clientEvents.participantAudioMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onParticipantAudioMuted, [{
-						data: message,
-					}]);
-					break;
-				}
-
-				case clientEvents.participantVideoMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onParticipantVideoMuted, [{
-						data: message,
-					}]);
-					break;
-				}
-
-				case clientEvents.participantScreenshareMutedEvent:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onParticipantScreenshareMuted, [{
-						data: message,
-					}]);
-					break;
-				}
-
-				default:
-				{
-					this.log(`Unknown scenario event ${eventName}`);
-				}
-			}
-		}
+		
 
 		destroy()
 		{
@@ -1412,9 +1346,7 @@
 			clearTimeout(this.pingUsersInterval);
 			clearTimeout(this.pingBackendInterval);
 
-			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{
-				call: this,
-			}]);
+			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{ callId: this.id, callUuid: this.uuid }]);
 			this.eventEmitter = null;
 			if (this.signaling)
 			{
@@ -1530,11 +1462,11 @@
 		{
 			return new Promise((resolve, reject) => {
 				client.requestOneTimeKey(options.roomId, options.endpoint, options.token).then((oneTimeKey) => {
-					CallUtil.warn('ontimekey received');
-					CallUtil.warn('ontimekey signed');
+						CallUtil.warn('ontimekey received');
+						CallUtil.warn('ontimekey signed');
 
-					resolve(client);
-				})
+						resolve(client);
+					})
 					.catch((error) => {
 						reject(error);
 					});
@@ -1918,7 +1850,6 @@
 		{
 			this.log(`Adding endpoint with ${endpoint.remoteVideoStreams.length} remote video streams`);
 
-			this.setReady(true);
 			this.inviteTimeout = false;
 			this.declined = false;
 			clearTimeout(this.connectionRestoreTimeout);
@@ -1940,7 +1871,14 @@
 				});
 			}
 
-			this.updateCalculatedState();
+			if (this.ready === true)
+			{
+				this.updateCalculatedState();
+			}
+			else
+			{
+				this.setReady(true);
+			}
 			this.bindEndpointEventHandlers();
 			if (endpoint.initialState)
 			{
@@ -2218,4 +2156,3 @@
 	window.BitrixCallDev = BitrixCallDev;
 })
 ();
-

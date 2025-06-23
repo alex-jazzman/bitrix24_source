@@ -1,9 +1,13 @@
-import { Text, Type, type JsonObject } from 'main.core';
-import { UI } from 'ui.notification';
+import { Type, type JsonObject } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { MessageMenuManager } from 'im.v2.lib.menu';
+import { MessageComponent } from 'im.v2.const';
+import type { BaseEvent } from 'main.core.events';
 
 import { VoteApplication } from 'vote.application';
 import { ImVoteService } from 'vote.provider.service';
 import { Loader } from 'vote.component.loader';
+import { VoteMessageMenu } from './classes/message-menu/message-menu';
 import type { QuestionCollectionType, VoteCollectionType, VoteElementState } from 'vote.store.vote';
 
 import { ButtonArea } from './components/button-area/button-area';
@@ -16,6 +20,7 @@ import './vote.css';
 import type { VoteInitQuestion, FormattedQuestionType, AnswersSelectedEvent } from './type';
 
 const ANONYMOUS_VOTE = 2;
+const ALLOW_REVOKING = 1;
 
 // @vue/component
 export const VoteDisplay = {
@@ -46,17 +51,17 @@ export const VoteDisplay = {
 			required: true,
 		},
 	},
-	emits: ['vote', 'revokeVote', 'copyLink'],
+	emits: ['vote', 'revokeVote', 'copyLink', 'completeVote'],
 	data(): JsonObject
 	{
 		return {
-			isLoading: true,
 			isShowPopup: false,
 			questionAnswers: {},
 		};
 	},
 	computed:
 	{
+		getMessage: () => getMessage,
 		firstQuestion(): Record<string, VoteInitQuestion>
 		{
 			const firstKey = Object.keys(this.voteItem.data?.questions)[0];
@@ -94,15 +99,6 @@ export const VoteDisplay = {
 
 			return this.currentVote.isVoted;
 		},
-		canRevoke(): boolean
-		{
-			if (this.isLoading)
-			{
-				return false;
-			}
-
-			return this.currentVote.canRevoke && this.isUserVoted && !this.isCompleted;
-		},
 		canEdit(): boolean
 		{
 			if (this.isLoading)
@@ -129,41 +125,56 @@ export const VoteDisplay = {
 		{
 			return Type.isArrayFilled(this.questionAnswers[this.firstQuestion.id]);
 		},
-		getVoteTypeText(): string
+		voteTypeText(): string
 		{
 			return this.isAnonymous ? getMessage('VOTE_ANONYMOUS') : getMessage('VOTE_PUBLIC');
 		},
-		getCompletionVoteText(): string
+		isLoading(): boolean
 		{
-			return getMessage('VOTE_NOTICE_COMPLETED');
+			return this.currentVote?.isLoading ?? true;
+		},
+		showRevokeNotice(): boolean
+		{
+			if (!this.isLoading && this.currentVote.isCompleted)
+			{
+				return false;
+			}
+
+			return this.voteItem.data?.options !== ALLOW_REVOKING;
 		},
 	},
-
 	created(): void
 	{
 		this.app = VoteApplication.init();
-		this.voteService = new ImVoteService(this.entityType, this.entityId);
+		this.voteService = ImVoteService.init();
+
+		MessageMenuManager.getInstance().registerMenuByMessageType(MessageComponent.voteMessage, VoteMessageMenu);
+		this.subscribeOnEvents();
 	},
-	async mounted(): void
+	mounted(): void
 	{
-		this.loadAttach();
+		if (!this.currentVote || this.currentVote?.isLoading !== false)
+		{
+			EventEmitter.emit('vote-message-batch', { messageId: this.entityId });
+		}
+	},
+	beforeUnmount(): void
+	{
+		this.unsubscribeFromEvents();
 	},
 	methods:
 	{
-		notifyAjaxError(ex): void
+		subscribeOnEvents(): void
 		{
-			if (Type.isObject(ex) && Type.isArrayFilled(ex.errors))
-			{
-				const message = ex?.errors[0]?.message ?? 'Unexpected error';
-				UI.Notification.Center.notify({
-					content: Text.encode(message),
-					autoHideDelay: 4000,
-				});
-			}
-			else
-			{
-				console.error(ex);
-			}
+			EventEmitter.subscribe('vote:message-menu:complete-vote', this.isShowCompletePopup);
+			EventEmitter.subscribe('vote:message-menu:revoke-vote', this.recallVote);
+			EventEmitter.subscribe('vote:message-menu:results-vote', this.showResults);
+		},
+		unsubscribeFromEvents(): void
+		{
+			EventEmitter.unsubscribe('vote:message-menu:complete-vote', this.isShowCompletePopup);
+			EventEmitter.unsubscribe('vote:message-menu:revoke-vote', this.recallVote);
+			EventEmitter.unsubscribe('vote:message-menu:results-vote', this.showResults);
 		},
 		async answersSelected(event: AnswersSelectedEvent): void
 		{
@@ -178,13 +189,12 @@ export const VoteDisplay = {
 		},
 		async submitVote(): Promise<void>
 		{
-			this.isLoading = true;
 			try
 			{
 				this.app.getStore().dispatch('vote/setUserVoted', {
 					voteId: this.currentVote.id,
 				});
-				await this.voteService.sendVote(this.questionAnswers);
+				await this.voteService.sendVote(this.questionAnswers, this.voteItem.id, this.entityId);
 				this.$emit('vote');
 				this.questionAnswers = {};
 			}
@@ -199,7 +209,6 @@ export const VoteDisplay = {
 					autoHideDelay: 4000,
 				});
 			}
-			this.isLoading = false;
 		},
 		onClickVoteButton(): void
 		{
@@ -208,8 +217,12 @@ export const VoteDisplay = {
 				this.submitVote();
 			}
 		},
-		async showResults(): void
+		async showResults(event: BaseEvent): void
 		{
+			if (event && event.data?.entityId !== this.entityId)
+			{
+				return;
+			}
 			BX.SidePanel.Instance.open(this.currentVote.resultUrl, {
 				cacheable: false,
 				width: 480,
@@ -224,19 +237,6 @@ export const VoteDisplay = {
 				},
 			});
 		},
-		async loadAttach(): void
-		{
-			try
-			{
-				await this.voteService.load();
-				this.isLoading = false;
-			}
-			catch (e)
-			{
-				this.notifyAjaxError(e);
-				// @TODO add error state;
-			}
-		},
 		async completeVote(): void
 		{
 			try
@@ -244,7 +244,8 @@ export const VoteDisplay = {
 				this.app.getStore().dispatch('vote/setVoteCompleted', {
 					voteId: this.currentVote.id,
 				});
-				await this.voteService.completeVote();
+				await this.voteService.completeVote(this.entityId);
+				this.$emit('completeVote');
 			}
 			catch (e)
 			{
@@ -260,17 +261,29 @@ export const VoteDisplay = {
 				});
 			}
 		},
-		onCompetePopupConfirm(): void
+		isShowCompletePopup(event: BaseEvent): void
+		{
+			if (event.data?.entityId !== this.entityId)
+			{
+				return;
+			}
+			this.isShowPopup = true;
+		},
+		onCompletePopupConfirm(): void
 		{
 			this.isShowPopup = false;
 			this.completeVote();
 		},
-		onCompetePopupCancel(): void
+		onCompletePopupCancel(): void
 		{
 			this.isShowPopup = false;
 		},
-		async recallVote(): void
+		async recallVote(event: BaseEvent): Promise<void>
 		{
+			if (event.data?.entityId !== this.entityId)
+			{
+				return;
+			}
 			const previousSelectedAnswers = this.app.getStore().getters['vote/getCurrentUserVotes'][this.firstQuestion.id];
 			try
 			{
@@ -281,7 +294,7 @@ export const VoteDisplay = {
 				this.app.getStore().dispatch('vote/resetUserVoted', {
 					voteId: this.currentVote.id,
 				});
-				await this.voteService.revokeVote();
+				await this.voteService.revokeVote(this.entityId, this.currentVote.id);
 				this.$emit('revokeVote');
 			}
 			catch (e)
@@ -302,50 +315,43 @@ export const VoteDisplay = {
 		},
 	},
 	template: `
-			<form class="vote-display">
-				<div class="vote-display-inner">
-					<VoteQuestion
-						:key="formattedQuestion.id"
-						:contextId="contextId"
-						:isLoading="isLoading"
+		<form class="vote-display">
+			<div class="vote-display-inner">
+				<VoteQuestion
+					:key="formattedQuestion.id"
+					:contextId="contextId"
+					:isLoading="isLoading"
+					:question="formattedQuestion"
+					:isUserVoted="isUserVoted"
+					:isCompleted="isCompleted"
+					:answers="formattedQuestion.answers"
+					@answersSelected="answersSelected"
+				/>
+				<div class="vote-display-bottom-container">
+					<div v-if="isLoading" class="vote-display__loader">
+						<Loader />
+					</div>
+					<ButtonArea v-else
 						:question="formattedQuestion"
+						:isLoading="isLoading"
 						:isUserVoted="isUserVoted"
 						:isCompleted="isCompleted"
-						:answers="formattedQuestion.answers"
-						@answersSelected="answersSelected"
+						:isBtnActive="hasSelectedAnswers"
+						@onClickVoteButton="onClickVoteButton"
+						@showResults="showResults"
 					/>
-					<div class="vote-display-bottom-container">
-						<div v-if="isLoading" class="vote-display__loader">
-							<Loader />
-						</div>
-						<ButtonArea v-else
-							:question="formattedQuestion"
-							:isLoading="isLoading"
-							:isUserVoted="isUserVoted"
-							:isCompleted="isCompleted"
-							:isBtnActive="hasSelectedAnswers"
-							@onClickVoteButton="onClickVoteButton"
-							@showResults="showResults"
-						/>
-						<div class="vote__notice">
-							<span class="vote__notice-text">{{ getVoteTypeText }}</span>
-							<span v-if="isCompleted" class="vote__notice-text">{{ getCompletionVoteText }}</span>
-						</div>
-
-		<!--				temporary button for testing-->
-						<div style="height:22px;display:none;">
-							<button v-if="canRevoke" @click="recallVote" type="button">Переголосовать</button>
-						</div>
-						<div style="height:22px;display:none;">
-							<button  v-if="!isCompleted && canEdit" @click="isShowPopup = true" type="button">Завершить</button>
-						</div>
+					<div class="vote__notice">
+						<span class="vote__notice-text">{{ voteTypeText }}</span>
+						<span v-if="showRevokeNotice" class="vote__notice-text">{{ getMessage('VOTE_NOTICE_REVOKE_IS_NOT_AVAILABLE') }}</span>
+						<span v-if="isCompleted" class="vote__notice-text">{{ getMessage('VOTE_NOTICE_COMPLETED') }}</span>
 					</div>
 				</div>
-			</form>
-			<VotePopup 
-				v-if="isShowPopup" 
-				@confirm="onCompetePopupConfirm"
-				@cancel="onCompetePopupCancel"
-			/>
+			</div>
+		</form>
+		<VotePopup
+			v-if="isShowPopup"
+			@confirm="onCompletePopupConfirm"
+			@cancel="onCompletePopupCancel"
+		/>
 	`,
 };

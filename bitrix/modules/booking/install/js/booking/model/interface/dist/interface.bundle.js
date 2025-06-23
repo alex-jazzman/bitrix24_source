@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,main_core,ui_vue3_vuex,booking_const) {
+(function (exports,main_core,ui_vue3_vuex,booking_const,booking_lib_timezone) {
 	'use strict';
 
 	function getOverbookingOccupancy(overbookingMap, resources) {
@@ -53,8 +53,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 	      canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
 	      editingBookingId: this.getVariable('editingBookingId', 0),
+	      editingWaitListItemId: this.getVariable('editingWaitListItemId', 0),
 	      draggedBookingId: 0,
 	      draggedBookingResourceId: 0,
+	      draggedDataTransfer: {
+	        id: 0,
+	        resourceId: 0,
+	        kind: ''
+	      },
 	      resizedBookingId: 0,
 	      isLoaded: false,
 	      zoom: 1,
@@ -62,11 +68,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      scroll: 0,
 	      offHoursHover: false,
 	      offHoursExpanded: false,
+	      waitListExpanded: this.getVariable('waitListExpanded', true),
+	      calendarExpanded: this.getVariable('calendarExpanded', true),
 	      fromHour: (_schedule$fromHour = schedule.fromHour) != null ? _schedule$fromHour : 9,
 	      toHour: (_schedule$toHour = schedule.toHour) != null ? _schedule$toHour : 19,
 	      selectedDateTs: new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime(),
 	      viewDateTs: new Date(today.getFullYear(), today.getMonth()).getTime(),
 	      deletingBookings: {},
+	      deletingWaitListItemIds: {},
 	      selectedCells: {},
 	      hoveredCell: null,
 	      busySlots: {},
@@ -95,7 +104,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      isCurrentSenderAvailable: false,
 	      isShownTrialPopup: false,
 	      embedItems: this.getVariable('embedItems', []),
-	      createdFromEmbedBookings: {}
+	      animationPause: false,
+	      createdFromEmbedBookings: {},
+	      createdFromEmbedWaitListItems: {}
 	    };
 	  }
 
@@ -114,16 +125,26 @@ this.BX.Booking = this.BX.Booking || {};
 	      isShownTrialPopup: state => state.isShownTrialPopup,
 	      /** @function interface/editingBookingId */
 	      editingBookingId: state => state.editingBookingId,
+	      /** @function interface/editingWaitListItemId */
+	      editingWaitListItemId: state => state.editingWaitListItemId,
 	      /** @function interface/isEditingBookingMode */
-	      isEditingBookingMode: state => state.editingBookingId > 0,
+	      isEditingBookingMode: state => {
+	        return state.editingBookingId > 0 || state.editingWaitListItemId > 0;
+	      },
 	      /** @function interface/draggedBookingId */
-	      draggedBookingId: state => state.draggedBookingId,
+	      draggedBookingId: state => {
+	        return state.draggedDataTransfer.kind === booking_const.DraggedElementKind.Booking ? state.draggedDataTransfer.id : 0;
+	      },
 	      /** @function interface/draggedBookingResourceId */
-	      draggedBookingResourceId: state => state.draggedBookingResourceId,
+	      draggedBookingResourceId: state => {
+	        return state.draggedDataTransfer.kind === booking_const.DraggedElementKind.Booking ? state.draggedDataTransfer.resourceId : 0;
+	      },
+	      /** @function interface/draggedDataTransfer */
+	      draggedDataTransfer: state => state.draggedDataTransfer,
 	      /** @function interface/resizedBookingId */
 	      resizedBookingId: state => state.resizedBookingId,
 	      /** @function interface/isDragMode */
-	      isDragMode: state => state.draggedBookingId || state.resizedBookingId,
+	      isDragMode: state => state.draggedDataTransfer.id > 0 || state.resizedBookingId,
 	      /** @function interface/isLoaded */
 	      isLoaded: state => state.isLoaded,
 	      /** @function interface/zoom */
@@ -136,6 +157,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      offHoursHover: state => state.offHoursHover,
 	      /** @function interface/offHoursExpanded */
 	      offHoursExpanded: state => state.offHoursExpanded,
+	      /** @function interface/waitListExpanded */
+	      waitListExpanded: state => state.waitListExpanded,
+	      /** @function interface/calendarExpanded */
+	      calendarExpanded: state => state.calendarExpanded,
 	      /** @function interface/fromHour */
 	      fromHour: state => state.fromHour,
 	      /** @function interface/toHour */
@@ -146,6 +171,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      viewDateTs: (state, getters) => state.viewDateTs - getters.offset,
 	      /** @function interface/deletingBookings */
 	      deletingBookings: state => state.deletingBookings,
+	      /** @function interface/deletingWaitListItems */
+	      deletingWaitListItems: state => state.deletingWaitListItemIds,
 	      /** @function interface/selectedCells */
 	      selectedCells: state => state.selectedCells,
 	      /** @function interface/hoveredCell */
@@ -197,21 +224,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      quickFilter: state => state.quickFilter,
 	      /** @function interface/timezone */
 	      timezone: state => state.timezone,
-	      /** @function interface/timezoneOffset */
-	      timezoneOffset: state => {
-	        const timeZone = state.timezone;
-	        const date = new Date(state.selectedDateTs);
-	        const dateInTimezone = new Date(date.toLocaleString('en-US', {
-	          timeZone
-	        }));
-	        const dateInUTC = new Date(date.toLocaleString('en-US', {
-	          timeZone: 'UTC'
-	        }));
-	        return (dateInTimezone.getTime() - dateInUTC.getTime()) / 1000;
-	      },
 	      /** @function interface/offset */
-	      offset: (state, getters) => {
-	        return (getters.timezoneOffset + new Date(state.selectedDateTs).getTimezoneOffset() * 60) * 1000;
+	      offset: state => {
+	        const timezoneOffset = booking_lib_timezone.Timezone.getOffset(state.selectedDateTs, state.timezone);
+	        return (timezoneOffset + new Date(state.selectedDateTs).getTimezoneOffset() * 60) * 1000;
 	      },
 	      /** @function interface/mousePosition */
 	      mousePosition: state => state.mousePosition,
@@ -261,9 +277,15 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      /** @function interface/embedItems */
 	      embedItems: state => state.embedItems,
+	      /** @function interface/animationPause */
+	      animationPause: state => state.animationPause,
 	      /** @function interface/isBookingCreatedFromEmbed */
 	      isBookingCreatedFromEmbed: state => id => {
 	        return id in state.createdFromEmbedBookings;
+	      },
+	      /** @function interface/isWaitListItemCreatedFromEmbed */
+	      isWaitListItemCreatedFromEmbed: state => id => {
+	        return id in state.createdFromEmbedWaitListItems;
 	      }
 	    };
 	  }
@@ -275,6 +297,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      setEditingBookingId: (store, editingBookingId) => {
 	        store.commit('setEditingBookingId', editingBookingId);
 	      },
+	      /** @function interface/setEditingWaitListItemId */
+	      setEditingWaitListItemId: (store, editingWaitListItemId) => {
+	        store.commit('setEditingWaitListItemId', editingWaitListItemId);
+	      },
 	      /** @function interface/setDraggedBookingId */
 	      setDraggedBookingId: (store, draggedBookingId) => {
 	        store.commit('setDraggedBookingId', draggedBookingId);
@@ -282,6 +308,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function interface/setDraggedBookingResourceId */
 	      setDraggedBookingResourceId: (store, draggedBookingResourceId) => {
 	        store.commit('setDraggedBookingResourceId', draggedBookingResourceId);
+	      },
+	      /** @function interface/setDraggedDataTransfer */
+	      setDraggedDataTransfer: (store, draggedDataTransfer) => {
+	        store.commit('setDraggedDataTransfer', draggedDataTransfer);
+	      },
+	      /** @function interface/clearDraggedDataTransfer */
+	      clearDraggedDataTransfer: store => {
+	        store.commit('setDraggedDataTransfer', {
+	          kind: null,
+	          id: 0,
+	          resourceId: 0
+	        });
 	      },
 	      /** @function interface/setResizedBookingId */
 	      setResizedBookingId: (store, resizedBookingId) => {
@@ -311,6 +349,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      setOffHoursExpanded: (store, offHoursExpanded) => {
 	        store.commit('setOffHoursExpanded', offHoursExpanded);
 	      },
+	      /** @function interface/setWaitListExpanded */
+	      setWaitListExpanded: (store, waitListExpanded) => {
+	        store.commit('setWaitListExpanded', waitListExpanded);
+	      },
+	      /** @function interface/setCalendarExpanded */
+	      setCalendarExpanded: (store, calendarExpanded) => {
+	        store.commit('setCalendarExpanded', calendarExpanded);
+	      },
 	      /** @function interface/setSelectedDateTs */
 	      setSelectedDateTs: (store, selectedDateTs) => {
 	        store.commit('setSelectedDateTs', selectedDateTs);
@@ -326,6 +372,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function interface/removeDeletingBooking */
 	      removeDeletingBooking: (store, bookingId) => {
 	        store.commit('removeDeletingBooking', bookingId);
+	      },
+	      /** @function interfcae/addDeletingWaitListItemId */
+	      addDeletingWaitListItemId: (store, waitListItemId) => {
+	        store.commit('addDeletingWaitListItemId', waitListItemId);
+	      },
+	      /** @function interface/removeDeletingWaitListItemId */
+	      removeDeletingWaitListItemId: (store, waitListItemId) => {
+	        store.commit('removeDeletingWaitListItemId', waitListItemId);
 	      },
 	      /** @function interface/addSelectedCell */
 	      addSelectedCell: (store, cell) => {
@@ -452,6 +506,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      setEmbedItems: (store, embedItems) => {
 	        store.commit('setEmbedItems', embedItems);
 	      },
+	      /** @function interface/setAnimationPause */
+	      setAnimationPause: ({
+	        commit
+	      }, pause) => {
+	        commit('setAnimationPause', pause);
+	      },
 	      /** @function interface/addCreatedFromEmbedBooking */
 	      addCreatedFromEmbedBooking: ({
 	        commit,
@@ -460,6 +520,16 @@ this.BX.Booking = this.BX.Booking || {};
 	        const embedItems = getters.embedItems || [];
 	        if (embedItems.length > 0) {
 	          commit('addCreatedFromEmbedBooking', id);
+	        }
+	      },
+	      /** @function interface/addCreatedFromEmbedWaitListItem */
+	      addCreatedFromEmbedWaitListItem: ({
+	        commit,
+	        getters
+	      }, id) => {
+	        const embedItems = getters.embedItems || [];
+	        if (embedItems.length > 0) {
+	          commit('addCreatedFromEmbedWaitListItem', id);
 	        }
 	      }
 	    };
@@ -471,6 +541,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      setEditingBookingId: (state, editingBookingId) => {
 	        state.editingBookingId = editingBookingId;
 	      },
+	      setEditingWaitListItemId: (state, editingWaitListItemId) => {
+	        state.editingWaitListItemId = editingWaitListItemId;
+	      },
 	      setDraggedBookingId: (state, draggedBookingId) => {
 	        state.draggedBookingId = draggedBookingId;
 	      },
@@ -479,6 +552,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setDraggedBookingResourceId: (state, draggedBookingResourceId) => {
 	        state.draggedBookingResourceId = draggedBookingResourceId;
+	      },
+	      setDraggedDataTransfer: (state, draggedDataTransfer) => {
+	        state.draggedDataTransfer = draggedDataTransfer;
 	      },
 	      setIsLoaded: (state, isLoaded) => {
 	        state.isLoaded = isLoaded;
@@ -498,6 +574,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      setOffHoursExpanded: (state, offHoursExpanded) => {
 	        state.offHoursExpanded = offHoursExpanded;
 	      },
+	      setWaitListExpanded: (state, waitListExpanded) => {
+	        state.waitListExpanded = waitListExpanded;
+	      },
+	      setCalendarExpanded: (state, calendarExpanded) => {
+	        state.calendarExpanded = calendarExpanded;
+	      },
 	      setSelectedDateTs: (state, selectedDateTs) => {
 	        state.selectedDateTs = selectedDateTs;
 	      },
@@ -509,6 +591,24 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      removeDeletingBooking: (state, bookingId) => {
 	        delete state.deletingBookings[bookingId];
+	      },
+	      addDeletingWaitListItemId: (state, waitListItemId) => {
+	        if (main_core.Type.isArray(waitListItemId)) {
+	          waitListItemId.forEach(id => {
+	            state.deletingWaitListItemIds[id] = id;
+	          });
+	        } else {
+	          state.deletingWaitListItemIds[waitListItemId] = waitListItemId;
+	        }
+	      },
+	      removeDeletingWaitListItemId: (state, waitListItemId) => {
+	        if (main_core.Type.isArray(waitListItemId)) {
+	          waitListItemId.forEach(id => {
+	            delete state.deletingWaitListItemIds[id];
+	          });
+	        } else {
+	          delete state.deletingWaitListItemIds[waitListItemId];
+	        }
 	      },
 	      addSelectedCell: (state, cell) => {
 	        state.selectedCells[cell.id] = cell;
@@ -608,6 +708,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      setEmbedItems: (state, embedItems) => {
 	        state.embedItems = embedItems;
 	      },
+	      setAnimationPause: (state, pause) => {
+	        state.animationPause = pause;
+	      },
 	      addCreatedFromEmbedBooking: (state, id) => {
 	        if (main_core.Type.isArray(id)) {
 	          for (const bookingId of id) {
@@ -616,6 +719,15 @@ this.BX.Booking = this.BX.Booking || {};
 	          return;
 	        }
 	        state.createdFromEmbedBookings[id] = id;
+	      },
+	      addCreatedFromEmbedWaitListItem: (state, id) => {
+	        if (main_core.Type.isArray(id)) {
+	          for (const waitListItemId of id) {
+	            state.createdFromEmbedWaitListItems[waitListItemId] = waitListItemId;
+	          }
+	          return;
+	        }
+	        state.createdFromEmbedWaitListItems[id] = id;
 	      }
 	    };
 	  }
@@ -623,5 +735,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Interface = Interface;
 
-}((this.BX.Booking.Model = this.BX.Booking.Model || {}),BX,BX.Vue3.Vuex,BX.Booking.Const));
+}((this.BX.Booking.Model = this.BX.Booking.Model || {}),BX,BX.Vue3.Vuex,BX.Booking.Const,BX.Booking.Lib));
 //# sourceMappingURL=interface.bundle.js.map

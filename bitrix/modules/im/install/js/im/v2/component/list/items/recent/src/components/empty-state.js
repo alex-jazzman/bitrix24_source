@@ -1,19 +1,13 @@
-import { Core } from 'im.v2.application.core';
-import { Button as MessengerButton, ButtonSize, ButtonColor } from 'im.v2.component.elements';
+import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { InviteManager } from 'im.v2.lib.invite';
 
 import '../css/empty-state.css';
-
-import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const EmptyState = {
 	name: 'EmptyState',
-	components: { MessengerButton },
-	data(): JsonObject
-	{
-		return {};
-	},
+	components: { ChatButton },
 	computed:
 	{
 		ButtonSize: () => ButtonSize,
@@ -22,26 +16,12 @@ export const EmptyState = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.intranetInviteAvailable);
 		},
-		inviteUsersLink(): string
-		{
-			const AJAX_PATH = '/bitrix/services/main/ajax.php';
-			const COMPONENT_NAME = 'bitrix:intranet.invitation';
-			const ACTION_NAME = 'getSliderContent';
-			const params = new URLSearchParams({
-				action: ACTION_NAME,
-				site_id: Core.getSiteId(),
-				c: COMPONENT_NAME,
-				mode: 'ajax',
-			});
-
-			return `${AJAX_PATH}?${params.toString()}`;
-		},
 	},
 	methods:
 	{
-		onInviteUsersClick()
+		onInviteUsersClick(): void
 		{
-			BX.SidePanel.Instance.open(this.inviteUsersLink);
+			InviteManager.openInviteSlider();
 		},
 		loc(phraseCode: string): string
 		{
@@ -54,7 +34,7 @@ export const EmptyState = {
 			<div class="bx-im-list-recent-empty-state__title">{{ loc('IM_LIST_RECENT_EMPTY_STATE_TITLE') }}</div>
 			<div class="bx-im-list-recent-empty-state__subtitle">{{ loc('IM_LIST_RECENT_EMPTY_STATE_SUBTITLE') }}</div>
 			<div v-if="canInviteUsers" class="bx-im-list-recent-empty-state__button">
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:isRounded="true"
 					:text="loc('IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS')"

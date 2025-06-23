@@ -190,6 +190,7 @@ export const FieldsSettingsStep = {
 			<div class="ui-form-row fields-settings">
 				<FormatTable
 					:fields-settings="fieldsSettings"
+					:disabled-elements="disabledElements"
 					@row-toggle="onRowToggled"
 					@header-toggle="onHeaderToggled"
 					@row-field-changed="onRowFieldChanged"

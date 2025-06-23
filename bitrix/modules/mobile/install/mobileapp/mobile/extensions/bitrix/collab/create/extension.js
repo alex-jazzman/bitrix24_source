@@ -17,6 +17,7 @@ jn.define('collab/create', (require, exports, module) => {
 	const { ajaxPublicErrorHandler, ajaxAlertErrorHandler, showInternalAlert } = require('error');
 	const { Alert, ButtonType } = require('alert');
 	const { CollabTaskPermissions } = require('collab/create/src/task-permissions');
+	const { CollabAccessService } = require('collab/service/access');
 
 	const CollabCreateStage = {
 		INTRO: 'intro',
@@ -77,6 +78,14 @@ jn.define('collab/create', (require, exports, module) => {
 		{
 			const { collabId = null, stage = CollabCreateStage.INTRO } = props;
 			const isEditMode = !isNil(collabId);
+			const isCollabToolEnabled = await CollabAccessService.checkAccess();
+
+			if (!isCollabToolEnabled)
+			{
+				CollabAccessService.openAccessDeniedBox();
+
+				return;
+			}
 
 			try
 			{
@@ -216,13 +225,14 @@ jn.define('collab/create', (require, exports, module) => {
 
 			const { data } = response;
 			const { name, description, ownerId, moderatorMembers, options, additionalInfo, permissions } = data;
-			const { whoCanInvite, manageMessages, showHistory } = options;
+			const { whoCanInvite, manageMessages, showHistory, messagesAutoDeleteDelay } = options;
 			const { tasks } = permissions;
 			const { users, image } = additionalInfo;
 
 			return {
 				name,
 				description,
+				messagesAutoDeleteDelay,
 				image: isNil(image) ? null : {
 					id: image.id,
 					previewUrl: encodeURI(image.src),
@@ -407,9 +417,20 @@ jn.define('collab/create', (require, exports, module) => {
 				description: this.settings.description,
 				image: this.settings.image,
 				onCreateButtonClick: this.#onCreateButtonClick,
+				messagesAutoDeleteDelay: this.settings.messagesAutoDeleteDelay,
+				isEnabledAutoDeleteInPortalSettings: this.settings.autoDeleteEnabledInPortalSettings,
+				isAutoDeleteFeatureAvailable: this.#isAutoDeleteFeatureAvailable(),
+				layoutWidget: this.props.layoutWidget,
 			});
 
 			return this.currentStepInstance;
+		}
+
+		#isAutoDeleteFeatureAvailable()
+		{
+			const chatFeatureClass = require('im/messenger/lib/feature')?.Feature;
+
+			return this.settings.autoDeleteFeatureAvailable && chatFeatureClass.isMessagesAutoDeleteNativeAvailable;
 		}
 
 		enablePendingForEditScreen = () => {
@@ -527,7 +548,7 @@ jn.define('collab/create', (require, exports, module) => {
 		};
 
 		#getSettingsForCreateRequest = () => {
-			const { name, description, image, permissions, taskPermissions } = this.settings;
+			const { name, description, image, permissions, taskPermissions, messagesAutoDeleteDelay } = this.settings;
 			const { owner, moderators, showHistory, inviters, messageWriters } = permissions;
 
 			return {
@@ -540,6 +561,7 @@ jn.define('collab/create', (require, exports, module) => {
 				options: {
 					whoCanInvite: inviters,
 					manageMessages: messageWriters,
+					messagesAutoDeleteDelay,
 					showHistory,
 				},
 				permissions: {
@@ -606,6 +628,7 @@ jn.define('collab/create', (require, exports, module) => {
 				await DialogOpener.open({
 					dialogId,
 					context: DialogOpener.context.chatCreation,
+					navigationTab: this.props?.navigationTab,
 				});
 				await openCollabInvite({
 					collabId,
@@ -677,6 +700,7 @@ jn.define('collab/create', (require, exports, module) => {
 	/**
 	 * @param {Object} props
 	 * @param {function} props.onCreate
+	 * @param {string} props.navigationTab
 	 * @param {LayoutComponent} parentWidget
 	 * @returns {Promise<CollabCreate|null>}
 	 */

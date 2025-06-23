@@ -19,9 +19,10 @@ class Signaling extends \Bitrix\Im\Call\Signaling
 
 		$associatedEntity = $this->call->getAssociatedEntity();
 		$isBroadcast = ($associatedEntity instanceof Chat) && $associatedEntity->isBroadcast();
+		$chatId = (int)$this->call->getAssociatedEntity()?->getChatId();
 
 		$config = [
-			'callToken' => JwtCall::getCallToken($this->call->getAssociatedEntity()->getChatId()),
+			'callToken' => JwtCall::getCallToken($chatId, $toUserId),
 			'call' => $this->getCallInfoForSend(($senderId !== $toUserId ? $toUserId : 0)),
 			'aiSettings' => $this->getCallAiSettings(),
 			'isLegacyMobile' => $isLegacyMobile,
@@ -59,13 +60,14 @@ class Signaling extends \Bitrix\Im\Call\Signaling
 
 		$pushText = Loc::getMessage('IM_CALL_INVITE', ['#USER_NAME#' => $name]);
 		$pushTag = 'IM_CALL_'.$this->call->getId();
+		$chatId = (int)$this->call->getAssociatedEntity()?->getChatId();
 		$push = [
 			'message' => $pushText,
 			'expiry' => 0,
 			'params' => [
 				'ACTION' => 'IMINV_'.$this->call->getId()."_".time()."_".($video ? 'Y' : 'N'),
 				'PARAMS' => [
-					'callToken' => JwtCall::getCallToken($this->call->getAssociatedEntity()->getChatId()),
+					'callToken' => JwtCall::getCallToken($chatId, $toUserId),
 					'call' => $this->getCallInfoForSend(($senderId === $toUserId ? $toUserId : 0)),
 					'type' => 'internal',
 					'callerName' => htmlspecialcharsback($name),
@@ -156,6 +158,7 @@ class Signaling extends \Bitrix\Im\Call\Signaling
 				'ID' => $this->call->getId(),
 				'UUID' => $this->call->getUuid(),
 				'PROVIDER' => $this->call->getProvider(),
+				'SCHEME' => $this->call->getScheme(),
 			];
 		}
 
@@ -198,6 +201,7 @@ class Signaling extends \Bitrix\Im\Call\Signaling
 			'startDate' => $this->call->getStartDate(),
 			'associatedEntity' => $this->call->getAssociatedEntity()->toArray($userId),
 			'userCounter' => count($this->call->getUsers()),
+			'scheme' => $this->call->getScheme(),
 		];
 	}
 }

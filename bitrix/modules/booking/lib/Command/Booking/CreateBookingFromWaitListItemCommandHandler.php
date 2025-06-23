@@ -1,28 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Command\Booking;
 
+use Bitrix\Booking\Command\Booking\Trait\BookingChangesTrait;
 use Bitrix\Booking\Command\WaitListItem\RemoveWaitListItemCommand;
 use Bitrix\Booking\Entity;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\Booking\CreateBookingFromWaitListItemException;
+use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
 use Bitrix\Booking\Internals\Repository\WaitListItemRepositoryInterface;
 use Bitrix\Booking\Internals\Service\BookingService;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
 use Bitrix\Booking\Internals\Service\Journal\JournalServiceInterface;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
+use Bitrix\Booking\Internals\Service\Overbooking\OverbookingService;
 use Bitrix\Booking\Internals\Service\ResourceService;
 use Bitrix\Booking\Provider\WaitListItemProvider;
 
 class CreateBookingFromWaitListItemCommandHandler
 {
+	use BookingChangesTrait;
+
 	private TransactionHandlerInterface $transactionHandler;
 	private WaitListItemProvider $waitListItemProvider;
 	private WaitListItemRepositoryInterface $waitListItemRepository;
 	private JournalServiceInterface $journalService;
 	private ResourceService $resourceService;
 	private BookingService $bookingService;
+	private OverbookingService $overbookingService;
+	private BookingRepositoryInterface $bookingRepository;
 
 	public function __construct()
 	{
@@ -32,6 +41,8 @@ class CreateBookingFromWaitListItemCommandHandler
 		$this->journalService = Container::getJournalService();
 		$this->resourceService = Container::getResourceService();
 		$this->bookingService = Container::getBookingService();
+		$this->overbookingService = Container::getOverbookingService();
+		$this->bookingRepository = Container::getBookingRepository();
 	}
 
 	public function __invoke(CreateBookingFromWaitListItemCommand $command): Entity\Booking\Booking
@@ -58,7 +69,8 @@ class CreateBookingFromWaitListItemCommandHandler
 				$resourceCollection = $newBooking->getResourceCollection();
 				$newBooking->setResourceCollection($this->resourceService->loadResourceCollection($resourceCollection));
 
-				$this->bookingService->checkBookingBeforeCreating($newBooking, $command->allowOverbooking);
+				$this->bookingService->checkBookingBeforeCreating($newBooking);
+				$intersectionResult = $this->bookingService->checkIntersection($newBooking, $command->allowOverbooking);
 
 				$bookingEntity = $this->bookingService->create($newBooking, $command->createdBy);
 
@@ -70,11 +82,23 @@ class CreateBookingFromWaitListItemCommandHandler
 						data: array_merge(
 							$addBookingCommand->toArray(),
 							[
+								'booking' => $bookingEntity->toArray(),
 								'currentUserId' => $command->createdBy,
+								'isOverbooking' => $intersectionResult->hasIntersections(),
 							],
 						),
 					),
 				);
+
+				if ($intersectionResult->hasIntersections())
+				{
+					$events = $this->prepareOverbookingUpdateEvents(
+						intersectionBookings: $intersectionResult->getBookingCollection(),
+						updatedBy: $command->createdBy,
+						isOverbooking: true,
+					);
+					array_map(fn(JournalEvent $event) => $this->journalService->append($event), $events);
+				}
 
 				$this->waitListItemRepository->remove($command->waitListItemId);
 				$waitListItem->setDeleted(true);
@@ -98,5 +122,20 @@ class CreateBookingFromWaitListItemCommandHandler
 			},
 			errType: CreateBookingFromWaitListItemException::class,
 		);
+	}
+
+	protected function getOverbookingService(): OverbookingService
+	{
+		return $this->overbookingService;
+	}
+
+	protected function getBookingRepository(): BookingRepositoryInterface
+	{
+		return $this->bookingRepository;
+	}
+
+	protected function getJournalService(): JournalServiceInterface
+	{
+		return $this->journalService;
 	}
 }

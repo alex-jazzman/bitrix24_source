@@ -4,9 +4,10 @@
 jn.define('im/messenger/provider/pull/base/counter', (require, exports, module) => {
 	const { CounterType } = require('im/messenger/const');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
-	const { BaseRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/base');
+	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/base');
 
 	/**
+	 * @deprecated
 	 * @class BaseCounterPullHandler
 	 */
 	class BaseCounterPullHandler extends BasePullHandler
@@ -144,11 +145,11 @@ jn.define('im/messenger/provider/pull/base/counter', (require, exports, module) 
 		 * @protected
 		 * @param {MessageAddParams} params
 		 * @param {PullExtraParams} extra
-		 * @return {BaseRecentMessageManager}
+		 * @return {NewMessageManager}
 		 */
 		getMessageManager(params, extra)
 		{
-			return new BaseRecentMessageManager(params, extra);
+			return new NewMessageManager(params, extra);
 		}
 
 		/**

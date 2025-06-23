@@ -244,7 +244,7 @@ class Form
 
 		$languages = Main\Localization\LanguageTable::getList([
 			'select' => ['VALUE' => 'ID', 'NAME'],
-			'filter'=> ['ACTIVE'=>'Y'],
+			'filter'=> ['=ACTIVE'=>'Y'],
 			'order'=> ['SORT'=>'ASC'],
 		])->fetchAll();
 		if (count($languages) > 1)

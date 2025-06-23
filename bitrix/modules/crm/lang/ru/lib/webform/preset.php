@@ -23,5 +23,15 @@ $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_NAME"] = "Форма контактны�
 $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_DESCRIPTION"] = "Представьтесь, пожалуйста";
 $MESS["CRM_WEBFORM_PRESET_ITEM_WA_CAPTION"] = "Обратный WhatsApp";
 $MESS["CRM_WEBFORM_PRESET_ITEM_WA_DESCRIPTION"] = "Оставьте свой номер телефона, и наш менеджер напишет вам в WhatsApp";
+$MESS["CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_BOOKING_RESOURCE"] = "Онлайн-запись";
 
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_AUTO_SELECTION_NAME"] = "Автоподбор";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_ANY_RESOURCE_NAME"] = "Выбор из доступных";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_MANUAL_SETTING_NAME"] = "Выбор из всех";
+
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_BUTTON_CAPTION"] = "Записаться";
+$MESS['CRM_WEBFORM_PRESET_ITEM_BOOKING_SUCCESS_TEXT'] = 'Готово!';
+$MESS['CRM_WEBFORM_PRESET_ITEM_BOOKING_FAILURE_TEXT'] = 'Не удалось записаться, попробуйте ещё раз';
+
+$MESS['CRM_WEBFORM_PRESET_ITEM_BOOKING_CONTACT_SECTION_CAPTION'] = 'Контактная информация';
 ?>

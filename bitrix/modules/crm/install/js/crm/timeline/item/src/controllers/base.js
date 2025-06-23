@@ -119,12 +119,15 @@ export class Base
 		if (menuBar)
 		{
 			menuBar.setActiveItemById('todo');
+			menuBar.scrollIntoView();
 
-			const todoEditor = menuBar.getItemById('todo');
+			setTimeout(() => {
+				const todoEditor = menuBar.getItemById('todo');
 
-			todoEditor.focus();
-			todoEditor.setParentActivityId(activityId);
-			todoEditor.setDeadLine(scheduleDate);
+				todoEditor.focus();
+				todoEditor.setParentActivityId(activityId);
+				todoEditor.setDeadLine(scheduleDate);
+			}, 250);
 		}
 	}
 

@@ -22553,6 +22553,11 @@ MessengerLimit.prototype.disableExtensions = function()
 		return true;
 	}
 
+	if (!BX.desktop.getBackgroundImage)
+	{
+		return true;
+	}
+
 	var value = BX.desktop.getBackgroundImage();
 	if (value.id === 'none')
 	{

@@ -3,6 +3,7 @@
 namespace Bitrix\Im\V2;
 
 use ArrayAccess;
+use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Message\Delete\DeletionMode;
 use Bitrix\Im\V2\Message\MessageError;
 use Bitrix\Im\V2\Message\Reaction\ReactionMessage;
@@ -1701,6 +1702,13 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		return $this->getChat()->filterUsersToMention($mentionedUsers);
 	}
 
+	public function getUserIdsToSendMentionAnchors(): array
+	{
+		$mentionedUsers = $this->getUserIdsFromMention();
+
+		return $this->getChat()->filterUsersToMentionAnchor($mentionedUsers);
+	}
+
 	public function getEnrichedParams(bool $withUrl = true): Params
 	{
 		$params = clone $this->getParams();
@@ -1934,7 +1942,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 	public function getCopilotData(): ?array
 	{
 		$chat = $this->getChat();
-		$roleManager = new \Bitrix\Im\V2\Integration\AI\RoleManager();
+		$roleManager = (new RoleManager())->setContextUser($this->getAuthorId());
 
 		if (
 			!$this->getParams()->isSet(Params::COPILOT_ROLE)
@@ -1959,7 +1967,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		return [
 			'chats' => $chatRoleInfo,
 			'messages' => $messageRole ? [['id' => $this->getId(), 'role' => $messageRole]] : null,
-			'roles' => $roleManager->getRoles($roles, $this->getAuthorId()),
+			'roles' => $roleManager->getRoles($roles),
 		];
 	}
 
@@ -1969,7 +1977,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			&& $this->getAuthorId() === \Bitrix\Imbot\Bot\CopilotChatBot::getBotId()
 		)
 		{
-			return \Bitrix\Im\V2\Integration\AI\RoleManager::getDefaultRoleCode();
+			return RoleManager::getDefaultRoleCode();
 		}
 
 		return null;

@@ -7,9 +7,11 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\JsHandler;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Loc::loadLanguageFile(\Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/salescenter/install/js/salescenter/app/config.php');
@@ -418,6 +420,38 @@ class Bitrix24Manager extends Base
 		}
 	}
 
+	public function addFeedbackTerminalOfferButtonToToolbar(): void
+	{
+		if ($this->isEnabled() && Loader::includeModule('ui'))
+		{
+			Extension::load(['salescenter.manager']);
+			$formParams = Json::encode([
+				'feedback_type' => 'terminal_offer',
+				'sender_page' => 'terminal',
+			]);
+			$formOptions = Json::encode([
+				'width' => 735,
+			]);
+			$clickCode =
+				'BX.Salescenter.Manager.openFeedbackFormParams('
+				. 'event, '
+				. $formParams . ', '
+				. $formOptions
+				. ');'
+			;
+			$button = [
+				'color' => Color::LIGHT_BORDER,
+				'click' => new JsCode($clickCode),
+				'text' => Loc::getMessage('SALESCENTER_FEEDBACK'),
+				'dataset' => [
+					'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO
+				]
+			];
+
+			Toolbar::addButton($button);
+		}
+	}
+
 	static private function prepareParamsIntegrationRequest(array $params = []): ?string
 	{
 		$list = [];
@@ -485,6 +519,11 @@ class Bitrix24Manager extends Base
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\SalesCenter\Integration\Bitrix24Manager::addFeedbackTerminalOfferButtonToToolbar
+	 * @return void
+	 */
 	public function renderFeedbackTerminalOfferButton(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))

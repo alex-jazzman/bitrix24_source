@@ -1,4 +1,4 @@
-import { Dom, Extension, Reflection } from 'main.core';
+import { Extension, Reflection } from 'main.core';
 
 class Desktop
 {
@@ -22,8 +22,8 @@ class Desktop
 			return Promise.resolve(true);
 		}
 
-		const anchorElement: HTMLAnchorElement = Dom.create({ tag: 'a', attrs: { href: url } });
-		if (anchorElement.host !== location.host)
+		const targetUrl = new URL(url);
+		if (targetUrl.host !== location.host)
 		{
 			return Promise.resolve(false);
 		}
@@ -33,7 +33,7 @@ class Desktop
 		const isRedirectAllowed = await DesktopManager?.getInstance().checkForOpenBrowserPage();
 		if (isRedirectAllowed)
 		{
-			return DesktopManager?.getInstance().openPage(anchorElement.href, { skipNativeBrowser });
+			return DesktopManager?.getInstance().openPage(targetUrl.href, { skipNativeBrowser });
 		}
 
 		if (skipNativeBrowser === true)
@@ -41,7 +41,7 @@ class Desktop
 			return Promise.resolve(false);
 		}
 
-		window.open(anchorElement.href, '_blank');
+		window.open(targetUrl.href, '_blank');
 
 		return Promise.resolve(true);
 	}

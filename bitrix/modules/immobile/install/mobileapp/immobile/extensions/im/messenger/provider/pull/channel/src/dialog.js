@@ -45,7 +45,7 @@ jn.define('im/messenger/provider/pull/channel/dialog', (require, exports, module
 				const chatData = chatDataResult.getData();
 				const chatHelper = DialogHelper.createByModel(chatData);
 
-				if (!chatHelper.isOpenChannel)
+				if (!chatHelper?.isOpenChannel)
 				{
 					return;
 				}

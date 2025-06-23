@@ -12,6 +12,11 @@ export const useChartStore = defineStore('hr-org-chart', {
 	actions: {
 		async refreshDepartments(nodeIds: number[]): Promise<void>
 		{
+			if (nodeIds.length === 0)
+			{
+				return;
+			}
+
 			const [departments, currentDepartments] = await Promise.all([
 				getData('humanresources.api.Structure.Node.getByIds', { nodeIds }),
 				getData('humanresources.api.Structure.Node.current'),
@@ -36,7 +41,7 @@ export const useChartStore = defineStore('hr-org-chart', {
 		changeCurrentDepartment(oldDepartmentId: number, newDepartmentId: ?number): void
 		{
 			const currentDepartments = this.currentDepartments.filter((departmentId) => {
-				return departmentId !== oldDepartmentId;
+				return departmentId !== oldDepartmentId && departmentId !== newDepartmentId;
 			});
 
 			if (!newDepartmentId)

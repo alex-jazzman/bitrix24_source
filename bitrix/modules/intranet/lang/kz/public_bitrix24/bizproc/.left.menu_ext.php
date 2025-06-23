@@ -11,4 +11,5 @@ $MESS["MENU_MY_PROCESS_1"] = "Менің процестерім";
 $MESS["MENU_PROCESS_STREAM"] = "Лентадағы процестер";
 $MESS["MENU_PROCESS_STREAM2"] = "Жаңалықтар лентасындағы процестер";
 $MESS["MENU_PROCESS_STREAM_3"] = "Жаңасын іске қосу";
+$MESS["MENU_START_PROCESS"] = "Процестерді іске қосу";
 $MESS["MENU_USER_PROCESSES"] = "Процестер";

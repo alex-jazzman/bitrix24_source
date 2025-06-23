@@ -3,6 +3,7 @@
 namespace Bitrix\Call;
 
 use Bitrix\Main\Config\Configuration;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Security\Cipher;
 use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\Config\Option;
@@ -80,43 +81,50 @@ class JwtCall
 			return '';
 		}
 
-		$portalId = Option::get("call", "call_portal_id", 0);
+		$portalId = (int)Option::get("call", "call_portal_id", 0);
+		$callToken = [
+			'portalId' => $portalId,
+			'chatId' => $chatData['CHAT_ID'],
+			'tokenVersion' => $chatData['TOKEN_VERSION'],
+			'usersLimit' => Call::getMaxCallServerParticipants(),
+			'portalType' => Client::getPortalType(),
+			'portalUrl' => Client::getServerName(),
+			'controllerUrl' => (new ControllerClient())->getServiceUrl(),
+			'roomType' => 1,
+			'additionalData' => $additionalData,
+		];
+		if (!empty($chatData['USER_ROLE']))
+		{
+			$callToken['role'] = $chatData['USER_ROLE'];
+		}
 
-		return JWT::encode(
-			[
-				'portalId' => (int)$portalId,
-				'chatId' => $chatData['CHAT_ID'],
-				'tokenVersion' => $chatData['TOKEN_VERSION'],
-				'usersLimit' => Call::getMaxCallServerParticipants(),
-				'portalType' => Client::getPortalType(),
-				'portalUrl' => Client::getServerName(),
-				'controllerUrl' => (new ControllerClient())->getServiceUrl(),
-				'roomType' => 1,
-				'additionalData' => $additionalData,
-			],
-			self::getPrivateKey()
-		);
+		return JWT::encode($callToken, self::getPrivateKey());
 	}
 
 	/**
 	 * Return call JWT
 	 *
 	 * @param int $chatId Chat info for token
+	 * @param int $userId
 	 * @param array|null $additionalData Additional info for call token
 	 *
 	 * @return string
 	 */
-	public static function getCallToken(int $chatId, array|null $additionalData = null): string
+	public static function getCallToken(int $chatId, int $userId, array|null $additionalData = null): string
 	{
 		if (empty($chatId))
 		{
 			return '';
 		}
 
-		return self::getCallJwt([
-			'CHAT_ID' => $chatId,
-			'TOKEN_VERSION' => self::getTokenVersion($chatId),
-		], $additionalData);
+		return self::getCallJwt(
+			[
+				'CHAT_ID' => $chatId,
+				'TOKEN_VERSION' => self::getTokenVersion($chatId),
+				'USER_ROLE' => self::getUserRole($chatId, $userId),
+			],
+			$additionalData
+		);
 	}
 
 	/**
@@ -151,10 +159,13 @@ class JwtCall
 				$additionalFields = $additionalData[$chatId];
 			}
 
-			$result[$chatId] =  self::getCallJwt([
-				'CHAT_ID' => $chatId,
-				'TOKEN_VERSION' => $tokenVersion,
-			], $additionalFields);
+			$result[$chatId] =  self::getCallJwt(
+				[
+					'CHAT_ID' => $chatId,
+					'TOKEN_VERSION' => $tokenVersion,
+				],
+				$additionalFields
+			);
 		}
 
 		return $result;
@@ -164,10 +175,10 @@ class JwtCall
 	 * Update call JWT version
 	 *
 	 * @param int $chatId Chat id for token update
-	 *
+	 * @param int $userId
 	 * @return string
 	 */
-	public static function updateCallToken(int $chatId): string
+	public static function updateCallToken(int $chatId, int $userId): string
 	{
 		if (empty($chatId))
 		{
@@ -182,6 +193,7 @@ class JwtCall
 		return self::getCallJwt([
 			'CHAT_ID' => $chatId,
 			'TOKEN_VERSION' => $newTokenVersion,
+			'USER_ROLE' => self::getUserRole($chatId, $userId),
 		]);
 	}
 
@@ -207,5 +219,40 @@ class JwtCall
 		}
 
 		return $tokenVersion;
+	}
+
+	private static function getUserRole(int $chatId, int $userId): string
+	{
+		static $cache = [];
+
+		if (isset($cache[$chatId][$userId]))
+		{
+			return $cache[$chatId][$userId];
+		}
+
+		$role = 'USER';
+		if ($chatId == 0 || $userId == 0)
+		{
+			return $role;
+		}
+
+		\Bitrix\Main\Loader::includeModule('im');
+
+		$chat = \Bitrix\Im\V2\Chat::getInstance($chatId);
+		if ($chat->getId() == $chatId)
+		{
+			if ($userId === $chat->getAuthorId())
+			{
+				$role = 'ADMIN';
+			}
+			elseif (in_array($userId, $chat->getManagerList(), true))
+			{
+				$role = 'MANAGER';
+			}
+		}
+
+		$cache[$chatId][$userId] = $role;
+
+		return $role;
 	}
 }

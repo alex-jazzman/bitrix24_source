@@ -22,4 +22,6 @@
 	\Bitrix\Sign\Controllers\V1\B2e\Document\Template::class => 'lib/Controllers/V1/B2e/Document/Template.php',
 	\Bitrix\Sign\Controllers\V1\Integration\Im\GroupChat::class => 'lib/Controllers/V1/Integration/Im/GroupChat.php',
 	\Bitrix\Sign\Controllers\V1\B2e\Document\Group::class => 'lib/Controllers/V1/B2e/Document/Group.php',
+	\Bitrix\Sign\Controllers\V1\B2e\WizardOptions::class => 'lib/Controllers/V1/B2e/WizardOptions.php',
+	\Bitrix\Sign\Controllers\V1\B2e\Document\TemplateFolder::class => 'lib/Controllers/V1/B2e/Document/TemplateFolder.php',
 ]);

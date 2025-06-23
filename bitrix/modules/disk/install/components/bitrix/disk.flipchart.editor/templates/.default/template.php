@@ -72,8 +72,21 @@ $setupSharingButton
 	<div class="disk-fe-office-header">
 		<div class="disk-fe-office-header-left">
 			<div class="disk-fe-flipchart-header-logo-box">
-				<a href="<?=$arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo" target="_blank"></a>
-				<span class="disk-fe-flipchart-header-logo-name"><?= Loc::getMessage('DISK_FLIPCHART_EDITOR_HEADER_BOARDS') ?></span>
+				<?php
+				if ($arResult['LANGUAGE'] === 'ru')
+				{
+				?>
+					<a href="<?=$arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo" target="_blank"></a>
+					<span class="disk-fe-flipchart-header-logo-name"><?= Loc::getMessage('DISK_FLIPCHART_EDITOR_HEADER_BOARDS') ?></span>
+				<?php
+				}
+				else
+				{
+				?>
+					<a href="<?=$arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo --eng" target="_blank"></a>
+				<?php
+				}
+				?>
 			</div>
 			<div class="disk-fe-office-header-mode">
 				<span class="disk-fe-office-header-mode-text"><?= htmlspecialcharsbx($arResult['DOCUMENT_NAME']) ?></span>
@@ -114,7 +127,7 @@ $setupSharingButton
 			ui: {
 				colorTheme: 'flipBitrixLight',
 				openTemplatesModal: <?=$arResult['SHOW_TEMPLATES_MODAL'] ? 'true' : 'false' ?>,
-				exportAsFile: false,
+				exportAsFile: true,
 				spinner: 'circular',
 			},
 			permissions: {
@@ -128,8 +141,7 @@ $setupSharingButton
 				fileName: '<?=CUtil::JSEscape($arResult['DOCUMENT_NAME_WITHOUT_EXTENSION']) ?>',
 			},
 			events: {
-				onFlipRenamed(newName) {
-					console.log('Flip Renamed', newName)
+				onBoardRenamed(newName) {
 
 					return BX.ajax.runAction('disk.api.file.rename', {
 						data: {

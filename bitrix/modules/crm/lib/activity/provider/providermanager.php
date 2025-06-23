@@ -92,6 +92,11 @@ class ProviderManager
 		{
 			$providersList[Zoom::getId()] = Zoom::className();
 		}
+		
+		if (Container::getInstance()->getRepeatSaleAvailabilityChecker()->isAvailable())
+		{
+			$providersList[RepeatSale::getId()] = RepeatSale::className();
+		}
 
 		return array_merge($providersList, self::anotherProviders());
 	}

@@ -2,9 +2,15 @@
  * @module im/messenger/lib/element/dialog/message/banner/factory
  */
 jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, exports, module) => {
+	const { MessageParams } = require('im/messenger/const');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
+
 	const { CustomMessageFactory } = require('im/messenger/lib/element/dialog/message/custom/factory');
+	const { SystemTextMessage } = require('im/messenger/lib/element/dialog/message/system-text');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
 	const { InviteUsersCopilotBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/invite-users-copilot');
+	const { NotesChatBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/notes');
 	const { CreateChatBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/create-chat');
 	const { CreateGeneralChatBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/create-general-chat');
 	const { CreateChannelBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/create-channel');
@@ -12,8 +18,6 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 	const { CreateChatConferenceBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/create-conference');
 	const { PlanLimitsBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/plan-limits');
 	const { SignMessage } = require('im/messenger/lib/element/dialog/message/banner/banners/sign/banner');
-	const { MessageParams } = require('im/messenger/const');
-	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class CreateBannerFactory
@@ -36,6 +40,14 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 
 				switch (modelMessage.params?.componentId)
 				{
+					case MessageParams.ComponentId.OwnChatCreationMessage:
+						if (Feature.isNotesBannerAvailable)
+						{
+							return new NotesChatBanner(modelMessage, optionsBanner);
+						}
+
+						return new SystemTextMessage(modelMessage, optionsBanner);
+
 					case MessageParams.ComponentId.ChatCreationMessage:
 						return new CreateChatBanner(modelMessage, optionsBanner);
 					case MessageParams.ComponentId.GeneralChatCreationMessage:
@@ -68,6 +80,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 		{
 			const creationParams = [
 				MessageParams.ComponentId.ChatCreationMessage,
+				MessageParams.ComponentId.OwnChatCreationMessage,
 				MessageParams.ComponentId.GeneralChatCreationMessage,
 				MessageParams.ComponentId.ChannelCreationMessage,
 				MessageParams.ComponentId.OpenChannelCreationMessage,

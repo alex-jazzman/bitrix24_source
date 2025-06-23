@@ -1,4 +1,4 @@
-import { Dom, Loc, Tag, Text as TextFormat, Event } from 'main.core';
+import { Dom, Loc, Tag, Text as TextFormat, Event, Extension } from 'main.core';
 import type { Loader } from 'main.loader';
 import { Helpdesk } from 'sign.v2.helper';
 import { Dialog, TagSelector, TagItem } from 'ui.entity-selector';
@@ -7,6 +7,8 @@ import type { CardItem } from './types/card-item';
 import { UserPartyCounters } from 'sign.v2.b2e.user-party-counters';
 import { UserPartyPopup } from 'sign.v2.b2e.user-party-popup';
 import { Api, CountMember } from 'sign.v2.api';
+import { FeatureStorage } from 'sign.feature-storage';
+import { MemberRole, type MemberRoleType, EntityType } from 'sign.type';
 import 'ui.icon-set.main';
 
 import './style.css';
@@ -43,8 +45,9 @@ export class UserParty
 		showMoreSignersContainer: HTMLDivElement = null,
 	};
 
-	#items: Map<number, CardItem> = new Map();
+	#items: Map<String, CardItem> = new Map();
 	#preselectedUserData: Array<Object> = [];
+	#userCount: Number = 0;
 
 	#viewMode = Mode.edit;
 
@@ -57,11 +60,13 @@ export class UserParty
 	#userPartyPopup: UserPartyPopup = null;
 
 	#counterDelayTimeout: ?number = null;
+	#role: MemberRoleType = MemberRole.signer;
 
 	constructor(options: UserPartyOptions)
 	{
 		this.#api = new Api();
 		this.#viewMode = options.mode;
+		this.#role = options.role ?? MemberRole.signer;
 		this.#init(options);
 	}
 
@@ -79,6 +84,29 @@ export class UserParty
 			userCountersLimit: b2eSignersLimitCount,
 		});
 		this.#ui.container = this.getLayout(region);
+
+		const tabs = [];
+		const entities = [
+			{
+				id: 'user',
+				options: { intranetUsersOnly: true },
+			},
+			{
+				id: 'structure-node',
+				options: {
+					selectMode: 'usersAndDepartments',
+					fillRecentTab: true,
+					allowFlatDepartments: true,
+				},
+			},
+		];
+
+		if (FeatureStorage.isDocumentsInSignersSelectorEnabled())
+		{
+			tabs.push({ id: 'sign-document', title: Loc.getMessage('SIGN_USER_PARTY_TAB_DOCUMENTS') });
+			entities.push({ id: 'sign-document' });
+		}
+
 		this.#tagSelector = new TagSelector({
 			events: {
 				onTagRemove: (event) => {
@@ -96,20 +124,8 @@ export class UserParty
 				multiple: true,
 				targetNode: this.#ui.itemContainer,
 				context: 'sign_b2e_user_party',
-				entities: [
-					{
-						id: 'user',
-						options: { intranetUsersOnly: true },
-					},
-					{
-						id: 'department',
-						options: {
-							selectMode: 'usersAndDepartments',
-							fillRecentTab: true,
-							allowFlatDepartments: true,
-						},
-					},
-				],
+				tabs,
+				entities,
 				dropdownMode: false,
 				hideOnDeselect: false,
 			},
@@ -157,7 +173,7 @@ export class UserParty
 
 		const descriptionMessage = region === 'ru'
 			? Helpdesk.replaceLink(Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION'), HelpdeskCodes.SignEdmWithEmployees)
-			: Loc.getMessage('SIGN_CMP_MASTER_TPL_TOUR_STEP_CHOOSE_MEMBER_USER_PARTY_DESCRIPTION')
+			: Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION_WITHOUT_LINK')
 		;
 		this.#ui.description = Tag.render`
 			<p class="sign-document-b2e-user-party__description">
@@ -184,8 +200,12 @@ export class UserParty
 
 	#createUserPartyPopup(bindElement: HTMLElement): UserPartyPopup
 	{
+		const isDepartmentsVisible = this.#role === MemberRole.signer;
+
 		return new UserPartyPopup({
 			bindElement,
+			isDepartmentsVisible,
+			role: this.#role,
 		});
 	}
 
@@ -200,14 +220,15 @@ export class UserParty
 		await promise;
 	}
 
-	async setSignersIds(usersData: [Object]): void
+	async setUserIds(usersData: [Object]): void
 	{
 		this.#clean();
 
 		const maxShownItems = this.#getViewModeItemsCount();
 
+		this.#userCount = usersData.length;
 		this.#preselectedUserData = usersData
-			.sort((a, b) => (a.entityType === 'department' ? -1 : 1))
+			.sort((a, b) => (a.entityType === 'structure-node' ? -1 : 1))
 			.slice(0, maxShownItems)
 		;
 
@@ -217,11 +238,12 @@ export class UserParty
 				this.#documentUid,
 				1,
 				maxShownItems,
+				this.#role,
 			);
 			const preselectedIds = new Set(
 				usersData
-					.filter((item) => item.entityType === 'user')
-					.map((item) => item.entityId)
+					.filter((item) => item.entityType === EntityType.USER)
+					.map((item) => item.entityId),
 			);
 			const addMembers = membersResponse.members
 				.filter((member) => !preselectedIds.has(member.userId))
@@ -241,12 +263,25 @@ export class UserParty
 
 	async #displayShowMoreBtn(): void
 	{
+		let isShowMoreBtn = false;
+		let showMoreCount = 0;
 		const shownUsers = this.#preselectedUserData
 			.reduce((count, item) => (item.entityType === 'user' ? count + 1 : count), 0)
 		;
-		const signersCountResponse = await this.#api.getUniqUserCountForDocument(this.#documentUid);
-		const showMoreCount = signersCountResponse.count - shownUsers;
-		if (showMoreCount > 0)
+
+		if (this.#role === MemberRole.signer)
+		{
+			const signersCountResponse = await this.#api.getUniqUserCountForDocument(this.#documentUid);
+			showMoreCount = signersCountResponse.count - shownUsers;
+			isShowMoreBtn = showMoreCount > 0;
+		}
+		else if (this.#userCount > this.#getViewModeItemsCount())
+		{
+			isShowMoreBtn = true;
+			showMoreCount = this.#userCount - this.#getViewModeItemsCount();
+		}
+
+		if (isShowMoreBtn)
 		{
 			this.#ui.showMoreSignersContainer.querySelector('.--count-placeholder').textContent = showMoreCount;
 			Dom.show(this.#ui.showMoreSignersContainer);
@@ -315,14 +350,14 @@ export class UserParty
 
 	#removeItem(tag: TagItem): void
 	{
-		const userId = tag.id;
-		const item = this.#items.get(userId);
+		const itemKey = this.#makeItemMapKeyByTag(tag);
+		const item = this.#items.get(itemKey);
 		if (item?.container)
 		{
 			Dom.remove(item.container);
 		}
 
-		this.#items.delete(userId);
+		this.#items.delete(itemKey);
 
 		this.#updateEditModeCounter();
 	}
@@ -343,14 +378,13 @@ export class UserParty
 			? this.#createItemLayout(item)
 			: null
 		;
-
 		if (container)
 		{
 			Dom.prepend(container, this.#ui.itemContainer);
 		}
 
 		item.container = container;
-		this.#items.set(item.id, item);
+		this.#items.set(this.#makeItemMapKeyByTag(tag), item);
 
 		this.#updateEditModeCounter();
 	}
@@ -380,6 +414,7 @@ export class UserParty
 
 	validate(): boolean
 	{
+		this.closeCounterGuide();
 		const isValid = this.#items.size > 0 && this.#userPartyCounters.getCount() > 0;
 		const tagSelectorContainer = this.#tagSelector.getOuterContainer();
 		if (isValid)
@@ -392,11 +427,6 @@ export class UserParty
 		}
 
 		return isValid;
-	}
-
-	getUserIds(): Array<number>
-	{
-		return [...this.#items.keys()];
 	}
 
 	getEntities(): Array<CardItem>
@@ -414,12 +444,22 @@ export class UserParty
 		this.#documentUid = uid;
 	}
 
+	getPreselectedUserData(): Object[]
+	{
+		return this.#preselectedUserData;
+	}
+
 	#createItemLayout(item: CardItem): HTMLElement
 	{
-		return item.entityType === 'department'
-			? this.#createDepartmentItemLayout(item)
-			: this.#createUserItemLayout(item)
-		;
+		switch (item.entityType)
+		{
+			case 'structure-node':
+				return this.#createDepartmentItemLayout(item);
+			case 'sign-document':
+				return this.#createDocumentItemLayout(item);
+			default:
+				return this.#createUserItemLayout(item);
+		}
 	}
 
 	#createDepartmentItemLayout(item: CardItem): HTMLElement
@@ -433,6 +473,25 @@ export class UserParty
 						class="sign-document-b2e-user-party__item-list_item-avatar"
 						title="${title}" src='${departmentAvatarLink}' alt="avatar"
 					/>
+				</div>
+				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
+					${title}
+				</div>
+			</div>
+		`;
+	}
+
+	#createDocumentItemLayout(item: CardItem): HTMLElement
+	{
+		const title = TextFormat.encode(item.title);
+
+		return Tag.render`
+			<div class="sign-document-b2e-user-party__item-list_item --document">
+				<div>
+					<div
+						class="sign-document-b2e-user-party__item-list_item-avatar ui-icon-set --document-sign"
+						title="${title}" alt="avatar"
+					></div>
 				</div>
 				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
 					${title}
@@ -464,6 +523,7 @@ export class UserParty
 
 	#clean(): void
 	{
+		this.closeCounterGuide();
 		[...this.#items.values()].forEach((item) => Dom.remove(item.container));
 		this.#items.clear();
 		this.#userPartyCounters?.update(this.#items.size);
@@ -472,5 +532,22 @@ export class UserParty
 	#getViewModeItemsCount(): number
 	{
 		return 7; // for fixed slider width
+	}
+
+	getUniqueUsersCount(): number
+	{
+		return this.#userPartyCounters?.getCount() ?? 0;
+	}
+
+	closeCounterGuide(): void
+	{
+		this.#userPartyCounters?.closeGuide();
+	}
+
+	#makeItemMapKeyByTag(tag: { id: number | string, entityId: string }): string
+	{
+		const { id, entityId } = tag;
+
+		return `${entityId}_${id}`;
 	}
 }

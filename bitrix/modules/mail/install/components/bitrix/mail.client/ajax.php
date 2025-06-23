@@ -43,7 +43,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	{
 		parent::init();
 
-		$this->isCrmEnable = Loader::includeModule('crm') && \CCrmPerms::isAccessEnabled();
+		$this->isCrmEnable = \Bitrix\Mail\Integration\Crm\Permissions::getInstance()->hasAccessToCrm();
 	}
 
 

@@ -1,4 +1,5 @@
 import Dialog from './dialog/dialog';
+import EntityError from './entity/entity-error';
 import Item from './item/item';
 import Tab from './dialog/tabs/tab';
 import Entity from './entity/entity';
@@ -32,7 +33,8 @@ const EntitySelector = {
 	BaseFooter,
 	DefaultFooter,
 	BaseStub,
-	DefaultStub
+	DefaultStub,
+	EntityError,
 };
 
 /**
@@ -50,13 +52,14 @@ export {
 	BaseFooter,
 	DefaultFooter,
 	BaseStub,
-	DefaultStub
-}
+	DefaultStub,
+	EntityError,
+};
 
 export type {
 	DialogOptions,
 	TabOptions,
 	ItemOptions,
 	EntityOptions,
-	TagSelectorOptions
-}
+	TagSelectorOptions,
+};

@@ -4,7 +4,18 @@ import { runAction } from 'im.v2.lib.rest';
 import { Logger } from 'im.v2.lib.logger';
 import { UserManager } from 'im.v2.lib.user';
 
-import type { ChannelRestResult } from 'im.v2.provider.service';
+import type { RawChat, RawFile, RawMessage, RawRecentItem, RawUser, RawMessagesAutoDeleteConfig } from 'im.v2.provider.service.types';
+
+type ChannelRestResult = {
+	hasNextPage: boolean,
+	chats: RawChat[],
+	files: RawFile[],
+	recentItems: RawRecentItem[],
+	users: RawUser[],
+	messages: RawMessage[],
+	additionalMessages: RawMessage[],
+	messagesAutoDeleteConfigs: RawMessagesAutoDeleteConfig[],
+};
 
 export class ChannelService
 {
@@ -54,8 +65,7 @@ export class ChannelService
 		};
 
 		const result: ChannelRestResult = await runAction(RestMethod.imV2RecentChannelTail, queryParams)
-			.catch((error) => {
-				// eslint-disable-next-line no-console
+			.catch(([error]) => {
 				console.error('Im.ChannelList: page request error', error);
 			});
 

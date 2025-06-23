@@ -88,7 +88,8 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		};
 
 		onDateSelected = (timestamp) => {
-			const date = new Date(timestamp * 1000 + this.timezoneOffset);
+			const date = new Date(timestamp * 1000);
+			date.setTime(date.getTime() + this.getSetDateOffset(date));
 
 			State.setSelectedDate(date);
 		};
@@ -101,7 +102,8 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 				});
 			}
 
-			const date = new Date(timestamp * 1000 + this.timezoneOffset);
+			const date = new Date(timestamp * 1000);
+			date.setTime(date.getTime() + this.getSetDateOffset(date));
 
 			this.setMonthTitle(date);
 			this.setDateAfterMonthSwitch(date);
@@ -121,7 +123,8 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 
 		setMonthTitle(date)
 		{
-			const text = DateHelper.getShortMonthName(date);
+			const monthName = DateHelper.getShortMonthName(date);
+			const text = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 			const detailText = date.getFullYear().toString();
 
 			this.props.layout.setTitle({ text, detailText, useLargeTitleMode: true });
@@ -157,9 +160,13 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 				return;
 			}
 
+			const sectionIds = SectionManager.getActiveSectionsIds().filter((sectionId) => {
+				return !this.props.hiddenSections.includes(sectionId);
+			});
+
 			const events = selectByMonth(store.getState(), {
 				date,
-				sectionIds: SectionManager.getActiveSectionsIds(),
+				sectionIds,
 				showDeclined: false,
 			});
 
@@ -224,19 +231,20 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 
 			events.forEach((reduxEvent) => {
 				const event = EventModel.fromReduxModel(reduxEvent);
-				const isLongWithTime = false;
+				const isLongWithTime = event.isLongWithTime();
 
 				if (event.isInvited())
 				{
-					let type = 'single';
+					let type = inviteEventTypes.single;
+
 					if (isLongWithTime)
 					{
-						type = 'long';
+						type = inviteEventTypes.long;
 					}
 
 					if (event.isRecurrence())
 					{
-						type = 'recurrent';
+						type = inviteEventTypes.recurrent;
 					}
 
 					invites[type] ??= {};
@@ -299,17 +307,35 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		{
 			return [...events].sort((event1, event2) => DateHelper.compareDayCodes(event1.dayCode, event2.dayCode));
 		}
+
+		getSetDateOffset(date)
+		{
+			return isAndroid ? 0 : DateHelper.getDateTimezoneOffset(date);
+		}
 	}
 
-	const mapStateToProps = (state) => ({
-		showWeekNumbers: state.showWeekNumbers,
-		isHidden: state.isSearchMode && !state.invitesSelected,
-		events: selectByMonth(store.getState(), {
-			date: state.selectedDate,
-			sectionIds: SectionManager.getActiveSectionsIds(),
-			showDeclined: state.showDeclined,
-		}),
-	});
+	const inviteEventTypes = {
+		single: 'single',
+		long: 'long',
+		recurrent: 'recurrent',
+	};
+
+	const mapStateToProps = (state) => {
+		const sectionIds = SectionManager.getActiveSectionsIds().filter((sectionId) => {
+			return !state.hiddenSections.includes(sectionId);
+		});
+
+		return {
+			showWeekNumbers: state.showWeekNumbers,
+			isHidden: state.isSearchMode && !state.invitesSelected,
+			hiddenSections: state.hiddenSections,
+			events: selectByMonth(store.getState(), {
+				sectionIds,
+				date: state.selectedDate,
+				showDeclined: state.showDeclined,
+			}),
+		};
+	};
 
 	module.exports = { CalendarGrid: observeState(CalendarGrid, mapStateToProps) };
 });

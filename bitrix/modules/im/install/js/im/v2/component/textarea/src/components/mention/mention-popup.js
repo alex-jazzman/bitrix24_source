@@ -1,4 +1,4 @@
-import { MessengerPopup } from 'im.v2.component.elements';
+import { MessengerPopup } from 'im.v2.component.elements.popup';
 import { ChatType } from 'im.v2.const';
 
 import type { ImModelChat } from 'im.v2.model';

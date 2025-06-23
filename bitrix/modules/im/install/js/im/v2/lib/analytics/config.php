@@ -10,12 +10,12 @@ return [
 		'./dist/analytics.bundle.js',
 	],
 	'rel' => [
-		'main.polyfill.core',
-		'im.v2.lib.analytics',
-		'im.v2.lib.message-component-manager',
-		'ui.analytics',
+		'main.core',
+		'im.v2.lib.message-component',
 		'im.v2.const',
 		'im.v2.application.core',
+		'im.v2.lib.analytics',
+		'ui.analytics',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

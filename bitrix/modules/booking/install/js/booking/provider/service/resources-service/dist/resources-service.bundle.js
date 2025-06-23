@@ -17,19 +17,32 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    })),
 	    counter: resourceDto.counter,
 	    isMain: resourceDto.isMain,
-	    isConfirmationNotificationOn: resourceDto.isConfirmationNotificationOn,
-	    isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
-	    isInfoNotificationOn: resourceDto.isInfoNotificationOn,
-	    isDelayedNotificationOn: resourceDto.isDelayedNotificationOn,
-	    isReminderNotificationOn: resourceDto.isReminderNotificationOn,
-	    templateTypeConfirmation: resourceDto.templateTypeConfirmation,
-	    templateTypeFeedback: resourceDto.templateTypeFeedback,
-	    templateTypeInfo: resourceDto.templateTypeInfo,
-	    templateTypeDelayed: resourceDto.templateTypeDelayed,
-	    templateTypeReminder: resourceDto.templateTypeReminder,
 	    createdBy: resourceDto.createdBy,
 	    createdAt: resourceDto.createdAt,
-	    updatedAt: resourceDto.updatedAt
+	    updatedAt: resourceDto.updatedAt,
+	    // info
+	    isInfoNotificationOn: resourceDto.isInfoNotificationOn,
+	    templateTypeInfo: resourceDto.templateTypeInfo,
+	    infoNotificationDelay: resourceDto.infoNotificationDelay,
+	    // confirmation
+	    isConfirmationNotificationOn: resourceDto.isConfirmationNotificationOn,
+	    templateTypeConfirmation: resourceDto.templateTypeConfirmation,
+	    confirmationNotificationDelay: resourceDto.confirmationNotificationDelay,
+	    confirmationNotificationRepetitions: resourceDto.confirmationNotificationRepetitions,
+	    confirmationNotificationRepetitionsInterval: resourceDto.confirmationNotificationRepetitionsInterval,
+	    confirmationCounterDelay: resourceDto.confirmationCounterDelay,
+	    // reminder
+	    isReminderNotificationOn: resourceDto.isReminderNotificationOn,
+	    templateTypeReminder: resourceDto.templateTypeReminder,
+	    reminderNotificationDelay: resourceDto.reminderNotificationDelay,
+	    // delayed
+	    isDelayedNotificationOn: resourceDto.isDelayedNotificationOn,
+	    templateTypeDelayed: resourceDto.templateTypeDelayed,
+	    delayedNotificationDelay: resourceDto.delayedNotificationDelay,
+	    delayedCounterDelay: resourceDto.delayedCounterDelay,
+	    // feedback
+	    isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
+	    templateTypeFeedback: resourceDto.templateTypeFeedback
 	  };
 	}
 	function mapModelToDto(resource) {
@@ -43,19 +56,32 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    slotRanges: resource.slotRanges,
 	    counter: null,
 	    isMain: resource.isMain,
-	    isConfirmationNotificationOn: resource.isConfirmationNotificationOn,
-	    isFeedbackNotificationOn: resource.isFeedbackNotificationOn,
-	    isInfoNotificationOn: resource.isInfoNotificationOn,
-	    isDelayedNotificationOn: resource.isDelayedNotificationOn,
-	    isReminderNotificationOn: resource.isReminderNotificationOn,
-	    templateTypeConfirmation: resource.templateTypeConfirmation,
-	    templateTypeFeedback: resource.templateTypeFeedback,
-	    templateTypeInfo: resource.templateTypeInfo,
-	    templateTypeDelayed: resource.templateTypeDelayed,
-	    templateTypeReminder: resource.templateTypeReminder,
 	    createdBy: null,
 	    createdAt: null,
-	    updatedAt: null
+	    updatedAt: null,
+	    // info
+	    isInfoNotificationOn: resource.isInfoNotificationOn,
+	    templateTypeInfo: resource.templateTypeInfo,
+	    infoNotificationDelay: resource.infoNotificationDelay,
+	    // confirmation
+	    isConfirmationNotificationOn: resource.isConfirmationNotificationOn,
+	    templateTypeConfirmation: resource.templateTypeConfirmation,
+	    confirmationNotificationDelay: resource.confirmationNotificationDelay,
+	    confirmationNotificationRepetitions: resource.confirmationNotificationRepetitions,
+	    confirmationNotificationRepetitionsInterval: resource.confirmationNotificationRepetitionsInterval,
+	    confirmationCounterDelay: resource.confirmationCounterDelay,
+	    // reminder
+	    isReminderNotificationOn: resource.isReminderNotificationOn,
+	    templateTypeReminder: resource.templateTypeReminder,
+	    reminderNotificationDelay: resource.reminderNotificationDelay,
+	    // delayed
+	    isDelayedNotificationOn: resource.isDelayedNotificationOn,
+	    templateTypeDelayed: resource.templateTypeDelayed,
+	    delayedNotificationDelay: resource.delayedNotificationDelay,
+	    delayedCounterDelay: resource.delayedCounterDelay,
+	    // feedback
+	    isFeedbackNotificationOn: resource.isFeedbackNotificationOn,
+	    templateTypeFeedback: resource.templateTypeFeedback
 	  };
 	}
 

@@ -4,6 +4,7 @@
 	const require = (ext) => jn.require(ext);
 	const { EntityReady } = require('entity-ready');
 	const { AvaMenu } = require('ava-menu');
+	const { Type } = require('type');
 
 	if (typeof window.SocketConnection === 'undefined')
 	{
@@ -35,7 +36,7 @@
 				chats: 'im_messenger',
 				copilot: 'im_messenger',
 				openlines: 'im_messenger',
-				notifications: 'im_messenger',
+				notifications: 'im_notify',
 				tasks_total: 'tasks_total',
 				crm_all_no_orders: 'crm_all_no_orders',
 				crm_activity_current_calltracker: 'crm_activity_current_calltracker',
@@ -343,12 +344,7 @@
 			clearTimeout(this.updateCountersTimeout);
 			this.updateCountersTimeout = null;
 
-			this.counters.messages = this.counters.chats + this.counters.notifications + this.counters.openlines;
-
-			if (typeof this.counters.copilot !== 'undefined')
-			{
-				this.counters.messages += this.counters.copilot;
-			}
+			this.counters.messages = this.getMessagesCounter();
 			const bpCounter = 0;
 			this.counters.stream = this.counters.livefeed + bpCounter;
 
@@ -391,6 +387,24 @@
 				const value = counter || 0;
 				AvaMenu.setCounter({ elemId, value });
 			}
+		}
+
+
+		getMessagesCounter()
+		{
+			let counter = this.counters.chats + this.counters.openlines;
+
+			if (this.isEnableApplicationCounterType('notifications'))
+			{
+				counter += this.counters.notifications;
+			}
+
+			if (!Type.isUndefined(this.counters.copilot))
+			{
+				counter += this.counters.copilot;
+			}
+
+			return counter;
 		}
 
 		isEnableApplicationCounterType(tabName)
@@ -532,10 +546,11 @@
 			return true;
 		}
 		const appId = (typeof Application.getPackageName === 'function' ? Application.getPackageName() : 'Bitrix24');
-
+		const uuid = device.uuid;
+		const model = device.model;
 		if (typeof (Application.registerVoipNotifications) === 'function')
 		{
-			Application.registerVoipNotifications().then(({ token, uuid, model }) => {
+			Application.registerVoipNotifications().then(({ token }) => {
 				BX.ajax({
 					url: `${env.siteDir}mobile/`,
 					method: 'POST',
@@ -596,8 +611,8 @@
 					tokenSaveRequest: true,
 					data: {
 						mobile_action: 'save_device_token',
-						device_name: (device.model),
-						uuid: device.uuid,
+						device_name: model,
+						uuid: uuid,
 						device_token: token,
 						app_id: appId,
 						device_type: dt,

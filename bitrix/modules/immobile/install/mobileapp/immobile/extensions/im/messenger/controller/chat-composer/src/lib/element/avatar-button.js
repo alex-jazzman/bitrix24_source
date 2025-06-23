@@ -76,7 +76,6 @@ jn.define('im/messenger/controller/chat-composer/lib/element/avatar-button', (re
 					backgroundColor: Color.accentSoftBlue3,
 					backBorderWidth: 0,
 					...this.getContent(),
-					id: 1,
 				}),
 			);
 		}

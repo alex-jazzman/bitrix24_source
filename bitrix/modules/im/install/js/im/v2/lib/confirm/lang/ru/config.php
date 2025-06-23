@@ -38,3 +38,4 @@ $MESS['IM_LIB_CONFIRM_DELETE_MESSAGES_TITLE'] = "Удалить";
 $MESS['IM_LIB_DOWNLOAD_ALL_FILES_TITLE'] = "Проверьте настройки скачивания в браузере";
 $MESS['IM_LIB_DOWNLOAD_ALL_FILES_TEXT'] = "Чтобы сохранить несколько файлов одновременно, разрешите автоматическое скачивание в настройках вашего браузера. [helpdesk]Подробнее[/helpdesk]";
 $MESS['IM_LIB_DOWNLOAD_ALL_FILES_BUTTON'] = "Понятно";
+$MESS['IM_LIB_CONFIRM_ACTIVE_CALL_CONFIRM'] = "Вы уверены, что хотите закрыть страницу? В этом случае вы отключитесь от звонка";

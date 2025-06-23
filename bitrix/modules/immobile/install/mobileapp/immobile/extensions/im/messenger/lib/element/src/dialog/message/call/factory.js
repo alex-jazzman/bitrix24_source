@@ -15,11 +15,6 @@ jn.define('im/messenger/lib/element/dialog/message/call/factory', (require, expo
 	{
 		static create(modelMessage, options = {})
 		{
-			if (!Feature.isCallMessageSupported)
-			{
-				return new TextMessage(modelMessage, options);
-			}
-
 			try
 			{
 				return new CallMessage(modelMessage, options);
@@ -34,7 +29,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/factory', (require, expo
 
 		static checkSuitableForDisplay(modelMessage)
 		{
-			return modelMessage.params?.componentId === CallMessageFactory.getComponentId();
+			return Feature.isCallMessageSupported && modelMessage.params?.componentId === CallMessageFactory.getComponentId();
 		}
 
 		static getComponentId()

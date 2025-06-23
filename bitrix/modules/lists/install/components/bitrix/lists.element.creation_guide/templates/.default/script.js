@@ -29,12 +29,16 @@ this.BX.Lists = this.BX.Lists || {};
 	  FIELDS: 'fields',
 	  STATUS: 'status'
 	});
+	const ERRORS = Object.freeze({
+	  NETWORK_ERROR: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_NETWORK_ERROR'
+	});
 	var _steps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("steps");
 	var _name = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("name");
 	var _description = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("description");
 	var _duration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("duration");
 	var _signedParameters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedParameters");
 	var _templateIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateIds");
+	var _iBlockId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("iBlockId");
 	var _currentStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStep");
 	var _startTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startTime");
 	var _descriptionNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("descriptionNode");
@@ -80,6 +84,7 @@ this.BX.Lists = this.BX.Lists || {};
 	var _appendBPFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendBPFormData");
 	var _appendStateFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendStateFormData");
 	var _showErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showErrors");
+	var _getErrorByCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getErrorByCode");
 	var _cleanErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cleanErrors");
 	var _startLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startLoading");
 	var _disableAllButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableAllButtons");
@@ -125,6 +130,9 @@ this.BX.Lists = this.BX.Lists || {};
 	    });
 	    Object.defineProperty(this, _cleanErrors, {
 	      value: _cleanErrors2
+	    });
+	    Object.defineProperty(this, _getErrorByCode, {
+	      value: _getErrorByCode2
 	    });
 	    Object.defineProperty(this, _showErrors, {
 	      value: _showErrors2
@@ -250,6 +258,10 @@ this.BX.Lists = this.BX.Lists || {};
 	      writable: true,
 	      value: []
 	    });
+	    Object.defineProperty(this, _iBlockId, {
+	      writable: true,
+	      value: null
+	    });
 	    Object.defineProperty(this, _currentStep, {
 	      writable: true,
 	      value: void 0
@@ -302,6 +314,7 @@ this.BX.Lists = this.BX.Lists || {};
 	      throw new TypeError('signedParameters must be filled string');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters] = _props.signedParameters;
+	    babelHelpers.classPrivateFieldLooseBase(this, _iBlockId)[_iBlockId] = _props.iBlockId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _name)[_name] = main_core.Type.isString(_props.name) ? _props.name : '';
 	    babelHelpers.classPrivateFieldLooseBase(this, _description)[_description] = main_core.Type.isString(_props.description) ? _props.description : '';
 	    if (main_core.Type.isInteger(_props.duration) && _props.duration >= 0) {
@@ -406,37 +419,16 @@ this.BX.Lists = this.BX.Lists || {};
 	        setTimeout(() => {
 	          BX.SidePanel.Instance.getSliderByWindow(window).close(false);
 	        }, CLOSE_SLIDER_AFTER_SECONDS * 1000);
+	        BX.SidePanel.Instance.getSliderByWindow(window).close(false);
+	        BX.SidePanel.Instance.postMessage(window, 'BX.Lists.Element.CreationGuide:onElementCreated', {
+	          iBlockId: babelHelpers.classPrivateFieldLooseBase(this, _iBlockId)[_iBlockId]
+	        });
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _changeStep)[_changeStep]();
 	    }).catch(error => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _sendCreationAnalytics)[_sendCreationAnalytics](error);
 	    }).finally(babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading].bind(this));
-	  }
-	  saveConstants(templateId, button) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _templateIds)[_templateIds].includes(templateId) || !main_core.Type.isDomNode(button) || babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading]) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _setWaitToButton)[_setWaitToButton](button);
-	    const formData = new FormData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendStateFormData)[_appendStateFormData](formData, `form_${BP_STATE_CONSTANTS_FORM_NAME}_${templateId}`);
-	    formData.append('templateIds[]', templateId);
-	    const errorsNode = document.getElementById(`${HTML_ELEMENT_ID}-constants-${templateId}-errors`);
-	    babelHelpers.classPrivateFieldLooseBase(this, _startLoading)[_startLoading]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _setConstants)[_setConstants](formData).then(() => {
-	      if (errorsNode) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _cleanErrors)[_cleanErrors](errorsNode);
-	      }
-	    }).catch(({
-	      errors
-	    }) => {
-	      if (main_core.Type.isArrayFilled(errors) && errorsNode) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showErrors)[_showErrors](errors, errorsNode);
-	      }
-	    }).finally(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _removeWaitFromButton)[_removeWaitFromButton](button);
-	    });
 	  }
 	  checkEqualFileField(fileFieldA, fileFieldB) {
 	    if (!fileFieldB) {
@@ -1002,8 +994,10 @@ this.BX.Lists = this.BX.Lists || {};
 	  if (errorsNode) {
 	    let message = '';
 	    errors.forEach(error => {
-	      if (error.message) {
-	        message += main_core.Text.encode(error.message);
+	      var _babelHelpers$classPr2;
+	      const errorMessage = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getErrorByCode)[_getErrorByCode](error.code)) != null ? _babelHelpers$classPr2 : error.message;
+	      if (errorMessage) {
+	        message += main_core.Text.encode(errorMessage);
 	        message += '<br/>';
 	      }
 	    });
@@ -1014,6 +1008,9 @@ this.BX.Lists = this.BX.Lists || {};
 				`), message), errorsNode);
 	    BX.scrollToNode(errorsNode);
 	  }
+	}
+	function _getErrorByCode2(code) {
+	  return main_core.Loc.getMessage(ERRORS[code]);
 	}
 	function _cleanErrors2(fromNode = null) {
 	  if (main_core.Type.isDomNode(fromNode)) {

@@ -160,6 +160,13 @@ $uiEntitySelectorConfig = [
 					'className' => CallScriptProvider::class,
 				],
 			],
+			[
+				'entityId' => 'crm_entity',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CrmEntityProvider',
+				],
+			]
 		],
 		'extensions' => ['crm.entity-selector'],
 	],
@@ -587,6 +594,9 @@ return array(
 			'crm.service.integration.im' => [
 				'className' => \Bitrix\Crm\Integration\Im\ImService::class,
 			],
+			'crm.repeatSale.availabilityChecker' => [
+				'className' => \Bitrix\Crm\RepeatSale\AvailabilityChecker::class,
+			],
 		],
 		'readonly' => true,
 	],
@@ -644,6 +654,23 @@ return array(
 				'Permissions',
 				(int)\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_ttl', 24*30))
 			)->setLevel(\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_level', \Psr\Log\LogLevel::INFO)),
+			'Webform' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('webform', 168))
+						->setLevel(\Psr\Log\LogLevel::ERROR)
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('webform', 9))
+							->setLevel(\Psr\Log\LogLevel::ERROR)
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
 		],
 	],
 	'console' => [

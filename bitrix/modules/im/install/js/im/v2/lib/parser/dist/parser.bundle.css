@@ -136,6 +136,11 @@
 	cursor: pointer;
 }
 
+.bx-im-mention.--extranet {
+	color: var(--im-color-extranet-orange-60);
+	border-bottom: 1px dotted var(--im-color-extranet-orange-60);
+}
+
 .bx-im-mention.--highlight {
 	color: var(--bx-im-mention__color_highlight);
 	background-color: var(--bx-im-mention__background-color_highlight);

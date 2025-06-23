@@ -1439,6 +1439,7 @@ class LandingPubComponent extends LandingBaseComponent
 					'FROM_USER_ID' => $fromUserId,
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'landing',
+					'NOTIFY_EVENT' => 'admin_notification',
 					'NOTIFY_TAG' => 'LANDING|NOTIFY_ADMIN|' . $userId . '|' . $fromUserId . '|V3',
 					'NOTIFY_MESSAGE' => $this->getMessageType('LANDING_CMP_ASK_ACCESS_KNOWLEDGE', [
 						'#LINK1#' => '<a href="' . $url . '">',

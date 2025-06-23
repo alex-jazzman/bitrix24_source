@@ -224,7 +224,7 @@ this.BX.Bizproc.Workflow = this.BX.Bizproc.Workflow || {};
 				</div>
 				${0}
 			</div>
-		`), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TITLE'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TEXT_P1'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TEXT_P2'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_AUTHOR'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_IN_PROGRESS'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TIME'), babelHelpers.classPrivateFieldLooseBase(this, _popupListNode)[_popupListNode]);
+		`), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TITLE'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TEXT_P1'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TEXT_P2'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_AUTHOR'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_IN_PROGRESS_MSGVER_1'), main_core.Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TIME'), babelHelpers.classPrivateFieldLooseBase(this, _popupListNode)[_popupListNode]);
 	}
 	function _renderListSkeleton2() {
 	  let i = 0;

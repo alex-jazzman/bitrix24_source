@@ -7,9 +7,11 @@ return [
 		'event-emitter',
 		'pull/client/events',
 		'layout/ui/fields/boolean',
-		'calendar:ajax',
-		'calendar:sync-page/provider',
 		'tokens',
+
+		'calendar:ajax',
+		'calendar:enums',
+		'calendar:sync-page/provider',
 	],
 	'bundle' => [
 		'./title'

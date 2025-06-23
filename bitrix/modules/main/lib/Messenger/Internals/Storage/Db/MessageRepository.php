@@ -44,7 +44,7 @@ class MessageRepository
 			return null;
 		}
 
-		return $this->mapper->convertFromOrm($item);
+		return $this->getEntityFromOrmItem($item);
 	}
 
 	/**
@@ -68,7 +68,14 @@ class MessageRepository
 
 		foreach ($items as $ormItem)
 		{
-			$collection->add($this->mapper->convertFromOrm($ormItem));
+			if ($messageBox = $this->getEntityFromOrmItem($ormItem))
+			{
+				$collection->add($messageBox);
+			}
+			else
+			{
+				$ormItem->delete();
+			}
 		}
 
 		return $collection;
@@ -127,7 +134,14 @@ class MessageRepository
 
 		foreach ($items as $ormItem)
 		{
-			$collection->add($this->mapper->convertFromOrm($ormItem));
+			if ($messageBox = $this->getEntityFromOrmItem($ormItem))
+			{
+				$collection->add($messageBox);
+			}
+			else
+			{
+				$ormItem->delete();
+			}
 		}
 
 		return $collection;
@@ -211,6 +225,18 @@ class MessageRepository
 		if (!$result->isSuccess())
 		{
 			throw new PersistenceException('Unable to update status: ' . $result->getError()->getMessage());
+		}
+	}
+
+	private function getEntityFromOrmItem($ormItem): ?MessageBox
+	{
+		try
+		{
+			return $this->mapper->convertFromOrm($ormItem);
+		}
+		catch (ArgumentException)
+		{
+			return null;
 		}
 	}
 }

@@ -160,7 +160,6 @@ class WizardTemplate extends CWizardTemplate
 		</noscript>
 		<link rel="stylesheet" href="/bitrix/images/install/installer_style.css">
 		<script>
-		<!--
 			document.onkeydown = EnterKeyPress;
 
 			function EnterKeyPress(event)
@@ -206,7 +205,6 @@ class WizardTemplate extends CWizardTemplate
 
 			{$jsCode}
 			{$jsBeforeOnload}
-		//-->
 		</script>
 
 

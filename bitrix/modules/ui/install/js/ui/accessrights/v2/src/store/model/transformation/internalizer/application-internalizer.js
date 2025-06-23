@@ -26,6 +26,17 @@ export class ApplicationInternalizer implements Transformer<Options, Readonly<Op
 			searchContainerSelector: Type.isStringFilled(externalSource.searchContainerSelector)
 				? externalSource.searchContainerSelector
 				: null,
+			additionalMembersParams: Type.isPlainObject(externalSource.additionalMembersParams)
+				? {
+					addUserGroupsProviderTab: Boolean(externalSource.additionalMembersParams?.addUserGroupsProviderTab ?? false),
+					addProjectsProviderTab: Boolean(externalSource.additionalMembersParams?.addProjectsProviderTab ?? true),
+					addStructureTeamsProviderTab: Boolean(externalSource.additionalMembersParams?.addStructureTeamsProviderTab ?? false),
+				}
+				: {
+					addUserGroupsProviderTab: false,
+					addProjectsProviderTab: true,
+					addStructureTeamsProviderTab: false,
+				},
 		});
 	}
 

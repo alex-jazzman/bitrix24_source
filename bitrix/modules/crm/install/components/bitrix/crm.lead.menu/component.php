@@ -251,21 +251,13 @@ if($arParams['TYPE'] === 'details')
 		$arResult['BUTTONS'][] = array(
 			'TYPE' => 'toolbar-conv-scheme',
 			'PARAMS' => array(
-				'NAME' => 'lead_converter',
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::LeadName,
-				'ENTITY_ID' => $arParams['ELEMENT_ID'],
-				'TYPE_ID' => $conversionTypeID,
-				'SCHEME_ID' => $conversionSchemeID,
-				'SCHEME_NAME' => \Bitrix\Crm\Conversion\LeadConversionScheme::resolveName($conversionSchemeID),
 				'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\LeadConversionScheme::getDescription($conversionSchemeID),
-				'IS_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
-				'LOCK_SCRIPT' => isset($arResult['CONVERSION_LOCK_SCRIPT']) ? $arResult['CONVERSION_LOCK_SCRIPT'] : ''
 			),
 			'CODE' => 'convert',
 			'TEXT' => GetMessage('LEAD_CREATE_ON_BASIS'),
 			'TITLE' => GetMessage('LEAD_CREATE_ON_BASIS_TITLE'),
-			'ICON' => 'btn-convert'
+			'ICON' => 'btn-convert',
+			'PRIMARY' => true,
 		);
 	}
 

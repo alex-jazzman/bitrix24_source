@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
@@ -181,21 +182,30 @@ this.BX = this.BX || {};
 	    key: "sendData",
 	    value: function sendData(data) {
 	      main_core.Runtime.loadExtension('ui.analytics').then(function (exports) {
-	        data.tool = Metrika.TOOL_NAME;
+	        var preparedData = {
+	          tool: Metrika.TOOL_NAME
+	        };
+	        ['category', 'event', 'type', 'c_section', 'c_sub_section', 'c_element', 'status'].forEach(function (key) {
+	          if (data[key]) {
+	            preparedData[key] = data[key];
+	          }
+	        });
 	        if (data.params && main_core.Type.isObject(data.params)) {
 	          var i = 1;
 	          var maxParams = 5;
-	          for (var param in data.params) {
+	          Object.keys(data.params).forEach(function (param) {
 	            if (i <= maxParams) {
 	              var key = 'p' + i++;
 	              main_core.Text.toCamelCase(param);
-	              data[key] = main_core.Text.toCamelCase(param) + '_' + main_core.Text.toCamelCase(data.params[param]);
+	              preparedData[key] = main_core.Text.toCamelCase(param) + '_' + main_core.Text.toCamelCase(data.params[param]);
 	            }
-	          }
-	          delete data.params;
+	          });
+	          delete preparedData.params;
 	        }
 	        var sendData = exports.sendData;
-	        sendData(data);
+	        sendData(preparedData);
+	      })["catch"](function (err) {
+	        console.error('Metrika send error', err);
 	      });
 	    }
 	  }]);

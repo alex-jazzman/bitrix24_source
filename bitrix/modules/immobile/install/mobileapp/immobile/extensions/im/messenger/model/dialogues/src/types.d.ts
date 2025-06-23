@@ -1,5 +1,5 @@
-import {DialogId} from "../../../types/common";
-import {MessengerModel, PayloadData} from "../../base";
+import { DialogId } from "../../../types/common";
+import { MessengerModel, PayloadData } from "../../base";
 
 export enum DialogType {
 	user = 'user',
@@ -62,13 +62,21 @@ export type DialoguesModelState = {
 	hasPrevPage: boolean,
 	hasNextPage: boolean,
 	diskFolderId: number,
-	tariffRestrictions: TariffRestrictions
+	tariffRestrictions: TariffRestrictions,
 	role: string,
 	permissions: DialogPermissions,
 	aiProvider: string,
 	parentChatId: number,
 	parentMessageId: number,
 	messageCount: number,
+	messagesAutoDeleteDelay: number,
+	textFieldEnabled: boolean,
+	backgroundId: string,
+	recentConfig: {
+		chatId: number,
+		sections: Array<string>,
+	} | null,
+	containsCollaber: boolean,
 };
 
 export type LastMessageViews = {
@@ -97,7 +105,6 @@ export type DialogPermissions = {
 	manageUsersDelete: PermissionRoles,
 	manageUi: PermissionRoles,
 	manageSettings: PermissionRoles,
-	canPost?: PermissionRoles,
 	manageMessages: PermissionRoles,
 }
 
@@ -146,11 +153,12 @@ export type DialoguesModelMutation =
 	| 'dialoguesModel/setFromPush'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
+	| 'dialoguesModel/clearAllCounters'
 
 
 export type DialoguesSetStateActions = 'setState';
-export interface DialoguesSetStateData extends PayloadData
-{
+
+export interface DialoguesSetStateData extends PayloadData {
 	collection: Record<DialogId, DialoguesModelState>,
 }
 
@@ -159,8 +167,8 @@ export type DialoguesAddActions =
 	| 'add'
 	| 'addCollection'
 	;
-export interface DialoguesAddData extends PayloadData
-{
+
+export interface DialoguesAddData extends PayloadData {
 	dialogId: DialogId;
 	fields: DialoguesModelState;
 }
@@ -183,36 +191,32 @@ export type DialoguesUpdateActions =
 	| 'setLastMessageViews'
 	| 'clearAllCounters'
 	;
-export interface DialoguesUpdateData extends PayloadData
-{
+
+export interface DialoguesUpdateData extends PayloadData {
 	dialogId: DialogId,
 	fields: Partial<DialoguesModelState>,
 }
 
-export interface DialoguesUpdateCollectionData extends PayloadData
-{
+export interface DialoguesUpdateCollectionData extends PayloadData {
 	updateItems: Array<DialogPayloadDataItem>
 }
 
-export interface DialoguesAddCollectionData extends PayloadData
-{
+export interface DialoguesAddCollectionData extends PayloadData {
 	addItems: Array<DialogPayloadDataItem>
 }
 
 export type DialoguesDeleteActions = 'delete' | 'deleteFromModel';
-export interface DialoguesDeleteData extends PayloadData
-{
+
+export interface DialoguesDeleteData extends PayloadData {
 	dialogId: DialogId,
 }
 
-export interface DialogPayloadDataItem
-{
+export interface DialogPayloadDataItem {
 	dialogId: DialogId,
 	fields: Partial<DialoguesModelState>,
 }
 
-export interface DialogUpdateTariffRestrictionsPayload
-{
+export interface DialogUpdateTariffRestrictionsPayload {
 	dialogId: DialogId,
 	tariffRestrictions: TariffRestrictions,
 	isForceUpdate?: boolean,
@@ -229,5 +233,12 @@ export interface DialogPayloadDataItem
 {
 	dialogId: DialogId,
 	fields: Partial<DialoguesModelState>,
+}
+
+export type DialoguesClearAllCountersActions = 'clearAllCounters';
+
+export interface DialoguesClearAllCountersData
+{
+	affectedDialogs: Array<DialogId>,
 }
 

@@ -10,4 +10,5 @@ $MESS["DOCUMENT_CONTROLLER_DELETE_ERROR"] = "\"#DOC_TITLE#\" құжатын өш
 $MESS["DOCUMENT_CONTROLLER_MANAGEMENT_NOT_ENABLED"] = "Құжатты өткізу үшін қойма есебін қосу қажет";
 $MESS["DOCUMENT_CONTROLLER_NO_INVENTORY_MANAGEMENT_ENABLED_ERROR"] = "Қойма есебі сіздің тарифіңізде қолжетімсіз";
 $MESS["DOCUMENT_CONTROLLER_NO_RIGHTS_ERROR"] = "Құжатты сақтау үшін құқықтар жеткіліксіз";
+$MESS["DOCUMENT_CONTROLLER_NO_RIGHTS_TO_DELETE_ERROR"] = "\"#DOC_TITLE#\" құжатын жою үшін құқықтар жеткіліксіз";
 $MESS["DOCUMENT_CONTROLLER_NO_STORE_RIGHTS_ERROR"] = "Әрекетті аяқтау мүмкін болмады, өйткені сізде қоймаларды қарау және таңдау құқығы жеткіліксіз";

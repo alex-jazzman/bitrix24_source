@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,ui_vue3_vuex,booking_const,booking_model_bookings,booking_model_messageStatus,booking_model_clients,booking_model_counters,booking_model_interface,booking_model_resourceTypes,booking_model_resources,booking_model_favorites,booking_model_dictionary,booking_model_mainResources,booking_provider_pull_bookingPullManager) {
+(function (exports,main_core,ui_vue3_vuex,booking_const,booking_model_bookings,booking_model_messageStatus,booking_model_clients,booking_model_counters,booking_model_interface,booking_model_resourceTypes,booking_model_resources,booking_model_favorites,booking_model_dictionary,booking_model_mainResources,booking_model_waitList,booking_provider_pull_bookingPullManager) {
 	'use strict';
 
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
@@ -77,6 +77,7 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder] = ui_vue3_vuex.Builder.init().addModel(booking_model_bookings.Bookings.create()).addModel(booking_model_messageStatus.MessageStatus.create()).addModel(booking_model_clients.Clients.create()).addModel(booking_model_counters.Counters.create()).addModel(booking_model_interface.Interface.create().setVariables({
 	    schedule: settings.schedule,
 	    editingBookingId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].editingBookingId,
+	    editingWaitListItemId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].editingWaitListItemId,
 	    timezone: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].timezone,
 	    totalClients: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].totalClients,
 	    totalNewClientsToday: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].totalClientsToday,
@@ -96,8 +97,10 @@ this.BX = this.BX || {};
 	          formattedOpportunity: ''
 	        }
 	      };
-	    })
-	  })).addModel(booking_model_resourceTypes.ResourceTypes.create()).addModel(booking_model_resources.Resources.create()).addModel(booking_model_favorites.Favorites.create()).addModel(booking_model_dictionary.Dictionary.create()).addModel(booking_model_mainResources.MainResources.create());
+	    }),
+	    calendarExpanded: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isCalendarExpanded,
+	    waitListExpanded: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isWaitListExpanded
+	  })).addModel(booking_model_resourceTypes.ResourceTypes.create()).addModel(booking_model_resources.Resources.create()).addModel(booking_model_favorites.Favorites.create()).addModel(booking_model_dictionary.Dictionary.create()).addModel(booking_model_mainResources.MainResources.create()).addModel(booking_model_waitList.WaitList.create());
 	  const builderResult = await babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].build();
 	  return builderResult.store;
 	}
@@ -111,5 +114,5 @@ this.BX = this.BX || {};
 
 	exports.Core = Core;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX,BX.Vue3.Vuex,BX.Booking.Const,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Pull));
+}((this.BX.Booking = this.BX.Booking || {}),BX,BX.Vue3.Vuex,BX.Booking.Const,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Pull));
 //# sourceMappingURL=core.bundle.js.map

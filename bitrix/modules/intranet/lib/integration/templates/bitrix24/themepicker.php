@@ -40,7 +40,7 @@ class ThemePicker
 		self::BEHAVIOUR_RETURN,
 	];
 
-	public const DEFAULT_THEME_ID = 'light:gravity';
+	public const DEFAULT_THEME_ID = 'light:lightness';
 
 	private static $instance = null;
 	private static $config = null;
@@ -71,7 +71,7 @@ class ThemePicker
 		}
 
 		$this->templateId = $templateId;
-		$this->templatePath = \getLocalPath("templates/".$templateId, BX_PERSONAL_ROOT);
+		$this->templatePath = defined('SITE_TEMPLATE_PATH') ? SITE_TEMPLATE_PATH : \getLocalPath('templates/'.$templateId, BX_PERSONAL_ROOT);
 		$this->siteId = is_string($siteId)? mb_substr(preg_replace("/[^a-z0-9_]/i", "", $siteId), 0, 2) : SITE_ID;
 		if (in_array($entityType, self::VALID_ENTITY_TYPE_LIST))
 		{
@@ -229,6 +229,25 @@ class ThemePicker
 			false,
 			AssetLocation::AFTER_JS
 		);
+	}
+
+	public function getBodyClasses(): string
+	{
+		$classes = [];
+
+		$baseThemeId = $this->getCurrentBaseThemeId();
+		$classes[] = 'bitrix24-' . $baseThemeId . '-theme';
+
+		if ($baseThemeId === 'dark' || $baseThemeId === 'default')
+		{
+			$classes[] = '--ui-context-edge-light';
+		}
+		else if ($baseThemeId === 'light')
+		{
+			$classes[] = '--ui-context-edge-dark';
+		}
+
+		return join(' ', $classes);
 	}
 
 	public function showBodyAssets()
@@ -804,24 +823,24 @@ class ThemePicker
 
 	public function getInitialDefaultThemeId(): string
 	{
-		$eastReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '27.11.2024 10:00', new \DateTimeZone('Europe/Moscow'));
+		$eastReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '16.05.2025 10:00', new \DateTimeZone('Europe/Moscow'));
 		if (in_array($this->getZoneId(), ['ru', 'kz', 'by']))
 		{
 			if (time() > $eastReleaseDate->getTimestamp())
 			{
-				return 'light:gravity'; // New Default East Theme
+				return 'light:lightness'; // New Default East Theme
 			}
 
-			return 'light:video-orion'; // Old Default East Theme
+			return 'light:gravity'; // Old Default East Theme
 		}
 
-		$westernReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '12.12.2024 10:00', new \DateTimeZone('Europe/Moscow'));
+		$westernReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '29.05.2025 10:00', new \DateTimeZone('Europe/Moscow'));
 		if (time() > $westernReleaseDate->getTimestamp())
 		{
-			return 'light:dark-silk'; // New Default West Theme
+			return 'light:lightness'; // New Default West Theme
 		}
 
-		return 'light:contrast-horizon'; // Old Default West Theme
+		return 'light:dark-silk'; // Old Default West Theme
 	}
 
 	public function setDefaultTheme($themeId, $currentUserId = 0): bool

@@ -329,7 +329,7 @@ if ($arResult['PERM_CAN_EDIT'])
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.toolbar',
-	SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '',
+	'title',
 	[
 		'TOOLBAR_ID' => 'crm_webform_toolbar',
 		'BUTTONS' => $interfaceToolbarButtons,

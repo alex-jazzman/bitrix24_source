@@ -88,55 +88,14 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 			$mergeValues = ($this->MergeMultipleFields === 'Y');
 		}
 
-		$documentService = $this->workflow->GetService('DocumentService');
-		$document = $documentService->GetDocument($documentId, $documentType);
-
-		if (is_object($document) && method_exists($document, 'loadFieldValues'))
-		{
-			$multipleFields = $this->getMultipleFields($documentId, $documentType, $fields, $mergeValues);
-			$document->loadFieldValues($multipleFields);
-		}
-
-		return $this->buildResultFields($documentId, $documentType, $fields, $mergeValues);
-	}
-
-	protected function getMultipleFields(array $documentId, array $documentType, array $fields, bool $mergeValues): array
-	{
-		$multipleFields = [];
-
-		$documentService = $this->workflow->GetService('DocumentService');
-		$documentFields = $documentService->GetDocumentFields($documentType);
-		$documentFieldsAliasesMap = CBPDocument::getDocumentFieldsAliasesMap($documentFields);
-
-		foreach ($fields as $key => $value)
-		{
-			$key = $this->resolveFieldKey($key, $documentFields, $documentFieldsAliasesMap);
-
-			$property = $documentFields[$key] ?? null;
-			if ($property && ($value || $mergeValues))
-			{
-				$fieldTypeObject = $documentService->getFieldTypeObject($documentType, $property);
-				if ($fieldTypeObject && $fieldTypeObject->isMultiple() && $mergeValues)
-				{
-					$fieldTypeObject->setDocumentId($documentId);
-					$multipleFields[] = $key;
-				}
-			}
-		}
-
-		return $multipleFields;
-	}
-
-	protected function buildResultFields(array $documentId, array $documentType, array $fields, $mergeValues = null): array
-	{
 		$resultFields = [];
 
 		$documentService = $this->workflow->GetService('DocumentService');
 		$documentFields = $documentService->GetDocumentFields($documentType);
 		$documentFieldsAliasesMap = CBPDocument::getDocumentFieldsAliasesMap($documentFields);
-		$document = $documentService->GetDocument($documentId, $documentType);
-
-		$documentValues = $this->getDocumentValues($document);
+		$rootActivity = $this->getRootActivity();
+		$usedDocumentFields = $rootActivity->{CBPDocument::PARAM_USED_DOCUMENT_FIELDS} ?? [];
+		$document = $documentService->GetDocument($documentId, $documentType, $usedDocumentFields);
 
 		foreach ($fields as $key => $value)
 		{
@@ -152,7 +111,7 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 
 					if ($mergeValues && $fieldTypeObject->isMultiple())
 					{
-						$baseValue = $documentValues[$key] ?? [];
+						$baseValue = $document[$key] ?? [];
 						$value = $fieldTypeObject->mergeValue($baseValue, $value);
 					}
 
@@ -171,16 +130,6 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 		}
 
 		return $resultFields;
-	}
-
-	protected function getDocumentValues($document)
-	{
-		if (is_object($document) && method_exists($document, 'toArray'))
-		{
-			return $document->toArray();
-		}
-
-		return $document;
 	}
 
 	protected function resolveFieldKey(string $key, array $documentFields, array $documentFieldsAliasesMap): string

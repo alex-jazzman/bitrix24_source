@@ -13,7 +13,7 @@ export class Util
 
 	static parseTime(str)
 	{
-		const date = Util.parseDate1(`${BX.date.format(Util.getDateFormat(), new Date())} ${str}`, false);
+		const date = Util.parseDate1(`${DateTimeFormat.format(Util.getDateFormat(), new Date())} ${str}`, false);
 
 		return date ? {
 			h: date.getHours(),
@@ -193,7 +193,7 @@ export class Util
 			day.setHours(hours, minutes, 0);
 		}
 
-		return BX.date.format(Util.getTimeFormatShort(), day.getTime() / 1000);
+		return DateTimeFormat.format(Util.getTimeFormatShort(), day.getTime() / 1000);
 	}
 
 	static formatDate(timestamp)
@@ -203,7 +203,7 @@ export class Util
 			timestamp = timestamp.getTime();
 		}
 
-		return BX.date.format(Util.getDateFormat(), timestamp / 1000);
+		return DateTimeFormat.format(Util.getDateFormat(), timestamp / 1000);
 	}
 
 	static formatDateTime(timestamp)
@@ -213,7 +213,7 @@ export class Util
 			timestamp = timestamp.getTime();
 		}
 
-		return BX.date.format(Util.getDateTimeFormat(), timestamp / 1000);
+		return DateTimeFormat.format(Util.getDateTimeFormat(), timestamp / 1000);
 	}
 
 	static formatTimeInterval(from, to)
@@ -259,7 +259,7 @@ export class Util
 			}
 		}
 
-		return BX.date.format([
+		return DateTimeFormat.format([
 			['today', 'today'],
 			['tommorow', 'tommorow'],
 			['yesterday', 'yesterday'],
@@ -545,8 +545,8 @@ export class Util
 			}
 			else
 			{
-				Util.TIME_FORMAT_BX = BX.isAmPmMode() ? 'H:MI:SS T' : 'HH:MI:SS';
-				Util.TIME_FORMAT = BX.date.convertBitrixFormat(BX.isAmPmMode() ? 'H:MI:SS T' : 'HH:MI:SS');
+				Util.TIME_FORMAT_BX = DateTimeFormat.isAmPmMode() ? 'H:MI:SS T' : 'HH:MI:SS';
+				Util.TIME_FORMAT = DateTimeFormat.convertBitrixFormat(BX.Main.DateTimeFormat.isAmPmMode() ? 'H:MI:SS T' : 'HH:MI:SS');
 			}
 		}
 
@@ -705,6 +705,53 @@ export class Util
 		return this.config.work_time_end;
 	}
 
+	static isReadOnlyMode()
+	{
+		const readOnly = this.getCalendarContext().util?.config.readOnly;
+
+		if (readOnly === undefined)
+		{
+			const sectionList = this.getCalendarContext().sectionManager.getSectionListForEdit();
+
+			if (!sectionList || sectionList.length === 0)
+			{
+				return true;
+			}
+		}
+
+		return Boolean(readOnly);
+	}
+
+	static hasFullAccess(): boolean
+	{
+		return Boolean(this.getCalendarContext().util?.config?.perm?.access);
+	}
+
+	static getSettings()
+	{
+		return this.getCalendarContext().util?.config.settings;
+	}
+
+	static hasLocationAccess()
+	{
+		return this.getCalendarContext()?.util?.config.locationAccess || false;
+	}
+
+	static isCollabFeatureEnabled()
+	{
+		return this.getCalendarContext()?.util?.config.isCollabFeatureEnabled || true;
+	}
+
+	static userIsOwner()
+	{
+		return this.getCalendarContext().util?.userIsOwner();
+	}
+
+	static isExtranet()
+	{
+		return this.getCalendarContext().util?.isExtranetUser();
+	}
+
 	static checkEmailLimitationPopup()
 	{
 		return !this.getEventWithEmailGuestEnabled();
@@ -713,6 +760,26 @@ export class Util
 	static isEventWithEmailGuestAllowed()
 	{
 		return this.getEventWithEmailGuestEnabled();
+	}
+
+	static setTimezoneList(value)
+	{
+		Util.timzezoneList = value;
+	}
+
+	static getTimezoneList(): Object
+	{
+		return Util.timzezoneList;
+	}
+
+	static setAbsenceAvailable(value)
+	{
+		Util.absenceAvailable = value;
+	}
+
+	static getAbsenceAvailable()
+	{
+		return Util.absenceAvailable;
 	}
 
 	static setEventWithEmailGuestEnabled(value)
@@ -733,6 +800,16 @@ export class Util
 	static isProjectFeatureEnabled()
 	{
 		return Util.projectFeatureEnabled;
+	}
+
+	static setIsBitrix24Template(value)
+	{
+		Util.isBitrix24Template = value;
+	}
+
+	static getIsBitrix24Template()
+	{
+		return Util.isBitrix24Template;
 	}
 
 	static setCurrentView(calendarView = null)

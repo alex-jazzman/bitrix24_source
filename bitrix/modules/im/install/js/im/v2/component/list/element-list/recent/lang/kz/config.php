@@ -1,0 +1,23 @@
+<?php
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE"] = "Басқа құрылғыдағы қоңырау";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_HANGUP"] = "Ажырау";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN"] = "Қосылу";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN_AUDIO"] = "Видеосыз";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN_VIDEO"] = "Видеомен";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_RETURN"] = "Қоңырауға оралу";
+$MESS["IM_LIST_RECENT_BIRTHDAY"] = "Бүгін туған күнін тойлап жатыр!";
+$MESS["IM_LIST_RECENT_BIRTHDAY_DATE"] = "бүгін";
+$MESS["IM_LIST_RECENT_CHAT_SELF"] = "бұл сіз";
+$MESS["IM_LIST_RECENT_CHAT_TYPE_GROUP_V2"] = "Топтық чат";
+$MESS["IM_LIST_RECENT_CONNECT_ERROR"] = "Біз сіздің Битрикс24-ке қосыла алмадық, интернет байланысын тексеріп, қайталап көріңіз.";
+$MESS["IM_LIST_RECENT_CREATE_CHAT_DEFAULT_TITLE"] = "Топтық чат";
+$MESS["IM_LIST_RECENT_CREATE_CHAT_SUBTITLE"] = "Чатты құру";
+$MESS["IM_LIST_RECENT_CREATE_CONFERENCE_DEFAULT_TITLE"] = "Бейнеконференция";
+$MESS["IM_LIST_RECENT_EMPTY"] = "Чаттар жоқ";
+$MESS["IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS"] = "Әріптестерді шақыру";
+$MESS["IM_LIST_RECENT_EMPTY_STATE_SUBTITLE"] = "Сіз Битрикс24-ке қосатын қызметкерлер чаттар тізімінде пайда болады";
+$MESS["IM_LIST_RECENT_EMPTY_STATE_TITLE"] = "Чаттар әлі жоқ";
+$MESS["IM_LIST_RECENT_INVITATION_NOT_ACCEPTED"] = "Шақыру қабылданбады";
+$MESS["IM_LIST_RECENT_MESSAGE_DRAFT_2"] = "Жоба: #TEXT#";
+$MESS["IM_LIST_RECENT_NEW_USER_POPUP_TEXT"] = "Мен сізбен бірге командадамын!";
+$MESS["IM_LIST_RECENT_VACATION"] = "#VACATION_END_DATE# дейін демалыста";

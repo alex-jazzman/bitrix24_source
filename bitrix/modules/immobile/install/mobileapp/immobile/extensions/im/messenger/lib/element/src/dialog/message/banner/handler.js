@@ -59,7 +59,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/handler', (require, ex
 				const callback = metaData.buttons?.find((button) => button.id === buttonId)?.callback;
 				if (callback)
 				{
-					callback(configuration.getMessageComponentParams());
+					callback({ dialogLocator: this.dialogLocator, messageData: configuration.getMessage() });
 				}
 			}
 			catch (error)
@@ -81,7 +81,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/handler', (require, ex
 		 * @protected
 		 * @param {BannerMessageConfiguration} configuration
 		 * @param {string} buttonId
-		 * @return {BannerMetaDataValue}
+		 * @return {BannerProps}
 		 */
 		getMetaData(configuration, buttonId)
 		{

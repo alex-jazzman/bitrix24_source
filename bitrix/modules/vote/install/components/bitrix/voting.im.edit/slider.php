@@ -8,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 global $APPLICATION;
 
 $saveButtonId = 'vote-im-edit-slider-button-create';
+$cancelButtonId = 'vote-im-edit-slider-button-cancel';
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
@@ -26,6 +27,7 @@ $APPLICATION->IncludeComponent(
 			],
 			'close' => [
 				'type' => 'close',
+				'ID' => $cancelButtonId,
 				'CAPTION' => Loc::getMessage('VOTE_IM_EDIT_COMPONENT_CANCEL_VOTE'),
 			],
 		],

@@ -1518,7 +1518,7 @@
 		{
 			BX.UI.Viewer.Item.prototype.destroy.apply(this);
 
-			if (this.player !== null && !this.player.vjsPlayer.isInPictureInPicture())
+			if (this.player !== null && this.player.vjsPlayer && !this.player.vjsPlayer.isInPictureInPicture())
 			{
 				this.player.destroy();
 				this.player = null;
@@ -1527,7 +1527,7 @@
 
 		beforeHide()
 		{
-			if (this.player !== null && !this.player.vjsPlayer.isInPictureInPicture())
+			if (this.player !== null && this.player.vjsPlayer && !this.player.vjsPlayer.isInPictureInPicture())
 			{
 				this.player.pause();
 			}
@@ -1536,11 +1536,6 @@
 		handleResize()
 		{
 			this.adjustVideo();
-		},
-
-		temp()
-		{
-			// timestamp update 207392
 		},
 	};
 })();

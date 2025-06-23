@@ -34,19 +34,39 @@ $APPLICATION->setTitle(htmlspecialcharsbx(
 			: $existedScheduleTitle
 	)
 );
+
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.feedback.form',
+	'',
+	$arResult['feedbackParams']
+);
+$feedbackBtn = ob_get_contents();
+ob_end_clean();
+
 if ($arResult['showShiftPlanBtn'])
 {
-	$this->SetViewTarget('pagetitle') ?>
-	<a href="<?php echo $arResult['shiftPlanLink']; ?>" class="ui-btn ui-btn-themes ui-btn-light-border"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_EDIT_SHIFT_PLAN_BTN_TITLE')); ?></a>
-	<?
-	$this->EndViewTarget();
+	$distributeShiftsTitle = Loc::getMessage('TM_SCHEDULE_EDIT_SHIFT_PLAN_BTN_TITLE');
+	$distributeShifts = <<<HTML
+		<a
+			href="{$arResult['shiftPlanLink']}"
+			class="ui-btn ui-btn-themes ui-btn-light-border"
+		>
+			$distributeShiftsTitle
+		</a>
+		$feedbackBtn
+	HTML;
+	
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addRightCustomHtml(
+		$distributeShifts,
+		['align' => 'right'],
+	);
 }
-if (\Bitrix\Main\Loader::includeModule('ui'))
+else
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		$arResult['feedbackParams']
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addRightCustomHtml(
+		$feedbackBtn,
+		['align' => 'right'],
 	);
 }
 ?>

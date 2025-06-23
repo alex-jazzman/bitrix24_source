@@ -10,7 +10,6 @@ $MESS["SIGN_B2E_PROVIDER_DISCONNECT"] = 'Отключить';
 $MESS["SIGN_B2E_NO_TAX_ID"] = 'Не указан ИНН';
 $MESS["SIGN_B2E_NO_REGISTER_URL"] = 'Подключение недоступно';
 $MESS["SIGN_B2E_PROVIDER_GOSKEY_NAME"] = 'Госключ';
-$MESS["SIGN_B2E_PROVIDER_TAXCOM_NAME"] = 'TaxCom';
 $MESS["SIGN_B2E_PROVIDER_SES_NAME"] = 'Битрикс24 КЭДО';
 $MESS["SIGN_B2E_PROVIDER_SES_COM_NAME"] = 'e-Signature for HR';
 $MESS["SIGN_B2E_COMPANIES_TAB"] = 'Компании';

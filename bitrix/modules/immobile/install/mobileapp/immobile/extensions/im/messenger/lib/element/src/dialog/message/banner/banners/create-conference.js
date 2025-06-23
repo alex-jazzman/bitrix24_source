@@ -11,8 +11,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/create-confere
 		prepareTextMessage()
 		{
 			const desc = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CONFERENCE_CREATE_BANNER_DESC');
-			this.message[0].text = `[color=${Theme.colors.base3}]${desc}[/color]\n\n[USER=copy:id${this.id}]${Loc.getMessage(
-				'IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CONFERENCE_CREATE_BANNER_COPY_LINK')}[/USER]`;
+			this.message[0].text = `[color=${Theme.colors.base3}]${desc}[/color]`;
 		}
 	}
 

@@ -76,10 +76,9 @@ final class TranscribeCallRecording extends AbstractOperation
 			return $result->addError(ErrorCode::getFileNotFoundError());
 		}
 
-		if (
-			!empty($originalFileName)
-			&& !in_array(GetFileExtension($originalFileName), self::SUPPORTED_AUDIO_EXTENSIONS, true)
-		)
+		$fileExtension = $this->getSupportedFileExtension($originalFileName);
+
+		if ($fileExtension === '')
 		{
 			return $result->addError(new Error(
 				'File is not a supported as a call recording.'
@@ -91,10 +90,26 @@ final class TranscribeCallRecording extends AbstractOperation
 
 		return $result->setData([
 			'payload' =>
-				(new \Bitrix\AI\Payload\Audio($fileUrl))
-					->setMarkers(['type' => $contentType])
-			,
+				(new \Bitrix\AI\Payload\Audio($fileUrl, $fileExtension ?? ''))
+					->setMarkers(['type' => $contentType]),
 		]);
+	}
+
+	private function getSupportedFileExtension(string $originalFileName): ?string
+	{
+		if (empty($originalFileName))
+		{
+			return null;
+		}
+
+		$fileExtension = GetFileExtension($originalFileName);
+
+		if (!in_array($fileExtension, self::SUPPORTED_AUDIO_EXTENSIONS, true))
+		{
+			return '';
+		}
+
+		return $fileExtension;
 	}
 
 	private function getFileInfo(int $storageTypeId, int $fileId): array
@@ -143,12 +158,6 @@ final class TranscribeCallRecording extends AbstractOperation
 			(string)$file['CONTENT_TYPE'],
 			(string)($file['ORIGINAL_NAME'] ?? null),
 		];
-	}
-
-
-	protected function getStubPayload(): string
-	{
-		return 'This is stub call transcription';
 	}
 
 	protected function getJobAddFields(): array

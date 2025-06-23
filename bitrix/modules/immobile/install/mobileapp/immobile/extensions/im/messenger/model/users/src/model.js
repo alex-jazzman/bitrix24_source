@@ -36,11 +36,7 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				const userList = [];
 
 				Object.keys(state.collection).forEach((userId) => {
-					const user = state.collection[userId];
-					if (user.isCompleteInfo === true)
-					{
-						userList.push(user);
-					}
+					userList.push(state.collection[userId]);
 				});
 
 				return userList;
@@ -140,6 +136,20 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 
 				return absentDate > new Date();
 			},
+
+			/**
+			 * @function usersModel/getBotBackgroundId
+			 * @return {DialogBackgroundId|null}
+			 */
+			getBotBackgroundId: (state, getters) => (userId) => {
+				const userModel = getters.getById(userId);
+				if (!userModel)
+				{
+					return null;
+				}
+
+				return userModel.botData.backgroundId ?? null;
+			},
 		},
 		actions: {
 			/** @function usersModel/setState */
@@ -158,8 +168,11 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				if (Type.isArray(payload))
 				{
 					result = payload.map((user) => {
+						const existingItem = store.state.collection[user.id];
+						const mergeItem = existingItem || userDefaultElement;
+
 						return {
-							...userDefaultElement,
+							...mergeItem,
 							...validate(user, {
 								fromLocalDatabase: true,
 							}),
@@ -188,10 +201,12 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				if (Type.isArray(payload))
 				{
 					result = payload.map((user) => {
+						const existingItem = store.state.collection[user.id];
+						const mergeItem = existingItem || userDefaultElement;
+
 						return {
-							...userDefaultElement,
+							...mergeItem,
 							...validate(user),
-							isCompleteInfo: true,
 						};
 					});
 				}
@@ -241,7 +256,6 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 					const existingUser = store.state.collection[modelUser.id];
 					if (!existingUser)
 					{
-						modelUser.isCompleteInfo = false;
 						userList.push({
 							...userDefaultElement,
 							...modelUser,
@@ -272,7 +286,6 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 							result.push({
 								...store.state.collection[user.id],
 								...validate(user),
-								isCompleteInfo: true,
 							});
 						}
 					});

@@ -59,7 +59,7 @@
 	--im-list-copilot-item__background-color_wrap: var(--im-color-palette-white-base);
 	--im-list-copilot-item__background-color_wrap-hover: #f1f4f6;
 	--im-list-copilot-item__background-color_separator: rgba(82,92,105,0.08);
-	--im-list-copilot-item__background-color_accent: #8e52ec;
+	--im-list-copilot-item__background-color_accent: var(--im-color-accent-blue);
 	--im-list-copilot-item__background-color_muted: var(--im-color-palette-gray-40);
 
 	--im-list-copilot__font-color_message: var(--im-color-palette-gray-60);

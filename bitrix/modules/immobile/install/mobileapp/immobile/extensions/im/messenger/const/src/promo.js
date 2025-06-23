@@ -3,8 +3,7 @@
  */
 jn.define('im/messenger/const/promo', (require, exports, module) => {
 	const Promo = {
-		immobileRelease2023: 'immobile:chat-v2:16112023:mobile',
-		immobileVideo2020: 'im:video:01042020:mobile',
+		copilotInDefaultTab: 'im:copilot-in-default-tab:11032025:all',
 	};
 
 	const PromoType = {

@@ -8,5 +8,6 @@ return [
 		'layout/pure-component',
 		'ui-system/typography/text',
 		'ui-system/blocks/switcher',
+		'utils/validation',
 	],
 ];

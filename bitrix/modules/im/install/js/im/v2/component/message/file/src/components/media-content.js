@@ -1,74 +1,46 @@
 import { MessageStatus } from 'im.v2.component.message.elements';
+import { MediaGallery } from 'im.v2.component.elements.media-gallery';
 import { FileType } from 'im.v2.const';
 
-import { getGalleryElementsConfig } from '../helpers/get-gallery-elements-config';
-import { getGalleryGridRowsConfig } from '../helpers/get-gallery-grid-rows-config';
-import { GalleryItem } from './items/gallery-item';
 import { VideoItem } from './items/video';
 
 import '../css/items/media-content.css';
 
-import type { ImModelMessage } from 'im.v2.model';
-
-const FILES_LIMIT = 10;
+import type { ImModelMessage, ImModelFile } from 'im.v2.model';
 
 // @vue/component
 export const MediaContent = {
 	name: 'MediaContent',
-	components: { GalleryItem, VideoItem, MessageStatus },
-	props:
-	{
+	components: { VideoItem, MessageStatus, MediaGallery },
+	props: {
 		item: {
 			type: Object,
 			required: true,
 		},
-		previewMode: {
-			type: Boolean,
-			default: false,
-		},
-		removable: {
-			type: Boolean,
-			default: false,
-		},
 	},
-	emits: ['onRemoveItem'],
-	computed:
-	{
+	emits: ['cancelClick'],
+	computed: {
 		message(): ImModelMessage
 		{
 			return this.item;
 		},
-		fileIds(): number[]
+		files(): Array<ImModelFile>
 		{
-			return this.message.files.slice(0, FILES_LIMIT);
+			return this.message.files.map((fileId) => {
+				return this.$store.getters['files/get'](fileId);
+			});
 		},
-		firstFileId(): number
+		filesCount(): number
 		{
-			return this.message.files[0];
+			return this.files.length;
 		},
-		isGallery(): boolean
+		firstFile(): ?ImModelFile
 		{
-			return this.message.files.length > 1;
+			return this.files[0];
 		},
-		galleryRowConfig(): { gridTemplateRows: string }
+		firstFileId(): ?ImModelFile['id']
 		{
-			return getGalleryGridRowsConfig(this.fileIds.length);
-		},
-		galleryColumnsConfig(): { gridTemplateColumns: string }
-		{
-			if (this.previewMode)
-			{
-				return { gridTemplateColumns: '119px 67px 67px 119px' };
-			}
-
-			return {};
-		},
-		galleryStyle(): { [key: string]: string }
-		{
-			return {
-				...this.galleryRowConfig,
-				...this.galleryColumnsConfig,
-			};
+			return this.firstFile?.id;
 		},
 		hasText(): boolean
 		{
@@ -80,57 +52,36 @@ export const MediaContent = {
 		},
 		onlyMedia(): boolean
 		{
-			return !this.previewMode && (!this.hasText && !this.hasAttach);
+			return !this.hasText && !this.hasAttach;
 		},
 		isSingleVideo(): boolean
 		{
-			if (this.isGallery)
-			{
-				return false;
-			}
-
-			return this.$store.getters['files/get'](this.firstFileId, true).type === FileType.video;
+			return (
+				this.filesCount === 1
+				&& this.firstFile.type === FileType.video
+			);
 		},
 	},
-	methods:
-	{
-		getGalleryElementStyles(index: number): { gridRowEnd: string, gridColumnEnd: string }
+	methods: {
+		onCancel(event)
 		{
-			return getGalleryElementsConfig(this.fileIds.length, index);
-		},
-		onRemoveItem(event)
-		{
-			this.$emit('onRemoveItem', event);
+			this.$emit('cancelClick', event);
 		},
 	},
 	template: `
 		<div class="bx-im-message-media-content__container">
-			<div v-if="isGallery" class="bx-im-message-media-content__gallery" :style="galleryStyle">
-				<GalleryItem
-					v-for="(fileId, index) in fileIds"
-					:key="fileId"
-					:id="fileId"
-					:isGallery="true"
-					:message="message"
-					:style="getGalleryElementStyles(index)"
-					:handleLoading="!previewMode"
-					:removable="removable"
-					@onRemoveClick="onRemoveItem"
-				/>
-			</div>
-			<div v-else-if="isSingleVideo" class="bx-im-message-media-content__single-video">
+			<div v-if="isSingleVideo" class="bx-im-message-media-content__single-video">
 				<VideoItem
 					:id="firstFileId"
 					:message="message"
-					:handleLoading="!previewMode"
+					@cancelClick="onCancel"
 				/>
 			</div>
-			<div v-else class="bx-im-message-media-content__single-image">
-				<GalleryItem
-					:id="firstFileId"
-					:message="message"
-					:handleLoading="!previewMode"
-					:previewMode="previewMode"
+			<div v-else class="bx-im-message-media-content__gallery">
+				<MediaGallery
+					:files="files"
+					:handleLoading="true"
+					@cancelClick="onCancel"
 				/>
 			</div>
 			<div v-if="onlyMedia" class="bx-im-message-media-content__status-container">

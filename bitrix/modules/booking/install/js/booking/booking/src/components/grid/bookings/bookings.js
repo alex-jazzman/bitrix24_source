@@ -2,7 +2,6 @@ import { createNamespacedHelpers } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
 import { busySlots } from 'booking.lib.busy-slots';
-import { Drag } from 'booking.lib.drag';
 import type { BookingModel, BookingModelUi } from 'booking.model.bookings';
 
 import type { BookingUiDuration } from './booking/types';
@@ -44,6 +43,7 @@ export const Bookings = {
 			isFeatureEnabled: 'isFeatureEnabled',
 			editingBookingId: 'editingBookingId',
 			embedItems: 'embedItems',
+			draggedBookingId: 'draggedBookingId',
 		}),
 		resourcesHash(): string
 		{
@@ -81,6 +81,18 @@ export const Bookings = {
 					.map((resourceId: number) => {
 						return createBookingModelUi(resourceId, booking, this.overbookingMap.get(booking.id));
 					});
+			}).sort((a, b) => {
+				if (a.resourcesIds[0] !== b.resourcesIds[0])
+				{
+					return b.resourcesIds[0] - a.resourcesIds[0];
+				}
+
+				if (a.dateFromTs !== b.dateFromTs)
+				{
+					return a.dateFromTs - b.dateFromTs;
+				}
+
+				return b.overbooking - a.overbooking;
 			});
 		},
 		cells(): CellDto[]
@@ -115,24 +127,19 @@ export const Bookings = {
 				)
 			);
 		},
+		draggedBooking(): BookingModel | null
+		{
+			if (!this.draggedBookingId)
+			{
+				return null;
+			}
+
+			return this.bookings.find(({ id }) => id === this.draggedBookingId) || null;
+		},
 	},
 	mounted(): void
 	{
 		this.startInterval();
-
-		if (this.isFeatureEnabled)
-		{
-			const dataId = this.editingBookingId ? `[data-id="${this.editingBookingId}"]` : '';
-
-			this.dragManager = new Drag({
-				container: this.$el.parentElement,
-				draggable: `.booking-booking-booking${dataId}`,
-			});
-		}
-	},
-	beforeUnmount(): void
-	{
-		this.dragManager?.destroy();
 	},
 	methods: {
 		generateBookingKey(booking: BookingModel): string
@@ -199,6 +206,7 @@ export const Bookings = {
 			<template v-for="cell of cells" :key="cell.id">
 				<Cell
 					:cell="cell"
+					:draggedBooking="draggedBooking"
 				/>
 			</template>
 			<template v-for="hour of quickFilterHours" :key="hour">

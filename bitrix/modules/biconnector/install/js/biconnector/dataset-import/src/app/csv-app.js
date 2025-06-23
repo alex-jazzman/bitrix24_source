@@ -1,3 +1,4 @@
+import { FileExport } from 'biconnector.dataset-import.file-export';
 import { AppLayout } from '../layout/app-layout';
 import { ImportConfig } from '../layout/import-config';
 import { FileErrorsPopup } from '../popups/file-checking/file-errors-popup';
@@ -61,6 +62,7 @@ export const CsvApp = {
 			hasMinimalLoadingAnimationTimePassed: true,
 			checkFileErrors: [],
 			isErrorsChecked: false,
+			exportDownloadLink: null,
 		};
 	},
 	computed: {
@@ -358,6 +360,32 @@ export const CsvApp = {
 				})
 			;
 		},
+		onExportFileClick()
+		{
+			const button = document.querySelector('.biconnector-export-file-button');
+
+			if (!button)
+			{
+				return;
+			}
+
+			Dom.addClass(button, 'ui-btn-wait');
+			Dom.attr(button, { disabled: true });
+
+			FileExport.getInstance().download({
+				id: this.datasetId,
+				title: this.$store.state.config.datasetProperties.name ?? 'dataset',
+			})
+				.then(() => {
+					Dom.removeClass(button, 'ui-btn-wait');
+					Dom.attr(button, { disabled: null });
+				})
+				.catch(() => {
+					Dom.removeClass(button, 'ui-btn-wait');
+					Dom.attr(button, { disabled: null });
+				})
+			;
+		},
 		saveIgnoringErrors()
 		{
 			this.togglePopup('fileErrors', false);
@@ -446,10 +474,16 @@ export const CsvApp = {
 		}
 
 		EventEmitter.subscribe('biconnector:dataset-import:onCheckFileClick', this.onCheckFileClick);
+		EventEmitter.subscribe('biconnector:dataset-import:onExportFileClick', this.onExportFileClick);
+		EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
+			URL.revokeObjectURL(this.exportDownloadLink);
+		});
 	},
 	beforeUnmount()
 	{
 		EventEmitter.unsubscribe('biconnector:dataset-import:onCheckFileClick', this.onCheckFileClick);
+		EventEmitter.unsubscribe('biconnector:dataset-import:onExportFileClick', this.onExportFileClick);
+		URL.revokeObjectURL(this.exportDownloadLink);
 	},
 	components: {
 		AppLayout,
@@ -486,6 +520,7 @@ export const CsvApp = {
 						:is-open-initially="isEditMode"
 						:disabled="steps.properties.disabled"
 						:reserved-names="appParams.reservedNames"
+						:name-max-length=30
 						ref="propertiesStep"
 						@validation="onStepValidation('properties', $event)"
 						@properties-changed="onDatasetPropertiesChanged"

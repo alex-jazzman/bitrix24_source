@@ -1115,12 +1115,14 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    this.childConverter = null;
 	    this.allowedChildren = [];
 	    this.notAllowedChildrenCallback = null;
+	    this.onParseHandler = null;
 	    this.setVoid(options.void);
 	    this.setCanBeEmpty(options.canBeEmpty);
 	    this.setChildConverter(options.convertChild);
 	    this.setAllowedChildren(options.allowedChildren);
 	    this.setOnChangeHandler(options.onChange);
 	    this.setNotAllowedChildrenCallback(options.onNotAllowedChildren);
+	    this.setOnParseHandler(options.onParse);
 	  }
 	  static defaultBlockStringifier(node, scheme, options = {}) {
 	    const isAllowNewlineBeforeOpeningTag = (() => {
@@ -1131,12 +1133,16 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      const nextSibling = node.getNextSibling();
 	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === BBCodeNode.ELEMENT_NODE && !nextSibling.getTagScheme().getGroup().includes('#inline'));
 	    })();
-	    node.trimLinebreaksOnce();
 	    const openingTag = node.getOpeningTag();
 	    const content = node.getContent(options);
 	    const closingTag = node.getClosingTag();
 	    const isAllowContentLinebreaks = content.length > 0;
 	    return [isAllowNewlineBeforeOpeningTag ? '\n' : '', openingTag, isAllowContentLinebreaks ? '\n' : '', content, isAllowContentLinebreaks ? '\n' : '', closingTag, isAllowNewlineAfterClosingTag ? '\n' : ''].join('');
+	  }
+	  static defaultOnBlockParseHandler(node) {
+	    if (node) {
+	      node.trimLinebreaksOnce();
+	    }
 	  }
 	  setVoid(value) {
 	    if (Type.isBoolean(value)) {
@@ -1186,6 +1192,18 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  runNotAllowedChildrenCallback(options) {
 	    if (Type.isFunction(this.notAllowedChildrenCallback)) {
 	      this.notAllowedChildrenCallback(options);
+	    }
+	  }
+	  setOnParseHandler(handler) {
+	    this.onParseHandler = handler;
+	  }
+	  getOnParseHandler() {
+	    return this.onParseHandler;
+	  }
+	  runOnParseHandler(node) {
+	    const handler = this.getOnParseHandler();
+	    if (Type.isFunction(handler)) {
+	      handler(node);
 	    }
 	  }
 	}
@@ -1517,12 +1535,14 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      group: ['#block'],
 	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 	      allowedIn: ['#root', '#shadowRoot']
 	    }), new BBCodeTagScheme({
 	      name: 'list',
 	      group: ['#block'],
 	      allowedChildren: ['*'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 	      allowedIn: ['#root', '#shadowRoot'],
 	      canBeEmpty: false,
 	      onNotAllowedChildren: ({
@@ -1568,6 +1588,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      group: ['#block'],
 	      allowedChildren: ['tr'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 	      allowedIn: ['#root', 'td', 'th', 'quote', 'spoiler'],
 	      canBeEmpty: false
 	    }), new BBCodeTagScheme({
@@ -1589,6 +1610,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      name: 'code',
 	      group: ['#block'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 	      allowedChildren: ['#text', '#linebreak', '#tab'],
 	      allowedIn: ['#root', '#shadowRoot'],
 	      convertChild: (child, scheme, toStringOptions) => {

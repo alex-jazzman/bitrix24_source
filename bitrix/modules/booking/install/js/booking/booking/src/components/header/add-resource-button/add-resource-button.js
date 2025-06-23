@@ -40,8 +40,11 @@ export const AddResourceButton = {
 			await ahaMoments.show({
 				id: 'booking-add-resource',
 				title: this.loc('BOOKING_AHA_ADD_RESOURCES_TITLE'),
-				text: this.loc('BOOKING_AHA_ADD_RESOURCES_TEXT'),
-				article: HelpDesk.AhaAddResource,
+				text: this.loc('BOOKING_AHA_ADD_RESOURCES_TEXT_MSGVER_1'),
+				article: {
+					...HelpDesk.AhaAddResource,
+					title: this.loc('BOOKING_AHA_ARTICLE_LINK_TITLE'),
+				},
 				target: this.$refs.button,
 			});
 

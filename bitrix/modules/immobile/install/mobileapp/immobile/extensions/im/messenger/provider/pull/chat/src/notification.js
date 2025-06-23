@@ -5,7 +5,7 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { EventType } = require('im/messenger/const');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -54,9 +54,9 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 				}
 			}
 
-			Counters.notificationCounter.value = params.counter;
+			TabCounters.notificationCounter.value = params.counter;
 			MessengerEmitter.emit(EventType.notification.reload, params);
-			Counters.update();
+			TabCounters.update();
 
 			const userName = params.userName ? params.userName : '';
 			if (extra && extra.server_time_ago <= 5)
@@ -83,8 +83,8 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 
 			logger.info('NotificationPullHandler.handleNotifyRead', params);
 
-			Counters.notificationCounter.value = params.counter;
-			Counters.update();
+			TabCounters.notificationCounter.value = params.counter;
+			TabCounters.update();
 		}
 
 		handleNotifyUnread(params, extra, command)
@@ -96,8 +96,8 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 
 			logger.info('NotificationPullHandler.handleNotifyUnread', params);
 
-			Counters.notificationCounter.value = params.counter;
-			Counters.update();
+			TabCounters.notificationCounter.value = params.counter;
+			TabCounters.update();
 
 			MessengerEmitter.emit(EventType.notification.reload, params);
 		}
@@ -111,8 +111,8 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 
 			logger.info('NotificationPullHandler.handleNotifyConfirm', params);
 
-			Counters.notificationCounter.value = params.counter;
-			Counters.update();
+			TabCounters.notificationCounter.value = params.counter;
+			TabCounters.update();
 
 			MessengerEmitter.emit(EventType.notification.reload, params);
 		}

@@ -30,7 +30,7 @@
 	border-radius: 32px;
 }
 
-.bx-im-messenger__container.--desktop {
+body:not(.template-air) .bx-im-messenger__container.--desktop {
 	height: 100vh;
 	overflow: hidden;
 }
@@ -46,6 +46,12 @@
 	border-top-left-radius: var(--im-border-radius-sm);
 	border-bottom-left-radius: var(--im-border-radius-sm);
 	overflow: hidden;
+}
+
+/* in embedded mode border-radius is controlled by template */
+#messenger-embedded-application .bx-im-messenger__layout_container {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 .bx-im-messenger__layout_content {
@@ -68,7 +74,6 @@
 .bx-im-messenger__content_container {
 	flex: 1;
 	min-width: 0;
-	background-color: #fff;
 	position: relative;
 	overflow: hidden;
 }

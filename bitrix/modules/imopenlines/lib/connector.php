@@ -1780,20 +1780,16 @@ class Connector
 
 			if (in_array($connectorId, self::getListShowDeliveryStatus()))
 			{
-				\CIMMessageParam::Set(
-					$messageId,
-					[
-						'SENDING' => 'Y',
-						'SENDING_TS' => time()
-					]
-				);
-				\CIMMessageParam::SendPull(
-					$messageId,
-					[
-						'SENDING',
-						'SENDING_TS'
-					]
-				);
+				$pullParams = [
+					'SENDING' => 'Y',
+					'SENDING_TS' => time()
+				];
+				\CIMMessageParam::Set($messageId, $pullParams);
+				\CIMMessageParam::SendPull($messageId, array_keys($pullParams));
+				if (Loader::includeModule('pull'))
+				{
+					\Bitrix\Pull\Event::send();
+				}
 			}
 
 			$resultSendMessage = (new self())->sendMessage($fields);
@@ -1811,6 +1807,7 @@ class Connector
 
 				return false;
 			}
+
 		}
 
 		return true;
@@ -2410,13 +2407,10 @@ class Connector
 		}
 
 		$pullParams = [
-			Im\V2\Message\Params::SENDING,
-			Im\V2\Message\Params::SENDING_TS,
-		];
-		$messageParams->fill([
 			Im\V2\Message\Params::SENDING => false,
 			Im\V2\Message\Params::SENDING_TS => 0
-		]);
+		];
+		$messageParams->fill($pullParams);
 		if (!empty($params['message']['id']))
 		{
 			$pullParams[] = Imopenlines\MessageParameter::CONNECTOR_MID;
@@ -2424,7 +2418,11 @@ class Connector
 		}
 		$messageParams->save();
 
-		\CIMMessageParam::sendPull($message->getMessageId(), $pullParams);
+		\CIMMessageParam::sendPull($message->getMessageId(), array_keys($pullParams));
+		if (Loader::includeModule('pull'))
+		{
+			\Bitrix\Pull\Event::send();
+		}
 
 		return true;
 	}

@@ -1956,5 +1956,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 	exports.CopilotAdviceErrorPopup = CopilotAdviceErrorPopup;
 	exports.CopilotAdviceErrorTypes = CopilotAdviceErrorTypes;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.UI,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX,BX,BX.Main,BX.Tasks.Flow));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.UI,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX.SidePanel,BX,BX.Main,BX.Tasks.Flow));
 //# sourceMappingURL=script.js.map

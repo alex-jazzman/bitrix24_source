@@ -331,7 +331,9 @@ export class Call extends Base
 			}
 			else
 			{
-				BX?.UI?.InfoHelper.show(data.sliderCode);
+				data.sliderCode?.includes('redirect=detail&code')
+				? top.BX.Helper.show(data.sliderCode)
+				: BX?.UI?.InfoHelper.show(data.sliderCode);
 			}
 		}
 		else if (this.#isAiMarketplaceAppsExist(data))

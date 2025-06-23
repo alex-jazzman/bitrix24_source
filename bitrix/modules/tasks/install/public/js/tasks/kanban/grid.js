@@ -1141,7 +1141,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			},
 			(response) => {
-				BX.Kanban.Utils.showErrorDialog("Error: " + response.errors[0].message, true);
+				BX.Kanban.Utils.showErrorDialog(BX.message('TASKS_KANBAN_MODAL_ERROR_PREFIX').concat(response.errors[0].message), true);
 			},
 		);
 	},

@@ -11,13 +11,13 @@ return [
 		'utils/url',
 		'toast',
 		'alert',
+		'app-rating-manager',
 
 		'ui-system/layout/box',
 		'ui-system/layout/area',
 		'ui-system/layout/card',
 		'ui-system/blocks/link',
 		'ui-system/blocks/icon',
-		'ui-system/blocks/chips/chip',
 		'ui-system/form/buttons',
 
 		'layout/ui/form',
@@ -46,6 +46,7 @@ return [
 		'calendar:data-managers/collab-manager',
 
 		'calendar:layout/menu/recursion-mode',
+		'collab/service/access',
 	],
 	'bundle' => [
 		'./src/form',
@@ -63,6 +64,8 @@ return [
 		'./src/fields/recurrence-rule',
 		'./src/fields/reminders',
 		'./src/fields/user-with-chat-buttons',
+		'./src/fields/accessibility',
+		'./src/fields/special',
 
 		'./src/layout/calendar-icon',
 		'./src/layout/icon-with-text',

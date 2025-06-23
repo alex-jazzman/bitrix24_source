@@ -8,6 +8,7 @@ use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Item\Document;
 use Bitrix\Sign\Helper\CloneHelper;
+use Bitrix\Sign\Item\Document\BindingCollection;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Result\CreateDocumentResult;
@@ -27,6 +28,7 @@ final class Copy implements Contract\Operation
 		private readonly Item\Document $document,
 		private readonly int $createdByUserId,
 		private readonly ?int $templateId = null,
+		private readonly ?BindingCollection $bindings = null,
 		?DocumentService $documentService = null,
 		?DocumentRepository $documentRepository = null,
 		?MemberRepository $memberRepository = null,
@@ -91,6 +93,7 @@ final class Copy implements Contract\Operation
 			initiatedByType: $this->document->initiatedByType,
 			createdById: $createdById,
 			templateId: $this->templateId,
+			bindings: $this->bindings,
 		);
 		if (!$result->isSuccess())
 		{

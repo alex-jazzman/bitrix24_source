@@ -11,7 +11,7 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
-	const { EntitySelectorFactory } = require('selector/widget/factory');
+	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
 	const Permission = {
 		OWNER: 'owner',
@@ -284,84 +284,50 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 			}
 		};
 
+		onSelectOwner = (owner) => {
+			if (owner)
+			{
+				this.setState({
+					owner: {
+						id: Number(owner.id),
+						fullName: owner.title,
+					},
+				}, () => this.#callOnChange());
+			}
+		};
+
 		#showOwnerSelector = () => {
-			const selector = EntitySelectorFactory.createByType(EntitySelectorFactory.Type.USER, {
-				provider: {
-					options: {
-						intranetUsersOnly: true,
-					},
-				},
-				createOptions: {
-					enableCreation: false,
-				},
+			const ownerSelector = new MemberSelector({
+				title: Loc.getMessage('M_COLLAB_PERMISSIONS_OWNER_SELECTOR_TITLE'),
+				onSelectItem: this.onSelectOwner,
 				allowMultipleSelection: false,
-				closeOnSelect: true,
-				initSelectedIds: [this.state.owner.id],
-				events: {
-					onClose: (selectedUsers) => {
-						if (Type.isArrayFilled(selectedUsers))
-						{
-							this.setState({
-								owner: {
-									id: selectedUsers[0].id,
-									firstName: selectedUsers[0].customData?.name ?? '',
-									lastName: selectedUsers[0].customData?.lastName ?? '',
-									fullName: selectedUsers[0].title,
-								},
-							}, () => this.#callOnChange());
-						}
-					},
-				},
-				widgetParams: {
-					title: Loc.getMessage('M_COLLAB_PERMISSIONS_OWNER_SELECTOR_TITLE'),
-					backdrop: {
-						mediumPositionPercent: 70,
-						horizontalSwipeAllowed: false,
-					},
-				},
+				withCurrentUser: true,
 			});
 
-			selector.show({}, this.props.layoutWidget);
+			ownerSelector.open(this.props.layoutWidget);
+		};
+
+		onSelectManagers = (selectedUsersIds, selectedUsers) => {
+			const moderators = Type.isArrayFilled(selectedUsers)
+				? selectedUsers.map((user) => ({
+					id: Number(user.id),
+					fullName: user.title,
+				}))
+				: [];
+			this.setState({
+				moderators,
+			}, () => this.#callOnChange());
 		};
 
 		#showModeratorsSelector = () => {
-			const selector = EntitySelectorFactory.createByType(EntitySelectorFactory.Type.USER, {
-				provider: {
-					options: {
-						intranetUsersOnly: true,
-					},
-				},
-				createOptions: {
-					enableCreation: false,
-				},
-				allowMultipleSelection: true,
-				closeOnSelect: true,
+			const moderatorSelector = new MemberSelector({
+				title: Loc.getMessage('M_COLLAB_PERMISSIONS_MODERATORS_SELECTOR_TITLE'),
 				initSelectedIds: this.state.moderators.map((user) => user.id),
-				events: {
-					onClose: (selectedUsers) => {
-						const moderators = Type.isArrayFilled(selectedUsers)
-							? selectedUsers.map((user) => ({
-								id: user.id,
-								firstName: user.customData?.name ?? '',
-								lastName: user.customData?.lastName ?? '',
-								fullName: user.title,
-							}))
-							: [];
-						this.setState({
-							moderators,
-						}, () => this.#callOnChange());
-					},
-				},
-				widgetParams: {
-					title: Loc.getMessage('M_COLLAB_PERMISSIONS_MODERATORS_SELECTOR_TITLE'),
-					backdrop: {
-						mediumPositionPercent: 70,
-						horizontalSwipeAllowed: false,
-					},
-				},
+				onSelectMembers: this.onSelectManagers,
+				withCurrentUser: true,
 			});
 
-			selector.show({}, this.props.layoutWidget);
+			moderatorSelector.open(this.props.layoutWidget);
 		};
 	}
 

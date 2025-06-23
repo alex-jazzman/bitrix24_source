@@ -38,6 +38,7 @@ $MESS["MENU_MAIL_CHANGE_SETTINGS"] = "Баптауларды өзгерту";
 $MESS["MENU_MARKETING"] = "Маркетинг";
 $MESS["MENU_MARKETPLACE_ALL"] = "Барлық қосымшалар";
 $MESS["MENU_MARKETPLACE_APPS_2"] = "Маркет";
+$MESS["MENU_MARKETPLACE_APPS_2_MSGVER_1"] = "Маркетплейс";
 $MESS["MENU_ONEC_SECTION"] = "1С + CRM Битрикс24";
 $MESS["MENU_OPENLINES_LINES_SINGLE"] = "Ашық желілер";
 $MESS["MENU_PHOTO"] = "Фотосуреттер";

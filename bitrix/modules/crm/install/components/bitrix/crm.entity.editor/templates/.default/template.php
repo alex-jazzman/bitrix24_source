@@ -440,6 +440,8 @@ if (!empty($htmlEditorConfigs))
 				checkScope: "<?=GetMessageJS('CRM_ENTITY_ED_CHECK_SCOPE')?>",
 				createScope: "<?=GetMessageJS('CRM_ENTITY_ED_CREATE_SCOPE')?>",
 				updateScope: "<?=GetMessageJS('CRM_ENTITY_ED_UPDATE_SCOPE')?>",
+				copyPageUrl: "<?= \CUtil::JSEscape($arResult['MESSAGES']['COPY_PAGE_URL']) ?>",
+				pageUrlCopied: "<?= \CUtil::JSEscape($arResult['MESSAGES']['PAGE_URL_COPIED']) ?>",
 			};
 
 			BX.Crm.EntityEditorScopeConfig.messages =
@@ -921,6 +923,8 @@ if (!empty($htmlEditorConfigs))
 						enableBottomPanel: <?=$arResult['ENABLE_BOTTOM_PANEL'] ? 'true' : 'false'?>,
 						enableFieldsContextMenu: <?=$arResult['ENABLE_FIELDS_CONTEXT_MENU'] ? 'true' : 'false'?>,
 						enablePageTitleControls: <?=$arResult['ENABLE_PAGE_TITLE_CONTROLS'] ? 'true' : 'false'?>,
+						enablePageTitleControlsViaToolbar: <?=$arResult['ENABLE_PAGE_TITLE_CONTROLS_VIA_TOOLBAR'] ? 'true' : 'false'?>,
+						enablePageTitleEdit: <?=$arResult['ENABLE_PAGE_TITLE_EDIT'] ? 'true' : 'false'?>,
 						enableCommunicationControls: <?=$arResult['ENABLE_COMMUNICATION_CONTROLS'] ? 'true' : 'false'?>,
 						enableExternalLayoutResolvers: <?=$arResult['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'] ? 'true' : 'false'?>,
 						readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,

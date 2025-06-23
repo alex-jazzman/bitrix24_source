@@ -51,4 +51,9 @@ class DatePeriodCollection implements \IteratorAggregate, Arrayable, \Countable
 	{
 		$this->items[] = $datePeriod;
 	}
+
+	public function getFirstCollectionItem(): DatePeriod|null
+	{
+		return empty($this->items) ? null : $this->items[0] ?? null;
+	}
 }

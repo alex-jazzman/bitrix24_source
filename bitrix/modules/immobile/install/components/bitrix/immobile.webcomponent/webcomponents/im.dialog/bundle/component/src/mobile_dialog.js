@@ -97,12 +97,20 @@ BX.ImMobile = function(params)
 		SmileManager.init();
 	}
 
+	const users = {};
+	const userEntity = BX.componentParameters.get('USER_ENTITY');
+	const currentUser = JSON.parse(userEntity);
+	if (currentUser !== null && typeof currentUser === 'object' && currentUser.id)
+	{
+		users[currentUser.id] = currentUser;
+	}
+
 	this.messenger = new BX.ImMessengerMobile(this, {
 		'openChatEnable': false,
 		'updateStateInterval': this.updateStateInterval,
 		'diskClass': this.disk,
 		'recent': {},
-		'users': {},
+		'users': users,
 		'businessUsers': false,
 		'openlines': false,
 		'groups': {},

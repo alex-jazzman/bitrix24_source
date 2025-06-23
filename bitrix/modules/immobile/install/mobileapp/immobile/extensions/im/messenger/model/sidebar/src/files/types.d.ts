@@ -14,6 +14,7 @@ declare type SidebarFileSubTypeItem = {
 	items: Map<number, SidebarFile>,
 	hasNextPage: boolean,
 	isHistoryLimitExceeded: boolean,
+	lastLoadFileId: number,
 }
 
 declare type chatId = number;
@@ -30,6 +31,8 @@ declare type SidebarFilesModelActions =
 	| 'sidebarModel/sidebarFilesModel/setFromPagination'
 	| 'sidebarModel/sidebarFilesModel/delete'
 	| 'sidebarModel/sidebarFilesModel/setHistoryLimitExceeded'
+	| 'sidebarModel/sidebarFilesModel/deleteFilesGroupedByChatId'
+	;
 
 declare type SidebarFilesModelMutation =
 	'sidebarModel/sidebarFilesModel/set'

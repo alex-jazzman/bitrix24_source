@@ -6,13 +6,15 @@
 jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, module) => {
 	/* global InAppNotifier  */
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { Alert, ButtonType } = require('alert');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { EventType, ErrorType } = require('im/messenger/const');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { isOnline } = require('device/connection');
 	const {
 		RecentRest,
@@ -40,6 +42,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 			this.store = serviceLocator.get('core').getStore();
 		}
 
+		// eslint-disable-next-line consistent-return
 		do(action, itemId)
 		{
 			logger.info('Recent item action: ', action, `dialogId: ${itemId}`);
@@ -66,11 +69,11 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 					break;
 
 				case 'pin':
-					this.pin(itemId, true);
+					this.pin(itemId);
 					break;
 
 				case 'unpin':
-					this.pin(itemId, false);
+					this.unpin(itemId);
 					break;
 
 				case 'read':
@@ -100,18 +103,24 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 				case 'profile':
 					this.openUserProfile(itemId);
 					break;
+
+				default: return false;
 			}
 		}
 
 		hide(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			if (Type.isUndefined(recentItem))
+			{
+				return;
+			}
 
 			this.store.dispatch('recentModel/delete', { id: recentItem.id })
 				.then(() => {
 					this.renderRecent();
 
-					Counters.update();
+					TabCounters.update();
 				})
 			;
 
@@ -123,7 +132,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 						.then(() => {
 							this.renderRecent();
 
-							Counters.update();
+							TabCounters.update();
 						})
 					;
 				})
@@ -133,10 +142,15 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		leave(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			if (Type.isUndefined(recentItem))
+			{
+				return;
+			}
+
 			const recentProvider = new RecentDataProvider();
 
 			recentProvider.deleteFromSource(RecentDataProvider.source.model, { dialogId: recentItem.id })
-				.then(() => Counters.update())
+				.then(() => TabCounters.update())
 				.catch((err) => logger.error('Recent item leave error: ', err))
 			;
 
@@ -155,7 +169,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 					logger.error('Recent item leave error: ', result.error());
 
 					this.store.dispatch('recentModel/set', [recentItem])
-						.then(() => Counters.update())
+						.then(() => TabCounters.update())
 						.catch((err) => logger.error('ChatRest.leave.recentModel/set.catch', err))
 					;
 				})
@@ -167,31 +181,73 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 			logger.log('call itemId:', itemId);
 		}
 
-		pin(itemId, shouldPin)
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		pin(dialogId)
 		{
-			this.store.dispatch('recentModel/set', [{
-				id: itemId,
-				pinned: shouldPin,
-			}]).then(() => this.renderRecent());
+			this.#updateRecentPin(dialogId, true);
 
-			RecentRest.pinChat({
-				dialogId: itemId,
-				shouldPin,
-			})
-				.catch((result) => {
-					logger.error('Recent item pin error: ', result.error());
+			RecentRest.pinChat(dialogId)
+				.catch((error) => {
+					logger.error('Recent item pin error: ', error);
 
-					this.store.dispatch('recentModel/set', [{
-						id: itemId,
-						pinned: !shouldPin,
-					}]).then(() => this.renderRecent());
+					const errorCode = error?.[0]?.code;
+					if (errorCode === ErrorType.recent.maxPin)
+					{
+						Alert.confirm(
+							null,
+							Loc.getMessage('IMMOBILE_RECENT_PIN_ERROR_MAX_PINNED'),
+							[
+								{
+									type: ButtonType.DEFAULT,
+								},
+							],
+						);
+					}
+
+					this.#updateRecentPin(dialogId, false);
 				})
 			;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		unpin(dialogId)
+		{
+			this.#updateRecentPin(dialogId, false);
+
+			RecentRest.unpinChat(dialogId)
+				.catch((error) => {
+					logger.error('Recent item unpin error: ', error);
+
+					this.#updateRecentPin(dialogId, true);
+				})
+			;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {boolean} pinned
+		 */
+		#updateRecentPin(dialogId, pinned)
+		{
+			this.store.dispatch('recentModel/set', [{
+				id: dialogId,
+				pinned,
+			}]);
+			this.renderRecent();
 		}
 
 		read(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			if (Type.isUndefined(recentItem))
+			{
+				return;
+			}
+
 			const dialogItem = this.getDialogById(itemId);
 
 			this.store.dispatch('dialoguesModel/update', {
@@ -207,7 +263,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 				.then(() => {
 					this.renderRecent();
 
-					Counters.update();
+					TabCounters.update();
 				});
 
 			RecentRest.readChat({
@@ -226,7 +282,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 						.then(() => {
 							this.renderRecent();
 
-							Counters.update();
+							TabCounters.update();
 						});
 				})
 			;
@@ -235,6 +291,10 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		unread(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			if (Type.isUndefined(recentItem))
+			{
+				return;
+			}
 
 			this.store.dispatch('recentModel/set', [{
 				id: itemId,
@@ -243,7 +303,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 			}]).then(() => {
 				this.renderRecent();
 
-				Counters.update();
+				TabCounters.update();
 			});
 
 			RecentRest.unreadChat({ dialogId: itemId })
@@ -253,7 +313,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 					this.store.dispatch('recentModel/set', [recentItem]).then(() => {
 						this.renderRecent();
 
-						Counters.update();
+						TabCounters.update();
 					});
 				})
 			;
@@ -262,6 +322,10 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		mute(itemId, shouldMute)
 		{
 			const dialog = this.getDialogById(itemId);
+			if (Type.isUndefined(dialog))
+			{
+				return;
+			}
 
 			const userId = MessengerParams.getUserId();
 			const muteList = new Set(dialog.muteList);
@@ -269,17 +333,19 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 			if (shouldMute)
 			{
 				muteList.add(userId);
+				TabCounters.addChatToMutedCollection(dialog.chatId);
 			}
 			else
 			{
 				muteList.delete(userId);
+				TabCounters.deleteChatFromMutedCollection(dialog.chatId);
 			}
 
 			this.store.dispatch('dialoguesModel/set', [{
 				dialogId: itemId,
 				muteList: [...muteList],
 			}]).then(() => {
-				Counters.update();
+				TabCounters.update();
 			});
 
 			ChatRest.mute({
@@ -292,7 +358,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 					this.store.dispatch('dialoguesModel/set', [dialog]).then(() => {
 						this.renderRecent();
 
-						Counters.update();
+						TabCounters.update();
 					});
 				})
 			;
@@ -331,6 +397,10 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		inviteCancel(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			if (Type.isUndefined(recentItem))
+			{
+				return;
+			}
 
 			this.store.dispatch('recentModel/delete', { id: recentItem.id })
 				.then(() => this.renderRecent())

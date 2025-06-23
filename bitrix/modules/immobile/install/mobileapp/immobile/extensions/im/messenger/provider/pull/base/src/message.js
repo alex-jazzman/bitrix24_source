@@ -13,7 +13,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { parser } = require('im/messenger/lib/parser');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { MessageDataConverter } = require('im/messenger/lib/converter/data/message');
@@ -21,14 +21,16 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { ChatDataProvider } = require('im/messenger/provider/data');
 
 	const {
 		DialogType,
 		EventType,
+		UserRole,
 	} = require('im/messenger/const');
-	const { BaseRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/base');
+	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/base');
 	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
 
 	/**
@@ -41,6 +43,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			super(options);
 
 			this.messageViews = {};
+			this.shareDialogCache = new ShareDialogCache();
 			this.writingTimer = 25000;
 		}
 
@@ -96,7 +99,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 						});
 					}
 
-					Counters.updateDelayed();
+					TabCounters.updateDelayed();
 
 					this.saveShareDialogCache();
 				})
@@ -141,8 +144,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					Counters.openlinesCounter.detail[params.dialogId] = params.counter;
-					Counters.update();
+					TabCounters.openlinesCounter.detail[params.dialogId] = params.counter;
+					TabCounters.update();
 				}
 
 				return;
@@ -192,7 +195,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 						});
 					}
 
-					Counters.updateDelayed();
+					TabCounters.updateDelayed();
 
 					this.saveShareDialogCache();
 				})
@@ -445,8 +448,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					Counters.openlinesCounter.detail[params.dialogId] = params.counter;
-					Counters.update();
+					TabCounters.openlinesCounter.detail[params.dialogId] = params.counter;
+					TabCounters.update();
 				}
 
 				return;
@@ -673,7 +676,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 					channelChatId: chatId,
 				})
 					.then(() => {
-						Counters.update();
+						TabCounters.update();
 					})
 					.catch((error) => {
 						this.logger.error(`${this.constructor.name}.fullDeletePostMessage comment delete error`, error);
@@ -708,7 +711,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			}
 
 			const fieldsCount = {
-				counter: params.counter,
+				// counter: params.counter,
 			};
 			if (params.lastMessageViews?.countOfViewers
 				&& (params.lastMessageViews.countOfViewers !== dialogItem.lastMessageViews.countOfViewers))
@@ -768,7 +771,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				{
 					this.store.dispatch('recentModel/set', [recentItem])
 						.then(() => {
-							Counters.update();
+							TabCounters.update();
 
 							this.saveShareDialogCache();
 						})
@@ -951,7 +954,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				const channelRecentItem = this.store.getters['recentModel/getById'](`chat${params.parentChatId}`);
 
 				this.store.dispatch('recentModel/set', [channelRecentItem])
-					.then(() => Counters.update())
+					.then(() => TabCounters.update())
 				;
 
 				return;
@@ -975,12 +978,12 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			this.store.dispatch('dialoguesModel/update', {
 				dialogId,
 				fields: {
-					counter: params.counter,
+					// counter: params.counter,
 					lastId: params.lastId,
 				},
 			})
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
-				.then(() => Counters.update())
+				.then(() => TabCounters.update())
 				.catch(
 					(err) => this.logger.error(`${this.getClassName()}.updateCounters.dialoguesModel/update.catch:`, err),
 				);
@@ -988,10 +991,10 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		saveShareDialogCache()
 		{
-			const firstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
-			ShareDialogCache.saveRecentItemList(firstPage).catch(
-				(err) => this.logger.error(`${this.getClassName()}.saveShareDialogCache.catch:`, err),
-			);
+			this.shareDialogCache.saveRecentItemList()
+				.catch((error) => {
+					this.logger.error(`${this.constructor.name}.saveShareDialogCache.catch:`, error);
+				});
 		}
 
 		/**
@@ -1024,7 +1027,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		 */
 		async setMessage(params)
 		{
-			const recentMessageManager = this.getRecentMessageManager(params);
+			const recentMessageManager = this.getNewMessageManager(params);
 			if (
 				recentMessageManager.isCommentChat()
 				&& !this.store.getters['applicationModel/isDialogOpen'](params.dialogId))
@@ -1214,12 +1217,17 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			if (params.message.id > dialog.lastMessageId)
 			{
 				dialogFieldsToUpdate.lastMessageId = params.message.id;
-				dialogFieldsToUpdate.counter = params.counter;
+				// dialogFieldsToUpdate.counter = params.counter;
 			}
 
 			if (params.message.senderId === MessengerParams.getUserId() && params.message.id > dialog.lastReadId)
 			{
 				dialogFieldsToUpdate.lastId = params.message.id;
+			}
+
+			if (this.isCurrentUserOwner(dialog.owner))
+			{
+				dialogFieldsToUpdate.role = UserRole.owner;
 			}
 
 			if (Object.keys(dialogFieldsToUpdate).length > 0)
@@ -1253,12 +1261,13 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 				return this.store.dispatch('dialoguesModel/set', {
 					dialogId: params.dialogId,
-					counter: params.counter,
+					// counter: params.counter,
 					type: DialogType.user,
 					name: opponent.name,
 					avatar: opponent.avatar,
 					color: opponent.color,
 					chatId: params.chatId,
+					messagesAutoDeleteDelay: params.messagesAutoDeleteConfigs?.[0]?.delay ?? 0,
 				});
 			}
 
@@ -1267,12 +1276,31 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				return false;
 			}
 
-			return this.store.dispatch('dialoguesModel/set', {
-				...params.chat[params.chatId],
+			const chatData = params.chat[params.chatId];
+			const dialog = {
+				...chatData,
 				dialogId: params.dialogId,
-				counter: params.counter,
+				// counter: params.counter,
 				chatId: params.chatId,
-			});
+			};
+
+			if (this.isCurrentUserOwner(chatData.owner))
+			{
+				dialog.role = UserRole.owner;
+			}
+
+			return this.store.dispatch('dialoguesModel/set', dialog);
+		}
+
+		/**
+		 * @param {number} ownerId
+		 * @return {boolean}
+		 */
+		isCurrentUserOwner(ownerId)
+		{
+			const currentUserId = serviceLocator.get('core').getUserId();
+
+			return currentUserId === ownerId;
 		}
 
 		/**
@@ -1285,11 +1313,11 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		}
 
 		/**
-		 * @return {BaseRecentMessageManager}
+		 * @return {NewMessageManager}
 		 */
-		getRecentMessageManager(params, extra = {})
+		getNewMessageManager(params, extra = {})
 		{
-			return new BaseRecentMessageManager(params, extra);
+			return new NewMessageManager(params, extra);
 		}
 
 		/**

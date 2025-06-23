@@ -13,6 +13,7 @@ use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
+use Bitrix\Crm\Integration\AI\Operation\Payload\StubFactory;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\CallParsingEvent;
@@ -310,6 +311,8 @@ abstract class AbstractOperation
 				})
 			;
 
+			static::setQuality($engine);
+
 			if (static::ENGINE_CATEGORY === 'audio')
 			{
 				$engine->completions();
@@ -479,8 +482,6 @@ abstract class AbstractOperation
 
 	abstract protected function getAIPayload(): \Bitrix\Main\Result;
 
-	abstract protected function getStubPayload(): mixed;
-
 	abstract protected static function notifyTimelineAfterSuccessfulLaunch(Result $result): void;
 
 	protected function getJobUpdateFields(): array
@@ -561,7 +562,12 @@ abstract class AbstractOperation
 
 		return $engine;
 	}
-
+	
+	protected function getStubPayload(): mixed
+	{
+		return StubFactory::build(static::TYPE_ID, $this->target)->makeStub();
+	}
+	
 	private function isAiMarketplaceAppsExist(): bool
 	{
 		if (!Loader::includeModule('rest'))
@@ -1145,6 +1151,10 @@ abstract class AbstractOperation
 			->setActivityOwnerTypeId($owner->getEntityTypeId())
 			->setActivityId($activityId)
 		;
+	}
+
+	protected static function setQuality(Engine $engine): void
+	{
 	}
 
 	abstract protected static function getJobFinishEventBuilder(): AIBaseEvent;

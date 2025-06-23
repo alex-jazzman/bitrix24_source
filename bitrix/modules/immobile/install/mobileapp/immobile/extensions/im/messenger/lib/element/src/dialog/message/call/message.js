@@ -6,7 +6,6 @@ jn.define('im/messenger/lib/element/dialog/message/call/message', (require, expo
 	const { CallMessageConfiguration } = require('im/messenger/lib/element/dialog/message/call/configuration');
 	const { MessageParams } = require('im/messenger/const');
 
-
 	/**
 	 * @class CallMessage
 	 */

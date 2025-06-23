@@ -194,6 +194,10 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\SourceExpenses', 'onBIBuilderDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\Source', 'onBIBuilderDataSources');
 
+			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'biconnector', '\Bitrix\BIConnector\Rest\Connector', 'OnRestServiceBuildDescription');
+			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'biconnector', '\Bitrix\BIConnector\Rest\Source', 'OnRestServiceBuildDescription');
+			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'biconnector', '\Bitrix\BIConnector\Rest\Dataset', 'OnRestServiceBuildDescription');
+
 			$this->InstallTasks();
 
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\LogTable::cleanUpAgent();', 'biconnector', 'N', 86400);
@@ -286,6 +290,10 @@ class BIConnector extends \CModule
 		// bi builder
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\SourceExpenses', 'onBIBuilderDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\Source', 'onBIBuilderDataSources');
+
+		$eventManager->unregisterEventHandler('rest', 'OnRestServiceBuildDescription', 'biconnector', '\Bitrix\BIConnector\Rest\Connector', 'OnRestServiceBuildDescription');
+		$eventManager->unregisterEventHandler('rest', 'OnRestServiceBuildDescription', 'biconnector', '\Bitrix\BIConnector\Rest\Source', 'OnRestServiceBuildDescription');
+		$eventManager->unregisterEventHandler('rest', 'OnRestServiceBuildDescription', 'biconnector', '\Bitrix\BIConnector\Rest\Dataset', 'OnRestServiceBuildDescription');
 
 		\CAgent::RemoveModuleAgents('biconnector');
 

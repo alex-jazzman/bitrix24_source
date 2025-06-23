@@ -181,7 +181,7 @@ abstract class Activity extends Configurable implements Deadlinable
 			->detectNearestWorkDateTime(self::NEAREST_WORK_DATE_DAYS, self::NEAREST_WORK_DATE_HOURS)
 		;
 
-		return (new Button(Loc::getMessage('CRM_COMMON_ACTION_SCHEDULE'), $buttonType))
+		return (new Button(Loc::getMessage('CRM_COMMON_ACTION_SCHEDULE_ACTIVITY'), $buttonType))
 			->setAction(
 				(new JsEvent($jsEventName))
 					->addActionParamInt('activityId', $this->getActivityId())

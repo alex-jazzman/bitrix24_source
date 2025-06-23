@@ -4,7 +4,18 @@ import { runAction } from 'im.v2.lib.rest';
 import { Logger } from 'im.v2.lib.logger';
 import { UserManager } from 'im.v2.lib.user';
 
-import type { CollabRestResult, RawChat, RawMessage, RawRecentItem } from 'im.v2.provider.service';
+import type { RawChat, RawMessage, RawRecentItem, RawFile, RawMessagesAutoDeleteConfig, RawUser } from 'im.v2.provider.service.types';
+
+type CollabRestResult = {
+	hasNextPage: boolean,
+	chats: RawChat[],
+	files: RawFile[],
+	recentItems: RawRecentItem[],
+	users: RawUser[],
+	messages: RawMessage[],
+	additionalMessages: RawMessage[],
+	messagesAutoDeleteConfigs: RawMessagesAutoDeleteConfig[],
+};
 
 export class CollabService
 {
@@ -54,8 +65,7 @@ export class CollabService
 		};
 
 		const result: CollabRestResult = await runAction(RestMethod.imV2RecentCollabTail, queryParams)
-			.catch((error) => {
-				// eslint-disable-next-line no-console
+			.catch(([error]) => {
 				console.error('Im.CollabList: page request error', error);
 			});
 
@@ -75,16 +85,24 @@ export class CollabService
 
 	#updateModels(restResult: CollabRestResult): Promise
 	{
-		const { users, chats, messages, files, recentItems } = restResult;
+		const { users, chats, messages, files, recentItems, messagesAutoDeleteConfigs } = restResult;
 		const chatsWithCounters = this.#getChatsWithCounters(chats, recentItems);
 
 		const usersPromise = (new UserManager()).setUsersToModel(users);
 		const dialoguesPromise = Core.getStore().dispatch('chats/set', chatsWithCounters);
+		const autoDeletePromise = Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 		const messagesPromise = Core.getStore().dispatch('messages/store', messages);
 		const filesPromise = Core.getStore().dispatch('files/set', files);
 		const recentPromise = Core.getStore().dispatch('recent/setCollab', recentItems);
 
-		return Promise.all([usersPromise, dialoguesPromise, messagesPromise, filesPromise, recentPromise]);
+		return Promise.all([
+			usersPromise,
+			dialoguesPromise,
+			messagesPromise,
+			filesPromise,
+			recentPromise,
+			autoDeletePromise,
+		]);
 	}
 
 	#getChatsWithCounters(chats: RawChat[], recentItems: RawRecentItem[]): RawChat[]

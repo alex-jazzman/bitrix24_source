@@ -216,6 +216,7 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 					isHidden: user.bot_data.is_hidden,
 					isSupportOpenline: user.bot_data.is_support_openline,
 					type: user.bot_data.type,
+					backgroundId: user.bot_data.background_id,
 				};
 			}
 			else

@@ -9,13 +9,6 @@ return [
 		],
 		'readonly' => true,
 	],
-	'services' => [
-		'value' => [
-			'ui.entityform.scope' => [
-				'className' => '\\Bitrix\\Ui\\EntityForm\\Scope',
-			],
-		]
-	],
 	'ui.uploader' => [
 		'value' => [
 			'allowUseControllers' => true,

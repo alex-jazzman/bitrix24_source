@@ -16,6 +16,9 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'tasks-pagetitle-view');
+
 Extension::load([
 	'tasks.flow.edit-form',
 	'tasks.flow.view-form',

@@ -1,3 +1,4 @@
+import { BotPullHandler } from './handlers/bot';
 import { MessagePullHandler } from './handlers/message';
 import { ChatPullHandler } from './handlers/chat';
 import { TariffPullHandler } from './handlers/tariff';
@@ -19,6 +20,7 @@ export class BasePullHandler
 	#tariffPullHandler: TariffPullHandler;
 	#applicationPullHandler: ApplicationPullHandler;
 	#collabPullHandler: CollabPullHandler;
+	#botPullHandler: BotPullHandler;
 
 	constructor()
 	{
@@ -31,6 +33,7 @@ export class BasePullHandler
 		this.#tariffPullHandler = new TariffPullHandler();
 		this.#applicationPullHandler = new ApplicationPullHandler();
 		this.#collabPullHandler = new CollabPullHandler();
+		this.#botPullHandler = new BotPullHandler();
 	}
 
 	getModuleId(): string
@@ -171,6 +174,11 @@ export class BasePullHandler
 		this.#chatHandler.handleChatUpdate(params);
 	}
 
+	handleChatFieldsUpdate(params)
+	{
+		this.#chatHandler.handleChatFieldsUpdate(params);
+	}
+
 	handleChatDelete(params)
 	{
 		this.#chatHandler.handleChatDelete(params);
@@ -184,6 +192,11 @@ export class BasePullHandler
 	handleChatCopilotRoleUpdate(params)
 	{
 		this.#chatHandler.handleChatCopilotRoleUpdate(params);
+	}
+
+	handleMessagesAutoDeleteDelayChanged(params)
+	{
+		this.#chatHandler.handleMessagesAutoDeleteDelayChanged(params);
 	}
 	// endregion 'chat'
 
@@ -253,6 +266,18 @@ export class BasePullHandler
 	handleApplicationOpenChat(params)
 	{
 		this.#applicationPullHandler.handleApplicationOpenChat(params);
+	}
+	// endregion 'application'
+
+	// region 'bot'
+	handleBotAdd(params)
+	{
+		this.#botPullHandler.handleBotAdd(params);
+	}
+
+	handleBotUpdate(params)
+	{
+		this.#botPullHandler.handleBotUpdate(params);
 	}
 	// endregion 'application'
 }

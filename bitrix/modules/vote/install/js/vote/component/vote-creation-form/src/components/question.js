@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { Answer } from './answer';
 import { Loc } from '../mixins/loc';
 import { DragAndDrop } from '../directives/answer-dnd';
@@ -56,6 +57,10 @@ export const Question = {
 		{
 			return this.answersCount < this.maxAnswersCount;
 		},
+		removable(): boolean
+		{
+			return this.answersCount > this.minAnswersCount;
+		},
 	},
 	watch:
 	{
@@ -69,6 +74,7 @@ export const Question = {
 		const switcher = new Switcher({
 			node: this.$refs.multipleAnswersSwitcher,
 			size: SwitcherSize.small,
+			checked: false,
 			handlers: {
 				toggled: () => {
 					this.$emit('changeQuestion', {
@@ -78,6 +84,7 @@ export const Question = {
 				},
 			},
 		});
+		Dom.attr(switcher.node, 'data-test-id', `vote_creation_form_allow_multiple_answers_${this.id}`);
 	},
 	methods:
 	{
@@ -106,11 +113,13 @@ export const Question = {
 			};
 			this.$emit('changeQuestion', question);
 		},
-		orderAnswer(draggedKey: string, targetKey: string): void
+		orderAnswer(draggedKey: string, targetKey: string, shouldInsertBelow: boolean): void
 		{
 			const answers = this.question.answers;
 			const newKeys = Object.keys(answers).filter((key) => key !== draggedKey);
-			newKeys.splice(newKeys.indexOf(targetKey), 0, draggedKey);
+			const targetIndex = newKeys.indexOf(targetKey);
+			const insertionIndex = shouldInsertBelow ? targetIndex + 1 : targetIndex;
+			newKeys.splice(insertionIndex, 0, draggedKey);
 			const newAnswers = newKeys.reduce((acc, key) => {
 				acc[key] = answers[key];
 
@@ -120,6 +129,59 @@ export const Question = {
 				...this.question,
 				answers: newAnswers,
 			});
+		},
+		focusQuestionField(): void {
+			const textarea = this.$refs.questionField;
+			textarea.focus();
+		},
+		getAnswerRefById(answerId: string): ?HTMLTextAreaElement
+		{
+			return this.$refs[`answer_${answerId}`]?.[0];
+		},
+		getAnswerIdByIndex(index: number): string | null
+		{
+			const answerIds = Object.keys(this.question.answers);
+
+			return answerIds[index] ?? null;
+		},
+		async focusNewAnswer(newAnswerId: string): void
+		{
+			const newAnswer = this.getAnswerRefById(newAnswerId);
+			if (newAnswer)
+			{
+				await this.$nextTick();
+				newAnswer.focus();
+			}
+		},
+		focusNextAnswer(currentAnswerId: string): void
+		{
+			const answerIds = Object.keys(this.question.answers);
+			const currentIndex = answerIds.indexOf(currentAnswerId);
+
+			if (currentIndex === -1)
+			{
+				return;
+			}
+
+			this.focusByIndex(currentIndex + 1);
+		},
+		handleQuestionEnter(): void
+		{
+			this.focusByIndex(0);
+		},
+		focusByIndex(index: number): void
+		{
+			const targetAnswerId = this.getAnswerIdByIndex(index);
+			const answerElement = this.getAnswerRefById(targetAnswerId);
+
+			if (answerElement)
+			{
+				answerElement.focus();
+			}
+			else if (this.canAddMoreAnswers)
+			{
+				this.addAnswer();
+			}
 		},
 	},
 	template: `
@@ -131,9 +193,12 @@ export const Question = {
 				<textarea
 					maxlength="250"
 					class="ui-ctl-element"
+					:data-test-id="'vote_creation_form_' + id"
 					v-model.trim="questionText"
 					v-resize
 					@input="changeText"
+					@keydown.enter.prevent="handleQuestionEnter"
+					ref="questionField"
 				></textarea>
 			</div>
 			<p class="vote-creation-form__question_answer-options">
@@ -141,20 +206,24 @@ export const Question = {
 			</p>
 			<div
 				class="vote-creation-form__answers"
+				:class="{'--removable': removable}"
 				v-dnd="orderAnswer"
 			>
 				<Answer
 					v-for="(answer, id) in question.answers"
 					:key="id"
 					:id="id"
+					:ref="'answer_' + id"
 					:answer="answer"
-					:removable="answersCount > minAnswersCount"
+					:removable="removable"
 					@removeAnswer="removeAnswer(id)"
 					@changeAnswer="changeAnswer(id, $event)"
+					@onKeyDownEnter="focusNextAnswer(id)"
 				></Answer>
 			</div>
 			<div
 				v-if="canAddMoreAnswers"
+				:data-test-id="'vote_creation_form_add_answer_' + id"
 				class="vote-creation-form__question_add-answer"
 				@click="addAnswer"
 			>

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals;
 
+use Bitrix\Booking\Internals\Repository\BookingMessageRepositoryInterface;
+use Bitrix\Booking\Internals\Repository\ClientTypeRepositoryInterface;
+use Bitrix\Booking\Internals\Repository\ORM\Mapper\ClientTypeMapper;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\WaitListItemMapper;
 use Bitrix\Booking\Internals\Repository\WaitListItemRepositoryInterface;
 use Bitrix\Booking\Internals\Service\BookingService;
@@ -30,6 +33,7 @@ use Bitrix\Booking\Internals\Repository\ResourceSlotRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
 use Bitrix\Booking\Internals\Service\Notifications\MessageSender;
+use Bitrix\Booking\Internals\Service\Overbooking\OverbookingService;
 use Bitrix\Booking\Internals\Service\Overbooking\OverlapPolicy;
 use Bitrix\Booking\Internals\Service\ProviderManager;
 use Bitrix\Booking\Internals\Service\ResourceService;
@@ -188,6 +192,16 @@ class Container
 		return self::getService('booking.wait.list.item.repository');
 	}
 
+	public static function getClientTypeRepository(): ClientTypeRepositoryInterface
+	{
+		return self::getService('booking.client.type.repository');
+	}
+
+	public static function getClientTypeRepositoryMapper(): ClientTypeMapper
+	{
+		return self::getService('booking.client.type.repository.mapper');
+	}
+
 	public static function getBookingService(): BookingService
 	{
 		return self::getService('booking.internals.booking.service');
@@ -213,8 +227,18 @@ class Container
 		return self::getService('booking.internals.wait.list.item.service');
 	}
 
+	public static function getBookingMessageRepository(): BookingMessageRepositoryInterface
+	{
+		return self::getService('booking.message.repository');
+	}
+
 	public static function getOverBookingOverlapPolicy(): OverlapPolicy
 	{
 		return self::getService('booking.overbooking.overlap.policy');
+	}
+
+	public static function getOverbookingService(): OverbookingService
+	{
+		return self::getService('booking.internals.overbooking.service');
 	}
 }

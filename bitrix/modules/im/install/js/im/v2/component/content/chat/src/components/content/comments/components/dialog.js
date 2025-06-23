@@ -53,10 +53,7 @@ export const CommentsDialog = {
 			}
 
 			dialog.showLoadingBar();
-			await dialog.getMessageService().loadFirstPage()
-				.catch((error) => {
-					Logger.error('goToMessageContext error', error);
-				});
+			await dialog.getMessageService().loadFirstPage();
 			await this.$nextTick();
 			dialog.hideLoadingBar();
 			dialog.getScrollManager().scrollToMessage(this.postMessageId);

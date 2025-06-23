@@ -1,4 +1,4 @@
-import { SearchInput } from 'im.v2.component.elements';
+import { SearchInput } from 'im.v2.component.elements.search-input';
 
 import './css/search-header.css';
 

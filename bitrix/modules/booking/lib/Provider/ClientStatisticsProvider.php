@@ -7,7 +7,6 @@ namespace Bitrix\Booking\Provider;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Booking\Internals\Repository\BookingClientRepositoryInterface;
-use Bitrix\Booking\Internals\Repository\Filter\ClientFilter;
 use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
 use Bitrix\Booking\Provider\Params\GridParams;
 use Bitrix\Booking\Provider\Params\WaitListItem\WaitListItemFilter;
@@ -82,6 +81,7 @@ class ClientStatisticsProvider
 			(
 				new GridParams(
 					filter: new WaitListItemFilter([
+						'INCLUDE_DELETED' => true,
 						'CREATED_WITHIN' => [
 							'FROM' => DateTime::createFromTimestamp(
 								$this->getTodayStartDate()->getTimestamp() - CTimeZone::GetOffset()

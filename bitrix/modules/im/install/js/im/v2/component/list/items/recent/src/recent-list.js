@@ -2,11 +2,11 @@ import { BaseEvent } from 'main.core.events';
 
 import { ChatType, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-import { RecentService } from 'im.v2.provider.service';
+import { RecentService } from 'im.v2.provider.service.recent';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { DraftManager } from 'im.v2.lib.draft';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements';
+import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 
 import { RecentItem } from './components/recent-item/recent-item';
 import { ActiveCall } from './components/active-call';

@@ -122,9 +122,8 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		static getLottieUrl(actionType, dialogType)
 		{
 			const actionTypeInKebabCase = actionType.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-			const animationByDialogType = dialogType === DialogType.copilot ? `${DialogType.copilot}/` : `${DialogType.chat}/`;
 
-			return `${ChatTitleAssets.getLottiePath() + animationByDialogType + actionTypeInKebabCase}.json`;
+			return `${ChatTitleAssets.getLottiePath() + actionTypeInKebabCase}.json`;
 		}
 
 		/**

@@ -7,7 +7,7 @@ jn.define('im/messenger/lib/plan-limit', (require, exports, module) => {
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { ErrorType, Analytics } = require('im/messenger/const');
-	const { AnalyticsService } = require('im/messenger/provider/service/analytics');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	/**
 	 * @param {AnalyticsEvent} analytics

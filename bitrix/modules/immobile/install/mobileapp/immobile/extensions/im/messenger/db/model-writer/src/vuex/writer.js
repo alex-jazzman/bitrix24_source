@@ -19,10 +19,11 @@ jn.define('im/messenger/db/model-writer/vuex/writer', (require, exports, module)
 		 *  user: UserRepository,
 		 *  message: MessageRepository,
 		 *  tempMessage: TempMessageRepository,
-		 *  reaction: ReactionRepository
-		 *  queue: QueueRepository
-		 *  pinMessage: PinMessageRepository
-		 *  sidebarFile: SidebarFileRepository
+		 *  reaction: ReactionRepository,
+		 *  queue: QueueRepository,
+		 *  pinMessage: PinMessageRepository,
+		 *  comment: CommentRepository,
+		 *  vote: VoteRepository,
 		 * }} options.repository
 		 */
 		constructor(options)

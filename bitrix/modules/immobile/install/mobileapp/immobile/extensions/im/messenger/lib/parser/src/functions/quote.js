@@ -73,7 +73,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 						text = `${timeTag}`;
 					}
 
-					text = text.trim();
+					text = this.truncateDoubleLineBreak(text.trim());
 
 					let title = '';
 					if (!skipTitle)
@@ -243,6 +243,11 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			);
 
 			return text;
+		},
+
+		truncateDoubleLineBreak(text)
+		{
+			return text.replaceAll(/\n[\t ]*\n/g, '\n');
 		},
 	};
 

@@ -270,7 +270,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		$this->arResult['debugMode'] = ($this->debugMode ? 'Y' : 'N');
 		$this->arResult['frameMode'] = ($this->frameMode ? 'Y' : 'N');
-		$this->arResult['views'] = $this->getViewsInfo($groupId);
+		$this->arResult['views'] = $this->prepareViewsInfo($this->getViewsInfo($groupId));
 		$this->arResult['culture'] = $this->getCultureInfo();
 
 		switch ($activeTab)
@@ -2289,7 +2289,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$completedSprint = $sprintService->getLastCompletedSprint($groupId);
 		}
 
-		$sprintViews = $this->arResult['views'];
+		$sprintViews = $this->getViewsInfo($groupId);
 
 		if ($completedSprint->isEmpty())
 		{
@@ -2664,6 +2664,23 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				'active' => ($viewHelper->getActiveView($groupId) == 'completed_sprint')
 			],
 		];
+	}
+
+	private function prepareViewsInfo(array $views): array
+	{
+		$result = [];
+
+		foreach ($views as $id => $view) {
+			$result[] = [
+				'id' => $id,
+				'title' => $view['name'],
+				'active' => $view['active'],
+				'url' => $view['url'],
+				'link' => ['href' => $view['url']],
+			];
+		}
+
+		return $result;
 	}
 
 	private function getCultureInfo(): array

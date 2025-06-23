@@ -50,6 +50,15 @@ jn.define('im/messenger/lib/element/recent/item/user/current', (require, exports
 
 			return this;
 		}
+
+		createDateStyle()
+		{
+			super.createDateStyle();
+
+			this.styles.date.image.name = '';
+
+			return this;
+		}
 	}
 
 	module.exports = {

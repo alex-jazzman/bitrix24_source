@@ -12,6 +12,7 @@ export type Chat = {
 	avatar: string,
 	color: string,
 	extranet: boolean,
+	containsCollaber: boolean,
 	counter: number,
 	userCounter: number,
 	lastReadId: number,
@@ -52,6 +53,8 @@ export type Chat = {
 		isHistoryLimitExceeded: boolean,
 	},
 	parentChatId: number,
+	backgroundId: string,
+	isTextareaEnabled: boolean,
 };
 
 export type CollabInfo = {

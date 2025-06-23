@@ -2,12 +2,15 @@
 $MESS["DISK_UF_WIDGET_ALLOW_DOCUMENT_EDIT"] = "Allow document editing";
 $MESS["DISK_UF_WIDGET_ALLOW_PHOTO_COLLAGE"] = "Allow photo collage";
 $MESS["DISK_UF_WIDGET_CANCEL_BUTTON_TITLE"] = "Cancel";
+$MESS["DISK_UF_WIDGET_CREATE"] = "Create";
 $MESS["DISK_UF_WIDGET_CREATE_BOARD"] = "Board";
 $MESS["DISK_UF_WIDGET_CREATE_DOCUMENT"] = "Create document";
 $MESS["DISK_UF_WIDGET_CREATE_DOCX"] = "Document";
 $MESS["DISK_UF_WIDGET_CREATE_PPTX"] = "Presentation";
+$MESS["DISK_UF_WIDGET_CREATE_WITH"] = "Create using";
 $MESS["DISK_UF_WIDGET_CREATE_XLSX"] = "Spreadsheet";
 $MESS["DISK_UF_WIDGET_EDIT_SERVICE_LABEL"] = "Use #NAME# to create documents";
+$MESS["DISK_UF_WIDGET_EXTERNAL_DRIVES"] = "External drives";
 $MESS["DISK_UF_WIDGET_FILE_SIZE"] = "File size: #filesize#";
 $MESS["DISK_UF_WIDGET_INSERT_INTO_THE_TEXT"] = "Add to text";
 $MESS["DISK_UF_WIDGET_MY_DRIVE"] = "My Drive";

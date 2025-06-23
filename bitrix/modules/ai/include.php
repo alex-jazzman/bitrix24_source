@@ -16,6 +16,7 @@ if (Facade\Bitrix24::shouldUseB24() === false)
 	Engine::addEngine(Engine\Enum\Category::AUDIO, Engine\Cloud\BitrixAudio::class);
 	Engine::addEngine(Engine\Enum\Category::AUDIO, Engine\Cloud\ItSolutionAudio::class);
 	Engine::addEngine(Engine\Enum\Category::AUDIO, Engine\Cloud\Whisper::class);
+	Engine::addEngine(Engine\Enum\Category::AUDIO, Engine\Cloud\SaluteSpeech::class);
 
 	Engine::addEngine(Engine\Enum\Category::CALL, Engine\Cloud\AudioCall::class);
 

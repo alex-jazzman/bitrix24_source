@@ -12,6 +12,11 @@ export const FormatTable = {
 			type: Object,
 			required: false,
 		},
+		disabledElements: {
+			type: Object,
+			required: false,
+			default: null,
+		},
 	},
 	emits: [
 		'rowToggle',
@@ -76,6 +81,7 @@ export const FormatTable = {
 						@checkbox-click="onRowCheckboxClicked"
 						@field-change="onRowFieldChanged"
 						:invalid-fields="unvalidatedRows[index] ?? []"
+						:disabled-elements="disabledElements"
 					/>
 				</template>
 			</tbody>

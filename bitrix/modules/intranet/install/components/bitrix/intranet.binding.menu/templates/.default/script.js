@@ -28,7 +28,7 @@
 			if (BX(this.id))
 			{
 				BX.bind(BX(this.id), 'click', BX.delegate(this.clickMenuButton, this));
-				if (BX(this.idTop) && BX(this.idTop).getAttribute('href') === '#')
+				if (BX(this.idTop) && !BX.Type.isStringFilled(BX(this.idTop).getAttribute('href')))
 				{
 					BX.bind(BX(this.idTop), 'click', BX.delegate(this.clickMenuButton, this));
 				}

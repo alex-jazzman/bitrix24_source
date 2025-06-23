@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Main\Messenger\Internals\Storage\Db;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Messenger\Entity\MessageBox;
 use Bitrix\Main\Messenger\Entity\MessageInterface;
 use Bitrix\Main\Messenger\Internals\Exception\Storage\MappingException;
@@ -13,6 +14,7 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\Web\Json;
 
 class MessageMapper
@@ -26,6 +28,7 @@ class MessageMapper
 
 	/**
 	 * @throws MappingException
+	 * @throws ArgumentException
 	 */
 	public function convertFromOrm(EntityObject $ormModel): MessageBox
 	{
@@ -40,7 +43,7 @@ class MessageMapper
 		}
 
 		/** @var MessageInterface $class */
-		$message = $class::createFromData(Json::decode($ormModel->getPayload()));
+		$message = $class::createFromData(Json::decode(Emoji::decode($ormModel->getPayload())));
 
 		$messageBox = new MessageBox($message);
 
@@ -72,7 +75,7 @@ class MessageMapper
 			->setQueueId($messageBox->getQueueId())
 			->setItemId($messageBox->getItemId())
 			->setClass($messageBox->getClassName())
-			->setPayload(Json::encode($messageBox->getMessage()))
+			->setPayload(Emoji::encode(Json::encode($messageBox->getMessage())))
 			->setCreatedAt($messageBox->getCreatedAt())
 			->setTtl($messageBox->getTtl())
 			->setAvailableAt($messageBox->getAvailableAt());

@@ -226,12 +226,6 @@ $includeFormComponent = static function(array $tab) {
 									<?php $includeFormComponent($tab) ?>
 									<div>
 										<div id="<?= htmlspecialcharsbx($htmlId . '-constants-' . $tab['templateId'] . '-errors')?>"></div>
-										<button
-											class="ui-btn ui-btn-xs ui-btn-secondary"
-											onclick="BX.Lists.Component.ElementCreationGuide.Instance.saveConstants(<?= (int)$tab['templateId'] ?>, this)"
-										>
-											<?= htmlspecialcharsbx(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_BUTTON_SAVE')) ?>
-										</button>
 									</div>
 								</div>
 							<?php endforeach ?>
@@ -313,6 +307,7 @@ $includeFormComponent = static function(array $tab) {
 				'hasFieldsToShow' => $hasFieldsToShow,
 				'hasStatesToTuning' => (bool)$statesToTuning,
 				'canUserTuningStates' => $canUserTuningStates,
+				'iBlockId' => $arResult['iBlockId'],
 			]) ?>
 		);
 

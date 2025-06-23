@@ -628,6 +628,16 @@ export class BitrixCallLegacy extends AbstractCall
 	{
 		this.BitrixCall.turnOffParticipantStream(options);
 	};
+	
+	allowSpeakPermission(options)
+	{
+		this.BitrixCall.allowSpeakPermission(options);
+	};
+
+	changeSettings(options)
+	{
+		this.BitrixCall.changeSettings(options);
+	};
 
 	sendRecordState(recordState)
 	{
@@ -1092,7 +1102,11 @@ export class BitrixCallLegacy extends AbstractCall
 		this.BitrixCall.on('VoiceStarted', this.#onEndpointVoiceStart);
 		this.BitrixCall.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
 		this.BitrixCall.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
+		this.BitrixCall.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
 		this.BitrixCall.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
+		this.BitrixCall.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
+		this.BitrixCall.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
+		this.BitrixCall.on('UserRoleChanged', this.#onUserRoleChanged);
 		this.BitrixCall.on('ParticipantMuted', this.#onParticipantMuted);
 		this.BitrixCall.on('VoiceEnded', this.#onEndpointVoiceEnd);
 		this.BitrixCall.on('Reconnecting', this.#onCallReconnecting);
@@ -1126,7 +1140,11 @@ export class BitrixCallLegacy extends AbstractCall
 			this.BitrixCall.on('HandRaised', BX.DoNothing);
 			this.BitrixCall.on('AllParticipantsAudioMuted', BX.DoNothing);
 			this.BitrixCall.on('AllParticipantsVideoMuted', BX.DoNothing);
+			this.BitrixCall.on('AllParticipantsScreenshareMuted', BX.DoNothing);
 			this.BitrixCall.on('YouMuteAllParticipants', BX.DoNothing);
+			this.BitrixCall.on('RoomSettingsChanged', BX.DoNothing);
+			this.BitrixCall.on('UserPermissionsChanged', BX.DoNothing);
+			this.BitrixCall.on('ParticipantMuted', BX.DoNothing);
 			this.BitrixCall.on('VoiceStarted', BX.DoNothing);
 			this.BitrixCall.on('VoiceEnded', BX.DoNothing);
 			this.BitrixCall.on('Reconnecting', BX.DoNothing);
@@ -2271,20 +2289,51 @@ export class BitrixCallLegacy extends AbstractCall
 	#onAllParticipantsAudioMuted = (p) =>
 	{
 		this.runCallback(CallEvent.onAllParticipantsAudioMuted, {
-			userId: p.from_sid
+			userId: p.fromUserId,
+			reason: p.reason,
 		})
 	}
 
 	#onAllParticipantsVideoMuted = (p) =>
 	{
 		this.runCallback(CallEvent.onAllParticipantsVideoMuted, {
-			userId: p.from_sid
+			userId: p.fromUserId,
+			reason: p.reason,
+		})
+	}
+
+	#onAllParticipantsScreenshareMuted = (p) =>
+	{
+		this.runCallback(CallEvent.onAllParticipantsScreenshareMuted, {
+			userId: p.fromUserId,
+			reason: p.reason,
 		})
 	}
 
 	#onYouMuteAllParticipants = (p) =>
 	{
 		this.runCallback(CallEvent.onYouMuteAllParticipants, {
+			data: p
+		})
+	}
+
+	#onRoomSettingsChanged = (p) =>
+	{
+		this.runCallback(CallEvent.onRoomSettingsChanged, {
+			data: p
+		})
+	}
+
+	#onUserPermissionsChanged = (p) =>
+	{
+		this.runCallback(CallEvent.onUserPermissionsChanged, {
+			data: p
+		})
+	}
+	
+	#onUserRoleChanged = (p) =>
+	{
+		this.runCallback(CallEvent.onUserRoleChanged, {
 			data: p
 		})
 	}

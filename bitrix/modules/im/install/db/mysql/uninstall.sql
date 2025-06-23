@@ -51,3 +51,6 @@ DROP TABLE IF EXISTS `b_im_chat_param`;
 DROP TABLE IF EXISTS `b_im_hr_sync_queue`;
 DROP TABLE IF EXISTS `b_im_counter_overflow`;
 DROP TABLE IF EXISTS `b_im_recent_init_queue`;
+DROP TABLE IF EXISTS `b_im_anchor`;
+DROP TABLE IF EXISTS `b_im_notify_group`;
+DROP TABLE IF EXISTS `b_im_notify_group_condition`;

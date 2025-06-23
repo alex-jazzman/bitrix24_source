@@ -41,12 +41,7 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 				false,
 				forceCopy,
 			)
-				.then(({ hasCopyToClipboardAutoNotification = false }) => {
-					if (hasCopyToClipboardAutoNotification)
-					{
-						return;
-					}
-
+				.then(() => {
 					const title = notificationText ?? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED');
 					const icon = notificationIcon instanceof Icon ? notificationIcon : Icon.COPY;
 					const toastParams = {
@@ -56,7 +51,8 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 
 					Notification.showToastWithParams(toastParams, parentWidget);
 				})
-				.catch(console.error);
+				.catch(console.error)
+			;
 		}
 	}
 

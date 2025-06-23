@@ -12,6 +12,7 @@ $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE"] = "Task dates cannot be changed withou
 $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE_PART"] = "Task deadline restricts possible date range";
 $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE_PART2"] = "Cannot move item due to task deadline date";
 $MESS["TASKS_KANBAN_ME_DISABLE_FROM_OVERDUE"] = "Change task deadline or close it before moving it";
+$MESS["TASKS_KANBAN_MODAL_ERROR_PREFIX"] = "Error:";
 $MESS["TASKS_KANBAN_MORE_USERS"] = "more";
 $MESS["TASKS_KANBAN_NOTIFY_BUTTON"] = "Send message";
 $MESS["TASKS_KANBAN_NOTIFY_HEADER"] = "Insufficient permissions to edit stages.";

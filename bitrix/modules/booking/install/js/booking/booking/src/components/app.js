@@ -12,26 +12,113 @@ import { mousePosition } from 'booking.lib.mouse-position';
 import type { BookingModel } from 'booking.model.bookings';
 
 import { expandOffHours } from '../lib/expand-off-hours/expand-off-hours';
-import { Filter, FilterPreset } from './filter/filter';
+import { Filter as BookingFilter, FilterPreset } from './filter/filter';
 import { CountersPanel, CounterItem } from './counters-panel/counters-panel';
 import { AfterTitle } from './after-title/after-title';
+import { SettingsButton } from './settings-button/settings-button';
 import { BaseComponent } from './base-component/base-component';
 import { MultiBooking } from './multi-booking/multi-booking';
 import { Banner } from './banner/banner';
 import { Trial } from './trial/trial';
 
+// @vue/component
 export const App = {
 	name: 'BookingApp',
+	components: {
+		BaseComponent,
+		AfterTitle,
+		SettingsButton,
+		BookingFilter,
+		CountersPanel,
+		MultiBooking,
+		Banner,
+		Trial,
+	},
 	props: {
 		afterTitleContainer: HTMLElement,
 		counterPanelContainer: HTMLElement,
-		filterId: String,
+		settingsButtonContainer: HTMLElement,
+		filterId: {
+			type: String,
+			required: true,
+		},
 	},
 	data(): Object
 	{
 		return {
 			loader: new Loader(),
 		};
+	},
+	computed: {
+		...mapGetters({
+			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			viewDateTs: `${Model.Interface}/viewDateTs`,
+			isFilterMode: `${Model.Interface}/isFilterMode`,
+			filteredBookingsIds: `${Model.Interface}/filteredBookingsIds`,
+			selectedCells: `${Model.Interface}/selectedCells`,
+			resourcesIds: `${Model.Favorites}/get`,
+			extraResourcesIds: `${Model.Interface}/extraResourcesIds`,
+			bookings: `${Model.Bookings}/get`,
+			intersections: `${Model.Interface}/intersections`,
+			editingBookingId: `${Model.Interface}/editingBookingId`,
+		}),
+		hasSelectedCells(): boolean
+		{
+			return Object.keys(this.selectedCells).length > 0;
+		},
+		editingBooking(): BookingModel | null
+		{
+			return this.$store.getters['bookings/getById'](this.editingBookingId) ?? null;
+		},
+	},
+	watch: {
+		selectedDateTs(): void
+		{
+			if (this.isFilterMode)
+			{
+				void this.applyFilter();
+			}
+			else
+			{
+				void this.fetchPage(this.selectedDateTs / 1000);
+			}
+		},
+		filteredBookingsIds(): void
+		{
+			if (this.isFilterMode)
+			{
+				this.showResourcesWithBookings();
+			}
+		},
+		isFilterMode(isFilterMode: boolean): void
+		{
+			if (!isFilterMode)
+			{
+				void this.fetchPage(this.selectedDateTs / 1000);
+			}
+		},
+		viewDateTs(): void
+		{
+			void this.updateMarks();
+		},
+		resourcesIds(): void
+		{
+			void this.updateMarks();
+		},
+		intersections(): void
+		{
+			void this.updateMarks();
+		},
+		editingBooking(booking: BookingModel | null): void
+		{
+			const additionalResourcesIds = booking?.resourcesIds?.slice(1) ?? [];
+			if (additionalResourcesIds.length > 0)
+			{
+				void this.$store.dispatch(`${Model.Interface}/setIntersections`, {
+					0: additionalResourcesIds,
+				});
+			}
+		},
 	},
 	beforeMount(): void
 	{
@@ -47,7 +134,7 @@ export const App = {
 
 		await Promise.all([
 			dictionaryService.fetchData(),
-			this.fetchPage(this.isEditingBookingMode ? 0 : this.selectedDateTs / 1000),
+			this.fetchPage(this.editingBookingId > 0 ? 0 : this.selectedDateTs / 1000),
 		]);
 
 		void this.$store.dispatch(`${Model.Interface}/setIsLoaded`, true);
@@ -55,30 +142,6 @@ export const App = {
 	beforeUnmount(): void
 	{
 		mousePosition.destroy();
-	},
-	computed: {
-		...mapGetters({
-			selectedDateTs: `${Model.Interface}/selectedDateTs`,
-			viewDateTs: `${Model.Interface}/viewDateTs`,
-			isFilterMode: `${Model.Interface}/isFilterMode`,
-			filteredBookingsIds: `${Model.Interface}/filteredBookingsIds`,
-			selectedCells: `${Model.Interface}/selectedCells`,
-			resourcesIds: `${Model.Favorites}/get`,
-			extraResourcesIds: `${Model.Interface}/extraResourcesIds`,
-			bookings: `${Model.Bookings}/get`,
-			intersections: `${Model.Interface}/intersections`,
-			editingBookingId: `${Model.Interface}/editingBookingId`,
-			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
-			offset: `${Model.Interface}/offset`,
-		}),
-		hasSelectedCells(): boolean
-		{
-			return Object.keys(this.selectedCells).length > 0;
-		},
-		editingBooking(): BookingModel | null
-		{
-			return this.$store.getters['bookings/getById'](this.editingBookingId) ?? null;
-		},
 	},
 	methods: {
 		async fetchPage(dateTs: number = 0): Promise<void>
@@ -118,6 +181,7 @@ export const App = {
 			await Promise.all([
 				this.$store.dispatch(`${Model.Interface}/setFilterMode`, true),
 				this.updateMarks(),
+				// eslint-disable-next-line unicorn/no-array-callback-reference
 				bookingService.filter(fields),
 			]);
 
@@ -225,69 +289,12 @@ export const App = {
 			void this.loader.hide();
 		},
 	},
-	watch: {
-		selectedDateTs(): void
-		{
-			if (this.isFilterMode)
-			{
-				void this.applyFilter();
-			}
-			else
-			{
-				void this.fetchPage(this.selectedDateTs / 1000);
-			}
-		},
-		filteredBookingsIds(): void
-		{
-			if (this.isFilterMode)
-			{
-				this.showResourcesWithBookings();
-			}
-		},
-		isFilterMode(isFilterMode: boolean): void
-		{
-			if (!isFilterMode)
-			{
-				void this.fetchPage(this.selectedDateTs / 1000);
-			}
-		},
-		viewDateTs(): void
-		{
-			void this.updateMarks();
-		},
-		resourcesIds(): void
-		{
-			void this.updateMarks();
-		},
-		intersections(): void
-		{
-			void this.updateMarks();
-		},
-		editingBooking(booking: BookingModel | null): void
-		{
-			const additionalResourcesIds = booking?.resourcesIds?.slice(1) ?? [];
-			if (additionalResourcesIds.length > 0)
-			{
-				void this.$store.dispatch(`${Model.Interface}/setIntersections`, {
-					0: additionalResourcesIds,
-				});
-			}
-		},
-	},
-	components: {
-		BaseComponent,
-		AfterTitle,
-		Filter,
-		CountersPanel,
-		MultiBooking,
-		Banner,
-		Trial,
-	},
 	template: `
 		<div>
 			<MultiBooking v-if="hasSelectedCells"/>
 			<AfterTitle ref="afterTitle"/>
-			<Filter
+			<SettingsButton :container="settingsButtonContainer"/>
+			<BookingFilter
 				:filterId="filterId"
 				ref="filter"
 				@apply="applyFilter"

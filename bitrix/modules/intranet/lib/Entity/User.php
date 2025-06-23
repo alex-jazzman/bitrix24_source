@@ -4,30 +4,74 @@ namespace Bitrix\Intranet\Entity;
 
 use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Enum\UserRole;
+use Bitrix\Intranet\Infrastructure\UserNameFormatter;
+use Bitrix\Intranet\Integration\HumanResources\HrUserService;
+use Bitrix\Intranet\Integration\Main\Culture;
+use Bitrix\Intranet\Internal\Repository\Mapper\UserMapper;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\UserTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Socialnetwork\Collab\CollabFeature;
 
 class User
 {
 	public function __construct(
 		private ?int $id = null,
-		private ?array  $departmetnsIds = null,
 		private ?string $login = null,
 		private ?string $email = null,
 		private ?string $name = null,
 		private ?string $lastName = null,
 		private ?string $confirmCode = null,
-		private ?array  $groupIds = null,
+		private ?array $groupIds = null,
 		private ?string $phoneNumber = null,
 		private ?string $xmlId = null,
-		private ?bool   $active = null,
+		private ?bool $active = null,
 		private ?string $externalAuthId = null,
 		private ?string $authPhoneNumber = null,
+		private ?string $secondName = null,
+		private ?int $personalPhoto = null,
+		private ?string $lid = null,
+		private ?string $languageId = null,
+		private ?string $personalMobile = null,
+		private ?string $password = null,
+		private mixed $ufCrmEntity = null, //UF_USER_CRM_ENTITY
 	)
-	{}
+	{
+	}
+
+	public function getUfCrmEntity(): mixed
+	{
+		return $this->ufCrmEntity;
+	}
+
+	public function setUfCrmEntity(mixed $ufCrmEntity): void
+	{
+		$this->ufCrmEntity = $ufCrmEntity;
+	}
+
+	public function getLanguageId(): ?string
+	{
+		return $this->languageId;
+	}
+
+	public function setLanguageId(?string $languageId): void
+	{
+		$this->languageId = $languageId;
+	}
+
+	public function getLid(): ?string
+	{
+		return $this->lid;
+	}
+
+	public function setLid(?string $lid): void
+	{
+		$this->lid = $lid;
+	}
 
 	public function getAuthPhoneNumber(): ?string
 	{
@@ -39,40 +83,19 @@ class User
 		$this->authPhoneNumber = $authPhoneNumber;
 	}
 
+	public function getPersonalMobile(): ?string
+	{
+		return $this->personalMobile;
+	}
+
+	public function setPersonalMobile(?string $authPhoneNumber): void
+	{
+		$this->personalMobile = $authPhoneNumber;
+	}
+
 	public static function initByArray(array $userData): self
 	{
-		$departmetnsIds = null;
-		$departments = $userData['UF_DEPARTMENT'] ?? null;
-		if (is_array($departments))
-		{
-			$departmetnsIds = $departments;
-		}
-		elseif ((int)$departments > 0)
-		{
-			$departmetnsIds = [(int)$departments];
-		}
-
-		$active = null;
-		if (!empty($userData['ACTIVE']))
-		{
-			$active = $userData['ACTIVE'] === 'Y' ? true : false;
-		}
-
-		return new \Bitrix\Intranet\Entity\User(
-			$userData['ID'] ?? null,
-				$departmetnsIds,
-			$userData['LOGIN'] ?? null,
-			$userData['EMAIL'] ?? null,
-			$userData['NAME'] ?? null,
-			$userData['LAST_NAME'] ?? null,
-			$userData["CONFIRM_CODE"] ?? null,
-			$userData['GROUP_ID'] ?? null,
-			$userData['PHONE_NUMBER'] ?? null,
-			$userData['XML_ID'] ?? null,
-				$active,
-			$userData['EXTERNAL_AUTH_ID'] ?? null,
-			$userData['AUTH_PHONE_NUMBER'] ?? null,
-		);
+		return (new UserMapper())->convertFromArray($userData);
 	}
 
 	public function getInviteStatus(): InvitationStatus
@@ -85,7 +108,7 @@ class User
 		{
 			return InvitationStatus::INVITED;
 		}
-		elseif (!empty($this->confirmCode) && !$this->active)
+		elseif (ModuleManager::isModuleInstalled('bitrix24') && !empty($this->confirmCode) && !$this->active)
 		{
 			return InvitationStatus::INVITE_AWAITING_APPROVE;
 		}
@@ -141,7 +164,8 @@ class User
 
 	public function isIntegrator(): bool
 	{
-		return in_array($this->id, ServiceContainer::getInstance()->getUserService()->getIntegratorUserIds());
+		return ModuleManager::isModuleInstalled('bitrix24')
+			&& in_array($this->id, ServiceContainer::getInstance()->getUserService()->getIntegratorUserIds());
 	}
 
 	public function isAdmin(): bool
@@ -155,6 +179,11 @@ class User
 			&& CollabFeature::isOn()
 			&& Loader::includeModule('extranet')
 			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->id);
+	}
+
+	public function getFormattedName(): string
+	{
+		return (new UserNameFormatter($this))->formatByCulture();
 	}
 
 	public function isEmail(): bool
@@ -242,16 +271,6 @@ class User
 		$this->id = $id;
 	}
 
-	public function getDepartmetnsIds(): ?array
-	{
-		return $this->departmetnsIds;
-	}
-
-	public function setDepartmetnsIds(?array $departmetnsIds): void
-	{
-		$this->departmetnsIds = $departmetnsIds;
-	}
-
 	public function getLogin(): ?string
 	{
 		return $this->login;
@@ -292,33 +311,51 @@ class User
 		$this->lastName = $lastName;
 	}
 
+	public function getSecondName(): ?string
+	{
+		return $this->secondName;
+	}
+
 	public function isExtranet(): bool
 	{
 		return (
 			ModuleManager::isModuleInstalled('extranet')
-			&& (
-				empty($this->departmetnsIds)
-				|| (
-					is_array($this->departmetnsIds)
-					&& (int)$this->departmetnsIds[0] <= 0
-				)
-			)
+			&& !(new HrUserService())->isEmployee($this)
 		);
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function isIntranet(): bool
 	{
-		return $this->getDepartmetnsIds()
-			&& (
-				(
-					!empty($this->getDepartmetnsIds())
-					&& (int)$this->getDepartmetnsIds()[0] > 0
-				)
-			);
+		return (new HrUserService())->isEmployee($this);
 	}
 
 	public function getAccessCode(): string
 	{
 		return 'U' . $this->getId();
+	}
+
+	public function setPassword(string $password): void
+	{
+		$this->password = $password;
+	}
+
+	public function getPassword(): ?string
+	{
+		return $this->password;
+	}
+
+	public function getPersonalPhoto(): ?int
+	{
+		return $this->personalPhoto;
+	}
+
+	public function setPersonalPhoto(?int $personalPhoto): void
+	{
+		$this->personalPhoto = $personalPhoto;
 	}
 }

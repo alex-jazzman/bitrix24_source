@@ -7,6 +7,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Text3, Text5 } = require('ui-system/typography/text');
+	const { PropTypes } = require('utils/validation');
 	const { Switcher, SwitcherSize } = require('ui-system/blocks/switcher');
 
 	/**

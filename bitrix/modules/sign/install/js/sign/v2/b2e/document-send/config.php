@@ -19,9 +19,11 @@ return [
 		'sign.v2.api',
 		'sign.v2.document-summary',
 		'sign.v2.lang-selector',
+		'sign.v2.datetime-limit-selector',
 		'sign.v2.helper',
 		'ui.progressbar',
 		'sign.v2.b2e.hcm-link-party-checker',
+		'sign.v2.ui.notice',
 	],
 	'skip_core' => false,
 ];

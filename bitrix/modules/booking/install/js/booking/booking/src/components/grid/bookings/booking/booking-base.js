@@ -1,6 +1,7 @@
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { DraggedElementKind, Model, VisitStatus } from 'booking.const';
+import { Communication, DisabledPopup } from 'booking.component.booking';
 import { Duration } from 'booking.lib.duration';
 import { mousePosition } from 'booking.lib.mouse-position';
 import { isRealId } from 'booking.lib.is-real-id';
@@ -8,16 +9,14 @@ import { grid } from 'booking.lib.grid';
 import type { BookingModel } from 'booking.model.bookings';
 import type { ClientModel, ClientData } from 'booking.model.clients';
 
-import { AddClient } from './add-client/add-client';
+import { BookingAddClient } from './add-client/add-client';
 import { BookingTime } from './booking-time/booking-time';
 import { Actions } from './actions/actions';
-import { Name } from './name/name';
-import { Note } from './note/note';
-import { Profit } from './profit/profit';
-import { Communication } from './communication/communication';
-import { CrmButton } from './crm-button/crm-button';
-import { Counter, CounterSize, CounterColor } from './counter/counter';
-import { DisabledPopup } from './disabled-popup/disabled-popup';
+import { BookingName } from './name/name';
+import { BookingNote } from './note/note';
+import { BookingProfit } from './profit/profit';
+import { BookingCrmButton } from './crm-button/crm-button';
+import { Counter } from './counter/counter';
 import { Resize } from './resize/resize';
 import { BookingWidth } from './const';
 import type { BookingUiDuration } from './types';
@@ -25,6 +24,7 @@ import './booking.css';
 
 export type { BookingUiDuration };
 
+// @vue/component
 export const BookingBase = {
 	name: 'BookingBase',
 	props: {
@@ -64,6 +64,7 @@ export const BookingBase = {
 			isDisabledPopupShown: false,
 			resizeFromTs: null,
 			resizeToTs: null,
+			visibleNotePopup: false,
 		};
 	},
 	mounted(): void
@@ -76,7 +77,7 @@ export const BookingBase = {
 			{
 				void this.$refs.resize.startResize();
 			}
-		}, 200);
+		}, 300);
 	},
 	beforeUnmount(): void
 	{
@@ -91,6 +92,7 @@ export const BookingBase = {
 			zoom: `${Model.Interface}/zoom`,
 			scroll: `${Model.Interface}/scroll`,
 			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
 			editingBookingId: `${Model.Interface}/editingBookingId`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			deletingBookings: `${Model.Interface}/deletingBookings`,
@@ -145,13 +147,6 @@ export const BookingBase = {
 		{
 			return this.isEditingBookingMode && this.editingBookingId !== this.bookingId;
 		},
-		counterOptions(): Object
-		{
-			return Object.freeze({
-				color: CounterColor.DANGER,
-				size: CounterSize.LARGE,
-			});
-		},
 		bookingOffset(): number
 		{
 			return this.leftOffset * this.zoom;
@@ -159,6 +154,24 @@ export const BookingBase = {
 		isExpiredBooking(): boolean
 		{
 			return this.booking.dateToTs < this.nowTs;
+		},
+		isNotVisited(): boolean
+		{
+			const started = this.nowTs > this.booking.dateFromTs;
+			const statusUnknown = this.booking.visitStatus === VisitStatus.Unknown;
+			const statusNotVisited = this.booking.visitStatus === VisitStatus.NotVisited;
+
+			return (started && statusUnknown) || statusNotVisited;
+		},
+		disabledHover(): boolean
+		{
+			return (
+				this.draggedDataTransfer.id > 0
+				&& (
+					this.draggedDataTransfer.kind !== DraggedElementKind.Booking
+					|| this.draggedDataTransfer.id !== this.bookingId
+				)
+			);
 		},
 	},
 	methods: {
@@ -186,12 +199,14 @@ export const BookingBase = {
 		},
 		onNoteMouseEnter(): void
 		{
-			this.showNoteTimeout = setTimeout(() => this.$refs.note.showViewPopup(), 100);
+			this.showNoteTimeout = setTimeout((): void => {
+				this.visibleNotePopup = true;
+			}, 100);
 		},
 		onNoteMouseLeave(): void
 		{
 			clearTimeout(this.showNoteTimeout);
-			this.$refs.note.closeViewPopup();
+			this.visibleNotePopup = false;
 		},
 		onClick(event: PointerEvent): void
 		{
@@ -240,24 +255,25 @@ export const BookingBase = {
 		},
 	},
 	components: {
-		AddClient,
-		BookingTime,
 		Actions,
-		Name,
-		Note,
-		Profit,
+		BookingAddClient,
+		BookingCrmButton,
+		BookingTime,
+		BookingName,
+		BookingNote,
+		BookingProfit,
 		Communication,
-		CrmButton,
 		Counter,
 		DisabledPopup,
 		Resize,
 	},
 	template: `
 		<div
-			class="booking-booking-booking"
+			class="booking-booking-booking booking--draggable-item"
 			data-element="booking-booking"
 			:data-id="bookingId"
 			:data-resource-id="resourceId"
+			data-kind="booking"
 			:style="[bookingStyle, {
 				'--left': left + bookingOffset + 'px',
 				'--top': top + 'px',
@@ -271,14 +287,16 @@ export const BookingBase = {
 				'--small': realHeight <= 15,
 				'--long': realHeight >= 65,
 				'--disabled': disabled,
-				'--confirmed': booking.isConfirmed,
+				'--confirmed': booking.isConfirmed && !isNotVisited,
 				'--expired': isExpiredBooking,
+				'--not-visited': isNotVisited,
 				'--resizing': resizeFromTs && resizeToTs,
-				'--no-pointer-events': draggedBookingId > 0 && draggedBookingId !== bookingId,
+				'--no-pointer-events': disabledHover,
 			}].flat(1)"
 			@click.capture="onClick"
 		>
 			<div v-if="visible" class="booking-booking-booking-padding">
+				<Counter :bookingId="bookingId" :nowTs="nowTs"/>
 				<div class="booking-booking-booking-inner">
 					<div class="booking-booking-booking-content">
 						<div class="booking-booking-booking-content-row">
@@ -286,12 +304,13 @@ export const BookingBase = {
 								class="booking-booking-booking-name-container"
 								@mouseenter="onNoteMouseEnter"
 								@mouseleave="onNoteMouseLeave"
-								@click="$refs.note.showViewPopup()"
+								@click="visibleNotePopup = true"
 							>
-								<Name :bookingId="bookingId" :resourceId="resourceId"/>
-								<Note
+								<BookingName :bookingId="bookingId" :resourceId="resourceId"/>
+								<BookingNote
 									:bookingId="bookingId"
 									:bindElement="() => $el"
+									:visiblePopup="visibleNotePopup"
 									ref="note"
 								/>
 							</div>
@@ -301,7 +320,7 @@ export const BookingBase = {
 								:dateFromTs="dateFromTsRounded"
 								:dateToTs="dateToTsRounded"
 							/>
-							<Profit :bookingId="bookingId" :resourceId="resourceId"/>
+							<BookingProfit :bookingId="bookingId" :resourceId="resourceId"/>
 						</div>
 						<div class="booking-booking-booking-content-row --lower">
 							<BookingTime
@@ -312,9 +331,9 @@ export const BookingBase = {
 							/>
 							<div v-if="client" class="booking-booking-booking-buttons">
 								<Communication/>
-								<CrmButton :bookingId="bookingId"/>
+								<BookingCrmButton :bookingId="bookingId"/>
 							</div>
-							<AddClient
+							<BookingAddClient
 								v-else
 								:bookingId="bookingId"
 								:resourceId="resourceId"
@@ -334,12 +353,11 @@ export const BookingBase = {
 				ref="resize"
 				@update="resizeUpdate"
 			/>
-			<Counter :bookingId="bookingId"/>
 			<DisabledPopup
 				v-if="isDisabledPopupShown"
-				:bookingId="bookingId"
-				:resourceId="resourceId"
+				:popupId="['booking-booking-disabled-popup', bookingId, resourceId].join('-')"
 				:bindElement="() => $el"
+				contentClass="booking-booking-disabled-popup-content"
 				@close="isDisabledPopupShown = false"
 			/>
 			<slot/>

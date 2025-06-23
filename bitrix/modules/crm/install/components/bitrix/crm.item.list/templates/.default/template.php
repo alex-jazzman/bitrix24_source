@@ -21,6 +21,7 @@ use Bitrix\Main\Web\Json;
 
 Extension::load([
 	'ui.dialogs.messagebox',
+	'ui.alerts',
 	'crm_common',
 	'crm.settings-button-extender',
 	'crm.entity-list.panel',

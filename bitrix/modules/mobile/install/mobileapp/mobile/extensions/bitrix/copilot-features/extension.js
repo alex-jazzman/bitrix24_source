@@ -256,14 +256,23 @@ jn.define('copilot-features', (require, exports, module) => {
 
 		openCopilotTab()
 		{
-			requireLazy('im:messenger/api/tab')
-				.then(({ openCopilotTab }) => {
-					this.layout.back();
-					setTimeout(() => {
-						openCopilotTab().catch(console.error);
-					}, 100);
+			// eslint-disable-next-line no-undef
+			requireLazyBatch(['im:messenger/api/tab', 'im:messenger/api/navigation'], false)
+				.then(async (extensions) => {
+					const { openCopilotTab } = extensions.get('im:messenger/api/tab');
+					const { closeAll } = extensions.get('im:messenger/api/navigation');
+
+					try
+					{
+						await closeAll?.();
+						await openCopilotTab?.();
+					}
+					catch (error)
+					{
+						console.error(error);
+					}
 				})
-				.catch(console.error);
+				.catch((error) => console.error(error));
 		}
 	}
 

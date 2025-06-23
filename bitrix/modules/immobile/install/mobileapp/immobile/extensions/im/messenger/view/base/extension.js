@@ -52,7 +52,7 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 
 		/**
 		 * @param {string} eventName
-		 * @param {()=>*} eventHandler
+		 * @param {function(string): Promise<void>} eventHandler
 		 * @return {object}
 		 */
 		on(eventName, eventHandler)

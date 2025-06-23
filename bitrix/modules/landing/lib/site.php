@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Landing;
 
+use \Bitrix\Landing\Copilot;
+use \Bitrix\Landing\Metrika;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Event;
 use \Bitrix\Main\EventResult;
@@ -1610,11 +1612,14 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Makes site public.
+	 *
 	 * @param int $id Site id.
 	 * @param bool $mark Mark.
+	 * @param Metrika\FieldsDto|null $metrikaFields - params for analytic. If not set anything - analytic not sent
+	 *
 	 * @return \Bitrix\Main\Result
 	 */
-	public static function publication(int $id, bool $mark = true): \Bitrix\Main\Result
+	public static function publication(int $id, bool $mark = true, ?Metrika\FieldsDto $metrikaFields = null): \Bitrix\Main\Result
 	{
 		$return = new \Bitrix\Main\Result;
 
@@ -1642,6 +1647,22 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				]
 			]
 		]);
+
+		$metrikaType = Metrika\Types::template;
+		if ((new Copilot\Generation())->initBySiteId($id, (new Copilot\Generation\Scenario\CreateSite())))
+		{
+			$metrikaType = Metrika\Types::ai;
+		}
+
+		$metrikaParams =
+			new Metrika\FieldsDto(
+				event: $mark ? Metrika\Events::publishSite : Metrika\Events::unpublishSite,
+				type: $metrikaType,
+				subSection: $metrikaFields?->subSection ?? 'from_list',
+				element: $metrikaFields?->element ?? 'manual',
+			)
+		;
+
 		while ($row = $res->fetch())
 		{
 			if ($row['ACTIVE'] != 'Y')
@@ -1665,19 +1686,25 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				$resPublication = $landing->unpublic();
 			}
 
-			if (!$resPublication)
+			if (
+				!$resPublication
+				&& !$landing->getError()->isEmpty()
+			)
 			{
-				if (!$landing->getError()->isEmpty())
-				{
-					$error = $landing->getError()->getFirstError();
-					$return->addError(new \Bitrix\Main\Error(
-						$error->getMessage(),
-						$error->getCode()
-					));
-					return $return;
-				}
+				$error =
+					$landing->getError()->getFirstError()
+					?? new \Bitrix\Main\Error('some_error', 'SOME_ERROR')
+				;
+				$return->addError($error);
+
+				$metrikaParams->error = $error;
+				self::sendAnalytics($metrikaParams, $id);
+
+				return $return;
 			}
 		}
+
+		self::sendAnalytics($metrikaParams, $id);
 
 		$res = Folder::getList([
 			'select' => [
@@ -1709,6 +1736,39 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	public static function unpublic(int $id): \Bitrix\Main\Result
 	{
 		return self::publication($id, false);
+	}
+
+	private static function sendAnalytics(Metrika\FieldsDto $params, int $siteId): void
+	{
+		if (!isset($params->event))
+		{
+			return;
+		}
+
+		$site = self::getList([
+			'select' => [
+				'TYPE'
+			],
+			'filter' => [
+				'=ID' => $siteId,
+			]
+		])->fetch();
+		if ($site)
+		{
+			$metrika = new Metrika\Metrika(
+				Metrika\Categories::getBySiteType($site['TYPE']),
+				$params->event
+			);
+			$metrika->setType($params->type);
+			$metrika->setSubSection($params->subSection);
+			$metrika->setElement($params->element);
+			if ($params->error)
+			{
+				$metrika->setError($params->error);
+			}
+
+			$metrika->send();
+		}
 	}
 
 	/**

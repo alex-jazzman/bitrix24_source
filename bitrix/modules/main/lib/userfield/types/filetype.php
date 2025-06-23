@@ -2,11 +2,13 @@
 
 namespace Bitrix\Main\UserField\Types;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\FileInputUtility;
 use Bitrix\Main\UserField\File\ManualUploadRegistry;
 use Bitrix\Main\UserField\File\UploadedFilesRegistry;
+use Bitrix\UI\FileUploader\Uploader;
 use CUserTypeManager;
 
 Loc::loadMessages(__FILE__);
@@ -449,9 +451,15 @@ class FileType extends BaseType
 				return false;
 			}
 
-			(new \Bitrix\Crm\Integration\UI\FileUploader(
+			if (!Loader::includeModule('ui'))
+			{
+				return false;
+			}
+
+			$uploader = new Uploader(
 				new \Bitrix\Main\FileUploader\FieldFileUploaderController($uploaderContextGenerator->getContextInEditMode($cid))
-			))->makePersistentFiles([$tempFileToken]);
+			);
+			$uploader->getPendingFiles([$tempFileToken])->makePersistent();
 
 			$uploadedFilesRegistry->unregisterFile($controlId, $fileId);
 		}

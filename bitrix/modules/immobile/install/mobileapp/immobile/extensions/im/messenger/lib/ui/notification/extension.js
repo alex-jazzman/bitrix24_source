@@ -13,7 +13,7 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
 
 	/**
-	 * @class Notify
+	 * @class Notification
 	 */
 	class Notification
 	{

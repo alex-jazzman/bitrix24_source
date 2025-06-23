@@ -92,7 +92,7 @@ export class SubmitDocumentInfo extends EventEmitter
 
 	#onProgressClosePageBtnClick(): void
 	{
-		this.emit(this.event.onProgressClosePageBtnClick);
+		this.emit(this.events.onProgressClosePageBtnClick);
 		BX.SidePanel.Instance.close();
 	}
 

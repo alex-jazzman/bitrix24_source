@@ -1,4 +1,5 @@
-import { SearchInput, Button as ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements';
+import { SearchInput } from 'im.v2.component.elements.search-input';
+import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { ChatType, Layout } from 'im.v2.const';
 
 import './detail-header.css';
@@ -61,11 +62,6 @@ export const DetailHeader = {
 		},
 		addButtonColor(): ButtonColor
 		{
-			if (this.isCopilotLayout)
-			{
-				return this.ButtonColor.Copilot;
-			}
-
 			if (this.isCollab)
 			{
 				return this.ButtonColor.Collab;

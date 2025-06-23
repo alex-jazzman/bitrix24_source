@@ -1,3 +1,2 @@
-<?
-$MESS["CRM_STATUS_TYPE_SOURCE_WEBFORM"] = "CRM-форма";
-?>
+<?php
+$MESS['CRM_STATUS_SOURCE_REPEAT_SALE'] = 'Повторные продажи';

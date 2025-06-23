@@ -76,3 +76,4 @@ $MESS['TASKS_KANBAN_POPUP_AT_LEAST_ONE_FIELD'] = 'В форме должно б�
 $MESS['TASKS_KANBAN_COLLAB_NOTIFY_HEADER'] = 'Недостаточно прав на настройку стадий';
 $MESS['TASKS_KANBAN_COLLAB_NOTIFY_TEXT'] = 'Попросите владельца коллабы добавить или изменить стадии канбана';
 $MESS['TASKS_KANBAN_COLLAB_NOTIFY_BUTTON'] = 'Понятно';
+$MESS['TASKS_KANBAN_MODAL_ERROR_PREFIX'] = 'Ошибка: ';

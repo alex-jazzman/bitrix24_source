@@ -151,7 +151,9 @@ CREATE TABLE b_vote_attached_object (
   ENTITY_ID int NOT NULL,
   CREATE_TIME timestamp NOT NULL,
   CREATED_BY int,
+  UID varchar(255) null default null,
   PRIMARY KEY (ID)
 );
 CREATE INDEX ix_b_vote_attached_object_object_id ON b_vote_attached_object (object_id);
 CREATE INDEX ix_b_vote_attached_object_module_id_entity_type_entity_id ON b_vote_attached_object (module_id, entity_type, entity_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_b_vote_attached_object_uid ON b_vote_attached_object (uid);

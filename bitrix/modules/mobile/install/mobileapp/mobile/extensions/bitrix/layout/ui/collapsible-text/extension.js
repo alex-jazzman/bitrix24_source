@@ -28,6 +28,7 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 		 * @param {Function} [props.onLinkClick]
 		 * @param {onClick} [props.onClick]
 		 * @param {string} [props.testId]
+		 * @props {function} [props.onAfterExpand]
 		 */
 		constructor(props)
 		{
@@ -228,7 +229,20 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 		{
 			if (this.isExpandable())
 			{
-				this.setState({ expanded: !this.state.expanded });
+				this.setState({ expanded: !this.state.expanded }, () => {
+					this.onAfterExpand(this.state.expanded);
+				});
+			}
+		}
+
+		/**
+		 * @param {boolean} expanded
+		 */
+		onAfterExpand(expanded)
+		{
+			if (this.props.onAfterExpand)
+			{
+				this.props.onAfterExpand(expanded);
 			}
 		}
 	}

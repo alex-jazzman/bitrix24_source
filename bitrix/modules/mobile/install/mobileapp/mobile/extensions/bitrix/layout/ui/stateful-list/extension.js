@@ -32,7 +32,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const DEFAULT_BLOCK_PAGE = 1;
 	const MINIMAL_SEARCH_LENGTH = 3;
 
-	const TIME_TO_BAD_REQUEST = 10000;
+	const TIME_TO_BAD_REQUEST = 60000;
 
 	const renderType = {
 		cache: 'cache',
@@ -357,6 +357,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.stopRefreshingList();
 			this.hideTitleLoader(false);
 			this.showBadConnectionToast();
+			console.error(
+				`StatefulList: timeout for request "${this.props.actions.loadItems}" has expired. List data loading is stopped.`,
+				this.state.actionParams.loadItems,
+			);
 		};
 
 		stopRefreshingList()

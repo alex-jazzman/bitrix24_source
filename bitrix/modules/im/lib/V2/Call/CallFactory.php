@@ -17,20 +17,12 @@ class CallFactory
 	protected static function getProviderClass(string $provider, int $type)
 	{
 		\Bitrix\Main\Loader::includeModule('call');
-		if (false && $type == Call::TYPE_LANGE)
-		{
-			return \Bitrix\Call\Call\LargeCall::class;
-		}
 
-		if ($type == Call::TYPE_PERMANENT)
+		return match (true)
 		{
-			return ConferenceCall::class;
-		}
-
-		return match ($provider)
-		{
-			Call::PROVIDER_BITRIX => BitrixCall::class,
-			Call::PROVIDER_PLAIN => PlainCall::class,
+			$type === Call::TYPE_PERMANENT => ConferenceCall::class,
+			$provider === Call::PROVIDER_BITRIX => BitrixCall::class,
+			$provider === Call::PROVIDER_PLAIN => PlainCall::class,
 			default => Call::class
 		};
 	}
@@ -38,10 +30,18 @@ class CallFactory
 	/**
 	 * @return Call|BitrixCall
 	 */
-	public static function createWithEntity(int $type, string $provider, string $entityType, string $entityId, int $initiatorId): Call
+	public static function createWithEntity(
+		int $type,
+		string $provider,
+		string $entityType,
+		string $entityId,
+		int $initiatorId,
+		?string $callUuid = null,
+		?int $scheme = null
+	): Call
 	{
 		$providerClass = self::getProviderClass($provider, $type);
-		return $providerClass::createWithEntity($type, $provider, $entityType, $entityId, $initiatorId);
+		return $providerClass::createWithEntity($type, $provider, $entityType, $entityId, $initiatorId, $callUuid, $scheme);
 	}
 
 	/**
@@ -55,6 +55,16 @@ class CallFactory
 	}
 
 	/**
+	 * @return Call|BitrixCall
+	 */
+	public static function getCallInstance(string $provider, array $fields): Call
+	{
+		$type = (int)($fields['TYPE'] ?? Call::TYPE_INSTANT);
+		$providerClass = self::getProviderClass($provider, $type);
+		return $providerClass::createCallInstance($fields);
+	}
+
+	/**
 	 * @return Call|BitrixCall|null
 	 */
 	public static function searchActive(int $type, string $provider, string $entityType, string $entityId, int $currentUserId = 0): ?Call
@@ -63,6 +73,25 @@ class CallFactory
 		if ($fields)
 		{
 			$instance = self::createWithArray($provider, $fields);
+
+			if ($instance->hasActiveUsers(false))
+			{
+				return $instance;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return Call|BitrixCall|null
+	 */
+	public static function searchActiveCall(int $type, string $provider, string $entityType, string $entityId, int $currentUserId = 0): ?Call
+	{
+		$fields = self::search($type, $provider, $entityType, $entityId, $currentUserId);
+		if ($fields)
+		{
+			$instance = self::getCallInstance($provider, $fields);
 
 			if ($instance->hasActiveUsers(false))
 			{
@@ -110,22 +139,6 @@ class CallFactory
 			->setOrder(['ID' => 'DESC'])
 			->setLimit(1)
 		;
-
-		/*
-		if ($entityType === EntityType::CHAT && strpos($entityId, "chat") !== 0)
-		{
-			if (!$currentUserId)
-			{
-				$currentUserId = \Bitrix\Im\User::getInstance()->getId();
-			}
-			$query->where('INITIATOR_ID', $currentUserId);
-			$query->where('ENTITY_ID', $entityId);
-		}
-		else
-		{
-			$query->where("ENTITY_ID", $entityId);
-		}
-		*/
 
 		$callFields = $query->exec()->fetch();
 

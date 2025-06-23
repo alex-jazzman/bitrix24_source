@@ -114,6 +114,7 @@ final class FillFields implements Contract\Operation
 
 		$membersFields = new Item\Api\Property\Request\Field\Fill\MemberFieldsCollection();
 		$this->hcmLinkValueReferenceMap = new Item\Field\HcmLink\HcmLinkFieldDelayedValueReferenceMap();
+		$this->hcmLinkValueReferenceMap->addByDocument($this->document);
 
 		foreach ($members as $member)
 		{
@@ -203,6 +204,11 @@ final class FillFields implements Contract\Operation
 
 		if ($fieldValue instanceof Item\Field\HcmLink\HcmLinkDelayedValue)
 		{
+			if ($member->role === Type\Member\Role::SIGNER)
+			{
+				$fieldValue->signerMemberId = $member->id;
+			}
+
 			$this->hcmLinkValueReferenceMap->add($fieldValue);
 		}
 
@@ -243,7 +249,7 @@ final class FillFields implements Contract\Operation
 		{
 			$operation = new GetRequiredFieldsWithCache(
 				documentId: $this->document->id,
-				companyUid: $this->document->companyUid,
+				companyUid: $this->document->companyUid ?? '',
 			);
 			$result = $operation->launch();
 
@@ -344,7 +350,8 @@ final class FillFields implements Contract\Operation
 			return new HcmLinkFieldLoadResult(false);
 		}
 
-		$result = $this->requestFieldsIfNeed($members, $employeeIds, $fieldIds);
+		$signerMemberIdByEmployeeIdMap = $this->hcmLinkValueReferenceMap->getSignerIdByEmployeeIdMap();
+		$result = $this->requestFieldsIfNeed($members, $employeeIds, $fieldIds, $signerMemberIdByEmployeeIdMap);
 		if (!$result->isSuccess())
 		{
 			return $result;
@@ -363,7 +370,7 @@ final class FillFields implements Contract\Operation
 			return new HcmLinkFieldLoadResult(true);
 		}
 
-		$result = $this->fillDelayedValuesByReference($employeeIds, $fieldIds);
+		$result = $this->fillDelayedValuesByReference();
 		if (!$result->isSuccess())
 		{
 			return $result;
@@ -382,6 +389,7 @@ final class FillFields implements Contract\Operation
 		Item\MemberCollection $members,
 		array $employeeIds,
 		array $fieldIds,
+		array $signerMemberIdByEmployeeIdMap,
 	): Main\Result
 	{
 		$notRequested = $members->filter(
@@ -399,7 +407,12 @@ final class FillFields implements Contract\Operation
 			$notRequestedEmployeeIds[] = $member->employeeId;
 		}
 		$result = $this->hcmLinkFieldService
-			->requestFieldValues($this->document->hcmLinkCompanyId, $notRequestedEmployeeIds, $fieldIds)
+			->requestFieldValues(
+				$this->document->hcmLinkCompanyId,
+				$notRequestedEmployeeIds,
+				$fieldIds,
+				$signerMemberIdByEmployeeIdMap,
+			)
 		;
 
 		if (!$result instanceof HcmLinkFieldRequestResult)
@@ -436,17 +449,40 @@ final class FillFields implements Contract\Operation
 		return array_values($ids);
 	}
 
-	private function fillDelayedValuesByReference(array $employeeIds, array $fieldIds): Main\Result
+	private function fillDelayedValuesByReference(): Main\Result
 	{
-		$result = $this->hcmLinkFieldService->getFieldValue($employeeIds, $fieldIds);
-		if (!$result instanceof GetFieldValueResult)
+		// handling document fields
+		$fieldValueResult = $this->hcmLinkFieldService->getFieldValue(
+			$this->hcmLinkValueReferenceMap->getSignerIds(),
+			$this->hcmLinkValueReferenceMap->getDocumentFieldIds(),
+		);
+		if (!$fieldValueResult instanceof GetFieldValueResult)
 		{
-			return $result;
+			return $fieldValueResult;
 		}
 
-		foreach ($result->collection as $valueItem)
+		foreach ($fieldValueResult->collection as $valueItem)
 		{
-			foreach ($this->hcmLinkValueReferenceMap->get($valueItem->employeeId, $valueItem->fieldId) as $requestValue)
+			$employeeId = $this->hcmLinkValueReferenceMap->getEmployeeIdBySignerId($valueItem->entityId);
+			foreach ($this->hcmLinkValueReferenceMap->get($employeeId, $valueItem->fieldId) as $requestValue)
+			{
+				$requestValue->value = $valueItem->value;
+			}
+		}
+
+		// handling employee fields
+		$fieldValueResult = $this->hcmLinkFieldService->getFieldValue(
+			$this->hcmLinkValueReferenceMap->getEmployeeIds(),
+			$this->hcmLinkValueReferenceMap->getEmployeeFieldIds(),
+		);
+		if (!$fieldValueResult instanceof GetFieldValueResult)
+		{
+			return $fieldValueResult;
+		}
+
+		foreach ($fieldValueResult->collection as $valueItem)
+		{
+			foreach ($this->hcmLinkValueReferenceMap->get($valueItem->entityId, $valueItem->fieldId) as $requestValue)
 			{
 				$requestValue->value = $valueItem->value;
 			}
@@ -639,5 +675,4 @@ final class FillFields implements Contract\Operation
 			}
 		}
 	}
-
 }

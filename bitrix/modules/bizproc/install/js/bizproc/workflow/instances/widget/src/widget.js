@@ -185,7 +185,7 @@ export class Widget
 						${Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_AUTHOR')}
 					</div>
 					<div class="bizproc-workflow-instances-popup-heads-item">
-						${Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_IN_PROGRESS')}
+						${Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_IN_PROGRESS_MSGVER_1')}
 					</div>
 					<div class="bizproc-workflow-instances-popup-heads-item">
 						${Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TIME')}

@@ -1,8 +1,8 @@
 /**
- * @module im/messenger/model/sidebar/files/validator
+ * @module im/messenger/model/sidebar/src/files/validator
  */
 
-jn.define('im/messenger/model/sidebar/files/validator', (require, exports, module) => {
+jn.define('im/messenger/model/sidebar/src/files/validator', (require, exports, module) => {
 	const { Type } = require('type');
 
 	/**

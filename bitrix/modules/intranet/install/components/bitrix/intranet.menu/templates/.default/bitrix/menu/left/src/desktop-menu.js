@@ -13,7 +13,7 @@ export default class DesktopMenu
 	theme = null;
 	#specialLiveFeedDecrement = 0;
 
-	constructor(allCounters)
+	constructor(allCounters: Object, isAir: boolean)
 	{
 		this.menuContainer = document.getElementById("menu-items-block");
 		if (!this.menuContainer)
@@ -23,7 +23,7 @@ export default class DesktopMenu
 
 		this.initTheme();
 		this.getItemsController();
-		this.getHistoryItems();
+		this.getHistoryItems(isAir);
 		this.showAccount(allCounters);
 		this.runAPICounters();
 	}
@@ -40,9 +40,9 @@ export default class DesktopMenu
 		});
 	}
 
-	getHistoryItems(): void
+	getHistoryItems(isAir: boolean): void
 	{
-		this.browserHistory = new BrowserHistory();
+		this.browserHistory = new BrowserHistory(isAir);
 		this.browserHistory.init();
 	}
 

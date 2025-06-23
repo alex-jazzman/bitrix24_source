@@ -68,19 +68,10 @@ if ($template)
 				'RELOAD_PAGE_AFTER_SAVE' => true,
 			]
 		);
-
-		return;
 	}
 }
-
-$APPLICATION->IncludeComponent(
-	'bitrix:landing.demo',
-	'.default',
-	[
-		'TYPE' => Type::SCOPE_CODE_MAINPAGE,
-		'DISABLE_REDIRECT' => $notRedirectToEdit,
-		'DONT_LEAVE_FRAME' => 'N',
-	],
-	$component
-);
+else
+{
+	ShowError('Template not found');
+}
 ?>

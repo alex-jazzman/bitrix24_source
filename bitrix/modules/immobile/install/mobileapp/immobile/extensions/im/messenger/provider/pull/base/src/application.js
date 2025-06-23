@@ -6,8 +6,14 @@
 jn.define('im/messenger/provider/pull/base/application', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
 	const { Type } = require('type');
+	const {
+		EventType,
+		ComponentCode,
+		DialogType,
+		NavigationTabByComponent,
+	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType, DialogType, ComponentCode } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class BaseApplicationPullHandler
@@ -28,10 +34,27 @@ jn.define('im/messenger/provider/pull/base/application', (require, exports, modu
 				return;
 			}
 
+			if (Feature.isCopilotInDefaultTabAvailable)
+			{
+				MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: params.dialogId }, ComponentCode.imMessenger);
+
+				return;
+			}
+
 			const componentCode = dialogModelState.type === DialogType.copilot
 				? ComponentCode.imCopilotMessenger : ComponentCode.imMessenger;
 
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: params.dialogId }, componentCode);
+			MessengerEmitter.emit(
+				EventType.navigation.broadCastEventCheckTabPreload,
+				{
+					broadCastEvent: EventType.messenger.openDialog,
+					toTab: NavigationTabByComponent[componentCode],
+					data: {
+						dialogId: params.dialogId,
+					},
+				},
+				ComponentCode.imNavigation,
+			);
 		}
 
 		/**

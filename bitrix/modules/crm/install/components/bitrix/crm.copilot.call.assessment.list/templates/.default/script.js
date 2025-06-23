@@ -343,12 +343,10 @@
 	function _showTooltip2(event) {
 	  var lowBorder = _classPrivateMethodGet$2(this, _getBorderById, _getBorderById2).call(this, LOW_BORDER);
 	  var highBorder = _classPrivateMethodGet$2(this, _getBorderById, _getBorderById2).call(this, HIGH_BORDER);
-	  main_core.Runtime.debounce(function () {
-	    BX.UI.Hint.show(event.target, main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP', {
-	      '#LOW_BORDER#': lowBorder.value,
-	      '#HIGH_BORDER#': highBorder.value
-	    }), true);
-	  }, 50, this)();
+	  BX.UI.Hint.show(event.target, main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP', {
+	    '#LOW_BORDER#': lowBorder.value,
+	    '#HIGH_BORDER#': highBorder.value
+	  }), true);
 	}
 	function _hideTooltip2(event) {
 	  BX.UI.Hint.hide(event.target);

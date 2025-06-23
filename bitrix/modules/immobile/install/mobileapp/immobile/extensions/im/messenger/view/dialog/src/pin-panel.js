@@ -5,6 +5,7 @@ jn.define('im/messenger/view/dialog/pin-panel', (require, exports, module) => {
 	const { EventFilterType } = require('im/messenger/const');
 
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class DialogPinPanel
@@ -44,13 +45,44 @@ jn.define('im/messenger/view/dialog/pin-panel', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {PinPanelShowParams} pinPanelParams
+		 */
+		update(pinPanelParams)
+		{
+			if (this.isUiAvailable() && Feature.isPinPanelNewAPIAvailable)
+			{
+				this.ui.update(pinPanelParams);
+			}
+		}
+
+		/**
 		 * @param {object} itemData
 		 */
 		updateItem(itemData)
 		{
-			if (this.isUiAvailable())
+			if (!this.isUiAvailable())
 			{
-				this.ui.updateItem(itemData);
+				return;
+			}
+
+			if (Feature.isPinPanelNewAPIAvailable)
+			{
+				this.ui.updateItems([itemData]);
+			}
+			else
+			{
+				this.ui.updateItem(itemData.item);
+			}
+		}
+
+		/**
+		 * @param {object[]} itemData
+		 */
+		updateItems(items)
+		{
+			if (!this.isUiAvailable() && Feature.isPinPanelNewAPIAvailable)
+			{
+				this.ui.updateItems(items);
 			}
 		}
 

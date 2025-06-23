@@ -9,8 +9,8 @@ import './note.css';
 
 export type { NotePopupSavePayload as UpdateNotePayload };
 
+// @vue/component
 export const Note = {
-	emits: ['popupShown', 'popupClosed', 'updateNote'],
 	props: {
 		id: {
 			type: [Number, String],
@@ -28,7 +28,12 @@ export const Note = {
 			type: String,
 			default: '',
 		},
+		dataAttributes: {
+			type: Object,
+			default: null,
+		},
 	},
+	emits: ['popupShown', 'popupClosed', 'updateNote'],
 	data(): Object
 	{
 		return {
@@ -115,15 +120,15 @@ export const Note = {
 		<div
 			class="booking-actions-popup__item-client-note"
 			:data-element="dataElementPrefix + '-menu-note'"
-			:data-booking-id="dataId"
 			:data-has-note="hasNote"
 			:class="{'--empty': !hasNote}"
+			v-bind="dataAttributes"
 			ref="note"
 		>
 			<div
 				class="booking-actions-popup__item-client-note-inner"
 				:data-element="dataElementPrefix + '-menu-note-add'"
-				:data-booking-id="dataId"
+				v-bind="dataAttributes"
 				@mouseenter="onMouseEnter"
 				@mouseleave="onMouseLeave"
 				@click="() => hasNote ? showViewPopup() : showEditPopup()"
@@ -132,7 +137,7 @@ export const Note = {
 					<div
 						class="booking-actions-popup__item-client-note-text"
 						:data-element="dataElementPrefix + '-menu-note-text'"
-						:data-booking-id="dataId"
+						v-bind="dataAttributes"
 					>
 						{{ note }}
 					</div>
@@ -140,7 +145,7 @@ export const Note = {
 						v-if="isFeatureEnabled"
 						class="booking-actions-popup__item-client-note-edit"
 						:data-element="dataElementPrefix + '-menu-note-edit'"
-						:data-booking-id="dataId"
+						v-bind="dataAttributes"
 						@click="showEditPopup"
 					>
 						<Icon :name="IconSet.PENCIL_40"/>

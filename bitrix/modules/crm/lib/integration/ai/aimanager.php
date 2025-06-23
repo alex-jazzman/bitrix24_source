@@ -10,6 +10,7 @@ use Bitrix\AI\Tuning\Manager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Integration\AI\Operation\ExtractScoringCriteria;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
+use Bitrix\Crm\Integration\AI\Operation\FillRepeatSaleTips;
 use Bitrix\Crm\Integration\AI\Operation\Scenario;
 use Bitrix\Crm\Integration\AI\Operation\ScoreCall;
 use Bitrix\Crm\Integration\AI\Operation\SummarizeCallTranscription;
@@ -354,6 +355,31 @@ final class AIManager
 
 		return $operation->launch();
 	}
+	
+	public static function launchFillRepeatSaleTips(int $activityId, ?int $userId = null, bool $isManualLaunch = false): Result
+	{
+		$result = new Result(FillRepeatSaleTips::TYPE_ID);
+
+		if (!self::isAvailable() || !self::isAiCallProcessingEnabled())
+		{
+			return $result->addError(ErrorCode::getAINotAvailableError());
+		}
+
+		if ($activityId <= 0)
+		{
+			return $result->addError(ErrorCode::getNotFoundError());
+		}
+
+		$operation = new FillRepeatSaleTips(
+			new ItemIdentifier(CCrmOwnerType::Activity, $activityId),
+			$userId,
+		);
+
+		$operation->setIsManualLaunch($isManualLaunch);
+		$operation->setScenario(Scenario::REPEAT_SALE_TIPS_SCENARIO);
+
+		return $operation->launch();
+	}
 	// endregion
 
 	public static function getAllOperationTypes(): array
@@ -364,6 +390,7 @@ final class AIManager
 			FillItemFieldsFromCallTranscription::TYPE_ID,
 			ScoreCall::TYPE_ID,
 			ExtractScoringCriteria::TYPE_ID,
+			FillRepeatSaleTips::TYPE_ID,
 		];
 	}
 
@@ -375,12 +402,20 @@ final class AIManager
 	public static function fetchLimitError(Error $error): ?Error
 	{
 		$errorCode = $error->getCode();
+		$customData = $error->getCustomData();
+
+		if ($errorCode === 'RATE_LIMIT' && !empty($customData['sliderCode']))
+		{
+			return ErrorCode::getAILimitOfRequestsExceededError([
+				'sliderCode' => $customData['sliderCode'],
+			]);
+		}
+
 		if (!str_starts_with($errorCode, 'LIMIT_IS_EXCEEDED'))
 		{
 			return null;
 		}
 
-		$customData = $error->getCustomData();
 		if (!empty($customData['sliderCode']))
 		{
 			$sliderCode = $customData['sliderCode'];

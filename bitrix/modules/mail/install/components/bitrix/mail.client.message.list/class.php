@@ -47,6 +47,23 @@ class CMailClientMessageListComponent extends CBitrixComponent implements Contro
 		$mailboxHelper->sendCountersEvent();
 	}
 
+	public function getMailboxCachedConnectionStatusAction(int $mailboxId): ?bool
+	{
+		$userId = Main\Engine\CurrentUser::get()->getId();
+
+		if (is_null($userId))
+		{
+			return null;
+		}
+
+		$mailboxSyncManager = new Mail\Helper\Mailbox\MailboxSyncManager($userId);
+
+		return $mailboxSyncManager->getCachedConnectionStatus($mailboxId);
+	}
+
+	/**
+	 * @deprecated Use \CMailClientMessageListComponent::getMailboxCachedConnectionStatusAction
+	 */
 	public function getLastMailboxSyncIsSuccessStatusAction(int $mailboxId): ?bool
 	{
 		$userId = Main\Engine\CurrentUser::get()->getId();
@@ -217,7 +234,7 @@ class CMailClientMessageListComponent extends CBitrixComponent implements Contro
 			Mail\Helper::setMailboxUnseenCounter($this->mailbox['ID'],0);
 		}
 
-		$this->arResult['userHasCrmActivityPermission'] = Main\Loader::includeModule('crm') && \CCrmPerms::isAccessEnabled();
+		$this->arResult['userHasCrmActivityPermission'] = \Bitrix\Mail\Integration\Crm\Permissions::getInstance()->hasAccessToCrm();
 
 		$mailboxesUnseen = Message::getCountersForUserMailboxes(
 			Main\Engine\CurrentUser::get()->getId()

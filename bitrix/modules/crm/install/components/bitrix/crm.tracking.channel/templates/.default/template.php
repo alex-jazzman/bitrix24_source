@@ -8,8 +8,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 /** @var array $arParams */
 /** @var array $arResult */
 
+use Bitrix\Crm\Tracking\Provider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load([
 	'ui.icons',
@@ -22,17 +24,18 @@ $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $iconClass = htmlspecialcharsbx($arResult['ROW']['ICON_CLASS']);
 
 $containerId = 'crm-tracking-channel-pool';
+
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.feedback.form',
+	'',
+	[ ...Provider::getFeedbackParameters(), 'VIEW_TARGET' => false ],
+);
+
+Toolbar::addRightCustomHtml(ob_get_clean(), ['align' => 'right']);
 ?>
 
 <div class="ui-slider-section ui-slider-section-icon-center">
-
-	<?
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		\Bitrix\Crm\Tracking\Provider::getFeedbackParameters()
-	);
-	?>
 
 	<span class="ui-slider-icon <?=$iconClass?>">
 		<i></i>

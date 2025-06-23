@@ -2,7 +2,7 @@ import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
-import { RecentService } from 'im.v2.provider.service';
+import { RecentService } from 'im.v2.provider.service.recent';
 
 import type { ImModelUser } from 'im.v2.model';
 

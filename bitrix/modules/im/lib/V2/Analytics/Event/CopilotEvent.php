@@ -76,7 +76,7 @@ class CopilotEvent extends Event
 
 	public function setCopilotP1(?string $promptCode): self
 	{
-		$this->p1 = isset($promptCode) ? ('1st-type_' . $this->convertUnderscore($promptCode)) : 'none';
+		$this->p1 = isset($promptCode) ? ('1st-type_' . self::convertUnderscore($promptCode)) : 'none';
 
 		return $this;
 	}
@@ -97,8 +97,8 @@ class CopilotEvent extends Event
 
 	protected function setCopilotP4(): self
 	{
-		$role = (new RoleManager())->getMainRole($this->chat->getChatId()) ?? RoleManager::getDefaultRoleCode();
-		$this->p4 = 'role_' . $this->convertUnderscore($role);
+		$role = (new RoleManager())->getMainRole($this->chat->getChatId()) ?? '';
+		$this->p4 = 'role_' . self::convertUnderscore($role);
 
 		return $this;
 	}

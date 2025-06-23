@@ -3,6 +3,7 @@
  */
 jn.define('tourist', (require, exports, module) => {
 	const { MemoryStorage } = require('native/memorystore');
+	const { TouristCacheExecutor } = require('tourist/src/cache');
 
 	const MAX_TIMES_TO_REMEMBER = 1000;
 
@@ -33,25 +34,84 @@ jn.define('tourist', (require, exports, module) => {
 				return Promise.resolve();
 			}
 
-			return BX.ajax.runAction('mobile.tourist.getEvents', { json: {} })
-				.then((response) => {
-					const operations = [];
-					operations.push(this.storage.set('_inited', true));
-					for (const eventId of Object.keys(response.data))
-					{
-						if (isKeyAllowed(eventId))
-						{
-							operations.push(this.storage.set(eventId, response.data[eventId]));
-						}
-					}
+			return new Promise((resolve) => {
+				const onInit = () => {
+					BX.removeCustomEvent('Tourist.Inited', onInit);
+					resolve();
+				};
 
-					return Promise.allSettled(operations);
+				BX.addCustomEvent('Tourist.Inited', onInit);
+			});
+		}
+
+		/**
+		 * @public
+		 * @return {Promise}
+		 */
+		async loadEvents()
+		{
+			const inited = await this.storage.get('_inited');
+
+			if (inited)
+			{
+				return Promise.resolve();
+			}
+
+			try
+			{
+				const executor = TouristCacheExecutor.getRunActionExecutor()
+					.setHandler((response) => this.#handleResponse(response))
+					.setCacheHandler((cache) => this.#handleResponse(cache))
+					.setSkipRequestIfCacheExists()
+				;
+
+				return await executor.call(true);
+			}
+			catch (error)
+			{
+				return this.#handleError(error);
+			}
+		}
+
+		#handleResponse(response)
+		{
+			if (response?.status !== 'success')
+			{
+				return this.#handleError(response);
+			}
+
+			const operations = [];
+			operations.push(this.storage.set('_inited', true));
+			for (const eventId of Object.keys(response.data))
+			{
+				if (isKeyAllowed(eventId))
+				{
+					operations.push(this.storage.set(eventId, response.data[eventId]));
+				}
+			}
+
+			return Promise.allSettled(operations)
+				.then(() => {
+					BX.postComponentEvent('Tourist.Inited');
 				})
 				.catch((err) => {
-					console.error('Cannot fetch tourist events from server', err);
+					console.error(err);
+				})
+			;
+		}
 
-					return this.storage.set('_inited', true);
-				});
+		#handleError(error)
+		{
+			console.error('Cannot fetch tourist events from server', error);
+
+			return this.storage.set('_inited', true)
+				.then(() => {
+					BX.postComponentEvent('Tourist.Inited');
+				})
+				.catch((err) => {
+					console.error(err);
+				})
+			;
 		}
 
 		/**
@@ -97,6 +157,16 @@ jn.define('tourist', (require, exports, module) => {
 		/**
 		 * @public
 		 * @param {string} event
+		 * @return {object|null}
+		 */
+		getContext(event)
+		{
+			return this.storage.getSync(event)?.context;
+		}
+
+		/**
+		 * @public
+		 * @param {string} event
 		 * @return {Date|undefined}
 		 */
 		lastTime(event)
@@ -109,25 +179,44 @@ jn.define('tourist', (require, exports, module) => {
 		/**
 		 * @public
 		 * @param {string} event
+		 * @param {object} [options = {}]
+		 * @param {object} [options.context = null]
+		 * @param {Date} [options.time = null]
+		 * @param {?number} [options.count = null]
 		 * @return {Promise}
 		 */
-		remember(event)
+		remember(event, { context = null, time = null, count = null } = {})
 		{
 			assertKeyAllowed(event);
 
-			const cnt = this.storage.getSync(event)?.cnt ?? 0;
+			const cnt = count ?? Math.min((this.storage.getSync(event)?.cnt ?? 0) + 1, MAX_TIMES_TO_REMEMBER);
+			const ts = time ? Math.round(time / 1000) : Math.round(Date.now() / 1000);
 			const model = {
-				ts: Math.round(Date.now() / 1000),
-				cnt: Math.min(cnt + 1, MAX_TIMES_TO_REMEMBER),
+				ts,
+				cnt,
+				context,
 			};
 
-			BX.ajax.runAction('mobile.tourist.remember', { json: { event } })
+			BX.ajax.runAction('mobile.tourist.remember', {
+				json: {
+					event,
+					context: context ? JSON.stringify(context) : null,
+					timestamp: time ? ts : null,
+					count: count ?? null,
+				},
+			})
 				.then((response) => {
-					this.storage.set(event, {
+					const data = {
 						...model,
 						...this.storage.getSync(event),
 						...response.data,
-					});
+					};
+					if (response.data.context)
+					{
+						data.context = JSON.parse(response.data.context);
+					}
+
+					this.#updateStorage(event, data);
 				})
 				.catch((err) => {
 					console.error('Cannot remember tourist event on server', event, err);
@@ -147,7 +236,14 @@ jn.define('tourist', (require, exports, module) => {
 
 			void BX.ajax.runAction('mobile.tourist.forget', { json: { event } });
 
-			return this.storage.set(event, null);
+			return this.#updateStorage(event, null);
+		}
+
+		#updateStorage(event, eventData)
+		{
+			TouristCacheExecutor.updateRunActionCache(event, eventData);
+
+			return this.storage.set(event, eventData);
 		}
 
 		/**

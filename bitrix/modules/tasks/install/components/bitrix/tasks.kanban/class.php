@@ -38,6 +38,7 @@ use \Bitrix\Tasks\Internals\UserOption;
 use \Bitrix\Tasks\Access\ActionDictionary;
 
 use \Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Form\ItemForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
@@ -414,6 +415,20 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		);
 
 		$this->arResult['IS_TOOL_AVAILABLE'] = $this->isToolAvailable();
+		$this->setPromoParams();
+	}
+
+	private function setPromoParams(): void
+	{
+		$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+
+		$needToShowInviteToMobile = $inviteToMobileService->needToShow((int)$this->userId);
+		$this->arResult['needToShowInviteToMobile'] = $needToShowInviteToMobile;
+
+		if ($needToShowInviteToMobile)
+		{
+			$this->arResult['inviteToMobileLink'] = $inviteToMobileService->getInviteLink((int)$this->userId);
+		}
 	}
 
 	private function isToolAvailable(): bool
@@ -1310,6 +1325,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				'canSort' => $this->isAdmin() && $this->arParams['TIMELINE_MODE'] !== 'Y',
 				'canAddItem' => $canAddItem,
 				'viewStateName'=> $viewModeForAnalytics,
+				'canSortItems' => $stage['CAN_SORT_ITEMS'] ?? true,
 			];
 		}
 
@@ -2729,10 +2745,11 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 						// update some fields, if fields is exists
 						if (isset($stages[$columnId]['TO_UPDATE']))
 						{
+							$taskInst = CTaskItem::getInstance($taskId, $this->userId);
+
 							$acceesAllowed = true;
 							if ($stages[$columnId]['TO_UPDATE_ACCESS'])
 							{
-								$taskInst = CTaskItem::getInstance($taskId, $this->userId);
 								if (!$taskInst->checkAccess(ActionDictionary::getActionByLegacyId($stages[$columnId]['TO_UPDATE_ACCESS'])))
 								{
 									$acceesAllowed = false;
@@ -3555,25 +3572,35 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					return [];
 				}
 
-				if (
-					$taskData['CREATED_BY'] == $this->userId
-					&& $task->checkAccess(ActionDictionary::ACTION_TASK_EDIT)
-				)
+				try
 				{
-					$task->update(array(
-						'RESPONSIBLE_ID' => $responsible
-					));
+					if (
+						$taskData['CREATED_BY'] == $this->userId
+						&& $task->checkAccess(ActionDictionary::ACTION_TASK_EDIT)
+					)
+					{
+						$task->update([
+							'RESPONSIBLE_ID' => $responsible,
+						]);
+					}
+					elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_DELEGATE, \Bitrix\Tasks\Access\Model\TaskModel::createFromId((int) $taskId)))
+					{
+						$task->delegate($responsible);
+					}
+					elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
+					{
+						$task->update([
+							'RESPONSIBLE_ID' => $responsible,
+						]);
+					}
 				}
-				elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_DELEGATE, \Bitrix\Tasks\Access\Model\TaskModel::createFromId((int) $taskId)))
+				catch (TasksException $e)
 				{
-					$task->delegate($responsible);
+					$this->errors[] = new Error($e->getMessage());
+
+					return [];
 				}
-				elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
-				{
-					$task->update(array(
-						'RESPONSIBLE_ID' => $responsible
-					));
-				}
+
 
 				//tmp, bug #85959
 				if (false && ($e = $this->application->GetException()))

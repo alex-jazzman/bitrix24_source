@@ -5,6 +5,7 @@ jn.define('utils/file', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { showSafeToast } = require('toast');
 	const { RequestExecutor } = require('rest');
+	const { fileSaver } = require('utils/file/src/saver');
 
 	const NativeViewerMediaTypes = {
 		IMAGE: 'image',
@@ -25,6 +26,11 @@ jn.define('utils/file', (require, exports, module) => {
 		}
 
 		return absolutePath;
+	}
+
+	function isLocalFile(url)
+	{
+		return url.startsWith('file://');
 	}
 
 	/**
@@ -267,6 +273,7 @@ jn.define('utils/file', (require, exports, module) => {
 	};
 
 	module.exports = {
+		isLocalFile,
 		NativeViewerMediaTypes,
 		getAbsolutePath,
 		getNativeViewerMediaType,
@@ -279,5 +286,6 @@ jn.define('utils/file', (require, exports, module) => {
 		prepareObjectId,
 		openNativeViewerByFileId,
 		formatFileSize,
+		fileSaver,
 	};
 });

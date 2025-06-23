@@ -1,6 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
-import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements';
+import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements.avatar';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelRecentItem, ImModelChat } from 'im.v2.model';

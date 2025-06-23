@@ -1,16 +1,22 @@
+import { UI } from 'ui.notification';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { mapState } from 'ui.vue3.pinia';
 import { Event } from 'main.core';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { getMemberRoles, reportedErrorTypes } from 'humanresources.company-structure.api';
 import { TreePreview } from './tree-preview/tree-preview';
 import { Department } from './steps/department';
 import { Employees } from './steps/employees';
 import { BindChat } from './steps/bind-chat';
 import { Entities } from './steps/entities';
+import { TeamRights } from './steps/team-rights';
 import { WizardAPI } from '../api';
 import { chartWizardActions } from '../actions';
 import { sendData as analyticsSendData } from 'ui.analytics';
 import type { WizardData, Step, DepartmentData, DepartmentUserIds } from '../types';
+import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { EntityTypes, NodeColorsSettingsDict } from 'humanresources.company-structure.utils';
+import { AuthorityTypes, SettingsTypes } from '../consts';
 import 'ui.buttons';
 import 'ui.forms';
 import '../style.css';
@@ -25,7 +31,7 @@ export const ChartWizard = {
 
 	emits: ['modifyTree', 'close'],
 
-	components: { Department, Employees, BindChat, TreePreview, Entities },
+	components: { Department, Employees, BindChat, TreePreview, Entities, TeamRights },
 
 	props: {
 		nodeId: {
@@ -43,8 +49,16 @@ export const ChartWizard = {
 		entity: {
 			type: String,
 		},
+		entityType: {
+			type: String,
+			default: EntityTypes.department,
+		},
 		source: {
 			type: String,
+		},
+		refToFocus: {
+			type: String,
+			default: null,
 		},
 	},
 
@@ -54,6 +68,7 @@ export const ChartWizard = {
 			stepIndex: 0,
 			waiting: false,
 			isValidStep: false,
+			isDepartmentDataChanged: false,
 			departmentData: {
 				id: 0,
 				parentId: 0,
@@ -61,10 +76,24 @@ export const ChartWizard = {
 				description: '',
 				heads: [],
 				employees: [],
+				chats: [],
+				channels: [],
 				userCount: 0,
+				createDefaultChat: true,
+				createDefaultChannel: true,
+				teamColor: NodeColorsSettingsDict.blue,
+				entityType: EntityTypes.department,
+				settings: {
+					[SettingsTypes.businessProcAuthority]: new Set([AuthorityTypes.departmentHead]),
+					[SettingsTypes.reportsAuthority]: new Set([AuthorityTypes.departmentHead]),
+				},
 			},
 			removedUsers: [],
 			employeesIds: [],
+			departmentSettings: {
+				[SettingsTypes.businessProcAuthority]: new Set([AuthorityTypes.departmentHead]),
+				[SettingsTypes.reportsAuthority]: new Set([AuthorityTypes.departmentHead]),
+			},
 			shouldErrorHighlight: false,
 			visibleSteps: [],
 			saveMode: SaveMode.moveUsers,
@@ -73,24 +102,6 @@ export const ChartWizard = {
 
 	created(): void
 	{
-		this.steps = [
-			{
-				id: 'entities',
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_SELECT_ENTITY_TITLE'),
-			},
-			{
-				id: 'department',
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_TITLE'),
-			},
-			{
-				id: 'employees',
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEES_TITLE'),
-			},
-			{
-				id: 'bindChat',
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE'),
-			},
-		];
 		this.init();
 	},
 
@@ -111,11 +122,32 @@ export const ChartWizard = {
 				? this.stepIndex
 				: this.stepIndex + 1;
 
-			return this.isEditMode ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EDIT_TITLE')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_STEP_PROGRESS', {
+			if (!this.isEditMode)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_STEP_PROGRESS', {
 					'#CURRENT_STEP#': currentStep,
 					'#MAX_STEP#': this.steps.length - 1,
 				});
+			}
+
+			return this.departmentData?.entityType === EntityTypes.team
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EDIT_TEAM_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EDIT_TITLE');
+		},
+		closeConfirmTitle(): string
+		{
+			if (this.isEditMode)
+			{
+				return this.departmentData?.entityType === EntityTypes.team
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIRM_CLOSE_EDIT_WIZARD_TEAM_TITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIRM_CLOSE_EDIT_WIZARD_DEPARTMENT_TITLE')
+				;
+			}
+
+			return this.departmentData?.entityType === EntityTypes.team
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIRM_CLOSE_CREATE_WIZARD_TEAM_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIRM_CLOSE_CREATE_WIZARD_DEPARTMENT_TITLE')
+			;
 		},
 		currentStep(): Step
 		{
@@ -123,9 +155,17 @@ export const ChartWizard = {
 
 			return this.steps.find((step) => id === step.id);
 		},
-		componentInfo(): { name: string, params?: Object, hasData?: boolean }
+		componentInfo(): { name: string, params?: Object }
 		{
-			const { parentId, name, description, heads } = this.departmentData;
+			const {
+				parentId,
+				name,
+				description,
+				heads,
+				entityType,
+				teamColor,
+			} = this.departmentData;
+
 			const components = {
 				department: {
 					name: 'Department',
@@ -133,26 +173,42 @@ export const ChartWizard = {
 						parentId,
 						name,
 						description,
+						entityType,
+						teamColor,
+						refToFocus: this.refToFocus,
 						shouldErrorHighlight: this.shouldErrorHighlight,
 						isEditMode: this.isEditMode,
 					},
-					hasData: true,
 				},
 				employees: {
 					name: 'Employees',
 					params: {
 						heads,
+						entityType,
 						employeesIds: this.employeesIds,
 						isEditMode: this.isEditMode,
 					},
-					hasData: true,
 				},
 				bindChat: {
 					name: 'BindChat',
+					params: {
+						heads,
+						name,
+						entityType,
+					},
+				},
+				teamRights: {
+					name: 'TeamRights',
+					params: {
+						name,
+						settings: this.departmentSettings,
+					},
 				},
 				entities: {
 					name: 'Entities',
-					hasData: true,
+					params: {
+						parentId,
+					},
 				},
 			};
 
@@ -163,6 +219,14 @@ export const ChartWizard = {
 		isFirstStep(): boolean
 		{
 			return this.currentStep.id === 'entities';
+		},
+		hasTreePreview(): boolean
+		{
+			return !['entities', 'bindChat', 'teamRights'].includes(this.currentStep.id);
+		},
+		isChatStep(): boolean
+		{
+			return this.currentStep.id === 'bindChat';
 		},
 		filteredSteps(): string[]
 		{
@@ -175,6 +239,17 @@ export const ChartWizard = {
 			});
 
 			return id;
+		},
+		isTeamEntity(): boolean
+		{
+			return this.departmentData?.entityType === EntityTypes.team;
+		},
+		createButtonText(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_CREATE_TEAM_BTN')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_CREATE_BTN')
+			;
 		},
 		...mapState(useChartStore, ['departments', 'userId', 'currentDepartments']),
 	},
@@ -190,8 +265,9 @@ export const ChartWizard = {
 		},
 		async init(): Promise<void>
 		{
+			// Important: we need to call createSteps as soon as we get entityType or determine a lack of it
+
 			Event.bind(window, 'beforeunload', this.handleBeforeUnload);
-			this.createVisibleSteps();
 			if (this.isEditMode)
 			{
 				const {
@@ -202,8 +278,16 @@ export const ChartWizard = {
 					heads,
 					userCount,
 					children,
+					entityType,
+					teamColor,
 					employees = [],
 				} = this.departments.get(this.nodeId);
+
+				this.getMemberRoles(entityType);
+				this.createSteps(entityType);
+				this.createVisibleSteps();
+				this.createDefaultSaveMode(entityType);
+
 				this.departmentData = {
 					...this.departmentData,
 					id,
@@ -214,11 +298,36 @@ export const ChartWizard = {
 					userCount,
 					children,
 					employees,
+					entityType,
+					teamColor,
+					createDefaultChat: false,
+					createDefaultChannel: false,
 				};
+				const rawSettings = await WizardAPI.getSettings(this.nodeId);
+				this.departmentSettings = rawSettings.reduce((acc, { settingsType, settingsValue }) => {
+					if (!Object.hasOwn(acc, settingsType))
+					{
+						acc[settingsType] = new Set();
+					}
+					acc[settingsType].add(settingsValue);
+
+					return acc;
+				}, { ...this.departmentSettings });
+
 				this.employeesIds = await WizardAPI.getEmployees(this.nodeId);
 
 				return;
 			}
+
+			if (this.entityType)
+			{
+				this.departmentData.entityType = this.entityType;
+			}
+
+			this.getMemberRoles(this.entityType);
+			this.createSteps(this.entityType);
+			this.createVisibleSteps();
+			this.createDefaultSaveMode(this.entityType);
 
 			if (this.nodeId)
 			{
@@ -227,7 +336,7 @@ export const ChartWizard = {
 				return;
 			}
 
-			this.departmentData.parentId = this.rootId;
+			this.departmentData.parentId = 0;
 
 			analyticsSendData({
 				tool: 'structure',
@@ -235,6 +344,10 @@ export const ChartWizard = {
 				event: 'create_wizard',
 				c_element: this.source,
 			});
+		},
+		getMemberRoles(entityType): void
+		{
+			this.memberRoles = getMemberRoles(entityType);
 		},
 		createVisibleSteps(): void
 		{
@@ -245,6 +358,9 @@ export const ChartWizard = {
 					break;
 				case 'employees':
 					this.visibleSteps = ['employees'];
+					break;
+				case 'teamRights':
+					this.visibleSteps = ['teamRights'];
 					break;
 				default:
 					this.visibleSteps = this.showEntitySelector
@@ -263,12 +379,11 @@ export const ChartWizard = {
 			}
 
 			this.stepIndex = buttonId === 'back' ? this.stepIndex - 1 : this.stepIndex + 1;
-			this.pickStepsAnalitics();
+			this.pickStepsAnalytics();
 		},
 		close(sendEvent: boolean = false): void
 		{
 			this.$emit('close');
-
 			if (sendEvent)
 			{
 				analyticsSendData({
@@ -279,10 +394,48 @@ export const ChartWizard = {
 				});
 			}
 		},
-		onApplyData(data: { isValid?: boolean, removedUsers?: User, ...Partial<DepartmentData> }): void
+		closeWithConfirm(): void
 		{
-			const { isValid = true, removedUsers = [], ...departmentData } = data;
+			if (!this.isDepartmentDataChanged)
+			{
+				this.close(true);
+
+				return;
+			}
+
+			const confirmPopup = new MessageBox({
+				title: this.closeConfirmTitle,
+				message: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIRM_CLOSE_WIZARD_MESSAGE'),
+				yesCaption: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIRM_CLOSE_WIZARD_OK_CAPTION'),
+				noCaption: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIRM_CLOSE_WIZARD_NO_CAPTION'),
+				onYes: () => {
+					this.close(true);
+
+					return true;
+				},
+				minHeight: 155,
+				buttons: MessageBoxButtons.YES_NO,
+				popupOptions: {
+					closeIcon: true,
+					className: 'humanresources-chart-wizard__close-confirm-popup',
+				},
+			});
+			confirmPopup.getYesButton().setRound(true);
+			confirmPopup.getNoButton().setRound(true);
+			confirmPopup.show();
+		},
+		onApplyData(
+			data: {
+				isValid?: boolean,
+				isDepartmentDataChanged?: boolean,
+				removedUsers?: User, ...Partial<DepartmentData>
+			},
+		): void
+		{
+			const prevEntityType = this.departmentData.entityType;
+			const { isValid = true, isDepartmentDataChanged = true, removedUsers = [], ...departmentData } = data;
 			this.isValidStep = isValid;
+			this.isDepartmentDataChanged = this.isDepartmentDataChanged || isDepartmentDataChanged;
 			if (departmentData)
 			{
 				this.departmentData = {
@@ -296,6 +449,82 @@ export const ChartWizard = {
 			{
 				this.shouldErrorHighlight = false;
 			}
+
+			// change steps and roles according to entityType
+			if (prevEntityType !== this.departmentData.entityType)
+			{
+				this.getMemberRoles(this.departmentData.entityType);
+				this.createSteps(this.departmentData.entityType);
+				this.createVisibleSteps();
+				this.createDefaultSaveMode(this.departmentData.entityType);
+
+				const prevMemberRoles = getMemberRoles(prevEntityType);
+				const rolesKeys = Object.keys(prevMemberRoles);
+				this.departmentData.heads = this.departmentData.heads.map((item) => {
+					const roleKey = rolesKeys.find((key) => prevMemberRoles[key] === item.role);
+
+					return { ...item, role: this.memberRoles[roleKey] };
+				});
+
+				this.departmentData.employees = this.departmentData.employees
+					.map((item) => ({ ...item, role: this.memberRoles.employee }))
+				;
+			}
+
+			// change NodeColorsSettingsDict according to entityType
+			this.departmentData.teamColor = this.isTeamEntity
+				? this.departmentData.teamColor ?? NodeColorsSettingsDict.blue
+				: null
+			;
+		},
+		createSteps(entityType: string = 'DEPARTMENT'): void
+		{
+			if (entityType === EntityTypes.team)
+			{
+				this.steps = [
+					{
+						id: 'entities',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_SELECT_ENTITY_TITLE'),
+					},
+					{
+						id: 'department',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_TITLE'),
+					},
+					{
+						id: 'employees',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_EMPLOYEES_TITLE'),
+					},
+					{
+						id: 'bindChat',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE'),
+					},
+					{
+						id: 'teamRights',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TITLE'),
+					},
+				];
+			}
+			else
+			{
+				this.steps = [
+					{
+						id: 'entities',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_SELECT_ENTITY_TITLE'),
+					},
+					{
+						id: 'department',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_TITLE'),
+					},
+					{
+						id: 'employees',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEES_TITLE'),
+					},
+					{
+						id: 'bindChat',
+						title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE_MSGVER_1'),
+					},
+				];
+			}
 		},
 		getUsersPromise(departmentId: number): Promise<void>
 		{
@@ -303,9 +532,9 @@ export const ChartWizard = {
 			const { headsIds, deputiesIds, employeesIds } = ids;
 
 			const departmentUserIds = {
-				[memberRoles.head]: headsIds,
-				[memberRoles.deputyHead]: deputiesIds,
-				[memberRoles.employee]: employeesIds,
+				[this.memberRoles.head]: headsIds,
+				[this.memberRoles.deputyHead]: deputiesIds,
+				[this.memberRoles.employee]: employeesIds,
 			};
 
 			return this.getUserMemberPromise(departmentId, departmentUserIds);
@@ -316,11 +545,11 @@ export const ChartWizard = {
 
 			return [...heads, ...employees].reduce((acc, user) => {
 				const { headsIds, deputiesIds, employeesIds } = acc;
-				if (user.role === memberRoles.head)
+				if (user.role === this.memberRoles.head)
 				{
 					headsIds.push(user.id);
 				}
-				else if (user.role === memberRoles.deputyHead)
+				else if (user.role === this.memberRoles.deputyHead)
 				{
 					deputiesIds.push(user.id);
 				}
@@ -359,13 +588,31 @@ export const ChartWizard = {
 		},
 		async create(): Promise<void>
 		{
-			const { name, parentId, description } = this.departmentData;
+			const {
+				name,
+				parentId,
+				description,
+				chats,
+				channels,
+				createDefaultChat,
+				createDefaultChannel,
+				entityType,
+				teamColor,
+				settings,
+			} = this.departmentData;
+
 			let departmentId = 0;
 			let accessCode = '';
 			this.waiting = true;
 			try
 			{
-				const [newDepartment] = await WizardAPI.addDepartment(name, parentId, description);
+				const [newDepartment] = await WizardAPI.addDepartment(
+					name,
+					parentId,
+					description,
+					entityType,
+					teamColor?.name,
+				);
 				departmentId = newDepartment.id;
 				accessCode = newDepartment.accessCode;
 
@@ -378,6 +625,38 @@ export const ChartWizard = {
 				{
 					chartWizardActions.tryToAddCurrentDepartment(this.departmentData, departmentId);
 				}
+
+				await WizardAPI.saveChats(
+					departmentId,
+					{ chat: [...chats], channel: [...channels] },
+					{ chat: Number(createDefaultChat), channel: Number(createDefaultChannel) },
+				);
+
+				if (entityType === EntityTypes.team)
+				{
+					await WizardAPI.createSettings(
+						departmentId,
+						{
+							[SettingsTypes.businessProcAuthority]: {
+								values: [...settings[SettingsTypes.businessProcAuthority]],
+								replace: true,
+							},
+						},
+						parentId,
+					);
+				}
+			}
+			catch (error)
+			{
+				if (!reportedErrorTypes.has(error.code))
+				{
+					UI.Notification.Center.notify({
+						content: error.message,
+						autoHideDelay: 4000,
+					});
+				}
+
+				return;
 			}
 			finally
 			{
@@ -411,7 +690,7 @@ export const ChartWizard = {
 				return;
 			}
 
-			const { id, parentId, name, description } = this.departmentData;
+			const { id, parentId, name, description, teamColor, settings } = this.departmentData;
 			const currentNode = this.departments.get(id);
 			const targetNodeId = currentNode?.parentId === parentId ? null : parentId;
 			this.waiting = true;
@@ -419,13 +698,25 @@ export const ChartWizard = {
 				? this.getUsersPromise(id)
 				: Promise.resolve();
 			const departmentPromise = this.entity === 'department'
-				? WizardAPI.updateDepartment(id, targetNodeId, name, description)
+				? WizardAPI.updateDepartment(id, targetNodeId, name, description, teamColor?.name)
+				: Promise.resolve();
+			const settingsPromise = this.entity === 'teamRights'
+				? WizardAPI.updateSettings(
+					id,
+					{
+						[SettingsTypes.businessProcAuthority]: {
+							values: [...settings[SettingsTypes.businessProcAuthority]],
+							replace: true,
+						},
+					},
+					parentId,
+				)
 				: Promise.resolve();
 
-			this.pickEditAnalitics(id, parentId);
+			this.pickEditAnalytics(id, parentId);
 			try
 			{
-				const [usersResponse] = await Promise.all([usersPromise, departmentPromise]);
+				const [usersResponse] = await Promise.all([usersPromise, departmentPromise, settingsPromise]);
 				let userMovedToRootIds = [];
 				if (this.removedUsers.length > 0)
 				{
@@ -470,7 +761,18 @@ export const ChartWizard = {
 		{
 			this.saveMode = actionId;
 		},
-		pickEditAnalitics(departmentId: number, parentId: number): void
+		createDefaultSaveMode(entityType: string = 'DEPARTMENT'): void
+		{
+			if (entityType === EntityTypes.team)
+			{
+				this.saveMode = SaveMode.addUsers;
+			}
+			else
+			{
+				this.saveMode = SaveMode.moveUsers;
+			}
+		},
+		pickEditAnalytics(departmentId: number, parentId: number): void
 		{
 			const currentNode = this.departments.get(departmentId);
 			switch (this.entity)
@@ -503,52 +805,53 @@ export const ChartWizard = {
 					break;
 			}
 		},
-		pickStepsAnalitics(): void
+		pickStepsAnalytics(): void
 		{
+			let event = null;
 			switch (this.currentStep.id)
 			{
 				case 'department':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'create_dept_step1',
-						c_element: this.source,
-					});
+					event = 'create_dept_step1';
 					break;
 				case 'employees':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'create_dept_step2',
-						c_element: this.source,
-					});
+					event = 'create_dept_step2';
 					break;
 				case 'bindChat':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'create_dept_step3',
-						c_element: this.source,
-					});
+					event = 'create_dept_step3';
+					break;
+				case 'teamRights':
+					event = 'create_dept_step4';
 					break;
 				default:
 					break;
+			}
+
+			if (event)
+			{
+				analyticsSendData({
+					tool: 'structure',
+					category: 'structure',
+					event,
+					c_element: this.source,
+				});
 			}
 		},
 	},
 
 	template: `
 		<div class="chart-wizard">
-			<div class="chart-wizard__dialog" :style="{ 'max-width': !isEditMode && isFirstStep ? '643px' : '883px' }">
+			<div class="chart-wizard__dialog" :style="{ 'max-width': !isEditMode && isFirstStep ? '580px' : '843px' }">
 				<div class="chart-wizard__head">
-					<div class="chart-wizard__head_close" @click="close(true)"></div>
+					<div class="chart-wizard__head_close" @click="closeWithConfirm(true)"></div>
 					<p class="chart-wizard__head_title">{{ stepTitle }}</p>
-					<p class="chart-wizard__head_descr">{{ currentStep.title }}</p>
+					<p class="chart-wizard__head_descr" :class="{ '--first-step': isFirstStep, '--edit-mode': isEditMode }">
+						{{ currentStep.title }}
+					</p>
 					<div class="chart-wizard__head_stages" v-if="!isFirstStep && !isEditMode">
 						<div
 							v-for="n in filteredSteps.length"
 							class="chart-wizard__head_stage"
-							:class="{ '--completed': stepIndex >= (this.showEntitySelector ? n : n - 1) }"
+							:class="{ '--completed': stepIndex >= (this.showEntitySelector ? n : n - 1), '--team': isTeamEntity }"
 						></div>
 					</div>
 				</div>
@@ -558,58 +861,68 @@ export const ChartWizard = {
 							:is="componentInfo.name"
 							v-bind="componentInfo.params"
 							v-on="{
-								applyData: componentInfo.hasData ? onApplyData : undefined,
+								applyData: onApplyData,
 								saveModeChanged: componentInfo.name === 'Employees' ? handleSaveModeChanged : undefined
 							}"
 						>
 						</component>
 					</KeepAlive>
-					<TreePreview
-						v-if="isEditMode || !isFirstStep"
-						:parentId="departmentData.parentId"
-						:name="departmentData.name"
-						:heads="departmentData.heads"
-						:userCount="departmentData.userCount"
-					/>
+					<div v-if="hasTreePreview" class="chart-wizard__tree_container">
+						<TreePreview
+							:parentId="departmentData.parentId"
+							:name="departmentData.name"
+							:heads="departmentData.heads"
+							:userCount="departmentData.userCount"
+							:entityType="departmentData.entityType"
+							:teamColor="departmentData.teamColor"
+						/>
+					</div>
 				</div>
 				<div class="chart-wizard__footer">
 					<button
 						v-if="stepIndex > 0"
-						class="ui-btn ui-btn-light --back"
+						class="ui-btn ui-btn-light chart-wizard__button --back"
 						@click="move('back')"
+						data-test-id="hr-company-structure_chart-wizard__back-button"
 					>
 						<div class="ui-icon-set --chevron-left"></div>
-						<span>{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BACK_BTN') }}</span>
+						<span class="chart-wizard__back-button-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BACK_BTN') }}
+						</span>
 					</button>
 					<button
 						v-show="stepIndex < visibleSteps.length - 1 && !isEditMode"
-						class="ui-btn ui-btn-primary ui-btn-round --next"
+						class="ui-btn ui-btn-primary ui-btn-round chart-wizard__button --next"
 						:class="{ 'ui-btn-disabled': !isValidStep, 'ui-btn-light-border': isEditMode }"
 						@click="move()"
+						data-test-id="hr-company-structure_chart-wizard__next-button"
 					>
 						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_NEXT_BTN') }}
 					</button>
 					<button
 						v-show="isEditMode"
-						class="ui-btn ui-btn-primary ui-btn-round --next"
+						class="ui-btn ui-btn-primary ui-btn-round chart-wizard__button --next"
 						:class="{ 'ui-btn-light-border': isEditMode }"
 						@click="close(true)"
+						data-test-id="hr-company-structure_chart-wizard__discard-button"
 					>
 						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DISCARD_BTN') }}
 					</button>
 					<button
 						v-show="!isEditMode && stepIndex === visibleSteps.length - 1"
-						class="ui-btn ui-btn-primary ui-btn-round"
+						class="ui-btn ui-btn-primary ui-btn-round chart-wizard__button"
 						:class="{ 'ui-btn-wait': waiting }"
 						@click="create"
+						data-test-id="hr-company-structure_chart-wizard__create-button"
 					>
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_CREATE_BTN') }}
+						{{ createButtonText }}
 					</button>
 					<button
 						v-show="isEditMode"
-						class="ui-btn ui-btn-primary ui-btn-round --save"
+						class="ui-btn ui-btn-primary ui-btn-round chart-wizard__button --save"
 						:class="{ 'ui-btn-wait': waiting, 'ui-btn-disabled': !isValidStep, }"
 						@click="save"
+						data-test-id="hr-company-structure_chart-wizard__save-button"
 					>
 						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_SAVE_BTN') }}
 					</button>

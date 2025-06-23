@@ -18,7 +18,7 @@ if ($arResult['AVAILABLE'])
 	{
 		echo (isset($arResult["CONTENT_VIEW_CNT"]) ? $arResult["CONTENT_VIEW_CNT"] : 0);
 	}
-	elseif (SITE_TEMPLATE_ID === 'bitrix24')
+	elseif (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 	{
 		?><span class="tariff-lock" onclick="B24.licenseInfoPopup.show('contentViewCounter', '<?=htmlspecialcharsbx(GetMessageJS("SCVC_TEMPLATE_LICENSE_TITLE2"))?>', '<?=htmlspecialcharsbx(GetMessageJS("SCVC_TEMPLATE_LICENSE_TEXT2"))?>')"></span><?
 	}
@@ -47,5 +47,3 @@ if ($arResult['AVAILABLE'])
 	});
 	</script><?
 }
-
-

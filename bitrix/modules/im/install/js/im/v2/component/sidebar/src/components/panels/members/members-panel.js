@@ -2,10 +2,13 @@ import { EventEmitter } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
 import { Analytics } from 'im.v2.lib.analytics';
-import { ActionByRole, ChatType, EventType, GetParameter, SidebarDetailBlock } from 'im.v2.const';
+import { LayoutManager } from 'im.v2.lib.layout';
+import { ActionByRole, ChatType, EventType, GetParameter, SidebarDetailBlock, Layout, Path } from 'im.v2.const';
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
-import { Button as ChatButton, ButtonColor, ButtonSize, Loader } from 'im.v2.component.elements';
+import { Loader } from 'im.v2.component.elements.loader';
+import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { Notifier } from 'im.v2.lib.notifier';
 
 import { DetailUser } from './detail-user';
 import { DetailHeader } from '../../elements/detail-header/detail-header';
@@ -64,10 +67,14 @@ export const MembersPanel = {
 		},
 		chatLink(): string
 		{
-			const isCopilot = this.dialog.type === ChatType.copilot;
+			const layoutName = LayoutManager.getInstance().getLayout().name;
+			const isCopilot = layoutName === Layout.copilot.name;
 			const chatGetParameter = isCopilot ? GetParameter.openCopilotChat : GetParameter.openChat;
+			const getParams = new URLSearchParams({
+				[chatGetParameter]: this.dialogId,
+			});
 
-			return `${Core.getHost()}/online/?${chatGetParameter}=${this.dialogId}`;
+			return `${Core.getHost()}${Path.online}?${getParams.toString()}`;
 		},
 		hasNextPage(): boolean
 		{
@@ -165,9 +172,7 @@ export const MembersPanel = {
 		{
 			if (BX.clipboard.copy(this.chatLink))
 			{
-				BX.UI.Notification.Center.notify({
-					content: this.loc('IM_SIDEBAR_COPIED_SUCCESS'),
-				});
+				Notifier.onCopyLinkComplete();
 			}
 		},
 		onBackClick()

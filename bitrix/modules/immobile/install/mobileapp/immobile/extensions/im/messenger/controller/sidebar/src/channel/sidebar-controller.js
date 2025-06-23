@@ -25,7 +25,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { showDeleteChannelAlert, showLeaveChannelAlert } = require('im/messenger/lib/ui/alert');
 
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 
 	const { BaseSidebarController } = require('im/messenger/controller/sidebar/base/sidebar-controller');

@@ -917,6 +917,88 @@ class CBPTaskService extends CBPRuntimeService
 		return $dbRes;
 	}
 
+	public static function isLastTaskForUserByActivity(string $activityName, int $userId, int $templateId): bool
+	{
+		$previousTasks = static::getPreviousTasks($activityName, $userId, $templateId);
+		$neededTask = static::getNeededTaskByActivityName($activityName, $previousTasks);
+
+		foreach ($previousTasks as $task)
+		{
+			if (is_null($task['CREATED_DATE']) || is_null($neededTask['MODIFIED']))
+			{
+				continue;
+			}
+
+			$completedCreatedDiff = $task['CREATED_DATE']->getTimestamp() - $neededTask['MODIFIED']->getTimestamp();
+			if ($completedCreatedDiff <= 2 && $completedCreatedDiff >= 0 && $task !== $neededTask)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static function getPreviousTasks(string $activityName, int $userId, int $templateId): array
+	{
+		$previousWorkflowIdSubquery =
+			Bizproc\Workflow\Task\TaskTable::query()
+				->setSelect(['WORKFLOW_ID'])
+				->setFilter([
+					'=ACTIVITY_NAME' => $activityName,
+					'=TASK_USERS.USER_ID' => $userId,
+					'=WORKFLOW_STATE.WORKFLOW_TEMPLATE_ID' => $templateId,
+				])
+				->whereNull('WORKFLOW_INSTANCE.ID')
+				->setOrder(['ID' => 'DESC'])
+				->setLimit(1)
+				->getQuery()
+		;
+
+		$tasksQuery =
+			Bizproc\Workflow\Task\TaskTable::query()
+				->setSelect(['ID', 'CREATED_DATE', 'MODIFIED', 'ACTIVITY_NAME'])
+				->setFilter([
+					'=TASK_USERS.USER_ID' => $userId,
+					'!=TASK_USERS.STATUS' => CBPTaskUserStatus::Waiting,
+					'=WORKFLOW_ID' => new Main\DB\SqlExpression("($previousWorkflowIdSubquery)"),
+				])
+				->setOrder(['MODIFIED' => 'ASC'])
+		;
+
+		return $tasksQuery->fetchAll();
+	}
+
+	private static function getNeededTaskByActivityName(string $activityName, array $previousTasks): ?array
+	{
+		foreach ($previousTasks as $task)
+		{
+			if ($task["ACTIVITY_NAME"] === $activityName)
+			{
+				return static::getLastCompletedParallelTask($task, $previousTasks);
+			}
+		}
+
+		return null;
+	}
+
+	private static function getLastCompletedParallelTask(array $neededTask, array $previousTasks): array
+	{
+		foreach ($previousTasks as $task)
+		{
+			if (
+				(!is_null($task['CREATED_DATE']) && !is_null($neededTask['CREATED_DATE']))
+				&& $task['CREATED_DATE']->getTimestamp() - $neededTask['CREATED_DATE']->getTimestamp() <= 2
+				&& $task['MODIFIED'] > $neededTask['MODIFIED']
+			)
+			{
+				$neededTask = $task;
+			}
+		}
+
+		return $neededTask;
+	}
+
 	private static function setSearchContent($status, $taskId, $taskData): void
 	{
 		try

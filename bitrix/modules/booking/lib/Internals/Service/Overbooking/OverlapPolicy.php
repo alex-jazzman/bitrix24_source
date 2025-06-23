@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Internals\Service\Overbooking;
 
 use Bitrix\Booking\Entity\Booking\Booking;
@@ -15,13 +17,13 @@ class OverlapPolicy
 	public function getIntersectionsList(
 		Booking $booking,
 		BookingCollection $intersectingBookingCollection
-	): BookingCollection
+	): IntersectionResult
 	{
-		$emptyResult = new BookingCollection();
+		$intersectionResult = new IntersectionResult();
 
 		if ($intersectingBookingCollection->isEmpty())
 		{
-			return $emptyResult;
+			return $intersectionResult;
 		}
 
 		$datePeriodCollection = $booking->getEventDatePeriodCollection();
@@ -42,8 +44,6 @@ class OverlapPolicy
 					$intersectionsCntByResource[$resource->getId()] = 0;
 				}
 
-				$result = new BookingCollection();
-
 				foreach ($intersectingBookingCollection as $intersectingBooking)
 				{
 					$doIntersect = $intersectingBooking->doEventsIntersect($currentDatePeriod);
@@ -59,14 +59,14 @@ class OverlapPolicy
 							$intersectionsCntByResource[$intersectingBookingResource->getId()]++;
 						}
 
-						$result->add($intersectingBooking);
+						$intersectionResult->addBooking($intersectingBooking);
 					}
 
 					foreach ($intersectionsCntByResource as $intersectionsCnt)
 					{
 						if ($intersectionsCnt > self::MAX_ALLOWED_INTERSECTIONS_CNT)
 						{
-							return $result;
+							return $intersectionResult->setIsSuccess(false);
 						}
 					}
 				}
@@ -75,6 +75,6 @@ class OverlapPolicy
 			}
 		}
 
-		return $emptyResult;
+		return $intersectionResult;
 	}
 }

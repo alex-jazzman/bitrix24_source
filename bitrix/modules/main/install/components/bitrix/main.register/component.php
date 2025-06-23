@@ -151,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["register_submit_button"] 
 			foreach($arError as $key => $error)
 				if(intval($key) == 0 && $key !== 0)
 					$arError[$key] = str_replace("#FIELD_NAME#", '"'.$key.'"', $error);
-			CEventLog::Log("SECURITY", "USER_REGISTER_FAIL", "main", false, implode("<br>", $arError));
+			CEventLog::Log(CEventLog::SEVERITY_SECURITY, "USER_REGISTER_FAIL", "main", false, implode("<br>", $arError));
 		}
 	}
 	else // if there's no any errors - create user
@@ -254,12 +254,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["register_submit_button"] 
 		if(empty($arResult["ERRORS"]))
 		{
 			if(COption::GetOptionString("main", "event_log_register", "N") === "Y")
-				CEventLog::Log("SECURITY", "USER_REGISTER", "main", $ID);
+				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "USER_REGISTER", "main", $ID);
 		}
 		else
 		{
 			if(COption::GetOptionString("main", "event_log_register_fail", "N") === "Y")
-				CEventLog::Log("SECURITY", "USER_REGISTER_FAIL", "main", $ID, implode("<br>", $arResult["ERRORS"]));
+				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "USER_REGISTER_FAIL", "main", $ID, implode("<br>", $arResult["ERRORS"]));
 		}
 
 		$events = GetModuleEvents("main", "OnAfterUserRegister", true);

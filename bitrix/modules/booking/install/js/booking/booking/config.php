@@ -5,7 +5,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+if (!\Bitrix\Main\Loader::includeModule('booking'))
+{
+	return [];
+}
+
 return [
+	'lang' => BX_ROOT.'/modules/booking/install/components/bitrix/booking/class.php',
 	'css' => 'dist/booking.bundle.css',
 	'js' => 'dist/booking.bundle.js',
 	'rel' => [
@@ -17,30 +23,35 @@ return [
 		'main.core.events',
 		'ui.counterpanel',
 		'ui.cnt',
-		'ui.vue3.components.rich-loc',
+		'ui.vue3.components.menu',
 		'booking.lib.drag',
+		'ui.vue3.components.rich-loc',
 		'ui.notification-manager',
 		'booking.provider.service.booking-actions-service',
 		'booking.component.loader',
-		'booking.component.actions-popup',
+		'ui.vue3.directives.hint',
 		'booking.lib.mouse-position',
 		'booking.component.time-selector',
 		'booking.component.note-popup',
-		'ui.vue3.directives.hint',
-		'ui.icon-set.crm',
-		'booking.lib.deal-helper',
+		'ui.icon-set.api.core',
+		'ui.icon-set.animated',
 		'booking.component.counter',
-		'booking.lib.is-real-id',
 		'booking.component.popup',
 		'booking.lib.check-booking-intersection',
-		'booking.model.bookings',
-		'booking.model.clients',
 		'booking.lib.grid',
 		'booking.lib.in-interval',
 		'booking.lib.range',
 		'booking.core',
 		'ui.date-picker',
+		'booking.lib.is-real-id',
+		'booking.component.actions-popup',
+		'booking.component.booking',
+		'booking.lib.deal-helper',
+		'booking.model.bookings',
+		'booking.model.clients',
+		'booking.provider.service.wait-list-service',
 		'booking.lib.remove-booking',
+		'booking.lib.remove-wait-list-item',
 		'booking.lib.currency-format',
 		'booking.component.statistics-popup',
 		'ui.dialogs.messagebox',
@@ -77,4 +88,15 @@ return [
 		'booking.lib.aha-moments',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'isAirTemplate' =>
+			\Bitrix\Main\Loader::includeModule('intranet')
+			&& class_exists(\Bitrix\Intranet\Integration\Templates\Air\AirTemplate::class)
+			&& \Bitrix\Intranet\Integration\Templates\Air\AirTemplate::isEnabled()
+		,
+		'webForms' => [
+			'link' => \Bitrix\Booking\Internals\Integration\Crm\WebForm::getCrmFormLink(),
+			'presets' => \Bitrix\Booking\Internals\Integration\Crm\WebForm::getCrmFormPresets(),
+		],
+	],
 ];

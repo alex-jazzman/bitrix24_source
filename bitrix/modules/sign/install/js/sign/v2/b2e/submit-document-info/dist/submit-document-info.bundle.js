@@ -319,7 +319,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _getProgressLayout)[_getProgressLayout]());
 	}
 	function _onProgressClosePageBtnClick2() {
-	  this.emit(this.event.onProgressClosePageBtnClick);
+	  this.emit(this.events.onProgressClosePageBtnClick);
 	  BX.SidePanel.Instance.close();
 	}
 	async function _openSigningSliderAndCloseCurrent2(signLink) {

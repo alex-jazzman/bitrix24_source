@@ -21,7 +21,7 @@ if (!defined('REST_MARKETPLACE_URL'))
 class Transport
 {
 	private const VERSION = 1;
-	private const API_VERSION = 4;
+	private const API_VERSION = 5;
 
 	private string $serviceDomain;
 
@@ -30,7 +30,6 @@ class Transport
 		'ru' => 'https://util.1c-bitrix.ru',
 		'kz' => 'https://util.1c-bitrix.kz',
 		'by' => 'https://util.1c-bitrix.by',
-		'ua' => 'https://util.bitrix.ua',
 	];
 
 	private static ?Transport $instance = null;
@@ -114,13 +113,17 @@ class Transport
 		$fields['lang'] = LANGUAGE_ID;
 		$fields['bsm'] = ModuleManager::isModuleInstalled('intranet') ? '0' : '1';
 
+		if (
+			Loader::includeModule('landing')
+			&& Loader::includeModule('ai')
+		)
+		{
+			$fields['landing_copilot_available'] = 'Y';
+		}
+
 		if (Loader::includeModule('bitrix24') && defined('BX24_HOST_NAME')) {
 			$fields['tariff'] = CBitrix24::getLicensePrefix();
 			$fields['host_name'] = BX24_HOST_NAME;
-
-			if (Loader::includeModule('landing')) {
-				$fields['landing_copilot_available'] = Manager::getOption('landing_ai_sites_available', 'N');
-			}
 		} else {
 			$fields['host_name'] = Context::getCurrent()->getRequest()->getHttpHost();
 

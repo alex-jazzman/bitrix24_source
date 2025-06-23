@@ -360,6 +360,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 				},
 				SpinnerLoader({
 					size: 16,
+					testId: this.getTestId('spinner-loader'),
 					design: this.#getLoaderDesign(),
 				}),
 			);

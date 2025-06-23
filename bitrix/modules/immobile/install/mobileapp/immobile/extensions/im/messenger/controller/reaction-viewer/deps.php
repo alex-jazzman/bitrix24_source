@@ -11,6 +11,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/lib/element',
 		'im:messenger/lib/date-formatter',
+		'im:messenger/provider/services/reaction',
 	],
 	'bundle' => [
 		'./src/controller',

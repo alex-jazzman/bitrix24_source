@@ -105,7 +105,7 @@ export const answerFieldsConfig: FieldsConfig = [
 	{
 		fieldName: 'counter',
 		targetFieldName: 'counter',
-		checkFunction: Type.isString,
+		checkFunction: isNumberOrString,
 		formatFunction: convertToNumber,
 	},
 	{

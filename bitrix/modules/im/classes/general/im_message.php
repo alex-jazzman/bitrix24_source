@@ -1,10 +1,11 @@
 <?
 
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Message\Counter\CounterType;
+use Bitrix\Im\V2\Recent\Config\RecentConfigManager;
 use Bitrix\Main\Application;
 use Bitrix\Im\V2\Sync;
-use Bitrix\Main\Engine\Response\Converter;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -815,6 +816,7 @@ class CIMMessage
 					'unread' => \Bitrix\Im\Recent::isUnread($this->user_id, \IM_MESSAGE_PRIVATE, $fromUserId),
 					'viewedMessages' => $viewedMessages,
 					'counterType' => $chat->getCounterType()->value,
+					'recentConfig' => $chat->getRecentConfig()->toPullFormat(),
 				),
 				'extra' => \Bitrix\Im\Common::getPullExtra()
 			));
@@ -916,6 +918,7 @@ class CIMMessage
 							'unread' => \Bitrix\Im\Recent::isUnread($this->user_id, \IM_MESSAGE_PRIVATE, $fromUserId),
 							'unreadTo' => $lastId,
 							'counterType' => $chat->getCounterType()->value,
+							'recentConfig' => $chat->getRecentConfig()->toPullFormat(),
 						),
 						'push' => Array('badge' => 'Y'),
 						'extra' => \Bitrix\Im\Common::getPullExtra()
@@ -938,7 +941,7 @@ class CIMMessage
 				Sync\Logger::getInstance()->add(
 					new Sync\Event(Sync\Event::ADD_EVENT, Sync\Event::CHAT_ENTITY, intval($arRes['CHAT_ID'])),
 					$this->user_id,
-					$chat->getType()
+					$chat
 				);
 
 				return true;
@@ -1263,6 +1266,7 @@ class CIMMessage
 
 		$arChat = Array();
 		$chatType = Chat::IM_TYPE_PRIVATE;
+		$chatEntityType = '';
 		if (isset($arParams['TO_CHAT_ID']))
 		{
 			$arChat = CIMChat::GetChatData(array(
@@ -1271,6 +1275,7 @@ class CIMMessage
 			));
 
 			$chatType = $arChat['chat'][$arParams['TO_CHAT_ID']]['message_type'];
+			$chatEntityType = $arChat['chat'][$arParams['TO_CHAT_ID']]['entity_type'] ?? '';
 			$extraParamContext = $arParams['EXTRA_PARAMS']['CONTEXT'] ?? null;
 			if (!empty($arUsers['users']) && $extraParamContext == 'LIVECHAT' && CModule::IncludeModule('imopenlines'))
 			{
@@ -1359,6 +1364,10 @@ class CIMMessage
 			$multidialog = $multidialogBot;
 		}
 
+		$chatId = (int)$arParams['CHAT_ID'];
+		$chat = Chat::getInstance($chatId);
+		$messagesAutoDeleteConfigs = new Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs([$chatId]);
+
 		return [
 			'chatId' => $arParams['CHAT_ID'],
 			'dateLastActivity' => \Bitrix\Main\Type\DateTime::createFromTimestamp($arParams['DATE_CREATE']),
@@ -1389,15 +1398,17 @@ class CIMMessage
 				'additionalEntities' => $additionalEntitiesRest,
 				'forward' => $forwardInfo,
 			],
-			'counterType' => CounterType::tryFromType($chatType)->value,
+			'counterType' => $chat->getCounterType()->value,
+			'recentConfig' => $chat->getRecentConfig()->toPullFormat(),
 			'files' => isset($arParams['FILES'])? $arParams['FILES']: [],
 			'notify' => $arParams['NOTIFY'],
+			'messagesAutoDeleteConfigs' => $messagesAutoDeleteConfigs->toRestFormat(),
 		];
 	}
 
 	private static function prepareCopilotData(array $arParams, int $chatId, bool $isCopilotChat): array
 	{
-		$roleManager = new \Bitrix\Im\V2\Integration\AI\RoleManager();
+		$roleManager = (new RoleManager())->setContextUser((int)$arParams['FROM_USER_ID']);
 		$messageRole = $arParams['PARAMS'][\Bitrix\Im\V2\Message\Params::COPILOT_ROLE] ?? null;
 
 		if (
@@ -1406,7 +1417,7 @@ class CIMMessage
 			&& $arParams['FROM_USER_ID'] === \Bitrix\Imbot\Bot\CopilotChatBot::getBotId()
 		)
 		{
-			$messageRole = \Bitrix\Im\V2\Integration\AI\RoleManager::getDefaultRoleCode();
+			$messageRole = RoleManager::getDefaultRoleCode();
 		}
 
 		if ($isCopilotChat)
@@ -1422,16 +1433,13 @@ class CIMMessage
 			: (int)$arParams['ID']
 		;
 
-		$copilotData = [
+		return [
 			'chats' => $chatRole ?? null,
 			'messages' => !empty($messageRole) ? [['id' => $messageId, 'role' => $messageRole]] : null,
 			'roles' => $roleManager->getRoles(
-				$isCopilotChat ? [$roleManager->getMainRole($chatId), $messageRole] : [$messageRole],
-				(int)$arParams['FROM_USER_ID']
+				$isCopilotChat ? [$roleManager->getMainRole($chatId), $messageRole] : [$messageRole]
 			),
 		];
-
-		return $copilotData;
 	}
 
 	public static function GetChatId($fromUserId, $toUserId, $createIfNotExists = true)

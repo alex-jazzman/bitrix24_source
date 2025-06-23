@@ -2,20 +2,24 @@
  * @module im/messenger/lib/element/recent/item/base
  */
 jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { Color } = require('tokens');
 	const { Type } = require('type');
-	const { Uuid } = require('utils/uuid');
 	const { Theme } = require('im/lib/theme');
+	const { Uuid } = require('utils/uuid');
+	const { Icon } = require('assets/icons');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { DraftType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
-	const {
-		DateHelper,
-		UserHelper,
-	} = require('im/messenger/lib/helper');
+	const { DateHelper, } = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const {
 		Path,
 		MessageStatus,
+		AnchorType,
 	} = require('im/messenger/const');
 	const {
 		PinAction,
@@ -27,7 +31,11 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		ProfileAction,
 		HideAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
-	const { CounterPrefix, CounterValue, CounterPostfix } = require('im/messenger/lib/element/recent/item/chat/const/test-id');
+	const {
+		CounterPrefix,
+		CounterValue,
+		CounterPostfix,
+	} = require('im/messenger/lib/element/recent/item/chat/const/test-id');
 	const { parser } = require('im/messenger/lib/parser');
 
 	const RecentItemSectionCode = Object.freeze({
@@ -79,6 +87,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					},
 				},
 				counter: {},
+				pin: {},
 			};
 			this.isSuperEllipseIcon = false;
 			this.counterTestId = '';
@@ -102,9 +111,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				.createParams()
 				.createTitleStyle()
 				.createSubtitleStyle()
+				.createDraftRecent()
+				.createAvatar()
 				.createAvatarStyle()
 				.createDateStyle()
+				.createMentionStyle()
+				.createCommentsStyle()
 				.createCounterStyle()
+				.createPinnedStyle()
 				.createCounterTestId()
 			;
 		}
@@ -174,14 +188,40 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return this;
 		}
 
+		createDraftRecent()
+		{
+			if (!this.hasDraft())
+			{
+				return this;
+			}
+
+			const { text: draftText } = this.getDraftModel();
+			const draftPrefix = (text) => {
+				return Feature.isChatDialogListSupportsSubtitleBbCodes
+					? `[COLOR=${Color.accentMainAlert.toHex()}]${text}[/COLOR]`
+					: text;
+			};
+
+			this.subtitle = `${draftPrefix(Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DRAFT_SUBTITLE_PREFIX'))} ${draftText}`.trim();
+			this.styles.subtitle = {
+				image: null,
+				font: null,
+				cornerRadius: null,
+				backgroundColor: null,
+				padding: null,
+			};
+
+			return this;
+		}
+
 		/**
 		 * @deprecated use to AvatarDetail
 		 * @return RecentItem
 		 */
 		createImageUrl()
 		{
-			const modelItem = this.getModelItem();
-			this.imageUrl = ChatAvatar.createFromDialogId(modelItem.id).getAvatarUrl();
+			const item = this.getModelItem();
+			this.imageUrl = ChatAvatar.createFromDialogId(item.id).getAvatarUrl();
 
 			return this;
 		}
@@ -232,7 +272,10 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			const dialog = this.getDialogItem();
 			if (dialog && dialog.counter)
 			{
-				this.messageCount = dialog.counter;
+				const chatId = dialog.chatId;
+				const hasMentions = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.mention);
+
+				this.messageCount = (dialog.counter === 1 && hasMentions) ? 0 : dialog.counter;
 			}
 
 			return this;
@@ -302,10 +345,33 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		/**
 		 * @return RecentItem
 		 */
-		createAvatarStyle()
+		createAvatar()
 		{
 			const modelItem = this.getModelItem();
 			this.avatar = ChatAvatar.createFromDialogId(modelItem.id).getRecentItemAvatarProps();
+
+			return this;
+		}
+
+		/**
+		 * @return RecentItem
+		 */
+		createAvatarStyle()
+		{
+			if (Feature.isImageInRecentAvatarStyleAvailable && Feature.isMessagesAutoDeleteAvailable)
+			{
+				const isMessagesAutoDeleteEnabled = this.getDialogHelper()?.isMessagesAutoDeleteDelayEnabled;
+
+				if (isMessagesAutoDeleteEnabled)
+				{
+					this.styles.avatar = {
+						image: {
+							name: Icon.TIMER_DOT.getIconName(),
+							tintColor: Color.base2.toHex(),
+						},
+					};
+				}
+			}
 
 			return this;
 		}
@@ -346,7 +412,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			{
 				subtitleStyle = {
 					image: {
-						name: 'reply',
+						name: Icon.REPLY.getIconName(),
 						sizeMultiplier: 0.7,
 					},
 				};
@@ -371,51 +437,59 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const item = this.getModelItem();
 			const message = this.getItemMessage();
+			const isMessageFromCurrentUser = message.senderId === serviceLocator.get('core').getUserId();
 
 			let name = '';
 			let url = '';
 			let sizeMultiplier = 0.7;
+			let tintColor = '';
 
-			if (message.senderId === serviceLocator.get('core').getUserId())
+			const chatId = this.getDialogItem()?.chatId;
+			const liked = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.reaction);
+
+			if (liked)
 			{
-				if (item.liked)
+				url = this.getImageUrlByFileName('status_reaction.png');
+				name = Icon.HEART.getIconName();
+				tintColor = Color.accentMainAlert.toHex();
+				sizeMultiplier = 1.2;
+			}
+			else if (isMessageFromCurrentUser && !this.hasDraft())
+			{
+				switch (message.status)
 				{
-					url = this.getImageUrlByFileName('status_reaction.png');
-					sizeMultiplier = 1.2;
-				}
-				else
-				{
-					switch (message.status)
+					case MessageStatus.received: {
+						name = Icon.CHECK.getIconName();
+						tintColor = Color.base4.toHex();
+
+						break;
+					}
+
+					case MessageStatus.error: {
+						name = 'message_error';
+						break;
+					}
+
+					case MessageStatus.delivered: {
+						name = Icon.DOUBLE_CHECK.getIconName();
+						tintColor = Color.accentMainPrimaryalt.toHex();
+
+						break;
+					}
+
+					default:
 					{
-						case MessageStatus.received: {
-							name = 'message_send';
-
-							break;
-						}
-
-						case MessageStatus.error: {
-							name = 'message_error';
-
-							break;
-						}
-
-						case MessageStatus.delivered: {
-							name = 'message_delivered';
-
-							break;
-						}
-
-						default: if (item.pinned)
+						if (item.pinned && !Feature.isPinInRecentStyleAvailable)
 						{
-							name = 'message_pin';
+							name = Icon.PIN.getIconName();
 							sizeMultiplier = 0.9;
 						}
 					}
 				}
 			}
-			else if (item.pinned)
+			else if (item.pinned && !Feature.isPinInRecentStyleAvailable)
 			{
-				name = 'message_pin';
+				name = Icon.PIN.getIconName();
 				sizeMultiplier = 0.9;
 			}
 			else
@@ -435,8 +509,43 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				dateStyle.image.name = name;
 			}
 
+			if (tintColor !== '')
+			{
+				dateStyle.image.tintColor = tintColor;
+			}
+
 			this.styles.date = dateStyle;
 
+			return this;
+		}
+
+		createMentionStyle()
+		{
+			const chatId = this.getDialogItem()?.chatId;
+
+			const hasMention = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.mention);
+
+			if (hasMention)
+			{
+				this.styles.mentions = {
+					backgroundColor: Color.accentMainPrimary.toHex(),
+					image: {
+						name: Icon.SMALL_MENTION.getIconName(),
+						tintColor: Color.baseWhiteFixed.toHex(),
+						contentHeight: 16,
+					},
+				};
+			}
+
+			return this;
+		}
+
+		/**
+		 * @abstract
+		 * @returns {RecentItem}
+		 */
+		createCommentsStyle()
+		{
 			return this;
 		}
 
@@ -446,6 +555,25 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		createCounterStyle()
 		{
 			this.styles.counter.backgroundColor = this.isMute ? Theme.colors.base5 : Theme.colors.accentMainPrimaryalt;
+
+			return this;
+		}
+
+		/**
+		 * @return RecentItem
+		 */
+		createPinnedStyle()
+		{
+			const item = this.getModelItem();
+			if (Feature.isPinInRecentStyleAvailable && item.pinned)
+			{
+				this.styles.pin = {
+					image: {
+						name: Icon.PIN.getIconName(),
+						tintColor: Color.base4.toHex(),
+					},
+				};
+			}
 
 			return this;
 		}
@@ -485,13 +613,23 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
+		 * @return {DialogHelper}
+		 */
+		getDialogHelper()
+		{
+			return DialogHelper.createByDialogId(this.getModelItem().id);
+		}
+
+		/**
 		 * @returns {Date}
 		 */
 		getItemDate()
 		{
 			const item = this.getModelItem();
+			const uploadingLastActivityDate = item.uploadingState?.lastActivityDate;
+			const draftLastActivityDate = this.getDraftModel()?.lastActivityDate;
 
-			return item.uploadingState?.lastActivityDate ?? item.lastActivityDate;
+			return draftLastActivityDate ?? uploadingLastActivityDate ?? item.lastActivityDate;
 		}
 
 		/**
@@ -513,8 +651,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 			return Uuid.isV4(message?.id)
 				? serviceLocator.get('core').getStore().getters['messagesModel/getByTemplateId'](message.id)
-				: serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id)
-			;
+				: serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id);
 		}
 
 		/**
@@ -551,6 +688,21 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			}
 
 			return messageText;
+		}
+
+		/**
+		 * @return {DraftModelState}
+		 */
+		getDraftModel()
+		{
+			return serviceLocator.get('core').getStore().getters['draftModel/getById'](this.id);
+		}
+
+		hasDraft()
+		{
+			const draft = this.getDraftModel();
+
+			return draft && (draft.type !== DraftType.text || draft.text);
 		}
 
 		/**

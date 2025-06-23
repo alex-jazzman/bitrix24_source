@@ -2,10 +2,9 @@
  * @module im/messenger/controller/dialog/lib/draft-manager
  */
 jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports, module) => {
-	const { debounce } = require('utils/function');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DraftType } = require('im/messenger/const');
-	const { ObjectUtils } = require('im/messenger/lib/utils');
+	const { ObjectUtils, AsyncQueue } = require('im/messenger/lib/utils');
 
 	class DraftManager
 	{
@@ -22,13 +21,12 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 			this.dialogId = dialogId;
 			this.replyManager = replyManager;
 			this.initWithExternalForward = initWithExternalForward;
-			this.setInStore = debounce(this.setInStore, 250, this, true);
-
 			this.changeTextHandler = this.saveDraft.bind(this);
+			this.queue = new AsyncQueue();
 
 			if (initWithExternalForward)
 			{
-				this.clearDraft();
+				void this.clearDraft();
 			}
 			this.start();
 		}
@@ -79,6 +77,9 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 			}
 		}
 
+		/**
+		 * @param {string} message
+		 */
 		saveDraft(message)
 		{
 			/** @type DraftModelState */
@@ -109,22 +110,43 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 				draft.image = this.replyManager.editMessage.image ?? null;
 			}
 
-			this.setInStore(draft);
+			return this.queue.enqueue(() => this.setInStore(draft));
 		}
 
-		cancelReply()
+		/**
+		 * @param {string} text
+		 *
+		 * @returns {Promise}
+		 */
+		cancelReply(text)
 		{
-			const draft = this.store.getters['draftModel/getById'](this.dialogId);
+			if (!text.trim())
+			{
+				return this.clearDraft();
+			}
 
-			draft.type = DraftType.text;
+			return this.queue.enqueue(() => this.setInStore({
+				text,
+				type: DraftType.text,
+				dialogId: this.dialogId,
+			}));
+		}
 
-			this.setInStore(draft);
+		/**
+		 * @returns {Promise}
+		 */
+		cancelEditingMessage()
+		{
+			return this.queue.enqueue(() => this.clearDraft());
 		}
 
 		/**
 		 *
 		 * @param {Message} message
 		 * @param {typeof InputQuoteType} type
+		 * @param {string} text
+		 *
+		 * @returns {Promise}
 		 */
 		setQuotMessageInStore(message, type, text)
 		{
@@ -139,17 +161,68 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 				type,
 			};
 
-			this.setInStore(draft);
+			return this.queue.enqueue(() => this.setInStore(draft));
 		}
 
-		clearDraft()
+		/**
+		 * @returns {Promise}
+		 */
+		async clearDraft()
 		{
-			this.store.dispatch('draftModel/delete', { dialogId: this.dialogId });
+			await this.deleteDraft();
+			await this.updateRecent();
 		}
 
-		setInStore(draft)
+		/**
+		 * @returns {Promise}
+		 */
+		async setInStore(draft)
 		{
-			this.store.dispatch('draftModel/set', draft);
+			await this.store.dispatch('draftModel/set', draft);
+			await this.updateRecent();
+		}
+
+		/**
+		 * @returns {Promise<Boolean>}
+		 */
+		updateRecent()
+		{
+			return this.store.dispatch('recentModel/update', [{ id: this.dialogId }]);
+		}
+
+		/**
+		 * @returns {DraftModelState}
+		 */
+		getDraft()
+		{
+			return this.store.getters['draftModel/getById'](this.dialogId);
+		}
+
+		/**
+		 * @returns {Promise<Boolean>}
+		 */
+		deleteDraft()
+		{
+			return this.store.dispatch('draftModel/delete', { dialogId: this.dialogId });
+		}
+
+		/**
+		 * @param {number} messageId
+		 * @returns {Promise<Boolean>}
+		 */
+		removeDraftByMessageId(messageId)
+		{
+			const draftModel = this.getDraft();
+
+			if (
+				messageId
+				&& draftModel?.messageId
+				&& String(draftModel?.messageId) === String(messageId))
+			{
+				return this.deleteDraft();
+			}
+
+			return Promise.resolve(false);
 		}
 	}
 

@@ -34,6 +34,7 @@ export const AudioMessage = {
 			default: false,
 		},
 	},
+	emits: ['cancelClick'],
 	computed:
 	{
 		FileType: () => FileType,
@@ -56,6 +57,12 @@ export const AudioMessage = {
 			return this.$store.getters['messages/getMessageType'](this.message.id);
 		},
 	},
+	methods: {
+		onCancel(event)
+		{
+			this.$emit('cancelClick', event);
+		},
+	},
 	template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
 			<div class="bx-im-message-audio__container">
@@ -65,6 +72,7 @@ export const AudioMessage = {
 					:item="messageFile"
 					:messageId="message.id"
 					:messageType="messageType"
+					@cancelClick="onCancel"
 				/>
 			</div>
 			<div class="bx-im-message-audio__default-message-container">

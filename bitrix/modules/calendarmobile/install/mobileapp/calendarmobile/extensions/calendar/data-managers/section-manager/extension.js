@@ -2,10 +2,11 @@
  * @module calendar/data-managers/section-manager
  */
 jn.define('calendar/data-managers/section-manager', (require, exports, module) => {
+	const { Type } = require('type');
 	const { SectionModel } = require('calendar/model/section');
 	const { SectionPermissionActions } = require('calendar/enums');
 	const { EventAjax } = require('calendar/ajax');
-	const { PullCommand } = require('calendar/enums');
+	const { PullCommand, CalendarType } = require('calendar/enums');
 
 	/**
 	 * @class SectionManager
@@ -16,6 +17,8 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 		{
 			this.sections = [];
 			this.collabSections = [];
+			this.trackingUserList = [];
+			this.hiddenSections = [];
 
 			this.isRefreshing = false;
 		}
@@ -42,6 +45,23 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 				const section = new SectionModel(collabSectionRaw);
 				this.collabSections[section.getId()] = section;
 			});
+		}
+
+		setHiddenSections(hiddenSections)
+		{
+			this.hiddenSections = [];
+
+			if (Type.isArrayFilled(hiddenSections))
+			{
+				hiddenSections.forEach((id) => {
+					this.hiddenSections.push(id === 'tasks' ? id : parseInt(id, 10));
+				});
+			}
+		}
+
+		setTrackingUserList(trackingUserList)
+		{
+			this.trackingUserList = trackingUserList;
 		}
 
 		getSection(id)
@@ -74,6 +94,11 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 			return this.sections.filter((section) => section.isActive());
 		}
 
+		getSortedSections()
+		{
+			return this.getActiveSections().sort((first, second) => this.compareByName(first, second));
+		}
+
 		getActiveSectionsForEdit()
 		{
 			return this.sections.filter((section) => section.isActive() && section.canDo(SectionPermissionActions.EDIT));
@@ -89,14 +114,30 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 			return this.collabSections.filter((section) => section.canDo(SectionPermissionActions.EDIT));
 		}
 
+		getTrackingUserList()
+		{
+			return this.trackingUserList;
+		}
+
+		getHiddenSections()
+		{
+			return this.hiddenSections;
+		}
+
+		saveHiddenSections(ownerId, calType, sections)
+		{
+			this.setHiddenSections(sections);
+			void EventAjax.saveHiddenSections({ ownerId, calType, sections });
+		}
+
 		handlePull(data)
 		{
 			const command = BX.prop.getString(data, 'command', '');
 			const params = BX.prop.getObject(data, 'params', {});
+			const fields = BX.prop.getObject(params, 'fields', {});
 
 			if (command === PullCommand.DELETE_SECTION)
 			{
-				const fields = BX.prop.getObject(params, 'fields', {});
 				const sectionId = BX.prop.getNumber(fields, 'ID', 0);
 
 				if (this.sections[sectionId])
@@ -106,12 +147,7 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 			}
 			else if (command === PullCommand.EDIT_SECTION)
 			{
-				const isNewSection = BX.prop.getBoolean(params, 'newSection', false);
-
-				if (isNewSection)
-				{
-					this.refresh();
-				}
+				this.editSectionHandler(fields);
 			}
 		}
 
@@ -120,8 +156,19 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 			delete this.sections[sectionId];
 		}
 
+		editSectionHandler(fields)
+		{
+			const section = new SectionModel(fields);
+			this.sections[section.getId()] = section;
+		}
+
 		refresh(ownerId, calType, force = false)
 		{
+			if (ownerId !== Number(env.userId) && calType !== CalendarType.USER)
+			{
+				return;
+			}
+
 			if (this.isRefreshing && !force)
 			{
 				return;
@@ -137,6 +184,24 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 					this.isRefreshing = false;
 				}
 			});
+		}
+
+		compareByName(first, second)
+		{
+			const firstName = first.getName().toLowerCase();
+			const secondName = second.getName().toLowerCase();
+
+			if (firstName > secondName)
+			{
+				return 1;
+			}
+
+			return firstName < secondName ? -1 : 0;
+		}
+
+		belongsToView(section, ownerId, calType)
+		{
+			return section.getOwnerId() === ownerId && section.getType() === calType;
 		}
 	}
 

@@ -14,6 +14,7 @@
 	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { CollabAccessService } = require('collab/service/access');
 	const { ProjectTagsField } = require('layout/socialnetwork/project/fields/tags');
 
 	class ProjectView extends LayoutComponent
@@ -820,10 +821,19 @@
 
 			if (isCollab)
 			{
-				if (dialogId)
+				const isCollabToolEnabled = await CollabAccessService.checkAccess();
+
+				if (isCollabToolEnabled)
 				{
-					void requireLazy('im:messenger/api/dialog-opener')
-						.then(({ DialogOpener }) => DialogOpener.open({ dialogId }));
+					if (dialogId)
+					{
+						void requireLazy('im:messenger/api/dialog-opener')
+							.then(({ DialogOpener }) => DialogOpener.open({ dialogId }));
+					}
+				}
+				else
+				{
+					CollabAccessService.openAccessDeniedBox();
 				}
 
 				return;

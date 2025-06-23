@@ -277,18 +277,10 @@ if ($arParams['TYPE'] === 'details')
 			$arResult['BUTTONS'][] = array(
 				'TYPE' => 'toolbar-conv-scheme',
 				'PARAMS' => array(
-					'NAME' => 'deal_converter',
 					'CONTAINER_ID' => $arParams['CONVERSION_CONTAINER_ID'],
 					'LABEL_ID' => $arParams['CONVERSION_LABEL_ID'],
 					'BUTTON_ID' => $arParams['CONVERSION_BUTTON_ID'],
-					'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
-					'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
-					'ENTITY_ID' => $arParams['ELEMENT_ID'],
-					'SCHEME_ID' => $schemeID,
-					'SCHEME_NAME' => \Bitrix\Crm\Conversion\DealConversionScheme::resolveName($schemeID),
 					'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\DealConversionScheme::getDescription($schemeID),
-					'IS_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
-					'LOCK_SCRIPT' => isset($arResult['CONVERSION_LOCK_SCRIPT']) ? $arResult['CONVERSION_LOCK_SCRIPT'] : '',
 				),
 				'CODE' => 'convert',
 				'TEXT' => GetMessage('DEAL_CREATE_ON_BASIS'),
@@ -392,6 +384,7 @@ if ($arParams['TYPE'] === 'details')
 			)
 		);
 
+		// only works in old deal details
 		if(!empty($moveToCategoryIDs))
 		{
 			$arResult['CATEGORY_CHANGER'] = array(

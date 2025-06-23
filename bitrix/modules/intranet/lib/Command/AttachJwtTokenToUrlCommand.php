@@ -2,10 +2,8 @@
 
 namespace Bitrix\Intranet\Command;
 
-use Bitrix\Intranet\Contract\Command;
-use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Main\Context;
-use Bitrix\Main\Result;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Config\Option;
 
@@ -33,6 +31,12 @@ class AttachJwtTokenToUrlCommand
 
 		$baseUrl = (Context::getCurrent()->getRequest()->isHttps() ? 'https://' : 'http://') . $serverName;
 		$uri = new Uri($baseUrl);
+
+		if (!Loader::includeModule('bitrix24'))
+		{
+			$uri->setPath('/auth/registration_link.php');
+			$uri->addParams(['register' => 'yes']);
+		}
 
 		return new AttachJwtTokenToUrlCommand($uri, $token);
 	}

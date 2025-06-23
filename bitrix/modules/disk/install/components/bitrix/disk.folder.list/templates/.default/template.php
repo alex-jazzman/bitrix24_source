@@ -127,7 +127,6 @@ if ($arResult['CONTEXT'] !== Context::SPACES)
 		'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
 		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
 	]);
-	Toolbar::setTitleMinWidth(158);
 }
 $uri = new Main\Web\Uri(Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri());
 
@@ -289,7 +288,7 @@ if (
 		$addBtn->addDataAttribute('hint-no-icon');
 		$addBtn->setDropdown();
 
-		Toolbar::addButton($addBtn, $isCollab ? ButtonLocation::AFTER_TITLE : ButtonLocation::RIGHT);
+		Toolbar::addButton($addBtn, ButtonLocation::AFTER_TITLE);
 	}
 	else
 	{
@@ -509,6 +508,7 @@ BX.message({
 	DISK_FOLDER_LIST_OK_FILE_COPIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_COPIED')?>',
 	DISK_FOLDER_LIST_OK_FILE_DELETED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_DELETED')?>',
 	DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED')?>',
+	DISK_FOLDER_LIST_OK_BOARD_SHARE_MODIFIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_BOARD_SHARE_MODIFIED')?>',
 	DISK_FOLDER_LIST_OK_FOLDER_MOVED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_MOVED')?>',
 	DISK_FOLDER_LIST_OK_FOLDER_COPIED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_COPIED')?>',
 	DISK_FOLDER_LIST_OK_FOLDER_DELETED: '<?= GetMessageJS('DISK_FOLDER_LIST_OK_FOLDER_DELETED')?>',
@@ -670,6 +670,32 @@ BX(function () {
 			BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].createFolder();
 		}
 	});
+
+	<?php
+	if(\Bitrix\Disk\Document\Flipchart\Configuration::isBoardsEnabled())
+	{
+	?>
+	menuItemsLists.push({
+		text: "<?= CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_BOARD')) ?>",
+		onclick: function(event, popupItem){
+			popupItem.getMenuWindow().close();
+			var newTab = window.open('', '_blank');
+			BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('board', 'l', response => {
+				BX.UI.Analytics.sendData({
+					event: 'create',
+					tool: 'boards',
+					category: 'boards',
+					c_element: 'disk_page',
+				});
+				if (response.openUrl) {
+					newTab.location.href = response.openUrl;
+				}
+			});
+		}
+	});
+	<?php
+	}
+	?>
 
 	<?
 	if (!empty($arResult['DOCUMENT_HANDLERS']))

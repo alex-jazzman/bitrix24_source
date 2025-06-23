@@ -55,12 +55,8 @@ export class CountersModel extends BuilderModel
 			},
 			/** @function counters/getTotalChatCounter */
 			getTotalChatCounter: (state: CountersState): number => {
-				let loadedChatsCounter = 0;
 				const recentCollection = Core.getStore().getters['recent/getRecentCollection'];
-				recentCollection.forEach((recentItem: ImModelRecentItem) => {
-					const recentItemCounter = this.#getRecentItemCounter(recentItem);
-					loadedChatsCounter += recentItemCounter;
-				});
+				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
 
 				let unloadedChatsCounter = 0;
 				Object.values(state.unloadedChatCounters).forEach((counter) => {
@@ -73,16 +69,8 @@ export class CountersModel extends BuilderModel
 			},
 			/** @function counters/getTotalCopilotCounter */
 			getTotalCopilotCounter: (state: CountersState): number => {
-				let loadedChatsCounter = 0;
 				const recentCollection = Core.getStore().getters['recent/getCopilotCollection'];
-				recentCollection.forEach((recentItem: ImModelRecentItem) => {
-					const chat = this.#getChat(recentItem.dialogId);
-					if (this.#isChatMuted(chat))
-					{
-						return;
-					}
-					loadedChatsCounter += chat.counter;
-				});
+				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
 
 				let unloadedChatsCounter = 0;
 				Object.values(state.unloadedCopilotCounters).forEach((counter) => {
@@ -93,12 +81,8 @@ export class CountersModel extends BuilderModel
 			},
 			/** @function counters/getTotalCollabCounter */
 			getTotalCollabCounter: (state: CountersState): number => {
-				let loadedChatsCounter = 0;
 				const recentCollection = Core.getStore().getters['recent/getCollabCollection'];
-				recentCollection.forEach((recentItem: ImModelRecentItem) => {
-					const recentItemCounter = this.#getRecentItemCounter(recentItem);
-					loadedChatsCounter += recentItemCounter;
-				});
+				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
 
 				let unloadedChatsCounter = 0;
 				Object.values(state.unloadedCollabCounters).forEach((counter) => {
@@ -382,5 +366,17 @@ export class CountersModel extends BuilderModel
 		}
 
 		return chat.counter;
+	}
+
+	#getLoadedChatsCounter(recentCollection: ImModelRecentItem[]): number
+	{
+		let loadedChatsCounter = 0;
+
+		recentCollection.forEach((recentItem: ImModelRecentItem) => {
+			const recentItemCounter = this.#getRecentItemCounter(recentItem);
+			loadedChatsCounter += recentItemCounter;
+		});
+
+		return loadedChatsCounter;
 	}
 }

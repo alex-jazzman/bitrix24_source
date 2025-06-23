@@ -437,7 +437,11 @@ class Calendar
 			return [];
 		}
 
-		return \CCalendar::getSectionListAvailableForUser($userId);
+		$sectionList = \CCalendar::getSectionListAvailableForUser($userId);
+
+		return array_filter($sectionList, static function(array $section) {
+			return ($section['PERM']['edit'] ?? null) === true;
+		});
 	}
 
 	public static function getCrmSectionId(int $userId, bool $autoCreate = false): ?int

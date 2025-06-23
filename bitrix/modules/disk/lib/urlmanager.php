@@ -645,9 +645,24 @@ class UrlManager implements IErrorable
 		return '/bitrix/tools/disk/document.php?' . http_build_query($params);
 	}
 
+	public static function getUrlForBoardsList(int $userId, array $getParams = [])
+	{
+		$get = '';
+		if ($getParams)
+		{
+			$get = '?' . http_build_query($getParams);
+		}
+		return '/company/personal/user/'.$userId.'/disk/boards/' . $get;
+	}
+
 	public function getUrlForViewBoard(int $fileId, $absolute = false)
 	{
-		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $fileId . '/openDocument';
+		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $fileId . '/open';
+	}
+
+	public function getUrlForViewAttachedBoard(int $attachedFileId, $absolute = false)
+	{
+		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $attachedFileId . '/openAttached';
 	}
 
 	/**

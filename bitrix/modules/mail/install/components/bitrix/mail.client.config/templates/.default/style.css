@@ -910,12 +910,6 @@
 	font-weight: var(--ui-font-weight-bold);
 	margin: 0 28px 0 0;
 }
-.mail-connect-last-sync-success {
-	color: #6f950d;
-}
-.mail-connect-last-sync-error {
-	color: #d04749;
-}
 .mail-connect-last-sync-wrapper {
 	margin: 8px 0 0 0;
 }

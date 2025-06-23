@@ -45,7 +45,7 @@ this.BX = this.BX || {};
 	    return this;
 	  }
 	  getCurrentListView(entityTypeId) {
-	    return this.currentViews[entityTypeId] || ListViewTypes.LIST;
+	    return this.currentViews[entityTypeId] || ListViewTypes.KANBAN;
 	  }
 	  static openSlider(url, options = null) {
 	    const preparedUrl = String(url);
@@ -147,7 +147,7 @@ this.BX = this.BX || {};
 	    const currentListView = this.getCurrentListView(entityTypeId);
 	    let template = null;
 	    if (currentListView === ListViewTypes.KANBAN) {
-	      template = this.getTemplate('bitrix:crm.kanban', entityTypeId);
+	      template = this.getTemplate('bitrix:crm.item.kanban', entityTypeId);
 	    } else {
 	      template = this.getTemplate('bitrix:crm.item.list', entityTypeId);
 	    }
@@ -257,6 +257,11 @@ this.BX = this.BX || {};
 	    let normalizedId = main_core.Text.toInteger(id);
 	    normalizedId = normalizedId > 0 ? normalizedId : 0;
 	    return new main_core.Uri(`/automation/type/automated_solution/details/${normalizedId}/`);
+	  }
+	  getDealKanbanUrl(categoryId) {
+	    let normalizedId = main_core.Text.toInteger(categoryId);
+	    normalizedId = normalizedId > 0 ? normalizedId : 0;
+	    return new main_core.Uri(`/crm/deal/kanban/category/${normalizedId}/`);
 	  }
 	}
 

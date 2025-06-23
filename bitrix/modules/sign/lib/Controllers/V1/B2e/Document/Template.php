@@ -4,25 +4,35 @@ namespace Bitrix\Sign\Controllers\V1\B2e\Document;
 
 use Bitrix\Main;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Attribute\Access\LogicAnd;
 use Bitrix\Sign\Attribute\ActionAccess;
+use Bitrix\Sign\Config\Feature;
 use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Item\Document;
+use Bitrix\Sign\Item\Document\Template\TemplateCreatedDocument;
 use Bitrix\Sign\Operation\Document\ExportBlank;
+use Bitrix\Sign\Operation\Document\Template\DeleteTemplateEntity;
 use Bitrix\Sign\Operation\Document\UnserializePortableBlank;
 use Bitrix\Sign\Operation\Document\Template\ImportTemplate;
 use Bitrix\Sign\Engine\Controller;
 use Bitrix\Sign\Operation;
 use Bitrix\Sign\Integration\Bitrix24\B2eTariff;
 use Bitrix\Sign\Operation\Document\Template\Send;
+use Bitrix\Sign\Result\Operation\Document\Template\CreateDocumentsResult;
 use Bitrix\Sign\Result\Operation\Document\Template\SendResult;
 use Bitrix\Sign\Result\Operation\Document\ExportBlankResult;
+use Bitrix\Sign\Result\Operation\Document\Template\SetupDocumentSignersResult;
 use Bitrix\Sign\Result\Operation\Document\UnserializePortableBlankResult;
+use Bitrix\Sign\Result\Operation\Member\ValidateEntitySelectorMembersResult;
 use Bitrix\Sign\Serializer\MasterFieldSerializer;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentScenario;
 use Bitrix\Sign\Type\ProviderCode;
+use Bitrix\Sign\Type\Template\EntityType;
 use Bitrix\Sign\Type\Template\Status;
 use Bitrix\Sign\Type\Template\Visibility;
 
@@ -55,16 +65,32 @@ class Template extends Controller
 			checkRequisitePermissions: false,
 		);
 		$result = [];
-		$documents = $documents->sortByTemplateIdsDesc();
-		foreach ($documents as $document)
+		foreach ($documents->sortByTemplateIdsDesc() as $document)
 		{
-			$companyId = $companyIds[$document->id];
+			if ($document === null)
+			{
+				continue;
+			}
+
+			$companyId = (int)($companyIds[$document->id] ?? null);
+			if ($companyId < 1)
+			{
+				continue;
+			}
+
 			$company = $companies->findById($companyId);
 			if ($company === null || $company->taxId === null || $company->taxId === '')
 			{
 				continue;
 			}
-			$template = $templates->findById($document->templateId);
+
+			$templateId = (int)$document->templateId;
+			if ($templateId < 1)
+			{
+				continue;
+			}
+
+			$template = $templates->findById($templateId);
 			if ($template === null)
 			{
 				continue;
@@ -109,8 +135,8 @@ class Template extends Controller
 
 		$result = (new Send(
 			template: $template,
-			sendFromUserId: $user->getId(),
 			fields: $fields,
+			sendFromUserId: (int)$user->getId(),
 		))->launch();
 		if (!$result instanceof SendResult)
 		{
@@ -168,7 +194,6 @@ class Template extends Controller
 	public function changeVisibilityAction(int $templateId, string $visibility): array
 	{
 		$visibility = Visibility::tryFrom($visibility);
-
 		if ($visibility === null)
 		{
 			$this->addErrorByMessage('Incorrect visibility status');
@@ -176,28 +201,13 @@ class Template extends Controller
 			return [];
 		}
 
-		$templateRepository = Container::instance()->getDocumentTemplateRepository();
-
-		$currentTemplate = $templateRepository->getById($templateId);
-		$currentStatus = $currentTemplate?->status ?? Status::NEW;
-
-		$isCurrentStatusNew = $currentStatus === Status::NEW;
-		$isVisible = $visibility === Visibility::VISIBLE;
-
-		$isStatusNewAndVisible = ($isCurrentStatusNew && $isVisible);
-		if ($isStatusNewAndVisible)
+		$result = Container::instance()->getDocumentTemplateService()->changeVisibility($templateId, $visibility);
+		if (!$result->isSuccess())
 		{
-			$this->addErrorByMessage('Incorrect visibility status');
+			$this->addErrorByMessage('Update visibility error');
 
 			return [];
 		}
-
-		$result = $templateRepository->updateVisibility($templateId, $visibility);
-		if (!$result->isSuccess())
-		{
-			$this->addErrorsFromResult($result);
-		}
-
 		return [];
 	}
 
@@ -208,10 +218,22 @@ class Template extends Controller
 	)]
 	public function deleteAction(int $templateId): array
 	{
-		$template = Container::instance()->getDocumentTemplateRepository()->getById($templateId);
+		$container = Container::instance();
+		$templateRepository = $container->getDocumentTemplateRepository();
+
+		$template = $templateRepository->getById($templateId);
 		if ($template === null)
 		{
 			$this->addErrorByMessage('Template not found');
+
+			return [];
+		}
+
+		$templateFolderRelationRepository = $container->getTemplateFolderRelationRepository();
+		$result = $templateFolderRelationRepository->deleteByIdAndType($templateId, EntityType::TEMPLATE);
+		if (!$result->isSuccess())
+		{
+			$this->addError(new Error('Delete relations error'));
 
 			return [];
 		}
@@ -230,7 +252,7 @@ class Template extends Controller
 		),
 		new ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_ADD),
 	)]
-	public function copyAction(int $templateId): array
+	public function copyAction(int $templateId, int $folderId): array
 	{
 		if ($templateId < 1)
 		{
@@ -248,7 +270,7 @@ class Template extends Controller
 		}
 
 		$createdByUserId = (int)CurrentUser::get()->getId();
-		$result = (new Operation\Document\Template\Copy($template, $createdByUserId))->launch();
+		$result = (new Operation\Document\Template\Copy($template, $createdByUserId, $folderId))->launch();
 		$this->addErrorsFromResult($result);
 
 		return [];
@@ -374,5 +396,197 @@ class Template extends Controller
 		$this->addErrorsFromResult($result);
 
 		return [];
+	}
+
+	/**
+	 * @param array<array{entityType: string, id: int}> $entities
+	 * @param int $folderId
+	 * @return array
+	 */
+	public function moveToFolderAction(array $entities, int $folderId): array
+	{
+		if (!Feature::instance()->isTemplateFolderGroupingAllowed())
+		{
+			$this->addErrorByMessage('Folder grouping is not allowed');
+
+			return [];
+		}
+
+		$container = Container::instance();
+		$templateAccessService = $container->getTemplateAccessService();
+		if (!$templateAccessService->hasAccessToEditTemplateEntities($entities)->isSuccess())
+		{
+			$this->addErrorByMessage('No access rights to edit all templates');
+
+			return [];
+		}
+
+		$templateService = $container->getDocumentTemplateService();
+		$result = $templateService->moveToFolder($entities, $folderId);
+		if (!$result->isSuccess())
+		{
+			$this->addErrorByMessage('Failed to move templates to folder');
+
+			return [];
+		}
+
+		return $result->getData();
+	}
+
+	/**
+	 * @param array<array{entityType: string, id: int}> $entities
+	 * @return array
+	 */
+	public function deleteEntitiesAction(array $entities): array
+	{
+		$templateAccessService = Container::instance()->getTemplateAccessService();
+		if (!$templateAccessService->hasAccessToDeleteTemplateEntities($entities)->isSuccess())
+		{
+			$this->addErrorByMessage('No access rights to delete all templates');
+
+			return [];
+		}
+
+		$templateFolderRelationService = Container::instance()->getTemplateFolderRelationService();
+		$preparedRelations = $templateFolderRelationService->getPrepareTemplateFolderRelations($entities);
+		if ($preparedRelations->isEmpty())
+		{
+			$this->addErrorByMessage('Relation collection cannot be empty');
+			return [];
+		}
+
+		$result = (new DeleteTemplateEntity($preparedRelations->toArray()))->launch();
+		if (!$result->isSuccess())
+		{
+			$this->addErrorByMessage('Delete folders or templates error');
+			return [];
+		}
+
+		return [];
+	}
+
+	/**
+	 * @param list<int> $templateIds
+	 *
+	 * @return array
+	 */
+	#[LogicAnd(
+		new ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_TEMPLATE_READ,
+			itemType: AccessibleItemType::TEMPLATE,
+			itemIdOrUidRequestKey: 'templateIds',
+		),
+		new ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD),
+	)]
+	public function registerDocumentsAction(array $templateIds): array
+	{
+		if (empty($templateIds))
+		{
+			$this->addErrorByMessage('No template ids');
+
+			return [];
+		}
+
+		$templates = Container::instance()
+			->getDocumentTemplateRepository()
+			->getByIds($templateIds)
+		;
+
+		$notFoundTemplates = array_diff($templateIds, $templates->getIds());
+		if (!empty($notFoundTemplates))
+		{
+			$this->addErrorByMessage('Not found templates with ids: ' . implode(',', $notFoundTemplates));
+
+			return [];
+		}
+
+		$operation = new Operation\Document\Template\RegisterDocumentsByTemplates(
+			templates: $templates,
+			sendFromUserId: (int)$this->getCurrentUser()->getId(),
+			onlyInitiatedByType: InitiatedByType::COMPANY,
+		);
+
+		$result = $operation->launch();
+		if ($result instanceof CreateDocumentsResult)
+		{
+			return [
+				'items' => array_map(
+					static fn (TemplateCreatedDocument $createdDocument) => [
+						'templateId' => $createdDocument->template->id,
+						'document' => (new \Bitrix\Sign\Ui\ViewModel\Wizard\Document($createdDocument->document))
+							->toArray()
+						,
+					],
+					$result->createdDocuments->toArray(),
+				),
+			];
+		}
+
+		$this->addErrorsFromResult($result);
+
+		return [];
+	}
+
+	/**
+	 * @param list<int> $documentIds
+	 * @param array{entityType: string, entityId: string} $signers
+	 *
+	 * @return array
+	 */
+	#[ActionAccess(
+		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		itemType: AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'documentIds',
+	)]
+	public function setupSignersAction(
+		array $documentIds,
+		array $signers,
+	): array
+	{
+		if (empty($documentIds))
+		{
+			$this->addErrorByMessage('No document ids');
+
+			return [];
+		}
+
+		$entitiesResult = (new Operation\Member\ValidateEntitySelectorSigners($signers))->launch();
+		if (!$entitiesResult instanceof ValidateEntitySelectorMembersResult)
+		{
+			$this->addErrorsFromResult($entitiesResult);
+
+			return [];
+		}
+
+		$documents = Container::instance()->getDocumentRepository()->listByIds($documentIds);
+		$notFoundDocuments = array_diff($documentIds, array_keys($documents->getArrayByIds()));
+		if (!empty($notFoundDocuments))
+		{
+			$this->addErrorByMessage('Not found documents with ids: ' . implode(',', $notFoundDocuments));
+
+			return [];
+		}
+
+		$operation = new Operation\Document\Template\SetupDocumentsSigners(
+			documents: $documents,
+			signers: $entitiesResult->entities,
+			sendFromUserId: (int)$this->getCurrentUser()->getId(),
+		);
+
+		$result = $operation->launch();
+		if (!$result instanceof SetupDocumentSignersResult)
+		{
+			$this->addErrorsFromResult($result);
+
+			return [];
+		}
+
+		return [
+			'shouldCheckDepartmentsSync' => $result->shouldCheckDepartmentSync,
+			'documents' => array_map(
+				static fn(Document $document) => (new \Bitrix\Sign\Ui\ViewModel\Wizard\Document($document))->toArray(),
+				$documents->toArray(),
+			),
+		];
 	}
 }

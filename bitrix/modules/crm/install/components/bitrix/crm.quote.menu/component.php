@@ -151,15 +151,7 @@ if ($arParams['TYPE'] === 'details')
 		$arResult['BUTTONS'][] = array(
 			'TYPE' => 'toolbar-conv-scheme',
 			'PARAMS' => array(
-				'NAME' => 'quote_converter',
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Quote,
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
-				'ENTITY_ID' => $arParams['ELEMENT_ID'],
-				'SCHEME_ID' => $schemeID,
-				'SCHEME_NAME' => \Bitrix\Crm\Conversion\QuoteConversionScheme::resolveName($schemeID),
 				'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\QuoteConversionScheme::getDescription($schemeID),
-				'IS_PERMITTED' => $isPermitted,
-				'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->prepareInfoHelperScript()
 			),
 			'CODE' => 'convert',
 			'TEXT' => Loc::getMessage('QUOTE_CREATE_ON_BASIS'),

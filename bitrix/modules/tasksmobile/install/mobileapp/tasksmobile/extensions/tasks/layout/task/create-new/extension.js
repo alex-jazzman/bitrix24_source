@@ -74,6 +74,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	} = require('tasks/fields/restriction');
 	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { AnalyticsEvent } = require('analytics');
+	const { AppRatingManager, UserEvent } = require('app-rating-manager');
 
 	const isAndroid = Application.getPlatform() !== 'ios';
 	const PARENT_TASK_HEIGHT = 30;
@@ -1538,7 +1539,19 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 				if (closeAfterSave)
 				{
-					this.layoutWidget.close();
+					this.layoutWidget.close(async () => {
+						if (Number.isNaN(this.state.flowId) || this.state.flowId === 0)
+						{
+							await AppRatingManager.increaseCounter(UserEvent.TASKS_CREATED);
+						}
+						else
+						{
+							await AppRatingManager.increaseCounter(UserEvent.TASKS_IN_FLOW_CREATED);
+						}
+						AppRatingManager.tryOpenAppRating({
+							parentWidget,
+						});
+					});
 				}
 			};
 

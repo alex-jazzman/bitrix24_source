@@ -307,7 +307,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 	{
 		$content = '<div class="bitrix-footer-terms">';
 		$lang = $this->getLang();
-		$setLinks = [
+		$links = [
 			'com' => [
 				'report' => 'https://www.bitrix24.com/abuse/',
 			],
@@ -334,7 +334,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 			],
 		];
 		$region = Application::getInstance()->getLicense()->getRegion();
-		$hrefLinkReport = new Uri($setLinks[$region]['report'] ?? $setLinks['com']['report']);
+		$hrefLinkReport = new Uri($links[$region]['report'] ?? $links['com']['report']);
 		$protocol = Manager::isHttps() ? 'https://' : 'http://';
 		$url = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 		$siteId = $this->getSiteId();
@@ -347,14 +347,19 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 			'from_url' => urlencode($url),
 		];
 		$hrefLinkReportWithParams = $hrefLinkReport->addParams($urlParams);
-		$linkReport = '<a class="bitrix-footer-link bitrix-footer-link-report" target="_blank" rel="nofollow"  href="'
+		$linkOpen =
+			'<a target="_blank" rel="nofollow" href="'
 			. $hrefLinkReportWithParams
 			. '">'
-			. Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT', null, $lang)
-			. '</a>';
+		;
+		$textReport = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_2', [
+			'#a1#' => $linkOpen,
+			'#a2#' => '</a>'
+		]);
 		$hintText = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_HINT', null, $lang);
 		$hint = '<span class="bitrix-footer-hint" data-hint="' . $hintText . '"></span>';
-		$content .= $linkReport . $hint;
+		$content .= "<span class=\"bitrix-footer-link bitrix-footer-link-report\">$textReport</span>";
+		$content .= $hint;
 		$content .= '</div>';
 
 		return $content;

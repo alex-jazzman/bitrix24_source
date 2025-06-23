@@ -28,7 +28,10 @@ export const AddToChatButton = {
 	},
 	mounted()
 	{
-		this.showAddToChatHint = PromoManager.getInstance().needToShow(PromoId.addUsersToCopilotChat);
+		const needCopilotInRecentTabHint = PromoManager.getInstance().needToShow(PromoId.copilotInRecentTab);
+		const needAddUsersToChatHint = PromoManager.getInstance().needToShow(PromoId.addUsersToCopilotChat);
+
+		this.showAddToChatHint = !needCopilotInRecentTabHint && needAddUsersToChatHint;
 	},
 	methods:
 	{

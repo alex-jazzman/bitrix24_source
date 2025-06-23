@@ -1,5 +1,3 @@
-// jn.require('im/messenger/lib/dev/action-timer');
-
 // eslint-disable-next-line no-var
 var REVISION = 19; // API revision - sync with im/lib/revision.php
 
@@ -24,13 +22,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
+	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
+	QuickRecentLoader.renderItemsOnViewLoaded();
+
 	const DialogList = dialogList;
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { isEqual } = require('utils/object');
+	const { EntityReady } = require('entity-ready');
+
 	const { ChannelApplication } = require('im/messenger/core/channel');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { EntityReady } = require('entity-ready');
 	const { Logger } = require('im/messenger/lib/logger');
 	const {
 		AppStatus,
@@ -38,7 +40,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		RestMethod,
 		ComponentCode,
 		NavigationTab,
+		Analytics,
 	} = require('im/messenger/const');
+
+	EntityReady.ready(`${ComponentCode.imChannelMessenger}::launched`);
 
 	const core = new ChannelApplication({
 		localStorage: {
@@ -59,7 +64,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const emitter = new JNEventEmitter();
 	serviceLocator.add('emitter', emitter);
 
-	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
+	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const channelInitService = new MessengerInitService({
 		actionName: RestMethod.immobileTabChannelLoad,
 	});
@@ -73,20 +78,24 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		ChannelFilePullHandler,
 	} = require('im/messenger/provider/pull/channel');
 	const { SidebarPullHandler } = require('im/messenger/provider/pull/sidebar');
-	const { SyncFillerChannel } = require('im/messenger/provider/service');
+	const { VotePullHandler } = require('im/messenger/provider/pull/vote');
+	const { SyncFillerChannel } = require('im/messenger/provider/services/sync/fillers/channel');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { CreateChannel } = require('im/messenger/controller/chat-composer');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
 	const { ChannelRecent } = require('im/messenger/controller/recent/channel');
 	const { RecentView } = require('im/messenger/view/recent');
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
+	const { SidebarLazyFactory } = require('im/messenger/controller/sidebar-v2/factory');
 	/* endregion import */
 
 	class ChannelMessenger extends MessengerBase
@@ -117,7 +126,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			this.extendWatchTimerId = null;
 			this.currentTab = MessengerParams.get('FIRST_TAB_ID', NavigationTab.imMessenger);
-			EntityReady.addCondition('channel-messenger', () => this.isReady);
+			EntityReady.addCondition(`${ComponentCode.imChannelMessenger}::ready`, () => this.isReady);
 		}
 
 		initCore()
@@ -172,9 +181,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
-			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
 			this.openChatSearch = this.openChatSearch.bind(this);
 			this.closeChatSearch = this.closeChatSearch.bind(this);
+			this.openChatCreate = this.openChatCreate.bind(this);
 			this.refresh = this.refresh.bind(this);
 
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
@@ -188,11 +197,19 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
+		preloadAssets()
+		{
+			SidebarLazyFactory.preload();
+		}
+
+		/**
+		 * @override
+		 */
 		subscribeMessengerEvents()
 		{
-			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
+			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
 		}
@@ -200,9 +217,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		unsubscribeMessengerEvents()
 		{
 			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.removeCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
+			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
 		}
 
@@ -296,10 +313,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		initPullHandlers()
 		{
+			super.initPullHandlers();
 			BX.PULL.subscribe(new ChannelFilePullHandler());
 			BX.PULL.subscribe(new ChannelMessagePullHandler());
 			BX.PULL.subscribe(new ChannelDialogPullHandler());
 			BX.PULL.subscribe(new SidebarPullHandler());
+			BX.PULL.subscribe(new VotePullHandler());
 		}
 
 		/**
@@ -435,7 +454,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshErrorNoticeFlag = false;
 			ChatTimer.stop('recent', 'error', true);
 
-			Counters.update();
+			TabCounters.update();
 
 			return this.ready();
 		}
@@ -487,7 +506,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			if (this.isFirstLoad)
 			{
 				Logger.warn('ChannelMessenger.ready');
-				EntityReady.ready('channel-messenger');
+				EntityReady.ready(`${ComponentCode.imChannelMessenger}::ready`);
 			}
 
 			this.isFirstLoad = false;
@@ -530,6 +549,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					this.dialog.open(openDialogOptions);
 
 					this.recent.view.renderChatCreateButton();
+
+					if (openDialogOptions.backToMessenegerTab)
+					{
+						MessengerEmitter.emit(
+							EventType.navigation.changeTab,
+							ComponentCode.imMessenger,
+							ComponentCode.imNavigation,
+						);
+					}
 				})
 				.catch((error) => {
 					Logger.error(error);
@@ -551,17 +579,30 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.searchSelector.close();
 		}
 
+		openChatCreate()
+		{
+			Logger.log(`${this.constructor.name}.createChat`);
+
+			if (!Feature.isChatComposerSupported)
+			{
+				Feature.showUnsupportedWidget();
+
+				return;
+			}
+
+			const createChannel = new CreateChannel();
+			createChannel.open();
+
+			AnalyticsService.getInstance().sendStartCreation({
+				section: Analytics.Section.channelTab,
+				category: Analytics.Category.channel,
+				type: Analytics.Type.channel,
+			});
+		}
+
 		onTaskStatusSuccess(taskId, result)
 		{
 			Logger.log('ChannelMessenger.chatDialog.taskStatusSuccess', taskId, result);
-		}
-
-		getOpenDialogParams(options = {})
-		{
-			const openDialogParamsResponseEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
-
-			const params = Dialog.getOpenDialogParams(options);
-			BX.postComponentEvent(openDialogParamsResponseEvent, [params], ComponentCode.imChannelMessenger);
 		}
 
 		/**

@@ -1,7 +1,7 @@
 <?php
 return [
 	'extensions' => [
-        'analytics',
+		'analytics',
 		'require-lazy',
 		'type',
 		'notify',
@@ -9,7 +9,7 @@ return [
 		'haptics',
 		'loc',
 		'toast',
-		'selector/widget/factory',
+		'feature',
 		'ui-system/layout/box',
 		'ui-system/layout/area-list',
 		'ui-system/layout/area',
@@ -27,7 +27,7 @@ return [
 		'layout/ui/email-input-box',
 		'layout/ui/name-checker-box',
 		'layout/ui/qr-invite',
-		'intranet/enum',
+		'intranet:enum',
 		'ui-system/blocks/avatar',
 		'utils/phone',
 		'utils/type',
@@ -37,12 +37,13 @@ return [
 		'notify-manager',
 		'intranet:invite-status-box',
 		'ui-system/form/buttons/button',
-		'feature',
+		'selector/widget/factory',
+		'im:messenger/controller/selector/member',
 	],
 	'bundle' => [
 		'./src/guests-tab-content',
-        './src/api',
+		'./src/api',
 		'./src/utils',
-        './src/analytics',
+		'./src/analytics',
 	]
 ];

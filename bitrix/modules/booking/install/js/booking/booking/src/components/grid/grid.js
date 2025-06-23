@@ -2,8 +2,9 @@ import { Dom, Event } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Ears } from 'ui.ears';
 
-import { AhaMoment, Model } from 'booking.const';
+import { AhaMoment, DraggedElementKind, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
+import { Drag } from 'booking.lib.drag';
 import { grid } from 'booking.lib.grid';
 import type { BookingModel } from 'booking.model.bookings';
 
@@ -20,6 +21,7 @@ type GridData = {
 	scrolledToBooking: boolean,
 };
 
+// @vue/component
 export const Grid = {
 	data(): GridData
 	{
@@ -43,11 +45,18 @@ export const Grid = {
 			resourcesIds: `${Model.Interface}/resourcesIds`,
 			scroll: `${Model.Interface}/scroll`,
 			editingBookingId: `${Model.Interface}/editingBookingId`,
+			editingWaitListItemId: `${Model.Interface}/editingWaitListItemId`,
+			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
+			isLoaded: `${Model.Interface}/isLoaded`,
 		}),
 		editingBooking(): BookingModel | null
 		{
 			return this.$store.getters['bookings/getById'](this.editingBookingId) ?? null;
 		},
+	},
+	beforeUnmount(): void
+	{
+		this.dragManager?.destroy();
 	},
 	methods: {
 		updateEars(): void
@@ -86,6 +95,19 @@ export const Grid = {
 				void this.$refs.scalePanel.showAhaMoment();
 			}
 		},
+		initDragManager(id: number | string = '', kind: $Values<typeof DraggedElementKind> = null): void
+		{
+			if (this.isFeatureEnabled)
+			{
+				const dataId = id ? `[data-id="${id}"]` : '';
+				const dataKind = kind ? `[data-kind="${kind}"]` : '';
+
+				this.dragManager = new Drag({
+					container: this.$el.parentElement,
+					draggable: `.booking--draggable-item${dataId}${dataKind}`,
+				});
+			}
+		},
 	},
 	watch: {
 		scroll(value): void
@@ -95,6 +117,41 @@ export const Grid = {
 		editingBooking(): void
 		{
 			this.scrollToEditingBooking();
+		},
+		isLoaded(isLoaded): void
+		{
+			if (isLoaded)
+			{
+				let dataId = null;
+				let dataKind = null;
+				if (this.editingBookingId)
+				{
+					dataId = this.editingBookingId;
+					dataKind = DraggedElementKind.Booking;
+				}
+
+				if (this.editingWaitListItemId)
+				{
+					dataId = this.editingWaitListItemId;
+					dataKind = DraggedElementKind.WaitListItem;
+				}
+
+				this.initDragManager(dataId, dataKind);
+			}
+		},
+		editingBookingId(id: number | string): void
+		{
+			if (id)
+			{
+				this.initDragManager(id, DraggedElementKind.Booking);
+			}
+		},
+		editingWaitListItemId(id: number | string): void
+		{
+			if (id)
+			{
+				this.initDragManager(id, DraggedElementKind.WaitListItem);
+			}
 		},
 	},
 	components: {
@@ -106,8 +163,9 @@ export const Grid = {
 		Sidebar,
 		DragDelete,
 	},
+	// language=Vue
 	template: `
-		<div class="booking-booking-grid">
+		<div ref="bookingContainer" class="booking-booking-grid">
 			<div
 				id="booking-booking-grid-wrap"
 				class="booking-booking-grid-inner --vertical-scroll-bar"

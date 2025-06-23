@@ -10,10 +10,16 @@ const IMAGE_CLASS = 'bx-im-messenger__out-of-view';
 const checkTimeoutList = {};
 
 export const CheckUtils = {
-	testImageLoad(successCallback, failureCallback, image = IMAGE_DESKTOP_RUN)
+	testImageLoad(image = IMAGE_DESKTOP_RUN): Promise<boolean>
 	{
+		let resolvePromise = null;
+
+		const loadCheckPromise = new Promise((resolve) => {
+			resolvePromise = resolve;
+		});
+
 		const dateCheck = Date.now();
-		let failureCallbackCalled = false;
+		let isPromiseResolvedToFalse = false;
 
 		const imageForCheck = Dom.create({
 			tag: 'img',
@@ -26,20 +32,20 @@ export const CheckUtils = {
 			},
 			events: {
 				error() {
-					if (failureCallbackCalled)
+					if (isPromiseResolvedToFalse)
 					{
 						return;
 					}
 
 					const checkId = this.dataset.id;
-					failureCallback(false, checkId);
+					resolvePromise(false);
 
 					clearTimeout(checkTimeoutList[checkId]);
 					Dom.remove(this);
 				},
 				load() {
 					const checkId = this.dataset.id;
-					successCallback(true, checkId);
+					resolvePromise(true);
 
 					clearTimeout(checkTimeoutList[checkId]);
 					Dom.remove(this);
@@ -50,11 +56,13 @@ export const CheckUtils = {
 		document.body.append(imageForCheck);
 
 		checkTimeoutList[dateCheck] = setTimeout(() => {
-			failureCallbackCalled = true;
+			isPromiseResolvedToFalse = true;
 
-			failureCallback(false, dateCheck);
+			resolvePromise(false);
 			Dom.remove(imageForCheck);
 		}, IMAGE_CHECK_TIMEOUT);
+
+		return loadCheckPromise;
 	},
 
 	testInternetConnection(): Promise

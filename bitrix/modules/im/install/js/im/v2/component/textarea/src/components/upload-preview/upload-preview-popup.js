@@ -1,5 +1,7 @@
 import { PopupManager } from 'main.popup';
-import { MessengerPopup } from 'im.v2.component.elements';
+
+import { MessengerPopup } from 'im.v2.component.elements.popup';
+
 import { UploadPreviewContent } from './upload-preview-content';
 
 import type { PopupOptions } from 'main.popup';
@@ -16,8 +18,12 @@ export const UploadPreviewPopup = {
 			type: String,
 			required: true,
 		},
-		uploaderId: {
-			type: String,
+		uploaderIds: {
+			type: Array,
+			required: true,
+		},
+		sourceFilesCount: {
+			type: Number,
 			required: true,
 		},
 		textareaValue: {
@@ -68,8 +74,9 @@ export const UploadPreviewPopup = {
 			:id="POPUP_ID"
 		>
 			<UploadPreviewContent 
-				:dialogId="dialogId" 
-				:uploaderId="uploaderId"
+				:dialogId="dialogId"
+				:uploaderIds="uploaderIds"
+				:sourceFilesCount="sourceFilesCount"
 				:textareaValue="textareaValue"
 				@close="$emit('close')"
 				@sendFiles="onSendFiles"

@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/reaction-viewer/controller', (require, exports, module) => {
 	const { ReactionViewerView } = require('im/messenger/controller/reaction-viewer/view');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ReactionService } = require('im/messenger/provider/service');
+	const { ReactionService } = require('im/messenger/provider/services/reaction');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');

@@ -36,7 +36,6 @@ class Client
 		'ru' => 'https://marketplace.1c-bitrix.ru/tobasket.php?ID=#CODE#&limit=#NUM#&b24=y',
 		'en' => 'https://store.bitrix24.com/tobasket.php?ID=#CODE#&limit=#NUM#&b24=y',
 		'de' => 'https://store.bitrix24.de/tobasket.php?ID=#CODE#&limit=#NUM#&b24=y',
-		'ua' => 'https://marketplace.1c-bitrix.ua/tobasket.php?ID=#CODE#&limit=#NUM#&b24=y',
 	);
 
 	private static $appTop = null;
@@ -211,20 +210,32 @@ class Client
 		return (is_array($categories['ITEMS']) ? $categories['ITEMS'] : []);
 	}
 
-	public static function getCategory($code, $page = false, $pageSize = false)
+	public static function getCategory($code, $page = false, $pageSize = false, bool $isMarket = false)
 	{
-		$queryFields = Array(
-			"code" => $code
-		);
-		$page = intval($page);
-		$pageSize = intval($pageSize);
-		if($page > 0)
+		$queryFields = [];
+		$page = (int)$page;
+		$pageSize = (int)$pageSize;
+
+		if ($page > 0)
 		{
 			$queryFields["page"] = $page;
 		}
-		if($pageSize > 0)
+		if ($pageSize > 0)
 		{
 			$queryFields["onPageSize"] = $pageSize;
+		}
+
+		if ($isMarket)
+		{
+			$queryFields['_market_'] = 'Y';
+			if (is_string($code))
+			{
+				$queryFields['category'] = $code;
+			}
+		}
+		else
+		{
+			$queryFields['code'] = $code;
 		}
 
 		return Transport::instance()->call(

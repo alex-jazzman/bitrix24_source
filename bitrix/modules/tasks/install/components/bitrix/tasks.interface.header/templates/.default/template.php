@@ -29,6 +29,7 @@ $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 			'USE_AJAX_ROLE_FILTER' => $arParams['USE_AJAX_ROLE_FILTER'],
 			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
 			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+			'MARK_SECTION_TASKS_LIST' => $arParams['MARK_SECTION_TASKS_LIST'] ?? null,
 			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
 			'MARK_TEMPLATES' => $arParams['MARK_TEMPLATES'] ?? null,
 			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,

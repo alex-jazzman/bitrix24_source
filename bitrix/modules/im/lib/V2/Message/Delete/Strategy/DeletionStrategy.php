@@ -2,15 +2,20 @@
 
 namespace Bitrix\Im\V2\Message\Delete\Strategy;
 
+use Bitrix\Disk\SystemUser;
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Entity\File\FileCollection;
 use Bitrix\Im\V2\Message\Delete\DeletionMode;
 use Bitrix\Im\V2\MessageCollection;
 use Bitrix\Im\V2\Result;
+use Bitrix\Im\V2\Sync\Event;
+use Bitrix\Im\V2\Sync\Logger;
 
 abstract class DeletionStrategy
 {
 	protected MessageCollection $messages;
-	protected ?Chat $chat;
+	protected Chat $chat;
+	protected ?FileCollection $files = null;
 
 	final protected function __construct(MessageCollection $messages)
 	{
@@ -44,6 +49,32 @@ abstract class DeletionStrategy
 	 */
 	abstract protected function execute(): void;
 
+	protected function logToSync(string $event): void
+	{
+		$ids = $this->messages->getIds();
+
+		foreach ($ids as $id)
+		{
+			Logger::getInstance()->add(
+				new Event($event, Event::MESSAGE_ENTITY, $id),
+				fn () => $this->chat->getRelations()->getUserIds(),
+				$this->chat
+			);
+		}
+	}
+
+	protected function deleteFiles(): void
+	{
+		if (!isset($this->files))
+		{
+			return;
+		}
+
+		foreach ($this->files as $file)
+		{
+			$file->getDiskFile()?->delete(SystemUser::SYSTEM_USER_ID);
+		}
+	}
 
 	/**
 	 * @throws InterruptedExecutionException

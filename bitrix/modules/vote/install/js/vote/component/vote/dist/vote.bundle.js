@@ -1,8 +1,132 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Vote = this.BX.Vote || {};
-(function (exports,ui_notification,vote_provider_service,vote_component_loader,main_core,ui_iconSet_animated,vote_application,main_popup,ui_vue3_components_popup) {
+(function (exports,im_v2_const,vote_provider_service,vote_component_loader,main_core_events,im_v2_lib_menu,vote_analytics,main_core,ui_vue3_directives_hint,vote_application,main_popup,ui_vue3_components_popup) {
 	'use strict';
+
+	var _app = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("app");
+	var _getCurrentVote = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentVote");
+	var _canCompleteVote = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canCompleteVote");
+	var _canShowResults = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canShowResults");
+	var _canRevokeVote = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canRevokeVote");
+	var _getCurrentQuestion = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentQuestion");
+	class VoteMessageMenu extends im_v2_lib_menu.MessageMenu {
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _getCurrentQuestion, {
+	      value: _getCurrentQuestion2
+	    });
+	    Object.defineProperty(this, _canRevokeVote, {
+	      value: _canRevokeVote2
+	    });
+	    Object.defineProperty(this, _canShowResults, {
+	      value: _canShowResults2
+	    });
+	    Object.defineProperty(this, _canCompleteVote, {
+	      value: _canCompleteVote2
+	    });
+	    Object.defineProperty(this, _getCurrentVote, {
+	      value: _getCurrentVote2
+	    });
+	    Object.defineProperty(this, _app, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = vote_application.VoteApplication.getInstance();
+	  }
+	  getMenuItems() {
+	    return [this.getReplyItem(), this.getShowResultsItem(), this.getRevokeItem(), this.getCopyLinkItem(), this.getPinItem(), this.getFavoriteItem(), this.getCompleteItem(), this.getDeleteItem()];
+	  }
+	  getCopyLinkItem() {
+	    const copyLinkItem = super.getCopyLinkItem();
+	    const {
+	      onclick
+	    } = copyLinkItem;
+	    copyLinkItem.onclick = () => {
+	      onclick();
+	      vote_analytics.VoteAnalytics.copyLink(this.context.dialogId, this.context.id, 'message_link');
+	    };
+	    return copyLinkItem;
+	  }
+	  getRevokeItem() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canRevokeVote)[_canRevokeVote]()) {
+	      return null;
+	    }
+	    return {
+	      text: main_core.Loc.getMessage('VOTE_REVOKE'),
+	      onclick: () => {
+	        main_core_events.EventEmitter.emit('vote:message-menu:revoke-vote', {
+	          entityId: this.context.id
+	        });
+	        this.close();
+	      }
+	    };
+	  }
+	  getCompleteItem() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canCompleteVote)[_canCompleteVote]()) {
+	      return null;
+	    }
+	    return {
+	      text: main_core.Loc.getMessage('VOTE_POPUP_BTN_COMPLETE'),
+	      onclick: () => {
+	        main_core_events.EventEmitter.emit('vote:message-menu:complete-vote', {
+	          entityId: this.context.id
+	        });
+	        this.close();
+	      }
+	    };
+	  }
+	  getShowResultsItem() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canShowResults)[_canShowResults]()) {
+	      return null;
+	    }
+	    return {
+	      text: main_core.Loc.getMessage('VOTE_SHOW_RESULTS'),
+	      onclick: () => {
+	        main_core_events.EventEmitter.emit('vote:message-menu:results-vote', {
+	          entityId: this.context.id
+	        });
+	        this.close();
+	      }
+	    };
+	  }
+	}
+	function _getCurrentVote2() {
+	  const voteCollection = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].getStore().getters['vote/getVoteCollection'];
+	  return voteCollection[this.context.componentParams.id];
+	}
+	function _canCompleteVote2() {
+	  const vote = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentVote)[_getCurrentVote]();
+	  if (!vote) {
+	    return false;
+	  }
+	  return !vote.isCompleted && vote.canEdit;
+	}
+	function _canShowResults2() {
+	  const vote = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentVote)[_getCurrentVote]();
+	  const question = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentQuestion)[_getCurrentQuestion]();
+	  if (!vote || !question) {
+	    return false;
+	  }
+	  return vote.canEdit && babelHelpers.classPrivateFieldLooseBase(this, _getCurrentQuestion)[_getCurrentQuestion]().totalCounter > 0;
+	}
+	function _canRevokeVote2() {
+	  const vote = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentVote)[_getCurrentVote]();
+	  if (!vote) {
+	    return false;
+	  }
+	  return !vote.isCompleted && vote.canRevoke && vote.isVoted;
+	}
+	function _getCurrentQuestion2() {
+	  var _this$context$compone, _questionCollection$f;
+	  const questions = (_this$context$compone = this.context.componentParams.data) == null ? void 0 : _this$context$compone.questions;
+	  if (!questions) {
+	    return null;
+	  }
+	  const [firstQuestionId] = Object.keys(questions);
+	  const questionCollection = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].getStore().getters['vote/getQuestionCollection'];
+	  return (_questionCollection$f = questionCollection[firstQuestionId]) != null ? _questionCollection$f : null;
+	}
 
 	const getMessage = phraseCode => {
 	  return main_core.Loc.getMessage(phraseCode);
@@ -16,6 +140,9 @@ this.BX.Vote = this.BX.Vote || {};
 	// @vue/component
 	const VoteQuestion = {
 	  name: 'VoteQuestion',
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
 	  props: {
 	    contextId: {
 	      type: String,
@@ -57,13 +184,13 @@ this.BX.Vote = this.BX.Vote || {};
 	    },
 	    formattedAnswers() {
 	      const formattedAnswers = {};
-	      Object.keys(this.answers).forEach(key => {
+	      Object.keys(this.answers).forEach((key, index) => {
 	        const answer = this.answers[key];
 	        const storeAnswer = this.answersCollection[answer.id] || {};
 	        formattedAnswers[key] = {
 	          ...answer,
 	          counter: storeAnswer.counter || 0,
-	          percent: storeAnswer.percent
+	          percent: this.question.isMultiple ? Math.round(storeAnswer.percent) : this.roundPercentages[index]
 	        };
 	      });
 	      return formattedAnswers;
@@ -73,6 +200,30 @@ this.BX.Vote = this.BX.Vote || {};
 	    },
 	    canShowResults() {
 	      return this.isUserVoted || this.isCompleted;
+	    },
+	    answerVotes() {
+	      return Object.values(this.answers).map(answer => {
+	        var _this$answersCollecti;
+	        const counter = (_this$answersCollecti = this.answersCollection[answer.id]) == null ? void 0 : _this$answersCollecti.counter;
+	        return counter || 0;
+	      });
+	    },
+	    roundPercentages() {
+	      const totalVotes = this.answerVotes.reduce((sum, count) => sum + count, 0);
+	      if (totalVotes === 0) {
+	        return this.answerVotes.map(() => 0);
+	      }
+	      const calculatedPercents = this.answerVotes.map(vote => vote / totalVotes * 100);
+	      const roundedPercents = calculatedPercents.map(percent => Math.floor(percent));
+	      const remainder = 100 - roundedPercents.reduce((sum, p) => sum + p, 0);
+	      const fractionalParts = calculatedPercents.map((percent, index) => ({
+	        index,
+	        fraction: percent % 1
+	      })).sort((a, b) => b.fraction - a.fraction);
+	      for (let i = 0; i < remainder; i++) {
+	        roundedPercents[fractionalParts[i].index] += 1;
+	      }
+	      return roundedPercents;
 	    }
 	  },
 	  watch: {
@@ -115,6 +266,24 @@ this.BX.Vote = this.BX.Vote || {};
 	    },
 	    getUniqueAnswerId(answerId) {
 	      return `vote-answer-${answerId}-${this.contextId}`;
+	    },
+	    showHintCounter(counter) {
+	      return {
+	        text: this.countText(counter),
+	        popupOptions: {
+	          position: 'bottom',
+	          targetContainer: document.body,
+	          offsetLeft: 25,
+	          offsetTop: 5,
+	          autoHide: false,
+	          angle: {
+	            position: 'top'
+	          }
+	        }
+	      };
+	    },
+	    countText(counter) {
+	      return getMessageWithCount('VOTE_RESULT_COUNT', counter);
 	    }
 	  },
 	  template: `
@@ -142,19 +311,27 @@ this.BX.Vote = this.BX.Vote || {};
 					v-model="selectedCheckboxes"
 					:value="answer.id"
 					:id="getUniqueAnswerId(answer.id)"
+					:key="answer.id"
 					@change="checkboxChanged"
 				/>
 				<div class="vote__progress-bar">
 					<label class='vote__answer-text' :for="getUniqueAnswerId(answer.id)">{{ answer.message }}</label>
-					<div v-if="canShowResults" class="vote__answer-percent">
-						<span>{{ answer.percent }}</span>
-						%
-					</div>
-					<div v-if="canShowResults" class="vote__progress-bar-fill"
-						 :style="{
-						width: answer.percent + '%'
-					  }"
-					></div>
+					<transition name="vote__answer-percent-show">
+						<div
+							v-if="canShowResults"
+							v-hint="answer.counter > 0 ? (() => showHintCounter(answer.counter)) : null"
+							class="vote__answer-percent"
+							:key="'percent-' + answerKey + '-' + answer.counter">
+							<span>{{ answer.percent }}</span>
+							%
+						</div>
+					</transition>
+					<transition name="vote__progress-bar-filled">
+						<div v-if="canShowResults" class="vote__progress-bar-fill"
+							 :key="'fill-' + answerKey"
+							 :style="{ '--target-width': answer.percent + '%' }"
+						></div>
+					</transition>
 				</div>
 			</div>
 		</div>
@@ -205,10 +382,10 @@ this.BX.Vote = this.BX.Vote || {};
 	      return this.app.getStore().getters['vote/getQuestionCollection'][this.question.id].isMultiple;
 	    },
 	    buttonType() {
-	      if (this.isUserVoted || this.isCompleted) {
+	      if ((this.isUserVoted || this.isCompleted) && this.question.totalCounter > 0) {
 	        return ButtonType.showResults;
 	      }
-	      if (this.isMultipleQuestion) {
+	      if (this.isMultipleQuestion && !this.isCompleted) {
 	        return ButtonType.vote;
 	      }
 	      return ButtonType.disable;
@@ -219,15 +396,15 @@ this.BX.Vote = this.BX.Vote || {};
 	    buttonClass() {
 	      return `--${this.buttonType}`;
 	    },
-	    getSummaryText() {
+	    summaryText() {
 	      if (this.question.totalCounter > 0) {
-	        return getMessageWithCount('VOTE_SUMMARY_COUNT', this.question.totalCounter);
+	        return getMessageWithCount('VOTE_RESULT_COUNT', this.question.totalCounter);
 	      }
-	      return getMessage('VOTE_SUMMARY_NO_VOTES');
+	      return getMessage('VOTE_SUMMARY_COUNT_NO_VOTES');
 	    },
-	    getButtonText() {
+	    buttonText() {
 	      if (this.isUserVoted || !this.isMultipleQuestion || this.isCompleted) {
-	        return this.getSummaryText;
+	        return this.summaryText;
 	      }
 	      return getMessage('VOTE_BUTTON');
 	    }
@@ -251,7 +428,7 @@ this.BX.Vote = this.BX.Vote || {};
 					:class="[buttonClass, { '--active': isBtnAvailableToVote }]"
 					type="button"
 			>
-				{{ getButtonText }}
+				{{ buttonText }}
 			</button>
 		</div>
 	`
@@ -299,6 +476,7 @@ this.BX.Vote = this.BX.Vote || {};
 	};
 
 	const ANONYMOUS_VOTE = 2;
+	const ALLOW_REVOKING = 1;
 
 	// @vue/component
 	const VoteDisplay = {
@@ -327,15 +505,15 @@ this.BX.Vote = this.BX.Vote || {};
 	      required: true
 	    }
 	  },
-	  emits: ['vote', 'revokeVote', 'copyLink'],
+	  emits: ['vote', 'revokeVote', 'copyLink', 'completeVote'],
 	  data() {
 	    return {
-	      isLoading: true,
 	      isShowPopup: false,
 	      questionAnswers: {}
 	    };
 	  },
 	  computed: {
+	    getMessage: () => getMessage,
 	    firstQuestion() {
 	      var _this$voteItem$data, _this$voteItem$data2;
 	      const firstKey = Object.keys((_this$voteItem$data = this.voteItem.data) == null ? void 0 : _this$voteItem$data.questions)[0];
@@ -364,12 +542,6 @@ this.BX.Vote = this.BX.Vote || {};
 	      }
 	      return this.currentVote.isVoted;
 	    },
-	    canRevoke() {
-	      if (this.isLoading) {
-	        return false;
-	      }
-	      return this.currentVote.canRevoke && this.isUserVoted && !this.isCompleted;
-	    },
 	    canEdit() {
 	      if (this.isLoading) {
 	        return false;
@@ -389,32 +561,48 @@ this.BX.Vote = this.BX.Vote || {};
 	    hasSelectedAnswers() {
 	      return main_core.Type.isArrayFilled(this.questionAnswers[this.firstQuestion.id]);
 	    },
-	    getVoteTypeText() {
+	    voteTypeText() {
 	      return this.isAnonymous ? getMessage('VOTE_ANONYMOUS') : getMessage('VOTE_PUBLIC');
 	    },
-	    getCompletionVoteText() {
-	      return getMessage('VOTE_NOTICE_COMPLETED');
+	    isLoading() {
+	      var _this$currentVote$isL, _this$currentVote;
+	      return (_this$currentVote$isL = (_this$currentVote = this.currentVote) == null ? void 0 : _this$currentVote.isLoading) != null ? _this$currentVote$isL : true;
+	    },
+	    showRevokeNotice() {
+	      var _this$voteItem$data4;
+	      if (!this.isLoading && this.currentVote.isCompleted) {
+	        return false;
+	      }
+	      return ((_this$voteItem$data4 = this.voteItem.data) == null ? void 0 : _this$voteItem$data4.options) !== ALLOW_REVOKING;
 	    }
 	  },
 	  created() {
 	    this.app = vote_application.VoteApplication.init();
-	    this.voteService = new vote_provider_service.ImVoteService(this.entityType, this.entityId);
+	    this.voteService = vote_provider_service.ImVoteService.init();
+	    im_v2_lib_menu.MessageMenuManager.getInstance().registerMenuByMessageType(im_v2_const.MessageComponent.voteMessage, VoteMessageMenu);
+	    this.subscribeOnEvents();
 	  },
-	  async mounted() {
-	    this.loadAttach();
+	  mounted() {
+	    var _this$currentVote2;
+	    if (!this.currentVote || ((_this$currentVote2 = this.currentVote) == null ? void 0 : _this$currentVote2.isLoading) !== false) {
+	      main_core_events.EventEmitter.emit('vote-message-batch', {
+	        messageId: this.entityId
+	      });
+	    }
+	  },
+	  beforeUnmount() {
+	    this.unsubscribeFromEvents();
 	  },
 	  methods: {
-	    notifyAjaxError(ex) {
-	      if (main_core.Type.isObject(ex) && main_core.Type.isArrayFilled(ex.errors)) {
-	        var _ex$errors$0$message, _ex$errors$;
-	        const message = (_ex$errors$0$message = ex == null ? void 0 : (_ex$errors$ = ex.errors[0]) == null ? void 0 : _ex$errors$.message) != null ? _ex$errors$0$message : 'Unexpected error';
-	        ui_notification.UI.Notification.Center.notify({
-	          content: main_core.Text.encode(message),
-	          autoHideDelay: 4000
-	        });
-	      } else {
-	        console.error(ex);
-	      }
+	    subscribeOnEvents() {
+	      main_core_events.EventEmitter.subscribe('vote:message-menu:complete-vote', this.isShowCompletePopup);
+	      main_core_events.EventEmitter.subscribe('vote:message-menu:revoke-vote', this.recallVote);
+	      main_core_events.EventEmitter.subscribe('vote:message-menu:results-vote', this.showResults);
+	    },
+	    unsubscribeFromEvents() {
+	      main_core_events.EventEmitter.unsubscribe('vote:message-menu:complete-vote', this.isShowCompletePopup);
+	      main_core_events.EventEmitter.unsubscribe('vote:message-menu:revoke-vote', this.recallVote);
+	      main_core_events.EventEmitter.unsubscribe('vote:message-menu:results-vote', this.showResults);
 	    },
 	    async answersSelected(event) {
 	      this.questionAnswers[event.questionId] = event.answerIds;
@@ -425,12 +613,11 @@ this.BX.Vote = this.BX.Vote || {};
 	      void this.submitVote();
 	    },
 	    async submitVote() {
-	      this.isLoading = true;
 	      try {
 	        this.app.getStore().dispatch('vote/setUserVoted', {
 	          voteId: this.currentVote.id
 	        });
-	        await this.voteService.sendVote(this.questionAnswers);
+	        await this.voteService.sendVote(this.questionAnswers, this.voteItem.id, this.entityId);
 	        this.$emit('vote');
 	        this.questionAnswers = {};
 	      } catch (e) {
@@ -443,14 +630,17 @@ this.BX.Vote = this.BX.Vote || {};
 	          autoHideDelay: 4000
 	        });
 	      }
-	      this.isLoading = false;
 	    },
 	    onClickVoteButton() {
 	      if (main_core.Type.isArrayFilled(this.questionAnswers[this.formattedQuestion.id])) {
 	        this.submitVote();
 	      }
 	    },
-	    async showResults() {
+	    async showResults(event) {
+	      var _event$data;
+	      if (event && ((_event$data = event.data) == null ? void 0 : _event$data.entityId) !== this.entityId) {
+	        return;
+	      }
 	      BX.SidePanel.Instance.open(this.currentVote.resultUrl, {
 	        cacheable: false,
 	        width: 480,
@@ -467,22 +657,13 @@ this.BX.Vote = this.BX.Vote || {};
 	        }
 	      });
 	    },
-	    async loadAttach() {
-	      try {
-	        await this.voteService.load();
-	        this.isLoading = false;
-	      } catch (e) {
-	        this.notifyAjaxError(e);
-	        // @TODO add error state;
-	      }
-	    },
-
 	    async completeVote() {
 	      try {
 	        this.app.getStore().dispatch('vote/setVoteCompleted', {
 	          voteId: this.currentVote.id
 	        });
-	        await this.voteService.completeVote();
+	        await this.voteService.completeVote(this.entityId);
+	        this.$emit('completeVote');
 	      } catch (e) {
 	        console.error('Vote: complete vote error', e);
 	        this.app.getStore().dispatch('vote/resetVoteCompleted', {
@@ -494,14 +675,25 @@ this.BX.Vote = this.BX.Vote || {};
 	        });
 	      }
 	    },
-	    onCompetePopupConfirm() {
+	    isShowCompletePopup(event) {
+	      var _event$data2;
+	      if (((_event$data2 = event.data) == null ? void 0 : _event$data2.entityId) !== this.entityId) {
+	        return;
+	      }
+	      this.isShowPopup = true;
+	    },
+	    onCompletePopupConfirm() {
 	      this.isShowPopup = false;
 	      this.completeVote();
 	    },
-	    onCompetePopupCancel() {
+	    onCompletePopupCancel() {
 	      this.isShowPopup = false;
 	    },
-	    async recallVote() {
+	    async recallVote(event) {
+	      var _event$data3;
+	      if (((_event$data3 = event.data) == null ? void 0 : _event$data3.entityId) !== this.entityId) {
+	        return;
+	      }
 	      const previousSelectedAnswers = this.app.getStore().getters['vote/getCurrentUserVotes'][this.firstQuestion.id];
 	      try {
 	        this.app.getStore().dispatch('vote/clearVotes', {
@@ -511,7 +703,7 @@ this.BX.Vote = this.BX.Vote || {};
 	        this.app.getStore().dispatch('vote/resetUserVoted', {
 	          voteId: this.currentVote.id
 	        });
-	        await this.voteService.revokeVote();
+	        await this.voteService.revokeVote(this.entityId, this.currentVote.id);
 	        this.$emit('revokeVote');
 	      } catch (e) {
 	        console.error('Vote: recall vote error', e);
@@ -530,55 +722,48 @@ this.BX.Vote = this.BX.Vote || {};
 	    }
 	  },
 	  template: `
-			<form class="vote-display">
-				<div class="vote-display-inner">
-					<VoteQuestion
-						:key="formattedQuestion.id"
-						:contextId="contextId"
-						:isLoading="isLoading"
+		<form class="vote-display">
+			<div class="vote-display-inner">
+				<VoteQuestion
+					:key="formattedQuestion.id"
+					:contextId="contextId"
+					:isLoading="isLoading"
+					:question="formattedQuestion"
+					:isUserVoted="isUserVoted"
+					:isCompleted="isCompleted"
+					:answers="formattedQuestion.answers"
+					@answersSelected="answersSelected"
+				/>
+				<div class="vote-display-bottom-container">
+					<div v-if="isLoading" class="vote-display__loader">
+						<Loader />
+					</div>
+					<ButtonArea v-else
 						:question="formattedQuestion"
+						:isLoading="isLoading"
 						:isUserVoted="isUserVoted"
 						:isCompleted="isCompleted"
-						:answers="formattedQuestion.answers"
-						@answersSelected="answersSelected"
+						:isBtnActive="hasSelectedAnswers"
+						@onClickVoteButton="onClickVoteButton"
+						@showResults="showResults"
 					/>
-					<div class="vote-display-bottom-container">
-						<div v-if="isLoading" class="vote-display__loader">
-							<Loader />
-						</div>
-						<ButtonArea v-else
-							:question="formattedQuestion"
-							:isLoading="isLoading"
-							:isUserVoted="isUserVoted"
-							:isCompleted="isCompleted"
-							:isBtnActive="hasSelectedAnswers"
-							@onClickVoteButton="onClickVoteButton"
-							@showResults="showResults"
-						/>
-						<div class="vote__notice">
-							<span class="vote__notice-text">{{ getVoteTypeText }}</span>
-							<span v-if="isCompleted" class="vote__notice-text">{{ getCompletionVoteText }}</span>
-						</div>
-
-		<!--				temporary button for testing-->
-						<div style="height:22px;display:none;">
-							<button v-if="canRevoke" @click="recallVote" type="button">Переголосовать</button>
-						</div>
-						<div style="height:22px;display:none;">
-							<button  v-if="!isCompleted && canEdit" @click="isShowPopup = true" type="button">Завершить</button>
-						</div>
+					<div class="vote__notice">
+						<span class="vote__notice-text">{{ voteTypeText }}</span>
+						<span v-if="showRevokeNotice" class="vote__notice-text">{{ getMessage('VOTE_NOTICE_REVOKE_IS_NOT_AVAILABLE') }}</span>
+						<span v-if="isCompleted" class="vote__notice-text">{{ getMessage('VOTE_NOTICE_COMPLETED') }}</span>
 					</div>
 				</div>
-			</form>
-			<VotePopup 
-				v-if="isShowPopup" 
-				@confirm="onCompetePopupConfirm"
-				@cancel="onCompetePopupCancel"
-			/>
+			</div>
+		</form>
+		<VotePopup
+			v-if="isShowPopup"
+			@confirm="onCompletePopupConfirm"
+			@cancel="onCompletePopupCancel"
+		/>
 	`
 	};
 
 	exports.VoteDisplay = VoteDisplay;
 
-}((this.BX.Vote.Component = this.BX.Vote.Component || {}),BX,BX.Vote.Service,BX.Vote.Component,BX,BX,BX.Vote,BX.Main,BX.UI.Vue3.Components));
+}((this.BX.Vote.Component = this.BX.Vote.Component || {}),BX.Messenger.v2.Const,BX.Vote.Service,BX.Vote.Component,BX.Event,BX.Messenger.v2.Lib,BX.Vote,BX,BX.Vue3.Directives,BX.Vote,BX.Main,BX.UI.Vue3.Components));
 //# sourceMappingURL=vote.bundle.js.map

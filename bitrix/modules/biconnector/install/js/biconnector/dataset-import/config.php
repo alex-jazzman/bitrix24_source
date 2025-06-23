@@ -12,6 +12,7 @@ return [
 	'js' => 'dist/dataset-import.bundle.js',
 	'rel' => [
 		'ui.vue3',
+		'biconnector.dataset-import.file-export',
 		'ui.pinner',
 		'ui.section',
 		'ui.alerts',

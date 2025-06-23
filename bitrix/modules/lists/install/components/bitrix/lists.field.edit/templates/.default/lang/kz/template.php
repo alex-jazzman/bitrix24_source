@@ -51,4 +51,4 @@ $MESS["CT_BLFE_TOOLBAR_DELETE_TITLE"] = "Өрісті жойып, өрістер
 $MESS["CT_BLFE_TOOLBAR_DELETE_WARNING"] = "Осы өрісті жойғыңыз келетініне сенімдісіз бе?";
 $MESS["CT_BLFE_TOOLBAR_FIELDS"] = "Тізім өрістері";
 $MESS["CT_BLFE_TOOLBAR_FIELDS_TITLE"] = "Тізім өрістерін баптау";
-$MESS["CT_BLFE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ӨРІСТЕР ТІЗІМІНЕ";
+$MESS["CT_BLFE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "Өрістер тізіміне";

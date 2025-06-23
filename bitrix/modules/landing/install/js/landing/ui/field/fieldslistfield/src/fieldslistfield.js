@@ -17,6 +17,7 @@ import {SeparatorPanel} from 'landing.ui.panel.separatorpanel';
 import {PageObject} from 'landing.pageobject';
 import {Loader} from 'main.loader';
 import {ProductField} from 'landing.ui.field.productfield';
+import { Settings as BookingFieldController } from 'booking.crm-forms.settings';
 import 'calendar.resourcebookinguserfield';
 import 'socnetlogdest';
 import 'ui.hint';
@@ -24,7 +25,6 @@ import {IconButton} from 'landing.ui.component.iconbutton';
 import {RequisiteSettingsField} from './internal/requisite-settings-field';
 
 import './css/style.css';
-
 
 export class FieldsListField extends BaseField
 {
@@ -205,7 +205,7 @@ export class FieldsListField extends BaseField
 		return '';
 	}
 
-	createResourceBookingFieldController(options: {[key: string]: any})
+	createCustomFieldController(options: ListItemOptions): { getSettings: Function, showSettingsPopup: Function }
 	{
 		if (options.type === 'resourcebooking')
 		{
@@ -213,11 +213,16 @@ export class FieldsListField extends BaseField
 			const crmField = this.getCrmFieldById(options.id);
 			return root.BX.Calendar.ResourcebookingUserfield.initCrmFormFieldController({
 				field: {
-					...options,
+					...options.sourceOptions,
 					dict: crmField,
 					node: Tag.render`<div><div class="crm-webform-resourcebooking-wrap"></div></div>`,
 				},
 			});
+		}
+
+		if (options.type === 'booking')
+		{
+			return new BookingFieldController(options, this.data.formOptions);
 		}
 
 		return null;
@@ -257,7 +262,7 @@ export class FieldsListField extends BaseField
 				listItemOptions.description = options.label || (crmField ? crmField.caption : '');
 				listItemOptions.editable = true;
 				listItemOptions.isSeparator = false;
-				listItemOptions.fieldController = this.createResourceBookingFieldController(options);
+				listItemOptions.fieldController = this.createCustomFieldController(listItemOptions);
 
 
 				if (options.editing.supportAutocomplete)
@@ -1082,6 +1087,7 @@ export class FieldsListField extends BaseField
 			'url',
 			'money',
 			'boolean',
+			'booking',
 			'resourcebooking',
 			'radio',
 			'bool',
@@ -1243,11 +1249,24 @@ export class FieldsListField extends BaseField
 
 	onItemEdit(event: BaseEvent)
 	{
+		const listItem = event.getTarget();
 		const {options} = event.getTarget();
 		if (options.fieldController)
 		{
 			event.preventDefault();
 			options.fieldController.showSettingsPopup();
+			if (options.sourceOptions.settingsData)
+			{
+				options.form.unsubscribe('onChange', listItem.onFormChange);
+				options.form.subscribe('onChange', listItem.onFormChange);
+				options.fieldController.settingsPopup.subscribeOnce('onClose', () => {
+					options.sourceOptions.settingsData = options.fieldController.getSettings();
+					options.form.emit('onChange');
+				});
+
+				return;
+			}
+
 			setTimeout(() => {
 				options.fieldController.settingsPopup.subscribeOnce('onClose', () => {
 					options.sourceOptions.booking.settings_data = options.fieldController.getSettings().data;

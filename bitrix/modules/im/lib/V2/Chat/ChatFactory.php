@@ -15,6 +15,7 @@ class ChatFactory
 	use ContextCustomer;
 
 	public const NON_CACHED_FIELDS = ['MESSAGE_COUNT', 'USER_COUNT', 'LAST_MESSAGE_ID'];
+	private const LOCK_TIMEOUT = 3;
 
 	protected static self $instance;
 
@@ -203,6 +204,7 @@ class ChatFactory
 			$type === Chat::IM_TYPE_COMMENT => new CommentChat($params),
 			$type === Chat::IM_TYPE_COPILOT => new CopilotChat($params),
 			$type === Chat::IM_TYPE_COLLAB => new CollabChat($params),
+			$type === Chat::IM_TYPE_EXTERNAL => new ExternalChat($params),
 			default => new NullChat(),
 		};
 
@@ -444,6 +446,24 @@ class ChatFactory
 		return $chat;
 	}
 
+	private function getEntityChatId(string $entityType, string $entityId): ?int
+	{
+		$row = ChatTable::query()
+			->setSelect(['ID'])
+			->where('ENTITY_TYPE', $entityType)
+			->where('ENTITY_ID', $entityId)
+			->setLimit(1)
+			->fetch()
+		;
+
+		if (!$row)
+		{
+			return null;
+		}
+
+		return (int)$row['ID'];
+	}
+
 	//endregion
 
 	//region Add new chat
@@ -454,9 +474,8 @@ class ChatFactory
 	 */
 	public function addChat(array $params): Result
 	{
-		$params['ENTITY_TYPE'] = $params['ENTITY_TYPE'] ?? '';
-
-		$params['TYPE'] = $params['TYPE'] ?? Chat::IM_TYPE_CHAT;
+		$params['ENTITY_TYPE'] ??= '';
+		$params['TYPE'] ??= Chat::IM_TYPE_CHAT;
 
 		// Temporary workaround for Open chat type
 		if (($params['SEARCHABLE'] ?? 'N') === 'Y')
@@ -493,6 +512,63 @@ class ChatFactory
 		}
 
 		return $addResult;
+	}
+
+	/**
+	 * Creates a chat ensuring uniqueness for the provided ENTITY_TYPE and ENTITY_ID pair.
+	 * @see static::addChat()
+	 *
+	 * @param array $params ENTITY_TYPE and ENTITY_ID are required keys
+	 * @return Result
+	 */
+	public function addUniqueChat(array $params): Result
+	{
+		$result = new Result();
+		if (!isset($params['ENTITY_TYPE']))
+		{
+			return $result->addError(new ChatError(ChatError::ENTITY_TYPE_EMPTY));
+		}
+		if (!isset($params['ENTITY_ID']))
+		{
+			return $result->addError(new ChatError(ChatError::ENTITY_ID_EMPTY));
+		}
+
+		$entityType = (string)$params['ENTITY_TYPE'];
+		$entityId = (string)$params['ENTITY_ID'];
+		$lockName = self::getUniqueAdditionLockName($entityType, $entityId);
+		$connection = Application::getConnection();
+
+		$isLocked = $connection->lock($lockName, self::LOCK_TIMEOUT);
+		if (!$isLocked)
+		{
+			return $result->addError(new ChatError(ChatError::CREATION_ERROR));
+		}
+
+		try
+		{
+			$chatId = $this->getEntityChatId($entityType, $entityId);
+			if ($chatId)
+			{
+				return $result->setResult(['CHAT_ID' => $chatId, 'CHAT' => Chat::getInstance($chatId)]);
+			}
+
+			return $this->addChat($params);
+		}
+		catch (\Throwable $exception)
+		{
+			Application::getInstance()->getExceptionHandler()->writeToLog($exception);
+
+			return $result->addError(new ChatError(ChatError::CREATION_ERROR));
+		}
+		finally
+		{
+			$connection->unlock($lockName);
+		}
+	}
+
+	private static function getUniqueAdditionLockName(string $entityType, string $entityId): string
+	{
+		return "add_unique_chat_{$entityType}_{$entityId}";
 	}
 
 	//endregion

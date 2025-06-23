@@ -809,8 +809,8 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									? CUtil::JsObjectToPhp($_POST["EVENTS"], true)
 									: null,
 								"ACTIVE" => $active,
-								"REPORT" => $sanitizer->SanitizeHtml($_POST["REPORT"]),
-								"PLANS" => $sanitizer->SanitizeHtml($_POST["PLANS"]),
+								"REPORT" => $sanitizer->SanitizeHtml($_POST["REPORT"] ?? ''),
+								"PLANS" => $sanitizer->SanitizeHtml($_POST["PLANS"] ?? ''),
 							];
 
 							if ($arFields["ACTIVE"] != "Y")
@@ -2513,6 +2513,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 					$info["request_id"] = ($_REQUEST["request_id"] ?? null);
 					if (CModule::IncludeModule("pull"))
 					{
+						/** @deprecated TIMEMANWORKINGDAY_ */
 						CPullWatch::AddToStack('TIMEMANWORKINGDAY_' . $USER->GetID(),
 							[
 								'module_id' => 'timeman',

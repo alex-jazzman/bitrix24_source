@@ -136,7 +136,6 @@ export const ImportPreview = {
 							</div>
 						</div>
 						<div class="import-preview__has-data" v-else>
-							<span class="import-preview__hint">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT') }}</span>
 							<PreviewTable
 								:headers="headers"
 								:column-visibility="columnVisibility"

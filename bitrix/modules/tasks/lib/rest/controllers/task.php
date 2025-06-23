@@ -1900,7 +1900,9 @@ final class Task extends Base
 	{
 		$filter = (!empty($filter) ? $filter : []);
 
-		$userId = ($filter['MEMBER'] ?? $this->getCurrentUser()->getId());
+		$memberId = is_numeric($filter['MEMBER'] ?? null) ? (int)$filter['MEMBER'] : null;
+
+		$userId = ($memberId ?? $this->getCurrentUser()->getId());
 		$roleId = (array_key_exists('ROLE', $filter) ? $filter['ROLE'] : '');
 
 		$filter = $this->processFilterSearchIndex($filter);

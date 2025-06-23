@@ -75,6 +75,38 @@ class CIntranetInviteDialog
 		return "BX.SidePanel.Instance.open('".$invitationLink."', {cacheable: false, allowChangeHistory: false, width: 1100})";
 	}
 
+	public static function GetInviteDialogLink($params = array())
+	{
+		$data = [
+			'c' => 'bitrix:intranet.invitation',
+			'mode' => Router::COMPONENT_MODE_AJAX,
+		];
+
+		$subSection = null;
+		if (isset($params['analyticsLabel']))
+		{
+			$subSection = $params['analyticsLabel']['analyticsLabel[source]'];
+		}
+
+		if (!is_null($subSection))
+		{
+			$analyticsLabels = [
+				'analyticsLabel[tool]' => 'Invitation',
+				'analyticsLabel[category]' => 'invitation',
+				'analyticsLabel[event]' => 'drawer_open',
+				'analyticsLabel[c_section]' => $subSection
+			];
+			$params['analyticsLabel'] = array_merge($params['analyticsLabel'], $analyticsLabels);
+		}
+
+		if (isset($params['analyticsLabel']))
+		{
+			$data = array_merge($data, $params['analyticsLabel']);
+		}
+
+		return UrlManager::getInstance()->create('getSliderContent', $data);
+	}
+
 	public static function setSendPassword($value)
 	{
 		self::$bSendPassword = $value;
@@ -1372,14 +1404,8 @@ class CIntranetInviteDialog
 
 				$firstUserCollab = $provider->getList($query)->getFirst();
 			}
-
-			$message = (new \Bitrix\Intranet\Service\InviteMessageFactory(
-				self::getInviteMessageText(),
-				$firstUserCollab
-			))
-				->create($user)
-			;
-			$message->sendImmediately();
+			$factory = new \Bitrix\Intranet\Internal\Factory\Message\CollabInvitationMessageFactory($user, $firstUserCollab);
+			$factory->createEmailEvent()->sendImmediately();
 
 			return true;
 		}

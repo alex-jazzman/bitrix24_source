@@ -512,7 +512,7 @@ final class TaskProvider
 
 		if (!isset($workMode))
 		{
-			$order['IS_PINNED'] = $ASC;
+			$order['IS_PINNED'] = 'DESC';
 		}
 
 		if ($this->order === TaskProvider::ORDER_DEADLINE)
@@ -591,6 +591,7 @@ final class TaskProvider
 
 		$taskStage = [];
 		$kanban = [];
+
 		if ($kanbanOwnerId)
 		{
 			$taskStageProvider = new TasksStagesProvider($workMode, null, $projectId, $kanbanOwnerId);
@@ -764,6 +765,7 @@ final class TaskProvider
 		$tasks = $this->fillFormattedDescription($tasks);
 		$tasks = $this->fillUserFieldsData($tasks);
 		$tasks = $this->fillActionData($tasks);
+		$tasks = $this->fillShouldShowStage($tasks);
 
 		if ($shouldFillDodData)
 		{
@@ -1238,6 +1240,41 @@ final class TaskProvider
 		return $tasks;
 	}
 
+	private function fillShouldShowStage(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		$preparedTasks = [];
+		foreach ($tasks as $task)
+		{
+			if ($task['ID'] > 0 && $task['GROUP_ID'] > 0)
+			{
+				$preparedTasks[] = [
+					'ID' => (int)$task['ID'],
+					'GROUP_ID' => (int)$task['GROUP_ID'],
+				];
+			}
+		}
+
+		if (empty($preparedTasks))
+		{
+			return $tasks;
+		}
+
+		$scrumProvider = new ScrumProvider();
+		$tasksWithKanbanStages = $scrumProvider->filterTasksWithKanbanStages($preparedTasks);
+
+		foreach ($tasksWithKanbanStages as $taskId)
+		{
+			$tasks[$taskId]['SHOULD_SHOW_KANBAN_STAGES'] = true;
+		}
+
+		return $tasks;
+	}
+
 	private function isDodNecessary(int $taskId, int $groupId): bool
 	{
 		$userId = User::getId();
@@ -1642,6 +1679,7 @@ final class TaskProvider
 					'areUserFieldsLoaded' => $task['ARE_USER_FIELDS_LOADED'] ?? false,
 					'userFields' => $task['USER_FIELDS'] ?? [],
 					'userFieldNames' => $task['USER_FIELD_NAMES'] ?? [],
+					'shouldShowKanbanStages' => $task['SHOULD_SHOW_KANBAN_STAGES'] ?? false,
 				])
 			),
 			$tasks,

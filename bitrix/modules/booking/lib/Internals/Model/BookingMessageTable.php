@@ -66,7 +66,6 @@ final class BookingMessageTable extends DataManager
 				->configureRequired(),
 
 			(new IntegerField('EXTERNAL_MESSAGE_ID'))
-				->configureRequired()
 				->configureRequired(),
 
 			(new DatetimeField('CREATED_AT')),

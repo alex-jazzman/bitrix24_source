@@ -1,13 +1,15 @@
 import { MenuManager } from 'main.popup';
 
 import { Core } from 'im.v2.application.core';
-import { ChatAvatar, AvatarSize, UserStatus, UserStatusSize, ScrollWithGradient } from 'im.v2.component.elements';
+import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
+import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 import { Utils } from 'im.v2.lib.utils';
 import { PopupType, Settings, UserStatus as UserStatusType } from 'im.v2.const';
 
 import { ButtonPanel } from './button-panel';
 import { UserStatusPopup } from '../status/user-status-popup';
+import { UserStatus, UserStatusSize } from '../status/user-status';
 import { DesktopAccountList } from './desktop-account-list/desktop-account-list';
 
 import 'ui.buttons';

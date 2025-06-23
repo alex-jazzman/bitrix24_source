@@ -156,6 +156,37 @@ return [
 		],
 		'readonly' => true,
 	],
+	'service.b2e.robot.publicity' => [
+		'value' => [
+			'ru' => true,
+			'by' => false,
+			'eu' => false,
+			'de' => false,
+			'fr' => false,
+			'it' => false,
+			'pl' => false,
+			'uk' => false,
+			'ur' => false,
+			'us' => false,
+			'en' => false,
+			'br' => false,
+			'la' => false,
+			'tr' => false,
+			'jp' => false,
+			'tc' => false,
+			'sc' => false,
+			'hi' => false,
+			'vn' => false,
+			'id' => false,
+			'ms' => false,
+			'th' => false,
+			'cn' => false,
+			'in' => false,
+			'co' => false,
+			'mx' => false,
+		],
+		'readonly' => true,
+	],
 	'service.publicity' => [
 		'value' => [
 			'ru' => true,
@@ -235,6 +266,9 @@ return [
 			],
 			'sign.service.integration.signmobile.member' => [
 				'className' => \Bitrix\Sign\Service\Integration\SignMobile\MemberService::class,
+			],
+			'sign.service.integration.humanresources.structurenode' => [
+				'className' => \Bitrix\Sign\Service\Integration\HumanResources\StructureNodeService::class,
 			],
 			'sign.container' => [
 				'className' => Service\Container::class,
@@ -519,6 +553,9 @@ return [
 			'sign.service.integration.crm.myCompany' => [
 				'className' => Service\Integration\Crm\MyCompanyService::class,
 			],
+			'sign.service.integration.crm.entity.relation' => [
+				'className' => Service\Integration\Crm\EntityRelationService::class,
+			],
 			'sign.service.provider.memberDynamic' => [
 				'className' => Service\Providers\MemberDynamicFieldInfoProvider::class,
 			],
@@ -533,6 +570,9 @@ return [
 			],
 			'sign.service.integration.humanresources.hcmlink.signedFile' => [
 				'className' => Service\Integration\HumanResources\HcmLinkSignedFileService::class,
+			],
+			'sign.service.integration.humanresources.node' => [
+				'className' => Service\Integration\HumanResources\NodeService::class,
 			],
 			'sign.service.provider.legal' => [
 				'className' => Service\Providers\LegalInfoProvider::class,
@@ -561,6 +601,30 @@ return [
 			'sign.access.controller.factory' => [
 				'className' => \Bitrix\Sign\Access\AccessController\AccessControllerFactory::class,
 			],
+			'sign.repository.document.templateFolder' => [
+				'className' => Repository\Document\TemplateFolderRepository::class,
+			],
+			'sign.repository.document.templateGrid' => [
+				'className' => Repository\Grid\TemplateGridRepository::class,
+			],
+			'sign.repository.document.templateFolderRelation' => [
+				'className' => Repository\Document\TemplateFolderRelationRepository::class,
+			],
+			'sign.service.document.templateFolder' => [
+				'className' => Service\Sign\Document\TemplateFolderService::class,
+			],
+			'sign.service.document.template.access' => [
+				'className' => Service\Sign\Document\Template\AccessService::class,
+			],
+			'sign.service.document.template.templateFolderRelation' => [
+				'className' => Service\Sign\Document\Template\TemplateFolderRelationService::class,
+			],
+			'sign.service.sign.document.signUntil' => [
+				'className' => Service\Sign\Document\SignUntilService::class,
+			],
+			'sign.service.localizedError' => [
+				'className' => Service\LocalizedErrorService::class,
+			],
 		]
 	],
 	'service.new.ui' => [ 'value' => true,],
@@ -574,7 +638,26 @@ return [
 						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\MyCompanyDataProvider::class,
 					],
 				],
+				[
+					'entityId' => 'sign-document',
+					'options' => [
+						'dynamicLoad' => true,
+						'dynamicSearch' => true,
+					],
+					'provider' => [
+						'moduleId' => 'sign',
+						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\SignRecentDocumentProvider::class,
+					],
+				],
+				[
+					'entityId' => 'sign-fired-user',
+					'provider' => [
+						'moduleId' => 'sign',
+						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\FiredUserProvider::class,
+					],
+				],
 			],
+			'extensions' => ['sign.entity-selector'],
 		],
 	],
 	'userField' => [

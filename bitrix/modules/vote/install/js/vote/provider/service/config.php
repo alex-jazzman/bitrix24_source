@@ -7,9 +7,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/vote-service.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
+		'ui.notification',
 		'vote.application',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];
 

@@ -17,7 +17,7 @@ jn.define('im/messenger/controller/chat-composer/update/channel', (require, expo
 	{
 		openChannelView({ titleType = WidgetTitleParamsType.entity } = {})
 		{
-			PageManager.openWidget('layout', {
+			this.parentWidget.openWidget('layout', {
 				titleParams: {
 					text: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_UPDATE_CHANNEL_TITLE'),
 					type: titleType,

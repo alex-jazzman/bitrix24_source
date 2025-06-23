@@ -22,12 +22,13 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		SystemTextMessage,
 		UnsupportedMessage,
 		CopilotPromptMessage,
-		CopilotErrorMessage,
+		ErrorMessage,
 		CopilotMessage,
 		CheckInMessageFactory,
 		CreateBannerFactory,
 		GalleryMessageFactory,
 		CallMessageFactory,
+		VoteMessageFactory,
 	} = require('im/messenger/lib/element');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageHelper } = require('im/messenger/lib/helper');
@@ -38,21 +39,31 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 	class MessageUiConverter
 	{
 		/**
+		 * @constructor
+		 * @param {DialogId} dialogId
+		 * @param {DialogLocator} dialogCode
+		 */
+		constructor({ dialogId, dialogCode })
+		{
+			this.dialogCode = dialogCode;
+			this.dialogId = dialogId;
+		}
+
+		/**
 		 * @param {Array<MessagesModelState>} modelMessageList
-		 * @param dialogId
 		 * @return {Array<Message>}
 		 */
-		static createMessageList(modelMessageList, dialogId)
+		createMessageList(modelMessageList)
 		{
 			if (!Type.isArrayFilled(modelMessageList))
 			{
 				return [];
 			}
 
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
-			const options = MessageUiConverter.prepareSharedOptionsForMessages(dialog);
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](this.dialogId);
+			const options = this.prepareSharedOptionsForMessages(dialog);
 
-			return modelMessageList.map((modelMessage) => MessageUiConverter.createMessage(modelMessage, options));
+			return modelMessageList.map((modelMessage) => this.createMessage(modelMessage, options));
 		}
 
 		/**
@@ -60,7 +71,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		 * @param {CreateMessageOptions} options
 		 * @return {Message}
 		 */
-		static createMessage(modelMessage = {}, options = {})
+		createMessage(modelMessage = {}, options = {})
 		{
 			if (modelMessage.params?.componentId === MessageParams.ComponentId.ChatCopilotCreationMessage)
 			{
@@ -91,17 +102,19 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				return new DeletedMessage(modelMessage, options);
 			}
 
-			if (
-				modelMessage.params?.COMPONENT_PARAMS?.copilotError
-				|| modelMessage.params?.COMPONENT_PARAMS?.COPILOT_ERROR // TODO delete after fix on back
-			)
+			if (messageHelper.isError)
 			{
-				return new CopilotErrorMessage(modelMessage, options);
+				return new ErrorMessage(modelMessage, options);
 			}
 
 			if (modelMessage.params?.componentId === MessageParams.ComponentId.CopilotMessage)
 			{
 				return new CopilotMessage(modelMessage, options);
+			}
+
+			if (modelMessage.params?.componentId === MessageParams.ComponentId.ConvertToCollabMessage)
+			{
+				return new TextMessage(modelMessage, options);
 			}
 
 			if (CheckInMessageFactory.checkSuitableForDisplay(modelMessage))
@@ -127,6 +140,11 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			if (CallMessageFactory.checkSuitableForDisplay(modelMessage))
 			{
 				return CallMessageFactory.create(modelMessage, options);
+			}
+
+			if (messageHelper.isVote && VoteMessageFactory.checkSuitableForDisplay(modelMessage))
+			{
+				return VoteMessageFactory.create(modelMessage, options);
 			}
 
 			const file = files[0];
@@ -165,7 +183,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				return new EmojiOnlyMessage(modelMessage, options);
 			}
 
-			if (messageHelper.isText)
+			if (messageHelper.isText && !messageHelper.isCustom)
 			{
 				return new TextMessage(modelMessage, options);
 			}
@@ -173,9 +191,9 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			return new UnsupportedMessage(modelMessage, options);
 		}
 
-		static createMessageFromRecent(dialogId)
+		createMessageFromRecent()
 		{
-			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
+			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](this.dialogId);
 			if (!recentItem || !recentItem.message || !recentItem.message.text)
 			{
 				return null;
@@ -210,10 +228,10 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				playingTime: 0,
 			};
 
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](this.dialogId);
 
 			const options = dialog
-				? MessageUiConverter.prepareSharedOptionsForMessages(dialog)
+				? this.prepareSharedOptionsForMessages(dialog)
 				: defaultOptions
 			;
 
@@ -224,7 +242,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				: defaultModelMessage
 			;
 
-			return MessageUiConverter.createMessage(modelMessage, options);
+			return this.createMessage(modelMessage, options);
 		}
 
 		/**
@@ -232,10 +250,12 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		 * @param {DialoguesModelState} dialog
 		 * @return {CreateMessageOptions}
 		 */
-		static prepareSharedOptionsForMessages(dialog)
+		prepareSharedOptionsForMessages(dialog)
 		{
 			/** @type {CreateMessageOptions} */
-			const options = {};
+			const options = {
+				dialogCode: this.dialogCode,
+			};
 			if (dialog.type === DialogType.user)
 			{
 				options.showUsername = false;

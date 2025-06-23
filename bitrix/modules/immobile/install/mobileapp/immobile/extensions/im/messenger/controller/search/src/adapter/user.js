@@ -58,10 +58,24 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 				return true;
 			});
 
-			const itemsData = filteredItems.map((item) => ObjectUtils.convertKeysToCamelCase(item.params.customData.imUser));
-			this.store.dispatch('usersModel/set', itemsData);
+			const userItemsData = [];
+			const dialogItemsData = [];
+			filteredItems.forEach((item) => {
+				userItemsData.push(ObjectUtils.convertKeysToCamelCase(item.params.customData.imUser));
 
-			const renderingItems = this.prepareItems(itemsData);
+				if (item.params.customData.imChat)
+				{
+					dialogItemsData.push({
+						dialogId: String(item.params.id),
+						...ObjectUtils.convertKeysToCamelCase(item.params.customData.imChat),
+					});
+				}
+			});
+
+			this.store.dispatch('usersModel/set', userItemsData);
+			this.store.dispatch('dialoguesModel/set', dialogItemsData);
+
+			const renderingItems = this.prepareItems(userItemsData);
 			const loaderItem = items.find((item) => item.id === 'loading');
 
 			const withLoader = typeof loaderItem !== 'undefined';

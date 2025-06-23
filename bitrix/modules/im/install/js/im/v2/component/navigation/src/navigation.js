@@ -1,32 +1,27 @@
 import { Type } from 'main.core';
-import { hint } from 'ui.vue3.directives.hint';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import { FeaturePromoter } from 'ui.info-helper';
 
 import { Logger } from 'im.v2.lib.logger';
 import { MessengerSlider } from 'im.v2.lib.slider';
-import { CallManager } from 'im.v2.lib.call';
-import { ActionByUserType, Layout, SliderCode } from 'im.v2.const';
+import { ActionByUserType, Layout, NavigationMenuItem, PromoId } from 'im.v2.const';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { PhoneManager } from 'im.v2.lib.phone';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { Analytics } from 'im.v2.lib.analytics';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { Utils } from 'im.v2.lib.utils';
+import { PromoManager } from 'im.v2.lib.promo';
 
 import { UserSettings } from './components/user-settings';
 import { MarketApps } from './components/market-apps';
+import { CopilotPromoHint } from './components/copilot-promo-hint';
 
 import './css/navigation.css';
 
 import type { JsonObject } from 'main.core';
+import type { NavigationMenuItemParams } from 'im.v2.lib.navigation';
 
 type MenuItem = {
 	id: string,
 	text: string,
-	active?: boolean,
 	counter?: number,
-	clickHandler?: (clickTarget: HTMLElement) => void,
 	showCondition?: () => boolean,
 };
 
@@ -39,8 +34,7 @@ const LayoutToAction = Object.freeze({
 // @vue/component
 export const MessengerNavigation = {
 	name: 'MessengerNavigation',
-	directives: { hint },
-	components: { UserSettings, MarketApps },
+	components: { UserSettings, MarketApps, CopilotPromoHint },
 	props: {
 		currentLayoutName: {
 			type: String,
@@ -53,95 +47,86 @@ export const MessengerNavigation = {
 		return {
 			needTopShadow: false,
 			needBottomShadow: false,
+			showCopilotPromoHint: false,
 		};
 	},
-	computed:
-	{
+	computed: {
+		NavigationMenuItem: () => NavigationMenuItem,
 		menuItems(): MenuItem[]
 		{
 			return [
 				{
-					id: Layout.chat.name,
+					id: NavigationMenuItem.chat,
 					text: this.prepareNavigationText('IM_NAVIGATION_CHATS'),
 					counter: this.formatCounter(this.$store.getters['counters/getTotalChatCounter']),
-					active: true,
 				},
 				{
-					id: Layout.copilot.name,
+					id: NavigationMenuItem.copilot,
 					text: this.prepareNavigationText('IM_NAVIGATION_COPILOT'),
 					counter: this.formatCounter(this.$store.getters['counters/getTotalCopilotCounter']),
-					clickHandler: this.onCopilotClick,
 					showCondition: () => FeatureManager.isFeatureAvailable(Feature.copilotAvailable),
-					active: true,
 				},
 				{
-					id: Layout.collab.name,
+					id: NavigationMenuItem.collab,
 					text: this.prepareNavigationText('IM_NAVIGATION_COLLAB'),
 					counter: this.formatCounter(this.$store.getters['counters/getTotalCollabCounter']),
 					showCondition: () => FeatureManager.isFeatureAvailable(Feature.collabAvailable),
-					active: true,
 				},
 				{
-					id: Layout.channel.name,
+					id: NavigationMenuItem.channel,
 					text: this.prepareNavigationText('IM_NAVIGATION_CHANNELS'),
-					active: true,
 				},
 				{
-					id: Layout.openlines.name,
+					id: NavigationMenuItem.openlines,
 					text: this.prepareNavigationText('IM_NAVIGATION_OPENLINES'),
 					counter: this.formatCounter(this.$store.getters['counters/getTotalLinesCounter']),
 					showCondition: () => {
 						return !this.isOptionOpenLinesV2Activated();
 					},
-					active: true,
 				},
 				{
-					id: Layout.openlinesV2.name,
+					id: NavigationMenuItem.openlinesV2,
 					text: this.prepareNavigationText('IM_NAVIGATION_OPENLINES'),
 					counter: this.formatCounter(this.$store.getters['counters/getTotalLinesCounter']),
 					showCondition: this.isOptionOpenLinesV2Activated,
-					active: true,
 				},
 				{
-					id: Layout.notification.name,
+					id: NavigationMenuItem.notification,
 					text: this.prepareNavigationText('IM_NAVIGATION_NOTIFICATIONS'),
 					counter: this.formatCounter(this.$store.getters['notifications/getCounter']),
-					active: true,
+					showCondition: () => !FeatureManager.isFeatureAvailable(Feature.isNotificationsStandalone),
 				},
 				{
-					id: Layout.call.name,
+					id: NavigationMenuItem.call,
 					text: this.prepareNavigationText('IM_NAVIGATION_CALLS_V2'),
-					clickHandler: this.onCallClick,
 					showCondition: PhoneManager.getInstance().canCall.bind(PhoneManager.getInstance()),
-					active: true,
 				},
 				{
-					id: 'timemanager',
+					id: NavigationMenuItem.timemanager,
 					text: this.prepareNavigationText('IM_NAVIGATION_TIMEMANAGER'),
-					clickHandler: this.onTimeManagerClick,
 					showCondition: this.isTimeManagerActive,
-					active: true,
 				},
 				{
-					id: 'main-page',
+					id: NavigationMenuItem.homepage,
 					text: this.prepareNavigationText('IM_NAVIGATION_MAIN_PAGE'),
-					clickHandler: this.onMainPageClick,
 					showCondition: this.isMainPageActive,
-					active: true,
 				},
 				{
-					id: 'market',
+					id: NavigationMenuItem.market,
 				},
 				{
-					id: Layout.settings.name,
+					id: NavigationMenuItem.settings,
 					text: this.prepareNavigationText('IM_NAVIGATION_SETTINGS'),
-					active: true,
 				},
 			];
 		},
 		showCloseIcon(): boolean
 		{
 			return !DesktopApi.isChatTab();
+		},
+		isCopilotChatsInRecentTabEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.showCopilotChatsInRecentTab);
 		},
 	},
 	created()
@@ -151,40 +136,25 @@ export const MessengerNavigation = {
 	mounted()
 	{
 		const container = this.$refs.navigation;
-		this.needBottomShadow = container.scrollTop + container.clientHeight !== container.scrollHeight;
+		this.needBottomShadow = container && container.scrollTop + container.clientHeight !== container.scrollHeight;
+		this.showCopilotPromoHint = this.isCopilotChatsInRecentTabEnabled
+			&& PromoManager.getInstance().needToShow(PromoId.copilotInRecentTab);
 	},
 	methods:
 	{
-		onMenuItemClick(item: MenuItem, event: PointerEvent)
+		onItemClick(item: MenuItem, event: PointerEvent)
 		{
-			if (!item.active)
-			{
-				return;
-			}
-
-			if (Type.isFunction(item.clickHandler))
-			{
-				item.clickHandler(event.target);
-
-				return;
-			}
-
-			this.sendClickEvent({ layoutName: item.id });
+			this.$emit('navigationClick', {
+				id: item.id,
+				target: event.target,
+			});
 		},
-		sendClickEvent({ layoutName, layoutEntityId = '' })
+		onMarketItemClick(item: NavigationMenuItemParams)
 		{
-			this.$emit('navigationClick', { layoutName, layoutEntityId });
+			this.$emit('navigationClick', item);
 		},
 		closeSlider()
 		{
-			const hasCall = CallManager.getInstance().hasCurrentCall();
-			if (hasCall)
-			{
-				this.showExitConfirm();
-
-				return;
-			}
-
 			MessengerSlider.getInstance().getCurrent().close();
 		},
 		getMenuItemClasses(item: MenuItem): Object<string, boolean>
@@ -192,7 +162,6 @@ export const MessengerNavigation = {
 			return {
 				'--selected': item.id === this.currentLayoutName,
 				'--with-counter': item.counter && item.id !== this.currentLayoutName,
-				'--active': item.active,
 			};
 		},
 		formatCounter(counter: number): string
@@ -204,43 +173,10 @@ export const MessengerNavigation = {
 
 			return counter > 99 ? '99+' : String(counter);
 		},
-		getHintContent(item: MenuItem): ?{text: string, popupOptions: Object<string, any>}
-		{
-			if (item.active)
-			{
-				return null;
-			}
-
-			return {
-				text: this.loc('IM_MESSENGER_NOT_AVAILABLE'),
-				popupOptions: {
-					angle: { position: 'left' },
-					targetContainer: document.body,
-					offsetLeft: 80,
-					offsetTop: -54,
-				},
-			};
-		},
 		prepareNavigationText(phraseCode: string): string
 		{
 			return this.loc(phraseCode, {
 				'#BR#': '</br>',
-			});
-		},
-		showExitConfirm()
-		{
-			MessageBox.show({
-				message: this.loc('IM_NAVIGATION_ACTIVE_CALL_CONFIRM'),
-				modal: true,
-				buttons: MessageBoxButtons.OK_CANCEL,
-				onOk: (messageBox: MessageBox) => {
-					CallManager.getInstance().leaveCurrentCall();
-					MessengerSlider.getInstance().getCurrent().close();
-					messageBox.close();
-				},
-				onCancel: (messageBox: MessageBox) => {
-					messageBox.close();
-				},
 			});
 		},
 		needToShowMenuItem(item: MenuItem): boolean
@@ -263,7 +199,7 @@ export const MessengerNavigation = {
 
 			return PermissionManager.getInstance().canPerformActionByUserType(action);
 		},
-		onScroll(event: Event)
+		onScroll(event: Event & { target: HTMLElement })
 		{
 			const scrollPosition = Math.round(event.target.scrollTop + event.target.clientHeight);
 			this.needBottomShadow = scrollPosition !== event.target.scrollHeight;
@@ -291,50 +227,21 @@ export const MessengerNavigation = {
 				behavior: 'smooth',
 			});
 		},
-		onCallClick(clickTarget: HTMLElement)
-		{
-			const MENU_ITEM_CLASS = 'bx-im-navigation__item';
-			const KEYPAD_OFFSET_TOP = -30;
-			const KEYPAD_OFFSET_LEFT = 64;
-
-			PhoneManager.getInstance().openKeyPad({
-				bindElement: clickTarget.closest(`.${MENU_ITEM_CLASS}`),
-				offsetTop: KEYPAD_OFFSET_TOP,
-				offsetLeft: KEYPAD_OFFSET_LEFT,
-			});
-		},
 		isTimeManagerActive(): boolean
 		{
 			return Boolean(BX.Timeman?.Monitor?.isEnabled());
-		},
-		async onTimeManagerClick()
-		{
-			BX.Timeman?.Monitor?.openReport();
-		},
-		onCopilotClick()
-		{
-			if (!FeatureManager.isFeatureAvailable(Feature.copilotActive))
-			{
-				const promoter = new FeaturePromoter({ code: SliderCode.copilotDisabled });
-				promoter.show();
-				Analytics.getInstance().copilot.onOpenTab({ isAvailable: false });
-
-				return;
-			}
-
-			this.sendClickEvent({ layoutName: Layout.copilot.name });
 		},
 		isOptionOpenLinesV2Activated(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.openLinesV2);
 		},
-		onMainPageClick()
-		{
-			Utils.browser.openLink('/');
-		},
 		isMainPageActive(): boolean
 		{
 			return DesktopApi.isChatWindow();
+		},
+		closeHint()
+		{
+			this.showCopilotPromoHint = false;
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{
@@ -359,18 +266,21 @@ export const MessengerNavigation = {
 				</template>
 				<!-- Menu items -->
 				<template v-for="item in menuItems">
-					<MarketApps v-if="needToShowMenuItem(item) && item.id === 'market'" @clickMarketItem="sendClickEvent"/>
+					<MarketApps
+						v-if="needToShowMenuItem(item) && item.id === NavigationMenuItem.market"
+						@clickMarketItem="onMarketItemClick"
+					/>
 					<div
 						v-else-if="needToShowMenuItem(item)"
 						:key="item.id"
-						v-hint="getHintContent(item)"
-						@click="onMenuItemClick(item, $event)"
+						:ref="item.id"
+						@click="onItemClick(item, $event)"
 						class="bx-im-navigation__item_container"
 					>
 						<div :class="getMenuItemClasses(item)" class="bx-im-navigation__item">
 							<div :class="'--' + item.id" class="bx-im-navigation__item_icon"></div>
 							<div class="bx-im-navigation__item_text" :title="item.text" v-html="item.text"></div>
-							<div v-if="item.active && item.counter" class="bx-im-navigation__item_counter">
+							<div v-if="item.counter" class="bx-im-navigation__item_counter">
 								<div class="bx-im-navigation__item_counter-text">
 									{{ item.counter }}
 								</div>
@@ -378,6 +288,11 @@ export const MessengerNavigation = {
 						</div>
 					</div>
 				</template>
+				<CopilotPromoHint
+					v-if="showCopilotPromoHint"
+					:bindElement="$refs.chat[0]"
+					@close="closeHint"
+				/>
 			</div>
 			<div v-if="needBottomShadow" class="bx-im-navigation__shadow --bottom">
 				<div class="bx-im-navigation__scroll-button --bottom" @click="onClickScrollDown"></div>

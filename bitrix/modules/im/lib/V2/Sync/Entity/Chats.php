@@ -4,6 +4,7 @@ namespace Bitrix\Im\V2\Sync\Entity;
 
 use Bitrix\Im\Chat;
 use Bitrix\Im\Recent;
+use Bitrix\Im\V2\Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs;
 use Bitrix\Im\V2\Sync\Entity;
 use Bitrix\Im\V2\Sync\Event;
 
@@ -71,12 +72,14 @@ class Chats implements Entity
 	{
 		$addedRecent = $this->getRecent();
 		$addedChats = $this->getChats();
+		$messagesAutoDeleteConfigs = $this->getMessagesAutoDeleteConfigs();
 
 		$result = [
 			'addedRecent' => $addedRecent,
 			'addedChats' => $addedChats,
 			'deletedChats' => $this->deletedChatIds,
 			'completeDeletedChats' => $this->completeDeleteChatIds,
+			'messagesAutoDeleteConfigs' => $messagesAutoDeleteConfigs,
 		];
 
 		if ($this->readAll)
@@ -90,5 +93,12 @@ class Chats implements Entity
 	public function getShortInfoChatIds(): array
 	{
 		return $this->shortInfoChatIds;
+	}
+
+	private function getMessagesAutoDeleteConfigs(): array
+	{
+		$configs = new MessagesAutoDeleteConfigs($this->chatIds);
+
+		return $configs->toRestFormat(['WITH_DEFAULT_VALUES' => true]) ?? [];
 	}
 }

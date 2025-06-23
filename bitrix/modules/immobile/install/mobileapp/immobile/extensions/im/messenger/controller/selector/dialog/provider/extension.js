@@ -4,6 +4,7 @@
 
 jn.define('im/messenger/controller/selector/dialog/provider', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { withCurrentDomain } = require('utils/url');
 
 	const { BaseSelectorProvider } = require('selector/providers/base');
@@ -11,6 +12,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 	const { RecentProvider: SearchProvider } = require('im/messenger/controller/search/experimental');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
+	const { DialogType } = require('im/messenger/const');
 	const { UserHelper } = require('im/messenger/lib/helper');
 
 	const ASSET_PATH = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/png/';
@@ -23,6 +25,10 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 		/**
 		 * @param {String} context
 		 * @param {Object} options
+		 * @param {Boolean} options.allowMultipleSelection=false
+		 * @param {Boolean} options.withFavorite=false
+		 * @param {Boolean} options.withCurrentUser=true
+		 * @param {Boolean} options.onlyUsers=false
 		 */
 		constructor(context, options = {})
 		{
@@ -30,7 +36,13 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			this.queryString = '';
 			this.items = [];
 
-			this.store = serviceLocator.get('core').getStore();
+			this.isMultipleSelection = options?.allowMultipleSelection ?? false;
+			this.withFavorite = options?.withFavorite ?? false;
+
+			this.withCurrentUser = options?.withCurrentUser ?? true;
+			this.onlyUsers = options?.onlyUsers ?? false;
+
+			this.store = serviceLocator.get('core').getMessengerStore();
 
 			this.searchProvider = new SearchProvider({
 				loadSearchProcessed: this.#onLocalSearchComplete,
@@ -42,7 +54,8 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 		{
 			const recentDialogs = this.#getRecentDialogs();
 
-			this.items = this.#withFavoriteItem(this.prepareItemsForDrawing(recentDialogs));
+			const preparedItems = this.prepareItemsForDrawing(recentDialogs);
+			this.items = this.withFavorite ? this.#withFavoriteItem(preparedItems) : preparedItems;
 			this.listener.onRecentResult(this.items, true);
 		}
 
@@ -53,7 +66,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 		prepareItemForDrawing(item)
 		{
-			if (UserHelper.isCurrentUser(item.dialogId))
+			if (UserHelper.isCurrentUser(item.dialogId) && this.withFavorite)
 			{
 				return this.#getFavoriteItem();
 			}
@@ -61,14 +74,21 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			const chatAvatar = ChatAvatar.createFromDialogId(item.dialogId);
 			const chatTitle = ChatTitle.createFromDialogId(item.dialogId);
 
+			const title = chatTitle.getTitle({ useNotes: false }) ?? item.name;
+
 			return {
 				id: item.dialogId,
-				title: chatTitle.getTitle(),
+				title,
 				subtitle: chatTitle.getDescription(),
 				useLetterImage: false,
 				sectionCode: 'common',
 				avatar: chatAvatar.getListItemAvatarProps(),
-				type: 'info',
+				type: this.isMultipleSelection ? null : 'info',
+				params: {
+					id: item.dialogId,
+					title,
+					type: 'dialog',
+				},
 			};
 		}
 
@@ -94,8 +114,48 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			void this.searchProvider.doSearch(currentQuery);
 		}
 
-		#onLocalSearchComplete = (itemIdList, needSearchOnServer) => {
+		#getDialogsByIds(itemIdList)
+		{
+			const getDialogById = this.store.getters['dialoguesModel/getById'];
+			let dialogs = itemIdList.map((id) => getDialogById(id));
 
+			if (this.onlyUsers)
+			{
+				// for copilot see 'im/messenger/lib/helper/dialog' DialogHelper.isDirect,
+				// need MessengerStore, not Store from Helper
+				const isDirect = (dialog) => {
+					return Type.isNumber(Number(dialog.chatId))
+						&& [DialogType.user, DialogType.private].includes(dialog.type);
+				};
+
+				dialogs = dialogs.filter((dialog) => isDirect(dialog));
+			}
+
+			if (!this.withCurrentUser)
+			{
+				dialogs = dialogs.filter((dialog) => {
+					return Number(dialog.dialogId) !== serviceLocator.get('core').getUserId();
+				});
+			}
+
+			return dialogs;
+		}
+
+		#getRecentDialogs()
+		{
+			const recentDialogIds = this.store.getters['recentModel/getSortedCollection']()
+				.map(({ id }) => id)
+			;
+
+			return this.#getDialogsByIds(recentDialogIds);
+		}
+
+		#withFavoriteItem(items)
+		{
+			return [this.#getFavoriteItem(), ...items];
+		}
+
+		#onLocalSearchComplete = (itemIdList, needSearchOnServer) => {
 			if (itemIdList.length === 0 && !needSearchOnServer)
 			{
 				this.listener.onFetchResult([], true);
@@ -125,27 +185,6 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			this.listener.onFetchResult(this.items, false);
 		};
 
-		#getDialogsByIds(itemIdList)
-		{
-			const getDialogById = this.store.getters['dialoguesModel/getById'];
-
-			return itemIdList.map((id) => getDialogById(id));
-		}
-
-		#getRecentDialogs()
-		{
-			const recentDialogIds = this.store.getters['recentModel/getSortedCollection']()
-				.map(({ id }) => id)
-			;
-
-			return this.#getDialogsByIds(recentDialogIds);
-		}
-
-		#withFavoriteItem(items)
-		{
-			return [this.#getFavoriteItem(), ...items];
-		}
-
 		#getFavoriteItem()
 		{
 			return {
@@ -156,7 +195,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 					hideOutline: true,
 					uri: withCurrentDomain(`${ASSET_PATH}favorite_avatar.png`),
 				},
-				type: 'info',
+				type: this.isMultipleSelection ? 'user' : 'info',
 			};
 		}
 

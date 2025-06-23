@@ -15,6 +15,7 @@ Example:
 />
  */
 
+// @vue/component
 export const Switcher = {
 	name: 'Switcher',
 	emits: ['check', 'uncheck'],

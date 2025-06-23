@@ -14,6 +14,8 @@ return [
 	'rel' => [
 		'call.core',
 		'call.lib.analytics',
+		'call.lib.call-token-manager',
+		'call.lib.settings-manager',
 		'im.debug',
 		'im.application.launch',
 		'im.component.conference.conference-public',

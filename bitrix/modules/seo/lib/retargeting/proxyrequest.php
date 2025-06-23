@@ -44,17 +44,23 @@ class ProxyRequest extends Request
 			$transport->setTimeout($params['timeout']);
 		}
 
+		if (isset($params['listenHttpErrors']) && $params['listenHttpErrors'])
+		{
+			$transport->listenHttpErrors();
+		}
+
 		if (isset($params['streamTimeout']))
 		{
 			$transport->setStreamTimeout((int)$params['streamTimeout']);
 		}
 
 		$response = $transport->call($methodName, $parameters);
-		if ($response['result']['RESULT'])
+		if (isset($response['result']['RESULT']))
 		{
 			return $response['result']['RESULT'];
 		}
-		if ($response['error'])
+
+		if (isset($response['error']))
 		{
 			throw new InvalidOperationException($response['error_description'] ? $response['error_description'] : $response['error']);
 		}

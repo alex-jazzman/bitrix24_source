@@ -126,6 +126,7 @@ jn.define('im/messenger/model/users/validator', (require, exports, module) => {
 				isHidden: fields.bot_data.is_hidden,
 				isSupportOpenline: fields.bot_data.is_support_openline,
 				type: fields.bot_data.type,
+				backgroundId: fields.bot_data.background_id,
 			};
 		}
 		else

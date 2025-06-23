@@ -20,10 +20,6 @@ export const ContextMenu = {
 			type: Object,
 			required: true,
 		},
-		menuIsActiveForId: {
-			type: [String, Number],
-			default: 0,
-		},
 		showContextMenu: {
 			type: Boolean,
 			default: true,
@@ -73,7 +69,6 @@ export const ContextMenu = {
 					:title="menuTitle"
 					@click="onMenuClick"
 					@contextmenu.prevent
-					:class="{'--active': menuIsActiveForId === message.id}"
 					class="bx-im-message-context-menu__button"
 				></button>
 			</div>

@@ -19,7 +19,7 @@ if(!$arResult['ALL_PROCESSES_INSTALL'])
 			"BX.Lists['CatalogProcessesClass_$randString'].installProcesses(this)"
 		),
 	]);
-	Bitrix\UI\Toolbar\Facade\Toolbar::addButton($installButton);
+	Bitrix\UI\Toolbar\Facade\Toolbar::addButton($installButton, Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
 }
 
 $processesButton = new Bitrix\UI\Buttons\Button([

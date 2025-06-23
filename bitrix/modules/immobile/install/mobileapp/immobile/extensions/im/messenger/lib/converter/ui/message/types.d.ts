@@ -16,4 +16,5 @@ type CreateMessageOptions = {
 	showAvatarsInReaction?: boolean,
 	initialPostMessageId?: string,
 	dialogId: DialogId,
+	dialogCode: string,
 };

@@ -1007,7 +1007,7 @@ BX.namespace('Tasks.Component');
 
 	BX.Tasks.Component.TaskView.prototype.initCommentActionController = function()
 	{
-		if (window.top !== window && window.BX.Tasks.CommentActionController)
+		if ((window.top !== window && window.BX.Tasks.CommentActionController) && window.top.BX.Tasks)
 		{
 			window.top.BX.Tasks.CommentActionController = window.BX.Tasks.CommentActionController;
 		}

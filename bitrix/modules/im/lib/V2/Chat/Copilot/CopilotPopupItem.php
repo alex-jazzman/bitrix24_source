@@ -3,38 +3,32 @@
 namespace Bitrix\Im\V2\Chat\Copilot;
 
 use Bitrix\Im\V2\Integration\AI\AIHelper;
-use Bitrix\Im\V2\Integration\AI\CopilotData;
 use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Rest\PopupDataItem;
-use Bitrix\Main\Engine\CurrentUser;
 
 class CopilotPopupItem implements PopupDataItem
 {
-	public const ENTITIES = [
-		'chat' => 'chat',
-		'messageCollection' => 'messageCollection',
-	];
-
 	/**
 	 * @var string[]
 	 */
 	private array $roleCodes;
 	private array $messages = [];
 	private array $chats = [];
+	private Entity $entity;
 
-	public function __construct(array $copilotRoles, string $entity)
+	public function __construct(array $copilotRoles, Entity $entity)
 	{
-			$this->roleCodes = array_unique($copilotRoles);
+		$this->entity = $entity;
+		$this->roleCodes = array_unique($copilotRoles);
 
-			if ($entity === self::ENTITIES['chat'])
-			{
-				$this->chats = $copilotRoles;
-			}
-
-			if ($entity === self::ENTITIES['messageCollection'])
-			{
-				$this->messages = $copilotRoles;
-			}
+		if ($entity === Entity::Chats)
+		{
+			$this->chats = $copilotRoles;
+		}
+		if ($entity === Entity::Messages)
+		{
+			$this->messages = $copilotRoles;
+		}
 	}
 
 	public function merge(PopupDataItem $item): self
@@ -43,7 +37,14 @@ class CopilotPopupItem implements PopupDataItem
 		{
 			$this->roleCodes = array_unique(array_merge($this->roleCodes, $item->roleCodes));
 
-			$this->messages += $item->messages;
+			if ($item->entity === Entity::Chats)
+			{
+				$this->chats += $item->chats;
+			}
+			if ($item->entity === Entity::Messages)
+			{
+				$this->messages += $item->messages;
+			}
 		}
 
 		return $this;
@@ -62,26 +63,26 @@ class CopilotPopupItem implements PopupDataItem
 		}
 
 		return [
-			'chats' => !empty($this->chats) ? self::convertArrayData($this->chats, self::ENTITIES['chat']) : null,
+			'chats' => !empty($this->chats) ? self::convertArrayData($this->chats, Entity::Chats) : null,
 			'messages' => !empty($this->messages)
-				? self::convertArrayData($this->messages, self::ENTITIES['messageCollection'])
+				? self::convertArrayData($this->messages, Entity::Messages)
 				: null,
 			'aiProvider' => AIHelper::getProviderName(),
-			'roles' => (new RoleManager())->getRoles($this->roleCodes, CurrentUser::get()->getId()),
+			'roles' => (new RoleManager())->getRoles(array_values($this->roleCodes)),
 		];
 	}
 
-	public static function convertArrayData(array $data, string $entity): array
+	public static function convertArrayData(array $data, Entity $entity): array
 	{
 		$result = [];
 
 		foreach ($data as $id => $item)
 		{
-			if ($entity === self::ENTITIES['chat'])
+			if ($entity === Entity::Chats)
 			{
 				$result[] = ['dialogId' => $id, 'role' => $item];
 			}
-			elseif ($entity === self::ENTITIES['messageCollection'])
+			elseif ($entity === Entity::Messages)
 			{
 				$result[] = ['id' => $id, 'role' => $item];
 			}

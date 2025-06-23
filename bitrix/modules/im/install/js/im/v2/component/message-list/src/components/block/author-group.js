@@ -1,4 +1,4 @@
-import { MessageAvatar, AvatarSize } from 'im.v2.component.elements';
+import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { ActionByRole, ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';

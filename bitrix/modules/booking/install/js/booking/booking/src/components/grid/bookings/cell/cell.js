@@ -14,20 +14,78 @@ import './cell.css';
  * @property {number} toTs
  * @property {number} resourceId
  * @property {boolean} boundedToBottom
+ *
+ * @vue/component
  */
 export const Cell = {
+	name: 'HoveredCell',
+	components: {
+		BaseCell,
+	},
 	props: {
 		/** @type {Cell} */
 		cell: {
 			type: Object,
 			required: true,
 		},
+		draggedBooking: {
+			type: Object,
+			default: null,
+		},
+	},
+	data(): { overbookingPositionsInCell: string[] }
+	{
+		return {
+			overbookingPositionsInCell: [],
+		};
 	},
 	computed: {
 		...mapGetters({
 			overbookingMap: `${Model.Bookings}/overbookingMap`,
 		}),
-		overbookingPositionsInCell(): string[]
+		left(): number
+		{
+			const left = grid.calculateLeft(this.cell.resourceId);
+			const overbookingPositions = this.overbookingPositionsInCell;
+			if (overbookingPositions.length > 1)
+			{
+				return -1;
+			}
+
+			if (overbookingPositions.length === 0 || overbookingPositions[0])
+			{
+				return left;
+			}
+
+			return left + grid.calculateWidth(this.width);
+		},
+		top(): number
+		{
+			return grid.calculateTop(this.cell.fromTs);
+		},
+		height(): number
+		{
+			const fromTs = this.cell.fromTs;
+			const draggedBookingDuration = this.draggedBooking
+				? this.draggedBooking.dateToTs - this.draggedBooking.dateFromTs
+				: Infinity;
+			const toTs = draggedBookingDuration < this.cell.toTs - fromTs
+				? fromTs + draggedBookingDuration
+				: this.cell.toTs;
+
+			return grid.calculateHeight(fromTs, toTs);
+		},
+		width(): number
+		{
+			return this.overbookingPositionsInCell.length === 0 ? 280 : 280 / 2;
+		},
+	},
+	mounted(): void
+	{
+		this.calcOverbookingPositionsInCell();
+	},
+	methods: {
+		calcOverbookingPositionsInCell(): void
 		{
 			const resourceId = this.cell.resourceId;
 			const cellTimespan = {
@@ -54,39 +112,8 @@ export const Cell = {
 				}
 			}
 
-			return positions;
+			this.overbookingPositionsInCell = positions;
 		},
-		left(): number
-		{
-			const left = grid.calculateLeft(this.cell.resourceId);
-			const overbookingPositions = this.overbookingPositionsInCell;
-			if (overbookingPositions.length > 1)
-			{
-				return -1;
-			}
-
-			if (overbookingPositions.length === 0 || overbookingPositions[0])
-			{
-				return left;
-			}
-
-			return left + grid.calculateWidth(this.width);
-		},
-		top(): number
-		{
-			return grid.calculateTop(this.cell.fromTs);
-		},
-		height(): number
-		{
-			return grid.calculateHeight(this.cell.fromTs, this.cell.toTs);
-		},
-		width(): number
-		{
-			return this.overbookingPositionsInCell.length === 0 ? 280 : 280 / 2;
-		},
-	},
-	components: {
-		BaseCell,
 	},
 	template: `
 		<div

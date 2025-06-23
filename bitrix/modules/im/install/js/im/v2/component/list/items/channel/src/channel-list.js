@@ -1,5 +1,5 @@
 import { Utils } from 'im.v2.lib.utils';
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements';
+import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 
 import { ChannelItem } from './components/channel-item/channel-item';
 import { EmptyState } from './components/empty-state';

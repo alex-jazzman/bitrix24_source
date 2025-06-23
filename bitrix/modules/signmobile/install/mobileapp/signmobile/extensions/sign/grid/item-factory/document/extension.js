@@ -153,7 +153,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 					},
 					Avatar({
 						id: secondSideMemberId,
-						testId: `USER_AVATAR_${this.getMemberId(0)}`,
+						testId: `document-${this.getMemberId(0)}-userAvatar`,
 						size: 24,
 						withRedux: true,
 						onClick: useCallback(() => this.#onSecondSideButtonClickHandler(secondSideMemberId), [secondSideMemberId]),
@@ -162,6 +162,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 						text: secondSideText,
 						design: SecondSideDesign,
 						mode: ChipStatusMode.OUTLINE,
+						testId: `document-${this.getMemberId(0)}-chipStatus`,
 						style: {
 							marginLeft: 10,
 						},
@@ -189,6 +190,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 							height: 40,
 							width: 40,
 						},
+						testId: `document-${this.getMemberId(0)}-downloadButton`,
 						icon: Icon.CHEVRON_TO_THE_RIGHT_SIZE_S,
 						color: Color.base1,
 						opacity: 0.5,
@@ -215,7 +217,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 						right: Indent.S.toNumber(),
 					},
 				},
-				BadgeCounter({value: 1, design: BadgeCounterDesign.ALERT}),
+				BadgeCounter({value: 1, design: BadgeCounterDesign.ALERT, testId: `documentAction-${this.getMemberId(0)}-badge`}),
 			);
 		}
 
@@ -239,7 +241,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 
 			return Button({
 				text: buttonText,
-				testId: 'Button',
+				testId: `document-${this.getMemberId(0)}-actionButton`,
 				size: ButtonSize.M,
 				design: ButtonDesign.OUTLINE_ACCENT_2,
 				stretched: true,

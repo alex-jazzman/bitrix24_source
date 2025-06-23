@@ -94,3 +94,9 @@
 	background-color: #fff;
 	border-radius: var(--ui-alert-border-radius);
 }
+
+.biconnector-superset-source-list__icon_image {
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}

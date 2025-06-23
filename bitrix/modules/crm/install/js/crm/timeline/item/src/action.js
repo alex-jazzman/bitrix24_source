@@ -113,10 +113,9 @@ export class Action
 
 				Ajax.runAction(
 					this.#value,
-					ajaxConfig
+					ajaxConfig,
 				).then(
-					(response) =>
-					{
+					(response) => {
 						this.#stopAnimation(vueComponent);
 						vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 							action: this.#value,
@@ -126,8 +125,7 @@ export class Action
 						});
 						resolve(response);
 					},
-					(response) =>
-					{
+					(response) => {
 						this.#stopAnimation(vueComponent, true);
 						UI.Notification.Center.notify({
 							content: response.errors[0].message,
@@ -140,8 +138,8 @@ export class Action
 							response,
 						});
 
-						reject(response);
-					}
+						resolve(response);
+					},
 				);
 			}
 			else if (this.isCallRestBatch())

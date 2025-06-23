@@ -32,20 +32,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		/**
 		 * Opens a dialog on top of the parent widget.
 		 *
-		 * @param {object} options
-		 *
-		 * @param {string|number} options.dialogId
-		 *
-		 * @param {object} [options.dialogTitleParams]
-		 * @param {string} [options.dialogTitleParams.name]
-		 * @param {string} [options.dialogTitleParams.description]
-		 * @param {string} [options.dialogTitleParams.avatar]
-		 * @param {string} [options.dialogTitleParams.color]
-		 *
-		 * @see DialogOpener.context
-		 * @param {string} [options.context] from opened. Need for analytics
-		 *
-		 * @param {object} [options.parentWidget]
+		 * @param {DialogOpenOptions} options
 		 *
 		 * @return {Promise<DialoguesModelState>}
 		 */
@@ -90,6 +77,25 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					}
 				};
 				BX.addCustomEvent(EventType.messenger.openDialogComplete, openDialogCompleteHandler);
+
+				if (options.navigationTab)
+				{
+					EntityReady.wait('chat').then(() => {
+						BX.postComponentEvent(
+							EventType.navigation.broadCastEventWithTabChange,
+							[{
+								broadCastEvent: EventType.messenger.openDialog,
+								toTab: options.navigationTab,
+								data: {
+									...options,
+								},
+							}],
+							ComponentCode.imNavigation,
+						);
+					});
+
+					return;
+				}
 
 				if (BX.componentParameters.get('COMPONENT_CODE') === ComponentCode.imMessenger)
 				{

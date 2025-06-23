@@ -1,13 +1,14 @@
 import { EventEmitter } from 'main.core.events';
 import { hint } from 'ui.vue3.directives.hint';
-
 import { Core } from 'im.v2.application.core';
+
+import { Analytics } from 'im.v2.lib.analytics';
 import { ActionByRole, EventType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { Button as ChatButton, ButtonSize, ButtonIcon, ButtonColor } from 'im.v2.component.elements';
+import { ChatButton, ButtonSize, ButtonIcon, ButtonColor } from 'im.v2.component.elements.button';
 import { ForwardPopup } from 'im.v2.component.entity-selector';
 import { showDeleteMessagesConfirm } from 'im.v2.lib.confirm';
-import { MessageService } from 'im.v2.provider.service';
+import { MessageService } from 'im.v2.provider.service.message';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -17,10 +18,7 @@ import '../css/bulk-actions-panel.css';
 export const BulkActionsPanel = {
 	name: 'BulkActionsPanel',
 	components: { ChatButton, ForwardPopup },
-	directives:
-	{
-		hint,
-	},
+	directives: { hint },
 	props:
 	{
 		dialogId: {
@@ -124,6 +122,7 @@ export const BulkActionsPanel = {
 	{
 		onForwardButtonClick()
 		{
+			Analytics.getInstance().messageForward.onClickForward({ dialogId: this.dialogId });
 			this.messagesIds = [...this.selectedMessages];
 			this.showForwardPopup = true;
 		},
@@ -209,6 +208,7 @@ export const BulkActionsPanel = {
 				<ForwardPopup
 					v-if="showForwardPopup"
 					:messagesIds="messagesIds"
+					:dialogId="dialogId"
 					@close="closeForwardPopup"
 				/>
 			</div>

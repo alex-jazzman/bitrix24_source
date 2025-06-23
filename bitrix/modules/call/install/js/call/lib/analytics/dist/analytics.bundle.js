@@ -45,7 +45,20 @@ this.BX.Call = this.BX.Call || {};
 	  clickTimeCode: 'click_timecode',
 	  playRecord: 'play_record',
 	  clickAiOff: 'click_ai_off',
-	  delete: 'delete'
+	  delete: 'delete',
+	  openSettings: 'open_settings',
+	  restrictCamera: 'restrict_camera',
+	  restrictMic: 'restrict_mic',
+	  restrictScreenshare: 'restrict_screenshare',
+	  allCamerasOff: 'all_cameras_off',
+	  allMicOff: 'all_mic_off',
+	  allScreenshareOff: 'all_screenshare_off',
+	  userCameraOff: 'user_camera_off',
+	  userMicOff: 'user_mic_off',
+	  userScreenshareOff: 'user_screenshare_off',
+	  deleteUser: 'delete_user',
+	  denyRequest: 'deny_request',
+	  approveRequest: 'approve_request'
 	});
 	const AnalyticsTool = Object.freeze({
 	  im: 'im',
@@ -389,6 +402,17 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	    ui_analytics.sendData(resultData);
 	  }
+	  onStartCallError(params) {
+	    const resultData = {
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.startCall,
+	      type: params.callType,
+	      status: `error_${params.errorCode}`,
+	      p5: 'callId_0'
+	    };
+	    ui_analytics.sendData(resultData);
+	  }
 	  onJoinCall(params) {
 	    const sendParams = {
 	      tool: AnalyticsTool.im,
@@ -415,6 +439,17 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	    ui_analytics.sendData(sendParams);
 	  }
+	  onJoinCallError(params) {
+	    const resultData = {
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.connect,
+	      type: params.callType,
+	      status: `error_${params.errorCode}`,
+	      p5: `callId_${params.callId}`
+	    };
+	    ui_analytics.sendData(resultData);
+	  }
 	  onReconnect(params) {
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
@@ -424,6 +459,16 @@ this.BX.Call = this.BX.Call || {};
 	      c_section: AnalyticsSection.callWindow,
 	      status: params.status,
 	      p4: `attemptNumber_${params.reconnectionEventCount}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onReconnectError(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.reconnect,
+	      type: params.callType,
+	      status: `error_${params.errorCode}`,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
@@ -737,6 +782,112 @@ this.BX.Call = this.BX.Call || {};
 	      resultData.p4 = im_v2_lib_analytics.getCollabId(params.dialog.chatId);
 	    }
 	    ui_analytics.sendData(resultData);
+	  }
+	  onOpenCallSettings(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.openSettings,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDeleteUser(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.deleteUser,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onCallSettingsChanged(params) {
+	    let event = '';
+	    switch (params.typeOfSetting) {
+	      case 'mic':
+	        event = AnalyticsEvent.restrictMic;
+	        break;
+	      case 'cam':
+	        event = AnalyticsEvent.restrictCamera;
+	        break;
+	      case 'screenshare':
+	        event = AnalyticsEvent.restrictScreenshare;
+	        break;
+	    }
+	    if (event) {
+	      ui_analytics.sendData({
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.call,
+	        event: event,
+	        type: params.callType,
+	        /*p1: params.settingEnabled,*/
+	        p5: `callId_${params.callId}`
+	      });
+	    }
+	  }
+	  onTurnOffAllParticipansStream(params) {
+	    let event = '';
+	    switch (params.typeOfStream) {
+	      case 'mic':
+	        event = AnalyticsEvent.allMicOff;
+	        break;
+	      case 'cam':
+	        event = AnalyticsEvent.allCamerasOff;
+	        break;
+	      case 'screenshare':
+	        event = AnalyticsEvent.allScreenshareOff;
+	        break;
+	    }
+	    if (event) {
+	      ui_analytics.sendData({
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.call,
+	        event: event,
+	        type: params.callType,
+	        p5: `callId_${params.callId}`
+	      });
+	    }
+	  }
+	  onTurnOffParticipantStream(params) {
+	    let event = '';
+	    switch (params.typeOfSetting) {
+	      case 'mic':
+	        event = AnalyticsEvent.userMicOff;
+	        break;
+	      case 'cam':
+	        event = AnalyticsEvent.userCameraOff;
+	        break;
+	      case 'screenshare':
+	        event = AnalyticsEvent.userScreenshareOff;
+	        break;
+	    }
+	    if (event) {
+	      ui_analytics.sendData({
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.call,
+	        event: event,
+	        type: params.callType,
+	        p5: `callId_${params.callId}`
+	      });
+	    }
+	  }
+	  onAllowPermissionToSpeakResponse(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.approveRequest,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDisallowPermissionToSpeakResponse(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.denyRequest,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
 	  }
 	}
 	function _getCallElementParam2(callType) {

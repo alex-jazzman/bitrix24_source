@@ -13,7 +13,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  ResourceWorkload: 'resource_workload',
 	  ResourceIntersection: 'resource_intersection',
 	  ExpandGrid: 'expand_grid',
-	  SelectResources: 'select_resources'
+	  SelectResources: 'select_resources',
+	  CyclePopup: 'cycle_popup'
 	});
 
 	const HelpDesk = Object.freeze({
@@ -57,10 +58,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    code: '23661926',
 	    anchorCode: 'feed'
 	  },
-	  AhaAddClient: {
-	    code: '23661964',
-	    anchorCode: ''
-	  },
 	  AhaSelectResources: {
 	    code: '23661972',
 	    anchorCode: 'filt'
@@ -81,10 +78,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    code: '23661926',
 	    anchorCode: ''
 	  },
-	  AhaExpandGrid: {
-	    code: '23712054',
-	    anchorCode: 'refl'
-	  },
 	  BookingActionsDeal: {
 	    code: '23661964',
 	    anchorCode: 'deal'
@@ -100,6 +93,10 @@ this.BX.Booking = this.BX.Booking || {};
 	  BookingActionsVisit: {
 	    code: '23661964',
 	    anchorCode: 'visit'
+	  },
+	  WaitListDescription: {
+	    code: '24846212',
+	    anchorCode: ''
 	  }
 	});
 
@@ -112,6 +109,17 @@ this.BX.Booking = this.BX.Booking || {};
 	  Contact: 'CONTACT',
 	  Company: 'COMPANY',
 	  Deal: 'DEAL'
+	});
+
+	const CrmFormTemplateId = Object.freeze({
+	  BookingAutoSelection: 'booking_auto_selection',
+	  BookingAnyResource: 'booking_any_resource',
+	  BookingManualSettings: 'booking_manual_settings'
+	});
+	const CrmFormSettingsDataPropName = Object.freeze({
+	  autoSelection: 'autoSelection',
+	  default: 'default',
+	  isAutoSelectionOn: 'isAutoSelectionOn'
 	});
 
 	const DateFormat = Object.freeze({
@@ -157,7 +165,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  Notifications: 'notifications',
 	  ResourceCreationWizard: 'resource-creation-wizard',
 	  ResourceTypes: 'resourceTypes',
-	  Resources: 'resources'
+	  Resources: 'resources',
+	  WaitList: 'wait-list'
 	});
 
 	const Module = Object.freeze({
@@ -179,14 +188,33 @@ this.BX.Booking = this.BX.Booking || {};
 	  delayed: 'templateTypeDelayed',
 	  feedback: 'templateTypeFeedback'
 	});
+	const Settings = Object.freeze({
+	  info: ['infoNotificationDelay'],
+	  confirmation: ['confirmationNotificationDelay', 'confirmationNotificationRepetitions', 'confirmationNotificationRepetitionsInterval', 'confirmationCounterDelay'],
+	  reminder: ['reminderNotificationDelay'],
+	  delayed: ['delayedNotificationDelay', 'delayedCounterDelay'],
+	  feedback: []
+	});
+	const Ordinal = Object.freeze({
+	  info: 1,
+	  confirmation: 2,
+	  reminder: 3,
+	  delayed: 4,
+	  feedback: 5
+	});
 	const NotificationFieldsMap = Object.freeze({
 	  NotificationOn,
-	  TemplateType
+	  TemplateType,
+	  Settings,
+	  Ordinal
 	});
 
 	const Option = Object.freeze({
 	  BookingEnabled: 'aha_banner',
 	  IntersectionForAll: 'IntersectionForAll',
+	  WaitListExpanded: 'wait_list_expanded',
+	  CalendarExpanded: 'calendar_expanded',
+	  NotificationsExpanded: 'notificationsExpanded',
 	  // AhaMoments
 	  AhaBanner: 'aha_banner',
 	  AhaTrialBanner: 'aha_trial_banner',
@@ -196,7 +224,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  AhaResourceWorkload: 'aha_resource_workload',
 	  AhaResourceIntersection: 'aha_resource_intersection',
 	  AhaExpandGrid: 'aha_expand_grid',
-	  AhaSelectResources: 'aha_select_resources'
+	  AhaSelectResources: 'aha_select_resources',
+	  AhaCyclePopup: 'aha_cycle_popup'
 	});
 
 	const NotificationChannel = Object.freeze({
@@ -207,6 +236,17 @@ this.BX.Booking = this.BX.Booking || {};
 	const BookingCounterType = Object.freeze({
 	  Delayed: 'booking_delayed',
 	  Unconfirmed: 'booking_unconfirmed'
+	});
+
+	const DraggedElementKind = Object.freeze({
+	  Booking: 'booking',
+	  WaitListItem: 'wait-list-item'
+	});
+
+	const VisitStatus = Object.freeze({
+	  Unknown: 'unknown',
+	  Visited: 'visited',
+	  NotVisited: 'notVisited'
 	});
 
 	const AnalyticsTool = Object.freeze({
@@ -245,6 +285,8 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.HelpDesk = HelpDesk;
 	exports.BusySlot = BusySlot;
 	exports.CrmEntity = CrmEntity;
+	exports.CrmFormTemplateId = CrmFormTemplateId;
+	exports.CrmFormSettingsDataPropName = CrmFormSettingsDataPropName;
 	exports.DateFormat = DateFormat;
 	exports.EntitySelectorEntity = EntitySelectorEntity;
 	exports.EntitySelectorTab = EntitySelectorTab;
@@ -257,6 +299,8 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.Option = Option;
 	exports.NotificationChannel = NotificationChannel;
 	exports.BookingCounterType = BookingCounterType;
+	exports.DraggedElementKind = DraggedElementKind;
+	exports.VisitStatus = VisitStatus;
 	exports.AnalyticsTool = AnalyticsTool;
 	exports.AnalyticsCategory = AnalyticsCategory;
 	exports.AnalyticsEvent = AnalyticsEvent;

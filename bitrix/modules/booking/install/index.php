@@ -1,8 +1,5 @@
 <?php
 
-use Bitrix\Booking\Entity\ResourceType\ResourceType;
-use Bitrix\Booking\Internals\Container;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\EventManager;
 
@@ -129,7 +126,6 @@ class booking extends CModule
 		$this->InstallEvents();
 		$this->InstallAgents();
 		$this->installTemplateRules();
-		$this->installResourceTypes();
 
 		return true;
 	}
@@ -238,39 +234,63 @@ class booking extends CModule
 			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDealDelete'
 		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'crm',
+			'OnCrmBookingFormSubmitted',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onCrmBookingFormFilled'
+		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'crm',
+			'onCrmDynamicItemDelete',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onDynamicItemDelete'
+		);
 	}
 
 	public function InstallAgents(): void
 	{
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\InfoNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\NotificationAgent::execute();',
 			module: 'booking',
-			interval: 300,
+			interval: 60,
 			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ConfirmationNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ConfirmationCounterAgent::execute();',
 			module: 'booking',
-			interval: 300,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 120, 'FULL'),
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ReminderNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\DelayedCounterAgent::execute();',
 			module: 'booking',
-			interval: 300,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 180, 'FULL'),
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\DelayedNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\ClearOldCountersAgent::execute();',
 			module: 'booking',
-			interval: 300,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 240, 'FULL'),
+			interval: 60 * 60, // 1 hour
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 12 * 60 * 60, 'FULL'),
+			existError: false
+		);
+
+		\CAgent::AddAgent(
+			name: '\\Bitrix\\Booking\\Internals\\Service\\InstallAgent::execute();',
+			module: 'booking',
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 	}
@@ -300,28 +320,21 @@ class booking extends CModule
 			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDealDelete'
 		);
-	}
 
-	private function installResourceTypes(): void
-	{
-		Loader::includeModule($this->MODULE_ID);
+		EventManager::getInstance()->unRegisterEventHandler(
+			'crm',
+			'OnCrmBookingFormSubmitted',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onCrmBookingFormFilled'
+		);
 
-		$resourceTypeRepository = Container::getResourceTypeRepository();
-		if (!$resourceTypeRepository->getList(limit: 1)->isEmpty())
-		{
-			return;
-		}
-
-		$advTypes = Container::getAdvertisingTypeRepository()->getList();
-		foreach ($advTypes as $advType)
-		{
-			$resourceTypeRepository->save(
-				ResourceType::mapFromArray([
-					...$advType['resourceType'],
-					'moduleId' => ResourceType::INTERNAL_MODULE_ID,
-				])
-			);
-
-		}
+		EventManager::getInstance()->unRegisterEventHandler(
+			'crm',
+			'onCrmDynamicItemDelete',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onDynamicItemDelete'
+		);
 	}
 }

@@ -39,6 +39,7 @@ final class Dictionary
 	public const EVENT_CALL_ACTIVITY_WITH_AUDIO_RECORDING = 'activity_call_with_audio_recording';
 	public const EVENT_CALL_SCORING = 'call_scoring';
 	public const EVENT_EXTRACT_SCORING_CRITERIA = 'extract_scoring_criteria';
+	public const EVENT_FILL_REPEAT_SALE_TIPS = 'fill_repeat_sale_tips';
 
 	public const EVENT_AUTOMATION_CREATE = 'automation_create';
 	public const EVENT_AUTOMATION_EDIT = 'automation_edit';
@@ -55,6 +56,7 @@ final class Dictionary
 	public const TYPE_MANUAL = 'manual';
 	public const TYPE_AUTO = 'auto';
 	public const TYPE_AUTOMATED_SOLUTION = 'automated_solution';
+	public const TYPE_DEAL = 'deal';
 	public const TYPE_DYNAMIC = 'dynamic';
 
 	public const TYPE_CONTACT_CENTER = 'contact_center';
@@ -90,6 +92,7 @@ final class Dictionary
 	public const SECTION_CRM_SETTINGS = 'crm_settings';
 	public const SECTION_WEBFORM = 'webform';
 	public const SECTION_SITE_WIDGET = 'site_widget_section';
+	public const SECTION_REPEAT_SALE = 'rs';
 	// endregion
 
 	// region Sub Section const
@@ -107,6 +110,7 @@ final class Dictionary
 	public const SUB_SECTION_LEAD = 'lead';
 
 	public const SUB_SECTION_GRID_ROW_MENU = 'grid_row_menu';
+	public const SUB_SECTION_REPEAT_SALE_SYSTEM = 'rs_sys';
 	// endregion
 
 	// region Element const

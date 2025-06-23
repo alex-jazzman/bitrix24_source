@@ -46,6 +46,11 @@ class sign extends CModule
 				[\Bitrix\Sign\Rest\B2e\HcmLink\SignedFile::class, 'onRestServiceBuildDescription'],
 			]
 		],
+		'im' => [
+			'OnGetNotifySchema' => [
+				[\Bitrix\Sign\Integration\Im\NotificationEventHandler::class, 'onGetNotifySchema']
+			],
+		],
 	];
 
 

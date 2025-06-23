@@ -2,15 +2,24 @@
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UI\Filter\Theme;
 use Bitrix\Mail\Helper\LicenseManager;
+use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+/** @var \CMain $APPLICATION */
+/** @var array $arResult */
+/** @var array $arParams */
+
+\Bitrix\Main\Loader::includeModule('ui');
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
@@ -34,11 +43,11 @@ $APPLICATION->SetAdditionalCSS("/bitrix/css/main/font-awesome.css");
 
 Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/mail.client.message.list/templates/.default/user-interface-manager.js');
 
-\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+Toolbar::deleteFavoriteStar();
 
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view pagetitle-mail-view no-background')));
-$filterOptions = [
+Toolbar::addFilter([
 	'FILTER_ID' => $arResult['FILTER_ID'],
 	'GRID_ID' => $arResult['GRID_ID'],
 	'ENABLE_LABEL' => true,
@@ -50,7 +59,28 @@ $filterOptions = [
 	'CONFIG' => [
 		'AUTOFOCUS' => false
 	],
-];
+]);
+Toolbar::addButton(
+	new Bitrix\UI\Buttons\Button([
+		'color' => Color::LIGHT_BORDER,
+		'icon' => Icon::SETTINGS,
+		'classList' => ['mail-list-settings-menu-popup-toggle'],
+	])
+);
+
+$createPath = new Uri($arParams['PATH_TO_MAIL_MSG_NEW']);
+$createPath->addParams(['id' => $arResult['MAILBOX']['ID']]);
+
+Toolbar::addButton(
+	new Bitrix\UI\Buttons\Button([
+		"color" => Color::SUCCESS,
+		"link" => htmlspecialcharsbx($createPath),
+		"text" => Loc::getMessage('MAIL_MESSAGE_NEW_BTN'),
+	]),
+	ButtonLocation::AFTER_TITLE
+);
+
+Toolbar::hideTitle();
 
 $unseenCountInCurrentMailbox = 0;
 $unseenCountInOtherMailboxes = 0;
@@ -71,12 +101,12 @@ foreach ($arResult['MAILBOXES'] as $mailboxId => $item)
 
 	$mailboxLockIconHtml = '';
 
-    if (!LicenseManager::checkTheMailboxForSyncAvailability($mailboxId, (int)$item['USER_ID']))
-    {
+	if (!LicenseManager::checkTheMailboxForSyncAvailability($mailboxId, (int)$item['USER_ID']))
+	{
 		$mailboxLockIconHtml = '<span class="mail-connect-lock-icon"></span>';
-    }
+	}
 
-    $mailboxMenu[] = array(
+	$mailboxMenu[] = array(
 		'html' => sprintf(
 			'<span class="mail-menu-popup-item-text-wrapper"><span class="main-buttons-item-text">%s</span>%s</span> %s',
 			htmlspecialcharsbx($item['NAME']),
@@ -139,10 +169,6 @@ $configPath = \CHTTP::urlAddParams(
 	),
 	array('id' => $arResult['MAILBOX']['ID'])
 );
-$createPath = \CHTTP::urlAddParams(
-	$arParams['PATH_TO_MAIL_MSG_NEW'],
-	array('id' => $arResult['MAILBOX']['ID'])
-);
 
 $disabledMailSettings = $USER->getId() != $arResult['MAILBOX']['USER_ID'] && !$USER->isAdmin() && !$USER->canDoOperation('bitrix24_config');
 
@@ -189,145 +215,92 @@ $settingsMenu = [
 	],*/
 ];
 
-$this->setViewTarget('mail-msg-counter-panel');
+$APPLICATION->AddViewContent('mail-msg-counter-panel', '
+	<div class="mail-error-box-wrapper" data-role="mail-error-box-wrapper"></div>
+	<div class="mail-msg-counter-wrapper">
+		<div class="mail-counter-toolbar" data-role="mail-counter-toolbar"></div>
+		<!-- The old error output block, which is controlled from the synchronization progress bar. -->
+		<div data-role="error-box" class="mail-home-error-box mail-hidden-element">
+			<div data-role="error-box-title" class="error-box-title"></div>
+			<div data-role="error-box-text" class="error-box-text"></div>
+			<div data-role="error-box-hint" class="error-box-hint"></div>
+		</div>
+	</div>'
+);
 
-?>
-<div class = 'mail-error-box-wrapper' data-role="mail-error-box-wrapper"></div>
-<div class="mail-msg-counter-wrapper">
-	<div class = 'mail-counter-toolbar' data-role="mail-counter-toolbar"></div>
-	<!-- The old error output block, which is controlled from the synchronization progress bar. -->
-	<div data-role = "error-box" class="mail-home-error-box mail-hidden-element">
-		<div data-role = "error-box-title" class="error-box-title"></div>
-		<div data-role = "error-box-text" class="error-box-text"></div>
-		<div data-role = "error-box-hint" class="error-box-hint"></div>
-	</div>
-</div>
-<?
-
-$this->endViewTarget();
-
-	$this->setViewTarget('progress');?>
+$APPLICATION->AddViewContent('progress', '
 	<div data-role="mail-progress-bar" class="mail-progress">
 		<div class="mail-progress-bar"></div>
-	</div>
-	<?$this->endViewTarget();
+	</div>'
+);
 
-	$this->setViewTarget('inside_pagetitle')?>
-		<div></div>
-	<?php
-		$siteLogo = \Bitrix\Intranet\Util::getClientLogo();
-		$siteTitle = trim(COption::GetOptionString("bitrix24", "site_title", ""));
-
-		$logo24 = \Bitrix\Intranet\Util::getLogo24();
-
-		if ($siteTitle == '')
-		{
-		$siteTitle =
-			ModuleManager::isModuleInstalled("bitrix24")
-				? Loc::getMessage('BITRIX')
-				: COption::GetOptionString("main", "site_name", "");
-		}
-	?>
-	<?$this->endViewTarget();
-
-	$this->setViewTarget('left-panel');?>
-		<div class="mail-left-menu-wrapper">
-			<div class="mail-left-menu-head">
-				<h2 class="mail-left-menu-title">
-					<span class="logo-mail"><?=Loc::getMessage('MAIL_CLIENT_HOME_TITLE')?></span>
-				</h2>
-			</div>
-			<div class="mailbox-sync-panel">
-				<a class="mailbox-panel ui-btn ui-btn-themes ui-btn-light-border ui-btn-themes mail-btn-dropdown ui-btn-round"
-			   data-role="mailbox-current-title"
-			   data-mailbox-id="<?=intval($arResult['MAILBOX']['ID']) ?>" title="<?=htmlspecialcharsbx($arResult['MAILBOX']['NAME']) ?>">
-<!--					<span class="ui-icon ui-icon-common-user mail-btn-dropdown-icon mail-ui-avatar" user-name="--><?//=htmlspecialcharsbx($arResult['MAILBOX']['NAME']) ?><!--" email="--><?//=htmlspecialcharsbx($arResult['MAILBOX']['NAME']) ?><!--"></span>-->
-					<div class="mail-btn-dropdown-title">
-						<span class="mail-btn-dropdown-title-mail-name" title="<?=htmlspecialcharsbx($arResult['MAILBOX_NAME'].$arResult['MAILBOX_DOMAIN'])?>">
-							<?=htmlspecialcharsbx($arResult['MAILBOX_NAME'])?><?=htmlspecialcharsbx($arResult['MAILBOX_DOMAIN'])?>
-						</span>
-					</div>
-					<span class="ui-btn ui-btn-sm ui-btn-light ui-btn-dropdown"></span>
-					<span class="unread-message-marker-for-all-mailboxes <?=($unseenCountInOtherMailboxes > 0 ? '' : 'mail-hidden-element') ?>" data-role="unreadMessageMailboxesMarker"></span>
-				</a>
-				<div class='mailbox-sync-btn' data-role="mail-msg-sync-button-wrapper">
-					</div>
-				</div>
-			</div>
-	<?$this->endViewTarget();
-
-	$this->setViewTarget('above_pagetitle'); ?>
-	<div class="mail-home-head">
-		<a class="ui-btn ui-btn-success mail-message-new-btn" href="<?=htmlspecialcharsbx($createPath) ?>"
-		   style="overflow: hidden; text-overflow: ellipsis; ">
-			<?=Loc::getMessage('MAIL_MESSAGE_NEW_BTN') ?>
-		</a>
-
-		<div class="pagetitle-container mail-pagetitle-flexible-space">
-			<? $APPLICATION->includeComponent(
-				'bitrix:main.ui.filter', '',
-				$filterOptions
-			); ?>
+$APPLICATION->AddViewContent('left-panel', sprintf('
+	<div class="mail-left-menu-wrapper">
+		<div class="mail-left-menu-head">
+			<h2 class="mail-left-menu-title">
+				<span class="logo-mail">%s</span>
+			</h2>
 		</div>
+		<div class="mailbox-sync-panel">
+			<a class="mailbox-panel ui-btn ui-btn-themes ui-btn-light-border ui-btn-themes mail-btn-dropdown ui-btn-round"
+				data-role="mailbox-current-title"
+				data-mailbox-id="%d"
+				title="%s">
+				<div class="mail-btn-dropdown-title">
+					<span class="mail-btn-dropdown-title-mail-name" title="%s">%s</span>
+				</div>
+				<span class="ui-btn ui-btn-sm ui-btn-light ui-btn-dropdown"></span>
+				<span class="unread-message-marker-for-all-mailboxes %s" data-role="unreadMessageMailboxesMarker"></span>
+			</a>
+			<div class="mailbox-sync-btn" data-role="mail-msg-sync-button-wrapper"></div>
+		</div>
+	</div>',
+	Loc::getMessage('MAIL_CLIENT_HOME_TITLE'),
+	intval($arResult['MAILBOX']['ID']),
+	htmlspecialcharsbx($arResult['MAILBOX']['NAME']),
+	htmlspecialcharsbx($arResult['MAILBOX_NAME'] . $arResult['MAILBOX_DOMAIN']),
+	htmlspecialcharsbx($arResult['MAILBOX_NAME'] . $arResult['MAILBOX_DOMAIN']),
+	($unseenCountInOtherMailboxes > 0) ? '' : 'mail-hidden-element'
+));
 
-		<button class="ui-btn ui-btn-themes ui-btn-light-border ui-btn-icon-setting" type="button"
-				style="margin-left: 12px; min-width: 39px; min-width: var(--ui-btn-height);" data-role="mail-list-settings-menu-popup-toggle"
-		></button>
-	</div>
-	<? $this->endViewTarget();
+$APPLICATION->AddViewContent('below_pagetitle', sprintf(
+	'%s%s%s',
+	$APPLICATION->getViewContent('progress'),
+	$APPLICATION->getViewContent('mail-msg-counter-panel'),
+	$APPLICATION->getViewContent('mail-msg-temp-alert')
+));
 
-	$this->setViewTarget('below_pagetitle'); ?>
+$APPLICATION->AddViewContent('mail-msg-counter-script', sprintf('
+	<script>
+		(function () {
+			var uiManager = BX.Mail.Client.Message.List["%s"].userInterfaceManager;
+			BX.onCustomEvent("Grid::updated", [uiManager.getGridInstance()]);
+			uiManager.initMailboxes(%s);
+			uiManager.updateTotalUnreadCounters(%d);
 
-	<?=$APPLICATION->getViewContent('progress') ?>
+			BX.Mail.Home.mailboxCounters.setCounters([
+				{ "path": "unseenCountInOtherMailboxes", "count": %d },
+				{ "path": "unseenCountInCurrentMailbox", "count": %d }
+			]);
 
-	<?=$APPLICATION->getViewContent('mail-msg-counter-panel') ?>
+			if (uiManager.getLastDir() !== uiManager.getCurrentFolder()) {
+				uiManager.setLastDir();
+				BXMailMailbox.sync(BX.Mail.Home.ProgressBar, "%s", true, true);
+			}
 
-	<?=$APPLICATION->getViewContent('mail-msg-temp-alert') ?>
-
-	<? $this->endViewTarget();
-
-$this->setViewTarget('mail-msg-counter-script');
-
-?>
-
-<script>
-(function ()
-{
-	var uiManager = BX.Mail.Client.Message.List['<?=\CUtil::jsEscape($component->getComponentId()) ?>'].userInterfaceManager;
-	BX.onCustomEvent('Grid::updated',[uiManager.getGridInstance()]);
-	uiManager.initMailboxes(<?=Main\Web\Json::encode($mailboxMenu) ?>);
-	uiManager.updateTotalUnreadCounters(<?=intval($unseenCountInOtherMailboxes) ?>);
-
-	BX.Mail.Home.mailboxCounters.setCounters([
-		{
-			'path': 'unseenCountInOtherMailboxes',
-			'count': <?= $unseenCountInOtherMailboxes ?>
-		},
-		{
-			'path': 'unseenCountInCurrentMailbox',
-			'count': <?= $unseenCountInCurrentMailbox ?>
-		}
-	]);
-
-	if (uiManager.getLastDir() != uiManager.getCurrentFolder())
-	{
-		uiManager.setLastDir();
-		BXMailMailbox.sync(BX.Mail.Home.ProgressBar, '<?=\CUtil::jsEscape($arResult['GRID_ID']) ?>', true,true);
-	}
-
-	const curPage = <?= (int)$arResult['NAV_OBJECT']->getCurrentPage(); ?>
-
-	uiManager.updateMessageMailHrefList(
-		<?= Main\Web\Json::encode($arResult['MESSAGE_HREF_LIST']) ?>,
-		curPage,
-		<?= !empty($arResult['ENABLE_NEXT_PAGE']) ? 'true' : 'false' ?>
-	);
-})();
-</script>
-
-<?
-
-$this->endViewTarget();
+			uiManager.updateMessageMailHrefList(%s, %d, %s);
+		})();
+	</script>',
+	\CUtil::jsEscape($component->getComponentId()),
+	Main\Web\Json::encode($mailboxMenu),
+	intval($unseenCountInOtherMailboxes),
+	intval($unseenCountInOtherMailboxes),
+	intval($unseenCountInCurrentMailbox),
+	\CUtil::jsEscape($arResult['GRID_ID']),
+	Main\Web\Json::encode($arResult['MESSAGE_HREF_LIST']),
+	(int)$arResult['NAV_OBJECT']->getCurrentPage(),
+	!empty($arResult['ENABLE_NEXT_PAGE']) ? 'true' : 'false'
+));
 
 addEventHandler('main', 'onAfterAjaxResponse', function ()
 {
@@ -489,46 +462,46 @@ $actionPanelActionButtons = [
 	],
 ];
 
-	$actionPanelActionButtons = array_merge($actionPanelActionButtons, [
-		[
-			'HIDDEN_IN_PANEL' => true,
-			'TYPE' => Main\Grid\Panel\Types::BUTTON,
-			'ID' => $arResult['gridActionsData']['addToCrm']['id'],
-			'ADDITIONAL_CLASS_FOR_PANEL' => 'mail-crm-action',
-			'TEXT' => '<span data-role="crm-action">' . $arResult['gridActionsData']['addToCrm']['text'] . '</span>',
-			'TITLE' => $arResult['gridActionsData']['addToCrm']['title'],
-			'DISABLED' => true,
-			'ONCHANGE' => [
-				[
-					'ACTION' => \Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => [
-						[
-							'JS' => "BX.Mail.Client.Message.List['" . CUtil::JSEscape($component->getComponentId()) . "'].onDisabledGroupActionClick()",
-						],
+$actionPanelActionButtons = array_merge($actionPanelActionButtons, [
+	[
+		'HIDDEN_IN_PANEL' => true,
+		'TYPE' => Main\Grid\Panel\Types::BUTTON,
+		'ID' => $arResult['gridActionsData']['addToCrm']['id'],
+		'ADDITIONAL_CLASS_FOR_PANEL' => 'mail-crm-action',
+		'TEXT' => '<span data-role="crm-action">' . $arResult['gridActionsData']['addToCrm']['text'] . '</span>',
+		'TITLE' => $arResult['gridActionsData']['addToCrm']['title'],
+		'DISABLED' => true,
+		'ONCHANGE' => [
+			[
+				'ACTION' => \Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+				'DATA' => [
+					[
+						'JS' => "BX.Mail.Client.Message.List['" . CUtil::JSEscape($component->getComponentId()) . "'].onDisabledGroupActionClick()",
 					],
 				],
 			],
 		],
-		[
-			'HIDDEN_IN_PANEL' => true,
-			'TYPE' => Main\Grid\Panel\Types::BUTTON,
-			'ADDITIONAL_CLASS_FOR_PANEL' => 'mail-not-crm-action',
-			'ID' => $arResult['gridActionsData']['excludeFromCrm']['id'],
-			'TEXT' => '<span data-role="not-crm-action">' . $arResult['gridActionsData']['excludeFromCrm']['text'] . '</span>',
-			'TITLE' => $arResult['gridActionsData']['excludeFromCrm']['text'],
-			'DISABLED' => true,
-			'ONCHANGE' => [
-				[
-					'ACTION' => \Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => [
-						[
-							'JS' => "BX.Mail.Client.Message.List['" . CUtil::JSEscape($component->getComponentId()) . "'].onDisabledGroupActionClick()",
-						],
+	],
+	[
+		'HIDDEN_IN_PANEL' => true,
+		'TYPE' => Main\Grid\Panel\Types::BUTTON,
+		'ADDITIONAL_CLASS_FOR_PANEL' => 'mail-not-crm-action',
+		'ID' => $arResult['gridActionsData']['excludeFromCrm']['id'],
+		'TEXT' => '<span data-role="not-crm-action">' . $arResult['gridActionsData']['excludeFromCrm']['text'] . '</span>',
+		'TITLE' => $arResult['gridActionsData']['excludeFromCrm']['text'],
+		'DISABLED' => true,
+		'ONCHANGE' => [
+			[
+				'ACTION' => \Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+				'DATA' => [
+					[
+						'JS' => "BX.Mail.Client.Message.List['" . CUtil::JSEscape($component->getComponentId()) . "'].onDisabledGroupActionClick()",
 					],
 				],
 			],
 		],
-	]);
+	],
+]);
 
 $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 	[
@@ -784,28 +757,42 @@ $APPLICATION->includeComponent(
 		Mail.Grid.setGridId('<?= CUtil::JSEscape($arResult['GRID_ID'])?>');
 		var mailboxId = Number(<?= intval($arResult['MAILBOX']['ID']) ?>);
 
-		BX.addCustomEvent("onPullEvent-mail", BX.delegate(function(command, params){
-			if (Mail.Grid.getCountDisplayed() < numberOfRowsPerPage && command === 'new_message_is_synchronized' && mailboxId === Number(params.mailboxId) && mailMessageList.getCurrentFolder() === params.dir)
+		BX.addCustomEvent("onPullEvent-mail", BX.delegate(function(command, params)
+		{
+			if (mailboxId === Number(params.mailboxId))
 			{
-				BX.ajax.runComponentAction('bitrix:mail.client.message.list', 'syncMailCounters',
+				if (
+					(
+						command === 'recovered_message_is_synchronized' ||
+						(command === 'new_message_is_synchronized' && Mail.Grid.getCountDisplayed() < numberOfRowsPerPage)
+					) &&
+					mailMessageList.getCurrentFolder() === params.dir
+				)
+				{
+					BX.ajax.runComponentAction('bitrix:mail.client.message.list', 'syncMailCounters',
 					{
 						mode: 'class',
 						data:
 						{
 							mailboxId: <?= intval($arResult['MAILBOX']['ID']) ?>,
 						}
-				});
-				Mail.Grid.reloadTable();
+					});
+
+					Mail.Grid.reloadTable();
+				}
+
+				if (command ==='counters_updated')
+				{
+					mailMessageList.updateCountersFromBackend();
+				}
+
+				if (command ==='counters_is_synchronized')
+				{
+					const data = params.dirs || {};
+					BX.Mail.Home.Counters.setCounters(data);
+				}
 			}
-			else if (command ==='counters_updated' && mailboxId === Number(params.mailboxId))
-			{
-				mailMessageList.updateCountersFromBackend();
-			}
-			else if (command ==='counters_is_synchronized')
-			{
-				const data = params.dirs || {};
-				BX.Mail.Home.Counters.setCounters(data);
-			}
+
 		}, this));
 
 		<?php if($arParams['VARIABLES']['start_sync_with_showing_stepper']==='true')

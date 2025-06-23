@@ -32,6 +32,7 @@ BX.Kanban.Column = function(options)
 
 	this.canEdit = null;
 	this.canSort = null;
+	this.canSortItems = null;
 	this.canRemove = null;
 	this.canAddItem = null;
 
@@ -125,7 +126,7 @@ BX.Kanban.Column.prototype =
 		this.setColor(options.color);
 		this.setData(options.data);
 
-		var boolOptions = ["canEdit", "canSort", "canRemove", "canAddItem", "droppable"];
+		var boolOptions = ["canEdit", "canSort", "canRemove", "canAddItem", "droppable", "canSortItems",];
 		boolOptions.forEach(function(boolOption) {
 			if (BX.type.isBoolean(options[boolOption]))
 			{
@@ -194,7 +195,6 @@ BX.Kanban.Column.prototype =
 
 		item.setColumnId(this.getId());
 		//? setGrid
-
 		var index = BX.util.array_search(beforeItem, this.items);
 		if (index >= 0)
 		{
@@ -496,6 +496,11 @@ BX.Kanban.Column.prototype =
 	canAddItems: function()
 	{
 		return this.canAddItem !== null ? this.canAddItem : this.getGrid().canAddItems();
+	},
+
+	canSortColumnItems: function()
+	{
+		return this.canSortItems ?? true;
 	},
 
 	/**

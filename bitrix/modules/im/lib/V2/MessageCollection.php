@@ -5,6 +5,7 @@ namespace Bitrix\Im\V2;
 use Bitrix\Im\V2\Chat\Copilot\CopilotPopupItem;
 use Bitrix\Im\V2\Chat\ChannelChat;
 use Bitrix\Im\V2\Chat\Comment\CommentPopupItem;
+use Bitrix\Im\V2\Chat\Copilot\Entity;
 use Bitrix\Im\V2\Entity\File\FilePopupItem;
 use Bitrix\Im\V2\Entity\Url\UrlCollection;
 use Bitrix\Im\V2\Entity\User\UserPopupItem;
@@ -688,7 +689,7 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 			new FilePopupItem($this->getFiles()),
 			//new ReminderPopupItem($this->getReminders()),
 			new AdditionalMessagePopupItem($additionalMessageIds),
-			new CopilotPopupItem($this->getCopilotRoles(), CopilotPopupItem::ENTITIES['messageCollection']),
+			new CopilotPopupItem($this->getCopilotRoles(), Entity::Messages),
 		];
 
 		if (!in_array(ReactionPopupItem::class, $excludedList, true))
@@ -788,6 +789,11 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 			$to->add('1 DAY');
 
 			$query->where('DATE_CREATE', '<=', $to);
+		}
+
+		if ($filter['WITHOUT_SYSTEM_MESSAGE'] ?? false)
+		{
+			$query->where('AUTHOR_ID', '!=', 0);
 		}
 	}
 }

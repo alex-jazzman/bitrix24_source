@@ -123,4 +123,41 @@ class Configuration
 
 		return Option::get('disk', 'flipchart.webhook_url', $webhookUrl);
 	}
+
+	public static function getAllowedLanguages(): array
+	{
+		$default = self::getFromSettings('allowed_languages', [
+			'ar',
+			'br',
+			'en',
+			'fr',
+			'id',
+			'it',
+			'ja',
+			'la',
+			'ms',
+			'pl',
+			'ru',
+			'sc',
+			'tc',
+			'th',
+			'tr',
+			'ua',
+			'vn',
+			'de',
+			'kz',
+		]);
+
+		return (array)json_decode(
+			Option::get('disk', 'flipchart.allowed_languages', json_encode($default)),
+			true
+		);
+	}
+
+	public static function getDefaultLanguage(): string
+	{
+		$default = self::getFromSettings('default_language', 'en');
+
+		return (string)Option::get('disk', 'flipchart.default_language', $default);
+	}
 }

@@ -15,7 +15,7 @@ use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
 use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Flow\FlowRegistry;
-use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Flow\Provider\UserProvider;
 use Bitrix\Tasks\InvalidCommandException;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -44,7 +44,7 @@ trait ChangeFlowDistributionTrait
 
 		$ownerId = $flow->getOwnerId();
 		$owner = UserTable::getById($ownerId)->fetchObject();
-		$newDistributorId = (bool)$owner?->getActive() === false ? User::getAdminId() : $ownerId;
+		$newDistributorId = (bool)$owner?->getActive() === false ? UserProvider::getDefaultAdminId() : $ownerId;
 
 		$command =
 			(new UpdateCommand())

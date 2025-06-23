@@ -8,10 +8,12 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Recyclebin\Task;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\UI\ScopeDictionary;
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
@@ -23,7 +25,6 @@ Loc::loadMessages(__FILE__);
 
 Extension::load([
 	'ui.fonts.opensans',
-	'ui.fonts.opensans',
 	'popup',
 	'tooltip',
 	'gantt',
@@ -32,6 +33,7 @@ Extension::load([
 	'CJSTask',
 	'ui.counter',
 	'ui.stepprocessing',
+	'ui.design-tokens'
 ]);
 
 /** intranet-settings-support */
@@ -57,7 +59,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column transparent-workarea");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column");
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 $APPLICATION->IncludeComponent(
@@ -112,6 +114,20 @@ else
         TASKS_CANNOT_ADD_DEPENDENCY: "<?=GetMessage("TASKS_CANNOT_ADD_DEPENDENCY")?>",
 		TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>'
     });
+
+	<?php if ($arResult['needToShowInviteToMobile']) : ?>
+		BX.Runtime.loadExtension('tasks.promo.invite-to-mobile').then(() => {
+			const inviteToMobile = new BX.Tasks.Promo.InviteToMobile({
+				appLink: <?= Json::encode($arResult['inviteToMobileLink']) ?>,
+			});
+
+			inviteToMobile.show();
+			<?php
+				$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+				$inviteToMobileService->setShown($arParams['USER_ID']);
+			?>
+		});
+	<?php endif; ?>
 
 	<?
 		$filter = $arResult["GET_LIST_PARAMS"]["legacyFilter"];
@@ -644,6 +660,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
 			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
 			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+			'MARK_SECTION_TASKS_LIST' => $arParams['MARK_SECTION_TASKS_LIST'] ?? null,
 			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
 			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
 			'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'] ?? null,

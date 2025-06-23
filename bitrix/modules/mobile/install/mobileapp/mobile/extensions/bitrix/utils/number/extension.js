@@ -41,34 +41,8 @@ jn.define('utils/number', (require, exports, module) => {
 		return 0;
 	}
 
-	/**
-	 * @function parseAmount
-	 * @param {string} amount
-	 * @param {string} decimalSeparator
-	 * @param {string} thousandsSeparator
-	 * @returns {number}
-	 */
-	function parseAmount(amount, decimalSeparator, thousandsSeparator)
-	{
-		const parts = String(amount).split(decimalSeparator);
-		let thousandPart = parts[0] ?? 0;
-		const decimalPart = parts[1] || '';
-
-		if (thousandsSeparator === '&nbsp;')
-		{
-			thousandPart = thousandPart.replaceAll('\u00A0', '');
-		}
-		else if (thousandsSeparator !== '')
-		{
-			thousandPart = thousandPart.replaceAll(thousandsSeparator, '');
-		}
-
-		return Number(`${thousandPart}.${decimalPart}`);
-	}
-
 	module.exports = {
 		inRange,
 		toNumber,
-		parseAmount,
 	};
 });

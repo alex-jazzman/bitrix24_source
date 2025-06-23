@@ -11,7 +11,6 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 
-
 // include 'template.html.php'; return;
 // include 'error.php'; return;
 
@@ -75,7 +74,7 @@ if (!empty($arResult['FEEDBACK_URL']))
 				<?
 				if ($overview?->agenda)
 				{
-					echo $overview->agenda?->explanation. '<br>';
+					echo $overview->agenda?->explanation . '<br>';
 					echo $overview->agenda?->quote;
 				}
 				?>
@@ -234,7 +233,7 @@ if (!empty($arResult['FEEDBACK_URL']))
 						?>
 						<li class="bx-call-component-call-ai__result-list-item">
 							<p class="bx-call-component-call-ai__task-description">
-								<?= $row->action_item ?>
+								<?= $row->actionItem ?>
 							</p>
 							<span
 								class="bx-call-component-call-ai__task-button"
@@ -315,14 +314,97 @@ if (!empty($arResult['FEEDBACK_URL']))
 			<div id="TabRecommendations" class="bx-call-component-call-ai__tab-content">
 			<?
 
-			if ($insights?->insights)
+			if (
+				$insights?->insights
+				|| $insights?->meetingStrengths
+				|| $insights?->meetingWeaknesses
+				|| $insights?->speechStyleInfluence
+				|| $insights?->engagementLevel
+				|| $insights?->areasOfResponsibility
+				|| $insights?->finalRecommendations
+			)
 			{
-				foreach ($insights->insights as $row)
+				if ($insights?->insights)
+				{
+					foreach ($insights->insights as $row)
+					{
+						?>
+						<p class="bx-call-component-call-ai__recommendations">
+							<?= $row->detailedInsight ?>
+						</p>
+						<?
+					}
+				}
+
+				if ($insights?->meetingStrengths)
 				{
 					?>
-					<p class="bx-call-component-call-ai__recommendations">
-						<?= $row->detailed_insight ?>
-					</p>
+					<div class="bx-call-component-call-ai-resume-block">
+						<div class="bx-call-component-call-ai-resume-block__header">
+							<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_STRENGTH') ?>
+						</div>
+					<?
+					foreach ($insights->meetingStrengths as $row)
+					{
+						?>
+						<p class="bx-call-component-call-ai__recommendations">
+							<?= $row->strength_title ?>. <?= $row->strength_explanation ?>
+						</p>
+						<?
+					}
+					?>
+					</div>
+					<?
+				}
+
+				if (
+					$insights?->meetingWeaknesses
+					|| $insights?->speechStyleInfluence
+					|| $insights?->engagementLevel
+					|| $insights?->areasOfResponsibility
+				)
+				{
+					?>
+					<div class="bx-call-component-call-ai-resume-block">
+						<div class="bx-call-component-call-ai-resume-block__header">
+							<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_WEAKNESS') ?>
+						</div>
+					<?
+					foreach ($insights->meetingWeaknesses as $row)
+					{
+						?>
+						<p class="bx-call-component-call-ai__recommendations">
+							<?= $row->weakness_title ?>. <?= $row->weakness_explanation ?>
+						</p>
+						<?
+					}
+					foreach (['speechStyleInfluence', 'engagementLevel', 'areasOfResponsibility'] as $field)
+					{
+						if ($insights?->{$field})
+						{
+							?>
+							<p class="bx-call-component-call-ai__recommendations">
+								<?= $insights->{$field} ?>
+							</p>
+							<?
+						}
+					}
+					?>
+					</div>
+					<?
+				}
+
+				if ($insights?->finalRecommendations)
+				{
+					?>
+					<div class="bx-call-component-call-ai-resume-block">
+						<div class="bx-call-component-call-ai-resume-block__header">
+							<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_FINAL_RECOMMENDATIONS') ?>
+						</div>
+						<p class="bx-call-component-call-ai__recommendations">
+							<?= $insights->finalRecommendations ?>
+						</p>
+					</div>
 					<?
 				}
 			}

@@ -1,7 +1,7 @@
 type Event = {
 	id: number,
 	parentId: number,
-	isFullDay: boolean,
+	fullDay: boolean,
 	calType: string,
 	ownerId: number,
 	dateFromFormatted: string,
@@ -9,6 +9,7 @@ type Event = {
 	dateToTs: number,
 	timezone: string,
 	timezoneOffset: number,
+	isDaylightSavingTimezone: string,
 	sectionId: number,
 	name: string,
 	description: string,

@@ -27,6 +27,7 @@ $action =
 		: 'view'
 ;
 
+$usePadding = $action === 'edit' ?? false;
 $formParams = [
 	"ID" => $taskId,
 	"GROUP_ID" => $groupId,
@@ -45,9 +46,6 @@ $formParams = [
 
 if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
-	include("util_group_menu.php");
-	include("util_group_profile.php");
-
 	if (
 		CSocNetFeatures::IsActiveFeature(
 			SONET_ENTITY_GROUP,
@@ -57,12 +55,19 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 	)
 	{
 		$APPLICATION->IncludeComponent(
-			"bitrix:tasks.iframe.popup",
-			"wrap",
+			'bitrix:ui.sidepanel.wrapper',
+			'',
 			[
-				"ACTION" => $action,
-				"FORM_PARAMETERS" => $formParams,
-				'HIDE_MENU_PANEL' => 'Y',
+				'POPUP_COMPONENT_NAME' => 'bitrix:tasks.iframe.popup',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => 'wrap',
+				'POPUP_COMPONENT_PARAMS' => [
+					"ACTION" => $action,
+					"FORM_PARAMETERS" => $formParams,
+					'HIDE_MENU_PANEL' => 'Y',
+				],
+				'USE_UI_TOOLBAR' => 'Y',
+				'USE_PADDING' => $usePadding,
+				'USE_FAST_WAY_CLOSE_LOADER' => $taskId > 0,
 			],
 			$component,
 			["HIDE_ICONS" => "Y"]

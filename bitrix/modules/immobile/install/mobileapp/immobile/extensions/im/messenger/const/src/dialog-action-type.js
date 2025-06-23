@@ -33,6 +33,7 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 		openAvatarMenu: 'openAvatarMenu',
 		openMessageMenu: 'openMessageMenu',
 		openSidebarMenu: 'openSidebarMenu',
+		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
 	});
 
 	module.exports = { DialogActionType };

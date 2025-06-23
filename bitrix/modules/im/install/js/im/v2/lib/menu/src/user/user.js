@@ -3,7 +3,7 @@ import { EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { Utils } from 'im.v2.lib.utils';
-import { ChatService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { showKickUserConfirm } from 'im.v2.lib.confirm';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ActionByRole, ChatType, EventType, UserType } from 'im.v2.const';

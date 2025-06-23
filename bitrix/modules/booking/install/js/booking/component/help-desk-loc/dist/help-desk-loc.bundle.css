@@ -3,3 +3,10 @@
 	cursor: pointer;
 	white-space: nowrap;
 }
+
+.booking--help-desk-nowrap {
+	white-space: nowrap;
+	/* clear parent gap: 6px */
+	margin-top: -6px;
+	margin-bottom: -6px;
+}

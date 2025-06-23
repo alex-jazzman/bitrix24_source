@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
@@ -213,7 +214,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          var _ref4 = babelHelpers.slicedToArray(_ref3, 2),
 	            categoryId = _ref4[0],
 	            category = _ref4[1];
-	          if (categoryId !== 'CATALOG' && categoryId !== 'ACTIVITY' && categoryId !== 'INVOICE') {
+	          if (categoryId !== 'CATALOG' && category !== 'BOOKING' && categoryId !== 'ACTIVITY' && categoryId !== 'INVOICE') {
 	            if (main_core.Type.isPlainObject(_this3.options) && main_core.Type.isBoolean(_this3.options.isLeadEnabled) && !_this3.options.isLeadEnabled && categoryId === 'LEAD') {
 	              return;
 	            }
@@ -441,7 +442,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
 	          categoryId = _ref6[0],
 	          category = _ref6[1];
-	        if (categoryId !== 'CATALOG' && categoryId !== 'ACTIVITY' && categoryId !== 'INVOICE' && (!main_core.Type.isArrayFilled(allowedCategories) || allowedCategories.includes(categoryId)) && !disabledCategories.includes(categoryId)) {
+	        if (categoryId !== 'CATALOG' && categoryId !== 'BOOKING' && categoryId !== 'ACTIVITY' && categoryId !== 'INVOICE' && (!main_core.Type.isArrayFilled(allowedCategories) || allowedCategories.includes(categoryId)) && !disabledCategories.includes(categoryId)) {
 	          var filteredFields = category.FIELDS.filter(function (field) {
 	            if (field.name === 'CONTACT_ORIGIN_VERSION' || field.name === 'CONTACT_LINK') {
 	              return false;

@@ -5,13 +5,14 @@
  */
 jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { unique } = require('utils/array');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { EventType, DialogType, ComponentCode, UserRole } = require('im/messenger/const');
+	const { EventType, DialogType, UserRole } = require('im/messenger/const');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 
 	/**
@@ -34,19 +35,19 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUpdate.dialoguesModel/update.catch:`, err));
 		}
 
-		handleReadAllChats(params, extra, command)
+		handleChatFieldsUpdate(params, extra, command)
 		{
 			if (this.interceptEvent(params, extra, command))
 			{
 				return;
 			}
 
-			this.logger.info(`${this.getClassName()}.handleReadAllChats`);
+			this.logger.info(`${this.getClassName()}.handleChatFieldsUpdate:`, params, extra, command);
 
-			this.store.dispatch('dialoguesModel/clearAllCounters')
-				.then(() => this.store.dispatch('recentModel/clearAllCounters'))
-				.then(() => Counters.update())
-			;
+			this.store.dispatch('dialoguesModel/update', {
+				dialogId: params.dialogId,
+				fields: params,
+			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatFieldsUpdate.dialoguesModel/update.catch:`, err));
 		}
 
 		handleChatPin(params, extra, command)
@@ -79,15 +80,34 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 				return;
 			}
+			const {
+				dialogId,
+				chatId,
+				muted,
+				counter,
+				counterType,
+				parentChatId = 0,
+			} = params;
 
-			const dialog = clone(this.store.getters['dialoguesModel/getById'](params.dialogId));
+			/** @type {CounterState} */
+			const counterState = {
+				chatId,
+				counter,
+				type: counterType,
+				parentChatId,
+			};
+
+			const dialog = clone(this.store.getters['dialoguesModel/getById'](dialogId));
 			if (Type.isUndefined(dialog))
 			{
+				this.updateCounterChatMutedCollection(counterState, muted);
+				TabCounters.update();
+
 				return;
 			}
 
 			const muteList = new Set(dialog.muteList);
-			if (params.muted)
+			if (muted)
 			{
 				muteList.add(MessengerParams.getUserId());
 			}
@@ -97,16 +117,17 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			}
 
 			this.store.dispatch('dialoguesModel/set', [{
-				dialogId: params.dialogId,
+				dialogId,
 				muteList: [...muteList],
 			}]).catch((err) => this.logger.error(`${this.getClassName()}.handleChatMuteNotify.dialoguesModel/set.catch:`, err));
 
 			this.store.dispatch('sidebarModel/changeMute', {
-				dialogId: params.dialogId,
-				isMute: params.muted,
+				dialogId,
+				isMute: muted,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatMuteNotify.sidebarModel/changeMute.catch:`, err));
 
-			Counters.update();
+			this.updateCounterChatMutedCollection(counterState, muted);
+			TabCounters.update();
 		}
 
 		handleChatHide(params, extra, command)
@@ -120,8 +141,8 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					delete Counters.openlinesCounter.detail[params.dialogId];
-					Counters.update();
+					delete TabCounters.openlinesCounter.detail[params.dialogId];
+					TabCounters.update();
 				}
 
 				return;
@@ -130,7 +151,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			this.logger.info(`${this.getClassName()}.handleChatHide`, params);
 
 			this.store.dispatch('recentModel/delete', { id: params.dialogId })
-				.then(() => Counters.updateDelayed())
+				.then(() => TabCounters.updateDelayed())
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleChatHide.updateDelayed().catch:`, err))
 			;
 		}
@@ -198,7 +219,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				id: dialogId,
 				unread: params.active,
 				counter,
-			}]).then(() => Counters.update());
+			}]).then(() => TabCounters.update());
 		}
 
 		handleChatUserAdd(params, extra, command)
@@ -215,17 +236,33 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				userCount,
 				users,
 				chatExtranet = false,
-			} = params;
+				containsCollaber = false,
+			} = params || {};
 
-			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
+			const dialogModel = this.#getDialogModel(dialogId);
+
+			unique(newUsers).forEach((userId) => {
+				const userDialogModel = this.#getDialogModel(userId);
+				if (userDialogModel)
+				{
+					void this.store.dispatch('sidebarModel/sidebarCommonChatsModel/set', {
+						chatId: userDialogModel.chatId,
+						chats: [dialogModel],
+					});
+				}
+			});
+
 			/** @type {Partial<DialoguesModelState>} */
 			const dialogUpdatingFields = {};
 
-			let needUpdateRecent = false;
 			if (Boolean(dialogModel?.extranet) !== chatExtranet)
 			{
 				dialogUpdatingFields.extranet = chatExtranet;
-				needUpdateRecent = true;
+			}
+
+			if (Boolean(dialogModel?.containsCollaber) !== containsCollaber)
+			{
+				dialogUpdatingFields.containsCollaber = containsCollaber;
 			}
 
 			if (newUsers.includes(MessengerParams.getUserId()))
@@ -238,32 +275,35 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				this.store.dispatch('dialoguesModel/update', {
 					dialogId,
 					fields: dialogUpdatingFields,
-				})
-					.then(() => {
-						if (!needUpdateRecent)
-						{
-							return;
-						}
-						const recentItem = this.store.getters['recentModel/getById'](dialogId);
-						if (!recentItem)
-						{
-							return;
-						}
-
-						this.store.dispatch('recentModel/set', [recentItem]);
-					})
-				;
+				});
 			}
 
-			this.store.dispatch('usersModel/set', Object.values(users))
-				.catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserAdd.usersModel/set.catch:`, err));
+			this.store.dispatch('usersModel/set', Object.values(users)).catch((err) => {
+				this.logger.error(`${this.getClassName()}.handleChatUserAdd.usersModel/set.catch:`, err);
+			});
 			this.store.dispatch('dialoguesModel/addParticipants', {
 				dialogId,
 				participants: newUsers,
 				userCounter: userCount,
-			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserAdd.dialoguesModel/addParticipants.catch:`, err));
+			}).catch((err) => {
+				this.logger.error(
+					`${this.getClassName()}.handleChatUserAdd.dialoguesModel/addParticipants.catch:`,
+					err,
+				);
+			});
 		}
 
+		/**
+		 * @param {Object} params
+		 * @param {DialogId} params.dialogId
+		 * @param {string} params.chatId
+		 * @param {number} params.userId
+		 * @param {number} params.userCount
+		 * @param {boolean} params.chatExtranet
+		 * @param {Object} extra
+		 * @param {Object} command
+		 * @returns {Promise<void>}
+		 */
 		async handleChatUserLeave(params, extra, command)
 		{
 			if (this.interceptEvent(params, extra, command))
@@ -273,11 +313,25 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 			this.logger.info(`${this.getClassName()}.handleChatUserLeave`, params);
 
-			const dialogId = params.dialogId;
+			const {
+				userId,
+				chatId,
+				dialogId,
+				userCount,
+				chatExtranet,
+				containsCollaber,
+			} = params;
 
-			this.deleteCounters(params.dialogId);
+			const userDialogModel = this.#getDialogModel(userId);
 
-			if (Number(params.userId) === MessengerParams.getUserId())
+			void this.store.dispatch('sidebarModel/sidebarCommonChatsModel/delete', {
+				chatId: userDialogModel.chatId,
+				id: chatId,
+			});
+
+			this.deleteCounters(dialogId);
+
+			if (Number(userId) === MessengerParams.getUserId())
 			{
 				const chatProvider = new ChatDataProvider();
 				const chatDataResult = await chatProvider.get({ dialogId });
@@ -290,10 +344,10 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				const chatHelper = DialogHelper.createByModel(chatData);
 
 				// close and delete the comment chat linked to this channel
-				if (chatHelper.isChannel)
+				if (chatHelper?.isChannel)
 				{
 					void this.store.dispatch('commentModel/deleteChannelCounters', {
-						channelId: params.chatId,
+						channelId: chatId,
 					});
 
 					const commentChatData = this.store.getters['dialoguesModel/getByParentChatId'](chatData.chatId);
@@ -328,43 +382,41 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 					shouldSendDeleteAnalytics: false,
 				});
 
-				Counters.update();
+				TabCounters.update();
 			}
 
 			this.store.dispatch('dialoguesModel/removeParticipants', {
 				dialogId,
-				participants: [params.userId],
-				userCounter: params.userCount,
-			})
-				.catch((error) => {
-					this.logger.error(
-						`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`,
-						error,
-					);
-				})
-			;
+				participants: [userId],
+				userCounter: userCount,
+			}).catch((error) => {
+				this.logger.error(
+					`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`,
+					error,
+				);
+			});
 
-			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
-			if (!dialogModel || dialogModel.extranet === params.chatExtranet)
+			const dialogModel = this.#getDialogModel(dialogId);
+			/** @type {Partial<DialoguesModelState>} */
+			const dialogUpdatingFields = {};
+
+			if (Boolean(dialogModel?.extranet) !== chatExtranet)
 			{
-				return;
+				dialogUpdatingFields.extranet = chatExtranet;
 			}
-			this.store.dispatch('dialoguesModel/update', {
-				dialogId,
-				fields: {
-					extranet: params.chatExtranet,
-				},
-			})
-				.then(() => {
-					const recentItem = this.store.getters['recentModel/getById'](dialogId);
-					if (!recentItem)
-					{
-						return;
-					}
 
-					this.store.dispatch('recentModel/set', [recentItem]);
-				})
-			;
+			if (Boolean(dialogModel?.containsCollaber) !== containsCollaber)
+			{
+				dialogUpdatingFields.containsCollaber = containsCollaber;
+			}
+
+			if (Object.keys(dialogUpdatingFields).length > 0)
+			{
+				this.store.dispatch('dialoguesModel/update', {
+					dialogId,
+					fields: dialogUpdatingFields,
+				});
+			}
 		}
 
 		/**
@@ -373,8 +425,8 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 		 */
 		deleteCounters(dialogId)
 		{
-			delete Counters.chatCounter.detail[dialogId];
-			delete Counters.openlinesCounter.detail[dialogId];
+			delete TabCounters.chatCounter.detail[dialogId];
+			delete TabCounters.openlinesCounter.detail[dialogId];
 		}
 
 		handleChatAvatar(params, extra, command)
@@ -561,6 +613,33 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 		getClassName()
 		{
 			return this.constructor.name;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @returns {?DialoguesModelState}
+		 */
+		#getDialogModel(dialogId)
+		{
+			return this.store.getters['dialoguesModel/getById'](dialogId);
+		}
+
+		/**
+		 * @param {CounterState} counterState
+		 * @param {boolean} isMuted
+		 */
+		updateCounterChatMutedCollection(counterState, isMuted)
+		{
+			if (isMuted)
+			{
+				TabCounters.addChatToMutedCollection(counterState.chatId);
+				TabCounters.deleteCounterByChatId(counterState.chatId);
+			}
+			else
+			{
+				TabCounters.deleteChatFromMutedCollection(counterState.chatId);
+				TabCounters.updateCounterDetailByCounterState(counterState);
+			}
 		}
 	}
 

@@ -1,8 +1,13 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die(); 
+<?php
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/** @var array $arParams */
+/** @var array $arResult */
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\Intranet\Settings;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\UI\Buttons;
 
 Loc::loadMessages(__FILE__);
 
@@ -14,19 +19,20 @@ if (!(new Settings())->isToolAvailable(Settings::TOOLS['templates']))
 {
 	return;
 }
+
+$templateSelectorText = $arParams['TEMPLATE_DATA']['BUTTON_LABEL'];
+$templateBtn = new Buttons\Button([
+	'color' => Buttons\Color::LIGHT_BORDER,
+	'text' => $templateSelectorText,
+]);
+
+$templateBtn->addAttribute('data-bx-id', 'templateselector-open');
+$templateBtn->addAttribute('id', 'templateselector-open');
+$templateBtn->addAttribute('title', Loc::getMessage('TASKS_TTDP_TEMPLATESELECTOR_CREATE_HINT'));
+$templateBtn->setDropdown(true);
+
+Toolbar::addButton($templateBtn);
 ?>
-
-<div id="bx-component-scope-<?=$templateId?>" class="task-template-selector">
-
-	<?$hasButton = $arParams['TEMPLATE_DATA']['BUTTON_LABEL'] != '';?>
-
-	<button data-bx-id="templateselector-open" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-dropdown" title="<?=Loc::getMessage('TASKS_TTDP_TEMPLATESELECTOR_CREATE_HINT')?>">
-		<?if($hasButton):?>
-			<?=htmlspecialcharsbx($arParams['TEMPLATE_DATA']['BUTTON_LABEL'])?>
-		<?endif?>
-	</button>
-
-</div>
 
 <script>
 	new BX.Tasks.Component.TaskDetailPartsTemplateSelector(<?=CUtil::PhpToJSObject(array(

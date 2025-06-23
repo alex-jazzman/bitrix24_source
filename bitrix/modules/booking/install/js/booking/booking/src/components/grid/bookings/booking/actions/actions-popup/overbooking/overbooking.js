@@ -1,6 +1,5 @@
-// @vue/component
-
 import { Text } from 'main.core';
+import { computed } from 'ui.vue3';
 import { mapGetters } from 'ui.vue3.vuex';
 import { hint } from 'ui.vue3.directives.hint';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
@@ -21,6 +20,7 @@ type OverbookingData = {
 	plusIconColor: string,
 };
 
+// @vue/component
 export const Overbooking = {
 	name: 'BookingActionsPopupOverbooking',
 	components: {
@@ -29,7 +29,6 @@ export const Overbooking = {
 	directives: {
 		hint,
 	},
-	emits: ['close'],
 	props: {
 		bookingId: {
 			type: [Number, String],
@@ -44,11 +43,14 @@ export const Overbooking = {
 			default: false,
 		},
 	},
-	setup(): OverbookingData
+	emits: ['close'],
+	setup(props): OverbookingData
 	{
 		const plusIcon = IconSet.PLUS_20;
 		const plusIconSize = 20;
-		const plusIconColor = 'var(--ui-color-palette-gray-20)';
+		const plusIconColor = computed((): string => {
+			return props.disabled ? 'var(--ui-color-palette-gray-20)' : 'var(--ui-color-palette-gray-60)';
+		});
 
 		return {
 			plusIcon,
@@ -131,19 +133,14 @@ export const Overbooking = {
 				visitStatus: this.dictionary.Unknown,
 			};
 			delete overbooking.name;
-			await this.addCreatedFromEmbedBooking(overbooking.id);
+
 			const result = await bookingService.add(overbooking);
 			if (result.success && result.booking)
 			{
 				BookingAnalytics.sendAddBooking({ isOverbooking: true });
-				await this.addCreatedFromEmbedBooking(result.booking.id);
 			}
 
 			this.$emit('close');
-		},
-		async addCreatedFromEmbedBooking(id: number | string): Promise<void>
-		{
-			await this.$store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, id);
 		},
 	},
 	template: `

@@ -66,4 +66,4 @@ $MESS["CT_BLLE_TOOLBAR_LIST_COPY_TITLE_PROCESS"] = "Процестің көші�
 $MESS["CT_BLLE_TOOLBAR_LIST_TITLE"] = "Тізім элементтерін қарау және түзету";
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_PROCESSES"] = "Процестерге ауыстыру";
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_WARNING_PROCESS"] = "Бұл тізімнің орнын ауыстырығыңыз келетініне сенімдісіз бе?";
-$MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ТІЗІМГЕ";
+$MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "Тізімге";

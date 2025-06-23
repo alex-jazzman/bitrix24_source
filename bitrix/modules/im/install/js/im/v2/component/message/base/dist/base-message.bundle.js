@@ -40,13 +40,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: Boolean,
 	      default: true
 	    },
-	    menuIsActiveForId: {
-	      type: [Number, String],
-	      default: 0
-	    },
 	    afterMessageWidthLimit: {
 	      type: Boolean,
 	      default: true
+	    },
+	    withError: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  computed: {
@@ -104,7 +104,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.openMessageMenu, this.dialogId);
 	    },
 	    hasError() {
-	      return this.message.error;
+	      return this.withError || this.message.error;
 	    }
 	  },
 	  methods: {
@@ -132,7 +132,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:showContextMenu="showContextMenu"
 						:dialogId="dialogId"
 						:message="message" 
-						:menuIsActiveForId="menuIsActiveForId" 
 					/>
 				</div>
 				<!-- After content -->

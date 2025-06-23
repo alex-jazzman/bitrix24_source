@@ -24,10 +24,11 @@ if($arResult["FIELD_ID"] && $arResult["FIELD_ID"] !== 'NAME')
 
 $returnButton = new Bitrix\UI\Buttons\Button([
 	'color' => \Bitrix\UI\Buttons\Color::LINK,
-	'text' => Loc::getMessage("CT_BLFE_TOOLBAR_RETURN_LIST_ELEMENT"),
+	'text' => Loc::getMessage("CT_BLFE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"),
 	'link' => $arResult["LIST_FIELDS_URL"],
+	'icon' => Bitrix\UI\Buttons\Icon::BACK,
 ]);
-$returnButton->addClass('lists-list-back');
+
 $returnButton->setSize(Bitrix\UI\Buttons\Size::SMALL);
 Bitrix\UI\Toolbar\Facade\Toolbar::addButton($returnButton);
 

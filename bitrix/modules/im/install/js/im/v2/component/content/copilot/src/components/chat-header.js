@@ -1,9 +1,9 @@
-import 'ui.notification';
 import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
-import { ChatService } from 'im.v2.provider.service';
-import { EditableChatTitle, AvatarSize, ChatAvatar } from 'im.v2.component.elements';
+import { ChatService } from 'im.v2.provider.service.chat';
+import { EditableChatTitle } from 'im.v2.component.elements.chat-title';
+import { AvatarSize, ChatAvatar } from 'im.v2.component.elements.avatar';
 import { ChatHeader } from 'im.v2.component.content.elements';
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
 
@@ -64,11 +64,7 @@ export const CopilotChatHeader = {
 	{
 		onNewTitleSubmit(newTitle: string)
 		{
-			this.getChatService().renameChat(this.dialogId, newTitle).catch(() => {
-				BX.UI.Notification.Center.notify({
-					content: this.loc('IM_CONTENT_CHAT_HEADER_RENAME_ERROR'),
-				});
-			});
+			void this.getChatService().renameChat(this.dialogId, newTitle);
 		},
 		onMembersClick()
 		{

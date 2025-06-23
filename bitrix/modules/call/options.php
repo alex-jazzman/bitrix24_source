@@ -159,6 +159,13 @@ $selfTurnServer = (Option::get('call', 'turn_server_self') == 'Y');
 		<td class="adm-detail-content-cell-l"><?=Loc::getMessage("CALL_OPTIONS_TURN_SERVER_PASSWORD")?>:<br><small>(<?=Loc::getMessage("CALL_OPTIONS_TURN_SERVER_PASSWORD_HINT")?>)</small></td>
 		<td class="adm-detail-content-cell-r"><input type="input" size="20" value="<?=htmlspecialcharsbx(COption::GetOptionString('call', 'turn_server_password'))?>" name="TURN_SERVER_PASSWORD"></td>
 	</tr>
+	<tr class="heading">
+		<td colspan="2"><?=Loc::getMessage("CALL_OPTIONS_HEADER_REGISTRATION")?></td>
+	</tr>
+	<tr id="video_group_6">
+		<td class="adm-detail-content-cell-l"><?=Loc::getMessage("CALL_OPTIONS_REGISTER_SECRET_KEY")?></td>
+		<td class="adm-detail-content-cell-r"><input type="button" name="REGISTER_SECRET_KEY" value="<?=Loc::getMessage("CALL_OPTIONS_REGISTER_SECRET_KEY_ACTION")?>" class="adm-btn-save" OnClick="RegisterSecretKey();"></td>
+	</tr>
 <?php $tabControl->Buttons();?>
 <script>
 function toogleVideoOptions(el)
@@ -174,6 +181,27 @@ function RestoreDefaults()
 	{
 		window.location = "<?= $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?= LANG?>&mid=<?= urlencode($mid)."&".bitrix_sessid_get();?>";
 	}
+}
+function RegisterSecretKey()
+{
+	let registerKeyDialog = new BX.CDialog({
+		title: '<?= AddSlashes(Loc::getMessage('CALL_OPTIONS_POPUP_REGISTER_SECRET_TITLE'))?>',
+		content: '<?= AddSlashes(Loc::getMessage('CALL_OPTIONS_POPUP_REGISTER_SECRET_MESSAGE'))?>',
+		height: 100,
+		width: 420,
+		resizable: false,
+		buttons: [ {
+			title: '<?= AddSlashes(Loc::getMessage('CALL_OPTIONS_POPUP_REGISTER_SECRET_OK_BTN'))?>',
+			id: 'my_save',
+			className: 'adm-btn-save',
+			action: () => {
+				BX.ajax.runAction("call.Settings.registerKey", {});
+				BX.WindowManager.Get().Close()
+			}
+		}, BX.CAdminDialog.btnCancel ]
+	});
+
+	registerKeyDialog.Show();
 }
 </script>
 <input type="submit" name="Update" <?if (!$hasPermissionEdit) echo "disabled" ?> value="<?= Loc::getMessage('MAIN_SAVE')?>">

@@ -6,13 +6,15 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 	const { Color, Component, Indent } = require('tokens');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const { showToast } = require('toast');
+	const { Icon } = require('assets/icons');
 
 	const { usersSelector } = require('statemanager/redux/slices/users');
 
 	const { SectionManager } = require('calendar/data-managers/section-manager');
 	const { CollabManager } = require('calendar/data-managers/collab-manager');
 	const { LocationManager } = require('calendar/data-managers/location-manager');
-	const { EventFormFields, EventMeetingStatus } = require('calendar/enums');
+	const { EventFormFields, EventMeetingStatus, CalendarType } = require('calendar/enums');
 
 	const { DataLoader } = require('calendar/event-view-form/data-loader');
 
@@ -24,6 +26,8 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 	const { RemindersField } = require('calendar/event-view-form/fields/reminders');
 	const { IcsField } = require('calendar/event-view-form/fields/ics');
 	const { UserWithChatButtonsField } = require('calendar/event-view-form/fields/user-with-chat-buttons');
+	const { AccessibilityField } = require('calendar/event-view-form/fields/accessibility');
+	const { SpecialField } = require('calendar/event-view-form/fields/special');
 
 	const { TextAreaField: Description } = require('layout/ui/fields/textarea/theme/air-description');
 	const { UserField } = require('layout/ui/fields/user/theme/air');
@@ -60,7 +64,7 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 					factory: NameField,
 					props: {
 						id: EventFormFields.TITLE,
-						name: event.name,
+						value: event.name,
 						dateFromTs: event.dateFromTs,
 						color: event.color,
 						sectionName: event.sectionName,
@@ -96,7 +100,7 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 						id: EventFormFields.DATE_TIME,
 						dateFromTs: event.dateFromTs,
 						dateToTs: event.dateToTs,
-						isFullDay: event.isFullDay,
+						fullDay: event.fullDay,
 						readOnly: true,
 						placeholder: 'dateFromTs',
 						required: true,
@@ -123,6 +127,8 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 						chatId: event.chatId,
 						attendees: event.attendees,
 						collabId: event.collabId,
+						ownerId: event.ownerId,
+						meetingHost: event.meetingHost,
 						layout,
 						readOnly: true,
 						multiple: true,
@@ -140,7 +146,7 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 						},
 					},
 				},
-				hasToShowDecisionButtons(event.meetingStatus, event.meetingHost) && {
+				hasToShowDecisionButtons(event.meetingStatus, event.meetingHost, event.ownerId, event.calType) && {
 					factory: DecisionButtonsField,
 					props: {
 						id: EventFormFields.DECISION_BUTTONS,
@@ -226,6 +232,23 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 							selectorTitle: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_DECLINED'),
 							textMultiple: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_DECLINED_COUNT'),
 						},
+					},
+				},
+				{
+					factory: AccessibilityField,
+					props: {
+						id: EventFormFields.ACCESSIBILITY,
+						value: event.accessibility,
+						readOnly: true,
+					},
+				},
+				{
+					factory: SpecialField,
+					props: {
+						id: EventFormFields.SPECIAL,
+						importance: event.importance,
+						privateEvent: event.privateEvent,
+						readOnly: true,
 					},
 				},
 				{
@@ -323,8 +346,12 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 		} : undefined;
 	};
 
-	const hasToShowDecisionButtons = (meetingStatus, meetingHost) => {
-		return meetingStatus !== EventMeetingStatus.HOST && meetingHost !== Number(env.userId);
+	const hasToShowDecisionButtons = (meetingStatus, meetingHost, ownerId, calType) => {
+		return meetingStatus !== EventMeetingStatus.HOST
+			&& meetingHost !== Number(env.userId)
+			&& ownerId === Number(env.userId)
+			&& calType === CalendarType.USER
+		;
 	};
 
 	const EventViewFormStyles = {
@@ -346,10 +373,20 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 		},
 	};
 
-	const mapStateToProps = (state, { moreButton, eventId, dateFromTs }) => {
+	const mapStateToProps = (state, { moreButton, eventId, dateFromTs, layout }) => {
 		const event = selectByIdAndDate(state, { eventId, dateFromTs });
 		if (!event)
 		{
+			layout.back();
+
+			if (moreButton.isDeleted === false)
+			{
+				showToast({
+					message: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_EMPTY_TITLE'),
+					iconName: Icon.INFO_CIRCLE.getIconName(),
+				});
+			}
+
 			return {};
 		}
 
@@ -370,12 +407,14 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 				id: eventId,
 				parentEventId: event.parentId,
 				name: event.name,
+				ownerId: event.ownerId,
+				calType: event.calType,
 				sectionId: event.sectionId,
 				sectionName: prepareSectionName(event.sectionId, event.collabId),
 				description: prepareDescription(event.description),
 				dateFromTs: event.dateFromTs,
 				dateToTs: event.dateToTs,
-				isFullDay: event.isFullDay,
+				fullDay: event.fullDay,
 				color: prepareColor(event.color, event.sectionId, event.collabId),
 				textLocation: LocationManager.getTextLocation(event.location),
 				meetingHost: event.meetingHost,
@@ -388,6 +427,9 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 				permissions: event.permissions,
 				collabId: event.collabId,
 				chatId: event.chatId,
+				accessibility: event.accessibility,
+				importance: event.importance,
+				privateEvent: event.privateEvent,
 			},
 			acceptedAttendees: getAttendeesInfo(state, event.attendees, EventMeetingStatus.ATTENDED, event.meetingHost),
 			declinedAttendees: getAttendeesInfo(state, event.attendees, EventMeetingStatus.DECLINED),

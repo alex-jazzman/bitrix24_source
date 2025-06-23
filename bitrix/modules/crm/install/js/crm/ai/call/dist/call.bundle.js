@@ -1104,7 +1104,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _getAvatar2() {
 	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _userPhotoUrl))) {
-	    return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"call-quality__rating__avatar\"\n\t\t\t\t\tstyle=\"background-image: url(", ")\"\n\t\t\t\t></div>\n\t\t\t"])), encodeURI(babelHelpers.classPrivateFieldGet(this, _userPhotoUrl)));
+	    return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"call-quality__rating__avatar\"\n\t\t\t\t\tstyle=\"background-image: url('", "')\"\n\t\t\t\t></div>\n\t\t\t"])), encodeURI(main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _userPhotoUrl))));
 	  }
 	  return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"call-quality__rating__avatar ui-icon ui-icon-common-user\">\n\t\t\t\t<i style=\"\"></i>\n\t\t\t</div>\n\t\t"])));
 	}

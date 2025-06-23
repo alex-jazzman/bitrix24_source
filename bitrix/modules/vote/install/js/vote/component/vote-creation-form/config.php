@@ -14,6 +14,7 @@ return [
 		'main.core',
 		'ui.switcher',
 		'ui.forms',
+		'vote.analytics',
 	],
 	'skip_core' => false,
 ];

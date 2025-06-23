@@ -1,6 +1,6 @@
 export interface IBoard {
     tryToCloseBoard: () => Promise<void>;
-    renameFlip: (name: string) => Promise<void>;
+    renameBoard: (name: string) => Promise<void>;
 }
 export interface JWTParams {
     user_id: string;
@@ -27,6 +27,8 @@ export interface UIParams {
     dashboardFlow?: DashboardFlow;
     exportAsFile?: boolean;
     spinner?: 'circular' | 'default';
+    userKickable?: boolean;
+    confirmUserKick?: boolean;
 }
 export interface BoardData {
     boardId?: string;
@@ -60,6 +62,8 @@ export interface SDKParams {
     partnerId: string;
     events?: {
         onBoardChanged?: () => void;
-        onFlipRenamed?: (name: string) => void;
+        onBoardRenamed?: (name: string) => void;
+        onUserKickConfirmed?: () => void;
+        onUserKicked?: () => void;
     };
 }

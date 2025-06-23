@@ -52,6 +52,7 @@ export class Popup extends EventEmitter
 				target: this.getOptions().target,
 				width: 374,
 				content: this.#getContent(),
+				popupLoader: this.getOptions().loader,
 			});
 		});
 	}
@@ -66,7 +67,7 @@ export class Popup extends EventEmitter
 				content.push(this.#getLicenseContent().getConfig());
 			}
 
-			if (this.getOptions().content.baas.isAvailable &&this.getOptions().content.market.isAvailable)
+			if (this.getOptions().content.baas.isAvailable && this.getOptions().content.market.isAvailable)
 			{
 				content.push({
 					html: [
@@ -132,7 +133,6 @@ export class Popup extends EventEmitter
 	{
 		return this.#cache.remember('baas-content', () => {
 			return new BaasContent({
-				awaitData: this.#getDynamicContent(),
 				licensePopupTarget: this.getOptions().target,
 				licensePopup: this,
 				isAdmin: this.getOptions().isAdmin,
@@ -154,7 +154,6 @@ export class Popup extends EventEmitter
 	{
 		return this.#cache.remember('telephony-content', () => {
 			return new TelephonyContent({
-				awaitData: this.#getDynamicContent(),
 				...this.getOptions().content.telephony,
 			});
 		});
@@ -174,15 +173,6 @@ export class Popup extends EventEmitter
 		return this.#cache.remember('partner-content', () => {
 			return new PartnerContent({
 				...this.getOptions().content.partner,
-			});
-		});
-	}
-
-	#getDynamicContent(): Promise
-	{
-		return this.#cache.remember('await-data', () => {
-			return new Promise((resolve, reject) => {
-				ajax.runAction(this.getOptions().content.action).then(resolve).catch(reject);
 			});
 		});
 	}

@@ -13,5 +13,7 @@ return [
 		'ui-system/typography/heading',
 		'ui-system/typography/text',
 		'ui-system/layout/area',
+		'utils/store',
 	],
 ];
+

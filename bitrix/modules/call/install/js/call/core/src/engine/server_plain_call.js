@@ -455,6 +455,7 @@ export class ServerPlainCall extends AbstractCall
 		this.CallApi.on('Reconnecting', this.#onCallReconnecting);
 		this.CallApi.on('Reconnected', this.#onCallReconnected);
 		this.CallApi.on('Disconnected', this.#onCallDisconnected);
+		this.CallApi.on('ReconnectingFailed', this.#onCallReconnectingFailed);
 	};
 
 	removeCallEvents()
@@ -468,6 +469,7 @@ export class ServerPlainCall extends AbstractCall
 			this.CallApi.on('Reconnecting', BX.DoNothing);
 			this.CallApi.on('Reconnected', BX.DoNothing);
 			this.CallApi.on('Disconnected', BX.DoNothing);
+			this.CallApi.on('ReconnectingFailed', BX.DoNothing);
 		}
 	};
 
@@ -1907,6 +1909,10 @@ export class ServerPlainCall extends AbstractCall
 		this.destroy();
 	}
 
+	#onCallReconnectingFailed = (e, error) => {
+		this.runCallback(CallEvent.onReconnectingFailed, { error });
+	};
+
 	#onUnload()
 	{
 		if (!this.ready)
@@ -1975,6 +1981,7 @@ export class ServerPlainCall extends AbstractCall
 		}
 
 		this.#beforeLeaveCall(finishCall);
+		this.runCallback(CallEvent.onLeave, { local: true });
 
 		return super.destroy();
 	}

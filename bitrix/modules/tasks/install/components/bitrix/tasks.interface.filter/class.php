@@ -463,7 +463,18 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 	protected function getData()
 	{
-		$this->arParams['VIEW_STATE_FOR_ANALYTICS'] = \Bitrix\Tasks\Helper\Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
+		$viewState = \Bitrix\Tasks\Helper\Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
+		$sectionType = match (true) {
+			($this->arResult['IS_SCRUM_PROJECT'] ?? false) => 'scrum',
+			($this->arResult['IS_COLLAB'] ?? false) => 'collab',
+			($this->arParams['MENU_GROUP_ID'] ?? $this->arParams['GROUP_ID'] ?? false) => 'project',
+			true => 'tasks',
+		};
+
+		$this->arResult['CREATE_BUTTON_ANALYTICS'] = [
+			'sectionType' => $sectionType,
+			'viewState' => $viewState,
+		];
 	}
 
 	private function getTasksViewList(): array

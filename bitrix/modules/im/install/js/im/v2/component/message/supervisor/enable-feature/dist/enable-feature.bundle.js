@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_elements,im_v2_component_message_supervisor_base,main_core,im_v2_lib_analytics,im_v2_lib_helpdesk,stafftrack_userStatisticsLink) {
+(function (exports,im_v2_component_elements_button,im_v2_component_message_supervisor_base,main_core,im_v2_lib_analytics,im_v2_lib_helpdesk,stafftrack_userStatisticsLink) {
 	'use strict';
 
 	const EnableFeatures = Object.freeze({
@@ -292,7 +292,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const SupervisorEnableFeatureMessage = {
 	  name: 'SupervisorEnableFeatureMessage',
 	  components: {
-	    ButtonComponent: im_v2_component_elements.Button,
+	    ChatButton: im_v2_component_elements_button.ChatButton,
 	    SupervisorBaseMessage: im_v2_component_message_supervisor_base.SupervisorBaseMessage
 	  },
 	  props: {
@@ -309,7 +309,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    message() {
 	      return this.item;
 	    },
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
 	    buttonColorScheme() {
 	      return {
 	        backgroundColor: 'transparent',
@@ -340,13 +340,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div :class="['bx-im-message-enable-feature__image', modifierImageClass]" />
 			</template>
 			<template #actions>
-				<ButtonComponent
+				<ChatButton
 					:size="ButtonSize.L"
 					:isRounded="true"
 					:text="toolData.detailButton.text"
 					@click="toolData.detailButton.callback"
 				/>
-				<ButtonComponent
+				<ChatButton
 					:size="ButtonSize.L"
 					:customColorScheme="buttonColorScheme"
 					:isRounded="true"

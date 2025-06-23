@@ -40,6 +40,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['SHOW_SECTION_REPORTS'], 'Y');
 		static::tryParseStringParameter($arParams['SHOW_SECTION_MANAGE'], 'A');
 
+		static::tryParseStringParameter($arParams['MARK_SECTION_TASKS_LIST'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS_LIST'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_FLOW_LIST'], 'N');
@@ -185,13 +186,14 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			$hasChildren = isset($item['ITEMS']) && is_array($item['ITEMS']) && !empty($item['ITEMS']);
 
 			$result[] = [
-				$item['NAME'] ?? $item['TEXT'],
+				$item['NAME'] ?? $item['TEXT'] ?? '',
 				($item['URL'] ?? null),
 				[],
 				[
 					'DEPTH_LEVEL' => $depthLevel,
 					'FROM_IBLOCK' => true,
 					'IS_PARENT' => $hasChildren,
+					'onclick' => $item['ON_CLICK'] ?? null,
 				]
 			];
 

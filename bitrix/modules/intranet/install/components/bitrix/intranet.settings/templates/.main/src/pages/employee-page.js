@@ -229,24 +229,6 @@ export class EmployeePage extends BaseSettingsPage
 			EmployeePage.addToSectionHelper(fastReqField, sectionSettings);
 		}
 
-		if (this.hasValue('allow_invite_users'))
-		{
-			let inviteToUserField = new Checker(this.getValue('allow_invite_users'));
-
-			EventEmitter.subscribe(
-				inviteToUserField.switcher,
-				'toggled',
-				() =>
-				{
-					this.getAnalytic()?.addEventConfigEmployee(
-						AnalyticSettingsEvent.CHANGE_REG_ALL,
-						inviteToUserField.isChecked()
-					);
-				}
-			);
-			EmployeePage.addToSectionHelper(inviteToUserField, sectionSettings);
-		}
-
 		if (this.hasValue('allow_invite_collabers'))
 		{
 			let inviteCollabersField = new Checker(this.getValue('allow_invite_collabers'));

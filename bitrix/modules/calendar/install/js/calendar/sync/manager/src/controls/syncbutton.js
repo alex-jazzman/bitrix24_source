@@ -1,15 +1,10 @@
-// @flow
-'use strict';
-
 import { Dom, Loc, Tag } from 'main.core';
 import { Popup } from 'main.popup';
+import { Button, ButtonSize, ButtonIcon, ButtonColor } from 'ui.buttons';
 import SyncStatusPopupV2 from './syncstatuspopup-v2';
 
 export default class SyncButton
 {
-	BUTTON_SIZE = BX.UI.Button.Size.EXTRA_SMALL;
-	BUTTON_ROUND = true;
-
 	constructor(options)
 	{
 		this.connectionsProviders = options.connectionsProviders;
@@ -23,7 +18,7 @@ export default class SyncButton
 		this.buttonEnterTimeout = null;
 	}
 
-	static createInstance(options)
+	static createInstance(options): SyncButton
 	{
 		return new this(options);
 	}
@@ -31,15 +26,19 @@ export default class SyncButton
 	show()
 	{
 		const buttonData = this.getButtonData();
-		this.button = new BX.UI.Button({
+
+		this.button = new Button({
+			round: true,
 			text: buttonData.text,
-			round: this.BUTTON_ROUND,
-			size: this.BUTTON_SIZE,
+			size: ButtonSize.EXTRA_SMALL,
 			color: buttonData.color,
 			counter: buttonData.counter ?? 0,
-			className: 'ui-btn-themes ' + (buttonData.iconClass || ''),
-			onclick: () => {
-				this.handleClick();
+			leftCounter: buttonData.counter ? { value: buttonData.counter ?? 0 } : '',
+			icon: buttonData.icon || '',
+			className: `ui-btn-themes ${buttonData.iconClass || ''}`,
+			onclick: this.handleClick,
+			dataset: {
+				id: 'calendar_sync_button',
 			},
 		});
 
@@ -60,7 +59,7 @@ export default class SyncButton
 				connectionsProviders: this.connectionsProviders,
 				node: button.getContainer(),
 				id: 'calendar-sync-v2__dialog',
-				onSyncPanelOpen: () => this.handleClick(),
+				onSyncPanelOpen: this.handleClick,
 			});
 		}, 1000);
 	}
@@ -109,9 +108,9 @@ export default class SyncButton
 		this.button.setCounter(buttonData.counter ?? 0);
 	}
 
-	handleClick()
-	{
+	handleClick = () => {
 		clearTimeout(this.buttonEnterTimeout);
+		// eslint-disable-next-line promise/catch-or-return
 		(window.top.BX || window.BX).Runtime.loadExtension('calendar.sync.interface').then((exports) => {
 			if (!Dom.hasClass(this.button.button, 'ui-btn-clock'))
 			{
@@ -123,48 +122,54 @@ export default class SyncButton
 				this.syncPanel.openSlider();
 			}
 		});
-	}
+	};
 
-	getButtonData()
+	getButtonData(): Object
 	{
 		if (this.status === 'refused')
 		{
 			return {
-				text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
-				color: BX.UI.Button.Color.LIGHT_BORDER,
+				text: Loc.getMessage('CAL_BUTTON_STATUS_FAILED_RECONNECT'),
+				color: ButtonColor.LIGHT_BORDER,
+				icon: ButtonIcon.REFRESH,
 				iconClass: 'calendar-sync-btn-icon-refused',
 			};
 		}
 
-		if (this.status === 'success')
+		switch (this.status)
 		{
-			return {
-				text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
-				color: BX.UI.Button.Color.LIGHT_BORDER,
-				iconClass: 'ui-btn-icon-success',
-			};
-		}
-		else if (this.status === 'failed')
-		{
-			return {
-				text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
-				color: BX.UI.Button.Color.LIGHT_BORDER,
-				iconClass: 'calendar-sync-btn-counter',
-				counter: this.counters.sync_errors || 1,
+			case 'success': {
+				return {
+					text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
+					color: ButtonColor.LIGHT_BORDER,
+					icon: ButtonIcon.CHECK,
+					iconClass: 'ui-btn-icon-success',
+				};
 			}
-		}
-		else if (this.status === 'synchronizing')
-		{
-			return {
-				text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
-				color: BX.UI.Button.Color.LIGHT_BORDER,
-				iconClass: 'ui-btn-clock',
-			}
-		}
 
-		return {
-			text: Loc.getMessage('STATUS_BUTTON_SYNC_CALENDAR_NEW'),
-			color: BX.UI.Button.Color.PRIMARY,
+			case 'failed': {
+				return {
+					text: Loc.getMessage('STATUS_BUTTON_FAILED'),
+					color: ButtonColor.LIGHT_BORDER,
+					counter: this.counters.sync_errors || 1,
+					iconClass: 'calendar-sync-btn-counter',
+				};
+			}
+
+			case 'synchronizing': {
+				return {
+					text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
+					color: ButtonColor.LIGHT_BORDER,
+					iconClass: 'ui-btn-clock',
+				};
+			}
+
+			default: {
+				return {
+					text: Loc.getMessage('STATUS_BUTTON_SYNC_CALENDAR_NEW'),
+					color: ButtonColor.PRIMARY,
+				};
+			}
 		}
 	}
 
@@ -172,8 +177,8 @@ export default class SyncButton
 	{
 		return this.syncPanel;
 	}
-	
-	setConnectionProviders(connectionsProviders)
+
+	setConnectionProviders(connectionsProviders): void
 	{
 		this.connectionsProviders = connectionsProviders;
 	}

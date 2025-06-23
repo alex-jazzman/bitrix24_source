@@ -1,14 +1,14 @@
 /* eslint-disable no-param-reassign */
 
 /**
- * @module im/messenger/model/sidebar/links/model
+ * @module im/messenger/model/sidebar/src/links/model
  */
-jn.define('im/messenger/model/sidebar/links/model', (require, exports, module) => {
+jn.define('im/messenger/model/sidebar/src/links/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Moment } = require('utils/date');
 
-	const { validate } = require('im/messenger/model/sidebar/links/validator');
-	const { linkItem, linkDefaultElement } = require('im/messenger/model/sidebar/links/default-element');
+	const { validate } = require('im/messenger/model/sidebar/src/links/validator');
+	const { linkItem, linkDefaultElement } = require('im/messenger/model/sidebar/src/links/default-element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -32,7 +32,7 @@ jn.define('im/messenger/model/sidebar/links/model', (require, exports, module) =
 					return {};
 				}
 
-				if (MessengerParams.isFullChatHistoryAvailable())
+				if (!state.collection[chatId]?.isHistoryLimitExceeded)
 				{
 					return state.collection[chatId];
 				}

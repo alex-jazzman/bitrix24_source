@@ -32,7 +32,7 @@ class LandingBlocksMainpageWidgetApps extends LandingBlocksMainpageWidgetBase
 	public function executeComponent(): void
 	{
 		$this->checkParam('TITLE_MOBILE', Loc::getMessage('LANDING_WIDGET_CLASS_APPS_MOBILE_TITLE'));
-		$this->checkParam('TITLE_DESKTOP', Loc::getMessage('LANDING_WIDGET_CLASS_APPS_DESKTOP_TITLE'));
+		$this->checkParam('TITLE_DESKTOP', Loc::getMessage('LANDING_WIDGET_CLASS_APPS_DESKTOP_TITLE_MSGVER_1'));
 		//style params
 		$this->checkParam('COLOR_TITLE_MOBILE', '#333333');
 		$this->checkParam('COLOR_TITLE_DESKTOP', '#333333');

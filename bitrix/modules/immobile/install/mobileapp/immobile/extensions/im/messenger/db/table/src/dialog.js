@@ -18,9 +18,14 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 	 */
 	class DialogTable extends Table
 	{
-		getName()
+		static getTableName()
 		{
 			return 'b_im_dialog';
+		}
+
+		getName()
+		{
+			return DialogTable.getTableName();
 		}
 
 		getPrimaryKey()
@@ -59,6 +64,10 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'aiProvider', type: FieldType.text },
 				{ name: 'role', type: FieldType.text, defaultValue: FieldDefaultValue.noneText },
 				{ name: 'permissions', type: FieldType.json },
+				{ name: 'optionalParams', type: FieldType.json, deprecated: true, replacement: ['textFieldEnabled', 'backgroundId'], defaultValue: FieldDefaultValue.emptyObject },
+				{ name: 'textFieldEnabled', type: FieldType.boolean, defaultValue: FieldDefaultValue.trueBoolean },
+				{ name: 'backgroundId', type: FieldType.text, defaultValue: FieldDefaultValue.emptyText },
+				{ name: 'containsCollaber', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
 			];
 		}
 

@@ -628,7 +628,16 @@ export class RobotSelector extends EventEmitter
 
 	#getGroupsFooter(): string
 	{
-		const url = '/marketplace/category/%category%/'.replace('%category%',  this.#context.get('marketplaceRobotCategory'));
+		const marketplaceRobotCategory = this.#context.get('marketplaceRobotCategory');
+		let url;
+		if (marketplaceRobotCategory.startsWith('automation'))
+		{
+			url = '/market/collection/%category%/'.replace('%category%', marketplaceRobotCategory);
+		}
+		else
+		{
+			url = '/marketplace/category/crm_bots/';
+		}
 
 		return `
 			<a class="bizproc-creating-robot__menu-market" href="${url}">

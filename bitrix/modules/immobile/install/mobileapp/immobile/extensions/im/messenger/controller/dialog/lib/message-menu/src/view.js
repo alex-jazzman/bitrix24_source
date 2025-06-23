@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/view', (require, expo
 
 	/**
 	 * @class MessageMenuView
+	 * @implements IMessageMenuView
 	 */
 	class MessageMenuView
 	{

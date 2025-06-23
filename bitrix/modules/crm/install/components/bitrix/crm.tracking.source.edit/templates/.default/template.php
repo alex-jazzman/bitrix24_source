@@ -4,9 +4,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Tracking\Provider;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
@@ -31,13 +36,35 @@ Extension::load([
 	'seo.ads.login',
 	'ui.info-helper',
 ]);
-
+Loader::includeModule('ui');
+Toolbar::deleteFavoriteStar();
 $this->addExternalCss($this->GetFolder() . '/utm.css');
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $code = htmlspecialcharsbx($arResult['ROW']['CODE']);
 
 $containerId = 'crm-analytics-source-ads-editor';
+if ($arResult['ROW']['ID'])
+{
+	$editButton = new Button([
+		"text" => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_EXPENSES'),
+		"color" => Color::LIGHT_BORDER,
+	]);
+	$editButton->addAttribute('id', 'crm-tracking-expenses');
+
+	Toolbar::addButton($editButton);
+}
+
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.feedback.form',
+	'',
+	[
+		...Provider::getFeedbackParameters(),
+		'VIEW_TARGET' => false,
+	]
+);
+Toolbar::addRightCustomHtml(ob_get_clean(), $arResult['ROW']['ID'] ? [] : ['align' => 'right']);
 ?>
 
 <script>
@@ -60,25 +87,6 @@ $containerId = 'crm-analytics-source-ads-editor';
 </script>
 
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-analytics-source-wrap">
-
-	<?
-	if ($arResult['ROW']['ID'])
-	{
-		$this->SetViewTarget('pagetitle');
-		?>
-		<button id="crm-tracking-expenses" type="button" class="ui-btn ui-btn-light-border">
-			<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_EXPENSES')?>
-		</button>
-		<?
-		$this->EndViewTarget();
-	}
-
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		\Bitrix\Crm\Tracking\Provider::getFeedbackParameters()
-	);
-	?>
 
 	<?if (empty($arResult['ROW']['CONFIGURABLE'])):?>
 		<div class="crm-analytics-source-block crm-analytics-source-block-desc">

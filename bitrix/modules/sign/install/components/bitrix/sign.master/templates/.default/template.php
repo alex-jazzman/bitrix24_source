@@ -87,6 +87,7 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 	<script>
 		BX.ready(async () => {
 			await top.BX.Runtime.loadExtension('sign.v2.editor');
+			await top.BX.Runtime.loadExtension('sign.v2.ui.tokens');
 			BX.Sign.V2.createSignSettings('sign-settings-container', {
 				uid: '<?=CUtil::JSEscape($document?->getUid() ?? '')?>',
 				config: <?= JsonHelper::encodeOrDefault(
@@ -96,12 +97,14 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 					false,
 					true,
 				) ?>,
-				type: '<?= CUtil::JSEscape($arResult['SCENARIO'] ?? '') ?>',
+				type: '<?= CUtil::JSEscape($arResult['SCENARIO']) ?>',
 				documentMode: '<?= CUtil::JSEscape($arResult['DOCUMENT_MODE']) ?>',
 				templateUid: '<?= CUtil::JSEscape($arResult['TEMPLATE_UID'] ?? '') ?>',
-				initiatedByType: '<?= CUtil::JSEscape($arResult['INITIATED_BY_TYPE'] ?? '' )?>',
+				initiatedByType: '<?= CUtil::JSEscape($arResult['INITIATED_BY_TYPE'])?>',
 				chatId: <?= (int)($arResult['CHAT_ID'] ?? 0) ?>,
-				b2eDocumentLimitCount: <?= (int)($arResult['MAX_DOCUMENT_COUNT'] ?? 20) ?>,
+				fromTemplateFolder: <?= $arResult['FROM_TEMPLATE_FOLDER'] ? 'true' : 'false' ?>,
+				fromRobot: <?= \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('FROM_ROBOT') ? 'true' : 'false' ?>,
+					b2eDocumentLimitCount: <?= (int)($arResult['MAX_DOCUMENT_COUNT'] ?? 20) ?>,
 				},
 				<?= JsonHelper::encodeOrDefault('{}', $arResult['ANALYTIC_CONTEXT'] ?? '') ?>
 			);

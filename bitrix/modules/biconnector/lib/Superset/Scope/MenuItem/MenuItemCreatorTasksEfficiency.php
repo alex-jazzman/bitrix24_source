@@ -24,10 +24,16 @@ final class MenuItemCreatorTasksEfficiency extends BaseMenuItemCreator
 		$menuItems = [];
 		foreach ($dashboards as $dashboard)
 		{
+			$url = $this->getDetailUrl(
+				$dashboard,
+				$params,
+				['openFrom' => 'menu']
+			);
+
 			$menuItems[] = [
 				'ID' => "BIC_DASHBOARD_{$dashboard->getId()}",
 				'TEXT' => $dashboard->getTitle(),
-				'ON_CLICK' => $this->createDashboardOpenEventFromMenu($dashboard, $params),
+				'URL' => $url,
 			];
 		}
 

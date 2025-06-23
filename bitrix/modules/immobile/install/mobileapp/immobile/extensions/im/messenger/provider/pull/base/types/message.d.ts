@@ -3,6 +3,13 @@ import {UsersModelState} from '../../../../model/users/src/types';
 import {DialoguesModelState} from '../../../../model/dialogues/src/types';
 import {RawChat, RawFile, RawMessage, RawPin, RawUser} from '../../../service/src/types/sync-list-result';
 import {MessageParams} from '../../../../model/messages/src/types/messages';
+import {CopilotRecentItemData} from "../../../../controller/recent/copilot/types/recent";
+
+export type MessagesAutoDeleteDelayParams = {
+	delay: number,
+	chatId: number,
+	dialogId: string,
+};
 
 export type AddReactionParams = {
 	actualReactions: {
@@ -110,6 +117,13 @@ type MessagePullHandlerUpdateDialogParams = {
 	users?: Record<number, UsersModelState>,
 	chat: Record<number, Partial<DialoguesModelState>>,
 	userInChat: Record<number, Array<number>>,
+	copilot: CopilotRecentItemData,
+	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>
+}
+
+type MessagesAutoDeleteConfigs = {
+	chatId: number,
+	delay: number,
 }
 
 declare type MessagePullHandlerMessageParamsUpdateParams = {

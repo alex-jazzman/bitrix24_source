@@ -2773,6 +2773,27 @@ class CTasks
 						$task["DEPENDS_ON"][] = $arDependsOn["DEPENDS_ON_ID"];
 					}
 				}
+
+				if ((in_array('CHAT_ID', $select) || in_array('*', $select))
+					&& \Bitrix\Tasks\V2\FormV2Feature::isOn()
+				)
+				{
+					$task['CHAT_ID'] = \Bitrix\Tasks\V2\Internals\Container::getInstance()
+						->getChatRepository()
+						->getChatIdByTaskId((int)$ID)
+					;
+
+					if ($task['CHAT_ID'] === null)
+					{
+						// special case, chat doesn't exist yet
+						$updatedTaskEntity = \Bitrix\Tasks\V2\Internals\Container::getInstance()
+							->getTaskProvider()
+							->getTaskById((int)$ID)
+						;
+
+						$task['CHAT_ID'] = $updatedTaskEntity->chatId;
+					}
+				}
 			}
 
 			if ($bReturnAsArray)

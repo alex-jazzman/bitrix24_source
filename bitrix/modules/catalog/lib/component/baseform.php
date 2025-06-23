@@ -2577,22 +2577,17 @@ abstract class BaseForm
 
 	protected function getDefaultVat(): array
 	{
-		$emptyVat = null;
 		$iblockVatId = $this->entity->getIblockInfo()->getVatId();
 
 		foreach ($this->getVats() as $vat)
 		{
-			if ($vat['EXCLUDE_VAT'] === 'Y')
-			{
-				$emptyVat = $vat;
-			}
-
 			if ((int)$vat['ID'] === $iblockVatId)
 			{
 				$vat['NAME'] = Loc::getMessage(
-					"CATALOG_C_F_DEFAULT",
+					'CATALOG_C_F_DEFAULT',
 					['#VALUE#' => htmlspecialcharsbx($vat['NAME'])]
 				);
+
 				return $vat;
 			}
 		}
@@ -2602,9 +2597,9 @@ abstract class BaseForm
 			'RATE' => null,
 			'EXCLUDE_VAT' => null,
 			'NAME' => Loc::getMessage(
-				"CATALOG_C_F_DEFAULT",
-				['#VALUE#' => Loc::getMessage("CATALOG_PRODUCT_CARD_VARIATION_GRID_NOT_SELECTED")]
-			)
+				'CATALOG_C_F_DEFAULT',
+				['#VALUE#' => Loc::getMessage('CATALOG_PRODUCT_CARD_VARIATION_GRID_NOT_SELECTED')]
+			),
 		];
 	}
 

@@ -16,6 +16,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
+	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 
 	const logger = getLogger('dialog--chat-service');
 
@@ -170,6 +171,9 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			logger.log('ChatLoadService.requestChat: response', actionName, params, actionResult);
 
 			await this.updateModels(actionResult);
+
+			const { callInfo } = actionResult;
+			this.updateCallToken(callInfo.chatId, callInfo.token);
 
 			if (this.isDialogLoadedMarkNeeded(actionName))
 			{
@@ -445,6 +449,15 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			MessengerEmitter.emit(EventType.messenger.renderRecent);
 
 			Counters.updateDelayed();
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @param {string} token
+		 */
+		updateCallToken(chatId, token)
+		{
+			return CallManager.getInstance().updateCallToken(chatId, token);
 		}
 
 		/**

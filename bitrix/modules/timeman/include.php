@@ -70,6 +70,7 @@ CJSCore::RegisterExt('timeman', array(
 		return [
 			'settings' => [
 				'featureCheckInStartEnabled' => CheckIn::isCheckInStartEnabled(),
+				'isAirTemplate' => defined('AIR_SITE_TEMPLATE'),
 			],
 		];
 	},

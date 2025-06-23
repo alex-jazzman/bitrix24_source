@@ -14,6 +14,9 @@ use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Internals\Container;
+use Bitrix\Tasks\V2\Internals\Integration\Im\Chat;
 use CAgent;
 use CTimeZone;
 
@@ -31,6 +34,7 @@ class Agent
 	private Controller $notificationController;
 	private TimeLineManager $timeLineManager;
 	private ?CommentPoster $commentPoster;
+	private Chat $chatIntegration;
 
 	private string $eventType;
 	private array $taskData;
@@ -139,6 +143,7 @@ class Agent
 			->sendEvent()
 			->triggerAutomation()
 			->runCrmEvent()
+			->notifyTaskChat()
 			->finish();
 	}
 
@@ -212,6 +217,28 @@ class Agent
 		return $this;
 	}
 
+	private function notifyTaskChat(): static
+	{
+		if ($this->eventType !== static::EVENT_TASK_EXPIRED || !FormV2Feature::isOn('create'))
+		{
+			return $this;
+		}
+
+		$taskEntity = Container::getInstance()
+			->getTaskRepository()
+			->getById($this->task->getId());
+
+		if ($taskEntity)
+		{
+			$this->chatIntegration->notifyTaskOverdue(
+				task: $taskEntity,
+				triggeredBy: null,
+			);
+		}
+
+		return $this;
+	}
+
 	private function finish(): string
 	{
 		return '';
@@ -222,6 +249,7 @@ class Agent
 		$this->notificationController = new Controller();
 		$this->timeLineManager = new TimeLineManager($this->task->getId(), $this->task->getResponsibleId());
 		$this->commentPoster = CommentPoster::getInstance($this->task->getId(), $this->task->getCreatedBy());
+		$this->chatIntegration = new Chat();
 		$this->taskData = $this->task->toArray(true);
 	}
 

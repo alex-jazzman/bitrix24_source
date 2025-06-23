@@ -1892,7 +1892,8 @@ this.BX = this.BX || {};
 	              inviteExtranetLink: true,
 	              groupId: this.groupId,
 	              checkWorkgroupWhenInvite: true,
-	              footerInviteIntranetOnly: !this.allowExtranet
+	              footerInviteIntranetOnly: !this.allowExtranet,
+	              collabers: false
 	            }
 	          }, {
 	            id: 'department',
@@ -1931,7 +1932,8 @@ this.BX = this.BX || {};
 	            options: {
 	              intranetUsersOnly: !this.allowExtranet,
 	              inviteEmployeeLink: true,
-	              footerInviteIntranetOnly: !this.allowExtranet
+	              footerInviteIntranetOnly: !this.allowExtranet,
+	              collabers: false
 	            }
 	          }, {
 	            id: 'department',
@@ -1973,7 +1975,8 @@ this.BX = this.BX || {};
 	              inviteEmployeeLink: true,
 	              groupId: this.groupId,
 	              checkWorkgroupWhenInvite: true,
-	              footerInviteIntranetOnly: !this.allowExtranet
+	              footerInviteIntranetOnly: !this.allowExtranet,
+	              collabers: false
 	            }
 	          }, {
 	            id: 'department',
@@ -2016,7 +2019,8 @@ this.BX = this.BX || {};
 	              intranetUsersOnly: !this.allowExtranet,
 	              groupId: this.groupId,
 	              checkWorkgroupWhenInvite: true,
-	              footerInviteIntranetOnly: !this.allowExtranet
+	              footerInviteIntranetOnly: !this.allowExtranet,
+	              collabers: false
 	            }
 	          }, {
 	            id: 'department',

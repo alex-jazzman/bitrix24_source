@@ -5,7 +5,6 @@ export type ShowToastParams = {
 	backgroundColor?: string,
 	backgroundOpacity?: number,
 	svg?: string,
-	svgType?: string,
 	icon?: object,
 }
 

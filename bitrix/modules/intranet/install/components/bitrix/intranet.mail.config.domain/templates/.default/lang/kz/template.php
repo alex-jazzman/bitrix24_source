@@ -12,7 +12,7 @@ $MESS["INTR_MAIL_DOMAIN_CHECK"] = "Тексеру";
 $MESS["INTR_MAIL_DOMAIN_CHOOSE_HINT"] = ".ru аймағында атауды таңдау";
 $MESS["INTR_MAIL_DOMAIN_CHOOSE_TITLE"] = "Доменді таңдау";
 $MESS["INTR_MAIL_DOMAIN_EMPTY_NAME"] = "атауды енгізіңіз";
-$MESS["INTR_MAIL_DOMAIN_EULA_CONFIRM"] = "Мен <a href=\"http://www.bitrix24.kz/about/domain.php\" target=\"_blank\">Пайдаланушылық келісімнің шарттарын қабылдаймын</a>";
+$MESS["INTR_MAIL_DOMAIN_EULA_CONFIRM"] = "Мен <a href=\"https://www.bitrix24.kz/about/domain.php\" target=\"_blank\">Пайдаланушылық келісімнің шарттарын қабылдаймын</a>";
 $MESS["INTR_MAIL_DOMAIN_HELP"] = "Егер сіздің доменіңіз домен үшін Яндекс.Поштада жұмыс істеу үшін бапталмаса, келесі әрекеттерді орындаңыз:
 <br/><br/>
 - <a href=\"https://passport.yandex.ru/registration/\" target=\"_blank\">Яндекс.Поштада аккаунт құрыңыз</a> немесе бұрыннан барын пайдаланыңыз<br/>

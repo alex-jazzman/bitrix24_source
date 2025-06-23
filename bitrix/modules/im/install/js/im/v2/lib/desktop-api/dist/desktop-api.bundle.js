@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_utils,im_v2_lib_logger,main_core,im_v2_const,main_core_events) {
+(function (exports,im_v2_lib_desktopApi,im_v2_lib_utils,im_v2_lib_logger,main_core,im_v2_const,main_core_events) {
 	'use strict';
 
 	const lifecycleFunctions = {
@@ -42,10 +42,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openPage: {
 	    id: 'openPage',
 	    version: 79
+	  },
+	  portalTabActivation: {
+	    id: 'portalTabActivation',
+	    version: 85
 	  }
 	};
 
 	const versionFunctions = {
+	  getMajorVersion() {
+	    if (!this.isDesktop()) {
+	      return 0;
+	    }
+	    const [majorVersion] = window.BXDesktopSystem.GetProperty('versionParts');
+	    return majorVersion;
+	  },
 	  getApiVersion() {
 	    if (!this.isDesktop()) {
 	      return 0;
@@ -67,6 +78,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return false;
 	    }
 	    return version >= DesktopFeature[code].version;
+	  },
+	  /**
+	    * Returns the Windows OS build number.
+	    * Returns 0 if the OS is not Windows or if the function does not exist.
+	    * For a list of Windows build numbers, see: https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions
+	    */
+	  getWindowsOSBuild() {
+	    var _window$BXDesktopSyst2, _window$BXDesktopSyst3;
+	    if (!main_core.Browser.isWin()) {
+	      return 0;
+	    }
+	    return (_window$BXDesktopSyst2 = (_window$BXDesktopSyst3 = window.BXDesktopSystem) == null ? void 0 : _window$BXDesktopSyst3.UserOsBuild()) != null ? _window$BXDesktopSyst2 : 0;
 	  }
 	};
 
@@ -119,12 +142,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const DesktopSettingsKey = {
+	  hideImTab: 'bxd_hide_im_tab',
 	  smoothing: 'bxd_camera_smoothing',
 	  smoothing_v2: 'bxd_camera_smoothing_v2',
 	  telemetry: 'bxd_telemetry',
 	  sliderBindingsStatus: 'sliderBindingsStatus'
 	};
 	const settingsFunctions = {
+	  getSliderBindingsStatus() {
+	    const result = this.getCustomSetting(DesktopSettingsKey.sliderBindingsStatus, '1');
+	    return result === '1';
+	  },
+	  isAirDesignEnabledInDesktop() {
+	    // duplicate setting from im.v2.lib.layout to minimize dependencies in external usages
+	    const settings = main_core.Extension.getSettings('im.v2.lib.layout');
+	    return this.isDesktop() && settings.get('isAirDesignEnabled', true);
+	  },
 	  getCameraSmoothingStatus() {
 	    return this.getCustomSetting(DesktopSettingsKey.smoothing, '0') === '1';
 	  },
@@ -174,6 +207,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const windowFunctions = {
+	  async handlePortalTabActivation() {
+	    const hasActiveTab = await this.hasActivePortalTab();
+	    if (hasActiveTab) {
+	      return Promise.resolve();
+	    }
+	    this.activatePortalFirstTab();
+	    return Promise.resolve();
+	  },
+	  activatePortalFirstTab() {
+	    BXDesktopSystem.ActivateFirstTab();
+	  },
+	  hasActivePortalTab() {
+	    return BXDesktopSystem.HasActiveTab();
+	  },
+	  setTabWithChatPageActive() {
+	    this.setActiveTabUrl(`${location.origin}${im_v2_const.Path.online}`);
+	  },
+	  isTabWithChatPageActive() {
+	    const tabsList = this.getTabsList();
+	    return tabsList.some(tab => tab.visible && tab.url.includes(im_v2_const.Path.online));
+	  },
+	  hasTabWithChatPage() {
+	    const tabsList = this.getTabsList();
+	    return tabsList.some(tab => tab.url.includes(im_v2_const.Path.online));
+	  },
+	  getTabsList() {
+	    return BXDesktopSystem.BrowserList();
+	  },
 	  isTwoWindowMode() {
 	    var _BXDesktopSystem;
 	    return Boolean((_BXDesktopSystem = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem.IsTwoWindowsMode());
@@ -185,12 +246,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  isChatTab() {
 	    return this.isChatWindow() || this.isDesktop() && location.href.includes('&IM_TAB=Y');
 	  },
+	  isActiveTab() {
+	    return this.isDesktop() && BXDesktopSystem.IsActiveTab();
+	  },
+	  showBrowserWindow() {
+	    BXDesktopWindow.ExecuteCommand('show.main');
+	  },
 	  setActiveTab(target = window) {
 	    var _target$BXDesktopSyst;
 	    if (!main_core.Type.isObject(target)) {
 	      return;
 	    }
 	    (_target$BXDesktopSyst = target.BXDesktopSystem) == null ? void 0 : _target$BXDesktopSyst.SetActiveTab();
+	  },
+	  setActiveTabUrl(url) {
+	    BXDesktopSystem.SetActiveTabUrl(url);
 	  },
 	  showWindow(target = window) {
 	    var _target$BXDesktopWind;
@@ -200,7 +270,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    (_target$BXDesktopWind = target.BXDesktopWindow) == null ? void 0 : _target$BXDesktopWind.ExecuteCommand('show');
 	  },
 	  activateWindow(target = window) {
-	    this.setActiveTab(target);
+	    // all tabs with the same URL are activated when a call is received, since
+	    // the setActiveTab method does not work correctly yet
+	    if (!im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
+	      this.setActiveTab(target);
+	    }
 	    this.showWindow(target);
 	  },
 	  hideWindow(target = window) {
@@ -221,22 +295,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    main_core.Dom.remove(document.getElementById('bx-desktop-loader'));
 	  },
 	  reloadWindow() {
-	    const event = new main_core_events.BaseEvent();
-	    main_core_events.EventEmitter.emit(window, im_v2_const.EventType.desktop.onReload, event);
-	    location.reload();
+	    BXDesktopSystem.Login({});
 	  },
 	  findWindow(name = '') {
 	    const mainWindow = opener || top;
 	    return mainWindow.BXWindows.find(window => (window == null ? void 0 : window.name) === name);
 	  },
 	  openPage(url, options = {}) {
-	    const anchorElement = main_core.Dom.create({
-	      tag: 'a',
-	      attrs: {
-	        href: url
-	      }
-	    });
-	    if (anchorElement.host !== location.host) {
+	    const targetUrl = new URL(url);
+	    if (targetUrl.host !== location.host) {
 	      setTimeout(() => this.hideWindow(), 100);
 	      return Promise.resolve(false);
 	    }
@@ -245,14 +312,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        setTimeout(() => this.hideWindow(), 100);
 	        return Promise.resolve(false);
 	      }
-	      im_v2_lib_utils.Utils.browser.openLink(anchorElement.href);
+	      im_v2_lib_utils.Utils.browser.openLink(targetUrl.href);
 
 	      // workaround timeout, if application is activated on hit, it cant be hidden immediately
 	      setTimeout(() => this.hideWindow(), 100);
 	      return Promise.resolve(true);
 	    }
-	    this.createTab(anchorElement.href);
+	    this.createTab(targetUrl.href);
 	    return Promise.resolve(true);
+	  },
+	  openInBrowser(url) {
+	    BXDesktopSystem.OpenInBrowser(url);
 	  },
 	  createTab(path) {
 	    const preparedPath = main_core.Dom.create({
@@ -650,5 +720,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.DesktopFeature = DesktopFeature;
 	exports.DesktopSettingsKey = DesktopSettingsKey;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Event));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Event));
 //# sourceMappingURL=desktop-api.bundle.js.map

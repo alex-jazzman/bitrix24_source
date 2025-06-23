@@ -20,6 +20,68 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'ui.alerts',
 ]);
 
+$fillDefaultMessages = static function (string $entityTypeName, array $messages): array {
+	/*
+	* CRM_ENT_DETAIL_COPY_LEAD_URL
+	* CRM_ENT_DETAIL_COPY_DEAL_URL
+	* CRM_ENT_DETAIL_COPY_CONTACT_URL
+	* CRM_ENT_DETAIL_COPY_COMPANY_URL
+	* CRM_ENT_DETAIL_COPY_QUOTE_URL_MSGVER_1
+	*/
+	$messages['COPY_PAGE_URL'] = $messages['COPY_PAGE_URL']
+		?? GetMessage("CRM_ENT_DETAIL_COPY_{$entityTypeName}_URL")
+		?? GetMessage("CRM_ENT_DETAIL_COPY_{$entityTypeName}_URL_MSGVER_1")
+	;
+
+	/*
+	* CRM_ENT_DETAIL_LEAD_URL_COPIED
+	* CRM_ENT_DETAIL_DEAL_URL_COPIED
+	* CRM_ENT_DETAIL_CONTACT_URL_COPIED
+	* CRM_ENT_DETAIL_COMPANY_URL_COPIED
+	* CRM_ENT_DETAIL_QUOTE_URL_COPIED_MSGVER_1
+	*/
+	$messages['PAGE_URL_COPIED'] = $messages['PAGE_URL_COPIED']
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_URL_COPIED")
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_URL_COPIED_MSGVER_1")
+	;
+
+	/*
+	 * CRM_ENT_DETAIL_DEAL_DELETE_DIALOG_TITLE
+	 * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_TITLE
+	 * CRM_ENT_DETAIL_CONTACT_DELETE_DIALOG_TITLE
+	 * CRM_ENT_DETAIL_COMPANY_DELETE_DIALOG_TITLE
+	 * CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_TITLE_MSGVER_1
+	 */
+	$messages['DELETE_DIALOG_TITLE'] = $messages['DELETE_DIALOG_TITLE']
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_TITLE")
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_TITLE_MSGVER_1")
+	;
+
+	/*
+	 * CRM_ENT_DETAIL_DEAL_DELETE_DIALOG_MESSAGE
+	 * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_MESSAGE
+	 * CRM_ENT_DETAIL_CONTACT_DELETE_DIALOG_MESSAGE
+	 * CRM_ENT_DETAIL_COMPANY_DELETE_DIALOG_MESSAGE
+	 * CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_MESSAGE_MSGVER_1
+	 */
+	$messages['DELETE_DIALOG_MESSAGE'] = $messages['DELETE_DIALOG_MESSAGE']
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_MESSAGE")
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_MESSAGE_MSGVER_1")
+	;
+
+	/*
+	 * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_TITLE
+	 */
+	$messages['EXCLUDE_DIALOG_TITLE'] = $messages['EXCLUDE_DIALOG_TITLE'] ?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_EXCLUDE_DIALOG_TITLE");
+
+	/*
+	 * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_MESSAGE
+	 */
+	$messages['EXCLUDE_DIALOG_MESSAGE'] = $messages['EXCLUDE_DIALOG_MESSAGE'] ?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_EXCLUDE_DIALOG_MESSAGE");
+
+	return $messages;
+};
+
 $hasBizprocData = false;
 $availabilityLock = null;
 if (!empty($arResult['BIZPROC_STARTER_DATA']) && Loader::includeModule('bizproc'))
@@ -59,6 +121,7 @@ array_unshift(
 	$tabs,
 	array('id'=> 'main', 'name' => GetMessage("CRM_ENT_DETAIL_MAIN_TAB"), 'active' => !in_array(true, $activeTabList, true))
 );
+$messages = $fillDefaultMessages($entityTypeName, $arResult['MESSAGES']);
 
 $containerId = "{$guid}_container";
 $tabContainerId = "{$guid}_tabs";
@@ -91,6 +154,12 @@ $tabContainerId = "{$guid}_tabs";
     {
 		?><div class="crm-stageflow-wrap crm-entity-section-status-wrap" data-role="stageflow-wrap"></div><?php
     }
+	else
+	{
+		// special css class when there is no stages under toolbar
+		$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? "{$bodyClass} " : '') . '--toolbar-under-menu');
+	}
 
 //region Tabs
 	//region mainTab info
@@ -108,7 +177,8 @@ $tabContainerId = "{$guid}_tabs";
 				'INITIAL_MODE' => $arResult['INITIAL_MODE'],
 				'DETAIL_MANAGER_ID' => $guid,
 				'MODULE_ID' => 'crm',
-				'MESSAGES' => $arResult['MESSAGES'],
+				'MESSAGES' => $messages,
+				'ENABLE_PAGE_TITLE_CONTROLS_VIA_TOOLBAR' => true,
 			)
 		)
 	);
@@ -320,63 +390,6 @@ $tabContainerId = "{$guid}_tabs";
 
 ?></div><?
 
-/*
-* CRM_ENT_DETAIL_COPY_LEAD_URL
-* CRM_ENT_DETAIL_COPY_DEAL_URL
-* CRM_ENT_DETAIL_COPY_CONTACT_URL
-* CRM_ENT_DETAIL_COPY_COMPANY_URL
-* CRM_ENT_DETAIL_COPY_QUOTE_URL_MSGVER_1
-*/
-$copyPageUrlMessage = $arResult['MESSAGES']['COPY_PAGE_URL']
-	?? GetMessage("CRM_ENT_DETAIL_COPY_{$entityTypeName}_URL")
-	?? GetMessage("CRM_ENT_DETAIL_COPY_{$entityTypeName}_URL_MSGVER_1")
-;
-/*
-* CRM_ENT_DETAIL_LEAD_URL_COPIED
-* CRM_ENT_DETAIL_DEAL_URL_COPIED
-* CRM_ENT_DETAIL_CONTACT_URL_COPIED
-* CRM_ENT_DETAIL_COMPANY_URL_COPIED
-* CRM_ENT_DETAIL_QUOTE_URL_COPIED_MSGVER_1
-*/
-$pageUrlCopiedMessage = $arResult['MESSAGES']['PAGE_URL_COPIED']
-	?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_URL_COPIED")
-	?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_URL_COPIED_MSGVER_1")
-;
-
-/*
- * CRM_ENT_DETAIL_DEAL_DELETE_DIALOG_TITLE
- * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_TITLE
- * CRM_ENT_DETAIL_CONTACT_DELETE_DIALOG_TITLE
- * CRM_ENT_DETAIL_COMPANY_DELETE_DIALOG_TITLE
- * CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_TITLE_MSGVER_1
- */
-$deletionDialogTitle = $arResult['MESSAGES']['DELETE_DIALOG_TITLE']
-	?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_TITLE")
-	?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_TITLE_MSGVER_1")
-;
-/*
- * CRM_ENT_DETAIL_DEAL_DELETE_DIALOG_MESSAGE
- * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_MESSAGE
- * CRM_ENT_DETAIL_CONTACT_DELETE_DIALOG_MESSAGE
- * CRM_ENT_DETAIL_COMPANY_DELETE_DIALOG_MESSAGE
- * CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_MESSAGE_MSGVER_1
- */
-$deletionConfirmDialogContent =
-	$arResult['MESSAGES']['DELETE_DIALOG_MESSAGE']
-	?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_MESSAGE")
-	?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DELETE_DIALOG_MESSAGE_MSGVER_1")
-;
-/*
- * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_TITLE
- */
-$exclusionDialogTitle = $arResult['MESSAGES']['EXCLUDE_DIALOG_TITLE'] ?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_EXCLUDE_DIALOG_TITLE");
-
-/*
- * CRM_ENT_DETAIL_LEAD_DELETE_DIALOG_MESSAGE
- */
-$exclusionConfirmDialogContent = $arResult['MESSAGES']['EXCLUDE_DIALOG_MESSAGE'] ?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_EXCLUDE_DIALOG_MESSAGE");
-$exclusionConfirmDialogContentHelp = GetMessage("CRM_ENT_DETAIL_EXCLUDE_DIALOG_MESSAGE_HELP");
-
 // prepare tabs for JS
 $tabs = array_map(static function(array $tab) {
 	unset($tab['html']);
@@ -394,15 +407,13 @@ $tabs = array_map(static function(array $tab) {
 
 			BX.Crm.EntityDetailManager.messages =
 			{
-				copyPageUrl: "<?=CUtil::JSEscape($copyPageUrlMessage)?>",
-				pageUrlCopied: "<?=CUtil::JSEscape($pageUrlCopiedMessage)?>",
-				deletionDialogTitle: "<?=CUtil::JSEscape($deletionDialogTitle)?>",
-				deletionConfirmDialogContent: "<?=CUtil::JSEscape($deletionConfirmDialogContent)?>",
+				deletionDialogTitle: "<?=CUtil::JSEscape($messages['DELETE_DIALOG_TITLE'])?>",
+				deletionConfirmDialogContent: "<?=CUtil::JSEscape($messages['DELETE_DIALOG_MESSAGE'])?>",
 				deletionWarning: "<?=CUtil::JSEscape(GetMessage("CRM_ENT_DETAIL_DELETION_WARNING"))?>",
 				goToDetails: "<?=CUtil::JSEscape(GetMessage("CRM_ENT_DETAIL_DELETION_GO_TO_DETAILS"))?>",
-				exclusionDialogTitle: "<?=CUtil::JSEscape($exclusionDialogTitle)?>",
-				exclusionConfirmDialogContent: "<?=CUtil::JSEscape($exclusionConfirmDialogContent)?>",
-				exclusionConfirmDialogContentHelp: "<?=CUtil::JSEscape($exclusionConfirmDialogContentHelp)?>"
+				exclusionDialogTitle: "<?=CUtil::JSEscape($messages['EXCLUDE_DIALOG_TITLE'])?>",
+				exclusionConfirmDialogContent: "<?=CUtil::JSEscape($messages['EXCLUDE_DIALOG_MESSAGE'])?>",
+				exclusionConfirmDialogContentHelp: "<?=CUtil::JSEscape(GetMessage('CRM_ENT_DETAIL_EXCLUDE_DIALOG_MESSAGE_HELP'))?>"
 			};
 
 			BX.Crm.EntityDetailManager.entityListUrls = <?=CUtil::PhpToJSObject($arResult['ENTITY_LIST_URLS'])?>;

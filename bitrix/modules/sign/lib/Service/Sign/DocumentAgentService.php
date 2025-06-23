@@ -154,6 +154,7 @@ class DocumentAgentService
 			}
 		}
 	}
+
 	private function addAgent(string $agentName, int $interval = 1, string $nextDateExec = '')
 	{
 		$agent = new \CAgent();

@@ -3,13 +3,13 @@ import { EventEmitter, BaseEvent } from 'main.core.events';
 
 import { Logger } from 'im.v2.lib.logger';
 import { Core } from 'im.v2.application.core';
-import { ChatType, EventType, Layout, TextareaPanelType } from 'im.v2.const';
+import { ChatType, EventType, TextareaPanelType } from 'im.v2.const';
 
 import { IndexedDbManager } from './indexed-db-manager';
 
 import type { JsonObject } from 'main.core';
 import type { OnLayoutChangeEvent } from 'im.v2.const';
-import type { PanelContext } from 'im.v2.provider.service';
+import type { PanelContext } from 'im.v2.provider.service.sending';
 
 type TextareaPanelTypeItem = $Values<typeof TextareaPanelType>;
 type Draft = {
@@ -64,7 +64,7 @@ export class DraftManager
 		let draftHistory = null;
 		try
 		{
-			draftHistory = await IndexedDbManager.getInstance().get(this.getStorageKey(), {});
+			draftHistory = await IndexedDbManager.getInstance().get(STORAGE_KEY, {});
 		}
 		catch (error)
 		{
@@ -143,9 +143,8 @@ export class DraftManager
 		{
 			await this.initDraftHistory();
 		}
-		const draft = this.drafts[dialogId] ?? {};
 
-		return Promise.resolve(draft);
+		return this.drafts[dialogId] ?? {};
 	}
 
 	clearDraft(dialogId: string)
@@ -168,7 +167,7 @@ export class DraftManager
 			return;
 		}
 
-		void Core.getStore().dispatch(this.getDraftMethodName(), {
+		void Core.getStore().dispatch('recent/setDraft', {
 			id: dialogId,
 			text,
 		});
@@ -177,12 +176,12 @@ export class DraftManager
 	onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 	{
 		const { from } = event.getData();
-		if (from.name !== this.getLayoutName() || from.entityId === '')
+		const dialogId = from.entityId;
+		if (dialogId === '')
 		{
 			return;
 		}
 
-		const dialogId = from.entityId;
 		setTimeout(async () => {
 			const { text = '' } = await this.getDraft(dialogId);
 			this.setRecentItemDraftText(dialogId, text);
@@ -199,7 +198,7 @@ export class DraftManager
 
 	saveToIndexedDb()
 	{
-		IndexedDbManager.getInstance().set(this.getStorageKey(), this.prepareDrafts());
+		IndexedDbManager.getInstance().set(STORAGE_KEY, this.prepareDrafts());
 	}
 
 	prepareDrafts(): { [dialogId: string]: Draft }
@@ -223,21 +222,6 @@ export class DraftManager
 		});
 
 		return result;
-	}
-
-	getLayoutName(): string
-	{
-		return Layout.chat.name;
-	}
-
-	getStorageKey(): string
-	{
-		return STORAGE_KEY;
-	}
-
-	getDraftMethodName(): string
-	{
-		return 'recent/setRecentDraft';
 	}
 
 	canSetRecentItemDraftText(dialogId: string): boolean

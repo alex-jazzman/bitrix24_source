@@ -15,6 +15,8 @@ use Bitrix\Main\Web\Json;
  */
 
 $APPLICATION->SetTitle(Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_LIST_TITLE'));
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-background');
 
 if (!empty($arResult['ERROR_MESSAGES']))
 {
@@ -50,6 +52,7 @@ Extension::load([
 	'ui.alerts',
 	'ui.tour',
 	'ui.switcher',
+	'ui.entity-selector',
 	'spotlight',
 ]);
 

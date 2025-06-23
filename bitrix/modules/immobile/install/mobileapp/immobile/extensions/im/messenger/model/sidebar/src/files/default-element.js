@@ -1,8 +1,8 @@
 /**
- * @module im/messenger/model/sidebar/files/default-element
+ * @module im/messenger/model/sidebar/src/files/default-element
  */
 
-jn.define('im/messenger/model/sidebar/files/default-element', (require, exports, module) => {
+jn.define('im/messenger/model/sidebar/src/files/default-element', (require, exports, module) => {
 	const fileItem = {
 		id: 0,
 		messageId: 0,
@@ -18,6 +18,7 @@ jn.define('im/messenger/model/sidebar/files/default-element', (require, exports,
 			items: new Map(),
 			hasNextPage: true,
 			isHistoryLimitExceeded: false,
+			lastLoadFileId: 0,
 		};
 	}
 

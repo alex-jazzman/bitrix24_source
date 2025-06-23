@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * @deprecated ATTENTION! This component is no longer used or maintained.
+ * This is a dead code that remains only for backwards compatibility.
+ */
+
 define("NOT_CHECK_PERMISSIONS", true);
 define("STOP_STATISTICS", true);
 define("NO_KEEP_STATISTIC", "Y");

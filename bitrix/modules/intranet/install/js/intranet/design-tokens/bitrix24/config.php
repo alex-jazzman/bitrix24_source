@@ -1,6 +1,8 @@
 <?
 
+use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
 use Bitrix\Main\Context;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
 use Bitrix\Main\Page\AssetMode;
@@ -15,7 +17,10 @@ if (defined('ADMIN_SECTION') && ADMIN_SECTION === true)
 	return [];
 }
 
-if (!defined('SITE_TEMPLATE_ID') || !in_array(SITE_TEMPLATE_ID, ['bitrix24', 'desktop_app', 'login', 'pub', 'landing24', 'dashboard_detail']))
+if (
+	!defined('SITE_TEMPLATE_ID')
+	|| !in_array(SITE_TEMPLATE_ID, ['bitrix24', 'air', 'desktop_app', 'login', 'pub', 'landing24', 'dashboard_detail'])
+)
 {
 	return [];
 }
@@ -88,6 +93,19 @@ $eventManager->addEventHandler(
 		$editor->setOption('headHtml', $jsInjection);
 	}
 );
+
+if (Loader::includeModule('intranet'))
+{
+	if (AirTemplate::isEnabled())
+	{
+		return [
+			'css' =>[
+				'air-design-tokens.css',
+			],
+			'skip_core' => true,
+		];
+	}
+}
 
 return [
 	'css' =>[

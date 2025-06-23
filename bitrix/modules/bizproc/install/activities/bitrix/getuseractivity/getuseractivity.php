@@ -21,6 +21,7 @@ class CBPGetUserActivity extends CBPActivity
 	private const USER_TYPE_RANDOM = 'random';
 	private const USER_TYPE_BOSS = 'boss';
 	private const USER_TYPE_SEQUENT = 'sequent';
+	private ?array $lastTeamResult = null;
 
 	public function __construct($name)
 	{
@@ -126,7 +127,6 @@ class CBPGetUserActivity extends CBPActivity
 		$skipAbsent = ($this->SkipAbsent != 'N');
 		$skipTimeman = ($this->SkipTimeman == 'Y');
 
-		$this->GetUser = null;
 		$user = false;
 
 		if ($this->UserType === self::USER_TYPE_BOSS)
@@ -142,6 +142,7 @@ class CBPGetUserActivity extends CBPActivity
 			$user = $this->getNextUser($skipAbsent, $skipTimeman);
 		}
 
+		$this->GetUser = null;
 		if ($user !== false)
 		{
 			$this->GetUser = $user;
@@ -177,8 +178,30 @@ class CBPGetUserActivity extends CBPActivity
 			return null;
 		}
 
-		$userService = $this->workflow->getRuntime()->getUserService();
 		$userId = (int)$arUsers[0];
+
+		// Prototype. Replace to "if (false)" in case of emergency :o
+		if ((int)$this->MaxLevel === 1)
+		{
+			if (isset($this->lastTeamResult[1][$userId]))
+			{
+				$userId = $this->lastTeamResult[0];
+				$this->lastTeamResult = null;
+			}
+			else
+			{
+				$this->lastTeamResult = null;
+				$teamHeads = $this->getUserTeamHeads($userId, $skipAbsent, $skipTimeman);
+				if ($teamHeads !== null)
+				{
+					$this->lastTeamResult = [$userId, array_flip($teamHeads)];
+
+					return array_map(static fn($teamHead) => "user_{$teamHead}",  $teamHeads);
+				}
+			}
+		}
+
+		$userService = $this->workflow->getRuntime()->getUserService();
 		$userDepartments = $userService->getUserDepartmentChains($userId);
 
 		$heads = [];
@@ -227,6 +250,52 @@ class CBPGetUserActivity extends CBPActivity
 		}
 
 		return $ar ?: false;
+	}
+
+	private function getUserTeamHeads(int $userId, bool $skipAbsent, bool $skipTimeman): ?array
+	{
+		Bitrix\Main\Loader::includeModule('humanresources');
+		if (!(
+				method_exists(\Bitrix\HumanResources\Config\Feature::class, 'isCrossFunctionalTeamsAvailable')
+				&& method_exists(\Bitrix\HumanResources\Service\Container::class, 'getNodeSettingsService')
+				&& \Bitrix\HumanResources\Config\Feature::instance()->isCrossFunctionalTeamsAvailable()
+		))
+		{
+			return null;
+		}
+		$collection = \Bitrix\HumanResources\Service\Container::getNodeMemberRepository()->findAllByEntityIdAndEntityTypeAndNodeType(
+			$userId,
+			\Bitrix\HumanResources\Type\MemberEntityType::USER,
+			\Bitrix\HumanResources\Type\NodeEntityType::TEAM
+		);
+
+		$heads = [];
+		foreach ($collection as $member)
+		{
+			$nodeSettings = \Bitrix\HumanResources\Service\Container::getNodeSettingsService()
+				->getBusinessProcAuthoritySettings($member->nodeId)
+			;
+			if ($nodeSettings->has(\Bitrix\HumanResources\Type\NodeSettingsAuthorityType::TeamHead))
+			{
+				$heads[] = array_column(\Bitrix\HumanResources\Util\StructureHelper::getNodeHeads($member->node), 'id');
+			}
+		}
+
+		$result = [];
+		foreach (CBPHelper::flatten($heads) as $headId)
+		{
+			if (
+				($headId === $userId)
+				|| ($skipAbsent && CIntranetUtils::isUserAbsent($headId))
+				|| ($skipTimeman && !$this->isUserWorking($skipTimeman))
+			)
+			{
+				continue;
+			}
+			$result[] = $headId;
+		}
+
+		return $result ?: null;
 	}
 
 	private function getRandomUser(bool $skipAbsent, bool $skipTimeman)

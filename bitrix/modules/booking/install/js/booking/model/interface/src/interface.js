@@ -4,7 +4,8 @@ import { Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
-import { Model, BusySlot } from 'booking.const';
+import { BusySlot, DraggedElementKind, Model } from 'booking.const';
+import { Timezone } from 'booking.lib.timezone';
 import type { BusySlotDto } from 'booking.lib.busy-slots';
 import type { BookingModel, DealData } from 'booking.model.bookings';
 
@@ -16,6 +17,7 @@ import type {
 	MoneyStatistics,
 	QuickFilter,
 	Occupancy,
+	DraggedDataTransfer,
 } from './types';
 
 export class Interface extends BuilderModel
@@ -35,8 +37,14 @@ export class Interface extends BuilderModel
 			canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 			canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
 			editingBookingId: this.getVariable('editingBookingId', 0),
+			editingWaitListItemId: this.getVariable('editingWaitListItemId', 0),
 			draggedBookingId: 0,
 			draggedBookingResourceId: 0,
+			draggedDataTransfer: {
+				id: 0,
+				resourceId: 0,
+				kind: '',
+			},
 			resizedBookingId: 0,
 			isLoaded: false,
 			zoom: 1,
@@ -44,11 +52,14 @@ export class Interface extends BuilderModel
 			scroll: 0,
 			offHoursHover: false,
 			offHoursExpanded: false,
+			waitListExpanded: this.getVariable('waitListExpanded', true),
+			calendarExpanded: this.getVariable('calendarExpanded', true),
 			fromHour: schedule.fromHour ?? 9,
 			toHour: schedule.toHour ?? 19,
 			selectedDateTs: new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime(),
 			viewDateTs: new Date(today.getFullYear(), today.getMonth()).getTime(),
 			deletingBookings: {},
+			deletingWaitListItemIds: {},
 			selectedCells: {},
 			hoveredCell: null,
 			busySlots: {},
@@ -77,7 +88,9 @@ export class Interface extends BuilderModel
 			isCurrentSenderAvailable: false,
 			isShownTrialPopup: false,
 			embedItems: this.getVariable('embedItems', []),
+			animationPause: false,
 			createdFromEmbedBookings: {},
+			createdFromEmbedWaitListItems: {},
 		};
 	}
 
@@ -97,16 +110,30 @@ export class Interface extends BuilderModel
 			isShownTrialPopup: (state): boolean => state.isShownTrialPopup,
 			/** @function interface/editingBookingId */
 			editingBookingId: (state): number => state.editingBookingId,
+			/** @function interface/editingWaitListItemId */
+			editingWaitListItemId: (state): number => state.editingWaitListItemId,
 			/** @function interface/isEditingBookingMode */
-			isEditingBookingMode: (state): boolean => state.editingBookingId > 0,
+			isEditingBookingMode: (state): boolean => {
+				return state.editingBookingId > 0 || state.editingWaitListItemId > 0;
+			},
 			/** @function interface/draggedBookingId */
-			draggedBookingId: (state): number => state.draggedBookingId,
+			draggedBookingId: (state): number => {
+				return state.draggedDataTransfer.kind === DraggedElementKind.Booking
+					? state.draggedDataTransfer.id
+					: 0;
+			},
 			/** @function interface/draggedBookingResourceId */
-			draggedBookingResourceId: (state): number => state.draggedBookingResourceId,
+			draggedBookingResourceId: (state): number => {
+				return state.draggedDataTransfer.kind === DraggedElementKind.Booking
+					? state.draggedDataTransfer.resourceId
+					: 0;
+			},
+			/** @function interface/draggedDataTransfer */
+			draggedDataTransfer: (state): DraggedDataTransfer => state.draggedDataTransfer,
 			/** @function interface/resizedBookingId */
 			resizedBookingId: (state): number => state.resizedBookingId,
 			/** @function interface/isDragMode */
-			isDragMode: (state): boolean => state.draggedBookingId || state.resizedBookingId,
+			isDragMode: (state): boolean => state.draggedDataTransfer.id > 0 || state.resizedBookingId,
 			/** @function interface/isLoaded */
 			isLoaded: (state): boolean => state.isLoaded,
 			/** @function interface/zoom */
@@ -116,9 +143,13 @@ export class Interface extends BuilderModel
 			/** @function interface/scroll */
 			scroll: (state): number => state.scroll,
 			/** @function interface/offHoursHover */
-			offHoursHover: (state): number => state.offHoursHover,
+			offHoursHover: (state): boolean => state.offHoursHover,
 			/** @function interface/offHoursExpanded */
-			offHoursExpanded: (state): number => state.offHoursExpanded,
+			offHoursExpanded: (state): boolean => state.offHoursExpanded,
+			/** @function interface/waitListExpanded */
+			waitListExpanded: (state): boolean => state.waitListExpanded,
+			/** @function interface/calendarExpanded */
+			calendarExpanded: (state): boolean => state.calendarExpanded,
 			/** @function interface/fromHour */
 			fromHour: (state): number => state.fromHour,
 			/** @function interface/toHour */
@@ -129,6 +160,8 @@ export class Interface extends BuilderModel
 			viewDateTs: (state, getters): number => state.viewDateTs - getters.offset,
 			/** @function interface/deletingBookings */
 			deletingBookings: (state): { [id: number]: number } => state.deletingBookings,
+			/** @function interface/deletingWaitListItems */
+			deletingWaitListItems: (state): { [id: number]: number } => state.deletingWaitListItemIds,
 			/** @function interface/selectedCells */
 			selectedCells: (state): { [id: string]: CellDto } => state.selectedCells,
 			/** @function interface/hoveredCell */
@@ -194,18 +227,11 @@ export class Interface extends BuilderModel
 			quickFilter: (state): QuickFilter => state.quickFilter,
 			/** @function interface/timezone */
 			timezone: (state): string => state.timezone,
-			/** @function interface/timezoneOffset */
-			timezoneOffset: (state): number => {
-				const timeZone = state.timezone;
-				const date = new Date(state.selectedDateTs);
-				const dateInTimezone = new Date(date.toLocaleString('en-US', { timeZone }));
-				const dateInUTC = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-
-				return (dateInTimezone.getTime() - dateInUTC.getTime()) / 1000;
-			},
 			/** @function interface/offset */
-			offset: (state, getters): number => {
-				return (getters.timezoneOffset + new Date(state.selectedDateTs).getTimezoneOffset() * 60) * 1000;
+			offset: (state): number => {
+				const timezoneOffset = Timezone.getOffset(state.selectedDateTs, state.timezone);
+
+				return (timezoneOffset + new Date(state.selectedDateTs).getTimezoneOffset() * 60) * 1000;
 			},
 			/** @function interface/mousePosition */
 			mousePosition: (state): MousePosition => state.mousePosition,
@@ -276,9 +302,15 @@ export class Interface extends BuilderModel
 			},
 			/** @function interface/embedItems */
 			embedItems: (state): DealData[] => state.embedItems,
+			/** @function interface/animationPause */
+			animationPause: (state): boolean => state.animationPause,
 			/** @function interface/isBookingCreatedFromEmbed */
 			isBookingCreatedFromEmbed: (state) => (id: number | string): boolean => {
 				return id in state.createdFromEmbedBookings;
+			},
+			/** @function interface/isWaitListItemCreatedFromEmbed */
+			isWaitListItemCreatedFromEmbed: (state) => (id: number | string): boolean => {
+				return id in state.createdFromEmbedWaitListItems;
 			},
 		};
 	}
@@ -291,6 +323,10 @@ export class Interface extends BuilderModel
 			setEditingBookingId: (store, editingBookingId: number) => {
 				store.commit('setEditingBookingId', editingBookingId);
 			},
+			/** @function interface/setEditingWaitListItemId */
+			setEditingWaitListItemId: (store, editingWaitListItemId: number) => {
+				store.commit('setEditingWaitListItemId', editingWaitListItemId);
+			},
 			/** @function interface/setDraggedBookingId */
 			setDraggedBookingId: (store, draggedBookingId: number) => {
 				store.commit('setDraggedBookingId', draggedBookingId);
@@ -298,6 +334,18 @@ export class Interface extends BuilderModel
 			/** @function interface/setDraggedBookingResourceId */
 			setDraggedBookingResourceId: (store, draggedBookingResourceId: number) => {
 				store.commit('setDraggedBookingResourceId', draggedBookingResourceId);
+			},
+			/** @function interface/setDraggedDataTransfer */
+			setDraggedDataTransfer: (store, draggedDataTransfer: DraggedDataTransfer): void => {
+				store.commit('setDraggedDataTransfer', draggedDataTransfer);
+			},
+			/** @function interface/clearDraggedDataTransfer */
+			clearDraggedDataTransfer: (store): void => {
+				store.commit('setDraggedDataTransfer', {
+					kind: null,
+					id: 0,
+					resourceId: 0,
+				});
 			},
 			/** @function interface/setResizedBookingId */
 			setResizedBookingId: (store, resizedBookingId: number) => {
@@ -327,6 +375,14 @@ export class Interface extends BuilderModel
 			setOffHoursExpanded: (store, offHoursExpanded: boolean) => {
 				store.commit('setOffHoursExpanded', offHoursExpanded);
 			},
+			/** @function interface/setWaitListExpanded */
+			setWaitListExpanded: (store, waitListExpanded: boolean) => {
+				store.commit('setWaitListExpanded', waitListExpanded);
+			},
+			/** @function interface/setCalendarExpanded */
+			setCalendarExpanded: (store, calendarExpanded: boolean) => {
+				store.commit('setCalendarExpanded', calendarExpanded);
+			},
 			/** @function interface/setSelectedDateTs */
 			setSelectedDateTs: (store, selectedDateTs: number) => {
 				store.commit('setSelectedDateTs', selectedDateTs);
@@ -342,6 +398,14 @@ export class Interface extends BuilderModel
 			/** @function interface/removeDeletingBooking */
 			removeDeletingBooking: (store, bookingId: number) => {
 				store.commit('removeDeletingBooking', bookingId);
+			},
+			/** @function interfcae/addDeletingWaitListItemId */
+			addDeletingWaitListItemId: (store, waitListItemId: number | number[]) => {
+				store.commit('addDeletingWaitListItemId', waitListItemId);
+			},
+			/** @function interface/removeDeletingWaitListItemId */
+			removeDeletingWaitListItemId: (store, waitListItemId: number | number[]) => {
+				store.commit('removeDeletingWaitListItemId', waitListItemId);
 			},
 			/** @function interface/addSelectedCell */
 			addSelectedCell: (store, cell: CellDto) => {
@@ -468,12 +532,24 @@ export class Interface extends BuilderModel
 			setEmbedItems: (store, embedItems: DealData[]) => {
 				store.commit('setEmbedItems', embedItems);
 			},
+			/** @function interface/setAnimationPause */
+			setAnimationPause: ({ commit }, pause: boolean) => {
+				commit('setAnimationPause', pause);
+			},
 			/** @function interface/addCreatedFromEmbedBooking */
 			addCreatedFromEmbedBooking: ({ commit, getters }, id: number | string | Array<number | string>) => {
 				const embedItems = getters.embedItems || [];
 				if (embedItems.length > 0)
 				{
 					commit('addCreatedFromEmbedBooking', id);
+				}
+			},
+			/** @function interface/addCreatedFromEmbedWaitListItem */
+			addCreatedFromEmbedWaitListItem: ({ commit, getters }, id: number | string | Array<number | string>) => {
+				const embedItems = getters.embedItems || [];
+				if (embedItems.length > 0)
+				{
+					commit('addCreatedFromEmbedWaitListItem', id);
 				}
 			},
 		};
@@ -486,6 +562,9 @@ export class Interface extends BuilderModel
 			setEditingBookingId: (state, editingBookingId: number) => {
 				state.editingBookingId = editingBookingId;
 			},
+			setEditingWaitListItemId: (state, editingWaitListItemId: number) => {
+				state.editingWaitListItemId = editingWaitListItemId;
+			},
 			setDraggedBookingId: (state, draggedBookingId: number) => {
 				state.draggedBookingId = draggedBookingId;
 			},
@@ -494,6 +573,9 @@ export class Interface extends BuilderModel
 			},
 			setDraggedBookingResourceId: (state, draggedBookingResourceId: number) => {
 				state.draggedBookingResourceId = draggedBookingResourceId;
+			},
+			setDraggedDataTransfer: (state, draggedDataTransfer: DraggedDataTransfer) => {
+				state.draggedDataTransfer = draggedDataTransfer;
 			},
 			setIsLoaded: (state, isLoaded: boolean) => {
 				state.isLoaded = isLoaded;
@@ -513,6 +595,12 @@ export class Interface extends BuilderModel
 			setOffHoursExpanded: (state, offHoursExpanded: boolean) => {
 				state.offHoursExpanded = offHoursExpanded;
 			},
+			setWaitListExpanded: (state, waitListExpanded: boolean) => {
+				state.waitListExpanded = waitListExpanded;
+			},
+			setCalendarExpanded: (state, calendarExpanded: boolean) => {
+				state.calendarExpanded = calendarExpanded;
+			},
 			setSelectedDateTs: (state, selectedDateTs: number) => {
 				state.selectedDateTs = selectedDateTs;
 			},
@@ -524,6 +612,30 @@ export class Interface extends BuilderModel
 			},
 			removeDeletingBooking: (state, bookingId: number) => {
 				delete state.deletingBookings[bookingId];
+			},
+			addDeletingWaitListItemId: (state, waitListItemId: number | number[]) => {
+				if (Type.isArray(waitListItemId))
+				{
+					waitListItemId.forEach((id) => {
+						state.deletingWaitListItemIds[id] = id;
+					});
+				}
+				else
+				{
+					state.deletingWaitListItemIds[waitListItemId] = waitListItemId;
+				}
+			},
+			removeDeletingWaitListItemId: (state, waitListItemId: number | number[]) => {
+				if (Type.isArray(waitListItemId))
+				{
+					waitListItemId.forEach((id) => {
+						delete state.deletingWaitListItemIds[id];
+					});
+				}
+				else
+				{
+					delete state.deletingWaitListItemIds[waitListItemId];
+				}
 			},
 			addSelectedCell: (state, cell: CellDto) => {
 				state.selectedCells[cell.id] = cell;
@@ -622,6 +734,9 @@ export class Interface extends BuilderModel
 			setEmbedItems: (state, embedItems: DealData[]) => {
 				state.embedItems = embedItems;
 			},
+			setAnimationPause: (state, pause: boolean) => {
+				state.animationPause = pause;
+			},
 			addCreatedFromEmbedBooking: (state, id: string | number | Array<number | string>) => {
 				if (Type.isArray(id))
 				{
@@ -634,6 +749,19 @@ export class Interface extends BuilderModel
 				}
 
 				state.createdFromEmbedBookings[id] = id;
+			},
+			addCreatedFromEmbedWaitListItem: (state, id: string | number | Array<number | string>) => {
+				if (Type.isArray(id))
+				{
+					for (const waitListItemId of id)
+					{
+						state.createdFromEmbedWaitListItems[waitListItemId] = waitListItemId;
+					}
+
+					return;
+				}
+
+				state.createdFromEmbedWaitListItems[id] = id;
 			},
 		};
 	}

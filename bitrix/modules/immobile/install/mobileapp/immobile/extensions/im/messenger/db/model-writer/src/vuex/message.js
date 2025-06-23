@@ -136,8 +136,8 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			}
 
 			const chatId = message.chatId;
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
-			if (DialogType.comment === dialog?.type)
+			const dialogHelper = DialogHelper.createByChatId(chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
 			{
 				return;
 			}

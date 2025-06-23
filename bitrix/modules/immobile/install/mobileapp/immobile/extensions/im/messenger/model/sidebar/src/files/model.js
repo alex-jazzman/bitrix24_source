@@ -1,15 +1,14 @@
 /* eslint-disable no-param-reassign */
 
 /**
- * @module im/messenger/model/sidebar/files/model
+ * @module im/messenger/model/sidebar/src/files/model
  */
-jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) => {
+jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Moment } = require('utils/date');
 
-	const { validate } = require('im/messenger/model/sidebar/files/validator');
-	const { fileItem, fileDefaultElement } = require('im/messenger/model/sidebar/files/default-element');
-	const { SidebarFileType } = require('im/messenger/const');
+	const { validate } = require('im/messenger/model/sidebar/src/files/validator');
+	const { fileItem, fileDefaultElement } = require('im/messenger/model/sidebar/src/files/default-element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -33,7 +32,7 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 					return {};
 				}
 
-				if (MessengerParams.isFullChatHistoryAvailable())
+				if (!state.collection[chatId]?.[subType]?.isHistoryLimitExceeded)
 				{
 					return state.collection[chatId][subType];
 				}
@@ -59,7 +58,7 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 			/**
 			 * @function sidebarModel/sidebarFilesModel/hasNextPage
 			 * @param state
-			 * @return {boolean}
+			 * @return {function(*, *): boolean}
 			 */
 			hasNextPage: (state) => (chatId, subType) => {
 				return Boolean(state.collection[chatId]?.[subType]?.hasNextPage);
@@ -90,6 +89,17 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 
 				return false;
 			},
+
+			/**
+			 * @function sidebarModel/sidebarFilesModel/getLastLoadFileId
+			 * @param state
+			 * @return {function(number, string): number}
+			 */
+			getLastLoadFileId: (state) => (chatId, subType) => {
+				logger.log('sidebarFilesModel: getLastLoadFileId getter', chatId, subType);
+
+				return state.collection[chatId]?.[subType]?.lastLoadFileId ?? 0;
+			},
 		},
 		actions: {
 			/**
@@ -109,7 +119,7 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 			 * @function sidebarModel/sidebarFilesModel/setFromPagination
 			 */
 			setFromPagination: (store, payload) => {
-				const { chatId, files, subType, hasNextPage, isHistoryLimitExceeded } = payload;
+				const { chatId, files, subType, hasNextPage, isHistoryLimitExceeded, lastLoadFileId } = payload;
 
 				if (!Type.isArray(files) || !Type.isNumber(chatId))
 				{
@@ -124,6 +134,18 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 							chatId,
 							subType,
 							hasNextPage,
+						},
+					});
+				}
+
+				if (lastLoadFileId)
+				{
+					store.commit('setLastLoadFileId', {
+						actionName: 'setLastLoadFileId',
+						data: {
+							chatId,
+							subType,
+							lastLoadFileId,
 						},
 					});
 				}
@@ -159,7 +181,7 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 			},
 			/** @function sidebarModel/sidebarFilesModel/delete */
 			delete: (store, payload) => {
-				const { chatId, id } = payload;
+				const { chatId, id, fileId } = payload;
 				const isValidParams = Type.isNumber(id) && Type.isNumber(chatId);
 				const hasCollection = store.state.collection[chatId];
 
@@ -173,7 +195,37 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 					data: {
 						chatId,
 						id,
+						fileId,
 					},
+				});
+			},
+
+			/**
+			 * @template TKey, TValue
+			 * @typedef {Object.<TKey, TValue>} Dictionary
+			 */
+
+			/**
+			 * @function sidebarModel/sidebarFilesModel/deleteFilesGroupedByChatId
+			 * @param {Object} store
+			 * @param {Object} payload
+			 * @param {Dictionary<number, Array<string|number>>} payload.filesGroupedByChatId
+			 */
+			deleteFilesGroupedByChatId: (store, payload) => {
+				const { filesGroupedByChatId } = payload;
+
+				Object.keys(filesGroupedByChatId).forEach((chatId) => {
+					const fileIds = filesGroupedByChatId[chatId];
+
+					fileIds.forEach((id) => {
+						store.commit('delete', {
+							actionName: 'deleteFilesGroupedByChatId',
+							data: {
+								chatId,
+								id,
+							},
+						});
+					});
 				});
 			},
 		},
@@ -232,7 +284,9 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 
 				const { chatId, id } = payload.data;
 
-				Object.values(SidebarFileType).forEach((subType) => {
+				const subtypesInCollection = Object.keys(state.collection[chatId]);
+
+				subtypesInCollection.forEach((subType) => {
 					if (state.collection[chatId][subType] && state.collection[chatId][subType].items.has(id))
 					{
 						state.collection[chatId][subType].items.delete(id);
@@ -259,6 +313,28 @@ jn.define('im/messenger/model/sidebar/files/model', (require, exports, module) =
 				}
 
 				state.collection[chatId][subType].hasNextPage = hasNextPage;
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<SidebarFilesSetHasNextPageData, SidebarFilesSetHasNextPageActions>} payload
+			 */
+			setLastLoadFileId: (state, payload) => {
+				logger.log('sidebarFilesModel: setLastLoadFileId mutation', payload);
+
+				const { chatId, subType, lastLoadFileId } = payload.data;
+
+				if (!state.collection[chatId])
+				{
+					state.collection[chatId] = {};
+				}
+
+				if (!state.collection[chatId][subType])
+				{
+					state.collection[chatId][subType] = fileDefaultElement();
+				}
+
+				state.collection[chatId][subType].lastLoadFileId = lastLoadFileId;
 			},
 		},
 	};

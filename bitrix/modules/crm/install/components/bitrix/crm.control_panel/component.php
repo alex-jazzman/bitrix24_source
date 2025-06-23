@@ -15,7 +15,7 @@ use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\Bitrix24Manager;
-use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
+use Bitrix\Crm\Integration\Market\Router;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ActivitySettings;
@@ -51,9 +51,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-if (
-	!$userPermissionsService->entityType()->canReadSomeItemsInCrm()
-)
+if (!$userPermissionsService->entityType()->canReadSomeItemsInCrm())
 {
 	if ($isShowOutput)
 	{
@@ -69,193 +67,71 @@ $router = Container::getInstance()->getRouter();
 global $APPLICATION;
 
 // Preparing of URL templates -->
-$arParams['PATH_TO_START'] = CrmCheckPath(
-	'PATH_TO_START',
-	$arParams['PATH_TO_START'] ?? '',
-	Option::get('crm', 'path_to_start', '/crm/start/', false)
-);
+$crmPaths = [
+	'PATH_TO_ACTIVITY_KANBAN' => '#SITE_DIR#crm/activity/kanban/',
+	'PATH_TO_ACTIVITY_LIST' => '#SITE_DIR#crm/activity/',
+	'PATH_TO_BUTTON' => '#SITE_DIR#crm/button/',
+	'PATH_TO_CATALOG' => '#SITE_DIR#crm/catalog/',
+	'PATH_TO_COMPANY_EDIT' => '#SITE_DIR#crm/company/edit/#company_id#/',
+	'PATH_TO_CONTACT_EDIT' => '#SITE_DIR#crm/contact/edit/#contact_id#/',
+	'PATH_TO_DEAL_ACTIVITY' => '#SITE_DIR#crm/deal/activity/',
+	'PATH_TO_DEAL_ACTIVITYCATEGORY' => '#SITE_DIR#crm/deal/activity/category/#category_id#/',
+	'PATH_TO_DEAL_CALENDAR' => '#SITE_DIR#crm/deal/calendar/',
+	'PATH_TO_DEAL_CALENDARCATEGORY' => '#SITE_DIR#crm/deal/calendar/category/#category_id#/',
+	'PATH_TO_DEAL_CATEGORY' => '#SITE_DIR#crm/deal/category/#category_id#/',
+	'PATH_TO_DEAL_EDIT' => '#SITE_DIR#crm/deal/edit/#deal_id#/',
+	'PATH_TO_DEAL_FUNNEL' => '#SITE_DIR#crm/reports/',
+	'PATH_TO_DEAL_KANBAN' => '#SITE_DIR#crm/deal/kanban/',
+	'PATH_TO_DEAL_KANBANCATEGORY' => '#SITE_DIR#crm/deal/kanban/category/#category_id#/',
+	'PATH_TO_EVENT_LIST' => '#SITE_DIR#crm/events/',
+	'PATH_TO_INVOICE_EDIT' => '#SITE_DIR#crm/invoice/edit/#invoice_id#/',
+	'PATH_TO_INVOICE_KANBAN' => '#SITE_DIR#crm/invoice/kanban/',
+	'PATH_TO_LEAD_ACTIVITY' => '#SITE_DIR#crm/lead/activity/',
+	'PATH_TO_LEAD_CALENDAR' => '#SITE_DIR#crm/lead/calendar/',
+	'PATH_TO_LEAD_EDIT' => '#SITE_DIR#crm/lead/edit/#lead_id#/',
+	'PATH_TO_LEAD_KANBAN' => '#SITE_DIR#crm/lead/kanban/',
+	'PATH_TO_MY_COMPANY' => '#SITE_DIR#crm/configs/mycompany/',
+	'PATH_TO_ORDER_KANBAN' => '#SITE_DIR#shop/orders/kanban/',
+	'PATH_TO_ORDER_LIST' => '##SITE_DIR#shop/orders/list/',
+	'PATH_TO_PERMISSIONS' => '#SITE_DIR#crm/configs/perms/',
+	'PATH_TO_PRODUCT_DETAILS' => '#SITE_DIR#crm/catalog/#catalog_id#/product/#product_id#/',
+	'PATH_TO_PRODUCT_LIST' => '#SITE_DIR#crm/product/index.php',
+	'PATH_TO_PRODUCT_MARKETPLACE' => Router::getBasePath(),
+	'PATH_TO_QUOTE_DEADLINES' => '#SITE_DIR#crm/quote/deadlines/',
+	'PATH_TO_QUOTE_EDIT' => '#SITE_DIR#crm/quote/edit/#quote_id#/',
+	'PATH_TO_QUOTE_KANBAN' => '#SITE_DIR#crm/quote/kanban/',
+	'PATH_TO_REPORT_LIST' => '#SITE_DIR#crm/reports/report/',
+	'PATH_TO_SEARCH_PAGE' => '#SITE_DIR#search/index.php?where=crm',
+	'PATH_TO_SETTINGS' => '#SITE_DIR#crm/configs/',
+	'PATH_TO_WEBFORM' => '#SITE_DIR#crm/webform/',
+];
 
-$arParams['PATH_TO_ORDER_LIST'] = (isset($arParams['PATH_TO_ORDER_LIST']) && $arParams['PATH_TO_ORDER_LIST'] !== '')
-	? $arParams['PATH_TO_ORDER_LIST'] : '#SITE_DIR#shop/orders/list/';
+foreach ($crmPaths as $key => $defaultPath)
+{
+	$arParams[$key] = !empty($arParams[$key]) ? $arParams[$key] : $defaultPath;
+}
 
-$arParams['PATH_TO_ORDER_KANBAN'] = (isset($arParams['PATH_TO_ORDER_KANBAN']) && $arParams['PATH_TO_ORDER_KANBAN'] !== '')
-	? $arParams['PATH_TO_ORDER_KANBAN'] : '#SITE_DIR#shop/orders/kanban/';
+//some paths can be replaced with stored Option
+$changeableCrmPaths = [
+	'PATH_TO_COMPANY_DETAILS' => '#SITE_DIR#crm/company/details/#company_id#/',
+	'PATH_TO_COMPANY_LIST' => '#SITE_DIR#crm/company/list/',
+	'PATH_TO_CONTACT_DETAILS' => '#SITE_DIR#crm/contact/details/#contact_id#/',
+	'PATH_TO_CONTACT_LIST' => '#SITE_DIR#crm/contact/list/',
+	'PATH_TO_DEAL_DETAILS' => '#SITE_DIR#crm/deal/details/#deal_id#/',
+	'PATH_TO_DEAL_LIST' => '#SITE_DIR#crm/deal/list/',
+	'PATH_TO_INVOICE_LIST' => '#SITE_DIR#crm/invoice/list/',
+	'PATH_TO_LEAD_DETAILS' => '#SITE_DIR#crm/lead/details/#lead_id#/',
+	'PATH_TO_LEAD_LIST' => '#SITE_DIR#crm/lead/list/',
+	'PATH_TO_QUOTE_DETAILS' => '#SITE_DIR#crm/quote/details/#quote_id#/',
+	'PATH_TO_QUOTE_LIST' => '#SITE_DIR#crm/quote/list/',
+	'PATH_TO_RECYCLE_BIN' => '#SITE_DIR#crm/recyclebin/',
+	'PATH_TO_START' => Option::get('crm', 'path_to_start', '/crm/start/'),
+];
 
-$arParams['PATH_TO_ACTIVITY_LIST'] = (isset($arParams['PATH_TO_ACTIVITY_LIST']) && $arParams['PATH_TO_ACTIVITY_LIST'] !== '')
-	? $arParams['PATH_TO_ACTIVITY_LIST'] : '#SITE_DIR#crm/activity/';
-
-$arParams['PATH_TO_ACTIVITY_KANBAN'] = empty($arParams['PATH_TO_ACTIVITY_KANBAN'])
-	? '#SITE_DIR#crm/activity/kanban/'
-	: $arParams['PATH_TO_ACTIVITY_KANBAN']
-;
-
-$arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath(
-	'PATH_TO_COMPANY_LIST',
-	$arParams['PATH_TO_COMPANY_LIST'] ?? '',
-	'#SITE_DIR#crm/company/list/'
-);
-
-$arParams['PATH_TO_COMPANY_EDIT'] = (isset($arParams['PATH_TO_COMPANY_EDIT']) && $arParams['PATH_TO_COMPANY_EDIT'] !== '')
-	? $arParams['PATH_TO_COMPANY_EDIT'] : '#SITE_DIR#crm/company/edit/#company_id#/';
-
-$arParams['PATH_TO_COMPANY_DETAILS'] = CrmCheckPath(
-	'PATH_TO_COMPANY_DETAILS',
-	$arParams['PATH_TO_COMPANY_DETAILS'] ?? '',
-	'#SITE_DIR#crm/company/details/#company_id#/'
-);
-
-$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath(
-	'PATH_TO_CONTACT_LIST',
-	$arParams['PATH_TO_CONTACT_LIST'] ?? '',
-	'#SITE_DIR#crm/contact/list/'
-);
-
-$arParams['PATH_TO_CONTACT_EDIT'] = (isset($arParams['PATH_TO_CONTACT_EDIT']) && $arParams['PATH_TO_CONTACT_EDIT'] !== '')
-	? $arParams['PATH_TO_CONTACT_EDIT'] : '#SITE_DIR#crm/contact/edit/#contact_id#/';
-
-$arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath(
-	'PATH_TO_CONTACT_DETAILS',
-	$arParams['PATH_TO_CONTACT_DETAILS'] ?? '',
-	'#SITE_DIR#crm/contact/details/#contact_id#/'
-);
-
-$arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath(
-	'PATH_TO_DEAL_LIST',
-	$arParams['PATH_TO_DEAL_LIST'] ?? '',
-	'#SITE_DIR#crm/deal/list/'
-);
-
-$arParams['PATH_TO_DEAL_EDIT'] = (isset($arParams['PATH_TO_DEAL_EDIT']) && $arParams['PATH_TO_DEAL_EDIT'] !== '')
-	? $arParams['PATH_TO_DEAL_EDIT'] : '#SITE_DIR#crm/deal/edit/#deal_id#/';
-
-$arParams['PATH_TO_DEAL_KANBAN'] = (isset($arParams['PATH_TO_DEAL_KANBAN']) && $arParams['PATH_TO_DEAL_KANBAN'] !== '')
-	? $arParams['PATH_TO_DEAL_KANBAN'] : '#SITE_DIR#crm/deal/kanban/';
-
-$arParams['PATH_TO_DEAL_ACTIVITY'] = (isset($arParams['PATH_TO_DEAL_ACTIVITY']) && $arParams['PATH_TO_DEAL_ACTIVITY'] !== '')
-	? $arParams['PATH_TO_DEAL_ACTIVITY'] : '#SITE_DIR#crm/deal/activity/';
-
-$arParams['PATH_TO_DEAL_CALENDAR'] = (isset($arParams['PATH_TO_DEAL_CALENDAR']) && $arParams['PATH_TO_DEAL_CALENDAR'] !== '')
-	? $arParams['PATH_TO_DEAL_CALENDAR'] : '#SITE_DIR#crm/deal/calendar/';
-
-$arParams['PATH_TO_DEAL_KANBANCATEGORY'] = (isset($arParams['PATH_TO_DEAL_KANBANCATEGORY']) && $arParams['PATH_TO_DEAL_KANBANCATEGORY'] !== '')
-	? $arParams['PATH_TO_DEAL_KANBANCATEGORY'] : '#SITE_DIR#crm/deal/kanban/category/#category_id#/';
-
-$arParams['PATH_TO_DEAL_ACTIVITYCATEGORY'] = (isset($arParams['PATH_TO_DEAL_ACTIVITYCATEGORY']) && $arParams['PATH_TO_DEAL_ACTIVITYCATEGORY'] !== '')
-	? $arParams['PATH_TO_DEAL_ACTIVITYCATEGORY'] : '#SITE_DIR#crm/deal/activity/category/#category_id#/';
-
-$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] = (isset($arParams['PATH_TO_DEAL_CALENDARCATEGORY']) && $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] !== '')
-	? $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] : '#SITE_DIR#crm/deal/calendar/category/#category_id#/';
-
-$arParams['PATH_TO_DEAL_CATEGORY'] = (isset($arParams['PATH_TO_DEAL_CATEGORY']) && $arParams['PATH_TO_DEAL_CATEGORY'] !== '')
-	? $arParams['PATH_TO_DEAL_CATEGORY'] : '#SITE_DIR#crm/deal/category/#category_id#/';
-
-$arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath(
-	'PATH_TO_DEAL_DETAILS',
-	$arParams['PATH_TO_DEAL_DETAILS'] ?? '',
-	'#SITE_DIR#crm/deal/details/#deal_id#/'
-);
-
-$arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath(
-	'PATH_TO_LEAD_LIST',
-	$arParams['PATH_TO_LEAD_LIST'] ?? '',
-	'#SITE_DIR#crm/lead/list/'
-);
-
-$arParams['PATH_TO_LEAD_EDIT'] = (isset($arParams['PATH_TO_LEAD_EDIT']) && $arParams['PATH_TO_LEAD_EDIT'] !== '')
-	? $arParams['PATH_TO_LEAD_EDIT'] : '#SITE_DIR#crm/lead/edit/#lead_id#/';
-
-$arParams['PATH_TO_LEAD_KANBAN'] = (isset($arParams['PATH_TO_LEAD_KANBAN']) && $arParams['PATH_TO_LEAD_KANBAN'] !== '')
-	? $arParams['PATH_TO_LEAD_KANBAN'] : '#SITE_DIR#crm/lead/kanban/';
-
-$arParams['PATH_TO_LEAD_ACTIVITY'] = (isset($arParams['PATH_TO_LEAD_ACTIVITY']) && $arParams['PATH_TO_LEAD_ACTIVITY'] !== '')
-	? $arParams['PATH_TO_LEAD_ACTIVITY'] : '#SITE_DIR#crm/lead/activity/';
-
-$arParams['PATH_TO_LEAD_CALENDAR'] = (isset($arParams['PATH_TO_LEAD_CALENDAR']) && $arParams['PATH_TO_LEAD_CALENDAR'] !== '')
-	? $arParams['PATH_TO_LEAD_CALENDAR'] : '#SITE_DIR#crm/lead/calendar/';
-
-$arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath(
-	'PATH_TO_LEAD_DETAILS',
-	$arParams['PATH_TO_LEAD_DETAILS'] ?? '',
-	'#SITE_DIR#crm/lead/details/#lead_id#/'
-);
-
-$arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath(
-	'PATH_TO_QUOTE_LIST',
-	$arParams['PATH_TO_QUOTE_LIST'] ?? '',
-	'#SITE_DIR#crm/quote/list/'
-);
-
-$arParams['PATH_TO_QUOTE_EDIT'] = (isset($arParams['PATH_TO_QUOTE_EDIT']) && $arParams['PATH_TO_QUOTE_EDIT'] !== '')
-	? $arParams['PATH_TO_QUOTE_EDIT'] : '#SITE_DIR#crm/quote/edit/#quote_id#/';
-
-$arParams['PATH_TO_QUOTE_KANBAN'] = (isset($arParams['PATH_TO_QUOTE_KANBAN']) && $arParams['PATH_TO_QUOTE_KANBAN'] !== '')
-	? $arParams['PATH_TO_QUOTE_KANBAN'] : '#SITE_DIR#crm/quote/kanban/';
-
-$arParams['PATH_TO_QUOTE_DEADLINES'] = (isset($arParams['PATH_TO_QUOTE_DEADLINES'])	&& $arParams['PATH_TO_QUOTE_DEADLINES'] !== '')
-	? $arParams['PATH_TO_QUOTE_DEADLINES'] : '#SITE_DIR#crm/quote/deadlines/';
-
-$arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath(
-	'PATH_TO_QUOTE_DETAILS',
-	$arParams['PATH_TO_QUOTE_DETAILS'] ?? '',
-	'#SITE_DIR#crm/quote/details/#quote_id#/'
-);
-
-$arParams['PATH_TO_INVOICE_LIST'] = CrmCheckPath(
-	'PATH_TO_INVOICE_LIST',
-	$arParams['PATH_TO_INVOICE_LIST'] ?? '',
-	'#SITE_DIR#crm/invoice/list/'
-);
-
-$arParams['PATH_TO_INVOICE_EDIT'] = (isset($arParams['PATH_TO_INVOICE_EDIT']) && $arParams['PATH_TO_INVOICE_EDIT'] !== '')
-	? $arParams['PATH_TO_INVOICE_EDIT'] : '#SITE_DIR#crm/invoice/edit/#invoice_id#/';
-
-$arParams['PATH_TO_INVOICE_KANBAN'] = (isset($arParams['PATH_TO_INVOICE_KANBAN']) && $arParams['PATH_TO_INVOICE_KANBAN'] !== '')
-	? $arParams['PATH_TO_INVOICE_KANBAN'] : '#SITE_DIR#crm/invoice/kanban/';
-
-$arParams['PATH_TO_REPORT_LIST'] = (isset($arParams['PATH_TO_REPORT_LIST']) && $arParams['PATH_TO_REPORT_LIST'] !== '')
-	? $arParams['PATH_TO_REPORT_LIST'] : '#SITE_DIR#crm/reports/report/';
-
-$arParams['PATH_TO_DEAL_FUNNEL'] = (isset($arParams['PATH_TO_DEAL_FUNNEL']) && $arParams['PATH_TO_DEAL_FUNNEL'] !== '')
-	? $arParams['PATH_TO_DEAL_FUNNEL'] : '#SITE_DIR#crm/reports/';
-
-$arParams['PATH_TO_EVENT_LIST'] = (isset($arParams['PATH_TO_EVENT_LIST']) && $arParams['PATH_TO_EVENT_LIST'] !== '')
-	? $arParams['PATH_TO_EVENT_LIST'] : '#SITE_DIR#crm/events/';
-
-$arParams['PATH_TO_PRODUCT_LIST'] = (isset($arParams['PATH_TO_PRODUCT_LIST']) && $arParams['PATH_TO_PRODUCT_LIST'] !== '')
-	? $arParams['PATH_TO_PRODUCT_LIST'] : '#SITE_DIR#crm/product/index.php';
-
-$arParams['PATH_TO_PRODUCT_DETAILS'] = (isset($arParams['PATH_TO_PRODUCT_DETAILS']) && $arParams['PATH_TO_PRODUCT_DETAILS'] !== '')
-	? $arParams['PATH_TO_PRODUCT_DETAILS'] : '#SITE_DIR#crm/catalog/#catalog_id#/product/#product_id#/';
-
-$arParams['PATH_TO_CATALOG'] = (isset($arParams['PATH_TO_CATALOG']) && $arParams['PATH_TO_CATALOG'] !== '')
-	? $arParams['PATH_TO_CATALOG'] : '#SITE_DIR#crm/catalog/';
-
-$arParams['PATH_TO_SETTINGS'] = (isset($arParams['PATH_TO_SETTINGS']) && $arParams['PATH_TO_SETTINGS'] !== '')
-	? $arParams['PATH_TO_SETTINGS'] : '#SITE_DIR#crm/configs/';
-
-$arParams['PATH_TO_PERMISSIONS'] = (isset($arParams['PATH_TO_PERMISSIONS']) && $arParams['PATH_TO_PERMISSIONS'] !== '')
-	? $arParams['PATH_TO_PERMISSIONS'] : '#SITE_DIR#crm/configs/perms/';
-
-$arParams['PATH_TO_MY_COMPANY'] = (isset($arParams['PATH_TO_MY_COMPANY']) && $arParams['PATH_TO_MY_COMPANY'] !== '')
-	? $arParams['PATH_TO_MY_COMPANY'] : '#SITE_DIR#crm/configs/mycompany/';
-
-$arParams['PATH_TO_SEARCH_PAGE'] = (isset($arParams['PATH_TO_SEARCH_PAGE']) && $arParams['PATH_TO_SEARCH_PAGE'] !== '')
-	? $arParams['PATH_TO_SEARCH_PAGE'] : '#SITE_DIR#search/index.php?where=crm';
-
-$arParams['PATH_TO_PRODUCT_MARKETPLACE'] = (isset($arParams['PATH_TO_PRODUCT_MARKETPLACE']) && $arParams['PATH_TO_PRODUCT_MARKETPLACE'] !== '')
-	? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : \Bitrix\Crm\Integration\Market\Router::getBasePath();
-
-$arParams['PATH_TO_WEBFORM'] = (isset($arParams['PATH_TO_WEBFORM']) && $arParams['PATH_TO_WEBFORM'] !== '')
-	? $arParams['PATH_TO_WEBFORM'] : '#SITE_DIR#crm/webform/';
-
-$arParams['PATH_TO_BUTTON'] = (isset($arParams['PATH_TO_BUTTON']) && $arParams['PATH_TO_BUTTON'] !== '')
-	? $arParams['PATH_TO_BUTTON'] : '#SITE_DIR#crm/button/';
-
-$arParams['PATH_TO_RECYCLE_BIN'] = CrmCheckPath(
-	'PATH_TO_RECYCLE_BIN',
-	$arParams['PATH_TO_RECYCLE_BIN'] ?? '',
-	'#SITE_DIR#crm/recyclebin/'
-);
+foreach ($changeableCrmPaths as $key => $defaultPath)
+{
+	$arParams[$key] = CrmCheckPath($key, $arParams[$key] ?? '', $defaultPath);
+}
 
 $currentCategoryID = CUserOptions::GetOption('crm', 'current_deal_category', -1);
 if($currentCategoryID >= 0)
@@ -350,9 +226,6 @@ if(is_array($navigationIndex))
 $isSliderEnabled = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
 $arResult['ACTIVE_ITEM_ID'] = $arParams['ACTIVE_ITEM_ID'] ?? '';
-//$arResult['ENABLE_SEARCH'] = isset($arParams['ENABLE_SEARCH']) && is_bool($arParams['ENABLE_SEARCH']) ? $arParams['ENABLE_SEARCH'] : true ;
-$arResult['ENABLE_SEARCH'] = false;
-$arResult['SEARCH_PAGE_URL'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SEARCH_PAGE']);
 
 $arResult['ID'] = $arParams['ID'] ?? '';
 if($arResult['ID'] === '')
@@ -877,7 +750,7 @@ if ($isAdmin || $userPermissionsService->isCrmAdmin())
 
 	$stdItems['CRM_PERMISSIONS'] = [
 		'ID' => 'CRM_PERMISSIONS',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS_MSGVER_1'),
 		'URL' => (string)$crmPermsViewEventBuilder->buildUri($router->getPermissionsUrl()),
 	];
 }
@@ -890,7 +763,7 @@ if (Loader::includeModule('catalog'))
 		$catalogRightsUrl = '/shop/settings/permissions/';
 		$catalogRights = [
 			'ID' => 'CATALOG_PERMISSIONS',
-			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS'),
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS_MSGVER_1'),
 			'URL' => $catalogRightsUrl,
 			'ON_CLICK' => 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($catalogRightsUrl) . '"); return false;'
 		];
@@ -902,7 +775,7 @@ if (Loader::includeModule('catalog'))
 		{
 			$catalogRights = [
 				'ID' => 'CATALOG_PERMISSIONS',
-				'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS'),
+				'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS_MSGVER_1'),
 				'URL' => '',
 				'ON_CLICK' => $helpLink['LINK'],
 				'IS_LOCKED' => true,
@@ -1139,8 +1012,8 @@ if(ModuleManager::isModuleInstalled('bitrix24'))
 			'ID' => 'MARKETPLACE_CRM_MIGRATION',
 			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_CRM_MIGRATION'),
 			'URL' => Loader::includeModule('market')
-				? \Bitrix\Crm\Integration\Market\Router::getBasePath() . 'collection/migration_crm/'
-				: \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration'),
+				? Router::getBasePath() . 'collection/migration_crm/'
+				: Router::getCategoryPath('migration'),
 			'IS_DISABLED' => true,
 			'SLIDER_ONLY' => true,
 		);
@@ -1179,7 +1052,7 @@ if (Loader::includeModule('salescenter'))
 		]);
 		$stdItems['SALES_CENTER_DELIVERY'] = [
 			'ID' => 'SALES_CENTER_DELIVERY',
-			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER_DELIVERY'),
+			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER_DELIVERY_MSGVER_1'),
 			'URL' => $deliveryPath,
 			'SLIDER_ONLY' => true,
 		];
@@ -1232,6 +1105,28 @@ if (
 	}
 
 	$stdItems['CALL_ASSESSMENT'] = $callAssessmentMenuItem;
+}
+
+$repeatSaleAvailabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+if (
+	$repeatSaleAvailabilityChecker->isAvailable()
+	&& Container::getInstance()->getUserPermissions()->repeatSale()->canRead()
+)
+{
+	$stdItems['REPEAT_SALE_SEGMENT'] = [
+		'ID' => 'REPEAT_SALE_SEGMENT',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_REPEAT_SALE_SEGMENT'),
+		'URL' => '/crm/repeat-sale-segment/',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('REPEAT_SALE_SEGMENT'),
+		'IS_NEW' => true, // @todo set end datetime
+	];
+
+	if (!$repeatSaleAvailabilityChecker->hasPermission())
+	{
+		unset($stdItems['REPEAT_SALE_SEGMENT']['URL']);
+		$stdItems['REPEAT_SALE_SEGMENT']['IS_LOCKED'] = true;
+		$stdItems['REPEAT_SALE_SEGMENT']['ON_CLICK'] = RestrictionManager::getRepeatSaleRestriction()->prepareFeaturePromoterScript();
+	}
 }
 
 if (Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::isMainMenuEnabled())

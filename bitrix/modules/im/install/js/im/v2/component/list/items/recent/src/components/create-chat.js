@@ -2,7 +2,7 @@ import { Loc, type JsonObject } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 
 import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { EmptyAvatar, EmptyAvatarType, AvatarSize } from 'im.v2.component.elements';
+import { EmptyAvatar, EmptyAvatarType, AvatarSize } from 'im.v2.component.elements.avatar';
 import { Layout, ChatType } from 'im.v2.const';
 
 import '../css/create-chat.css';

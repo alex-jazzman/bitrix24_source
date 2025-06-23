@@ -163,7 +163,12 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 				() => {
 					if (this.layout)
 					{
-						this.layout.close();
+						this.layout.close(() => {
+							BX.postComponentEvent(
+								'AppRatingManager.onBizProcTaskCompleted',
+								[taskCompletionParams?.taskRequest],
+							);
+						});
 					}
 				},
 				280,

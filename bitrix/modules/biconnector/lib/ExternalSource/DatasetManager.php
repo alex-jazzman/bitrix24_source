@@ -5,8 +5,9 @@ namespace Bitrix\BIConnector\ExternalSource;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Engine\Response\Converter;
 
-final class DatasetManager
+class DatasetManager
 {
 	public const EVENT_ON_AFTER_ADD_DATASET = 'onAfterAddDataset';
 	public const EVENT_ON_BEFORE_UPDATE_DATASET = 'onBeforeUpdateDataset';
@@ -23,11 +24,11 @@ final class DatasetManager
 	 *
 	 * @return Main\Result
 	 */
-	public static function add(array $dataset, array $fields, array $settings, int $sourceId = null): Main\Result
+	public static function add(array $dataset, array $fields, array $settings = [], int $sourceId = null): Main\Result
 	{
 		$result = new Main\Result();
 
-		$checkResult = self::checkAndPrepareBeforeAdd($dataset, $fields, $settings);
+		$checkResult = static::checkAndPrepareBeforeAdd($dataset, $fields, $settings, $sourceId);
 		if (!$checkResult->isSuccess())
 		{
 			$result->addErrors($checkResult->getErrors());
@@ -57,15 +58,19 @@ final class DatasetManager
 				$result->addErrors($addFieldsResult->getErrors());
 			}
 
-			$addSettingsResult = self::addSettingsToDataset($id, $settings);
-			if (!$addSettingsResult->isSuccess())
+			if ($settings)
 			{
-				$result->addErrors($addSettingsResult->getErrors());
+				$addSettingsResult = self::addSettingsToDataset($id, $settings);
+				if (!$addSettingsResult->isSuccess())
+				{
+					$result->addErrors($addSettingsResult->getErrors());
+				}
 			}
 
 			if ($sourceId)
 			{
 				$relationAddResult = Internal\ExternalSourceDatasetRelationTable::addRelation($sourceId, $id);
+				if (!$relationAddResult->isSuccess())
 				{
 					$result->addErrors($relationAddResult->getErrors());
 				}
@@ -122,7 +127,12 @@ final class DatasetManager
 		return $result;
 	}
 
-	private static function checkAndPrepareBeforeAdd(array $dataset, array $fields, array $settings): Main\Result
+	protected static function checkAndPrepareBeforeAdd(
+		array $dataset,
+		array $fields,
+		array $settings,
+		int $sourceId = null
+	): Main\Result
 	{
 		$result = new Main\Result();
 
@@ -140,7 +150,8 @@ final class DatasetManager
 		}
 		else
 		{
-			if (in_array($dataset['NAME'], SupersetServiceIntegration::getTableList(), true))
+			$datasetName = $dataset['NAME'] ?? $dataset['name'];
+			if (in_array($datasetName, SupersetServiceIntegration::getTableList(), true))
 			{
 				$result->addError(
 					new Main\Error(
@@ -162,7 +173,7 @@ final class DatasetManager
 			$result->addError(new Main\Error('$fields is empty', 'FIELDS_EMPTY'));
 		}
 
-		if (empty($settings))
+		if (empty($settings) && is_null($sourceId))
 		{
 			$result->addError(new Main\Error('$settings is empty', 'SETTINGS_EMPTY'));
 		}
@@ -216,7 +227,7 @@ final class DatasetManager
 			}
 		}
 
-		$checkResult = self::checkAndPrepareBeforeUpdate($id, $dataset, $fields, $settings);
+		$checkResult = static::checkAndPrepareBeforeUpdate($id, $dataset, $fields, $settings);
 		if (!$checkResult->isSuccess())
 		{
 			$result->addErrors($checkResult->getErrors());
@@ -246,8 +257,14 @@ final class DatasetManager
 		{
 			$currentFields = self::getDatasetFieldsById($id);
 
+			if (isset($fields[0]['id'], $fields[0]['visible']))
+			{
+				$converter = new Converter(Converter::KEYS | Converter::TO_UPPER | Converter::RECURSIVE);
+				$fields = $converter->process($fields);
+			}
+
 			$fieldsToUpdate = array_filter($fields, static function ($field) use ($currentFields) {
-				return isset($field['ID']) && $currentFields->getByPrimary($field['ID']);
+				return isset($field['ID']) && $currentFields->getByPrimary($field['ID']) !== null;
 			});
 
 			foreach ($fieldsToUpdate as $fieldToUpdate)
@@ -336,7 +353,7 @@ final class DatasetManager
 		return $result;
 	}
 
-	private static function checkAndPrepareBeforeUpdate(int $id, array $dataset, array $fields, array $settings): Main\Result
+	protected static function checkAndPrepareBeforeUpdate(int $id, array $dataset, array $fields, array $settings): Main\Result
 	{
 		$result = new Main\Result();
 
@@ -381,7 +398,7 @@ final class DatasetManager
 		return $result;
 	}
 
-	private static function checkBefore(array $dataset, array $fields, array $settings): Main\Result
+	protected static function checkBefore(array $dataset, array $fields, array $settings): Main\Result
 	{
 		$result = new Main\Result();
 
@@ -400,7 +417,7 @@ final class DatasetManager
 		return $result;
 	}
 
-	private static function addFieldsToDataset(int $id, array $fields): Main\Result
+	protected static function addFieldsToDataset(int $id, array $fields): Main\Result
 	{
 		$result = new Main\Result();
 

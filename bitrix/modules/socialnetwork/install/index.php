@@ -273,6 +273,22 @@ Class socialnetwork extends CModule
 			'onRegenerateCollabInviteLink',
 		);
 
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserUpdate',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
+			'OnAfterUserFired',
+		);
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
+			'OnAfterUserDelete',
+		);
+
 		CAgent::AddAgent("CSocNetMessages::SendEventAgent();", "socialnetwork", "N", 600);
 		CAgent::AddAgent(
 			"\Bitrix\Socialnetwork\Internals\EventService\CleanAgent::execute();",
@@ -612,6 +628,22 @@ Class socialnetwork extends CModule
 			'socialnetwork',
 			'\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher',
 			'OnAfterCalendarEventEdit'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserUpdate',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
+			'OnAfterUserFired',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\Collab\Onboarding\Event\EventDispatcher',
+			'OnAfterUserDelete',
 		);
 
 		UnRegisterModule("socialnetwork");

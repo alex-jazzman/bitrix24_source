@@ -19,6 +19,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UserPermission } = require('im/messenger/lib/permission-manager');
+	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('recent--view');
 
@@ -36,6 +37,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				EventType.recent.loadNextPage,
 			]);
 
+			this.isWelcomeScreenVisible = false;
 			this.loaderShown = false;
 			this.loadNextPageItemId = 'loadNextPage';
 			this.itemCollection = {};
@@ -51,6 +53,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.initTopMenu();
 			this.initSections();
 			this.renderChatCreateButton();
+			this.initQuickRecentLoader();
 		}
 
 		bindMethods()
@@ -176,9 +179,12 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.setRightButtons(buttons);
 		}
 
-		initSections()
+		/**
+		 * @return {Array<JNListWidgetSectionItem>}
+		 */
+		getSections()
 		{
-			this.setSections([
+			return [
 				{
 					title: '',
 					id: 'call',
@@ -197,7 +203,12 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					backgroundColor: '#ffffff',
 					sortItemParams: { order: 'desc' },
 				},
-			]);
+			];
+		}
+
+		initSections()
+		{
+			this.setSections(this.getSections());
 		}
 
 		renderChatCreateButton()
@@ -208,6 +219,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			}
 
 			this.setFloatingButton(this.getChatCreateButtonOption());
+		}
+
+		initQuickRecentLoader()
+		{
+			this.quickRecentLoader = new QuickRecentLoader();
 		}
 
 		renderChatCreateButtonForWelcomeScreen()
@@ -325,6 +341,9 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.ui.setRightButtons(buttonList);
 		}
 
+		/**
+		 * @param {Array<JNListWidgetSectionItem>} sectionList
+		 */
 		setSections(sectionList)
 		{
 			this.ui.setSections(sectionList);
@@ -335,6 +354,9 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.ui.showSearchBar();
 		}
 
+		/**
+		 * @param {Array<NativeRecentItem>} items
+		 */
 		setItems(items)
 		{
 			logger.log(`${this.constructor.name}.setItems`, items);
@@ -343,16 +365,24 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
 			});
+
+			this.updateSharedStorageRecentCache();
 		}
 
-		addItems(items)
+		/**
+		 * @param {Array<NativeRecentItem>} items
+		 * @param {boolean} [isAnimated=false]
+		 */
+		addItems(items, isAnimated = false)
 		{
 			logger.log(`${this.constructor.name}.addItems`, items);
 
-			this.ui.addItems(items, false);
+			this.ui.addItems(items, isAnimated);
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
 			});
+
+			this.updateSharedStorageRecentCache();
 		}
 
 		updateItems(items)
@@ -369,6 +399,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				}
 				this.itemCollection[item.element.id] = item.element;
 			});
+
+			this.updateSharedStorageRecentCache();
 		}
 
 		updateItem(filter, fields)
@@ -383,16 +415,38 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				return;
 			}
 			this.itemCollection[fields.id] = fields;
+
+			this.updateSharedStorageRecentCache();
 		}
 
 		removeItem(itemFilter)
 		{
 			logger.log(`${this.constructor.name}.removeItem`, itemFilter);
-
 			this.ui.removeItem(itemFilter);
 			if (itemFilter.id)
 			{
 				delete this.itemCollection[itemFilter.id];
+
+				this.updateSharedStorageRecentCache();
+			}
+		}
+
+		removeCallItem(itemFilter)
+		{
+			logger.log(`${this.constructor.name}.removeCallItem`, itemFilter);
+			const entityId = itemFilter?.associatedEntity?.id;
+			if (!entityId)
+			{
+				return;
+			}
+
+			const id = `call${entityId}`;
+			const item = this.itemCollection[id];
+
+			if (item?.params.call.uuid === itemFilter.uuid)
+			{
+				this.ui.removeItem({ id });
+				delete this.itemCollection[id];
 			}
 		}
 
@@ -409,6 +463,16 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		getItems()
 		{
 			return this.itemCollection;
+		}
+
+		getItemList()
+		{
+			return Object.values(this.itemCollection);
+		}
+
+		updateSharedStorageRecentCache()
+		{
+			void this.quickRecentLoader.saveCache(this.getSections(), this.getItemList());
 		}
 
 		stopRefreshing()
@@ -444,9 +508,14 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		showWelcomeScreen()
 		{
+			if (this.isWelcomeScreenVisible)
+			{
+				return;
+			}
+
 			let options = {};
 
-			if (Feature.isIntranetInvitationAvaliable)
+			if (Feature.isIntranetInvitationAvailable)
 			{
 				options = {
 					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_1'),
@@ -501,12 +570,17 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 			this.ui.welcomeScreen.show(options);
 			this.renderChatCreateButtonForWelcomeScreen();
+			this.isWelcomeScreenVisible = true;
 		}
 
 		hideWelcomeScreen()
 		{
-			this.ui.welcomeScreen.hide();
-			this.renderChatCreateButton();
+			if (this.isWelcomeScreenVisible)
+			{
+				this.ui.welcomeScreen.hide();
+				this.renderChatCreateButton();
+				this.isWelcomeScreenVisible = false;
+			}
 		}
 
 		createChatButtonTapHandler()

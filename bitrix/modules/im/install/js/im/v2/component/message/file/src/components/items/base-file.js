@@ -1,10 +1,10 @@
 import 'ui.icons.disk';
 import { Type } from 'main.core';
 
-import { FileType, FileViewerContext } from 'im.v2.const';
+import { FileViewerContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
+import { ProgressBar } from	'im.v2.component.elements.progressbar';
 
-import { ProgressBar } from './progress-bar';
 import { BaseFileContextMenu } from '../../classes/base-file-context-menu';
 
 import '../../css/items/base-file.css';
@@ -26,6 +26,7 @@ export const BaseFileItem = {
 			required: true,
 		},
 	},
+	emits: ['cancelClick'],
 	computed:
 	{
 		file(): ImModelFile
@@ -105,13 +106,22 @@ export const BaseFileItem = {
 				fileId: this.id,
 			});
 		},
+		onCancelClick(event)
+		{
+			this.$emit('cancelClick', event);
+		},
 	},
 	template: `
 		<div class="bx-im-base-file-item__container">
 			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
 				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
-					<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageId" :withLabels="false" />
-					<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
+					<ProgressBar 
+						v-if="!isLoaded" 
+						:item="file"
+						:withLabels="false"
+						@cancelClick="onCancelClick"
+					/>
+				<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
 					<div v-else :class="iconClass" class="bx-im-base-file-item__type-icon ui-icon"><i></i></div>
 				</div>
 				<div class="bx-im-base-file-item__content">

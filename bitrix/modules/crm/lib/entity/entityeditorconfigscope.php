@@ -19,7 +19,16 @@ class EntityEditorConfigScope
 	 */
 	public static function isDefined(string $scope): bool
 	{
-		return (in_array($scope, [self::PERSONAL, self::COMMON, self::CUSTOM], true));
+		return (in_array($scope, self::scopes(), true));
+	}
+
+	public static function scopes(): array
+	{
+		return [
+			self::PERSONAL,
+			self::COMMON,
+			self::CUSTOM,
+		];
 	}
 
 	/**

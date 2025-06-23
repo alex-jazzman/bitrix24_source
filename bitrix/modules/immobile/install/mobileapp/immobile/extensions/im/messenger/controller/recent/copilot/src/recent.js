@@ -6,9 +6,14 @@
 jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { Type } = require('type');
+
+	const { Feature } = require('im/messenger/lib/feature');
+	const { CounterHelper } = require('im/messenger/lib/helper');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
 	const { EventType, ComponentCode, DialogType } = require('im/messenger/const');
+	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
+
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const logger = getLogger('recent--copilot-recent');
@@ -130,6 +135,8 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 					this.store.dispatch('recentModel/delete', { id });
 				});
 			}
+
+			MessengerCounterSender.getInstance().sendRecentPageLoaded(modelData.counterState);
 		}
 
 		/**
@@ -142,6 +149,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 				dialogues: [],
 				recent: [],
 				copilot: [],
+				counterState: [],
 			};
 
 			recentData.items.forEach((item) => {
@@ -171,6 +179,13 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 					avatar: item.avatar.url,
 					color: item.avatar.color,
 					counter: dialogItem.counter,
+				});
+
+				result.counterState.push({
+					chatId: dialogItem.id,
+					parentChatId: dialogItem.parentChatId ?? 0,
+					type: CounterHelper.getCounterTypeByDialogType(dialogItem.type),
+					counter: dialogItem.counter ?? 0,
 				});
 
 				try

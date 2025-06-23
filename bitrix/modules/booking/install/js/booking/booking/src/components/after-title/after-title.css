@@ -5,7 +5,7 @@
 }
 
 .booking-toolbar-after-title-date {
-	margin-right: 10px;
+	margin: 0 10px;
 	color: rgba(var(--ui-color-palette-white-base-rgb), 0.6);
 	font-size: 20px;
 	font-weight: var(--ui-font-weight-light);

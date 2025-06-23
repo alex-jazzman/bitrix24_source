@@ -240,7 +240,13 @@ class Manager
 
 		if (!array_key_exists($siteId, $sites))
 		{
-			$sites[$siteId] = \Bitrix\Main\SiteTable::getById($siteId)->fetch();
+			$sites[$siteId] = \Bitrix\Main\SiteTable::query()
+				->setSelect(['*'])
+				->where('LID', '=', $siteId)
+				->setCacheTtl(86400)
+				->exec()
+				->fetch()
+			;
 		}
 
 		return $sites[$siteId];

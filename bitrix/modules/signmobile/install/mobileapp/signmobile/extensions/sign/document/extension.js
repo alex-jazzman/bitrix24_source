@@ -97,8 +97,11 @@ jn.define('sign/document', (require, exports, module) => {
 		renderSignButtons()
 		{
 			return Card(
-				{},
+				{
+					testId: `signButtons-card`,
+				},
 				Button({
+					testId: `signDocument-button-confirm`,
 					text: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_BUTTON_TITLE'),
 					size: ButtonSize.XL,
 					design: ButtonDesign.FILLED,
@@ -117,8 +120,11 @@ jn.define('sign/document', (require, exports, module) => {
 		renderReviewButtons()
 		{
 			return Card(
-				{},
+				{
+					testId: `reviewButtons-card`,
+				},
 				Button({
+					testId: `signDocument-button-review`,
 					text: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_REVIEW_BUTTON_TITLE'),
 					size: ButtonSize.XL,
 					design: ButtonDesign.FILLED,
@@ -139,6 +145,7 @@ jn.define('sign/document', (require, exports, module) => {
 			const { titleCode } = this.#getRejectButtonConfig();
 
 			return Button({
+				testId: `signDocument-button-Reject`,
 				text: Loc.getMessage(titleCode),
 				size: ButtonSize.XL,
 				design: ButtonDesign.PLAN_ACCENT,

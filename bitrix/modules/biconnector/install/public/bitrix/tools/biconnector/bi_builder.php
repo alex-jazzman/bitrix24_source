@@ -104,7 +104,7 @@ if ($supersetKey)
 }
 elseif (
 	!Main\Loader::includeModule('bitrix24')
-	&& $biKey === BIConnector\Superset\KeyManager::getAccessKey()
+	&& BIConnector\Superset\KeyManager::isActiveKey($biKey)
 )
 {
 	$limitManager->setIsSuperset();

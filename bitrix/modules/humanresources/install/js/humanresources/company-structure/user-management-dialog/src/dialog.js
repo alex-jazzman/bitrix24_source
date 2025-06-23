@@ -1,9 +1,10 @@
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import { Type, Loc } from 'main.core';
 import { Dialog } from 'ui.entity-selector';
 import type { UserManagementDialogConfiguration } from './types';
 import { BaseUserManagementDialogHeader } from './header';
 import { BaseUserManagementDialogFooter } from './footer';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { getMemberRoles, type MemberRolesType } from 'humanresources.company-structure.api';
 import { allowedDialogTypes } from './consts';
 import './style.css';
 
@@ -15,6 +16,8 @@ export class UserManagementDialog
 	#nodeId: number;
 	#type: string;
 	#role: string;
+	#entityType: string;
+	#memberRoles: MemberRolesType;
 
 	constructor(options: UserManagementDialogConfiguration)
 	{
@@ -36,18 +39,32 @@ export class UserManagementDialog
 			throw new TypeError(`Invalid argument 'type'. Expected one of: ${allowedDialogTypes.join(', ')}`);
 		}
 
-		if (Object.values(memberRoles).includes(options.role))
+		if (Type.isString(options.entityType) && Object.values(EntityTypes).includes(options.entityType))
+		{
+			this.#entityType = options.entityType;
+			if (this.#entityType === EntityTypes.team)
+			{
+				this.#type = 'add';
+			}
+		}
+		else
+		{
+			this.#entityType = EntityTypes.department;
+		}
+		this.#memberRoles = getMemberRoles(this.#entityType);
+
+		if (Object.values(this.#memberRoles).includes(options.role))
 		{
 			this.#role = options.role;
 		}
 		else
 		{
-			this.#role = memberRoles.employee;
+			this.#role = this.#memberRoles.employee;
 		}
 
 		this.id = `${dialogId}-${this.#type}`;
-		this.title = this.#getTitleByTypeAndRole(this.#type, this.#role);
-		this.description = this.#getDescriptionByTypeAndRole(this.#type, this.#role);
+		this.title = this.#getTitleByTypeAndRoleAndEntity(this.#type, this.#role, this.#entityType);
+		this.description = this.#getDescriptionByTypeRoleAndEntity(this.#type, this.#role, this.#entityType);
 		this.#createDialog();
 	}
 
@@ -80,12 +97,14 @@ export class UserManagementDialog
 				title: this.title,
 				role: this.#role,
 				description: this.description,
+				memberRoles: this.#memberRoles,
 			},
 			footer: BaseUserManagementDialogFooter,
 			footerOptions: {
 				nodeId: this.#nodeId,
 				role: this.#role,
 				type: this.#type,
+				entityType: this.#entityType,
 			},
 			popupOptions: {
 				overlay: { opacity: 40 },
@@ -102,19 +121,24 @@ export class UserManagementDialog
 		});
 	}
 
-	#getTitleByTypeAndRole(type: string, role: string): string
+	#getTitleByTypeAndRoleAndEntity(type: string, role: string, entityType: string): string
 	{
-		if (type === 'move' && role === memberRoles.employee)
+		if (type === 'add' && role === this.#memberRoles.employee && entityType === EntityTypes.team)
+		{
+			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_TEAM_EMPLOYEE_TITLE');
+		}
+
+		if (type === 'move' && role === this.#memberRoles.employee)
 		{
 			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_MOVE_USER_FROM_TITLE');
 		}
 
-		if (type === 'add' && role === memberRoles.employee)
+		if (type === 'add' && role === this.#memberRoles.employee)
 		{
 			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_EMPLOYEE_TITLE');
 		}
 
-		if (type === 'add' && role === memberRoles.head)
+		if (type === 'add' && role === this.#memberRoles.head)
 		{
 			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_HEAD_TITLE');
 		}
@@ -122,14 +146,19 @@ export class UserManagementDialog
 		return '';
 	}
 
-	#getDescriptionByTypeAndRole(type: string, role: string): string
+	#getDescriptionByTypeRoleAndEntity(type: string, role: string, entityType: string): string
 	{
-		if (type === 'move' && role === memberRoles.employee)
+		if (type === 'add' && entityType === EntityTypes.team)
+		{
+			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_TEAM_EMPLOYEE_DESCRIPTION');
+		}
+
+		if (type === 'move' && role === this.#memberRoles.employee)
 		{
 			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_MOVE_USER_FROM_DESCRIPTION');
 		}
 
-		if (type === 'add' && role === memberRoles.employee)
+		if (type === 'add' && role === this.#memberRoles.employee)
 		{
 			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_EMPLOYEE_DESCRIPTION');
 		}

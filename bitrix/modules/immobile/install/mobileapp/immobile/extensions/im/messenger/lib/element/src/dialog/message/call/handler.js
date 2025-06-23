@@ -7,7 +7,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/handler', (require, expo
 	const { CallMessage } = require('im/messenger/lib/element/dialog/message/call/message');
 	const { CallMessageType } = require('im/messenger/lib/element/dialog/message/call/const/type');
 	const { CallMessageConfiguration } = require('im/messenger/lib/element/dialog/message/call/configuration');
-	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
+	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 
 	/**
 	 * @class CallMessageHandler
@@ -69,8 +69,8 @@ jn.define('im/messenger/lib/element/dialog/message/call/handler', (require, expo
 				: Analytics.Element.finishMessage
 			;
 
-			Calls.sendAnalyticsEvent(dialog.dialogId, analyticsElement, Analytics.Section.callMessage);
-			Calls.createVideoCall(dialog.dialogId);
+			CallManager.getInstance().sendAnalyticsEvent(dialog.dialogId, analyticsElement, Analytics.Section.callMessage);
+			CallManager.getInstance().createVideoCall(dialog.dialogId);
 		}
 	}
 

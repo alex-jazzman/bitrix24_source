@@ -193,9 +193,15 @@
 	max-width: 100%;
 }
 
+.ui-access-rights-v2-column-item-title .ui-access-rights-v2-hint-container {
+	position: relative;
+	top: 2px;
+}
+
 .ui-access-rights-v2-column-item-title .ui-hint {
-	height: 18px;
-	line-height: 18px;
+	line-height: normal;
+	width: 13px;
+	height: 13px;
 }
 
 .ui-access-rights-v2-column-item-title .ui-hint-icon {
@@ -402,6 +408,13 @@ div.ui-access-rights-v2-members-item-new:last-of-type {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	max-width: 100px;
+}
+
+.ui-access-rights-v2-text-wrap {
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	word-break: break-word;
 }
 
 .ui-access-rights-v2-text-center {

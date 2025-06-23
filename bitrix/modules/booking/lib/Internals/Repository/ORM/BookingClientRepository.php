@@ -124,7 +124,7 @@ class BookingClientRepository implements BookingClientRepositoryInterface
 		$res = $query
 			->setSelect(['CNT' => Query::expr()->countDistinct('CLIENT_ID')])
 			->where('IS_PRIMARY', 'Y')
-			->where('IS_RETURNING', false)
+			->whereNot('IS_RETURNING')
 			->where($conditions)
 			->exec()
 			->fetch()

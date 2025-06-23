@@ -1,3 +1,4 @@
+export const WINDOW_ACTIVATION_DELAY = 300;
 export const DesktopBxLink = {
 	chat: 'chat',
 	lines: 'lines',
@@ -14,6 +15,8 @@ export const DesktopBxLink = {
 	openTab: 'openTab',
 	openPage: 'openPage',
 	chatCreation: 'chatCreation',
+	botContext: 'botContext',
+	openLayout: 'openLayout',
 };
 
 export const LegacyDesktopBxLink = {
@@ -23,4 +26,10 @@ export const LegacyDesktopBxLink = {
 	notify: 'notify',
 	callTo: 'callto',
 	callList: 'calllist',
+};
+
+export const DesktopBroadcastAction = {
+	notification: 'notification',
+	answerButtonClick: 'answerButtonClick',
+	bxLink: 'bxLink',
 };

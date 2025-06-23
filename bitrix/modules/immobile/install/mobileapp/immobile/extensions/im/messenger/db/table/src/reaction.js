@@ -40,7 +40,7 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 					items: [],
 				};
 			}
-			const idsFormatted = Type.isNumber(idList[0]) ? idList.toString() : idList.map((id) => `"${id}"`);
+			const idsFormatted = this.createWhereInCondition(this.getPrimaryKey(), idList);
 			const result = await this.executeSql({
 				query: `
 					SELECT * 

@@ -77,10 +77,11 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$this->findLink();
 		$this->defaultHandlerForView = $this->getHandlerForView();
 
+		$isBoardsHandler = $this->defaultHandlerForView instanceof BoardsHandler;
 		if(
-			($this->externalLink->isAutomatic() && !Configuration::isEnabledAutoExternalLink()) ||
-			(!$this->externalLink->isAutomatic() && !Configuration::isEnabledManualExternalLink()) ||
-			(($this->defaultHandlerForView instanceof BoardsHandler) && !Configuration::isEnabledManualExternalLink())
+			($isBoardsHandler && !Configuration::isEnabledBoardExternalLink()) ||
+			(!$isBoardsHandler && $this->externalLink->isAutomatic() && !Configuration::isEnabledAutoExternalLink()) ||
+			(!$isBoardsHandler && !$this->externalLink->isAutomatic() && !Configuration::isEnabledManualExternalLink())
 		)
 		{
 			$this->arResult = array(

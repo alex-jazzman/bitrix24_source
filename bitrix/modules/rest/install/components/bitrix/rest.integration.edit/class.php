@@ -17,6 +17,7 @@ use Bitrix\Rest\Preset\Provider;
 use Bitrix\Main\SystemException;
 use Bitrix\Rest\Url\DevOps;
 use Bitrix\Rest\Analytic;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Loc::loadMessages(__FILE__);
 
@@ -299,6 +300,11 @@ class RestIntegrationEditComponent extends CBitrixComponent implements Controlle
 		)
 		{
 			$result['ERROR_MESSAGE'][] = Loc::getMessage('REST_INTEGRATION_EDIT_HOLD_DUE_TO_OVERLOAD');
+		}
+
+		if ($this->arParams['IFRAME'])
+		{
+			Toolbar::addEditableTitle();
 		}
 
 		$this->arResult = $result;

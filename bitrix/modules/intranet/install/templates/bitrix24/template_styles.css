@@ -2756,7 +2756,17 @@ div.microblog-post {
 	width: 341px;
 }
 
-.content-edit-form-chart-bar-yellow, .content-edit-form-chart-bar-green {
+.content-edit-form-chart-boost {
+	background-color: var(--ui-color-palette-gray-05);;
+	border: 1px solid var(--ui-color-palette-gray-15);
+	border-radius: var(--ui-border-radius-2xs, 3px);
+	height: 21px;
+	width: 341px;
+}
+
+.content-edit-form-chart-bar-yellow,
+.content-edit-form-chart-bar-green,
+.content-edit-form-chart-bar-boost {
 	border: 1px solid;
 	display: inline-block;
 	height: 21px;
@@ -2781,6 +2791,13 @@ div.microblog-post {
 	border-radius: 3px 0 0 3px;
 	box-shadow: 1px 1px 0 rgba(255, 243, 185, 0.3) inset;
 	margin-left: -1px;
+}
+
+.content-edit-form-chart-bar-boost {
+	background: radial-gradient(78.15% 78.15% at 9.27% 9.23%, #F9BE74 0%, #FB7595 50%, #B55CCE 100%);
+	border-radius: 3px;
+	margin: 0;
+	border: none;
 }
 
 .content-edit-form-chart-info {
@@ -2812,10 +2829,19 @@ div.microblog-post {
 	padding-top: 18px;
 }
 
-.content-edit-form-bullet-yellow, .content-edit-form-bullet-green, .content-edit-form-bullet-transp, .content-edit-form-bullet-gray {
+.content-edit-form-bullet-yellow,
+.content-edit-form-bullet-green,
+.content-edit-form-bullet-transp,
+.content-edit-form-bullet-gray,
+.content-edit-form-bullet-boost,
+.content-edit-form-bullet-boost-gray {
 	border-radius: 5px;
 	height: 10px;
 	width: 10px;
+}
+
+.content-edit-form-bullet-boost {
+	background: radial-gradient(78.15% 78.15% at 9.27% 9.23%, #F9BE74 0%, #FB7595 50%, #B55CCE 100%);
 }
 
 .content-edit-form-bullet-yellow {
@@ -2837,6 +2863,14 @@ div.microblog-post {
 	box-shadow: 0 2px 2px -1px #dbded0 inset;
 	height: 9px;
 	width: 9px;
+}
+
+.content-edit-form-bullet-boost-gray {
+	border: 1px solid var(--ui-color-palette-gray-15);
+	background-color: var(--ui-color-palette-gray-05);
+	box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.05) inset;
+	width: 9px;
+	height: 9px;
 }
 
 .content-edit-form-bullet-gray {

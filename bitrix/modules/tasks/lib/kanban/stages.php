@@ -327,8 +327,16 @@ class StagesTable extends DataManager
 				{
 					$row['TO_UPDATE_ACCESS'] = $predefinedStages[$row['SYSTEM_TYPE']]['UPDATE_ACCESS'];
 				}
+
+				if (isset($predefinedStages[$row['SYSTEM_TYPE']]['CAN_SORT_ITEMS']))
+				{
+					$row['CAN_SORT_ITEMS'] = $predefinedStages[$row['SYSTEM_TYPE']]['CAN_SORT_ITEMS'];
+				}
+				else
+				{
+					$row['CAN_SORT_ITEMS'] = true;
+				}
 			}
-			$row['TO_UPDATE'] = (array)$row['TO_UPDATE'];
 			$row['ADDITIONAL_FILTER'] = (array)$row['ADDITIONAL_FILTER'];
 			$stages[$entityType . $entityId][$row['ID']] = $row;
 		}
@@ -1185,6 +1193,17 @@ class StagesTable extends DataManager
 	public static function getCollectionClass(): string
 	{
 		return StagesCollection::class;
+	}
+
+	public static function getCompletedStage(int $userId): array
+	{
+		return [
+			'SORT' => 700,
+			'COLOR' => '6F768F',
+			'SYSTEM_TYPE' => 'PERIOD7',
+			'ENTITY_ID' => $userId,
+			'ENTITY_TYPE' => 'P',
+		];
 	}
 
 	/**

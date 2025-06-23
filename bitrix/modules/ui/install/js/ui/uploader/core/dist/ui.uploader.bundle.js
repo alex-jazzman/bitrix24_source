@@ -2954,8 +2954,8 @@ this.BX.UI = this.BX.UI || {};
 	// This function uses in a resize workers.
 	// You cannot import anything from other files and extensions.
 	const createImagePreviewCanvas = (imageSource, newWidth, newHeight) => {
-	  let width = Math.round(newWidth);
-	  let height = Math.round(newHeight);
+	  const width = Math.round(newWidth);
+	  const height = Math.round(newHeight);
 	  const isPageContext = typeof window !== 'undefined' && typeof document !== 'undefined' && typeof parent !== 'undefined';
 	  const createCanvas = (canvasWidth, canvasHeight) => {
 	    if (isPageContext) {
@@ -2972,11 +2972,6 @@ this.BX.UI = this.BX.UI || {};
 	    context.imageSmoothingQuality = 'high';
 	    context.drawImage(imageSource, 0, 0, width, height);
 	    return canvas;
-	  }
-	  if (imageSource.height > imageSource.width) {
-	    width = Math.floor(height * (imageSource.width / imageSource.height));
-	  } else {
-	    height = Math.floor(width * (imageSource.height / imageSource.width));
 	  }
 	  let currentImageWidth = Math.floor(imageSource.width);
 	  let currentImageHeight = Math.floor(imageSource.height);
@@ -3073,8 +3068,8 @@ this.BX.UI = this.BX.UI || {};
 	  */
 
 	  return {
-	    targetWidth: Math.round(width),
-	    targetHeight: Math.round(height),
+	    targetWidth: Math.floor(width),
+	    targetHeight: Math.floor(height),
 	    useOriginalSize: false
 	  };
 	};
@@ -4373,22 +4368,21 @@ this.BX.UI = this.BX.UI || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _uploadNext)[_uploadNext]();
 	    }
 	  }
+	  stop() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _status$1)[_status$1] !== UploaderStatus.STOPPED) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _status$1)[_status$1] = UploaderStatus.STOPPED;
 
-	  // stop(): void
-	  // {
-	  // 	this.#status = UploaderStatus.STOPPED;
-	  //
-	  // 	this.getFiles().forEach((file: UploaderFile) => {
-	  // 		if (file.isUploading())
-	  // 		{
-	  // 			file.abort();
-	  // 			file.setStatus(FileStatus.PENDING);
-	  // 		}
-	  // 	});
-	  //
-	  // 	this.emit('onStop');
-	  // }
+	      // this.getFiles().forEach((file: UploaderFile) => {
+	      // 	if (file.isUploading())
+	      // 	{
+	      // 		file.abort();
+	      // 		file.setStatus(FileStatus.PENDING);
+	      // 	}
+	      // });
 
+	      this.emit('onStop');
+	    }
+	  }
 	  destroy(options) {
 	    this.emit(UploaderEvent.DESTROY);
 	    this.unassignBrowseAll();

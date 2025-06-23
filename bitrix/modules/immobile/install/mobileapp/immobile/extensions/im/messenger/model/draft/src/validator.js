@@ -1,8 +1,9 @@
 /**
- * @module im/messenger/model/draft/validator
+ * @module im/messenger/model/draft/src/validator
  */
-jn.define('im/messenger/model/draft/validator', (require, exports, module) => {
+jn.define('im/messenger/model/draft/src/validator', (require, exports, module) => {
 	const { Type } = require('type');
+	const { DateHelper } = require('im/messenger/lib/helper');
 
 	/**
 	 * @param {DraftModelState} fields
@@ -21,6 +22,11 @@ jn.define('im/messenger/model/draft/validator', (require, exports, module) => {
 		if (Type.isStringFilled(fields.messageId) || Type.isNumber(fields.messageId))
 		{
 			result.messageId = fields.messageId;
+		}
+
+		if (Type.isString(fields.lastActivityDate) || Type.isDate(fields.lastActivityDate))
+		{
+			result.lastActivityDate = DateHelper.cast(fields.lastActivityDate, null);
 		}
 
 		if (Type.isStringFilled(fields.type))

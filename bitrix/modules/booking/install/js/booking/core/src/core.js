@@ -12,6 +12,7 @@ import { Resources } from 'booking.model.resources';
 import { Favorites } from 'booking.model.favorites';
 import { Dictionary } from 'booking.model.dictionary';
 import { MainResources } from 'booking.model.main-resources';
+import { WaitList } from 'booking.model.wait-list';
 import { BookingPullManager } from 'booking.provider.pull.booking-pull-manager';
 import type { MoneyStatistics } from 'booking.model.interface';
 
@@ -31,6 +32,8 @@ export type BookingParams = {
 	totalClients: number,
 	totalClientsToday: number,
 	moneyStatistics: MoneyStatistics,
+	isCalendarExpanded: boolean,
+	isWaitListExpanded: boolean,
 	embedItems: {
 		id: number,
 		code: string,
@@ -85,6 +88,7 @@ class CoreApplication
 			.addModel(Interface.create().setVariables({
 				schedule: settings.schedule,
 				editingBookingId: this.#params.editingBookingId,
+				editingWaitListItemId: this.#params.editingWaitListItemId,
 				timezone: this.#params.timezone,
 				totalClients: this.#params.totalClients,
 				totalNewClientsToday: this.#params.totalClientsToday,
@@ -105,12 +109,15 @@ class CoreApplication
 						},
 					};
 				}),
+				calendarExpanded: this.#params.isCalendarExpanded,
+				waitListExpanded: this.#params.isWaitListExpanded,
 			}))
 			.addModel(ResourceTypes.create())
 			.addModel(Resources.create())
 			.addModel(Favorites.create())
 			.addModel(Dictionary.create())
 			.addModel(MainResources.create())
+			.addModel(WaitList.create())
 		;
 
 		const builderResult = await this.#builder.build();

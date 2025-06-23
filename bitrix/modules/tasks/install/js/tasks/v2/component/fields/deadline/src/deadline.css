@@ -1,0 +1,64 @@
+.tasks-field-deadline {
+	max-width: max-content;
+	white-space: nowrap;
+}
+
+.tasks-field-deadline-main {
+	display: flex;
+	align-items: center;
+	border-radius: 10px;
+	padding-right: 5px;
+}
+
+.tasks-field-deadline-main:focus-visible {
+	outline: 2px solid var(--ui-color-design-outline-a1-content-divider);
+}
+
+.tasks-field-deadline-main:not(.--readonly) {
+	cursor: pointer;
+}
+
+.tasks-field-deadline-icon {
+	margin-right: var(--ui-space-inline-xs);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-deadline.--expired .tasks-field-deadline-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.tasks-field-deadline-cross {
+	margin-left: 6px;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+	--ui-icon-set__icon-size: 18px;
+}
+
+.tasks-field-deadline-cross:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-deadline-main:not(:hover) .tasks-field-deadline-cross {
+	opacity: 0;
+}
+
+.tasks-field-deadline-text {
+	line-height: 22px;
+	color: var(--ui-color-base-1);
+}
+
+.tasks-field-deadline.--expired .tasks-field-deadline-text {
+	color: var(--ui-color-accent-main-alert);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+
+.tasks-field-deadline-expired {
+	max-width: max-content;
+	margin-top: 5px;
+	padding: 4px 10px;
+	border-radius: 1in;
+	border: var(--ui-border-width-thin) solid var(--ui-color-accent-soft-red-1);
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--ui-font-size-xs);
+	cursor: default;
+}

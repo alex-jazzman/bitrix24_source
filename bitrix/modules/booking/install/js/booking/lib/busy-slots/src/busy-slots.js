@@ -1,6 +1,6 @@
 import { Core } from 'booking.core';
 import { BusySlot, DateFormat, Model } from 'booking.const';
-import { Duration } from 'booking.lib.duration';
+import { SlotRanges } from 'booking.lib.slot-ranges';
 import { resourceDialogService } from 'booking.provider.service.resource-dialog-service';
 import { resourcesDateCache } from 'booking.lib.resources-date-cache';
 import type { BookingModel, OverbookingMap } from 'booking.model.bookings';
@@ -48,9 +48,9 @@ class BusySlots
 		return Core.getStore().getters[`${Model.Interface}/offset`];
 	}
 
-	get #timezoneOffset(): number
+	get #timezone(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/timezoneOffset`];
+		return Core.getStore().getters[`${Model.Interface}/timezone`];
 	}
 
 	get #resourcesIds(): number[]
@@ -150,83 +150,8 @@ class BusySlots
 			.map((booking: BookingModel) => this.#calculateMinutesRange(booking))
 		;
 
-		const minutesInDay = Duration.getUnitDurations().d / Duration.getUnitDurations().i;
-
-		const slotRanges = resource.slotRanges
-			.map((slotRange: SlotRange): SlotRange => {
-				const timeZone = slotRange.timezone;
-
-				const date = new Date(this.#selectedDateTs);
-				const dateInTimezone = new Date(date.toLocaleString('en-US', { timeZone }));
-				const dateInUTC = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-
-				const timezoneOffset = (dateInTimezone.getTime() - dateInUTC.getTime()) / 1000;
-				const minutesOffset = (this.#timezoneOffset - timezoneOffset) / 60;
-
-				return {
-					...slotRange,
-					from: slotRange.from + minutesOffset,
-					to: slotRange.to + minutesOffset,
-				};
-			})
-			.map((slotRange: SlotRange) => {
-				if (slotRange.from > minutesInDay)
-				{
-					return {
-						...slotRange,
-						from: slotRange.from - minutesInDay,
-						to: slotRange.to - minutesInDay,
-						weekDays: slotRange.weekDays.map((weekDay) => this.#getNextDay(weekDay)),
-					};
-				}
-
-				if (slotRange.to < 0)
-				{
-					return {
-						...slotRange,
-						from: slotRange.from + minutesInDay,
-						to: slotRange.to + minutesInDay,
-						weekDays: slotRange.weekDays.map((weekDay) => this.#getPreviousDay(weekDay)),
-					};
-				}
-
-				return slotRange;
-			})
-			.flatMap((slotRange: SlotRange): SlotRange[] => {
-				if (slotRange.from < 0)
-				{
-					return [
-						{
-							...slotRange,
-							from: 0,
-						},
-						...slotRange.weekDays.map((weekDay) => ({
-							...slotRange,
-							from: minutesInDay + slotRange.from,
-							to: minutesInDay,
-							weekDays: [this.#getPreviousDay(weekDay)],
-						})),
-					];
-				}
-
-				if (slotRange.to > minutesInDay)
-				{
-					return [
-						{
-							...slotRange,
-							to: minutesInDay,
-						},
-						...slotRange.weekDays.map((weekDay) => ({
-							...slotRange,
-							from: 0,
-							to: slotRange.to - minutesInDay,
-							weekDays: [this.#getNextDay(weekDay)],
-						})),
-					];
-				}
-
-				return slotRange;
-			})
+		const slotRanges = SlotRanges
+			.applyTimezone(resource.slotRanges, this.#selectedDateTs, this.#timezone)
 			.filter((slotRange: SlotRange) => slotRange.weekDays.includes(this.#selectedWeekDay))
 		;
 
@@ -454,16 +379,6 @@ class BusySlots
 	#getResource(resourceId: number): ResourceModel
 	{
 		return Core.getStore().getters[`${Model.Resources}/getById`](resourceId);
-	}
-
-	#getNextDay(weekDay: string): string
-	{
-		return DateFormat.WeekDays[(DateFormat.WeekDays.indexOf(weekDay) + 1) % 7];
-	}
-
-	#getPreviousDay(weekDay: string): string
-	{
-		return DateFormat.WeekDays[(DateFormat.WeekDays.indexOf(weekDay) + 7 - 1) % 7];
 	}
 
 	#getOverbookingMap(): OverbookingMap

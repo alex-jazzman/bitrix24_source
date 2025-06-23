@@ -14,6 +14,8 @@ use Bitrix\Main\EventManager;
 use Bitrix\MobileApp\Mobile;
 use Bitrix\Im\V2\Chat\CopilotChat;
 use Bitrix\Tasks\Flow\Integration\AI\FlowCopilotFeature;
+use Bitrix\Mobile\Feature\SupportFeature;
+use Bitrix\Mobile\Provider\SupportProvider;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -373,7 +375,7 @@ if (
 			foreach ($pages as $page)
 			{
 				$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($page->getSettings());
-				if (Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+				if (Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeId))
 				{
 					$hasPermissions = true;
 					break;
@@ -749,6 +751,50 @@ JS,
 		],
 	];
 
+	$supportTitle = Loc::getMessage('MENU_BITRIX24_SUPPORT24');
+	$supportBotId = (int)(new SupportProvider())->getBotId();
+	$isSupportActive = Feature::isEnabled(SupportFeature::class);
+	$isSupportShown = SupportProvider::isSupportShownForUser();
+
+	if ($isSupportActive && isset($supportBotId) && $supportBotId > 0)
+	{
+		$myBitrix24Items[] = [
+			'id' => 'support',
+			'title' => $supportTitle,
+			'color' => '#1E8EC2',
+			'imageUrl' => $imageDir . 'favorite/support.png',
+			'imageName' => 'feedback',
+			'attrs' => [
+				'showHighlighted' => !$isSupportShown,
+				'onclick' => <<<JS
+					let botId = {$supportBotId};
+
+					if (botId && Number(botId) > 0)
+					{
+						void requireLazy('im:messenger/api/dialog-opener')
+							.then(({ DialogOpener }) => DialogOpener.open({ dialogId: Number(botId) }))
+							.then(() => requireLazy('tourist', false))
+							.then(({ Tourist }) => Tourist.remember('show_support', {}))
+							.catch(async (error) => {
+								console.error('Error in support opener:', error);
+
+								const { showErrorToast } = await requireLazy('toast', false);
+								showErrorToast({
+									message: "{$hereDocGetMessage('MENU_BITRIX24_SUPPORT24_ERROR_TEXT')}",
+									},
+									this.layout,
+								);
+							});
+					}
+					else
+					{
+						console.error('Empty or invalid botId', botId);
+					}
+			JS,
+			],
+		];
+	}
+
 	$menuStructure[] = [
 		'title' => Loc::getMessage('MB_SEC_B24_MSGVER_1'),
 		'sort' => 1,
@@ -854,6 +900,7 @@ if (
 	Loader::includeModule('intranet')
 	&& !$isExtranetUser
 	&& Loader::includeModule('ai')
+	&& \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() !== 'cn'
 )
 {
 	$isCopilotAvailable = CopilotChat::isActive() && CopilotChat::isAvailable();
@@ -874,7 +921,7 @@ if (
 
 	$menuStructure[] = [
 		'title' => Loc::getMessage('MENU_AI_MSGVER_1'),
-		'sort' => 110,
+		'sort' => 101,
 		'hidden' => false,
 		'items' => [
 			[

@@ -89,11 +89,11 @@ class Mainpage extends Scope
 	 */
 	public static function getExcludedHooks(): array
 	{
-		// todo: anything else?
 		return [
 			'B24BUTTON',
 			'COPYRIGHT',
 			'CSSBLOCK',
+			'COOKIES',
 			'FAVICON',
 			'GACOUNTER',
 			'GTM',
@@ -102,13 +102,17 @@ class Mainpage extends Scope
 			'METAMAIN',
 			'METAROBOTS',
 			'METAYANDEXVERIFICATION',
+			'METAOG',
 			'PIXELFB',
 			'PIXELVK',
 			'ROBOTS',
 			'SETTINGS',
 			'SPEED',
+			'THEMEFONTS',
+			'TRANSITION',
+			'THEMEFONTS',
+			'UP',
 			'YACOUNTER',
-			'COOKIES',
 		];
 	}
 
@@ -121,6 +125,7 @@ class Mainpage extends Scope
 	{
 		$allowedManifestKeys = [
 			'block',
+			'cards',
 			'nodes',
 			'style',
 			'assets',
@@ -213,6 +218,7 @@ class Mainpage extends Scope
 			'margin-left',
 			'margin-right',
 			'text-align',
+			'font-family',
 			//for widget
 			'widget',
 			'widget-type',

@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Copilot\AiQueueBuffer\Consumer;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Kanban\Desktop;
@@ -53,6 +54,8 @@ class CrmKanbanComponent extends CBitrixComponent
 		{
 			return $arParams;
 		}
+
+		(Consumer::getInstance())->execute();
 
 		$arParams['HIDE_CC'] = CUserOptions::getOption(
 			static::OPTION_CATEGORY,

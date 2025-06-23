@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const { Icon } = require('assets/icons');
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
@@ -36,8 +37,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		/**
 		 *
 		 * @param {number|string} dialogId
-		 * @param {Object} options
-		 * @param {boolean} options.showItsYou
+		 * @param {ChatTitleOptions} options
 		 * @returns {ChatTitle}
 		 */
 		static createFromDialogId(dialogId, options = {})
@@ -63,6 +63,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			this.userCounter = 0;
 			this.inputActions = [];
 			this.dialogType = null;
+			this.titleIcons = null;
 			this.isCurrentUser = UserHelper.isCurrentUser(dialogId);
 
 			if (DialogHelper.isDialogId(dialogId))
@@ -76,7 +77,12 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				this.createUserTitle(options);
 			}
 
-			this.setInputActions();
+			this.setMessagesAutoDeleteDelay();
+
+			if (!options.ignoreInputActions)
+			{
+				this.setInputActions();
+			}
 		}
 
 		/**
@@ -194,6 +200,30 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			this.createUserNameColor(user);
 		}
 
+		setMessagesAutoDeleteDelay()
+		{
+			if (!Feature.isTitleIconsInDialogHeaderAvailable || !Feature.isMessagesAutoDeleteAvailable)
+			{
+				return;
+			}
+
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (!dialog)
+			{
+				return;
+			}
+
+			if (dialog.messagesAutoDeleteDelay)
+			{
+				this.titleIcons = {
+					right: {
+						name: Icon.SMALL_TIMER_DOT.getIconName(),
+						tintColor: AppTheme.colors.base3,
+					},
+				};
+			}
+		}
+
 		/**
 		 * @private
 		 * @param {DialoguesModelState} dialog
@@ -224,6 +254,13 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			if (dialog.type === DialogType.support24Question)
 			{
 				this.nameColor = Theme.colors.accentMainLink;
+
+				return;
+			}
+
+			if (dialog.containsCollaber)
+			{
+				this.nameColor = Theme.colors.collabAccentPrimaryAlt;
 			}
 		}
 
@@ -298,6 +335,11 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				detailTextColor: AppTheme.colors.base3,
 			};
 
+			if (this.titleIcons)
+			{
+				titleParams.titleIcons = this.titleIcons;
+			}
+
 			if (this.name)
 			{
 				titleParams.text = this.getTitle(options);
@@ -310,7 +352,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.description)
 			{
-				titleParams.detailText = this.getDescription();
+				titleParams.detailText = this.getDescription(options);
 			}
 
 			if (this.inputActions.length > 0)
@@ -342,6 +384,11 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			if (this.name)
 			{
 				titleParams.text = this.getTitle();
+			}
+
+			if (this.titleIcons)
+			{
+				titleParams.titleIcons = this.titleIcons;
 			}
 
 			if (useTextColor)
@@ -410,9 +457,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				titleParams.detailText = this.buildInputActionTextGroupChat();
 				titleParams.detailLottie = this.#buildDetailLottie();
 				titleParams.hasInputActions = true;
-				titleParams.detailTextColor = this.dialogType === DialogType.copilot
-					? Theme.colors.accentMainCopilot
-					: Theme.colors.accentMainPrimaryalt;
+				titleParams.detailTextColor = Theme.colors.accentMainPrimaryalt;
 			}
 
 			return titleParams;
@@ -461,7 +506,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		getDescription({ useNotes = false } = {})
 		{
-			if (useNotes)
+			if (useNotes && this.isCurrentUser)
 			{
 				return '';
 			}
@@ -622,9 +667,9 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			const firstUser = this.inputActions[0];
 
 			const lottie = {
-				[UserInputAction.writing]: ChatTitleAssets.getLottieUrl(UserInputAction.writing, this.dialogType),
-				[UserInputAction.recordingVoice]: ChatTitleAssets.getLottieUrl(UserInputAction.recordingVoice, this.dialogType),
-				[UserInputAction.sendingFile]: ChatTitleAssets.getLottieUrl(UserInputAction.sendingFile, this.dialogType),
+				[UserInputAction.writing]: ChatTitleAssets.getLottieUrl(UserInputAction.writing),
+				[UserInputAction.recordingVoice]: ChatTitleAssets.getLottieUrl(UserInputAction.recordingVoice),
+				[UserInputAction.sendingFile]: ChatTitleAssets.getLottieUrl(UserInputAction.sendingFile),
 			};
 
 			if (userCount === 1)
@@ -644,7 +689,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			if (userCount > 1)
 			{
 				return {
-					uri: ChatTitleAssets.getLottieUrl(UserInputAction.writing, this.dialogType),
+					uri: ChatTitleAssets.getLottieUrl(UserInputAction.writing),
 				};
 			}
 

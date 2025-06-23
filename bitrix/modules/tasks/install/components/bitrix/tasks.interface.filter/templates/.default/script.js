@@ -332,8 +332,10 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 			return;
 		}
 
+		const buttonSelector = BX.UI.ButtonManager.createFromNode(BX(containerId));
+
 		BX.bind(
-			BX(containerId).querySelector('.webform-small-button'),
+			BX(containerId),
 			"click",
 			function()
 			{
@@ -377,8 +379,7 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 								]
 							);
 
-							var selectorTextNode = BX(containerId).querySelector('.webform-small-button-text');
-							selectorTextNode.textContent = selectedItem.customData.get('label');
+							buttonSelector.setText(selectedItem.customData.get('label'));
 						},
 					},
 				});
@@ -407,7 +408,7 @@ if (typeof BX.Tasks.ProjectSelector === "undefined")
 
 
 this.BX = this.BX || {};
-(function (exports,ui_tour,main_core) {
+(function (exports,ui_tour,main_core,ui_buttons) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -493,9 +494,59 @@ this.BX = this.BX || {};
 	}
 	babelHelpers.defineProperty(Preset, "DELAY", 1000);
 
-	exports.Preset = Preset;
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _params = /*#__PURE__*/new WeakMap();
+	var _initAddButton = /*#__PURE__*/new WeakSet();
+	var _showPresetTourGuide = /*#__PURE__*/new WeakSet();
+	var TasksInterfaceFilter = function TasksInterfaceFilter(params) {
+	  babelHelpers.classCallCheck(this, TasksInterfaceFilter);
+	  _classPrivateMethodInitSpec$1(this, _showPresetTourGuide);
+	  _classPrivateMethodInitSpec$1(this, _initAddButton);
+	  _classPrivateFieldInitSpec$1(this, _params, {
+	    writable: true,
+	    value: void 0
+	  });
+	  babelHelpers.classPrivateFieldSet(this, _params, params);
+	  _classPrivateMethodGet$1(this, _initAddButton, _initAddButton2).call(this);
+	  _classPrivateMethodGet$1(this, _showPresetTourGuide, _showPresetTourGuide2).call(this);
+	};
+	function _initAddButton2() {
+	  var _this = this;
+	  if (!babelHelpers.classPrivateFieldGet(this, _params).isV2Form || !babelHelpers.classPrivateFieldGet(this, _params).createNode) {
+	    return;
+	  }
+	  var button = new ui_buttons.Button({
+	    className: 'ui-btn-main',
+	    text: main_core.Loc.getMessage('TASKS_BTN_CREATE_TASK'),
+	    onclick: function onclick() {
+	      new BX.Tasks.V2.Application.TaskCard({
+	        groupId: babelHelpers.classPrivateFieldGet(_this, _params).groupId,
+	        analytics: babelHelpers.classPrivateFieldGet(_this, _params).analytics
+	      }).showCompactCard();
+	    },
+	    props: {
+	      id: 'tasks-buttonAdd'
+	    }
+	  });
+	  babelHelpers.classPrivateFieldGet(this, _params).createNode.replaceWith(button.render());
+	}
+	function _showPresetTourGuide2() {
+	  if (!babelHelpers.classPrivateFieldGet(this, _params).showPresetTourGuide) {
+	    return;
+	  }
+	  BX.Tasks.Preset.Aha = new BX.Tasks.Preset({
+	    filterId: babelHelpers.classPrivateFieldGet(this, _params).filterId
+	  });
+	  BX.Tasks.Preset.Aha.payAttention();
+	}
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX));
+	exports.Preset = Preset;
+	exports.TasksInterfaceFilter = TasksInterfaceFilter;
+
+}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX,BX.UI));
 
 
 //# sourceMappingURL=script.js.map

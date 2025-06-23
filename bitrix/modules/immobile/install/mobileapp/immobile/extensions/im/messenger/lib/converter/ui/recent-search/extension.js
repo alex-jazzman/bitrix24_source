@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { UserHelper } = require('im/messenger/lib/helper');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 
 	/**
@@ -29,7 +30,7 @@ jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, modu
 			item.params.id = preparedUser.id;
 			item.params.externalAuthId = preparedUser.externalAuthId;
 			/** @deprecated use to avatar title {AvatarDetail} */
-			item.title = preparedUser.firstName;
+			item.title = RecentSearchUiConverter.#createCarouselTitle(preparedUser);
 			/** @deprecated use to avatar.uri {AvatarDetail} */
 			item.imageUrl = chatAvatar.getAvatarUrl();
 
@@ -39,7 +40,7 @@ jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, modu
 			}
 			/** @deprecated use to avatar.placeholder.backgroundColor {AvatarDetail} */
 			item.color = preparedUser.color;
-			item.shortTitle = preparedUser.firstName ? preparedUser.firstName : preparedUser.name;
+			item.shortTitle = ''; // android uses "shortTitle" first. If it is empty, it uses "title". IOS uses only "title"
 			item.subtitle = preparedUser.workPosition ? preparedUser.workPosition : '';
 
 			item.styles = {
@@ -191,6 +192,18 @@ jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, modu
 			result.extranet = user.extranet;
 
 			return result;
+		}
+
+		/**
+		 * @param {RecentCarouselItemUser} user
+		 * @return {string}
+		 */
+		static #createCarouselTitle(user)
+		{
+			return UserHelper.isCurrentUser(user.id)
+				? ChatTitle.createFromDialogId(user.id).getTitle({ useNotes: true })
+				: user.firstName
+			;
 		}
 	}
 

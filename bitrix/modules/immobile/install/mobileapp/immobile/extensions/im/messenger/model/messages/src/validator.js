@@ -120,12 +120,21 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.richLinkId = fields.richLinkId;
 		}
 
+		// passed when a file is received from the local database
+		if (Type.isArrayFilled(fields.files))
+		{
+			result.files = fields.files;
+		}
+
 		if (Type.isPlainObject(fields.params))
 		{
 			const { params, fileIds, attach, richLinkId, keyboard } = validateParams(fields.params);
 			result.params = params;
-			result.files = fileIds;
-			result.richLinkId = richLinkId;
+
+			if (Type.isUndefined(result.files))
+			{
+				result.files = fileIds;
+			}
 
 			if (Type.isUndefined(result.attach))
 			{
@@ -141,12 +150,6 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			{
 				result.keyboard = keyboard;
 			}
-		}
-
-		// passed when a file is received from the local database
-		if (Type.isArrayFilled(fields.files))
-		{
-			result.files = fields.files;
 		}
 
 		if (Type.isPlainObject(fields.reactionCollection))
@@ -232,6 +235,11 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.push = fields.push;
 		}
 
+		if (Type.isPlainObject(fields.vote))
+		{
+			result.vote = fields.vote;
+		}
+
 		return result;
 	}
 
@@ -255,6 +263,7 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			else if (key === 'FILE_ID' && Type.isArray(value))
 			{
 				fileIds = value;
+				params.FILE_ID = value;
 			}
 			else if (key === 'REPLY_ID')
 			{

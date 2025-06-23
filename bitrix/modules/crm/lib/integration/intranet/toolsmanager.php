@@ -41,6 +41,8 @@ final class ToolsManager
 	private const TERMINAL_TOOL_ID = 'terminal';
 	public const TERMINAL_SLIDER_CODE = 'limit_crm_terminal_off';
 
+	public const REPEAT_SALE_TOOL_ID = 'repeat_sale';
+
 	public function __construct()
 	{
 		$this->canUseIntranetToolsManager = (
@@ -200,5 +202,13 @@ final class ToolsManager
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 
 		return $factory && $factory->isInCustomSection();
+	}
+
+	public function checkRepeatSaleAvailability(): bool
+	{
+		return
+			$this->check(self::REPEAT_SALE_TOOL_ID)
+			&& $this->checkCrmAvailability()
+		;
 	}
 }

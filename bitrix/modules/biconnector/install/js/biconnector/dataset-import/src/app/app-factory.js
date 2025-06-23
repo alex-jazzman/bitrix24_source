@@ -8,6 +8,7 @@ import { Store } from './store';
 const codeMap = {
 	csv: CsvApp,
 	'1c': ExternalConnectionApp,
+	rest: ExternalConnectionApp,
 };
 
 type AppParams = {

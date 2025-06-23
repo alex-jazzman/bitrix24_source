@@ -462,6 +462,22 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTIONF'),
 			},
 		},
+		[Failure.byEmployeeExpiredToEmployee]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_EXPIRED_TO_EMPLOYEE_TITLE'),
+				imageName: ImageName.docFailureSign,
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_EXPIRED_TO_EMPLOYEE_TITLE_DESCRIPTION'),
+				buttons: [
+					{
+						id: Failure.byEmployeeStoppedToEmployee,
+						text: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_EXPIRED_TO_EMPLOYEE_BUTTON_TEXT'),
+						height: ButtonSize.S.getName(),
+						callback,
+						design: ButtonDesignType.outlineAccent2,
+					},
+				],
+			},
+		},
 		[Failure.byEmployeeStoppedToEmployee]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_STOPPED_TO_EMPLOYEE_TITLE'),
@@ -669,6 +685,22 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 				],
 			},
 		},
+		[Failure.documentExpiredToCompany]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DOCUMENT_EXPIRED_COMPANY_TITLE'),
+				imageName: ImageName.docFailureSign,
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DOCUMENT_EXPIRED_COMPANY_DESCRIPTION'),
+				buttons: [
+					{
+						id: Failure.documentStoppedToInitiator,
+						text: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DOCUMENT_EXPIRED_COMPANY_BUTTON_TEXT'),
+						height: ButtonSize.S.getName(),
+						callback,
+						design: ButtonDesignType.outlineAccent2,
+					},
+				],
+			},
+		},
 		[Failure.refusedCompany]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_REFUSED_COMPANY_TITLE'),
@@ -742,11 +774,12 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 
 	/**
 	 * @protected
-	 * @param {SignMessageRestParams} data
+	 * @param {MessagesModelState | {}} messageData
 	 */
-	function callback(data)
+	function callback({ messageData })
 	{
-		const url = data.document?.link;
+		const messageComponentParams = messageData.params?.COMPONENT_PARAMS;
+		const url = messageComponentParams?.document?.link;
 
 		if (url)
 		{

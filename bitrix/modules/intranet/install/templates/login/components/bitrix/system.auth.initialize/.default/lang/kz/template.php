@@ -15,3 +15,4 @@ $MESS["CT_MAIN_REG_INIT_REQUIRED_COMMENT"] = "Міндетті өрістер";
 $MESS["CT_MAIN_REG_INIT_TITLE"] = "Тіркелуді растау";
 $MESS["CT_MAIN_REG_INIT_WORK_COMPANY_TITLE"] = "Компания";
 $MESS["CT_MAIN_REG_INIT_WORK_PHONE_TITLE"] = "Телефон";
+$MESS["INTRANET_INIT_USER_ALREADY_EXISTS"] = "Сіз Битрикс24-ке қосылғансыз. Кіру үшін логин мен құпиясөзді енгізіңіз";

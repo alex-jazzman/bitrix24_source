@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\AI\Operation;
 
+use Bitrix\AI\Engine;
+use Bitrix\AI\Quality;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Entity\FieldDataProvider;
@@ -27,11 +29,6 @@ use Bitrix\Crm\Timeline\AI\Call\Controller;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Security\Random;
-use Bitrix\Main\UserField\Types\DoubleType;
-use Bitrix\Main\UserField\Types\IntegerType;
-use Bitrix\Main\UserField\Types\StringType;
-use Bitrix\Main\Web\Json;
 use CCrmOwnerType;
 
 class FillItemFieldsFromCallTranscription extends AbstractOperation
@@ -93,54 +90,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 				'original_message' => $this->summary,
 			])->getResult()
 		;
-	}
-
-	protected function getStubPayload(): mixed
-	{
-		$generateSingleStubValue = static function(string $type): mixed {
-			return match ($type) {
-				StringType::USER_TYPE_ID => Random::getString(4, true),
-				IntegerType::USER_TYPE_ID => Random::getInt(0, 10_000),
-				DoubleType::USER_TYPE_ID => Random::getInt(0, 100_000) * 0.1,
-				default => null,
-			};
-		};
-
-		$fields = [
-			// unallocated data
-			'comment' => [
-				'This is stub of an unallocated data',
-				'Imagine that it was returned by AI',
-				'(Some super magic info here)',
-			],
-		];
-		foreach (self::getAllSuitableFields($this->target->getEntityTypeId()) as $fieldDescription)
-		{
-			if ($fieldDescription['MULTIPLE'])
-			{
-				$numberOfElements = Random::getInt(-1, 3);
-				if ($numberOfElements < 0)
-				{
-					$value = null;
-				}
-				else
-				{
-					$value = [];
-					while (count($value) < $numberOfElements)
-					{
-						$value[] = $generateSingleStubValue($fieldDescription['TYPE']);
-					}
-				}
-			}
-			else
-			{
-				$value = Random::getInt(0, 1) ? $generateSingleStubValue($fieldDescription['TYPE']) : null;
-			}
-
-			$fields[$fieldDescription['NAME']] = $value;
-		}
-
-		return Json::encode($fields);
 	}
 
 	final protected function getContextLanguageId(): string
@@ -215,7 +164,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		return new FillItemFieldsFromCallTranscriptionPayload([
 			'singleFields' => $singleFields,
 			'multipleFields' => $multipleFields,
-			'unallocatedData' => self::extractPayloadString($json['comment'] ?? ''),
+			'unallocatedData' => self::extractPayloadString($json['comment'] ?? $json['comments'] ?? ''),
 		]);
 	}
 
@@ -245,7 +194,11 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 				$aiValue = $fieldDto->aiValue;
 
 				//todo will it work for list fields?
-				if (!$field->isValueEmpty($itemValue) && !$field->isValueEmpty($aiValue) && (string)$itemValue !== (string)$aiValue)
+				if (
+					!$field->isValueEmpty($itemValue)
+					&& !$field->isValueEmpty($aiValue)
+					&& (string)$itemValue !== (string)$aiValue
+				)
 				{
 					$fieldDto->isConflict = true;
 				}
@@ -654,5 +607,13 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 	protected static function getJobFinishEventBuilder(): AIBaseEvent
 	{
 		return new ExtractFieldsEvent();
+	}
+
+	protected static function setQuality(Engine $engine): void
+	{
+		if (isset(Quality::QUALITIES['fields_highlight']) && method_exists($engine->getIEngine(), 'setQuality'))
+		{
+			$engine->getIEngine()->setQuality(Quality::QUALITIES['fields_highlight']);
+		}
 	}
 }

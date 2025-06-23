@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Controller\V1;
 
+use Bitrix\Booking\Entity\Message\BookingMessage;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Service\Notifications\MessageSender;
 use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
@@ -27,7 +28,7 @@ class Message extends BaseController
 		$this->messageSender = Container::getMessageSender();
 	}
 
-	public function sendAction(int $bookingId, string $notificationType): array|null
+	public function sendAction(int $bookingId, string $notificationType): BookingMessage|null
 	{
 		$notificationType = NotificationType::tryFrom($notificationType);
 		if (!$notificationType)
@@ -66,6 +67,9 @@ class Message extends BaseController
 			return null;
 		}
 
-		return [];
+		return (new BookingMessage())
+			->setBookingId($bookingId)
+			->setNotificationType($notificationType)
+		;
 	}
 }

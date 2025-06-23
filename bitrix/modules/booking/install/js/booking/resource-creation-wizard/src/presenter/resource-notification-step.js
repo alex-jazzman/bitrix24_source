@@ -116,6 +116,7 @@ export class ResourceNotificationStep extends Step
 			.reduce((acc: Object, type: string) => {
 				const notificationOnField = NotificationFieldsMap.NotificationOn[type];
 				const templateTypeField = NotificationFieldsMap.TemplateType[type];
+				const settingsFields = NotificationFieldsMap.Settings[type];
 
 				const isCheckedForAll = this.store.getters[`${Model.ResourceCreationWizard}/isCheckedForAll`](type);
 
@@ -123,6 +124,10 @@ export class ResourceNotificationStep extends Step
 					...acc,
 					[notificationOnField]: isCheckedForAll ? resource[notificationOnField] : resourceType[notificationOnField],
 					[templateTypeField]: isCheckedForAll ? resource[templateTypeField] : resourceType[templateTypeField],
+					...settingsFields.reduce((fields, field) => ({
+						...fields,
+						[field]: isCheckedForAll ? resource[field] : resourceType[field],
+					}), {}),
 				};
 			}, {})
 		;

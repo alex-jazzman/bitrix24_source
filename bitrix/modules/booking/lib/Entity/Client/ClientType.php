@@ -4,10 +4,30 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Client;
 
-class ClientType
+
+use Bitrix\Booking\Entity\EntityInterface;
+use Bitrix\Main\NotImplementedException;
+
+class ClientType implements EntityInterface
 {
 	private string|null $moduleId = null;
 	private string|null $code = null;
+
+	/**
+	 * @throws NotImplementedException
+	 */
+	public function getId(): int|string|null
+	{
+		throw new NotImplementedException('Method getId() not implemented');
+	}
+
+	/**
+	 * @throws NotImplementedException
+	 */
+	public function setId(int $id): void
+	{
+		throw new NotImplementedException('Method setId() not implemented');
+	}
 
 	public function getModuleId(): string|null
 	{

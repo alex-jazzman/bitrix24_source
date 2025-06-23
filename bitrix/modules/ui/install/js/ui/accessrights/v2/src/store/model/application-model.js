@@ -15,7 +15,14 @@ export type Options = {
 	isSaveOnlyChangedRights: boolean,
 	maxVisibleUserGroups: ?number,
 	searchContainerSelector: ?string,
+	additionalMembersParams: AdditionalMembersParams,
 }
+
+export type AdditionalMembersParams = {
+	addUserGroupsProviderTab?: boolean,
+	addProjectsProviderTab?: boolean,
+	addStructureTeamsProviderTab?: boolean,
+};
 
 export const ACTION_SAVE = 'save';
 export const MODE = 'ajax';

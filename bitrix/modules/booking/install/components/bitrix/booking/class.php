@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Booking\Internals\Service\Enum\AhaMoment;
+use Bitrix\Booking\Provider\OptionProvider;
 use Bitrix\Booking\Service\BookingFeature;
 use Bitrix\Booking\Component;
 use Bitrix\Booking\Internals\Integration\Pull\PushService;
@@ -16,6 +17,8 @@ use Bitrix\Booking\Provider\MoneyStatisticsProvider;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Booking\Internals\Integration\Crm\WebForm;
 
 class BookingComponent extends CBitrixComponent
 {
@@ -47,8 +50,14 @@ class BookingComponent extends CBitrixComponent
 		$this->arResult['IS_SLIDER'] = $this->request->get('IFRAME') === 'Y';
 		$this->arResult['FILTER_ID'] = Component\Booking\Filter::getId();
 		$this->arResult['editingBookingId'] = $this->getEditingBookingId();
-		$this->arResult['editingWaitListItemId'] = $this->getEditingWaitListItemId();
+		$editingWaitListItemId = $this->getEditingWaitListItemId();
+		$this->arResult['editingWaitListItemId'] = $editingWaitListItemId;
 		$this->arResult['AHA_MOMENTS'] = (new AhaMomentProvider())->get($userId);
+
+		$optionProvider = (new OptionProvider());
+		$this->arResult['isCalendarExpanded'] = $optionProvider->isCalendarExpanded($userId);
+		// if wait list item being edited, wait list should be expanded regardless option value
+		$this->arResult['isWaitListExpanded'] = $editingWaitListItemId || $optionProvider->isWaitListExpanded($userId);
 
 		$clientStatisticsProvider = new ClientStatisticsProvider();
 		$this->arResult['TOTAL_CLIENTS'] = $clientStatisticsProvider->getTotalClients();
@@ -56,6 +65,7 @@ class BookingComponent extends CBitrixComponent
 		$this->arResult['MONEY_STATISTICS'] = (new MoneyStatisticsProvider())->get($userId);
 
 		$this->arResult['embedItems'] = $this->getEmbedItems();
+		$this->arResult['MENU_ITEMS'] = $this->getTopMenuItems();
 
 		$this->checkIfShouldShowBanner();
 
@@ -186,5 +196,41 @@ class BookingComponent extends CBitrixComponent
 		// force set banner aha-moment to not show in this request,
 		// but it will be shown in future requests anyway
 		$this->arResult['AHA_MOMENTS'][AhaMoment::Banner->value] = false;
+	}
+
+	private function getTopMenuItems(): array
+	{
+		if (!WebForm::isAvailable())
+		{
+			return [];
+		}
+
+		return [
+			[
+				'ID' => 'records',
+				'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_RECORDS'),
+				'IS_ACTIVE' => true,
+			],
+			[
+				'ID' => 'forms',
+				'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_FORMS'),
+				'ITEMS' => [
+					[
+						'ID' => 'all_forms',
+						'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_FORMS_ALL_FORMS'),
+						'ON_CLICK' => "BX.SidePanel.Instance.open('" . \CUtil::JSEscape(WebForm::getCrmFormLink()) . "', { cacheable: false })",
+					],
+					[
+						'ID' => 'create_form',
+						'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_FORMS_CREATE_FORM'),
+						'ITEMS' => array_map(static fn ($preset): array => [
+							'ID' => $preset['XML_ID'],
+							'TEXT' => $preset['NAME'],
+							'ON_CLICK' => 'window.open(\'' . \CUtil::JSescape($preset['LINK']) . '\', \'_blank\');',
+						], WebForm::getCrmFormPresets()),
+					],
+				],
+			],
+		];
 	}
 }

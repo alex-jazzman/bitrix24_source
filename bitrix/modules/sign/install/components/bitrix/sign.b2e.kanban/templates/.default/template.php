@@ -18,6 +18,7 @@ Loc::loadLanguageFile(__DIR__ . '/template.php');
 	'crm.entity-editor',
 	'sign.v2.ui.tokens',
 	'sign.onboarding',
+	'sign.v2.grid.b2e.templates',
 ]);
 
 $showWelcomeTour = $arResult['SHOW_WELCOME_TOUR'] ?? false;
@@ -94,3 +95,4 @@ endif;
 		});
 	</script>
 <?php endif; ?>
+

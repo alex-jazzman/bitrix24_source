@@ -2,7 +2,9 @@ import { Loc } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { BaseMenu } from 'im.v2.lib.menu';
-import { SendingService, MessageService } from 'im.v2.provider.service';
+import { SendingService } from 'im.v2.provider.service.sending';
+import { MessageService } from 'im.v2.provider.service.message';
+import { UploadingService } from 'im.v2.provider.service.uploading';
 
 import type { MenuItem } from 'im.v2.lib.menu';
 import type { ImModelMessage } from 'im.v2.model';
@@ -71,11 +73,20 @@ export class RetryContextMenu extends BaseMenu
 		return this.context.error;
 	}
 
+	#hasFiles(): boolean
+	{
+		return this.context.files.length > 0;
+	}
+
 	#retrySend()
 	{
-		const hasFiles = this.context.files.length > 0;
-		if (hasFiles)
+		if (this.#hasFiles())
 		{
+			const uploadingService: UploadingService = UploadingService.getInstance();
+			const uploaderId: string = uploadingService.getUploaderIdByFileId(this.context.files[0]);
+
+			uploadingService.retry(uploaderId);
+
 			return;
 		}
 
@@ -84,7 +95,7 @@ export class RetryContextMenu extends BaseMenu
 
 	#retrySendMessage()
 	{
-		(new SendingService()).retrySendMessage({
+		void (new SendingService()).retrySendMessage({
 			tempMessageId: this.context.id,
 			dialogId: this.context.dialogId,
 		});

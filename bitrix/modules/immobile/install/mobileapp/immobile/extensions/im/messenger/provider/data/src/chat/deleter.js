@@ -119,6 +119,7 @@ jn.define('im/messenger/provider/data/chat/deleter', (require, exports, module) 
 			await this.store.dispatch('filesModel/deleteByChatId', { chatId });
 			await this.store.dispatch('messagesModel/reactionsModel/deleteByChatId', { chatId });
 			await this.store.dispatch('messagesModel/pinModel/deleteMessagesByChatId', { chatId });
+			await this.store.dispatch('messagesModel/voteModel/deleteByChatId', { chatId });
 
 			await this.store.dispatch('messagesModel/deleteByChatId', { chatId });
 		}
@@ -141,8 +142,11 @@ jn.define('im/messenger/provider/data/chat/deleter', (require, exports, module) 
 			await this.repository.file.deleteByChatId(chatId);
 			await this.repository.pinMessage.deleteByChatId(chatId);
 			await this.repository.tempMessage.deleteByChatId(chatId);
+			await this.repository.vote.deleteByChatId(chatId);
 
 			await this.repository.message.deleteByChatId(chatId);
+
+			await this.repository.comment.deleteByParentChatId(chatId);
 		}
 	}
 

@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 
 import { ThemeManager } from 'im.v2.lib.theme';
-import { RecentService } from 'im.v2.provider.service';
+import { RecentService } from 'im.v2.provider.service.recent';
 
 import './css/empty-state.css';
 

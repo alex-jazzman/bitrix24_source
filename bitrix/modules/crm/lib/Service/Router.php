@@ -774,7 +774,7 @@ class Router
 			return null;
 		}
 
-		if ($entityTypeId === \CCrmOwnerType::Deal)
+		if ($entityTypeId === \CCrmOwnerType::Deal && !is_null($categoryId))
 		{
 			$template = Option::get(self::MODULE_ID, 'path_to_deal_category_activity');
 

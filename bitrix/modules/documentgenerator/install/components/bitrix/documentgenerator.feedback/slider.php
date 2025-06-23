@@ -15,12 +15,18 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-$APPLICATION->includeComponent(
-	'bitrix:documentgenerator.feedback', '',
+/** @global \CMain $APPLICATION */
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
+	'',
 	[
-		'provider' => $request->get('provider'),
-		'templateName' => $request->get('templateName'),
-		'templateCode' => $request->get('templateCode'),
+		'POPUP_COMPONENT_NAME' => 'bitrix:documentgenerator.feedback',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'POPUP_COMPONENT_PARAMS' => [
+			'provider' => $request->get('provider'),
+			'templateName' => $request->get('templateName'),
+			'templateCode' => $request->get('templateCode'),
+		],
 	]
 );
 

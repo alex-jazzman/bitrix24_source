@@ -1,0 +1,25 @@
+<?php
+$MESS["UI_INFOHELPER_PROVIDER_POPUP_DEFAULT_DEESCRIPTION"] = "Осы және басқа Битрикс24 мүмкіндіктерін пайдалану үшін жоғарыдағы тарифті таңдаңыз";
+$MESS["UI_INFOHELPER_PROVIDER_POPUP_DEFAULT_TOP_TITLE"] = "Сіздің тарифіңізде қолжетімсіз";
+$MESS["UI_INFOHELPER_PROVIDER_POPUP_EXTRA_BUTTON"] = "Мүмкіндіктерді кеңейту";
+$MESS["UI_INFOHELPER_PROVIDER_POPUP_MORE_BUTTON"] = "Толығырақ";
+$MESS["UI_POPUP_BTN"] = "Мүмкіндіктерді кеңейту";
+$MESS["UI_POPUP_CONSTRUCTOR_BUTTON_DESCRIPTION_1"] = "14 күнге тегін";
+$MESS["UI_POPUP_CONSTRUCTOR_BUTTON_DESCRIPTION_2"] = "Бір жылға төлеген кезде бүкіл компания үшін 5590";
+$MESS["UI_POPUP_CONSTRUCTOR_BUTTON_DESCRIPTION_3"] = "Бір жылға төлеген кезде бүкіл компания үшін 11 880";
+$MESS["UI_POPUP_CONSTRUCTOR_BUTTON_DESCRIPTION_4"] = "Бір жылға төлеген кезде бүкіл компания үшін 23 880";
+$MESS["UI_POPUP_CONSTRUCTOR_BUTTON_DESCRIPTION_5"] = "Бір жылға төлеген кезде бүкіл компания үшін 41 880";
+$MESS["UI_POPUP_CONSTRUCTOR_BUTTON_TEXT_1"] = "Белсендіру";
+$MESS["UI_POPUP_CONSTRUCTOR_BUTTON_TEXT_2"] = "Сатып алу";
+$MESS["UI_POPUP_CONSTRUCTOR_DESCRIPTION_1"] = "Қажетті тарифті таңдау үшін құжаттарды онлайн режимінде қолданып көріңіз.";
+$MESS["UI_POPUP_CONSTRUCTOR_DESCRIPTION_2"] = "Сіздің тиімділігіңіз үшін құжаттарды, кестелерді, презентацияларды және т.б. қарау.";
+$MESS["UI_POPUP_CONSTRUCTOR_DESCRIPTION_3"] = "Бірлескен жұмыс үшін құжаттарды редакциялау, кездесуді жоспарлаушы және т.б. ";
+$MESS["UI_POPUP_CONSTRUCTOR_DESCRIPTION_4"] = "Максималды автоматтандыру үшін құжаттарды редакциялау, бизнес-процестер және т.б. ";
+$MESS["UI_POPUP_CONSTRUCTOR_DESCRIPTION_5"] = "Жұмысты керемет жылдамдату үшін құжаттарды редакциялау, Энтерпрайз кластері және басқалары. ";
+$MESS["UI_POPUP_CONSTRUCTOR_MORE_1"] = " Толығырақ";
+$MESS["UI_POPUP_CONSTRUCTOR_TITLE_1"] = "Демо тариф";
+$MESS["UI_POPUP_CONSTRUCTOR_TITLE_2"] = "\"Базалық\" тарифі";
+$MESS["UI_POPUP_CONSTRUCTOR_TITLE_3"] = "\"Стандартты\" тарифі";
+$MESS["UI_POPUP_CONSTRUCTOR_TITLE_4"] = "\"Кәсіби\" тарифі";
+$MESS["UI_POPUP_CONSTRUCTOR_TITLE_5"] = "\"Энтерпрайз\" тарифі";
+$MESS["UI_POPUP_HEADER_DESCRIPTION_TITLE2"] = "Поштаны Битрикс24-те тексеріңіз";

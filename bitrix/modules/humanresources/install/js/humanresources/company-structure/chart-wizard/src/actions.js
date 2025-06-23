@@ -10,12 +10,15 @@ export const chartWizardActions = {
 		departments.set(departmentId, {
 			...departmentData,
 			id: departmentId,
+			chats: null,
+			channels: null,
 		});
 	},
 	editDepartment: (departmentData: DepartmentData): void => {
 		const { id, parentId } = departmentData;
 		const { departments } = useChartStore();
-		departments.set(id, { ...departmentData });
+		const oldData = departments.get(id);
+		departments.set(id, { ...oldData, ...departmentData });
 		const prevParent = [...departments.values()].find((department) => {
 			return department.children?.includes(id);
 		});

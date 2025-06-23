@@ -654,7 +654,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            }
 	            return _objectSpread(_objectSpread(_objectSpread({}, formOptions), value), additionalValue);
 	          }
-	          if (Reflect.has(value, 'embedding') || Reflect.has(value, 'callback') || Reflect.has(value, 'whatsapp') || Reflect.has(value, 'name') && Reflect.has(value, 'data') && Reflect.has(value.data, 'useSign')) {
+	          if (Reflect.has(value, 'embedding') || Reflect.has(value, 'callback') || Reflect.has(value, 'whatsapp') || Reflect.has(value, 'bookingResourceAutoSelection') || Reflect.has(value, 'name') && Reflect.has(value, 'data') && Reflect.has(value.data, 'useSign')) {
 	            var mergedOptions = main_core.Runtime.merge(formOptions, value);
 	            if (Reflect.has(value, 'responsible')) {
 	              mergedOptions.responsible.users = value.responsible.users;

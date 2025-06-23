@@ -39,7 +39,7 @@ if ($bizprocPerms >= "R") :
 		["automation_no_forced_tracking", GetMessage("BIZPROC_AUTOMATION_NO_FORCED_TRACKING"), "N", ["checkbox"]],
 		["limit_simultaneous_processes", GetMessage("BIZPROC_LIMIT_SIMULTANEOUS_PROCESSES"), "", ["text", 3]],
 		["employee_compatible_mode", GetMessage("BIZPROC_EMPLOYEE_COMPATIBLE_MODE"), "N", ["checkbox"]],
-		//	array("name_template", GetMessage("BIZPROC_NAME_TEMPLATE"), "", Array("select", 35))
+		["limit_while_iterations", GetMessage("BIZPROC_LIMIT_WHILE_ITERATIONS"), "1000", ["text", 5]],
 	];
 
 	$strWarning = "";
@@ -69,6 +69,7 @@ if ($bizprocPerms >= "R") :
 
 		COption::SetOptionString("bizproc", "employee_compatible_mode", ($employee_compatible_mode ?? 'N') === "Y" ? "Y" : "N");
 		COption::SetOptionString("bizproc", "limit_simultaneous_processes", ($limit_simultaneous_processes ?? 0) ? $limit_simultaneous_processes : 0);
+		COption::SetOptionString("bizproc", "limit_while_iterations", ($limit_while_iterations ?? 1000));
 		COption::SetOptionString("bizproc", "log_skip_types", ($log_skip_types ?? '') ? implode(',', $log_skip_types) : "");
 		COption::SetOptionString("bizproc", "automation_no_forced_tracking", ($automation_no_forced_tracking ?? 'N') === "Y" ? "Y" : "N");
 

@@ -24,6 +24,7 @@ return [
 		'landing.pageobject',
 		'main.loader',
 		'landing.ui.field.productfield',
+		'booking.crm-forms.settings',
 		'calendar.resourcebookinguserfield',
 		'socnetlogdest',
 		'ui.hint',

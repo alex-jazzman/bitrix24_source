@@ -253,6 +253,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			else if (key === 'FILE_ID' && Type.isArray(value))
 			{
 				fileIds = value;
+				params.FILE_ID = value;
 			}
 			else if (key === 'ATTACH')
 			{

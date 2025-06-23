@@ -68,6 +68,7 @@ class rest extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getEntityList');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getManifestList');
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~mp24_paid_date', 'rest', '\Bitrix\Rest\Marketplace\Client', 'onChangeSubscriptionDate');
+		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~mp24_paid_date', 'rest', '\Bitrix\Rest\Integration\Main\EventHandler', 'onSubscriptionChange');
 		if(CModule::IncludeModule('iblock'))
 		{
 			COption::SetOptionString("rest", "entity_iblock_type", "rest_entity");
@@ -185,6 +186,7 @@ class rest extends CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getEntityList');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getManifestList');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~mp24_paid_date', 'rest', '\Bitrix\Rest\Marketplace\Client', 'onChangeSubscriptionDate');
+		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~mp24_paid_date', 'rest', '\Bitrix\Rest\Integration\Main\EventHandler', 'onSubscriptionChange');
 		$eventManager->unRegisterEventHandler(
 			'main',
 			'OnAfterRegisterModule',

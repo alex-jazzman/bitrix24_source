@@ -48,18 +48,28 @@ class Calendar extends BaseController
 		$dateFrom = (new DateTimeImmutable('@' . $dateFromTs))->setTimezone(new DateTimeZone($timezone));
 		$dateTo = (new DateTimeImmutable('@' . $dateToTs))->setTimezone(new DateTimeZone($timezone));
 
-		$resourceCollection = $this->getResourceCollection($resources, $userId);
+		$resourceCollections = [];
+		foreach ($resources as $resourceIds)
+		{
+			$resourceCollections[] = $this->resourceProvider->getList(
+				gridParams: new GridParams(
+					filter: new ResourceFilter(['ID' => $resourceIds],
+					),
+				),
+				userId: $userId,
+			);
+		}
 
 		$multiResourceEachDayFirstOccurrenceResponse = (new TimeProvider())
 			->getMultiResourceEachDayFirstOccurrence(
-				resourceCollections: [$resourceCollection],
+				resourceCollections: $resourceCollections,
 				eventCollection:
-				(empty($resourceCollection->isEmpty()))
+				empty($resourceIds)
 					? new Entity\Booking\BookingCollection()
 					: $this->bookingProvider->getList(
 					gridParams: new GridParams(
 						filter: new BookingFilter([
-							'RESOURCE_ID' => $this->getAllResourceIds([$resourceCollection]),
+							'RESOURCE_ID' => $this->getAllResourceIds($resourceCollections),
 							'WITHIN' => [
 								'DATE_FROM' => $dateFrom->getTimestamp(),
 								'DATE_TO' => $dateTo->getTimestamp(),
@@ -196,32 +206,5 @@ class Calendar extends BaseController
 		}
 
 		return array_unique($result);
-	}
-
-	private function getResourceCollection(array $resources, int $userId): ResourceCollection
-	{
-		$resourceIdsToSelect = [];
-
-		foreach ($resources as $resourceIds)
-		{
-			foreach ($resourceIds as $resourceId)
-			{
-				$resourceIdsToSelect[] = $resourceId;
-			}
-		}
-
-		if (!empty($resourceIdsToSelect))
-		{
-			return $this->resourceProvider->getList(
-				gridParams: new GridParams(
-					filter: new ResourceFilter([
-						'ID' => $resourceIdsToSelect],
-					),
-				),
-				userId: $userId,
-			);
-		}
-
-		return new ResourceCollection(...[]);
 	}
 }

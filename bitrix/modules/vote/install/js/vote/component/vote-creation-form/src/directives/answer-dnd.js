@@ -29,14 +29,14 @@ const createGhost = (draggedNode: HTMLElement): HTMLElement => {
 	const ghost = draggedNode.cloneNode(true);
 	Dom.addClass(ghost, 'vote-creation-form__answer_ghost');
 	transform(ghost, draggedNode.offsetTop);
-	Dom.append(ghost, draggedNode.parentElement);
+	Dom.prepend(ghost, draggedNode.parentElement);
 
 	return ghost;
 };
 
 const createPositionPointer = (container: HTMLElement): HTMLElement => {
 	const pointer = Tag.render`<div class="vote-creation-form__answer_position-pointer" hidden></div>`;
-	Dom.append(pointer, container);
+	Dom.prepend(pointer, container);
 
 	return pointer;
 };
@@ -51,6 +51,7 @@ const dragStartHandler = ({ target, currentTarget: dragContainer }: MouseEvent, 
 	let targetNode = null;
 	let prevScrollY = window.scrollY;
 	const pointerOffset = 8;
+	const borderWidth = 1;
 	const draggedNode = target.closest('.vote-creation-form__answer');
 	const ghost = createGhost(draggedNode);
 	const positionPointer = createPositionPointer(dragContainer);
@@ -62,7 +63,8 @@ const dragStartHandler = ({ target, currentTarget: dragContainer }: MouseEvent, 
 		transformGhost(draggedNode, dragContainer, ghost, transformY);
 		Dom.removeClass(dragContainer, '--pointer-events-disabled');
 		const { x, y } = ghost.getBoundingClientRect();
-		const belowNode = document.elementFromPoint(x, y);
+		const belowY = transformY > 0 ? y + ghost.offsetHeight - borderWidth : y;
+		const belowNode = document.elementFromPoint(x, belowY);
 		targetNode = belowNode?.closest('.vote-creation-form__answer');
 		Dom.addClass(dragContainer, '--pointer-events-disabled');
 		if (!targetNode || targetNode === draggedNode)
@@ -72,8 +74,10 @@ const dragStartHandler = ({ target, currentTarget: dragContainer }: MouseEvent, 
 			return;
 		}
 
+		const { offsetTop, offsetHeight } = targetNode;
+		const pointerPosition = transformY > 0 ? offsetTop + offsetHeight + pointerOffset : offsetTop - pointerOffset;
 		positionPointer.hidden = false;
-		transform(positionPointer, targetNode.offsetTop - pointerOffset);
+		transform(positionPointer, pointerPosition);
 	};
 
 	const mouseUpHandler = (): void => {
@@ -87,7 +91,7 @@ const dragStartHandler = ({ target, currentTarget: dragContainer }: MouseEvent, 
 		Dom.remove(positionPointer);
 		if (targetNode && targetNode !== draggedNode)
 		{
-			order(draggedNode.dataset.id, targetNode.dataset.id);
+			order(draggedNode.dataset.id, targetNode.dataset.id, transformY > 0);
 		}
 	};
 

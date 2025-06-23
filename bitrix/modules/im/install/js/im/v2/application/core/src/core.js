@@ -1,4 +1,4 @@
-import { Extension, Loc } from 'main.core';
+import { Type, Extension, Loc } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
 import { Builder, Store } from 'ui.vue3.vuex';
 
@@ -27,6 +27,7 @@ import {
 	NotifierPullHandler,
 	OnlinePullHandler,
 	CounterPullHandler,
+	AnchorPullHandler,
 } from 'im.v2.provider.pull';
 import { Logger } from 'im.v2.lib.logger';
 import { OpenLinesLaunchResources } from 'imopenlines.v2.lib.launch-resources';
@@ -105,9 +106,12 @@ class CoreApplication
 			.addModel(CopilotModel.create())
 		;
 
-		OpenLinesLaunchResources.models.forEach((model) => {
-			builder.addModel(model.create());
-		});
+		if (OpenLinesLaunchResources)
+		{
+			OpenLinesLaunchResources.models.forEach((model) => {
+				builder.addModel(model.create());
+			});
+		}
 
 		return builder.build().then((result) => {
 			this.store = result.store;
@@ -132,10 +136,14 @@ class CoreApplication
 		this.pullClient.subscribe(new NotifierPullHandler());
 		this.pullClient.subscribe(new OnlinePullHandler());
 		this.pullClient.subscribe(new CounterPullHandler());
+		this.pullClient.subscribe(new AnchorPullHandler());
 
-		OpenLinesLaunchResources.pullHandlers.forEach((Handler) => {
-			this.pullClient.subscribe(new Handler());
-		});
+		if (OpenLinesLaunchResources)
+		{
+			OpenLinesLaunchResources.pullHandlers.forEach((Handler) => {
+				this.pullClient.subscribe(new Handler());
+			});
+		}
 
 		this.pullClient.subscribe({
 			type: this.pullInstance.SubscriptionType.Status,
@@ -198,12 +206,22 @@ class CoreApplication
 
 		return new Promise((resolve) => {
 			initConfig.created = function() {
+				if (Type.isFunction(config.created))
+				{
+					config.created.call(this);
+				}
+
 				resolve(this);
 			};
 			const bitrixVue = BitrixVue.createApp(initConfig);
 			bitrixVue.config.errorHandler = function(err, vm, info) {
 				// eslint-disable-next-line no-console
 				console.error(err, vm, info);
+
+				if (Type.isFunction(config.onError))
+				{
+					config.onError(err);
+				}
 			};
 
 			bitrixVue.config.warnHandler = function(warn, vm, trace) {

@@ -145,6 +145,7 @@ CREATE TABLE `b_im_relation`
 	`START_COUNTER` int(18) DEFAULT 0,
 	`LAST_SEND_MESSAGE_ID` int(18) DEFAULT 0 not null,
 	`REASON` varchar(50) not null DEFAULT '',
+	`IS_HIDDEN` char(1) not null DEFAULT 'N',
 	PRIMARY KEY (`ID`),
 	KEY `IX_IM_REL_2` (`USER_ID`, `MESSAGE_TYPE`, `STATUS`),
 	KEY `IX_IM_REL_3` (`USER_ID`, `MESSAGE_TYPE`, `CHAT_ID`),
@@ -206,6 +207,7 @@ CREATE TABLE `b_im_bot`
 	`METHOD_MESSAGE_UPDATE` varchar(255),
 	`METHOD_MESSAGE_DELETE` varchar(255),
 	`METHOD_WELCOME_MESSAGE` varchar(255),
+	`METHOD_CONTEXT_GET` varchar(255),
 	`TEXT_PRIVATE_WELCOME_MESSAGE` text,
 	`TEXT_CHAT_WELCOME_MESSAGE` text,
 	`COUNT_COMMAND` int(18) DEFAULT 0,
@@ -216,6 +218,7 @@ CREATE TABLE `b_im_bot`
 	`VERIFIED` char(1) DEFAULT 'N',
 	`OPENLINE` char(1) DEFAULT 'N',
 	`HIDDEN` char(1) DEFAULT 'N',
+	`BACKGROUND_ID` varchar(50),
 	PRIMARY KEY `PK_B_IM_BOT` (`BOT_ID`)
 );
 
@@ -342,6 +345,7 @@ CREATE TABLE `b_im_call`
 (
 	`ID` int not null auto_increment,
 	`TYPE` int,
+	`SCHEME` int,
 	`INITIATOR_ID` int,
 	`IS_PUBLIC` char(1) not null default 'N',
 	`PUBLIC_ID` varchar(32),
@@ -349,6 +353,7 @@ CREATE TABLE `b_im_call`
 	`ENTITY_TYPE` varchar(32),
 	`ENTITY_ID` varchar(32),
 	`PARENT_ID` int,
+	`PARENT_UUID` varchar (36),
 	`STATE` varchar(50),
 	`START_DATE` datetime,
 	`END_DATE` datetime,
@@ -363,7 +368,8 @@ CREATE TABLE `b_im_call`
 	UNIQUE KEY `IX_B_IM_CALL_PID`(`PUBLIC_ID`),
 	INDEX `IX_B_IM_CALL_ENT_ID_2`(`ENTITY_TYPE`, `ENTITY_ID`, `TYPE`, `PROVIDER`, `END_DATE`),
 	INDEX `IX_B_IM_CALL_CHAT_ID`(`CHAT_ID`),
-	INDEX `IX_IM_CALL_3`(`UUID`)
+	INDEX `IX_IM_CALL_3`(`UUID`),
+	INDEX `IX_IM_CALL_STATE_START`(`STATE`, `START_DATE`)
 );
 
 CREATE TABLE `b_im_call_user`
@@ -774,4 +780,41 @@ CREATE TABLE `b_im_recent_init_queue`
 	`DATE_CREATE` DATETIME NULL,
 	`DATE_UPDATE` DATETIME NULL,
 	PRIMARY KEY (`ID`)
+);
+
+CREATE TABLE `b_im_anchor`
+(
+	`ID` INT NOT NULL AUTO_INCREMENT,
+	`CHAT_ID` INT NOT NULL,
+	`MESSAGE_ID` INT NOT NULL,
+	`USER_ID` INT NOT NULL,
+	`FROM_USER_ID` INT NOT NULL,
+	`TYPE` VARCHAR(100) NOT NULL,
+	`SUB_TYPE` VARCHAR(100) DEFAULT NULL,
+	PRIMARY KEY (`ID`),
+	UNIQUE KEY `IX_B_IM_ANCHOR_1` (`MESSAGE_ID`, `TYPE`, `USER_ID`, `FROM_USER_ID`),
+	KEY `IX_B_IM_ANCHOR_2` (`USER_ID`, `CHAT_ID`)
+);
+
+CREATE TABLE `b_im_notify_group`
+(
+	`ID` int not null auto_increment,
+	`USER_ID` int not null,
+	`TITLE` varchar(255) null,
+	`DATE_CREATE` DATETIME NULL,
+	`DATE_UPDATE` DATETIME NULL,
+	PRIMARY KEY (`ID`),
+	KEY `IX_IM_NOTIFY_GROUP_USER_ID` (`USER_ID`)
+);
+
+CREATE TABLE `b_im_notify_group_condition`
+(
+	`ID` int not null auto_increment,
+	`GROUP_ID` int not null,
+	`MODULE` varchar(255) not null,
+	`EVENT` varchar(255) not null default '',
+	`USER_ID` int not null,
+	`DATE_CREATE` DATETIME NULL,
+	PRIMARY KEY (`ID`),
+	UNIQUE INDEX `UX_IM_NOTIFY_GROUP_CONDITION_GROUP_ID_MODULE_EVENT` (GROUP_ID, MODULE, EVENT)
 );

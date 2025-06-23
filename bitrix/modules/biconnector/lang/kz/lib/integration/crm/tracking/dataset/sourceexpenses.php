@@ -1,5 +1,7 @@
 <?php
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_ACTIONS"] = "Әрекеттер";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_AD_ID"] = "Жарнамалық хабарландырудың ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_AD_NAME"] = "Жарнаманың атауы";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_CAMPAIGN_ID"] = "Жарнама науқанының ID-і";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_CAMPAIGN_NAME"] = "Жарнамалық науқанның атауы";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_CLICKS"] = "Шертулер";
@@ -8,6 +10,8 @@ $MESS["TRACKING_SOURCE_EXPENSES_FIELD_CPM"] = "Мың көрсетілім ба�
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_CURRENCY"] = "Валюта";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_DATE"] = "Күні";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_EXPENSES"] = "Бір күндік шығындар";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_GROUP_ID"] = "Жарнама тобының ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_GROUP_NAME"] = "Жарнама тобының атауы";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_IMPRESSIONS"] = "Көрсетілімдер";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_SOURCE_ID"] = "Дереккөз ID-і";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_CAMPAIGN"] = "Жарнама науқанының ID-і";

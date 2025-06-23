@@ -69,6 +69,16 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 		return new self($fields);
 	}
 
+	public function merge(self $collection): self
+	{
+		foreach ($collection as $field)
+		{
+			$this->fields[$field->getName()] = $field;
+		}
+
+		return $this;
+	}
+
 	public function current(): ?Field
 	{
 		return current($this->fields);

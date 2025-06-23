@@ -5,7 +5,7 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 	const { clone } = require('utils/object');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
-	const { ChatRecentUpdateManager } = require('im/messenger/provider/pull/lib/recent/chat');
+	const { ChatRecentUpdateManager } = require('im/messenger/provider/pull/lib/recent/chat/update-manager');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const logger = getLogger('pull-handler--chat-recent');

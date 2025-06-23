@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/drag.bundle.css',
 	'js' => 'dist/drag.bundle.js',
 	'rel' => [
 		'main.core',
@@ -15,6 +14,7 @@ return [
 		'booking.const',
 		'booking.core',
 		'booking.lib.busy-slots',
+		'booking.lib.analytics',
 		'booking.provider.service.booking-service',
 	],
 	'skip_core' => false,

@@ -3,7 +3,6 @@ import {EventEmitter} from 'main.core.events'
 import {Popup} from 'main.popup'
 import {Hardware} from '../hardware';
 import {BackgroundDialog} from '../dialogs/background_dialog';
-import {Provider} from '../engine/engine';
 import 'ui.switcher';
 import Util from '../util';
 
@@ -20,7 +19,6 @@ const DeviceSelectorEvents = {
 	onAdvancedSettingsClick: "onOpenAdvancedSettingsClick",
 	onShow: "onShow",
 	onDestroy: "onDestroy",
-	onTurnOffStreamForAll: "onTurnOffStreamForAll",
 };
 
 /**
@@ -152,10 +150,8 @@ export class DeviceSelector
 							deviceList: Hardware.getMicrophoneList(),
 							selectedDevice: this.microphoneId,
 							deviceEnabled: this.microphoneEnabled,
-							deviceType: 'mic',
 							icons: ["microphone", "microphone-off"],
 							events: {
-								onTurnOffStreamForAll: this.onTurnOffStreamForAll.bind(this),
 								onSwitch: this.onMicrophoneSwitch.bind(this),
 								onSelect: this.onMicrophoneSelect.bind(this)
 							}
@@ -166,10 +162,8 @@ export class DeviceSelector
 							deviceList: Hardware.getCameraList(),
 							selectedDevice: this.cameraId,
 							deviceEnabled: this.cameraEnabled,
-							deviceType: 'cam',
 							icons: ["camera", "camera-off"],
 							events: {
-								onTurnOffStreamForAll: this.onTurnOffStreamForAll.bind(this),
 								onSwitch: this.onCameraSwitch.bind(this),
 								onSelect: this.onCameraSelect.bind(this)
 							}
@@ -180,7 +174,6 @@ export class DeviceSelector
 								deviceList: Hardware.getSpeakerList(),
 								selectedDevice: this.speakerId,
 								deviceEnabled: this.speakerEnabled,
-								deviceType: 'speaker',
 								icons: ["speaker", "speaker-off"],
 								events: {
 									onSwitch: this.onSpeakerSwitch.bind(this),
@@ -377,11 +370,6 @@ export class DeviceSelector
 		})
 	};
 
-	onTurnOffStreamForAll(e)
-	{
-		this.eventEmitter.emit(DeviceSelectorEvents.onTurnOffStreamForAll, e.data);
-	};
-
 	onAllowMirroringVideoChange(e)
 	{
 		Hardware.enableMirroring = e.target.checked;
@@ -414,7 +402,6 @@ export class DeviceSelector
 }
 
 const DeviceMenuEvents = {
-	onTurnOffStreamForAll: "onTurnOffStreamForAll",
 	onSelect: "onSelect",
 	onSwitch: "onSwitch"
 };
@@ -428,7 +415,6 @@ class DeviceMenu
 		this.menuBlocked = config.blocked || false;
 		this.deviceList = BX.prop.getArray(config, "deviceList", []);
 		this.selectedDevice = BX.prop.getString(config, "selectedDevice", "");
-		this.deviceType = BX.prop.getString(config, "deviceType", "");
 		this.deviceEnabled = BX.prop.getBoolean(config, "deviceEnabled", false);
 		this.deviceLabel = BX.prop.getString(config, "deviceLabel", "");
 		this.icons = BX.prop.getArray(config, "icons", []);
@@ -439,17 +425,6 @@ class DeviceMenu
 			menuInner: null,
 			menuItems: {}  // deviceId => {root: element, icon: element}
 		};
-
-		this.currentBitrixCall = Util.getCurrentBitrixCall();
-
-		this.isShowOffAllParticipantsButtons =
-			Util.isUserControlFeatureEnabled()
-			&& this.currentBitrixCall
-			&& this.currentBitrixCall.provider !== Provider.Plain
-			&& !(this.currentBitrixCall.associatedEntity.type === 'chat' && this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');
-
-		this.isShowOffAllParticipantsMic = (this.deviceType === 'mic' && this.isShowOffAllParticipantsButtons);
-		this.isShowOffAllParticipantsCam = (this.deviceType === 'cam' && this.isShowOffAllParticipantsButtons);
 
 		var events = BX.prop.getObject(config, "events", {});
 		for (var eventName in events)
@@ -508,29 +483,6 @@ class DeviceMenu
 					props: {className: "bx-call-view-device-selector-menu-inner" + (this.menuBlocked ? ' inactive' : '')},
 					children: this.deviceList.map(this.renderDevice.bind(this))
 				}),
-
-				this.isShowOffAllParticipantsMic ?
-					(this.turnOffMicContainer = ParticipantsStreamControlButton.create({
-						typeOfStream: 'mic',
-						label: BX.message("CALL_TURN_OFF_MIC_FOR_ALL_PARTICIPANTS"),
-						events: {
-							onTurnOffStreamForAll: this.onTurnOffStreamForAll.bind(this)
-						}
-
-					})).render()
-					: null,
-
-				this.isShowOffAllParticipantsCam ?
-					(this.turnOffMicContainer = ParticipantsStreamControlButton.create({
-						typeOfStream: 'cam',
-						label: BX.message("CALL_TURN_OFF_CAM_FOR_ALL_PARTICIPANTS"),
-						events: {
-							onTurnOffStreamForAll: this.onTurnOffStreamForAll.bind(this)
-						}
-
-					})).render()
-					: null,
-
 			]
 		});
 		return this.elements.root;
@@ -572,11 +524,6 @@ class DeviceMenu
 	{
 		this.menuBlocked = false;
 		this.elements.root.classList.remove("bx-call-view-device-selector-menu-container-blocked");
-	};
-
-	onTurnOffStreamForAll(e)
-	{
-		this.eventEmitter.emit(DeviceMenuEvents.onTurnOffStreamForAll, e.data);
 	};
 
 	getDeviceIconClass()
@@ -628,62 +575,3 @@ class DeviceMenu
 		})
 	};
 };
-
-const ParticipantsStreamControlButtonEvents = {
-	onTurnOffStreamForAll: "onTurnOffStreamForAll"
-};
-
-class ParticipantsStreamControlButton
-{
-	constructor(config)
-	{
-		config = BX.type.isObject(config) ? config : {};
-
-		this.label = config.label || '';
-		this.typeOfStream = config.typeOfStream || '';
-		this.eventEmitter = new EventEmitter(this, 'ParticipantsStreamControl');
-
-		var events = BX.prop.getObject(config, "events", {});
-		for (var eventName in events)
-		{
-			if (!events.hasOwnProperty(eventName))
-			{
-				continue;
-			}
-
-			this.eventEmitter.subscribe(eventName, events[eventName]);
-		}
-	};
-
-	static create(config)
-	{
-		return new ParticipantsStreamControlButton(config);
-	};
-
-	render()
-	{
-		return Dom.create("div", {
-			props: {className: "bx-call-view-participants-control-stream-button"},
-			children: [
-				Dom.create("div", {
-					props: {className: "bx-call-view-participants-control-stream-button-icon bx-call-view-participants-control-stream-button-icon-" + this.typeOfStream},
-
-				}),
-				Dom.create("span", {
-					props: {className: "bx-call-view-participants-control-stream-button-action"},
-					text: this.label
-				})
-			],
-			events: {
-				click: (e) =>
-				{
-					this.eventEmitter.emit(ParticipantsStreamControlButtonEvents.onTurnOffStreamForAll, {
-						typeOfStream: this.typeOfStream
-					})
-
-				}
-			}
-		});
-	};
-}
-

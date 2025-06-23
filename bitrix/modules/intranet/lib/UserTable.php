@@ -230,7 +230,7 @@ class UserTable extends \Bitrix\Main\UserTable
 				)->configureJoinType(\Bitrix\Main\ORM\Query\Join::TYPE_LEFT)
 			);
 
-			// remove this after b_extranet_user migration
+			// deprecated
 			$entity->addField(
 				(new \Bitrix\Main\ORM\Fields\Relations\Reference(
 					'EXTRANET_GROUP',

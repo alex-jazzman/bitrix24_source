@@ -3495,7 +3495,7 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 	{
 		e.preventDefault();
 
-		if(!B24 || !B24['licenseInfoPopup'])
+		if(!top.BX || !top.BX.UI ||!top.BX.UI.InfoHelper)
 		{
 			return;
 		}

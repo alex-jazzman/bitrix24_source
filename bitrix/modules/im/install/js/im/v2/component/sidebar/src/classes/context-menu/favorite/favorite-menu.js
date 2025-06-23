@@ -1,9 +1,10 @@
 import { Loc } from 'main.core';
 
-import type { MenuItem } from 'im.v2.lib.menu';
-import { MessageService } from 'im.v2.provider.service';
+import { MessageService } from 'im.v2.provider.service.message';
 
 import { SidebarMenu } from '../sidebar-base-menu';
+
+import type { MenuItem } from 'im.v2.lib.menu';
 
 export class FavoriteMenu extends SidebarMenu
 {

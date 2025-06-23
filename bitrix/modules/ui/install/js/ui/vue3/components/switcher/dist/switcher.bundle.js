@@ -19,6 +19,7 @@ this.BX.UI.Vue3 = this.BX.UI.Vue3 || {};
 	/>
 	 */
 
+	// @vue/component
 	const Switcher = {
 	  name: 'Switcher',
 	  emits: ['check', 'uncheck'],

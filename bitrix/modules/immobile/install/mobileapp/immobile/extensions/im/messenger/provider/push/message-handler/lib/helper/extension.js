@@ -116,6 +116,11 @@ jn.define('im/messenger/provider/push/message-handler/lib/helper', (require, exp
 			return this.getChatType() === DialogType.copilot;
 		}
 
+		isLines()
+		{
+			return !Type.isNil(this.#event.params.lines);
+		}
+
 		isUserInChat()
 		{
 			if (Type.isArray(this.#event.params.userInChat))

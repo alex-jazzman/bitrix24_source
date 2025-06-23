@@ -1,5 +1,6 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { getMemberRoles } from 'humanresources.company-structure.api';
+import { Type } from 'main.core';
 
 export const DepartmentContentActions = {
 	moveUserToDepartment: (departmentId, userId, targetDepartmentId, role): void => {
@@ -12,7 +13,9 @@ export const DepartmentContentActions = {
 			return;
 		}
 
-		const user = role === memberRoles.employee
+		const oldMemberRoles = getMemberRoles(department.entityType);
+		const targetMemberRoles = getMemberRoles(targetDepartment.entityType);
+		const user = role === oldMemberRoles.employee
 			? department.employees?.find((employee) => employee.id === userId)
 			: department.heads.find((head) => head.id === userId)
 		;
@@ -22,7 +25,7 @@ export const DepartmentContentActions = {
 		}
 
 		department.userCount -= 1;
-		if (role === memberRoles.employee)
+		if (role === oldMemberRoles.employee)
 		{
 			department.employees = department.employees.filter((employee) => employee.id !== userId);
 		}
@@ -37,7 +40,7 @@ export const DepartmentContentActions = {
 			store.changeCurrentDepartment(departmentId, targetDepartmentId);
 		}
 
-		user.role = memberRoles.employee;
+		user.role = targetMemberRoles.employee;
 		if (!targetDepartment.employees)
 		{
 			return;
@@ -47,6 +50,7 @@ export const DepartmentContentActions = {
 	removeUserFromDepartment: (departmentId, userId, role): void => {
 		const store = useChartStore();
 		const department = store.departments.get(departmentId);
+		const oldMemberRoles = getMemberRoles(department.entityType);
 		if (!department)
 		{
 			return;
@@ -58,7 +62,7 @@ export const DepartmentContentActions = {
 		}
 
 		department.userCount -= 1;
-		if (role === memberRoles.employee)
+		if (role === oldMemberRoles.employee)
 		{
 			department.employees = department.employees.filter((employee) => employee.id !== userId);
 
@@ -80,7 +84,7 @@ export const DepartmentContentActions = {
 	},
 	updateEmployeeListOptions: (
 		departmentId: number,
-		options: { page?: number, shouldUpdateList?: boolean, isListUpdated?: boolean }
+		options: { page?: number, shouldUpdateList?: boolean, isListUpdated?: boolean },
 	): void => {
 		const { departments } = useChartStore();
 		const department = departments.get(departmentId);
@@ -96,5 +100,47 @@ export const DepartmentContentActions = {
 		};
 
 		departments.set(departmentId, department);
+	},
+	setChatsAndChannels: (
+		nodeId: number,
+		chats: Array,
+		channels: Array,
+	): void => {
+		const store = useChartStore();
+		const department = store.departments.get(nodeId);
+		if (!department)
+		{
+			return;
+		}
+
+		department.channels = channels;
+		department.chats = chats;
+		department.chatAndChannelsCount = (chats.length + channels.length);
+	},
+	removeUserFromAllDepartments: async (userId): Promise<void> => {
+		const store = useChartStore();
+		const departments = store.departments;
+		const departmentsToUpdate = [];
+
+		for (const [key, department] of departments)
+		{
+			if (
+				(
+					'heads' in department
+					&& Type.isArray(department.heads)
+					&& department.heads.some((employee) => employee.id === userId)
+				)
+				|| (
+					'employees' in department
+					&& Type.isArray(department.employees)
+					&& department.employees.some((employee) => employee.id === userId)
+				)
+			)
+			{
+				departmentsToUpdate.push(key);
+			}
+		}
+
+		return store.refreshDepartments(departmentsToUpdate);
 	},
 };

@@ -19,7 +19,7 @@ if (!$skipLoader)
 	Extension::load('loader');
 ?>
 	<script>
-		const target = document.querySelector('.workarea-content');
+		const target = document.querySelector('.page__workarea-content');
 		const loader = new BX.Loader({
 			target: target,
 		});

@@ -11,6 +11,7 @@ return [
 		'main.polyfill.core',
 		'humanresources.company-structure.api',
 		'humanresources.company-structure.chart-store',
+		'humanresources.company-structure.utils',
 	],
 	'skip_core' => true,
 ];

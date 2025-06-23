@@ -214,7 +214,7 @@ class ActivityController extends EntityController
 					: (DateTime::createFromUserTime($fields['DEADLINE'])->getTimestamp())
 			);
 			$activityData = [
-				'DESCRIPTION' => $fields['DESCRIPTION'],
+				'DESCRIPTION' => $fields['DESCRIPTION'] ?? '',
 				'ASSOCIATED_ENTITY_ID' => $fields['ASSOCIATED_ENTITY_ID'],
 				'DEADLINE_TIMESTAMP' => $deadlineTimestamp,
 			];
@@ -249,6 +249,25 @@ class ActivityController extends EntityController
 					]);
 				}
 			}
+		}
+		elseif (
+			$typeID === \CCrmActivityType::Provider
+			&& isset($fields['PROVIDER_ID'])
+			&& $fields['PROVIDER_ID'] === Activity\Provider\RepeatSale::getId()
+		)
+		{
+			$binding = array_shift($bindings);
+
+			LogMessageController::getInstance()->onCreate(
+				[
+					'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
+					'ENTITY_ID' => $binding['OWNER_ID'],
+					'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+					'ASSOCIATED_ENTITY_ID' => $ownerID,
+				],
+				LogMessageType::REPEAT_SALE_CREATED,
+				$params['CURRENT_USER'] ?? null
+			);
 		}
 
 		$enableHistoryPush =
@@ -383,6 +402,7 @@ class ActivityController extends EntityController
 						Activity\Provider\Bizproc\Workflow::getId(),
 						Activity\Provider\Bizproc\Comment::getId(),
 						Activity\Provider\Bizproc\Task::getId(),
+						Activity\Provider\RepeatSale::getId(),
 					]
 				)
 			)
@@ -715,7 +735,9 @@ class ActivityController extends EntityController
 			Activity\Provider\Bizproc\Workflow::getId(),
 			Activity\Provider\Bizproc\Comment::getId(),
 			Activity\Provider\Bizproc\Task::getId(),
+			Activity\Provider\Booking\Booking::getId(),
 			Activity\Provider\Booking\WaitListItem::getId(),
+			Activity\Provider\RepeatSale::getId(),
 		];
 	}
 
@@ -745,6 +767,7 @@ class ActivityController extends EntityController
 				Activity\Provider\Bizproc\Workflow::getId(),
 				Activity\Provider\Bizproc\Comment::getId(),
 				Activity\Provider\Bizproc\Task::getId(),
+				Activity\Provider\RepeatSale::getId(),
 			],
 			true
 		);

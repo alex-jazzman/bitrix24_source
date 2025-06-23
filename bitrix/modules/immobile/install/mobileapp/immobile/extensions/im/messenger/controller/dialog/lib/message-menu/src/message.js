@@ -6,17 +6,21 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 	const {
 		DialogType,
 	} = require('im/messenger/const');
-	const { Feature } = require('im/messenger/lib/feature');
+	const { Feature, MobileFeature } = require('im/messenger/lib/feature');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
 
 	/**
 	 * @class MessageMenuMessage
+	 * @implements IMessageMenuMessage
 	 */
 	class MessageMenuMessage
 	{
+		/** @type {MessageHelper} */
+		#messageHelper;
+		#dialogHelper;
+
 		/**
-		 *
 		 * @param {MessagesModelState} messageModel
 		 * @param {FilesModelState || undefined} fileModel
 		 * @param {DialoguesModelState} dialogModel
@@ -33,35 +37,35 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			isUserSubscribed,
 		})
 		{
-			this.message = messageModel;
-			this.file = fileModel;
-			this.dialog = dialogModel;
-			this.user = userModel;
+			this.messageModel = messageModel;
+			this.fileModel = fileModel;
+			this.dialogModel = dialogModel;
+			this.userModel = userModel;
 			this.isPinned = isPinned;
 			this.isUserSubscribed = isUserSubscribed;
-			this.messageHelper = MessageHelper.createByModel(messageModel, fileModel ?? []);
-			this.dialogHelper = DialogHelper.createByModel(dialogModel);
+			this.#messageHelper = MessageHelper.createByModel(messageModel, fileModel ?? []);
+			this.#dialogHelper = DialogHelper.createByModel(dialogModel);
 		}
 
 		isPossibleReact()
 		{
-			// return this.dialog.type !== DialogType.copilot; TODO experimental solution
+			// return this.dialogModel.type !== DialogType.copilot; TODO experimental solution
 			return true;
 		}
 
 		isPossibleReply()
 		{
-			if (this.#isChannel() || this.dialog.type === DialogType.copilot)
+			if (this.#isChannel() || this.dialogModel.type === DialogType.copilot)
 			{
 				return false;
 			}
 
-			if (Number(this.dialog.parentMessageId) === Number(this.message.id))
+			if (Number(this.dialogModel.parentMessageId) === Number(this.messageModel.id))
 			{
 				return false;
 			}
 
-			return ChatPermission.isCanReply(this.dialog);
+			return ChatPermission.isCanReply(this.dialogModel);
 		}
 
 		isPossibleCopy()
@@ -71,27 +75,22 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return this.#isText() && !this.#isDeleted();
 			}
 
-			return this.#isText();
+			return this.#isText() && !this.#isVote();
 		}
 
 		isPossibleCopyLink()
 		{
-			if (this.isDialogCopilot() || this.#isComment())
-			{
-				return false;
-			}
-
-			return true;
+			return !this.isDialogCopilot() && !this.#isComment();
 		}
 
 		isPossiblePin()
 		{
-			if (this.dialog.type === DialogType.comment)
+			if (this.dialogModel.type === DialogType.comment)
 			{
 				return false;
 			}
 
-			if (!ChatPermission.isCanPost(this.dialog))
+			if (!ChatPermission.isCanPost(this.dialogModel))
 			{
 				return false;
 			}
@@ -101,12 +100,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleUnpin()
 		{
-			if (this.dialog.type === DialogType.comment)
+			if (this.dialogModel.type === DialogType.comment)
 			{
 				return false;
 			}
 
-			if (!ChatPermission.isCanPost(this.dialog))
+			if (!ChatPermission.isCanPost(this.dialogModel))
 			{
 				return false;
 			}
@@ -116,30 +115,38 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleForward()
 		{
-			if (this.dialog.type === DialogType.comment)
-			{
-				return false;
-			}
-
-			return true;
+			return this.dialogModel.type !== DialogType.comment && !this.#isVote();
 		}
 
 		isPossibleCreate()
 		{
-			if (this.#isChannel())
-			{
-				return false;
-			}
+			return !this.#isChannel() && !this.#isVote();
+		}
 
-			return true;
+		isPossibleSaveFile()
+		{
+			return this.#isWithFile() && !this.#isDeleted();
+		}
+
+		isPossibleDownloadToDevice()
+		{
+			return (this.#isSingleFileMessage() && this.isPossibleSaveFile())
+				|| (this.isPossibleSaveGallery() && MobileFeature.isMultipleFilesDownloadSupported());
+		}
+
+		isPossibleSaveGallery()
+		{
+			return this.#isGallery() && !this.#isDeleted();
 		}
 
 		isPossibleSaveToLibrary()
 		{
-			return (this.#isImage() || this.#isVideo() || this.#isAudio())
-				&& !this.#isDeleted()
-				&& !this.#isGallery()
-			;
+			return this.isPossibleSaveMediaToLibrary() && !this.#isGallery();
+		}
+
+		isPossibleSaveMediaToLibrary()
+		{
+			return (this.#isImage() || this.#isVideo() || this.#isAudio()) && !this.#isDeleted();
 		}
 
 		isPossibleShowProfile()
@@ -159,12 +166,17 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return false;
 			}
 
-			if (this.dialog.type === DialogType.comment)
+			if (this.dialogModel.type === DialogType.comment)
 			{
 				return false;
 			}
 
-			return !this.message.sending;
+			if (this.#isVote())
+			{
+				return false;
+			}
+
+			return !this.messageModel.sending;
 		}
 
 		isPossibleEdit()
@@ -172,10 +184,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			if (this.isDialogCopilot())
 			{
 				return this.#isYour() && !this.#isDeleted() && !this.#isSystem() && !this.#isForward()
-				&& !this.#isMessageToCopilot();
+					&& !this.#isMessageToCopilot();
 			}
 
-			return this.#isYour() && !this.#isDeleted() && !this.#isSystem() && !this.#isForward();
+			return this.#isYour() && !this.#isDeleted() && !this.#isSystem() && !this.#isForward() && !this.#isVote();
 		}
 
 		isPossibleDelete()
@@ -185,7 +197,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return !this.#isDeleted();
 			}
 
-			if (ChatPermission.isCanDeleteOtherMessage(this.dialog))
+			if (ChatPermission.isCanDeleteOtherMessage(this.dialogModel))
 			{
 				return !this.#isDeleted();
 			}
@@ -195,12 +207,24 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleSubscribe()
 		{
-			return this.#isChannel() && !this.isUserSubscribed && !this.#isSystem() && !this.#isEmojiOrSmileOnly();
+			return (
+				this.#isChannel()
+				&& !this.isUserSubscribed
+				&& !this.#isSystem()
+				&& !this.#isEmojiOrSmileOnly()
+				&& !this.#isVote()
+			);
 		}
 
 		isPossibleUnsubscribe()
 		{
-			return this.#isChannel() && this.isUserSubscribed && !this.#isSystem() && !this.#isEmojiOrSmileOnly();
+			return (
+				this.#isChannel()
+				&& this.isUserSubscribed
+				&& !this.#isSystem()
+				&& !this.#isEmojiOrSmileOnly()
+				&& !this.#isVote()
+			);
 		}
 
 		isPossibleResend()
@@ -208,89 +232,159 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			return this.#isSendError();
 		}
 
+		isPossibleFinishVote()
+		{
+			return (
+				Feature.isVoteMessageAvailable
+				&& this.#isYour()
+				&& this.#isVoteModelExist()
+				&& !this.#isFinishedVote()
+			);
+		}
+
+		isPossibleRevote()
+		{
+			return (
+				Feature.isVoteMessageAvailable
+				&& this.#isVotedVote()
+				&& this.#isRevotingVote()
+				&& !this.#isFinishedVote()
+			);
+		}
+
+		isPossibleOpenVoteResult()
+		{
+			return (
+				Feature.isVoteMessageAvailable
+				&& this.#isYour()
+				&& this.#isVoteModelExist()
+				&& !this.#isEmptyVote()
+			);
+		}
+
 		#isDeleted()
 		{
-			return this.messageHelper.isDeleted;
+			return this.#messageHelper.isDeleted;
 		}
 
 		#isForward()
 		{
-			return this.messageHelper.isForward;
+			return this.#messageHelper.isForward;
 		}
 
 		#isGallery()
 		{
-			return this.messageHelper.isGallery;
+			return this.#messageHelper.isGallery;
+		}
+
+		#isWithFile()
+		{
+			return this.#messageHelper.isWithFile;
 		}
 
 		#isVideo()
 		{
-			return this.messageHelper.isVideo;
+			return this.#messageHelper.isVideo;
 		}
 
 		#isImage()
 		{
-			return this.messageHelper.isImage;
+			return this.#messageHelper.isImage;
 		}
 
 		#isAudio()
 		{
-			return this.messageHelper.isAudio;
+			return this.#messageHelper.isAudio;
 		}
 
 		#isSystem()
 		{
-			return this.messageHelper.isSystem;
+			return this.#messageHelper.isSystem;
 		}
 
 		#isText()
 		{
-			return this.messageHelper.isText;
+			return this.#messageHelper.isText;
 		}
 
 		#isYour()
 		{
-			return this.messageHelper.isYour;
+			return this.#messageHelper.isYour;
+		}
+
+		#isVote()
+		{
+			return this.#messageHelper.isVote;
+		}
+
+		#isVoteModelExist()
+		{
+			return this.#messageHelper.isVoteModelExist;
+		}
+
+		#isFinishedVote()
+		{
+			return this.#messageHelper.isFinishedVote;
+		}
+
+		#isVotedVote()
+		{
+			return this.#messageHelper.isVotedVote;
+		}
+
+		#isRevotingVote()
+		{
+			return this.#messageHelper.isRevotingVote;
+		}
+
+		#isEmptyVote()
+		{
+			return this.#messageHelper.isEmptyVote;
 		}
 
 		isDialogCopilot()
 		{
-			return this.dialog.type === DialogType.copilot;
+			return this.dialogModel.type === DialogType.copilot;
 		}
 
 		#isBot()
 		{
-			return this.user.bot;
+			return this.userModel.bot;
 		}
 
 		#isMessageToCopilot()
 		{
-			return !(this.message.text.includes('[USER') || this.message.text.includes('[user'));
+			return !(this.messageModel.text.includes('[USER') || this.messageModel.text.includes('[user'));
 		}
 
 		isAdmin()
 		{
-			return this.dialogHelper.isCurrentUserOwner;
+			return this.#dialogHelper?.isCurrentUserOwner;
 		}
 
 		#isChannel()
 		{
-			return this.dialogHelper.isChannel;
+			return this.#dialogHelper?.isChannel;
 		}
 
 		#isComment()
 		{
-			return this.dialogHelper.isComment;
+			return this.#dialogHelper?.isComment;
 		}
 
 		#isEmojiOrSmileOnly()
 		{
-			return this.messageHelper.isEmojiOnly || this.messageHelper.isSmileOnly;
+			return this.#messageHelper.isEmojiOnly || this.#messageHelper.isSmileOnly;
 		}
 
 		#isSendError()
 		{
-			return this.message.error === true;
+			return this.messageModel.error === true;
+		}
+
+		#isSingleFileMessage()
+		{
+			return this.messageModel.files.length === 1;
 		}
 	}
 

@@ -1,4 +1,5 @@
-import { Event, ZIndexManager, Runtime } from 'main.core';
+import { Event, ZIndexManager, Runtime, Extension } from 'main.core';
+import { SidePanel, type SliderManager } from 'main.sidepanel';
 import { EventEmitter } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
@@ -7,23 +8,25 @@ import { Logger } from 'im.v2.lib.logger';
 import { Launch } from 'im.v2.application.launch';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { LayoutManager } from 'im.v2.lib.layout';
+import { CallManager } from 'im.v2.lib.call';
+import { showCloseWithActiveCallConfirm } from 'im.v2.lib.confirm';
 
 import 'ui.notification';
 import 'im.v2.lib.opener';
 
 import type { Store } from 'ui.vue3.vuex';
+import type { SettingsCollection } from 'main.core.collections';
 
 const SLIDER_PREFIX = 'im:slider';
 const BASE_STACK_INDEX = 1200;
 const SLIDER_CONTAINER_CLASS = 'bx-im-messenger__slider';
-const LOADER_CHATS_PATH = '/bitrix/js/im/v2/lib/slider/src/images/loader-chats.svg?v3';
 
 export class MessengerSlider
 {
 	static instance = null;
 
 	instances: Object = {};
-	sidePanelManager: Object = BX.SidePanel.Instance;
+	sidePanelManager: SliderManager = SidePanel.Instance;
 	store: Store;
 
 	static init()
@@ -63,6 +66,11 @@ export class MessengerSlider
 
 	openSlider(): Promise
 	{
+		if (this.isChatEmbeddedOnPage())
+		{
+			return Promise.resolve();
+		}
+
 		if (DesktopManager.isChatWindow())
 		{
 			this.sidePanelManager.closeAll(true);
@@ -96,15 +104,13 @@ export class MessengerSlider
 				hideControls: true,
 				customLeftBoundary: 0,
 				customRightBoundary: 0,
-				loader: LOADER_CHATS_PATH,
+				loader: this.getLoaderPath(),
 				contentCallback: () => {
 					return `<div class="${SLIDER_CONTAINER_CLASS}"></div>`;
 				},
 				events: {
-					onLoad: (event) => {
-						event.slider.showLoader();
-					},
 					onOpenComplete: async (event) => {
+						event.slider.showLoader();
 						await this.initMessengerComponent();
 						event.slider.closeLoader();
 
@@ -147,7 +153,7 @@ export class MessengerSlider
 		Logger.warn('Slider: onDialogOpen', event.data.dialogId);
 	}
 
-	onClose({ data: event })
+	async onClose({ data: event })
 	{
 		[event] = event;
 		const sliderId = event.getSlider().getUrl().toString();
@@ -159,6 +165,21 @@ export class MessengerSlider
 		if (!this.canClose())
 		{
 			event.denyAction();
+
+			return;
+		}
+
+		const hasCall = CallManager.getInstance().hasCurrentCall();
+		if (hasCall)
+		{
+			event.denyAction();
+
+			const result = await showCloseWithActiveCallConfirm();
+			if (result)
+			{
+				CallManager.getInstance().leaveCurrentCall();
+				event.slider.close();
+			}
 
 			return;
 		}
@@ -269,5 +290,20 @@ export class MessengerSlider
 	getIdFromSliderId(sliderId: string): number
 	{
 		return Number.parseInt(sliderId.slice(SLIDER_PREFIX.length + 1), 10);
+	}
+
+	getLoaderPath(): string
+	{
+		const LOADER = '/bitrix/js/im/v2/lib/slider/src/images/loader-chats.svg?v3';
+		const LOADER_WITHOUT_NAVIGATION = '/bitrix/js/im/v2/lib/slider/src/images/loader-chats-without-navigation.svg';
+
+		const hasNavigation = !LayoutManager.getInstance().isAirDesignEnabled();
+
+		return hasNavigation ? LOADER : LOADER_WITHOUT_NAVIGATION;
+	}
+
+	isChatEmbeddedOnPage(): boolean
+	{
+		return LayoutManager.getInstance().isQuickAccessHidden();
 	}
 }

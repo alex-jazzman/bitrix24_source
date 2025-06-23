@@ -63,7 +63,7 @@
 		this.zipInstallPath = params.zipInstallPath
 						? params.zipInstallPath
 						: null;
-		this.appCode = params.appCode || '';
+		this.appCode = params.appCode || null;
 		this.siteId = params.siteId || 0;
 		this.langId = BX.type.isString(params.langId)
 						? params.langId
@@ -71,8 +71,7 @@
 		this.folderId = params.folderId || 0;
 		this.replaceLid = params.replaceLid || 0;
 		this.isCrmForm = (params.isCrmForm || 'N') === 'Y';
-		this.context_section = params.context_section || null;
-		this.context_element = params.context_element || null;
+		this.isKnowledgeBase = (params.isKnowledgeBase || 'N') === 'Y';
 		this.urlPreview = params.urlPreview || '';
 
 		this.onCreateButtonClick = proxy(this.onCreateButtonClick, this);
@@ -80,6 +79,9 @@
 		this.onFrameLoad = proxy(this.onFrameLoad, this);
 
 		this.init();
+
+		this.metrika = new BX.Landing.Metrika(true);
+		this.metrika.sendData(this.getMetrikaParams('preview_template', 'success'));
 
 		return this;
 	};
@@ -469,6 +471,10 @@
 
 			if (BX.Dom.hasClass(this.createButton.parentNode, 'needed-market-subscription'))
 			{
+				const metrikaParams = this.getMetrikaParams(this.getMetrikaCreateEvent(), 'error_market');
+				metrikaParams.params.errorType = 'need_market_subscription';
+				this.metrika.sendData(metrikaParams);
+
 				top.BX.UI.InfoHelper.show('limit_subscription_market_templates');
 				new Promise(resolve => {
 					const timerId = setInterval(() => {
@@ -487,19 +493,17 @@
 				return;
 			}
 
-			// Analytic
-			const metrika = new BX.Landing.Metrika(true);
-			metrika.sendData(this.getMetrikaParams('attempt'));
-
 			if (this.isStore() && this.IsLoadedFrame)
 			{
-				this.loaderText = BX.create("div", {
-					props: {className: "landing-template-preview-loader-text"},
-					text: this.messages.LANDING_LOADER_WAIT
+				this.loaderText = BX.create('div', {
+					props: {
+						className: 'landing-template-preview-loader-text',
+					},
+					text: this.messages.LANDING_LOADER_WAIT,
 				});
 
 				this.progressBar = new BX.UI.ProgressBar({
-					column: true
+					column: true,
 				});
 
 				this.progressBar.getContainer().classList.add("ui-progressbar-landing-preview");
@@ -586,7 +590,8 @@
 		},
 
 		/**
-		 * @param {'success'|'attempt'} status
+		 * @param {string} event - analytic event param
+		 * @param {'success'|'attempt'|'error'} status
 		 * @return {{
 		 *  [category]: string,
 		 * 	[event]: string,
@@ -596,54 +601,71 @@
 		 *  [params]: {object},
 		 * }}
 		 */
-		getMetrikaParams: function (status)
+		getMetrikaParams: function (event, status)
 		{
-			let category = 'landings';
+			/**
+			 * @see \Bitrix\Landing\Metrika\Categories
+			 */
+			let category = 'site';
 			if (this.isCrmForm)
 			{
 				category = 'crm_forms';
 			}
-			if (this.isMainpage())
+			else if (this.isStore())
 			{
-				category = 'vibe';
+				category = 'shop';
 			}
-			if (this.isStore())
+			else if (this.isKnowledgeBase)
 			{
-				category = 'stores';
+				category = 'kb';
 			}
-			if (this.isMainpage())
+			else if (this.isMainpage())
 			{
 				category = 'vibe';
 			}
 
 			const metrikaParams = {
 				category,
-				event: this.isMainpage() ? 'create_template' : 'create_page_template',
-				params: {
-					appCode: this.appCode,
-				},
+				event,
+				type: 'template',
 				status,
 			};
 
-			if (this.replaceLid > 0)
+			if (this.appCode)
 			{
-				metrikaParams.event = 'replace_template';
-			}
-			else if (this.siteId !== 0)
-			{
-				metrikaParams.event = 'create_site_template';
+				metrikaParams.params = {
+					appCode: this.appCode,
+				};
 			}
 
-			if (this.context_section)
+			if (this.isMainpage())
 			{
-				metrikaParams.c_section = this.context_section;
+				delete metrikaParams.type;
 			}
-			if (this.context_element)
+			else
 			{
-				metrikaParams.c_element = this.context_element;
+				metrikaParams.c_section = 'site';
+				if (this.siteId !== 0)
+				{
+					metrikaParams.c_section = 'page';
+				}
+				if (this.isCrmForm && this.replaceLid > 0)
+				{
+					metrikaParams.c_section = 'block_style';
+					metrikaParams.c_element = 'create_template_button';
+				}
 			}
 
 			return metrikaParams;
+		},
+
+		/**
+		 * Create event name for template creating
+		 * @returns {string}
+		 */
+		getMetrikaCreateEvent: function()
+		{
+			return this.isCrmForm ? 'replace_template' : 'create_template';
 		},
 
 		/**
@@ -706,7 +728,7 @@
 		{
 			if (this.zipInstallPath)
 			{
-				let add = [];
+				let add = {};
 				const value = this.getValue();
 				for (let name in value)
 				{
@@ -720,7 +742,7 @@
 					add['additional[replaceLid]'] = this.replaceLid;
 				}
 
-				const metrikaParams = this.getMetrikaParams('success');
+				const metrikaParams = this.getMetrikaParams(this.getMetrikaCreateEvent(), 'success');
 
 				add['additional[st_category]'] = metrikaParams.category;
 				add['additional[st_event]'] = metrikaParams.event;
@@ -732,7 +754,10 @@
 				{
 					add['additional[st_element]'] = metrikaParams.c_element;
 				}
-				add['additional[app_code]'] = this.appCode;
+				if (metrikaParams.params)
+				{
+					add['additional[st_params]'] = JSON.stringify(metrikaParams.params);
+				}
 
 				// 'form' is for analytic
 				add['from'] = this.createParamsStrFromUrl(url);
@@ -752,63 +777,37 @@
 						this.loader.show(popupImportLoaderContainer);
 						BX.Dom.addClass(previewFrame, 'landing-import-start');
 					}
-					add['inSlider'] = 'N';
+					add['IFRAME'] = 'Y';
 					if (this.siteId !== 0)
 					{
 						add['createType'] = 'PAGE';
 					}
-					let interval;
-					BX.ajax({
-						method: 'POST',
-						dataType: 'html',
-						url: addQueryParams(this.zipInstallPath, add),
-						onsuccess: data => {
-							const promise = new Promise((resolve, reject) => {
-								const result = BX.Dom.create('div', {html: data});
-								BX.Dom.style(result, 'display', 'none');
-								popupImport.append(result);
-								let restImportElement;
-								let count = 0;
-								interval = setInterval(
-									() => {
-										if (count > 100)
-										{
-											reject(new Error('Time is up'));
-										}
-										restImportElement = result.querySelector('.rest-configuration-wrapper');
-										if (restImportElement !== null)
-										{
-											resolve(restImportElement);
-										}
-										count++;
-									},
-									300
-								);
-							});
-							promise.then(
-								result => {
-									clearInterval(interval);
-									if (BX.Dom.hasClass(result, 'rest-configuration-wrapper'))
-									{
-										const importTitle = result.querySelector('.rest-configuration-title');
-										const importIconContainer = result.querySelector('.rest-configuration-start-icon-main-container');
-										if (importTitle && importIconContainer)
-										{
-											BX.Dom.remove(importTitle);
-											BX.Dom.insertBefore(importTitle, importIconContainer.nextSibling);
-										}
-										this.loader.hide();
-										BX.Dom.append(result, popupImport);
-										BX.Dom.style(popupImportLoaderContainer, 'display', 'none');
-									}
-								},
-								error => {
-									clearInterval(interval);
-									this.addRepeatCreateButton();
+					BX.ajax.get(
+						addQueryParams(this.zipInstallPath, add),
+						(data) => {
+							const resultHtml = BX.Dom.create('div', {html: data});
+							const restContent = resultHtml.querySelector('.rest-configuration-wrapper');
+							if (restContent)
+							{
+								const importTitle = restContent.querySelector('.rest-configuration-title');
+								const importIconContainer = restContent.querySelector(
+									'.rest-configuration-start-icon-main-container');
+								if (importTitle && importIconContainer)
+								{
+									BX.Dom.remove(importTitle);
+									BX.Dom.insertBefore(importTitle, importIconContainer.nextSibling);
 								}
-							);
-						}
-					});
+								// BX.Dom.append(restContent, popupImport);
+								BX.Dom.style(popupImportLoaderContainer, 'display', 'none');
+								popupImport.append(restContent);
+								this.loader.hide();
+							}
+							else
+							{
+								this.addRepeatCreateButton();
+							}
+						},
+					);
 				}
 			}
 			else if (this.disableStoreRedirect)

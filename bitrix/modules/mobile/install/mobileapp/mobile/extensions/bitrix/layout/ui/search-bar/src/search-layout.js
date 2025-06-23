@@ -259,7 +259,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			if (!this.presetsLoaded || !isEqual(this.counters, counters) || !isEqual(this.presets, presets))
 			{
 				this.counters = counters;
-				this.presets = Object.entries(presets).map(([id, preset]) => ({ id, ...preset }));
+				this.presets = presets.filter((preset) => !Type.isNil(preset.name));
 
 				this.searchLayoutView.setPresets(this.presets, this.counters);
 			}

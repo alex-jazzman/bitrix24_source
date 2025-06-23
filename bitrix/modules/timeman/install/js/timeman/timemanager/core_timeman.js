@@ -178,6 +178,8 @@ BX.timeman.formatWorkTimeView = function(time, view)
 	if (!view)
 		return BX.timeman.formatWorkTime(time);
 
+	registerTimerFormat();
+
 	if (BX.type.isString(view))
 	{
 		view = BX.timer.getHandler(view);
@@ -719,7 +721,27 @@ BX.CTimeMan.prototype.CheckNeedToReport = function(bForce)
 	return false;
 }
 
-BX.CTimeMan.prototype.ShowFormWeekly = function(data)
+BX.CTimeMan.prototype.initFormWeekly = function(data)
+{
+	const reportInfo = data.REPORT_INFO;
+
+	this.REPORT_FULL_MODE = reportInfo.MODE;
+
+	this.ShowCallReport = false;
+	if (reportInfo.IS_REPORT_DAY === 'Y')
+	{
+		this.ShowCallReport = true;
+
+		BX.addCustomEvent('OnWorkReportSend', () => {
+			if (BX('work_report_call_link'))
+			{
+				BX.hide(BX('work_report_call_link'));
+			}
+		});
+	}
+}
+
+BX.CTimeMan.prototype.ShowFormWeekly = function(data, autoLauncherId = null)
 {
 	this.ShowCallReport = false;
 	report_info = data.REPORT_INFO;
@@ -754,6 +776,21 @@ BX.CTimeMan.prototype.ShowFormWeekly = function(data)
 		else
 			this.WEEKLY_FORM.popup.show();
 		window.WEEKLY_FORM = this.WEEKLY_FORM;
+
+		const handleClose = () => {
+			if (autoLauncherId)
+			{
+				const AutoLauncher = BX.Reflection.getClass('BX.UI.AutoLaunch.AutoLauncher');
+				if (AutoLauncher)
+				{
+					AutoLauncher.unregister(autoLauncherId);
+				}
+			}
+		};
+
+		this.WEEKLY_FORM.popup.subscribe('onClose', handleClose);
+		this.WEEKLY_FORM.popup.subscribe('onDestroy', handleClose);
+
 	}
 
 	return false;
@@ -784,7 +821,11 @@ BX.CTimeMan.prototype.blockActionBtn = function(e)
 	}
 	else
 	{
-		BX.addClass(this.blockedBtn, 'ui-btn-wait');
+		const btnNode = this.blockedBtn.closest('.ui-btn');
+		if (btnNode)
+		{
+			BX.addClass(btnNode, 'ui-btn-wait');
+		}
 	}
 }
 
@@ -801,7 +842,11 @@ BX.CTimeMan.prototype.unBlockActionBtn = function()
 	}
 	else
 	{
-		BX.removeClass(this.blockedBtn, 'ui-btn-wait');
+		const btnNode = this.blockedBtn.closest('.ui-btn');
+		if (btnNode)
+		{
+			BX.removeClass(btnNode, 'ui-btn-wait');
+		}
 	}
 
 	this.blockedBtn = null;
@@ -1017,6 +1062,13 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 
 			p.lightShadow = true;
 
+			const settings = BX.Extension.getSettings('timeman');
+			const isAirTemplate = settings.get('isAirTemplate');
+			if (isAirTemplate)
+			{
+				p.className = 'template-air-popup';
+			}
+
 			this.POPUP = new BX.PopupWindow('timeman_main', this.bindOptions.node, p);
 		}
 
@@ -1127,7 +1179,7 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 	{
 		BX.Runtime.loadExtension('timeman.stafftrack-check-in').then(({ StafftrackCheckIn }) => {
 			new StafftrackCheckIn({
-				container: BX('timeman_main'),
+				container: this.LAYOUT,
 			});
 		})
 		this.stafftrackDisplayed = true;
@@ -1144,6 +1196,8 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 
 BX.CTimeManWindow.prototype.CreateDashboard = function(DATA)
 {
+	registerTimerFormat();
+
 	var event_time, clock, state, tasks_counter;
 
 	if (null == this.DASHBOARD)
@@ -1294,6 +1348,8 @@ BX.CTimeManWindow.prototype.CreateLayoutTable = function()
 
 BX.CTimeManWindow.prototype.CreateNoticeRow = function(DATA)
 {
+	registerTimerFormat();
+
 	var row_notice, row_timer, row_edit;
 
 	if (null == this.NOTICE)
@@ -1448,15 +1504,13 @@ BX.CTimeManWindow.prototype.addPwt = function()
 		}
 
 		this.isMonitorEnabled().then(function(result) {
-			BX('timeman_main').appendChild(
+			this.LAYOUT.appendChild(
 				BX.create('div', {
 					props: {
 						id: 'timeman-pwt-container'
 					},
 					style: {
 						textAlign: 'center',
-						marginLeft: '12px',
-						marginRight: '12px',
 					},
 				})
 			);
@@ -1484,42 +1538,83 @@ BX.CTimeManWindow.prototype.setPwtStateReadyToEnable = function()
 
 	pwtContainer.innerHTML = '';
 
-	pwtContainer.appendChild(
-		BX.create('button', {
-			props: {
-				className: 'ui-btn ui-btn-success ui-btn-icon-start',
-				id: 'timeman-pwt-enable'
-			},
-			text: BX.message("JS_CORE_TM_MONITOR_ENABLE_BUTTON"),
-			style: {
-				marginBottom: '8px',
-				width: '100%',
-			},
-			events: {
-				click : function() {
-					this.enableMonitorForCurrentUser().then(function(result) {
-						if (!result)
-						{
-							return;
-						}
+	const settings = BX.Extension.getSettings('timeman');
+	const isAirTemplate = settings.get('isAirTemplate');
 
-						BX.remove(BX('timeman-pwt-enable'));
-
-						this.addPwtAlert();
-					}.bind(this));
-				}.bind(this)
+	const enableMonitorForCurrentUser = () => {
+		this.enableMonitorForCurrentUser().then((result) => {
+			if (!result)
+			{
+				return;
 			}
-		})
-	);
+
+			BX.remove(BX('timeman-pwt-enable'));
+
+			this.addPwtAlert();
+		});
+	};
+
+	if (isAirTemplate)
+	{
+		pwtContainer.appendChild(
+			BX.create('div', {
+				props: {
+					className: 'timeman-pwt-enable',
+					id: 'timeman-pwt-enable',
+				},
+				style: {
+					width: '100%',
+				},
+				events: {
+					click: enableMonitorForCurrentUser,
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: 'ui-icon-set --o-clock',
+						},
+					}),
+					BX.create('div', {
+						props: {
+							className: 'timeman-pwt-enable-text',
+						},
+						text: BX.message("JS_CORE_TM_MONITOR_ENABLE_BUTTON_NEW"),
+					}),
+				],
+			}),
+		);
+	}
+	else
+	{
+		pwtContainer.appendChild(
+			BX.create('button', {
+				props: {
+					className: 'ui-btn ui-btn-success ui-btn-icon-start',
+					id: 'timeman-pwt-enable',
+				},
+				text: BX.message("JS_CORE_TM_MONITOR_ENABLE_BUTTON"),
+				style: {
+					width: '100%',
+				},
+				events: {
+					click: enableMonitorForCurrentUser,
+				},
+			}),
+		);
+	}
 }
 
 BX.CTimeManWindow.prototype.addPwtAlert = function()
 {
+	const settings = BX.Extension.getSettings('timeman');
+	const isAirTemplate = settings.get('isAirTemplate');
+
 	BX('timeman-pwt-container').appendChild(
 		new BX.UI.Alert({
 			icon: BX.UI.Alert.Icon.INFO,
 			color: BX.UI.Alert.Color.SUCCESS,
 			text: BX.message("JS_CORE_TM_MONITOR_ENABLED"),
+			useAirDesign: isAirTemplate,
 		}).getContainer()
 	);
 }
@@ -1568,6 +1663,8 @@ BX.CTimeManWindow.prototype.openMonitorReport = function()
 
 BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 {
+	registerTimerFormat();
+
 	var row_pause;
 
 	if (null == this.MAIN_ROW)
@@ -1631,15 +1728,34 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 		this.PAUSE_TIMER = null;
 	}
 
-
 	if (DATA.STATE != 'PAUSED')
 	{
-		this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-pause tm-btn-pause';
+		if (this.pauseControlBtn)
+		{
+			this.pauseControlBtn.setText(BX.message('JS_CORE_TM_PAUSE'));
+			this.pauseControlBtn.setIcon(BX.UI.Button.Icon.PAUSE);
+			this.pauseControlBtn.setStyle(BX.UI.Button.AirStyle.OUTLINE);
+		}
+		else
+		{
+			this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-pause tm-btn-pause';
+		}
+
 		BX.hide(row_pause);
 	}
 	else
 	{
-		this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-start tm-btn-start';
+		if (this.pauseControlBtn)
+		{
+			this.pauseControlBtn.setText(BX.message('JS_CORE_TM_UNPAUSE'));
+			this.pauseControlBtn.setIcon(BX.UI.Button.Icon.START);
+			this.pauseControlBtn.setStyle(BX.UI.Button.AirStyle.FILLED);
+		}
+		else
+		{
+			this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-start tm-btn-start';
+		}
+
 		BX.show(row_pause);
 
 		this.PAUSE_TIMER = BX.timer(row_pause.lastChild, {
@@ -1668,22 +1784,60 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 			&& DATA.CAN_OPEN !== 'REOPEN'
 		);
 
-		this.MAIN_BUTTON = this.MAIN_ROW_CELL_BTN.appendChild(BX.create('DIV', {
-			props: {className: 'tm-popup-button-handler'},
-			children: [
-				BX.create('button', {
-					props: {className: 'ui-btn ' + (DATA.STATE != 'CLOSED' ? 'ui-btn-danger ui-btn-icon-stop' : 'ui-btn-success ui-btn-icon-start') },
-					text: BX.message('JS_CORE_TM_' + btn),
-					events: {
-						click: (
-							(canCheckInPopupShow)
-								? this.showCheckInStartPopup.bind(this)
-								: BX.proxy(this.MainButtonClick, this)
-						),
+		const isAirTemplate = settings.get('isAirTemplate');
+		if (isAirTemplate)
+		{
+			const text = BX.message('JS_CORE_TM_' + btn);
+			let icon = (DATA.STATE !== 'CLOSED' ? BX.UI.Button.Icon.STOP : BX.UI.Button.Icon.START);
+			if (DATA.STATE === 'CLOSED' && DATA.CAN_OPEN === 'REOPEN')
+			{
+				icon = BX.UI.Button.Icon.REFRESH;
+			}
+			const style = (DATA.STATE !== 'CLOSED' ? BX.UI.Button.AirStyle.FILLED_ALERT : BX.UI.Button.AirStyle.FILLED);
+
+			const button = new BX.UI.Button({
+				size: BX.UI.Button.Size.MEDIUM,
+				text,
+				icon,
+				useAirDesign: true,
+				style,
+				noCaps: true,
+				wide: false,
+				events: {
+					click: (btnRef, event) => {
+						if (canCheckInPopupShow)
+						{
+							this.showCheckInStartPopup();
+						}
+						else
+						{
+							this.MainButtonClick(event);
+						}
 					},
-				})
-			]
-		}));
+				},
+			});
+
+			this.MAIN_BUTTON = this.MAIN_ROW_CELL_BTN.appendChild(button.render());
+		}
+		else
+		{
+			this.MAIN_BUTTON = this.MAIN_ROW_CELL_BTN.appendChild(BX.create('DIV', {
+				props: {className: 'tm-popup-button-handler'},
+				children: [
+					BX.create('button', {
+						props: {className: 'ui-btn ' + (DATA.STATE != 'CLOSED' ? 'ui-btn-danger ui-btn-icon-stop' : 'ui-btn-success ui-btn-icon-start') },
+						text: BX.message('JS_CORE_TM_' + btn),
+						events: {
+							click: (
+								(canCheckInPopupShow)
+									? this.showCheckInStartPopup.bind(this)
+									: BX.proxy(this.MainButtonClick, this)
+							),
+						},
+					})
+				]
+			}));
+		}
 
 		if(DATA.CAN_OPEN_AND_RELAUNCH)
 		{
@@ -1700,8 +1854,11 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 
 		if (DATA.CAN_EDIT && DATA.STATE != 'PAUSED')
 		{
+			const extraIndentClass = DATA.INFO ? '' : '--extra-indent';
 			this.MAIN_ROW_CELL_BTN.appendChild(BX.create('SPAN', {
-				props: {className: 'tm-popup-change-time-link'},
+				props: {
+					className: `tm-popup-change-time-link ${extraIndentClass}`,
+				},
 				events: {
 					click: (
 						(canCheckInPopupShow)
@@ -1750,6 +1907,39 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 
 BX.CTimeManWindow.prototype.CreateMainPauseControl = function(DATA)
 {
+	const settings = BX.Extension.getSettings('timeman');
+	const isAirTemplate = settings.get('isAirTemplate');
+
+	if (isAirTemplate)
+	{
+		const isPaused = this.PARENT.DATA.INFO?.PAUSED;
+
+		const text = (
+			isPaused
+				? BX.message('JS_CORE_TM_UNPAUSE')
+				: BX.message('JS_CORE_TM_PAUSE')
+		);
+		const icon = (isPaused ? BX.UI.Button.Icon.START : BX.UI.Button.Icon.PAUSE);
+		const style = (isPaused ? BX.UI.Button.AirStyle.FILLED : BX.UI.Button.AirStyle.OUTLINE);
+
+		this.pauseControlBtn = new BX.UI.Button({
+			size: BX.UI.Button.Size.MEDIUM,
+			text,
+			icon,
+			useAirDesign: true,
+			style,
+			noCaps: true,
+			wide: false,
+			events: {
+				click: (btnRef, event) => {
+					this.PauseButtonClick(event);
+				},
+			},
+		});
+
+		return this.pauseControlBtn.render();
+	}
+
 	var c = BX.create('button', {
 		events: {
 			click: BX.proxy(this.PauseButtonClick, this)
@@ -1864,27 +2054,10 @@ BX.CTimeManWindow.prototype.CreateEventsForm = function(cb)
 
 			BX.timer.start(inp_TimeFrom.bxtimer);
 			BX.timer.start(inp_TimeTo.bxtimer);
-
-			if (!bEnterPressed)
-			{
-				BX.addClass(inp_Name.parentNode, 'tm-popup-event-form-disabled');
-				inp_Name.value = BX.message('JS_CORE_TM_EVENTS_ADD');
-			}
-			else
-			{
-				inp_Name.value = '';
-			}
 		}
 
 		return (e || window.event) ? BX.PreventDefault(e) : null;
-	}, this),
-
-	handler_name_focus = function()
-	{
-		BX.removeClass(this.parentNode, 'tm-popup-event-form-disabled');
-		if (this.value == BX.message('JS_CORE_TM_EVENTS_ADD'))
-			this.value = '';
-	};
+	}, this);
 
 	var inp_TimeFrom = BX.create('INPUT', {
 		props: {type: 'text', className: 'tm-popup-event-start-time-textbox' + mt_format_css}
@@ -1948,7 +2121,6 @@ BX.CTimeManWindow.prototype.CreateEventsForm = function(cb)
 			BX.timer.stop(inp_TimeTo.bxtimer);
 
 			inp_Name.focus();
-			handler_name_focus.apply(inp_Name);
 		}, this);
 
 		if (!this.CLOCK)
@@ -1973,19 +2145,17 @@ BX.CTimeManWindow.prototype.CreateEventsForm = function(cb)
 	inp_TimeTo.bxtimer = BX.timer(inp_TimeTo, {dt: 7200000, accuracy: 3600});
 
 	var inp_Name = BX.create('INPUT', {
-		props: {type: 'text', className: 'tm-popup-event-form-textbox' + mt_format_css, value: BX.message('JS_CORE_TM_EVENTS_ADD')},
+		props: {
+			type: 'text',
+			className: 'tm-popup-event-form-textbox' + mt_format_css,
+		},
+		attrs: {
+			placeHolder: BX.message('JS_CORE_TM_EVENTS_ADD'),
+		},
 		events: {
 			keypress: function(e) {
 				return (e.keyCode == 13) ? handler(e, true) : true;
 			},
-			blur: function() {
-				if (this.value == '')
-				{
-					BX.addClass(this.parentNode, 'tm-popup-event-form-disabled');
-					this.value = BX.message('JS_CORE_TM_EVENTS_ADD');
-				}
-			},
-			focus: handler_name_focus
 		}
 	});
 
@@ -2148,44 +2318,28 @@ BX.CTimeManWindow.prototype.CreateTasksForm = function(cb)
 {
 	var handler = BX.delegate(function(e, bEnterPressed) {
 		inp_Task.value = BX.util.trim(inp_Task.value);
-		if (inp_Task.value && inp_Task.value!=BX.message('JS_CORE_TM_TASKS_ADD'))
+		if (inp_Task.value)
 		{
 			cb({
 				name: inp_Task.value
 			});
-
-			if (!bEnterPressed)
-			{
-				BX.addClass(inp_Task.parentNode, 'tm-popup-task-form-disabled')
-				inp_Task.value = BX.message('JS_CORE_TM_TASKS_ADD');
-			}
-			else
-			{
-				inp_Task.value = '';
-			}
 		}
 
 		return BX.PreventDefault(e);
 	}, this);
 
 	var inp_Task = BX.create('INPUT', {
-		props: {type: 'text', className: 'tm-popup-task-form-textbox', value: BX.message('JS_CORE_TM_TASKS_ADD')},
+		props: {
+			type: 'text',
+			className: 'tm-popup-task-form-textbox',
+		},
+		attrs: {
+			placeHolder: BX.message('JS_CORE_TM_TASKS_ADD')
+		},
 		events: {
 			keypress: function(e) {
 				return (e.keyCode == 13) ? handler(e, true) : true;
 			},
-			blur: function() {
-				if (this.value == '')
-				{
-					BX.addClass(this.parentNode, 'tm-popup-task-form-disabled');
-					this.value = BX.message('JS_CORE_TM_TASKS_ADD');
-				}
-			},
-			focus: function() {
-				BX.removeClass(this.parentNode, 'tm-popup-task-form-disabled');
-				if (this.value == BX.message('JS_CORE_TM_TASKS_ADD'))
-					this.value = '';
-			}
 		}
 	});
 
@@ -2696,18 +2850,62 @@ BX.CTimeManTimeSelector = function(parent, params)
 
 	this.free_mode = !!params.free_mode;
 
-	params.popup_buttons = [
-		new BX.PopupWindowButton({
-			text : parent.MAIN_BUTTON.textContent || parent.MAIN_BUTTON.innerText,
-			className : parent.DATA.STATE == "CLOSED" ? "popup-window-button-accept" : "popup-window-button-decline",
-			events : {click : BX.proxy(this.setValue, this)}
-		}),
-		new BX.PopupWindowButtonLink({
-			text : BX.message('JS_CORE_TM_B_CLOSE'),
-			className : "popup-window-button-link-cancel",
-			events : {click : BX.proxy(this.closeWnd, this)}
-		})
-	];
+	const settings = BX.Extension.getSettings('timeman');
+	const isAirTemplate = settings.get('isAirTemplate');
+
+	const buttons = [];
+	if (isAirTemplate)
+	{
+		buttons.push(
+			new BX.UI.Button({
+				size: BX.UI.Button.Size.MEDIUM,
+				text: parent.MAIN_BUTTON.textContent || parent.MAIN_BUTTON.innerText,
+				useAirDesign: true,
+				style: (
+					parent.DATA.STATE === 'CLOSED'
+						? BX.UI.Button.AirStyle.FILLED
+						: BX.UI.Button.AirStyle.FILLED_ALERT
+				),
+				noCaps: true,
+				wide: false,
+				events: {
+					click: (btnRef, event) => {
+						this.setValue(event);
+					},
+				},
+			}),
+			new BX.UI.Button({
+				size: BX.UI.Button.Size.MEDIUM,
+				text: BX.message('JS_CORE_TM_B_CLOSE'),
+				useAirDesign: true,
+				style: BX.UI.Button.AirStyle.PLAIN,
+				noCaps: true,
+				wide: false,
+				events: {
+					click: (btnRef, event) => {
+						this.closeWnd(event);
+					},
+				},
+			})
+		);
+	}
+	else
+	{
+		buttons.push(
+			new BX.PopupWindowButton({
+				text : parent.MAIN_BUTTON.textContent || parent.MAIN_BUTTON.innerText,
+				className : parent.DATA.STATE == "CLOSED" ? "popup-window-button-accept" : "popup-window-button-decline",
+				events : {click : BX.proxy(this.setValue, this)}
+			}),
+			new BX.PopupWindowButtonLink({
+				text : BX.message('JS_CORE_TM_B_CLOSE'),
+				className : "popup-window-button-link-cancel",
+				events : {click : BX.proxy(this.closeWnd, this)}
+			}),
+		);
+	}
+
+	params.popup_buttons = buttons;
 
 	BX.CTimeManTimeSelector.superclass.constructor.apply(this, [parent, params]);
 
@@ -2923,7 +3121,14 @@ BX.CTimeManTimeSelector.prototype.setError = function(error)
 BX.CTimeManTimeSelector.prototype.setNode = function(node)
 {
 	BX.CTimeManTimeSelector.superclass.setNode.apply(this, arguments);
-	this.params.popup_buttons[0].setName(node.textContent || node.innerText);
+
+	const settings = BX.Extension.getSettings('timeman');
+	const isAirTemplate = settings.get('isAirTemplate');
+
+	if (!isAirTemplate)
+	{
+		this.params.popup_buttons[0].setName(node.textContent || node.innerText);
+	}
 }
 
 BX.CTimeManTimeSelector.prototype.Clear = function()
@@ -3854,26 +4059,48 @@ BX.CTimeManReport.prototype.Create = function()
 
 	BX.focusEvents(this.REPORT);
 
-	this.REPORT_CONTAINER = BX.create('DIV', {
-		props: {className: 'tm-popup-report'},
-		children: [
+	const settings = BX.Extension.getSettings('timeman');
+	const isAirTemplate = settings.get('isAirTemplate');
+
+	const children = [];
+	if (isAirTemplate)
+	{
+		children.push(
 			BX.create('DIV', {
-				props: {className: 'tm-popup-report-text'},
+				props: { className: 'tm-popup-report-text' },
 				children: [
-					this.REPORT
+					this.REPORT,
+				]
+			}),
+		);
+	}
+	else
+	{
+		this.REPORT_BTN = BX.create('SPAN', {
+			props: {className: 'ui-btn ui-btn-success ui-btn-disabled'},
+			events: {click: BX.proxy(this._btnClick, this)},
+			html: BX.message('JS_CORE_TM_B_SAVE')
+		});
+
+		children.push(
+			BX.create('DIV', {
+				props: { className: 'tm-popup-report-text' },
+				children: [
+					this.REPORT,
 				]
 			}),
 			BX.create('DIV', {
 				props: {className: 'tm-popup-report-buttons'},
 				children: [
-					(this.REPORT_BTN = BX.create('SPAN', {
-						props: {className: 'ui-btn ui-btn-success ui-btn-disabled'},
-						events: {click: BX.proxy(this._btnClick, this)},
-						html: BX.message('JS_CORE_TM_B_SAVE')
-					}))
-				]
-			})
-		]
+					this.REPORT_BTN,
+				],
+			}),
+		);
+	}
+
+	this.REPORT_CONTAINER = BX.create('DIV', {
+		props: {className: 'tm-popup-report'},
+		children,
 	});
 
 	BX.addCustomEvent(window, 'onTimeManReportChange', BX.delegate(function(report, ts) {
@@ -3893,14 +4120,20 @@ BX.CTimeManReport.prototype.setEditMode = function(f)
 	if (this.bCanSave)
 	{
 		BX.addClass(this.REPORT_CONTAINER, 'tm-popup-report-editmode');
-		BX.removeClass(this.REPORT_BTN, 'ui-btn-disabled');
-		BX.adjust(this.REPORT_BTN, {props: {disabled: false}});
+		if (this.REPORT_BTN)
+		{
+			BX.removeClass(this.REPORT_BTN, 'ui-btn-disabled');
+			BX.adjust(this.REPORT_BTN, {props: {disabled: false}});
+		}
 	}
 	else
 	{
 		BX.removeClass(this.REPORT_CONTAINER, 'tm-popup-report-editmode');
-		BX.addClass(this.REPORT_BTN, 'ui-btn-disabled');
-		BX.adjust(this.REPORT_BTN, {props: {disabled: true}});
+		if (this.REPORT_BTN)
+		{
+			BX.addClass(this.REPORT_BTN, 'ui-btn-disabled');
+			BX.adjust(this.REPORT_BTN, {props: {disabled: true}});
+		}
 	}
 };
 
@@ -3937,7 +4170,10 @@ BX.CTimeManReport.prototype.Save = function()
 
 	this.setEditMode(false);
 
-	this.REPORT_BTN.innerHTML = BX.message('JS_CORE_TM_B_SAVING');
+	if (this.REPORT_BTN)
+	{
+		this.REPORT_BTN.innerHTML = BX.message('JS_CORE_TM_B_SAVING');
+	}
 
 	this.REPORT_TEXT = this.REPORT.value;
 
@@ -3983,7 +4219,11 @@ BX.CTimeManReport.prototype.SaveFinished = function(data)
 	this.parent.DATA.REPORT_TS = data.REPORT_TS;
 	this.REPORT_SAVE_TIME = new Date(data.REPORT_TS * 1000);
 	this.REPORT_CLIENT_SAVE_TIME = new Date();
-	this.REPORT_BTN.innerHTML = BX.message('JS_CORE_TM_B_SAVE');
+
+	if (this.REPORT_BTN)
+	{
+		this.REPORT_BTN.innerHTML = BX.message('JS_CORE_TM_B_SAVE');
+	}
 
 	if (this.saveXhr)
 		BX.onGlobalCustomEvent('onTimeManReportChange', [this.REPORT_TEXT, parseInt(this.REPORT_SAVE_TIME.valueOf() / 1000)], true);
@@ -7758,13 +7998,40 @@ function _worktime_timeman(h, m, s)
 	return '(' + BX.util.trim(r) + ')';
 }
 
-function _worktime_notice_timeman(h, m, s)
-{
-	return '<span class="tm-popup-notice-time-hours"><span class="tm-popup-notice-time-number">' + h + '</span><span class="tm-popup-notice-time-unit">' + BX.message('JS_CORE_H') + '</span></span><span class="tm-popup-notice-time-minutes"><span class="tm-popup-notice-time-number">' + m + '</span><span class="tm-popup-notice-time-unit">' + BX.message('JS_CORE_M') + '</span></span><span class="tm-popup-notice-time-seconds"><span class="tm-popup-notice-time-number">' + s + '</span><span class="tm-popup-notice-time-unit">' + BX.message('JS_CORE_S') + '</span></span>';
-}
+	function _worktime_notice_timeman(h, m, s)
+	{
+		return '<span class="tm-popup-notice-time-hours"><span class="tm-popup-notice-time-number">' +
+			BX.util.str_pad(h, 2, '0', 'left') + '</span><span class="tm-popup-notice-time-unit">' +
+			BX.message('JS_CORE_H') + '</span></span>' +
+			'<span class="tm-popup-notice-time-minutes"><span class="tm-popup-notice-time-number">' +
+			BX.util.str_pad(m, 2, '0', 'left') + '</span><span class="tm-popup-notice-time-unit">' +
+			BX.message('JS_CORE_M') + '</span></span>' +
+			'<span class="tm-popup-notice-time-seconds"><span class="tm-popup-notice-time-number">' +
+			BX.util.str_pad(s, 2, '0', 'left') + '</span><span class="tm-popup-notice-time-unit">' +
+			BX.message('JS_CORE_S') + '</span></span>';
+	}
 
 /*customize timer */
-BX.timer.registerFormat('worktime_timeman', _worktime_timeman);
-BX.timer.registerFormat('worktime_notice_timeman', _worktime_notice_timeman);
+
+let timerFormatRegistered = false;
+function registerTimerFormat()
+{
+	if (timerFormatRegistered)
+	{
+		return;
+	}
+
+	if (!BX.timer.getHandler('worktime_timeman'))
+	{
+		BX.timer.registerFormat('worktime_timeman', _worktime_timeman);
+	}
+
+	if (!BX.timer.getHandler('worktime_notice_timeman'))
+	{
+		BX.timer.registerFormat('worktime_notice_timeman', _worktime_notice_timeman);
+	}
+
+	timerFormatRegistered = true;
+}
 
 })();

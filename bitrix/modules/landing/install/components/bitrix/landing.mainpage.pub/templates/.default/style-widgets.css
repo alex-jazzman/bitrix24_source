@@ -2670,6 +2670,10 @@ small,
   cursor: pointer;
 }
 
+.g-cursor-default {
+  cursor: default;
+}
+
 /*------------------------------------
   Overflows
 ------------------------------------*/
@@ -18279,7 +18283,10 @@ h6, .h6 {
  * Copyright 2011-2019 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  */
-
+/*
+ * custom fix for vibe
+ * see orig in /unify/html/assets/vendor/bootstrap/bootstrap-grid.css:7-23
+ */
 .landing-layout-flex *,
 .landing-layout-flex *::before,
 .landing-layout-flex *::after {
@@ -18291,6 +18298,9 @@ h6, .h6 {
   --bs-gutter-y: 0;
 }
 
+/*
+ * end custom fix for vibe
+ */
 .container {
   width: 100%;
   padding-right: 15px;
@@ -20389,6 +20399,18 @@ h6, .h6 {
   color: var(--primary);
 }
 
+.g-color-primary-dark-v1, .g-color-primary-dark-v1--hover:hover {
+  color: var(--primary-darken-1) !important;
+}
+
+.g-color-primary-dark-v2, .g-color-primary-dark-v2--hover:hover {
+  color: var(--primary-darken-2) !important;
+}
+
+.g-color-primary-dark-v3, .g-color-primary-dark-v3--hover:hover {
+  color: var(--primary-darken-3) !important;
+}
+
 /* Secondary Colors */
 .g-color-secondary {
   color: var(--theme-color-secondary) !important;
@@ -21282,12 +21304,6 @@ h6.g-color, .h6.g-color {
 .g-bg--after::after {
   background: transparent !important;
   background: var(--bg--after) !important;
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
   pointer-events: none;
 }
 
@@ -27126,4 +27142,77 @@ div.g-video-preview.--loader::after, div.g-video-preview.--loader:hover::after {
 .landing-main [data-pseudo-url*='"enabled":true}'],
 .landing-sidebar [data-pseudo-url*='"enabled":true}'] {
   cursor: pointer;
+}
+
+/* Styles for separator blocks */
+main:not(.landing-edit-mode) .block-26-2-separator,
+main:not(.landing-edit-mode) .block-26-3-separator,
+main:not(.landing-edit-mode) .block-26-4-separator,
+main:not(.landing-edit-mode) .block-26-5-separator,
+main:not(.landing-edit-mode) .block-26-6-separator-waves,
+main:not(.landing-edit-mode) .block-26-7-separator,
+main:not(.landing-edit-mode) .block-26-8-separator {
+  overflow: hidden;
+}
+
+.landing-edit-mode .block-26-2-separator .landing-block,
+.landing-edit-mode .block-26-3-separator .landing-block,
+.landing-edit-mode .block-26-4-separator .landing-block,
+.landing-edit-mode .block-26-5-separator .landing-block,
+.landing-edit-mode .block-26-6-separator-waves .landing-block,
+.landing-edit-mode .block-26-7-separator .landing-block,
+.landing-edit-mode .block-26-8-separator .landing-block {
+  margin: 0;
+}
+
+/* Styles for menu in store v3 */
+main:not(.landing-edit-mode) .block-store-menu-sidebar .landing-block {
+  overflow-y: auto;
+  height: calc(100vh - 100px);
+}
+
+/* GRID */
+.d-grid {
+  display: grid;
+}
+
+.bg-hover:hover .bg-hover-prev-white {
+  background-color: #fff !important;
+}
+
+.card-before::before {
+  position: relative;
+  top: 16px;
+  transition: 0.3s;
+}
+
+.color-hover:hover .color-hover-prev-before::before {
+  color: var(--color) !important;
+}
+
+.arrow-1::before,
+.arrow-1::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 12px;
+  border-radius: 9999px;
+  -webkit-transform-origin: 50% calc(100% - 1px);
+          transform-origin: 50% calc(100% - 1px);
+}
+
+.arrow-1::before {
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+}
+
+.arrow-1::after {
+  -webkit-transform: rotate(-45deg);
+          transform: rotate(-45deg);
+}
+
+.color-white {
+  color: #fff !important;
 }

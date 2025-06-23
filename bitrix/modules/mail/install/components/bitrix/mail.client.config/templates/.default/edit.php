@@ -128,7 +128,9 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 				<? if (!empty($mailbox)): ?>
 					<div class="mail-connect-section-block">
 						<div class="mail-connect-mailbox-block">
-							<div class="mail-connect-mailbox-name"><?=htmlspecialcharsbx($mailbox['EMAIL'] ?: sprintf('#%u', $mailbox['ID'])) ?></div>
+							<div class="mail-connect-mailbox-name">
+								<?=htmlspecialcharsbx($mailbox['EMAIL'] ?: sprintf('#%u', $mailbox['ID'])) ?>
+							</div>
 							<? if ($arResult['LAST_MAIL_CHECK_DATE'] > 0): ?>
 								<div class="mail-connect-last-sync-wrapper">
 							<span class="mail-connect-last-sync-title">
@@ -141,10 +143,6 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 										)
 									)
 								) ?>
-							</span>
-									<? $isSuccessSyncStatus = $arResult['LAST_MAIL_CHECK_STATUS']; ?>
-									<span class="mail-connect-last-sync-status mail-connect-last-sync-<?= $isSuccessSyncStatus ? 'success' : 'error'; ?> <?= is_null($isSuccessSyncStatus) ? 'mail-hidden-element' : ''; ?> ">
-								<?= Loc::getMessage('MAIL_CLIENT_CONFIG_LAST_MAIL_CHECK_' . ($isSuccessSyncStatus ? 'SUCCESS' : 'ERROR')); ?>
 							</span>
 								</div>
 							<? endif ?>
@@ -765,7 +763,6 @@ $arJsParams = [
 	}
 	else
 	{
-		top.BX.loadCSS('/bitrix/components/bitrix/mail.client.sidepanel/templates/.default/style.css');
 		top.BX.loadCSS('/bitrix/components/bitrix/mail.client.config/templates/.default/style.css');
 	}
 

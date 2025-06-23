@@ -66,8 +66,6 @@ if (!function_exists('renderNameColumn'))
 			HTML;
 		}
 
-		$isFeatureEnabled = $arResult['isFeatureEnabled'] ? 'Y' : 'N';
-
 		if ($data['demo'] && $data['editable'])
 		{
 			$isFeatureTrialable = Json::encode($arResult['isFeatureTrialable']);
@@ -75,25 +73,9 @@ if (!function_exists('renderNameColumn'))
 		}
 		else
 		{
-			$flowUri = new Uri(
-				CComponentEngine::makePathFromTemplate(
-					$arResult['pathToFlows'],
-				)
-			);
-			$host = Application::getInstance()->getContext()->getRequest()->getServer()->getHttpHost();
-
-			$flowUri->addParams(['ID_numsel' => 'exact']);
-			$flowUri->addParams(['ID_from' => $flowId]);
-			$flowUri->addParams(['ID_to' => $flowId]);
-			$flowUri->addParams(['apply_filter' => 'Y']);
-			$flowUri->setHost($host);
-			$url = $flowUri->getUri();
-
 			$nameClick = "BX.Tasks.Flow.ViewForm.showInstance({
 				flowId: $flowId,
 				bindElement: this,
-				isFeatureEnabled: '$isFeatureEnabled',
-				flowUrl: '$url',
 			})";
 		}
 

@@ -57,7 +57,7 @@ Loc::loadMessages(__FILE__);
 
 			if (
 				$feature === 'search'
-				&& SITE_TEMPLATE_ID === 'bitrix24'
+				&& (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 			)
 			{
 				?><input type="hidden" name="<?= $feature ?>_active"  value="<?= $featureActive ?>">

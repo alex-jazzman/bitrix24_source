@@ -322,7 +322,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						},
 						notifyAboutReadOnlyStatus: onFieldContentClick,
 						readOnly: view === ViewMode.DEADLINE
-							? !(canMoveStage && actions[TaskFieldActionAccess[Field.UPDATE_DEADLINE]])
+							? !(canMoveStage && actions[TaskFieldActionAccess[Field.DEADLINE]])
 							: !canMoveStage,
 						value: task.stageId,
 						view,

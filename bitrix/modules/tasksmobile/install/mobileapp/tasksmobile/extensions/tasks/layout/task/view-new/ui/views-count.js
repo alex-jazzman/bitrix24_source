@@ -8,9 +8,9 @@ jn.define('tasks/layout/task/view-new/ui/views-count', (require, exports, module
 	const { ViewerListManager } = require('layout/ui/viewer-list');
 	const { selectByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks');
 	const { Moment } = require('utils/date');
-	const { longDate, dayMonth } = require('utils/date/formats');
-	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { connect } = require('statemanager/redux/connect');
+	const { FriendlyDate } = require('layout/ui/friendly-date');
+	const { FormatterTypes } = require('layout/ui/friendly-date/formatter-factory');
 
 	const EntityType = {
 		TASK: 'TASK',
@@ -37,14 +37,12 @@ jn.define('tasks/layout/task/view-new/ui/views-count', (require, exports, module
 
 			const moment = Moment.createFromTimestamp(data.viewTimestamp);
 
-			const defaultFormat = (moment.inThisYear ? dayMonth() : longDate());
-
 			return new FriendlyDate({
 				moment,
-				defaultFormat,
 				showTime: true,
 				useTimeAgo: true,
-				futureAllowed: true,
+				futureAllowed: false,
+				formatType: FormatterTypes.HUMAN_DATE,
 				style: {
 					color: Color.base3.toHex(),
 				},

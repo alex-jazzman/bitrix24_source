@@ -25,6 +25,13 @@ export type FormattedQuestionType ={
 	fieldType: number,
 	totalCounter: number,
 	isMultiple: boolean,
+	answers: {
+		[AnswerId]: {
+			id: number,
+			message: string,
+			reaction: string,
+		}
+	},
 };
 
 export type AnswersSelectedEvent = {

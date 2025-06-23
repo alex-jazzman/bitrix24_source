@@ -6,7 +6,8 @@ import {FloatingScreenShare} from './floating_screenshare';
 import {FloatingScreenShareContent} from './floating_screenshare';
 import {CallHint} from './call_hint_popup'
 import {CallController} from './controller';
-import {CallEngine, CallEvent, EndpointDirection, UserState, Provider, CallType, CallState} from './engine/engine';
+import { CallEngine, CallEvent, EndpointDirection, UserState, Provider, CallType, CallState, DisconnectReason, CallScheme } from './engine/engine';
+import {CallEngineLegacy} from './engine/engine_legacy';
 import {Hardware} from './hardware';
 import Util from './util';
 import { CallAI } from './call_ai';
@@ -32,7 +33,9 @@ export {
 	CallEvent as Event,
 	CallHint as Hint,
 	CallState as State,
+	CallEngineLegacy as EngineLegacy,
 	EndpointDirection,
+	DisconnectReason,
 	FloatingScreenShare,
 	FloatingScreenShareContent,
 	IncomingNotificationContent,
@@ -49,6 +52,7 @@ export {
 	CopilotPopup,
 	UserList,
 	CallAI,
+	CallScheme,
 };
 
 // compatibility

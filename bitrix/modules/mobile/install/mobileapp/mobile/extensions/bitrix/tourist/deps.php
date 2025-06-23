@@ -1,8 +1,11 @@
 <?php
 
 return [
-    'extensions' => [
-        'rest',
-    ],
-    'bundle' => [],
+	'extensions' => [
+		'rest',
+		'rest/run-action-executor',
+	],
+	'bundle' => [
+		'./src/cache',
+	],
 ];

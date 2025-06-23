@@ -39,9 +39,14 @@ export const TitlePanel = {
 		{
 			const permissionChecker = PermissionChecker.getInstance();
 			this.canEditPermissions = permissionChecker
-				&& permissionChecker.hasPermissionOfAction(PermissionActions.accessEdit);
+				&& (permissionChecker.hasPermissionOfAction(PermissionActions.accessEdit)
+				|| permissionChecker.hasPermissionOfAction(PermissionActions.teamAccessEdit)
+				);
 			this.canAddNode = permissionChecker
-				&& permissionChecker.hasPermissionOfAction(PermissionActions.departmentCreate);
+				&& (
+					permissionChecker.hasPermissionWithAnyNode(PermissionActions.departmentCreate)
+					|| permissionChecker.hasPermissionWithAnyNode(PermissionActions.teamCreate)
+				);
 		}
 		catch (error)
 		{
@@ -66,9 +71,32 @@ export const TitlePanel = {
 		{
 			return Set;
 		},
-		toolbarStarIcon(): string
+		toolbarStarIcon(): string | null
 		{
-			return this.toolbarStarActive ? this.set.FAVORITE_1 : this.set.FAVORITE_0;
+			if (this.isAirTemplate)
+			{
+				return null;
+			}
+
+			if (this.isHovered || this.toolbarStarActive)
+			{
+				return this.set.FAVORITE_1;
+			}
+
+			return this.set.FAVORITE_0;
+		},
+		isAirTemplate(): boolean
+		{
+			return BX.Reflection.getClass('top.BX.Intranet.Bitrix24.Template') !== null;
+		},
+		toolbarClassIcon(): string
+		{
+			if (!this.isAirTemplate)
+			{
+				return 'humanresources-title-panel__star';
+			}
+
+			return this.toolbarStarActive ? 'humanresources-title-panel__unpin' : 'humanresources-title-panel__pin';
 		},
 	},
 
@@ -100,22 +128,25 @@ export const TitlePanel = {
 
 	template: `
 		<div class="humanresources-title-panel">
-		  <p class="humanresources-title-panel__title">
-		    {{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_TITLE') }}
-		  </p>
-		  <BIcon :name="isHovered ? set.FAVORITE_1 : toolbarStarIcon" :size="24" class="humanresources-title-panel__star"
-		               @mouseover="isHovered = true"
-		               @mouseleave="isHovered = false" @click="triggerFavoriteStar"
-		  ></BIcon>
-		  <div class="humanresources-title-panel__separator"></div>
-		  <AddButton
-			  v-if="canAddNode"
-		      @addDepartment="addDepartment"
-		  />
-		  <div class="humanresources-title-panel__separator" v-if="canAddNode"></div>
-		  <BurgerMenuButton v-if="canEditPermissions"/>
-		  <div class="humanresources-title-panel__separator" v-if="canEditPermissions"></div>
-		  <SearchBar @locate="onLocate"/>
+			<p class="humanresources-title-panel__title">
+				{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_TITLE') }}
+			</p>
+			<BIcon
+				:name="toolbarStarIcon"
+				:size="24"
+				color="rgba(149, 156, 164, 1)"
+				:class="toolbarClassIcon"
+				@mouseover="isHovered = true"
+				@mouseleave="isHovered = false" @click="triggerFavoriteStar"
+			></BIcon>
+			<AddButton
+				v-if="canAddNode"
+				@addDepartment="addDepartment"
+			/>
+			<div class="humanresources-title-panel__icon-buttons">
+				<BurgerMenuButton v-if="canEditPermissions"/>
+				<SearchBar @locate="onLocate"/>
+			</div>
 		</div>
 	`,
 };

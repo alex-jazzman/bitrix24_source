@@ -5,6 +5,7 @@ jn.define('im/messenger/provider/service/classes/chat/update', (require, exports
 	const { RestMethod } = require('im/messenger/const');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ChatRest } = require('im/messenger/provider/rest');
 
 	const logger = LoggerManager.getInstance().getLogger('update-service--chat');
 
@@ -104,6 +105,17 @@ jn.define('im/messenger/provider/service/classes/chat/update', (require, exports
 						return response;
 					},
 				);
+		}
+
+		/**
+		 * @desc rest update messages auto delete delay
+		 * @param {number} delay
+		 * @param {number} chatId
+		 * @return {Promise<{result:boolean}>}
+		 */
+		updateMessagesAutoDeleteDelay(delay, chatId)
+		{
+			return ChatRest.setMessagesAutoDeleteDelay({ delay, chatId });
 		}
 	}
 

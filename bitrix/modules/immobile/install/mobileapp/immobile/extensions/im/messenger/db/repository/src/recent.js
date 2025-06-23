@@ -222,6 +222,22 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			return result;
 		}
 
+		/**
+		 * @param {string} searchText
+		 * @param {'asc'|'desc'} order='asc'
+		 * @param {number} limit=25
+		 *
+		 * @returns {Promise<{items: *[]}>}
+		 */
+		async searchByText({
+			searchText,
+			order = 'desc',
+			limit = 25,
+		})
+		{
+			return this.recentTable.searchByText(searchText, order, limit);
+		}
+
 		prepareRecentMessage(fields)
 		{
 			const message = {};

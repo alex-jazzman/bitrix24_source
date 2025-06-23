@@ -285,6 +285,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.counter = serverTask.counter;
 			}
 
+			if (!Type.isUndefined(serverTask.shouldShowKanbanStages))
+			{
+				preparedTask.shouldShowKanbanStages = serverTask.shouldShowKanbanStages;
+			}
+
 			if (!Type.isUndefined(serverTask.actions))
 			{
 				const actions = FieldChangeRegistry.removeChangedFields(preparedTask.id, serverTask.actions);

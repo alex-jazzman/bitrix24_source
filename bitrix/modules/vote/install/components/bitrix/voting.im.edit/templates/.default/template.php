@@ -15,7 +15,7 @@ $APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('VOTE_IM_EDIT_C
 \Bitrix\Main\UI\Extension::load(['vote.component.vote-creation-form']);
 
 $containerId = 'vote-creation-form';
-$chatId = $arResult['CHAT_ID'] ?? '';
+$chatId = intval($arResult['CHAT_ID'] ?? 0);
 $maxQuestionsCount = \Bitrix\Vote\Integration\Im\ImVote::getMaxQuestionsCount();
 $minAnswersCount = \Bitrix\Vote\Integration\Im\ImVote::getMinAnswersCount();
 $maxAnswersCount = \Bitrix\Vote\Integration\Im\ImVote::getMaxAnswersCount();
@@ -25,7 +25,7 @@ $maxAnswersCount = \Bitrix\Vote\Integration\Im\ImVote::getMaxAnswersCount();
 <script>
 	const { App } = BX.Vote.Component;
 	App.mount({
-		chatId: '<?=$chatId?>',
+		chatId: <?=$chatId?>,
 		containerId: '<?=$containerId?>',
 		maxQuestionsCount: <?=$maxQuestionsCount?>,
 		minAnswersCount: <?=$minAnswersCount?>,

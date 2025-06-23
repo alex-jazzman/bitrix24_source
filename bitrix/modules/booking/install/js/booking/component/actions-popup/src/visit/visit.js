@@ -130,7 +130,10 @@ export const Visit = {
 		VisitMenu,
 	},
 	template: `
-		<div class="booking-actions-popup__item booking-actions-popup__item-visit-content">
+		<div
+			class="booking-actions-popup__item booking-actions-popup__item-visit-content"
+			:class="{'--disabled': disabled}"
+		>
 			<Loader v-if="isLoading" class="booking-actions-popup__item-visit-loader"/>
 			<template v-else>
 				<div :class="['booking-actions-popup-item-icon', iconClass]">

@@ -7,22 +7,29 @@ jn.define('entity-ready', (require, exports, module) => {
 		constructor()
 		{
 			this.readyEntitiesCollection = new Set();
+			this.eventHandlers = new Map();
+			this.checkReadyHandlers = new Map();
 			this.listenUnreadyEvent();
+			this.listenReadyEvent();
 		}
 
 		addCondition(entityId, condition)
 		{
 			if (typeof condition !== 'function')
 			{
+				// eslint-disable-next-line no-param-reassign
 				condition = () => condition === true;
 			}
 
-			BX.addCustomEvent('EntityReady::checkReady', () => {
+			const checkReadyHandler = () => {
 				if (condition())
 				{
 					BX.postComponentEvent('EntityReady::ready', [entityId]);
 				}
-			});
+			};
+
+			this.checkReadyHandlers.set(entityId, checkReadyHandler);
+			BX.addCustomEvent('EntityReady::checkReady', checkReadyHandler);
 		}
 
 		wait(entityId)
@@ -30,7 +37,9 @@ jn.define('entity-ready', (require, exports, module) => {
 			return new Promise((resolve) => {
 				if (this.readyEntitiesCollection.has(entityId))
 				{
-					return resolve();
+					resolve();
+
+					return;
 				}
 
 				const readyHandler = (readyEntityId) => {
@@ -39,11 +48,22 @@ jn.define('entity-ready', (require, exports, module) => {
 					if (readyEntityId === entityId)
 					{
 						resolve();
-						BX.removeCustomEvent('EntityReady::ready', (readyEntityId) => readyHandler(readyEntityId));
+
+						BX.removeCustomEvent('EntityReady::ready', this.eventHandlers.get(entityId));
+						this.eventHandlers.delete(entityId);
+
+						const checkReadyHandler = this.checkReadyHandlers.get(entityId);
+						if (checkReadyHandler)
+						{
+							BX.removeCustomEvent('EntityReady::checkReady', checkReadyHandler);
+							this.checkReadyHandlers.delete(entityId);
+						}
 					}
 				};
 
-				BX.addCustomEvent('EntityReady::ready', (entityId) => readyHandler(entityId));
+				this.eventHandlers.set(entityId, readyHandler);
+
+				BX.addCustomEvent('EntityReady::ready', readyHandler);
 				BX.postComponentEvent('EntityReady::checkReady', []);
 			});
 		}
@@ -67,6 +87,13 @@ jn.define('entity-ready', (require, exports, module) => {
 		{
 			BX.addCustomEvent('EntityReady::unready', (entityId) => {
 				this.readyEntitiesCollection.delete(entityId);
+			});
+		}
+
+		listenReadyEvent()
+		{
+			BX.addCustomEvent('EntityReady::ready', (entityId) => {
+				this.readyEntitiesCollection.add(entityId);
 			});
 		}
 	}

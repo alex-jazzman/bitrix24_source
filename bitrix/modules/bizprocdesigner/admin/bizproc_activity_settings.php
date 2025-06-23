@@ -271,7 +271,12 @@ else
 
 		if (array_key_exists($object, $checkMap))
 		{
-			if (!array_key_exists($field, $checkMap[$object]))
+			// usages excludes _printable from field key (ASSIGNED_BY_PRINTABLE -> ASSIGNED_BY)
+			if (
+				!array_key_exists($field, $checkMap[$object])
+				&& !array_key_exists($field . '_printable', $checkMap[$object])
+				&& !array_key_exists($field . '_PRINTABLE', $checkMap[$object])
+			)
 			{
 				if ($object === \Bitrix\Bizproc\Workflow\Template\SourceType::Parameter)
 				{
@@ -285,7 +290,12 @@ else
 		elseif ($object === \Bitrix\Bizproc\Workflow\Template\SourceType::Activity)
 		{
 			$activityUsage = CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $field);
-			if (!array_key_exists($returnField, $runtime->getActivityReturnProperties($activityUsage)))
+			$returnProperties = $runtime->getActivityReturnProperties($activityUsage);
+			if (
+				!array_key_exists($returnField, $returnProperties)
+				&& !array_key_exists($returnField . '_printable', $returnProperties)
+				&& !array_key_exists($returnField . '_PRINTABLE', $returnProperties)
+			)
 			{
 				$link = '{=' . $field . ':' . $returnField . '}';
 				$brokenLinks[$link] = htmlspecialcharsbx($link);

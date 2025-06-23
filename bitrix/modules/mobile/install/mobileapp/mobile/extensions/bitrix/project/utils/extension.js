@@ -3,6 +3,7 @@
  */
 (() => {
 	const require = (extension) => jn.require(extension);
+	const { CollabAccessService } = require('collab/service/access');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { qrauth } = require('qrauth/utils');
 	const { showToast } = require('toast');
@@ -163,7 +164,8 @@
 						SITE_DIR: siteDir,
 						LANGUAGE_ID: env.languageId,
 						PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
-						analyticsLabel: params.analyticsLabel,
+						ANALYTICS_LABEL: params.analyticsLabel,
+						isScrum: item.params?.isScrum,
 					},
 				},
 			};
@@ -352,8 +354,17 @@
 				return;
 			}
 
+			const isCollabToolEnabled = await CollabAccessService.checkAccess();
+
 			if (item)
 			{
+				if (item.type === 'collab' && !isCollabToolEnabled)
+				{
+					CollabAccessService.openAccessDeniedBox();
+
+					return;
+				}
+
 				WorkgroupUtil.openComponent(item, params);
 
 				return;
@@ -368,6 +379,13 @@
 						if (!data)
 						{
 							WorkgroupUtil.showProjectErrorToast();
+
+							return;
+						}
+
+						if (data.TYPE === 'collab' && !isCollabToolEnabled)
+						{
+							CollabAccessService.openAccessDeniedBox();
 
 							return;
 						}
@@ -388,6 +406,7 @@
 									opened: (data.OPENED || 'N'),
 									isCollab: data.TYPE === 'collab',
 									dialogId: data.DIALOG_ID,
+									isScrum: data.TYPE === 'scrum',
 								},
 							},
 							params,

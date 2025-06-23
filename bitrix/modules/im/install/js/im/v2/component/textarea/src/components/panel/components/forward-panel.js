@@ -6,7 +6,7 @@ import { Parser } from 'im.v2.lib.parser';
 import '../css/message-panel.css';
 
 import type { ImModelMessage, ImModelUser } from 'im.v2.model';
-import type { PanelContextWithMultipleIds } from 'im.v2.provider.service';
+import type { PanelContextWithMultipleIds } from 'im.v2.provider.service.sending';
 
 const MESSAGE_DISPLAY_LIMIT = 5;
 

@@ -1,0 +1,5 @@
+<?php
+$MESS["IM_SIDEBAR_CHANNEL_HEADER_TITLE"] = "About channel";
+$MESS["IM_SIDEBAR_COLLAB_HEADER_TITLE"] = "About collab";
+$MESS["IM_SIDEBAR_COMMENTS_HEADER_TITLE"] = "About post";
+$MESS["IM_SIDEBAR_HEADER_TITLE"] = "About chat";

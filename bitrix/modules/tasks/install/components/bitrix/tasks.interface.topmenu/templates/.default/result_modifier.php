@@ -23,6 +23,14 @@ use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Main\UI\Extension;
+
+
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
+if ($isV2Form)
+{
+	Extension::load('tasks.v2.application.task-card');
+}
 
 $isMenu = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === true;
 $arResult['BX24_RU_ZONE'] = ModuleManager::isModuleInstalled('bitrix24')
@@ -104,27 +112,29 @@ $taskEditLink->addParams([
 	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['horizontal_menu'],
 ]);
 
+$tasksSubLink = [
+	'CLASS' => '',
+	'URL' => $taskEditLink->getUri(),
+];
+
+if ($isV2Form)
+{
+	unset($tasksSubLink['URL']);
+	$analytics = [
+		'context' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
+		'additionalContext' => '',
+		'element' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['horizontal_menu'],
+	];
+	$tasksSubLink['ON_CLICK'] = '(new BX.Tasks.V2.Application.TaskCard({ analytics: '. \Bitrix\Main\Web\Json::encode($analytics) .' })).showCompactCard();';
+}
+
 $arResult['ITEMS'][] = array(
 	"TEXT" => GetMessage("TASKS_PANEL_TAB_TASKS"),
 	"URL" => $tasksLink . '?F_CANCEL=Y&F_SECTION=ADVANCED&F_STATE=sR' . $strIframe2,
 	"ID" => "view_all",
 	'CLASS' => $arParams['PROJECT_VIEW'] === 'Y' ? '' : 'tasks_role_link',
-	'SUB_LINK' => [
-		'CLASS' => '',
-		'URL' => $taskEditLink->getUri(),
-	],
-	"IS_ACTIVE" => (isset($arParams["MARK_TEMPLATES"]) && $arParams["MARK_TEMPLATES"] !== "Y" &&
-					isset($arParams["MARK_SECTION_PROJECTS"]) && $arParams["MARK_SECTION_PROJECTS"] !== "Y" &&
-					isset($arParams["MARK_SECTION_PROJECTS_LIST"]) && $arParams["MARK_SECTION_PROJECTS_LIST"] !== "Y" &&
-					isset($arParams["MARK_SECTION_FLOW_LIST"]) && $arParams["MARK_SECTION_FLOW_LIST"] !== "Y" &&
-					isset($arParams["MARK_SECTION_SCRUM_LIST"]) && $arParams["MARK_SECTION_SCRUM_LIST"] !== "Y" &&
-					isset($arParams["MARK_SECTION_MANAGE"]) && $arParams["MARK_SECTION_MANAGE"] !== "Y" &&
-					isset($arParams["MARK_SECTION_EMPLOYEE_PLAN"]) && $arParams["MARK_SECTION_EMPLOYEE_PLAN"] !== "Y" &&
-					isset($arParams["MARK_SECTION_REPORTS"]) && $arParams["MARK_SECTION_REPORTS"] !== "Y") &&
-					isset($arParams['DEFAULT_ROLEID']) &&
-					($arParams["MARK_RECYCLEBIN"] ?? 'N') !== "Y" &&
-					($arParams["MARK_SECTION_EFFECTIVE"] ?? 'N') !== "Y" &&
-					($arParams['DEFAULT_ROLEID'] === 'view_all' || $arParams['DEFAULT_ROLEID'] === ''), // need refactoring,
+	'SUB_LINK' => $tasksSubLink,
+	'IS_ACTIVE' => $arParams['MARK_SECTION_TASKS_LIST'] === 'Y',
 	'COUNTER' => $arResult['TOTAL'],
 	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_MEMBER_TOTAL,
 	'COUNTER_ACTIVE' => 'Y'
@@ -343,7 +353,41 @@ if (!$isCollaber)
 		],
 	];
 
-	$efficiencyMenu['ITEMS'] = array_merge($efficiencyMenu['ITEMS'], $flowsBIMenuItem);
+	/** @var string[] $efficiencyItemsIds */
+	$efficiencyItemsIds = array_column($efficiencyMenu['ITEMS'], 'ID');
+	foreach ($efficiencyItemsIds as &$efficiencyItemsId)
+	{
+		$pos = strrpos($efficiencyItemsId, '_');
+		if ($pos !== false)
+		{
+			$tail = substr($efficiencyItemsId, $pos + 1);
+			if (!empty($tail))
+			{
+				$efficiencyItemsId = $tail;
+			}
+		}
+	}
+
+	$efficiencyMenu['ITEMS'] = array_merge(
+		$efficiencyMenu['ITEMS'],
+		array_filter(
+			$flowsBIMenuItem,
+			function ($item) use ($efficiencyItemsIds) {
+				$itemId = $item['ID'] ?? '';
+				$pos = strrpos($itemId, '_');
+				if ($pos !== false)
+				{
+					$tail = substr($itemId, $pos + 1);
+					if (!empty($tail))
+					{
+						return !in_array($tail, $efficiencyItemsIds, true);
+					}
+				}
+
+				return true;
+			}
+		)
+	);
 
 	$efficiencyItem = [
 		'TEXT' => Loc::getMessage('TASKS_PANEL_TAB_EFFECTIVE'),

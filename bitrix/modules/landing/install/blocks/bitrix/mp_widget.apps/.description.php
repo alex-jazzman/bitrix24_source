@@ -52,7 +52,7 @@ $return = [
 	],
 	'style' => [
 		'block' => [
-			'type' => ['margin-bottom', 'widget-type'],
+			'type' => ['margin-bottom', 'widget-type', 'font-family'],
 		],
 	],
 ];

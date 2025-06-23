@@ -15,7 +15,6 @@ if (Loader::includeModule('booking'))
 }
 
 return [
-	'css' => 'dist/core.bundle.css',
 	'js' => 'dist/core.bundle.js',
 	'rel' => [
 		'main.core',
@@ -31,6 +30,7 @@ return [
 		'booking.model.favorites',
 		'booking.model.dictionary',
 		'booking.model.main-resources',
+		'booking.model.wait-list',
 		'booking.provider.pull.booking-pull-manager',
 	],
 	'skip_core' => false,

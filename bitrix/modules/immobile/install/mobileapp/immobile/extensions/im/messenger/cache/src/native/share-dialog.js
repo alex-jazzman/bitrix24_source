@@ -4,23 +4,27 @@
  * @module im/messenger/cache/share-dialog
  */
 jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
-	const { clone } = require('utils/object');
 	const { throttle } = require('utils/function');
 	const { utils } = require('native/im');
+
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ComponentCode } = require('im/messenger/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title'); // TODO: refactor, after splitting into separate extensions im/messenger/lib/element and  im/messenger/provider/service
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar'); // TODO: refactor, after splitting into separate extensions im/messenger/lib/element and  im/messenger/provider/service
 
 	class ShareDialogCache
 	{
 		constructor()
 		{
 			this.saveRecentItemList = throttle(this.saveRecentItemList, 10000, this);
+			this.store = serviceLocator.get('core').getStore();
 		}
 
-		saveRecentItemList(recentItemList)
+		saveRecentItemList()
 		{
-			recentItemList = clone(recentItemList);
+			const recentFirstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
 
 			return new Promise((resolve, reject) => {
 				const componentCode = MessengerParams.getComponentCode();
@@ -31,30 +35,34 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 					return;
 				}
 
-				recentItemList = recentItemList.map((item) => {
+				const formattedRecentList = recentFirstPage.map((item) => {
 					let lastMessageTimestamp = 0;
 					if (item.message && item.message.id !== 0 && item.message.date)
 					{
-						lastMessageTimestamp = +DateHelper.cast(item.message.date);
+						lastMessageTimestamp = Number(DateHelper.cast(item.message.date));
 					}
+
+					const chatAvatar = ChatAvatar.createFromDialogId(item.id);
+					const chatTitle = ChatTitle.createFromDialogId(item.id);
+					const color = chatAvatar.getRecentItemAvatarProps().placeholder.backgroundColor;
 
 					return {
 						id: item.id,
-						title: item.title,
-						subTitle: '',
-						imageUrl: item.avatar ? item.avatar : '',
-						color: item.color,
+						title: chatTitle.getTitle(),
+						subTitle: chatTitle.getDescription(),
+						imageUrl: chatAvatar.getAvatarUrl(),
+						color,
 						lastMessageTimestamp,
 					};
 				});
 
-				utils.setRecentUsers(recentItemList);
-				resolve(recentItemList);
+				utils.setRecentUsers(formattedRecentList);
+				resolve(formattedRecentList);
 			});
 		}
 	}
 
 	module.exports = {
-		ShareDialogCache: new ShareDialogCache(),
+		ShareDialogCache,
 	};
 });

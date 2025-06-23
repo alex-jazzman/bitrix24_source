@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_SERVICE_FORM_CATEGORY_BOOKING"] = "Онлайн-жазылу";
 $MESS["CRM_SERVICE_FORM_CATEGORY_CRM"] = "Клиенттермен коммуникация";
 $MESS["CRM_SERVICE_FORM_CATEGORY_CRM_AUTOMATION"] = "Өрістерді автоматты түрде толтыру";
 $MESS["CRM_SERVICE_FORM_CATEGORY_CRM_FILLING"] = "CRM толтыру";

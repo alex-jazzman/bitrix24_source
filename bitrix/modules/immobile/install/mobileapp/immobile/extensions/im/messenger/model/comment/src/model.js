@@ -57,6 +57,52 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 			},
 
 			/**
+			 * @function commentModel/getRelationCommentInfoByCommentChatIdList
+			 * @return {Array<RelationCommentInfo>}
+			 */
+			getRelationCommentInfoByCommentChatIdList: (state, getters, rootState, rootGetters) => (commentChatIdList) => {
+				if (!Type.isArrayFilled(commentChatIdList))
+				{
+					return [];
+				}
+
+				/**
+				 * @param {number} commentChatId
+				 * @return {RelationCommentInfo|null}
+				 */
+				const createRelationCommentInfoByCommentChatId = (commentChatId) => {
+					/** @type {CommentInfoModelState | undefined} */
+					const commentInfo = getters.getCommentInfoByCommentChatId(commentChatId);
+					if (!commentInfo)
+					{
+						return null;
+					}
+
+					/**
+					 * @type {RelationCommentInfo}
+					 */
+					const relationCommentInfo = {
+						commentChatId: commentInfo.chatId,
+						parentMessageId: commentInfo.messageId,
+						parentChatId: 0,
+					};
+
+					const message = rootGetters['messagesModel/getById'](commentInfo.messageId);
+					if (Type.isNumber(message.id))
+					{
+						relationCommentInfo.parentChatId = message.chatId;
+					}
+
+					return relationCommentInfo;
+				};
+
+				return commentChatIdList
+					.map((commentChatId) => createRelationCommentInfoByCommentChatId(commentChatId))
+					.filter((relationCommentInfo) => !Type.isNull(relationCommentInfo))
+				;
+			},
+
+			/**
 			 * @function commentModel/getAllCounters
 			 * @param state
 			 * @return {number}
@@ -254,6 +300,33 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 				});
 			},
 
+			/** @function commentModel/clearAllCounters */
+			clearAllCounters: (store, payload) => {
+				const affectedChannels = [];
+				const affectedComments = [];
+
+				const countersMap = clone(store.state.countersCollection);
+				Object.keys(countersMap).forEach((channelChatId) => {
+					Object.keys(countersMap[channelChatId]).forEach((commentChatId) => {
+						if (countersMap[channelChatId][commentChatId] !== 0)
+						{
+							affectedChannels.push(channelChatId);
+							affectedComments.push(commentChatId);
+							countersMap[channelChatId][commentChatId] = 0;
+						}
+					});
+				});
+
+				store.commit('setCounters', {
+					actionName: 'clearAllCounters',
+					data: {
+						affectedComments,
+						affectedChannels,
+						chatCounterMap: countersMap,
+					},
+				});
+			},
+
 			/** @function commentModel/deleteComments */
 			deleteComments: (store, payload) => {
 				store.commit('deleteComments', {
@@ -266,7 +339,7 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 			deleteChannelCounters: (store, payload) => {
 				const { channelId } = payload;
 				if (
-					store.state.countersCollection[channelId]
+					!store.state.countersCollection[channelId]
 					&& store.getters.getChannelCounters(channelId) === 0
 				)
 				{

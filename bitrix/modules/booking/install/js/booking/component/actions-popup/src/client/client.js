@@ -19,16 +19,18 @@ export type { UpdateNotePayload } from './note/note';
 
 const SidePanel = SidePanelMain || BX.SidePanel;
 
+// @vue/component
 export const Client = {
 	name: 'ActionsPopupClient',
 	directives: { lazyload, hint },
-	emits: [
-		'freeze',
-		'unfreeze',
-		'addClients',
-		'updateClients',
-		'updateNote',
-	],
+	components: {
+		Button,
+		Icon,
+		Loader,
+		Empty,
+		Note,
+		EditClientButton,
+	},
 	props: {
 		id: {
 			type: [Number, String],
@@ -60,7 +62,18 @@ export const Client = {
 			type: String,
 			default: '',
 		},
+		dataAttributes: {
+			type: Object,
+			default: null,
+		},
 	},
+	emits: [
+		'freeze',
+		'unfreeze',
+		'addClients',
+		'updateClients',
+		'updateNote',
+	],
 	data(): Object
 	{
 		return {
@@ -152,14 +165,6 @@ export const Client = {
 			SidePanel.Instance.open(`/crm/${entity}/details/${this.client.id}/`);
 		},
 	},
-	components: {
-		Button,
-		Icon,
-		Loader,
-		Empty,
-		Note,
-		EditClientButton,
-	},
 	template: `
 		<div class="booking-actions-popup__item booking-actions-popup__item-client">
 			<div class="booking-actions-popup__item-client-client">
@@ -197,7 +202,7 @@ export const Client = {
 						<div class="booking-actions-popup-item-buttons booking-actions-popup__item-client-info-btn">
 							<Button
 								:data-element="dataElementPrefix + '-menu-client-open'"
-								:data-booking-id="dataId"
+								v-bind="dataAttributes"
 								class="booking-actions-popup-item-client-open-button"
 								:text="loc('BB_ACTIONS_POPUP_CLIENT_BTN_LABEL')"
 								:size="ButtonSize.EXTRA_SMALL"
@@ -208,8 +213,8 @@ export const Client = {
 							<EditClientButton
 								:id
 								:clients
-								:dataId
 								:dataElementPrefix
+								:dataAttributes
 								@visible="$emit('freeze')"
 								@invisible="$emit('unfreeze')"
 								@updateClients="$emit('updateClients', $event)"
@@ -235,6 +240,7 @@ export const Client = {
 				:dataId
 				:dataElementPrefix
 				:note
+				:dataAttributes
 				@popupShown="$emit('freeze')"
 				@popupClosed="$emit('unfreeze')"
 				@updateNote="$emit('updateNote', $event)"

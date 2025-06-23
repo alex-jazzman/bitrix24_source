@@ -168,45 +168,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        result.push(this.getItemIdByAccessCode(accessCode));
 	      }
 	      return result;
-	    }
+	    },
+	    ...ui_vue3_vuex.mapState({
+	      options: state => state.application.options,
+	      addUserGroupsProviderTab: state => state.application.options.additionalMembersParams.addUserGroupsProviderTab,
+	      addProjectsProviderTab: state => state.application.options.additionalMembersParams.addProjectsProviderTab,
+	      addStructureTeamsProviderTab: state => state.application.options.additionalMembersParams.addStructureTeamsProviderTab
+	    })
 	  },
 	  mounted() {
+	    const entities = this.getEntities();
 	    new ui_entitySelector.Dialog({
 	      enableSearch: true,
 	      context: EntitySelectorContext.MEMBER,
 	      alwaysShowLabels: true,
-	      entities: [{
-	        id: 'user',
-	        options: {
-	          intranetUsersOnly: true,
-	          emailUsers: false,
-	          inviteEmployeeLink: false,
-	          inviteGuestLink: false
-	        }
-	      }, {
-	        id: 'department',
-	        options: {
-	          selectMode: 'usersAndDepartments',
-	          allowSelectRootDepartment: true,
-	          allowFlatDepartments: true
-	        }
-	      }, {
-	        id: 'project',
-	        dynamicLoad: true,
-	        options: {
-	          addProjectMetaUsers: true
-	        },
-	        itemOptions: {
-	          default: {
-	            link: '',
-	            linkTitle: ''
-	          }
-	        }
-	      }, {
-	        id: 'site-groups',
-	        dynamicLoad: true,
-	        dynamicSearch: true
-	      }],
+	      entities,
 	      targetNode: this.bindNode,
 	      preselectedItems: this.selectedItems,
 	      cacheable: false,
@@ -242,11 +218,24 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        const groupId = match ? match[1] : null;
 	        return ['site-groups', groupId];
 	      }
+	      if (accessCode.at(0) === 'A') {
+	        return ['user-groups', accessCode];
+	      }
 	      if (/^SG(\d+)_([AEK])$/.test(accessCode)) {
 	        const match = accessCode.match(/^SG(\d+)_([AEK])$/) || null;
 	        const projectId = match ? match[1] : null;
 	        const postfix = match ? match[2] : null;
 	        return ['project', `${projectId}:${postfix}`];
+	      }
+	      if (/^SNT(\d+)$/.test(accessCode)) {
+	        const match = accessCode.match(/^SNT(\d+)$/) || null;
+	        const structureNodeId = match ? match[1] : null;
+	        return ['structure-node', `${structureNodeId}:F`];
+	      }
+	      if (/^SNTR(\d+)$/.test(accessCode)) {
+	        const match = accessCode.match(/^SNTR(\d+)$/) || null;
+	        const structureNodeId = match ? match[1] : null;
+	        return ['structure-node', structureNodeId];
 	      }
 	      return ['unknown', accessCode];
 	    },
@@ -294,8 +283,19 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        // whole department recursively
 	        return `DR${item.id}`;
 	      }
+	      if (entityId === 'structure-node') {
+	        if (main_core.Type.isString(item.id) && item.id.endsWith(':F')) {
+	          const match = item.id.match(/^(\d+):F$/);
+	          const originalId = match ? match[1] : null;
+	          return `SNT${originalId}`;
+	        }
+	        return `SNTR${item.id}`;
+	      }
 	      if (entityId === 'site-groups') {
 	        return `G${item.id}`;
+	      }
+	      if (entityId === 'user-groups') {
+	        return item.id;
 	      }
 	      if (entityId === 'project') {
 	        const subType = item.customData.get('metauser');
@@ -324,11 +324,75 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	          return 'sonetgroups';
 	        case 'group':
 	          return 'groups';
+	        case 'structure-node':
+	          return 'structureteams';
 	        case 'site-groups':
+	        case 'user-groups':
 	          return 'usergroups';
 	        default:
 	          return '';
 	      }
+	    },
+	    getEntities() {
+	      const entities = [{
+	        id: 'user',
+	        options: {
+	          intranetUsersOnly: true,
+	          emailUsers: false,
+	          inviteEmployeeLink: false,
+	          inviteGuestLink: false
+	        }
+	      }, {
+	        id: 'department',
+	        options: {
+	          selectMode: 'usersAndDepartments',
+	          allowSelectRootDepartment: true,
+	          allowFlatDepartments: true
+	        }
+	      }, {
+	        id: 'site-groups',
+	        dynamicLoad: true,
+	        dynamicSearch: true
+	      }];
+	      if (this.addStructureTeamsProviderTab) {
+	        entities.push({
+	          id: 'structure-node',
+	          options: {
+	            selectMode: 'usersAndDepartments',
+	            allowSelectRootDepartment: true,
+	            allowFlatDepartments: true,
+	            includedNodeEntityTypes: ['team'],
+	            useMultipleTabs: true,
+	            visual: {
+	              avatarMode: 'node',
+	              tagStyle: 'none'
+	            }
+	          }
+	        });
+	      }
+	      if (this.addProjectsProviderTab) {
+	        entities.push({
+	          id: 'project',
+	          dynamicLoad: true,
+	          options: {
+	            addProjectMetaUsers: true
+	          },
+	          itemOptions: {
+	            default: {
+	              link: '',
+	              linkTitle: ''
+	            }
+	          }
+	        });
+	      }
+	      if (this.addUserGroupsProviderTab) {
+	        entities.push({
+	          id: 'user-groups',
+	          dynamicLoad: true,
+	          options: {}
+	        });
+	      }
+	      return entities;
 	    }
 	  },
 	  // just a template stub
@@ -357,6 +421,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      }
 	      if (this.member.type === 'usergroups') {
 	        return 'ui-icon-common-user-group';
+	      }
+	      if (this.member.type === 'structureteams') {
+	        return 'ui-icon-common-my-plan';
 	      }
 	      return 'ui-icon-common-user';
 	    }
@@ -1033,6 +1100,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	/**
 	 * A special case of Section
 	 */
+	// @vue/component
 	const Header = {
 	  name: 'Header',
 	  components: {
@@ -1043,14 +1111,14 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    ColumnLayout,
 	    CellLayout
 	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
 	  props: {
 	    userGroups: {
 	      type: Map,
 	      required: true
 	    }
-	  },
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapState({
@@ -3119,7 +3187,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      return ServiceLocator.getHint(this.guid);
 	    }
 	  },
-	  template: '<span ref="container"></span>'
+	  template: '<span class="ui-access-rights-v2-hint-container" ref="container"></span>'
 	};
 
 	const Header$2 = {
@@ -3275,7 +3343,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		<div
 			class='ui-access-rights-v2-column-item-text ui-access-rights-v2-column-item-title'
 			@click="toggleGroup"
-			:title="right.title"
 			:style="{
 				cursor: right.groupHead ? 'pointer' : null,
 			}"
@@ -3290,10 +3357,12 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					'--plus-in-circle': !right.isGroupExpanded,
 				}"
 			></span>
-			<span class="ui-access-rights-v2-text-ellipsis" :style="{
+			<span class="ui-access-rights-v2-text-wrap" :style="{
 				'margin-left': !right.groupHead && !right.group ? '23px' : null,
-			}">{{ right.title }}</span>
-			<Hint v-once v-if="right.hint" :html="right.hint" />
+			}">
+				{{ right.title }}
+				<Hint v-once v-if="right.hint" :html="right.hint" />
+			</span>
 		</div>
 		<div
 			ref="icon" 
@@ -3373,6 +3442,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	`
 	};
 
+	// @vue/component
 	const Section = {
 	  name: 'Section',
 	  components: {
@@ -4728,6 +4798,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  // noinspection OverlyComplexFunctionJS
 	  transform(externalSource) {
+	    var _externalSource$addit, _externalSource$addit2, _externalSource$addit3, _externalSource$addit4, _externalSource$addit5, _externalSource$addit6;
 	    // freeze tells vue that we don't need reactivity on this state
 	    // and prevents accidental modification as well
 	    return babelHelpers.classPrivateFieldLooseBase(this, _deepFreeze)[_deepFreeze]({
@@ -4738,7 +4809,16 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      additionalSaveParams: main_core.Type.isPlainObject(externalSource.additionalSaveParams) ? externalSource.additionalSaveParams : null,
 	      isSaveOnlyChangedRights: main_core.Type.isBoolean(externalSource.isSaveOnlyChangedRights) ? externalSource.isSaveOnlyChangedRights : false,
 	      maxVisibleUserGroups: main_core.Type.isInteger(externalSource.maxVisibleUserGroups) ? externalSource.maxVisibleUserGroups : null,
-	      searchContainerSelector: main_core.Type.isStringFilled(externalSource.searchContainerSelector) ? externalSource.searchContainerSelector : null
+	      searchContainerSelector: main_core.Type.isStringFilled(externalSource.searchContainerSelector) ? externalSource.searchContainerSelector : null,
+	      additionalMembersParams: main_core.Type.isPlainObject(externalSource.additionalMembersParams) ? {
+	        addUserGroupsProviderTab: Boolean((_externalSource$addit = (_externalSource$addit2 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit2.addUserGroupsProviderTab) != null ? _externalSource$addit : false),
+	        addProjectsProviderTab: Boolean((_externalSource$addit3 = (_externalSource$addit4 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit4.addProjectsProviderTab) != null ? _externalSource$addit3 : true),
+	        addStructureTeamsProviderTab: Boolean((_externalSource$addit5 = (_externalSource$addit6 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit6.addStructureTeamsProviderTab) != null ? _externalSource$addit5 : false)
+	      } : {
+	        addUserGroupsProviderTab: false,
+	        addProjectsProviderTab: true,
+	        addStructureTeamsProviderTab: false
+	      }
 	    });
 	  }
 	}

@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/model/dialogues/default-element', (require, exports, module) => {
-	const { DialogType, UserRole, Color } = require('im/messenger/const');
+	const { DialogType, UserRole, Color, DialogBackgroundId } = require('im/messenger/const');
 
 	const dialogDefaultElement = Object.freeze({
 		dialogId: '0',
@@ -53,15 +53,22 @@ jn.define('im/messenger/model/dialogues/default-element', (require, exports, mod
 			manageUsersDelete: UserRole.none,
 			manageUi: UserRole.none,
 			manageSettings: UserRole.none,
-			canPost: UserRole.none,
 		},
 		tariffRestrictions: {
 			isHistoryLimitExceeded: false,
 		},
+		messagesAutoDeleteDelay: 0,
+		textFieldEnabled: true,
+		backgroundId: DialogBackgroundId.default,
 		aiProvider: '',
 		parentChatId: 0, // unsafe in local database
 		parentMessageId: 0, // unsafe in local database
 		messageCount: 0, // unsafe in local database
+		recentConfig: { // unsafe in local database
+			chatId: 0,
+			sections: [],
+		},
+		containsCollaber: false,
 	});
 
 	module.exports = {

@@ -7,6 +7,6 @@ return [
 		'layout/ui/plan-restriction',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
-		'im:messenger/provider/service',
+		'im:messenger/provider/services/analytics',
 	],
 ];

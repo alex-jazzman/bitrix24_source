@@ -703,6 +703,32 @@ jn.define('selector/widget', (require, exports, module) => {
 			}
 		}
 
+		disableCreation()
+		{
+			this.createOptions.enableCreation = false;
+			this.createOptions.canCreateWithEmptySearch = false;
+			this.widget.setRightButtons([]);
+		}
+
+		enableCreation(handler = () => {})
+		{
+			this.createOptions = {
+				...this.createOptions,
+				enableCreation: true,
+				canCreateWithEmptySearch: true,
+				handler,
+			};
+			this.widget.setRightButtons([
+				{
+					type: 'plus',
+					testId: 'ENTITY_SELECTOR_PLUS_BUTTON',
+					callback: () => {
+						this.createItems(this.queryText);
+					},
+				},
+			]);
+		}
+
 		isCreationModeActive()
 		{
 			const { canCreateWithEmptySearch, enableCreation } = this.createOptions;

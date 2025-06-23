@@ -844,7 +844,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "fasten",
 	    value: function fasten(e) {
-	      if (this._fixedHistory._items.length >= 3) {
+	      if (this._fixedHistory._items.length >= 7) {
 	        if (!this.fastenLimitPopup) {
 	          this.fastenLimitPopup = new BX.PopupWindow('timeline_fasten_limit_popup_' + this._id, this._switcher, {
 	            content: BX.message('CRM_TIMELINE_FASTEN_LIMIT_MESSAGE'),
@@ -1809,7 +1809,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (menu) {
 	        menu.close();
 	      }
-	      void new Action(item.action).execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
+	      const action = new Action(item.action);
+	      void action.execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
 	    }
 	  }], [{
 	    key: "showMenu",
@@ -1919,7 +1920,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          _classPrivateMethodGet$1(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
 	          _classPrivateMethodGet$1(this, _sendAnalytics, _sendAnalytics2).call(this);
 	          resolve(true);
-	        } else if (this.isAjaxAction()) {
+	        } else if (this.isAjaxAction() || this.isAjaxJsonAction()) {
 	          _classPrivateMethodGet$1(this, _startAnimation, _startAnimation2).call(this, vueComponent);
 	          vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	            action: babelHelpers.classPrivateFieldGet(this, _value),
@@ -1927,7 +1928,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
 	          });
 	          const ajaxConfig = {
-	            data: _classPrivateMethodGet$1(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
+	            [this.isAjaxJsonAction() ? 'json' : 'data']: _classPrivateMethodGet$1(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
 	          };
 	          if (babelHelpers.classPrivateFieldGet(this, _analytics)) {
 	            ajaxConfig.analytics = babelHelpers.classPrivateFieldGet(this, _analytics);
@@ -1953,7 +1954,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              actionParams: babelHelpers.classPrivateFieldGet(this, _actionParams),
 	              response
 	            });
-	            reject(response);
+	            resolve(response);
 	          });
 	        } else if (this.isCallRestBatch()) {
 	          _classPrivateMethodGet$1(this, _startAnimation, _startAnimation2).call(this, vueComponent);
@@ -2041,6 +2042,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "isAjaxAction",
 	    value: function isAjaxAction() {
 	      return babelHelpers.classPrivateFieldGet(this, _type) === 'runAjaxAction';
+	    }
+	  }, {
+	    key: "isAjaxJsonAction",
+	    value: function isAjaxJsonAction() {
+	      return babelHelpers.classPrivateFieldGet(this, _type) === 'runAjaxJsonAction';
 	    }
 	  }, {
 	    key: "isCallRestBatch",
@@ -4327,10 +4333,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
 	      if (menuBar) {
 	        menuBar.setActiveItemById('todo');
-	        const todoEditor = menuBar.getItemById('todo');
-	        todoEditor.focus();
-	        todoEditor.setParentActivityId(activityId);
-	        todoEditor.setDeadLine(scheduleDate);
+	        menuBar.scrollIntoView();
+	        setTimeout(() => {
+	          const todoEditor = menuBar.getItemById('todo');
+	          todoEditor.focus();
+	          todoEditor.setParentActivityId(activityId);
+	          todoEditor.setDeadLine(scheduleDate);
+	        }, 250);
 	      }
 	    }
 	  }], [{
@@ -6204,8 +6213,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          const info = list[i];
 	          const icon = BX.create("i");
 	          const imageUrl = BX.prop.getString(info, "avatar", "");
-	          if (imageUrl !== "") {
-	            icon.style.backgroundImage = "url(" + encodeURI(imageUrl) + ")";
+	          if (main_core.Type.isStringFilled(imageUrl)) {
+	            icon.style.backgroundImage = "url('" + encodeURI(main_core.Text.encode(imageUrl)) + "')";
 	          }
 	          this._userWrapper.appendChild(BX.create("span", {
 	            props: {

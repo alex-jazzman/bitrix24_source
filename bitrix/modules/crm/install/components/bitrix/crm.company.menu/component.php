@@ -444,9 +444,6 @@ if($arParams['TYPE'] === 'list')
 			'ICON' => 'btn-export'
 		);
 
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
-
-
 		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
 	}
 

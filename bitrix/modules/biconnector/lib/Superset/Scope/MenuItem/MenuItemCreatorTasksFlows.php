@@ -20,16 +20,16 @@ class MenuItemCreatorTasksFlows extends BaseMenuItemCreator
 		$menuItems = [];
 		foreach ($dashboards as $dashboard)
 		{
+			$url = $this->getDetailUrl(
+				$dashboard,
+				$params,
+				['openFrom' => 'menu']
+			);
+
 			$menuItems[] = [
 				'ID' => "BIC_TASKS_FLOWS_DASHBOARD_{$dashboard->getId()}",
 				'TEXT' => $dashboard->getTitle(),
-				'URL' => $this->getDetailUrl(
-					$dashboard,
-					$params,
-					[
-						'openFrom' => 'flows',
-					]
-				),
+				'URL' => $url,
 			];
 		}
 

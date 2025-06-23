@@ -102,7 +102,7 @@ final class FieldRepository
 		bool $feminine = false
 	): ScalarField
 	{
-		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_TIME';
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_TIME_V2';
 		$this->prepareMessageCode($messageCode, $feminine);
 
 		return
@@ -163,7 +163,7 @@ final class FieldRepository
 		bool $feminine = false
 	): ScalarField
 	{
-		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_BY';
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_BY_V2';
 		$this->prepareMessageCode($messageCode, $feminine);
 
 		return

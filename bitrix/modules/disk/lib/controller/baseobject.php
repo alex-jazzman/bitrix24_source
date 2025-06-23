@@ -5,9 +5,12 @@ namespace Bitrix\Disk\Controller;
 use Bitrix\Disk;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\Error;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
@@ -202,6 +205,14 @@ abstract class BaseObject extends Internals\Engine\Controller
 			return null;
 		}
 
+		if ($object->getType() == Internals\ObjectTable::TYPE_FILE && $object->getRealObject()->getTypeFile() == Disk\TypeFile::FLIPCHART)
+		{
+			Application::getInstance()->addBackgroundJob(function() {
+				$event = new AnalyticsEvent('turnon_publiclink', 'boards', 'boards');
+				$event->send();
+			});
+		}
+
 		return $this->parseExternalLinkObject($extLink, $object);
 	}
 
@@ -307,5 +318,13 @@ abstract class BaseObject extends Internals\Engine\Controller
 		return [
 			'operations' => $operations,
 		];
+	}
+
+	protected function checkExternalLinkFeature(Disk\File $file): bool
+	{
+		$isBoardType = (int)$file->getTypeFile() === Disk\TypeFile::FLIPCHART;
+		$featureName = $isBoardType ? 'disk_board_external_link' : 'disk_manual_external_link';
+
+		return Bitrix24Manager::isFeatureEnabled($featureName);
 	}
 }

@@ -5,6 +5,8 @@ import { ActionMenu } from './components/menu/action-menu';
 import { UserListActionMenu } from './components/menu/user-list-action-menu';
 import { ConfirmationPopup } from './components/popup/confirmation-popup';
 import { Hint } from './directives/hint';
+import { ManagementDialog } from './components/management-dialog/management-dialog';
+import { getChatDialogEntity, getChannelDialogEntity, getChatRecentTabOptions, ChatTypeDict } from './options/selectors';
 
 export {
 	BasePopup,
@@ -14,4 +16,9 @@ export {
 	UserListActionMenu,
 	ConfirmationPopup,
 	Hint,
+	ManagementDialog,
+	getChatDialogEntity,
+	getChannelDialogEntity,
+	getChatRecentTabOptions,
+	ChatTypeDict,
 };

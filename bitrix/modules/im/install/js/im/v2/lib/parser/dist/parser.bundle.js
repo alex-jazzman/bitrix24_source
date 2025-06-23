@@ -270,8 +270,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getTextForFile(rawText, files) {
 	    let preparedText = rawText;
 	    if (main_core.Type.isArray(files) && files.length > 0) {
-	      const [firstFile] = files;
-	      preparedText = this.getIconTextForFile(rawText, firstFile);
+	      preparedText = this.getIconTextForFile(rawText, files);
 	    } else if (files === true) {
 	      preparedText = this.getIconTextForFileType(rawText, FileIconType.file);
 	    }
@@ -316,15 +315,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    return result.trim();
 	  },
-	  getIconTextForFile(text, file) {
+	  getIconTextForFile(text, files) {
 	    const withText = text.replace(/(\s|\n)/gi, '').length > 0;
+	    const [file] = files;
 
 	    // todo: remove this hack after fix receiving messages with files on P&P
 	    if (!file || !file.type) {
 	      return text;
 	    }
-	    if (file.type === FileType.image) {
+	    const isGallery = files.every(file => [FileIconType.image, FileIconType.video].includes(file.type));
+	    if (file.type === FileType.image && files.length === 1) {
 	      return this.getIconTextForFileType(text, FileIconType.image);
+	    } else if (isGallery && files.length > 1) {
+	      return this.getIconTextForFileType(text, FileIconType.gallery);
 	    } else if (file.type === FileType.audio) {
 	      return this.getIconTextForFileType(text, FileIconType.audio);
 	    } else if (file.type === FileType.video) {
@@ -1079,6 +1082,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const {
+	  UserType,
 	  EventType: EventType$2,
 	  MessageMentionType: MessageMentionType$1
 	} = getConst();
@@ -1089,8 +1093,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!main_core.Type.isNumber(userId) || userId === 0) {
 	        return userName;
 	      }
+	      const user = getCore().getStore().getters['users/get'](userId);
 	      if (replace || !userName) {
-	        const user = getCore().getStore().getters['users/get'](userId);
 	        if (user) {
 	          userName = user.name;
 	        }
@@ -1103,6 +1107,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      let className = 'bx-im-mention';
 	      if (getCore().getUserId() === userId) {
 	        className += ' --highlight';
+	      }
+	      if (user && user.type === UserType.extranet) {
+	        className += ' --extranet';
 	      }
 	      return main_core.Dom.create({
 	        tag: 'span',

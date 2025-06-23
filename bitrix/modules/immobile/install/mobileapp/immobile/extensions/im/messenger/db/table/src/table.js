@@ -4,6 +4,7 @@
  * @module im/messenger/db/table/table
  */
 jn.define('im/messenger/db/table/table', (require, exports, module) => {
+	/* globals DatabaseTable, include */
 	include('sqlite');
 
 	const { Type } = require('type');
@@ -11,40 +12,24 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
+
+	const { FieldType, FieldDefaultValue } = require('im/messenger/db/const');
+
 	const logger = getLogger('database-table--table');
-
-	const FieldType = Object.freeze({
-		integer: 'integer',
-		text: 'text',
-		date: 'date',
-		boolean: 'boolean',
-		json: 'json',
-		map: 'map',
-		set: 'set',
-	});
-
-	const FieldDefaultValue = Object.freeze({
-		zeroInteger: 0,
-		emptyText: '',
-		noneText: 'none',
-		emptyDate: '',
-		falseBoolean: '0',
-		trueBoolean: '1',
-		null: null,
-		emptyObject: {}, // these types are a literal format because it will be a JSON.stringify()
-		emptyArray: [],
-		emptyMap: {},
-		emptySet: {},
-	});
 
 	/**
 	 * @abstract
-	 * @implements ITable
 	 * @template TStoredItem
 	 * @implements {ITable<TStoredItem>}
 	 */
 	class Table
 	{
+		/**
+		 * @protected
+		 * @type {IDatabaseTableInstance}
+		 */
+		static databaseTable;
+
 		constructor()
 		{
 			this.fieldsCollection = this.getFieldsCollection();
@@ -67,12 +52,35 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				[FieldType.text]: this.restoreTextFieldHandler.bind(this),
 			};
 
-			if (this.isSupported)
+			this.getPrimaryKey();
+		}
+
+		/**
+		* @return {IDatabaseTableInstance|null}
+		*/
+		get table()
+		{
+			if (this.constructor.databaseTable)
 			{
-				this.table = new DatabaseTable(this.getName(), this.getFields());
+				return this.constructor.databaseTable;
 			}
 
-			this.getPrimaryKey();
+			if (this.isSupported)
+			{
+				this.createDatabaseTableInstance();
+
+				return this.constructor.databaseTable;
+			}
+
+			return null;
+		}
+
+		/**
+		 * @void
+		 */
+		createDatabaseTableInstance()
+		{
+			this.constructor.databaseTable = new DatabaseTable(this.getName(), this.getFields());
 		}
 
 		/**
@@ -235,6 +243,16 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		/**
 		 * @abstract
+		 * @return {string}
+		 */
+		static getTableName()
+		{
+			throw new Error('Table: getTableName() must be override in subclass.');
+		}
+
+		/**
+		 * @abstract
+		 * @return {string}
 		 */
 		getName()
 		{
@@ -243,6 +261,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		/**
 		 * @abstract
+		 * @return {Array<TableField>}
 		 */
 		getFields()
 		{
@@ -260,9 +279,27 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				});
 
 				this.fieldsCollection = fieldsCollection;
+				this.checkDeprecatedFields(fields);
 			}
 
 			return this.fieldsCollection;
+		}
+
+		/**
+		 * @desc check and reminder about deprecated columns
+		 * @param {Array<object>} fields
+		 */
+		checkDeprecatedFields(fields) {
+			for (const field of fields)
+			{
+				if (field.deprecated)
+				{
+					logger.warn(`Deprecated field used: ${field.name}`, {
+						table: this.getName(),
+						replacement: field.replacement || 'none specified',
+					});
+				}
+			}
 		}
 
 		getDefaultValueByFieldName(fieldName)
@@ -423,7 +460,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 					items: [],
 				};
 			}
-			const idsFormatted = Type.isNumber(idList[0]) ? idList.toString() : idList.map((id) => `"${id}"`);
+			const idsFormatted = this.createWhereInCondition(this.getPrimaryKey(), idList);
 			const result = await this.executeSql({
 				query: `
 					SELECT * 
@@ -432,6 +469,16 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				`,
 			});
 
+			return this.prepareListResult(result, shouldRestoreRows);
+		}
+
+		/**
+		 * @param {Array<TStoredItem>} result
+		 * @param {Boolean} shouldRestoreRows
+		 * @returns {{items: *[]}}
+		 */
+		prepareListResult(result, shouldRestoreRows = true)
+		{
 			const {
 				columns,
 				rows,
@@ -473,7 +520,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				return Promise.resolve({});
 			}
 
-			const idsFormatted = Type.isNumber(idList[0]) ? idList.toString() : idList.map((id) => `"${id}"`);
+			const idsFormatted = this.createWhereInCondition(this.getPrimaryKey(), idList);
 			const result = await this.executeSql({
 				query: `
 					DELETE
@@ -488,7 +535,9 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 		}
 
 		/**
-		 * @param options
+		 * @param {object} options
+		 * @param {object} options.filter
+		 * @param {{[colunmName: string]: any}} options.fields
 		 * @return {Promise<Awaited<{}>>|*}
 		 */
 		update(options)
@@ -659,6 +708,45 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			});
 
 			return getListResult;
+		}
+
+		/**
+		 * @returns {Logger}
+		 */
+		get logger()
+		{
+			return logger;
+		}
+
+		/**
+		 * @param {string} entityName
+		 * @param {Array<any>} entityList
+		 * @return {string}
+		 */
+		createWhereInCondition(entityName, entityList)
+		{
+			const columnInfo = this.getFieldsCollection()[entityName];
+			if (Type.isNil(columnInfo))
+			{
+				throw new TypeError(`${this.constructor.name}.createWhereInCondition: unknown entityName: ${entityName}`);
+			}
+
+			if (!Type.isArrayFilled(entityList))
+			{
+				this.logger.error(`${this.constructor.name}.createWhereInCondition entityList not must be empty`, entityList);
+
+				return '';
+			}
+
+			const saveHandler = Type.isFunction(this.saveHandlerCollection[columnInfo.type])
+				? this.saveHandlerCollection[columnInfo.type]
+				: (fieldName, fieldValue) => fieldValue
+			;
+
+			return entityList
+				.map((entity) => `"${saveHandler(entityName, entity)}"`)
+				.toString()
+			;
 		}
 	}
 

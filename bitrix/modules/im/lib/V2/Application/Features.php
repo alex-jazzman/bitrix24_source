@@ -6,16 +6,19 @@ use Bitrix\Im\Call\Integration\Zoom;
 use Bitrix\Im\Integration\Disk\Documents;
 use Bitrix\Im\Settings;
 use Bitrix\Im\V2\Chat\CopilotChat;
+use Bitrix\Im\V2\Integration\Extranet\CollaberService;
 use Bitrix\Im\V2\Integration\HumanResources\Structure;
 use Bitrix\Im\V2\Integration\Intranet\Invitation;
 use Bitrix\Im\V2\Integration\Sign\DocumentSign;
-use Bitrix\Im\V2\Integration\Socialnetwork\Collab;
+use Bitrix\Im\V2\Integration\Socialnetwork\Collab\Collab;
 use Bitrix\ImBot\Bot\Giphy;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 
 class Features
 {
+	private static self $currentFeatures;
+
 	public function __construct(
 		public readonly bool $chatV2,
 		public readonly bool $chatDepartments,
@@ -30,15 +33,31 @@ class Features
 		public readonly bool $giphyAvailable,
 		public readonly bool $collabAvailable,
 		public readonly bool $collabCreationAvailable,
+		public readonly bool $enabledCollabersInvitation,
 		public readonly bool $inviteByPhoneAvailable,
 		public readonly bool $inviteByLinkAvailable,
 		public readonly bool $documentSignAvailable,
 		public readonly bool $intranetInviteAvailable,
 		public readonly bool $voteCreationAvailable,
-		public readonly bool $autoDeleteMessagesAvailable,
+		public readonly bool $messagesAutoDeleteAvailable,
+		public readonly bool $copilotInDefaultTabAvailable,
+		public readonly bool $messagesAutoDeleteEnabled,
+		public readonly bool $isNotificationsStandalone,
+		public readonly bool $teamsInStructureAvailable,
+		public readonly bool $isDesktopRedirectAvailable,
 	){}
 
 	public static function get(): self
+	{
+		if (!isset(self::$currentFeatures))
+		{
+			self::$currentFeatures = self::createCurrent();
+		}
+
+		return self::$currentFeatures;
+	}
+
+	private static function createCurrent(): self
 	{
 		return new self(
 			!Settings::isLegacyChatActivated(),
@@ -54,12 +73,18 @@ class Features
 			self::isGiphyAvailable(),
 			Collab::isAvailable(),
 			Collab::isCreationAvailable(),
+			CollaberService::getInstance()->isEnabledCollabersInvitation(),
 			self::isInviteByPhoneAvailable(),
 			self::isInviteByLinkAvailable(),
 			DocumentSign::isAvailable(),
 			Invitation::isAvailable(),
 			self::isVoteCreationAvailable(),
-			self::isAutoDeleteMessagesAvailable(),
+			self::isMessagesAutoDeleteAvailable(),
+			self::isCopilotInDefaultTabAvailable(),
+			self::isMessagesAutoDeleteEnabled(),
+			self::isNotificationsStandalone(),
+			Structure::isTeamsAvailable(),
+			self::isDesktopRedirectAvailable(),
 		);
 	}
 
@@ -80,7 +105,7 @@ class Features
 
 	private static function isInviteByLinkAvailable(): bool
 	{
-		return Loader::includeModule("bitrix24");
+		return true;
 	}
 
 	private static function isImOpenLinesV2Available(): bool
@@ -101,8 +126,33 @@ class Features
 		;
 	}
 
-	private static function isAutoDeleteMessagesAvailable(): bool
+	public static function isMessagesAutoDeleteAvailable(): bool
 	{
-		return \Bitrix\Main\Config\Option::get('im', 'auto_delete_messages_activated', 'N') === 'Y';
+		return Option::get('im', 'auto_delete_messages_activated', 'N') === 'Y';
+	}
+
+	public static function isCopilotInDefaultTabAvailable(): bool
+	{
+		if (!CopilotChat::isActive() || !CopilotChat::isAvailable())
+		{
+			return false;
+		}
+
+		return \Bitrix\Main\Config\Option::get('im', 'copilot_in_default_tab_activated', 'N') === 'Y';
+	}
+
+	private static function isNotificationsStandalone(): bool
+	{
+		return Option::get('im', '~is_notifications_standalone', 'N') === 'Y';
+	}
+
+	public static function isMessagesAutoDeleteEnabled(): bool
+	{
+		return Option::get('im', 'isAutoDeleteMessagesEnabled', 'Y') === 'Y';
+	}
+
+	public static function isDesktopRedirectAvailable(): bool
+	{
+		return Option::get('im', 'desktop_redirect_available', 'N') === 'Y';
 	}
 }

@@ -1,16 +1,70 @@
 <?php
 
+use Bitrix\HumanResources\Repository\NodeSettingsRepository;
+use Bitrix\HumanResources\Type\StructureAction;
+
 return [
 	'services' => [
 		'value' => [
 			'humanresources.container' => [
 				'className' => \Bitrix\HumanResources\Service\Container::class,
 			],
+			'humanresources.public.container' => [
+				'className' => \Bitrix\HumanResources\Public\Service\Container::class,
+			],
 			'humanresources.repository.node' => [
 				'className' => \Bitrix\HumanResources\Repository\NodeRepository::class,
 			],
 			'humanresources.repository.permission.restricted.node' => [
 				'className' => \Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository::class,
+			],
+			'humanresources.repository.createPermission.restricted.node' => [
+				'className' => \Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'structureAction' => StructureAction::CreateAction,
+					];
+				},
+			],
+			'humanresources.repository.updatePermission.restricted.node' => [
+				'className' => \Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'structureAction' => StructureAction::UpdateAction,
+					];
+				},
+			],
+			'humanresources.repository.deletePermission.restricted.node' => [
+				'className' => \Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'structureAction' => StructureAction::DeleteAction,
+					];
+				},
+			],
+			'humanresources.repository.addEmployeePermission.restricted.node' => [
+				'className' => \Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'structureAction' => StructureAction::AddMemberAction,
+					];
+				},
+			],
+			'humanresources.repository.removeEmployeePermission.restricted.node' => [
+				'className' => \Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'structureAction' => StructureAction::RemoveMemberAction,
+					];
+				},
+			],
+			'humanresources.repository.inviteEmployeePermission.restricted.node' => [
+				'className' => \Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'structureAction' => StructureAction::InviteUserAction,
+					];
+				},
 			],
 			'humanresources.repository.node.access.code' => [
 				'className' => \Bitrix\HumanResources\Repository\NodeAccessCodeRepository::class,
@@ -36,6 +90,9 @@ return [
 			'humanresources.service.node.member' => [
 				'className' => \Bitrix\HumanResources\Service\NodeMemberService::class,
 			],
+			'humanresources.service.node.branch' => [
+				'className' => \Bitrix\HumanResources\Service\NodeBranchService::class,
+			],
 			'humanresources.service.event.sender' => [
 				'className' => \Bitrix\HumanResources\Service\EventSenderService::class,
 			],
@@ -47,6 +104,9 @@ return [
 			],
 			'humanresources.service.node.relation' => [
 				'className' => \Bitrix\HumanResources\Service\NodeRelationService::class,
+			],
+			'humanresources.service.public.nodeSettings' => [
+				'className' => \Bitrix\HumanResources\Public\Service\NodeSettingsService::class,
 			],
 			'humanresources.util.cache' => [
 				'className' => \Bitrix\HumanResources\Util\CacheManager::class
@@ -108,6 +168,9 @@ return [
 			'humanresources.repository.hcmlink.user' => [
 				'className' => \Bitrix\HumanResources\Repository\HcmLink\UserRepository::class,
 			],
+			'humanresources.service.hcmlink.field' => [
+				'className' => \Bitrix\HumanResources\Service\HcmLink\FieldService::class,
+			],
 			'humanresources.service.hcmlink.field.value' => [
 				'className' => \Bitrix\HumanResources\Service\HcmLink\FieldValueService::class,
 			],
@@ -148,7 +211,28 @@ return [
 			'humanresources.service.hcmlink.placement.salaryAndVacation' => [
 				'className' => \Bitrix\HumanResources\Service\HcmLink\Placement\SalaryVacationService::class,
 			],
-		]
+			'humanresources.service.member.departmentUserSearchService' => [
+				'className' => \Bitrix\HumanResources\Service\Member\DepartmentUserSearchService::class,
+			],
+			'humanresources.repository.node.path' => [
+				'className' => \Bitrix\HumanResources\Repository\NodePathRepository::class,
+			],
+			'humanresources.repository.nodeSettings' => [
+				'className' => \Bitrix\HumanResources\Repository\NodeSettingsRepository::class,
+			],
+			'humanresources.service.access.structure.structureAccessService' => [
+				'className' => \Bitrix\HumanResources\Service\Access\Structure\StructureAccessService::class,
+			],
+			'humanresources.intergation.im.chatService' => [
+				'className' => \Bitrix\HumanResources\Integration\Im\ChatService::class,
+			],
+			'humanresources.intergation.pull.pushMessageService' => [
+				'className' => \Bitrix\HumanResources\Integration\Pull\PushMessageService::class,
+			],
+			'humanresources.access.authProvider.structureAuthProvider' => [
+				'className' => \Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider::class,
+			],
+		],
 	],
 	'controllers' => [
 		'value' => [
@@ -170,14 +254,32 @@ return [
 					'entityId' => 'structure-node',
 					'provider' => [
 						'moduleId' => 'humanresources',
-						'className' => \Bitrix\HumanResources\Integration\UI\DepartmentProvider::class
+						'className' => \Bitrix\HumanResources\Integration\UI\DepartmentProvider::class,
+					],
+				],
+				[
+					'entityId' => 'user-groups',
+					'provider' => [
+						'moduleId' => 'humanresources',
+						'className' => \Bitrix\HumanResources\Integration\UI\EntitySelector\UserGroupProvider::class,
 					],
 				],
 				[
 					'entityId' => 'hcmlink-person-data',
 					'provider' => [
 						'moduleId' => 'humanresources',
-						'className' => \Bitrix\HumanResources\Ui\EntitySelector\HcmLink\PersonDataProvider::class,
+						'className' => \Bitrix\HumanResources\Integration\UI\EntitySelector\HcmLink\PersonDataProvider::class,
+					],
+				],
+				[
+					'entityId' => 'structure-node-role',
+					'provider' => [
+						'moduleId' => 'humanresources',
+						'className' => \Bitrix\HumanResources\Integration\UI\RoleProvider::class,
+					],
+					'options' => [
+						'dynamicLoad' => true,
+						'dynamicSearch' => true,
 					],
 				],
 			],

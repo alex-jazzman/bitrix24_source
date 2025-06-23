@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, module) => {
 	const { Type } = require('type');
+	const { isEqual } = require('utils/object');
 
 	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { Worker } = require('im/messenger/lib/helper/worker');
@@ -79,25 +80,11 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 		update(itemList)
 		{
-			const viewItemList = RecentUiConverter.toList(itemList);
-			const collection = this.view.getItems();
-
-			if (collection)
-			{
-				const collectionKeys = Object.keys(collection);
-
-				collectionKeys.forEach((itemId) => {
-					const hasItem = viewItemList.some((item) => item.id === itemId);
-					if (!hasItem)
-					{
-						viewItemList.push(collection[itemId]);
-					}
-				});
-			}
+			const viewItemList = this.#prepareViewItemList(itemList);
 
 			if (viewItemList.length > 0)
 			{
-				this.view.setItems(viewItemList);
+				this.view.updateItems(viewItemList);
 
 				return true;
 			}
@@ -181,6 +168,32 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 		isActionSupported(action)
 		{
 			return this.getSupportedActions().has(action);
+		}
+
+		/**
+		 * @param {RecentModelState[]} itemList
+		 * @returns {{filter: {id: string}, element: RecentItem}[]}
+		 */
+		#prepareViewItemList(itemList)
+		{
+			return RecentUiConverter
+				.toList(itemList)
+				.map((item) => ({
+					filter: { id: item.id.toString() },
+					element: item,
+				}))
+				.filter((item) => !this.#hasEqualItemInRecent(item.element));
+		}
+
+		/**
+		 * @param {RecentItem} item
+		 * @returns {boolean}
+		 */
+		#hasEqualItemInRecent(item)
+		{
+			const viewItem = this.view.getItem(item?.id.toString());
+
+			return viewItem && isEqual(viewItem, item);
 		}
 	}
 

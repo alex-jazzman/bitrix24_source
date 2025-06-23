@@ -326,6 +326,7 @@ class User
 			->where('ID', $this->userId)
 			->setSelect(['ID', 'OWN_USER_ID' => 'INVITATION.ORIGINATOR_ID'])
 			->setLimit(1)
+			->setCacheTtl(604800)
 			->fetch();
 
 		if (isset($user['OWN_USER_ID']) && (int)$user['OWN_USER_ID'] > 0)
@@ -422,10 +423,7 @@ class User
 
 	public function getUserRole(): UserRole
 	{
-		if (
-			Loader::includeModule('bitrix24')
-			&& \Bitrix\Bitrix24\Integrator::isIntegrator($this->userId)
-		)
+		if ($this->isIntegrator())
 		{
 			return UserRole::INTEGRATOR;
 		}
@@ -442,7 +440,9 @@ class User
 
 		if (
 			Loader::includeModule('socialnetwork')
+			&& Loader::includeModule('extranet')
 			&& CollabFeature::isOn()
+			&& Loader::includeModule('extranet')
 			&& ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->userId)
 		)
 		{
@@ -470,6 +470,11 @@ class User
 		}
 
 		return UserRole::VISITOR;
+	}
+
+	public function isIntegrator(): bool
+	{
+		return Loader::includeModule('bitrix24') && \Bitrix\Bitrix24\Integrator::isIntegrator($this->userId);
 	}
 
 	private function getGroups(): array

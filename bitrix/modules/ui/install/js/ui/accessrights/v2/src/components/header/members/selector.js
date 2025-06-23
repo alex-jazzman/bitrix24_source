@@ -1,5 +1,6 @@
-import { Type } from 'main.core';
+import { Type, Runtime } from 'main.core';
 import { Dialog, type Item, type ItemId } from 'ui.entity-selector';
+import { mapState } from 'ui.vue3.vuex';
 import { EntitySelectorContext } from '../../../integration/entity-selector/dictionary';
 
 export const Selector = {
@@ -26,50 +27,22 @@ export const Selector = {
 
 			return result;
 		},
+		...mapState({
+			options: (state) => state.application.options,
+			addUserGroupsProviderTab: (state) => state.application.options.additionalMembersParams.addUserGroupsProviderTab,
+			addProjectsProviderTab: (state) => state.application.options.additionalMembersParams.addProjectsProviderTab,
+			addStructureTeamsProviderTab: (state) => state.application.options.additionalMembersParams.addStructureTeamsProviderTab,
+		}),
 	},
 	mounted()
 	{
+		const entities = this.getEntities();
+
 		(new Dialog({
 			enableSearch: true,
 			context: EntitySelectorContext.MEMBER,
 			alwaysShowLabels: true,
-			entities: [
-				{
-					id: 'user',
-					options: {
-						intranetUsersOnly: true,
-						emailUsers: false,
-						inviteEmployeeLink: false,
-						inviteGuestLink: false,
-					},
-				},
-				{
-					id: 'department',
-					options: {
-						selectMode: 'usersAndDepartments',
-						allowSelectRootDepartment: true,
-						allowFlatDepartments: true,
-					},
-				},
-				{
-					id: 'project',
-					dynamicLoad: true,
-					options: {
-						addProjectMetaUsers: true,
-					},
-					itemOptions: {
-						default: {
-							link: '',
-							linkTitle: '',
-						},
-					},
-				},
-				{
-					id: 'site-groups',
-					dynamicLoad: true,
-					dynamicSearch: true,
-				},
-			],
+			entities,
 			targetNode: this.bindNode,
 			preselectedItems: this.selectedItems,
 			cacheable: false,
@@ -117,6 +90,11 @@ export const Selector = {
 				return ['site-groups', groupId];
 			}
 
+			if (accessCode.at(0) === 'A')
+			{
+				return ['user-groups', accessCode];
+			}
+
 			if (/^SG(\d+)_([AEK])$/.test(accessCode))
 			{
 				const match = accessCode.match(/^SG(\d+)_([AEK])$/) || null;
@@ -125,6 +103,22 @@ export const Selector = {
 				const postfix = match ? match[2] : null;
 
 				return ['project', `${projectId}:${postfix}`];
+			}
+
+			if (/^SNT(\d+)$/.test(accessCode))
+			{
+				const match = accessCode.match(/^SNT(\d+)$/) || null;
+				const structureNodeId = match ? match[1] : null;
+
+				return ['structure-node', `${structureNodeId}:F`];
+			}
+
+			if (/^SNTR(\d+)$/.test(accessCode))
+			{
+				const match = accessCode.match(/^SNTR(\d+)$/) || null;
+				const structureNodeId = match ? match[1] : null;
+
+				return ['structure-node', structureNodeId];
 			}
 
 			return ['unknown', accessCode];
@@ -180,9 +174,27 @@ export const Selector = {
 				return `DR${item.id}`;
 			}
 
+			if (entityId === 'structure-node')
+			{
+				if (Type.isString(item.id) && item.id.endsWith(':F'))
+				{
+					const match = item.id.match(/^(\d+):F$/);
+					const originalId = match ? match[1] : null;
+
+					return `SNT${originalId}`;
+				}
+
+				return `SNTR${item.id}`;
+			}
+
 			if (entityId === 'site-groups')
 			{
 				return `G${item.id}`;
+			}
+
+			if (entityId === 'user-groups')
+			{
+				return item.id;
 			}
 
 			if (entityId === 'project')
@@ -220,11 +232,85 @@ export const Selector = {
 					return 'sonetgroups';
 				case 'group':
 					return 'groups';
+				case 'structure-node':
+					return 'structureteams';
 				case 'site-groups':
+				case 'user-groups':
 					return 'usergroups';
 				default:
 					return '';
 			}
+		},
+		getEntities(): Array {
+			const entities = [
+				{
+					id: 'user',
+					options: {
+						intranetUsersOnly: true,
+						emailUsers: false,
+						inviteEmployeeLink: false,
+						inviteGuestLink: false,
+					},
+				},
+				{
+					id: 'department',
+					options: {
+						selectMode: 'usersAndDepartments',
+						allowSelectRootDepartment: true,
+						allowFlatDepartments: true,
+					},
+				},
+				{
+					id: 'site-groups',
+					dynamicLoad: true,
+					dynamicSearch: true,
+				},
+			];
+
+			if (this.addStructureTeamsProviderTab)
+			{
+				entities.push({
+					id: 'structure-node',
+					options: {
+						selectMode: 'usersAndDepartments',
+						allowSelectRootDepartment: true,
+						allowFlatDepartments: true,
+						includedNodeEntityTypes: ['team'],
+						useMultipleTabs: true,
+						visual: {
+							avatarMode: 'node',
+							tagStyle: 'none',
+						},
+					},
+				});
+			}
+			if (this.addProjectsProviderTab)
+			{
+				entities.push({
+					id: 'project',
+					dynamicLoad: true,
+					options: {
+						addProjectMetaUsers: true,
+					},
+					itemOptions: {
+						default: {
+							link: '',
+							linkTitle: '',
+						},
+					},
+				});
+			}
+
+			if (this.addUserGroupsProviderTab)
+			{
+				entities.push({
+					id: 'user-groups',
+					dynamicLoad: true,
+					options: {},
+				});
+			}
+
+			return entities;
 		},
 	},
 	// just a template stub

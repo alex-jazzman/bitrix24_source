@@ -2,8 +2,6 @@ import { Browser, Dom, Runtime, Text, Type, Loc } from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Popup} from 'main.popup';
 import {DesktopApi} from 'im.v2.lib.desktop-api';
-import { CopilotNotify, CopilotNotifyType } from './copilot-notify';
-import { PictureInPictureWindow } from './pictureInPictureWindow';
 
 import {UserModel, UserRegistry} from './user-registry'
 import * as Buttons from './buttons';
@@ -17,8 +15,14 @@ import {DeviceSelector} from './device-selector';
 import {EndpointDirection, UserState} from '../engine/engine';
 import Util from '../util';
 import { CallAI } from '../call_ai';
+import { CopilotNotify, CopilotNotifyType } from './copilot-notify';
+import { MediaRenderer } from './media-renderer';
+import { PictureInPictureWindow } from './pictureInPictureWindow';
 import { Utils } from 'im.v2.lib.utils';
 import {UserSelector} from './user-selector';
+
+import { PromoManager } from 'im.v2.lib.promo';
+import { AhaMomentNotify } from './aha-moment-notify';
 
 import '../css/view.css';
 
@@ -93,6 +97,9 @@ const EventName = {
 	onHasMainStream: 'onHasMainStream',
 	onTurnOffParticipantMic: 'onTurnOffParticipantMic',
 	onTurnOffParticipantCam: 'onTurnOffParticipantCam',
+	onTurnOffParticipantScreenshare: 'onTurnOffParticipantScreenshare',
+	onAllowSpeakPermission: 'onAllowSpeakPermission',
+	onDisallowSpeakPermission: 'onDisallowSpeakPermission',
 	onToggleSubscribe: 'onToggleSubscribe',
 	onUnfold: 'onUnfold',
 };
@@ -112,6 +119,8 @@ const MIN_GRID_USER_HEIGHT = 100;
 
 const CHANGE_VIDEO_RERENDER_DELAY = 3000;
 const WAITING_VIDEO_DELAY = 3000;
+
+const CALLCONTROL_PROMO_ID = 'call:callcontrol-notify-promo:07052025:all';
 
 type ViewOptions = {
 	title: ?string,
@@ -141,6 +150,8 @@ type ViewOptions = {
 	showAddUserButtonInList?: boolean,
 	isCopilotFeaturesEnabled: boolean,
 	isCopilotActive: boolean,
+	isWindowFocus?: boolean,
+	isVideoconf: boolean,
 }
 
 export class View
@@ -172,6 +183,7 @@ export class View
 		this.showCopilotButton = (config.showCopilotButton !== false);
 		this.showButtonPanel = (config.showButtonPanel !== false);
 		this.showAddUserButtonInList = config.showAddUserButtonInList || false;
+		this.preferInitialWindowPlacementPictureInPicture = true;
 
 		this.limitation = null;
 		this.inactiveUsers = [];
@@ -226,6 +238,7 @@ export class View
 			onClick: this._onUserClick.bind(this),
 			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
 			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
+			onTurnOffParticipantScreenshare: this._onTurnOffParticipantScreenshare.bind(this),
 			onPin: this._onUserPin.bind(this),
 			onUnPin: this._onUserUnPin.bind(this),
 		});
@@ -397,6 +410,10 @@ export class View
 		this._isPreparing = false;
 		this._videoRerenderDelay = 0;
 
+		this.isWindowFocus = config.isWindowFocus || false;
+		this.isDocumentHidden = false;
+		this._isActivePiPFromController = false;
+
 		this.init();
 		this.subscribeEvents(config);
 		if (Type.isPlainObject(config.userStates))
@@ -417,7 +434,16 @@ export class View
 		this.isCopilotActive = config.isCopilotActive || false;
 		this.copilotNotify = null;
 
+		this.ahaMomentNotify = null;
+
 		this.pictureInPictureCallWindow = null;
+
+		this.floorRequestNotifications = [];
+		this.currentPiPUserId = null;
+
+		this.isVideoconf = config.isVideoconf || false;
+
+		this.needToShowCallcontrolPromo = this.isVideoconf ? false : PromoManager.getInstance().needToShow(CALLCONTROL_PROMO_ID);
 	};
 
 	openArticle(articleCode)
@@ -533,6 +559,55 @@ export class View
 		}, 5000);
 	}
 
+	toggleVisibilityChangeDocumentEvent(isActive)
+	{
+		const settings = (() =>
+		{
+			if (typeof document.hidden !== "undefined")
+			{
+				return {
+					hidden: 'hidden',
+					eventName: 'visibilitychange',
+				};
+			}
+			else if (typeof document.msHidden !== "undefined")
+			{
+				return {
+					hidden: 'msHidden',
+					eventName: 'msvisibilitychange',
+				};
+			}
+			else if (typeof document.webkitHidden !== "undefined")
+			{
+				return {
+					hidden: 'webkitHidden',
+					eventName: 'webkitvisibilitychange',
+				};
+			}
+			else
+			{
+				return null;
+			}
+		})();
+
+		if (settings) {
+			document[`${isActive ? 'add' : 'remove'}EventListener`](settings.eventName, () =>
+			{
+				this.isDocumentHidden = document[settings.hidden];
+
+				if (this.pictureInPictureCallWindow)
+				{
+					this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
+					this.pictureInPictureCallWindow.updateButtons();
+				}
+
+				if (DesktopApi.isDesktop() && !this.destroyed) {
+					this.toggleStatePictureInPictureCallWindow(this.isDocumentHidden || this._isActivePiPFromController)
+				}
+			});
+		}
+	}
+
 	init()
 	{
 		this.getLimitation();
@@ -584,7 +659,8 @@ export class View
 
 		this.onMouseMoveHandler = this.toggleVisibilityEar.bind(this);
 		document.addEventListener('mousemove', this.onMouseMoveHandler);
-
+		// TODO: Disable PiP on minimize
+		// this.toggleVisibilityChangeDocumentEvent(true);
 		if (Browser.isMac())
 		{
 			this.keyModifier = '&#8984; + Shift';
@@ -597,6 +673,16 @@ export class View
 		this.container.appendChild(this.elements.audioContainer);
 		this.container.appendChild(this.elements.screenAudioContainer);
 	};
+
+	get isActivePiPFromController()
+	{
+		return this._isActivePiPFromController;
+	}
+
+	set isActivePiPFromController(isActive)
+	{
+		this._isActivePiPFromController = isActive;
+	}
 
 	get isPreparing()
 	{
@@ -1406,6 +1492,7 @@ export class View
 			onUnPin: this._onUserUnPin.bind(this),
 			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
 			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
+			onTurnOffParticipantScreenshare: this._onTurnOffParticipantScreenshare.bind(this),
 		});
 
 		this.screenUsers[userId] = new CallUser({
@@ -1505,6 +1592,8 @@ export class View
 		}
 		else if (newState === UserState.Idle)
 		{
+			this.setUserFloorRequestState(userId, false);
+			this.setUserPermissionToSpeakState(userId, false);
 			clearTimeout(this.waitingForUserMediaTimeouts.get(userId));
 			this.waitingForUserMediaTimeouts.delete(userId);
 			this.rerenderQueue.set(userId, {
@@ -1519,7 +1608,6 @@ export class View
 		}
 		else if (newState == UserState.Idle)
 		{
-			this.setUserFloorRequestState(userId, false);
 			// reset user position to add them in the end after they reconnect
 			user.prevOrder = user.order;
 			user.order = newUserPosition;
@@ -1533,6 +1621,11 @@ export class View
 		}
 
 		const skippedElementsList = userId === this.localUser.id ? [] : ['panel'];
+
+		if (userId == this.presenterId && newState !== UserState.Connected)
+		{
+			this.switchPresenter();
+		}
 
 		this.updateUserList();
 		this.updateButtons(skippedElementsList);
@@ -1603,7 +1696,7 @@ export class View
 		{
 			if(data.participant.userId && data.track){
 				this.users[data.participant.userId].showTrackSubscriptionFailed(data.track);
-			}			
+			}
 		}
 	}
 
@@ -1673,6 +1766,12 @@ export class View
 			}
 
 			user.floorRequestState = userFloorRequestState;
+
+			if (userId != this.localUser.id)
+			{
+				this.updateFloorRequestNotifications(user, userFloorRequestState);
+			}
+
 			if (userId != this.localUser.id && userFloorRequestState)
 			{
 				this.showFloorRequestNotification(userId);
@@ -1683,6 +1782,25 @@ export class View
 		{
 			this.setButtonActive('floorRequest', userFloorRequestState);
 		}
+	};
+
+	setUserPermissionToSpeakState(userId, permissionToSpeakState)
+	{
+		const user: UserModel = this.userRegistry.get(userId);
+		if (!user)
+		{
+			return;
+		}
+
+		if (user.permissionToSpeak !== permissionToSpeakState)
+		{
+			user.permissionToSpeak = permissionToSpeakState;
+		}
+	};
+
+	setAllUserPermissionToSpeakState(permissionToSpeakState)
+	{
+		this.userRegistry.users.forEach((userModel) => {userModel.permissionToSpeak = permissionToSpeakState});
 	};
 
 	pinUser(userId)
@@ -1714,6 +1832,29 @@ export class View
 		this.switchPresenterDeferred();
 	};
 
+	updateFloorRequestNotifications(userModel, floorRequestState)
+	{
+		const indexFloorRequestInList = this.floorRequestNotifications.findIndex(req => req.userModel.id === userModel.id);
+		const hasFloorRequestInList = indexFloorRequestInList !== -1;
+		const currentUser = this.users[userModel.id];
+		const currentUserData = {
+			userModel,
+			avatarBackgroundColor: currentUser?.avatarBackground || Util.getAvatarBackground(),
+		}
+
+		if (floorRequestState && !hasFloorRequestInList)
+		{
+			this.floorRequestNotifications.push(currentUserData);
+		}
+
+		if (!floorRequestState && hasFloorRequestInList)
+		{
+			this.floorRequestNotifications.splice(indexFloorRequestInList, 1);
+		}
+
+		this.pictureInPictureCallWindow?.updateFloorRequestState(currentUserData);
+	}
+
 	showFloorRequestNotification(userId)
 	{
 		const userModel: ?UserModel = this.userRegistry.get(userId);
@@ -1721,13 +1862,48 @@ export class View
 		{
 			return;
 		}
+
 		let notification = FloorRequest.create({
-			userModel: userModel
+			userModel,
+			onAllowSpeakPermissionClicked: (_userModel) => {
+				this._onAllowSpeakPermissionClickedHandler(_userModel);
+			},
+			onDisallowSpeakPermissionClicked: (_userModel) => {
+				this._onDisallowSpeakPermissionClickedHandler(_userModel);
+			},
 		});
 
 		notification.mount(this.elements.notificationPanel);
 		NotificationManager.Instance.addNotification(notification);
 	};
+	
+	updateFloorRequestNotification()
+	{
+		if (!NotificationManager?.Instance.notifications.length)
+		{
+			return;
+		}
+		
+		NotificationManager.Instance.notifications.forEach(notification => 
+		{
+			notification.updatePermissionButtonState();
+		});
+	}
+	
+	_onAllowSpeakPermissionClickedHandler(_userModel)
+	{
+		this.setUserPermissionToSpeakState(_userModel.id, true);
+		this.eventEmitter.emit(EventName.onAllowSpeakPermission, {
+			userId: _userModel.id
+		});		
+	}
+
+	_onDisallowSpeakPermissionClickedHandler(_userModel)
+	{
+		this.eventEmitter.emit(EventName.onDisallowSpeakPermission, {
+			userId: _userModel.id
+		});		
+	}
 
 	setUserScreenState(userId, screenState)
 	{
@@ -1781,7 +1957,12 @@ export class View
 		}
 		else
 		{
-			this.localUser.videoTrack = mediaStream.getVideoTracks().length > 0 ? mediaStream.getVideoTracks()[0] : null;
+			const videoTrack = mediaStream.getVideoTracks().length > 0 ? mediaStream.getVideoTracks()[0] : null;
+			this.localUser.videoTrack = videoTrack;
+			this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, new MediaRenderer({
+				kind: 'video',
+				track: videoTrack,
+			}));
 		}
 
 		if (!Type.isUndefined(flipVideo))
@@ -1833,6 +2014,16 @@ export class View
 			this.updateUserList();
 		}
 	};
+
+	setLocalStreamVideoTrack(videoTrack)
+	{
+		this.localStreamVideoTrack = videoTrack;
+
+		this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, new MediaRenderer({
+			kind: 'sharing',
+			track: videoTrack,
+		}));
+	}
 
 	setSpeakerId(speakerId)
 	{
@@ -2014,15 +2205,21 @@ export class View
 		if (kind === 'video')
 		{
 			this.users[userId].videoTrack = track;
+			this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+				kind: 'video',
+				track: track,
+			}));
 		}
 		if (kind === 'screen')
 		{
 			this.screenUsers[userId].videoTrack = track;
+			this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+				kind: 'sharing',
+				track: track,
+			}));
 			this.updateUserList();
 			this.setUserScreenState(userId, track !== null);
 		}
-
-		this.pictureInPictureCallWindow?.setUserMedia(userId, kind, track);
 	};
 
 	removeScreenUsers()
@@ -2167,6 +2364,7 @@ export class View
 	hide()
 	{
 		this.closeCopilotNotify();
+		this.clearCallcontrolPromo();
 		if (this.overflownButtonsPopup)
 		{
 			this.overflownButtonsPopup.close();
@@ -2251,7 +2449,6 @@ export class View
 				[DeviceSelector.Events.onAdvancedSettingsClick]: () => this.eventEmitter.emit(EventName.onOpenAdvancedSettings),
 				[DeviceSelector.Events.onDestroy]: () => this.deviceSelector = null,
 				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {}),
-				[DeviceSelector.Events.onTurnOffStreamForAll]: this._onTurnOffStreamForAll.bind(this),
 			}
 		});
 		this.deviceSelector.show();
@@ -2564,6 +2761,45 @@ export class View
 		this.elements.overlay.appendChild(errorContainer);
 	}
 
+	renderReloadPageLayout()
+	{
+		if (!this.elements.root)
+		{
+			this.render();
+			this.container.appendChild(this.elements.root);
+		}
+
+		const errorContainer = Dom.create("div", {
+			props: {className: 'bx-messenger-videocall-error-container'},
+			children: [
+				Dom.create('div', {
+					props: {className: "bx-messenger-videocall-error-container-icon-alert"},
+				}),
+				Dom.create('div', {
+					props: {className: "bx-messenger-videocall-error-message"},
+					html: BX.message('CALL_SECURITY_KEY_CHANGED').replace('[break]', '<br/>'),
+				}),
+				Dom.create('div', {
+					props: {className: 'bx-messenger-videocall-error-button-self-test'},
+					text: BX.message('CALL_RELOAD_PAGE'),
+					events: {
+						click: () =>
+						{
+							this.destroy();
+							location.reload();
+						}
+					}
+				}),
+			],
+		})
+
+		if (this.elements.overlay.childElementCount)
+		{
+			Dom.clean(this.elements.overlay);
+		}
+		this.elements.overlay.appendChild(errorContainer);
+	};
+
 	/**
 	 * @param {Object} params
 	 * @param {string} params.text
@@ -2572,6 +2808,14 @@ export class View
 	showFatalError(params)
 	{
 		this.renderErrorCallLayout();
+		this.setUiState(UiState.Error);
+		// in some cases video elements may still be shown on the error screen, let's hide them
+		this.elements.userList.container.style.display = 'none';
+	};
+
+	showSecurityKeyError()
+	{
+		this.renderReloadPageLayout();
 		this.setUiState(UiState.Error);
 		// in some cases video elements may still be shown on the error screen, let's hide them
 		this.elements.userList.container.style.display = 'none';
@@ -2597,6 +2841,8 @@ export class View
 
 		this.visible = false;
 		this.eventEmitter.emit(EventName.onClose);
+
+		this.clearCallcontrolPromo();
 	};
 
 	setSize(size)
@@ -2610,6 +2856,8 @@ export class View
 
 		if (this.size == Size.Folded)
 		{
+			this.clearCallcontrolPromo();
+
 			if (this.overflownButtonsPopup)
 			{
 				this.overflownButtonsPopup.close();
@@ -2652,13 +2900,15 @@ export class View
 		switch (buttonName)
 		{
 			case 'camera':
-				return (this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected) || this.blockedButtons[buttonName] === true;
+				return (this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected) || this.blockedButtons[buttonName] === true || !Util.havePermissionToBroadcast('cam');
 			case 'chat':
 				return !this.showChatButtons || this.blockedButtons[buttonName] === true;
+			case 'microphone':
+				return !Util.havePermissionToBroadcast('mic');
 			case 'floorRequest':
 				return (this.uiState !== UiState.Connected) || this.blockedButtons[buttonName] === true;
 			case 'screen':
-				return !this.showShareButton || (!this.isScreenSharingSupported() || this.isFullScreen) || this.blockedButtons[buttonName] === true;
+				return !this.showShareButton || (!this.isScreenSharingSupported() || this.isFullScreen) || this.blockedButtons[buttonName] === true || !Util.havePermissionToBroadcast('screenshare');
 			case 'users':
 				return !this.showUsersButton || this.blockedButtons[buttonName] === true;
 			case 'record':
@@ -2802,6 +3052,20 @@ export class View
 	unblockAddUser()
 	{
 		this.unblockButtons(['add']);
+
+		this.updateButtons();
+	};
+
+	blockUsersButton()
+	{
+		this.blockButtons(['users']);
+
+		this.updateButtons();
+	};
+
+	unblockUsersButton()
+	{
+		this.unblockButtons(['users']);
 
 		this.updateButtons();
 	};
@@ -3026,6 +3290,16 @@ export class View
 		if (this.uiState === UiState.Connected && this.layout != Layouts.Mobile)
 		{
 			result.push('feedback');
+		}
+
+		if (
+			this.uiState === UiState.Connected
+			&& this.layout != Layouts.Mobile
+			&& Util.canControlChangeSettings()
+			&& Util.isUserControlFeatureEnabled()
+		)
+		{
+			result.push('callcontrol');
 		}
 
 		if (this.uiState != UiState.Preparing)
@@ -3853,8 +4127,17 @@ export class View
 		this.elements.root.classList.toggle("bx-messenger-videocall-user-list-empty", (this.elements.userList.container.childElementCount === 0));
 		this.localUser.updatePanelDeferred();
 
-		this.toggleSubscribingVideoInRenderUserList(this.activeUsers, true)
-		this.toggleSubscribingVideoInRenderUserList(this.inactiveUsers, false)
+		const currentActiveUsers = this.currentPiPUserId ? [...this.activeUsers, this.currentPiPUserId] : this.activeUsers;
+		const currentInactiveUsers = [...this.inactiveUsers];
+		const currentPiPUserIndexInInactiveUsers = this.currentPiPUserId ? currentInactiveUsers.indexOf(this.currentPiPUserId) : -1;
+
+		if (currentPiPUserIndexInInactiveUsers !== -1)
+		{
+			currentInactiveUsers.splice(currentPiPUserIndexInInactiveUsers, 1);
+		}
+
+		this.toggleSubscribingVideoInRenderUserList(currentActiveUsers, true)
+		this.toggleSubscribingVideoInRenderUserList(currentInactiveUsers, false)
 	};
 
 	shouldShowLocalUser()
@@ -4132,7 +4415,7 @@ export class View
 									},
 								};
 								const hintText = this.isCopilotActive
-									? Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT')
+									? Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2')
 									: Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT')
 								;
 								this.hintManager.show(e.currentTarget, hintText);
@@ -4372,6 +4655,15 @@ export class View
 					})
 					result.appendChild(this.buttons.feedback.render());
 					break;
+				case "callcontrol":					
+					this.buttons.callcontrol = new Buttons.TopButton({
+						iconClass: 'callcontrol',
+						text: BX.message('CALL_CALLCONTROL_BUTTON_LABEL'),
+						onClick: this._onCallcontrolButtonClick.bind(this)
+					})
+					
+					result.appendChild(this.buttons.callcontrol.render(), this.elements.topPanel);				
+					break;
 				case "participants":
 					let foldButtonState;
 
@@ -4517,6 +4809,35 @@ export class View
 		});
 	}
 
+	createAhaMomentNotifyCallcontrol()
+	{
+		if (!this.buttons.callcontrol)
+		{
+			return;
+		}
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			this.ahaMomentNotifyCallcontrol.show();
+			return this.ahaMomentNotifyCallcontrol;
+		}
+
+		this.ahaMomentNotifyCallcontrol = new AhaMomentNotify({
+			notifyTitle: BX.message("CALL_CALLCONTROL_AXA_MOMENT_TITLE"),
+			notifyText: BX.message("CALL_CALLCONTROL_AXA_MOMENT_TEXT"),
+			bindElement: this.buttons.callcontrol.elements.root,
+			promoId: CALLCONTROL_PROMO_ID,
+			onClose: () => {
+				this.needToShowCallcontrolPromo = false;
+				this.ahaMomentNotifyCallcontrol = null;
+			}
+		});
+
+		this.ahaMomentNotifyCallcontrol.show();
+
+		return this.ahaMomentNotifyCallcontrol;
+	}
+
 	calculateUnusedPanelSpace(buttonList)
 	{
 		if (!buttonList)
@@ -4539,18 +4860,35 @@ export class View
 		return this.elements.panel.scrollWidth - totalButtonWidth - 32;
 	};
 
+
+	setWindowFocusState(isActive)
+	{
+		if (isActive === this.isWindowFocus)
+		{
+			return;
+		}
+
+		this.isWindowFocus = isActive;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
+			this.pictureInPictureCallWindow.updateButtons();
+		}
+	}
+
 	getPictureInPictureCallWindowGetButtonsList()
 	{
 		const buttonsList = ["microphone", "camera"];
 
-		if (this.size === View.Size.Folded)
-		{
-			buttonsList.push("returnToCall");
-		}
-
 		if (this.getButtonActive('screen'))
 		{
 			buttonsList.push("stop-screen");
+		}
+
+		if (this.size === View.Size.Folded || this.isDocumentHidden)
+		{
+			buttonsList.push("returnToCall");
 		}
 
 		// if (this.getButtonList().includes('copilot'))
@@ -4561,23 +4899,63 @@ export class View
 		return buttonsList;
 	}
 
-	getPictureInPictureCallWindowUserModel()
-	{
-		const currentUserId = this.presenterId || this.userId;
-
-		return this.userRegistry.get(currentUserId);
-	}
-
 	getPictureInPictureCallWindowUser()
 	{
-		const currentUserId = this.presenterId || this.userId;
+		const currentUserId = this.presenterId || this.centralUser?.userModel.id || this.userId;
+		const isLocalUser = +this.userId === +currentUserId;
+		const currentUser = isLocalUser ? this.localUser : this.users[currentUserId];
 
-		if (this.userId === currentUserId)
+		const isCurrentPiPUser = !!this.currentPiPUserId && currentUserId === this.currentPiPUserId;
+
+		if (isCurrentPiPUser)
 		{
-			return this.localUser;
+			return;
 		}
 
-		return this.users[currentUserId];
+		if (!this.activeUsers.includes(currentUserId) && !isLocalUser)
+		{
+			this.toggleSubscribingVideoInRenderUserList([currentUserId], true);
+		}
+
+		if (this.currentPiPUserId && +this.userId !== +this.currentPiPUserId && !this.activeUsers.includes(this.currentPiPUserId))
+		{
+			this.toggleSubscribingVideoInRenderUserList([this.currentPiPUserId], false);
+		}
+
+		this.currentPiPUserId = currentUserId;
+
+		const modifiedCurrentUser =  {
+			userModel: this.userRegistry.get(currentUserId),
+			avatarBackground: currentUser.avatarBackground,
+			videoRenderer: currentUser.videoRenderer,
+			previewRenderer: currentUser.previewRenderer,
+		};
+
+		if (currentUser.videoTrack)
+		{
+			modifiedCurrentUser.videoRenderer = new MediaRenderer({
+				kind: 'video',
+				track: currentUser.videoTrack,
+			});
+		}
+
+		if (!isLocalUser && this.screenUsers[currentUserId]?.videoTrack)
+		{
+			modifiedCurrentUser.previewRenderer = new MediaRenderer({
+				kind: 'sharing',
+				track: this.screenUsers[currentUserId].videoTrack,
+			});
+		}
+
+		if (isLocalUser && this.localStreamVideoTrack)
+		{
+			modifiedCurrentUser.previewRenderer = new MediaRenderer({
+				kind: 'sharing',
+				track: this.localStreamVideoTrack,
+			});
+		}
+
+		return modifiedCurrentUser;
 	}
 
 	getBlockedButtonsListPictureInPictureCallWindow()
@@ -4602,12 +4980,11 @@ export class View
 		return blockedButtons;
 	}
 
-	toggleStatePictureInPictureCallWindow(isActive, isBitrixCall = false)
+	toggleStatePictureInPictureCallWindow(isActive)
 	{
-		if (isActive && !this.pictureInPictureCallWindow && isBitrixCall && Util.isPictureInPictureFeatureEnabled())
+		if (isActive && !this.pictureInPictureCallWindow && Util.isPictureInPictureFeatureEnabled())
 		{
 			this.pictureInPictureCallWindow = new PictureInPictureWindow({
-				userModel: this.getPictureInPictureCallWindowUserModel(),
 				currentUser: this.getPictureInPictureCallWindowUser(),
 				isCopilotFeaturesEnabled: this.isCopilotFeaturesEnabled,
 				buttons: this.getPictureInPictureCallWindowGetButtonsList(),
@@ -4615,10 +4992,15 @@ export class View
 				allowPinButton: false,
 				allowBackgroundItem: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
 				allowMaskItem: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
-				onClose: () => {
+				preferInitialWindowPlacement: this.preferInitialWindowPlacementPictureInPicture,
+				floorRequestNotifications: this.floorRequestNotifications,
+				onClose: () =>
+				{
 					this.pictureInPictureCallWindow = null;
+					this.currentPiPUserId = null;
 				},
-				onButtonClick: ({ buttonName, event }) => {
+				onButtonClick: ({ buttonName, event }) =>
+				{
 					switch (buttonName)
 					{
 						case "microphone":
@@ -4633,23 +5015,15 @@ export class View
 						case "stop-screen":
 							this._onScreenButtonClick(event);
 							break;
-						case "copilot":
-							if (this.size === View.Size.Folded)
-							{
-								this._onBodyClick(event);
-							}
-
-							if (this.buttons.copilot)
-							{
-								this.buttons.copilot.click();
-							}
-							break;
 						default:
 							break;
 					}
 				}
 			});
-			this.pictureInPictureCallWindow.checkAvailableAndCreate();
+			this.pictureInPictureCallWindow.checkAvailableAndCreate()
+				.then(() => {
+					this.preferInitialWindowPlacementPictureInPicture = false;
+				});
 		}
 
 		if (!isActive && this.pictureInPictureCallWindow)
@@ -4677,7 +5051,7 @@ export class View
 
 	getButtonActive(buttonName)
 	{
-		if (!this.buttons[buttonName])
+		if (!this.buttons || !this.buttons[buttonName])
 		{
 			return false;
 		}
@@ -4852,6 +5226,22 @@ export class View
 		if (this.pictureInPictureCallWindow)
 		{
 			this.pictureInPictureCallWindow.updateButtons();
+		}
+
+		if (this.showCallcontrolPromoPopupTimeout)
+		{
+			clearTimeout(this.showCallcontrolPromoPopupTimeout);
+		}
+
+		if (this.needToShowCallcontrolPromo)
+		{
+			this.showCallcontrolPromoPopupTimeout = setTimeout(() =>
+			{
+				if (this.size !== View.Size.Folded)
+				{
+					this.createAhaMomentNotifyCallcontrol();
+				}
+			}, 1500);
 		}
 
 		this.renderAddUserButtonInList();
@@ -5505,7 +5895,6 @@ export class View
 
 	_onTurnOffParticipantMic(e)
 	{
-		console.warn('_onTurnOffParticipantMic', e);
 		this.eventEmitter.emit(EventName.onTurnOffParticipantMic, {
 			userId: e.userId
 		});
@@ -5513,8 +5902,14 @@ export class View
 
 	_onTurnOffParticipantCam(e)
 	{
-		console.warn('_onTurnOffParticipantCam', e);
 		this.eventEmitter.emit(EventName.onTurnOffParticipantCam, {
+			userId: e.userId
+		});
+	};
+	
+	_onTurnOffParticipantScreenshare(e)
+	{
+		this.eventEmitter.emit(EventName.onTurnOffParticipantScreenshare, {
 			userId: e.userId
 		});
 	};
@@ -5675,6 +6070,10 @@ export class View
 
 	_onMicrophoneButtonClick(e)
 	{
+		if (this.isButtonBlocked('microphone'))
+		{
+			return;
+		}
 		if ("stopPropagation" in e)
 		{
 			e.stopPropagation();
@@ -5708,6 +6107,10 @@ export class View
 
 	_onCameraButtonClick(e)
 	{
+		if (this.isButtonBlocked('camera'))
+		{
+			return;
+		}
 		if ("stopPropagation" in e)
 		{
 			e.stopPropagation();
@@ -5826,14 +6229,6 @@ export class View
 		});
 	};
 
-	_onTurnOffStreamForAll(e)
-	{
-		this.eventEmitter.emit(EventName.onButtonClick, {
-			buttonName: 'turnOffAllParticipansStream',
-			data: e.data
-		});
-	};
-
 	_onMoreButtonClick(e)
 	{
 		e.stopPropagation();
@@ -5902,6 +6297,22 @@ export class View
 			buttonName: 'feedback',
 			node: e.target
 		});
+	}
+	
+	_onCallcontrolButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'callcontrol',
+			node: e.target
+		});
+		
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			PromoManager.getInstance().markAsWatched(CALLCONTROL_PROMO_ID);
+		}
+		
+		this.clearCallcontrolPromo();
 	}
 
 	_onParticipantsButtonListClick(event)
@@ -6168,13 +6579,34 @@ export class View
 		this.rerenderQueue.clear();
 	}
 
+	clearCallcontrolPromo()
+	{
+		if (this.showCallcontrolPromoPopupTimeout)
+		{
+			clearTimeout(this.showCallcontrolPromoPopupTimeout);
+		}
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			this.needToShowCallcontrolPromo = false;
+			this.ahaMomentNotifyCallcontrol.close();
+			this.ahaMomentNotifyCallcontrol = null;
+		}
+
+	}
+
 	destroy()
 	{
+		this.destroyed = true;
+
 		this.closeCopilotNotify();
 		if (this.overflownButtonsPopup)
 		{
 			this.overflownButtonsPopup.close();
 		}
+
+		this.preferInitialWindowPlacementPictureInPicture = true;
+
 		if (this.elements.root)
 		{
 			Dom.remove(this.elements.root);
@@ -6191,6 +6623,9 @@ export class View
 		window.removeEventListener("keyup", this._onKeyUpHandler);
 
 		document.removeEventListener('mousemove', this.onMouseMoveHandler);
+
+		// TODO: Disable PiP on minimize
+		// this.toggleVisibilityChangeDocumentEvent(false);
 		this.resizeObserver.disconnect();
 		this.resizeObserver = null;
 		if (this.intersectionObserver)
@@ -6224,6 +6659,8 @@ export class View
 
 		Hardware.unsubscribe(Hardware.Events.onChangeMicrophoneMuted, this.setMuted);
 		Hardware.unsubscribe(Hardware.Events.onChangeCameraOn, this.setCameraState);
+
+		this.clearCallcontrolPromo();
 	};
 
 	static Layout = Layouts;

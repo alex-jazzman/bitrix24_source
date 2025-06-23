@@ -2,6 +2,7 @@
 
 namespace Bitrix\Call;
 
+use Bitrix\Main\Loader;
 use Bitrix\Im\Call\Util;
 use Bitrix\Im\Model\CallTable;
 use Bitrix\Im\Model\CallUserTable;
@@ -59,7 +60,7 @@ class Call
 			$result[$call['ID']] = array_merge(
 				$callInstance->toArray($currentUserId),
 				[
-					'CALL_TOKEN' => JwtCall::getCallToken($call['CHAT_ID']),
+					'CALL_TOKEN' => JwtCall::getCallToken($call['CHAT_ID'], $currentUserId),
 					'CONNECTION_DATA' => $callInstance->getConnectionData($currentUserId),
 					'USERS' => $callUsers,
 					'LOG_TOKEN' => $callInstance->getLogToken($currentUserId),
@@ -69,5 +70,49 @@ class Call
 
 			return $result;
 		}, []);
+	}
+
+	public static function finishActiveCalls(int $depthHours = 12): void
+	{
+		Loader::includeModule('im');
+
+		$callList = CallTable::getList([
+			'select' => ['*'],
+			'filter' => [
+				'=PROVIDER' => \Bitrix\Im\Call\Call::PROVIDER_BITRIX,
+				'!=STATE' => \Bitrix\Im\Call\Call::STATE_FINISHED,
+				'<START_DATE' => (new DateTime())->add("-{$depthHours} hour"),
+			]
+		]);
+
+		while ($row = $callList->fetch())
+		{
+			$call = CallFactory::createWithArray($row['PROVIDER'], $row);
+			$call->finish();
+		}
+	}
+
+	public static function finishOldCallsAgent(int $depthHours = 12): string
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return __METHOD__ . '();';
+		}
+
+		$callList = CallTable::getList([
+			'select' => ['*'],
+			'filter' => [
+				'!=STATE' => \Bitrix\Im\Call\Call::STATE_FINISHED,
+				'<START_DATE' => (new DateTime())->add("-{$depthHours} hour"),
+			]
+		]);
+
+		while ($row = $callList->fetch())
+		{
+			$call = CallFactory::createWithArray($row['PROVIDER'], $row);
+			$call->finish();
+		}
+
+		return __METHOD__ . '();';
 	}
 }

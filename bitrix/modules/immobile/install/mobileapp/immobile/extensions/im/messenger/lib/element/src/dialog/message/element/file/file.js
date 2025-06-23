@@ -14,6 +14,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		getShortFileName,
 		getFileIconTypeByExtension,
 	} = require('im/messenger/lib/helper/file');
+	const { withCurrentDomain } = require('utils/url');
 
 	class File
 	{
@@ -47,6 +48,8 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 				iconDownloadFallbackUrl: this.#getIconDownloadFallbackUrl(),
 				iconDownloadSvg: this.#getIconDownloadSvg(),
 				iconSvg: this.#getIconSvg(),
+				sizeBytes: this.#getSizeBytes(),
+				url: this.#getDownloadUrl(),
 				originalName: this.#getOriginalName(),
 			};
 		}
@@ -93,12 +96,18 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		 */
 		#getSize()
 		{
-			if (this.fileModel.size > 0)
+			const sizeBytes = this.#getSizeBytes();
+			if (sizeBytes > 0)
 			{
-				return formatFileSize(this.fileModel.size);
+				return formatFileSize(sizeBytes);
 			}
 
 			return '';
+		}
+
+		#getSizeBytes()
+		{
+			return this.fileModel.size;
 		}
 
 		/**
@@ -106,7 +115,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		 */
 		#getIconDownloadName()
 		{
-			return Icon.DOWNLOAD.getIconName();
+			return this.#getIcon().getIconName();
 		}
 
 		/**
@@ -114,7 +123,15 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		 */
 		#getIconDownloadFallbackUrl()
 		{
-			return currentDomain + Icon.DOWNLOAD.getPath();
+			return withCurrentDomain(this.#getIcon().getPath());
+		}
+
+		/**
+		 * @returns {Icon}
+		 */
+		#getIcon()
+		{
+			return Icon.DOWNLOAD;
 		}
 
 		/**
@@ -133,6 +150,11 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 			const fileIconType = getFileIconTypeByExtension(this.fileModel.extension);
 
 			return resolveFileIcon(this.fileModel.extension, fileIconType).getSvg();
+		}
+
+		#getDownloadUrl()
+		{
+			return this.fileModel.urlDownload;
 		}
 	}
 

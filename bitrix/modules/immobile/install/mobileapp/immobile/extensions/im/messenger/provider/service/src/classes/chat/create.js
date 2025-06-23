@@ -24,6 +24,11 @@ jn.define('im/messenger/provider/service/classes/chat/create', (require, exports
 				memberEntities: params.memberEntities,
 			};
 
+			if (Type.isNumber(params.messagesAutoDeleteDelay))
+			{
+				config.messagesAutoDeleteDelay = params.messagesAutoDeleteDelay;
+			}
+
 			if (Type.isStringFilled(params.title))
 			{
 				config.title = params.title;
@@ -38,6 +43,24 @@ jn.define('im/messenger/provider/service/classes/chat/create', (require, exports
 			{
 				config.avatar = params.avatar;
 			}
+
+			return runAction(RestMethod.imV2ChatAdd, {
+				data: {
+					fields: config,
+				},
+			});
+		}
+
+		/**
+		 * @param {CreateCopilotParams} params
+		 * @returns {Promise<{chatId: number}>}
+		 */
+		async createCopilot(params)
+		{
+			const config = {
+				type: params.type,
+				copilotMainRole: params.copilotMainRole,
+			};
 
 			return runAction(RestMethod.imV2ChatAdd, {
 				data: {

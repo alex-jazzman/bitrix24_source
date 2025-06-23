@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.buttons',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

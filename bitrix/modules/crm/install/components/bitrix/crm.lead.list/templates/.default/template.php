@@ -26,10 +26,7 @@ use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -545,6 +542,7 @@ js,
 
 	$dateCreate = $arLead['DATE_CREATE'] ?? '';
 	$dateModify = $arLead['DATE_MODIFY'] ?? '';
+	$movedTime = $arLead['MOVED_TIME'] ?? '';
 	$webformId = null;
 	if (isset($arLead['WEBFORM_ID']))
 	{
@@ -595,6 +593,7 @@ js,
 			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION'] ?? ''),
 			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
 			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+			'MOVED_TIME' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($movedTime), $now),
 			'SUM' => $arLead['FORMATTED_OPPORTUNITY'],
 			'OPPORTUNITY' => $arLead['~OPPORTUNITY'] ?? 0.0,
 			'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arLead['~CURRENCY_ID'] ?? null),
@@ -624,7 +623,7 @@ js,
 			),
 			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? null,
 			'WEBFORM_ID' => $webformId,
-			'CREATED_BY' => isset($arLead['~CREATED_BY']) && $arLead['~CREATED_BY'] > 0
+			'CREATED_BY' => isset($arLead['~CREATED_BY']) && isset($arLead['CREATED_BY_FORMATTED_NAME']) && $arLead['~CREATED_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_CREATOR",
@@ -634,7 +633,15 @@ js,
 					)
 				)
 				: '',
-			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && $arLead['~MODIFY_BY'] > 0
+			'MOVED_BY' => isset($arLead['~MOVED_BY']) && isset($arLead['MOVED_BY_FORMATTED_NAME']) && $arLead['~MOVED_BY'] > 0
+				? CCrmViewHelper::PrepareUserBaloonHtml([
+					'PREFIX' => "DEAL_{$arLead['~ID']}_MOVED",
+					'USER_ID' => $arLead['~MOVED_BY'],
+					'USER_NAME' => $arLead['MOVED_BY_FORMATTED_NAME'],
+					'USER_PROFILE_URL' => $arLead['PATH_TO_USER_MOVED'],
+				])
+				: '',
+			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && isset($arLead['MODIFY_BY_FORMATTED_NAME']) && $arLead['~MODIFY_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_MODIFIER",
@@ -830,6 +837,10 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
+		'COUNTER_PANEL' => [
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::LeadName,
+			'EXTRAS' => [],
+		],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
 			->setItems([
 				NavigationBarPanel::ID_KANBAN,

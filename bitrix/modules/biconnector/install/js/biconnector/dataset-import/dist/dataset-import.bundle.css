@@ -39,7 +39,7 @@
 	pointer-events: none;
 }
 
-.app-body .ui-side-panel-toolbar {
+.app-body .ui-side-panel-header {
 	position: -webkit-sticky;
 	position: sticky;
 	top: 0;
@@ -399,7 +399,9 @@
 .connection-icon {
 	width: 26px;
 	height: 26px;
-	background-size: cover;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
 	margin-right: 8px;
 }
 
@@ -415,14 +417,14 @@
 }
 
 .dataset-import-step.dataset-import-step--full-height .ui-section__wrapper {
-	/* 73px is slider header, 66 is bottom buttons block, 18px is padding before button block */
-	height: calc(100vh - 73px - 66px - 18px);
+	/* 74px is slider header, 66 is bottom buttons block, 18px is padding before button block */
+	height: calc(100vh - 74px - 66px - 18px);
 }
 
 .dataset-import-step.dataset-import-step--sticky {
 	position: -webkit-sticky;
 	position: sticky;
-	top: 73px;
+	top: 74px;
 }
 
 .dataset-import-step__content .ui-alert {
@@ -572,6 +574,10 @@
 
 .ui-ctl-textbox.format-table__text-input--invalid {
 	border-color: var(--ui-color-palette-red-50);
+}
+
+.format-table__type-control--disabled {
+	pointer-events: none;
 }
 
 .format-table__text-input[disabled],
@@ -728,6 +734,14 @@
 	border-color: var(--ui-field-color-primary) !important;
 }
 
+.format-table__text-input--disabled {
+	pointer-events: none;
+}
+
+.format-table__text-input--disabled .format-table__error-icon{
+	pointer-events: all;
+}
+
 .format-table__text-input--disabled .format-table__name-input {
 	border: 0;
 }
@@ -837,9 +851,19 @@
 	max-width: 100%;
 }
 
+.ui-tag-selector-tag-avatar {
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
+.ui-tag-selector-text-box {
+	width: 100%;
+}
+
 .connection-error {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	flex-direction: row;
 	margin-top: 6px;
 	color: var(--ui-color-palette-red-50);
@@ -857,6 +881,8 @@
 	background-size: 14px 12px;
 	background-repeat: no-repeat;
 	background-position: center center;
+	margin-top: 2px;
+	flex-shrink: 0;
 }
 
 .table-title {

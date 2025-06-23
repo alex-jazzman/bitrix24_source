@@ -13,7 +13,6 @@ final class SaleshubItem
 	private const QUERY_DEFAULT_URL = 'https://util.bitrixsoft.com/b24/saleshub.php';
 	private const QUERY_URL = [
 		'ru' => 'https://util.1c-bitrix.ru/b24/saleshub.php',
-		'ua' => 'https://util.bitrix.ua/b24/saleshub.php',
 		'en' => 'https://util.bitrixsoft.com/b24/saleshub.php',
 		'kz' => 'https://util.1c-bitrix.kz/b24/saleshub.php',
 		'by' => 'https://util.1c-bitrix.by/b24/saleshub.php'

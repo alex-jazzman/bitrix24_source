@@ -14,6 +14,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _uids = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uids");
 	var _documentMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentMode");
 	var _chatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
+	var _actionMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actionMode");
 	var _initNotifications = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initNotifications");
 	var _isChatCreated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChatCreated");
 	var _appendChatWarningContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendChatWarningContainer");
@@ -101,6 +102,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _actionMode, {
+	      writable: true,
+	      value: 'create'
+	    });
 	    this.setEventNamespace('BX.Sign.V2.DocumentSetup');
 	    this.blankSelector = new sign_v2_blankSelector.BlankSelector({
 	      ...blankSelectorConfig,
@@ -170,7 +175,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  loadBlocks(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(uid);
 	  }
-	  async setup(uid, isTemplateMode = false) {
+	  async setup(uid, isTemplateMode = false, copyBlocksFromPreviousBlank = false) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _actionMode)[_actionMode] = main_core.Type.isStringFilled(uid) ? 'edit' : 'create';
 	    if (this.isSameBlankSelected()) {
 	      this.setupData = {
 	        ...this.setupData,
@@ -193,10 +199,13 @@ this.BX.Sign = this.BX.Sign || {};
 	        const {
 	          blankId
 	        } = loadedData;
+	        this.blankIsNotSelected = false;
 	        if (!this.blankSelector.hasBlank(blankId)) {
 	          await this.blankSelector.loadBlankById(blankId);
 	        }
-	        this.blankSelector.selectBlank(blankId);
+	        this.blankSelector.selectBlank(blankId, {
+	          isInitial: true
+	        });
 	      } else {
 	        var _this$setupData2;
 	        this.ready = false;
@@ -211,14 +220,14 @@ this.BX.Sign = this.BX.Sign || {};
 	        if (isBlankChanged && isTemplateMode && documentUid) {
 	          const {
 	            templateUid
-	          } = await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](documentUid, blankId);
+	          } = await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](documentUid, blankId, copyBlocksFromPreviousBlank);
 	          documentTemplateUid = templateUid;
 	        } else {
 	          const isRegistered = babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].has(blankId);
 	          const {
 	            uid,
 	            templateUid
-	          } = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId, isTemplateMode, babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	          } = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId, copyBlocksFromPreviousBlank) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId, isTemplateMode, babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
 	          documentUid = uid;
 	          documentTemplateUid = templateUid;
 	        }
@@ -290,9 +299,14 @@ this.BX.Sign = this.BX.Sign || {};
 	      const blank = this.blankSelector.getBlank(blankId);
 	      blank.setPreview(urls[0].url);
 	    }
+	    let blocks = null;
+	    if (this.isTemplateMode()) {
+	      blocks = await this.loadBlocks(uid);
+	      this.setupData.blocks = blocks;
+	    }
 	    clearInterval(interval);
 	    isPagesReady = true;
-	    await babelHelpers.classPrivateFieldLooseBase(this, _processPages)[_processPages](urls, cb);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _processPages)[_processPages](urls, cb, blocks);
 	  }
 	  set ready(isReady) {
 	    if (isReady) {
@@ -306,6 +320,12 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	  deleteDocumentFromList(blankId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].delete(blankId);
+	  }
+	  getActionMode() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _actionMode)[_actionMode];
+	  }
+	  isEditActionMode() {
+	    return this.getActionMode() === 'edit';
 	  }
 	}
 	function _initNotifications2(portalConfig) {
@@ -343,8 +363,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].register(blankId, babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType], isTemplateMode, chatId);
 	  return data != null ? data : {};
 	}
-	async function _changeDocumentBlank2(uid, blankId) {
-	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeDocument(uid, blankId);
+	async function _changeDocumentBlank2(uid, blankId, copyBlocksFromPreviousBlank = false) {
+	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeBlank(uid, blankId, copyBlocksFromPreviousBlank);
 	  return data != null ? data : {};
 	}
 	async function _getPages2(uid) {
@@ -371,7 +391,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    removeFromServer: false
 	  });
 	}
-	async function _processPages2(urls, cb) {
+	async function _processPages2(urls, cb, newBlocks) {
 	  let startIndex = 0;
 	  const pagesCount = 3;
 	  while (startIndex < urls.length) {
@@ -381,7 +401,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      selected: true
 	    });
 	    startIndex += pagesCount;
-	    cb(convertedPages, urls.length);
+	    cb(convertedPages, urls.length, newBlocks);
 	  }
 	}
 	function _appendUnsecuredSchemeWarningContainer2() {

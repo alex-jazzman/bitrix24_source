@@ -10,7 +10,7 @@ export const DepartmentAPI = {
 			userId,
 		});
 	},
-	moveUserToDepartment: (nodeId: number, userId: number, targetNodeId: number,): Promise<void> => {
+	moveUserToDepartment: (nodeId: number, userId: number, targetNodeId: number): Promise<void> => {
 		return postData('humanresources.api.Structure.Node.Member.moveUser', {
 			nodeId,
 			userId,
@@ -28,10 +28,29 @@ export const DepartmentAPI = {
 			userId,
 		});
 	},
+	fireUser: (userId: number): Promise<void> => {
+		return postData('intranet.user.fire', {
+			userId,
+		});
+	},
 	findMemberByQuery: (nodeId: number, query: string): Promise<void> => {
 		return getData('humanresources.api.Structure.Node.Member.find', {
 			nodeId,
 			query,
+		});
+	},
+	getChatsAndChannels: (nodeId: number) => {
+		return getData('humanresources.api.Structure.Node.Member.Chat.getList', {
+			nodeId,
+		});
+	},
+	saveChats: (
+		nodeId: number,
+		ids: number[],
+	): Promise<Array> => {
+		return postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
+			nodeId,
+			ids,
 		});
 	},
 };

@@ -9,26 +9,22 @@
 	position: absolute;
 	top: 0;
 	right: 0;
-	width: 60px;
-	height: 60px;
+	width: 42px;
+	height: 42px;
 	z-index: 1;
 	background-repeat: no-repeat;
 	background-position: center;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cg clip-path='url(%23a)'%3E%3Ccircle cx='60' r='45' fill='%2392C5FF' fill-opacity='.4'/%3E%3Crect width='10' height='4' x='32' y='15' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3Crect width='16' height='4' x='32' y='8' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3Crect width='20' height='4' x='32' y='22' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Crect width='60' height='60' fill='%23fff' rx='10'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42' fill='none'%3E%3Crect width='10' height='3' x='12' y='18' fill='%2392C5FF' fill-opacity='.4' rx='1.5'/%3E%3Crect width='14' height='3' x='12' y='12' fill='%2392C5FF' fill-opacity='.4' rx='1.5'/%3E%3Crect width='18' height='3' x='12' y='24' fill='%2392C5FF' fill-opacity='.4' rx='1.5'/%3E%3C/svg%3E");
 }
 
-.bx-im-content-chat__container.--left-align .bx-im-message-base__wrap.--self .bx-im-chat-title__vote-icon {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cg clip-path='url(%23a)'%3E%3Ccircle cx='60' r='45' fill='%23A4E548' fill-opacity='.5'/%3E%3Crect width='10' height='4' x='32' y='15' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3Crect width='16' height='4' x='32' y='8' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3Crect width='20' height='4' x='32' y='22' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Crect width='60' height='60' fill='%23fff' rx='10'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
-}
-
-.bx-im-content-chat__container.--center-align .bx-im-message-base__wrap.--self .bx-im-chat-title__vote-icon {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cg clip-path='url(%23a)'%3E%3Ccircle cx='60' r='45' fill='%23A4E548' fill-opacity='.5'/%3E%3Crect width='10' height='4' x='32' y='15' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3Crect width='16' height='4' x='32' y='8' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3Crect width='20' height='4' x='32' y='22' fill='%23fff' fill-opacity='.7' rx='2'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Crect width='60' height='60' fill='%23fff' rx='6'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+.bx-im-message-base__wrap.--self .bx-im-chat-title__vote-icon {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42' fill='none'%3E%3Crect width='10' height='3' x='12' y='18' fill='%23A4E548' fill-opacity='.4' rx='1.5'/%3E%3Crect width='14' height='3' x='12' y='12' fill='%23A4E548' fill-opacity='.4' rx='1.5'/%3E%3Crect width='18' height='3' x='12' y='24' fill='%23A4E548' fill-opacity='.4' rx='1.5'/%3E%3C/svg%3E");
 }
 
 .bx-im-chat__vote-container {
 	position: relative;
 	min-width: 410px;
-	max-width: 700px;
+	max-width: 500px;
 	border-radius: 6px;
 	background: var(--ui-color-background-primary);
 }
@@ -55,4 +51,12 @@
 
 .bx-im-content-chat__container.--center-align .bx-im-message-base__wrap.--self:last-child .bx-im-chat__vote-container {
 	border-bottom-right-radius: 0;
+}
+
+.bx-im-message-default-content__vote {
+	padding: 0 14px 12px;
+}
+
+.bx-im-message-base__wrap.--has-error .bx-im-chat-title__vote-icon {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42' fill='none'%3E%3Crect width='10' height='3' x='12' y='18' fill='%23000' fill-opacity='.4' rx='1.5'/%3E%3Crect width='14' height='3' x='12' y='12' fill='%23000' fill-opacity='.4' rx='1.5'/%3E%3Crect width='18' height='3' x='12' y='24' fill='%23000' fill-opacity='.4' rx='1.5'/%3E%3C/svg%3E")
 }

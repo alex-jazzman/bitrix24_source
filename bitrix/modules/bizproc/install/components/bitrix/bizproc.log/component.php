@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\ModuleManager;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -166,7 +168,13 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 		$arResult["RECORDS"] = array();
 		$level = 0;
 
-		$dbTrack = CBPTrackingService::GetList($gridSort["sort"], $arFilter);
+		$navParams = false;
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$navParams = ['nTopCount' => 50];
+		}
+
+		$dbTrack = CBPTrackingService::GetList($gridSort["sort"], $arFilter, arNavStartParams: $navParams);
 		while ($arTrack = $dbTrack->GetNext())
 		{
 			$prefix = "";

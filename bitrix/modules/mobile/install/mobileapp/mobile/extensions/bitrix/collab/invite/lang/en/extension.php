@@ -31,7 +31,6 @@ $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_EMAIL"] = "Enter guest names";
 $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_PHONE"] = "Check guest names";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION"] = "Only the collab owner or moderator can invite people to this collab.";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_TITLE"] = "Insufficient permissions";
-$MESS["COLLAB_INVITE_QR_SHARING_MESSAGE_TEXT"] = "Scan the QR code to join the collab";
 $MESS["COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT"] = "Invite";
 $MESS["COLLAB_INVITE_SHARE_LINK_DIALOG_TITLE"] = "Share link";
 $MESS["COLLAB_INVITE_SHARING_MESSAGE_TEXT"] = "Join our collab to communicate and bring our project to success #link#";

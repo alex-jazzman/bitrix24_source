@@ -907,11 +907,13 @@ this.BX = this.BX || {};
 	        var viewerMode = this.isBroadcast && !this.isCurrentUserPresenter;
 	        im_lib_logger.Logger.warn('ready to join call', video, viewerMode);
 	        if (viewerMode) {
-	          this.getApplication().joinCall(this.getApplication().preCall.id, {
+	          this.getApplication().joinCall(this.getApplication().preCall.id, this.getApplication().preCall.uuid, {
 	            joinAsViewer: true
 	          });
 	        } else {
-	          this.getApplication().startCall(video);
+	          this.getApplication().joinCall(this.getApplication().preCall.id, this.getApplication().preCall.uuid, {
+	            video: video
+	          });
 	        }
 	      }
 	    },

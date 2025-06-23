@@ -34,6 +34,14 @@ $MESS['M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_TITLE'] = 'Задачи колла�
 $MESS['M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_SUBTITLE'] = 'Настройте права доступа';
 $MESS['M_COLLAB_CREATE_SECURITY_ITEM_TITLE'] = 'Безопасность';
 $MESS['M_COLLAB_CREATE_SECURITY_ITEM_SUBTITLE'] = 'Защитите корпоративные данные';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_TITLE'] = 'Автоудаление сообщений';
+
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_OFF'] = 'Выкл';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_HOUR'] = '1 час';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_DAY'] = '1 день';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_WEEK'] = '1 нед.';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_MONTH'] = '1 мес.';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_PERMISSION_MESSAGE'] = 'Автоудаление отключено администратором вашего Битрикс24';
 
 $MESS['M_COLLAB_PERMISSIONS_OWNER_ITEM_TITLE'] = 'Владелец';
 $MESS['M_COLLAB_PERMISSIONS_MODERATORS_ITEM_TITLE'] = 'Модераторы';

@@ -60,6 +60,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			this.modifyItemsListHandler = this.modifyItemsList.bind(this);
 			this.onDetailCardCreate = this.onDetailCardCreateHandler.bind(this);
 			this.onDetailCardUpdate = this.onDetailCardUpdateHandler.bind(this);
+			this.onRefresh = this.onRefresh.bind(this);
 			this.operationsQueue = Promise.resolve();
 			this.changeItemsStateQueue = Promise.resolve();
 		}
@@ -75,6 +76,13 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				Math.ceil(this.props.itemsLoadLimit / 2),
 				MIN_ROWS_COUNT_FOR_LOAD_MORE,
 			);
+		}
+
+		get viewabilityConfig()
+		{
+			return this.props.viewabilityConfig || {
+				waitForInteraction: true,
+			};
 		}
 
 		componentDidMount()
@@ -604,7 +612,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		reloadList()
 		{
-			this.props.reloadListHandler();
+			this.props.reloadListHandler?.();
 		}
 
 		getListViewContainer()
@@ -669,10 +677,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						analyticsLabel: this.props.analyticsLabel,
 					});
 				},
-				onRefresh: () => {
-					this.reloadList();
-					BX.postComponentEvent('UI.SimpleList::onRefresh');
-				},
+				onRefresh: this.props.onRefresh !== undefined ? this.props.onRefresh : this.onRefresh,
 				isRefreshing: this.props.isRefreshing,
 				onLoadMore: (
 					this.state.allItemsLoaded || (this.currentIdsOrder.length < this.props.itemsLoadLimit)
@@ -680,12 +685,14 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						: this.onLoadMoreDummy // need for show the loader at the bottom of the list
 				),
 				onViewableItemsChanged: (viewableItems) => {
+					this.visibleIndexes = (viewableItems[0].items || null);
+					this.handleViewableItemsChanged(this.visibleIndexes);
+
 					if (this.state.allItemsLoaded)
 					{
 						return;
 					}
 
-					this.visibleIndexes = (viewableItems[0].items || null);
 					if (this.visibleIndexes)
 					{
 						const maxIndex = Math.max(...this.visibleIndexes) + 1;
@@ -697,9 +704,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						}
 					}
 				},
-				viewabilityConfig: {
-					waitForInteraction: true,
-				},
+				viewabilityConfig: this.viewabilityConfig,
 				renderLoadMore: () => {
 					if (this.state.allItemsLoaded)
 					{
@@ -716,6 +721,22 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					this.listView = ref;
 				},
 			});
+		}
+
+		onRefresh()
+		{
+			this.reloadList();
+			BX.postComponentEvent('UI.SimpleList::onRefresh');
+		}
+
+		handleViewableItemsChanged(viewableIndexes)
+		{
+			const viewableItems = viewableIndexes.map((index) => this.getItem(this.currentIdsOrder[index]));
+
+			if (this.props.onItemsViewable)
+			{
+				this.props.onItemsViewable(viewableItems);
+			}
 		}
 
 		isEmptyList()
@@ -824,7 +845,12 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		renderFloatingButton()
 		{
-			const { layout, onFloatingButtonLongClick, onFloatingButtonClick } = this.props;
+			const { layout, onFloatingButtonLongClick, onFloatingButtonClick, renderFloatingButton } = this.props;
+
+			if (renderFloatingButton)
+			{
+				return renderFloatingButton();
+			}
 
 			return new FloatingButtonComponent({
 				testId: `${this.testId}_ADD_BTN`,
@@ -1505,6 +1531,11 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		getStyles()
 		{
+			if (this.props.styles)
+			{
+				return this.props.styles;
+			}
+
 			return {
 				wrapper: {
 					flexDirection: 'column',

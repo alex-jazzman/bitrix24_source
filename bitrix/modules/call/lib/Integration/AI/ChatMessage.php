@@ -4,6 +4,7 @@ namespace Bitrix\Call\Integration\AI;
 
 use Bitrix\Call\Integration\AI\Outcome\Insights;
 use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Message;
@@ -29,8 +30,6 @@ class ChatMessage
 			->setMessage($errorMessage)
 			->markAsSystem(true);
 
-		// todo: Add COMPONENT_ID  for call message
-		//$message->getParams()->get(Params::COMPONENT_ID)->setValue(NotifyService::MESSAGE_COMPONENT_ID);
 		$message->getParams()->get(Params::COMPONENT_PARAMS)->setValue([
 			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_AI_FAILED,
 			'CALL_ID' => $call->getId(),
@@ -133,7 +132,7 @@ class ChatMessage
 		$message = new Message();
 		//$message->setMessage('[b]'.Loc::getMessage('CALL_NOTIFY_COPILOT').'[/b]');
 
-		$linkMess = self::makeCallStartMessageLink($callId, $chat);
+		$linkMess = self::makeCallStartMessageLink($callId, $chat->getId());
 		$message->setMessage(Loc::getMessage('CALL_NOTIFY_TASK_COMPLETE', [
 			'#CALL_START#' => $linkMess,
 			'#CALL_ID#' => $callId,
@@ -196,7 +195,7 @@ class ChatMessage
 
 		if ($overview?->agenda)
 		{
-			if ($overview->agenda?->explanation || $overview->agenda?->quote)
+			if ($overview->agenda?->explanation)
 			{
 				$attach->AddDelimiter($delimiter);
 				//$attach->AddMessage('[b]' . Loc::getMessage('CALL_NOTIFY_COPILOT_AGENDA') . '[/b]');
@@ -204,7 +203,7 @@ class ChatMessage
 					'NAME' => Loc::getMessage('CALL_NOTIFY_COPILOT_AGENDA'),
 					'AVATAR' => $hostUrl.'/bitrix/js/call/images/copilot-message-agenda.svg',
 				]);
-				$attach->AddMessage($overview->agenda?->explanation . "\n" . $overview->agenda?->quote);
+				$attach->AddMessage($overview->agenda?->explanation);
 			}
 		}
 
@@ -237,10 +236,10 @@ class ChatMessage
 				$number = 0;
 				foreach ($overview->actionItems as $action)
 				{
-					if (!empty($action->action_item))
+					if (!empty($action->actionItem))
 					{
 						$number++;
-						$attach->AddMessage("{$number}. " . $action->action_item);
+						$attach->AddMessage("{$number}. " . $action->actionItem);
 					}
 				}
 			}
@@ -287,9 +286,9 @@ class ChatMessage
 				]);
 				foreach ($insights->insights as $insight)
 				{
-					if (!empty($insight->detailed_insight))
+					if (!empty($insight->detailedInsight))
 					{
-						$attach->AddMessage($insight->detailed_insight . '[br][br]');
+						$attach->AddMessage($insight->detailedInsight . '[br][br]');
 						$attach->AddDelimiter($spacer);
 					}
 				}
@@ -307,8 +306,6 @@ class ChatMessage
 			->setAttach($attach)
 			->markAsSystem(true);
 
-		//todo: Add COMPONENT_ID  for call message
-		//$message->getParams()->get(Params::COMPONENT_ID)->setValue(NotifyService::MESSAGE_COMPONENT_ID);
 		$message->getParams()->get(Params::COMPONENT_PARAMS)->setValue([
 			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_AI_OVERVIEW,
 			'CALL_ID' => $callId,
@@ -320,7 +317,7 @@ class ChatMessage
 	public static function generateTaskCompleteMessage(Outcome $outcome, Chat $chat): ?Message
 	{
 		$callId = $outcome->getCallId();
-		$linkMess = self::makeCallStartMessageLink($callId, $chat);
+		$linkMess = self::makeCallStartMessageLink($callId, $chat->getId());
 
 		$message = new Message();
 		$message->setMessage(Loc::getMessage('CALL_NOTIFY_TASK_COMPLETE', [
@@ -335,7 +332,7 @@ class ChatMessage
 	public static function generateCallFinishedMessage(Call $call, Chat $chat): ?Message
 	{
 		$callId = $call->getId();
-		$linkMess = self::makeCallStartMessageLink($callId, $chat);
+		$linkMess = self::makeCallStartMessageLink($callId, $chat->getId());
 
 		$message = new Message();
 		$message->setMessage(
@@ -346,10 +343,29 @@ class ChatMessage
 		);
 		$message->markAsSystem(true);
 
-		//todo: Add COMPONENT_ID  for call message
-		//$message->getParams()->get(Params::COMPONENT_ID)->setValue(NotifyService::MESSAGE_COMPONENT_ID);
 		$message->getParams()->get(Params::COMPONENT_PARAMS)->setValue([
 			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_AI_START,
+			'CALL_ID' => $callId,
+		]);
+
+		return $message;
+	}
+
+	public static function generateWaitMessage(Call $call, Chat $chat): ?Message
+	{
+		$callId = $call->getId();
+		$linkMess = self::makeCallStartMessageLink($callId, $chat->getId());
+
+		$message = new Message();
+		$message->setMessage(
+			Loc::getMessage('CALL_NOTIFY_TASK_WAIT', [
+				'#CALL_START#' => $linkMess,
+				'#CALL_ID#' => $callId,
+			])
+		);
+		$message->markAsSystem(true);
+		$message->getParams()->get(Params::COMPONENT_PARAMS)->setValue([
+			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_AI_WAIT,
 			'CALL_ID' => $callId,
 		]);
 
@@ -359,7 +375,7 @@ class ChatMessage
 	public static function generateTaskStartMessage(AITask $task, Chat $chat): ?Message
 	{
 		$callId = $task->getCallId();
-		$linkMess = self::makeCallStartMessageLink($callId, $chat);
+		$linkMess = self::makeCallStartMessageLink($callId, $chat->getId());
 
 		$message = new Message();
 		$message->setMessage(
@@ -375,7 +391,7 @@ class ChatMessage
 
 	public static function generateTaskFailedMessage(int $callId, \Bitrix\Main\Error $error, Chat $chat): ?Message
 	{
-		$linkMess = self::makeCallStartMessageLink($callId, $chat);
+		$linkMess = self::makeCallStartMessageLink($callId, $chat->getId());
 
 		$mess = Loc::getMessage('CALL_NOTIFY_TASK_FAILED', ['#CALL_START#' => $linkMess, '#CALL_ID#' => $callId]);
 
@@ -394,8 +410,6 @@ class ChatMessage
 		$message->setMessage($mess);
 		$message->markAsSystem(true);
 
-		//todo: Add COMPONENT_ID  for call message
-		//$message->getParams()->get(Params::COMPONENT_ID)->setValue(NotifyService::MESSAGE_COMPONENT_ID);
 		$message->getParams()->get(Params::COMPONENT_PARAMS)->setValue([
 			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_AI_FAILED,
 			'CALL_ID' => $callId,
@@ -404,10 +418,57 @@ class ChatMessage
 		return $message;
 	}
 
-	private static function makeCallStartMessageLink(int $callId, Chat $chat): string
+	public static function generateFollowUpDroppedMessage(int $callId, int $actionUserId, Chat $chat): Message
+	{
+		$linkMess = self::makeCallStartMessageLink($callId, $chat->getId());
+
+		Loader::includeModule('im');
+
+		$user = \Bitrix\Im\User::getInstance($actionUserId);
+		$userName = "[user={$actionUserId}]". $user->getFullName(). "[/user]";
+
+		$message = new Message();
+		$message->setMessage(Loc::getMessage('CALL_NOTIFY_TASK_DROPPED_'. ($user->getGender() === 'F' ? 'F' : 'M'), [
+			'#CALL_START#' => $linkMess,
+			'#CALL_ID#' => $callId,
+			'#USER#' => $userName,
+		]));
+		$message->markAsSystem(true);
+
+		return $message;
+	}
+
+	public static function generateTrackDestroyMessage(int $callId, int $actionUserId, int $chatId): ?Message
+	{
+		$linkMess = self::makeCallStartMessageLink($callId, $chatId);
+
+		Loader::includeModule('im');
+
+		$user = \Bitrix\Im\User::getInstance($actionUserId);
+		$userName = "[user={$actionUserId}]". $user->getFullName(). "[/user]";
+
+		$message = new Message();
+		$message->setMessage(
+			Loc::getMessage('CALL_NOTIFY_TASK_DESTROY_'. ($user->getGender() === 'F' ? 'F' : 'M'), [
+				'#CALL_START#' => $linkMess,
+				'#CALL_ID#' => $callId,
+				'#USER#' => $userName,
+			])
+		);
+		$message->markAsSystem(true);
+
+		$message->getParams()->get(Params::COMPONENT_PARAMS)->setValue([
+			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_AI_DESTROY,
+			'CALL_ID' => $callId,
+		]);
+
+		return $message;
+	}
+
+	private static function makeCallStartMessageLink(int $callId, int $chatId): string
 	{
 		$callStartMessageId = null;
-		if ($startMessage = NotifyService::getInstance()->findMessage($chat, $callId, NotifyService::MESSAGE_TYPE_START))
+		if ($startMessage = NotifyService::getInstance()->findMessage($chatId, $callId, NotifyService::MESSAGE_TYPE_START))
 		{
 			$callStartMessageId = $startMessage->getMessageId();
 		}
@@ -415,7 +476,7 @@ class ChatMessage
 		$linkMess = '';
 		if ($callStartMessageId)
 		{
-			$linkMess = \Bitrix\Call\Library::getChatMessageUrl($chat->getChatId(), $callStartMessageId);
+			$linkMess = \Bitrix\Call\Library::getChatMessageUrl($chatId, $callStartMessageId);
 		}
 
 		return $linkMess;

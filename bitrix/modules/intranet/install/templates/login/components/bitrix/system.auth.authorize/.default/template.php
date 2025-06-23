@@ -7,6 +7,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
    \Bitrix\Main\UI\Extension::load(['qrcode', 'pull.client', 'loader']);
 }
 ?>
+<div class="log-popup-form-wrapper">
 <div class="log-popup-form-input --show" data-role="log-popup-form-input">
 	<div class="log-popup-header"><?=$APPLICATION->GetTitle();?></div>
 
@@ -125,7 +126,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 </div>
 
 <?php endif ?>
-
+</div>
 <script>
 	function fireEnterKey(event)
 	{

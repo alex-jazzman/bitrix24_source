@@ -93,6 +93,33 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 			}
 		}
 
+		showActionButton(params)
+		{
+			if (this.isUiAvailable())
+			{
+				this.ui.showActionButton(params);
+			}
+		}
+
+		/**
+		 * @param {[Array<object>, Array<object>]} params
+		 */
+		showActionButtonPopupMenu(params)
+		{
+			if (this.isUiAvailable())
+			{
+				this.ui.showActionButtonPopupMenu(...params);
+			}
+		}
+
+		hideActionButton()
+		{
+			if (this.isUiAvailable())
+			{
+				this.ui.hideActionButton();
+			}
+		}
+
 		/**
 		 * @param {boolean} [isAnimated=false]
 		 */

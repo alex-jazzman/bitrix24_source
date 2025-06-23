@@ -17,6 +17,7 @@ enum ActionType: string
 	case ExcludeUser = 'exclude_user';
 	case CopyLink = 'copy_link';
 	case RegenerateLink = 'regenerate_link';
+	case ConvertGroupToCollab = 'convert_group_to_collab';
 
 	public static function values(): array
 	{

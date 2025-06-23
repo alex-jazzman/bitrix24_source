@@ -1,0 +1,11 @@
+.tasks-field-status {
+	display: flex;
+	align-items: center;
+	max-width: max-content;
+	cursor: default;
+}
+
+.tasks-field-status-icon {
+	margin-right: 6px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}

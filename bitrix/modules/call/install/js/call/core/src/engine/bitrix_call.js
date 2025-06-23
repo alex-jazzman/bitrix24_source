@@ -10,10 +10,12 @@ import {
 	CallEvent,
 	CallState,
 	CallType,
-	Provider
+	Provider,
+	DisconnectReason,
 } from './engine';
-import {Call, CALL_STATE, MediaStreamsKinds} from '../call_api.js';
+import {Call, CALL_STATE, MediaStreamsKinds, RecorderStatus} from '../call_api.js';
 import {View} from '../view/view';
+import { MediaRenderer } from '../view/media-renderer';
 import {SimpleVAD} from './simple_vad'
 import {Hardware} from '../hardware';
 import Util from '../util'
@@ -37,20 +39,8 @@ import {Event} from 'main.core';
  */
 
 const ajaxActions = {
-	invite: 'im.call.invite',
-	answer: 'im.call.answer',
-	decline: 'im.call.decline',
-	hangup: 'im.call.hangup',
-	ping: 'im.call.ping',
-	finish: 'im.call.finish',
-};
-
-const pullEvents = {
-	ping: 'Call::ping',
-	answer: 'Call::answer',
-	hangup: 'Call::hangup',
-	userInviteTimeout: 'Call::userInviteTimeout',
-	repeatAnswer: 'Call::repeatAnswer',
+	invite: 'call.Call.invite',
+	decline: 'call.Call.decline',
 };
 
 const clientEvents = {
@@ -63,6 +53,8 @@ const clientEvents = {
 	recordState: 'Call::recordState',
 	emotion: 'Call::emotion',
 	customMessage: 'Call::customMessage',
+	usersInvited: 'Call::usersInvited',
+	userInviteTimeout: 'Call::userInviteTimeout',
 	showUsers: 'Call::showUsers',
 	showAll: 'Call::showAll',
 	hideAll: 'Call::hideAll',
@@ -84,8 +76,7 @@ const MediaKinds = {
 	[MediaStreamsKinds.ScreenAudio]: 'sharingAudio',
 };
 
-const pingPeriod = 5000;
-const backendPingPeriod = 25000;
+const invitePeriod = 30000;
 const reinvitePeriod = 5500;
 
 // const MAX_USERS_WITHOUT_SIMULCAST = 6;
@@ -110,7 +101,6 @@ export class BitrixCall extends AbstractCall
 
 		this.peers = {};
 		this.peersWithBadConnection = new Set();
-		this.joinedElsewhere = false;
 		this.joinedAsViewer = false;
 		this.localVideoShown = false;
 		this._localUserState = UserState.Idle;
@@ -131,33 +121,21 @@ export class BitrixCall extends AbstractCall
 
 		this.microphoneLevelInterval = null;
 
-		window.addEventListener("unload", this.#onWindowUnload);
-
 		this.initPeers();
-
-		this.pingUsersInterval = setInterval(this.pingUsers.bind(this), pingPeriod);
-		this.pingBackendInterval = setInterval(this.pingBackend.bind(this), backendPingPeriod);
-
-		this.lastPingReceivedTimeout = null;
-		this.lastSelfPingReceivedTimeout = null;
 
 		this.reinviteTimeout = null;
 
 		this._reconnectionEventCount = 0;
+		this.waitForAnswerTimeout = null;
 
 		this.pullEventHandlers = {
 			'Call::answer': this.#onPullEventAnswer,
 			'Call::hangup': this.#onPullEventHangup,
-			'Call::usersJoined': this.#onPullEventUsersJoined,
-			'Call::usersInvited': this.#onPullEventUsersInvited,
-			'Call::userInviteTimeout': this.#onPullEventUserInviteTimeout,
-			'Call::ping': this.#onPullEventPing,
 			'Call::finish': this.#onPullEventFinish,
-			'Call::repeatAnswer': this.#onPullEventRepeatAnswer,
 			'Call::switchTrackRecordStatus': this.#onPullEventSwitchTrackRecordStatus,
 		};
 
-		this._isCopilotActive = config.isCopilotActive;
+		this._recorderState = RecorderStatus.UNAVAILABLE;
 		this._isCopilotFeaturesEnabled = true;
 		this._isRecordWhenCopilotActivePopupAlreadyShow = false;
 		this._isBoostExpired = false;
@@ -173,17 +151,19 @@ export class BitrixCall extends AbstractCall
 		return this._screenShared;
 	}
 
-	get isCopilotActive()
+	get isCopilotInitialized()
 	{
-		return this._isCopilotActive;
+		return this._recorderState !== RecorderStatus.UNAVAILABLE;
 	}
 
-	set isCopilotActive(isCopilotActive)
+	get isCopilotActive()
 	{
-		if (isCopilotActive !== this._isCopilotActive)
-		{
-			this._isCopilotActive = isCopilotActive;
-		}
+		return this._recorderState === RecorderStatus.ENABLED;
+	}
+
+	get isCopilotDisabled()
+	{
+		return this._recorderState === RecorderStatus.DESTROYED;
 	}
 
 	get isBoostExpired()
@@ -295,23 +275,6 @@ export class BitrixCall extends AbstractCall
 		}
 
 		this.initPeers();
-	};
-
-	pingUsers()
-	{
-		if (this.ready)
-		{
-			const users = this.users.concat(this.userId);
-			this.signaling.sendPingToUsers({userId: users}, true);
-		}
-	};
-
-	pingBackend()
-	{
-		if (this.ready)
-		{
-			this.signaling.sendPingToBackend();
-		}
 	};
 
 	createPeer(userId)
@@ -574,6 +537,16 @@ export class BitrixCall extends AbstractCall
 		}
 	};
 
+	setRecorderState(state)
+	{
+		if (!this.BitrixCall || this._recorderState === state)
+		{
+			return;
+		}
+
+		this.BitrixCall.setRecorderState(state);
+	};
+
 	#setPublishingState(deviceType, publishing)
 	{
 		if (deviceType === MediaStreamsKinds.Camera)
@@ -597,6 +570,11 @@ export class BitrixCall extends AbstractCall
 
 	setMainStream(userId)
 	{
+		if (!this.BitrixCall)
+		{
+			return;
+		}
+
 		if (userId && userId !== this.userId)
 		{
 			const participant = this.peers[userId]?.participant;
@@ -627,6 +605,16 @@ export class BitrixCall extends AbstractCall
 	turnOffParticipantStream(options)
 	{
 		this.BitrixCall.turnOffParticipantStream(options);
+	};
+
+	allowSpeakPermission(options)
+	{
+		this.BitrixCall.allowSpeakPermission(options);
+	};
+
+	changeSettings(options)
+	{
+		this.BitrixCall.changeSettings(options);
 	};
 
 	sendRecordState(recordState)
@@ -734,62 +722,68 @@ export class BitrixCall extends AbstractCall
 	/**
 	 * Invites users to participate in the call.
 	 */
-	inviteUsers(config: { users: number[], show?: boolean } = {})
+	inviteUsers(config: { users: ?number[], userData: ?Object, show: ?boolean } = {})
 	{
 		this.ready = true;
-		let users = Type.isArray(config.users) ? config.users : this.users;
+		const usersToInvite = Type.isArray(config.users) ? config.users : this.users;
 
 		this.attachToConference()
-			.then(() =>
-			{
-				this.signaling.sendPingToUsers({userId: users});
-
-				if (users.length > 0)
+			.then(() => {
+				if (this.type === CallType.Instant)
 				{
-					return this.signaling.inviteUsers({
-						userIds: users,
-						video: Hardware.isCameraOn ? 'Y' : 'N',
-						show: config.show === true ? 'Y' : 'N',
-					})
+					clearTimeout(this.waitForAnswerTimeout);
+					this.waitForAnswerTimeout = setTimeout(() => {
+						this.#onNoAnswer();
+					}, invitePeriod);
 				}
-			})
-			.then(() =>
-			{
+
 				this.state = CallState.Connected;
 				this.runCallback(CallEvent.onJoin, {
-					local: true
+					local: true,
 				});
-				for (let i = 0; i < users.length; i++)
-				{
-					const userId = parseInt(users[i]);
+
+				usersToInvite.forEach((user) => {
+					const userId = parseInt(user, 10);
 					if (!this.users.includes(userId))
 					{
 						this.users.push(userId);
 					}
+
 					if (!this.peers[userId])
 					{
 						this.peers[userId] = this.createPeer(userId);
-
-						if (this.type === CallType.Instant)
-						{
-							this.runCallback(CallEvent.onUserInvited, {
-								userId: userId
-							});
-						}
 					}
+
 					if (this.type === CallType.Instant)
 					{
 						this.peers[userId].onInvited();
-						this.scheduleRepeatInvite();
 					}
+				});
+
+				if (config.userData && config.show)
+				{
+					const inviteParams = {
+						users: config.userData,
+					};
+					this.signaling.sendUsersInvited(inviteParams);
+				}
+
+				if (config.show && this.type === CallType.Instant && usersToInvite.length > 0)
+				{
+					const inviteParams = {
+						users: usersToInvite,
+						video: Hardware.isCameraOn ? 'Y' : 'N',
+						repeated: 'Y',
+					};
+
+					this.signaling.inviteUsers(inviteParams).then(() => this.scheduleRepeatInvite());
 				}
 			})
-			.catch((e) =>
-			{
-				this.#onFatalError(e)
+			.catch((e) => {
+				this.#onFatalError(e);
 			})
 		;
-	};
+	}
 
 	scheduleRepeatInvite()
 	{
@@ -818,7 +812,7 @@ export class BitrixCall extends AbstractCall
 			return;
 		}
 		const inviteParams = {
-			userIds: usersToRepeatInvite,
+			users: usersToRepeatInvite,
 			video: Hardware.isCameraOn ? 'Y' : 'N',
 			repeated: 'Y',
 		}
@@ -837,12 +831,6 @@ export class BitrixCall extends AbstractCall
 		this.videoEnabled = Hardware.isCameraOn;
 		this.muted = Hardware.isMicrophoneMuted;
 
-		clearTimeout(this.lastSelfPingReceivedTimeout);
-
-		if (!joinAsViewer)
-		{
-			this._outgoingAnswer = this.signaling.sendAnswer();
-		}
 		this.attachToConference({joinAsViewer: joinAsViewer})
 			.then(() =>
 			{
@@ -863,7 +851,7 @@ export class BitrixCall extends AbstractCall
 	{
 		this.ready = false;
 		const data = {
-			callId: this.id,
+			callUuid: this.uuid,
 			callInstanceId: this.instanceId,
 		};
 		if (code)
@@ -909,18 +897,6 @@ export class BitrixCall extends AbstractCall
 
 		//clone users and append current user id to send event to all participants of the call
 		data.userId = this.users.slice(0).concat(this.userId);
-		if (this._outgoingAnswer && !finishCall)
-		{
-			this._outgoingAnswer.then(() => this.signaling.sendHangup(data));
-		}
-		else if (finishCall)
-		{
-			this.signaling.sendFinish(data);
-		}
-		else if (reason !== 'SIGNALING_DUPLICATE_PARTICIPANT')
-		{
-			this.signaling.sendHangup(data)
-		}
 
 		if (reason !== 'SIGNALING_DUPLICATE_PARTICIPANT') {
 			// for future reconnections
@@ -930,7 +906,7 @@ export class BitrixCall extends AbstractCall
 		if (this.BitrixCall)
 		{
 			this.BitrixCall._replaceVideoSharing = false;
-			this.BitrixCall.hangup();
+			this.BitrixCall.hangup(!!finishCall);
 			this.BitrixCall = null;
 		}
 		else
@@ -938,6 +914,8 @@ export class BitrixCall extends AbstractCall
 			this.log("Tried to hangup, but this.BitrixCall points nowhere");
 			console.error("Tried to hangup, but this.BitrixCall points nowhere");
 		}
+
+		this.connectionData = {};
 
 		this.screenShared = false;
 		this.localVideoShown = false;
@@ -1005,10 +983,11 @@ export class BitrixCall extends AbstractCall
 				}
 
 				this.BitrixCall.connect({
-					roomId: this.id,
+					roomId: this.uuid,
 					userId: this.userId,
-					endpoint: this.connectionData.endpoint,
-					jwt: this.connectionData.jwt,
+					userRole: this.userRole,
+					mediaServerUrl: this.connectionData.mediaServerUrl,
+					roomData: this.connectionData.roomData,
 					videoBitrate: 1000000,
 					videoSimulcast: true,
 					audioDeviceId: this.microphoneId,
@@ -1028,6 +1007,16 @@ export class BitrixCall extends AbstractCall
 		this.log("Call connected");
 		this.sendTelemetryEvent("connect");
 		this.localUserState = UserState.Connected;
+
+		if (!Util.havePermissionToBroadcast('cam'))
+		{
+			Hardware.isCameraOn = false;
+		}
+
+		if (!Util.havePermissionToBroadcast('mic'))
+		{
+			Hardware.isMicrophoneMuted = true;
+		}
 
 		this.BitrixCall.on('Failed', this.#onCallDisconnected);
 
@@ -1091,11 +1080,17 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.on('VoiceStarted', this.#onEndpointVoiceStart);
 		this.BitrixCall.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
 		this.BitrixCall.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
+		this.BitrixCall.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
 		this.BitrixCall.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
+		this.BitrixCall.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
+		this.BitrixCall.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
+		this.BitrixCall.on('UserRoleChanged', this.#onUserRoleChanged);
 		this.BitrixCall.on('ParticipantMuted', this.#onParticipantMuted);
 		this.BitrixCall.on('VoiceEnded', this.#onEndpointVoiceEnd);
+		this.BitrixCall.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
 		this.BitrixCall.on('Reconnecting', this.#onCallReconnecting);
 		this.BitrixCall.on('Reconnected', this.#onCallReconnected);
+		this.BitrixCall.on('ReconnectingFailed', this.#onCallReconnectingFailed);
 		this.BitrixCall.on('Disconnected', this.#onCallDisconnected);
 		// if (Util.shouldCollectStats())
 		// {
@@ -1106,7 +1101,6 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
 		this.BitrixCall.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
 	};
-
 
 	removeCallEvents()
 	{
@@ -1126,11 +1120,14 @@ export class BitrixCall extends AbstractCall
 			this.BitrixCall.on('HandRaised', BX.DoNothing);
 			this.BitrixCall.on('AllParticipantsAudioMuted', BX.DoNothing);
 			this.BitrixCall.on('AllParticipantsVideoMuted', BX.DoNothing);
+			this.BitrixCall.on('AllParticipantsScreenshareMuted', BX.DoNothing);
 			this.BitrixCall.on('YouMuteAllParticipants', BX.DoNothing);
 			this.BitrixCall.on('VoiceStarted', BX.DoNothing);
 			this.BitrixCall.on('VoiceEnded', BX.DoNothing);
+			this.BitrixCall.on('RecorderStatusChanged', BX.DoNothing);
 			this.BitrixCall.on('Reconnecting', BX.DoNothing);
 			this.BitrixCall.on('Reconnected', BX.DoNothing);
+			this.BitrixCall.on('ReconnectingFailed', BX.DoNothing);
 			this.BitrixCall.on('Disconnected', BX.DoNothing);
 			// if (Util.shouldCollectStats())
 			// {
@@ -1156,38 +1153,14 @@ export class BitrixCall extends AbstractCall
 	};
 
 	/**
-	 * Adds new users to call
-	 * @param {Number[]} users
-	 */
-	addJoinedUsers(users)
-	{
-		for (let i = 0; i < users.length; i++)
-		{
-			const userId = Number(users[i]);
-			if (userId == this.userId || this.peers[userId])
-			{
-				continue;
-			}
-			this.peers[userId] = this.createPeer(userId);
-			if (!this.users.includes(userId))
-			{
-				this.users.push(userId);
-			}
-			this.runCallback(CallEvent.onUserInvited, {
-				userId: userId
-			});
-		}
-	};
-
-	/**
 	 * Adds users, invited by you or someone else
-	 * @param {Number[]} users
+	 * @param {Object} users
 	 */
-	addInvitedUsers(users, show)
+	addInvitedUsers(users)
 	{
-		for (let i = 0; i < users.length; i++)
+		for (let id in users)
 		{
-			const userId = Number(users[i]);
+			const userId = Number(id);
 			if (userId == this.userId)
 			{
 				continue;
@@ -1197,13 +1170,14 @@ export class BitrixCall extends AbstractCall
 			{
 				this.peers[userId] = this.createPeer(userId);
 				this.runCallback(CallEvent.onUserInvited, {
-					userId: userId
+					userId: userId,
+					userData: {[userId]: users[id]},
 				});
 			}
 
 			if (this.type === CallType.Instant && this.peers[userId].calculatedState !== UserState.Calling)
 			{
-				this.peers[userId].onInvited(show);
+				this.peers[userId].onInvited();
 			}
 
 			if (!this.users.includes(userId))
@@ -1257,7 +1231,7 @@ export class BitrixCall extends AbstractCall
 		{
 			if (this.type == CallType.Instant && !this.isAnyoneParticipating())
 			{
-				this.hangup();
+				// this.hangup();
 			}
 		}
 	};
@@ -1333,6 +1307,14 @@ export class BitrixCall extends AbstractCall
 		return true;
 	};
 
+	#onNoAnswer()
+	{
+		if (this.ready && !this.isAnyoneParticipating())
+		{
+			this.destroy(true);
+		}
+	}
+
 	__onPullEvent(command, params, extra)
 	{
 		if (this.pullEventHandlers[command])
@@ -1353,21 +1335,6 @@ export class BitrixCall extends AbstractCall
 		{
 			return this.__onPullEventAnswerSelf(params);
 		}
-
-		if (!this.peers[senderId])
-		{
-			this.peers[senderId] = this.createPeer(senderId);
-			this.runCallback(CallEvent.onUserInvited, {
-				userId: senderId
-			});
-		}
-
-		if (!this.users.includes(senderId))
-		{
-			this.users.push(senderId);
-		}
-
-		this.peers[senderId].setReady(true);
 	};
 
 	__onPullEventAnswerSelf(params)
@@ -1378,137 +1345,56 @@ export class BitrixCall extends AbstractCall
 		}
 
 		// call was answered elsewhere
-		this.joinedElsewhere = true;
-		this.runCallback(CallEvent.onJoin, {
-			local: false
-		});
-	};
+		this.runCallback(CallEvent.onJoin, { local: false });
+	}
 
-	#onPullEventHangup = (params) =>
-	{
+	#onPullEventHangup = (params) => {
 		const senderId = params.senderId;
-		if (this.userId === senderId && params.callInstanceId && this.instanceId !== params.callInstanceId)
+		const callInstanceId = params.callInstanceId;
+		const peer = this.peers[senderId];
+
+		if (this.userId === senderId && callInstanceId && this.instanceId !== callInstanceId)
 		{
 			// Call declined by the same user elsewhere
-			this.runCallback(CallEvent.onLeave, {local: false});
+			this.runCallback(CallEvent.onLeave, { local: false });
+
 			return;
 		}
 
-		if (!this.peers[senderId])
+		if (!peer || (peer.participant && !callInstanceId))
 		{
 			return;
 		}
-		
-		Util.sendLog({'description': 'GOT A #onPullEventHangup from user', 'pullEvent': '#onPullEventHangup', params: params});
 
-		this.peers[senderId].participant = null;
-		this.peers[senderId].setReady(false);
+		Util.sendLog({
+			params,
+			description: 'GOT A #onPullEventHangup from user',
+			pullEvent: '#onPullEventHangup',
+		});
+
+		peer.participant = null;
+		peer.setReady(false);
 
 		if (params.code == 603)
 		{
-			this.peers[senderId].setDeclined(true);
+			peer.setDeclined(true);
 		}
 		else if (params.code == 486)
 		{
-			this.peers[senderId].setBusy(true);
-			console.error("user " + senderId + " is busy");
+			peer.setBusy(true);
+			console.error(`user ${senderId} is busy`);
 		}
 
-		if (this.ready && this.type == CallType.Instant && !this.isAnyoneParticipating())
+		if (this.ready && this.type === CallType.Instant && !this.isAnyoneParticipating())
 		{
 			this.hangup();
 		}
-	};
-
-	#onPullEventUsersJoined = (params) =>
-	{
-		this.log('__onPullEventUsersJoined', params);
-		const users = params.users;
-
-		this.addJoinedUsers(users);
-	};
-
-	#onPullEventUsersInvited = (params) =>
-	{
-		this.log('__onPullEventUsersInvited', params);
-		const users = params.users;
-		const show = params.show;
-
-		if (this.type === CallType.Instant)
-		{
-			this.addInvitedUsers(users, show);
-		}
-	};
-
-	#onPullEventUserInviteTimeout = (params) =>
-	{
-		this.log('__onPullEventUserInviteTimeout', params);
-		const failedUserId = params.failedUserId;
-
-		if (this.peers[failedUserId])
-		{
-			this.peers[failedUserId].onInviteTimeout(false);
-		}
-	};
-
-	#onPullEventPing = (params) =>
-	{
-		if (params.callInstanceId === this.instanceId)
-		{
-			// ignore self ping
-			return;
-		}
-
-		const senderId = Number(params.senderId);
-
-		if (senderId == this.userId)
-		{
-			if (!this.joinedElsewhere)
-			{
-				this.runCallback(CallEvent.onJoin, {
-					local: false
-				});
-				this.joinedElsewhere = true;
-			}
-			clearTimeout(this.lastSelfPingReceivedTimeout);
-			this.lastSelfPingReceivedTimeout = setTimeout(this.#onNoSelfPingsReceived, pingPeriod * 2.1);
-		}
-		clearTimeout(this.lastPingReceivedTimeout);
-		this.lastPingReceivedTimeout = setTimeout(this.#onNoPingsReceived, pingPeriod * 2.1);
-		if (this.peers[senderId])
-		{
-			this.peers[senderId].setReady(true);
-		}
-	};
-
-	#onNoPingsReceived = () =>
-	{
-		if (!this.ready)
-		{
-			this.destroy();
-		}
-	};
-
-	#onNoSelfPingsReceived = () =>
-	{
-		this.runCallback(CallEvent.onLeave, {
-			local: false
-		});
-		this.joinedElsewhere = false;
 	};
 
 	#onPullEventFinish = () =>
 	{
 		this.destroy();
 	};
-
-	#onPullEventRepeatAnswer = () =>
-	{
-		if (this.ready)
-		{
-			this.signaling.sendAnswer({userId: this.userId}, true);
-		}
-	}
 
 	#onPullEventSwitchTrackRecordStatus = (e) =>
 	{
@@ -1718,84 +1604,90 @@ export class BitrixCall extends AbstractCall
 
 	#onRemoteMediaAdded = (p, t) =>
 	{
-		const kind = MediaKinds[t.source];
-		if (!kind)
+		if (p && t)
 		{
-			this.log(`Wrong kind for mediaRenderer: ${t.source}`);
-			return;
-		}
-
-		const e = {
-			mediaRenderer: new MediaRenderer({
-				kind,
-				track: t.track
-			})
-		};
-
-		const peer = this.peers[p.userId];
-		if (peer)
-		{
-			// temporary solution to play new streams
-			// todo: need to find what cause the problem itself
-			if (!peer.participant)
+			const kind = MediaKinds[t.source];
+			if (!kind)
 			{
-				peer.participant = p;
-				peer.updateCalculatedState();
+				this.log(`Wrong kind for mediaRenderer: ${t.source}`);
+				return;
 			}
-			peer.addMediaRenderer(e.mediaRenderer);
+
+			const e = {
+				mediaRenderer: new MediaRenderer({
+					kind,
+					track: t.track
+				})
+			};
+
+			const peer = this.peers[p.userId];
+			if (peer)
+			{
+				// temporary solution to play new streams
+				// todo: need to find what cause the problem itself
+				if (!peer.participant)
+				{
+					peer.participant = p;
+					peer.updateCalculatedState();
+				}
+				peer.addMediaRenderer(e.mediaRenderer);
+			}
+
+			switch (t.source)
+			{
+				case MediaStreamsKinds.Camera:
+					this.runCallback(CallEvent.onUserCameraState, {
+						userId: p.userId,
+						cameraState: !p.isMutedVideo
+					});
+					break;
+
+				case MediaStreamsKinds.Microphone:
+					this.runCallback(CallEvent.onUserMicrophoneState, {
+						userId: p.userId,
+						microphoneState: !p.isMutedAudio
+					});
+					break;
+			}
+
+			console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
 		}
-
-		switch (t.source)
-		{
-			case MediaStreamsKinds.Camera:
-				this.runCallback(CallEvent.onUserCameraState, {
-					userId: p.userId,
-					cameraState: !p.isMutedVideo
-				});
-				break;
-
-			case MediaStreamsKinds.Microphone:
-				this.runCallback(CallEvent.onUserMicrophoneState, {
-					userId: p.userId,
-					microphoneState: !p.isMutedAudio
-				});
-				break;
-		}
-
-		console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
 	};
 
 	#onRemoteMediaRemoved = (p, t) =>
 	{
-		const kind = MediaKinds[t.source];
-		if (!kind)
+		if (p && t) // sometimes track could be 'undefined'
 		{
-			this.log(`Wrong kind for mediaRenderer: ${t.source}`);
-			return;
+			const kind = MediaKinds[t.source];
+			if (!kind)
+			{
+				this.log(`Wrong kind for mediaRenderer: ${t.source}`);
+				return;
+			}
+
+			const e = {
+				mediaRenderer: new MediaRenderer({
+					kind,
+					track: t.track
+				})
+			};
+
+			const peer = this.peers[p.userId];
+			if (peer)
+			{
+				peer.removeMediaRenderer(e.mediaRenderer);
+			}
+
+			if (t.source === MediaStreamsKinds.Camera)
+			{
+				this.runCallback(CallEvent.onUserCameraState, {
+					userId: p.userId,
+					cameraState: false
+				});
+			}
+
+			console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
 		}
-
-		const e = {
-			mediaRenderer: new MediaRenderer({
-				kind,
-				track: t.track
-			})
-		};
-
-		const peer = this.peers[p.userId];
-		if (peer)
-		{
-			peer.removeMediaRenderer(e.mediaRenderer);
-		}
-
-		if (t.source === MediaStreamsKinds.Camera)
-		{
-			this.runCallback(CallEvent.onUserCameraState, {
-				userId: p.userId,
-				cameraState: false
-			});
-		}
-
-		console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
 	};
 
 	#onRemoteMediaMuteToggled = (p, t) =>
@@ -1809,52 +1701,95 @@ export class BitrixCall extends AbstractCall
 		}
 	}
 
-	#onParticipantJoined = (p) =>
+	#onUsersInvited = (params) =>
 	{
-		const peer = this.peers[p.userId];
-		if (peer)
+		this.log('__onUsersInvited', params);
+		const users = params.users;
+		const show = params.show;
+
+		if (this.type === CallType.Instant)
 		{
-			if (!p.audioEnabled || p.isMutedAudio)
-			{
-				this.runCallback(CallEvent.onUserMicrophoneState, {
-					userId: p.userId,
-					microphoneState: false
-				});
-			}
-
-			if (!p.videoEnabled || p.isMutedVideo)
-			{
-				this.runCallback(CallEvent.onUserCameraState, {
-					userId: p.userId,
-					cameraState: false
-				});
-			}
-
-			if (p.isHandRaised)
-			{
-				this.runCallback(CallEvent.onUserFloorRequest, {
-					userId: p.userId,
-					requestActive: p.isHandRaised
-				})
-			}
-
-			peer.participant = p;
-			peer.updateCalculatedState();
-
-			if (this.recordState.state !== View.RecordState.Stopped && this.recordState.userId === this.userId)
-			{
-				this.signaling.sendRecordState(this.userId, this.recordState);
-			}
+			this.addInvitedUsers(users, show);
 		}
 	};
 
-	#onParticipantLeaved = (p) =>
+	#onUserInviteTimeout = (params) =>
 	{
+		this.log('__onUserInviteTimeout', params);
+		const failedUserId = params.failedUserId;
+
+		if (this.peers[failedUserId])
+		{
+			this.peers[failedUserId].onInviteTimeout(false);
+		}
+	};
+
+	#onParticipantJoined = (p) => {
+		clearTimeout(this.waitForAnswerTimeout);
+		let peer = this.peers[p.userId];
+
+		if (!peer)
+		{
+			const userId = parseInt(p.userId, 10);
+			if (!this.users.includes(userId))
+			{
+				this.users.push(userId);
+			}
+
+			peer = this.createPeer(userId);
+			this.peers[userId] = peer;
+		}
+
+		this.runCallback(CallEvent.onUserJoined, {
+			userId: p.userId,
+			userData: {
+				[p.userId]: {
+					name: p.name,
+					avatar_hr: p.image,
+					avatar: p.image,
+					gender: p.gender,
+				},
+			},
+		});
+
+		if (!p.audioEnabled || p.isMutedAudio)
+		{
+			this.runCallback(CallEvent.onUserMicrophoneState, {
+				userId: p.userId,
+				microphoneState: false,
+			});
+		}
+
+		if (!p.videoEnabled || p.isMutedVideo)
+		{
+			this.runCallback(CallEvent.onUserCameraState, {
+				userId: p.userId,
+				cameraState: false,
+			});
+		}
+
+		if (p.isHandRaised)
+		{
+			this.runCallback(CallEvent.onUserFloorRequest, {
+				userId: p.userId,
+				requestActive: p.isHandRaised,
+			});
+		}
+
+		peer.participant = p;
+		peer.setReady(true);
+
+		if (this.recordState.state !== View.RecordState.Stopped && this.recordState.userId === this.userId)
+		{
+			this.signaling.sendRecordState(this.userId, this.recordState);
+		}
+	};
+
+	#onParticipantLeaved = (p) => {
 		const peer = this.peers[p.userId];
 		if (peer)
 		{
-			peer.participant = null;
-			for (let type in MediaStreamsKinds)
+			for (const type in MediaStreamsKinds)
 			{
 				const source = MediaStreamsKinds[type];
 				const kind = MediaKinds[source];
@@ -1865,7 +1800,8 @@ export class BitrixCall extends AbstractCall
 				};
 				peer.removeMediaRenderer(e.mediaRenderer);
 			}
-			peer.updateCalculatedState();
+			peer.participant = null;
+			peer.setReady(false);
 		}
 	};
 
@@ -1971,6 +1907,10 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.raiseHand(this.floorRequestActive);
 	};
 
+	#onCallReconnectingFailed = (e, error) => {
+		this.runCallback(CallEvent.onReconnectingFailed, { error });
+	};
+
 	#onCallDisconnected = (e) =>
 	{
 		let logData = {};
@@ -1994,8 +1934,9 @@ export class BitrixCall extends AbstractCall
 
 		this.log("__onCallDisconnected", (Object.keys(logData).length ? logData : null));
 
-		if (this.ready && leaveInformation) {
-			this.hangup(leaveInformation.code, leaveInformation.reason)
+		if (this.ready && leaveInformation?.reason !== DisconnectReason.SecurityKeyChanged)
+		{
+			this.hangup(leaveInformation?.code, leaveInformation?.reason);
 		}
 
 		this.sendTelemetryEvent("disconnect");
@@ -2011,19 +1952,24 @@ export class BitrixCall extends AbstractCall
 		this.unsubscribeHardwareChanges();
 
 		this.state = CallState.Proceeding;
+
+		if (leaveInformation?.reason === DisconnectReason.SecurityKeyChanged)
+		{
+			this.#onFatalError(leaveInformation.reason);
+
+			return;
+		}
+
+		if (leaveInformation?.reason === DisconnectReason.RoomClosed)
+		{
+			this.destroy();
+
+			return;
+		}
+
 		this.runCallback(CallEvent.onLeave, {
 			local: true
 		});
-	};
-
-	#onWindowUnload = () =>
-	{
-		if (this.ready && this.BitrixCall)
-		{
-			this.signaling.sendHangup({
-				userId: this.users
-			});
-		}
 	};
 
 	#onFatalError = (error) =>
@@ -2069,11 +2015,11 @@ export class BitrixCall extends AbstractCall
 		}
 	};
 
-	#onTrackSubscriptionFailed = (params) =>	
+	#onTrackSubscriptionFailed = (params) =>
 	{
 		this.runCallback(CallEvent.onTrackSubscriptionFailed, params);
 	}
-	
+
 	#onCallStatsReceived = (stats) =>
 	{
 		const usersToSendReports = {};
@@ -2229,6 +2175,14 @@ export class BitrixCall extends AbstractCall
 				emotion: message.emotion
 			})
 		}
+		else if (eventName === clientEvents.usersInvited)
+		{
+			this.#onUsersInvited(message);
+		}
+		else if (eventName === clientEvents.userInviteTimeout)
+		{
+			this.#onUserInviteTimeout(message);
+		}
 		else if (eventName === clientEvents.customMessage)
 		{
 			this.runCallback(CallEvent.onCustomMessage, {
@@ -2271,20 +2225,51 @@ export class BitrixCall extends AbstractCall
 	#onAllParticipantsAudioMuted = (p) =>
 	{
 		this.runCallback(CallEvent.onAllParticipantsAudioMuted, {
-			userId: p.from_sid
+			userId: p.fromUserId,
+			reason: p.reason,
 		})
 	}
 
 	#onAllParticipantsVideoMuted = (p) =>
 	{
 		this.runCallback(CallEvent.onAllParticipantsVideoMuted, {
-			userId: p.from_sid
+			userId: p.fromUserId,
+			reason: p.reason,
+		})
+	}
+
+	#onAllParticipantsScreenshareMuted = (p) =>
+	{
+		this.runCallback(CallEvent.onAllParticipantsScreenshareMuted, {
+			userId: p.fromUserId,
+			reason: p.reason,
 		})
 	}
 
 	#onYouMuteAllParticipants = (p) =>
 	{
 		this.runCallback(CallEvent.onYouMuteAllParticipants, {
+			data: p
+		})
+	}
+
+	#onRoomSettingsChanged = (p) =>
+	{
+		this.runCallback(CallEvent.onRoomSettingsChanged, {
+			data: p
+		})
+	}
+
+	#onUserPermissionsChanged = (p) =>
+	{
+		this.runCallback(CallEvent.onUserPermissionsChanged, {
+			data: p
+		})
+	}
+
+	#onUserRoleChanged = (p) =>
+	{
+		this.runCallback(CallEvent.onUserRoleChanged, {
 			data: p
 		})
 	}
@@ -2324,6 +2309,18 @@ export class BitrixCall extends AbstractCall
 		});
 	}
 
+	#onRecorderStatusChanged = (status) => {
+		const ignoreError = status.code === RecorderStatus.DESTROYED;
+		const error = ignoreError ? '' : status.errMsg;
+		this._recorderState = error ? this._recorderState : status.code;
+		const isCopilotActive = this._recorderState === RecorderStatus.ENABLED;
+
+		this.runCallback(CallEvent.onRecorderStatusChanged, {
+			error,
+			status: isCopilotActive,
+		});
+	};
+
 	sendTelemetryEvent(eventName)
 	{
 		Util.sendTelemetryEvent({
@@ -2334,7 +2331,7 @@ export class BitrixCall extends AbstractCall
 		})
 	};
 
-	destroy()
+	destroy(finishCall = false)
 	{
 		this.ready = false;
 		this.joinedAsViewer = false;
@@ -2349,7 +2346,7 @@ export class BitrixCall extends AbstractCall
 		{
 			this.removeCallEvents();
 			this.unsubscribeHardwareChanges();
-			this.BitrixCall.hangup();
+			this.BitrixCall.hangup(finishCall);
 			this.BitrixCall = null;
 		}
 
@@ -2361,12 +2358,8 @@ export class BitrixCall extends AbstractCall
 			}
 		}
 
-		clearTimeout(this.lastPingReceivedTimeout);
-		clearTimeout(this.lastSelfPingReceivedTimeout);
-		clearInterval(this.pingUsersInterval);
-		clearInterval(this.pingBackendInterval);
+		this.runCallback(CallEvent.onLeave, { local: true });
 
-		window.removeEventListener("unload", this.#onWindowUnload);
 		return super.destroy();
 	};
 }
@@ -2383,47 +2376,12 @@ class Signaling
 		return this.#runRestAction(ajaxActions.invite, data);
 	};
 
-	sendAnswer(data, repeated)
+	sendUsersInvited(data)
 	{
-		if (repeated && CallEngine.getPullClient().isPublishingEnabled())
-		{
-			this.#sendPullEvent(pullEvents.answer, data);
-		}
-		else
-		{
-			return this.#runRestAction(ajaxActions.answer, data);
-		}
-	};
-
-	sendHangup(data)
-	{
-		if (CallEngine.getPullClient().isPublishingEnabled())
-		{
-			this.#sendPullEvent(pullEvents.hangup, data);
-			data.retransmit = false;
-			this.#runRestAction(ajaxActions.hangup, data);
-		}
-		else
-		{
-			data.retransmit = true;
-			this.#runRestAction(ajaxActions.hangup, data);
-		}
-	};
-
-	sendFinish(data)
-	{
-		if (CallEngine.getPullClient().isPublishingEnabled())
-		{
-			this.#sendPullEvent(pullEvents.hangup, data);
-			data.retransmit = false;
-			this.#runRestAction(ajaxActions.finish, data);
-		}
-		else
-		{
-			data.retransmit = true;
-			this.#runRestAction(ajaxActions.finish, data);
-		}
-	};
+		this.#sendMessage(clientEvents.usersInvited, {
+			users: data.userData,
+		});
+	}
 
 	sendCameraState(cameraState)
 	{
@@ -2486,52 +2444,9 @@ class Signaling
 		return this.#sendMessage(clientEvents.hideAll, {});
 	};
 
-	sendPingToUsers(data)
-	{
-		if (CallEngine.getPullClient().isPublishingEnabled())
-		{
-			this.#sendPullEvent(pullEvents.ping, data, 0);
-		}
-	};
-
-	sendPingToBackend()
-	{
-		this.#runRestAction(ajaxActions.ping, {retransmit: false});
-	};
-
 	sendUserInviteTimeout(data)
 	{
-		if (CallEngine.getPullClient().isPublishingEnabled())
-		{
-			this.#sendPullEvent(pullEvents.userInviteTimeout, data, 0);
-		}
-	};
-
-	#sendPullEvent(eventName, data, expiry)
-	{
-		expiry = expiry || 5;
-		if (!data.userId)
-		{
-			throw new Error('userId is not found in data');
-		}
-
-		if (!Type.isArray(data.userId))
-		{
-			data.userId = [data.userId];
-		}
-		if (data.userId.length === 0)
-		{
-			// nobody to send, exit
-			return;
-		}
-
-		data.callInstanceId = this.call.instanceId;
-		data.senderId = this.call.userId;
-		data.callId = this.call.id;
-		data.requestId = Util.getUuidv4();
-
-		this.call.log('Sending p2p signaling event ' + eventName + '; ' + JSON.stringify(data));
-		CallEngine.getPullClient().sendMessage(data.userId, 'im', eventName, data, expiry);
+		return this.#sendMessage(clientEvents.userInviteTimeout, {data});
 	};
 
 	#sendMessage(eventName, data)
@@ -2559,7 +2474,7 @@ class Signaling
 			data = {};
 		}
 
-		data.callId = this.call.id;
+		data.callUuid = this.call.uuid;
 		data.callInstanceId = this.call.instanceId;
 		data.requestId = Util.getUuidv4();
 		return CallEngine.getRestClient().callMethod(signalName, data);
@@ -2577,7 +2492,6 @@ class Peer
 
 		this.ready = !!params.ready;
 		this.calling = false;
-		this.backgroundCalling = false;
 		this.declined = false;
 		this.busy = false;
 		this.inviteTimeout = false;
@@ -2608,11 +2522,10 @@ class Peer
 			return;
 		}
 		this.ready = ready;
-		if (this.calling || this.backgroundCalling)
+		if (this.calling)
 		{
 			clearTimeout(this.callingTimeout);
 			this.calling = false;
-			this.backgroundCalling = false;
 			this.inviteTimeout = false;
 		}
 		if (this.ready)
@@ -2636,11 +2549,10 @@ class Peer
 	setDeclined(declined)
 	{
 		this.declined = declined;
-		if (this.calling || this.backgroundCalling)
+		if (this.calling)
 		{
 			clearTimeout(this.callingTimeout);
 			this.calling = false;
-			this.backgroundCalling = false;
 		}
 		if (this.declined)
 		{
@@ -2653,11 +2565,10 @@ class Peer
 	setBusy(busy)
 	{
 		this.busy = busy;
-		if (this.calling || this.backgroundCalling)
+		if (this.calling)
 		{
 			clearTimeout(this.callingTimeout);
 			this.calling = false;
-			this.backgroundCalling = false;
 		}
 		if (this.busy)
 		{
@@ -2767,40 +2678,32 @@ class Peer
 
 	isParticipating()
 	{
-		return ((this.calling || this.backgroundCalling || this.ready || this.participant) && !this.declined);
+		return ((this.calling || this.ready || this.participant) && !this.declined);
 	}
 
-	onInvited(showUser = false)
+	onInvited()
 	{
 		this.ready = false;
 		this.inviteTimeout = false;
 		this.declined = false;
-		if (showUser)
-		{
-			this.calling = true;
-		}
-		else
-		{
-			this.backgroundCalling = true;
-		}
+		this.calling = true;
 
 		if (this.callingTimeout)
 		{
 			clearTimeout(this.callingTimeout);
 		}
-		this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), 30000);
+		this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), invitePeriod);
 		this.updateCalculatedState();
 	}
 
 	onInviteTimeout(internal)
 	{
 		clearTimeout(this.callingTimeout);
-		if (!(this.calling || this.backgroundCalling))
+		if (!(this.calling))
 		{
 			return;
 		}
 		this.calling = false;
-		this.backgroundCalling = false;
 		this.inviteTimeout = true;
 		if (internal)
 		{
@@ -2908,35 +2811,4 @@ const transformVoxStats = function (s, BitrixCall)
 	}
 	return result;
 
-}
-
-class MediaRenderer
-{
-	element = null;
-
-	constructor(params)
-	{
-		params = params || {};
-		this.kind = params.kind || 'video';
-		if (params.track)
-		{
-			this.stream = new MediaStream([params.track]);
-		}
-		else
-		{
-			this.stream = new MediaStream();
-		}
-	}
-
-	render(el)
-	{
-		if (!el.srcObject || !el.srcObject.active || el.srcObject.id !== this.stream.id)
-		{
-			el.srcObject = this.stream;
-		}
-	}
-
-	requestVideoSize()
-	{
-	}
 }

@@ -3,14 +3,14 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_polyfill_intersectionobserver,ui_dialogs_messagebox,im_v2_provider_service,im_v2_lib_utils,im_v2_lib_parser,im_public,im_v2_component_elements,im_v2_lib_dateFormatter,ui_forms,ui_vue3_vuex,im_v2_lib_user,main_core,im_v2_application_core,im_v2_const,im_v2_lib_logger) {
+(function (exports,main_polyfill_intersectionobserver,ui_dialogs_messagebox,im_v2_provider_service_notification,im_v2_component_elements_userListPopup,im_v2_component_elements_loader,im_v2_lib_utils,im_v2_component_elements_avatar,im_v2_component_elements_attach,im_v2_lib_parser,im_v2_component_elements_button,im_public,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,ui_forms,ui_vue3_vuex,im_v2_lib_user,main_core,im_v2_application_core,im_v2_const,im_v2_lib_logger) {
 	'use strict';
 
 	// @vue/component
 	const NotificationItemAvatar = {
 	  name: 'NotificationItemAvatar',
 	  components: {
-	    ChatAvatar: im_v2_component_elements.ChatAvatar
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
 	  },
 	  props: {
 	    userId: {
@@ -19,7 +19,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    isSystem() {
 	      return this.userId === 0;
 	    },
@@ -51,7 +51,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const NotificationQuickAnswer = {
 	  name: 'NotificationQuickAnswer',
 	  components: {
-	    MessengerButton: im_v2_component_elements.Button
+	    ChatButton: im_v2_component_elements_button.ChatButton
 	  },
 	  props: {
 	    notification: {
@@ -70,8 +70,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor
 	  },
 	  methods: {
 	    toggleQuickAnswer() {
@@ -140,7 +140,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						v-if="!successSentQuickAnswer" 
 						class="bx-im-content-notification-quick-answer__buttons-container"
 					>
-						<MessengerButton
+						<ChatButton
 							:color="ButtonColor.Primary"
 							:size="ButtonSize.M"
 							:isRounded="true"
@@ -149,7 +149,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							:isLoading="isSending"
 							@click="sendQuickAnswer"
 						/>
-						<MessengerButton
+						<ChatButton
 							:color="ButtonColor.LightBorder"
 							:size="ButtonSize.M"
 							:isRounded="true"
@@ -173,7 +173,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const NotificationItemConfirmButtons = {
 	  name: 'NotificationItemConfirmButtons',
 	  components: {
-	    MessengerButton: im_v2_component_elements.Button
+	    ChatButton: im_v2_component_elements_button.ChatButton
 	  },
 	  props: {
 	    buttons: {
@@ -183,8 +183,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  emits: ['confirmButtonsClick'],
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
 	    preparedButtons() {
 	      return this.buttons.map(button => {
 	        const [id, value] = button.COMMAND_PARAMS.split('|');
@@ -205,12 +205,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.$emit('confirmButtonsClick', button);
 	    },
 	    getButtonColor(button) {
-	      return button.value === 'Y' ? im_v2_component_elements.ButtonColor.Primary : im_v2_component_elements.ButtonColor.LightBorder;
+	      return button.value === 'Y' ? im_v2_component_elements_button.ButtonColor.Primary : im_v2_component_elements_button.ButtonColor.LightBorder;
 	    }
 	  },
 	  template: `
 		<div class="bx-im-content-notification-item-confirm-buttons__container">
-			<MessengerButton
+			<ChatButton
 				v-for="(button, index) in preparedButtons" :key="index"
 				:text="button.text"
 				:color="getButtonColor(button)"
@@ -218,7 +218,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:isRounded="true"
 				:isUppercase="false"
 				@click="click(button)"
-			></MessengerButton>
+			/>
 		</div>
 	`
 	};
@@ -228,7 +228,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  name: 'NotificationItemContent',
 	  components: {
 	    NotificationQuickAnswer,
-	    Attach: im_v2_component_elements.Attach,
+	    Attach: im_v2_component_elements_attach.Attach,
 	    NotificationItemConfirmButtons
 	  },
 	  props: {
@@ -295,7 +295,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const NotificationItemHeader = {
 	  name: 'NotificationItemHeader',
 	  components: {
-	    ChatTitle: im_v2_component_elements.ChatTitle
+	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle
 	  },
 	  props: {
 	    notification: {
@@ -866,22 +866,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.userManager.setUsersToModel(responseData.users);
 	      this.isLoading = false;
 	      return responseData.notifications;
-	    }).catch(error => {
-	      im_v2_lib_logger.Logger.warn('History request error', error);
+	    }).catch(result => {
+	      console.error('NotificationService: requestItems error', result.error());
 	    });
 	  }
 	  getSearchRequestParams(firstPage) {
 	    const requestParams = {
-	      'SEARCH_TEXT': this.searchQuery,
-	      'SEARCH_TYPE': this.searchType,
-	      'LIMIT': LIMIT_PER_PAGE,
-	      'CONVERT_TEXT': 'Y'
+	      SEARCH_TEXT: this.searchQuery,
+	      SEARCH_TYPE: this.searchType,
+	      LIMIT: LIMIT_PER_PAGE,
+	      CONVERT_TEXT: 'Y'
 	    };
 	    if (BX.parseDate(this.searchDate) instanceof Date) {
-	      requestParams['SEARCH_DATE'] = BX.parseDate(this.searchDate).toISOString();
+	      requestParams.SEARCH_DATE = BX.parseDate(this.searchDate).toISOString();
 	    }
 	    if (!firstPage) {
-	      requestParams['LAST_ID'] = this.lastId;
+	      requestParams.LAST_ID = this.lastId;
 	    }
 	    return requestParams;
 	  }
@@ -889,10 +889,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    return collection[collection.length - 1].id;
 	  }
 	  isLastPage(notifications) {
-	    if (!main_core.Type.isArrayFilled(notifications) || notifications.length < LIMIT_PER_PAGE) {
-	      return true;
-	    }
-	    return false;
+	    return !main_core.Type.isArrayFilled(notifications) || notifications.length < LIMIT_PER_PAGE;
 	  }
 	  destroy() {
 	    im_v2_lib_logger.Logger.warn('Notification search service destroyed');
@@ -936,8 +933,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      id: idToReadFrom
 	    }).then(response => {
 	      im_v2_lib_logger.Logger.warn(`I have read all the notifications from id ${idToReadFrom}`, response);
-	    }).catch(() => {
-	      // revert?
+	    }).catch(result => {
+	      console.error('NotificationReadService: readRequest error', result.error());
 	    });
 	    this.itemsToRead.clear();
 	  }
@@ -953,8 +950,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      id: 0
 	    }).then(response => {
 	      im_v2_lib_logger.Logger.warn('I have read ALL the notifications', response);
-	    }).catch(error => {
-	      console.error(error);
+	    }).catch(result => {
+	      console.error('NotificationReadService: readAll error', result.error());
 	    });
 	  }
 	  changeReadStatus(notificationId) {
@@ -971,9 +968,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        only_current: 'Y'
 	      }).then(() => {
 	        im_v2_lib_logger.Logger.warn(`Notification ${notification.id} unread status set to ${!notification.read}`);
-	      }).catch(error => {
-	        console.error(error);
-	        //revert?
+	      }).catch(result => {
+	        console.error('NotificationReadService: changeReadStatus error', result.error());
+	        // revert?
 	      });
 	    }, 1500);
 	  }
@@ -990,8 +987,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    NotificationSearchPanel,
 	    NotificationPlaceholder,
 	    NotificationScrollButton,
-	    UserListPopup: im_v2_component_elements.UserListPopup,
-	    Loader: im_v2_component_elements.Loader
+	    UserListPopup: im_v2_component_elements_userListPopup.UserListPopup,
+	    Loader: im_v2_component_elements_loader.Loader
 	  },
 	  directives: {
 	    'notifications-item-observer': {
@@ -1062,7 +1059,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  created() {
-	    this.notificationService = new im_v2_provider_service.NotificationService();
+	    this.notificationService = new im_v2_provider_service_notification.NotificationService();
 	    this.notificationSearchService = new NotificationSearchService();
 	    this.notificationReadService = new NotificationReadService();
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 1500, this);
@@ -1070,13 +1067,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    main_core.Event.bind(window, 'blur', this.onWindowBlur);
 	    this.initObserver();
 	  },
-	  mounted() {
+	  async mounted() {
 	    this.isInitialLoading = true;
 	    this.windowFocused = document.hasFocus();
-	    this.notificationService.loadFirstPage().then(response => {
-	      this.schema = response;
-	      this.isInitialLoading = false;
-	    });
+	    this.schema = await this.notificationService.loadFirstPage();
+	    this.isInitialLoading = false;
 	  },
 	  beforeUnmount() {
 	    this.notificationService.destroy();
@@ -1122,11 +1117,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.notificationReadService.addToReadQueue(notificationIds);
 	      this.notificationReadService.read();
 	    },
-	    searchOnServer(event) {
-	      this.notificationSearchService.loadFirstPage(event).then(result => {
-	        this.isNextPageLoading = false;
-	        this.setSearchResult(result);
-	      });
+	    async searchOnServer(event) {
+	      const result = await this.notificationSearchService.loadFirstPage(event);
+	      this.isNextPageLoading = false;
+	      this.setSearchResult(result);
 	    },
 	    setSearchResult(items) {
 	      this.$store.dispatch('notifications/setSearchResult', {
@@ -1170,15 +1164,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.isNextPageLoading = false;
 	      });
 	    },
-	    onScrollSearchResult(event) {
+	    async onScrollSearchResult(event) {
 	      if (!im_v2_lib_utils.Utils.dom.isOneScreenRemaining(event.target) || !this.notificationSearchService.hasMoreItemsToLoad || this.isInitialLoading || this.isNextPageLoading) {
 	        return;
 	      }
 	      this.isNextPageLoading = true;
-	      this.notificationSearchService.loadNextPage().then(result => {
-	        this.isNextPageLoading = false;
-	        this.setSearchResult(result);
-	      });
+	      const result = await this.notificationSearchService.loadNextPage();
+	      this.isNextPageLoading = false;
+	      this.setSearchResult(result);
 	    },
 	    onDoubleClick(notificationId) {
 	      this.notificationReadService.changeReadStatus(notificationId);
@@ -1302,5 +1295,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.NotificationContent = NotificationContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.UI.Dialogs,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.UI.Dialogs,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=notification-content.bundle.js.map

@@ -52,12 +52,12 @@ export const ButtonArea = {
 		},
 		buttonType(): string
 		{
-			if (this.isUserVoted || this.isCompleted)
+			if ((this.isUserVoted || this.isCompleted) && this.question.totalCounter > 0)
 			{
 				return ButtonType.showResults;
 			}
 
-			if (this.isMultipleQuestion)
+			if (this.isMultipleQuestion && !this.isCompleted)
 			{
 				return ButtonType.vote;
 			}
@@ -72,20 +72,20 @@ export const ButtonArea = {
 		{
 			return `--${this.buttonType}`;
 		},
-		getSummaryText(): string
+		summaryText(): string
 		{
 			if (this.question.totalCounter > 0)
 			{
-				return getMessageWithCount('VOTE_SUMMARY_COUNT', this.question.totalCounter);
+				return getMessageWithCount('VOTE_RESULT_COUNT', this.question.totalCounter);
 			}
 
-			return getMessage('VOTE_SUMMARY_NO_VOTES');
+			return getMessage('VOTE_SUMMARY_COUNT_NO_VOTES');
 		},
-		getButtonText(): string
+		buttonText(): string
 		{
 			if (this.isUserVoted || !this.isMultipleQuestion || this.isCompleted)
 			{
-				return this.getSummaryText;
+				return this.summaryText;
 			}
 
 			return getMessage('VOTE_BUTTON');
@@ -115,7 +115,7 @@ export const ButtonArea = {
 					:class="[buttonClass, { '--active': isBtnAvailableToVote }]"
 					type="button"
 			>
-				{{ getButtonText }}
+				{{ buttonText }}
 			</button>
 		</div>
 	`,

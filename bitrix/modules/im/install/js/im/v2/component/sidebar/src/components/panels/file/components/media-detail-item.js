@@ -3,7 +3,7 @@ import { Type } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
 import { FileViewerContext } from 'im.v2.const';
-import { MessageAvatar, AvatarSize } from 'im.v2.component.elements';
+import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 
 import '../css/media-detail-item.css';
 

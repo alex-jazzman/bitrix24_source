@@ -24,6 +24,11 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 			this.canselSelectionHandler = this.canselSelection.bind(this);
 		}
 
+		get testId()
+		{
+			return `reaction-tab-${this.state.isCurrent ? 'selected-' : ''}${this.props.reactionType}`;
+		}
+
 		componentDidMount()
 		{
 			sharedEmitter.on('canselSelection', this.canselSelectionHandler);
@@ -38,6 +43,7 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 		{
 			return View(
 				{
+					testId: this.testId,
 					style: {
 						minHeight: 46,
 						minWidth: 70,

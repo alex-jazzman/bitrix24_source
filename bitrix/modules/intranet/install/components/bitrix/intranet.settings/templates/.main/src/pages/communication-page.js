@@ -304,6 +304,12 @@ export class CommunicationPage extends BaseSettingsPage
 			CommunicationPage.addToSectionHelper(allowUrlPreviewField, settingsSection);
 		}
 
+		if (this.hasValue('isAutoDeleteMessagesEnabled'))
+		{
+			const allowAutoDeleteField = new Checker(this.getValue('isAutoDeleteMessagesEnabled'));
+			CommunicationPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
+		}
+
 		if (this.hasValue('create_overdue_chats'))
 		{
 			let overdueChatsField = new Checker(this.getValue('create_overdue_chats'));

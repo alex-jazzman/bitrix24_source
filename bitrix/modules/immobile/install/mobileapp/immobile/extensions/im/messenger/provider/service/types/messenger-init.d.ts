@@ -1,11 +1,12 @@
 import { RecentItemData } from '../../../controller/recent/copilot/types/recent';
-import { UsersModelState } from '../../../model/types/users';
-import { DialoguesModelState } from '../../../model/types/dialogues';
+import { UsersModelState } from '../../../model/users/src/types';
+import { DialoguesModelState } from '../../../model/dialogues/src/types';
 import { RawMessage, RawFile } from '../src/types/sync-list-result';
 import { ChannelRecentItemData } from '../../../controller/recent/channel/types/recent';
-import { channelChatId, commentChatId } from '../../../model/types/comment';
-import { ChatsCopilotDataItem, CopilotRoleData, MessageCopilotDataItem } from '../../../model/types/dialogues/copilot';
+import { channelChatId, commentChatId } from '../../../model/comment/src/types';
+import { ChatsCopilotDataItem, CopilotRoleData, MessageCopilotDataItem } from '../../../model/dialogues/src/copilot/types';
 import { PlanLimits } from '../../../lib/params/types/params';
+import {MessagesAutoDeleteConfigs} from "../../pull/base/types/message";
 
 declare type immobileTabsLoadCommonResult = {
 	desktopStatus: {
@@ -49,8 +50,10 @@ declare type immobileTabChatLoadResult = Partial<immobileTabsLoadCommonResult> &
 		hasMore: boolean,
 		hasNextPage: boolean,
 		items: RecentItemData[],
+		messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>,
 	},
 	tariffRestriction?: PlanLimits,
+	activeCalls: [],
 }
 
 declare type immobileTabChannelLoadResult = Partial<immobileTabsLoadCommonResult> & {
@@ -81,4 +84,11 @@ declare type immobileTabCopilotLoadResult = Partial<immobileTabsLoadCommonResult
 		hasNextPage: boolean,
 		items: RecentItemData[],
 	},
+}
+
+declare type MessengerInitActionData = {
+	methodList: Array<string>,
+	options?: {
+		siteId: string,
+	}
 }

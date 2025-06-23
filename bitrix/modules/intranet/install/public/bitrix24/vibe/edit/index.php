@@ -44,9 +44,7 @@ else
 		$APPLICATION->IncludeComponent(
 			'bitrix:landing.mainpage.pub',
 			'',
-			[
-				'DRAFT_MODE' => 'Y',
-			],
+			[],
 			null,
 			[
 				'HIDE_ICONS' => 'Y',

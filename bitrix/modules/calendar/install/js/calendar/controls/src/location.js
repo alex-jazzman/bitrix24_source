@@ -209,7 +209,11 @@ export class Location
 				this.categoriesWithRooms.categories.forEach((category) => {
 					if (category.rooms.length > 0)
 					{
-						menuItemList.push({ text: category.name, delimiter: true });
+						menuItemList.push({
+							text: category.name,
+							delimiter: true,
+						});
+
 						category.rooms.forEach((room) => pushRoomToItemList(room));
 					}
 				});
@@ -217,7 +221,6 @@ export class Location
 				if (this.categoriesWithRooms.default.length > 0)
 				{
 					menuItemList.push({
-						text: '\0',
 						className: 'calendar-popup-window-delimiter-default-category',
 						delimiter: true,
 					});
@@ -263,19 +266,19 @@ export class Location
 			disabled: disabledControl,
 			minWidth: 300,
 			onChangeCallback: () => {
+				// eslint-disable-next-line no-shadow
 				const menuItemList = this.menuItemList;
 
 				EventEmitter.emit('Calendar.LocationControl.onValueChange');
-				let i; const
-					value = this.DOM.input.value;
+				const value = this.DOM.input.value;
 				this.value = { text: value };
-				for (i = 0; i < menuItemList.length; i++)
+				for (const element of menuItemList)
 				{
-					if (menuItemList[i].labelRaw === value)
+					if (element.labelRaw === value)
 					{
-						this.value.type = menuItemList[i].type;
-						this.value.value = menuItemList[i].value;
-						Location.setCurrentCapacity(menuItemList[i].capacity);
+						this.value.type = element.type;
+						this.value.value = element.value;
+						Location.setCurrentCapacity(element.capacity);
 						break;
 					}
 				}

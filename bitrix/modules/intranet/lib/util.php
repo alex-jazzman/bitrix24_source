@@ -747,7 +747,8 @@ class Util
 					$status = 'employee';
 				}
 				elseif (
-					Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)$userId)
+					Loader::includeModule('extranet')
+					&& Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)$userId)
 				)
 				{
 					$status = 'collaber';

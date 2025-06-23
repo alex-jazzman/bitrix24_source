@@ -1,8 +1,12 @@
 import { DateTimeFormat } from 'main.date';
 import { DatePicker, DatePickerEvent, getNextDate, createDate } from 'ui.date-picker';
-import { createNamespacedHelpers } from 'ui.vue3.vuex';
+import { createNamespacedHelpers, mapGetters } from 'ui.vue3.vuex';
+import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.main';
+import 'ui.icon-set.actions';
 
-import { DateFormat, Model } from 'booking.const';
+import { DateFormat, Model, Option } from 'booking.const';
+import { optionService } from 'booking.provider.service.option-service';
 
 import './calendar.css';
 
@@ -12,7 +16,7 @@ export const Calendar = {
 	data(): Object
 	{
 		return {
-			expanded: true,
+			IconSet,
 		};
 	},
 	created(): void
@@ -42,6 +46,9 @@ export const Calendar = {
 		this.datePicker.destroy();
 	},
 	computed: {
+		...mapGetters({
+			calendarExpanded: `${Model.Interface}/calendarExpanded`,
+		}),
 		...mapInterfaceGetters({
 			filteredMarks: 'filteredMarks',
 			freeMarks: 'freeMarks',
@@ -68,12 +75,12 @@ export const Calendar = {
 		},
 		formattedDate(): string
 		{
-			const format = this.expanded
+			const format = this.calendarExpanded
 				? this.loc('BOOKING_MONTH_YEAR_FORMAT')
 				: DateTimeFormat.getFormat('LONG_DATE_FORMAT')
 			;
 
-			const timestamp = this.expanded
+			const timestamp = this.calendarExpanded
 				? this.viewDateTs / 1000
 				: this.selectedDateTs / 1000
 			;
@@ -82,13 +89,9 @@ export const Calendar = {
 		},
 	},
 	methods: {
-		onCollapseClick(): void
-		{
-			this.expanded = !this.expanded;
-		},
 		onPreviousClick(): void
 		{
-			if (this.expanded)
+			if (this.calendarExpanded)
 			{
 				this.previousMonth();
 			}
@@ -99,7 +102,7 @@ export const Calendar = {
 		},
 		onNextClick(): void
 		{
-			if (this.expanded)
+			if (this.calendarExpanded)
 			{
 				this.nextMonth();
 			}
@@ -205,6 +208,13 @@ export const Calendar = {
 
 			return DateTimeFormat.format(dateFormat, timestamp / 1000);
 		},
+		async collapseToggle(): Promise<void>
+		{
+			await Promise.all([
+				this.$store.dispatch(`${Model.Interface}/setCalendarExpanded`, !this.calendarExpanded),
+				optionService.setBool(Option.CalendarExpanded, this.calendarExpanded),
+			]);
+		},
 	},
 	watch: {
 		selectedDateTs(selectedDateTs: number): void
@@ -229,28 +239,28 @@ export const Calendar = {
 			this.updateMarks();
 		},
 	},
+	components: {
+		Icon,
+	},
 	template: `
-		<div class="booking-booking-sidebar-calendar">
-			<div class="booking-booking-sidebar-calendar-header">
-				<div class="booking-booking-sidebar-calendar-button" @click="onPreviousClick">
-					<div class="ui-icon-set --chevron-left"></div>
+		<div class="booking-sidebar-calendar-container" :class="{'--expanded': calendarExpanded}">
+			<div class="booking-booking-sidebar-calendar">
+				<div class="booking-booking-sidebar-calendar-header">
+					<div class="booking-sidebar-button" @click="onPreviousClick">
+						<div class="ui-icon-set --chevron-left"></div>
+					</div>
+					<div class="booking-booking-sidebar-calendar-title">
+						{{ formattedDate }}
+					</div>
+					<div class="booking-sidebar-button --right" @click="onNextClick">
+						<div class="ui-icon-set --chevron-right"></div>
+					</div>
+					<div class="booking-sidebar-button" @click="collapseToggle">
+						<Icon :name="calendarExpanded ? IconSet.COLLAPSE : IconSet.EXPAND_1"/>
+					</div>
 				</div>
-				<div class="booking-booking-sidebar-calendar-title">
-					{{ formattedDate }}
-				</div>
-				<div class="booking-booking-sidebar-calendar-button" @click="onNextClick">
-					<div class="ui-icon-set --chevron-right"></div>
-				</div>
-				<div class="booking-booking-sidebar-calendar-button --collapse" @click="onCollapseClick">
-					<div v-if="expanded" class="ui-icon-set --collapse"></div>
-					<div v-else class="ui-icon-set --expand-1"></div>
-				</div>
+				<div class="booking-booking-sidebar-calendar-date-picker" ref="datePicker"></div>
 			</div>
-			<div
-				class="booking-booking-sidebar-calendar-date-picker"
-				:class="{'--expanded': expanded}"
-				ref="datePicker"
-			></div>
 		</div>
 	`,
 };

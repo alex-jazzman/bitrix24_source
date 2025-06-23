@@ -95,6 +95,17 @@ export const Cancel = {
 		{
 			return this.context !== 'manager.view.details';
 		},
+		showCancelPopup(): boolean
+		{
+			return (
+				this.context === 'cancel.pub.page'
+				|| this.context === 'info.pub.page'
+			);
+		},
+		showConfirmPopup(): boolean
+		{
+			return this.context === 'delayed.pub.page';
+		},
 	},
 	watch: {
 		booking:
@@ -125,14 +136,14 @@ export const Cancel = {
 			</a>
 		</div>
 		<CancelPopup 
-			v-if="context === 'cancel.pub.page'"
+			v-if="showCancelPopup"
 			:showPopup="showPopup" 
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"
 			@popupClosed="closePopup"
 		/>
 		<ConfirmPopup
-			v-if="context === 'delayed.pub.page'"
+			v-if="showConfirmPopup"
 			:showPopup="showPopup"
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"

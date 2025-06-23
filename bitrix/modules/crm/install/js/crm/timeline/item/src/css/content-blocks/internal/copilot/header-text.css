@@ -1,0 +1,21 @@
+.crm-timeline-block-internal-copilot-header {
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-copilot-primary);
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+}
+
+.crm-timeline-block-internal-copilot-header-icon {
+	background: transparent url('../../../../images/common/crm-timeline__copilot.svg') no-repeat center;
+	width: 26px;
+	height: 26px;
+	margin-right: 8px;
+}
+
+.crm-timeline-block-internal-copilot-loader__lottie {
+	max-width: 16px;
+	padding-top: 5px;
+	margin: 0 auto;
+}

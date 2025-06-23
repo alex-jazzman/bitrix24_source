@@ -21,5 +21,8 @@ return [
 		'tariff-plan-restriction',
 
 		'im:messenger/api/dialog-opener',
+		'layout/socialnetwork/project/fields/tags',
+		'rest',
+		'collab/service/access',
 	],
 ];

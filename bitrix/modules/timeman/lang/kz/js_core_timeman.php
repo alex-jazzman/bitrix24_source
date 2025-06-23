@@ -96,6 +96,7 @@ $MESS["JS_CORE_TM_MONITOR"] = "Жұмыс уақытының жеке көмек
 $MESS["JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR"] = "Жұмыс уақытының тиімділігін өлшеу үшін Битрикс24 жұмыс десктоп-қосымшасын іске қосыңыз.";
 $MESS["JS_CORE_TM_MONITOR_ENABLED"] = "Жұмыс уақытының жеке көмекшісі қосулы";
 $MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON"] = "Жеке жұмыс уақытының көмекшісін қосыңыз";
+$MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON_NEW"] = "Жұмыс уақытының жеке көмекшісі";
 $MESS["JS_CORE_TM_MONITOR_GET_DESKTOP_BUTTON"] = "Битрикс24 жүктеу";
 $MESS["JS_CORE_TM_MONITOR_OPEN_ERROR"] = "Жеке жұмыс уақытының көмекшісі Windows/Mac үшін Битрикс24 қосымшасының жаңа нұсқасында ғана қолжетімді";
 $MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION"] = "Жұмыс уақыты туралы есеппен басшымен бөлісуді ұмытпаңыз.";

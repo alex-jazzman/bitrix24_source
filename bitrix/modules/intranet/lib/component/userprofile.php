@@ -340,7 +340,10 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		if (
 			$this->arParams["ID"] == $USER->GetID()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
+			&& (
+				$USER->isAdmin()
+				|| \CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
+			)
 		)
 		{
 			$user["SHOW_SONET_ADMIN"] = true;

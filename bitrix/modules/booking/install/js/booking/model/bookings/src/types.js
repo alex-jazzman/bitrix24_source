@@ -31,6 +31,7 @@ export type BookingModel = {
 	visitStatus: string,
 	note: string | null,
 	externalData: DealData[],
+	messages: MessageModel[],
 };
 
 export type DealData = {
@@ -51,16 +52,22 @@ export type OverbookingMapItem = {
 	id: BookingId,
 	booking: BookingModel,
 	items: OverbookingResourceIntersections[],
-}
+};
 
 export type OverbookingResourceIntersections = {
 	resourceId: number,
 	shifted: boolean,
 	intersections: OverbookingIntersection[],
-}
+};
 
 export type OverbookingIntersection = {
 	id: number,
 	dateFromTs: number,
 	dateToTs: number,
-}
+};
+
+export type MessageModel = {
+	id: number,
+	bookingId: number,
+	notificationType: string,
+};

@@ -34,6 +34,7 @@ use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Grid\Task;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\Ui\Controls\Column;
 use Bitrix\Tasks\Util\Error\Collection;
@@ -131,7 +132,22 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		$this->setUserId();
+		$this->setPromoParams();
+
 		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	private function setPromoParams(): void
+	{
+		$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+
+		$needToShowInviteToMobile = $inviteToMobileService->needToShow((int)$this->userId);
+		$this->arResult['needToShowInviteToMobile'] = $needToShowInviteToMobile;
+
+		if ($needToShowInviteToMobile)
+		{
+			$this->arResult['inviteToMobileLink'] = $inviteToMobileService->getInviteLink((int)$this->userId);
+		}
 	}
 
 		public function executeComponent()
@@ -1447,6 +1463,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return;
 		}
 
+		// probably dead code here, because now getGlobalLimit never returns "null"
 		if (Counter::getGlobalLimit() !== null)
 		{
 			return;

@@ -18,7 +18,10 @@ jn.define('im/messenger/view/dialog/action-panel', (require, exports, module) =>
 		getAvailableEvents()
 		{
 			return {
-				[EventFilterType.selectMessagesMode]: [EventType.dialog.actionPanel.buttonTap],
+				[EventFilterType.selectMessagesMode]: [
+					EventType.dialog.actionPanel.buttonTap,
+					EventType.dialog.actionPanel.disabledButtonTap,
+				],
 			};
 		}
 

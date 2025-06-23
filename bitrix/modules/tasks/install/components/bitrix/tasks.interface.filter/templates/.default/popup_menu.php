@@ -2,6 +2,9 @@
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\UI\Toolbar\ButtonLocation;
 
 Extension::load([
 	'ui.stepprocessing',
@@ -12,10 +15,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+$menuBtn = new Buttons\Button([
+	'color' => Buttons\Color::LIGHT_BORDER,
+	'icon' => Buttons\Icon::SETTING,
+]);
+$menuBtn->addClass('ui-btn-themes webform-cogwheel');
+$menuBtn->addAttribute('id', 'tasks-popupMenuOptions');
+
+Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
 ?>
-
-<button id="tasks-popupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel"></button>
-
 
 <script>
 	(function()

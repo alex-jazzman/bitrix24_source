@@ -37,7 +37,6 @@ else
 		<?endif?>
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="REGISTRATION" />
-
 			<div class="log-popup-header"><?=GetMessage("AUTH_REGISTER")?></div>
 			<hr class="b_line_gray">
 			<?ShowMessage($arParams["~AUTH_RESULT"]);?>

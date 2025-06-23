@@ -126,7 +126,6 @@ $channelTileManagerId = 'crm-analytics-channels';
             </div>
         </div>
     </div>
-	</div>
 
 	<script>
 		BX.ready(function () {

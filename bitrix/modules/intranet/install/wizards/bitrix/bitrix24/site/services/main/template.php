@@ -70,7 +70,7 @@ if ($arSite = $obSite->Fetch())
 	}
 
 	if (!$foundEmpty)
-		$arTemplates[]= Array("CONDITION" => '((method_exists("CUser", "HasNoAccess") && $GLOBALS["USER"]->HasNoAccess()) || !$GLOBALS["USER"]->IsAuthorized()) && $_SERVER["REMOTE_USER"]==""', "SORT" => 250, "TEMPLATE" => "login");
+		$arTemplates[]= Array("CONDITION" => '((method_exists("CUser", "HasNoAccess") && $GLOBALS["USER"]->HasNoAccess()) || !$GLOBALS["USER"]->IsAuthorized()) && empty($_SERVER["REMOTE_USER"])', "SORT" => 250, "TEMPLATE" => "login");
 
 	if (!$foundPub)
 		$arTemplates[]= Array("CONDITION" => "CSite::InDir('/pub/')", "SORT" => 1, "TEMPLATE" => "pub");

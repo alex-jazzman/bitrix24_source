@@ -56,10 +56,6 @@ export const BaseChatContent = {
 			type: String,
 			default: '',
 		},
-		backgroundId: {
-			type: [Number, String, null],
-			default: null,
-		},
 		withSidebar: {
 			type: Boolean,
 			default: true,
@@ -85,6 +81,11 @@ export const BaseChatContent = {
 		},
 		canSend(): boolean
 		{
+			if (!this.dialog.isTextareaEnabled)
+			{
+				return false;
+			}
+
 			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.send, this.dialog.dialogId);
 		},
 		isGuest(): boolean
@@ -107,12 +108,7 @@ export const BaseChatContent = {
 		},
 		backgroundStyle(): BackgroundStyle
 		{
-			if (this.backgroundId)
-			{
-				return ThemeManager.getBackgroundStyleById(this.backgroundId);
-			}
-
-			return ThemeManager.getCurrentBackgroundStyle();
+			return ThemeManager.getCurrentBackgroundStyle(this.dialogId);
 		},
 		dialogContainerStyle(): Object
 		{

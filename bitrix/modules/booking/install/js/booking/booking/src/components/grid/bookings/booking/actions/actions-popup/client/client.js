@@ -9,15 +9,16 @@ import type {
 	UpdateNotePayload,
 } from 'booking.component.actions-popup';
 
+// @vue/component
 export const BookingClient = {
 	name: 'BookingActionsPopupClient',
-	emits: ['freeze', 'unfreeze'],
 	props: {
 		bookingId: {
 			type: [Number, String],
 			required: true,
 		},
 	},
+	emits: ['freeze', 'unfreeze'],
 	computed: {
 		booking(): BookingModel
 		{
@@ -57,6 +58,9 @@ export const BookingClient = {
 			:primaryClientData="booking.primaryClient"
 			:note="booking.note"
 			:dataId="bookingId"
+			:dataAttributes="{
+				'data-booking-id': bookingId,
+			}"
 			dataElementPrefix="booking"
 			@freeze="$emit('freeze')"
 			@unfreeze="$emit('unfreeze')"

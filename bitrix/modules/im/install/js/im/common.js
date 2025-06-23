@@ -7666,6 +7666,8 @@
 					}
 				}
 
+				const textOriginal = params.message.textOriginal ?? params.message.text;
+
 				if (params.message.senderId == this.BXIM.userId)
 				{
 					if (this.isMobile())
@@ -7709,7 +7711,7 @@
 							date: params.message.date,
 							author_id: params.message.senderId,
 							status: 'received',
-							text: BX.util.htmlspecialchars(params.message.textOriginal),
+							text: BX.util.htmlspecialchars(textOriginal),
 							attach: params.message.params && params.message.params.ATTACH? params.message.params.ATTACH.length > 0: false,
 							file: params.message.params && params.message.params.FILE_ID? params.message.params.FILE_ID.length > 0: false,
 						},
@@ -7793,7 +7795,7 @@
 							date: params.message.date,
 							author_id: params.message.senderId,
 							status: 'delivered',
-							text: BX.util.htmlspecialchars(params.message.textOriginal),
+							text: BX.util.htmlspecialchars(textOriginal),
 							attach: params.message.params && params.message.params.ATTACH? params.message.params.ATTACH.length > 0: false,
 							file: params.message.params && params.message.params.FILE_ID? params.message.params.FILE_ID.length > 0: false,
 						},

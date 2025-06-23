@@ -45,3 +45,5 @@ export type { MarketApplication as ImModelMarketApplication } from './type/marke
 export type { CopilotRole as ImModelCopilotRole } from './type/copilot';
 export type { CopilotPrompt as ImModelCopilotPrompt } from './type/copilot';
 export type { SidebarMultidialogItem as ImModelSidebarMultidialogItem } from './type/sidebar/multidialog';
+export type { SidebarFileTab as ImModelSidebarFileTab } from './type/sidebar/file-tab';
+export type { Anchor as ImModelAnchor } from './type/anchor';

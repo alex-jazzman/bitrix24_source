@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Command\Booking;
 
+use Bitrix\Booking\Command\Booking\Trait\BookingChangesTrait;
 use Bitrix\Booking\Entity;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
 use Bitrix\Booking\Internals\Exception\Booking\UpdateBookingException;
-use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Model\Enum\EntityType;
+use Bitrix\Booking\Internals\Service\BookingService;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
 use Bitrix\Booking\Internals\Service\Journal\JournalServiceInterface;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
@@ -20,11 +21,14 @@ use Bitrix\Booking\Internals\Repository\ORM\BookingResourceRepository;
 use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
-use Bitrix\Booking\Internals\Service\Overbooking\OverlapPolicy;
+use Bitrix\Booking\Internals\Service\Overbooking\OverbookingService;
+use Bitrix\Booking\Provider\BookingProvider;
 use Bitrix\Booking\Provider\Params\Resource\ResourceFilter;
 
 class UpdateBookingCommandHandler
 {
+	use BookingChangesTrait;
+
 	private ResourceRepositoryInterface $resourceRepository;
 	private ResourceTypeRepositoryInterface $resourceTypeRepository;
 	private BookingRepositoryInterface $bookingRepository;
@@ -33,7 +37,9 @@ class UpdateBookingCommandHandler
 	private BookingResourceRepository $bookingResourceRepository;
 	private TransactionHandlerInterface $transactionHandler;
 	private JournalServiceInterface $journalService;
-	private OverlapPolicy $overbookingOverlapPolicy;
+	private BookingService $bookingService;
+	private OverbookingService $overbookingService;
+	private BookingProvider $bookingProvider;
 
 	public function __construct()
 	{
@@ -45,7 +51,9 @@ class UpdateBookingCommandHandler
 		$this->bookingResourceRepository = Container::getBookingResourceRepository();
 		$this->transactionHandler = Container::getTransactionHandler();
 		$this->journalService = Container::getJournalService();
-		$this->overbookingOverlapPolicy = Container::getOverbookingOverlapPolicy();
+		$this->bookingService = Container::getBookingService();
+		$this->overbookingService = Container::getOverbookingService();
+		$this->bookingProvider = new BookingProvider();
 	}
 
 	public function __invoke(UpdateBookingCommand $command): Entity\Booking\Booking
@@ -57,35 +65,23 @@ class UpdateBookingCommandHandler
 			throw new UpdateBookingException('Booking not found');
 		}
 
-		if ($command->allowOverbooking)
+		try
 		{
-			$intersectingBookings = $this->overbookingOverlapPolicy->getIntersectionsList(
-				$command->booking,
-				$this->bookingRepository->getIntersectionsList($command->booking)
+			$intersectionResult = $this->bookingService->checkIntersection(
+				booking: $command->booking,
+				allowOverbooking: $command->allowOverbooking,
 			);
-			$isResourceAvailable = $intersectingBookings->isEmpty();
 		}
-		else
+		catch (\Throwable $exception)
 		{
-			$intersectingBookings = $this->bookingRepository->getIntersectionsList($command->booking);
-			$isResourceAvailable = $intersectingBookings->isEmpty();
-		}
-
-		if (!$isResourceAvailable)
-		{
-			throw new UpdateBookingException(
-				'Some resources are unavailable for the requested time range: '
-				. implode(',', $intersectingBookings->getEntityIds()),
-				Exception::CODE_BOOKING_INTERSECTION
-			);
+			throw new UpdateBookingException($exception->getMessage());
 		}
 
 		$this->loadResourceCollection($command->booking);
 
 		return $this->transactionHandler->handle(
-			fn: function() use ($command, $currentBooking) {
-
-				$this->handleResources($command, $currentBooking);
+			fn: function() use ($command, $currentBooking, $intersectionResult) {
+				$this->handleResources($command->booking, $currentBooking);
 				$this->handleClients($command, $currentBooking);
 				$this->handleExternalData($command, $currentBooking);
 				$bookingId = $this->bookingRepository->save($command->booking);
@@ -109,21 +105,50 @@ class UpdateBookingCommandHandler
 					?->getDataProvider()
 					?->updateBindings($booking, $currentBooking);
 
-				// fire new BookingUpdated event
 				$this->journalService->append(
 					new JournalEvent(
 						entityId: $command->booking->getId(),
 						type: JournalType::BookingUpdated,
-						data: array_merge(
-							$command->toArray(),
-							[
-								'booking' => $booking->toArray(),
-								'currentUserId' => $command->updatedBy,
-								'prevBooking' => $currentBooking->toArray(),
-							],
-						),
+						data: [
+							...$command->toArray(),
+							'booking' => $booking->toArray(),
+							'currentUserId' => $command->updatedBy,
+							'prevBooking' => $currentBooking->toArray(),
+							'isOverbooking' => $intersectionResult->hasIntersections(),
+						],
 					),
 				);
+
+				$this->processBookingChanges(
+					$currentBooking,
+					$booking,
+					$intersectionResult,
+					$command->updatedBy,
+				);
+
+				if (!$currentBooking->isConfirmed() && $booking->isConfirmed())
+				{
+					$this->journalService->append(
+						new JournalEvent(
+							entityId: $command->booking->getId(),
+							type: JournalType::BookingConfirmed,
+							data: [
+								'booking' => $booking->toArray(),
+							],
+						)
+					);
+				}
+
+				// TODO: if BookingRepository::getById refactored and stop return counters without condition
+				// refactor this, check usages for proper counters loading
+				if ($command->updatedBy > 0)
+				{
+					// update counters cause it may be changed during booking update process
+					$this->bookingProvider->withCounters(
+						new Entity\Booking\BookingCollection($booking),
+						$command->updatedBy
+					);
+				}
 
 				return $booking;
 			},
@@ -131,10 +156,10 @@ class UpdateBookingCommandHandler
 		);
 	}
 
-	private function handleResources(UpdateBookingCommand $command, Entity\Booking\Booking $booking): void
+	private function handleResources(Entity\Booking\Booking $newBooking, Entity\Booking\Booking $currentBooking): void
 	{
-		$newResources = $command->booking->getResourceCollection();
-		$existingResources = $booking->getResourceCollection();
+		$newResources = $newBooking->getResourceCollection();
+		$existingResources = $currentBooking->getResourceCollection();
 
 		if ($newResources->isEqual($existingResources))
 		{
@@ -144,16 +169,16 @@ class UpdateBookingCommandHandler
 		if (!$existingResources->isEmpty())
 		{
 			$unlink = $existingResources->diff($newResources);
-			$this->bookingResourceRepository->unLink($booking, $unlink);
+			$this->bookingResourceRepository->unLink($currentBooking, $unlink);
 		}
 
 		if (!$newResources->isEmpty())
 		{
 			$link = $newResources->diff($existingResources);
-			$this->bookingResourceRepository->link($booking, $link);
+			$this->bookingResourceRepository->link($currentBooking, $link);
 		}
 
-		$booking->setResourceCollection($newResources);
+		$newBooking->setResourceCollection($newResources);
 	}
 
 	private function handleClients(UpdateBookingCommand $command, Entity\Booking\Booking $booking): void
@@ -303,5 +328,20 @@ class UpdateBookingCommandHandler
 		}
 
 		return $externalResourceIds;
+	}
+
+	protected function getOverbookingService(): OverbookingService
+	{
+		return $this->overbookingService;
+	}
+
+	protected function getBookingRepository(): BookingRepositoryInterface
+	{
+		return $this->bookingRepository;
+	}
+
+	protected function getJournalService(): JournalServiceInterface
+	{
+		return $this->journalService;
 	}
 }

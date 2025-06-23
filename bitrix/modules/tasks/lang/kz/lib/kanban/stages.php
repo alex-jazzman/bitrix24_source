@@ -10,4 +10,5 @@ $MESS["TASKS_STAGE_PERIOD3"] = "Осы аптада";
 $MESS["TASKS_STAGE_PERIOD4"] = "Келесі аптада";
 $MESS["TASKS_STAGE_PERIOD5"] = "Мерзімсіз";
 $MESS["TASKS_STAGE_PERIOD6"] = "Екі аптадан астам";
+$MESS["TASKS_STAGE_PERIOD7"] = "Аяқталды";
 $MESS["TASKS_STAGE_WORK"] = "Орындалуда";

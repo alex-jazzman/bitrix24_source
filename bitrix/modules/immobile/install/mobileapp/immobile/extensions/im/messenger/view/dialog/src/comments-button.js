@@ -12,6 +12,18 @@ jn.define('im/messenger/view/dialog/comments-button', (require, exports, module)
 	class DialogCommentsButton extends ProxyView
 	{
 		/**
+		 * @constructor
+		 * @param {JNBaseClassInterface} ui
+		 * @param {EventFilter} eventFilter
+		 */
+		constructor(ui, eventFilter)
+		{
+			super(ui, eventFilter);
+
+			this.currentCounterValue = null;
+		}
+
+		/**
 		 * @return {AvailableEventCollection}
 		 */
 		getAvailableEvents()
@@ -48,9 +60,11 @@ jn.define('im/messenger/view/dialog/comments-button', (require, exports, module)
 		 */
 		setCounter(value)
 		{
-			if (this.isUiAvailable())
+			const isNewCounterValue = this.currentCounterValue !== value;
+			if (this.isUiAvailable() && isNewCounterValue)
 			{
 				this.ui.setCounter(value);
+				this.currentCounterValue = value;
 			}
 		}
 	}

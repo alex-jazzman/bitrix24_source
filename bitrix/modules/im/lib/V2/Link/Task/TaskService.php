@@ -327,14 +327,18 @@ class TaskService
 
 	protected function getAuditors(Chat $chat): array
 	{
-		$userIds = RelationCollection::find(
-			['ACTIVE' => true, 'ONLY_INTERNAL_TYPE' => true, 'CHAT_ID' => $chat->getId()],
+		return RelationCollection::find(
+			[
+				'ACTIVE' => true,
+				'ONLY_INTERNAL_TYPE' => true,
+				'CHAT_ID' => $chat->getId(),
+				'IS_HIDDEN' => false,
+				'ONLY_INTRANET' => true,
+				'!USER_ID' => $this->getContext()->getUserId()
+			],
 			limit: 50,
 			select: ['ID', 'USER_ID', 'CHAT_ID']
-		)->getUsers()->filterExtranet()->getIds();
-		unset($userIds[$this->getContext()->getUserId()]);
-
-		return $userIds;
+		)->getUserIds();
 	}
 
 	protected function getFilesForPrepareText(Message $message): array

@@ -30,6 +30,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/type', (require,
 		channel: 'ic_channel_banner',
 		generalChat: 'ic_general_chat_banner',
 		chat: 'ic_group_chat_banner',
+		notes: 'ic_notes_chat_banner',
 	});
 
 	module.exports = {

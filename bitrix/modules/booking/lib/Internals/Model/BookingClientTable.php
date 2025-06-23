@@ -61,11 +61,6 @@ final class BookingClientTable extends DataManager
 				->configurePrimary()
 				->configureAutocomplete(),
 
-			/** @deprecated  */
-			(new IntegerField('BOOKING_ID'))
-				->configureRequired(false)
-				->configureDefaultValue(null),
-
 			(new IntegerField('ENTITY_ID'))
 				->configureRequired()
 				->configureDefaultValue(0),
@@ -114,32 +109,28 @@ final class BookingClientTable extends DataManager
 					(CASE WHEN EXISTS (
 						SELECT 1
 						FROM b_booking_booking_client booking_client
-						JOIN b_booking_booking booking on booking.ID = booking_client.ENTITY_ID
+						JOIN b_booking_booking booking on booking.ID = booking_client.ENTITY_ID 
+							AND booking_client.ENTITY_TYPE = '" . EntityType::Booking->value . "'
+						JOIN b_booking_wait_list_item wait_list_item on wait_list_item.ID = booking_client.ENTITY_ID 
+							AND booking_client.ENTITY_TYPE = '" . EntityType::WaitList->value . "'
 						WHERE
-							booking_client.CLIENT_TYPE_ID = %s
+							(booking_client.CLIENT_TYPE_ID = %s
 							AND booking_client.CLIENT_ID = %s
 							AND booking.DATE_FROM < " . strtotime("midnight") . "
 							AND booking.DATE_TO < " . strtotime("tomorrow") - 1 . "
-							AND booking_client.ENTITY_TYPE = '" . EntityType::Booking->value . "'
 							AND booking.VISIT_STATUS IN (
 								'" . BookingVisitStatus::Visited->value . "',
 								'" . BookingVisitStatus::Unknown->value . "'
+							))
+							OR
+							(
+								booking_client.CLIENT_TYPE_ID = %s
+								AND booking_client.CLIENT_ID = %s
+								AND UNIX_TIMESTAMP(wait_list_item.CREATED_AT) > " . strtotime("midnight") . "
+								AND UNIX_TIMESTAMP(wait_list_item.CREATED_AT) < " . strtotime("tomorrow") - 1 . "
 							)
 						LIMIT 1
-					) THEN 1 ELSE 0 END)
-					OR
-					(CASE WHEN EXISTS (
-						SELECT 1
-						FROM b_booking_booking_client booking_client
-						JOIN b_booking_wait_list_item wait_list_item on wait_list_item.ID = booking_client.ENTITY_ID
-						WHERE
-							booking_client.CLIENT_TYPE_ID = %s
-							AND booking_client.CLIENT_ID = %s
-							AND wait_list_item.CREATED_AT > " . strtotime("midnight") . "
-							AND wait_list_item.CREATED_AT < " . strtotime("tomorrow") - 1 . "
-							AND booking_client.ENTITY_TYPE = '" . EntityType::WaitList->value . "'
-						LIMIT 1
-					) THEN 1 ELSE 0 END)
+					) THEN TRUE ELSE FALSE END)
 				)",
 				[
 					'CLIENT_TYPE_ID',

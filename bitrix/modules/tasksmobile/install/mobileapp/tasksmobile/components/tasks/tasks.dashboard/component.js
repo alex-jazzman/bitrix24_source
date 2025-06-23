@@ -127,20 +127,22 @@
 				isTabsMode: this.props.isTabsMode,
 			});
 
+			const { currentUserId, ownerId, projectId, isScrum } = this.props;
+
 			const {
 				loading,
-				view,
+				view: initialView,
 				displayFields,
 				calendarSettings,
 				canCreateTask = false,
 			} = this.getCachedSettings();
 
+			const view = (isScrum && initialView === Views.KANBAN) ? Views.LIST : initialView;
+
 			this.sorting = new TasksDashboardSorting({
 				type: TasksDashboardSorting.types.ACTIVITY,
 				view,
 			});
-
-			const { currentUserId, ownerId, projectId } = this.props;
 
 			this.moreMenu = new TasksDashboardMoreMenu(
 				this.tasksDashboardFilter.getCountersByRole(),
@@ -152,6 +154,7 @@
 					onReadAllClick: this.onReadAllClick,
 					getSelectedView: () => this.state.view,
 					getProjectId: () => projectId,
+					isScrumProject: () => isScrum,
 					openViewSwitcher: this.openViewSwitcher,
 					onListClick: () => this.setView(Views.LIST),
 					onKanbanClick: () => this.setView(Views.KANBAN),
@@ -796,8 +799,8 @@
 									checklistFlatTree: task.checklistFlatTree,
 									startDatePlan: task.startDatePlan,
 									endDatePlan: task.endDatePlan,
-									imChatId: task.imChatId,
-									imMessageId: task.imMessageId,
+									IM_CHAT_ID: task.imChatId,
+									IM_MESSAGE_ID: task.imMessageId,
 								},
 								layoutWidget: layout,
 							};
@@ -1116,7 +1119,7 @@
 		openViewSwitcher()
 		{
 			const items = Object.values(Views)
-				.filter((view) => !(view === Views.KANBAN && this.props.projectId === null))
+				.filter((view) => !(view === Views.KANBAN && this.props.projectId === null && !this.props.isScrum))
 				.map((view) => ({
 					id: view,
 					onClickCallback: () => this.setView(view),
@@ -1764,6 +1767,7 @@
 				tabsGuid: BX.componentParameters.get('TABS_GUID', ''),
 				analyticsLabel: BX.componentParameters.get('ANALYTICS_LABEL', { c_section: 'tasks' }),
 				siteId: BX.componentParameters.get('SITE_ID', ''),
+				isScrum: BX.componentParameters.get('isScrum', false),
 
 				defaultPresetId,
 				presets,

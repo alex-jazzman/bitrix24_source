@@ -1,18 +1,18 @@
 <?php
+
 namespace Bitrix\Sign\Access;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Config\Feature;
-use Bitrix\Sign\Service\Container;
 use ReflectionClass;
 
 class SectionDictionary
 {
-	const B2B = 1;
-	const B2E = 2;
-	const ACCESS = 3;
+	public const B2B = 1;
+	public const B2E = 2;
+	public const ACCESS = 3;
 
 	/**
 	 * @return array[]
@@ -46,6 +46,7 @@ class SectionDictionary
 				SignPermissionDictionary::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
 				SignPermissionDictionary::SIGN_B2E_MY_SAFE,
 				SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
+				SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
 				SignPermissionDictionary::SIGN_B2E_TEMPLATES,
 			],
 			self::ACCESS => [
@@ -77,6 +78,7 @@ class SectionDictionary
 	public static function getList(): array
 	{
 		$class = new ReflectionClass(__CLASS__);
+
 		return array_flip($class->getConstants());
 	}
 
@@ -95,7 +97,7 @@ class SectionDictionary
 		}
 		$title = $sectionsList[$value];
 
-		return Loc::getMessage("SIGN_CONFIG_SECTIONS_".$title) ?? '';
+		return Loc::getMessage("SIGN_CONFIG_SECTIONS_" . $title) ?? '';
 	}
 
 	private static function removeSendByEmployeePermissions(array $map): array

@@ -1,0 +1,68 @@
+.tasks-field-flow {
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.tasks-field-flow-flow {
+	display: flex;
+	align-items: center;
+	max-width: -webkit-max-content;
+	max-width: max-content;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.tasks-field-flow-image {
+	margin-right: 6px;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+}
+
+.tasks-field-flow-title {
+	line-height: 18px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-2);
+}
+
+
+
+.tasks-field-flow-flow:not(:hover) .tasks-field-flow-cross.ui-icon-set {
+	opacity: 0;
+}
+
+.tasks-field-flow-flow .tasks-field-flow-cross.ui-icon-set {
+	margin-left: 5px;
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-base-color: var(--ui-color-base-5);
+}
+
+.tasks-field-flow-flow .tasks-field-flow-cross.ui-icon-set:hover {
+	--ui-icon-set__icon-base-color: var(--ui-color-base-4);
+}
+
+.tasks-field-flow-menu-item.--alert {
+	color: var(--ui-color-accent-main-alert);
+}
+
+
+
+.tasks-field-flow-add-icon {
+	margin-right: 6px;
+	--ui-icon-set__icon-base-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-flow-add-text {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-form-flow-view-popup {
+	margin-top: 10px;
+}
+
+
+
+.tasks-field-flow-chip.--readonly {
+	pointer-events: none;
+}

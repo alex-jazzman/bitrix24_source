@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -58,6 +59,11 @@ return [
 				"resourcebooking" => [
 					'link' => Main\Loader::includeModule('crm')
 						? Crm\UI\Webpack\Form\ResourceBooking::instance()->getEmbeddedFileUrl()
+						: null
+				],
+				'booking' => [
+					'link' => Main\Loader::includeModule('crm')
+						? Crm\UI\Webpack\Form\Booking::instance()->getEmbeddedFileUrl()
 						: null
 				],
 				"proxy" => [

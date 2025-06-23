@@ -121,6 +121,7 @@ class SignMyDocumentsComponent extends SignBaseComponent
 		$button->setText(Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_SALARY_AND_VACATION_BUTTON_TITLE') ?? '');
 		$button->setDropdown();
 		$button->setColor(\Bitrix\UI\Buttons\Color::PRIMARY);
+		$button->setStyle(\Bitrix\UI\Buttons\AirButtonStyle::FILLED);
 
 		if (
 			!$salaryAndVacationService->isConfigured()

@@ -14,17 +14,35 @@ export type ResourceDto = {
 		slotSize: number,
 	}],
 	counter: number | null,
-	isConfirmationNotificationOn: boolean,
-	isFeedbackNotificationOn: boolean,
-	isInfoNotificationOn: boolean,
-	isDelayedNotificationOn: boolean,
-	isReminderNotificationOn: boolean,
-	templateTypeConfirmation: string,
-	templateTypeFeedback: string,
-	templateTypeInfo: string,
-	templateTypeDelayed: string,
-	templateTypeReminder: string,
 	createdBy: number | null,
 	createdAt: number | null,
 	updatedAt: number | null,
+
+	// info
+	isInfoNotificationOn: boolean,
+	templateTypeInfo: string,
+	infoNotificationDelay: number,
+
+	// confirmation
+	isConfirmationNotificationOn: boolean,
+	templateTypeConfirmation: string,
+	confirmationNotificationDelay: number,
+	confirmationNotificationRepetitions: number,
+	confirmationNotificationRepetitionsInterval: number,
+	confirmationCounterDelay: number,
+
+	// reminder
+	isReminderNotificationOn: boolean,
+	templateTypeReminder: string,
+	reminderNotificationDelay: number,
+
+	// delayed
+	isDelayedNotificationOn: boolean,
+	templateTypeDelayed: string,
+	delayedNotificationDelay: number,
+	delayedCounterDelay: number,
+
+	// feedback
+	isFeedbackNotificationOn: boolean,
+	templateTypeFeedback: string,
 };

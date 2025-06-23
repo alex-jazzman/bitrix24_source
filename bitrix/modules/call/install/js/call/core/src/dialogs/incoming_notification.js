@@ -534,12 +534,13 @@ export class IncomingNotificationContent extends EventEmitter
 		// (if invite window is closed before appearing), which leads to hanging of the window
 		if (window.opener.BXIM?.callController && !window.opener.BXIM.callController.callNotification)
 		{
+			console.log('Workaround to prevent incoming call window from hanging');
 			BXDesktopWindow.ExecuteCommand("close");
 			return;
 		}
 
-		const width = 450;
-		const height = 575;
+		const width = 460;
+		const height = 580;
 
 		this.render();
 		document.body.appendChild(this.elements.root);
@@ -599,11 +600,6 @@ export class IncomingNotificationContent extends EventEmitter
 		{
 			this.cameraState = false;
 			this.microphoneState = true;
-		}
-
-		if (this.isMessengerOpen && typeof BX.SidePanel !== 'undefined' && BX.SidePanel.Instance.isOpen())
-		{
-			BX.SidePanel.Instance.close();
 		}
 
 		if (DesktopApi.isDesktop())

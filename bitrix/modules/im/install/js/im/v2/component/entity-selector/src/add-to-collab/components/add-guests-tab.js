@@ -1,11 +1,13 @@
 import { InvitationInput } from 'intranet.invitation-input';
 import { EventEmitter } from 'main.core.events';
 
-import { UserType } from 'im.v2.const';
+import { UserType, SliderCode } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { Button as MessengerButton, ButtonSize, ButtonColor, ScrollWithGradient } from 'im.v2.component.elements';
+import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
+import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
+import { FeaturePromoter } from 'ui.info-helper';
 
 import { CopyInviteLink } from './copy-invite-link';
 
@@ -18,7 +20,7 @@ const HELPDESK_SLIDER_ID = 'main:helper';
 // @vue/component
 export const AddGuestsTab = {
 	name: 'AddGuestsTab',
-	components: { MessengerButton, ScrollWithGradient, CopyInviteLink },
+	components: { ChatButton, ScrollWithGradient, CopyInviteLink },
 	props:
 	{
 		dialogId: {
@@ -103,6 +105,10 @@ export const AddGuestsTab = {
 
 			return currentUser.type === UserType.collaber;
 		},
+		isEnabledCollabersInvitation(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.enabledCollabersInvitation);
+		},
 	},
 	created()
 	{
@@ -150,6 +156,17 @@ export const AddGuestsTab = {
 			this.isInvitingGuests = false;
 			this.$emit('close');
 		},
+		onInvitationGuests()
+		{
+			if (!this.isEnabledCollabersInvitation)
+			{
+				this.showHelper();
+			}
+		},
+		showHelper()
+		{
+			new FeaturePromoter({ code: SliderCode.collabInviteOff }).show();
+		},
 		onCloseOpenHelpdeskSlider({ data })
 		{
 			const [event] = data;
@@ -188,13 +205,14 @@ export const AddGuestsTab = {
 							<div 
 								ref="im-collab-invitation-guests-input" 
 								class="bx-im-add-to-collab__invite-block-input"
+								@click="onInvitationGuests"
 							></div>
 						</div>
 					</div>
 				</ScrollWithGradient>
 			</div>
 			<div class="bx-im-add-to-collab__buttons">
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Collab"
 					:isRounded="true"
@@ -203,7 +221,7 @@ export const AddGuestsTab = {
 					:isLoading="isInvitingGuests"
 					@click="addGuestToCollab"
 				/>
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.LightBorder"
 					:isRounded="true"

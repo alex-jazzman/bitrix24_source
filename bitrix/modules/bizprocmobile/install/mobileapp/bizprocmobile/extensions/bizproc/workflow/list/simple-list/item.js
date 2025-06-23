@@ -259,6 +259,7 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 					color: AppTheme.colors.base4,
 					marginRight: 60,
 					marginLeft: 13,
+					marginBottom: 8,
 				},
 			});
 		}
@@ -327,10 +328,19 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 					isInline: true,
 					title: data.typeName,
 					onFail: useCallback(this.onDoTaskFailed.bind(this)),
+					onComplete: useCallback(this.onDoTaskCompleted.bind(this)),
 					ref: useCallback((ref) => {
 						this.taskButtonsRef = ref;
 					}),
 				}),
+			);
+		}
+
+		onDoTaskCompleted(responseData, props)
+		{
+			BX.postComponentEvent(
+				'AppRatingManager.onBizProcTaskCompleted',
+				[props?.taskRequest],
 			);
 		}
 
@@ -364,7 +374,6 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 			position: 'relative',
 			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
-			paddingHorizontal: 12,
 		},
 		itemContent: {
 			paddingTop: 17,

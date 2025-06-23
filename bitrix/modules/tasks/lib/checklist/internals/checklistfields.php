@@ -19,6 +19,7 @@ class CheckListFields
 	];
 
 	private $id;
+	private ?string $nodeId = null;
 	private $copiedId;
 	private $entityId;
 	private $userId;
@@ -230,6 +231,10 @@ class CheckListFields
 			'ATTACHMENTS' => [
 				'SET_CHECK' => $setCheckFunctions['ATTACHMENTS'],
 				'SAVE_CHECK' => $saveCheckFunctions['ATTACHMENTS'],
+			],
+			'NODE_ID' => [
+				'SET_CHECK' => $setCheckFunctions['STRING'],
+				'SAVE_CHECK' => $saveCheckFunctions['STRING'],
 			],
 		];
 	}
@@ -461,6 +466,16 @@ class CheckListFields
 	public function setId($id)
 	{
 		$this->id = $id;
+	}
+
+	public function setNodeId(?string $nodeId): void
+	{
+		$this->nodeId = $nodeId;
+	}
+
+	public function getNodeId(): ?string
+	{
+		return $this->nodeId;
 	}
 
 	/**

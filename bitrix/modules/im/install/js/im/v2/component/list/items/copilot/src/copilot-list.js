@@ -1,6 +1,6 @@
-import { CopilotDraftManager } from 'im.v2.lib.draft';
+import { DraftManager } from 'im.v2.lib.draft';
 import { Utils } from 'im.v2.lib.utils';
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements';
+import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 
 import { CopilotItem } from './components/copilot-item';
 import { CopilotRecentService } from './classes/copilot-service';
@@ -62,7 +62,7 @@ export const CopilotList = {
 		this.isLoading = true;
 		await this.getRecentService().loadFirstPage();
 		this.isLoading = false;
-		void CopilotDraftManager.getInstance().initDraftHistory();
+		void DraftManager.getInstance().initDraftHistory();
 	},
 	beforeUnmount()
 	{

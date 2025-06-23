@@ -11,4 +11,5 @@ export const Model = Object.freeze({
 	ResourceCreationWizard: 'resource-creation-wizard',
 	ResourceTypes: 'resourceTypes',
 	Resources: 'resources',
+	WaitList: 'wait-list',
 });

@@ -34,6 +34,11 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 			return this.props.editorConfig;
 		}
 
+		get processEditor()
+		{
+			return this.props.processEditor;
+		}
+
 		render()
 		{
 			return View(
@@ -50,6 +55,7 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 					this.renderDescription(),
 				),
 				this.renderEditor(),
+				this.#renderProcessEditor(),
 			);
 		}
 
@@ -75,7 +81,7 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 			const collapsibleText = this.workflow.description && (new CollapsibleText({
 				bbCodeMode: true,
 				testId: 'WORKFLOW_DETAILS_DESCRIPTION',
-				value: this.workflow.description,
+				value: jnComponent.convertHtmlEntities(this.workflow.description),
 				containerStyle: {
 					flexGrow: 0,
 				},
@@ -118,6 +124,21 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 			);
 		}
 
+		#renderProcessEditor()
+		{
+			if (this.#canRenderProcessEditor())
+			{
+				return EntityManager.create({
+					uid: this.uid,
+					layout: this.layout,
+					editorProps: this.processEditor,
+					isEmbedded: true,
+				});
+			}
+
+			return null;
+		}
+
 		renderEmptyBlock(message)
 		{
 			return View(
@@ -146,6 +167,11 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 		canRenderEditor()
 		{
 			return Boolean(this.props.canView && this.editorConfig);
+		}
+
+		#canRenderProcessEditor()
+		{
+			return Boolean(this.props.canView && this.processEditor);
 		}
 	}
 

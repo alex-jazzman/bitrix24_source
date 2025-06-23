@@ -1,3 +1,5 @@
+import 'planner';
+import 'im.integration.viewer';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import 'im.v2.css.tokens';
@@ -19,7 +21,7 @@ import { SettingsContent } from 'im.v2.component.content.settings';
 import { CopilotListContainer } from 'im.v2.component.list.container.copilot';
 import { CopilotContent } from 'im.v2.component.content.copilot';
 import { Analytics } from 'im.v2.lib.analytics';
-
+import { CounterManager } from 'im.v2.lib.counter';
 import { Logger } from 'im.v2.lib.logger';
 import { InitManager } from 'im.v2.lib.init';
 import { Layout } from 'im.v2.const';
@@ -27,6 +29,7 @@ import { CallManager } from 'im.v2.lib.call';
 import { ThemeManager } from 'im.v2.lib.theme';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { LayoutManager } from 'im.v2.lib.layout';
+import { NavigationManager, type NavigationMenuItemParams } from 'im.v2.lib.navigation';
 
 import './css/messenger.css';
 
@@ -91,11 +94,18 @@ export const Messenger = {
 				'--dark-theme': ThemeManager.isDarkTheme(),
 				'--light-theme': ThemeManager.isLightTheme(),
 				'--desktop': DesktopManager.isDesktop(),
+				'--air': LayoutManager.getInstance().isAirDesignEnabled(),
 			};
 		},
 		callContainerClass(): string[]
 		{
 			return [CallManager.viewContainerClass];
+		},
+		hasNavigation(): boolean
+		{
+			const hasNavigation = !LayoutManager.getInstance().isAirDesignEnabled();
+
+			return hasNavigation ?? true;
 		},
 	},
 	watch:
@@ -117,10 +127,12 @@ export const Messenger = {
 	created()
 	{
 		InitManager.start();
+		// emit again because external code expects to receive it after the messenger is opened (not via quick-access).
+		CounterManager.getInstance().emitCounters();
 		LayoutManager.init();
 		Logger.warn('MessengerRoot created');
 
-		this.getLayoutManager().restoreLastLayout();
+		void this.getLayoutManager().prepareInitialLayout();
 		this.sendAnalytics();
 	},
 	beforeUnmount()
@@ -129,17 +141,9 @@ export const Messenger = {
 	},
 	methods:
 	{
-		onNavigationClick({ layoutName, layoutEntityId }: {layoutName: string, layoutEntityId: string | number})
+		onNavigationClick(payload: NavigationMenuItemParams)
 		{
-			let entityId = layoutEntityId;
-
-			const lastOpenedElement = this.getLayoutManager().getLastOpenedElement(layoutName);
-			if (!entityId && lastOpenedElement)
-			{
-				entityId = lastOpenedElement;
-			}
-
-			this.getLayoutManager().setLayout({ name: layoutName, entityId });
+			NavigationManager.open(payload);
 		},
 		onEntitySelect({ layoutName, entityId })
 		{
@@ -156,9 +160,11 @@ export const Messenger = {
 	},
 	template: `
 		<div class="bx-im-messenger__scope bx-im-messenger__container" :class="containerClasses">
-			<div class="bx-im-messenger__navigation_container">
-				<MessengerNavigation :currentLayoutName="currentLayout.name" @navigationClick="onNavigationClick" />
-			</div>
+			<MessengerNavigation
+				v-if="hasNavigation"
+				:currentLayoutName="currentLayout.name" 
+				@navigationClick="onNavigationClick"
+			/>
 			<div class="bx-im-messenger__layout_container">
 				<div class="bx-im-messenger__layout_content">
 					<div v-if="currentLayout.list" class="bx-im-messenger__list_container">

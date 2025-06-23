@@ -30,7 +30,7 @@ export class BookingAnalytics
 		}
 	}
 
-	static sendAddBooking({ isOverbooking, isWaitlist }: { isOverbooking: boolean, isWaitlist: boolean }): void
+	static sendAddBooking({ isOverbooking }: { isOverbooking: ?boolean } = {}): void
 	{
 		const options: AddBookingOptions = {
 			tool: AnalyticsTool.booking,
@@ -40,7 +40,22 @@ export class BookingAnalytics
 			c_element: 'solo_button',
 			p1: 'isMultiResource_N',
 			p2: isOverbooking ? 'isOverbooking_Y' : 'isOverbooking_N',
-			p3: isWaitlist ? 'isWaitlist_Y' : 'isWaitlist_N',
+			p3: 'isWaitlist_N',
+		};
+		sendData(options);
+	}
+
+	static sendAddWaitListItem(): void
+	{
+		const options: AddBookingOptions = {
+			tool: AnalyticsTool.booking,
+			category: AnalyticsCategory.booking,
+			event: 'add_booking',
+			c_section: getCSection(),
+			c_element: 'solo_button',
+			p1: 'isMultiResource_N',
+			p2: 'isOverbooking_N',
+			p3: 'isWaitlist_Y',
 		};
 		sendData(options);
 	}

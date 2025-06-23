@@ -127,7 +127,7 @@ export class WidgetVue
 
 				if (!this.#appAllowedByTariff)
 				{
-					throw new Error(Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT'));
+					throw new Error(Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT_MSGVER_1'));
 				}
 
 				if (this.#useDemoData)

@@ -293,9 +293,12 @@ export const SelectResources = {
 		{
 			await ahaMoments.show({
 				id: 'booking-select-resources',
-				title: this.loc('BOOKING_AHA_SELECT_RESOURCES_TITLE'),
-				text: this.loc('BOOKING_AHA_SELECT_RESOURCES_TEXT'),
-				article: HelpDesk.AhaSelectResources,
+				title: this.loc('BOOKING_AHA_SELECT_RESOURCES_TITLE_MSGVER_1'),
+				text: this.loc('BOOKING_AHA_SELECT_RESOURCES_TEXT_MSGVER_1'),
+				article: {
+					...HelpDesk.AhaSelectResources,
+					title: this.loc('BOOKING_AHA_ARTICLE_LINK_TITLE'),
+				},
 				target: this.$refs.button,
 			});
 

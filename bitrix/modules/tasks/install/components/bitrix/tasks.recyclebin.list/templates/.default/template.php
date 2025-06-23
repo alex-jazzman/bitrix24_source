@@ -4,7 +4,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load('ui.design-tokens');
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.actions-bar',
+]);
 
 Loc::loadMessages(__FILE__);
 
@@ -14,9 +17,11 @@ if($isBitrix24Template)
 	$this->SetViewTarget('below_pagetitle', 0);
 }
 ?>
-
-<div class="tasks-rec-list__toolbar">
-	<div class="tasks-rec-list__toolbar-item --float-left"><?= GetMessage('TASKS_RECYCLEBIN_FILE_LIFETIME'); ?></div>
+<div class="ui-actions-bar">
+	<div class="ui-actions-bar__panel"></div>
+	<div class="ui-actions-bar__buttons">
+		<div class="tasks-rec-list__toolbar-item"><?= Loc::getMessage('TASKS_RECYCLEBIN_FILE_LIFETIME') ?></div>
+	</div>
 </div>
 
 <?

@@ -2,13 +2,14 @@ import { Dom, Event, Tag, Loc, Text } from 'main.core';
 import { BaseHeader, type Dialog, type Tab, type HeadOptions } from 'ui.entity-selector';
 import { Menu, PopupManager } from 'main.popup';
 import { BaseUserManagementDialogFooter } from './footer';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { memberRoles, type MemberRolesType } from 'humanresources.company-structure.api';
 
 export class BaseUserManagementDialogHeader extends BaseHeader
 {
 	title: string;
 	description: string;
 	role: string;
+	memberRoles: MemberRolesType;
 
 	constructor(context: Dialog | Tab, options: HeadOptions)
 	{
@@ -16,7 +17,8 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 
 		this.tiltle = Text.encode(this.getOption('title') ?? '');
 		this.description = Text.encode(this.getOption('description') ?? '');
-		this.role = this.getOption('role') ?? memberRoles.employee;
+		this.memberRoles = this.getOption('memberRoles') ?? memberRoles;
+		this.role = this.getOption('role') ?? this.memberRoles.employee;
 	}
 
 	render(): HTMLElement
@@ -35,7 +37,7 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 		});
 
 		this.header = header;
-		if (this.role === memberRoles.employee)
+		if (this.role === this.memberRoles.employee)
 		{
 			const employeeAddSubtitle = Tag.render`
 				<span class="hr-user-management-dialog__header-description">
@@ -107,7 +109,7 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 				`,
 				onclick: () => {
 					this.roleSwitcher.innerText = Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE');
-					this.#changeRole(memberRoles.head);
+					this.#changeRole(this.memberRoles.head);
 					roleSwitcherMenu.destroy();
 				},
 			},
@@ -121,7 +123,7 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 				`,
 				onclick: () => {
 					this.roleSwitcher.innerText = Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_DEPUTY_ROLE_TITLE');
-					this.#changeRole(memberRoles.deputyHead);
+					this.#changeRole(this.memberRoles.deputyHead);
 					roleSwitcherMenu.destroy();
 				},
 			},

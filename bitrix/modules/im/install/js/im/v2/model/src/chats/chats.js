@@ -7,6 +7,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
 import { chatFieldsConfig } from './format/field-config';
+import { AutoDeleteModel } from './nested-modules/auto-delete/auto-delete';
 import { CollabsModel } from './nested-modules/collabs/collabs';
 import { InputActionsModel } from './nested-modules/input-actions';
 
@@ -30,6 +31,7 @@ export class ChatsModel extends BuilderModel
 		return {
 			collabs: CollabsModel,
 			inputActions: InputActionsModel,
+			autoDelete: AutoDeleteModel,
 		};
 	}
 
@@ -51,6 +53,7 @@ export class ChatsModel extends BuilderModel
 			avatar: '',
 			color: Color.base,
 			extranet: false,
+			containsCollaber: false,
 			counter: 0,
 			userCounter: 0,
 			lastReadId: 0,
@@ -78,18 +81,20 @@ export class ChatsModel extends BuilderModel
 			hasPrevPage: false,
 			hasNextPage: false,
 			diskFolderId: 0,
-			role: UserRole.guest,
+			role: UserRole.member,
 			permissions: {
 				manageUi: UserRole.none,
 				manageSettings: UserRole.none,
 				manageUsersAdd: UserRole.none,
 				manageUsersDelete: UserRole.none,
-				manageMessages: UserRole.none,
+				manageMessages: UserRole.member,
 			},
 			tariffRestrictions: {
 				isHistoryLimitExceeded: false,
 			},
 			parentChatId: 0,
+			backgroundId: '',
+			isTextareaEnabled: true,
 		};
 	}
 
@@ -183,6 +188,15 @@ export class ChatsModel extends BuilderModel
 				}
 
 				return state.collection[dialogId].type === ChatType.support24Question;
+			},
+			/** @function chats/getBackgroundId */
+			getBackgroundId: (state: ChatState) => (dialogId: string): string => {
+				if (!state.collection[dialogId])
+				{
+					return '';
+				}
+
+				return state.collection[dialogId].backgroundId;
 			},
 		};
 	}
@@ -392,8 +406,8 @@ export class ChatsModel extends BuilderModel
 		};
 	}
 
-	formatFields(fields: JsonObject): JsonObject
+	formatFields(rawFields: JsonObject): JsonObject
 	{
-		return formatFieldsWithConfig(fields, chatFieldsConfig);
+		return formatFieldsWithConfig(rawFields, chatFieldsConfig);
 	}
 }

@@ -6,6 +6,7 @@ use Bitrix\BIConnector;
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\ExternalSource;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestConnectorTable;
 use Bitrix\BIConnector\ExternalSource\SourceManager;
 use Bitrix\BIConnector\Superset\ActionFilter\BIConstructorAccess;
 use Bitrix\Crm;
@@ -15,6 +16,7 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Result;
 
 class Source extends Controller
@@ -96,15 +98,7 @@ class Source extends Controller
 			return null;
 		}
 
-		$source = BIConnector\ExternalSource\Internal\ExternalSourceTable::getById($id)->fetchObject();
-		if (!$source)
-		{
-			$this->addError(new Error(Loc::getMessage('BICONNECTOR_CONTROLLER_SOURCE_ERROR_NOT_FOUND')));
-
-			return null;
-		}
-
-		$deleteResult = $source->delete();
+		$deleteResult = SourceManager::deleteSource($id);
 		if (!$deleteResult->isSuccess())
 		{
 			$this->addErrors($deleteResult->getErrors());
@@ -149,7 +143,8 @@ class Source extends Controller
 			return null;
 		}
 
-		$requiredFields = ExternalSource\SourceManager::getFieldsConfig()[$data['type']];
+		$configKey = $data['code'];
+		$requiredFields = ExternalSource\SourceManager::getFieldsConfig()[$configKey];
 		$settings = ExternalSource\Internal\ExternalSourceSettingsTable::createCollection();
 		foreach ($requiredFields as $requiredField)
 		{
@@ -181,6 +176,20 @@ class Source extends Controller
 		}
 
 		$source = ExternalSource\Source\Factory::getSource($type, 0);
+		if ($source instanceof ExternalSource\Source\Rest)
+		{
+			$connectorId = (int)str_replace('rest_', '', $data['code']);
+			$connector = ExternalSourceRestConnectorTable::getByPrimary($connectorId)->fetchObject();
+
+			if (!$connector)
+			{
+				$this->errorCollection[] = new Error(Loc::getMessage('BICONNECTOR_CONTROLLER_SOURCE_ERROR_NOT_FOUND'));
+
+				return null;
+			}
+
+			$source->setConnector($connector);
+		}
 		$connectionResult = $source->connect($settings);
 		if (!$connectionResult->isSuccess())
 		{

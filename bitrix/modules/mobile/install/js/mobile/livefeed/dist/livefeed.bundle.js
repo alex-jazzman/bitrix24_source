@@ -1156,7 +1156,7 @@ this.BX = this.BX || {};
 	        }, {
 	          id: 'delete',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_DELETE'),
-	          iconUrl: `${this.iconUrlFolderPath}delete.png`,
+	          iconUrl: "".concat(this.iconUrlFolderPath, "delete.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            BlogPost$$1["delete"]({
@@ -1171,7 +1171,7 @@ this.BX = this.BX || {};
 	        result.push({
 	          id: 'favorites',
 	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_".concat(this.favoritesValue ? 'Y' : 'N')),
-	          iconUrl: "".concat(this.iconUrlFolderPath, "favorite.png"),
+	          iconUrl: this.favoritesValue ? "".concat(this.iconUrlFolderPath, "unfavorite.png") : "".concat(this.iconUrlFolderPath, "favorite.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            var postInstance = new Post$$1({
@@ -1189,7 +1189,7 @@ this.BX = this.BX || {};
 	        result.push({
 	          id: 'follow',
 	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_".concat(this.followValue ? 'Y' : 'N')),
-	          iconUrl: "".concat(this.iconUrlFolderPath, this.followValue ? "watch.png" : "unwatch.png"),
+	          iconUrl: this.followValue ? "".concat(this.iconUrlFolderPath, "watch.png") : "".concat(this.iconUrlFolderPath, "unwatch.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            FollowManagerInstance.setFollow({

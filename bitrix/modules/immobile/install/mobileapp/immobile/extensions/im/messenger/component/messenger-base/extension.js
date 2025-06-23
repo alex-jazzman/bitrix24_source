@@ -5,17 +5,19 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 	const { RestManager } = require('im/messenger/lib/rest-manager');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { Logger } = require('im/messenger/lib/logger');
-	const {
-		ConnectionService,
-		SyncService,
-		SendingService,
-		QueueService,
-	} = require('im/messenger/provider/service');
+	const { QueueService } = require('im/messenger/provider/services/queue');
+	const { ConnectionService } = require('im/messenger/provider/services/connection');
+	const { SendingService } = require('im/messenger/provider/services/sending');
+	const { SyncService } = require('im/messenger/provider/services/sync/service');
 	const { EntityReady } = require('entity-ready');
 	const {
 		AppStatus,
 		MessengerInitRestMethod,
 	} = require('im/messenger/const');
+	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
+	const { AnchorPullHandler } = require('im/messenger/provider/pull/anchor');
+	const { Anchors } = require('im/messenger/lib/anchors');
+	const { MessengerCounterHandler } = require('im/messenger/lib/counters/counter-manager/messenger/handler');
 
 	class MessengerBase
 	{
@@ -88,11 +90,17 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.dialogCreator = null;
 			this.visibilityManager = VisibilityManager.getInstance();
 
+			this.callManager = CallManager.getInstance();
+
+			this.counterClientHandler = MessengerCounterHandler.getInstance();
+
 			this.initPromise = this.init();
 
 			this.initPromise.catch((error) => {
 				Logger.error(`${this.constructor.name} init error`, error);
 			});
+
+			this.anchors = new Anchors();
 		}
 
 		async init()
@@ -194,7 +202,7 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 
 		initPullHandlers()
 		{
-			Logger.info('MessengerBase.initPullHandlers method is not override');
+			BX.PULL.subscribe(new AnchorPullHandler());
 		}
 
 		initServices()
@@ -307,6 +315,7 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			return [
 				MessengerInitRestMethod.recentList,
 				MessengerInitRestMethod.imCounters,
+				MessengerInitRestMethod.anchors,
 			];
 		}
 	}

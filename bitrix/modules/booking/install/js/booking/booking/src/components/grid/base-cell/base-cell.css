@@ -20,7 +20,7 @@
 }
 
 .booking-booking-grid-cell-padding {
-	padding: var(--padding-outer);
+	padding: var(--padding-outer) calc(var(--padding-outer) - 1px);
 	height: calc(100% - 2 * var(--padding-outer));
 }
 
@@ -52,8 +52,17 @@
 	pointer-events: all;
 }
 
+.ui-draggable--type-move .booking-booking-grid-cell-time {
+	pointer-events: none;
+}
+
 .booking-booking-base-cell.--small .booking-booking-grid-cell-time {
 	align-self: center;
+}
+
+.booking-booking-base-cell.--bounded-to-bottom .booking-booking-grid-cell-time,
+.booking-booking-base-cell.--selected .booking-booking-grid-cell-time {
+	height: 100%;
 }
 
 .booking-booking-grid-cell-time-inner {

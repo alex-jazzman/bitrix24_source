@@ -1,5 +1,5 @@
 import { Settings } from 'im.v2.const';
-import { SettingsService } from 'im.v2.provider.service';
+import { SettingsService } from 'im.v2.provider.service.settings';
 import { Utils } from 'im.v2.lib.utils';
 
 import { RadioOption, type RadioOptionItem } from '../elements/radio';

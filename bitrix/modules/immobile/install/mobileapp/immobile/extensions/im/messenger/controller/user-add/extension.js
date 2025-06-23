@@ -17,7 +17,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { UserAddView } = require('im/messenger/controller/user-add/view');
-	const { ChatService } = require('im/messenger/provider/service');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { Theme } = require('im/lib/theme');
 
 	class UserAdd

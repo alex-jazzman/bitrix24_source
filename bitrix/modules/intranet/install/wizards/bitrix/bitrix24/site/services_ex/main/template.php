@@ -35,7 +35,7 @@ if ($arSite = $obSite->Fetch())
 		$arTemplates[]= Array("CONDITION" => "", "SORT" => 150, "TEMPLATE" => WIZARD_TEMPLATE_ID);
 
 	if (!$foundEmpty && $allowGuests <> "Y")
-		$arTemplates[]= Array("CONDITION" => '((method_exists("CUser", "HasNoAccess") && $GLOBALS["USER"]->HasNoAccess()) || !$GLOBALS["USER"]->IsAuthorized()) && $_SERVER["REMOTE_USER"]==""', "SORT" => 250, "TEMPLATE" => "login");
+		$arTemplates[]= Array("CONDITION" => '((method_exists("CUser", "HasNoAccess") && $GLOBALS["USER"]->HasNoAccess()) || !$GLOBALS["USER"]->IsAuthorized()) && empty($_SERVER["REMOTE_USER"])', "SORT" => 250, "TEMPLATE" => "login");
 
 	$arFields = Array(
 		"TEMPLATE" => $arTemplates,

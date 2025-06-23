@@ -4,6 +4,10 @@
 	align-items: center;
 }
 
+.template-air .biconnector-external-dataset-top {
+	height: 54px;
+}
+
 .biconnector-external-dataset-title-box {
 	display: flex;
 	align-items: center;

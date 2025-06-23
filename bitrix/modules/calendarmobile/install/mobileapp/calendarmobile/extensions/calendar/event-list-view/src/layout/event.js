@@ -19,6 +19,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 	const { SectionManager } = require('calendar/data-managers/section-manager');
 	const { EventMeetingStatus, CalendarType, Counters } = require('calendar/enums');
 	const { RecursionModeMenu } = require('calendar/layout/menu/recursion-mode');
+	const { AppRatingManager } = require('app-rating-manager');
 
 	const { dispatch } = require('statemanager/redux/store');
 	const { setMeetingStatus } = require('calendar/statemanager/redux/slices/events');
@@ -70,8 +71,8 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					style: {
 						flexDirection: 'row',
 						paddingVertical: Indent.XL.toNumber(),
-						borderTopWidth: 1,
-						borderTopColor: Color.bgSeparatorSecondary.toHex(),
+						borderBottomWidth: 1,
+						borderBottomColor: Color.bgSeparatorSecondary.toHex(),
 					},
 					clickable: true,
 					onClick: this.openEventViewForm,
@@ -91,8 +92,13 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 						width: 6,
 						height: '100%',
 						borderRadius: Corner.S.toNumber(),
-						backgroundColor: this.getEventColor(),
+						borderWidth: 1.2,
+						borderColor: this.getEventColor(),
 						opacity: this.isDeclinedOrHasPassed() ? 0.4 : 1,
+						backgroundColor: (this.event.isLongWithTime() && !this.event.isFullDay())
+							? Color.bgContentPrimary.toHex()
+							: this.getEventColor()
+						,
 					},
 					testId: `event_${this.event.getId()}_color`,
 				},
@@ -271,6 +277,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 				{
 					testId: `event_${this.event.getId()}_not_participating`,
 					style: {
+						paddingTop: Indent.XS2.toNumber(),
 						alignItems: 'center',
 						flexDirection: 'row',
 					},
@@ -280,7 +287,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					mode: BadgeStatusMode.WARNING_GREY,
 					size: BadgeStatusSize.SMALL,
 				}),
-				Text6({
+				Text5({
 					text: Loc.getMessage('M_CALENDAR_EVENT_LIST_NOT_ATTENDED'),
 					color: Color.base4,
 					style: {
@@ -292,7 +299,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 		renderCollabName()
 		{
-			return Text6({
+			return Text5({
 				testId: `event_${this.event.getId()}_collab_name`,
 				color: Color.collabAccentPrimaryAlt,
 				text: Loc.getMessage('M_CALENDAR_EVENT_LIST_COLLAB_NAME', {
@@ -392,10 +399,9 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 				if (this.dayCode === DateHelper.getDayCode(dateTo.date))
 				{
-					return Loc.getMessage('M_CALENDAR_EVENT_LIST_TILL_TIME').replace(
-						'#TIME#',
-						dateTo.format(shortTime()).toLocaleUpperCase(env.languageId),
-					);
+					return Loc.getMessage('M_CALENDAR_EVENT_LIST_TILL_TIME', {
+						'#TIME#': dateTo.format(shortTime()).toLocaleUpperCase(env.languageId),
+					});
 				}
 
 				return Loc.getMessage('M_CALENDAR_EVENT_LIST_ALL_DAY');
@@ -418,11 +424,19 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 		openEventViewForm = () => {
 			EventView.open({
-				ownerId: State.ownerId,
-				calType: State.calType,
-				parentLayout: this.props.layout,
 				eventId: this.event.getId(),
+				parentId: this.event.getParentId(),
+				ownerId: this.event.getOwnerId(),
+				calType: this.event.getCalType(),
+				parentLayout: this.props.layout,
 				dateFromTs: this.getEventDateFrom().getTime(),
+				onClose: this.onEventViewFormClose,
+			});
+		};
+
+		onEventViewFormClose = () => {
+			void AppRatingManager.tryOpenAppRating({
+				parentWidget: this.props.layout,
 			});
 		};
 

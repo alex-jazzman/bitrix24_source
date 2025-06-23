@@ -84,6 +84,10 @@ class CMainInterfaceButtons
 			;
 
 			$arParams["THEME_ID"] = " --" . $arParams["THEME"];
+
+			$arParams["THEME_VARS"] =
+				isset($arParams["THEME_VARS"]) && is_array($arParams["THEME_VARS"]) ? $arParams["THEME_VARS"] : []
+			;
 		}
 
 		return $arParams;

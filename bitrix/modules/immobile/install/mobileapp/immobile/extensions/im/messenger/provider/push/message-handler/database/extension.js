@@ -60,6 +60,11 @@ jn.define('im/messenger/provider/push/message-handler/database', (require, expor
 
 				const helper = this.getHelper(event);
 
+				if (helper.isLines())
+				{
+					continue;
+				}
+
 				if (!helper.isChatExist())
 				{
 					continue;

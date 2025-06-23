@@ -90,6 +90,13 @@ class AvailabilityManager
 		]);
 	}
 
+	public function getRepeatSaleInaccessibilityContent(): string
+	{
+		return $this->getInaccessibilityComponentContent([
+			'sliderCode' => ToolsManager::QUOTE_SLIDER_CODE, // @todo set correct code
+		]);
+	}
+
 	/**
 	 * @param array{entityTypeId: int, sliderCode: string} $data
 	 * @return string

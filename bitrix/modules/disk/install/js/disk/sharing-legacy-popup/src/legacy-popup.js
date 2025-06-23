@@ -227,7 +227,17 @@ export default class LegacyPopup
 												{
 													return;
 												}
-												response.message = BX.message('JS_DISK_SHARING_LEGACY_POPUP_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+												let name = params.object.name.split('.');
+												const ext = name.pop().toLowerCase();
+												name = name.join('.');
+												if (name && ext === 'board')
+												{
+													response.message = BX.message('JS_DISK_SHARING_LEGACY_POPUP_OK_BOARD_SHARE_MODIFIED').replace('#FILE#', name);
+												}
+												else
+												{
+													response.message = BX.message('JS_DISK_SHARING_LEGACY_POPUP_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+												}
 
 												BX.Disk.showModalWithStatusAction(response);
 											}

@@ -1,6 +1,10 @@
 import Util from './util';
 import {Event} from 'main.core';
 
+export const ClientPlatform = 'web';
+
+export const ClientVersion = '1.0.0';
+
 export const MediaStreamsKinds = {
 	Camera: 1,
 	Microphone: 2,
@@ -97,6 +101,15 @@ const MONITORING_EVENTS_LIST = {
 	events: []
 };
 
+export const RecorderStatus = {
+	UNAVAILABLE: 0, // recording not available at the moment
+	NONE: 1, // recording not started but available
+	ENABLED: 2, // recording started and not paused
+	DISABLED: 3, // recording stopped and can not be resumed
+	PAUSED: 4, // recording started and paused
+	DESTROYED: 5, // recording will be aborted and no results will be provided
+};
+
 const ReconnectionReason = {
 	NetworkError: 'NetworkError',
 	PingPongMissed: 'PingPongMissed',
@@ -117,8 +130,6 @@ export class Call {
 	sender = null;
 	recipient = null;
 	#privateProperties = {
-		clientVersion: '1.0.0',
-		clientPlatform: 'web',
 		codec: 'vp8',
 		canReconnect: true,
 		logs: {},
@@ -131,8 +142,10 @@ export class Call {
 		prevParticipantsWithLargeDataLoss: new Set(),
 		tracksDataFromSocket: {},
 		realTracksIds: {}, // todo: check why track ids are different in a stream and in the track itself
-		url: null,
+		mediaServerUrl: null,
+		roomData: null,
 		roomId: null,
+		isLegacy: false,
 		token: null,
 		endpoint: null,
 		jwt: null,
@@ -242,6 +255,8 @@ export class Call {
 
 	checkQosFeatureAndExecutionCallback(callback)
 	{
+		return;
+
 		if (typeof callback === 'function' && Util.isNewQOSEnabled())
 		{
 			callback();
@@ -522,37 +537,48 @@ export class Call {
 			this.#privateProperties[`${key}`] = options[key]
 		}
 
-		if (!this.#privateProperties.endpoint) {
-			this.setLog(`Missing required param 'endpoint' from backend, disconnecting`, LOG_LEVEL.ERROR);
-			this.triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'endpoint'`}]);
-			return;
-		}
-		if (!this.#privateProperties.jwt) {
-			this.setLog(`Missing required param 'jwt' from backend, disconnecting`, LOG_LEVEL.ERROR);
-			this.triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'jwt'`}]);
-			return;
+		if (this.#privateProperties.isLegacy)
+		{
+			if (!this.#privateProperties.endpoint)
+			{
+				this.setLog(`Missing required param 'endpoint' from backend, disconnecting`, LOG_LEVEL.ERROR);
+				this.triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'endpoint'`}]);
+				return;
+			}
+			if (!this.#privateProperties.jwt)
+			{
+				this.setLog(`Missing required param 'jwt' from backend, disconnecting`, LOG_LEVEL.ERROR);
+				this.triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'jwt'`}]);
+				return;
+			}
+
+			this.#privateProperties.endpoint = this.#privateProperties.endpoint.replace(/\/+$/, '');
 		}
 
-		this.#privateProperties.endpoint = this.#privateProperties.endpoint.replace(/\/+$/, '');
+		const canConnect = this.#privateProperties.mediaServerUrl && this.#privateProperties.roomData;
 
-		try
+		if (!canConnect)
 		{
-			const mediaServerInfo = await this.getMediaServerInfo();
-			this.#privateProperties.url = mediaServerInfo.url;
-			this.#privateProperties.token = mediaServerInfo.token;
-			this.#privateProperties.data = mediaServerInfo.data;
-		}
-		catch (error)
-		{
-			if (error.name !== 'AbortError' && !this.#privateProperties.abortController.signal.aborted)
+			try
 			{
-				this.#reconnect();
+				const mediaServerInfo = await this.getMediaServerInfo();
+
+				this.#privateProperties.mediaServerUrl = mediaServerInfo.mediaServerUrl;
+				this.#privateProperties.roomData = mediaServerInfo.roomData;
 			}
-			else if (this.#privateProperties.abortController.signal.aborted)
+			catch (error)
 			{
-				this.triggerEvents('Failed', [error]);
+				if (error.name !== 'AbortError' && !this.#privateProperties.abortController.signal.aborted)
+				{
+					this.#reconnect();
+				}
+				else if (this.#privateProperties.abortController.signal.aborted)
+				{
+					this.triggerEvents('Failed', [error]);
+				}
+
+				return;
 			}
-			return;
 		}
 
 		if (this.#privateProperties.abortController.signal.aborted)
@@ -562,7 +588,12 @@ export class Call {
 		}
 		this.#privateProperties.abortController.signal.addEventListener('abort', this.beforeDisconnectBound);
 
-		this.#privateProperties.socketConnect = new WebSocket(`${this.#privateProperties.url}?access_token=${this.#privateProperties.token}&auto_subscribe=1&sdk=js&version=1.6.7&protocol=8&roomData=${this.#privateProperties.data}`);
+		this.#privateProperties.socketConnect = new WebSocket(
+			`${this.#privateProperties.mediaServerUrl}?auto_subscribe=1&sdk=js&version=1.6.7&protocol=8`
+			+`&roomData=${this.#privateProperties.roomData}`
+			+`&clientVersion=${ClientVersion}`
+			+`&clientPlatform=${ClientPlatform}`);
+
 		this.#privateProperties.socketConnect.onmessage = (e) => this.socketOnMessageHandler(e);
 		this.#privateProperties.socketConnect.onopen = () => this.socketOnOpenHandler();
 		this.#privateProperties.socketConnect.onerror = () => this.socketOnErrorHandler();
@@ -599,6 +630,9 @@ export class Call {
 		this.#clearPingTimeout();
 		clearInterval(this.#privateProperties.callStatsInterval);
 
+		this.#privateProperties.mediaServerUrl = '';
+		this.#privateProperties.roomData = '';
+
 		this.#privateProperties.localTracks = {};
 		this.#privateProperties.isWaitAnswer = false;
 
@@ -613,79 +647,93 @@ export class Call {
 		}
 	}
 
-	getMediaServerInfo() {
-		return new Promise(async (resolve, reject) => {
-			let url = `${this.#privateProperties.endpoint}/join`;
-				url += `?token=${this.#privateProperties.jwt}`;
-				url += `&clientVersion=${this.#privateProperties.clientVersion}`;
-				url += `&clientPlatform=${this.#privateProperties.clientPlatform}`;
-			let response;
-			let data;
+	getMediaServerInfo()
+	{
+		let request = null;
 
-			try
-			{
-				response = await fetch(url, {
+		if (this.#privateProperties.isLegacy)
+		{
+			let url = `${this.#privateProperties.endpoint}/join`;
+			url += `?token=${this.#privateProperties.jwt}`;
+			url += `&clientVersion=${ClientVersion}`;
+			url += `&clientPlatform=${ClientPlatform}`;
+
+			request = new Promise((resolve, reject) => {
+				fetch(url, {
 					method: 'GET',
 					signal: this.#privateProperties.abortController.signal,
-				});
-				if (!response.ok)
-				{
-					throw new Error(`Got response code ${response.status}`);
-				}
-			}
-			catch (error)
-			{
-				if (error.name === 'AbortError')
-				{
-					reject(error);
-				}
-				else
-				{
-					this.#privateProperties.lastReconnectionReason = ReconnectionReason.NetworkError;
-					reject({name: 'MEDIASERVER_UNREACHABLE', message: error.message});
-				}
-				return;
-			}
+				})
+					.then((response) => {
+						return response.json();
+					})
+					.then((data) => {
+						resolve(data);
+					})
+					.catch((error) => {
+						reject(error);
+					});
+			});
+		}
+		else
+		{
+			request = Util.getCallConnectionDataById(this.#privateProperties.roomId);
+		}
 
-			try
-			{
-				data = await response.json();
-			}
-			catch (error)
-			{
-				this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
-				reject({name: 'MEDIASERVER_UNEXPECTED_ANSWER', message: error.message});
-				return;
-			}
+		return new Promise((resolve, reject) => {
+			const isErrorPreventingReconnection = (code) => {
+				return code === ErrorPreventingReconnection.InputError
+					|| code === ErrorPreventingReconnection.AccessDenied
+					|| code === ErrorPreventingReconnection.RoomNotFound
+					|| code === ErrorPreventingReconnection.MalfunctioningSignaling;
+			};
 
-			if (data.result?.mediaServerUrl && data.result?.tokenToAccessMediaServer && data.result?.roomData)
-			{
-				resolve({
-					url: data.result.mediaServerUrl,
-					token: data.result.tokenToAccessMediaServer,
-					data: data.result.roomData,
+			request
+				.then((data) => {
+					if (data.error)
+					{
+						throw data.error;
+					}
+					else if (!data?.result?.mediaServerUrl || !data?.result?.roomData)
+					{
+						throw {
+							name: 'MEDIASERVER_MISSING_PARAMS',
+							message: 'Incorrect signaling response',
+						};
+					}
+
+					resolve({
+						mediaServerUrl: data.result.mediaServerUrl,
+						roomData: data.result.roomData,
+					});
+				})
+				.catch((error) => {
+					if (
+						(error.code && isErrorPreventingReconnection(error.code))
+						|| error.name === 'AbortError'
+						|| error.name === 'SyntaxError'
+					)
+					{
+						this.#privateProperties.abortController.abort();
+						reject({
+							name: 'MEDIASERVER_UNEXPECTED_ANSWER',
+							message: error.message,
+						});
+					}
+					else
+					{
+						this.#privateProperties.lastReconnectionReason = error.code
+							? ReconnectionReason.JoinResponseError
+							: ReconnectionReason.NetworkError;
+
+						reject({
+							name: 'MEDIASERVER_ERROR',
+							message: `Reason: ${error.message}`,
+						});
+					}
 				});
-			}
-			else
-			{
-				if (
-					data?.error?.code === ErrorPreventingReconnection.InputError
-					|| data?.error?.code === ErrorPreventingReconnection.AccessDenied
-					|| data?.error?.code === ErrorPreventingReconnection.RoomNotFound
-					|| data?.error?.code === ErrorPreventingReconnection.MalfunctioningSignaling
-				)
-				{
-					this.#privateProperties.abortController.abort();
-					reject(data.error);
-				}
-				else
-				{
-					this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
-					reject({name: 'MEDIASERVER_MISSING_PARAMS', message: `Incorrect signaling response`});
-				}
-			}
 		});
 	}
+
 	async sendOffer() {
 		if (this.#privateProperties.offersStack > 0 && !this.#privateProperties.isWaitAnswer) {
 			this.setLog('Start sending an offer', LOG_LEVEL.INFO);
@@ -753,11 +801,16 @@ export class Call {
 		} else if (data?.offer) {
 			await this.#offerHandler(data);
 		} else if (data?.joinResponse) {
+			if (data.joinResponse.role)
+			{
+				Util.setCurrentUserRole(data.joinResponse.role);
+			}
+
 			this.#privateProperties.abortController.signal.removeEventListener('abort', this.beforeDisconnectBound);
 
 			this.#privateProperties.iceServers = data.joinResponse.iceServers;
 			this.#privateProperties.localParticipantSid = data.joinResponse.localParticipant.sid;
-			this.#createPeerConnection()
+			this.#createPeerConnection();
 
 			const connectedEvent = this.#privateProperties.isReconnecting && this.wasConnected
 				? 'Reconnected'
@@ -768,6 +821,19 @@ export class Call {
 			this.setLog(`${connectedEvent} to the call ${this.#privateProperties.roomId} on the mediaserver after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
 			this.#privateProperties.isReconnecting = false;
 			this.#privateProperties.reconnectionAttempt = 0;
+
+			if(data.joinResponse.permissions && connectedEvent === 'Connected')
+			{
+				this.#setUserPermissions(data.joinResponse.permissions);
+			}
+
+			if(data.joinResponse.roomState && connectedEvent === 'Connected')
+			{
+				Util.setRoomPermissions(data.joinResponse.roomState);
+				Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
+
+			}
+
 			this.triggerEvents(connectedEvent);
 
 			this.checkQosFeatureAndExecutionCallback(() =>
@@ -795,6 +861,17 @@ export class Call {
 				this.triggerEvents('ParticipantLeaved', [participant]);
 				delete this.#privateProperties.remoteTracks[userId];
 				delete this.#privateProperties.remoteParticipants[userId];
+			}
+
+			if ('recorderStatus' in data.joinResponse)
+			{
+				const recorderStatus = { code: data.joinResponse.recorderStatus };
+				if (data.joinResponse.recorderRespStatus)
+				{
+					recorderStatus.errMsg = data.joinResponse.recorderRespStatus;
+				}
+
+				this.triggerEvents('RecorderStatusChanged', [recorderStatus]);
 			}
 
 			this.#privateProperties.pingIntervalDuration = data.joinResponse.pingInterval * 1000
@@ -949,10 +1026,18 @@ export class Call {
 			}
 		} else if (data?.trackMuted) {
 			this.#trackMutedHandler(data.trackMuted);
-		} else if (data?.trickle) {
+		}
+		else if (data.recorderStatus)
+		{
+			this.triggerEvents('RecorderStatusChanged', [data.recorderStatus]);
+		}
+		else if (data?.trickle) {
 			this.#addIceCandidate(data.trickle);
 		} else if (data?.newMessage) {
 			const message = new Message(data.newMessage)
+			this.triggerEvents('MessageReceived', [message]);
+		} else if (data['1to1Info']) {
+			const message = new Message(data['1to1Info'])
 			this.triggerEvents('MessageReceived', [message]);
 		} else if (data?.handRaised) {
 			const participant = this.#privateProperties.remoteParticipants[data.handRaised.participantId];
@@ -963,10 +1048,7 @@ export class Call {
 			}
 		} else if (data?.speakersChanged) {
 			this.#speakerChangedHandler(data)
-		} else if (data?.subscribedQualityUpdate) {
-			console.log(data)
 		} else if (data?.connectionQuality) {
-			console.log(data);
 			if (!data.connectionQuality.updates)
 			{
 				return;
@@ -1031,8 +1113,10 @@ export class Call {
 			this.setLog(`Got leave signal with ${data.leave.reason} reason`, LOG_LEVEL.WARNING);
 			this.#beforeDisconnect();
 
+			const reasonsToReconnect = ['CHANGING_MEDIA_SERVER', 'FULL_RECONNECT_NEEDED', 'STATE_MISMATCH'];
+
 			if (
-				(data.leave.canReconnect || data.leave.reason === 'CHANGING_MEDIA_SERVER') &&
+				(data.leave.canReconnect || reasonsToReconnect.includes(data.leave.reason)) &&
 				data.leave.reason !== "SIGNALING_DUPLICATE_PARTICIPANT")
 			{
 				this.#privateProperties.lastReconnectionReason = ReconnectionReason.LeaveCommand;
@@ -1047,10 +1131,34 @@ export class Call {
 						leaveInformation: {code: data.leave.code, reason: data.leave.reason}
 					}]);
 			}
-		} else if (data?.allParticipantMuted) {
-			this.#allParticipantMutedHandler(data.allParticipantMuted);
-		} else if (data?.onParticipantMuted) { // task-568199
-			this.#participantMutedHandler(data.onParticipantMuted);
+		}
+		else if (data?.onErrorResponse)
+		{
+			this.setLog(`Got signaling error: ${data.onErrorResponse.message}`, LOG_LEVEL.ERROR);
+		}
+		else if (data?.onActionSent)
+		{
+			console.warn('data?.onActionSent', data.onActionSent); // test_remove
+			if (data?.onActionSent.changeSettings)
+			{
+				this.#settingsChangedHandler(data.onActionSent.changeSettings);
+			}
+			else if (data?.onActionSent.givePermissions)
+			{
+				this.#userPermissionsChanged(data.onActionSent.givePermissions);
+			}
+			else if (data?.onActionSent.participantMuted)
+			{
+				this.#participantMutedHandler(data.onActionSent.participantMuted);
+			}
+			else if (data?.onActionSent.allParticipantsMuted)
+			{
+				this.#allParticipantsMutedHandler(data.onActionSent.allParticipantsMuted);
+			}
+			else if (data?.onActionSent.updateRole)
+			{
+				this.#updateRoleHandler(data.onActionSent.updateRole);
+			}
 		}
 	};
 
@@ -1063,7 +1171,6 @@ export class Call {
 
 		if (e?.code && e?.code !== 1005)
 		{
-
 			this.setLog(`Socket closed with a code ${e.code}, reconnecting`, LOG_LEVEL.ERROR);
 			this.#privateProperties.lastReconnectionReason = ReconnectionReason.WsTransportClosed;
 			this.#reconnect();
@@ -1737,7 +1844,7 @@ export class Call {
 		}
 	}
 
-	hangup() {
+	hangup(closeRoom = false) {
 		if (this.#privateProperties.callState === CALL_STATE.TERMINATED)
 		{
 			return;
@@ -1748,7 +1855,18 @@ export class Call {
 		this.#privateProperties.callState = CALL_STATE.TERMINATED;
 
 		this.setLog(`Disconnecting from the call`, LOG_LEVEL.INFO);
-		this.#sendLeave();
+		if (closeRoom)
+		{
+			this.#sendSignal({
+				closeRoom: {
+					timestamp: Math.floor(Date.now() / 1000)
+				}
+			});
+		}
+		else
+		{
+			this.#sendLeave();
+		}
 		this.#beforeDisconnect();
 		this.#destroyPeerConnection();
 
@@ -1769,10 +1887,6 @@ export class Call {
 		}
 		this.#privateProperties.pendingSubscriptions = {};
 
-		this.#privateProperties.url = null;
-		this.#privateProperties.token = null;
-		this.#privateProperties.endpoint = null;
-		this.#privateProperties.jwt = null;
 		this.#privateProperties.options = null;
 		this.#privateProperties.iceServers = null;
 		this.#privateProperties.lastReconnectionReason = null;
@@ -1905,6 +2019,10 @@ export class Call {
 
 	async enableAudio(disabled = false)
 	{
+		if (!Util.havePermissionToBroadcast('mic'))
+		{
+			return;
+		}
 		this.setLog('Start enabling audio', LOG_LEVEL.INFO);
 		this.#privateProperties.needToEnableAudioAfterSystemMuted = false;
 		if (this.#privateProperties.switchActiveAudioDeviceInProgress)
@@ -1959,21 +2077,21 @@ export class Call {
 		const bySystem = options?.bySystem || false;
 		const calledFrom = options?.calledFrom || '';
 		const hasQueue = this.#privateProperties.videoQueue !== VIDEO_QUEUE.INITIAL;
-		
+
 		this.setLog(`Start disabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
 		//console.warn(`Start disabling video - isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, calledFrom: ${calledFrom}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `);
 		if (this.#privateProperties.isReconnecting)
 		{
 			return;
 		}
-		
+
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.DISABLE;
-		
+
 		if (hasQueue)
 		{
 			return;
 		}
-		
+
 		const track = this.#privateProperties.cameraStream?.getVideoTracks()[0];
 		if (track && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
 		{
@@ -2022,15 +2140,20 @@ export class Call {
 		const skipUnpause = options?.skipUnpause || false;
 		const calledFrom = options?.calledFrom || '';
 		const hasQueue = this.#privateProperties.videoQueue !== VIDEO_QUEUE.INITIAL;
-		
+
 		this.setLog(`Start enabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, skipUnpause: ${skipUnpause}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
 		//console.warn(`Start enabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, skipUnpause: ${skipUnpause}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
-		
+
 		if (this.#privateProperties.isReconnecting)
 		{
 			return;
 		}
-		
+
+		if (!Util.havePermissionToBroadcast('cam'))
+		{
+			return;
+		}
+
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.ENABLE;
 		if (hasQueue)
 		{
@@ -2047,7 +2170,7 @@ export class Call {
 				this.onPublishFailed(MediaStreamsKinds.Camera);
 			}
 		}
-		
+
 		let hasTrack = !!this.#privateProperties.cameraStream?.getVideoTracks()[0];
 		let track = await this.getLocalVideo();
 
@@ -2107,6 +2230,11 @@ export class Call {
 	}
 
 	async startScreenShare() {
+		if (!Util.havePermissionToBroadcast('screenshare'))
+		{
+			return;
+		}
+
 		this.setLog('Start enabling screen sharing', LOG_LEVEL.INFO);
 		const tracks = await this.getLocalScreen()
 		const videoTrack = tracks?.video;
@@ -2142,88 +2270,182 @@ export class Call {
 		this.#sendSignal({ sendMessage: { message } });
 	}
 
+	send1to1Info(message) {
+		this.#sendSignal({ send1to1Info: { message } });
+	}
+
 	raiseHand(raised) {
 		this.#sendSignal({ raiseHand: { raised } });
 	}
 
-	turnOffAllParticipansStream(options) {
-		if(options?.data){
-			if(options.data?.typeOfStream){
-
-				switch (options.data.typeOfStream){
-					case 'mic':
-						this.#sendSignal({ muteAllParticipants: {'audioMutedEvent': { 'muted': true }}});
-						this.sendMessage(JSON.stringify({eventName: 'audioMutedEvent' })); // hook for mobile
-						break;
-					case 'cam':
-						this.#sendSignal({ muteAllParticipants: {'videoMutedEvent': { 'muted': true }}});
-						this.sendMessage(JSON.stringify({eventName: 'videoMutedEvent' })); // hook for mobile
-						break;
-					case 'screenshare':
-						this.#sendSignal({ muteAllParticipants: {'screenShareMutedEvent': { 'muted': true }}});
-						this.sendMessage(JSON.stringify({eventName: 'screenShareMutedEvent' })); // hook for mobile
-						break;
-				}
-			} else {
-				this.setLog(`No typeOfStream passed in options in turnOffAllParticipansStream`, LOG_LEVEL.ERROR);
-
-				return;
-			}
-		} else {
-			this.setLog(`No options passed to turnOffAllParticipansStream`, LOG_LEVEL.ERROR);
-
+	changeSettings(options)
+	{
+		if (!Util.isUserControlFeatureEnabled())
+		{
 			return;
+		}
+
+		let settingsObj = {};
+
+		switch (options.typeOfSetting){
+			case 'mic':
+				settingsObj =  { 'audioMutedEvent': { 'muted': !options.settingEnabled } };
+				break;
+			case 'cam':
+				settingsObj =  { 'videoMutedEvent': { 'muted': !options.settingEnabled } };
+				break;
+			case 'screenshare':
+				settingsObj =  { 'screenShareMutedEvent': { 'muted': !options.settingEnabled } };
+				break;
+		}
+
+		this.#sendSignal( { sendAction: {
+			act: 'change_settings',
+			changeSettingsPayload: settingsObj
+		}});
+	}
+
+	turnOffAllParticipansStream(options)
+	{
+		if (!Util.isUserControlFeatureEnabled())
+		{
+			return;
+		}
+
+		if(options?.data)
+		{
+			if(options.data?.typeOfStream)
+			{
+				switch (options.data.typeOfStream)
+				{
+					case 'mic':
+						this.#sendSignal(
+						{	sendAction:
+							{
+								act: 'mute_others',
+								muteAllParticipantPayload:
+								{
+									audioMutedEvent:
+									{
+										'muted': true
+									}
+								},
+							}
+						});
+
+
+					break;
+
+					case 'cam':
+						this.#sendSignal(
+						{	sendAction:
+							{
+								act: 'mute_others',
+								muteAllParticipantPayload:
+								{
+									videoMutedEvent:
+									{
+										'muted': true
+									}
+								},
+							}
+						});
+
+
+					break;
+
+					case 'screenshare':
+						this.#sendSignal(
+						{	sendAction:
+							{
+								act: 'mute_others',
+								muteAllParticipantPayload:
+								{
+									screenShareMutedEvent:
+									{
+										'muted': true
+									}
+								},
+							}
+						});
+
+
+					break;
+				}
+			}
 		}
 	}
 
-	turnOffParticipantStream(options) {
-		if(options.typeOfStream){
-			switch (options.typeOfStream){
-				case 'mic':
-					this.#sendSignal({
-						muteParticipant: {
+	turnOffParticipantStream(options)
+	{
+		if (!Util.isUserControlFeatureEnabled())
+		{
+			return;
+		}
+
+		if(!options.typeOfStream)
+		{
+			return;
+		}
+
+		switch (options.typeOfStream)
+		{
+			case 'mic':
+				this.#sendSignal({
+					sendAction:
+					{
+						act: 'mute_others',
+						muteParticipantPayload:
+						{
 							'participantID': (options.userId + ''), // must be a String type
 							'audioMutedEvent': { 'muted': true }
-						}
-					});
-					
-					this.sendMessage(JSON.stringify({
-						eventName: 'participantAudioMutedEvent', 
-						userId: (options.userId + ''),
-						fromUserId: (options.fromUserId + '')
-						})); 
-					break;
-				case 'cam':
-					this.#sendSignal({
-						muteParticipant: {
+						},
+					}
+				});
+
+				break;
+			case 'cam':
+				this.#sendSignal({
+					sendAction:
+					{
+						act: 'mute_others',
+						muteParticipantPayload:
+						{
 							'participantID': (options.userId + ''), // must be a String type
 							'videoMutedEvent': { 'muted': true }
-						}
-					});
-					this.sendMessage(JSON.stringify({
-						eventName: 'participantVideoMutedEvent', 
-						userId: (options.userId + ''),
-						fromUserId: (options.fromUserId + '')
-						})); 
-					break;
-				case 'screenshare':
-					this.#sendSignal({
-						muteParticipant: {
+						},
+					}
+				});
+
+				break;
+			case 'screenshare':
+				this.#sendSignal({
+					sendAction:
+					{
+						act: 'mute_others',
+						muteParticipantPayload:
+						{
 							'participantID': (options.userId + ''), // must be a String type
 							'screenShareMutedEvent': { 'muted': true }
-						}
-					});
-					this.sendMessage(JSON.stringify({
-						eventName: 'participantScreenshareMutedEvent', 
-						userId: (options.userId + ''),
-						fromUserId: (options.fromUserId + '')
-						})); 
-					break;
-			}
-		} else {
-			this.setLog(`No typeOfStream passed in options in turnOffParticipantStream`, LOG_LEVEL.ERROR);
+						},
+					}
+				});
+				break;
+		}
+	}
 
-			return;
+	allowSpeakPermission(options)
+	{
+		if (Util.canControlGiveSpeakPermission())
+		{
+			this.#sendSignal( { sendAction: {
+				'act': 'give_permissions',
+				'givePermissionsPayload':
+				{
+					'forUserId': (options.userId + ''),
+					'allow': options.allow,
+				},
+			}});
 		}
 	}
 
@@ -2650,18 +2872,34 @@ export class Call {
 		return this.#privateProperties.callState
 	}
 
+	setRecorderState(status)
+	{
+		if (!Object.values(RecorderStatus).includes(status))
+		{
+			return;
+		}
+
+		const signal = {
+			recorderControl: {
+				status: status,
+			}
+		};
+
+		return this.isConnected() ? this.#sendSignal(signal) : false;
+	}
+
 	setLog(log, level) {
 		level = LOG_LEVEL[level] || LOG_LEVEL.info;
 
 		if (this.#privateProperties.isloggingEnable)
 		{
 			const desktopVersion = window['BXDesktopSystem']?.ApiVersion?.();
-			const version = this.#privateProperties.clientVersion + (desktopVersion ? ` (desktopApi: ${desktopVersion})` : '');
+			const version = ClientVersion + (desktopVersion ? ` (desktopApi: ${desktopVersion})` : '');
 			const data = {
 				timestamp: Math.floor(Date.now() / 1000),
 				timestampMS: Date.now(),
 				event: log,
-				client: this.#privateProperties.clientPlatform,
+				client: ClientPlatform,
 				appVersion: version,
 			};
 			const logLength = Object.values(this.#privateProperties.logs).length;
@@ -2692,6 +2930,7 @@ export class Call {
 	}
 
 	#sendLog(log, level) {
+		return true;
 
 		const signal = {
 			sendLog: {
@@ -2860,6 +3099,20 @@ export class Call {
 					value: 3,
 				});
 			});
+		}
+	}
+
+	#setUserPermissions(_permissionsJSON)
+	{
+		try
+		{
+			let permissions = JSON.parse(_permissionsJSON);
+
+			Util.setUserPermissions(permissions);
+		}
+		catch (err)
+		{
+			this.setLog(`Could not parse a permissions JSON: ${_permissionsJSON}  ${err.message}`, LOG_LEVEL.WARNING);
 		}
 	}
 
@@ -3098,22 +3351,33 @@ export class Call {
 			? 'RemoteMediaRemoved'
 			: 'RemoteMediaAdded';
 
+		if (this.#privateProperties.tracksDataFromSocket[options.track.sid])
+		{
+			this.#privateProperties.tracksDataFromSocket[options.track.sid].muted = options.isMuted;
+		}
+
 		this.triggerEvents(eventName, [options.participant, options.track]);
 	}
 
-	#participantMutedHandler(data) {
-		if (data.user_id === data.from_sid) // we not accept mute participant by himself by this method
+	#participantMutedHandler(data)
+	{
+		if (!Util.isUserControlFeatureEnabled())
 		{
 			return;
 		}
 
-		if (data.user_id != this.#privateProperties.userId)
+		if (data.toUserId === data.fromUserId) // we not accept mute participant by himself by this method
 		{
-			const participant = this.#privateProperties.remoteParticipants[data.user_id];
+			return;
+		}
+
+		if (data.toUserId != this.#privateProperties.userId)
+		{
+			const participant = this.#privateProperties.remoteParticipants[data.toUserId];
 
 			if (!participant)
 			{
-				this.setLog(`Got a onParticipantMuted event for non-existent user (user_id: ${data.user_id})`, LOG_LEVEL.WARNING);
+				this.setLog(`Got a onParticipantMuted event for non-existent user (toUserId: ${data.toUserId})`, LOG_LEVEL.WARNING);
 				return;
 			}
 
@@ -3121,15 +3385,32 @@ export class Call {
 			{
 				if (data.track.type === 0 && participant.audioEnabled)
 				{ // audio
+					participant.audioEnabled = false;
+
 					const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Microphone);
 
 					this.#microphoneMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
 				}
 				else if (data.track.type === 1 && participant.videoEnabled)
 				{ // video
+					participant.videoEnabled = false;
 					const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Camera);
 
 					this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+				}
+				else if (data.track.type === 2 && participant.screenSharingEnabled)
+				{ // screenshare
+					participant.screenSharingEnabled = false;
+
+					const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Screen);
+					const screenAudioTrack = participant.getTrack(MediaStreamsKinds.ScreenAudio);
+
+					this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+
+					if (screenAudioTrack)
+					{
+						this.#microphoneMuteUnmuteHandler({track: screenAudioTrack, isMuted: true, participant: participant});
+					}
 				}
 			}
 		}
@@ -3137,43 +3418,151 @@ export class Call {
 		this.triggerEvents('ParticipantMuted', [data]);
 	}
 
-	#allParticipantMutedHandler(data) {
-		if (data.from_sid == this.#privateProperties.userId)
+	#allParticipantsMutedHandler(data) {
+		if (!Util.isUserControlFeatureEnabled())
 		{
-			this.triggerEvents('YouMuteAllParticipants', [data]);
-		} else {
-			if (data?.track.type === 0){
+			return;
+		}
+		if (data.fromUserId == this.#privateProperties.userId)
+		{
+			if (!data.reason || (data.reason && data.reason != 'settings'))
+			{
+				this.triggerEvents('YouMuteAllParticipants', [data]);
+			}
+		}
+		else
+		{
+			if (data?.track.type === 0)
+			{
 				this.triggerEvents('AllParticipantsAudioMuted', [data]);
-			} else if (data.track.type === 1){
+			}
+			else if (data.track.type === 1)
+			{
 				this.triggerEvents('AllParticipantsVideoMuted', [data]);
+			}
+			else if (data.track.type === 2)
+			{
+				this.triggerEvents('AllParticipantsScreenshareMuted', [data]);
 			}
 		}
 
 		if (data?.track.muted) // tbh always should be in "true"..
 		{
-			for (let i in this.#privateProperties.remoteParticipants) {
-
-				if (this.#privateProperties.remoteParticipants.hasOwnProperty(i)){
-
+			for (let i in this.#privateProperties.remoteParticipants)
+			{
+				if (this.#privateProperties.remoteParticipants.hasOwnProperty(i))
+				{
 					let  participant = this.#privateProperties.remoteParticipants[i];
 
-					if (participant.userId != data.from_sid){
-						if (data.track.type === 0 && participant.audioEnabled){ // audio
-							const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Microphone);
+					if (participant.userId != data.fromUserId && Util.isRegularUser(Util.getUserRoleByUserId(participant.userId)))
+					{
+						if (data.track.type === 0 && participant.audioEnabled)
+						{ // audio
+							participant.audioEnabled = false;
+
+							const track = participant.getTrack(MediaStreamsKinds.Microphone);
 
 							this.#microphoneMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+						}
+						else if(data.track.type === 1 && participant.videoEnabled)
+						{ // video
+							participant.videoEnabled = false;
 
-						} else if(data.track.type === 1 && participant.videoEnabled){ // video
-							const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Camera);
+							const track = participant.getTrack(MediaStreamsKinds.Camera);
 
 							this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
-						} else if(data.track.type === 2){ // screenshare
+						}
+						else if(data.track.type === 2)
+						{ // screenshare
+							participant.screenSharingEnabled = false;
+
+							const track = participant.getTrack(MediaStreamsKinds.Screen);
+							const screenAudioTrack = participant.getTrack(MediaStreamsKinds.ScreenAudio);
+
+							this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+							if (screenAudioTrack)
+							{
+								this.#microphoneMuteUnmuteHandler({track: screenAudioTrack, isMuted: true, participant: participant});
+							}
 
 						}
 					}
 				}
 			}
 		}
+	}
+
+	#updateRoleHandler(data)
+	{
+		if (!Util.isUserControlFeatureEnabled())
+		{
+			return;
+		}
+		if (data.toUserId == this.#privateProperties.userId)
+		{
+			Util.setCurrentUserRole(data.role);
+			this.#setUserPermissions(data.permissions);
+		}
+
+		this.triggerEvents('UserRoleChanged', [data]);
+	}
+
+	#userPermissionsChanged(data)
+	{
+		if (!Util.isUserControlFeatureEnabled())
+		{
+			return;
+		}
+		if (data.allow === true && Util.isRegularUser(Util.getCurrentUserRole()))
+		{
+			let permissions = Util.getUserPermissions();
+
+			permissions.audio = data.allow;
+			permissions.video = data.allow;
+			permissions.screen_share = data.allow;
+
+			Util.setUserPermissions(permissions);
+		}
+
+		this.triggerEvents('UserPermissionsChanged', [data]);
+	}
+
+	#settingsChangedHandler(data)
+	{
+		if (!Util.isUserControlFeatureEnabled())
+		{
+			return;
+		}
+		data.calledFrom = 'settingsChanged';
+
+		let newRoomSettings = Util.getRoomPermissions();
+		let options = {reason: 'settings', eft: data.eft, fromUserId: data.fromUserId, track: {type: 0}};
+
+		switch (data.act)
+		{
+			case 'audio':
+				options.track.type = 0;
+				newRoomSettings.AudioEnabled = data.roomState.AudioEnabled;
+				break
+			case 'video':
+				options.track.type = 1;
+				newRoomSettings.VideoEnabled = data.roomState.VideoEnabled;
+				break
+			case 'screen_share':
+				options.track.type = 2;
+				newRoomSettings.ScreenShareEnabled = data.roomState.ScreenShareEnabled;
+				break
+		}
+
+		Util.setRoomPermissions(newRoomSettings);
+		Util.updateUserPermissionByNewRoomPermission(data.act, !data.eft);
+
+		if (data.eft === true)
+		{
+			this.#allParticipantsMutedHandler(options);
+		}
+
+		this.triggerEvents('RoomSettingsChanged', [data]);
 	}
 
 	#createPeerConnection() {

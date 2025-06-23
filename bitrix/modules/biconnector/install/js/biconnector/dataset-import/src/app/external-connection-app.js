@@ -30,6 +30,7 @@ export const ExternalConnectionApp = {
 				fields: {
 					disabled: !this.$store.getters.isEditMode,
 					valid: true,
+					disabledElements: null,
 				},
 			},
 			shownPopups: {
@@ -55,6 +56,10 @@ export const ExternalConnectionApp = {
 		};
 	},
 	computed: {
+		isRestEntity(): boolean
+		{
+			return this.sourceCode === 'rest';
+		},
 		sourceCode(): string
 		{
 			return this.$store.state.config.connectionProperties?.connectionType ?? '';
@@ -86,12 +91,22 @@ export const ExternalConnectionApp = {
 		{
 			return this.steps.fields.valid && this.steps.properties.valid && this.steps.connection.valid;
 		},
+		importFailurePopupTitle()
+		{
+			return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER');
+		},
 		importSuccessPopupTitle(): string
 		{
 			return this.isEditMode
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
 			;
+		},
+		importProgressPopupDescription()
+		{
+			return this.isEditMode
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT')
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
 		},
 		loadFailurePopupTitle(): string
 		{
@@ -102,11 +117,22 @@ export const ExternalConnectionApp = {
 		},
 		fieldsSettingsStepHint(): string
 		{
-			return this.isEditMode
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL')
-					.replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23508958`)">')
-					.replace('[/link]', '</a>')
+			if (this.isEditMode)
+			{
+				return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
+			}
+
+			let articleCode = '23508958';
+			let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL';
+			if (this.isRestEntity)
+			{
+				articleCode = '24486426';
+				hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_REST';
+			}
+
+			return this.$Bitrix.Loc.getMessage(hintCode)
+				.replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=' + articleCode + '`)">')
+				.replace('[/link]', '</a>')
 			;
 		},
 		unsavedChangesPopupTitle(): string
@@ -272,6 +298,13 @@ export const ExternalConnectionApp = {
 			this.$refs.propertiesStep.open();
 			this.$refs.fieldsStep.open();
 			this.toggleStepState('properties', false);
+			if (this.isRestEntity)
+			{
+				this.steps.fields.disabledElements = {
+					name: true,
+					type: true,
+				};
+			}
 			this.toggleStepState('fields', false);
 			this.$refs.propertiesStep.validate();
 			this.$refs.fieldsStep.validate();
@@ -455,6 +488,7 @@ export const ExternalConnectionApp = {
 						:is-open-initially="isEditMode"
 						:disabled="steps.properties.disabled"
 						:reserved-names="appParams.reservedNames"
+						:name-max-length=230
 						ref="propertiesStep"
 						@validation="onStepValidation('properties', $event)"
 						@properties-changed="onDatasetPropertiesChanged"
@@ -463,6 +497,7 @@ export const ExternalConnectionApp = {
 					<FieldsSettingsStep
 						:is-open-initially="isEditMode"
 						:disabled="steps.fields.disabled"
+						:disabled-elements="steps.fields.disabledElements"
 						ref="fieldsStep"
 						@validation="onStepValidation('fields', $event)"
 						@parsing-options-changed="onParsingOptionsChanged"
@@ -485,7 +520,7 @@ export const ExternalConnectionApp = {
 
 		<ImportProgressPopup
 			v-if="shownPopups.savingProgress"
-			:description="$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION')"
+			:description="importProgressPopupDescription"
 		/>
 
 		<ImportSuccessPopup
@@ -504,7 +539,7 @@ export const ExternalConnectionApp = {
 			v-if="shownPopups.savingFailure"
 			@close="closeFailurePopup"
 			@click="closeFailurePopup"
-			:title="$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER')"
+			:title="importFailurePopupTitle"
 			:description="$Bitrix.Loc.getMessage('DATASET_IMPORT_EXTERNAL_FAILURE_POPUP_DESCRIPTION').replace('[link]', '<a>').replace('[/link]', '</a>')"
 		/>
 

@@ -35,6 +35,7 @@ export const VoteModel = {
 			questions: [],
 			isAnonymous: false,
 			isVoted: false,
+			isLoading: false,
 			canEdit: false,
 			canVote: false,
 			canRevoke: false,
@@ -160,6 +161,10 @@ export const VoteModel = {
 		resetVoteCompleted: (store, payload) => {
 			store.commit('resetVoteCompleted', payload);
 		},
+		/** @function vote/setLoadingStatus */
+		setLoadingStatus: (store, payload) => {
+			store.commit('setLoadingStatus', payload);
+		},
 	},
 
 	mutations:
@@ -205,6 +210,13 @@ export const VoteModel = {
 		},
 		resetVoteCompleted: (state, payload) => {
 			state.voteCollection[payload.voteId].isCompleted = false;
+		},
+		setLoadingStatus: (state, payload) => {
+			const { voteId, isLoading } = payload;
+			if (state.voteCollection[voteId])
+			{
+				state.voteCollection[voteId].isLoading = isLoading;
+			}
 		},
 	},
 

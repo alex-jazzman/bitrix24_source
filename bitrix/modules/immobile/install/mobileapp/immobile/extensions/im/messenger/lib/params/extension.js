@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/params', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { ComponentCode } = require('im/messenger/const');
 
 	/**
@@ -160,6 +161,43 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 				zoomActive: false,
 				zoomAvailable: false,
 				intranetInviteAvailable: false,
+				messagesAutoDeleteAvailable: false,
+				messagesAutoDeleteEnabled: false,
+				copilotInDefaultTabAvailable: false,
+				voteCreationAvailable: false,
+			});
+		}
+
+		/**
+		 * @param {Partial<ImFeatures>} features
+		 */
+		updateExistingImFeatures(features)
+		{
+			const actualFeatures = this.getImFeatures();
+
+			Object.entries(features).forEach(([key, value]) => {
+				if (!Type.isNil(actualFeatures[key]))
+				{
+					actualFeatures[key] = value;
+				}
+			});
+
+			this.set('IM_FEATURES', actualFeatures);
+		}
+
+		/**
+		 * @return {SidebarV2Features}
+		 */
+		getSidebarV2Features()
+		{
+			return this.get('SIDEBAR_V2_FEATURES', {
+				directChatSidebar: false,
+				groupChatSidebar: false,
+				collabSidebar: false,
+				channelSidebar: false,
+				copilotSidebar: false,
+				commentsSidebar: false,
+				notesSidebar: false,
 			});
 		}
 
@@ -190,11 +228,35 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('MULTIPLE_ACTION_MESSAGE_LIMIT', 20);
 		}
 
+		/**
+		 * @param {ComponentCode} componentCode
+		 * @return {boolean}
+		 */
 		isComponentAvailable(componentCode)
 		{
 			const availableComponents = this.get('AVAILABLE_MESSENGER_COMPONENTS', {});
 
 			return Boolean(availableComponents[componentCode]);
+		}
+
+		/**
+		 * @param {ComponentCode} componentCode
+		 * @return {boolean}
+		 */
+		isComponentPreloaded(componentCode)
+		{
+			const preloadedComponents = this.get('PRELOADED_MESSENGER_COMPONENTS', {});
+
+			return Boolean(preloadedComponents[componentCode]);
+		}
+
+		/**
+		 * @param {ComponentCode} componentCode
+		 * @return {boolean}
+		 */
+		isComponentRequestBroadcasterAvailable(componentCode)
+		{
+			return this.isComponentAvailable(componentCode) && this.isComponentPreloaded(componentCode);
 		}
 	}
 

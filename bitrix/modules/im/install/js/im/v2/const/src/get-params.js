@@ -6,9 +6,13 @@ export const GetParameter = {
 	openLines: 'IM_LINES',
 	openSettings: 'IM_SETTINGS',
 	openCopilotChat: 'IM_COPILOT',
+	openChannel: 'IM_CHANNEL',
 	openCollab: 'IM_COLLAB',
+
+	botContext: 'BOT_CONTEXT',
 
 	desktopChatTabMode: 'IM_TAB',
 
 	backgroundType: 'IM_BACKGROUND',
+	legacyMode: 'IM_LEGACY',
 };

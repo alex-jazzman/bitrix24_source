@@ -33,7 +33,10 @@ class CallAIError extends \Bitrix\Call\Error
 		// Errors comes from AI module are started with prefix AI_ENGINE_ERROR_
 		return
 			str_starts_with($this->getCode(), 'AI_ENGINE_ERROR')
-			|| str_starts_with($this->getCode(), 'LIMIT_IS_EXCEEDED');
+			|| str_starts_with($this->getCode(), 'LIMIT_IS_EXCEEDED')
+			|| str_starts_with($this->getCode(), 'CLOUD_REGISTRATION')
+			|| $this->getCode() == 'RATE_LIMIT'
+		;
 	}
 
 	/**

@@ -29,8 +29,12 @@ return function (RoutingConfigurator $routes) {
 	// disk
 	$routes->prefix('disk/boards')
 		->where('fileId', '[0-9]+')
+		->where('attachedObjectId', '[0-9]+')
 		->group(function (RoutingConfigurator $routes) {
 			$routes->any('{fileId}/openDocument', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openDocument']);
+			$routes->any('{attachedObjectId}/openAttachedDocument', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openAttachedDocument']);
+			$routes->any('{fileId}/open', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openDocument']);
+			$routes->any('{attachedObjectId}/openAttached', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openAttachedDocument']);
 		});
 
 	$routes->any('/disk/{action}/{fileId}/{any}', new PublicPageController('/bitrix/services/disk/index.php'))

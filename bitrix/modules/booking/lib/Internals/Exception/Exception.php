@@ -41,8 +41,9 @@ class Exception extends SystemException
 	public const CODE_WAIT_LIST_ITEM_REMOVE = 1036;
 	public const CODE_BOOKING_FROM_WAIT_LIST_ITEM_CREATE = 1038;
 	public const CODE_EXTERNAL_RESOURCE_PROCESSING = 1039;
-
 	public const CODE_WAIT_LIST_ITEM_CREATE_FROM_BOOKING = 1037;
+	public const CODE_WAIT_LIST_ITEM_NOT_FOUND = 1040;
+	public const CODE_BOOKING_CONFIRMATION_ALREADY_CONFIRMED = 1041;
 
 	private bool $isPublic = false;
 

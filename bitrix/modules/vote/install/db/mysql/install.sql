@@ -143,8 +143,10 @@ create table if not exists b_vote_attached_object (
 
 	CREATE_TIME datetime not null,
 	CREATED_BY int(11),
+	UID varchar(255) null default null,
 
 	PRIMARY KEY (ID),
 
 	KEY IX_VOTE_AO_1 (OBJECT_ID),
+	unique index UX_VOTE_ATTACHED_OBJECT_UID (UID),
 	KEY IX_VOTE_AO_2 (MODULE_ID, ENTITY_TYPE, ENTITY_ID));

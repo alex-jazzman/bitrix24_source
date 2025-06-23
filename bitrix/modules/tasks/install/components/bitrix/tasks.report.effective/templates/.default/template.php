@@ -6,6 +6,9 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\ButtonLocation;
 
 Extension::load([
 	"ui.graph.circle",
@@ -13,6 +16,13 @@ Extension::load([
 	"ui.design-tokens",
 	"ui.fonts.opensans",
 ]);
+
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
+
+if ($isV2Form)
+{
+	Extension::load('tasks.v2.application.task-card');
+}
 
 $isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 
@@ -45,7 +55,6 @@ CJSCore::init("spotlight");
 Loc::loadMessages(__FILE__);
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view ');
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
 
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
@@ -72,11 +81,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 
-<?
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget('inside_pagetitle');
-}
+<?php
 $addTaskPath = new \Bitrix\Main\Web\Uri($arParams['PATH_TO_TASK_ADD']);
 $addTaskPath->addParams([
 	'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
@@ -84,47 +89,32 @@ $addTaskPath->addParams([
 	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'],
 ]);
 
-//region FILTER
-
-	if (!$isBitrix24Template): ?>
-		<div class="tasks-interface-filter-container">
-	<? endif ?>
-
-		<div class="pagetitle-container pagetitle-flexible-space">
-			<? $APPLICATION->IncludeComponent(
-				"bitrix:main.ui.filter",
-				"",
-				array(
-					"FILTER_ID" => 'TASKS_REPORT_EFFECTIVE_GRID',
-					"FILTER" => $arResult["FILTERS"],
-					"FILTER_PRESETS" => $arResult["PRESETS"],
-					"ENABLE_LABEL" => true,
-					'ENABLE_LIVE_SEARCH' => (!isset($arParams['USE_LIVE_SEARCH']) || $arParams['USE_LIVE_SEARCH'] !== 'N'),
-					'RESET_TO_DEFAULT_MODE' => true,
-					'DISABLE_SEARCH'=>true,
-
-					'VALUE_REQUIRED_MODE' => true,
-				),
-				$component,
-				array("HIDE_ICONS" => true)
-			); ?>
-		</div>
-		<div class="pagetitle-container pagetitle-align-right-container task-report-filter-btn-add" style="padding-right: 30px;">
-			<a class="ui-btn ui-btn-primary ui-btn-icon-add" href="<?=$addTaskPath?>">
-				<?=GetMessage('TASKS_ADD_TASK')?>
-			</a>
-		</div>
-
-	<? if (!$isBitrix24Template): ?>
-		</div>
-	<? endif ?>
-<?php
-//endregion
-
-if ($isBitrix24Template)
+if ($isV2Form)
 {
-	$this->EndViewTarget();
+	$addTaskPath->addParams([
+		'miniform' => true,
+	]);
 }
+
+Toolbar::addFilter([
+	'FILTER_ID' => 'TASKS_REPORT_EFFECTIVE_GRID',
+	'FILTER' => $arResult['FILTERS'],
+	'FILTER_PRESETS' => $arResult['PRESETS'],
+	'ENABLE_LABEL' => true,
+	'ENABLE_LIVE_SEARCH' => (!isset($arParams['USE_LIVE_SEARCH']) || $arParams['USE_LIVE_SEARCH'] !== 'N'),
+	'RESET_TO_DEFAULT_MODE' => true,
+	'DISABLE_SEARCH'=>true,
+	'VALUE_REQUIRED_MODE' => true,
+]);
+
+$addBtn = new Buttons\Button([
+	'color' => Buttons\Color::PRIMARY,
+	'text' => Loc::getMessage('TASKS_ADD_TASK'),
+	'icon' => Buttons\Icon::ADD,
+	'tag' => Buttons\Tag::LINK,
+]);
+$addBtn->addAttribute('href', $addTaskPath);
+Toolbar::addButton($addBtn, ButtonLocation::RIGHT);
 ?>
 <div class="<?=(($arResult['TASK_LIMIT_EXCEEDED'] || !$arResult['tasksEfficiencyEnabled']) ? 'task-report-locked' : '')?>" id="<?=$arResult['HELPER']->getScopeId()?>">
 	<div class="task-report-row task-report-row-50-50">

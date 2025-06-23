@@ -57,6 +57,7 @@ $MESS["LANDING_BLOCK_STYLE_BACKGROUND_HOVER"] = "Фон при наведени�
 $MESS["LANDING_BLOCK_STYLE_COLOR_HOVER"] = "Цвет при наведении";
 $MESS["LANDING_BLOCK_STYLE_BACKGROUND_OVERLAY"] = "Цвет наложения";
 $MESS["LANDING_BLOCK_STYLE_BUTTON_COLOR"] = "Цвет кнопки";
+$MESS["LANDING_BLOCK_STYLE_BUTTON_COLOR_HOVER"] = "Цвет кнопки при наведении";
 $MESS["LANDING_BLOCK_STYLE_ANIMATION"] = "Анимация появления";
 $MESS["LANDING_BLOCK_STYLE_ANIMATION_NONE"] = "Без анимации";
 $MESS["LANDING_BLOCK_STYLE_BG_COLOR_BEFORE"] = "Цвет элемента";

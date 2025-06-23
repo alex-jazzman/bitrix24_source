@@ -897,7 +897,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    value: function getLoadingContent() {
 	      var hintLink = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a href=\"#\" class=\"biconnector-dashboard__hint_link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_LINK'));
 	      main_core.Event.bind(hintLink, 'click', function () {
-	        top.BX.Helper.show('redirect=detail&code=18897300');
+	        BX.Helper.show('redirect=detail&code=18897300');
 	      });
 	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-dashboard__hint_title\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"biconnector-dashboard__hint_desc\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t", "\n\t\t"])), main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_MSGVER_1'), main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_DESC_MSGVER_1'), hintLink);
 	    }

@@ -76,7 +76,9 @@ final class SupersetController
 		$addResult = SupersetUserTable::addClientId($user->id, $data['client_id']);
 		if ($addResult->isSuccess())
 		{
-			$user->clientId = $data['client_id'];
+			$user->clientId = (string)$data['client_id'];
+			$user->updated = true;
+
 			$result->setData([
 				'user' => $user,
 				'response' => $response,

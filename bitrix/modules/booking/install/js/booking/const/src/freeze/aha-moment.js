@@ -8,4 +8,5 @@ export const AhaMoment = Object.freeze({
 	ResourceIntersection: 'resource_intersection',
 	ExpandGrid: 'expand_grid',
 	SelectResources: 'select_resources',
+	CyclePopup: 'cycle_popup',
 });

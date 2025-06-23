@@ -23,7 +23,6 @@ return [
 		'tokens',
 		'ui-system/layout/card',
 		'ui-system/blocks/badges/counter',
-		'selector/widget/entity/socialnetwork/user',
 
 		'im:lib/theme',
 		'im:messenger/const',
@@ -54,14 +53,19 @@ return [
 
 		'im:messenger/provider/rest',
 		'im:messenger/provider/data',
-		'im:messenger/provider/service',
+		'im:messenger/provider/services/chat',
+		'im:messenger/provider/services/disk',
+		'im:messenger/provider/services/analytics',
+		'im:messenger/lib/integration/callmobile/call-manager',
+
+		'im:messenger/controller/selector/member'
 	],
 	'bundle' => [
 		'./lib/assets/icons',
 		'./lib/const',
-		
+
 		'./src/base/sidebar-controller',
-		
+
 		'./src/chat/sidebar-controller',
 		'./src/chat/sidebar-view',
 		'./src/chat/sidebar-friendly-date',

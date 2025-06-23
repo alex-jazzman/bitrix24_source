@@ -2,8 +2,13 @@
 
 namespace Bitrix\Call;
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Config\Option;
 use Bitrix\Im;
+use Bitrix\Main\Security\Cipher;
+use Bitrix\Main\Security\Random;
+use Bitrix\Main\Security\SecurityException;
 
 class Settings
 {
@@ -20,16 +25,20 @@ class Settings
 			'callBetaIosEnabled' => Im\Call\Call::isIosBetaEnabled(),
 			'isAIServiceEnabled' => static::isAIServiceEnabled(),
 			'isNewMobileGridEnabled' => static::isNewMobileGridEnabled(),
+			'userJwt' => JwtCall::getUserJwt(),
+			'callBalancerUrl' => static::getBalancerUrl(),
+			'jwtCallsEnabled' => static::isNewCallsEnabled(),
+			'jwtInPlainCallsEnabled' => static::isPlainCallsUseNewScheme(),
 		], self::getAdditionalMobileOptions());
 	}
 
 	// todo should be moved to callmobile along with the rest of the parameters
 	protected static function getAdditionalMobileOptions(): array
 	{
-		\Bitrix\Main\Loader::includeModule('im');
+		Loader::includeModule('im');
 
 		$userId = (int)$GLOBALS['USER']->getId();
-		$usersData = \Bitrix\Im\Call\Util::getUsers([$userId]);
+		$usersData = Im\Call\Util::getUsers([$userId]);
 
 		return [
 			'currentUserData' => $usersData[$userId],
@@ -47,11 +56,15 @@ class Settings
 	 */
 	public static function isAIServiceEnabled(): bool
 	{
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() ?: '';
+		if ($region === 'cn')
+		{
+			return false;
+		}
+
 		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			// box
-			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() ?: 'us';
-
 			return in_array($region, ['ru', 'by', 'kz'], true);
 		}
 
@@ -68,14 +81,102 @@ class Settings
 			return $value;
 		}
 
-		/*
-		return match (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() ?: $region)
-		{
-			'ru' => 'Y',
-			default => 'N',
-		};
-		*/
 		return 'N';
+	}
+
+	public static function getBalancerUrl(): string
+	{
+		return (new BalancerClient())->getServiceUrl();
+	}
+
+	/**
+	 * Generates a secret key for call JWT
+	 */
+	public static function registerPortalKey(): bool
+	{
+		$privateKey = base64_encode(Random::getBytes(32));
+		$cryptoOptions = Configuration::getValue('crypto');
+
+		if (!empty($cryptoOptions['crypto_key']))
+		{
+			try
+			{
+				$cipher = new Cipher();
+				$encryptedKey = base64_encode($cipher->encrypt($privateKey, $cryptoOptions['crypto_key']));
+
+				Option::set('call', 'call_portal_key', $encryptedKey);
+
+				$result = (new ControllerClient())->registerCallKey($privateKey)->getData();
+				Option::set('call', 'call_portal_id', $result['PORTAL_ID']);
+
+				Signaling::sendClearCallTokens();
+
+				return true;
+			}
+			catch (SecurityException $exception)
+			{
+				return false;
+			}
+		}
+
+		return false;
+	}
+
+	public static function registerPortalKeyAgent(int $retryCount = 1): string
+	{
+		$portalId = (int)Option::get('call', 'call_portal_id', 0);
+		if (!empty($portalId))
+		{
+			return '';
+		}
+
+		$result = self::registerPortalKey();
+		if ($result)
+		{
+			return '';
+		}
+
+		$retryCount ++;
+
+		return __METHOD__ . "({$retryCount});";
+	}
+
+	public static function isNewCallsEnabled(): bool
+	{
+		return (bool)Option::get('call', 'call_v2_enabled', false);
+	}
+
+	public static function isPlainCallsUseNewScheme(): bool
+	{
+		return (bool)Option::get('call', 'plain_calls_use_new_scheme', false);
+	}
+
+	public static function updateCallV2Availability(
+		bool $isJwtEnabled,
+		bool $isPlainUseJwt,
+		string $callBalancerUrl = '',
+		string $callServerUrl = ''
+	): void
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return;
+		}
+
+		Option::set('call', 'call_v2_enabled', $isJwtEnabled);
+		Option::set('call', 'plain_calls_use_new_scheme', $isPlainUseJwt);
+
+		if ($callBalancerUrl)
+		{
+			Option::set('call', 'call_balancer_url', $callBalancerUrl);
+		}
+
+		if ($callServerUrl)
+		{
+			Option::set('im', 'call_server_url', $callServerUrl);
+		}
+
+		Signaling::sendChangedCallV2Enable($isJwtEnabled, $isPlainUseJwt, $callBalancerUrl);
 	}
 
 	/**

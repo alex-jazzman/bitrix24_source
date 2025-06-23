@@ -1,5 +1,6 @@
 <?php
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON"] = "Кез келген қызметкер қосымшаны Маркеттен орната алады, егер қосымшаны әзірлеуші бұған тыйым салмаса. Баптау өшірілген кезде қосымшаларды тек әкімші орната алады";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON_MSGVER_1"] = "Кез келген қызметкер әзірлеуші тыйым салмаса, Маркетплейстен қосымша орната алады. Баптаулар өшірілген кезде қосымшаларды тек әкімші орната алады";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON_MSGVER_1"] = "Профильдегі қызметкерлерде стресс деңгейін өлшеу бар. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON"] = "Кез келген қызметкер сіздің Битрикс24 үшін тариф сатып ала алады. Баптау өшірілген кезде тарифті тек әкімші сатып ала алады";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1"] = "Пайдаланушылардың географиялық орналасуы туралы мәліметтер жиналады. #MORE_DETAILS#";
@@ -10,6 +11,7 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24"] = "Уақыт қанд
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_CLICK_ON_MSGVER_1"] = "Өту бекітіледі. Сіз мұны сатуды автоматтандыру үшін пайдалана аласыз.<br>Мысалы, менеджерге клиенттің төлем сілтемесіне ауысқандығы туралы мәлімдеме жіберу. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_ON"] = "Хат \"оқылды\" деп белгіленеді";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION"] = "Барлық қызметкерлерге Маркеттен қосымшалар орнатуға рұқсат ету";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION_MSGVER_1"] = "Барлық қызметкерлерге Маркетплейстен қосымшалар орнатуға рұқсат етіңіз";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL"] = "Стресс деңгейін өлшеуге және нәтижені профильде көрсетуге рұқсат ету";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF"] = "Барлығына тарифті төлеуге рұқсат ету";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS"] = "Карта провайдерін таңдаңыз";

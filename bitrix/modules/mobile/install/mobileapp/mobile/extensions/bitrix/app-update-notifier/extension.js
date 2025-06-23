@@ -13,9 +13,7 @@ jn.define('app-update-notifier', (require, exports, module) => {
 	const { Text3, Text2 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
-
-	const APP_STORE_URL = 'https://apps.apple.com/ru/app/bitrix24/id561683423';
-	const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=com.bitrix24.android';
+	const { openStore } = require('utils/store');
 
 	const RELATIVE_PATH = `${currentDomain}/bitrix/mobileapp`;
 	const IMAGE_PATH = `${RELATIVE_PATH}/mobile/extensions/bitrix/assets`;
@@ -311,15 +309,10 @@ jn.define('app-update-notifier', (require, exports, module) => {
 
 		renderUpdateButton()
 		{
-			if (Application.getPlatform() === 'android')
-			{
-				return this.renderButton(GOOGLE_PLAY_URL);
-			}
-
-			return this.renderButton(APP_STORE_URL);
+			return this.renderButton();
 		}
 
-		renderButton(link)
+		renderButton()
 		{
 			return View(
 				{
@@ -335,9 +328,7 @@ jn.define('app-update-notifier', (require, exports, module) => {
 					size: ButtonSize.L,
 					stretched: true,
 					text: Loc.getMessage('APP_UPDATE_NOTIFIER_OPEN_UPDATE_LINK'),
-					onClick: () => {
-						Application.openUrl(link);
-					},
+					onClick: openStore,
 				}),
 				Button({
 					testId: this.#getTestId('close'),

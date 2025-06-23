@@ -22,6 +22,7 @@ jn.define('im/messenger/lib/emitter', (require, exports, module) => {
 			}
 
 			const component = componentCode || MessengerParams.get('COMPONENT_CODE');
+
 			BX.postComponentEvent(eventName, [eventData], component);
 		}
 

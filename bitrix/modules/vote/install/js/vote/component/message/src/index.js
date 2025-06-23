@@ -1,7 +1,8 @@
 import { BaseMessage } from 'im.v2.component.message.base';
-import { AuthorTitle, MessageFooter, ReactionList } from 'im.v2.component.message.elements';
+import { AuthorTitle, DefaultMessageContent, MessageFooter } from 'im.v2.component.message.elements';
 
 import { VoteDisplay } from 'vote.component.vote';
+import { VoteAnalytics } from 'vote.analytics';
 
 import './style.css';
 
@@ -13,7 +14,7 @@ export const VoteChatDisplay = {
 		VoteDisplay,
 		AuthorTitle,
 		MessageFooter,
-		ReactionList,
+		DefaultMessageContent,
 	},
 	props:
 	{
@@ -24,10 +25,6 @@ export const VoteChatDisplay = {
 		},
 		dialogId: {
 			type: String,
-			required: true,
-		},
-		withTitle: {
-			type: Boolean,
 			required: true,
 		},
 	},
@@ -43,11 +40,29 @@ export const VoteChatDisplay = {
 			return this.item.componentParams;
 		},
 	},
+	methods:
+	{
+		onVote(): void
+		{
+			VoteAnalytics.vote(this.dialogId, this.savedMessageId);
+		},
+		onRevokeVote(): void
+		{
+			VoteAnalytics.revokeVote(this.dialogId, this.savedMessageId);
+		},
+		onCopyLink(): void
+		{
+			VoteAnalytics.copyLink(this.dialogId, this.savedMessageId, 'poll_results');
+		},
+		onCompleteVote(): void
+		{
+			VoteAnalytics.completeVote(this.dialogId, this.savedMessageId);
+		},
+	},
 	template: `
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
-			:withContextMenu="false"
 			:withBackground="true"
 		>
 			<div class="bx-im-chat__vote-container">
@@ -58,8 +73,17 @@ export const VoteChatDisplay = {
 					:entityId="savedMessageId"
 					:entityType="'ImMessage'"
 					:contextId="dialogId"
+					@vote="onVote"
+					@revokeVote="onRevokeVote"
+					@copyLink="onCopyLink"
+					@completeVote="onCompleteVote"
 				/>
-				<ReactionList :messageId="item.id" :contextDialogId="dialogId" class="bx-im-reaction-list__vote"/>
+				<DefaultMessageContent
+					:item="item"
+					:dialogId="dialogId"
+					:withText="false"
+					:withAttach="false"
+					class="bx-im-message-default-content__vote"/>
 				<MessageFooter :item="item" :dialogId="dialogId" />
 			</div>
 		</BaseMessage>

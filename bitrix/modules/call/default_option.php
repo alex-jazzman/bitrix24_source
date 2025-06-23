@@ -1,11 +1,12 @@
 <?php
-$call_default_option = array(
+$call_default_option = [
 	'call_server_large_room' => 1000,
+	'call_balancer_url' => '',
 	'turn_server_self' => 'N',
 	'turn_server_login' => 'bitrix',
 	'turn_server_password' => 'bitrix',
 	'turn_server_max_users' => 4,
-);
+];
 
 $region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 if (in_array($region, ['ru', 'by', 'kz']))

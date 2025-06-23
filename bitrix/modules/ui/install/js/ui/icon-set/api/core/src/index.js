@@ -1,8 +1,10 @@
-import { Set, Actions, Social, Main, ContactCenter, CRM, Editor, Special, Animated } from './icon';
+import { Set, Actions, Social, Main, ContactCenter, CRM, Editor, Special, Animated, Outline } from './icon';
 import { Icon } from './js';
+import { IconHoverMode } from './icon-hover-mode';
 
 export {
 	Icon,
+	IconHoverMode,
 	Set,
 	Actions,
 	Social,
@@ -12,4 +14,5 @@ export {
 	Editor,
 	Special,
 	Animated,
+	Outline,
 };

@@ -1,0 +1,21 @@
+export type CheckListSliderData = {
+	ID: number,
+	NODE_ID: string,
+	TITLE: string,
+	CREATED_BY: number,
+	TOGGLED_BY: number,
+	TOGGLED_DATE: string,
+	ACCOMPLICES: number[],
+	AUDITORS: number[],
+	ATTACHMENTS: string[],
+	IS_COMPLETE: boolean,
+	IS_IMPORTANT: boolean,
+	PARENT_ID: string,
+	PARENT_NODE_ID: string,
+	SORT_INDEX: number,
+	ACTIONS: {
+		MODIFY: boolean,
+		REMOVE: boolean,
+		TOGGLE: boolean,
+	},
+}

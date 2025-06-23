@@ -3,13 +3,9 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service,ui_entitySelector,im_v2_lib_channel,main_core,intranet_invitationInput,im_v2_application_core,im_v2_lib_helpdesk,ui_vue3_directives_hint,im_v2_lib_permission,im_v2_lib_feature,im_v2_lib_rest,im_v2_lib_utils,main_popup,im_v2_component_elements,main_core_events,im_public,im_v2_const,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch) {
+(function (exports,im_v2_provider_service_chat,ui_entitySelector,im_v2_lib_channel,main_core,intranet_invitationInput,im_v2_application_core,im_v2_lib_helpdesk,im_v2_component_elements_scrollWithGradient,ui_vue3_directives_hint,ui_infoHelper,im_v2_lib_permission,im_v2_lib_feature,im_v2_lib_notifier,im_v2_component_elements_button,im_v2_lib_rest,im_v2_lib_utils,main_popup,im_v2_component_elements_popup,main_core_events,im_public,im_v2_const,im_v2_lib_analytics,im_v2_component_search) {
 	'use strict';
 
-	const searchConfig = Object.freeze({
-	  chats: false,
-	  users: true
-	});
 	const SEARCH_ENTITY_ID = 'user';
 	const DEFAULT_CONTAINER_HEIGHT = 600;
 
@@ -17,8 +13,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const AddToChatContent = {
 	  name: 'AddToChatContent',
 	  components: {
-	    ChatSearch: im_v2_component_search_chatSearch.ChatSearch,
-	    MessengerButton: im_v2_component_elements.Button
+	    AddToChat: im_v2_component_search.AddToChat,
+	    ChatButton: im_v2_component_elements_button.ChatButton
 	  },
 	  props: {
 	    dialogId: {
@@ -34,7 +30,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: DEFAULT_CONTAINER_HEIGHT
 	    }
 	  },
-	  emits: ['inviteMembers'],
+	  emits: ['inviteMembers', 'close'],
 	  data() {
 	    return {
 	      searchQuery: '',
@@ -43,9 +39,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
-	    searchConfig: () => searchConfig,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -76,6 +71,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  mounted() {
 	    this.membersSelector.renderTo(this.$refs['tag-selector']);
 	    this.membersSelector.focusTextBox();
+	  },
+	  beforeUnmount() {
+	    im_v2_lib_analytics.Analytics.getInstance().userAdd.onClosePopup();
 	  },
 	  activated() {
 	    this.membersSelector.hideAddButton();
@@ -122,7 +120,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	            this.focusSelector();
 	          },
 	          onInput: () => {
-	            this.searchQuery = this.membersSelector.getTextBoxValue();
+	            im_v2_lib_analytics.Analytics.getInstance().userAdd.onStartSearch({
+	              dialogId: this.dialogId
+	            });
+	            this.searchQuery = this.membersSelector.getTextBoxValue().trim().toLowerCase();
 	          },
 	          onBlur: () => {
 	            const inputText = this.membersSelector.getTextBoxValue();
@@ -198,18 +199,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				</label>
 			</div>
 			<div class="bx-im-entity-selector-add-to-chat__search-result-container">
-				<ChatSearch
-					:searchMode="true"
-					:searchQuery="searchQuery"
-					:selectMode="true"
-					:searchConfig="searchConfig"
+				<AddToChat
+					:query="searchQuery"
+					:dialogId="dialogId"
 					:selectedItems="[...selectedItems]"
-					:showMyNotes="false"
 					@clickItem="onSelectItem"
 				/>
 			</div>
 			<div class="bx-im-entity-selector-add-to-chat__buttons">
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Primary"
 					:isRounded="true"
@@ -218,7 +216,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:isDisabled="selectedItems.size === 0"
 					@click="onInviteClick"
 				/>
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.LightBorder"
 					:isRounded="true"
@@ -236,7 +234,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const AddToChat = {
 	  name: 'AddToChat',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    AddToChatContent
 	  },
 	  props: {
@@ -285,7 +283,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  created() {
-	    this.chatService = new im_v2_provider_service.ChatService();
+	    this.chatService = new im_v2_provider_service_chat.ChatService();
 	  },
 	  methods: {
 	    inviteMembers(event) {
@@ -309,8 +307,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }).then(() => {
 	        this.isLoading = false;
 	        this.$emit('close');
-	      }).catch(error => {
-	        console.error(error);
+	      }).catch(() => {
 	        this.isLoading = false;
 	        this.$emit('close');
 	      });
@@ -325,8 +322,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        members,
 	        ownerId: im_v2_application_core.Core.getUserId(),
 	        isPrivate: true
-	      }).catch(error => {
-	        console.error(error);
+	      }).catch(() => {
 	        this.isLoading = false;
 	      });
 	      this.isLoading = false;
@@ -361,7 +357,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        members: im_v2_lib_utils.Utils.user.prepareSelectorIds(members)
 	      }
 	    };
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.socialnetworkMemberAdd, payload).catch(error => {
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.socialnetworkMemberAdd, payload).catch(([error]) => {
 	      console.error('CollabInvitationService: add employee error', error);
 	    });
 	  }
@@ -371,9 +367,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        collabId
 	      }
 	    };
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.intranetInviteGetLinkByCollabId, payload).catch(errors => {
-	      console.error('CollabInvitationService: getting invite link error', errors);
-	      throw errors;
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.intranetInviteGetLinkByCollabId, payload).catch(([error]) => {
+	      console.error('CollabInvitationService: getting invite link error', error);
+	      throw error;
 	    });
 	  }
 	  updateLink(collabId) {
@@ -382,9 +378,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        collabId
 	      }
 	    };
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.intranetInviteRegenerateLinkByCollabId, payload).catch(errors => {
-	      console.error('CollabInvitationService: updating invite link error', errors);
-	      throw errors;
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.intranetInviteRegenerateLinkByCollabId, payload).catch(([error]) => {
+	      console.error('CollabInvitationService: updating invite link error', error);
+	      throw error;
 	    });
 	  }
 	}
@@ -393,8 +389,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const CopyInviteLink = {
 	  name: 'CopyInviteLink',
 	  components: {
-	    MessengerButton: im_v2_component_elements.Button,
-	    ChatHint: im_v2_component_elements.ChatHint
+	    ChatButton: im_v2_component_elements_button.ChatButton
 	  },
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
@@ -416,10 +411,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
 	    isInviteLinkAvailable() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.inviteByLinkAvailable);
+	    },
+	    isEnabledCollabersInvitation() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.enabledCollabersInvitation);
 	    },
 	    updateLinkHint() {
 	      return {
@@ -444,35 +442,43 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    async copyInviteLink() {
+	      if (!this.isEnabledCollabersInvitation) {
+	        this.showHelper();
+	        return;
+	      }
 	      try {
 	        this.isCopyingInviteLink = true;
 	        const link = await new CollabInvitationService().copyLink(this.collabId);
 	        await im_v2_lib_utils.Utils.text.copyToClipboard(link);
-	        this.showNotification(this.loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_COPIED'));
+	        im_v2_lib_notifier.Notifier.onCopyLinkComplete();
 	      } catch {
-	        this.showNotification(this.loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_NOT_COPIED'));
+	        im_v2_lib_notifier.Notifier.onCopyLinkError();
 	      } finally {
 	        this.isCopyingInviteLink = false;
 	      }
 	    },
 	    async updateLink() {
+	      if (!this.isEnabledCollabersInvitation) {
+	        this.showHelper();
+	        return;
+	      }
 	      try {
 	        this.isUpdatingLink = true;
 	        await new CollabInvitationService().updateLink(this.collabId);
-	        this.showNotification(this.loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_UPDATED'));
+	        im_v2_lib_notifier.Notifier.collab.onUpdateLinkComplete();
 	      } catch {
-	        this.showNotification(this.loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_UPDATED_ERROR'));
+	        im_v2_lib_notifier.Notifier.onDefaultError();
 	      } finally {
 	        this.isUpdatingLink = false;
 	      }
 	    },
-	    showNotification(content) {
-	      BX.UI.Notification.Center.notify({
-	        content
-	      });
-	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    showHelper() {
+	      new ui_infoHelper.FeaturePromoter({
+	        code: im_v2_const.SliderCode.collabInviteOff
+	      }).show();
 	    }
 	  },
 	  template: `
@@ -480,7 +486,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<span class="bx-im-add-to-collab__invite-block-title --ellipsis">
 				{{ loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_BY_LINK') }}
 			</span>
-			<MessengerButton
+			<ChatButton
 				:size="ButtonSize.M"
 				:color="ButtonColor.Primary"
 				:isRounded="true"
@@ -510,8 +516,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const AddGuestsTab = {
 	  name: 'AddGuestsTab',
 	  components: {
-	    MessengerButton: im_v2_component_elements.Button,
-	    ScrollWithGradient: im_v2_component_elements.ScrollWithGradient,
+	    ChatButton: im_v2_component_elements_button.ChatButton,
+	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
 	    CopyInviteLink
 	  },
 	  props: {
@@ -532,8 +538,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
 	    isCurrentUserCollaber() {
 	      const currentUser = this.$store.getters['users/get'](im_v2_application_core.Core.getUserId(), true);
 	      return currentUser.type === im_v2_const.UserType.collaber;
@@ -575,6 +581,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isCollaber() {
 	      const currentUser = this.$store.getters['users/get'](im_v2_application_core.Core.getUserId());
 	      return currentUser.type === im_v2_const.UserType.collaber;
+	    },
+	    isEnabledCollabersInvitation() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.enabledCollabersInvitation);
 	    }
 	  },
 	  created() {
@@ -613,6 +622,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.isInvitingGuests = false;
 	      this.$emit('close');
 	    },
+	    onInvitationGuests() {
+	      if (!this.isEnabledCollabersInvitation) {
+	        this.showHelper();
+	      }
+	    },
+	    showHelper() {
+	      new ui_infoHelper.FeaturePromoter({
+	        code: im_v2_const.SliderCode.collabInviteOff
+	      }).show();
+	    },
 	    onCloseOpenHelpdeskSlider({
 	      data
 	    }) {
@@ -649,13 +668,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							<div 
 								ref="im-collab-invitation-guests-input" 
 								class="bx-im-add-to-collab__invite-block-input"
+								@click="onInvitationGuests"
 							></div>
 						</div>
 					</div>
 				</ScrollWithGradient>
 			</div>
 			<div class="bx-im-add-to-collab__buttons">
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Collab"
 					:isRounded="true"
@@ -664,7 +684,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:isLoading="isInvitingGuests"
 					@click="addGuestToCollab"
 				/>
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.LightBorder"
 					:isRounded="true"
@@ -697,7 +717,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    inviteMembers({
 	      members
 	    }) {
-	      void new CollabInvitationService().addEmployees({
+	      new CollabInvitationService().addEmployees({
 	        dialogId: this.dialogId,
 	        members
 	      });
@@ -734,8 +754,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const AddToCollab = {
 	  name: 'AddToCollab',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
-	    SegmentButton: im_v2_component_elements.SegmentButton,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+	    SegmentButton: im_v2_component_elements_button.SegmentButton,
 	    AddGuestsTab,
 	    AddEmployeesTab
 	  },
@@ -775,6 +795,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        className: 'bx-im-add-to-collab__scope'
 	      };
 	    },
+	    isEnabledCollabersInvitation() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.enabledCollabersInvitation);
+	    },
 	    tabComponent() {
 	      return this.activeTabId === TabId.guests ? AddGuestsTab : AddEmployeesTab;
 	    },
@@ -798,6 +821,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return finalHeight;
 	    }
 	  },
+	  created() {
+	    this.activeTabId = this.isEnabledCollabersInvitation ? TabId.guests : TabId.employees;
+	  },
 	  methods: {
 	    onTabSwitch(tabId) {
 	      this.activeTabId = tabId;
@@ -811,7 +837,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@close="$emit('close')"
 		>
 			<div class="bx-im-add-to-collab__tabs">
-				<SegmentButton :tabs="Tabs" @segmentSelected="onTabSwitch" />
+				<SegmentButton 
+					:tabs="Tabs" 
+					:activeTabId="activeTabId" 
+					@segmentSelected="onTabSwitch"
+				/>
 			</div>
 			<KeepAlive>
 				<component
@@ -827,21 +857,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const searchConfig$1 = Object.freeze({
-	  chats: true,
-	  users: true
-	});
-
 	// @vue/component
 	const ForwardContent = {
 	  name: 'ForwardContent',
 	  components: {
-	    ChatSearch: im_v2_component_search_chatSearch.ChatSearch,
-	    ChatSearchInput: im_v2_component_search_chatSearchInput.ChatSearchInput
+	    ForwardSearch: im_v2_component_search.ForwardSearch,
+	    ChatSearchInput: im_v2_component_search.ChatSearchInput
 	  },
 	  props: {
 	    messagesIds: {
 	      type: Array,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
 	      required: true
 	    }
 	  },
@@ -852,15 +881,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      isLoading: false
 	    };
 	  },
-	  computed: {
-	    searchConfig: () => searchConfig$1
+	  beforeUnmount() {
+	    im_v2_lib_analytics.Analytics.getInstance().messageForward.onClosePopup();
 	  },
 	  methods: {
 	    onLoading(value) {
 	      this.isLoading = value;
 	    },
 	    onUpdateSearch(query) {
-	      this.searchQuery = query;
+	      im_v2_lib_analytics.Analytics.getInstance().messageForward.onStartSearch({
+	        dialogId: this.dialogId
+	      });
+	      this.searchQuery = query.trim().toLowerCase();
 	    },
 	    async onSelectItem(event) {
 	      const {
@@ -889,10 +921,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 			</div>
 			<div class="bx-im-entity-selector-forward__search-result-container">
-				<ChatSearch
-					:searchMode="true"
-					:searchQuery="searchQuery"
-					:searchConfig="searchConfig"
+				<ForwardSearch
+					:query="searchQuery"
+					:dialogId="dialogId"
 					@clickItem="onSelectItem"
 					@loading="onLoading"
 				/>
@@ -907,12 +938,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const ForwardPopup = {
 	  name: 'ForwardPopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    ForwardContent
 	  },
 	  props: {
 	    messagesIds: {
 	      type: Array,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
 	      required: true
 	    }
 	  },
@@ -949,7 +984,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:config="config"
 			@close="$emit('close')"
 		>
-			<ForwardContent :messagesIds="messagesIds" @close="$emit('close')" />
+			<ForwardContent
+				:dialogId="dialogId"
+				:messagesIds="messagesIds" 
+				@close="$emit('close')"
+			/>
 		</MessengerPopup>
 	`
 	};
@@ -958,5 +997,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AddToCollab = AddToCollab;
 	exports.ForwardPopup = ForwardPopup;
 
-}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX,BX.Intranet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component));
+}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX,BX.Intranet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Vue3.Directives,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component));
 //# sourceMappingURL=registry.bundle.js.map

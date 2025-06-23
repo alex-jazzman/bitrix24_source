@@ -21,6 +21,12 @@ class User
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'user')
+		{
+			return;
+		}
+
 		$result['user'] = [
 			'TABLE_NAME' => 'b_user',
 			'TABLE_ALIAS' => 'U',

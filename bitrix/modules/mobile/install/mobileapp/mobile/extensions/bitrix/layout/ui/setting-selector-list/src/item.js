@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/setting-selector-list/src/item', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
-	const { Text3, Text5 } = require('ui-system/typography/text');
+	const { Text3, Text4, Text5 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { PureComponent } = require('layout/pure-component');
 	const { Switcher, SwitcherSize } = require('ui-system/blocks/switcher');
@@ -70,8 +70,25 @@ jn.define('layout/ui/setting-selector-list/src/item', (require, exports, module)
 					onClick: this.#onItemClick,
 				},
 				this.#renderContent(),
+				this.#renderOptionPreview(),
 				this.#isIconOrSwitcherPlacementRoot() && this.#renderRootIconOrSwitcher(),
 			);
+		}
+
+		#renderOptionPreview()
+		{
+			const { useOptionPreview, optionPreviewValue, optionColor } = this.item;
+
+			if (!useOptionPreview || !optionPreviewValue)
+			{
+				return null;
+			}
+
+			return Text4({
+				text: String(optionPreviewValue),
+				color: optionColor ?? Color.base4,
+				marginRight: Indent.XS2.toNumber(),
+			});
 		}
 
 		#renderContent = () => {

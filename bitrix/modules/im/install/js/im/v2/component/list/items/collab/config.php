@@ -8,8 +8,9 @@ return [
 	'css' => 'dist/collab-list.bundle.css',
 	'js' => 'dist/collab-list.bundle.js',
 	'rel' => [
+		'im.v2.lib.draft',
 		'im.v2.lib.utils',
-		'im.v2.component.elements',
+		'im.v2.component.elements.list-loading-state',
 		'im.v2.component.list.items.recent',
 		'im.v2.application.core',
 		'im.v2.lib.rest',

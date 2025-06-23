@@ -1,14 +1,14 @@
 import 'ui.notification';
 
 import { Messenger } from 'im.public';
-import { ChatType, Layout, UserRole } from 'im.v2.const';
+import { ChatType, Layout, UserRole, ErrorCode, PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { ChatService } from 'im.v2.provider.service';
-import { AccessErrorCode } from 'im.v2.lib.access';
+import { PromoManager } from 'im.v2.lib.promo';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { BaseChatContent } from 'im.v2.component.content.elements';
 import { Core } from 'im.v2.application.core';
 
@@ -16,8 +16,11 @@ import { ChannelContent } from '../../content/channel/channel';
 import { CollabContent } from '../../content/collab/collab';
 import { MultidialogContent } from '../../content/multidialog/multidialog';
 import { NotesContent } from '../../content/notes/notes-content';
+import { DefaultChatContent } from '../../content/default/default';
 import { BaseEmptyState as EmptyState } from './components/empty-state/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
+import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
+import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
 import { UserService } from './classes/user-service';
 import { CollabEmptyState } from './components/empty-state/collab/collab';
 
@@ -25,12 +28,6 @@ import './css/default-chat-content.css';
 
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { ImModelChat, ImModelLayout } from 'im.v2.model';
-
-const EmptyStateComponentByLayout = {
-	[Layout.channel.name]: ChannelEmptyState,
-	[Layout.collab.name]: CollabEmptyState,
-	default: EmptyState,
-};
 
 // @vue/component
 export const ChatOpener = {
@@ -43,6 +40,7 @@ export const ChatOpener = {
 		EmptyState,
 		ChannelEmptyState,
 		NotesContent,
+		DefaultChatContent,
 	},
 	props:
 	{
@@ -74,6 +72,10 @@ export const ChatOpener = {
 		{
 			return this.dialog.type === ChatType.collab;
 		},
+		isRecentChat(): boolean
+		{
+			return [ChatType.copilot, ChatType.chat].includes(this.dialog.type);
+		},
 		isMultidialog(): boolean
 		{
 			return this.$store.getters['sidebar/multidialog/isSupport'](this.dialogId);
@@ -88,6 +90,13 @@ export const ChatOpener = {
 		},
 		emptyStateComponent(): BitrixVueComponentProps
 		{
+			const EmptyStateComponentByLayout = {
+				[Layout.channel.name]: ChannelEmptyState,
+				[Layout.collab.name]: CollabEmptyState,
+				[Layout.chat.name]: this.getChatEmptyStateComponent(),
+				default: EmptyState,
+			};
+
 			return EmptyStateComponentByLayout[this.layout.name] ?? EmptyStateComponentByLayout.default;
 		},
 	},
@@ -110,7 +119,7 @@ export const ChatOpener = {
 	},
 	methods:
 	{
-		async onChatChange()
+		async onChatChange(): void
 		{
 			if (this.dialogId === '')
 			{
@@ -136,7 +145,7 @@ export const ChatOpener = {
 				if (this.isUser)
 				{
 					const userId = parseInt(this.dialog.dialogId, 10);
-					void this.getUserService().updateLastActivityDate(userId);
+					this.getUserService().updateLastActivityDate(userId);
 				}
 				else if (this.isChannel && !this.isGuest)
 				{
@@ -171,10 +180,8 @@ export const ChatOpener = {
 			Logger.warn(`ChatContent: loading chat ${this.dialogId} with context - ${this.layout.contextId}`);
 
 			await this.getChatService().loadChatWithContext(this.dialogId, this.layout.contextId)
-				.catch((errors) => {
-					this.sendAnalytics(errors);
-					this.handleChatLoadError(errors);
-					Logger.error(errors);
+				.catch((error) => {
+					this.sendAnalytics(error);
 					Messenger.openChat();
 				});
 
@@ -185,39 +192,32 @@ export const ChatOpener = {
 			Logger.warn(`ChatContent: loading chat ${this.dialogId}`);
 
 			await this.getChatService().loadChatWithMessages(this.dialogId)
-				.catch((errors) => {
-					this.handleChatLoadError(errors);
-					Logger.error(errors);
+				.catch(() => {
 					Messenger.openChat();
 				});
 
 			Logger.warn(`ChatContent: chat ${this.dialogId} is loaded`);
 		},
-		handleChatLoadError(errors: Error[]): void
+		sendAnalytics(error: Error)
 		{
-			const [firstError] = errors;
-			if (firstError.code === AccessErrorCode.accessDenied)
-			{
-				this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
-			}
-			else if (firstError.code === AccessErrorCode.messageNotFound)
-			{
-				this.showNotification(this.loc('IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND'));
-			}
-		},
-		sendAnalytics(errors: Error[])
-		{
-			const [firstError] = errors;
-			if (firstError.code !== AccessErrorCode.messageNotFound)
+			if (error.code !== ErrorCode.message.notFound)
 			{
 				return;
 			}
 
 			Analytics.getInstance().messageDelete.onNotFoundNotification({ dialogId: this.dialogId });
 		},
-		showNotification(text: string)
+		getChatEmptyStateComponent(): BitrixVueComponentProps
 		{
-			BX.UI.Notification.Center.notify({ content: text });
+			const isEmbeddedMode = LayoutManager.getInstance().isEmbeddedMode();
+			const needToShowPromoEmptyState = PromoManager.getInstance().needToShow(PromoId.embeddedChatEmptyState);
+
+			if (!isEmbeddedMode)
+			{
+				return EmptyState;
+			}
+
+			return needToShowPromoEmptyState ? EmbeddedChatPromoEmptyState : EmbeddedChatEmptyState;
 		},
 		getChatService(): ChatService
 		{
@@ -249,6 +249,7 @@ export const ChatOpener = {
 			<CollabContent v-else-if="isCollab" :dialogId="dialogId" />
 			<MultidialogContent v-else-if="isMultidialog" :dialogId="dialogId" />
 			<NotesContent v-else-if="isNotes" :dialogId="dialogId" />
+			<DefaultChatContent v-else-if="isRecentChat" :dialogId="dialogId" />
 			<BaseChatContent v-else :dialogId="dialogId" />
 		</div>
 	`,

@@ -33,18 +33,19 @@
 
 .vote-display-btn.--vote.--active,
 .bx-im-message-base__wrap.--self .vote-display-btn.--vote.--active {
-	background: #0075ff;
+	background: #1f86ff;
 	color: #fff;
 	pointer-events: auto;
 }
 
-.vote-display-btn.--vote.--active:hover {
-	background: #1f86ff;
+.vote-display-btn.--vote.--active:hover,
+.bx-im-message-base__wrap.--self .vote-display-btn.--vote.--active:hover {
+	background: #1b71d8;
 }
 
 .vote-display-btn.--show {
 	background: transparent;
-	color: #0075ff;
+	color: #1f86ff;
 }
 
 .vote-display-btn.--show:after {
@@ -53,7 +54,7 @@
 	top: 5px;
 	width: 25px;
 	height: 24px;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='24' fill='none'%3E%3Cpath fill='%230075FF' fill-rule='evenodd' d='M10.96 6.54a.65.65 0 1 0-.92.92L14.58 12l-4.54 4.54a.65.65 0 1 0 .92.92l5-5a.65.65 0 0 0 0-.92l-5-5Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='24' fill='none'%3E%3Cpath fill='%2300ace3' fill-rule='evenodd' d='M10.96 6.54a.65.65 0 1 0-.92.92L14.58 12l-4.54 4.54a.65.65 0 1 0 .92.92l5-5a.65.65 0 0 0 0-.92l-5-5Z' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .vote-display-btn.--disable {

@@ -63,21 +63,21 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/tags-users-popup.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
 
+UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 if (!$arResult['IS_CURRENT_USER_COLLABER'] && !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber']))
 {
-	$this->SetViewTarget('inside_pagetitle');
 	$APPLICATION->includeComponent(
 		'bitrix:intranet.binding.menu',
 		'',
 		array(
 			'SECTION_CODE' => 'user_detail',
 			'MENU_CODE' => 'top_menu',
+			'USE_UI_TOOLBAR' => 'Y',
 			'CONTEXT' => [
 				'USER_ID' => $arResult['User']['ID']
 			]
 		)
 	);
-	$this->EndViewTarget();
 }
 
 if (
@@ -85,18 +85,15 @@ if (
 	&& $arResult["User"]["STATUS"] !== "email"
 )
 {
-	$this->SetViewTarget('inside_pagetitle');
-
 	if ($arResult["Permissions"]['edit'])
 	{
-		?>
-		<span
-			onclick="BX.SidePanel.Instance.open('<?=$arResult["Urls"]["CommonSecurity"]."?page=auth"?>', {width: 1100});"
-			class="ui-btn ui-btn-light-border ui-btn-themes"
-		>
-			<?=Loc::getMessage("INTRANET_USER_PROFILE_PASSWORDS")?>
-		</span>
-		<?php
+		UI\Toolbar\Facade\Toolbar::addButton([
+			'text' => Loc::getMessage("INTRANET_USER_PROFILE_PASSWORDS"),
+			'color' => UI\Buttons\Color::LIGHT_BORDER,
+			'onclick' => new UI\Buttons\JsCode(
+				'BX.SidePanel.Instance.open("' . $arResult['Urls']['CommonSecurity'] . '?page=auth"' . ', {width: 1100});'
+			),
+		]);
 	}
 
 	if (
@@ -104,17 +101,14 @@ if (
 		&& ($arResult["IsOwnProfile"] || $USER->CanDoOperation('security_edit_user_otp'))
 	)
 	{
-		?>
-		<span
-			onclick="BX.SidePanel.Instance.open('<?=$arResult["Urls"]["CommonSecurity"]."?page=otpConnected"?>', {width: 1100});"
-			class="ui-btn ui-btn-light-border ui-btn-themes"
-		>
-			<?=Loc::getMessage("INTRANET_USER_PROFILE_SECURITY")?>
-		</span>
-		<?php
+		UI\Toolbar\Facade\Toolbar::addButton([
+			'text' => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY"),
+			'color' => UI\Buttons\Color::LIGHT_BORDER,
+			'onclick' => new UI\Buttons\JsCode(
+				'BX.SidePanel.Instance.open("' . $arResult['Urls']['CommonSecurity'] . '?page=otpConnected"' . ', {width: 1100});'
+			),
+		]);
 	}
-
-	$this->EndViewTarget();
 }
 
 if (
@@ -140,6 +134,8 @@ if (
 		<div class="intranet-user-profile-column-block">
 			<div class="intranet-user-profile-rank">
 				<?php
+				$haveAvailableActions = in_array(true, $arResult['ACTIONS_AVAILABILITY'], true);
+
 				if (
 					isset($arResult["User"]["STATUS"]) && !empty($arResult["User"]["STATUS"])
 					&& (
@@ -148,6 +144,7 @@ if (
 							&& ($arResult["IsOwnProfile"] || !$arResult["Permissions"]['edit'])
 						)
 						|| $arResult["User"]["SHOW_SONET_ADMIN"]
+						|| $haveAvailableActions
 					)
 				)
 				{
@@ -155,7 +152,7 @@ if (
 						'intranet-user-profile-rank-item',
 						'intranet-user-profile-rank-' . $arResult["User"]["STATUS"],
 					];
-					if ($arResult["Permissions"]['edit'])
+					if ($arResult["Permissions"]['edit'] || $haveAvailableActions)
 					{
 						$classList[] = 'intranet-user-profile-rank-item-pointer';
 					}
@@ -166,7 +163,7 @@ if (
 							?? Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"]
 							))?></span>
 						<?php
-						if ($arResult["Permissions"]['edit'])
+						if ($arResult["Permissions"]['edit'] || $haveAvailableActions)
 						{
 							?>
 							<span class="intranet-user-profile-rank-item-config"></span>
@@ -977,6 +974,7 @@ if ($arResult["adminRightsRestricted"])
 		isCurrentUserAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>',
 		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>,
 		userpicUploadAttribute: <?= \Bitrix\Main\Web\Json::encode(UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"])) ?>,
+		actionsAvailability: <?= \Bitrix\Main\Web\Json::encode($arResult['ACTIONS_AVAILABILITY']) ?>,
 	});
 </script>
 

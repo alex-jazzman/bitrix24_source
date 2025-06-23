@@ -5,6 +5,8 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 	const { Type } = require('type');
 	const { OptionTable } = require('im/messenger/db/table');
 
+	const { updaterQueryBuilder } = require('im/messenger/db/update/update-query-builder');
+
 	/**
 	 * @class Updater
 	 */
@@ -253,6 +255,35 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 			return this.executeSql({
 				query: 'COMMIT TRANSACTION',
 			});
+		}
+
+		/**
+		 * @param {typeof Table} TableClass
+		 * @param {string} columnName
+		 */
+		async addColumnIfNotExists(TableClass, columnName)
+		{
+			const table = new TableClass();
+			const isColumnExist = await this.isColumnExists(table.getName(), columnName);
+			if (isColumnExist)
+			{
+				return;
+			}
+
+			try
+			{
+				const query = updaterQueryBuilder.addColumn(table, columnName);
+
+				await this.executeSql({
+					query,
+				});
+			}
+			catch (error)
+			{
+				console.error(error);
+
+				throw error;
+			}
 		}
 	}
 

@@ -1,6 +1,5 @@
-import { AudioPlayer } from 'im.v2.component.elements';
-
-import { ProgressBar } from './progress-bar';
+import { AudioPlayer } from 'im.v2.component.elements.audioplayer';
+import { ProgressBar } from 'im.v2.component.elements.progressbar';
 
 import '../../css/items/audio.css';
 
@@ -10,8 +9,7 @@ import type { ImModelFile } from 'im.v2.model';
 export const AudioItem = {
 	name: 'AudioItem',
 	components: { AudioPlayer, ProgressBar },
-	props:
-	{
+	props: {
 		item: {
 			type: Object,
 			required: true,
@@ -25,8 +23,8 @@ export const AudioItem = {
 			required: true,
 		},
 	},
-	computed:
-	{
+	emits: ['cancelClick'],
+	computed: {
 		file(): ImModelFile
 		{
 			return this.item;
@@ -36,9 +34,19 @@ export const AudioItem = {
 			return this.file.progress === 100;
 		},
 	},
+	methods: {
+		onCancelClick(event)
+		{
+			this.$emit('onCancel', event);
+		},
+	},
 	template: `
 		<div class="bx-im-media-audio__container">
-			<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageId" />
+			<ProgressBar 
+				v-if="!isLoaded" 
+				:item="file" 
+				@cancelClick="onCancelClick"
+			/>
 			<AudioPlayer
 				:id="file.id"
 				:messageId="messageId"

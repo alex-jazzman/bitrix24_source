@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Question, type QuestionData } from './question';
@@ -48,6 +49,12 @@ export const VoteForm = {
 		{
 			return this.questionsCount < this.options.maxQuestionsCount;
 		},
+		firstQuestionId(): string | null
+		{
+			const [firstQuestionId] = Object.keys(this.questions);
+
+			return firstQuestionId || null;
+		},
 	},
 	watch:
 	{
@@ -60,8 +67,14 @@ export const VoteForm = {
 	{
 		this.questionIdCounter = 1;
 		this.answerIdCounter = 1;
-		this.settingsLabels = { anonymousVote: this.loc('VOTE_SETTING_ANONYMOUS') };
-		this.settings = { anonymousVote: false };
+		this.settingsLabels = {
+			anonymousVote: this.loc('VOTE_SETTING_ANONYMOUS'),
+			allowRevoking: this.loc('VOTE_SETTING_ALLOW_REVOTING'),
+		};
+		this.settings = {
+			anonymousVote: false,
+			allowRevoking: true,
+		};
 		this.initQuestions();
 	},
 	mounted(): void
@@ -70,12 +83,18 @@ export const VoteForm = {
 			const switcher = new Switcher({
 				node: this.$refs[id][0],
 				size: SwitcherSize.small,
+				checked: this.settings[id],
 				handlers: {
 					toggled: () => {
 						this.settings = { ...this.settings, [id]: switcher.checked };
 					},
 				},
 			});
+			Dom.attr(switcher.node, 'data-test-id', `vote_creation_form_setting_${id}`);
+		});
+
+		this.$nextTick(() => {
+			this.focusFirstQuestion();
 		});
 	},
 	methods:
@@ -85,13 +104,13 @@ export const VoteForm = {
 			const { minQuestionsCount, minAnswersCount } = this.options;
 			const answersCount = minQuestionsCount * minAnswersCount;
 			let answerIndex = 1;
-			let questionId = `vote_question_${this.questionIdCounter}`;
+			let questionId = `question_${this.questionIdCounter}`;
 			for (let i = 0; i < answersCount; i++)
 			{
 				if (answerIndex > minAnswersCount)
 				{
 					answerIndex = 1;
-					questionId = `vote_question_${++this.questionIdCounter}`;
+					questionId = `question_${++this.questionIdCounter}`;
 				}
 
 				if (!this.questions[questionId])
@@ -100,7 +119,7 @@ export const VoteForm = {
 					this.questions[questionId] = { questionText: '', answers: {}, allowMultipleAnswers: false };
 				}
 
-				const answerId = `vote_answer_${this.answerIdCounter++}`;
+				const answerId = `answer_${this.answerIdCounter++}`;
 				this.questions[questionId].answers[answerId] = '';
 				answerIndex += 1;
 			}
@@ -111,10 +130,10 @@ export const VoteForm = {
 			const { minAnswersCount } = this.options;
 			for (let i = 0; i < minAnswersCount; i++)
 			{
-				answers[`vote_answer_${this.answerIdCounter++}`] = '';
+				answers[`answer_${this.answerIdCounter++}`] = '';
 			}
 
-			const questionId = `vote_question_${++this.questionIdCounter}`;
+			const questionId = `question_${++this.questionIdCounter}`;
 			this.questions[questionId] = {
 				questionText: '',
 				answers,
@@ -126,7 +145,13 @@ export const VoteForm = {
 		{
 			const question = this.questions[questionId];
 			const { answers } = question;
-			answers[`vote_answer_${this.answerIdCounter++}`] = '';
+			const newAnswerId = `answer_${this.answerIdCounter++}`;
+			answers[newAnswerId] = '';
+
+			this.$nextTick(() => {
+				const questionRef = this.$refs[`question_${questionId}`]?.[0];
+				questionRef?.focusNewAnswer(newAnswerId);
+			});
 		},
 		removeAnswer(questionId: string, answerId: string): void
 		{
@@ -140,6 +165,16 @@ export const VoteForm = {
 		validate(questionId: string, value: boolean): void
 		{
 			this.validatedQuestions[questionId] = value;
+		},
+		focusFirstQuestion(): void
+		{
+			if (!this.firstQuestionId)
+			{
+				return;
+			}
+
+			const firstQuestionRef = this.$refs[`question_${this.firstQuestionId}`]?.[0];
+			firstQuestionRef?.focusQuestionField();
 		},
 	},
 	template: `
@@ -156,6 +191,7 @@ export const VoteForm = {
 					@removeAnswer="removeAnswer(id, $event)"
 					@changeQuestion="changeQuestion(id, $event)"
 					@validate="validate(id, $event)"
+					:ref="'question_' + id"
 				></Question>
 				<button
 					v-if="canAddMoreQuestions"

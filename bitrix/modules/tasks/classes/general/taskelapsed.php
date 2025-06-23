@@ -19,7 +19,11 @@ class CTaskElapsedTime
 		return true;
 	}
 
-
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Command\Task\Tracking\AddElapsedTimeCommand
+	 */
 	function Add($arFields, $arParams = array())
 	{
 		global $DB;
@@ -36,15 +40,6 @@ class CTaskElapsedTime
 
 		if ($this->CheckFields($arFields))
 		{
-			$curDuration = 0;
-			$rsTask = CTasks::getList(
-				array(),
-				array('ID' => $arFields['TASK_ID']),
-				array('ID', 'TIME_SPENT_IN_LOGS')
-			);
-			if ($rsTask && ($arTask = $rsTask->fetch()))
-				$curDuration = (int) $arTask['TIME_SPENT_IN_LOGS'];
-
 			// Maintance backward compatibility
 			if (isset($arFields['MINUTES'], $arFields['SECONDS']))
 			{
@@ -60,12 +55,6 @@ class CTaskElapsedTime
 				CTaskAssert::assert(false);
 			}
 
-			foreach(GetModuleEvents('tasks', 'OnBeforeTaskElapsedTimeAdd', true) as $arEvent)
-			{
-				if (ExecuteModuleEventEx($arEvent, array(&$arFields))===false)
-					return false;
-			}
-
 			$arFields['SOURCE'] = CTaskElapsedItem::SOURCE_MANUAL;
 			if (isset($arParams['SOURCE_SYSTEM']) && ($arParams['SOURCE_SYSTEM'] === 'Y'))
 				$arFields['SOURCE'] = CTaskElapsedItem::SOURCE_SYSTEM;
@@ -74,6 +63,41 @@ class CTaskElapsedTime
 				$createdDate = Bitrix\Main\Type\DateTime::createFromUserTime($arFields['CREATED_DATE']);
 			else
 				$createdDate = new Bitrix\Main\Type\DateTime();
+
+			if (\Bitrix\Tasks\V2\FormV2Feature::isOn('elapsed'))
+			{
+				$mapper = \Bitrix\Tasks\V2\Internals\Container::getInstance()->getElapsedTimeMapper();
+
+				$arFields['CREATED_DATE'] = $createdDate;
+
+				$elapsedTime = $mapper->mapToEntity($arFields);
+
+				$result = (new \Bitrix\Tasks\V2\Command\Task\Tracking\AddElapsedTimeCommand(
+					elapsedTime: $elapsedTime,
+				))->run();
+
+				if (!$result->isSuccess())
+				{
+					return false;
+				}
+
+				return (int)$result->getObject()?->getId();
+			}
+
+			$curDuration = 0;
+			$rsTask = CTasks::getList(
+				array(),
+				array('ID' => $arFields['TASK_ID']),
+				array('ID', 'TIME_SPENT_IN_LOGS')
+			);
+			if ($rsTask && ($arTask = $rsTask->fetch()))
+				$curDuration = (int) $arTask['TIME_SPENT_IN_LOGS'];
+
+			foreach(GetModuleEvents('tasks', 'OnBeforeTaskElapsedTimeAdd', true) as $arEvent)
+			{
+				if (ExecuteModuleEventEx($arEvent, array(&$arFields))===false)
+					return false;
+			}
 
 			$addResult = \Bitrix\Tasks\Internals\Task\ElapsedTimeTable::add(array(
 				"CREATED_DATE" => $createdDate,

@@ -41,5 +41,6 @@ return [
 		'utils/file',
 
 		'bizproc:helper/duration',
+		'bizproc:workflow/result',
 	],
 ];

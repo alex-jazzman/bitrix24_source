@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
+use Bitrix\BIConnector\Access\Superset\Synchronizer;
 use Bitrix\BIConnector\Configuration\DashboardTariffConfigurator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\ServiceLocation;
@@ -23,6 +24,8 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\BIConnector\Superset;
+use Bitrix\Main\Application;
 
 Loader::includeModule("biconnector");
 
@@ -125,6 +128,17 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 
 		$this->prepareResult();
 
+		if (SupersetInitializer::isSupersetReady())
+		{
+			(new Synchronizer(CurrentUser::get()->getId()))->sync();
+		}
+
+		Application::getInstance()->addBackgroundJob(fn() => Superset\Updater\ClientUpdater::update());
+
+		$superset = new SupersetController(Integrator::getInstance());
+		$superset->initializeOrCheckSupersetStatus();
+		$initResult = $this->initDashboard();
+
 		if (SupersetInitializer::isSupersetLoading())
 		{
 			$dashboard['STATUS'] = SupersetDashboardTable::DASHBOARD_STATUS_LOAD;
@@ -140,7 +154,7 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 			return;
 		}
 
-		if (!$this->initDashboard()	|| !SupersetInitializer::isSupersetReady())
+		if (!$initResult)
 		{
 			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_DETAIL_NOT_FOUND');
 			$this->includeComponentTemplate();

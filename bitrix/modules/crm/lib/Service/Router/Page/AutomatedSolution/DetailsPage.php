@@ -39,6 +39,7 @@ final class DetailsPage extends AbstractPage
 
 	protected function configureSidePanel(SidePanelWrapper $sidePanel): void
 	{
+		$sidePanel->isUseToolbar = false;
 		$sidePanel->pageMode = false;
 		$sidePanel->pageModeBackUrl = Container::getInstance()->getRouter()->getAutomatedSolutionListUrl();
 	}

@@ -1,5 +1,3 @@
-// jn.require('im/messenger/lib/dev/action-timer');
-
 // eslint-disable-next-line no-var,no-implicit-globals
 var REVISION = 19; // API revision - sync with im/lib/revision.php
 
@@ -24,23 +22,27 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
+	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
+	QuickRecentLoader.renderItemsOnViewLoaded();
+
 	const DialogList = dialogList;
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { isEqual } = require('utils/object');
+	const { EntityReady } = require('entity-ready');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { CopilotApplication } = require('im/messenger/core/copilot');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { EntityReady } = require('entity-ready');
-	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
+	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const {
 		AppStatus,
 		EventType,
 		RestMethod,
 		ComponentCode,
-		MessengerInitRestMethod,
 	} = require('im/messenger/const');
+
+	EntityReady.ready(`${ComponentCode.imCopilotMessenger}::launched`);
 
 	const core = new CopilotApplication({
 		localStorage: {
@@ -73,6 +75,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		CopilotMessagePullHandler,
 		CopilotFilePullHandler,
 		CopilotUserPullHandler,
+		CopilotCounterPullHandler,
 	} = require('im/messenger/provider/pull/copilot');
 	const { PlanLimitsPullHandler } = require('im/messenger/provider/pull/plan-limits');
 
@@ -83,16 +86,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { CopilotDialog } = require('im/messenger/controller/dialog/copilot');
 	const { CopilotAssets } = require('im/messenger/controller/dialog/lib/assets');
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { CopilotPushMessageHandler } = require('im/messenger/provider/push/message-handler/copilot');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
-	const { SyncFillerCopilot } = require('im/messenger/provider/service');
+	const { SyncFillerCopilot } = require('im/messenger/provider/services/sync/fillers/copilot');
 	const AppTheme = require('apptheme');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { SidebarLazyFactory } = require('im/messenger/controller/sidebar-v2/factory');
 	/* endregion import */
 
 	class CopilotMessenger extends MessengerBase
@@ -119,7 +123,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			super();
 
 			this.communication = new Communication();
-			EntityReady.addCondition('copilot-messenger', () => this.isReady);
+			EntityReady.addCondition(`${ComponentCode.imCopilotMessenger}::ready`, () => this.isReady);
 		}
 
 		initCore()
@@ -174,11 +178,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			this.searchSelector = new RecentSelector(DialogList);
 			this.chatCreator = new ChatCreator();
-
-			if (Application.getApiVersion() >= 47)
-			{
-				this.dialogCreator = new DialogCreator();
-			}
+			this.dialogCreator = new DialogCreator();
 		}
 
 		/**
@@ -188,7 +188,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
-			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
 			this.openChatSearch = this.openChatSearch.bind(this);
 			this.closeChatSearch = this.closeChatSearch.bind(this);
 			this.openChatCreate = this.openChatCreate.bind(this);
@@ -211,6 +210,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			// TODO: generalize the approach to background caching
 			(new CopilotAssets()).preloadAssets();
+			SidebarLazyFactory.preload();
 		}
 
 		/**
@@ -218,7 +218,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		subscribeMessengerEvents()
 		{
-			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
@@ -230,7 +229,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		unsubscribeMessengerEvents()
 		{
 			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.removeCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
 			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
@@ -337,8 +335,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		initPullHandlers()
 		{
+			super.initPullHandlers();
 			BX.PULL.subscribe(new CopilotDialogPullHandler());
 			BX.PULL.subscribe(new CopilotMessagePullHandler());
+			// deprecated. delete after counters in memoryStorage go to prod
+			// BX.PULL.subscribe(new CopilotCounterPullHandler());
 			BX.PULL.subscribe(new CopilotFilePullHandler());
 			BX.PULL.subscribe(new CopilotUserPullHandler());
 			BX.PULL.subscribe(new PlanLimitsPullHandler());
@@ -423,7 +424,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshErrorNoticeFlag = false;
 			ChatTimer.stop('recent', 'error', true);
 
-			Counters.update();
+			TabCounters.update();
 
 			return this.ready();
 		}
@@ -474,7 +475,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			if (this.isFirstLoad)
 			{
 				Logger.warn('CopilotMessenger.ready');
-				EntityReady.ready('copilot-messenger');
+				EntityReady.ready(`${ComponentCode.imCopilotMessenger}::ready`);
 			}
 
 			this.isFirstLoad = false;
@@ -518,6 +519,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					this.dialog.open(openDialogOptions);
 
 					this.recent.view.renderChatCreateButton();
+
+					if (openDialogOptions.backToMessenegerTab)
+					{
+						MessengerEmitter.emit(
+							EventType.navigation.changeTab,
+							ComponentCode.imMessenger,
+							ComponentCode.imNavigation,
+						);
+					}
 				})
 				.catch((error) => {
 					Logger.error(error);
@@ -561,14 +571,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			Logger.log('CopilotMessenger.chatDialog.taskStatusSuccess', taskId, result);
 		}
 
-		getOpenDialogParams(options = {})
-		{
-			const openDialogParamsResponseEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
-
-			const params = CopilotDialog.getOpenDialogParams(options);
-			BX.postComponentEvent(openDialogParamsResponseEvent, [params], ComponentCode.imCopilotMessenger);
-		}
-
 		/**
 		 * @private
 		 * @param {{id: string, value: any}} setting
@@ -583,8 +585,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		onChatDialogInitComplete(event)
 		{
 			Logger.log('CopilotMessenger.chatDialog.initComplete', event);
-
-			Promotion.checkDialog(event.dialogId.toString());
 		}
 
 		onChatDialogCounterChange(event)

@@ -8,7 +8,7 @@
 jn.define('im/messenger/model/dialogues/validator', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { UserRole } = require('im/messenger/const');
+	const { UserRole, DialogBackgroundId } = require('im/messenger/const');
 	const { mergeImmutable } = require('utils/object');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -200,6 +200,21 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.entityId = fields.entityId.toString();
 		}
 
+		if (Type.isStringFilled(fields.entityData1))
+		{
+			result.entityData1 = fields.entityData1;
+		}
+
+		if (Type.isStringFilled(fields.entityData2))
+		{
+			result.entityData2 = fields.entityData2;
+		}
+
+		if (Type.isStringFilled(fields.entityData3))
+		{
+			result.entityData3 = fields.entityData3;
+		}
+
 		if (!Type.isUndefined(fields.date_create))
 		{
 			fields.dateCreate = fields.date_create;
@@ -313,6 +328,21 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.permissions = mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions);
 		}
 
+		if (Type.isBoolean(fields.text_field_enabled) || Type.isBoolean(fields.textFieldEnabled))
+		{
+			result.textFieldEnabled = fields.text_field_enabled ?? fields.textFieldEnabled;
+		}
+
+		if (Type.isStringFilled(fields.background_id) || Type.isStringFilled(fields.backgroundId))
+		{
+			result.backgroundId = fields.background_id ?? fields.backgroundId;
+		}
+
+		if (Type.isNull(fields.background_id) || Type.isNull(fields.backgroundId))
+		{
+			result.backgroundId = DialogBackgroundId.default;
+		}
+
 		if (Type.isStringFilled(fields.aiProvider))
 		{
 			result.aiProvider = fields.aiProvider;
@@ -336,6 +366,26 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 		if (fields.tariffRestrictions)
 		{
 			result.tariffRestrictions = fields.tariffRestrictions;
+		}
+
+		if (Type.isNumber(fields.messagesAutoDeleteDelay))
+		{
+			result.messagesAutoDeleteDelay = fields.messagesAutoDeleteDelay;
+		}
+
+		if (Type.isPlainObject(fields.recentConfig))
+		{
+			result.recentConfig = fields.recentConfig;
+		}
+
+		if (Type.isBoolean(fields.contains_collaber))
+		{
+			result.containsCollaber = fields.contains_collaber;
+		}
+
+		if (Type.isBoolean(fields.containsCollaber))
+		{
+			result.containsCollaber = fields.containsCollaber;
 		}
 
 		return result;
@@ -548,11 +598,6 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 		if (Type.isStringFilled(fields.manage_settings) || Type.isStringFilled(fields.manageSettings))
 		{
 			result.manageSettings = fields.manage_settings || fields.manageSettings;
-		}
-
-		if (Type.isStringFilled(fields.can_post) || Type.isStringFilled(fields.canPost))
-		{
-			fields.manageMessages = fields.can_post || fields.canPost;
 		}
 
 		if (Type.isStringFilled(fields.manage_messages) || Type.isStringFilled(fields.manageMessages))

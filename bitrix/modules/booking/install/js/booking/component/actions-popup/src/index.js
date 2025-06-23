@@ -4,6 +4,7 @@ export { Confirmation } from './confirmation/confirmation';
 export { Deal } from './deal/deal';
 export { Document } from './document/document';
 export { FullForm } from './full-form/full-form';
+export { Info } from './info/info';
 export { Message } from './message/message';
 export { RemoveButton } from './remove-button/remove-button';
 export { Visit } from './visit/visit';

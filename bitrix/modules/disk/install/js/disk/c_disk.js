@@ -675,22 +675,7 @@ if(!BX.Disk.pathToUser)
 
 			sendTelemetryEvent: function(options)
 			{
-				if (!BX.Disk.isAvailableOnlyOffice())
-				{
-					return;
-				}
-
-				var url = (document.location.protocol === "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
-				var request =  new XMLHttpRequest();
-				request.open("POST", url, true);
-				request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-				request.withCredentials = true;
-				options.op = "doc";
-				options.u = BX.message.USER_ID;
-				options.t = Date.now();
-				options.d = document.location.host;
-				var query = BX.util.buildQueryString(options);
-				request.send(query);
+				return;
 			},
 
 			getFirstErrorFromResponse: function(reponse)

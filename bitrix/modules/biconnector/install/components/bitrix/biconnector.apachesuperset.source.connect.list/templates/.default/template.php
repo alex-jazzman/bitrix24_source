@@ -32,10 +32,15 @@ $sourceList = $arResult['SOURCE_LIST'];
 	<div class="biconnector-superset-source-list-card">
 		<div class="biconnector-superset-source-list-card__content">
 			<div class="biconnector-superset-source-list-card__icon">
-				<div style="background: url(images/<?= mb_strtolower($source->getCode()) ?>.svg) no-repeat center; width: 120px; height: 120px"></div>
+
+				<?php
+				$sourceCode = mb_strtolower($source->getCode());
+				$image = htmlspecialcharsbx($source->getLogo() ?? "images/{$sourceCode}.svg");
+				?>
+				<div style="background: url('<?=$image?>'); width: 120px; height: 120px" class="biconnector-superset-source-list-card__icon_image"></div>
 			</div>
 			<div class="biconnector-superset-source-list-card__desc">
-				<div class="biconnector-superset-source-list-card__desc-title"><?= htmlspecialcharsbx($source->getTitle()) ?></div>
+				<div class="biconnector-superset-source-list-card__desc-title" title="<?= htmlspecialcharsbx($source->getTitle()) ?>"><?= htmlspecialcharsbx($source->getTitle()) ?></div>
 				<div class="biconnector-superset-source-list-card__desc-text"><?= htmlspecialcharsbx($source->getDescription()) ?></div>
 			</div>
 		</div>

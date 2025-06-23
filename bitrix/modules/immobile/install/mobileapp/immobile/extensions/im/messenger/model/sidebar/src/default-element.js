@@ -1,8 +1,8 @@
 /**
- * @module im/messenger/model/sidebar/default-element
+ * @module im/messenger/model/sidebar/src/default-element
  */
 
-jn.define('im/messenger/model/sidebar/default-element', (require, exports, module) => {
+jn.define('im/messenger/model/sidebar/src/default-element', (require, exports, module) => {
 	const sidebarDefaultElement = Object.freeze({
 		dialogId: '0',
 		isMute: false,

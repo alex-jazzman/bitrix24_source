@@ -1846,8 +1846,7 @@ BX.Intranet.SearchTitle = function(arParams)
 		{
 			BX.bind(closeIcon, "click", BX.proxy(function (event)
 			{
-				this.INPUT.value = "";
-				this.onKeyUp();
+				this.clearSearch();
 			}, this));
 		}
 
@@ -1865,6 +1864,20 @@ BX.Intranet.SearchTitle = function(arParams)
 		}, this));
 
 		BX.bind(document, "click", BX.proxy(this.checkAutoHide, this));
+	};
+
+	this.clearSearch = function()
+	{
+		this.INPUT.value = "";
+		this.onKeyUp();
+	};
+
+	this.closeResult = function()
+	{
+		if (this.RESULT)
+		{
+			this.RESULT.style.display = 'none';
+		}
 	};
 
 	this.checkAutoHide = function(event)

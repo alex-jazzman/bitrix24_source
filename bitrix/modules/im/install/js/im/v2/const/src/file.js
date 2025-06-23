@@ -22,15 +22,15 @@ export const FileIconType = Object.freeze({
 	call: 'call',
 	attach: 'attach',
 	quote: 'quote',
+	gallery: 'gallery',
 });
 
 export const FileViewerContext = Object.freeze({
 	dialog: 'dialog',
 	sidebarMain: 'sidebarMain',
 	sidebarTabBriefs: 'sidebarTabBriefs',
-	sidebarTabDocuments: 'sidebarTabDocuments',
+	sidebarTabFiles: 'sidebarTabFiles',
 	sidebarTabMedia: 'sidebarTabMedia',
-	sidebarTabOther: 'sidebarTabOther',
 	sidebarTabFileUnsorted: 'sidebarTabFileUnsorted',
 });
 

@@ -6,6 +6,8 @@
 jn.define('im/messenger/provider/pull/chat/dialog', (require, exports, module) => {
 	const { BaseDialogPullHandler } = require('im/messenger/provider/pull/base');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { ChatNewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/chat');
+	const { readAllCountersOnClient } = require('im/messenger/lib/counters/counter-manager/messenger/actions');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('pull-handler--chat-dialog');
 
@@ -19,6 +21,22 @@ jn.define('im/messenger/provider/pull/chat/dialog', (require, exports, module) =
 			super({ logger });
 		}
 
+		handleReadAllChats(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			this.logger.info(`${this.getClassName()}.handleReadAllChats`);
+
+			readAllCountersOnClient()
+				.catch((error) => {
+					this.logger.error(`${this.getClassName()}.handleReadAllChats: readAllCountersOnClient error`, error);
+				})
+			;
+		}
+
 		/**
 		 * @param {DialoguesModelState} chatData
 		 * @return {boolean}
@@ -27,17 +45,54 @@ jn.define('im/messenger/provider/pull/chat/dialog', (require, exports, module) =
 		{
 			const helper = DialogHelper.createByModel(chatData);
 
-			if (helper?.isCopilot)
+			return !helper?.isOpenChannel || helper?.isCurrentUserParticipant;
+		}
+
+		handleChatAvatar(params, extra, command)
+		{
+			const isCopilot = this.getNewMessageManager(params, extra).isCopilotChat();
+			if (isCopilot)
 			{
-				return false;
+				return;
 			}
 
-			if (helper.isOpenChannel && !helper?.isCurrentUserParticipant)
+			super.handleChatAvatar(params, extra, command);
+		}
+
+		handleChatChangeColor(params, extra, command)
+		{
+			const isCopilot = this.getNewMessageManager(params, extra).isCopilotChat();
+			if (isCopilot)
 			{
-				return false;
+				return;
 			}
 
-			return true;
+			super.handleChatChangeColor(params, extra, command);
+		}
+
+		getNewMessageManager(params, extra = {})
+		{
+			return new ChatNewMessageManager(params, extra);
+		}
+
+		handleChatCopilotRoleUpdate(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info(`${this.constructor.name}.handleChatCopilotRoleUpdate.params`, params);
+			this.store.dispatch(
+				'dialoguesModel/copilotModel/updateRole',
+				{
+					dialogId: params.dialogId,
+					fields: {
+						chats: params.copilotRole.chats,
+						roles: params.copilotRole.roles,
+					},
+				},
+			).catch((error) => logger.error(`${this.constructor.name}.handleChatCopilotRoleUpdate.catch:`, error));
 		}
 	}
 

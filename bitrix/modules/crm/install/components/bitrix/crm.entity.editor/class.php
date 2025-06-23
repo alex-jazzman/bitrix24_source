@@ -69,6 +69,8 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			[
 				'GUID' =>'entity_editor',
 				'ENABLE_PAGE_TITLE_CONTROLS' => true,
+				'ENABLE_PAGE_TITLE_CONTROLS_VIA_TOOLBAR' => false,
+				'ENABLE_PAGE_TITLE_EDIT' => false,
 				'ENABLE_COMMUNICATION_CONTROLS' => true,
 				'ENABLE_REQUIRED_FIELDS_INJECTION' => true,
 				'ENABLE_AVAILABLE_FIELDS_INJECTION' => false,
@@ -728,6 +730,20 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->arResult['CONTEXT']['EDITOR_CONFIG_ID'] = $this->configID;
 
 		$this->arResult['MESSAGES'] = (array)($this->arParams['MESSAGES'] ?? []);
+
+		if ($this->arResult['ENABLE_PAGE_TITLE_CONTROLS'] && $this->arResult['ENABLE_PAGE_TITLE_CONTROLS_VIA_TOOLBAR'])
+		{
+			UI\Toolbar\Facade\Toolbar::enableMultiLineTitle();
+
+			UI\Toolbar\Facade\Toolbar::setCopyLinkButton([
+				'title' => $this->arResult['MESSAGES']['COPY_PAGE_URL'] ?? null,
+				'successfulCopyMessage' => $this->arResult['MESSAGES']['PAGE_URL_COPIED'] ?? null,
+			]);
+			if ($this->arResult['ENABLE_PAGE_TITLE_EDIT'])
+			{
+				UI\Toolbar\Facade\Toolbar::addEditableTitle();
+			}
+		}
 
 		$this->prepareRestrictions();
 		$this->prepareEntityData();

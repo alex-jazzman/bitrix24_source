@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/feature', (require, exports, module) => {
 	const { Feature: MobileFeature } = require('feature');
+	const { feature: NativeFeature } = require('native/feature') ?? {};
 
 	const { MessengerParams } = require('im/messenger/lib/params');
 
@@ -16,6 +17,14 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 	 */
 	class Feature
 	{
+		/**
+		 * @param {Partial<ImFeatures>} features
+		 */
+		static updateExistingImFeatures(features)
+		{
+			return MessengerParams.updateExistingImFeatures(features);
+		}
+
 		static getChatSettings()
 		{
 			return Application.storage.getObject('settings.chat', {
@@ -23,6 +32,10 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 				chatDevModeEnable: false,
 				localStorageEnable: true,
 				autoplayVideo: true,
+				autoSaveFiles: {
+					enabled: true,
+					maxSize: 10_485_760,
+				},
 			});
 		}
 
@@ -72,6 +85,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Feature.getChatSettings().autoplayVideo;
 		}
 
+		static get isAutoSaveFilesEnabled()
+		{
+			return Application.getApiVersion() >= 59 && Feature.getChatSettings().autoSaveFiles;
+		}
+
 		static disableLocalStorage()
 		{
 			dynamicProperties.localStorageEnable = false;
@@ -115,6 +133,16 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isChatDialogWidgetSupportsSendPutCallBbCodes()
 		{
 			return Application.getApiVersion() >= 55;
+		}
+
+		static get isChatDialogListSupportsSubtitleBbCodes()
+		{
+			return Application.getApiVersion() >= 59;
+		}
+
+		static get isChatRecentItemTypeInSearchOverlayAvailable()
+		{
+			return Application.getApiVersion() >= 60;
 		}
 
 		static get isNavigationContextSupportsGetStack()
@@ -161,6 +189,12 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return MessengerParams.getImFeatures().sidebarLinks;
 		}
 
+		static get isSidebarV2Enabled()
+		{
+			return Application.getApiVersion() >= 60
+				&& Object.values(MessengerParams.getSidebarV2Features()).includes(true);
+		}
+
 		static get isCollabSupported()
 		{
 			return Application.getApiVersion() >= 56;
@@ -183,7 +217,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 		static get isInstantPushEnabled()
 		{
-			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 59;
+			return Application.getApiVersion() >= 59;
 		}
 
 		static get isDevelopmentEnvironment()
@@ -218,7 +252,17 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 59;
 		}
 
+		static get isNotesBannerAvailable()
+		{
+			return Application.getApiVersion() >= 59;
+		}
+
 		static get isNotesIconAvailable()
+		{
+			return Application.getApiVersion() >= 59;
+		}
+
+		static get isDialogBackgroundAvailable()
 		{
 			return Application.getApiVersion() >= 59;
 		}
@@ -233,9 +277,90 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 57;
 		}
 
-		static get isIntranetInvitationAvaliable()
+		static get isIntranetInvitationAvailable()
 		{
 			return MessengerParams.getImFeatures().intranetInviteAvailable;
+		}
+
+		static get isMessagesAutoDeleteAvailable()
+		{
+			return MessengerParams.getImFeatures().messagesAutoDeleteAvailable;
+		}
+
+		static get isMessagesAutoDeleteNativeAvailable()
+		{
+			return Feature.isActionButtonAvailable
+				&& Feature.isTitleIconsInDialogHeaderAvailable
+				&& Feature.isImageInRecentAvatarStyleAvailable;
+		}
+
+		static get isActionButtonAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isIOSChangeTabInBackgroundAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isTitleIconsInDialogHeaderAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isImageInRecentAvatarStyleAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isPinInRecentStyleAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isBackToReplyAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isCopilotInDefaultTabAvailable()
+		{
+			return MessengerParams.getImFeatures().copilotInDefaultTabAvailable;
+		}
+
+		static get isMessagesAutoDeleteEnabled()
+		{
+			return MessengerParams.getImFeatures().messagesAutoDeleteEnabled;
+		}
+
+		static get isSpotlightIdInTabViewAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isVoteMessageAvailable()
+		{
+			return (
+				NativeFeature?.isFeatureEnabled('chat-vote')
+				&& env.installedModules?.vote
+				&& MessengerParams.getImFeatures().voteCreationAvailable
+			);
+		}
+
+		static get isPinPanelNewAPIAvailable()
+		{
+			return Application.getApiVersion() >= 60 && NativeFeature.isFeatureEnabled('chat-multi-pin');
+		}
+
+		static get isChatAvatarAccentTypePurpleAvailable()
+		{
+			return Application.getApiVersion() >= 60;
+		}
+
+		static get isFloatingButtonsBarAvailable()
+		{
+			return NativeFeature?.isFeatureEnabled('chat-like-mention-comments') ?? false;
 		}
 	}
 
@@ -246,5 +371,5 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		&& Feature.getChatSettings().localStorageEnable
 	);
 
-	module.exports = { Feature };
+	module.exports = { Feature, MobileFeature };
 });

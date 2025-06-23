@@ -78,6 +78,12 @@ class AuthCode extends Main\Engine\Controller
 			return null;
 		}
 
+		if(!$params["userId"])
+		{
+			$this->addError(new Main\Error(Loc::getMessage("main_authcode_incorrect_request"), "ERR_USER_ID"));
+			return null;
+		}
+
 		if(!preg_match('/^[0-9]{6}$/', $code))
 		{
 			$this->addError(new Main\Error(Loc::getMessage("main_authcode_incorrect_code"), "ERR_FORMAT_CODE"));

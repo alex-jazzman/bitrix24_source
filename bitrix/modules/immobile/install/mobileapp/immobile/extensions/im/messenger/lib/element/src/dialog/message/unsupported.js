@@ -2,10 +2,12 @@
  * @module im/messenger/lib/element/dialog/message/unsupported
  */
 jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, exports, module) => {
-	const { Message } = require('im/messenger/lib/element/dialog/message/base');
-	const { MessageType } = require('im/messenger/const');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { Color } = require('tokens');
+
+	const { Message } = require('im/messenger/lib/element/dialog/message/base');
+	const { MessageType } = require('im/messenger/const');
 
 	/**
 	 * @class UnsupportedMessage
@@ -26,11 +28,6 @@ jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, expor
 
 		getType()
 		{
-			if (Application.getApiVersion() >= 53)
-			{
-				return MessageType.unsupported;
-			}
-
 			return MessageType.text;
 		}
 
@@ -54,8 +51,11 @@ jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, expor
 		*/
 		setMessage()
 		{
-			const title = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED');
-			const text = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_LINK');
+			const title = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_TITLE');
+			const subtitle = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_SUBTITLE');
+			const urlText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_LINK_MSGVER_1');
+			const description = `[color=${Color.chatMyColorShade.toHex()}][b]${title}[/b]\n${subtitle}[/color]`;
+
 			let url = 'https://play.google.com/store/apps/details?id=com.bitrix24.android';
 			if (Application.getPlatform() === 'ios')
 			{
@@ -63,15 +63,9 @@ jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, expor
 			}
 
 			const message = {
-				text: `${title}\n[url=${url}]${text}[/url]`,
+				text: `${description}\n\n[url=${url}]${urlText}[/url]`,
 				type: 'text',
 			};
-
-			if (Application.getApiVersion() >= 53)
-			{
-				message.title = title;
-				message.text = `[url=${url}]${text}[/url]`;
-			}
 
 			this.message = [message];
 		}

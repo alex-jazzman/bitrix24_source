@@ -28,12 +28,17 @@ export const Cell = {
 			isFilterMode: `${Model.Interface}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
 			resizedBookingId: `${Model.Interface}/resizedBookingId`,
 			quickFilter: `${Model.Interface}/quickFilter`,
 		}),
+		draggedElementId(): number
+		{
+			return this.draggedDataTransfer.id;
+		},
 		isAvailable(): boolean
 		{
-			if (this.isFilterMode || this.resizedBookingId || (this.isEditingBookingMode && !this.draggedBookingId))
+			if (this.isFilterMode || this.resizedBookingId || (this.isEditingBookingMode && !this.draggedDataTransfer.id))
 			{
 				return false;
 			}
@@ -157,12 +162,14 @@ export const Cell = {
 				this.halfOffset = halfHour;
 			}
 
-			if (!bottomHalf && !canSubtractHalfHour && this.freeSpace.fromTs - this.cell.fromTs > 0)
+			if (
+				((!bottomHalf && !canSubtractHalfHour) || (bottomHalf && !canAddHalfHour))
+				&& this.freeSpace.fromTs - this.cell.fromTs > 0
+			)
 			{
 				this.halfOffset = this.freeSpace.fromTs - this.cell.fromTs;
 			}
-
-			if ((!bottomHalf && canSubtractHalfHour) || (bottomHalf && !canAddHalfHour))
+			else if ((!bottomHalf && canSubtractHalfHour) || (bottomHalf && !canAddHalfHour))
 			{
 				this.halfOffset = 0;
 			}
@@ -204,9 +211,9 @@ export const Cell = {
 		},
 	},
 	watch: {
-		draggedBookingId(): void
+		draggedElementId(): void
 		{
-			if (!this.draggedBookingId)
+			if (!this.draggedElementId)
 			{
 				void this.$store.dispatch(`${Model.Interface}/setHoveredCell`, null);
 			}

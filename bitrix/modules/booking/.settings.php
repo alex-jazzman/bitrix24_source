@@ -8,8 +8,12 @@ return [
 			'namespaces' => [
 				'\\Bitrix\\Booking\\Controller' => 'api',
 				'\\Bitrix\\Booking\\Controller\\V1' => 'api_v1',
+				'\\Bitrix\\Booking\\Rest\\V1\\Controller' => 'v1',
 			],
 			'defaultNamespace' => '\\Bitrix\\Booking\\Controller',
+			'restIntegration' => [
+				'enabled' => true,
+			],
 		],
 		'readonly' => true,
 	],
@@ -173,6 +177,17 @@ return [
 			'booking.overbooking.overlap.policy' => [
 				'className' => \Bitrix\Booking\Internals\Service\Overbooking\OverlapPolicy::class,
 			],
+			'booking.client.type.repository' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\ClientTypeRepository::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getClientTypeRepositoryMapper(),
+					];
+				},
+			],
+			'booking.client.type.repository.mapper' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\Mapper\ClientTypeMapper::class,
+			],
 			'booking.internals.booking.service' => [
 				'className' => \Bitrix\Booking\Internals\Service\BookingService::class,
 				'constructorParams' => static function() {
@@ -220,6 +235,17 @@ return [
 						'waitListItemRepository' => \Bitrix\Booking\Internals\Container::getWaitListItemRepository(),
 						'clientService' => \Bitrix\Booking\Internals\Container::getClientService(),
 						'externalDataService' => \Bitrix\Booking\Internals\Container::getExternalDataService(),
+					];
+				},
+			],
+			'booking.message.repository' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingMessageRepository::class,
+			],
+			'booking.internals.overbooking.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\Overbooking\OverbookingService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
 					];
 				},
 			],

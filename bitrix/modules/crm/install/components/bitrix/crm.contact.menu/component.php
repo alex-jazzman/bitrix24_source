@@ -481,8 +481,6 @@ if($arParams['TYPE'] === 'list')
 		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
 		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('CRM_CONTACT_EXPORT_EXCEL_TITLE');
 
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
-
 		$lockScript = null;
 		if (!RestrictionManager::getContactExportRestriction()->hasPermission())
 		{

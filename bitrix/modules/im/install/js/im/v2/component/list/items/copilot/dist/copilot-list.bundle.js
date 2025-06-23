@@ -3,14 +3,14 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_draft,main_date,im_v2_lib_utils,im_v2_lib_parser,im_v2_component_elements,im_v2_lib_dateFormatter,im_v2_application_core,im_v2_const,im_v2_lib_layout,im_v2_lib_logger,im_v2_provider_service,main_core,im_public,im_v2_lib_menu) {
+(function (exports,im_v2_lib_draft,im_v2_component_elements_listLoadingState,main_date,im_v2_component_list_items_elements_inputActionIndicator,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,im_v2_const,im_v2_lib_utils,im_v2_lib_parser,im_v2_component_elements_avatar,im_v2_application_core,im_v2_provider_service_recent,main_core,im_public,im_v2_lib_menu,im_v2_lib_feature) {
 	'use strict';
 
 	// @vue/component
 	const MessageText = {
 	  name: 'MessageText',
 	  components: {
-	    MessageAvatar: im_v2_component_elements.MessageAvatar
+	    MessageAvatar: im_v2_component_elements_avatar.MessageAvatar
 	  },
 	  props: {
 	    item: {
@@ -19,7 +19,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    recentItem() {
 	      return this.item;
 	    },
@@ -114,10 +114,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const CopilotItem = {
 	  name: 'CopilotItem',
 	  components: {
-	    ChatAvatar: im_v2_component_elements.ChatAvatar,
-	    ChatTitle: im_v2_component_elements.ChatTitle,
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
+	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle,
 	    MessageText,
-	    InputActionIndicator: im_v2_component_elements.InputActionIndicator
+	    InputActionIndicator: im_v2_component_list_items_elements_inputActionIndicator.InputActionIndicator
 	  },
 	  props: {
 	    item: {
@@ -129,7 +129,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    return {};
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    recentItem() {
 	      return this.item;
 	    },
@@ -168,6 +168,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    showPinnedIcon() {
 	      return this.recentItem.pinned && this.dialog.counter === 0 && !this.recentItem.unread;
+	    },
+	    showUnreadWithoutCounter() {
+	      return this.recentItem.unread && this.dialog.counter === 0;
 	    },
 	    showCounter() {
 	      return this.dialog.counter > 0;
@@ -222,6 +225,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 								<div v-else-if="showCounter" :class="{'--muted': isChatMuted}" class="bx-im-list-copilot-item__counter_number">
 									{{ formattedCounter }}
 								</div>
+								<div v-else-if="showUnreadWithoutCounter" class="bx-im-list-copilot-item__counter_number --no-counter"></div>
 							</div>
 						</div>
 					</div>
@@ -231,7 +235,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	class CopilotRecentService extends im_v2_provider_service.RecentService {
+	class CopilotRecentService extends im_v2_provider_service_recent.RecentService {
 	  getQueryParams(firstPage) {
 	    return {
 	      ONLY_COPILOT: 'Y',
@@ -252,31 +256,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      withBirthdays: false
 	    };
 	  }
-	  hideChat(dialogId) {
-	    im_v2_lib_logger.Logger.warn('Im.CopilotRecentList: hide chat', dialogId);
-	    const recentItem = im_v2_application_core.Core.getStore().getters['recent/get'](dialogId);
-	    if (!recentItem) {
-	      return;
-	    }
-	    im_v2_application_core.Core.getStore().dispatch('recent/delete', {
-	      id: dialogId
-	    });
-	    const chatIsOpened = im_v2_application_core.Core.getStore().getters['application/isChatOpen'](dialogId);
-	    if (chatIsOpened) {
-	      im_v2_lib_layout.LayoutManager.getInstance().clearCurrentLayoutEntityId();
-	      void im_v2_lib_layout.LayoutManager.getInstance().deleteLastOpenedElementById(dialogId);
-	    }
-	    im_v2_application_core.Core.getRestClient().callMethod(im_v2_const.RestMethod.imRecentHide, {
-	      DIALOG_ID: dialogId
-	    }).catch(error => {
-	      // eslint-disable-next-line no-console
-	      console.error('Im.CopilotRecentList: hide chat error', error);
-	    });
-	  }
 	}
 
 	class CopilotRecentMenu extends im_v2_lib_menu.RecentMenu {
 	  getMenuItems() {
+	    if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.showCopilotChatsInRecentTab)) {
+	      return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem(), this.getHideItem(), this.getLeaveItem()];
+	    }
 	    return [this.getPinMessageItem(), this.getHideItem(), this.getLeaveItem()];
 	  }
 	  getOpenItem() {
@@ -310,7 +296,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  name: 'CopilotList',
 	  components: {
 	    CopilotItem,
-	    LoadingState: im_v2_component_elements.ListLoadingState
+	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState
 	  },
 	  emits: ['chatClick'],
 	  data() {
@@ -349,7 +335,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    this.isLoading = true;
 	    await this.getRecentService().loadFirstPage();
 	    this.isLoading = false;
-	    void im_v2_lib_draft.CopilotDraftManager.getInstance().initDraftHistory();
+	    void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 	  },
 	  beforeUnmount() {
 	    this.contextMenuManager.destroy();
@@ -415,5 +401,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotList = CopilotList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Main,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Application,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=copilot-list.bundle.js.map

@@ -20,6 +20,11 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . $this->getFolder() . '/template.ph
 
 $this->setFrameMode(true);
 
+if (!Toolbar::isEnabled())
+{
+	return;
+}
+
 $favoriteTitleTemplate = (!empty($arParams['~FAVORITES_TITLE_TEMPLATE']) ? $arParams['~FAVORITES_TITLE_TEMPLATE'] : '');
 if (mb_strlen($favoriteTitleTemplate) <= 0)
 {

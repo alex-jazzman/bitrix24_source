@@ -137,6 +137,25 @@
 	}
 
 	/**
+	 * @param {[string|number[]]} arrays
+	 * @returns {string|number[]}
+	 */
+	function intersection(...arrays)
+	{
+		if (arrays.length === 0)
+		{
+			return [];
+		}
+
+		const [firstArray, ...restArrays] = arrays;
+		const items = firstArray.filter(item => {
+			return restArrays.every(array => array.includes(item));
+		});
+
+		return unique(items);
+	}
+
+	/**
 	 * @class ArrayUtils
 	 * @deprecated Please import specific utilities directly, using jn.require()
 	 */
@@ -167,6 +186,7 @@
 			mergeBy,
 			sortBy,
 			replaceBy,
+			intersection,
 		};
 	});
 })();

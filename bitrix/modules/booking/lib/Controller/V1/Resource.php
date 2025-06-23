@@ -54,7 +54,7 @@ class Resource extends BaseController
 
 			return null;
 		}
-			}
+	}
 
 	public function addAction(array $resource, int|null $copies = null): Entity\Resource\Resource|null
 	{

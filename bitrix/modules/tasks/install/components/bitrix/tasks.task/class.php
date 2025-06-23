@@ -140,6 +140,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 	protected $hitState = null;
 
+	/** @var \Bitrix\Tasks\Util\Error\Collection */
 	protected $errorCollection;
 
 	private bool $isFlowForm;
@@ -989,7 +990,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 				'THROTTLE_MESSAGES' => $parameters['THROTTLE_MESSAGES'],
 
 				// there also could be RETURN_CAN or RETURN_DATA, or both as RETURN_ENTITY
-				'RETURN_ENTITY' => $parameters['RETURN_ENTITY'],
+				'RETURN_ENTITY' => $parameters['RETURN_ENTITY'] ?? null,
 			]);
 
 			$result['ID'] = $taskId;
@@ -1473,6 +1474,11 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		return ["fileCount" => $fileCount];
 	}
 
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Controller\Task\Attention\Priority
+	 */
 	public function setPriorityAction($taskId, $priority)
 	{
 		$taskId = (int)$taskId;
@@ -1498,6 +1504,33 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			$this->addForbiddenError();
 			return $result;
+		}
+
+		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('priority'))
+		{
+			if ($priority === Priority::HIGH)
+			{
+				$result = (new \Bitrix\Tasks\V2\Command\Task\Attention\SetHighTaskPriorityCommand(
+					taskId: $taskId,
+					userId: $this->userId
+				))->run();
+			}
+			else
+			{
+				$result = (new \Bitrix\Tasks\V2\Command\Task\Attention\SetAverageTaskPriorityCommand(
+					taskId: $taskId,
+					userId: $this->userId
+				))->run();
+			}
+
+			if (!$result->isSuccess())
+			{
+				$this->errorCollection->add($result->getError());
+
+				return null;
+			}
+
+			return [];
 		}
 
 		$this->updateTask(
@@ -3068,6 +3101,24 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$data[Integration\Disk\UserField::getMainSysUFCode()] = $diskFiles;
 		}
 
+		// rewrite with direct data
+		$fileIds = $this->request->get('FILE_IDS');
+		if (!empty($fileIds))
+		{
+			$data[Integration\Disk\UserField::getMainSysUFCode()] = $fileIds;
+		}
+
+		$checklist = $this->request->get('CHECKLIST');
+		if (!empty($checklist))
+		{
+			uasort(
+				$checklist,
+				static fn ($a, $b): int => (int)($a['SORT_INDEX'] ?? 0) <=> (int)($b['SORT_INDEX'] ?? 0)
+			);
+
+			$data[Task\CheckList::getCode(true)] = $checklist;
+		}
+
 		// crm links
 		$ufCrm = Integration\CRM\UserField::getMainSysUFCode();
 		$crm = $this->hitState->get("INITIAL_TASK_DATA.{$ufCrm}");
@@ -3106,6 +3157,12 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$data['DEADLINE'] = $deadline;
 		}
 
+		$deadlineTs = (int)$this->request->get('DEADLINE_TS');
+		if ($deadlineTs > 0)
+		{
+			$data['DEADLINE'] = Main\Type\DateTime::createFromTimestamp($deadlineTs);
+		}
+
 		// START_DATE_PLAN
 		$startDatePlan = $this->hitState->get('INITIAL_TASK_DATA.START_DATE_PLAN');
 		if (!empty($startDatePlan))
@@ -3131,6 +3188,12 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if ($flowId)
 		{
 			$data['FLOW_ID'] = $flowId;
+		}
+
+		$isImportant = $this->request->get('IS_IMPORTANT') === 'Y';
+		if ($isImportant)
+		{
+			$data['PRIORITY'] = Priority::HIGH;
 		}
 
 		return ['DATA' => $data];

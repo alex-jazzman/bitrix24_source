@@ -11,6 +11,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		openChat: 'open_chat',
 		openExisting: 'open_existing',
 		openComments: 'open_comments',
+		openCreateMenu: 'open_create_menu',
 		createNewChat: 'create_new_chat',
 		clickCreateNew: 'click_create_new',
 		submitCreateNew: 'submit_create_new',
@@ -37,6 +38,25 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickAttach: 'click_attach',
 		galleryLimitException: 'gallery_limit_exception',
 		cancelFileUpload: 'cancel_file_upload',
+		pinMessage: 'pin_message',
+		unpinMessage: 'unpin_message',
+		openPinList: 'open_pinned_list',
+		pinnedMessageLimitException: 'pinned_message_limit_exception',
+		openSearch: 'open_search',
+		startSearch: 'start_search',
+		searchResult: 'search_result',
+		cancelSearch: 'cancel_search',
+		selectSearchResult: 'select_search_result',
+		backToSearch: 'back_to_search',
+		clickCreatePoll: 'click_create_poll',
+		publishPoll: 'publish_poll',
+		finishPoll: 'finish_poll',
+		vote: 'vote',
+		cancelVote: 'cancel_vote',
+		copyPollLink: 'copy_poll_link',
+		setOptions: 'set_options',
+		isMultipleChoice: 'is_multiple_choice',
+		setCancelVote: 'set_cancel_vote',
 	});
 
 	const Tool = Object.freeze({
@@ -104,6 +124,28 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		/* region media type */
 		media: 'media',
 		files: 'files',
+
+		/* region pins type */
+		singlePin: 'single',
+		multiplePins: 'multiple',
+		selectedPin: 'selected',
+		allPins: 'all',
+
+		/* region vote type */
+		votePublic: 'public',
+		voteAnonymous: 'anonymous',
+
+		/* region vote finisher type */
+		voteFinisherUser: 'user',
+		voteFinisherAutoTimer: 'autotimer',
+
+		/* region vote answers type */
+		voteAnswersTwo: 'two',
+		voteAnswersMultiple: 'multiple',
+
+		/* region vote link copy source type */
+		voteLinkCopySourceMessage: 'message_link',
+		voteLinkCopySourceResult: 'poll_results',
 	});
 
 	const Section = Object.freeze({
@@ -177,6 +219,11 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		collaber: 'user_collaber',
 	});
 
+	const Status = Object.freeze({
+		notFound: 'not_found',
+		success: 'success',
+	});
+
 	const Analytics = Object.freeze({
 		CopilotChatType,
 		Event,
@@ -189,6 +236,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		P1,
 		P2,
 		P3,
+		Status,
 	});
 
 	module.exports = { Analytics };

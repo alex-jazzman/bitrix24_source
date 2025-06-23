@@ -1,10 +1,21 @@
-import { TagSelector } from 'ui.entity-selector';
+import { TeamColorPicker } from '../team-color-picker/team-color-picker';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { EntityTypes, type NodeColorSettingsType } from 'humanresources.company-structure.utils';
+import { type BaseEvent } from 'main.core.events';
+import { TagSelector, type Item } from 'ui.entity-selector';
+import { MemoryCache } from 'main.core.cache';
 
+type DepartmentStepDataType = {
+	deniedError: boolean,
+	showColorPicker: boolean,
+	teamColorValue: NodeColorSettingsType | null,
+}
+
+// @vue/component
 export const Department = {
 	name: 'department',
 
-	emits: ['applyData'],
+	components: { TeamColorPicker },
 
 	props: {
 		parentId: {
@@ -26,13 +37,38 @@ export const Department = {
 		isEditMode: {
 			type: Boolean,
 		},
+		entityType: {
+			type: String,
+			required: true,
+		},
+		teamColor: {
+			type: [Object, null],
+			default: null,
+		},
+		refToFocus: {
+			type: String,
+			default: null,
+		},
 	},
 
-	data(): { deniedError: boolean; }
+	emits: ['applyData'],
+
+	data(): DepartmentStepDataType
 	{
 		return {
 			deniedError: false,
+			showColorPicker: false,
+			teamColorValue: this.teamColor,
 		};
+	},
+
+	watch:
+	{
+		isTeamEntity(): void
+		{
+			// tag selector is not valid now
+			this.recreateTagSelector();
+		},
 	},
 
 	created(): void
@@ -40,7 +76,8 @@ export const Department = {
 		this.selectedParentDepartment = this.parentId;
 		this.departmentName = this.name;
 		this.departmentDescription = this.description;
-		this.departmentsSelector = this.getTagSelector();
+		this.departmentSelectorCashe = new MemoryCache();
+		this.departmentsSelector = this.getOrCreateTagSelector();
 	},
 
 	mounted(): void
@@ -50,15 +87,54 @@ export const Department = {
 
 	activated(): void
 	{
-		this.applyData();
-		this.$refs.title.focus();
+		this.teamColorValue = this.teamColor;
+		this.$emit('applyData', {
+			isDepartmentDataChanged: false,
+			isValid:
+				this.departmentName !== ''
+				&& this.selectedParentDepartment !== null
+				&& !this.deniedError
+			,
+		});
+
+		if (this.refToFocus && this.$refs[this.refToFocus])
+		{
+			this.$refs[this.refToFocus].focus();
+		}
+		else
+		{
+			this.$refs.title.focus();
+		}
 	},
 
 	methods:
 	{
-		getTagSelector(): TagSelector
+		recreateTagSelector(): void
 		{
-			return new TagSelector({
+			this.$refs['tag-selector'].innerHTML = '';
+			this.departmentsSelector = this.getOrCreateTagSelector();
+			this.departmentsSelector.renderTo(this.$refs['tag-selector']);
+		},
+		createTagSelector(): TagSelector
+		{
+			const locked = this.parentId === 0 && this.isEditMode;
+			let preselectedItems = this.parentId ? [['structure-node', this.parentId]] : [];
+			if (!this.isEditMode)
+			{
+				const permissionChecker = PermissionChecker.getInstance();
+				const permissionAction = this.isTeamEntity ? PermissionActions.teamCreate : PermissionActions.departmentCreate;
+				if (
+					permissionChecker
+					&& !permissionChecker.hasPermission(permissionAction, this.parentId)
+				)
+				{
+					preselectedItems = [['structure-node', 0]];
+				}
+			}
+
+			const isTabEmpty = (tab) => tab.getRootNode().getChildren().count() === 0;
+
+			const selector = new TagSelector({
 				events: {
 					onTagAdd: (event: BaseEvent) => {
 						const { tag } = event.data;
@@ -70,7 +146,7 @@ export const Department = {
 					},
 				},
 				multiple: false,
-				locked: this.parentId === 0,
+				locked,
 				dialogOptions: {
 					width: 425,
 					height: 350,
@@ -81,12 +157,22 @@ export const Department = {
 							id: 'structure-node',
 							options: {
 								selectMode: 'departmentsOnly',
+								restricted: this.isEditMode ? 'update' : 'create',
+								includedNodeEntityTypes: this.includedNodeEntityTypesInDialog,
+								useMultipleTabs: true,
 							},
 						},
 					],
-					preselectedItems: this.parentId ? [['structure-node', this.parentId]] : [],
+					preselectedItems,
 					events: {
 						onLoad: (event) => {
+							const dialog = selector.getDialog();
+
+							dialog.getTabs()
+								.filter((tab) => isTabEmpty(tab))
+								.forEach((tab) => tab.setVisible(false))
+							;
+
 							if (this.isEditMode)
 							{
 								return;
@@ -102,12 +188,20 @@ export const Department = {
 							const selectedItem = target.selectedItems?.values()?.next()?.value;
 							const nodes = target.items.get('structure-node');
 
+							const permissionAction = this.isTeamEntity
+								? PermissionActions.teamCreate
+								: PermissionActions.departmentCreate
+							;
+
 							for (const [, node] of nodes)
 							{
-								if (permissionChecker.hasPermission(PermissionActions.departmentCreate, node.id)
-									&& !permissionChecker.hasPermission(PermissionActions.departmentCreate, selectedItem?.id))
+								if 	(
+									permissionChecker.hasPermission(permissionAction, node.id)
+									&& !permissionChecker.hasPermission(permissionAction, selectedItem?.id ?? 0)
+								)
 								{
 									node.select();
+
 									break;
 								}
 							}
@@ -116,7 +210,7 @@ export const Department = {
 							this.selectedParentDepartment = null;
 							this.applyData();
 						},
-						'Item:onSelect': (event) => {
+						'Item:onSelect': (event: BaseEvent<{ item: Item }>) => {
 							this.deniedError = false;
 
 							const target = event.target;
@@ -128,21 +222,41 @@ export const Department = {
 								return;
 							}
 
-							if (!permissionChecker.hasPermission(PermissionActions.departmentCreate, selectedItem.id))
+							const permissionCreateAction = this.isTeamEntity
+								? PermissionActions.teamCreate
+								: PermissionActions.departmentCreate
+							;
+
+							const permissionEditAction = this.isTeamEntity
+								? PermissionActions.teamEdit
+								: PermissionActions.departmentEdit
+							;
+
+							const permissionAction = this.isEditMode
+								? permissionEditAction
+								: permissionCreateAction
+							;
+
+							if (!permissionChecker.hasPermission(permissionAction, selectedItem.id))
 							{
 								this.deniedError = true;
 							}
+
 							this.applyData();
 						},
 					},
 				},
-				tagBgColor: '#ade7e4',
-				tagTextColor: '#207976',
-				tagFontWeight: '700',
-				tagAvatar: '/bitrix/js/humanresources/entity-selector/src/images/department.svg',
 			});
+
+			return selector;
 		},
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		getOrCreateTagSelector(): TagSelector
+		{
+			const key = String(this.isTeamEntity);
+
+			return this.departmentSelectorCashe.remember(key, () => this.createTagSelector());
+		},
+		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
@@ -152,6 +266,8 @@ export const Department = {
 				name: this.departmentName,
 				description: this.departmentDescription,
 				parentId: this.selectedParentDepartment,
+				teamColor: this.teamColorValue,
+				isDepartmentDataChanged: true,
 				isValid:
 					this.departmentName !== ''
 					&& this.selectedParentDepartment !== null
@@ -161,16 +277,51 @@ export const Department = {
 		},
 	},
 
+	computed:
+	{
+		includedNodeEntityTypesInDialog(): string[]
+		{
+			return this.isTeamEntity ? ['department', 'team'] : ['department'];
+		},
+		isTeamEntity(): boolean
+		{
+			return this.entityType === EntityTypes.team;
+		},
+		namePlaceholder(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_NAME_PLACEHOLDER_MSGVER_1')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_NAME_PLACEHOLDER');
+		},
+		descriptionPlaceholder(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_DESCR_PLACEHOLDER')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_DESCR_PLACEHOLDER');
+		},
+		higherLevelDepartmentContainer(): string
+		{
+			// for team entity department tag selector should be placed after name and description
+			// to presumably encourage user to fill in the description field
+			return this.isTeamEntity ? '.chart-wizard__department_higher_bottom' : '.chart-wizard__department_higher_top';
+		},
+	},
+
 	template: `
 		<div class="chart-wizard__department">
 			<div class="chart-wizard__form">
-				<div class="chart-wizard__department_item">
+				<Teleport defer :to="higherLevelDepartmentContainer">
 					<span class="chart-wizard__department_item-label">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_HIGHER_LABEL')}}
+						{{
+							isTeamEntity
+								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_HIGHER_WITH_TEAM_LABEL')
+								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_HIGHER_LABEL')
+						}}
 					</span>
 					<div
 						:class="{ 'ui-ctl-warning': deniedError || (selectedParentDepartment === null && shouldErrorHighlight) }"
-						ref="tag-selector"></div>
+						ref="tag-selector"
+					></div>
 					<div
 						v-if="deniedError || (selectedParentDepartment === null && shouldErrorHighlight)"
 						class="chart-wizard__department_item-error"
@@ -180,33 +331,58 @@ export const Department = {
 							v-if="deniedError"
 							class="chart-wizard__department_item-error-message"
 						>
-							{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ADD_TO_DEPARTMENT_DENIED_MSG_VER_1')}}
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ADD_TO_DEPARTMENT_DENIED_MSG_VER_1') }}
 						</span>
 						<span
 							v-else
 							class="chart-wizard__department_item-error-message"
 						>
-							{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_PARENT_ERROR')}}
+							{{
+								isTeamEntity
+									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_PARENT_ERROR')
+									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_PARENT_ERROR')
+							}}
 						</span>
 					</div>
+				</Teleport>
+				<div
+					v-show="!isTeamEntity"
+					class="chart-wizard__department_item chart-wizard__department_higher_top">
 				</div>
 				<div class="chart-wizard__department_item">
 					<span class="chart-wizard__department_item-label">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_NAME_LABEL')}}
+						{{
+							isTeamEntity
+								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_TEAM_NAME_LABEL')
+								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_NAME_LABEL') 
+						}}
 					</span>
-					<div
-						class="ui-ctl ui-ctl-textbox"
-						:class="{ 'ui-ctl-warning': shouldErrorHighlight && departmentName === '' }"
-					>
-						<input
-							v-model="departmentName"
-							type="text"
-							maxlength="255"
-							class="ui-ctl-element"
-							ref="title"
-							:placeholder="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_NAME_PLACEHOLDER')"
-							@input="applyData()"
-						/>
+					<div class="chart-wizard__department_control-wrapper">
+						<div
+							class="ui-ctl ui-ctl-textbox"
+							:class="{ 'ui-ctl-warning': shouldErrorHighlight && departmentName === '' }"
+						>
+							<input
+								v-model="departmentName"
+								type="text"
+								maxlength="255"
+								class="ui-ctl-element"
+								ref="title"
+								:placeholder="namePlaceholder"
+								@input="applyData()"
+							/>
+						</div>
+						<div v-if="isTeamEntity" 
+							 class="chart-wizard__department__color-picker" 
+							 @click="showColorPicker = true"
+							 ref="TeamColorPicker"
+							 :data-test-id="'wizard-department-color-picker'"
+							 :class="{ '--active': showColorPicker }"
+						>
+							<div class="chart-wizard__department__color-picker_inner"
+								 :style="{ 'background-color': teamColorValue?.pickerColor }"
+							></div>
+						</div>
 					</div>
 					<div
 						v-if="shouldErrorHighlight && departmentName === ''"
@@ -214,26 +390,42 @@ export const Department = {
 					>
 						<div class="ui-icon-set --warning"></div>
 						<span class="chart-wizard__department_item-error-message">
-							{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_NAME_ERROR')}}
+							{{
+								isTeamEntity
+									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_NAME_ERROR')
+									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_NAME_ERROR')
+							}}
 						</span>
 					</div>
 				</div>
 				<div class="chart-wizard__department_item">
 					<span class="chart-wizard__department_item-label">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_DESCR_LABEL')}}
+						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_DESCR_LABEL') }}
 					</span>
 					<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize">
 						<textarea
 							v-model="departmentDescription"
 							maxlength="255"
 							class="ui-ctl-element"
-							:placeholder="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_DESCR_PLACEHOLDER')"
+							ref="description"
+							:placeholder="descriptionPlaceholder"
 							@change="applyData()"
 						>
 						</textarea>
 					</div>
 				</div>
+				<div
+					v-show="isTeamEntity"
+					class="chart-wizard__department_item chart-wizard__department_higher_bottom"
+				></div>
 			</div>
+			<TeamColorPicker
+				v-if="showColorPicker"
+				:bindElement="$refs.TeamColorPicker"
+				v-model="teamColorValue"
+				@update:model-value="applyData()"
+				@close="showColorPicker = false"
+			/>
 		</div>
 	`,
 };

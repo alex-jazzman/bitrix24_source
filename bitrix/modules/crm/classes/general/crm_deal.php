@@ -22,7 +22,10 @@ use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Integration\Im\ProcessEntity\NotificationManager;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\RepeatSale\Log\Controller\RepeatSaleLogController;
+use Bitrix\Crm\RepeatSale\Segment\SegmentManager;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Security\QueryBuilder\Result\JoinWithUnionSpecification;
 use Bitrix\Crm\Service\Container;
@@ -483,6 +486,7 @@ class CAllCrmDeal
 		$result['ASSIGNED_BY'] = $result['ASSIGNED_BY_ID'];
 		$result['CREATED_BY'] = $result['CREATED_BY_ID'];
 		$result['MODIFY_BY'] = $result['MODIFY_BY_ID'];
+		$result['MOVED_BY'] = $result['MOVED_BY_ID'];
 
 		if(!is_array($arOptions))
 		{
@@ -3689,9 +3693,9 @@ class CAllCrmDeal
 
 			self::PullChange('UPDATE', array('ID' => $ID));
 
-			if(!$isSystemAction)
+			$stageSemanticsId = ($arFields['STAGE_SEMANTIC_ID'] ?? null) ?: $arRow['STAGE_SEMANTIC_ID'];
+			if (!$isSystemAction)
 			{
-				$stageSemanticsId = ($arFields['STAGE_SEMANTIC_ID'] ?? null) ?: $arRow['STAGE_SEMANTIC_ID'];
 				if(Crm\Ml\Scoring::isMlAvailable() && !Crm\PhaseSemantics::isFinal($stageSemanticsId))
 				{
 					Crm\Ml\Scoring::queuePredictionUpdate(CCrmOwnerType::Deal, $ID, [
@@ -3729,6 +3733,12 @@ class CAllCrmDeal
 					{
 						(new Bitrix\Crm\Service\Operation\Action\DeleteEntityBadges())->process($item);
 					}
+				}
+
+				if (Container::getInstance()->getRepeatSaleAvailabilityChecker()->isAvailable())
+				{
+					$repeatSaleController = RepeatSaleLogController::getInstance();
+					$repeatSaleController->updateStageSemanticId($stageSemanticsId, $ID, \CCrmOwnerType::Deal);
 				}
 			}
 
@@ -3977,6 +3987,8 @@ class CAllCrmDeal
 					'EVENT_ID' => ($arOptions['eventId'] ?? null),
 				]
 			);
+
+			SegmentManager::onEntityDelete(new ItemIdentifier(\CCrmOwnerType::Deal, $ID));
 		}
 		return true;
 	}

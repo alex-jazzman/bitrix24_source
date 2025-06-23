@@ -281,8 +281,6 @@ class Entities
 
 	public static function getLastSort($params = array())
 	{
-		global $USER;
-
 		$result = array(
 			'DATA' => array(),
 			'DATA_ADDITIONAL' => array()
@@ -316,11 +314,8 @@ class Entities
 
 		if (!$userId)
 		{
-			if ($USER->IsAuthorized())
-			{
-				$userId = $USER->getId();
-			}
-			else
+			$userId = \Bitrix\Main\Engine\CurrentUser::get()->getId();
+			if (!$userId)
 			{
 				return $result;
 			}
@@ -419,7 +414,7 @@ class Entities
 				$res = FinderDestTable::getList(array(
 					'order' => $order,
 					'filter' => array(
-						"USER_ID" => $USER->getId(),
+						"USER_ID" => $userId,
 						"=CODE_USER.EXTERNAL_AUTH_ID" => 'email',
 						"=CODE_TYPE" => 'U'
 					),

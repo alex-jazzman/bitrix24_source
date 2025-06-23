@@ -1,0 +1,3 @@
+<?php
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_HINT"] = "Бустарды тек веб-нұсқада сатып ала аласыз";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_TITLE"] = "CoPilot үшін бустар";

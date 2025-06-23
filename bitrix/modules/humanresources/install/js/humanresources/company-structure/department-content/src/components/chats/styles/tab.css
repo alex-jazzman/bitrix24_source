@@ -1,0 +1,27 @@
+.hr-department-detail-content__chat-empty-tab-add_tab-icon {
+	height: 112px;
+	width: 112px;
+	background-image: url('../images/empty-tab-add.svg');
+}
+
+.hr-department-detail-content__chat-empty-tab-list-item_tab-icon {
+	width: 32px;
+	height: 32px;
+	background-image: url("../images/empty-list-item.svg");
+}
+
+.hr-department-detail-content__chat-empty-tab-add_chat-button-icon {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-70)
+}
+
+.--isExtranet .hr-department-detail-content__tab-list_item-title {
+	color: var(--ui-color-extranet);
+}
+
+.--isExtranet  .hr-department-detail-content__tab-list_item-title:hover {
+	border-color: var(--ui-color-extranet);
+}
+
+.hr-department-detail-content__tab-list_item-action-btn.--chat-item-action-btn {
+	--ui-icon-set__icon-size: 20px;
+}

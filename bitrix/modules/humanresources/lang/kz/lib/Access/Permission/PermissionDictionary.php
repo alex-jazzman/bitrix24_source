@@ -1,0 +1,27 @@
+<?php
+$MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_2"] = "Бөлім жойылғаннан кейін оның барлық қызметкерлері мен бағыныстағы бөлімдері жоғары бөлімге ауыстырылады";
+$MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_2"] = "Компания құрылымындағы бөлімнің атауы мен сипаттамасы";
+$MESS["HINT_HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_1"] = "Битрикс24-тен қызметкерлерді қосу мүмкіндігі, бірақ жаңаларын шақырмаңыз";
+$MESS["HINT_HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT_MSGVER_1"] = "Қызметкер құрылымда қалады және егер ол басқа бөлімге немесе бөлімшеге қосылмаған болса, компания директорына бағынады";
+$MESS["HINT_HUMAN_RESOURCES_TEAM_DELETE"] = "Команда жойылғаннан кейін барлық қатысушылар өз бөлімдерінде қалады";
+$MESS["HINT_HUMAN_RESOURCES_TEAM_EDIT_MSGVER_1"] = "Компания құрылымындағы команданың атауы мен сипаттамасы";
+$MESS["HINT_HUMAN_RESOURCES_TEAM_MEMBER_ADD"] = "Жаңа қызметкерлерді шақыру мүмкіндігінсіз сіздің Битрикс24-тен қатысушыларды қосу";
+$MESS["HINT_HUMAN_RESOURCES_TEAM_MEMBER_REMOVE"] = "Қатысушылар өз бөлімдерінде қалады және тек командадан шығарылады";
+$MESS["HINT_HUMAN_RESOURCES_TEAM_SETTINGS_EDIT"] = "Бизнес-процестер мен жұмыс есептерін баптау";
+$MESS["HUMAN_RESOURCES_DEPARTMENT_CREATE_MSGVER_1"] = "Құрылымға жаңа бөлімдер қосу";
+$MESS["HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_1"] = "Құрылымнан бөлімдерді жою ";
+$MESS["HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_1"] = "Бөлім туралы ақпаратты өңдеу";
+$MESS["HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_2"] = "Бөлімге қызметкерді қосу";
+$MESS["HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT"] = "Қызметкерді бөлімнен алып тастау";
+$MESS["HUMAN_RESOURCES_FIRE_EMPLOYEE"] = "Қызметкерлерді Битрикс24-тен шығару";
+$MESS["HUMAN_RESOURCES_STRUCTURE_VIEW_MSGVER_1"] = "Компания бөлімдерін қарау";
+$MESS["HUMAN_RESOURCES_TEAM_ACCESS_EDIT"] = "Қол жеткізу құқықтарын басқару";
+$MESS["HUMAN_RESOURCES_TEAM_CREATE"] = "Жаңа командаларды қосу";
+$MESS["HUMAN_RESOURCES_TEAM_DELETE"] = "Командаларды жою";
+$MESS["HUMAN_RESOURCES_TEAM_EDIT"] = "Командаларды өңдеу";
+$MESS["HUMAN_RESOURCES_TEAM_MEMBER_ADD"] = "Командаға қатысушыларді қосу";
+$MESS["HUMAN_RESOURCES_TEAM_MEMBER_REMOVE"] = "Қатысушыларды командадан шығару";
+$MESS["HUMAN_RESOURCES_TEAM_SETTINGS_EDIT"] = "Басшылардың өкілеттіктерін редакциялау";
+$MESS["HUMAN_RESOURCES_TEAM_VIEW"] = "Командаларды қарау";
+$MESS["HUMAN_RESOURCES_USERS_ACCESS_EDIT_MSGVER_1"] = "Қол жеткізу құқықтарын басқару";
+$MESS["HUMAN_RESOURCES_USER_INVITE"] = "Қызметкерлерді Битрик24-ке шақыру";

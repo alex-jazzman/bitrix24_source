@@ -36,23 +36,23 @@ if(LANGUAGE_ID == 'de'):
 				<table>
 					<tr>
 						<td width="28px">
-							<a target="_blank" href="http://www.facebook.com/bitrix24de"><img alt="Facebook" src="http://bitrix24.com/bitrix/templates/b24/img/icoFacebook.png"></a>
+							<a target="_blank" href="http://www.facebook.com/bitrix24de"><img alt="Facebook" src="https://bitrix24.com/bitrix/templates/b24/img/icoFacebook.png"></a>
 						</td>
 						<td width="2px"></td>
 						<td width="28px">
-							<a target="_blank" href="http://twitter.com/bitrix24de"><img alt="Twitter" src="http://bitrix24.com/bitrix/templates/b24/img/icoTwitter.png"></a>
+							<a target="_blank" href="http://twitter.com/bitrix24de"><img alt="Twitter" src="https://bitrix24.com/bitrix/templates/b24/img/icoTwitter.png"></a>
 						</td>
 						<td width="2px"></td>
 						<td width="28px">
-							<a target="_blank" href="http://www.xing.com/net/bitrix"><img alt="Xing" src="http://bitrix24.com/bitrix/templates/b24/img/icoXing.png"></a>
+							<a target="_blank" href="http://www.xing.com/net/bitrix"><img alt="Xing" src="https://bitrix24.com/bitrix/templates/b24/img/icoXing.png"></a>
 						</td>
 						<td width="2px"></td>
 						<td width="28px">
-							<a target="_blank" href="https://plus.google.com/+Bitrix24Deu/videos"><img alt="Google+" src="http://bitrix24.com/bitrix/templates/b24/img/icoGoogle.png"></a>
+							<a target="_blank" href="https://plus.google.com/+Bitrix24Deu/videos"><img alt="Google+" src="https://bitrix24.com/bitrix/templates/b24/img/icoGoogle.png"></a>
 						</td>
 						<td width="2px"></td>
 						<td width="28px">
-							<a target="_blank" href="http://www.youtube.com/channel/UC8G6EN8RSb3N_FRO8oFjDMQ"><img alt="YouTube" src="http://bitrix24.com/bitrix/templates/b24/img/icoYoutube.png"></a>
+							<a target="_blank" href="http://www.youtube.com/channel/UC8G6EN8RSb3N_FRO8oFjDMQ"><img alt="YouTube" src="https://bitrix24.com/bitrix/templates/b24/img/icoYoutube.png"></a>
 						</td>
 					</tr>
 					<tr>
@@ -70,27 +70,27 @@ elseif(\Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID) == 'en'):
 					<tbody>
 					<tr>
 						<td width="28px">
-							<a target="_blank" href="http://www.facebook.com/bitrix24"><img alt="Facebook" src="http://bitrix24.com/bitrix/templates/b24/img/icoFacebook.png"></a>
+							<a target="_blank" href="http://www.facebook.com/bitrix24"><img alt="Facebook" src="https://bitrix24.com/bitrix/templates/b24/img/icoFacebook.png"></a>
 						</td>
 						<td width="2px">
 						</td>
 						<td width="28px">
-							<a target="_blank" href="http://twitter.com/bitrix24"><img alt="Twitter" src="http://bitrix24.com/bitrix/templates/b24/img/icoTwitter.png"></a>
+							<a target="_blank" href="http://twitter.com/bitrix24"><img alt="Twitter" src="https://bitrix24.com/bitrix/templates/b24/img/icoTwitter.png"></a>
 						</td>
 						<td width="2px">
 						</td>
 						<td width="28px">
-							<a target="_blank" href="http://www.linkedin.com/groups/Bitrix24-4426654"><img alt="LinkedIn" src="http://bitrix24.com/bitrix/templates/b24/img/icoLinkedin.png"></a>
+							<a target="_blank" href="http://www.linkedin.com/groups/Bitrix24-4426654"><img alt="LinkedIn" src="https://bitrix24.com/bitrix/templates/b24/img/icoLinkedin.png"></a>
 						</td>
 						<td width="2px">
 						</td>
 						<td width="28px">
-							<a target="_blank" href="https://plus.google.com/101157989654968484902"><img alt="Google+" src="http://bitrix24.com/bitrix/templates/b24/img/icoGoogle.png"></a>
+							<a target="_blank" href="https://plus.google.com/101157989654968484902"><img alt="Google+" src="https://bitrix24.com/bitrix/templates/b24/img/icoGoogle.png"></a>
 						</td>
 						<td width="2px">
 						</td>
 						<td width="28px">
-							<a target="_blank" href="http://www.youtube.com/bitrix24"><img alt="YouTube" src="http://bitrix24.com/bitrix/templates/b24/img/icoYoutube.png"></a>
+							<a target="_blank" href="http://www.youtube.com/bitrix24"><img alt="YouTube" src="https://bitrix24.com/bitrix/templates/b24/img/icoYoutube.png"></a>
 						</td>
 					</tr>
 					<tr>

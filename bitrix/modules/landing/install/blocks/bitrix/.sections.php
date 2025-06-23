@@ -156,4 +156,8 @@ return [
 		'name' => Loc::getMessage('LD_BLOCK_SECTION_VIDEO'),
 		'type' => ['mainpage'],
 	],
+	'widgets_tiles' => [
+		'name' => Loc::getMessage('LD_BLOCK_SECTION_TILES_NEW2'),
+		'type' => ['mainpage'],
+	],
 ];

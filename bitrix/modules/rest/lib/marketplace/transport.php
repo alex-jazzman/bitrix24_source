@@ -29,7 +29,6 @@ class Transport
 		'ru' => 'https://util.1c-bitrix.ru/',
 		'kz' => 'https://util.1c-bitrix.kz/',
 		'by' => 'https://util.1c-bitrix.by/',
-		'ua' => 'https://util.bitrix.ua/',
 	];
 	public const SERVICE_TYPE_APP = 'APP';
 	public const SERVICE_TYPE_COUPON = 'COUPON';

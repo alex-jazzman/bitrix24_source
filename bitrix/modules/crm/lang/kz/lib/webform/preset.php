@@ -1,4 +1,11 @@
 <?php
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_ANY_RESOURCE_NAME"] = "Қолжетімділерден таңдау";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_AUTO_SELECTION_NAME"] = "Автоматты таңдау";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_BUTTON_CAPTION"] = "Жазылу";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_CONTACT_SECTION_CAPTION"] = "Байланыс ақпараты";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_FAILURE_TEXT"] = "Жазылу мүмкін болмады, қайталап көріңіз";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_MANUAL_SETTING_NAME"] = "Барлығынан таңдау";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_SUCCESS_TEXT"] = "Дайын!";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_BUTTON_CAPTION"] = "Мен сізден қоңырау күтемін";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_CALL_TEXT"] = "Сайттан кері байланысқа өтінім қалдырылды, сізді клиентпен байланыстырамын.";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_CAPTION"] = "Іздегеніңізді таппадыңыз ба?";
@@ -8,6 +15,7 @@ $MESS["CRM_WEBFORM_PRESET_ITEM_CB_RESULT_SUCCESS_TEXT"] = "Жуырдағы бі
 $MESS["CRM_WEBFORM_PRESET_ITEM_CD_CAPTION"] = "Байланыс деректері";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CD_DESCRIPTION"] = "Байланыс деректеріңізді қалдырыңыз, біз сізбен міндетті түрде хабарласамыз";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CD_NAME"] = "Байланыс деректері";
+$MESS["CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_BOOKING_RESOURCE"] = "Онлайн-жазылу";
 $MESS["CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_COMMENTS"] = "Түсініктеме";
 $MESS["CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_EMAIL"] = "E-mail";
 $MESS["CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_LAST_NAME"] = "Тегі";

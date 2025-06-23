@@ -9,7 +9,11 @@ return [
 	'js' => 'dist/ui.buttons.bundle.js',
 	'rel' => [
 		'ui.design-tokens',
+		'ui.design-tokens.air',
 		'ui.fonts.opensans',
-		'main.popup'
+		'main.popup',
+		'ui.cnt',
+		'ui.switcher',
+		'ui.icon-set.outline',
 	]
 ];

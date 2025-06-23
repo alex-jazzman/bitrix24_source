@@ -1,5 +1,5 @@
-import {DialogId} from "../../../types/common";
-import {DialogPermissions, DialogType, LastMessageViews,} from "../../../model/types/dialogues";
+import {DialogId} from '../../../types/common';
+import {DialogPermissions, DialogType, LastMessageViews,} from '../../../model/dialogues/src/types';
 
 declare type DialogStoredData = {
 	dialogId: DialogId,
@@ -30,4 +30,7 @@ declare type DialogStoredData = {
 	role: string,
 	permissions: DialogPermissions,
 	aiProvider: string,
+	textFieldEnabled: boolean,
+	backgroundId: string,
+	containsCollaber: boolean,
 };

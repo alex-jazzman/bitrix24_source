@@ -3,15 +3,12 @@ import { Dom, Type } from 'main.core';
 
 export class PushInvitations extends BX.UI.Notification.Balloon
 {
+	invitationButton: ?Element = null;
 	constructor(...args) {
 		super(...args);
 
 		this.doNotAdjustPosition = true;
-		let invitationButton = this.getData().target;
-		if (invitationButton.length > 0)
-		{
-			invitationButton = invitationButton[0];
-		}
+		this.invitationButton = this.getData().target;
 
 		addEventListener('resize', (event) => {
 			for (const key of Object.keys(BX.UI.Notification.Center.balloons))
@@ -19,8 +16,8 @@ export class PushInvitations extends BX.UI.Notification.Balloon
 				const ballon = BX.UI.Notification.Center.balloons[key];
 				if (ballon.category === 'PushInvitations')
 				{
-					ballon.getContainer().style.left = `${invitationButton.offsetLeft - invitationButton.scrollWidth - 100}px`;
-					ballon.getContainer().style.top = `${invitationButton.offsetTop + invitationButton.scrollHeight + 25}px`;
+					ballon.getContainer().style.left = `${this.invitationButton.offsetLeft - this.invitationButton.scrollWidth - 100}px`;
+					ballon.getContainer().style.top = `${this.invitationButton.offsetTop + this.invitationButton.scrollHeight + 25}px`;
 				}
 			}
 		});

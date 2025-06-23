@@ -1,6 +1,6 @@
-import BaseButton from '../base-button';
+import BaseButton, { type SetCounterOptions } from '../base-button';
 import { Menu } from 'main.popup';
-import { Type, Dom, Text, Event } from 'main.core';
+import { Type, Dom, Text, Event, Tag } from 'main.core';
 import ButtonColor from './button-color';
 import ButtonSize from './button-size';
 import ButtonIcon from './button-icon';
@@ -9,6 +9,11 @@ import ButtonStyle from './button-style';
 import ButtonTag from './button-tag';
 import { ButtonOptions } from './button-options';
 import { type MenuOptions } from 'main.popup';
+import AirButtonStyle from './air-button-style';
+import { ButtonCounterOptions, ButtonCounterSize, SplitButton } from 'ui.buttons';
+import { getCounterSize } from '../helpers/counter-size';
+import 'ui.cnt';
+import 'ui.icon-set.api.core';
 
 /**
  * @namespace {BX.UI}
@@ -16,6 +21,9 @@ import { type MenuOptions } from 'main.popup';
 export default class Button extends BaseButton
 {
 	static BASE_CLASS = 'ui-btn';
+
+	#style: ?string;
+	#isWide: boolean = false;
 
 	constructor(options: ButtonOptions)
 	{
@@ -39,11 +47,29 @@ export default class Button extends BaseButton
 		this.setDependOnTheme(this.options.dependOnTheme);
 		this.setSize(this.options.size);
 		this.setColor(this.options.color);
-		this.setIcon(this.options.icon);
+		this.setIcon(this.options.icon, this.options.iconPosition || 'left');
 		this.setState(this.options.state);
 		this.setId(this.options.id);
 		this.setMenu(this.options.menu);
 		this.setContext(this.options.context);
+		this.setWide(this.options.wide === true);
+		this.setLeftCorners(this.options.removeLeftCorners !== true);
+		this.setRightCorners(this.options.removeRightCorners !== true);
+		if (this.options.collapsedIcon)
+		{
+			this.setCollapsedIcon(this.options.collapsedIcon);
+		}
+
+		if (this.hasAirDesign())
+		{
+			this.setStyle(this.options.style || AirButtonStyle.FILLED);
+			this.setNoCaps(true);
+
+			if (!this.text && !(this instanceof SplitButton))
+			{
+				this.setCollapsed(true);
+			}
+		}
 
 		this.options.noCaps && this.setNoCaps();
 		this.options.round && this.setRound();
@@ -60,6 +86,27 @@ export default class Button extends BaseButton
 	static Icon = ButtonIcon;
 	static Tag = ButtonTag;
 	static Style = ButtonStyle;
+	static AirStyle = AirButtonStyle;
+
+	setText(text: string): this {
+		super.setText(text);
+
+		if (this.hasAirDesign() === false)
+		{
+			return this;
+		}
+
+		if (this.text)
+		{
+			Dom.removeClass(this.getContainer(), 'ui-btn-collapsed');
+		}
+		else
+		{
+			Dom.addClass(this.getContainer(), 'ui-btn-collapsed');
+		}
+
+		return this;
+	}
 
 	/**
 	 * @public
@@ -102,11 +149,40 @@ export default class Button extends BaseButton
 	/**
 	 * @public
 	 * @param {?ButtonIcon} icon
+	 * @param iconPosition
 	 * @return {this}
 	 */
-	setIcon(icon: ButtonIcon | null): this
+	setIcon(icon: ButtonIcon | null, iconPosition: 'right' | 'left' = 'left'): this
 	{
-		this.setProperty('icon', icon, ButtonIcon);
+		if (icon)
+		{
+			Dom.addClass(this.getContainer(), 'ui-icon-set__scope');
+		}
+		else
+		{
+			Dom.removeClass(this.getContainer(), 'ui-icon-set__scope');
+		}
+
+		if (icon && iconPosition === 'left')
+		{
+			this.setProperty('icon', icon, ButtonIcon);
+			Dom.addClass(this.getContainer(), '--with-left-icon');
+		}
+		else if (iconPosition === 'left')
+		{
+			this.setProperty('icon', icon, ButtonIcon);
+			Dom.removeClass(this.getContainer(), '--with--left-icon');
+		}
+		else if (icon && iconPosition === 'right')
+		{
+			this.setProperty('icon', icon, ButtonIcon);
+			Dom.addClass(this.getContainer(), '--with-right-icon');
+		}
+		else if (iconPosition === 'right')
+		{
+			this.setProperty('icon', icon, ButtonIcon);
+			Dom.removeClass(this.getContainer(), '--with-right-icon');
+		}
 
 		if (this.isInputType() && this.getIcon() !== null)
 		{
@@ -114,6 +190,25 @@ export default class Button extends BaseButton
 		}
 
 		return this;
+	}
+
+	setCollapsedIcon(icon: ButtonIcon | null): this
+	{
+		if (icon)
+		{
+			Dom.addClass(this.getContainer(), '--with-collapsed-icon');
+			Dom.addClass(this.getContainer(), 'ui-icon-set__scope');
+		}
+		else
+		{
+			Dom.removeClass(this.getContainer(), '--with-collapsed-icon');
+			Dom.removeClass(this.getContainer(), 'ui-icon-set__scope');
+		}
+
+		if (icon)
+		{
+			this.setProperty('icon', icon, ButtonIcon);
+		}
 	}
 
 	/**
@@ -270,6 +365,13 @@ export default class Button extends BaseButton
 	 */
 	setCollapsed(flag: ? boolean): this
 	{
+		if (this.hasAirDesign() && !this.getText())
+		{
+			Dom.addClass(this.getContainer(), ButtonStyle.COLLAPSED);
+
+			return this;
+		}
+
 		if (flag === false)
 		{
 			Dom.removeClass(this.getContainer(), ButtonStyle.COLLAPSED);
@@ -289,6 +391,36 @@ export default class Button extends BaseButton
 	isCollapsed(): boolean
 	{
 		return Dom.hasClass(this.getContainer(), ButtonStyle.COLLAPSED);
+	}
+
+	// works only with air buttons
+	setLeftCorners(flag: boolean): this
+	{
+		if (flag === false)
+		{
+			Dom.addClass(this.getContainer(), '--remove-left-corners');
+		}
+		else
+		{
+			Dom.removeClass(this.getContainer(), '--remove-left-corners');
+		}
+
+		return this;
+	}
+
+	// works only with air buttons
+	setRightCorners(flag: boolean): this
+	{
+		if (flag === false)
+		{
+			Dom.addClass(this.getContainer(), '--remove-right-corners');
+		}
+		else
+		{
+			Dom.removeClass(this.getContainer(), '--remove-right-corners');
+		}
+
+		return this;
 	}
 
 	/**
@@ -554,5 +686,107 @@ export default class Button extends BaseButton
 	getContext(): any
 	{
 		return this.context;
+	}
+
+	setWide(isWide: boolean): this
+	{
+		this.#isWide = isWide === true;
+
+		if (isWide)
+		{
+			Dom.addClass(this.getContainer(), '--wide');
+		}
+		else
+		{
+			Dom.removeClass(this.getContainer(), '--wide');
+		}
+
+		return this;
+	}
+
+	isWide(): boolean
+	{
+		return this.#isWide;
+	}
+
+	// This method works only with useAirDesign: true option
+	setStyle(style: string): void
+	{
+		if (this.hasAirDesign() === false)
+		{
+			console.warn('Style option works only with air buttons.');
+
+			return;
+		}
+
+		if (Object.values(AirButtonStyle).includes(style) === false)
+		{
+			console.warn('Undefined style option. Use value from AirButtonStyle');
+
+			return;
+		}
+
+		Dom.removeClass(this.getContainer(), this.#style);
+		Dom.addClass(this.getContainer(), style);
+
+		this.#style = style;
+	}
+
+	getStyle(): string
+	{
+		return this.#style;
+	}
+
+	setLeftCounter(options: ButtonCounterOptions | null): this {
+		if (options)
+		{
+			const optionsWithSize = { ...options };
+			if (this.getSize())
+			{
+				optionsWithSize.size = this.getSize();
+			}
+
+			super.setLeftCounter(optionsWithSize);
+		}
+		else
+		{
+			super.setLeftCounter(null);
+		}
+
+		return this;
+	}
+
+	setRightCounter(options: ButtonCounterOptions | null): this {
+		if (options)
+		{
+			const optionsWithSize = { ...options };
+
+			if (this.getSize())
+			{
+				optionsWithSize.size = this.getSize();
+			}
+
+			super.setRightCounter(optionsWithSize);
+		}
+		else
+		{
+			super.setRightCounter(null);
+		}
+
+		return this;
+	}
+
+	startShimmer(): void
+	{
+		const highlighter = Tag.render`<span class="ui-button__shimmer"></span>`;
+
+		Dom.append(highlighter, this.getContainer());
+	}
+
+	stopShimmer(): void
+	{
+		const highlighter = this.getContainer().querySelector('.ui-button__shimmer');
+
+		Dom.remove(highlighter);
 	}
 }

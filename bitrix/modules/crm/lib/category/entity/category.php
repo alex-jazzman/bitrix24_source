@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Category\Entity;
 
 use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Event;
 use Bitrix\Main\Result;
 
 abstract class Category implements \JsonSerializable
@@ -111,5 +112,22 @@ abstract class Category implements \JsonSerializable
 		}
 
 		return $filter;
+	}
+
+	protected function processDeletedEvent(): void
+	{
+		$this->sendBitrixEvent(
+			type: 'onCategoryDelete',
+			parameters:  [
+				'id' => $this->getId(),
+				'entityTypeId' => $this->getEntityTypeId(),
+				'code' => $this->getCode(),
+			],
+		);
+	}
+
+	private function sendBitrixEvent(string $type, array $parameters = []): void
+	{
+		(new Event('crm', $type, $parameters))->send();
 	}
 }

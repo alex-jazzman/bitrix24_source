@@ -80,17 +80,18 @@ jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module
 			return true;
 		}
 
-		static getCreateEntityHandler(providerOptions, getParentLayoutFunction = null, analytics = {})
+		static getCreateEntityHandler(providerOptions, createOptions)
 		{
 			// to prevent cyclical dependency
 			const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+			const { getParentLayout, analytics } = createOptions;
 
 			return (text, allowMultipleSelection) => {
 				return new Promise((resolve, reject) => {
 					openIntranetInviteWidget({
 						analytics,
 						multipleInvite: allowMultipleSelection,
-						parentLayout: getParentLayoutFunction ? getParentLayoutFunction() : null,
+						parentLayout: getParentLayout ? getParentLayout() : null,
 						onInviteSentHandler: (users) => {
 							if (Array.isArray(users) && users.length > 0)
 							{

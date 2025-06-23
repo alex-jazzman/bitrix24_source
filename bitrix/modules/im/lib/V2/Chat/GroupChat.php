@@ -5,18 +5,23 @@ namespace Bitrix\Im\V2\Chat;
 use Bitrix\Im\Notify;
 use Bitrix\Im\Color;
 use Bitrix\Im\V2\Analytics\ChatAnalytics;
+use Bitrix\Im\V2\Call\CallToken;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\Copilot\CopilotPopupItem;
+use Bitrix\Im\V2\Chat\Param\Params;
 use Bitrix\Im\V2\Entity\File\ChatAvatar;
+use Bitrix\Im\V2\Entity\User\User;
+use Bitrix\Im\V2\Entity\User\UserCollection;
 use Bitrix\Im\V2\Entity\User\UserPopupItem;
+use Bitrix\Im\V2\Entity\User\UserType;
 use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Integration\HumanResources\Structure;
+use Bitrix\Im\V2\Logger;
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\Send\PushService;
 use Bitrix\Im\V2\Message\Send\SendingConfig;
 use Bitrix\Im\V2\Relation;
 use Bitrix\Im\V2\Relation\AddUsersConfig;
-use Bitrix\Im\V2\Relation\Reason;
 use Bitrix\Im\V2\Rest\PopupData;
 use Bitrix\Im\V2\Rest\PopupDataAggregatable;
 use Bitrix\Im\V2\Result;
@@ -28,6 +33,7 @@ use Bitrix\ImBot\Bot\SupportBox;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Pull\Event;
+use Bitrix\Im\V2\Message\Delete\DisappearService;
 
 class GroupChat extends Chat implements PopupDataAggregatable
 {
@@ -146,75 +152,76 @@ class GroupChat extends Chat implements PopupDataAggregatable
 			'CHAT' => $chat,
 		]);
 
-		self::cleanCache($chat->getChatId());
-		$chat->isFilledNonCachedData = false;
-		$chat->onUserAddAfterChatCreate($usersToInvite);
+		$chat->onAfterAdd();
+		$chat->onUserAddAfterChatAdd($usersToInvite);
 
 		return $result;
 	}
 
 	protected function onBeforeAdd(?Context $context = null): void
 	{
-		$this->setExtranet($this->checkIsExtranet())->setContext($context);
-		$this->setUserIds($this->resolveRelationConflicts($this->getValidUsersToAdd($this->getUserIds())));
-		$this->setUserCount(count($this->getUserIds()));
+		$userIds = $this->getUserIds() ?? [];
+		$containsExtranet = UserCollection::hasUserByType($userIds, UserType::EXTRANET);
+		$this->setExtranet($containsExtranet)->setContext($context);
+		if (UserCollection::hasUserByType($userIds, UserType::COLLABER))
+		{
+			$this->getChatParams()->addParamByName(Params::CONTAINS_COLLABER, true, false);
+		}
+
+		$this->setUserCount(count($userIds));
 	}
 
-	protected function onUserAddAfterChatCreate(array $addedUsers): void
+	protected function onAfterAdd(?Context $context = null): void
+	{
+		Message\Delete\DisappearService::sendMessageAfterChatAdd($this);
+
+		self::cleanCache($this->getChatId());
+		$this->isFilledNonCachedData = false;
+	}
+
+	protected function onUserAddAfterChatAdd(array $addedUsers): void
 	{
 		return;
 	}
 
 	protected function filterParams(array $params): array
 	{
-		if (isset($params['USER_ID']))
+		if (
+			isset($params['MESSAGES_AUTO_DELETE_DELAY'])
+			&& (int)$params['MESSAGES_AUTO_DELETE_DELAY'] !== 0
+			&& !DisappearService::checkAvailability($this->getExtendedType(false))->isSuccess()
+		)
 		{
-			$params['USER_ID'] = (int)$params['USER_ID'];
+			unset($params['MESSAGES_AUTO_DELETE_DELAY']);
 		}
-		else
-		{
-			$params['USER_ID'] = $this->getContext()->getUserId();
-		}
-
-		if (isset($params['AUTHOR_ID']))
-		{
-			$params['AUTHOR_ID'] = (int)$params['AUTHOR_ID'];
-		}
-		elseif (isset($params['OWNER_ID']))
-		{
-			$params['AUTHOR_ID'] = (int)$params['OWNER_ID'];
-		}
-
-		foreach (['USERS', 'MANAGERS'] as $paramName)
-		{
-			if (!isset($params[$paramName]) || !is_array($params[$paramName]))
-			{
-				$params[$paramName] = [];
-			}
-			else
-			{
-				$params[$paramName] = filter_var(
-					$params[$paramName],
-					FILTER_VALIDATE_INT,
-					[
-						'flags' => FILTER_REQUIRE_ARRAY,
-						'options' => ['min_range' => 1]
-					]
-				);
-
-				foreach ($params[$paramName] as $key => $paramValue)
-				{
-					if (!is_int($paramValue))
-					{
-						unset($params[$paramName][$key]);
-					}
-				}
-			}
-		}
-
-		$params['SKIP_ADD_MESSAGE'] = isset($params['SKIP_ADD_MESSAGE']) && $params['SKIP_ADD_MESSAGE'] === 'Y';
 
 		return $params;
+	}
+
+	protected function validateAuthorId(int $authorId): Result
+	{
+		$result = new Result();
+		if ($authorId <= 0)
+		{
+			return $result->addError(
+				new ChatError(
+					ChatError::AUTHOR_ID_EMPTY,
+					'Using AUTHOR_ID = 0 is deprecated and will be disallowed soon. Please provide a valid user ID.'
+				)
+			);
+		}
+
+		if (!User::getInstance($authorId)->isExist())
+		{
+			return $result->addError(
+				new ChatError(
+					ChatError::AUTHOR_NOT_EXISTS,
+					'The specified AUTHOR_ID does not match any existing user. Please provide a valid user ID.'
+				)
+			);
+		}
+
+		return $result;
 	}
 
 	protected function prepareParams(array $params = []): Result
@@ -222,23 +229,21 @@ class GroupChat extends Chat implements PopupDataAggregatable
 		$result = new Result();
 		$params = $this->filterParams($params);
 
-		if (!isset($params['AUTHOR_ID']))
+		$params['AUTHOR_ID'] = (int)($params['AUTHOR_ID'] ?? $this->getContext()->getUserId());
+		$validateAuthorIdResult = $this->validateAuthorId((int)$params['AUTHOR_ID']);
+		if (!$validateAuthorIdResult->isSuccess())
 		{
-			$params['AUTHOR_ID'] = $this->getContext()->getUserId();
+			(new Logger('chat-creation-author-id-error'))->logErrors($validateAuthorIdResult->getErrorCollection());
 		}
 
-		if (!isset($params['OWNER_ID']))
-		{
-			$params['OWNER_ID'] = $this->getContext()->getUserId();
-		}
-
+		$users = $params['USERS'] ?? [];
+		$managers = $params['MANAGERS'] ?? [];
+		$params['USERS'] = is_array($users) ? $users : [];
+		$params['MANAGERS'] = is_array($managers) ? $managers : [];
 		[$users, $structureNodes] = Structure::splitEntities($params['MEMBER_ENTITIES'] ?? []);
 
-		$params['MANAGERS'] ??= [];
 		$params['MANAGERS'] = array_unique(array_merge($params['MANAGERS'], [$params['AUTHOR_ID']]));
-
-		$params['USERS'] = array_filter(array_unique(array_merge($params['USERS'], $params['MANAGERS'], $users)));
-		$params['USER_COUNT'] = count($params['USERS']);
+		$params['USERS'] = array_unique(array_merge($params['USERS'], $params['MANAGERS'], $users));
 		$params['STRUCTURE_NODES'] = $structureNodes;
 
 		if (
@@ -254,7 +259,8 @@ class GroupChat extends Chat implements PopupDataAggregatable
 
 	protected function addUsersToRelation(array $usersToAdd, AddUsersConfig $config): void
 	{
-		$config->setHideHistory($config->isHideHistory() ?? \CIMSettings::GetStartChatMessage() == \CIMSettings::START_MESSAGE_LAST);
+		$isHideHistory = $config->hideHistory ?? \CIMSettings::GetStartChatMessage() == \CIMSettings::START_MESSAGE_LAST;
+		$config = $config->setHideHistory($isHideHistory);
 		parent::addUsersToRelation($usersToAdd, $config);
 	}
 
@@ -423,7 +429,7 @@ class GroupChat extends Chat implements PopupDataAggregatable
 		}
 		$author = \Bitrix\Im\V2\Entity\User\User::getInstance($authorId);
 
-		$replace = ['#USER_NAME#' => htmlspecialcharsback($author->getName())];
+		$replace = ['#USER_NAME#' => "[USER={$authorId}][/USER]"];
 		$messageText =  Loc::getMessage($this->getCodeGreetingMessage($author), $replace);
 
 		if ($messageText)
@@ -649,14 +655,18 @@ class GroupChat extends Chat implements PopupDataAggregatable
 
 	public function getPopupData(array $excludedList = []): PopupData
 	{
-		$userIds = [$this->getContext()->getUserId()];
+		$userId = $this->getContext()->getUserId();
 
-		return new PopupData(
-			[
-				new UserPopupItem($userIds),
-				new CopilotPopupItem($this->getCopilotRoles(), CopilotPopupItem::ENTITIES['chat']),
-			],
-			$excludedList
-		);
+		return parent::getPopupData($excludedList)
+			->add(new UserPopupItem([$userId]))
+			->add(new CopilotPopupItem($this->getCopilotRoles(), Chat\Copilot\Entity::Chats))
+			->add(new Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs([$this->getChatId()]))
+			->add(new CallToken($this->getId(), $userId))
+		;
+	}
+
+	protected function needToSendMessageUserDelete(): bool
+	{
+		return true;
 	}
 }

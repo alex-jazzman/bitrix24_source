@@ -27,7 +27,6 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		ChannelItem,
 	} = require('im/messenger/lib/element');
 	const {
-		DialogType,
 		BotType,
 		ComponentCode,
 		UserType,

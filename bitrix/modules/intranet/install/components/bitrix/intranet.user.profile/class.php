@@ -2,6 +2,8 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Intranet\User\Access\Model\TargetUserModel;
+use Bitrix\Intranet\User\Access\UserAccessController;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Intranet\Component\UserProfile;
@@ -162,6 +164,12 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->arResult['ADDITIONAL_BLOCKS'] = $this->getAdditionalBlocks();
 		$this->arResult['IS_ADDITIONAL_BLOCK'] = !empty($this->arResult['ADDITIONAL_BLOCKS']);
 
+		$access = UserAccessController::createByDefault();
+		$userAccessModel = TargetUserModel::createFromArray($this->arResult['User']);
+		$this->arResult['ACTIONS_AVAILABILITY'] = $access->batchCheck(
+			\Bitrix\Intranet\User\Access\UserActionDictionary::valuesForBatchCheck(),
+			$userAccessModel,
+		);
 
 		$this->processShowYear();
 

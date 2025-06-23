@@ -24,6 +24,8 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Type\JwtHolder;
 use Bitrix\Disk\User;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\Application;
 use Bitrix\Main\Engine\ActionFilter\Authentication;
 use Bitrix\Disk\Controller\Integration\Filter\JwtFilter;
 use Bitrix\Disk\Internals\Engine\Controller;
@@ -74,30 +76,24 @@ final class Flipchart extends Controller implements JwtHolder
 				],
 			],
 			'getDocument' => [
-				'+prefilters' => [
-					// new Jwt(self::FLIPCHART_JWT_SECRET, $this),
-				],
 				'-prefilters' => [
 					Csrf::class,
 					Authentication::class,
 				],
 			],
 			'openDocument' => [
-				'+prefilters' => [
-					// new Jwt(self::FLIPCHART_JWT_SECRET, $this),
-				],
 				'-prefilters' => [
 					Csrf::class,
-					Authentication::class,
+				],
+			],
+			'openAttachedDocument' => [
+				'-prefilters' => [
+					Csrf::class,
 				],
 			],
 			'viewDocument' => [
-				'+prefilters' => [
-					// new Jwt(self::FLIPCHART_JWT_SECRET, $this),
-				],
 				'-prefilters' => [
 					Csrf::class,
-					Authentication::class,
 				],
 			],
 		];
@@ -181,6 +177,11 @@ final class Flipchart extends Controller implements JwtHolder
 				)
 				{
 					$boardService->saveDocument();
+
+					Application::getInstance()->addBackgroundJob(function() {
+						$event = new AnalyticsEvent('save_changes', 'boards', 'boards');
+						$event->send();
+					});
 				}
 
 				break;
@@ -195,6 +196,11 @@ final class Flipchart extends Controller implements JwtHolder
 				if ($editAllowed)
 				{
 					$boardService->saveDocument();
+
+					Application::getInstance()->addBackgroundJob(function() {
+						$event = new AnalyticsEvent('save_changes', 'boards', 'boards');
+						$event->send();
+					});
 				}
 				$boardService->closeSession();
 
@@ -238,9 +244,52 @@ final class Flipchart extends Controller implements JwtHolder
 		return new BFile($object);
 	}
 
-	public function openDocumentAction(int $fileId, CurrentUser $currentUser): ?HttpResponse
+	/**
+	 * @param int $fileId AttachedObject ID
+	 * @param CurrentUser $currentUser
+	 * @return HttpResponse|null
+	 */
+	public function openAttachedDocumentAction(?AttachedObject $attachedObject, CurrentUser $currentUser): ?HttpResponse
 	{
-		$file = File::getById($fileId);
+		if (!$attachedObject)
+		{
+			return $this->getErrorPageResponse();
+		}
+
+		$attachedCanUpdate = $attachedObject->canUpdate((int)$currentUser->getId());
+		$attachedCanRead = $attachedCanUpdate || $attachedObject->canRead((int)$currentUser->getId());
+
+		if (!$attachedCanRead)
+		{
+			return $this->getErrorPageResponse();
+		}
+
+		$sessionType = $attachedCanUpdate ? DocumentSession::TYPE_EDIT : DocumentSession::TYPE_VIEW;
+
+		$manager = new SessionManager();
+		$manager->setFile($attachedObject->getFile());
+		$manager->setUserId((int)$currentUser->getId());
+		$manager->setSessionType($sessionType);
+		$manager->setSessionContext(
+			new DocumentSessionContext(
+				(int)$attachedObject->getFileId(),
+				(int)$attachedObject->getId(),
+				null,
+			),
+		);
+
+		$session = $manager->findOrCreateSession();
+
+		if (!$session)
+		{
+			return $this->getErrorPageResponse();
+		}
+
+		return $this->viewDocumentAction($session, $currentUser, $attachedObject->getFile());
+	}
+
+	public function openDocumentAction(?File $file, CurrentUser $currentUser): ?HttpResponse
+	{
 		if (!$file)
 		{
 			return $this->getErrorPageResponse();
@@ -267,40 +316,12 @@ final class Flipchart extends Controller implements JwtHolder
 		$fileCanUpdate = $file->canUpdate($securityContext);
 		$fileCanRead = $fileCanUpdate || $file->canRead($securityContext);
 
-		$attachedCanRead = false;
-		$attachedCanUpdate = false;
-		$attachedObjectId = null;
 		if (!$fileCanRead && !$fileCanUpdate)
 		{
-			$attachedObjects = $file->getAttachedObjects();
-			if ($attachedObjects)
-			{
-				foreach ($attachedObjects as $attachedObject)
-				{
-					if (!$attachedCanUpdate && $attachedObject->canUpdate((int)$currentUser->getId()))
-					{
-						$attachedCanUpdate = true;
-						$attachedCanRead = true;
-						$attachedObjectId = (int)$attachedObject->getId();
-						break;
-					}
-					if (!$attachedCanRead && $attachedObject->canRead((int)$currentUser->getId()))
-					{
-						$attachedCanRead = true;
-						$attachedObjectId = (int)$attachedObject->getId();
-					}
-				}
-			}
-
-			if (!$attachedCanRead && !$attachedCanUpdate)
-			{
-				return $this->getErrorPageResponse();
-			}
+			return $this->getErrorPageResponse();
 		}
 
-		$sessionType = ($fileCanUpdate || $attachedCanUpdate)
-			? DocumentSession::TYPE_EDIT
-			: DocumentSession::TYPE_VIEW;
+		$sessionType = $fileCanUpdate ? DocumentSession::TYPE_EDIT : DocumentSession::TYPE_VIEW;
 
 		$manager = new SessionManager();
 		$manager->setFile($file);
@@ -309,7 +330,7 @@ final class Flipchart extends Controller implements JwtHolder
 		$manager->setSessionContext(
 			new DocumentSessionContext(
 				(int)$file->getId(),
-				$attachedObjectId,
+				null,
 				null,
 			),
 		);

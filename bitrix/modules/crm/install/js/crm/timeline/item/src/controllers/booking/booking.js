@@ -1,5 +1,6 @@
 import { ActionParams, Base } from '../base';
 import ConfigurableItem from 'crm.timeline.item';
+import { showCyclePopup } from './show-cycle-popup';
 
 export class Booking extends Base
 {
@@ -12,12 +13,17 @@ export class Booking extends Base
 			return;
 		}
 
-		if (action === 'Activity:Booking:ShowBooking')
+		if (action === `${item.getType()}:ShowBooking`)
 		{
 			const url = `/booking/?editingBookingId=${actionData.id}`;
 			BX.SidePanel.Instance.open(url, {
 				customLeftBoundary: 0,
 			});
+		}
+
+		if (action === `${item.getType()}:ShowCyclePopup`)
+		{
+			showCyclePopup(actionData.status);
 		}
 	}
 

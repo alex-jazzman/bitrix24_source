@@ -97,7 +97,6 @@ export class HistoryLimit
 			case SidebarDetailBlock.brief:
 			case SidebarDetailBlock.document:
 			case SidebarDetailBlock.media:
-			case SidebarDetailBlock.other:
 				return 'docs';
 			case SidebarDetailBlock.messageSearch:
 				return 'message_search';

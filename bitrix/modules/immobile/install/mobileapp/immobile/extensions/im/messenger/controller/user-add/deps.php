@@ -6,7 +6,7 @@ return [
 		'loc',
 		'im:lib/theme',
 		'im:messenger/lib/di/service-locator',
-		'im:messenger/provider/service',
+		'im:messenger/provider/services/chat',
 		'im:messenger/const',
 		'im:messenger/controller/search',
 		'im:messenger/lib/element',

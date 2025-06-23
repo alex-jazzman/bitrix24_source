@@ -246,6 +246,14 @@
 					useNewStyle: true,
 					notRequireChanges: true,
 				},
+				{
+					exp: /\/bitrix\/components\/bitrix\/voting\.attached\.result\/slider\.php\?signedattachid=(\d+\.\w+)/gi,
+					replace: '/bitrix/components/bitrix/voting.attached.result/slider.php?signedAttachId=$1',
+				},
+				{
+					exp: /\/vote-result\/([\w.]+)/gi,
+					replace: '/vote-result/$1',
+				},
 			];
 
 			var params = null;
@@ -303,6 +311,13 @@
 					openFunction(data) {
 						// eslint-disable-next-line no-undef
 						BXMobileApp.Events.postToComponent('taskbackground::task::open', [data, params], 'background');
+					},
+				},
+				{
+					resolveFunction: BX.MobileTools.callIdFromUrl,
+					openFunction(data) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('callbackground::call::followup', data, 'background');
 					},
 				},
 				{
@@ -484,6 +499,16 @@
 						BXMobileApp.Events.postToComponent('calendar::event::ics', { eventId });
 					},
 				},
+				{
+					resolveFunction: BX.MobileTools.getSignedAttachIdFromUrl,
+					openFunction(signedAttachId) {
+						BXMobileApp.Events.postToComponent(
+							'ImMobile.Messenger.VoteResult:open',
+							{ signedAttachId },
+							'im.messenger',
+						);
+					},
+				},
 			];
 
 			resolveList.push(
@@ -656,6 +681,24 @@
 					return {
 						taskId: result[2],
 						messageId,
+					};
+				}
+			}
+		},
+		callIdFromUrl(url)
+		{
+			var regs = [
+				/\/call\/detail\/(\d+)/i,
+				/\/call\/\?callId=(\d+)/i,
+			];
+
+			for (var i = 0; i < regs.length; i++)
+			{
+				var result = url.match(regs[i]);
+				if (result)
+				{
+					return {
+						callId: result[1],
 					};
 				}
 			}
@@ -998,6 +1041,24 @@
 			}
 
 			return { eventId };
+		},
+		getSignedAttachIdFromUrl(url)
+		{
+			const regs = [
+				/\/bitrix\/components\/bitrix\/voting\.attached\.result\/slider\.php\?signedattachid=(\d+\.\w+)/i,
+				/\/vote-result\/([\w.]+)/i,
+			];
+
+			for (const reg of regs)
+			{
+				const result = url.match(reg);
+				if (result)
+				{
+					return result[1];
+				}
+			}
+
+			return null;
 		},
 		createCardScanner(options)
 		{

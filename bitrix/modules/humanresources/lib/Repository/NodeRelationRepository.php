@@ -13,11 +13,15 @@ use Bitrix\HumanResources\Model\NodeRelationTable;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Enum\EventName;
 use Bitrix\HumanResources\Type\MemberEntityType;
+use Bitrix\HumanResources\Type\NodeEntityType;
+use Bitrix\HumanResources\Type\NodeEntityTypeCollection;
+use Bitrix\HumanResources\Type\RelationEntitySubtype;
 use Bitrix\HumanResources\Type\RelationEntityType;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\HumanResources\Contract;
+use InvalidArgumentException;
 
 class NodeRelationRepository implements Contract\Repository\NodeRelationRepository
 {
@@ -40,6 +44,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			entityId:       $nodeRelation->getEntityId(),
 			entityType:     RelationEntityType::tryFrom($nodeRelation->getEntityType()),
 			withChildNodes: $nodeRelation->getWithChildNodes(),
+			entitySubtype:  RelationEntitySubtype::tryFrom($nodeRelation->getEntitySubtype() ?? ''),
 			id:             $nodeRelation->getId(),
 			createdBy:      $nodeRelation->getCreatedBy(),
 			createdAt:      $nodeRelation->getCreatedAt(),
@@ -55,10 +60,11 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			entityId: $nodeRelation['ENTITY_ID'],
 			entityType: RelationEntityType::tryFrom($nodeRelation['ENTITY_TYPE']),
 			withChildNodes: $nodeRelation['WITH_CHILD_NODES'] === 'Y',
+			entitySubtype: RelationEntitySubtype::tryFrom($nodeRelation['ENTITY_SUBTYPE'] ?? ''),
 			id: $nodeRelation['ID'],
 			createdBy: $nodeRelation['CREATED_BY'],
 			createdAt: $nodeRelation['CREATED_AT'],
-			updatedAt: $nodeRelation['UPDATED_BY'],
+			updatedAt: $nodeRelation['UPDATED_AT'],
 			node: $this->nodeRepository->getById($nodeRelation['NODE_ID']),
 		);
 	}
@@ -89,8 +95,9 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			->setNodeId($nodeRelation->nodeId)
 			->setCreatedBy($currentUserId)
 			->setEntityId($nodeRelation->entityId)
-			->setEntityType($nodeRelation->entityType->name)
+			->setEntityType($nodeRelation->entityType->value)
 			->setWithChildNodes($nodeRelation->withChildNodes)
+			->setEntitySubtype($nodeRelation->entitySubtype?->value)
 			->save()
 		;
 
@@ -103,11 +110,34 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		$nodeRelation->id = $nodeRelationCreateResult->getId();
 		$nodeRelation->node = $this->nodeRepository->getById($nodeRelation->nodeId);
 
-		$this->eventSenderService->send(EventName::RELATION_ADDED, [
+		$this->eventSenderService->send(EventName::OnRelationAdded, [
 			'relation' => $nodeRelation,
 		]);
 
 		return $nodeRelation;
+	}
+
+	public function createByCollection(
+		Item\Collection\NodeRelationCollection $nodeRelationCollection,
+	): Item\Collection\NodeRelationCollection
+	{
+		$connection = Application::getConnection();
+		try
+		{
+			$connection->startTransaction();
+			foreach ($nodeRelationCollection as $nodeRelation)
+			{
+				$this->create($nodeRelation);
+			}
+			$connection->commitTransaction();
+		}
+		catch (\Exception $exception)
+		{
+			$connection->rollbackTransaction();
+			throw $exception;
+		}
+
+		return $nodeRelationCollection;
 	}
 
 	public function remove(Item\NodeRelation $nodeRelation): void
@@ -125,7 +155,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			;
 		}
 
-		$this->eventSenderService->send(EventName::RELATION_DELETED, [
+		$this->eventSenderService->send(EventName::OnRelationDeleted, [
 			'relation' => $nodeRelation,
 		]);
 	}
@@ -142,7 +172,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		$nodeRelations = new Item\Collection\NodeRelationCollection();
 		foreach ($relations as $nodeRelationEntity)
 		{
-			$nodeRelations->add($this->convertModelToItem($nodeRelationEntity));
+			$nodeRelations->add($this->convertModelToItemFromArray($nodeRelationEntity));
 		}
 
 		return $nodeRelations;
@@ -158,7 +188,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			NodeRelationTable::query()
 				->setSelect(['*'])
 				->where('NODE_ID', $nodeId)
-				->where('ENTITY_TYPE', $entityType->name)
+				->where('ENTITY_TYPE', $entityType->value)
 				->where('ENTITY_ID', $entityId)
 				->fetchObject()
 		;
@@ -182,7 +212,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			NodeRelationTable::query()
 				->setSelect(['*'])
 				->where('NODE_ID', $nodeId)
-				->where('ENTITY_TYPE', $entityType->name)
+				->where('ENTITY_TYPE', $entityType->value)
 				->where('ENTITY_ID', $entityId)
 				->where('WITH_CHILD_NODES', $withChildNodes)
 				->fetchObject()
@@ -205,7 +235,8 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		MemberEntityType $memberEntityType,
 		RelationEntityType $relationEntityType,
 		int $limit = 100,
-		int $offset = 0
+		int $offset = 0,
+		NodeEntityTypeCollection $nodeEntityTypeCollection = new NodeEntityTypeCollection(NodeEntityType::DEPARTMENT),
 	): Item\Collection\NodeRelationCollection
 	{
 		$connection = Application::getConnection();
@@ -215,6 +246,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			$memberEntityId,
 			$memberEntityType,
 			$relationEntityType,
+			$nodeEntityTypeCollection
 		);
 
 		$nodeRelations = $this->getLimitedNodeRelationCollection($query, $offset, $limit);
@@ -224,6 +256,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 			$memberEntityId,
 			$memberEntityType,
 			$relationEntityType,
+			$nodeEntityTypeCollection
 		);
 
 		$count = $connection
@@ -246,15 +279,26 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		int $nodeId,
 		RelationEntityType $relationEntityType,
 		int $limit = 100,
-		int $offset = 0
+		int $offset = 0,
+		NodeEntityTypeCollection $nodeEntityTypeCollection = new NodeEntityTypeCollection(NodeEntityType::DEPARTMENT),
 	): Item\Collection\NodeRelationCollection
 	{
+		$node = $this->nodeRepository->getById($nodeId);
+
+		if ($node?->isTeam())
+		{
+			$nodeEntityTypeCollection = new NodeEntityTypeCollection(
+				NodeEntityType::TEAM,
+			);
+		}
+
 		$connection = Application::getConnection();
 
 		$query = $this->prepareFindRelationByNodeIdQuery(
 			'DISTINCT nr.*',
 			$nodeId,
 			$relationEntityType,
+			$nodeEntityTypeCollection,
 		);
 
 		$nodeRelations = $this->getLimitedNodeRelationCollection($query, $offset, $limit);
@@ -266,7 +310,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		);
 
 		$count =
-			$connection->query($countQuery)
+				$connection->query($countQuery)
 				->fetch()
 		;
 
@@ -282,21 +326,43 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		int $memberEntityId,
 		MemberEntityType $memberEntityType,
 		RelationEntityType $relationEntityType,
+		NodeEntityTypeCollection $nodeEntityTypeCollection = new NodeEntityTypeCollection(NodeEntityType::DEPARTMENT),
 	): string
 	{
-		$relationEntityType = $relationEntityType->name;
-		$memberEntityType = $memberEntityType->name;
+		$relationEntityType = $relationEntityType->value;
+		$memberEntityType = $memberEntityType->value;
 		$nodeTableName = Model\NodeTable::getTableName();
 		$nodePathTableName = Model\NodePathTable::getTableName();
 		$nodeRelationTableName = Model\NodeRelationTable::getTableName();
 		$nodeMemberTableName = Model\NodeMemberTable::getTableName();
+
+		if (empty($nodeEntityTypeCollection->getItems()))
+		{
+			$nodeEntityTypeCollection = new NodeEntityTypeCollection(
+				NodeEntityType::DEPARTMENT,
+				NodeEntityType::TEAM
+			);
+		}
+
+		$helper = Application::getConnection()->getSqlHelper();
+
+		$types = implode(
+			',',
+			array_map(
+				static function(NodeEntityType $type) use ($helper) {
+					$type = $helper->forSql($type->value);
+					return "'$type'";
+				},
+				$nodeEntityTypeCollection->getItems(),
+			),
+		);
 
 		return <<<SQL
 SELECT $select
 	FROM $nodeTableName n
 		   INNER JOIN $nodePathTableName np ON np.CHILD_ID = n.ID
 		   INNER JOIN $nodeRelationTableName nr ON (
-	nr.WITH_CHILD_NODES = 'Y' AND (np.PARENT_ID = nr.NODE_ID OR nr.NODE_ID = n.ID)
+	nr.WITH_CHILD_NODES = 'Y' AND (np.PARENT_ID = nr.NODE_ID OR nr.NODE_ID = n.ID) AND n.TYPE in ($types)
 		  OR
 	nr.WITH_CHILD_NODES = 'N' AND nr.NODE_ID = n.ID
     )
@@ -317,7 +383,7 @@ SQL;
 		$relations =
 			NodeRelationTable::query()
 				->setSelect(['*'])
-				->where('ENTITY_TYPE', $entityType->name)
+				->where('ENTITY_TYPE', $entityType->value)
 				->where('ENTITY_ID', $entityId)
 				->fetchAll()
 		;
@@ -334,20 +400,42 @@ SQL;
 	private function prepareFindRelationByNodeIdQuery(
 		string $select,
 		int $nodeId,
-		RelationEntityType $relationEntityType
+		RelationEntityType $relationEntityType,
+		NodeEntityTypeCollection $nodeEntityTypeCollection = new NodeEntityTypeCollection(NodeEntityType::DEPARTMENT),
 	): string
 	{
-		$relationEntityType = $relationEntityType->name;
+		$relationEntityType = $relationEntityType->value;
 		$nodeTableName = Model\NodeTable::getTableName();
 		$nodePathTableName = Model\NodePathTable::getTableName();
 		$nodeRelationTableName = Model\NodeRelationTable::getTableName();
+
+		if (empty($nodeEntityTypeCollection->getItems()))
+		{
+			$nodeEntityTypeCollection = new NodeEntityTypeCollection(
+				NodeEntityType::DEPARTMENT,
+				NodeEntityType::TEAM
+			);
+		}
+
+		$helper = Application::getConnection()->getSqlHelper();
+
+		$types = implode(
+			',',
+			array_map(
+				static function(NodeEntityType $type) use ($helper) {
+					$type = $helper->forSql($type->value);
+					return "'$type'";
+				},
+				$nodeEntityTypeCollection->getItems(),
+			),
+		);
 
 		return <<<SQL
 SELECT $select
   from $nodeTableName n
 		   INNER JOIN $nodePathTableName np ON np.CHILD_ID = n.ID
 		   INNER JOIN $nodeRelationTableName nr ON (
-	  nr.WITH_CHILD_NODES = 'Y' AND (np.PARENT_ID = nr.NODE_ID OR nr.NODE_ID = n.ID)
+	  nr.WITH_CHILD_NODES = 'Y' AND (np.PARENT_ID = nr.NODE_ID OR nr.NODE_ID = n.ID) AND n.TYPE IN ($types)
 		  OR
 	  nr.WITH_CHILD_NODES = 'N' AND nr.NODE_ID = n.ID
 	  )
@@ -374,13 +462,16 @@ SQL;
 	{
 		$connection = Application::getConnection();
 
-		if ($connection->getType() === 'mysql')
+		if ($limit && $offset)
 		{
-			$query .= " LIMIT $offset, $limit";
-		}
-		else
-		{
-			$query .= " LIMIT $limit OFFSET $offset";
+			if ($connection->getType() === 'mysql')
+			{
+				$query .= " LIMIT $offset, $limit";
+			}
+			else
+			{
+				$query .= " LIMIT $limit OFFSET $offset";
+			}
 		}
 
 		$relations =
@@ -395,5 +486,61 @@ SQL;
 		}
 
 		return $nodeRelations;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function findRelationsByRelationType(
+		RelationEntityType $relationEntityType,
+		int $limit = 100,
+		int $offset = 0
+	): Item\Collection\NodeRelationCollection
+	{
+		$query =
+			NodeRelationTable::query()
+			 ->setSelect(['*'])
+			->where('ENTITY_TYPE', $relationEntityType->value)
+		;
+
+		if ($limit)
+		{
+			$query->setLimit($limit);
+		}
+
+		if ($offset)
+		{
+			$query->setOffset($offset);
+		}
+
+		$relations = $query->fetchAll();
+		$nodeRelations = new Item\Collection\NodeRelationCollection();
+		foreach ($relations as $nodeRelationEntity)
+		{
+			$nodeRelations->add($this->convertModelToItemFromArray($nodeRelationEntity));
+		}
+
+		return $nodeRelations;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function deleteRelationByEntityTypeAndEntityIds(RelationEntityType $entityType, array $entityIds): void
+	{
+		if (array_filter($entityIds, 'is_int') !== $entityIds)
+		{
+			throw new InvalidArgumentException("All entity IDs must be integers.");
+		}
+
+		try
+		{
+			Model\NodeRelationTable::deleteList([
+				'=ENTITY_TYPE' => $entityType->value,
+				'@ENTITY_ID' => $entityIds,
+			]);
+		}
+		catch (\Exception)
+		{}
 	}
 }

@@ -5,7 +5,7 @@
 .vote-creation-form__questions,
 .vote-creation-form__settings {
 	background: var( --ui-color-palette-white-base);
-	padding: 18px;
+	padding: 18px 24px;
 	border-radius: 12px;
 	-webkit-box-shadow: 0 2px 4px 0 #00000005;
 	        box-shadow: 0 2px 4px 0 #00000005;
@@ -30,8 +30,10 @@
 	border-radius: var(--ui-border-radius-sm);
 	padding-top: 14px;
 	padding-bottom: 14px;
+	padding-right: 35px;
 	overflow-y: hidden;
 	height: 48px;
+	line-height: 18px;
 }
 
 .vote-creation-form__question_label,
@@ -40,12 +42,12 @@
 	font-weight: var(--ui-font-weight-medium);
 	line-height: var(--ui-font-line-height-sm);
 	color: var(--ui-color-palette-black-base);
-	margin: 0 0 18px 0;
+	margin: 0 0 22px 0;
 }
 
 .vote-creation-form__question_answer-options {
 	color: var(--ui-color-palette-black-base);
-	margin: 20px 0;
+	margin: 23px 0 21px;
 }
 
 .vote-creation-form__question_answer-options,
@@ -70,7 +72,11 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	margin-bottom: 15px;
+	margin-bottom: 14px;
+}
+
+.vote-creation-form__answer:last-child {
+	margin-bottom: 0;
 }
 
 .vote-creation-form__answer_dnd-icon {
@@ -90,6 +96,7 @@
 	left: 0;
 	z-index: 1;
 	width: 100%;
+	margin-bottom: 0;
 }
 
 .vote-creation-form__answer_position-pointer {
@@ -100,15 +107,36 @@
 	left: 0;
 }
 
-.vote-creation-form__answer_trash {
+.vote-creation-form__answer_delete {
 	cursor: pointer;
 	width: 22px;
 	height: 22px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='22' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.012 6.126h-2.428L14.25 4.6a2.383 2.383 0 00-2.328-1.874H10.17a2.383 2.383 0 00-2.337 1.915l-.298 1.485H5.127a.642.642 0 100 1.283h11.885a.642.642 0 000-1.283zm-8.125-.213l.204-1.02a1.1 1.1 0 011.079-.883h1.752a1.1 1.1 0 011.074.865l.227 1.038H8.887zm1.247 5.719a.642.642 0 10-1.283 0v4.032a.642.642 0 101.283 0v-4.032zm2.958 0a.642.642 0 00-1.284 0v4.032a.642.642 0 001.284 0v-4.032zM4.997 9.303a.917.917 0 01.908-1.038h10.089c.559 0 .988.496.907 1.05l-1.208 8.274a1.833 1.833 0 01-1.815 1.569H7.92c-.918 0-1.695-.68-1.817-1.59L4.997 9.302zm2.378 8.094L6.325 9.55h9.245l-1.147 7.855a.55.55 0 01-.545.47H7.92a.55.55 0 01-.545-.477z' fill='%23D0D0D0'/%3E%3C/svg%3E") no-repeat;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none'%3E%3Cpath fill='%233B434D' fill-rule='evenodd' d='M5.48 14.52a.5.5 0 010-.707L9.293 10 5.48 6.189a.5.5 0 11.707-.707L10 9.293l3.813-3.813a.5.5 0 11.707.708L10.707 10l3.813 3.813a.5.5 0 11-.707.707L10 10.708 6.187 14.52a.5.5 0 01-.707 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	background-position: center;
+	background-repeat: no-repeat;
+	display: inline-block;
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	-webkit-transform: translateY(-50%);
+	    -ms-transform: translateY(-50%);
+	        transform: translateY(-50%);
+	opacity: .35;
+	-webkit-transition: opacity .2s linear;
+	-o-transition: opacity .2s linear;
+	transition: opacity .2s linear;
+}
+
+.vote-creation-form__answers.--removable .vote-creation-form__answer_delete {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='22' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.012 6.126h-2.428L14.25 4.6a2.383 2.383 0 00-2.328-1.874H10.17a2.383 2.383 0 00-2.337 1.915l-.298 1.485H5.127a.642.642 0 100 1.283h11.885a.642.642 0 000-1.283zm-8.125-.213l.204-1.02a1.1 1.1 0 011.079-.883h1.752a1.1 1.1 0 011.074.865l.227 1.038H8.887zm1.247 5.719a.642.642 0 10-1.283 0v4.032a.642.642 0 101.283 0v-4.032zm2.958 0a.642.642 0 00-1.284 0v4.032a.642.642 0 001.284 0v-4.032zM4.997 9.303a.917.917 0 01.908-1.038h10.089c.559 0 .988.496.907 1.05l-1.208 8.274a1.833 1.833 0 01-1.815 1.569H7.92c-.918 0-1.695-.68-1.817-1.59L4.997 9.302zm2.378 8.094L6.325 9.55h9.245l-1.147 7.855a.55.55 0 01-.545.47H7.92a.55.55 0 01-.545-.477z' opacity='.7' fill='%233B434D'/%3E%3C/svg%3E");
+}
+
+.vote-creation-form__answer_delete:hover {
+	opacity: .6;
 }
 
 .vote-creation-form__question_add-answer {
-	margin: 8px 0;
+	margin: 13px 0 5px;
 	color: #a7a7a7;
 	display: -webkit-inline-box;
 	display: -ms-inline-flexbox;

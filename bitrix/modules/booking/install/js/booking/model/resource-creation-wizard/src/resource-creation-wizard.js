@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { Loc, Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
@@ -33,9 +34,11 @@ export class ResourceCreationWizardModel extends BuilderModel
 			invalidResourceName: false,
 			invalidResourceType: false,
 			isCompanyScheduleAccess: false,
+			companyScheduleUrl: '',
 			weekStart: 'Mon',
 			globalSchedule: false,
 			checkedForAll: {},
+			isChannelChoiceAvailable: true,
 		};
 	}
 
@@ -75,8 +78,12 @@ export class ResourceCreationWizardModel extends BuilderModel
 			},
 			/** @function resource-creation-wizard/isCompanyScheduleAccess */
 			isCompanyScheduleAccess: (state): boolean => state.isCompanyScheduleAccess,
+			/** @function resource-creation-wizard/companyScheduleUrl */
+			companyScheduleUrl: (state): boolean => state.companyScheduleUrl,
 			/** @function resource-creation-wizard/weekStart */
 			weekStart: (state): boolean => state.weekStart,
+			/** @function resource-creation-wizard/isChannelChoiceAvailable */
+			isChannelChoiceAvailable: (state): boolean => state.isChannelChoiceAvailable,
 			/** @function resource-creation-wizard/isCheckedForAll */
 			isCheckedForAll: (state) => (type: string): boolean => state.checkedForAll[type] ?? true,
 			advertisingResourceType: (state): AdvertisingResourceType | undefined => {
@@ -142,7 +149,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 					commit('updateStep', state.step - 1);
 				}
 			},
-			setAdvertisingResourceTypes({ commit }, types: AdvertisingResourceType[]): void
+			setAdvertisingTypes({ commit }, types: AdvertisingResourceType[]): void
 			{
 				const advertisingResourceType: AdvertisingResourceType[] = [
 					...types,
@@ -153,7 +160,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 					},
 				];
 
-				commit('setAdvertisingResourceTypes', advertisingResourceType);
+				commit('setAdvertisingTypes', advertisingResourceType);
 			},
 			/** @function resource-creation-wizard/updateResource */
 			updateResource({ commit, rootGetters }, patch: Partial<ResourceModel>): void
@@ -164,6 +171,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 					const notifications = [
 						...Object.values(NotificationFieldsMap.NotificationOn),
 						...Object.values(NotificationFieldsMap.TemplateType),
+						...Object.values(NotificationFieldsMap.Settings).flat(),
 					].reduce((acc: Partial<ResourceModel>, field: $Keys<ResourceModel>) => ({
 						...acc,
 						[field]: resourceType[field],
@@ -195,6 +203,11 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				commit('setCompanyScheduleAccess', isCompanyScheduleAccess);
 			},
+			/** @function resource-creation-wizard/setCompanyScheduleUrl */
+			setCompanyScheduleUrl({ commit }, companyScheduleUrl: string): void
+			{
+				commit('setCompanyScheduleUrl', companyScheduleUrl);
+			},
 			/** @function resource-creation-wizard/setInvalidResourceName */
 			setInvalidResourceName({ commit, state }, invalid: boolean): void
 			{
@@ -225,6 +238,11 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				commit('setSlotLengthId', { slotLengthId });
 			},
+			/** @function resource-creation-wizard/setIsChannelChoiceAvailable */
+			setIsChannelChoiceAvailable({ commit }, isChannelChoiceAvailable: boolean): void
+			{
+				commit('setIsChannelChoiceAvailable', isChannelChoiceAvailable);
+			},
 		};
 	}
 
@@ -241,7 +259,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				state.resourceName = name;
 			},
-			setAdvertisingResourceTypes(state: ResourceCreationWizardState, types: AdvertisingResourceType[]): void
+			setAdvertisingTypes(state: ResourceCreationWizardState, types: AdvertisingResourceType[]): void
 			{
 				state.advertisingResourceTypes = types;
 			},
@@ -276,6 +294,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				state.isCompanyScheduleAccess = isCompanyScheduleAccess;
 			},
+			setCompanyScheduleUrl(state: ResourceCreationWizardState, companyScheduleUrl: string): void
+			{
+				state.companyScheduleUrl = companyScheduleUrl;
+			},
 			setInvalidResourceName(state, invalid: boolean): void
 			{
 				state.invalidResourceName = invalid;
@@ -295,6 +317,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setSlotLengthId(state, { slotLengthId }: { slotLengthId: number }): void
 			{
 				state.slotLengthId = slotLengthId;
+			},
+			setIsChannelChoiceAvailable(state, isChannelChoiceAvailable: boolean): void
+			{
+				state.isChannelChoiceAvailable = isChannelChoiceAvailable;
 			},
 		};
 	}

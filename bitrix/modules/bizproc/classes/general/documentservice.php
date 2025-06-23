@@ -30,7 +30,7 @@ class CBPDocumentService extends CBPRuntimeService
 		return null;
 	}
 
-	public function getDocument($parameterDocumentId, $parameterDocumentType = null)
+	public function getDocument($parameterDocumentId, $parameterDocumentType = null, array $select = [])
 	{
 		$this->checkCache();
 		[$moduleId, $entity, $documentId] = CBPHelper::ParseDocumentId($parameterDocumentId);
@@ -38,6 +38,11 @@ class CBPDocumentService extends CBPRuntimeService
 		$documentType = ($parameterDocumentType && is_array($parameterDocumentType)) ? $parameterDocumentType[2] : null;
 
 		$k = $moduleId."@".$entity."@".$documentId.($documentType ? '@'.$documentType : '');
+		//if (!empty($select))
+		//{
+		//	$k .= '@' . implode('@', $select);
+		//}
+
 		if (array_key_exists($k, $this->arDocumentsCache))
 		{
 			return $this->arDocumentsCache[$k];
@@ -50,7 +55,13 @@ class CBPDocumentService extends CBPRuntimeService
 
 		if (class_exists($entity) && method_exists($entity, 'GetDocument'))
 		{
-			$this->arDocumentsCache[$k] = call_user_func_array([$entity, "GetDocument"], [$documentId, $documentType]);
+			$this->arDocumentsCache[$k] = call_user_func(
+				[$entity, "GetDocument"],
+				$documentId,
+				$documentType,
+				//$select,
+			);
+
 			return $this->arDocumentsCache[$k];
 		}
 
@@ -72,7 +83,7 @@ class CBPDocumentService extends CBPRuntimeService
 		}
 
 		//if no API
-		$document = $this->getDocument($parameterDocumentId);
+		$document = $this->getDocument($parameterDocumentId, select: ['ID']);
 		if ($document instanceof Bizproc\Document\ValueCollection)
 		{
 			return (bool)$document['ID'];
@@ -81,7 +92,7 @@ class CBPDocumentService extends CBPRuntimeService
 		return is_array($document) && count($document) > 0;
 	}
 
-	public function getFieldValue($parameterDocumentId, $fieldId, $parameterDocumentType = null)
+	public function getFieldValue($parameterDocumentId, $fieldId, $parameterDocumentType = null, array $usedDocumentFields = [])
 	{
 		[$moduleId, $entity, $documentId] = CBPHelper::ParseDocumentId($parameterDocumentId);
 		$documentType = ($parameterDocumentType && is_array($parameterDocumentType)) ? $parameterDocumentType[2] : null;
@@ -95,7 +106,7 @@ class CBPDocumentService extends CBPRuntimeService
 			return call_user_func_array([$entity, "getFieldValue"], [$documentId, $fieldId, $documentType]);
 		}
 
-		$document = $this->GetDocument($parameterDocumentId, $parameterDocumentType);
+		$document = $this->GetDocument($parameterDocumentId, $parameterDocumentType, $usedDocumentFields);
 
 		return $document[$fieldId] ?? null;
 	}

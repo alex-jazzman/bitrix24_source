@@ -26,7 +26,7 @@ export default class ButtonIcon
 	static BACK = 'ui-btn-icon-back';
 	static REMOVE = 'ui-btn-icon-remove';
 	static DOWNLOAD = 'ui-btn-icon-download';
-	static DOTS = 'ui-btn-icon-ui-btn-icon-dots';
+	static DOTS = 'ui-btn-icon-dots';
 	static DONE = 'ui-btn-icon-done';
 	static CANCEL = 'ui-btn-icon-cancel';
 	static DISK = 'ui-btn-icon-disk';
@@ -61,4 +61,14 @@ export default class ButtonIcon
 	static COPY = 'ui-btn-icon-copy';
 	static AI = 'ui-btn-icon-ai ui-icon-set__scope';
 	static BUSINESS_NEW = 'ui-btn-icon-business-new';
+	static OUTLINE_ADD = 'ui-btn-icon-outline-add';
+	static HELP = 'ui-btn-icon-help';
+	static CHECK = 'ui-btn-icon-check';
+	static CHEVRON_LEFT_S = 'ui-btn-icon-chevron-left-s';
+	static CHEVRON_RIGHT_S = 'ui-btn-icon-chevron-right-s';
+	static REFRESH = 'ui-btn-icon-refresh';
+	static CITY = 'ui-btn-icon-city';
+	static TWO_PERSONS = 'ui-btn-icon-two-persons';
+	static COPILOT = 'ui-btn-icon-copilot';
+	static RELOAD = 'ui-btn-icon-reload';
 }

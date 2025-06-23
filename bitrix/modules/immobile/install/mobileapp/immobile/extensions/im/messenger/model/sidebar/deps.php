@@ -7,6 +7,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
+		'im:messenger/lib/helper',
 	],
 	'bundle' => [
 		'./src/model',
@@ -17,5 +18,8 @@ return [
 		'./src/links/model',
 		'./src/links/validator',
 		'./src/links/default-element',
+		'./src/common-chats/model',
+		'./src/common-chats/validator',
+		'./src/common-chats/default-element',
 	],
 ];

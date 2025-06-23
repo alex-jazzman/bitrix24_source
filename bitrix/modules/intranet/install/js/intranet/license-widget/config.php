@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/license-widget.bundle.css',
 	'js' => 'dist/license-widget.bundle.js',
 	'rel' => [
-		'ui.cnt',
 		'main.core.events',
 		'ui.info-helper',
 		'main.core',

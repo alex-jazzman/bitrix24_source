@@ -23,7 +23,7 @@ $MESS["COMP_NAME_TEMPLATE_SMITH_JOHN_LLOYD"] = "Петров Иван Васил
 $MESS["COMP_NAME_TEMPLATE_SMITH_J_L"] = "Петров И. В.";
 $MESS["COMP_PARAM_CACHE_AUTO_OFF"] = "<span style=\"color:red\">өшірілген</span>";
 $MESS["COMP_PARAM_CACHE_AUTO_ON"] = "қосулы";
-$MESS["COMP_PARAM_CACHE_MAN"] = "#NAME?";
+$MESS["COMP_PARAM_CACHE_MAN"] = "Басқарылатын";
 $MESS["COMP_PARAM_CACHE_MANAGED_OFF"] = "<span style=\"color:red\">өшірілген</span>";
 $MESS["COMP_PARAM_CACHE_MANAGED_ON"] = "қосулы";
 $MESS["COMP_PARAM_DATETIME_FORMAT_SITE"] = "Сайттың пішімі (уақытты қоса)";

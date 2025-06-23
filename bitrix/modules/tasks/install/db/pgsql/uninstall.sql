@@ -161,3 +161,7 @@ DROP TABLE IF EXISTS b_tasks_onboarding_queue;
 DROP TABLE IF EXISTS b_tasks_onboarding_queue_job_count;
 
 DROP TABLE IF EXISTS b_tasks_deadline_user_option;
+
+DROP TABLE IF EXISTS b_tasks_task_chat;
+
+DROP TABLE IF EXISTS b_tasks_task_result_file;

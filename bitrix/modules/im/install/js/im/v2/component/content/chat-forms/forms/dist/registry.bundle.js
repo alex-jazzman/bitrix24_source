@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_helpdesk,socialnetwork_collab_accessRights,main_core_events,main_popup,im_v2_lib_confirm,ui_notification,main_core,im_v2_application_core,im_public,im_v2_lib_analytics,im_v2_provider_service,im_v2_component_elements,im_v2_const,im_v2_component_content_chatForms_elements) {
+(function (exports,im_v2_lib_notifier,im_v2_lib_permission,im_v2_lib_createChat,main_core,im_v2_lib_helpdesk,socialnetwork_collab_accessRights,main_core_events,main_popup,im_v2_lib_confirm,im_v2_application_core,im_public,im_v2_lib_analytics,im_v2_provider_service_chat,im_v2_component_elements_avatar,im_v2_const,im_v2_component_content_chatForms_elements) {
 	'use strict';
 
 	// @vue/component
@@ -24,10 +24,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      isCreating: false,
 	      avatarFile: null,
 	      chatTitle: '',
-	      chatMembers: [['user', im_v2_application_core.Core.getUserId()]],
+	      chatMembers: [],
+	      undeselectedItems: [],
 	      settings: {
 	        isAvailableInSearch: false,
-	        description: ''
+	        description: '',
+	        autoDeleteDelay: 0
 	      },
 	      rights: {
 	        ownerId: 0,
@@ -46,14 +48,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  created() {
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange);
-	    this.rights.ownerId = im_v2_application_core.Core.getUserId();
 	    this.initDefaultRolesForRights();
+	    this.undeselectedItems = im_v2_lib_createChat.CreateChatManager.getInstance().getUndeselectedItems();
+	    this.rights.ownerId = im_v2_lib_createChat.CreateChatManager.getInstance().getOwnerId();
+	    this.chatMembers = im_v2_lib_createChat.CreateChatManager.getInstance().getChatMembers();
 	    this.restoreFields();
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatType(im_v2_const.ChatType.chat);
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(true);
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
 	  },
 	  beforeUnmount() {
+	    im_v2_lib_createChat.CreateChatManager.getInstance().clearExternalFields();
 	    if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation) {
 	      return;
 	    }
@@ -71,6 +76,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onChatTypeChange(isAvailableInSearch) {
 	      this.settings.isAvailableInSearch = isAvailableInSearch;
+	    },
+	    onAutoDeleteChange(delay) {
+	      this.settings.autoDeleteDelay = delay;
 	    },
 	    onDescriptionChange(description) {
 	      this.settings.description = description;
@@ -102,12 +110,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageUsersAdd: this.rights.manageUsersAdd,
 	        manageUsersDelete: this.rights.manageUsersDelete,
 	        manageUi: this.rights.manageUi,
-	        manageMessages: this.rights.manageMessages
+	        manageMessages: this.rights.manageMessages,
+	        autoDeleteDelay: this.settings.autoDeleteDelay
 	      }).catch(() => {
 	        this.isCreating = false;
-	        BX.UI.Notification.Center.notify({
-	          content: this.loc('IM_CREATE_CHAT_ERROR')
-	        });
 	      });
 	      this.isCreating = false;
 	      this.exitByCreation = true;
@@ -179,7 +185,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -195,11 +201,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<CreateChatHeading :text="loc('IM_CREATE_CHAT_MEMBERS_TITLE')" />
 			<div class="bx-im-content-chat-forms__members_container">
-				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+				<ChatMembersSelector 
+					:undeselectedItems="undeselectedItems" 
+					:chatMembers="chatMembers"
+					:allowTeamsSelect="true"
+					@membersChange="onMembersChange"
+				/>
 			</div>
 			<SettingsSection
 				:isAvailableInSearch="settings.isAvailableInSearch"
 				:description="settings.description"
+				:autoDeleteDelay="settings.autoDeleteDelay"
+				@autoDeleteDelayChange="onAutoDeleteChange"
 				@chatTypeChange="onChatTypeChange"
 				@descriptionChange="onDescriptionChange"
 			/>
@@ -265,7 +278,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    EmptyAvatarType: () => im_v2_component_elements.EmptyAvatarType
+	    EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType
 	  },
 	  watch: {
 	    chatTitle(newValue) {
@@ -324,7 +337,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    async onCreateClick() {
 	      if (!this.checkPassword()) {
-	        this.showPasswordError();
+	        im_v2_lib_notifier.Notifier.conference.onPasswordError();
 	        return;
 	      }
 	      this.isCreating = true;
@@ -345,9 +358,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        conferencePassword: this.conference.passwordNeeded ? this.conference.password : ''
 	      }).catch(() => {
 	        this.isCreating = false;
-	        BX.UI.Notification.Center.notify({
-	          content: this.loc('IM_CREATE_CHAT_ERROR')
-	        });
 	      });
 	      this.isCreating = false;
 	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
@@ -423,14 +433,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const password = this.conference.password.trim();
 	      return password !== '' && password.length >= PASSWORD_MIN_LENGTH;
 	    },
-	    showPasswordError() {
-	      BX.UI.Notification.Center.notify({
-	        content: this.loc('IM_CREATE_CHAT_CONFERENCE_PASSWORD_ERROR')
-	      });
-	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -461,6 +466,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 			<SettingsSection
 				:withSearchOption="false"
+				:withAutoDeleteOption="false"
 				:description="settings.description"
 				@descriptionChange="onDescriptionChange"
 			/>
@@ -495,7 +501,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    TitleInput: im_v2_component_content_chatForms_elements.TitleInput,
 	    ChatAvatar: im_v2_component_content_chatForms_elements.ChatAvatar,
 	    ChatMembersSelector: im_v2_component_content_chatForms_elements.ChatMembersSelector,
-	    SettingsSection: im_v2_component_content_chatForms_elements.SettingsSection,
 	    RightsSection: im_v2_component_content_chatForms_elements.RightsSection,
 	    AppearanceSection: im_v2_component_content_chatForms_elements.AppearanceSection,
 	    PrivacySection: im_v2_component_content_chatForms_elements.PrivacySection,
@@ -508,7 +513,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      isCreating: false,
 	      avatarFile: null,
 	      chatTitle: '',
-	      chatMembers: [['user', im_v2_application_core.Core.getUserId()]],
+	      chatMembers: [],
+	      undeselectedItems: [],
 	      settings: {
 	        isAvailableInSearch: false,
 	        description: ''
@@ -525,7 +531,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  computed: {
 	    ChatType: () => im_v2_const.ChatType,
-	    EmptyAvatarType: () => im_v2_component_elements.EmptyAvatarType
+	    EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType
 	  },
 	  watch: {
 	    chatTitle(newValue) {
@@ -534,14 +540,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  created() {
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange);
-	    this.rights.ownerId = im_v2_application_core.Core.getUserId();
 	    this.initDefaultRolesForRights();
+	    this.undeselectedItems = im_v2_lib_createChat.CreateChatManager.getInstance().getUndeselectedItems();
+	    this.rights.ownerId = im_v2_lib_createChat.CreateChatManager.getInstance().getOwnerId();
+	    this.chatMembers = im_v2_lib_createChat.CreateChatManager.getInstance().getChatMembers();
 	    this.restoreFields();
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatType(im_v2_const.ChatType.channel);
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(true);
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
 	  },
 	  beforeUnmount() {
+	    im_v2_lib_createChat.CreateChatManager.getInstance().clearExternalFields();
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange);
 	    if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation) {
 	      return;
@@ -595,18 +604,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageMessages: this.rights.manageMessages
 	      }).catch(() => {
 	        this.isCreating = false;
-	        BX.UI.Notification.Center.notify({
-	          content: this.loc('IM_CREATE_CHAT_ERROR')
-	        });
 	      });
 	      this.isCreating = false;
 	      this.exitByCreation = true;
 	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setPreselectedMembers([]);
 	      void im_public.Messenger.openChat(newDialogId);
 	    },
 	    onCancelClick() {
 	      this.exitByCancel = true;
 	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setPreselectedMembers([]);
 	      im_public.Messenger.openChat();
 	    },
 	    onAvatarChange(newAvatarFile) {
@@ -669,7 +677,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -706,7 +714,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:hintText="loc('IM_CREATE_CHANNEL_MEMBERS_HINT')"
 			/>
 			<div class="bx-im-content-chat-forms__members_container">
-				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+				<ChatMembersSelector 
+					:chatMembers="chatMembers"
+					:undeselectedItems="undeselectedItems"
+					:allowTeamsSelect="true"
+					@membersChange="onMembersChange"
+				/>
 			</div>
 			<RightsSection
 				:chatType="ChatType.channel"
@@ -846,17 +859,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const CreateCollabErrorCode = {
-	  emptyName: 'name',
-	  duplicateName: 'ERROR_GROUP_NAME_EXISTS',
-	  urlInName: 'ERROR_NAME_CONTAINS_URL'
-	};
-	const NotificationTextByErrorCode = {
-	  [CreateCollabErrorCode.emptyName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_EMPTY_NAME'),
-	  [CreateCollabErrorCode.duplicateName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME'),
-	  [CreateCollabErrorCode.urlInName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_URL_IN_NAME'),
-	  default: main_core.Loc.getMessage('IM_CREATE_CHAT_ERROR')
-	};
 	const CollabCreation = {
 	  name: 'CollabCreation',
 	  components: {
@@ -866,7 +868,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    CreateChatHeading: im_v2_component_content_chatForms_elements.CreateChatHeading,
 	    TextareaInput: im_v2_component_content_chatForms_elements.TextareaInput,
 	    ButtonPanel: im_v2_component_content_chatForms_elements.ButtonPanel,
-	    RightsSection
+	    RightsSection,
+	    AutoDelete: im_v2_component_content_chatForms_elements.AutoDelete
 	  },
 	  data() {
 	    return {
@@ -877,9 +880,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      groupSettings: {
 	        ownerId: im_v2_application_core.Core.getUserId(),
 	        moderatorMembers: [],
-	        options: null,
+	        options: {},
 	        permissions: null
-	      }
+	      },
+	      autoDeleteDelay: 0
 	    };
 	  },
 	  watch: {
@@ -888,7 +892,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  computed: {
-	    EmptyAvatarType: () => im_v2_component_elements.EmptyAvatarType,
+	    EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType,
 	    createButtonColorScheme() {
 	      return {
 	        borderColor: im_v2_const.Color.transparent,
@@ -922,17 +926,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        chatTitle,
 	        avatarFile,
-	        description
+	        description,
+	        autoDeleteDelay
 	      } = savedFields;
 	      this.chatTitle = chatTitle;
 	      this.avatarFile = avatarFile;
 	      this.description = description;
+	      this.autoDeleteDelay = autoDeleteDelay;
 	    },
 	    saveFields() {
 	      im_v2_lib_createChat.CreateChatManager.getInstance().saveFields({
 	        chatTitle: this.chatTitle,
 	        avatarFile: this.avatarFile,
-	        description: this.description
+	        description: this.description,
+	        autoDeleteDelay: this.autoDeleteDelay
 	      });
 	    },
 	    onLayoutChange(event) {
@@ -955,15 +962,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	          ownerId: this.groupSettings.ownerId,
 	          moderatorMembers: this.groupSettings.moderatorMembers,
 	          options: this.groupSettings.options,
-	          permissions: this.groupSettings.permissions
+	          permissions: this.groupSettings.permissions,
+	          autoDeleteDelay: this.autoDeleteDelay
 	        });
 	        this.isCreating = false;
 	        this.exitByCreation = true;
 	        im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
 	        await im_public.Messenger.openChat(newDialogId);
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.header.openAddToChatPopup);
-	      } catch (error) {
-	        this.handleCreationError(error);
+	      } catch {
+	        this.isCreating = false;
 	      }
 	    },
 	    onCancelClick() {
@@ -990,22 +998,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.groupSettings.permissions = permissions;
 	      this.groupSettings.options = options;
 	    },
-	    handleCreationError(error) {
-	      var _NotificationTextByEr;
-	      const {
-	        code
-	      } = error;
-	      const notificationText = (_NotificationTextByEr = NotificationTextByErrorCode[code]) != null ? _NotificationTextByEr : NotificationTextByErrorCode.default;
-	      this.isCreating = false;
-	      BX.UI.Notification.Center.notify({
-	        content: notificationText
-	      });
-	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
+	    },
+	    onAutoDeleteDelayChange(delay) {
+	      this.autoDeleteDelay = delay;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -1033,6 +1033,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 			</div>
 			<RightsSection @change="onRightsChange" />
+			<AutoDelete 
+				:initialDelay="autoDeleteDelay" 
+				@delayChange="onAutoDeleteDelayChange" 
+			/>
 		</div>
 		<ButtonPanel
 			:isCreating="isCreating"
@@ -1203,6 +1207,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    chatId() {
 	      return this.dialog.chatId;
 	    },
+	    ChatType: () => im_v2_const.ChatType,
 	    collapsedUsers() {
 	      if (!this.areUsersCollapsed) {
 	        return [];
@@ -1308,9 +1313,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageMessages: this.rights.manageMessages
 	      }).catch(() => {
 	        this.isUpdating = false;
-	        BX.UI.Notification.Center.notify({
-	          content: this.loc('IM_UPDATE_CHAT_ERROR')
-	        });
 	      });
 	      this.isUpdating = false;
 	      return im_public.Messenger.openChat(this.dialogId);
@@ -1332,7 +1334,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -1367,7 +1369,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div class="bx-im-content-chat-forms__members_container">
 				<ChatMembersSelector 
 					:customElements="collapsedUsers"
-					:chatMembers="chatMembers" 
+					:chatMembers="chatMembers"
+					:allowTeamsSelect="dialog.type !== ChatType.videoconf"
 					@membersChange="onMembersChange" 
 				/>
 			</div>
@@ -1375,6 +1378,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:isAvailableInSearch="settings.isAvailableInSearch"
 				:description="settings.description"
 				:withSearchOption="canChangeSearchAvailability"
+				:withAutoDeleteOption="false"
 				@chatTypeChange="onChatTypeChange"
 				@descriptionChange="onDescriptionChange"
 			/>
@@ -1409,7 +1413,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    TitleInput: im_v2_component_content_chatForms_elements.TitleInput,
 	    ChatAvatar: im_v2_component_content_chatForms_elements.ChatAvatar,
 	    ChatMembersSelector: im_v2_component_content_chatForms_elements.ChatMembersSelector,
-	    SettingsSection: im_v2_component_content_chatForms_elements.SettingsSection,
 	    RightsSection: im_v2_component_content_chatForms_elements.RightsSection,
 	    AppearanceSection: im_v2_component_content_chatForms_elements.AppearanceSection,
 	    PrivacySection: im_v2_component_content_chatForms_elements.PrivacySection,
@@ -1449,12 +1452,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  computed: {
 	    ChatType: () => im_v2_const.ChatType,
-	    EmptyAvatarType: () => im_v2_component_elements.EmptyAvatarType,
+	    EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
+	    },
+	    chatType() {
+	      return this.dialog.type;
 	    },
 	    collapsedUsers() {
 	      if (!this.areUsersCollapsed) {
@@ -1529,9 +1535,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageMessages: this.rights.manageMessages
 	      }).catch(() => {
 	        this.isUpdating = false;
-	        BX.UI.Notification.Center.notify({
-	          content: this.loc('IM_UPDATE_CHAT_ERROR')
-	        });
 	      });
 	      this.isUpdating = false;
 	      return im_public.Messenger.openChat(this.dialogId);
@@ -1553,7 +1556,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -1631,8 +1634,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div class="bx-im-content-chat-forms__members_container">
 				<ChatMembersSelector
 					:customElements="collapsedUsers"
-					:chatMembers="chatMembers" 
-					@membersChange="onMembersChange" 
+					:chatMembers="chatMembers"
+					:allowTeamsSelect="true"
+					@membersChange="onMembersChange"
 				/>
 			</div>
 			<RightsSection
@@ -1658,18 +1662,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@cancel="onCancelClick"
 		/>
 	`
-	};
-
-	const UpdateCollabErrorCode = {
-	  emptyName: 'name',
-	  duplicateName: 'ERROR_GROUP_NAME_EXISTS',
-	  urlInName: 'ERROR_NAME_CONTAINS_URL'
-	};
-	const NotificationTextByErrorCode$1 = {
-	  [UpdateCollabErrorCode.emptyName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_EMPTY_NAME'),
-	  [UpdateCollabErrorCode.duplicateName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_DUPLICATE_NAME'),
-	  [UpdateCollabErrorCode.urlInName]: main_core.Loc.getMessage('IM_CREATE_COLLAB_ERROR_URL_IN_NAME'),
-	  default: main_core.Loc.getMessage('IM_UPDATE_CHAT_ERROR')
 	};
 
 	// @vue/component
@@ -1706,7 +1698,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    EmptyAvatarType: () => im_v2_component_elements.EmptyAvatarType,
+	    EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -1792,29 +1784,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        await this.getChatService().updateCollab(this.dialogId, payload);
 	        this.isUpdating = false;
 	        void im_public.Messenger.openChat(this.dialogId);
-	      } catch (error) {
-	        this.handleUpdateError(error);
+	      } catch {
+	        this.isUpdating = false;
 	      }
 	    },
 	    onCancelClick() {
 	      im_v2_lib_analytics.Analytics.getInstance().ignoreNextChatOpen(this.dialogId);
 	      void im_public.Messenger.openChat(this.dialogId);
 	    },
-	    handleUpdateError(error) {
-	      var _NotificationTextByEr;
-	      console.error('1', error);
-	      const {
-	        code
-	      } = error;
-	      const notificationText = (_NotificationTextByEr = NotificationTextByErrorCode$1[code]) != null ? _NotificationTextByEr : NotificationTextByErrorCode$1.default;
-	      this.isUpdating = false;
-	      BX.UI.Notification.Center.notify({
-	        content: notificationText
-	      });
-	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -1900,5 +1880,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.CreatableChat = CreatableChat;
 	exports.UpdateChatContent = UpdateChatContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Socialnetwork.Collab,BX.Event,BX.Main,BX.Messenger.v2.Lib,BX,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Content));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Socialnetwork.Collab,BX.Event,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Content));
 //# sourceMappingURL=registry.bundle.js.map

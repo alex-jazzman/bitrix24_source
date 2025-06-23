@@ -272,3 +272,7 @@ $MESS['MAIN_OPTION_CONTROLLER_PROXY_PASS_SET'] = '(установлен)';
 $MESS['MAIN_OPTION_CONTROLLER_PROXY_PASS_DEL_TITLE'] = 'Удалить сохраненный пароль';
 $MESS['MAIN_OPTION_CONTROLLER_PROXY_PASS_DEL'] = 'Удалить';
 $MESS["SUP_MENU_TURN_EXPERT_MODE_ON"] = "Включить экспертный режим:";
+$MESS['main_option_additional_log_title'] = 'Дополнительное журналирование';
+$MESS['main_option_event_log_syslog'] = 'Записывать события в syslog (JSON):';
+$MESS['main_option_event_log_file'] = 'Записывать события в файл (JSON):';
+$MESS['main_option_event_log_file_path'] = 'Полный путь к файлу:';

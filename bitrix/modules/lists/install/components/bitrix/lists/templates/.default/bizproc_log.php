@@ -35,7 +35,7 @@ $returnButton = new Bitrix\UI\Buttons\Button([
 	'text' => Loc::getMessage('CT_BL_LIST_GO_BACK'),
 	'color' => Bitrix\UI\Buttons\Color::LINK,
 	'link' => $backUrl,
-	'className' => 'lists-list-back',
+	'icon' => Bitrix\UI\Buttons\Icon::BACK,
 ]);
 $returnButton->setSize(Bitrix\UI\Buttons\Size::SMALL);
 Bitrix\UI\Toolbar\Facade\Toolbar::addButton($returnButton);

@@ -1,5 +1,5 @@
-import {DialogId} from "../../../types/common";
-import {MessengerModel, PayloadData} from "../../base";
+import { DialogId } from "../../../types/common";
+import { MessengerModel, PayloadData } from "../../base";
 
 export enum DraftType {
 	text = 'text',
@@ -8,11 +8,12 @@ export enum DraftType {
 	edit = 'edit',
 }
 
-export type DraftModelState = {
+export interface DraftModelState {
 	dialogId: DialogId,
 	messageId: number,
 	messageType: 'text' | 'audio' | 'image',
 	type: DraftType,
+	lastActivityDate: Date,
 	text: string,
 	userName: string,
 	message: Array<{
@@ -52,31 +53,31 @@ export type DraftModelMutation =
 
 
 export type DraftSetStateActions = 'setState';
-export interface DraftSetStateData extends PayloadData
-{
+
+export interface DraftSetStateData extends PayloadData {
 	collection: Record<DialogId, DraftModelState>;
 }
 
 
 export type DraftAddActions = 'set';
-export interface DraftAddData extends PayloadData
-{
+
+export interface DraftAddData extends PayloadData {
 	dialogId: DialogId;
 	fields: DraftModelState;
 }
 
 
 export type DraftUpdateActions = 'set';
-export interface DraftUpdateData extends PayloadData
-{
+
+export interface DraftUpdateData extends PayloadData {
 	dialogId: DialogId;
 	fields: Partial<DraftModelState>;
 }
 
 
 export type DraftDeleteActions = 'delete';
-export interface DraftDeleteData extends PayloadData
-{
+
+export interface DraftDeleteData extends PayloadData {
 	dialogId: DialogId;
 }
 

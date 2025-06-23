@@ -1,37 +1,51 @@
 import { Loc, Text, Type } from 'main.core';
-import { MenuManager, PopupOptions } from 'main.popup';
-import { FileOrigin, FileStatus, FileStatusType } from 'ui.uploader.core';
-import { TileWidgetSlot } from 'ui.uploader.tile-widget';
+import { MenuManager, type PopupOptions } from 'main.popup';
 
+import { FileOrigin, FileStatus } from 'ui.uploader.core';
+import { TileWidgetSlot } from 'ui.uploader.tile-widget';
+import { BIcon } from 'ui.icon-set.api.vue';
+import { Actions, Outline } from 'ui.icon-set.api.core';
+import 'ui.icon-set.actions';
+import 'ui.icon-set.outline';
 import type { BitrixVueComponentProps } from 'ui.vue3';
+
 import { ErrorPopup } from './error-popup';
 import { FileIconComponent } from './file-icon';
 import { InsertIntoTextButton } from './insert-into-text-button';
-
 import { UploadLoader } from './upload-loader';
 
+// @vue/component
 export const TileItem: BitrixVueComponentProps = {
 	components: {
+		BIcon,
 		UploadLoader,
 		ErrorPopup,
 		FileIconComponent,
 	},
-	inject: ['uploader', 'widgetOptions', 'emitter'],
+	inject: ['uploader', 'adapter', 'widgetOptions', 'emitter'],
 	props: {
 		item: {
 			type: Object,
-			default: {},
+			default: () => {},
 		},
 	},
-	data()
+	setup(): Object
 	{
 		return {
-			tileId: `tile-uploader-${Text.getRandom().toLowerCase()}`,
+			Actions,
+			Outline,
+			FileStatus,
+			menuId: `ui-tile-uploader-item-menu-${Text.getRandom().toLowerCase()}`,
+		};
+	},
+	data(): Object
+	{
+		return {
 			showError: false,
+			isMenuShown: false,
 		};
 	},
 	computed: {
-		FileStatus: (): FileStatusType => FileStatus,
 		status(): string
 		{
 			if (this.item.status === FileStatus.UPLOADING)
@@ -80,26 +94,23 @@ export const TileItem: BitrixVueComponentProps = {
 			}
 
 			const nameWithoutExtension = nameParts.join('.');
-			if (nameWithoutExtension.length > 27)
+			const maxLength = this.widgetOptions.compact ? 22 : 27;
+			if (nameWithoutExtension.length > maxLength)
 			{
-				return nameWithoutExtension.substr(0, 17) + '...' + nameWithoutExtension.substr(-5);
+				return `${nameWithoutExtension.slice(0, maxLength - 10)}...${nameWithoutExtension.slice(-5)}`;
 			}
 
 			return nameWithoutExtension;
 		},
-
 		showItemMenuButton(): boolean
 		{
 			if (Type.isBoolean(this.widgetOptions.showItemMenuButton))
 			{
 				return this.widgetOptions.showItemMenuButton;
 			}
-			else
-			{
-				return this.menuItems.length > 0;
-			}
-		},
 
+			return this.menuItems.length > 0;
+		},
 		menuItems(): Array
 		{
 			const items = [];
@@ -135,19 +146,12 @@ export const TileItem: BitrixVueComponentProps = {
 						id: 'download',
 						text: Loc.getMessage('TILE_UPLOADER_MENU_DOWNLOAD'),
 						href: this.item.downloadUrl,
-						onclick: (): void => {
-							if (this.menu)
-							{
-								this.menu.close();
-							}
-						},
+						onclick: (): void => this.menu?.close(),
 					},
 					{
 						id: 'remove',
 						text: Loc.getMessage('TILE_UPLOADER_MENU_REMOVE'),
-						onclick: (): void => {
-							this.remove();
-						},
+						onclick: this.remove,
 					},
 				);
 			}
@@ -165,6 +169,10 @@ export const TileItem: BitrixVueComponentProps = {
 		isSelected(): boolean
 		{
 			return this.item.customData.tileSelected === true;
+		},
+		fileIconSize(): number
+		{
+			return this.widgetOptions.compact ? 24 : 36;
 		},
 	},
 	created(): void
@@ -192,12 +200,10 @@ export const TileItem: BitrixVueComponentProps = {
 				this.showError = true;
 			}
 		},
-
 		handleMouseLeave(): void
 		{
 			this.showError = false;
 		},
-
 		toggleMenu(): void
 		{
 			setTimeout(() => {
@@ -214,15 +220,23 @@ export const TileItem: BitrixVueComponentProps = {
 				}
 
 				this.menu = MenuManager.create({
-					id: this.tileId,
-					bindElement: this.$refs.menu,
+					id: this.menuId,
+					bindElement: this.$refs.menu.$el,
 					angle: true,
 					offsetLeft: 13,
 					minWidth: 100,
 					cacheable: false,
 					items: this.menuItems,
 					events: {
-						onDestroy: () => {
+						onShow: (): void => {
+							this.isMenuShown = true;
+							this.adapter.getItem(this.item.id).isMenuShown = true;
+						},
+						onClose: (): void => {
+							this.isMenuShown = false;
+							this.adapter.getItem(this.item.id).isMenuShown = false;
+						},
+						onDestroy: (): void => {
 							this.menu = null;
 						},
 					},
@@ -237,68 +251,70 @@ export const TileItem: BitrixVueComponentProps = {
 			});
 		},
 	},
-	// language=Vue
 	template: `
-	<div
-		class="ui-tile-uploader-item"
-		:class="['ui-tile-uploader-item--' + item.status, { '--image': item.isImage, '--selected': isSelected } ]"
-		ref="container"
-	>
-		<ErrorPopup v-if="item.error && showError" :error="item.error" :popup-options="errorPopupOptions"/>
-		<div 
-			class="ui-tile-uploader-item-content"
-			@mouseenter="handleMouseEnter(item)" 
-			@mouseleave="handleMouseLeave(item)"
+		<div
+			class="ui-tile-uploader-item"
+			:class="[
+				'ui-tile-uploader-item--' + item.status,
+				{
+					'--image': item.isImage,
+					'--selected': (isMenuShown && widgetOptions.compact) || isSelected,
+				},
+			]"
+			ref="container"
 		>
-			<div v-if="item.status !== FileStatus.COMPLETE" class="ui-tile-uploader-item-state">
-				<div class="ui-tile-uploader-item-loader" v-if="item.status === FileStatus.UPLOADING">
-					<UploadLoader :progress="item.progress" :width="20" colorTrack="#73d8f8" colorBar="#fff" />
-				</div>
-				<div v-else class="ui-tile-uploader-item-state-icon"></div>
-				<div class="ui-tile-uploader-item-status">
-					<div class="ui-tile-uploader-item-status-name">{{status}}</div>
-					<div v-if="fileSize" class="ui-tile-uploader-item-state-desc">{{fileSize}}</div>
-				</div>
-				<div class="ui-tile-uploader-item-state-remove" @click="remove" key="aaa"></div>
-			</div>
-			<template v-else>
-				<div class="ui-tile-uploader-item-remove" @click="remove" key="remove"></div>
-				<div class="ui-tile-uploader-item-actions" key="actions">
-					<div class="ui-tile-uploader-item-actions-pad">
-						<div v-if="extraAction" class="ui-tile-uploader-item-extra-actions">
-							<component :is="extraAction" :item="this.item"></component>
-						</div>
-						<div v-if="showItemMenuButton" class="ui-tile-uploader-item-menu" @click="toggleMenu" ref="menu"></div>
+			<ErrorPopup v-if="item.error && showError" :error="item.error" :popup-options="errorPopupOptions"/>
+			<div
+				class="ui-tile-uploader-item-content"
+				@mouseenter="handleMouseEnter(item)"
+				@mouseleave="handleMouseLeave"
+			>
+				<div v-if="item.status !== FileStatus.COMPLETE" class="ui-tile-uploader-item-state">
+					<div class="ui-tile-uploader-item-loader" v-if="item.status === FileStatus.UPLOADING">
+						<UploadLoader :progress="item.progress" :width="20" colorTrack="#73d8f8" colorBar="#fff"/>
 					</div>
+					<div v-else class="ui-tile-uploader-item-state-icon"></div>
+					<div class="ui-tile-uploader-item-status">
+						<div class="ui-tile-uploader-item-status-name">{{status}}</div>
+						<div v-if="fileSize" class="ui-tile-uploader-item-state-desc">{{fileSize}}</div>
+					</div>
+					<div class="ui-tile-uploader-item-state-remove" @click="remove" key="aaa"></div>
 				</div>
-			</template>
-			<div class="ui-tile-uploader-item-preview">
-				<div
-					v-if="item.previewUrl"
-					class="ui-tile-uploader-item-image"
-					:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
-					:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
+				<template v-else>
+					<div class="ui-tile-uploader-item-remove" key="remove" @click="remove">
+						<BIcon :name="Outline.CROSS_L"/>
+					</div>
+					<div class="ui-tile-uploader-item-actions" key="actions">
+						<div class="ui-tile-uploader-item-actions-pad">
+							<div v-if="extraAction" class="ui-tile-uploader-item-extra-actions">
+								<component :is="extraAction" :item="item"></component>
+							</div>
+							<BIcon
+								v-if="showItemMenuButton"
+								class="ui-tile-uploader-item-menu"
+								:name="Actions.MORE"
+								ref="menu"
+								@click="toggleMenu"
+							/>
+						</div>
+					</div>
+				</template>
+				<div class="ui-tile-uploader-item-preview">
+					<div
+						v-if="item.previewUrl"
+						class="ui-tile-uploader-item-image"
+						:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
+						:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
+					</div>
+					<FileIconComponent v-else :name="item.extension || '...'" :size="fileIconSize"/>
 				</div>
-				<div 
-					v-else-if="item.name" 
-					class="ui-tile-uploader-item-file-icon"
-				>
-					<FileIconComponent :name="item.extension ? item.extension : '...'" />
-				</div>
-				<div 
-					v-else 
-					class="ui-tile-uploader-item-file-default"
-				>
-					<FileIconComponent :name="item.extension ? item.extension : '...'" :size="36" />
-				</div>
-			</div>
-			<div v-if="item.name" class="ui-tile-uploader-item-name-box" :title="item.name">
-				<div class="ui-tile-uploader-item-name">
-					<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span><!--
-					--><span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
+				<div v-if="item.name" class="ui-tile-uploader-item-name-box" :title="item.name">
+					<div class="ui-tile-uploader-item-name">
+						<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span>
+						<span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
-	`
+	`,
 };

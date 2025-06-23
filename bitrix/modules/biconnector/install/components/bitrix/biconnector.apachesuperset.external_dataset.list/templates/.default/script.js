@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,ui_dialogs_messagebox,main_core,main_core_events,ui_buttons) {
+(function (exports,biconnector_datasetImport_fileExport,ui_dialogs_messagebox,main_core,main_core_events,ui_buttons) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -83,9 +83,20 @@
 	      filterApi.apply();
 	    }
 	  }, {
+	    key: "exportDataset",
+	    value: function exportDataset(id) {
+	      var _this = this;
+	      babelHelpers.classPrivateFieldGet(this, _grid).tableFade();
+	      biconnector_datasetImport_fileExport.FileExport.getInstance().downloadOnce(id).then(function () {
+	        babelHelpers.classPrivateFieldGet(_this, _grid).tableUnfade();
+	      })["catch"](function () {
+	        babelHelpers.classPrivateFieldGet(_this, _grid).tableUnfade();
+	      });
+	    }
+	  }, {
 	    key: "deleteDataset",
 	    value: function deleteDataset(id) {
-	      var _this = this;
+	      var _this2 = this;
 	      var messageBox = new ui_dialogs_messagebox.MessageBox({
 	        message: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION'),
 	        title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE'),
@@ -94,13 +105,13 @@
 	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_YES'),
 	          onclick: function onclick(button) {
 	            button.setWaiting();
-	            _this.deleteDatasetAjaxAction(id).then(function () {
-	              babelHelpers.classPrivateFieldGet(_this, _grid).reload();
+	            _this2.deleteDatasetAjaxAction(id).then(function () {
+	              babelHelpers.classPrivateFieldGet(_this2, _grid).reload();
 	              messageBox.close();
 	            })["catch"](function (response) {
 	              messageBox.close();
 	              if (response.errors) {
-	                _classPrivateMethodGet(_this, _notifyErrors, _notifyErrors2).call(_this, response.errors);
+	                _classPrivateMethodGet(_this2, _notifyErrors, _notifyErrors2).call(_this2, response.errors);
 	              }
 	            });
 	          }
@@ -125,7 +136,7 @@
 	  }, {
 	    key: "createChart",
 	    value: function createChart(datasetId) {
-	      var _this2 = this;
+	      var _this3 = this;
 	      babelHelpers.classPrivateFieldGet(this, _grid).tableFade();
 	      main_core.ajax.runAction('biconnector.externalsource.dataset.getEditUrl', {
 	        data: {
@@ -136,11 +147,11 @@
 	        if (link) {
 	          window.open(link, '_blank').focus();
 	        }
-	        babelHelpers.classPrivateFieldGet(_this2, _grid).tableUnfade();
+	        babelHelpers.classPrivateFieldGet(_this3, _grid).tableUnfade();
 	      })["catch"](function (response) {
-	        babelHelpers.classPrivateFieldGet(_this2, _grid).tableUnfade();
+	        babelHelpers.classPrivateFieldGet(_this3, _grid).tableUnfade();
 	        if (response.errors) {
-	          _classPrivateMethodGet(_this2, _notifyErrors, _notifyErrors2).call(_this2, response.errors);
+	          _classPrivateMethodGet(_this3, _notifyErrors, _notifyErrors2).call(_this3, response.errors);
 	        }
 	      });
 	    }
@@ -163,17 +174,17 @@
 	  manager.init(babelHelpers.classPrivateFieldGet(this, _grid).getContainer());
 	}
 	function _subscribeToEvents2() {
-	  var _this3 = this;
+	  var _this4 = this;
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
 	    var _event$getData = event.getData(),
 	      _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
 	      messageEvent = _event$getData2[0];
 	    if (messageEvent.getEventId() === 'BIConnector.dataset-import:onDatasetCreated') {
-	      babelHelpers.classPrivateFieldGet(_this3, _grid).reload();
+	      babelHelpers.classPrivateFieldGet(_this4, _grid).reload();
 	    }
 	  });
 	  main_core_events.EventEmitter.subscribe('Grid::updated', function () {
-	    _classPrivateMethodGet(_this3, _initHints, _initHints2).call(_this3);
+	    _classPrivateMethodGet(_this4, _initHints, _initHints2).call(_this4);
 	  });
 	}
 	function _notifyErrors2(errors) {
@@ -185,5 +196,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalDatasetManager = ExternalDatasetManager;
 
-}((this.window = this.window || {}),BX.UI.Dialogs,BX,BX.Event,BX.UI));
+}((this.window = this.window || {}),BX.BIConnector.DatasetImport,BX.UI.Dialogs,BX,BX.Event,BX.UI));
 //# sourceMappingURL=script.js.map

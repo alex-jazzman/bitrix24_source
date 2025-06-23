@@ -1,3 +1,2 @@
-<?
-$MESS["CRM_STATUS_TYPE_SOURCE_WEBFORM"] = "CRM form";
-?>
+<?php
+$MESS["CRM_STATUS_SOURCE_REPEAT_SALE"] = "Repeat sales";

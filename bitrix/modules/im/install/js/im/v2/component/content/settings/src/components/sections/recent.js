@@ -1,5 +1,5 @@
 import { Settings } from 'im.v2.const';
-import { SettingsService } from 'im.v2.provider.service';
+import { SettingsService } from 'im.v2.provider.service.settings';
 
 import { CheckboxOption } from '../elements/checkbox';
 
@@ -7,10 +7,6 @@ import { CheckboxOption } from '../elements/checkbox';
 export const RecentSection = {
 	name: 'RecentSection',
 	components: { CheckboxOption },
-	data()
-	{
-		return {};
-	},
 	computed:
 	{
 		showBirthday(): boolean

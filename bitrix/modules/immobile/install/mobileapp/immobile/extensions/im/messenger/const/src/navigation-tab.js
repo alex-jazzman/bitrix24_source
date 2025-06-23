@@ -2,6 +2,8 @@
  * @module im/messenger/const/navigation-tab
  */
 jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
+	const { ComponentCode } = require('im/messenger/const/component-code');
+
 	const NavigationTab = {
 		imMessenger: 'chats',
 		imCopilotMessenger: 'copilot',
@@ -11,5 +13,14 @@ jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
 		imOpenlinesRecent: 'openlines',
 	};
 
-	module.exports = { NavigationTab };
+	const NavigationTabByComponent = {
+		[ComponentCode.imMessenger]: NavigationTab.imMessenger,
+		[ComponentCode.imChannelMessenger]: NavigationTab.imChannelMessenger,
+		[ComponentCode.imCopilotMessenger]: NavigationTab.imCopilotMessenger,
+		[ComponentCode.imCollabMessenger]: NavigationTab.imCollabMessenger,
+		[ComponentCode.imNotify]: NavigationTab.imNotify,
+		[ComponentCode.imOpenlinesRecent]: NavigationTab.imOpenlinesRecent,
+	};
+
+	module.exports = { NavigationTab, NavigationTabByComponent };
 });

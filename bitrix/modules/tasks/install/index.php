@@ -238,6 +238,9 @@ class tasks extends CModule
 			'onBoostActivated'
 		);
 
+		// chat integration
+		\Bitrix\Tasks\V2\Internals\Integration\Im\Chat::register();
+
 		$this->InstallTasks();
 
 		CModule::includeModule('tasks');
@@ -865,6 +868,9 @@ class tasks extends CModule
 			'\Bitrix\Tasks\Flow\Integration\AI\Control\AdviceService',
 			'onBoostActivated',
 		);
+
+		// chat integration
+		\Bitrix\Tasks\V2\Internals\Integration\Im\Chat::unRegister();
 
 		// remove tasks from socnetlog table
 		if (

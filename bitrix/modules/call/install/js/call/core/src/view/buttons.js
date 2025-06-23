@@ -219,6 +219,8 @@ export class DeviceButton
 		this.arrowHidden = (config.arrowHidden === true);
 		this.blocked = (config.blocked === true);
 
+		this.backgroundClass = BX.prop.getString(config, "backgroundClass", "");
+
 		this.showLevel = (config.showLevel === true);
 		this.level = config.level || 0;
 
@@ -266,14 +268,14 @@ export class DeviceButton
 									props: {className: this.getIconClass()},
 								}),
 							]
-						}),
-
-						Dom.create("div", {
-							props: {className: "bx-messenger-videocall-panel-text"},
-							text: this.text
-						})
+						}),						
 					]
-				})
+				}),
+				
+				Dom.create("div", {
+					props: {className: "bx-messenger-videocall-panel-text"},
+					text: this.text
+				}),
 			],
 			events: {
 				click: this.callbacks.onClick,
@@ -300,7 +302,7 @@ export class DeviceButton
 
 		if (!this.arrowHidden)
 		{
-			this.elements.icon.appendChild(this.elements.arrow);
+			this.elements.root.appendChild(this.elements.arrow);
 		}
 
 		if (this.showLevel)
@@ -416,7 +418,7 @@ export class DeviceButton
 
 	getIconContainerClass()
 	{
-		return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this.class + (this.enabled ? "" : "-off") + (this.arrowHidden ? " bx-messenger-videocall-panel-item-with-arrow-icon-container-arrow-hidden" : "");
+		return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this.class + (this.enabled ? "" : "-off") + (this.arrowHidden ? " bx-messenger-videocall-panel-item-with-arrow-icon-container-arrow-hidden" : "") + (this.backgroundClass ? ` ${this.backgroundClass}` : "");
 	};
 
 	enable()
@@ -576,6 +578,10 @@ export class TopButton
 	{
 		this.iconClass = BX.prop.getString(config, "iconClass", "");
 		this.text = BX.prop.getString(config, "text", "");
+		
+		this.elements = {
+			root: null,
+		};
 
 		this.callbacks = {
 			onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
@@ -586,7 +592,12 @@ export class TopButton
 
 	render()
 	{
-		return Dom.create("div", {
+		if (this.elements.root)
+		{
+			return this.elements.root;
+		}
+		
+		this.elements.root = Dom.create("div", {
 			props: {className: "bx-messenger-videocall-top-button"},
 			children: [
 				Dom.create("div", {
@@ -602,7 +613,9 @@ export class TopButton
 				mouseover: this.callbacks.onMouseOver,
 				mouseout: this.callbacks.onMouseOut
 			}
-		})
+		});
+		
+		return this.elements.root;
 	};
 }
 

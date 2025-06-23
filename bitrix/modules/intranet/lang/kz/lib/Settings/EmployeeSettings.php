@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_SETTINGS_FIELD_HINT_COLLABERS_INVITE_ON"] = "Қызметкерлер қонақтарды коллабтарға шақыра алатындай етіп баптау. Қажет болса, әр коллаб ішінде шақыру құқығын шектеуге болады. Баптау өшірілген кезде барлық қызметкерлерге сіздің компанияңыздан тыс мүшелерді коллабқа шақыруға тыйым салынады.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON_MSGVER_1"] = "Сыртқы пайдаланушылар Битрикс24-те жұмыс істей алатындай етіп баптауды қосыңыз. Бұл экстранет тобына шақырылған, кіру құқығы шектеулі және корпоративішілік ақпаратты қарау мүмкіндігі жоқ пайдаланушылар. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1"] = "Пайдаланушылар сілтеме арқылы тіркеле алады. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_LF_ON"] = "Жаңалықтар лентасында барлығы жаңа қызметкерлердің қосылғаны туралы хабарды көреді";
@@ -9,6 +10,8 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_BIRTH_YEAR"] = "Туған күн қа
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_NUMBER_FORMAT"] = "Телефон қалай көріністеледі";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_USERS_TO_INVITE_ON"] = "Барлық қызметкерлер Битрикс24 шақыра алады. Баптау өшірілген кезде пайдаланушыларды тек әкімші шақыра алады.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ADDRESS_FORMAT"] = "Мекенжай үшін әдепкі аймақ";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_COLLABERS_INVITE"] = "Сыртқы пайдаланушыларды коллабтарға шақыруға рұқсат етіңіз";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_COMPANY_PULSE_DESCRIPTION"] = "Виджет сіздің компанияңызда Битрикс24-ті пайдалану белсенділігін көрсетеді-қызметкерлер қаншалықты жиі міндеттер қояды, хабарламалар жазады, мобильді қосымшаға кіреді, бәрі көрінеді.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_COUNTRY_PHONE_NUMBER"] = "Телефон нөмірі үшін әдепкі ел";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_EXTRANET"] = "Экстранет";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_FAST_REG"] = "Жылдам тіркеуге рұқсат ету";

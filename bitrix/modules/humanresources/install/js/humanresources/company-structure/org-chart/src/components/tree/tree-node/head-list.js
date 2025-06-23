@@ -1,10 +1,10 @@
-import { SidePanel } from 'main.sidepanel';
 import './style.css';
 import { UserListActionMenu } from 'humanresources.company-structure.structure-components';
-import { events } from '../../../events';
+import { events } from '../../../consts';
 import { EventEmitter } from 'main.core.events';
 import type { UserData } from 'humanresources.company-structure.utils';
 
+// @vue/component
 export const HeadList = {
 	name: 'headList',
 
@@ -33,6 +33,11 @@ export const HeadList = {
 			required: false,
 			default: 'head',
 		},
+		isTeamEntity: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 
 	data(): Object
@@ -41,14 +46,6 @@ export const HeadList = {
 			isCollapsed: false,
 			isUpdating: true,
 			headsVisible: false,
-		};
-	},
-
-	created(): void
-	{
-		this.userTypes = {
-			head: 'head',
-			deputy: 'deputy',
 		};
 	},
 
@@ -61,7 +58,7 @@ export const HeadList = {
 		dropdownItems(): Array<UserData>
 		{
 			return this.items.map((item: UserData): UserData => {
-				const workPosition = item.workPosition || this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_HEAD_POSITION');
+				const workPosition = this.getPositionText(item);
 
 				return { ...item, workPosition };
 			});
@@ -75,6 +72,14 @@ export const HeadList = {
 		},
 	},
 
+	created(): void
+	{
+		this.userTypes = {
+			head: 'head',
+			deputy: 'deputy',
+		};
+	},
+
 	methods:
 	{
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
@@ -83,19 +88,31 @@ export const HeadList = {
 		},
 		handleUserClick(url: string): void
 		{
-			SidePanel.Instance.open(url, {
+			BX.SidePanel.Instance.open(url, {
 				cacheable: false,
 			});
 		},
 		closeHeadList(): void
 		{
-			this.headsVisible = false;
-			EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
+			if (this.headsVisible) // to prevent double unsubscription
+			{
+				this.headsVisible = false;
+				EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
+				EventEmitter.unsubscribe(events.HR_DRAG_DEPARTMENT, this.closeHeadList);
+			}
 		},
 		openHeadList(): void
 		{
-			this.headsVisible = true;
-			EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
+			if (!this.headsVisible) // to prevent double subscription
+			{
+				this.headsVisible = true;
+				EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
+				EventEmitter.subscribe(events.HR_DRAG_DEPARTMENT, this.closeHeadList);
+			}
+		},
+		getPositionText(item: UserData): string
+		{
+			return item.workPosition || this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_HEAD_POSITION');
 		},
 	},
 
@@ -118,13 +135,14 @@ export const HeadList = {
 				<div class="humanresources-tree__node_head-text">
 					<span
 						:bx-tooltip-user-id="item.id"
+						bx-tooltip-context="b24"
 						class="humanresources-tree__node_head-name"
 						@click.stop="handleUserClick(item.url)"
 					>
 						{{ item.name }}
 					</span>
 					<span v-if="!collapsed" class="humanresources-tree__node_head-position">
-						{{ item.workPosition || loc('HUMANRESOURCES_COMPANY_STRUCTURE_HEAD_POSITION') }}
+						{{ getPositionText(item) }}
 					</span>
 				</div>
 				<span

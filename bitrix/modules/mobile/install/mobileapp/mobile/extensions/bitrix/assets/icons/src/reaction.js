@@ -74,6 +74,33 @@ jn.define('assets/icons/src/reaction', (require, exports, module) => {
 			content: '',
 		});
 
+		static WHATS_NEW_FIRE = new ReactionIcon('WHATS_NEW_FIRE', {
+			name: 'fire',
+			testId: 'MESSAGE_MENU_REACTION_FIRE',
+			path: '/bitrix/mobileapp/mobile/extensions/bitrix/assets/reactions/icons/whats-new-fire.svg',
+			imageUrl: '/bitrix/mobileapp/mobile/extensions/bitrix/assets/reactions/images/whats-new-fire.png',
+			lottieUrl: null,
+			content: '',
+		});
+
+		static WHATS_NEW_LIKE = new ReactionIcon('WHATS_NEW_LIKE', {
+			name: 'sad',
+			testId: 'MESSAGE_MENU_REACTION_SAD',
+			path: '/bitrix/mobileapp/mobile/extensions/bitrix/assets/reactions/icons/whats-new-like.svg',
+			imageUrl: '/bitrix/mobileapp/mobile/extensions/bitrix/assets/reactions/images/whats-new-like.png',
+			lottieUrl: null,
+			content: '',
+		});
+
+		static WHATS_NEW_DISLIKE = new ReactionIcon('WHATS_NEW_DISLIKE', {
+			name: 'heart-eyes',
+			testId: 'MESSAGE_MENU_REACTION_HEART_EYES',
+			path: '/bitrix/mobileapp/mobile/extensions/bitrix/assets/reactions/icons/whats-new-dislike.svg',
+			imageUrl: '/bitrix/mobileapp/mobile/extensions/bitrix/assets/reactions/images/whats-new-dislike.png',
+			lottieUrl: null,
+			content: '',
+		});
+
 		/**
 		 * @public
 		 * @param {string} reactionId

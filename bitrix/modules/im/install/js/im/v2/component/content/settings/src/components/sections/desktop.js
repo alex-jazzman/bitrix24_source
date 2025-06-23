@@ -1,7 +1,9 @@
 import { DesktopApi, DesktopFeature, DesktopSettingsKey } from 'im.v2.lib.desktop-api';
 import { showDesktopConfirm, showDesktopRestartConfirm } from 'im.v2.lib.confirm';
 import { Settings } from 'im.v2.const';
-import { SettingsService } from 'im.v2.provider.service';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { LayoutManager } from 'im.v2.lib.layout';
+import { SettingsService } from 'im.v2.provider.service.settings';
 
 import { CheckboxOption } from '../elements/checkbox';
 
@@ -45,6 +47,14 @@ export const DesktopSection = {
 		sendTelemetry(): boolean
 		{
 			return DesktopApi.getTelemetryStatus();
+		},
+		isAirDesignEnabled(): boolean
+		{
+			return LayoutManager.getInstance().isAirDesignEnabled();
+		},
+		isRedirectAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isDesktopRedirectAvailable);
 		},
 	},
 	methods:
@@ -114,6 +124,7 @@ export const DesktopSection = {
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_STARTUP') }}
 				</div>
 				<CheckboxOption
+					v-if="!isAirDesignEnabled"
 					:value="twoWindowMode"
 					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_TWO_WINDOW_MODE_V2')"
 					@change="onTwoWindowModeChange"
@@ -129,6 +140,7 @@ export const DesktopSection = {
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_LINKS') }}
 				</div>
 				<CheckboxOption
+					v-if="isRedirectAvailable"
 					:value="openPortalLinkInDesktop"
 					:text="openPortalLinkInDesktopPhrase"
 					@change="onOpenPortalLinkInDesktopChange"

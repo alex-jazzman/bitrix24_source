@@ -12,14 +12,7 @@ export class TelephonyContent extends Content
 	getConfig(): Object
 	{
 		return {
-			html: this.getOptions().awaitData.then((response) => {
-				this.setOptions({
-					...response.data.telephony,
-					...this.getOptions(),
-				});
-
-				return this.getLayout();
-			}),
+			html: this.getLayout(),
 			minHeight: '43px',
 			sizeLoader: 30,
 		};

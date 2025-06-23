@@ -1,6 +1,9 @@
 import type { ProviderCodeType } from 'sign.type';
+import { LoadedDocumentData } from 'sign.v2.api';
+import type { CardItem } from 'sign.v2.b2e.user-party';
 import { post } from '../request';
-import type { Template, TemplateField, FieldValue } from './type';
+import type { Template, TemplateField, FieldValue, TemplateSelectedEntity, TemplateCreatedDocument } from './type';
+import type { ControllerError } from '../type';
 
 export type { Template };
 
@@ -37,5 +40,43 @@ export class TemplateApi
 	importBlank(serializedTemplate: string): Promise<void>
 	{
 		return post('sign.api_v1.b2e.document.template.import', { serializedTemplate }, true);
+	}
+
+	changeVisibility(templateId: number, visibility: string): Promise<any>
+	{
+		return post('sign.api_v1.b2e.document.template.changeVisibility', { templateId, visibility });
+	}
+
+	copy(templateId: number, folderId: number): Promise<void>
+	{
+		return post('sign.api_v1.b2e.document.template.copy', { templateId, folderId });
+	}
+
+	moveToFolder(entities: Object, folderId: number): Promise<any>
+	{
+		return post('sign.api_v1.b2e.document.template.moveToFolder', { entities, folderId });
+	}
+
+	delete(templateId: number): Promise<void>
+	{
+		return post('sign.api_v1.b2e.document.template.delete', { templateId });
+	}
+
+	deleteEntities(entities: TemplateSelectedEntity): Promise<any>
+	{
+		return post('sign.api_v1.b2e.document.template.deleteEntities', { entities });
+	}
+
+	registerDocuments(templateIds: number[]): Promise<{items: TemplateCreatedDocument[]}>
+	{
+		return post('sign.api_v1.b2e.document.template.registerDocuments', { templateIds });
+	}
+
+	setupSigners(documentIds: number[], signers: CardItem[]): Promise<{
+		shouldCheckDepartmentsSync: boolean,
+		documents: LoadedDocumentData[],
+	}>
+	{
+		return post('sign.api_v1.b2e.document.template.setupSigners', { documentIds, signers });
 	}
 }

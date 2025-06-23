@@ -22,9 +22,14 @@ type EditClientButtonData = {
 	isClientPopupShowed: boolean,
 }
 
+// @vue/component
 export const EditClientButton = {
 	name: 'EditClientButton',
-	emits: ['visible', 'invisible', 'updateClients'],
+	components: {
+		ClientPopup,
+		Button,
+		Icon,
+	},
 	props: {
 		id: {
 			type: [Number, Array],
@@ -37,15 +42,16 @@ export const EditClientButton = {
 			type: Array,
 			default: () => [],
 		},
-		dataId: {
-			type: [Number, String],
-			default: '',
-		},
 		dataElementPrefix: {
 			type: String,
 			default: '',
 		},
+		dataAttributes: {
+			type: Object,
+			default: null,
+		},
 	},
+	emits: ['visible', 'invisible', 'updateClients'],
 	setup(): EditClientButtonData
 	{
 		const iconSet = IconSet;
@@ -109,15 +115,10 @@ export const EditClientButton = {
 			this.$emit('invisible');
 		},
 	},
-	components: {
-		ClientPopup,
-		Button,
-		Icon,
-	},
 	template: `
 		<Button
 			:data-element="dataElementPrefix + '-menu-client-edit'"
-			:data-booking-id="dataId"
+			v-bind="dataAttributes"
 			:size="buttonSize.EXTRA_SMALL"
 			:color="buttonColor.LIGHT"
 			:round="true"

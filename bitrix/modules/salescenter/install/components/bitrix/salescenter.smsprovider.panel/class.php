@@ -315,7 +315,10 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 		}
 		Main\Type\Collection::sortByColumn($result, ['sort' => SORT_ASC]);
 
-		if (NotificationsManager::isAvailable())
+		if (
+			NotificationsManager::isAvailable()
+			&& Main\Application::getInstance()->getLicense()->getRegion() === 'ru'
+		)
 		{
 			array_unshift(
 				$result,

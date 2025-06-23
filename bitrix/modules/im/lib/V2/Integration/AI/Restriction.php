@@ -3,8 +3,6 @@
 namespace Bitrix\Im\V2\Integration\AI;
 
 use Bitrix\AI\Engine;
-use Bitrix\AI\Facade\Bitrix24;
-use Bitrix\AI\Quality;
 use Bitrix\AI\Tuning\Defaults;
 use Bitrix\AI\Tuning\Manager;
 use Bitrix\AI\Tuning\Type;
@@ -23,6 +21,7 @@ class Restriction
 	public const AI_TEXT_ERROR = 'AI_TEXT_NOT_ACTIVE';
 	public const AI_AVAILABLE_ERROR = 'AI_NOT_AVAILABLE';
 	public const AI_IMAGE_ERROR = 'AI_IMAGE_NOT_ACTIVE';
+	public const DEFAULT_COPILOT_ENABLED = true;
 
 	private const CATEGORIES_BY_TYPE = [
 		self::AI_TEXTAREA => self::AI_TEXT_CATEGORY,
@@ -80,7 +79,7 @@ class Restriction
 				'title' => Loc::getMessage('IM_RESTRICTION_COPILOT_TITLE'),
 				'header' => Loc::getMessage('IM_RESTRICTION_COPILOT_HEADER'),
 				'type' => Type::BOOLEAN,
-				'default' => true,
+				'default' => self::DEFAULT_COPILOT_ENABLED,
 			];
 
 			$items[self::SETTING_COPILOT_CHAT_PROVIDER] = array_merge(
@@ -125,13 +124,14 @@ class Restriction
 			return false;
 		}
 
-		$copilotSetting = (new Manager())->getItem(self::SETTINGS_BY_TYPE[$this->type]);
-		if (!isset($copilotSetting))
-		{
-			return false;
-		}
+		return $this->isCopilotOptionEnabled();
+	}
 
-		return $copilotSetting->getValue();
+	private function isCopilotOptionEnabled(): bool
+	{
+		$settings = Manager::getTuningStorage();
+
+		return (bool)($settings[self::SETTING_COPILOT_CHAT] ?? self::DEFAULT_COPILOT_ENABLED);
 	}
 
 	private function isAvailableInternal(): bool

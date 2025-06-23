@@ -18,8 +18,10 @@ declare interface JNChatPinPanel extends JNChatBaseClassInterface<PinPanelEvents
 	showPreviousItem(): void;
 	showItemById(id: string): void;
 	show(params: PinPanelShowParams): void;
+	update(params: object): void;
 	hide(): void;
 	updateItem(item: object): void;
+	updateItems(items: object[]): void;
 }
 
 export type PinPanelShowParams = {

@@ -202,34 +202,14 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  }
 	}
 
-	function trimLineBreaks(nodes) {
-	  const trimmedNodes = [...nodes];
-	  const firstNode = trimmedNodes[0];
-	  const lastNode = trimmedNodes[trimmedNodes.length - 1];
-	  if (isLineBreakNode(firstNode) || isParagraphNode(firstNode) && firstNode.isEmpty()) {
-	    trimmedNodes.splice(0, 1);
-	  }
-	  if (isLineBreakNode(lastNode) || isParagraphNode(lastNode) && lastNode.isEmpty()) {
-	    trimmedNodes.splice(-1, 1);
-	  }
-	  return trimmedNodes;
-	}
-	function isLineBreakNode(node) {
-	  return node && node.getScheme().isNewLine(node);
-	}
-	function isParagraphNode(node) {
-	  return node && node.getName() === 'p';
-	}
-
 	function normalizeLineBreaks(node) {
 	  const scheme = node.getScheme();
-	  const children = trimLineBreaks(node.getChildren(), scheme);
-	  node.setChildren(children);
 
-	  // to avoid a height collapsing for empty elements
-	  if (children.length === 0 || !scheme.isNewLine(children.at(-1)) && /^\s*$/.test(node.getTextContent())) {
-	    node.appendChild(scheme.createNewLine());
-	  }
+	  // To avoid a height collapsing for empty elements we need to add an additional <br> (<p></p> => <p><br></p>).
+	  // If we end an element with a LineBreakNode, then we need to add an additional <br>.
+	  // A browser doesn't render the last <br> (<p>text<br></p>).
+
+	  node.appendChild(scheme.createNewLine());
 	  return node;
 	}
 
@@ -1002,6 +982,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        node,
 	        data
 	      }) {
+	        var _data$files;
 	        if (fileMode === null) {
 	          return node;
 	        }
@@ -1017,7 +998,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        if (!main_core.Type.isStringFilled(serverFileId) || fileMode === 'disk' && !/^n?\d+$/i.test(serverFileId) || fileMode === 'file' && !/^(\d+|[\da-f-]{36}\.[\da-f]{32,})$/i.test(serverFileId)) {
 	          return createTextNode();
 	        }
-	        const info = data.files.find(file => {
+	        const info = data == null ? void 0 : (_data$files = data.files) == null ? void 0 : _data$files.find(file => {
 	          return file.serverFileId.toString() === serverFileId.toString();
 	        });
 	        if (!info) {
@@ -1215,45 +1196,54 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  props: {
 	    bbcode: {
 	      type: String,
-	      required: false,
 	      default: ''
+	    },
+	    /** @type HtmlFormatterOptions */
+	    options: {
+	      type: Object,
+	      default: undefined
+	    },
+	    /** @type FormatterData */
+	    formatData: {
+	      type: Object,
+	      default: () => ({})
 	    }
 	  },
 	  beforeCreate() {
 	    this.htmlFormatter = null;
 	  },
 	  mounted() {
-	    this.format(this.bbcode);
+	    this.format();
 	  },
 	  unmounted() {
 	    this.htmlFormatter = null;
 	  },
 	  watch: {
-	    bbcode(newValue) {
-	      this.format(newValue);
+	    bbcode() {
+	      this.format();
+	    },
+	    formatData() {
+	      this.format();
 	    }
 	  },
 	  methods: {
-	    format(bbcode) {
+	    format() {
 	      const result = this.getHtmlFormatter().format({
-	        source: bbcode
+	        source: this.bbcode,
+	        data: this.formatData
 	      });
-	      const container = this.$refs.content;
-	      main_core.Dom.clean(container);
-	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dom-methods
-	      container.appendChild(result);
-	      // container.parentNode.replaceChild(result, container);
+	      main_core.Dom.clean(this.$el);
+	      main_core.Dom.append(result, this.$el);
 	    },
-
 	    getHtmlFormatter() {
-	      if (this.htmlFormatter !== null) {
-	        return this.htmlFormatter;
-	      }
-	      this.htmlFormatter = new HtmlFormatter();
+	      var _this$htmlFormatter;
+	      (_this$htmlFormatter = this.htmlFormatter) != null ? _this$htmlFormatter : this.htmlFormatter = new HtmlFormatter(this.options);
 	      return this.htmlFormatter;
 	    }
 	  },
-	  template: '<div class="ui-typography-container" ref="content"></div>'
+	  template: `
+		<div class="ui-typography-container"></div>
+	`
 	};
 
 	exports.HtmlFormatter = HtmlFormatter;

@@ -89,20 +89,24 @@ $MESS["BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"] = "В вашем тарифе ог�
 Чтобы добавить новых, перейдите на один из платных тарифов. Это не только снимет ограничение на число сотрудников, но и добавит больше возможностей для вашего бизнеса.";
 
 $MESS["INTRANET_INVITE_DIALOG_TITLE_EMAIL"] = "Пригласить по E-mail";
+$MESS["INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1"] = "Пригласить по почте";
 $MESS["INTRANET_INVITE_DIALOG_TITLE_EMAIL_AND_PHONE"] = "E-mail или номер телефона";
+$MESS["INTRANET_INVITE_DIALOG_TITLE_PHONE"] = "Номер телефона";
+$MESS["INTRANET_INVITE_DIALOG_TITLE_PHONE_MSGVER_1"] = "Пригласить по СМС";
 $MESS["INTRANET_INVITE_DIALOG_INPUT_EMAIL"] = "Введите e-mail";
 $MESS["INTRANET_INVITE_DIALOG_INPUT_EMAIL_AND_PHONE"] = "Введите e-mail или телефон";
+$MESS["INTRANET_INVITE_DIALOG_INPUT_PHONE"] = "Введите телефон";
 $MESS["INTRANET_INVITE_DIALOG_ADD_MORE"] = "Добавить еще";
 $MESS["INTRANET_INVITE_DIALOG_ADD_MASSIVE"] = "Пригласить массово";
 $MESS["INTRANET_INVITE_DIALOG_OR"] = "или";
 $MESS["INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL_AND_PHONE"] = "Неверно введен email или телефон";
 $MESS["INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL"] = "Неверно введен email";
+$MESS["INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE"] = "Неверно введен телефон";
 $MESS["INTRANET_INVITE_DIALOG_EMPTY_ERROR_EMAIL_AND_PHONE"] = "Не введено ни одного значения email или телефон";
 $MESS["INTRANET_INVITE_DIALOG_EMPTY_ERROR_EMAIL"] = "Не введено ни одного значения email";
+$MESS["INTRANET_INVITE_DIALOG_EMPTY_ERROR_PHONE"] = "Не введено ни одного значения телефона";
 $MESS["INTRANET_INVITE_DIALOG_SUCCESS_SEND"] = "Приглашения отправлены!";
 $MESS["INTRANET_INVITE_DIALOG_FAST_REG_TITLE"] = "Пригласить по ссылке";
-$MESS["INTRANET_INVITE_DIALOG_REG_ON"] = "ВКЛ";
-$MESS["INTRANET_INVITE_DIALOG_REG_OFF"] = "ВЫКЛ";
 $MESS["INTRANET_INVITE_DIALOG_SELF_OFF_HINT"] = "Регистрация по ссылке будет отключена. Ссылка, отправленная коллегам ранее, станет более не активна. Вы всегда сможете включить ее снова.";
 $MESS["INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"] = "E-mail интегратора";
 $MESS["INTRANET_INVITE_DIALOG_MASS_TITLE"] = "Массовое приглашение";
@@ -136,3 +140,47 @@ $MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE"] = "Пригласить
 $MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_DESCRIPTION"] = "В вашем Битрикс24 может храниться важная информация: персональные данные сотрудников и клиентов, финансовые и юридические документы. Обращайтесь только к официальным партнерам Битрикс24.<span>Подробнее</span>";
 $MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES"] = "Да, пригласить";
 $MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO"] = "Не приглашать";
+
+$MESS["INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_LABEL"] = "Выберите отдел";
+$MESS["INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION"] = "Сотрудник сразу добавится в нужный отдел. Все согласования <br>и рабочие отчёты будут проходить через его руководителя";
+$MESS["INTRANET_INVITE_DIALOG_GROUP_INPUT"] = "Выбрать группу";
+$MESS["INTRANET_INVITE_ALLOW_INVITATION_LINK"] = "Разрешить регистрацию по ссылке";
+$MESS["INTRANET_INVITE_ALLOW_INVITATION_LINK_DESCRIPTION"] = "Выключите, если хотите запретить регистрацию в Битрикс24 по ссылке.<br>При повторном включении будет создана новая ссылка";
+$MESS["INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED"] = "Регистрация по ссылке отключена";
+$MESS["INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED_DESCRIPTION"] = "В вашем Битрикс24 отключена возможность приглашать новых сотрудников по ссылке. Обратитесь к администратору";
+$MESS["INTRANET_INVITE_DIALOG_GROUP_TITLE"] = "С привязкой к группе";
+$MESS["INTRANET_INVITE_COPY_BUTTON_DESCRIPTION"] = "Скопируйте ссылку и отправьте её в любой удобный мессенджер, по почте <br>или СМС. Коллеги смогут быстро присоединиться к вашему Битрикс24";
+$MESS["INTRANET_INVITE_DIALOG_ADD_PERSONAL"] = "Персональное приглашение";
+$MESS["INTRANET_INVITE_DIALOG_MASS_TITLE_EMAIL_AND_PHONE"] = "Чтобы пригласить сразу много сотрудников, укажите через запятую их номера телефонов или e-mail";
+$MESS["INTRANET_INVITE_DIALOG_MASS_TITLE_EMAIL"] = "Чтобы пригласить сразу много сотрудников, укажите через запятую их e-mail";
+$MESS["INTRANET_INVITE_DIALOG_MASS_TITLE_PHONE"] = "Чтобы пригласить сразу много сотрудников, укажите через запятую их номера телефонов";
+$MESS["INTRANET_INVITE_DIALOG_PLACEHOLDER_NAME"] = "Иван";
+$MESS["INTRANET_INVITE_DIALOG_PLACEHOLDER_LAST_NAME"] = "Иванов";
+$MESS["INTRANET_INVITE_DIALOG_PLACEHOLDER_EMAIL"] = "exmple@inbox.mail";
+$MESS["INTRANET_INVITE_DIALOG_PLACEHOLDER_POSITION"] = "Должность";
+$MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS"] = "Ссылка обновлена";
+$MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR"] = "Ошибка обновления ссылки";
+$MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING"] = "Присоединиться к Битрикс24 по ранее<br>созданным ссылкам будет нельзя";
+$MESS["INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_TITLE"] = "Отключить регистрацию по ссылке?";
+$MESS["INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_TEXT"] = "Все отправленные ссылки перестанут работать, по ним нельзя будет присоединиться к вашему Битрикс24";
+$MESS["INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_OK"] = "Да, отключить";
+$MESS["INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_CANCEL"] = "Не отключать";
+
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_DESCRIPTION"] = "Приглашения отправляются через почтовый сервис, установленный на вашем компьютере (например, можно отправить с адреса корпоративной почты). Это повышает доверие и делает приглашения более персонализированными.";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEPS"] = "1. Нажмите кнопку «Пригласить»<br/>
+						2. Откроется ваша почта с текстом приглашения, который вы можете изменить перед отправкой<br/>
+						3. Введите адреса сотрудников, которых хотите пригласить в Битрикс24<br/>
+						4. Отправьте приглашения";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_MAIL_SERVICE"] = "Если на вашем компьютере не настроен почтовый сервис, можно выбрать другой способ 
+				приглашения или отправить приглашения через [LINK]почтовый сервис[/LINK] Битрикс24";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE"] = "Отправьте приглашения";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_DESCRIPTION"] = "Введите адреса сотрудников, которых хотите пригласить в ваш Битрикс24 ";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_SEND"] = "Отправить";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_CANCEL"] = "Отмена";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_PLACEHOLDER"] = "Введите e-mail";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_SUBJECT"] = "Приглашаю вас в Битрикс24";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_BODY"] = "Мы работаем и общаемся в Битрикс24. Перейдите по ссылке, чтобы принять приглашение";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_TITLE"] = "Приглашения отправлены";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_DESCRIPTION"] = "Следите за статусом приглашений в разделе Сотрудники. [LINK]Перейти в раздел[/LINK] ";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_FAILED_TITLE"] = "Не удалось отправить приглашения";
+$MESS["INTRANET_INVITE_DIALOG_LOCAL_POPUP_FAILED_DESCRIPTION"] = "Попробуйте обновить страницу и отправить приглашения ещё раз";

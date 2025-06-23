@@ -187,7 +187,7 @@ this.BX = this.BX || {};
 	  }).then(assets => {
 	    content += babelHelpers.classPrivateFieldLooseBase(this, _parseExtensionConfig)[_parseExtensionConfig](assets);
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _appAllowedByTariff)[_appAllowedByTariff]) {
-	      throw new Error(main_core.Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT'));
+	      throw new Error(main_core.Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT_MSGVER_1'));
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _useDemoData)[_useDemoData]) {
 	      if (!babelHelpers.classPrivateFieldLooseBase(this, _demoData)[_demoData]) {

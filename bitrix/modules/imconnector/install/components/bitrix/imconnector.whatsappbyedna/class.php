@@ -126,7 +126,7 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 
 			foreach ($fromList as $from)
 			{
-				if ($from['id'] == $subjectId)
+				if (is_array($from) && isset($from['id']) && $from['id'] == $subjectId)
 				{
 					$phone = $from['channelPhone'];
 					break;

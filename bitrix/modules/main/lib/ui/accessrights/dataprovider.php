@@ -42,8 +42,12 @@ class DataProvider
 				return Entity\Department::class;
 			case (AccessCode::TYPE_ACCESS_DIRECTOR):
 				return Entity\AccessDirector::class;
+			case (AccessCode::TYPE_ACCESS_DEPUTY):
+				return Entity\AccessDeputy::class;
 			case (AccessCode::TYPE_ACCESS_EMPLOYEE):
 				return Entity\UserAll::class;
+			case (AccessCode::TYPE_STRUCTURE_TEAM):
+				return Entity\StructureTeam::class;
 			default:
 				return null;
 		}

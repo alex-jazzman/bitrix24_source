@@ -37,3 +37,5 @@ $MESS["IM_LIB_EXIT_DELETE_CHAT_TITLE"] = "Delete chat";
 $MESS["IM_LIB_EXIT_UPDATE_CHANNEL_TITLE"] = "Do you want to save the changes and proceed to managing the subscribers?";
 $MESS["IM_LIB_EXIT_UPDATE_CHAT_TEXT_CONFIRM"] = "Yes";
 $MESS["IM_LIB_EXIT_UPDATE_CHAT_TITLE"] = "Do you want to save the changes and proceed to managing the chat members?";
+$MESS["IM_LIB_CONFIRM_ACTIVE_CALL_CONFIRM"] = "Are you sure you want to close the page? Your call will disconnect if you close the page.";
+

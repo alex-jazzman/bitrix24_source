@@ -1,6 +1,7 @@
-import 'ui.icon-set.animated';
+import { hint, type HintParams } from 'ui.vue3.directives.hint';
 
 import { VoteApplication } from 'vote.application';
+import { getMessageWithCount } from '../helpers/helpers';
 
 import type { JsonObject } from 'main.core';
 import type { AnswerCollectionType } from 'vote.store.vote';
@@ -11,6 +12,7 @@ import './style.css';
 // @vue/component
 export const VoteQuestion = {
 	name: 'VoteQuestion',
+	directives: { hint },
 	props: {
 		contextId: {
 			type: String,
@@ -56,14 +58,14 @@ export const VoteQuestion = {
 		{
 			const formattedAnswers = {};
 
-			Object.keys(this.answers).forEach((key) => {
+			Object.keys(this.answers).forEach((key, index) => {
 				const answer = this.answers[key];
 				const storeAnswer = this.answersCollection[answer.id] || {};
 
 				formattedAnswers[key] = {
 					...answer,
 					counter: storeAnswer.counter || 0,
-					percent: storeAnswer.percent,
+					percent: this.question.isMultiple ? Math.round(storeAnswer.percent) : this.roundPercentages[index],
 				};
 			});
 
@@ -76,6 +78,37 @@ export const VoteQuestion = {
 		canShowResults(): boolean
 		{
 			return this.isUserVoted || this.isCompleted;
+		},
+		answerVotes(): number[]
+		{
+			return Object.values(this.answers).map((answer) => {
+				const counter = this.answersCollection[answer.id]?.counter;
+
+				return counter || 0;
+			});
+		},
+		roundPercentages(): number[]
+		{
+			const totalVotes = this.answerVotes.reduce((sum, count) => sum + count, 0);
+			if (totalVotes === 0)
+			{
+				return this.answerVotes.map(() => 0);
+			}
+
+			const calculatedPercents = this.answerVotes.map((vote) => (vote / totalVotes) * 100);
+			const roundedPercents = calculatedPercents.map((percent) => Math.floor(percent));
+			const remainder = 100 - roundedPercents.reduce((sum, p) => sum + p, 0);
+
+			const fractionalParts = calculatedPercents
+				.map((percent, index) => ({ index, fraction: percent % 1 }))
+				.sort((a, b) => b.fraction - a.fraction);
+
+			for (let i = 0; i < remainder; i++)
+			{
+				roundedPercents[fractionalParts[i].index] += 1;
+			}
+
+			return roundedPercents;
 		},
 	},
 	watch: {
@@ -133,6 +166,26 @@ export const VoteQuestion = {
 		{
 			return `vote-answer-${answerId}-${this.contextId}`;
 		},
+		showHintCounter(counter: number): Partial<HintParams> | null
+		{
+			return {
+				text: this.countText(counter),
+				popupOptions: {
+					position: 'bottom',
+					targetContainer: document.body,
+					offsetLeft: 25,
+					offsetTop: 5,
+					autoHide: false,
+					angle: {
+						position: 'top',
+					},
+				},
+			};
+		},
+		countText(counter: number): string
+		{
+			return getMessageWithCount('VOTE_RESULT_COUNT', counter);
+		},
 	},
 	template: `
 		<div class="vote__question">
@@ -159,19 +212,27 @@ export const VoteQuestion = {
 					v-model="selectedCheckboxes"
 					:value="answer.id"
 					:id="getUniqueAnswerId(answer.id)"
+					:key="answer.id"
 					@change="checkboxChanged"
 				/>
 				<div class="vote__progress-bar">
 					<label class='vote__answer-text' :for="getUniqueAnswerId(answer.id)">{{ answer.message }}</label>
-					<div v-if="canShowResults" class="vote__answer-percent">
-						<span>{{ answer.percent }}</span>
-						%
-					</div>
-					<div v-if="canShowResults" class="vote__progress-bar-fill"
-						 :style="{
-						width: answer.percent + '%'
-					  }"
-					></div>
+					<transition name="vote__answer-percent-show">
+						<div
+							v-if="canShowResults"
+							v-hint="answer.counter > 0 ? (() => showHintCounter(answer.counter)) : null"
+							class="vote__answer-percent"
+							:key="'percent-' + answerKey + '-' + answer.counter">
+							<span>{{ answer.percent }}</span>
+							%
+						</div>
+					</transition>
+					<transition name="vote__progress-bar-filled">
+						<div v-if="canShowResults" class="vote__progress-bar-fill"
+							 :key="'fill-' + answerKey"
+							 :style="{ '--target-width': answer.percent + '%' }"
+						></div>
+					</transition>
 				</div>
 			</div>
 		</div>

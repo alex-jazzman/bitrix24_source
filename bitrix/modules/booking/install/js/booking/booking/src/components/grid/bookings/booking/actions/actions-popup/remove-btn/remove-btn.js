@@ -14,8 +14,10 @@ function BookingRemoveBtn(props, { emit }): void
 	return h(
 		RemoveButton,
 		{
-			dataId: bookingId,
-			dataElementPrefix: 'booking',
+			dataAttributes: {
+				'data-booking-id': bookingId,
+				'data-element': 'booking-menu-remove-button',
+			},
 			onRemove: removeBooking,
 		},
 	);

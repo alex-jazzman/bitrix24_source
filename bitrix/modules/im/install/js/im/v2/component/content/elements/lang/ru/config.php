@@ -1,6 +1,5 @@
 <?php
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_MEMBERS"] = "Кликните для открытия списка пользователей";
-$MESS["IM_CONTENT_CHAT_HEADER_RENAME_ERROR"] = "При переименовании чата произошла ошибка, повторите попытку позже";
 $MESS["IM_CONTENT_CHAT_HEADER_SUPPORT_SUBTITLE"] = "Готовы ответить на ваши вопросы";
 $MESS["IM_CONTENT_CHAT_HEADER_START_CONFERENCE"] = "Начать конференцию";
 $MESS["IM_CONTENT_CHAT_HEADER_USER_COUNT_PLURAL_0"] = "#COUNT# участник";
@@ -35,3 +34,8 @@ $MESS["IM_CONTENT_BULK_ACTIONS_SELECT_MESSAGES"] = "Выберите сообщ�
 
 $MESS["IM_CONTENT_BULK_ACTIONS_CONFIRM_TITLE"] = "Удалить выбранные сообщения (#COUNT#) ?";
 $MESS["IM_CONTENT_BULK_ACTIONS_DELETE_NOT_CAN_DELETE"] = "Чужие сообщения удалить нельзя";
+
+$MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_ONE_DAY_TITLE'] = "Пригласите команду, <br> чтобы начать работу";
+$MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_ONE_DAY_TEXT'] = "Ваша коллаба готова, осталось пригласить коллег, подрядчиков или клиентов. Это просто и быстро!";
+$MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_FOUR_DAYS_TITLE'] = "В коллабе всё ещё никого нет";
+$MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_FOUR_DAYS_TEXT'] = "Пригласите коллег <br> или внешнюю команду. <br> Это первое, с чего нужно начать";

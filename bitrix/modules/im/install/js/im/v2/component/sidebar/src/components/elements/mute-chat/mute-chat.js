@@ -2,9 +2,9 @@ import { hint } from 'ui.vue3.directives.hint';
 
 import { ActionByRole, Layout } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
-import { ChatService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { Toggle, ToggleSize } from 'im.v2.component.elements';
+import { Toggle, ToggleSize } from 'im.v2.component.elements.toggle';
 
 import type { ImModelChat } from 'im.v2.model';
 

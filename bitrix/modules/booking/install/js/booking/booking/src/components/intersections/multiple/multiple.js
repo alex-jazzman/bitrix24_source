@@ -233,7 +233,7 @@ export const Multiple = {
 					:data-id="'bbi-resource-selector-add-button' + resourceId"
 				>
 					<span class="bbi-resource-selector-add-button-caption">
-						{{ loc('BOOKING_BOOKING_INTERSECTION_BUTTON') }}
+						{{ loc('BOOKING_BOOKING_INTERSECTION_BUTTON_MSGVER_1') }}
 					</span>
 				</span>
 			</template>

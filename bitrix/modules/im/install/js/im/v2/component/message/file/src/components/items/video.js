@@ -2,9 +2,8 @@ import { Type } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
 import { FileViewerContext } from 'im.v2.const';
-import { VideoPlayer } from	'im.v2.component.elements';
-
-import { ProgressBar } from './progress-bar';
+import { VideoPlayer } from	'im.v2.component.elements.videoplayer';
+import { ProgressBar } from	'im.v2.component.elements.progressbar';
 
 import '../../css/items/video.css';
 
@@ -32,11 +31,8 @@ export const VideoItem = {
 			type: Object,
 			required: true,
 		},
-		handleLoading: {
-			type: Boolean,
-			default: true,
-		},
 	},
+	emits: ['cancelClick'],
 	computed:
 	{
 		messageItem(): ImModelMessage
@@ -124,6 +120,10 @@ export const VideoItem = {
 
 			window.open(this.file.urlDownload, '_blank');
 		},
+		onCancelClick(event)
+		{
+			this.$emit('cancelClick', event);
+		},
 	},
 	template: `
 		<div
@@ -131,7 +131,11 @@ export const VideoItem = {
 			:class="{'--with-forward': isForward}"
 			@click="download"
 		>
-			<ProgressBar v-if="!isLoaded && handleLoading" :item="file" :messageId="messageItem.id" />
+			<ProgressBar 
+				v-if="!isLoaded" 
+				:item="file" 
+				@cancelClick="onCancelClick"
+			/>
 			<VideoPlayer
 				:fileId="file.id"
 				:src="file.urlDownload"

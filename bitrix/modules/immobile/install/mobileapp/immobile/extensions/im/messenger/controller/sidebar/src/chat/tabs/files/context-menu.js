@@ -14,7 +14,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/context-menu', (requi
 	const { Icon } = require('assets/icons');
 	const { UIMenu } = require('layout/ui/menu');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { DiskService } = require('im/messenger/provider/service');
+	const { DiskService } = require('im/messenger/provider/services/disk');
 
 	/**
 	 * @class FileContextMenu

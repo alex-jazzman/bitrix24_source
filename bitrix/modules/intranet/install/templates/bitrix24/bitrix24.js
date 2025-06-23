@@ -880,29 +880,36 @@ B24.Timemanager = {
 
 	redraw_planner: function(data)
 	{
-		if(!!data.TASKS_ENABLED)
+		if(!!data?.TASKS_ENABLED)
 		{
 			data.TASKS_COUNT = !data.TASKS_COUNT ? 0 : data.TASKS_COUNT;
 			this.layout.tasks.innerHTML = data.TASKS_COUNT;
 			this.layout.tasks.style.display = data.TASKS_COUNT == 0 ? "none" : "inline-block";
 		}
 
-		if(!!data.CALENDAR_ENABLED)
+		if(!!data?.CALENDAR_ENABLED)
 		{
 			this.layout.event.innerHTML = data.EVENT_TIME;
 			this.layout.event.style.display = data.EVENT_TIME == '' ? 'none' : 'inline-block';
 		}
 
-		this.layout.info.style.display =
-			(BX.style(this.layout.tasks, "display") == 'none' && BX.style(this.layout.event, "display") == 'none')
-				? 'none'
-				: 'block';
+		if (this.layout.info)
+		{
+			this.layout.info.style.display = (
+				(
+					BX.style(this.layout.tasks, "display") == 'none'
+					&& BX.style(this.layout.event, "display") == 'none'
+				)
+					? 'none'
+					: 'block'
+			);
+		}
 	},
 
 	redraw : function()
 	{
-		const checkInValue = this.data.CHECKIN_COUNTER?.VALUE;
-		const checkInClass = this.data.CHECKIN_COUNTER?.CLASS;
+		const checkInValue = this.data?.CHECKIN_COUNTER?.VALUE;
+		const checkInClass = this.data?.CHECKIN_COUNTER?.CLASS;
 		if (checkInValue)
 		{
 			BX.Runtime.loadExtension('ui.counter').then(() => {
@@ -917,15 +924,24 @@ B24.Timemanager = {
 		}
 		else
 		{
-			this.layout.checkInCounter.style.display = 'none';
+			if (this.layout.checkInCounter)
+			{
+				this.layout.checkInCounter.style.display = 'none';
+			}
 		}
 
-		this.redraw_planner(this.data.PLANNER);
+		this.redraw_planner(this.data?.PLANNER);
 
-		if (this.data.STATE == "CLOSED" && (this.data.CAN_OPEN == "REOPEN" || !this.data.CAN_OPEN))
-			this.layout.status.innerHTML = this.getStatusName("COMPLETED");
-		else
-			this.layout.status.innerHTML = this.getStatusName(this.data.STATE);
+		if (this.layout.status)
+		{
+			if (
+				this.data.STATE == "CLOSED"
+				&& (this.data.CAN_OPEN == "REOPEN" || !this.data.CAN_OPEN)
+			)
+				this.layout.status.innerHTML = this.getStatusName("COMPLETED");
+			else
+				this.layout.status.innerHTML = this.getStatusName(this.data.STATE);
+		}
 
 		// if (this.data.STATE == "OPENED")
 		// 	this.setTimer();
@@ -939,16 +955,16 @@ B24.Timemanager = {
 			this.timer = BX.timer({container: this.layout.timer, display : "bitrix24_time"}); //BX.timer.clock(this.layout.timer);
 
 		var statusClass = "";
-		if (this.data.STATE == "CLOSED")
+		if (this.data?.STATE == "CLOSED")
 		{
 			if (this.data.CAN_OPEN == "REOPEN" || !this.data.CAN_OPEN)
 				statusClass = "timeman-completed";
 			else
 				statusClass = "timeman-start";
 		}
-		else if (this.data.STATE == "PAUSED")
+		else if (this.data?.STATE == "PAUSED")
 			statusClass = "timeman-paused";
-		else if (this.data.STATE == "EXPIRED")
+		else if (this.data?.STATE == "EXPIRED")
 			statusClass = "timeman-expired";
 
 		BX.removeClass(this.layout.block, "timeman-completed timeman-start timeman-paused timeman-expired");
@@ -1045,6 +1061,11 @@ B24.Timemanager = {
 
 	endBlink : function()
 	{
+		if (!BX("timeman-background", true))
+		{
+			return;
+		}
+
 		if (this.blinkAnimation)
 		{
 			clearInterval(this.blinkAnimation);
@@ -1276,20 +1297,9 @@ B24.upgradeButtonRedirect = function(params)
 	if (typeof params !== "object")
 		return;
 
-	var url = params.COUNTER_URL || "",
-		licensePath = params.LICENSE_PATH || "",
-		host = params.HOST || "";
+	var licensePath = params.LICENSE_PATH || "";
 
-	BX.ajax.post(
-		url,
-		{
-			action: "upgradeButton",
-			host: host
-		},
-		BX.proxy(function(){
-			BX.SidePanel.Instance.open(licensePath);
-		}, this)
-	);
+	BX.SidePanel.Instance.open(licensePath);
 }
 
 B24.PopupBlur = function() {

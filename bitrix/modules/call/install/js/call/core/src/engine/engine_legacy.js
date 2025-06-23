@@ -94,6 +94,14 @@ export const CallEvent = {
 	onUserVoiceStarted: 'onUserVoiceStarted',
 	onUserVoiceStopped: 'onUserVoiceStopped',
 	onUserFloorRequest: 'onUserFloorRequest', // request for a permission to speak
+	onAllParticipantsAudioMuted: 'onAllParticipantsAudioMuted',
+	onAllParticipantsVideoMuted: 'onAllParticipantsVideoMuted',
+	onAllParticipantsScreenshareMuted: 'onAllParticipantsScreenshareMuted',
+	onYouMuteAllParticipants: 'onYouMuteAllParticipants',
+	onRoomSettingsChanged: 'onRoomSettingsChanged',
+	onUserPermissionsChanged: 'onUserPermissionsChanged',
+	onUserRoleChanged: 'onUserRoleChanged',
+	onParticipantMuted: 'onParticipantMuted',
 	onUserEmotion: 'onUserEmotion',
 	onUserStatsReceived: 'onUserStatsReceived',
 	onCustomMessage: 'onCustomMessage',
@@ -131,6 +139,11 @@ const ajaxActions = {
 	createChildCall: 'im.call.createChildCall',
 	getPublicChannels: 'pull.channel.public.list',
 	getCall: 'im.call.get'
+};
+
+export const CallScheme = {
+	classic: 1,
+	jwt: 2,
 };
 
 class EngineLegacy
@@ -312,6 +325,7 @@ class EngineLegacy
 					logToken: createCallResponse.logToken,
 					connectionData: createCallResponse.connectionData,
 					isCopilotActive: callFields['RECORD_AUDIO'],
+					scheme: callFields['SCHEME'],
 				});
 
 				call.addDialogInfo(callFields.ASSOCIATED_ENTITY);
@@ -391,6 +405,7 @@ class EngineLegacy
 					connectionData: createCallResponse.connectionData,
 					debug: config.debug,
 					isCopilotActive: callFields['RECORD_AUDIO'],
+					scheme: callFields['SCHEME'],
 					// jwt: callFields['JWT'],
 					// endpoint: callFields['ENDPOINT']
 				});
@@ -435,6 +450,7 @@ class EngineLegacy
 			logToken: logToken,
 			connectionData: connectionData,
 			isCopilotActive: callFields['RECORD_AUDIO'],
+			scheme: callFields['SCHEME'],
 			// jwt: callFields['JWT'],
 			// endpoint: callFields['ENDPOINT'],
 
@@ -486,13 +502,14 @@ class EngineLegacy
 		})
 	};
 
+	getCallWithDialogId(dialogId: string): ?Object
+	{
+		return Object.values(this.calls).find((call) => call.associatedEntity?.id == dialogId);
+	}
+
 	#onPullEvent(command: string, params, extra)
 	{
-		const isLegacyPlainCall = params?.call?.PROVIDER === Provider.Plain
-			&& !CallSettingsManager.isJwtInPlainCallsEnabled();
-		const isLegacyBitrixCall = !CallSettingsManager.jwtCallsEnabled;
-
-		if (!isLegacyPlainCall && !isLegacyBitrixCall)
+		if (params?.call?.SCHEME !== CallScheme.classic)
 		{
 			return;
 		}
@@ -615,6 +632,7 @@ class EngineLegacy
 					onDestroy: this.#onCallDestroy.bind(this)
 				},
 				isCopilotActive: callFields['RECORD_AUDIO'],
+				scheme: callFields['SCHEME'],
 				// jwt: callFields['JWT'],
 				// endpoint: callFields['ENDPOINT']
 			});

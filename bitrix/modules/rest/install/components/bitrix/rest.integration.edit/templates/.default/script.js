@@ -1026,6 +1026,16 @@
 			)
 		);
 
+		BX.UI.ToolbarManager?.getDefaultToolbar().subscribe(BX.UI.ToolbarEvents.finishEditing, (event) => {
+			let updatedTitle = event.getData()?.updatedTitle
+			if (typeof updatedTitle === 'string')
+			{
+				BX('rest-integration-form')
+					.querySelector('#rest-integration-form input[name="TITLE"]')
+					.value = event.getData().updatedTitle;
+			}
+		});
+
 		BX.addCustomEvent(
 			'SidePanel.Slider:onClose',
 			this.onCloseSlider.bind(this)

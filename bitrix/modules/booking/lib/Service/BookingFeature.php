@@ -6,7 +6,6 @@ namespace Bitrix\Booking\Service;
 
 use Bitrix\Bitrix24\Feature;
 
-use Bitrix\Booking\Provider\NotificationsAvailabilityProvider;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
@@ -53,7 +52,6 @@ final class BookingFeature
 		{
 			$canTurnOnTrial = (
 				(!self::isFeatureEnabled() && !self::isTrialFeatureWasEnabled())
-				&& NotificationsAvailabilityProvider::isAvailable()
 				&& (Loader::includeModule('crm') && NotificationsManager::canUse())
 			);
 		}

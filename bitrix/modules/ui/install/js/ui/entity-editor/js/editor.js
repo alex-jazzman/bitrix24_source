@@ -73,6 +73,8 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 		this._pageTitleExternalClickHandler = BX.delegate(this.onPageTitleExternalClick, this);
 		this._pageTitleKeyPressHandler = BX.delegate(this.onPageTitleKeyPress, this);
+		this._toolbarBeforeStartEditingHandler = BX.delegate(this.onToolbarBeforeStartEditing, this);
+		this._toolbarFinishEditingHandler = BX.delegate(this.onToolbarFinishEditing, this);
 
 		this._validators = null;
 		this._modeSwitch = null;
@@ -159,15 +161,8 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			this._canBeMultipleFields = BX.prop.getBoolean(this._settings, "canBeMultipleFields", true);
 			this._enableShowAlwaysFeauture = BX.prop.getBoolean(this._settings, "enableShowAlwaysFeauture", true);
 			this._enableVisibilityPolicy = BX.prop.getBoolean(this._settings, "enableVisibilityPolicy", true);
-			this._enablePageTitleControls = BX.prop.getBoolean(this._settings, "enablePageTitleControls", true);
-			if(this._enablePageTitleControls)
-			{
-				this._pageTitle = BX("pagetitle");
-				this._buttonWrapper = BX("pagetitle_btn_wrapper");
-				this._editPageTitleButton = BX("pagetitle_edit");
-				this._copyPageUrlButton = BX("page_url_copy_btn");
-			}
 
+			this.initializePageTitleControls();
 			this.adjustSize();
 			this.adjustTitle();
 
@@ -411,12 +406,52 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		initializeCustomEditors: function()
 		{
 		},
+		/**
+		 * @private
+		 *
+		 * @returns {void}
+		 */
+		initializePageTitleControls: function()
+		{
+			this._enablePageTitleControls = BX.prop.getBoolean(this._settings, "enablePageTitleControls", true);
+			if (!this._enablePageTitleControls)
+			{
+				return;
+			}
+
+			this._enablePageTitleControlsViaToolbar = BX.prop.getBoolean(this._settings, "enablePageTitleControlsViaToolbar", false);
+			if (!this._enablePageTitleControlsViaToolbar)
+			{
+				// compatiblity
+
+				this._pageTitle = BX("pagetitle");
+				this._buttonWrapper = BX("pagetitle_btn_wrapper");
+				this._editPageTitleButton = BX("pagetitle_edit");
+				this._copyPageUrlButton = BX("page_url_copy_btn");
+
+				return;
+			}
+
+			const toolbar = BX.Reflection.getClass('BX.UI.ToolbarManager') && BX.UI.ToolbarManager.getDefaultToolbar();
+			if (!toolbar)
+			{
+				return;
+			}
+
+			this._toolbar = toolbar;
+		},
 		attachToEvents: function()
 		{
 			BX.bind(window, "resize", this._windowResizeHandler);
 
 			BX.addCustomEvent("SidePanel.Slider:onOpenComplete", this._sliderOpenHandler);
 			BX.addCustomEvent("SidePanel.Slider:onClose", this._sliderCloseHandler);
+
+			if (this._enablePageTitleControls && this._enablePageTitleControlsViaToolbar && this._toolbar)
+			{
+				this._toolbar.subscribe(BX.UI.ToolbarEvents.beforeStartEditing, this._toolbarBeforeStartEditingHandler);
+				this._toolbar.subscribe(BX.UI.ToolbarEvents.finishEditing, this._toolbarFinishEditingHandler);
+			}
 		},
 		deattachFromEvents: function()
 		{
@@ -424,6 +459,12 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 			BX.removeCustomEvent("SidePanel.Slider:onOpenComplete", this._sliderOpenHandler);
 			BX.removeCustomEvent("SidePanel.Slider:onClose", this._sliderCloseHandler);
+
+			if (this._enablePageTitleControls && this._enablePageTitleControlsViaToolbar && this._toolbar)
+			{
+				this._toolbar.unsubscribe(BX.UI.ToolbarEvents.beforeStartEditing, this._toolbarBeforeStartEditingHandler);
+				this._toolbar.unsubscribe(BX.UI.ToolbarEvents.finishEditing, this._toolbarFinishEditingHandler);
+			}
 		},
 		initPull: function()
 		{
@@ -1635,7 +1676,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				this.showToolPanel();
 			}
 
-			if(this._model.isCaptionEditable())
+			if (this._enablePageTitleControls && !this._enablePageTitleControlsViaToolbar && this._model.isCaptionEditable())
 			{
 				BX.bind(
 					this._pageTitle,
@@ -1850,9 +1891,13 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		switchTitleMode: function(mode)
 		{
+			if (this._enablePageTitleControlsViaToolbar)
+			{
+				return;
+			}
+
 			if(mode === BX.UI.EntityEditorMode.edit)
 			{
-
 				this._pageTitle.style.display = "none";
 				document.body.classList.add('--edit__title-input');
 
@@ -1895,7 +1940,6 @@ if(typeof BX.UI.EntityEditor === "undefined")
 					this._pageTitleInput = BX.remove(this._pageTitleInput);
 				}
 
-				this._pageTitle.innerHTML = BX.util.htmlspecialchars(this._model.getCaption());
 				this._pageTitle.style.display = "";
 
 				if(this._buttonWrapper)
@@ -1911,44 +1955,30 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		adjustTitle: function()
 		{
-			if(!this._enablePageTitleControls || !this._buttonWrapper)
+			if (!this._enablePageTitleControls || this._isNew)
 			{
 				return;
 			}
 
-			var caption = this._model.getCaption().trim();
-			var captionTail = "";
-			var match = caption.match(/\s+\S+\s*$/);
-			if(match)
-			{
-				captionTail = caption.substr(match["index"]);
-				caption = caption.substr(0, match["index"]);
-			}
-			else
-			{
-				captionTail = caption;
-				caption = "";
-			}
+			const caption = this._model.getCaption().trim();
 
-			BX.cleanNode(this._buttonWrapper);
-			if(captionTail !== "")
+			if (this._enablePageTitleControlsViaToolbar && this._toolbar)
 			{
-				this._buttonWrapper.appendChild(document.createTextNode(captionTail));
+				this._toolbar.setTitle(caption);
 			}
-			if(this._editPageTitleButton)
+			// why check _buttonWrapper you ask? it's compatibility hack to not change page title on entity creation
+			else if (!this._enablePageTitleControlsViaToolbar && this._pageTitle && this._buttonWrapper)
 			{
-				this._buttonWrapper.appendChild(this._editPageTitleButton);
+				this._pageTitle.textContent = caption;
 			}
-			if(this._copyPageUrlButton)
-			{
-				this._buttonWrapper.appendChild(this._copyPageUrlButton);
-			}
-
-			this._pageTitle.innerHTML = BX.util.htmlspecialchars(caption);
 		},
 		adjustSize: function()
 		{
 			if(!this._enablePageTitleControls || !this._pageTitle)
+			{
+				return;
+			}
+			if (this._enablePageTitleControlsViaToolbar)
 			{
 				return;
 			}
@@ -1963,7 +1993,6 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			{
 				BX.removeClass(wrapper, "pagetitle-narrow");
 			}
-
 		},
 		adjustButtons: function()
 		{
@@ -2087,14 +2116,14 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			}
 			return data;
 		},
-		savePageTitle: function()
+		savePageTitle: function(title)
 		{
-			if(!this._pageTitleInput)
+			if(!this._enablePageTitleControls)
 			{
 				return;
 			}
 
-			var title = BX.util.trim(this._pageTitleInput.value);
+			title = BX.util.trim(title);
 			if(title === "")
 			{
 				return;
@@ -2755,6 +2784,11 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			}
 
 			analyticsData.status = status;
+
+			if (status === 'success' && this._isNew && this._entityId > 0)
+			{
+				analyticsData.p2 = `id_${this._entityId}`;
+			}
 
 			if (BX.prop.getBoolean(analyticsConfig, 'appendParamsFromCurrentUrl', false))
 			{
@@ -3420,25 +3454,70 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		onPageTitleExternalClick: function(e)
 		{
+			if (this._enablePageTitleControlsViaToolbar)
+			{
+				return;
+			}
+
 			var target = BX.getEventTarget(e);
 			if(target !== this._pageTitleInput)
 			{
-				this.savePageTitle();
+				this.savePageTitle(this._pageTitleInput.value);
 				this.switchTitleMode(BX.UI.EntityEditorMode.view);
 			}
 		},
 		onPageTitleKeyPress: function(e)
 		{
+			if (this._enablePageTitleControlsViaToolbar)
+			{
+				return;
+			}
+
 			var c = e.keyCode;
 			if(c === 13)
 			{
-				this.savePageTitle();
+				this.savePageTitle(this._pageTitleInput.value);
 				this.switchTitleMode(BX.UI.EntityEditorMode.view);
 			}
 			else if(c === 27)
 			{
 				this.switchTitleMode(BX.UI.EntityEditorMode.view);
 			}
+		},
+		/**
+		 * @private
+		 */
+		onToolbarBeforeStartEditing: function(event)
+		{
+			if (this._readOnly || !this._model.isCaptionEditable())
+			{
+				event.preventDefault();
+
+				return
+			}
+
+			if (this.isChanged())
+			{
+				event.preventDefault();
+
+				this.showMessageDialog(
+					"titleEditDenied",
+					BX.message("UI_ENTITY_EDITOR_TITLE_EDIT"),
+					BX.message("UI_ENTITY_EDITOR_TITLE_EDIT_UNSAVED_CHANGES")
+				);
+
+				return;
+			}
+		},
+		/**
+		 * @private
+		 */
+		onToolbarFinishEditing: function(event)
+		{
+			const updatedTitle = event.getData().updatedTitle;
+
+			this.savePageTitle(updatedTitle);
+			this.adjustTitle();
 		},
 		onInterfaceToolbarMenuBuild: function(sender, eventArgs)
 		{

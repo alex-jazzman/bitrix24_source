@@ -628,9 +628,9 @@ this.BX = this.BX || {};
 	      icon: ui_iconSet_api_core.Actions.PLUS_50
 	    };
 	    const isLibraryAvailable = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
-	    let result = [...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController), connectAiMenuItem];
+	    let result = [...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController)];
 	    if (isLibraryAvailable) {
-	      result.push({
+	      result.push(connectAiMenuItem, {
 	        separator: true
 	      }, getMarketMenuItem());
 	    }

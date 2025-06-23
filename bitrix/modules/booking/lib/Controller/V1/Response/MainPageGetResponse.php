@@ -18,9 +18,9 @@ class MainPageGetResponse implements \JsonSerializable
 		public readonly string|null $providerModuleId,
 		public readonly array $clientsDataRecent,
 		public readonly bool $isCurrentSenderAvailable,
-		public readonly bool $isIntersectionForAll = true,
-		public readonly array $counters = [],
 		public readonly WaitListItemCollection $waitListItemCollection,
+		public readonly bool $isIntersectionForAll,
+		public readonly array $counters,
 	)
 	{
 	}
@@ -36,9 +36,9 @@ class MainPageGetResponse implements \JsonSerializable
 				'recent' => $this->clientsDataRecent,
 			],
 			'counters' => $this->counters,
+			'waitListItems' => $this->waitListItemCollection->toArray(),
 			'isIntersectionForAll' => $this->isIntersectionForAll,
 			'isCurrentSenderAvailable' => $this->isCurrentSenderAvailable,
-			'waitListItems' => $this->waitListItemCollection->toArray(),
 		];
 	}
 }

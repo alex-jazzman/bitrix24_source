@@ -8,11 +8,13 @@ use Bitrix\Booking\Internals\Exception\Booking\CreateBookingException;
 use Bitrix\Booking\Internals\Exception\Booking\RemoveBookingException;
 use Bitrix\Booking\Internals\Exception\Note\CreateNoteException;
 use Bitrix\Booking\Internals\Exception\Note\RemoveNoteException;
+use Bitrix\Booking\Internals\Model\BookingResourceTable;
 use Bitrix\Booking\Internals\Model\BookingTable;
 use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Booking\Internals\Model\EO_Booking;
 use Bitrix\Booking\Internals\Model\NotesTable;
 use Bitrix\Booking\Entity;
+use Bitrix\Booking\Internals\Model\ResourceNotificationSettingsTable;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\BookingMapper;
 use Bitrix\Booking\Provider\BookingProvider;
@@ -21,6 +23,7 @@ use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
 use Bitrix\Booking\Provider\Params\Booking\BookingSort;
 use Bitrix\Booking\Provider\Params\FilterInterface;
 use Bitrix\Booking\Provider\Params\GridParams;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\ORM\Query\QueryHelper;
 
@@ -33,9 +36,17 @@ class BookingRepository implements BookingRepositoryInterface
 		$this->mapper = $mapper;
 	}
 
-	public function getQuery(): Query
+	public function getQuery(FilterInterface|null $filter = null): Query
 	{
-		return BookingTable::query();
+		$query = BookingTable::query();
+
+		if ($filter !== null)
+		{
+			$filter->prepareQuery($query);
+			$query->where($filter->prepareFilter());
+		}
+
+		return $query;
 	}
 
 	public function getList(
@@ -151,6 +162,8 @@ class BookingRepository implements BookingRepositoryInterface
 		);
 
 		$provider
+			// TODO: should always be condition for counters loading
+			// need to refactor, add condition, and check usages
 			->withCounters($collection, $userId)
 			->withClientsData($collection)
 			->withExternalData($collection)

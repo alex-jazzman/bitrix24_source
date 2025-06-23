@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,im_public,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,crm_entityEditor_field_paymentDocuments,pull_client,calendar_util,main_popup,calendar_sharing_interface,crm_ai_call,crm_router,ui_hint,ui_dialogs_messagebox,main_core_events,ui_notification,main_core,ui_imageStackSteps,ui_iconSet_main,ui_designTokens,crm_timeline_item) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,im_public,main_date,crm_timeline_tools,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,crm_entityEditor_field_paymentDocuments,pull_client,calendar_util,main_popup,calendar_sharing_interface,crm_ai_call,ui_hint,ui_dialogs_messagebox,main_core_events,ui_imageStackSteps,ui_iconSet_main,ui_designTokens,crm_timeline_item,main_core,crm_router,ui_infoHelper,ui_notification) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -90,7 +90,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (menu) {
 	        menu.close();
 	      }
-	      void new Action(item.action).execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
+	      const action = new Action(item.action);
+	      void action.execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
 	    }
 	  }], [{
 	    key: "showMenu",
@@ -234,7 +235,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              actionParams: babelHelpers.classPrivateFieldGet(this, _actionParams),
 	              response
 	            });
-	            reject(response);
+	            resolve(response);
 	          });
 	        } else if (this.isCallRestBatch()) {
 	          _classPrivateMethodGet(this, _startAnimation, _startAnimation2).call(this, vueComponent);
@@ -2613,10 +2614,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
 	      if (menuBar) {
 	        menuBar.setActiveItemById('todo');
-	        const todoEditor = menuBar.getItemById('todo');
-	        todoEditor.focus();
-	        todoEditor.setParentActivityId(activityId);
-	        todoEditor.setDeadLine(scheduleDate);
+	        menuBar.scrollIntoView();
+	        setTimeout(() => {
+	          const todoEditor = menuBar.getItemById('todo');
+	          todoEditor.focus();
+	          todoEditor.setParentActivityId(activityId);
+	          todoEditor.setDeadLine(scheduleDate);
+	        }, 250);
 	      }
 	    }
 	  }], [{
@@ -3646,9 +3650,97 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "YELLOW", 'yellow');
 	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "WHITE", 'white');
 
+	const Loader = {
+	  mounted() {
+	    this.renderLottieAnimation();
+	  },
+	  methods: {
+	    renderLottieAnimation() {
+	      const mainAnimation = ui_lottie.Lottie.loadAnimation({
+	        path: this.getAnimationPath(),
+	        container: this.$refs.lottie,
+	        renderer: 'svg',
+	        loop: true,
+	        autoplay: true
+	      });
+	      mainAnimation.setSpeed(0.75);
+	      return this.$refs.lottie.root;
+	    },
+	    getAnimationPath() {
+	      return '/bitrix/js/crm/timeline/item/src/components/content-blocks/internal/copilot/lottie/loader.json';
+	    }
+	  },
+	  template: `
+		<div ref="lottie" class="crm-timeline-block-internal-copilot-loader__lottie"></div>
+	`
+	};
+
+	var CopilotHeader = {
+	  components: {
+	    Loader
+	  },
+	  props: {
+	    text: {
+	      type: String,
+	      required: true
+	    },
+	    animated: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    }
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline-block-internal-copilot-header', {
+	        '--animated': this.animated
+	      }];
+	    }
+	  },
+	  template: `
+		<div :class="className">
+			<div class="crm-timeline-block-internal-copilot-header-icon">
+				<Loader v-if="animated"></Loader>
+			</div>
+			{{ text }}
+		</div>
+	`
+	};
+
+	const HELP_ARTICLE_CODE = '20412666';
+	var CopilotFooter = {
+	  computed: {
+	    getText() {
+	      return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_COPILOT_WARNING_TEXT', {
+	        '#LINK_START#': '<a class="crm-timeline-block-internal-copilot-footer-more">',
+	        '#LINK_END#': '</a>'
+	      });
+	    }
+	  },
+	  methods: {
+	    openHelpArticle(event) {
+	      if (!main_core.Dom.hasClass(event.target, 'crm-timeline-block-internal-copilot-footer-more')) {
+	        return;
+	      }
+	      if (top.BX && top.BX.Helper) {
+	        top.BX.Helper.show(`redirect=detail&code=${HELP_ARTICLE_CODE}`);
+	      }
+	    }
+	  },
+	  template: `
+		<div 
+			class="crm-timeline-block-internal-copilot-footer"
+			v-html="getText"
+			@click="openHelpArticle"
+		></div>
+	`
+	};
+
 	const EditableDescription = {
 	  components: {
 	    Button,
+	    CopilotHeader,
+	    CopilotFooter,
 	    TextEditorComponent: ui_textEditor.TextEditorComponent,
 	    HtmlFormatterComponent: ui_bbcode_formatter_htmlFormatter.HtmlFormatterComponent
 	  },
@@ -3687,19 +3779,29 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: Object,
 	      required: false,
 	      default: []
+	    },
+	    copilotResultCfg: {
+	      type: Object,
+	      required: false,
+	      default: []
 	    }
 	  },
 	  beforeCreate() {
 	    this.textEditor = null;
 	  },
 	  data() {
+	    var _this$copilotResultCf, _this$copilotResultCf2, _this$copilotResultCf3, _this$copilotResultCf4, _this$copilotResultCf5, _this$copilotResultCf6, _this$copilotResultCf7;
 	    return {
 	      isEdit: false,
 	      isSaving: false,
 	      isLongText: false,
 	      isCollapsed: false,
 	      bbcode: this.text,
-	      isContentEmpty: main_core.Type.isString(this.text) && this.text.trim() === ''
+	      isContentEmpty: main_core.Type.isString(this.text) && this.text.trim() === '',
+	      isCopied: this.copied,
+	      isCopilotHeader: main_core.Type.isStringFilled((_this$copilotResultCf = this.copilotResultCfg) === null || _this$copilotResultCf === void 0 ? void 0 : _this$copilotResultCf.header),
+	      isCopilotFooter: main_core.Type.isStringFilled((_this$copilotResultCf2 = this.copilotResultCfg) === null || _this$copilotResultCf2 === void 0 ? void 0 : _this$copilotResultCf2.footer) || main_core.Type.isBoolean((_this$copilotResultCf3 = this.copilotResultCfg) === null || _this$copilotResultCf3 === void 0 ? void 0 : _this$copilotResultCf3.footer) && ((_this$copilotResultCf4 = this.copilotResultCfg) === null || _this$copilotResultCf4 === void 0 ? void 0 : _this$copilotResultCf4.footer) === true,
+	      isCopilotAnimated: main_core.Type.isStringFilled((_this$copilotResultCf5 = this.copilotResultCfg) === null || _this$copilotResultCf5 === void 0 ? void 0 : _this$copilotResultCf5.header) && main_core.Type.isBoolean((_this$copilotResultCf6 = this.copilotResultCfg) === null || _this$copilotResultCf6 === void 0 ? void 0 : _this$copilotResultCf6.animated) && ((_this$copilotResultCf7 = this.copilotResultCfg) === null || _this$copilotResultCf7 === void 0 ? void 0 : _this$copilotResultCf7.animated) === true
 	    };
 	  },
 	  inject: ['isReadOnly', 'isLogMessage'],
@@ -3709,7 +3811,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        '--is-read-only': this.isLogMessage,
 	        '--is-edit': this.isEdit,
 	        '--is-long': this.isLongText,
-	        '--is-expanded': this.isCollapsed || !this.isLongText
+	        '--is-expanded': this.isCollapsed || !this.isLongText,
+	        '--copiloted': this.isCopiloted
+	      }];
+	    },
+	    textClassName() {
+	      return ['crm-timeline__editable-text_text', {
+	        '--hidden': this.isCopilotAnimated
 	      }];
 	    },
 	    heightClassnameModifier() {
@@ -3736,7 +3844,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.editable && this.saveAction && !this.isReadOnly;
 	    },
 	    isCopied() {
-	      return !this.isEdit && this.copied;
+	      return !this.isEdit && this.isCopied;
+	    },
+	    isCopiloted() {
+	      return !this.isEdit && (this.isCopilotHeader || this.isCopilotFooter);
 	    },
 	    saveTextButtonProps() {
 	      return {
@@ -3784,11 +3895,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        type: 'jsEvent',
 	        value: eventName
 	      });
-	      action.execute(this);
+	      void action.execute(this);
 	    },
 	    adjustHeight(elem) {
-	      elem.style.height = 0;
-	      elem.style.height = `${elem.scrollHeight}px`;
+	      main_core.Dom.style(elem, 'height', 0);
+	      main_core.Dom.style(elem, 'height', `${elem.scrollHeight}px`);
 	    },
 	    saveText() {
 	      if (this.saveTextButtonState === ButtonState.DISABLED || this.saveTextButtonState === ButtonState.LOADING || !this.isEdit) {
@@ -3855,14 +3966,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      let isSuccess = false;
 	      try {
 	        isSuccess = document.execCommand('copy');
-	      } catch (err) {
+	      } catch {
 	        // just in case
 	      }
 	      selection.removeAllRanges();
 	      if (isSuccess) {
 	        new main_popup.Popup({
 	          id: `copyTextHint_${main_core.Text.getRandom(8)}`,
-	          content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_TEXT_IS_COPIED'),
+	          content: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_TEXT_IS_COPIED'),
 	          bindElement: this.$refs.copyTextBtn,
 	          darkMode: true,
 	          autoHide: true,
@@ -3905,7 +4016,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        removePlugins: ['BlockToolbar'],
 	        maxHeight: 600,
 	        content: this.bbcode,
-	        paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : null),
+	        paragraphPlaceholder: this.$Bitrix.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : null),
 	        toolbar: [],
 	        floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'link', 'copilot'],
 	        visualOptions: {
@@ -3939,6 +4050,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.$nextTick(() => {
 	        this.isLongText = this.checkIsLongText();
 	      });
+	    },
+	    copied(newValue) {
+	      this.isCopied = newValue;
+	    },
+	    copilotResultCfg(newValue) {
+	      this.isCopilotHeader = main_core.Type.isStringFilled(newValue.header);
+	      this.isCopilotFooter = main_core.Type.isStringFilled(newValue.footer) || main_core.Type.isBoolean(newValue.footer) && newValue.footer === true;
+	      this.isCopilotAnimated = main_core.Type.isStringFilled(newValue.header) && main_core.Type.isBoolean(newValue.animated) && newValue.animated === true;
 	    },
 	    isCollapsed(isCollapsed) {
 	      if (isCollapsed === false && this.isInViewport() === false) {
@@ -3997,6 +4116,12 @@ this.BX.Crm = this.BX.Crm || {};
 					<i class="crm-timeline__editable-text_edit-icon"></i>
 				</button>
 				<div class="crm-timeline__editable-text_inner">
+					<CopilotHeader 
+						v-if="isCopilotHeader"
+						:text="this.copilotResultCfg?.header"
+						:animated = "this.isCopilotAnimated"
+						class="crm-timeline__editable-text-copilot-header"
+					></CopilotHeader>
 					<div class="crm-timeline__editable-text_content">
 						<TextEditorComponent
 							v-if="isEdit"
@@ -4005,7 +4130,7 @@ this.BX.Crm = this.BX.Crm || {};
 						<span
 							v-else
 							ref="text"
-							class="crm-timeline__editable-text_text"
+							:class="textClassName"
 						>
 							<HtmlFormatterComponent :bbcode="bbcode" />
 						</span>
@@ -4036,6 +4161,10 @@ this.BX.Crm = this.BX.Crm || {};
 					{{ expandButtonText }}
 				</button>
 			</div>
+			<CopilotFooter
+				v-if="isCopilotFooter"
+				class="crm-timeline__editable-text-copilot-footer"
+			></CopilotFooter>
 		</div>
 	`
 	};
@@ -6105,6 +6234,56 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const CopilotLaunchButton = {
+	  props: {
+	    title: {
+	      type: String,
+	      default: ''
+	    },
+	    tooltip: {
+	      type: String,
+	      default: ''
+	    },
+	    action: Object | null
+	  },
+	  data() {
+	    return {
+	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
+	    };
+	  },
+	  methods: {
+	    executeAction() {
+	      if (this.action) {
+	        const action = new Action(this.action);
+	        void action.execute(this);
+	      }
+	    },
+	    showTooltip() {
+	      if (this.hintText === '') {
+	        return;
+	      }
+	      BX.UI.Hint.show(this.$el, this.hintText, true);
+	    },
+	    hideTooltip() {
+	      if (this.hintText === '') {
+	        return;
+	      }
+	      BX.UI.Hint.hide(this.$el);
+	    }
+	  },
+	  template: `
+		<button 
+			class="crm-timeline__copilot-launch-button"
+			@click="executeAction"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+		>
+			<div class="crm-timeline__copilot-launch-button-icon"></div>
+			{{ title }}
+		</button>
+	`
+	};
+
 	let DeadlineAndPingSelectorBackgroundColor = function DeadlineAndPingSelectorBackgroundColor() {
 	  babelHelpers.classCallCheck(this, DeadlineAndPingSelectorBackgroundColor);
 	};
@@ -6537,7 +6716,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        DeadlineAndPingSelector,
 	        WorkflowEfficiency,
 	        CallScoringPill,
-	        CallScoring
+	        CallScoring,
+	        CopilotLaunchButton
 	      };
 	    }
 	    /**
@@ -7899,8 +8079,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        console.error('Cant load "baas.store" extension');
 	      });
 	    } else {
-	      var _BX3, _BX3$UI;
-	      (_BX3 = BX) === null || _BX3 === void 0 ? void 0 : (_BX3$UI = _BX3.UI) === null || _BX3$UI === void 0 ? void 0 : _BX3$UI.InfoHelper.show(data.sliderCode);
+	      var _data$sliderCode, _BX3, _BX3$UI;
+	      (_data$sliderCode = data.sliderCode) !== null && _data$sliderCode !== void 0 && _data$sliderCode.includes('redirect=detail&code') ? top.BX.Helper.show(data.sliderCode) : (_BX3 = BX) === null || _BX3 === void 0 ? void 0 : (_BX3$UI = _BX3.UI) === null || _BX3$UI === void 0 ? void 0 : _BX3$UI.InfoHelper.show(data.sliderCode);
 	    }
 	  } else if (_classPrivateMethodGet$9(this, _isAiMarketplaceAppsExist, _isAiMarketplaceAppsExist2).call(this, data)) {
 	    if (!babelHelpers.classPrivateFieldGet(this, _isCopilotBannerShown) && data.isCopilotBannerNeedShow) {
@@ -10519,6 +10699,24 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	function showCyclePopup(status) {
+	  void main_core.Runtime.loadExtension('booking.component.cycle-popup').then(CyclePopup => {
+	    const scrollToCard = {
+	      not_confirmed: CyclePopup.CardId.Unconfirmed,
+	      confirmed: CyclePopup.CardId.Confirmed,
+	      success: CyclePopup.CardId.Confirmed,
+	      late: CyclePopup.CardId.Late,
+	      failed: CyclePopup.CardId.Late,
+	      waitlist: CyclePopup.CardId.Waitlist,
+	      overbooking: CyclePopup.CardId.Overbooking
+	    }[status];
+	    CyclePopup.cyclePopupOpener.show({
+	      context: 'crm',
+	      scrollToCard
+	    });
+	  });
+	}
+
 	let Booking = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Booking, _Base);
 	  function Booking() {
@@ -10536,11 +10734,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (actionType !== 'jsEvent') {
 	        return;
 	      }
-	      if (action === 'Activity:Booking:ShowBooking') {
+	      if (action === `${item.getType()}:ShowBooking`) {
 	        const url = `/booking/?editingBookingId=${actionData.id}`;
 	        BX.SidePanel.Instance.open(url, {
 	          customLeftBoundary: 0
 	        });
+	      }
+	      if (action === `${item.getType()}:ShowCyclePopup`) {
+	        showCyclePopup(actionData.status);
 	      }
 	    }
 	  }], [{
@@ -10569,11 +10770,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (actionType !== 'jsEvent') {
 	        return;
 	      }
-	      if (action === 'Activity:WaitListItem:ShowWaitListItem') {
+	      if (action === `${item.getType()}:ShowWaitListItem`) {
 	        const url = `/booking/?editingWaitListItemId=${actionData.id}`;
 	        BX.SidePanel.Instance.open(url, {
 	          customLeftBoundary: 0
 	        });
+	      }
+	      if (action === `${item.getType()}:ShowCyclePopup`) {
+	        showCyclePopup(actionData.status);
 	      }
 	    }
 	  }], [{
@@ -10584,6 +10788,91 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return WaitListItem;
 	}(Base);
+
+	function _classPrivateMethodInitSpec$t(obj, privateSet) { _checkPrivateRedeclaration$w(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$w(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$t(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _openSegment = /*#__PURE__*/new WeakSet();
+	var _launchCopilot$1 = /*#__PURE__*/new WeakSet();
+	let RepeatSale = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(RepeatSale, _Base);
+	  function RepeatSale(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, RepeatSale);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(RepeatSale).call(this, ...args));
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _launchCopilot$1);
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _openSegment);
+	    return _this;
+	  }
+	  babelHelpers.createClass(RepeatSale, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent' || !actionData) {
+	        return;
+	      }
+	      if (action === 'Activity:RepeatSale:Schedule') {
+	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
+	      }
+	      if (action === 'Activity:RepeatSale:OpenSegment') {
+	        _classPrivateMethodGet$t(this, _openSegment, _openSegment2).call(this, actionData.activityId, actionData);
+	      }
+	      if (action === 'Activity:RepeatSale:LaunchCopilot' && actionData) {
+	        _classPrivateMethodGet$t(this, _launchCopilot$1, _launchCopilot2$1).call(this, item, actionData);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:RepeatSale' || item.getType() === 'RepeatSaleCreated' || item.getType() === 'LaunchError';
+	    }
+	  }]);
+	  return RepeatSale;
+	}(Base);
+	function _openSegment2(item, actionData) {
+	  if (!main_core.Type.isInteger(actionData.segmentId)) {
+	    return;
+	  }
+	  crm_router.Router.openSlider(`/crm/repeat-sale-segment/details/${actionData.segmentId}/`, {
+	    width: 700,
+	    cacheable: false,
+	    requestMethod: 'post',
+	    requestParams: {
+	      readOnly: true
+	    }
+	  });
+	}
+	function _launchCopilot2$1(item, actionData) {
+	  const isValidParams = main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId) && BX.CrmEntityType.enumeration.deal === parseInt(actionData.ownerTypeId, 10);
+	  if (!isValidParams) {
+	    throw new Error('Invalid "actionData" parameters');
+	  }
+	  main_core.ajax.runAction('crm.timeline.repeatsale.launchCopilot', {
+	    data: {
+	      activityId: actionData.activityId,
+	      ownerTypeId: actionData.ownerTypeId,
+	      ownerId: actionData.ownerId
+	    }
+	  }).then(response => {}).catch(response => {
+	    var _customData$sliderCod;
+	    const customData = response.errors[0].customData;
+	    if (customData && main_core.Type.isStringFilled((_customData$sliderCod = customData.sliderCode) !== null && _customData$sliderCod !== void 0 ? _customData$sliderCod : '')) {
+	      ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	        code: customData.sliderCode
+	      }).show();
+	    } else {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: main_core.Text.encode(response.errors[0].message),
+	        autoHideDelay: 5000
+	      });
+	    }
+	    throw response;
+	  });
+	}
 
 	ControllerManager.registerController(Activity);
 	ControllerManager.registerController(CommonContentBlocks);
@@ -10617,6 +10906,7 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(Bizproc);
 	ControllerManager.registerController(Booking);
 	ControllerManager.registerController(WaitListItem);
+	ControllerManager.registerController(RepeatSale);
 
 	exports.Item = Item$1;
 	exports.ConfigurableItem = ConfigurableItem;
@@ -10624,5 +10914,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX.Crm,BX,BX.Calendar,BX.Main,BX.Calendar.Sharing,BX.Crm.AI,BX.Crm,BX,BX.UI.Dialogs,BX.Event,BX,BX,BX.UI,BX,BX,BX.Crm.Timeline));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX.Crm,BX,BX.Calendar,BX.Main,BX.Calendar.Sharing,BX.Crm.AI,BX,BX.UI.Dialogs,BX.Event,BX.UI,BX,BX,BX.Crm.Timeline,BX,BX.Crm,BX.UI,BX));
 //# sourceMappingURL=index.bundle.js.map

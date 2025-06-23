@@ -1059,7 +1059,7 @@
 																		else
 																		{
 																			BX.SidePanel.Instance.open(
-																				BX.message['LANDING_PAR_PAGE_URL_SITE_EDIT'] + '#b24widget',
+																				BX.message['PAGE_URL_LANDING_SETTINGS'] + '#b24widget',
 																				{ allowChangeHistory: false, cacheable: false }
 																			);
 																		}

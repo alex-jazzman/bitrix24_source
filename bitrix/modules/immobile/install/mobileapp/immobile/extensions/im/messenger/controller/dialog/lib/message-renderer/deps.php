@@ -7,7 +7,6 @@ return [
 		'utils/uuid',
 		'analytics',
 		'im:messenger/const',
-		'im:messenger/lib/converter/ui/message',
 		'im:messenger/lib/element',
 		'im/messenger/lib/helper',
 		'im:messenger/lib/logger',

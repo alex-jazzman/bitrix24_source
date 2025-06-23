@@ -158,6 +158,7 @@ export class Timeline
 	#biPopup: HTMLDivElement;
 	#dateFormat: string;
 	#dateFormatShort: string;
+	#efficiencyPopup: Popup;
 
 	constructor(
 		options: { workflowId: string, taskId?: number, },
@@ -199,6 +200,7 @@ export class Timeline
 						allowChangeHistory: false,
 						cacheable: false,
 						loader: '/bitrix/js/bizproc/workflow/timeline/img/skeleton.svg',
+						printable: true,
 					},
 				);
 			})
@@ -675,7 +677,7 @@ export class Timeline
 
 	#createEfficiencyPopup(): Popup
 	{
-		return new Popup({
+		this.#efficiencyPopup = new Popup({
 			width: 403,
 			minHeight: 345,
 			closeIcon: true,
@@ -709,9 +711,11 @@ export class Timeline
 				},
 			},
 		});
+
+		return this.#efficiencyPopup;
 	}
 
-	#getEfficiencyData()
+	#getEfficiencyData(): Popup
 	{
 		let logoClass = '--first';
 		let notice = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_NO_STATS');
@@ -719,19 +723,8 @@ export class Timeline
 		switch (this.#data.stats.efficiency)
 		{
 			case 'fast':
-				if (
-					DurationFormatter.formatTimeInterval(this.#data.stats.averageDuration)
-					=== DurationFormatter.formatTimeInterval(this.#data.executionTime)
-				)
-				{
-					logoClass = '--slow';
-					notice = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMED_SLOWLY');
-				}
-				else
-				{
-					logoClass = '--fast';
-					notice = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMED_QUICKLY');
-				}
+				logoClass = '--fast';
+				notice = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMED_QUICKLY');
 				break;
 			case 'slow':
 				logoClass = '--slow';
@@ -892,7 +885,7 @@ export class Timeline
 			content: this.#renderBiPopupContent(menu),
 			bindElement: {
 				left: 555,
-				top: 502,
+				top: this.#getBiMenuTopOffset(),
 			},
 			padding: 17,
 			borderRadius: '18px',
@@ -900,6 +893,18 @@ export class Timeline
 		});
 
 		return this.#biPopup;
+	}
+
+	#getBiMenuTopOffset(): number
+	{
+		const containerHeight = this.#efficiencyPopup?.getPopupContainer()?.offsetHeight;
+		const topOffset = this.#efficiencyPopup?.bindElementPos?.top;
+		if (containerHeight && topOffset)
+		{
+			return containerHeight + topOffset + 20;
+		}
+
+		return 522;
 	}
 
 	#showBiMenu(menu: Array<BiMenuItem>, event: Event): void

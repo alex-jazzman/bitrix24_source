@@ -10,4 +10,3 @@ $MESS["CRM_1C_START_FACE_CARD_DO_START"] = "Қосу";
 $MESS["CRM_1C_START_FACE_CARD_INFO_TITLE"] = "Клиентке енді жеңілдік картасы қажет емес-жеке қатысу немесе тіпті телефондағы фотосуреттер жеткілікті.";
 $MESS["CRM_1C_START_FACE_CARD_INSTALL_INFO"] = "Face-карталар модулін орнатыңыз. Клиенттеріңіз үшін жеңілдік карталарын жасаңыз. Сатылымдарды арттырыңыз.";
 $MESS["CRM_1C_START_FACE_CARD_NAME"] = "Face-карталар";
-$MESS["CRM_1C_START_FACE_CARD_WARN_TEXT"] = "Бет-жүзді тану бөлек төленетінін ескеріңіз, бірақ <a class=\"b24-integration-desc-link\" href=\"\\crm\\crmplus\\\">\"CRM+\"</a> тарифінде олар тегін және шектеусіз.";

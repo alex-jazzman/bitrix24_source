@@ -14,6 +14,7 @@ use Bitrix\Booking\Entity\EntityWithExternalDataRelationInterface;
 use Bitrix\Booking\Entity\EventInterface;
 use Bitrix\Booking\Entity\EventTrait;
 use Bitrix\Booking\Entity\ExternalData\ExternalDataCollection;
+use Bitrix\Booking\Entity\Message\BookingMessageCollection;
 use Bitrix\Booking\Entity\Resource\Resource;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
 use Bitrix\Booking\Internals\Exception\Booking\ConfirmBookingException;
@@ -48,6 +49,7 @@ class Booking implements
 	private ResourceCollection $resourceCollection;
 	private ClientCollection $clientCollection;
 	private ExternalDataCollection $externalDataCollection;
+	private BookingMessageCollection $messageCollection;
 
 	private string|null $rrule = null;
 	private Booking|null $parent = null;
@@ -62,9 +64,10 @@ class Booking implements
 
 	public function __construct()
 	{
-		$this->resourceCollection = new ResourceCollection(...[]);
-		$this->clientCollection = new ClientCollection(...[]);
-		$this->externalDataCollection = new ExternalDataCollection(...[]);
+		$this->resourceCollection = new ResourceCollection();
+		$this->clientCollection = new ClientCollection();
+		$this->externalDataCollection = new ExternalDataCollection();
+		$this->messageCollection = new BookingMessageCollection();
 	}
 
 	public function getId(): int|null
@@ -251,6 +254,18 @@ class Booking implements
 		return $this;
 	}
 
+	public function getMessageCollection(): BookingMessageCollection
+	{
+		return $this->messageCollection;
+	}
+
+	public function setMessageCollection(BookingMessageCollection $messageCollection): self
+	{
+		$this->messageCollection = $messageCollection;
+
+		return $this;
+	}
+
 	public function getMaxDate(): DateTimeImmutable|null
 	{
 		if ($this->isEventRecurring())
@@ -358,7 +373,7 @@ class Booking implements
 		$now = time();
 
 		if (
-			$this->getDatePeriod()->getDateFrom()->getTimestamp() < ($now - Time::SECONDS_IN_MINUTE * 5)
+			$this->getDatePeriod()->getDateFrom()->getTimestamp() < ($now - Time::CONSIDER_BOOKING__DELAYED_AFTER_SECONDS)
 			&& $this->getDatePeriod()->getDateTo()->getTimestamp() > $now
 			&& $this->visitStatus->value !== BookingVisitStatus::Visited->value
 		)
@@ -394,6 +409,7 @@ class Booking implements
 			'resources' => $this->resourceCollection->toArray(),
 			'clients' => $this->clientCollection->toArray(),
 			'externalData' => $this->externalDataCollection->toArray(),
+			'messages' => $this->messageCollection->toArray(),
 			'primaryClient' => $this->getPrimaryClient(),
 			'rrule' => $this->rrule,
 			'parent' => $this->parent?->toArray(),
@@ -464,6 +480,13 @@ class Booking implements
 		{
 			$result->setExternalDataCollection(
 				ExternalDataCollection::mapFromArray((array)$props['externalData'])
+			);
+		}
+
+		if (isset($props['messages']))
+		{
+			$result->setMessageCollection(
+				BookingMessageCollection::mapFromArray((array)$props['messages'])
 			);
 		}
 

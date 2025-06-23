@@ -9,6 +9,8 @@ if (!CModule::IncludeModule("intranet"))
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
+
 if (!function_exists('getComponentMailFooterLink'))
 {
 	function getComponentMailFooterLink(): array
@@ -38,14 +40,14 @@ if (!function_exists('getComponentMailFooterLink'))
 }
 if (!function_exists('getMailCompanyLogo'))
 {
-	function getMailCompanyLogo(string $color = 'white'): string
+	function getMailCompanyLogo(string $userLang = LANGUAGE_ID, string $color = 'white'): string
 	{
 		$result = [
 			'white' => '/images/logo-en.png',
 			'black' => '/images/logo-dark-en.png',
 		];
 
-		if (LANGUAGE_ID === 'ru')
+		if ($userLang === 'ru')
 		{
 			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 
@@ -68,6 +70,9 @@ if (!function_exists('getMailCompanyLogo'))
 		return $result[$color];
 	}
 }
+
+$arResult['USER_LANG'] = LANGUAGE_ID;
+
 if (
 	$arParams["TEMPLATE_TYPE"] == "USER_INVITATION"
 	|| $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION"
@@ -119,7 +124,7 @@ if ($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 	$protocol = \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http';
 	$baseUrl = "$protocol://".$arParams["SERVER_NAME"];
 	/** @var $this CBitrixComponent */
-	$arResult["LOGO"] = $this->getPath().'/templates/.default'.getMailCompanyLogo();
+
 	if ($arParams['FIELDS']['ACTIVE_USER'] ?? false)
 	{
 		$arParams["LINK"] = $baseUrl;
@@ -127,8 +132,18 @@ if ($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 	else
 	{
 		$arParams["LINK"] = $baseUrl."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"].'&collab_name='.urlencode($arParams['FIELDS']['COLLAB_NAME']);
+
+		if (isset($arParams['FIELDS']['USER_LANG']))
+		{
+			$arParams['LINK'] = (new Uri($arParams['LINK']))
+				->addParams(['user_lang' => $arParams['FIELDS']['USER_LANG']])
+				->getUri();
+
+			$arResult['USER_LANG'] = $arParams['FIELDS']['USER_LANG'];
+		}
 	}
 
+	$arResult['LOGO'] = $this->getPath().'/templates/.default'.getMailCompanyLogo($arResult['USER_LANG']);
 	$arResult["FOOTER_LINK"] = getComponentMailFooterLink();
 }
 

@@ -30,7 +30,9 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 		{
 			openDialogSelector({
 				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
-				providerOptions: {},
+				providerOptions: {
+					withFavorite: true,
+				},
 				onItemSelected: this.#onDialogSelected,
 				closeOnSelect: true,
 			});

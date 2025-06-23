@@ -109,10 +109,12 @@ class Queue extends Http\Queue
 
 					$promise->reject(new Http\NetworkException($promise->getRequest(), $error));
 
-					if ($logger = $handler->getLogger())
-					{
-						$logger->error($error . "\n");
-					}
+					$handler->getLogger()?->error($error . "\n");
+				}
+
+				if ($handler->getDebugLevel() & HttpDebug::DIAGNOSTICS)
+				{
+					$handler->log("\n***TIME connect={connect}, handshake={handshake}, request={request}, total={total}\n", HttpDebug::DIAGNOSTICS, $handler->getInfo());
 				}
 
 				// job done, the promise is fullfilled or rejected

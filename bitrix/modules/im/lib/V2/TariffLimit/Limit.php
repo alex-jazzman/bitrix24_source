@@ -4,7 +4,6 @@ namespace Bitrix\Im\V2\TariffLimit;
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Im\V2\Chat;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 
@@ -12,6 +11,12 @@ class Limit
 {
 	private const DAYS_LIMIT_HISTORY_VARIABLE = 'im_history_days_limit';
 	private const HISTORY_LIMIT_ID = 'im_history_limit';
+	private const CHAT_TYPE_BLACKLIST = [
+		Chat\ChannelChat::class,
+		Chat\CommentChat::class,
+		Chat\CollabChat::class,
+		Chat\ExternalChat::class
+	];
 
 	private static ?self $instance;
 
@@ -100,9 +105,7 @@ class Limit
 			return false;
 		}
 
-		$chat = Chat::getInstance($chatId);
-
-		return !$chat instanceof Chat\ChannelChat && !$chat instanceof Chat\CommentChat && !$chat instanceof Chat\CollabChat;
+		return $this->isChatTypeAllowed($chatId);
 	}
 
 	public function getLimitDate(): DateTime
@@ -111,5 +114,19 @@ class Limit
 		$days = $this->getLimitDays();
 
 		return (new DateTime())->add("-{$days} days");
+	}
+
+	private function isChatTypeAllowed(int $chatId): bool
+	{
+		$chat = Chat::getInstance($chatId);
+		foreach (self::CHAT_TYPE_BLACKLIST as $type)
+		{
+			if ($chat instanceof $type)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

@@ -26,6 +26,7 @@ return [
 		'tasks:layout/action-menu/actions',
 		'tasks:statemanager/redux/slices/tasks',
 		'tasks:statemanager/redux/slices/tasks-results',
+		'layout/ui/friendly-date/formatter-factory',
 	],
 	'bundle' => [
 		'./src/date',

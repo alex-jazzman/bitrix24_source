@@ -1,14 +1,20 @@
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import { UsersTab } from './users/tab';
-import { ChatTab } from './chat/tab';
+import { ChatsTab } from './chats/tab';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 
 import '../style.css';
 
+// @vue/component
 export const DepartmentContent = {
 	name: 'departmentContent',
 
-	components: { UsersTab, ChatTab },
+	components: { UsersTab, ChatsTab },
+
+	props: {
+		isCollapsed: Boolean,
+	},
 
 	emits: ['showDetailLoader', 'hideDetailLoader', 'editEmployee'],
 
@@ -17,77 +23,29 @@ export const DepartmentContent = {
 		return {
 			activeTab: 'usersTab',
 			tabs: [
-				{ name: 'usersTab', component: 'usersTab', id: 'users-tab' },
-				{ name: 'chatTab', component: 'ChatTab', id: 'chats-tab', soon: true },
+				{ name: 'usersTab', component: 'UsersTab', id: 'users-tab' },
+				{ name: 'chatsTab', component: 'ChatsTab', id: 'chats-tab' },
 			],
 			isDescriptionOverflowed: false,
 			isDescriptionExpanded: false,
 		};
 	},
 
-	mounted(): void
-	{
-		this.isDescriptionOverflowed = this.checkDescriptionOverflowed();
-	},
-
-	methods:
-	{
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-		},
-		selectTab(tabName): void
-		{
-			this.activeTab = tabName;
-		},
-		getTabLabel(name: string): string
-		{
-			if (name === 'usersTab')
-			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TITLE');
-			}
-
-			if (name === 'chatTab')
-			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_TITLE');
-			}
-
-			return '';
-		},
-		toggleDescriptionExpand(): void
-		{
-			this.isDescriptionExpanded = !this.isDescriptionExpanded;
-		},
-		checkDescriptionOverflowed(): boolean
-		{
-			const descriptionContainer = this.$refs.descriptionContainer ?? null;
-			if (descriptionContainer)
-			{
-				return descriptionContainer.scrollWidth > descriptionContainer.clientWidth;
-			}
-
-			return false;
-		},
-		hideDetailLoader(): boolean
-		{
-			this.$emit('hideDetailLoader');
-			this.$nextTick(() => {
-				this.isDescriptionOverflowed = this.checkDescriptionOverflowed();
-			});
-		},
-	},
-
 	computed: {
 		...mapState(useChartStore, ['focusedNode', 'departments']),
-		activeTabComponent(): EmployeeTab | ChatTab | null
+		activeTabComponent(): UsersTab | ChatsTab | null
 		{
 			const activeTab = this.tabs.find((tab) => tab.name === this.activeTab);
 
 			return activeTab ? activeTab.component : null;
 		},
-		count(): Number
+		usersCount(): Number
 		{
 			return this.departments.get(this.focusedNode)?.userCount ?? 0;
+		},
+		chatAndChannelsCount(): Number
+		{
+			return this.departments.get(this.focusedNode)?.chatAndChannelsCount ?? null;
 		},
 		tabArray(): Array
 		{
@@ -96,7 +54,15 @@ export const DepartmentContent = {
 				{
 					return {
 						...tab,
-						count: this.count,
+						count: this.usersCount,
+					};
+				}
+
+				if (tab.name === 'chatsTab')
+				{
+					return {
+						...tab,
+						count: this.chatAndChannelsCount,
 					};
 				}
 
@@ -127,6 +93,61 @@ export const DepartmentContent = {
 			this.isDescriptionExpanded = false;
 			this.selectTab('usersTab');
 		},
+		isCollapsed(): void
+		{
+			this.$nextTick(() => {
+				this.isDescriptionOverflowed = this.checkDescriptionOverflowed();
+			});
+		},
+	},
+
+	methods:
+	{
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+		},
+		selectTab(tabName): void
+		{
+			this.activeTab = tabName;
+		},
+		getTabLabel(name: string): string
+		{
+			if (name === 'usersTab')
+			{
+				return this.departments.get(this.focusedNode)?.entityType === EntityTypes.team
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_TEAM_USERS_TITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TITLE');
+			}
+
+			if (name === 'chatsTab')
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_TITLE');
+			}
+
+			return '';
+		},
+		toggleDescriptionExpand(): void
+		{
+			this.isDescriptionExpanded = !this.isDescriptionExpanded;
+		},
+		checkDescriptionOverflowed(): boolean
+		{
+			const descriptionContainer = this.$refs.descriptionContainer ?? null;
+			if (descriptionContainer)
+			{
+				return descriptionContainer.scrollHeight > descriptionContainer.clientHeight;
+			}
+
+			return false;
+		},
+		hideDetailLoader(): void
+		{
+			this.$emit('hideDetailLoader');
+			this.$nextTick(() => {
+				this.isDescriptionOverflowed = this.checkDescriptionOverflowed();
+			});
+		},
 	},
 
 	template: `
@@ -148,14 +169,12 @@ export const DepartmentContent = {
 					v-for="tab in tabArray"
 					:key="tab.name"
 					class="hr-department-detail-content__tab-item"
-					:class="[{'--active-tab' : activeTab === tab.name}, {'--soon' : tab.soon}]"
-					:data-title="tab.soon ? loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_BADGE_SOON') : null"
+					:class="[{'--active-tab' : activeTab === tab.name}]"
 					@click="selectTab(tab.name)"
 					:data-id="tab.id ? 'hr-department-detail-content__' + tab.id + '_button' : null"
 				>
 					{{ this.getTabLabel(tab.name) }}
 					<span
-						v-if="!tab.soon"
 						class="hr-department-detail-content__tab-count"
 						:data-id="tab.id ? 'hr-department-detail-content__' + tab.id + '_counter' : null"
 					>{{ tab.count }}
@@ -163,8 +182,14 @@ export const DepartmentContent = {
 				</button>
 			</div>
 			<component
+				v-if="activeTab === 'usersTab'"
 				:is="activeTabComponent"
-				@editDepartmentUsers="$emit('editEmployee')"
+				@showDetailLoader="$emit('showDetailLoader')"
+				@hideDetailLoader="hideDetailLoader"
+			/>
+			<component
+				v-if="activeTab === 'chatsTab'"
+				:is="activeTabComponent"
 				@showDetailLoader="$emit('showDetailLoader')"
 				@hideDetailLoader="hideDetailLoader"
 			/>

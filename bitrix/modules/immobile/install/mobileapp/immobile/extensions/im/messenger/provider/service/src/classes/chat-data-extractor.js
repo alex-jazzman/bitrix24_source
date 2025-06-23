@@ -29,6 +29,11 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 			return this.restResult.chat.dialogId;
 		}
 
+		getMessagesAutoDeleteDelay()
+		{
+			return this.restResult.messagesAutoDeleteConfigs?.[0]?.delay ?? 0;
+		}
+
 		isOpenlinesChat()
 		{
 			return this.restResult.chat.type === DialogType.lines;
@@ -47,6 +52,8 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 		{
 			const mainChat = {
 				...this.restResult.chat,
+				messagesAutoDeleteDelay: this.getMessagesAutoDeleteDelay(),
+				recentConfig: this.getRecentConfig(),
 				tariffRestrictions: this.getTariffRestrictions(),
 				hasPrevPage: this.restResult.hasPrevPage,
 				hasNextPage: this.restResult.hasNextPage,
@@ -156,6 +163,11 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 		getCopilot()
 		{
 			return this.restResult.copilot ?? {};
+		}
+
+		getRecentConfig()
+		{
+			return this.restResult.recentConfig ?? null;
 		}
 	}
 

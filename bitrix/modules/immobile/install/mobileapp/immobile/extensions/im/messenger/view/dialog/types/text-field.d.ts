@@ -20,6 +20,9 @@ declare interface JNChatTextField extends JNChatBaseClassInterface<DialogTextFie
 	getCursorIndex(): number;
 	setPlaceholder(text: string): void;
 	show(params: { animated: boolean }): void;
+	showActionButton(params: { id: string, icon: { name: string, tintColor: string } }): void;
+	showActionButtonPopupMenu(items: Array<object>, sections: Array<object>): void;
+	hideActionButton(): void;
 	hide(params: { animated: boolean }): void;
 	setQuote(message: object, type: string, openKeyboard: boolean, title?: string, text?: string): void;
 	removeQuote(): void;

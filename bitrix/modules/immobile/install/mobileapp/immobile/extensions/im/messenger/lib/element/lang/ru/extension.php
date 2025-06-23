@@ -1,5 +1,4 @@
 <?php
-
 $MESS['IMMOBILE_ELEMENT_CHAT_TITLE_ANNOUNCEMENT'] = 'Чат анонсов';
 $MESS['IMMOBILE_ELEMENT_CHAT_TITLE_GROUP_MSGVER_1'] = 'Групповой чат';
 $MESS['IMMOBILE_ELEMENT_CHAT_TITLE_VIDEOCONF'] = 'Чат видеконференции';
@@ -82,16 +81,17 @@ $MESS['IMMOBILE_ELEMENT_RECENT_ACTION_UNPIN'] = 'Открепить';
 $MESS['IMMOBILE_ELEMENT_RECENT_ACTION_PROFILE'] = 'Профиль';
 $MESS['IMMOBILE_ELEMENT_RECENT_ACTION_UNREAD'] = 'Не прочитан';
 $MESS['IMMOBILE_ELEMENT_RECENT_ACTION_READ'] = 'Прочитать';
-$MESS['IMMOBILE_ELEMENT_RECENT_ACTION_MUTE'] = 'Не следить';
-$MESS['IMMOBILE_ELEMENT_RECENT_ACTION_UNMUTE'] = 'Следить';
+$MESS['IMMOBILE_ELEMENT_RECENT_ACTION_MUTE_MSGVER_1'] = 'Не следить';
+$MESS['IMMOBILE_ELEMENT_RECENT_ACTION_UNMUTE_MSGVER_1'] = 'Следить';
 $MESS['IMMOBILE_ELEMENT_RECENT_ACTION_INVITE_RESEND'] = 'Пригласить повторно';
 $MESS['IMMOBILE_ELEMENT_RECENT_ACTION_INVITE_CANCEL'] = 'Отменить приглашение';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD'] = 'Переслано от';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_MSGVER_1'] = 'Переслано от #USER_NAME#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL'] = 'Переслано от #USER_NAME#, Канал: #CHANNEL_NAME#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_SYSTEM'] = 'Переслано системное сообщение';
-$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED'] = 'Сообщение не поддерживается';
-$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_LINK'] = 'Обновите приложение';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_TITLE'] = 'Сообщение недоступно';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_SUBTITLE'] = 'Для просмотра нужна новая версия приложения';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_UNSUPPORTED_LINK_MSGVER_1'] = 'Обновить приложение';
 
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BUTTON_COPY'] = 'Скопировать';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_TEXT_MSGVER_1'] = 'Задайте мне вопрос или выберите один из примеров';
@@ -112,6 +112,9 @@ $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_DESC_ADD_USERS'] = 'Наж
 
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_DESC'] = 'Общайтесь, делитесь файлами, комментируйте сообщения коллег и ставьте лайки';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_ADD_USERS'] = 'Добавить участников';
+
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_NOTES_BANNER_TITLE'] = 'Мои заметки';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_NOTES_BANNER_DESC'] = 'Сохраняйте здесь важные сообщения, файлы и ссылки';
 
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CONFERENCE_CREATE_BANNER_TITLE'] = 'Видеоконференция';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CONFERENCE_CREATE_BANNER_DESC'] = 'Общайтесь, переписывайтесь в чате и обменивайтесь файлами';
@@ -140,6 +143,16 @@ $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_BUTTON_UNLOCK'] = 'П�
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHECK_IN_BUTTON'] = 'Чекин на работе';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_GALLERY_PHOTO'] = 'ещё #COUNT# фото';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_ATTACH_FILE_DOWNLOAD'] = 'Скачать';
+
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_PUBLIC"] = "Публичный опрос";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_ANONYMOUS"] = "Анонимный опрос";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_REVOTE_DISABLED"] = " • нельзя переголосовать";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_FINISHED"] = " • опрос завершён";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_VOTE_BUTTON"] = "Голосовать";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_NO_VOTED_BUTTON"] = "Нет голосов";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_VOTED_BUTTON_PLURAL_0"] = "#COUNT# голос";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_VOTED_BUTTON_PLURAL_1"] = "#COUNT# голоса";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_VOTED_BUTTON_PLURAL_2"] = "#COUNT# голосов";
 // Sign message
 
 $MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_TITLE"] = "Подпишите документ";
@@ -248,11 +261,19 @@ $MESS["IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTION"] = "#INITIAT
 $MESS["IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTIONM"] = "#INITIATOR_LINK# отменил подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
 $MESS["IMMOBILE_MESSAGE_SIGN_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTIONF"] = "#INITIATOR_LINK# отменила подписание документа #DOCUMENT_NAME#. Вам больше не нужно подписывать документ";
 
+$MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_EXPIRED_TO_EMPLOYEE_TITLE"] = "Истёк срок рассмотрения документа";
+$MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_EXPIRED_TO_EMPLOYEE_TITLE_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для рассмотрения. Вы можете запустить процесс заново";
+$MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_EXPIRED_TO_EMPLOYEE_BUTTON_TEXT"] = "Открыть документ";
+
 $MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_STOPPED_TO_EMPLOYEE_TITLE"] = "Документ отклонён";
 $MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTION"] = "#INITIATOR_LINK# отклонил(а) документ #DOCUMENT_NAME#. Уточните причины и отправьте документ заново";
 $MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTIONM"] = "#INITIATOR_LINK# отклонил документ #DOCUMENT_NAME#. Уточните причины и отправьте документ заново";
 $MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_STOPPED_TO_EMPLOYEE_TITLE_DESCRIPTIONF"] = "#INITIATOR_LINK# отклонила документ #DOCUMENT_NAME#. Уточните причины и отправьте документ заново";
 $MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_STOPPED_TO_EMPLOYEE_BUTTON_TEXT"] = "Открыть документ";
+
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_EXPIRED_COMPANY_TITLE"] = "Истёк срок подписания";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_EXPIRED_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписания";
+$MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_EXPIRED_COMPANY_BUTTON_TEXT"] = "К процессу подписания";
 
 $MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_TITLE"] = "Подписание документа отменено";
 $MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_STOPPED_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписи";
@@ -289,3 +310,4 @@ $MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_REPEAT_DESCRIPTION"] = "Некоторые
 $MESS["IMMOBILE_MESSAGE_SIGN_DOCUMENT_REPEAT_BUTTON_TEXT"] = "Подписать повторно";
 
 $MESS["IMMOBILE_MESSAGE_SIGN_SIDEPANEL_BTN_SIGN"] = "Подпись";
+$MESS["IMMOBILE_MESSAGE_SIGN_DRAFT_SUBTITLE_PREFIX"] = "Черновик:";

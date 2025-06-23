@@ -1645,6 +1645,7 @@
 	left: 0;
 	position: absolute;
 	width: 100%;
+	pointer-events: none;
 }
 
 .menu-item-draggable {

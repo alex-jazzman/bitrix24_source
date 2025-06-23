@@ -38,6 +38,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
 	  imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
 	  imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
+	  imV2ChatAnchorRead: 'im.v2.Chat.Anchor.read',
 	  imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 	  imV2ChatUserList: 'im.v2.Chat.User.list',
 	  imV2ChatListShared: 'im.v2.Chat.listShared',
@@ -46,6 +47,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatCommentReadAll: 'im.v2.Chat.Comment.readAll',
 	  imV2ChatAddManagers: 'im.v2.Chat.addManagers',
 	  imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
+	  imV2ChatMessageDisappear: 'im.v2.Chat.Message.disappear',
+	  imV2ChatSetMessagesAutoDeleteDelay: 'im.v2.Chat.setMessagesAutoDeleteDelay',
 	  imV2SettingsGeneralUpdate: 'im.v2.Settings.General.update',
 	  imV2SettingsNotifyUpdate: 'im.v2.Settings.Notify.update',
 	  imV2SettingsNotifySwitchScheme: 'im.v2.Settings.Notify.switchScheme',
@@ -61,6 +64,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 	  imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
 	  imV2DiskFileSave: 'im.v2.Disk.File.save',
+	  imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
+	  imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
+	  imV2RecentPin: 'im.v2.Chat.pin',
+	  imV2RecentUnpin: 'im.v2.Chat.unpin',
+	  imV2AnchorRead: 'im.v2.Anchor.read',
+	  imV2PromotionRead: 'im.v2.Promotion.read',
 	  imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
 	  imCallBetaCreateRoom: 'im.call.beta.createRoom',
 	  imMessageAdd: 'im.message.add',
@@ -136,7 +145,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const EventType = Object.freeze({
 	  layout: {
 	    onLayoutChange: 'IM.Layout:onLayoutChange',
-	    onOpenChat: 'IM.Layout:onOpenChat',
 	    onOpenNotifications: 'IM.Layout:onOpenNotifications'
 	  },
 	  header: {
@@ -199,7 +207,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onNotificationCounterChange: 'onImUpdateCounterNotify',
 	    onChatCounterChange: 'onImUpdateCounterMessage',
 	    onLinesCounterChange: 'onImUpdateCounterLines',
-	    onImUpdateCounter: 'onImUpdateCounter'
+	    onImUpdateCounter: 'onImUpdateCounter',
+	    onUpdate: 'IM.Counters:onUpdate'
 	  },
 	  desktop: {
 	    onInit: 'onDesktopInit',
@@ -228,6 +237,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    pause: 'im:audioplayer:pause',
 	    stop: 'im:audioplayer:stop',
 	    preload: 'im:audioplayer:preload'
+	  },
+	  task: {
+	    onMembersCountChange: 'tasks:card:onMembersCountChange'
 	  }
 	});
 
@@ -253,8 +265,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openChannel: 'openChannel',
 	  generalChannel: 'generalChannel',
 	  comment: 'comment',
-	  collab: 'collab',
-	  openlinesV2: 'openlinesV2'
+	  collab: 'collab'
 	});
 	const DialogScrollThreshold = Object.freeze({
 	  none: 'none',
@@ -293,15 +304,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  code: 'code',
 	  call: 'call',
 	  attach: 'attach',
-	  quote: 'quote'
+	  quote: 'quote',
+	  gallery: 'gallery'
 	});
 	const FileViewerContext = Object.freeze({
 	  dialog: 'dialog',
 	  sidebarMain: 'sidebarMain',
 	  sidebarTabBriefs: 'sidebarTabBriefs',
-	  sidebarTabDocuments: 'sidebarTabDocuments',
+	  sidebarTabFiles: 'sidebarTabFiles',
 	  sidebarTabMedia: 'sidebarTabMedia',
-	  sidebarTabOther: 'sidebarTabOther',
 	  sidebarTabFileUnsorted: 'sidebarTabFileUnsorted'
 	});
 	const AudioPlaybackRate = Object.freeze({
@@ -327,6 +338,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  smile: 'SmileMessage',
 	  unsupported: 'UnsupportedMessage',
 	  deleted: 'DeletedMessage',
+	  error: 'ErrorMessage',
 	  callInvite: 'CallInviteMessage',
 	  zoomInvite: 'ZoomInviteMessage',
 	  chatCreation: 'ChatCreationMessage',
@@ -349,6 +361,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  channelCreationMessage: 'ChannelCreationMessage',
 	  callMessage: 'CallMessage',
 	  voteMessage: 'VoteMessage',
+	  taskChatCreationMessage: 'TaskChatCreationMessage',
 	  ...imopenlines_v2_const.OpenLinesMessageComponent
 	});
 	const MessageMentionType = Object.freeze({
@@ -371,10 +384,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 	const FakeMessagePrefix = 'temp';
 	const FakeDraftMessagePrefix = 'temp-draft';
+	const AutoDeleteDelay = Object.freeze({
+	  Off: 0,
+	  Hour: 1,
+	  Day: 24,
+	  Week: 168,
+	  Month: 720
+	});
 
 	const RecentCallStatus = {
 	  waiting: 'waiting',
 	  joined: 'joined'
+	};
+	const RecentType = {
+	  default: 'default',
+	  copilot: 'copilot',
+	  openChannel: 'openChannel',
+	  collab: 'collab'
 	};
 
 	const NotificationTypesCodes = Object.freeze({
@@ -500,7 +526,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  audio: 'audio',
 	  document: 'document',
 	  fileUnsorted: 'fileUnsorted',
-	  other: 'other',
 	  meeting: 'meeting',
 	  market: 'market',
 	  messageSearch: 'messageSearch',
@@ -508,32 +533,51 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  multidialog: 'multidialog',
 	  none: ''
 	});
-	const SidebarFileTypes = Object.freeze({
+	const SidebarFileGroups = Object.freeze({
 	  media: 'media',
 	  audio: 'audio',
-	  document: 'document',
-	  other: 'other',
+	  file: 'file',
 	  brief: 'brief',
 	  fileUnsorted: 'fileUnsorted'
 	});
-	const SidebarFileTabTypes = Object.freeze({
-	  [SidebarFileTypes.media]: SidebarFileTypes.media,
-	  [SidebarFileTypes.audio]: SidebarFileTypes.audio,
-	  [SidebarFileTypes.document]: SidebarFileTypes.document,
-	  [SidebarFileTypes.brief]: SidebarFileTypes.brief,
-	  [SidebarFileTypes.other]: SidebarFileTypes.other
+	const SidebarFileTabGroups = Object.freeze({
+	  [SidebarFileGroups.media]: SidebarFileGroups.media,
+	  [SidebarFileGroups.file]: SidebarFileGroups.file,
+	  [SidebarFileGroups.audio]: SidebarFileGroups.audio,
+	  [SidebarFileGroups.brief]: SidebarFileGroups.brief
 	});
+	const SidebarMainPanelBlock = {
+	  support: 'support',
+	  chat: 'chat',
+	  notes: 'notes',
+	  user: 'user',
+	  copilot: 'copilot',
+	  copilotInfo: 'copilotInfo',
+	  info: 'info',
+	  post: 'post',
+	  fileList: 'fileList',
+	  fileUnsortedList: 'fileUnsortedList',
+	  task: 'task',
+	  taskList: 'taskList',
+	  meetingList: 'meetingList',
+	  marketAppList: 'marketAppList',
+	  multidialog: 'multidialog',
+	  tariffLimit: 'tariffLimit',
+	  collabHelpdesk: 'collabHelpdesk'
+	};
 
 	const Color = Object.freeze({
 	  base: '#17a3ea',
 	  transparent: 'transparent',
 	  white: '#fff',
+	  gray40: '#bdc1c6',
 	  gray90: '#525c69',
 	  collab70: '#00a94e',
 	  collab60: '#19cc45',
 	  collab50: '#6be860',
 	  collab10: '#f2fee2',
-	  orange50: '#ffa900'
+	  orange50: '#ffa900',
+	  accentBlue: '#00ace3'
 	});
 	const ColorToken = Object.freeze({
 	  base: 'base',
@@ -579,6 +623,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  dialog: 'DIALOG'
 	};
 
+	const WINDOW_ACTIVATION_DELAY = 300;
 	const DesktopBxLink = {
 	  chat: 'chat',
 	  lines: 'lines',
@@ -594,7 +639,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  settings: 'settings',
 	  openTab: 'openTab',
 	  openPage: 'openPage',
-	  chatCreation: 'chatCreation'
+	  chatCreation: 'chatCreation',
+	  botContext: 'botContext',
+	  openLayout: 'openLayout'
 	};
 	const LegacyDesktopBxLink = {
 	  messenger: 'messenger',
@@ -603,6 +650,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  notify: 'notify',
 	  callTo: 'callto',
 	  callList: 'calllist'
+	};
+	const DesktopBroadcastAction = {
+	  notification: 'notification',
+	  answerButtonClick: 'answerButtonClick',
+	  bxLink: 'bxLink'
 	};
 
 	const LocalStorageKey = Object.freeze({
@@ -710,7 +762,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  addUsersToCopilotChat: 'im:add-users-to-copilot-chat:09042024:all',
 	  changeRoleCopilot: 'im:change-role-copilot-chat:09042024:all',
 	  collabHelpdeskSidebar: 'im:collab-helpdesk-sidebar:30102024:all',
-	  downloadSeveralFiles: 'im:download-several-files:22112024:all'
+	  downloadSeveralFiles: 'im:download-several-files:22112024:all',
+	  copilotInRecentTab: 'im:copilot-in-default-tab:11032025:all',
+	  embeddedChatEmptyState: 'im:air-chat-empty-state:29042025:all',
+	  collabEntities: 'socialnetwork:CreatedTaskOrMeetingOrFileThreeDays-collab',
+	  membersNotInvitedOneDayToCollab: 'socialnetwork:MembersNotInvitedOneDay-collab',
+	  membersNotInvitedFourDayToCollab: 'socialnetwork:MembersNotInvitedFourDays-collab',
+	  collaberNotAcceptInvitationOneDay: 'socialnetwork:CollaberNotAcceptInvitationOneDay-collab',
+	  recentCreateChatInviteUsers: 'im:recent-create-chat-invite-users:22052025:all'
 	});
 
 	const ActionByRole = Object.freeze({
@@ -742,7 +801,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openSidebarMenu: 'openSidebarMenu',
 	  updateInviteLink: 'updateInviteLink',
 	  createDocumentSign: 'createDocumentSign',
-	  createCalendarSlots: 'createCalendarSlots'
+	  createCalendarSlots: 'createCalendarSlots',
+	  changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay'
 	});
 	const ChatActionGroup = Object.freeze({
 	  manageSettings: 'manageSettings',
@@ -760,7 +820,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  createChannel: 'createChannel',
 	  createChat: 'createChat',
 	  createConference: 'createConference',
-	  leaveCollab: 'leaveCollab'
+	  leaveCollab: 'leaveCollab',
+	  changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay'
 	});
 
 	const RawBotType = Object.freeze({
@@ -785,6 +846,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  activate: 'activate'
 	});
 
+	const Path = {
+	  online: '/online/',
+	  history: '/desktop_app/history.php'
+	};
+
 	const GetParameter = {
 	  openNotifications: 'IM_NOTIFY',
 	  openHistory: 'IM_HISTORY',
@@ -793,15 +859,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openLines: 'IM_LINES',
 	  openSettings: 'IM_SETTINGS',
 	  openCopilotChat: 'IM_COPILOT',
+	  openChannel: 'IM_CHANNEL',
 	  openCollab: 'IM_COLLAB',
+	  botContext: 'BOT_CONTEXT',
 	  desktopChatTabMode: 'IM_TAB',
-	  backgroundType: 'IM_BACKGROUND'
-	};
-
-	// noinspection ES6PreferShortImport
-	const PathPlaceholder = {
-	  dialog: `/online/?${GetParameter.openChat}=#DIALOG_ID#`,
-	  lines: `/online/?${GetParameter.openLines}=#DIALOG_ID#`
+	  backgroundType: 'IM_BACKGROUND',
+	  legacyMode: 'IM_LEGACY'
 	};
 
 	const TextareaPanelType = {
@@ -832,7 +895,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const SliderCode = {
 	  copilotDisabled: 'limit_copilot_off',
-	  historyLimited: 'limit_office_chating_history'
+	  historyLimited: 'limit_office_chating_history',
+	  autoDeleteDisabled: 'limit_auto_delete_messages_off',
+	  collabInviteOff: 'limit_v2_socialnetwork_collab_invite_off',
+	  collabDisabled: 'socialnetwork_collab_off'
 	};
 
 	const CounterType = Object.freeze({
@@ -848,6 +914,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  files: 'files',
 	  calendar: 'calendar'
 	};
+
+	const ErrorCode = Object.freeze({
+	  chat: {
+	    accessDenied: 'ACCESS_DENIED',
+	    notFound: 'CHAT_NOT_FOUND'
+	  },
+	  message: {
+	    accessDenied: 'MESSAGE_ACCESS_DENIED',
+	    accessDeniedByTariff: 'MESSAGE_ACCESS_DENIED_BY_TARIFF',
+	    notFound: 'MESSAGE_NOT_FOUND'
+	  },
+	  user: {
+	    invitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
+	    notFound: 'USER_NOT_FOUND'
+	  },
+	  file: {
+	    maxFileSize: 'MAX_FILE_SIZE_EXCEEDED'
+	  }
+	});
+
+	const NavigationMenuItem = Object.freeze({
+	  [Layout.chat.name]: Layout.chat.name,
+	  [Layout.copilot.name]: Layout.copilot.name,
+	  [Layout.collab.name]: Layout.collab.name,
+	  [Layout.channel.name]: Layout.channel.name,
+	  [Layout.openlines.name]: Layout.openlines.name,
+	  [Layout.openlinesV2.name]: Layout.openlinesV2.name,
+	  [Layout.notification.name]: Layout.notification.name,
+	  [Layout.call.name]: Layout.call.name,
+	  [Layout.market.name]: Layout.market.name,
+	  [Layout.settings.name]: Layout.settings.name,
+	  timemanager: 'timemanager',
+	  homepage: 'homepage'
+	});
+
+	const AnchorType = Object.freeze({
+	  mention: 'MENTION',
+	  reaction: 'REACTION'
+	});
 
 	exports.RestMethod = RestMethod;
 	exports.EventType = EventType;
@@ -868,7 +973,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.OwnMessageStatus = OwnMessageStatus;
 	exports.FakeMessagePrefix = FakeMessagePrefix;
 	exports.FakeDraftMessagePrefix = FakeDraftMessagePrefix;
+	exports.AutoDeleteDelay = AutoDeleteDelay;
 	exports.RecentCallStatus = RecentCallStatus;
+	exports.RecentType = RecentType;
 	exports.NotificationTypesCodes = NotificationTypesCodes;
 	exports.NotificationSettingsMode = NotificationSettingsMode;
 	exports.Layout = Layout;
@@ -878,8 +985,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.UserRole = UserRole;
 	exports.UserIdNetworkPrefix = UserIdNetworkPrefix;
 	exports.SidebarDetailBlock = SidebarDetailBlock;
-	exports.SidebarFileTabTypes = SidebarFileTabTypes;
-	exports.SidebarFileTypes = SidebarFileTypes;
+	exports.SidebarFileGroups = SidebarFileGroups;
+	exports.SidebarFileTabGroups = SidebarFileTabGroups;
+	exports.SidebarMainPanelBlock = SidebarMainPanelBlock;
 	exports.Color = Color;
 	exports.ColorToken = ColorToken;
 	exports.AttachType = AttachType;
@@ -890,6 +998,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.KeyboardButtonContext = KeyboardButtonContext;
 	exports.DesktopBxLink = DesktopBxLink;
 	exports.LegacyDesktopBxLink = LegacyDesktopBxLink;
+	exports.DesktopBroadcastAction = DesktopBroadcastAction;
+	exports.WINDOW_ACTIVATION_DELAY = WINDOW_ACTIVATION_DELAY;
 	exports.LocalStorageKey = LocalStorageKey;
 	exports.PlacementType = PlacementType;
 	exports.PopupType = PopupType;
@@ -905,7 +1015,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.RawBotType = RawBotType;
 	exports.BotCode = BotCode;
 	exports.BotCommand = BotCommand;
-	exports.PathPlaceholder = PathPlaceholder;
+	exports.Path = Path;
 	exports.GetParameter = GetParameter;
 	exports.TextareaPanelType = TextareaPanelType;
 	exports.ChatEntityLinkType = ChatEntityLinkType;
@@ -913,6 +1023,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.SliderCode = SliderCode;
 	exports.CounterType = CounterType;
 	exports.CollabEntityType = CollabEntityType;
+	exports.ErrorCode = ErrorCode;
+	exports.NavigationMenuItem = NavigationMenuItem;
+	exports.AnchorType = AnchorType;
 
-}((this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}),BX.OpenLines.v2.Const,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}),BX?.OpenLines?.v2?.Const??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=registry.bundle.js.map

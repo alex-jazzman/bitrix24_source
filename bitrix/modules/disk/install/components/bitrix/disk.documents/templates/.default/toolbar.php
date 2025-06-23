@@ -35,7 +35,6 @@ Toolbar::addFilter([
 	'ENABLE_LABEL' => true,
 	'RESET_TO_DEFAULT_MODE' => false,
 ]);
-Toolbar::setTitleMinWidth(158);
 
 $defaultHandler = end($arResult['DOCUMENT_HANDLERS']);
 $items = array_map(function ($item) use ($defaultHandler) {
@@ -76,7 +75,7 @@ if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
 		[
 			'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD'),
 			'onclick' => new UI\Buttons\JsCode(
-				'BX.Disk.Documents.Toolbar.createBoard();'
+				'BX.Disk.Documents.Toolbar.createBoard("docs_page");'
 			)
 		],
 	);
@@ -96,7 +95,7 @@ if ($arResult['VARIANT'] == Disk\Type\DocumentGridVariant::FlipchartList)
 		->addClass('toolbar-button-create-new-board')
 		->bindEvent(
 			'click',
-			new UI\Buttons\JsCode('BX.Disk.Documents.Toolbar.createBoard();')
+			new UI\Buttons\JsCode('BX.Disk.Documents.Toolbar.createBoard("boards_page");')
 		);
 }
 else

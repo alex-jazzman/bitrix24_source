@@ -19,6 +19,8 @@ return [
 		'assets/icons',
 		'layout/ui/scroll-view',
 		'haptics',
+		'tourist',
+		'app-rating-manager',
 
 		'ui-system/blocks/icon',
 		'ui-system/blocks/badges/counter',
@@ -34,6 +36,7 @@ return [
 		'ui-system/blocks/setting-selector',
 		'ui-system/blocks/chips/chip-filter',
 		'ui-system/blocks/status-block',
+		'ui-system/form/checkbox',
 
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
@@ -72,5 +75,10 @@ return [
 		'./src/list-skeleton',
 		'./src/search/layout',
 		'./src/search/preset',
+
+		'./src/section-list/page',
+		'./src/section-list/manager',
+		'./src/section-list/item',
+		'./src/section-list/header',
 	],
 ];

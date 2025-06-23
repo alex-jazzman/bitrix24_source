@@ -28,8 +28,6 @@ class User extends \IRestService
 		'TITLE',
 		'IS_ONLINE',
 		'TIME_ZONE',
-		'TIME_ZONE_OFFSET',
-		'TIME_ZONE_OFFSET',
 		'TIMESTAMP_X',
 		'DATE_REGISTER',
 		'PERSONAL_PROFESSION',
@@ -68,7 +66,6 @@ class User extends \IRestService
 		'IS_ONLINE',
 		'TIME_ZONE',
 		'TIMESTAMP_X',
-		'TIME_ZONE_OFFSET',
 		'DATE_REGISTER',
 		'LAST_ACTIVITY_DATE',
 		'PERSONAL_PROFESSION',
@@ -137,7 +134,6 @@ class User extends \IRestService
 		'DATE_REGISTER',
 		'TIME_ZONE',
 		'IS_ONLINE',
-		'TIME_ZONE_OFFSET',
 		'TIMESTAMP_X',
 		'LAST_ACTIVITY_DATE',
 		'PERSONAL_GENDER',
@@ -199,7 +195,6 @@ class User extends \IRestService
 		"LAST_LOGIN",
 		"DATE_REGISTER",
 		"IS_ONLINE",
-		"TIME_ZONE_OFFSET",
 	];
 
 	public static function getDefaultAllowedUserFields()
@@ -471,7 +466,7 @@ class User extends \IRestService
 			if(mb_substr($key, 0, 3) != 'UF_')
 			{
 				$lkey = isset($langMessages[$key]) ? $key : str_replace('PERSONAL_', 'USER_', $key);
-				$res[$key] = isset($langMessages[$lkey]) ? $langMessages[$lkey] : $key;
+				$res[$key] = $langMessages[$lkey] ?? $key;
 				if(mb_substr($res[$key], -1) == ':')
 				{
 					$res[$key] = mb_substr($res[$key], 0, -1);
@@ -511,7 +506,7 @@ class User extends \IRestService
 		return $result;
 	}
 
-	public static function userGet($query, $nav = 0, \CRestServer $server)
+	public static function userGet($query, $nav = 0, \CRestServer $server = null)
 	{
 		global $USER;
 
@@ -566,7 +561,7 @@ class User extends \IRestService
 		if (isset($query['FILTER']) && is_array($query['FILTER']))
 		{
 			/**
-			 * The following code is a mistake
+			 * The following code is a mistake,
 			 * but it must be here to save backward compatibility
 			 */
 			$query = array_change_key_case($query['FILTER'], CASE_UPPER);
@@ -584,7 +579,7 @@ class User extends \IRestService
 
 		if (isset($filter['NAME_SEARCH']) || isset($filter['FIND']))
 		{
-			$nameSearch = isset($filter['NAME_SEARCH'])? $filter['NAME_SEARCH']: $filter['FIND'];
+			$nameSearch = $filter['NAME_SEARCH'] ?? $filter['FIND'];
 			unset($filter['NAME_SEARCH']);
 			unset($filter['FIND']);
 
@@ -741,7 +736,7 @@ class User extends \IRestService
 				{
 					$count = $dbRes->getCount();
 				}
-				catch (ObjectPropertyException $exception)
+				catch (ObjectPropertyException)
 				{
 				}
 			}
@@ -865,7 +860,7 @@ class User extends \IRestService
 					}
 
 					$inviteFields['EMAIL'] = $userFields["EMAIL"];
-					$inviteFields['ACTIVE'] = (isset($inviteFields['ACTIVE'])? $inviteFields['ACTIVE'] : 'Y');
+					$inviteFields['ACTIVE'] = ($inviteFields['ACTIVE'] ?? 'Y');
 					$inviteFields['GROUP_ID'] = \CIntranetInviteDialog::getUserGroups($siteId, $bExtranet);
 					$inviteFields["CONFIRM_CODE"] = randString(8);
 
@@ -1210,7 +1205,7 @@ class User extends \IRestService
 		if (isset($user['PERSONAL_BIRTHDAY']))
 			$user['PERSONAL_BIRTHDAY'] = \CRestUtil::unConvertDate($user['PERSONAL_BIRTHDAY']);
 
-		if (isset($user['UF_DEPARTMENT']) && !is_array($user['UF_DEPARTMENT']) && !empty($user['UF_DEPARTMENT']))
+		if (!empty($user['UF_DEPARTMENT']) && !is_array($user['UF_DEPARTMENT']))
 			$user['UF_DEPARTMENT'] = array($user['UF_DEPARTMENT']);
 
 		if (isset($user['PERSONAL_PHOTO']))

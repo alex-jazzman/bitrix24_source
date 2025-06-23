@@ -116,5 +116,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardTagGridManager = SupersetDashboardTagGridManager;
 
-}((this.window = this.window || {}),BX.BIConnector.Grid,BX,BX,BX.UI.Dialogs,BX));
+}((this.window = this.window || {}),BX.BIConnector.Grid,BX,BX,BX.UI.Dialogs,BX.SidePanel));
 //# sourceMappingURL=script.js.map

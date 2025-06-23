@@ -13,5 +13,6 @@ return [
 		'im:messenger/model/draft',
 		'im:messenger/model/queue',
 		'im:messenger/model/comment',
+		'im:messenger/model/anchor',
 	],
 ];

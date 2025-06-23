@@ -334,7 +334,8 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 					return compareRole === currentRole || compareRole === UserRole.member;
 				case UserRole.member:
 					return compareRole === currentRole;
-				default: return false;
+				default:
+					return false;
 			}
 		}
 
@@ -442,6 +443,24 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		}
 
 		/**
+		 * @desc Check is can change message auto delete delay
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		canChangeMessagesAutoDeleteDelay(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType[DialogActionType.changeMessagesAutoDeleteDelay];
+
+			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		/**
 		 * @desc check is can call by dialog type ( chat )
 		 * @param {string} type
 		 * @return {boolean}
@@ -454,8 +473,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				DialogType.openChannel,
 				DialogType.generalChannel,
 				DialogType.comment,
-			].includes(type)
-			;
+			].includes(type);
 		}
 
 		/**

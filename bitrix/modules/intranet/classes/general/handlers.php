@@ -21,7 +21,7 @@ class CIntranetEventHandlers
 			return;
 		}
 
-		if (!self::$fieldsCache[$arFields['IBLOCK_ID']])
+		if (!isset(self::$fieldsCache[$arFields['IBLOCK_ID']]))
 		{
 			$dbRes = CIntranetSharepoint::GetByID($arFields['IBLOCK_ID']);
 			if ($arRes = $dbRes->Fetch())
@@ -30,7 +30,7 @@ class CIntranetEventHandlers
 			}
 		}
 
-		if (self::$fieldsCache[$arFields['IBLOCK_ID']])
+		if (isset(self::$fieldsCache[$arFields['IBLOCK_ID']]))
 		{
 			CIntranetSharepoint::AddToUpdateLog(self::$fieldsCache[$arFields['IBLOCK_ID']]);
 		}
@@ -1889,6 +1889,10 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 			\Bitrix\Intranet\Service\ServiceContainer::getInstance()
 				->getUserService()
 				->logAuthTimeForNonMobile($userId)
+			;
+			\Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->getUserService()
+				->logFirstTimeAuthForMobile($userId)
 			;
 		}
 	}

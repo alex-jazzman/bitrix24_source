@@ -1105,6 +1105,11 @@ class SupersetDashboardGridManager
 		if (isInTopMenu && dashboardTitle)
 		{
 			menu.addMenuItem({
+				ID: `biconnector_superset_menu_dashboard_${dashboardId}`,
+				TEXT: dashboardTitle,
+				ON_CLICK: `window.open(\`${url}\`, '_blank');`,
+
+				// TODO: Temporary workaround for compatibility with main 25.300.0, remove after that version is released
 				id: `biconnector_superset_menu_dashboard_${dashboardId}`,
 				text: dashboardTitle,
 				onClick: `window.open(\`${url}\`, '_blank');`,

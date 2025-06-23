@@ -112,7 +112,11 @@ jn.define('im/messenger/lib/component-request-broadcaster', (require, exports, m
 
 				this.#expectRegisteredHandlerList(eventId, handlerIdListToWait)
 					.then(() => {
-						for (const requestOptions of requestOptionList)
+						const filteredRequestOptionList = requestOptionList.filter((request) => {
+							return handlerIdListToWait.includes(request.handlerId);
+						});
+
+						for (const requestOptions of filteredRequestOptionList)
 						{
 							this.#emitRequest(eventId, requestOptions);
 						}
@@ -240,9 +244,24 @@ jn.define('im/messenger/lib/component-request-broadcaster', (require, exports, m
 		#getHandlerIdListToExpect(requestOptionList)
 		{
 			return requestOptionList
+				.filter((requestData) => this.#isComponentAvailable(requestData))
 				.map((requestData) => requestData.handlerId)
 				.sort() // required for proper operation isEqual
 			;
+		}
+
+		/**
+		 * @desc check is available and launched component
+		 * @param {ComponentRequest} requestData
+		 */
+		#isComponentAvailable(requestData)
+		{
+			if (!MessengerParams.isComponentAvailable(requestData.toComponent))
+			{
+				return false;
+			}
+
+			return EntityReady.isReady(`${requestData.toComponent}::launched`);
 		}
 
 		/**
@@ -302,6 +321,7 @@ jn.define('im/messenger/lib/component-request-broadcaster', (require, exports, m
 			}
 
 			logger.log(`${this.className}.emitRequest: emit event to external component`, eventId, requestOptions, toComponent);
+
 			MessengerEmitter.emit(fullEventName, eventData, toComponent);
 		}
 
@@ -327,6 +347,7 @@ jn.define('im/messenger/lib/component-request-broadcaster', (require, exports, m
 			}
 
 			logger.log(`${this.className}.emitResponse: emit event to external component`, eventId, requestOptions, toComponent);
+
 			MessengerEmitter.emit(fullEventName, eventData, toComponent);
 		}
 	}

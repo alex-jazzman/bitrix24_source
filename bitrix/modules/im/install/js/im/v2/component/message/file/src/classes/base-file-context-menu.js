@@ -1,9 +1,10 @@
 import { Loc } from 'main.core';
 
-import { DiskService } from 'im.v2.provider.service';
+import { DiskService } from 'im.v2.provider.service.disk';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { Utils } from 'im.v2.lib.utils';
 import { PopupType } from 'im.v2.const';
+import { Notifier } from 'im.v2.lib.notifier';
 
 import type { MenuItem } from 'im.v2.lib.menu';
 import type { ImModelFile, ImModelMessage } from 'im.v2.model';
@@ -61,13 +62,10 @@ export class BaseFileContextMenu extends BaseMenu
 
 		return {
 			text: Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_MSGVER_1'),
-			onclick: function() {
-				void this.diskService.save(this.context.files).then(() => {
-					BX.UI.Notification.Center.notify({
-						content: Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_SUCCESS_MSGVER_1'),
-					});
-				});
+			onclick: async function() {
 				this.menuInstance.close();
+				await this.diskService.save(this.context.files);
+				Notifier.file.onDiskSaveComplete();
 			}.bind(this),
 		};
 	}

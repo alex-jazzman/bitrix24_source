@@ -50,5 +50,5 @@ $MESS["CT_BLEE_TOOLBAR_COPY_ELEMENT_TITLE"] = "Элементті көшіру";
 $MESS["CT_BLEE_TOOLBAR_DELETE_TITLE"] = "Элементті жойып, тізімге оралу.";
 $MESS["CT_BLEE_TOOLBAR_DELETE_WARNING"] = "Бұл элементті жойғыңыз келетініне сенімдісіз бе?";
 $MESS["CT_BLEE_TOOLBAR_LIST_TITLE"] = "Элементтер тізіміне өту";
-$MESS["CT_BLEE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ТІЗІМГЕ";
+$MESS["CT_BLEE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "Тізімге";
 $MESS["CT_BLEE_UN_LOCK_ELEMENT"] = "Бұғатты ашу";

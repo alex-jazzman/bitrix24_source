@@ -103,9 +103,9 @@ class MainPage extends BaseController
 				providerModuleId: $this->provider?->getModuleId(),
 				clientsDataRecent: $this->getClientsDataRecent(),
 				isCurrentSenderAvailable: MessageSenderPicker::canUseCurrentSender(),
+				waitListItemCollection: $waitListItemCollection,
 				isIntersectionForAll: true,
 				counters: $this->counterRepository->getList($userId),
-				waitListItemCollection: $waitListItemCollection,
 			);
 		}
 		catch (Exception $e)
@@ -141,9 +141,9 @@ class MainPage extends BaseController
 				providerModuleId: $this->provider?->getModuleId(),
 				clientsDataRecent: $this->getClientsDataRecent(),
 				isCurrentSenderAvailable: MessageSenderPicker::canUseCurrentSender(),
+				waitListItemCollection: $waitListItems,
 				isIntersectionForAll: $this->isIntersectionForAll($userId),
 				counters: $this->counterRepository->getList($userId),
-				waitListItemCollection: $waitListItems,
 			);
 		}
 		catch (Exception $e)
@@ -235,6 +235,7 @@ class MainPage extends BaseController
 			->withCounters($bookings, $userId)
 			->withClientsData($bookings)
 			->withExternalData($bookings)
+			->withMessages($bookings)
 		;
 
 		return $bookings;

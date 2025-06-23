@@ -23,6 +23,7 @@ import TextBlock from '../components/content-blocks/text';
 import { TimelineAudio } from '../components/content-blocks/timeline-audio';
 import { CallScoringPill } from '../components/content-blocks/copilot/call-scoring-pill';
 import { CallScoring } from '../components/content-blocks/copilot/call-scoring.js';
+import { CopilotLaunchButton } from '../components/content-blocks/copilot/copilot-launch-button';
 import DeadlineAndPingSelector from '../components/content-blocks/todo/deadline-and-ping-selector';
 import PingSelector from '../components/content-blocks/todo/ping-selector';
 import WithTitle from '../components/content-blocks/with-title';
@@ -63,6 +64,7 @@ export class CommonContentBlocks extends Base
 			WorkflowEfficiency,
 			CallScoringPill,
 			CallScoring,
+			CopilotLaunchButton,
 		};
 	}
 

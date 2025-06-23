@@ -1,3 +1,4 @@
+import { FileExport } from 'biconnector.dataset-import.file-export';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Reflection, Loc, Text, ajax as Ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
@@ -98,6 +99,18 @@ class ExternalDatasetManager
 
 		filterApi.extendFilter(filterToExtend);
 		filterApi.apply();
+	}
+
+	exportDataset(id)
+	{
+		this.#grid.tableFade();
+		FileExport.getInstance().downloadOnce(id)
+			.then(() => {
+				this.#grid.tableUnfade();
+			})
+			.catch(() => {
+				this.#grid.tableUnfade();
+			});
 	}
 
 	deleteDataset(id: number) {

@@ -709,6 +709,11 @@ final class Deal extends Factory
 			new Operation\Action\CreateFinalSummaryTimelineHistoryItem()
 		);
 
+		$operation->addAction(
+			Operation::ACTION_AFTER_SAVE,
+			new Operation\Action\UpdateRepeatSaleLog()
+		);
+
 		return $operation;
 	}
 
@@ -739,6 +744,10 @@ final class Deal extends Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\DeleteEntityFieldsContext()
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\DeleteRepeatSaleLog()
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,

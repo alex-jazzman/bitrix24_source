@@ -1,0 +1,28 @@
+.bx-im-copilot-promo-hint__scope {
+	--im-copilot-promo-hint__color_action-button: var(--im-color-accent-purple);
+
+	padding: 10px 20px;
+	font-size: var(--im-font-size-md);
+	font-family: var(--im-font-family-system);
+	line-height: var(--im-font-line-height-2xs);
+}
+
+.bx-im-copilot-promo-hint__scope .popup-window-content {
+	overflow: hidden;
+}
+
+.bx-im-copilot-promo-hint__title {
+	font-weight: var(--im-font-weight-bold);
+}
+
+.bx-im-copilot-promo-hint__action {
+	display: flex;
+	font: inherit;
+	color: var(--im-copilot-promo-hint__color_action-button);
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	height: 22px;
+	margin-top: 20px;
+}

@@ -405,7 +405,7 @@ input.ui-entity-editor-header-title-text {
 	transition: opacity 150ms ease, border-color 150ms ease;
 }
 
-.ui-entity-editor-section-edit .ui-entity-editor-content-block-field-readonly .ui-entity-editor-block-context-menu { top: -4px; !important;}
+.ui-entity-editor-section-edit .ui-entity-editor-content-block-field-readonly .ui-entity-editor-block-context-menu { top: -4px !important;}
 
 .ui-entity-editor-section-edit .ui-entity-editor-block-context-menu,
 .ui-entity-editor-content-block-edit .ui-entity-editor-block-context-menu { top: 28px; }
@@ -2034,4 +2034,16 @@ input.ui-entity-editor-header-title-text {
 .ui-page-slider-wrapper.--edit__title-input .ui-toolbar-title-inner,
 .ui-page-slider-wrapper.--edit__title-input .ui-toolbar .crm-pagetitle.ui-toolbar-title-item-box {
 	width: 100%;
+}
+
+.ui-entity-editor-block-title-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ui-entity-editor-block-title-text-right-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }

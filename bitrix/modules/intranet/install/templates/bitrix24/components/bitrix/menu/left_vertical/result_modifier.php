@@ -145,8 +145,6 @@ if (
 	{
 		$arResult["SHOW_LICENSE_BUTTON"] = true;
 		$arResult["B24_LICENSE_PATH"] = CBitrix24::PATH_LICENSE_ALL;
-		$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
-		$arResult["HOST_NAME"] = defined('BX24_HOST_NAME')? BX24_HOST_NAME: SITE_SERVER_NAME;
 		$arResult["IS_DEMO_LICENSE"] = \CBitrix24::getLicenseFamily() === "demo";
 		$arResult["DEMO_DAYS"] = "";
 

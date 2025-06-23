@@ -1,18 +1,18 @@
+import 'ui.icon-set.outline';
 import { Extension, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
-import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType } from 'im.v2.const';
+import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType, Color } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { DraftManager } from 'im.v2.lib.draft';
 import { Utils } from 'im.v2.lib.utils';
 import { Parser } from 'im.v2.lib.parser';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
-import {
-	MessageService,
-	SendingService,
-	UploadingService,
-	InputSenderService,
-} from 'im.v2.provider.service';
+import { UploadingService, MultiUploadingService } from 'im.v2.provider.service.uploading';
+import { SendingService } from 'im.v2.provider.service.sending';
+import { MessageService } from 'im.v2.provider.service.message';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
 import { Textarea } from 'im.v2.lib.textarea';
@@ -20,6 +20,7 @@ import { ChannelManager } from 'im.v2.lib.channel';
 import { InputAction } from 'im.v2.lib.input-action';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
+import { InputSenderService } from './classes/input-sender-service';
 import { ResizeDirection, ResizeManager } from './classes/resize-manager';
 import { AudioInput } from './components/audio-input/audio-input';
 import { SmileSelector } from './components/smile-selector/smile-selector';
@@ -28,19 +29,22 @@ import { SendButton } from './components/send-button';
 import { UploadPreviewPopup } from './components/upload-preview/upload-preview-popup';
 import { MentionPopup } from './components/mention/mention-popup';
 import { TextareaPanel } from './components/panel/panel';
+import { AutoDeleteSelector } from './components/auto-delete-selector/auto-delete-selector';
 
 import './css/textarea.css';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 import type { InsertTextEvent, InsertMentionEvent } from 'im.v2.const';
-import type { ForwardedEntityConfig, PanelContextWithMultipleIds } from 'im.v2.provider.service';
+import type { ForwardedEntityConfig, PanelContextWithMultipleIds } from 'im.v2.provider.service.sending';
+import type { MultiUploadingResult } from 'im.v2.provider.service.uploading';
 
 const MESSAGE_ACTION_PANELS = new Set([PanelType.edit, PanelType.reply, PanelType.forward, PanelType.forwardEntity]);
 const TextareaHeight = {
 	max: 400,
 	min: 22,
 };
+const ICON_SIZE = 24;
 
 // @vue/component
 export const ChatTextarea = {
@@ -52,6 +56,8 @@ export const ChatTextarea = {
 		MentionPopup,
 		TextareaPanel,
 		AudioInput,
+		AutoDeleteSelector,
+		BIcon,
 	},
 	props: {
 		dialogId: {
@@ -86,9 +92,9 @@ export const ChatTextarea = {
 			type: Boolean,
 			default: true,
 		},
-		draftManagerClass: {
-			type: Function,
-			default: DraftManager,
+		withAutoFocus: {
+			type: Boolean,
+			default: true,
 		},
 	},
 	emits: ['mounted'],
@@ -102,7 +108,8 @@ export const ChatTextarea = {
 			mentionQuery: '',
 
 			showUploadPreviewPopup: false,
-			previewPopupUploaderId: '',
+			previewPopupUploaderIds: [],
+			previewPopupSourceFilesCount: 0,
 
 			panelType: PanelType.none,
 			panelContext: {
@@ -112,6 +119,8 @@ export const ChatTextarea = {
 	},
 	computed:
 	{
+		OutlineIcons: () => OutlineIcons,
+		ICON_SIZE: () => ICON_SIZE,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -180,6 +189,19 @@ export const ChatTextarea = {
 		{
 			return this.text === '';
 		},
+		isAutoDeleteEnabled(): boolean
+		{
+			return this.$store.getters['chats/autoDelete/isEnabled'](this.dialog.chatId);
+		},
+		marketIconColor(): string
+		{
+			if (this.marketMode)
+			{
+				return Color.accentBlue;
+			}
+
+			return Color.gray40;
+		},
 	},
 	watch:
 	{
@@ -214,8 +236,13 @@ export const ChatTextarea = {
 	},
 	mounted()
 	{
-		this.initMentionManager();
-		this.focus();
+		void this.initMentionManager();
+
+		if (this.withAutoFocus)
+		{
+			this.focus();
+		}
+
 		this.$emit('mounted');
 	},
 	beforeUnmount()
@@ -266,7 +293,7 @@ export const ChatTextarea = {
 		{
 			if (this.editMode && text === '')
 			{
-				void this.getMessageService().deleteMessages([this.panelContext.messageId]);
+				this.getMessageService().deleteMessages([this.panelContext.messageId]);
 			}
 			else if (this.editMode && text !== '')
 			{
@@ -274,7 +301,7 @@ export const ChatTextarea = {
 			}
 			else if (this.forwardMode)
 			{
-				this.getSendingService().forwardMessages({
+				void this.getSendingService().forwardMessages({
 					text,
 					dialogId: this.dialogId,
 					forwardIds: this.panelContext.messagesIds,
@@ -456,6 +483,8 @@ export const ChatTextarea = {
 		},
 		async onKeyDown(event: KeyboardEvent)
 		{
+			Analytics.getInstance().onTypeMessage(this.dialog);
+
 			if (this.showMention)
 			{
 				this.mentionManager.onActiveMentionKeyDown(event);
@@ -552,16 +581,19 @@ export const ChatTextarea = {
 		{
 			this.resizeManager.onResizeStart(event, this.textareaHeight);
 		},
-		async onFileSelect({ event, sendAsFile }: InputEvent)
+		async onFileSelect({ event, sendAsFile }: Event)
 		{
-			const uploaderId = await this.getUploadingService().uploadFromInput({
+			const multiUploadingService: MultiUploadingService = this.getMultiUploadingService();
+			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.uploadFromInput({
 				event,
 				sendAsFile,
 				dialogId: this.dialogId,
+				autoUpload: false,
 			});
 
 			this.showUploadPreviewPopup = true;
-			this.previewPopupUploaderId = uploaderId;
+			this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+			this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 		},
 		onDiskFileSelect({ files })
 		{
@@ -640,26 +672,30 @@ export const ChatTextarea = {
 				return;
 			}
 
-			const uploaderId = await this.getUploadingService().uploadFromClipboard({
+			const multiUploadingService: MultiUploadingService = this.getMultiUploadingService();
+			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.uploadFromClipboard({
 				clipboardEvent,
 				dialogId: this.dialogId,
-				imagesOnly: !this.isChannelType,
+				imagesOnly: false,
+				autoUpload: false,
 			});
 
-			if (!uploaderId)
+			if (!Type.isArrayFilled(multiUploadingResult.uploaderIds))
 			{
 				return;
 			}
 
 			this.showUploadPreviewPopup = true;
-			this.previewPopupUploaderId = uploaderId;
+			this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+			this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 		},
 		onOpenUploadPreview(event: BaseEvent)
 		{
-			const { uploaderId } = event.getData();
+			const { multiUploadingResult } = event.getData();
 
 			this.showUploadPreviewPopup = true;
-			this.previewPopupUploaderId = uploaderId;
+			this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+			this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 		},
 		onMarketIconClick()
 		{
@@ -741,7 +777,7 @@ export const ChatTextarea = {
 		{
 			if (!this.draftManager)
 			{
-				this.draftManager = this.draftManagerClass.getInstance();
+				this.draftManager = DraftManager.getInstance();
 			}
 
 			return this.draftManager;
@@ -792,17 +828,28 @@ export const ChatTextarea = {
 			this.uploadingService.unsubscribe(UploadingService.event.uploadCancel, this.stopFileUploadAction);
 			this.uploadingService.unsubscribe(UploadingService.event.uploadError, this.stopFileUploadAction);
 		},
+		getMultiUploadingService(): MultiUploadingService
+		{
+			if (!this.multiUploadingService)
+			{
+				this.multiUploadingService = new MultiUploadingService();
+			}
+
+			return this.multiUploadingService;
+		},
 		onSendFilesFromPreviewPopup(event)
 		{
 			this.text = '';
-			const { groupFiles, text, uploaderId } = event;
-			if (groupFiles)
-			{
-				return;
-			}
-
+			const { text, uploaderIds } = event;
 			const textWithMentions = this.mentionManager.replaceMentions(text);
-			this.getUploadingService().sendMessageWithFiles({ uploaderId, text: textWithMentions });
+
+			uploaderIds.forEach((uploaderId, index) => {
+				this.getUploadingService().sendMessageWithFiles({
+					uploaderId,
+					text: index === 0 ? textWithMentions : '',
+				});
+			});
+
 			this.focus();
 		},
 		closeMentionPopup()
@@ -839,7 +886,7 @@ export const ChatTextarea = {
 		},
 	},
 	template: `
-		<div class="bx-im-send-panel__scope bx-im-send-panel__container">
+		<div class="bx-im-send-panel__scope bx-im-send-panel__container --ui-context-content-light">
 			<div class="bx-im-textarea__container">
 				<div @mousedown="onResizeStart" class="bx-im-textarea__drag-handle"></div>
 				<TextareaPanel
@@ -850,13 +897,12 @@ export const ChatTextarea = {
 				/>
 				<div class="bx-im-textarea__content" ref="textarea-content">
 					<div class="bx-im-textarea__left">
-						<div v-if="withUploadMenu" class="bx-im-textarea__upload_container">
-							<UploadMenu 
-								:dialogId="dialogId" 
-								@fileSelect="onFileSelect" 
-								@diskFileSelect="onDiskFileSelect" 
-							/>
-						</div>
+						<UploadMenu
+							v-if="withUploadMenu"
+							:dialogId="dialogId" 
+							@fileSelect="onFileSelect" 
+							@diskFileSelect="onDiskFileSelect" 
+						/>
 						<textarea
 							v-model="text"
 							:style="textareaStyle"
@@ -876,13 +922,19 @@ export const ChatTextarea = {
 					</div>
 					<div class="bx-im-textarea__right">
 						<div class="bx-im-textarea__action-panel">
-							<div
+							<AutoDeleteSelector
+								v-if="isAutoDeleteEnabled"
+								:dialogId="dialogId"
+							/>
+							<BIcon
 								v-if="withMarket"
+								:name="OutlineIcons.APPS"
 								:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
+								:size="ICON_SIZE"
+								:color="marketIconColor"
+								class="bx-im-textarea__icon"
 								@click="onMarketIconClick"
-								class="bx-im-textarea__icon --market"
-								:class="{'--active': marketMode}"
-							></div>
+							/>
 							<SmileSelector 
 								v-if="withSmileSelector" 
 								:dialogId="dialogId" 
@@ -895,7 +947,8 @@ export const ChatTextarea = {
 			<UploadPreviewPopup
 				v-if="showUploadPreviewPopup"
 				:dialogId="dialogId"
-				:uploaderId="previewPopupUploaderId"
+				:uploaderIds="previewPopupUploaderIds"
+				:sourceFilesCount="previewPopupSourceFilesCount"
 				:textareaValue="text"
 				@close="showUploadPreviewPopup = false"
 				@sendFiles="onSendFilesFromPreviewPopup"

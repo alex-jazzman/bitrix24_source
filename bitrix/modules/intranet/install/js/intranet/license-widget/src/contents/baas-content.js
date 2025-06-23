@@ -9,14 +9,7 @@ export class BaasContent extends MarketContent
 	getConfig(): Object
 	{
 		return {
-			html: this.getOptions().awaitData.then((response) => {
-				this.setOptions({
-					...response.data.baas,
-					...this.getOptions(),
-				});
-
-				return this.getLayout();
-			}),
+			html: this.getLayout(),
 			minHeight: this.getOptions().isSmall ? '86px' : '55px',
 		};
 	}

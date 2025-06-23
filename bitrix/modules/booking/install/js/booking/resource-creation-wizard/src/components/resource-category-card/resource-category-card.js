@@ -40,10 +40,10 @@ export const ResourceCategoryCard = {
 		<div class="resource-category-card">
 			<div class="resource-category-card__header">
 				<div class="resource-category-card__header__title">
-					{{ loc('BRCW_CHOOSE_CATEGORY') }}
+					{{ loc('BRCW_CHOOSE_CATEGORY_MSGVER_1') }}
 				</div>
 				<HelpDeskLoc
-					:message="loc('BRCW_CHOOSE_CATEGORY_DESCRIPTION_MSGVER_1')"
+					:message="loc('BRCW_CHOOSE_CATEGORY_DESCRIPTION_MSGVER_2')"
 					:code="code"
 					:anchor="anchorCode"
 				/>

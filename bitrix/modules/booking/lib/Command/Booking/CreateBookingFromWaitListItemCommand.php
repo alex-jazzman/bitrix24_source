@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Command\Booking;
 
 use Bitrix\Booking\Command\AbstractCommand;

@@ -20,6 +20,7 @@ import {SidebarLinksModelActions, SidebarLinksModelMutation} from "../../model/s
 import { CollabModelActions, CollabModelMutation } from "../../model/dialogues/src/collab/types";
 import { CopilotModelActions, CopilotModelMutation } from "../../model/dialogues/src/copilot/types";
 import { CounterModelMutation, CounterModelActions } from "../../model/counter/src/types";
+import { VoteModelActions, VoteModelMutation } from "../../model/messages/src/vote/types";
 
 export type MessengerStoreActions =
 	FilesModelActions
@@ -40,6 +41,7 @@ export type MessengerStoreActions =
 	| CollabModelActions
 	| CounterModelActions
 	| CopilotModelActions
+	| VoteModelActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -60,6 +62,7 @@ export type MessengerStoreMutation =
 	| CollabModelMutation
 	| CounterModelMutation
 	| CopilotModelMutation
+	| VoteModelMutation
 
 type MessengerCoreStore = {
 	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,

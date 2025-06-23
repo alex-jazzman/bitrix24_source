@@ -13,6 +13,8 @@ jn.define('im/messenger/const/messenger-init-rest', (require, exports, module) =
 		promotion: 'promotion',
 		departmentColleagues: 'departmentColleagues',
 		tariffRestriction: 'tariffRestriction',
+		activeCalls: 'activeCalls',
+		anchors: 'anchors',
 	});
 
 	module.exports = {

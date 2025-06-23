@@ -1,5 +1,5 @@
 import { Core } from 'im.v2.application.core';
-import { SettingsService } from 'im.v2.provider.service';
+import { SettingsService } from 'im.v2.provider.service.settings';
 import { Settings } from 'im.v2.const';
 
 import { CheckboxOption } from '../../elements/checkbox';

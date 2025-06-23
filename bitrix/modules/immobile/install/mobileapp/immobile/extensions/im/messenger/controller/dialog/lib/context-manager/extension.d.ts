@@ -1,5 +1,7 @@
+import { DialogId } from '../../../../types/common';
+
 declare type GoToMessageContextEvent = {
-	dialogId: string | number,
+	dialogId: DialogId,
 	messageId: string | number,
 	context: string,
 	parentMessageId?: string,
@@ -9,11 +11,11 @@ declare type GoToMessageContextEvent = {
 }
 
 declare type GoToLastReadMessageContextEvent = {
-	dialogId: string | number,
+	dialogId: DialogId,
 }
 
 declare type GoToBottomMessageContextEvent = {
-	dialogId: string | number,
+	dialogId: DialogId,
 }
 
 declare type GoToPostMessageContextEvent = {
@@ -22,6 +24,7 @@ declare type GoToPostMessageContextEvent = {
 }
 
 declare type GoToMessageContextByCommentsChatIdEvent = {
+	dialogId: DialogId,
 	commentChatId: number,
 	withMessageHighlight?: boolean,
 }

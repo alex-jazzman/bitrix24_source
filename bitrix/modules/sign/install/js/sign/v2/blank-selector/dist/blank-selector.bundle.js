@@ -435,6 +435,11 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _checkForFilesValid, {
 	      value: _checkForFilesValid2
 	    });
+	    this.events = Object.freeze({
+	      beforeAddFileSuccessfully: 'beforeAddFileSuccessfully',
+	      toggleSelection: 'toggleSelection',
+	      addFile: 'addFile'
+	    });
 	    Object.defineProperty(this, _cache$1, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
@@ -568,6 +573,18 @@ this.BX.Sign = this.BX.Sign || {};
 		`), () => babelHelpers.classPrivateFieldLooseBase(this, _loadBlanks)[_loadBlanks](babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] + 1), main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_LOAD_MORE'));
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	  }
+	  getUploadedFileName(fileIndex) {
+	    const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
+	    const files = uploader.getFiles();
+	    if (files.length === 0) {
+	      return null;
+	    }
+	    const file = files.at(fileIndex);
+	    if (!file) {
+	      return null;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](file.getName());
+	  }
 	  async createBlankFromOuterUploaderFiles(files) {
 	    if (files.length === 0) {
 	      return;
@@ -617,12 +634,14 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	  }
 	  resetSelectedBlank() {
-	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(this.selectedBlankId);
+	    const previousSelectedBlankId = this.selectedBlankId;
+	    const blank = this.getBlank(this.selectedBlankId);
 	    blank == null ? void 0 : blank.deselect();
 	    this.selectedBlankId = 0;
 	    if (blank) {
-	      this.emit('toggleSelection', {
-	        selected: false
+	      this.emit(this.events.toggleSelection, {
+	        selected: false,
+	        previousSelectedBlankId
 	      });
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _enableSaveButtonIntoSlider)[_enableSaveButtonIntoSlider]();
@@ -650,25 +669,28 @@ this.BX.Sign = this.BX.Sign || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _addBlank)[_addBlank](blankData, blank);
 	    }
 	  }
-	  async selectBlank(blankId) {
+	  async selectBlank(blankId, eventExtraOptions = {}) {
+	    const previousSelectedBlankId = this.selectedBlankId;
 	    if (blankId !== this.selectedBlankId) {
 	      this.resetSelectedBlank();
 	    }
 	    this.selectedBlankId = blankId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](false);
-	    let blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    let blank = this.getBlank(blankId);
 	    if (!blank) {
 	      await this.loadBlankById(blankId);
-	      blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	      blank = this.getBlank(blankId);
 	    }
 	    const {
 	      title
 	    } = blank.getProps();
 	    blank.select();
-	    this.emit('toggleSelection', {
+	    this.emit(this.events.toggleSelection, {
 	      id: blankId,
 	      selected: true,
-	      title: babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](title)
+	      title: babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](title),
+	      extra: eventExtraOptions,
+	      previousSelectedBlankId
 	    });
 	  }
 	  deleteBlank(blankId) {
@@ -776,12 +798,21 @@ this.BX.Sign = this.BX.Sign || {};
 	  const allExistImages = files.every(file => isImage(file));
 	  return allAddedImages && allExistImages && imagesLimit - filesLength >= addedFiles.length;
 	}
-	function _onFileBeforeAdd2(event) {
+	function _onFileBeforeAdd2(uploaderEvent) {
 	  const {
 	    files: addedFiles
-	  } = event.getData();
+	  } = uploaderEvent.getData();
 	  const valid = babelHelpers.classPrivateFieldLooseBase(this, _checkForFilesValid)[_checkForFilesValid](addedFiles);
 	  if (valid) {
+	    const selfEvent = new main_core_events.BaseEvent({
+	      data: {
+	        files: addedFiles
+	      }
+	    });
+	    this.emit(this.events.beforeAddFileSuccessfully, selfEvent);
+	    if (selfEvent.isDefaultPrevented()) {
+	      return;
+	    }
 	    return;
 	  }
 	  let bindElement = babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer].firstElementChild;
@@ -801,7 +832,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    })
 	  });
 	  errorPopup.show();
-	  event.preventDefault();
+	  uploaderEvent.preventDefault();
 	}
 	function _getImagesLimit2() {
 	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7;
@@ -811,7 +842,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  const title = event.data.file.getName();
 	  babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](true);
 	  this.resetSelectedBlank();
-	  this.emit('addFile', {
+	  this.emit(this.events.addFile, {
 	    title: babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](title)
 	  });
 	}

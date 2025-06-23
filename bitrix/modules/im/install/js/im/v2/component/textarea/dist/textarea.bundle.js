@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,im_v2_lib_inputAction,im_v2_lib_desktopApi,im_v2_lib_smileManager,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,im_v2_component_message_file,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
+(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_channel,im_v2_lib_inputAction,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_message_file,im_v2_component_elements_mediaGallery,ui_icons,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -290,6 +290,75 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	MentionManager.eventNamespace = 'BX.Messenger.v2.Textarea.MentionManager';
 
+	const ACTIVE_STATUS_DURATION = 15000;
+	const REQUEST_DELAY = 5000;
+	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
+	var _statusTimerMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("statusTimerMap");
+	var _requestDelayMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestDelayMap");
+	var _isActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isActive");
+	var _sendRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendRequest");
+	var _isSelfChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSelfChat");
+	class InputSenderService {
+	  constructor(dialogId) {
+	    Object.defineProperty(this, _isSelfChat, {
+	      value: _isSelfChat2
+	    });
+	    Object.defineProperty(this, _sendRequest, {
+	      value: _sendRequest2
+	    });
+	    Object.defineProperty(this, _isActive, {
+	      value: _isActive2
+	    });
+	    Object.defineProperty(this, _dialogId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _statusTimerMap, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _requestDelayMap, {
+	      writable: true,
+	      value: {}
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId] = dialogId;
+	  }
+	  startAction(actionType) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isActive)[_isActive](actionType) || babelHelpers.classPrivateFieldLooseBase(this, _isSelfChat)[_isSelfChat]()) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType] = setTimeout(() => {
+	      delete babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType];
+	    }, ACTIVE_STATUS_DURATION);
+	    babelHelpers.classPrivateFieldLooseBase(this, _requestDelayMap)[_requestDelayMap][actionType] = setTimeout(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendRequest)[_sendRequest](actionType);
+	    }, REQUEST_DELAY);
+	  }
+	  stopAction(actionType) {
+	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType]);
+	    delete babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType];
+	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _requestDelayMap)[_requestDelayMap][actionType]);
+	    delete babelHelpers.classPrivateFieldLooseBase(this, _requestDelayMap)[_requestDelayMap][actionType];
+	  }
+	}
+	function _isActive2(actionType) {
+	  return Boolean(babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType]);
+	}
+	function _sendRequest2(actionType) {
+	  const queryParams = {
+	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId],
+	    type: actionType
+	  };
+	  im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatInputActionNotify, {
+	    data: queryParams
+	  }).catch(([error]) => {
+	    console.error('InputSenderService: sendRequest error', error);
+	  });
+	}
+	function _isSelfChat2() {
+	  return Number(babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]) === im_v2_application_core.Core.getUserId();
+	}
+
 	const ResizeDirection = {
 	  up: 'up',
 	  down: 'down'
@@ -429,7 +498,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	  main_core.Event.bind(this.recognizer, RecognizerEvent.error, event => {
 	    this.emit(AudioManager.events.recognitionError, event.error);
-	    // eslint-disable-next-line no-console
 	    console.error('Copilot: AudioManager: error', event.error);
 	  });
 	  main_core.Event.bind(this.recognizer, RecognizerEvent.end, () => {
@@ -534,9 +602,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	      this.getAudioManager().subscribe(AudioManager.events.recognitionError, () => {
 	        this.audioMode = false;
-	        BX.UI.Notification.Center.notify({
-	          content: this.loc('IM_TEXTAREA_AUDIO_INPUT_ERROR')
-	        });
+	        im_v2_lib_notifier.Notifier.speech.onRecognitionError();
 	      });
 	    },
 	    unbindAudioEvents() {
@@ -3723,18 +3789,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.hasMoreItemsToLoad = true;
 	  }
 	  getPopular() {
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imBotGiphyListPopular, {}).catch(error => {
-	      im_v2_lib_logger.Logger.error('GiphyLoadService error', error);
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imBotGiphyListPopular, {}).catch(([error]) => {
+	      console.error('GiphyLoadService error', error);
+	      throw error;
 	    });
 	  }
-	  getQuery(searchQuery, nextPage) {
+	  async getQuery(searchQuery, nextPage) {
 	    if (nextPage) {
 	      this.pageNumber++;
 	    } else {
 	      this.pageNumber = 1;
 	      this.hasMoreItemsToLoad = true;
 	    }
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imBotGiphyList, {
+	    const payload = {
 	      data: {
 	        filter: {
 	          search: searchQuery
@@ -3742,14 +3809,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        limit: PAGE_SIZE,
 	        offset: this.pageNumber * PAGE_SIZE
 	      }
-	    }).then(gifs => {
-	      if (gifs.length < PAGE_SIZE) {
-	        this.hasMoreItemsToLoad = false;
-	      }
-	      return gifs;
-	    }).catch(error => {
-	      im_v2_lib_logger.Logger.error('GiphyLoadService error', error);
+	    };
+	    const gifs = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imBotGiphyList, payload).catch(([error]) => {
+	      console.error('GiphyLoadService error', error);
+	      throw error;
 	    });
+	    if (gifs.length < PAGE_SIZE) {
+	      this.hasMoreItemsToLoad = false;
+	    }
+	    return gifs;
 	  }
 	}
 
@@ -3762,8 +3830,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const TabGiphy = {
 	  name: 'GiphyContent',
 	  components: {
-	    Loader: im_v2_component_elements.Loader,
-	    Spinner: im_v2_component_elements.Spinner
+	    Loader: im_v2_component_elements_loader.Loader,
+	    Spinner: im_v2_component_elements_loader.Spinner
 	  },
 	  props: {
 	    dialogId: {
@@ -3787,8 +3855,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    itemsReceived() {
 	      return this.popularGifList.length > 0;
 	    },
-	    SpinnerSize: () => im_v2_component_elements.SpinnerSize,
-	    SpinnerColor: () => im_v2_component_elements.SpinnerColor,
+	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
+	    SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor,
 	    errorText() {
 	      if (this.gifList.length === 0) {
 	        return this.loc('IM_TEXTAREA_GIPHY_EMPTY_STATE');
@@ -3844,7 +3912,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getSendingService() {
 	      if (!this.sendingService) {
-	        this.sendingService = im_v2_provider_service.SendingService.getInstance();
+	        this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
 	      }
 	      return this.sendingService;
 	    },
@@ -3990,7 +4058,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const TabMarket = {
 	  name: 'SmilePopupMarketContent',
 	  components: {
-	    Spinner: im_v2_component_elements.Spinner
+	    Spinner: im_v2_component_elements_loader.Spinner
 	  },
 	  props: {
 	    entityId: {
@@ -4010,7 +4078,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
-	    SpinnerSize: () => im_v2_component_elements.SpinnerSize
+	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize
 	  },
 	  watch: {
 	    entityId(newValue) {
@@ -4069,11 +4137,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const SmilePopup = {
 	  name: 'SmilePopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    TabSmiles,
 	    TabGiphy,
 	    TabMarket,
-	    MessengerTabs: im_v2_component_elements.MessengerTabs
+	    MessengerTabs: im_v2_component_elements_tabs.MessengerTabs
 	  },
 	  props: {
 	    bindElement: {
@@ -4093,7 +4161,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
-	    TabsColorScheme: () => im_v2_component_elements.TabsColorScheme,
+	    TabsColorScheme: () => im_v2_component_elements_tabs.TabsColorScheme,
 	    TabType: () => TabType,
 	    popupConfig() {
 	      return {
@@ -4168,10 +4236,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const ICON_SIZE = 24;
+
 	// @vue/component
 	const SmileSelector = {
 	  name: 'SmileSelector',
 	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
 	    SmilePopup
 	  },
 	  props: {
@@ -4185,19 +4256,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      showPopup: false
 	    };
 	  },
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE,
+	    iconColor() {
+	      if (this.showPopup) {
+	        return im_v2_const.Color.accentBlue;
+	      }
+	      return im_v2_const.Color.gray40;
+	    }
+	  },
 	  methods: {
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
-		<div
-			@click="showPopup = true"
-			:title="loc('IM_TEXTAREA_ICON_SMILE')"
-			class="bx-im-textarea__icon --smile"
-			:class="{'--active': showPopup}"
-			ref="addSmile"
-		>
+		<div ref="addSmile" class="bx-im-textarea__icon-container">
+			<BIcon
+				:name="OutlineIcons.SMILE"
+				:title="loc('IM_TEXTAREA_ICON_SMILE')"
+				:size="ICON_SIZE"
+				:color="iconColor"
+				class="bx-im-textarea__icon"
+				@click="showPopup = true"
+			/>
 		</div>
 		<SmilePopup
 			v-if="showPopup"
@@ -4210,7 +4293,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const FILE_DIALOG_ID = 'im-file-dialog';
 
-	/* eslint-disable bitrix-rules/no-bx */
+	/* eslint-disable @bitrix24/bitrix24-rules/no-bx */
 	// @vue/component
 	const DiskPopup = {
 	  name: 'DiskPopup',
@@ -4240,12 +4323,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      BX.DiskFileDialog.obCallback[name] = {
-	        'saveButton': (tab, path, selected) => {
+	        saveButton: (tab, path, selected) => {
 	          this.$emit('diskFileSelect', {
 	            files: selected
 	          });
 	        },
-	        'popupDestroy': () => {
+	        popupDestroy: () => {
 	          this.unsubscribeEvents();
 	          this.$emit('close');
 	        }
@@ -4267,16 +4350,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	    }
 	  },
-	  template: `<template></template>`
+	  template: '<template></template>'
 	};
 
+	const ICON_SIZE$1 = 24;
 	const DOCUMENT_SIGN_SLIDER_URL = '/sign/doc/0/?chat_id=';
 
 	// @vue/component
 	const UploadMenu = {
 	  components: {
-	    MessengerMenu: im_v2_component_elements.MessengerMenu,
-	    MenuItem: im_v2_component_elements.MenuItem,
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    MessengerMenu: im_v2_component_elements_menu.MessengerMenu,
+	    MenuItem: im_v2_component_elements_menu.MenuItem,
 	    DiskPopup
 	  },
 	  props: {
@@ -4293,35 +4378,37 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE$1,
 	    menuItems() {
 	      return [{
-	        icon: im_v2_component_elements.MenuItemIcon.file,
+	        icon: im_v2_component_elements_menu.MenuItemIcon.file,
 	        title: this.loc('IM_TEXTAREA_SELECT_LOCAL_FILE'),
 	        clickHandler: this.onSelectLocalFile
 	      }, {
-	        icon: im_v2_component_elements.MenuItemIcon.b24,
+	        icon: im_v2_component_elements_menu.MenuItemIcon.b24,
 	        title: this.loc('IM_TEXTAREA_SELECT_FILE_FROM_B24'),
 	        clickHandler: this.onSelectFromB24
 	      }, {
-	        icon: im_v2_component_elements.MenuItemIcon.task,
+	        icon: im_v2_component_elements_menu.MenuItemIcon.task,
 	        title: this.loc('IM_TEXTAREA_SELECT_TASK'),
 	        clickHandler: this.onCreateTaskClick
 	      }, {
-	        icon: im_v2_component_elements.MenuItemIcon.meeting,
+	        icon: im_v2_component_elements_menu.MenuItemIcon.meeting,
 	        title: this.loc('IM_TEXTAREA_SELECT_MEETING'),
 	        clickHandler: this.onCreateMeetingClick
 	      }, {
-	        icon: im_v2_component_elements.MenuItemIcon.calendarSlot,
+	        icon: im_v2_component_elements_menu.MenuItemIcon.calendarSlot,
 	        title: this.loc('IM_TEXTAREA_SELECT_CALENDAR_SLOT'),
 	        clickHandler: this.onCreateCalendarSlotClick,
 	        showCondition: () => this.isCalendarSlotAvailable
 	      }, {
-	        icon: im_v2_component_elements.MenuItemIcon.documentSign,
+	        icon: im_v2_component_elements_menu.MenuItemIcon.documentSign,
 	        title: this.loc('IM_TEXTAREA_SELECT_DOCUMENT_SIGN'),
 	        clickHandler: this.onCreateDocumentSignClick,
 	        showCondition: () => this.isDocumentSignAvailable
 	      }, {
-	        icon: im_v2_component_elements.MenuItemIcon.vote,
+	        icon: im_v2_component_elements_menu.MenuItemIcon.vote,
 	        title: this.loc('IM_TEXTAREA_SELECT_VOTE'),
 	        clickHandler: this.onCreateVoteClick,
 	        showCondition: () => this.isVoteCreationAvailable
@@ -4350,6 +4437,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
+	    chatType() {
+	      return this.dialog.type;
+	    },
 	    chatId() {
 	      return this.dialog.chatId;
 	    },
@@ -4364,7 +4454,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.createCalendarSlots, this.dialogId);
 	    },
 	    isVoteCreationAvailable() {
+	      if (!(vote_application.VoteApplication != null && vote_application.VoteApplication.canCreateVoteInChat(this.chatType))) {
+	        return false;
+	      }
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.voteCreationAvailable);
+	    },
+	    iconColor() {
+	      if (this.showMenu) {
+	        return im_v2_const.Color.accentBlue;
+	      }
+	      return im_v2_const.Color.gray40;
 	    }
 	  },
 	  methods: {
@@ -4423,7 +4522,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        groupSharing.openDialog();
 	        this.showMenu = false;
 	      } catch (errors) {
-	        this.showNotification(this.loc('IM_TEXTAREA_UNKNOWN_ERROR'));
+	        im_v2_lib_notifier.Notifier.onDefaultError();
 	        console.error('ChatTextarea: UploadMenu: select slots error', errors);
 	      }
 	    },
@@ -4434,28 +4533,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	    },
 	    onCreateVoteClick() {
-	      const preparedUrl = `/bitrix/components/bitrix/voting.im.edit/slider.php?chatId=${this.chatId}`;
+	      const analyticsInstance = im_v2_lib_analytics.Analytics.getInstance();
+	      const analyticsParams = analyticsInstance.vote.getSerializedParams(this.dialogId);
+	      const preparedUrl = `/bitrix/components/bitrix/voting.im.edit/slider.php?chatId=${this.chatId}&${analyticsParams}`;
 	      BX.SidePanel.Instance.open(preparedUrl, {
 	        cacheable: false,
-	        width: 800,
+	        width: 600,
 	        allowChangeHistory: false
 	      });
+	      im_v2_lib_analytics.Analytics.getInstance().chatEntities.onCreateVoteFromTextareaClick(this.dialogId);
 	      this.showMenu = false;
-	    },
-	    showNotification(content) {
-	      BX.UI.Notification.Center.notify({
-	        content
-	      });
 	    }
 	  },
 	  template: `
-		<div
-			class="bx-im-textarea__icon --upload"
-			:class="{'--active': showMenu}"
-			:title="loc('IM_TEXTAREA_ICON_UPLOAD_TITLE')"
-			@click="onUploadButtonClick"
-			ref="upload"
-		>
+		<div ref="upload" class="bx-im-textarea__icon-container">
+			<BIcon
+				:name="OutlineIcons.ATTACH"
+				:title="loc('IM_TEXTAREA_ICON_UPLOAD_TITLE')"
+				:color="iconColor"
+				:size="ICON_SIZE"
+				class="bx-im-textarea__icon"
+				@click="onUploadButtonClick"
+			/>
 		</div>
 		<MessengerMenu v-if="showMenu" :config="menuConfig" @close="showMenu = false" className="bx-im-file-menu__scope">
 			<MenuItem
@@ -4592,7 +4691,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      default: false
 	    }
 	  },
-	  emits: ['onRemoveItem'],
+	  emits: ['removeItem'],
 	  computed: {
 	    hasError() {
 	      return this.file.status === im_v2_const.FileStatus.error;
@@ -4606,7 +4705,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    onRemoveClick() {
-	      this.$emit('onRemoveItem', {
+	      this.$emit('removeItem', {
 	        file: this.file
 	      });
 	    }
@@ -4624,27 +4723,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const MAX_FILES_COUNT = 10;
+	const MAX_FILES_COUNT = 100;
 	const BUTTONS_CONTAINER_HEIGHT = 74;
 	const TextareaHeight = {
 	  max: 208,
 	  min: 46
 	};
+
 	// @vue/component
 	const UploadPreviewContent = {
 	  name: 'UploadPreviewContent',
 	  components: {
 	    MediaContent: im_v2_component_message_file.MediaContent,
 	    FileItem,
-	    SendButton
+	    SendButton,
+	    MediaGallery: im_v2_component_elements_mediaGallery.MediaGallery
 	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      required: true
 	    },
-	    uploaderId: {
-	      type: String,
+	    uploaderIds: {
+	      type: Array,
+	      required: true
+	    },
+	    sourceFilesCount: {
+	      type: Number,
 	      required: true
 	    },
 	    textareaValue: {
@@ -4659,44 +4764,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      text: '',
 	      sendAsFile: false,
 	      uploaderFiles: [],
+	      chunks: [],
 	      textareaHeight: TextareaHeight.min,
 	      textareaResizedHeight: 0
 	    };
 	  },
 	  computed: {
-	    files() {
-	      return this.uploaderFiles.map(file => {
-	        return this.$store.getters['files/get'](file.getId());
-	      });
-	    },
-	    fileIds() {
-	      return this.files.map(file => {
-	        return file.id;
-	      });
-	    },
-	    fakeMessage() {
-	      return {
-	        id: 'fake',
-	        files: this.fileIds,
-	        text: '',
-	        attach: [],
-	        forward: {}
-	      };
-	    },
-	    filesCount() {
-	      return this.files.length;
-	    },
-	    isSingleFile() {
-	      return this.files.length === 1;
-	    },
-	    sourceFilesCount() {
-	      return this.getUploadingService().getSourceFilesCount(this.uploaderId);
-	    },
 	    isOverMaxFilesLimit() {
 	      return this.sourceFilesCount > MAX_FILES_COUNT;
 	    },
 	    isMediaOnly() {
-	      return this.files.every(file => {
+	      return this.chunks.flat().every(file => {
 	        return file.type === im_v2_const.FileType.image || file.type === im_v2_const.FileType.video;
 	      });
 	    },
@@ -4708,8 +4786,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.textareaHeight === 'auto' ? 'auto' : `${this.textareaHeight}px`;
 	    },
 	    title() {
+	      const filesCount = Math.min(this.uploaderFiles.length, MAX_FILES_COUNT);
 	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_COMPUTED_TITLE', {
-	        '#COUNT#': this.filesCount
+	        '#COUNT#': filesCount
 	      });
 	    }
 	  },
@@ -4728,8 +4807,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  created() {
 	    this.initResizeManager();
-	    this.getUploadingService().getFiles(this.uploaderId).forEach(file => {
-	      this.uploaderFiles.push(file);
+	    this.uploaderIds.forEach(uploaderId => {
+	      const files = [];
+	      this.getUploadingService().getFiles(uploaderId).forEach(file => {
+	        this.uploaderFiles.push(file);
+	        files.push(this.$store.getters['files/get'](file.getId()));
+	      });
+	      this.chunks.push(files);
 	    });
 	  },
 	  mounted() {
@@ -4765,7 +4849,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getUploadingService() {
 	      if (!this.uploadingService) {
-	        this.uploadingService = im_v2_provider_service.UploadingService.getInstance();
+	        this.uploadingService = im_v2_provider_service_uploading.UploadingService.getInstance();
 	      }
 	      return this.uploadingService;
 	    },
@@ -4780,10 +4864,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          this.removePreviewParams(file);
 	        });
 	      }
+	      const filteredUploaderIds = this.uploaderIds.filter(uploaderId => {
+	        return this.getUploadingService().getFiles(uploaderId).length > 0;
+	      });
 	      this.$emit('sendFiles', {
-	        groupFiles: false,
 	        text: this.text,
-	        uploaderId: this.uploaderId,
+	        uploaderIds: filteredUploaderIds,
 	        sendAsFile: this.sendAsFile
 	      });
 	      this.text = '';
@@ -4843,39 +4929,62 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const textareaTop = this.$refs.messageText.getBoundingClientRect().top;
 	      return textareaTop + newMaxPoint + BUTTONS_CONTAINER_HEIGHT > window.innerHeight;
 	    },
-	    onRemoveItem(event) {
-	      this.getUploadingService().removeFileFromUploader({
-	        uploaderId: this.uploaderId,
-	        filesIds: [event.file.id]
+	    getUploaderIdByFileId(fileId) {
+	      const uploadingService = this.getUploadingService();
+	      return this.uploaderIds.find(uploaderId => {
+	        return uploadingService.getFiles(uploaderId).some(file => {
+	          return file.getId() === fileId;
+	        });
 	      });
-	      this.uploaderFiles = this.getUploadingService().getFiles(this.uploaderId);
-	      if (this.filesCount === 0) {
-	        this.$emit('close');
+	    },
+	    removeFileFromUploader(fileId) {
+	      const uploaderId = this.getUploaderIdByFileId(fileId);
+	      this.getUploadingService().removeFileFromUploader({
+	        uploaderId,
+	        filesIds: [fileId]
+	      });
+	    },
+	    onRemoveItem(event) {
+	      this.removeFileFromUploader(event.file.id);
+	      this.chunks = [];
+	      this.uploaderFiles = [];
+	      this.uploaderIds.forEach(uploaderId => {
+	        const files = [];
+	        this.getUploadingService().getFiles(uploaderId).forEach(file => {
+	          this.uploaderFiles.push(file);
+	          files.push(this.$store.getters['files/get'](file.getId()));
+	        });
+	        if (main_core.Type.isArrayFilled(files)) {
+	          this.chunks.push(files);
+	        }
+	      });
+	      if (!main_core.Type.isArrayFilled(this.uploaderFiles)) {
+	        this.onCancel();
 	      }
 	    }
 	  },
 	  template: `
 		<div class="bx-im-upload-preview__container">
 			<div class="bx-im-upload-preview__items-container">
-				<MediaContent 
-					v-if="isMediaOnly && !sendAsFile" 
-					:item="fakeMessage" 
-					:previewMode="true" 
-					:removable="true"
-					@onRemoveItem="onRemoveItem"
-				/>
-				<FileItem 
-					v-else 
-					v-for="fileItem in files" 
-					:file="fileItem" 
-					:class="{'--single': isSingleFile}" 
-					:removable="true"
-					@onRemoveItem="onRemoveItem"
-				/>
+				<div v-if="isMediaOnly && !sendAsFile" v-for="chunk in chunks" class="bx-im-upload-preview__items-chunk">
+					<MediaGallery
+						:files="chunk"
+						:allowRemoveItem="true"
+						@removeItem="onRemoveItem"
+					/>
+				</div>
+				<div v-else v-for="chunk in chunks" class="bx-im-upload-preview__items-chunk">
+					<FileItem
+						v-for="fileItem in chunk"
+						:file="fileItem"
+						:removable="true"
+						@removeItem="onRemoveItem"
+					/>
+				</div>
 			</div>
 			<div class="bx-im-upload-preview__controls-container">
-				<div v-if="isOverMaxFilesLimit" class="ui-alert ui-alert-xs ui-alert-icon-warning bx-im-upload-preview__controls-files-limit-message">
-					<span class="ui-alert-message">{{ loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_10') }}</span>
+				<div v-if="isOverMaxFilesLimit" class="bx-im-upload-preview__controls-files-limit-message">
+					<span>{{ loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_100') }}</span>
 				</div>
 				<label v-if="isMediaOnly" class="bx-im-upload-preview__control-compress-image">
 					<input type="checkbox" class="bx-im-upload-preview__control-compress-image-checkbox" v-model="sendAsFile">
@@ -4906,7 +5015,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const UploadPreviewPopup = {
 	  name: 'UploadPreviewPopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    UploadPreviewContent
 	  },
 	  props: {
@@ -4914,8 +5023,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: String,
 	      required: true
 	    },
-	    uploaderId: {
-	      type: String,
+	    uploaderIds: {
+	      type: Array,
+	      required: true
+	    },
+	    sourceFilesCount: {
+	      type: Number,
 	      required: true
 	    },
 	    textareaValue: {
@@ -4964,8 +5077,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			:id="POPUP_ID"
 		>
 			<UploadPreviewContent 
-				:dialogId="dialogId" 
-				:uploaderId="uploaderId"
+				:dialogId="dialogId"
+				:uploaderIds="uploaderIds"
+				:sourceFilesCount="sourceFilesCount"
 				:textareaValue="textareaValue"
 				@close="$emit('close')"
 				@sendFiles="onSendFiles"
@@ -4987,8 +5101,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MentionItem = {
 	  name: 'MentionItem',
 	  components: {
-	    ChatAvatar: im_v2_component_elements.ChatAvatar,
-	    ChatTitleWithHighlighting: im_v2_component_elements.ChatTitleWithHighlighting
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
+	    ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting
 	  },
 	  props: {
 	    dialogId: {
@@ -5010,7 +5124,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  emits: ['itemClick', 'itemHover'],
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -5090,11 +5204,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MentionLoadingState = {
 	  name: 'MentionLoadingState',
 	  components: {
-	    Spinner: im_v2_component_elements.Spinner
+	    Spinner: im_v2_component_elements_loader.Spinner
 	  },
 	  computed: {
-	    SpinnerSize: () => im_v2_component_elements.SpinnerSize,
-	    SpinnerColor: () => im_v2_component_elements.SpinnerColor
+	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
+	    SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor
 	  },
 	  template: `
 		<div class="bx-im-mention-loading-state__scope bx-im-mention-loading-state__container">
@@ -5112,7 +5226,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MentionContentFooter = {
 	  name: 'MentionContentFooter',
 	  components: {
-	    Loader: im_v2_component_elements.Loader
+	    Loader: im_v2_component_elements_loader.Loader
 	  },
 	  props: {
 	    isLoading: {
@@ -5204,7 +5318,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    } catch (error) {
 	      console.error('Mention search service: load chat participants error', error);
 	    }
-	    void babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater].updateUsers(users);
+	    void new im_v2_lib_user.UserManager().setUsersToModel(users);
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIdAndDate)[_getDialogIdAndDate](users);
 	  }
 	}
@@ -5236,27 +5350,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	}
 
-	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _localSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localSearch");
 	var _baseServerSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("baseServerSearch");
 	var _localCollection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localCollection");
 	var _isSelfDialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSelfDialogId");
 	var _getDialogIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIds");
-	var _isExtranet = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExtranet");
 	class MentionSearchService {
 	  constructor(searchConfig) {
-	    Object.defineProperty(this, _isExtranet, {
-	      value: _isExtranet2
-	    });
 	    Object.defineProperty(this, _getDialogIds, {
 	      value: _getDialogIds2
 	    });
 	    Object.defineProperty(this, _isSelfDialogId, {
 	      value: _isSelfDialogId2
-	    });
-	    Object.defineProperty(this, _store, {
-	      writable: true,
-	      value: void 0
 	    });
 	    Object.defineProperty(this, _localSearch, {
 	      writable: true,
@@ -5270,7 +5375,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: new Map()
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch] = new im_v2_lib_search.LocalSearch(searchConfig);
 	    babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch] = new BaseServerSearch(searchConfig);
 	  }
@@ -5288,7 +5392,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  searchLocal(query) {
 	    const localCollection = [...babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].values()];
 	    const result = babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch].search(query, localCollection);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](result);
+	    const sortedResult = im_v2_lib_search.sortByDate(result);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](sortedResult);
 	  }
 	  async search(query) {
 	    const searchResult = await babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch].search(query);
@@ -5297,41 +5402,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](searchResult);
 	  }
-	  sortByDate(items) {
-	    items.sort((firstItem, secondItem) => {
-	      if (!firstItem.dateMessage || !secondItem.dateMessage) {
-	        if (!firstItem.dateMessage && !secondItem.dateMessage) {
-	          if (babelHelpers.classPrivateFieldLooseBase(this, _isExtranet)[_isExtranet](firstItem.dialogId)) {
-	            return 1;
-	          }
-	          if (babelHelpers.classPrivateFieldLooseBase(this, _isExtranet)[_isExtranet](secondItem.dialogId)) {
-	            return -1;
-	          }
-	          return 0;
-	        }
-	        return firstItem.dateMessage ? -1 : 1;
-	      }
-	      return im_v2_lib_utils.Utils.date.cast(secondItem.dateMessage) - im_v2_lib_utils.Utils.date.cast(firstItem.dateMessage);
-	    });
-	    return items;
-	  }
 	}
 	function _isSelfDialogId2(dialogId) {
 	  return dialogId === im_v2_application_core.Core.getUserId().toString();
 	}
 	function _getDialogIds2(items) {
 	  return items.map(item => item.dialogId);
-	}
-	function _isExtranet2(dialogId) {
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](dialogId);
-	  if (!dialog) {
-	    return false;
-	  }
-	  if (dialog.type === im_v2_const.ChatType.user) {
-	    const user = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['users/get'](dialogId);
-	    return user && user.type === im_v2_const.UserType.extranet;
-	  }
-	  return dialog.extranet;
 	}
 
 	// @vue/component
@@ -5341,7 +5417,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    MentionItem,
 	    MentionContentFooter,
 	    MentionEmptyState,
-	    ScrollWithGradient: im_v2_component_elements.ScrollWithGradient,
+	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
 	    MentionLoadingState
 	  },
 	  props: {
@@ -5393,19 +5469,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.chatParticipantsLoaded && this.chatParticipants.length <= 1;
 	    },
 	    usersFromRecent() {
-	      const recentUsers = [];
-	      this.$store.getters['recent/getSortedCollection'].forEach(recentItem => {
-	        if (this.isChat(recentItem.dialogId)) {
-	          return;
-	        }
-	        const user = this.$store.getters['users/get'](recentItem.dialogId, true);
-	        const isBot = user.type === im_v2_const.UserType.bot;
-	        if (isBot || user.id === im_v2_application_core.Core.getUserId()) {
-	          return;
-	        }
-	        recentUsers.push(user);
-	      });
-	      return recentUsers.map(user => user.id.toString());
+	      return im_v2_lib_search.getUsersFromRecentItems({
+	        withFakeUsers: false
+	      }).map(({
+	        dialogId
+	      }) => dialogId);
 	    },
 	    preparedQuery() {
 	      return this.query.trim().toLowerCase();
@@ -5480,8 +5548,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (query !== this.preparedQuery) {
 	          return;
 	        }
-	        const sortedLocalResult = this.searchService.sortByDate(dialogIds);
-	        this.searchResult = this.appendResult(sortedLocalResult);
+	        this.searchResult = this.appendResult(dialogIds);
 	      }
 	      if (query.length >= this.minTokenSize) {
 	        this.isLoading = true;
@@ -5611,7 +5678,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MentionPopup = {
 	  name: 'MentionPopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    MentionPopupContent
 	  },
 	  props: {
@@ -5987,8 +6054,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MarketAppPopup = {
 	  name: 'MarketAppPopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
-	    Spinner: im_v2_component_elements.Spinner
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+	    Spinner: im_v2_component_elements_loader.Spinner
 	  },
 	  props: {
 	    bindElement: {
@@ -6020,7 +6087,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
-	    SpinnerSize: () => im_v2_component_elements.SpinnerSize,
+	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
 	    popupConfig() {
 	      return {
 	        width: this.width,
@@ -6264,7 +6331,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MarketShowMorePopup = {
 	  name: 'MarketShowMorePopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    MarketShowMorePopupContent
 	  },
 	  props: {
@@ -6432,11 +6499,108 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const ICON_SIZE$2 = 24;
+	const AutoDeleteSelector = {
+	  name: 'AutoDeleteSelector',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    AutoDeleteHint: im_v2_component_elements_autoDelete.AutoDeleteHint,
+	    AutoDeletePopup: im_v2_component_elements_autoDelete.AutoDeletePopup
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      showAutoDeleteMessagesPopup: false,
+	      showAutoDeleteMessagesHintPopup: false,
+	      hintConfig: {
+	        width: 316,
+	        offsetLeft: -106,
+	        offsetTop: 5,
+	        angle: {
+	          offset: 141
+	        }
+	      }
+	    };
+	  },
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE$2,
+	    Color: () => im_v2_const.Color,
+	    isAutoDeleteAllowed() {
+	      return im_v2_lib_autoDelete.AutoDeleteManager.isAutoDeleteAllowed(this.dialogId);
+	    },
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    autoDeleteDelayInHours() {
+	      return this.$store.getters['chats/autoDelete/getDelay'](this.dialog.chatId);
+	    }
+	  },
+	  methods: {
+	    onIconClick() {
+	      if (!this.isAutoDeleteAllowed) {
+	        this.showAutoDeleteMessagesHintPopup = true;
+	        return;
+	      }
+	      this.showAutoDeleteMessagesPopup = true;
+	    },
+	    closePopup() {
+	      this.showAutoDeleteMessagesPopup = false;
+	    },
+	    hideAutoDeleteMessagesHintPopup() {
+	      this.showAutoDeleteMessagesHintPopup = false;
+	    },
+	    onAutoDeleteDelayChange(delay) {
+	      this.getChatService().setMessagesAutoDeleteDelay(this.dialogId, delay);
+	      this.$emit('close');
+	    },
+	    getChatService() {
+	      if (!this.chatService) {
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
+	      }
+	      return this.chatService;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<div ref="autoDeleteIcon" class="bx-im-textarea__icon-container">
+			<BIcon 
+				:name="OutlineIcons.TIMER_DOT"
+				:color="Color.accentBlue"
+				:title="loc('IM_TEXTAREA_AUTO_DELETE_TITLE')"
+				:size="ICON_SIZE"
+				class="bx-im-textarea__icon"
+				@click="onIconClick"
+			/>
+		</div>
+		<AutoDeletePopup
+			v-if="showAutoDeleteMessagesPopup"
+			:autoDeleteDelay="autoDeleteDelayInHours"
+			@close="closePopup"
+			@autoDeleteDelayChange="onAutoDeleteDelayChange"
+		/>
+		<AutoDeleteHint
+			v-if="showAutoDeleteMessagesHintPopup"
+			:bindElement="$refs['autoDeleteIcon']"
+			:config="hintConfig"
+			@close="hideAutoDeleteMessagesHintPopup"
+		/>
+	`
+	};
+
 	const MESSAGE_ACTION_PANELS = new Set([im_v2_const.TextareaPanelType.edit, im_v2_const.TextareaPanelType.reply, im_v2_const.TextareaPanelType.forward, im_v2_const.TextareaPanelType.forwardEntity]);
 	const TextareaHeight$1 = {
 	  max: 400,
 	  min: 22
 	};
+	const ICON_SIZE$3 = 24;
 
 	// @vue/component
 	const ChatTextarea = {
@@ -6447,7 +6611,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    UploadPreviewPopup,
 	    MentionPopup,
 	    TextareaPanel,
-	    AudioInput
+	    AudioInput,
+	    AutoDeleteSelector,
+	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
 	  props: {
 	    dialogId: {
@@ -6482,9 +6648,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: Boolean,
 	      default: true
 	    },
-	    draftManagerClass: {
-	      type: Function,
-	      default: im_v2_lib_draft.DraftManager
+	    withAutoFocus: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  emits: ['mounted'],
@@ -6495,7 +6661,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      showMention: false,
 	      mentionQuery: '',
 	      showUploadPreviewPopup: false,
-	      previewPopupUploaderId: '',
+	      previewPopupUploaderIds: [],
+	      previewPopupSourceFilesCount: 0,
 	      panelType: im_v2_const.TextareaPanelType.none,
 	      panelContext: {
 	        messageId: 0
@@ -6503,6 +6670,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE$3,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -6552,6 +6721,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isEmptyText() {
 	      return this.text === '';
+	    },
+	    isAutoDeleteEnabled() {
+	      return this.$store.getters['chats/autoDelete/isEnabled'](this.dialog.chatId);
+	    },
+	    marketIconColor() {
+	      if (this.marketMode) {
+	        return im_v2_const.Color.accentBlue;
+	      }
+	      return im_v2_const.Color.gray40;
 	    }
 	  },
 	  watch: {
@@ -6579,8 +6757,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	  },
 	  mounted() {
-	    this.initMentionManager();
-	    this.focus();
+	    void this.initMentionManager();
+	    if (this.withAutoFocus) {
+	      this.focus();
+	    }
 	    this.$emit('mounted');
 	  },
 	  beforeUnmount() {
@@ -6621,11 +6801,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    handlePanelAction(text) {
 	      if (this.editMode && text === '') {
-	        void this.getMessageService().deleteMessages([this.panelContext.messageId]);
+	        this.getMessageService().deleteMessages([this.panelContext.messageId]);
 	      } else if (this.editMode && text !== '') {
 	        this.getMessageService().editMessageText(this.panelContext.messageId, text);
 	      } else if (this.forwardMode) {
-	        this.getSendingService().forwardMessages({
+	        void this.getSendingService().forwardMessages({
 	          text,
 	          dialogId: this.dialogId,
 	          forwardIds: this.panelContext.messagesIds
@@ -6762,6 +6942,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.panelContext = panelContext;
 	    },
 	    async onKeyDown(event) {
+	      im_v2_lib_analytics.Analytics.getInstance().onTypeMessage(this.dialog);
 	      if (this.showMention) {
 	        this.mentionManager.onActiveMentionKeyDown(event);
 	        return;
@@ -6838,13 +7019,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      event,
 	      sendAsFile
 	    }) {
-	      const uploaderId = await this.getUploadingService().uploadFromInput({
+	      const multiUploadingService = this.getMultiUploadingService();
+	      const multiUploadingResult = await multiUploadingService.uploadFromInput({
 	        event,
 	        sendAsFile,
-	        dialogId: this.dialogId
+	        dialogId: this.dialogId,
+	        autoUpload: false
 	      });
 	      this.showUploadPreviewPopup = true;
-	      this.previewPopupUploaderId = uploaderId;
+	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 	    },
 	    onDiskFileSelect({
 	      files
@@ -6927,23 +7111,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!this.withUploadMenu) {
 	        return;
 	      }
-	      const uploaderId = await this.getUploadingService().uploadFromClipboard({
+	      const multiUploadingService = this.getMultiUploadingService();
+	      const multiUploadingResult = await multiUploadingService.uploadFromClipboard({
 	        clipboardEvent,
 	        dialogId: this.dialogId,
-	        imagesOnly: !this.isChannelType
+	        imagesOnly: false,
+	        autoUpload: false
 	      });
-	      if (!uploaderId) {
+	      if (!main_core.Type.isArrayFilled(multiUploadingResult.uploaderIds)) {
 	        return;
 	      }
 	      this.showUploadPreviewPopup = true;
-	      this.previewPopupUploaderId = uploaderId;
+	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 	    },
 	    onOpenUploadPreview(event) {
 	      const {
-	        uploaderId
+	        multiUploadingResult
 	      } = event.getData();
 	      this.showUploadPreviewPopup = true;
-	      this.previewPopupUploaderId = uploaderId;
+	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 	    },
 	    onMarketIconClick() {
 	      this.toggleMarketPanel();
@@ -6983,7 +7171,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (this.sendingService) {
 	        return;
 	      }
-	      this.sendingService = im_v2_provider_service.SendingService.getInstance();
+	      this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
 	    },
 	    async initMentionManager() {
 	      const {
@@ -7006,19 +7194,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getInputActionService() {
 	      if (!this.inputSenderService) {
-	        this.inputSenderService = new im_v2_provider_service.InputSenderService(this.dialogId);
+	        this.inputSenderService = new InputSenderService(this.dialogId);
 	      }
 	      return this.inputSenderService;
 	    },
 	    getDraftManager() {
 	      if (!this.draftManager) {
-	        this.draftManager = this.draftManagerClass.getInstance();
+	        this.draftManager = im_v2_lib_draft.DraftManager.getInstance();
 	      }
 	      return this.draftManager;
 	    },
 	    getMessageService() {
 	      if (!this.messageService) {
-	        this.messageService = new im_v2_provider_service.MessageService({
+	        this.messageService = new im_v2_provider_service_message.MessageService({
 	          chatId: this.dialog.chatId
 	        });
 	      }
@@ -7031,41 +7219,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.uploadingService;
 	    },
 	    initUploadingService() {
-	      this.uploadingService = im_v2_provider_service.UploadingService.getInstance();
+	      this.uploadingService = im_v2_provider_service_uploading.UploadingService.getInstance();
 	      this.startFileUploadAction = () => {
 	        this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.sendingFile);
 	      };
 	      this.stopFileUploadAction = () => {
 	        this.getInputActionService().stopAction(im_v2_lib_inputAction.InputAction.sendingFile);
 	      };
-	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadStart, this.startFileUploadAction);
-	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadComplete, this.stopFileUploadAction);
-	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadCancel, this.stopFileUploadAction);
-	      this.uploadingService.subscribe(im_v2_provider_service.UploadingService.event.uploadError, this.stopFileUploadAction);
+	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadStart, this.startFileUploadAction);
+	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadComplete, this.stopFileUploadAction);
+	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadCancel, this.stopFileUploadAction);
+	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadError, this.stopFileUploadAction);
 	    },
 	    unbindUploadingService() {
 	      if (!this.uploadingService) {
 	        return;
 	      }
-	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadStart, this.startFileUploadAction);
-	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadComplete, this.stopFileUploadAction);
-	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadCancel, this.stopFileUploadAction);
-	      this.uploadingService.unsubscribe(im_v2_provider_service.UploadingService.event.uploadError, this.stopFileUploadAction);
+	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadStart, this.startFileUploadAction);
+	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadComplete, this.stopFileUploadAction);
+	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadCancel, this.stopFileUploadAction);
+	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadError, this.stopFileUploadAction);
+	    },
+	    getMultiUploadingService() {
+	      if (!this.multiUploadingService) {
+	        this.multiUploadingService = new im_v2_provider_service_uploading.MultiUploadingService();
+	      }
+	      return this.multiUploadingService;
 	    },
 	    onSendFilesFromPreviewPopup(event) {
 	      this.text = '';
 	      const {
-	        groupFiles,
 	        text,
-	        uploaderId
+	        uploaderIds
 	      } = event;
-	      if (groupFiles) {
-	        return;
-	      }
 	      const textWithMentions = this.mentionManager.replaceMentions(text);
-	      this.getUploadingService().sendMessageWithFiles({
-	        uploaderId,
-	        text: textWithMentions
+	      uploaderIds.forEach((uploaderId, index) => {
+	        this.getUploadingService().sendMessageWithFiles({
+	          uploaderId,
+	          text: index === 0 ? textWithMentions : ''
+	        });
 	      });
 	      this.focus();
 	    },
@@ -7098,7 +7290,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-send-panel__scope bx-im-send-panel__container">
+		<div class="bx-im-send-panel__scope bx-im-send-panel__container --ui-context-content-light">
 			<div class="bx-im-textarea__container">
 				<div @mousedown="onResizeStart" class="bx-im-textarea__drag-handle"></div>
 				<TextareaPanel
@@ -7109,13 +7301,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/>
 				<div class="bx-im-textarea__content" ref="textarea-content">
 					<div class="bx-im-textarea__left">
-						<div v-if="withUploadMenu" class="bx-im-textarea__upload_container">
-							<UploadMenu 
-								:dialogId="dialogId" 
-								@fileSelect="onFileSelect" 
-								@diskFileSelect="onDiskFileSelect" 
-							/>
-						</div>
+						<UploadMenu
+							v-if="withUploadMenu"
+							:dialogId="dialogId" 
+							@fileSelect="onFileSelect" 
+							@diskFileSelect="onDiskFileSelect" 
+						/>
 						<textarea
 							v-model="text"
 							:style="textareaStyle"
@@ -7135,13 +7326,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					</div>
 					<div class="bx-im-textarea__right">
 						<div class="bx-im-textarea__action-panel">
-							<div
+							<AutoDeleteSelector
+								v-if="isAutoDeleteEnabled"
+								:dialogId="dialogId"
+							/>
+							<BIcon
 								v-if="withMarket"
+								:name="OutlineIcons.APPS"
 								:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
+								:size="ICON_SIZE"
+								:color="marketIconColor"
+								class="bx-im-textarea__icon"
 								@click="onMarketIconClick"
-								class="bx-im-textarea__icon --market"
-								:class="{'--active': marketMode}"
-							></div>
+							/>
 							<SmileSelector 
 								v-if="withSmileSelector" 
 								:dialogId="dialogId" 
@@ -7154,7 +7351,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<UploadPreviewPopup
 				v-if="showUploadPreviewPopup"
 				:dialogId="dialogId"
-				:uploaderId="previewPopupUploaderId"
+				:uploaderIds="previewPopupUploaderIds"
+				:sourceFilesCount="previewPopupSourceFilesCount"
 				:textareaValue="text"
 				@close="showUploadPreviewPopup = false"
 				@sendFiles="onSendFilesFromPreviewPopup"
@@ -7172,5 +7370,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Calendar.Sharing,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Message,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=textarea.bundle.js.map

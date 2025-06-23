@@ -20,7 +20,7 @@ if ($arParams['CAN_EDIT'])
 		'color' => \Bitrix\UI\Buttons\Color::SUCCESS,
 		'link' => $arResult['LIST_EDIT_URL'],
 	]);
-	Bitrix\UI\Toolbar\Facade\Toolbar::addButton($addNewButton);
+	Bitrix\UI\Toolbar\Facade\Toolbar::addButton($addNewButton, Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
 
 	if ($isLiveFeed)
 	{

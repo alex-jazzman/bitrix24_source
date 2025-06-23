@@ -11,7 +11,6 @@ use Bitrix\Intranet;
 use Bitrix\Intranet\Entity\User;
 use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Integration\Socialnetwork;
-use Bitrix\Intranet\Service\InviteMessageFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
@@ -138,11 +137,6 @@ class InviteUserCollectionToGroupCommand implements Command
 
 		if ($group instanceof Collab)
 		{
-			$messageFactory = new InviteMessageFactory(
-				Loc::getMessage('INTRANET_COMMAND_INVITATION_USER_COLLECTION_TO_GROUP_COLLAB_EMAIL_TEXT'),
-				$group
-			);
-
 			foreach ($userCollection as $user)
 			{
 				if (
@@ -151,7 +145,9 @@ class InviteUserCollectionToGroupCommand implements Command
 					&& ServiceContainer::getInstance()->getCollaberService()->isCollaberById($user->getId())
 				)
 				{
-					$messageFactory->create($user)->sendImmediately();
+					(new Intranet\Internal\Factory\Message\CollabInvitationMessageFactory($user, $group))
+						->createEmailEvent()
+						->sendImmediately();
 				}
 			}
 		}

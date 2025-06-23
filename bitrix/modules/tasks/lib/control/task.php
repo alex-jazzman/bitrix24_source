@@ -22,6 +22,13 @@ use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Control\Exception\TaskAddException;
 use Bitrix\Tasks\Control\Exception\TaskNotFoundException;
 use Bitrix\Tasks\Control\Exception\TaskUpdateException;
+use Bitrix\Tasks\V2\Command\Task\AddTaskCommand;
+use Bitrix\Tasks\V2\Command\Task\DeleteTaskCommand;
+use Bitrix\Tasks\V2\Command\Task\UpdateTaskCommand;
+use Bitrix\Tasks\V2\Internals\Container;
+use Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Config\AddConfig;
+use Bitrix\Tasks\V2\Internals\Control\Task\Action\Delete\Config\DeleteConfig;
+use Bitrix\Tasks\V2\Internals\Control\Task\Action\Update\Config\UpdateConfig;
 use Bitrix\Tasks\Control\Handler\TaskFieldHandler;
 use Bitrix\Tasks\Control\Handler\TariffFieldHandler;
 use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
@@ -72,6 +79,8 @@ use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Internals\ErrorCode;
 use CAdminException;
 use CApplicationException;
 use CIBlock;
@@ -263,6 +272,31 @@ class Task
 	{
 		$this->reset();
 
+		if (FormV2Feature::isOn('create'))
+		{
+			$config = new AddConfig(
+				userId: $this->userId,
+				fromAgent: $this->fromAgent,
+				fromWorkFlow: $this->fromWorkFlow,
+				checkFileRights: $this->checkFileRights,
+				cloneAttachments: $this->cloneAttachments,
+				byPassParameters: $this->byPassParams,
+				skipBP: $this->skipBP,
+				skipTimeZoneFields: $this->skipTimeZoneFields,
+				needCorrectDatePlan: $this->needCorrectDatePlan,
+				eventGuid: $this->eventGuid
+			);
+
+			$mapper = Container::getInstance()->getOrmTaskMapper();
+			$entity = $mapper->mapToEntity($fields);
+			$command = new AddTaskCommand($entity, $config);
+
+			/** @var \Bitrix\Tasks\V2\Entity\Task $entity */
+			$entity = $command->run()->getObject();
+
+			return $mapper->mapToObject($entity);
+		}
+
 		try
 		{
 			$fields = $this->prepareFields($fields);
@@ -347,6 +381,55 @@ class Task
 	public function update(int $taskId, array $fields): TaskObject|bool
 	{
 		$this->reset();
+
+		if (FormV2Feature::isOn('update'))
+		{
+			$config = new UpdateConfig(
+				userId: $this->userId,
+				needCorrectDatePlan: $this->needCorrectDatePlan,
+				checkFileRights: $this->checkFileRights,
+				correctDatePlanDependent: $this->correctDatePlanDependent,
+				needAutoclose: $this->needAutoclose,
+				skipNotifications: $this->skipNotifications,
+				skipRecount: $this->skipRecount,
+				byPassParameters: $this->byPassParams,
+				skipComments: $this->skipComments,
+				skipPush: $this->skipPush,
+				skipBP: $this->skipBP,
+				eventGuid: $this->eventGuid
+			);
+
+			$mapper = Container::getInstance()->getOrmTaskMapper();
+			$fields['ID'] = $taskId;
+
+			$entity = $mapper->mapToEntity($fields);
+			$command = new UpdateTaskCommand($entity, $config);
+
+			$result = $command->run();
+
+			foreach ($result->getErrors() as $error)
+			{
+				if (
+					$error->getCode() === ErrorCode::WRONG_TASK_ID
+					|| $error->getCode() === ErrorCode::TASK_NOT_EXISTS
+				)
+				{
+					return false;
+				}
+			}
+
+			if (!$result->isSuccess())
+			{
+				throw new TaskUpdateException($result->getError()?->getMessage());
+			}
+
+			/** @var \Bitrix\Tasks\V2\Entity\Task $entity */
+			$entity = $result->getObject();
+
+			$this->legacyOperationResultData = $command->config->getRuntime()->getLegacyOperationResultData();
+
+			return $mapper->mapToObject($entity);
+		}
 
 		if ($taskId < 1)
 		{
@@ -459,6 +542,34 @@ class Task
 	public function delete(int $taskId): bool
 	{
 		$this->reset();
+
+		if (FormV2Feature::isOn('delete'))
+		{
+			$config = new DeleteConfig(
+				userId: $this->userId,
+				byPassParameters: $this->byPassParams,
+				skipExchangeSync: $this->skipExchangeSync,
+				eventGuid: $this->eventGuid,
+				skipBP: $this->skipBP
+			);
+
+			$command = new DeleteTaskCommand($taskId, $config);
+
+			$result = $command->run();
+			foreach ($result->getErrors() as $error)
+			{
+				if (
+					$error->getCode() === ErrorCode::WRONG_TASK_ID
+					|| $error->getCode() === ErrorCode::TASK_NOT_EXISTS
+					|| $error->getCode() === ErrorCode::TASK_STOP_DELETE
+				)
+				{
+					return false;
+				}
+			}
+
+			return $result->isSuccess();
+		}
 
 		if ($taskId < 1)
 		{

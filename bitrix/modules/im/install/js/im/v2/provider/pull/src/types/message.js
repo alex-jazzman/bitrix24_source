@@ -1,15 +1,17 @@
 import type { reactionType as Reaction } from 'ui.reactions-select';
 
-import { CounterType } from 'im.v2.const';
+import { CounterType, RecentType } from 'im.v2.const';
 
 import type { RawChat, RawFile, RawUser, RawMessage, RawMultidialog, RawLines, MultipleRawMessage } from './common';
 
 type CounterTypeItem = $Values<typeof CounterType>;
+type RecentTypeItem = $Values<typeof RecentType>;
 
 export type MessageAddParams = {
 	chat?: {[chatId: string]: RawChat} | [],
 	chatId: number,
 	counter: number,
+	counterType: CounterTypeItem,
 	dialogId: string,
 	files: {[fileId: string]: RawFile} | [],
 	lines: RawLines | null,
@@ -18,6 +20,11 @@ export type MessageAddParams = {
 	userBlockChat: {[chatId: string]: {[userId: string]: boolean}} | [],
 	userInChat: {[chatId: string]: number[]} | [],
 	users: {[userId: string]: RawUser} | null,
+	messagesAutoDeleteConfigs: { delay: number, chatId: number }[],
+	recentConfig: {
+		chatId: number,
+		sections: RecentTypeItem[],
+	},
 };
 
 export type MessageUpdateParams = {

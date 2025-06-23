@@ -1,6 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
-import { Button as ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements';
+import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 
 // @vue/component

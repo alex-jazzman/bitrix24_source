@@ -16,7 +16,8 @@ return [
 		'im:messenger/lib/utils',
 		'im:messenger/lib/params',
 		'im:messenger/assets/common',
-		'im:messenger/controller/user-add',
+		'im:messenger/controller/selector/member',
+		'im:messenger/provider/service',
 	],
 	'bundle' => [
 		'./src/buttons',

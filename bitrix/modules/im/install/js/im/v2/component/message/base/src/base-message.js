@@ -39,13 +39,13 @@ export const BaseMessage = {
 			type: Boolean,
 			default: true,
 		},
-		menuIsActiveForId: {
-			type: [Number, String],
-			default: 0,
-		},
 		afterMessageWidthLimit: {
 			type: Boolean,
 			default: true,
+		},
+		withError: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	computed:
@@ -120,7 +120,7 @@ export const BaseMessage = {
 		},
 		hasError(): boolean
 		{
-			return this.message.error;
+			return this.withError || this.message.error;
 		},
 	},
 	methods:
@@ -150,7 +150,6 @@ export const BaseMessage = {
 						:showContextMenu="showContextMenu"
 						:dialogId="dialogId"
 						:message="message" 
-						:menuIsActiveForId="menuIsActiveForId" 
 					/>
 				</div>
 				<!-- After content -->

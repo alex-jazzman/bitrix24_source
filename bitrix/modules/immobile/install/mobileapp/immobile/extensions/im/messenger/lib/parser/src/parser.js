@@ -216,6 +216,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				files,
 				showFilePrefix: false,
 			});
+			text = parserQuote.truncateDoubleLineBreak(text);
 
 			return text.trim();
 		},

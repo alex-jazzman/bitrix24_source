@@ -1,6 +1,5 @@
-// @vue/component
-
-import { ActionsPopup, FullForm } from 'booking.component.actions-popup';
+import { Model } from 'booking.const';
+import { ActionsPopup, FullForm, Info } from 'booking.component.actions-popup';
 import type { PopupMakerItem, PopupOptions } from 'booking.component.actions-popup';
 import type { BookingModel } from 'booking.model.bookings';
 
@@ -22,9 +21,15 @@ type ActionsPopupData = {
 	soonTmp: boolean,
 };
 
+// @vue/component
 export const BookingActionsPopup = {
 	name: 'BookingActionsPopup',
-	emits: ['close'],
+	components: {
+		ActionsPopup,
+		Overbooking,
+		Waitlist,
+		BookingRemoveBtn,
+	},
 	props: {
 		bindElement: {
 			type: HTMLElement,
@@ -46,6 +51,7 @@ export const BookingActionsPopup = {
 			default: null,
 		},
 	},
+	emits: ['close'],
 	data(): ActionsPopupData
 	{
 		return {
@@ -56,7 +62,7 @@ export const BookingActionsPopup = {
 		config(): PopupOptions
 		{
 			return {
-				offsetLeft: this.bindElement.offsetWidth,
+				offsetLeft: this.getOffsetLeft(),
 				offsetTop: -200,
 			};
 		},
@@ -107,32 +113,41 @@ export const BookingActionsPopup = {
 					},
 					component: BookingVisit,
 				},
-				{
-					id: ActionsPopupActionEnum.fullForm,
-					props: {
-						bookingId: this.bookingId,
+				[
+					{
+						id: ActionsPopupActionEnum.fullForm,
+						props: {
+							bookingId: this.bookingId,
+						},
+						component: FullForm,
 					},
-					component: FullForm,
-				},
+					{
+						id: ActionsPopupActionEnum.info,
+						class: '--shrink',
+						props: {
+							bookingId: this.bookingId,
+						},
+						component: Info,
+					},
+				],
 			];
 		},
 		booking(): BookingModel
 		{
-			return this.$store.getters['bookings/getById'](this.bookingId);
+			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
 		},
 	},
-	components: {
-		ActionsPopup,
-		BookingClient,
-		BookingDeal,
-		BookingDocument,
-		BookingMessage,
-		BookingConfirmation,
-		BookingVisit,
-		FullForm,
-		Overbooking,
-		Waitlist,
-		BookingRemoveBtn,
+	methods: {
+		getOffsetLeft(): number
+		{
+			const { left } = this.bindElement.getBoundingClientRect();
+			if (window.innerWidth - left < 325)
+			{
+				return -325;
+			}
+
+			return this.bindElement.offsetWidth;
+		},
 	},
 	template: `
 		<ActionsPopup
@@ -150,9 +165,7 @@ export const BookingActionsPopup = {
 					:disabled="Boolean(options?.overbooking?.disabled)"
 					@close="$emit('close')"
 				/>
-				<template v-if="soonTmp">
-					<Waitlist :bookingId/>
-				</template>
+				<Waitlist :bookingId/>
 				<BookingRemoveBtn :bookingId @close="$emit('close')"/>
 			</template>
 		</ActionsPopup>

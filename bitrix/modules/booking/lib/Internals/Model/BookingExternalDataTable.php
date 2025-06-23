@@ -53,11 +53,6 @@ final class BookingExternalDataTable extends DataManager
 				->configurePrimary()
 				->configureAutocomplete(),
 
-			/** @deprecated  */
-			(new IntegerField('BOOKING_ID'))
-				->configureRequired(false)
-				->configureDefaultValue(null),
-
 			(new IntegerField('ENTITY_ID'))
 				->configureRequired()
 				->configureDefaultValue(0),

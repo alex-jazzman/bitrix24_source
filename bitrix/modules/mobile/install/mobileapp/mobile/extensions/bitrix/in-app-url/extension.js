@@ -21,6 +21,7 @@ jn.define('in-app-url', (require, exports, module) => {
 		'bizproc/in-app-url/routes',
 		'disk/in-app-url/routes',
 		'in-app-url/routes',
+		'call/in-app-url/routes',
 	];
 
 	routes.forEach((ext) => {

@@ -1,12 +1,14 @@
 import { getData, postData } from 'humanresources.company-structure.api';
+import { getNodeColorSettings } from 'humanresources.company-structure.utils';
 import type { TreeItem } from './types';
 
 const createTreeDataStore = (treeData: Array<TreeItem>): Map<number, TreeItem> => {
 	const dataMap = new Map();
 	treeData.forEach((item) => {
-		const { id, parentId } = item;
+		const { id, parentId, colorName, entityType } = item;
 		const mapItem = dataMap.get(id) ?? {};
-		dataMap.set(id, { ...mapItem, ...item });
+		const teamColor = getNodeColorSettings(colorName, entityType);
+		dataMap.set(id, { ...mapItem, ...item, teamColor });
 		if (parentId === 0)
 		{
 			return;

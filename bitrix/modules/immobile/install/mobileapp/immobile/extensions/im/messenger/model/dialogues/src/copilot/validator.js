@@ -4,6 +4,7 @@
 
 jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, module) => {
 	const { Type } = require('type');
+	const { withCurrentDomain } = require('utils/url');
 
 	/**
 	 * @param {CopilotModelState} fields
@@ -19,6 +20,23 @@ jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, m
 
 		if (!Type.isUndefined(fields.roles) && !Type.isNull(fields.roles))
 		{
+			Object.entries(fields.roles).forEach(([roleId, roleData]) => {
+				if (!Type.isObject(roleData) || !Type.isObject(roleData.avatar))
+				{
+					return;
+				}
+
+				Object.entries(roleData.avatar).forEach(([avatarSize, avatarUrl]) => {
+					if (!Type.isStringFilled(avatarUrl))
+					{
+						return;
+					}
+
+					// eslint-disable-next-line no-param-reassign
+					fields.roles[roleId].avatar[avatarSize] = withCurrentDomain(avatarUrl);
+				});
+			});
+
 			result.roles = fields.roles;
 		}
 

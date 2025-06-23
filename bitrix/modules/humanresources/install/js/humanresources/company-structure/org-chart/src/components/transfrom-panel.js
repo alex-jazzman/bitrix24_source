@@ -1,7 +1,11 @@
+import { detailPanelWidth } from '../consts';
+
+// @vue/component
 export const TransformPanel = {
 	name: 'transform-panel',
 
-	props: {
+	props:
+	{
 		modelValue: {
 			type: Object,
 			required: true,
@@ -17,16 +21,6 @@ export const TransformPanel = {
 		};
 	},
 
-	created(): void
-	{
-		this.actions = Object.freeze({
-			zoomIn: 'zoomIn',
-			zoomOut: 'zoomOut',
-			locate: 'locate',
-			navigate: 'navigate',
-		});
-	},
-
 	computed:
 	{
 		zoomInPercent(): string
@@ -35,6 +29,16 @@ export const TransformPanel = {
 
 			return `${(this.modelValue.zoom * 100).toFixed(0)}${percent}`;
 		},
+	},
+
+	created(): void
+	{
+		this.actions = Object.freeze({
+			zoomIn: 'zoomIn',
+			zoomOut: 'zoomOut',
+			locate: 'locate',
+			navigate: 'navigate',
+		});
 	},
 
 	methods:
@@ -64,7 +68,18 @@ export const TransformPanel = {
 				return;
 			}
 
-			this.$emit('update:modelValue', { ...this.modelValue, zoom });
+			// calibrate x and y according to viewpoint center
+			const treeRect = this.$parent.$refs.tree.getTreeBounds();
+			const centerX = (treeRect.width / 2) / this.modelValue.zoom - detailPanelWidth / 2;
+			const centerY = (treeRect.height / 2) / this.modelValue.zoom;
+
+			const oldCenterX = (centerX - this.modelValue.x) / this.modelValue.zoom;
+			const oldCenterY = (centerY - this.modelValue.y) / this.modelValue.zoom;
+
+			const x = centerX - oldCenterX * zoom;
+			const y = centerY - oldCenterY * zoom;
+
+			this.$emit('update:modelValue', { ...this.modelValue, zoom, x, y });
 		},
 		onLocate(): void
 		{

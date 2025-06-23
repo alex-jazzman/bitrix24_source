@@ -7,4 +7,5 @@ export type {
 	OverbookingMapItem,
 	OverbookingResourceIntersections,
 	BookingCounter,
+	MessageModel,
 } from './types';

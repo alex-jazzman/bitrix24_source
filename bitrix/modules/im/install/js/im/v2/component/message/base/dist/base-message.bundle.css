@@ -211,6 +211,10 @@
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='4' height='9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.202 9H4V0C3.854 2.61 2.008 5.042.354 6.718-.4 7.482.13 9 1.202 9z' fill='%23fff'/%3E%3C/svg%3E");
 }
 
+.bx-im-message-base__wrap.--opponent:last-child.--has-error .bx-im-message-base__body::before {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='4' height='9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.202 9H4V0C3.854 2.61 2.008 5.042.354 6.718-.4 7.482.13 9 1.202 9z' fill='%23FFE8E8'/%3E%3C/svg%3E");
+}
+
 .bx-im-content-chat__container.--left-align .bx-im-message-base__wrap.--self:last-child .bx-im-message-base__body::before {
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='4' height='9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.202 9H4V0C3.854 2.61 2.008 5.042.354 6.718-.4 7.482.13 9 1.202 9z' fill='%23E9FECB'/%3E%3C/svg%3E");
 }

@@ -1,33 +1,41 @@
-import { DepartmentAPI } from '../../api';
-import { UserList } from './list/list';
-import { UserListActionButton } from './list/list-action-button';
-import { EmptyStateContainer } from './empty-state-container';
-import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import { mapState, mapWritableState } from 'ui.vue3.pinia';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { getMemberRoles, MemberRolesType } from 'humanresources.company-structure.api';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
-import { UserManagementDialog } from 'humanresources.company-structure.user-management-dialog';
-import { emptyStateTypes } from './empty-state-types';
+import { AnalyticsSourceType } from 'humanresources.company-structure.api';
+import { UsersTabActionMenu } from 'humanresources.company-structure.org-chart';
+import { HeadListDataTestIds, EmployeeListDataTestIds } from './consts';
+import { EmptyTabAddButton } from './empty-tab-add-button';
+import { UserListItem } from './item/item';
+import { EmptyState } from '../base-components/empty-state/empty-state';
+import { TabList } from '../base-components/list/list';
+import { SearchInput } from '../base-components/search/search-input';
+import { DepartmentAPI } from '../../api';
 import { DepartmentContentActions } from '../../actions';
+import type { TabListDataTestIds } from '../base-components/list/types';
 
 import 'ui.buttons';
 import './styles/tab.css';
-
-type addToDepartmentOptions = {
-	type: ?string,
-};
 
 type DepartmentUsersStatus = {
 	departmentId: number;
 	loaded: boolean;
 };
 
+// @vue/component
 export const UsersTab = {
 	name: 'usersTab',
 
-	emits: ['editDepartmentUsers', 'showDetailLoader', 'hideDetailLoader'],
+	components: {
+		SearchInput,
+		EmptyState,
+		TabList,
+		EmptyTabAddButton,
+		UserListItem,
+	},
 
-	components: { UserList, UserListActionButton, EmptyStateContainer },
+	emits: ['showDetailLoader', 'hideDetailLoader'],
 
 	data(): Object
 	{
@@ -35,21 +43,14 @@ export const UsersTab = {
 			searchQuery: '',
 			selectedUserId: null,
 			needToScroll: false,
-			hasFocus: false,
 		};
 	},
 
-	created(): void
-	{
-		this.loadEmployeesAction();
-	},
-
-	mounted(): void
-	{
-		this.tabContainer = this.$refs['tab-container'];
-	},
-
 	computed: {
+		memberRoles(): MemberRolesType
+		{
+			return getMemberRoles(this.entityType);
+		},
 		heads(): Array
 		{
 			return this.departments.get(this.focusedNode).heads ?? [];
@@ -57,6 +58,10 @@ export const UsersTab = {
 		headCount(): number
 		{
 			return this.heads.length ?? 0;
+		},
+		departmentId(): number
+		{
+			return this.focusedNode;
 		},
 		formattedHeads(): Array
 		{
@@ -66,8 +71,8 @@ export const UsersTab = {
 				badgeText: this.getBadgeText(head.role),
 			})).sort((a, b) => {
 				const roleOrder = {
-					[memberRoles.head]: 1,
-					[memberRoles.deputyHead]: 2,
+					[this.memberRoles.head]: 1,
+					[this.memberRoles.deputyHead]: 2,
 				};
 
 				const roleA = roleOrder[a.role] || 3;
@@ -80,7 +85,7 @@ export const UsersTab = {
 		{
 			return this.formattedHeads.filter(
 				(head) => head.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-					|| head.workPosition.toLowerCase().includes(this.searchQuery.toLowerCase()),
+					|| head.workPosition?.toLowerCase().includes(this.searchQuery.toLowerCase()),
 			);
 		},
 		employeeCount(): number
@@ -113,37 +118,13 @@ export const UsersTab = {
 		{
 			return this.departments.get(this.focusedNode)?.employees ?? [];
 		},
-		showEmptyState(): boolean
-		{
-			if (!this.memberCount)
-			{
-				return true;
-			}
-
-			return this.filteredHeads.length === 0 && this.filteredEmployees.length === 0;
-		},
-		emptyStateType(): ?string
-		{
-			if (!this.memberCount && this.canAddUsers)
-			{
-				return emptyStateTypes.NO_MEMBERS_WITH_ADD_PERMISSION;
-			}
-
-			if (!this.memberCount)
-			{
-				return emptyStateTypes.NO_MEMBERS_WITHOUT_ADD_PERMISSION;
-			}
-
-			if (this.filteredHeads.length === 0 && this.filteredEmployees.length === 0)
-			{
-				return emptyStateTypes.NO_SEARCHED_USERS_RESULTS;
-			}
-
-			return null;
-		},
 		showSearchBar(): boolean
 		{
 			return this.memberCount > 0;
+		},
+		showSearchEmptyState(): boolean
+		{
+			return this.filteredHeads.length === 0 && this.filteredEmployees.length === 0;
 		},
 		canAddUsers(): boolean
 		{
@@ -154,26 +135,38 @@ export const UsersTab = {
 			}
 
 			const nodeId = this.focusedNode;
+			const permission = this.isTeamEntity
+				? PermissionActions.teamAddMember
+				: PermissionActions.employeeAddToDepartment
+			;
 
-			return permissionChecker.hasPermission(PermissionActions.employeeAddToDepartment, nodeId);
+			return permissionChecker.hasPermission(permission, nodeId);
 		},
 		headListEmptyStateTitle(): string
 		{
 			if (this.canAddUsers)
 			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE');
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_HEAD_EMPTY_LIST_ITEM_TITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE');
 			}
 
-			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
 		},
 		employeesListEmptyStateTitle(): string
 		{
 			if (this.canAddUsers)
 			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE');
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_EMPLOYEE_EMPTY_LIST_ITEM_TITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE');
 			}
 
-			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
 		},
 		shouldUpdateList(): boolean
 		{
@@ -189,80 +182,172 @@ export const UsersTab = {
 
 			return { departmentId: this.focusedNode, loaded: false };
 		},
+		headMenu(): UsersTabActionMenu
+		{
+			return new UsersTabActionMenu(
+				this.focusedNode,
+				AnalyticsSourceType.DETAIL,
+				'head',
+				this.entityType,
+			);
+		},
+		employeeMenu(): UsersTabActionMenu
+		{
+			return new UsersTabActionMenu(
+				this.focusedNode,
+				AnalyticsSourceType.DETAIL,
+				'employee',
+				this.entityType,
+			);
+		},
+		isEmployeeListOptionsSet(): boolean
+		{
+			const department = this.departments.get(this.focusedNode) || {};
+
+			return department.employeeListOptions && Object.keys(department.employeeListOptions).length > 0;
+		},
+		employeeTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_EMPLOYEE_LIST_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_LIST_TITLE');
+		},
+		entityType(): string
+		{
+			return this.departments.get(this.focusedNode)?.entityType;
+		},
+		isTeamEntity(): boolean
+		{
+			return this.entityType === EntityTypes.team;
+		},
+		emptyStateTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_TEAM_ADD_USER_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_TITLE');
+		},
+		emptyStateDescription(): string
+		{
+			if (this.canAddUsers)
+			{
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_TEAM_ADD_USER_SUBTITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_SUBTITLE');
+			}
+
+			// text is in progress
+			return this.isTeamEntity
+				? ''
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_SUBTITLE');
+		},
 	},
 
-	methods: {
-		onDragStart(targetElement)
+	watch: {
+		focusedNode(newId: number): void
 		{
-			if (!targetElement.id)
+			const department = this.departments.get(newId) || {};
+			if (!this.isEmployeeListOptionsSet)
+			{
+				const employeeListOptions = {
+					page: 0,
+					shouldUpdateList: true,
+					isListUpdated: false,
+				};
+				DepartmentContentActions.updateEmployeeListOptions(newId, employeeListOptions);
+				this.departments.set(newId, department);
+			}
+
+			if (
+				department.employeeListOptions.page === 0
+				&& department.employeeListOptions.isListUpdated === false
+				&& department.employeeListOptions.shouldUpdateList === true
+			)
+			{
+				this.loadEmployeesAction();
+			}
+
+			this.isDescriptionExpanded = false;
+			this.searchQuery = '';
+
+			if (this.searchedUserId)
+			{
+				this.needToFocusUserId = this.searchedUserId;
+				this.$nextTick(() => {
+					this.scrollToUser();
+				});
+			}
+		},
+		searchedUserId: {
+			handler(userId: number): void
+			{
+				if (!userId)
+				{
+					return;
+				}
+
+				this.needToFocusUserId = userId;
+				if (this.isListUpdated)
+				{
+					this.needToScroll = true;
+				}
+				else
+				{
+					this.$nextTick(() => {
+						this.scrollToUser();
+					});
+				}
+			},
+			immediate: true,
+		},
+		async searchQuery(newQuery: string): Promise<void>
+		{
+			await this.searchMembers(newQuery);
+		},
+		departmentUsersStatus(usersStatus: DepartmentUsersStatus, prevUsersStatus: DepartmentUsersStatus): void
+		{
+			const { departmentId, loaded } = usersStatus;
+			const { departmentId: prevDepartmentId, loaded: prevLoaded } = prevUsersStatus;
+			if (departmentId === prevDepartmentId && loaded === prevLoaded)
 			{
 				return;
 			}
 
-			this.draggedEmployee = targetElement;
-		},
-		onDropToEmployee(targetIndex)
-		{
-			// @todo send order or new member to backend
-			if (this.draggedEmployee)
+			if (loaded)
 			{
-				if (this.draggedEmployee.role)
-				{
-					const movedEmployee = { ...this.draggedEmployee };
-					delete movedEmployee.role;
-					delete movedEmployee.badgeText;
-
-					const index = this.heads.findIndex((head) => head.id === this.draggedEmployee.id);
-					this.heads.splice(index, 1);
-					this.employees.splice(targetIndex.id, 0, movedEmployee);
-				}
-				else
-				{
-					const index = this.employees.findIndex((employee) => employee && employee.id === this.draggedEmployee.id);
-					const movedEmployee = this.employees.splice(index, 1)[0];
-					this.employees.splice(targetIndex.id, 0, movedEmployee);
-				}
-
-				this.draggedEmployee = null;
-				this.draggedIndex = null;
+				this.$emit('hideDetailLoader');
+			}
+			else
+			{
+				this.$emit('showDetailLoader');
+				this.loadEmployeesAction();
 			}
 		},
-		onDropToHead(targetElement)
-		{
-			if (this.draggedEmployee)
-			{
-				if (this.draggedEmployee.role === 'MEMBER_HEAD')
-				{
-					const index = this.heads.findIndex((head) => head.id === this.draggedEmployee.id);
-					const movedHead = this.heads.splice(index, 1)[0];
-					this.heads.splice(targetElement.id, 0, movedHead);
-				}
-				else
-				{
-					const movedHead = { ...this.draggedEmployee, role: 'MEMBER_HEAD' };
+	},
 
-					const index = this.employees.findIndex((employee) => employee && employee.id === this.draggedEmployee.id);
-					this.employees.splice(index, 1);
+	created(): void
+	{
+		this.loadEmployeesAction();
+		this.clearSearchTimeout = null;
+	},
 
-					this.heads.splice(targetElement.id, 0, movedHead);
-				}
+	mounted(): void
+	{
+		this.tabContainer = this.$refs['tab-container'];
+	},
 
-				this.draggedEmployee = null;
-				this.draggedIndex = null;
-			}
-		},
+	methods: {
 		loc(phraseCode, replacements = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 		getBadgeText(role): ?string
 		{
-			if (role === memberRoles.head)
+			if (role === this.memberRoles.head)
 			{
 				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_HEAD_BADGE');
 			}
 
-			if (role === memberRoles.deputyHead)
+			if (role === this.memberRoles.deputyHead)
 			{
 				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_DEPUTY_HEAD_BADGE');
 			}
@@ -279,39 +364,6 @@ export const UsersTab = {
 				this.loadEmployeesAction();
 			}
 		},
-		addToDepartment(options: addToDepartmentOptions = {}): void
-		{
-			const nodeId = this.focusedNode;
-			const role = options.type === 'head' ? memberRoles.head : memberRoles.employee;
-			UserManagementDialog.openDialog({
-				nodeId,
-				type: 'add',
-				role,
-			});
-		},
-		userInvite(): void
-		{
-			const departmentToInvite = this.departments.get(this.focusedNode).accessCode.slice(1);
-
-			BX.SidePanel.Instance.open(
-				'/bitrix/services/main/ajax.php?action=getSliderContent'
-				+ '&c=bitrix%3Aintranet.invitation&mode=ajax'
-				+ `&departments[]=${departmentToInvite}&firstInvitationBlock=invite-with-group-dp`,
-				{ cacheable: false, allowChangeHistory: false, width: 1100 },
-			);
-		},
-		moveUser(): void
-		{
-			const nodeId = this.focusedNode;
-			UserManagementDialog.openDialog({
-				nodeId,
-				type: 'move',
-			});
-		},
-		editDepartmentUsers(): void
-		{
-			this.$emit('editDepartmentUsers');
-		},
 		async loadEmployeesAction(): void
 		{
 			const nodeId = this.focusedNode;
@@ -327,11 +379,7 @@ export const UsersTab = {
 			employeeListOptions.shouldUpdateList = employeeListOptions.shouldUpdateList ?? true;
 			employeeListOptions.isListUpdated = employeeListOptions.isListUpdated ?? false;
 			DepartmentContentActions.updateEmployeeListOptions(nodeId, employeeListOptions);
-
-			if (
-				employeeListOptions.isListUpdated
-				|| !employeeListOptions.shouldUpdateList
-			)
+			if (employeeListOptions.isListUpdated || !employeeListOptions.shouldUpdateList)
 			{
 				return;
 			}
@@ -361,7 +409,7 @@ export const UsersTab = {
 			}
 
 			loadedEmployees = loadedEmployees.map((user) => {
-				return { ...user, role: memberRoles.employee };
+				return { ...user, role: this.memberRoles.employee };
 			});
 
 			const employees = this.departments.get(nodeId)?.employees ?? [];
@@ -408,7 +456,7 @@ export const UsersTab = {
 					return;
 				}
 
-				if (user.role === memberRoles.head || user.role === memberRoles.deputyHead)
+				if (user.role === this.memberRoles.head || user.role === this.memberRoles.deputyHead)
 				{
 					department.heads = department.heads ?? [];
 					if (!department.heads.some((head) => head.id === user.id))
@@ -425,6 +473,7 @@ export const UsersTab = {
 					}
 				}
 
+				// eslint-disable-next-line vue/valid-next-tick
 				await this.$nextTick(() => {
 					element = this.tabContainer.querySelector(selectors);
 				});
@@ -440,7 +489,12 @@ export const UsersTab = {
 				this.selectedUserId = userId;
 			}, 750);
 
-			setTimeout(() => {
+			if (this.clearSearchTimeout)
+			{
+				clearTimeout(this.clearSearchTimeout);
+			}
+
+			this.clearSearchTimeout = setTimeout(() => {
 				if (this.searchedUserId === userId)
 				{
 					this.selectedUserId = null;
@@ -489,199 +543,103 @@ export const UsersTab = {
 			department.employees.push(...newMembers);
 			nodeResults.success.push(query);
 		},
-		onBlur(): void
+		searchUser(searchQuery: string): void
 		{
-			if (this.searchQuery.length === 0)
-			{
-				this.hasFocus = false;
-			}
+			this.searchQuery = searchQuery;
 		},
-		clearInput(): void
+		onHeadListActionMenuItemClick(actionId: string): void
 		{
-			this.searchQuery = '';
-			this.hasFocus = false;
+			this.headMenu.onActionMenuItemClick(actionId);
 		},
-	},
-
-	watch: {
-		focusedNode(newId): void
+		onEmployeeListActionMenuItemClick(actionId: string): void
 		{
-			const department = this.departments.get(newId) || {};
-			if (!department.employeeListOptions || Object.keys(department.employeeListOptions).length === 0)
-			{
-				const employeeListOptions = {
-					page: 0,
-					shouldUpdateList: true,
-					isListUpdated: false,
-				};
-				DepartmentContentActions.updateEmployeeListOptions(newId, employeeListOptions);
-				this.departments.set(newId, department);
-			}
-
-			if (
-				department.employeeListOptions.page === 0
-				&& department.employeeListOptions.isListUpdated === false
-				&& department.employeeListOptions.shouldUpdateList === true
-			)
-			{
-				this.loadEmployeesAction();
-			}
-
-			this.isDescriptionExpanded = false;
-			this.searchQuery = '';
+			this.employeeMenu.onActionMenuItemClick(actionId);
 		},
-		searchedUserId: {
-			handler(userId): void
-			{
-				if (!userId)
-				{
-					return;
-				}
-
-				this.needToFocusUserId = userId;
-				if (this.isListUpdated)
-				{
-					this.needToScroll = true;
-				}
-				else
-				{
-					this.$nextTick(() => {
-						this.scrollToUser();
-					});
-				}
-			},
-			immediate: true,
-		},
-		async searchQuery(newQuery) {
-			await this.searchMembers(newQuery);
-		},
-		departmentUsersStatus(usersStatus: DepartmentUsersStatus, prevUsersStatus: DepartmentUsersStatus): void
+		getHeadListDataTestIds(): TabListDataTestIds
 		{
-			const { departmentId, loaded } = usersStatus;
-			const { departmentId: prevDepartmentId, loaded: prevLoaded } = prevUsersStatus;
-			if (departmentId === prevDepartmentId && loaded === prevLoaded)
-			{
-				return;
-			}
-
-			if (loaded)
-			{
-				this.$emit('hideDetailLoader');
-			}
-			else
-			{
-				this.$emit('showDetailLoader');
-				this.loadEmployeesAction();
-			}
+			return HeadListDataTestIds;
 		},
-
+		getEmployeeListDataTestIds(): TabListDataTestIds
+		{
+			return EmployeeListDataTestIds;
+		},
 	},
 
 	template: `
-		<div
-			class="hr-department-detail-content__tab-container"
-			ref="tab-container"
-		>
-			<div
-				v-if="showSearchBar"
-				class="hr-department-detail-content__content-search"
-				:class="{'--focused': hasFocus}"
-			>
-				<div class="hr-department-detail-content__content-search-icon"/>
-				<input
-					v-model="searchQuery"
-					class="hr-department-detail-content__content-search-input"
-					:placeholder="!hasFocus ? loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_SEARCH_PLACEHOLDER') : ''"
-					@focus="hasFocus = true"
-					@blur="onBlur"
-				>
-				<div
-					class="hr-department-detail-content__content-search-close-button ui-icon-set --cross-circle-50"
-					:class="{'--hide': !hasFocus}"
-					style="--ui-icon-set__icon-size: 24px; --ui-icon-set__icon-color: #2FC6F6;"
-					@click="clearInput"
+		<div class="hr-department-detail-content__tab-container --users" ref="tab-container">
+			<template v-if="memberCount > 0">
+				<SearchInput
+					v-if="showSearchBar"
+					:placeholder="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_SEARCH_PLACEHOLDER')"
+					:value="searchQuery"
+					@inputChange="searchUser"
+					dataTestId="hr-department-detail-content_users-tab__users-search-input"
 				/>
-			</div>
-			<EmptyStateContainer
-				v-if="emptyStateType"
-				:type="emptyStateType"
-				:departmentId="focusedNode"
-				@addToDepartment="addToDepartment"
-				@userInvite="userInvite"
-				@moveUser="moveUser"
-			/>
-			<div
-				v-else
-				v-on="shouldUpdateList ? { scroll: updateList } : {}"
-				class="hr-department-detail-content__lists-container"
+				<div
+					v-if="!showSearchEmptyState"
+					v-on="shouldUpdateList ? { scroll: updateList } : {}"
+					class="hr-department-detail-content__lists-container"
+				>
+					<TabList
+						id='hr-department-detail-content_chats-tab__chat-list'
+						:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_LIST_TITLE')"
+						:count="headCount"
+						:menuItems="headMenu.items"
+						:listItems="filteredHeads"
+						:emptyItemTitle="headListEmptyStateTitle"
+						emptyItemImageClass="hr-department-detail-content__empty-user-list-item-image"
+						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canAddUsers"
+						@tabListAction="onHeadListActionMenuItemClick"
+						:dataTestIds="getHeadListDataTestIds()"
+					>
+						<template v-slot="{ item }">
+							<UserListItem
+								:user="item"
+								:selectedUserId="selectedUserId"
+								:entityType="entityType"
+							/>
+						</template>
+					</TabList>
+					<TabList
+						id='hr-department-detail-content_chats-tab__channel-list'
+						:title="employeeTitle"
+						:count="employeeCount"
+						:menuItems="employeeMenu.items"
+						:listItems="filteredEmployees"
+						:emptyItemTitle="employeesListEmptyStateTitle"
+						emptyItemImageClass="hr-department-detail-content__empty-user-list-item-image"
+						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canAddUsers"
+						@tabListAction="onEmployeeListActionMenuItemClick"
+						:dataTestIds="getEmployeeListDataTestIds()"
+					>
+						<template v-slot="{ item }">
+							<UserListItem
+								:user="item"
+								:selectedUserId="selectedUserId"
+								:entityType="entityType"
+							/>
+						</template>
+					</TabList>
+				</div>
+				<EmptyState v-else
+					imageClass="hr-department-detail-content__empty-tab-user-not-found-icon"
+					:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_TITLE')"
+					:description ="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_SUBTITLE')"
+				/>
+			</template>
+			<EmptyState v-else
+				:imageClass="canAddUsers 
+					? 'hr-department-detail-content__empty-tab-add-user-icon' 
+					: 'hr-department-detail-content__empty-tab-cant-add-user-icon'"
+				:title="emptyStateTitle"
+				:description ="emptyStateDescription"
 			>
-				<div class="hr-department-detail-content__list --head">
-					<div class="hr-department-detail-content__list-header-container">
-						<div class="hr-department-detail-content__list-title">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_LIST_TITLE') }}
-							<span
-								class="hr-department-detail-content__list-count"
-								data-id="hr-department-detail-content__head_list-count"
-							>
-								{{ headCount }}
-							</span>
-						</div>
-						<UserListActionButton
-							role="head"
-							@addToDepartment="addToDepartment({ type: 'head' })"
-							@editDepartmentUsers="editDepartmentUsers"
-							:departmentId="focusedNode"
-						/>
-					</div>
-					<div v-if="!headCount" :class="['hr-department-detail-content__empty-list-item', { '--with-add': canAddUsers }]">
-						<div class="hr-department-detail-content__empty-user-list-item-image"/>
-						<div class="hr-department-detail-content__empty-list-item-content">
-							<div class="hr-department-detail-content__empty-list-item-title">
-								{{ headListEmptyStateTitle }}
-							</div>
-						</div>
-					</div>
-					<UserList
-						:items="filteredHeads"
-						@dragstart="onDragStart"
-						@drop="onDropToHead"
-						:selectedUserId="selectedUserId"
-					/>
-				</div>
-				<div class="hr-department-detail-content__list --employee">
-					<div class="hr-department-detail-content__list-header-container">
-						<div class="hr-department-detail-content__list-title">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_LIST_TITLE') }}
-							<span
-								class="hr-department-detail-content__list-count"
-								data-id="hr-department-detail-content__employee_list-count"
-							>
-								{{ employeeCount }}
-							</span>
-						</div>
-						<UserListActionButton
-							role="employee"
-							@addToDepartment="addToDepartment({ type: 'employee' })"
-							@editDepartmentUsers="editDepartmentUsers"
-							:departmentId="focusedNode"
-						/>
-					</div>
-					<div v-if="!employeeCount" :class="['hr-department-detail-content__empty-list-item', { '--with-add': canAddUsers }]">
-						<div class="hr-department-detail-content__empty-user-list-item-image"/>
-						<div class="hr-department-detail-content__empty-list-item-content">
-							<div class="hr-department-detail-content__empty-list-item-title">
-								{{ employeesListEmptyStateTitle }}
-							</div>
-						</div>
-					</div>
-					<UserList
-						:items="filteredEmployees"
-						@dragstart="onDragStart"
-						@drop="onDropToEmployee"
-						:selectedUserId="selectedUserId"
-					/>
-				</div>
-			</div>
+				<template v-slot:content>
+					<EmptyTabAddButton v-if="canAddUsers" :departmentId="departmentId" :entityType="entityType"/>
+				</template>
+			</EmptyState>
 		</div>
 	`,
 };

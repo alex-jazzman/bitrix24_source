@@ -4,7 +4,8 @@ import { Resize } from '../directives/resize';
 export const Answer = {
 	name: 'voteAnswer',
 	directives: { resize: Resize },
-	props: {
+	props:
+	{
 		id: {
 			type: String,
 			required: true,
@@ -14,20 +15,38 @@ export const Answer = {
 			required: true,
 		},
 	},
-	emits: ['removeAnswer', 'changeAnswer'],
+	emits: ['removeAnswer', 'changeAnswer', 'onKeyDownEnter'],
 	data(): { answerText: string; }
 	{
-		return { answerText: '' };
+		return {
+			answerText: '',
+		};
 	},
 	methods:
 	{
-		removeAnswer(): void
-		{
-			this.$emit('removeAnswer');
-		},
 		changeAnswer(): void
 		{
 			this.$emit('changeAnswer', this.answerText);
+		},
+		focus(): void
+		{
+			this.$refs.answerField.focus();
+		},
+		handleDeleteClick(): void
+		{
+			if (this.removable)
+			{
+				this.$emit('removeAnswer');
+			}
+			else
+			{
+				this.answerText = '';
+				this.$emit('changeAnswer', this.answerText);
+			}
+		},
+		handleEnterPress(): void
+		{
+			this.$emit('onKeyDownEnter');
 		},
 	},
 	template: `
@@ -36,17 +55,21 @@ export const Answer = {
 			<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize">
 				<textarea
 					maxlength="100"
+					autocomplete="off"
 					class="ui-ctl-element"
+					:data-test-id="'vote_creation_form_' + id"
 					v-resize
 					v-model.trim="answerText"
 					@input="changeAnswer"
+					@keydown.enter.prevent="handleEnterPress"
+					ref="answerField"
 				></textarea>
-			</div>
-			<div
-				v-if="removable"
-				class="vote-creation-form__answer_trash"
-				@click="removeAnswer"
-			>
+				<span
+					:data-test-id="'vote_creation_form_delete_' + id"
+					class="vote-creation-form__answer_delete"
+					@click="handleDeleteClick"
+				>
+				</span>
 			</div>
 		</div>
 	`,

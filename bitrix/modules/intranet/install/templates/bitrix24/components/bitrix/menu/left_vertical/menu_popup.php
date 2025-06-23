@@ -14,7 +14,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 			<span class="left-menu-popup-description-item"><?=GetMessage("MENU_PRESET_DESC")?></span>
 		</div><!--left-menu-popup-description-->
 		<div class="left-menu-popup-card-container">
-			<?if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled()):?>
+			<?if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm()):?>
 			<label class="left-menu-popup-card-item js-left-menu-preset-item<?if ($arResult["CURRENT_PRESET_ID"] == "crm"):?> left-menu-popup-selected<?endif?>" for="presetTypeCrm">
 				<div class="left-menu-popup-card-item-title"><?=GetMessage("MENU_PRESET_CRM_TITLE")?></div>
 				<div class="left-menu-popup-card-item-icon-box left-menu-popup-icon-crm">

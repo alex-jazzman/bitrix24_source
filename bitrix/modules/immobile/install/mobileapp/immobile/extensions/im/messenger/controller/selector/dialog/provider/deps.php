@@ -10,5 +10,9 @@ return [
 		'im:messenger/controller/search/experimental',
 		'im:messenger/lib/element',
 		'im:messenger/lib/helper',
+		'type',
+		'im:messenger/const',
+	],
+	'bundle' => [
 	],
 ];

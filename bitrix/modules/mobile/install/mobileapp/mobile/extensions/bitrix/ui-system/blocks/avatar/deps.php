@@ -19,6 +19,7 @@ return [
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
+		'utils/validation',
 	],
 	'bundle' => [
 		'./src/elements/base',

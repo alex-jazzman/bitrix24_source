@@ -1102,6 +1102,19 @@ BX.CRM.Kanban.Grid.prototype = {
 								}
 							});
 						}
+						if (BX.Type.isArrayFilled(data.config?.fields))
+						{
+							data.config.fields.forEach((item) => {
+								const fieldConfigExist = gridData.itemsConfig?.fields.some((field) => {
+									return field.code === item.code;
+								});
+
+								if (!fieldConfigExist)
+								{
+									gridData.itemsConfig?.fields.push(item);
+								}
+							});
+						}
 					}
 
 					if (data.items)
@@ -2061,14 +2074,17 @@ BX.CRM.Kanban.Grid.prototype = {
 			},
 			(data) => {
 				const gridData = this.getData();
+
 				if (!BX.Type.isUndefined(data.customFields))
 				{
 					gridData.customFields = data.customFields;
 				}
-				if (!BX.Type.isArray(data.customEditFields))
+
+				if (BX.Type.isArray(data.customEditFields))
 				{
 					gridData.customEditFields = data.customEditFields;
 				}
+
 				if (BX.Type.isObject(data.config) && Object.keys(data.config).length > 0)
 				{
 					Object.keys(data.config).forEach(key => {
@@ -2598,7 +2614,7 @@ BX.CRM.Kanban.Grid.prototype = {
 						selectedFields,
 					}
 				})
-				.then(({ status, data, errors }) => {
+				.then(({ status, data }) => {
 					if (status === 'success')
 					{
 						resolve(data);
@@ -2607,7 +2623,7 @@ BX.CRM.Kanban.Grid.prototype = {
 					}
 
 					console.error(`Fields for ${entityType} not fetched`);
-				}, (error) => {
+				}, () => {
 					console.error(`Fields for ${entityType} not fetched`);
 				})
 			;
@@ -3230,10 +3246,15 @@ BX.CRM.Kanban.Grid.prototype = {
 		var gridData = this.getData();
 
 		var renderToNode = document.querySelector(".page-navigation");
+		const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
 
 		if(!renderToNode)
 		{
-			renderToNode = document.getElementById('uiToolbarContainer');
+			renderToNode = (
+				isAirTemplate
+					? document.querySelector('.page__actions') // Temporary fix for air template
+					: document.getElementById('uiToolbarContainer')
+			);
 		}
 
 		if (this.customActionPanel)

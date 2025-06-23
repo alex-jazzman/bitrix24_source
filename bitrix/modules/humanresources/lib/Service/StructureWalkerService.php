@@ -2,25 +2,27 @@
 
 namespace Bitrix\HumanResources\Service;
 
-use Bitrix\HumanResources\Enum\NodeActiveFilter;
-use Bitrix\HumanResources\Exception\CreationFailedException;
-use Bitrix\HumanResources\Exception\DeleteFailedException;
-use Bitrix\HumanResources\Item\Node;
+use Bitrix\HumanResources\Command\Structure\Node\NodeOrderCommand;
 use Bitrix\HumanResources\Contract;
-use Bitrix\HumanResources\Item\NodeMember;
-use Bitrix\HumanResources\Model\NodePathTable;
-use Bitrix\HumanResources\Model\NodeTable;
+use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Contract\Repository\StructureRepository;
-use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
-use Bitrix\HumanResources\Repository\RoleRepository;
+use Bitrix\HumanResources\Contract\Repository\NodeRelationRepository;
 use Bitrix\HumanResources\Enum\Direction;
+use Bitrix\HumanResources\Enum\NodeActiveFilter;
+use Bitrix\HumanResources\Exception\DeleteFailedException;
+use Bitrix\HumanResources\Item\Node;
+use Bitrix\HumanResources\Item\NodeMember;
+use Bitrix\HumanResources\Model\NodeMemberTable;
+use Bitrix\HumanResources\Model\NodePathTable;
+use Bitrix\HumanResources\Repository\RoleRepository;
+use Bitrix\HumanResources\Type\NodeEntityType;
+use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Diag\FileLogger;
 use Bitrix\Main\Diag\Logger;
-use Bitrix\Main;
 use Psr\Log\LogLevel;
 use Throwable;
 
@@ -37,6 +39,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 	private ?Direction $nodeDirection = null;
 	private NodeMemberRepository $nodeMemberRepository;
 	private Contract\Repository\RoleRepository $roleRepository;
+	private NodeRelationRepository $nodeRelationRepository;
 
 	/**
 	 * @param \Bitrix\HumanResources\Repository\NodeRepository|null $nodeRepository
@@ -46,12 +49,14 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 		?NodeMemberRepository $nodeMemberRepository = null,
 		?RoleRepository $roleRepository = null,
 		?StructureRepository $structureRepository = null,
+		?NodeRelationRepository $nodeRelationRepository = null,
 	)
 	{
 		$this->nodeRepository = $nodeRepository ?? Container::getNodeRepository();
 		$this->nodeMemberRepository = $nodeMemberRepository ?? Container::getNodeMemberRepository();
 		$this->roleRepository = $roleRepository ?? Container::getRoleRepository();
 		$this->structureRepository = $structureRepository ?? Container::getStructureRepository();
+		$this->nodeRelationRepository = $nodeRelationRepository ?? Container::getNodeRelationRepository();
 
 		$this->connection = Application::getConnection();
 
@@ -121,7 +126,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 		return match ($this->nodeDirection)
 		{
 			Direction::ROOT => $this->getRootParentId(),
-			Direction::CHILD => $this->targetNode->id,
+			Direction::CHILD => $this->targetNode?->id,
 		};
 	}
 
@@ -129,7 +134,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 	{
 		return $this->targetNode === $this->currentNode
 			? null
-			: $this->targetNode->parentId;
+			: $this->targetNode?->parentId;
 	}
 
 	/**
@@ -155,9 +160,17 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 			$this->connection->startTransaction();
 
 			$this->moveChildNodes($node);
-			$this->moveMembers($node);
+			if ($node->type !== NodeEntityType::TEAM)
+			{
+				$this->moveMembers($node);
+			}
 
 			$this->nodeRepository->deleteById($node->id);
+			$nodeRelationCollection = $this->nodeRelationRepository->findAllByNodeId($node->id);
+			foreach ($nodeRelationCollection as $nodeRelation)
+			{
+				$this->nodeRelationRepository->remove($nodeRelation);
+			}
 			$this->connection->commitTransaction();
 
 			return;
@@ -191,6 +204,9 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 
 		$parent = $this->nodeRepository->getById($node->parentId);
 
+		$lastSibling = $this->nodeRepository->getChildOf($parent)->getLast();
+		$lastSiblingSort = $lastSibling ? $lastSibling->sort : 0;
+
 		foreach ($children as $child)
 		{
 			$childIds[] = $child->id;
@@ -202,7 +218,10 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 			}
 
 			$child->parentId = $parent->id;
+			$child->sort = $lastSiblingSort + NodeOrderCommand::ORDER_STEP;
 			$this->nodeRepository->update($child);
+
+			$lastSiblingSort = $child->sort;
 		}
 
 		return $childIds;
@@ -223,6 +242,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 				nodeId: $node->id,
 				limit: $limit,
 				offset: $offset,
+				onlyActive: false,
 		)) && !$memberCollection->empty())
 		{
 			foreach ($memberCollection as $member)
@@ -241,7 +261,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 
 				try
 				{
-					$this->nodeMemberRepository->create($member);
+					$this->nodeMemberRepository->update($member);
 				}
 				catch (Throwable)
 				{
@@ -250,7 +270,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 			$offset += $limit;
 		}
 
-		$this->nodeMemberRepository->removeAllMembersByNodeId($node->id);
+		NodeMemberTable::cleanCache();
 	}
 
 	/**
@@ -264,7 +284,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 		if (!$structure)
 		{
 			return $result->addError(
-				new Main\Error("Structure with id: ${structureId} not found")
+				new Main\Error("Structure with id: {$structureId} not found")
 			);
 		}
 

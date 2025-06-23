@@ -19,6 +19,7 @@ export type UsersModelState = {
 		isHidden?: boolean,
 		isSupportOpenline?: boolean,
 		type?: string,
+		backgroundId?: string,
 	},
 	connector: boolean,
 	externalAuthId: string,
@@ -60,8 +61,8 @@ export type UsersModelMutation =
 	| 'usersModel/merge'
 
 export type UsersSetStateActions = 'setState';
-export interface UsersSetStateData extends PayloadData
-{
+
+export interface UsersSetStateData extends PayloadData {
 	collection: Record<number, UsersModelState>;
 }
 
@@ -72,14 +73,16 @@ export type UsersSetActions =
 	| 'update'
 	| 'merge'
 	;
-export interface UsersSetData extends PayloadData
-{
+
+export interface UsersSetData extends PayloadData {
 	userList: Array<UsersModelState>;
 }
 
 export type UsersDeleteActions = 'delete';
-export interface UsersDeleteData extends PayloadData
-{
+
+export type UserRole = 'guest' | 'member' | 'manager' | 'owner' | 'none';
+
+export interface UsersDeleteData extends PayloadData {
 	id: number;
 }
 

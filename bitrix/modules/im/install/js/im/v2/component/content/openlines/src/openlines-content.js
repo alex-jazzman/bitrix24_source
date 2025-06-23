@@ -19,6 +19,7 @@ const IFRAME_PARAMS = {
 	IM_MENU: 'N',
 	IM_STATUS: 'N',
 	IM_V2_LAYOUT: 'Y',
+	IM_LEGACY: 'Y',
 };
 
 // @vue/component

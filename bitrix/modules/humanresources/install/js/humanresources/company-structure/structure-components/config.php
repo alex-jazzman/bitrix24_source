@@ -10,9 +10,11 @@ return [
 	'rel' => [
 		'main.popup',
 		'ui.icon-set.api.vue',
-		'main.sidepanel',
-		'main.core',
 		'ui.hint',
+		'ui.entity-selector',
+		'ui.icon-set.actions',
+		'humanresources.company-structure.utils',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

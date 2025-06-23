@@ -17,4 +17,4 @@ $MESS["CT_BLF_TOOLBAR_LIST_EDIT"] = "Тізімнің баптаулары";
 $MESS["CT_BLF_TOOLBAR_LIST_EDIT_PROCESS"] = "Процесті баптау";
 $MESS["CT_BLF_TOOLBAR_LIST_TITLE"] = "Тізім баптауларына оралу";
 $MESS["CT_BLF_TOOLBAR_LIST_TITLE_PROCESS"] = "Процесті баптауға оралу";
-$MESS["CT_BLF_TOOLBAR_RETURN_LIST_ELEMENT"] = "ТІЗІМГЕ";
+$MESS["CT_BLF_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "Тізімге";

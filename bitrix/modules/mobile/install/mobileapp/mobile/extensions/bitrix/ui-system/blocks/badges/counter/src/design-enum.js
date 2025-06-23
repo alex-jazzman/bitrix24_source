@@ -63,6 +63,11 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 			backgroundColor: Color.baseWhiteFixed,
 		});
 
+		static COPILOT = new BadgeCounterDesign('COPILOT', {
+			color: Color.baseWhiteFixed,
+			backgroundColor: Color.accentMainCopilot,
+		});
+
 		getColor()
 		{
 			return this.getValue().color;

@@ -45,6 +45,7 @@ export class DefaultBBCodeScheme extends BBCodeScheme
 				group: ['#block'],
 				allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
 				stringify: BBCodeTagScheme.defaultBlockStringifier,
+				onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 				allowedIn: ['#root', '#shadowRoot'],
 			}),
 			new BBCodeTagScheme({
@@ -52,6 +53,7 @@ export class DefaultBBCodeScheme extends BBCodeScheme
 				group: ['#block'],
 				allowedChildren: ['*'],
 				stringify: BBCodeTagScheme.defaultBlockStringifier,
+				onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 				allowedIn: ['#root', '#shadowRoot'],
 				canBeEmpty: false,
 				onNotAllowedChildren: ({ node, children }): BBCodeElementNode => {
@@ -108,6 +110,7 @@ export class DefaultBBCodeScheme extends BBCodeScheme
 				group: ['#block'],
 				allowedChildren: ['tr'],
 				stringify: BBCodeTagScheme.defaultBlockStringifier,
+				onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 				allowedIn: ['#root', 'td', 'th', 'quote', 'spoiler'],
 				canBeEmpty: false,
 			}),
@@ -133,9 +136,14 @@ export class DefaultBBCodeScheme extends BBCodeScheme
 				name: 'code',
 				group: ['#block'],
 				stringify: BBCodeTagScheme.defaultBlockStringifier,
+				onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 				allowedChildren: ['#text', '#linebreak', '#tab'],
 				allowedIn: ['#root', '#shadowRoot'],
-				convertChild: (child: BBCodeContentNode, scheme: BBCodeScheme, toStringOptions: BBCodeToStringOptions): BBCodeContentNode => {
+				convertChild: (
+					child: BBCodeContentNode,
+					scheme: BBCodeScheme,
+					toStringOptions: BBCodeToStringOptions,
+				): BBCodeContentNode => {
 					if (['#linebreak', '#tab', '#text'].includes(child.getName()))
 					{
 						return child;

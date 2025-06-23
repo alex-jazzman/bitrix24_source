@@ -223,8 +223,8 @@ class AnalyticBoard
 			'PRESETS' => [
 				'BOARD_KEY' => $this->getBoardKey(),
 				'sender_page' => $this->getTitle()
-			]
-
+			],
+			'air' => true,
 		]);
 		$this->addButton($feedbackButton);
 	}

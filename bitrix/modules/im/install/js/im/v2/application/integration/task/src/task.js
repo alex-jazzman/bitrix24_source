@@ -1,21 +1,33 @@
+import { Text } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
 
 import { TaskChatOpener } from './components/task-chat-opener';
+import { TaskChatPlaceholder } from './components/placeholder/placeholder';
 
-type ApplicationConfig = {
+import type { RunActionError } from 'im.v2.lib.rest';
+
+const APP_NAME = 'TaskChatApplication';
+const PLACEHOLDER_APP_NAME = 'TaskChatPlaceholderApplication';
+
+type MountPayload = {
+	rootContainer: string | HTMLElement,
 	chatId: number,
+	onError: (RunActionError[]) => void,
+	type: string,
 };
 
-const APPLICATION_NAME = 'TaskChatApplication';
+type MountPlaceholderPayload = {
+	rootContainer: string | HTMLElement,
+	taskId: number | string,
+};
 
 export class TaskApplication
 {
 	#initPromise: Promise<TaskApplication>;
-	#config: ApplicationConfig;
 
-	constructor(config: ApplicationConfig = {})
+	constructor()
 	{
-		this.#config = config;
 		this.#initPromise = this.#init();
 	}
 
@@ -24,23 +36,47 @@ export class TaskApplication
 		return this.#initPromise;
 	}
 
-	async render(node: string | HTMLElement): Promise
+	async mount(payload: MountPayload): Promise
 	{
 		await this.ready();
 
-		const outerConfig = this.#config;
+		const { rootContainer, chatId, onError, type } = payload;
+		if (!rootContainer)
+		{
+			return Promise.reject(new Error('Provide node or selector for root container'));
+		}
+
+		if (!type)
+		{
+			return Promise.reject(new Error('Provide custom chat type name for task chat'));
+		}
+
+		const preparedChatType = Text.toCamelCase(type);
 
 		return Core.createVue(this, {
-			name: APPLICATION_NAME,
-			el: node,
+			name: APP_NAME,
+			el: rootContainer,
+			onError,
 			components: { TaskChatOpener },
-			data(): { config: ApplicationConfig }
-			{
-				return {
-					config: outerConfig,
-				};
-			},
-			template: `<TaskChatOpener :chatId="${this.#config.chatId}" :config="config" />`,
+			template: `<TaskChatOpener :chatId="${chatId}" chatType="${preparedChatType}" />`,
+		});
+	}
+
+	async mountPlaceholder(payload: MountPlaceholderPayload): Promise
+	{
+		await this.ready();
+
+		const { rootContainer, taskId } = payload;
+		if (!rootContainer)
+		{
+			return Promise.reject(new Error('Provide node or selector for root container'));
+		}
+
+		return Core.createVue(this, {
+			name: PLACEHOLDER_APP_NAME,
+			el: rootContainer,
+			components: { TaskChatPlaceholder },
+			template: `<TaskChatPlaceholder :taskId="${taskId}" />`,
 		});
 	}
 

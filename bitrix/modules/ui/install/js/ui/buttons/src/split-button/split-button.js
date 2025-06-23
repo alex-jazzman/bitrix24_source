@@ -1,11 +1,17 @@
+import type { Switcher } from 'ui.switcher';
+
 import Button from '../button/button';
 import SplitSubButton from './split-sub-button';
 import SplitButtonState from './split-button-state';
 import ButtonState from '../button/button-state';
+import ButtonSize from '../button/button-size';
 import { Type, Tag } from 'main.core';
 import SplitSubButtonType from './split-sub-button-type';
 import type { SplitButtonOptions } from './split-button-options';
 import ButtonTag from '../button/button-tag';
+import type { SetCounterOptions } from '../base-button';
+import { ButtonCounterOptions } from 'ui.buttons';
+import { getSwitcherSizeByButtonSize } from './helpers/get-switcher-size';
 
 /**
  * @namespace {BX.UI}
@@ -42,13 +48,35 @@ export default class SplitButton extends Button
 		menuOptions.buttonType = SplitSubButtonType.MENU;
 		menuOptions.splitButton = this;
 
-		this.mainButton = new SplitSubButton(mainOptions);
+		this.mainButton = new SplitSubButton({
+			...mainOptions,
+			useAirDesign: this.options.useAirDesign,
+			style: this.options.style,
+		});
+
 		this.menuButton = new SplitSubButton(menuOptions);
 		this.menuTarget = SplitSubButtonType.MAIN;
 
 		if (this.options.menuTarget === SplitSubButtonType.MENU)
 		{
 			this.menuTarget = SplitSubButtonType.MENU;
+		}
+
+		if (Type.isPlainObject(this.options.switcher) || this.options.switcher === true)
+		{
+			const addSwitcherOptions = Type.isPlainObject(this.options.switcher) ? this.options.switcher : {};
+			const buttonSize = Type.isStringFilled(this.options.size) ? this.options.size : ButtonSize.MEDIUM;
+
+			this.switcherButton = new SplitSubButton({
+				buttonType: SplitSubButtonType.SWITCHER,
+				splitButton: this,
+				switcherOptions: {
+					...addSwitcherOptions,
+					disabled: this.options.disabled,
+					size: getSwitcherSizeByButtonSize(buttonSize),
+					useAirDesign: this.options.useAirDesign === true,
+				},
+			});
 		}
 
 		super.init();
@@ -64,10 +92,15 @@ export default class SplitButton extends Button
 	{
 		if (this.button === null)
 		{
+			const rightButton = this.getSwitcherButton()
+				? this.getSwitcherButton()?.getContainer()
+				: this.getMenuButton().getContainer()
+			;
+
 			this.button = Tag.render`
 				<div class="${this.getBaseClass()}">${[
 				this.getMainButton().getContainer(),
-				this.getMenuButton().getContainer()
+				rightButton,
 			]}</div>
 			`;
 		}
@@ -91,6 +124,25 @@ export default class SplitButton extends Button
 	getMenuButton(): SplitSubButton
 	{
 		return this.menuButton;
+	}
+
+	getSwitcherButton(): ?SplitSubButton
+	{
+		return this.switcherButton;
+	}
+
+	getSwitcher(): ?Switcher
+	{
+		return this.getSwitcherButton()?.getSwitcher();
+	}
+
+	setAirDesign(use: boolean) {
+		super.setAirDesign(use);
+
+		if (this.getSwitcher())
+		{
+			this.getSwitcher().setAirDesign(use);
+		}
 	}
 
 	/**
@@ -125,6 +177,38 @@ export default class SplitButton extends Button
 	setCounter(counter: number | string): this
 	{
 		return this.getMainButton().setCounter(counter);
+	}
+
+	// use only with air buttons
+	setLeftCounter(options: ButtonCounterOptions | null): this {
+		if (options)
+		{
+			const optionsWithSize = {...options};
+			if (this.getSize())
+			{
+				optionsWithSize.size = this.getSize();
+			}
+
+			this.getMainButton().setLeftCounter(optionsWithSize);
+		}
+
+		return this;
+	}
+
+	// use only with air buttons
+	setRightCounter(options: ButtonCounterOptions | null): this {
+		if (options)
+		{
+			const optionsWithSize = {...options};
+			if (this.getSize())
+			{
+				optionsWithSize.size = this.getSize();
+			}
+
+			this.getMainButton().setRightCounter(optionsWithSize);
+		}
+
+		return this;
 	}
 
 	/**
@@ -174,7 +258,8 @@ export default class SplitButton extends Button
 	{
 		this.setState(flag === false ? null : ButtonState.DISABLED);
 		this.getMainButton().setDisabled(flag);
-		this.getMenuButton().setDisabled(flag);
+		this.getMenuButton()?.setDisabled(flag);
+		this.getSwitcherButton()?.setDisabled(flag);
 
 		return this;
 	}

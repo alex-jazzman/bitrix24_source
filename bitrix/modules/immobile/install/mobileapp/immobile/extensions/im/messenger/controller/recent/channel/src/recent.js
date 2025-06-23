@@ -18,11 +18,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			this.lastMessageId = null;
 		}
 
-		async fillStoreFromCache()
-		{
-			return Promise.resolve();
-		}
-
 		async drawCacheItems()
 		{
 			return Promise.resolve();
@@ -115,7 +110,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			void await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
 			void await this.store.dispatch('filesModel/set', modelData.files);
 			void await this.store.dispatch('messagesModel/store', modelData.messages);
-
 			void await this.store.dispatch('recentModel/set', modelData.recent);
 
 			if (this.recentService.pageNavigation.currentPage === 1)
@@ -182,15 +176,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 		onCreateChat()
 		{
-			MessengerEmitter.emit(
-				EventType.navigation.broadCastEventWithTabChange,
-				{
-					broadCastEvent: EventType.messenger.createChannel,
-					toTab: ComponentCode.imMessenger,
-					data: {},
-				},
-				ComponentCode.imNavigation,
-			);
+			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imChannelMessenger);
 		}
 
 		/**

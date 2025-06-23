@@ -15,7 +15,7 @@ jn.define('im/messenger/controller/sidebar/collab/profile-buttons-controller', (
 	const { CollabEntity } = require('im/messenger/const');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--collab-profile-buttons');

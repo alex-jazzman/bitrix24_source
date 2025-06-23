@@ -1,14 +1,15 @@
-import { Extension } from 'main.core';
+import { Extension, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { EventType, FileType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { isNewLineCombination, isSendMessageCombination } from 'im.v2.lib.hotkey';
 import { Textarea } from 'im.v2.lib.textarea';
-import { UploadingService } from 'im.v2.provider.service';
+import { UploadingService } from 'im.v2.provider.service.uploading';
+import { MediaContent } from 'im.v2.component.message.file';
+import { MediaGallery } from 'im.v2.component.elements.media-gallery';
 
 import { ResizeDirection, ResizeManager } from '../../classes/resize-manager';
-import { MediaContent } from 'im.v2.component.message.file';
 import { SendButton } from '../send-button';
 import { FileItem } from './file-item';
 
@@ -18,32 +19,28 @@ import type { JsonObject } from 'main.core';
 import type { ImModelFile } from 'im.v2.model';
 import type { UploaderFile } from 'ui.uploader.core';
 
-const MAX_FILES_COUNT = 10;
+const MAX_FILES_COUNT = 100;
 const BUTTONS_CONTAINER_HEIGHT = 74;
 const TextareaHeight = {
 	max: 208,
 	min: 46,
 };
 
-type FakeMessage = {
-	id: string,
-	files: Array<string>,
-	text: string,
-	attach: Array<any>,
-	forward: { [keys: string]: any },
-};
-
 // @vue/component
 export const UploadPreviewContent = {
 	name: 'UploadPreviewContent',
-	components: { MediaContent, FileItem, SendButton },
+	components: { MediaContent, FileItem, SendButton, MediaGallery },
 	props: {
 		dialogId: {
 			type: String,
 			required: true,
 		},
-		uploaderId: {
-			type: String,
+		uploaderIds: {
+			type: Array,
+			required: true,
+		},
+		sourceFilesCount: {
+			type: Number,
 			required: true,
 		},
 		textareaValue: {
@@ -59,53 +56,20 @@ export const UploadPreviewContent = {
 			text: '',
 			sendAsFile: false,
 			uploaderFiles: [],
+			chunks: [],
 			textareaHeight: TextareaHeight.min,
 			textareaResizedHeight: 0,
 		};
 	},
 	computed:
 	{
-		files(): Array<ImModelFile>
-		{
-			return this.uploaderFiles.map((file: UploaderFile) => {
-				return this.$store.getters['files/get'](file.getId());
-			});
-		},
-		fileIds(): number | string
-		{
-			return this.files.map((file: ImModelFile) => {
-				return file.id;
-			});
-		},
-		fakeMessage(): FakeMessage
-		{
-			return {
-				id: 'fake',
-				files: this.fileIds,
-				text: '',
-				attach: [],
-				forward: {},
-			};
-		},
-		filesCount(): number
-		{
-			return this.files.length;
-		},
-		isSingleFile(): boolean
-		{
-			return this.files.length === 1;
-		},
-		sourceFilesCount(): number
-		{
-			return this.getUploadingService().getSourceFilesCount(this.uploaderId);
-		},
 		isOverMaxFilesLimit(): boolean
 		{
 			return this.sourceFilesCount > MAX_FILES_COUNT;
 		},
 		isMediaOnly(): boolean
 		{
-			return this.files.every((file: ImModelFile) => {
+			return this.chunks.flat().every((file: ImModelFile) => {
 				return (file.type === FileType.image || file.type === FileType.video);
 			});
 		},
@@ -121,9 +85,11 @@ export const UploadPreviewContent = {
 		},
 		title(): string
 		{
+			const filesCount: number = Math.min(this.uploaderFiles.length, MAX_FILES_COUNT);
+
 			return this.$Bitrix.Loc.getMessage(
 				'IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_COMPUTED_TITLE',
-				{ '#COUNT#': this.filesCount },
+				{ '#COUNT#': filesCount },
 			);
 		},
 	},
@@ -147,8 +113,16 @@ export const UploadPreviewContent = {
 	created()
 	{
 		this.initResizeManager();
-		this.getUploadingService().getFiles(this.uploaderId).forEach((file) => {
-			this.uploaderFiles.push(file);
+
+		this.uploaderIds.forEach((uploaderId) => {
+			const files = [];
+			this.getUploadingService().getFiles(uploaderId).forEach((file) => {
+				this.uploaderFiles.push(file);
+
+				files.push(this.$store.getters['files/get'](file.getId()));
+			});
+
+			this.chunks.push(files);
 		});
 	},
 	mounted()
@@ -217,10 +191,13 @@ export const UploadPreviewContent = {
 				});
 			}
 
+			const filteredUploaderIds: Array<string> = this.uploaderIds.filter((uploaderId: string) => {
+				return this.getUploadingService().getFiles(uploaderId).length > 0;
+			});
+
 			this.$emit('sendFiles', {
-				groupFiles: false,
 				text: this.text,
-				uploaderId: this.uploaderId,
+				uploaderIds: filteredUploaderIds,
 				sendAsFile: this.sendAsFile,
 			});
 
@@ -289,43 +266,74 @@ export const UploadPreviewContent = {
 
 			return textareaTop + newMaxPoint + BUTTONS_CONTAINER_HEIGHT > window.innerHeight;
 		},
-		onRemoveItem(event)
+		getUploaderIdByFileId(fileId: string): ?string
 		{
+			const uploadingService: UploadingService = this.getUploadingService();
+
+			return this.uploaderIds.find((uploaderId: string) => {
+				return uploadingService.getFiles(uploaderId).some((file: UploaderFile) => {
+					return file.getId() === fileId;
+				});
+			});
+		},
+		removeFileFromUploader(fileId: string)
+		{
+			const uploaderId: string = this.getUploaderIdByFileId(fileId);
+
 			this.getUploadingService().removeFileFromUploader({
-				uploaderId: this.uploaderId,
-				filesIds: [event.file.id],
+				uploaderId,
+				filesIds: [fileId],
+			});
+		},
+		onRemoveItem(event: { file: ImModelFile })
+		{
+			this.removeFileFromUploader(event.file.id);
+
+			this.chunks = [];
+			this.uploaderFiles = [];
+
+			this.uploaderIds.forEach((uploaderId: string) => {
+				const files = [];
+				this.getUploadingService().getFiles(uploaderId).forEach((file) => {
+					this.uploaderFiles.push(file);
+
+					files.push(this.$store.getters['files/get'](file.getId()));
+				});
+
+				if (Type.isArrayFilled(files))
+				{
+					this.chunks.push(files);
+				}
 			});
 
-			this.uploaderFiles = this.getUploadingService().getFiles(this.uploaderId);
-
-			if (this.filesCount === 0)
+			if (!Type.isArrayFilled(this.uploaderFiles))
 			{
-				this.$emit('close');
+				this.onCancel();
 			}
 		},
 	},
 	template: `
 		<div class="bx-im-upload-preview__container">
 			<div class="bx-im-upload-preview__items-container">
-				<MediaContent 
-					v-if="isMediaOnly && !sendAsFile" 
-					:item="fakeMessage" 
-					:previewMode="true" 
-					:removable="true"
-					@onRemoveItem="onRemoveItem"
-				/>
-				<FileItem 
-					v-else 
-					v-for="fileItem in files" 
-					:file="fileItem" 
-					:class="{'--single': isSingleFile}" 
-					:removable="true"
-					@onRemoveItem="onRemoveItem"
-				/>
+				<div v-if="isMediaOnly && !sendAsFile" v-for="chunk in chunks" class="bx-im-upload-preview__items-chunk">
+					<MediaGallery
+						:files="chunk"
+						:allowRemoveItem="true"
+						@removeItem="onRemoveItem"
+					/>
+				</div>
+				<div v-else v-for="chunk in chunks" class="bx-im-upload-preview__items-chunk">
+					<FileItem
+						v-for="fileItem in chunk"
+						:file="fileItem"
+						:removable="true"
+						@removeItem="onRemoveItem"
+					/>
+				</div>
 			</div>
 			<div class="bx-im-upload-preview__controls-container">
-				<div v-if="isOverMaxFilesLimit" class="ui-alert ui-alert-xs ui-alert-icon-warning bx-im-upload-preview__controls-files-limit-message">
-					<span class="ui-alert-message">{{ loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_10') }}</span>
+				<div v-if="isOverMaxFilesLimit" class="bx-im-upload-preview__controls-files-limit-message">
+					<span>{{ loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_100') }}</span>
 				</div>
 				<label v-if="isMediaOnly" class="bx-im-upload-preview__control-compress-image">
 					<input type="checkbox" class="bx-im-upload-preview__control-compress-image-checkbox" v-model="sendAsFile">

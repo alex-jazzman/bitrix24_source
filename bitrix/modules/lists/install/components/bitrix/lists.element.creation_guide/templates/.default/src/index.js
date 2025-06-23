@@ -24,6 +24,10 @@ const STEPS = Object.freeze({
 	STATUS: 'status',
 });
 
+const ERRORS = Object.freeze({
+	NETWORK_ERROR: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_NETWORK_ERROR',
+});
+
 type ComponentData = {
 	name: string,
 	description: string,
@@ -33,6 +37,7 @@ type ComponentData = {
 	hasFieldsToShow: boolean,
 	hasStatesToTuning: boolean,
 	canUserTuningStates: boolean,
+	iBlockId: ?number,
 };
 
 type Step = {
@@ -50,6 +55,7 @@ class ElementCreationGuide
 	#duration: ?number = null;
 	#signedParameters: string;
 	#templateIds: [] = [];
+	#iBlockId: ?number = null;
 
 	#currentStep: ?string;
 	#startTime: number;
@@ -71,6 +77,7 @@ class ElementCreationGuide
 			throw new TypeError('signedParameters must be filled string');
 		}
 		this.#signedParameters = props.signedParameters;
+		this.#iBlockId = props.iBlockId;
 
 		this.#name = Type.isString(props.name) ? props.name : '';
 		this.#description = Type.isString(props.description) ? props.description : '';
@@ -910,6 +917,8 @@ class ElementCreationGuide
 						},
 						CLOSE_SLIDER_AFTER_SECONDS * 1000,
 					);
+					BX.SidePanel.Instance.getSliderByWindow(window).close(false);
+					BX.SidePanel.Instance.postMessage(window, 'BX.Lists.Element.CreationGuide:onElementCreated', { iBlockId: this.#iBlockId });
 				}
 				this.#changeStep();
 			})
@@ -918,42 +927,6 @@ class ElementCreationGuide
 				this.#sendCreationAnalytics(error);
 			})
 			.finally(this.#finishLoading.bind(this))
-		;
-	}
-
-	saveConstants(templateId: number, button: HTMLButtonElement)
-	{
-		if (!this.#templateIds.includes(templateId) || !Type.isDomNode(button) || this.#isLoading)
-		{
-			return;
-		}
-
-		this.#setWaitToButton(button);
-
-		const formData = new FormData();
-		this.#appendStateFormData(formData, `form_${BP_STATE_CONSTANTS_FORM_NAME}_${templateId}`);
-		formData.append('templateIds[]', templateId);
-
-		const errorsNode = document.getElementById(`${HTML_ELEMENT_ID}-constants-${templateId}-errors`);
-
-		this.#startLoading();
-		this.#setConstants(formData)
-			.then(() => {
-				if (errorsNode)
-				{
-					this.#cleanErrors(errorsNode);
-				}
-			})
-			.catch(({ errors }) => {
-				if (Type.isArrayFilled(errors) && errorsNode)
-				{
-					this.#showErrors(errors, errorsNode);
-				}
-			})
-			.finally(() => {
-				this.#finishLoading();
-				this.#removeWaitFromButton(button);
-			})
 		;
 	}
 
@@ -1032,9 +1005,10 @@ class ElementCreationGuide
 		{
 			let message = '';
 			errors.forEach((error) => {
-				if (error.message)
+				const errorMessage = this.#getErrorByCode(error.code) ?? error.message;
+				if (errorMessage)
 				{
-					message += Text.encode(error.message);
+					message += Text.encode(errorMessage);
 					message += '<br/>';
 				}
 			});
@@ -1049,6 +1023,11 @@ class ElementCreationGuide
 			);
 			BX.scrollToNode(errorsNode);
 		}
+	}
+
+	#getErrorByCode(code: string): string
+	{
+		return Loc.getMessage(ERRORS[code]);
 	}
 
 	#cleanErrors(fromNode: HTMLElement = null)

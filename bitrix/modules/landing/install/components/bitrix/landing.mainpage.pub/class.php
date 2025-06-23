@@ -4,22 +4,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Landing\Block\Cache;
-use \Bitrix\Landing\Hook;
-use \Bitrix\Landing\Manager;
-use \Bitrix\Landing\Landing;
-use \Bitrix\Landing\Domain;
-use \Bitrix\Landing\Site;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\Event;
+use Bitrix\Crm\UI\Webpack\CallTracker;
+use Bitrix\Crm\MessageSender\NotificationsPromoManager;
+use Bitrix\Landing\Hook;
+use Bitrix\Landing\Manager;
+use Bitrix\Landing\Landing;
+use Bitrix\Landing\Domain;
+use Bitrix\Landing\Site;
 use Bitrix\Landing\Site\Type;
-use \Bitrix\Landing\Syspage;
-use \Bitrix\Landing\Rights;
-use \Bitrix\Landing\Mainpage;
-use \Bitrix\Main\Entity;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\EventManager;
-use \Bitrix\Main\Event;
-use \Bitrix\Crm\UI\Webpack\CallTracker;
-use \Bitrix\Crm\MessageSender\NotificationsPromoManager;
+use Bitrix\Landing\Syspage;
+use Bitrix\Landing\Mainpage;
 
 Loc::loadMessages(__FILE__);
 
@@ -142,7 +141,7 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 	{
 		if (
 			isset($this->arParams['SEF_MODE'])
-			&& $this->arParams['SEF_MODE'] = 'Y'
+			&& $this->arParams['SEF_MODE'] === 'Y'
 			&& isset($this->arParams['SEF_FOLDER'])
 			&& isset($this->arParams['SEF_URL_TEMPLATES'])
 		)
@@ -242,22 +241,6 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 		);
 	}
 
-
-	/**
-	 * Handler on epilog finish.
-	 * @return void
-	 */
-	protected function onEpilog(): void
-	{
-		$eventManager = EventManager::getInstance();
-		$eventManager->addEventHandler('main', 'OnEpilog',
-			function()
-			{
-				Manager::initAssets($this->arResult['LANDING']->getId());
-			}
-		);
-	}
-
 	/**
 	 * Handler on preview mode.
 	 * @return void
@@ -266,7 +249,7 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 	{
 		$eventManager = EventManager::getInstance();
 
-		Manager::setPageView('BodyClass', 'landing-mode-preview');
+		Manager::setPageView('BodyClass', 'landing-mode-preview no-page-header');
 
 		// remove all target="_self" in links
 		$eventManager->addEventHandler('main', 'OnEndBufferContent',
@@ -345,55 +328,13 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 	}
 
 	/**
-	 * Sends request for getting access to current site.
-	 * @return array
-	 */
-	protected function actionAskAccess(): array
-	{
-		$this->clearHttpStatus();
-		$this->setHttpStatusOnce($this::ERROR_STATUS_OK);
-		if (
-			Manager::isB24() &&
-			isset($this->arResult['REAL_LANDING']) &&
-			($userId = $this->request('userId')) &&
-			\Bitrix\Main\Loader::includeModule('im')
-		)
-		{
-			$admins = $this->getAdmins();
-			if (isset($admins[$userId]))
-			{
-				$fromUserId = Manager::getUserId();
-				$name = $this->arResult['REAL_LANDING']->getTitle();
-				$url = $this->arParams['PAGE_URL_ROLES']
-						? $this->arParams['PAGE_URL_ROLES']
-						: $this->arParams['PAGE_URL_SITES'];
-				\CIMNotify::add([
-					'TO_USER_ID' => $userId,
-					'FROM_USER_ID' => $fromUserId,
-					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
-					'NOTIFY_MODULE' => 'landing',
-					'NOTIFY_TAG' => 'LANDING|NOTIFY_ADMIN|' . $userId . '|' . $fromUserId . '|V3',
-					'NOTIFY_MESSAGE' => $this->getMessageType('LANDING_CMP_ASK_ACCESS_KNOWLEDGE', [
-						'#LINK1#' => '<a href="' . $url . '">',
-						'#LINK2#' => '</a>',
-						'#NAME#' => $name,
-					]),
-				]);
-			}
-		}
-		return [
-			'status' => 'success',
-		];
-	}
-
-	/**
 	 * Sends push on landing first view.
 	 * @param int $landingId Landing id.
 	 * @return void
 	 */
 	protected function sendPageViewPush(int $landingId): void
 	{
-		if (\Bitrix\Main\Loader::includeModule('pull'))
+		if (Loader::includeModule('pull'))
 		{
 			\CPullWatch::addToStack(
 				'LANDING_ENTITY_LANDING',
@@ -414,8 +355,6 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 	 */
 	public function executeComponent()
 	{
-		// todo: check special type MAIN
-
 		$init = $this->init();
 
 		if ($init)
@@ -447,7 +386,6 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 			$this->checkParam('CHECK_PERMISSIONS', 'N');
 			$this->checkParam('SHOW_EDIT_PANEL', 'N');
 			$this->checkParam('SKIP_404', 'N');
-			$this->checkParam('DRAFT_MODE', 'N');
 			$this->checkParam('PAGE_URL_LANDING_VIEW', '');
 			$this->checkParam('PAGE_URL_SITES', '');
 			$this->checkParam('PAGE_URL_SITE_SHOW', '');
@@ -455,10 +393,8 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 
 			Type::setScope(Type::SCOPE_CODE_MAINPAGE);
 
-			if ($this->arParams['DRAFT_MODE'] == 'Y')
-			{
-				$this->isPreviewMode = true;
-			}
+			// always draft
+			$this->isPreviewMode = true;
 
 			if ($this->detectPage())
 			{
@@ -490,7 +426,7 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 				}
 				$landing = Landing::createInstance($lid, [
 					'check_permissions' => $this->arParams['CHECK_PERMISSIONS'] == 'Y',
-					'disable_link_preview' => $this->arParams['DRAFT_MODE'] == 'Y',
+					'disable_link_preview' => $this->isPreviewMode,
 				]);
 				self::$landingMain['LANDING_ID'] = $lid;
 				self::$landingMain['LANDING_INSTANCE'] = $landing;
@@ -502,36 +438,19 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 				// if landing found
 				if ($landing->exist())
 				{
-					\Bitrix\Landing\Site\Version::update($landing->getSiteId(), $landing->getMeta()['SITE_VERSION']);
+					Site\Version::update($landing->getSiteId(), $landing->getMeta()['SITE_VERSION']);
 
-					$this->arParams['TYPE'] = $landing::getSiteType();
-					if ($this->arParams['TYPE'] == 'STORE')
-					{
-						header('X-Bitrix24-Page: dynamic');
-					}
-					// if intranet, check rights for showing menu
-					if (!$landing->getDomainId())
-					{
-						$operations = Rights::getOperationsForSite(
-							$landing->getSiteId()
-						);
-						if (in_array(Rights::ACCESS_TYPES['edit'], $operations))
-						{
-							$this->arResult['CAN_EDIT'] = 'Y';
-						}
-					}
 					$this->replaceParamsUrls($landing);
 				}
-				// else errors
+
 				$this->setErrors(
-					$landing->getError()->getErrors()
+					$landing->getError()?->getErrors()
 				);
 
-				if ($landing->getError()->isEmpty())
+				if ($landing->getError()?->isEmpty())
 				{
 					// events
 					$this->onBeforeLocalRedirect();
-					$this->onEpilog();
 					// change view for public mode
 					// todo: set correctly
 					Manager::setPageView(
@@ -540,8 +459,8 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 					);
 					// call tracker
 					if (
-						$this->arParams['DRAFT_MODE'] != 'Y' &&
-						\Bitrix\Main\Loader::includeModule('crm')
+						!$this->isPreviewMode &&
+						Loader::includeModule('crm')
 					)
 					{
 						Manager::setPageView(
@@ -553,7 +472,7 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 					if ($this->request('promo') == 'Y')// only for promo hit
 					{
 						$this->sendPageViewPush($landing->getId());
-						if (\Bitrix\Main\Loader::includeModule('crm'))
+						if (Loader::includeModule('crm'))
 						{
 							NotificationsPromoManager::enablePromoSession($landing->getId());
 						}
@@ -562,13 +481,6 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 					\Bitrix\Landing\Landing\View::inc($lid);
 				}
 			}
-			// else if ($this->getCurrentHttpStatus() === $this::ERROR_STATUS_FORBIDDEN)
-			// {
-			// 	$this->addError(
-			// 		'SITE_NOT_ALLOWED',
-			// 		$this->getMessageType('LANDING_CMP_SITE_NOT_ALLOWED')
-			// 	);
-			// }
 			else
 			{
 				// for 404 we need site url
@@ -588,10 +500,6 @@ class LandingMainpagePubComponent extends LandingBaseComponent
 					'SITE_NOT_FOUND',
 					$this->getMessageType('LANDING_CMP_SITE_NOT_FOUND2')
 				);
-				if ($this->arParams['TYPE'] === 'GROUP')
-				{
-					\localRedirect($this->arParams['PAGE_URL_SITES']);
-				}
 			}
 		}
 

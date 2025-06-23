@@ -23,5 +23,8 @@ return [
 		'./src/vuex/application',
 		'./src/vuex/copilot',
 		'./src/vuex/sidebar/file',
+		'./src/vuex/draft',
+		'./src/vuex/comment',
+		'./src/vuex/vote',
 	],
 ];

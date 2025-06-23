@@ -26,6 +26,7 @@ $action =
 		? 'edit'
 		: 'view'
 ;
+$usePadding = $action === 'edit' ?? false;
 
 if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
@@ -53,29 +54,36 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 	elseif (Loader::includeModule('tasks'))
 	{
 		$APPLICATION->IncludeComponent(
-			"bitrix:tasks.iframe.popup",
-			"wrap",
+			'bitrix:ui.sidepanel.wrapper',
+			'',
 			[
-				"ACTION" => $action,
-				"FORM_PARAMETERS" => [
-					"ID" => $taskId,
-					"GROUP_ID" => "",
-					"USER_ID" => $userId,
-					"PATH_TO_USER_TASKS" => $arResult["PATH_TO_USER_TASKS"],
-					"PATH_TO_USER_TASKS_TASK" => $arResult["PATH_TO_USER_TASKS_TASK"],
-					"PATH_TO_GROUP_TASKS" => $arParams["PATH_TO_GROUP_TASKS"],
-					"PATH_TO_GROUP_TASKS_TASK" => "",
-					"PATH_TO_USER_PROFILE" => $arResult["PATH_TO_USER"],
-					"PATH_TO_GROUP" => $arParams["PATH_TO_GROUP"],
-					"PATH_TO_USER_TASKS_PROJECTS_OVERVIEW" => $arResult["PATH_TO_USER_TASKS_PROJECTS_OVERVIEW"],
-					"PATH_TO_USER_TASKS_TEMPLATES" => $arResult["PATH_TO_USER_TASKS_TEMPLATES"],
-					"PATH_TO_USER_TEMPLATES_TEMPLATE" => $arResult["PATH_TO_USER_TEMPLATES_TEMPLATE"],
-					"SET_NAVCHAIN" => $arResult["SET_NAV_CHAIN"],
-					"SET_TITLE" => $arResult["SET_TITLE"],
-					"SHOW_RATING" => $arParams["SHOW_RATING"],
-					"RATING_TYPE" => $arParams["RATING_TYPE"],
-					"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
+				'POPUP_COMPONENT_NAME' => 'bitrix:tasks.iframe.popup',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => 'wrap',
+				'POPUP_COMPONENT_PARAMS' => [
+					"ACTION" => $action,
+					"FORM_PARAMETERS" => [
+						"ID" => $taskId,
+						"GROUP_ID" => "",
+						"USER_ID" => $userId,
+						"PATH_TO_USER_TASKS" => $arResult["PATH_TO_USER_TASKS"],
+						"PATH_TO_USER_TASKS_TASK" => $arResult["PATH_TO_USER_TASKS_TASK"],
+						"PATH_TO_GROUP_TASKS" => $arParams["PATH_TO_GROUP_TASKS"],
+						"PATH_TO_GROUP_TASKS_TASK" => "",
+						"PATH_TO_USER_PROFILE" => $arResult["PATH_TO_USER"],
+						"PATH_TO_GROUP" => $arParams["PATH_TO_GROUP"],
+						"PATH_TO_USER_TASKS_PROJECTS_OVERVIEW" => $arResult["PATH_TO_USER_TASKS_PROJECTS_OVERVIEW"],
+						"PATH_TO_USER_TASKS_TEMPLATES" => $arResult["PATH_TO_USER_TASKS_TEMPLATES"],
+						"PATH_TO_USER_TEMPLATES_TEMPLATE" => $arResult["PATH_TO_USER_TEMPLATES_TEMPLATE"],
+						"SET_NAVCHAIN" => $arResult["SET_NAV_CHAIN"],
+						"SET_TITLE" => $arResult["SET_TITLE"],
+						"SHOW_RATING" => $arParams["SHOW_RATING"],
+						"RATING_TYPE" => $arParams["RATING_TYPE"],
+						"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
+					],
 				],
+				'USE_UI_TOOLBAR' => 'Y',
+				'USE_PADDING' => $usePadding,
+				'USE_FAST_WAY_CLOSE_LOADER' => $taskId > 0,
 			],
 			$component,
 			["HIDE_ICONS" => "Y"]

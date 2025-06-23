@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Service\Router;
 
-use Bitrix\Crm\Service\Router\Contract;
 use Bitrix\Crm\Service\Router\Component\SidePanelWrapper;
 use Bitrix\Crm\Service\Router\Enum\Scope;
 use Bitrix\Crm\Service\Router\PageValidator\ScopeAvailabilityValidator;
@@ -87,7 +86,6 @@ abstract class AbstractPage implements Contract\Page\StaticPage
 		}
 
 		return !$this->isIframe()
-			&& $this->isPlainView
 			&& $target->isAvailable()
 		;
 	}

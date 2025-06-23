@@ -6,8 +6,11 @@ use Bitrix\Disk\Document\Flipchart\JwtService;
 use Bitrix\Disk\Document\Models\DocumentSession;
 use Bitrix\Disk\Document\Models\GuestUser;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\File;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\User;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\Application;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
@@ -80,13 +83,28 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 		$this->prepareSdkParams();
 		$this->prepareOtherParams();
 		$this->includeComponentTemplate();
+		$this->sendAnalytics();
 	}
 
+	protected function sendAnalytics(): void
+	{
+		/** @var ?File $originalFile */
+		$originalFile = $this->arParams['ORIGINAL_FILE'];
+		$isNewElement = $originalFile && time() - $originalFile->getCreateTime()->getTimestamp() < 30;
+
+		Application::getInstance()->addBackgroundJob(function() use ($isNewElement){
+			$event = new AnalyticsEvent('open', 'boards', 'boards');
+			$event
+				->setSubSection($isNewElement ? 'new_element' : 'old_element')
+				->send()
+			;
+		});
+	}
 	private function getLanguage(): string
 	{
-		return in_array(Context::getCurrent()->getLanguage(), ['ru', 'en'])
-			? Context::getCurrent()->getLanguage()
-			: 'en';
+		return in_array(Context::getCurrent()?->getLanguage(), Configuration::getAllowedLanguages())
+			? Context::getCurrent()?->getLanguage()
+			: Configuration::getDefaultLanguage();
 	}
 
 	private function getHeaderLogoUrl(): string

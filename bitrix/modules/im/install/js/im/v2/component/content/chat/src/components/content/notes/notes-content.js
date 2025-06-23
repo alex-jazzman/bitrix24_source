@@ -1,6 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { BaseChatContent, ChatHeader } from 'im.v2.component.content.elements';
-import { ChatTitle, ChatTitleType } from 'im.v2.component.elements';
+import { ChatTitle, ChatTitleType } from 'im.v2.component.elements.chat-title';
 
 // @vue/component
 export const NotesContent = {
@@ -15,7 +15,7 @@ export const NotesContent = {
 	computed: {
 		titleType(): string
 		{
-			return Number.parseInt(this.dialogId, 10) === Core.getUserId() ? ChatTitleType.notes : ''
+			return Number.parseInt(this.dialogId, 10) === Core.getUserId() ? ChatTitleType.notes : '';
 		},
 	},
 	template: `

@@ -87,10 +87,8 @@ export const MultiBooking = {
 			}
 
 			this.fetching = true;
-			await this.addCreatedFromEmbedBooking(bookings);
 			const bookingList = await bookingService.addList(bookings);
 			BookingAnalytics.sendAddMultiBookings(bookingList.map(({ id }) => id));
-			await this.addCreatedFromEmbedBooking(bookingList);
 			this.fetching = false;
 
 			this.showNotification(bookingList);
@@ -137,10 +135,6 @@ export const MultiBooking = {
 		async closeMultiBooking()
 		{
 			await this.$store.dispatch(`${Model.Interface}/clearSelectedCells`);
-		},
-		addCreatedFromEmbedBooking(bookings: BookingModel[]): Promise<void>
-		{
-			this.$store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, bookings.map(({ id }) => id));
 		},
 	},
 	components: {

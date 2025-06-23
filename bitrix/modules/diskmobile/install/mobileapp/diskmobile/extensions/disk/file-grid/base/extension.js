@@ -812,7 +812,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		 * @param {string} folder.name
 		 */
 		openFolder = (folder) => {
-			const { parentWidget, groupId } = this.props;
+			const { parentWidget, groupId, isCollabToolEnabled } = this.props;
 			if (parentWidget)
 			{
 				parentWidget.openWidget(
@@ -826,6 +826,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 								parentWidget: layoutWidget,
 								breadcrumbs: [...this.breadcrumbs],
 								groupId,
+								isCollabToolEnabled,
 							}));
 						},
 						onError: (error) => console.error(error),
@@ -888,9 +889,16 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		{
 			const preventByCollaber = this.currentUserIsCollaber() && !this.isCollabFolder();
 			const preventByPermissions = this.state.folderRights?.canAdd === false;
+			const preventByCollabAvailability = this.props.isCollabToolEnabled === false;
 
 			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 			if (preventByCollaber || preventByPermissions)
+			{
+				return false;
+			}
+
+			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
+			if (this.isCollabFolder() && preventByCollabAvailability)
 			{
 				return false;
 			}

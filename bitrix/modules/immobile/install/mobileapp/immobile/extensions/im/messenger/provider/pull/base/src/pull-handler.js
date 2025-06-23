@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { SyncService } = require('im/messenger/provider/service/sync');
+	const { SyncService } = require('im/messenger/provider/services/sync/service');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**

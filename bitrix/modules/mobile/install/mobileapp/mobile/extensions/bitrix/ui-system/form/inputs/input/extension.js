@@ -35,6 +35,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	 * @property {string} [value]
 	 * @property {string} [placeholder]
 	 * @property {string} [label]
+	 * @property {number} [maxLength]
 	 * @property {InputSize} [size=InputSize.M]
 	 * @property {InputMode} [mode=InputMode.STROKE]
 	 * @property {InputDesign} [design=InputDesign.PRIMARY]
@@ -46,6 +47,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	 * @property {boolean} [edit=false]
 	 * @property {boolean} [dropdown=false]
 	 * @property {boolean} [erase=false]
+	 * @property {Color} [eraseIconColor=Color.base2]
 	 * @property {boolean} [required=false]
 	 * @property {boolean} [error=false]
 	 * @property {boolean} [enableKeyboardHide]
@@ -61,6 +63,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	 * @property {Object | Icon} [rightContent]
 	 * @property {Function} [onClickRightContent]
 	 * @property {Object | Icon} [rightStickContent]
+	 * @property {Color} [rightStickContentColor=Color.base2]
 	 * @property {Function} [onClickRightStickContent]
 	 * @property {Function} [onFocus]
 	 * @property {Function} [onChange]
@@ -315,12 +318,12 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				return null;
 			}
 
-			const { onClickRightStickContent } = this.props;
+			const { onClickRightStickContent, rightStickContentColor } = this.props;
 
 			return this.renderIconContent({
 				position: 'right_stick',
 				content: rightStickContent,
-				iconColor: Color.base2,
+				iconColor: rightStickContentColor,
 				onClick: onClickRightStickContent,
 			});
 		}
@@ -408,7 +411,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				testId: this.getTestId('erase'),
 				size: Input.getIconSize(),
 				icon: Icon.CROSS,
-				color: Color.base2,
+				color: this.props.eraseIconColor,
 				onClick: this.handleOnErase,
 			});
 		}
@@ -751,6 +754,11 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return Boolean(multiline);
 		}
 
+		getMaxLength()
+		{
+			return this.props.maxLength;
+		}
+
 		/**
 		 * @protected
 		 */
@@ -950,6 +958,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					this.contentFieldRef = ref;
 				},
 				multiline: this.isMultiline(),
+				maxLength: this.getMaxLength(),
 				focus: this.#isFocused(),
 				enable: this.isEnable(),
 				size: this.getTextSize(),
@@ -1121,11 +1130,13 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		dropdown: false,
 		required: false,
 		erase: false,
+		eraseIconColor: Color.base2,
 		multiline: false,
 		focus: false,
 		enableKeyboardHide: false,
 		enableLineBreak: false,
 		showBBCode: true,
+		rightStickContentColor: Color.base2,
 	};
 
 	Input.propTypes = {
@@ -1134,6 +1145,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		placeholder: PropTypes.string,
 		label: PropTypes.string,
+		maxLength: PropTypes.number,
 		size: PropTypes.instanceOf(InputSize),
 		design: PropTypes.instanceOf(InputDesign),
 		mode: PropTypes.instanceOf(InputMode),
@@ -1145,6 +1157,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		edit: PropTypes.bool,
 		dropdown: PropTypes.bool,
 		required: PropTypes.bool,
+		erase: PropTypes.bool,
+		eraseIconColor: PropTypes.instanceOf(Color),
 		error: PropTypes.bool,
 		enableKeyboardHide: PropTypes.bool,
 		enableLineBreak: PropTypes.bool,
@@ -1160,6 +1174,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		rightContent: PropTypes.oneOfType([PropTypes.object, PropTypes.instanceOf(Icon)]),
 		onClickRightContent: PropTypes.func,
 		rightStickContent: PropTypes.oneOfType([PropTypes.object, PropTypes.instanceOf(Icon)]),
+		rightStickContentColor: PropTypes.instanceOf(Color),
 		onClickRightStickContent: PropTypes.func,
 		onChange: PropTypes.func,
 		onSubmit: PropTypes.func,

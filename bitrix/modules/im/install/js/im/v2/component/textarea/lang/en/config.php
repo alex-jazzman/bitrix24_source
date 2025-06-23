@@ -1,5 +1,5 @@
 <?php
-$MESS["IM_TEXTAREA_AUDIO_INPUT_ERROR"] = "Speech recognition failed. Please try again later.";
+$MESS["IM_TEXTAREA_AUTO_DELETE_TITLE"] = "Old messages are auto deleted in this chat";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_SUBTITLE"] = "AI will create image according to your description.";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_TITLE"] = "Create image";
 $MESS["IM_TEXTAREA_CREATE_AI_TEXT_SUBTITLE"] = "AI will create or improve text according to your description.";
@@ -60,11 +60,10 @@ $MESS["IM_TEXTAREA_SELECT_MEETING"] = "Event or meeting";
 $MESS["IM_TEXTAREA_SELECT_TASK"] = "Task";
 $MESS["IM_TEXTAREA_SELECT_VOTE"] = "Poll";
 $MESS["IM_TEXTAREA_SMILE_SELECTOR_SMILES_TAB"] = "Smileys";
-$MESS["IM_TEXTAREA_UNKNOWN_ERROR"] = "Cannot perform action. Please try again later.";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_CANCEL"] = "Cancel";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_SEND"] = "Send";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_COMPUTED_TITLE"] = "Selected: #COUNT#";
-$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_10"] = "You can upload up to 10 files at a time.";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILES_LIMIT_MESSAGE_100"] = "You cannot send more than 100 files at once.";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_FILE_UPLOAD_ERROR"] = "Cannot upload file.";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER_2"] = "Add text";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_SEND_WITHOUT_COMPRESSION"] = "Don't compress images";

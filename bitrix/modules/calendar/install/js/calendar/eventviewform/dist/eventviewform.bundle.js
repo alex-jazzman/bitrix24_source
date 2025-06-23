@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,calendar_controls,calendar_planner,ui_vue3,calendar_util,calendar_entry,main_core,main_core_events,calendar_sectionmanager,viewer,calendar_entityrelation,ui_avatar) {
+(function (exports,calendar_controls,calendar_planner,ui_vue3,calendar_util,calendar_entry,main_core,main_core_events,calendar_sectionmanager,viewer,main_date,calendar_entityrelation,ui_avatar) {
 	'use strict';
 
 	const UserAvatar = {
@@ -1266,5 +1266,5 @@ this.BX = this.BX || {};
 
 	exports.EventViewForm = EventViewForm;
 
-}((this.BX.Calendar = this.BX.Calendar || {}),BX.Calendar.Controls,BX.Calendar,BX.Vue3,BX.Calendar,BX.Calendar,BX,BX.Event,BX.Calendar,BX,BX.Calendar,BX.UI));
+}((this.BX.Calendar = this.BX.Calendar || {}),BX.Calendar.Controls,BX.Calendar,BX.Vue3,BX.Calendar,BX.Calendar,BX,BX.Event,BX.Calendar,BX,BX.Main,BX.Calendar,BX.UI));
 //# sourceMappingURL=eventviewform.bundle.js.map

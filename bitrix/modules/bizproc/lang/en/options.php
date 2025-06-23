@@ -2,6 +2,7 @@
 $MESS["BIZPROC_AUTOMATION_NO_FORCED_TRACKING"] = "Don't log automation rule statuses";
 $MESS["BIZPROC_EMPLOYEE_COMPATIBLE_MODE"] = "Enable compatibility mode for \"Bind to user\" type";
 $MESS["BIZPROC_LIMIT_SIMULTANEOUS_PROCESSES"] = "Maximum simultaneous processes for element";
+$MESS["BIZPROC_LIMIT_WHILE_ITERATIONS"] = "Maximum cycle iterations";
 $MESS["BIZPROC_LOG_CLEANUP_DAYS"] = "Number of days to keep business process log";
 $MESS["BIZPROC_LOG_SKIP_TYPES"] = "Don't log events";
 $MESS["BIZPROC_LOG_SKIP_TYPES_1_1"] = "activity start";

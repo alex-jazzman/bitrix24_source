@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\Site\FirstPage;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\Uri;
 
 class IntranetFirstPage implements FirstPage
@@ -61,7 +62,19 @@ class IntranetFirstPage implements FirstPage
 			|| preg_match('~^(http|//|/company/personal/mail/)~i', $firstPagePath)
 		)
 		{
-			$firstPagePath = SITE_DIR . 'stream/';
+			if (
+				defined('AIR_SITE_TEMPLATE')
+				&& AIR_SITE_TEMPLATE
+				&& \CBXFeatures::IsFeatureEnabled('WebMessenger')
+				&& ModuleManager::isModuleInstalled('im')
+			)
+			{
+				$firstPagePath = SITE_DIR . 'online/';
+			}
+			else
+			{
+				$firstPagePath = SITE_DIR . 'stream/';
+			}
 		}
 
 		return new Uri($firstPagePath);
@@ -84,7 +97,7 @@ class IntranetFirstPage implements FirstPage
 
 	protected function isCrmAvailable(): bool
 	{
-		return \CCrmPerms::IsAccessEnabled();
+		return \Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm();
 	}
 
 	protected function isCrmLeadAvailable(): bool

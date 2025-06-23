@@ -1,14 +1,27 @@
 <?php
 $MESS["IM_CONTENT_CHAT_NO_CHATS_START_MESSAGE"] = "Пригласите коллег и начните общение";
 $MESS["IM_CONTENT_CHAT_START_MESSAGE_V2"] = "Выберите чат и начните общение";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TITLE"] = "Битрикс[color]24[/color] — мультипространство для совместной работы";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CHATS"] = "Чаты";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CALLS"] = "Звонки";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CHANNELS"] = "Каналы";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_DOCS"] = "Документы";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_TASKS"] = "Задачи";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CALENDAR"] = "Календарь";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_FILES"] = "Файлы";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_BOARDS"] = "Доски";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_EASE"] = "Всё легко и понятно людям любых профессий";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_SAFETY"] = "Безопасное общение внутри компании";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_AI"] = "AI встроен в ежедневные рабочие процессы";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_INVITE_MSGVER_2"] = "[action]Пригласите команду[/action], чтобы быстрее начать работу";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_SUBTITLE"] = "Выберите чат и начните общение";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_SEPARATOR_TEXT"] = "или";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_INVITE_ACTION"] = "Пригласите команду";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V3"] = "Здесь будут открытые каналы компании";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Когда вы подпишетесь на канал, он переместится в список ваших чатов";
-$MESS["IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1"] = "Вы не добавлены в этот чат или чат уже удалён";
-$MESS["IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND"] = "Сообщение не найдено";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Подписаться на канал";
 $MESS["IM_CONTENT_COMMENTS_HEADER_TITLE"] = "Комментарии";
 $MESS["IM_CONTENT_COMMENTS_FOLLOW_TOGGLE_TEXT"] = "Следить";
-$MESS["IM_CONTENT_COMMENTS_MESSAGE_MENU_OPEN_IN_CHANNEL"] = "Посмотреть в канале";
 $MESS["IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER"] = "Добавьте публикацию";
 $MESS["IM_CONTENT_COLLAB_HEADER_LINK_TASKS"] = "Задачи";
 $MESS["IM_CONTENT_COLLAB_HEADER_LINK_FILES"] = "Файлы";
@@ -28,3 +41,6 @@ $MESS["IM_CONTENT_COLLAB_START_CREATE_BUTTON"] = "Создать коллабу"
 $MESS["IM_CONTENT_COLLAB_HEADER_GUEST_COUNT_PLURAL_0"] = "(#COUNT# гость)";
 $MESS["IM_CONTENT_COLLAB_HEADER_GUEST_COUNT_PLURAL_1"] = "(#COUNT# гостя)";
 $MESS["IM_CONTENT_COLLAB_HEADER_GUEST_COUNT_PLURAL_2"] = "(#COUNT# гостей)";
+
+$MESS['IM_CONTENT_COLLAB_ONBOARDING_ENTITIES_TITLE'] = "Коллабы — это не только чат";
+$MESS['IM_CONTENT_COLLAB_ONBOARDING_ENTITIES_TEXT'] = "Создавайте задачи, загружайте файлы, планируйте встречи <br> и находите всё нужное для проекта в пару кликов";

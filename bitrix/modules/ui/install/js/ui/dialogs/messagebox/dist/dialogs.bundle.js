@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_core,main_popup) {
+(function (exports,main_core,main_popup,ui_buttons) {
 	'use strict';
 
 	/**
@@ -34,6 +34,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.minHeight = 130;
 	    this.maxWidth = 400;
 	    this.buttons = [];
+	    this.useAirDesign = false;
 	    this.okCallback = null;
 	    this.cancelCallback = null;
 	    this.yesCallback = null;
@@ -50,6 +51,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.setCancelCallback(options.onCancel);
 	    this.setYesCallback(options.onYes);
 	    this.setNoCallback(options.onNo);
+	    this.useAirDesign = options.useAirDesign === true;
 	    if (main_core.Type.isBoolean(options.mediumButtonSize)) {
 	      this.mediumButtonSize = options.mediumButtonSize;
 	    } else if (this.getTitle() !== null) {
@@ -170,9 +172,13 @@ this.BX.UI = this.BX.UI || {};
 	   */
 	  getPopupWindow() {
 	    if (this.popupWindow === null) {
+	      let className = this.isMediumButtonSize() ? 'ui-message-box ui-message-box-medium-buttons' : 'ui-message-box';
+	      if (this.useAirDesign) {
+	        className += ' --air';
+	      }
 	      this.popupWindow = new main_popup.Popup({
 	        bindElement: null,
-	        className: this.isMediumButtonSize() ? 'ui-message-box ui-message-box-medium-buttons' : 'ui-message-box',
+	        className,
 	        content: this.getMessage(),
 	        titleBar: this.getTitle(),
 	        minWidth: this.minWidth,
@@ -308,7 +314,8 @@ this.BX.UI = this.BX.UI || {};
 	        text: main_core.Loc.getMessage('UI_MESSAGE_BOX_OK_CAPTION'),
 	        events: {
 	          click: this.handleButtonClick
-	        }
+	        },
+	        useAirDesign: this.useAirDesign
 	      });
 	    });
 	  }
@@ -325,7 +332,9 @@ this.BX.UI = this.BX.UI || {};
 	        text: main_core.Loc.getMessage('UI_MESSAGE_BOX_CANCEL_CAPTION'),
 	        events: {
 	          click: this.handleButtonClick
-	        }
+	        },
+	        useAirDesign: this.useAirDesign,
+	        style: ui_buttons.AirButtonStyle.PLAIN
 	      });
 	    });
 	  }
@@ -343,7 +352,8 @@ this.BX.UI = this.BX.UI || {};
 	        text: main_core.Loc.getMessage('UI_MESSAGE_BOX_YES_CAPTION'),
 	        events: {
 	          click: this.handleButtonClick
-	        }
+	        },
+	        useAirDesign: this.useAirDesign
 	      });
 	    });
 	  }
@@ -361,7 +371,9 @@ this.BX.UI = this.BX.UI || {};
 	        text: main_core.Loc.getMessage('UI_MESSAGE_BOX_NO_CAPTION'),
 	        events: {
 	          click: this.handleButtonClick
-	        }
+	        },
+	        useAirDesign: this.useAirDesign,
+	        style: ui_buttons.AirButtonStyle.PLAIN
 	      });
 	    });
 	  }
@@ -432,5 +444,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.MessageBox = MessageBox;
 	exports.MessageBoxButtons = MessageBoxButtons;
 
-}((this.BX.UI.Dialogs = this.BX.UI.Dialogs || {}),BX,BX.Main));
+}((this.BX.UI.Dialogs = this.BX.UI.Dialogs || {}),BX,BX.Main,BX.UI));
 //# sourceMappingURL=dialogs.bundle.js.map

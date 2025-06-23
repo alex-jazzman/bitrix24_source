@@ -50,7 +50,7 @@ export const BaseCell = {
 			timezone: `${Model.Interface}/timezone`,
 			offset: `${Model.Interface}/offset`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
-			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
 			embedItems: `${Model.Interface}/embedItems`,
 		}),
 		selected(): boolean
@@ -142,7 +142,6 @@ export const BaseCell = {
 				externalData: this.externalData,
 				clients: this.clients,
 			});
-			void this.addCreatedFromEmbedBooking(this.creatingBookingId);
 
 			Event.bind(window, 'mouseup', this.addBooking);
 		},
@@ -166,13 +165,8 @@ export const BaseCell = {
 					BookingAnalytics.sendAddBooking({
 						isOverbooking: Boolean(overbookingMap?.has?.(result.booking.id)),
 					});
-					await this.addCreatedFromEmbedBooking(result.booking.id);
 				}
 			});
-		},
-		async addCreatedFromEmbedBooking(id: number | string): Promise<void>
-		{
-			await this.$store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, id);
 		},
 	},
 	template: `
@@ -202,7 +196,7 @@ export const BaseCell = {
 					>
 						<span class="booking-booking-grid-cell-time-inner">
 							<input
-								v-if="!draggedBookingId"
+								v-if="!draggedDataTransfer.id"
 								class="booking-booking-grid-cell-checkbox"
 								type="checkbox"
 								:checked="selected"
@@ -214,7 +208,7 @@ export const BaseCell = {
 						</span>
 					</label>
 					<div
-						v-if="!hasSelectedCells && !draggedBookingId"
+						v-if="!hasSelectedCells && !draggedDataTransfer.id"
 						class="booking-booking-grid-cell-select-button-container"
 						ref="button"
 					>

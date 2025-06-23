@@ -169,6 +169,25 @@ class DealDataProvider extends EntityDataProvider implements FactoryOptionable
 					'partial' => true,
 				]
 			),
+			'MOVED_BY_ID' => $this->createField(
+				'MOVED_BY_ID',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			),
+			'MOVED_TIME' => $this->createField(
+				'MOVED_TIME',
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 		);
 
 		if ($this->isActivityResponsibleEnabled())
@@ -604,7 +623,7 @@ class DealDataProvider extends EntityDataProvider implements FactoryOptionable
 				'items' => \CCrmStatus::GetStatusList('DEAL_TYPE')
 			);
 		}
-		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'OBSERVER_IDS', 'ACTIVITY_RESPONSIBLE_IDS'], true))
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'OBSERVER_IDS', 'ACTIVITY_RESPONSIBLE_IDS', 'MOVED_BY_ID'], true))
 		{
 			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 

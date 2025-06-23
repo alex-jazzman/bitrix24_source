@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports,ui_designTokens_air,main_core) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -379,6 +379,25 @@ this.BX = this.BX || {};
 	}(AvatarBase);
 
 	var _templateObject$2;
+	var AvatarRoundCopilot = /*#__PURE__*/function (_AvatarRoundGuest) {
+	  babelHelpers.inherits(AvatarRoundCopilot, _AvatarRoundGuest);
+	  function AvatarRoundCopilot() {
+	    babelHelpers.classCallCheck(this, AvatarRoundCopilot);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AvatarRoundCopilot).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(AvatarRoundCopilot, [{
+	    key: "getContainer",
+	    value: function getContainer() {
+	      if (!this.node.avatar) {
+	        this.node.avatar = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --round --copilot\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<circle class=\"ui-avatar-border-inner\" cx=\"51\" cy=\"51\" r=\"51\"/>\n\t\t\t\t\t\t<circle class=\"ui-avatar-base\" cx=\"51\" cy=\"51\" r=\"42.5\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M51 98.26C77.101 98.26 98.26 77.101 98.26 51C98.26 24.899 77.101 3.74 51 3.74C24.899 3.74 3.74 24.899 3.74 51C3.74 77.101 24.899 98.26 51 98.26ZM51 102C79.1665 102 102 79.1665 102 51C102 22.8335 79.1665 0 51 0C22.8335 0 0 22.8335 0 51C0 79.1665 22.8335 102 51 102Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	      }
+	      return this.node.avatar;
+	    }
+	  }]);
+	  return AvatarRoundCopilot;
+	}(AvatarRoundGuest);
+
+	var _templateObject$3;
 	var AvatarRoundExtranet = /*#__PURE__*/function (_AvatarRoundGuest) {
 	  babelHelpers.inherits(AvatarRoundExtranet, _AvatarRoundGuest);
 	  function AvatarRoundExtranet() {
@@ -389,7 +408,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --round --extranet\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<circle class=\"ui-avatar-border-inner\" cx=\"51\" cy=\"51\" r=\"51\"/>\n\t\t\t\t\t\t<circle class=\"ui-avatar-base\" cx=\"51\" cy=\"51\" r=\"42.5\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M51 98.26C77.101 98.26 98.26 77.101 98.26 51C98.26 24.899 77.101 3.74 51 3.74C24.899 3.74 3.74 24.899 3.74 51C3.74 77.101 24.899 98.26 51 98.26ZM51 102C79.1665 102 102 79.1665 102 51C102 22.8335 79.1665 0 51 0C22.8335 0 0 22.8335 0 51C0 79.1665 22.8335 102 51 102Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	        this.node.avatar = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --round --extranet\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<circle class=\"ui-avatar-border-inner\" cx=\"51\" cy=\"51\" r=\"51\"/>\n\t\t\t\t\t\t<circle class=\"ui-avatar-base\" cx=\"51\" cy=\"51\" r=\"42.5\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M51 98.26C77.101 98.26 98.26 77.101 98.26 51C98.26 24.899 77.101 3.74 51 3.74C24.899 3.74 3.74 24.899 3.74 51C3.74 77.101 24.899 98.26 51 98.26ZM51 102C79.1665 102 102 79.1665 102 51C102 22.8335 79.1665 0 51 0C22.8335 0 0 22.8335 0 51C0 79.1665 22.8335 102 51 102Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 	      return this.node.avatar;
 	    }
@@ -397,7 +416,7 @@ this.BX = this.BX || {};
 	  return AvatarRoundExtranet;
 	}(AvatarRoundGuest);
 
-	var _templateObject$3;
+	var _templateObject$4;
 	var AvatarRoundAccent = /*#__PURE__*/function (_AvatarRoundGuest) {
 	  babelHelpers.inherits(AvatarRoundAccent, _AvatarRoundGuest);
 	  function AvatarRoundAccent() {
@@ -408,7 +427,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --round --accent\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<circle class=\"ui-avatar-border-inner\" cx=\"51\" cy=\"51\" r=\"51\"/>\n\t\t\t\t\t\t<circle class=\"ui-avatar-base\" cx=\"51\" cy=\"51\" r=\"42.5\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" fill=\"url(#ui-avatar-gradient-accent-", ")\" d=\"M51 98.26C77.101 98.26 98.26 77.101 98.26 51C98.26 24.899 77.101 3.74 51 3.74C24.899 3.74 3.74 24.899 3.74 51C3.74 77.101 24.899 98.26 51 98.26ZM51 102C79.1665 102 102 79.1665 102 51C102 22.8335 79.1665 0 51 0C22.8335 0 0 22.8335 0 51C0 79.1665 22.8335 102 51 102Z\"/>\n\t\t\t\t\t\t<linearGradient id=\"ui-avatar-gradient-accent-", "\" x1=\"13.3983\" y1=\"2.16102\" x2=\"53.5932\" y2=\"60.0763\" gradientUnits=\"userSpaceOnUse\">\n\t\t\t\t\t\t\t<stop stop-color=\"var(--ui-avatar-color-gradient-start)\"/>\n\t\t\t\t\t\t\t<stop offset=\"1\" stop-color=\"var(--ui-avatar-color-gradient-stop)\"/>\n\t\t\t\t\t\t</linearGradient>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])), this.getUnicId(), this.getUnicId());
+	        this.node.avatar = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --round --accent\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<circle class=\"ui-avatar-border-inner\" cx=\"51\" cy=\"51\" r=\"51\"/>\n\t\t\t\t\t\t<circle class=\"ui-avatar-base\" cx=\"51\" cy=\"51\" r=\"42.5\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" fill=\"url(#ui-avatar-gradient-accent-", ")\" d=\"M51 98.26C77.101 98.26 98.26 77.101 98.26 51C98.26 24.899 77.101 3.74 51 3.74C24.899 3.74 3.74 24.899 3.74 51C3.74 77.101 24.899 98.26 51 98.26ZM51 102C79.1665 102 102 79.1665 102 51C102 22.8335 79.1665 0 51 0C22.8335 0 0 22.8335 0 51C0 79.1665 22.8335 102 51 102Z\"/>\n\t\t\t\t\t\t<linearGradient id=\"ui-avatar-gradient-accent-", "\" x1=\"13.3983\" y1=\"2.16102\" x2=\"53.5932\" y2=\"60.0763\" gradientUnits=\"userSpaceOnUse\">\n\t\t\t\t\t\t\t<stop stop-color=\"var(--ui-avatar-color-gradient-start)\"/>\n\t\t\t\t\t\t\t<stop offset=\"1\" stop-color=\"var(--ui-avatar-color-gradient-stop)\"/>\n\t\t\t\t\t\t</linearGradient>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])), this.getUnicId(), this.getUnicId());
 	      }
 	      return this.node.avatar;
 	    }
@@ -416,7 +435,7 @@ this.BX = this.BX || {};
 	  return AvatarRoundAccent;
 	}(AvatarRoundGuest);
 
-	var _templateObject$4;
+	var _templateObject$5;
 	var AvatarHexagon = /*#__PURE__*/function (_AvatarBase) {
 	  babelHelpers.inherits(AvatarHexagon, _AvatarBase);
 	  function AvatarHexagon() {
@@ -451,7 +470,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --base\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	        this.node.avatar = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --base\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 	      return this.node.avatar;
 	    }
@@ -459,7 +478,7 @@ this.BX = this.BX || {};
 	  return AvatarHexagon;
 	}(AvatarBase);
 
-	var _templateObject$5;
+	var _templateObject$6;
 	var AvatarHexagonGuest = /*#__PURE__*/function (_AvatarBase) {
 	  babelHelpers.inherits(AvatarHexagonGuest, _AvatarBase);
 	  function AvatarHexagonGuest() {
@@ -511,7 +530,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --guest\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M87.126 21.0224L59.7625 6.05561C54.3025 3.06921 47.6975 3.06921 42.2376 6.0556L14.8741 21.0224C9.01831 24.2253 5.3766 30.3681 5.3766 37.0426V64.9573C5.3766 71.6319 9.0183 77.7746 14.8741 80.9775L42.2376 95.9443C47.6975 98.9307 54.3025 98.9307 59.7625 95.9443L87.126 80.9775C92.9818 77.7746 96.6235 71.6319 96.6235 64.9573V37.0426C96.6235 30.3681 92.9818 24.2253 87.126 21.0224ZM61.5572 2.77436C54.979 -0.823711 47.0211 -0.823713 40.4429 2.77436L13.0794 17.7412C6.0242 21.6001 1.6366 29.001 1.6366 37.0426V64.9573C1.6366 72.9989 6.02419 80.3998 13.0794 84.2588L40.4429 99.2256C47.0211 102.824 54.979 102.824 61.5572 99.2256L88.9207 84.2588C95.9759 80.3998 100.363 72.9989 100.363 64.9573V37.0426C100.363 29.001 95.9759 21.6001 88.9207 17.7412L61.5572 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M44.2368 10.2019C48.4219 7.93252 53.5781 7.93252 57.7632 10.2019L85.2368 25.0997C89.4219 27.3692 92 31.5632 92 36.1021V65.8977C92 70.4365 89.4219 74.6306 85.2368 76.9L57.7632 91.7978C53.5781 94.0672 48.4219 94.0672 44.2368 91.7978L16.7632 76.9C12.5781 74.6306 10 70.4365 10 65.8977V36.1021C10 31.5632 12.5781 27.3692 16.7632 25.0997L44.2368 10.2019Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	        this.node.avatar = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --guest\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M87.126 21.0224L59.7625 6.05561C54.3025 3.06921 47.6975 3.06921 42.2376 6.0556L14.8741 21.0224C9.01831 24.2253 5.3766 30.3681 5.3766 37.0426V64.9573C5.3766 71.6319 9.0183 77.7746 14.8741 80.9775L42.2376 95.9443C47.6975 98.9307 54.3025 98.9307 59.7625 95.9443L87.126 80.9775C92.9818 77.7746 96.6235 71.6319 96.6235 64.9573V37.0426C96.6235 30.3681 92.9818 24.2253 87.126 21.0224ZM61.5572 2.77436C54.979 -0.823711 47.0211 -0.823713 40.4429 2.77436L13.0794 17.7412C6.0242 21.6001 1.6366 29.001 1.6366 37.0426V64.9573C1.6366 72.9989 6.02419 80.3998 13.0794 84.2588L40.4429 99.2256C47.0211 102.824 54.979 102.824 61.5572 99.2256L88.9207 84.2588C95.9759 80.3998 100.363 72.9989 100.363 64.9573V37.0426C100.363 29.001 95.9759 21.6001 88.9207 17.7412L61.5572 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M44.2368 10.2019C48.4219 7.93252 53.5781 7.93252 57.7632 10.2019L85.2368 25.0997C89.4219 27.3692 92 31.5632 92 36.1021V65.8977C92 70.4365 89.4219 74.6306 85.2368 76.9L57.7632 91.7978C53.5781 94.0672 48.4219 94.0672 44.2368 91.7978L16.7632 76.9C12.5781 74.6306 10 70.4365 10 65.8977V36.1021C10 31.5632 12.5781 27.3692 16.7632 25.0997L44.2368 10.2019Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 	      return this.node.avatar;
 	    }
@@ -519,7 +538,7 @@ this.BX = this.BX || {};
 	  return AvatarHexagonGuest;
 	}(AvatarBase);
 
-	var _templateObject$6;
+	var _templateObject$7;
 	var AvatarHexagonExtranet = /*#__PURE__*/function (_AvatarHexagonGuest) {
 	  babelHelpers.inherits(AvatarHexagonExtranet, _AvatarHexagonGuest);
 	  function AvatarHexagonExtranet() {
@@ -530,7 +549,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --extranet\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M87.126 21.0224L59.7625 6.05561C54.3025 3.06921 47.6975 3.06921 42.2376 6.0556L14.8741 21.0224C9.01831 24.2253 5.3766 30.3681 5.3766 37.0426V64.9573C5.3766 71.6319 9.0183 77.7746 14.8741 80.9775L42.2376 95.9443C47.6975 98.9307 54.3025 98.9307 59.7625 95.9443L87.126 80.9775C92.9818 77.7746 96.6235 71.6319 96.6235 64.9573V37.0426C96.6235 30.3681 92.9818 24.2253 87.126 21.0224ZM61.5572 2.77436C54.979 -0.823711 47.0211 -0.823713 40.4429 2.77436L13.0794 17.7412C6.0242 21.6001 1.6366 29.001 1.6366 37.0426V64.9573C1.6366 72.9989 6.02419 80.3998 13.0794 84.2588L40.4429 99.2256C47.0211 102.824 54.979 102.824 61.5572 99.2256L88.9207 84.2588C95.9759 80.3998 100.363 72.9989 100.363 64.9573V37.0426C100.363 29.001 95.9759 21.6001 88.9207 17.7412L61.5572 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M44.2368 10.2019C48.4219 7.93252 53.5781 7.93252 57.7632 10.2019L85.2368 25.0997C89.4219 27.3692 92 31.5632 92 36.1021V65.8977C92 70.4365 89.4219 74.6306 85.2368 76.9L57.7632 91.7978C53.5781 94.0672 48.4219 94.0672 44.2368 91.7978L16.7632 76.9C12.5781 74.6306 10 70.4365 10 65.8977V36.1021C10 31.5632 12.5781 27.3692 16.7632 25.0997L44.2368 10.2019Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	        this.node.avatar = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --extranet\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M87.126 21.0224L59.7625 6.05561C54.3025 3.06921 47.6975 3.06921 42.2376 6.0556L14.8741 21.0224C9.01831 24.2253 5.3766 30.3681 5.3766 37.0426V64.9573C5.3766 71.6319 9.0183 77.7746 14.8741 80.9775L42.2376 95.9443C47.6975 98.9307 54.3025 98.9307 59.7625 95.9443L87.126 80.9775C92.9818 77.7746 96.6235 71.6319 96.6235 64.9573V37.0426C96.6235 30.3681 92.9818 24.2253 87.126 21.0224ZM61.5572 2.77436C54.979 -0.823711 47.0211 -0.823713 40.4429 2.77436L13.0794 17.7412C6.0242 21.6001 1.6366 29.001 1.6366 37.0426V64.9573C1.6366 72.9989 6.02419 80.3998 13.0794 84.2588L40.4429 99.2256C47.0211 102.824 54.979 102.824 61.5572 99.2256L88.9207 84.2588C95.9759 80.3998 100.363 72.9989 100.363 64.9573V37.0426C100.363 29.001 95.9759 21.6001 88.9207 17.7412L61.5572 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M44.2368 10.2019C48.4219 7.93252 53.5781 7.93252 57.7632 10.2019L85.2368 25.0997C89.4219 27.3692 92 31.5632 92 36.1021V65.8977C92 70.4365 89.4219 74.6306 85.2368 76.9L57.7632 91.7978C53.5781 94.0672 48.4219 94.0672 44.2368 91.7978L16.7632 76.9C12.5781 74.6306 10 70.4365 10 65.8977V36.1021C10 31.5632 12.5781 27.3692 16.7632 25.0997L44.2368 10.2019Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 	      return this.node.avatar;
 	    }
@@ -538,7 +557,7 @@ this.BX = this.BX || {};
 	  return AvatarHexagonExtranet;
 	}(AvatarHexagonGuest);
 
-	var _templateObject$7;
+	var _templateObject$8;
 	var AvatarHexagonAccent = /*#__PURE__*/function (_AvatarHexagonGuest) {
 	  babelHelpers.inherits(AvatarHexagonAccent, _AvatarHexagonGuest);
 	  function AvatarHexagonAccent() {
@@ -549,7 +568,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --accent\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" fill=\"url(#ui-avatar-gradient-accent-", ")\"  d=\"M87.126 21.0224L59.7625 6.05561C54.3025 3.06921 47.6975 3.06921 42.2376 6.0556L14.8741 21.0224C9.01831 24.2253 5.3766 30.3681 5.3766 37.0426V64.9573C5.3766 71.6319 9.0183 77.7746 14.8741 80.9775L42.2376 95.9443C47.6975 98.9307 54.3025 98.9307 59.7625 95.9443L87.126 80.9775C92.9818 77.7746 96.6235 71.6319 96.6235 64.9573V37.0426C96.6235 30.3681 92.9818 24.2253 87.126 21.0224ZM61.5572 2.77436C54.979 -0.823711 47.0211 -0.823713 40.4429 2.77436L13.0794 17.7412C6.0242 21.6001 1.6366 29.001 1.6366 37.0426V64.9573C1.6366 72.9989 6.02419 80.3998 13.0794 84.2588L40.4429 99.2256C47.0211 102.824 54.979 102.824 61.5572 99.2256L88.9207 84.2588C95.9759 80.3998 100.363 72.9989 100.363 64.9573V37.0426C100.363 29.001 95.9759 21.6001 88.9207 17.7412L61.5572 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M44.2368 10.2019C48.4219 7.93252 53.5781 7.93252 57.7632 10.2019L85.2368 25.0997C89.4219 27.3692 92 31.5632 92 36.1021V65.8977C92 70.4365 89.4219 74.6306 85.2368 76.9L57.7632 91.7978C53.5781 94.0672 48.4219 94.0672 44.2368 91.7978L16.7632 76.9C12.5781 74.6306 10 70.4365 10 65.8977V36.1021C10 31.5632 12.5781 27.3692 16.7632 25.0997L44.2368 10.2019Z\"/>\n\t\t\t\t\t\t<linearGradient id=\"ui-avatar-gradient-accent-", "\" x1=\"13.3983\" y1=\"2.16102\" x2=\"53.5932\" y2=\"60.0763\" gradientUnits=\"userSpaceOnUse\">\n\t\t\t\t\t\t\t<stop stop-color=\"var(--ui-avatar-color-gradient-start)\"/>\n\t\t\t\t\t\t\t<stop offset=\"1\" stop-color=\"var(--ui-avatar-color-gradient-stop)\"/>\n\t\t\t\t\t\t</linearGradient>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])), this.getUnicId(), this.getUnicId());
+	        this.node.avatar = main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --hexagon --accent\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M40.4429 2.77436C47.0211 -0.823713 54.979 -0.823711 61.5572 2.77436L88.9207 17.7412C95.9759 21.6001 100.363 29.001 100.363 37.0426V64.9573C100.363 72.9989 95.9759 80.3998 88.9207 84.2588L61.5572 99.2256C54.979 102.824 47.0211 102.824 40.4429 99.2256L13.0794 84.2588C6.02419 80.3998 1.6366 72.9989 1.6366 64.9573V37.0426C1.6366 29.001 6.0242 21.6001 13.0794 17.7412L40.4429 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" fill=\"url(#ui-avatar-gradient-accent-", ")\"  d=\"M87.126 21.0224L59.7625 6.05561C54.3025 3.06921 47.6975 3.06921 42.2376 6.0556L14.8741 21.0224C9.01831 24.2253 5.3766 30.3681 5.3766 37.0426V64.9573C5.3766 71.6319 9.0183 77.7746 14.8741 80.9775L42.2376 95.9443C47.6975 98.9307 54.3025 98.9307 59.7625 95.9443L87.126 80.9775C92.9818 77.7746 96.6235 71.6319 96.6235 64.9573V37.0426C96.6235 30.3681 92.9818 24.2253 87.126 21.0224ZM61.5572 2.77436C54.979 -0.823711 47.0211 -0.823713 40.4429 2.77436L13.0794 17.7412C6.0242 21.6001 1.6366 29.001 1.6366 37.0426V64.9573C1.6366 72.9989 6.02419 80.3998 13.0794 84.2588L40.4429 99.2256C47.0211 102.824 54.979 102.824 61.5572 99.2256L88.9207 84.2588C95.9759 80.3998 100.363 72.9989 100.363 64.9573V37.0426C100.363 29.001 95.9759 21.6001 88.9207 17.7412L61.5572 2.77436Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M44.2368 10.2019C48.4219 7.93252 53.5781 7.93252 57.7632 10.2019L85.2368 25.0997C89.4219 27.3692 92 31.5632 92 36.1021V65.8977C92 70.4365 89.4219 74.6306 85.2368 76.9L57.7632 91.7978C53.5781 94.0672 48.4219 94.0672 44.2368 91.7978L16.7632 76.9C12.5781 74.6306 10 70.4365 10 65.8977V36.1021C10 31.5632 12.5781 27.3692 16.7632 25.0997L44.2368 10.2019Z\"/>\n\t\t\t\t\t\t<linearGradient id=\"ui-avatar-gradient-accent-", "\" x1=\"13.3983\" y1=\"2.16102\" x2=\"53.5932\" y2=\"60.0763\" gradientUnits=\"userSpaceOnUse\">\n\t\t\t\t\t\t\t<stop stop-color=\"var(--ui-avatar-color-gradient-start)\"/>\n\t\t\t\t\t\t\t<stop offset=\"1\" stop-color=\"var(--ui-avatar-color-gradient-stop)\"/>\n\t\t\t\t\t\t</linearGradient>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])), this.getUnicId(), this.getUnicId());
 	      }
 	      return this.node.avatar;
 	    }
@@ -557,7 +576,7 @@ this.BX = this.BX || {};
 	  return AvatarHexagonAccent;
 	}(AvatarHexagonGuest);
 
-	var _templateObject$8;
+	var _templateObject$9;
 	var AvatarSquare = /*#__PURE__*/function (_AvatarBase) {
 	  babelHelpers.inherits(AvatarSquare, _AvatarBase);
 	  function AvatarSquare() {
@@ -579,7 +598,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --base\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	        this.node.avatar = main_core.Tag.render(_templateObject$9 || (_templateObject$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --base\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 	      return this.node.avatar;
 	    }
@@ -587,7 +606,7 @@ this.BX = this.BX || {};
 	  return AvatarSquare;
 	}(AvatarBase);
 
-	var _templateObject$9;
+	var _templateObject$a;
 	var AvatarSquareGuest = /*#__PURE__*/function (_AvatarSquare) {
 	  babelHelpers.inherits(AvatarSquareGuest, _AvatarSquare);
 	  function AvatarSquareGuest() {
@@ -639,7 +658,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$9 || (_templateObject$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --guest\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M90 3.74H12C7.43813 3.74 3.74 7.43813 3.74 12V90C3.74 94.5619 7.43813 98.26 12 98.26H90C94.5619 98.26 98.26 94.5619 98.26 90V12C98.26 7.43813 94.5619 3.74 90 3.74ZM12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M8.47241 14.4724C8.47241 11.1587 11.1587 8.47241 14.4724 8.47241H87.4724C90.7861 8.47241 93.4724 11.1587 93.4724 14.4724V87.4724C93.4724 90.7861 90.7861 93.4724 87.4724 93.4724H14.4724C11.1587 93.4724 8.47241 90.7861 8.47241 87.4724V14.4724Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	        this.node.avatar = main_core.Tag.render(_templateObject$a || (_templateObject$a = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --guest\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M90 3.74H12C7.43813 3.74 3.74 7.43813 3.74 12V90C3.74 94.5619 7.43813 98.26 12 98.26H90C94.5619 98.26 98.26 94.5619 98.26 90V12C98.26 7.43813 94.5619 3.74 90 3.74ZM12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M8.47241 14.4724C8.47241 11.1587 11.1587 8.47241 14.4724 8.47241H87.4724C90.7861 8.47241 93.4724 11.1587 93.4724 14.4724V87.4724C93.4724 90.7861 90.7861 93.4724 87.4724 93.4724H14.4724C11.1587 93.4724 8.47241 90.7861 8.47241 87.4724V14.4724Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 	      return this.node.avatar;
 	    }
@@ -647,7 +666,7 @@ this.BX = this.BX || {};
 	  return AvatarSquareGuest;
 	}(AvatarSquare);
 
-	var _templateObject$a;
+	var _templateObject$b;
 	var AvatarSquareExtranet = /*#__PURE__*/function (_AvatarSquareGuest) {
 	  babelHelpers.inherits(AvatarSquareExtranet, _AvatarSquareGuest);
 	  function AvatarSquareExtranet() {
@@ -658,7 +677,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$a || (_templateObject$a = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --extranet\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M90 3.74H12C7.43813 3.74 3.74 7.43813 3.74 12V90C3.74 94.5619 7.43813 98.26 12 98.26H90C94.5619 98.26 98.26 94.5619 98.26 90V12C98.26 7.43813 94.5619 3.74 90 3.74ZM12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M8.47241 14.4724C8.47241 11.1587 11.1587 8.47241 14.4724 8.47241H87.4724C90.7861 8.47241 93.4724 11.1587 93.4724 14.4724V87.4724C93.4724 90.7861 90.7861 93.4724 87.4724 93.4724H14.4724C11.1587 93.4724 8.47241 90.7861 8.47241 87.4724V14.4724Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
+	        this.node.avatar = main_core.Tag.render(_templateObject$b || (_templateObject$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --extranet\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" d=\"M90 3.74H12C7.43813 3.74 3.74 7.43813 3.74 12V90C3.74 94.5619 7.43813 98.26 12 98.26H90C94.5619 98.26 98.26 94.5619 98.26 90V12C98.26 7.43813 94.5619 3.74 90 3.74ZM12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M8.47241 14.4724C8.47241 11.1587 11.1587 8.47241 14.4724 8.47241H87.4724C90.7861 8.47241 93.4724 11.1587 93.4724 14.4724V87.4724C93.4724 90.7861 90.7861 93.4724 87.4724 93.4724H14.4724C11.1587 93.4724 8.47241 90.7861 8.47241 87.4724V14.4724Z\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 	      return this.node.avatar;
 	    }
@@ -666,7 +685,7 @@ this.BX = this.BX || {};
 	  return AvatarSquareExtranet;
 	}(AvatarSquareGuest);
 
-	var _templateObject$b;
+	var _templateObject$c;
 	var AvatarSquareAccent = /*#__PURE__*/function (_AvatarSquareGuest) {
 	  babelHelpers.inherits(AvatarSquareAccent, _AvatarSquareGuest);
 	  function AvatarSquareAccent() {
@@ -677,7 +696,7 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      if (!this.node.avatar) {
-	        this.node.avatar = main_core.Tag.render(_templateObject$b || (_templateObject$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --accent\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" fill=\"url(#ui-avatar-gradient-accent-", ")\"  d=\"M90 3.74H12C7.43813 3.74 3.74 7.43813 3.74 12V90C3.74 94.5619 7.43813 98.26 12 98.26H90C94.5619 98.26 98.26 94.5619 98.26 90V12C98.26 7.43813 94.5619 3.74 90 3.74ZM12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M8.47241 14.4724C8.47241 11.1587 11.1587 8.47241 14.4724 8.47241H87.4724C90.7861 8.47241 93.4724 11.1587 93.4724 14.4724V87.4724C93.4724 90.7861 90.7861 93.4724 87.4724 93.4724H14.4724C11.1587 93.4724 8.47241 90.7861 8.47241 87.4724V14.4724Z\"/>\n\t\t\t\t\t\t<linearGradient id=\"ui-avatar-gradient-accent-", "\" x1=\"13.3983\" y1=\"2.16102\" x2=\"53.5932\" y2=\"60.0763\" gradientUnits=\"userSpaceOnUse\">\n\t\t\t\t\t\t\t<stop stop-color=\"var(--ui-avatar-color-gradient-start)\"/>\n\t\t\t\t\t\t\t<stop offset=\"1\" stop-color=\"var(--ui-avatar-color-gradient-stop)\"/>\n\t\t\t\t\t\t</linearGradient>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])), this.getUnicId(), this.getUnicId());
+	        this.node.avatar = main_core.Tag.render(_templateObject$c || (_templateObject$c = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-avatar --square --accent\">\n\t\t\t\t\t<svg viewBox=\"0 0 102 102\">\n\t\t\t\t\t\t\n\t\t\t\t\t\t<path class=\"ui-avatar-border-inner\" d=\"M12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-border\" fill=\"url(#ui-avatar-gradient-accent-", ")\"  d=\"M90 3.74H12C7.43813 3.74 3.74 7.43813 3.74 12V90C3.74 94.5619 7.43813 98.26 12 98.26H90C94.5619 98.26 98.26 94.5619 98.26 90V12C98.26 7.43813 94.5619 3.74 90 3.74ZM12 0C5.37258 0 0 5.37258 0 12V90C0 96.6274 5.37258 102 12 102H90C96.6274 102 102 96.6274 102 90V12C102 5.37258 96.6274 0 90 0H12Z\"/>\n\t\t\t\t\t\t<path class=\"ui-avatar-base\" d=\"M8.47241 14.4724C8.47241 11.1587 11.1587 8.47241 14.4724 8.47241H87.4724C90.7861 8.47241 93.4724 11.1587 93.4724 14.4724V87.4724C93.4724 90.7861 90.7861 93.4724 87.4724 93.4724H14.4724C11.1587 93.4724 8.47241 90.7861 8.47241 87.4724V14.4724Z\"/>\n\t\t\t\t\t\t<linearGradient id=\"ui-avatar-gradient-accent-", "\" x1=\"13.3983\" y1=\"2.16102\" x2=\"53.5932\" y2=\"60.0763\" gradientUnits=\"userSpaceOnUse\">\n\t\t\t\t\t\t\t<stop stop-color=\"var(--ui-avatar-color-gradient-start)\"/>\n\t\t\t\t\t\t\t<stop offset=\"1\" stop-color=\"var(--ui-avatar-color-gradient-stop)\"/>\n\t\t\t\t\t\t</linearGradient>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t"])), this.getUnicId(), this.getUnicId());
 	      }
 	      return this.node.avatar;
 	    }
@@ -687,6 +706,7 @@ this.BX = this.BX || {};
 
 	exports.AvatarBase = AvatarBase;
 	exports.AvatarRound = AvatarRound;
+	exports.AvatarRoundCopilot = AvatarRoundCopilot;
 	exports.AvatarRoundGuest = AvatarRoundGuest;
 	exports.AvatarRoundExtranet = AvatarRoundExtranet;
 	exports.AvatarRoundAccent = AvatarRoundAccent;
@@ -699,5 +719,5 @@ this.BX = this.BX || {};
 	exports.AvatarSquareExtranet = AvatarSquareExtranet;
 	exports.AvatarSquareAccent = AvatarSquareAccent;
 
-}((this.BX.UI = this.BX.UI || {}),BX));
+}((this.BX.UI = this.BX.UI || {}),BX,BX));
 //# sourceMappingURL=avatar.bundle.js.map

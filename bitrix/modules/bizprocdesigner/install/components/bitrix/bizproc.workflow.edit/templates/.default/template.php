@@ -496,7 +496,10 @@ $aMenu[] = [
 	endif;
 	?>
 	<form>
-		<div id="wf1" style="width: 100%; border-bottom: 2px #efefef dotted; padding-bottom: 10px; position: relative; z-index: 1"></div>
+		<div
+			id="wf1"
+			style="width: 100%; border-bottom: 2px #efefef dotted; padding-bottom: 10px; position: relative; z-index: 1; overflow: scroll"
+		></div>
 
 		<?php if (!$isAdminSection):
 

@@ -1,8 +1,8 @@
 /**
- * @module im/messenger/model/sidebar/links/default-element
+ * @module im/messenger/model/sidebar/src/links/default-element
  */
 
-jn.define('im/messenger/model/sidebar/links/default-element', (require, exports, module) => {
+jn.define('im/messenger/model/sidebar/src/links/default-element', (require, exports, module) => {
 	const linkItem = {
 		id: 0,
 		messageId: 0,

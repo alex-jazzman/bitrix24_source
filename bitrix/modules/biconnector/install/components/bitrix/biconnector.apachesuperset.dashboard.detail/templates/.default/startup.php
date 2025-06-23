@@ -34,6 +34,13 @@ Extension::load([
 	'pull.client',
 	'ui.lottie',
 ]);
+CJSCore::Init(['helper']);
+
+$helpDeskUrl = new \Bitrix\Main\Web\Uri(\Bitrix\UI\Util::getHelpdeskUrl(true) . '/widget2/');
+$helpDeskUrl->addParams([
+	'action' => 'open',
+	'redirect' => 'detail',
+]);
 
 $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
 $APPLICATION->SetTitle($dashboardTitle);
@@ -99,5 +106,10 @@ else
 			isSupersetAvailable: <?= Json::encode($arResult['IS_SUPERSET_AVAILABLE'] ?? true) ?>,
 			paramsCompatible: <?= Json::encode($arResult['PARAMS_COMPATIBLE'] ?? true) ?>,
 		})
+	});
+
+	BX.Helper.init({
+		frameOpenUrl: '<?= $helpDeskUrl ?>',
+		langId: '<?=LANGUAGE_ID?>'
 	});
 </script>

@@ -1150,6 +1150,8 @@ this.BX.UI = this.BX.UI || {};
 	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -1164,6 +1166,7 @@ this.BX.UI = this.BX.UI || {};
 	var _enableUsers = /*#__PURE__*/new WeakMap();
 	var _enableAll = /*#__PURE__*/new WeakMap();
 	var _enableDepartments = /*#__PURE__*/new WeakMap();
+	var _dialogEvents = /*#__PURE__*/new WeakMap();
 	var _getDepartamentsSelectMode = /*#__PURE__*/new WeakSet();
 	var _createInputElement = /*#__PURE__*/new WeakSet();
 	var _initInput = /*#__PURE__*/new WeakSet();
@@ -1218,6 +1221,10 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _dialogEvents, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _encode, main_core.Type.isFunction(params.encodeValue) ? params.encodeValue : null);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _decode, main_core.Type.isFunction(params.decodeValue) ? params.decodeValue : null);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _inputContainer, main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-section__input-container\"></div>"]))));
@@ -1225,6 +1232,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _enableUsers, params.enableUsers !== false);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _enableAll, babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _enableUsers) && params.enableAll !== false);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _enableDepartments, params.enableDepartments === true);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _dialogEvents, main_core.Type.isObject(params.dialogEvents) ? params.dialogEvents : null);
 	    _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _initInput, _initInput2).call(babelHelpers.assertThisInitialized(_this), params.values);
 	    var entities = [];
 	    if (babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _enableUsers)) {
@@ -1258,6 +1266,12 @@ this.BX.UI = this.BX.UI || {};
 	      entities.push.apply(entities, babelHelpers.toConsumableArray(params.entities));
 	    }
 	    var multiple = params.multiple !== false;
+	    var onChangeSelector = _this.onChangeSelector.bind(babelHelpers.assertThisInitialized(_this));
+	    var baseEvents = {
+	      'Item:onSelect': onChangeSelector,
+	      'Item:onDeselect': onChangeSelector
+	    };
+	    var events = _objectSpread$1(_objectSpread$1({}, baseEvents), babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _dialogEvents));
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entitySelector, new ui_entitySelector.TagSelector({
 	      id: _this.getId(),
 	      textBoxAutoHide: false,
@@ -1268,10 +1282,7 @@ this.BX.UI = this.BX.UI || {};
 	        preselectedItems: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _defaultValues),
 	        multiple: multiple,
 	        hideOnDeselect: !multiple,
-	        events: {
-	          'Item:onSelect': _this.onChangeSelector.bind(babelHelpers.assertThisInitialized(_this)),
-	          'Item:onDeselect': _this.onChangeSelector.bind(babelHelpers.assertThisInitialized(_this))
-	        },
+	        events: events,
 	        entities: entities
 	      },
 	      multiple: multiple

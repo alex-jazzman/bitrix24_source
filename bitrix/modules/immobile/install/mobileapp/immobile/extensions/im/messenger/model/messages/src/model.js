@@ -6,12 +6,14 @@
 jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
-	const { mergeImmutable, clone, isEqual } = require('utils/object');
+	const { mergeImmutable, clone, isEqual, isEmpty } = require('utils/object');
 
+	const { MessageParams } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerMutationHandlersWaiter } = require('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter');
 	const { reactionsModel } = require('im/messenger/model/messages/reactions/model');
 	const { messageDefaultElement } = require('im/messenger/model/messages/default-element');
+	const { voteModel } = require('im/messenger/model/messages/vote/model');
 	const { pinModel } = require('im/messenger/model/messages/pin/model');
 	const { validate } = require('im/messenger/model/messages/validator');
 
@@ -33,6 +35,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 		modules: {
 			reactionsModel,
 			pinModel,
+			voteModel,
 		},
 		getters: {
 			/**
@@ -49,6 +52,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return {
 						...state.collection[messageId],
 						reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
+						vote: rootGetters['messagesModel/voteModel/getByMessageId'](messageId),
 					};
 				}).sort((a, b) => sortCollection(a, b));
 			},
@@ -71,6 +75,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				return {
 					...message,
 					reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
+					vote: rootGetters['messagesModel/voteModel/getByMessageId'](messageId),
 				};
 			},
 
@@ -125,9 +130,9 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return [];
 				}
 
-				return state.collection[messageId].files.map((fileId) => {
-					return rootGetters['filesModel/getById'](fileId);
-				});
+				return state.collection[messageId].files
+					.map((fileId) => rootGetters['filesModel/getById'](fileId))
+					.filter((file) => Type.isPlainObject(file));
 			},
 
 			/**
@@ -362,6 +367,16 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			isPushMessage: (state) => (messageId) => {
 				return state.collection[messageId]?.push === true;
 			},
+
+			/**
+			 * @function messagesModel/getByReplyIds
+			 * @return {Array<MessagesModelState>}
+			 */
+			getByReplyIds: (state, getters) => (replyIds, chatId) => {
+				const messages = getters.getByChatId(chatId);
+
+				return messages.filter((message) => replyIds.includes(message.params.replyId));
+			},
 		},
 		actions: {
 			/** @function messagesModel/forceUpdateByChatId */
@@ -502,7 +517,11 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 						result.viewed = false;
 					}
 
-					return result;
+					return mergeImmutable(
+						messageDefaultElement,
+						result,
+						store.state.collection[message.id] ?? {},
+					);
 				});
 				messageList.sort((message1, message2) => message1.id - message2.id);
 
@@ -591,6 +610,14 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 							id: message.id,
 						},
 					});
+				}
+
+				if (
+					message.params?.componentId === MessageParams.ComponentId.VoteMessage
+					&& message.vote
+				)
+				{
+					await store.dispatch('voteModel/add', { votes: [message.vote] });
 				}
 
 				store.commit('store', {
@@ -693,7 +720,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			},
 
 			/** @function messagesModel/updateWithId */
-			updateWithId: (store, payload) => {
+			updateWithId: async (store, payload) => {
 				const { id } = payload;
 				if (!store.state.collection[id])
 				{
@@ -701,6 +728,14 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				}
 
 				const fields = validate(payload.fields);
+
+				if (
+					fields.params?.componentId === MessageParams.ComponentId.VoteMessage
+					&& fields.vote
+				)
+				{
+					await store.dispatch('voteModel/updateWithId', { id, vote: fields.vote });
+				}
 
 				if (
 					store.getters.isUploadingMessage(id)
@@ -873,17 +908,30 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			},
 
 			/** @function messagesModel/deleteByIdList */
-			deleteByIdList: (store, payload) => {
+			deleteByIdList: async (store, payload) => {
 				const { idList } = payload;
 
-				idList.forEach((id) => {
-					if (store.getters.isUploadingMessage(id))
+				const filesGroupedByChatId = {};
+
+				idList.forEach((messageId) => {
+					const message = store.getters.getById(messageId);
+					if (message?.chatId)
+					{
+						const fileIds = store.state.collection[messageId].files || [];
+						if (!filesGroupedByChatId[message.chatId])
+						{
+							filesGroupedByChatId[message.chatId] = [];
+						}
+						filesGroupedByChatId[message.chatId].push(...fileIds);
+					}
+
+					if (store.getters.isUploadingMessage(messageId))
 					{
 						store.commit('deleteFromUploadingCollection', {
 							actionName: 'delete',
 							data: {
-								id,
-								chatId: store.state.collection[id].chatId,
+								id: messageId,
+								chatId: store.state.collection[messageId].chatId,
 							},
 						});
 					}
@@ -896,11 +944,16 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					},
 				});
 
-				return store.dispatch('pinModel/deleteMessagesByIdList', { idList });
+				if (!isEmpty(filesGroupedByChatId))
+				{
+					await store.dispatch('sidebarModel/sidebarFilesModel/deleteFilesGroupedByChatId', { filesGroupedByChatId });
+				}
+
+				await store.dispatch('pinModel/deleteMessagesByIdList', { idList });
 			},
 
 			/** @function messagesModel/delete */
-			delete: (store, payload) => {
+			delete: async (store, payload) => {
 				const { id } = payload;
 
 				store.dispatch('pinModel/deleteMessage', { id });
@@ -914,6 +967,23 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 							chatId: store.state.collection[id].chatId,
 						},
 					});
+				}
+
+				const filesGroupedByChatId = {};
+				const message = store.getters.getById(id);
+				if (message?.chatId)
+				{
+					const fileIds = store.state.collection[id].files || [];
+					if (!filesGroupedByChatId[message.chatId])
+					{
+						filesGroupedByChatId[message.chatId] = [];
+					}
+					filesGroupedByChatId[message.chatId].push(...fileIds);
+				}
+
+				if (!isEmpty(filesGroupedByChatId))
+				{
+					await store.dispatch('sidebarModel/sidebarFilesModel/deleteFilesGroupedByChatId', { filesGroupedByChatId });
 				}
 
 				store.commit('delete', {
@@ -1239,11 +1309,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 
 				for (const message of messageList)
 				{
-					state.collection[message.id] = mergeImmutable(
-						messageDefaultElement,
-						state.collection[message.id] ?? {},
-						message,
-					);
+					state.collection[message.id] = message;
 				}
 			},
 

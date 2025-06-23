@@ -271,7 +271,7 @@ class Task implements Tabable
 
 	private function getFlowListTab(): ?array
 	{
-		if (!Settings::getInstance()->isTaskFlowAvailable())
+		if ($this->context->extranet || !Settings::getInstance()->isTaskFlowAvailable())
 		{
 			return null;
 		}

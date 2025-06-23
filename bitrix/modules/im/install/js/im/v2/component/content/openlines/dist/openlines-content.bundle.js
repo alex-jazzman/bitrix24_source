@@ -25,7 +25,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  IM_LINES: 'Y',
 	  IM_MENU: 'N',
 	  IM_STATUS: 'N',
-	  IM_V2_LAYOUT: 'Y'
+	  IM_V2_LAYOUT: 'Y',
+	  IM_LEGACY: 'Y'
 	};
 
 	// @vue/component

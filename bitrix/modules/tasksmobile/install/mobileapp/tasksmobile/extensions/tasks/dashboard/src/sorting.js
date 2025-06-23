@@ -137,6 +137,42 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 
 			return 2;
 		}
+
+		getSortItemsCallback()
+		{
+			return (a, b) => {
+				const aSection = this.getSortingSection(a) ?? 0;
+				const bSection = this.getSortingSection(b) ?? 0;
+
+				if (aSection !== bSection)
+				{
+					return Math.sign(aSection - bSection);
+				}
+
+				const aSortProperty = this.getPropertyValue(a, this.getType()) ?? this.noPropertyValue;
+				const bSortProperty = this.getPropertyValue(b, this.getType()) ?? this.noPropertyValue;
+
+				if (aSortProperty !== bSortProperty)
+				{
+					if (this.getType() === TasksDashboardSorting.types.DEADLINE)
+					{
+						if (aSortProperty === this.noPropertyValue && bSortProperty !== this.noPropertyValue)
+						{
+							return 1;
+						}
+
+						if (bSortProperty === this.noPropertyValue && aSortProperty !== this.noPropertyValue)
+						{
+							return -1;
+						}
+					}
+
+					return (aSortProperty < bSortProperty ? -1 : 1) * (this.isASC ? 1 : -1);
+				}
+
+				return 0;
+			};
+		}
 	}
 
 	module.exports = { TasksDashboardSorting };

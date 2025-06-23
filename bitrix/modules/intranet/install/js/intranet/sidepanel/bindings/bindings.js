@@ -35,6 +35,24 @@
 		return 1500 + Math.floor((window.innerWidth - 1500) / 3);
 	};
 
+	const getQueryParams = function(url)
+	{
+		// Extract the query string part after '?'
+		const queryStringMatch = url.match(/\?([^#]*)/);
+		if (!queryStringMatch) return {};
+
+		const queryString = queryStringMatch[1];
+		const params = {};
+
+		// Regex to match key=value pairs
+		queryString.replace(/([^&=]+)=([^&]*)/g, (match, key, value) => {
+			params[decodeURIComponent(key)] = decodeURIComponent(value);
+			return '';
+		});
+
+		return params;
+	}
+
 	BX.SidePanel.Instance.bindAnchors({
 		rules: [
 			{
@@ -88,7 +106,8 @@
 			{
 				condition: [
 					'(?<url>/company/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
-					'(?<url>/workgroups/group/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/company/personal/user/(\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
+					'(?<url>/workgroups/group/(?<groupId>\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
 					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
 				],
 				minimizeOptions: (link) => {
@@ -119,6 +138,68 @@
 							});
 						},
 					},
+				},
+				handler: async function(event, link) {
+					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');
+					const groupId = parseInt(link.matches.groups.groupId, 10);
+					const isV2FromAllowedForGroup = tasksSettings.allowedGroups.includes(groupId);
+					const taskId = parseInt(link.matches.groups.taskId, 10);
+					const params = getQueryParams(link.url);
+
+					if (taskId === 0 && tasksSettings.isV2MiniForm && params.miniform)
+					{
+						event.preventDefault();
+
+						const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
+
+						(new TaskCard({
+							analytics: {
+								context: params.ta_sec,
+								element: params.ta_el,
+							},
+						})).showCompactCard();
+
+						return;
+					}
+
+					if (tasksSettings.isV2Form || isV2FromAllowedForGroup)
+					{
+						const sidePanelId = `tasks-task-full-card-${taskId}`;
+						const maxWidth = 1510;
+
+						BX.SidePanel.Instance.open(sidePanelId, {
+							customLeftBoundary: 0,
+							width: maxWidth,
+							cacheable: false,
+							contentClassName: 'tasks-full-card-slider-content',
+							customRightBoundary: 0,
+							contentCallback: async () => {
+								const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
+
+								const taskCard = await TaskCard.init({ taskId });
+
+								BX.Event.EventEmitter.subscribeOnce(
+									'SidePanel.Slider:onCloseComplete',
+									(baseEvent) => {
+										if (baseEvent.target.url === sidePanelId)
+										{
+											taskCard.unmountCard();
+										}
+									},
+								);
+
+								return await taskCard.mountCard();
+							},
+						});
+
+						event.preventDefault();
+					}
+					else
+					{
+						event.preventDefault();
+
+						BX.SidePanel.Instance.open(link.url, this.options);
+					}
 				},
 			},
 			{
@@ -430,7 +511,8 @@
 				],
 				handler: function(event, link)
 				{
-					if (!window.BXIM)
+					const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
+					if (!window.BXIM || isAirTemplate)
 					{
 						return;
 					}
@@ -442,7 +524,7 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_COLLAB)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_CHANNEL|IM_COLLAB)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
 				],
 				handler: function(event, link)
 				{
@@ -467,6 +549,13 @@
 					else if (type === 'IM_COPILOT')
 					{
 						BX.Messenger.Public.openCopilot(dialogId);
+					}
+					else if (type === 'IM_CHANNEL')
+					{
+						BX.Messenger.Public?.openNavigationItem({
+							id: 'channel',
+							entityId: dialogId,
+						});
 					}
 					else if (type === 'IM_COLLAB')
 					{
@@ -502,7 +591,8 @@
 				],
 				handler: function(event, link)
 				{
-					if (!window.BXIM)
+					const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
+					if (!window.BXIM || isAirTemplate)
 					{
 						return;
 					}
@@ -1341,6 +1431,10 @@
 					new RegExp("/call/detail/[0-9]+", "i"),
 					new RegExp("/extranet/call/detail/[0-9]+", "i"),
 				],
+				options: {
+					width: 1100,
+					copyLinkLabel: true,
+				},
 				handler: function(event, link)
 				{
 					BX.SidePanel.Instance.open(
@@ -1350,7 +1444,8 @@
 							allowChangeHistory: false,
 							//contentClassName: "bitrix24-profile-slider-content",
 							loader: 'default-loader',
-							width: 1100
+							width: 1100,
+							copyLinkLabel: true,
 						}
 					);
 					event.stopPropagation();
@@ -1372,13 +1467,54 @@
 				},
 			},
 			{
-				condition: [
-					new RegExp("/bitrix/components/bitrix/voting\.attached\.result/slider\.php", "i"),
-				],
+				condition: [ new RegExp("/bitrix/components/bitrix/voting\.attached\.result/slider\.php", "i") ],
+				options: {
+					cacheable: false,
+					width: 480,
+				},
+			},
+			{
+				condition: [ '/vote-result/' ],
 				options: {
 					cacheable: false,
 					width: 480,
 					copyLinkLabel: true,
+				},
+			},
+			{
+				condition: [
+					new RegExp('(?<url>/bitrix/components/bitrix/bizproc.workflow.timeline.slider/index.php\\?workflowId=(?<workflowId>[a-z0-9.]+))', 'i')
+				],
+				options: {
+					width: 950,
+					allowChangeHistory: false,
+					cacheable: false,
+					loader: '/bitrix/js/bizproc/workflow/timeline/img/skeleton.svg',
+					printable: true,
+				},
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'bizproc:timeline',
+						entityId: link.matches.groups.workflowId.replace('.', '_'),
+						entityName: BX.message('INTRANET_BINDINGS_PROTOCOL'),
+						url: link.matches.groups.url,
+					};
+				},
+			},
+			{
+				condition: [new RegExp('(?<url>/company/personal/bizproc/(?<id>[a-z0-9.]+)/)', 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'bizproc:info',
+						entityId: link.matches.groups.id.replace('.', '_'),
+						entityName: BX.message('INTRANET_BINDINGS_ASSIGNMENT'),
+						url: link.matches.groups.url,
+					};
+				},
+				loader: 'bizproc:workflow-info',
+				options: {
+					width: detectCrmSliderWidth(),
+					cacheable: false,
 				},
 			},
 		]

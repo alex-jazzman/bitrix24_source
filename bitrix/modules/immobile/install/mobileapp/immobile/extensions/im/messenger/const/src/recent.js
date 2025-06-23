@@ -9,6 +9,13 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		notification: 'notification',
 	});
 
+	const RecentTab = Object.freeze({
+		chat: 'default',
+		copilot: 'copilot',
+		openChannel: 'openChannel',
+		collab: 'collab',
+	});
+
 	const MessageStatus = Object.freeze({
 		received: 'received',
 		delivered: 'delivered',
@@ -23,6 +30,7 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 
 	module.exports = {
 		ChatTypes,
+		RecentTab,
 		MessageStatus,
 		SubTitleIconType,
 	};

@@ -1,11 +1,10 @@
-import 'ui.notification';
 import { EventEmitter } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
 import { Analytics } from 'im.v2.lib.analytics';
-import { ChatService } from 'im.v2.provider.service';
-import { EmptyAvatarType } from 'im.v2.component.elements';
+import { ChatService } from 'im.v2.provider.service.chat';
+import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
 import { UserRole, PopupType, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
 import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
 import {
@@ -15,7 +14,6 @@ import {
 	ButtonPanel,
 	TextareaInput,
 	CreateChatHeading,
-	SettingsSection,
 	RightsSection,
 	AppearanceSection,
 	PrivacySection,
@@ -36,7 +34,6 @@ export const ChannelUpdating = {
 		TitleInput,
 		ChatAvatar,
 		ChatMembersSelector,
-		SettingsSection,
 		RightsSection,
 		AppearanceSection,
 		PrivacySection,
@@ -86,6 +83,10 @@ export const ChannelUpdating = {
 		chatId(): number
 		{
 			return this.dialog.chatId;
+		},
+		chatType(): $Values<typeof ChatType>
+		{
+			return this.dialog.type;
 		},
 		collapsedUsers(): TagSelectorElement[]
 		{
@@ -181,9 +182,6 @@ export const ChannelUpdating = {
 				manageMessages: this.rights.manageMessages,
 			}).catch(() => {
 				this.isUpdating = false;
-				BX.UI.Notification.Center.notify({
-					content: this.loc('IM_UPDATE_CHAT_ERROR'),
-				});
 			});
 
 			this.isUpdating = false;
@@ -301,8 +299,9 @@ export const ChannelUpdating = {
 			<div class="bx-im-content-chat-forms__members_container">
 				<ChatMembersSelector
 					:customElements="collapsedUsers"
-					:chatMembers="chatMembers" 
-					@membersChange="onMembersChange" 
+					:chatMembers="chatMembers"
+					:allowTeamsSelect="true"
+					@membersChange="onMembersChange"
 				/>
 			</div>
 			<RightsSection

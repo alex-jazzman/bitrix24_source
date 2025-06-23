@@ -13,3 +13,7 @@
 .ui-page-slider-wrapper-hr.--premissions {
 	overflow: visible;
 }
+
+.ui-icon-set.--administrator {
+	--ui-icon-set__icon-path: url("/bitrix/components/bitrix/humanresources.config.permissions/templates/.default/images/administrator.svg");
+}

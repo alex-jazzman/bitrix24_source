@@ -9,6 +9,7 @@ use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\UiTour;
@@ -73,7 +74,8 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 			$this->variant = $this->arParams['VARIANT'];
 			$this->arResult['VARIANT'] = $this->arParams['VARIANT'];
 		}
-		if ($this->variant == Disk\Type\DocumentGridVariant::FlipchartList)
+		$this->arResult['IS_BOARDS_PAGE'] = $this->variant === Disk\Type\DocumentGridVariant::FlipchartList;
+		if ($this->arResult['IS_BOARDS_PAGE'])
 		{
 			$this->arResult['HIDE_BUTTONS'] = true;
 		}
@@ -179,7 +181,14 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 
 			if ($file->getTypeFile() == TypeFile::FLIPCHART)
 			{
-				$openUrl = $this->getUrlManager()->getUrlForViewBoard($fileId);
+				if ($file->getExtra()->get('ATTACHED_OBJECT_ID'))
+				{
+					$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($file->getExtra()->get('ATTACHED_OBJECT_ID'));
+				}
+				else
+				{
+					$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($fileId);
+				}
 				$attr->addAction([
 					'type' => 'open',
 					'buttonIconClass' => ' ',
@@ -576,6 +585,21 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 		];
 
 		$this->includeComponentTemplate();
+
+		if ($this->variant == Disk\Type\DocumentGridVariant::FlipchartList)
+		{
+			Main\Application::getInstance()->addBackgroundJob(function() {
+				$cSection = $this->request->getQuery('c_section');
+				if (in_array($cSection, ['left_menu','promo_popup']))
+				{
+					$event = new AnalyticsEvent('open_section', 'boards', 'boards');
+					$event
+						->setSection($cSection)
+						->send()
+					;
+				}
+			});
+		}
 	}
 
 	public function getErrors()

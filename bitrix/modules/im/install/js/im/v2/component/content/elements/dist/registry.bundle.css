@@ -183,10 +183,6 @@
 	position: relative;
 }
 
-.bx-im-content-chat__dialog_container *:hover::-webkit-scrollbar-thumb {
-	background-color: rgba(255,255,255, .8)!important;
-}
-
 .bx-im-content-chat__dialog_content {
 	position: absolute;
 	height: 100%;

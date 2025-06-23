@@ -1,4 +1,5 @@
-import { memberRoles } from 'humanresources.company-structure.api';
+import { getMemberRoles, memberRolesKeys } from 'humanresources.company-structure.api';
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import { ChangeSaveModeControl } from '../change-save-mode-control/change-save-mode-control';
 import { TagSelector, type ItemOptions } from 'ui.entity-selector';
 import { getUserDataBySelectorItem } from 'humanresources.company-structure.utils';
@@ -23,18 +24,26 @@ export const Employees = {
 			type: Boolean,
 			required: true,
 		},
+		entityType: {
+			type: String,
+			required: true,
+		},
 	},
 
 	created(): void
 	{
+		this.memberRoles = getMemberRoles(this.entityType);
 		this.selectedUsers = new Set();
 		this.departmentHeads = [];
 		this.departmentEmployees = [];
 		this.removedUsers = [];
-		this.headSelector = this.getUserSelector(memberRoles.head);
-		this.deputySelector = this.getUserSelector(memberRoles.deputyHead);
-		this.employeesSelector = this.getUserSelector(memberRoles.employee);
+		this.headSelector = this.getUserSelector(memberRolesKeys.head);
+		this.deputySelector = this.getUserSelector(memberRolesKeys.deputyHead);
+		this.employeesSelector = this.getUserSelector(memberRolesKeys.employee);
 		this.userCount = 0;
+
+		// store initial users to control applyData method in tagSelector
+		this.initialUsers = this.heads.reduce((set, item) => set.add(item.id), new Set());
 	},
 
 	mounted(): void
@@ -43,12 +52,30 @@ export const Employees = {
 		this.deputySelector.renderTo(this.$refs['deputy-selector']);
 		this.employeesSelector.renderTo(this.$refs['employees-selector']);
 	},
+
 	watch:
 	{
+		entityType(entityType: string): void
+		{
+			const prevMemberRoles = this.memberRoles;
+			const rolesKeys = Object.keys(prevMemberRoles);
+			this.memberRoles = getMemberRoles(entityType);
+
+			this.departmentHeads = this.departmentHeads.map((item) => {
+				const roleKey = rolesKeys.find((key) => prevMemberRoles[key] === item.role);
+
+				return { ...item, role: this.memberRoles[roleKey] };
+			});
+
+			this.departmentEmployees = this.departmentEmployees
+				.map((item) => ({ ...item, role: this.memberRoles.employee }))
+			;
+		},
 		employeesIds:
 		{
 			handler(payload: number[]): void
 			{
+				this.employeesIds.forEach((item) => this.initialUsers.add(item));
 				const preselectedEmployees = payload.map((employeeId) => ['user', employeeId]);
 				const { dialog } = this.employeesSelector;
 				dialog.setPreselectedItems(preselectedEmployees);
@@ -61,7 +88,7 @@ export const Employees = {
 	{
 		getPreselectedItems(role: string): Array<number>
 		{
-			if (memberRoles.employee === role)
+			if (this.memberRoles.employee === role)
 			{
 				return this.employeesIds.map((employeeId) => ['user', employeeId]);
 			}
@@ -70,26 +97,34 @@ export const Employees = {
 				return ['user', head.id];
 			});
 		},
-		getUserSelector(role: String): TagSelector
+		getUserSelector(roleKey: String): TagSelector
 		{
 			const selector = new TagSelector({
 				events: {
 					onTagAdd: (event: BaseEvent) => {
 						const { tag } = event.getData();
 						this.selectedUsers.add(tag.id);
-						this.onSelectorToggle(tag, role);
-						this.applyData();
+						this.onSelectorToggle(tag, this.memberRoles[roleKey]);
+
+						if (this.initialUsers.has(tag.id))
+						{
+							this.initialUsers.delete(tag.id);
+						}
+						else
+						{
+							this.applyData();
+						}
 					},
 					onTagRemove: (event: BaseEvent) => {
 						const { tag } = event.getData();
 						this.selectedUsers.delete(tag.id);
-						this.onSelectorToggle(tag, role);
+						this.onSelectorToggle(tag, this.memberRoles[roleKey]);
 						this.applyData();
 					},
 				},
 				multiple: true,
 				dialogOptions: {
-					preselectedItems: this.getPreselectedItems(role),
+					preselectedItems: this.getPreselectedItems(this.memberRoles[roleKey]),
 					popupOptions: {
 						events: {
 							onBeforeShow: () => {
@@ -162,7 +197,7 @@ export const Employees = {
 			const item = tag.selector.dialog.getItem(['user', tag.id]);
 			const userData = getUserDataBySelectorItem(item, role);
 
-			const isEmployee = role === memberRoles.employee;
+			const isEmployee = role === this.memberRoles.employee;
 			if (!tag.rendered)
 			{
 				this.removedUsers = this.removedUsers.filter((user) => user.id !== userData.id);
@@ -205,6 +240,7 @@ export const Employees = {
 				employees: this.departmentEmployees,
 				removedUsers: this.removedUsers,
 				userCount: this.userCount,
+				isDepartmentDataChanged: true,
 			});
 		},
 		handleSaveModeChangedChanged(actionId: string): void
@@ -213,12 +249,26 @@ export const Employees = {
 		},
 	},
 
+	computed:
+	{
+		isTeamEntity(): boolean
+		{
+			return this.entityType === EntityTypes.team;
+		},
+		employeeTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_EMPLOYEES_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_EMPLOYEES_TITLE');
+		},
+	},
+
 	template: `
 		<div class="chart-wizard__employee">
 			<div class="chart-wizard__form">
 				<div class="chart-wizard__employee_item">
 					<span class="chart-wizard__employee_item-label">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE')}}
+						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE') }}
 					</span>
 					<div
 						class="chart-wizard__employee_selector"
@@ -226,12 +276,12 @@ export const Employees = {
 						data-test-id="hr-company-structure_chart-wizard__employees-head-selector"
 					/>
 					<span class="chart-wizard__employee_item-description">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_DESCR')}}
+						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_DESCR') }}
 					</span>
 				</div>
 				<div class="chart-wizard__employee_item">
 					<span class="chart-wizard__employee_item-label">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE')}}
+						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE') }}
 					</span>
 					<div
 						class="chart-wizard__employee_selector"
@@ -239,12 +289,12 @@ export const Employees = {
 						data-test-id="hr-company-structure_chart-wizard__employees-deputy-selector"
 					/>
 					<span class="chart-wizard__employee_item-description">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_DESCR')}}
+						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_DESCR') }}
 					</span>
 				</div>
 				<div class="chart-wizard__employee_item">
 					<span class="chart-wizard__employee_item-label">
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_EMPLOYEES_TITLE')}}
+						{{ employeeTitle }}
 					</span>
 					<div
 						class="chart-wizard__employee_selector"
@@ -252,13 +302,13 @@ export const Employees = {
 						data-test-id="hr-company-structure_chart-wizard__employees-employee-selector"
 					/>
 				</div>
-				<div class="chart-wizard__employee_item --change-save-mode-control">
+				<div v-if="!isTeamEntity" class="chart-wizard__employee_item --change-save-mode-control">
 					<ChangeSaveModeControl
 						v-if="!isEditMode"
 						@saveModeChanged="handleSaveModeChangedChanged"
 					></ChangeSaveModeControl>
 					<div class="chart-wizard__change-save-mode-control-container" v-else>
-						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_EDIT_WIZARD_EMPLOYEE_SAVE_MODE_TEXT')}}
+						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_EDIT_WIZARD_EMPLOYEE_SAVE_MODE_TEXT') }}
 					</div>
 				</div>
 			</div>

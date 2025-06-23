@@ -71,10 +71,20 @@ export default class Toolbar
 		return null;
 	}
 
-	static createBoard()
+	static createBoard(analyticsElement = null)
 	{
 		const newTab = window.open('', '_blank');
-		BX.ajax.runAction('disk.integration.flipchart.createDocument')
+		const config = {};
+		if (analyticsElement)
+		{
+			config.analytics = {
+				event: 'create',
+				tool: 'boards',
+				category: 'boards',
+				c_element: analyticsElement,
+			};
+		}
+		BX.ajax.runAction('disk.integration.flipchart.createDocument', config)
 			.then(response => {
 				if (response.status === 'success' && response.data.file)
 				{

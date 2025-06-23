@@ -88,7 +88,7 @@ export const Message = {
 		}),
 		menuId(): string
 		{
-			return `booking-message-menu-${this.bookingId}`;
+			return `booking-message-menu-${this.id}`;
 		},
 		client(): ClientModel | null
 		{
@@ -96,9 +96,13 @@ export const Message = {
 
 			return clientData ? this.$store.getters['clients/getByClientData'](clientData) : null;
 		},
-		status(): MessageStatusModel
+		status(): MessageStatusModel | undefined
 		{
 			return this.$store.getters[`${Model.MessageStatus}/getById`](this.id);
+		},
+		semantic(): string
+		{
+			return this.status?.semantic || '';
 		},
 		iconColor(): string
 		{
@@ -108,11 +112,11 @@ export const Message = {
 				failure: '#ffffff',
 			};
 
-			return colorMap[this.status.semantic] || '';
+			return colorMap[this.semantic] || '';
 		},
 		failure(): boolean
 		{
-			return this.status.semantic === 'failure';
+			return this.semantic === 'failure';
 		},
 	},
 	methods: {
@@ -125,7 +129,7 @@ export const Message = {
 				return;
 			}
 
-			if (this.status.isDisabled && this.isCurrentSenderAvailable)
+			if (this.disabled || (this.status.isDisabled && this.isCurrentSenderAvailable))
 			{
 				return;
 			}
@@ -198,13 +202,13 @@ export const Message = {
 	template: `
 		<div
 			class="booking-actions-popup__item booking-actions-popup__item-message-content"
-			:class="{'--disabled': !isCurrentSenderAvailable}"
+			:class="{'--disabled': disabled || !isCurrentSenderAvailable}"
 		>
 			<Loader v-if="loading" class="booking-actions-popup__item-message-loader"/>
 			<template v-else>
 				<div
 					class="booking-actions-popup-item-icon"
-					:class="'--' + status.semantic"
+					:class="'--' + semantic || 'none'"
 				>
 					<Icon
 						:name="iconSet.SMS"
@@ -213,25 +217,25 @@ export const Message = {
 				</div>
 				<div class="booking-actions-popup-item-info">
 					<div class="booking-actions-popup-item-title">
-						<span :title="status.title">{{ status.title }}</span>
+						<span :title="status?.title">{{ status?.title || 'СМС клиенту' }}</span>
 						<Icon :name="iconSet.HELP" @click="showHelpDesk"/>
 					</div>
 					<div
 						class="booking-actions-popup-item-subtitle"
-						:class="'--' + status.semantic"
+						:class="'--' + semantic || 'none'"
 					>
-						{{ status.description }}
+						{{ status?.description || 'Не отправлено' }}
 					</div>
 				</div>
 				<div class="booking-actions-popup-item-buttons">
 					<Button
 						:data-element="dataElementPrefix + '-menu-message-button'"
 						:data-booking-id="dataId"
-						:disabled="disabled || (status.isDisabled && isCurrentSenderAvailable)"
+						:disabled="disabled || (status?.isDisabled && isCurrentSenderAvailable)"
 						class="booking-actions-popup-button-with-chevron"
 						:class="{
 							'--lock': !isFeatureEnabled,
-							'--disabled': status.isDisabled && isCurrentSenderAvailable
+							'--disabled': disabled || (status?.isDisabled && isCurrentSenderAvailable)
 						}"
 						buttonClass="ui-btn-shadow"
 						:text="loc('BB_ACTIONS_POPUP_MESSAGE_BUTTON_SEND')"

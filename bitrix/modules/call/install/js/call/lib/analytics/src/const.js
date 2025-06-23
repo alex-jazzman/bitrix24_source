@@ -40,6 +40,20 @@ export const AnalyticsEvent = Object.freeze({
 	playRecord: 'play_record',
 	clickAiOff: 'click_ai_off',
 	delete: 'delete',
+
+	openSettings: 'open_settings',
+	restrictCamera: 'restrict_camera',
+	restrictMic: 'restrict_mic',
+	restrictScreenshare: 'restrict_screenshare',
+	allCamerasOff: 'all_cameras_off',
+	allMicOff: 'all_mic_off',
+	allScreenshareOff: 'all_screenshare_off',
+	userCameraOff: 'user_camera_off',
+	userMicOff: 'user_mic_off',
+	userScreenshareOff: 'user_screenshare_off',
+	deleteUser: 'delete_user',
+	denyRequest: 'deny_request',
+	approveRequest: 'approve_request',
 });
 
 export const AnalyticsTool = Object.freeze({

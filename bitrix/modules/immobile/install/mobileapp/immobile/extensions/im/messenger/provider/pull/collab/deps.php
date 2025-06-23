@@ -12,7 +12,7 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
-		'im:messenger/lib/counters',
+		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',
@@ -21,7 +21,7 @@ return [
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',
-		'im:messenger/provider/pull/lib/recent/chat',
+		'im:messenger/provider/pull/lib/new-message-manager/collab',
 		'im:messenger/provider/pull/lib/file',
 	],
 	'bundle' => [

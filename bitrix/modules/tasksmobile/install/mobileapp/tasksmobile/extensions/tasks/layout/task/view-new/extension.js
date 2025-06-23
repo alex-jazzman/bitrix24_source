@@ -79,6 +79,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { updateTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages/thunk');
 	const { selectTaskStageByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
+	const { AppRatingManager, UserEvent } = require('app-rating-manager');
 
 	/**
 	 * @class TaskView
@@ -97,13 +98,15 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						type: 'entity',
 					},
 				})
-				.then((newLayout) => {
+				.then(async (newLayout) => {
 					taskViewComponent.init({
 						...props,
 						layout: newLayout,
 					});
 
 					newLayout.showComponent(taskViewComponent);
+
+					void AppRatingManager.increaseCounter(UserEvent.TASKS_VIEWED);
 				})
 				.catch(console.error)
 			;
@@ -157,6 +160,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.layout = props.layout;
 			this.layout.enableNavigationBarBorder(false);
 			this.layout.on('titleClick', () => this.scrollViewRef?.scrollToBegin(true));
+			this.layout.on('onViewRemoved', this.onViewRemoved);
 
 			this.checklistController = new ChecklistController({
 				taskId: this.#taskId,
@@ -237,6 +241,12 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.#observeTaskState();
 			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange);
 		}
+
+		onViewRemoved = () => {
+			AppRatingManager.tryOpenAppRating({
+				parentWidget: this.props.parentWidget,
+			});
+		};
 
 		componentDidMount()
 		{
@@ -1076,17 +1086,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		#isStageSelectorInitiallyHidden()
 		{
-			return this.view === ViewMode.KANBAN && (
-				(
-					// backlog task
-					(
-						this.#task?.groupId !== 0
-						&& Number.isInteger(this.initialStageId)
-						&& (Array.isArray(this.initialStages) && this.initialStages.length === 0)
-					)
-					|| this.#task?.groupId === 0
-				)
-			);
+			return (this.view === ViewMode.KANBAN && !this.#task?.shouldShowKanbanStages);
 		}
 
 		/**

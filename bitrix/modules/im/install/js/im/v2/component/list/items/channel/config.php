@@ -8,8 +8,10 @@ return [
 	'css' => 'dist/channel-list.bundle.css',
 	'js' => 'dist/channel-list.bundle.js',
 	'rel' => [
+		'im.v2.component.elements.list-loading-state',
 		'main.date',
-		'im.v2.component.elements',
+		'im.v2.component.elements.chat-title',
+		'im.v2.component.elements.avatar',
 		'im.v2.lib.utils',
 		'im.v2.lib.parser',
 		'im.v2.lib.date-formatter',

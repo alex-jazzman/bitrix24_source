@@ -29,6 +29,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	} = require('im/messenger/const/rest');
 	const {
 		ChatTypes,
+		RecentTab,
 		MessageStatus,
 		SubTitleIconType,
 	} = require('im/messenger/const/recent');
@@ -38,7 +39,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		UserRole,
 		UserColor,
 	} = require('im/messenger/const/user');
-	const { UserInputAction } = require('im/messenger/const/dialog-status');
 	const {
 		MessageType,
 		MessageIdType,
@@ -47,14 +47,14 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageComponent,
 	} = require('im/messenger/const/message');
 	const { ReactionType } = require('im/messenger/const/reaction-type');
+	const { UserInputAction } = require('im/messenger/const/dialog-status');
+	const { DialogBackgroundId } = require('im/messenger/const/dialog-background');
+	const { DialogActionType } = require('im/messenger/const/dialog-action-type');
 	const {
 		DialogType,
 		DialogWidgetType,
 	} = require('im/messenger/const/dialog-type');
-	const {
-		DialogActionType,
-		ActionByUserType,
-	} = require('im/messenger/const/permission');
+	const { ActionByUserType } = require('im/messenger/const/permission');
 	const {
 		SidebarActionType,
 		SidebarHeaderContextMenuActionType,
@@ -80,7 +80,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
-	const { NavigationTab } = require('im/messenger/const/navigation-tab');
+	const { NavigationTab, NavigationTabByComponent } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
 		KeyboardButtonType,
@@ -97,6 +97,11 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { DialogPermissions, RightsLevel } = require('im/messenger/const/permission');
 	const { WidgetTitleParamsType } = require('im/messenger/const/widget');
 	const { EntitySelectorElementType } = require('im/messenger/const/entity-selector');
+	const { MessagesAutoDeleteDelay, MessagesAutoDeleteMenuIds } = require('im/messenger/const/messages-auto-delete');
+	const { MessageMenuActionType } = require('im/messenger/const/message-menu-action-type');
+	const { AnchorType } = require('im/messenger/const/anchor-type');
+	const { FileDownloadType } = require('im/messenger/const/src/file-download-types');
+	const { PinCount } = require('im/messenger/const/pin');
 
 	module.exports = {
 		AppStatus,
@@ -117,6 +122,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		EventType,
 		EventFilterType,
 		ChatTypes,
+		RecentTab,
 		MessageStatus,
 		SubTitleIconType,
 		RestMethod,
@@ -129,6 +135,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		DialogType,
 		DialogWidgetType,
 		DialogActionType,
+		DialogBackgroundId,
 		ActionByUserType,
 		SidebarActionType,
 		SidebarHeaderContextMenuActionType,
@@ -151,12 +158,14 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		Setting,
 		SidebarFileType,
 		SidebarTab,
+		PinCount,
 		Promo,
 		PromoType,
 		CopilotButtonType,
 		CopilotPromptType,
 		ComponentCode,
 		NavigationTab,
+		NavigationTabByComponent,
 		KeyboardButtonContext,
 		KeyboardButtonType,
 		KeyboardButtonNewLineSeparator,
@@ -172,5 +181,10 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		RightsLevel,
 		WidgetTitleParamsType,
 		EntitySelectorElementType,
+		MessagesAutoDeleteDelay,
+		MessagesAutoDeleteMenuIds,
+		MessageMenuActionType,
+		AnchorType,
+		FileDownloadType,
 	};
 });

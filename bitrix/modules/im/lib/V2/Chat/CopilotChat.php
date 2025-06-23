@@ -6,6 +6,7 @@ use Bitrix\Im;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Error;
 use Bitrix\Im\V2\Integration\AI\Restriction;
+use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Relation\AddUsersConfig;
 use Bitrix\Im\V2\Relation\DeleteUserConfig;
 use Bitrix\Im\V2\Result;
@@ -194,9 +195,9 @@ class CopilotChat extends GroupChat
 	{
 		if (!isset($copilotName))
 		{
-			$roleManager = new Im\V2\Integration\AI\RoleManager();
+			$roleManager = (new Im\V2\Integration\AI\RoleManager())->setContextUser($this->getContext()->getUser());
 			$copilotCode = $roleManager->getMainRole($this->getChatId());
-			$copilotName = $roleManager->getRoles([$copilotCode], $this->getContext()->getUserId())[$copilotCode]['name'];
+			$copilotName = $roleManager->getRoles([$copilotCode])[$copilotCode]['name'];
 		}
 
 		\CIMMessage::Add([
@@ -298,17 +299,6 @@ class CopilotChat extends GroupChat
 		return $title;
 	}
 
-	protected function addIndex(): Chat
-	{
-		return $this;
-	}
-
-	protected function updateIndex(): Chat
-	{
-		return $this;
-	}
-
-
 	protected function sendEventUsersAdd(array $usersToAdd): void
 	{
 		if (empty($usersToAdd))
@@ -325,7 +315,6 @@ class CopilotChat extends GroupChat
 			}
 			if ($relation->getUser()->isBot())
 			{
-				Im\Bot::changeChatMembers($this->getId(), $userId);
 				Im\Bot::onJoinChat('chat'.$this->getId(), [
 					'CHAT_TYPE' => $this->getType(),
 					'MESSAGE_TYPE' => $this->getType(),

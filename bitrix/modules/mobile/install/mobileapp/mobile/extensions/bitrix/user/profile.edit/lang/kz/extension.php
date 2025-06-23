@@ -6,6 +6,7 @@ $MESS["COMMUNICATE_MESSAGE"] = "Хабарлама жазу";
 $MESS["COMMUNICATE_VIDEO"] = "Бейне қоңырау";
 $MESS["COMMUNICATE_WITH"] = "Байланысу";
 $MESS["DELETE_ACCOUNT"] = "Профильді жою";
+$MESS["DELETE_B24"] = "Менің Битрикс24-ді жою";
 $MESS["DEPARTMENTS"] = "Бөлімшелер";
 $MESS["EMAIL"] = "Email";
 $MESS["ERROR"] = "Қате";

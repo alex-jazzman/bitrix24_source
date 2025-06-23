@@ -1,3 +1,7 @@
+import { Type, ajax } from 'main.core';
+import { UI } from 'ui.notification';
+import { type BaseEvent } from 'main.core.events';
+
 import { VoteApplication } from 'vote.application';
 import { type BackendVote } from './type';
 
@@ -6,68 +10,142 @@ export const BackendEntityType = 'Bitrix\\Vote\\Attachment\\ImMessageConnector';
 
 export type EntityAuthParams = {
 	moduleId: string,
-	entityId: number,
+	entityType: string,
 };
 
 export class ImVoteService
 {
-	#entityId: number;
+	static instance: ImVoteService;
 	#app: VoteApplication = null;
 
-	constructor(entityType: string, entityId: number)
+	static init(): ImVoteService
 	{
-		this.#entityId = entityId;
-		this.#app = VoteApplication.init();
+		return ImVoteService.getInstance();
 	}
 
-	load(): Promise<boolean>
+	static getInstance(): ImVoteService
 	{
-		return new Promise((resolve, reject) => {
-			this.#getAttachedVote()
-				.then((response) => {
-					this.#updateStore(response?.data?.attach);
-					resolve(true);
-				})
-				.catch((response) => reject(response))
-			;
+		if (!ImVoteService.instance)
+		{
+			ImVoteService.instance = new ImVoteService();
+		}
+
+		return ImVoteService.instance;
+	}
+
+	constructor()
+	{
+		this.#app = VoteApplication.init();
+		this.#app.subscribe('loadVotes', ({ data }: BaseEvent) => {
+			const { entityIds, voteIds } = data;
+			this.#load(entityIds, voteIds);
 		});
 	}
 
-	sendVote(ballot: Record<number, number[]>): Promise
+	async #load(entityIds: Array<number>, voteIds: Array<string>): Promise<void>
 	{
-		return this.#sendBackendVote(ballot).then((response) => {
+		try
+		{
+			const response = await this.#getManyVotes(entityIds);
+			if (!response?.data?.items)
+			{
+				this.#setLoading(voteIds, false);
+
+				return;
+			}
+
+			response.data.items.forEach((item) => {
+				this.#updateStore(item);
+			});
+		}
+		catch (ex)
+		{
+			this.#app.handleLoadError(entityIds);
+			this.#notifyAjaxError(ex);
+			this.#setLoading(voteIds, false);
+		}
+	}
+
+	#notifyAjaxError(ex): void
+	{
+		if (Type.isObject(ex) && Type.isArrayFilled(ex.errors))
+		{
+			const content = ex?.errors[0]?.message ?? 'Unexpected error';
+			UI.Notification.Center.notify({
+				content,
+				autoHideDelay: 4000,
+			});
+		}
+		else
+		{
+			console.error(ex);
+		}
+	}
+
+	#getManyVotes(entityIds: Array<number>): Promise
+	{
+		return ajax.runAction('vote.AttachedVote.getMany', {
+			data: {
+				...this.#getEntityParams(),
+				entityIds,
+			},
+		});
+	}
+
+	#setLoading(voteIds: Array<string>, isLoading: boolean): void
+	{
+		voteIds.forEach((voteId) => {
+			this.#app.getStore().dispatch('vote/setLoadingStatus', {
+				isLoading,
+				voteId,
+			});
+		});
+	}
+
+	async sendVote(ballot: Record<number, number[]>, voteId: string, entityId: number): Promise<void>
+	{
+		this.#setLoading([voteId], true);
+		try
+		{
+			const response = await this.#sendBackendVote(ballot, entityId);
+			if (!response?.data?.attach)
+			{
+				this.#setLoading([voteId], false);
+
+				return;
+			}
+
+			this.#updateStore(response.data.attach);
+		}
+		catch (ex)
+		{
+			this.#setLoading([voteId], false);
+			throw ex;
+		}
+	}
+
+	async revokeVote(entityId: number, voteId: string): Promise<boolean>
+	{
+		this.#setLoading([voteId], true);
+		try
+		{
+			const response = await this.#sendVoteRevokeRequest(entityId);
 			this.#updateStore(response?.data?.attach);
 
-			return response?.data?.attach;
-		});
+			return true;
+		}
+		catch (response)
+		{
+			this.#setLoading([voteId], false);
+			console.error(response.errors[0].code);
+			throw response;
+		}
 	}
 
-	#getAttachedVote(): Promise
-	{
-		return BX.ajax.runAction('vote.AttachedVote.get', {
-			data: this.#getEntityParams(),
-		});
-	}
-
-	revokeVote(): Promise<boolean>
-	{
-		return new Promise((resolve, reject) => {
-			this.#sendVoteRevokeRequest()
-				.then((response) => {
-					this.#updateStore(response?.data?.attach);
-					resolve(true);
-				})
-				.catch((response) => {
-					console.error(response.errors[0].code);
-					reject(response);
-				});
-		});
-	}
-
-	completeVote(): Promise<boolean>
+	completeVote(entityId: number): Promise<boolean>
 	{
 		return new Promise((resolve, reject) => {
-			this.#sendVoteStopRequest()
+			this.#sendVoteStopRequest(entityId)
 				.then(() => {
 					resolve(true);
 				})
@@ -78,25 +156,32 @@ export class ImVoteService
 		});
 	}
 
-	#sendVoteStopRequest(): Promise<void>
+	#sendVoteStopRequest(entityId: number): Promise<void>
 	{
-		return BX.ajax.runAction('vote.AttachedVote.stop', {
-			data: this.#getEntityParams(),
-		});
-	}
-
-	#sendVoteRevokeRequest(): Promise
-	{
-		return BX.ajax.runAction('vote.AttachedVote.recall', {
-			data: this.#getEntityParams(),
-		});
-	}
-
-	#sendBackendVote(ballot: Record<number, number[]>): Promise
-	{
-		return BX.ajax.runAction('vote.AttachedVote.vote', {
+		return ajax.runAction('vote.AttachedVote.stop', {
 			data: {
 				...this.#getEntityParams(),
+				entityId,
+			},
+		});
+	}
+
+	#sendVoteRevokeRequest(entityId: number): Promise
+	{
+		return ajax.runAction('vote.AttachedVote.recall', {
+			data: {
+				...this.#getEntityParams(),
+				entityId,
+			},
+		});
+	}
+
+	#sendBackendVote(ballot: Record<number, number[]>, entityId: number): Promise
+	{
+		return ajax.runAction('vote.AttachedVote.vote', {
+			data: {
+				...this.#getEntityParams(),
+				entityId,
 				ballot,
 			},
 		});
@@ -107,7 +192,6 @@ export class ImVoteService
 		return {
 			moduleId: BackendModuleId,
 			entityType: BackendEntityType,
-			entityId: this.#entityId,
 		};
 	}
 

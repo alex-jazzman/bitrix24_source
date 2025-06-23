@@ -13,11 +13,15 @@ use Bitrix\Main\Localization\Loc;
 $APPLICATION->SetTitle(Loc::getMessage('VOTE_ATTACHED_RESULT_COMPONENT_TITLE'));
 \Bitrix\Main\UI\Extension::load([
 	'ui.common',
-	'vote.attached-result',
+	'vote.component.attached-result',
+	'vote.analytics'
 ]);
 
+$buttonId = 'vote-download-result';
 $downloadButton = \Bitrix\UI\Buttons\Button::create()
+   ->addClass('vote-result__btn')
    ->setTag(\Bitrix\UI\Buttons\Tag::LINK)
+   ->addAttribute('id', $buttonId)
    ->setLink($arResult['VOTE']['attach']['downloadUrl'] ?? '')
    ->setText(Loc::getMessage('VOTE_ATTACHED_RESULT_EXPORT'))
    ->setColor(\Bitrix\UI\Buttons\Color::PRIMARY)
@@ -29,10 +33,16 @@ $containerId = 'vote-attach-result-container';
 <script>
 	const voteData = <?= \Bitrix\Main\Web\Json::encode($arResult['VOTE'] ?? null) ?>;
 	const container = document.getElementById('<?= CUtil::JSescape($containerId )?>');
-	const ext = (new BX.Vote.VoteAttachedResult({
+	const ext = (new BX.Vote.Component.VoteAttachedResult({
 		votedPageSize: <?= (int)($arResult['VOTED_PAGE_SIZE'] ?? 10) ?>,
 	}));
 	ext.renderTo(voteData, container);
+	BX.ready(() => {
+		const saveResultButton = document.getElementById('<?= CUtil::JSescape($buttonId)?>');
+		BX.Event.bind(saveResultButton, 'click', () => {
+			BX.Vote.VoteAnalytics.downloadResult(voteData.attach.entityId);
+		});
+	});
 </script>
 
 <?php

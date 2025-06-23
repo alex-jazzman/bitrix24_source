@@ -16,6 +16,7 @@ export class UserModel
 	screenState: boolean
 	videoPaused: boolean
 	floorRequestState: boolean
+	permissionToSpeak: boolean
 	localUser: boolean
 	centralUser: boolean
 	pinned: boolean
@@ -42,6 +43,7 @@ export class UserModel
 			screenState: BX.prop.getBoolean(config, "screenState", false),
 			videoPaused: BX.prop.getBoolean(config, "videoPaused", false),
 			floorRequestState: BX.prop.getBoolean(config, "floorRequestState", false),
+			permissionToSpeak: BX.prop.getBoolean(config, "permissionToSpeak", false),
 			localUser: BX.prop.getBoolean(config, "localUser", false),
 			centralUser: BX.prop.getBoolean(config, "centralUser", false),
 			pinned: BX.prop.getBoolean(config, "pinned", false),

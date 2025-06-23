@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_application_core,im_v2_const) {
+(function (exports,main_core,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	const ThemeType = Object.freeze({
@@ -50,13 +50,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	});
 	const SpecialBackgroundId = {
-	  collab: 'collab-v2'
+	  collab: 'collab',
+	  martaAI: 'martaAI',
+	  copilot: 'copilot'
 	};
+	const COPILOT_BACKGROUND_ID = 4;
 	const SpecialBackground = {
 	  [SpecialBackgroundId.collab]: {
 	    color: '#76c68b',
 	    type: ThemeType.dark
-	  }
+	  },
+	  [SpecialBackgroundId.martaAI]: {
+	    color: '#4596f9',
+	    type: ThemeType.dark
+	  },
+	  [SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID]
+	};
+	const ImageFileByBackgroundId = {
+	  [SpecialBackgroundId.collab]: 'collab-v2',
+	  [SpecialBackgroundId.martaAI]: 'marta-ai',
+	  [SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString()
 	};
 
 	const IMAGE_FOLDER_PATH = '/bitrix/js/im/images/chat-v2-background';
@@ -75,11 +88,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const selectedColorScheme = SelectableBackground[selectedBackgroundId];
 	    return (selectedColorScheme == null ? void 0 : selectedColorScheme.type) === ThemeType.dark;
 	  },
-	  getCurrentBackgroundStyle() {
-	    const selectedBackgroundId = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.appearance.background);
-	    return this.getBackgroundStyleById(selectedBackgroundId);
+	  getCurrentBackgroundStyle(dialogId) {
+	    const backgroundId = resolveBackgroundId(dialogId);
+	    return this.getBackgroundStyleById(backgroundId);
 	  },
 	  getBackgroundStyleById(backgroundId) {
+	    var _ImageFileByBackgroun;
 	    const backgroundsList = {
 	      ...SelectableBackground,
 	      ...SpecialBackground
@@ -89,8 +103,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return {};
 	    }
 	    const patternColor = colorScheme.type === ThemeType.light ? BackgroundPatternColor.gray : BackgroundPatternColor.white;
+	    const fileName = (_ImageFileByBackgroun = ImageFileByBackgroundId[backgroundId]) != null ? _ImageFileByBackgroun : backgroundId;
 	    const patternImage = `url('${IMAGE_FOLDER_PATH}/pattern-${patternColor}.svg')`;
-	    const highlightImage = `url('${IMAGE_FOLDER_PATH}/${backgroundId}.png')`;
+	    const highlightImage = `url('${IMAGE_FOLDER_PATH}/${fileName}.png')`;
 	    return {
 	      backgroundColor: colorScheme.color,
 	      backgroundImage: `${patternImage}, ${highlightImage}`,
@@ -101,10 +116,40 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	/** Background selection priority:
+	 * 1. If there is no dialog context: user selected background (from user settings)
+	 * 2. Background by chat type (collab/copilot)
+	 * 3. Chat background (from chat fields)
+	 * 4. Bot background (from bot fields)
+	 * 5. User selected background (from user settings)
+	 */
+	const resolveBackgroundId = dialogId => {
+	  const userBackground = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.appearance.background);
+	  if (!main_core.Type.isStringFilled(dialogId)) {
+	    return userBackground;
+	  }
+	  const chatType = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true).type;
+	  if (chatType === im_v2_const.ChatType.collab) {
+	    return SpecialBackgroundId.collab;
+	  }
+	  if (chatType === im_v2_const.ChatType.copilot) {
+	    return SpecialBackgroundId.copilot;
+	  }
+	  const chatBackground = im_v2_application_core.Core.getStore().getters['chats/getBackgroundId'](dialogId);
+	  const botBackground = im_v2_application_core.Core.getStore().getters['users/bots/getBackgroundId'](dialogId);
+	  if (SpecialBackgroundId[chatBackground]) {
+	    return SpecialBackgroundId[chatBackground];
+	  }
+	  if (SpecialBackgroundId[botBackground]) {
+	    return SpecialBackgroundId[botBackground];
+	  }
+	  return userBackground;
+	};
+
 	exports.SelectableBackground = SelectableBackground;
 	exports.SpecialBackground = SpecialBackgroundId;
 	exports.ThemeType = ThemeType;
 	exports.ThemeManager = ThemeManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=theme.bundle.js.map

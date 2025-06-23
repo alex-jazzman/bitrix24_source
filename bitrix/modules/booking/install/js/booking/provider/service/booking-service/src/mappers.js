@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
 import type { BookingModel } from 'booking.model.bookings';
-import type { BookingDto } from './types';
+import type { BookingDto, BookingFromWaitListItemDto } from './types';
 
 export function mapModelToDto(booking: BookingModel): BookingDto
 {
@@ -53,8 +53,7 @@ export function mapModelToDto(booking: BookingModel): BookingDto
 export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 {
 	const clients = bookingDto.clients.filter((client) => Type.isArrayFilled(Object.values(client.data)));
-
-	return {
+	const booking = {
 		id: bookingDto.id,
 		updatedAt: bookingDto.updatedAt,
 		resourcesIds: bookingDto.resources.map(({ id }) => id),
@@ -73,5 +72,26 @@ export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 		note: bookingDto.note,
 		visitStatus: bookingDto.visitStatus,
 		externalData: bookingDto.externalData,
+		messages: bookingDto.messages?.length ? bookingDto.messages : undefined,
+	};
+
+	return Object.fromEntries(Object.entries(booking).filter(([, value]) => !Type.isUndefined(value)));
+}
+
+export function mapModelToCreateFromWaitListItemDto(waitListItemId: number, booking: BookingModel): BookingFromWaitListItemDto
+{
+	return {
+		waitListItemId,
+		resources: booking.resourcesIds.map((id) => ({ id })),
+		datePeriod: {
+			from: {
+				timestamp: booking.dateFromTs / 1000,
+				timezone: booking.timezoneFrom,
+			},
+			to: {
+				timestamp: booking.dateToTs / 1000,
+				timezone: booking.timezoneTo,
+			},
+		},
 	};
 }

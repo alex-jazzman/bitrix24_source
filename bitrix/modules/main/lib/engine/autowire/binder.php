@@ -5,6 +5,7 @@ namespace Bitrix\Main\Engine\AutoWire;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Result;
+use Bitrix\Main\Validation\Engine\AutoWire\ValidationChecker;
 use Psr\Container\NotFoundExceptionInterface;
 
 class Binder
@@ -390,6 +391,8 @@ class Binder
 					);
 				}
 
+				(new ValidationChecker($parameter, $constructedValue))->check();
+
 				return $constructedValue;
 			}
 
@@ -492,6 +495,8 @@ class Binder
 			{
 				$value = (array)$value;
 			}
+
+			(new ValidationChecker($parameter, $value))->check();
 		}
 
 		return $value;

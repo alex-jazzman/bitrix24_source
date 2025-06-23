@@ -1,0 +1,26 @@
+:root {
+	--bx-im-elements-media-gallery-template-columns: 119px 67px 67px 119px;
+}
+
+.bx-im-elements-media-gallery__items {
+	display: grid;
+	grid-template-columns: var(--bx-im-elements-media-gallery-template-columns);
+	grid-auto-rows: auto;
+	grid-gap: 1px;
+	max-width: 376px;
+	max-height: 364px;
+}
+
+.bx-im-elements-media-gallery__single-file {
+	position: relative;
+	display: flex;
+	width: 100%;
+}
+
+.bx-im-elements-media-gallery__single-file .bx-im-elements-media-gallery-image-item__source {
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	cursor: pointer;
+}

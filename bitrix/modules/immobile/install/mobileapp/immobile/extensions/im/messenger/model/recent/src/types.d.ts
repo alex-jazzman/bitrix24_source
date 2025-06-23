@@ -1,5 +1,5 @@
-import { DialogId } from "../../../types/common";
-import { MessengerModel, PayloadData } from "../../base";
+import { DialogId } from '../../../types/common';
+import { MessengerModel, PayloadData } from '../../base';
 
 export enum ChatType
 {
@@ -111,5 +111,3 @@ export type RecentModelCollection = {
 }
 
 export type RecentMessengerModel = MessengerModel<RecentModelCollection>;
-
-

@@ -1,24 +1,28 @@
-import { Tag, Dom, Event, Loc } from 'main.core';
+import { Tag, Dom, Event, Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { BlankSelector, type BlankSelectorConfig } from 'sign.v2.blank-selector';
 import { Api } from 'sign.v2.api';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Button } from 'ui.buttons';
 import { Alert } from 'ui.alerts';
-import type { DocumentDetails } from './type';
+import type { DocumentDetails, ActionMode } from './type';
 import type { DocumentInitiatedType, DocumentModeType } from 'sign.type';
 import './style.css';
 
-export type { DocumentDetails };
+export type { DocumentDetails, ActionMode } from './type';
 
 export class DocumentSetup extends EventEmitter
 {
 	blankSelector: BlankSelector;
 	setupData: null | {
-		uid: string,
+		id: ?number,
+		title: ?string,
+		uid: ?string,
 		initiatedByType: DocumentInitiatedType,
 		templateUid: ?string,
 		templateId: ?number,
+		integrationId: ?number,
+		externalId: ?string,
 		...
 	};
 	layout: HTMLElement;
@@ -29,6 +33,7 @@ export class DocumentSetup extends EventEmitter
 	#uids: Map<number, string>;
 	#documentMode: DocumentModeType;
 	#chatId: 0;
+	#actionMode: ActionMode = 'create';
 
 	constructor(blankSelectorConfig: BlankSelectorConfig)
 	{
@@ -117,12 +122,12 @@ export class DocumentSetup extends EventEmitter
 		return data ?? {};
 	}
 
-	async #changeDocumentBlank(uid: string, blankId: number): Promise<{
+	async #changeDocumentBlank(uid: string, blankId: number, copyBlocksFromPreviousBlank: boolean = false): Promise<{
 		uid: string,
 		templateUid: string | null,
 	}>
 	{
-		const data = await this.#api.changeDocument(uid, blankId);
+		const data = await this.#api.changeBlank(uid, blankId, copyBlocksFromPreviousBlank);
 
 		return data ?? {};
 	}
@@ -157,7 +162,7 @@ export class DocumentSetup extends EventEmitter
 		this.blankSelector.clearFiles({ removeFromServer: false });
 	}
 
-	async #processPages(urls: string[], cb: () => void)
+	async #processPages(urls: string[], cb: () => void, newBlocks: Array | null)
 	{
 		let startIndex = 0;
 		const pagesCount = 3;
@@ -167,7 +172,7 @@ export class DocumentSetup extends EventEmitter
 			const convertedPages = await this.#convertToBase64(sliced);
 			this.emit('toggleActivity', { selected: true });
 			startIndex += pagesCount;
-			cb(convertedPages, urls.length);
+			cb(convertedPages, urls.length, newBlocks);
 		}
 	}
 
@@ -256,8 +261,13 @@ export class DocumentSetup extends EventEmitter
 		return this.#api.loadBlocksByDocument(uid);
 	}
 
-	async setup(uid: ?string, isTemplateMode: boolean = false): Promise<void>
+	async setup(
+		uid: ?string,
+		isTemplateMode: boolean = false,
+		copyBlocksFromPreviousBlank: boolean = false,
+	): Promise<void>
 	{
+		this.#actionMode = Type.isStringFilled(uid) ? 'edit' : 'create';
 		if (this.isSameBlankSelected())
 		{
 			this.setupData = {
@@ -280,12 +290,13 @@ export class DocumentSetup extends EventEmitter
 				]);
 				this.#setDocumentData({ ...loadedData, blocks, isTemplate: true });
 				const { blankId } = loadedData;
+				this.blankIsNotSelected = false;
 				if (!this.blankSelector.hasBlank(blankId))
 				{
 					await this.blankSelector.loadBlankById(blankId);
 				}
 
-				this.blankSelector.selectBlank(blankId);
+				this.blankSelector.selectBlank(blankId, { isInitial: true });
 			}
 			else
 			{
@@ -307,7 +318,7 @@ export class DocumentSetup extends EventEmitter
 					&& documentUid
 				)
 				{
-					const { templateUid } = await this.#changeDocumentBlank(documentUid, blankId);
+					const { templateUid } = await this.#changeDocumentBlank(documentUid, blankId, copyBlocksFromPreviousBlank);
 					documentTemplateUid = templateUid;
 				}
 				else
@@ -315,7 +326,7 @@ export class DocumentSetup extends EventEmitter
 					const isRegistered = this.#uids.has(blankId);
 
 					const { uid, templateUid } = isRegistered
-						? await this.#changeDocumentBlank(this.#uids.get(blankId), blankId)
+						? await this.#changeDocumentBlank(this.#uids.get(blankId), blankId, copyBlocksFromPreviousBlank)
 						: await this.#register(blankId, isTemplateMode, this.#chatId);
 
 					documentUid = uid;
@@ -403,9 +414,16 @@ export class DocumentSetup extends EventEmitter
 			blank.setPreview(urls[0].url);
 		}
 
+		let blocks = null;
+		if (this.isTemplateMode())
+		{
+			blocks = await this.loadBlocks(uid);
+			this.setupData.blocks = blocks;
+		}
+
 		clearInterval(interval);
 		isPagesReady = true;
-		await this.#processPages(urls, cb);
+		await this.#processPages(urls, cb, blocks);
 	}
 
 	set ready(isReady: boolean)
@@ -428,5 +446,15 @@ export class DocumentSetup extends EventEmitter
 	deleteDocumentFromList(blankId: string): void
 	{
 		this.#uids.delete(blankId);
+	}
+
+	getActionMode(): ActionMode
+	{
+		return this.#actionMode;
+	}
+
+	isEditActionMode(): boolean
+	{
+		return this.getActionMode() === 'edit';
 	}
 }

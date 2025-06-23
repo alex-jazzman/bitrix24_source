@@ -18,8 +18,15 @@ jn.define('statemanager/redux/slices/settings/selector', (require, exports, modu
 		(reactionMessage) => reactionMessage?.value,
 	);
 
+	const selectIsCollabToolEnabled = createDraftSafeSelector(
+		(state) => selectById(state, 'collab_tool_enabled'),
+		(collabSetting) => collabSetting?.value ?? true,
+	);
+
 	module.exports = {
+		selectById,
 		selectReactionsTemplate,
 		selectReactionMessageById,
+		selectIsCollabToolEnabled,
 	};
 });

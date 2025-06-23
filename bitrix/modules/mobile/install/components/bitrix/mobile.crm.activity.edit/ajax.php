@@ -64,7 +64,6 @@ if(!function_exists('__CrmMobileActivityEditEndResponse'))
 	}
 }
 
-$curUserPrems = CCrmPerms::GetCurrentUserPermissions();
 $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
 if($action === 'SAVE_ENTITY')
 {
@@ -350,7 +349,7 @@ if($action === 'SAVE_ENTITY')
 				'OWNER_ID' => $ownerID
 			);
 		}
-		
+
 		$comms = array();
 		foreach($commData as &$comm)
 		{

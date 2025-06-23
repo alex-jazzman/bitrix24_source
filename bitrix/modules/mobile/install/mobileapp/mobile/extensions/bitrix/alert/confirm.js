@@ -51,7 +51,10 @@ jn.define('alert/confirm', (require, exports, module) => {
 		{
 			if (!Type.isArrayFilled(buttons))
 			{
-				return buttons;
+				return [{
+					text: Loc.getMessage('ALERT_CONFIRMATION_CONFIRM'),
+					type: ButtonType.DEFAULT,
+				}];
 			}
 
 			let preparedButtons = [...buttons];
@@ -61,18 +64,7 @@ jn.define('alert/confirm', (require, exports, module) => {
 				throw new Error(`Only one button with type "${ButtonType.CANCEL}" is allowed.`);
 			}
 
-			if (preparedButtons.length === 0)
-			{
-				preparedButtons.push({
-					text: Loc.getMessage('ALERT_CONFIRMATION_CONFIRM'),
-					type: ButtonType.DEFAULT,
-				});
-			}
-			else
-			{
-				preparedButtons = this.setButtonsTextByType(preparedButtons);
-			}
-
+			preparedButtons = this.setButtonsTextByType(preparedButtons);
 			preparedButtons = this.moveCancelButtonLast(preparedButtons);
 
 			// fix weird android behavior when last button becomes first

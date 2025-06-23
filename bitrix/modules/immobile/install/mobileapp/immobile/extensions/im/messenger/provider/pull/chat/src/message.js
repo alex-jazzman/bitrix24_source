@@ -5,16 +5,21 @@
  */
 jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) => {
 	const { Type } = require('type');
+	const { EntityReady } = require('entity-ready');
+
 	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Counters } = require('im/messenger/lib/counters');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const {
 		DialogType,
+		MessagesAutoDeleteDelay,
+		ComponentCode,
 	} = require('im/messenger/const');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { ChatRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/chat');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { ChatNewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/chat');
 
 	const logger = getLogger('pull-handler--chat-message');
 
@@ -28,6 +33,32 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 			super({ logger });
 		}
 
+		/**
+		 * @param {MessagesAutoDeleteDelayParams} params
+		 * @param {object} extra
+		 * @param {object} command
+		 */
+		handleMessagesAutoDeleteDelayChanged(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+			this.logger.log(`${this.constructor.name}.handleMessagesAutoDeleteDelayChanged `, params, extra);
+
+			if (params.delay !== MessagesAutoDeleteDelay.off)
+			{
+				Feature.updateExistingImFeatures({ messagesAutoDeleteEnabled: true });
+			}
+
+			this.store.dispatch('dialoguesModel/update', {
+				dialogId: String(params.dialogId),
+				fields: {
+					messagesAutoDeleteDelay: params.delay,
+				},
+			});
+		}
+
 		handleMessageChat(params, extra, command)
 		{
 			if (this.interceptEvent(params, extra, command))
@@ -35,13 +66,9 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				return;
 			}
 
-			const recentMessageManager = this.getRecentMessageManager(params, extra);
-			if (recentMessageManager.isCopilotChat())
-			{
-				return;
-			}
+			const recentMessageManager = this.getNewMessageManager(params, extra);
 
-			if (recentMessageManager.isChannelListEvent())
+			if (!recentMessageManager.needToProcessMessage())
 			{
 				return;
 			}
@@ -57,22 +84,15 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				;
 			}
 
-			if (recentMessageManager.isLinesChat())
-			{
-				if (MessengerParams.isOpenlinesOperator())
-				{
-					Counters.openlinesCounter.detail[params.dialogId] = params.counter;
-					Counters.update();
-				}
-
-				return;
-			}
-
 			this.updateDialog(params)
-				.then(() => recentMessageManager.updateRecent())
+				.then(() => {
+					this.updateCopilotModel(params);
+
+					return recentMessageManager.updateRecent();
+				})
 				.then(() => {
 					this.messageNotify(params, extra, recentMessageManager.getMessageText());
-					Counters.updateDelayed();
+					TabCounters.updateDelayed();
 
 					this.saveShareDialogCache();
 				})
@@ -232,17 +252,12 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 
 			if (Type.isNumber(params.counter))
 			{
-				await this.store.dispatch('commentModel/setCommentWithCounter', {
+				await this.store.dispatch('commentModel/setComment', {
 					messageId: chat.parent_message_id,
 					chatId: params.chatId,
 					messageCount: chat.message_count,
 					dialogId: params.dialogId,
 					newUserId: params.message.senderId,
-					chatCounterMap: {
-						[parentChatId]: {
-							[chat.id]: params.counter,
-						},
-					},
 				});
 			}
 			else
@@ -271,9 +286,62 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 			await this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
-		getRecentMessageManager(params, extra = {})
+		getNewMessageManager(params, extra = {})
 		{
-			return new ChatRecentMessageManager(params, extra);
+			return new ChatNewMessageManager(params, extra);
+		}
+
+		/**
+		 * @param {MessagePullHandlerUpdateDialogParams}params
+		 */
+		updateCopilotModel(params)
+		{
+			const isCopilot = params.chat[params.chatId]?.type === DialogType.copilot;
+			if (!isCopilot || !Feature.isCopilotInDefaultTabAvailable)
+			{
+				return;
+			}
+
+			const copilot = params.copilot;
+			const copilotModel = {
+				dialogId: params.dialogId,
+				chats: copilot.chats,
+				aiProvider: '',
+				roles: copilot.roles,
+				messages: copilot.messages,
+			};
+
+			void this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilotModel)
+				.catch((error) => {
+					logger.error(`${this.getClassName()}.updateCopilotModel: `, error);
+				})
+			;
+		}
+
+		needUpdateCopilotCounter(isCopilotChat)
+		{
+			return isCopilotChat && !Feature.isCopilotInDefaultTabAvailable;
+		}
+
+		/**
+		 * @params {boolean} params
+		 * @return {boolean}
+		 */
+		updateCopilotCounter(params)
+		{
+			if (!this.isCopilotReady())
+			{
+				TabCounters.copilotCounter.detail[params.dialogId] = params.counter;
+				TabCounters.update();
+			}
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isCopilotReady()
+		{
+			return EntityReady.isReady(`${ComponentCode.imCopilotMessenger}::launched`);
 		}
 	}
 

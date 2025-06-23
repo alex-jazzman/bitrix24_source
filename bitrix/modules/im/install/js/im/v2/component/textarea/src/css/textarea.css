@@ -5,9 +5,8 @@
 	--im-textarea__font-color_edit-text: var(--im-color-palette-gray-70);
 	--im-textarea__background-color: var(--im-color-palette-white-base);
 	--im-textarea__background-color_edit-separator: var(--im-color-palette-blue-50);
-	--im-textarea__background-color_send-button: #00ace3;
+	--im-textarea__background-color_send-button: var(--im-color-accent-blue);
 	--im-textarea__background-color_send-button-channel: var(--im-color-accent-turquoise);
-	--im-textarea__background-color_send-button-copilot: var(--im-color-palette-copilot-primary);
 }
 
 .bx-im-send-panel__container {
@@ -39,7 +38,6 @@
 	background-color: var(--im-textarea__background-color);
 	border-radius: var(--im-border-radius-sm);
 	position: relative;
-	border-top: 1px solid var(--im-content-chat__background-color);
 	overflow: hidden;
 }
 
@@ -55,36 +53,14 @@
 	flex-grow: 1;
 }
 
-.bx-im-textarea__upload_container {
+.bx-im-textarea__icon-container {
+	display: flex;
 	flex-shrink: 0;
 	flex-grow: 0;
 }
 
 .bx-im-textarea__icon {
-	width: 24px;
-	height: 24px;
-	background-position: center;
-	background-repeat: no-repeat;
 	cursor: pointer;
-	/*opacity: 0.35;*/
-	transition: opacity .3s;
-}
-.bx-im-textarea__icon:hover,
-.bx-im-textarea__icon.--active {
-	/*opacity: 0.7;*/
-}
-
-.bx-im-textarea__icon.--disabled {
-	/*opacity: 0.1;*/
-	cursor: initial;
-}
-
-.bx-im-textarea__action-panel .bx-im-textarea__icon {
-	margin-right: 13px;
-}
-
-.bx-im-textarea__action-panel .bx-im-textarea__icon:last-child {
-	margin-right: 5px;
 }
 
 .bx-im-textarea__element {
@@ -107,14 +83,17 @@
 }
 
 .bx-im-textarea__right {
+	display: flex;
 	flex-grow: 0;
 	flex-shrink: 0;
 }
 
 .bx-im-textarea__action-panel {
 	display: flex;
+	gap: 4px;
 	justify-content: flex-end;
 	width: 100%;
+	margin-right: 2px;
 }
 
 .bx-im-textarea__drag-handle {
@@ -155,22 +134,6 @@
 	background-image: url(./images/market-active.svg);
 }
 
-.bx-im-textarea__icon.--create {
-	background-image: url(./images/create.svg);
-}
-
-.bx-im-textarea__icon.--create.--active {
-	background-image: url(./images/create-active.svg);
-}
-
-.bx-im-textarea__icon.--create.--with-ai {
-	background-image: url(./images/create-with-ai.svg);
-}
-
-.bx-im-textarea__icon.--create.--with-ai.--active {
-	background-image: url(./images/create-with-ai-active.svg);
-}
-
 .bx-im-textarea__icon.--smile {
 	background-image: url(./images/smile.svg);
 }
@@ -203,8 +166,4 @@
 .bx-im-send-panel__button_container.--openChannel,
 .bx-im-send-panel__button_container.--generalChannel {
 	background-color: var(--im-textarea__background-color_send-button-channel);
-}
-
-.bx-im-send-panel__button_container.--copilot {
-	background-color: var(--im-textarea__background-color_send-button-copilot);
 }

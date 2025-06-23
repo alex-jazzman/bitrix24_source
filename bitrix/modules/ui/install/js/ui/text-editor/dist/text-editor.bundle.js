@@ -46,6 +46,21 @@ this.BX.UI = this.BX.UI || {};
 	const DETAIL_PREDICATES = [node => node.isDirectionless() && 'Directionless', node => node.isUnmergeable() && 'Unmergeable'];
 	const MODE_PREDICATES = [node => node.isToken() && 'Token', node => node.isSegmented() && 'Segmented'];
 
+	function getSelectedNode(selection) {
+	  const anchor = selection.anchor;
+	  const focus = selection.focus;
+	  const anchorNode = selection.anchor.getNode();
+	  const focusNode = selection.focus.getNode();
+	  if (anchorNode === focusNode) {
+	    return anchorNode;
+	  }
+	  const isBackward = selection.isBackward();
+	  if (isBackward) {
+	    return ui_lexical_selection.$isAtNodeEnd(focus) ? anchorNode : focusNode;
+	  }
+	  return ui_lexical_selection.$isAtNodeEnd(anchor) ? anchorNode : focusNode;
+	}
+
 	const nodeNameToTextFormat = {
 	  b: 'bold',
 	  strong: 'bold',
@@ -227,9 +242,6 @@ this.BX.UI = this.BX.UI || {};
 	function convertTextNode(textNode) {
 	  let textContent = textNode.getContent();
 	  textContent = textContent.replaceAll(/\r?\n|\t/gm, ' ').replace('\r', '');
-	  if (textNode.getParent().getName() !== 'code') {
-	    textContent = textContent.replaceAll(/\s+/g, ' ');
-	  }
 	  if (textContent === '') {
 	    return {
 	      node: null
@@ -364,34 +376,6 @@ this.BX.UI = this.BX.UI || {};
 	  });
 	  elementNode.appendChild(node);
 	  return elementNode;
-	}
-
-	function trimLineBreaks(nodes) {
-	  const trimmedNodes = [...nodes];
-	  const firstNode = trimmedNodes[0];
-	  const lastNode = trimmedNodes[trimmedNodes.length - 1];
-	  if (ui_lexical_core.$isLineBreakNode(firstNode) || ui_lexical_core.$isParagraphNode(firstNode) && firstNode.isEmpty()) {
-	    trimmedNodes.splice(0, 1);
-	  }
-	  if (ui_lexical_core.$isLineBreakNode(lastNode) || ui_lexical_core.$isParagraphNode(lastNode) && lastNode.isEmpty()) {
-	    trimmedNodes.splice(-1, 1);
-	  }
-	  return trimmedNodes;
-	}
-
-	function getSelectedNode(selection) {
-	  const anchor = selection.anchor;
-	  const focus = selection.focus;
-	  const anchorNode = selection.anchor.getNode();
-	  const focusNode = selection.focus.getNode();
-	  if (anchorNode === focusNode) {
-	    return anchorNode;
-	  }
-	  const isBackward = selection.isBackward();
-	  if (isBackward) {
-	    return ui_lexical_selection.$isAtNodeEnd(focus) ? anchorNode : focusNode;
-	  }
-	  return ui_lexical_selection.$isAtNodeEnd(anchor) ? anchorNode : focusNode;
 	}
 
 	var _textEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textEditor");
@@ -2048,10 +2032,10 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function convertParagraphNode(bbcodeNode) {
 	  return {
-	    node: ui_lexical_core.$createParagraphNode(),
-	    after: childLexicalNodes => {
-	      return trimLineBreaks(childLexicalNodes);
-	    }
+	    node: ui_lexical_core.$createParagraphNode()
+	    // after: (childLexicalNodes: Array<LexicalNode>): Array<LexicalNode> => {
+	    // 	return trimLineBreaks(childLexicalNodes);
+	    // },
 	  };
 	}
 
@@ -2487,8 +2471,8 @@ this.BX.UI = this.BX.UI || {};
 	          return {
 	            node: $createCodeNode(),
 	            after: childLexicalNodes => {
-	              const childNodes = trimLineBreaks(childLexicalNodes);
-	              const content = childNodes.map(childNode => childNode.getTextContent()).join('');
+	              // const childNodes = trimLineBreaks(childLexicalNodes);
+	              const content = childLexicalNodes.map(childNode => childNode.getTextContent()).join('');
 
 	              // return getCodeTokenNodes(parse(content));
 	              return [ui_lexical_core.$createTextNode(content)];
@@ -9371,14 +9355,16 @@ this.BX.UI = this.BX.UI || {};
 	    if (!ui_lexical_core.$isRangeSelection(selection)) {
 	      return false;
 	    }
-	    event.preventDefault();
-	    return this.getEditor().dispatchCommand(event.shiftKey ? ui_lexical_core.OUTDENT_CONTENT_COMMAND : ui_lexical_core.INDENT_CONTENT_COMMAND);
+	    return this.getEditor().dispatchCommand(event.shiftKey ? ui_lexical_core.OUTDENT_CONTENT_COMMAND : ui_lexical_core.INDENT_CONTENT_COMMAND, {
+	      event,
+	      triggerByTab: true
+	    });
 	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR),
 	  // Turn off RichText built-in indents
-	  this.getEditor().registerCommand(ui_lexical_core.INDENT_CONTENT_COMMAND, event => {
+	  this.getEditor().registerCommand(ui_lexical_core.INDENT_CONTENT_COMMAND, () => {
 	    const selection = ui_lexical_core.$getSelection();
 	    return !$isSelectionInList(selection);
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.OUTDENT_CONTENT_COMMAND, event => {
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.OUTDENT_CONTENT_COMMAND, () => {
 	    const selection = ui_lexical_core.$getSelection();
 	    return !$isSelectionInList(selection);
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));

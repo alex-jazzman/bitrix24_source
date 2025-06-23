@@ -24,7 +24,7 @@ if(!isset($arResult['HIDE_BUTTONS']) || !$arResult['HIDE_BUTTONS']) {
 		if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
 		{
 		?>
-			<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createBoard();">
+			<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createBoard('docs_page');">
 				<div class="disk-documents-control-panel-card disk-documents-control-panel-card--board">
 					<div class="disk-documents-control-panel-card-icon"></div>
 					<div class="disk-documents-control-panel-card-btn"></div>

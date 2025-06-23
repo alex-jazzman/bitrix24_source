@@ -13,11 +13,18 @@
 	align-items: center;
 }
 
-.booking-actions-popup__item-waitlist-icon {
+.booking--booking-actions-popup__item-waitlist-btn {
 	display: flex;
 	align-items: center;
+	cursor: pointer;
 }
 
-.booking-actions-popup__item-waitlist-icon.--end {
+.booking--booking-actions-popup__item-waitlist-btn.--end {
 	margin-left: 12px;
+}
+
+.booking--booking-actions-popup__item-waitlist-btn.--disabled {
+	opacity: 0.5;
+	cursor: unset;
+	user-select: none;
 }

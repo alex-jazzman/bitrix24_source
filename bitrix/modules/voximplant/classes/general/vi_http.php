@@ -11,7 +11,7 @@ class CVoxImplantHttp
 	const TYPE_CP = 'CP';
 	const VERSION = 20;
 
-	const CONTROLLER_RU = 'https://telephony-ru.bitrix.info/telephony/portal.php';
+	const CONTROLLER_RU = 'https://telephony.bitrix24.tech/telephony/portal.php';
 	const CONTROLLER_OTHER = 'https://telephony.bitrix.info/telephony/portal.php';
 
 	private const CACHE_ACCOUNT_NODE_ID_PREFIX = 'account_node_';
@@ -54,10 +54,11 @@ class CVoxImplantHttp
 
 		$account = new CVoxImplantAccount();
 		$accountLang = $account->GetAccountLang(false);
-		if ($accountLang === "kz" || $accountLang === "ru")
+		if (in_array($accountLang, ['ru', 'by', 'kz', 'uz'], true))
 		{
 			return static::CONTROLLER_RU;
 		}
+
 		return static::CONTROLLER_OTHER;
 	}
 

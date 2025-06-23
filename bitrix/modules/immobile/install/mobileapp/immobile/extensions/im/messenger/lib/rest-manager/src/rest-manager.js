@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, module) => {
 	const { Type } = require('type');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const logger = getLogger('network--batch');
+	const logger = getLogger('network');
 	/**
 	 * @class RestManager
 	 *

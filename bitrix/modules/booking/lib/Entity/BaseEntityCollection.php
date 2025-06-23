@@ -77,11 +77,7 @@ class BaseEntityCollection implements \IteratorAggregate, Arrayable, \Countable
 		return array_udiff(
 			$this->getCollectionItems(),
 			$collectionToCompare->getCollectionItems(),
-			function (EntityInterface $entity1, EntityInterface $entity2) {
-
-				return $entity1 <=> $entity2;
-
-			}
+			static fn (EntityInterface $entity1, EntityInterface $entity2) => $entity1 <=> $entity2,
 		);
 	}
 }

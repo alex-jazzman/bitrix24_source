@@ -18,6 +18,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
 	const { Loc } = require('loc');
 	const { qrauth } = require('qrauth/utils');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const CACHE_ID = 'DETAIL_CARD';
 	const TAB_HEADER_HEIGHT = 50;
@@ -2140,15 +2141,17 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			}
 
 			const { entityTypeId, entityId, categoryId } = this.getComponentParams();
-			const queryConfig = { json: { entityTypeId, entityId, categoryId } };
+			const queryConfig = { entityTypeId, entityId, categoryId };
 
-			BX.ajax
-				.runAction(this.getActionEndpoint('loadTabCounters'), queryConfig)
-				.then((response) => {
-					response.data.forEach(({ id, counter }) => {
+			const executor = new RunActionExecutor(this.getActionEndpoint('loadTabCounters'), queryConfig)
+				.enableJson()
+				.setHandler((response) => {
+					response.data?.forEach(({ id, counter }) => {
 						this.setTabCounter(id, counter);
 					});
-				})
+				});
+
+			executor.call(false)
 				.catch((response) => {
 					console.warn('Unable to load tab counters', response);
 				});
@@ -2166,7 +2169,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			if (this.layout)
 			{
 				this.layout.back();
-				this.layout.close();
+				this.layout.close(() => {
+					BX.postComponentEvent('DetailCard::onClose_Global', [{ entityTypeId: this.getEntityTypeId() }]);
+				});
 			}
 		}
 

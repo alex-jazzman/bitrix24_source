@@ -1,9 +1,6 @@
 <?php
 
 $MESS['BIZPROC_WORKFLOW_START_LIST_TITLE'] = 'Бизнес-процессы';
-$MESS['BIZPROC_WORKFLOW_START_LIST_MODULE_ERROR'] = 'Модуль "#MODULE#" не установлен';
-$MESS['BIZPROC_WORKFLOW_START_LIST_DOCUMENT_TYPE_ERROR'] = 'Для этого элемента бизнес-процессы недоступны ';
-$MESS['BIZPROC_WORKFLOW_START_LIST_RIGHTS_ERROR'] = 'Недостаточно прав для просмотра бизнес-процессов. Обратитесь к администратору вашего Битрикс24';
 $MESS['BIZPROC_WORKFLOW_START_LIST_GRID_COLUMN_NAME'] = 'Название';
 $MESS['BIZPROC_WORKFLOW_START_LIST_GRID_COLUMN_START'] = 'Действие';
 $MESS['BIZPROC_WORKFLOW_START_LIST_GRID_COLUMN_START_BUTTON'] = 'Запустить';
@@ -17,5 +14,5 @@ $MESS['BIZPROC_WORKFLOW_START_LIST_SYSTEM_PRESET_NAME'] = 'Для этой во�
 $MESS['BIZPROC_WORKFLOW_START_LIST_SYSTEM_PRESET_ITEM'] = 'Все';
 $MESS['BIZPROC_WORKFLOW_START_LIST_FILTER_FIELD_SYSTEM_PRESET'] = 'Показывать процессы';
 $MESS['BIZPROC_WORKFLOW_START_LIST_SOON'] = 'Скоро появится';
-$MESS['BIZPROC_WORKFLOW_START_EMPTY_DESCRIPTION'] = 'Нет описания';
+$MESS['BIZPROC_WORKFLOW_START_EMPTY_DESCRIPTION_1'] = 'Вам будет удобнее работать с процессом, если администратор заполнит описание';
 $MESS['BIZPROC_WORKFLOW_START_LIST_FEEDBACK_BUTTON'] = 'Обратная связь';

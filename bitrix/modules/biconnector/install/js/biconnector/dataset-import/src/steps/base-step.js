@@ -21,6 +21,11 @@ export const BaseStep = {
 			required: false,
 			default: false,
 		},
+		disabledElements: {
+			type: Object,
+			required: false,
+			default: null,
+		},
 	},
 	computed: {
 		displayedTitle()

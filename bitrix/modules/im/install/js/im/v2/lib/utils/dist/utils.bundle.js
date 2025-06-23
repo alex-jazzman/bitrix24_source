@@ -89,6 +89,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  isSameHour(firstDate, secondDate) {
 	    return firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth() && firstDate.getDate() === secondDate.getDate() && firstDate.getHours() === secondDate.getHours();
+	  },
+	  formatMediaDurationTime(seconds) {
+	    const padZero = num => {
+	      return num.toString().padStart(2, '0');
+	    };
+	    const hours = Math.floor(seconds / 3600);
+	    const minutes = Math.floor(seconds % 3600 / 60);
+	    const remainingSeconds = Math.floor(seconds % 60);
+	    const formattedHours = hours > 0 ? `${hours}:` : '';
+	    const formattedMinutes = hours > 0 ? padZero(minutes) : minutes.toString();
+	    const formattedSeconds = padZero(remainingSeconds);
+	    return `${formattedHours}${formattedMinutes}:${formattedSeconds}`;
 	  }
 	};
 
@@ -372,7 +384,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return `[USER=${dialogId}]${name}[/USER]`;
 	  },
 	  getMessageLink(dialogId, messageId) {
-	    return `${location.origin}/online/?${im_v2_const.GetParameter.openChat}=${dialogId}&${im_v2_const.GetParameter.openMessage}=${messageId}`;
+	    const getParams = new URLSearchParams({
+	      [im_v2_const.GetParameter.openChat]: dialogId,
+	      [im_v2_const.GetParameter.openMessage]: messageId
+	    });
+	    return `${location.origin}${im_v2_const.Path.online}?${getParams.toString()}`;
 	  },
 	  async copyToClipboard(textToCopy) {
 	    var _BX$clipboard;

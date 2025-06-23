@@ -11,10 +11,7 @@ CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip', 'ui.fonts.opensans'));
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	\Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 $guid = $arResult['GUID']."_editor";
 $prefix = mb_strtolower($guid);
@@ -47,6 +44,7 @@ $editorContext = array(
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
 			'ENABLE_MODE_TOGGLE' => false,
+			'ENABLE_PAGE_TITLE_CONTROLS' => false,
 			'ENABLE_CONFIG_CONTROL' => false,
 			'ENABLE_CONFIGURATION_UPDATE' => false,
 			'ENABLE_BOTTOM_PANEL' => false,

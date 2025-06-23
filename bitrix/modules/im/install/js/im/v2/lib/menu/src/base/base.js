@@ -6,6 +6,7 @@ import { RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
 
+import type { MenuOptions } from 'main.popup';
 import type { MenuItem } from '../type/menu';
 
 const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -54,7 +55,7 @@ export class BaseMenu extends EventEmitter
 		return MenuManager.create(this.getMenuOptions());
 	}
 
-	getMenuOptions(): Object
+	getMenuOptions(): MenuOptions
 	{
 		return {
 			id: this.id,
@@ -110,6 +111,11 @@ export class BaseMenu extends EventEmitter
 		return Core.getUserId();
 	}
 
+	isDelimiter(element: ?MenuItem): boolean
+	{
+		return Type.isObjectLike(element) && element.delimiter === true;
+	}
+
 	#prepareMenuItems(): MenuItem[]
 	{
 		return this.#filterExcessDelimiters(this.getMenuItems());
@@ -127,7 +133,7 @@ export class BaseMenu extends EventEmitter
 		let previousElement = null;
 
 		return menuItems.filter((element) => {
-			if (this.#isDelimiter(previousElement) && this.#isDelimiter(element))
+			if (this.isDelimiter(previousElement) && this.isDelimiter(element))
 			{
 				return false;
 			}
@@ -146,7 +152,7 @@ export class BaseMenu extends EventEmitter
 		let previousElement = null;
 
 		return menuItems.reverse().filter((element) => {
-			if (previousElement === null && this.#isDelimiter(element))
+			if (previousElement === null && this.isDelimiter(element))
 			{
 				return false;
 			}
@@ -158,10 +164,5 @@ export class BaseMenu extends EventEmitter
 
 			return true;
 		}).reverse();
-	}
-
-	#isDelimiter(element: ?MenuItem): boolean
-	{
-		return Type.isObjectLike(element) && element.delimiter === true;
 	}
 }

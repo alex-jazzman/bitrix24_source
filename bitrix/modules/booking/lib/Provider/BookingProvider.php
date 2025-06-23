@@ -7,6 +7,7 @@ namespace Bitrix\Booking\Provider;
 use Bitrix\Booking\Entity\Booking\Booking;
 use Bitrix\Booking\Entity\Booking\BookingCollection;
 use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Repository\BookingMessageRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
 use Bitrix\Booking\Internals\Service\CounterDictionary;
 use Bitrix\Booking\Internals\Service\Feature\BookingConfirmLink;
@@ -15,10 +16,12 @@ use Bitrix\Booking\Provider\Params\GridParams;
 class BookingProvider
 {
 	private BookingRepositoryInterface $repository;
+	private BookingMessageRepositoryInterface $messageRepository;
 
 	public function __construct()
 	{
 		$this->repository = Container::getBookingRepository();
+		$this->messageRepository = Container::getBookingMessageRepository();
 	}
 
 	public function getList(GridParams $gridParams, int $userId): BookingCollection
@@ -96,6 +99,20 @@ class BookingProvider
 		Container::getProviderManager()::getCurrentProvider()
 			?->getDataProvider()
 			?->loadDataForCollection(...$externalDataCollections);
+
+		return $this;
+	}
+
+	public function withMessages(BookingCollection $bookingCollection): self
+	{
+		$messageCollection = $this->messageRepository->getByBookingIds($bookingCollection->getEntityIds());
+
+		foreach ($bookingCollection as $booking)
+		{
+			$booking->setMessageCollection(
+				$messageCollection->filterByBookingId($booking->getId())
+			);
+		}
 
 		return $this;
 	}

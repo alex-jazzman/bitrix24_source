@@ -39,6 +39,9 @@ else if ($arParams['CALENDAR_TYPE'] === 'group')
 	$editTaskPath = str_replace(array('#group_id#', '#action#', '#task_id#'), array($arParams["OWNER_ID"], 'edit', 0), $arParams['PATH_TO_GROUP_TASK']);
 }
 
+$arParams['EDIT_TASK_PATH'] = $editTaskPath;
+$arParams['VIEW_TASK_PATH'] = $viewTaskPath;
+
 $arParams['USER_ID'] = CCalendar::GetCurUserId();
 $arParams['SHOW_FILTER'] =
 	($arParams['CALENDAR_TYPE'] === 'user' && (int)$arParams['OWNER_ID'] === (int)$arParams['USER_ID'])

@@ -306,7 +306,7 @@ ChatCreate.event.onInviteEmployees = function(event)
 
 	if (
 		Application.getApiVersion() < 34
-		|| !Feature.isIntranetInvitationAvaliable
+		|| !Feature.isIntranetInvitationAvailable
 	)
 	{
 		return false;

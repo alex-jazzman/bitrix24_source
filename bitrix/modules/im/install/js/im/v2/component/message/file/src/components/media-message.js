@@ -19,6 +19,7 @@ import type { ImModelMessage, ImModelChat } from 'im.v2.model';
 
 const MAX_GALLERY_WIDTH = 305;
 const MAX_SINGLE_MEDIA_WIDTH = 488;
+const MAX_SINGLE_MEDIA_WITH_TEXT_WIDTH = 305;
 
 // @vue/component
 export const MediaMessage = {
@@ -45,11 +46,8 @@ export const MediaMessage = {
 			type: Boolean,
 			default: true,
 		},
-		menuIsActiveForId: {
-			type: [String, Number],
-			default: 0,
-		},
 	},
+	emits: ['cancelClick'],
 	computed:
 	{
 		message(): ImModelMessage
@@ -75,6 +73,10 @@ export const MediaMessage = {
 		hasReply(): boolean
 		{
 			return this.message.replyId !== 0;
+		},
+		hasError(): boolean
+		{
+			return this.message.error;
 		},
 		showContextMenu(): boolean
 		{
@@ -104,14 +106,43 @@ export const MediaMessage = {
 				maxWidth = MAX_GALLERY_WIDTH;
 			}
 
+			if (this.hasText)
+			{
+				maxWidth = MAX_SINGLE_MEDIA_WITH_TEXT_WIDTH;
+
+				return {
+					'max-width': `${maxWidth}px`,
+					'min-width': `${maxWidth}px`,
+				};
+			}
+
 			return { 'max-width': `${maxWidth}px` };
 		},
 	},
+	methods: {
+		onCancel(event)
+		{
+			this.$emit('cancelClick', event);
+		},
+	},
 	template: `
-		<BaseMessage :item="item" :dialogId="dialogId" :withBackground="needBackground">
-			<div class="bx-im-message-image__container" :style="imageContainerStyles">
+		<BaseMessage 
+			:item="item" 
+			:dialogId="dialogId" 
+			:withBackground="needBackground"
+		>
+			<div 
+				class="bx-im-message-image__container"
+				:class="{
+					'--has-text': hasText,
+				}"
+				:style="imageContainerStyles"
+			>
 				<MessageHeader :withTitle="false" :item="item" class="bx-im-message-image__header" />
-				<MediaContent :item="message" />
+				<MediaContent 
+					:item="message"
+					@cancelClick="onCancel"
+				/>
 				<div v-if="showBottomContainer" class="bx-im-message-image__bottom-container">
 					<DefaultMessageContent
 						:item="item"

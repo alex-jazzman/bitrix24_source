@@ -1434,6 +1434,8 @@ BX(function() {
 		this.arParams = options.arParams;
 		this.migrationBarOptions = options.migrationBarOptions;
 
+		this.isV2Form = (options.isV2Form === 'true');
+
 		this.calendarSettings = (options.calendarSettings ? options.calendarSettings : {});
 
 		this.taskList = new Map();
@@ -2746,6 +2748,8 @@ BX(function() {
 		this.tours = options.tours;
 		this.guide = null;
 
+		this.isV2Form = options.isV2Form;
+
 		this.initGuides(options);
 	};
 
@@ -2778,12 +2782,19 @@ BX(function() {
 
 	BX.Tasks.TourGuideController.FirstGridTaskCreationTourGuide.prototype = {
 		start: function() {
-			var addButton = BX('tasks-buttonAdd');
+			const addButton = BX('tasks-buttonAdd');
 			if (!addButton)
 			{
 				return;
 			}
-			addButton.href = BX.Uri.addParam(addButton.href, { FIRST_GRID_TASK_CREATION_TOUR_GUIDE: 'Y' });
+
+			if (this.isV2Form === false)
+			{
+				addButton.href = BX.Uri.addParam(
+					addButton.href,
+					{ FIRST_GRID_TASK_CREATION_TOUR_GUIDE: 'Y' },
+				);
+			}
 
 			this.guide = new BX.UI.Tour.Guide({
 				steps: [
@@ -2796,12 +2807,15 @@ BX(function() {
 				onEvents: true,
 			});
 
-			BX.addCustomEvent('UI.Tour.Guide:onFinish', function(event) {
-				if (event.getData().guide === this.guide)
-				{
-					addButton.href = BX.Uri.removeParam(addButton.href, ['FIRST_GRID_TASK_CREATION_TOUR_GUIDE']);
-				}
-			}.bind(this));
+			if (this.isV2Form === false)
+			{
+				BX.addCustomEvent('UI.Tour.Guide:onFinish', function(event) {
+					if (event.getData().guide === this.guide)
+					{
+						addButton.href = BX.Uri.removeParam(addButton.href, ['FIRST_GRID_TASK_CREATION_TOUR_GUIDE']);
+					}
+				}.bind(this));
+			}
 
 			this.showNextStep();
 		},

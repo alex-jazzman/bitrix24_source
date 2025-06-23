@@ -167,7 +167,7 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 		renderText()
 		{
-			const { text, textStyles } = this.props;
+			const { text, textStyles = {} } = this.props;
 
 			return Text4({
 				text,

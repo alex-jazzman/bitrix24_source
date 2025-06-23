@@ -4,7 +4,7 @@ import { UserMenu } from 'im.v2.lib.menu';
 import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
 import { CallManager } from 'im.v2.lib.call';
-import { ChatService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { ActionByRole, ActionByUserType, ChatType, UserType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { showLeaveChatConfirm } from 'im.v2.lib.confirm';

@@ -511,6 +511,7 @@ class CAllCrmLead
 		$result['ASSIGNED_BY'] = $result['ASSIGNED_BY_ID'];
 		$result['CREATED_BY'] = $result['CREATED_BY_ID'];
 		$result['MODIFY_BY'] = $result['MODIFY_BY_ID'];
+		$result['MOVED_BY'] = $result['MOVED_BY_ID'];
 
 		$additionalFields = is_array($arOptions) && isset($arOptions['ADDITIONAL_FIELDS'])
 			? $arOptions['ADDITIONAL_FIELDS'] : null;

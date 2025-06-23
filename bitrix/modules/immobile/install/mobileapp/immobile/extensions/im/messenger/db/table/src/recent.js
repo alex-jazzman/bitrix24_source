@@ -13,6 +13,7 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogType } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { getStartWordsSearchVariants } = require('im/messenger/db/helper/start-words');
 
 	/**
 	 * @extends {Table<RecentStoredData>}
@@ -117,11 +118,12 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			);
 
 			const query = `
-				SELECT b_im_recent.*, b_im_dialog.* 
-				FROM b_im_recent 
-				JOIN b_im_dialog ON b_im_recent.id = b_im_dialog.dialogId ${filterString}
-				ORDER BY pinned DESC, lastActivityDate DESC
-				LIMIT ?
+				SELECT b_im_recent.*, b_im_dialog.*
+				FROM b_im_recent
+						 JOIN b_im_dialog ON b_im_recent.id = b_im_dialog.dialogId
+						 LEFT JOIN b_im_draft ON b_im_recent.id = b_im_draft.dialogId ${filterString}
+				ORDER BY pinned DESC, b_im_draft.lastActivityDate DESC NULLS LAST, lastActivityDate DESC
+					LIMIT ?
 			`;
 
 			const selectResult = await this.executeSql({
@@ -139,6 +141,10 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 
 			const filesIds = this.getFilesIdsFromRecentItems(restoredRows.items);
 			restoredRows.files = await this.getFilesByIdList(filesIds);
+
+			const draftIds = this.getDraftIdsFromRecentItems(restoredRows.items);
+			restoredRows.draft = await this.getDraftByIdList(draftIds);
+
 			try
 			{
 				const lastActivityDateObj = restoredRows.items[restoredRows.items.length - 1]?.lastActivityDate;
@@ -156,6 +162,55 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			}
 
 			return restoredRows;
+		}
+
+		/**
+		 * @param {string} searchText
+		 * @param {'asc'|'desc'} order='asc'
+		 * @param {number} limit=25
+		 *
+		 * @returns {Promise<{items: *[]}>}
+		 */
+		async searchByText(
+			searchText,
+			order = 'desc',
+			limit = 25,
+			shouldRestoreRows = true,
+		)
+		{
+			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isStringFilled(searchText))
+			{
+				return {
+					items: [],
+				};
+			}
+
+			const filterString = this.createFilter(
+				{
+					exceptDialogTypes: [
+						DialogType.copilot,
+						DialogType.lines,
+						DialogType.comment,
+					],
+				},
+			);
+
+			const { sqlCondition, values } = getStartWordsSearchVariants('name', searchText);
+			const result = await this.executeSql({
+				query: `
+					SELECT * 
+					FROM b_im_dialog
+					JOIN b_im_recent ON b_im_recent.id = b_im_dialog.dialogId
+					${filterString} AND ${sqlCondition} 
+					ORDER BY id ${order}
+					LIMIT ${limit}
+				`,
+				values: [
+					...values,
+				],
+			});
+
+			return this.prepareListResult(result, shouldRestoreRows);
 		}
 
 		/**
@@ -243,7 +298,7 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			if (dialogTypes.length > 0)
 			{
 				const types = dialogTypes.map((item) => `'${item}'`);
-				filterString = `WHERE type IN (${types})`;
+				filterString = `WHERE ${DialogTable.getTableName()}.type IN (${types})`;
 			}
 
 			if (exceptDialogTypes.length > 0)
@@ -251,11 +306,11 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				const types = exceptDialogTypes.map((item) => `'${item}'`);
 				if (filterString.length > 0)
 				{
-					filterString += ` AND type NOT IN (${types})`;
+					filterString += ` AND ${DialogTable.getTableName()}.type NOT IN (${types})`;
 				}
 				else
 				{
-					filterString = `WHERE type NOT IN (${types})`;
+					filterString = `WHERE ${DialogTable.getTableName()}.type NOT IN (${types})`;
 				}
 			}
 
@@ -263,8 +318,8 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			{
 				// eslint-disable-next-line no-unused-expressions
 				filterString.length > 0
-					? filterString += ` AND lastActivityDate < '${lastActivityDate}'`
-					: filterString = ` WHERE lastActivityDate < '${lastActivityDate}'`;
+					? filterString += ` AND ${this.getName()}.lastActivityDate < '${lastActivityDate}'`
+					: filterString = ` WHERE ${this.getName()}.lastActivityDate < '${lastActivityDate}'`;
 			}
 
 			return filterString;
@@ -328,6 +383,15 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {Array<object>} recentItems
+		 * @return {Array<number | string>}
+		 */
+		getDraftIdsFromRecentItems(recentItems)
+		{
+			return [...new Set(recentItems.map((item) => item.id))];
+		}
+
+		/**
 		 * @param {Array<string>} ids
 		 * @return {Promise<{items: Array}>}
 		 */
@@ -356,6 +420,17 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		async getFilesByIdList(ids)
 		{
 			const result = await serviceLocator.get('core').getRepository().message.fileTable.getListByIds(ids);
+
+			return result.items;
+		}
+
+		/**
+		 * @param {Array<string>} ids
+		 * @return {Promise<{items: Array}>}
+		 */
+		async getDraftByIdList(ids)
+		{
+			const result = await serviceLocator.get('core').getRepository().draft.draftTable.getListByIds(ids);
 
 			return result.items;
 		}

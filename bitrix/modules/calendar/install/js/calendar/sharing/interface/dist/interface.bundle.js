@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Calendar = this.BX.Calendar || {};
-(function (exports,main_date,calendar_sharing_analytics,ui_entitySelector,ui_avatar,ui_iconSet_api_core,ui_dialogs_messagebox,ui_buttons,ui_iconSet_actions,main_qrcode,ui_designTokens,ui_switcher,spotlight,ui_tour,ui_cnt,ui_infoHelper,calendar_util,main_core,main_popup,main_loader,main_core_events) {
+(function (exports,ui_switcher,main_date,calendar_sharing_analytics,ui_entitySelector,ui_avatar,ui_iconSet_api_core,ui_dialogs_messagebox,ui_buttons,ui_iconSet_actions,main_qrcode,ui_designTokens,spotlight,ui_tour,ui_cnt,ui_infoHelper,calendar_util,main_core,main_popup,main_loader,main_core_events) {
 	'use strict';
 
 	var _calendarSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calendarSettings");
@@ -2801,10 +2801,6 @@ this.BX.Calendar = this.BX.Calendar || {};
 	  };
 	}
 
-	let _$8 = t => t,
-	  _t$8,
-	  _t2$6,
-	  _t3$6;
 	class SharingButton {
 	  constructor(options = {}) {
 	    var _this$sharingConfig, _this$sharingConfig2, _this$sharingConfig3;
@@ -2828,7 +2824,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	  }
 	  show() {
 	    main_core.Dom.addClass(this.wrap, 'calendar-sharing__btn-wrap');
-	    this.button = new ui_buttons.Button({
+	    this.button = new ui_buttons.SplitButton({
 	      text: main_core.Loc.getMessage('SHARING_BUTTON_TITLE'),
 	      round: true,
 	      size: ui_buttons.ButtonSize.EXTRA_SMALL,
@@ -2836,13 +2832,26 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      icon: this.sharingFeatureLimit ? ui_buttons.ButtonIcon.LOCK : null,
 	      className: 'ui-btn-themes calendar-sharing__btn',
 	      onclick: (button, event) => {
-	        if (!this.switcher.getNode().contains(event.target)) {
+	        if (!button.getSwitcher().getNode().contains(event.target)) {
 	          this.handleSharingButtonClick();
+	        }
+	      },
+	      dataset: {
+	        id: 'calendar_sharing_btn'
+	      },
+	      switcher: {
+	        checked: this.isSharingEnabled() && !this.sharingFeatureLimit,
+	        color: ui_switcher.SwitcherColor.green,
+	        useAirDesign: true,
+	        handlers: {
+	          toggled: () => this.handleSwitcherToggled()
 	        }
 	      }
 	    });
 	    this.button.renderTo(this.wrap);
-	    this.renderSwitcher();
+	    main_core.Event.bind(this.button.getSwitcher().getNode(), 'click', this.handleSwitcherWrapClick.bind(this), {
+	      capture: true
+	    });
 	    if (this.payAttentionToNewFeatureMode === this.PAY_ATTENTION_TO_NEW_FEATURE_JOINT) {
 	      setTimeout(() => {
 	        if (BX.SidePanel.Instance.getTopSlider() === null) {
@@ -2862,62 +2871,34 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    if (this.isSharingEnabled()) {
 	      this.openDialog();
 	    } else {
-	      this.switcher.toggle();
+	      this.button.getSwitcher().toggle();
 	    }
 	  }
-	  getSwitcherContainer() {
-	    return main_core.Tag.render(_t$8 || (_t$8 = _$8`
-			<div class="calendar-sharing__switcher"></div>
-		`));
-	  }
-	  getSwitcherDivider() {
-	    return main_core.Tag.render(_t2$6 || (_t2$6 = _$8`
-			<div class="calendar-sharing__switcher_divider"></div>
-		`));
-	  }
-	  renderSwitcher() {
-	    main_core.Dom.append(this.getSwitcherDivider(), this.wrap);
-	    this.switcherWrap = main_core.Tag.render(_t3$6 || (_t3$6 = _$8`<div class="calendar-sharing__switcher-wrap"></div>`));
-	    main_core.Dom.append(this.switcherWrap, this.wrap);
-	    main_core.Event.bind(this.switcherWrap, 'click', this.handleSwitcherWrapClick.bind(this), {
-	      capture: true
-	    });
-	    this.switcher = new BX.UI.Switcher({
-	      node: this.getSwitcherContainer(),
-	      checked: this.isSharingEnabled() && !this.sharingFeatureLimit,
-	      color: 'green',
-	      size: 'small',
-	      handlers: {
-	        toggled: () => this.handleSwitcherToggled()
-	      }
-	    });
-	    this.switcher.renderTo(this.switcherWrap);
-	  }
 	  handleSwitcherWrapClick(event) {
-	    if (this.switcher.isChecked()) {
+	    if (this.button.getSwitcher().isChecked()) {
 	      this.showWarningPopup();
 	      event.stopPropagation();
 	    }
 	  }
 	  handleSwitcherToggled() {
-	    if (this.sharingFeatureLimit && this.switcher.isChecked()) {
+	    if (this.sharingFeatureLimit && this.button.getSwitcher().isChecked()) {
 	      ui_infoHelper.FeaturePromotersRegistry.getPromoter({
 	        featureId: 'calendar_sharing'
 	      }).show();
-	      this.switcher.toggle();
+	      this.button.getSwitcher().toggle();
 	      return;
 	    }
 	    if (this.isToggledAfterErrorOccurred()) {
 	      return;
 	    }
-	    if (this.switcher.isChecked()) {
+	    if (this.button.getSwitcher().isChecked()) {
 	      this.enableSharing();
 	    } else {
 	      this.disableSharing();
 	    }
 	  }
 	  isToggledAfterErrorOccurred() {
-	    return this.switcher.isChecked() === this.isSharingEnabled();
+	    return this.button.getSwitcher().isChecked() === this.isSharingEnabled();
 	  }
 	  isSharingEnabled() {
 	    return main_core.Type.isString(this.sharingUrl);
@@ -2931,11 +2912,11 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      this.sharingRule = response.data.rule;
 	      this.openDialog();
 	      main_core_events.EventEmitter.emit(event, {
-	        isChecked: this.switcher.isChecked(),
+	        isChecked: this.button.getSwitcher().isChecked(),
 	        url: response.data.url
 	      });
 	    }).catch(() => {
-	      this.switcher.toggle();
+	      this.button.getSwitcher().toggle();
 	    });
 	  }
 	  openDialog() {
@@ -2975,10 +2956,10 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        this.newDialog = null;
 	      }
 	      main_core_events.EventEmitter.emit(event, {
-	        isChecked: this.switcher.isChecked()
+	        isChecked: this.button.getSwitcher().isChecked()
 	      });
 	    }).catch(() => {
-	      this.switcher.toggle();
+	      this.button.getSwitcher().toggle();
 	    });
 	  }
 	  showWarningPopup() {
@@ -3024,7 +3005,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    });
 	  }
 	  handleSubmitButtonClick() {
-	    this.switcher.toggle();
+	    this.button.getSwitcher().toggle();
 	    this.warningPopup.close();
 	  }
 	  handleCancelButtonClick() {
@@ -3222,9 +3203,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	  }
 	}
 
-	let _$9 = t => t,
-	  _t$9,
-	  _t2$7;
+	let _$8 = t => t,
+	  _t$8,
+	  _t2$6;
 	var _popup$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
 	var _layout$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
@@ -3305,7 +3286,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	   */
 	  getNodeQr() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _layout$8)[_layout$8].qr) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _layout$8)[_layout$8].qr = main_core.Tag.render(_t$9 || (_t$9 = _$9`
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$8)[_layout$8].qr = main_core.Tag.render(_t$8 || (_t$8 = _$8`
 				<div class="calendar-sharing__qr-block"></div>
 			`));
 
@@ -3336,7 +3317,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	   * @returns {HTMLElement}
 	   */
 	  getContent() {
-	    return main_core.Tag.render(_t2$7 || (_t2$7 = _$9`
+	    return main_core.Tag.render(_t2$6 || (_t2$6 = _$8`
 			<div class="calendar-sharing__qr-content">
 				<div class="calendar-sharing__qr-title">${0}</div>
 				${0}
@@ -3511,5 +3492,5 @@ this.BX.Calendar = this.BX.Calendar || {};
 	exports.GroupSharing = GroupSharing;
 	exports.GroupSharingController = GroupSharingController;
 
-}((this.BX.Calendar.Sharing = this.BX.Calendar.Sharing || {}),BX.Main,BX.Calendar.Sharing,BX.UI.EntitySelector,BX.UI,BX.UI.IconSet,BX.UI.Dialogs,BX.UI,BX,BX,BX,BX.UI,BX,BX.UI.Tour,BX.UI,BX.UI,BX.Calendar,BX,BX.Main,BX,BX.Event));
+}((this.BX.Calendar.Sharing = this.BX.Calendar.Sharing || {}),BX.UI,BX.Main,BX.Calendar.Sharing,BX.UI.EntitySelector,BX.UI,BX.UI.IconSet,BX.UI.Dialogs,BX.UI,BX,BX,BX,BX,BX.UI.Tour,BX.UI,BX.UI,BX.Calendar,BX,BX.Main,BX,BX.Event));
 //# sourceMappingURL=interface.bundle.js.map

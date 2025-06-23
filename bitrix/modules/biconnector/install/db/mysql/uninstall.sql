@@ -18,3 +18,5 @@ DROP TABLE IF EXISTS b_biconnector_external_dataset;
 DROP TABLE IF EXISTS b_biconnector_external_source_dataset_relation;
 DROP TABLE IF EXISTS b_biconnector_external_dataset_field;
 DROP TABLE IF EXISTS b_biconnector_external_dataset_field_format;
+DROP TABLE IF EXISTS b_biconnector_external_source_rest;
+DROP TABLE IF EXISTS b_biconnector_external_source_rest_connector;

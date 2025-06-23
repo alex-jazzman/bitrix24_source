@@ -3,9 +3,10 @@ import { EventEmitter } from 'main.core.events';
 import { UI } from 'ui.notification';
 import { BitrixVue } from 'ui.vue3';
 import { VoteForm } from './components/form';
+import { VoteAnalytics, AnalyticsEvents } from 'vote.analytics';
 
 type FormOptions = {
-	chatId: string;
+	chatId: number;
 	containerId: string;
 	maxQuestionsCount: number;
 	minAnswersCount: number;
@@ -18,11 +19,14 @@ const calculateSortOrder = (questionIndex: number): string => {
 	return String(questionIndex * indexStep + indexStep);
 };
 
-const parseData = (chatId: string): { [key: string]: string } => {
+const parseData = (chatId: number): { [key: string]: string } => {
 	const { questions, settings } = App.voteForm;
-	const { anonymousVote } = settings;
-	const data = { chatId, 'IM_MESSAGE_VOTE_DATA[ANONYMITY]': anonymousVote ? '2' : '1' };
-	data['IM_MESSAGE_VOTE_DATA[OPTIONS][]'] = '1';
+	const { anonymousVote, allowRevoking } = settings;
+	const data = {
+		chatId,
+		'IM_MESSAGE_VOTE_DATA[ANONYMITY]': anonymousVote ? '2' : '1',
+		'IM_MESSAGE_VOTE_DATA[OPTIONS]': allowRevoking ? '1' : '0',
+	};
 
 	return Object.values(questions).reduce((acc, question, questionIndex) => {
 		const { questionText, allowMultipleAnswers, answers } = question;
@@ -30,11 +34,7 @@ const parseData = (chatId: string): { [key: string]: string } => {
 		acc[`${questionKey}[QUESTION]`] = questionText;
 		acc[`${questionKey}[C_SORT]`] = calculateSortOrder(questionIndex);
 		acc[`${questionKey}[QUESTION_TYPE]`] = 'text';
-		acc[`${questionKey}[FIELD_TYPE]`] = '0';
-		if (allowMultipleAnswers)
-		{
-			acc[`${questionKey}[FIELD_TYPE]`] = '1';
-		}
+		acc[`${questionKey}[FIELD_TYPE]`] = allowMultipleAnswers ? '1' : '0';
 
 		Object.values(answers).forEach((answer, answerIndex) => {
 			const answerKey = `${questionKey}[ANSWERS][${answerIndex}]`;
@@ -48,11 +48,20 @@ const parseData = (chatId: string): { [key: string]: string } => {
 	}, data);
 };
 
-const createVote = async (saveButton: HTMLElement, chatId: string): Promise<void> => {
+const createVote = async (saveButton: HTMLElement, chatId: number): Promise<void> => {
 	const parsedData = parseData(chatId);
 	try
 	{
-		await ajax.runAction('bitrix:vote.Integration.Im.send', { data: parsedData });
+		const { settings, questions } = App.voteForm;
+		const { anonymousVote, allowRevoking } = settings;
+		const { data } = await ajax.runAction('bitrix:vote.Integration.Im.send', { data: parsedData });
+		const { messageId } = data;
+		VoteAnalytics.publishVote(anonymousVote, messageId);
+		const [{ answers, allowMultipleAnswers }] = Object.values(questions);
+		const answersCount = Object.keys(answers).length;
+		VoteAnalytics.setupVote(answersCount, AnalyticsEvents.setOptions, messageId);
+		VoteAnalytics.setupVote(allowMultipleAnswers, AnalyticsEvents.isMultipleChoice, messageId);
+		VoteAnalytics.setupVote(allowRevoking, AnalyticsEvents.setCancelVote, messageId);
 		BX.SidePanel.Instance.close();
 	}
 	catch (response)
@@ -71,7 +80,7 @@ const toggleSaveButton = (saveButton: HTMLElement): void => {
 	Dom.toggleClass(saveButton, 'ui-btn-disabled');
 };
 
-const init = (chatId: string): void => {
+const init = (chatId: number): void => {
 	const saveButton = document.getElementById('vote-im-edit-slider-button-create');
 	toggleSaveButton(saveButton);
 	Event.bind(saveButton, 'click', () => createVote(saveButton, chatId));

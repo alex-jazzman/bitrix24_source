@@ -1910,7 +1910,7 @@ class BizProcDocument
 						$customType = $USER_FIELD_MANAGER->getUserType($customTypeID);
 						if(is_bool($customType))
 							$customType = array();
-						
+
 						if ($value !== null && array_key_exists("CheckFields", $customType))
 						{
 							$errorsTmp1 = call_user_func_array(

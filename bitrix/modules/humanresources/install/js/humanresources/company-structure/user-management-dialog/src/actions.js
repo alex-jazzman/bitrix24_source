@@ -1,5 +1,5 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { getMemberRoles } from 'humanresources.company-structure.api';
 
 export const UserManagementDialogActions = {
 	getDepartmentName: (nodeId: number): string => {
@@ -50,6 +50,7 @@ export const UserManagementDialogActions = {
 		{
 			return;
 		}
+		const memberRoles = getMemberRoles(targetDepartment.entityType);
 
 		const newMemberUserIds = new Set(users.map((user) => user.id));
 		if (newMemberUserIds.has(store.userId))

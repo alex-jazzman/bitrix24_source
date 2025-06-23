@@ -71,6 +71,28 @@ if ($arParams['sourceId'] === ExternalSource\Type::Csv->value)
 			]
 		)
 	);
+
+	if ($arParams['datasetId'] > 0)
+	{
+		Toolbar::addButton(
+			new Buttons\Button(
+				[
+					'color' => Buttons\Color::LIGHT_BORDER,
+					'size' => Buttons\Size::MEDIUM,
+					'click' => new Buttons\JsCode(
+						"BX.Event.EventEmitter.emit('biconnector:dataset-import:onExportFileClick');"
+					),
+					'dataset' => [
+						'toolbar-collapsed-icon' => Buttons\Icon::INFO,
+					],
+					'text' => Loc::getMessage('DATASET_IMPORT_REEXPORT'),
+					'classList' => [
+						'biconnector-export-file-button',
+					],
+				]
+			)
+		);
+	}
 }
 
 $articleCode = (int)($arResult['helpdeskCode'] ?? 0);

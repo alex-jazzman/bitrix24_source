@@ -62,6 +62,7 @@ $MESS["HINT_CATALOG_SETTINGS_STORE_DOCUMENT_CARD_EDIT"] = "User can add, edit or
 $MESS["HINT_CATALOG_STORE_DOCUMENT_ALLOW_NEGATION_PRODUCT_QUANTITY_D"] = "User can write-off product quantity that exceeds the actual warehouse stock, which will result in negative product stock for this warehouse.";
 $MESS["HINT_CATALOG_STORE_DOCUMENT_ALLOW_NEGATION_PRODUCT_QUANTITY_M"] = "User can transfer product quantity that exceeds the actual warehouse stock, which will result in negative product stock for this warehouse. This may be useful when the product has arrived but not enrolled yet.";
 $MESS["HINT_CATALOG_STORE_DOCUMENT_ALLOW_NEGATION_PRODUCT_QUANTITY_W"] = "User can sell product quantity that exceeds the actual warehouse stock, which will result in negative product stock for this warehouse. This may be useful when the product has arrived but not enrolled yet.";
+$MESS["HINT_CATALOG_STORE_DOCUMENT_DELETE"] = "User will have to have access permissions for all warehouses specified in the inventory object.";
 $MESS["HINT_CATALOG_STORE_MODIFY"] = "Employee can add, edit and delete warehouses.";
 $MESS["HINT_CATALOG_STORE_RESERVE"] = "Select warehouses where the user can reserve products. Use this option to restrict user access to a specific warehouse only.";
 $MESS["HINT_CATALOG_STORE_VIEW"] = "User can view current product availability in the warehouse, and select warehouses when preparing inventory objects, performing stock receipt or write-off.";

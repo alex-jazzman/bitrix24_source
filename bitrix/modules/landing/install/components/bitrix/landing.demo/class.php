@@ -16,6 +16,7 @@ use Bitrix\Landing\Rights;
 use Bitrix\Landing\Landing\Cache;
 use Bitrix\Landing\Hook\Page\Settings;
 use Bitrix\Landing\Site\Type;
+use Bitrix\Landing\Metrika;
 use Bitrix\Highloadblock;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -1035,6 +1036,19 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 			);
 			if ($landingId)
 			{
+				$metrika = new Metrika\Metrika(
+					Metrika\Categories::getBySiteType($this->arParams['TYPE']),
+					Metrika\Events::createTemplate,
+				);
+				$metrika
+					->setType(Metrika\Types::template)
+					->setSection(Metrika\Sections::page)
+					->setParams([
+						'code' => $code,
+					])
+					->send()
+				;
+
 				return $this->redirectToLanding($landingId);
 			}
 			else
@@ -1446,6 +1460,19 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				}
 				\Bitrix\Landing\Rights::setGlobalOn();
 				// send events
+
+				$metrika = new Metrika\Metrika(
+					Metrika\Categories::getBySiteType($this->arParams['TYPE']),
+					Metrika\Events::createTemplate,
+				);
+				$metrika->setType(Metrika\Types::template)
+					->setSection(Metrika\Sections::page)
+					->setParams([
+						'code' => $code,
+					])
+					->send()
+				;
+
 				$event = new Event('landing', 'onAfterDemoCreate', array(
 					'id' => $siteData['ID'],
 					'code' => $code,
@@ -1922,6 +1949,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 					'search-result3-dark',
 					'news-detail',
 					'requisites',
+					'ent-en',
 				];
 				foreach ($localTemplates as $template)
 				{

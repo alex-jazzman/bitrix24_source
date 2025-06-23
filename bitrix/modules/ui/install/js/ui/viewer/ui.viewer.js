@@ -658,6 +658,8 @@
 							loadedItem.asFirstToShow();
 						}
 					}
+
+					this.processPreload(index, direction);
 				})
 				.catch((reason) => {
 					this.unobserveItemLoading(item);
@@ -683,8 +685,6 @@
 
 			const cycleMove = this.items.length > 20 && (moveToStart || moveToEnd);
 			this.selectCarouselItem(this.currentIndex, options.asFirstToShow !== true && !cycleMove);
-
-			this.processPreload(this.currentIndex, direction);
 		},
 
 		processPreload(fromIndex, direction)
@@ -2291,17 +2291,39 @@
 				return false;
 			}
 
-			var items = nodes.map(function(node, index) {
-				if (node === targetNode)
-				{
-					indexToShow = index;
-				}
-				return BX.UI.Viewer.buildItemByNode(node);
-			});
+			const openViewer = () => {
+				const items = nodes.map((node, index) => {
+					if (node === targetNode)
+					{
+						indexToShow = index;
+					}
 
-			BX.UI.Viewer.Instance.setItems(items).then(function () {
-				BX.UI.Viewer.Instance.open(indexToShow);
-			});
+					return top.BX.UI.Viewer.buildItemByNode(node);
+				});
+
+				top.BX.UI.Viewer.Instance.setItems(items)
+					.then(() => {
+						top.BX.UI.Viewer.Instance.open(indexToShow);
+					})
+					.catch(() => {
+						// Fail silently
+					});
+			};
+
+			if (window.top !== window && !BX.getClass('window.top.BX.UI.Viewer.Instance'))
+			{
+				top.BX.loadExt('ui.viewer')
+					.then(() => {
+						openViewer();
+					})
+					.catch(() => {
+						// Fail Silently
+					});
+			}
+			else
+			{
+				openViewer();
+			}
 
 			event.preventDefault();
 		});

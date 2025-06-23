@@ -41,6 +41,10 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 		constructor()
 		{
 			this.lastId = 0;
+			/**
+			 * @type {Array<Message>}
+			 */
+			this.messageList = [];
 			this.bindMethods();
 		}
 
@@ -76,6 +80,7 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 			this.viewAreaMessagesChangedHandler = this.viewAreaMessagesChangedHandler.bind(this);
 			this.scrollToNewMessagesHandler = this.scrollToNewMessagesHandler.bind(this);
 			this.messageLongTapHandler = this.messageLongTapHandler.bind(this);
+			this.messageMenuActionTapHandler = this.messageMenuActionTapHandler.bind(this);
 		}
 
 		subscribeEvents()
@@ -200,10 +205,10 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 		{
 			if (this.lastId === 1)
 			{
-				return this.widget.setMessages([message]);
+				return this.setMessageList([message]);
 			}
 
-			return this.widget.addMessages([message]);
+			return this.addMessageList([message]);
 		}
 
 		async log(args)
@@ -229,6 +234,37 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 		async trace(args)
 		{
 			return this.printMessage(this.createLogMessage(args));
+		}
+
+		/**
+		 * @param {array} messageList
+		 */
+		setMessageList(messageList)
+		{
+			this.messageList = messageList.length > 0 ? messageList : [];
+
+			return this.widget.setMessages(messageList);
+		}
+
+		/**
+		 * @param {array} messageList
+		 */
+		addMessageList(messageList)
+		{
+			this.messageList.push(...messageList);
+
+			return this.widget.addMessages(messageList);
+		}
+
+		/**
+		 * @param {string} id
+		 * @return {Message|undefined}
+		 */
+		getMessageById(id)
+		{
+			return this.messageList.find((message) => {
+				return message.id === String(id);
+			});
 		}
 
 		textFieldSubmitHandler(inputText)
@@ -281,7 +317,9 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 		{
 			if (actionId === CopyAction.id)
 			{
-				Application.copyToClipboard(message?.message[0]?.text);
+				const messageData = this.getMessageById(message?.id);
+
+				Application.copyToClipboard(messageData?.message?.[0]?.text);
 
 				Notification.showToastWithParams({
 					message: 'Log copied',

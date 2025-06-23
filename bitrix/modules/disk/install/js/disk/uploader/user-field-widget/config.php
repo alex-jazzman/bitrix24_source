@@ -9,6 +9,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+if (!\Bitrix\Main\Loader::includeModule('disk'))
+{
+	return [];
+}
+
 $importHandlers = [];
 $handlersManager = \Bitrix\Disk\Driver::getInstance()->getDocumentHandlersManager();
 foreach ($handlersManager->getHandlersForImport() as $handler)
@@ -48,16 +53,19 @@ return [
 	'js' => 'dist/disk.uploader.uf-file.bundle.js',
 	'css' => 'dist/disk.uploader.uf-file.bundle.css',
 	'rel' => [
-		'main.core',
-		'ui.design-tokens',
 		'ui.uploader.vue',
 		'ui.uploader.tile-widget',
-		'main.popup',
+		'main.core.events',
+		'ui.buttons',
 		'ui.info-helper',
-
-		// it would be better to load these extensions on demand
 		'disk.document',
-		'disk.viewer.actions',
+		'ui.vue3.components.rich-loc',
+		'main.core',
+		'ui.system.menu',
+		'ui.uploader.core',
+		'ui.icons.generator',
+		'ui.icon-set.api.core',
+		'ui.icon-set.outline',
 	],
 	'skip_core' => false,
 	'settings' => [

@@ -89,7 +89,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 		 */
 		handleFileDelete(params, extra, command)
 		{
-			const { chatId, linkId } = params;
+			const { chatId, linkId, fileId } = params;
 			if (
 				!this.isFilesMigrated()
 				|| !this.isSidebarInited(chatId)
@@ -104,6 +104,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 			void this.store.dispatch('sidebarModel/sidebarFilesModel/delete', {
 				chatId,
 				id: linkId,
+				fileId,
 			});
 		}
 		// endregion

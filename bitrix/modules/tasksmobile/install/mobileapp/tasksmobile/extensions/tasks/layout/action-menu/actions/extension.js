@@ -31,6 +31,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { truncate } = require('utils/string');
 	const { throttle } = require('utils/function');
 	const { copyToClipboard } = require('utils/copy');
+	const { AppRatingManager, UserEvent } = require('app-rating-manager');
 	const throttledShowSafeToast = throttle(showSafeToast, 4000);
 
 	const {
@@ -282,6 +283,14 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 									tasksUpserted([data.parentTask]);
 									showCompleteParentTaskAlert(data.task, data.parentTask);
 								}
+							})
+							.catch(console.error);
+
+						void AppRatingManager.increaseCounter(UserEvent.TASKS_COMPLETED)
+							.then(() => {
+								AppRatingManager.tryOpenAppRating({
+									parentWidget: layoutWidget,
+								});
 							})
 							.catch(console.error);
 

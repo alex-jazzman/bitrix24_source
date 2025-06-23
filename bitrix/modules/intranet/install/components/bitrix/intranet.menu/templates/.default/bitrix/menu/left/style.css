@@ -29,7 +29,7 @@ html {
 	max-width: 100%;
 	padding: 22px 30px;
 	box-sizing: border-box;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .intranet__desktop-menu_inner {

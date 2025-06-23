@@ -13,6 +13,11 @@ export const DataTypeSelector = {
 			required: false,
 			default: false,
 		},
+		disabled: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	emits: [
 		'valueChange',

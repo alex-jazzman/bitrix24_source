@@ -16,7 +16,6 @@ $MESS["CRM_QUOTE_DETAILS_COPY_PAGE_URL_MSGVER_1"] = "Ұсыныс сілтеме
 $MESS["CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_MESSAGE_MSGVER_1"] = "Бұл ұсынысты жойғыңыз келетініне сенімдісіз бе?";
 $MESS["CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_TITLE_MSGVER_1"] = "Ұсынысты жою";
 $MESS["CRM_QUOTE_DETAILS_DELETE_MSGVER_1"] = "Ұсынысты жою";
-$MESS["CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE_MSGVER_1"] = "Ұсыныс туралы";
 $MESS["CRM_QUOTE_DETAILS_JS_ERROR_NO_EMAIL_SETTINGS"] = "Email жіберу параметрлері табылмады";
 $MESS["CRM_QUOTE_DETAILS_JS_ERROR_NO_TEMPLATES"] = "Басып шығаруға арналған қалыптар табылмады";
 $MESS["CRM_QUOTE_DETAILS_JS_PRINT"] = "Басып шығару";

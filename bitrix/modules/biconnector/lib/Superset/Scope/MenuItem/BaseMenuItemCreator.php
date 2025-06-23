@@ -7,8 +7,10 @@ use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboard;
 use Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetDashboard_Collection;
 use Bitrix\BIConnector\Superset\Dashboard\UrlParameter\Service;
+use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\Main\Localization\Loc;
+use CUtil;
 
 abstract class BaseMenuItemCreator
 {
@@ -40,6 +42,27 @@ abstract class BaseMenuItemCreator
 	protected function getMenuItemTitle(): string
 	{
 		return Loc::getMessage('BIC_SCOPE_MENU_ITEM_TITLE');
+	}
+
+	protected function getAdditionalItems(): array
+	{
+		return [
+			[
+				'ID' => 'SCOPE_MENU_MARKETPLACE',
+				'TEXT' => Loc::getMessage('BIC_SCOPE_MENU_ITEM_MARKETPLACE'),
+				'ON_CLICK' => $this->getOpenMarketScript(),
+			]
+		];
+	}
+
+	protected function getOpenMarketScript(): string
+	{
+		\Bitrix\Main\UI\Extension::load('biconnector.apache-superset-market-manager');
+		$isMarketExists = \Bitrix\Main\Loader::includeModule('market') ? 'true' : 'false';
+		$marketUrl = CUtil::JSEscape(MarketDashboardManager::getMarketCollectionUrl());
+		$analyticSource = 'scope_menu_' . $this->getScopeCode();
+
+		return "BX.BIConnector.ApacheSupersetMarketManager.openMarket({$isMarketExists}, '{$marketUrl}', '{$analyticSource}')";
 	}
 
 	protected function getDetailUrl(

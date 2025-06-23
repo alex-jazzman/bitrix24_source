@@ -34,6 +34,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  };
 	}
 
+	/* eslint-disable no-param-reassign */
 	class ResourceCreationWizardModel extends ui_vue3_vuex.BuilderModel {
 	  getName() {
 	    return booking_const.Model.ResourceCreationWizard;
@@ -51,9 +52,11 @@ this.BX.Booking = this.BX.Booking || {};
 	      invalidResourceName: false,
 	      invalidResourceType: false,
 	      isCompanyScheduleAccess: false,
+	      companyScheduleUrl: '',
 	      weekStart: 'Mon',
 	      globalSchedule: false,
-	      checkedForAll: {}
+	      checkedForAll: {},
+	      isChannelChoiceAvailable: true
 	    };
 	  }
 	  getGetters() {
@@ -87,8 +90,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      /** @function resource-creation-wizard/isCompanyScheduleAccess */
 	      isCompanyScheduleAccess: state => state.isCompanyScheduleAccess,
+	      /** @function resource-creation-wizard/companyScheduleUrl */
+	      companyScheduleUrl: state => state.companyScheduleUrl,
 	      /** @function resource-creation-wizard/weekStart */
 	      weekStart: state => state.weekStart,
+	      /** @function resource-creation-wizard/isChannelChoiceAvailable */
+	      isChannelChoiceAvailable: state => state.isChannelChoiceAvailable,
 	      /** @function resource-creation-wizard/isCheckedForAll */
 	      isCheckedForAll: state => type => {
 	        var _state$checkedForAll$;
@@ -160,7 +167,7 @@ this.BX.Booking = this.BX.Booking || {};
 	          commit('updateStep', state.step - 1);
 	        }
 	      },
-	      setAdvertisingResourceTypes({
+	      setAdvertisingTypes({
 	        commit
 	      }, types) {
 	        const advertisingResourceType = [...types, {
@@ -168,7 +175,7 @@ this.BX.Booking = this.BX.Booking || {};
 	          name: main_core.Loc.getMessage('BRCW_CHOOSE_CATEGORY_YOUR_TYPE'),
 	          relatedResourceTypeId: 0
 	        }];
-	        commit('setAdvertisingResourceTypes', advertisingResourceType);
+	        commit('setAdvertisingTypes', advertisingResourceType);
 	      },
 	      /** @function resource-creation-wizard/updateResource */
 	      updateResource({
@@ -177,7 +184,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      }, patch) {
 	        if (patch.typeId) {
 	          const resourceType = rootGetters[`${booking_const.Model.ResourceTypes}/getById`](patch.typeId);
-	          const notifications = [...Object.values(booking_const.NotificationFieldsMap.NotificationOn), ...Object.values(booking_const.NotificationFieldsMap.TemplateType)].reduce((acc, field) => ({
+	          const notifications = [...Object.values(booking_const.NotificationFieldsMap.NotificationOn), ...Object.values(booking_const.NotificationFieldsMap.TemplateType), ...Object.values(booking_const.NotificationFieldsMap.Settings).flat()].reduce((acc, field) => ({
 	            ...acc,
 	            [field]: resourceType[field]
 	          }), {});
@@ -207,6 +214,12 @@ this.BX.Booking = this.BX.Booking || {};
 	        commit
 	      }, isCompanyScheduleAccess) {
 	        commit('setCompanyScheduleAccess', isCompanyScheduleAccess);
+	      },
+	      /** @function resource-creation-wizard/setCompanyScheduleUrl */
+	      setCompanyScheduleUrl({
+	        commit
+	      }, companyScheduleUrl) {
+	        commit('setCompanyScheduleUrl', companyScheduleUrl);
 	      },
 	      /** @function resource-creation-wizard/setInvalidResourceName */
 	      setInvalidResourceName({
@@ -252,6 +265,12 @@ this.BX.Booking = this.BX.Booking || {};
 	        commit('setSlotLengthId', {
 	          slotLengthId
 	        });
+	      },
+	      /** @function resource-creation-wizard/setIsChannelChoiceAvailable */
+	      setIsChannelChoiceAvailable({
+	        commit
+	      }, isChannelChoiceAvailable) {
+	        commit('setIsChannelChoiceAvailable', isChannelChoiceAvailable);
 	      }
 	    };
 	  }
@@ -269,7 +288,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      setCurrentResourceName(state, name) {
 	        state.resourceName = name;
 	      },
-	      setAdvertisingResourceTypes(state, types) {
+	      setAdvertisingTypes(state, types) {
 	        state.advertisingResourceTypes = types;
 	      },
 	      setCompanyScheduleSlots(state, slots) {
@@ -296,6 +315,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      setCompanyScheduleAccess(state, isCompanyScheduleAccess) {
 	        state.isCompanyScheduleAccess = isCompanyScheduleAccess;
 	      },
+	      setCompanyScheduleUrl(state, companyScheduleUrl) {
+	        state.companyScheduleUrl = companyScheduleUrl;
+	      },
 	      setInvalidResourceName(state, invalid) {
 	        state.invalidResourceName = invalid;
 	      },
@@ -315,6 +337,9 @@ this.BX.Booking = this.BX.Booking || {};
 	        slotLengthId
 	      }) {
 	        state.slotLengthId = slotLengthId;
+	      },
+	      setIsChannelChoiceAvailable(state, isChannelChoiceAvailable) {
+	        state.isChannelChoiceAvailable = isChannelChoiceAvailable;
 	      }
 	    };
 	  }

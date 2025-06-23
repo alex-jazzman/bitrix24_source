@@ -16,7 +16,7 @@
 .landing-widget-active-employees {
 	display: flex;
 	flex-direction: column;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	cursor: default;
 }
 
@@ -31,7 +31,7 @@
 	margin-bottom: 20px;
 	padding-bottom: 16px;
 	border-bottom: 1px solid var(--widget-color-border-line);
-	font: var(--ui-font-weight-medium) 28px var(--ui-font-family-system);
+	font: var(--ui-font-weight-medium) 28px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--widget-color-h);
 }
 
@@ -149,7 +149,7 @@ a[href].landing-widget-active-employees-content-item-text-name:hover {
 .landing-widget-active-employees-content-item-img-default {
 	margin-bottom: 9px;
 	min-width: 60px;
-	height: 60px;
+	min-height: 60px;
 	border-radius: var(--ui-border-radius-circle);
 	background-size: cover;
 }

@@ -5,6 +5,7 @@ $MESS["CC_BBUS_EMPTYSTATE_OVER_LIMIT_DESCRIPTION_B24"] = "Сұраудағы ж�
 $MESS["CC_BBUS_EMPTYSTATE_OVER_LIMIT_TITLE"] = "Шектеуден асқан сұраулар жоқ.";
 $MESS["CC_BBUS_EMPTYSTATE_TITLE"] = "Мұнда <br>BI коннекторын пайдаланустатистикасы болады";
 $MESS["CC_BBUS_ERROR_INCLUDE_MODULE"] = "Biconnector модулі орнатылмаған.";
+$MESS["CC_BBUS_ROWS_NO_DATA"] = "Деректер жоқ";
 $MESS["CC_BBUS_SERVICE_DATALENS"] = "Yandex DataLens";
 $MESS["CC_BBUS_SERVICE_GDS"] = "Looker Studio";
 $MESS["CC_BBUS_SERVICE_PBI"] = "Microsoft Power BI";

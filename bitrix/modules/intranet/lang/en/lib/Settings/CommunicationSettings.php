@@ -1,5 +1,6 @@
 <?php
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_CONNECT_DISK_ON_MSGVER_1"] = "The workgroup's Drive will be connected to the employee's Drive after they have joined the workgroup. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Chat members can manage the message auto delete preferences. This function will delete the chat messages after a specified length of time.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_BLOCK_DOC_ON_MSGVER_1"] = "If the document is locked, other employees cannot edit it. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_EDIT_DOC_ON"] = "Users with enough permissions can edit attached documents. You can disable editing for individual message manually.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_POST_GEN_CHANNEL"] = "Selected users can add new posts to Company News channel. #MORE_DETAILS#";
@@ -12,6 +13,7 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_PUBLISH_TO_ALL_DEFAULT_ON"] = "New Feed post
 $MESS["INTRANET_SETTINGS_FIELD_HINT_URL_PREVIEW_ON"] = "Links will show a brief description and an image.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE"] = "Post administrator change notification to the General chat";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK"] = "Auto connect workgroup Drive for new workgroup members";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Allow access to \"Auto delete messages\" option in the chats";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC"] = "Lock document while editing";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC"] = "Allow editing documents in Feed, tasks, chats and comments";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE"] = "Post employee dismissal notification to the General chat";
@@ -26,6 +28,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS"] = "Create a task ove
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT"] = "Like button/link text:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT"] = "Maximum entries in document history:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "All employees can post to Feed";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = 'Allow broadcast posts';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Add all employees to recipients by default (broadcast)";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER"] = "View documents using:";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CHANNELS"] = "General channels";

@@ -15,6 +15,8 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		WidgetTitleParamsType,
 		EntitySelectorElementType,
 		OpenDialogContextType,
+		ComponentCode,
+		NavigationTabByComponent,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -22,7 +24,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 
-	const { ChatService } = require('im/messenger/provider/service');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 
 	const { ChannelView } = require('im/messenger/controller/chat-composer/lib/view/channel');
 	const { DialogTypeView } = require('im/messenger/controller/chat-composer/lib/view/dialog-type');
@@ -334,10 +336,28 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		{
 			this.layoutWidget.close();
 
-			MessengerEmitter.emit(EventType.messenger.openDialog, {
-				dialogId: `chat${chatId}`,
-				context: OpenDialogContextType.chatCreation,
-			});
+			if (this.dialogInfo.type === DialogType.channel)
+			{
+				MessengerEmitter.emit(
+					EventType.navigation.broadCastEventWithTabChange,
+					{
+						broadCastEvent: EventType.messenger.openDialog,
+						toTab: NavigationTabByComponent[ComponentCode.imMessenger],
+						data: {
+							dialogId: `chat${chatId}`,
+							context: OpenDialogContextType.chatCreation,
+						},
+					},
+					ComponentCode.imNavigation,
+				);
+			}
+			else
+			{
+				MessengerEmitter.emit(EventType.messenger.openDialog, {
+					dialogId: `chat${chatId}`,
+					context: OpenDialogContextType.chatCreation,
+				});
+			}
 		}
 
 		#showSuccessfullyToast()
