@@ -417,7 +417,7 @@ $arJSParams = array(
 	"ajaxPath" => $this->GetFolder()."/ajax.php",
 	"isAdmin" => $arResult["IS_ADMIN"],
 	"isExtranet" => $arResult["IS_EXTRANET"] ? "Y" : "N",
-	"isCollapsedMode" => CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y",
+	"isCollapsedMode" => \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed(),
 	"isCustomPresetAvailable" => $arResult["IS_CUSTOM_PRESET_AVAILABLE"] ? "Y" : "N",
 	"customPresetExists" => !empty($arResult["CUSTOM_PRESET_EXISTS"]) ? "Y" : "N",
 	'workgroupsCounterData' => $arResult["WORKGROUP_COUNTER_DATA"],

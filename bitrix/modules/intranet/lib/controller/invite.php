@@ -321,25 +321,18 @@ class Invite extends Main\Engine\Controller
 		?Entity\Collection\DepartmentCollection $departmentCollection
 	): ?string
 	{
-		if (!Loader::includeModule('bitrix24'))
-		{
-			$this->addError(new Error('This method is not available'));
-
-			return null;
-		}
-
 		if (!$departmentCollection)
 		{
 			$departmentCollection = new Entity\Collection\DepartmentCollection();
 		}
-		$departmentRepository = Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+		$departmentRepository = Intranet\Service\ServiceContainer::getInstance()->hrDepartmentRepository();
 		if ($departmentCollection->empty())
 		{
 			$departmentCollection->add($departmentRepository->getRootDepartment());
 		}
 
 		$linkGenerator = InviteLinkGenerator::createByDepartmentsIds(
-			$departmentCollection->map(fn(Entity\Department $department) => DepartmentBackwardAccessCode::extractIdFromCode($department->getAccessCode()))
+			$departmentCollection->map(fn(Entity\Department $department) => $department->getId())
 		);
 
 		if (!$linkGenerator)
@@ -514,7 +507,13 @@ class Invite extends Main\Engine\Controller
 			}
 			else
 			{
-				$result = \CIntranetInviteDialog::reinviteUserByPhone($userId);
+				$reinviteResult = \CIntranetInviteDialog::reinviteUserByPhone($userId);
+				$result = $reinviteResult->isSuccess();
+				if (!$result && !empty($reinviteResult->getError()?->getMessage()))
+				{
+					$this->addError($reinviteResult->getError());
+					return null;
+				}
 			}
 		}
 		else

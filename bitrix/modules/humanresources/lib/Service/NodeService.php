@@ -178,6 +178,11 @@ class NodeService implements Contract\Service\NodeService
 			$node->parentId !== $nodeEntity->parentId
 		)
 		{
+			if ($node->parentId === $node->id)
+			{
+				throw (new UpdateFailedException())->addError(new Error("Node can't be its own parent"));
+			}
+
 			$targetNode = $this->nodeRepository->getById($node->parentId);
 			if (!$targetNode)
 			{

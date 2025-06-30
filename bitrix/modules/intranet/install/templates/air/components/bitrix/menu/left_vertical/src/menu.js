@@ -1,6 +1,7 @@
-import { Cache, Loc, ajax, Type, Dom, Reflection } from 'main.core';
+import { ajax, Cache, Dom, Loc, Reflection, Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { PopupManager, MenuItem } from 'main.popup';
+import { MenuItem, PopupManager } from 'main.popup';
+import { AirButtonStyle, Button } from 'ui.buttons';
 import PresetCustomController from './controllers/preset-custom-controller';
 import PresetDefaultController from './controllers/preset-default-controller';
 import SettingsController from './controllers/settings-controller';
@@ -54,6 +55,8 @@ export default class Menu
 		Options.inviteDialogLink = params.inviteDialogLink;
 		Options.showMarta = params.showMarta;
 		Options.showSitemapMenuItem = params.showSitemapMenuItem;
+		Options.showLicenseButton = params.showLicenseButton;
+		Options.licenseButtonPath = params.licenseButtonPath;
 
 		this.isCollapsedMode = params.isCollapsedMode;
 		this.analytics = new Analytics(params.isAdmin);
@@ -61,6 +64,7 @@ export default class Menu
 		this.initAndBindNodes();
 		this.bindEvents();
 		this.getItemsController();
+		this.#addLicenseButton();
 
 		this.groupPanel = new GroupPanel({
 			isExtranetInstalled: params.isExtranetInstalled !== 'N',
@@ -486,13 +490,17 @@ export default class Menu
 
 	showGlobalPreset()
 	{
-		BannerDispatcher.high.toQueue((onDone) => {
-			const presetController = this.getDefaultPresetController();
-			presetController.show('global');
-			presetController.getPopup().subscribe('onAfterClose', (event) => {
-				onDone();
+		const loadBannerDispatcherExtensionPromise = Runtime.loadExtension('ui.banner-dispatcher');
+
+		loadBannerDispatcherExtensionPromise.then(() => {
+			BannerDispatcher.high.toQueue((onDone) => {
+				const presetController = this.getDefaultPresetController();
+				presetController.show('global');
+				presetController.getPopup().subscribe('onAfterClose', (event) => {
+					onDone();
+				});
 			});
-		});
+		}).catch(() => {});
 	}
 
 	handleShowHiddenClick()
@@ -885,6 +893,11 @@ export default class Menu
 				if (immediately !== true)
 				{
 					BX.addClass(this.mainTable, "menu-sliding-closing-mode");
+
+					if (Options.showLicenseButton)
+					{
+						this.#getLicenseButton().setCollapsed(true);
+					}
 				}
 
 				BX.removeClass(this.mainTable, "menu-sliding-mode menu-sliding-opening-mode");
@@ -899,6 +912,12 @@ export default class Menu
 			if (immediately !== true)
 			{
 				BX.addClass(this.mainTable, "menu-sliding-opening-mode");
+				if (Options.showLicenseButton)
+				{
+					setTimeout(() => {
+						this.#getLicenseButton().setCollapsed(false);
+					}, 50);
+				}
 			}
 
 			BX.addClass(this.mainTable, "menu-sliding-mode");
@@ -959,11 +978,6 @@ export default class Menu
 		var menuEmployeesText = leftColumn.querySelector('.menu-invite-employees-text');
 		var menuEmployeesIcon = leftColumn.querySelector('.menu-invite-icon-box');
 
-		var licenseContainer = leftColumn.querySelector('.menu-license-all-container');
-		var licenseBtn = leftColumn.querySelector('.menu-license-all-default');
-		var licenseHeight = licenseBtn ? licenseBtn.offsetHeight : 0;
-		var licenseCollapsedBtn = leftColumn.querySelector('.menu-license-all-collapsed');
-
 		const settingsIconBox = this.menuContainer.querySelector(".menu-settings-icon-box");
 		const settingsBtnText = this.menuContainer.querySelector(".menu-settings-btn-text");
 
@@ -1004,6 +1018,11 @@ export default class Menu
 				if (pageHeader)
 				{
 					pageHeader.style.maxWidth = "calc(100vw - " + state.sidebarWidth + "px - " + imBarWidth + "px)";
+				}
+
+				if (Options.showLicenseButton && state.sidebarWidth > 160)
+				{
+					this.#getLicenseButton().setCollapsed(isOpen);
 				}
 
 				if (isOpen)
@@ -1073,16 +1092,6 @@ export default class Menu
 					{
 						menuMoreCounter.style.transform = "translateX(" + state.translateIcon + "px)";
 						menuMoreCounter.style.opacity = state.opacityRevert / 100;
-					}
-
-					if (licenseContainer)
-					{
-						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
-						licenseBtn.style.opacity = state.opacity / 100;
-						licenseBtn.style.height = state.heightLicenseBtn + "px";
-
-						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
 					}
 
 					menuLinks.forEach(function(item) {
@@ -1180,16 +1189,6 @@ export default class Menu
 						menuMoreCounter.style.transform = "translateX(" + state.translateText + "px)";
 					}
 
-					if (licenseContainer)
-					{
-						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
-						licenseBtn.style.opacity = state.opacity / 100;
-						licenseBtn.style.height = state.heightLicenseBtn + "px";
-
-						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
-					}
-
 					menuLinks.forEach(function(item) {
 						var menuIcon = item.querySelector(".menu-item-icon-box");
 						var menuLinkText = item.querySelector(".menu-item-link-text");
@@ -1255,8 +1254,6 @@ export default class Menu
 					menuEmployeesIcon,
 					menuEmployeesText,
 					menuMoreCounter,
-					licenseBtn,
-					licenseCollapsedBtn,
 					this.menuContainer,
 					pageHeader,
 				];
@@ -1436,4 +1433,47 @@ export default class Menu
 		this.getItemsController().updateCounters(counters, send);
 	}
 	//endregion
+
+	#addLicenseButton(): void
+	{
+		if (Options.showLicenseButton)
+		{
+			const licenseButtonWrapper = this.menuContainer.querySelector('.menu-license-all-wrapper');
+
+			if (licenseButtonWrapper)
+			{
+				this.#getLicenseButton().renderTo(licenseButtonWrapper);
+			}
+		}
+	}
+
+	#getLicenseButton(): Button
+	{
+		if (this.licenseButton)
+		{
+			return this.licenseButton;
+		}
+
+		this.licenseButton = this.#createLicenseButton();
+		this.licenseButton.setCollapsed(this.isCollapsed());
+
+		return this.licenseButton;
+	}
+
+	#createLicenseButton(): Button
+	{
+		return new Button({
+			size: Button.Size.SMALL,
+			text: Loc.getMessage('MENU_LICENSE_ALL'),
+			useAirDesign: true,
+			style: AirButtonStyle.FILLED_SUCCESS,
+			noCaps: true,
+			wide: true,
+			icon: 'o-rocket',
+			className: 'menu-license-all-button',
+			onclick: () => {
+				BX.SidePanel.Instance.open(Options.licenseButtonPath, { width: 1250, cacheable: false });
+			},
+		});
+	}
 }

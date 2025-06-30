@@ -72,7 +72,11 @@ class UserRepository implements UserRepositoryContract
 				->whereNotIn('EXTERNAL_AUTH_ID', $notUserTypes)
 				->whereNull('EXTERNAL_AUTH_ID')
 			)
-			->where('CONFIRM_CODE', '')
+			->where(Query::filter()
+				->logic('or')
+				->where('CONFIRM_CODE', '')
+				->whereNull('CONFIRM_CODE')
+			)
 			->setSelect([
 				'*',
 				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER'
@@ -391,7 +395,7 @@ class UserRepository implements UserRepositoryContract
 			'SECOND_NAME' => $user->getSecondName(),
 			'GROUP_ID' => $user->getGroupIds(),
 			'LID' => $user->getLid(), //SITE_ID
-			'LANGUAGE_ID' => ($site = \CSite::GetArrayByID($user->getLid())) ? $site['LANGUAGE_ID'] : LANGUAGE_ID,
+			'LANGUAGE_ID' => $user->getLanguageId() ?? (($site = \CSite::GetArrayByID($user->getLid())) ? $site['LANGUAGE_ID'] : LANGUAGE_ID),
 			'PHONE_NUMBER' => $user->getPhoneNumber(),
 			'PERSONAL_MOBILE' => $user->getPhoneNumber(),
 			'ACTIVE' => $user->getActive(),

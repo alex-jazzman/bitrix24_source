@@ -1,6 +1,8 @@
 import { EditableColumnManager } from 'biconnector.grid.editable-columns';
 import { Reflection, Uri, Text, Loc, ajax as Ajax } from 'main.core';
+import { Button, ButtonColor, CancelButton } from 'ui.buttons';
 import { EventEmitter } from 'main.core.events';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.alerts';
 import 'ui.forms';
 
@@ -182,14 +184,14 @@ class ExternalSourceManager
 
 	deleteSource(id: number, moduleId: string)
 	{
-		Ajax.runAction('biconnector.externalsource.source.delete', {
+		Ajax.runAction('biconnector.externalsource.source.validateBeforeDelete', {
 			data: {
 				id,
 				moduleId,
 			},
 		})
 			.then(() => {
-				this.getGrid().reload();
+				this.#showDeleteSourcePopup(id, moduleId);
 			})
 			.catch((response) => {
 				if (response.errors)
@@ -198,6 +200,46 @@ class ExternalSourceManager
 				}
 			})
 		;
+	}
+
+	#showDeleteSourcePopup(id: number, moduleId: string)
+	{
+		const messageBox = new MessageBox({
+			message: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_TITLE'),
+			buttons: [
+				new Button({
+					color: ButtonColor.DANGER,
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_CAPTION_YES'),
+					onclick: (button) => {
+						button.setWaiting();
+						Ajax.runAction('biconnector.externalsource.source.delete', {
+							data: {
+								id,
+								moduleId,
+							},
+						})
+							.then(() => {
+								this.getGrid().reload();
+								messageBox.close();
+							})
+							.catch((response) => {
+								messageBox.close();
+								if (response.errors)
+								{
+									this.#notifyErrors(response.errors);
+								}
+							})
+						;
+					},
+				}),
+				new CancelButton({
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_CAPTION_NO'),
+					onclick: () => messageBox.close(),
+				}),
+			],
+		});
+
+		messageBox.show();
 	}
 
 	#notifyErrors(errors: Array): void

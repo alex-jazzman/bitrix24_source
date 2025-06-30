@@ -152,13 +152,14 @@ class Connector extends Base
 		$result = new Result();
 		$converter = new Converter(
 			Converter::KEYS
-			| Converter::TO_SNAKE
 			| Converter::RECURSIVE
+			| Converter::TO_SNAKE
+			| Converter::TO_UPPER
 		);
 		$fields = $converter->process($params['fields']);
-		$fields['app_id'] = $params['appId'];
+		$fields['APP_ID'] = $params['appId'];
 
-		$checkSettingsResult = self::checkAndPrepareSettings($fields['settings']);
+		$checkSettingsResult = self::checkAndPrepareSettings($fields['SETTINGS']);
 		if (!$checkSettingsResult->isSuccess())
 		{
 			$result->addErrors($checkSettingsResult->getErrors());
@@ -166,7 +167,7 @@ class Connector extends Base
 			return $result;
 		}
 
-		$fields['settings'] = $checkSettingsResult->getData()['settings'];
+		$fields['SETTINGS'] = $checkSettingsResult->getData()['settings'];
 		$addResult = ExternalSourceRestConnectorTable::add($fields);
 
 		if (!$addResult->isSuccess())
@@ -186,8 +187,9 @@ class Connector extends Base
 		$result = new Result();
 		$converter = new Converter(
 			Converter::KEYS
-			| Converter::TO_SNAKE
 			| Converter::RECURSIVE
+			| Converter::TO_SNAKE
+			| Converter::TO_UPPER
 		);
 		$fields = $converter->process($params['fields']);
 		$id = (int)$params['id'];
@@ -200,9 +202,9 @@ class Connector extends Base
 			return $result;
 		}
 
-		if (isset($fields['settings']))
+		if (isset($fields['SETTINGS']))
 		{
-			$checkSettingsResult = self::checkAndPrepareSettings($fields['settings']);
+			$checkSettingsResult = self::checkAndPrepareSettings($fields['SETTINGS']);
 			if (!$checkSettingsResult->isSuccess())
 			{
 				$result->addErrors($checkSettingsResult->getErrors());
@@ -210,7 +212,7 @@ class Connector extends Base
 				return $result;
 			}
 
-			$fields['settings'] = $checkSettingsResult->getData()['settings'];
+			$fields['SETTINGS'] = $checkSettingsResult->getData()['settings'];
 		}
 
 		foreach ($fields as $key => $value)
@@ -303,34 +305,34 @@ class Connector extends Base
 		$resultSettings = [];
 		foreach ($settings as $setting)
 		{
-			if (!isset($setting['type'], $setting['name'], $setting['code']))
+			if (!isset($setting['TYPE'], $setting['NAME'], $setting['CODE']))
 			{
 				$result->addError(new Error('Settings must include "type", "name" and "code" fields.', 'VALIDATION_SETTINGS_MISSING_REQUIRED_FIELDS'));
 				continue;
 			}
 
-			if (mb_strlen($setting['name']) > 512)
+			if (mb_strlen($setting['NAME']) > 512)
 			{
 				$result->addError(new Error('Parameter "name" must be less than 512 characters.', 'VALIDATION_SETTINGS_NAME_TOO_LONG'));
 				continue;
 			}
 
-			if (mb_strlen($setting['code']) > 512)
+			if (mb_strlen($setting['CODE']) > 512)
 			{
 				$result->addError(new Error('Parameter "code" must be less than 512 characters.', 'VALIDATION_SETTINGS_CODE_TOO_LONG'));
 				continue;
 			}
 
-			if (SourceSettingType::tryFrom($setting['type']) === null)
+			if (SourceSettingType::tryFrom($setting['TYPE']) === null)
 			{
 				$result->addError(new Error('Parameter "type" is not correct.', 'VALIDATION_SETTINGS_INVALID_TYPE'));
 				continue;
 			}
 
 			$resultSettings[] = [
-				'name' => $setting['name'],
-				'code' => $setting['code'],
-				'type' => $setting['type'],
+				'name' => $setting['NAME'],
+				'code' => $setting['CODE'],
+				'type' => $setting['TYPE'],
 			];
 		}
 

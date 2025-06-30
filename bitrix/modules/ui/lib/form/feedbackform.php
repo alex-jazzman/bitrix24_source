@@ -26,7 +26,7 @@ class FeedbackForm
 		$this->id = $id;
 		$this->isCloud = Loader::includeModule('bitrix24');
 		$this->title = Loc::getMessage('UI_FEEDBACK_FORM_BUTTON');
-		$this->portalUri = (new UrlProvider())->getFeedbackDomain();
+		$this->portalUri = 'https://' . (new UrlProvider())->getFeedbackDomain();
 	}
 
 	public function getId()

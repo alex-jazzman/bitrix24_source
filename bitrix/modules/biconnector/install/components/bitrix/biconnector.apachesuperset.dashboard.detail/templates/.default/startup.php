@@ -104,7 +104,6 @@ else
 			dashboardId: <?= (int)$arResult['DASHBOARD_ID'] ?>,
 			status: '<?= \CUtil::JSEscape($arResult['DASHBOARD_STATUS']) ?>',
 			isSupersetAvailable: <?= Json::encode($arResult['IS_SUPERSET_AVAILABLE'] ?? true) ?>,
-			paramsCompatible: <?= Json::encode($arResult['PARAMS_COMPATIBLE'] ?? true) ?>,
 		})
 	});
 

@@ -16,7 +16,7 @@ class AuthorizationServerUrlResolver
 
 		return match ($region)
 		{
-			'ru', 'by', 'kz', 'uz' => 'https://oauth.bitrix24.tech',
+			'ru', 'am', 'az', 'ge', 'kz', 'kg', 'uz', 'by' => 'https://oauth.bitrix24.tech',
 			default => 'https://oauth.bitrix.info',
 		};
 	}

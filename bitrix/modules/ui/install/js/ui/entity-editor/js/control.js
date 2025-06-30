@@ -3148,8 +3148,8 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 		var isViewMode = this._mode === BX.UI.EntityEditorMode.view ;
 
 		const wrapperClassNames = isViewMode
-			? ['ui-entity-editor-section']
-			: ['ui-entity-editor-section-edit'];
+			? ['ui-entity-editor-section', '--ui-context-content-light']
+			: ['ui-entity-editor-section-edit', '--ui-context-content-light'];
 
 		const sectionData = this.getSchemeElement().getImmutableOptions();
 		if (BX.Type.isPlainObject(sectionData))

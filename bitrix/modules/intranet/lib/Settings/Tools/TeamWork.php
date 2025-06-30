@@ -2,7 +2,7 @@
 
 namespace Bitrix\Intranet\Settings\Tools;
 
-use Bitrix\Intranet\Integration\Socialnetwork\Collab\Collab;
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
 use Bitrix\Intranet\UI\LeftMenu\Preset;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
@@ -17,7 +17,7 @@ class TeamWork extends Tool
 		return match ($subgroupId)
 		{
 			'instant_messenger' => ModuleManager::isModuleInstalled('im'),
-			'collab' => (new Collab())->isAvailable(),
+			'collab' => (new CollabProviderData())->isAvailable(),
 			'calendar' => ModuleManager::isModuleInstalled('calendar'),
 			'docs' => \Bitrix\Main\Config\Option::get('disk', 'documents_enabled', 'N') === 'Y',
 			'boards' => \Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y',

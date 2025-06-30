@@ -357,6 +357,11 @@ final class FillFields implements Contract\Operation
 			return $result;
 		}
 
+		if ($result instanceof HcmLinkFieldLoadResult && $result->shouldWait)
+		{
+			return new HcmLinkFieldLoadResult(true);
+		}
+
 		$result = $this->hcmLinkService->isAllJobsDone($this->getMemberJobIds($members));
 		if (!$result instanceof HcmLinkJobsCheckResult)
 		{
@@ -390,7 +395,7 @@ final class FillFields implements Contract\Operation
 		array $employeeIds,
 		array $fieldIds,
 		array $signerMemberIdByEmployeeIdMap,
-	): Main\Result
+	): Main\Result|HcmLinkFieldLoadResult
 	{
 		$notRequested = $members->filter(
 			fn(Item\Member $member) => !$member->hcmLinkJobId && in_array($member->employeeId, $employeeIds, true),
@@ -399,6 +404,11 @@ final class FillFields implements Contract\Operation
 		if ($notRequested->isEmpty())
 		{
 			return new Main\Result();
+		}
+
+		if ($this->isRestrictedToCreateRestOfflineEvents())
+		{
+			return new HcmLinkFieldLoadResult(true);
 		}
 
 		$notRequestedEmployeeIds = [];
@@ -674,5 +684,17 @@ final class FillFields implements Contract\Operation
 				break;
 			}
 		}
+	}
+
+	/**
+	 * To avoid creating rest offline events on rest hits
+	 *
+	 * @see \Bitrix\Rest\Event\ProviderOffline::finalize
+	 */
+	private function isRestrictedToCreateRestOfflineEvents(): bool
+	{
+		$requestUri = \Bitrix\Main\Application::getInstance()->getContext()?->getRequest()?->getRequestUri() ?? '';
+
+		return str_starts_with($requestUri, '/rest/');
 	}
 }

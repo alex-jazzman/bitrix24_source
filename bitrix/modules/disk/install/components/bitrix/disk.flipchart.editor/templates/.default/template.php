@@ -5,7 +5,6 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
-use Bitrix\Disk\Document\Models\DocumentSession;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Size;
@@ -27,45 +26,50 @@ Extension::load([
 
 $APPLICATION->SetTitle($arResult['DOCUMENT_NAME']);
 
-$setupSharingButton = Button::create();
-$wayToSharing = [
-	[
-		'id' => 'ext-link',
-		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
-			. '<div class="ui-icon-set --share-1"></div>'
-			. '<div> ' . Loc::getMessage("DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK") .' </div>'
-			.'</div>',
-		'dataset' => [
-			'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
-			'blockerExternalLinkFeature' => $arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] ?: '',
+$sharingButtonHtml = '';
+if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
+{
+	$setupSharingButton = Button::create();
+	$wayToSharing = [
+		[
+			'id' => 'ext-link',
+			'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
+				. '<div class="ui-icon-set --share-1"></div>'
+				. '<div> ' . Loc::getMessage("DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK") . ' </div>'
+				. '</div>',
+			'dataset' => [
+				'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
+				'blockerExternalLinkFeature' => $arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] ?: '',
+			],
 		],
-	],
-	[
-		'id' => 'sharing',
-		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
-			. '<div class="ui-icon-set --person-plus-3"></div>'
-			. '<div> ' . Loc::getMessage('DISK_BOARDS_HEADER_BTN_SHARING_SHARE') .' </div>'
-			.'</div>',
-	],
-];
+		[
+			'id' => 'sharing',
+			'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
+				. '<div class="ui-icon-set --person-plus-3"></div>'
+				. '<div> ' . Loc::getMessage('DISK_BOARDS_HEADER_BTN_SHARING_SHARE') . ' </div>'
+				. '</div>',
+		],
+	];
 
-$setupSharingButton
-	->setText(Loc::getMessage('DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS'))
-	->addClass('disk-fe-flipchart-btn-access-setting')
-	->setSize(Size::SMALL)
-	->setColor(Color::PRIMARY)
-	->setRound()
-	->setDropdown()
-	->setMenu([
-		'className' => 'disk-fe-flipchart__popup',
-		'autoHide' => true,
-		'closeEsc' => true,
-		'offsetTop' => 5,
-		'offsetLeft' => 0,
-		'animation' => 'fading-slide',
-		'items' => $wayToSharing
-	])
-;
+	$setupSharingButton
+		->setText(Loc::getMessage('DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS'))
+		->addClass('disk-fe-flipchart-btn-access-setting')
+		->setSize(Size::SMALL)
+		->setColor(Color::PRIMARY)
+		->setRound()
+		->setDropdown()
+		->setMenu([
+			'className' => 'disk-fe-flipchart__popup',
+			'autoHide' => true,
+			'closeEsc' => true,
+			'offsetTop' => 5,
+			'offsetLeft' => 0,
+			'animation' => 'fading-slide',
+			'items' => $wayToSharing
+		]);
+
+	$sharingButtonHtml = $setupSharingButton->render(false);
+}
 ?>
 
 <div data-id="<?= $containerId ?>-wrapper">
@@ -77,7 +81,6 @@ $setupSharingButton
 				{
 				?>
 					<a href="<?=$arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo" target="_blank"></a>
-					<span class="disk-fe-flipchart-header-logo-name"><?= Loc::getMessage('DISK_FLIPCHART_EDITOR_HEADER_BOARDS') ?></span>
 				<?php
 				}
 				else
@@ -87,6 +90,7 @@ $setupSharingButton
 				<?php
 				}
 				?>
+				<span class="disk-fe-flipchart-header-logo-name"><?= Loc::getMessage('DISK_FLIPCHART_EDITOR_HEADER_BOARDS') ?></span>
 			</div>
 			<div class="disk-fe-office-header-mode">
 				<span class="disk-fe-office-header-mode-text"><?= htmlspecialcharsbx($arResult['DOCUMENT_NAME']) ?></span>
@@ -94,12 +98,7 @@ $setupSharingButton
 		</div>
 		<div class="disk-fe-office-header-right">
 			<div class="disk-fe-office-header-online"><?= Loc::getMessage('DISK_FLIPCHART_EDITOR_AUTOSAVE') ?></div>
-			<?php
-				if ($arResult['DOCUMENT_SESSION']->getType() === DocumentSession::TYPE_EDIT)
-				{
-					echo $setupSharingButton->render(false);
-				}
-			?>
+			<?= $sharingButtonHtml?>
 		</div>
 	</div>
 	<div data-id="<?= $containerId ?>" style="height: calc(100vh - 70px);">
@@ -110,7 +109,7 @@ $setupSharingButton
 <script>
 	new BX.Disk.Flipchart.Board({
 		panelButtonUniqIds: {
-			setupSharing: '<?= $setupSharingButton->getUniqId() ?>',
+			setupSharing: '<?= isset($setupSharingButton) ? $setupSharingButton->getUniqId() : '' ?>',
 		},
 		boardData: {
 			id: <?= $arResult['ORIGINAL_DOCUMENT_ID'] ?>,

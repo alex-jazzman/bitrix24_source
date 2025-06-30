@@ -13,6 +13,7 @@ class InstallerFactory
 	public const VERSION_1 = 1;
 	public const VERSION_2 = 2;
 	public const VERSION_3 = 3;
+	public const VERSION_4 = 4;
 
 	/**
 	 * @return array<int, string>
@@ -25,6 +26,7 @@ class InstallerFactory
 			self::VERSION_1 => DeputyAndHRPermissionInstaller::class,
 			self::VERSION_2 => InviteAndFirePermissionInstaller::class,
 			self::VERSION_3 => TeamRolesInstaller::class,
+			self::VERSION_4 => TeamRoleViewAllCompanyInstaller::class,
 		];
 	}
 

@@ -276,10 +276,19 @@ class Toolbar
 
 		if ($this->hasAirDesign())
 		{
-			$GLOBALS['APPLICATION']->includeComponent('bitrix:main.ui.filter', '', [
+			$updatedFilterOptions = [
 				...$filterOptions,
 				'THEME' => Theme::AIR,
-			]);
+			];
+
+			if (isset($updatedFilterOptions['CONFIG']) === false)
+			{
+				$updatedFilterOptions['CONFIG'] = [];
+			}
+
+			$updatedFilterOptions['CONFIG']['AUTOFOCUS'] = false;
+
+			$GLOBALS['APPLICATION']->includeComponent('bitrix:main.ui.filter', '', $updatedFilterOptions);
 		}
 		else
 		{

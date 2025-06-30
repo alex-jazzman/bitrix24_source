@@ -54,6 +54,10 @@ class CVoxImplantHttp
 
 		$account = new CVoxImplantAccount();
 		$accountLang = $account->GetAccountLang(false);
+		if (empty($accountLang))
+		{
+			$accountLang = Application::getInstance()->getLicense()->getRegion();
+		}
 		if (in_array($accountLang, ['ru', 'by', 'kz', 'uz'], true))
 		{
 			return static::CONTROLLER_RU;

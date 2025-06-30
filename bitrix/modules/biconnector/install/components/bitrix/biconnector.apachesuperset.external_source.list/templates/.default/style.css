@@ -100,3 +100,8 @@
 	background-repeat: no-repeat;
 	background-position: center;
 }
+
+.ui-page-slider-wrapper.grid-mode .main-grid-empty-stub table.main-grid-table
+{
+	height: calc(100vh - 240px) !important;
+}

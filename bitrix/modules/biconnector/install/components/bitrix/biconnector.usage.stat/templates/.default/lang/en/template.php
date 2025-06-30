@@ -11,4 +11,4 @@ $MESS["CT_BBSU_COLUMN_SOURCE_ID"] = "Source entity";
 $MESS["CT_BBSU_COLUMN_TIMESTAMP_X"] = "Date and time";
 $MESS["CT_BBSU_REFRESH"] = "Refresh";
 $MESS["CT_BBSU_SHOW_ALL"] = "Show all";
-$MESS["CT_BBSU_SHOW_OVERLIMIT"] = "Show limit exceeded";
+$MESS["CT_BBSU_SHOW_OVERLIMIT"] = "Show only oversized requests";

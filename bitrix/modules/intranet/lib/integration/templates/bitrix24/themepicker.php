@@ -636,6 +636,11 @@ class ThemePicker
 			$customTheme["previewColor"] = $customThemeOptions["bgColor"];
 			$style .= "background-color: ".$customThemeOptions["bgColor"]."; ";
 		}
+		else
+		{
+			$customTheme["previewColor"] = '#eef2f4';
+			$style .= "background-color: #eef2f4; ";
+		}
 
 		$style .= " }";
 		$customTheme["style"] = $style;

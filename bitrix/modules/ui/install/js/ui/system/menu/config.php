@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.popup',
 		'ui.icon-set.main',
+		'ui.cnt',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
 		'main.core',

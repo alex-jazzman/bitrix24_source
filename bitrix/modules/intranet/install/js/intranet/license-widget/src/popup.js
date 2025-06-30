@@ -133,6 +133,7 @@ export class Popup extends EventEmitter
 	{
 		return this.#cache.remember('baas-content', () => {
 			return new BaasContent({
+				...this.getOptions().content.baas,
 				licensePopupTarget: this.getOptions().target,
 				licensePopup: this,
 				isAdmin: this.getOptions().isAdmin,

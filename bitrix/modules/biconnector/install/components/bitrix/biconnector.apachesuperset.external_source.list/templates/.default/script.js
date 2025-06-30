@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,biconnector_grid_editableColumns,main_core,main_core_events) {
+(function (exports,biconnector_grid_editableColumns,main_core,ui_buttons,main_core_events,ui_dialogs_messagebox) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -12,6 +12,7 @@
 	var _filter = /*#__PURE__*/new WeakMap();
 	var _subscribeToEvents = /*#__PURE__*/new WeakSet();
 	var _initHints = /*#__PURE__*/new WeakSet();
+	var _showDeleteSourcePopup = /*#__PURE__*/new WeakSet();
 	var _notifyErrors = /*#__PURE__*/new WeakSet();
 	/**
 	 * @namespace BX.BIConnector
@@ -21,6 +22,7 @@
 	    var _BX$Main$gridManager$;
 	    babelHelpers.classCallCheck(this, ExternalSourceManager);
 	    _classPrivateMethodInitSpec(this, _notifyErrors);
+	    _classPrivateMethodInitSpec(this, _showDeleteSourcePopup);
 	    _classPrivateMethodInitSpec(this, _initHints);
 	    _classPrivateMethodInitSpec(this, _subscribeToEvents);
 	    _classPrivateFieldInitSpec(this, _grid, {
@@ -144,13 +146,13 @@
 	    key: "deleteSource",
 	    value: function deleteSource(id, moduleId) {
 	      var _this2 = this;
-	      main_core.ajax.runAction('biconnector.externalsource.source.delete', {
+	      main_core.ajax.runAction('biconnector.externalsource.source.validateBeforeDelete', {
 	        data: {
 	          id: id,
 	          moduleId: moduleId
 	        }
 	      }).then(function () {
-	        _this2.getGrid().reload();
+	        _classPrivateMethodGet(_this2, _showDeleteSourcePopup, _showDeleteSourcePopup2).call(_this2, id, moduleId);
 	      })["catch"](function (response) {
 	        if (response.errors) {
 	          _classPrivateMethodGet(_this2, _notifyErrors, _notifyErrors2).call(_this2, response.errors);
@@ -183,6 +185,39 @@
 	  });
 	  manager.init(babelHelpers.classPrivateFieldGet(this, _grid).getContainer());
 	}
+	function _showDeleteSourcePopup2(id, moduleId) {
+	  var _this4 = this;
+	  var messageBox = new ui_dialogs_messagebox.MessageBox({
+	    message: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_TITLE'),
+	    buttons: [new ui_buttons.Button({
+	      color: ui_buttons.ButtonColor.DANGER,
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_CAPTION_YES'),
+	      onclick: function onclick(button) {
+	        button.setWaiting();
+	        main_core.ajax.runAction('biconnector.externalsource.source.delete', {
+	          data: {
+	            id: id,
+	            moduleId: moduleId
+	          }
+	        }).then(function () {
+	          _this4.getGrid().reload();
+	          messageBox.close();
+	        })["catch"](function (response) {
+	          messageBox.close();
+	          if (response.errors) {
+	            _classPrivateMethodGet(_this4, _notifyErrors, _notifyErrors2).call(_this4, response.errors);
+	          }
+	        });
+	      }
+	    }), new ui_buttons.CancelButton({
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_CAPTION_NO'),
+	      onclick: function onclick() {
+	        return messageBox.close();
+	      }
+	    })]
+	  });
+	  messageBox.show();
+	}
 	function _notifyErrors2(errors) {
 	  if (errors[0] && errors[0].message) {
 	    BX.UI.Notification.Center.notify({
@@ -192,5 +227,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalSourceManager = ExternalSourceManager;
 
-}((this.window = this.window || {}),BX.BIConnector.Grid,BX,BX.Event));
+}((this.window = this.window || {}),BX.BIConnector.Grid,BX,BX.UI,BX.Event,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map

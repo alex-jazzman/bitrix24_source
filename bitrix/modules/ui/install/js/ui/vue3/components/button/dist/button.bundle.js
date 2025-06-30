@@ -1,8 +1,15 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Vue3 = this.BX.Vue3 || {};
-(function (exports,main_core,ui_buttons,ui_vue3) {
+(function (exports,main_core,ui_buttons,ui_iconSet_api_core) {
 	'use strict';
+
+	const allIcons = {
+	  ...ui_buttons.ButtonIcon,
+	  ...ui_iconSet_api_core.Set,
+	  ...ui_iconSet_api_core.Outline
+	};
+	const iconValidator = val => main_core.Type.isNil(val) || Object.values(allIcons).includes(val);
 
 	// @vue/component
 	const Button = {
@@ -28,14 +35,14 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      type: String,
 	      default: undefined,
 	      validator(val) {
-	        return main_core.Type.isUndefined(val) || main_core.Type.isNull(val) || Object.values(ui_buttons.ButtonSize).includes(val);
+	        return main_core.Type.isNil(val) || Object.values(ui_buttons.ButtonSize).includes(val);
 	      }
 	    },
 	    state: {
 	      type: String,
 	      default: undefined,
 	      validator(val) {
-	        return main_core.Type.isUndefined(val) || main_core.Type.isNull(val) || Object.values(ui_buttons.ButtonState).includes(val);
+	        return main_core.Type.isNil(val) || Object.values(ui_buttons.ButtonState).includes(val);
 	      }
 	    },
 	    style: {
@@ -43,7 +50,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      required: false,
 	      default: null,
 	      validator(val) {
-	        return main_core.Type.isUndefined(val) || null || Object.values(ui_buttons.AirButtonStyle).includes(val);
+	        return main_core.Type.isNil(val) || Object.values(ui_buttons.AirButtonStyle).includes(val);
 	      }
 	    },
 	    noCaps: {
@@ -66,23 +73,17 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    leftIcon: {
 	      type: String,
 	      default: null,
-	      validator(val) {
-	        return main_core.Type.isUndefined(val) || main_core.Type.isNull(val) || Object.values(ui_buttons.ButtonIcon).includes(val);
-	      }
+	      validator: iconValidator
 	    },
 	    rightIcon: {
 	      type: String,
 	      default: null,
-	      validator(val) {
-	        return main_core.Type.isUndefined(val) || main_core.Type.isNull(val) || Object.values(ui_buttons.ButtonIcon).includes(val);
-	      }
+	      validator: iconValidator
 	    },
 	    collapsedIcon: {
 	      type: String,
 	      default: null,
-	      validator(val) {
-	        return Object.values(ui_buttons.ButtonIcon).includes(val);
-	      }
+	      validator: iconValidator
 	    },
 	    leftCounterColor: {
 	      type: String,
@@ -276,7 +277,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      });
 	    }
 	    if (this.shimmer) {
-	      button.startHighlighting();
+	      button.startShimmer();
 	    }
 	    this.button = button;
 	  },
@@ -304,5 +305,5 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	exports.ButtonTag = ui_buttons.ButtonTag;
 	exports.Button = Button;
 
-}((this.BX.Vue3.Components = this.BX.Vue3.Components || {}),BX,BX.UI,BX.Vue3));
+}((this.BX.Vue3.Components = this.BX.Vue3.Components || {}),BX,BX.UI,BX.UI.IconSet));
 //# sourceMappingURL=button.bundle.js.map

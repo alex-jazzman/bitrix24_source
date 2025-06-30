@@ -119,6 +119,15 @@ if ($arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION")
 	$arParams["LINK"] = "https://".$arParams["SERVER_NAME"]."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"];
 }
 
+if ($arParams["TEMPLATE_TYPE"] == "COLLAB_JOIN")
+{
+	$protocol = \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http';
+	$baseUrl = "$protocol://" . $arParams["SERVER_NAME"] . $arParams['FIELDS']["COLLAB_CHAT_URL"];
+	$arParams["LINK"] = $baseUrl;
+	$arResult['LOGO'] = $this->getPath().'/templates/.default'.getMailCompanyLogo($arResult['USER_LANG']);
+	$arResult["FOOTER_LINK"] = getComponentMailFooterLink();
+}
+
 if ($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 {
 	$protocol = \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http';
@@ -225,7 +234,11 @@ if (Loader::includeModule("bitrix24"))
 	$this->arResult["HOST_NAME"] = defined('BX24_HOST_NAME') ? BX24_HOST_NAME : SITE_SERVER_NAME;
 }
 
-if($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
+if ($arParams["TEMPLATE_TYPE"] == "COLLAB_JOIN")
+{
+	$this->IncludeComponentTemplate("collab_join");
+}
+elseif($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 {
 	$this->IncludeComponentTemplate("collab");
 }

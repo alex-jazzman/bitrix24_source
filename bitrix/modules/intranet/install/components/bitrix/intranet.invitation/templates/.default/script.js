@@ -967,7 +967,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _linkRegisterEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkRegisterEnabled");
 	var _transport = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
 	var _input$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	var _invitationUrlByDepartments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("invitationUrlByDepartments");
 	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _onSubmitWithLocalEmailProgram = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSubmitWithLocalEmailProgram");
 	var _openLocalMailProgram = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openLocalMailProgram");
@@ -1011,10 +1010,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _invitationUrlByDepartments, {
-	      writable: true,
-	      value: []
-	    });
 	    Object.defineProperty(this, _analytics, {
 	      writable: true,
 	      value: null
@@ -1045,12 +1040,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _onSubmitWithLocalEmailProgram2() {
 	  const departmentsId = babelHelpers.classPrivateFieldLooseBase(this, _departmentControl)[_departmentControl].getValues();
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _invitationUrlByDepartments)[_invitationUrlByDepartments][departmentsId.toString()]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _openLocalMailProgram)[_openLocalMailProgram](babelHelpers.classPrivateFieldLooseBase(this, _invitationUrlByDepartments)[_invitationUrlByDepartments][departmentsId.toString()]);
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
-	    return;
-	  }
 
 	  // eslint-disable-next-line promise/catch-or-return
 	  babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport].send({
@@ -1064,7 +1053,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
 	    const invitationUrl = (_response$data = response.data) == null ? void 0 : _response$data.invitationLink;
 	    if (main_core.Type.isStringFilled(invitationUrl)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _invitationUrlByDepartments)[_invitationUrlByDepartments][departmentsId.toString()] = invitationUrl;
 	      babelHelpers.classPrivateFieldLooseBase(this, _openLocalMailProgram)[_openLocalMailProgram](invitationUrl);
 	    }
 	  }, response => {
@@ -1127,7 +1115,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _getNotificationContent2(isSuccess) {
 	  const title = isSuccess ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_TITLE') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_FAILED_TITLE');
 	  const description = isSuccess ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_DESCRIPTION', {
-	    '[LINK]': '<a class="intranet-invitation-dialog-link" href="/company/">',
+	    '[LINK]': '<a class="intranet-invitation-dialog-link">',
 	    '[/LINK]': '</a>'
 	  }) : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_FAILED_DESCRIPTION');
 	  const content = main_core.Tag.render(_t$6 || (_t$6 = _$6`
@@ -1140,7 +1128,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				</div>
 			</div>
 		`), title, description);
-	  const link = content.querySelector('.intranet-invitetion-dialog-link');
+	  const link = content.querySelector('.intranet-invitation-dialog-link');
 	  if (main_core.Type.isDomNode(link)) {
 	    main_core.Event.unbindAll(link);
 	    main_core.Event.bind(link, 'click', babelHelpers.classPrivateFieldLooseBase(this, _openInvitationPageWithFilter)[_openInvitationPageWithFilter].bind(this));
@@ -2686,7 +2674,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      return;
 	    }
 	    const data = {
-	      ITEMS: values.join(' '),
+	      invitationText: values.join(' '),
 	      departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].getValues(),
 	      tab: 'mass'
 	    };

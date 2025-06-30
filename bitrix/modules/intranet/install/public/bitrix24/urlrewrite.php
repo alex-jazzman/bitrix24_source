@@ -713,6 +713,12 @@ $arUrlRewrite = array(
 		'PATH' => '/bi/statistics/index.php',
 	),
 	array(
+		'CONDITION' => '#^/bi/unused_elements/#',
+		'RULE' => '',
+		'ID' => 'bitrix:biconnector.apachesuperset.workspace_analytic.controller',
+		'PATH' => '/bi/unused_elements/index.php',
+	),
+	array(
 		'CONDITION' => '#^/bi/dashboard/detail/([0-9]+)/#',
 		'RULE' => "dashboardId=\$1",
 		'ID' => 'bitrix:biconnector.apachesuperset.dashboard.detail',

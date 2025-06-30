@@ -82,6 +82,12 @@ WHERE sn.ID IN (" . implode(',', $nodeIds) . ") AND sn.GLOBAL_ACTIVE = 'Y' AND s
 				$DB->Query($sql);
 
 				$headRoleId = \Bitrix\HumanResources\Service\Container::getRoleHelperService()->getHeadRoleId();
+
+				if (!$headRoleId)
+				{
+					return;
+				}
+
 				//if the user is a boss let's add all his subordinates ('IU')
 				$sql = $helper->getInsertIgnore(
 					'b_user_access',

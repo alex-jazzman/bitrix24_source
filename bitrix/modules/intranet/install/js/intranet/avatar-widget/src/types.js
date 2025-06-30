@@ -99,6 +99,11 @@ export type SignDocumentsContentOptions = {
 	isLocked: boolean,
 };
 
+export type PerfReviewContentOptions = {
+	title: string,
+	path: string,
+};
+
 export type BaseContentOptions =
 	DesktopContentOptions
 	| SignDocumentsContentOptions

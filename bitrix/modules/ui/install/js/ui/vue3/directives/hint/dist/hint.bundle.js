@@ -13,12 +13,13 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      value: _getText2
 	    });
 	    this.popup = null;
+	    this.cursorOnPopup = false;
 	  }
 	  show(element, params) {
-	    var _params$popupOptions;
-	    this.hide();
+	    var _params$popupOptions, _this$popup;
+	    this.hide(false);
 	    const popupOptions = {
-	      id: 'bx-vue-hint',
+	      id: `bx-vue-hint-${Date.now()}`,
 	      bindElement: element,
 	      bindOptions: {
 	        position: params.position === 'top' ? 'top' : 'bottom'
@@ -29,14 +30,32 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      darkMode: true,
 	      autoHide: true,
 	      cacheable: false,
+	      animation: 'fading',
 	      ...((_params$popupOptions = params.popupOptions) != null ? _params$popupOptions : null)
 	    };
 	    this.popup = new main_popup.Popup(popupOptions);
 	    this.popup.show();
+	    if (params.interactivity && (_this$popup = this.popup) != null && _this$popup.getPopupContainer()) {
+	      main_core.Event.bind(this.popup.getPopupContainer(), 'mouseenter', () => {
+	        this.cursorOnPopup = true;
+	      });
+	      main_core.Event.bind(this.popup.getPopupContainer(), 'mouseleave', () => {
+	        this.cursorOnPopup = false;
+	        this.hide(true);
+	      });
+	    }
 	  }
-	  hide() {
-	    var _this$popup;
-	    (_this$popup = this.popup) == null ? void 0 : _this$popup.close();
+	  hide(isInteractive) {
+	    if (isInteractive) {
+	      setTimeout(() => {
+	        if (this.popup && this.popup.getPopupContainer() && !this.cursorOnPopup) {
+	          this.popup.close();
+	        }
+	      }, 100);
+	    } else {
+	      var _this$popup2;
+	      (_this$popup2 = this.popup) == null ? void 0 : _this$popup2.close();
+	    }
 	  }
 	}
 	function _getText2(element, params) {
@@ -58,11 +77,13 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  async mounted(element, {
 	    value
 	  }) {
+	    var _value$interactivity;
 	    if (!value) {
 	      return;
 	    }
 	    main_core.Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
-	    main_core.Event.bind(element, 'mouseleave', () => hideTooltip());
+	    const isInteractive = (_value$interactivity = value.interactivity) != null ? _value$interactivity : false;
+	    main_core.Event.bind(element, 'mouseleave', () => hideTooltip(isInteractive));
 	    main_core.Event.bind(element, 'click', () => hideTooltip());
 	  }
 	};
@@ -76,9 +97,9 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  clearTimeouts();
 	  tooltip.show(element, params);
 	}
-	function hideTooltip() {
+	function hideTooltip(isInteractive) {
 	  clearTimeouts();
-	  tooltip.hide();
+	  tooltip.hide(isInteractive);
 	}
 	function clearTimeouts() {
 	  clearTimeout(showTimeout);

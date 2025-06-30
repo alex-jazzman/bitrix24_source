@@ -339,12 +339,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        }, {
 	          id: 'structure-node',
 	          options: {
-	            selectMode: 'onlyDepartments',
-	            flatMode: true,
-	            fillRecentTab: true,
+	            selectMode: 'departmentsOnly',
+	            useMultipleTabs: true,
 	            restricted: 'view',
-	            includedNodeEntityTypes: ['department', 'team'],
-	            useMultipleTabs: true
+	            flatMode: true,
+	            includedNodeEntityTypes: ['department', 'team']
 	          }
 	        }],
 	        recentTabOptions: {
@@ -370,15 +369,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            this.$emit('locate', item.id);
 	          },
 	          onLoad: event => {
-	            event.target.items.get('user').forEach(item => {
+	            var _event$target$items$g;
+	            (_event$target$items$g = event.target.items.get('user')) == null ? void 0 : _event$target$items$g.forEach(item => {
 	              if (!item.getSubtitle()) {
 	                item.setSubtitle(item.customData.get('position'));
 	              }
 	            });
 	          },
 	          'SearchTab:onLoad': event => {
-	            var _event$target$items$g;
-	            (_event$target$items$g = event.target.items.get('user')) == null ? void 0 : _event$target$items$g.forEach(item => {
+	            var _event$target$items$g2;
+	            (_event$target$items$g2 = event.target.items.get('user')) == null ? void 0 : _event$target$items$g2.forEach(item => {
 	              if (!item.getSubtitle()) {
 	                item.setSubtitle(item.customData.get('position'));
 	              }

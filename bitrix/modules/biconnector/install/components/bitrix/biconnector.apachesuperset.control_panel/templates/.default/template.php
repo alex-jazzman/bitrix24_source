@@ -5,15 +5,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var \CMain $APPLICATION */
+/** @var array $arResult */
+/** @var array $arParams */
+
+if ($arParams['MENU_MODE'] ?? false)
+{
+	return;
+}
+
 \Bitrix\Main\Loader::includeModule('ui');
 \Bitrix\Main\UI\Extension::load([
 	'biconnector.apache-superset-feedback-form',
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-analytics',
 ]);
-
-/** @var \CMain $APPLICATION */
-/** @var array $arResult */
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.interface.buttons',

@@ -16,6 +16,7 @@ export type Options = {
 	maxVisibleUserGroups: ?number,
 	searchContainerSelector: ?string,
 	additionalMembersParams: AdditionalMembersParams,
+	isSaveAccessRightsList: boolean,
 }
 
 export type AdditionalMembersParams = {
@@ -66,6 +67,12 @@ export class ApplicationModel extends BuilderModel
 		return {
 			isMaxVisibleUserGroupsSet: (state): boolean => {
 				return state.options.maxVisibleUserGroups > 0;
+			},
+			isModified: (state, getters, rootState, rootGetters): boolean => {
+				return rootGetters['userGroups/isModified'] || rootGetters['accessRights/isModified'];
+			},
+			guid: (state): string => {
+				return state.guid;
 			},
 		};
 	}

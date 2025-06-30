@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_popup,ui_iconSet_main,ui_iconSet_api_core,ui_iconSet_outline,main_core) {
+(function (exports,main_popup,ui_iconSet_main,ui_cnt,ui_iconSet_api_core,ui_iconSet_outline,main_core) {
 	'use strict';
 
 	var _delta = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("delta");
@@ -78,7 +78,9 @@ this.BX.UI = this.BX.UI || {};
 	  _t10,
 	  _t11,
 	  _t12,
-	  _t13;
+	  _t13,
+	  _t14,
+	  _t15;
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _callbacks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("callbacks");
 	var _subMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subMenu");
@@ -100,6 +102,7 @@ this.BX.UI = this.BX.UI || {};
 	var _renderButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderButtons");
 	var _renderCheck = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCheck");
 	var _renderExtra = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderExtra");
+	var _renderCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCounter");
 	var _renderIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderIcon");
 	var _renderArrow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderArrow");
 	class MenuItem {
@@ -109,6 +112,9 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	    Object.defineProperty(this, _renderIcon, {
 	      value: _renderIcon2
+	    });
+	    Object.defineProperty(this, _renderCounter, {
+	      value: _renderCounter2
 	    });
 	    Object.defineProperty(this, _renderExtra, {
 	      value: _renderExtra2
@@ -411,8 +417,9 @@ this.BX.UI = this.BX.UI || {};
 				${0}
 				${0}
 				${0}
+				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderCheck)[_renderCheck](), babelHelpers.classPrivateFieldLooseBase(this, _renderExtra)[_renderExtra](), babelHelpers.classPrivateFieldLooseBase(this, _renderIcon)[_renderIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderArrow)[_renderArrow]());
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderCheck)[_renderCheck](), babelHelpers.classPrivateFieldLooseBase(this, _renderExtra)[_renderExtra](), babelHelpers.classPrivateFieldLooseBase(this, _renderCounter)[_renderCounter](), babelHelpers.classPrivateFieldLooseBase(this, _renderIcon)[_renderIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderArrow)[_renderArrow]());
 	}
 	function _renderCheck2() {
 	  if (!main_core.Type.isBoolean(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isSelected)) {
@@ -444,16 +451,34 @@ this.BX.UI = this.BX.UI || {};
 	  }, true);
 	  return extra;
 	}
+	function _renderCounter2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].counter) {
+	    return '';
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].counter.value) {
+	    return main_core.Tag.render(_t11 || (_t11 = _`
+				<div class="ui-popup-menu-item-counter"></div>
+			`));
+	  }
+	  return main_core.Tag.render(_t12 || (_t12 = _`
+			<div class="ui-popup-menu-item-counter">
+				${0}
+			</div>
+		`), new ui_cnt.Counter({
+	    color: ui_cnt.CounterColor.DANGER,
+	    ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].counter
+	  }).render());
+	}
 	function _renderIcon2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].icon) {
-	    return main_core.Tag.render(_t11 || (_t11 = _`
+	    return main_core.Tag.render(_t13 || (_t13 = _`
 				<div class="ui-popup-menu-item-icon">
 					<div class="ui-icon-set --${0}"></div>
 				</div>
 			`), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].icon);
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].svg) {
-	    return main_core.Tag.render(_t12 || (_t12 = _`
+	    return main_core.Tag.render(_t14 || (_t14 = _`
 				<div class="ui-popup-menu-item-svg">
 					${0}
 				</div>
@@ -465,7 +490,7 @@ this.BX.UI = this.BX.UI || {};
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].subMenu) {
 	    return '';
 	  }
-	  return main_core.Tag.render(_t13 || (_t13 = _`
+	  return main_core.Tag.render(_t15 || (_t15 = _`
 			<div class="ui-popup-menu-item-arrow">
 				<div class="ui-icon-set --${0}"></div>
 			</div>
@@ -631,25 +656,25 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
 	  }
 	  updateItems(itemsOptions) {
-	    var _babelHelpers$classPr7;
-	    const openedItem = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].find(item => {
+	    var _babelHelpers$classPr7, _babelHelpers$classPr8;
+	    const openedItem = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) == null ? void 0 : _babelHelpers$classPr7.find(item => {
 	      var _item$getSubMenu2, _item$getSubMenu2$get;
 	      return (_item$getSubMenu2 = item.getSubMenu()) == null ? void 0 : (_item$getSubMenu2$get = _item$getSubMenu2.getPopup()) == null ? void 0 : _item$getSubMenu2$get.isShown();
 	    });
-	    (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) == null ? void 0 : _babelHelpers$classPr7.forEach(item => item.destroy());
+	    (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) == null ? void 0 : _babelHelpers$classPr8.forEach(item => item.destroy());
 	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = babelHelpers.classPrivateFieldLooseBase(this, _prepareItems)[_prepareItems](itemsOptions);
 	    babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
 	    if (openedItem && !(openedItem != null && openedItem.getSubMenu().getOptions().closeOnItemClick)) {
-	      var _babelHelpers$classPr8;
-	      (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].find(item => item.getOptions().id === openedItem.getOptions().id)) == null ? void 0 : _babelHelpers$classPr8.showSubMenu();
+	      var _babelHelpers$classPr9;
+	      (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].find(item => item.getOptions().id === openedItem.getOptions().id)) == null ? void 0 : _babelHelpers$classPr9.showSubMenu();
 	    }
 	  }
 	  close() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].close();
 	  }
 	  destroy() {
-	    var _babelHelpers$classPr9;
-	    (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) == null ? void 0 : _babelHelpers$classPr9.forEach(item => item.destroy());
+	    var _babelHelpers$classPr10;
+	    (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) == null ? void 0 : _babelHelpers$classPr10.forEach(item => item.destroy());
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].destroy();
 	  }
 	}
@@ -671,8 +696,8 @@ this.BX.UI = this.BX.UI || {};
 	  return items;
 	}
 	function _render2() {
-	  var _babelHelpers$classPr10, _babelHelpers$classPr11;
-	  (_babelHelpers$classPr11 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _container))[_container]) != null ? _babelHelpers$classPr11 : _babelHelpers$classPr10[_container] = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	  var _babelHelpers$classPr11, _babelHelpers$classPr12;
+	  (_babelHelpers$classPr12 = (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _container))[_container]) != null ? _babelHelpers$classPr12 : _babelHelpers$classPr11[_container] = main_core.Tag.render(_t$1 || (_t$1 = _$1`
 			<div class="ui-popup-menu-container"></div>
 		`));
 	  const itemsContainer = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
@@ -686,11 +711,11 @@ this.BX.UI = this.BX.UI || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	}
 	function _renderRichHeader2() {
-	  var _babelHelpers$classPr12;
+	  var _babelHelpers$classPr13;
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].richHeader) {
 	    return '';
 	  }
-	  const design = (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].richHeader.design) != null ? _babelHelpers$classPr12 : MenuRichHeaderDesign.Default;
+	  const design = (_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].richHeader.design) != null ? _babelHelpers$classPr13 : MenuRichHeaderDesign.Default;
 	  const richHeader = main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
 			<div class="ui-popup-menu-rich-header --${0}">
 				<div class="ui-popup-menu-rich-header-image">
@@ -740,7 +765,7 @@ this.BX.UI = this.BX.UI || {};
 		`), babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].richHeader.icon);
 	}
 	function _renderItems2() {
-	  var _itemsBySection$baseS, _itemsBySection$baseS2, _babelHelpers$classPr13, _babelHelpers$classPr14;
+	  var _itemsBySection$baseS, _itemsBySection$baseS2, _babelHelpers$classPr14, _babelHelpers$classPr15;
 	  const baseSection = 'base';
 	  const itemsBySection = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].reduce((result, item) => {
 	    var _item$getOptions$sect, _result$sectionCode;
@@ -751,14 +776,14 @@ this.BX.UI = this.BX.UI || {};
 	      [sectionCode]: [...sectionItems, item]
 	    };
 	  }, {});
-	  return [...((_itemsBySection$baseS = (_itemsBySection$baseS2 = itemsBySection[baseSection]) == null ? void 0 : _itemsBySection$baseS2.map(item => item.render())) != null ? _itemsBySection$baseS : []), ...((_babelHelpers$classPr13 = (_babelHelpers$classPr14 = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].sections) == null ? void 0 : _babelHelpers$classPr14.flatMap(options => {
+	  return [...((_itemsBySection$baseS = (_itemsBySection$baseS2 = itemsBySection[baseSection]) == null ? void 0 : _itemsBySection$baseS2.map(item => item.render())) != null ? _itemsBySection$baseS : []), ...((_babelHelpers$classPr14 = (_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].sections) == null ? void 0 : _babelHelpers$classPr15.flatMap(options => {
 	    var _items$map;
 	    const items = itemsBySection[options.code];
 	    if (!items) {
 	      return null;
 	    }
 	    return [babelHelpers.classPrivateFieldLooseBase(this, _renderSection)[_renderSection](options), ...((_items$map = items.map(item => item.render())) != null ? _items$map : [])];
-	  })) != null ? _babelHelpers$classPr13 : []).filter(it => it)];
+	  })) != null ? _babelHelpers$classPr14 : []).filter(it => it)];
 	}
 	function _renderSection2(options) {
 	  var _options$design;
@@ -783,5 +808,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.MenuSectionDesign = MenuSectionDesign;
 	exports.MenuRichHeaderDesign = MenuRichHeaderDesign;
 
-}((this.BX.UI.System = this.BX.UI.System || {}),BX.Main,BX,BX.UI.IconSet,BX,BX));
+}((this.BX.UI.System = this.BX.UI.System || {}),BX.Main,BX,BX.UI,BX.UI.IconSet,BX,BX));
 //# sourceMappingURL=menu.bundle.js.map

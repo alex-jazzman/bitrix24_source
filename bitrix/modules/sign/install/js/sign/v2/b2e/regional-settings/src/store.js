@@ -110,7 +110,7 @@ export const useRegionalSettingsStore = defineStore('sign-b2e-regional-settings-
 				this.documentSettingsMap.set(uid, settings);
 				if (this.hcmLinkCompanyId === null)
 				{
-					this.hcmLinkCompanyId = documentDetail.hcmLinkCompanyId;
+					this.modifyHcmLinkCompanyId(documentDetail.hcmLinkCompanyId);
 				}
 			}
 

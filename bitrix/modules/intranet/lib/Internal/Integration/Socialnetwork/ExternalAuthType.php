@@ -25,4 +25,16 @@ class ExternalAuthType
 
 		return [];
 	}
+
+	public function getAllTypeList(): array
+	{
+		if (Loader::includeModule('socialnetwork'))
+		{
+			return ComponentHelper::checkPredefinedAuthIdList(
+				$this->defaultTypes
+			);
+		}
+
+		return [];
+	}
 }

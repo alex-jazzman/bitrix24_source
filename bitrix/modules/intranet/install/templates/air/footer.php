@@ -138,6 +138,7 @@ if (!$imEnabled || !$imEmbedded)
 		[
 			'CONTEXT' => SITE_ID . '_' . SITE_TEMPLATE_ID,
 			'POSITION' => ['right' => '70px', 'bottom' => '15px'],
+			'SHIFTED_POSITION' => ['right' => '10px', 'bottom' => '15px'],
 		]
 	);
 }

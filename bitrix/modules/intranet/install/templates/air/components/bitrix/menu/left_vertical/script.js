@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_buttons,main_core_event,main_popup,main_core_events,ui_dialogs_messagebox,ui_bannerDispatcher,ui_analytics,main_core,main_core_cache,main_sidepanel) {
+(function (exports,ui_buttons,main_core_event,ui_cnt,main_popup,main_core_events,ui_dialogs_messagebox,ui_bannerDispatcher,ui_analytics,main_core,main_core_cache,main_sidepanel) {
 	'use strict';
 
 	class Options {
@@ -706,33 +706,23 @@ this.BX = this.BX || {};
 	    }
 	  }
 	  getCounterValue() {
-	    const node = this.container.querySelector('[data-role="counter"]');
-	    if (!node) {
+	    const counter = ui_cnt.Counter.initFromCounterNode(this.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+	    if (!counter) {
 	      return null;
 	    }
-	    return parseInt(node.dataset.counterValue);
+	    return counter.getRealValue();
 	  }
 	  updateCounter(counterValue) {
-	    const node = this.container.querySelector('[data-role="counter"]');
-	    if (!node) {
+	    const counter = ui_cnt.Counter.initFromCounterNode(this.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+	    if (!counter) {
 	      return;
 	    }
-	    const oldValue = parseInt(node.dataset.counterValue) || 0;
-	    node.dataset.counterValue = counterValue;
+	    const oldValue = counter.getRealValue() || 0;
+	    counter.update(parseInt(counterValue, 10));
 	    if (counterValue > 0) {
-	      node.innerHTML = counterValue > 99 ? '99+' : counterValue;
-	      this.container.classList.add('menu-item-with-index');
+	      main_core.Dom.addClass(this.container, 'menu-item-with-index');
 	    } else {
-	      node.innerHTML = '';
-	      this.container.classList.remove('menu-item-with-index');
-	      if (counterValue < 0)
-	        // TODO need to know what it means
-	        {
-	          const warning = BX('menu-counter-warning-' + this.getId());
-	          if (warning) {
-	            warning.style.display = 'inline-block';
-	          }
-	        }
+	      main_core.Dom.removeClass(this.container, 'menu-item-with-index');
 	    }
 	    return {
 	      oldValue,
@@ -848,6 +838,13 @@ this.BX = this.BX || {};
 	    counterId = counterId ? main_core.Text.encode(counterId) : '';
 	    counterValue = counterValue ? parseInt(counterValue) : 0;
 	    openInNewPage = openInNewPage === 'Y' ? 'Y' : 'N';
+	    const counter = new ui_cnt.Counter({
+	      size: ui_cnt.Counter.Size.SMALL,
+	      style: ui_cnt.Counter.Style.FILLED_ALERT,
+	      useAirDesign: true,
+	      value: counterValue,
+	      id: `menu-counter-${counterId}`
+	    });
 	    return main_core.Tag.render(_t2 || (_t2 = _$1`<li 
 			id="bx_left_menu_${0}" 
 			data-status="show" 
@@ -876,8 +873,7 @@ this.BX = this.BX || {};
 					<span class="menu-favorites-btn-icon"></span>
 				</span>
 			</li>`), id, id, counterId, link, this.code, topMenuId ? `data-top-menu-id="${main_core.Text.encode(topMenuId)}"` : "", openInNewPage, link, openInNewPage === 'Y' ? '_blank' : '_self', text, counterId ? `<span class="menu-item-index-wrap">
-						<span data-role="counter"
-							data-counter-value="${counterValue}" class="menu-item-index" id="menu-counter-${counterId}">${counterValue}</span>
+						${counter.render()}
 					</span>` : '');
 	  }
 
@@ -1611,16 +1607,15 @@ this.BX = this.BX || {};
 	  }
 	  updateCounter() {
 	    let counterValue = 0;
-	    [...this.container.parentNode.querySelector(`[data-group-id="${this.getId()}"]`).querySelectorAll('[data-role="counter"]')].forEach(node => {
-	      counterValue += main_core.Text.toNumber(node.dataset.counterValue);
+	    [...this.container.parentNode.querySelector(`[data-group-id="${this.getId()}"]`).querySelectorAll(`.${ui_cnt.Counter.BaseClassname}`)].forEach(node => {
+	      const counter = ui_cnt.Counter.initFromCounterNode(node);
+	      counterValue += counter.getRealValue();
 	    });
-	    const node = this.container.querySelector('[data-role="counter"]');
+	    ui_cnt.Counter.updateCounterNodeValue(this.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`), counterValue);
 	    if (counterValue > 0) {
-	      node.innerHTML = counterValue > 99 ? '99+' : counterValue;
-	      this.container.classList.add('menu-item-with-index');
+	      main_core.Dom.addClass(this.container, 'menu-item-with-index');
 	    } else {
-	      node.innerHTML = '';
-	      this.container.classList.remove('menu-item-with-index');
+	      main_core.Dom.removeClass(this.container, 'menu-item-with-index');
 	    }
 	  }
 	  markAsActive() {
@@ -2094,7 +2089,7 @@ this.BX = this.BX || {};
 	          if (res > 0) {
 	            let counterId = 'doesNotMatter';
 	            if (id.indexOf('menu_crm') >= 0 || id.indexOf('menu_tasks') >= 0) {
-	              const counterNode = item.container.querySelector('[data-role="counter"]');
+	              const counterNode = item.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`);
 	              if (counterNode) {
 	                counterId = counterNode.id;
 	              }
@@ -2346,8 +2341,9 @@ this.BX = this.BX || {};
 	}
 	function _recalculateCounters2(item) {
 	  let counterValue = 0;
-	  if (item.container.querySelector('[data-role="counter"]')) {
-	    counterValue = item.container.querySelector('[data-role="counter"]').dataset.counterValue;
+	  const counter = ui_cnt.Counter.initFromCounterNode(item.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+	  if (counter) {
+	    counterValue = counter.getRealValue();
 	  }
 	  if (counterValue <= 0) {
 	    return;
@@ -2359,20 +2355,12 @@ this.BX = this.BX || {};
 	  });
 	  let hiddenCounterValue = 0;
 	  [...this.parentContainer.querySelectorAll(`.menu-item-block[data-status="hide"][data-role='item']`)].forEach(node => {
-	    const counterNode = node.querySelector('[data-role="counter"]');
-	    if (counterNode) {
-	      hiddenCounterValue += parseInt(counterNode.dataset.counterValue);
+	    const hiddenMenuItemCounter = ui_cnt.Counter.initFromCounterNode(node.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+	    if (hiddenMenuItemCounter) {
+	      hiddenCounterValue += hiddenMenuItemCounter.getRealValue();
 	    }
 	  });
-	  const hiddenCounterNode = this.parentContainer.querySelector('#menu-hidden-counter');
-	  hiddenCounterNode.dataset.counterValue = Math.max(0, hiddenCounterValue);
-	  if (hiddenCounterNode.dataset.counterValue > 0) {
-	    hiddenCounterNode.classList.remove('menu-hidden-counter');
-	    hiddenCounterNode.innerHTML = hiddenCounterNode.dataset.counterValue > 99 ? '99+' : hiddenCounterNode.dataset.counterValue;
-	  } else {
-	    hiddenCounterNode.classList.add('menu-hidden-counter');
-	    hiddenCounterNode.innerHTML = '';
-	  }
+	  ui_cnt.Counter.updateCounterNodeValue(ui_cnt.Counter.initFromCounterNode(this.parentContainer.querySelector('#menu-hidden-counter')), hiddenCounterValue);
 	}
 	function _refreshActivity2(item, oldParent) {
 	  if (this.getActiveItem() !== item) {
@@ -2391,8 +2379,8 @@ this.BX = this.BX || {};
 	function _getItemsByCounterId2(counterId) {
 	  const result = [];
 	  [...this.items.values()].forEach(item => {
-	    const node = item.container.querySelector('[data-role="counter"]');
-	    if (node && node.id.indexOf(counterId) >= 0) {
+	    const counter = ui_cnt.Counter.initFromCounterNode(item.container.querySelector(`.${ui_cnt.Counter.BaseClassname}`));
+	    if (counter && counter.getId().includes(counterId)) {
 	      result.push(item);
 	    }
 	  });
@@ -3167,10 +3155,22 @@ this.BX = this.BX || {};
 
 	var _getLeftMenuItemByTopMenuItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLeftMenuItemByTopMenuItem");
 	var _specialLiveFeedDecrement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("specialLiveFeedDecrement");
+	var _addLicenseButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addLicenseButton");
+	var _getLicenseButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLicenseButton");
+	var _createLicenseButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createLicenseButton");
 	class Menu {
 	  //
 
 	  constructor(params) {
+	    Object.defineProperty(this, _createLicenseButton, {
+	      value: _createLicenseButton2
+	    });
+	    Object.defineProperty(this, _getLicenseButton, {
+	      value: _getLicenseButton2
+	    });
+	    Object.defineProperty(this, _addLicenseButton, {
+	      value: _addLicenseButton2
+	    });
 	    Object.defineProperty(this, _getLeftMenuItemByTopMenuItem, {
 	      value: _getLeftMenuItemByTopMenuItem2
 	    });
@@ -3199,11 +3199,14 @@ this.BX = this.BX || {};
 	    Options.inviteDialogLink = params.inviteDialogLink;
 	    Options.showMarta = params.showMarta;
 	    Options.showSitemapMenuItem = params.showSitemapMenuItem;
+	    Options.showLicenseButton = params.showLicenseButton;
+	    Options.licenseButtonPath = params.licenseButtonPath;
 	    this.isCollapsedMode = params.isCollapsedMode;
 	    this.analytics = new Analytics(params.isAdmin);
 	    this.initAndBindNodes();
 	    this.bindEvents();
 	    this.getItemsController();
+	    babelHelpers.classPrivateFieldLooseBase(this, _addLicenseButton)[_addLicenseButton]();
 	    this.groupPanel = new GroupPanel({
 	      isExtranetInstalled: params.isExtranetInstalled !== 'N'
 	    });
@@ -3575,13 +3578,16 @@ this.BX = this.BX || {};
 	    this.showMessage(bindElement, main_core.Loc.getMessage('edit_error'));
 	  }
 	  showGlobalPreset() {
-	    ui_bannerDispatcher.BannerDispatcher.high.toQueue(onDone => {
-	      const presetController = this.getDefaultPresetController();
-	      presetController.show('global');
-	      presetController.getPopup().subscribe('onAfterClose', event => {
-	        onDone();
+	    const loadBannerDispatcherExtensionPromise = main_core.Runtime.loadExtension('ui.banner-dispatcher');
+	    loadBannerDispatcherExtensionPromise.then(() => {
+	      ui_bannerDispatcher.BannerDispatcher.high.toQueue(onDone => {
+	        const presetController = this.getDefaultPresetController();
+	        presetController.show('global');
+	        presetController.getPopup().subscribe('onAfterClose', event => {
+	          onDone();
+	        });
 	      });
-	    });
+	    }).catch(() => {});
 	  }
 	  handleShowHiddenClick() {
 	    this.getItemsController().toggleHiddenContainer(true);
@@ -3846,6 +3852,9 @@ this.BX = this.BX || {};
 	      if (BX.hasClass(this.mainTable, "menu-sliding-mode")) {
 	        if (immediately !== true) {
 	          BX.addClass(this.mainTable, "menu-sliding-closing-mode");
+	          if (Options.showLicenseButton) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(true);
+	          }
 	        }
 	        BX.removeClass(this.mainTable, "menu-sliding-mode menu-sliding-opening-mode");
 	        main_core.Dom.removeClass(this.menuContainer, '--ui-context-edge-dark');
@@ -3855,6 +3864,11 @@ this.BX = this.BX || {};
 	      main_core.Dom.removeClass(this.menuContainer, '--ui-context-edge-dark');
 	      if (immediately !== true) {
 	        BX.addClass(this.mainTable, "menu-sliding-opening-mode");
+	        if (Options.showLicenseButton) {
+	          setTimeout(() => {
+	            babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(false);
+	          }, 50);
+	        }
 	      }
 	      BX.addClass(this.mainTable, "menu-sliding-mode");
 	      main_core.Dom.addClass(this.menuContainer, '--ui-context-edge-dark');
@@ -3894,10 +3908,6 @@ this.BX = this.BX || {};
 	    var menuSitemapText = leftColumn.querySelector('.menu-sitemap-btn-text');
 	    var menuEmployeesText = leftColumn.querySelector('.menu-invite-employees-text');
 	    var menuEmployeesIcon = leftColumn.querySelector('.menu-invite-icon-box');
-	    var licenseContainer = leftColumn.querySelector('.menu-license-all-container');
-	    var licenseBtn = leftColumn.querySelector('.menu-license-all-default');
-	    var licenseHeight = licenseBtn ? licenseBtn.offsetHeight : 0;
-	    var licenseCollapsedBtn = leftColumn.querySelector('.menu-license-all-collapsed');
 	    const settingsIconBox = this.menuContainer.querySelector(".menu-settings-icon-box");
 	    const settingsBtnText = this.menuContainer.querySelector(".menu-settings-btn-text");
 	    const helpIconBox = this.menuContainer.querySelector(".menu-help-icon-box");
@@ -3933,6 +3943,9 @@ this.BX = this.BX || {};
 	        //Change this formula in template_style.css as well
 	        if (pageHeader) {
 	          pageHeader.style.maxWidth = "calc(100vw - " + state.sidebarWidth + "px - " + imBarWidth + "px)";
+	        }
+	        if (Options.showLicenseButton && state.sidebarWidth > 160) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(isOpen);
 	        }
 	        if (isOpen) {
 	          //Closing Mode
@@ -3979,13 +3992,6 @@ this.BX = this.BX || {};
 	          if (menuMoreCounter) {
 	            menuMoreCounter.style.transform = "translateX(" + state.translateIcon + "px)";
 	            menuMoreCounter.style.opacity = state.opacityRevert / 100;
-	          }
-	          if (licenseContainer) {
-	            licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
-	            licenseBtn.style.opacity = state.opacity / 100;
-	            licenseBtn.style.height = state.heightLicenseBtn + "px";
-	            licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-	            licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
 	          }
 	          menuLinks.forEach(function (item) {
 	            var menuIcon = item.querySelector(".menu-item-icon-box");
@@ -4051,13 +4057,6 @@ this.BX = this.BX || {};
 	          if (menuMoreCounter) {
 	            menuMoreCounter.style.transform = "translateX(" + state.translateText + "px)";
 	          }
-	          if (licenseContainer) {
-	            licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
-	            licenseBtn.style.opacity = state.opacity / 100;
-	            licenseBtn.style.height = state.heightLicenseBtn + "px";
-	            licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-	            licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
-	          }
 	          menuLinks.forEach(function (item) {
 	            var menuIcon = item.querySelector(".menu-item-icon-box");
 	            var menuLinkText = item.querySelector(".menu-item-link-text");
@@ -4091,7 +4090,7 @@ this.BX = this.BX || {};
 	          BX.removeClass(this.mainTable, "menu-collapsed-mode");
 	        }
 	        BX.removeClass(this.mainTable, "menu-animation-mode menu-animation-opening-mode menu-animation-closing-mode");
-	        var containers = [leftColumn, menuTextDivider, this.menuHeaderBurger, this.headerBurger, settingsIconBox, settingsBtnText, helpIconBox, helpBtnText, menuMoreBtnDefault, menuMoreBtn, menuSitemapIcon, menuSitemapText, menuEmployeesIcon, menuEmployeesText, menuMoreCounter, licenseBtn, licenseCollapsedBtn, this.menuContainer, pageHeader];
+	        var containers = [leftColumn, menuTextDivider, this.menuHeaderBurger, this.headerBurger, settingsIconBox, settingsBtnText, helpIconBox, helpBtnText, menuMoreBtnDefault, menuMoreBtn, menuSitemapIcon, menuSitemapText, menuEmployeesIcon, menuEmployeesText, menuMoreCounter, this.menuContainer, pageHeader];
 	        containers.forEach(function (container) {
 	          if (container) {
 	            container.style.cssText = "";
@@ -4231,8 +4230,42 @@ this.BX = this.BX || {};
 	  }
 	  return (_item = item) != null ? _item : null;
 	}
+	function _addLicenseButton2() {
+	  if (Options.showLicenseButton) {
+	    const licenseButtonWrapper = this.menuContainer.querySelector('.menu-license-all-wrapper');
+	    if (licenseButtonWrapper) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().renderTo(licenseButtonWrapper);
+	    }
+	  }
+	}
+	function _getLicenseButton2() {
+	  if (this.licenseButton) {
+	    return this.licenseButton;
+	  }
+	  this.licenseButton = babelHelpers.classPrivateFieldLooseBase(this, _createLicenseButton)[_createLicenseButton]();
+	  this.licenseButton.setCollapsed(this.isCollapsed());
+	  return this.licenseButton;
+	}
+	function _createLicenseButton2() {
+	  return new ui_buttons.Button({
+	    size: ui_buttons.Button.Size.SMALL,
+	    text: main_core.Loc.getMessage('MENU_LICENSE_ALL'),
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.FILLED_SUCCESS,
+	    noCaps: true,
+	    wide: true,
+	    icon: 'o-rocket',
+	    className: 'menu-license-all-button',
+	    onclick: () => {
+	      BX.SidePanel.Instance.open(Options.licenseButtonPath, {
+	        width: 1250,
+	        cacheable: false
+	      });
+	    }
+	  });
+	}
 
 	exports.Menu = Menu;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.Main,BX.Event,BX.UI.Dialogs,BX.UI,BX.UI.Analytics,BX,BX.Cache,BX.SidePanel));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.UI,BX.Main,BX.Event,BX.UI.Dialogs,BX.UI,BX.UI.Analytics,BX,BX.Cache,BX.SidePanel));
 //# sourceMappingURL=script.js.map

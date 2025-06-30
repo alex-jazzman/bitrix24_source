@@ -1,17 +1,9 @@
 <?php
+$MESS["DASHBOARD_PARAMS_SELECTOR_GROUPS"] = "Топтар";
+$MESS["DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT"] = "Топқа есеп қосылғаннан кейін оған топтың кіру құқығы қолданыла бастайды";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS"] = "Параметрлер";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_BUTTON_CANCEL"] = "Болдырмау";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_BUTTON_CONFIRM"] = "Растау";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_CONTENT"] = "Сіз таңдалған параметрлерге сәйкес келмейтін көріну аймағын қосып жатырсыз. Есептегі параметрлер тізімі өзгертіледі";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_NOT_TO_SAVE_PLURAL_0"] = "#PARAMS_NOT_TO_SAVE# параметрі қолжетімсіз болады";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_NOT_TO_SAVE_PLURAL_1"] = "#PARAMS_NOT_TO_SAVE# параметрлері қолжетімсіз болады";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_NOT_TO_SAVE_PLURAL_2"] = "#PARAMS_NOT_TO_SAVE# параметрлері қолжетімсіз болады";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_TO_DELETE_PLURAL_0"] = "#PARAMS_TO_DELETE# параметрі жойылады";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_TO_DELETE_PLURAL_1"] = "#PARAMS_TO_DELETE# параметрлері жойылады";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_TO_DELETE_PLURAL_2"] = "#PARAMS_TO_DELETE# параметрлері жойылады";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_TITLE"] = "Көріну аймағын қосу керек пе?";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_GLOBAL"] = "Жаһандық параметр";
-$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT"] = "Есепте көріну аймағы таңдалған болса, міндетті параметрлер автоматты түрде қосылады. Сондай-ақ, сіз басқа параметрлер қоса аласыз. [link]Толығырақ[/link]";
+$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT_MSGVER_1"] = "Қолжетімді параметрлер таңдалған көріну аймақтарына байланысты және автоматты түрде қосылады. \"Пайдаланушы идентификаторы\" параметрі әрқашан қолжетімді. [link]Толығырақ[/link]";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_LIST"] = "Параметр идентификаторлары";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_UNAVAILABLE"] = "Параметр таңдалған көріну аймақтарында қолжетімсіз";
 $MESS["DASHBOARD_PARAMS_SELECTOR_SCOPE"] = "Көріну аймақтары";

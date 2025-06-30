@@ -1190,7 +1190,7 @@ class CIntranetUtils
 			self::_GetDeparmentsTreeWithoutEmployee();
 		}
 
-		return self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id]['UF_HEAD'];
+		return self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id]['UF_HEAD'] ?? null;
 	}
 
 	/**
@@ -1240,13 +1240,14 @@ class CIntranetUtils
 
 		foreach ($arDepartments as $section_id)
 		{
-			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id];
+			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id] ?? null;
 
-			$bFound = $arSection['UF_HEAD']
+			$bFound = isset($arSection['UF_HEAD'])
+				&& $arSection['UF_HEAD']
 				&& $arSection['UF_HEAD'] != $skipUserId
 				&& array_key_exists($arSection['UF_HEAD'], $arManagers);
 
-			if (!$bFound && $bRecursive && $arSection['IBLOCK_SECTION_ID'])
+			if (!$bFound && $bRecursive && !empty($arSection['IBLOCK_SECTION_ID']))
 			{
 				$ar = CIntranetUtils::GetDepartmentManager(array($arSection['IBLOCK_SECTION_ID']), $skipUserId, $bRecursive);
 				$arManagers = $arManagers + $ar;

@@ -266,18 +266,16 @@ abstract class BaseObject extends Internals\Engine\Controller
 			'action' => 'default',
 		), true));
 
+		$isBoard = false;
 		$canEditDocument = null;
 		$availableEdit = $extLink->availableEdit();
 		if ($availableEdit)
 		{
 			$canEditDocument = $extLink->getAccessRight() === $extLink::ACCESS_RIGHT_EDIT;
-			// todo: temporary restriction for board, remove it when it is no longer needed
 			if ($object instanceof Disk\File)
 			{
 				$fileType = (int)$object->getTypeFile();
-				$isNotBoard = $fileType !== Disk\TypeFile::FLIPCHART;
-				$canEditDocument = $canEditDocument && $isNotBoard;
-				$availableEdit = $isNotBoard;
+				$isBoard = $fileType === Disk\TypeFile::FLIPCHART;
 			}
 		}
 
@@ -293,6 +291,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 				'canEditDocument' => $canEditDocument,
 				'deathTime' => $extLink->getDeathTime(),
 				'deathTimeTimestamp' => $extLink->hasDeathTime()? $extLink->getDeathTime()->getTimestamp() : null,
+				'isBoard' => $isBoard,
 			],
 		];
 	}

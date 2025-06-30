@@ -602,6 +602,10 @@ this.BX.UI = this.BX.UI || {};
 	            }
 	          }
 	        });
+	        const downloadItem = this.menu.getMenuItem('download');
+	        if (downloadItem) {
+	          main_core.Dom.attr(downloadItem.getContainer(), 'download', true);
+	        }
 	        this.emitter.emit('TileItem:onMenuCreate', {
 	          menu: this.menu,
 	          item: this.item

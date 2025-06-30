@@ -5,6 +5,7 @@ use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Intranet\Portal\FirstPage;
 use Bitrix\Intranet\Site\FirstPage\MainFirstPage;
 use Bitrix\Intranet\UI\LeftMenu\MenuItem;
+use Bitrix\Intranet\UI\LeftMenu\Preset\Social;
 
 class Menu
 {
@@ -322,8 +323,10 @@ class Menu
 	{
 		$requestUri = \Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri();
 		$isEmbeddedMessenger = str_starts_with($requestUri, SITE_DIR . 'online/');
+		$isSocialPreset = Preset\Manager::getPreset()->getCode() === Social::CODE;
+		$defaultValue = $isSocialPreset ? 'N' : 'Y';
 
-		$globalValue = \CUserOptions::getOption('intranet', 'left_menu_collapsed') === 'Y';
+		$globalValue = \CUserOptions::getOption('intranet', 'left_menu_collapsed', $defaultValue) === 'Y';
 		if ($isEmbeddedMessenger)
 		{
 			return \CUserOptions::getOption('intranet', 'left_menu_collapsed:online', $globalValue ? 'Y' : 'N') === 'Y';

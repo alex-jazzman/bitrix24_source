@@ -1,5 +1,5 @@
 <?php
-$MESS["BICONNECTOR_CONTROLLER_EXTERNAL_SOURCE_DATASET_ACCESS_ERROR"] = "Датасетпен жұмыс істеуге құқықтар жеткіліксіз. Битрикс24 жетекшісіне немесе әкімшісіне хабарласыңыз";
+$MESS['BICONNECTOR_CONTROLLER_EXTERNAL_SOURCE_DATASET_ACCESS_ERROR'] = 'Датасетпен жұмыс істеуге құқықтар жеткіліксіз. Битрикс24 жетекшісіне немесе әкімшісіне хабарласыңыз';
 $MESS["BICONNECTOR_EXTERNAL_SOURCE_DATASET_ADD_ERROR"] = "Датасет жасау қатесі";
 $MESS["BICONNECTOR_EXTERNAL_SOURCE_DATASET_ALREADY_EXIST_ERROR"] = "Осы атаумен датасет қазірдің өзінде бар";
 $MESS["BICONNECTOR_EXTERNAL_SOURCE_DATASET_DELETE_ERROR"] = "Датасет жою қатесі";

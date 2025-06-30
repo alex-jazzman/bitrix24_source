@@ -40,7 +40,6 @@ export class InvitationInput extends EventEmitter
 		this.#inputType = options?.inputType ?? InvitationInputType.ALL;
 		this.setEventNamespace('BX.Intranet.InvitationInput');
 
-		this.#placeholder = Type.isStringFilled(options?.placeholder) ? options.placeholder : this.#getDefaultPlaceholder();
 		this.#minHeight = options?.minHeight;
 		this.#showErrorBeforeSubmit = Type.isBoolean(options?.showErrorBeforeSubmit)
 			? options.showErrorBeforeSubmit
@@ -58,6 +57,7 @@ export class InvitationInput extends EventEmitter
 		this.#isPhoneEnabled = [InvitationInputType.ALL, InvitationInputType.PHONE].includes(this.#inputType)
 			&& Boolean(settings?.isInvitationByPhoneAvailable);
 		this.#isEmailEnabled = [InvitationInputType.ALL, InvitationInputType.EMAIL].includes(this.#inputType);
+		this.#placeholder = Type.isStringFilled(options?.placeholder) ? options.placeholder : this.#getDefaultPlaceholder();
 	}
 
 	changeLanguage(lang: string): void
@@ -265,11 +265,11 @@ export class InvitationInput extends EventEmitter
 
 	#getDefaultPlaceholder(): string
 	{
-		if (this.#inputType === InvitationInputType.PHONE)
+		if (this.#isPhoneEnabled && !this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER_PHONE');
 		}
-		else if (this.#inputType === InvitationInputType.EMAIL)
+		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER');
 		}
@@ -279,11 +279,11 @@ export class InvitationInput extends EventEmitter
 
 	#getDefaultValidationMessage(): string
 	{
-		if (this.#inputType === InvitationInputType.PHONE)
+		if (this.#isPhoneEnabled && !this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
 		}
-		else if (this.#inputType === InvitationInputType.EMAIL)
+		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE');
 		}
@@ -293,11 +293,11 @@ export class InvitationInput extends EventEmitter
 
 	#getEmptyValidationMessage(): string
 	{
-		if (this.#inputType === InvitationInputType.PHONE)
+		if (this.#isPhoneEnabled && !this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
 		}
-		else if (this.#inputType === InvitationInputType.EMAIL)
+		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE');
 		}

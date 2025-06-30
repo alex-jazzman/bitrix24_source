@@ -1,4 +1,4 @@
-import { Tag, Event } from 'main.core';
+import { Tag, Event, ajax, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu } from 'main.popup';
 import { AvatarRound, AvatarRoundExtranet, AvatarRoundGuest, AvatarBase } from 'ui.avatar';
@@ -136,6 +136,7 @@ export class MainContent extends Content
 			return new Menu({
 				bindElement: target,
 				items,
+				fixed: true,
 			});
 		});
 	}
@@ -181,6 +182,21 @@ export class MainContent extends Content
 				{
 					BX.Helper.show('redirect=detail&code=16615982');
 				}
+
+				break;
+			}
+
+			case 'pulse': {
+				ajax.runAction('intranet.user.widget.getUserStatComponent', {
+					mode: 'class'
+				}).then((response) => {
+					Runtime.html(null, response.data.html).then(() => {
+						if (window['openIntranetUStat'])
+						{
+							openIntranetUStat();
+						}
+					});
+				});
 
 				break;
 			}

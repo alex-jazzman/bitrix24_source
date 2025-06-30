@@ -68,6 +68,10 @@
 .dashboard-header-title-section {
 	display: flex;
 	align-items: center;
+	flex-shrink: 1;
+	flex-grow: 1;
+	min-width: 0;
+	margin-right: 20px;
 }
 
 .dashboard-iframe {
@@ -158,6 +162,7 @@
 	flex-direction: row;
 	align-items: center;
 	cursor: pointer;
+	min-width: 0;
 }
 
 .dashboard-header-selector-icon {
@@ -173,7 +178,11 @@
 	font-size: 20px;
 	font-style: normal;
 	font-weight: 500;
-	line-height: 20px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex-shrink: 1;
+	min-width: 0;
 }
 
 .ui-info-error {

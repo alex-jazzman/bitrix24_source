@@ -1005,25 +1005,30 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  });
 	}
 
-	var _templateObject$7, _templateObject2$6, _templateObject3$6, _templateObject4$6, _templateObject5$6, _templateObject6$4;
+	var _templateObject$7, _templateObject2$6, _templateObject3$6, _templateObject4$6, _templateObject5$6, _templateObject6$4, _templateObject7$2;
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _groups = /*#__PURE__*/new WeakMap();
 	var _scopes = /*#__PURE__*/new WeakMap();
 	var _params = /*#__PURE__*/new WeakMap();
 	var _scopeParamsMap = /*#__PURE__*/new WeakMap();
-	var DashboardParamsField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
-	  babelHelpers.inherits(DashboardParamsField, _BX$UI$EntityEditorCu);
-	  function DashboardParamsField() {
+	var DashboardGroupsField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
+	  babelHelpers.inherits(DashboardGroupsField, _BX$UI$EntityEditorCu);
+	  function DashboardGroupsField() {
 	    var _babelHelpers$getProt;
 	    var _this;
-	    babelHelpers.classCallCheck(this, DashboardParamsField);
+	    babelHelpers.classCallCheck(this, DashboardGroupsField);
 	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
 	      args[_key] = arguments[_key];
 	    }
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(DashboardParamsField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(DashboardGroupsField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _groups, {
+	      writable: true,
+	      value: void 0
+	    });
 	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _scopes, {
 	      writable: true,
 	      value: void 0
@@ -1038,11 +1043,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    });
 	    return _this;
 	  }
-	  babelHelpers.createClass(DashboardParamsField, [{
+	  babelHelpers.createClass(DashboardGroupsField, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
 	      var _this2 = this;
-	      babelHelpers.get(babelHelpers.getPrototypeOf(DashboardParamsField.prototype), "initialize", this).call(this, id, settings);
+	      babelHelpers.get(babelHelpers.getPrototypeOf(DashboardGroupsField.prototype), "initialize", this).call(this, id, settings);
 	      babelHelpers.classPrivateFieldSet(this, _scopes, new Set());
 	      var scopes = this._model.getField('SCOPE', []);
 	      scopes.forEach(function (scopeCode) {
@@ -1052,6 +1057,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      var params = this._model.getField('PARAMS', []);
 	      params.forEach(function (param) {
 	        babelHelpers.classPrivateFieldGet(_this2, _params).add(param);
+	      });
+	      babelHelpers.classPrivateFieldSet(this, _groups, new Set());
+	      var groups = this._model.getField('GROUPS', []);
+	      groups.forEach(function (groupId) {
+	        babelHelpers.classPrivateFieldGet(_this2, _groups).add(main_core.Text.toNumber(groupId));
 	      });
 	      babelHelpers.classPrivateFieldSet(this, _scopeParamsMap, this._model.getField('SCOPE_PARAMS_MAP', {}));
 	      main_core_events.EventEmitter.subscribe('BIConnector.DashboardParamsSelector:onChange', this.onChange.bind(this));
@@ -1064,18 +1074,19 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      });
 	      this.adjustWrapper();
 	      this._innerWrapper = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["<div class='ui-entity-editor-content-block ui-ctl-custom'></div>"])));
-	      var message = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_PARAMS_HINT_LINK', {
+	      var message = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT', {
 	        '#HINT_LINK#': '<link></link>'
 	      });
 	      var hint = main_core.Tag.render(_templateObject2$6 || (_templateObject2$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), message);
 	      var link = main_core.Tag.render(_templateObject3$6 || (_templateObject3$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"biconnector-superset-settings-panel-range__hint-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'));
 	      main_core.Event.bind(link, 'click', function () {
-	        top.BX.Helper.show('redirect=detail&code=20337242&anchor=DashboardOwner');
+	        top.BX.Helper.show('redirect=detail&code=25556500');
 	      });
 	      main_core.Dom.replace(hint.querySelector('link'), link);
 	      main_core.Dom.insertBefore(hint, this._container);
 	      main_core.Dom.append(this._innerWrapper, this._wrapper);
 	      var selectorParams = {
+	        groups: babelHelpers.classPrivateFieldGet(this, _groups),
 	        scopes: babelHelpers.classPrivateFieldGet(this, _scopes),
 	        params: babelHelpers.classPrivateFieldGet(this, _params),
 	        scopeParamsMap: babelHelpers.classPrivateFieldGet(this, _scopeParamsMap)
@@ -1094,33 +1105,45 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          main_core.Dom.remove(oldSaveBlock);
 	        }
 	        var saveBlock = main_core.Tag.render(_templateObject4$6 || (_templateObject4$6 = babelHelpers.taggedTemplateLiteral(["<div class=\"save-block\"></div>"])));
-	        var _iterator = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _scopes)),
+	        var _iterator = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _groups)),
 	          _step;
 	        try {
 	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	            var scope = _step.value;
-	            main_core.Dom.append(main_core.Tag.render(_templateObject5$6 || (_templateObject5$6 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[SCOPE][]\" value=\"", "\">"])), this.getName(), scope), saveBlock);
+	            var group = _step.value;
+	            main_core.Dom.append(main_core.Tag.render(_templateObject5$6 || (_templateObject5$6 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[GROUPS][]\" value=\"", "\">"])), this.getName(), group), saveBlock);
 	          }
 	        } catch (err) {
 	          _iterator.e(err);
 	        } finally {
 	          _iterator.f();
 	        }
-	        var _iterator2 = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _params)),
+	        var _iterator2 = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _scopes)),
 	          _step2;
 	        try {
 	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-	            var param = _step2.value;
-	            main_core.Dom.append(main_core.Tag.render(_templateObject6$4 || (_templateObject6$4 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[PARAMS][]\" value=\"", "\">"])), this.getName(), param), saveBlock);
+	            var scope = _step2.value;
+	            main_core.Dom.append(main_core.Tag.render(_templateObject6$4 || (_templateObject6$4 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[SCOPE][]\" value=\"", "\">"])), this.getName(), scope), saveBlock);
 	          }
 	        } catch (err) {
 	          _iterator2.e(err);
 	        } finally {
 	          _iterator2.f();
 	        }
+	        var _iterator3 = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _params)),
+	          _step3;
+	        try {
+	          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	            var param = _step3.value;
+	            main_core.Dom.append(main_core.Tag.render(_templateObject7$2 || (_templateObject7$2 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[PARAMS][]\" value=\"", "\">"])), this.getName(), param), saveBlock);
+	          }
+	        } catch (err) {
+	          _iterator3.e(err);
+	        } finally {
+	          _iterator3.f();
+	        }
 	        main_core.Dom.append(saveBlock, this._innerWrapper);
 	      }
-	      this._model.setField(this.getName(), babelHelpers.classPrivateFieldGet(this, _scopes));
+	      this._model.setField(this.getName(), babelHelpers.toConsumableArray(babelHelpers.classPrivateFieldGet(this, _groups)));
 	    }
 	  }, {
 	    key: "onChange",
@@ -1140,7 +1163,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return self;
 	    }
 	  }]);
-	  return DashboardParamsField;
+	  return DashboardGroupsField;
 	}(BX.UI.EntityEditorCustom);
 
 	var FieldFactory = /*#__PURE__*/function () {
@@ -1169,8 +1192,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          return UserNotificationField.create(controlId, settings);
 	        case 'ownerSelector':
 	          return DashboardOwnerField.create(controlId, settings);
-	        case 'dashboardParametersSelector':
-	          return DashboardParamsField.create(controlId, settings);
+	        case 'dashboardGroupsSelector':
+	          return DashboardGroupsField.create(controlId, settings);
 	        case 'deleteSuperset':
 	          return DeleteSupersetField.create(controlId, settings);
 	        case 'clearCache':

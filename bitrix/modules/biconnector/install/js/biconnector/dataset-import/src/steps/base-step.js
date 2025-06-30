@@ -26,6 +26,10 @@ export const BaseStep = {
 			required: false,
 			default: null,
 		},
+		sourceType: {
+			type: String,
+			required: true,
+		},
 	},
 	computed: {
 		displayedTitle()
@@ -43,6 +47,14 @@ export const BaseStep = {
 		defaultHint()
 		{
 			return '';
+		},
+		sourceTypeCsv(): boolean
+		{
+			return this.sourceType === 'csv';
+		},
+		sourceTypeExternal(): boolean
+		{
+			return this.sourceType === 'external';
 		},
 	},
 	methods: {

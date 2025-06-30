@@ -3,6 +3,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die;
 
 use Bitrix\Intranet\Invitation;
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\User;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -467,6 +468,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		$fields["GROUP_ID"] = $arGroups;
 
 		$USER->Update($this->userId, $fields);
+
+		ServiceContainer::getInstance()->getUserService()->clearCache();
 
 		return true;
 	}

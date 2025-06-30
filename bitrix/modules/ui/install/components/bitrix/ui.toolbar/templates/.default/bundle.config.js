@@ -7,4 +7,5 @@ module.exports = {
 	},
 	namespace: 'BX.UI',
 	adjustConfigPhp: false,
+	browserslist: true,
 };

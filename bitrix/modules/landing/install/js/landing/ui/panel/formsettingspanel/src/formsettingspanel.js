@@ -619,6 +619,8 @@ export class FormSettingsPanel extends BasePresetPanel
 
 		const editorWindow = PageObject.getEditorWindow();
 		Dom.addClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
+		const rootWindow = PageObject.getRootWindow();
+		Dom.addClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
 
 		void StylePanel.getInstance().hide();
 
@@ -1608,6 +1610,8 @@ export class FormSettingsPanel extends BasePresetPanel
 	{
 		const editorWindow = PageObject.getEditorWindow();
 		Dom.removeClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
+		const rootWindow = PageObject.getRootWindow();
+		Dom.removeClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
 		this.enableHistory();
 		return super.hide();
 	}

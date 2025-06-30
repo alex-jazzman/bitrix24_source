@@ -15,6 +15,8 @@ class Counter
 		public readonly CounterSize $size = CounterSize::MEDIUM,
 		public readonly bool $isDouble = false,
 		public readonly bool $usePercentSymbol = false,
+		public readonly string $id = '',
+		public readonly bool $hideIfZero = false,
 	) {
 	}
 
@@ -37,12 +39,23 @@ class Counter
 			$classes[] = '--one-digit';
 		}
 
+		if ($this->hideIfZero)
+		{
+			$classes[] = '--hide-zero';
+		}
+
 		$classes[] = $this->color->value;
 		$classes[] = $this->size->value;
 		$classes[] = $this->style->value;
 
 		$classString = implode(' ', $classes);
-		$html = sprintf('<div class="%s" data-value="%s">', htmlspecialcharsbx($classString), htmlspecialcharsbx($this->value));
+		$id = $this->id ?? '';
+		$html = sprintf(
+			'<div id="%s" class="%s" data-value="%s">',
+			htmlspecialcharsbx($id),
+			htmlspecialcharsbx($classString),
+			htmlspecialcharsbx($this->value)
+		);
 		$html .= $this->getInnerHtml();
 
 		if ($this->isDouble)

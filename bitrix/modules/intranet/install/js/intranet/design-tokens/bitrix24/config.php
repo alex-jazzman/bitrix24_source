@@ -72,6 +72,73 @@ if (preg_match('/Linux/i', $userAgent) && !preg_match('/Android/i', $userAgent))
 	$asset->addString($jsInjection, false, AssetLocation::BEFORE_CSS, AssetMode::ALL);
 }
 
+$detectGPU = <<<JS
+(function() {
+	const canvas = document.createElement('canvas');
+	let gl;
+
+	try
+	{
+		gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+	}
+	catch (e)
+	{
+		return;
+	}
+
+	if (!gl)
+	{
+		return;
+	}
+
+	const result = {
+		vendor: gl.getParameter(gl.VENDOR),
+		renderer: gl.getParameter(gl.RENDERER),
+	};
+
+	const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+	if (debugInfo)
+	{
+		result.unmaskedVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+		result.unmaskedRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+	}
+
+	function isLikelyIntegratedGPU(gpuInfo)
+	{
+		const renderer = (gpuInfo.unmaskedRenderer || gpuInfo.renderer || '').toLowerCase();
+		const vendor = (gpuInfo.unmaskedVendor || gpuInfo.vendor || '').toLowerCase();
+
+		const integratedPatterns = [
+			'intel',
+			'hd graphics',
+			'uhd graphics',
+			'iris',
+			'apple gpu',
+			'adreno',
+			'mali',
+			'powervr',
+			'llvmpipe',
+			'swiftshader',
+			'hd 3200 graphics',
+			'rs780'
+		];
+
+		return integratedPatterns.some(pattern => renderer.includes(pattern) || vendor.includes(pattern));
+	}
+
+	const isLikelyIntegrated = isLikelyIntegratedGPU(result);
+	if (isLikelyIntegrated)
+	{
+		const html = document.documentElement;
+		html.classList.add('bx-integrated-gpu', '--ui-reset-bg-blur');
+	}
+})();
+JS;
+
+$detectGpuScript = '<script data-skip-moving="true">' . str_replace(["\n", "\t"], '', $detectGPU) . '</script>';
+$asset = Asset::getInstance();
+$asset->addString($detectGpuScript, false, AssetLocation::BEFORE_CSS, AssetMode::ALL);
+
 $eventManager = \Bitrix\Main\EventManager::getInstance();
 $eventManager->addEventHandler(
 	'fileman',

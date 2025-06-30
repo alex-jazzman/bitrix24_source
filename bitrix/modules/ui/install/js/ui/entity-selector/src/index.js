@@ -4,6 +4,7 @@ import Item from './item/item';
 import Tab from './dialog/tabs/tab';
 import Entity from './entity/entity';
 import TagSelector from './tag-selector/tag-selector';
+import TagItem from './tag-selector/tag-item';
 import BaseHeader from './dialog/header/base-header';
 import DefaultHeader from './dialog/header/default-header';
 import BaseFooter from './dialog/footer/base-footer';
@@ -28,6 +29,7 @@ const EntitySelector = {
 	Tab,
 	Entity,
 	TagSelector,
+	TagItem,
 	BaseHeader,
 	DefaultHeader,
 	BaseFooter,
@@ -47,6 +49,7 @@ export {
 	Tab,
 	Entity,
 	TagSelector,
+	TagItem,
 	BaseHeader,
 	DefaultHeader,
 	BaseFooter,

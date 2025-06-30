@@ -113,13 +113,7 @@ this.BX = this.BX || {};
 	      (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup))[_popup]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_popup] = babelHelpers.classPrivateFieldLooseBase(this, _createPopup)[_createPopup](onDone);
 	      (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.show();
 	      document.body.scrollIntoView();
-	      main_core.Event.bind(window, 'touchmove', this.stopToucEvent, {
-	        passive: false
-	      });
 	    });
-	  }
-	  stopToucEvent(event) {
-	    event.preventDefault();
 	  }
 	}
 	function _calculatePopupPosition2() {
@@ -143,7 +137,7 @@ this.BX = this.BX || {};
 	    minWidth: babelHelpers.classPrivateFieldLooseBase(this, _position)[_position].minWidth,
 	    minHeight: babelHelpers.classPrivateFieldLooseBase(this, _position)[_position].minHeight,
 	    content: babelHelpers.classPrivateFieldLooseBase(this, _getContent)[_getContent](),
-	    disableScroll: true,
+	    //disableScroll: true,
 	    padding: 0,
 	    offsetTop: babelHelpers.classPrivateFieldLooseBase(this, _position)[_position].offsetTop,
 	    offsetLeft: babelHelpers.classPrivateFieldLooseBase(this, _position)[_position].offsetLeft,
@@ -201,7 +195,6 @@ this.BX = this.BX || {};
 	      var _babelHelpers$classPr4;
 	      (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr4.close();
 	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]('push_mobapp_click_start');
-	      main_core.Event.unbind(window, 'touchmove', this.stopToucEvent);
 	      setTimeout(() => {
 	        window.location.href = babelHelpers.classPrivateFieldLooseBase(this, _authLink)[_authLink];
 	      });
@@ -216,7 +209,6 @@ this.BX = this.BX || {};
 	    onclick: () => {
 	      var _babelHelpers$classPr5;
 	      (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr5.close();
-	      main_core.Event.unbind(window, 'touchmove', this.stopToucEvent);
 	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]('push_mobapp_click_stay_browser');
 	      const optionName = babelHelpers.classPrivateFieldLooseBase(this, _isTablet)[_isTablet] ? 'tabletPopupContinueToApp' : 'mobilePopupContinueToApp';
 	      BX.userOptions.save('intranet', optionName, null, 'Y');

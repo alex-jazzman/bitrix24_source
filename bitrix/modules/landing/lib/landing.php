@@ -2192,14 +2192,11 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			}
 		}
 
-		if ($metrikaFields)
-		{
-			$metrika->setType($metrikaFields->type ?? null);
-			$metrika->setSubSection($metrikaFields->subSection ?? null);
-			$metrika->setElement($metrikaFields->element ?? null);
+		$metrika->setType($metrikaFields?->type);
+		$metrika->setSubSection($metrikaFields?->subSection);
+		$metrika->setElement($metrikaFields?->element);
 
-			$metrika->send();
-		}
+		$metrika->send();
 
 		return $result;
 	}

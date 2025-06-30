@@ -1,4 +1,4 @@
-import { Event, Runtime, Type, ajax } from 'main.core';
+import { Event, Runtime, Type, ajax, Dom } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
 import { EventEmitter } from 'main.core.events';
 import { Counter, CounterStyle } from 'ui.cnt';
@@ -42,13 +42,31 @@ export class AvatarButton
 
 		Event.bind(this.#avatarWrapper, 'click', () => {
 			Event.unbindAll(this.#avatarWrapper);
+			this.#getWidgetLoader().getPopup().setFixed(true);
 			this.#getWidgetLoader()
 				.createSkeletonFromConfig(options.skeleton)
 				.show();
+			this.#setHiddenAvatar();
+			this.#getWidgetLoader().getPopup().subscribe('onClose', () => {
+				this.#setVisibleAvatar();
+			});
+			this.#getWidgetLoader().getPopup().subscribe('onShow', () => {
+				this.#setHiddenAvatar();
+			});
 			Runtime.loadExtension(['intranet.avatar-widget']).then(() => {
 				this.#showWidget();
 			}).catch(() => {});
 		});
+	}
+
+	static #setHiddenAvatar(): void
+	{
+		Dom.style(this.#avatarWrapper, 'opacity', '0');
+	}
+
+	static #setVisibleAvatar(): void
+	{
+		Dom.style(this.#avatarWrapper, 'opacity', '1');
 	}
 
 	static #showWidget(): void
@@ -72,11 +90,12 @@ export class AvatarButton
 			return new WidgetLoader({
 				id: 'bx-avatar-header-popup',
 				bindElement: this.#avatarWrapper,
+				className: 'intranet-avatar-widget-base-popup',
 				width: 450,
 				useAngle: false,
 				fixed: true,
 				offsetTop: -50,
-				offsetLeft: 50,
+				offsetLeft: -392,
 			});
 		});
 	}

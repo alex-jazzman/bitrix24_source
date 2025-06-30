@@ -6,7 +6,8 @@ SliderManager.registerSliderClass(
 	'BX.Intranet.Bitrix24.Slider',
 	{
 		startPosition: 'bottom',
-		hideToolbarOnOpen: true,
+		overlayBgColor: '#00204E',
+		overlayOpacity: 52,
 	},
 	{
 		animationDuration: 200,

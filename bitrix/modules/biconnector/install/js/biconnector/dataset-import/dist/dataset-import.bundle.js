@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
-(function (exports,ui_vue3,biconnector_datasetImport_fileExport,ui_pinner,ui_section,ui_alerts,ui_hint,ui_sidepanel_layout,ui_iconSet_crm,ui_switcher,ui_uploader_stackWidget,main_loader,ui_ears,main_popup,ui_analytics,ui_buttons,ui_entitySelector,ui_iconSet_api_vue,ui_vue3_directives_hint,main_core_events,ui_vue3_vuex,main_core,ui_sidepanel) {
+(function (exports,biconnector_datasetImport_fileExport,ui_pinner,ui_section,ui_alerts,ui_hint,ui_sidepanel_layout,ui_iconSet_crm,ui_switcher,ui_uploader_stackWidget,main_loader,ui_ears,main_popup,ui_analytics,ui_buttons,ui_vue3,ui_entitySelector,ui_iconSet_api_vue,ui_vue3_directives_hint,main_core_events,ui_vue3_vuex,main_core,ui_sidepanel) {
 	'use strict';
 
 	const AppLayout = {
@@ -862,6 +862,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Object,
 	      required: false,
 	      default: null
+	    },
+	    sourceType: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  computed: {
@@ -878,6 +882,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    defaultHint() {
 	      return '';
+	    },
+	    sourceTypeCsv() {
+	      return this.sourceType === 'csv';
+	    },
+	    sourceTypeExternal() {
+	      return this.sourceType === 'external';
 	    }
 	  },
 	  methods: {
@@ -1549,6 +1559,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Object,
 	      required: false,
 	      default: null
+	    },
+	    isEditMode: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    sourceType: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  data() {
@@ -1610,9 +1629,19 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        }
 	      };
 	    },
-	    canEdit() {
-	      var _this$fieldSettings;
-	      return !(((_this$fieldSettings = this.fieldSettings) == null ? void 0 : _this$fieldSettings.id) > 0);
+	    sourceTypeCsv() {
+	      return this.sourceType === 'csv';
+	    },
+	    sourceTypeExternal() {
+	      return this.sourceType === 'external';
+	    },
+	    canEditType() {
+	      return !this.isEditMode && this.sourceTypeCsv;
+	    },
+	    canEditName() {
+	      var _this$fieldSettings, _this$fieldSettings2;
+	      const isNew = !Boolean(((_this$fieldSettings = this.fieldSettings) == null ? void 0 : _this$fieldSettings.id) > 0);
+	      return isNew || ((_this$fieldSettings2 = this.fieldSettings) == null ? void 0 : _this$fieldSettings2.visible) && this.sourceTypeExternal;
 	    }
 	  },
 	  emits: ['checkboxClick', 'fieldChange'],
@@ -1632,7 +1661,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    onFieldInput(event) {
 	      var _this$disabledElement;
-	      if (!this.canEdit || (_this$disabledElement = this.disabledElements) != null && _this$disabledElement.name) {
+	      if (!this.canEditName || (_this$disabledElement = this.disabledElements) != null && _this$disabledElement.name) {
 	        const input = event.target;
 	        input.value = this.fieldSettings.name;
 	        return;
@@ -1695,20 +1724,20 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				<input class="format-table__checkbox" ref="visibilityCheckbox" type="checkbox" @change="onCheckboxClick" :checked="enabled">
 			</td>
 			<td class="format-table__cell">
-				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :can-edit="canEdit && !disabledElements?.type" :disabled="!canEdit || disabledElements?.type"/>
+				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :can-edit="canEditType && !disabledElements?.type" :disabled="!canEditType || disabledElements?.type"/>
 			</td>
 			<td class="format-table__cell">
 				<div
 					class="ui-ctl ui-ctl-textbox ui-ctl-w100 format-table__name-control"
 					:class="{
 						'format-table__text-input--invalid': displayedValidationErrors.name && !isNameValid,
-						'format-table__text-input--disabled': !canEdit || disabledElements?.name,
-						'ui-ctl-after-icon': canEdit && !isNameValid,
+						'format-table__text-input--disabled': !canEditName || disabledElements?.name,
+						'ui-ctl-after-icon': canEditName && !isNameValid,
 					}"
 				>
 					<input
 						class="ui-ctl-element format-table__text-input format-table__name-input"
-						:disabled="!canEdit || disabledElements?.name"
+						:disabled="!canEditName || disabledElements?.name"
 						type="text"
 						:placeholder="$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_PLACEHOLDER')"
 						name="name"
@@ -1755,6 +1784,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Object,
 	      required: false,
 	      default: null
+	    },
+	    isEditMode: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    sourceType: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  emits: ['rowToggle', 'headerToggle', 'rowFieldChanged'],
@@ -1809,6 +1847,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						@field-change="onRowFieldChanged"
 						:invalid-fields="unvalidatedRows[index] ?? []"
 						:disabled-elements="disabledElements"
+						:is-edit-mode="isEditMode"
+						:source-type="sourceType"
 					/>
 				</template>
 			</tbody>
@@ -1873,7 +1913,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      const rows = {};
 	      this.$store.state.config.fieldsSettings.forEach((field, index) => {
 	        const invalidFields = {};
-	        if (!field.id) {
+	        if (field.visible || this.sourceTypeCsv || !field.name) {
 	          const nameValidationResult = this.validateName(field.name);
 	          if (!nameValidationResult.result) {
 	            invalidFields.name = nameValidationResult;
@@ -1934,6 +1974,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    onRowToggled(event) {
 	      this.$store.commit('toggleRowVisibility', event.index);
 	      this.$emit('settingsChanged');
+	      this.validate();
 	    },
 	    onHeaderToggled(event) {
 	      if (this.$store.getters.areAllRowsVisible) {
@@ -1942,6 +1983,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        this.$store.commit('setAllRowsVisible');
 	      }
 	      this.$emit('settingsChanged');
+	      this.validate();
 	    },
 	    onRowFieldChanged(event) {
 	      this.fieldsSettings[event.index][event.fieldName] = event.value;
@@ -1958,7 +2000,6 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    validate() {
 	      const result = Object.keys(this.unvalidatedRows).length === 0;
 	      this.$emit('validation', result);
-	      return result;
 	    },
 	    showValidationErrors() {
 	      this.$refs.formatTable.showValidationErrors();
@@ -1988,6 +2029,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 					@row-field-changed="onRowFieldChanged"
 					:unvalidated-rows="unvalidatedRows"
 					ref="formatTable"
+					:is-edit-mode="isEditMode"
+					:source-type="sourceType"
 				/>
 			</div>
 		</Step>
@@ -2890,6 +2933,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    unsavedChangesPopupText() {
 	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT');
+	    },
+	    sourceType() {
+	      return '';
 	    }
 	  },
 	  mounted() {
@@ -3162,6 +3208,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    importProgressPopupDescription() {
 	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
+	    },
+	    sourceType() {
+	      return 'csv';
 	    }
 	  },
 	  methods: {
@@ -3500,6 +3549,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 					<FieldsSettingsStep
 						:is-open-initially="isEditMode"
 						:disabled="steps.fields.disabled"
+						:source-type="sourceType"
 						ref="fieldsStep"
 						@validation="onStepValidation('fields', $event)"
 						@parsing-options-changed="onDatasetReloadNeeded('fields')"
@@ -4228,7 +4278,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        savingSuccess: false,
 	        savingFailure: false,
 	        loadFailure: false,
-	        syncFields: false
+	        syncFields: false,
+	        fieldsSettingsChanges: false
 	      },
 	      isValidationComplete: true,
 	      popupParams: {
@@ -4242,8 +4293,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      },
 	      isLoading: false,
 	      previewError: '',
-	      previewDataLoaded: false
+	      previewDataLoaded: false,
+	      pendingSavePromise: null,
+	      initialFieldsSettings: null
 	    };
+	  },
+	  created() {
+	    this.initialFieldsSettings = structuredClone(ui_vue3.toRaw(this.$store.state.config.fieldsSettings));
 	  },
 	  computed: {
 	    isRestEntity() {
@@ -4290,10 +4346,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    fieldsSettingsStepHint() {
 	      if (this.isEditMode) {
-	        return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
+	        if (this.isRestEntity) {
+	          return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
+	        }
+	        return '';
 	      }
 	      let articleCode = '23508958';
-	      let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL';
+	      let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
 	      if (this.isRestEntity) {
 	        articleCode = '24486426';
 	        hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_REST';
@@ -4314,6 +4373,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        supported: this.isEditMode,
 	        disabled: this.isLoading
 	      };
+	    },
+	    sourceType() {
+	      return 'external';
 	    }
 	  },
 	  mounted() {
@@ -4491,6 +4553,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        this.$refs.propertiesStep.showValidationErrors();
 	        return Promise.reject();
 	      }
+	      if (this.isEditMode && this.hasFieldsSettingsChanges()) {
+	        this.togglePopup('fieldsSettingsChanges', true);
+	        return new Promise((resolve, reject) => {
+	          this.pendingSavePromise = {
+	            resolve,
+	            reject
+	          };
+	        });
+	      }
 	      this.togglePopup('savingProgress', true);
 	      return Promise.resolve();
 	    },
@@ -4546,6 +4617,38 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        this.processSyncResponse(response);
 	        this.previewError = (_response$errors$0$me2 = (_response$errors$2 = response.errors[0]) == null ? void 0 : _response$errors$2.message) != null ? _response$errors$0$me2 : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
 	      });
+	    },
+	    hasFieldsSettingsChanges() {
+	      const fieldsToCompare = ['id', 'visible', 'type', 'name'];
+	      let currentFields = ui_vue3.toRaw(this.$store.state.config.fieldsSettings);
+	      let initialFields = ui_vue3.toRaw(this.initialFieldsSettings);
+
+	      // eslint-disable-next-line max-len
+	      currentFields = currentFields.map(obj => fieldsToCompare.reduce((result, field) => Object.prototype.hasOwnProperty.call(obj, field) ? {
+	        ...result,
+	        [field]: obj[field]
+	      } : result, {}));
+	      // eslint-disable-next-line max-len
+	      initialFields = initialFields.map(obj => fieldsToCompare.reduce((result, field) => Object.prototype.hasOwnProperty.call(obj, field) ? {
+	        ...result,
+	        [field]: obj[field]
+	      } : result, {}));
+	      return JSON.stringify(currentFields) !== JSON.stringify(initialFields);
+	    },
+	    onConfirmFieldsSettingsChangesPopup() {
+	      this.togglePopup('fieldsSettingsChanges', false);
+	      this.togglePopup('savingProgress', true);
+	      if (this.pendingSavePromise) {
+	        this.pendingSavePromise.resolve();
+	        this.pendingSavePromise = null;
+	      }
+	    },
+	    onCancelFieldsSettingsChangesPopup() {
+	      this.togglePopup('fieldsSettingsChanges', false);
+	      if (this.pendingSavePromise) {
+	        this.pendingSavePromise.reject();
+	        this.pendingSavePromise = null;
+	      }
 	    }
 	  },
 	  components: {
@@ -4592,6 +4695,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						:is-open-initially="isEditMode"
 						:disabled="steps.fields.disabled"
 						:disabled-elements="steps.fields.disabledElements"
+						:source-type="sourceType"
 						ref="fieldsStep"
 						@validation="onStepValidation('fields', $event)"
 						@parsing-options-changed="onParsingOptionsChanged"
@@ -4658,6 +4762,24 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			@close="togglePopup('syncFields', false)"
 		>
 		</SyncFieldsPopup>
+
+		<GenericPopup
+			v-if="shownPopups.fieldsSettingsChanges"
+			:title="$Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_HEADER')"
+			@close="togglePopup('fieldsSettingsChanges', false)"
+		>
+			<template v-slot:content>
+				<p>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_MESSAGE_MSGVER_1') }}</p>
+			</template>
+			<template v-slot:buttons>
+				<button @click="onConfirmFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-success">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_BUTTON_SAVE') }}
+				</button>
+				<button @click="onCancelFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-link">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_BUTTON_CANCEL') }}
+				</button>
+			</template>
+		</GenericPopup>
 	`
 	};
 
@@ -4818,5 +4940,5 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	exports.AppFactory = AppFactory;
 	exports.Slider = Slider;
 
-}((this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}),BX.Vue3,BX.BIConnector.DatasetImport,BX,BX.UI,BX.UI,BX,BX.UI.SidePanel,BX,BX.UI,BX.UI.Uploader,BX,BX.UI,BX.Main,BX.UI.Analytics,BX.UI,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives,BX.Event,BX.Vue3.Vuex,BX,BX));
+}((this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}),BX.BIConnector.DatasetImport,BX,BX.UI,BX.UI,BX,BX.UI.SidePanel,BX,BX.UI,BX.UI.Uploader,BX,BX.UI,BX.Main,BX.UI.Analytics,BX.UI,BX.Vue3,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives,BX.Event,BX.Vue3.Vuex,BX,BX));
 //# sourceMappingURL=dataset-import.bundle.js.map

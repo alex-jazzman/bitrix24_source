@@ -1,5 +1,6 @@
 <?php
 $MESS["DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT"] = "allow editing";
+$MESS["DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT_BOARD"] = "allow edit access";
 $MESS["DISK_JS_EL_SETTINGS_LINK_HINT_PROTECT_BY_LIFETIME"] = "set expiration date and time";
 $MESS["DISK_JS_EL_SETTINGS_LINK_HINT_PROTECT_BY_PASSWORD"] = "protect this link with password";
 $MESS["DISK_JS_EL_SETTINGS_LINK_LABEL_DAY"] = "days";

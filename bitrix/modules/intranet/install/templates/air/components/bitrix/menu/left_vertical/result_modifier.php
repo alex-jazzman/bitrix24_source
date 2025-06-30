@@ -105,3 +105,15 @@ if (!$arResult["IS_EXTRANET"] && $GLOBALS["USER"]->isAuthorized())
 {
 	$arResult["GROUP_COUNT"] = count(\Bitrix\Intranet\Controller\LeftMenu::getMyGroups());
 }
+
+//license button
+$arResult["SHOW_LICENSE_BUTTON"] = false;
+
+if (
+	Main\Loader::includeModule('bitrix24')
+	&& !(Main\Loader::includeModule("extranet") && CExtranet::IsExtranetSite())
+)
+{
+	$arResult["SHOW_LICENSE_BUTTON"] = \CBitrix24::getLicenseFamily() !== 'ent';
+	$arResult["B24_LICENSE_PATH"] = \CBitrix24::PATH_LICENSE_ALL . '?analyticsLabel[leftMenu]=Y&analyticsLabel[licenseType]=' . \CBitrix24::getLicenseType();
+}

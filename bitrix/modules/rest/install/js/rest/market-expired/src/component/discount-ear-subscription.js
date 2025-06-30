@@ -9,6 +9,7 @@ export class DiscountEarSubscription extends DiscountEar
 
 		this.discountPercentage = props?.discountPercentage ?? null;
 		this.termsUrl = props?.termsUrl ?? null;
+		this.marketLabel = props?.marketLabel ?? '';
 	}
 
 	getContainer(): HTMLElement
@@ -17,7 +18,7 @@ export class DiscountEarSubscription extends DiscountEar
 			<aside class="rest-market-expired-popup__discount rest-market-expired-popup__discount--subscription">
 				${this.#renderDiscountPercent()}
 				<p class="rest-market-expired-popup__discount-description">
-					${Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION')}
+					${Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION${this.marketLabel}`)}
 				</p>
 				${this.#renderTermsOfPromotion()}
 			</aside>

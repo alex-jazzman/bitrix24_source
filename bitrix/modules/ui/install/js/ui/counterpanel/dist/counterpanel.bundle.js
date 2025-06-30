@@ -260,7 +260,7 @@ this.BX = this.BX || {};
 	    key: "unLock",
 	    value: function unLock() {
 	      this.locked = false;
-	      main_core.Dom.remove(this.getContainer(), '--locked');
+	      main_core.Dom.removeClass(this.getContainer(), '--locked');
 	    }
 	  }, {
 	    key: "getArrowDropdown",

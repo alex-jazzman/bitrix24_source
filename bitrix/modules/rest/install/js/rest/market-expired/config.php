@@ -33,5 +33,6 @@ return [
 		'withDemo' => $marketExpiredNotification->marketSubscription->isDemoAvailable(),
 		'discount' => $marketExpiredNotification->marketSubscription->getDiscount()->toArray(),
 		'olWidgetCode' => $marketExpiredNotification->getOpenLinesWidgetCode(),
+		'isRenamedMarket' => \Bitrix\Rest\Integration\Market\Label::isRenamedMarket(),
 	]
 ];

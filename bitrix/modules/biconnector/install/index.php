@@ -187,6 +187,7 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'onAfterUpdateDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\SupersetIntegration', 'onAfterUpdateDataset');
 			$eventManager->registerEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\SupersetIntegration', 'onAfterDeleteDataset');
 			$eventManager->registerEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Source\Csv', 'onAfterDeleteDataset');
+			$eventManager->registerEventHandler('biconnector', 'onBeforeAddDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Source\Csv', 'onBeforeAddDataset');
 
 			$eventManager->registerEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Dataset\Base', 'onBIBuilderExternalDataSources');
 
@@ -204,6 +205,8 @@ class BIConnector extends \CModule
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::createDefaultRoles();', 'biconnector');
 
 			ModuleManager::registerModule($this->MODULE_ID);
+
+			\Bitrix\Main\Config\Option::set('biconnector', 'check_permissions_by_group', 'Y');
 
 			$this->InstallTemplateRules();
 
@@ -286,6 +289,7 @@ class BIConnector extends \CModule
 		$eventManager->unregisterEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\SupersetIntegration', 'onAfterDeleteDataset');
 		$eventManager->unRegisterEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Source\Csv', 'onAfterDeleteDataset');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Dataset\Base', 'onBIBuilderExternalDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'onBeforeAddDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Source\Csv', 'onBeforeAddDataset');
 
 		// bi builder
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\SourceExpenses', 'onBIBuilderDataSources');

@@ -67,6 +67,10 @@ export const BaseApp = {
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT')
 			;
 		},
+		sourceType(): string
+		{
+			return '';
+		},
 	},
 	mounted()
 	{

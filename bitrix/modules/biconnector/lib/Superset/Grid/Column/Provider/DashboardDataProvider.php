@@ -46,6 +46,13 @@ class DashboardDataProvider extends DataProvider
 				->setAlign('left')
 				->setDefault(true)
 		;
+		$result[] =
+			$this->createColumn('GROUPS')
+				->setType(Type::TEXT)
+				->setName(Loc::getMessage('BICONNECTOR_SUPERSET_GRID_COLUMN_TITLE_GROUPS'))
+				->setAlign('left')
+				->setDefault(true)
+		;
 
 		$result[] =
 			$this->createColumn('TAGS')

@@ -88,9 +88,9 @@ class TaskUpdateBlock extends TaskStep
 			}
 			$blockInstance->updateNodes($nodesArray);
 			$blockInstance->save();
-		}
 
-		$this->updateBlockStyles($blockInstance, $blockData);
+			$this->updateBlockStyles($blockInstance, $blockData);
+		}
 	}
 
 	private function updateBlockStyles(\Bitrix\Landing\Block $blockInstance, Data\Block $blockData): void
@@ -104,7 +104,7 @@ class TaskUpdateBlock extends TaskStep
 	}
 
 	private function updateBackgroundStyles(
-		array  $styles,
+		array $styles,
 		Data\Block $blockData,
 		\Bitrix\Landing\Block $blockInstance
 	): array
@@ -195,14 +195,19 @@ class TaskUpdateBlock extends TaskStep
 
 		$updatedStyles = $this->applyColorStyles($styles, $blockData, $nodesWithProperty['color'], $blockInstance);
 
-		return $this->applyFontFamilyStyles($updatedStyles, $blockData, $nodesWithProperty['fontFamily'], $blockInstance);
+		return $this->applyFontFamilyStyles(
+			$updatedStyles,
+			$blockData,
+			$nodesWithProperty['fontFamily'],
+			$blockInstance
+		);
 	}
 
 	private function processStyleNode(
-		array  $styleNode,
-		array  $blockStyles,
+		array $styleNode,
+		array $blockStyles,
 		string $codeNode,
-		array  $nodesWithProperty,
+		array $nodesWithProperty,
 	): array
 	{
 		$updatedNodesWithProperty = $nodesWithProperty;
@@ -318,7 +323,7 @@ class TaskUpdateBlock extends TaskStep
 	}
 
 	private function prepareNodeSelectorClasses(
-		array  $styleNodesSelectorClasses,
+		array $styleNodesSelectorClasses,
 		string $codeNode,
 		string $blockContent,
 		string $classToAdd,

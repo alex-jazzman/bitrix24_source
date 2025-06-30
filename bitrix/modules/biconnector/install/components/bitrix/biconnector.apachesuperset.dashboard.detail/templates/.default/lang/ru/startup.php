@@ -7,4 +7,3 @@ $MESS['SUPERSET_DASHBOARD_DETAIL_ERROR_DESC'] = 'Не удалось созда�
 $MESS['SUPERSET_DASHBOARD_DETAIL_ERROR_RELOAD_BTN'] = 'Повторить';
 $MESS['SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_UNAVAILABLE'] = 'Отчёт недоступен';
 $MESS['SUPERSET_DASHBOARD_DETAIL_HINT_DESC_UNAVAILABLE'] = 'Это временно,<br>скоро всё заработает';
-$MESS['SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE'] = 'Посмотреть этот отчёт можно только из выбранных зон видимости';

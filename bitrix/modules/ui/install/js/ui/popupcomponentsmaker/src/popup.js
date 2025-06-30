@@ -21,6 +21,7 @@ export default class PopupComponentsMaker
 		blurBackground,
 		useAngle,
 		popupLoader,
+		offsetLeft,
 	})
 	{
 		this.id = Type.isString(id) ? id : null;
@@ -35,6 +36,7 @@ export default class PopupComponentsMaker
 		this.contentPadding = Type.isNumber(contentPadding) ? contentPadding : 0;
 		this.padding = Type.isNumber(padding) ? padding : 13;
 		this.offsetTop = Type.isNumber(offsetTop) ? offsetTop : 0;
+		this.offsetLeft = Type.isNumber(offsetLeft) ? offsetLeft : null;
 		this.blurBlackground = Type.isBoolean(blurBackground) ? blurBackground : false;
 		this.useAngle = (Type.isUndefined(useAngle) || useAngle !== false);
 		this.popupLoader = popupLoader instanceof Popup ? popupLoader : null;
@@ -95,7 +97,7 @@ export default class PopupComponentsMaker
 			this.popup.setContentPadding(this.contentPadding);
 			this.popup.setOffset({
 				offsetTop: this.offsetTop,
-				offsetLeft: -(popupWidth / 2) + (this.target ? this.target.offsetWidth / 2 : 0) + 40,
+				offsetLeft: this.offsetLeft ?? -(popupWidth / 2) + (this.target ? this.target.offsetWidth / 2 : 0) + 40,
 			});
 			this.popup.setWidth(popupWidth);
 			this.popup.setAutoHide(true);

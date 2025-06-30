@@ -22,9 +22,9 @@ return [
 		'crm.router',
 		'humanresources.hcmlink.salary-vacation-menu',
 		'main.core.events',
-		'main.popup',
 		'im.v2.lib.desktop-api',
 		'main.core',
+		'main.popup',
 	],
 	'skip_core' => false,
 ];

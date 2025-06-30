@@ -32,7 +32,7 @@
 .ui-btn-dropdown.ui-btn[class*="ui-btn-icon-"]:not(input):empty,
 .ui-btn-dropdown.ui-btn-split[class*="ui-btn-icon-"] .ui-btn-main:empty,
 .ui-btn-dropdown.ui-btn.ui-btn-empty[class*="ui-btn-icon-"]:not(input),
-.ui-btn-dropdown.ui-btn.ui-btn-collapsed[class*="ui-btn-icon-"]:not(input),
+.ui-btn-dropdown.ui-btn.ui-btn-collapsed:not(input),
 .ui-btn-dropdown.ui-btn-split.ui-btn-empty[class*="ui-btn-icon-"] .ui-btn-main,
 .ui-btn-dropdown.ui-btn-split.ui-btn-collapsed[class*="ui-btn-icon-"] .ui-btn-main {
 	width: calc(var(--ui-btn-height) * 2);
@@ -1686,4 +1686,3 @@
 .ui-btn-icon-outline-add {
 	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/outline-plus-l.svg);
 }
-

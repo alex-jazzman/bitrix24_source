@@ -70,7 +70,7 @@ export class MobilePopup extends EventEmitter
 				minWidth: this.#position.minWidth,
 				minHeight: this.#position.minHeight,
 				content: this.#getContent(),
-				disableScroll: true,
+				//disableScroll: true,
 				padding: 0,
 				offsetTop: this.#position.offsetTop,
 				offsetLeft: this.#position.offsetLeft,
@@ -100,13 +100,7 @@ export class MobilePopup extends EventEmitter
 			this.#popup ??= this.#createPopup(onDone);
 			this.#popup?.show();
 			document.body.scrollIntoView();
-			Event.bind(window, 'touchmove', this.stopToucEvent, { passive: false });
 		});
-	}
-
-	stopToucEvent(event): void
-	{
-		event.preventDefault();
 	}
 
 	#getContent(): HTMLElement
@@ -170,7 +164,6 @@ export class MobilePopup extends EventEmitter
 			onclick: () => {
 				this.#popup?.close();
 				this.#sendAnalytics('push_mobapp_click_start');
-				Event.unbind(window, 'touchmove', this.stopToucEvent);
 				setTimeout(() => {
 					window.location.href = this.#authLink;
 				});
@@ -186,7 +179,6 @@ export class MobilePopup extends EventEmitter
 			size: Button.Size.SMALL,
 			onclick: () => {
 				this.#popup?.close();
-				Event.unbind(window, 'touchmove', this.stopToucEvent);
 				this.#sendAnalytics('push_mobapp_click_stay_browser');
 				const optionName = this.#isTablet ? 'tabletPopupContinueToApp' : 'mobilePopupContinueToApp';
 				BX.userOptions.save('intranet', optionName, null, 'Y');

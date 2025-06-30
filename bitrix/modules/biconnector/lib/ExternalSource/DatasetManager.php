@@ -9,6 +9,7 @@ use Bitrix\Main\Engine\Response\Converter;
 
 class DatasetManager
 {
+	public const EVENT_ON_BEFORE_ADD_DATASET = 'onBeforeAddDataset';
 	public const EVENT_ON_AFTER_ADD_DATASET = 'onAfterAddDataset';
 	public const EVENT_ON_BEFORE_UPDATE_DATASET = 'onBeforeUpdateDataset';
 	public const EVENT_ON_AFTER_UPDATE_DATASET = 'onAfterUpdateDataset';
@@ -27,6 +28,32 @@ class DatasetManager
 	public static function add(array $dataset, array $fields, array $settings = [], int $sourceId = null): Main\Result
 	{
 		$result = new Main\Result();
+
+		$event = new Main\Event(
+			'biconnector',
+			self::EVENT_ON_BEFORE_ADD_DATASET,
+			[
+				'dataset' => $dataset,
+				'fields' => $fields,
+				'settings' => $settings,
+			]
+		);
+		$event->send();
+
+		foreach ($event->getResults() as $eventResult)
+		{
+			if ($eventResult->getType() === Main\EventResult::ERROR)
+			{
+				$error = $eventResult->getParameters();
+				$result->addError(
+					$error instanceof Main\Error
+						? $error
+						: new Main\Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MANAGER_ADD_ERROR'))
+				);
+
+				return $result;
+			}
+		}
 
 		$checkResult = static::checkAndPrepareBeforeAdd($dataset, $fields, $settings, $sourceId);
 		if (!$checkResult->isSuccess())
@@ -150,7 +177,7 @@ class DatasetManager
 		}
 		else
 		{
-			$datasetName = $dataset['NAME'] ?? $dataset['name'];
+			$datasetName = $dataset['NAME'];
 			if (in_array($datasetName, SupersetServiceIntegration::getTableList(), true))
 			{
 				$result->addError(
@@ -272,8 +299,19 @@ class DatasetManager
 				$currentField = $currentFields->getByPrimary($fieldToUpdate['ID']);
 				if (isset($fieldToUpdate['VISIBLE']) && $fieldToUpdate['VISIBLE'] !== $currentField->getVisible())
 				{
-					// update only VISIBLE field
 					$currentField->setVisible($fieldToUpdate['VISIBLE']);
+				}
+
+				if (isset($fieldToUpdate['NAME']) && $fieldToUpdate['NAME'] !== $currentField->getName())
+				{
+					$currentField->setName($fieldToUpdate['NAME']);
+				}
+
+				if (
+					$currentField->isVisibleChanged()
+					|| $currentField->isNameChanged()
+				)
+				{
 					$saveFieldResult = $currentField->save();
 					if (!$saveFieldResult->isSuccess())
 					{
@@ -319,6 +357,17 @@ class DatasetManager
 			}
 		}
 
+		if ($result->isSuccess())
+		{
+			$connection->commitTransaction();
+		}
+		else
+		{
+			$connection->rollbackTransaction();
+
+			return $result;
+		}
+
 		$event = new Main\Event(
 			'biconnector',
 			self::EVENT_ON_AFTER_UPDATE_DATASET,
@@ -339,15 +388,6 @@ class DatasetManager
 						: new Main\Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MANAGER_UPDATE_ERROR'))
 				);
 			}
-		}
-
-		if ($result->isSuccess())
-		{
-			$connection->commitTransaction();
-		}
-		else
-		{
-			$connection->rollbackTransaction();
 		}
 
 		return $result;

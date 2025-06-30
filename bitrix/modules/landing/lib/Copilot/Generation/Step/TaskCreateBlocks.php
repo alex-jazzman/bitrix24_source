@@ -704,8 +704,8 @@ class TaskCreateBlocks extends TaskStep
 			return;
 		}
 
-		$bLockWithPrimaryBg = Collector::getStylesDataForBlockWithPrimaryBg($blockData->getCode());
-		if (!$bLockWithPrimaryBg)
+		$blockWithPrimaryBg = Collector::getStylesDataForBlockWithPrimaryBg($blockData->getCode());
+		if (!$blockWithPrimaryBg)
 		{
 			return;
 		}
@@ -713,7 +713,7 @@ class TaskCreateBlocks extends TaskStep
 		$styles = [];
 		$colors = $this->siteData->getColors();
 		$blockContent = $blockInstance->getContent();
-		foreach ($bLockWithPrimaryBg as $styleNodeName => $styleNodeValues)
+		foreach ($blockWithPrimaryBg as $styleNodeName => $styleNodeValues)
 		{
 			$properties = $styleNodeValues['property'];
 			$styleValues = $styleNodeValues['styleValue'];

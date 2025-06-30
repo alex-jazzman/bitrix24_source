@@ -198,7 +198,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return false;
 	    }
 	  }
-	  const userDepartments = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
+	  const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
+	  const userDepartments = new Set(userEntities.filter(id => {
+	    const department = departments.get(id);
+	    return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.department;
+	  }));
 	  if (permissionObject.id < minLevel) {
 	    return false;
 	  }
@@ -207,12 +211,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return true;
 	    case PermissionLevels.selfAndSub:
 	      {
-	        if (userDepartments.includes(departmentId)) {
+	        if (userDepartments.has(departmentId)) {
 	          return true;
 	        }
 	        let currentDepartment = departments.get(departmentId);
 	        while (currentDepartment) {
-	          if (userDepartments.includes(currentDepartment.id)) {
+	          if (userDepartments.has(currentDepartment.id)) {
 	            return true;
 	          }
 	          currentDepartment = departments.get(currentDepartment.parentId);
@@ -220,7 +224,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        return false;
 	      }
 	    case PermissionLevels.self:
-	      return userDepartments.includes(departmentId);
+	      return userDepartments.has(departmentId);
 	    case PermissionLevels.none:
 	    default:
 	      return false;
@@ -230,20 +234,24 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  if (level === PermissionLevels.none) {
 	    return false;
 	  }
-	  const userDepartments = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
-	  if (userDepartments.includes(nodeId)) {
+	  const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
+	  const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
+	  const userTeams = new Set(userEntities.filter(id => {
+	    const department = nodes.get(id);
+	    return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.team;
+	  }));
+	  if (userTeams.has(nodeId)) {
 	    return true;
 	  }
 	  if (level === PermissionLevels.self) {
 	    return false;
 	  }
-	  const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
 	  let currentDepartment = nodes.get(nodeId);
 	  while (currentDepartment) {
 	    if (currentDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
 	      return false;
 	    }
-	    if (userDepartments.includes(currentDepartment.id)) {
+	    if (userTeams.has(currentDepartment.id)) {
 	      return true;
 	    }
 	    currentDepartment = nodes.get(currentDepartment.parentId);
@@ -254,19 +262,23 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  if (level === PermissionLevels.none) {
 	    return false;
 	  }
-	  const userDepartments = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
-	  if (userDepartments.includes(nodeId)) {
+	  const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
+	  const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
+	  const userDepartments = new Set(userEntities.filter(id => {
+	    const department = nodes.get(id);
+	    return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.department;
+	  }));
+	  if (userDepartments.has(nodeId)) {
 	    return true;
 	  }
-	  const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
 	  let currentDepartment = nodes.get(nodeId);
 	  while (currentDepartment) {
-	    if (userDepartments.includes(currentDepartment.id)) {
+	    if (userDepartments.has(currentDepartment.id)) {
 	      return true;
 	    }
 	    if (level === PermissionLevels.self && currentDepartment.type === humanresources_companyStructure_utils.EntityTypes.department) {
 	      if (action === PermissionActions.teamCreate) {
-	        return this.hasPermission(PermissionActions.structureView, currentDepartment.id) && userDepartments.includes(currentDepartment.id);
+	        return this.hasPermission(PermissionActions.structureView, currentDepartment.id) && userDepartments.has(currentDepartment.id);
 	      }
 	      return false;
 	    }

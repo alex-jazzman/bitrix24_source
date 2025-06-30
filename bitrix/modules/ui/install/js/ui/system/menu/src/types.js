@@ -1,4 +1,5 @@
 import type { PopupOptions } from 'main.popup';
+import type { CounterOptions } from 'ui.cnt';
 
 export type MenuOptions = PopupOptions & {
 	sections: MenuSectionOptions[],
@@ -28,6 +29,7 @@ export type MenuItemOptions = {
 		onClick: Function,
 		isSelected: boolean,
 	},
+	counter: CounterOptions,
 	svg: SVGElement,
 	subMenu: MenuOptions[],
 	isLocked: boolean,

@@ -60,23 +60,9 @@ class CollabInvitationLinkFacade extends InvitationLinkFacade
 		}
 	}
 
-	/**
-	 * @throws NotFoundExceptionInterface
-	 * @throws LoaderException
-	 * @throws ObjectNotFoundException
-	 */
-	private function makeUserToCollaber(User $user): void
-	{
-		$this->memberServiceFacade->addUser($user);
-		if (Loader::includeModule('extranet'))
-		{
-			ServiceContainer::getInstance()->getCollaberService()->clearCache();
-		}
-	}
-
 	protected function afterRegister(User $user): User
 	{
-		$this->makeUserToCollaber($user);
+		$this->memberServiceFacade->addUser($user);
 
 		return $user;
 	}
@@ -89,6 +75,14 @@ class CollabInvitationLinkFacade extends InvitationLinkFacade
 
 	public function processAuthUser(User $user): void
 	{
-		$this->makeUserToCollaber($user);
+		$this->memberServiceFacade->addUser($user);
+	}
+
+	protected function afterCommitTransaction(User $user): void
+	{
+		if (Loader::includeModule('extranet'))
+		{
+			ServiceContainer::getInstance()->getCollaberService()->clearCache();
+		}
 	}
 }

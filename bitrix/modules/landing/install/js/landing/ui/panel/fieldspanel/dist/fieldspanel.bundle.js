@@ -416,10 +416,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        activeButton.deactivate();
 	      }
 	      button.activate();
-	      var hideCreateButton = this.getAllowedTypes().every(function (type) {
-	        return main_core.Type.isPlainObject(type);
-	      });
-	      if (main_core.Type.isArrayFilled(this.getAllowedTypes()) && hideCreateButton) {
+	      var activatedCategoryId = button.id;
+	      if (this.shouldHideCreateButton(activatedCategoryId)) {
 	        this.hideCreateFieldButton();
 	      } else {
 	        this.showCreateFieldButton();
@@ -432,6 +430,19 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      }
 	    }
 	  }, {
+	    key: "shouldHideCreateButton",
+	    value: function shouldHideCreateButton(activatedCategoryId) {
+	      var categoriesWithoutCreateButton = ['BOOKING'];
+	      var hideCreateButtonForCategory = categoriesWithoutCreateButton.includes(activatedCategoryId);
+	      if (hideCreateButtonForCategory) {
+	        return true;
+	      }
+	      var hideCreateButton = this.getAllowedTypes().every(function (type) {
+	        return main_core.Type.isPlainObject(type);
+	      });
+	      return main_core.Type.isArrayFilled(this.getAllowedTypes()) && hideCreateButton;
+	    }
+	  }, {
 	    key: "getFilteredFieldsTree",
 	    value: function getFilteredFieldsTree() {
 	      var searchString = String(this.getSearchField().getValue()).toLowerCase().trim();
@@ -442,7 +453,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
 	          categoryId = _ref6[0],
 	          category = _ref6[1];
-	        if (categoryId !== 'CATALOG' && categoryId !== 'BOOKING' && categoryId !== 'ACTIVITY' && categoryId !== 'INVOICE' && (!main_core.Type.isArrayFilled(allowedCategories) || allowedCategories.includes(categoryId)) && !disabledCategories.includes(categoryId)) {
+	        if (categoryId !== 'CATALOG' && categoryId !== 'ACTIVITY' && categoryId !== 'INVOICE' && (!main_core.Type.isArrayFilled(allowedCategories) || allowedCategories.includes(categoryId)) && !disabledCategories.includes(categoryId)) {
 	          var filteredFields = category.FIELDS.filter(function (field) {
 	            if (field.name === 'CONTACT_ORIGIN_VERSION' || field.name === 'CONTACT_LINK') {
 	              return false;

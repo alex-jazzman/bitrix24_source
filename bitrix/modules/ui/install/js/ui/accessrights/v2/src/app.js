@@ -9,6 +9,7 @@ import 'ui.notification';
 import { AnalyticsManager } from './integration/analytics-manager';
 import { createStore } from './store/index';
 import type { Options } from './store/model/application-model';
+import { AccessRightsExporter } from './store/model/transformation/backend-exporter/access-rights-exporter';
 import { AllUserGroupsExporter } from './store/model/transformation/backend-exporter/user-groups/all-user-groups-exporter';
 import { OnlyChangedUserGroupsExporter } from './store/model/transformation/backend-exporter/user-groups/only-changed-user-groups-exporter';
 import type { ExternalAccessRightSection } from './store/model/transformation/internalizer/access-rights-internalizer';
@@ -18,6 +19,7 @@ import type { ExternalUserGroup } from './store/model/transformation/internalize
 import { UserGroupsInternalizer } from './store/model/transformation/internalizer/user-groups-internalizer';
 import { ShownUserGroupsCopier } from './store/model/transformation/shown-user-groups-copier';
 import type { UserGroupsCollection, UserGroupsModel } from './store/model/user-groups-model';
+import type { AccessRightsModel } from './store/model/access-rights-model';
 
 export type AppConstructOptions = Options & {
 	renderTo: HTMLElement;
@@ -25,7 +27,7 @@ export type AppConstructOptions = Options & {
 	accessRights: ExternalAccessRightSection[];
 };
 
-type SaveAjaxResponse = AjaxResponse<{ USER_GROUPS: JsonObject }>;
+type SaveAjaxResponse = AjaxResponse<{ USER_GROUPS: JsonObject, ACCESS_RIGHTS: ?JsonObject }>;
 
 /**
  * @memberOf BX.UI.AccessRights.V2
@@ -47,6 +49,7 @@ export class App
 	#resetState: () => void;
 	#unwatch: () => void;
 	#userGroupsModel: UserGroupsModel;
+	#accessRightsModel: AccessRightsModel;
 	#analyticsManager: AnalyticsManager;
 
 	constructor(options: AppConstructOptions)
@@ -152,7 +155,7 @@ export class App
 	sendActionRequest(): Promise
 	{
 		return new Promise((resolve, reject) => {
-			if (this.#store.state.application.isSaving || !this.#store.getters['userGroups/isModified'])
+			if (this.#store.state.application.isSaving || !this.#store.getters['application/isModified'])
 			{
 				resolve();
 
@@ -164,12 +167,18 @@ export class App
 			this.#analyticsManager.onSaveAttempt();
 
 			this.#runSaveAjaxRequest()
-				.then(({ userGroups }) => {
+				.then(({ userGroups, accessRights }) => {
 					this.#analyticsManager.onSaveSuccess();
 					this.#userGroupsModel.setInitialUserGroups(userGroups);
+					if (accessRights)
+					{
+						this.#accessRightsModel.setInitialAccessRights(accessRights);
+					}
 
 					// reset modification flags and stuff
 					this.#resetState();
+					const guid: string = this.#guid;
+					EventEmitter.emit('BX.UI.AccessRights.V2:afterSave', { userGroups, accessRights, guid });
 
 					this.#showNotification(Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SETTINGS_HAVE_BEEN_SAVED'));
 				})
@@ -186,6 +195,7 @@ export class App
 					}
 
 					this.#showNotification(response?.errors?.[0]?.message || 'Something went wrong');
+					EventEmitter.emit('ui:accessRights:v2:onSaveError', { response });
 
 					reject(response);
 				})
@@ -215,6 +225,17 @@ export class App
 
 		const bodyType = this.#store.state.application.options.bodyType;
 
+		let accessRights = null;
+		let deletedAccessRights = null;
+		if (this.#store.state.application.options.isSaveAccessRightsList)
+		{
+			accessRights = (new AccessRightsExporter()).transform(
+				this.#store.state.accessRights.collection,
+				this.#guid,
+			);
+			deletedAccessRights = [...this.#store.state.accessRights.deleted.values()];
+		}
+
 		// wrap ajax in native promise
 		return new Promise((resolve, reject) => {
 			Ajax.runComponentAction(
@@ -226,6 +247,8 @@ export class App
 						userGroups,
 						deletedUserGroups: [...this.#store.state.userGroups.deleted.values()],
 						parameters: this.#store.state.application.options.additionalSaveParams,
+						accessRights,
+						deletedAccessRights,
 					},
 				},
 			)
@@ -238,8 +261,15 @@ export class App
 
 					(new ShownUserGroupsCopier(internalUserGroups, maxVisibleUserGroups)).transform(newUserGroups);
 
+					let newAccessRights = null;
+					if (response.data.ACCESS_RIGHTS)
+					{
+						newAccessRights = (new AccessRightsInternalizer()).transform(response.data.ACCESS_RIGHTS);
+					}
+
 					resolve({
 						userGroups: newUserGroups,
+						accessRights: newAccessRights,
 					});
 				})
 				.catch(reject)
@@ -249,7 +279,7 @@ export class App
 
 	#confirmBeforeClosingModifiedSlider(sliderEvent: BX.SidePanel.Event): void
 	{
-		if (!this.#store.getters['userGroups/isModified'] || this.#isUserConfirmedClose)
+		if (!this.#store.getters['application/isModified'] || this.#isUserConfirmedClose)
 		{
 			return;
 		}
@@ -257,6 +287,7 @@ export class App
 		sliderEvent.denyAction();
 
 		const box = MessageBox.create({
+			mediumButtonSize: false,
 			title: Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING_TITLE'),
 			message: Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING'),
 			modal: true,
@@ -291,7 +322,7 @@ export class App
 	{
 		const applicationOptions = (new ApplicationInternalizer()).transform(this.#options);
 
-		const { store, resetState, userGroupsModel } = createStore(
+		const { store, resetState, userGroupsModel, accessRightsModel } = createStore(
 			applicationOptions,
 			(new UserGroupsInternalizer(applicationOptions.maxVisibleUserGroups)).transform(this.#options.userGroups),
 			(new AccessRightsInternalizer()).transform(this.#options.accessRights),
@@ -301,9 +332,10 @@ export class App
 		this.#store = store;
 		this.#resetState = resetState;
 		this.#userGroupsModel = userGroupsModel;
+		this.#accessRightsModel = accessRightsModel;
 
 		this.#unwatch = this.#store.watch(
-			(state, getters) => getters['userGroups/isModified'],
+			(state, getters) => getters['application/isModified'],
 			(newValue) => {
 				if (newValue)
 				{
@@ -348,11 +380,16 @@ export class App
 
 	hasUnsavedChanges(): boolean
 	{
-		return !(!this.#store.getters['userGroups/isModified'] || this.#isUserConfirmedClose);
+		return !(!this.#store.getters['application/isModified'] || this.#isUserConfirmedClose);
 	}
 
 	scrollToSection(sectionCode)
 	{
 		this.#rootComponent.scrollToSection(sectionCode);
+	}
+
+	getGuid(): string
+	{
+		return this.#guid;
 	}
 }

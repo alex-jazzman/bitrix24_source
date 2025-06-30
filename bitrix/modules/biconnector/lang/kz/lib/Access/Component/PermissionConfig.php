@@ -1,4 +1,5 @@
 <?php
-$MESS["BICONNECTOR_CONFIG_PERMISSION_SECTION_RIGHTS_DASHBOARD"] = "Есептер";
+$MESS["BICONNECTOR_CONFIG_PERMISSION_SECTION_BUTTON_ADD_GROUP"] = "Жасау";
+$MESS["BICONNECTOR_CONFIG_PERMISSION_SECTION_RIGHTS_GROUP"] = "Есеп топтары";
 $MESS["BICONNECTOR_CONFIG_PERMISSION_SECTION_RIGHTS_MAIN"] = "BI Құрастырушы";
-$MESS["HINT_BICONNECTOR_CONFIG_PERMISSION_SECTION_RIGHTS_DASHBOARD"] = "Есептерді редакциялауға құқығы бар иесі мен пайдаланушылары Битрикс24-тегі BI Құрастырушы бөліміне кіре алмаса да, BI Құрастырушыда тікелей жұмыс істей алады ";
+$MESS["HINT_BICONNECTOR_CONFIG_PERMISSION_SECTION_RIGHTS_GROUP"] = "Топқа қосылған кезде есептер тиісті Битрикс24 бөлімінің жоғарғы мәзірінде пайда болады";

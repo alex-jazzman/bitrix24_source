@@ -40,6 +40,10 @@ export const Section = {
 			/** @type AccessRightSectionIcon */
 			type: Object,
 		},
+		action: {
+			/** @type AccessRightSectionAction */
+			type: Object,
+		},
 	},
 	provide(): Object {
 		return {
@@ -52,6 +56,7 @@ export const Section = {
 					sectionHint: this.hint,
 					isExpanded: this.isExpanded,
 					rights: this.rights,
+					action: this.action,
 				};
 			}),
 		};

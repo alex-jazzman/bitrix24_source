@@ -2,6 +2,7 @@
 
 namespace Bitrix\HumanResources\Service;
 
+use Bitrix\HumanResources\Config\Storage;
 use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
 use Bitrix\HumanResources\Item\Collection\NodeMemberCollection;
@@ -13,6 +14,7 @@ use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use CSite;
@@ -115,6 +117,12 @@ final class UserService
 	 */
 	public function isEmployee(int $userId): bool
 	{
+		if (!Storage::instance()->isCompanyStructureConverted()
+			&& Loader::includeModule('intranet'))
+		{
+			return \Bitrix\Intranet\Util::isIntranetUser($userId);
+		}
+
 		$cacheKey = sprintf(self::USER_DEPARTMENT_EXISTS_KEY, $userId);
 
 		$cacheValue = $this->cacheManager->getData($cacheKey);

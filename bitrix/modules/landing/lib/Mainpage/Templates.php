@@ -6,6 +6,5 @@ namespace Bitrix\Landing\Mainpage;
 
 enum Templates: string
 {
-	case EnterpriseWest = 'vibe_enterprise_west';
-	case EnterpriseRu = 'vibe_enterprise_ru';
+	case Enterprise = 'vibe_enterprise';
 }

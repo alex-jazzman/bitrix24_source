@@ -283,22 +283,12 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		NodeEntityTypeCollection $nodeEntityTypeCollection = new NodeEntityTypeCollection(NodeEntityType::DEPARTMENT),
 	): Item\Collection\NodeRelationCollection
 	{
-		$node = $this->nodeRepository->getById($nodeId);
-
-		if ($node?->isTeam())
-		{
-			$nodeEntityTypeCollection = new NodeEntityTypeCollection(
-				NodeEntityType::TEAM,
-			);
-		}
-
 		$connection = Application::getConnection();
 
 		$query = $this->prepareFindRelationByNodeIdQuery(
 			'DISTINCT nr.*',
 			$nodeId,
 			$relationEntityType,
-			$nodeEntityTypeCollection,
 		);
 
 		$nodeRelations = $this->getLimitedNodeRelationCollection($query, $offset, $limit);
@@ -361,6 +351,7 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 SELECT $select
 	FROM $nodeTableName n
 		   INNER JOIN $nodePathTableName np ON np.CHILD_ID = n.ID
+	  	   INNER JOIN $nodeTableName n2 ON (n2.ID = np.PARENT_ID AND n2.TYPE = n.TYPE)
 		   INNER JOIN $nodeRelationTableName nr ON (
 	nr.WITH_CHILD_NODES = 'Y' AND (np.PARENT_ID = nr.NODE_ID OR nr.NODE_ID = n.ID) AND n.TYPE in ($types)
 		  OR
@@ -397,11 +388,20 @@ SQL;
 		return $nodeRelations;
 	}
 
+	/**
+	 * Finds relations by node ID and relation type,
+	 * including parent nodes' relations if WITH_CHILD_NODES is 'Y'
+	 * AND if a parent has the same type as the node.
+	 *
+	 * @param string $select
+	 * @param int $nodeId
+	 * @param RelationEntityType $relationEntityType
+	 * @return string
+	 */
 	private function prepareFindRelationByNodeIdQuery(
 		string $select,
 		int $nodeId,
 		RelationEntityType $relationEntityType,
-		NodeEntityTypeCollection $nodeEntityTypeCollection = new NodeEntityTypeCollection(NodeEntityType::DEPARTMENT),
 	): string
 	{
 		$relationEntityType = $relationEntityType->value;
@@ -409,33 +409,13 @@ SQL;
 		$nodePathTableName = Model\NodePathTable::getTableName();
 		$nodeRelationTableName = Model\NodeRelationTable::getTableName();
 
-		if (empty($nodeEntityTypeCollection->getItems()))
-		{
-			$nodeEntityTypeCollection = new NodeEntityTypeCollection(
-				NodeEntityType::DEPARTMENT,
-				NodeEntityType::TEAM
-			);
-		}
-
-		$helper = Application::getConnection()->getSqlHelper();
-
-		$types = implode(
-			',',
-			array_map(
-				static function(NodeEntityType $type) use ($helper) {
-					$type = $helper->forSql($type->value);
-					return "'$type'";
-				},
-				$nodeEntityTypeCollection->getItems(),
-			),
-		);
-
 		return <<<SQL
 SELECT $select
   from $nodeTableName n
 		   INNER JOIN $nodePathTableName np ON np.CHILD_ID = n.ID
+	  	   INNER JOIN $nodeTableName n2 ON (n2.ID = np.PARENT_ID AND n2.TYPE = n.TYPE)
 		   INNER JOIN $nodeRelationTableName nr ON (
-	  nr.WITH_CHILD_NODES = 'Y' AND (np.PARENT_ID = nr.NODE_ID OR nr.NODE_ID = n.ID) AND n.TYPE IN ($types)
+	  nr.WITH_CHILD_NODES = 'Y' AND (np.PARENT_ID = nr.NODE_ID OR nr.NODE_ID = n.ID)
 		  OR
 	  nr.WITH_CHILD_NODES = 'N' AND nr.NODE_ID = n.ID
 	  )

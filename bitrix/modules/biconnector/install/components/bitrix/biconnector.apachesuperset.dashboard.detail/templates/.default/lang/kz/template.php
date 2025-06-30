@@ -8,7 +8,6 @@ $MESS["SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE"] = "Чатқа жіберу";
 $MESS["SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT"] = "Экспорттау";
 $MESS["SUPERSET_DASHBOARD_DETAIL_MORE_MENU_FEEDBACK"] = "Кері байланыс";
 $MESS["SUPERSET_DASHBOARD_DETAIL_MORE_MENU_ORDER_DASHBOARD"] = "Есепке тапсырыс беру";
-$MESS["SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE"] = "Сіз бұл есепті тек таңдалған көріну аймақтарынан көре аласыз";
 $MESS["SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER"] = "Маркеттен жүктеу";
 $MESS["SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER_MARKET_INSTALL_ERROR"] = "Есептерді Маркеттен жүктеу үшін \"market\"модулін орнатыңыз";
 $MESS["SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER_MARKET_INSTALL_ERROR_MSGVER_1"] = "Есептерді Маркетплейстен жүктеу үшін «market» модулін орнатыңыз";

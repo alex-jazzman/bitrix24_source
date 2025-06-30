@@ -17,7 +17,7 @@ export class MarketTrialPopup extends MarketExpiredPopup
 		return Tag.render`
 			<div class="rest-market-expired-popup__description">
 				<p class="rest-market-expired-popup__description-text">
-					${Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL')}
+					${Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL${this.marketLabel}`)}
 				</p>
 			</div>
 		`;
@@ -25,7 +25,7 @@ export class MarketTrialPopup extends MarketExpiredPopup
 
 	getTitle(): string
 	{
-		return Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_${this.type}`, {
+		return Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_${this.type}${this.marketLabel}`, {
 			'#DAYS#': this.expireDays,
 		});
 	}

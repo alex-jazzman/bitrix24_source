@@ -103,6 +103,7 @@ export class PopupFactory
 				return new DiscountEarSubscription({
 					discountPercentage: discountConfig.percentage,
 					termsUrl: discountConfig.termsUrl,
+					marketLabel: this.config.isRenamedMarket ? '' : '_MARKET_PLUS',
 				});
 
 			case PopupCategory.TRANSITION:

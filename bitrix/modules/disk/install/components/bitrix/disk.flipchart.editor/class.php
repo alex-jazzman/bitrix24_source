@@ -11,6 +11,7 @@ use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\User;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
@@ -25,6 +26,11 @@ Loc::loadMessages(__FILE__);
 class CDiskFlipchartViewerComponent extends DiskComponent
 {
 
+	private bool $isExternalLinkMode = false;
+	private bool $isViewMode = false;
+	private bool $isEditMode = false;
+	private ?DocumentSession $session = null;
+
 	private function convertDocumentId(int | string $documentId): string
 	{
 		return BoardService::convertDocumentIdToExternal($documentId);
@@ -32,12 +38,11 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 
 	private function generateToken(): string
 	{
-		/** @var DocumentSession $session */
-		$session = $this->arParams['DOCUMENT_SESSION'];
+		$session = $this->session;
 		$jwt = new JwtService($session->getUser());
 
 		return $jwt->generateToken(
-			$session->getType() === DocumentSession::TYPE_VIEW,
+			$this->isViewMode,
 			[
 				'user_id' => $this->arParams['USER_ID'],
 				'username' => $this->arParams['USERNAME'],
@@ -53,8 +58,7 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 
 	private function prepareSdkParams(): void
 	{
-		/** @var DocumentSession $session */
-		$session = $this->arParams['DOCUMENT_SESSION'];
+		$session = $this->session;
 		$this->arResult['DOCUMENT_SESSION'] = $session;
 		$this->arResult['DOCUMENT_URL'] = $this->arParams['DOCUMENT_URL'];
 		$this->arResult['DOCUMENT_ID'] = $this->convertDocumentId($session->getObject()->getId());
@@ -63,9 +67,9 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 		$this->arResult['DOCUMENT_NAME_WITHOUT_EXTENSION'] = $this->arParams['ORIGINAL_FILE']?->getNameWithoutExtension() ?? $this->arParams['DOCUMENT_NAME_WITHOUT_EXTENSION'] ?? $session->getObject()->getNameWithoutExtension();
 		$this->arResult['SESSION_ID'] = $session->getExternalHash();
 		$this->arResult['APP_URL'] = Configuration::getAppUrl();
-		$this->arResult['TOKEN'] = $this->generateToken($session->getType() === DocumentSession::TYPE_VIEW);
-		$this->arResult['ACCESS_LEVEL'] = ($session->getType() === DocumentSession::TYPE_VIEW) ? 'readonly' : 'editable';
-		$this->arResult['EDIT_BOARD'] = $session->getType() === DocumentSession::TYPE_EDIT;
+		$this->arResult['TOKEN'] = $this->generateToken();
+		$this->arResult['ACCESS_LEVEL'] = $this->isViewMode ? 'readonly' : 'editable';
+		$this->arResult['EDIT_BOARD'] = $this->isEditMode;
 		$this->arResult['SHOW_TEMPLATES_MODAL'] = (bool)($this->arParams['SHOW_TEMPLATES_MODAL'] ?? false);
 		$this->arResult['LANGUAGE'] = $this->getLanguage();
 		$this->arResult['HEADER_LOGO_URL'] = $this->getHeaderLogoUrl();
@@ -76,7 +80,26 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 		$featureBlocker = Bitrix24Manager::filterJsAction('disk_board_external_link', '');
 		$this->arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'] = (bool)$featureBlocker;
 		$this->arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] = $featureBlocker;
+		$this->arResult['SHOULD_SHOW_SHARING_BUTTON'] = $this->isEditMode && !$this->isExternalLinkMode;
 	}
+
+	protected function prepareParams(): void
+	{
+		parent::prepareParams();
+
+		if ($this->arParams['DOCUMENT_SESSION'] instanceof DocumentSession)
+		{
+			$this->session = $this->arParams['DOCUMENT_SESSION'];
+			$this->isExternalLinkMode = (bool)($this->arParams['EXTERNAL_LINK_MODE'] ?? false);
+			$this->isViewMode = $this->session->getType() === DocumentSession::TYPE_VIEW;
+			$this->isEditMode = $this->session->getType() === DocumentSession::TYPE_EDIT;
+		}
+		else
+		{
+			throw new ArgumentException('DOCUMENT_SESSION is a required parameter!');
+		}
+	}
+
 
 	protected function processActionDefault(): void
 	{
@@ -100,6 +123,7 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 			;
 		});
 	}
+
 	private function getLanguage(): string
 	{
 		return in_array(Context::getCurrent()?->getLanguage(), Configuration::getAllowedLanguages())
@@ -109,14 +133,12 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 
 	private function getHeaderLogoUrl(): string
 	{
-		$isExternalLinkMode = (bool)($this->arParams['EXTERNAL_LINK_MODE'] ?? false);
-
-		if ($isExternalLinkMode && ModuleManager::isModuleInstalled('bitrix24'))
+		if ($this->isExternalLinkMode && ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			return 'https://bitrix24.com';
 		}
 
-		if ($isExternalLinkMode && !ModuleManager::isModuleInstalled('bitrix24'))
+		if ($this->isExternalLinkMode && !ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			return UrlManager::getInstance()->getHostUrl();
 		}

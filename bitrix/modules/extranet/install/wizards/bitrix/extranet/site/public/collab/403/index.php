@@ -22,7 +22,7 @@ if ($availableCollab)
 }
 
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/public/collab/403/index.php');
-\Bitrix\Main\UI\Extension::load('ui.fonts.inter');
+
 ?>
 <div class="bx-collab-grid">
 	<style>

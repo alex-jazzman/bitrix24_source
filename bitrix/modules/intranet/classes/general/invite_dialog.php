@@ -7,11 +7,14 @@
  * @copyright 2001-2014 Bitrix
  */
 
+use Bitrix\Intranet\Internal\Factory\Message\CollabInvitationMessageFactory;
+use Bitrix\Intranet\Internal\Factory\Message\ExtranetInvitationMessageFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
 use Bitrix\Socialnetwork;
 use Bitrix\Main\UserTable;
@@ -1214,7 +1217,7 @@ class CIntranetInviteDialog
 		;
 	}
 
-	public static function reinviteUserByPhone(int $userId, array $params = []): bool
+	public static function reinviteUserByPhone(int $userId, array $params = []): Result
 	{
 		if (Loader::includeModule('bitrix24'))
 		{
@@ -1224,17 +1227,17 @@ class CIntranetInviteDialog
 				&& self::cannotSendInvite()
 			)
 			{
-				return false;
+				return (new Result())->addError(new Error(''));
 			}
 
-			return \Bitrix\Bitrix24\Integration\Network\ProfileService::getInstance()->reInviteUserByPhone($userId)->isSuccess();
+			return \Bitrix\Bitrix24\Integration\Network\ProfileService::getInstance()->reInviteUserByPhone($userId);
 		}
 		else
 		{
 			// TODO: from portal sms provider
 		}
 
-		return false;
+		return (new Result())->addError(new Error(''));
 	}
 
 	public static function InviteUserByPhone($arUser, $params = array())
@@ -1389,26 +1392,26 @@ class CIntranetInviteDialog
 		if($userData = $resultUser->Fetch())
 		{
 			$user = \Bitrix\Intranet\Entity\User::initByArray($userData);
-			$firstUserCollab = null;
+			$defaultUserCollab = null;
 			if (Loader::includeModule('socialnetwork'))
 			{
-				$provider = \Bitrix\Socialnetwork\Collab\Provider\CollabProvider::getInstance();
-				$filter = \Bitrix\Main\ORM\Query\Query::filter()
-					->where('MEMBERS.ROLE', \Bitrix\Socialnetwork\Collab\Permission\UserRole::REQUEST)
-					->where('MEMBERS.USER_ID', $userId)
+				$defaultUserCollab = Socialnetwork\Collab\Provider\CollabDefaultProvider::getInstance()
+					->getCollab($userId)
 				;
-				$query = (new \Bitrix\Socialnetwork\Collab\Provider\CollabQuery($userId))
-					->setWhere($filter)
-					->setSelect(['ID', 'NAME'])
-				;
-
-				$firstUserCollab = $provider->getList($query)->getFirst();
 			}
-			$factory = new \Bitrix\Intranet\Internal\Factory\Message\CollabInvitationMessageFactory($user, $firstUserCollab);
+			if ($defaultUserCollab)
+			{
+				$factory = new CollabInvitationMessageFactory($user, $defaultUserCollab);
+			}
+			else
+			{
+				$factory = new ExtranetInvitationMessageFactory($user);
+			}
 			$factory->createEmailEvent()->sendImmediately();
 
 			return true;
 		}
+
 		return false;
 	}
 

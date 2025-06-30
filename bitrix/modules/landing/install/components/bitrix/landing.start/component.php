@@ -259,7 +259,10 @@ $arResult['VARS'] = $variables;
 // check rules for templates
 if ($arParams['SEF_MODE'] === 'Y')
 {
-	if (isset($arParams['PAGE_URL_LANDING_VIEW']))
+	if (
+		isset($arParams['PAGE_URL_LANDING_VIEW'])
+		&& $arParams['TYPE'] !== 'MAINPAGE'
+	)
 	{
 		$condition = $arParams['PAGE_URL_LANDING_VIEW'];
 		$condition = str_replace(

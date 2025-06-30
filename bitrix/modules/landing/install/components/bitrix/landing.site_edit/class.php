@@ -114,6 +114,22 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 					$langs[$code] = $lang['NAME'];
 				}
 			}
+
+			if (!isset($langs['by']))
+			{
+				Loc::loadMessages(Manager::getDocRoot() . '/bitrix/modules/landing/install/components/bitrix/landing.site_edit/class_notranslate.php');
+				$langsWithBy = [];
+				foreach ($langs as $lang => $langName)
+				{
+					$langsWithBy[$lang] = $langName;
+					if ($lang === 'ru')
+					{
+						$langsWithBy['by'] = Loc::getMessage('LANDING_SITE_EDIT_BY_LANG');
+					}
+				}
+				$langs = $langsWithBy;
+			}
+
 			return $langs;
 		}
 

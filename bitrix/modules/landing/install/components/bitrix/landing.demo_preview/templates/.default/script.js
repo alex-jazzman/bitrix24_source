@@ -785,21 +785,33 @@
 					BX.ajax.get(
 						addQueryParams(this.zipInstallPath, add),
 						(data) => {
-							const resultHtml = BX.Dom.create('div', {html: data});
-							const restContent = resultHtml.querySelector('.rest-configuration-wrapper');
-							if (restContent)
+							const resultNode = BX.Dom.create('div', {html: data});
+
+							const restNode = resultNode.querySelector('.rest-configuration-wrapper');
+							if (restNode)
 							{
-								const importTitle = restContent.querySelector('.rest-configuration-title');
-								const importIconContainer = restContent.querySelector(
+								const importTitle = restNode.querySelector('.rest-configuration-title');
+								const importIconContainer = restNode.querySelector(
 									'.rest-configuration-start-icon-main-container');
 								if (importTitle && importIconContainer)
 								{
 									BX.Dom.remove(importTitle);
 									BX.Dom.insertBefore(importTitle, importIconContainer.nextSibling);
 								}
-								// BX.Dom.append(restContent, popupImport);
+
+								popupImport.append(restNode);
+							}
+
+							const toolbarNode = resultNode.querySelector('.ui-toolbar');
+							if (toolbarNode)
+							{
+								toolbarNode.hidden = true;
+								popupImport.append(toolbarNode);
+							}
+
+							if (restNode)
+							{
 								BX.Dom.style(popupImportLoaderContainer, 'display', 'none');
-								popupImport.append(restContent);
 								this.loader.hide();
 							}
 							else

@@ -2,6 +2,7 @@
 
 namespace Bitrix\BIConnector\ExternalSource\Source;
 
+use Bitrix\BIConnector\ExternalSource\FieldType;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRest;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestConnector;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestTable;
@@ -43,6 +44,52 @@ class Rest extends Base
 		}
 
 		$this->source = $source;
+	}
+
+	private static function checkTableList(array $tableList): bool
+	{
+		foreach ($tableList as $table)
+		{
+			if (!is_array($table))
+			{
+				return false;
+			}
+
+			if (empty($table['code']) || empty($table['title']))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static function checkTableDescription(array $columns): bool
+	{
+		$requiredColumnFields = ['code', 'name', 'type'];
+
+		if (empty($columns))
+		{
+			return false;
+		}
+
+		foreach ($columns as $column)
+		{
+			if (!is_array($column))
+			{
+				return false;
+			}
+
+			foreach ($requiredColumnFields as $field)
+			{
+				if (!array_key_exists($field, $column) || empty($column[$field]))
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	public function connect(ExternalSourceSettingsCollection $settings = null): Result
@@ -112,7 +159,7 @@ class Rest extends Base
 			);
 
 			$tableList = $this->decode($resultQuery);
-			if ($tableList === null)
+			if ($tableList === null || !self::checkTableList($tableList))
 			{
 				$result->addError(new Error(Loc::getMessage('BICONNECTOR_REST_EMPTY_TABLE_LIST_ERROR')));
 
@@ -174,7 +221,7 @@ class Rest extends Base
 			throw new SystemException(Loc::getMessage('BICONNECTOR_REST_CONNECTION_TABLE_DESCRIPTION_404_ERROR'));
 		}
 
-		if (!$columns || !is_array($columns))
+		if (!$columns || !is_array($columns) || !self::checkTableDescription($columns))
 		{
 			throw new SystemException(Loc::getMessage('BICONNECTOR_REST_EMPTY_TABLE_DESCRIPTION_ERROR'));
 		}
@@ -185,7 +232,7 @@ class Rest extends Base
 			$result[] = [
 				'CODE' => $column['code'],
 				'NAME' => $column['name'] ?? $column['code'],
-				'TYPE' => $this->mapType($column['type']),
+				'TYPE' => $this->mapType($column['type'] ?? Services\ApacheSuperset::TYPE_STRING),
 			];
 		}
 
@@ -359,23 +406,14 @@ class Rest extends Base
 	 */
 	private function mapType(string $type): string
 	{
-		$availableTypes = [
-			Services\ApacheSuperset::TYPE_STRING,
-			Services\ApacheSuperset::TYPE_BOOLEAN,
-			Services\ApacheSuperset::TYPE_DATE,
-			Services\ApacheSuperset::TYPE_DATETIME,
-			Services\ApacheSuperset::TYPE_INT,
-			Services\ApacheSuperset::TYPE_DOUBLE,
-			Services\ApacheSuperset::TYPE_ARRAY_STRING,
-			Services\ApacheSuperset::TYPE_MAP_STRING,
-		];
+		$mapType = FieldType::tryFrom(mb_strtolower($type));
 
-		if (in_array($type, $availableTypes, true))
+		if ($mapType)
 		{
-			return $type;
+			return $mapType->value;
 		}
 
-		return Services\ApacheSuperset::TYPE_STRING;
+		return FieldType::String->value;
 	}
 
 	private function decode($data): ?array

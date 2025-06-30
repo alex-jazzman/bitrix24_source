@@ -20,6 +20,8 @@ export type SliderOptions = {
 	contentClassName?: string,
 	containerClassName?: string,
 	overlayClassName?: string,
+	overlayOpacity?: number,
+	overlayBgColor?: string,
 	typeLoader?: string, // compatibility
 	data?: JsonObject,
 	minimizeOptions?: MinimizeOptions,

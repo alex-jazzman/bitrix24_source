@@ -44,8 +44,20 @@ export class ChatMenu
 		const data = event.getData();
 		const menu = this.getMenu();
 
-		menu?.unsetActive(data.from.name.toLowerCase());
-		menu?.setActive(data.to.name.toLowerCase());
+		let fromItemId = data.from.name.toLowerCase();
+		if (fromItemId === 'market' && data.from.entityId)
+		{
+			fromItemId = `${fromItemId}_${data.from.entityId}`;
+		}
+
+		let toItemId = data.to.name.toLowerCase();
+		if (toItemId === 'market' && data.to.entityId)
+		{
+			toItemId = `${toItemId}_${data.to.entityId}`;
+		}
+
+		menu?.unsetActive(fromItemId);
+		menu?.setActive(toItemId);
 		menu?.closeMoreMenu();
 	}
 

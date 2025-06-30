@@ -36,7 +36,7 @@ final class RestDatasetManager extends DatasetManager
 		}
 
 		$fieldsToUpdate = array_filter($fieldsToUpdate, static function ($field) use ($currentFields) {
-			return isset($field['id']) && $currentFields->getByPrimary($field['id']) !== null;
+			return isset($field['ID']) && $currentFields->getByPrimary($field['ID']) !== null;
 		});
 
 		$db = Application::getInstance()->getConnection();
@@ -45,11 +45,11 @@ final class RestDatasetManager extends DatasetManager
 		foreach ($fieldsToUpdate as $fieldToUpdate)
 		{
 			/** @var Internal\ExternalDatasetField $currentField */
-			$currentField = $currentFields->getByPrimary($fieldToUpdate['id']);
-			if (isset($fieldToUpdate['visible']) && $fieldToUpdate['visible'] !== $currentField->getVisible())
+			$currentField = $currentFields->getByPrimary($fieldToUpdate['ID']);
+			if (isset($fieldToUpdate['VISIBLE']) && $fieldToUpdate['VISIBLE'] !== $currentField->getVisible())
 			{
 				// update only VISIBLE field
-				$currentField->setVisible((bool)$fieldToUpdate['visible']);
+				$currentField->setVisible((bool)$fieldToUpdate['VISIBLE']);
 				$saveFieldResult = $currentField->save();
 				if (!$saveFieldResult->isSuccess())
 				{
@@ -72,6 +72,15 @@ final class RestDatasetManager extends DatasetManager
 			Internal\ExternalDatasetFieldTable::deleteByFilter(['=ID' => $fieldsToDelete]);
 		}
 
+		if ($result->isSuccess())
+		{
+			$db->commitTransaction();
+		}
+		else
+		{
+			$db->rollbackTransaction();
+		}
+
 		$event = new Event(
 			'biconnector',
 			self::EVENT_ON_AFTER_UPDATE_DATASET,
@@ -92,15 +101,6 @@ final class RestDatasetManager extends DatasetManager
 						: new Error('Error updating dataset.', 'DATASET_UPDATE_ERROR')
 				);
 			}
-		}
-
-		if ($result->isSuccess())
-		{
-			$db->commitTransaction();
-		}
-		else
-		{
-			$db->rollbackTransaction();
 		}
 
 		return $result;
@@ -144,7 +144,7 @@ final class RestDatasetManager extends DatasetManager
 			$result->addErrors($checkFieldsResult->getErrors());
 		}
 
-		if (mb_strlen($dataset['name']) > 230)
+		if (mb_strlen($dataset['NAME']) > 230)
 		{
 			$result->addError(new Error('Dataset name must not exceed 230 characters.', 'VALIDATION_DATASET_NAME_TOO_LONG'));
 		}
@@ -158,7 +158,7 @@ final class RestDatasetManager extends DatasetManager
 
 		if ($fields)
 		{
-			$fieldCodes = array_column($fields, 'external_code');
+			$fieldCodes = array_column($fields, 'EXTERNAL_CODE');
 			$duplicatesCodes = array_filter(array_count_values($fieldCodes), static function($count) {
 				return $count > 1;
 			});
@@ -171,7 +171,7 @@ final class RestDatasetManager extends DatasetManager
 				));
 			}
 
-			$fieldNames = array_column($fields, 'name');
+			$fieldNames = array_column($fields, 'NAME');
 			$duplicatesNames = array_filter(array_count_values($fieldNames), static function($count) {
 				return $count > 1;
 			});
@@ -188,9 +188,9 @@ final class RestDatasetManager extends DatasetManager
 			{
 				if (
 					!is_array($field)
-					|| !array_key_exists('name', $field)
-					|| !array_key_exists('type', $field)
-					|| !array_key_exists('external_code', $field)
+					|| !array_key_exists('NAME', $field)
+					|| !array_key_exists('TYPE', $field)
+					|| !array_key_exists('EXTERNAL_CODE', $field)
 				)
 				{
 					$result->addError(new Error(
@@ -201,7 +201,7 @@ final class RestDatasetManager extends DatasetManager
 					return $result;
 				}
 
-				if (!preg_match('/^[A-Z][A-Z0-9_]*$/', $field['name']))
+				if (!preg_match('/^[A-Z][A-Z0-9_]*$/', $field['NAME']))
 				{
 					$result->addError(new Error(
 						'Field "name" has to start with an uppercase Latin character. Possible entry includes uppercase Latin characters (A-Z), numbers (0-9) and underscores.',
@@ -209,7 +209,7 @@ final class RestDatasetManager extends DatasetManager
 					));
 				}
 
-				if (mb_strlen($field['name']) > 32)
+				if (mb_strlen($field['NAME']) > 32)
 				{
 					$result->addError(new Error(
 						'Field "name" must not exceed 32 characters.',
@@ -217,7 +217,7 @@ final class RestDatasetManager extends DatasetManager
 					));
 				}
 
-				if (FieldType::tryFrom($field['type']) === null)
+				if (FieldType::tryFrom($field['TYPE']) === null)
 				{
 					$result->addError(new Error('Invalid field type.' , 'VALIDATION_FIELD_INVALID_TYPE'));
 				}
@@ -244,7 +244,7 @@ final class RestDatasetManager extends DatasetManager
 			return $result;
 		}
 
-		$duplicatesCodes = array_intersect($currentCodes, array_column($fieldsToAdd, 'external_code'));
+		$duplicatesCodes = array_intersect($currentCodes, array_column($fieldsToAdd, 'EXTERNAL_CODE'));
 		$duplicatesCodes = array_unique($duplicatesCodes);
 		if ($duplicatesCodes)
 		{
@@ -255,7 +255,7 @@ final class RestDatasetManager extends DatasetManager
 			));
 		}
 
-		$duplicatesNames = array_intersect($currentNames, array_column($fieldsToAdd, 'name'));
+		$duplicatesNames = array_intersect($currentNames, array_column($fieldsToAdd, 'NAME'));
 		$duplicatesNames = array_unique($duplicatesNames);
 		if ($duplicatesNames)
 		{

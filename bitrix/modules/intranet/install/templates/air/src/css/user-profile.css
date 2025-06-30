@@ -71,3 +71,16 @@
 	top: 35px;
 	left: 40px;
 }
+
+.intranet-avatar-widget-base-popup {
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	max-height: 97vh;
+}
+
+.intranet-avatar-widget-popup-base::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}

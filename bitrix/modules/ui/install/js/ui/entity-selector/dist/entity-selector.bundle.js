@@ -2995,7 +2995,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }, {
 	    key: "deselect",
-	    value: function deselect() {
+	    value: function deselect(preselectedMode = false) {
 	      if (!this.selected) {
 	        return;
 	      }
@@ -3018,7 +3018,7 @@ this.BX.UI = this.BX.UI || {};
 	        });
 	      }
 	      if (dialog) {
-	        dialog.handleItemDeselect(this);
+	        dialog.handleItemDeselect(this, !preselectedMode);
 	        dialog.emit('Item:onDeselect', {
 	          item: this
 	        });
@@ -8555,8 +8555,8 @@ this.BX.UI = this.BX.UI || {};
 	     */
 	  }, {
 	    key: "handleItemDeselect",
-	    value: function handleItemDeselect(item) {
-	      const shouldAnimate = this.isMultiple();
+	    value: function handleItemDeselect(item, animate = true) {
+	      const shouldAnimate = animate && this.isMultiple();
 	      this.selectedItems.delete(item);
 	      if (this.getTagSelector()) {
 	        this.getTagSelector().removeTag({
@@ -8815,6 +8815,7 @@ this.BX.UI = this.BX.UI || {};
 	  Tab,
 	  Entity,
 	  TagSelector,
+	  TagItem,
 	  BaseHeader,
 	  DefaultHeader,
 	  BaseFooter,
@@ -8830,6 +8831,7 @@ this.BX.UI = this.BX.UI || {};
 	exports.Tab = Tab;
 	exports.Entity = Entity;
 	exports.TagSelector = TagSelector;
+	exports.TagItem = TagItem;
 	exports.BaseHeader = BaseHeader;
 	exports.DefaultHeader = DefaultHeader;
 	exports.BaseFooter = BaseFooter;

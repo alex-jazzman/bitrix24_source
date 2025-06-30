@@ -138,6 +138,7 @@
 							});
 						},
 					},
+					printable: true,
 				},
 				handler: async function(event, link) {
 					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');

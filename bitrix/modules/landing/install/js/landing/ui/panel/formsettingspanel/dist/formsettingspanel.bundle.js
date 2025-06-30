@@ -465,6 +465,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      });
 	      var editorWindow = landing_pageobject.PageObject.getEditorWindow();
 	      main_core.Dom.addClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
+	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
+	      main_core.Dom.addClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
 	      void landing_ui_panel_stylepanel.StylePanel.getInstance().hide();
 	      this.disableHistory();
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "show", this).call(this, options).then(function () {
@@ -1154,6 +1156,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    value: function hide() {
 	      var editorWindow = landing_pageobject.PageObject.getEditorWindow();
 	      main_core.Dom.removeClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
+	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
+	      main_core.Dom.removeClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
 	      this.enableHistory();
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "hide", this).call(this);
 	    }

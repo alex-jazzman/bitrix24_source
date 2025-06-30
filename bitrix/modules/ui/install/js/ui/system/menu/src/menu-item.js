@@ -1,4 +1,5 @@
 import { Dom, Event, Tag, Text, Type } from 'main.core';
+import { Counter, CounterColor } from 'ui.cnt';
 import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
@@ -292,6 +293,7 @@ export class MenuItem
 			<div class="ui-popup-menu-item-buttons">
 				${this.#renderCheck()}
 				${this.#renderExtra()}
+				${this.#renderCounter()}
 				${this.#renderIcon()}
 				${this.#renderArrow()}
 			</div>
@@ -338,6 +340,27 @@ export class MenuItem
 		}, true);
 
 		return extra;
+	}
+
+	#renderCounter(): HTMLElement
+	{
+		if (!this.#options.counter)
+		{
+			return '';
+		}
+
+		if (!this.#options.counter.value)
+		{
+			return Tag.render`
+				<div class="ui-popup-menu-item-counter"></div>
+			`;
+		}
+
+		return Tag.render`
+			<div class="ui-popup-menu-item-counter">
+				${new Counter({ color: CounterColor.DANGER, ...this.#options.counter }).render()}
+			</div>
+		`;
 	}
 
 	#renderIcon(): HTMLElement

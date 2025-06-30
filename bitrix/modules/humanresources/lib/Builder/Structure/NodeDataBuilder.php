@@ -33,6 +33,7 @@ final class NodeDataBuilder extends BaseDataBuilder
 		'ACTIVE',
 		'GLOBAL_ACTIVE',
 		'NAME',
+		'DESCRIPTION',
 		'ACCESS_CODE',
 		'COLOR_NAME'
 	];

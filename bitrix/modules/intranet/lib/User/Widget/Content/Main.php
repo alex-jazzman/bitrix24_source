@@ -114,6 +114,15 @@ class Main extends BaseContent
 		if (!$isExtranet)
 		{
 			$items[] = $this->getUserLoginHistoryMenuItem();
+
+			if (Intranet\UStat\UStat::checkAvailableCompanyPulse())
+			{
+				$items[] = [
+					'title' => Loc::getMessage('INTRANET_USER_WIDGET_CONTENT_MAIN_MORE_MENU_PULSE_TITLE'),
+					'icon' => '--o-pulse',
+					'type' => 'pulse',
+				];
+			}
 		}
 
 		if (isset($_GET['BXD_API_VERSION']) || str_contains($_SERVER['HTTP_USER_AGENT'], 'BitrixDesktop'))

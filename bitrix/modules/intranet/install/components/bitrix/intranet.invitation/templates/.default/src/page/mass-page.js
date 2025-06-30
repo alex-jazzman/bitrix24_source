@@ -117,7 +117,7 @@ export class MassPage extends Page
 		}
 
 		const data = {
-			ITEMS: values.join(' '),
+			invitationText: values.join(' '),
 			departmentIds: this.#departmentControl.getValues(),
 			tab: 'mass',
 		};

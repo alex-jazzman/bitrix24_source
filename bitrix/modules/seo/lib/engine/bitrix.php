@@ -72,6 +72,8 @@ class Bitrix extends Engine implements IEngine
 		{
 			$this->authInterface =
 				new \CBitrixSeoOAuthInterface($this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']);
+
+			$this->authInterface->setProxyUrl($this->getAuthSettings()['PROXY_URL'] ?? '');
 		}
 
 		return $this->authInterface;
@@ -79,12 +81,18 @@ class Bitrix extends Engine implements IEngine
 
 	public function setAuthSettings($settings = null): void
 	{
+		if (!$this->isRegistered())
+		{
+			return;
+		}
+
 		if (is_array($settings) && array_key_exists("expires_in", $settings))
 		{
 			$settings["expires_in"] += time();
 		}
 
 		$this->engineSettings['AUTH'] = $settings;
+		$this->engineSettings['PROXY_URL'] = $settings['PROXY_URL'] ;
 		$this->saveSettings();
 	}
 }

@@ -11,7 +11,6 @@ return [
 	],
 	'js' => 'dist/dataset-import.bundle.js',
 	'rel' => [
-		'ui.vue3',
 		'biconnector.dataset-import.file-export',
 		'ui.pinner',
 		'ui.section',
@@ -26,6 +25,7 @@ return [
 		'main.popup',
 		'ui.analytics',
 		'ui.buttons',
+		'ui.vue3',
 		'ui.entity-selector',
 		'ui.icon-set.api.vue',
 		'ui.vue3.directives.hint',

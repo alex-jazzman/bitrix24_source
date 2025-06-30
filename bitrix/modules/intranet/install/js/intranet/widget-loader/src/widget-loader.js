@@ -46,14 +46,15 @@ export class WidgetLoader
 				id: this.#getOptions().id ?? null,
 				bindElement: this.#getOptions().bindElement,
 				width: this.#getOptions().width,
-				offsetLeft: this.#getOptions().offsetLeft ?? offsetLeft,
 				useAngle: this.#getOptions().useAngle ?? true,
 				angle: this.#getOptions().useAngle ?? {
 					offset: (this.#getOptions().width / 2) - 16,
 				},
-				offsetTop: this.#getOptions().offsetTop ?? 3,
+				className: this.#getOptions().className ?? null,
 				animation: 'fading-slide',
 				closeByEsc: true,
+				offsetLeft: this.#getOptions().offsetLeft ?? offsetLeft,
+				offsetTop: this.#getOptions().offsetTop ?? 3,
 			});
 			const container = popup.getPopupContainer();
 			this.#cache.set('popup-content', container.querySelector('.popup-window-content'));

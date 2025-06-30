@@ -12,7 +12,6 @@ export class InviteEmailHandler
 	#linkRegisterEnabled: boolean;
 	#transport: Transport = null;
 	#input: EmailInvitationInput = null;
-	#invitationUrlByDepartments: Array = [];
 	#analytics: Analytics = null;
 
 	constructor(options: LocalEmailPageType, input: EmailInvitationInput)
@@ -53,14 +52,6 @@ export class InviteEmailHandler
 	#onSubmitWithLocalEmailProgram(): void
 	{
 		const departmentsId = this.#departmentControl.getValues();
-		if (this.#invitationUrlByDepartments[departmentsId.toString()])
-		{
-			this.#openLocalMailProgram(this.#invitationUrlByDepartments[departmentsId.toString()]);
-			EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
-			EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
-
-			return;
-		}
 
 		// eslint-disable-next-line promise/catch-or-return
 		this.#transport.send({
@@ -75,7 +66,6 @@ export class InviteEmailHandler
 			const invitationUrl = response.data?.invitationLink;
 			if (Type.isStringFilled(invitationUrl))
 			{
-				this.#invitationUrlByDepartments[departmentsId.toString()] = invitationUrl;
 				this.#openLocalMailProgram(invitationUrl);
 			}
 		}, (response) => {
@@ -160,7 +150,7 @@ export class InviteEmailHandler
 			? Loc.getMessage(
 				'INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_DESCRIPTION',
 				{
-					'[LINK]': '<a class="intranet-invitation-dialog-link" href="/company/">',
+					'[LINK]': '<a class="intranet-invitation-dialog-link">',
 					'[/LINK]': '</a>',
 				},
 			)
@@ -177,7 +167,7 @@ export class InviteEmailHandler
 			</div>
 		`;
 
-		const link = content.querySelector('.intranet-invitetion-dialog-link');
+		const link = content.querySelector('.intranet-invitation-dialog-link');
 		if (Type.isDomNode(link))
 		{
 			Event.unbindAll(link);

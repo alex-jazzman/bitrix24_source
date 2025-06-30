@@ -7,7 +7,7 @@ import {
 	KeyInfoField,
 	UserNotificationField,
 	DashboardOwnerField,
-	DashboardParamsField,
+	DashboardGroupsField,
 	DeleteSupersetField,
 	ClearCacheField,
 } from './entities/index';
@@ -36,8 +36,8 @@ export class FieldFactory
 				return UserNotificationField.create(controlId, settings);
 			case 'ownerSelector':
 				return DashboardOwnerField.create(controlId, settings);
-			case 'dashboardParametersSelector':
-				return DashboardParamsField.create(controlId, settings);
+			case 'dashboardGroupsSelector':
+				return DashboardGroupsField.create(controlId, settings);
 			case 'deleteSuperset':
 				return DeleteSupersetField.create(controlId, settings);
 			case 'clearCache':

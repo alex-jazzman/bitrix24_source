@@ -4,9 +4,6 @@ declare(strict_types=1);
 namespace Bitrix\Intranet\Public\Facade\Invitation;
 
 use Bitrix\Intranet\Entity\Collection\DepartmentCollection;
-use Bitrix\Intranet\Entity\Collection\UserCollection;
-use Bitrix\Intranet\Public\Type\BaseInvitation;
-use Bitrix\Intranet\Public\Type\Collection\InvitationCollection;
 use Bitrix\Intranet\Public\Type\EmailInvitation;
 use Bitrix\Intranet\Entity\User;
 use Bitrix\Intranet\Enum\InvitationType;
@@ -16,7 +13,6 @@ use Bitrix\Intranet\Repository\UserRepository;
 use Bitrix\Intranet\Public\Service\InvitationService;
 use Bitrix\Intranet\Public\Service\RegistrationService;
 use Bitrix\Intranet\Internal\Factory\Message\IntranetInvitationMessageFactory;
-use Bitrix\Intranet\Internal\Strategy\Registration\IntranetRegistrationStrategy;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -59,14 +55,14 @@ class IntranetInvitationFacade extends InvitationFacade
 
 		EventManager::getInstance()->addEventHandler(
 			'intranet',
-			'onSendInviteUser',
-			[$this, 'sendInvitation'],
+			'onAfterUserRegistration',
+			[$this, 'onAfterUserRegistration'],
 		);
 
 		EventManager::getInstance()->addEventHandler(
 			'intranet',
-			'onUserInvited',
-			[$this, 'afterInviteUserAction'],
+			'onSendInviteUser',
+			[$this, 'sendInvitation'],
 		);
 	}
 
@@ -90,22 +86,20 @@ class IntranetInvitationFacade extends InvitationFacade
 		}
 	}
 
-	public function afterInviteUserAction(Event $event): void
+	public function onAfterUserRegistration(Event $event): void
 	{
-		$userCollection = $event->getParameter('invitedUsers');
+		$user = $event->getParameter('user');
 		$departmentAssigner = new DepartmentAssigner($this->departmentCollection);
-		$departmentAssigner->assignUsers($userCollection);
-		foreach ($userCollection as $user)
+		$departmentAssigner->assignUser($user);
+
+		$groupCodes = array_map(fn($code) => "SG{$code}", $this->groupIds);
+		if (!empty($groupCodes))
 		{
-			$groupCodes = array_map(fn($code) => "SG{$code}", $this->groupIds);
-			if (!empty($groupCodes))
-			{
-				\CIntranetInviteDialog::RequestToSonetGroups(
-					$user->getId(),
-					$groupCodes,
-					"",
-				);
-			}
+			\CIntranetInviteDialog::RequestToSonetGroups(
+				$user->getId(),
+				$groupCodes,
+				"",
+			);
 		}
 	}
 

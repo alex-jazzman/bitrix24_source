@@ -225,7 +225,6 @@
 	overflow: hidden;
 	padding: 0;
 	z-index: 2;
-	border-radius: var(--sidepanel-border-radius);
 }
 
 .side-panel.--self-contained .side-panel-content-container {
@@ -572,7 +571,7 @@
 }
 
 .side-panel-toolbar-toggle {
-	min-width: 52px;
+	min-width: 46px;
 	height: 100%;
 	border-radius: 50%;
 	cursor: pointer;

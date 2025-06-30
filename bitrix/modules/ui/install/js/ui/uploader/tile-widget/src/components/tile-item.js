@@ -1,4 +1,4 @@
-import { Loc, Text, Type } from 'main.core';
+import { Dom, Loc, Text, Type } from 'main.core';
 import { MenuManager, type PopupOptions } from 'main.popup';
 
 import { FileOrigin, FileStatus } from 'ui.uploader.core';
@@ -241,6 +241,12 @@ export const TileItem: BitrixVueComponentProps = {
 						},
 					},
 				});
+
+				const downloadItem = this.menu.getMenuItem('download');
+				if (downloadItem)
+				{
+					Dom.attr(downloadItem.getContainer(), 'download', true);
+				}
 
 				this.emitter.emit('TileItem:onMenuCreate', {
 					menu: this.menu,

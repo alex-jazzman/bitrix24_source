@@ -25,6 +25,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Landing\Metrika;
+use Bitrix\Main\UI\Extension;
 
 Loc::loadMessages(__FILE__);
 
@@ -69,7 +70,7 @@ Manager::setPageView(
 	'no-all-paddings landing-tile no-background'
 );
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'sidepanel',
@@ -147,17 +148,29 @@ $request = \Bitrix\Main\Context::getCurrent()?->getRequest();
 $featureCode = $request->getQuery('feature_promoter');
 ?>
 
-<?php if ($featureCode): ?>
+<?php if (
+	$featureCode
+	&& !Manager::isB24Cloud()
+): ?>
 	<script>
 		BX.ready(() => {
-			const promoter = BX.UI.FeaturePromotersRegistry.getPromoter({code: '<?= \CUtil::JSEscape($featureCode) ?>'});
-			BX.UI.BannerDispatcher.critical.toQueue((onDone) => {
-				BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
-					onDone();
-				});
+			BX.Runtime.loadExtension(['ui.banner-dispatcher', 'ui.info-helper'])
+				.then((exports) => {
+					const { BannerDispatcher } = exports;
+					const promoter = BX.UI.FeaturePromotersRegistry.getPromoter({code: '<?= \CUtil::JSEscape($featureCode) ?>'});
 
-				promoter.show();
-			});
+					if (BannerDispatcher)
+					{
+						BannerDispatcher.critical.toQueue((onDone) => {
+							BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
+								onDone();
+							});
+
+							promoter.show();
+						});
+					}
+				})
+				.catch(() => {});
 		});
 	</script>
 <?php endif; ?>

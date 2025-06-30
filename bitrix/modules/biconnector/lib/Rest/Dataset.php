@@ -174,19 +174,20 @@ class Dataset extends Base
 	{
 		$converter = new Converter(
 			Converter::KEYS
-			| Converter::TO_SNAKE
 			| Converter::RECURSIVE
+			| Converter::TO_SNAKE
+			| Converter::TO_UPPER
 		);
 		$fields = $converter->process($params['fields']);
-		$fields['type'] = Type::Rest->value;
+		$fields['TYPE'] = Type::Rest->value;
 
-		$datasetFields = $fields['fields'];
-		unset($fields['fields']);
-		$sourceId = $fields['source_id'];
-		unset($fields['source_id']);
+		$datasetFields = $fields['FIELDS'];
+		unset($fields['FIELDS']);
+		$sourceId = $fields['SOURCE_ID'];
+		unset($fields['SOURCE_ID']);
 		$dataset = $fields;
 
-		if (!self::checkDatasetName($dataset['name']))
+		if (!self::checkDatasetName($dataset['NAME']))
 		{
 			$result = new Result();
 			$result->addError(new Error(
@@ -244,8 +245,9 @@ class Dataset extends Base
 
 		$converter = new Converter(
 			Converter::KEYS
-			| Converter::TO_SNAKE
 			| Converter::RECURSIVE
+			| Converter::TO_SNAKE
+			| Converter::TO_UPPER
 		);
 		$datasetInfo = $converter->process($params['fields']);
 
@@ -446,7 +448,12 @@ class Dataset extends Base
 			return ['error' => self::ACCESS_ERROR];
 		}
 
-		$params['appId'] = self::prepareAppId($server);
+		$checkAppIdResult = self::checkAndPrepareAppId($server);
+		if (!$checkAppIdResult->isSuccess())
+		{
+			return ['error' => self::ACCESS_ERROR];
+		}
+		$params['appId'] = $checkAppIdResult->getData()['appId'];
 		$validateResult = static::validateParamsForFieldsUpdate($params);
 
 		if (!$validateResult->isSuccess())
@@ -513,9 +520,9 @@ class Dataset extends Base
 					return $result;
 				}
 				$addArray[] = [
-					'name' => $field['name'],
-					'external_code' => $field['externalCode'],
-					'type' => $field['type'],
+					'NAME' => $field['name'],
+					'EXTERNAL_CODE' => $field['externalCode'],
+					'TYPE' => $field['type'],
 				];
 			}
 		}
@@ -532,8 +539,8 @@ class Dataset extends Base
 					return $result;
 				}
 				$updateArray[] = [
-					'id' => $field['id'],
-					'visible' => $field['visible'],
+					'ID' => $field['id'],
+					'VISIBLE' => $field['visible'],
 				];
 			}
 		}

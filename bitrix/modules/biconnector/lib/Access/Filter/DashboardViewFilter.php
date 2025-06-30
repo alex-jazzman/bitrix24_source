@@ -2,7 +2,9 @@
 
 namespace Bitrix\BIConnector\Access\Filter;
 
+use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\Main\Access\Filter\AbstractAccessFilter;
 
@@ -39,7 +41,7 @@ class DashboardViewFilter extends AbstractAccessFilter
 					[
 						'STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_DRAFT,
 						'OWNER_ID' => $this->user->getUserId(),
-					]
+					],
 				],
 				'cache' => ['ttl' => 3600],
 			])->fetchAll();
@@ -49,7 +51,7 @@ class DashboardViewFilter extends AbstractAccessFilter
 					'ID' => $dashboard['ID'],
 					'TYPE' => $dashboard['TYPE'],
 					'OWNER_ID' => $dashboard['OWNER_ID'],
-				]))
+				])),
 			);
 			$allowedDashboardIds = array_column($allowedDashboardIds, 'ID');
 
@@ -61,6 +63,25 @@ class DashboardViewFilter extends AbstractAccessFilter
 			return [
 				'=ID' => $allowedDashboardIds,
 			];
+		}
+		if ($entity === SupersetDashboardGroupTable::class)
+		{
+			$allowedGroupIds = $this->controller->getAllowedGroupValue(ActionDictionary::ACTION_BIC_DASHBOARD_VIEW);
+
+			$groupIdsWithOwnDashboards = SupersetDashboardGroupTable::getList([
+				'select' => ['ID'],
+				'filter' => ['=DASHBOARDS.OWNER_ID' => $this->user->getUserId()],
+			])
+				->fetchCollection()
+				->getIdList()
+			;
+
+			$allowedGroupIds = array_unique(array_merge($allowedGroupIds, $groupIdsWithOwnDashboards));
+
+			if (!empty($allowedGroupIds))
+			{
+				return ['=ID' => $allowedGroupIds];
+			}
 		}
 
 		return ['=ID' => null];

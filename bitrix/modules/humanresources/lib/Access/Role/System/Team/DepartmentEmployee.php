@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\HumanResources\Access\Role\System\Team;
 
 use Bitrix\HumanResources\Access\Enum\PermissionValueType;
@@ -17,7 +19,11 @@ class DepartmentEmployee extends Base
 			TeamPermissionMapper::makeTeamPermissionId(
 				PermissionDictionary::HUMAN_RESOURCES_TEAM_VIEW,
 				PermissionValueType::TeamValue,
-			) => PermissionVariablesDictionary::VARIABLE_SELF_TEAMS,
+			) => PermissionVariablesDictionary::VARIABLE_ALL,
+			TeamPermissionMapper::makeTeamPermissionId(
+				PermissionDictionary::HUMAN_RESOURCES_TEAM_VIEW,
+				PermissionValueType::DepartmentValue,
+			) => PermissionVariablesDictionary::VARIABLE_ALL,
 			PermissionDictionary::HUMAN_RESOURCES_TEAM_ACCESS_EDIT => PermissionDictionaryAlias::VALUE_NO,
 		];
 	}

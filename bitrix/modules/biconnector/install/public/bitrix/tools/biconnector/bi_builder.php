@@ -213,7 +213,7 @@ elseif ($service->getTableFields($tableName))
 				$errorsMsg[] = $error->getMessage();
 				if (!empty($error->getCustomData()['description']))
 				{
-					$errorsDescMsg = $error->getCustomData()['description'];
+					$errorsDescMsg[] = $error->getCustomData()['description'];
 				}
 			}
 

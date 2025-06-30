@@ -27,8 +27,16 @@ class Transport
 
 	private const SERVICE_DOMAIN_LIST = [
 		'en' => 'https://util.bitrixsoft.com',
+
 		'ru' => 'https://util.1c-bitrix.ru',
+		'am' => 'https://util.1c-bitrix.ru',
+		'az' => 'https://util.1c-bitrix.ru',
+		'ge' => 'https://util.1c-bitrix.ru',
+
 		'kz' => 'https://util.1c-bitrix.kz',
+		'kg' => 'https://util.1c-bitrix.kz',
+		'uz' => 'https://util.1c-bitrix.kz',
+
 		'by' => 'https://util.1c-bitrix.by',
 	];
 

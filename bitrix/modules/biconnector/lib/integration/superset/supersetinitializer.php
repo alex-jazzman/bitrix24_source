@@ -2,6 +2,10 @@
 
 namespace Bitrix\BIConnector\Integration\Superset;
 
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupBindingTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupScopeTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTagTable;
 use Bitrix\BIConnector\Superset\Config\ConfigContainer;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
@@ -92,6 +96,9 @@ final class SupersetInitializer
 
 		if (self::getSupersetStatus() === self::SUPERSET_STATUS_DOESNT_EXISTS)
 		{
+			\Bitrix\BIConnector\Access\Install\AccessInstaller::reinstall();
+			Option::set('biconnector', \Bitrix\BIConnector\Configuration\Feature::CHECK_PERMISSION_BY_GROUP_OPTION, 'Y');
+
 			Application::getInstance()->addBackgroundJob(static function () {
 				self::makeSupersetCreateRequest();
 			});
@@ -490,13 +497,13 @@ final class SupersetInitializer
 			}
 		}
 
+		$connection = Application::getInstance()->getConnection();
 		foreach (DatasetManager::getList() as $dataset)
 		{
 			// Don't use DatasetManager::delete because it uses events
 			$datasetDeleteResult = ExternalDatasetTable::delete($dataset->getId());
 			if ($datasetDeleteResult->isSuccess())
 			{
-				$connection = Application::getInstance()->getConnection();
 				$tableName = Csv::TABLE_NAME_PREFIX . $dataset->getName();
 				try
 				{
@@ -527,6 +534,26 @@ final class SupersetInitializer
 
 		Registrar::getRegistrar()->clear();
 
-		// TODO Clear permission and tag tables
+		SupersetDashboardTagTable::deleteByFilter(['>ID' => 0]);
+		SupersetDashboardGroupBindingTable::deleteByFilter(['>ID' => 0]);
+
+		$customGroups = SupersetDashboardGroupTable::getList([
+			'select' => ['ID'],
+			'filter' => ['=TYPE' => SupersetDashboardGroupTable::GROUP_TYPE_CUSTOM],
+		])
+			->fetchAll()
+		;
+
+		$customGroupIds = array_column($customGroups, 'ID');
+		if (!empty($customGroupIds))
+		{
+			SupersetDashboardGroupScopeTable::deleteByFilter([
+				'=GROUP_ID' => $customGroupIds,
+			]);
+
+			SupersetDashboardGroupTable::deleteByFilter([
+				'=TYPE' => SupersetDashboardGroupTable::GROUP_TYPE_CUSTOM,
+			]);
+		}
 	}
 }

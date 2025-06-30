@@ -272,7 +272,6 @@ Loc::loadMessages(__FILE__);
 									<?=Loc::getMessage('REST_INTEGRATION_EDIT_GENERATOR_ADD_PARAM_BTN')?>
 								</span>
 								<? if (isset($data['QUERY_INFORMATION_URL']) && $data['QUERY_INFORMATION_URL']): ?>
-
 									<a
 										href="<?=$data['QUERY_INFORMATION_URL']?>" target="_blank"
 										class="integration-webhook-param-control-item"

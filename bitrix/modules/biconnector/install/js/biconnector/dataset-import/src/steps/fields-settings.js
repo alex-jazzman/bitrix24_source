@@ -47,7 +47,7 @@ export const FieldsSettingsStep = {
 			this.$store.state.config.fieldsSettings.forEach((field, index) => {
 				const invalidFields = {};
 
-				if (!field.id)
+				if (field.visible || this.sourceTypeCsv || !field.name)
 				{
 					const nameValidationResult = this.validateName(field.name);
 					if (!nameValidationResult.result)
@@ -128,6 +128,8 @@ export const FieldsSettingsStep = {
 		{
 			this.$store.commit('toggleRowVisibility', event.index);
 			this.$emit('settingsChanged');
+
+			this.validate();
 		},
 		onHeaderToggled(event)
 		{
@@ -141,6 +143,8 @@ export const FieldsSettingsStep = {
 			}
 
 			this.$emit('settingsChanged');
+
+			this.validate();
 		},
 		onRowFieldChanged(event)
 		{
@@ -164,8 +168,6 @@ export const FieldsSettingsStep = {
 			const result = Object.keys(this.unvalidatedRows).length === 0;
 
 			this.$emit('validation', result);
-
-			return result;
 		},
 		showValidationErrors()
 		{
@@ -196,6 +198,8 @@ export const FieldsSettingsStep = {
 					@row-field-changed="onRowFieldChanged"
 					:unvalidated-rows="unvalidatedRows"
 					ref="formatTable"
+					:is-edit-mode="isEditMode"
+					:source-type="sourceType"
 				/>
 			</div>
 		</Step>

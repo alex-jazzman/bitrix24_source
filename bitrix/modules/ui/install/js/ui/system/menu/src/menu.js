@@ -63,7 +63,7 @@ export class Menu
 
 	updateItems(itemsOptions: MenuItemOptions[]): void
 	{
-		const openedItem = this.#items.find((item: MenuItem) => item.getSubMenu()?.getPopup()?.isShown());
+		const openedItem = this.#items?.find((item: MenuItem) => item.getSubMenu()?.getPopup()?.isShown());
 
 		this.#items?.forEach((item: MenuItem): void => item.destroy());
 		this.#items = this.#prepareItems(itemsOptions);

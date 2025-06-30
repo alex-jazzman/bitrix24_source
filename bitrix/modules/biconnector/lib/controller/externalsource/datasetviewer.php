@@ -366,7 +366,7 @@ final class DatasetViewer
 			return true;
 		}
 
-		if ($this->type === Type::Rest)
+		if ($this->type === Type::Rest || $this->type === Type::Source1C)
 		{
 			return true;
 		}

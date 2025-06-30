@@ -224,6 +224,9 @@ export class UserGroupsModel extends BuilderModel
 			hideUserGroup: (store, payload): void => {
 				this.#hideUserGroupAction(store, payload);
 			},
+			deleteRight: (store, payload): void => {
+				this.#deleteRightAction(store, payload);
+			},
 		};
 	}
 
@@ -663,6 +666,11 @@ export class UserGroupsModel extends BuilderModel
 		return section?.rights.has(valueId);
 	}
 
+	#deleteRightAction(store: UserGroupsState, { rightId }): void
+	{
+		store.commit('deleteRight', { rightId });
+	}
+
 	getMutations(): MutationTree<UserGroupsState>
 	{
 		return {
@@ -719,6 +727,15 @@ export class UserGroupsModel extends BuilderModel
 			hideUserGroup: (state, { userGroupId }) => {
 				// eslint-disable-next-line no-param-reassign
 				state.collection.get(userGroupId).isShown = false;
+			},
+			deleteRight: (state: UserGroupsState, { rightId }) => {
+				for (const role: UserGroup of state.collection.values())
+				{
+					if (role.accessRights.get(rightId))
+					{
+						role.accessRights.delete(rightId);
+					}
+				}
 			},
 		};
 	}

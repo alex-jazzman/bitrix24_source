@@ -6,6 +6,7 @@ namespace Bitrix\BIConnector\Integration\Superset;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetUserTable;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
+use Bitrix\BIConnector\Integration\Superset\Repository\DashboardGroupRepository;
 use Bitrix\BIConnector\Integration\Superset\Repository\DashboardRepository;
 use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
 use Bitrix\Main;
@@ -13,6 +14,7 @@ use Bitrix\Main;
 final class SupersetController
 {
 	private DashboardRepository $dashboardRepository;
+	private DashboardGroupRepository $dashboardGroupRepository;
 
 	public function __construct(private Integrator $integrator)
 	{
@@ -22,11 +24,17 @@ final class SupersetController
 	private function initRepositories(): void
 	{
 		$this->dashboardRepository = new DashboardRepository($this->integrator);
+		$this->dashboardGroupRepository = new DashboardGroupRepository($this->integrator);
 	}
 
 	public function getDashboardRepository(): DashboardRepository
 	{
 		return $this->dashboardRepository;
+	}
+
+	public function getUnionDashboardGroupRepository(): DashboardGroupRepository
+	{
+		return $this->dashboardGroupRepository;
 	}
 
 	/**

@@ -59,6 +59,7 @@ abstract class InvitationLinkFacade
 			}
 
 			$connection->commitTransaction();
+			$this->afterCommitTransaction($user);
 
 			return $user;
 		}
@@ -88,6 +89,9 @@ abstract class InvitationLinkFacade
 
 	public function processAuthUser(User $user): void
 	{
-		return;
+	}
+
+	protected function afterCommitTransaction(User $user): void
+	{
 	}
 }

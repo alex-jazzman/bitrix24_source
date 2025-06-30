@@ -10,7 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.buttons',
-		'ui.vue3',
+		'ui.icon-set.api.core',
 	],
 	'skip_core' => false,
 ];

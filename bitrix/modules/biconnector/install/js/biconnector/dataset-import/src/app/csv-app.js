@@ -122,6 +122,10 @@ export const CsvApp = {
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT')
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
 		},
+		sourceType(): string
+		{
+			return 'csv';
+		},
 	},
 	methods: {
 		markAsChanged()
@@ -529,6 +533,7 @@ export const CsvApp = {
 					<FieldsSettingsStep
 						:is-open-initially="isEditMode"
 						:disabled="steps.fields.disabled"
+						:source-type="sourceType"
 						ref="fieldsStep"
 						@validation="onStepValidation('fields', $event)"
 						@parsing-options-changed="onDatasetReloadNeeded('fields')"

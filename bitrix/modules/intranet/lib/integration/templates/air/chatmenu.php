@@ -19,6 +19,10 @@ class ChatMenu
 			if (!empty($item['entityId']))
 			{
 				$data['entityId'] = $item['entityId'];
+				if ($item['id'] === 'market')
+				{
+					$item['id'] = $item['id'] . '_' . $item['entityId'];
+				}
 			}
 
 			$jsData = "const data = " . json_encode($data) . "; data.event = event;";

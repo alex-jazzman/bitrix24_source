@@ -119,9 +119,16 @@ class RequestBlockContent extends RequestSingle
 
 			foreach ($block['nodes'] as &$node)
 			{
-				$node = array_filter($node, static function($value) {
-					return $value !== '';
-				});
+				if (is_array($node))
+				{
+					$node = array_filter($node, static function($value) {
+						return $value !== '';
+					});
+				}
+				else
+				{
+					$node = [];
+				}
 			}
 			unset($node);
 

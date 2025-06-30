@@ -224,7 +224,7 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 		if (
 			!Manager::isAdmin()
 			&& $this->dashboard->getStatus() === SupersetDashboardTable::DASHBOARD_STATUS_DRAFT
-			&& $this->dashboard->getOrmObject()->getOwnerId() !== CurrentUser::get()->getId()
+			&& $this->dashboard->getOrmObject()->getOwnerId() !== (int)CurrentUser::get()->getId()
 		)
 		{
 			return false;
@@ -253,7 +253,6 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 	private function prepareUrlParams(): void
 	{
 		$this->arResult['URL_PARAMS'] = [];
-		$this->arResult['PARAMS_COMPATIBLE'] = true;
 
 		$uriVariables = SupersetDashboardUrlParameterTable::getList([
 				'filter' => ['=DASHBOARD_ID' => $this->dashboard->getId()],
@@ -273,10 +272,6 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 			if (isset($this->arParams['URL_PARAMS'][$code]))
 			{
 				$this->arResult['URL_PARAMS'][$code] = $this->arParams['URL_PARAMS'][$code];
-			}
-			else
-			{
-				$this->arResult['PARAMS_COMPATIBLE'] = false;
 			}
 		}
 	}

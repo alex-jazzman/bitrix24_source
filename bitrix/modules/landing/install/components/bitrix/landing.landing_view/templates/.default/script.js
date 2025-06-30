@@ -1364,32 +1364,17 @@
 		onSettingsClick: function()
 		{
 			if (
-				typeof landingParams['PAGE_URL_LANDING_SETTINGS'] !== 'undefined' &&
-				typeof BX.SidePanel !== 'undefined'
+				typeof landingParams['PAGE_URL_LANDING_SETTINGS'] !== 'undefined'
+				&& typeof BX.SidePanel !== 'undefined'
 			)
 			{
 				BX.SidePanel.Instance.open(landingParams['PAGE_URL_LANDING_SETTINGS'], {
+					allowChangeHistory: false,
 					events: {
 						onCloseComplete: ()=> {
 							if (top.window['landingSettingsSaved'] === true)
 							{
 								top.window['landingSettingsSaved'] = false;
-
-								if (
-									this.type === 'KNOWLEDGE'
-									|| this.type === 'GROUP'
-									|| this.isMainpage
-
-								)
-								{
-									if (BX.SidePanel.Instance.getTopSlider())
-									{
-										BX.SidePanel.Instance.reload();
-										return;
-									}
-								}
-
-								top.window.location.reload();
 							}
 						},
 					},

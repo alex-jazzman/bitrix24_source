@@ -15,18 +15,12 @@ export class Skeleton
 		this.status = options.status;
 		this.isSupersetAvailable = options.isSupersetAvailable;
 		this.#dashboardManager = new DashboardManager();
-		this.paramsCompatible = options.paramsCompatible ?? true;
 
 		this.subscribeOnEvents();
 
 		if (Type.isDomNode(this.container))
 		{
 			Dom.append(this.getAnimationContainer(), this.container);
-		}
-
-		if (this.paramsCompatible === false)
-		{
-			this.#changeContent(this.#getParamsCompatibilityErrorContent());
 		}
 	}
 
@@ -290,18 +284,6 @@ export class Skeleton
 	getErrorLogo(): HTMLElement {
 		return Tag.render`
 			<div class="biconnector-dashboard__error__logo"></div>
-		`;
-	}
-
-	#getParamsCompatibilityErrorContent(): HTMLElement
-	{
-		return Tag.render`
-			<div class="biconnector-dashboard__error__logo-wrapper">
-				${this.getErrorLogo()}
-			</div>
-			<div class="biconnector-dashboard__hint_desc">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE')}
-			</div>
 		`;
 	}
 }

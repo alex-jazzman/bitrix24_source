@@ -36,7 +36,7 @@
 
 .menu-item-with-index .menu-item-index-wrap,
 .menu-expand .menu-item-index-wrap {
-	display: inline-block;
+	display: inline-flex;
 }
 
 .menu-expand.menu-favorites-more-btn-open .menu-item-index-wrap {

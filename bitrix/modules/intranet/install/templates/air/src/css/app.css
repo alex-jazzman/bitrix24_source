@@ -42,13 +42,14 @@
 	justify-content: flex-start;
 	order: 1;
 	overflow: hidden;
+	padding-bottom: calc(80px * var(--side-panel-toolbar-shifted, 0));
 }
 
 .im-bar-mode-off .app__right-bar {
 	display: none;
 }
 
-.app__right-bar.--show-scroll-btn {
+body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
 	padding-bottom: 64px;
 }
 
@@ -118,4 +119,8 @@
 .app__go-top-button.--show {
 	display: block;
 	z-index: 990;
+}
+
+.side-panel-disable-scrollbar .app__go-top-button {
+	display: none;
 }

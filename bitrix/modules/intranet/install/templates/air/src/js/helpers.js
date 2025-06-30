@@ -12,7 +12,7 @@ function getQueryString(ignoredParams): string
 {
 	const query = window.location.search.slice(1);
 
-	if (Type.isStringFilled(query))
+	if (!Type.isStringFilled(query))
 	{
 		return '';
 	}

@@ -207,7 +207,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 					'<linkcrm>', '</linkcrm>',
 				],
 				[
-					$logo, '', '', '', '', '', ''
+					$logo, '', '', '', '', '', '',
 				],
 				$commonText
 			);
@@ -232,11 +232,12 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 		if ($linkSite)
 		{
 			return Loc::getMessage(
-				'LANDING_HOOK_COPYRIGHT_TEXT_COMMON_EN', [
-				'#LOGO#' => $logo,
-				'<linksite>' => '<a class="bitrix-footer-link" target="_blank" href="' . $linkSite . '">',
-				'</linksite>' => '</a>',
-			],
+				'LANDING_HOOK_COPYRIGHT_TEXT_COMMON_EN',
+				[
+					'#LOGO#' => $logo,
+					'<linksite>' => '<a class="bitrix-footer-link" target="_blank" href="' . $linkSite . '">',
+					'</linksite>' => '</a>',
+				],
 				$lang
 			);
 		}
@@ -250,7 +251,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 				'<linkcrm>', '</linkcrm>',
 			],
 			[
-				$logo, '', '', '', '', '', ''
+				$logo, '', '', '', '', '', '',
 			],
 			$commonText
 		);
@@ -305,10 +306,32 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 
 	protected function getTermsContent(): string
 	{
-		$content = '<div class="bitrix-footer-terms">';
+		$reportUrl = $this->getReportUrl();
+		$reportLinkOpen =
+			'<a class="bitrix-footer-link" target="_blank" rel="nofollow" href="'
+			. $reportUrl->getUri()
+			. '">'
+		;
+		$reportText = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_2', [
+			'#a1#' => $reportLinkOpen,
+			'#a2#' => '</a>',
+		]);
+
 		$lang = $this->getLang();
+		$hintText = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_HINT', null, $lang);
+
+		return <<<HTML
+			<div class="bitrix-footer-terms">
+		        <span class="bitrix-footer-link bitrix-footer-link-report">$reportText</span>
+				<span class="bitrix-footer-hint" data-hint="$hintText"></span>
+			</div>
+		HTML;
+	}
+
+	private function getReportUrl(): Uri
+	{
 		$links = [
-			'com' => [
+			'en' => [
 				'report' => 'https://www.bitrix24.com/abuse/',
 			],
 			'ru' => [
@@ -320,7 +343,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 			'de' => [
 				'report' => 'https://www.bitrix24.de/abuse/',
 			],
-			'es' => [
+			'la' => [
 				'report' => 'https://www.bitrix24.es/abuse/',
 			],
 			'ua' => [
@@ -333,36 +356,23 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 				'report' => 'https://www.bitrix24.by/abuse/',
 			],
 		];
-		$region = Application::getInstance()->getLicense()->getRegion();
-		$hrefLinkReport = new Uri($links[$region]['report'] ?? $links['com']['report']);
+
+		$lang = $this->getLang();
+		$reportUrl = new Uri($links[$lang]['report'] ?? $links['com']['report']);
+
 		$protocol = Manager::isHttps() ? 'https://' : 'http://';
-		$url = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-		$siteId = $this->getSiteId();
-		$portalName = \COption::getOptionString("main", "server_name", '');
+		$fromUrl = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+		$portalName = \COption::getOptionString('main', 'server_name', '');
 		$senderPage = strtoupper(Landing::getSiteType());
-		$urlParams = [
+
+		$reportUrl->addParams([
 			'sender_page' => urlencode($senderPage),
 			'hostname' => urlencode($portalName),
-			'siteId' => urlencode($siteId),
-			'from_url' => urlencode($url),
-		];
-		$hrefLinkReportWithParams = $hrefLinkReport->addParams($urlParams);
-		$linkOpen =
-			'<a target="_blank" rel="nofollow" href="'
-			. $hrefLinkReportWithParams
-			. '">'
-		;
-		$textReport = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_2', [
-			'#a1#' => $linkOpen,
-			'#a2#' => '</a>'
+			'siteId' => urlencode($this->getSiteId()),
+			'from_url' => urlencode($fromUrl),
 		]);
-		$hintText = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_HINT', null, $lang);
-		$hint = '<span class="bitrix-footer-hint" data-hint="' . $hintText . '"></span>';
-		$content .= "<span class=\"bitrix-footer-link bitrix-footer-link-report\">$textReport</span>";
-		$content .= $hint;
-		$content .= '</div>';
 
-		return $content;
+		return $reportUrl;
 	}
 
 	/**
@@ -456,7 +466,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 			while ($row = $existing->fetch())
 			{
 				$res = HookDataTable::update($row['ID'], [
-					'VALUE' => $newData[$row['CODE']]
+					'VALUE' => $newData[$row['CODE']],
 				]);
 				if ($res->isSuccess())
 				{

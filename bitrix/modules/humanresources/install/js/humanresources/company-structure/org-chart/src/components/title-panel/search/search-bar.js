@@ -105,12 +105,11 @@ export const SearchBar = {
 					{
 						id: 'structure-node',
 						options: {
-							selectMode: 'onlyDepartments',
-							flatMode: true,
-							fillRecentTab: true,
-							restricted: 'view',
-							includedNodeEntityTypes: ['department', 'team'],
+							selectMode: 'departmentsOnly',
 							useMultipleTabs: true,
+							restricted: 'view',
+							flatMode: true,
+							includedNodeEntityTypes: ['department', 'team'],
 						},
 					},
 				],
@@ -142,7 +141,7 @@ export const SearchBar = {
 						this.$emit('locate', item.id);
 					},
 					onLoad: (event) => {
-						event.target.items.get('user').forEach((item) => {
+						event.target.items.get('user')?.forEach((item) => {
 							if (!item.getSubtitle())
 							{
 								item.setSubtitle(item.customData.get('position'));

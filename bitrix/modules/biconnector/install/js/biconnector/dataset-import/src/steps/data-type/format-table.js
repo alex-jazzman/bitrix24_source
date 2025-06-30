@@ -17,6 +17,15 @@ export const FormatTable = {
 			required: false,
 			default: null,
 		},
+		isEditMode: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
+		sourceType: {
+			type: String,
+			required: true,
+		},
 	},
 	emits: [
 		'rowToggle',
@@ -82,6 +91,8 @@ export const FormatTable = {
 						@field-change="onRowFieldChanged"
 						:invalid-fields="unvalidatedRows[index] ?? []"
 						:disabled-elements="disabledElements"
+						:is-edit-mode="isEditMode"
+						:source-type="sourceType"
 					/>
 				</template>
 			</tbody>

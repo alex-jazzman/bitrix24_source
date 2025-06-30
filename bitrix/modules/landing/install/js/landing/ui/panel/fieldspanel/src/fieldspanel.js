@@ -512,11 +512,9 @@ export class FieldsPanel extends Content
 		}
 
 		button.activate();
+		const activatedCategoryId = button.id;
 
-		const hideCreateButton = this.getAllowedTypes().every((type) => {
-			return Type.isPlainObject(type);
-		});
-		if (Type.isArrayFilled(this.getAllowedTypes()) && hideCreateButton)
+		if (this.shouldHideCreateButton(activatedCategoryId))
 		{
 			this.hideCreateFieldButton();
 		}
@@ -535,6 +533,23 @@ export class FieldsPanel extends Content
 		}
 	}
 
+	shouldHideCreateButton(activatedCategoryId: string): boolean
+	{
+		const categoriesWithoutCreateButton = ['BOOKING'];
+		const hideCreateButtonForCategory = categoriesWithoutCreateButton.includes(activatedCategoryId);
+
+		if (hideCreateButtonForCategory)
+		{
+			return true;
+		}
+
+		const hideCreateButton = this.getAllowedTypes().every((type) => {
+			return Type.isPlainObject(type);
+		});
+
+		return Type.isArrayFilled(this.getAllowedTypes()) && hideCreateButton;
+	}
+
 	getFilteredFieldsTree(): {[key: string]: any}
 	{
 		const searchString = String(this.getSearchField().getValue()).toLowerCase().trim();
@@ -548,7 +563,6 @@ export class FieldsPanel extends Content
 				if (
 					(
 						categoryId !== 'CATALOG'
-						&& categoryId !== 'BOOKING'
 						&& categoryId !== 'ACTIVITY'
 						&& categoryId !== 'INVOICE'
 					)

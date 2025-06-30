@@ -22,12 +22,27 @@ if ($request->get('IFRAME') !== 'Y' && $context->getServer()->getRequestMethod()
 	if (!in_array($this->getPageName(), ['template', 'sites', 'site_show', 'landing_view', 'roles', 'role_edit', 'notes', 'ai']))
 	{
 		$session->set('LANDING_OPEN_SIDE_PANEL', Application::getInstance()->getContext()->getRequest()->getRequestUri());
-		//when opening link to create page in existing site
-		if (($arResult['VARS']['site_show'] ?? 0) > 0 && $arResult['VARS']['landing_edit'] === '0' && $this->getPageName() === 'landing_edit')
+
+		$url = $arParams['PAGE_URL_SITES'] ?? '/';
+		$sid = (int)($arResult['VARS']['site_show'] ?? 0);
+		$lid = (int)($arResult['VARS']['landing_edit'] ?? 0);
+		if ($sid > 0)
 		{
-			localRedirect('/sites/site/' . $arResult['VARS']['site_show'] . '/');
+			if (
+				$lid > 0
+				&& isset ($arParams['PAGE_URL_LANDING_VIEW'])
+			)
+			{
+				$url = $arParams['PAGE_URL_LANDING_VIEW'];
+			}
+			elseif (isset ($arParams['PAGE_URL_SITE_SHOW']))
+			{
+				$url = $arParams['PAGE_URL_SITE_SHOW'];
+			}
 		}
-		localRedirect($arParams['PAGE_URL_SITES']);
+
+		$redirect = str_replace(['#site_show#', '#landing_edit#'], [$sid, $lid], $url);
+		localRedirect($redirect);
 	}
 }
 if ($session->has('LANDING_OPEN_SIDE_PANEL'))

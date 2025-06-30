@@ -26,8 +26,9 @@
 }
 
 .bitrix-footer-link,
-.bitrix-footer-link a,
-.bitrix-footer-link a:visited,
+a.bitrix-footer-link,
+a.bitrix-footer-link:visited,
+.bitrix-footer-terms,
 .bitrix-footer-text {
 	color: #919191;
 	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -35,8 +36,8 @@
 	text-align: center;
 }
 
-.bitrix-footer-link a,
-.bitrix-footer-link a:visited{
+a.bitrix-footer-link,
+a.bitrix-footer-link:visited{
 	-webkit-transition: 180ms all ease;
 	-o-transition: 180ms all ease;
 	transition: 180ms all ease;
@@ -44,7 +45,7 @@
 	text-decoration: none;
 }
 
-.bitrix-footer-link a:hover{
+a.bitrix-footer-link:hover{
 	color:#fff;
 	border-bottom-color:#fff;
 	text-decoration: none;

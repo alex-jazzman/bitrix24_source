@@ -120,7 +120,9 @@ class SupersetDashboardSelector
 
 	#setTitle(text: string)
 	{
-		this.#textNode.innerHTML = Text.encode(text);
+		const title = Text.encode(text);
+		this.#textNode.innerHTML = title;
+		this.#textNode.title = title;
 	}
 
 	#handleCopyDashboard(event): Promise

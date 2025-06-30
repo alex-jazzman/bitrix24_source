@@ -2215,9 +2215,9 @@ export default class Dialog extends EventEmitter
 	/**
 	 * @internal
 	 */
-	handleItemDeselect(item: Item): void
+	handleItemDeselect(item: Item, animate: boolean = true): void
 	{
-		const shouldAnimate: boolean = this.isMultiple();
+		const shouldAnimate: boolean = animate && this.isMultiple();
 
 		this.selectedItems.delete(item);
 

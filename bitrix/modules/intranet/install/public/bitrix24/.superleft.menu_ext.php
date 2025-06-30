@@ -8,7 +8,7 @@ use Bitrix\BIConnector;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Intranet\Binding\Marketplace;
-use Bitrix\Intranet\Integration\Socialnetwork\Collab\Collab;
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
 use Bitrix\Intranet\Site\Sections\AutomationSection;
 use \Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
@@ -171,7 +171,6 @@ if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm())
 		[
 			"/crm/",
 			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
-			'/bi/dashboard/',
 		],
 		[
 			"real_link" => \Bitrix\Crm\Settings\EntityViewSettings::getDefaultPageUrl(),
@@ -262,16 +261,21 @@ if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_shop'))
 
 if (
 	Loader::includeModule('biconnector')
-	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('crm_bi')
+	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_bi_constructor')
 	&& BIConnector\Access\AccessController::getCurrent()->check(BIConnector\Access\ActionDictionary::ACTION_BIC_ACCESS)
 )
 {
 	$arMenu[] = [
 		Loc::getMessage('MENU_BI_CONSTRUCTOR'),
-		'/bi/dashboard/',
+		'/bi/menu/',
 		[],
 		[
+			'real_link' => getLeftMenuItemLink(
+				'menu_bi_constructor',
+				'/bi/dashboard'
+			),
 			'menu_item_id' => 'menu_bi_constructor',
+			'top_menu_id' => 'top_menu_bi_constructor',
 		],
 		'',
 	];
@@ -310,7 +314,7 @@ $arMenu[] = [
 
 if (
 	ToolsManager::getInstance()->checkAvailabilityByToolId('collab')
-	&& (new Collab())->isAvailable()
+	&& (new CollabProviderData())->isAvailable()
 )
 {
 	$arMenu[] = [

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_sidepanel,main_core,main_core_events) {
+(function (exports,main_core,main_core_events,main_sidepanel) {
 	'use strict';
 
 	var _slider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("slider");
@@ -57,12 +57,28 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onClosing', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClosing)[_handleSliderClosing].bind(this));
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onCloseComplete', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderCloseComplete)[_handleSliderCloseComplete].bind(this));
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onDestroy', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderDestroy)[_handleSliderDestroy].bind(this));
+	    if (!this.canUseBlurry()) {
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', event => {
+	        const [sliderEvent] = event.getData();
+	        if (sliderEvent.getSlider() !== babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider]) {
+	          main_core.Dom.style(this.getContainer(), 'visibility', 'hidden');
+	        }
+	      });
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] === main_sidepanel.SidePanel.Instance.getTopSlider()) {
+	          main_core.Dom.style(this.getContainer(), 'visibility', null);
+	        }
+	      });
+	    }
 	    main_core_events.EventEmitter.subscribe('IM.Layout:onLayoutChange', () => {
 	      if (!babelHelpers.classPrivateFieldLooseBase(this, _loaded)[_loaded]) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _loaded)[_loaded] = true;
 	        main_core.Dom.addClass(this.getContainer(), '--loaded');
 	      }
 	    });
+	  }
+	  canUseBlurry() {
+	    return !main_core.Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
 	  }
 	  getContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
@@ -92,6 +108,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _handleSliderOpening2() {
 	  this.setZIndex(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getZIndexComponent().getZIndex() + 1);
 	  main_core.Dom.style(this.getContainer(), 'display', 'block');
+	  main_core.Dom.style(this.getContainer(), 'visibility', null);
 	  requestAnimationFrame(() => {
 	    main_core.Dom.addClass(this.getContainer(), '--open');
 	  });
@@ -102,6 +119,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _handleSliderCloseComplete2() {
 	  main_core.Dom.style(this.getContainer(), 'display', 'none');
+	  main_core.Dom.style(this.getContainer(), 'visibility', null);
 	}
 	function _handleSliderDestroy2() {
 	  this.reset();
@@ -113,9 +131,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	const MENU_COLLAPSED_WIDTH = 65;
 	const MENU_EXPANDED_WIDTH = 240;
-	const RIGHT_MARGIN = 18;
 	var _onWindowResize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onWindowResize");
 	var _chatMenuBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatMenuBar");
+	var _verticalScrollWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("verticalScrollWidth");
 	var _handleWindowResize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleWindowResize");
 	class Slider extends main_sidepanel.Slider {
 	  constructor(url, sliderOptions) {
@@ -126,9 +144,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (isMessenger) {
 	      options.hideControls = false;
 	      options.autoOffset = false;
-	    }
-	    if (main_core.Type.isNumber(options.customLeftBoundary) && options.customLeftBoundary < MENU_COLLAPSED_WIDTH) {
-	      options.customLeftBoundary = MENU_COLLAPSED_WIDTH + RIGHT_MARGIN;
+	      const canUseBlurry = !main_core.Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
+	      if (!canUseBlurry) {
+	        options.overlayOpacity = 85;
+	      }
 	    }
 	    super(url, options);
 	    Object.defineProperty(this, _handleWindowResize, {
@@ -146,24 +165,57 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _onWindowResize)[_onWindowResize] = babelHelpers.classPrivateFieldLooseBase(this, _handleWindowResize)[_handleWindowResize].bind(this);
 	  }
 	  applyHacks() {
+	    babelHelpers.classPrivateFieldLooseBase(Slider, _verticalScrollWidth)[_verticalScrollWidth] = window.innerWidth - document.documentElement.clientWidth;
 	    this.adjustBackgroundSize();
 	    main_core.Event.bind(window, 'resize', babelHelpers.classPrivateFieldLooseBase(this, _onWindowResize)[_onWindowResize]);
+	    if (this.getRightBar() && !this.isMessengerSlider()) {
+	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
+	      stack.register(this.getRightBar());
+	    }
 	    return true;
 	  }
 	  resetHacks() {
 	    this.resetBackgroundSize();
 	    main_core.Event.unbind(window, 'resize', babelHelpers.classPrivateFieldLooseBase(this, _onWindowResize)[_onWindowResize]);
+	    if (this.getRightBar()) {
+	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
+	      stack.unregister(this.getRightBar());
+	      main_core.Dom.style(this.getRightBar(), 'z-index', null); // ZIndexManager may not remove z-index, so we do it manually
+	    }
+	  }
+
+	  open() {
+	    const opened = super.open();
+	    if (this.getRightBar() && opened) {
+	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
+	      if (!this.isMessengerSlider() && !Slider.isMessengerOpen()) {
+	        stack.bringToFront(this.getRightBar());
+	      }
+	    }
+	    return opened;
+	  }
+	  static isMessengerOpen() {
+	    const MessengerSlider = main_core.Reflection.getClass('BX.Messenger.v2.Lib.MessengerSlider');
+	    if (MessengerSlider && MessengerSlider.getInstance().isOpened()) {
+	      return true;
+	    }
+	    const LayoutManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');
+	    return LayoutManager && LayoutManager.getInstance().isEmbeddedMode();
+	  }
+	  isMessengerSlider() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _chatMenuBar)[_chatMenuBar] !== null;
+	  }
+	  getRightBar() {
+	    return document.getElementById('right-bar');
 	  }
 	  getLeftBoundary() {
+	    const windowWidth = main_core.Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
+	    if (windowWidth < 1260) {
+	      return this.getMinLeftBoundary();
+	    }
 	    const LeftMenu = main_core.Reflection.getClass('BX.Intranet.LeftMenu');
-	    const leftMenu = LeftMenu != null && LeftMenu.isCollapsed() || babelHelpers.classPrivateFieldLooseBase(this, _chatMenuBar)[_chatMenuBar] !== null ? MENU_COLLAPSED_WIDTH : MENU_EXPANDED_WIDTH;
-	    return leftMenu + RIGHT_MARGIN;
-
-	    // const windowWidth = Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
-	    //
-	    // return windowWidth < 1160 ? 0 : 240; // Left Menu Width
+	    return LeftMenu != null && LeftMenu.isCollapsed() || this.isMessengerSlider() ? MENU_COLLAPSED_WIDTH : MENU_EXPANDED_WIDTH;
 	  }
-
 	  getRightBoundary() {
 	    return 0;
 	  }
@@ -171,15 +223,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return 0;
 	  }
 	  calculateOuterBoundary() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _chatMenuBar)[_chatMenuBar] !== null) {
+	    var _this$getRightBar;
+	    if (this.isMessengerSlider() || Slider.isMessengerOpen()) {
 	      return {
-	        top: 58,
+	        top: this.isMessengerSlider() ? 58 : 18,
 	        right: 18
 	      };
 	    }
+	    const rightBarWidth = ((_this$getRightBar = this.getRightBar()) == null ? void 0 : _this$getRightBar.offsetWidth) || 0;
+	    const rightMargin = babelHelpers.classPrivateFieldLooseBase(Slider, _verticalScrollWidth)[_verticalScrollWidth] + rightBarWidth;
 	    return {
 	      top: 18,
-	      right: 18
+	      right: rightMargin
 	    };
 	  }
 	  adjustBackgroundSize() {
@@ -229,10 +284,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _handleWindowResize2() {
 	  this.adjustBackgroundSize();
 	}
+	Object.defineProperty(Slider, _verticalScrollWidth, {
+	  writable: true,
+	  value: null
+	});
 
 	main_sidepanel.SliderManager.registerSliderClass('BX.Intranet.Bitrix24.Slider', {
 	  startPosition: 'bottom',
-	  hideToolbarOnOpen: true
+	  overlayBgColor: '#00204E',
+	  overlayOpacity: 52
 	}, {
 	  animationDuration: 200,
 	  label: {
@@ -258,5 +318,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.Slider = Slider;
 
-}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.SidePanel,BX,BX.Event));
+}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX,BX.Event,BX.SidePanel));
 //# sourceMappingURL=air-sidepanel.bundle.js.map

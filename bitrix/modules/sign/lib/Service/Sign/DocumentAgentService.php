@@ -163,7 +163,8 @@ class DocumentAgentService
 				module: "sign",
 				period: "Y",
 				interval: $interval,
-				next_exec: $nextDateExec ?: \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+$interval, "FULL")
+				next_exec: $nextDateExec ?: \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+$interval, "FULL"),
+				sort: 300,
 			);
 	}
 

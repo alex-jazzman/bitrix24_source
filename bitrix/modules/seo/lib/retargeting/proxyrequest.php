@@ -25,7 +25,8 @@ class ProxyRequest extends Request
 
 		$methodName = static::REST_METHOD_PREFIX . '.' . $params['methodName'];
 		$parameters = $params['parameters'];
-		$engine = new Engine\Bitrix();
+
+		$engine = \Bitrix\Seo\Service::getEngine($this);
 		if (!$engine->isRegistered())
 		{
 			return false;
@@ -65,5 +66,24 @@ class ProxyRequest extends Request
 			throw new InvalidOperationException($response['error_description'] ? $response['error_description'] : $response['error']);
 		}
 		return [];
+	}
+
+	public function getServiceUrl(string $sourceUrl): string
+	{
+		$domains = [
+			'tech' => 'bitrix24.tech',
+			'info' => 'bitrix.info',
+		];
+
+		$domain = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() == 'ru'
+			? $domains['tech']
+			: $domains['info']
+		;
+
+		return str_replace(
+			array_values($domains),
+			[$domain, $domain],
+			$sourceUrl,
+		);
 	}
 }

@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI\Extension;
 use \Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\Size;
 use \Bitrix\UI\Buttons\Split\Button;
 use \Bitrix\UI\Toolbar\Facade\Toolbar;
@@ -38,7 +39,7 @@ $button = new Button([
 $button->setMaxWidth('300px');
 if ($frequency && isset($frequency['href']))
 {
-	$button->getMainButton()->setLink(htmlspecialcharsbx($frequency['href']));
+	$button->getMainButton()->setLink($frequency['href']);
 }
 
 if (!$frequency)
@@ -48,7 +49,9 @@ if (!$frequency)
 
 if (isset($frequency['onclick']))
 {
-	$button->getMainButton()->bindEvent('click', htmlspecialcharsbx($frequency['onclick']) . '; return false;');
+	$isLink = !empty($button->getMainButton()->getLink());
+	$jsCode = new JsCode($frequency['onclick'] . ($isLink ? '; event.preventDefault();' : ''));
+	$button->getMainButton()->bindEvent('click', $jsCode);
 }
 
 if (defined('AIR_SITE_TEMPLATE'))

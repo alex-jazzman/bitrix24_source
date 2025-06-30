@@ -39,7 +39,7 @@ export class MarketTransitionPopup extends MarketExpiredPopup
 			Dom.append(
 				Tag.render`
 					<p class="rest-market-expired-popup__description-text">
-						${Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_FINAL')}
+						${Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_FINAL${this.marketLabel}`)}
 					</p>
 				`,
 				descriptionContainer,
@@ -67,10 +67,10 @@ export class MarketTransitionPopup extends MarketExpiredPopup
 	{
 		if (this.type === PopupType.WARNING)
 		{
-			return this.#renderButtonsForFinal();
+			return this.#renderButtonsForWarning();
 		}
 
-		return this.#renderButtonsForWarning();
+		return this.#renderButtonsForFinal();
 	}
 
 	show(): void

@@ -8,6 +8,7 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\Engine\Access;
@@ -87,7 +88,12 @@ class Client
 			Transport::DICTIONARY_IMMUNE_LIST,
 		);
 
-		return is_array($immuneAppList) ? $immuneAppList : [];
+		if (!is_array($immuneAppList))
+		{
+			throw new SystemException('Wrong answer from service');
+		}
+
+		return $immuneAppList;
 	}
 
 	public static function getUpdates($codeList)

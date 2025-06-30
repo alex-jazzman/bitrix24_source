@@ -19,11 +19,26 @@ if (empty($encryptedData))
 function readConfig(): ?array
 {
 	/** @see \Bitrix\Main\Config\Configuration::CONFIGURATION_FILE_PATH */
+	/** @see \Bitrix\Main\Config\Configuration::CONFIGURATION_FILE_EXTRA */
 	$settingsPath = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/.settings.php';
+	$settingsExtraPath = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/.settings_extra.php';
+
 	$settings = include($settingsPath);
-	if (empty($settings))
+	if (empty($settings) || (is_array($settings) === false))
 	{
-		return null;
+		$settings = [];
+	}
+
+	if (file_exists($settingsExtraPath))
+	{
+		$settingsExtra = include($settingsExtraPath);
+		if (is_array($settingsExtra) && !empty($settingsExtra))
+		{
+			foreach ($settingsExtra as $k => $v)
+			{
+				$settings[$k] = $v;
+			}
+		}
 	}
 
 	/** @see \Bitrix\Disk\QuickAccess\Configuration::CONFIG_SECTION */
@@ -281,6 +296,7 @@ $accelRedirectPath = $storedData['path'];
 $contentType = $storedData['contentType'];
 $expirationTime = $storedData['expirationTime'];
 $dir = $storedData['dir'];
+$bFileId = $storedData['id'];
 $fileName = $storedData['filename'];
 $attachmentName = $decryptedData['l'] ?? null;
 
@@ -289,15 +305,48 @@ if (time() > $expirationTime)
 	return;
 }
 
-if (isset($_GET['width'], $_GET['height']))
+$requestedWidth = isset($_GET['width']) ? (int)$_GET['width'] : 0;
+$requestedHeight = isset($_GET['height']) ? (int)$_GET['height'] : 0;
+$originalWidth = (int)$storedData['width'] ?: 0;
+$originalHeight = (int)$storedData['height'] ?: 0;
+
+// Resize the image only if a smaller version than the original is needed.
+if (
+    $requestedWidth > 0 && $requestedHeight > 0
+	&& ($requestedWidth < $originalWidth || $requestedHeight < $originalHeight)
+)
 {
-	// todo: we have situations when width, height are in the link, but at the same time these are the original dimensions of the image (or they are larger)
-	// that is, we do not need to resize and we must return the original. But in this case, the original will now fall into the resize_cache/ folder
-	$width = (int) $_GET['width'];
-	$height = (int) $_GET['height'];
 	$exact = $_GET['exact'] === 'Y' ? 2 : 1;
-	$resizeDir = "{$width}_{$height}_{$exact}";
-	$accelRedirectPath = "/upload/resize_cache/x/{$dir}/{$resizeDir}/{$fileName}";
+
+	if (empty($storedData['handlerId']))
+	{
+		$resizeDir = "{$requestedWidth}_{$requestedHeight}_{$exact}";
+		$accelRedirectPath = "/upload/resize_cache/x/{$dir}/{$resizeDir}/{$fileName}";
+	}
+	else
+	{
+		$encodedDir = rawurlencode($dir);
+		$delimiterPosition = strpos($accelRedirectPath, $encodedDir);
+		if ($delimiterPosition === false)
+		{
+			return;
+		}
+
+		$partBeforeDir = substr($accelRedirectPath, 0, $delimiterPosition);
+		$dirAndRest = substr($accelRedirectPath, $delimiterPosition);
+		$defaultResizeFilter = [
+			['width' => $requestedWidth, 'height' => $requestedHeight],
+			$exact,
+			[],
+			false,
+			[0 => ['name' => 'sharpen', 'precision' => 15]],
+			true
+		];
+		$resizeDir = md5(serialize($defaultResizeFilter));
+
+		$accelRedirectPath = $partBeforeDir . rawurlencode("resize_cache/{$bFileId}/{$resizeDir}/") . $dirAndRest;
+		$accelRedirectPath = '/upload/resize_cache/c' . $accelRedirectPath;
+	}
 }
 
 header('X-Accel-Buffering: no');
@@ -306,7 +355,7 @@ header('Content-Type: ' . $contentType);
 if ($attachmentName)
 {
 	$urlEncodedName = rawurlencode($attachmentName);
-	header("Content-Disposition: attachment; filename*=utf-8''{$urlEncodedName}");
+	header("X-CD-Info: attachment; filename*=utf-8''{$urlEncodedName}");
 }
 header('X-Gen-Src: ' . $_SERVER['REQUEST_URI'] . '&_gen=1');
 

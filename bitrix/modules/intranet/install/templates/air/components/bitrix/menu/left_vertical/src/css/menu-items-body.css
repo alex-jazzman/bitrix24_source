@@ -30,6 +30,15 @@
 		min-width: auto;
 	}
 
+	.bx-mac .menu-items-body {
+		--menu-scroll-width: 14px;
+	}
+
+	.bx-mac .app.menu-collapsed-mode .menu-items-body,
+	.bx-mac .app.menu-animation-closing-mode .menu-items-body {
+		scrollbar-width: none;
+	}
+
 	.menu-items-body:hover {
 		scrollbar-color: var(--menu-scroll-thumb-color) var(--menu-scrollbar-color);
 	}

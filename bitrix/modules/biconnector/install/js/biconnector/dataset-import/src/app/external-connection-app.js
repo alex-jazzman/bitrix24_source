@@ -1,3 +1,4 @@
+import { toRaw } from 'ui.vue3';
 import { ajax as Ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { AppLayout } from '../layout/app-layout';
@@ -39,6 +40,7 @@ export const ExternalConnectionApp = {
 				savingFailure: false,
 				loadFailure: false,
 				syncFields: false,
+				fieldsSettingsChanges: false,
 			},
 			isValidationComplete: true,
 			popupParams: {
@@ -53,7 +55,12 @@ export const ExternalConnectionApp = {
 			isLoading: false,
 			previewError: '',
 			previewDataLoaded: false,
+			pendingSavePromise: null,
+			initialFieldsSettings: null,
 		};
+	},
+	created() {
+		this.initialFieldsSettings = structuredClone(toRaw(this.$store.state.config.fieldsSettings));
 	},
 	computed: {
 		isRestEntity(): boolean
@@ -119,11 +126,16 @@ export const ExternalConnectionApp = {
 		{
 			if (this.isEditMode)
 			{
-				return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
+				if (this.isRestEntity)
+				{
+					return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
+				}
+
+				return '';
 			}
 
 			let articleCode = '23508958';
-			let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL';
+			let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
 			if (this.isRestEntity)
 			{
 				articleCode = '24486426';
@@ -162,6 +174,10 @@ export const ExternalConnectionApp = {
 				supported: this.isEditMode,
 				disabled: this.isLoading,
 			};
+		},
+		sourceType(): string
+		{
+			return 'external';
 		},
 	},
 	mounted()
@@ -390,6 +406,15 @@ export const ExternalConnectionApp = {
 				return Promise.reject();
 			}
 
+			if (this.isEditMode && this.hasFieldsSettingsChanges())
+			{
+				this.togglePopup('fieldsSettingsChanges', true);
+
+				return new Promise((resolve, reject) => {
+					this.pendingSavePromise = { resolve, reject };
+				});
+			}
+
 			this.togglePopup('savingProgress', true);
 
 			return Promise.resolve();
@@ -453,6 +478,41 @@ export const ExternalConnectionApp = {
 					this.previewError = response.errors[0]?.message ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
 				});
 		},
+		hasFieldsSettingsChanges(): boolean
+		{
+			const fieldsToCompare = ['id', 'visible', 'type', 'name'];
+
+			let currentFields = toRaw(this.$store.state.config.fieldsSettings);
+			let initialFields = toRaw(this.initialFieldsSettings);
+
+			// eslint-disable-next-line max-len
+			currentFields = currentFields.map(obj => fieldsToCompare.reduce((result, field) => (Object.prototype.hasOwnProperty.call(obj, field) ? { ...result, [field]: obj[field] } : result), {}));
+			// eslint-disable-next-line max-len
+			initialFields = initialFields.map(obj => fieldsToCompare.reduce((result, field) => (Object.prototype.hasOwnProperty.call(obj, field) ? { ...result, [field]: obj[field] } : result), {}));
+
+			return JSON.stringify(currentFields) !== JSON.stringify(initialFields);
+		},
+		onConfirmFieldsSettingsChangesPopup()
+		{
+			this.togglePopup('fieldsSettingsChanges', false);
+			this.togglePopup('savingProgress', true);
+
+			if (this.pendingSavePromise)
+			{
+				this.pendingSavePromise.resolve();
+				this.pendingSavePromise = null;
+			}
+		},
+		onCancelFieldsSettingsChangesPopup()
+		{
+			this.togglePopup('fieldsSettingsChanges', false);
+
+			if (this.pendingSavePromise)
+			{
+				this.pendingSavePromise.reject();
+				this.pendingSavePromise = null;
+			}
+		},
 	},
 	components: {
 		AppLayout,
@@ -498,6 +558,7 @@ export const ExternalConnectionApp = {
 						:is-open-initially="isEditMode"
 						:disabled="steps.fields.disabled"
 						:disabled-elements="steps.fields.disabledElements"
+						:source-type="sourceType"
 						ref="fieldsStep"
 						@validation="onStepValidation('fields', $event)"
 						@parsing-options-changed="onParsingOptionsChanged"
@@ -564,5 +625,23 @@ export const ExternalConnectionApp = {
 			@close="togglePopup('syncFields', false)"
 		>
 		</SyncFieldsPopup>
+
+		<GenericPopup
+			v-if="shownPopups.fieldsSettingsChanges"
+			:title="$Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_HEADER')"
+			@close="togglePopup('fieldsSettingsChanges', false)"
+		>
+			<template v-slot:content>
+				<p>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_MESSAGE_MSGVER_1') }}</p>
+			</template>
+			<template v-slot:buttons>
+				<button @click="onConfirmFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-success">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_BUTTON_SAVE') }}
+				</button>
+				<button @click="onCancelFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-link">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_BUTTON_CANCEL') }}
+				</button>
+			</template>
+		</GenericPopup>
 	`,
 };

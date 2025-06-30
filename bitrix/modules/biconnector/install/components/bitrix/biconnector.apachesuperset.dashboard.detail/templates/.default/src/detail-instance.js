@@ -45,25 +45,6 @@ export class DetailInstance
 		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
 		this.#subscribeEvents();
 		this.#initHeaderButtons();
-		if (!this.#embeddedParams.paramsCompatible)
-		{
-			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
-				container: this.#frameNode,
-				isSupersetAvailable: true,
-				paramsCompatible: false,
-			});
-
-			ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-				c_element: config.analyticSource,
-				status: 'error',
-				type: this.#embeddedParams.type.toLowerCase(),
-				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-				p2: this.#embeddedParams.id,
-				...(config.analyticScope && { p3: ApacheSupersetAnalytics.buildScopeForAnalyticRequest(config.analyticScope) }),
-			});
-
-			return;
-		}
 
 		if (!BX.BIConnector.LimitLockPopup)
 		{
@@ -97,35 +78,15 @@ export class DetailInstance
 			this.#canExport = this.#embeddedParams.canExport;
 
 			let historyUrl = this.#embeddedParams.embeddedUrl;
-			if (this.#embeddedParams.paramsCompatible)
-			{
-				this.#initFrame(this.#embeddedParams);
+			this.#initFrame(this.#embeddedParams);
 
-				ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-					c_element: 'selector',
-					status: 'success',
-					type: this.#embeddedParams.type.toLowerCase(),
-					p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-					p2: this.#embeddedParams.id,
-				});
-			}
-			else
-			{
-				historyUrl = this.#embeddedParams.dashboardUrl;
-				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
-					container: this.#frameNode,
-					isSupersetAvailable: true,
-					paramsCompatible: false,
-				});
-
-				ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-					c_element: 'selector',
-					status: 'error',
-					type: this.#embeddedParams.type.toLowerCase(),
-					p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-					p2: this.#embeddedParams.id,
-				});
-			}
+			ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+				c_element: 'selector',
+				status: 'success',
+				type: this.#embeddedParams.type.toLowerCase(),
+				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+				p2: this.#embeddedParams.id,
+			});
 
 			top.window.history.pushState(null, '', historyUrl);
 			this.#initHeaderButtons();

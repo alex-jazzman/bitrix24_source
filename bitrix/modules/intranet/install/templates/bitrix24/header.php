@@ -174,7 +174,7 @@ $APPLICATION->ShowViewContent('im');
 $APPLICATION->ShowViewContent('im-fullscreen');
 
 $layoutMode = '';
-if (CUserOptions::GetOption('intranet', 'left_menu_collapsed') === 'Y')
+if (\Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed())
 {
 	$layoutMode .= ' menu-collapsed-mode';
 }

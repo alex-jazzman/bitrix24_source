@@ -34,6 +34,15 @@ export const TableRow = {
 			required: false,
 			default: null,
 		},
+		isEditMode: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
+		sourceType: {
+			type: String,
+			required: true,
+		},
 	},
 	data()
 	{
@@ -109,9 +118,23 @@ export const TableRow = {
 				},
 			};
 		},
-		canEdit(): boolean
+		sourceTypeCsv(): boolean
 		{
-			return !(this.fieldSettings?.id > 0);
+			return this.sourceType === 'csv';
+		},
+		sourceTypeExternal(): boolean
+		{
+			return this.sourceType === 'external';
+		},
+		canEditType(): boolean
+		{
+			return !this.isEditMode && this.sourceTypeCsv;
+		},
+		canEditName(): boolean
+		{
+			const isNew = !Boolean(this.fieldSettings?.id > 0);
+
+			return isNew || (this.fieldSettings?.visible && this.sourceTypeExternal);
 		},
 	},
 	emits: [
@@ -136,7 +159,7 @@ export const TableRow = {
 		},
 		onFieldInput(event)
 		{
-			if (!this.canEdit || this.disabledElements?.name)
+			if (!this.canEditName || this.disabledElements?.name)
 			{
 				const input = event.target;
 				input.value = this.fieldSettings.name;
@@ -215,20 +238,20 @@ export const TableRow = {
 				<input class="format-table__checkbox" ref="visibilityCheckbox" type="checkbox" @change="onCheckboxClick" :checked="enabled">
 			</td>
 			<td class="format-table__cell">
-				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :can-edit="canEdit && !disabledElements?.type" :disabled="!canEdit || disabledElements?.type"/>
+				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :can-edit="canEditType && !disabledElements?.type" :disabled="!canEditType || disabledElements?.type"/>
 			</td>
 			<td class="format-table__cell">
 				<div
 					class="ui-ctl ui-ctl-textbox ui-ctl-w100 format-table__name-control"
 					:class="{
 						'format-table__text-input--invalid': displayedValidationErrors.name && !isNameValid,
-						'format-table__text-input--disabled': !canEdit || disabledElements?.name,
-						'ui-ctl-after-icon': canEdit && !isNameValid,
+						'format-table__text-input--disabled': !canEditName || disabledElements?.name,
+						'ui-ctl-after-icon': canEditName && !isNameValid,
 					}"
 				>
 					<input
 						class="ui-ctl-element format-table__text-input format-table__name-input"
-						:disabled="!canEdit || disabledElements?.name"
+						:disabled="!canEditName || disabledElements?.name"
 						type="text"
 						:placeholder="$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_PLACEHOLDER')"
 						name="name"

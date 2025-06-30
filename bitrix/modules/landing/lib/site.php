@@ -1679,7 +1679,7 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 
 			if ($mark)
 			{
-				$resPublication = $landing->publication();
+				$resPublication = $landing->publication(null, $metrikaParams);
 			}
 			else
 			{

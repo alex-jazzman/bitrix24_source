@@ -24104,8 +24104,8 @@ div.g-video-preview.--loader::after, div.g-video-preview.--loader:hover::after {
   transition: 0.3s ease-out;
   z-index: 11;
   position: fixed;
-  bottom: 15px;
-  left: 15px;
+  bottom: 66px;
+  left: 30px;
 }
 .u-go-to-v1:before {
   content: "";
@@ -24116,8 +24116,8 @@ div.g-video-preview.--loader::after, div.g-video-preview.--loader:hover::after {
           transform: translate(-50%, -50%);
   width: 12px;
   height: 12px;
-  border: 2px solid transparent;
-  border-color: inherit;
+  border-width: 2px;
+  border-style: solid;
   border-bottom: none;
   border-right: none;
   -webkit-transform: rotate(45deg);

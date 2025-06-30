@@ -1,5 +1,5 @@
-import { Type, Runtime } from 'main.core';
-import { Dialog, type Item, type ItemId } from 'ui.entity-selector';
+import { Type } from 'main.core';
+import { Dialog, type EntityOptions, type Item, type ItemId } from 'ui.entity-selector';
 import { mapState } from 'ui.vue3.vuex';
 import { EntitySelectorContext } from '../../../integration/entity-selector/dictionary';
 
@@ -97,12 +97,7 @@ export const Selector = {
 
 			if (/^SG(\d+)_([AEK])$/.test(accessCode))
 			{
-				const match = accessCode.match(/^SG(\d+)_([AEK])$/) || null;
-
-				const projectId = match ? match[1] : null;
-				const postfix = match ? match[2] : null;
-
-				return ['project', `${projectId}:${postfix}`];
+				return ['project-access-codes', accessCode];
 			}
 
 			if (/^SNT(\d+)$/.test(accessCode))
@@ -197,24 +192,9 @@ export const Selector = {
 				return item.id;
 			}
 
-			if (entityId === 'project')
+			if (entityId === 'project-access-codes')
 			{
-				const subType = item.customData.get('metauser');
-				const originalId = item.customData.get('projectId');
-				if (subType === 'owner')
-				{
-					return `SG${originalId}_A`;
-				}
-
-				if (subType === 'moderator')
-				{
-					return `SG${originalId}_E`;
-				}
-
-				if (subType === 'all')
-				{
-					return `SG${originalId}_K`;
-				}
+				return item.id;
 			}
 
 			return '';
@@ -228,7 +208,7 @@ export const Selector = {
 				case 'department':
 					return 'departments';
 				case 'socnetgroup':
-				case 'project':
+				case 'project-access-codes':
 					return 'sonetgroups';
 				case 'group':
 					return 'groups';
@@ -241,8 +221,8 @@ export const Selector = {
 					return '';
 			}
 		},
-		getEntities(): Array {
-			const entities = [
+		getEntities(): EntityOptions[] {
+			const entities: EntityOptions[] = [
 				{
 					id: 'user',
 					options: {
@@ -284,20 +264,11 @@ export const Selector = {
 					},
 				});
 			}
+
 			if (this.addProjectsProviderTab)
 			{
 				entities.push({
-					id: 'project',
-					dynamicLoad: true,
-					options: {
-						addProjectMetaUsers: true,
-					},
-					itemOptions: {
-						default: {
-							link: '',
-							linkTitle: '',
-						},
-					},
+					id: 'project-access-codes',
 				});
 			}
 

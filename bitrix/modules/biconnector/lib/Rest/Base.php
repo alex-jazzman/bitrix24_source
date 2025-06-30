@@ -42,7 +42,12 @@ abstract class Base extends IRestService
 			return ['error' => self::ACCESS_ERROR];
 		}
 
-		$params['appId'] = self::prepareAppId($server);
+		$checkAppIdResult = self::checkAndPrepareAppId($server);
+		if (!$checkAppIdResult->isSuccess())
+		{
+			return ['error' => self::ACCESS_ERROR];
+		}
+		$params['appId'] = $checkAppIdResult->getData()['appId'];
 		$validateResult = static::validateParamsForAdd($params);
 
 		if (!$validateResult->isSuccess())
@@ -77,7 +82,12 @@ abstract class Base extends IRestService
 			return ['error' => self::ACCESS_ERROR];
 		}
 
-		$params['appId'] = self::prepareAppId($server);
+		$checkAppIdResult = self::checkAndPrepareAppId($server);
+		if (!$checkAppIdResult->isSuccess())
+		{
+			return ['error' => self::ACCESS_ERROR];
+		}
+		$params['appId'] = $checkAppIdResult->getData()['appId'];
 		$validateResult = self::validateParamsForUpdate($params);
 
 		if (!$validateResult->isSuccess())
@@ -112,7 +122,12 @@ abstract class Base extends IRestService
 			return ['error' => self::ACCESS_ERROR];
 		}
 
-		$params['appId'] = self::prepareAppId($server);
+		$checkAppIdResult = self::checkAndPrepareAppId($server);
+		if (!$checkAppIdResult->isSuccess())
+		{
+			return ['error' => self::ACCESS_ERROR];
+		}
+		$params['appId'] = $checkAppIdResult->getData()['appId'];
 		$validateResult = self::validateParamsId($params);
 
 		if (!$validateResult->isSuccess())
@@ -157,7 +172,12 @@ abstract class Base extends IRestService
 			return ['error' => self::ACCESS_ERROR];
 		}
 
-		$params['appId'] = self::prepareAppId($server);
+		$checkAppIdResult = self::checkAndPrepareAppId($server);
+		if (!$checkAppIdResult->isSuccess())
+		{
+			return ['error' => self::ACCESS_ERROR];
+		}
+		$params['appId'] = $checkAppIdResult->getData()['appId'];
 		$validateResult = static::validateParamsId($params);
 
 		if (!$validateResult->isSuccess())
@@ -192,7 +212,12 @@ abstract class Base extends IRestService
 			return ['error' => self::ACCESS_ERROR];
 		}
 
-		$params['appId'] = self::prepareAppId($server);
+		$checkAppIdResult = self::checkAndPrepareAppId($server);
+		if (!$checkAppIdResult->isSuccess())
+		{
+			return ['error' => self::ACCESS_ERROR];
+		}
+		$params['appId'] = $checkAppIdResult->getData()['appId'];
 		$validateResult = static::validateParamsForList($params);
 
 		if (!$validateResult->isSuccess())
@@ -538,15 +563,26 @@ abstract class Base extends IRestService
 		return true;
 	}
 
-	protected static function prepareAppId(CRestServer $server)
+	protected static function checkAndPrepareAppId(CRestServer $server): Result
 	{
+		$result = new Result();
 		$appId = $server->getClientId();
+
 		if (\Bitrix\Main\Config\Option::get('biconnector', 'biconnector_use_webhooks_rest_source', 'N') === 'Y')
 		{
-			$appId = $appId ?? 'test_app_id'; //stub for test and webhooks
+			$appId = $appId ?? 'test_app_id'; //stub for test
 		}
 
-		return $appId;
+		if (empty($appId))
+		{
+			$result->addError(new Error('Webhook calls are not permitted for this operation'));
+
+			return $result;
+		}
+
+		$result->setData(['appId' => $appId]);
+
+		return $result;
 	}
 
 	protected static function checkPermissionAppBySourceId(string $appId, int $sourceId): bool

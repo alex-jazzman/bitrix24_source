@@ -2033,7 +2033,15 @@ class Connector
 
 		$connection = \Bitrix\Main\Application::getInstance()->getConnection();
 
-		$params['END_ID'] = (int)$params['END_ID'];
+		$startId = (int)$params['START_ID'];
+		$endId = (int)$params['END_ID'];
+		if ($startId === 0 || $endId === 0)
+		{
+			$session = V2\Session\Session::getInstanceByChatId((int)$params['CHAT_ID']);
+
+			$startId = $startId ?: $session->getStartId();
+			$endId = $endId ?: $session->getEndId();
+		}
 
 		$messages = [];
 		$query = $connection->query("
@@ -2045,8 +2053,8 @@ class Connector
 					AND MP.PARAM_NAME = 'CONNECTOR_MID'
 			WHERE
 				M.CHAT_ID = ". (int)$params['CHAT_ID'] ." 
-				AND M.ID > ". (int)$params['START_ID']
-				.($params['END_ID'] ? " AND M.ID < ".((int)$params['END_ID'] + 1) : "")."
+				AND M.ID > ". $startId
+				.($endId ? " AND M.ID < ".($endId + 1) : "")."
 		");
 		while($row = $query->fetch())
 		{

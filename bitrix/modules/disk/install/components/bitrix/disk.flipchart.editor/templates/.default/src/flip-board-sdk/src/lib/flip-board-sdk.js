@@ -115,6 +115,7 @@ export default class WebSDK {
             url.searchParams.set('openTemplates', 'true');
         if (this.boardParams.ui.spinner && this.boardParams.ui.spinner !== 'default')
             url.searchParams.set('spinner', this.boardParams.ui.spinner);
+        url.searchParams.set('dt', Date.now().toString());
         return url.toString();
     }
     addEventListener() {

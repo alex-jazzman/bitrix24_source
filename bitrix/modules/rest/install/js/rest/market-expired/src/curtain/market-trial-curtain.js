@@ -26,8 +26,8 @@ export class MarketTrialCurtain extends MarketExpiredCurtain
 	getContent(): string
 	{
 		return this.options.type === PopupType.FINAL
-			? Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT')
-			: Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT', {
+			? Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT${this.marketLabel}`)
+			: Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT${this.marketLabel}`, {
 				'#DAYS#': this.options.expireDays,
 			});
 	}

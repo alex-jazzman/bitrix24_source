@@ -147,10 +147,6 @@
 	border-radius: var(--ui-border-radius-3xs);
 }
 
-.biconnector-settings-scope-selector .ui-selector-tab-labels {
-	display: none;
-}
-
 .ui-ctl-dropdown-range-group .ui-ctl-bottom {
 	margin-top: 0;
 }

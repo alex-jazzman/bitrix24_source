@@ -6585,8 +6585,9 @@ this.BX = this.BX || {};
 	            BX.UI.ButtonPanel.hide();
 	            babelHelpers.classPrivateFieldLooseBase(this, _cancelMessageBox)[_cancelMessageBox].close();
 	            babelHelpers.classPrivateFieldLooseBase(this, _cancelMessageBox)[_cancelMessageBox] = null;
-	            panelEvent.slider.close();
-	            panelEvent.slider.destroy();
+	            panelEvent.slider.close(false, () => {
+	              panelEvent.slider.destroy();
+	            });
 	            if (babelHelpers.classPrivateFieldLooseBase(this, _basePage)[_basePage].includes('/configs/')) {
 	              babelHelpers.classPrivateFieldLooseBase(this, _reload)[_reload]('/index.php');
 	            }

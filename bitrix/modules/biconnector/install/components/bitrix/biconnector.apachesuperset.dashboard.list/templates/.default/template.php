@@ -15,8 +15,6 @@ use Bitrix\Main\Web\Json;
  */
 
 $APPLICATION->SetTitle(Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_LIST_TITLE'));
-$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-background');
 
 if (!empty($arResult['ERROR_MESSAGES']))
 {
@@ -97,6 +95,10 @@ if (!$limitManager->checkLimitWarning())
 		BX.BIConnector.SupersetDashboardGridManager.Instance = new BX.BIConnector.SupersetDashboardGridManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
 			'isNeedShowDraftGuide' => $arResult['NEED_SHOW_DRAFT_GUIDE'] ?? false,
+			'isAvailableDashboardCreation' => $arResult['IS_AVAILABLE_DASHBOARD_CREATION'] ?? false,
+			'isAvailableGroupCreation' => $arResult['IS_AVAILABLE_GROUP_CREATION'] ?? false,
+			'isMarketExists' => $arParams['IS_MARKET_EXISTS'] ?? false,
+			'marketUrl' => $arParams['MARKET_URL'] ?? '',
 		])?>);
 
 		BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();

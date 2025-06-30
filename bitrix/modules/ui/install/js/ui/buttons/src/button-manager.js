@@ -137,6 +137,7 @@ export default class ButtonManager
 			state: this.#getEnumProp(node, isSplitButton ? SplitButtonState : ButtonState),
 			noCaps: Dom.hasClass(node, ButtonStyle.NO_CAPS),
 			round: Dom.hasClass(node, ButtonStyle.ROUND),
+			dependOnTheme: Dom.hasClass(node, ButtonStyle.DEPEND_ON_THEME),
 			style: this.#getEnumProp(node, AirButtonStyle),
 			switcher: isSplitButton ? { node: switcherNode } : null,
 		};
@@ -162,6 +163,11 @@ export default class ButtonManager
 
 				options.counterNode = undefined;
 				options.counter = undefined;
+
+				if (Dom.hasClass(counterNode?.parentElement, 'ui-btn-right-counter'))
+				{
+					Dom.remove(counterNode?.parentElement);
+				}
 
 				Dom.remove(counterNode);
 			}

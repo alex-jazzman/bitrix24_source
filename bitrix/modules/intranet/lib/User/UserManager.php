@@ -177,6 +177,10 @@ final class UserManager
 					$user['UF_DEPARTMENT'][$department->getId()] = htmlspecialcharsbx($department->getName());
 				}
 			}
+			else
+			{
+				$user['UF_DEPARTMENT'] = [];
+			}
 
 			$userId = $user['ID'];
 			$result[$userId]['data'] = $user;

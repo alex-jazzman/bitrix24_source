@@ -1,7 +1,8 @@
 import { Loc, Tag, Dom, Reflection, ajax } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { DashboardParametersSelector } from 'biconnector.dashboard-parameters-selector';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
-import { ButtonManager } from 'ui.buttons';
+import { Button, ButtonManager } from 'ui.buttons';
 
 type Props = {
 	nodeId: string,
@@ -9,6 +10,8 @@ type Props = {
 	signedParameters: string,
 	defaultValues: Object,
 	scopeParamsMap: Object,
+	groupIds: number[],
+	canManageGroups: boolean,
 };
 
 /**
@@ -18,27 +21,37 @@ class SupersetDashboardCreateManager
 {
 	#props: Props;
 	#node: HTMLElement;
-	#paramsSelector: DashboardParametersSelector;
+	#paramsSelector: ?DashboardParametersSelector;
+	#saveButton: Button;
 
 	constructor(props: Props)
 	{
 		this.#props = props;
 		this.#node = document.querySelector(`#${this.#props.nodeId}`);
 		this.#render();
+		this.#saveButton = ButtonManager.createFromNode(document.querySelector('#dashboard-button-save'));
+		if (this.#props.canManageGroups)
+		{
+			this.#saveButton.setDisabled(true);
+		}
+		EventEmitter.subscribe('BIConnector.DashboardParamsSelector:initCompleted', this.#onParamSelectorInit.bind(this));
 	}
 
 	#render(): void
 	{
 		Dom.append(this.#getTopBlock(), this.#node);
-
 		Dom.append(this.#getMainContent(), this.#node);
 
-		this.#paramsSelector = new DashboardParametersSelector({
-			scopes: new Set(),
-			params: new Set(),
-			scopeParamsMap: this.#props.scopeParamsMap,
-		});
-		Dom.append(this.#paramsSelector.getLayout(), this.#node);
+		if (this.#props.canManageGroups)
+		{
+			this.#paramsSelector = new DashboardParametersSelector({
+				groups: new Set(),
+				scopes: new Set(),
+				params: new Set(),
+				scopeParamsMap: this.#props.scopeParamsMap,
+			});
+			Dom.append(this.#paramsSelector.getLayout(), this.#node);
+		}
 	}
 
 	#getMainContent(): HTMLElement
@@ -69,18 +82,29 @@ class SupersetDashboardCreateManager
 		`;
 	}
 
+	#onParamSelectorInit(): void
+	{
+		this.#paramsSelector.selectGroups(this.#props.groupIds);
+		this.#saveButton.setDisabled(false);
+	}
+
 	// noinspection JSUnusedGlobalSymbols
 	onClickSave(): void
 	{
-		const selectorData = this.#paramsSelector.getValues();
 		const titleField = document.querySelector('#dashboard-title-field');
 		const saveData = {
-			scopes: [...selectorData.scopes],
-			params: [...selectorData.params],
 			title: titleField.value,
 		};
-		const saveButton = ButtonManager.createFromNode(document.querySelector('#dashboard-button-save'));
-		saveButton.setWaiting(true);
+
+		if (this.#props.canManageGroups)
+		{
+			const selectorData = this.#paramsSelector.getValues();
+			saveData.groups = [...selectorData.groups];
+			saveData.scopes = [...selectorData.scopes];
+			saveData.params = [...selectorData.params];
+		}
+
+		this.#saveButton.setWaiting(true);
 
 		ajax.runComponentAction(
 			this.#props.componentName,
@@ -107,7 +131,7 @@ class SupersetDashboardCreateManager
 				BX.UI.Notification.Center.notify({
 					content: response.errors[0].message,
 				});
-				saveButton.setWaiting(false);
+				this.#saveButton.setWaiting(false);
 			});
 	}
 }

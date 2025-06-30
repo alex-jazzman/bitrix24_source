@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/v2.bundle.css',
 	'js' => 'dist/v2.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'ui.dialogs.messagebox',
+		'ui.icon-set.api.vue',
 		'ui.buttons',
 		'ui.vue3.components.popup',
 		'ui.entity-selector',
@@ -23,6 +23,7 @@ return [
 		'ui.notification',
 		'ui.analytics',
 		'ui.vue3.vuex',
+		'main.core.events',
 		'main.core',
 		'ui.fonts.opensans',
 		'ui.design-tokens',

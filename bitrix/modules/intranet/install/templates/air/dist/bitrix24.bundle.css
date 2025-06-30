@@ -95,13 +95,14 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 	justify-content: flex-start;
 	order: 1;
 	overflow: hidden;
+	padding-bottom: calc(80px * var(--side-panel-toolbar-shifted, 0));
 }
 
 .im-bar-mode-off .app__right-bar {
 	display: none;
 }
 
-.app__right-bar.--show-scroll-btn {
+body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
 	padding-bottom: 64px;
 }
 
@@ -171,6 +172,10 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 .app__go-top-button.--show {
 	display: block;
 	z-index: 990;
+}
+
+.side-panel-disable-scrollbar .app__go-top-button {
+	display: none;
 }
 
 body {
@@ -674,6 +679,19 @@ textarea {
 	position: absolute;
 	top: 35px;
 	left: 40px;
+}
+
+.intranet-avatar-widget-base-popup {
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	max-height: 97vh;
+}
+
+.intranet-avatar-widget-popup-base::-webkit-scrollbar {
+	width: 0;
+	height: 0;
 }
 
 .bitrix24-light-theme .app__right-bar.--transparent {
@@ -1351,7 +1369,7 @@ textarea {
 	display: none;
 }
 
-body {
+html.bx-integrated-gpu body {
 	--sidepanel-border-radius: 18px 18px 0 0;
 }
 

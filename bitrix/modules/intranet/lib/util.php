@@ -11,6 +11,7 @@ namespace Bitrix\Intranet;
 use Bitrix\Bitrix24\Integrator;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Intranet\Internals\InvitationTable;
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
@@ -509,6 +510,8 @@ class Util
 			$user->Update($currentUserId, ['GROUP_ID' => $currentAdminGroups]);
 		}
 
+		ServiceContainer::getInstance()->getUserService()->clearCache();
+
 		return true;
 	}
 
@@ -575,6 +578,8 @@ class Util
 			]
 		);
 		$event->send();
+
+		ServiceContainer::getInstance()->getUserService()->clearCache();
 
 		return true;
 	}

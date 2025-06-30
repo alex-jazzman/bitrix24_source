@@ -6,9 +6,11 @@ namespace Bitrix\Intranet\Command\Invitation;
 
 use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Intranet\Contract\Command;
+use Bitrix\Intranet\Contract\Strategy\InvitationMessageFactoryContract;
 use Bitrix\Intranet\Entity\Collection\UserCollection;
 use Bitrix\Intranet;
 use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\Enum\InvitationMessageType;
 use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Integration\Socialnetwork;
 use Bitrix\Main\ArgumentException;
@@ -72,7 +74,7 @@ class InviteUserCollectionToGroupCommand implements Command
 				return $invitationResult;
 			}
 
-			$this->sendEmailInvitationByUserCollection($inviteCollection);
+			$this->sendEmailUserCollectionByInvitationMessageType($inviteCollection, InvitationMessageType::INVITE);
 		}
 
 		if (!$addCollection->empty())
@@ -83,6 +85,8 @@ class InviteUserCollectionToGroupCommand implements Command
 			{
 				return $addResult;
 			}
+
+			$this->sendEmailUserCollectionByInvitationMessageType($addCollection, InvitationMessageType::JOIN);
 		}
 
 		return (new Result())->setData([...$inviteCollection, ...$addCollection]);
@@ -130,26 +134,45 @@ class InviteUserCollectionToGroupCommand implements Command
 		return [$invitationCollection, $addCollection];
 	}
 
-	private function sendEmailInvitationByUserCollection(UserCollection $userCollection): void
+	private function sendEmailUserCollectionByInvitationMessageType(
+		UserCollection $userCollection,
+		InvitationMessageType $type
+	): void
 	{
 		$group = GroupRegistry::getInstance()->get($this->groupId);
-		$extranetAvailable = Loader::includeModule('extranet');
-
-		if ($group instanceof Collab)
+		if (!($group instanceof Collab))
 		{
-			foreach ($userCollection as $user)
+			return;
+		}
+
+		$extranetAvailable = Loader::includeModule('extranet');
+		foreach ($userCollection as $user)
+		{
+			if (
+				$extranetAvailable
+				&& $user->getInviteStatus() === InvitationStatus::ACTIVE
+				&& $user->isCollaber()
+			)
 			{
-				if (
-					$extranetAvailable
-					&& $user->getInviteStatus() === InvitationStatus::ACTIVE
-					&& ServiceContainer::getInstance()->getCollaberService()->isCollaberById($user->getId())
-				)
-				{
-					(new Intranet\Internal\Factory\Message\CollabInvitationMessageFactory($user, $group))
-						->createEmailEvent()
-						->sendImmediately();
-				}
+				$messageFactory = $this->getMessageFactory($type, $user, $group);
+				$messageFactory->createEmailEvent()
+					->sendImmediately();
 			}
 		}
+	}
+
+	private function getMessageFactory(InvitationMessageType $type, User $user, Collab $group): InvitationMessageFactoryContract
+	{
+		return match ($type)
+		{
+			InvitationMessageType::JOIN => new Intranet\Internal\Factory\Message\CollabJoinMessageFactory(
+				$user,
+				$group
+			),
+			InvitationMessageType::INVITE => new Intranet\Internal\Factory\Message\CollabInvitationMessageFactory(
+				$user,
+				$group
+			),
+		};
 	}
 }

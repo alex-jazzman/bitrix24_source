@@ -13,6 +13,7 @@
 	<span v-hint="{text: 'Custom position top and light mode', position: 'top', popupOptions: {darkMode: false}}">
 		Text top on light panel
 	</span>
+	<span v-hint="{text: 'Hint text <a>More</a>', interactivity: true}">Hint with clickable link</span>
 */
 
 import { Event, Type } from 'main.core';
@@ -30,7 +31,8 @@ export const hint = {
 		}
 
 		Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
-		Event.bind(element, 'mouseleave', () => hideTooltip());
+		const isInteractive = value.interactivity ?? false;
+		Event.bind(element, 'mouseleave', () => hideTooltip(isInteractive));
 		Event.bind(element, 'click', () => hideTooltip());
 	},
 };
@@ -49,10 +51,10 @@ function showTooltip(element: HTMLElement, params: HintParams): void
 	tooltip.show(element, params);
 }
 
-function hideTooltip(): void
+function hideTooltip(isInteractive): void
 {
 	clearTimeouts();
-	tooltip.hide();
+	tooltip.hide(isInteractive);
 }
 
 function clearTimeouts(): void

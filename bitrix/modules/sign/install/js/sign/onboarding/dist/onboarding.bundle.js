@@ -23,8 +23,12 @@ this.BX = this.BX || {};
 	var _createB2eTemplatesStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createB2eTemplatesStep");
 	var _createB2eKanbanRouteStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createB2eKanbanRouteStep");
 	var _shouldStartB2eOnboarding = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldStartB2eOnboarding");
+	var _isTemplateBtnVisible = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTemplateBtnVisible");
 	class Onboarding {
 	  constructor() {
+	    Object.defineProperty(this, _isTemplateBtnVisible, {
+	      value: _isTemplateBtnVisible2
+	    });
 	    Object.defineProperty(this, _shouldStartB2eOnboarding, {
 	      value: _shouldStartB2eOnboarding2
 	    });
@@ -113,7 +117,7 @@ this.BX = this.BX || {};
 	    events: {
 	      onFinish
 	    },
-	    steps: [babelHelpers.classPrivateFieldLooseBase(this, _createB2eKanbanRouteStep)[_createB2eKanbanRouteStep]('.ui-toolbar-after-title-buttons > button.sign-b2e-onboarding-route'), babelHelpers.classPrivateFieldLooseBase(this, _createB2eTemplatesStep)[_createB2eTemplatesStep]('div#sign_sign_b2e_employee_template_list')]
+	    steps: [babelHelpers.classPrivateFieldLooseBase(this, _createB2eKanbanRouteStep)[_createB2eKanbanRouteStep]('.ui-toolbar-after-title-buttons > button.sign-b2e-onboarding-route'), babelHelpers.classPrivateFieldLooseBase(this, _createB2eTemplatesStep)[_createB2eTemplatesStep](babelHelpers.classPrivateFieldLooseBase(this, _isTemplateBtnVisible)[_isTemplateBtnVisible]() ? 'div#sign_sign_b2e_employee_template_list' : 'div#sign_more_button')]
 	  });
 	}
 	function _getB2eWelcomeGuide2(options, onFinish) {
@@ -125,7 +129,7 @@ this.BX = this.BX || {};
 	    events: {
 	      onFinish
 	    },
-	    steps: [babelHelpers.classPrivateFieldLooseBase(this, _createB2eNewDocumentButtonStep)[_createB2eNewDocumentButtonStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-create', options.region), babelHelpers.classPrivateFieldLooseBase(this, _createB2eKanbanRouteStep)[_createB2eKanbanRouteStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-route'), babelHelpers.classPrivateFieldLooseBase(this, _createB2eTemplatesStep)[_createB2eTemplatesStep]('div#sign_sign_b2e_employee_template_list')]
+	    steps: [babelHelpers.classPrivateFieldLooseBase(this, _createB2eNewDocumentButtonStep)[_createB2eNewDocumentButtonStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-create', options.region), babelHelpers.classPrivateFieldLooseBase(this, _createB2eKanbanRouteStep)[_createB2eKanbanRouteStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-route'), babelHelpers.classPrivateFieldLooseBase(this, _createB2eTemplatesStep)[_createB2eTemplatesStep](babelHelpers.classPrivateFieldLooseBase(this, _isTemplateBtnVisible)[_isTemplateBtnVisible]() ? 'div#sign_sign_b2e_employee_template_list' : 'div#sign_more_button')]
 	  });
 	}
 	function _getB2eFallbackGuide2(options, onFinish) {
@@ -252,6 +256,10 @@ this.BX = this.BX || {};
 	    lastVisitDate
 	  } = await babelHelpers.classPrivateFieldLooseBase(this, _backend)[_backend].getLastVisitDate(b2ePopupTourId);
 	  return main_core.Type.isNull(lastVisitDate);
+	}
+	function _isTemplateBtnVisible2() {
+	  var _document$querySelect;
+	  return ((_document$querySelect = document.querySelector('div#sign_sign_b2e_employee_template_list')) == null ? void 0 : _document$querySelect.offsetParent) !== null;
 	}
 
 	exports.Onboarding = Onboarding;

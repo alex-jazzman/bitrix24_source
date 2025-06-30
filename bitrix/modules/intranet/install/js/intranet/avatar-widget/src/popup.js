@@ -1,4 +1,4 @@
-import { Cache } from 'main.core';
+import { Cache, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
 import { MainContent } from './content/main-content';
@@ -10,6 +10,7 @@ import { SalaryVacationContent } from './content/salary-vacation-content';
 import { ExtensionContent } from './content/extension-content';
 import { LogoutContent } from './content/logout-content';
 import { ThemeContent } from './content/theme-content';
+import { PerfReviewContent } from './content/perf-review-content';
 import { Analytics } from './analytics';
 import type { ConfigOptions, PopupOptions } from './types';
 
@@ -58,7 +59,25 @@ export class Popup extends EventEmitter
 				width: 450,
 				content: this.#getContent(),
 				popupLoader: this.getOptions().loader,
+				offsetLeft: -392,
+				offsetTop: -50,
 			});
+			popup.getPopup().setFixed(true);
+			const setOverlay = () => {
+				if (BX.SidePanel.Instance.isOpen())
+				{
+					popup.getPopup().setOverlay({
+						backgroundColor: 'transparent',
+					});
+					popup.getPopup().showOverlay();
+				}
+			};
+			setOverlay();
+			popup.getPopup().subscribe('onClose', () => {
+				this.#popupsShowAfterBasePopup = [];
+				popup.getPopup().removeOverlay();
+			});
+			popup.getPopup().subscribe('onBeforeShow', setOverlay);
 			this.#cache.set('popup', popup);
 
 			this.emit('afterInit');
@@ -80,6 +99,11 @@ export class Popup extends EventEmitter
 					this.#getSignDocumentsContent().getConfig(),
 					this.#getSalaryVacationContent().getConfig(),
 				);
+			}
+
+			if (this.getOptions().content?.perfReview?.isAvailable)
+			{
+				content.push(this.#getPerfReviewContent().getConfig());
 			}
 
 			if (this.getOptions().content?.otp?.isAvailable)
@@ -147,6 +171,15 @@ export class Popup extends EventEmitter
 		return this.#cache.remember('salaryVacationContent', () => {
 			return new SalaryVacationContent({
 				...this.getOptions().content.salaryVacation,
+			});
+		});
+	}
+
+	#getPerfReviewContent(): PerfReviewContent
+	{
+		return this.#cache.remember('perfReviewContent', () => {
+			return new PerfReviewContent({
+				...this.getOptions().content.perfReview,
 			});
 		});
 	}
@@ -236,6 +269,8 @@ export class Popup extends EventEmitter
 				return;
 			}
 
+			Dom.style(this.getBasePopup().getPopup().getPopupContainer(), 'overflow-y', 'hidden');
+
 			const popup = event.getTarget();
 
 			if (popup && popup.getId() === this.getBasePopup().getPopup().getId())
@@ -259,6 +294,7 @@ export class Popup extends EventEmitter
 					if (this.#popupsShowAfterBasePopup.length === 0)
 					{
 						this.getBasePopup().getPopup().setAutoHide(true);
+						Dom.style(this.getBasePopup().getPopup().getPopupContainer(), 'overflow-y', 'auto');
 						EventEmitter.emit('BX.Intranet.AvatarWidget.Popup:enabledAutoHide');
 					}
 				};

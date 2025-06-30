@@ -78,73 +78,72 @@ class Manager
 			return;
 		}
 
-		$this->siteId = Landing\Manager::getOption(self::SITE_ID_OPTION_CODE);
+		Rights::setGlobalOff();
 
-		if (!$this->siteId || !$this->landingId)
+		$optionSiteId = (int)Landing\Manager::getOption(self::SITE_ID_OPTION_CODE);
+
+		// check that exists
+		if ($optionSiteId > 0)
 		{
-			Rights::setGlobalOff();
-
-			// try find
-			$exists = (Landing\Site::getList([
-				'select' => ['ID', 'TYPE', 'ACTIVE', 'LANDING_ID_INDEX'],
+			$connectedSite = (Landing\Site::getList([
+				'select' => ['LANDING_ID_INDEX'],
 				'filter' => [
+					'=ID' => $optionSiteId,
 					'=ACTIVE' => 'Y',
 					'TYPE' => Type::SCOPE_CODE_MAINPAGE,
 					'=SPECIAL' => 'Y',
 					'CHECK_PERMISSIONS' => 'N',
 				],
+				'cache' => ['ttl' => 86400],
 			]))->fetch();
-			if ($exists && (int)$exists['ID'])
+			if ($connectedSite)
 			{
-				$this->siteId = (int)$exists['ID'];
-				if (!$this->landingId && $exists['LANDING_ID_INDEX'] > 0)
+				$this->siteId = $optionSiteId;
+				if (!$this->landingId && $connectedSite['LANDING_ID_INDEX'] > 0)
 				{
-					$this->landingId = (int)$exists['LANDING_ID_INDEX'];
+					$this->landingId = (int)$connectedSite['LANDING_ID_INDEX'];
 				}
-			}
-			else
-			{
-				$newId = $this->createDefaultSite();
-				if ($newId)
-				{
-					$this->siteId = $newId;
-					$this->landingId = null;
-				}
-			}
-
-			if ($this->siteId)
-			{
-				Landing\Manager::setOption(self::SITE_ID_OPTION_CODE, $this->siteId);
 				Rights::setGlobalOn();
 
 				return;
 			}
 		}
 
-		// check that exists
-		if ($this->siteId)
+		// try find
+		$exists = (Landing\Site::getList([
+			'select' => ['ID', 'TYPE', 'ACTIVE', 'LANDING_ID_INDEX'],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+				'TYPE' => Type::SCOPE_CODE_MAINPAGE,
+				'=SPECIAL' => 'Y',
+				'CHECK_PERMISSIONS' => 'N',
+			],
+		]))->fetch();
+		if ($exists && (int)$exists['ID'])
 		{
-			$new = Landing\Site::getList([
-				'select' => [
-					'ID',
-				],
-				'filter' => [
-					'=ID' => $this->siteId,
-					'=TYPE' => Type::SCOPE_CODE_MAINPAGE,
-					'=SPECIAL' => 'Y',
-					'CHECK_PERMISSIONS' => 'N',
-				],
-			]);
-
-			$site = $new->fetch();
-			if (!$site)
+			$this->siteId = (int)$exists['ID'];
+			if (!$this->landingId && $exists['LANDING_ID_INDEX'] > 0)
 			{
-				$this->siteId = null;
-				Landing\Manager::setOption(self::SITE_ID_OPTION_CODE, $this->siteId);
-
-				$this->detectConnectedSite();
+				$this->landingId = (int)$exists['LANDING_ID_INDEX'];
 			}
 		}
+		// create
+		else
+		{
+			$newId = $this->createDefaultSite();
+			if ($newId)
+			{
+				$this->siteId = $newId;
+				$this->landingId = null;
+			}
+		}
+
+		if ($this->siteId && $this->siteId !== $optionSiteId)
+		{
+			Landing\Manager::setOption(self::SITE_ID_OPTION_CODE, $this->siteId);
+		}
+
+		Rights::setGlobalOn();
 	}
 
 	private function createDefaultSite(): ?int
@@ -190,6 +189,7 @@ class Manager
 				'order' => [
 					'ID' => 'asc',
 				],
+				'cache' => ['ttl' => 86400],
 			]))->fetch();
 
 			if ($exists && (int)$exists['ID'])

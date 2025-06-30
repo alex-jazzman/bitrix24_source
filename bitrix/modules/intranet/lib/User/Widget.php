@@ -9,6 +9,7 @@ use Bitrix\Intranet\User\Widget\Content\Desktop;
 use Bitrix\Intranet\User\Widget\Content\Extension;
 use Bitrix\Intranet\User\Widget\Content\HcmlinkSalaryVacation;
 use Bitrix\Intranet\User\Widget\Content\Main;
+use Bitrix\Intranet\User\Widget\Content\PerfReview;
 use Bitrix\Intranet\User\Widget\Content\SignDocuments;
 use Bitrix\Intranet\User\Widget\Content\Otp;
 use Bitrix\Intranet\User\Widget\Content\QrAuth;
@@ -23,6 +24,7 @@ class Widget
 		Main::class,
 		SignDocuments::class,
 		HcmlinkSalaryVacation::class,
+		PerfReview::class,
 		Desktop::class,
 		QrAuth::class,
 		Otp::class,
@@ -61,6 +63,11 @@ class Widget
 		}
 
 		if (HcmlinkSalaryVacation::isAvailable())
+		{
+			$items[] = ['type' => 'item', 'height' => 40];
+		}
+
+		if (PerfReview::isAvailable())
 		{
 			$items[] = ['type' => 'item', 'height' => 40];
 		}

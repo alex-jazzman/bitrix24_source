@@ -146,6 +146,11 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 			return false;
 		}
 
+		if ((bool)$useSiteTemplateOption === true)
+		{
+			return false;
+		}
+
 		if (\Bitrix\Main\Loader::includeModule('intranet'))
 		{
 			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();

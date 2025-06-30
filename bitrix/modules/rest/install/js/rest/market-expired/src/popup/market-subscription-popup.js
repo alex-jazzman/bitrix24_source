@@ -14,19 +14,23 @@ export class MarketSubscriptionPopup extends MarketExpiredPopup
 
 	getTitle(): string
 	{
-		return Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_${this.type}`, {
-			'#DAYS#': this.expireDays,
-		});
+		const replacements = { '#DAYS#': this.expireDays };
+		const marketLabel = this.type === PopupType.WARNING ? this.marketLabel : '';
+
+		return Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_${this.type}${marketLabel}`, replacements);
 	}
 
 	renderDescription(): HTMLElement
 	{
+		const replacements = { '#DATE#': this.expireDate };
+		const marketLabel = this.type === PopupType.FINAL ? this.marketLabel : '';
+
 		return Tag.render`
 			<div class="rest-market-expired-popup__description">
 				<p class="rest-market-expired-popup__description-text">
-					${Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_${this.type}`, {
-						'#DATE#': this.expireDate,
-					})}
+					${
+						Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_${this.type}${marketLabel}`, replacements)
+					}
 				</p>
 			</div>
 		`;

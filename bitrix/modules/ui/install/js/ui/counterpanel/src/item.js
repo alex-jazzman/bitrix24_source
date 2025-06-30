@@ -376,7 +376,7 @@ export default class CounterItem
 	unLock(): void
 	{
 		this.locked = false;
-		Dom.remove(this.getContainer(), '--locked');
+		Dom.removeClass(this.getContainer(), '--locked');
 	}
 
 	getArrowDropdown(): HTMLElement

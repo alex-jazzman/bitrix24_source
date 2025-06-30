@@ -16,6 +16,6 @@ export type BaseButtonOptions = {
 	className?: string,
 	disabled?: boolean,
 	onclick?: (button: BaseButton, event: MouseEvent) => {},
-	events?: { [event: string]: (button: BaseButton, event: MouseEvent) => {} }
-	dataset?: { [key: string]: string }
+	events?: { [event: string]: (button: BaseButton, event: MouseEvent) => {} },
+	dataset?: { [key: string]: string },
 };

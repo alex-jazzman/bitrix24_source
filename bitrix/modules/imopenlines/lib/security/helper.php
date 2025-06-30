@@ -277,12 +277,12 @@ class Helper
 		}
 		if (isset($roleIds['CHIEF']))
 		{
-			$dbGroup = \CGroup::GetList('', '', Array("STRING_ID" => "DIRECTION"));
-			if($arGroup = $dbGroup->Fetch())
+			$groupId = \CGroup::GetIDByCode("DIRECTION");
+			if ($groupId)
 			{
 				\Bitrix\ImOpenlines\Model\RoleAccessTable::add(array(
 					'ROLE_ID' => $roleIds['CHIEF'],
-					'ACCESS_CODE' => 'G'.$arGroup["ID"]
+					'ACCESS_CODE' => 'G' . $groupId
 				));
 			}
 		}

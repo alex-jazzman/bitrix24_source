@@ -1,9 +1,13 @@
 <?php
 
-use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Intranet\Enum\InvitationMessageType;
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
+use Bitrix\Intranet\Internal\Factory\Message\CollabJoinMessageFactory;
+use Bitrix\Intranet\Repository\UserRepository;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Event;
 use Bitrix\Intranet\Internals\InvitationTable;
+use Bitrix\Main\UserTable;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -1026,12 +1030,32 @@ class CIntranetEventHandlers
 			InvitationTable::update($invitationFields['ID'], [
 				'INITIALIZED' => 'Y'
 			]);
+
+			$user = (new UserRepository())->getUserById($userId);
+			if ($user->isCollaber())
+			{
+				static::sendCollabMail($user);
+			}
 		}
 
 		(new \Bitrix\Main\Event('intranet', 'onUserFirstInitialization', [
 			'invitationFields' => $invitationFields,
 			'userId' => $userId
 		]))->send();
+	}
+
+	private static function sendCollabMail(Bitrix\Intranet\Entity\User $user): void
+	{
+		$userCollab = (new CollabProviderData())->getUserCollabCollection($user);
+		foreach ($userCollab as $collab)
+		{
+			(new CollabJoinMessageFactory(
+				$user,
+				$collab
+			))
+				->createEmailEvent()
+				->sendImmediately();
+		}
 	}
 
 	public static function OnAfterUserAdd($arUser)

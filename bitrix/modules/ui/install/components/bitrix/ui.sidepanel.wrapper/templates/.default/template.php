@@ -251,6 +251,7 @@ $showToolbar = $arParams['USE_UI_TOOLBAR'] || (!$arParams['HIDE_TOOLBAR'] && !$a
 						<?php $APPLICATION->ShowViewContent("inside_pagetitle"); ?>
 					</div>
 				</div>
+				<script>console.error('Side Panel Wrapper: do not use an old toolbar.')</script>
 				<?php
 			}
 			else

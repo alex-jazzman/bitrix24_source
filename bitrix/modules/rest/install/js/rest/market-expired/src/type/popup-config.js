@@ -9,6 +9,7 @@ export type PopupConfig = {
 	marketSubscriptionUrl: string,
 	withDemo: boolean,
 	olWidgetCode: ?string,
+	isRenamedMarket: boolean,
 	discount: {
 		isAvailable: boolean,
 		percentage: ?number,

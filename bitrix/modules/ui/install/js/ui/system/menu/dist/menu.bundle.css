@@ -282,6 +282,20 @@
 
 
 
+/* ui-popup-menu-item-counter */
+.ui-popup-menu-item-counter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+}
+
+.ui-popup-menu-item.--disabled .ui-popup-menu-item-counter {
+	display: none;
+}
+
+
+
 /* ui-popup-menu-item-lock */
 .ui-popup-menu-item-lock {
 	display: flex;

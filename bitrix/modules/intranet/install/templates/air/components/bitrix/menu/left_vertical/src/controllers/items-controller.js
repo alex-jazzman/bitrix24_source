@@ -13,6 +13,7 @@ import Backend from "../backend";
 import ItemAdminCustom from "../items/item-admin-custom";
 import {Menu, MenuItem} from 'main.popup';
 import ItemGroup from "../items/item-group";
+import { Counter } from 'ui.cnt';
 
 export default class ItemsController extends DefaultController{
 	parentContainer: Element;
@@ -337,10 +338,13 @@ export default class ItemsController extends DefaultController{
 	#recalculateCounters(item: Item)
 	{
 		let counterValue = 0;
-		if (item.container.querySelector('[data-role="counter"]'))
+		const counter = Counter.initFromCounterNode(item.container.querySelector(`.${Counter.BaseClassname}`));
+
+		if (counter)
 		{
-			counterValue = item.container.querySelector('[data-role="counter"]').dataset.counterValue;
+			counterValue = counter.getRealValue();
 		}
+
 		if (counterValue <= 0)
 		{
 			return;
@@ -359,26 +363,18 @@ export default class ItemsController extends DefaultController{
 		[...this.parentContainer
 			.querySelectorAll(`.menu-item-block[data-status="hide"][data-role='item']`)
 		].forEach((node) => {
-				const counterNode = node.querySelector('[data-role="counter"]');
-				if (counterNode)
-				{
-					hiddenCounterValue += parseInt(counterNode.dataset.counterValue);
-				}
-			})
-		;
+			const hiddenMenuItemCounter = Counter.initFromCounterNode(node.querySelector(`.${Counter.BaseClassname}`));
 
-		const hiddenCounterNode = this.parentContainer.querySelector('#menu-hidden-counter');
-		hiddenCounterNode.dataset.counterValue = Math.max(0, hiddenCounterValue);
-		if (hiddenCounterNode.dataset.counterValue > 0)
-		{
-			hiddenCounterNode.classList.remove('menu-hidden-counter');
-			hiddenCounterNode.innerHTML = hiddenCounterNode.dataset.counterValue > 99 ? '99+' : hiddenCounterNode.dataset.counterValue;
-		}
-		else
-		{
-			hiddenCounterNode.classList.add('menu-hidden-counter');
-			hiddenCounterNode.innerHTML = '';
-		}
+			if (hiddenMenuItemCounter)
+			{
+				hiddenCounterValue += hiddenMenuItemCounter.getRealValue();
+			}
+		});
+
+		Counter.updateCounterNodeValue(
+			Counter.initFromCounterNode(this.parentContainer.querySelector('#menu-hidden-counter')),
+			hiddenCounterValue,
+		);
 	}
 
 	#refreshActivity(item: Item, oldParent:? ItemGroup)
@@ -474,7 +470,7 @@ export default class ItemsController extends DefaultController{
 							let counterId = 'doesNotMatter';
 							if (id.indexOf('menu_crm') >= 0 || id.indexOf('menu_tasks') >= 0)
 							{
-								const counterNode = item.container.querySelector('[data-role="counter"]');
+								const counterNode = item.container.querySelector(`.${Counter.BaseClassname}`);
 								if (counterNode)
 								{
 									counterId = counterNode.id;
@@ -541,12 +537,14 @@ export default class ItemsController extends DefaultController{
 		const result = [];
 		[...this.items.values()]
 			.forEach((item: Item) => {
-				const node = item.container.querySelector('[data-role="counter"]');
-				if (node && node.id.indexOf(counterId) >= 0)
+				const counter = Counter.initFromCounterNode(item.container.querySelector(`.${Counter.BaseClassname}`));
+
+				if (counter && counter.getId().includes(counterId))
 				{
 					result.push(item);
 				}
 			});
+
 		return result;
 	}
 

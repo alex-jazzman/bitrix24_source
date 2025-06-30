@@ -38,6 +38,7 @@
 	position: relative;
 	top: 3px;
 	mask-image: var(--o-ui-icon-set__path_pin);
+	-webkit-mask-image: var(--o-ui-icon-set__path_pin);
 	mask-size: contain;
 	mask-position: center;
 	mask-repeat: no-repeat;
@@ -47,6 +48,7 @@
 
 .ui-toolbar.--air .ui-toolbar-star-active {
 	mask-image: var(--o-ui-icon-set__path_unpin);
+	-webkit-mask-image: var(--o-ui-icon-set__path_unpin);
 }
 
 .ui-toolbar.--air .ui-toolbar-title-item-box-buttons {
@@ -63,11 +65,17 @@
 }
 
 .ui-toolbar.--air .ui-toolbar-filter-box .main-ui-filter-search {
-	flex-grow: revert;
+	flex-grow: 0;
 	flex-shrink: 1;
 	flex-basis: auto;
 	min-width: 300px;
 	max-width: 748px;
+	transition: 0.2s flex-grow ease-in-out;
+}
+
+.ui-toolbar.--air .ui-toolbar-filter-box .main-ui-filter-search:focus-within,
+.ui-toolbar.--air .ui-toolbar-filter-box .main-ui-filter-search--showed {
+	flex-grow: 1;
 }
 
 .ui-toolbar.--air .ui-toolbar-after-title-box {

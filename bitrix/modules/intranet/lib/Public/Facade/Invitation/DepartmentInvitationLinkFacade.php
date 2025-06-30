@@ -13,9 +13,11 @@ use Bitrix\Intranet\Internal\Access\InvitationLinkPermission;
 use Bitrix\Intranet\Repository\HrDepartmentRepository;
 use Bitrix\Main\AccessDeniedException;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Event;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\EventManager;
 
 class DepartmentInvitationLinkFacade extends InvitationLinkFacade
 {
@@ -32,6 +34,12 @@ class DepartmentInvitationLinkFacade extends InvitationLinkFacade
 		$this->departmentRepository = new HrDepartmentRepository();
 		$this->permission = new PermissionInvitation($this->getInvitingUserId());
 		$this->linkPermission = new InvitationLinkPermission();
+
+		EventManager::getInstance()->addEventHandlerCompatible(
+			'main',
+			'OnAfterUserAdd',
+			[$this, 'onAfterUserRegistration'],
+		);
 	}
 
 	public function isActual(): bool
@@ -84,22 +92,9 @@ class DepartmentInvitationLinkFacade extends InvitationLinkFacade
 		}
 	}
 
-	/**
-	 * @throws SystemException
-	 */
 	protected function afterRegister(User $user): User
 	{
-		(new DepartmentAssigner($this->filteredByPermissionDepartmentCollection()))->assignUsers(
-			new UserCollection($user),
-		);
-
 		return $user;
-	}
-
-	public function onBeforeUserRegister(array &$data): void
-	{
-		$data['SITE_ID'] = SITE_ID;
-		$data['UF_DEPARTMENT'] = null;
 	}
 
 	/**
@@ -107,4 +102,20 @@ class DepartmentInvitationLinkFacade extends InvitationLinkFacade
 	 * @throws SystemException
 	 * @throws ArgumentException
 	 */
+	public function onAfterUserRegistration($fields): void
+	{
+		if (!is_array($fields) || empty($fields['ID']))
+		{
+			return;
+		}
+		$user = User::initByArray($fields);
+		$departmentAssigner = new DepartmentAssigner($this->filteredByPermissionDepartmentCollection());
+		$departmentAssigner->assignUser($user);
+	}
+
+	public function onBeforeUserRegister(array &$data): void
+	{
+		$data['SITE_ID'] = SITE_ID;
+		$data['UF_DEPARTMENT'] = null;
+	}
 }

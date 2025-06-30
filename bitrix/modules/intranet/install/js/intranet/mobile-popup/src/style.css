@@ -3,10 +3,6 @@
 	font-family: var(--ui-font-face-montserrat);
 }
 
-.intranet-mobile-popup-wrapper {
-	touch-action: manipulation;
-}
-
 @media (min-width: 768px) {
 	.intranet-mobile-popup {
 		padding: 28px;
@@ -98,5 +94,4 @@
 
 .popup-window-overlay {
 	opacity: 0.95;
-	touch-action: manipulation;
 }

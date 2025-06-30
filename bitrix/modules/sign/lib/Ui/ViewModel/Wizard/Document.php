@@ -4,6 +4,7 @@ namespace Bitrix\Sign\Ui\ViewModel\Wizard;
 
 use Bitrix\Main\Type\Contract\Arrayable;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\Integration\HumanResources\HcmLinkService;
 use Bitrix\Sign\Service\Sign\BlankService;
 use Bitrix\Sign\Type\ProviderCode;
 
@@ -11,15 +12,24 @@ final class Document implements Arrayable
 {
 	private \Bitrix\Sign\Item\Document $document;
 	private readonly BlankService $blankService;
+	private readonly HcmLinkService $hcmLinkService;
 
 	public function __construct(\Bitrix\Sign\Item\Document $document)
 	{
 		$this->document = $document;
 		$this->blankService = Container::instance()->getSignBlankService();
+		$this->hcmLinkService = Container::instance()->getHcmLinkService();
 	}
 
 	public function toArray(): array
 	{
+		$hcmLinkCompanyId = null;
+		$documentHcmLinkCompanyId = (int)$this->document->hcmLinkCompanyId;
+		if ($documentHcmLinkCompanyId > 0 && $this->hcmLinkService->isCompanyExistWithId($documentHcmLinkCompanyId))
+		{
+			$hcmLinkCompanyId = $documentHcmLinkCompanyId;
+		}
+
 		return [
 			'id' => $this->document->id,
 			'blankId' => $this->document->blankId,
@@ -52,7 +62,7 @@ final class Document implements Arrayable
 			'groupId' => $this->document->groupId,
 			'createdFromDocumentId' => $this->document->createdFromDocumentId,
 			'initiatedByType' => $this->document->initiatedByType,
-			'hcmLinkCompanyId' => $this->document->hcmLinkCompanyId,
+			'hcmLinkCompanyId' => $hcmLinkCompanyId,
 			'dateStatusChanged' => $this->document->dateStatusChanged,
 			'dateSignUntil' => $this->document->dateSignUntil,
 			'previewUrl' => $this->blankService->getPreviewUrl((int)$this->document->blankId),

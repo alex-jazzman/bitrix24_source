@@ -7,4 +7,3 @@ $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_DESC_UNAVAILABLE"] = "Бұл уақытш�
 $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_LINK"] = "Толығырақ";
 $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_MSGVER_1"] = "Есепті қалыптастыру...";
 $MESS["SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_UNAVAILABLE"] = "Есеп қолжетімсіз";
-$MESS["SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE"] = "Сіз бұл есепті тек таңдалған көріну аймақтарынан көре аласыз";

@@ -68,3 +68,8 @@
 	margin-left: 3px;
 	max-width: 200px;
 }
+
+.ui-access-rights-v2-section-action {
+	margin-left: 12px;
+	cursor: pointer;
+}

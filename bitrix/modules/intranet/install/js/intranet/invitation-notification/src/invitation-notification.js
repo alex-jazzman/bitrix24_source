@@ -30,6 +30,8 @@ export class InvitationNotification
 
 	createNotificationBalloon(onDone: Function): BX.UI.Notification.Balloon
 	{
+		const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
+
 		return PopupManager.create({
 			id: 'push-invitations',
 			className: 'popup-window-dark',
@@ -41,7 +43,7 @@ export class InvitationNotification
 			borderRadius: 20,
 			contentPadding: 0,
 			offsetTop: 10,
-			offsetLeft: -277,
+			offsetLeft: isAirTemplate ? -310 : -277,
 			angle: {
 				offset: 360,
 				position: 'top',
@@ -142,7 +144,7 @@ export class InvitationNotification
 
 				if (isReInviteNotification)
 				{
-					window.location.href = '/company/?apply_filter=Y&INVITED=Y';
+					window.location.href = '/company/?INVITED=Y';
 				}
 				else
 				{

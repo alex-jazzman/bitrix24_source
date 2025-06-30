@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
-(function (exports,main_core_events,ui_dialogs_messagebox,ui_buttons,ui_vue3_components_popup,ui_entitySelector,ui_vue3,ui_vue3_directives_hint,ui_vue3_components_switcher,main_popup,ui_ears,ui_hint,ui_vue3_components_richMenu,ui_notification,ui_analytics,ui_vue3_vuex,main_core) {
+(function (exports,ui_dialogs_messagebox,ui_iconSet_api_vue,ui_buttons,ui_vue3_components_popup,ui_entitySelector,ui_vue3,ui_vue3_directives_hint,ui_vue3_components_switcher,main_popup,ui_ears,ui_hint,ui_vue3_components_richMenu,ui_notification,ui_analytics,ui_vue3_vuex,main_core_events,main_core) {
 	'use strict';
 
 	/**
@@ -222,10 +222,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        return ['user-groups', accessCode];
 	      }
 	      if (/^SG(\d+)_([AEK])$/.test(accessCode)) {
-	        const match = accessCode.match(/^SG(\d+)_([AEK])$/) || null;
-	        const projectId = match ? match[1] : null;
-	        const postfix = match ? match[2] : null;
-	        return ['project', `${projectId}:${postfix}`];
+	        return ['project-access-codes', accessCode];
 	      }
 	      if (/^SNT(\d+)$/.test(accessCode)) {
 	        const match = accessCode.match(/^SNT(\d+)$/) || null;
@@ -297,18 +294,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      if (entityId === 'user-groups') {
 	        return item.id;
 	      }
-	      if (entityId === 'project') {
-	        const subType = item.customData.get('metauser');
-	        const originalId = item.customData.get('projectId');
-	        if (subType === 'owner') {
-	          return `SG${originalId}_A`;
-	        }
-	        if (subType === 'moderator') {
-	          return `SG${originalId}_E`;
-	        }
-	        if (subType === 'all') {
-	          return `SG${originalId}_K`;
-	        }
+	      if (entityId === 'project-access-codes') {
+	        return item.id;
 	      }
 	      return '';
 	    },
@@ -320,7 +307,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        case 'department':
 	          return 'departments';
 	        case 'socnetgroup':
-	        case 'project':
+	        case 'project-access-codes':
 	          return 'sonetgroups';
 	        case 'group':
 	          return 'groups';
@@ -372,17 +359,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      }
 	      if (this.addProjectsProviderTab) {
 	        entities.push({
-	          id: 'project',
-	          dynamicLoad: true,
-	          options: {
-	            addProjectMetaUsers: true
-	          },
-	          itemOptions: {
-	            default: {
-	              link: '',
-	              linkTitle: ''
-	            }
-	          }
+	          id: 'project-access-codes'
 	        });
 	      }
 	      if (this.addUserGroupsProviderTab) {
@@ -1295,6 +1272,179 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  return compileAliasKey(parsed, separator);
 	}
 
+	var _internalizeExternalSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalSection");
+	var _internalizeExternalIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalIcon");
+	var _internalizeExternalSectionAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalSectionAction");
+	var _internalizeSelectedVariablesAliases = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeSelectedVariablesAliases");
+	var _internalizeValueSet = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeValueSet");
+	var _internalizeSetEmptyOnSetMinMaxValueInColumn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeSetEmptyOnSetMinMaxValueInColumn");
+	var _internalizeExternalVariable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalVariable");
+	class AccessRightsInternalizer {
+	  constructor() {
+	    Object.defineProperty(this, _internalizeExternalVariable, {
+	      value: _internalizeExternalVariable2
+	    });
+	    Object.defineProperty(this, _internalizeSetEmptyOnSetMinMaxValueInColumn, {
+	      value: _internalizeSetEmptyOnSetMinMaxValueInColumn2
+	    });
+	    Object.defineProperty(this, _internalizeValueSet, {
+	      value: _internalizeValueSet2
+	    });
+	    Object.defineProperty(this, _internalizeSelectedVariablesAliases, {
+	      value: _internalizeSelectedVariablesAliases2
+	    });
+	    Object.defineProperty(this, _internalizeExternalSectionAction, {
+	      value: _internalizeExternalSectionAction2
+	    });
+	    Object.defineProperty(this, _internalizeExternalIcon, {
+	      value: _internalizeExternalIcon2
+	    });
+	    Object.defineProperty(this, _internalizeExternalSection, {
+	      value: _internalizeExternalSection2
+	    });
+	  }
+	  transform(externalSource) {
+	    const result = new Map();
+	    for (const external of externalSource) {
+	      const internalized = babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalSection)[_internalizeExternalSection](external);
+	      result.set(internalized.sectionCode, internalized);
+	    }
+	    return result;
+	  }
+	  internalizeExternalItem(externalItem) {
+	    const [aliases, separator] = babelHelpers.classPrivateFieldLooseBase(this, _internalizeSelectedVariablesAliases)[_internalizeSelectedVariablesAliases](externalItem.selectedVariablesAliases);
+	    const normalizedItem = {
+	      id: String(externalItem.id),
+	      type: String(externalItem.type),
+	      title: String(externalItem.title),
+	      subtitle: main_core.Type.isStringFilled(externalItem.subtitle) ? externalItem.subtitle : null,
+	      hint: main_core.Type.isStringFilled(externalItem.hint) ? externalItem.hint : null,
+	      group: main_core.Type.isNil(externalItem.group) ? null : String(externalItem.group),
+	      groupHead: main_core.Type.isBoolean(externalItem.groupHead) ? externalItem.groupHead : false,
+	      isShown: true,
+	      minValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.minValue),
+	      maxValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.maxValue),
+	      defaultValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.defaultValue),
+	      emptyValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.emptyValue),
+	      nothingSelectedValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.nothingSelectedValue),
+	      setEmptyOnSetMinMaxValueInColumn: babelHelpers.classPrivateFieldLooseBase(this, _internalizeSetEmptyOnSetMinMaxValueInColumn)[_internalizeSetEmptyOnSetMinMaxValueInColumn](externalItem),
+	      variables: main_core.Type.isArray(externalItem.variables) || main_core.Type.isMap(externalItem.variables) ? new Map() : null,
+	      allSelectedCode: main_core.Type.isStringFilled(externalItem.allSelectedCode) ? externalItem.allSelectedCode : null,
+	      selectedVariablesAliases: aliases,
+	      selectedVariablesAliasesSeparator: separator,
+	      enableSearch: main_core.Type.isBoolean(externalItem.enableSearch) ? externalItem.enableSearch : null,
+	      showAvatars: main_core.Type.isBoolean(externalItem.showAvatars) ? externalItem.showAvatars : null,
+	      compactView: main_core.Type.isBoolean(externalItem.compactView) ? externalItem.compactView : null,
+	      hintTitle: main_core.Type.isStringFilled(externalItem.hintTitle) ? externalItem.hintTitle : null,
+	      dependentVariablesPopupHint: main_core.Type.isStringFilled(externalItem.dependentVariablesPopupHint) ? externalItem.dependentVariablesPopupHint : null,
+	      iconClass: main_core.Type.isStringFilled(externalItem.iconClass) ? externalItem.iconClass : null,
+	      isClickable: main_core.Type.isBoolean(externalItem.isClickable) ? externalItem.isClickable : false,
+	      isDeletable: main_core.Type.isBoolean(externalItem.isDeletable) ? externalItem.isDeletable : false,
+	      isNew: main_core.Type.isBoolean(externalItem.isNew) ? externalItem.isNew : false,
+	      isModified: main_core.Type.isBoolean(externalItem.isModified) ? externalItem.isModified : false
+	    };
+	    if (normalizedItem.groupHead || normalizedItem.group) {
+	      normalizedItem.isGroupExpanded = false;
+	    }
+	    if (main_core.Type.isArray(externalItem.variables)) {
+	      for (const variable of externalItem.variables) {
+	        const normalizedVariable = babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalVariable)[_internalizeExternalVariable](variable);
+	        normalizedItem.variables.set(normalizedVariable.id, normalizedVariable);
+	      }
+	    } else if (main_core.Type.isMap(externalItem.variables)) {
+	      for (const variable of externalItem.variables.values()) {
+	        const normalizedVariable = babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalVariable)[_internalizeExternalVariable](variable);
+	        normalizedItem.variables.set(normalizedVariable.id, normalizedVariable);
+	      }
+	    }
+	    return normalizedItem;
+	  }
+	}
+	function _internalizeExternalSection2(externalSection) {
+	  const internalizedSection = {
+	    sectionCode: main_core.Type.isStringFilled(externalSection.sectionCode) ? externalSection.sectionCode : main_core.Text.getRandom(),
+	    sectionTitle: String(externalSection.sectionTitle),
+	    sectionSubTitle: main_core.Type.isStringFilled(externalSection.sectionSubTitle) ? externalSection.sectionSubTitle : null,
+	    sectionHint: main_core.Type.isStringFilled(externalSection.sectionHint) ? externalSection.sectionHint : null,
+	    sectionIcon: babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalIcon)[_internalizeExternalIcon](externalSection.sectionIcon),
+	    rights: new Map(),
+	    isExpanded: true,
+	    isShown: true,
+	    action: babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalSectionAction)[_internalizeExternalSectionAction](externalSection.action)
+	  };
+	  for (const externalItem of externalSection.rights) {
+	    const internalizedItem = this.internalizeExternalItem(externalItem);
+	    internalizedSection.rights.set(internalizedItem.id, internalizedItem);
+	  }
+	  return internalizedSection;
+	}
+	function _internalizeExternalIcon2(externalIcon) {
+	  if (main_core.Type.isStringFilled(externalIcon == null ? void 0 : externalIcon.type) && main_core.Type.isStringFilled(externalIcon == null ? void 0 : externalIcon.bgColor)) {
+	    return {
+	      type: externalIcon.type,
+	      bgColor: externalIcon.bgColor
+	    };
+	  }
+	  return null;
+	}
+	function _internalizeExternalSectionAction2(externalSectionAction) {
+	  if (main_core.Type.isStringFilled(externalSectionAction == null ? void 0 : externalSectionAction.buttonText)) {
+	    return {
+	      buttonText: externalSectionAction.buttonText
+	    };
+	  }
+	  return null;
+	}
+	function _internalizeSelectedVariablesAliases2(externalAliases) {
+	  if (!main_core.Type.isPlainObject(externalAliases)) {
+	    return [new Map(), DEFAULT_ALIAS_SEPARATOR];
+	  }
+	  const separator = main_core.Type.isString(externalAliases.separator) ? externalAliases.separator : DEFAULT_ALIAS_SEPARATOR;
+	  const result = new Map();
+	  for (const [key, value] of Object.entries(externalAliases)) {
+	    if (key === 'separator') {
+	      continue;
+	    }
+	    result.set(normalizeAliasKey(key, separator), String(value));
+	  }
+	  return [result, separator];
+	}
+	function _internalizeValueSet2(value) {
+	  if (main_core.Type.isNil(value)) {
+	    return null;
+	  }
+	  if (main_core.Type.isArray(value)) {
+	    return new Set(value.map(item => String(item)));
+	  }
+	  if (main_core.Type.isSet(value)) {
+	    return new Set(Array.from(value, item => String(item)));
+	  }
+	  return new Set([String(value)]);
+	}
+	function _internalizeSetEmptyOnSetMinMaxValueInColumn2(externalItem) {
+	  const boolOrNull = x => main_core.Type.isBoolean(x) ? x : null;
+	  if (!main_core.Type.isUndefined(externalItem.setEmptyOnSetMinMaxValueInColumn)) {
+	    return boolOrNull(externalItem.setEmptyOnSetMinMaxValueInColumn);
+	  }
+
+	  // todo compatibility, can be removed when crm update is out
+	  return boolOrNull(externalItem.setEmptyOnGroupActions);
+	}
+	function _internalizeExternalVariable2(externalVariable) {
+	  return {
+	    id: String(externalVariable.id),
+	    title: String(externalVariable.title),
+	    entityId: main_core.Type.isStringFilled(externalVariable.entityId) ? externalVariable.entityId : null,
+	    supertitle: main_core.Type.isStringFilled(externalVariable.supertitle) ? externalVariable.supertitle : null,
+	    avatar: main_core.Type.isStringFilled(externalVariable.avatar) ? externalVariable.avatar : null,
+	    avatarOptions: main_core.Type.isPlainObject(externalVariable.avatarOptions) ? externalVariable.avatarOptions : null,
+	    conflictsWith: main_core.Type.isArray(externalVariable.conflictsWith) ? new Set(externalVariable.conflictsWith.map(x => String(x))) : null,
+	    requires: main_core.Type.isArray(externalVariable.requires) ? new Set(externalVariable.requires.map(x => String(x))) : null,
+	    secondary: main_core.Type.isBoolean(externalVariable.secondary) ? externalVariable.secondary : null,
+	    hint: main_core.Type.isStringFilled(externalVariable.hint) ? externalVariable.hint : null
+	  };
+	}
+
 	var _initialRights = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initialRights");
 	var _searchAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchAction");
 	class AccessRightsModel extends ui_vue3_vuex.BuilderModel {
@@ -1318,12 +1468,15 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  getState() {
 	    return {
 	      collection: main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(this, _initialRights)[_initialRights]),
-	      searchQuery: ''
+	      searchQuery: '',
+	      deleted: new Set()
 	    };
 	  }
 	  getElementState(params = {}) {
 	    throw new Error('Cant create AccessRightSection. You are doing something wrong');
 	  }
+
+	  // eslint-disable-next-line max-lines-per-function
 	  getGetters() {
 	    return {
 	      shown: state => {
@@ -1402,6 +1555,19 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        }
 	        const key = compileAliasKey(values, item.selectedVariablesAliasesSeparator);
 	        return item.selectedVariablesAliases.get(key);
+	      },
+	      isModified: state => {
+	        if (state.deleted.size > 0) {
+	          return true;
+	        }
+	        for (const section of state.collection.values()) {
+	          for (const rightItem of section.rights.values()) {
+	            if (rightItem.isNew || rightItem.isModified) {
+	              return true;
+	            }
+	          }
+	        }
+	        return false;
 	      }
 	    };
 	  }
@@ -1459,11 +1625,179 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      },
 	      search: (store, payload) => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _searchAction)[_searchAction](store, payload);
+	      },
+	      addRight: (store, {
+	        sectionCode,
+	        right
+	      }) => {
+	        if (!store.state.collection.has(sectionCode)) {
+	          console.warn('ui.accessrights.v2: Adding right to section that doesn`t exists', {
+	            sectionCode
+	          });
+	          return;
+	        }
+	        const section = store.state.collection.get(sectionCode);
+	        if (section) {
+	          const internalRight = new AccessRightsInternalizer().internalizeExternalItem(right);
+	          store.commit('expandSection', {
+	            sectionCode
+	          });
+	          store.commit('addRight', {
+	            sectionCode,
+	            right: internalRight
+	          });
+	        }
+	      },
+	      updateRightTitle: (store, {
+	        sectionCode,
+	        rightId,
+	        rightTitle
+	      }) => {
+	        if (!store.state.collection.has(sectionCode)) {
+	          console.warn('ui.accessrights.v2: Updating right in section that doesn`t exists', {
+	            sectionCode
+	          });
+	          return;
+	        }
+	        const section = store.state.collection.get(sectionCode);
+	        if (!section.rights.has(rightId)) {
+	          console.warn('ui.accessrights.v2: Updating right that doesn`t exists', {
+	            rightId
+	          });
+	          return;
+	        }
+	        store.commit('expandSection', {
+	          sectionCode
+	        });
+	        store.commit('setRightTitle', {
+	          sectionCode,
+	          rightId,
+	          title: rightTitle
+	        });
+	      },
+	      updateRightSubtitle: (store, {
+	        sectionCode,
+	        rightId,
+	        rightSubtitle
+	      }) => {
+	        if (!store.state.collection.has(sectionCode)) {
+	          console.warn('ui.accessrights.v2: Updating right in section that doesn`t exists', {
+	            sectionCode
+	          });
+	          return;
+	        }
+	        const section = store.state.collection.get(sectionCode);
+	        if (!section.rights.has(rightId)) {
+	          console.warn('ui.accessrights.v2: Updating right that doesn`t exists', {
+	            rightId
+	          });
+	          return;
+	        }
+	        store.commit('expandSection', {
+	          sectionCode
+	        });
+	        store.commit('setRightSubtitle', {
+	          sectionCode,
+	          rightId,
+	          subtitle: rightSubtitle
+	        });
+	      },
+	      deleteRight: (store, {
+	        sectionCode,
+	        rightId
+	      }) => {
+	        if (!store.state.collection.has(sectionCode)) {
+	          console.warn('ui.accessrights.v2: Deleting right in section that doesn`t exists', {
+	            sectionCode
+	          });
+	          return;
+	        }
+	        const section = store.state.collection.get(sectionCode);
+	        if (!section.rights.has(rightId)) {
+	          console.warn('ui.accessrights.v2: Deleting right that doesn`t exists', {
+	            rightId
+	          });
+	          return;
+	        }
+	        store.commit('expandSection', {
+	          sectionCode
+	        });
+	        store.commit('deleteRight', {
+	          sectionCode,
+	          rightId
+	        });
+	      },
+	      markRightAsModified: (store, {
+	        sectionCode,
+	        rightId,
+	        isModified
+	      }) => {
+	        if (!store.state.collection.has(sectionCode)) {
+	          console.warn('ui.accessrights.v2: Updating right in section that doesn`t exists', {
+	            sectionCode
+	          });
+	          return;
+	        }
+	        const section = store.state.collection.get(sectionCode);
+	        if (!section.rights.has(rightId)) {
+	          console.warn('ui.accessrights.v2: Updating right that doesn`t exists', {
+	            rightId
+	          });
+	          return;
+	        }
+	        store.commit('expandSection', {
+	          sectionCode
+	        });
+	        store.commit('markRightAsModified', {
+	          sectionCode,
+	          rightId,
+	          isModified
+	        });
 	      }
 	    };
 	  }
+	  // eslint-disable-next-line max-lines-per-function
 	  getMutations() {
 	    return {
+	      addRight: (state, {
+	        sectionCode,
+	        right
+	      }) => {
+	        const section = state.collection.get(sectionCode);
+	        section.rights.set(right.id, right);
+	      },
+	      setRightTitle: (state, {
+	        sectionCode,
+	        rightId,
+	        title
+	      }) => {
+	        const section = state.collection.get(sectionCode);
+	        section.rights.get(rightId).title = title;
+	      },
+	      setRightSubtitle: (state, {
+	        sectionCode,
+	        rightId,
+	        subtitle
+	      }) => {
+	        const section = state.collection.get(sectionCode);
+	        section.rights.get(rightId).subtitle = subtitle;
+	      },
+	      deleteRight: (state, {
+	        sectionCode,
+	        rightId
+	      }) => {
+	        const section = state.collection.get(sectionCode);
+	        section.rights.delete(rightId);
+	        state.deleted.add(rightId);
+	      },
+	      markRightAsModified: (state, {
+	        sectionCode,
+	        rightId,
+	        isModified
+	      }) => {
+	        const section = state.collection.get(sectionCode);
+	        section.rights.get(rightId).isModified = isModified;
+	      },
 	      toggleSection: (state, {
 	        sectionCode
 	      }) => {
@@ -1948,7 +2282,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  emits: ['apply'],
 	  components: {
 	    Switcher: ui_vue3_components_switcher.Switcher,
-	    PopupHeader
+	    PopupHeader,
+	    Icon: ui_iconSet_api_vue.BIcon
+	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
 	  },
 	  props: {
 	    // value for selector is id of a selected variable
@@ -2006,6 +2344,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        size: 'extra-small',
 	        color: 'green'
 	      };
+	    },
+	    iconSet() {
+	      return ui_iconSet_api_vue.Set;
 	    }
 	  },
 	  mounted() {
@@ -2088,6 +2429,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        }
 	      });
 	      return result;
+	    },
+	    getVariableHintOptions(variable) {
+	      return {
+	        text: variable.hint,
+	        popupOptions: {
+	          bindOptions: {
+	            position: 'bottom'
+	          },
+	          width: 262,
+	          angle: {
+	            position: 'top',
+	            offset: 33
+	          }
+	        }
+	      };
 	    }
 	  },
 	  // data attributes are needed for e2e automated tests
@@ -2106,7 +2462,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					:key="variableId"
 					class="ui-access-rights-v2-dv-popup--line"
 				>
-					<span class="ui-access-rights-v2-text-ellipsis" :title="variable.title">{{ variable.title }}</span>
+					<div class="ui-access-rights-v2-dv-popup--line-title">
+						<span class="ui-access-rights-v2-text-ellipsis" :title="variable.title">{{ variable.title }}</span>
+						<Icon v-if="variable.hint" :name="iconSet.INFO_1" :color="'var(--ui-color-palette-gray-40)'" :size="20" v-hint="getVariableHintOptions(variable)"></Icon>
+					</div>
 					<Switcher
 						:is-checked="notSavedValues.has(variable.id)"
 						@check="addValue(variable.id)"
@@ -2130,6 +2489,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					/>
 					<span class="ui-access-rights-v2-text-ellipsis">{{ variable.title }}</span>
 				</div>
+			</div>
+			<div
+				v-if="right.dependentVariablesPopupHint"
+				class="ui-access-rights-v2-dv-popup--hint"
+			>
+				<Icon :name="iconSet.INFO_1" :color="'var(--ui-color-palette-gray-40)'" :size="20"></Icon>
+				<span>{{ right.dependentVariablesPopupHint }}</span>
 			</div>
 		</div>
 	`
@@ -3202,6 +3568,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      this.$store.dispatch('accessRights/toggleSection', {
 	        sectionCode: this.section.sectionCode
 	      });
+	    },
+	    onSectionEventButtonClick() {
+	      const eventData = {
+	        guid: this.$store.getters['application/guid'],
+	        section: this.section
+	      };
+	      main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:onSectionHeaderClick', eventData);
 	    }
 	  },
 	  template: `
@@ -3233,6 +3606,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				{{ section.sectionSubTitle }}
 			</span>
 			<Hint v-if="section.sectionHint" :html="section.sectionHint"/>
+			<span 
+				v-if="section.action"
+				class="ui-btn ui-btn-light-border ui-btn-xs ui-access-rights-v2-section-action"
+				@click.stop="onSectionEventButtonClick"
+			>{{ section.action.buttonText }}</span>
 		</div>
 	`
 	};
@@ -3302,6 +3680,15 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    isRowValueConfigurable() {
 	      var _ServiceLocator$getVa, _ServiceLocator$getVa2;
 	      return (_ServiceLocator$getVa = (_ServiceLocator$getVa2 = ServiceLocator.getValueTypeByRight(this.right)) == null ? void 0 : _ServiceLocator$getVa2.isRowValueConfigurable()) != null ? _ServiceLocator$getVa : false;
+	    },
+	    isRightDeletable() {
+	      return this.right.isDeletable;
+	    },
+	    rightCellStyle() {
+	      return {
+	        'margin-left': !this.right.groupHead && !this.right.group && !this.right.iconClass ? '23px' : null,
+	        'max-width': this.right.iconClass ? 'calc(100% - 52px)' : 'auto'
+	      };
 	    }
 	  },
 	  methods: {
@@ -3336,6 +3723,26 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    openRowValue() {
 	      this.isMenuShown = false;
 	      this.isRowValueShown = true;
+	    },
+	    onRightClick() {
+	      const eventData = {
+	        guid: this.$store.getters['application/guid'],
+	        right: this.right
+	      };
+	      main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:onRightClick', eventData);
+	    },
+	    deleteRight() {
+	      this.$store.dispatch('userGroups/deleteRight', {
+	        rightId: this.right.id
+	      });
+	      this.$store.dispatch('accessRights/deleteRight', {
+	        sectionCode: this.section.sectionCode,
+	        rightId: this.right.id
+	      });
+	      main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:onRightDelete', {
+	        guid: this.$store.getters['application/guid'],
+	        right: this.right
+	      });
 	    }
 	  },
 	  // data attributes are needed for e2e automated tests
@@ -3346,7 +3753,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			:style="{
 				cursor: right.groupHead ? 'pointer' : null,
 			}"
-			v-memo="[right.isGroupExpanded]"
+			v-memo="[right.isGroupExpanded, right.title, right.subtitle]"
 			:data-accessrights-right-id="right.id"
 		>
 			<span
@@ -3357,12 +3764,32 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					'--plus-in-circle': !right.isGroupExpanded,
 				}"
 			></span>
-			<span class="ui-access-rights-v2-text-wrap" :style="{
-				'margin-left': !right.groupHead && !right.group ? '23px' : null,
-			}">
-				{{ right.title }}
-				<Hint v-once v-if="right.hint" :html="right.hint" />
-			</span>
+			<div 
+				v-if="right.iconClass" 
+				:class="right.iconClass"
+				class="ui-access-rights-v2-column-item-title-icon"
+			><i></i></div>
+			<div class="ui-access-rights-v2-column-item-title-block" :style="rightCellStyle">
+				<span
+					v-if="right.isClickable"
+					class="ui-access-rights-v2-column-item-title-link ui-access-rights-v2-text-ellipsis"
+					@click="onRightClick"
+				>
+					{{ right.title }}
+					<Hint v-once v-if="right.hint" :html="right.hint"/>
+				</span>
+				<span 
+					v-else 
+					class="ui-access-rights-v2-text-wrap"
+				>
+					{{ right.title }}
+					<Hint v-once v-if="right.hint" :html="right.hint"/>
+				</span>
+				<span 
+					v-if="right.subtitle" 
+					class="ui-access-rights-v2-column-item-subtitle ui-access-rights-v2-text-ellipsis"
+				>{{ right.subtitle }}</span>
+			</div>
 		</div>
 		<div
 			ref="icon" 
@@ -3394,6 +3821,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_OPEN_ROW_VALUE')"
 					:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_OPEN_ROW_VALUE_SUBTITLE')"
 					@click="openRowValue"
+				/>
+				<RichMenuItem
+					v-if="isRightDeletable"
+					:icon="RichMenuItemIcon['trash-bin']"
+					:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_DELETE_ROW')"
+					:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_DELETE_ROW_SUBTITLE')"
+					@click="deleteRight"
 				/>
 			</RichMenuPopup>
 			<RowValue v-if="isRowValueShown" @close="isRowValueShown = false"/>
@@ -3482,6 +3916,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    icon: {
 	      /** @type AccessRightSectionIcon */
 	      type: Object
+	    },
+	    action: {
+	      /** @type AccessRightSectionAction */
+	      type: Object
 	    }
 	  },
 	  provide() {
@@ -3494,7 +3932,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	          sectionIcon: this.icon,
 	          sectionHint: this.hint,
 	          isExpanded: this.isExpanded,
-	          rights: this.rights
+	          rights: this.rights,
+	          action: this.action
 	        };
 	      })
 	    };
@@ -3534,6 +3973,16 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  },
 	  mounted() {
 	    ServiceLocator.getHint(this.guid).initOwnerDocument(this.$refs.container);
+	    main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:addRight', this.addRight);
+	    main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:updateRightTitle', this.updateRightTitle);
+	    main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:updateRightSubtitle', this.updateRightSubtitle);
+	    main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:markRightAsModified', this.markRightAsModified);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:addRight', this.addRight);
+	    main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:updateRightTitle', this.updateRightTitle);
+	    main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:updateRightSubtitle', this.updateRightSubtitle);
+	    main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:markRightAsModified', this.markRightAsModified);
 	  },
 	  methods: {
 	    scrollToSection(sectionCode) {
@@ -3542,6 +3991,80 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        scrollTo({
 	          top: main_core.Dom.getPosition(section.$el).top - 155,
 	          behavior: 'smooth'
+	        });
+	      }
+	    },
+	    addRight(event) {
+	      const {
+	        guid,
+	        sectionCode,
+	        right
+	      } = event.data;
+	      if (!guid) {
+	        console.warn('ui.accessrights.v2: addRight: application guid should be passed in event data');
+	        return;
+	      }
+	      if (guid === this.$store.getters['application/guid']) {
+	        this.$store.dispatch('accessRights/addRight', {
+	          sectionCode,
+	          right
+	        });
+	      }
+	    },
+	    updateRightTitle(event) {
+	      const {
+	        guid,
+	        sectionCode,
+	        rightId,
+	        rightTitle
+	      } = event.data;
+	      if (!guid) {
+	        console.warn('ui.accessrights.v2: updateRightTitle: application guid should be passed in event data');
+	        return;
+	      }
+	      if (guid === this.$store.getters['application/guid']) {
+	        this.$store.dispatch('accessRights/updateRightTitle', {
+	          sectionCode,
+	          rightId,
+	          rightTitle
+	        });
+	      }
+	    },
+	    updateRightSubtitle(event) {
+	      const {
+	        guid,
+	        sectionCode,
+	        rightId,
+	        rightSubtitle
+	      } = event.data;
+	      if (!guid) {
+	        console.warn('ui.accessrights.v2: updateRightSubtitle: application guid should be passed in event data');
+	        return;
+	      }
+	      if (guid === this.$store.getters['application/guid']) {
+	        this.$store.dispatch('accessRights/updateRightSubtitle', {
+	          sectionCode,
+	          rightId,
+	          rightSubtitle
+	        });
+	      }
+	    },
+	    markRightAsModified(event) {
+	      const {
+	        guid,
+	        sectionCode,
+	        rightId,
+	        isModified
+	      } = event.data;
+	      if (!guid) {
+	        console.warn('ui.accessrights.v2: markRightAsModified: application guid should be passed in event data');
+	        return;
+	      }
+	      if (guid === this.$store.getters['application/guid']) {
+	        this.$store.dispatch('accessRights/markRightAsModified', {
+	          sectionCode,
+	          rightId,
+	          isModified
 	        });
 	      }
 	    }
@@ -3564,6 +4087,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				:hint="accessRightSection.sectionHint"
 				:icon="accessRightSection.sectionIcon"
 				:rights="accessRightSection.rights"
+				:action="accessRightSection.action"
 				:user-groups="shownUserGroups"
 				ref="sections"
 			/>
@@ -3829,6 +4353,12 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    return {
 	      isMaxVisibleUserGroupsSet: state => {
 	        return state.options.maxVisibleUserGroups > 0;
+	      },
+	      isModified: (state, getters, rootState, rootGetters) => {
+	        return rootGetters['userGroups/isModified'] || rootGetters['accessRights/isModified'];
+	      },
+	      guid: state => {
+	        return state.guid;
 	      }
 	    };
 	  }
@@ -3868,6 +4398,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	var _isUserGroupExists = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUserGroupExists");
 	var _getUserGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserGroup");
 	var _isValueExistsInStructure = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValueExistsInStructure");
+	var _deleteRightAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteRightAction");
 	var _isValueModified = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValueModified");
 	var _isSetsEqual = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSetsEqual");
 	var _isUserGroupModified = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUserGroupModified");
@@ -3882,6 +4413,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    });
 	    Object.defineProperty(this, _isValueModified, {
 	      value: _isValueModified2
+	    });
+	    Object.defineProperty(this, _deleteRightAction, {
+	      value: _deleteRightAction2
 	    });
 	    Object.defineProperty(this, _isValueExistsInStructure, {
 	      value: _isValueExistsInStructure2
@@ -4095,6 +4629,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      },
 	      hideUserGroup: (store, payload) => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _hideUserGroupAction)[_hideUserGroupAction](store, payload);
+	      },
+	      deleteRight: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _deleteRightAction)[_deleteRightAction](store, payload);
 	      }
 	    };
 	  }
@@ -4170,6 +4707,15 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      }) => {
 	        // eslint-disable-next-line no-param-reassign
 	        state.collection.get(userGroupId).isShown = false;
+	      },
+	      deleteRight: (state, {
+	        rightId
+	      }) => {
+	        for (const role of state.collection.values()) {
+	          if (role.accessRights.get(rightId)) {
+	            role.accessRights.delete(rightId);
+	          }
+	        }
 	      }
 	    };
 	  }
@@ -4508,6 +5054,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  const section = store.rootState.accessRights.collection.get(sectionCode);
 	  return section == null ? void 0 : section.rights.has(valueId);
 	}
+	function _deleteRightAction2(store, {
+	  rightId
+	}) {
+	  store.commit('deleteRight', {
+	    rightId
+	  });
+	}
 	function _isValueModified2(userGroupId, valueId, values, emptyValue) {
 	  var _initialGroup$accessR, _initialGroup$accessR2;
 	  const initialGroup = babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups].get(userGroupId);
@@ -4562,14 +5115,50 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 
 	function createStore(options, userGroups, accessRights, appGuid) {
 	  const userGroupsModel = UserGroupsModel.create().setInitialUserGroups(userGroups);
+	  const accessRightsModel = AccessRightsModel.create().setInitialAccessRights(accessRights);
 	  const {
 	    store
-	  } = ui_vue3_vuex.Builder.init().addModel(ApplicationModel.create().setOptions(options).setGuid(appGuid)).addModel(AccessRightsModel.create().setInitialAccessRights(accessRights)).addModel(userGroupsModel).syncBuild();
+	  } = ui_vue3_vuex.Builder.init().addModel(ApplicationModel.create().setOptions(options).setGuid(appGuid)).addModel(accessRightsModel).addModel(userGroupsModel).syncBuild();
 	  return {
 	    store,
-	    resetState: () => userGroupsModel.clearState(),
-	    userGroupsModel
+	    resetState: () => {
+	      userGroupsModel.clearState();
+	      accessRightsModel.clearState();
+	      main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:onResetState', {
+	        guid: appGuid
+	      });
+	    },
+	    userGroupsModel,
+	    accessRightsModel
 	  };
+	}
+
+	class AccessRightsExporter {
+	  transform(source, appGuid) {
+	    const result = [];
+	    for (const accessRightSection of source.values()) {
+	      for (const accessRight of accessRightSection.rights.values()) {
+	        const data = {
+	          id: accessRight.id,
+	          name: accessRight.title,
+	          additionalRightData: {}
+	        };
+	        const eventResults = main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:additionalRightData', {
+	          guid: appGuid,
+	          right: accessRight
+	        });
+	        for (const eventResult of eventResults) {
+	          var _eventResult$getData;
+	          data.additionalRightData = {
+	            ...data.additionalRightData,
+	            ...((_eventResult$getData = eventResult.getData()) == null ? void 0 : _eventResult$getData.additionalRightData)
+	          };
+	        }
+	        result.push(data);
+	      }
+	    }
+	    return result;
+	  }
 	}
 
 	var _transformAccessCodes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transformAccessCodes");
@@ -4641,154 +5230,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	}
 
-	var _internalizeExternalSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalSection");
-	var _internalizeExternalIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalIcon");
-	var _internalizeExternalItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalItem");
-	var _internalizeSelectedVariablesAliases = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeSelectedVariablesAliases");
-	var _internalizeValueSet = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeValueSet");
-	var _internalizeSetEmptyOnSetMinMaxValueInColumn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeSetEmptyOnSetMinMaxValueInColumn");
-	var _internalizeExternalVariable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalVariable");
-	class AccessRightsInternalizer {
-	  constructor() {
-	    Object.defineProperty(this, _internalizeExternalVariable, {
-	      value: _internalizeExternalVariable2
-	    });
-	    Object.defineProperty(this, _internalizeSetEmptyOnSetMinMaxValueInColumn, {
-	      value: _internalizeSetEmptyOnSetMinMaxValueInColumn2
-	    });
-	    Object.defineProperty(this, _internalizeValueSet, {
-	      value: _internalizeValueSet2
-	    });
-	    Object.defineProperty(this, _internalizeSelectedVariablesAliases, {
-	      value: _internalizeSelectedVariablesAliases2
-	    });
-	    Object.defineProperty(this, _internalizeExternalItem, {
-	      value: _internalizeExternalItem2
-	    });
-	    Object.defineProperty(this, _internalizeExternalIcon, {
-	      value: _internalizeExternalIcon2
-	    });
-	    Object.defineProperty(this, _internalizeExternalSection, {
-	      value: _internalizeExternalSection2
-	    });
-	  }
-	  transform(externalSource) {
-	    const result = new Map();
-	    for (const external of externalSource) {
-	      const internalized = babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalSection)[_internalizeExternalSection](external);
-	      result.set(internalized.sectionCode, internalized);
-	    }
-	    return result;
-	  }
-	}
-	function _internalizeExternalSection2(externalSection) {
-	  const internalizedSection = {
-	    sectionCode: main_core.Type.isStringFilled(externalSection.sectionCode) ? externalSection.sectionCode : main_core.Text.getRandom(),
-	    sectionTitle: String(externalSection.sectionTitle),
-	    sectionSubTitle: main_core.Type.isStringFilled(externalSection.sectionSubTitle) ? externalSection.sectionSubTitle : null,
-	    sectionHint: main_core.Type.isStringFilled(externalSection.sectionHint) ? externalSection.sectionHint : null,
-	    sectionIcon: babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalIcon)[_internalizeExternalIcon](externalSection.sectionIcon),
-	    rights: new Map(),
-	    isExpanded: true,
-	    isShown: true
-	  };
-	  for (const externalItem of externalSection.rights) {
-	    const internalizedItem = babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalItem)[_internalizeExternalItem](externalItem);
-	    internalizedSection.rights.set(internalizedItem.id, internalizedItem);
-	  }
-	  return internalizedSection;
-	}
-	function _internalizeExternalIcon2(externalIcon) {
-	  if (main_core.Type.isStringFilled(externalIcon == null ? void 0 : externalIcon.type) && main_core.Type.isStringFilled(externalIcon == null ? void 0 : externalIcon.bgColor)) {
-	    return {
-	      type: externalIcon.type,
-	      bgColor: externalIcon.bgColor
-	    };
-	  }
-	  return null;
-	}
-	function _internalizeExternalItem2(externalItem) {
-	  const [aliases, separator] = babelHelpers.classPrivateFieldLooseBase(this, _internalizeSelectedVariablesAliases)[_internalizeSelectedVariablesAliases](externalItem.selectedVariablesAliases);
-	  const normalizedItem = {
-	    id: String(externalItem.id),
-	    type: String(externalItem.type),
-	    title: String(externalItem.title),
-	    hint: main_core.Type.isStringFilled(externalItem.hint) ? externalItem.hint : null,
-	    group: main_core.Type.isNil(externalItem.group) ? null : String(externalItem.group),
-	    groupHead: main_core.Type.isBoolean(externalItem.groupHead) ? externalItem.groupHead : false,
-	    isShown: true,
-	    minValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.minValue),
-	    maxValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.maxValue),
-	    defaultValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.defaultValue),
-	    emptyValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.emptyValue),
-	    nothingSelectedValue: babelHelpers.classPrivateFieldLooseBase(this, _internalizeValueSet)[_internalizeValueSet](externalItem.nothingSelectedValue),
-	    setEmptyOnSetMinMaxValueInColumn: babelHelpers.classPrivateFieldLooseBase(this, _internalizeSetEmptyOnSetMinMaxValueInColumn)[_internalizeSetEmptyOnSetMinMaxValueInColumn](externalItem),
-	    variables: main_core.Type.isArray(externalItem.variables) ? new Map() : null,
-	    allSelectedCode: main_core.Type.isStringFilled(externalItem.allSelectedCode) ? externalItem.allSelectedCode : null,
-	    selectedVariablesAliases: aliases,
-	    selectedVariablesAliasesSeparator: separator,
-	    enableSearch: main_core.Type.isBoolean(externalItem.enableSearch) ? externalItem.enableSearch : null,
-	    showAvatars: main_core.Type.isBoolean(externalItem.showAvatars) ? externalItem.showAvatars : null,
-	    compactView: main_core.Type.isBoolean(externalItem.compactView) ? externalItem.compactView : null,
-	    hintTitle: main_core.Type.isStringFilled(externalItem.hintTitle) ? externalItem.hintTitle : null
-	  };
-	  if (normalizedItem.groupHead || normalizedItem.group) {
-	    normalizedItem.isGroupExpanded = false;
-	  }
-	  if (main_core.Type.isArray(externalItem.variables)) {
-	    for (const variable of externalItem.variables) {
-	      const normalizedVariable = babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalVariable)[_internalizeExternalVariable](variable);
-	      normalizedItem.variables.set(normalizedVariable.id, normalizedVariable);
-	    }
-	  }
-	  return normalizedItem;
-	}
-	function _internalizeSelectedVariablesAliases2(externalAliases) {
-	  if (!main_core.Type.isPlainObject(externalAliases)) {
-	    return [new Map(), DEFAULT_ALIAS_SEPARATOR];
-	  }
-	  const separator = main_core.Type.isString(externalAliases.separator) ? externalAliases.separator : DEFAULT_ALIAS_SEPARATOR;
-	  const result = new Map();
-	  for (const [key, value] of Object.entries(externalAliases)) {
-	    if (key === 'separator') {
-	      continue;
-	    }
-	    result.set(normalizeAliasKey(key, separator), String(value));
-	  }
-	  return [result, separator];
-	}
-	function _internalizeValueSet2(value) {
-	  if (main_core.Type.isNil(value)) {
-	    return null;
-	  }
-	  if (main_core.Type.isArray(value)) {
-	    return new Set(value.map(item => String(item)));
-	  }
-	  return new Set([String(value)]);
-	}
-	function _internalizeSetEmptyOnSetMinMaxValueInColumn2(externalItem) {
-	  const boolOrNull = x => main_core.Type.isBoolean(x) ? x : null;
-	  if (!main_core.Type.isUndefined(externalItem.setEmptyOnSetMinMaxValueInColumn)) {
-	    return boolOrNull(externalItem.setEmptyOnSetMinMaxValueInColumn);
-	  }
-
-	  // todo compatibility, can be removed when crm update is out
-	  return boolOrNull(externalItem.setEmptyOnGroupActions);
-	}
-	function _internalizeExternalVariable2(externalVariable) {
-	  return {
-	    id: String(externalVariable.id),
-	    title: String(externalVariable.title),
-	    entityId: main_core.Type.isStringFilled(externalVariable.entityId) ? externalVariable.entityId : null,
-	    supertitle: main_core.Type.isStringFilled(externalVariable.supertitle) ? externalVariable.supertitle : null,
-	    avatar: main_core.Type.isStringFilled(externalVariable.avatar) ? externalVariable.avatar : null,
-	    avatarOptions: main_core.Type.isPlainObject(externalVariable.avatarOptions) ? externalVariable.avatarOptions : null,
-	    conflictsWith: main_core.Type.isArray(externalVariable.conflictsWith) ? new Set(externalVariable.conflictsWith.map(x => String(x))) : null,
-	    requires: main_core.Type.isArray(externalVariable.requires) ? new Set(externalVariable.requires.map(x => String(x))) : null,
-	    secondary: main_core.Type.isBoolean(externalVariable.secondary) ? externalVariable.secondary : null
-	  };
-	}
-
 	var _deepFreeze = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deepFreeze");
 	class ApplicationInternalizer {
 	  constructor() {
@@ -4818,7 +5259,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        addUserGroupsProviderTab: false,
 	        addProjectsProviderTab: true,
 	        addStructureTeamsProviderTab: false
-	      }
+	      },
+	      isSaveAccessRightsList: main_core.Type.isBoolean(externalSource.isSaveAccessRightsList) ? externalSource.isSaveAccessRightsList : false
 	    });
 	  }
 	}
@@ -4990,6 +5432,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	var _resetState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetState");
 	var _unwatch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unwatch");
 	var _userGroupsModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userGroupsModel");
+	var _accessRightsModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("accessRightsModel");
 	var _analyticsManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analyticsManager");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
@@ -5068,6 +5511,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _accessRightsModel, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _analyticsManager, {
 	      writable: true,
 	      value: void 0
@@ -5104,20 +5551,30 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  sendActionRequest() {
 	    return new Promise((resolve, reject) => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.isSaving || !babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['userGroups/isModified']) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.isSaving || !babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['application/isModified']) {
 	        resolve();
 	        return;
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].commit('application/setSaving', true);
 	      babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager].onSaveAttempt();
 	      babelHelpers.classPrivateFieldLooseBase(this, _runSaveAjaxRequest)[_runSaveAjaxRequest]().then(({
-	        userGroups
+	        userGroups,
+	        accessRights
 	      }) => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager].onSaveSuccess();
 	        babelHelpers.classPrivateFieldLooseBase(this, _userGroupsModel)[_userGroupsModel].setInitialUserGroups(userGroups);
+	        if (accessRights) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _accessRightsModel)[_accessRightsModel].setInitialAccessRights(accessRights);
+	        }
 
 	        // reset modification flags and stuff
 	        babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState]();
+	        const guid = babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1];
+	        main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:afterSave', {
+	          userGroups,
+	          accessRights,
+	          guid
+	        });
 	        babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SETTINGS_HAVE_BEEN_SAVED'));
 	      }).catch(response => {
 	        var _response$errors, _response$errors$;
@@ -5128,6 +5585,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	          return;
 	        }
 	        babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification]((response == null ? void 0 : (_response$errors = response.errors) == null ? void 0 : (_response$errors$ = _response$errors[0]) == null ? void 0 : _response$errors$.message) || 'Something went wrong');
+	        main_core_events.EventEmitter.emit('ui:accessRights:v2:onSaveError', {
+	          response
+	        });
 	        reject(response);
 	      }).finally(() => {
 	        var _babelHelpers$classPr;
@@ -5143,12 +5603,14 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    const {
 	      store,
 	      resetState,
-	      userGroupsModel
+	      userGroupsModel,
+	      accessRightsModel
 	    } = createStore(applicationOptions, new UserGroupsInternalizer(applicationOptions.maxVisibleUserGroups).transform(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].userGroups), new AccessRightsInternalizer().transform(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].accessRights), babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1] = store;
 	    babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState] = resetState;
 	    babelHelpers.classPrivateFieldLooseBase(this, _userGroupsModel)[_userGroupsModel] = userGroupsModel;
-	    babelHelpers.classPrivateFieldLooseBase(this, _unwatch)[_unwatch] = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].watch((state, getters) => getters['userGroups/isModified'], newValue => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _accessRightsModel)[_accessRightsModel] = accessRightsModel;
+	    babelHelpers.classPrivateFieldLooseBase(this, _unwatch)[_unwatch] = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].watch((state, getters) => getters['application/isModified'], newValue => {
 	      if (newValue) {
 	        var _babelHelpers$classPr2;
 	        (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel]) == null ? void 0 : _babelHelpers$classPr2.show();
@@ -5179,10 +5641,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo] = null;
 	  }
 	  hasUnsavedChanges() {
-	    return !(!babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['userGroups/isModified'] || babelHelpers.classPrivateFieldLooseBase(this, _isUserConfirmedClose)[_isUserConfirmedClose]);
+	    return !(!babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['application/isModified'] || babelHelpers.classPrivateFieldLooseBase(this, _isUserConfirmedClose)[_isUserConfirmedClose]);
 	  }
 	  scrollToSection(sectionCode) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _rootComponent)[_rootComponent].scrollToSection(sectionCode);
+	  }
+	  getGuid() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1];
 	  }
 	}
 	function _bindEvents2() {
@@ -5239,6 +5704,12 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    userGroups = new AllUserGroupsExporter().transform(internalUserGroups);
 	  }
 	  const bodyType = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.options.bodyType;
+	  let accessRights = null;
+	  let deletedAccessRights = null;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.options.isSaveAccessRightsList) {
+	    accessRights = new AccessRightsExporter().transform(babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.accessRights.collection, babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1]);
+	    deletedAccessRights = [...babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.accessRights.deleted.values()];
+	  }
 
 	  // wrap ajax in native promise
 	  return new Promise((resolve, reject) => {
@@ -5247,24 +5718,32 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      [bodyType]: {
 	        userGroups,
 	        deletedUserGroups: [...babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.userGroups.deleted.values()],
-	        parameters: babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.options.additionalSaveParams
+	        parameters: babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.options.additionalSaveParams,
+	        accessRights,
+	        deletedAccessRights
 	      }
 	    }).then(response => {
 	      const maxVisibleUserGroups = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.options.maxVisibleUserGroups;
 	      const newUserGroups = new UserGroupsInternalizer(maxVisibleUserGroups).transform(response.data.USER_GROUPS);
 	      new ShownUserGroupsCopier(internalUserGroups, maxVisibleUserGroups).transform(newUserGroups);
+	      let newAccessRights = null;
+	      if (response.data.ACCESS_RIGHTS) {
+	        newAccessRights = new AccessRightsInternalizer().transform(response.data.ACCESS_RIGHTS);
+	      }
 	      resolve({
-	        userGroups: newUserGroups
+	        userGroups: newUserGroups,
+	        accessRights: newAccessRights
 	      });
 	    }).catch(reject);
 	  });
 	}
 	function _confirmBeforeClosingModifiedSlider2(sliderEvent) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['userGroups/isModified'] || babelHelpers.classPrivateFieldLooseBase(this, _isUserConfirmedClose)[_isUserConfirmedClose]) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['application/isModified'] || babelHelpers.classPrivateFieldLooseBase(this, _isUserConfirmedClose)[_isUserConfirmedClose]) {
 	    return;
 	  }
 	  sliderEvent.denyAction();
 	  const box = ui_dialogs_messagebox.MessageBox.create({
+	    mediumButtonSize: false,
 	    title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING_TITLE'),
 	    message: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING'),
 	    modal: true,
@@ -5292,5 +5771,5 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 
 	exports.App = App;
 
-}((this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}),BX.Event,BX.UI.Dialogs,BX.UI,BX.UI.Vue3.Components,BX.UI.EntitySelector,BX.Vue3,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Main,BX.UI,BX,BX.UI.Vue3.Components,BX,BX.UI.Analytics,BX.Vue3.Vuex,BX));
+}((this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}),BX.UI.Dialogs,BX.UI.IconSet,BX.UI,BX.UI.Vue3.Components,BX.UI.EntitySelector,BX.Vue3,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Main,BX.UI,BX,BX.UI.Vue3.Components,BX,BX.UI.Analytics,BX.Vue3.Vuex,BX.Event,BX));
 //# sourceMappingURL=v2.bundle.js.map

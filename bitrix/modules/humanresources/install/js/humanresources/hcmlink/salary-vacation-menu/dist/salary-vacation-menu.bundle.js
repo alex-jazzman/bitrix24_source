@@ -109,7 +109,8 @@ this.BX.HumanResources = this.BX.HumanResources || {};
 	    const menu = new main_popup.Menu({
 	      id: 'hcmLink-vacation-salary-menu',
 	      items,
-	      autoHide: true
+	      autoHide: true,
+	      fixed: babelHelpers.classPrivateFieldLooseBase(this, _mode)[_mode] === 'profile-menu'
 	    });
 	    return menu;
 	  });

@@ -31,6 +31,11 @@
 	padding-bottom: 20px;
 }
 
+.ui-page-slider-wrapper.grid-mode .main-grid-empty-stub table.main-grid-table
+{
+	height: calc(100vh - 240px) !important;
+}
+
 .ui-btn-icon-reload.ui-btn-primary {
 	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-reload.svg);
 }

@@ -935,7 +935,7 @@
 }
 
 .invite-content-mail-service__link {
-	color: #0000EE;
+	color: #2067b0;
 	text-decoration: underline dashed;
 	cursor: pointer;
 }
@@ -999,12 +999,18 @@
 
 .email-popup-container__input .ui-tag-selector-outer-container {
 	border-radius: 8px;
+}
+
+.email-popup-container__input .ui-tag-selector-container {
 	height: 116px;
 	cursor: text;
 }
 
 .invite-content-container .email-popup-container__input .ui-tag-selector-outer-container {
 	border-radius: 8px;
+}
+
+.invite-content-container .email-popup-container__input .ui-tag-selector-container {
 	height: 82px;
 	cursor: text;
 }

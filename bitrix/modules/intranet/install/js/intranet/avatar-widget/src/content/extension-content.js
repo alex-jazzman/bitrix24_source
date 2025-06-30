@@ -41,6 +41,7 @@ export class ExtensionContent extends Content
 				angle: true,
 				cachable: false,
 				offsetLeft: 10,
+				fixed: true,
 			});
 			EventEmitter.subscribe('SidePanel.Slider:onOpenStart', () => {
 				menu.close();

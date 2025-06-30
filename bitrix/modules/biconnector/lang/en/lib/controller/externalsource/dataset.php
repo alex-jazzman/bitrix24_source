@@ -1,5 +1,5 @@
 <?php
-$MESS["BICONNECTOR_CONTROLLER_EXTERNAL_SOURCE_DATASET_ACCESS_ERROR"] = "Insufficient permission to use this dataset. Please contact your supervisor or Bitrix24 administrator.";
+$MESS['BICONNECTOR_CONTROLLER_EXTERNAL_SOURCE_DATASET_ACCESS_ERROR'] = 'Insufficient permission to use this dataset. Please contact your supervisor or Bitrix24 administrator.';
 $MESS["BICONNECTOR_EXTERNAL_SOURCE_DATASET_ADD_ERROR"] = "Error creating dataset";
 $MESS["BICONNECTOR_EXTERNAL_SOURCE_DATASET_ALREADY_EXIST_ERROR"] = "Dataset with this name already exists.";
 $MESS["BICONNECTOR_EXTERNAL_SOURCE_DATASET_DELETE_ERROR"] = "Error deleting dataset.";

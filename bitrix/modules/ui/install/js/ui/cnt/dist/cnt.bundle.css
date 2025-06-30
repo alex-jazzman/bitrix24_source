@@ -8,6 +8,7 @@
 	--ui-counter-font-size: 11px;
 	--ui-counter-symbol-font-size: 11px;
 	--ui-counter-inline-space: 6px;
+	--ui-counter-symbol-compenstation: 0px;
 	--ui-counter-border-color: transparent;
 	--ui-counter-border-width: 0;
 }
@@ -46,6 +47,10 @@
 	z-index: 1;
 }
 
+.ui-counter.--air.--hide-zero[data-value="0"] {
+	display: none;
+}
+
 .ui-counter.--air.--one-digit .ui-counter-inner {
 	padding-inline: 0;
 }
@@ -55,6 +60,11 @@
 	font-size: var(--ui-counter-symbol-font-size);
 	opacity: 0.96;
 	letter-spacing: var(--ui-letter-spacing-xl);
+	margin-right: var(--ui-counter-symbol-compenstation);
+}
+
+.ui-counter.--air .ui-counter__symbol:empty {
+	margin-right: 0;
 }
 
 /*endregion*/
@@ -149,6 +159,7 @@
 	--ui-counter-font-size: var(--ui-font-size-4xs);
 	--ui-counter-symbol-font-size: var(--ui-font-size-5xs);
 	--ui-counter-inline-space: 4px;
+	--ui-counter-symbol-compenstation: -2px;
 }
 
 .ui-counter-md.--air {
@@ -156,6 +167,7 @@
 	--ui-counter-font-size: var(--ui-font-size-xs);
 	--ui-counter-symbol-font-size: var(--ui-font-size-4xs);
 	--ui-counter-inline-space: 4px;
+	--ui-counter-symbol-compenstation: -2px;
 }
 
 .ui-counter-lg.--air {
@@ -163,6 +175,7 @@
 	--ui-counter-font-size: var(--ui-font-size-sm);
 	--ui-counter-symbol-font-size: var(--ui-font-size-4xs);
 	--ui-counter-inline-space: 6px;
+	--ui-counter-symbol-compenstation: -4px;
 }
 
 /*endregion*/

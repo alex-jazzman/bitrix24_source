@@ -523,6 +523,8 @@ this.BX = this.BX || {};
 	    this.loader = main_core.Type.isStringFilled(options.loader) || main_core.Type.isElementNode(options.loader) ? options.loader : main_core.Type.isStringFilled(options.typeLoader) ? options.typeLoader : 'default-loader';
 	    this.animation = null;
 	    this.animationDuration = main_core.Type.isNumber(options.animationDuration) ? options.animationDuration : 200;
+	    this.overlayBgColor = main_core.Type.isStringFilled(options.overlayBgColor) && /^#[\dA-Za-f]{6}$/.test(options.overlayBgColor) ? options.overlayBgColor : '#000000';
+	    this.overlayOpacity = main_core.Type.isNumber(options.overlayOpacity) ? Math.min(Math.max(options.overlayOpacity, 0), 100) : 40;
 	    babelHelpers.classPrivateFieldSet(this, _startPosition, ['right', 'bottom', 'top'].includes(options.startPosition) ? options.startPosition : babelHelpers.classPrivateFieldGet(this, _startPosition));
 	    babelHelpers.classPrivateFieldSet(this, _outerBoundary, main_core.Type.isPlainObject(options.outerBoundary) ? options.outerBoundary : {});
 	    babelHelpers.classPrivateFieldSet(this, _startAnimationState, _classPrivateMethodGet$1(this, _getAnimationState, _getAnimationState2).call(this, 'start'));
@@ -1296,7 +1298,7 @@ this.BX = this.BX || {};
 	        bottom = null
 	      } = _classPrivateMethodGet$1(this, _calculateOuterBoundary, _calculateOuterBoundary2).call(this);
 	      main_core.Dom.style(this.getContainer(), {
-	        width: `calc(100% - ${leftBoundary}px)`,
+	        width: `calc(100% - ${leftBoundary + (right === null ? 0 : right)}px)`,
 	        maxWidth: this.getWidth() === null ? null : `${this.getWidth()}px`,
 	        right: right === null ? null : `${right}px`,
 	        top: top === null ? null : `${top}px`,
@@ -1388,6 +1390,12 @@ this.BX = this.BX || {};
 	    key: "showShadow",
 	    value: function showShadow() {
 	      main_core.Dom.addClass(this.getContainer(), 'side-panel-show-shadow');
+	    }
+	  }, {
+	    key: "setOverlayBackground",
+	    value: function setOverlayBackground() {
+	      const opacity = parseInt(this.overlayOpacity / 100 * 255, 10).toString(16).padStart(2, 0);
+	      main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
 	    }
 	  }, {
 	    key: "setOverlayAnimation",
@@ -1795,7 +1803,8 @@ this.BX = this.BX || {};
 	        main_core.Dom.style(this.getContainer(), 'transform', `translate(${state.translateX}%, ${state.translateY}%)`);
 	      }
 	      if (this.getOverlayAnimation()) {
-	        main_core.Dom.style(this.getOverlay(), 'background-color', `rgba(0, 0, 0, ${state.opacity / 100})`);
+	        const opacity = parseInt(state.opacity / 100 * 255, 10).toString(16).padStart(2, 0);
+	        main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
 	      }
 	    }
 	    /**
@@ -2275,7 +2284,7 @@ this.BX = this.BX || {};
 	      end: {
 	        translateX: 0,
 	        translateY: 0,
-	        opacity: 40,
+	        opacity: this.overlayOpacity,
 	        scale: 100
 	      }
 	    },
@@ -2289,7 +2298,7 @@ this.BX = this.BX || {};
 	      end: {
 	        translateX: 0,
 	        translateY: 0,
-	        opacity: 40,
+	        opacity: this.overlayOpacity,
 	        scale: 100
 	      }
 	    },
@@ -2303,7 +2312,7 @@ this.BX = this.BX || {};
 	      end: {
 	        translateX: 0,
 	        translateY: 0,
-	        opacity: 40,
+	        opacity: this.overlayOpacity,
 	        scale: 100
 	      }
 	    }
@@ -3860,6 +3869,7 @@ this.BX = this.BX || {};
 	      if (this.getTopSlider()) {
 	        this.exitFullScreen();
 	        this.getTopSlider().hideOverlay();
+	        slider.setOverlayBackground();
 	        const sameWidth = this.getTopSlider().getOffset() === slider.getOffset() && this.getTopSlider().getWidth() === slider.getWidth() && this.getTopSlider().getCustomLeftBoundary() === slider.getCustomLeftBoundary();
 	        if (!sameWidth) {
 	          this.getTopSlider().showShadow();

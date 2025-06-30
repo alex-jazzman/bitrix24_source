@@ -7,6 +7,7 @@ export class CreateFolderPopup
 		return new Promise((resolve) => {
 			const uniqueId = `folderNameInput_${Date.now()}`;
 			const popup = new BX.PopupWindow(`folderNamePopup_${uniqueId}`, null, {
+				className: 'sign-b2e-grid-templates-popup',
 				content: `
 					<div class="sign-create-folder-popup-item-container">
 						<span class="sign-create-folder-popup-icon"></span>

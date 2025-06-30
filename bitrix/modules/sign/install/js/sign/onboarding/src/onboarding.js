@@ -78,7 +78,11 @@ export class Onboarding
 			},
 			steps: [
 				this.#createB2eKanbanRouteStep('.ui-toolbar-after-title-buttons > button.sign-b2e-onboarding-route'),
-				this.#createB2eTemplatesStep('div#sign_sign_b2e_employee_template_list'),
+				this.#createB2eTemplatesStep(
+					this.#isTemplateBtnVisible()
+						? 'div#sign_sign_b2e_employee_template_list'
+						: 'div#sign_more_button'
+				),
 			],
 		});
 	}
@@ -95,7 +99,11 @@ export class Onboarding
 			steps: [
 				this.#createB2eNewDocumentButtonStep('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-create', options.region),
 				this.#createB2eKanbanRouteStep('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-route'),
-				this.#createB2eTemplatesStep('div#sign_sign_b2e_employee_template_list'),
+				this.#createB2eTemplatesStep(
+					this.#isTemplateBtnVisible()
+						? 'div#sign_sign_b2e_employee_template_list'
+						: 'div#sign_more_button'
+				),
 			],
 		});
 	}
@@ -272,5 +280,10 @@ export class Onboarding
 		const { lastVisitDate } = await this.#backend.getLastVisitDate(b2ePopupTourId);
 
 		return Type.isNull(lastVisitDate);
+	}
+
+	#isTemplateBtnVisible(): boolean
+	{
+		return document.querySelector('div#sign_sign_b2e_employee_template_list')?.offsetParent !== null;
 	}
 }

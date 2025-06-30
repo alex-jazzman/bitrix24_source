@@ -145,7 +145,8 @@ this.BX = this.BX || {};
 	      events: {
 	        onClose: function onClose() {},
 	        onDestroy: function onDestroy() {}
-	      }
+	      },
+	      fixed: true
 	    }
 	  });
 	  window.BXTIMEMAN.Open();

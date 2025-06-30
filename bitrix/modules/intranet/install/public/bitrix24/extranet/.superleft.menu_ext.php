@@ -1,6 +1,6 @@
 <?
 
-use Bitrix\Intranet\Integration\Socialnetwork\Collab\Collab;
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -74,7 +74,7 @@ else
 
 if (
 	ToolsManager::getInstance()->checkAvailabilityByToolId('collab')
-	&& (new Collab())->isAvailable()
+	&& (new CollabProviderData())->isAvailable()
 )
 {
 	$arMenu[] = [

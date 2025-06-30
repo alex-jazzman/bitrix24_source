@@ -1109,7 +1109,7 @@
   --ui-color-bg-content-inapp: #00428F;
   --ui-color-bg-content-primary-layer: #292929;
   --ui-color-bg-content-light: #EEEEEE;
-  --ui-bg-blur-content: var(--ui-bg-blur-accent);
+  --ui-bg-blur-content: var(--ui-bg-blur-default);
   --ui-bg-blur-vibrant: var(--ui-bg-blur-accent);
   --ui-color-accent-main-primary: #1587FA;
   --ui-color-design-filled-bg: var(--ui-color-accent-main-primary);
@@ -1630,7 +1630,7 @@
   --ui-color-bg-content-inapp: #00428F;
   --ui-color-bg-content-primary-layer: #FFFFFF;
   --ui-color-bg-content-light: #EEEEEE;
-  --ui-bg-blur-content: var(--ui-bg-blur-accent);
+  --ui-bg-blur-content: var(--ui-bg-blur-default);
   --ui-bg-blur-vibrant: var(--ui-bg-blur-accent-more);
   --ui-color-accent-main-primary: #1587FA;
   --ui-color-design-filled-bg: var(--ui-color-accent-main-primary);

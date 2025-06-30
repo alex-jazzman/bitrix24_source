@@ -143,6 +143,7 @@ export class WorkTimeButton
 					onClose: () => {},
 					onDestroy: () => {},
 				},
+				fixed: true,
 			},
 		});
 

@@ -1,9 +1,10 @@
-import { ajax as Ajax, Loc, Tag, Text, Type, Uri } from 'main.core';
+import { ajax as Ajax, Loc, Tag, Text, Type, Uri, UI } from 'main.core';
 import { Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import 'sidepanel';
 import { DashboardExportMaster } from 'biconnector.dashboard-export-master';
+import { DashboardGroup } from 'biconnector.dashboard-group';
 
 import './css/main.css';
 
@@ -44,7 +45,7 @@ export class DashboardManager
 			if (dashboardList)
 			{
 				EventEmitter.emit('BIConnector.Superset.DashboardManager:onDashboardBatchStatusUpdate', {
-					dashboardList: dashboardList,
+					dashboardList,
 				});
 			}
 		});
@@ -236,12 +237,55 @@ export class DashboardManager
 		});
 	}
 
+	deleteGroup(dashboardId): Promise
+	{
+		return Ajax.runAction('biconnector.group.delete', {
+			data: {
+				id: dashboardId,
+			},
+		});
+	}
+
+	showGroupSettingsPopup(groupId): Promise
+	{
+		return new Promise((resolve, reject) => {
+			Ajax
+				.runAction('biconnector.group.loadSettingsData')
+				.then((response: {}) => {
+					const dashboards = new Map(
+						Object
+							.entries(response.data.dashboards ?? [])
+							.map(([key, value]) => [Number(key), value]),
+					);
+
+					DashboardGroup.open({
+						groupId,
+						groups: response.data.groups,
+						dashboards,
+						saveEnabled: true,
+						isNeedShowDeletionWarningPopup: response.data.isNeedShowDeletionWarningPopup,
+					});
+					resolve(response);
+				})
+				.catch((response) => {
+					if (response.errors)
+					{
+						UI.Notification.Center.notify({
+							content: Text.encode(response.errors[0].message),
+						});
+					}
+					reject(response);
+				})
+			;
+		});
+	}
+
 	renameDashboard(dashboardId: number, title: string): Promise
 	{
 		return Ajax.runAction('biconnector.dashboard.rename', {
 			data: {
 				id: dashboardId,
-				title: title,
+				title,
 			},
 		});
 	}
@@ -270,7 +314,7 @@ export class DashboardManager
 				}
 
 				EventEmitter.emit(window, 'BIConnector.Superset.DashboardManager:onDashboardBatchStatusUpdate', {
-					dashboardList: dashboardList,
+					dashboardList,
 				});
 			},
 		);
@@ -330,10 +374,14 @@ export class DashboardManager
 		);
 	}
 
-	openCreationSlider(): void
+	openCreationSlider(groupIds: []): void
 	{
 		const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.create/slider.php';
 		const sliderLink = new Uri(componentLink);
+		if (groupIds.length > 0)
+		{
+			sliderLink.setQueryParam('groupIds', groupIds);
+		}
 
 		BX.SidePanel.Instance.open(
 			sliderLink.toString(),
@@ -343,6 +391,11 @@ export class DashboardManager
 				cacheable: false,
 			},
 		);
+	}
+
+	showCreationGroupPopup(): void
+	{
+		this.showGroupSettingsPopup('new_G0');
 	}
 
 	getEditUrl(dashboardInfo: DashboardInfo): Promise

@@ -293,8 +293,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _handleImLayoutChange2(event) {
 	  const data = event.getData();
 	  const menu = this.getMenu();
-	  menu == null ? void 0 : menu.unsetActive(data.from.name.toLowerCase());
-	  menu == null ? void 0 : menu.setActive(data.to.name.toLowerCase());
+	  let fromItemId = data.from.name.toLowerCase();
+	  if (fromItemId === 'market' && data.from.entityId) {
+	    fromItemId = `${fromItemId}_${data.from.entityId}`;
+	  }
+	  let toItemId = data.to.name.toLowerCase();
+	  if (toItemId === 'market' && data.to.entityId) {
+	    toItemId = `${toItemId}_${data.to.entityId}`;
+	  }
+	  menu == null ? void 0 : menu.unsetActive(fromItemId);
+	  menu == null ? void 0 : menu.setActive(toItemId);
 	  menu == null ? void 0 : menu.closeMoreMenu();
 	}
 	function _handleCounterUpdate2(event) {
@@ -312,7 +320,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function getQueryString(ignoredParams) {
 	  const query = window.location.search.slice(1);
-	  if (main_core.Type.isStringFilled(query)) {
+	  if (!main_core.Type.isStringFilled(query)) {
 	    return '';
 	  }
 	  const vars = query.split('&');
@@ -952,6 +960,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	const DEFAULT_SLIDER_BLUR = 'blur(6px)';
 	const IM_SLIDER_BLUR = 'blur(10px)';
+	const SIDEPANEL_BORDER_RADIUS = '18px 18px 0 0';
 	var _rightBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
 	var _header = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
 	var _footer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("footer");
@@ -963,6 +972,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _patchJSClock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchJSClock");
 	var _fixSliderBorderRadius = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fixSliderBorderRadius");
 	var _makeSliderBlurry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("makeSliderBlurry");
+	var _setSliderBlur = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSliderBlur");
+	var _resetSliderBlur = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetSliderBlur");
 	var _preventFromIframe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preventFromIframe");
 	var _applyUserAgentRules = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyUserAgentRules");
 	var _patchRestAPI = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchRestAPI");
@@ -976,6 +987,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	    Object.defineProperty(this, _preventFromIframe, {
 	      value: _preventFromIframe2
+	    });
+	    Object.defineProperty(this, _resetSliderBlur, {
+	      value: _resetSliderBlur2
+	    });
+	    Object.defineProperty(this, _setSliderBlur, {
+	      value: _setSliderBlur2
 	    });
 	    Object.defineProperty(this, _makeSliderBlurry, {
 	      value: _makeSliderBlurry2
@@ -1051,6 +1068,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  getCollaborationMenu() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu];
 	  }
+	  canUseBlurry() {
+	    return !main_core.Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
+	  }
 	}
 	function _patchPopupMenu2() {
 	  main_core_events.EventEmitter.subscribe('BX.Main.Menu:onInit', event => {
@@ -1103,20 +1123,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    const previousSlider = main_sidepanel.SidePanel.Instance.getPreviousSlider();
 	    if (previousSlider) {
-	      main_core.Dom.style(previousSlider.getOverlay(), 'backdrop-filter', null);
+	      babelHelpers.classPrivateFieldLooseBase(this, _resetSliderBlur)[_resetSliderBlur](previousSlider);
 	    }
-	    const isMessenger = slider.getUrl().startsWith('im:slider');
-	    main_core.Dom.style(slider.getOverlay(), 'backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setSliderBlur)[_setSliderBlur](slider);
 	  });
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', event => {
 	    const [sliderEvent] = event.getData();
 	    const slider = sliderEvent.getSlider();
 	    const previousSlider = main_sidepanel.SidePanel.Instance.getPreviousSlider();
 	    if (previousSlider) {
-	      const isMessenger = previousSlider.getUrl().startsWith('im:slider');
-	      main_core.Dom.style(previousSlider.getOverlay(), 'backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+	      babelHelpers.classPrivateFieldLooseBase(this, _setSliderBlur)[_setSliderBlur](previousSlider);
 	    }
-	    main_core.Dom.style(slider.getOverlay(), 'backdrop-filter', null);
+	    babelHelpers.classPrivateFieldLooseBase(this, _resetSliderBlur)[_resetSliderBlur](slider);
 	  });
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', () => {
 	    if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() === 1) {
@@ -1150,6 +1168,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _fixSliderBorderRadius)[_fixSliderBorderRadius](slider);
 	    });
 	  });
+	}
+	function _setSliderBlur2(slider) {
+	  if (!this.canUseBlurry()) {
+	    return;
+	  }
+	  const isMessenger = slider.getUrl().startsWith('im:slider');
+	  main_core.Dom.style(slider.getOverlay(), '-webkit-backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+	  main_core.Dom.style(slider.getOverlay(), 'backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+	  main_core.Dom.style(slider.getOverlay(), '--sidepanel-border-radius', SIDEPANEL_BORDER_RADIUS);
+	}
+	function _resetSliderBlur2(slider) {
+	  if (!this.canUseBlurry()) {
+	    return;
+	  }
+	  main_core.Dom.style(slider.getOverlay(), '-webkit-backdrop-filter', null);
+	  main_core.Dom.style(slider.getOverlay(), 'backdrop-filter', null);
+	  main_core.Dom.style(slider.getOverlay(), '--sidepanel-border-radius', null);
 	}
 	function _preventFromIframe2() {
 	  const iframeMode = window !== window.top;
@@ -1285,6 +1320,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _avatarWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("avatarWrapper");
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
+	var _setHiddenAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setHiddenAvatar");
+	var _setVisibleAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setVisibleAvatar");
 	var _showWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
 	var _getWidgetLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
 	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
@@ -1310,12 +1347,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'click', () => {
 	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup().setFixed(true);
 	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().createSkeletonFromConfig(options.skeleton).show();
+	      babelHelpers.classPrivateFieldLooseBase(this, _setHiddenAvatar)[_setHiddenAvatar]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup().subscribe('onClose', () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setVisibleAvatar)[_setVisibleAvatar]();
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup().subscribe('onShow', () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setHiddenAvatar)[_setHiddenAvatar]();
+	      });
 	      main_core.Runtime.loadExtension(['intranet.avatar-widget']).then(() => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _showWidget)[_showWidget]();
 	      }).catch(() => {});
 	    });
 	  }
+	}
+	function _setHiddenAvatar2() {
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '0');
+	}
+	function _setVisibleAvatar2() {
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '1');
 	}
 	function _showWidget2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _getContent)[_getContent]().then(response => {
@@ -1335,11 +1386,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return new intranet_widgetLoader.WidgetLoader({
 	      id: 'bx-avatar-header-popup',
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper],
+	      className: 'intranet-avatar-widget-base-popup',
 	      width: 450,
 	      useAngle: false,
 	      fixed: true,
 	      offsetTop: -50,
-	      offsetLeft: 50
+	      offsetLeft: -392
 	    });
 	  });
 	}
@@ -1444,6 +1496,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	});
 	Object.defineProperty(AvatarButton, _showWidget, {
 	  value: _showWidget2
+	});
+	Object.defineProperty(AvatarButton, _setVisibleAvatar, {
+	  value: _setVisibleAvatar2
+	});
+	Object.defineProperty(AvatarButton, _setHiddenAvatar, {
+	  value: _setHiddenAvatar2
 	});
 	Object.defineProperty(AvatarButton, _avatarWrapper, {
 	  writable: true,

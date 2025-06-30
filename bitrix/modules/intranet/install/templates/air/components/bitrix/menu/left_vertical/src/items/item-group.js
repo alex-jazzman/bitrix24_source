@@ -1,6 +1,7 @@
 import Item from './item';
 import Backend from '../backend';
 import { Dom, Text } from 'main.core';
+import { Counter } from 'ui.cnt';
 
 export default class ItemGroup extends Item
 {
@@ -173,21 +174,24 @@ export default class ItemGroup extends Item
 		[...this.container
 			.parentNode
 			.querySelector(`[data-group-id="${this.getId()}"]`)
-			.querySelectorAll('[data-role="counter"]')]
+			.querySelectorAll(`.${Counter.BaseClassname}`)]
 			.forEach((node) => {
-				counterValue += Text.toNumber(node.dataset.counterValue);
+				const counter = Counter.initFromCounterNode(node);
+				counterValue += counter.getRealValue();
 			});
-		const node = this.container.querySelector('[data-role="counter"]');
+
+		Counter.updateCounterNodeValue(
+			this.container.querySelector(`.${Counter.BaseClassname}`),
+			counterValue,
+		);
 
 		if (counterValue > 0)
 		{
-			node.innerHTML = (counterValue > 99 ? '99+' : counterValue);
-			this.container.classList.add('menu-item-with-index');
+			Dom.addClass(this.container, 'menu-item-with-index');
 		}
 		else
 		{
-			node.innerHTML = '';
-			this.container.classList.remove('menu-item-with-index');
+			Dom.removeClass(this.container, 'menu-item-with-index');
 		}
 	}
 

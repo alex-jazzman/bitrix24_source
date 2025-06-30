@@ -11,6 +11,7 @@ import { CollaborationMenu } from './collaboration-menu';
 
 const DEFAULT_SLIDER_BLUR = 'blur(6px)';
 const IM_SLIDER_BLUR = 'blur(10px)';
+const SIDEPANEL_BORDER_RADIUS = '18px 18px 0 0';
 
 export class SiteTemplate
 {
@@ -72,6 +73,11 @@ export class SiteTemplate
 	getCollaborationMenu(): CollaborationMenu
 	{
 		return this.#collaborationMenu;
+	}
+
+	canUseBlurry(): boolean
+	{
+		return !Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
 	}
 
 	#patchPopupMenu(): void
@@ -141,12 +147,10 @@ export class SiteTemplate
 			const previousSlider = SidePanel.Instance.getPreviousSlider();
 			if (previousSlider)
 			{
-				Dom.style(previousSlider.getOverlay(), 'backdrop-filter', null);
+				this.#resetSliderBlur(previousSlider);
 			}
 
-			const isMessenger = slider.getUrl().startsWith('im:slider');
-
-			Dom.style(slider.getOverlay(), 'backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+			this.#setSliderBlur(slider);
 		});
 
 		EventEmitter.subscribe('SidePanel.Slider:onClosing', (event: BaseEvent) => {
@@ -156,11 +160,10 @@ export class SiteTemplate
 			const previousSlider = SidePanel.Instance.getPreviousSlider();
 			if (previousSlider)
 			{
-				const isMessenger = previousSlider.getUrl().startsWith('im:slider');
-				Dom.style(previousSlider.getOverlay(), 'backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+				this.#setSliderBlur(previousSlider);
 			}
 
-			Dom.style(slider.getOverlay(), 'backdrop-filter', null);
+			this.#resetSliderBlur(slider);
 		});
 
 		EventEmitter.subscribe('SidePanel.Slider:onOpening', () => {
@@ -197,6 +200,32 @@ export class SiteTemplate
 				this.#fixSliderBorderRadius(slider);
 			});
 		});
+	}
+
+	#setSliderBlur(slider): void
+	{
+		if (!this.canUseBlurry())
+		{
+			return;
+		}
+
+		const isMessenger = slider.getUrl().startsWith('im:slider');
+
+		Dom.style(slider.getOverlay(), '-webkit-backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+		Dom.style(slider.getOverlay(), 'backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
+		Dom.style(slider.getOverlay(), '--sidepanel-border-radius', SIDEPANEL_BORDER_RADIUS);
+	}
+
+	#resetSliderBlur(slider): void
+	{
+		if (!this.canUseBlurry())
+		{
+			return;
+		}
+
+		Dom.style(slider.getOverlay(), '-webkit-backdrop-filter', null);
+		Dom.style(slider.getOverlay(), 'backdrop-filter', null);
+		Dom.style(slider.getOverlay(), '--sidepanel-border-radius', null);
 	}
 
 	#preventFromIframe(): void

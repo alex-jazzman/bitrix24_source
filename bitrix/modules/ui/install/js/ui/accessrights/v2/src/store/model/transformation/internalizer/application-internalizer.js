@@ -37,6 +37,9 @@ export class ApplicationInternalizer implements Transformer<Options, Readonly<Op
 					addProjectsProviderTab: true,
 					addStructureTeamsProviderTab: false,
 				},
+			isSaveAccessRightsList: Type.isBoolean(externalSource.isSaveAccessRightsList)
+				? externalSource.isSaveAccessRightsList
+				: false,
 		});
 	}
 

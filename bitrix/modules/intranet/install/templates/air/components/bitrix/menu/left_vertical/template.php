@@ -2,6 +2,8 @@
 
 use Bitrix\Intranet\MainPage;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Counter\Counter;
+use Bitrix\UI\Counter\CounterSize;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -9,7 +11,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 CJSCore::Init([
 	'ui.dialogs.messagebox',
-	'ui.banner-dispatcher',
 	'intranet.menu.analytics',
 	'ui.icon-set',
 	'ui.icon-set.outline',
@@ -243,21 +244,27 @@ $siteUrl = htmlspecialcharsbx(SITE_DIR);
 							}
 							if ($counterId <> '')
 							{
-								$valueCounter = "";
-								$badgeCounter = "";
+								$valueCounter = 0;
+
 								if ($isCompositeMode === false)
 								{
-									$valueCounter = intval($counter);
-									$badgeCounter =  $counter > 99 ? "99+" : $counter;
+									$valueCounter = (int)$counter;
 								}
+
 								?>
 								<span class="menu-item-index-wrap">
-									<span
-										data-role="counter"
-										data-counter-value="<?=$valueCounter?>"
-										class="menu-item-index"
-										id="menu-counter-<?= mb_strtolower($item["PARAMS"]["counter_id"])?>"><?=$badgeCounter?></span>
-									</span>
+									<?php
+										$counter = new Counter(
+											useAirDesign: true,
+											value: $valueCounter,
+											size: CounterSize::SMALL,
+											id: 'menu-counter-' . mb_strtolower($item["PARAMS"]["counter_id"]),
+											hideIfZero: true,
+										);
+
+										echo $counter->render();
+									?>
+								</span>
 							<?
 							}
 							if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y'):?>
@@ -318,14 +325,32 @@ $siteUrl = htmlspecialcharsbx(SITE_DIR);
 				<span class="menu-item-link-text" id="menu-more-btn-text" data-role="item-text" style=""><?=Loc::getMessage("MENU_MORE_ITEMS_EXPAND")?></span>
 				<?php if ($isCompositeMode || $sumHiddenCounters <= 0): ?>
 					<span class="menu-item-index-wrap">
-							<span id="menu-hidden-counter" data-role="counter" data-counter-value="0" class="menu-item-index"></span>
+							<?php
+							$counter = new Counter(
+								useAirDesign: true,
+								value: 0,
+								size: CounterSize::SMALL,
+								id: 'menu-hidden-counter',
+								hideIfZero: true,
+							);
+
+							echo $counter->render();
+							?>
 						</span>
 				<?php else: ?>
 					<span class="menu-item-index-wrap">
-							<span id="menu-hidden-counter" class="menu-item-index" data-role="counter" data-counter-value="<?=$sumHiddenCounters?>">
-								<?=($sumHiddenCounters > 99 ? "99+" : $sumHiddenCounters) ?>
-							</span>
-						</span>
+					<?php
+						$counter = new Counter(
+							useAirDesign: true,
+							value: $sumHiddenCounters,
+							size: CounterSize::SMALL,
+							id: 'menu-hidden-counter',
+							hideIfZero: true,
+						);
+
+						echo $counter->render();
+					?>
+					</span>
 				<?php endif; ?>
 			</span>
 		</button>
@@ -349,6 +374,9 @@ $siteUrl = htmlspecialcharsbx(SITE_DIR);
 					<span class="menu-item-link-text" id="menu-more-btn-text" data-role="item-text" style=""><?=Loc::getMessage("LEFT_MENU_SETTINGS")?></span>
 				</span>
 			</button>
+			<?php endif; ?>
+			<?php if (isset($arResult['SHOW_LICENSE_BUTTON']) && $arResult['SHOW_LICENSE_BUTTON']): ?>
+				<div class="menu-license-all-wrapper"></div>
 			<?php endif; ?>
 			<?php if($arResult['SHOW_MARTA'] ?? true): ?>
 				<div class="menu-marta-wrapper">
@@ -381,6 +409,8 @@ $arJSParams = array(
 		]) : '',
 	'showMarta' => '',
 	'showSitemapMenuItem' => $arResult['SHOW_SITEMAP_BUTTON'],
+	'showLicenseButton' => $arResult['SHOW_LICENSE_BUTTON'] ?? false,
+	'licenseButtonPath' => $arResult['B24_LICENSE_PATH'] ?? '',
 );
 ?>
 
@@ -465,6 +495,7 @@ BX.message({
 	MENU_MY_WORKGROUPS_EXTRANET: '<?=GetMessageJS("MENU_MY_WORKGROUPS_EXTRANET")?>',
 	MENU_MY_WORKGROUPS_FAVORITES: '<?=GetMessageJS("MENU_MY_WORKGROUPS_FAVORITES")?>',
 	mainpage_settings_path: '<?= (new Bitrix\Intranet\Site\FirstPage\MainFirstPage())->getSettingsPath() ?>',
+	MENU_LICENSE_ALL: '<?=GetMessageJS("MENU_LICENSE_ALL")?>',
 });
 BX.Intranet.LeftMenu = new BX.Intranet.Menu(<?=CUtil::PhpToJSObject($arJSParams)?>);
 <?

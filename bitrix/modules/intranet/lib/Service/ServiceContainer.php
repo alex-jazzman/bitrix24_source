@@ -63,6 +63,15 @@ class ServiceContainer implements ContainerInterface
 		return $this->get('repository.department');
 	}
 
+	/**
+	 * @throws NotFoundExceptionInterface
+	 * @throws ObjectNotFoundException
+	 */
+	public function hrDepartmentRepository(): DepartmentRepository
+	{
+		return $this->get('repository.hr.department');
+	}
+
 	public function invitationRepository(): InvitationRepository
 	{
 		return $this->get('repository.invitation');

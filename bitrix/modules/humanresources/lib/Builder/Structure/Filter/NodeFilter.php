@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\HumanResources\Builder\Structure\Filter;
 
+use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
 use Bitrix\HumanResources\Builder\Structure\Filter\Column\IdFilter;
 use Bitrix\HumanResources\Builder\Structure\Filter\Column\Node\NodeTypeFilter;
 use Bitrix\HumanResources\Builder\Structure\Filter\SelectionCondition\Node\NodeAccessFilter;
@@ -11,6 +12,8 @@ use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\HumanResources\Enum\Direction;
 use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Exception\NodeAccessFilterException;
+use Bitrix\HumanResources\Service\Access\Structure\StructureAccessService;
+use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Util\StructureHelper;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
@@ -59,7 +62,7 @@ final class NodeFilter extends BaseFilter
 
 		if ($this->name !== null)
 		{
-			$conditionTree->where($this->getFieldByQueryContext('NAME'), $this->name);
+			$conditionTree->whereLike($this->getFieldByQueryContext('NAME'), '%' . $this->name . '%');
 		}
 
 		return $conditionTree;
@@ -67,6 +70,31 @@ final class NodeFilter extends BaseFilter
 
 	private function addConditionsForIdsFilter(ConditionTree $conditionTree): void
 	{
+		if (is_null($this->idFilter) && is_int($this->depthLevel))
+		{
+			$permissionValue = PermissionVariablesDictionary::VARIABLE_NONE;
+			if ($this->accessFilter)
+			{
+				$structureAccessService = new StructureAccessService();
+				$structureAccessService->setAction($this->accessFilter->action);
+				$permissionValue = $structureAccessService->getPermissionValue()->getFirst()?->value ?? PermissionVariablesDictionary::VARIABLE_NONE;
+			}
+
+			if (is_null($this->accessFilter) || $permissionValue === PermissionVariablesDictionary::VARIABLE_ALL)
+			{
+				if (!$this->structureId)
+				{
+					return;
+				}
+
+				$rootNode = Container::getNodeRepository()->getRootNodeByStructureId($this->structureId);
+				if ($rootNode?->id)
+				{
+					$this->idFilter = IdFilter::fromId($rootNode->id);
+				}
+			}
+		}
+
 		if (is_null($this->idFilter))
 		{
 			return;

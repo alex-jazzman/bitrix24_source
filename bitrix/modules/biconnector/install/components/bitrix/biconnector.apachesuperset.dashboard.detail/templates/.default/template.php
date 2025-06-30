@@ -126,7 +126,7 @@ if (!$limitManager->checkLimitWarning())
 				<div class="dashboard-header-logo-svg dashboard-header-logo-svg-url"></div>
 			</div>
 			<div class="dashboard-header-selector-container" id="dashboard-selector">
-				<div class="dashboard-header-selector-text" id="dashboard-selector-text"><?= $dashboardTitle ?></div>
+				<div class="dashboard-header-selector-text" id="dashboard-selector-text" title="<?= $dashboardTitle ?>"><?= $dashboardTitle ?></div>
 				<div class="ui-icon-set --chevron-down dashboard-header-selector-icon"></div>
 			</div>
 		</div>
@@ -172,7 +172,6 @@ if (!$limitManager->checkLimitWarning())
 					'supersetDomain' => \CUtil::JSEscape($arResult['SUPERSET_DOMAIN']),
 					'type' => $arResult['DASHBOARD_TYPE'],
 					'appId' => $arResult['DASHBOARD_APP_ID'],
-					'paramsCompatible' => $arResult['PARAMS_COMPATIBLE'],
 				],
 				'embeddedDebugMode' => $arResult['EMBEDDED_DEBUG_MODE'],
 			]) ?>

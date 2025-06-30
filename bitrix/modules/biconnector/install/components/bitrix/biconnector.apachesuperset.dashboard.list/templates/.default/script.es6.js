@@ -1,4 +1,5 @@
 import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime } from 'main.core';
+import { Menu } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { BaseEvent, EventEmitter } from 'main.core.events';
@@ -7,13 +8,19 @@ import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
 import { Dialog } from 'ui.entity-selector';
 import { Guide } from 'ui.tour';
+import { ApacheSupersetMarketManager } from 'biconnector.apache-superset-market-manager';
 import { TagFooter } from 'biconnector.entity-selector';
+import { Button, ButtonColor, CancelButton } from 'ui.buttons';
 import 'ui.alerts';
 import 'ui.forms';
 
 type Props = {
 	gridId: ?string,
 	isNeedShowDraftGuide: boolean,
+	isAvailableDashboardCreation: boolean,
+	isAvailableGroupCreation: boolean,
+	isMarketExists: boolean,
+	marketUrl: string,
 };
 
 type LoginPopupParams = {
@@ -34,7 +41,6 @@ class SupersetDashboardGridManager
 	#tagSelectorDialog: ?Dialog;
 	#lastPinnedRowId: ?number;
 	#properties: Props;
-
 	constructor(props: Props)
 	{
 		this.#dashboardManager = new DashboardManager();
@@ -42,7 +48,6 @@ class SupersetDashboardGridManager
 
 		this.#grid = BX.Main.gridManager.getById(props.gridId)?.instance;
 		this.#filter = BX.Main.filterManager.getById(props.gridId);
-
 		this.#subscribeToEvents();
 
 		this.#colorPinnedRows();
@@ -157,6 +162,14 @@ class SupersetDashboardGridManager
 
 		EventEmitter.subscribe('BIConnector.CreateForm:onDashboardCreated', (event) => {
 			this.#onNewDashboardCreated(event);
+		});
+
+		EventEmitter.subscribe('BIConnector.AccessRights:onRightsSaved', () => {
+			this.#grid.reload();
+		});
+
+		EventEmitter.subscribe('BIConnector.GroupPopup:onGroupSaved', () => {
+			this.#grid.reload();
 		});
 	}
 
@@ -308,14 +321,71 @@ class SupersetDashboardGridManager
 		);
 	}
 
-	showLockedByParamsPopup()
+	#isActiveGroupIdFilter(): boolean
 	{
-		MessageBox.alert(
-			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCKED_PARAM_DASHBOARD_OPEN_DESCRIPTION'),
-			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCKED_PARAM_DASHBOARD_OPEN_TITLE'),
-			(messageBox) => {messageBox.close()},
-			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCKED_PARAM_DASHBOARD_CLOSE_BUTTON'),
+		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
+		const selectedGroups: string[] = filterFieldsValues['GROUPS.ID'] ?? [];
+
+		return selectedGroups.length > 0;
+	}
+
+	/**
+	 * @param event PointerEvent
+	 */
+	showCreationMenu(event: PointerEvent): void
+	{
+		const items = [];
+
+		if (this.#properties.isAvailableDashboardCreation)
+		{
+			items.push(
+				{
+					text: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_NEW_DASHBOARD'),
+					onclick: () => {
+						this.openCreationSlider();
+						creationMenu.close();
+					},
+				},
+			);
+		}
+
+		if (this.#properties.isAvailableGroupCreation)
+		{
+			items.push(
+				{
+					text: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_NEW_GROUP'),
+					onclick: () => {
+						this.showCreationGroupPopup();
+						creationMenu.close();
+					},
+					disabled: this.#isActiveGroupIdFilter(),
+				},
+			);
+		}
+
+		items.push(
+			{
+				text: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_CREATE_DASHBOARD'),
+				onclick: () => {
+					ApacheSupersetMarketManager.openMarket(this.#properties.isMarketExists, this.#properties.marketUrl, 'menu');
+					creationMenu.close();
+				},
+			},
 		);
+
+		const creationMenu = new Menu({
+
+			closeByEsc: false,
+			closeIcon: false,
+			cacheable: false,
+			angle: true,
+			offsetLeft: 20,
+			items,
+			autoHide: true,
+			bindElement: event.target,
+		});
+
+		creationMenu.show();
 	}
 
 	restartDashboardLoad(dashboardId: number): void
@@ -423,7 +493,7 @@ class SupersetDashboardGridManager
 				}
 			});
 
-			label.querySelector('span').innerText = labelTitle
+			label.querySelector('span').innerText = labelTitle;
 		}
 	}
 
@@ -446,12 +516,29 @@ class SupersetDashboardGridManager
 				const gridRealtime: BX.Grid.Realtime = grid.getRealtime();
 				const newDashboard = response.data.dashboard;
 
-				gridRealtime.addRow({
+				const newRow = {
 					id: newDashboard.id,
 					columns: newDashboard.columns,
 					actions: newDashboard.actions,
-					insertAfter: this.#lastPinnedRowId,
-				});
+				};
+
+				const firstDashboardRow = this.#grid
+					.getRows()
+					.getRowsByGroupId('D')
+					.find((row) => !Dom.hasClass(row.node, 'biconnector-dashboard-pinned'))
+				;
+				if (firstDashboardRow)
+				{
+					newRow.insertBefore = firstDashboardRow?.getId();
+				}
+				else
+				{
+					newRow.insertAfter = 0;
+				}
+
+				gridRealtime.addRow(newRow);
+				const newRowNode = this.#grid.getRows().getById(newDashboard.id).node;
+				newRowNode.setAttribute('data-group-id', 'D');
 
 				const editableData = grid.getParam('EDITABLE_DATA');
 				if (BX.type.isPlainObject(editableData))
@@ -516,6 +603,7 @@ class SupersetDashboardGridManager
 
 		return this.#dashboardManager.exportDashboard(dashboardId, 'grid_menu');
 	}
+
 	publish(dashboardId: number): void
 	{
 		this.#dashboardManager.toggleDraft(dashboardId, true)
@@ -553,8 +641,8 @@ class SupersetDashboardGridManager
 		const messageBox = new MessageBox({
 			message: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE'),
 			buttons: [
-				new BX.UI.Button({
-					color: BX.UI.Button.Color.DANGER,
+				new Button({
+					color: ButtonColor.DANGER,
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
 					onclick: (button) => {
 						button.setWaiting();
@@ -572,7 +660,7 @@ class SupersetDashboardGridManager
 							});
 					},
 				}),
-				new BX.UI.CancelButton({
+				new CancelButton({
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
 					onclick: (button) => messageBox.close(),
 				}),
@@ -582,15 +670,89 @@ class SupersetDashboardGridManager
 		messageBox.show();
 	}
 
-	openCreationSlider()
+	deleteGroup(groupId: number): void
 	{
-		this.#dashboardManager.openCreationSlider();
+		const messageBox = new MessageBox({
+			message: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_TITLE'),
+			buttons: [
+				new Button({
+					color: ButtonColor.DANGER,
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_CAPTION_YES'),
+					onclick: (button) => {
+						button.setWaiting();
+						this.#dashboardManager.deleteGroup(groupId)
+							.then(() => {
+								this.getGrid().reload();
+								messageBox.close();
+							})
+							.catch((response) => {
+								messageBox.close();
+								if (response.errors)
+								{
+									this.#notifyErrors(response.errors);
+								}
+							});
+					},
+				}),
+				new CancelButton({
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_CAPTION_NO'),
+					onclick: (button) => messageBox.close(),
+				}),
+			],
+		});
+
+		messageBox.show();
 	}
 
-	#onNewDashboardCreated(event: Event)
+	openCreationSlider(): void
 	{
-		const grid = this.getGrid();
+		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
+		const selectedGroups: string[] = filterFieldsValues['GROUPS.ID'] ?? [];
+
+		this.#dashboardManager.openCreationSlider(selectedGroups);
+	}
+
+	showCreationGroupPopup(): void
+	{
+		if (this.#isActiveGroupIdFilter())
+		{
+			return;
+		}
+
+		this.#dashboardManager.showCreationGroupPopup();
+	}
+
+	#onNewDashboardCreated(event: Event): void
+	{
 		const newDashboard = event.data.dashboard;
+		let needAddRowInRealtime = false;
+		const filterGroupIds: string[] = this.getFilter().getFilterFieldsValues()['GROUPS.ID'] ?? [];
+		if (filterGroupIds.length === 0 && newDashboard.groupIds.length === 0)
+		{
+			needAddRowInRealtime = true;
+		}
+		else
+		{
+			for (const dashboardGroupId of newDashboard.groupIds)
+			{
+				if (filterGroupIds.includes(String(dashboardGroupId)))
+				{
+					needAddRowInRealtime = true;
+					break;
+				}
+			}
+		}
+
+		if (!needAddRowInRealtime)
+		{
+			BX.UI.Notification.Center.notify({
+				content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DASHBOARD_CREATED'),
+			});
+
+			return;
+		}
+
+		const grid: BX.Main.grid = this.getGrid();
 		const gridRealtime: BX.Grid.Realtime = grid.getRealtime();
 		gridRealtime.addRow({
 			id: newDashboard.id,
@@ -598,6 +760,8 @@ class SupersetDashboardGridManager
 			actions: newDashboard.actions,
 			insertAfter: this.#lastPinnedRowId,
 		});
+		const newRowNode = this.#grid.getRows().getById(newDashboard.id).node;
+		newRowNode.setAttribute('data-group-id', 'D');
 
 		const editableData = grid.getParam('EDITABLE_DATA');
 		if (BX.type.isPlainObject(editableData))
@@ -609,7 +773,7 @@ class SupersetDashboardGridManager
 		counterTotalTextContainer.textContent++;
 		this.#initHints();
 		setTimeout(() => {
-			this.#showDraftGuide(this.#grid.getRows().getBodyFirstChild().node);
+			this.#showDraftGuide(newRowNode);
 		}, 1200);
 	}
 
@@ -719,6 +883,17 @@ class SupersetDashboardGridManager
 		}
 
 		return null;
+	}
+
+	showGroupSettingsPopup(groupId: number): void
+	{
+		this.#grid.tableFade();
+		this.#dashboardManager.showGroupSettingsPopup(groupId)
+			.then(() => {
+				this.#grid.tableUnfade();
+			})
+			.catch(() => {})
+		;
 	}
 
 	renameDashboard(dashboardId: number): void
@@ -849,6 +1024,14 @@ class SupersetDashboardGridManager
 		this.#initHints();
 	}
 
+	handleGroupTitleClick(groupJson: Object): void
+	{
+		this.handleFilterChange({
+			fieldId: 'GROUPS.ID',
+			...groupJson,
+		});
+	}
+
 	handleTagClick(tagJson: string): void
 	{
 		const tag = JSON.parse(tagJson);
@@ -891,7 +1074,14 @@ class SupersetDashboardGridManager
 							}
 						}
 					},
-				);
+				)
+				.catch((response) => {
+					if (response.errors)
+					{
+						this.#notifyErrors(response.errors);
+					}
+				})
+			;
 		};
 		const entityId = 'biconnector-superset-dashboard-tag';
 
@@ -1023,7 +1213,7 @@ class SupersetDashboardGridManager
 		}
 		else if (!currentFilteredField.includes(fieldData.ID))
 		{
-			currentFilteredField.push(fieldData.ID);
+			currentFilteredField.push(fieldData.ID.toString());
 			currentFilteredFieldLabel.push(fieldData.TITLE);
 		}
 

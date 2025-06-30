@@ -1,18 +1,20 @@
-import type IButton from './ibutton';
-import ButtonTag from './button/button-tag';
 import { Type, Tag, Dom, Event } from 'main.core';
-import { type BaseButtonOptions } from './base-button-options';
 import 'ui.design-tokens.air';
-import './ui.buttons.css';
-import './ui.air-buttons.css';
+
 import { ButtonCounter, type ButtonCounterOptions } from './button-counter';
 import { getCounterSize } from './helpers/counter-size';
 import { ButtonCounterSize } from './index';
+import ButtonTag from './button/button-tag';
+import type { BaseButtonOptions } from './base-button-options';
+import type IButton from './ibutton';
+
+import './ui.buttons.css';
+import './ui.air-buttons.css';
 
 export type SetCounterOptions = {
-	counter: ButtonCounterOptions;
-	position: 'left' | 'right';
-}
+	counter: ButtonCounterOptions,
+	position: 'left' | 'right',
+};
 
 export default class BaseButton implements IButton
 {
@@ -24,8 +26,7 @@ export default class BaseButton implements IButton
 
 	constructor(options: BaseButtonOptions)
 	{
-		options = Type.isPlainObject(options) ? options : {};
-		this.options = Object.assign(this.getDefaultOptions(), options);
+		this.options = Object.assign(this.getDefaultOptions(), Type.isPlainObject(options) ? options : {});
 
 		/**
 		 * 'buttonNode', 'textNode' and counterNode options use only in ButtonManager.createFromNode
@@ -48,8 +49,6 @@ export default class BaseButton implements IButton
 
 		this.baseClass = Type.isStringFilled(this.options.baseClass) ? this.options.baseClass : '';
 		this.disabled = false;
-
-		this.handleEvent = this.handleEvent.bind(this);
 
 		this.init(); // needs to initialize private properties in derived classes.
 
@@ -102,14 +101,7 @@ export default class BaseButton implements IButton
 	{
 		this.#useAirDesign = use === true;
 
-		if (use === true)
-		{
-			Dom.addClass(this.getContainer(), '--air');
-		}
-		else
-		{
-			Dom.removeClass(this.getContainer(), '--air');
-		}
+		Dom.toggleClass(this.getContainer(), '--air', this.#useAirDesign);
 	}
 
 	hasAirDesign(): boolean
@@ -125,128 +117,79 @@ export default class BaseButton implements IButton
 		return {};
 	}
 
-	/**
-	 * @public
-	 * @return {HTMLElement}
-	 */
 	render(): HTMLElement
 	{
 		return this.getContainer();
 	}
 
-	/**
-	 * @public
-	 * @param {HTMLElement} node
-	 * @return {?HTMLElement}
-	 */
-	renderTo(node: HTMLElement): HTMLElement | null
+	renderTo(node: HTMLElement): HTMLElement
 	{
-		if (Type.isDomNode(node))
-		{
-			return node.appendChild(this.getContainer());
-		}
+		Dom.append(this.getContainer(), node);
 
-		return null;
+		return this.getContainer();
 	}
 
-	/**
-	 * @public
-	 * @return {HTMLElement}
-	 */
 	getContainer(): HTMLElement
 	{
-		if (this.button !== null)
-		{
-			return this.button;
-		}
-
-		switch (this.getTag())
-		{
-			case ButtonTag.BUTTON:
-			default:
-				this.button = Tag.render`<button class="${this.getBaseClass()}"></button>`;
-				break;
-			case ButtonTag.INPUT:
-				this.button = Tag.render`<input class="${this.getBaseClass()}" type="button">`;
-				break;
-			case ButtonTag.LINK:
-				this.button = Tag.render`<a class="${this.getBaseClass()}" href=""></a>`;
-				break;
-			case ButtonTag.SUBMIT:
-				this.button = Tag.render`<input class="${this.getBaseClass()}" type="submit">`;
-				break;
-			case ButtonTag.DIV:
-				this.button = Tag.render`<div class="${this.getBaseClass()}"></div>`;
-				break;
-			case ButtonTag.SPAN:
-				this.button = Tag.render`<span class="${this.getBaseClass()}"></span>`;
-				break;
-		}
+		this.button ??= {
+			[ButtonTag.LINK]: () => Tag.render`<a class="${this.getBaseClass()}" href=""></a>`,
+			[ButtonTag.INPUT]: () => Tag.render`<input class="${this.getBaseClass()}" type="button">`,
+			[ButtonTag.SUBMIT]: () => Tag.render`<input class="${this.getBaseClass()}" type="submit">`,
+			[ButtonTag.DIV]: () => Tag.render`<div class="${this.getBaseClass()}"></div>`,
+		}[this.getTag()]?.() ?? Tag.render`<button class="${this.getBaseClass()}"></button>`;
 
 		return this.button;
 	}
 
 	/**
 	 * @protected
-	 * @return {string}
 	 */
 	getBaseClass(): string
 	{
 		return this.baseClass;
 	}
 
-	/**
-	 * @public
-	 * @param {string} text
-	 * @return {this}
-	 */
 	setText(text: string): this
 	{
-		if (Type.isString(text) || this.hasAirDesign())
+		if (!Type.isString(text) && !this.hasAirDesign())
 		{
-			this.text = text || '';
+			return this;
+		}
 
-			if (this.isInputType())
-			{
-				this.getContainer().value = this.text;
-			}
-			else if (this.text.length > 0 || this.hasAirDesign())
-			{
-				if (this.textNode === null)
-				{
-					this.textNode = Tag.render`<span class="ui-btn-text"><span class="ui-btn-text-inner"></span></span>`;
-				}
+		this.text = text || '';
 
-				if (!this.textNode.parentNode)
-				{
-					Dom.prepend(this.textNode, this.getContainer());
-				}
-
-				if (this.textNode.querySelector('.ui-btn-text-inner'))
-				{
-					this.textNode.querySelector('.ui-btn-text-inner').textContent = text;
-				}
-				else
-				{
-					this.textNode.textContent = text;
-				}
-			}
-			else
+		if (this.isInputType())
+		{
+			this.getContainer().value = this.text;
+		}
+		else if (this.text.length > 0 || this.hasAirDesign())
+		{
+			if (this.textNode === null)
 			{
-				if (this.textNode !== null)
-				{
-					Dom.remove(this.textNode);
-				}
+				this.textNode = Tag.render`<span class="ui-btn-text"><span class="ui-btn-text-inner"></span></span>`;
 			}
+
+			if (!this.textNode.parentNode)
+			{
+				Dom.prepend(this.textNode, this.getContainer());
+			}
+
+			const textContentNode = this.textNode.querySelector('.ui-btn-text-inner') ?? this.textNode;
+			textContentNode.textContent = text;
+		}
+		else if (this.textNode !== null)
+		{
+			Dom.remove(this.textNode);
 		}
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @return {string}
-	 */
+	getTextContainer(): HTMLElement
+	{
+		return this.textNode;
+	}
+
 	getText(): string
 	{
 		return this.text;
@@ -257,8 +200,6 @@ export default class BaseButton implements IButton
 	 * Use only to create or delete a counter. Update counter value via getLeftCounter() method.
 	 *
 	 * @param options Object | null Object for creating. null for deleting.
-	 *
-	 * @return void
 	 */
 	setLeftCounter(options: ButtonCounterOptions | null): this
 	{
@@ -307,9 +248,7 @@ export default class BaseButton implements IButton
 	 * Use only to create or delete a counter. Update counter value via getRightCounter() method.
 	 *
 	 * @param options Object | null Object for creating. null for deleting.
-	 *
-	 * @return void
-	 * */
+	 */
 	setRightCounter(options: ButtonCounterOptions | null): this
 	{
 		if (this.hasAirDesign() === false)
@@ -323,11 +262,6 @@ export default class BaseButton implements IButton
 		{
 			this.#removeRightCounter();
 
-			return this;
-		}
-
-		if (this.#rightCounter)
-		{
 			return this;
 		}
 
@@ -379,20 +313,13 @@ export default class BaseButton implements IButton
 
 	/**
 	 * use for old buttons (without useAirTheme option)
-	 *
-	 * @param {number | string} counter
-	 * @return {this}
 	 */
 	setCounter(counter: number | string): this
 	{
 		if ([0, '0', '', null, false].includes(counter))
 		{
-			if (this.counterNode !== null)
-			{
-				Dom.remove(this.counterNode);
-				this.counterNode = null;
-			}
-
+			Dom.remove(this.counterNode);
+			this.counterNode = null;
 			this.counter = null;
 		}
 		else if ((Type.isNumber(counter) && counter > 0) || Type.isStringFilled(counter))
@@ -422,20 +349,11 @@ export default class BaseButton implements IButton
 		return this;
 	}
 
-	/**
-	 *
-	 * @return {number | string | null}
-	 */
 	getCounter(): number | string | null
 	{
 		return this.counter;
 	}
 
-	/**
-	 *
-	 * @param {string} link
-	 * @return {this}
-	 */
 	setLink(link: string): this
 	{
 		if (Type.isStringFilled(link))
@@ -451,10 +369,6 @@ export default class BaseButton implements IButton
 		return this;
 	}
 
-	/**
-	 *
-	 * @return {string}
-	 */
 	getLink(): string
 	{
 		return this.getContainer().href;
@@ -462,16 +376,8 @@ export default class BaseButton implements IButton
 
 	setMaxWidth(maxWidth: number): this
 	{
-		if (Type.isNumber(maxWidth) && maxWidth > 0)
-		{
-			this.maxWidth = maxWidth;
-			this.getContainer().style.maxWidth = `${maxWidth}px`;
-		}
-		else if (maxWidth === null)
-		{
-			this.getContainer().style.removeProperty('max-width');
-			this.maxWidth = null;
-		}
+		this.maxWidth = maxWidth > 0 ? maxWidth : null;
+		Dom.style(this.getContainer(), 'max-width', maxWidth > 0 ? `${maxWidth}px` : null);
 
 		return this;
 	}
@@ -481,65 +387,34 @@ export default class BaseButton implements IButton
 		return this.maxWidth;
 	}
 
-	/**
-	 * @public
-	 * @return {ButtonTag}
-	 */
 	getTag(): ButtonTag
 	{
 		return this.tag;
 	}
 
-	/**
-	 * @public
-	 * @param {object.<string, string>} props
-	 * @return {this}
-	 */
 	setProps(props: { [propertyName: string]: string }): this
 	{
-		if (!Type.isPlainObject(props))
+		if (Type.isPlainObject(props))
 		{
-			return this;
-		}
-
-		for (let propName in props)
-		{
-			const propValue = props[propName];
-			Dom.attr(this.getContainer(), propName, propValue);
+			Dom.attr(this.getContainer(), props);
 		}
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @return {object.<string, string>}
-	 */
-	getProps(): { [propertyName: string]: string }
+	getProps(): { [property: string]: string }
 	{
-		const attrs = this.getContainer().attributes;
-		const result = {};
 		const reserved = this.isInputType() ? ['class', 'type'] : ['class'];
 
-		for (let i = 0; i < attrs.length; i++)
-		{
-			const { name, value } = attrs[i];
-			if (reserved.includes(name) || name.startsWith('data-'))
-			{
-				continue;
-			}
-
-			result[name] = value;
-		}
-
-		return result;
+		return [...this.getContainer().attributes]
+			.filter(({ name }) => !reserved.includes(name) && !name.startsWith('data-'))
+			.reduce((props, { name, value }) => ({
+				...props,
+				[name]: value,
+			}), {})
+		;
 	}
 
-	/**
-	 * @public
-	 * @param {object.<string, string>} props
-	 * @return {this}
-	 */
 	setDataSet(props: { [propertyName: string]: string }): this
 	{
 		if (!Type.isPlainObject(props))
@@ -547,197 +422,106 @@ export default class BaseButton implements IButton
 			return this;
 		}
 
-		for (let propName in props)
-		{
-			const propValue = props[propName];
-			if (propValue === null)
+		Object.entries(props).forEach(([property, value]) => {
+			this.getDataSet()[property] = value;
+			if (value === null)
 			{
-				delete this.getDataSet()[propName];
+				delete this.getDataSet()[property];
 			}
-			else
-			{
-				this.getDataSet()[propName] = propValue;
-			}
-		}
+		});
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @return {DOMStringMap}
-	 */
 	getDataSet(): DOMStringMap
 	{
 		return this.getContainer().dataset;
 	}
 
-	/**
-	 * @public
-	 * @param {string} className
-	 * @return {this}
-	 */
 	addClass(className: string): this
 	{
-		if (Type.isStringFilled(className))
-		{
-			Dom.addClass(this.getContainer(), className);
-		}
+		Dom.addClass(this.getContainer(), className);
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @param {string} className
-	 * @return {this}
-	 */
 	removeClass(className: string): this
 	{
-		if (Type.isStringFilled(className))
-		{
-			Dom.removeClass(this.getContainer(), className);
-		}
+		Dom.removeClass(this.getContainer(), className);
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @param {boolean} [flag=true]
-	 * @return {this}
-	 */
-	setDisabled(flag?: boolean): this
+	setDisabled(disabled: boolean = true): this
 	{
-		if (flag === false)
-		{
-			this.disabled = false;
-			this.setProps({ disabled: null });
-		}
-		else
-		{
-			this.disabled = true;
-			this.setProps({ disabled: true });
-		}
+		this.disabled = disabled;
+		this.setProps({ disabled: disabled ? true : null });
 
 		return this;
 	}
 
-	/**
-	 *
-	 * @return {boolean}
-	 */
 	isDisabled(): boolean
 	{
 		return this.disabled;
 	}
 
-	/**
-	 * @public
-	 * @return {boolean}
-	 */
 	isInputType(): boolean
 	{
-		return this.getTag() === ButtonTag.SUBMIT || this.getTag() === ButtonTag.INPUT;
+		return [ButtonTag.SUBMIT, ButtonTag.INPUT].includes(this.getTag());
 	}
 
-	/**
-	 * @public
-	 * @param {object.<string, function>} events
-	 * @return {this}
-	 */
 	bindEvents(events: { [event: string]: (button: this, event: MouseEvent) => {} }): this
 	{
 		if (Type.isPlainObject(events))
 		{
-			for (let eventName in events)
-			{
-				const fn = events[eventName];
-				this.bindEvent(eventName, fn);
-			}
+			Object.entries(events).forEach(([name, handler]) => this.bindEvent(name, handler));
 		}
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @param {string[]} events
-	 * @return {this}
-	 */
 	unbindEvents(events: string[]): this
 	{
 		if (Type.isArray(events))
 		{
-			events.forEach(eventName => {
-				this.unbindEvent(eventName);
-			});
+			events.forEach((eventName) => this.unbindEvent(eventName));
 		}
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @param {string} eventName
-	 * @param {function} fn
-	 * @return {this}
-	 */
 	bindEvent(eventName: string, fn: (button: this, event: MouseEvent) => {}): this
 	{
 		if (Type.isStringFilled(eventName) && Type.isFunction(fn))
 		{
 			this.unbindEvent(eventName);
 			this.events[eventName] = fn;
-			Event.bind(this.getContainer(), eventName, this.handleEvent);
+			Event.bind(this.getContainer(), eventName, this.#handleEvent);
 		}
 
 		return this;
 	}
 
-	/**
-	 * @public
-	 * @param {string} eventName
-	 * @return {this}
-	 */
 	unbindEvent(eventName: string): this
 	{
 		if (this.events[eventName])
 		{
 			delete this.events[eventName];
-			Event.unbind(this.getContainer(), eventName, this.handleEvent);
+			Event.unbind(this.getContainer(), eventName, this.#handleEvent);
 		}
 
 		return this;
 	}
 
-	/**
-	 * @private
-	 * @param {MouseEvent} event
-	 */
-	handleEvent(event)
-	{
-		const eventName = event.type;
-		if (this.events[eventName])
-		{
-			const fn = this.events[eventName];
-			fn.call(this, this, event);
-		}
-	}
+	#handleEvent = (event: MouseEvent): void => {
+		this.events[event.type]?.call(this, this, event);
+	};
 
 	/**
 	 * @protected
 	 */
-	isEnumValue(value, enumeration): boolean
+	isEnumValue(value: any, enumeration: Object): boolean
 	{
-		for (let code in enumeration)
-		{
-			if (enumeration[code] === value)
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return Object.values(enumeration).includes(value);
 	}
 }

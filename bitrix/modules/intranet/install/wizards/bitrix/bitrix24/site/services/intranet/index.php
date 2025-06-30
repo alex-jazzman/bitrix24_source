@@ -32,8 +32,6 @@ $defaultThemeId = ThemePicker::DEFAULT_THEME_ID;
 $theme = new ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
 $theme->setDefaultTheme($defaultThemeId);
 
-CUserOptions::SetOption("intranet", "left_menu_collapsed", "Y", true);
-
 $arIblockCode = Array(
 	"iblock_structure" => "departments",
 	"iblock_absence" => "absence",

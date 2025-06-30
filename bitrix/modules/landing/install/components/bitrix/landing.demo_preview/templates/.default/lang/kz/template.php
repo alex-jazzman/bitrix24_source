@@ -15,6 +15,7 @@ $MESS["LANDING_TPL_BUTTON_REPLACE_PAGE"] = "Қалыпты қолдану";
 $MESS["LANDING_TPL_BUTTON_SHOW_IN_MOBILE"] = "Мобильді құрылғыда ашу";
 $MESS["LANDING_TPL_HEADER_LOGO_BITRIX"] = "Битрикс";
 $MESS["LANDING_TPL_HEADER_LOGO_KB"] = "Білім қорлары";
+$MESS["LANDING_TPL_HEADER_LOGO_MAINPAGE"] = "Вайб";
 $MESS["LANDING_TPL_HEADER_LOGO_SITE"] = "Сайттар";
 $MESS["LANDING_TPL_HEADER_RIGHT_CREATE_HINT_MSGVER_1"] = "Сіздің сайттарды құруға құқығыңыз жоқ Өз Битрикс24 әкімшісіне хабарласыңыз.";
 $MESS["LANDING_TPL_MY_COLOR"] = "Өз түсі";

@@ -202,7 +202,14 @@ export class PermissionCheckerClass
 			}
 		}
 
-		const userDepartments = useChartStore().currentDepartments;
+		const userEntities = useChartStore().currentDepartments;
+		const userDepartments = new Set(
+			userEntities.filter((id) => {
+				const department = departments.get(id);
+
+				return department && department.entityType === EntityTypes.department;
+			}),
+		);
 
 		if (permissionObject.id < minLevel)
 		{
@@ -216,7 +223,7 @@ export class PermissionCheckerClass
 
 			case PermissionLevels.selfAndSub:
 			{
-				if (userDepartments.includes(departmentId))
+				if (userDepartments.has(departmentId))
 				{
 					return true;
 				}
@@ -224,7 +231,7 @@ export class PermissionCheckerClass
 				let currentDepartment = departments.get(departmentId);
 				while (currentDepartment)
 				{
-					if (userDepartments.includes(currentDepartment.id))
+					if (userDepartments.has(currentDepartment.id))
 					{
 						return true;
 					}
@@ -235,7 +242,7 @@ export class PermissionCheckerClass
 				return false;
 			}
 			case PermissionLevels.self:
-				return userDepartments.includes(departmentId);
+				return userDepartments.has(departmentId);
 
 			case PermissionLevels.none:
 			default:
@@ -250,8 +257,17 @@ export class PermissionCheckerClass
 			return false;
 		}
 
-		const userDepartments = useChartStore().currentDepartments;
-		if (userDepartments.includes(nodeId))
+		const nodes = useChartStore().departments;
+		const userEntities = useChartStore().currentDepartments;
+		const userTeams = new Set(
+			userEntities.filter((id) => {
+				const department = nodes.get(id);
+
+				return department && department.entityType === EntityTypes.team;
+			}),
+		);
+
+		if (userTeams.has(nodeId))
 		{
 			return true;
 		}
@@ -261,7 +277,6 @@ export class PermissionCheckerClass
 			return false;
 		}
 
-		const nodes = useChartStore().departments;
 		let currentDepartment = nodes.get(nodeId);
 		while (currentDepartment)
 		{
@@ -270,7 +285,7 @@ export class PermissionCheckerClass
 				return false;
 			}
 
-			if (userDepartments.includes(currentDepartment.id))
+			if (userTeams.has(currentDepartment.id))
 			{
 				return true;
 			}
@@ -288,17 +303,25 @@ export class PermissionCheckerClass
 			return false;
 		}
 
-		const userDepartments = useChartStore().currentDepartments;
-		if (userDepartments.includes(nodeId))
+		const nodes = useChartStore().departments;
+		const userEntities = useChartStore().currentDepartments;
+		const userDepartments = new Set(
+			userEntities.filter((id) => {
+				const department = nodes.get(id);
+
+				return department && department.entityType === EntityTypes.department;
+			}),
+		);
+
+		if (userDepartments.has(nodeId))
 		{
 			return true;
 		}
 
-		const nodes = useChartStore().departments;
 		let currentDepartment = nodes.get(nodeId);
 		while (currentDepartment)
 		{
-			if (userDepartments.includes(currentDepartment.id))
+			if (userDepartments.has(currentDepartment.id))
 			{
 				return true;
 			}
@@ -308,7 +331,7 @@ export class PermissionCheckerClass
 				if (action === PermissionActions.teamCreate)
 				{
 					return this.hasPermission(PermissionActions.structureView, currentDepartment.id)
-						&& userDepartments.includes(currentDepartment.id)
+						&& userDepartments.has(currentDepartment.id)
 					;
 				}
 

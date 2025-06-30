@@ -1,3 +1,4 @@
+import { EventEmitter } from 'main.core.events';
 import { Builder, type Store } from 'ui.vue3.vuex';
 import type { AccessRightsCollection } from './model/access-rights-model';
 import { AccessRightsModel } from './model/access-rights-model';
@@ -20,6 +21,10 @@ export function createStore(
 		.setInitialUserGroups(userGroups)
 	;
 
+	const accessRightsModel = AccessRightsModel.create()
+		.setInitialAccessRights(accessRights)
+	;
+
 	const { store } = Builder
 		.init()
 		.addModel(
@@ -28,18 +33,21 @@ export function createStore(
 				.setGuid(appGuid)
 			,
 		)
-		.addModel(
-			AccessRightsModel.create()
-				.setInitialAccessRights(accessRights)
-			,
-		)
+		.addModel(accessRightsModel)
 		.addModel(userGroupsModel)
 		.syncBuild()
 	;
 
 	return {
 		store,
-		resetState: () => userGroupsModel.clearState(),
+		resetState: () => {
+			userGroupsModel.clearState();
+			accessRightsModel.clearState();
+			EventEmitter.emit('BX.UI.AccessRights.V2:onResetState', {
+				guid: appGuid,
+			});
+		},
 		userGroupsModel,
+		accessRightsModel,
 	};
 }

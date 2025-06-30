@@ -168,7 +168,8 @@ this.BX = this.BX || {};
 	    offsetTop,
 	    blurBackground,
 	    useAngle,
-	    popupLoader
+	    popupLoader,
+	    offsetLeft
 	  }) {
 	    this.id = main_core.Type.isString(id) ? id : null;
 	    this.target = main_core.Type.isElementNode(target) ? target : null;
@@ -182,6 +183,7 @@ this.BX = this.BX || {};
 	    this.contentPadding = main_core.Type.isNumber(contentPadding) ? contentPadding : 0;
 	    this.padding = main_core.Type.isNumber(padding) ? padding : 13;
 	    this.offsetTop = main_core.Type.isNumber(offsetTop) ? offsetTop : 0;
+	    this.offsetLeft = main_core.Type.isNumber(offsetLeft) ? offsetLeft : null;
 	    this.blurBlackground = main_core.Type.isBoolean(blurBackground) ? blurBackground : false;
 	    this.useAngle = main_core.Type.isUndefined(useAngle) || useAngle !== false;
 	    this.popupLoader = popupLoader instanceof main_popup.Popup ? popupLoader : null;
@@ -201,6 +203,7 @@ this.BX = this.BX || {};
 	  }
 	  getPopup() {
 	    if (!this.popup) {
+	      var _this$offsetLeft;
 	      const popupWidth = this.width ? this.width : 350;
 	      const popupId = this.id ? this.id + '-popup' : null;
 	      if (this.popupLoader) {
@@ -218,7 +221,7 @@ this.BX = this.BX || {};
 	      this.popup.setContentPadding(this.contentPadding);
 	      this.popup.setOffset({
 	        offsetTop: this.offsetTop,
-	        offsetLeft: -(popupWidth / 2) + (this.target ? this.target.offsetWidth / 2 : 0) + 40
+	        offsetLeft: (_this$offsetLeft = this.offsetLeft) != null ? _this$offsetLeft : -(popupWidth / 2) + (this.target ? this.target.offsetWidth / 2 : 0) + 40
 	      });
 	      this.popup.setWidth(popupWidth);
 	      this.popup.setAutoHide(true);

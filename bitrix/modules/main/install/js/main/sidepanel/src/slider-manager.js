@@ -860,6 +860,7 @@ export class SliderManager
 			this.exitFullScreen();
 
 			this.getTopSlider().hideOverlay();
+			slider.setOverlayBackground();
 
 			const sameWidth = (
 				this.getTopSlider().getOffset() === slider.getOffset()

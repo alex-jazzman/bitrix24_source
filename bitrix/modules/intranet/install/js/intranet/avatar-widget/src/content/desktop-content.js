@@ -205,6 +205,7 @@ export class DesktopContent extends Content
 				angle: true,
 				offsetLeft,
 				offsetTop,
+				fixed: true,
 			});
 		});
 	}

@@ -3,5 +3,4 @@ export type SkeletonConfig = {
 	dashboardId: number,
 	status: string,
 	isSupersetAvailable: boolean,
-	paramsCompatible: boolean,
 }

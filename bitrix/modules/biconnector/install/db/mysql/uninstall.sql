@@ -20,3 +20,6 @@ DROP TABLE IF EXISTS b_biconnector_external_dataset_field;
 DROP TABLE IF EXISTS b_biconnector_external_dataset_field_format;
 DROP TABLE IF EXISTS b_biconnector_external_source_rest;
 DROP TABLE IF EXISTS b_biconnector_external_source_rest_connector;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_group;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_group_binding;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_group_scope;

@@ -35,8 +35,15 @@ class EventSenderService implements \Bitrix\HumanResources\Contract\Service\Even
 
 			return $event;
 		}
-		catch (\Throwable)
+		catch (\Throwable $t)
 		{
+			AddMessage2Log(
+				'EventSenderService::send: '
+				. $t->getMessage()
+				. '. Trace as string: ' . $t->getTraceAsString(),
+				'humanresources',
+			);
+
 			return $event;
 		}
 	}

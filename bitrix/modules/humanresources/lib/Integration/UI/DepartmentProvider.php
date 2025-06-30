@@ -792,7 +792,7 @@ class DepartmentProvider extends BaseProvider
 						entityTypeFilter: NodeTypeFilter::fromNodeTypes($this->getIncludedNodeEntityTypes()),
 						structureId: $structure?->id,
 						active: $this->options['active'],
-						accessFilter: $this->options['accessFilter'],
+						accessFilter: new NodeAccessFilter(StructureAction::ViewAction),
 					)
 				)
 				->getAll()

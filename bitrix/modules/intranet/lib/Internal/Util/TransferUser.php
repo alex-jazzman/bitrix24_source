@@ -10,6 +10,7 @@ use Bitrix\Intranet\Internals\InvitationTable;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Internal\Repository\Mapper\UserMapper;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
@@ -73,6 +74,15 @@ class TransferUser
 		{
 			ExecuteModuleEventEx($arEvent, [$this->userMapper->convertToArray($user)]);
 		}
+
+		$event = new Event(
+			'intranet',
+			'onAfterUserRegistration',
+			[
+				'user' => $user,
+			],
+		);
+		$event->send();
 
 		foreach(GetModuleEvents("intranet", "OnRegisterUser", true) as $arEvent)
 		{

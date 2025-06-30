@@ -255,6 +255,7 @@ this.BX = this.BX || {};
 	    this.type = options.type;
 	    this.expireDays = options.expireDays;
 	    this.discountEar = options.discountEar;
+	    this.marketLabel = options.isRenamedMarket ? '' : '_MARKET_PLUS';
 	  }
 	  getTitle() {
 	    throw new Error('Not implemented');
@@ -482,10 +483,10 @@ this.BX = this.BX || {};
 					${0}
 				</p>
 			</div>
-		`), main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL'));
+		`), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL${this.marketLabel}`));
 	  }
 	  getTitle() {
-	    return main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_${this.type}`, {
+	    return main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_${this.type}${this.marketLabel}`, {
 	      '#DAYS#': this.expireDays
 	    });
 	  }
@@ -563,20 +564,24 @@ this.BX = this.BX || {};
 	    return PopupCategory.SUBSCRIPTION;
 	  }
 	  getTitle() {
-	    return main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_${this.type}`, {
+	    const replacements = {
 	      '#DAYS#': this.expireDays
-	    });
+	    };
+	    const marketLabel = this.type === PopupType.WARNING ? this.marketLabel : '';
+	    return main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_${this.type}${marketLabel}`, replacements);
 	  }
 	  renderDescription() {
+	    const replacements = {
+	      '#DATE#': this.expireDate
+	    };
+	    const marketLabel = this.type === PopupType.FINAL ? this.marketLabel : '';
 	    return main_core.Tag.render(_t$4 || (_t$4 = _$4`
 			<div class="rest-market-expired-popup__description">
 				<p class="rest-market-expired-popup__description-text">
 					${0}
 				</p>
 			</div>
-		`), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_${this.type}`, {
-	      '#DATE#': this.expireDate
-	    }));
+		`), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_${this.type}${marketLabel}`, replacements));
 	  }
 	  renderButtons() {
 	    return main_core.Tag.render(_t2$4 || (_t2$4 = _$4`
@@ -640,7 +645,7 @@ this.BX = this.BX || {};
 	var _renderTermsOfPromotion = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTermsOfPromotion");
 	class DiscountEarSubscription extends DiscountEar {
 	  constructor(props) {
-	    var _props$discountPercen, _props$termsUrl;
+	    var _props$discountPercen, _props$termsUrl, _props$marketLabel;
 	    super(props);
 	    Object.defineProperty(this, _renderTermsOfPromotion, {
 	      value: _renderTermsOfPromotion2
@@ -650,6 +655,7 @@ this.BX = this.BX || {};
 	    });
 	    this.discountPercentage = (_props$discountPercen = props == null ? void 0 : props.discountPercentage) != null ? _props$discountPercen : null;
 	    this.termsUrl = (_props$termsUrl = props == null ? void 0 : props.termsUrl) != null ? _props$termsUrl : null;
+	    this.marketLabel = (_props$marketLabel = props == null ? void 0 : props.marketLabel) != null ? _props$marketLabel : '';
 	  }
 	  getContainer() {
 	    var _this$container;
@@ -661,7 +667,7 @@ this.BX = this.BX || {};
 				</p>
 				${0}
 			</aside>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderDiscountPercent)[_renderDiscountPercent](), main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _renderTermsOfPromotion)[_renderTermsOfPromotion]());
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderDiscountPercent)[_renderDiscountPercent](), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION${this.marketLabel}`), babelHelpers.classPrivateFieldLooseBase(this, _renderTermsOfPromotion)[_renderTermsOfPromotion]());
 	    return this.container;
 	  }
 	}
@@ -813,7 +819,7 @@ this.BX = this.BX || {};
 					<p class="rest-market-expired-popup__description-text">
 						${0}
 					</p>
-				`), main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_FINAL')), descriptionContainer);
+				`), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_FINAL${this.marketLabel}`)), descriptionContainer);
 	    }
 	    main_core.Dom.append(main_core.Tag.render(_t3$5 || (_t3$5 = _$7`
 				<p class="rest-market-expired-popup__description-text">
@@ -826,9 +832,9 @@ this.BX = this.BX || {};
 	  }
 	  renderButtons() {
 	    if (this.type === PopupType.WARNING) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _renderButtonsForFinal)[_renderButtonsForFinal]();
+	      return babelHelpers.classPrivateFieldLooseBase(this, _renderButtonsForWarning)[_renderButtonsForWarning]();
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _renderButtonsForWarning)[_renderButtonsForWarning]();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _renderButtonsForFinal)[_renderButtonsForFinal]();
 	  }
 	  show() {
 	    super.show();
@@ -1022,7 +1028,8 @@ this.BX = this.BX || {};
 	    case PopupCategory.SUBSCRIPTION:
 	      return new DiscountEarSubscription({
 	        discountPercentage: discountConfig.percentage,
-	        termsUrl: discountConfig.termsUrl
+	        termsUrl: discountConfig.termsUrl,
+	        marketLabel: this.config.isRenamedMarket ? '' : '_MARKET_PLUS'
 	      });
 	    case PopupCategory.TRANSITION:
 	    default:
@@ -1174,7 +1181,7 @@ this.BX = this.BX || {};
 	    })];
 	  }
 	  getContent() {
-	    return this.options.type === PopupType.FINAL ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT') : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT', {
+	    return this.options.type === PopupType.FINAL ? main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT${this.marketLabel}`) : main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT${this.marketLabel}`, {
 	      '#DAYS#': this.options.expireDays
 	    });
 	  }
@@ -1203,7 +1210,7 @@ this.BX = this.BX || {};
 	    })];
 	  }
 	  getContent() {
-	    return this.options.type === PopupType.FINAL ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT') : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT', {
+	    return this.options.type === PopupType.FINAL ? main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT${this.marketLabel}`) : main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT${this.marketLabel}`, {
 	      '#DAYS#': this.options.expireDays
 	    });
 	  }

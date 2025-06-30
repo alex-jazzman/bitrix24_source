@@ -92,6 +92,7 @@ export class SalaryVacationMenu
 				id: 'hcmLink-vacation-salary-menu',
 				items,
 				autoHide: true,
+				fixed: this.#mode === 'profile-menu',
 			});
 
 			return menu;

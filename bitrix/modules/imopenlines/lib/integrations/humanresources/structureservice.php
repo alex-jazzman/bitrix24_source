@@ -372,7 +372,7 @@ class StructureService
 		//todo: Remove this block
 		else
 		{
-			$headId = \CIntranetUtils::GetDepartmentManagerID($departmentId);
+			$headId = \CIntranetUtils::GetDepartmentManagerID($departmentId) ?? 0;
 		}
 
 		return $headId;

@@ -1218,14 +1218,10 @@ class DocumentService
 		}
 		else
 		{
-			if (!$this->isIntegrationDocumentSettingsAvailableForProvider($document->providerCode))
+			$checkDocumentIntegrationResult = $this->checkDocumentIntegration($document);
+			if (!$checkDocumentIntegrationResult->isSuccess())
 			{
-				return (new Main\Result())->addError(new Main\Error('Invalid document provider code'));
-			}
-
-			if (!Container::instance()->getHcmLinkService()->isAvailable() || (int)$document->hcmLinkCompanyId < 1)
-			{
-				return (new Main\Result())->addError(new Main\Error('Is not available', 'HCM_LINK_NOT_AVAILABLE'));
+				return $checkDocumentIntegrationResult;
 			}
 
 			if ((int)$hcmLinkSettingId < 1)
@@ -1271,17 +1267,10 @@ class DocumentService
 
 		if ($hcmLinkSettingId > 0)
 		{
-			if (!$this->isIntegrationDocumentSettingsAvailableForProvider($document->providerCode))
+			$checkDocumentIntegrationResult = $this->checkDocumentIntegration($document);
+			if (!$checkDocumentIntegrationResult->isSuccess())
 			{
-				return (new Main\Result())->addError(new Main\Error('Invalid document provider code'));
-			}
-
-			if (
-				!Container::instance()->getHcmLinkService()->isAvailable()
-				|| !$document->hcmLinkCompanyId
-			)
-			{
-				return (new Main\Result())->addError(new Main\Error('Is not available', 'HCM_LINK_NOT_AVAILABLE'));
+				return $checkDocumentIntegrationResult;
 			}
 
 			if (!Container::instance()->getHcmLinkFieldService()->isDocumentTypeSettingFieldById($hcmLinkSettingId))
@@ -1382,17 +1371,10 @@ class DocumentService
 		}
 		else
 		{
-			if (!$this->isIntegrationDocumentSettingsAvailableForProvider($document->providerCode))
+			$checkDocumentIntegrationResult = $this->checkDocumentIntegration($document);
+			if (!$checkDocumentIntegrationResult->isSuccess())
 			{
-				return (new Main\Result())->addError(new Main\Error('Invalid document provider code'));
-			}
-
-			if (
-				!Container::instance()->getHcmLinkService()->isAvailable()
-				|| !$document->hcmLinkCompanyId
-			)
-			{
-				return (new Main\Result())->addError(new Main\Error('Is not available', 'HCM_LINK_NOT_AVAILABLE'));
+				return $checkDocumentIntegrationResult;
 			}
 
 			if (empty($hcmLinkSettingId))
@@ -1417,6 +1399,32 @@ class DocumentService
 		}
 
 		return new Main\Result();
+	}
+
+	private function checkDocumentIntegration(Item\Document $document): Main\Result
+	{
+		$result = new Main\Result();
+		if (!$this->isIntegrationDocumentSettingsAvailableForProvider($document->providerCode))
+		{
+			return $result->addError(new Main\Error('Invalid document provider code'));
+		}
+
+		if (!Container::instance()->getHcmLinkService()->isAvailable())
+		{
+			return $result->addError(new Main\Error('Integration is not available', 'HCM_LINK_NOT_AVAILABLE'));
+		}
+
+		if ((int)$document->hcmLinkCompanyId < 1)
+		{
+			return $result->addError(new Main\Error('Incorrect hcmLinkCompanyId', 'HCM_LINK_NOT_AVAILABLE'));
+		}
+
+		if (!Container::instance()->getHcmLinkService()->isCompanyExistWithId((int)$document->hcmLinkCompanyId))
+		{
+			return $result->addError(new Main\Error('HcmLinkCompany not found', 'HCM_LINK_NOT_AVAILABLE'));
+		}
+
+		return $result;
 	}
 
 	public function modifyHcmLinkCompanyId(string $documentUid, ?int $hcmLinkCompanyId = null): ?Main\Result

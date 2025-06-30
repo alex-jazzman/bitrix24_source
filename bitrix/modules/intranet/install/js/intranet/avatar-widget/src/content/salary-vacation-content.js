@@ -1,4 +1,4 @@
-import { Tag } from 'main.core';
+import { Event, Tag} from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Content } from './content';
 import { SalaryVacationMenu } from 'humanresources.hcmlink.salary-vacation-menu';
@@ -40,22 +40,40 @@ export class SalaryVacationContent extends Content
 	#getDisabledState(): HTMLElement
 	{
 		return this.cache.remember('disabledState', () => {
-			EventEmitter.emit('BX.Intranet.AvatarWidget.Popup:makeWithHint');
-
-			return Tag.render`
+			const container = Tag.render`
 				<div
 					class="intranet-avatar-widget-item__wrapper"
-					${this.#salaryVacationMenu.isDisabled() ? `data-hint="${this.getOptions().disabledHint}"` : ''}
-					data-hint-no-icon
-					data-hint-html
-					data-hint-interactivity
 					data-id="bx-avatar-widget-content-salary-vacation"
+					data-hint
+					data-hint-interactivity
 				 >
 					<i class="ui-icon-set --o-favorite intranet-avatar-widget-item__icon"/>
 					<span class="intranet-avatar-widget-item__title">${this.getOptions().title}</span>
 					${this.#getChevron()}
 				</div>
 			`;
+
+			Event.bind(container, 'mouseenter', () => {
+				this.#getHintInstance().show(container, this.getOptions().disabledHint, true);
+			});
+
+			Event.bind(container, 'mouseleave', () => {
+				this.#getHintInstance().hide(container);
+			});
+
+			return container;
+		});
+	}
+
+	#getHintInstance(): Manager
+	{
+		return this.cache.remember('hint', () => {
+			return BX.UI.Hint.createInstance({
+				popupParameters: {
+					fixed: true,
+					offsetTop: -20,
+				},
+			});
 		});
 	}
 
@@ -69,7 +87,7 @@ export class SalaryVacationContent extends Content
 
 			return Tag.render`
 				<div onclick="${onclick}" class="intranet-avatar-widget-item__wrapper" data-id="bx-avatar-widget-content-salary-vacation">
-					<i class="ui-icon-set --active --o-favorite intranet-avatar-widget-item__icon"/>
+					<i class="ui-icon-set --o-favorite intranet-avatar-widget-item__icon"/>
 					<span class="intranet-avatar-widget-item__title">${this.getOptions().title}</span>
 					${this.#getChevron()}
 				</div>

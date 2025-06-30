@@ -26,6 +26,13 @@ if (isset($_GET['IFRAME']) && $_GET['IFRAME'] === 'Y' && !isset($_GET['SONET']))
 	return;
 }
 
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$isSearchTitleRequest = !empty($request->get('ajax_call'));
+if ($request->isAjaxRequest() && !$isSearchTitleRequest)
+{
+	return;
+}
+
 // Live Feed Ajax
 if (isset($_GET['RELOAD']) && $_GET['RELOAD'] == 'Y')
 {

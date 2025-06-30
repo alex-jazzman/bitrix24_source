@@ -41,7 +41,7 @@ class ActiveUserInvitation extends Engine\ActionFilter\Base
 
 		$emailUserCollection = $this->userRepository->findActivatedUsersByLogins(
 			$emailLogins,
-			(new ExternalAuthType())->getNotUserTypeList(),
+			(new ExternalAuthType())->getAllTypeList(),
 		);
 
 		if (!$emailUserCollection->empty())
@@ -53,7 +53,7 @@ class ActiveUserInvitation extends Engine\ActionFilter\Base
 
 		$phoneUserCollection = $this->userRepository->findActivatedUsersByLogins(
 			$phoneLogins,
-			(new ExternalAuthType())->getNotUserTypeList(),
+			(new ExternalAuthType())->getAllTypeList(),
 		);
 
 		if (!$phoneUserCollection->empty())

@@ -503,7 +503,7 @@ export default class Item
 		}
 	}
 
-	deselect(): void
+	deselect(preselectedMode: boolean = false): void
 	{
 		if (!this.selected)
 		{
@@ -532,7 +532,7 @@ export default class Item
 
 		if (dialog)
 		{
-			dialog.handleItemDeselect(this);
+			dialog.handleItemDeselect(this, !preselectedMode);
 			dialog.emit('Item:onDeselect', { item: this });
 		}
 	}

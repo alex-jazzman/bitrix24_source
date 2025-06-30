@@ -113,6 +113,15 @@
 		min-width: auto;
 	}
 
+	.bx-mac .menu-items-body {
+		--menu-scroll-width: 14px;
+	}
+
+	.bx-mac .app.menu-collapsed-mode .menu-items-body,
+	.bx-mac .app.menu-animation-closing-mode .menu-items-body {
+		scrollbar-width: none;
+	}
+
 	.menu-items-body:hover {
 		scrollbar-color: var(--menu-scroll-thumb-color) var(--menu-scrollbar-color);
 	}
@@ -1072,7 +1081,7 @@
 
 .menu-item-with-index .menu-item-index-wrap,
 .menu-expand .menu-item-index-wrap {
-	display: inline-block;
+	display: inline-flex;
 }
 
 .menu-expand.menu-favorites-more-btn-open .menu-item-index-wrap {
@@ -1486,7 +1495,10 @@ li.menu-item-group-more {
 	display: flex;
 }
 
-
+.menu-license-all-wrapper {
+    padding: 12px 0 0 2px;
+    min-height: 28px;
+}
 .menu-item-beta {
 	display: none;
 	position: relative;

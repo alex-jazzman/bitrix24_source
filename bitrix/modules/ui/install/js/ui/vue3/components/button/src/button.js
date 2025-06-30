@@ -7,7 +7,11 @@ import {
 	ButtonCounterColor,
 	ButtonTag,
 } from 'ui.buttons';
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { Set, Outline } from 'ui.icon-set.api.core';
+import type { BitrixVueComponentProps } from 'ui.vue3';
+
+const allIcons = { ...ButtonIcon, ...Set, ...Outline };
+const iconValidator = (val): boolean => Type.isNil(val) || Object.values(allIcons).includes(val);
 
 // @vue/component
 export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
@@ -34,7 +38,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			default: undefined,
 			validator(val): boolean
 			{
-				return Type.isUndefined(val) || Type.isNull(val) || Object.values(ButtonSize).includes(val);
+				return Type.isNil(val) || Object.values(ButtonSize).includes(val);
 			},
 		},
 		state: {
@@ -42,7 +46,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			default: undefined,
 			validator(val): boolean
 			{
-				return Type.isUndefined(val) || Type.isNull(val) || Object.values(ButtonState).includes(val);
+				return Type.isNil(val) || Object.values(ButtonState).includes(val);
 			},
 		},
 		style: {
@@ -51,7 +55,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			default: null,
 			validator(val): boolean
 			{
-				return Type.isUndefined(val) || null || Object.values(AirButtonStyle).includes(val);
+				return Type.isNil(val) || Object.values(AirButtonStyle).includes(val);
 			},
 		},
 		noCaps: {
@@ -74,26 +78,17 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 		leftIcon: {
 			type: String,
 			default: null,
-			validator(val): boolean
-			{
-				return Type.isUndefined(val) || Type.isNull(val) || Object.values(ButtonIcon).includes(val);
-			},
+			validator: iconValidator,
 		},
 		rightIcon: {
 			type: String,
 			default: null,
-			validator(val): boolean
-			{
-				return Type.isUndefined(val) || Type.isNull(val) || Object.values(ButtonIcon).includes(val);
-			},
+			validator: iconValidator,
 		},
 		collapsedIcon: {
 			type: String,
 			default: null,
-			validator(val): boolean
-			{
-				return Object.values(ButtonIcon).includes(val);
-			},
+			validator: iconValidator,
 		},
 		leftCounterColor: {
 			type: String,
@@ -322,7 +317,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 
 		if (this.shimmer)
 		{
-			button.startHighlighting();
+			button.startShimmer();
 		}
 
 		this.button = button;
