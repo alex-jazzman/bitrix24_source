@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Activity\Entity;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use CCrmActivity;
 use CCrmContentType;
@@ -90,15 +89,6 @@ final class RepeatSale extends BaseActivity
 			if (!$existedActivity)
 			{
 				$result->addError(ErrorCode::getNotFoundError());
-				
-				return $result;
-			}
-
-			if ($existedActivity['COMPLETED'] === 'Y')
-			{
-				$result->addError(
-					new Error(Loc::getMessage("CRM_TODO_ENTITY_ACTIVITY_ALREADY_COMPLETED"), 'CAN_NOT_UPDATE_COMPLETED_TODO'),
-				);
 				
 				return $result;
 			}

@@ -749,12 +749,20 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					{
 						navigator.notification.alert('MOBILE_CALL_ALREADY_FINISHED');
 					}
+					else if (errorCode === 'user_is_busy')
+					{
+						// we don't want to show any error messages for this one
+					}
 					else
 					{
 						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 					}
 
-					this.sendStartCallErrorAnalytics(errorCode);
+					if (errorCode !== 'user_is_busy')
+					{
+
+						this.sendStartCallErrorAnalytics(errorCode);
+					}
 
 					this.clearEverything();
 				});

@@ -1,5 +1,7 @@
-import { ajax as Ajax, Loc, Tag } from 'main.core';
+import { Builder, Dictionary } from 'crm.integration.analytics';
+import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
 import 'ui.design-tokens';
+import { sendData } from 'ui.analytics';
 import { Footer } from '../footer';
 import type { WidgetParams, WidgetTypeEnum } from '../widget';
 import { WidgetType } from '../widget';
@@ -9,6 +11,7 @@ export class Start extends Base
 {
 	#isFlowStarted: ?boolean = null;
 	#showSettingsButton: boolean = true;
+	#hasClients: boolean = false;
 
 	constructor(params: WidgetParams)
 	{
@@ -29,39 +32,82 @@ export class Start extends Base
 		void Ajax.runAction('crm.repeatsale.widget.incrementShowedFlowStartCount');
 	}
 
-	getPopupContent(data: Object): HTMLElement
+	getPopupContent(data: ?Object = null): HTMLElement
 	{
-		if (this.#isFlowStarted === null)
+		if (Type.isObject(data))
 		{
-			const { isFlowStarted } = data;
-			this.#isFlowStarted = isFlowStarted;
+			if (this.#isFlowStarted === null)
+			{
+				const { isFlowStarted } = data;
+				this.#isFlowStarted = isFlowStarted;
+			}
+
+			this.#hasClients = this.#isHasClients(data);
 		}
 
 		return Tag.render`
 			<div>
 				<header class="crm-rs__w-header">
-					${this.#getTitle(data)}
+					${this.#getTitle()}
 				</header>
-				<div class="crm-rs__w-body">
-					<div class="crm-rs__w-body-content">
-						<div class="crm-rs__w-body-title">
-							${this.#getBodyTitle(data)}
-						</div>
-						${this.#getButton(data)}
-					</div>
-					<div class="crm-rs__w-body-bubble ${this.#isFlowStarted ? '--flow-started' : ''}">
-						${this.renderLottieAnimation()}
-						<div class="crm-rs__w-body-icon"></div>
-					</div>
-				</div>
-				<footer class="crm-rs__w-footer">
-					${this.#getFooterContent(data)}
-				</footer>
+				${this.#hasClients ? this.#getBodyContentWithClients() : this.#getBodyContent()}
+				${this.#hasClients ? this.#getFooterContent() : null}
 			</div>
 		`;
 	}
 
-	#getTitle(data: Object): string | HTMLElement
+	#getBodyContent(): HTMLElement
+	{
+		return Tag.render`
+			<div class="crm-rs__w-body">
+				<div class="crm-rs__w-body-content">
+					<div class="crm-rs__w-body-title">
+						${this.#getBodyTitle()}
+					</div>
+					${this.#getDescription()}
+				</div>
+				${this.#getBubble()}
+			</div>
+		`;
+	}
+
+	#getBodyContentWithClients(): HTMLElement
+	{
+		return Tag.render`
+			<div class="crm-rs__w-body">
+				<div class="crm-rs__w-body-content --has-clients">
+					<div class="crm-rs__w-body-title">
+						${this.#getBodyTitle()}
+					</div>
+					${this.#getButton()}
+				</div>
+				${this.#getBubble()}
+			</div>
+		`;
+	}
+
+	#getBubble(): HTMLElement
+	{
+		const hasClients = this.#hasClients;
+
+		return Tag.render`
+			<div class="crm-rs__w-body-bubble ${this.#isFlowStarted ? '--flow-started' : ''} ${hasClients ? '--has-clients' : ''}">
+				${this.renderLottieAnimation()}
+				<div class="crm-rs__w-body-icon"></div>
+			</div>
+		`;
+	}
+
+	#getFooterContent(): HTMLElement
+	{
+		return Tag.render`
+			<footer class="crm-rs__w-footer">
+				${this.#getDescription()}
+			</footer>
+		`;
+	}
+
+	#getTitle(): string | HTMLElement
 	{
 		if (this.#isFlowStarted)
 		{
@@ -70,16 +116,10 @@ export class Start extends Base
 			`;
 		}
 
-		const code = (
-			this.#hasClients(data)
-				? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_TITLE_WITH_CLIENTS'
-				: 'CRM_REPEAT_SALE_WIDGET_START_POPUP_TITLE_WITHOUT_CLIENTS'
-		);
-
-		return Loc.getMessage(code);
+		return Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_POPUP_TITLE');
 	}
 
-	#getBodyTitle(data: Object): string | HTMLElement
+	#getBodyTitle(): string | HTMLElement
 	{
 		if (this.#isFlowStarted)
 		{
@@ -88,67 +128,74 @@ export class Start extends Base
 			`;
 		}
 
-		const hasClients = this.#hasClients(data);
-
 		const code = (
-			hasClients
+			this.#hasClients
 				? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BODY_TITLE_WITH_CLIENTS'
 				: 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BODY_TITLE_WITHOUT_CLIENTS'
 		);
 
-		if (hasClients)
-		{
-			return Loc.getMessagePlural(code, data.count, { '#COUNT#': data.count });
-		}
-
 		return Loc.getMessage(code);
 	}
 
-	#getButton(data: Object): ?string
+	#getButton(): ?string
 	{
 		if (this.#isFlowStarted)
 		{
 			return null;
 		}
 
-		const hasClients = this.#hasClients(data);
-
-		const code = (
-			hasClients
-				? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_WITH_CLIENTS'
-				: 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_WITHOUT_CLIENTS'
-		);
-
 		return Tag.render`
-			<div class="crm-rs__w-body-title-btn ${hasClients ? '--has-clients' : ''}">
+			<div class="crm-rs__w-body-title-btn --has-clients">
 				<span
-					onclick="${this.#onButtonClick.bind(this, data)}"
-				>${Loc.getMessage(code)}</span>
+					onclick="${this.#onButtonClick.bind(this)}"
+				>${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN')}</span>
 			</div>
 		`;
 	}
 
-	#getFooterContent(data: Object): HTMLElement
+	#getDescription(): HTMLElement
 	{
 		if (this.#isFlowStarted)
 		{
-			const footer = new Footer(this.#showSettingsButton);
+			const footer = new Footer(this.#showSettingsButton, {
+				type: this.getAnalyticsType(),
+				subSection: this.getAnalyticsSubSection(),
+			});
 
-			return footer.getFooterContent();
+			return Tag.render`
+				<div class="crm-rs__w-buttons-wrapper">
+					${footer.getFooterContent()}
+				</div>
+			`;
 		}
 
+		const hasClients = this.#hasClients;
 		const code = (
-			this.#hasClients(data)
+			hasClients
 				? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITH_CLIENTS'
 				: 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_CLIENTS'
 		);
 
-		return Loc.getMessage(code);
+		const content = Loc.getMessage(code);
+
+		return Tag.render`
+			<div class="crm-rs__w-body-description ${hasClients ? '--has-clients' : ''}">
+				${hasClients ? null : '<div class="crm-rs__w-body-description-border"></div>'}
+				<div class="crm-rs__w-body-description-text ${hasClients ? '--has-clients' : ''}">
+					${content}
+				</div>
+				<div class="crm-rs__w-body-description-btn">
+					<span
+						onclick="${this.#onReadMoreButtonClick.bind(this)}"
+					>${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_READ_MORE')}</span>
+				</div>
+			</div>
+		`;
 	}
 
-	#onButtonClick(data: Object): void
+	#onButtonClick(): void
 	{
-		if (this.#hasClients(data))
+		if (this.#hasClients)
 		{
 			Ajax
 				.runAction('crm.repeatsale.flow.enable')
@@ -157,7 +204,11 @@ export class Start extends Base
 						if (response.status === 'success')
 						{
 							this.#isFlowStarted = true;
-							this.setPopupContent(this.getPopupContent(data));
+							this.setPopupContent(this.getPopupContent());
+
+							const instance = this.#getClickEventBuilder();
+							instance.setElement('start_flow');
+							sendData(instance.buildData());
 
 							return;
 						}
@@ -178,14 +229,27 @@ export class Start extends Base
 		}
 		else
 		{
-			// @todo
-			alert('empty clients, need show manual');
+			this.#showReadMore();
 
 			void Ajax.runAction('crm.repeatsale.widget.finalizeShowedFlowStart');
 		}
 	}
 
-	#hasClients(data: Object): boolean
+	#onReadMoreButtonClick(): void
+	{
+		const instance = this.#getClickEventBuilder();
+		instance.setElement('info_button');
+		sendData(instance.buildData());
+
+		this.#showReadMore();
+	}
+
+	#showReadMore(): void
+	{
+		top.BX?.Helper?.show('redirect=detail&code=25376986');
+	}
+
+	#isHasClients(data: Object): boolean
 	{
 		return data.count > 0;
 	}
@@ -198,5 +262,36 @@ export class Start extends Base
 	getFetchParams(): Object
 	{
 		return {};
+	}
+
+	#getClickEventBuilder(): Builder.RepeatSale.Banner.ClickEvent
+	{
+		const type = this.getAnalyticsType();
+		const subSection = this.getAnalyticsSubSection();
+
+		return Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
+	}
+
+	onFirstShow(): void
+	{
+		const type = this.getAnalyticsType();
+		const subSection = this.getAnalyticsSubSection();
+
+		this.#sendShowAnalytics(type, subSection);
+	}
+
+	#sendShowAnalytics(type: string, subSection: string): void
+	{
+		const instance = Builder.RepeatSale.Banner.ViewEvent.createDefault(type, subSection);
+		sendData(instance.buildData());
+	}
+
+	getAnalyticsType(): string
+	{
+		return (
+			this.#hasClients
+				? Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY
+				: Dictionary.TYPE_REPEAT_SALE_BANNER_START
+		);
 	}
 }

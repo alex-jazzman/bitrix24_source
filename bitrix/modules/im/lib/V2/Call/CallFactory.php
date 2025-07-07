@@ -67,9 +67,9 @@ class CallFactory
 	/**
 	 * @return Call|BitrixCall|null
 	 */
-	public static function searchActive(int $type, string $provider, string $entityType, string $entityId, int $currentUserId = 0): ?Call
+	public static function searchActive(int $type, string $provider, string $entityType, string $entityId): ?Call
 	{
-		$fields = self::search($type, $provider, $entityType, $entityId, $currentUserId);
+		$fields = self::search($type, $provider, $entityType, $entityId);
 		if ($fields)
 		{
 			$instance = self::createWithArray($provider, $fields);
@@ -86,9 +86,9 @@ class CallFactory
 	/**
 	 * @return Call|BitrixCall|null
 	 */
-	public static function searchActiveCall(int $type, string $provider, string $entityType, string $entityId, int $currentUserId = 0): ?Call
+	public static function searchActiveCall(int $type, string $provider, string $entityType, string $entityId): ?Call
 	{
-		$fields = self::search($type, $provider, $entityType, $entityId, $currentUserId);
+		$fields = self::search($type, $provider, $entityType, $entityId);
 		if ($fields)
 		{
 			$instance = self::getCallInstance($provider, $fields);
@@ -116,16 +116,34 @@ class CallFactory
 		return null;
 	}
 
+	/**
+	 * Gets list active calls of a user on portal.
+	 * @return array
+	 */
+	public static function getUserActiveCalls(int $userId, int $depthHours = 12): array
+	{
+		$date = (new DateTime())->add("-{$depthHours} hour");
+
+		$query = CallTable::query()
+			->addSelect('*')
+			->whereIn('STATE', [\Bitrix\Im\Call\Call::STATE_NEW, \Bitrix\Im\Call\Call::STATE_INVITING])
+			->where('START_DATE', '>=', $date)
+			->where('CALL_USER.USER_ID', $userId)
+			->whereIn('CALL_USER.STATE', [\Bitrix\Im\Call\CallUser::STATE_READY, \Bitrix\Im\Call\CallUser::STATE_CALLING])
+		;
+		$activeCalls = $query->exec()->fetchAll();
+
+		return $activeCalls ?: [];
+	}
 
 	/**
 	 * @param int $type
 	 * @param string $provider
 	 * @param string $entityType
 	 * @param string $entityId
-	 * @param int $currentUserId
-	 * @return Call|null
+	 * @return array|null
 	 */
-	protected static function search(int $type, string $provider, string $entityType, string $entityId, int $currentUserId = 0): ?array
+	protected static function search(int $type, string $provider, string $entityType, string $entityId): ?array
 	{
 		$query = CallTable::query()
 			->addSelect('*')

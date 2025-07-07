@@ -5,9 +5,11 @@ namespace Bitrix\Crm\Controller\RepeatSale;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\RepeatSale\AgentsManager;
 use Bitrix\Crm\RepeatSale\FlowController;
+use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Queue\Controller\RepeatSaleQueueController;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
 use Bitrix\Crm\RepeatSale\Segment\SegmentItem;
+use Bitrix\Crm\RepeatSale\Segment\SystemSegmentCode;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Config\Option;
 
@@ -37,8 +39,12 @@ final class Flow extends Base
 		$this->cleanQueue();
 		$this->deletePendingOption();
 		$this->processSystemSegments();
+		$this->removeOnlyCalcSchedulerAgent();
 		$this->addAgents();
 		$this->saveFlowEnableDate();
+
+		$userId = $this->getCurrentUser()?->getId() ?? Container::getInstance()->getContext()->getUserId();
+		(new Logger())->info('Flow have been enabled', ['userId' => $userId]);
 
 		return true;
 	}
@@ -70,10 +76,15 @@ final class Flow extends Base
 
 		$userId = $this->getCurrentUser()?->getId() ?? 1;
 
+		$defaultEnableSegments = [
+			SystemSegmentCode::DEAL_EVERY_MONTH->value,
+			SystemSegmentCode::DEAL_EVERY_HALF_YEAR->value,
+			SystemSegmentCode::DEAL_EVERY_YEAR->value,
+		];
+
 		foreach ($segments as $segment)
 		{
 			$segmentItem = (SegmentItem::createFromEntity($segment))
-				->setIsEnabled(true)
 				->setClientCoverage(null)
 			;
 
@@ -82,8 +93,18 @@ final class Flow extends Base
 				$segmentItem->setAssignmentUserIds([$userId]);
 			}
 
+			if (in_array($segmentItem->getCode(), $defaultEnableSegments, true))
+			{
+				$segmentItem->setIsEnabled(true);
+			}
+
 			$segmentController->update($segmentItem->getId(), $segmentItem);
 		}
+	}
+
+	private function removeOnlyCalcSchedulerAgent(): void
+	{
+		AgentsManager::getInstance()->removeOnlyCalcSchedulerAgent();
 	}
 
 	private function addAgents(): void

@@ -1927,7 +1927,7 @@ class crm extends CModule
 			'Bitrix\Crm\Agent\RepeatSale\JobExecutorAgent::run();',
 			'crm',
 			'N',
-			60, // @todo set correct interval
+			60,
 			'',
 			'Y',
 			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 800, 'FULL'),

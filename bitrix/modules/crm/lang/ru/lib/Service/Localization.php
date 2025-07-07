@@ -80,6 +80,8 @@ $MESS["CRM_COMMON_IS_MANUAL_OPPORTUNITY_TRUE"] = "Вручную";
 $MESS["CRM_COMMON_IS_MANUAL_OPPORTUNITY_FALSE"] = "На основе стоимости товаров";
 $MESS["CRM_COMMON_ERROR_GENERAL"] = "Общая ошибка";
 $MESS["CRM_COMMON_ERROR_ACCESS_DENIED"] = "Доступ запрещен";
+$MESS["CRM_COMMON_ERROR_MODULE_NOT_INSTALLED"] = "Установите модуль #MODULE#, чтобы продолжить";
+$MESS["CRM_COMMON_ERROR_ENTITY_TYPE_NOT_SUPPORT"] = "Сущность CRM #ENTITY# не поддерживается";
 $MESS["CRM_COMMON_ERROR_DYNAMIC_DISABLED_MSGVER_1"] = "Работа со смарт-процессами недоступна";
 $MESS["CRM_COMMON_LIST"] = "Список";
 $MESS["CRM_COMMON_KANBAN"] = "Канбан";
@@ -202,6 +204,7 @@ $MESS["CRM_TYPE_QUOTE_FIELD_STATUS_MSGVER_2"] = "Стадия предложен
 $MESS["CRM_TYPE_ITEM_FIELD_NAME_OPPORTUNITY_WITH_CURRENCY"] = "Сумма и валюта";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_BEGIN_DATE"] = "Дата выставления";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_CLOSE_DATE"] = "Срок оплаты";
+$MESS["CRM_TYPE_ITEM_FIELD_NAME_LAST_COMMUNICATION_TIME"] = "Дата последней коммуникации";
 
 $MESS["CRM_TYPE_CATEGORY_DEFAULT_NAME"] = "Общая";
 $MESS["CRM_TYPE_CATEGORY_NOT_FOUND_ERROR"] = "Воронка не найдена";

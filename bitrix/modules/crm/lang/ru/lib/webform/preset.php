@@ -34,4 +34,3 @@ $MESS['CRM_WEBFORM_PRESET_ITEM_BOOKING_SUCCESS_TEXT'] = 'Готово!';
 $MESS['CRM_WEBFORM_PRESET_ITEM_BOOKING_FAILURE_TEXT'] = 'Не удалось записаться, попробуйте ещё раз';
 
 $MESS['CRM_WEBFORM_PRESET_ITEM_BOOKING_CONTACT_SECTION_CAPTION'] = 'Контактная информация';
-?>

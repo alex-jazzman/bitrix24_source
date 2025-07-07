@@ -111,6 +111,17 @@ class Section
 		return $this->elements[$elementName] ?? null;
 	}
 
+	public function getElementNames(): array
+	{
+		$names = [];
+		foreach ($this->elements as $element)
+		{
+			$names[] = $element->getName();
+		}
+
+		return $names;
+	}
+
 	public function getOrCreateElement(string $elementName): Element
 	{
 		$element = $this->getElement($elementName);

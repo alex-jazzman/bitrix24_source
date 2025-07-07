@@ -53,7 +53,7 @@ export class ActiveField
 									this.#isFlowDisabled = false;
 								},
 								() => {
-									switcher.check(true, false);
+									switcher.check(false, false);
 								},
 							);
 						}
@@ -140,6 +140,12 @@ export class ActiveField
 					json: {
 						id: this.#id,
 						isEnabled: isEnabled ? 'Y' : 'N',
+					},
+					analyticsLabel: {
+						tool: 'crm',
+						category: 'settings_master',
+						event: 'scenario_enable',
+						c_element: `${isEnabled ? 'on' : 'off'}`,
 					},
 				})
 				.catch((response) => {

@@ -1,3 +1,4 @@
 <?php
 $MESS["DISK_INTEGRATION_IM_CALL_CALL_DOCUMENT_CREATED"] = "Створено документ";
 $MESS["DISK_INTEGRATION_IM_CALL_CALL_RESUME_CREATED"] = "Створено резюме зустрічі";
+$MESS["DISK_INTEGRATION_IM_CALL_CALL_RESUME_CREATED_MSGVER_1"] = "Створено протокол зустрічі.";

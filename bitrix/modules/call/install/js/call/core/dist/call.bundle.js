@@ -3494,13 +3494,17 @@ this.BX = this.BX || {};
 	                _this8.setLog("Adding an early connected participant with id ".concat(p.userId, " (sid: ").concat(p.sid, ")"), LOG_LEVEL.INFO);
 	                _classPrivateMethodGet(_this8, _setRemoteParticipant, _setRemoteParticipant2).call(_this8, p);
 	              });
-	              for (userId in participantsToDelete) {
-	                participant = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
-	                this.setLog("Deleting a missing participant with id ".concat(participant.userId, " (sid: ").concat(participant.sid, ")"), LOG_LEVEL.INFO);
-	                this.triggerEvents('ParticipantLeaved', [participant]);
-	                delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteTracks[userId];
-	                delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
-	              }
+	              if (connectedEvent === 'Reconnected')
+	                // task-601473
+	                {
+	                  for (userId in participantsToDelete) {
+	                    participant = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
+	                    this.setLog("Deleting a missing participant with id ".concat(participant.userId, " (sid: ").concat(participant.sid, ")"), LOG_LEVEL.INFO);
+	                    this.triggerEvents('ParticipantLeaved', [participant]);
+	                    delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteTracks[userId];
+	                    delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
+	                  }
+	                }
 	              if ('recorderStatus' in data.joinResponse) {
 	                recorderStatus = {
 	                  code: data.joinResponse.recorderStatus
@@ -19769,17 +19773,23 @@ this.BX = this.BX || {};
 	          description: 'GOT A #onPullEventHangup from user',
 	          pullEvent: '#onPullEventHangup'
 	        });
-	        peer.participant = null;
-	        peer.setReady(false);
-	        if (params.code == 603) {
-	          peer.setDeclined(true);
-	        } else if (params.code == 486) {
-	          peer.setBusy(true);
-	          console.error("user ".concat(senderId, " is busy"));
-	        }
-	        if (_this.ready && _this.type === CallType.Instant && !_this.isAnyoneParticipating()) {
-	          _this.hangup();
-	        }
+
+	        //peer.participant = null; // task-605993 (task-601473)
+	        //peer.setReady(false);
+
+	        if (!peer.participant)
+	          // task-605993
+	          {
+	            if (params.code == 603) {
+	              peer.setDeclined(true);
+	            } else if (params.code == 486) {
+	              peer.setBusy(true);
+	              console.warn("user ".concat(senderId, " is busy"));
+	            }
+	            if (_this.ready && _this.type === CallType.Instant && !_this.isAnyoneParticipating()) {
+	              _this.hangup();
+	            }
+	          }
 	      }
 	    });
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventFinish$1, {
@@ -22810,7 +22820,7 @@ this.BX = this.BX || {};
 	      }
 	    };
 	    _this.deviceList = [];
-	    _this.turnServer = (main_core.Browser.isFirefox() ? BX.message('turn_server_firefox') : BX.message('turn_server')) || 'turn.calls.bitrix24.com';
+	    _this.turnServer = BX.message('turn_server');
 	    _this.turnServerLogin = BX.message('turn_server_login') || 'bitrix';
 	    _this.turnServerPassword = BX.message('turn_server_password') || 'bitrix';
 	    _this.pingUsersInterval = setInterval(_this.pingUsers.bind(babelHelpers.assertThisInitialized(_this)), pingPeriod);
@@ -36052,15 +36062,19 @@ this.BX = this.BX || {};
 	        } else {
 	          errorCode = 'UNKNOWN_ERROR';
 	        }
-	        call_lib_analytics.Analytics.getInstance().onStartCallError({
-	          callType: _this8.getCallType(provider),
-	          errorCode: errorCode
-	        });
-	        _this8._onCallFailure({
-	          code: errorCode,
-	          message: error.message || ""
-	        });
-	        _this8._stopLocalStream();
+	        if (errorCode === 'user_is_busy') {
+	          _this8.leaveCurrentCall();
+	        } else {
+	          call_lib_analytics.Analytics.getInstance().onStartCallError({
+	            callType: _this8.getCallType(provider),
+	            errorCode: errorCode
+	          });
+	          _this8._onCallFailure({
+	            code: errorCode,
+	            message: error.message || ''
+	          });
+	          _this8._stopLocalStream();
+	        }
 	      })["finally"](function () {
 	        _this8.initCallPromise = null;
 	        _this8.preparedCall = null;
@@ -37987,6 +38001,11 @@ this.BX = this.BX || {};
 	        error = _ref2.error;
 	      this._onUpdateCallCopilotState(status);
 	      if (this.currentCall.isCopilotInitialized) {
+	        if (!this.currentCall.initiatorId && status) {
+	          this.sendStartCopilotRecordAnalytics({
+	            isAutostart: true
+	          });
+	        }
 	        this.callView.unblockButtons(['copilot']);
 	      }
 	      if (error) {

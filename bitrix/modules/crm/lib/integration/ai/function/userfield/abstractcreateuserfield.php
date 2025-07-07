@@ -7,6 +7,9 @@ use Bitrix\Crm\Entity\EntityEditorConfig;
 use Bitrix\Crm\Integration\AI\Contract\AIFunction;
 use Bitrix\Crm\Integration\AI\Function\UserField\Dto\CreateUserFieldParameters;
 use Bitrix\Crm\Integration\AI\Function\UserField\Enum\UserFieldType;
+use Bitrix\Crm\Integration\UI\EntityEditor\Configuration\Element;
+use Bitrix\Crm\Integration\UI\EntityEditor\Enum\MarkTarget;
+use Bitrix\Crm\Integration\UI\EntityEditor\MartaAIMarksRepository;
 use Bitrix\Crm\Result;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Crm\Service\Container;
@@ -116,51 +119,27 @@ abstract class AbstractCreateUserField implements AIFunction
 		];
 
 		$config = EntityEditorConfig::createWithCurrentScope($parameters->entityTypeId, $extras);
-		$configuration = $config->get() ?? $config->getDefault();
-
-		$isConfigNotFound = $configuration === null;
-		$isConfigHasNoSections = is_array($configuration) && count($configuration) === 0;
-		if ($isConfigNotFound || $isConfigHasNoSections)
+		$configuration = $config->getConfiguration(useDefaultIfNotExists: true);
+		if ($configuration === null || !$configuration->hasSections())
 		{
 			return;
 		}
 
-		$targetSection = 0;
-		foreach ($configuration as $i => $section)
+		$element = $configuration->getElement($fieldName);
+		if ($element !== null)
 		{
-			if ($section['name'] === 'additional')
-			{
-				$targetSection = $i;
-
-				break;
-			}
+			$element->setShowAlways(true);
+		}
+		else
+		{
+			$section = $configuration->getSection('additional') ?? $configuration->getSectionFirst();
+			$section?->addElement(new Element(name: $fieldName, isShowAlways: true));
 		}
 
-		$elements = &$configuration[$targetSection]['elements'];
-		$elements = $elements ?? [];
+		$configuration->save();
 
-		$isConfigContainsAddedField = false;
-		foreach ($elements as &$element)
-		{
-			if ($element['name'] === $fieldName)
-			{
-				$isConfigContainsAddedField = true;
-				$element['optionFlags'] = 1;
-
-				break;
-			}
-		}
-		unset($element);
-
-		if (!$isConfigContainsAddedField)
-		{
-			$elements[] = [
-				'name' => $fieldName,
-				'optionFlags' => 1,
-			];
-		}
-
-		$config->set($configuration);
+		MartaAIMarksRepository::fromEntityEditorConfig($configuration->entityEditorConfig())
+			->mark(MarkTarget::Field, [$fieldName]);
 	}
 
 	protected function getLabelFields(string $label): array

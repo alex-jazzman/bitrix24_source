@@ -6,6 +6,7 @@ $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS_MSGVER_2"] = "Докл�
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_1"] = "Посилання на оплату у WhatsApp або СМС";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_2"] = "Онлайн-оплата картою, Apple Pay, Google Pay та іншими способами";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3"] = "Без зовнішніх провайдерів і перевірок WhatsApp";
+$MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3_MSGVER_1"] = "Без самостійного підключення зовнішніх провайдерів і перевірок WhatsApp";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SECOND_DESCRIPTION"] = "Якщо клієнт відповість на ваше автоматичне повідомлення, ви легко зможете продовжити спілкуватися з ним у чаті! Ви отримаєте повідомлення у чат Бітрікс24, а клієнт – у свій WhatsApp";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SECOND_TITLE"] = "Продовжуйте спілкування з клієнтом у WhatsApp";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SUBTITLE"] = "Здивуйте своїх клієнтів: продемонструйте сервіс найвищого рівня";

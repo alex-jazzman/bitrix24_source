@@ -32,26 +32,9 @@ class Call
 			return [];
 		}
 
-		$date = (new DateTime())->setTime(0, 0);
 		$currentUserId = self::getCurrentUserId();
 
-		$activeCalls = CallTable::query()
-			->addSelect('*')
-			->registerRuntimeField(
-				'CALL_USER',
-				new Reference(
-					'CALL_USER',
-					CallUserTable::class,
-					Join::on('this.ID', 'ref.CALL_ID'),
-					['join_type' => Join::TYPE_INNER]
-				)
-			)
-			->whereIn('STATE', [\Bitrix\Im\Call\Call::STATE_NEW, \Bitrix\Im\Call\Call::STATE_INVITING])
-			->where('START_DATE', '>=', $date)
-			->where('CALL_USER.USER_ID', $currentUserId)
-			->exec()
-			->fetchAll()
-		;
+		$activeCalls = \Bitrix\Im\V2\Call\CallFactory::getUserActiveCalls($currentUserId);
 
 		return array_reduce($activeCalls, function ($result, $call) use ($currentUserId) {
 			$callInstance = CallFactory::getCallInstance($call['PROVIDER'], $call);

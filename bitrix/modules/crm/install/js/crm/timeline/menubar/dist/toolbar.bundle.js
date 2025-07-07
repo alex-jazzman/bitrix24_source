@@ -6876,6 +6876,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  setDeadLine(deadLine) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].setDeadline(deadLine);
 	  }
+	  setDescription(description) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].setDescription(description);
+	  }
 	  focus() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].setFocused();
 	  }

@@ -13,6 +13,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
@@ -37,12 +38,23 @@ Extension::load([
 	'ui.forms',
 	'crm.tracking.connector',
 	'ui.sidepanel-content',
+	'ui.feedback.form',
 ]);
 Loader::includeModule('ui');
-Toolbar::deleteFavoriteStar();
 Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.analytics.channel.phone/templates/.default/style.css');
 
 $containerId = 'crm-tracking-site';
+$feedbackParams = Json::encode(Provider::getFeedbackParameters());
+
+Toolbar::deleteFavoriteStar();
+Toolbar::addButton([
+	"color" => Color::LIGHT_BORDER,
+	"click" => new JsCode(
+		"BX.UI.Feedback.Form.open({$feedbackParams});"
+	),
+	"text" => Provider::getFeedbackButtonTitle(),
+]);
+
 if ($arResult['ROW']['ID'])
 {
 	$editButton = new Button([
@@ -54,17 +66,6 @@ if ($arResult['ROW']['ID'])
 
 	Toolbar::addButton($editButton);
 }
-
-ob_start();
-$APPLICATION->IncludeComponent(
-	'bitrix:ui.feedback.form',
-	'',
-	[
-		...Provider::getFeedbackParameters(),
-		'VIEW_TARGET' => false,
-	]
-);
-Toolbar::addRightCustomHtml(ob_get_clean(), $arResult['ROW']['ID'] ? [] : ['align' => 'right']);
 ?>
 
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-tracking-site-wrap">

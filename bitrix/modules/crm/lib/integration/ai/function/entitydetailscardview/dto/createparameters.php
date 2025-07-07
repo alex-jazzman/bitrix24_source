@@ -6,8 +6,10 @@ use Bitrix\Crm\Dto\Caster;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Dto\Validator\DefinedCategoryIdentifier;
 use Bitrix\Crm\Dto\Validator\NotEmptyField;
+use Bitrix\Crm\Dto\Validator\ObjectCollectionField;
 use Bitrix\Crm\Dto\Validator\RequiredField;
 use Bitrix\Crm\Dto\Validator\ScalarCollectionField;
+use Bitrix\Crm\Entity\EntityEditorConfig;
 use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Configuration\Section;
 
 final class CreateParameters extends Dto
@@ -16,6 +18,8 @@ final class CreateParameters extends Dto
 	public ?int $categoryId = null;
 
 	public string $title;
+
+	/** @var array<Section> */
 	public array $sections;
 
 	public array $userIds = [];
@@ -36,18 +40,32 @@ final class CreateParameters extends Dto
 		return [
 			new DefinedCategoryIdentifier($this, 'entityTypeId', 'categoryId'),
 
-			new RequiredField($this, 'title'),
 			new NotEmptyField($this, 'title'),
 
-			new RequiredField($this,'sections'),
 			new NotEmptyField($this, 'sections'),
+			new ObjectCollectionField($this, 'sections'),
 
-			new ScalarCollectionField($this, 'userIds'),
+			new ScalarCollectionField($this, 'userIds', onlyNotEmptyValues: true),
 		];
 	}
 
-	public function toArraySections(): array
+	public function configuration(): array
 	{
-		return array_map(static fn (Section $section) => $section->toArray(), $this->sections);
+		return [
+			[
+				'name' => 'default_column',
+				'type' => 'column',
+				'elements' => array_map(static fn (Section $section) => $section->toArray(), $this->sections),
+			]
+		];
+	}
+
+	public function options(): array
+	{
+		return [
+			'forceSetToUsers' => $this->forceSetToUsers,
+			'common' => $this->common,
+			'categoryName' => EntityEditorConfig::CATEGORY_NAME,
+		];
 	}
 }

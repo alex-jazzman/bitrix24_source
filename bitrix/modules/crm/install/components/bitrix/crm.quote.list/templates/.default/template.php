@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -352,6 +353,8 @@ foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 	{
 		$resultItem['columns']['QUOTE_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arQuote['badges']);
 	}
+
+	(new LastCommunicationTimeFormatter())->formatListDate($arQuote, $resultItem['columns']);
 
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);

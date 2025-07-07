@@ -7,7 +7,10 @@ use Bitrix\Crm\Dto\Validator\DefinedCategoryIdentifier;
 use Bitrix\Crm\Dto\Validator\EntityType\IsPossibleDynamicType;
 use Bitrix\Crm\Dto\Validator\EnumField;
 use Bitrix\Crm\Dto\Validator\Logic;
+use Bitrix\Crm\Dto\Validator\NotEmptyField;
+use Bitrix\Crm\Dto\Validator\ObjectField;
 use Bitrix\Crm\Dto\Validator\RequiredField;
+use Bitrix\Main\Error;
 use CCrmOwnerType;
 
 final class CreateParameters extends Dto
@@ -20,7 +23,7 @@ final class CreateParameters extends Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			Logic::or([
+			Logic::or($this, [
 				new EnumField($this, 'entityTypeId', [
 					CCrmOwnerType::Lead,
 					CCrmOwnerType::Deal,
@@ -31,7 +34,9 @@ final class CreateParameters extends Dto
 			]),
 
 			new DefinedCategoryIdentifier($this, 'entityTypeId', 'categoryId'),
-			new RequiredField($this, 'fields'),
+
+			new ObjectField($this, 'fields'),
+			new NotEmptyField($this, 'fields'),
 		];
 	}
 }

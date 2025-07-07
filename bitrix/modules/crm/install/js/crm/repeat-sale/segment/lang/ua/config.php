@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION"] = "Додайте до нової угоди скрипт продажів, щоб підвищити ймовірність продажу. Менеджер побачить скрипт під час дзвінка клієнту й точно знатиме, як побудувати розмову.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_SELECTOR"] = "Вибрати скрипт";
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE"] = "Скрипти продажів";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION"] = "AI проаналізує історію взаємодії з клієнтами й всю інформацію з минулих угод, створить нові угоди та підготує рекомендації. Це допоможе правильно побудувати діалог із клієнтом і успішно завершити угоду.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_DISABLED"] = "Вимкнено";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_ENABLED"] = "Увімкнено";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE"] = "Автоматика CoPilot";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE"] = "Відповідальні";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_HELP"] = "Як це працюватиме в угодах";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE"] = "Назва для нових угод";
+$MESS["CRM_REPEAT_SALE_SEGMENT_HOW_IT_WORK_TITLE"] = "Як це працюватиме в угодах";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE"] = "Вирва для нових угод";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE"] = "Стадія";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE"] = "Текст справи CRM для менеджера";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_CANCEL"] = "Скасувати";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_CLOSE"] = "Закрити";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_UPDATE"] = "Зберегти";
+$MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER"] = "Детально опишіть, що потрібно зробити менеджеру";
+$MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT"] = "Докладно опишіть, що потрібно зробити менеджеру, або натисніть пробіл для запуску CoPilot";
+$MESS["CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR"] = "Не вдалося зберегти сценарій. Спробуйте ще раз.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE"] = "Налаштування сценарію повторних продажів";
+$MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR"] = "У сценарії має бути хоча б один відповідальний.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR"] = "У сценарії має бути заповнений текст справи CRM.";

@@ -52,3 +52,4 @@ $MESS["CT_BLFE_TOOLBAR_DELETE_WARNING"] = "Ви впевнені, що хоче�
 $MESS["CT_BLFE_TOOLBAR_FIELDS"] = "Поля списку";
 $MESS["CT_BLFE_TOOLBAR_FIELDS_TITLE"] = "Налаштувати поля списку";
 $MESS["CT_BLFE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ ПОЛІВ";
+$MESS["CT_BLFE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "До списку полів";

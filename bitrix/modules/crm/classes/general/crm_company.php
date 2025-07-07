@@ -21,6 +21,7 @@ use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -376,10 +377,12 @@ class CAllCrmCompany
 		);
 
 		// add utm fields
-		self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
+		self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
 		self::$FIELD_INFOS += Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(CCrmOwnerType::Company);
 
 		self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
+
+		self::$FIELD_INFOS += LastCommunicationTable::getLastStateFieldInfo();
 
 		return self::$FIELD_INFOS;
 	}
@@ -542,10 +545,10 @@ class CAllCrmCompany
 			Container::getInstance()->getParentFieldManager()->getParentFieldsSqlInfo(
 				CCrmOwnerType::Company,
 				$tableAliasName
-			)
+			),
+			self::getLastActivityAdapter()->getFields(),
+			LastCommunicationTable::getFieldsByEntityTypeId(CCrmOwnerType::Company, true),
 		);
-
-		$result += self::getLastActivityAdapter()->getFields();
 
 		return $result;
 	}

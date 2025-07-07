@@ -74,7 +74,12 @@ final class Confetti
 	private function hasNewSuccessItems(): bool
 	{
 		$showedStatisticsData = $this->getShowedStatisticsData();
-		$successItemsCount = $showedStatisticsData['successItemsCount'] ?? 0;
+		$successItemsCount = $showedStatisticsData['successItemsCount'] ?? null;
+
+		if ($successItemsCount === null && $this->getSuccessItemsCount() === 0)
+		{
+			return false;
+		}
 
 		return $successItemsCount < $this->getSuccessItemsCount();
 	}

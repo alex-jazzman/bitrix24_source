@@ -31,6 +31,7 @@ class Executor
 		foreach ($this->queryModificators as $queryModificator)
 		{
 			$queryModificator->transferFormattedValues($fetchAllResult, $result);
+			$queryModificator->fillDefaultValue($result);
 		}
 
 		return $result;

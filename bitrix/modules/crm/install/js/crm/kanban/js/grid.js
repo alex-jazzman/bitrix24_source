@@ -738,6 +738,8 @@ BX.CRM.Kanban.Grid.prototype = {
 				onlyItems: (page > 1 ? 'Y' : 'N'),
 			},
 			(data) => {
+				this.updateConfig(data);
+
 				if (
 					data
 					&& !data.error
@@ -1086,36 +1088,7 @@ BX.CRM.Kanban.Grid.prototype = {
 						resolve(data);
 					}
 
-					if (BX.Type.isObject(data.config) && Object.keys(data.config).length > 0)
-					{
-						const gridData = this.getData();
-						if (BX.Type.isArrayFilled(data.config?.users))
-						{
-							data.config.users.forEach((item) => {
-								const userExist = gridData.itemsConfig?.users.some((user) => {
-									return Number(user.id) === Number(item.id);
-								});
-
-								if (!userExist)
-								{
-									gridData.itemsConfig.users.push(item);
-								}
-							});
-						}
-						if (BX.Type.isArrayFilled(data.config?.fields))
-						{
-							data.config.fields.forEach((item) => {
-								const fieldConfigExist = gridData.itemsConfig?.fields.some((field) => {
-									return field.code === item.code;
-								});
-
-								if (!fieldConfigExist)
-								{
-									gridData.itemsConfig?.fields.push(item);
-								}
-							});
-						}
-					}
+					this.updateConfig(data);
 
 					if (data.items)
 					{
@@ -1214,6 +1187,43 @@ BX.CRM.Kanban.Grid.prototype = {
 				}.bind(this)
 			);
 		}.bind(this));
+	},
+
+	updateConfig: function(data)
+	{
+		if (!BX.Type.isObject(data.config) || Object.keys(data.config).length === 0)
+		{
+			return;
+		}
+
+		const gridData = this.getData();
+		if (BX.Type.isArrayFilled(data.config?.users))
+		{
+			data.config.users.forEach((item) => {
+				const userExist = gridData.itemsConfig?.users.some((user) => {
+					return Number(user.id) === Number(item.id);
+				});
+
+				if (!userExist)
+				{
+					gridData.itemsConfig.users.push(item);
+				}
+			});
+		}
+
+		if (BX.Type.isArrayFilled(data.config?.fields))
+		{
+			data.config.fields.forEach((item) => {
+				const fieldConfigExist = gridData.itemsConfig?.fields.some((field) => {
+					return field.code === item.code;
+				});
+
+				if (!fieldConfigExist)
+				{
+					gridData.itemsConfig?.fields.push(item);
+				}
+			});
+		}
 	},
 
 	/**
@@ -3252,7 +3262,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		{
 			renderToNode = (
 				isAirTemplate
-					? document.querySelector('.page__actions') // Temporary fix for air template
+					? document.querySelector('.crm-kanban-action-panel')
 					: document.getElementById('uiToolbarContainer')
 			);
 		}

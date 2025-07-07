@@ -12,6 +12,7 @@ $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE"] = "Ви не можете перене
 $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE_PART"] = "Крайній термін завдання обмежує переміщення на тривалий термін";
 $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE_PART2"] = "Крайній термін завдання обмежує переміщення";
 $MESS["TASKS_KANBAN_ME_DISABLE_FROM_OVERDUE"] = "Змініть крайній термін або завершіть завдання, щоб перемістити його";
+$MESS["TASKS_KANBAN_MODAL_ERROR_PREFIX"] = "Помилка:";
 $MESS["TASKS_KANBAN_MORE_USERS"] = "ще";
 $MESS["TASKS_KANBAN_NOTIFY_BUTTON"] = "Надіслати сповіщення";
 $MESS["TASKS_KANBAN_NOTIFY_HEADER"] = "Недостатньо прав на зміну стадій";

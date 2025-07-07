@@ -5566,15 +5566,15 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        if (accessRights) {
 	          babelHelpers.classPrivateFieldLooseBase(this, _accessRightsModel)[_accessRightsModel].setInitialAccessRights(accessRights);
 	        }
-
-	        // reset modification flags and stuff
-	        babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState]();
 	        const guid = babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1];
 	        main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:afterSave', {
 	          userGroups,
 	          accessRights,
 	          guid
 	        });
+
+	        // reset modification flags and stuff
+	        babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState]();
 	        babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SETTINGS_HAVE_BEEN_SAVED'));
 	      }).catch(response => {
 	        var _response$errors, _response$errors$;

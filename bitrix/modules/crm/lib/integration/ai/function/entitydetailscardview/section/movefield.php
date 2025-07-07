@@ -5,7 +5,10 @@ namespace Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Section;
 use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Section\AbstractParameters;
 use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Section\MoveFieldParameters;
 use Bitrix\Crm\Integration\UI\EntityEditor\Configuration;
+use Bitrix\Crm\Integration\UI\EntityEditor\Enum\MarkTarget;
+use Bitrix\Crm\Integration\UI\EntityEditor\MartaAIMarksRepository;
 use Bitrix\Crm\Result;
+use Bitrix\Main\Localization\Loc;
 
 final class MoveField extends AbstractFunction
 {
@@ -19,7 +22,7 @@ final class MoveField extends AbstractFunction
 		$targetSection = $configuration->getSection($parameters->sectionName);
 		if ($targetSection === null)
 		{
-			return Result::fail('Section to which the field needs to be moved was not found');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_ENTITY_DETAILS_CARD_VIEW_TARGET_SECTION_NOT_FOUND_ERROR'), 'SECTION_NOT_FOUND');
 		}
 
 		$targetElement = null;
@@ -38,6 +41,9 @@ final class MoveField extends AbstractFunction
 		$targetSection->addElement($targetElement);
 
 		$configuration->save();
+
+		MartaAIMarksRepository::fromEntityEditorConfig($configuration->entityEditorConfig())
+			->mark(MarkTarget::Field, [$targetElement->getName()]);
 
 		return Result::success();
 	}

@@ -17,7 +17,7 @@ use Bitrix\Crm\Copilot\PullManager;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Config;
-use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
+use Bitrix\Crm\Integration\AI\Dto\Scoring\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
@@ -207,7 +207,7 @@ final class ScoreCall extends AbstractOperation
 					[
 						'OPERATION_TYPE_ID' => self::TYPE_ID,
 						'ENGINE_ID' => self::$engineId,
-						'ERRORS' => $result->getErrorMessages(),
+						'ERRORS' => array_unique($result->getErrorMessages()),
 					],
 					$result->getUserId(),
 				);
@@ -294,7 +294,6 @@ final class ScoreCall extends AbstractOperation
 			}
 
 			self::notifyTimelinesAboutActivityUpdate($activityId);
-
 			self::notifyCallQualityUpdate($activityId, 'error');
 
 			return;
@@ -355,6 +354,7 @@ final class ScoreCall extends AbstractOperation
 				]
 			);
 
+			self::cleanBadgeByType($activityId, Badge\Badge::AI_CALL_FIELDS_FILLING_RESULT);
 			self::trySyncScoreStatusBadge(
 				$activityId,
 				$assessment,

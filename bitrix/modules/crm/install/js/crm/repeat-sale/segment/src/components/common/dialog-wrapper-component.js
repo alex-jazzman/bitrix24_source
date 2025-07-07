@@ -29,11 +29,9 @@ export const DialogWrapperComponent = {
 		},
 		showAvatars: {
 			type: Boolean,
-			default: false,
 		},
 		multiple: {
 			type: Boolean,
-			default: false,
 		},
 		context: {
 			type: String,
@@ -45,7 +43,6 @@ export const DialogWrapperComponent = {
 		},
 		readOnly: {
 			type: Boolean,
-			default: false,
 		},
 	},
 

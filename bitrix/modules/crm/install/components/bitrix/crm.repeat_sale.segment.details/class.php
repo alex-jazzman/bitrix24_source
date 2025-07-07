@@ -11,7 +11,8 @@ use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\EventHandler;
-use Bitrix\Crm\Integration\Bitrix24Manager;
+use Bitrix\Crm\Integration\AI\Operation\Scenario;
+use Bitrix\Crm\RepeatSale\CostManager;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
 use Bitrix\Crm\RepeatSale\Segment\SegmentItem;
 use Bitrix\Crm\Service\Container;
@@ -69,19 +70,25 @@ class CCrmRepeatSaleSegmentDetailsComponent extends Base
 			return;
 		}
 
-		$isAiCallEnabled = $this->isAiCallEnabled();
+		$isAiCallEnabled = AIManager::isAiCallProcessingEnabled();
+
 		$this->arResult['data'] = [
 			'segment' => $segmentItem,
 			'categories' => $this->getCategories(),
+			'aiSettings' => $this->getAiSettings(),
+			'baasSettings' => $this->getBaasSettings(),
 			'isAiCallEnabled' => $isAiCallEnabled,
-			'callAssessmentId' => 1, // @todo
 			'callAssessments' => $isAiCallEnabled ? $this->getCallAssessments() : [],
+			'callAssessmentId' => 1, // @todo: not implemented yet
 		];
 
 		$this->arResult['copilotSettings'] = $this->getCopilotSettings();
 
 		$isReadOnly = (bool)$this->request->getPost('readOnly');
 		$this->arResult['readOnly'] = $isReadOnly || !$userPermissions->repeatSale()->canEdit();
+
+		$analytics = $this->request->getPost('analytics') ?? [];
+		$this->arResult['analytics'] = $this->getPreparedAnalytics($analytics);
 
 		$this->includeComponentTemplate();
 	}
@@ -120,6 +127,23 @@ class CCrmRepeatSaleSegmentDetailsComponent extends Base
 		return $result;
 	}
 
+	private function getBaasSettings(): array
+	{
+		return [
+			'isAvailable' => AIManager::isBaasServiceAvailable(),
+			'hasPackage' => AIManager::isBaasServiceHasPackage(),
+			'aiPackagesEmptySliderCode' => AIManager::AI_PACKAGES_EMPTY_COMMON_SLIDER_CODE,
+		];
+	}
+
+	private function getAiSettings(): array
+	{
+		return [
+			'isSponsored' => CostManager::isSponsoredOperation(),
+			'isAvailable' => AIManager::isAiCallProcessingEnabled() && Scenario::isEnabledScenario(Scenario::REPEAT_SALE_TIPS_SCENARIO),
+			'aiDisabledSliderCode' => Scenario::REPEAT_SALE_TIPS_SCENARIO_SLIDER_CODE,
+		];
+	}
 	private function getCallAssessments(): array
 	{
 		$result = [];
@@ -146,14 +170,6 @@ class CCrmRepeatSaleSegmentDetailsComponent extends Base
 		return $result;
 	}
 
-	private function isAiCallEnabled(): bool
-	{
-		return (
-			Bitrix24Manager::isFeatureEnabled(AIManager::AI_COPILOT_FEATURE_NAME)
-			&& AIManager::isAiCallProcessingEnabled()
-		);
-	}
-
 	private function showError(string $messageCode, string $descriptionCode = ''): void
 	{
 		$this->getApplication()->IncludeComponent(
@@ -178,6 +194,25 @@ class CCrmRepeatSaleSegmentDetailsComponent extends Base
 			'contextId' => 'crm_repeat_sale_segment_prompt_' . CurrentUser::get()->getId(),
 			'category' => Category::CRM_COMMENT_FIELD->value,
 			'autoHide' => true,
+		];
+	}
+
+	private function getPreparedAnalytics(array $analytics): array
+	{
+		if (empty($analytics))
+		{
+			$analytics = $this->arParams['ANALYTICS'] ?? [];
+		}
+
+		$availableSections = ['deal_section', 'grid'];
+		$section = (
+			in_array($analytics['section'] ?? null, $availableSections, true)
+				? $analytics['section']
+				: 'grid'
+		);
+
+		return [
+			'section' => $section,
 		];
 	}
 }

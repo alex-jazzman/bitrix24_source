@@ -80,7 +80,7 @@ final class RepeatSaleJobController
 		return RepeatSaleJobTable::query()
 			->setSelect([
 				'*',
-				'STATUS' => '\Bitrix\Crm\RepeatSale\Queue\Entity\RepeatSaleQueueTable:JOB.STATUS'
+				'STATUS' => '\Bitrix\Crm\RepeatSale\Queue\Entity\RepeatSaleQueueTable:JOB.STATUS',
 			])
 			->where('STATUS', '=', Status::Progress->value)
 			->fetchObject()

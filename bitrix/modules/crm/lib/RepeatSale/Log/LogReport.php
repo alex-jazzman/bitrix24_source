@@ -27,10 +27,8 @@ final class LogReport
 			->addFilter('@SEGMENT_ID', $segmentIds)
 		;
 
-		if (
-			$phaseSemanticId === PhaseSemantics::SUCCESS
-			|| $phaseSemanticId === PhaseSemantics::FAILURE
-		)
+		$filteredPhases = [PhaseSemantics::SUCCESS, PhaseSemantics::FAILURE];
+		if (in_array($phaseSemanticId, $filteredPhases, true))
 		{
 			$query->addFilter('=STAGE_SEMANTIC_ID', $phaseSemanticId);
 		}

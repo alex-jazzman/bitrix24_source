@@ -1,0 +1,4 @@
+<?php
+$MESS["INTRANET_CALENDAR_SECTION_COMPANY_CALENDAR"] = "Календар компанії";
+$MESS["INTRANET_CALENDAR_SECTION_MY_CALENDAR"] = "Мій календар";
+$MESS["INTRANET_CALENDAR_SECTION_ROOMS"] = "Зайнятість переговорних";

@@ -340,7 +340,7 @@ class Chat extends AbstractEntity
 				'INITIATOR_ID' => $this->call->getActionUserId(),
 			];
 
-			if (count($userIds) == 1)
+			if ($this->call instanceof \Bitrix\Call\Call\PlainCall)
 			{
 				$otherUser = \Bitrix\Im\User::getInstance($userIds[0]);
 				$otherUserState = $this->call->getUser($userIds[0]) ? $this->call->getUser($userIds[0])->getState() : '';

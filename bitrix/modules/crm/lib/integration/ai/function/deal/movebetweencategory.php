@@ -16,7 +16,6 @@ use CCrmOwnerType;
 
 final class MoveBetweenCategory implements AIFunction
 {
-	private readonly UserPermissions\EntityPermissions\Type $permissions;
 	private readonly Factory $factory;
 
 	private const LIMIT = 100;
@@ -25,7 +24,6 @@ final class MoveBetweenCategory implements AIFunction
 		private readonly int $currentUserId,
 	)
 	{
-		$this->permissions = Container::getInstance()->getUserPermissions($this->currentUserId)->entityType();
 		$this->factory = Container::getInstance()->getFactory(CCrmOwnerType::Deal);
 	}
 
@@ -40,11 +38,6 @@ final class MoveBetweenCategory implements AIFunction
 		if ($parameters->hasValidationErrors())
 		{
 			return Result::fail($parameters->getValidationErrors());
-		}
-
-		if (!$this->permissions->canAddItemsInCategory(CCrmOwnerType::Deal, $parameters->to))
-		{
-			return Result::failAccessDenied();
 		}
 
 		$errors = new ErrorCollection();
@@ -62,7 +55,7 @@ final class MoveBetweenCategory implements AIFunction
 
 		if (!$errors->isEmpty())
 		{
-			return Result::fail($errors);
+			return Result::fail(ErrorCode::groupErrorsByMessage($errors));
 		}
 
 		return Result::success();
@@ -101,7 +94,6 @@ final class MoveBetweenCategory implements AIFunction
 			->setUserId($this->currentUserId);
 
 		$operation
-			->disableCheckAccess()
 			->disableCheckFields()
 			->disableCheckRequiredUserFields();
 

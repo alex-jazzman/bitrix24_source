@@ -7,7 +7,7 @@ use Bitrix\Crm\Copilot\AiQueueBuffer\Consumer;
 
 final class AiQueueBufferAgent extends AgentBase
 {
-	public const AGENT_DONE_STOP_IT = false;
+	public const CONTINUE = true;
 
 	public static function doRun(): bool
 	{
@@ -16,11 +16,11 @@ final class AiQueueBufferAgent extends AgentBase
 		$instance = new self();
 		$instance->setExecutionPeriod($instance->getPeriodInSeconds());
 
-		return self::AGENT_DONE_STOP_IT;
+		return self::CONTINUE;
 	}
 
 	private function getPeriodInSeconds(): int
 	{
-		return \COption::GetOptionInt('crm', 'ai_queue_buffer_agent_period', 60 * 10);
+		return \COption::GetOptionInt('crm', 'ai_queue_buffer_agent_period', 60 * 5);
 	}
 }

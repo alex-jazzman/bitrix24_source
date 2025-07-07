@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Dto\Validator;
 
 use Bitrix\Crm\Dto\Contract\Validator;
+use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Dto\Validator\Logic\LogicOr;
 
 final class Logic
@@ -11,8 +12,8 @@ final class Logic
 	{
 	}
 
-	public static function or(array $validators): LogicOr
+	public static function or(Dto $dto, array $validators): LogicOr
 	{
-		return new LogicOr($validators);
+		return new LogicOr($dto, $validators);
 	}
 }

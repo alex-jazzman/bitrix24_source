@@ -24,6 +24,7 @@ use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\RepeatSale\Log\Controller\RepeatSaleLogController;
 use Bitrix\Crm\RepeatSale\Segment\SegmentManager;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
@@ -386,6 +387,8 @@ class CAllCrmDeal
 
 		self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 
+		self::$FIELD_INFOS += LastCommunicationTable::getLastStateFieldInfo();
+
 		return self::$FIELD_INFOS;
 	}
 	public static function GetFields($arOptions = null)
@@ -571,13 +574,14 @@ class CAllCrmDeal
 		);
 
 		// add utm fields
-		$result = array_merge($result, UtmTable::getFieldsDescriptionByEntityTypeId(CCrmOwnerType::Deal));
 		$result = array_merge(
 			$result,
+			UtmTable::getFieldsDescriptionByEntityTypeId(CCrmOwnerType::Deal),
 			Container::getInstance()->getParentFieldManager()->getParentFieldsSqlInfo(
 				CCrmOwnerType::Deal,
 				'L'
-			)
+			),
+			LastCommunicationTable::getFieldsByEntityTypeId(CCrmOwnerType::Deal, true),
 		);
 
 		// add uf fields

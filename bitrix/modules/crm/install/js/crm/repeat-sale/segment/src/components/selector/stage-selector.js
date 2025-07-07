@@ -70,6 +70,11 @@ export const StageSelector = {
 				hasSelected = false;
 			});
 
+			if (!items.some((item) => item.selected === true))
+			{
+				items.find(Boolean).selected = true;
+			}
+
 			return items;
 		},
 	},
@@ -95,6 +100,7 @@ export const StageSelector = {
 			:items="items"
 			:tabs="tabs"
 			:showAvatars="true"
+			:read-only="readOnly"
 		/>
 	`,
 };

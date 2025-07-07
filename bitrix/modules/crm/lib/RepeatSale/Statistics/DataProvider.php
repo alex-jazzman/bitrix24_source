@@ -7,9 +7,13 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\ItemIdentifierCollection;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RepeatSale\Log\Controller\RepeatSaleLogController;
+use Bitrix\Crm\RepeatSale\Log\Entity\RepeatSaleLog;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ORM\Objectify\Collection;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use CCrmCurrency;
+use CCrmOwnerType;
 
 final class DataProvider
 {
@@ -25,25 +29,31 @@ final class DataProvider
 
 		if ($logItems->isEmpty())
 		{
-			$otherWinSum = $this->getItemsSum(new ItemIdentifierCollection(), false, $startDate);
-
 			return [
 				'repeatSaleWinSum' => $this->format(0),
 				'repeatSaleWinCount' => 0,
 				'repeatSaleProcessSum' => $this->format(0),
-				'otherWinSum' => $this->format($otherWinSum),
-				'totalSum' => $this->format($otherWinSum),
-				'percent' => 0,
+				'repeatSaleProcessCount' => 0,
+    			'repeatSaleTotalCount' => 0,
+    			'repeatSaleTodayCount' => 0,
+    			'conversionByCount' => 0.0,
+    			'conversionBySum' => 0.0,
 			];
 		}
 
 		$allItems = new ItemIdentifierCollection();
-		$finalItems = new ItemIdentifierCollection();
+		$winItems = new ItemIdentifierCollection();
 		$processItems = new ItemIdentifierCollection();
+		$todayItems = new ItemIdentifierCollection();
+
+		$format = 'd-m-Y';
+		$today = (new Date())->format($format);
+
+		/** @var $logItem RepeatSaleLog */
 		foreach ($logItems as $logItem)
 		{
 			// temporary support only deals
-			if ($logItem->getEntityTypeId() !== \CCrmOwnerType::Deal)
+			if ($logItem->getEntityTypeId() !== CCrmOwnerType::Deal)
 			{
 				continue;
 			}
@@ -53,37 +63,50 @@ final class DataProvider
 				$logItem->getEntityId(),
 			);
 
+			$allItems->append($itemIdentifier);
 			if ($logItem->getStageSemanticId() === PhaseSemantics::PROCESS)
 			{
 				$processItems->append($itemIdentifier);
-				$allItems->append($itemIdentifier);
 			}
 			elseif ($logItem->getStageSemanticId() === PhaseSemantics::SUCCESS)
 			{
-				$finalItems->append($itemIdentifier);
-				$allItems->append($itemIdentifier);
+				$winItems->append($itemIdentifier);
+			}
+
+			if ($logItem->getCreatedAt()->format($format) === $today)
+			{
+				$todayItems->append($itemIdentifier);
 			}
 		}
 
-		$repeatSaleWinSum = $this->getItemsSum($finalItems);
-		$repeatSaleProcessSum = $this->getItemsSum($processItems);
-		$repeatSaleTotalSum = $repeatSaleWinSum + $repeatSaleProcessSum;
-		$otherWinSum = $this->getItemsSum($allItems, false, $startDate);
-		$total = $repeatSaleTotalSum + $otherWinSum;
+		$totalSum = $this->getItemsSum($allItems);
+		$winSum = $this->getItemsSum($winItems);
+		$processSum = $this->getItemsSum($processItems);
+
+		$winCount = $winItems->count();
+
+		$createdCountForPeriod = $allItems->count();
+		$createdCountToday = $todayItems->count();
 
 		return [
-			'repeatSaleWinSum' => $this->format($repeatSaleWinSum),
-			'repeatSaleWinCount' => $finalItems->count(),
-			'repeatSaleProcessSum' => $this->format($repeatSaleProcessSum),
-			'otherWinSum' => $this->format($otherWinSum),
-			'totalSum' => $this->format($total),
-			'percent' => $total > 0 ? round($repeatSaleTotalSum / $total * 100) : 0,
+			'repeatSaleWinSum' => $this->format($winSum),
+			'repeatSaleWinCount' => $winCount,
+
+			'repeatSaleProcessSum' => $this->format($processSum),
+			'repeatSaleProcessCount' => $processItems->count(),
+
+			'repeatSaleTotalCount' => $createdCountForPeriod,
+			'repeatSaleTodayCount' => $createdCountToday,
+
+			'conversionByCount' => $createdCountForPeriod > 0 ? round($winCount / $createdCountForPeriod * 100, 1) : 0,
+			'conversionBySum' => $totalSum > 0 ? round($winSum / $totalSum * 100, 1) : 0,
 		];
 	}
 
 	private function getLogItems(array $filter): Collection
 	{
 		return $this->repeatSaleLogController->getList([
+			'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID', 'STAGE_SEMANTIC_ID', 'CREATED_AT'],
 			'filter' => $filter,
 			'limit' => 0,
 		]);
@@ -143,7 +166,7 @@ final class DataProvider
 	 */
 	private function getDealItemsAmount(?DateTime $startDate): float
 	{
-		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+		$factory = Container::getInstance()->getFactory(CCrmOwnerType::Deal);
 		$fieldName = $factory->getFieldsMap()[Item::FIELD_NAME_CREATED_TIME];
 
 		$filter = [];
@@ -160,7 +183,7 @@ final class DataProvider
 
 	private function format(float $sum): string
 	{
-		return \CCrmCurrency::MoneyToString(round($sum), $this->getCurrency());
+		return CCrmCurrency::MoneyToString(round($sum), $this->getCurrency());
 	}
 
 	private function getStartDate(PeriodType $periodType): ?DateTime
@@ -189,6 +212,6 @@ final class DataProvider
 
 	private function getCurrency(): ?string
 	{
-		return \CCrmCurrency::GetAccountCurrencyID();
+		return CCrmCurrency::GetAccountCurrencyID();
 	}
 }

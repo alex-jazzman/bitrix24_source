@@ -35,6 +35,7 @@ import './css/content-blocks/line-of-text-blocks-button.css';
 import './css/content-blocks/todo/deadline-and-ping-selector.css';
 import './css/content-blocks/address.css';
 import './css/content-blocks/workflow-efficiency.css';
+import './css/content-blocks/error-block.css';
 import Item from './item';
 import { StreamType } from './stream-type';
 import './css/main.css';

@@ -6,12 +6,14 @@ use Bitrix\Crm\Copilot\AiQueueBuffer\Controller\AiQueueBufferController;
 use Bitrix\Crm\Copilot\AiQueueBuffer\Entity\AiQueueBuffer;
 use Bitrix\Crm\Copilot\AiQueueBuffer\Entity\AiQueueBufferItem;
 use Bitrix\Crm\Copilot\AiQueueBuffer\Enum\Status;
-use Bitrix\Crm\Copilot\AiQueueBuffer\Provider\Factory;
+use Bitrix\Crm\Copilot\Restriction\ExecutionDataManager;
+use Bitrix\Crm\Copilot\Restriction\LimitManager;
+use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Result;
 use Bitrix\Crm\Traits\Singleton;
+use Bitrix\Main\Error;
 use Bitrix\Main\Type\Date;
-use Bitrix\Main\Web\Json;
 use COption;
 
 final class Consumer
@@ -19,7 +21,6 @@ final class Consumer
 	use Singleton;
 
 	private const LIMIT = 5;
-	private const MAX_AI_QUIRES_LIMIT_PER_DAY = 50;
 	private const MAX_RETRY_COUNT = 5;
 	private const MAX_PENDING_RECORDS = 20;
 
@@ -44,11 +45,7 @@ final class Consumer
 
 		$this->markItemsAsProgress($items);
 
-		$result = $this->processItems($items);
-		if ($result->isSuccess())
-		{
-			$this->incExecutionCount($result->getData()['successCount']);
-		}
+		$this->processItems($items);
 	}
 
 	private function init(): void
@@ -63,22 +60,19 @@ final class Consumer
 			return false;
 		}
 
-		$lastExecutionDate = $this->getLastExecutionDate();
-		$today = new Date();
+		$lastExecutionMonth = $this->getLastExecutionDate()->format('n');
+		$currentMonth = (new Date())->format('n');
 
-		if ($today > $lastExecutionDate)
+		if ($currentMonth !== $lastExecutionMonth)
 		{
-			$this->startNewDay();
+			$this->startNewMonth();
 
 			return true;
 		}
 
-		if ($this->getExecutionCount() >= $this->getMaxCountLimit())
-		{
-			return false;
-		}
+		$isPeriodLimitExceeded = LimitManager::getInstance()->isPeriodLimitExceeded();
 
-		return true;
+		return !$isPeriodLimitExceeded;
 	}
 
 	private function isQueueHasManyPendingRecords(): bool
@@ -139,7 +133,7 @@ final class Consumer
 			{
 				$successCount++;
 			}
-			else
+			elseif ($this->isNeedMoveItemToEndOfQueue($result->getError()))
 			{
 				$this->moveItemToEndOfQueue($item);
 			}
@@ -150,14 +144,28 @@ final class Consumer
 		return (new Result())->setData(['successCount' => $successCount]);
 	}
 
+	private function isNeedMoveItemToEndOfQueue(?Error $error = null): bool
+	{
+		return (
+			!in_array(
+				$error?->getCode(),
+				[
+					ErrorCode::JOB_ALREADY_EXISTS,
+					ErrorCode::NOT_SUITABLE_TARGET,
+				],
+			true
+			)
+		);
+	}
+
 	private function moveItemToEndOfQueue(AiQueueBuffer $item): void
 	{
 		$this->controller->delete([$item->getId()]);
 
-		$AiQueueBufferItem = AiQueueBufferItem::createFromEntity($item);
-		$AiQueueBufferItem->incrementRetryCount();
+		$aiQueueBufferItem = AiQueueBufferItem::createFromEntity($item);
+		$aiQueueBufferItem->incrementRetryCount();
 
-		$this->controller->add($AiQueueBufferItem);
+		$this->controller->add($aiQueueBufferItem);
 	}
 
 	private function getLimit(): int
@@ -169,68 +177,39 @@ final class Consumer
 		);
 	}
 
-	private function getMaxCountLimit(): int
+	private function getLastExecutionDate(): Date
+	{
+		return Date::createFromTimestamp($this->getCurrentPeriodTimestamp());
+	}
+
+	private function startNewMonth(): void
+	{
+		$this->truncateQueue();
+		$this->saveNewPeriodTimestamp();
+
+		ExecutionDataManager::getInstance()->clearExecutionData();
+	}
+
+	private function truncateQueue(): void
+	{
+		$this->controller->deleteAll();
+	}
+
+	private function getCurrentPeriodTimestamp(): int
 	{
 		return COption::GetOptionInt(
 			'crm',
-			'ai_queue_buffer_max_queue_limit_per_day',
-			self::MAX_AI_QUIRES_LIMIT_PER_DAY
+			'ai_queue_buffer_execution_period_date',
+			(new Date())->getTimestamp()
 		);
 	}
 
-	private function getLastExecutionDate(): Date
+	private function saveNewPeriodTimestamp(): void
 	{
-		if (isset($this->getExecutionData()['lastExecutionTimestamp']))
-		{
-			return Date::createFromTimestamp($this->getExecutionData()['lastExecutionTimestamp']);
-		}
-
-		return new Date();
-	}
-
-	private function getExecutionCount(): int
-	{
-		return $this->getExecutionData()['count'] ?? 0;
-	}
-
-	private function startNewDay(): void
-	{
-		$this->setExecutionData([
-			'count' => 0,
-			'lastExecutionTimestamp' => (new Date())->getTimestamp(),
-		]);
-	}
-
-	private function incExecutionCount(int $count): void
-	{
-		if ($count <= 0)
-		{
-			return;
-		}
-
-		$executionData = $this->getExecutionData();
-		$executionData['count'] = $count + ($executionData['count'] ?? 0);
-
-		$this->setExecutionData($executionData);
-	}
-
-	private function getExecutionData(): array
-	{
-		$dataString = COption::GetOptionString(
+		COption::SetOptionInt(
 			'crm',
-			'ai_queue_buffer_execution_data',
-			null
-		);
-
-		return ($dataString ? Json::decode($dataString) : []);
-	}
-
-	private function setExecutionData(array $executionData): void
-	{
-		COption::SetOptionString(
-			'crm',
-			'ai_queue_buffer_execution_data',
-			Json::encode($executionData)
+			'ai_queue_buffer_execution_period_date',
+			(new Date())->getTimestamp()
 		);
 	}
 }

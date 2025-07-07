@@ -8,4 +8,9 @@ final class DealEveryMonthCollector extends BasePeriodCollector
 	{
 		return ['-1 month', '-2 months'];
 	}
+
+	protected function getPeriod(): string
+	{
+		return '7 days';
+	}
 }

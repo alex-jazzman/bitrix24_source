@@ -4,6 +4,7 @@ namespace Bitrix\Crm\RepeatSale\Segment;
 
 use Bitrix\Crm\RepeatSale\Segment\Entity\RepeatSaleSegment;
 use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
 
 final class SegmentItem
 {
@@ -12,7 +13,7 @@ final class SegmentItem
 	private string $prompt;
 	private bool $isEnabled = true;
 	private ?string $code = null;
-	private int $entityTypeId = \CCrmOwnerType::Deal;
+	private int $entityTypeId = CCrmOwnerType::Deal;
 	private int $entityCategoryId = 0;
 	private string $entityStageId = '';
 	private ?string $entityTitlePattern = null;
@@ -40,7 +41,7 @@ final class SegmentItem
 		$instance->clientFound = $segmentItem->getClientFound();
 		$instance->clientCoverage = $segmentItem->getClientCoverage();
 
-		foreach ($segmentItem->getAssignmentUsers() as $assignmentUser)
+		foreach ( $segmentItem->getAssignmentUsers() as $assignmentUser)
 		{
 			$instance->assignmentUserIds[] = $assignmentUser->getUserId();
 		}
@@ -106,7 +107,7 @@ final class SegmentItem
 		return $this->isEnabled;
 	}
 
-	public function setIsEnabled(bool $isEnabled): SegmentItem
+	public function setIsEnabled(bool $isEnabled): self
 	{
 		$this->isEnabled = $isEnabled;
 
@@ -118,7 +119,7 @@ final class SegmentItem
 		return $this->code;
 	}
 
-	public function setCode(?string $code): SegmentItem
+	public function setCode(?string $code): self
 	{
 		$this->code = $code;
 
@@ -135,7 +136,7 @@ final class SegmentItem
 		return $this->entityCategoryId;
 	}
 
-	public function setEntityCategoryId(int $entityCategoryId): SegmentItem
+	public function setEntityCategoryId(int $entityCategoryId): self
 	{
 		$this->entityCategoryId = $entityCategoryId;
 
@@ -152,7 +153,7 @@ final class SegmentItem
 		return $this->clientCoverage;
 	}
 
-	public function setClientCoverage(?int $clientCoverage): SegmentItem
+	public function setClientCoverage(?int $clientCoverage): self
 	{
 		$this->clientCoverage = $clientCoverage;
 
@@ -169,7 +170,7 @@ final class SegmentItem
 		return $this->entityStageId;
 	}
 
-	public function setEntityStageId(string $entityStageId): SegmentItem
+	public function setEntityStageId(string $entityStageId): self
 	{
 		$this->entityStageId = $entityStageId;
 
@@ -181,7 +182,7 @@ final class SegmentItem
 		return $this->assignmentUserIds;
 	}
 
-	public function setAssignmentUserIds(array $assignmentUserIds): SegmentItem
+	public function setAssignmentUserIds(array $assignmentUserIds): self
 	{
 		$this->assignmentUserIds = $assignmentUserIds;
 
@@ -203,6 +204,13 @@ final class SegmentItem
 		return $this->isAiEnabled;
 	}
 
+	public function setIsAiEnabled(bool $isEnabled): self
+	{
+		$this->isAiEnabled = $isEnabled;
+
+		return $this;
+	}
+
 	public function getDescription(): ?string
 	{
 		return match ($this->code)
@@ -210,9 +218,9 @@ final class SegmentItem
 			SystemSegmentCode::DEAL_EVERY_MONTH->value => Loc::getMessage('CRM_SEGMENT_ITEM_SYSTEM_DEAL_EVERY_MONTH'),
 			SystemSegmentCode::DEAL_EVERY_HALF_YEAR->value => Loc::getMessage('CRM_SEGMENT_ITEM_SYSTEM_DEAL_EVERY_HALF_YEAR'),
 			SystemSegmentCode::DEAL_EVERY_YEAR->value => Loc::getMessage('CRM_SEGMENT_ITEM_SYSTEM_DEAL_EVERY_YEAR'),
-			SystemSegmentCode::DEAL_LOST_MORE_12_MONTH->value => Loc::getMessage('CRM_SEGMENT_ITEM_SYSTEM_DEAL_LOST_MORE_12_MONTH'),
-			SystemSegmentCode::DEAL_LAST_ACTIVITY_LESS_12_MONTH->value => Loc::getMessage('CRM_SEGMENT_ITEM_SYSTEM_LAST_ACTIVITY_LESS_12_MONTH'),
-			default => null
+			SystemSegmentCode::LOST_CLIENT->value => Loc::getMessage('CRM_SEGMENT_ITEM_SYSTEM_DEAL_LOST_MORE_12_MONTH'),
+			SystemSegmentCode::SLEEPING_CLIENT->value => Loc::getMessage('CRM_SEGMENT_ITEM_SYSTEM_LAST_ACTIVITY_LESS_12_MONTH'),
+			default => null,
 		};
 	}
 }

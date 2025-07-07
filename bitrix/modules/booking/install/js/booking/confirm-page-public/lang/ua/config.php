@@ -18,6 +18,7 @@ $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_NO"] = "Не скасовувати";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_NOT_CONFIRM"] = "Не підтверджувати";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_YES"] = "Так, скасувати";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT"] = "Якщо у вас змінилися плани, дайте нам знати.";
+$MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT_MSGVER_1"] = "Так ми точно знатимемо, що ви прийдете.";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TILE"] = "Підтвердити запис?";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_TEXT"] = "Якщо ваші плани змінилися, ви завжди можете вибрати більш слушну дату й час";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_TILE"] = "Скасувати ваш запис?";

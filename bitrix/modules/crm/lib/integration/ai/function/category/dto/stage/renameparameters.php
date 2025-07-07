@@ -9,6 +9,7 @@ use Bitrix\Crm\Dto\Validator\EntityType\IsPossibleDynamicType;
 use Bitrix\Crm\Dto\Validator\EnumField;
 use Bitrix\Crm\Dto\Validator\Logic;
 use Bitrix\Crm\Dto\Validator\NotEmptyField;
+use Bitrix\Crm\Dto\Validator\ObjectCollectionField;
 use Bitrix\Crm\Dto\Validator\RequiredField;
 use CCrmOwnerType;
 
@@ -31,7 +32,7 @@ final class RenameParameters extends Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			Logic::or([
+			Logic::or($this, [
 				new EnumField($this, 'entityTypeId', [
 					CCrmOwnerType::Lead,
 					CCrmOwnerType::Deal,
@@ -43,7 +44,7 @@ final class RenameParameters extends Dto
 
 			new DefinedCategoryIdentifier($this, 'entityTypeId', 'categoryId'),
 
-			new RequiredField($this, 'names'),
+			new ObjectCollectionField($this, 'names'),
 			new NotEmptyField($this, 'names'),
 		];
 	}

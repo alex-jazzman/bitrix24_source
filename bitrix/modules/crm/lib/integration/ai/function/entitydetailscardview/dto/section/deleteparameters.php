@@ -17,7 +17,6 @@ class DeleteParameters extends AbstractParameters
 		return [
 			...parent::getValidators($fields),
 
-			new RequiredField($this, 'name'),
 			new NotEmptyField($this, 'name'),
 		];
 	}

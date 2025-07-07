@@ -93,4 +93,11 @@ final class StartBanner
 
 		return $this->showedStatisticsData;
 	}
+
+	public function dropShowedStatisticsData(): void
+	{
+		CUserOptions::DeleteOption('crm', self::SHOWED_OPTION_NAME);
+
+		$this->showedStatisticsData = [];
+	}
 }

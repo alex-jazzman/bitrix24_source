@@ -89,7 +89,7 @@ final class QueueItem
 		return $this->jobId;
 	}
 
-	public function setJobId(int $jobId): QueueItem
+	public function setJobId(int $jobId): self
 	{
 		$this->jobId = $jobId;
 
@@ -106,7 +106,7 @@ final class QueueItem
 		return $this->params;
 	}
 
-	public function setParams(?array $params): QueueItem
+	public function setParams(?array $params): self
 	{
 		$this->params = $params;
 		$this->hash = md5($params);
@@ -119,7 +119,7 @@ final class QueueItem
 		return Status::from($this->status);
 	}
 
-	public function setStatus(Status $status): QueueItem
+	public function setStatus(Status $status): self
 	{
 		$this->status = $status->value;
 
@@ -131,7 +131,7 @@ final class QueueItem
 		return $this->lastEntityTypeId;
 	}
 
-	public function setLastEntityTypeId(?int $lastEntityTypeId): QueueItem
+	public function setLastEntityTypeId(?int $lastEntityTypeId): self
 	{
 		$this->lastEntityTypeId = $lastEntityTypeId;
 
@@ -143,7 +143,7 @@ final class QueueItem
 		return $this->lastItemId;
 	}
 
-	public function setLastItemId(?int $lastItemId): QueueItem
+	public function setLastItemId(?int $lastItemId): self
 	{
 		$this->lastItemId = $lastItemId;
 
@@ -155,7 +155,7 @@ final class QueueItem
 		return $this->lastAssignmentId;
 	}
 
-	public function setLastAssignmentId(?int $lastAssignmentId): QueueItem
+	public function setLastAssignmentId(?int $lastAssignmentId): self
 	{
 		$this->lastAssignmentId = $lastAssignmentId;
 
@@ -167,7 +167,7 @@ final class QueueItem
 		return $this->handlerTypeId;
 	}
 
-	public function setHandlerTypeId(int $handlerTypeId): QueueItem
+	public function setHandlerTypeId(int $handlerTypeId): self
 	{
 		$this->handlerTypeId = $handlerTypeId;
 
@@ -184,7 +184,7 @@ final class QueueItem
 		return $this->retryCount;
 	}
 
-	public function setRetryCount(int $retryCount): QueueItem
+	public function setRetryCount(int $retryCount): self
 	{
 		$this->retryCount = $retryCount;
 
@@ -196,7 +196,7 @@ final class QueueItem
 		return $this->itemsCount;
 	}
 
-	public function setItemsCount(int $itemsCount): QueueItem
+	public function setItemsCount(int $itemsCount): self
 	{
 		$this->itemsCount = $itemsCount;
 
@@ -208,7 +208,7 @@ final class QueueItem
 		return $this->isOnlyCalc;
 	}
 
-	public function incRetryCount(): QueueItem
+	public function incRetryCount(): self
 	{
 		$this->retryCount++;
 

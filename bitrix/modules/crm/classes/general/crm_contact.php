@@ -22,6 +22,7 @@ use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Security\QueryBuilder\Result\JoinWithUnionSpecification;
 use Bitrix\Crm\Service\Container;
@@ -377,6 +378,8 @@ class CAllCrmContact
 
 		self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 
+		self::$FIELD_INFOS += LastCommunicationTable::getLastStateFieldInfo();
+
 		return self::$FIELD_INFOS;
 	}
 
@@ -540,7 +543,8 @@ class CAllCrmContact
 			Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsSqlInfo(
 				CCrmOwnerType::Contact,
 				$tableAliasName
-			)
+			),
+			LastCommunicationTable::getFieldsByEntityTypeId(CCrmOwnerType::Contact, true),
 		);
 
 		$result += self::getLastActivityAdapter()->getFields();

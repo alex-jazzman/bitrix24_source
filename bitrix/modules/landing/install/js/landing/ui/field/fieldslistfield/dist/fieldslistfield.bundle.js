@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
-(function (exports,ui_designTokens,landing_loc,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_fileLimit,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,landing_pageobject,main_loader,landing_ui_field_productfield,booking_crmForms_settings,calendar_resourcebookinguserfield,socnetlogdest,ui_hint,landing_ui_component_iconbutton,main_core,landing_ui_field_basefield) {
+(function (exports,ui_designTokens,landing_loc,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_fileLimit,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,landing_pageobject,main_loader,landing_ui_field_productfield,calendar_resourcebookinguserfield,socnetlogdest,ui_hint,landing_ui_component_iconbutton,main_core,landing_ui_field_basefield) {
 	'use strict';
 
 	var _templateObject, _templateObject2;
@@ -258,8 +258,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          })
 	        });
 	      }
-	      if (options.type === 'booking') {
-	        return new booking_crmForms_settings.Settings(options, this.data.formOptions);
+	      if (options.type === 'booking' && BX.Booking) {
+	        var BookingFieldController = BX.Booking.CrmForms.Settings;
+	        return new BookingFieldController(options, this.data.formOptions);
 	      }
 	      return null;
 	    }
@@ -1067,5 +1068,5 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	exports.FieldsListField = FieldsListField;
 
-}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX,BX.Landing,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Landing,BX,BX.Landing.Ui.Field,BX.Booking.CrmForms,BX.Calendar,BX,BX,BX.Landing.UI.Component,BX,BX.Landing.UI.Field));
+}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX,BX.Landing,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Landing,BX,BX.Landing.Ui.Field,BX.Calendar,BX,BX,BX.Landing.UI.Component,BX,BX.Landing.UI.Field));
 //# sourceMappingURL=fieldslistfield.bundle.js.map

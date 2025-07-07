@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Configura
 use Bitrix\Crm\Dto\Caster;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Dto\Validator\NotEmptyField;
+use Bitrix\Crm\Dto\Validator\ObjectCollectionField;
 use Bitrix\Crm\Dto\Validator\RequiredField;
 
 final class Section extends Dto
@@ -32,13 +33,11 @@ final class Section extends Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			new RequiredField($this, 'name'),
 			new NotEmptyField($this, 'name'),
 
-			new RequiredField($this, 'title'),
 			new NotEmptyField($this, 'title'),
 
-			new RequiredField($this, 'elements'),
+			new ObjectCollectionField($this, 'elements'),
 			new NotEmptyField($this, 'elements'),
 		];
 	}

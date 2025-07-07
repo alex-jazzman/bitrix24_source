@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationAvailabilityChecker;
 use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Activity\TodoCreateNotification;
 use Bitrix\Crm\Category\Entity\Category;
@@ -14,10 +15,12 @@ use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Operation\Action\Compatible\SocialNetwork\ProcessSendNotification;
+use Bitrix\Crm\Service\Operation\Action\RestoreFromBin;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics;
@@ -88,6 +91,11 @@ abstract class Factory
 			$settings += UtmTable::getUtmFieldsInfo();
 		}
 		$settings += Container::getInstance()->getParentFieldManager()->getParentFieldsInfo($this->getEntityTypeId());
+
+		if (LastCommunicationAvailabilityChecker::getInstance()->isEnabled())
+		{
+			$settings += LastCommunicationTable::getFieldsInfo();
+		}
 
 		foreach ($settings as $name => &$field)
 		{
@@ -257,6 +265,7 @@ abstract class Factory
 			EditorAdapter::FIELD_PRODUCT_ROW_SUMMARY => Loc::getMessage('CRM_COMMON_PRODUCTS'),
 			EditorAdapter::FIELD_OPPORTUNITY => Loc::getMessage('CRM_TYPE_ITEM_FIELD_NAME_OPPORTUNITY_WITH_CURRENCY'),
 			EditorAdapter::FIELD_UTM => Loc::getMessage('CRM_COMMON_UTM'),
+			EditorAdapter::FIELD_LAST_COMMUNICATION => Loc::getMessage('CRM_TYPE_ITEM_FIELD_NAME_LAST_COMMUNICATION_TIME'),
 		];
 	}
 
@@ -1465,6 +1474,12 @@ abstract class Factory
 		$restore->removeAction(
 			Operation::ACTION_AFTER_SAVE,
 			ProcessSendNotification\WhenAddingEntity::class,
+		);
+
+		$restore->addAction(
+			Operation::ACTION_BEFORE_SAVE,
+			new RestoreFromBin($item->getCreatedTime()),
+			0,
 		);
 
 		return $restore;

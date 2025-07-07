@@ -15,12 +15,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Grid\MenuActionsPreparer;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Loader;
@@ -100,6 +102,7 @@ echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 	?></div><?
 
 $isRecurring = isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y';
+$isShowCounterPanel = ($arParams['SHOW_COUNTER_PANEL'] ?? true) && !$isRecurring;
 $isInternal = $arResult['INTERNAL'];
 $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
@@ -661,6 +664,8 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		$resultItem['columns']['DEAL_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arDeal['badges']);
 	}
 
+	(new LastCommunicationTimeFormatter())->formatListDate($arDeal, $resultItem['columns']);
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
@@ -873,10 +878,14 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
-		'COUNTER_PANEL' => $isRecurring ? null : [
-			'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
-			'EXTRAS' => ['DEAL_CATEGORY_ID' => $arResult['CATEGORY_ID']],
-		],
+		'COUNTER_PANEL' => (
+			$isShowCounterPanel
+				? [
+					'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
+					'EXTRAS' => ['DEAL_CATEGORY_ID' => $arResult['CATEGORY_ID']],
+				]
+				: null
+		),
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
 			->setItems([
 				NavigationBarPanel::ID_KANBAN,
@@ -914,6 +923,7 @@ $APPLICATION->IncludeComponent(
 			],
 		],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+		'SHOW_ROW_CHECKBOXES' => $arParams['SHOW_ROW_CHECKBOXES'] ?? true,
 	],
 	$component
 );
@@ -1263,3 +1273,5 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 }
 
 \Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();
+
+print OnboardingPopup::getInstance()->build();

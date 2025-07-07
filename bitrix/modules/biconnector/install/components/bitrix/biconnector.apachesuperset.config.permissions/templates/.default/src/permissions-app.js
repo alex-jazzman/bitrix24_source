@@ -170,6 +170,8 @@ export const PermissionsApp: BitrixVueComponentProps = {
 						}
 					}
 				}
+
+				this.$store.commit('setStateAsInitial');
 			}
 
 			if (parent?.BX)

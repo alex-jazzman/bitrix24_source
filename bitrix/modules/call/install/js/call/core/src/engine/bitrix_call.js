@@ -1372,22 +1372,25 @@ export class BitrixCall extends AbstractCall
 			pullEvent: '#onPullEventHangup',
 		});
 
-		peer.participant = null;
-		peer.setReady(false);
+		//peer.participant = null; // task-605993 (task-601473)
+		//peer.setReady(false);
+		
+		if (!peer.participant) // task-605993
+		{
+			if (params.code == 603)
+			{
+				peer.setDeclined(true);
+			}
+			else if (params.code == 486)
+			{
+				peer.setBusy(true);
+				console.warn(`user ${senderId} is busy`);
+			}
 
-		if (params.code == 603)
-		{
-			peer.setDeclined(true);
-		}
-		else if (params.code == 486)
-		{
-			peer.setBusy(true);
-			console.error(`user ${senderId} is busy`);
-		}
-
-		if (this.ready && this.type === CallType.Instant && !this.isAnyoneParticipating())
-		{
-			this.hangup();
+			if (this.ready && this.type === CallType.Instant && !this.isAnyoneParticipating())
+			{
+				this.hangup();
+			}
 		}
 	};
 
@@ -1787,6 +1790,7 @@ export class BitrixCall extends AbstractCall
 
 	#onParticipantLeaved = (p) => {
 		const peer = this.peers[p.userId];
+		
 		if (peer)
 		{
 			for (const type in MediaStreamsKinds)

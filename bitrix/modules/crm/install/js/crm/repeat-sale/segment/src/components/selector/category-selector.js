@@ -62,6 +62,7 @@ export const CategorySelector = {
 		<DialogWrapperComponent
 			:items="items"
 			:tabs="tabs"
+			:read-only="readOnly"
 		/>
 	`,
 };

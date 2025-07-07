@@ -1,16 +1,21 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import 'ui.design-tokens';
 import { ajax as Ajax, Loc, Tag } from 'main.core';
 import { PopupManager } from 'main.popup';
+import { sendData } from 'ui.analytics';
 import { Lottie } from 'ui.lottie';
 import { Footer } from '../footer';
 import type { WidgetParams, WidgetTypeEnum } from '../widget';
 import { PeriodType, WidgetType } from '../widget';
 import { Base } from './base';
 
+import 'ui.hint';
+
 export class Statistics extends Base
 {
 	#periodType: number = PeriodType.day30;
 	#showSettingsButton: boolean = true;
+	#hint: ?Manager = null;
 
 	constructor(params: WidgetParams)
 	{
@@ -22,6 +27,16 @@ export class Statistics extends Base
 	getType(): WidgetTypeEnum
 	{
 		return WidgetType.statistics;
+	}
+
+	getPopupWidth(): number
+	{
+		return 489;
+	}
+
+	isAutoHidePopup(): boolean
+	{
+		return true;
 	}
 
 	#getLoadingPopupContent(): HTMLElement
@@ -70,84 +85,117 @@ export class Statistics extends Base
 		return container.root;
 	}
 
-	getPopupContent(data: Object): HTMLElement
+	getPopupContent(data: ?Object = null): HTMLElement
 	{
 		return Tag.render`
 			<div>
 				<header class="crm-rs__w-header --statistics">
-					${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE')}
+					${this.#getPopupTitle(data)}
 				</header>
 				<div class="crm-rs__w-body">
 					<div class="crm-rs__w-body-content --statistics">
-						<div class="crm-rs__w-period-selector">
-							${this.#getSelectorTitle()}
-							<span
-								onclick="${this.#onPeriodChange.bind(this, this.#periodType)}"
-								class="crm-rs__w-period-selector-icon"
-							></span>
-						</div>
-						<div class="crm-rs__w-body-statistics">
-							<div class="crm-rs__w-body-rs-statistics">
-								<div class="crm-rs__w-body-rs-statistics-title">
-									${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_TITLE')}
-								</div>
-								<div class="crm-rs__w-body-statistics-row">
-									<div class="crm-rs__w-body-statistics-item">
-										${Loc.getMessagePlural(
-											'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_RS_WIN',
-											data.repeatSaleWinCount ?? 0,
-											{ '#COUNT#': data.repeatSaleWinCount ?? 0 },
-										)}
-									</div>
-									<div class="crm-rs__w-body-statistics-item --sum">
-										${data.repeatSaleWinSum ?? ''}
-									</div>
-								</div>
-								<div class="crm-rs__w-body-statistics-row">
-									<div class="crm-rs__w-body-statistics-item">
-										${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_RS_PROCESS')}
-									</div>
-									<div class="crm-rs__w-body-statistics-item --sum">
-										${data.repeatSaleProcessSum ?? 0}
-									</div>
-								</div>
-							</div>
-							<div class="crm-rs__w-body-statistics-row">
-								<div class="crm-rs__w-body-statistics-item">
-									${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_OTHER')}
-								</div>
-								<div class="crm-rs__w-body-statistics-item --sum">
-									${data.otherWinSum ?? 0}
-								</div>
-							</div>
-							<div class="crm-rs__w-body-statistics-row">
-								<div class="crm-rs__w-body-statistics-item">
-									${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_TOTAL')}
-								</div>
-								<div class="crm-rs__w-body-statistics-item --sum">
-									${data.totalSum ?? 0}
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="crm-rs__w-body-bubble --statistics">
-						${this.renderLottieAnimation()}
-						<div class="crm-rs__w-body-icon"></div>
-						<div class="crm-rs__w-body-bubble-percent">
-							<span>${data.percent ?? 0}</span>
-							<div>
-								<div class="crm-rs__w-body-bubble-percent-arrow ${data.percent > 0 ? '' : '--hidden'}"></div>
-								<div class="crm-rs__w-body-bubble-percent-icon"></div>
-							</div>
-						</div>
-						<div class="crm-rs__w-body-bubble-subtitle">
-							${this.#getBubbleSubTitle()}
+						<div class="crm-rs__w-body-statistics-table-container">
+							<table class="crm-rs__w-body-statistics-table">
+								<thead>
+									<tr>
+										<th></th>
+										<th>${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_COUNT')}</th>
+										<th>${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_SUM')}</th>
+									</tr>
+								</thead>
+								<tbody class="crm-rs__w-body-statistics-table-body">
+									<tr>
+										<td><span>${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_DEALS_IN_WORK')}</span></td>
+										<td><span>${data.repeatSaleProcessCount ?? 0}</span></td>
+										<td><span>${data.repeatSaleProcessSum ?? 0}</span></td>
+									</tr>
+									<tr>
+										<td>${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_WIN_DEALS')}</td>
+										<td>${data.repeatSaleWinCount ?? 0}</td>
+										<td>${data.repeatSaleWinSum ?? 0}</td>
+									</tr>
+								</tbody>
+								<tfoot class="crm-rs__w-body-statistics-table-footer">
+									<tr>
+										<td>
+											<div>
+												${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_CONVERSION')}
+												<span 
+													class="crm-rs__w-body-statistics-hint"
+													onmouseenter="${this.#showHint.bind(this)}"
+													onmouseleave="${this.#hideHint.bind(this)}"
+												></span>
+											</div>
+										</td>
+										<td><span>${data.conversionByCount}${data.conversionByCount > 0 ? '%' : ''}</span></td>
+										<td>${data.conversionBySum}${data.conversionBySum > 0 ? '%' : ''}</td>
+									</tr>
+								</tfoot>
+							</table>
 						</div>
 					</div>
 				</div>
 				<footer class="crm-rs__w-footer --statistics">
 					${this.#getFooterContent()}
 				</footer>
+			</div>
+		`;
+	}
+
+	#getPopupTitle(data: Object): HTMLElement
+	{
+		const repeatSaleForPeriodText = Tag.render`
+			<span>
+				${Loc.getMessagePlural(
+					'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE_TOTAL_DEALS',
+					data.repeatSaleTotalCount ?? 0,
+					{
+						'#COUNT#': data.repeatSaleTotalCount ?? 0,
+					},
+				)}
+			</span>
+		`;
+
+		const repeatSaleTodayCount = data.repeatSaleTodayCount ?? 0;
+
+		let repeatSaleTodayText = null;
+		if (repeatSaleTodayCount > 0)
+		{
+			repeatSaleTodayText = Tag.render`
+				<span>
+					${Loc.getMessagePlural(
+						'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE_TODAY_DEALS',
+						data.repeatSaleTodayCount ?? 0,
+						{
+							'#COUNT#': data.repeatSaleTodayCount ?? 0,
+						},
+					)}
+				</span>
+			`;
+		}
+		else
+		{
+			const todayNoDealsMessage = Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE_TODAY_NO_DEALS');
+			if (todayNoDealsMessage)
+			{
+				repeatSaleTodayText = Tag.render`<span>${todayNoDealsMessage}</span>`;
+			}
+		}
+
+		return Tag.render`
+			<div>
+				${Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE')}
+				<div class="crm-rs__w-header-span-wrapper">
+					${repeatSaleForPeriodText}
+					${repeatSaleTodayText}
+				</div>
+			</div>
+			<div 
+				class="crm-rs__w-period-selector"
+				onclick="${this.#onPeriodChange.bind(this, this.#periodType)}"
+			>
+				${this.#getSelectorTitle()}
+				<span class="crm-rs__w-period-selector-icon"></span>
 			</div>
 		`;
 	}
@@ -177,36 +225,19 @@ export class Statistics extends Base
 		return Loc.getMessage(code);
 	}
 
-	#getBubbleSubTitle(): string
-	{
-		let code = null;
-
-		switch (this.#periodType)
-		{
-			case PeriodType.day30:
-				code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_DAY_30';
-				break;
-			case PeriodType.quarter:
-				code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_QUARTER';
-				break;
-			case PeriodType.halfYear:
-				code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_HALF_YEAR';
-				break;
-			case PeriodType.year:
-				code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_YEAR';
-				break;
-			default:
-				throw new RangeError('unknown period type');
-		}
-
-		return Loc.getMessage(code);
-	}
-
 	#getFooterContent(): HTMLElement
 	{
-		const footer = new Footer(this.#showSettingsButton);
+		const footer = new Footer(this.#showSettingsButton, {
+			type: this.getAnalyticsType(),
+			subSection: this.getAnalyticsSubSection(),
+		});
 
 		return footer.getFooterContent();
+	}
+
+	getAnalyticsType(): string
+	{
+		return Dictionary.TYPE_REPEAT_SALE_BANNER_STATISTICS;
 	}
 
 	getFetchUrl(): string
@@ -239,6 +270,11 @@ export class Statistics extends Base
 		const data = {
 			periodTypeId: nextPeriodTypeId,
 		};
+
+		const eventBuilder = this.#getClickEventBuilder();
+		eventBuilder.setElement('change_period');
+		eventBuilder.setPeriod(nextPeriodTypeId);
+		sendData(eventBuilder.buildData());
 
 		// @todo maybe pointless loader
 		// const popup = PopupManager.getPopupById(`crm_repeat_sale_widget_${this.getType()}`);
@@ -279,5 +315,54 @@ export class Statistics extends Base
 				this.showError();
 			})
 		;
+	}
+
+	#showHint(event: Event): void
+	{
+		if (this.#getHintInstance().popup?.isShown())
+		{
+			return;
+		}
+
+		this.#getHintInstance().show(
+			event.target,
+			Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_CONVERSION_HINT'),
+			true,
+		);
+	}
+
+	#hideHint(): void
+	{
+		if (this.#getHintInstance().popup?.isShown())
+		{
+			this.#getHintInstance().hide();
+		}
+	}
+
+	#getHintInstance(): Manager
+	{
+		if (this.#hint === null)
+		{
+			this.#hint = BX.UI.Hint.createInstance({
+				popupParameters: {
+					autoHide: true,
+					events: {
+						onFirstShow: () => {
+							this.#hint.popup.setOffset({ offsetLeft: 9 });
+						},
+					},
+				},
+			});
+		}
+
+		return this.#hint;
+	}
+
+	#getClickEventBuilder(): Builder.RepeatSale.Banner.ClickEvent
+	{
+		const type = this.getAnalyticsType();
+		const subSection = this.getAnalyticsSubSection();
+
+		return Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
 	}
 }

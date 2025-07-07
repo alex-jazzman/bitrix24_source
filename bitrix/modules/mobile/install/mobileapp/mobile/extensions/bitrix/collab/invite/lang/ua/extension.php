@@ -1,4 +1,5 @@
 <?php
+$MESS["COLLAB_GUEST_INVITE_LANGUAGE_CHOOSER_TEXT"] = "Мова запрошення: [COLOR=#COLOR#][URL]#LANGUAGE#[/URL][/COLOR]";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_BUTTON_TEXT"] = "Закрити";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT"] = "Докладніше";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION"] = "Зверніться до адміністратора\nвашого Бітрікс24.";
@@ -16,6 +17,8 @@ $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_DESCRIPTION"] = "Ці адреси ел
 $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_TITLE"] = "Не можемо надіслати запрошення на деякі адреси ел. пошти";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_DESCRIPTION"] = "Ці номери вказані в неправильному форматі: #phonesNumbersString#";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_TITLE"] = "Не можемо надіслати запрошення деяким контактам";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_AHA_MOMENT_TEXT"] = "Виберіть мову запрошення та інтерфейсу гостя. Для інших учасників мова не зміниться.";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_MENU_SECTION_TITLE"] = "за вмовчанням";
 $MESS["COLLAB_INVITE_MULTIPLE_ADD_SUCCESS_TOAST_TEXT"] = "Співробітників додано";
 $MESS["COLLAB_INVITE_MULTIPLE_SEND_SUCCESS_TOAST_TEXT"] = "Запрошення надіслані";
 $MESS["COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON"] = "Продовжити запрошувати";

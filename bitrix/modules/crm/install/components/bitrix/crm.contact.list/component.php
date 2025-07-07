@@ -66,6 +66,7 @@ if (!$isErrorOccured && $isBizProcInstalled)
 $arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 $factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
 $category = $factory?->getCategory($arResult['CATEGORY_ID']);
+$arResult['IS_DEFAULT_CATEGORY'] = $factory?->getDefaultCategory()?->getId() === $category?->getId();
 
 if (!$isErrorOccured && !$userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']))
 {
@@ -679,6 +680,8 @@ if ($factory && $category)
 		);
 	}
 }
+
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
 
 $CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 

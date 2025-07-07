@@ -36,6 +36,22 @@ class NavigationBar
 		return $this->isEnabled;
 	}
 
+	private function getActiveView(): ?string
+	{
+		$viewList = $this->getSwitchViewList();
+		$items = $viewList['items'] ?? [];
+
+		foreach ($items as $item)
+		{
+			if ($item['active'])
+			{
+				return $item['id'];
+			}
+		}
+
+		return null;
+	}
+
 	public function getSwitchViewList(): array
 	{
 		return $this->switchViewList;
@@ -110,6 +126,7 @@ class NavigationBar
 			),
 			'dataset' => [
 				'id' => 'crm-repeat-sale-widget-button',
+				'subsection' => $this->getActiveView(),
 			],
 		]);
 	}

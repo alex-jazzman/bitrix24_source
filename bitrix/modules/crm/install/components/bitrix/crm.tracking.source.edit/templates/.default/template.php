@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Tracking\Provider;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
@@ -35,15 +36,26 @@ Extension::load([
 	'seo.ads.client_selector',
 	'seo.ads.login',
 	'ui.info-helper',
+	'ui.feedback.form',
 ]);
 Loader::includeModule('ui');
-Toolbar::deleteFavoriteStar();
 $this->addExternalCss($this->GetFolder() . '/utm.css');
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $code = htmlspecialcharsbx($arResult['ROW']['CODE']);
 
 $containerId = 'crm-analytics-source-ads-editor';
+$feedbackParams = Json::encode(Provider::getFeedbackParameters());
+
+Toolbar::deleteFavoriteStar();
+Toolbar::addButton([
+	"color" => Color::LIGHT_BORDER,
+	"click" => new JsCode(
+		"BX.UI.Feedback.Form.open({$feedbackParams});"
+	),
+	"text" => Provider::getFeedbackButtonTitle(),
+]);
+
 if ($arResult['ROW']['ID'])
 {
 	$editButton = new Button([
@@ -54,17 +66,6 @@ if ($arResult['ROW']['ID'])
 
 	Toolbar::addButton($editButton);
 }
-
-ob_start();
-$APPLICATION->IncludeComponent(
-	'bitrix:ui.feedback.form',
-	'',
-	[
-		...Provider::getFeedbackParameters(),
-		'VIEW_TARGET' => false,
-	]
-);
-Toolbar::addRightCustomHtml(ob_get_clean(), $arResult['ROW']['ID'] ? [] : ['align' => 'right']);
 ?>
 
 <script>

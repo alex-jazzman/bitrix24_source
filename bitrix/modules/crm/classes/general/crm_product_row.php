@@ -1133,6 +1133,10 @@ class CAllCrmProductRow
 		{
 			$result['PRICE_BRUTTO'] = round((float)$product['PRICE_BRUTTO'], 2);
 		}
+		elseif ($discountSum === 0.0) // avoid influence of $priceNetto rounding
+		{
+			$result['PRICE_BRUTTO'] = $inclusivePrice;
+		}
 		else
 		{
 			$result['PRICE_BRUTTO'] = round(static::CalculateInclusivePrice($priceNetto, $result['TAX_RATE']), 2);

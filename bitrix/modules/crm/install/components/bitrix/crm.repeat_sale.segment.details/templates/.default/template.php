@@ -21,6 +21,9 @@ $data = $arResult['data'] ?? [];
 $config = [
 	'readOnly' => $arResult['readOnly'] ?? true,
 ];
+$analytics = [
+	'section' => $arResult['analytics']['section'],
+];
 ?>
 <script>
 	BX.ready(() => {
@@ -40,7 +43,8 @@ $config = [
 							}
 						}
 					}
-				}
+				},
+				analytics: <?= Json::encode($analytics) ?>,
 			},
 		);
 	});

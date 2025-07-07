@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Section;
 
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Dto\Validator\NotEmptyField;
+use Bitrix\Crm\Dto\Validator\ObjectCollectionField;
+use Bitrix\Crm\Dto\Validator\ObjectField;
 use Bitrix\Crm\Dto\Validator\RequiredField;
 use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Configuration\Section;
 
@@ -18,7 +20,7 @@ class CreateParameters extends AbstractParameters
 		return [
 			...parent::getValidators($fields),
 
-			new RequiredField($this, 'section'),
+			new ObjectField($this, 'section'),
 			new NotEmptyField($this, 'section'),
 		];
 	}

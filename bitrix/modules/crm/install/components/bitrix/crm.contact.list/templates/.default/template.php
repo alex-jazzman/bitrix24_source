@@ -15,11 +15,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 * @var CBitrixComponent $component
 */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
@@ -615,6 +617,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		$resultItem['columns']['CONTACT_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arContact['badges']);
 	}
 
+	(new LastCommunicationTimeFormatter())->formatListDate($arContact, $resultItem['columns']);
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
@@ -679,6 +683,13 @@ $filterLazyLoadParams = [
 ];
 $uri = new Uri($filterLazyLoadUrl);
 
+$isDefaultCategory = $arResult['IS_DEFAULT_CATEGORY'] ?? false;
+
+if ($isDefaultCategory)
+{
+	print OnboardingPopup::getInstance()->build();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -739,9 +750,7 @@ $APPLICATION->IncludeComponent(
 			'PATH_TO_ENTITY_LIST' => $pathToList,
 		],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Contact))
-			->setItems([
-				NavigationBarPanel::ID_REPEAT_SALE,
-			])
+			->setItems($isDefaultCategory ? [NavigationBarPanel::ID_REPEAT_SALE] : [])
 			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get()
 		,
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],

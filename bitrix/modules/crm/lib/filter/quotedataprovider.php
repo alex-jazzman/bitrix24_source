@@ -5,6 +5,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Crm;
@@ -380,6 +381,8 @@ class QuoteDataProvider extends EntityDataProvider implements FactoryOptionable
 		{
 			$result[$code] = $this->createField($code, $parentField);
 		}
+
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationField($this, $result);
 
 		return $result;
 	}

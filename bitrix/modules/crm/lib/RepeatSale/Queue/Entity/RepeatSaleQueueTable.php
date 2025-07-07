@@ -100,12 +100,11 @@ class RepeatSaleQueueTable extends DataManager
 			,
 			$fieldRepository->getCreatedTime('CREATED_AT'),
 			$fieldRepository->getUpdatedTime('UPDATED_AT'),
-			(new Reference(
+			new Reference(
 				'JOB',
 				RepeatSaleJobTable::class,
 				Join::on('this.JOB_ID', 'ref.ID'),
-			))
+			),
 		];
 	}
 }
-

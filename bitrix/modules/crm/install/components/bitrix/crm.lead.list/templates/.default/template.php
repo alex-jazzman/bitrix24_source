@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
@@ -686,6 +687,8 @@ js,
 	{
 		$resultItem['columns']['LEAD_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arLead['badges']);
 	}
+
+	(new LastCommunicationTimeFormatter())->formatListDate($arLead, $resultItem['columns']);
 
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);

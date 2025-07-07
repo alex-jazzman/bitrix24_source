@@ -18,6 +18,7 @@ $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK"] = "Докладніш
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT"] = "Зміна періоду вплине лише на цей звіт.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_DELETE_BUTTON"] = "Вимкнути";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_HINT"] = "Після вимкнення всі користувацькі звіти, датасети та налаштування безповоротно видалятимуться. Відновити інформацію не вийде, усе треба буде налаштувати наново. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT"] = "Ви можете втратити доступ до звіту, якщо видалите його з груп, до яких у вас є доступ. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Під час оновлення ключа сталася помилка.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Ключ успішно оновлено.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Виберіть співробітників, яким надходитимуть сповіщення про нові системні звіти та їхні оновлення. #HINT_LINK#";

@@ -2,10 +2,9 @@
 
 namespace Bitrix\Crm\Integration\AI\Operation\Payload\Stub;
 
-use Bitrix\Crm\Entity\FieldDataProvider;
+use Bitrix\Crm\Integration\AI\Operation\Payload\Payload\ExtractFormFields as ExtractFormFieldsPayload;
 use Bitrix\Crm\Integration\AI\Operation\Payload\StubInterface;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserField\Types\DateType;
@@ -31,10 +30,8 @@ final class ExtractFormFields implements StubInterface
 				'(Some super magic info here)',
 			],
 		];
-		
-		$suitableFields = (new FieldDataProvider($this->identifier->getEntityTypeId(), Context::SCOPE_AI))
-			->getFieldData()
-		;
+
+		$suitableFields = ExtractFormFieldsPayload::getAllSuitableFields($this->identifier->getEntityTypeId());
 		foreach ($suitableFields as $fieldDescription)
 		{
 			if ($fieldDescription['MULTIPLE'])
@@ -66,7 +63,7 @@ final class ExtractFormFields implements StubInterface
 			
 			$fields[$fieldDescription['NAME']] = $value;
 		}
-		
+
 		return Json::encode($fields);
 	}
 	
@@ -100,9 +97,9 @@ final class ExtractFormFields implements StubInterface
 		{
 			return '';
 		}
-		
-		$flipped = array_values(array_flip($values));
-		
-		return (string)$flipped[Random::getInt(0, count($flipped) - 1)];
+
+		$values = array_values($values);
+
+		return (string)$values[Random::getInt(0, count($values) - 1)];
 	}
 }

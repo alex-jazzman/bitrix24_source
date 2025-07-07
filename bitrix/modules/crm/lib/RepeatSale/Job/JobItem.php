@@ -51,7 +51,7 @@ final class JobItem
 		return $this->segmentId;
 	}
 
-	public function setSegmentId(int $segmentId): JobItem
+	public function setSegmentId(int $segmentId): self
 	{
 		$this->segmentId = $segmentId;
 
@@ -63,7 +63,7 @@ final class JobItem
 		return $this->scheduleType;
 	}
 
-	public function setScheduleType(int $scheduleType): JobItem
+	public function setScheduleType(int $scheduleType): self
 	{
 		$this->scheduleType = $scheduleType;
 

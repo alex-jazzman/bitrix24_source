@@ -2,8 +2,8 @@
 	border-radius: 10px;
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 	background-color: var(--ui-color-palette-white-base);
-	padding: 24px 31px 16px 26px;
-	margin-bottom: 16px;
+	padding: 18px 31px 16px 21px;
+	margin-bottom: 22px;
 	display: none;
 }
 
@@ -11,37 +11,28 @@
 	display: block;
 }
 
+.crm-repeat-sale__segment-section.--main {
+	background: url('../images/bg.png') no-repeat calc(100% - 23px) 24px var(--ui-color-palette-white-base);
+	min-height: 140px;
+	padding: 23px 285px 45px 25px;
+}
+
 .crm-repeat-sale__segment-section-header {
 	display: flex;
 	flex-direction: row;
-	padding: 25px 0 14px 0;
+	padding: 17px 0 14px 0;
 	justify-content: space-between;
 	align-items: center;
 }
 
 .crm-repeat-sale__segment-section-header-title {
 	color: var(--ui-color-palette-black-base);
-	font-size: 17px;
 	position: relative;
 	font-weight: var(--ui-font-weight-medium);
 	padding-right: 22px;
-}
-
-.crm-repeat-sale__segment-section-header-help {
-	background: url('../images/help.svg') no-repeat center center;
-	width: 18px;
-	height: 18px;
-	display: inline-block;
-	margin-left: 4px;
-	margin-top: 4px;
-	position: absolute;
-	cursor: pointer;
-	opacity: var(--ui-opacity-80);
-	transition: 300ms opacity;
-}
-
-.crm-repeat-sale__segment-section-header-help:hover {
-	opacity: var(--ui-opacity-full);
+	font-size: 25px;
+	line-height: 33px;
+	letter-spacing: -0.35px;
 }
 
 .crm-repeat-sale__segment-section-feedback.ui-btn {
@@ -56,22 +47,16 @@
 	color: var(--ui-color-palette-black-base);
 	font-size: 17px;
 	line-height: 20px;
-	padding-bottom: 8px;
-}
-
-.crm-repeat-sale__segment-section-title.--level2 {
-	color: var(--ui-color-palette-black-solid);
-	font-size: var(--ui-font-size-lg);
-	font-weight: var(--ui-font-weight-medium);
-	line-height: 20px;
+	padding-bottom: 12px;
 }
 
 .crm-repeat-sale__segment-section-description {
 	color: #4F4F4F;
-	font-size: var(--ui-font-size-sm);
-	line-height: 17px;
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
 	padding-top: 3px;
 	padding-bottom: 8px;
+	max-width: 549px;
 }
 
 .crm-repeat-sale__segment-fields-row {
@@ -100,82 +85,82 @@
 	margin-bottom: 6px;
 }
 
-.crm-repeat-sale__segment-expert-settings-btn-wrapper {
-	padding: 11px 0 10px 0;
-	margin-bottom: 16px;
-	line-height: 20px;
-	display: flex;
-}
-
-.crm-repeat-sale__segment-expert-settings-btn {
-	color: var(--ui-color-palette-gray-90);
-	font-size: var(--ui-font-size-lg);
-	display: inline-block;
-	cursor: pointer;
-}
-
-.crm-repeat-sale__segment-expert-settings-btn-chevron {
-	transition: 300ms all;
-	background: url('../images/chevron.svg') no-repeat center center;
-	width: 20px;
-	height: 20px;
-	margin-left: 2px;
-	display: inline-block;
-	transform: rotate(-180deg);
-	cursor: pointer;
-}
-
-.crm-repeat-sale__segment-expert-settings-btn-chevron.--active {
-	transform: rotate(0);
+.crm-repeat-sale__segment-field-title + .ui-ctl {
+	width: auto;
 }
 
 .crm-repeat-sale__segment-ai-switcher-wrapper {
-	padding: 16px 28px 16px 64px;
+	gap: 16px;
 	display: flex;
 	flex-direction: row;
-	gap: 8px;
-	align-items: center;
+	justify-content: space-between;
+	align-items: flex-start;
 	border-radius: 20px;
 	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.02), 0 5px 16px 0 rgba(0, 0, 0, 0.03);
-	background: #E6F4FF url('../images/avatar.png') no-repeat 4px center;
+	background: #E6F4FF url('../images/copilot.png') no-repeat 12px 12px;
+	padding: 11px 17px 17px 63px;
 }
 
 .crm-repeat-sale__segment-ai-switcher {
 	display: block;
 	height: 17px;
+	margin-top: 3px;
 }
 
-.crm-repeat-sale__segment-ai-switcher-avatar {
-	width: 46px;
-	height: 46px;
+.crm-repeat-sale__segment-ai-switcher-title {
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	margin-bottom: 6px;
+}
+
+.crm-repeat-sale__segment-ai-switcher-title span {
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 16px;
+	border-radius: 18px;
+	padding: 0 8px;
+	margin-left: 6px;
+	background: var(--ui-color-palette-gray-10);
+	color: var(--ui-color-palette-gray-70);
+}
+
+.crm-repeat-sale__segment-ai-switcher-title span.--enabled {
+	background: #1BCE7B;
+	color: var(--ui-color-palette-white-base);
+}
+
+.crm-repeat-sale__segment-ai-switcher-description {
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	letter-spacing: -0.05px;
 }
 
 .crm-repeat-sale__segment-field .ui-tag-selector-outer-container,
 .crm-repeat-sale__segment-field .ui-ctl-element {
 	border-radius: var(--ui-border-radius-sm);
-	border-color: #1F86FF;
 }
 
 .crm-repeat-sale__segment-field .ui-text-editor {
 	border-radius: 20px;
-	border: 1px solid #1F86FF;
 	position: relative;
 	background-color: white;
 	margin-bottom: 5px;
 }
 
 .crm-repeat-sale__segment-field-info{
-	padding-top: 3px;
+	padding-top: 14px;
 	color: #0075FF;
 	font-size: var(--ui-font-size-sm);
 	line-height: 17px;
-	cursor: pointer;
-	opacity: var(--ui-opacity-80);
-	transition: 300ms opacity;
 }
 
-.crm-repeat-sale__segment-field-info:hover {
-	opacity: var(--ui-opacity-full);
+.crm-repeat-sale__segment-field-info span {
+	cursor: pointer;
 }
 
 .crm-repeat-sale__segment_call-assessment {
@@ -240,7 +225,7 @@
 }
 
 .crm-repeat-sale__segment-wrapper {
-	padding: 0 36px 27px 31px;
+	padding: 0 36px 27px 22px;
 	flex-grow: 1;
 	overflow: auto;
 	height: calc(100vh - 240px);
@@ -251,7 +236,7 @@
 }
 
 .crm-repeat-sale__segment-section-body {
-	margin-top: 12px;
+	margin-top: 4px;
 }
 
 .crm-repeat-sale__segment-section-body-field {

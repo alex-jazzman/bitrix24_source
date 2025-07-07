@@ -39,7 +39,7 @@ final class SetParameters extends Dto
 				EntityEditorConfigScope::CUSTOM,
 			]),
 
-			new ScalarCollectionField($this, 'userIds'),
+			new ScalarCollectionField($this, 'userIds', onlyNotEmptyValues: true),
 		];
 
 		$scope = $fields['scope'] ?? null;

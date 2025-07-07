@@ -9,6 +9,7 @@ use Bitrix\Crm\RepeatSale\Service\Handler\ConfigurableHandler;
 use Bitrix\Crm\RepeatSale\Service\Handler\SystemHandler;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Traits\Singleton;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\ORM\Objectify\Collection;
 use Bitrix\Main\Type\Date;
 
@@ -20,7 +21,8 @@ final class Scheduler
 
 	public function execute(): void
 	{
-		if (!Container::getInstance()->getRepeatSaleAvailabilityChecker()->isEnabled())
+		$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+		if (!$availabilityChecker->isEnabled() || !$availabilityChecker->isItemsCountsLessThenLimit())
 		{
 			return;
 		}
@@ -52,6 +54,11 @@ final class Scheduler
 			]);
 
 			$queueController->add($queueItem);
+		}
+
+		if ($this->isOnlyCalc)
+		{
+			Option::delete('crm', ['name' => 'repeat-sale-wait-only-calc-scheduler']);
 		}
 	}
 

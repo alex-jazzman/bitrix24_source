@@ -150,6 +150,14 @@ final class ErrorCode
 		);
 	}
 
+	public static function getInvalidPayloadMarkersForFillRepeatSaleTipsError(): Error
+	{
+		return new Error(
+			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_WRONG_REPEAT_SALE_PAYLOAD_MARKERS'),
+			self::INVALID_ARG_VALUE
+		);
+	}
+
 	private function __construct()
 	{
 	}

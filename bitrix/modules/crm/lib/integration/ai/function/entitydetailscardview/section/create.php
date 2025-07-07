@@ -6,7 +6,10 @@ use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Section\Abstrac
 use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Section\CreateParameters;
 use Bitrix\Crm\Integration\UI\EntityEditor\Configuration;
 use Bitrix\Crm\Integration\UI\EntityEditor\Configuration\Section;
+use Bitrix\Crm\Integration\UI\EntityEditor\Enum\MarkTarget;
+use Bitrix\Crm\Integration\UI\EntityEditor\MartaAIMarksRepository;
 use Bitrix\Crm\Result;
+use Bitrix\Main\Localization\Loc;
 
 final class Create extends AbstractFunction
 {
@@ -23,7 +26,7 @@ final class Create extends AbstractFunction
 
 		if ($configuration->getSection($newSection->getName()) !== null)
 		{
-			return Result::fail('Created section name must be unique');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_ENTITY_DETAILS_CARD_VIEW_CREATE_SECTION_NAME_NOT_UNIQUE', 'SECTION_NAME_NOT_UNIQUE'));
 		}
 
 		$fieldNames = array_keys($newSection->getElements());
@@ -31,6 +34,10 @@ final class Create extends AbstractFunction
 			->removeElements($fieldNames)
 			->addSection($newSection)
 			->save();
+
+		MartaAIMarksRepository::fromEntityEditorConfig($configuration->entityEditorConfig())
+			->mark(MarkTarget::Field, $newSection->getElementNames())
+			->mark(MarkTarget::Section, [$newSection->getName()]);
 
 		return Result::success();
 	}

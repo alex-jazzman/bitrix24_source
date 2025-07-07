@@ -20,4 +20,6 @@ abstract class AbstractQueryModificator
 	abstract public function modify(Query $query): Query;
 
 	abstract public function transferFormattedValues(array $fetchAllResult, ExecutorResultValues $values): void;
+
+	abstract public function fillDefaultValue(ExecutorResultValues $values): void;
 }

@@ -5,12 +5,14 @@ namespace Bitrix\Call;
 use Bitrix\Call\Integration\AI\ChatMessage;
 use Bitrix\Im\Call\Call;
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Chat\ChatFactory;
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\Params;
 use Bitrix\Im\V2\Message\Send\SendingConfig;
 use Bitrix\Im\V2\MessageCollection;
 use Bitrix\Im\V2\Service\Context;
 use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
 
 class NotifyService
 {
@@ -125,23 +127,38 @@ class NotifyService
 		}
 	}
 
-	public function sendMessage(Chat $chat, Message $message, ?SendingConfig $sendingConfig = null): void
+	public function sendOpponentBusyMessage(int $currentUserId, int $opponentUserId): void
+	{
+		$chat = ChatFactory::getInstance()->getPrivateChat($currentUserId, $opponentUserId);
+		if ($chat->getId() > 0)
+		{
+			$message = ChatMessage::generateOpponentBusyMessage($opponentUserId);
+			if ($message)
+			{
+				$sendingConfig = (new SendingConfig)->disableSkipCounterIncrements();
+				$context = (new Context())->setUser($opponentUserId);
+				$this->sendMessageDeferred($chat, $message, $sendingConfig, $context);
+			}
+		}
+	}
+
+	public function sendMessage(Chat $chat, Message $message, ?SendingConfig $sendingConfig = null, ?Context $context = null): void
 	{
 		$chat
-			->setContext(new Context)
+			->setContext($context ?? new Context)
 			->sendMessage($message, $sendingConfig);
 	}
 
-	public function sendError(Chat $chat, Message $message, ?SendingConfig $sendingConfig = null): void
+	public function sendError(Chat $chat, Message $message, ?SendingConfig $sendingConfig = null, ?Context $context = null): void
 	{
 		$chat
-			->setContext(new Context)
+			->setContext($context ?? new Context)
 			->sendMessage($message, $sendingConfig);
 	}
 
-	public function sendMessageDeferred(Chat $chat, Message $message, ?SendingConfig $sendingConfig = null): void
+	public function sendMessageDeferred(Chat $chat, Message $message, ?SendingConfig $sendingConfig = null, ?Context $context = null): void
 	{
-		Application::getInstance()->addBackgroundJob([$this, 'sendMessage'], [$chat, $message, $sendingConfig], Application::JOB_PRIORITY_LOW);
+		Application::getInstance()->addBackgroundJob([$this, 'sendMessage'], [$chat, $message, $sendingConfig, $context], Application::JOB_PRIORITY_LOW);
 	}
 
 	public function findMessage(int $chatId, int $callId, string $messageType, int $depth = 100): ?Message

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationAvailabilityChecker;
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Component\EntityList\NearestActivity;
@@ -11,6 +13,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Restriction\ItemsMutator;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -256,6 +259,18 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 	private function getGridColumns(): array
 	{
 		$this->gridColumns ??= array_merge($this->provider->getGridColumns(), $this->ufProvider->getGridColumns());
+
+		if (LastCommunicationAvailabilityChecker::getInstance()->isEnabled())
+		{
+			[$code, $name] = LastCommunicationTable::getLastStateCodeName();
+			$this->gridColumns[] = [
+				'id' => $code,
+				'name' => $name,
+				'sort' => $code,
+				'class' => 'datetime',
+				'default' => false,
+			];
+		}
 
 		$this->gridColumns = array_values($this->gridColumns);
 
@@ -1196,6 +1211,8 @@ js,
 			$detailUrl = htmlspecialcharsbx($this->router->getItemDetailUrl($this->entityTypeId, $item->getId()));
 			$columns[Item::FIELD_NAME_TITLE] = '<a href="'.$detailUrl.'">'.htmlspecialcharsbx($item->getHeading()).'</a>';
 		}
+
+		(new LastCommunicationTimeFormatter())->formatDetailDate($columns);
 	}
 
 	protected function appendParentColumns(Item $item, array &$columns): void
@@ -1259,6 +1276,11 @@ js,
 			}
 			if ($fakeItem->hasField($field))
 			{
+				if (in_array($field, LastCommunicationTable::getCodeList(true), true))
+				{
+					$field = 'LAST_COMMUNICATION.LAST_COMMUNICATION_TIME';
+				}
+
 				$result[$field] = $direction;
 			}
 		}

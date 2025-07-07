@@ -31,6 +31,15 @@ class CrmRepeatSaleSegmentDetailsWrapper extends Base
 			return;
 		}
 
+		if (!Container::getInstance()->getRepeatSaleAvailabilityChecker()->isItemsCountsLessThenLimit())
+		{
+			$componentPage = 'limit';
+
+			$this->includeComponentTemplate($componentPage);
+
+			return;
+		}
+
 		$this->init();
 
 		$this->arResult = $this->arParams;

@@ -64,6 +64,7 @@ if (!$isErrorOccured && $isBizProcInstalled)
 $arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 $factory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
 $category = $factory?->getCategory($arResult['CATEGORY_ID']);
+$arResult['IS_DEFAULT_CATEGORY'] = $factory?->getDefaultCategory()?->getId() === $category?->getId();
 
 $userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 if (!$isErrorOccured && !$userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']))
@@ -744,6 +745,8 @@ if ($factory && $category)
 		);
 	}
 }
+
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
 
 $CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 

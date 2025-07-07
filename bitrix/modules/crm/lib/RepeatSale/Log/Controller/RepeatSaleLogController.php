@@ -123,8 +123,7 @@ class RepeatSaleLogController
 
 		$sql = '
 			DELETE FROM ' . $sqlHelper->quote($table)
-			. ' WHERE ENTITY_TYPE_ID =' . $entityTypeId . ' AND ENTITY_ID = ' . $entityId
-		;
+			. ' WHERE ENTITY_TYPE_ID =' . $entityTypeId . ' AND ENTITY_ID = ' . $entityId;
 
 		return Application::getConnection()->query($sql);
 	}

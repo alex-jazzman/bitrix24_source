@@ -68,6 +68,11 @@ final class ChangeDocumentStatus implements Contract\Operation
 			return $result->addError(new Main\Error('Empty document ID.'));
 		}
 
+		if ($this->document->isTemplated())
+		{
+			return $result->addError(new Main\Error('Can not change status of templated document.'));
+		}
+
 		// status may be changed asynchronously
 		$this->document = $this->documentRepository->getById($this->document->id);
 

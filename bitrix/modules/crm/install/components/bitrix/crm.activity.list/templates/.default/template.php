@@ -15,8 +15,8 @@ $editorCfg = array(
 	'READ_ONLY' => $arResult['READ_ONLY'],
 	'ENABLE_UI' => true,
 	'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK_ADD'],
-	'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'],
-	'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD']
+	'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'] ?? false,
+	'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'] ?? false
 );
 
 if(!function_exists('__CrmActivityListRenderItems'))

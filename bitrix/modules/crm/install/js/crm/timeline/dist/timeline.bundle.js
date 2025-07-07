@@ -4323,12 +4323,13 @@ this.BX.Crm = this.BX.Crm || {};
 	     *
 	     * @param activityId Activity ID
 	     * @param scheduleDate Date to use in editor
+	     * @param description Default description to use in editor
 	     *
 	     * @protected
 	     */
 	  }, {
 	    key: "runScheduleAction",
-	    value: function runScheduleAction(activityId, scheduleDate) {
+	    value: function runScheduleAction(activityId, scheduleDate, description = '') {
 	      var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
 	      const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
 	      if (menuBar) {
@@ -4339,6 +4340,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          todoEditor.focus();
 	          todoEditor.setParentActivityId(activityId);
 	          todoEditor.setDeadLine(scheduleDate);
+	          if (main_core.Type.isStringFilled(description)) {
+	            todoEditor.setDescription(description);
+	            todoEditor.focus();
+	          }
 	        }, 250);
 	      }
 	    }

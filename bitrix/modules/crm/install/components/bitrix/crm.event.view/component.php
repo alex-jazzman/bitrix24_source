@@ -684,6 +684,9 @@ foreach ($loadedItems as $loadedItemId)
 
 	$arEvent['EVENT_NAME'] = htmlspecialcharsbx($arEvent['~EVENT_NAME']);
 
+	$arEvent['EVENT_TEXT_1'] = \Bitrix\Main\Text\Emoji::decode($arEvent['EVENT_TEXT_1']);
+	$arEvent['EVENT_TEXT_2'] = \Bitrix\Main\Text\Emoji::decode($arEvent['EVENT_TEXT_2']);
+
 	$arEvent['~EVENT_TEXT_1'] = $arEvent['EVENT_TEXT_1'];
 	$arEvent['~EVENT_TEXT_2'] = $arEvent['EVENT_TEXT_2'];
 

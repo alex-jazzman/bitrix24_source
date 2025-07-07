@@ -26,7 +26,7 @@ final class AiQueueBufferItem
 
 		$instance->id = $fields['ID'] ?? null;
 		$instance->providerId = $fields['PROVIDER_ID'];
-		$instance->status = Status::tryFrom($fields['STATUS']) ?? Status::Waiting;
+		$instance->status = isset($fields['STATUS']) ? Status::tryFrom($fields['STATUS']) : Status::Waiting;
 		$instance->providerData = $fields['PROVIDER_DATA'] ?? null;
 		$instance->retryCount = $fields['RETRY_COUNT'] ?? 0;
 

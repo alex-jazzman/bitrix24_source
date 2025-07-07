@@ -1601,17 +1601,24 @@ export class CallController extends EventEmitter
 					errorCode = 'UNKNOWN_ERROR';
 				}
 
-				Analytics.getInstance().onStartCallError({
-					callType: this.getCallType(provider),
-					errorCode,
-				});
+				if (errorCode === 'user_is_busy')
+				{
+					this.leaveCurrentCall();
+				}
+				else
+				{
+					Analytics.getInstance().onStartCallError({
+						callType: this.getCallType(provider),
+						errorCode,
+					});
 
-				this._onCallFailure({
-					code: errorCode,
-					message: error.message || "",
-				})
+					this._onCallFailure({
+						code: errorCode,
+						message: error.message || '',
+					});
 
-				this._stopLocalStream();
+					this._stopLocalStream();
+				}
 			})
 			.finally(() =>
 			{
@@ -3966,6 +3973,10 @@ export class CallController extends EventEmitter
 
 		if (this.currentCall.isCopilotInitialized)
 		{
+			if (!this.currentCall.initiatorId && status)
+			{
+				this.sendStartCopilotRecordAnalytics({ isAutostart: true });
+			}
 			this.callView.unblockButtons(['copilot']);
 		}
 
@@ -5781,6 +5792,7 @@ export class CallController extends EventEmitter
 			//errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
 			errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN_WITH_CODE").replace("#ERROR_CODE#", errorCode);
 		}
+
 		if (this.callView)
 		{
 			if (errorCode === DisconnectReason.SecurityKeyChanged)
@@ -5796,6 +5808,7 @@ export class CallController extends EventEmitter
 		{
 			this.showNotification(errorMessage);
 		}
+
 		this.messengerFacade.stopRepeatSound('dialtone');
 		this.autoCloseCallView = false;
 		if (this.currentCall)

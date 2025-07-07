@@ -1276,6 +1276,7 @@ class CCrmStatus
 	public static function GetDefaultDealStages($namespace = ''): array
 	{
 		$prefix = empty($namespace) ? '' :  "{$namespace}:";
+		$colorGenerator = new \Bitrix\Crm\Stage\DefaultProcessColorGenerator();
 
 		return [
 			[
@@ -1283,35 +1284,35 @@ class CCrmStatus
 				'STATUS_ID' => "{$prefix}NEW",
 				'SORT' => 10,
 				'SYSTEM' => 'Y',
-				'COLOR' => '#39A8EF',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_PREPARATION'),
 				'STATUS_ID' => "{$prefix}PREPARATION",
 				'SORT' => 20,
 				'SYSTEM' => 'N',
-				'COLOR' => '#2FC6F6',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_PREPAYMENT_INVOICE'),
 				'STATUS_ID' => "{$prefix}PREPAYMENT_INVOICE", //PRELIMINARY_INVOICE
 				'SORT' => 30,
 				'SYSTEM' => 'N',
-				'COLOR' => '#55D0E0',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_EXECUTING'),
 				'STATUS_ID' => "{$prefix}EXECUTING",
 				'SORT' => 40,
 				'SYSTEM' => 'N',
-				'COLOR' => '#47E4C2',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_FINAL_INVOICE'),
 				'STATUS_ID' => "{$prefix}FINAL_INVOICE",
 				'SORT' => 50,
 				'SYSTEM' => 'N',
-				'COLOR' => '#FFA900',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_WON'),

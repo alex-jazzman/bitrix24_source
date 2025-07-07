@@ -3,7 +3,8 @@
 namespace Bitrix\Crm\Integration\AI\Function\UserField\Dto\CreateUserFieldParameters;
 
 use Bitrix\Crm\Dto\Caster;
-use Bitrix\Crm\Dto\Validator\RequiredField;
+use Bitrix\Crm\Dto\Validator\NotEmptyField;
+use Bitrix\Crm\Dto\Validator\ObjectCollectionField;
 use Bitrix\Crm\Integration\AI\Function\UserField\Dto\CreateUserFieldParameters;
 use Bitrix\Crm\UserField\Dto\EnumerationItem;
 
@@ -25,7 +26,9 @@ class CreateEnumerationParameters extends CreateUserFieldParameters
 	{
 		return [
 			...parent::getValidators($fields),
-			new RequiredField($this, 'enumerationList'),
+
+			new ObjectCollectionField($this, 'enumerationList'),
+			new NotEmptyField($this, 'enumerationList'),
 		];
 	}
 }

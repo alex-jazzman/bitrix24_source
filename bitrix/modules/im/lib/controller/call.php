@@ -2,12 +2,14 @@
 
 namespace Bitrix\Im\Controller;
 
+use Bitrix\Call\NotifyService;
 use Bitrix\Im\Call\CallUser;
 use Bitrix\Im\Call\Integration\EntityType;
 use Bitrix\Im\Call\Registry;
 use Bitrix\Im\Call\Util;
 use Bitrix\Im\Common;
 use Bitrix\Im\V2\Call\CallFactory;
+use Bitrix\Im\V2\Chat\ChatFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine;
 use Bitrix\Main\Error;
@@ -34,6 +36,8 @@ class Call extends Engine\Controller
 	 */
 	public function createAction(int $type, string $provider, string $entityType, string $entityId, bool $joinExisting = false): ?array
 	{
+		Loader::includeModule('call');
+
 		$currentUserId = $this->getCurrentUser()->getId();
 
 		$call = null;
@@ -43,7 +47,7 @@ class Call extends Engine\Controller
 		{
 			if ($joinExisting)
 			{
-				$call = CallFactory::searchActive($type, $provider, $entityType, $entityId, $currentUserId);
+				$call = CallFactory::searchActive($type, $provider, $entityType, $entityId);
 			}
 
 			if (!$call)
@@ -55,7 +59,25 @@ class Call extends Engine\Controller
 
 		if (!$call && $joinExisting)
 		{
-			$call = CallFactory::searchActive($type, $provider, $entityType, $entityId, $currentUserId);
+			$call = CallFactory::searchActive($type, $provider, $entityType, $entityId);
+		}
+
+		if (!$call && ($provider == \Bitrix\Im\Call\Call::PROVIDER_PLAIN))
+		{
+			$opponentActiveCalls = CallFactory::getUserActiveCalls((int)$entityId);
+			if (!empty($opponentActiveCalls))
+			{
+				$chat = ChatFactory::getInstance()->getPrivateChat($currentUserId, (int)$entityId);
+				if ($chat->getId() > 0)
+				{
+					$notifyService = NotifyService::getInstance();
+					$notifyService->sendOpponentBusyMessage($currentUserId, (int)$entityId);
+				}
+
+				$this->addError(new Error('User is currently busy on another call', 'user_is_busy'));
+				Application::getConnection()->unlock($lockName);
+				return null;
+			}
 		}
 
 		$isNew = false;
@@ -72,7 +94,21 @@ class Call extends Engine\Controller
 
 				if (!$call->getAssociatedEntity()->checkAccess($currentUserId))
 				{
-					$this->addError(new Error("You can not access this call", 'access_denied'));
+					if ($call instanceof \Bitrix\Call\Call\PlainCall)
+					{
+						$chat = ChatFactory::getInstance()->getPrivateChat($currentUserId, (int)$entityId);
+						if ($chat->getId() > 0)
+						{
+							$notifyService = NotifyService::getInstance();
+							$notifyService->sendOpponentBusyMessage($currentUserId, (int)$entityId);
+						}
+
+						$this->addError(new Error('User is currently busy on another call', 'user_is_busy'));
+						Application::getConnection()->unlock($lockName);
+						return null;
+					}
+
+					$this->addError(new Error('You can not access this call', 'access_denied'));
 					Application::getConnection()->unlock($lockName);
 					return null;
 				}
@@ -258,8 +294,7 @@ class Call extends Engine\Controller
 	 */
 	public function tryJoinCallAction($type, $provider, $entityType, $entityId): ?array
 	{
-		$currentUserId = $this->getCurrentUser()->getId();
-		$call = CallFactory::searchActive($type, $provider, $entityType, $entityId, $currentUserId);
+		$call = CallFactory::searchActive($type, $provider, $entityType, $entityId);
 		if (!$call)
 		{
 			return ['success' => false];
@@ -271,6 +306,7 @@ class Call extends Engine\Controller
 			return null;
 		}
 
+		$currentUserId = $this->getCurrentUser()->getId();
 		if (!$call->getAssociatedEntity()->checkAccess($currentUserId))
 		{
 			$this->addError(new Error("You can not access this call", 'access_denied'));

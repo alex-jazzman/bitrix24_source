@@ -15,6 +15,9 @@ final class Dictionary
 	public const CATEGORY_AUTOMATION_OPERATIONS = 'automation_operations';
 	public const CATEGORY_KANBAN_OPERATIONS = 'kanban_operations';
 	public const CATEGORY_SETTINGS_OPERATIONS = 'settings_operations';
+	public const CATEGORY_ACTIVITY_OPERATIONS = 'activity_operations';
+	public const CATEGORY_COMMUNICATION = 'communication';
+	public const CATEGORY_BANNERS = 'banners';
 
 	// region Event const
 	public const EVENT_ENTITY_ADD_OPEN = 'entity_add_open';
@@ -83,10 +86,12 @@ final class Dictionary
 	public const SECTION_SMART_DOCUMENT_CONTACT = 'smart_document_contact_section';
 	/**
 	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::CONTACT_CODE
+	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::CATALOG_CONTRACTOR_CONTACT
 	 */
 	public const SECTION_CATALOG_CONTRACTOR_CONTACT = 'catalog_contractor_contact_section';
 	/**
 	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::COMPANY_CODE
+	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::CATALOG_CONTRACTOR_COMPANY
 	 */
 	public const SECTION_CATALOG_CONTRACTOR_COMPANY = 'catalog_contractor_company_section';
 	public const SECTION_CRM_SETTINGS = 'crm_settings';
@@ -110,7 +115,7 @@ final class Dictionary
 	public const SUB_SECTION_LEAD = 'lead';
 
 	public const SUB_SECTION_GRID_ROW_MENU = 'grid_row_menu';
-	public const SUB_SECTION_REPEAT_SALE_SYSTEM = 'rs_sys';
+	public const SUB_SECTION_REPEAT_SALE_SYSTEM = 'repeat_sale_sys';
 	// endregion
 
 	// region Element const

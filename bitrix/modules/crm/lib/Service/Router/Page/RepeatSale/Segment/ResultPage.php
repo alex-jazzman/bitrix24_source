@@ -42,6 +42,7 @@ class ResultPage extends AbstractPage
 		$sidePanel->isUseBackgroundContent = false;
 		$sidePanel->isPlainView = false;
 		$sidePanel->isHideToolbar = false;
+		$sidePanel->isUseBitrix24Theme = true;
 	}
 
 	public static function routes(): array

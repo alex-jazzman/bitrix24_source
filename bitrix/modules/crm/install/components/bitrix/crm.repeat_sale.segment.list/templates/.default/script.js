@@ -1,36 +1,13 @@
 /* eslint-disable */
-(function (exports,ui_sidepanel,ui_dialogs_messagebox,ui_notification,main_core,ui_progressround) {
+(function (exports,ui_dialogs_messagebox,ui_notification,main_core,ui_progressround) {
 	'use strict';
-
-	var namespace = main_core.Reflection.namespace('BX.Crm.RepeatSale.SegmentList');
-	var ActionButton = /*#__PURE__*/function () {
-	  function ActionButton() {
-	    babelHelpers.classCallCheck(this, ActionButton);
-	  }
-	  babelHelpers.createClass(ActionButton, [{
-	    key: "execute",
-	    value: function execute() {
-	      if (!ui_sidepanel.SidePanel.Instance) {
-	        console.error('SidePanel.Instance not found');
-	        return;
-	      }
-	      ui_sidepanel.SidePanel.Instance.open("/crm/repeat-sale-segment/details/0/", {
-	        cacheable: false,
-	        width: 700,
-	        allowChangeHistory: false
-	      });
-	    }
-	  }]);
-	  return ActionButton;
-	}();
-	namespace.ActionButton = ActionButton;
 
 	var _templateObject, _templateObject2;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var namespace$1 = main_core.Reflection.namespace('BX.Crm.RepeatSale.SegmentList');
+	var namespace = main_core.Reflection.namespace('BX.Crm.RepeatSale.SegmentList');
 	var _id = /*#__PURE__*/new WeakMap();
 	var _targetNode = /*#__PURE__*/new WeakMap();
 	var _checked = /*#__PURE__*/new WeakMap();
@@ -101,7 +78,7 @@
 	                  _classPrivateMethodGet(_this, _changeRepeatSaleSegmentActive, _changeRepeatSaleSegmentActive2).call(_this, true);
 	                  babelHelpers.classPrivateFieldSet(_this, _isFlowDisabled, false);
 	                }, function () {
-	                  switcher.check(true, false);
+	                  switcher.check(false, false);
 	                });
 	              } else {
 	                _classPrivateMethodGet(_this, _changeRepeatSaleSegmentActive, _changeRepeatSaleSegmentActive2).call(_this, true);
@@ -167,6 +144,12 @@
 	      json: {
 	        id: babelHelpers.classPrivateFieldGet(_this2, _id),
 	        isEnabled: isEnabled ? 'Y' : 'N'
+	      },
+	      analyticsLabel: {
+	        tool: 'crm',
+	        category: 'settings_master',
+	        event: 'scenario_enable',
+	        c_element: "".concat(isEnabled ? 'on' : 'off')
 	      }
 	    })["catch"](function (response) {
 	      ui_notification.UI.Notification.Center.notify({
@@ -177,14 +160,14 @@
 	    });
 	  }, 100)();
 	}
-	namespace$1.ActiveField = ActiveField;
+	namespace.ActiveField = ActiveField;
 
 	var _templateObject$1, _templateObject2$1;
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var namespace$2 = main_core.Reflection.namespace('BX.Crm.RepeatSale.SegmentList');
+	var namespace$1 = main_core.Reflection.namespace('BX.Crm.RepeatSale.SegmentList');
 	var DEFAULT_BORDER = 'default';
 	var LOW_BORDER = 'lowBorder';
 	var HIGH_BORDER = 'highBorder';
@@ -273,11 +256,10 @@
 	    return border.id === id;
 	  })) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null;
 	}
-	namespace$2.RoundChartField = RoundChartField;
+	namespace$1.RoundChartField = RoundChartField;
 
 	exports.ActiveField = ActiveField;
-	exports.ActionButton = ActionButton;
 	exports.RoundChartField = RoundChartField;
 
-}((this.window = this.window || {}),BX,BX.UI.Dialogs,BX,BX,BX.UI));
+}((this.window = this.window || {}),BX.UI.Dialogs,BX,BX,BX.UI));
 //# sourceMappingURL=script.js.map

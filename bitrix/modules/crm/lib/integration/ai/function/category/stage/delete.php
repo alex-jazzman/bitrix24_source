@@ -8,6 +8,7 @@ use Bitrix\Crm\Result;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Main\Localization\Loc;
 
 final class Delete implements AIFunction
 {
@@ -55,7 +56,7 @@ final class Delete implements AIFunction
 
 		if ($stageToDelete === null)
 		{
-			return Result::fail('Stage not found');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_CATEGORY_STAGE_DELETE_STAGE_NOT_FOUND_ERROR'), 'STAGE_NOT_FOUND');
 		}
 
 		return $stageToDelete->delete();

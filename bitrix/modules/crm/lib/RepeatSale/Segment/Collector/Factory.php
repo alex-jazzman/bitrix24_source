@@ -11,14 +11,14 @@ final class Factory
 
 	public function getCollector(?SystemSegmentCode $segmentCode): ?BaseCollector
 	{
-		if ($segmentCode === SystemSegmentCode::DEAL_LOST_MORE_12_MONTH)
+		if ($segmentCode === SystemSegmentCode::LOST_CLIENT)
 		{
-			return LastDealLostMoreThan12MonthAgoCollector::getInstance();
+			return LostClientCollector::getInstance();
 		}
 
-		if ($segmentCode === SystemSegmentCode::DEAL_LAST_ACTIVITY_LESS_12_MONTH)
+		if ($segmentCode === SystemSegmentCode::SLEEPING_CLIENT)
 		{
-			return LastActivityLessThen12MonthButNoActiveDealsCollector::getInstance();
+			return SleepingClientCollector::getInstance();
 		}
 
 		if ($segmentCode === SystemSegmentCode::DEAL_EVERY_YEAR)

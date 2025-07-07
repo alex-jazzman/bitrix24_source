@@ -11,8 +11,17 @@ import {
 
 export class Copilot
 {
+	#callAutoStartRecordSent: Array<string> = [];
+
 	onAIRecordStart(params)
 	{
+		if (params?.isAutostart && this.#callAutoStartRecordSent.includes(params.callId))
+		{
+			return;
+		}
+
+		this.#callAutoStartRecordSent.push(params.callId);
+
 		const errorCodes = {
 			AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
 			AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,

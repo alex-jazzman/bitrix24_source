@@ -6,6 +6,7 @@ use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Dto\Validator\DefinedCategory;
 use Bitrix\Crm\Dto\Validator\IntegerField;
 use Bitrix\Crm\Dto\Validator\RequiredField;
+use Bitrix\Main\ArgumentException;
 use CCrmOwnerType;
 
 final class MoveBetweenCategoryParameters extends Dto
@@ -13,6 +14,9 @@ final class MoveBetweenCategoryParameters extends Dto
 	public int $from;
 	public int $to;
 
+	/**
+	 * @throws ArgumentException
+	 */
 	protected function getValidators(array $fields): array
 	{
 		return [

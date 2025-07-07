@@ -1080,6 +1080,12 @@ class Recent
 			];
 		}
 
+		$publicOption = null;
+		if ($row["CHAT_ENTITY_TYPE"] === \Bitrix\Im\V2\Chat::ENTITY_TYPE_VIDEOCONF)
+		{
+			$publicOption = \Bitrix\Im\V2\Chat::getInstance((int)$row['ITEM_CID'])->getPublicOption();
+		}
+
 		$managerList = [];
 		if ($row['CHAT_OWNER'] ?? null == $row['RELATION_USER_ID'] || $row['RELATION_IS_MANAGER'] == 'Y')
 		{
@@ -1127,6 +1133,7 @@ class Recent
 				'MANAGE_MESSAGES' => mb_strtolower($row['CHAT_CAN_POST'] ?? ''),
 				'CAN_POST' => mb_strtolower($row['CHAT_CAN_POST'] ?? ''),
 			],
+			'PUBLIC' => $publicOption ?? '',
 		];
 	}
 

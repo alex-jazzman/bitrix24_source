@@ -7,6 +7,7 @@ use Bitrix\Crm\Dto\Validator\DefinedCategory;
 use Bitrix\Crm\Dto\Validator\IntegerField;
 use Bitrix\Crm\Dto\Validator\NotEmptyField;
 use Bitrix\Crm\Dto\Validator\RequiredField;
+use Bitrix\Main\ArgumentException;
 use CCrmOwnerType;
 
 final class CreateParameters extends Dto
@@ -14,13 +15,15 @@ final class CreateParameters extends Dto
 	public int $categoryId;
 	public string $title;
 
+	/**
+	 * @throws ArgumentException
+	 */
 	protected function getValidators(array $fields): array
 	{
 		return [
 			new RequiredField($this, 'categoryId'),
 			new DefinedCategory($this, CCrmOwnerType::Deal, 'categoryId'),
 
-			new RequiredField($this, 'title'),
 			new NotEmptyField($this, 'title'),
 		];
 	}

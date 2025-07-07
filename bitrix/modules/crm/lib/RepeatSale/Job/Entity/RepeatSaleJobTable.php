@@ -65,12 +65,11 @@ class RepeatSaleJobTable extends DataManager
 				->getUpdatedBy('UPDATED_BY_ID')
 				->configureDefaultValue(static fn() => Container::getInstance()->getContext()->getUserId())
 			,
-			(new Reference(
+			new Reference(
 				'SEGMENT',
 				RepeatSaleSegmentTable::class,
 				Join::on('this.SEGMENT_ID', 'ref.ID'),
-			)),
+			),
 		];
 	}
 }
-

@@ -1,5 +1,6 @@
 <?php
 $MESS["REST_INTEGRATION_OPTION_SECTION_DESCRIPTION_AUTOMATE_CONTROL"] = "Автоматично ставте завдання співробітникам, інформуйте керівництво про проблеми, що виникають, і публікуйте звіти у живій стрічці";
+$MESS["REST_INTEGRATION_OPTION_SECTION_DESCRIPTION_AUTOMATE_CONTROL_MSGVER_1"] = "Автоматично призначайте завдання співробітникам, інформуйте керівництво про виявлені проблеми та публікуйте звіти в живій стрічці.";
 $MESS["REST_INTEGRATION_OPTION_SECTION_DESCRIPTION_AUTOMATE_SALES"] = "Автоматично рухайте ліди та угоди воронкою та перевіряйте правильність даних у CRM";
 $MESS["REST_INTEGRATION_OPTION_SECTION_DESCRIPTION_CHAT_BOT"] = "Створіть чатботи, які будуть відправляти нотифікації та звіти співробітникам прямо в месенджер";
 $MESS["REST_INTEGRATION_OPTION_SECTION_DESCRIPTION_CUSTOM"] = "Реалізуйте свої сценарії отримання та зміни даних у Бітрікс24";

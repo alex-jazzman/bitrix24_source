@@ -70,7 +70,7 @@ class DetailsPage extends AbstractPage
 					$options
 						->setCacheable(false)
 						->setAllowChangeHistory(false)
-						->setWidth(700)
+						->setWidth(922)
 					;
 				})
 			,

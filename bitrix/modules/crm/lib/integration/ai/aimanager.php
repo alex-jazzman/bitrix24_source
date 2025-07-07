@@ -35,6 +35,7 @@ final class AIManager
 	
 	public const SUPPORTED_ENTITY_TYPE_IDS = FillItemFieldsFromCallTranscription::SUPPORTED_TARGET_ENTITY_TYPE_IDS;
 	public const AI_LICENCE_FEATURE_NAME = 'ai_available_by_version';
+	public const AI_PACKAGES_EMPTY_COMMON_SLIDER_CODE = 'limit_boost_copilot';
 	public const AI_PACKAGES_EMPTY_SLIDER_CODE = 'limit_boost_crm_automation';
 	public const AI_COPILOT_FEATURE_RESTRICTED_SLIDER_CODE = 'limit_v2_crm_copilot_call_assessment';
 
@@ -47,7 +48,7 @@ final class AIManager
 	private const AI_LIMIT_SLIDERS_MAP = [
 		self::AI_LIMIT_CODE_DAILY => 'limit_copilot_max_number_daily_requests',
 		self::AI_LIMIT_CODE_MONTHLY => 'limit_copilot_requests',
-		self::AI_LIMIT_BAAS => 'limit_boost_copilot',
+		self::AI_LIMIT_BAAS => self::AI_PACKAGES_EMPTY_COMMON_SLIDER_CODE,
 	];
 
 	private const AI_APP_COLLECTION_MARKET_MAP = [
@@ -128,10 +129,16 @@ final class AIManager
 
 	public static function isAiCallProcessingEnabled(): bool
 	{
-		return
-			self::isAvailable()
-			&& Bitrix24Manager::isFeatureEnabled(self::AI_COPILOT_FEATURE_NAME)
-		;
+		static $result = null;
+
+		if (is_null($result))
+		{
+			$result = self::isAvailable()
+				&& Bitrix24Manager::isFeatureEnabled(self::AI_COPILOT_FEATURE_NAME)
+			;
+		}
+
+		return $result;
 	}
 
 	public static function isAiCallAutomaticProcessingAllowed(): bool

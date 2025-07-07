@@ -12,7 +12,7 @@ final class Context
 		return $this->jobId;
 	}
 
-	public function setJobId(int $jobId): Context
+	public function setJobId(int $jobId): self
 	{
 		$this->jobId = $jobId;
 
@@ -24,7 +24,7 @@ final class Context
 		return $this->segmentId;
 	}
 
-	public function setSegmentId(int $segmentId): Context
+	public function setSegmentId(int $segmentId): self
 	{
 		$this->segmentId = $segmentId;
 

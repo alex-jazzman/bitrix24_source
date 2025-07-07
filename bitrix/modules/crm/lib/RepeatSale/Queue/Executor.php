@@ -2,8 +2,11 @@
 
 namespace Bitrix\Crm\RepeatSale\Queue;
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+use Bitrix\Crm\RepeatSale\AgentsManager;
 use Bitrix\Crm\RepeatSale\AvailabilityChecker;
 use Bitrix\Crm\RepeatSale\Job\Controller\RepeatSaleJobController;
+use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Queue\Controller\RepeatSaleQueueController;
 use Bitrix\Crm\RepeatSale\Queue\Entity\RepeatSaleQueue;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
@@ -11,8 +14,11 @@ use Bitrix\Crm\RepeatSale\Segment\SegmentManager;
 use Bitrix\Crm\RepeatSale\Service\Context;
 use Bitrix\Crm\RepeatSale\Service\Handler\Factory;
 use Bitrix\Crm\RepeatSale\Service\Handler\Result;
+use Bitrix\Crm\RepeatSale\Widget\StartBanner;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Traits\Singleton;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\DateTime;
 
@@ -29,7 +35,7 @@ final class Executor
 	public function execute(): void
 	{
 		$availabilityChecker = $this->getAvailabilityChecker();
-		if (!$availabilityChecker->isEnabled())
+		if (!$availabilityChecker->isEnabled() || !$availabilityChecker->isItemsCountsLessThenLimit())
 		{
 			return;
 		}
@@ -38,9 +44,9 @@ final class Executor
 
 		if ($itemEntity === null)
 		{
-			if ($availabilityChecker->isSegmentsInitializationProgress())
+			if (Option::get('crm', 'repeat-sale-wait-only-calc-scheduler', 'N') !== 'Y')
 			{
-				$this->updateFlowToPending();
+				$this->tryUpdateFlow();
 			}
 
 			return;
@@ -48,6 +54,17 @@ final class Executor
 
 		$segmentId = $itemEntity['JOB']['SEGMENT_ID'] ?? 0;
 		$item = QueueItem::createFromEntity($itemEntity);
+
+		if (
+			!$availabilityChecker->isSegmentsInitializationProgress() // first search clients in segment
+			&& !$availabilityChecker->isEnablePending()
+			&& !$this->checkSegment($segmentId)
+		)
+		{
+			$this->deleteFromQueue($item);
+
+			return;
+		}
 
 		$this->markQueueItemAsProgress($item);
 
@@ -138,7 +155,6 @@ final class Executor
 		}
 
 		// @todo for ConfigurableHandler will be set segmentId
-
 		try
 		{
 			$limit = $this->getLimit($item->isOnlyCalc());
@@ -153,6 +169,11 @@ final class Executor
 		}
 		catch (\Exception $e)
 		{
+			(new Logger())->error('Failed to execute queue item', [
+				'segmentId' => $segmentId,
+				'message' => $e->getMessage(),
+			]);
+
 			return (new Result())->addError(new Error('Failed to execute queue item: ' . $e->getMessage()));
 		}
 
@@ -173,10 +194,21 @@ final class Executor
 	{
 		$this->deleteFromQueue($item);
 
+		$loggerContext = [
+			'jobId' => $item->getJobId(),
+			'params' => $item->getParams(),
+		];
+
+		$logger = new Logger();
+
 		if ($item->getRetryCount() > self::MAX_RETRY_COUNT)
 		{
+			$logger->error('The number of attempts for the queue item has been exceeded', $loggerContext);
+
 			return;
 		}
+
+		$logger->error('An attempt to process an item from the queue failed', $loggerContext);
 
 		$item
 			->setStatus(Status::Waiting)
@@ -184,6 +216,18 @@ final class Executor
 		;
 
 		$this->addToQueue($item);
+	}
+
+	private function checkSegment(int $segmentId): bool
+	{
+		if ($segmentId <= 0)
+		{
+			return false;
+		}
+
+		$segment = RepeatSaleSegmentController::getInstance()->getById($segmentId);
+
+		return $segment?->getIsEnabled();
 	}
 
 	private function markQueueItemAsProgress(QueueItem $item): void
@@ -195,30 +239,68 @@ final class Executor
 
 	private function isQueueItemCompleted(Result $result): bool
 	{
+		$segmentData = $result->getSegmentData();
+
+		if ($segmentData === null)
+		{
+			return false;
+		}
+
 		return (
-			$result->isFinalQueueIteration()
-			&& $result->getSegmentData()?->getEntityTypeId() === \CCrmOwnerType::Company
+			$segmentData->isLastDataForEntityTypeId()
+			&& $segmentData->getEntityTypeId() === \CCrmOwnerType::Company
 		);
 	}
 
 	private function onQueueItemCompleted(QueueItem $queueItem, Result $result): void
 	{
-		$itemsCount = $queueItem->getItemsCount() + count($result->getSegmentData()->getItems());
+		$itemsCount = $queueItem->getItemsCount() + $result->getSegmentData()->getItemsCount();
 
 		$jobId = $queueItem->getJobId();
 		$job = RepeatSaleJobController::getInstance()->getById($jobId);
 
 		RepeatSaleSegmentController::getInstance()->updateClientCoverage($job?->getSegmentId(), $itemsCount);
 
-		if ($itemsCount > 0 && $this->getAvailabilityChecker()->isSegmentsInitializationProgress())
+		if ($itemsCount > 0)
 		{
-			$this->updateFlowToPending();
+			$this->tryUpdateFlow(true, $itemsCount);
 		}
 	}
 
-	private function updateFlowToPending(): void
+	private function tryUpdateFlow(bool $isDropStartBannerStatistics = false, int $itemsCount = 0): void
 	{
-		(new SegmentManager())->updateFlowToPending();
+		$availabilityChecker = $this->getAvailabilityChecker();
+
+		if ($availabilityChecker->isSegmentsInitializationProgress())
+		{
+			(new SegmentManager())->updateFlowToPending();
+		}
+
+		if ($availabilityChecker->isEnablePending())
+		{
+			/**
+			 * We'll repeat the search in a week
+			 */
+			(new Logger())->debug('The only calc search will be repeated in a week', []);
+
+			AgentsManager::getInstance()->addOnlyCalcSchedulerAgent();
+
+			if ($isDropStartBannerStatistics)
+			{
+				(new StartBanner())->dropShowedStatisticsData();
+			}
+
+			$this->sendAnalytics($itemsCount);
+		}
+	}
+
+	private function sendAnalytics(int $count = 0): void
+	{
+		$event = new AnalyticsEvent('banner_prepare', Dictionary::TOOL_CRM, Dictionary::CATEGORY_BANNERS);
+		$event
+			->setP1('count-deals-' . $count)
+			->send()
+		;
 	}
 
 	private function deleteFromQueue(QueueItem $item): void
@@ -233,12 +315,11 @@ final class Executor
 
 	private function updateQueueItemForNextIteration(QueueItem $item, Result $result): void
 	{
-		$item
-			->setStatus(Status::Waiting)
-			->setLastAssignmentId($result->getSegmentData()?->getLastAssignmentId())
-		;
+		$item->setStatus(Status::Waiting);
 
-		if ($result->isFinalQueueIteration())
+		$segmentData = $result->getSegmentData();
+
+		if ($segmentData->isLastDataForEntityTypeId())
 		{
 			$item
 				->setLastItemId(null)
@@ -248,8 +329,9 @@ final class Executor
 		else
 		{
 			$item
-				->setLastEntityTypeId($result->getSegmentData()?->getEntityTypeId())
-				->setLastItemId($result->getSegmentData()?->getLastEntityId())
+				->setLastEntityTypeId($segmentData->getEntityTypeId())
+				->setLastItemId($segmentData->getLastEntityId())
+				->setLastAssignmentId($segmentData->getLastAssignmentId())
 			;
 		}
 
@@ -260,6 +342,6 @@ final class Executor
 
 	private function getItemsCount(QueueItem $item, Result $result): int
 	{
-		return $item->getItemsCount() + count($result->getSegmentData()->getItems());
+		return $item->getItemsCount() + $result->getSegmentData()->getItemsCount();
 	}
 }

@@ -53474,3 +53474,174 @@ namespace Bitrix\Crm {
 	 */
 	class EO_EventRelations_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+/* ORMENTITYANNOTATION:Bitrix\Crm\Model\LastCommunicationTable:crm/lib/Model/LastCommunicationTable.php */
+namespace Bitrix\Crm\Model {
+	/**
+	 * EO_LastCommunication
+	 * @see \Bitrix\Crm\Model\LastCommunicationTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication resetEntityId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication unsetEntityId()
+	 * @method \int fillEntityId()
+	 * @method \int getEntityTypeId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication setEntityTypeId(\int|\Bitrix\Main\DB\SqlExpression $entityTypeId)
+	 * @method bool hasEntityTypeId()
+	 * @method bool isEntityTypeIdFilled()
+	 * @method bool isEntityTypeIdChanged()
+	 * @method \int remindActualEntityTypeId()
+	 * @method \int requireEntityTypeId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication resetEntityTypeId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication unsetEntityTypeId()
+	 * @method \int fillEntityTypeId()
+	 * @method \boolean getLastCommunicationTime()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication setLastCommunicationTime(\boolean|\Bitrix\Main\DB\SqlExpression $lastCommunicationTime)
+	 * @method bool hasLastCommunicationTime()
+	 * @method bool isLastCommunicationTimeFilled()
+	 * @method bool isLastCommunicationTimeChanged()
+	 * @method \boolean remindActualLastCommunicationTime()
+	 * @method \boolean requireLastCommunicationTime()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication resetLastCommunicationTime()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication unsetLastCommunicationTime()
+	 * @method \boolean fillLastCommunicationTime()
+	 * @method \string getType()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication setType(\string|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method bool hasType()
+	 * @method bool isTypeFilled()
+	 * @method bool isTypeChanged()
+	 * @method \string remindActualType()
+	 * @method \string requireType()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication resetType()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication unsetType()
+	 * @method \string fillType()
+	 * @method \int getActivityId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication setActivityId(\int|\Bitrix\Main\DB\SqlExpression $activityId)
+	 * @method bool hasActivityId()
+	 * @method bool isActivityIdFilled()
+	 * @method bool isActivityIdChanged()
+	 * @method \int remindActualActivityId()
+	 * @method \int requireActivityId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication resetActivityId()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication unsetActivityId()
+	 * @method \int fillActivityId()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication set($fieldName, $value)
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication reset($fieldName)
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\Model\EO_LastCommunication wakeUp($data)
+	 */
+	class EO_LastCommunication {
+		static public EO_LastCommunication|string $dataClass = \Bitrix\Crm\Model\LastCommunicationTable::class;
+
+		public function __construct(bool|array $setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\Model {
+	/**
+	 * EO_LastCommunication_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getEntityTypeIdList()
+	 * @method \int[] fillEntityTypeId()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
+	 * @method \int[] getLastCommunicationTimeList()
+	 * @method \int[] fillLastCommunicationTime()
+	 * @method \int[] getTypeList()
+	 * @method \int[] fillType()
+	 * @method \int[] getActivityIdList()
+	 * @method \int[] fillActivityId()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\Model\EO_LastCommunication $object)
+	 * @method bool has(\Bitrix\Crm\Model\EO_LastCommunication $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication getByPrimary($primary)
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication[] getAll()
+	 * @method bool remove(\Bitrix\Crm\Model\EO_LastCommunication $object)
+	 * @method void removeByPrimary($primary)
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\Model\EO_LastCommunication_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication_Collection merge(?\Bitrix\Crm\Model\EO_LastCommunication_Collection $collection)
+	 * @method bool isEmpty()
+	 * @method array collectValues(int $valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, int $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL, bool $recursive = false)
+	 */
+	class EO_LastCommunication_Collection implements \ArrayAccess, \Iterator, \Countable {
+		static public LastCommunicationTable|string $dataClass = \Bitrix\Crm\Model\LastCommunicationTable::class;
+	}
+}
+namespace Bitrix\Crm\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_LastCommunication_Result exec()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication fetchObject()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication_Collection fetchCollection()
+	 */
+	class EO_LastCommunication_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication fetchObject()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication_Collection fetchCollection()
+	 */
+	class EO_LastCommunication_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication_Collection createCollection()
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication wakeUpObject($row)
+	 * @method \Bitrix\Crm\Model\EO_LastCommunication_Collection wakeUpCollection($rows)
+	 */
+	class EO_LastCommunication_Entity extends \Bitrix\Main\ORM\Entity {}
+}

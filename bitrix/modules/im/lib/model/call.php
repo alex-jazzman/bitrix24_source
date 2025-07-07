@@ -5,12 +5,14 @@ namespace Bitrix\Im\Model;
 use Bitrix\Im\Call\Call;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\EnumField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 
 /**
  * Class CallTable
@@ -93,6 +95,10 @@ class CallTable extends DataManager
 			(new BooleanField('AI_ANALYZE'))
 				->configureValues('N', 'Y')
 				->configureDefaultValue('N'),
+
+			(new Reference('CALL_USER',CallUserTable::class,
+				Join::on('this.ID', 'ref.CALL_ID')))
+				->configureJoinType(Join::TYPE_INNER),
 		];
 	}
 

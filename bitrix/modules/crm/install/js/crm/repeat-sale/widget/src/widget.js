@@ -1,6 +1,7 @@
 import { ContentFactory } from './content-factory';
 import { Base } from './content/base';
 import 'ui.design-tokens';
+import 'ui.design-tokens.air';
 import './widget.css';
 
 export type WidgetTypeEnum = WidgetType.start | WidgetType.statistics;
@@ -32,6 +33,7 @@ export class Widget
 		bindElement: ?HTMLElement = null,
 		params: WidgetParams = {},
 		event: ?Event = null,
+		onCloseCallback: ?Function = null,
 	): void
 	{
 		if (!this.instance[widgetType])
@@ -47,7 +49,7 @@ export class Widget
 		{
 			const forceShowConfetti = (event?.altKey && event?.ctrlKey) ?? false;
 
-			this.instance[widgetType].show(forceShowConfetti);
+			this.instance[widgetType].show(forceShowConfetti, onCloseCallback);
 		}
 	}
 
@@ -61,9 +63,9 @@ export class Widget
 		}
 	}
 
-	show(forceShowConfetti: boolean = false): void
+	show(forceShowConfetti: boolean = false, onCloseCallback: ?Function = null): void
 	{
-		this.#contentPopupInstance.show(forceShowConfetti);
+		this.#contentPopupInstance.show(forceShowConfetti, onCloseCallback);
 	}
 
 	isShown(): boolean

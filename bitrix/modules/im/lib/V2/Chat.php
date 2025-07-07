@@ -3739,7 +3739,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		return [];
 	}
 
-	protected function getPublicOption(): ?array
+	public function getPublicOption(): ?array
 	{
 		if ($this->getAliasName() === null)
 		{

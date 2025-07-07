@@ -4,11 +4,14 @@ namespace Bitrix\Crm\Integration\AI\ContextCollector;
 
 use Bitrix\Crm\Integration\AI\ContextCollector\EntityCollector\Settings;
 use Bitrix\Crm\Integration\AI\Contract\ContextCollector;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 use CCrmOwnerType;
 
 final class EntityCollector implements ContextCollector
 {
 	private readonly Settings $settings;
+	private readonly Factory $factory;
 
 	public function __construct(
 		private readonly int $entityTypeId,
@@ -16,11 +19,7 @@ final class EntityCollector implements ContextCollector
 	)
 	{
 		$this->settings = new Settings();
-	}
-
-	public function settings(): Settings
-	{
-		return $this->settings;
+		$this->factory = Container::getInstance()->getFactory($this->entityTypeId);
 	}
 
 	/**
@@ -52,21 +51,27 @@ final class EntityCollector implements ContextCollector
 	{
 		$collectors = [];
 
-		if ($this->settings()->isCollectFields())
+		if ($this->settings->userFields()->isCollect())
 		{
-			$collectors['user_fields'] = new UserFieldsCollector($this->entityTypeId, $this->context);
+			$collectors['user_fields'] = (new UserFieldsCollector($this->entityTypeId, $this->context))
+				->setSettings($this->settings->userFields());
 		}
 
-		if ($this->settings()->isCollectCategories())
+		if ($this->factory->isCategoriesSupported())
 		{
-			$collectors['categories'] = new CategoriesCollector($this->entityTypeId, $this->context);
+			if ($this->settings->isCollectCategories())
+			{
+				$collectors['categories'] = (new CategoriesCollector($this->entityTypeId, $this->context))
+					->setStageSettings($this->settings->stages());
+			}
 		}
-
-		if ($this->settings()->isCollectStages())
+		elseif (
+			$this->factory->isStagesSupported()
+			&& $this->settings->stages()->isCollect()
+		)
 		{
-			$collectors['stages'] = (new StagesCollector($this->entityTypeId, $this->context))
-				->setIsCollectItemsCount($this->settings()->isCollectStagesItemsCount())
-				->setIsCollectItemsSum($this->settings()->isCollectStagesItemsSum());
+			$collectors['stages'] = (new StagesCollector($this->entityTypeId, null, $this->context))
+				->setSettings($this->settings->stages());
 		}
 
 		return $collectors;

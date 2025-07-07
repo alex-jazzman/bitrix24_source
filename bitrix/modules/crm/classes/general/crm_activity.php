@@ -8,6 +8,7 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\FastSearch;
 use Bitrix\Crm\Activity\FillActLightCounter;
+use Bitrix\Crm\Activity\LastCommunication\SyncLastCommunication;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\Provider\Eventable\PingOffset;
@@ -2055,6 +2056,7 @@ class CAllCrmActivity
 			if (
 				!isset($fields['EDITOR_ID'])
 				&& ($fields['PROVIDER_ID'] ?? null) !== Provider\Email::getId()
+				&& ($params['PREVIOUS_FIELDS']['PROVIDER_ID'] ?? null) !== Provider\Email::getId()
 			)
 			{
 				$userID = $fields['AUTHOR_ID'] ?? 0;
@@ -2229,11 +2231,14 @@ class CAllCrmActivity
 		);
 
 		$monitor = Crm\Service\Timeline\Monitor::getInstance();
+		$lastCommunication = (new SyncLastCommunication());
 		foreach ($affectedBindings as $binding)
 		{
 			if (\CCrmOwnerType::IsDefined($binding->getOwnerTypeId()) && $binding->getOwnerId() > 0)
 			{
-				$monitor->onActivityRemoveIfSuitable(new Crm\ItemIdentifier($binding->getOwnerTypeId(), $binding->getOwnerId()), $activityID);
+				$itemIdentifier = new Crm\ItemIdentifier($binding->getOwnerTypeId(), $binding->getOwnerId());
+				$monitor->onActivityRemoveIfSuitable($itemIdentifier, $activityID);
+				$lastCommunication->onActivityRemoveIfSuitable($itemIdentifier, $activityID);
 			}
 		}
 
@@ -5196,6 +5201,8 @@ class CAllCrmActivity
 			}
 		}
 		//endregion
+
+		(new SyncLastCommunication())->onEntityDelete(new Crm\ItemIdentifier($ownerTypeID, $ownerID));
 	}
 	public static function DeleteBindingsByOwner($ownerTypeID, $ownerID)
 	{

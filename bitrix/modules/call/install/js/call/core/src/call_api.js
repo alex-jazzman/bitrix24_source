@@ -852,17 +852,20 @@ export class Call {
 				}
 				this.setLog(`Adding an early connected participant with id ${p.userId} (sid: ${p.sid})`, LOG_LEVEL.INFO);
 				this.#setRemoteParticipant(p);
-			})
-
-			for (let userId in participantsToDelete)
+			});
+			
+			if (connectedEvent === 'Reconnected') // task-601473
 			{
-				const participant = this.#privateProperties.remoteParticipants[userId];
-				this.setLog(`Deleting a missing participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
-				this.triggerEvents('ParticipantLeaved', [participant]);
-				delete this.#privateProperties.remoteTracks[userId];
-				delete this.#privateProperties.remoteParticipants[userId];
+				for (let userId in participantsToDelete)
+				{
+					const participant = this.#privateProperties.remoteParticipants[userId];
+					this.setLog(`Deleting a missing participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+					this.triggerEvents('ParticipantLeaved', [participant]);
+					delete this.#privateProperties.remoteTracks[userId];
+					delete this.#privateProperties.remoteParticipants[userId];
+				}
 			}
-
+			
 			if ('recorderStatus' in data.joinResponse)
 			{
 				const recorderStatus = { code: data.joinResponse.recorderStatus };

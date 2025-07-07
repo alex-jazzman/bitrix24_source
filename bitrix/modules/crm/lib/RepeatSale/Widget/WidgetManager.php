@@ -7,8 +7,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tour\Config;
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use CBitrix24;
 
 final class WidgetManager
 {
@@ -31,16 +31,25 @@ final class WidgetManager
 		]);
 
 		if ($type && $executeImmediately):
+			Extension::load([
+				'crm.integration.ui.banner-dispatcher',
+			]);
 			?>
 			<script>
 			BX.ready(
 				() => {
 					const target = document.querySelector('[data-id="crm-repeat-sale-widget-button"]');
-					BX.Crm.RepeatSale.Widget.execute(
-						'<?= $type ?>',
-						target,
-						<?= $params ?>
-					);
+
+					const bannerDispatcher = new BX.Crm.Integration.UI.BannerDispatcher();
+					bannerDispatcher.toQueue((onDone) => {
+						BX.Crm.RepeatSale.Widget.execute(
+							'<?= $type ?>',
+							target,
+							<?= $params ?>,
+							null,
+							onDone,
+						);
+					}, 'high');
 				}
 			);
 		</script>
@@ -51,7 +60,11 @@ final class WidgetManager
 	public function getWidgetConfig(): ?array
 	{
 		$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
-		if (!$availabilityChecker->isAvailable() || !$availabilityChecker->hasPermission())
+		if (
+			!$availabilityChecker->isAvailable()
+			|| !$availabilityChecker->hasPermission()
+			|| !$availabilityChecker->isItemsCountsLessThenLimit()
+		)
 		{
 			return null;
 		}
@@ -100,16 +113,37 @@ final class WidgetManager
 			return [];
 		}
 
-		$defaultParams = [826, 'ma3ms9'];
-
-		return match (CBitrix24::getLicensePrefix())
-		{
-			'ru' => [818, 'vgluix'],
-			'en' => $defaultParams,
-			'de' => [824, 'c59bdw'],
-			'br' => [820, '2a9g49'],
-			'es' => [822, '9e9sm1'],
-			default => $defaultParams,
-		};
+		return [
+			[
+				'zones' => ['en'],
+				'id' => 826,
+				'lang' => 'en',
+				'sec' => 'ma3ms9',
+			],
+			[
+				'zones' => ['ru'],
+				'id' => 818,
+				'lang' => 'ru',
+				'sec' => 'vgluix',
+			],
+			[
+				'zones' => ['de'],
+				'id' => 824,
+				'lang' => 'de',
+				'sec' => 'c59bdw',
+			],
+			[
+				'zones' => ['br'],
+				'id' => 820,
+				'lang' => 'br',
+				'sec' => '2a9g49',
+			],
+			[
+				'zones' => ['es'],
+				'id' => 822,
+				'lang' => 'es',
+				'sec' => '9e9sm1',
+			],
+		];
 	}
 }

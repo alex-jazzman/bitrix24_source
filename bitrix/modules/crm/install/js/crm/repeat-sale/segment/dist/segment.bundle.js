@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,ui_bbcode_parser,ui_notification,ui_vue3_directives_hint,ui_promoVideoPopup,ui_switcher,ui_textEditor,ui_buttons,main_core,main_core_events,ui_entitySelector) {
+(function (exports,ui_vue3,crm_integration_analytics,ui_analytics,ui_bbcode_parser,ui_infoHelper,ui_notification,ui_promoVideoPopup,ui_switcher,ui_textEditor,ui_buttons,main_core,main_core_events,ui_entitySelector) {
 	'use strict';
 
 	const AdditionalInfoComponent = {
@@ -76,31 +76,57 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    renderSwitcher() {
-	      const switcher = new ui_switcher.Switcher({
-	        checked: this.checked,
-	        disabled: this.readOnly,
-	        size: ui_switcher.SwitcherSize.small,
-	        showStateTitle: false,
-	        handlers: {
-	          checked: event => {
-	            this.emitChange(false);
-	          },
-	          unchecked: event => {
-	            this.emitChange(true);
+	      if (!this.switcher) {
+	        this.switcher = new ui_switcher.Switcher({
+	          checked: this.checked,
+	          disabled: this.readOnly,
+	          size: ui_switcher.SwitcherSize.small,
+	          showStateTitle: false,
+	          handlers: {
+	            checked: event => {
+	              this.emitChange(false);
+	            },
+	            unchecked: event => {
+	              this.emitChange(true);
+	            }
 	          }
-	        }
-	      });
-	      switcher.renderTo(this.$refs.switcher);
+	        });
+	        this.switcher.renderTo(this.$refs.switcher);
+	      }
 	    },
 	    emitChange(value) {
 	      this.$emit('change', value);
+	    }
+	  },
+	  computed: {
+	    badgeClassList() {
+	      return {
+	        '--enabled': this.checked
+	      };
+	    },
+	    badgeTitle() {
+	      if (this.checked) {
+	        return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_ENABLED');
+	      }
+	      return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DISABLED');
+	    }
+	  },
+	  watch: {
+	    checked(newValue) {
+	      this.switcher.check(newValue, false);
 	    }
 	  },
 	  // language=Vue
 	  template: `
 		<div class="crm-repeat-sale__segment-ai-switcher-wrapper">
 			<div>
-				{{this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION')}}
+				<div class="crm-repeat-sale__segment-ai-switcher-title">
+					{{this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE')}}
+					<span :class="badgeClassList">{{badgeTitle}}</span>
+				</div>
+				<div class="crm-repeat-sale__segment-ai-switcher-description">
+					{{this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION')}}
+				</div>
 			</div>
 			<div class="crm-repeat-sale__segment-ai-switcher" ref="switcher"></div>
 		</div>
@@ -336,12 +362,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      default: []
 	    },
 	    showAvatars: {
-	      type: Boolean,
-	      default: false
+	      type: Boolean
 	    },
 	    multiple: {
-	      type: Boolean,
-	      default: false
+	      type: Boolean
 	    },
 	    context: {
 	      type: String,
@@ -352,8 +376,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      default: {}
 	    },
 	    readOnly: {
-	      type: Boolean,
-	      default: false
+	      type: Boolean
 	    }
 	  },
 	  methods: {
@@ -649,6 +672,7 @@ this.BX.Crm = this.BX.Crm || {};
 		<DialogWrapperComponent
 			:items="items"
 			:tabs="tabs"
+			:read-only="readOnly"
 		/>
 	`
 	};
@@ -710,6 +734,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        hasSelected = false;
 	      });
+	      if (!items.some(item => item.selected === true)) {
+	        items.find(Boolean).selected = true;
+	      }
 	      return items;
 	    }
 	  },
@@ -731,6 +758,7 @@ this.BX.Crm = this.BX.Crm || {};
 			:items="items"
 			:tabs="tabs"
 			:showAvatars="true"
+			:read-only="readOnly"
 		/>
 	`
 	};
@@ -784,7 +812,6 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const ARTICLE_CODE = '23240682';
 	const Segment = {
 	  components: {
 	    Button,
@@ -795,9 +822,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    CategorySelector,
 	    StageSelector,
 	    UserSelector
-	  },
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
 	  },
 	  props: {
 	    settings: {
@@ -820,34 +844,44 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: Object,
 	      default: {}
 	    },
+	    analytics: {
+	      type: Object,
+	      default: {}
+	    },
 	    textEditor: ui_textEditor.TextEditor
 	  },
 	  data() {
-	    var _segment$id, _segment$isEnabled, _segment$entityCatego, _segment$entityStageI, _segment$assignmentUs, _segment$entityTitleP, _segment$callAssessme, _segment$isAiEnabled;
+	    var _segment$id, _segment$isEnabled, _settings$ai, _settings$ai2, _settings$baas, _segment$entityCatego, _segment$entityStageI, _segment$assignmentUs, _segment$entityTitleP, _segment$callAssessme;
 	    const {
 	      segment,
 	      textEditor,
-	      categories
+	      categories,
+	      settings
 	    } = this;
 	    const id = (_segment$id = segment == null ? void 0 : segment.id) != null ? _segment$id : null;
 	    const isEnabled = (_segment$isEnabled = segment == null ? void 0 : segment.isEnabled) != null ? _segment$isEnabled : null;
 	    const firstCategory = categories[0];
+	    let isAiEnabled = false;
+	    if ((_settings$ai = settings.ai) != null && _settings$ai.isAvailable && ((_settings$ai2 = settings.ai) != null && _settings$ai2.isSponsored || (_settings$baas = settings.baas) != null && _settings$baas.hasPackage)) {
+	      var _segment$isAiEnabled;
+	      isAiEnabled = (_segment$isAiEnabled = segment.isAiEnabled) != null ? _segment$isAiEnabled : true;
+	    }
 	    return {
 	      id,
 	      isEnabled,
 	      text: textEditor.getText(),
 	      parser: new ui_bbcode_parser.BBCodeParser(),
-	      isVisibleExpertSettings: false,
 	      currentCategoryId: (_segment$entityCatego = segment.entityCategoryId) != null ? _segment$entityCatego : firstCategory.id,
 	      currentStageId: (_segment$entityStageI = segment.entityStageId) != null ? _segment$entityStageI : this.getFirstAvailableCategoryStageId(firstCategory),
 	      assignmentUserIds: new Set((_segment$assignmentUs = segment.assignmentUserIds) != null ? _segment$assignmentUs : []),
 	      currentEntityTitlePattern: (_segment$entityTitleP = segment.entityTitlePattern) != null ? _segment$entityTitleP : null,
 	      currentCallAssessmentId: (_segment$callAssessme = segment.callAssessmentId) != null ? _segment$callAssessme : null,
-	      currentIsAiEnabled: (_segment$isAiEnabled = segment.isAiEnabled) != null ? _segment$isAiEnabled : true
+	      currentIsAiEnabled: isAiEnabled
 	    };
 	  },
 	  mounted() {
 	    this.$Bitrix.eventEmitter.subscribe(ButtonEvents.click, this.onNavigationButtonClick);
+	    this.sendViewAnalytics();
 	  },
 	  beforeUnmount() {
 	    this.$Bitrix.eventEmitter.unsubscribe(ButtonEvents.click, this.onNavigationButtonClick);
@@ -866,6 +900,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        id
 	      } = data;
 	      if (id === 'cancel' || id === 'close') {
+	        this.sendCancelAnalytics();
 	        this.closeSlider();
 	        return;
 	      }
@@ -873,7 +908,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    sendData() {
 	      const data = {
-	        prompt: this.textEditor.getText(),
 	        entityTypeId: 2,
 	        // temporary only deal
 	        entityCategoryId: this.currentCategoryId,
@@ -883,6 +917,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        callAssessmentId: this.currentCallAssessmentId,
 	        isAiEnabled: this.currentIsAiEnabled
 	      };
+	      if (!this.currentIsAiEnabled) {
+	        data.prompt = this.textEditor.getText();
+	      }
 	      if (!this.validate(data)) {
 	        return;
 	      }
@@ -906,11 +943,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          return;
 	        }
 	        this.onSaveCallback();
+	        this.sendEditAnalytics();
 	        this.closeSlider();
 	      }, response => {
 	        const messageCode = 'CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR';
 	        ui_notification.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage(messageCode),
+	          content: this.$Bitrix.Loc.getMessage(messageCode),
 	          autoHideDelay: 6000
 	        });
 	      }).catch(response => {
@@ -924,7 +962,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    validate(data) {
 	      if (!main_core.Type.isArrayFilled(data.assignmentUserIds)) {
 	        ui_notification.UI.Notification.Center.notify({
-	          content: main_core.Text.encode(main_core.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR')),
+	          content: this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR'),
+	          autoHideDelay: 6000
+	        });
+	        return false;
+	      }
+	      if (!this.currentIsAiEnabled && !main_core.Type.isStringFilled(this.getPlainText())) {
+	        ui_notification.UI.Notification.Center.notify({
+	          content: this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR'),
 	          autoHideDelay: 6000
 	        });
 	        return false;
@@ -936,18 +981,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    getPlainText() {
 	      return this.parser.parse(this.textEditor.getText()).toPlainText().trim();
-	    },
-	    toggleExpertSettings() {
-	      this.isVisibleExpertSettings = !this.isVisibleExpertSettings;
-	      if (this.isVisibleExpertSettings) {
-	        void this.$nextTick(() => {
-	          this.$refs.expertSettings.scrollIntoView(false);
-	        });
-	      }
-	    },
-	    showHelpArticle() {
-	      var _window$top$BX, _window$top$BX$Helper;
-	      (_window$top$BX = window.top.BX) == null ? void 0 : (_window$top$BX$Helper = _window$top$BX.Helper) == null ? void 0 : _window$top$BX$Helper.show(`redirect=detail&code=${ARTICLE_CODE}`);
 	    },
 	    onSelectCategory(category) {
 	      if (this.currentCategoryId === category.id) {
@@ -983,29 +1016,81 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    setCurrentIsAiEnabled(value) {
 	      this.currentIsAiEnabled = value;
+	    },
+	    sendViewAnalytics() {
+	      var _this$analytics$secti;
+	      const section = (_this$analytics$secti = this.analytics.section) != null ? _this$analytics$secti : '';
+	      const viewEvent = crm_integration_analytics.Builder.RepeatSale.Segment.ViewEvent.createDefault(section);
+	      ui_analytics.sendData(viewEvent.buildData());
+	    },
+	    sendCancelAnalytics() {
+	      var _this$analytics$secti2;
+	      const section = (_this$analytics$secti2 = this.analytics.section) != null ? _this$analytics$secti2 : '';
+	      const viewEvent = crm_integration_analytics.Builder.RepeatSale.Segment.CancelEvent.createDefault(section);
+	      ui_analytics.sendData(viewEvent.buildData());
+	    },
+	    sendEditAnalytics() {
+	      var _this$analytics$secti3;
+	      const section = (_this$analytics$secti3 = this.analytics.section) != null ? _this$analytics$secti3 : '';
+	      const editEvent = crm_integration_analytics.Builder.RepeatSale.Segment.EditEvent.createDefault(section);
+	      if (!this.currentIsAiEnabled && this.getPlainPromptText() !== this.getPlainSegmentText()) {
+	        editEvent.setIsActivityTextChanged(true);
+	      }
+	      if (this.segment.entityTitlePattern !== this.currentEntityTitlePattern) {
+	        editEvent.setIsEntityTitlePatternChanged(true);
+	      }
+	      if (this.segment.isAiEnabled !== this.currentIsAiEnabled) {
+	        editEvent.setIsCopilotEnabled(this.currentIsAiEnabled);
+	      }
+	      editEvent.setSegmentCode(this.segment.code);
+	      ui_analytics.sendData(editEvent.buildData());
+	    },
+	    getPlainPromptText() {
+	      return this.parseText(this.textEditor.getText());
+	    },
+	    getPlainSegmentText() {
+	      return this.parseText(this.segment.prompt);
+	    },
+	    parseText(text) {
+	      return this.parser.parse(text).toPlainText().trim();
 	    }
 	  },
 	  computed: {
 	    readOnly() {
 	      return this.settings.isReadOnly;
 	    },
+	    isSponsored() {
+	      var _this$settings$ai$isS, _this$settings$ai;
+	      return (_this$settings$ai$isS = (_this$settings$ai = this.settings.ai) == null ? void 0 : _this$settings$ai.isSponsored) != null ? _this$settings$ai$isS : false;
+	    },
+	    isAiAvailable() {
+	      var _this$settings$ai$isA, _this$settings$ai2;
+	      return (_this$settings$ai$isA = (_this$settings$ai2 = this.settings.ai) == null ? void 0 : _this$settings$ai2.isAvailable) != null ? _this$settings$ai$isA : false;
+	    },
+	    aiDisabledSliderCode() {
+	      var _this$settings$ai$aiD, _this$settings$ai3;
+	      return (_this$settings$ai$aiD = (_this$settings$ai3 = this.settings.ai) == null ? void 0 : _this$settings$ai3.aiDisabledSliderCode) != null ? _this$settings$ai$aiD : null;
+	    },
+	    isBaasAvailable() {
+	      var _this$settings$baas$i, _this$settings$baas;
+	      return (_this$settings$baas$i = (_this$settings$baas = this.settings.baas) == null ? void 0 : _this$settings$baas.isAvailable) != null ? _this$settings$baas$i : false;
+	    },
+	    isBaasHasPackage() {
+	      var _this$settings$baas$h, _this$settings$baas2;
+	      return (_this$settings$baas$h = (_this$settings$baas2 = this.settings.baas) == null ? void 0 : _this$settings$baas2.hasPackage) != null ? _this$settings$baas$h : false;
+	    },
+	    packageEmptySliderCode() {
+	      var _this$settings$baas$a, _this$settings$baas3;
+	      return (_this$settings$baas$a = (_this$settings$baas3 = this.settings.baas) == null ? void 0 : _this$settings$baas3.aiPackagesEmptySliderCode) != null ? _this$settings$baas$a : null;
+	    },
 	    aiCallEnabled() {
 	      return this.settings.isAiCallEnabled;
 	    },
-	    chevronClassList() {
-	      return ['crm-repeat-sale__segment-expert-settings-btn-chevron', {
-	        '--active': this.isVisibleExpertSettings
-	      }];
-	    },
 	    repeatSaleSegmentSection() {
-	      return ['crm-repeat-sale__segment-section', {
-	        '--active': this.isVisibleExpertSettings
-	      }];
+	      return ['crm-repeat-sale__segment-section'];
 	    },
 	    title() {
-	      return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_TITLE', {
-	        '#TITLE#': this.segment.title
-	      });
+	      return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_TITLE');
 	    },
 	    currentCategory() {
 	      var _this$categories$find;
@@ -1013,21 +1098,35 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    messages() {
 	      return {
-	        manualTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_TITLE'),
-	        manualDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_DESCRIPTION'),
 	        textAreaTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE'),
 	        dealHelp: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_HELP'),
 	        sectionTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE'),
 	        stageTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE'),
 	        dealAssignedTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE'),
-	        expert: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_EXPERT'),
 	        dealTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_TITLE'),
 	        dealDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_DESCRIPTION'),
 	        dealTitlePattern: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE'),
-	        copilot: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE'),
 	        assessmentTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE'),
 	        assessmentDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION')
 	      };
+	    }
+	  },
+	  watch: {
+	    currentIsAiEnabled(value) {
+	      if (this.isAiAvailable && (this.isSponsored || this.isBaasHasPackage)) {
+	        this.currentIsAiEnabled = value;
+	        return;
+	      }
+	      if (value === true) {
+	        if (!this.isAiAvailable && this.aiDisabledSliderCode) {
+	          ui_infoHelper.InfoHelper.show(this.aiDisabledSliderCode);
+	        } else if (!this.isBaasHasPackage && this.packageEmptySliderCode) {
+	          ui_infoHelper.InfoHelper.show(this.packageEmptySliderCode);
+	        }
+	        void this.$nextTick(() => {
+	          this.currentIsAiEnabled = false;
+	        });
+	      }
 	    }
 	  },
 	  // language=Vue
@@ -1036,27 +1135,42 @@ this.BX.Crm = this.BX.Crm || {};
 			<div class="crm-repeat-sale__segment-wrapper">
 				<header class="crm-repeat-sale__segment-section-header">
 					<div class="crm-repeat-sale__segment-section-header-title">
-						<span>
-							{{title}}
-							<span 
-								v-if="segment.description"
-								v-hint="segment.description"
-								class="crm-repeat-sale__segment-section-header-help"
-							>
-							</span>
-						</span>
+						<span>{{title}}</span>
 					</div>
 				</header>
 				<div class="crm-repeat-sale__segment-section-body">
-					<section class="crm-repeat-sale__segment-section --active">
+					<section class="crm-repeat-sale__segment-section --main --active">
 						<h1 class="crm-repeat-sale__segment-section-title">
-							{{messages.manualTitle}}
+							{{segment.title}}
 						</h1>
 						<div class="crm-repeat-sale__segment-section-description">
-							{{messages.manualDescription}}
+							{{segment.description}}
 						</div>
-				
-						<div class="crm-repeat-sale__segment-fields-row">
+						<AdditionalInfoComponent
+							:title="messages.dealHelp"
+						/>
+					</section>
+					
+					
+					<section class="crm-repeat-sale__segment-section --active">
+						<div
+							class="crm-repeat-sale__segment-fields-row"
+							v-if="isBaasAvailable || isSponsored"
+						>
+							<div class="crm-repeat-sale__segment-field">
+								<AiSwitcherComponent
+									ref="aiSwitcher"
+									:checked="currentIsAiEnabled"
+									:read-only="readOnly"
+									@change="setCurrentIsAiEnabled"
+								/>
+							</div>
+						</div>
+						
+						<div
+							v-if="!currentIsAiEnabled"
+							class="crm-repeat-sale__segment-fields-row"
+						>
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
 									{{messages.textAreaTitle}}
@@ -1064,12 +1178,9 @@ this.BX.Crm = this.BX.Crm || {};
 								<TextEditorWrapperComponent
 									:textEditor="textEditor"
 								/>
-								<AdditionalInfoComponent 
-									:title="messages.dealHelp"
-								/>
 							</div>
 						</div>
-				
+						
 						<div class="crm-repeat-sale__segment-fields-row">
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
@@ -1078,6 +1189,7 @@ this.BX.Crm = this.BX.Crm || {};
 								<CategorySelector 
 									:current-category-id="currentCategoryId"
 									:categories="categories"
+									:read-only="readOnly"
 									@onSelectItem="onSelectCategory"
 								/>
 							</div>
@@ -1089,11 +1201,12 @@ this.BX.Crm = this.BX.Crm || {};
 									ref="stageSelector"
 									:current-stage-id="currentStageId"
 									:category="currentCategory"
+									:read-only="readOnly"
 									@onSelectItem="onSelectStage"
 								/>
 							</div>
 						</div>
-				
+
 						<div class="crm-repeat-sale__segment-fields-row">
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
@@ -1107,36 +1220,13 @@ this.BX.Crm = this.BX.Crm || {};
 								/>
 							</div>
 						</div>
-					</section>
-			
-					<div class="crm-repeat-sale__segment-expert-settings-btn-wrapper">
-						<span 
-							class="crm-repeat-sale__segment-expert-settings-btn"
-							@click="toggleExpertSettings"
-						>
-							{{messages.expert}}
-						</span>
-						<span 
-							:class="chevronClassList"
-							@click="toggleExpertSettings"
-						>
-						</span>
-					</div>
-			
-					<section :class="repeatSaleSegmentSection" ref="expertSettings">
-						<h1 class="crm-repeat-sale__segment-section-title --level2">
-							{{messages.dealTitle}}
-						</h1>
-						<div class="crm-repeat-sale__segment-section-description">
-							{{messages.dealDescription}}
-						</div>
-				
+						
 						<div class="crm-repeat-sale__segment-fields-row">
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
 									{{messages.dealTitlePattern}}
 								</div>
-								<input 
+								<input
 									class="ui-ctl-element"
 									type="text"
 									v-model="currentEntityTitlePattern"
@@ -1144,20 +1234,8 @@ this.BX.Crm = this.BX.Crm || {};
 								>
 							</div>
 						</div>
-						<div class="crm-repeat-sale__segment-fields-row">
-							<div class="crm-repeat-sale__segment-field">
-								<div class="crm-repeat-sale__segment-field-title">
-									{{messages.copilot}}
-								</div>
-								<AiSwitcherComponent
-									:checked="currentIsAiEnabled"
-									:read-only="readOnly"
-									@change="setCurrentIsAiEnabled"
-								/>
-							</div>
-						</div>
 					</section>
-			
+
 					<section 
 						:class="repeatSaleSegmentSection"
 						v-if="aiCallEnabled && false"
@@ -1168,7 +1246,7 @@ this.BX.Crm = this.BX.Crm || {};
 						<div class="crm-repeat-sale__segment-section-description">
 							{{messages.assessmentDescription}}
 						</div>
-				
+
 						<div class="crm-repeat-sale__segment-field">
 							<CallAssessmentSelector 
 								:call-assessments="callAssessments"
@@ -1230,12 +1308,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      settings: {
 	        isReadOnly: babelHelpers.classPrivateFieldLooseBase(this, _isReadOnly)[_isReadOnly],
 	        isCopy: (_params$config$isCopy = (_params$config4 = params.config) == null ? void 0 : _params$config4.isCopy) != null ? _params$config$isCopy : false,
+	        ai: params.data.aiSettings,
+	        baas: params.data.baasSettings,
 	        isAiCallEnabled: params.data.isAiCallEnabled
 	      },
 	      segment: params.data.segment,
 	      categories: params.data.categories,
 	      callAssessments: params.data.callAssessments,
-	      events: params.events
+	      events: params.events,
+	      analytics: params.analytics
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	  }
@@ -1270,5 +1351,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Segment = Segment$1;
 
-}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.Vue3,BX.UI.BBCode,BX,BX.Vue3.Directives,BX.UI,BX.UI,BX.UI.TextEditor,BX.UI,BX,BX.Event,BX.UI.EntitySelector));
+}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.Vue3,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.BBCode,BX.UI,BX,BX.UI,BX.UI,BX.UI.TextEditor,BX.UI,BX,BX.Event,BX.UI.EntitySelector));
 //# sourceMappingURL=segment.bundle.js.map

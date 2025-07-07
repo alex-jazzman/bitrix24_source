@@ -9,6 +9,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -522,6 +523,8 @@ class LeadDataProvider extends EntityDataProvider implements FactoryOptionable
 				]
 			);
 		}
+
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationField($this, $result);
 
 		return $result;
 	}

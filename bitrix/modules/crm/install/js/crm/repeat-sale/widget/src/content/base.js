@@ -1,7 +1,9 @@
+import { Builder } from 'crm.integration.analytics';
 import { ajax as Ajax, Dom, Loc, Tag, Type } from 'main.core';
 import 'ui.design-tokens';
 import type { PopupOptions } from 'main.popup';
 import { Popup } from 'main.popup';
+import { sendData } from 'ui.analytics';
 import { Confetti } from 'ui.confetti';
 import { Lottie } from 'ui.lottie';
 import { UI } from 'ui.notification';
@@ -13,6 +15,7 @@ export class Base
 	#popup: ?Popup = null;
 	#bindElement: ?HTMLElement = null;
 	#isConfettiShowed: boolean = true;
+	#isPreparing: boolean = false;
 	params: WidgetParams = {};
 
 	constructor(params: WidgetParams = {})
@@ -30,57 +33,52 @@ export class Base
 		throw new Error('Must be implement in child class');
 	}
 
-	async show(forceShowConfetti: boolean = false): void
+	async show(forceShowConfetti: boolean = false, onCloseCallback: ?Function = null): void
 	{
 		const data = await this.getData();
 
+		if (data === null)
+		{
+			return;
+		}
+
 		if (this.#popup === null)
 		{
-			this.#popup = new Popup(this.getPopupParams(data, { forceShowConfetti }));
+			this.#popup = new Popup(this.getPopupParams(data, { forceShowConfetti, onCloseCallback }));
 		}
 
 		this.#popup.show();
+		this.#popup.adjustPosition();
 	}
 
 	getPopupParams(data: Object, params: Object = {}): PopupOptions
 	{
-		const hasParentButton = Boolean(this.#bindElement.closest('button'));
-		const hasParentLink = Boolean(this.#bindElement.closest('a'));
-
-		let bindElement = this.#bindElement;
-		if (hasParentButton)
-		{
-			bindElement = this.#bindElement.closest('button');
-		}
-		else if (hasParentLink)
-		{
-			bindElement = this.#bindElement.closest('a');
-		}
-
-		const bindElementRect = bindElement.getBoundingClientRect();
-
 		return {
 			id: `crm_repeat_sale_widget_${this.getType()}`,
-			bindElement: {
-				top: bindElementRect.top + bindElementRect.height + 10,
-				left: bindElementRect.right - 410,
-			},
+			bindElement: this.#getBindElementData(),
 			content: this.getPopupContent(data),
 			cacheable: false,
-			isScrollBlock: true,
+			isScrollBlock: false,
 			className: `crm-repeat-sale-widget-popup --${this.getType()}`,
 			closeByEsc: true,
 			closeIcon: true,
 			padding: 16,
-			width: 410,
+			width: this.getPopupWidth(),
 			maxHeight: 500,
 			overlay: null,
-			autoHide: true,
+			autoHide: this.isAutoHidePopup(),
 			events: {
 				onclose: () => {
 					this.onClose();
+
+					if (Type.isFunction(params?.onCloseCallback))
+					{
+						params.onCloseCallback();
+					}
 				},
 				onFirstShow: () => {
+					this.onFirstShow();
+
 					if (this.#isConfettiShowed && params?.forceShowConfetti !== true)
 					{
 						return;
@@ -95,7 +93,52 @@ export class Base
 		};
 	}
 
-	getPopupContent(data: Object): HTMLElement
+	#getBindElementData(): Object
+	{
+		const bindElement = this.#getParentBindElement();
+
+		const bindElementRect = bindElement.getBoundingClientRect();
+
+		return {
+			top: bindElementRect.top + bindElementRect.height + 5 + window.pageYOffset,
+			left: bindElementRect.right - (bindElement.clientWidth / 2) - (this.getPopupWidth() / 2) + window.pageXOffset,
+		};
+	}
+
+	#getParentBindElement(): HTMLElement
+	{
+		const hasParentButton = Boolean(this.#bindElement.closest('button'));
+		const hasParentLink = Boolean(this.#bindElement.closest('a'));
+
+		if (hasParentButton)
+		{
+			return this.#bindElement.closest('button');
+		}
+
+		if (hasParentLink)
+		{
+			return this.#bindElement.closest('a');
+		}
+
+		return this.#bindElement;
+	}
+
+	getPopupWidth(): number
+	{
+		return 469;
+	}
+
+	isAutoHidePopup(): boolean
+	{
+		return false;
+	}
+
+	onFirstShow(): void
+	{
+		// may be implement in child class
+	}
+
+	getPopupContent(data: ?Object = null): HTMLElement
 	{
 		throw new Error('Must be implement in child class');
 	}
@@ -107,12 +150,27 @@ export class Base
 
 	onClose(): void
 	{
+		this.#sendAnalyticsCloseEvent();
+
 		if (this.params.showConfetti)
 		{
 			void Ajax.runAction('crm.repeatsale.widget.incrementShowedConfettiCount');
 		}
 
 		this.#popup = null;
+	}
+
+	#sendAnalyticsCloseEvent(): void
+	{
+		const type = this.getAnalyticsType();
+		const subSection = this.getAnalyticsSubSection();
+
+		sendData(Builder.RepeatSale.Banner.CloseEvent.createDefault(type, subSection).buildData());
+	}
+
+	getAnalyticsType(): string
+	{
+		return '';
 	}
 
 	#showConfetti(): void
@@ -170,11 +228,19 @@ export class Base
 
 	async fetchData(): Promise
 	{
+		if (this.#isPreparing)
+		{
+			return Promise.resolve(null);
+		}
+
+		this.#isPreparing = true;
+
 		return new Promise((resolve) => {
 			Ajax
 				.runAction(this.getFetchUrl(), { data: this.getFetchParams() })
 				.then(
 					(response) => {
+						this.#isPreparing = false;
 						if (response.status === 'success')
 						{
 							resolve(response.data);
@@ -185,10 +251,12 @@ export class Base
 						this.showError();
 					},
 					() => {
+						this.#isPreparing = false;
 						this.showError();
 					},
 				)
 				.catch((response) => {
+					this.#isPreparing = false;
 					this.showError();
 
 					throw response;
@@ -222,6 +290,11 @@ export class Base
 		this.#bindElement = element;
 
 		return this;
+	}
+
+	getAnalyticsSubSection(): ?string
+	{
+		return this.#getParentBindElement().dataset.subsection ?? null;
 	}
 
 	isShown(): boolean

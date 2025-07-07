@@ -16,9 +16,11 @@ return [
 	'js' => 'dist/segment.bundle.js',
 	'rel' => [
 		'ui.vue3',
+		'crm.integration.analytics',
+		'ui.analytics',
 		'ui.bbcode.parser',
+		'ui.info-helper',
 		'ui.notification',
-		'ui.vue3.directives.hint',
 		'ui.promo-video-popup',
 		'ui.switcher',
 		'ui.text-editor',

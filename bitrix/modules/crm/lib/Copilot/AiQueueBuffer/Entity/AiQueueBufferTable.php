@@ -85,4 +85,13 @@ final class AiQueueBufferTable extends DataManager
 
 		return new Result();
 	}
+
+	public static function deleteAll(): Result
+	{
+		$sqlQuery = new SqlExpression('DELETE FROM ?#', self::getTableName());
+
+		Application::getConnection()->query((string)$sqlQuery);
+
+		self::cleanCache();
+	}
 }

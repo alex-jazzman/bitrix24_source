@@ -16,6 +16,7 @@ use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Crm\Tour;
+use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -115,6 +116,22 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 	->setEntityTypeId($entityTypeId)
 	->build()
 ;
+
+$repeatSaleEntityTypeIds = [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company];
+if (in_array($entityTypeId, $repeatSaleEntityTypeIds, true))
+{
+	print OnboardingPopup::getInstance()->build();
+}
+
+if (defined('AIR_SITE_TEMPLATE'))
+{
+	$isInIframe = \Bitrix\Main\Context::getCurrent()->getRequest()->getQuery('IFRAME') === 'Y';
+	$this->setViewTarget($isInIframe ? 'above_pagetitle' : 'page_menu', 100);
+		?><div class="crm-kanban-action-panel-container">
+			<div class="crm-kanban-action-panel"><div></div></div><?
+		?></div><?
+	$this->endViewTarget();
+}
 ?>
 
 <div id="crm_kanban"></div>

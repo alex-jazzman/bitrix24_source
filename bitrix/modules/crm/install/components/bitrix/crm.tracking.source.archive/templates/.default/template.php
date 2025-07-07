@@ -2,13 +2,27 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Tracking\Provider;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
 /** @var array $arResult */
+
+Extension::load(['ui.feedback.form']);
+$feedbackParams = Json::encode(Provider::getFeedbackParameters());
+
+Toolbar::addButton([
+	"color" => Color::LIGHT_BORDER,
+	"click" => new JsCode(
+		"BX.UI.Feedback.Form.open({$feedbackParams});"
+	),
+	"text" => Provider::getFeedbackButtonTitle(),
+]);
 
 foreach ($arResult['ERRORS'] as $error)
 {
@@ -47,17 +61,6 @@ foreach ($arResult['ROWS'] as $index => $data)
 		'actions' => $actions
 	);
 }
-
-ob_start();
-$APPLICATION->IncludeComponent(
-	'bitrix:ui.feedback.form',
-	'',
-	[
-		...Provider::getFeedbackParameters(),
-		'VIEW_TARGET' => false,
-	]
-);
-Toolbar::addRightCustomHtml(ob_get_clean(), ['align' => 'right']);
 
 $snippet = new \Bitrix\Main\Grid\Panel\Snippet();
 $controlPanel = array('GROUPS' => array(array('ITEMS' => array())));

@@ -1,2 +1,3 @@
 <?php
 $MESS["CRM_TIMELINE_SHARING"] = "Слоти";
+$MESS["CRM_TIMELINE_SHARING_MSGVER_1"] = "Слоти";

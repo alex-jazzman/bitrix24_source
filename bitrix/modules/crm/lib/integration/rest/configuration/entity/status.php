@@ -5,18 +5,19 @@ namespace Bitrix\Crm\Integration\Rest\Configuration\Entity;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Status\FunnelStatusCollectionRevalidator;
 use Bitrix\Crm\StatusTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Application;
-use Bitrix\Main\Loader;
 use Bitrix\Rest\Configuration\Helper;
 use CAllCrmInvoice;
-use CCrmStatus;
 use CCrmQuote;
+use CCrmStatus;
 use Exception;
 
 class Status
@@ -424,21 +425,26 @@ class Status
 		elseif(DealCategory::isCustomized())
 		{
 			$oldCategory = DealCategory::getAll(false);
+			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+
 			foreach ($oldCategory as $category)
 			{
 				if ($clearFull)
 				{
-					try
+					$categoryId = $category['ID'] ?? null;
+					if ($categoryId === null)
 					{
-						DealCategory::delete($category['ID']);
+						continue;
+					}
 
+					$category = $factory->getCategory($categoryId);
+					$deleteResult = $category?->delete();
+					if ($deleteResult?->isSuccess())
+					{
 						$result['OWNER_DELETE'][] = [
 							'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_CRM_DEAL_CATEGORY,
-							'ENTITY' => $category['ID']
+							'ENTITY' => $categoryId,
 						];
-					}
-					catch(Exception $e)
-					{
 					}
 				}
 				else

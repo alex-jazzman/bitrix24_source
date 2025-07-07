@@ -175,7 +175,7 @@ require 'js_templates.php';
 		</div><!--crm-orderform-edit-field-constructor-container-->
 
 		<?
-		$userBlockController->start('DEPENDENCIES', Loc::getMessage('CRM_ORDERFORM_EDIT_DEP_SECTION'), Loc::getMessage('CRM_ORDERFORM_EDIT_DEP_SECTION_NAV'));
+		$userBlockController->start('DEPENDENCIES', Loc::getMessage('CRM_ORDERFORM_EDIT_DEP_SECTION_MSGVER_1'), Loc::getMessage('CRM_ORDERFORM_EDIT_DEP_SECTION_NAV'));
 		?>
 		<div class="crm-orderform-edit-task-options-item-open-settings">
 			<div id="DEPENDENCY_CONTAINER" class="crm-orderform-ext-block-dep-list">
@@ -189,15 +189,9 @@ require 'js_templates.php';
 			<span id="DEPENDENCY_BUTTON_ADD" class="crm-orderform-edit-task-options-rule">&#43; <?=Loc::getMessage('CRM_ORDERFORM_EDIT_DEP_BUTTON_ADD')?></span>
 		</div>
 		<?
-		$userBlockController->start('ENTITY_SCHEME', Loc::getMessage('CRM_ORDERFORM_EDIT_DOC_SECTION'), Loc::getMessage('CRM_ORDERFORM_EDIT_DOC_SECTION_NAV'));
+		$userBlockController->start('ENTITY_SCHEME', Loc::getMessage('CRM_ORDERFORM_EDIT_DOC_SECTION_MSGVER_1'), Loc::getMessage('CRM_ORDERFORM_EDIT_DOC_SECTION_NAV_MSGVER_1'));
 		?>
 		<div class="crm-orderform-edit-task-options-item-open-settings">
-			<div class="crm-orderform-edit-task-options-settings-title-cotainer">
-				<div class="crm-orderform-edit-task-options-settings-title">
-					<?=Loc::getMessage('CRM_ORDERFORM_EDIT_DOC_TITLE')?>:
-				</div>
-			</div>
-
 			<div id="ENTITY_SCHEME_CONTAINER" class="crm-orderform-edit-task-options-settings-container">
 				<div class="crm-orderform-edit-task-options-document-settings-radio-container" style="display: none;">
 					<input type="hidden" name="ENTITY_SCHEME" value="<?=htmlspecialcharsbx($arResult['ENTITY_SCHEMES']['SELECTED_ID'])?>">
@@ -219,7 +213,6 @@ require 'js_templates.php';
 				</div>
 				<div class="crm-orderform-edit-task-options-document-settings-description">
 				<span class="crm-orderform-edit-task-options-document-settings-description-element">
-					<?=Loc::getMessage('CRM_ORDERFORM_EDIT_DOC_LIST_TITLE')?>:
 					<span data-bx-orderform-edit-scheme-desc="">
 						<?=htmlspecialcharsbx($arResult['ENTITY_SCHEMES']['SELECTED_DESCRIPTION'])?>
 					</span>
@@ -255,7 +248,7 @@ require 'js_templates.php';
 				<div id="CRM_ORDERFORM_RESPONSIBLE" class="crm-orderform-edit-task-options-item-destination-wrap">
 
 					<div class="crm-orderform-edit-task-options-item crm-orderform-edit-task-options-item-destination">
-						<span class="crm-orderform-edit-task-options-item-param"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_ASSIGNED_BY1')?>:</span>
+						<span class="crm-orderform-edit-task-options-item-param"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_ASSIGNED_BY1_MSGVER_1')?></span>
 						<div class="crm-orderform-edit-task-options-item-open-inner">
 							<div id="crm-orderform-edit-responsible"></div>
 
@@ -263,7 +256,7 @@ require 'js_templates.php';
 								<div style="margin: 15px 0 0 0;">
 									<label for="ASSIGNED_WORK_TIME" class="crm-orderform-edit-task-options-stylesheet-label">
 										<input id="ASSIGNED_WORK_TIME" name="ASSIGNED_WORK_TIME" value="Y" type="checkbox" <?=($arResult['ASSIGNED_BY']['WORK_TIME'] ? 'checked' : '')?> class="crm-orderform-edit-task-options-stylesheet-checkbox">
-										<span class="crm-orderform-edit-task-options-stylesheet-element"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_ASSIGNED_WORK_TIME')?></span>
+										<span class="crm-orderform-edit-task-options-stylesheet-element"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_ASSIGNED_WORK_TIME_MSGVER_1')?></span>
 									</label>
 								</div>
 							<? endif; ?>

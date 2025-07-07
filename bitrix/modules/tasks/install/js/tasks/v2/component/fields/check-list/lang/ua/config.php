@@ -27,6 +27,7 @@ $MESS["TASKS_V2_CHECK_LIST_LOADING"] = "Чек-лист завантажуєть
 $MESS["TASKS_V2_CHECK_LIST_NEW_BTN"] = "Новий чек-лист";
 $MESS["TASKS_V2_CHECK_LIST_READY_BTN"] = "Готово";
 $MESS["TASKS_V2_CHECK_LIST_STATUS_LABEL"] = "<span>#completed#/#total#</span><span>виконано</span>";
+$MESS["TASKS_V2_CHECK_LIST_STUB_BTN"] = "Створити чек-лист";
 $MESS["TASKS_V2_CHECK_LIST_STUB_TITLE"] = "Чек-листів у цьому завданні наразі немає";
 $MESS["TASKS_V2_CHECK_LIST_TITLE"] = "Чек-лист";
 $MESS["TASKS_V2_CHECK_LIST_TITLE_NUMBER"] = "Чек-лист #number#";

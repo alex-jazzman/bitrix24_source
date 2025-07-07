@@ -15,14 +15,12 @@ use CCrmOwnerType;
 
 final class Create implements AIFunction
 {
-	private readonly UserPermissions\EntityPermissions\Type $permissions;
 	private readonly Factory $factory;
 
 	public function __construct(
 		private readonly int $currentUserId,
 	)
 	{
-		$this->permissions = Container::getInstance()->getUserPermissions($this->currentUserId)->entityType();
 		$this->factory = Container::getInstance()->getFactory(CCrmOwnerType::Deal);
 	}
 
@@ -37,11 +35,6 @@ final class Create implements AIFunction
 		if ($parameters->hasValidationErrors())
 		{
 			return Result::fail($parameters->getValidationErrors());
-		}
-
-		if (!$this->permissions->canAddItemsInCategory(CCrmOwnerType::Deal, $parameters->categoryId))
-		{
-			return Result::failAccessDenied();
 		}
 
 		$data = [
@@ -64,8 +57,7 @@ final class Create implements AIFunction
 
 		$operation
 			->disableCheckFields()
-			->disableCheckRequiredUserFields()
-			->disableCheckAccess();
+			->disableCheckRequiredUserFields();
 
 		return $operation;
 	}

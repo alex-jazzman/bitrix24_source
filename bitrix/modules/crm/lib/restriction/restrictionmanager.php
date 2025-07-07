@@ -714,7 +714,7 @@ class RestrictionManager
 			true,
 			null,
 			[
-				'ID' => 'limit_crm_fields_visible_to_selected_users', //@todo set correct slider code
+				'ID' => 'limit_v2_crm_repeat_sale',
 			]
 		);
 

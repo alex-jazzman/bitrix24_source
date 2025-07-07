@@ -1113,9 +1113,11 @@ if (
 	&& Container::getInstance()->getUserPermissions()->repeatSale()->canRead()
 )
 {
+	Container::getInstance()->getLocalization()->loadMessages();
+
 	$stdItems['REPEAT_SALE_SEGMENT'] = [
 		'ID' => 'REPEAT_SALE_SEGMENT',
-		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_REPEAT_SALE_SEGMENT'),
+		'NAME' => Loc::getMessage('CRM_COMMON_REPEAT_SALE'),
 		'URL' => '/crm/repeat-sale-segment/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('REPEAT_SALE_SEGMENT'),
 		'IS_NEW' => true, // @todo set end datetime
@@ -1354,7 +1356,7 @@ if ($userPermissionsService->isCrmAdmin())
 	$stdItems['DYNAMIC_LIST'] = [
 		'ID' => 'DYNAMIC_LIST',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST_MSGVER_1'),
-		'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
+		'URL' => Container::getInstance()->getRouter()->getTypeListUrl(),
 	];
 }
 

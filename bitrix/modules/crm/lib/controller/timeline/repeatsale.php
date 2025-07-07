@@ -5,6 +5,8 @@ namespace Bitrix\Crm\Controller\Timeline;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\ErrorCode as AIErrorCode;
 use Bitrix\Crm\Integration\AI\Operation\Scenario;
+use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
+use Bitrix\Crm\RepeatSale\Segment\SegmentItem;
 use Bitrix\Crm\RepeatSale\Segment\SegmentItemChecker;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\ActivityController;
@@ -17,9 +19,10 @@ final class RepeatSale extends Activity
 	{
 		$filters = parent::getDefaultPreFilters();
 		$filters[] = new Scope(Scope::NOT_REST);
-		
+
 		return $filters;
 	}
+
 	public function launchCopilotAction(int $activityId, int $ownerTypeId, int $ownerId): void
 	{
 		$activity = $this->loadActivity($activityId, $ownerTypeId, $ownerId);
@@ -47,18 +50,22 @@ final class RepeatSale extends Activity
 						]
 					)
 				);
-				
+
 				return;
 			}
 
+			$segmentId = (int)($activity['PROVIDER_PARAMS']['SEGMENT_ID'] ?? 0);
+			$segmentItem = SegmentItem::createFromEntity(
+				RepeatSaleSegmentController::getInstance()->getById($segmentId, true)
+			);
 			$checkerResult = SegmentItemChecker::getInstance()
-				->setItemByActivity($activity)
+				->setItem($segmentItem)
 				->run()
 			;
 			if (!$checkerResult->isSuccess())
 			{
 				$this->addError($checkerResult->getError());
-				
+
 				return;
 			}
 
@@ -78,10 +85,10 @@ final class RepeatSale extends Activity
 				{
 					$this->addError(AIErrorCode::getAIEngineNotFoundError());
 				}
-				
+
 				return;
 			}
-			
+
 			// apply timeline
 			$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
 			if ($activity)
@@ -92,7 +99,7 @@ final class RepeatSale extends Activity
 					true
 				);
 			}
-			
+
 			return;
 		}
 

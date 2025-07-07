@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Agent\RepeatSale;
 
 use Bitrix\Crm\Agent\AgentBase;
 use Bitrix\Crm\RepeatSale\Queue\Executor;
+use Bitrix\Crm\Service\Container;
 
 class JobExecutorAgent extends AgentBase
 {
@@ -11,7 +12,25 @@ class JobExecutorAgent extends AgentBase
 
 	public static function doRun(): bool
 	{
-		Executor::getInstance()->execute();
+		$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+		$instance = new self();
+
+		if ($availabilityChecker->isItemsCountsLessThenLimit())
+		{
+			if ($availabilityChecker->isAllowedTime() || $availabilityChecker->isSegmentsInitializationProgress())
+			{
+				$instance->setExecutionPeriod(60);
+				Executor::getInstance()->execute();
+			}
+			else
+			{
+				$instance->setExecutionPeriod(3600);
+			}
+		}
+		else
+		{
+			$instance->setExecutionPeriod(86400);
+		}
 
 		return self::PERIODICAL_AGENT_RUN_LATER;
 	}

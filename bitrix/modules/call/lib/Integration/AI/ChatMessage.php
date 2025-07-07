@@ -481,4 +481,32 @@ class ChatMessage
 
 		return $linkMess;
 	}
+
+	public static function generateOpponentBusyMessage(int $opponentUserId): ?Message
+	{
+		Loader::includeModule('im');
+
+		Loc::loadMessages($_SERVER["DOCUMENT_ROOT"]. '/bitrix/modules/im/lib/call/integration/chat.php');
+
+		$opponentUser = \Bitrix\Im\User::getInstance($opponentUserId);
+
+		$message = new Message();
+		$message->setMessage(
+			Loc::getMessage('IM_CALL_INTEGRATION_CHAT_CALL_USER_BUSY_'. ($opponentUser->getGender() === 'F' ? 'F' : 'M'), [
+				'#NAME#' => $opponentUser->getFullName()
+			])
+		);
+		$message->setAuthorId($opponentUserId);
+
+		$params = $message->getParams();
+		$params->get(Params::NOTIFY)->setValue(true);
+		$params->get(Params::COMPONENT_ID)->setValue(NotifyService::MESSAGE_COMPONENT_ID);
+		$params->get(Params::COMPONENT_PARAMS)->setValue([
+			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_BUSY,
+			'INITIATOR_ID' => $opponentUserId,
+			'MESSAGE_TEXT' => $message->getMessage(),
+		]);
+
+		return $message;
+	}
 }

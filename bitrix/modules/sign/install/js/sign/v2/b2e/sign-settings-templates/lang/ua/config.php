@@ -1,0 +1,9 @@
+<?php
+$MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT"] = "Документ надіслано на підпис.";
+$MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP"] = "Документи надіслано на підпис.";
+$MESS["SIGN_SETTINGS_TEMPLATES_CLOSE_CONFIRM"] = "Закрити майстра? Зміни не збережуться. ";
+$MESS["SIGN_SETTINGS_TEMPLATES_CLOSE_CONFIRM_OK"] = "Так, закрити";
+$MESS["SIGN_SETTINGS_TEMPLATES_COMPLETE_TITLE"] = "Надіслати";
+$MESS["SIGN_SETTINGS_TEMPLATES_HEAD_TITLE"] = "Новий документ за шаблоном на підпис";
+$MESS["SIGN_SETTINGS_TEMPLATES_STEP_DOCUMENT_TITLE"] = "Документ";
+$MESS["SIGN_SETTINGS_TEMPLATES_STEP_EMPLOYEES_TITLE"] = "Співробітники";

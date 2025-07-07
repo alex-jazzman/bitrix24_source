@@ -2,16 +2,21 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
+use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Format\TextHelper;
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Dto\RepeatSale\FillRepeatSaleTipsPayload;
 use Bitrix\Crm\Integration\AI\JobRepository;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
+use Bitrix\Crm\RepeatSale\Segment\Entity\RepeatSaleSegment;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Item\Mixin\CopilotButtonTrait;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Copilot\CopilotLaunchButton;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EditableDescription;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
@@ -22,6 +27,11 @@ use CCrmContentType;
 
 final class RepeatSale extends Activity
 {
+	use CopilotButtonTrait;
+
+	private const HELPDESK_CODE_COPILOT_WARNING = '20412666';
+	private const HELPDESK_CODE_REPEAT_SALE = '25376986';
+
 	protected function getActivityTypeId(): string
 	{
 		return 'RepeatSale';
@@ -36,49 +46,67 @@ final class RepeatSale extends Activity
 	{
 		return Common\Icon::REPEAT_SALE;
 	}
-	
+
 	public function getLogo(): ?Logo
 	{
 		return Common\Logo::getInstance(Common\Logo::REPEAT_SALE)->createLogo();
 	}
-	
+
 	public function getContentBlocks(): array
 	{
 		$result = [];
 
-		$aiJobResult = JobRepository::getInstance()
-			->getFillRepeatSaleTipsByActivity($this->getActivityId())
-		;
-		$descriptionBlock = $this->buildDescriptionBlock($aiJobResult);
+		$descriptionBlock = $this->buildDescriptionBlock();
 		if (isset($descriptionBlock))
 		{
 			$result['description'] = $descriptionBlock;
 		}
-		
-		$runCopilotBlock = $this->buildRunCopilotBlock($aiJobResult);
-		if (isset($runCopilotBlock))
+
+		$warningBlock = $this->buildWarningBlock();
+		if (isset($warningBlock))
 		{
-			$result['runCopilotBlock'] = $runCopilotBlock;
+			$result['warning'] = $warningBlock;
 		}
 
 		$result['segment'] = $this->buildSegmentBlock();
+
+		$errorBlock = $this->buildErrorBlock();
+		if (isset($errorBlock))
+		{
+			$result['error'] = $errorBlock;
+		}
 
 		return $result;
 	}
 
 	public function getButtons(): array
 	{
-		$buttons = parent::getButtons();
-		
-		$buttonType = $this->isScheduled()
+		$buttons = parent::getButtons() ?? [];
+
+		$scheduleButtonType = $this->isScheduled()
 			? Button::TYPE_PRIMARY
 			: Button::TYPE_SECONDARY
 		;
-		$buttons['scheduleButton'] = $this->getScheduleButton('Activity:RepeatSale:Schedule', $buttonType);
 
-		return $buttons;
+		/** @var Result<FillRepeatSaleTipsPayload>|null $jobResult */
+		$payload = $this->getCoPilotJobResult()?->getPayload();
+		if ($payload)
+		{
+			$description = Provider\RepeatSale::createDescriptionFromPayload($payload, true);
+		}
+
+		$scheduleButton = $this->getScheduleButton(
+			'Activity:RepeatSale:Schedule',
+			$description ?? '',
+			$scheduleButtonType
+		);
+
+		return array_merge($buttons, [
+			'scheduleButton' => $scheduleButton,
+			'aiButton' => $this->getAIButton(),
+		]);
 	}
-	
+
 	public function getMenuItems(): array
 	{
 		$menuItems = parent::getMenuItems();
@@ -88,16 +116,16 @@ final class RepeatSale extends Activity
 		{
 			unset($menuItems['delete']);
 		}
-		
+
 		return $menuItems;
 	}
-	
+
 	public function needShowNotes(): bool
 	{
 		return true;
 	}
-	
-	private function buildDescriptionBlock(?Result $aiJobResult): ?ContentBlock
+
+	private function buildDescriptionBlock(): ?ContentBlock
 	{
 		// base block
 		$block = (new EditableDescription())
@@ -110,120 +138,141 @@ final class RepeatSale extends Activity
 			)
 		;
 
-		// not processed by copilot
-		if (is_null($aiJobResult))
+		$jobResult = $this->getCoPilotJobResult();
+		if (
+			is_null($jobResult)
+			|| !$jobResult->isSuccess()
+		) // not processed by copilot or error
 		{
-			$description = $this->fetchDefaultDescription();
+			$description = $this->getSegment()?->getPrompt() ?? '';
+			$headerText = $this->getDescriptionHeaderText('CRM_TIMELINE_ITEM_REPEAT_SALE_HEADER_TEXT_DEFAULT');
 
 			return empty($description)
-				? null
-				: $block->setCopied(true)->setText($description)
+				? null // not found segment or empty description
+				: $block
+					->setCopied(true)
+					->setHeaderText($headerText)
+					->setText($description)
 			;
 		}
 
 		// copilot in progress
-		if ($aiJobResult?->isPending())
+		if ($jobResult->isPending())
 		{
-			return $block
-				->setCopilotResultCfg([
-					'header' => Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_HEADER_PENDING'),
-					'hideContent' => true,
-					'animated' => true,
-				])
-			;
+			return $block->setCopilotStatus(EditableDescription::AI_IN_PROGRESS);
 		}
-		
+
 		// copilot return success result
-		if ($aiJobResult?->isSuccess())
+		if ($jobResult->isSuccess())
 		{
+			$headerText = $this->getDescriptionHeaderText('CRM_TIMELINE_ITEM_REPEAT_SALE_HEADER_TEXT_COPILOT');
+
 			return $block
 				->setCopied(true)
-				->setText($this->fetchGeneratedDescription())
-				->setCopilotResultCfg([
-					'header' => Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_HEADER'),
-					'footer' => true,
-				])
+				->setHeaderText($headerText)
+				->setText($this->getDescription())
+				->setCopilotStatus(EditableDescription::AI_SUCCESS)
 			;
 		}
-		
+
 		// copilot return error
 		return $block
 			->setText(Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_ERROR'))
-			->setCopilotResultCfg([
-				'header' => Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_HEADER'),
-			])
+			->setCopilotStatus(EditableDescription::AI_NONE)
 		;
 	}
-	
-	private function buildRunCopilotBlock(?Result $aiJobResult): ?ContentBlock
-	{
-		$isCopilotStarted = isset($aiJobResult)
-			&& ($aiJobResult->isSuccess() || $aiJobResult->isPending())
-		;
-		
-		if ($isCopilotStarted)
-		{
-			return null;
-		}
-		
-		$buttonTitle = is_null($aiJobResult)
-			? Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_LAUNCH_BTN_START') // not processed by copilot
-			: Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_LAUNCH_BTN_RETRY') // copilot return error
-		;
 
-		return (new CopilotLaunchButton())
-			->setTitle($buttonTitle)
-			->setAction(
-				(new JsEvent('Activity:RepeatSale:LaunchCopilot'))
-					->addActionParamInt('activityId', $this->getActivityId())
-					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
-					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-			)
-		;
-	}
-	
 	private function buildSegmentBlock(): LineOfTextBlocks
 	{
-		$segmentId = $this->fetchSegmentId();
-		if ($segmentId > 0)
+		$segment = $this->getSegment();
+		$segmentName = $segment?->getTitle() ?? Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_UNKNOWN_SCENARIO');
+		$segmentId = $segment?->getId() ?? 0;
+
+		$action = null;
+
+		if ($segmentId > 0 && Container::getInstance()->getRepeatSaleAvailabilityChecker()->hasPermission())
 		{
-			$segment = RepeatSaleSegmentController::getInstance()->getById($segmentId);
-			$segmentName = $segment?->getTitle() ?? Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_UNKNOWN_SCENARIO');
+			$action = (new JsEvent('Activity:RepeatSale:OpenSegment'))
+				->addActionParamInt('segmentId', $segmentId)
+			;
 		}
-		
-		$textOrLink = ContentBlockFactory::createTextOrLink(
-			$segmentName ?? Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_UNKNOWN_SCENARIO'),
-			$segmentId > 0
-				? (new JsEvent('Activity:RepeatSale:OpenSegment'))->addActionParamInt('segmentId', $segmentId)
-				: null
-		);
-		
+		elseif ($segmentId > 0)
+		{
+			$action = new JsEvent('Activity:RepeatSale:ShowRestrictionSlider');
+		}
+
+		$textOrLink = ContentBlockFactory::createTextOrLink($segmentName, $action);
+
 		return (new LineOfTextBlocks())
 			->addContentBlock('title', ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_SCENARIO')))
 			->addContentBlock('value', $textOrLink->setIsBold($segmentId > 0))
 		;
 	}
-	
-	private function fetchSegmentId(): int
+	private function buildWarningBlock(): ?ContentBlock
 	{
-		$params = $this->getAssociatedEntityModel()?->get('PROVIDER_PARAMS') ?? [];
-		
-		return (int)($params['SEGMENT_ID'] ?? 0);
-	}
-	
-	private function fetchDefaultDescription(): string
-	{
-		$segmentId = $this->fetchSegmentId();
-		
-		return RepeatSaleSegmentController::getInstance()->getById($segmentId)?->getPrompt() ?? '';
+		$jobResult = $this->getCoPilotJobResult();
+		if ($jobResult?->isSuccess())
+		{
+			$message = Loc::getMessage(
+				'CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_WARNING',
+				[
+					'[helpdesklink]' => '<a href="' . $this->getLinkOnHelp(self::HELPDESK_CODE_COPILOT_WARNING) . '" target="blank">',
+					'[/helpdesklink]' => '</a>',
+				]
+			);
+
+			return ContentBlockFactory::createFromHtmlString(
+				$message,
+				'copilot_warning_',
+				[
+					'link' => [
+						'color' => ContentBlock\Text::COLOR_BASE_50,
+						'size' => ContentBlock\Text::FONT_SIZE_SM,
+						'decoration' => ContentBlock\Text::DECORATION_UNDERLINE,
+					],
+					'text' => [
+						'color' => ContentBlock\Text::COLOR_BASE_50,
+						'size' => ContentBlock\Text::FONT_SIZE_SM,
+					],
+				]
+			);
+		}
+
+		return null;
 	}
 
-	private function fetchGeneratedDescription(): string
+	private function buildErrorBlock(): ?ContentBlock
 	{
-		$description = (string)($this->getAssociatedEntityModel()
-			?->get($this->isScheduled() ? 'DESCRIPTION' : 'DESCRIPTION_RAW') ?? '')
-		;
-		$description = trim($description);
+		$jobResult = $this->getCoPilotJobResult();
+		if (isset($jobResult) && !$jobResult->isSuccess())
+		{
+			return (new ContentBlock\ErrorBlock())
+				->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_ERROR_TITLE'))
+				->setDescription(Loc::getMessage('CRM_TIMELINE_ITEM_REPEAT_SALE_COPILOT_ERROR'))
+				->setClosable(true)
+				->setType(ContentBlock\ErrorBlock::ERROR_TYPE_AI)
+			;
+		}
+
+		return null;
+	}
+
+	private function getSegment(): ?RepeatSaleSegment
+	{
+		$params = $this->getAssociatedEntityModel()?->get('PROVIDER_PARAMS') ?? [];
+		$segmentId = (int)($params['SEGMENT_ID'] ?? 0);
+
+		return RepeatSaleSegmentController::getInstance()->getById($segmentId);
+	}
+
+	private function getCoPilotJobResult(): ?Result
+	{
+		return JobRepository::getInstance()->getFillRepeatSaleTipsByActivity($this->getActivityId());
+	}
+
+	private function getDescription(): string
+	{
+		$description = (string)($this->getAssociatedEntityModel()?->get('DESCRIPTION') ?? '');
 
 		// Temporarily removes [p] for mobile compatibility
 		$descriptionType = (int)$this->getAssociatedEntityModel()?->get('DESCRIPTION_TYPE');
@@ -234,7 +283,40 @@ final class RepeatSale extends Activity
 		{
 			$description = TextHelper::removeParagraphs($description);
 		}
-		
+
 		return $description;
+	}
+
+	private function getDescriptionHeaderText(string $code): ?string
+	{
+		return Loc::getMessage(
+			$code,
+			[
+				'[helpdesklink]' => '<a href="' . $this->getLinkOnHelp(self::HELPDESK_CODE_REPEAT_SALE) . '" target="blank">',
+				'[/helpdesklink]' => '</a>',
+			]
+		);
+	}
+
+	private function getAIButton(): ?Activity\RepeatSale\CopilotButton
+	{
+		$activityId = $this->getActivityId();
+
+		$isButtonVisible = AIManager::isAiCallProcessingEnabled()
+			&& $this->hasUpdatePermission()
+			&& $this->isItemHashValid($activityId, $this->getContext())
+			&& $this->getSegment() !== null
+		;
+
+		if (!$isButtonVisible)
+		{
+			return null;
+		}
+
+		return new Activity\RepeatSale\CopilotButton(
+			$this->getContext(),
+			$this->getAssociatedEntityModel(),
+			$activityId
+		);
 	}
 }

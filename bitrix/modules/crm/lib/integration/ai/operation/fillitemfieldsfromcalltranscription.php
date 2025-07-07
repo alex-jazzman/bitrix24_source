@@ -16,6 +16,7 @@ use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\JobRepository;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
+use Bitrix\Crm\Integration\AI\Operation\Payload\Payload\ExtractFormFields;
 use Bitrix\Crm\Integration\AI\Operation\Payload\PayloadFactory;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
@@ -122,7 +123,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		}
 
 		$map = [];
-		foreach (self::getAllSuitableFields($job->requireEntityTypeId()) as $singleFieldDescription)
+		foreach (ExtractFormFields::getAllSuitableFields($job->requireEntityTypeId()) as $singleFieldDescription)
 		{
 			$map[$singleFieldDescription['NAME']] = $singleFieldDescription;
 		}
@@ -141,7 +142,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			{
 				$candidate = new MultipleFieldFillPayload([
 					'name' => $fieldDescription['ID'],
-					'aiValues' => $value,
+					'aiValues' => ExtractFormFields::prepareValue($fieldDescription, $value),
 				]);
 				if (!$candidate->hasValidationErrors())
 				{
@@ -152,7 +153,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			{
 				$candidate = new SingleFieldFillPayload([
 					'name' => $fieldDescription['ID'],
-					'aiValue' => $value,
+					'aiValue' => ExtractFormFields::prepareValue($fieldDescription, $value),
 				]);
 				if (!$candidate->hasValidationErrors())
 				{
@@ -459,7 +460,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 					[
 						'OPERATION_TYPE_ID' => self::TYPE_ID,
 						'ENGINE_ID' => self::$engineId,
-						'ERRORS' => $result->getErrorMessages(),
+						'ERRORS' => array_unique($result->getErrorMessages()),
 					],
 					$result->getUserId(),
 				);
@@ -510,16 +511,13 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		;
 	}
 
-	private static function getAllSuitableFields(int $entityTypeId): array
-	{
-		return (new FieldDataProvider($entityTypeId, Context::SCOPE_AI))->getFieldData();
-	}
-
 	private static function getAutomaticallyHandledFields(Item $item, int $userId): array
 	{
 		$categoryId = $item->isCategoriesSupported() ? $item->getCategoryId() : null;
 
-		return (new FieldDataProvider($item->getEntityTypeId(), Context::SCOPE_AI))->getDisplayedInEntityEditorFieldData($userId, $categoryId);
+		return (new FieldDataProvider($item->getEntityTypeId(), Context::SCOPE_AI))
+			->getDisplayedInEntityEditorFieldData($userId, $categoryId)
+		;
 	}
 
 	public static function actualizeResult(Result $result, ?int $userId = null): Result

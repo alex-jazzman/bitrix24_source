@@ -1,5 +1,8 @@
 <?php
 $MESS["IM_SIDEBAR_ADD_BUTTON_TEXT"] = "Додати";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_HELP"] = "Що вибрати?";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_MARKET"] = "Вибрати в Маркеті";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS"] = "Налаштування";
 $MESS["IM_SIDEBAR_AUDIO_EMPTY"] = "Немає аудіо.";
 $MESS["IM_SIDEBAR_AUTODELETE_NO_PERMISSION"] = "Недостатньо прав для роботи з автовидаленням. [helpdesklink]Докладніше[/helpdesklink]";
 $MESS["IM_SIDEBAR_AUTODELETE_STATUS_1D"] = "Через 1 добу";

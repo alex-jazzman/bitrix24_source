@@ -429,6 +429,10 @@ final class Deal extends Factory
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
 				'CLASS' => Field\Observers::class,
 			],
+			Item::FIELD_LAST_COMMUNICATION_TIME => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+			],
 		];
 
 		$locationAttributes = [];

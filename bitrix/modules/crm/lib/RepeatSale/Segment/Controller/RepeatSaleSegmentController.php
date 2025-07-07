@@ -2,8 +2,10 @@
 
 namespace Bitrix\Crm\RepeatSale\Segment\Controller;
 
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\RepeatSale\Job\Controller\RepeatSaleJobController;
 use Bitrix\Crm\RepeatSale\Job\JobItem;
+use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Queue\Controller\RepeatSaleQueueController;
 use Bitrix\Crm\RepeatSale\Segment\Entity\RepeatSaleSegment;
 use Bitrix\Crm\RepeatSale\Segment\Entity\RepeatSaleSegmentTable;
@@ -20,6 +22,8 @@ use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\ORM\Objectify\Collection;
 use Bitrix\Main\ORM\Query\QueryHelper;
 use Bitrix\Main\Type\DateTime;
+use CCrmContentType;
+use CCrmOwnerType;
 
 final class RepeatSaleSegmentController
 {
@@ -87,8 +91,7 @@ final class RepeatSaleSegmentController
 			'PROMPT' => $segmentItem->getPrompt(),
 			'IS_ENABLED' => $segmentItem->isEnabled(),
 			'CODE' => $segmentItem->getCode(),
-			//'ENTITY_TYPE_ID' => $segmentItem->getEntityTypeId(),
-			'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal, // @todo temporary only deal support
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Deal, // @todo temporary only deal support
 			'ENTITY_CATEGORY_ID' => $segmentItem->getEntityCategoryId(),
 			'ENTITY_STAGE_ID' => $segmentItem->getEntityStageId(),
 			'ENTITY_TITLE_PATTERN' => $segmentItem->getEntityTitlePattern(),
@@ -191,6 +194,8 @@ final class RepeatSaleSegmentController
 			$userController->deleteBySegmentId($job->getSegmentId());
 		}
 
+		(new Logger())->info('Segment and all its surroundings have been deleted', ['id' => $id]);
+
 		return $result;
 	}
 
@@ -203,12 +208,13 @@ final class RepeatSaleSegmentController
 
 		$ttl = 3600;
 
-		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
-		$categoryId = $factory->getDefaultCategory()->getId();
-		$totalCompanies = $factory->getItemsCount(['CATEGORY_ID' => $categoryId], $ttl);
+		$factory = Container::getInstance()->getFactory(CCrmOwnerType::Company);
+		$categoryId = $factory?->getDefaultCategory()?->getId() ?? 0;
+		$totalCompanies = $factory?->getItemsCount(['CATEGORY_ID' => $categoryId], $ttl);
 
-		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
-		$totalContacts = $factory->getItemsCount(['TYPE_ID' => 'CLIENT'], $ttl);
+		$factory = Container::getInstance()->getFactory(CCrmOwnerType::Contact);
+		$categoryId = $factory?->getDefaultCategory()?->getId() ?? 0;
+		$totalContacts = $factory?->getItemsCount(['CATEGORY_ID' => $categoryId], $ttl);
 
 		$totalClients = $totalCompanies + $totalContacts;
 		if ($totalClients <= 0)
@@ -221,8 +227,44 @@ final class RepeatSaleSegmentController
 		}
 
 		return RepeatSaleSegmentTable::update($segmentId, [
-			'CLIENT_COVERAGE' => $clientCoverage,
+			'CLIENT_COVERAGE' => min($clientCoverage, 100),
 			'CLIENT_FOUND' => $suitableClientsCount,
 		]);
+	}
+
+	public function collectCopilotData(int $segmentId, bool $sanitizeData = true): array
+	{
+		if ($segmentId <= 0)
+		{
+			return [];
+		}
+
+		$entityItem = $this->getById($segmentId, true);
+		if (!$entityItem)
+		{
+			return [];
+		}
+
+		$item = SegmentItem::createFromEntity($entityItem);
+		$description = $item->getDescription() ?? '';
+		$caseText =  $item->getPrompt() ?? '';
+
+		if ($sanitizeData)
+		{
+			$cleaner = static function(string $input): string {
+				$input = TextHelper::cleanTextByType($input, CCrmContentType::BBCode);
+
+				return trim(str_replace('&nbsp;', '', $input));
+			};
+
+			$description = $cleaner($description);
+			$caseText = $cleaner($caseText);
+		}
+
+		return [
+			'name' => $item->getTitle(),
+			'description' => $description,
+			'case_text' => $caseText,
+		];
 	}
 }

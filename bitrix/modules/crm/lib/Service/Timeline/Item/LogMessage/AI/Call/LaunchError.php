@@ -50,9 +50,10 @@ final class LaunchError extends Base
 			return null;
 		}
 
-		$statusTagLocCode = 'CRM_TIMELINE_LOG_LAUNCH_ERROR_TAG';
-		$errorText = empty($settings['ERRORS']) ? '' : implode(PHP_EOL, $settings['ERRORS']);
+		$errorsList = array_unique($settings['ERRORS'] ?? []);
+		$errorText = empty($errorsList) ? '' : implode(PHP_EOL, $errorsList);
 		$engineId = $settings['ENGINE_ID'] ?? 0;
+		$statusTagLocCode = 'CRM_TIMELINE_LOG_LAUNCH_ERROR_TAG';
 		if ($engineId !== 0)
 		{
 			$statusTagLocCode = 'CRM_TIMELINE_LOG_LAUNCH_ERROR_THIRDPARTY_TAG';

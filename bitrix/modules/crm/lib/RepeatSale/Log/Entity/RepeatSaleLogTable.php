@@ -68,16 +68,16 @@ class RepeatSaleLogTable extends DataManager
 			,
 			$fieldRepository->getCreatedTime('CREATED_AT'),
 			$fieldRepository->getUpdatedTime('UPDATED_AT'),
-			(new Reference(
+			new Reference(
 				'JOB',
 				RepeatSaleJobTable::class,
 				Join::on('this.JOB_ID', 'ref.ID'),
-			)),
-			(new Reference(
+			),
+			new Reference(
 				'SEGMENT',
 				RepeatSaleSegmentTable::class,
 				Join::on('this.SEGMENT_ID', 'ref.ID'),
-			))
+			),
 		];
 	}
 }

@@ -4,6 +4,7 @@ namespace Bitrix\Crm\RepeatSale\Service\Handler;
 
 use Bitrix\Crm\RepeatSale\Segment\Collector\Factory;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
+use Bitrix\Crm\RepeatSale\Segment\Data\SegmentDataInterface;
 use Bitrix\Crm\RepeatSale\Segment\SegmentItem;
 use Bitrix\Crm\RepeatSale\Segment\SystemSegmentCode;
 use Bitrix\Crm\RepeatSale\Service\Action\CreateActivityAction;
@@ -17,7 +18,7 @@ final class SystemHandler extends BaseHandler
 {
 	public function __construct(
 		private readonly string $segmentCode,
-		private readonly ?Context $context = null
+		private readonly ?Context $context = null,
 	)
 	{
 
@@ -37,6 +38,7 @@ final class SystemHandler extends BaseHandler
 		$segmentData = Factory::getInstance()
 			->getCollector($segmentCode)
 			?->setLimit($this->limit)
+			->setIsOnlyCalc($this->isOnlyCalc)
 			->getSegmentData($this->entityTypeId, $this->lastEntityId)
 		;
 
@@ -45,12 +47,24 @@ final class SystemHandler extends BaseHandler
 			return $result->addError(new Error('Unknown segment collector'));
 		}
 
+		if (!$segmentData->canProcessed())
+		{
+			return $result->addError(new Error('Segment data is not processed'));
+		}
+
+		return $this->processSegmentData($segmentData);
+	}
+
+	private function processSegmentData(SegmentDataInterface $segmentData): Result
+	{
+		$result = (new Result());
+
 		$items = $segmentData->getItems();
 
 		$result->setSegmentData($segmentData);
 		if (empty($items))
 		{
-			return $result->setIsFinalQueueIteration(true);
+			return $result;
 		}
 
 		if ($this->isOnlyCalc)

@@ -22,6 +22,7 @@ $MESS["CRM_SIGN_B2E_ACTIVITY_TITLE_STOPPED"] = "Підписання скасо�
 $MESS["CRM_TIMELINE_ACTIVITY_CREATE_CHAT"] = "Відкрити чат";
 $MESS["CRM_TIMELINE_ACTIVITY_DOWNLOAD"] = "Завантажити архів";
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT"] = "Документ на підпис";
+$MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLIENT_WITH_COUNT"] = "Клієнт #CLIENT_COUNT#";
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED"] = "Документ на підпис опрацьовано";
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED_TAG"] = "Підписано всіма сторонами";
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CONTER_AGENT"] = "Контрагент";

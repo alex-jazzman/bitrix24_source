@@ -246,3 +246,4 @@ DROP TABLE IF EXISTS b_crm_repeat_sale_log;
 DROP TABLE IF EXISTS b_crm_repeat_sale_segment_assignment_user;
 DROP TABLE IF EXISTS b_crm_copilot_call_assessment_availability;
 DROP TABLE IF EXISTS b_crm_ai_queue_buffer;
+DROP TABLE IF EXISTS b_crm_last_communication;

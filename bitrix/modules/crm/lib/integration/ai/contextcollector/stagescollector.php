@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Integration\AI\ContextCollector;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\EO_Status_Collection;
+use Bitrix\Crm\Integration\AI\ContextCollector\EntityCollector\StageSettings;
 use Bitrix\Crm\Integration\AI\ContextCollector\StagesQueryModificator\Executor;
 use Bitrix\Crm\Integration\AI\ContextCollector\StagesQueryModificator\ExecutorResultValues;
 use Bitrix\Crm\Integration\AI\ContextCollector\StagesQueryModificator\ItemsCountQueryModificator;
@@ -18,31 +19,30 @@ use CCrmOwnerType;
 
 final class StagesCollector implements ContextCollector
 {
-	private bool $isCollectItemsCount = true;
-	private bool $isCollectItemsSum = true;
-
 	private readonly UserPermissions $permissions;
+	private readonly PermissionEntityTypeHelper $permissionHelper;
 	private readonly ?Factory $factory;
+	private StageSettings $settings;
+
+	private static array $additionalStageData = [];
 
 	public function __construct(
 		private readonly int $entityTypeId,
+		private readonly ?int $categoryId,
 		private readonly Context $context,
 	)
 	{
 		$this->permissions = Container::getInstance()->getUserPermissions($this->context->userId());
+		$this->permissionHelper = new PermissionEntityTypeHelper($this->entityTypeId);
+
 		$this->factory = Container::getInstance()->getFactory($this->entityTypeId);
+
+		$this->settings = new StageSettings();
 	}
 
-	public function setIsCollectItemsCount(bool $isCollect): self
+	public function setSettings(StageSettings $stageSettings): self
 	{
-		$this->isCollectItemsCount = $isCollect;
-
-		return $this;
-	}
-
-	public function setIsCollectItemsSum(bool $isCollect): self
-	{
-		$this->isCollectItemsSum = $isCollect;
+		$this->settings = $stageSettings;
 
 		return $this;
 	}
@@ -54,98 +54,89 @@ final class StagesCollector implements ContextCollector
 			return [];
 		}
 
-		$categoryIds = $this->getCategoryIds();
-		if (empty($categoryIds) && $this->factory->isCategoriesSupported())
-		{
-			return [];
-		}
-
-		$stages = $this->getStages($categoryIds);
-		$additionalData = $this->getAdditionalData($categoryIds);
+		$additionalData = $this->getAdditionalData();
 
 		$result = [];
-		foreach ($stages as $stage)
+		foreach ($this->stages() as $stage)
 		{
-			$result[] = [
+			$info = [
 				'id' => $stage->getStatusId(),
 				'name' => $stage->getName(),
 				'semantics' => $stage->getSemantics() ?? PhaseSemantics::PROCESS,
 				'sort' => $stage->getSort(),
-				'category_id' => $this->factory->isCategoriesSupported() ? $stage->getCategoryId() : null,
-				'items_count' => $additionalData->getItemsCount($stage->getStatusId()),
-				'items_sum' => $additionalData->getItemsSum($stage->getStatusId())?->toArray(),
 			];
+
+			if ($this->settings->isCollectItemsCount())
+			{
+				$info['items_count'] = $additionalData->getItemsCount($stage->getStatusId());
+			}
+
+			if ($this->settings->isCollectItemsSum())
+			{
+				$info['items_sum'] = $additionalData->getItemsSum($stage->getStatusId())?->toArray();
+			}
+
+			$result[] = $info;
 		}
 
 		return $result;
 	}
 
-	private function getCategoryIds(): ?array
+	private function stages(): EO_Status_Collection
 	{
-		if ($this->factory->isCategoriesSupported())
-		{
-			$categories = $this->factory->getCategories();
-			$categories = $this->permissions->category()->filterAvailableForReadingCategories($categories);
-
-			return array_map(static fn (Category $category): int => $category->getId(), $categories);
-		}
-
-		return null;
+		return $this->factory->getStages($this->categoryId);
 	}
 
-	private function getStages(?array $categoryIds): EO_Status_Collection
+	private function getAdditionalData(): ExecutorResultValues
 	{
-		if ($categoryIds === null)
+		if (isset(self::$additionalStageData[$this->entityTypeId]))
 		{
-			return $this->factory->getStages();
+			return self::$additionalStageData[$this->entityTypeId];
 		}
 
-		return $this->factory
-			->getStageBroker()
-			->getByCategoryIds($categoryIds);
-	}
-
-	private function getAdditionalData(?array $categoryIds): ExecutorResultValues
-	{
 		$queryModificators = $this->getAdditionalDataQueryModificators();
 		if (empty($queryModificators))
 		{
-			return new ExecutorResultValues();
+			self::$additionalStageData[$this->entityTypeId] = new ExecutorResultValues();
+
+			return self::$additionalStageData[$this->entityTypeId];
 		}
 
-		$permissionEntityTypes = $this->getPermissionEntityTypes($categoryIds);
-
+		$query = $this->factory->getDataClass()::query();
 		$query = $this->permissions
 			->itemsList()
-			->applyAvailableItemsQueryParameters($this->factory->getDataClass()::query(), $permissionEntityTypes);
+			->applyAvailableItemsQueryParameters($query, $this->getPermissionEntityTypes());
 
-		return (new Executor($queryModificators))
+		self::$additionalStageData[$this->entityTypeId] = (new Executor($queryModificators))
 			->execute($query);
+
+		return self::$additionalStageData[$this->entityTypeId];
 	}
 
-	private function getPermissionEntityTypes(?array $categoryIds): array
+	private function getPermissionEntityTypes(): array
 	{
-		if ($categoryIds === null)
+		if (!$this->factory->isCategoriesSupported())
 		{
 			return [
 				CCrmOwnerType::ResolveName($this->entityTypeId),
 			];
 		}
 
-		$permissionHelper = (new PermissionEntityTypeHelper($this->entityTypeId));
+		$categories = $this->factory->getCategories();
+		$categoryIds = array_map(static fn (Category $category) => $category->getId(), $categories);
 
-		return array_map([$permissionHelper, 'getPermissionEntityTypeForCategory'], $categoryIds);
+		return array_map([$this->permissionHelper, 'getPermissionEntityTypeForCategory'], $categoryIds);
 	}
 
 	private function getAdditionalDataQueryModificators(): array
 	{
 		$result = [];
-		if ($this->isCollectItemsCount)
+		if ($this->settings->isCollectItemsCount())
 		{
 			$result[] = new ItemsCountQueryModificator($this->factory);
 		}
 
-		if ($this->isCollectItemsSum)
+		if ($this->settings->isCollectItemsSum())
 		{
 			$result[] = new ItemsSumQueryModificator($this->factory);
 		}

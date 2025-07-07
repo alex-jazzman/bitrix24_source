@@ -1,8 +1,12 @@
-import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import { Builder } from 'crm.integration.analytics';
+
+import { ajax as Ajax, Text, Type } from 'main.core';
+import { sendData } from 'ui.analytics';
 import { BBCodeParser } from 'ui.bbcode.parser';
+import { InfoHelper } from 'ui.info-helper';
 import { UI } from 'ui.notification';
 import { TextEditor } from 'ui.text-editor';
-import { hint } from 'ui.vue3.directives.hint';
+
 import { AdditionalInfoComponent } from './common/additional-info-component';
 import { AiSwitcherComponent } from './common/ai-switcher-component';
 import { TextEditorWrapperComponent } from './common/text-editor-wrapper-component';
@@ -11,8 +15,6 @@ import { CallAssessmentSelector } from './selector/call-assessment-selector';
 import { CategorySelector } from './selector/category-selector';
 import { StageSelector } from './selector/stage-selector';
 import { UserSelector } from './selector/user-selector';
-
-const ARTICLE_CODE = '23240682';
 
 export const Segment = {
 	components: {
@@ -24,10 +26,6 @@ export const Segment = {
 		CategorySelector,
 		StageSelector,
 		UserSelector,
-	},
-
-	directives: {
-		hint,
 	},
 
 	props: {
@@ -51,36 +49,50 @@ export const Segment = {
 			type: Object,
 			default: {},
 		},
+		analytics: {
+			type: Object,
+			default: {},
+		},
 		textEditor: TextEditor,
 	},
 
 	data(): Object
 	{
-		const { segment, textEditor, categories } = this;
+		const { segment, textEditor, categories, settings } = this;
 		const id = segment?.id ?? null;
 		const isEnabled = segment?.isEnabled ?? null;
 
 		const firstCategory = categories[0];
+
+		let isAiEnabled = false;
+		if (
+			settings.ai?.isAvailable
+			&& (settings.ai?.isSponsored || settings.baas?.hasPackage)
+		)
+		{
+			isAiEnabled = segment.isAiEnabled ?? true;
+		}
 
 		return {
 			id,
 			isEnabled,
 			text: textEditor.getText(),
 			parser: new BBCodeParser(),
-			isVisibleExpertSettings: false,
 
 			currentCategoryId: segment.entityCategoryId ?? firstCategory.id,
 			currentStageId: segment.entityStageId ?? this.getFirstAvailableCategoryStageId(firstCategory),
 			assignmentUserIds: new Set(segment.assignmentUserIds ?? []),
 			currentEntityTitlePattern: segment.entityTitlePattern ?? null,
 			currentCallAssessmentId: segment.callAssessmentId ?? null,
-			currentIsAiEnabled: segment.isAiEnabled ?? true,
+			currentIsAiEnabled: isAiEnabled,
 		};
 	},
 
 	mounted(): void
 	{
 		this.$Bitrix.eventEmitter.subscribe(ButtonEvents.click, this.onNavigationButtonClick);
+
+		this.sendViewAnalytics();
 	},
 
 	beforeUnmount(): void
@@ -101,6 +113,7 @@ export const Segment = {
 			const { id } = data;
 			if (id === 'cancel' || id === 'close')
 			{
+				this.sendCancelAnalytics();
 				this.closeSlider();
 
 				return;
@@ -111,7 +124,6 @@ export const Segment = {
 		sendData(): void
 		{
 			const data = {
-				prompt: this.textEditor.getText(),
 				entityTypeId: 2, // temporary only deal
 				entityCategoryId: this.currentCategoryId,
 				entityStageId: this.currentStageId,
@@ -120,6 +132,11 @@ export const Segment = {
 				callAssessmentId: this.currentCallAssessmentId,
 				isAiEnabled: this.currentIsAiEnabled,
 			};
+
+			if (!this.currentIsAiEnabled)
+			{
+				data.prompt = this.textEditor.getText();
+			}
 
 			if (!this.validate(data))
 			{
@@ -153,13 +170,16 @@ export const Segment = {
 						}
 
 						this.onSaveCallback();
+
+						this.sendEditAnalytics();
+
 						this.closeSlider();
 					},
 					(response) => {
 						const messageCode = 'CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR';
 
 						UI.Notification.Center.notify({
-							content: Loc.getMessage(messageCode),
+							content: this.$Bitrix.Loc.getMessage(messageCode),
 							autoHideDelay: 6000,
 						});
 					},
@@ -179,7 +199,17 @@ export const Segment = {
 			if (!Type.isArrayFilled(data.assignmentUserIds))
 			{
 				UI.Notification.Center.notify({
-					content: Text.encode(Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR')),
+					content: this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR'),
+					autoHideDelay: 6000,
+				});
+
+				return false;
+			}
+
+			if (!this.currentIsAiEnabled && !Type.isStringFilled(this.getPlainText()))
+			{
+				UI.Notification.Center.notify({
+					content: this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR'),
 					autoHideDelay: 6000,
 				});
 
@@ -196,22 +226,6 @@ export const Segment = {
 		{
 			return this.parser.parse(this.textEditor.getText()).toPlainText().trim();
 		},
-		toggleExpertSettings(): void
-		{
-			this.isVisibleExpertSettings = !this.isVisibleExpertSettings;
-
-			if (this.isVisibleExpertSettings)
-			{
-				void this.$nextTick(() => {
-					this.$refs.expertSettings.scrollIntoView(false);
-				});
-			}
-		},
-		showHelpArticle(): void
-		{
-			window.top.BX?.Helper?.show(`redirect=detail&code=${ARTICLE_CODE}`);
-		},
-
 		onSelectCategory(category: Object): void
 		{
 			if (this.currentCategoryId === category.id)
@@ -259,6 +273,57 @@ export const Segment = {
 		{
 			this.currentIsAiEnabled = value;
 		},
+		sendViewAnalytics(): void
+		{
+			const section = this.analytics.section ?? '';
+			const viewEvent = Builder.RepeatSale.Segment.ViewEvent.createDefault(section);
+			sendData(viewEvent.buildData());
+		},
+		sendCancelAnalytics(): void
+		{
+			const section = this.analytics.section ?? '';
+			const viewEvent = Builder.RepeatSale.Segment.CancelEvent.createDefault(section);
+			sendData(viewEvent.buildData());
+		},
+		sendEditAnalytics(): void
+		{
+			const section = this.analytics.section ?? '';
+			const editEvent = Builder.RepeatSale.Segment.EditEvent.createDefault(section);
+
+			if (
+				!this.currentIsAiEnabled
+				&& this.getPlainPromptText() !== this.getPlainSegmentText()
+			)
+			{
+				editEvent.setIsActivityTextChanged(true);
+			}
+
+			if (this.segment.entityTitlePattern !== this.currentEntityTitlePattern)
+			{
+				editEvent.setIsEntityTitlePatternChanged(true);
+			}
+
+			if (this.segment.isAiEnabled !== this.currentIsAiEnabled)
+			{
+				editEvent.setIsCopilotEnabled(this.currentIsAiEnabled);
+			}
+
+			editEvent.setSegmentCode(this.segment.code);
+
+			sendData(editEvent.buildData());
+		},
+		getPlainPromptText(): string
+		{
+			return this.parseText(this.textEditor.getText());
+		},
+		getPlainSegmentText(): string
+		{
+			return this.parseText(this.segment.prompt);
+		},
+		parseText(text: string): string
+		{
+			return this.parser.parse(text).toPlainText().trim();
+		},
 	},
 
 	computed: {
@@ -266,32 +331,43 @@ export const Segment = {
 		{
 			return this.settings.isReadOnly;
 		},
+		isSponsored(): boolean
+		{
+			return this.settings.ai?.isSponsored ?? false;
+		},
+		isAiAvailable(): boolean
+		{
+			return this.settings.ai?.isAvailable ?? false;
+		},
+		aiDisabledSliderCode(): ?string
+		{
+			return this.settings.ai?.aiDisabledSliderCode ?? null;
+		},
+		isBaasAvailable(): boolean
+		{
+			return this.settings.baas?.isAvailable ?? false;
+		},
+		isBaasHasPackage(): boolean
+		{
+			return this.settings.baas?.hasPackage ?? false;
+		},
+		packageEmptySliderCode(): ?string
+		{
+			return this.settings.baas?.aiPackagesEmptySliderCode ?? null;
+		},
 		aiCallEnabled(): boolean
 		{
 			return this.settings.isAiCallEnabled;
-		},
-		chevronClassList(): Array
-		{
-			return [
-				'crm-repeat-sale__segment-expert-settings-btn-chevron',
-				{ '--active': this.isVisibleExpertSettings },
-			];
 		},
 		repeatSaleSegmentSection(): Array
 		{
 			return [
 				'crm-repeat-sale__segment-section',
-				{ '--active': this.isVisibleExpertSettings },
 			];
 		},
 		title(): string
 		{
-			return this.$Bitrix.Loc.getMessage(
-				'CRM_REPEAT_SALE_SEGMENT_TITLE',
-				{
-					'#TITLE#': this.segment.title,
-				},
-			);
+			return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_TITLE');
 		},
 		currentCategory(): ?Object
 		{
@@ -300,21 +376,51 @@ export const Segment = {
 		messages(): Object
 		{
 			return {
-				manualTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_TITLE'),
-				manualDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_DESCRIPTION'),
 				textAreaTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE'),
 				dealHelp: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_HELP'),
 				sectionTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE'),
 				stageTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE'),
 				dealAssignedTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE'),
-				expert: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_EXPERT'),
 				dealTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_TITLE'),
 				dealDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_DESCRIPTION'),
 				dealTitlePattern: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE'),
-				copilot: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE'),
 				assessmentTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE'),
 				assessmentDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION'),
 			};
+		},
+	},
+
+	watch: {
+		currentIsAiEnabled(value: boolean): void
+		{
+			if (
+				this.isAiAvailable
+				&& (
+					this.isSponsored
+					|| this.isBaasHasPackage
+				)
+			)
+			{
+				this.currentIsAiEnabled = value;
+
+				return;
+			}
+
+			if (value === true)
+			{
+				if (!this.isAiAvailable && this.aiDisabledSliderCode)
+				{
+					InfoHelper.show(this.aiDisabledSliderCode);
+				}
+				else if (!this.isBaasHasPackage && this.packageEmptySliderCode)
+				{
+					InfoHelper.show(this.packageEmptySliderCode);
+				}
+
+				void this.$nextTick(() => {
+					this.currentIsAiEnabled = false;
+				});
+			}
 		},
 	},
 
@@ -324,27 +430,42 @@ export const Segment = {
 			<div class="crm-repeat-sale__segment-wrapper">
 				<header class="crm-repeat-sale__segment-section-header">
 					<div class="crm-repeat-sale__segment-section-header-title">
-						<span>
-							{{title}}
-							<span 
-								v-if="segment.description"
-								v-hint="segment.description"
-								class="crm-repeat-sale__segment-section-header-help"
-							>
-							</span>
-						</span>
+						<span>{{title}}</span>
 					</div>
 				</header>
 				<div class="crm-repeat-sale__segment-section-body">
-					<section class="crm-repeat-sale__segment-section --active">
+					<section class="crm-repeat-sale__segment-section --main --active">
 						<h1 class="crm-repeat-sale__segment-section-title">
-							{{messages.manualTitle}}
+							{{segment.title}}
 						</h1>
 						<div class="crm-repeat-sale__segment-section-description">
-							{{messages.manualDescription}}
+							{{segment.description}}
 						</div>
-				
-						<div class="crm-repeat-sale__segment-fields-row">
+						<AdditionalInfoComponent
+							:title="messages.dealHelp"
+						/>
+					</section>
+					
+					
+					<section class="crm-repeat-sale__segment-section --active">
+						<div
+							class="crm-repeat-sale__segment-fields-row"
+							v-if="isBaasAvailable || isSponsored"
+						>
+							<div class="crm-repeat-sale__segment-field">
+								<AiSwitcherComponent
+									ref="aiSwitcher"
+									:checked="currentIsAiEnabled"
+									:read-only="readOnly"
+									@change="setCurrentIsAiEnabled"
+								/>
+							</div>
+						</div>
+						
+						<div
+							v-if="!currentIsAiEnabled"
+							class="crm-repeat-sale__segment-fields-row"
+						>
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
 									{{messages.textAreaTitle}}
@@ -352,12 +473,9 @@ export const Segment = {
 								<TextEditorWrapperComponent
 									:textEditor="textEditor"
 								/>
-								<AdditionalInfoComponent 
-									:title="messages.dealHelp"
-								/>
 							</div>
 						</div>
-				
+						
 						<div class="crm-repeat-sale__segment-fields-row">
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
@@ -366,6 +484,7 @@ export const Segment = {
 								<CategorySelector 
 									:current-category-id="currentCategoryId"
 									:categories="categories"
+									:read-only="readOnly"
 									@onSelectItem="onSelectCategory"
 								/>
 							</div>
@@ -377,11 +496,12 @@ export const Segment = {
 									ref="stageSelector"
 									:current-stage-id="currentStageId"
 									:category="currentCategory"
+									:read-only="readOnly"
 									@onSelectItem="onSelectStage"
 								/>
 							</div>
 						</div>
-				
+
 						<div class="crm-repeat-sale__segment-fields-row">
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
@@ -395,36 +515,13 @@ export const Segment = {
 								/>
 							</div>
 						</div>
-					</section>
-			
-					<div class="crm-repeat-sale__segment-expert-settings-btn-wrapper">
-						<span 
-							class="crm-repeat-sale__segment-expert-settings-btn"
-							@click="toggleExpertSettings"
-						>
-							{{messages.expert}}
-						</span>
-						<span 
-							:class="chevronClassList"
-							@click="toggleExpertSettings"
-						>
-						</span>
-					</div>
-			
-					<section :class="repeatSaleSegmentSection" ref="expertSettings">
-						<h1 class="crm-repeat-sale__segment-section-title --level2">
-							{{messages.dealTitle}}
-						</h1>
-						<div class="crm-repeat-sale__segment-section-description">
-							{{messages.dealDescription}}
-						</div>
-				
+						
 						<div class="crm-repeat-sale__segment-fields-row">
 							<div class="crm-repeat-sale__segment-field">
 								<div class="crm-repeat-sale__segment-field-title">
 									{{messages.dealTitlePattern}}
 								</div>
-								<input 
+								<input
 									class="ui-ctl-element"
 									type="text"
 									v-model="currentEntityTitlePattern"
@@ -432,20 +529,8 @@ export const Segment = {
 								>
 							</div>
 						</div>
-						<div class="crm-repeat-sale__segment-fields-row">
-							<div class="crm-repeat-sale__segment-field">
-								<div class="crm-repeat-sale__segment-field-title">
-									{{messages.copilot}}
-								</div>
-								<AiSwitcherComponent
-									:checked="currentIsAiEnabled"
-									:read-only="readOnly"
-									@change="setCurrentIsAiEnabled"
-								/>
-							</div>
-						</div>
 					</section>
-			
+
 					<section 
 						:class="repeatSaleSegmentSection"
 						v-if="aiCallEnabled && false"
@@ -456,7 +541,7 @@ export const Segment = {
 						<div class="crm-repeat-sale__segment-section-description">
 							{{messages.assessmentDescription}}
 						</div>
-				
+
 						<div class="crm-repeat-sale__segment-field">
 							<CallAssessmentSelector 
 								:call-assessments="callAssessments"

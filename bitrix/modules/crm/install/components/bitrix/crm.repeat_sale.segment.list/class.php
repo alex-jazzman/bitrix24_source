@@ -2,10 +2,11 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die;
+	die();
 }
 
 use Bitrix\Crm\Component\Base;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RepeatSale\Job\Controller\RepeatSaleJobController;
 use Bitrix\Crm\RepeatSale\Log\LogReport;
@@ -54,6 +55,15 @@ class CrmRepeatSaleSegmentListComponent extends Base
 		if (!Container::getInstance()->getRepeatSaleAvailabilityChecker()->hasPermission())
 		{
 			$componentPage = 'restrictions';
+
+			$this->includeComponentTemplate($componentPage);
+
+			return;
+		}
+
+		if (!Container::getInstance()->getRepeatSaleAvailabilityChecker()->isItemsCountsLessThenLimit())
+		{
+			$componentPage = 'limit';
 
 			$this->includeComponentTemplate($componentPage);
 
@@ -141,7 +151,7 @@ class CrmRepeatSaleSegmentListComponent extends Base
 		return [
 			[
 				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_EDIT'),
-				'ONCLICK' => 'BX.Crm.Router.openSlider("' . $this->getDetailsUri($id) . '", {width: 700, cacheable: false });',
+				'ONCLICK' => 'BX.Crm.Router.openSlider("' . $this->getDetailsUri($id) . '", {width: 922, cacheable: false });',
 				'DEFAULT' => true,
 			],
 		];
@@ -595,7 +605,7 @@ HTML;
 		$columns[] = [
 			'id' => 'TITLE',
 			'default' => true,
-			'name' => Loc::getMessage('CRM_COMMON_TITLE'),
+			'name' => Loc::getMessage('CRM_REPEAT_SALE_SEGMENT_LIST_COLUMN_EDIT'),
 			'sort' => 'TITLE',
 		];
 		$columns[] = [
@@ -607,7 +617,7 @@ HTML;
 		$columns[] = [
 			'id' => 'EDIT',
 			'default' => true,
-			'name' => Loc::getMessage('CRM_REPEAT_SALE_SEGMENT_LIST_COLUMN_EDIT'),
+			'name' => Loc::getMessage('CRM_COMMON_SETTINGS'),
 		];
 		$columns[] = [
 			'id' => 'SECTION',
@@ -677,8 +687,9 @@ HTML;
 						),
 						'dataset' => [
 							'id' => 'crm-repeat-sale-widget-button',
+							'subSection' => Dictionary::SUB_SECTION_DETAILS,
 						],
-					])
+					]),
 				],
 			],
 		];

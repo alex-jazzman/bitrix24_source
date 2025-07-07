@@ -192,6 +192,7 @@ $MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME_FEMININE"] = "Дата пересунен�
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME_V2"] = "Дата зміни етапу";
 $MESS["CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID"] = "Реквізити вашої компанії";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME"] = "Ім'я";
+$MESS["CRM_TYPE_ITEM_FIELD_NAME_LAST_COMMUNICATION_TIME"] = "Дата останньої комунікації";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME_OPPORTUNITY_WITH_CURRENCY"] = "Сума та валюта";
 $MESS["CRM_TYPE_ITEM_FIELD_OBSERVERS"] = "Спостерігачі";
 $MESS["CRM_TYPE_ITEM_FIELD_OPENED"] = "Доступно для всіх";

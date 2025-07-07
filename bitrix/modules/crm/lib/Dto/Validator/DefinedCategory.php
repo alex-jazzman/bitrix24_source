@@ -8,6 +8,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Crm\Result;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use CCrmOwnerType;
 
 final class DefinedCategory extends Validator
@@ -48,11 +50,26 @@ final class DefinedCategory extends Validator
 
 		if (!is_numeric($categoryId) || !$this->factory->isCategoryAvailable((int)$categoryId))
 		{
-			$error = $this->getWrongFieldError($this->categoryIdField, $this->dto->getName());
-
-			return Result::fail($error);
+			return Result::fail($this->error());
 		}
 
 		return Result::success();
+	}
+
+	private function error(): Error
+	{
+		return new Error(
+			message: Loc::getMessage('CRM_DTO_VALIDATOR_DEFINED_CATEGORY', [
+				'#FIELD#' => $this->categoryIdField,
+				'#PARENT_OBJECT#' => $this->dto->getName(),
+				'#ENTITY_NAME#' => CCrmOwnerType::GetDescription($this->entityTypeId),
+			]),
+			code: 'DEFINED_CATEGORY',
+			customData: [
+				'FIELD' => $this->categoryIdField,
+				'PARENT_OBJECT' => $this->dto->getName(),
+				'ENTITY_TYPE_ID' => $this->entityTypeId,
+			],
+		);
 	}
 }

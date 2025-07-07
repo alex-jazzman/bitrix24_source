@@ -21,15 +21,13 @@ final class RenameParameters extends Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			Logic::or([
+			Logic::or($this, [
 				new EnumField($this, 'entityTypeId', [CCrmOwnerType::Deal]),
 				new IsPossibleDynamicType($this, 'entityTypeId'),
 			]),
 
-			new IntegerField($this, 'categoryId', -1),
 			new DefinedCategoryIdentifier($this, 'entityTypeId', 'categoryId'),
 
-			new RequiredField($this, 'title'),
 			new NotEmptyField($this, 'title'),
 		];
 	}

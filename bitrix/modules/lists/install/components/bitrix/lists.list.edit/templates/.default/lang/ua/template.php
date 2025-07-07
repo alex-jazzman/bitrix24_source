@@ -67,3 +67,4 @@ $MESS["CT_BLLE_TOOLBAR_LIST_TITLE"] = "Перегляд і редагуванн�
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_PROCESSES"] = "Перенести в процеси";
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_WARNING_PROCESS"] = "Ви впевнені, що хочете перенести цей список?";
 $MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";
+$MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "До списку";

@@ -1,12 +1,22 @@
+import { Builder } from 'crm.integration.analytics';
 import { Extension, Loc, Tag, Type } from 'main.core';
+import { sendData } from 'ui.analytics';
+import 'ui.feedback.form';
+
+type Analytics = {
+	type: string,
+	subSection: string,
+}
 
 export class Footer
 {
 	#showSettingsButton: boolean = false;
+	#analytics: Analytics = {};
 
-	constructor(showSettingsButton: boolean = false)
+	constructor(showSettingsButton: boolean = false, analytics: Analytics = {})
 	{
 		this.#showSettingsButton = showSettingsButton;
+		this.#analytics = analytics;
 	}
 
 	getFooterContent(): HTMLElement
@@ -39,46 +49,40 @@ export class Footer
 
 	#onSettingsClick(): void
 	{
+		const eventBuilder = this.#getClickEventBuilder();
+		eventBuilder.setElement('config');
+		sendData(eventBuilder.buildData());
+
 		window.location.href = '/crm/repeat-sale-segment/';
 	}
 
 	#onFeedbackClick(): void
 	{
-		const [numberCode, stringCode] = this.#getFeedbackFormParams();
+		const eventBuilder = this.#getClickEventBuilder();
+		eventBuilder.setElement('feedback');
+		sendData(eventBuilder.buildData());
 
-		this.#showFeedbackCrmForm(numberCode, stringCode);
+		this.#showFeedbackCrmForm();
 	}
 
-	#showFeedbackCrmForm(numberCode: number, stringCode: string): void
+	#showFeedbackCrmForm(): void
 	{
-		BX.SidePanel.Instance.open(
-			'bx-repeat-sale-slider',
-			{
-				contentCallback: () => {
-					return `<script data-b24-form="inline/${numberCode}/${stringCode}" data-skip-moving="true"></script>`;
-				},
-				width: 664,
-				loader: 'default-loader',
-				cacheable: false,
-				closeByEsc: false,
-				data: { rightBoundary: 0 },
-				events: {
-					onOpen: () => {
-						(function(w,d,u){
-							var s=d.createElement('script');
-							s.async=true;
-							s.src=u+'?'+(Date.now()/180000|0);
-							var h=d.getElementsByTagName('script')[0];
-							h.parentNode.insertBefore(s,h);
-						})(window,document,`https://cdn.bitrix24.com/b5309667/crm/form/loader_${numberCode}.js`);
-					},
-				},
-			},
-		);
+		BX.UI.Feedback.Form.open({
+			id: Math.random().toString(),
+			forms: this.#getFeedbackFormParams(),
+		});
 	}
 
 	#getFeedbackFormParams(): Array
 	{
 		return Extension.getSettings('crm.repeat-sale.widget').get('feedbackFormParams');
+	}
+
+	#getClickEventBuilder(): Builder.RepeatSale.Banner.ClickEvent
+	{
+		const type = this.#analytics.type;
+		const subSection = this.#analytics.subSection;
+
+		return Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
 	}
 }

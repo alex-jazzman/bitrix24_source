@@ -9,6 +9,8 @@ use Bitrix\Main\Result;
 
 abstract class Category implements \JsonSerializable
 {
+	protected const SORT_INCREMENT = 100;
+
 	abstract public function getId(): ?int;
 
 	abstract public function getEntityTypeId(): int;
@@ -129,5 +131,19 @@ abstract class Category implements \JsonSerializable
 	private function sendBitrixEvent(string $type, array $parameters = []): void
 	{
 		(new Event('crm', $type, $parameters))->send();
+	}
+
+	public function setSortAfterMaxCategory(): static
+	{
+		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+		if ($factory === null || !$factory->isCategoriesSupported())
+		{
+			return $this;
+		}
+
+		$sortList = array_map(static fn (Category $category) => $category->getSort(), $factory->getCategories());
+		$maxSort = empty($sortList) ? 0 : max($sortList);
+
+		return $this->setSort($maxSort + static::SORT_INCREMENT);
 	}
 }

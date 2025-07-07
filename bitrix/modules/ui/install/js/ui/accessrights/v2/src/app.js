@@ -175,10 +175,11 @@ export class App
 						this.#accessRightsModel.setInitialAccessRights(accessRights);
 					}
 
-					// reset modification flags and stuff
-					this.#resetState();
 					const guid: string = this.#guid;
 					EventEmitter.emit('BX.UI.AccessRights.V2:afterSave', { userGroups, accessRights, guid });
+
+					// reset modification flags and stuff
+					this.#resetState();
 
 					this.#showNotification(Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SETTINGS_HAVE_BEEN_SAVED'));
 				})

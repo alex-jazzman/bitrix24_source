@@ -130,7 +130,7 @@ class EntityEditorConfig
 			|| \CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID);
 	}
 
-	protected function getConfigId(): string
+	public function getConfigId(): string
 	{
 		$optionName = $this->resolveOptionName();
 		if($optionName === '')

@@ -609,8 +609,10 @@ if ($effectiveCategoryID >= 0)
 
 $arResult['CATEGORY_LIST'] = DealCategory::prepareSelectListItems($arResult['CATEGORY_ACCESS']['READ']);
 
+$isExtendedInternal = $arParams['EXTENDED_INTERNAL_MODE'] ?? null;
+
 //region Filter Presets Initialization
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal)
 {
 	$flags = Crm\Filter\DealSettings::FLAG_NONE | Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
 	if ($arParams['IS_RECURRING'] === 'Y')
@@ -684,7 +686,7 @@ if (isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 $fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
 //endregion
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
 
@@ -1285,7 +1287,9 @@ if (
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
 }
 
-if ($bInternal && ($arParams['USE_ALL_HEADER_SECTIONS'] ?? null !== true))
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
+
+if ($bInternal && $isExtendedInternal !== true)
 {
 	$arResult['HEADERS_SECTIONS'] = [
 		[
@@ -1348,7 +1352,7 @@ $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\O
 
 $arResult['HEADERS'] = array_values($arResult['HEADERS']);
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$clientFieldHeaders = [];
 	if (Bitrix\Crm\Component\EntityList\ClientDataProvider::getPriorityEntityTypeId() === \CCrmOwnerType::Contact)
@@ -1509,7 +1513,7 @@ if (isset($arFilter['CLOSEDATE_datesel']) && $arFilter['CLOSEDATE_datesel'] === 
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmDeal::$sUFEntityID, $arFilter);
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$contactDataProvider->prepareFilter($arResult['FILTER'], $arFilter);
 	$companyDataProvider->prepareFilter($arResult['FILTER'], $arFilter);
@@ -1915,7 +1919,7 @@ if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSele
 
 $userDataProvider->prepareSelect($arSelect);
 $observersDataProvider->prepareSelect($arSelect);
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$contactDataProvider->prepareSelect($arSelect);
 	$companyDataProvider->prepareSelect($arSelect);
@@ -2420,7 +2424,7 @@ if ($arResult['CAN_EXCLUDE'])
 	$arResult['CAN_EXCLUDE'] = !empty($excludeApplicableList);
 }
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$contactDataProvider->appendResult($arResult['DEAL']);
 	$companyDataProvider->appendResult($arResult['DEAL']);
@@ -2922,7 +2926,7 @@ foreach ($CCrmUserType->GetAbstractFields() as $userFieldId => $userFieldData)
 {
 	$displayFields[$userFieldId] = Crm\Service\Display\Field::createFromUserField($userFieldId, $userFieldData);
 }
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$displayFields = array_merge(
 		$displayFields,

@@ -5,6 +5,7 @@ namespace Bitrix\Crm\RepeatSale\Segment;
 use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\RepeatSale\Log\Controller\RepeatSaleLogController;
+use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Queue\Controller\RepeatSaleQueueController;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
 use Bitrix\Crm\Service\Container;
@@ -72,5 +73,7 @@ final class SegmentManager
 		Option::set('crm', $availabilityChecker::ENABLE_PENDING_OPTION_NAME, 'Y');
 
 		RepeatSaleQueueController::getInstance()->deleteOnlyCalcItems();
+
+		(new Logger())->debug('The flow is updated to pending', []);
 	}
 }

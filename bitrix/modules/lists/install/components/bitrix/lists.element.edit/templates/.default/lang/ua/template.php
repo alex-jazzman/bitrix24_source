@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CT_BLEE_ACCESS_RIGHTS"] = "Групи користувачів, що мають доступ до списку";
 $MESS["CT_BLEE_ADD_BUTTON"] = "Додати";
 $MESS["CT_BLEE_BIZPROC_CANCEL_BUTTON"] = "Скасування";
@@ -51,5 +51,5 @@ $MESS["CT_BLEE_TOOLBAR_DELETE_TITLE"] = "Видалити елемент і по
 $MESS["CT_BLEE_TOOLBAR_DELETE_WARNING"] = "Ви впевнені, що хочете видалити цей елемент?";
 $MESS["CT_BLEE_TOOLBAR_LIST_TITLE"] = "Перейти до списку елементів";
 $MESS["CT_BLEE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";
+$MESS["CT_BLEE_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "До списку";
 $MESS["CT_BLEE_UN_LOCK_ELEMENT"] = "Розблокувати";
-?>

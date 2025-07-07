@@ -9,6 +9,7 @@ use Bitrix\Crm\Result;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Main\Localization\Loc;
 
 final class Delete implements AIFunction
 {
@@ -47,7 +48,7 @@ final class Delete implements AIFunction
 
 		if ($category->getIsDefault())
 		{
-			return Result::fail('Cannot delete default category');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_CATEGORY_DELETE_DEFAULT_CATEGORY_ERROR'), 'DELETE_DEFAULT_CATEGORY');
 		}
 
 		return $category->delete();

@@ -2,10 +2,15 @@
 
 namespace Bitrix\Crm\RepeatSale\Service\Action;
 
+use Bitrix\Crm\Activity\Analytics\Dictionary;
 use Bitrix\Crm\Activity\Entity;
 use Bitrix\Crm\Activity\Provider\RepeatSale;
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
+use Bitrix\Crm\Integration\Analytics\Builder\Activity\AddActivityEvent;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\RepeatSale\CostManager;
 use Bitrix\Crm\RepeatSale\Segment\SegmentItem;
 use Bitrix\Crm\RepeatSale\Service\Context;
 use Bitrix\Main\Error;
@@ -13,7 +18,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
-class CreateActivityAction implements ActionInterface
+final class CreateActivityAction implements ActionInterface
 {
 	public function process(
 		Item $clientItem,
@@ -34,7 +39,13 @@ class CreateActivityAction implements ActionInterface
 			return $this->getErrorResult();
 		}
 
-		$activityId = $this->addActivity($item, $assignmentUserId, $context);
+		$activityId = $this->addActivity(
+			$item,
+			$clientItem,
+			$assignmentUserId,
+			$context,
+			$segmentItem,
+		);
 		if ($activityId === null)
 		{
 			return $this->getErrorResult();
@@ -48,12 +59,19 @@ class CreateActivityAction implements ActionInterface
 		return (new Result())->addError(new Error(Loc::getMessage('CRM_REPEAT_SALE_ACTION_CREATE_ACTIVITY_ERROR')));
 	}
 
-	private function addActivity(Item $item, int $assignmentUserId, ?Context $context = null): ?int
+	private function addActivity(
+		Item $item,
+		Item $clientItem,
+		int $assignmentUserId,
+		?Context $context = null,
+		?SegmentItem $segmentItem = null,
+	)
+	: ?int
 	{
-		$segmentId = $context?->getSegmentId() ?? 0;
+		$segmentId = $segmentItem?->getId() ?? 0;
 		if ($segmentId <= 0)
 		{
-			return null; // @todo: $this->addError(ErrorCode::getNotFoundError());
+			return null;
 		}
 
 		$identifier = ItemIdentifier::createFromArray([
@@ -63,14 +81,15 @@ class CreateActivityAction implements ActionInterface
 
 		if (!$identifier)
 		{
-			return null; // @todo: $this->addError(ErrorCode::getNotFoundError());
+			return null;
 		}
 
 		$deadline = (new DateTime())->add('+15 day');
+		$isAiAutoStartEnabled = $this->isAutomaticProcessingAllowed() && $segmentItem?->isAiEnabled();
 		$activity = new Entity\RepeatSale($identifier, new RepeatSale());
 		$activity
 			->setSubject(Loc::getMessage('CRM_REPEAT_SALE_ACTION_CREATE_ACTIVITY_TITLE', ['#ENTITY_ID#' => $item->getId()]))
-			->setDescription('') // use description from segment for
+			->setDescription($segmentItem?->getPrompt() ?? '')
 			->setResponsibleId($item->getAssignedById())
 			->setDeadline($deadline)
 			->setAuthorId($assignmentUserId)
@@ -79,6 +98,9 @@ class CreateActivityAction implements ActionInterface
 					'PROVIDER_PARAMS' => [
 						'JOB_ID' => $context?->getJobId(),
 						'SEGMENT_ID' => $segmentId,
+						'CLIENT_ENTITY_TYPE_ID' => $clientItem->getEntityTypeId(),
+						'CLIENT_ENTITY_ID' => $clientItem->getId(),
+						'IS_AI_AUTO_START_ENABLED' => $isAiAutoStartEnabled,
 					],
 					'IS_INCOMING_CHANNEL' => 'Y',
 				]
@@ -86,12 +108,39 @@ class CreateActivityAction implements ActionInterface
 			->setCheckPermissions(false)
 		;
 
+		$activityId = null;
+		$analyticsStatus = \Bitrix\Crm\Integration\Analytics\Dictionary::STATUS_ERROR;
 		$saveResult = $activity->save();
 		if ($saveResult->isSuccess())
 		{
-			return $activity->getId();
+			$analyticsStatus = \Bitrix\Crm\Integration\Analytics\Dictionary::STATUS_SUCCESS;
+
+			$activityId = $activity->getId();
 		}
 
-		return null; // @todo: return errors [$saveResult->getErrors();]
+		AddActivityEvent::createDefault($identifier->getEntityTypeId())
+			->setType(Dictionary::REPEAT_SALE_TYPE)
+			->setElement(Dictionary::REPEAT_SALE_ELEMENT_SYS)
+			->setStatus($analyticsStatus)
+			->setP5('segment', str_replace('_', '-', $segmentItem?->getCode() ?? ''))
+			->buildEvent()
+			->send()
+		;
+
+		return $activityId;
+	}
+
+	private function isAutomaticProcessingAllowed(): bool
+	{
+		$isAiEnabled = AIManager::isAiCallProcessingEnabled()
+			&& AIManager::isEnabledInGlobalSettings(GlobalSetting::RepeatSale)
+		;
+
+		if (!$isAiEnabled)
+		{
+			return false;
+		}
+
+		return CostManager::isSponsoredOperation() || AIManager::isBaasServiceHasPackage();
 	}
 }

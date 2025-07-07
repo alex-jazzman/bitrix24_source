@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,im_public,main_date,crm_timeline_tools,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,crm_entityEditor_field_paymentDocuments,pull_client,calendar_util,main_popup,calendar_sharing_interface,crm_ai_call,ui_hint,ui_dialogs_messagebox,main_core_events,ui_imageStackSteps,ui_iconSet_main,ui_designTokens,crm_timeline_item,main_core,crm_router,ui_infoHelper,ui_notification) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,im_public,main_date,crm_timeline_tools,ai_engine,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,crm_entityEditor_field_paymentDocuments,pull_client,calendar_util,main_popup,calendar_sharing_interface,crm_ai_call,ui_hint,main_core_events,ui_imageStackSteps,ui_iconSet_main,ui_designTokens,crm_timeline_item,crm_router,main_core,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,ui_notification) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -568,7 +568,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.formatUserTime('F');
 	    },
 	    dayWeek() {
-	      return this.formatUserTime('D');
+	      const dayShortName = this.formatUserTime('D');
+	      if (this.time.length > 5)
+	        // "12:34".length === 5, if +" PM" than > 5
+	        {
+	          return dayShortName.slice(0, 2);
+	        }
+	      return dayShortName;
 	    },
 	    time() {
 	      return this.getDateTimeConverter().toTimeString();
@@ -968,7 +974,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      uiButton: Object.freeze(null),
 	      timerSecondsRemaining: 0,
 	      currentState: this.state,
-	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
+	      hintText: main_core.Type.isStringFilled(this.tooltip) ? this.tooltip : ''
 	    };
 	  },
 	  computed: {
@@ -2604,12 +2610,13 @@ this.BX.Crm = this.BX.Crm || {};
 	     *
 	     * @param activityId Activity ID
 	     * @param scheduleDate Date to use in editor
+	     * @param description Default description to use in editor
 	     *
 	     * @protected
 	     */
 	  }, {
 	    key: "runScheduleAction",
-	    value: function runScheduleAction(activityId, scheduleDate) {
+	    value: function runScheduleAction(activityId, scheduleDate, description = '') {
 	      var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
 	      const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
 	      if (menuBar) {
@@ -2620,6 +2627,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          todoEditor.focus();
 	          todoEditor.setParentActivityId(activityId);
 	          todoEditor.setDeadLine(scheduleDate);
+	          if (main_core.Type.isStringFilled(description)) {
+	            todoEditor.setDescription(description);
+	            todoEditor.focus();
+	          }
 	        }, 250);
 	      }
 	    }
@@ -3650,6 +3661,13 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "YELLOW", 'yellow');
 	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "WHITE", 'white');
 
+	let EditableDescriptionAiStatus = function EditableDescriptionAiStatus() {
+	  babelHelpers.classCallCheck(this, EditableDescriptionAiStatus);
+	};
+	babelHelpers.defineProperty(EditableDescriptionAiStatus, "NONE", '');
+	babelHelpers.defineProperty(EditableDescriptionAiStatus, "SUCCESS", 'success');
+	babelHelpers.defineProperty(EditableDescriptionAiStatus, "IN_PROGRESS", 'in_progress');
+
 	const Loader = {
 	  mounted() {
 	    this.renderLottieAnimation();
@@ -3680,59 +3698,46 @@ this.BX.Crm = this.BX.Crm || {};
 	    Loader
 	  },
 	  props: {
-	    text: {
+	    status: {
 	      type: String,
-	      required: true
-	    },
-	    animated: {
-	      type: Boolean,
-	      required: false,
-	      default: false
+	      required: true,
+	      validator: value => {
+	        return [EditableDescriptionAiStatus.NONE, EditableDescriptionAiStatus.SUCCESS, EditableDescriptionAiStatus.IN_PROGRESS].includes(value);
+	      }
 	    }
 	  },
 	  computed: {
+	    text() {
+	      if (this.status === EditableDescriptionAiStatus.IN_PROGRESS) {
+	        return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER_PENDING');
+	      }
+	      if (this.status === EditableDescriptionAiStatus.SUCCESS) {
+	        return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER');
+	      }
+	      return '';
+	    },
+	    isAnimated() {
+	      return this.status === EditableDescriptionAiStatus.IN_PROGRESS;
+	    },
 	    className() {
 	      return ['crm-timeline-block-internal-copilot-header', {
-	        '--animated': this.animated
+	        '--animated': this.status === EditableDescriptionAiStatus.IN_PROGRESS
 	      }];
 	    }
 	  },
 	  template: `
 		<div :class="className">
 			<div class="crm-timeline-block-internal-copilot-header-icon">
-				<Loader v-if="animated"></Loader>
+				<Loader v-if="isAnimated"></Loader>
 			</div>
-			{{ text }}
+			<div class="crm-timeline-block-internal-copilot-header_text">{{ text }}</div>
+			<div
+				v-if="isAnimated"
+				class="crm-timeline-block-internal-copilot-header_stage"
+			>
+				<div class="crm-timeline-block-internal-copilot-header_dot-flashing"></div>
+			</div>
 		</div>
-	`
-	};
-
-	const HELP_ARTICLE_CODE = '20412666';
-	var CopilotFooter = {
-	  computed: {
-	    getText() {
-	      return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_COPILOT_WARNING_TEXT', {
-	        '#LINK_START#': '<a class="crm-timeline-block-internal-copilot-footer-more">',
-	        '#LINK_END#': '</a>'
-	      });
-	    }
-	  },
-	  methods: {
-	    openHelpArticle(event) {
-	      if (!main_core.Dom.hasClass(event.target, 'crm-timeline-block-internal-copilot-footer-more')) {
-	        return;
-	      }
-	      if (top.BX && top.BX.Helper) {
-	        top.BX.Helper.show(`redirect=detail&code=${HELP_ARTICLE_CODE}`);
-	      }
-	    }
-	  },
-	  template: `
-		<div 
-			class="crm-timeline-block-internal-copilot-footer"
-			v-html="getText"
-			@click="openHelpArticle"
-		></div>
 	`
 	};
 
@@ -3740,49 +3745,44 @@ this.BX.Crm = this.BX.Crm || {};
 	  components: {
 	    Button,
 	    CopilotHeader,
-	    CopilotFooter,
 	    TextEditorComponent: ui_textEditor.TextEditorComponent,
 	    HtmlFormatterComponent: ui_bbcode_formatter_htmlFormatter.HtmlFormatterComponent
 	  },
 	  props: {
+	    headerText: {
+	      type: String,
+	      default: ''
+	    },
 	    text: {
 	      type: String,
-	      required: false,
 	      default: ''
 	    },
 	    saveAction: {
 	      type: Object,
-	      required: false,
 	      default: null
 	    },
 	    editable: {
 	      type: Boolean,
-	      required: false,
 	      default: true
 	    },
 	    copied: {
 	      type: Boolean,
-	      required: false,
 	      default: false
 	    },
 	    height: {
 	      type: String,
-	      required: false,
 	      default: EditableDescriptionHeight.SHORT
 	    },
 	    backgroundColor: {
 	      type: String,
-	      required: false,
 	      default: ''
+	    },
+	    copilotStatus: {
+	      type: String,
+	      default: EditableDescriptionAiStatus.NONE
 	    },
 	    copilotSettings: {
 	      type: Object,
-	      required: false,
-	      default: []
-	    },
-	    copilotResultCfg: {
-	      type: Object,
-	      required: false,
 	      default: []
 	    }
 	  },
@@ -3790,7 +3790,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.textEditor = null;
 	  },
 	  data() {
-	    var _this$copilotResultCf, _this$copilotResultCf2, _this$copilotResultCf3, _this$copilotResultCf4, _this$copilotResultCf5, _this$copilotResultCf6, _this$copilotResultCf7;
 	    return {
 	      isEdit: false,
 	      isSaving: false,
@@ -3798,10 +3797,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      isCollapsed: false,
 	      bbcode: this.text,
 	      isContentEmpty: main_core.Type.isString(this.text) && this.text.trim() === '',
-	      isCopied: this.copied,
-	      isCopilotHeader: main_core.Type.isStringFilled((_this$copilotResultCf = this.copilotResultCfg) === null || _this$copilotResultCf === void 0 ? void 0 : _this$copilotResultCf.header),
-	      isCopilotFooter: main_core.Type.isStringFilled((_this$copilotResultCf2 = this.copilotResultCfg) === null || _this$copilotResultCf2 === void 0 ? void 0 : _this$copilotResultCf2.footer) || main_core.Type.isBoolean((_this$copilotResultCf3 = this.copilotResultCfg) === null || _this$copilotResultCf3 === void 0 ? void 0 : _this$copilotResultCf3.footer) && ((_this$copilotResultCf4 = this.copilotResultCfg) === null || _this$copilotResultCf4 === void 0 ? void 0 : _this$copilotResultCf4.footer) === true,
-	      isCopilotAnimated: main_core.Type.isStringFilled((_this$copilotResultCf5 = this.copilotResultCfg) === null || _this$copilotResultCf5 === void 0 ? void 0 : _this$copilotResultCf5.header) && main_core.Type.isBoolean((_this$copilotResultCf6 = this.copilotResultCfg) === null || _this$copilotResultCf6 === void 0 ? void 0 : _this$copilotResultCf6.animated) && ((_this$copilotResultCf7 = this.copilotResultCfg) === null || _this$copilotResultCf7 === void 0 ? void 0 : _this$copilotResultCf7.animated) === true
+	      currentCopilotStatus: this.copilotStatus,
+	      currentHeaderText: this.headerText
 	    };
 	  },
 	  inject: ['isReadOnly', 'isLogMessage'],
@@ -3812,12 +3809,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        '--is-edit': this.isEdit,
 	        '--is-long': this.isLongText,
 	        '--is-expanded': this.isCollapsed || !this.isLongText,
-	        '--copiloted': this.isCopiloted
+	        '--copiloted': !this.isEdit && this.currentCopilotStatus !== EditableDescriptionAiStatus.NONE
 	      }];
 	    },
 	    textClassName() {
 	      return ['crm-timeline__editable-text_text', {
-	        '--hidden': this.isCopilotAnimated
+	        '--hidden': this.currentCopilotStatus === EditableDescriptionAiStatus.IN_PROGRESS
 	      }];
 	    },
 	    heightClassnameModifier() {
@@ -3844,10 +3841,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.editable && this.saveAction && !this.isReadOnly;
 	    },
 	    isCopied() {
-	      return !this.isEdit && this.isCopied;
-	    },
-	    isCopiloted() {
-	      return !this.isEdit && (this.isCopilotHeader || this.isCopilotFooter);
+	      return !this.isEdit && this.copied;
 	    },
 	    saveTextButtonProps() {
 	      return {
@@ -4042,22 +4036,35 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      return this.textEditor;
+	    },
+	    getHeaderText() {
+	      return this.currentHeaderText;
+	    },
+	    setHeaderText(headerText) {
+	      this.currentHeaderText = headerText;
+	      void this.$nextTick(() => {
+	        this.isLongText = this.checkIsLongText();
+	      });
+	    },
+	    setCopilotStatus(status) {
+	      this.currentCopilotStatus = status;
+	      void this.$nextTick(() => {
+	        this.isLongText = this.checkIsLongText();
+	      });
 	    }
 	  },
 	  watch: {
 	    text(newTextValue) {
 	      this.bbcode = newTextValue;
-	      this.$nextTick(() => {
+	      void this.$nextTick(() => {
 	        this.isLongText = this.checkIsLongText();
 	      });
 	    },
-	    copied(newValue) {
-	      this.isCopied = newValue;
+	    copilotStatus(newStatus) {
+	      this.currentCopilotStatus = newStatus;
 	    },
-	    copilotResultCfg(newValue) {
-	      this.isCopilotHeader = main_core.Type.isStringFilled(newValue.header);
-	      this.isCopilotFooter = main_core.Type.isStringFilled(newValue.footer) || main_core.Type.isBoolean(newValue.footer) && newValue.footer === true;
-	      this.isCopilotAnimated = main_core.Type.isStringFilled(newValue.header) && main_core.Type.isBoolean(newValue.animated) && newValue.animated === true;
+	    headerText(newHeaderText) {
+	      this.currentHeaderText = newHeaderText;
 	    },
 	    isCollapsed(isCollapsed) {
 	      if (isCollapsed === false && this.isInViewport() === false) {
@@ -4084,7 +4091,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  mounted() {
-	    this.$nextTick(() => {
+	    void this.$nextTick(() => {
 	      this.isLongText = this.checkIsLongText();
 	    });
 	  },
@@ -4116,10 +4123,16 @@ this.BX.Crm = this.BX.Crm || {};
 					<i class="crm-timeline__editable-text_edit-icon"></i>
 				</button>
 				<div class="crm-timeline__editable-text_inner">
+					<div
+						v-if="!isEditable && currentHeaderText !== ''"
+						v-html="currentHeaderText"
+						class="crm-timeline__editable-text_header-text"
+					>
+					</div>
 					<CopilotHeader 
-						v-if="isCopilotHeader"
-						:text="this.copilotResultCfg?.header"
-						:animated = "this.isCopilotAnimated"
+						ref="copilotHeader"
+						v-if="currentCopilotStatus !== ''"
+						:status="currentCopilotStatus"
 						class="crm-timeline__editable-text-copilot-header"
 					></CopilotHeader>
 					<div class="crm-timeline__editable-text_content">
@@ -4161,10 +4174,6 @@ this.BX.Crm = this.BX.Crm || {};
 					{{ expandButtonText }}
 				</button>
 			</div>
-			<CopilotFooter
-				v-if="isCopilotFooter"
-				class="crm-timeline__editable-text-copilot-footer"
-			></CopilotFooter>
 		</div>
 	`
 	};
@@ -4808,32 +4817,30 @@ this.BX.Crm = this.BX.Crm || {};
 	    action: Object,
 	    title: {
 	      type: String,
-	      required: false,
 	      default: ''
 	    },
 	    color: {
 	      type: String,
-	      required: false,
 	      default: ''
 	    },
 	    bold: {
 	      type: Boolean,
-	      required: false,
 	      default: false
+	    },
+	    size: {
+	      type: String,
+	      default: 'md'
 	    },
 	    decoration: {
 	      type: String,
-	      required: false,
 	      default: ''
 	    },
 	    icon: {
 	      type: String,
-	      required: false,
 	      default: ''
 	    },
 	    rowLimit: {
 	      type: Number,
-	      required: false,
 	      default: 0
 	    }
 	  },
@@ -4866,7 +4873,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return attrs;
 	    },
 	    className() {
-	      return ['crm-timeline__card_link', this.colorClassName, this.boldClassName, this.decorationClassName, this.rowLimitClassName];
+	      return ['crm-timeline__card_link', this.colorClassName, this.boldClassName, this.sizeClassname, this.decorationClassName, this.rowLimitClassName];
 	    },
 	    colorClassName() {
 	      var _TextColor$upperCaseC;
@@ -4876,6 +4883,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    boldClassName() {
 	      return this.bold ? '--bold' : '';
+	    },
+	    sizeClassname() {
+	      var _TextSize$upperCaseSi;
+	      const upperCaseSizeProp = this.size ? this.size.toUpperCase() : '';
+	      const size = (_TextSize$upperCaseSi = TextSize[upperCaseSizeProp]) !== null && _TextSize$upperCaseSi !== void 0 ? _TextSize$upperCaseSi : TextSize.SM;
+	      return `--size-${size}`;
 	    },
 	    decorationClassName() {
 	      var _TextDecoration$upper;
@@ -4912,24 +4925,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  },
-	  template: `
-			<a
-				v-if="href"
-				v-bind="linkAttrs"
-				:class="className"
-				:title="title"
-				:style="rowLimitStyle"
-			>{{text}}<span v-if="icon" :class="iconClassName"></span>
-			</a>
-			<span
-				v-else
-				@click="executeAction"
-				:class="className"
-				:title="title"
-				:style="rowLimitStyle"
-			>{{text}}<span v-if="icon" :class="iconClassName"></span>
-			</span>
-		`
+	  template: `<a
+			v-if="href"
+			v-bind="linkAttrs"
+			:class="className"
+			:title="title"
+			:style="rowLimitStyle"
+		>{{text}}<span v-if="icon" :class="iconClassName"></span>
+		</a>
+		<span
+			v-else
+			@click="executeAction"
+			:class="className"
+			:title="title"
+			:style="rowLimitStyle"
+		>{{text}}<span v-if="icon" :class="iconClassName"></span>
+		</span>`
 	};
 
 	var EditableDate = {
@@ -6234,56 +6245,6 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const CopilotLaunchButton = {
-	  props: {
-	    title: {
-	      type: String,
-	      default: ''
-	    },
-	    tooltip: {
-	      type: String,
-	      default: ''
-	    },
-	    action: Object | null
-	  },
-	  data() {
-	    return {
-	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
-	    };
-	  },
-	  methods: {
-	    executeAction() {
-	      if (this.action) {
-	        const action = new Action(this.action);
-	        void action.execute(this);
-	      }
-	    },
-	    showTooltip() {
-	      if (this.hintText === '') {
-	        return;
-	      }
-	      BX.UI.Hint.show(this.$el, this.hintText, true);
-	    },
-	    hideTooltip() {
-	      if (this.hintText === '') {
-	        return;
-	      }
-	      BX.UI.Hint.hide(this.$el);
-	    }
-	  },
-	  template: `
-		<button 
-			class="crm-timeline__copilot-launch-button"
-			@click="executeAction"
-			@mouseover="showTooltip"
-			@mouseleave="hideTooltip"
-		>
-			<div class="crm-timeline__copilot-launch-button-icon"></div>
-			{{ title }}
-		</button>
-	`
-	};
-
 	let DeadlineAndPingSelectorBackgroundColor = function DeadlineAndPingSelectorBackgroundColor() {
 	  babelHelpers.classCallCheck(this, DeadlineAndPingSelectorBackgroundColor);
 	};
@@ -6668,6 +6629,87 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	let ErrorType = function ErrorType() {
+	  babelHelpers.classCallCheck(this, ErrorType);
+	};
+	babelHelpers.defineProperty(ErrorType, "AI", 'ai');
+
+	const ErrorBlock = {
+	  props: {
+	    title: {
+	      type: String,
+	      required: true,
+	      default: ''
+	    },
+	    description: {
+	      type: String,
+	      required: true,
+	      default: ''
+	    },
+	    closable: {
+	      type: Boolean,
+	      required: true,
+	      default: false
+	    },
+	    type: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  data() {
+	    return {
+	      isClosable: this.closable
+	    };
+	  },
+	  computed: {
+	    iconClassname() {
+	      return {
+	        'crm-timeline__error-block__header-icon': true,
+	        '--ai': this.type === ErrorType.AI
+	      };
+	    },
+	    encodedTitle() {
+	      return main_core.Text.encode(this.title);
+	    },
+	    encodedDescription() {
+	      return main_core.Text.encode(this.description);
+	    }
+	  },
+	  methods: {
+	    closeBlock() {
+	      const blockEl = this.$refs.rootElement;
+	      if (main_core.Type.isDomNode(blockEl)) {
+	        main_core.Dom.addClass(blockEl, '--hidden');
+	        setTimeout(() => {
+	          main_core.Dom.remove(blockEl);
+	        }, 700);
+	      }
+	    }
+	  },
+	  template: `
+		<div ref="rootElement" class="crm-timeline__error-block_wrapper">
+			<div class="crm-timeline__error-block">
+				<div class="crm-timeline__error-block__header">
+					<div :class="iconClassname"></div>
+					<div
+						class="crm-timeline__error-block__header-title"
+						v-html="encodedTitle"
+					></div>
+					<button
+						v-if="isClosable"
+						@click="closeBlock"
+						class="crm-timeline__error-block_close-btn"
+					></button>
+				</div>
+				<div
+					class="crm-timeline__error-block__description"
+					v-html="encodedDescription"
+				></div>
+			</div>
+		</div>
+	`
+	};
+
 	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$7(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -6717,7 +6759,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        WorkflowEfficiency,
 	        CallScoringPill,
 	        CallScoring,
-	        CopilotLaunchButton
+	        ErrorBlock
 	      };
 	    }
 	    /**
@@ -10792,15 +10834,29 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateMethodInitSpec$t(obj, privateSet) { _checkPrivateRedeclaration$w(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$w(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$t(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	const COPILOT_BUTTON_DISABLE_DELAY$1 = 5000;
+	const COPILOT_HELPDESK_CODE$1 = 18799442;
 	var _openSegment = /*#__PURE__*/new WeakSet();
+	var _showRestrictionSlider = /*#__PURE__*/new WeakSet();
 	var _launchCopilot$1 = /*#__PURE__*/new WeakSet();
+	var _showAdditionalInfo$1 = /*#__PURE__*/new WeakSet();
+	var _showMarketMessageBox$1 = /*#__PURE__*/new WeakSet();
+	var _showFeedbackMessageBox$1 = /*#__PURE__*/new WeakSet();
+	var _isSliderCodeExist$1 = /*#__PURE__*/new WeakSet();
+	var _isAiMarketplaceAppsExist$1 = /*#__PURE__*/new WeakSet();
 	let RepeatSale = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(RepeatSale, _Base);
 	  function RepeatSale(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, RepeatSale);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(RepeatSale).call(this, ...args));
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _isAiMarketplaceAppsExist$1);
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _isSliderCodeExist$1);
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _showFeedbackMessageBox$1);
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _showMarketMessageBox$1);
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo$1);
 	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _launchCopilot$1);
+	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _showRestrictionSlider);
 	    _classPrivateMethodInitSpec$t(babelHelpers.assertThisInitialized(_this), _openSegment);
 	    return _this;
 	  }
@@ -10812,17 +10868,46 @@ this.BX.Crm = this.BX.Crm || {};
 	        actionType,
 	        actionData
 	      } = actionParams;
-	      if (actionType !== 'jsEvent' || !actionData) {
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:RepeatSale:ShowRestrictionSlider') {
+	        _classPrivateMethodGet$t(this, _showRestrictionSlider, _showRestrictionSlider2).call(this);
+	      }
+	      if (!main_core.Type.isObject(actionData)) {
 	        return;
 	      }
 	      if (action === 'Activity:RepeatSale:Schedule') {
-	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
+	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate, actionData.description);
 	      }
 	      if (action === 'Activity:RepeatSale:OpenSegment') {
-	        _classPrivateMethodGet$t(this, _openSegment, _openSegment2).call(this, actionData.activityId, actionData);
+	        _classPrivateMethodGet$t(this, _openSegment, _openSegment2).call(this, actionData.activityId, actionData.segmentId);
 	      }
-	      if (action === 'Activity:RepeatSale:LaunchCopilot' && actionData) {
-	        _classPrivateMethodGet$t(this, _launchCopilot$1, _launchCopilot2$1).call(this, item, actionData);
+	      if (action === 'Activity:RepeatSale:LaunchCopilot') {
+	        // @todo
+	        const isCopilotAgreementNeedShow = actionData.isCopilotAgreementNeedShow || false;
+	        if (isCopilotAgreementNeedShow) {
+	          main_core.Runtime.loadExtension('ai.copilot-agreement').then(({
+	            CopilotAgreement
+	          }) => {
+	            const copilotAgreementPopup = new CopilotAgreement({
+	              moduleId: 'crm',
+	              contextId: 'audio',
+	              events: {
+	                onAccept: () => _classPrivateMethodGet$t(this, _launchCopilot$1, _launchCopilot2$1).call(this, item, actionData)
+	              }
+	            });
+	            void copilotAgreementPopup.checkAgreement()
+	            // eslint-disable-next-line promise/no-nesting
+	            .then(isAgreementAccepted => {
+	              if (isAgreementAccepted) {
+	                _classPrivateMethodGet$t(this, _launchCopilot$1, _launchCopilot2$1).call(this, item, actionData);
+	              }
+	            });
+	          }).catch(() => console.error('Cant load "ai.copilot-agreement" extension'));
+	        } else {
+	          _classPrivateMethodGet$t(this, _launchCopilot$1, _launchCopilot2$1).call(this, item, actionData);
+	        }
 	      }
 	    }
 	  }], [{
@@ -10833,24 +10918,48 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return RepeatSale;
 	}(Base);
-	function _openSegment2(item, actionData) {
-	  if (!main_core.Type.isInteger(actionData.segmentId)) {
+	function _openSegment2(item, segmentId) {
+	  if (!main_core.Type.isInteger(segmentId)) {
 	    return;
 	  }
-	  crm_router.Router.openSlider(`/crm/repeat-sale-segment/details/${actionData.segmentId}/`, {
-	    width: 700,
+	  void crm_router.Router.openSlider(`/crm/repeat-sale-segment/details/${segmentId}/`, {
+	    width: 922,
 	    cacheable: false,
 	    requestMethod: 'post',
 	    requestParams: {
-	      readOnly: true
+	      readOnly: true,
+	      analytics: {
+	        section: 'deal_section'
+	      }
 	    }
 	  });
+	}
+	function _showRestrictionSlider2() {
+	  ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	    featureId: 'limit_v2_crm_repeat_sale'
+	  }).show();
 	}
 	function _launchCopilot2$1(item, actionData) {
 	  const isValidParams = main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId) && BX.CrmEntityType.enumeration.deal === parseInt(actionData.ownerTypeId, 10);
 	  if (!isValidParams) {
 	    throw new Error('Invalid "actionData" parameters');
 	  }
+	  const aiCopilotBtn = item.getLayoutFooterButtonById('aiButton');
+	  if (!aiCopilotBtn) {
+	    throw new Error('"CoPilot" button is not found in layout');
+	  }
+	  const aiCopilotBtnUI = aiCopilotBtn.getUiButton();
+	  const aiCopilotBtnUIPrevState = aiCopilotBtnUI.getState();
+	  if (aiCopilotBtnUI.getState() === ui_buttons.ButtonState.AI_WAITING) {
+	    return;
+	  }
+	  aiCopilotBtnUI.setState(ui_buttons.ButtonState.AI_WAITING);
+	  const descriptionBlock = item.getLayoutContentBlockById('description');
+	  const prevHeaderText = descriptionBlock === null || descriptionBlock === void 0 ? void 0 : descriptionBlock.getHeaderText();
+	  descriptionBlock === null || descriptionBlock === void 0 ? void 0 : descriptionBlock.setHeaderText('');
+	  descriptionBlock === null || descriptionBlock === void 0 ? void 0 : descriptionBlock.setCopilotStatus(EditableDescriptionAiStatus.IN_PROGRESS);
+	  const errorBlock = item.getLayoutContentBlockById('error');
+	  errorBlock === null || errorBlock === void 0 ? void 0 : errorBlock.closeBlock();
 	  main_core.ajax.runAction('crm.timeline.repeatsale.launchCopilot', {
 	    data: {
 	      activityId: actionData.activityId,
@@ -10858,20 +10967,123 @@ this.BX.Crm = this.BX.Crm || {};
 	      ownerId: actionData.ownerId
 	    }
 	  }).then(response => {}).catch(response => {
-	    var _customData$sliderCod;
 	    const customData = response.errors[0].customData;
-	    if (customData && main_core.Type.isStringFilled((_customData$sliderCod = customData.sliderCode) !== null && _customData$sliderCod !== void 0 ? _customData$sliderCod : '')) {
-	      ui_infoHelper.FeaturePromotersRegistry.getPromoter({
-	        code: customData.sliderCode
-	      }).show();
+	    if (customData) {
+	      _classPrivateMethodGet$t(this, _showAdditionalInfo$1, _showAdditionalInfo2$1).call(this, customData, item, actionData);
+	      aiCopilotBtnUI.setState(aiCopilotBtnUIPrevState || ui_buttons.ButtonState.ACTIVE);
+	      descriptionBlock === null || descriptionBlock === void 0 ? void 0 : descriptionBlock.setHeaderText(prevHeaderText);
+	      descriptionBlock === null || descriptionBlock === void 0 ? void 0 : descriptionBlock.setCopilotStatus(EditableDescriptionAiStatus.NONE);
 	    } else {
+	      aiCopilotBtnUI.setState(ui_buttons.ButtonState.DISABLED);
+	      descriptionBlock === null || descriptionBlock === void 0 ? void 0 : descriptionBlock.setHeaderText(prevHeaderText);
+	      descriptionBlock === null || descriptionBlock === void 0 ? void 0 : descriptionBlock.setCopilotStatus(EditableDescriptionAiStatus.NONE);
 	      ui_notification.UI.Notification.Center.notify({
 	        content: main_core.Text.encode(response.errors[0].message),
-	        autoHideDelay: 5000
+	        autoHideDelay: COPILOT_BUTTON_DISABLE_DELAY$1
 	      });
+	      setTimeout(() => {
+	        aiCopilotBtnUI.setState(ui_buttons.ButtonState.ACTIVE);
+	      }, COPILOT_BUTTON_DISABLE_DELAY$1);
 	    }
 	    throw response;
 	  });
+	}
+	function _showAdditionalInfo2$1(data, item, actionData) {
+	  if (_classPrivateMethodGet$t(this, _isSliderCodeExist$1, _isSliderCodeExist2$1).call(this, data)) {
+	    if (data.sliderCode === 'limit_boost_copilot') {
+	      main_core.Runtime.loadExtension('baas.store').then(({
+	        ServiceWidget,
+	        Analytics
+	      }) => {
+	        var _item$getLayoutFooter, _item$getLayoutFooter2;
+	        if (!ServiceWidget) {
+	          void ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	            code: 'limit_boost_copilot'
+	          }).show();
+	          console.error('Cant load "baas.store" extension');
+	        }
+	        const serviceWidget = ServiceWidget === null || ServiceWidget === void 0 ? void 0 : ServiceWidget.getInstanceByCode('ai_copilot_token');
+	        const bindElement = (_item$getLayoutFooter = item.getLayoutFooterButtonById('aiButton')) === null || _item$getLayoutFooter === void 0 ? void 0 : (_item$getLayoutFooter2 = _item$getLayoutFooter.getUiButton()) === null || _item$getLayoutFooter2 === void 0 ? void 0 : _item$getLayoutFooter2.getContainer();
+	        serviceWidget.bind(bindElement, Analytics.CONTEXT_CRM);
+	        serviceWidget.show(bindElement);
+	        serviceWidget.getPopup().adjustPosition({
+	          forceTop: true
+	        });
+	      }).catch(() => {
+	        void ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	          code: 'limit_boost_copilot'
+	        }).show();
+	        console.error('Cant load "baas.store" extension');
+	      });
+	    } else {
+	      var _data$sliderCode;
+	      (_data$sliderCode = data.sliderCode) !== null && _data$sliderCode !== void 0 && _data$sliderCode.includes('redirect=detail&code') ? top.BX.Helper.show(data.sliderCode) : ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	        code: data.sliderCode
+	      }).show();
+	    }
+	  } else if (_classPrivateMethodGet$t(this, _isAiMarketplaceAppsExist$1, _isAiMarketplaceAppsExist2$1).call(this, data)) {
+	    _classPrivateMethodGet$t(this, _showMarketMessageBox$1, _showMarketMessageBox2$1).call(this);
+	  } else {
+	    _classPrivateMethodGet$t(this, _showFeedbackMessageBox$1, _showFeedbackMessageBox2$1).call(this);
+	  }
+	}
+	function _showMarketMessageBox2$1() {
+	  ui_dialogs_messagebox.MessageBox.show({
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
+	      '[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE$1}');">`,
+	      '[/helpdesklink]': '</a>'
+	    }),
+	    modal: true,
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	    okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
+	    onOk: () => {
+	      return crm_router.Router.openSlider(main_core.Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK'));
+	    },
+	    onCancel: messageBox => {
+	      messageBox.close();
+	    }
+	  });
+	}
+	function _showFeedbackMessageBox2$1() {
+	  ui_dialogs_messagebox.MessageBox.show({
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'),
+	    modal: true,
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	    okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'),
+	    onOk: messageBox => {
+	      messageBox.close();
+	      BX.UI.Feedback.Form.open({
+	        id: 'b24_ai_provider_partner_crm_feedback',
+	        defaultForm: {
+	          id: 682,
+	          lang: 'en',
+	          sec: '3sd3le'
+	        },
+	        forms: [{
+	          zones: ['cn'],
+	          id: 678,
+	          lang: 'cn',
+	          sec: 'wyufoe'
+	        }, {
+	          zones: ['vn'],
+	          id: 680,
+	          lang: 'vn',
+	          sec: '2v97xr'
+	        }]
+	      });
+	    },
+	    onCancel: messageBox => {
+	      messageBox.close();
+	    }
+	  });
+	}
+	function _isSliderCodeExist2$1(data) {
+	  return Object.hasOwn(data, 'sliderCode') && main_core.Type.isStringFilled(data.sliderCode);
+	}
+	function _isAiMarketplaceAppsExist2$1(data) {
+	  return Object.hasOwn(data, 'isAiMarketplaceAppsExist') && main_core.Type.isBoolean(data.isAiMarketplaceAppsExist) && data.isAiMarketplaceAppsExist;
 	}
 
 	ControllerManager.registerController(Activity);
@@ -10914,5 +11126,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX.Crm,BX,BX.Calendar,BX.Main,BX.Calendar.Sharing,BX.Crm.AI,BX,BX.UI.Dialogs,BX.Event,BX.UI,BX,BX,BX.Crm.Timeline,BX,BX.Crm,BX.UI,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.AI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX.Crm,BX,BX.Calendar,BX.Main,BX.Calendar.Sharing,BX.Crm.AI,BX,BX.Event,BX.UI,BX,BX,BX.Crm.Timeline,BX.Crm,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX));
 //# sourceMappingURL=index.bundle.js.map

@@ -21,7 +21,7 @@ final class DeleteParameters extends Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			Logic::or([
+			Logic::or($this, [
 				new EnumField($this, 'entityTypeId', [
 					CCrmOwnerType::Lead,
 					CCrmOwnerType::Deal,
@@ -33,7 +33,6 @@ final class DeleteParameters extends Dto
 
 			new DefinedCategoryIdentifier($this, 'entityTypeId', 'categoryId'),
 
-			new RequiredField($this, 'stageId'),
 			new NotEmptyField($this, 'stageId'),
 		];
 	}

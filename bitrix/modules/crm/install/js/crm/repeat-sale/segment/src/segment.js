@@ -10,6 +10,7 @@ type RepeatSaleSegmentParams = {
 	data: Object,
 	config?: Object,
 	events?: Object,
+	analytics?: Object,
 }
 
 export class Segment
@@ -37,12 +38,15 @@ export class Segment
 			settings: {
 				isReadOnly: this.#isReadOnly,
 				isCopy: params.config?.isCopy ?? false,
+				ai: params.data.aiSettings,
+				baas: params.data.baasSettings,
 				isAiCallEnabled: params.data.isAiCallEnabled,
 			},
 			segment: params.data.segment,
 			categories: params.data.categories,
 			callAssessments: params.data.callAssessments,
 			events: params.events,
+			analytics: params.analytics,
 		});
 
 		this.#app.mount(this.#container);

@@ -671,6 +671,40 @@ return array(
 
 				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
 			},
+			'RepeatSale' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('crm.repeatSale', 168))
+						->setLevel(\Bitrix\Main\Config\Option::get('crm', 'log_repeat_sale_db_level', \Psr\Log\LogLevel::ERROR))
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.repeatSale', 9))
+							->setLevel(\Bitrix\Main\Config\Option::get('crm', 'log_repeat_sale_message_level', \Psr\Log\LogLevel::INFO))
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
+			'Features' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('Features', (int)\Bitrix\Main\Config\Option::get('crm', 'features_logger_ttl', 24*90)))
+						->setLevel(\Bitrix\Main\Config\Option::get('crm', 'features_logger_level', \Psr\Log\LogLevel::INFO))
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('Features', 9))
+							->setLevel(\Bitrix\Main\Config\Option::get('crm', 'features_logger_message_level', \Psr\Log\LogLevel::INFO))
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
 		],
 	],
 	'console' => [

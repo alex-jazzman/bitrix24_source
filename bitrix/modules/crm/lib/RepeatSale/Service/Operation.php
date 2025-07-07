@@ -20,7 +20,7 @@ final class Operation
 	public function __construct(
 		private readonly Item $item,
 		private readonly int $assignmentUserId,
-		private readonly ?Context $context = null
+		private readonly ?Context $context = null,
 	)
 	{
 		if ($this->context)
@@ -34,7 +34,7 @@ final class Operation
 		}
 	}
 
-	public function addAction(ActionInterface $action): Operation
+	public function addAction(ActionInterface $action): self
 	{
 		$this->actions[] = $action;
 
@@ -122,6 +122,16 @@ final class Operation
 
 	private function afterLaunch(): Result
 	{
+		if (!isset(self::$itemsCount['all']))
+		{
+			self::$itemsCount['all'] = 0;
+		}
+
+		if (!isset(self::$itemsCount[$this->segmentItem->getCode()]))
+		{
+			self::$itemsCount[$this->segmentItem->getCode()] = 0;
+		}
+
 		self::$itemsCount['all']++;
 		self::$itemsCount[$this->segmentItem->getCode()]++;
 
@@ -140,7 +150,7 @@ final class Operation
 				$this->assignmentUserId,
 				$actionResult,
 				$this->context,
-				$this->segmentItem
+				$this->segmentItem,
 			);
 
 			if (!$actionResult->isSuccess())

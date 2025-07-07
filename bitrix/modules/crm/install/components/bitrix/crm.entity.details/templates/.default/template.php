@@ -1,5 +1,6 @@
-<?
+<?php
 
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Loader;

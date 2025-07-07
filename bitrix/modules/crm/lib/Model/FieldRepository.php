@@ -977,4 +977,35 @@ final class FieldRepository
 			)
 		);
 	}
+
+	/**
+	 * @param int $entityTypeId
+	 * @return Relation[]
+	 */
+	public function getLastCommunications(int $entityTypeId): array
+	{
+		$communications = [];
+
+		foreach (LastCommunicationTable::getCodeNames() as $fieldName => $fieldTitle)
+		{
+			$fmTableName = $this->sqlHelper->quote(LastCommunicationTable::getTableName());
+			$typeId = $this->sqlHelper->convertToDbString($entityTypeId);
+			$type = $this->sqlHelper->convertToDbString($fieldName);
+
+			$sql = "SELECT LCT.LAST_COMMUNICATION_TIME FROM {$fmTableName} LCT WHERE LCT.ENTITY_TYPE_ID = {$typeId}"
+				. " AND LCT.ENTITY_ID = %s AND LCT.TYPE = {$type}";
+			;
+
+			$communications[] =
+				(new ExpressionField(
+					LastCommunicationTable::FIELD_PREFIX . $fieldName,
+					'(' . $this->sqlHelper->getTopSql($sql, 1) . ')',
+					['ID']
+				))
+				->configureTitle($fieldTitle)
+				->configureValueType(DatetimeField::class);
+		}
+
+		return $communications;
+	}
 }

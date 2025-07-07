@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\RepeatSale\Segment;
 
+use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
@@ -10,19 +11,54 @@ use CCrmOwnerType;
 
 final class FillPreliminarySegments
 {
+	private Logger $logger;
+
+	public function __construct()
+	{
+		$this->logger = new Logger();
+	}
+
 	public function execute(): void
 	{
 		$controller = RepeatSaleSegmentController::getInstance();
 
+		$addedSegments = [];
+
 		$collection = $controller->getList();
-		if ($collection->isEmpty())
+		$codes = $collection->getCodeList();
+
+		foreach ($this->getData() as $data)
 		{
-			foreach ($this->getData() as $data)
+			if (in_array($data['code'], $codes, true))
 			{
-				$segment = SegmentItem::createFromArray($data);
-				$controller->add($segment);
+				$this->logger->debug(
+					'Segment exist',
+					[
+						'segmentCode' => $data['code'],
+					],
+				);
+
+				continue;
+			}
+
+			$segment = SegmentItem::createFromArray($data);
+			$result = $controller->add($segment);
+			if ($result->isSuccess())
+			{
+				$addedSegments[] = $segment->getCode();
+			}
+			else
+			{
+				$this->logger->error(
+					'Segment not added',
+					[
+						'segmentCode' => $segment->getCode(),
+					],
+				);
 			}
 		}
+
+		$this->logger->info('Segments have been added', $addedSegments);
 	}
 
 	private function getData(): array
@@ -39,38 +75,40 @@ final class FillPreliminarySegments
 			'entityCategoryId' => $factory?->getDefaultCategory()?->getId() ?? 0,
 			'entityStageId' => $resolver(),
 			'callAssessmentId' => null,
-			'isAiEnabled' => false,
+			'isAiEnabled' => true,
 			'assignmentUserIds' => [],
 		];
 
 		return [
-			//$this->getLastActivityLessThen12MonthButNoActiveDeals($params),
-			$this->getLastDealLostMoreThan12MonthAgo($params),
+			//$this->getSleepingClients($params),
+			//$this->getLostClients($params),
 			$this->getEveryYearDeals($params),
 			$this->getEveryHalfYearDeals($params),
 			$this->getEveryMonthDeals($params),
 		];
 	}
 
-	private function getLastDealLostMoreThan12MonthAgo(array $params): array
+	private function getLostClients(array $params): array
 	{
 		$data = [
-			'code' => SystemSegmentCode::DEAL_LOST_MORE_12_MONTH->value,
-			'title' => Loc::getMessage('CRM_FPS_12MONTH_TITLE'),
-			'prompt' => Loc::getMessage('CRM_FPS_12MONTH_PROMPT'),
-			'entityTitlePattern' => Loc::getMessage('CRM_FPS_12MONTH_ENTITY_TITLE_PATTERN'),
+			'code' => SystemSegmentCode::LOST_CLIENT->value,
+			'title' => Loc::getMessage('CRM_FPS_LESS_12MONTH_TITLE'),
+			'prompt' => Loc::getMessage('CRM_FPS_LESS_12MONTH_PROMPT'),
+			'entityTitlePattern' => Loc::getMessage('CRM_FPS_LESS_12MONTH_ENTITY_TITLE_PATTERN'),
+			'isAiEnabled' => false,
 		];
 
 		return array_merge($params, $data);
 	}
 
-	private function getLastActivityLessThen12MonthButNoActiveDeals(array $params): array
+	private function getSleepingClients(array $params): array
 	{
 		$data = [
-			'code' => SystemSegmentCode::DEAL_LAST_ACTIVITY_LESS_12_MONTH->value,
-			'title' => Loc::getMessage('CRM_FPS_LESS_12MONTH_TITLE'),
-			'prompt' => Loc::getMessage('CRM_FPS_LESS_12MONTH_PROMPT'),
-			'entityTitlePattern' => Loc::getMessage('CRM_FPS_LESS_12MONTH_ENTITY_TITLE_PATTERN'),
+			'code' => SystemSegmentCode::SLEEPING_CLIENT->value,
+			'title' => Loc::getMessage('CRM_FPS_12MONTH_TITLE'),
+			'prompt' => Loc::getMessage('CRM_FPS_12MONTH_PROMPT'),
+			'entityTitlePattern' => Loc::getMessage('CRM_FPS_12MONTH_ENTITY_TITLE_PATTERN'),
+			'isAiEnabled' => false,
 		];
 
 		return array_merge($params, $data);

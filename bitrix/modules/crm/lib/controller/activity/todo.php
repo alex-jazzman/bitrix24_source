@@ -28,6 +28,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber\Parser;
+use CCrmActivity;
 use CCrmOwnerType;
 
 class ToDo extends Base
@@ -53,8 +54,7 @@ class ToDo extends Base
 		$calendarOwnerId = null;
 		if ($activityId)
 		{
-			$activity = \CCrmActivity::GetByID($activityId);
-
+			$activity = CCrmActivity::GetByID($activityId);
 			if (!$activity)
 			{
 				$this->addError(ErrorCode::getNotFoundError());
@@ -478,6 +478,12 @@ class ToDo extends Base
 		{
 			return null;
 		}
+
+		if (isset($parentActivityId) && !CCrmActivity::GetByID($parentActivityId))
+		{
+			$parentActivityId = null;
+		}
+
 		$todo
 			->setDeadline($deadline)
 			->setParentActivityId($parentActivityId)

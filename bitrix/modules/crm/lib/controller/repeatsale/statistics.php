@@ -68,6 +68,7 @@ final class Statistics extends Base
 		if (
 			!$availabilityChecker->isAvailable()
 			|| !$availabilityChecker->hasPermission()
+			|| !$availabilityChecker->isItemsCountsLessThenLimit()
 			|| !Container::getInstance()->getUserPermissions()->repeatSale()->canRead()
 		)
 		{

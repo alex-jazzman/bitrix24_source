@@ -113,16 +113,16 @@ class RepeatSaleSegmentTable extends DataManager
 				->getUpdatedBy('UPDATED_BY_ID')
 				->configureDefaultValue(static fn() => Container::getInstance()->getContext()->getUserId())
 			,
-			(new Reference(
+			new Reference(
 				'DEAL_CATEGORY',
 				DealCategoryTable::class,
 				Join::on('this.ENTITY_CATEGORY_ID', 'ref.ID'),
-			)),
-			(new Reference(
+			),
+			new Reference(
 				'CALL_ASSESSMENT',
 				CopilotCallAssessmentTable::class,
 				Join::on('this.CALL_ASSESSMENT_ID', 'ref.ID'),
-			)),
+			),
 			(new OneToMany(
 				'ASSIGNMENT_USERS',
 				RepeatSaleSegmentAssignmentUser::class,

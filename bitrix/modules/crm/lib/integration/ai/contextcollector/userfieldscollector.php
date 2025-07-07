@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\AI\ContextCollector;
 
+use Bitrix\Crm\Integration\AI\ContextCollector\EntityCollector\UserFieldsSettings;
 use Bitrix\Crm\Integration\AI\Contract\ContextCollector;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
@@ -11,6 +12,7 @@ final class UserFieldsCollector implements ContextCollector
 {
 	private UserPermissions\EntityPermissions\Type $permissions;
 	private ?Factory $factory;
+	private UserFieldsSettings $settings;
 
 	public function __construct(
 		private readonly int $entityTypeId,
@@ -19,6 +21,15 @@ final class UserFieldsCollector implements ContextCollector
 	{
 		$this->factory = Container::getInstance()->getFactory($this->entityTypeId);
 		$this->permissions = Container::getInstance()->getUserPermissions($this->context->userId())->entityType();
+
+		$this->settings = new UserFieldsSettings();
+	}
+
+	public function setSettings(UserFieldsSettings $settings): self
+	{
+		$this->settings = $settings;
+
+		return $this;
 	}
 
 	public function collect(): array
@@ -31,11 +42,17 @@ final class UserFieldsCollector implements ContextCollector
 		$result = [];
 		foreach ($this->factory->getUserFieldsCollection() as $field)
 		{
-			$result[] = [
-				'name' => $field->getName(),
+			$info = [
 				'title' => $field->getTitle(),
 				'type' => $field->getType(),
 			];
+
+			if ($this->settings->isCollectName())
+			{
+				$info['name'] = $field->getName();
+			}
+
+			$result[] = $info;
 		}
 
 		return $result;

@@ -6,6 +6,7 @@ use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Section\Abstrac
 use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\Section\DeleteParameters;
 use Bitrix\Crm\Integration\UI\EntityEditor\Configuration;
 use Bitrix\Crm\Result;
+use Bitrix\Main\Localization\Loc;
 
 final class Delete extends AbstractFunction
 {
@@ -18,13 +19,13 @@ final class Delete extends AbstractFunction
 	{
 		if ($configuration->getSection($parameters->name) === null)
 		{
-			return Result::fail('Section not found');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_ENTITY_DETAILS_CARD_VIEW_SECTION_NOT_FOUND_ERROR'), 'SECTION_NOT_FOUND');
 		}
 
 		$configuration->removeSection($parameters->name);
 		if (empty($configuration->getSections()))
 		{
-			return Result::fail('Last section cannot be deleted');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_ENTITY_DETAILS_CARD_VIEW_CANNOT_DELETE_LAST_SECTION_ERROR'), 'DELETE_LAST_SECTION');
 		}
 
 		$configuration->save();

@@ -12,6 +12,8 @@ use Bitrix\Crm\Tracking\Provider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
@@ -25,21 +27,23 @@ Extension::load([
 	'ui.sidepanel-content',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'ui.feedback.form',
 ]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $iconClass = htmlspecialcharsbx($arResult['ROW']['ICON_CLASS']);
 
 $containerId = 'crm-tracking-site-b24';
+$feedbackParams = Json::encode(Provider::getFeedbackParameters());
 
-ob_start();
-$APPLICATION->IncludeComponent(
-	'bitrix:ui.feedback.form',
-	'',
-	[ ...Provider::getFeedbackParameters(), 'VIEW_TARGET' => false ],
-);
 Toolbar::deleteFavoriteStar();
-Toolbar::addRightCustomHtml(ob_get_clean(), ['align' => 'right']);
+Toolbar::addButton([
+		"color" => Color::LIGHT_BORDER,
+		"click" => new JsCode(
+			"BX.UI.Feedback.Form.open({$feedbackParams});"
+		),
+		"text" => Provider::getFeedbackButtonTitle(),
+]);
 ?>
 
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-analytics-source-block-wrap">

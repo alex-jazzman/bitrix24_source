@@ -7,7 +7,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 
 UI\Extension::load(["ui.tooltip", "ui.fonts.opensans", 'crm.autorun']);
@@ -459,8 +458,8 @@ $APPLICATION->IncludeComponent(
 		'READ_ONLY' => $arResult['READ_ONLY'],
 		'ENABLE_UI' => false,
 		'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK_ADD'],
-		'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'],
-		'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'],
+		'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'] ?? false,
+		'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'] ?? false,
 		'ENABLE_TOOLBAR' => $enableToolbar,
 		'TOOLBAR_ID' => $toolbarID,
 		'FORM_ID' => $arResult['FORM_ID'],

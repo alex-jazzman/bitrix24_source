@@ -39,12 +39,19 @@
 
 	--call-component-call-ai__resume-block-border: var(--ui-color-palette-gray-20, #DFE0E3)
 }
+
 .bx-call-mention {
 	display: inline-block;
 	color: var(--call-component-call-ai__mention-color);
 	border-bottom: 1px dotted var(--call-component-call-ai__mention-color);
 	cursor: pointer;
 }
+
+.bx-call-component-call-ai__resume-title > .bx-call-mention {
+	color: inherit !important;
+	border-bottom: 1px dotted var(--call-component-call-ai__light-text-color) !important;
+}
+
 .ui-page-slider-wrapper.bx-call-component-call-ai-page {
 	height: 100% !important;
 	background: url('images/copilot-slider-bg.png') fixed 100% 0 no-repeat !important;

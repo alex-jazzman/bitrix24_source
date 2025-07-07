@@ -68,6 +68,11 @@ export class Store
 					state.groups = Store.initialGroups;
 					state.dashboards = Store.initialDashboards;
 				},
+				setStateAsInitial(state: PermissionAppState): void
+				{
+					Store.initialGroups = state.groups;
+					Store.initialDashboards = state.dashboards;
+				},
 			},
 			getters: {
 				newGroupPermissions(state: PermissionAppState): Object

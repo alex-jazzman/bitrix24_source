@@ -15,11 +15,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
@@ -652,6 +654,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		$resultItem['columns']['COMPANY_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arCompany['badges']);
 	}
 
+	(new LastCommunicationTimeFormatter())->formatListDate($arCompany, $resultItem['columns']);
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
@@ -716,6 +720,19 @@ $filterLazyLoadParams = [
 ];
 $uri = new Uri($filterLazyLoadUrl);
 
+$navigationBar = (new NavigationBarPanel(CCrmOwnerType::Company))
+	->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+;
+$isDefaultCategory = $arResult['IS_DEFAULT_CATEGORY'] ?? false;
+if ($isDefaultCategory)
+{
+	$navigationBar->setItems([
+		NavigationBarPanel::ID_REPEAT_SALE,
+	]);
+
+	print OnboardingPopup::getInstance()->build();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -772,14 +789,7 @@ $APPLICATION->IncludeComponent(
 				'CATEGORY_ID' => (int)($arResult['CATEGORY_ID'] ?? 0),
 			],
 		],
-		'NAVIGATION_BAR' => $isMyCompanyMode
-			? null
-			: (new NavigationBarPanel(CCrmOwnerType::Company))
-				->setItems([
-					NavigationBarPanel::ID_REPEAT_SALE,
-				])
-				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get()
-		,
+		'NAVIGATION_BAR' => $isMyCompanyMode ? null : $navigationBar->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => [
 			'ID' => $gridManagerID,

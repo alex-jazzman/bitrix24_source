@@ -8,6 +8,7 @@ use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UI\EntitySelector;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -396,6 +397,8 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 				unset($result[$unsupportedField]);
 			}
 		}
+
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationField($this, $result);
 
 		return $result;
 	}

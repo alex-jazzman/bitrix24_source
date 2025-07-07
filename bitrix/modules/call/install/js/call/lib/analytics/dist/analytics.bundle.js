@@ -137,8 +137,19 @@ this.BX.Call = this.BX.Call || {};
 	  aiOff: 'ai_off'
 	});
 
+	var _callAutoStartRecordSent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("callAutoStartRecordSent");
 	class Copilot {
+	  constructor() {
+	    Object.defineProperty(this, _callAutoStartRecordSent, {
+	      writable: true,
+	      value: []
+	    });
+	  }
 	  onAIRecordStart(params) {
+	    if (params != null && params.isAutostart && babelHelpers.classPrivateFieldLooseBase(this, _callAutoStartRecordSent)[_callAutoStartRecordSent].includes(params.callId)) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _callAutoStartRecordSent)[_callAutoStartRecordSent].push(params.callId);
 	    const errorCodes = {
 	      AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
 	      AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,

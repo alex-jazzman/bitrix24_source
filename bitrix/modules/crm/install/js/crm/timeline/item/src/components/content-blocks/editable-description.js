@@ -10,56 +10,52 @@ import { ButtonState } from '../enums/button-state';
 import { ButtonType } from '../enums/button-type';
 import { EditableDescriptionHeight } from '../enums/editable-description-height';
 import { EditableDescriptionBackgroundColor } from '../enums/editable-description-background-color';
+import { EditableDescriptionAiStatus } from '../enums/editable-description-ai-status';
+
 import CopilotHeader from '../content-blocks/internal/copilot/header-text';
-import CopilotFooter from '../content-blocks/internal/copilot/footer-text';
 
 export const EditableDescription = {
 	components: {
 		Button,
 		CopilotHeader,
-		CopilotFooter,
 		TextEditorComponent,
 		HtmlFormatterComponent,
 	},
 	props: {
+		headerText: {
+			type: String,
+			default: '',
+		},
 		text: {
 			type: String,
-			required: false,
 			default: '',
 		},
 		saveAction: {
 			type: Object,
-			required: false,
 			default: null,
 		},
 		editable: {
 			type: Boolean,
-			required: false,
 			default: true,
 		},
 		copied: {
 			type: Boolean,
-			required: false,
 			default: false,
 		},
 		height: {
 			type: String,
-			required: false,
 			default: EditableDescriptionHeight.SHORT,
 		},
 		backgroundColor: {
 			type: String,
-			required: false,
 			default: '',
+		},
+		copilotStatus: {
+			type: String,
+			default: EditableDescriptionAiStatus.NONE,
 		},
 		copilotSettings: {
 			type: Object,
-			required: false,
-			default: [],
-		},
-		copilotResultCfg: {
-			type: Object,
-			required: false,
 			default: [],
 		},
 	},
@@ -78,12 +74,8 @@ export const EditableDescription = {
 			isCollapsed: false,
 			bbcode: this.text,
 			isContentEmpty: Type.isString(this.text) && this.text.trim() === '',
-			isCopied: this.copied,
-			isCopilotHeader: Type.isStringFilled(this.copilotResultCfg?.header),
-			isCopilotFooter: Type.isStringFilled(this.copilotResultCfg?.footer)
-				|| (Type.isBoolean(this.copilotResultCfg?.footer) && this.copilotResultCfg?.footer === true),
-			isCopilotAnimated: Type.isStringFilled(this.copilotResultCfg?.header)
-				&& Type.isBoolean(this.copilotResultCfg?.animated) && this.copilotResultCfg?.animated === true,
+			currentCopilotStatus: this.copilotStatus,
+			currentHeaderText: this.headerText,
 		};
 	},
 
@@ -103,7 +95,7 @@ export const EditableDescription = {
 					'--is-edit': this.isEdit,
 					'--is-long': this.isLongText,
 					'--is-expanded': this.isCollapsed || !this.isLongText,
-					'--copiloted': this.isCopiloted,
+					'--copiloted': !this.isEdit && this.currentCopilotStatus !== EditableDescriptionAiStatus.NONE,
 				},
 			];
 		},
@@ -113,7 +105,7 @@ export const EditableDescription = {
 			return [
 				'crm-timeline__editable-text_text',
 				{
-					'--hidden': this.isCopilotAnimated,
+					'--hidden': this.currentCopilotStatus === EditableDescriptionAiStatus.IN_PROGRESS,
 				},
 			];
 		},
@@ -128,7 +120,7 @@ export const EditableDescription = {
 			}
 		},
 
-		bgColorClassnameModifier(): ?string
+		bgColorClassnameModifier(): string
 		{
 			switch (this.backgroundColor)
 			{
@@ -145,12 +137,7 @@ export const EditableDescription = {
 
 		isCopied(): boolean
 		{
-			return !this.isEdit && this.isCopied;
-		},
-
-		isCopiloted(): boolean
-		{
-			return !this.isEdit && (this.isCopilotHeader || this.isCopilotFooter);
+			return !this.isEdit && this.copied;
 		},
 
 		saveTextButtonProps(): Object
@@ -190,7 +177,8 @@ export const EditableDescription = {
 		{
 			return this.isCollapsed
 				? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE_MSGVER_1')
-				: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW_MSGVER_1');
+				: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW_MSGVER_1')
+			;
 		},
 
 		isEditButtonVisible(): boolean
@@ -429,6 +417,29 @@ export const EditableDescription = {
 
 			return this.textEditor;
 		},
+
+		getHeaderText(): string
+		{
+			return this.currentHeaderText;
+		},
+
+		setHeaderText(headerText: string): void
+		{
+			this.currentHeaderText = headerText;
+
+			void this.$nextTick(() => {
+				this.isLongText = this.checkIsLongText();
+			});
+		},
+
+		setCopilotStatus(status: string): void
+		{
+			this.currentCopilotStatus = status;
+
+			void this.$nextTick(() => {
+				this.isLongText = this.checkIsLongText();
+			});
+		},
 	},
 
 	watch: {
@@ -436,23 +447,19 @@ export const EditableDescription = {
 		{
 			this.bbcode = newTextValue;
 
-			this.$nextTick(() => {
+			void this.$nextTick(() => {
 				this.isLongText = this.checkIsLongText();
 			});
 		},
 
-		copied(newValue: boolean): void
+		copilotStatus(newStatus: string): void
 		{
-			this.isCopied = newValue;
+			this.currentCopilotStatus = newStatus;
 		},
 
-		copilotResultCfg(newValue: Object): void
+		headerText(newHeaderText: string): void
 		{
-			this.isCopilotHeader = Type.isStringFilled(newValue.header);
-			this.isCopilotFooter = Type.isStringFilled(newValue.footer)
-				|| (Type.isBoolean(newValue.footer) && newValue.footer === true);
-			this.isCopilotAnimated = Type.isStringFilled(newValue.header)
-				&& Type.isBoolean(newValue.animated) && newValue.animated === true;
+			this.currentHeaderText = newHeaderText;
 		},
 
 		isCollapsed(isCollapsed: boolean): void
@@ -488,7 +495,7 @@ export const EditableDescription = {
 
 	mounted(): void
 	{
-		this.$nextTick(() => {
+		void this.$nextTick(() => {
 			this.isLongText = this.checkIsLongText();
 		});
 	},
@@ -521,10 +528,16 @@ export const EditableDescription = {
 					<i class="crm-timeline__editable-text_edit-icon"></i>
 				</button>
 				<div class="crm-timeline__editable-text_inner">
+					<div
+						v-if="!isEditable && currentHeaderText !== ''"
+						v-html="currentHeaderText"
+						class="crm-timeline__editable-text_header-text"
+					>
+					</div>
 					<CopilotHeader 
-						v-if="isCopilotHeader"
-						:text="this.copilotResultCfg?.header"
-						:animated = "this.isCopilotAnimated"
+						ref="copilotHeader"
+						v-if="currentCopilotStatus !== ''"
+						:status="currentCopilotStatus"
 						class="crm-timeline__editable-text-copilot-header"
 					></CopilotHeader>
 					<div class="crm-timeline__editable-text_content">
@@ -566,10 +579,6 @@ export const EditableDescription = {
 					{{ expandButtonText }}
 				</button>
 			</div>
-			<CopilotFooter
-				v-if="isCopilotFooter"
-				class="crm-timeline__editable-text-copilot-footer"
-			></CopilotFooter>
 		</div>
 	`,
 };

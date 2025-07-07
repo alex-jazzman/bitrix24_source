@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_confetti,ui_notification,main_core,main_popup,ui_lottie) {
+(function (exports,ui_confetti,ui_notification,ui_feedback_form,crm_integration_analytics,main_core,main_popup,ui_analytics,ui_lottie) {
 	'use strict';
 
 	let _ = t => t,
@@ -11,11 +11,24 @@ this.BX.Crm = this.BX.Crm || {};
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _bindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
 	var _isConfettiShowed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isConfettiShowed");
+	var _isPreparing = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPreparing");
+	var _getBindElementData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBindElementData");
+	var _getParentBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getParentBindElement");
+	var _sendAnalyticsCloseEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsCloseEvent");
 	var _showConfetti = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showConfetti");
 	class Base {
 	  constructor(params = {}) {
 	    Object.defineProperty(this, _showConfetti, {
 	      value: _showConfetti2
+	    });
+	    Object.defineProperty(this, _sendAnalyticsCloseEvent, {
+	      value: _sendAnalyticsCloseEvent2
+	    });
+	    Object.defineProperty(this, _getParentBindElement, {
+	      value: _getParentBindElement2
+	    });
+	    Object.defineProperty(this, _getBindElementData, {
+	      value: _getBindElementData2
 	    });
 	    Object.defineProperty(this, _data, {
 	      writable: true,
@@ -33,6 +46,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: true
 	    });
+	    Object.defineProperty(this, _isPreparing, {
+	      writable: true,
+	      value: false
+	    });
 	    this.params = {};
 	    this.params = params;
 	    if (main_core.Type.isBoolean(this.params.showConfetti)) {
@@ -42,47 +59,44 @@ this.BX.Crm = this.BX.Crm || {};
 	  getType() {
 	    throw new Error('Must be implement in child class');
 	  }
-	  async show(forceShowConfetti = false) {
+	  async show(forceShowConfetti = false, onCloseCallback = null) {
 	    const data = await this.getData();
+	    if (data === null) {
+	      return;
+	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] === null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = new main_popup.Popup(this.getPopupParams(data, {
-	        forceShowConfetti
+	        forceShowConfetti,
+	        onCloseCallback
 	      }));
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
+	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].adjustPosition();
 	  }
 	  getPopupParams(data, params = {}) {
-	    const hasParentButton = Boolean(babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('button'));
-	    const hasParentLink = Boolean(babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('a'));
-	    let bindElement = babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement];
-	    if (hasParentButton) {
-	      bindElement = babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('button');
-	    } else if (hasParentLink) {
-	      bindElement = babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('a');
-	    }
-	    const bindElementRect = bindElement.getBoundingClientRect();
 	    return {
 	      id: `crm_repeat_sale_widget_${this.getType()}`,
-	      bindElement: {
-	        top: bindElementRect.top + bindElementRect.height + 10,
-	        left: bindElementRect.right - 410
-	      },
+	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _getBindElementData)[_getBindElementData](),
 	      content: this.getPopupContent(data),
 	      cacheable: false,
-	      isScrollBlock: true,
+	      isScrollBlock: false,
 	      className: `crm-repeat-sale-widget-popup --${this.getType()}`,
 	      closeByEsc: true,
 	      closeIcon: true,
 	      padding: 16,
-	      width: 410,
+	      width: this.getPopupWidth(),
 	      maxHeight: 500,
 	      overlay: null,
-	      autoHide: true,
+	      autoHide: this.isAutoHidePopup(),
 	      events: {
 	        onclose: () => {
 	          this.onClose();
+	          if (main_core.Type.isFunction(params == null ? void 0 : params.onCloseCallback)) {
+	            params.onCloseCallback();
+	          }
 	        },
 	        onFirstShow: () => {
+	          this.onFirstShow();
 	          if (babelHelpers.classPrivateFieldLooseBase(this, _isConfettiShowed)[_isConfettiShowed] && (params == null ? void 0 : params.forceShowConfetti) !== true) {
 	            return;
 	          }
@@ -94,35 +108,55 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    };
 	  }
-	  getPopupContent(data) {
+	  getPopupWidth() {
+	    return 469;
+	  }
+	  isAutoHidePopup() {
+	    return false;
+	  }
+	  onFirstShow() {
+	    // may be implement in child class
+	  }
+	  getPopupContent(data = null) {
 	    throw new Error('Must be implement in child class');
 	  }
 	  setPopupContent(content) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].setContent(content);
 	  }
 	  onClose() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsCloseEvent)[_sendAnalyticsCloseEvent]();
 	    if (this.params.showConfetti) {
 	      void main_core.ajax.runAction('crm.repeatsale.widget.incrementShowedConfettiCount');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = null;
+	  }
+	  getAnalyticsType() {
+	    return '';
 	  }
 	  async getData() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data] = await this.fetchData();
 	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data];
 	  }
 	  async fetchData() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isPreparing)[_isPreparing]) {
+	      return Promise.resolve(null);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isPreparing)[_isPreparing] = true;
 	    return new Promise(resolve => {
 	      main_core.ajax.runAction(this.getFetchUrl(), {
 	        data: this.getFetchParams()
 	      }).then(response => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _isPreparing)[_isPreparing] = false;
 	        if (response.status === 'success') {
 	          resolve(response.data);
 	          return;
 	        }
 	        this.showError();
 	      }, () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _isPreparing)[_isPreparing] = false;
 	        this.showError();
 	      }).catch(response => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _isPreparing)[_isPreparing] = false;
 	        this.showError();
 	        throw response;
 	      });
@@ -145,13 +179,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement] = element;
 	    return this;
 	  }
-	  isShown() {
+	  getAnalyticsSubSection() {
 	    var _babelHelpers$classPr;
-	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.isShown();
+	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getParentBindElement)[_getParentBindElement]().dataset.subsection) != null ? _babelHelpers$classPr : null;
+	  }
+	  isShown() {
+	    var _babelHelpers$classPr2;
+	    return (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.isShown();
 	  }
 	  close() {
-	    var _babelHelpers$classPr2;
-	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.close();
+	    var _babelHelpers$classPr3;
+	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.close();
 	  }
 	  renderLottieAnimation() {
 	    const container = main_core.Tag.render(_t || (_t = _`
@@ -170,9 +208,33 @@ this.BX.Crm = this.BX.Crm || {};
 	    return container.root;
 	  }
 	}
+	function _getBindElementData2() {
+	  const bindElement = babelHelpers.classPrivateFieldLooseBase(this, _getParentBindElement)[_getParentBindElement]();
+	  const bindElementRect = bindElement.getBoundingClientRect();
+	  return {
+	    top: bindElementRect.top + bindElementRect.height + 5 + window.pageYOffset,
+	    left: bindElementRect.right - bindElement.clientWidth / 2 - this.getPopupWidth() / 2 + window.pageXOffset
+	  };
+	}
+	function _getParentBindElement2() {
+	  const hasParentButton = Boolean(babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('button'));
+	  const hasParentLink = Boolean(babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('a'));
+	  if (hasParentButton) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('button');
+	  }
+	  if (hasParentLink) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].closest('a');
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement];
+	}
+	function _sendAnalyticsCloseEvent2() {
+	  const type = this.getAnalyticsType();
+	  const subSection = this.getAnalyticsSubSection();
+	  ui_analytics.sendData(crm_integration_analytics.Builder.RepeatSale.Banner.CloseEvent.createDefault(type, subSection).buildData());
+	}
 	function _showConfetti2() {
-	  var _babelHelpers$classPr3;
-	  const container = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.getPopupContainer();
+	  var _babelHelpers$classPr4;
+	  const container = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr4.getPopupContainer();
 	  if (!container) {
 	    return;
 	  }
@@ -211,12 +273,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t2$1,
 	  _t3;
 	var _showSettingsButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSettingsButton");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _onSettingsClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSettingsClick");
 	var _onFeedbackClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFeedbackClick");
 	var _showFeedbackCrmForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showFeedbackCrmForm");
 	var _getFeedbackFormParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFeedbackFormParams");
+	var _getClickEventBuilder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getClickEventBuilder");
 	class Footer {
-	  constructor(showSettingsButton = false) {
+	  constructor(showSettingsButton = false, analytics = {}) {
+	    Object.defineProperty(this, _getClickEventBuilder, {
+	      value: _getClickEventBuilder2
+	    });
 	    Object.defineProperty(this, _getFeedbackFormParams, {
 	      value: _getFeedbackFormParams2
 	    });
@@ -233,7 +300,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: {}
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton)[_showSettingsButton] = showSettingsButton;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = analytics;
 	  }
 	  getFooterContent() {
 	    const settingsButton = babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton)[_showSettingsButton] ? main_core.Tag.render(_t$1 || (_t$1 = _$1`
@@ -261,66 +333,84 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _onSettingsClick2() {
+	  const eventBuilder = babelHelpers.classPrivateFieldLooseBase(this, _getClickEventBuilder)[_getClickEventBuilder]();
+	  eventBuilder.setElement('config');
+	  ui_analytics.sendData(eventBuilder.buildData());
 	  window.location.href = '/crm/repeat-sale-segment/';
 	}
 	function _onFeedbackClick2() {
-	  const [numberCode, stringCode] = babelHelpers.classPrivateFieldLooseBase(this, _getFeedbackFormParams)[_getFeedbackFormParams]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _showFeedbackCrmForm)[_showFeedbackCrmForm](numberCode, stringCode);
+	  const eventBuilder = babelHelpers.classPrivateFieldLooseBase(this, _getClickEventBuilder)[_getClickEventBuilder]();
+	  eventBuilder.setElement('feedback');
+	  ui_analytics.sendData(eventBuilder.buildData());
+	  babelHelpers.classPrivateFieldLooseBase(this, _showFeedbackCrmForm)[_showFeedbackCrmForm]();
 	}
-	function _showFeedbackCrmForm2(numberCode, stringCode) {
-	  BX.SidePanel.Instance.open('bx-repeat-sale-slider', {
-	    contentCallback: () => {
-	      return `<script data-b24-form="inline/${numberCode}/${stringCode}" data-skip-moving="true"></script>`;
-	    },
-	    width: 664,
-	    loader: 'default-loader',
-	    cacheable: false,
-	    closeByEsc: false,
-	    data: {
-	      rightBoundary: 0
-	    },
-	    events: {
-	      onOpen: () => {
-	        (function (w, d, u) {
-	          var s = d.createElement('script');
-	          s.async = true;
-	          s.src = u + '?' + (Date.now() / 180000 | 0);
-	          var h = d.getElementsByTagName('script')[0];
-	          h.parentNode.insertBefore(s, h);
-	        })(window, document, `https://cdn.bitrix24.com/b5309667/crm/form/loader_${numberCode}.js`);
-	      }
-	    }
+	function _showFeedbackCrmForm2() {
+	  BX.UI.Feedback.Form.open({
+	    id: Math.random().toString(),
+	    forms: babelHelpers.classPrivateFieldLooseBase(this, _getFeedbackFormParams)[_getFeedbackFormParams]()
 	  });
 	}
 	function _getFeedbackFormParams2() {
 	  return main_core.Extension.getSettings('crm.repeat-sale.widget').get('feedbackFormParams');
+	}
+	function _getClickEventBuilder2() {
+	  const type = babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].type;
+	  const subSection = babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].subSection;
+	  return crm_integration_analytics.Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
 	}
 
 	let _$2 = t => t,
 	  _t$2,
 	  _t2$2,
 	  _t3$1,
-	  _t4;
+	  _t4,
+	  _t5,
+	  _t6,
+	  _t7,
+	  _t8,
+	  _t9,
+	  _t10;
 	var _isFlowStarted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFlowStarted");
 	var _showSettingsButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSettingsButton");
+	var _hasClients = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasClients");
+	var _getBodyContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBodyContent");
+	var _getBodyContentWithClients = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBodyContentWithClients");
+	var _getBubble = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBubble");
+	var _getFooterContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFooterContent");
 	var _getTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitle");
 	var _getBodyTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBodyTitle");
 	var _getButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButton");
-	var _getFooterContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFooterContent");
+	var _getDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDescription");
 	var _onButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onButtonClick");
-	var _hasClients = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasClients");
+	var _onReadMoreButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onReadMoreButtonClick");
+	var _showReadMore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showReadMore");
+	var _isHasClients = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHasClients");
+	var _getClickEventBuilder$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getClickEventBuilder");
+	var _sendShowAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendShowAnalytics");
 	class Start extends Base {
 	  constructor(params) {
 	    var _params$showSettingsB;
 	    super(params);
-	    Object.defineProperty(this, _hasClients, {
-	      value: _hasClients2
+	    Object.defineProperty(this, _sendShowAnalytics, {
+	      value: _sendShowAnalytics2
+	    });
+	    Object.defineProperty(this, _getClickEventBuilder$1, {
+	      value: _getClickEventBuilder2$1
+	    });
+	    Object.defineProperty(this, _isHasClients, {
+	      value: _isHasClients2
+	    });
+	    Object.defineProperty(this, _showReadMore, {
+	      value: _showReadMore2
+	    });
+	    Object.defineProperty(this, _onReadMoreButtonClick, {
+	      value: _onReadMoreButtonClick2
 	    });
 	    Object.defineProperty(this, _onButtonClick, {
 	      value: _onButtonClick2
 	    });
-	    Object.defineProperty(this, _getFooterContent, {
-	      value: _getFooterContent2
+	    Object.defineProperty(this, _getDescription, {
+	      value: _getDescription2
 	    });
 	    Object.defineProperty(this, _getButton, {
 	      value: _getButton2
@@ -331,6 +421,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _getTitle, {
 	      value: _getTitle2
 	    });
+	    Object.defineProperty(this, _getFooterContent, {
+	      value: _getFooterContent2
+	    });
+	    Object.defineProperty(this, _getBubble, {
+	      value: _getBubble2
+	    });
+	    Object.defineProperty(this, _getBodyContentWithClients, {
+	      value: _getBodyContentWithClients2
+	    });
+	    Object.defineProperty(this, _getBodyContent, {
+	      value: _getBodyContent2
+	    });
 	    Object.defineProperty(this, _isFlowStarted, {
 	      writable: true,
 	      value: null
@@ -338,6 +440,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _showSettingsButton$1, {
 	      writable: true,
 	      value: true
+	    });
+	    Object.defineProperty(this, _hasClients, {
+	      writable: true,
+	      value: false
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton$1)[_showSettingsButton$1] = (_params$showSettingsB = params.showSettingsButton) != null ? _params$showSettingsB : true;
 	  }
@@ -348,35 +454,25 @@ this.BX.Crm = this.BX.Crm || {};
 	    super.onClose();
 	    void main_core.ajax.runAction('crm.repeatsale.widget.incrementShowedFlowStartCount');
 	  }
-	  getPopupContent(data) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted] === null) {
-	      const {
-	        isFlowStarted
-	      } = data;
-	      babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted] = isFlowStarted;
+	  getPopupContent(data = null) {
+	    if (main_core.Type.isObject(data)) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted] === null) {
+	        const {
+	          isFlowStarted
+	        } = data;
+	        babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted] = isFlowStarted;
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients] = babelHelpers.classPrivateFieldLooseBase(this, _isHasClients)[_isHasClients](data);
 	    }
 	    return main_core.Tag.render(_t$2 || (_t$2 = _$2`
 			<div>
 				<header class="crm-rs__w-header">
 					${0}
 				</header>
-				<div class="crm-rs__w-body">
-					<div class="crm-rs__w-body-content">
-						<div class="crm-rs__w-body-title">
-							${0}
-						</div>
-						${0}
-					</div>
-					<div class="crm-rs__w-body-bubble ${0}">
-						${0}
-						<div class="crm-rs__w-body-icon"></div>
-					</div>
-				</div>
-				<footer class="crm-rs__w-footer">
-					${0}
-				</footer>
+				${0}
+				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _getTitle)[_getTitle](data), babelHelpers.classPrivateFieldLooseBase(this, _getBodyTitle)[_getBodyTitle](data), babelHelpers.classPrivateFieldLooseBase(this, _getButton)[_getButton](data), babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted] ? '--flow-started' : '', this.renderLottieAnimation(), babelHelpers.classPrivateFieldLooseBase(this, _getFooterContent)[_getFooterContent](data));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getTitle)[_getTitle](), babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients] ? babelHelpers.classPrivateFieldLooseBase(this, _getBodyContentWithClients)[_getBodyContentWithClients]() : babelHelpers.classPrivateFieldLooseBase(this, _getBodyContent)[_getBodyContent](), babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients] ? babelHelpers.classPrivateFieldLooseBase(this, _getFooterContent)[_getFooterContent]() : null);
 	  }
 	  getFetchUrl() {
 	    return 'crm.repeatsale.statistics.getInitData';
@@ -384,59 +480,124 @@ this.BX.Crm = this.BX.Crm || {};
 	  getFetchParams() {
 	    return {};
 	  }
+	  onFirstShow() {
+	    const type = this.getAnalyticsType();
+	    const subSection = this.getAnalyticsSubSection();
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendShowAnalytics)[_sendShowAnalytics](type, subSection);
+	  }
+	  getAnalyticsType() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients] ? crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY : crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_START;
+	  }
 	}
-	function _getTitle2(data) {
+	function _getBodyContent2() {
+	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
+			<div class="crm-rs__w-body">
+				<div class="crm-rs__w-body-content">
+					<div class="crm-rs__w-body-title">
+						${0}
+					</div>
+					${0}
+				</div>
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getBodyTitle)[_getBodyTitle](), babelHelpers.classPrivateFieldLooseBase(this, _getDescription)[_getDescription](), babelHelpers.classPrivateFieldLooseBase(this, _getBubble)[_getBubble]());
+	}
+	function _getBodyContentWithClients2() {
+	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
+			<div class="crm-rs__w-body">
+				<div class="crm-rs__w-body-content --has-clients">
+					<div class="crm-rs__w-body-title">
+						${0}
+					</div>
+					${0}
+				</div>
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getBodyTitle)[_getBodyTitle](), babelHelpers.classPrivateFieldLooseBase(this, _getButton)[_getButton](), babelHelpers.classPrivateFieldLooseBase(this, _getBubble)[_getBubble]());
+	}
+	function _getBubble2() {
+	  const hasClients = babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients];
+	  return main_core.Tag.render(_t4 || (_t4 = _$2`
+			<div class="crm-rs__w-body-bubble ${0} ${0}">
+				${0}
+				<div class="crm-rs__w-body-icon"></div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted] ? '--flow-started' : '', hasClients ? '--has-clients' : '', this.renderLottieAnimation());
+	}
+	function _getFooterContent2() {
+	  return main_core.Tag.render(_t5 || (_t5 = _$2`
+			<footer class="crm-rs__w-footer">
+				${0}
+			</footer>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getDescription)[_getDescription]());
+	}
+	function _getTitle2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted]) {
-	    return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
+	    return main_core.Tag.render(_t6 || (_t6 = _$2`
 				<span>${0}</span>
 			`), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_FLOW_STARTED_POPUP_TITLE'));
 	  }
-	  const code = babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients](data) ? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_TITLE_WITH_CLIENTS' : 'CRM_REPEAT_SALE_WIDGET_START_POPUP_TITLE_WITHOUT_CLIENTS';
-	  return main_core.Loc.getMessage(code);
+	  return main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_POPUP_TITLE');
 	}
-	function _getBodyTitle2(data) {
+	function _getBodyTitle2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted]) {
-	    return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
+	    return main_core.Tag.render(_t7 || (_t7 = _$2`
 				<span>${0}</span>
 			`), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_POPUP_BODY_FLOW_STARTED_TITLE'));
 	  }
-	  const hasClients = babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients](data);
-	  const code = hasClients ? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BODY_TITLE_WITH_CLIENTS' : 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BODY_TITLE_WITHOUT_CLIENTS';
-	  if (hasClients) {
-	    return main_core.Loc.getMessagePlural(code, data.count, {
-	      '#COUNT#': data.count
-	    });
-	  }
+	  const code = babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients] ? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BODY_TITLE_WITH_CLIENTS' : 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BODY_TITLE_WITHOUT_CLIENTS';
 	  return main_core.Loc.getMessage(code);
 	}
-	function _getButton2(data) {
+	function _getButton2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted]) {
 	    return null;
 	  }
-	  const hasClients = babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients](data);
-	  const code = hasClients ? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_WITH_CLIENTS' : 'CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_WITHOUT_CLIENTS';
-	  return main_core.Tag.render(_t4 || (_t4 = _$2`
-			<div class="crm-rs__w-body-title-btn ${0}">
+	  return main_core.Tag.render(_t8 || (_t8 = _$2`
+			<div class="crm-rs__w-body-title-btn --has-clients">
 				<span
 					onclick="${0}"
 				>${0}</span>
 			</div>
-		`), hasClients ? '--has-clients' : '', babelHelpers.classPrivateFieldLooseBase(this, _onButtonClick)[_onButtonClick].bind(this, data), main_core.Loc.getMessage(code));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _onButtonClick)[_onButtonClick].bind(this), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN'));
 	}
-	function _getFooterContent2(data) {
+	function _getDescription2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted]) {
-	    const footer = new Footer(babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton$1)[_showSettingsButton$1]);
-	    return footer.getFooterContent();
+	    const footer = new Footer(babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton$1)[_showSettingsButton$1], {
+	      type: this.getAnalyticsType(),
+	      subSection: this.getAnalyticsSubSection()
+	    });
+	    return main_core.Tag.render(_t9 || (_t9 = _$2`
+				<div class="crm-rs__w-buttons-wrapper">
+					${0}
+				</div>
+			`), footer.getFooterContent());
 	  }
-	  const code = babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients](data) ? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITH_CLIENTS' : 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_CLIENTS';
-	  return main_core.Loc.getMessage(code);
+	  const hasClients = babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients];
+	  const code = hasClients ? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITH_CLIENTS' : 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_CLIENTS';
+	  const content = main_core.Loc.getMessage(code);
+	  return main_core.Tag.render(_t10 || (_t10 = _$2`
+			<div class="crm-rs__w-body-description ${0}">
+				${0}
+				<div class="crm-rs__w-body-description-text ${0}">
+					${0}
+				</div>
+				<div class="crm-rs__w-body-description-btn">
+					<span
+						onclick="${0}"
+					>${0}</span>
+				</div>
+			</div>
+		`), hasClients ? '--has-clients' : '', hasClients ? null : '<div class="crm-rs__w-body-description-border"></div>', hasClients ? '--has-clients' : '', content, babelHelpers.classPrivateFieldLooseBase(this, _onReadMoreButtonClick)[_onReadMoreButtonClick].bind(this), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_READ_MORE'));
 	}
-	function _onButtonClick2(data) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients](data)) {
+	function _onButtonClick2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasClients)[_hasClients]) {
 	    main_core.ajax.runAction('crm.repeatsale.flow.enable').then(response => {
 	      if (response.status === 'success') {
 	        babelHelpers.classPrivateFieldLooseBase(this, _isFlowStarted)[_isFlowStarted] = true;
-	        this.setPopupContent(this.getPopupContent(data));
+	        this.setPopupContent(this.getPopupContent());
+	        const instance = babelHelpers.classPrivateFieldLooseBase(this, _getClickEventBuilder$1)[_getClickEventBuilder$1]();
+	        instance.setElement('start_flow');
+	        ui_analytics.sendData(instance.buildData());
 	        return;
 	      }
 	      this.showError();
@@ -449,42 +610,81 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.close();
 	    });
 	  } else {
-	    // @todo
-	    alert('empty clients, need show manual');
+	    babelHelpers.classPrivateFieldLooseBase(this, _showReadMore)[_showReadMore]();
 	    void main_core.ajax.runAction('crm.repeatsale.widget.finalizeShowedFlowStart');
 	  }
 	}
-	function _hasClients2(data) {
+	function _onReadMoreButtonClick2() {
+	  const instance = babelHelpers.classPrivateFieldLooseBase(this, _getClickEventBuilder$1)[_getClickEventBuilder$1]();
+	  instance.setElement('info_button');
+	  ui_analytics.sendData(instance.buildData());
+	  babelHelpers.classPrivateFieldLooseBase(this, _showReadMore)[_showReadMore]();
+	}
+	function _showReadMore2() {
+	  var _top$BX, _top$BX$Helper;
+	  (_top$BX = top.BX) == null ? void 0 : (_top$BX$Helper = _top$BX.Helper) == null ? void 0 : _top$BX$Helper.show('redirect=detail&code=25376986');
+	}
+	function _isHasClients2(data) {
 	  return data.count > 0;
+	}
+	function _getClickEventBuilder2$1() {
+	  const type = this.getAnalyticsType();
+	  const subSection = this.getAnalyticsSubSection();
+	  return crm_integration_analytics.Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
+	}
+	function _sendShowAnalytics2(type, subSection) {
+	  const instance = crm_integration_analytics.Builder.RepeatSale.Banner.ViewEvent.createDefault(type, subSection);
+	  ui_analytics.sendData(instance.buildData());
 	}
 
 	let _$3 = t => t,
 	  _t$3,
 	  _t2$3,
-	  _t3$2;
+	  _t3$2,
+	  _t4$1,
+	  _t5$1,
+	  _t6$1,
+	  _t7$1;
 	var _periodType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("periodType");
 	var _showSettingsButton$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSettingsButton");
+	var _hint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hint");
 	var _getLoadingPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLoadingPopupContent");
 	var _renderLoadingLottieAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLoadingLottieAnimation");
+	var _getPopupTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupTitle");
 	var _getSelectorTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectorTitle");
-	var _getBubbleSubTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBubbleSubTitle");
 	var _getFooterContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFooterContent");
 	var _onPeriodChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPeriodChange");
+	var _showHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showHint");
+	var _hideHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideHint");
+	var _getHintInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHintInstance");
+	var _getClickEventBuilder$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getClickEventBuilder");
 	class Statistics extends Base {
 	  constructor(params) {
 	    var _params$showSettingsB;
 	    super(params);
+	    Object.defineProperty(this, _getClickEventBuilder$2, {
+	      value: _getClickEventBuilder2$2
+	    });
+	    Object.defineProperty(this, _getHintInstance, {
+	      value: _getHintInstance2
+	    });
+	    Object.defineProperty(this, _hideHint, {
+	      value: _hideHint2
+	    });
+	    Object.defineProperty(this, _showHint, {
+	      value: _showHint2
+	    });
 	    Object.defineProperty(this, _onPeriodChange, {
 	      value: _onPeriodChange2
 	    });
 	    Object.defineProperty(this, _getFooterContent$1, {
 	      value: _getFooterContent2$1
 	    });
-	    Object.defineProperty(this, _getBubbleSubTitle, {
-	      value: _getBubbleSubTitle2
-	    });
 	    Object.defineProperty(this, _getSelectorTitle, {
 	      value: _getSelectorTitle2
+	    });
+	    Object.defineProperty(this, _getPopupTitle, {
+	      value: _getPopupTitle2
 	    });
 	    Object.defineProperty(this, _renderLoadingLottieAnimation, {
 	      value: _renderLoadingLottieAnimation2
@@ -500,13 +700,23 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: true
 	    });
+	    Object.defineProperty(this, _hint, {
+	      writable: true,
+	      value: null
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton$2)[_showSettingsButton$2] = (_params$showSettingsB = params.showSettingsButton) != null ? _params$showSettingsB : true;
 	  }
 	  getType() {
 	    return WidgetType.statistics;
 	  }
-	  getPopupContent(data) {
-	    var _data$repeatSaleWinCo, _data$repeatSaleWinCo2, _data$repeatSaleWinSu, _data$repeatSaleProce, _data$otherWinSum, _data$totalSum, _data$percent;
+	  getPopupWidth() {
+	    return 489;
+	  }
+	  isAutoHidePopup() {
+	    return true;
+	  }
+	  getPopupContent(data = null) {
+	    var _data$repeatSaleProce, _data$repeatSaleProce2, _data$repeatSaleWinCo, _data$repeatSaleWinSu;
 	    return main_core.Tag.render(_t$3 || (_t$3 = _$3`
 			<div>
 				<header class="crm-rs__w-header --statistics">
@@ -514,65 +724,44 @@ this.BX.Crm = this.BX.Crm || {};
 				</header>
 				<div class="crm-rs__w-body">
 					<div class="crm-rs__w-body-content --statistics">
-						<div class="crm-rs__w-period-selector">
-							${0}
-							<span
-								onclick="${0}"
-								class="crm-rs__w-period-selector-icon"
-							></span>
-						</div>
-						<div class="crm-rs__w-body-statistics">
-							<div class="crm-rs__w-body-rs-statistics">
-								<div class="crm-rs__w-body-rs-statistics-title">
-									${0}
-								</div>
-								<div class="crm-rs__w-body-statistics-row">
-									<div class="crm-rs__w-body-statistics-item">
-										${0}
-									</div>
-									<div class="crm-rs__w-body-statistics-item --sum">
-										${0}
-									</div>
-								</div>
-								<div class="crm-rs__w-body-statistics-row">
-									<div class="crm-rs__w-body-statistics-item">
-										${0}
-									</div>
-									<div class="crm-rs__w-body-statistics-item --sum">
-										${0}
-									</div>
-								</div>
-							</div>
-							<div class="crm-rs__w-body-statistics-row">
-								<div class="crm-rs__w-body-statistics-item">
-									${0}
-								</div>
-								<div class="crm-rs__w-body-statistics-item --sum">
-									${0}
-								</div>
-							</div>
-							<div class="crm-rs__w-body-statistics-row">
-								<div class="crm-rs__w-body-statistics-item">
-									${0}
-								</div>
-								<div class="crm-rs__w-body-statistics-item --sum">
-									${0}
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="crm-rs__w-body-bubble --statistics">
-						${0}
-						<div class="crm-rs__w-body-icon"></div>
-						<div class="crm-rs__w-body-bubble-percent">
-							<span>${0}</span>
-							<div>
-								<div class="crm-rs__w-body-bubble-percent-arrow ${0}"></div>
-								<div class="crm-rs__w-body-bubble-percent-icon"></div>
-							</div>
-						</div>
-						<div class="crm-rs__w-body-bubble-subtitle">
-							${0}
+						<div class="crm-rs__w-body-statistics-table-container">
+							<table class="crm-rs__w-body-statistics-table">
+								<thead>
+									<tr>
+										<th></th>
+										<th>${0}</th>
+										<th>${0}</th>
+									</tr>
+								</thead>
+								<tbody class="crm-rs__w-body-statistics-table-body">
+									<tr>
+										<td><span>${0}</span></td>
+										<td><span>${0}</span></td>
+										<td><span>${0}</span></td>
+									</tr>
+									<tr>
+										<td>${0}</td>
+										<td>${0}</td>
+										<td>${0}</td>
+									</tr>
+								</tbody>
+								<tfoot class="crm-rs__w-body-statistics-table-footer">
+									<tr>
+										<td>
+											<div>
+												${0}
+												<span 
+													class="crm-rs__w-body-statistics-hint"
+													onmouseenter="${0}"
+													onmouseleave="${0}"
+												></span>
+											</div>
+										</td>
+										<td><span>${0}${0}</span></td>
+										<td>${0}${0}</td>
+									</tr>
+								</tfoot>
+							</table>
 						</div>
 					</div>
 				</div>
@@ -580,9 +769,10 @@ this.BX.Crm = this.BX.Crm || {};
 					${0}
 				</footer>
 			</div>
-		`), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _getSelectorTitle)[_getSelectorTitle](), babelHelpers.classPrivateFieldLooseBase(this, _onPeriodChange)[_onPeriodChange].bind(this, babelHelpers.classPrivateFieldLooseBase(this, _periodType)[_periodType]), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_TITLE'), main_core.Loc.getMessagePlural('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_RS_WIN', (_data$repeatSaleWinCo = data.repeatSaleWinCount) != null ? _data$repeatSaleWinCo : 0, {
-	      '#COUNT#': (_data$repeatSaleWinCo2 = data.repeatSaleWinCount) != null ? _data$repeatSaleWinCo2 : 0
-	    }), (_data$repeatSaleWinSu = data.repeatSaleWinSum) != null ? _data$repeatSaleWinSu : '', main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_RS_PROCESS'), (_data$repeatSaleProce = data.repeatSaleProcessSum) != null ? _data$repeatSaleProce : 0, main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_OTHER'), (_data$otherWinSum = data.otherWinSum) != null ? _data$otherWinSum : 0, main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BODY_TOTAL'), (_data$totalSum = data.totalSum) != null ? _data$totalSum : 0, this.renderLottieAnimation(), (_data$percent = data.percent) != null ? _data$percent : 0, data.percent > 0 ? '' : '--hidden', babelHelpers.classPrivateFieldLooseBase(this, _getBubbleSubTitle)[_getBubbleSubTitle](), babelHelpers.classPrivateFieldLooseBase(this, _getFooterContent$1)[_getFooterContent$1]());
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getPopupTitle)[_getPopupTitle](data), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_COUNT'), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_SUM'), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_DEALS_IN_WORK'), (_data$repeatSaleProce = data.repeatSaleProcessCount) != null ? _data$repeatSaleProce : 0, (_data$repeatSaleProce2 = data.repeatSaleProcessSum) != null ? _data$repeatSaleProce2 : 0, main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_WIN_DEALS'), (_data$repeatSaleWinCo = data.repeatSaleWinCount) != null ? _data$repeatSaleWinCo : 0, (_data$repeatSaleWinSu = data.repeatSaleWinSum) != null ? _data$repeatSaleWinSu : 0, main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_CONVERSION'), babelHelpers.classPrivateFieldLooseBase(this, _showHint)[_showHint].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _hideHint)[_hideHint].bind(this), data.conversionByCount, data.conversionByCount > 0 ? '%' : '', data.conversionBySum, data.conversionBySum > 0 ? '%' : '', babelHelpers.classPrivateFieldLooseBase(this, _getFooterContent$1)[_getFooterContent$1]());
+	  }
+	  getAnalyticsType() {
+	    return crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_STATISTICS;
 	  }
 	  getFetchUrl() {
 	    return 'crm.repeatsale.statistics.getData';
@@ -632,6 +822,49 @@ this.BX.Crm = this.BX.Crm || {};
 	  mainAnimation.setSpeed(0.75);
 	  return container.root;
 	}
+	function _getPopupTitle2(data) {
+	  var _data$repeatSaleTotal, _data$repeatSaleTotal2, _data$repeatSaleToday;
+	  const repeatSaleForPeriodText = main_core.Tag.render(_t4$1 || (_t4$1 = _$3`
+			<span>
+				${0}
+			</span>
+		`), main_core.Loc.getMessagePlural('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE_TOTAL_DEALS', (_data$repeatSaleTotal = data.repeatSaleTotalCount) != null ? _data$repeatSaleTotal : 0, {
+	    '#COUNT#': (_data$repeatSaleTotal2 = data.repeatSaleTotalCount) != null ? _data$repeatSaleTotal2 : 0
+	  }));
+	  const repeatSaleTodayCount = (_data$repeatSaleToday = data.repeatSaleTodayCount) != null ? _data$repeatSaleToday : 0;
+	  let repeatSaleTodayText = null;
+	  if (repeatSaleTodayCount > 0) {
+	    var _data$repeatSaleToday2, _data$repeatSaleToday3;
+	    repeatSaleTodayText = main_core.Tag.render(_t5$1 || (_t5$1 = _$3`
+				<span>
+					${0}
+				</span>
+			`), main_core.Loc.getMessagePlural('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE_TODAY_DEALS', (_data$repeatSaleToday2 = data.repeatSaleTodayCount) != null ? _data$repeatSaleToday2 : 0, {
+	      '#COUNT#': (_data$repeatSaleToday3 = data.repeatSaleTodayCount) != null ? _data$repeatSaleToday3 : 0
+	    }));
+	  } else {
+	    const todayNoDealsMessage = main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE_TODAY_NO_DEALS');
+	    if (todayNoDealsMessage) {
+	      repeatSaleTodayText = main_core.Tag.render(_t6$1 || (_t6$1 = _$3`<span>${0}</span>`), todayNoDealsMessage);
+	    }
+	  }
+	  return main_core.Tag.render(_t7$1 || (_t7$1 = _$3`
+			<div>
+				${0}
+				<div class="crm-rs__w-header-span-wrapper">
+					${0}
+					${0}
+				</div>
+			</div>
+			<div 
+				class="crm-rs__w-period-selector"
+				onclick="${0}"
+			>
+				${0}
+				<span class="crm-rs__w-period-selector-icon"></span>
+			</div>
+		`), main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_TITLE'), repeatSaleForPeriodText, repeatSaleTodayText, babelHelpers.classPrivateFieldLooseBase(this, _onPeriodChange)[_onPeriodChange].bind(this, babelHelpers.classPrivateFieldLooseBase(this, _periodType)[_periodType]), babelHelpers.classPrivateFieldLooseBase(this, _getSelectorTitle)[_getSelectorTitle]());
+	}
 	function _getSelectorTitle2() {
 	  let code = null;
 	  switch (babelHelpers.classPrivateFieldLooseBase(this, _periodType)[_periodType]) {
@@ -652,28 +885,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  return main_core.Loc.getMessage(code);
 	}
-	function _getBubbleSubTitle2() {
-	  let code = null;
-	  switch (babelHelpers.classPrivateFieldLooseBase(this, _periodType)[_periodType]) {
-	    case PeriodType.day30:
-	      code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_DAY_30';
-	      break;
-	    case PeriodType.quarter:
-	      code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_QUARTER';
-	      break;
-	    case PeriodType.halfYear:
-	      code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_HALF_YEAR';
-	      break;
-	    case PeriodType.year:
-	      code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_BUBBLE_PERIOD_YEAR';
-	      break;
-	    default:
-	      throw new RangeError('unknown period type');
-	  }
-	  return main_core.Loc.getMessage(code);
-	}
 	function _getFooterContent2$1() {
-	  const footer = new Footer(babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton$2)[_showSettingsButton$2]);
+	  const footer = new Footer(babelHelpers.classPrivateFieldLooseBase(this, _showSettingsButton$2)[_showSettingsButton$2], {
+	    type: this.getAnalyticsType(),
+	    subSection: this.getAnalyticsSubSection()
+	  });
 	  return footer.getFooterContent();
 	}
 	function _onPeriodChange2(periodTypeId) {
@@ -688,6 +904,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  const data = {
 	    periodTypeId: nextPeriodTypeId
 	  };
+	  const eventBuilder = babelHelpers.classPrivateFieldLooseBase(this, _getClickEventBuilder$2)[_getClickEventBuilder$2]();
+	  eventBuilder.setElement('change_period');
+	  eventBuilder.setPeriod(nextPeriodTypeId);
+	  ui_analytics.sendData(eventBuilder.buildData());
 
 	  // @todo maybe pointless loader
 	  // const popup = PopupManager.getPopupById(`crm_repeat_sale_widget_${this.getType()}`);
@@ -718,6 +938,41 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.showError();
 	  });
 	}
+	function _showHint2(event) {
+	  var _babelHelpers$classPr;
+	  if ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getHintInstance)[_getHintInstance]().popup) != null && _babelHelpers$classPr.isShown()) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _getHintInstance)[_getHintInstance]().show(event.target, main_core.Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_CONVERSION_HINT'), true);
+	}
+	function _hideHint2() {
+	  var _babelHelpers$classPr2;
+	  if ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getHintInstance)[_getHintInstance]().popup) != null && _babelHelpers$classPr2.isShown()) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getHintInstance)[_getHintInstance]().hide();
+	  }
+	}
+	function _getHintInstance2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hint)[_hint] === null) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _hint)[_hint] = BX.UI.Hint.createInstance({
+	      popupParameters: {
+	        autoHide: true,
+	        events: {
+	          onFirstShow: () => {
+	            babelHelpers.classPrivateFieldLooseBase(this, _hint)[_hint].popup.setOffset({
+	              offsetLeft: 9
+	            });
+	          }
+	        }
+	      }
+	    });
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _hint)[_hint];
+	}
+	function _getClickEventBuilder2$2() {
+	  const type = this.getAnalyticsType();
+	  const subSection = this.getAnalyticsSubSection();
+	  return crm_integration_analytics.Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
+	}
 
 	class ContentFactory {
 	  static getContentInstance(widgetType, params = {}) {
@@ -744,7 +999,7 @@ this.BX.Crm = this.BX.Crm || {};
 	});
 	var _contentPopupInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentPopupInstance");
 	class Widget {
-	  static execute(widgetType, bindElement = null, params = {}, event = null) {
+	  static execute(widgetType, bindElement = null, params = {}, event = null, onCloseCallback = null) {
 	    if (!this.instance[widgetType]) {
 	      this.instance[widgetType] = new Widget(widgetType, bindElement, params);
 	    }
@@ -753,7 +1008,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    } else {
 	      var _ref;
 	      const forceShowConfetti = (_ref = (event == null ? void 0 : event.altKey) && (event == null ? void 0 : event.ctrlKey)) != null ? _ref : false;
-	      this.instance[widgetType].show(forceShowConfetti);
+	      this.instance[widgetType].show(forceShowConfetti, onCloseCallback);
 	    }
 	  }
 	  constructor(widgetType, bindElement = null, params = {}) {
@@ -766,8 +1021,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _contentPopupInstance)[_contentPopupInstance].setBindElement(bindElement);
 	    }
 	  }
-	  show(forceShowConfetti = false) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _contentPopupInstance)[_contentPopupInstance].show(forceShowConfetti);
+	  show(forceShowConfetti = false, onCloseCallback = null) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _contentPopupInstance)[_contentPopupInstance].show(forceShowConfetti, onCloseCallback);
 	  }
 	  isShown() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _contentPopupInstance)[_contentPopupInstance].isShown();
@@ -782,5 +1037,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.WidgetType = WidgetType;
 	exports.Widget = Widget;
 
-}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.UI,BX,BX,BX.Main,BX.UI));
+}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.UI,BX,BX.UI.Feedback,BX.Crm.Integration.Analytics,BX,BX.Main,BX.UI.Analytics,BX.UI));
 //# sourceMappingURL=widget.bundle.js.map

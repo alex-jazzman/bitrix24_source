@@ -27,7 +27,7 @@ final class RepeatSale implements PermissionEntity
 			return [];
 		}
 
-		$name = Loc::getMessage('CRM_SECURITY_ROLE_ENTITY_TYPE_CRM_REPEAT_SALE');
+		$name = (string)Loc::getMessage('CRM_SECURITY_ROLE_ENTITY_TYPE_CRM_REPEAT_SALE');
 
 		return [
 			new EntityDTO('RS', $name, [], $this->permissions()),

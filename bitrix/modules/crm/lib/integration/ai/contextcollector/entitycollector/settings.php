@@ -4,22 +4,30 @@ namespace Bitrix\Crm\Integration\AI\ContextCollector\EntityCollector;
 
 final class Settings
 {
-	private bool $isCollectFields = true;
 	private bool $isCollectCategories = true;
-	private bool $isCollectStages = true;
-	private bool $isCollectStagesItemsCount = true;
-	private bool $isCollectStagesItemsSum = true;
+	private readonly UserFieldsSettings $userFieldsSettings;
+	private readonly StageSettings $stageSettings;
 
-	public function isCollectFields(): bool
+	public function __construct()
 	{
-		return $this->isCollectFields;
+		$this->userFieldsSettings = new UserFieldsSettings();
+		$this->stageSettings = new StageSettings();
 	}
 
-	public function setIsCollectFields(bool $isCollectFields): self
+	/**
+	 * @param callable(UserFieldsSettings $settings): void $configurator
+	 * @return $this
+	 */
+	public function configureUserFieldsSettings(callable $configurator): self
 	{
-		$this->isCollectFields = $isCollectFields;
+		$configurator($this->userFieldsSettings);
 
 		return $this;
+	}
+
+	public function userFields(): UserFieldsSettings
+	{
+		return $this->userFieldsSettings;
 	}
 
 	public function isCollectCategories(): bool
@@ -30,42 +38,23 @@ final class Settings
 	public function setIsCollectCategories(bool $isCollectCategories): self
 	{
 		$this->isCollectCategories = $isCollectCategories;
-		return $this;
-	}
-
-	public function isCollectStages(): bool
-	{
-		return $this->isCollectStages;
-	}
-
-	public function setIsCollectStages(bool $isCollectStages): self
-	{
-		$this->isCollectStages = $isCollectStages;
 
 		return $this;
 	}
 
-	public function isCollectStagesItemsCount(): bool
+	/**
+	 * @param callable(StageSettings $settings): void $configurator
+	 * @return $this
+	 */
+	public function configureStageSettings(callable $configurator): self
 	{
-		return $this->isCollectStagesItemsCount;
-	}
-
-	public function setIsCollectStagesItemsCount(bool $isCollectStagesItemsCount): self
-	{
-		$this->isCollectStagesItemsCount = $isCollectStagesItemsCount;
+		$configurator($this->stageSettings);
 
 		return $this;
 	}
 
-	public function isCollectStagesItemsSum(): bool
+	public function stages(): StageSettings
 	{
-		return $this->isCollectStagesItemsSum;
-	}
-
-	public function setIsCollectStagesItemsSum(bool $isCollectStagesItemsSum): self
-	{
-		$this->isCollectStagesItemsSum = $isCollectStagesItemsSum;
-
-		return $this;
+		return $this->stageSettings;
 	}
 }

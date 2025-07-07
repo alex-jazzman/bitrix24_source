@@ -2,10 +2,13 @@
 
 namespace Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView;
 
-use Bitrix\Crm\Entity\EntityEditorConfig;
+use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Entity\EntityEditorOptionBuilder;
 use Bitrix\Crm\Integration\AI\Contract\AIFunction;
 use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\CreateParameters;
+use Bitrix\Crm\Integration\UI\EntityEditor\Configuration;
+use Bitrix\Crm\Integration\UI\EntityEditor\Enum\MarkTarget;
+use Bitrix\Crm\Integration\UI\EntityEditor\MartaAIMarksRepository;
 use Bitrix\Crm\Result;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\UserPermissions;
@@ -15,6 +18,8 @@ use Bitrix\Ui\EntityForm\Scope;
 
 final class Create implements AIFunction
 {
+	private const SCOPE_CATEGORY = 'crm';
+
 	private readonly UserPermissions $permissions;
 
 	public function __construct(private readonly int $currentUserId)
@@ -51,36 +56,49 @@ final class Create implements AIFunction
 			return Result::failEntityTypeNotSupported($parameters->entityTypeId);
 		}
 
-		$category = 'crm';
-		$title = $parameters->title;
-		$accessCodes = $this->getUserAccessCodes($parameters);
-		$config = $this->getConfig($parameters);
-		$options = $this->getOptions($parameters);
+		$config = $parameters->configuration();
 
-		$result = Scope::getInstance()
+		$userScopeIdOrErrors = Scope::getInstance()
 			->setScopeConfig(
-				$category,
+				self::SCOPE_CATEGORY,
 				$guid,
-				$title,
-				$accessCodes,
+				$parameters->title,
+				$this->getUserAccessCodes($parameters->userIds),
 				$config,
-				$options,
+				$parameters->options(),
 			);
 
-		if (is_array($result))
+		if (is_array($userScopeIdOrErrors))
 		{
-			return Result::fail(new ErrorCollection($result));
+			return Result::fail(new ErrorCollection($userScopeIdOrErrors));
 		}
 
-		return Result::success(userScopeId: $result);
+		$configuration = Configuration::fromArray($config);
+		$marksRepository = new MartaAIMarksRepository(
+			$this->currentUserId,
+			$guid,
+			EntityEditorConfigScope::CUSTOM,
+			$userScopeIdOrErrors,
+		);
+
+		$marksRepository
+			->mark(MarkTarget::Section, $configuration->getSectionNames())
+			->mark(MarkTarget::Field, $configuration->getElementNames());
+
+		return Result::success(userScopeId: $userScopeIdOrErrors);
 	}
 
-	private function getUserAccessCodes(CreateParameters $parameters): array
+	private function getGuid(CreateParameters $parameters): string
 	{
-		$userIds = [
-			$this->currentUserId,
-			...$parameters->userIds,
-		];
+		return (new EntityEditorOptionBuilder($parameters->entityTypeId))
+			->setCategoryId($parameters->categoryId)
+			->build();
+	}
+
+	private function getUserAccessCodes(array $userIds): array
+	{
+		$userIds[] = $this->currentUserId;
+		$userIds = array_unique($userIds);
 
 		$result = [];
 		foreach ($userIds as $userId)
@@ -92,32 +110,5 @@ final class Create implements AIFunction
 		}
 
 		return $result;
-	}
-
-	private function getConfig(CreateParameters $parameters): array
-	{
-		return [
-			[
-				'name' => 'default_column',
-				'type' => 'column',
-				'elements' => $parameters->toArraySections(),
-			]
-		];
-	}
-
-	private function getOptions(CreateParameters $parameters): array
-	{
-		return [
-			'forceSetToUsers' => $parameters->forceSetToUsers,
-			'common' => $parameters->common,
-			'categoryName' => EntityEditorConfig::CATEGORY_NAME,
-		];
-	}
-
-	private function getGuid(CreateParameters $parameters): string
-	{
-		return (new EntityEditorOptionBuilder($parameters->entityTypeId))
-			->setCategoryId($parameters->categoryId)
-			->build();
 	}
 }

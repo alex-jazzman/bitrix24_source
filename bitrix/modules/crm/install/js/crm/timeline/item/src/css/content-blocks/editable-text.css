@@ -124,12 +124,17 @@
 	--ui-typography-block-space-stack: 15px;
 }
 
-.crm-timeline__editable-text-copilot-header {
-	padding-top: 15px;
+.crm-timeline__editable-text_header-text {
+	padding-top: 10px;
+	padding-bottom: 0;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-base-70);
 }
 
-.crm-timeline__editable-text-copilot-footer {
-	margin-top: 15px;
+.crm-timeline__editable-text-copilot-header {
+	padding-top: 8px;
+	margin-bottom: -10px;
 }
 
 .crm-timeline__editable-text_text {

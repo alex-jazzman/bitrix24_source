@@ -8,6 +8,10 @@ use Bitrix\AI\Quality;
 use Bitrix\AI\Tuning;
 use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\Activity\Provider\RepeatSale;
+use Bitrix\Crm\Copilot\AiQueueBuffer\Controller\AiQueueBufferController;
+use Bitrix\Crm\Copilot\AiQueueBuffer\Entity\AiQueueBufferItem;
+use Bitrix\Crm\Copilot\AiQueueBuffer\Provider\FillRepeatSaleTipsProvider;
+use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\Autostart\AutoLauncher;
@@ -23,6 +27,7 @@ use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\VoxImplant;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\RepeatSale\CostManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
@@ -139,9 +144,8 @@ final class EventHandler
 					'sort' => 16,
 				];
 
-				// @todo: add correct quality
 				$quality = new Quality([
-					Quality::QUALITIES['repeat_sale'] ?? Quality::QUALITIES['translate'],
+					Quality::QUALITIES['scoring'] ?? Quality::QUALITIES['translate'],
 				]);
 
 				$items[self::SETTINGS_REPEAT_SALE_ENGINE_CODE] = [
@@ -360,9 +364,40 @@ final class EventHandler
 			return;
 		}
 
-		AIManager::launchFillRepeatSaleTips($activityId);
+		$isAiEnabled = AIManager::isAiCallProcessingEnabled()
+			&& AIManager::isEnabledInGlobalSettings(GlobalSetting::RepeatSale)
+		;
+		if (!$isAiEnabled)
+		{
+			return; // AI is disabled in global settings
+		}
+
+		$isAutoStartPossible = CostManager::isSponsoredOperation() || AIManager::isBaasServiceHasPackage();
+		if (!$isAutoStartPossible)
+		{
+			return;
+		}
+
+		$isAiAutoStartEnabled = (bool)($activityFields['PROVIDER_PARAMS']['IS_AI_AUTO_START_ENABLED'] ?? false);
+		if ($isAiAutoStartEnabled)
+		{
+			$job = JobRepository::getInstance()->getFillRepeatSaleTipsByActivity($activityId);
+			if ($job)
+			{
+				return; // job already exists in 'b_crm_ai_queue' table
+			}
+
+			AiQueueBufferController::getInstance()->add(
+				AiQueueBufferItem::createFromEntityFields([
+					'PROVIDER_ID' => FillRepeatSaleTipsProvider::getId(),
+					'PROVIDER_DATA' => [
+						'activityId' => $activityId,
+					]
+				])
+			);
+		}
 	}
-	//endregion
+	// endregion
 
 	//region Recycle bin
 	public static function onItemMoveToBin(ItemIdentifier $target, ItemIdentifier $recycleBinItem): void

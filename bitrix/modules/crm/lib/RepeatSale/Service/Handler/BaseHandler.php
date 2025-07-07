@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\RepeatSale\Service\Handler;
 
+use Bitrix\Crm\Service\Communication\Utils\Common;
 use Bitrix\Main\ArgumentOutOfRangeException;
 
 abstract class BaseHandler
@@ -20,14 +21,14 @@ abstract class BaseHandler
 		return HandlerType::SystemHandler;
 	}
 
-	public function setEntityTypeId(int $entityTypeId = \CCrmOwnerType::Contact): BaseHandler
+	public function setEntityTypeId(int $entityTypeId = \CCrmOwnerType::Contact): self
 	{
-		if ($entityTypeId !== \CCrmOwnerType::Contact && $entityTypeId !== \CCrmOwnerType::Company)
+		if (!Common::isClientEntityTypeId($entityTypeId))
 		{
 			throw new ArgumentOutOfRangeException(
 				'entityTypeId',
 				\CCrmOwnerType::Contact,
-				\CCrmOwnerType::Company
+				\CCrmOwnerType::Company,
 			);
 		}
 
@@ -36,35 +37,35 @@ abstract class BaseHandler
 		return $this;
 	}
 
-	public function setLastEntityId(?int $lastEntityId = null): BaseHandler
+	public function setLastEntityId(?int $lastEntityId = null): self
 	{
 		$this->lastEntityId = $lastEntityId;
 
 		return $this;
 	}
 
-	public function setLastAssignmentId(?int $lastAssignmentId): BaseHandler
+	public function setLastAssignmentId(?int $lastAssignmentId): self
 	{
 		$this->lastAssignmentId = $lastAssignmentId;
 
 		return $this;
 	}
 
-	public function setLimit(int $limit): BaseHandler
+	public function setLimit(int $limit): self
 	{
 		$this->limit = $limit;
 
 		return $this;
 	}
 
-	public function setOffset(int $offset): BaseHandler
+	public function setOffset(int $offset): self
 	{
 		$this->offset = $offset;
 
 		return $this;
 	}
 
-	public function setIsOnlyCalc(bool $value): BaseHandler
+	public function setIsOnlyCalc(bool $value): self
 	{
 		$this->isOnlyCalc = $value;
 

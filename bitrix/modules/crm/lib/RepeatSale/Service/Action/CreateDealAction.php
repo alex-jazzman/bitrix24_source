@@ -38,7 +38,7 @@ final class CreateDealAction implements ActionInterface
 
 		$this->sendAnalyticsEvent($segmentItem?->getCode(), $result->isSuccess());
 
-		return ($result->isSuccess() ? $result->setData(['item' => $deal]) : $result);
+		return $result->isSuccess() ? $result->setData(['item' => $deal]) : $result;
 	}
 
 	private function createDeal(int $assignmentUserId, ?SegmentItem $segmentItem): Item
@@ -70,7 +70,7 @@ final class CreateDealAction implements ActionInterface
 		$event = new AnalyticsEvent(
 			Dictionary::EVENT_ENTITY_CREATE,
 			Dictionary::TOOL_CRM,
-			Dictionary::CATEGORY_ENTITY_OPERATIONS
+			Dictionary::CATEGORY_ENTITY_OPERATIONS,
 		);
 
 		$event
@@ -85,9 +85,10 @@ final class CreateDealAction implements ActionInterface
 
 	private function getP5BySegmentCode(string $segmentCode): ?string
 	{
-		return match ($segmentCode) {
-			SystemSegmentCode::DEAL_LAST_ACTIVITY_LESS_12_MONTH->value => 'deal-activity-less-12m',
-			SystemSegmentCode::DEAL_LOST_MORE_12_MONTH->value => 'deal-lost-more-12m',
+		return match ($segmentCode)
+		{
+			SystemSegmentCode::SLEEPING_CLIENT->value => 'deal-activity-less-12m',
+			SystemSegmentCode::LOST_CLIENT->value => 'deal-lost-more-12m',
 			SystemSegmentCode::DEAL_EVERY_YEAR->value => 'deal-annual',
 			SystemSegmentCode::DEAL_EVERY_HALF_YEAR->value => 'deal-semiannual',
 			SystemSegmentCode::DEAL_EVERY_MONTH->value => 'deal-month-yr',

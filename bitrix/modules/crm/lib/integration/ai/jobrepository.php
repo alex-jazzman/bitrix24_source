@@ -2,10 +2,10 @@
 
 namespace Bitrix\Crm\Integration\AI;
 
-use Bitrix\Crm\Integration\AI\Dto\ExtractScoringCriteriaPayload;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
-use Bitrix\Crm\Integration\AI\Dto\FillRepeatSaleTipsPayload;
-use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
+use Bitrix\Crm\Integration\AI\Dto\RepeatSale\FillRepeatSaleTipsPayload;
+use Bitrix\Crm\Integration\AI\Dto\Scoring\ExtractScoringCriteriaPayload;
+use Bitrix\Crm\Integration\AI\Dto\Scoring\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;

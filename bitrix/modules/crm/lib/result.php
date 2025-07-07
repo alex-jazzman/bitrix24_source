@@ -3,7 +3,6 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\Controller\ErrorCode;
-use Bitrix\Crm\Dto\Dto;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use CAdminException;
@@ -42,10 +41,9 @@ class Result extends \Bitrix\Main\Result
 		return static::fail(ErrorCode::getEntityTypeNotSupportedError($entityTypeId));
 	}
 
-	public static function failModuleNotInstalled(string $module): static
+	public static function failModuleNotInstalled(string $moduleName): static
 	{
-		// todo: localization
-		return static::fail("{$module} module not installed");
+		return static::fail(ErrorCode::getModuleNotInstalledError($moduleName));
 	}
 
 	public static function failFromApplication(): static
@@ -75,7 +73,6 @@ class Result extends \Bitrix\Main\Result
 
 	public function addCommonError(): static
 	{
-		// todo: localization
-		return $this->addError(new Error('Action could not be completed due to an unknown error'));
+		return $this->addError(ErrorCode::getGeneralError());
 	}
 }

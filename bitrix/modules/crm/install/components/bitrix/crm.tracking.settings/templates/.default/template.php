@@ -11,6 +11,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 use Bitrix\Crm\Tracking\Provider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load([
@@ -19,21 +22,22 @@ Extension::load([
 	'ui.hint',
 	'ui.common',
 	'ui.design-tokens',
+	'ui.feedback.form',
 ]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $iconClass = htmlspecialcharsbx($arResult['ROW']['ICON_CLASS']);
 
 $containerId = 'crm-tracking-channel-pool';
+$feedbackParams = Json::encode(Provider::getFeedbackParameters());
 
-ob_start();
-$APPLICATION->IncludeComponent(
-	'bitrix:ui.feedback.form',
-	'',
-	[ ...Provider::getFeedbackParameters(), 'VIEW_TARGET' => false ],
-);
-
-Toolbar::addRightCustomHtml(ob_get_clean(), ['align' => 'right']);
+Toolbar::addButton([
+	"color" => Color::LIGHT_BORDER,
+	"click" => new JsCode(
+		"BX.UI.Feedback.Form.open({$feedbackParams});"
+	),
+	"text" => Provider::getFeedbackButtonTitle(),
+]);
 ?>
 
 <div class="crm-analytics-source-block crm-analytics-source-block-desc">

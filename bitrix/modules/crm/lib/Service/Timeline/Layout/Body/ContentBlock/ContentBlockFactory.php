@@ -8,7 +8,7 @@ use Bitrix\Main\Web\Uri;
 
 class ContentBlockFactory
 {
-	public static function createTextOrLink(string $text, ?Action $action)
+	public static function createTextOrLink(string $text, ?Action $action): ContentBlock
 	{
 		return $action
 			? (new Link())
@@ -26,9 +26,14 @@ class ContentBlockFactory
 	 *
 	 * @param string $html
 	 * @param string $idPrefix
-	 * @return void
+	 *
+	 * @return LineOfTextBlocks
 	 */
-	public static function createFromHtmlString(string $html, $idPrefix = ''): LineOfTextBlocks
+	public static function createFromHtmlString(
+		string $html,
+		string $idPrefix = '',
+		array $textProperties = []
+	): LineOfTextBlocks
 	{
 		$lineOfTextBlocks = new LineOfTextBlocks();
 		preg_match_all('/<([^\s>]+)(.*?)>((.*?)<\/\1>)?|(?<=^|>)(.+?)(?=$|<)/i',$html,$result);
@@ -46,6 +51,14 @@ class ContentBlockFactory
 						->setValue(strip_tags($text))
 					;
 
+					if (isset($textProperties['link']))
+					{
+						$linkProp = $textProperties['link'];
+						isset($linkProp['color']) && $block->setColor($linkProp['color']);
+						isset($linkProp['size']) && $block->setFontSize($linkProp['size']);
+						isset($linkProp['decoration']) && $block->setDecoration($linkProp['decoration']);
+					}
+
 					preg_match('/href=["\']?([^"\'>]+)["\']?/', $text, $href);
 					$url = isset($href[1]) ? new Uri($href[1]) : null;
 
@@ -62,11 +75,25 @@ class ContentBlockFactory
 						->setValue(strip_tags($text))
 						->setIsBold($tag === 'b')
 					;
+
+					if (isset($textProperties['text']))
+					{
+						$textProp = $textProperties['text'];
+						isset($textProp['color']) && $block->setColor($textProp['color']);
+						isset($textProp['size']) && $block->setFontSize($textProp['size']);
+					}
 				}
 			}
 			else
 			{
 				$block = (new Text())->setValue($text);
+
+				if (isset($textProperties['text']))
+				{
+					$textProp = $textProperties['text'];
+					isset($textProp['color']) && $block->setColor($textProp['color']);
+					isset($textProp['size']) && $block->setFontSize($textProp['size']);
+				}
 			}
 
 			$lineOfTextBlocks->addContentBlock($idPrefix . $index, $block);
@@ -106,15 +133,16 @@ class ContentBlockFactory
 	 * @param array $replacements
 	 * @return ContentBlock[]
 	 */
-	public static function getBlocksFromTemplate(
-		string $template,
-		array $replacements
-	): array
+	public static function getBlocksFromTemplate(string $template, array $replacements): array
 	{
 		$result = [];
 
-		$parts = preg_split('/(#\w+#)/u', $template, -1, PREG_SPLIT_NO_EMPTY|PREG_SPLIT_DELIM_CAPTURE);
-
+		$parts = preg_split(
+			'/(#\w+#)/u',
+			$template,
+			-1,
+			PREG_SPLIT_NO_EMPTY|PREG_SPLIT_DELIM_CAPTURE
+		);
 		foreach ($parts as $singlePart)
 		{
 			$singlePart = trim($singlePart, ' ');

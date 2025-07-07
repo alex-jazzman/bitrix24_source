@@ -17,7 +17,7 @@ final class DeleteParameters extends Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			Logic::or([
+			Logic::or($this, [
 				new EnumField($this, 'entityTypeId', [CCrmOwnerType::Deal]),
 				new IsPossibleDynamicType($this, 'entityTypeId'),
 			]),

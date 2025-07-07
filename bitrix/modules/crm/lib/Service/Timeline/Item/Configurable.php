@@ -25,6 +25,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\AppTable;
+use Bitrix\UI\Util;
 
 abstract class Configurable extends Item
 {
@@ -683,5 +684,13 @@ abstract class Configurable extends Item
 	protected function canBeReloaded(): bool
 	{
 		return true;
+	}
+
+	final protected function getLinkOnHelp(string $code): ?string
+	{
+		return Loader::includeModule('ui')
+			? Util::getArticleUrlByCode($code)
+			: 'https://helpdesk.bitrix24.ru/open/' . $code
+		;
 	}
 }

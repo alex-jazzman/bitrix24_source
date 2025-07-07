@@ -17,7 +17,6 @@ import {SeparatorPanel} from 'landing.ui.panel.separatorpanel';
 import {PageObject} from 'landing.pageobject';
 import {Loader} from 'main.loader';
 import {ProductField} from 'landing.ui.field.productfield';
-import { Settings as BookingFieldController } from 'booking.crm-forms.settings';
 import 'calendar.resourcebookinguserfield';
 import 'socnetlogdest';
 import 'ui.hint';
@@ -220,8 +219,10 @@ export class FieldsListField extends BaseField
 			});
 		}
 
-		if (options.type === 'booking')
+		if (options.type === 'booking' && BX.Booking)
 		{
+			const BookingFieldController = BX.Booking.CrmForms.Settings;
+
 			return new BookingFieldController(options, this.data.formOptions);
 		}
 

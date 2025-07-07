@@ -1,4 +1,6 @@
 <?php
+$MESS["DASHBOARD_PARAMS_SELECTOR_GROUPS"] = "Групи";
+$MESS["DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT"] = "Після додавання звіту до групи на нього починають діяти права доступу групи.";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS"] = "Параметри";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_BUTTON_CANCEL"] = "Скасувати";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_BUTTON_CONFIRM"] = "Підтвердити";
@@ -12,6 +14,7 @@ $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_TO_DELETE_PLU
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_TITLE"] = "Додати зону видимості?";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_GLOBAL"] = "Глобальний параметр";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT"] = "Обов'язкові параметри додадуться автоматично, якщо для звіту вибрано зону видимості. Ви також зможете додати інші параметри. [link]Докладніше[/link]";
+$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT_MSGVER_1"] = "Доступні параметри залежать від вибраних зон видимості та додаються автоматично. Параметр «Ідентифікатор користувача» доступний завжди. [link]Докладніше[/link]";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_LIST"] = "Ідентифікатори параметрів";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_UNAVAILABLE"] = "Параметр недоступний за вибраними зонами видимості.";
 $MESS["DASHBOARD_PARAMS_SELECTOR_SCOPE"] = "Зони видимості";

@@ -16,6 +16,7 @@ $MESS["EC_CONFIRMED_EMAIL_HELP_LINK"] = "Детальніше для чого п
 $MESS["EC_CONFIRMED_EMAIL_SEND"] = "Продовжити";
 $MESS["EC_CONFIRMED_EMAIL_TEXT_1"] = "З цієї адреси будуть відправлені запрошення учасникам по email";
 $MESS["EC_CONFIRMED_EMAIL_TITLE"] = "Укажіть адресу електронної пошти";
+$MESS["EC_CONTROL_ACC_A"] = "Відсутній (занести до графіка відсутностей)";
 $MESS["EC_CONTROL_ACC_B"] = "Зайнятий";
 $MESS["EC_CONTROL_ACC_F"] = "Вільний";
 $MESS["EC_CONTROL_ACC_Q"] = "Під питанням";

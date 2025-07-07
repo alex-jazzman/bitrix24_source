@@ -1,4 +1,5 @@
 <?php
+$MESS["APP_TITLE_INTEGRATIONS24RU_POISK_PO_BIN_IIN_KZ"] = "Қазақстан БСН және ЖСН бойынша деректемелерді іздеу";
 $MESS["APP_TITLE_INTEGRATIONS24_MNS_KAZAKHSTAN_POISK_PO_BIN"] = "Қазақстанның САМ - БСН бойынша іздеу";
 $MESS["APP_TITLE_INTEGRATIONS24_PORTAL_NALOG_GOV_BY"] = "Беларусьтің САМ - СТН бойынша іздеу";
 $MESS["CRM_CLIENT_ADDRESS_BOROUGH"] = "ҚАЛАЛЫҚ ОКРУГ";

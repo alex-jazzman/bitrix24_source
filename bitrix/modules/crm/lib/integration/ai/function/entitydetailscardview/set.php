@@ -11,6 +11,7 @@ use Bitrix\Crm\Integration\AI\Function\EntityDetailsCardView\Dto\SetParameters;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\EntityForm\Scope;
 
 final class Set implements AIFunction
@@ -54,7 +55,7 @@ final class Set implements AIFunction
 
 		if (!$this->isCustomScopeExists($parameters))
 		{
-			return Result::fail('Custom configuration not found');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_ENTITY_DETAILS_CARD_VIEW_CUSTOM_SCOPE_NOT_FOUND_ERROR'), 'CUSTOM_SCOPE_NOT_FOUND');
 		}
 
 		foreach ($this->getUserIds($parameters) as $userId)

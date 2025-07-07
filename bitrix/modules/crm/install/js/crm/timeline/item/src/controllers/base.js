@@ -1,4 +1,4 @@
-import { ajax as Ajax } from 'main.core';
+import { ajax as Ajax, Type } from 'main.core';
 import { UI } from 'ui.notification';
 
 import ConfigurableItem from '../configurable-item';
@@ -110,10 +110,11 @@ export class Base
 	 *
 	 * @param activityId Activity ID
 	 * @param scheduleDate Date to use in editor
+	 * @param description Default description to use in editor
 	 *
 	 * @protected
 	 */
-	runScheduleAction(activityId: Number, scheduleDate: String): void
+	runScheduleAction(activityId: Number, scheduleDate: String, description: String = ''): void
 	{
 		const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
 		if (menuBar)
@@ -127,6 +128,12 @@ export class Base
 				todoEditor.focus();
 				todoEditor.setParentActivityId(activityId);
 				todoEditor.setDeadLine(scheduleDate);
+
+				if (Type.isStringFilled(description))
+				{
+					todoEditor.setDescription(description);
+					todoEditor.focus();
+				}
 			}, 250);
 		}
 	}

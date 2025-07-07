@@ -10,6 +10,7 @@ use CCrmOwnerType;
 final class ItemsSumQueryModificator extends AbstractQueryModificator
 {
 	private const RESULT_FIELD = 'ITEMS_SUM';
+	private const DEFAULT_ITEMS_SUM = 0;
 
 	public function modify(Query $query): Query
 	{
@@ -57,5 +58,12 @@ final class ItemsSumQueryModificator extends AbstractQueryModificator
 			CCrmOwnerType::Invoice => CCrmCurrency::getInvoiceDefault(),
 			default => CCrmCurrency::GetAccountCurrencyID(),
 		};
+	}
+
+	public function fillDefaultValue(ExecutorResultValues $values): void
+	{
+		$values->setDefaultItemsSum(
+			new ItemsSum(self::DEFAULT_ITEMS_SUM, $this->getCurrency()),
+		);
 	}
 }

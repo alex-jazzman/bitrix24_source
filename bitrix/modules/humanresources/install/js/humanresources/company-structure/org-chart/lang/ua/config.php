@@ -105,6 +105,7 @@ $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_EMPLOYEES_TITLE"] = "Учас�
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_NO_SUBDEPARTMENTS"] = "немає команд у підпорядкуванні";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_DELETE_FROM_COMPANY_TITLE"] = "Видалити";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_SUBTITLE"] = "Співробітника буде видалено з вашого Бітрікс24.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_SUBTITLE_MSGVER_1"] = "Співробітник не зможе ввійти у ваш Бітрікс24.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_TITLE"] = "Звільнити";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_SUBTITLE"] = "Співробітника буде видалено з цього відділу та переведено до іншого відділу.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_TITLE"] = "Перевести в інший відділ";

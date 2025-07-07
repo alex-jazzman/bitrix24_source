@@ -93,7 +93,7 @@ class AvailabilityManager
 	public function getRepeatSaleInaccessibilityContent(): string
 	{
 		return $this->getInaccessibilityComponentContent([
-			'sliderCode' => ToolsManager::QUOTE_SLIDER_CODE, // @todo set correct code
+			'sliderCode' => ToolsManager::REPEAT_SALE_SLIDER_CODE,
 		]);
 	}
 

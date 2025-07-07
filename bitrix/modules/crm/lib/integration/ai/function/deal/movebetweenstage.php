@@ -13,11 +13,11 @@ use Bitrix\Crm\Service\Operation\Update;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Crm\Result;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Localization\Loc;
 use CCrmOwnerType;
 
 final class MoveBetweenStage implements AIFunction
 {
-	private readonly UserPermissions\EntityPermissions\Stage $permissions;
 	private readonly Factory $factory;
 
 	private const LIMIT = 100;
@@ -26,7 +26,6 @@ final class MoveBetweenStage implements AIFunction
 		private readonly int $currentUserId,
 	)
 	{
-		$this->permissions = Container::getInstance()->getUserPermissions($this->currentUserId)->stage();
 		$this->factory = Container::getInstance()->getFactory(CCrmOwnerType::Deal);
 	}
 
@@ -46,18 +45,13 @@ final class MoveBetweenStage implements AIFunction
 		$fromStage = $this->factory->getStageFromCategory($parameters->categoryId, $parameters->from);
 		if ($fromStage === null)
 		{
-			return Result::fail('Stage from which deals must be moved does not found');
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_DEAL_MOVE_BETWEEN_STAGE_FROM_STAGE_NOT_FOUND_ERROR'), 'STAGE_NOT_FOUND');
 		}
 
 		$toStage = $this->factory->getStageFromCategory($parameters->categoryId, $parameters->to);
 		if ($toStage === null)
 		{
-			return Result::fail('Stage to which deals need to be moved does not found');
-		}
-
-		if (!$this->canAddInStage($parameters))
-		{
-			return Result::failAccessDenied();
+			return Result::fail(Loc::getMessage('CRM_INTEGRATION_AI_FUNCTION_DEAL_MOVE_BETWEEN_STAGE_TO_STAGE_NOT_FOUND_ERROR'), 'STAGE_NOT_FOUND');
 		}
 
 		$errors = new ErrorCollection();
@@ -76,7 +70,7 @@ final class MoveBetweenStage implements AIFunction
 
 		if (!$errors->isEmpty())
 		{
-			return Result::fail($errors);
+			return Result::fail(ErrorCode::groupErrorsByMessage($errors));
 		}
 
 		return Result::success();
@@ -115,15 +109,9 @@ final class MoveBetweenStage implements AIFunction
 			->setUserId($this->currentUserId);
 
 		$operation
-			->disableCheckAccess()
 			->disableCheckFields()
 			->disableCheckRequiredUserFields();
 
 		return $operation;
-	}
-
-	private function canAddInStage(MoveBetweenStageParameters $parameters): bool
-	{
-		return $this->permissions->canAddInStage(CCrmOwnerType::Deal, $parameters->categoryId, $parameters->to);
 	}
 }

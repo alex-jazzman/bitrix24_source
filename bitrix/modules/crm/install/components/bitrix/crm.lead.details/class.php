@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Crm\Component\EntityDetails\Traits;
@@ -22,6 +23,7 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Location\Entity\Address\AddressLinkCollection;
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 if (!Main\Loader::includeModule('crm'))
@@ -1188,6 +1190,8 @@ class CCrmLeadDetailsComponent
 			);
 		}
 
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationFieldInfo($this->entityFieldInfos);
+
 		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
 
 		return $this->entityFieldInfos;
@@ -2153,6 +2157,8 @@ class CCrmLeadDetailsComponent
 				);
 			}
 		}
+
+		(new LastCommunicationTimeFormatter())->formatDetailDate($this->entityData);
 
 		$this->arResult['ENTITY_DATA'] = $this->entityData;
 

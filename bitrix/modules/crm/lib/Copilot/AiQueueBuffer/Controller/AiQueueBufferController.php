@@ -38,13 +38,23 @@ final class AiQueueBufferController
 		return $query->exec()->fetchCollection();
 	}
 
-	public function getById(int $id): AiQueueBuffer
+	public function getById(int $id): ?AiQueueBuffer
 	{
+		if ($id <= 0)
+		{
+			return null;
+		}
+
 		return AiQueueBufferTable::getById($id)?->fetchObject();
 	}
 
 	public function delete(array $ids): Result
 	{
 		return AiQueueBufferTable::deleteByIds($ids);
+	}
+
+	public function deleteAll(): void
+	{
+		AiQueueBufferTable::deleteAll();
 	}
 }

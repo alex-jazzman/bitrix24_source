@@ -2,31 +2,18 @@
 
 namespace Bitrix\Crm\RepeatSale\Service\Handler;
 
-use Bitrix\Crm\RepeatSale\Segment\Collector\SegmentData;
+use Bitrix\Crm\RepeatSale\Segment\Data\SegmentDataInterface;
 
 final class Result extends \Bitrix\Main\Result
 {
-	private bool $isFinalQueueIteration = false;
-	private ?SegmentData $segmentData = null;
+	private ?SegmentDataInterface $segmentData = null;
 
-	public function isFinalQueueIteration(): bool
-	{
-		return $this->isFinalQueueIteration;
-	}
-
-	public function setIsFinalQueueIteration(bool $isFinalQueueIteration): Result
-	{
-		$this->isFinalQueueIteration = $isFinalQueueIteration;
-
-		return $this;
-	}
-
-	public function getSegmentData(): ?SegmentData
+	public function getSegmentData(): ?SegmentDataInterface
 	{
 		return $this->segmentData;
 	}
 
-	public function setSegmentData(?SegmentData $segmentData): Result
+	public function setSegmentData(?SegmentDataInterface $segmentData): self
 	{
 		$this->segmentData = $segmentData;
 
